@@ -272,8 +272,7 @@ export function AditivoCard({ index, draft, onConfirmar, onCancelar, onDesfazer 
 
       <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-3">
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Coins className="h-3.5 w-3.5" /> Criar debita {draft.custoCreditos} crédito
-          {draft.custoCreditos === 1 ? "" : "s"} de IA
+          <Coins className="h-3.5 w-3.5" /> Criar consome tokens de IA
         </span>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={cancelar} disabled={salvando}>

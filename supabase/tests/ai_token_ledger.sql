@@ -11,7 +11,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(16);
+SELECT plan(22);
 
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
 VALUES
@@ -230,6 +230,62 @@ SELECT is(
    WHERE reference_id = 'ai_usage_logs:a70e9999-0000-0000-0000-000000000001'),
   1,
   'backfill rodado duas vezes não duplica (NOT EXISTS por reference_id)'
+);
+
+-- =============================================
+-- 10. Fase 2 (spec 075): gate_tokens concede o ciclo, é idempotente e expira sobra
+-- =============================================
+-- Empresa C nova, sem assinatura: a cota cai no plano de entrada (starter).
+INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
+VALUES ('a70e0000-0000-0000-0000-00000000000c', 'Empresa Token C', NULL, TRUE, '{}'::jsonb)
+ON CONFLICT (id) DO NOTHING;
+
+-- Sobra "do ciclo anterior": grant manual com reference de um ciclo antigo, para o
+-- gate do ciclo corrente ter o que expirar (não dá para viajar no tempo com now()).
+INSERT INTO public.ai_token_ledger (empresa_id, agent_key, source, tokens_delta, reference_id)
+VALUES ('a70e0000-0000-0000-0000-00000000000c', 'ciclo', 'plan_grant', 12000,
+        'plan_grant:a70e0000-0000-0000-0000-00000000000c:2026-07');
+
+SELECT test_set_service();
+
+SELECT lives_ok(
+  $$ SELECT * FROM public.gate_tokens('a70e0000-0000-0000-0000-00000000000c') $$,
+  'gate_tokens roda como service_role'
+);
+
+SELECT results_eq(
+  $$ SELECT saldo_plano, saldo_comprado FROM public.ai_token_saldo
+     WHERE empresa_id = 'a70e0000-0000-0000-0000-00000000000c' $$,
+  $$ SELECT p.tokens_mensais, 0::bigint FROM public.pilar_subscription_plans p WHERE p.slug = 'starter' $$,
+  'gate concede a cota do ciclo e a sobra do ciclo anterior expira (use-or-lose)'
+);
+
+SELECT is(
+  (SELECT tokens_delta FROM public.ai_token_ledger
+   WHERE reference_id = 'plan_expire:a70e0000-0000-0000-0000-00000000000c:' || to_char(now(), 'YYYY-MM')),
+  -12000,
+  'a sobra expirada vira linha plan_expire no ledger (auditável)'
+);
+
+SELECT lives_ok(
+  $$ SELECT * FROM public.gate_tokens('a70e0000-0000-0000-0000-00000000000c') $$,
+  'gate_tokens repetido no mesmo ciclo não é erro'
+);
+
+SELECT results_eq(
+  $$ SELECT count(*)::int FROM public.ai_token_ledger
+     WHERE reference_id = 'plan_grant:a70e0000-0000-0000-0000-00000000000c:' || to_char(now(), 'YYYY-MM') $$,
+  $$ VALUES (1) $$,
+  'gate repetido no mesmo ciclo é no-op (um plan_grant só)'
+);
+
+SELECT test_set_auth('a70e1111-0000-0000-0000-00000000000a');
+
+SELECT throws_ok(
+  $$ SELECT * FROM public.gate_tokens('a70e0000-0000-0000-0000-00000000000a') $$,
+  '42501',
+  NULL,
+  'gate_tokens como authenticated é bloqueada (grant + guard no corpo)'
 );
 
 SELECT * FROM finish();

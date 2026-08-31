@@ -4437,6 +4437,7 @@ export type Database = {
           preco_anual: number | null
           preco_mensal: number
           slug: string
+          tokens_mensais: number | null
         }
         Insert: {
           ativo?: boolean
@@ -4452,6 +4453,7 @@ export type Database = {
           preco_anual?: number | null
           preco_mensal: number
           slug: string
+          tokens_mensais?: number | null
         }
         Update: {
           ativo?: boolean
@@ -4467,6 +4469,7 @@ export type Database = {
           preco_anual?: number | null
           preco_mensal?: number
           slug?: string
+          tokens_mensais?: number | null
         }
         Relationships: []
       }
@@ -7220,6 +7223,14 @@ export type Database = {
       find_or_create_fatura: {
         Args: { p_cartao_id: string; p_data_compra: string }
         Returns: string
+      }
+      gate_tokens: {
+        Args: { p_empresa_id: string }
+        Returns: {
+          cota_ciclo: number
+          saldo_comprado: number
+          saldo_plano: number
+        }[]
       }
       gerar_alertas_ambient: { Args: never; Returns: number }
       gerar_fatura: {

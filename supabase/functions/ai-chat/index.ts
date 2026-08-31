@@ -20,6 +20,7 @@ import {
   streamGeminiText,
   debitarTokens,
   getAiSaldo,
+  verificarTokens,
   GEMINI_MODEL,
   type AiSaldo,
 } from "../_shared/ai-client.ts";
@@ -1128,7 +1129,17 @@ serve(
       setSentryUser({ id: user.id, email: user.email, empresa_id: empresaId });
 
       if (!(await checkRateLimit(adminClient, empresaId))) {
-        return jsonResponse({ error: "Limite mensal de IA atingido" }, 429, req);
+        return jsonResponse({ error: "Muitas chamadas de IA em sequência. Aguarde um minuto e tente de novo." }, 429, req);
+      }
+
+      // Gate de tokens (Fase 2, spec 075): bloqueia ANTES de gastar no provider.
+      const gateTokens = await verificarTokens(adminClient, empresaId);
+      if (!gateTokens.ok) {
+        return jsonResponse(
+          { error: "Os tokens de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador." },
+          402,
+          req
+        );
       }
 
       const body = await req.json().catch(() => ({}));

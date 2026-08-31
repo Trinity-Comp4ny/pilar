@@ -8,9 +8,6 @@ const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/
 // streamGenerateContent + alt=sse: cada chunk chega como um evento SSE ("data: {json}\n\n").
 const GEMINI_STREAM_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse`;
 
-// Teto mensal padrão quando ainda não há linha em ai_usage (mesmo default da coluna limite_requests).
-const DEFAULT_LIMITE_REQUESTS = 100;
-
 // Timeouts do Gemini. Cada chamada tem um teto próprio (AbortController); o orçamento
 // total limita a soma das tentativas (retry) para não estourar o wall-clock da edge.
 const GEMINI_CALL_TIMEOUT_MS = 30_000;
@@ -61,10 +58,11 @@ interface GeminiApiResponse {
 }
 
 /**
- * Verifica rate limit e retorna se pode prosseguir
+ * Anti-rajada: barra loop/burst (30 chamadas/60s) por empresa. Responde 429.
+ * O teto mensal por REQUESTS morreu na Fase 2 (spec 075): a cota agora é de
+ * tokens, aplicada por verificarTokens() (402).
  */
 export async function checkRateLimit(supabaseAdmin: SupabaseClient, empresaId: string): Promise<boolean> {
-  // Janela curta: barra rajada/loop de chamadas antes de olhar o teto mensal.
   const desde = new Date(Date.now() - SHORT_WINDOW_SECONDS * 1000).toISOString();
   const { count } = await supabaseAdmin
     .from("ai_token_ledger")
@@ -72,49 +70,61 @@ export async function checkRateLimit(supabaseAdmin: SupabaseClient, empresaId: s
     .eq("empresa_id", empresaId)
     .eq("source", "usage")
     .gte("created_at", desde);
-  if ((count ?? 0) >= SHORT_WINDOW_MAX_CALLS) {
-    return false;
-  }
-
-  const { usados, limite } = await getAiSaldo(supabaseAdmin, empresaId);
-  return usados < limite;
+  return (count ?? 0) < SHORT_WINDOW_MAX_CALLS;
 }
 
 export interface AiSaldo {
-  usados: number;
-  limite: number;
-  restante: number;
+  tokens_plano: number;
+  tokens_comprado: number;
+  tokens_restantes: number;
 }
 
 /**
- * Saldo de uso de IA do mês corrente: usados = nº de débitos `usage` do mês no ledger
- * (ai_token_ledger, fonte única do ADR 0035); limite = teto de requests configurável
- * por empresa (ai_usage.limite_requests, coluna que segue sendo a config vigente até a
- * Fase 2 trazer a cota de tokens por plano). Sem linha → teto padrão. `restante` nunca
- * fica negativo. Usa o client admin (bypassa RLS).
+ * Gate de tokens (Fase 2, spec 075): garante a concessão do ciclo corrente via RPC
+ * gate_tokens (idempotente por mês; cobre a virada de ciclo on-demand, sem depender
+ * de cron) e devolve o saldo. `ok=false` = responder 402 ANTES de chamar o modelo.
+ *
+ * Falha de infra aqui NÃO bloqueia o usuário (fail-open consciente: melhor deixar
+ * passar uma chamada do que travar a IA inteira por erro de RPC), mas é reportada
+ * ao Sentry — nunca silenciosa.
+ */
+export async function verificarTokens(
+  supabaseAdmin: SupabaseClient,
+  empresaId: string
+): Promise<{ ok: boolean; saldo: AiSaldo | null }> {
+  try {
+    const { data, error } = await supabaseAdmin.rpc("gate_tokens", { p_empresa_id: empresaId });
+    if (error) {
+      throw new Error(`gate_tokens falhou: ${error.message}`);
+    }
+    const row = (data as Array<{ saldo_plano: number; saldo_comprado: number }> | null)?.[0];
+    if (!row) return { ok: true, saldo: null };
+    const saldo: AiSaldo = {
+      tokens_plano: Number(row.saldo_plano),
+      tokens_comprado: Number(row.saldo_comprado),
+      tokens_restantes: Number(row.saldo_plano) + Number(row.saldo_comprado),
+    };
+    return { ok: saldo.tokens_restantes > 0, saldo };
+  } catch (e) {
+    await captureException(e, { fn: "verificarTokens", tags: { empresa_id: empresaId } });
+    return { ok: true, saldo: null };
+  }
+}
+
+/**
+ * Saldo de tokens da empresa (leitura direta do cache ai_token_saldo, sem conceder
+ * ciclo). Para o chip do chat e afins; o gate de bloqueio é verificarTokens().
  */
 export async function getAiSaldo(supabaseAdmin: SupabaseClient, empresaId: string): Promise<AiSaldo> {
-  const now = new Date();
-  const inicioMes = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
-
-  const { count } = await supabaseAdmin
-    .from("ai_token_ledger")
-    .select("id", { count: "exact", head: true })
-    .eq("empresa_id", empresaId)
-    .eq("source", "usage")
-    .gte("created_at", inicioMes);
-
   const { data } = await supabaseAdmin
-    .from("ai_usage")
-    .select("limite_requests")
+    .from("ai_token_saldo")
+    .select("saldo_plano, saldo_comprado")
     .eq("empresa_id", empresaId)
-    .eq("mes", now.getMonth() + 1)
-    .eq("ano", now.getFullYear())
     .maybeSingle();
-
-  const usados = count ?? 0;
-  const limite = (data as { limite_requests: number } | null)?.limite_requests ?? DEFAULT_LIMITE_REQUESTS;
-  return { usados, limite, restante: Math.max(0, limite - usados) };
+  const row = data as { saldo_plano: number; saldo_comprado: number } | null;
+  const plano = Number(row?.saldo_plano ?? 0);
+  const comprado = Number(row?.saldo_comprado ?? 0);
+  return { tokens_plano: plano, tokens_comprado: comprado, tokens_restantes: plano + comprado };
 }
 
 export interface DebitarTokensParams {

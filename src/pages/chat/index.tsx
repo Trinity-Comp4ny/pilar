@@ -22,7 +22,13 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PageHeader } from "@/components/PageHeader";
 import { useChat } from "./useChat";
+import { MarkdownResposta } from "./MarkdownResposta";
+
+// Saldo de tokens no chip: compacto no rótulo ("1,9 mi"), cheio no title.
+const fmtTokens = new Intl.NumberFormat("pt-BR", { notation: "compact", maximumFractionDigits: 1 });
+const fmtTokensCheio = new Intl.NumberFormat("pt-BR");
 import { LeadConfirmationCard } from "./LeadConfirmationCard";
 import { ProjetoConfirmationCard } from "./ProjetoConfirmationCard";
 import { LancamentoCard } from "./LancamentoCard";
@@ -61,7 +67,6 @@ export default function ChatPage() {
     stop,
     loading,
     reset,
-    creditosUsados,
     saldo,
     confirmarDraft,
     cancelarDraft,
@@ -149,8 +154,6 @@ export default function ChatPage() {
 
   const vazio = messages.length === 0;
   const primeiroNome = profile?.first_name || profile?.nome?.split(" ")[0] || null;
-  // Header some no herói vazio, pra dar lugar ao input centralizado.
-  const mostrarHeader = !vazio;
 
   const inputPanel = (
     <InputPanel
@@ -171,45 +174,29 @@ export default function ChatPage() {
       className="fixed inset-y-0 right-0 z-40 flex flex-col bg-background transition-[left] duration-300 ease-in-out"
       style={{ left }}
     >
-      {/* Cabeçalho — no herói vazio some para o input virar herói, mas reaparece
-          quando a aba Revisão está ativa ou há pendências a mostrar. */}
-      {mostrarHeader && (
-        <header className="relative flex items-center gap-3 border-b border-border px-6 py-3.5">
-          <div className="min-w-0 flex-1">
-            <h1 className="text-base font-medium tracking-tight text-foreground">Agentes</h1>
-          </div>
-
-          <div className="flex flex-1 items-center justify-end gap-2">
-            {saldo && (
-              <span
-                className="hidden lg:flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
-                title={`Créditos de IA restantes este mês (${saldo.usados} de ${saldo.limite} usados)`}
-              >
-                <Coins className="h-3.5 w-3.5" />
-                {saldo.restante} crédito{saldo.restante === 1 ? "" : "s"} restantes
-              </span>
-            )}
-            {creditosUsados > 0 && (
-              <span
-                className="hidden lg:flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
-                title="Créditos de IA debitados nesta conversa"
-              >
-                <Coins className="h-3.5 w-3.5" />
-                {creditosUsados} usado{creditosUsados === 1 ? "" : "s"} agora
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={handleReset}
-              disabled={loading}
-              className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
+      {/* Header padrão da casa (spec 002 via PageHeader), sempre visível. */}
+      <div className="border-b border-border">
+        <PageHeader title="Agentes">
+          {saldo && (
+            <span
+              className="hidden lg:flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
+              title={`Tokens de IA: ${fmtTokensCheio.format(saldo.tokens_plano)} do plano + ${fmtTokensCheio.format(saldo.tokens_comprado)} avulsos`}
             >
-              <PenLine className="h-3.5 w-3.5" />
-              Nova conversa
-            </button>
-          </div>
-        </header>
-      )}
+              <Coins className="h-3.5 w-3.5" />
+              {fmtTokens.format(saldo.tokens_restantes)} tokens
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleReset}
+            disabled={loading}
+            className="flex h-9 items-center gap-1.5 rounded-full border border-border px-3 text-[13px] font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
+          >
+            <PenLine className="h-3.5 w-3.5" />
+            Nova conversa
+          </button>
+        </PageHeader>
+      </div>
 
       {vazio ? (
         /* ── Estado vazio: herói centralizado (padrão agent-first) ── */
@@ -312,7 +299,7 @@ export default function ChatPage() {
                                 </div>
                               );
                             })()}
-                          <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
+                          <MarkdownResposta>{m.content}</MarkdownResposta>
                         </div>
                       )}
                     </div>
