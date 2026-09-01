@@ -20,10 +20,17 @@ import { parseOr400, z } from "../_shared/schemas.ts";
 
 const log = createLogger("pilar-token-pack-create");
 
-// Números fixados em DECISOES.md 2026-09-01 (MOTOR_DE_TOKENS.md §3). Mudar exige
-// decisão própria, não só editar esta constante.
-const TOKENS_POR_PACOTE = 500_000;
-const VALOR_CENTAVOS_POR_PACOTE = 4900;
+// Catálogo de tiers (SPEC 080, DECISOES.md 2026-09-01). Fonte única de preço/tokens —
+// o cliente manda só o tier_id, nunca um valor. Mudar exige decisão própria (pricing),
+// não só editar esta constante.
+const TIER_CATALOG = {
+  starter: { tokens: 500_000, valorCentavos: 4900 },
+  cresce: { tokens: 1_500_000, valorCentavos: 12900 },
+  escala: { tokens: 3_000_000, valorCentavos: 22800 },
+  maximo: { tokens: 6_000_000, valorCentavos: 39900 },
+} as const;
+
+type TierId = keyof typeof TIER_CATALOG;
 
 const creditCardSchema = z.object({
   holderName: z.string().trim().min(2).max(200),
@@ -50,7 +57,7 @@ const holderInfoSchema = z.object({
 
 const purchaseSchema = z
   .object({
-    quantidade_pacotes: z.number().int().min(1).max(20),
+    tier_id: z.enum(["starter", "cresce", "escala", "maximo"]),
     billing_type: z.enum(["CREDIT_CARD", "PIX", "BOLETO"]),
     credit_card: creditCardSchema.optional(),
     credit_card_holder_info: holderInfoSchema.optional(),
@@ -144,7 +151,8 @@ serve(
       );
     }
 
-    const valorCentavos = body.quantidade_pacotes * VALOR_CENTAVOS_POR_PACOTE;
+    const tier = TIER_CATALOG[body.tier_id as TierId];
+    const valorCentavos = tier.valorCentavos;
     const valor = valorCentavos / 100;
 
     // --- Cria a compra pendente ANTES do Asaas (mesmo padrão do checkout de
@@ -155,8 +163,9 @@ serve(
       .insert({
         empresa_id: profile.empresa_id,
         user_id: user.id,
-        quantidade_pacotes: body.quantidade_pacotes,
-        tokens_pacote: TOKENS_POR_PACOTE,
+        tier_id: body.tier_id,
+        quantidade_pacotes: 1,
+        tokens_pacote: tier.tokens,
         valor_centavos: valorCentavos,
         billing_type: body.billing_type,
         status: "pending",
@@ -179,7 +188,7 @@ serve(
         billingType: body.billing_type,
         value: valor,
         dueDate: todayISO(),
-        description: `Pilar — ${body.quantidade_pacotes} pacote(s) de ${TOKENS_POR_PACOTE.toLocaleString("pt-BR")} tokens`,
+        description: `Pilar — ${tier.tokens.toLocaleString("pt-BR")} tokens`,
         externalReference: purchase.id,
         ...(body.billing_type === "CREDIT_CARD" && body.credit_card && body.credit_card_holder_info
           ? { creditCard: body.credit_card, creditCardHolderInfo: body.credit_card_holder_info, remoteIp }
@@ -239,7 +248,7 @@ serve(
         purchase_id: purchase.id,
         billing_type: body.billing_type,
         payment_status: initialStatus,
-        tokens: body.quantidade_pacotes * TOKENS_POR_PACOTE,
+        tokens: tier.tokens,
         value: valor,
         metadata,
       },

@@ -11,6 +11,36 @@ Regras de manutenção:
 
 ---
 
+## 2026-09-01 (mais tarde) · Pacote de tokens vira 4 tiers fixos com desconto por volume
+
+**Decisão:** a compra avulsa de tokens deixa de ser "quantidade livre de pacotes de 500k a
+R$49 cada" e vira 4 tiers fixos, com preço por milhão de tokens caindo conforme o tier sobe:
+
+| Tier | Tokens | Preço | R$/milhão | Desconto vs. tier 1 |
+|---|---|---|---|---|
+| 1 | 500 mil | R$49 | R$98,00 | — (preço-base inalterado) |
+| 2 | 1,5 milhão | R$129 | R$86,00 | ~12% |
+| 3 | 3 milhões | R$228 | R$76,00 | ~22% |
+| 4 | 6 milhões | R$399 | R$66,50 | ~32% |
+
+**Contexto:** feedback direto do CEO testando o fluxo de compra em staging — selecionar
+quantidade num campo numérico e forma de pagamento num radio genérico "ficou muito ruim"
+perto do padrão de mercado (OpenAI, Anthropic Console: tiers fixos como cards clicáveis).
+Com o COGS medido (~R$3,50/milhão, ver MOTOR_DE_TOKENS.md §3), mesmo o tier 4 com 32% de
+desconto mantém margem ~95% — desconto por volume aqui é alavanca de ticket médio e
+conversão, não sacrifício de margem.
+
+**Supera:** o modelo de "1-20 pacotes de 500k a R$49 cada" fixado nesta mesma sessão mais
+cedo (SPEC 077). O preço do tier 1 (R$49/500k) não muda — só deixa de ser o único ponto
+da curva.
+
+**Como aplicar:** catálogo de tiers fica hardcoded no backend (`pilar-token-pack-create`),
+nunca aceita preço do cliente. UI mostra os 4 tiers como cards, sem campo de quantidade
+livre (SPEC 080). Recalibrar os números quando a Fase 0 (dado real de uso em produção)
+confirmar o COGS medido.
+
+---
+
 ## 2026-09-01 · Ativação do Asaas de plataforma é iniciativa própria, sandbox primeiro
 
 **Decisão:** ligar o Asaas que cobra a assinatura do Pilar (não o Asaas por-empresa, que já

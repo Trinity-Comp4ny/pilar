@@ -67,7 +67,20 @@ Regras:
 | Profissional (R$690) | 2 milhões | ~R$7,00 | 1,0% |
 | Escala (R$1.290) | 8 milhões | ~R$28,00 | 2,2% |
 | Enterprise | sob consulta | — | — |
-| **Pacote extra** | **R$49 por 500 mil tokens, sem expiração** | ~R$1,75 (margem ~96%) | — |
+
+Pacote avulso (sem expiração no ciclo) em 4 tiers fixos com desconto por volume
+(decisão 2026-09-01, SPEC 080 — substitui o modelo anterior de "1-20 pacotes de 500k"):
+
+| Tier | Tokens | Preço | R$/milhão | Desconto |
+|---|---|---|---|---|
+| 1 (base) | 500 mil | R$49 | R$98,00 | — |
+| 2 | 1,5 milhão | R$129 | R$86,00 | ~12% |
+| 3 | 3 milhões | R$228 | R$76,00 | ~22% |
+| 4 | 6 milhões | R$399 | R$66,50 | ~32% |
+
+Margem no tier 4 (maior desconto): COGS ~R$21 (6M × R$3,50/M) vs. R$399 de receita, ~95%
+de margem — desconto por volume aqui é alavanca de ticket médio e conversão, não
+sacrifício de margem (ver cálculo de COGS abaixo).
 
 COGS calculado com o Gemini 2.5 Flash ($0,30/M input, $2,50/M output, câmbio R$5,50) no
 mix real observado via ledger (~86% input / 14% output): ~R$3,50/milhão de tokens. Com
