@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { edgeFunctionErrorMessage } from "@/lib/edgeFunctionError";
 
 export type TokenPackBillingType = "PIX" | "BOLETO" | "CREDIT_CARD";
 export type TokenPackTierId = "starter" | "cresce" | "escala" | "maximo";
@@ -61,8 +62,7 @@ export function useTokenPackCreate() {
       });
 
       if (error) {
-        const message = error.message ?? "Erro ao processar compra";
-        throw new Error(message);
+        throw new Error(await edgeFunctionErrorMessage(error, "Erro ao processar compra"));
       }
 
       if (!data || !("success" in data) || !data.success) {

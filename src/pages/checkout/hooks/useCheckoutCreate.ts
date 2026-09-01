@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { edgeFunctionErrorMessage } from "@/lib/edgeFunctionError";
 import type { BillingCycle } from "@/pages/planos/components/CycleToggle";
 
 export type BillingType = "CREDIT_CARD" | "PIX" | "BOLETO";
@@ -72,8 +73,7 @@ export function useCheckoutCreate() {
       });
 
       if (error) {
-        const message = error.message ?? "Erro ao processar checkout";
-        throw new Error(message);
+        throw new Error(await edgeFunctionErrorMessage(error, "Erro ao processar checkout"));
       }
 
       if (!data || !("success" in data) || !data.success) {
