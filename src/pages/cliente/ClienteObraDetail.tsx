@@ -107,8 +107,8 @@ export default function ClienteObraDetail() {
               description="Assim que a equipe lançar o dia, ele aparece aqui."
             />
           ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              {data.diario.map((dia) => (
+            <div className="mx-auto max-w-xl">
+              {data.diario.map((dia, i) => (
                 <RdoFeedCard
                   key={dia.id}
                   data={dia.data}
@@ -118,6 +118,7 @@ export default function ClienteObraDetail() {
                     const url = urlPorFoto[f.id];
                     return url ? [{ id: f.id, url }] : [];
                   })}
+                  ultimo={i === data.diario.length - 1}
                 />
               ))}
             </div>
