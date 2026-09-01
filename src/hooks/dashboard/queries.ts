@@ -143,10 +143,12 @@ export async function buildDashboardQueries(
       .limit(5),
 
     // projetosAtivosCount — count exato de projetos Em andamento (sem limit)
+    // projetos_safe (view): SELECT * na tabela base foi revogado (20260879000000),
+    // só colunas explícitas são concedidas e valor_contrato/custo_indireto_pct
+    // ficam de fora. Usar a view evita 403 mesmo num select("*", head: true).
     supabase
-      .from("projetos")
-      .select("*", { count: "exact", head: true })
-      .is("deleted_at", null)
+      .from("projetos_safe")
+      .select("id", { count: "exact", head: true })
       .eq("status", PROJECT_STATUS.EM_ANDAMENTO),
   ]);
 

@@ -29,11 +29,9 @@ export function PlanoTab({ empresaId, currentPlan }: { empresaId: string | null;
     const load = async () => {
       const [{ count: usuarios }, { count: projetos }, { count: clientes }] = await Promise.all([
         supabase.from("profiles").select("*", { count: "exact", head: true }).eq("empresa_id", empresaId),
-        supabase
-          .from("projetos")
-          .select("*", { count: "exact", head: true })
-          .eq("empresa_id", empresaId)
-          .is("deleted_at", null),
+        // projetos_safe: select("*") na tabela base foi revogado (20260879000000),
+        // só colunas explícitas são concedidas (sem valor_contrato/custo_indireto_pct).
+        supabase.from("projetos_safe").select("id", { count: "exact", head: true }).eq("empresa_id", empresaId),
         supabase.from("clientes").select("*", { count: "exact", head: true }).eq("empresa_id", empresaId),
       ]);
 

@@ -145,7 +145,11 @@ serve(
         tipo: "import-financeiro",
       };
 
-      const result = await callGeminiStructured(aiRequest, ResultSchema, { maxRetries: 1 });
+      // maxOutputTokens: 4096 (default) corta no meio de extratos com muitos
+      // lançamentos e derruba em "JSON inválido (Unexpected end of JSON input)";
+      // mesmo teto do ai-cotacao-import, que extrai a mesma forma de dado (lista
+      // de itens de um documento).
+      const result = await callGeminiStructured(aiRequest, ResultSchema, { maxRetries: 1, maxOutputTokens: 8192 });
 
       const runId = await recordAgentRun(
         adminClient,
