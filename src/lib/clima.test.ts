@@ -1,6 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   alertasClimaTarefas,
+  buscarClimaDoDia,
+  climaDoDiaEmSerie,
   climaPorCodigo,
   corTemperatura,
   diasComChuva,
@@ -33,6 +35,49 @@ describe("climaPorCodigo (WMO)", () => {
   it("código nulo/desconhecido não quebra", () => {
     expect(climaPorCodigo(null).label).toBe("Indisponível");
     expect(climaPorCodigo(9999).chuva).toBe(false);
+  });
+});
+
+describe("climaDoDiaEmSerie (spec 080)", () => {
+  const serie = { time: ["2026-08-30", "2026-08-31", "2026-09-01"], weather_code: [0, 63, 3] };
+
+  it("acha o código da data exata e mapeia pro enum do RDO", () => {
+    expect(climaDoDiaEmSerie(serie, "2026-08-31")).toBe("chuvoso");
+    expect(climaDoDiaEmSerie(serie, "2026-09-01")).toBe("nublado");
+  });
+
+  it("data fora da série devolve null (formulário não sugere nada)", () => {
+    expect(climaDoDiaEmSerie(serie, "2026-01-01")).toBeNull();
+  });
+
+  it("série ausente devolve null", () => {
+    expect(climaDoDiaEmSerie(undefined, "2026-09-01")).toBeNull();
+  });
+});
+
+describe("buscarClimaDoDia (spec 080)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("aceita a resposta REAL do Open-Meteo pra daily=weather_code (só time+weather_code, sem os campos de buscarPrevisao)", async () => {
+    // Regressão: buscarClimaDoDia pedia só `weather_code` na API, mas validava
+    // contra o schema de buscarPrevisao (exige temperatura/vento/UV/sunrise...).
+    // O parse sempre falhava e devolvia null silenciosamente — nunca sugeria nada.
+    const respostaReal = {
+      latitude: -22.249561,
+      longitude: -49.927673,
+      daily: { time: ["2026-09-01"], weather_code: [80] },
+    };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => respostaReal }));
+    const resultado = await buscarClimaDoDia(-22.21389, -49.94583, "2026-09-01");
+    expect(resultado).toBe("chuvoso");
+  });
+
+  it("devolve null quando o fetch falha, sem lançar", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) }));
+    const resultado = await buscarClimaDoDia(-22.21389, -49.94583, "2026-09-01");
+    expect(resultado).toBeNull();
   });
 });
 

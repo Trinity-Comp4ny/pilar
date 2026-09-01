@@ -28,6 +28,12 @@ export const formatDocument = (value: string): string => {
   return d.length > 11 ? formatCNPJ(d) : formatCPF(d);
 };
 
+export const formatCEP = (value: string): string => {
+  const d = onlyDigits(value).slice(0, 8);
+  if (d.length <= 5) return d;
+  return `${d.slice(0, 5)}-${d.slice(5)}`;
+};
+
 /**
  * Formata RG no padrão brasileiro mais comum: XX.XXX.XXX-X
  * Aceita até 9 caracteres (8 dígitos + 1 dígito ou X verificador).
