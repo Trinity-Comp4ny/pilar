@@ -325,7 +325,9 @@ jobs:
         # undefined pra sempre: nenhum workflow setava RELEASE_SHA nem SENTRY_RELEASE
         # nos secrets do projeto. `secrets set` é global ao projeto (não precisa de
         # redeploy) e vale pro próximo cold start de cada function.
-        run: supabase secrets set RELEASE_SHA="$GITHUB_SHA" SENTRY_RELEASE="$GITHUB_SHA" --project-ref "$SUPABASE_PROJECT_REF"
+        # SENTRY_ENV separa staging de produção no Sentry (sem isto, _shared/sentry.ts
+        # cai no default "production" pros dois projetos Supabase, ver ADR 0036).
+        run: supabase secrets set RELEASE_SHA="$GITHUB_SHA" SENTRY_RELEASE="$GITHUB_SHA" SENTRY_ENV="staging" --project-ref "$SUPABASE_PROJECT_REF"
         env:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
       - name: Smoke test (health)
@@ -461,7 +463,7 @@ jobs:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
       - name: Marcar release nas edge functions (health + Sentry)
         # Ver comentário equivalente no job de staging.
-        run: supabase secrets set RELEASE_SHA="$GITHUB_SHA" SENTRY_RELEASE="$GITHUB_SHA" --project-ref "$SUPABASE_PROJECT_REF"
+        run: supabase secrets set RELEASE_SHA="$GITHUB_SHA" SENTRY_RELEASE="$GITHUB_SHA" SENTRY_ENV="production" --project-ref "$SUPABASE_PROJECT_REF"
         env:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
       - name: Smoke test (health)

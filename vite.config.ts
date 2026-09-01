@@ -7,6 +7,12 @@ import path from "path";
 // com "release: undefined" no Sentry e não dá pra saber qual deploy introduziu o bug.
 const SENTRY_RELEASE = process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.SENTRY_RELEASE ?? "dev";
 
+// Separa staging de produção no Sentry sem exigir configurar VITE_SENTRY_ENV
+// manualmente por ambiente na Vercel: VERCEL_ENV já vem "production"/"preview"
+// de graça em todo build (preview cobre staging e qualquer PR preview). Fora da
+// Vercel (build local), cai em "development". Ver ADR 0036.
+const SENTRY_ENVIRONMENT = process.env.VERCEL_ENV ?? process.env.SENTRY_ENV ?? "development";
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
@@ -24,7 +30,13 @@ export default defineConfig(({ mode }) => ({
         org: process.env.SENTRY_ORG ?? "trinity-company",
         project: process.env.SENTRY_PROJECT,
         authToken: process.env.SENTRY_AUTH_TOKEN,
-        release: { name: SENTRY_RELEASE },
+        release: {
+          name: SENTRY_RELEASE,
+          // Marca o release como deployado (timeline em Releases > deploys), sem
+          // precisar de step próprio no CI: o front é buildado direto pela Vercel
+          // (ci.yml só cobre o backend Supabase), então isto roda em todo build.
+          deploy: { env: SENTRY_ENVIRONMENT },
+        },
         // Sobe o .map pro Sentry pra desmascarar o stack trace, depois apaga do
         // dist: sourcemap de produção não precisa ficar servível publicamente.
         sourcemaps: { filesToDeleteAfterUpload: ["dist/**/*.map"] },
@@ -37,6 +49,7 @@ export default defineConfig(({ mode }) => ({
   },
   define: {
     __SENTRY_RELEASE__: JSON.stringify(SENTRY_RELEASE),
+    __SENTRY_ENVIRONMENT__: JSON.stringify(SENTRY_ENVIRONMENT),
   },
   // Pré-otimiza os deps que só entram via import() (exportação de relatórios). Sem
   // isto, o Vite os descobre em voo no primeiro uso, re-otimiza o cache e troca os

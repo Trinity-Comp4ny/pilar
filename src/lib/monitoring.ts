@@ -49,7 +49,11 @@ interface Monitoring {
 
 const DEV = import.meta.env.DEV;
 const DSN = env.VITE_SENTRY_DSN;
-const ENV = env.VITE_SENTRY_ENV ?? import.meta.env.MODE;
+// __SENTRY_ENVIRONMENT__ (injetado no build via VERCEL_ENV, ver vite.config.ts)
+// separa staging/preview de produção sem precisar configurar VITE_SENTRY_ENV por
+// ambiente na Vercel. VITE_SENTRY_ENV continua valendo como override explícito
+// (ex.: dev local testando um valor específico).
+const ENV = env.VITE_SENTRY_ENV ?? __SENTRY_ENVIRONMENT__;
 // Já validado como número em 0..1 por env.ts, que também resolve o nome legado
 // VITE_SENTRY_TRACES_RATE. Antes, `Number(undefined ?? ...)` podia render NaN e uma
 // var declarada vazia virava 0 sem ninguém notar.
@@ -137,12 +141,17 @@ const sentryMonitoring: Monitoring = {
       environment: ENV,
       release: __SENTRY_RELEASE__,
       tracesSampleRate: TRACES_RATE,
+      // Mesma taxa do tracing: profiling só faz sentido dentro de uma transaction
+      // amostrada (é isso que o Sentry usa pra decidir quando perfilar), então não
+      // introduz uma env var de sample rate própria pra configurar.
+      profilesSampleRate: TRACES_RATE,
       replaysSessionSampleRate: 0,
       replaysOnErrorSampleRate: 1.0,
       sendDefaultPii: false,
       integrations: [
         Sentry.browserTracingIntegration(),
         Sentry.replayIntegration({ maskAllText: false, blockAllMedia: false }),
+        Sentry.browserProfilingIntegration(),
       ],
       beforeSendTransaction(event) {
         const txName = event.transaction ?? "";

@@ -14,6 +14,9 @@ import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { jsonResponse, optionsResponse } from "../_shared/cors.ts";
 import { cancelSubscription, updateSubscription } from "../_shared/asaas-platform.ts";
+import { createLogger } from "../_shared/logger.ts";
+
+const log = createLogger("pilar-subscription-manage");
 
 interface Payload {
   action: "update_plan" | "cancel";
@@ -85,6 +88,7 @@ serve(
       try {
         await cancelSubscription(sub.asaas_subscription_id);
       } catch (err) {
+        log.error("asaas cancel subscription failed", err, { subscription_id: sub.id });
         const msg = err instanceof Error ? err.message : "Erro Asaas";
         return jsonResponse({ error: `Falha ao cancelar: ${msg}` }, 502, req);
       }
@@ -132,6 +136,7 @@ serve(
           updatePendingPayments: true,
         });
       } catch (err) {
+        log.error("asaas update subscription failed", err, { subscription_id: sub.id });
         const msg = err instanceof Error ? err.message : "Erro Asaas";
         return jsonResponse({ error: `Falha ao atualizar: ${msg}` }, 502, req);
       }
