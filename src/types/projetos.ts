@@ -224,7 +224,18 @@ export function dbDisciplinaToLegacy(d: ProjetoDisciplinaDB): DisciplinaResponsa
   };
 }
 
-export const disciplinaStatusOptions = ["Não Iniciado", "Em Andamento", "Concluído", "Pendente"];
+export const disciplinaStatusOptions = ["Não Iniciado", "Em Andamento", "Concluído", "Pendente", "Pausada"];
+
+/** Registro de pausa da disciplina (spec 083): motivo obrigatório, quem pausou/retomou.
+ *  Só criado/fechado via rpc_pausar_disciplina/rpc_retomar_disciplina, nunca por update direto. */
+export interface ProjetoDisciplinaPausa {
+  id: string;
+  motivo: string;
+  pausado_em: string;
+  pausado_por_nome: string | null;
+  retomado_em: string | null;
+  retomado_por_nome: string | null;
+}
 
 // Re-export de utilitários centralizados para manter compatibilidade de imports existentes
 export { formatCurrency } from "@/lib/currencyUtils";

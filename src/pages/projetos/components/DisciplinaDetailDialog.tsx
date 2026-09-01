@@ -22,9 +22,12 @@ import {
   CircleDot,
   Clock,
   Flag,
+  History,
   Layers,
   ListChecks,
   MessageSquare,
+  Pause,
+  Play,
   Plus,
   Tag,
   Trash2,
@@ -38,6 +41,9 @@ import { LabelsEditor } from "@/components/LabelsEditor";
 import { LinksEditor, type LinkItem } from "@/components/LinksEditor";
 import { AtividadeComposer } from "./AtividadeComposer";
 import { useDisciplinaChecklist } from "@/hooks/useProjetoDisciplinaChecklist";
+import { useDisciplinaPausas, totalDiasParados } from "@/hooks/useDisciplinaPausas";
+import { FormDialog } from "@/components/FormDialog";
+import { formatDateTime } from "@/lib/format";
 
 interface DisciplinaDetailDialogProps {
   open: boolean;
@@ -154,6 +160,37 @@ function DisciplinaDetailBody({
   const checklistIncompleto = checklistItens.length > 0 && checklistConcluidos < checklistItens.length;
   const [novoItemChecklist, setNovoItemChecklist] = useState("");
 
+  const pausas = useDisciplinaPausas(persistida ? disciplina.id : undefined);
+  const historicoPausas = pausas.data ?? [];
+  const diasParados = totalDiasParados(historicoPausas);
+  // `disciplina.status` é um snapshot que o componente pai não resincroniza sozinho após a
+  // mutation (fica preso em "Em Andamento" até o dialog reabrir); o histórico de pausas já
+  // vem fresco da própria query, então é a fonte confiável pra saber se está pausada agora.
+  const estaPausada = historicoPausas.some((p) => !p.retomado_em);
+  const [pausarOpen, setPausarOpen] = useState(false);
+  const [motivoPausa, setMotivoPausa] = useState("");
+
+  const abrirPausar = () => {
+    setMotivoPausa("");
+    setPausarOpen(true);
+  };
+
+  const confirmarPausar = () => {
+    if (!motivoPausa.trim()) return;
+    pausas.pausar.mutate(motivoPausa.trim(), {
+      onSuccess: () => {
+        setPausarOpen(false);
+        // A mutation não passa por onUpdateField, então o pai (dono do `disciplina.status`
+        // exibido) não se resincroniza sozinho: atualiza aqui pro Select/texto não ficar preso.
+        onUpdateField("status", "Pausada");
+      },
+    });
+  };
+
+  const confirmarRetomar = () => {
+    pausas.retomar.mutate(undefined, { onSuccess: () => onUpdateField("status", "Em Andamento") });
+  };
+
   const salvarNumero = (raw: string, inicial: string, save?: (n: number) => void) => {
     if (!save || raw.trim() === inicial.trim()) return;
     const n = raw.trim() ? Number(raw) : 0;
@@ -212,27 +249,60 @@ function DisciplinaDetailBody({
             {/* Propriedades em grade 2 colunas */}
             <div className="grid max-w-3xl grid-cols-1 gap-x-10 gap-y-4 md:grid-cols-2">
               <Prop icon={CircleDot} label="Status">
-                <Select value={disciplina.status} onValueChange={(val) => onUpdateField("status", val)}>
-                  <SelectTrigger className="h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {disciplinaStatusOptions.map((opt) => (
-                      <SelectItem
-                        key={opt}
-                        value={opt}
-                        disabled={opt === "Concluído" && checklistIncompleto}
-                        title={
-                          opt === "Concluído" && checklistIncompleto
-                            ? "Conclua todos os itens do checklist antes"
-                            : undefined
-                        }
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={estaPausada ? "Pausada" : disciplina.status}
+                    onValueChange={(val) => onUpdateField("status", val)}
+                    disabled={estaPausada}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {disciplinaStatusOptions.map((opt) => (
+                        <SelectItem
+                          key={opt}
+                          value={opt}
+                          disabled={(opt === "Concluído" && checklistIncompleto) || opt === "Pausada"}
+                          title={
+                            opt === "Concluído" && checklistIncompleto
+                              ? "Conclua todos os itens do checklist antes"
+                              : opt === "Pausada"
+                                ? "Use o botão Pausar, ao lado, pra registrar o motivo"
+                                : undefined
+                          }
+                        >
+                          {opt}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {persistida &&
+                    (estaPausada ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-9 flex-shrink-0 gap-1.5"
+                        onClick={confirmarRetomar}
+                        disabled={pausas.retomar.isPending}
                       >
-                        {opt}
-                      </SelectItem>
+                        <Play className="h-3.5 w-3.5" /> Retomar
+                      </Button>
+                    ) : (
+                      disciplina.status === "Em Andamento" && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-9 flex-shrink-0 gap-1.5"
+                          onClick={abrirPausar}
+                        >
+                          <Pause className="h-3.5 w-3.5" /> Pausar
+                        </Button>
+                      )
                     ))}
-                  </SelectContent>
-                </Select>
+                </div>
               </Prop>
 
               <Prop icon={User} label="Responsável">
@@ -367,6 +437,39 @@ function DisciplinaDetailBody({
                 </Prop>
               )}
             </div>
+
+            {persistida && historicoPausas.length > 0 && (
+              <div className="space-y-2 border-t pt-6">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-1.5 text-sm font-semibold">
+                    <History className="h-4 w-4" /> Histórico de pausas
+                  </Label>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {diasParados.toFixed(1)} dia(s) parado no total
+                  </span>
+                </div>
+                <ul className="space-y-2">
+                  {historicoPausas.map((p) => (
+                    <li key={p.id} className="rounded-md border bg-muted/30 px-3 py-2 text-sm">
+                      <p className="text-ink">{p.motivo}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        Pausado {p.pausado_por_nome ? `por ${p.pausado_por_nome} ` : ""}em{" "}
+                        {formatDateTime(p.pausado_em)}
+                        {p.retomado_em ? (
+                          <>
+                            {" "}
+                            · retomado {p.retomado_por_nome ? `por ${p.retomado_por_nome} ` : ""}em{" "}
+                            {formatDateTime(p.retomado_em)}
+                          </>
+                        ) : (
+                          " · em aberto"
+                        )}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {onUpdateDescricao && (
               <div className="space-y-2 border-t pt-6">
@@ -541,6 +644,30 @@ function DisciplinaDetailBody({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <FormDialog
+        open={pausarOpen}
+        onOpenChange={setPausarOpen}
+        title="Pausar disciplina"
+        description="Registra o motivo e a data de início da pausa. Fica no histórico até você retomar."
+        size="sm"
+        onSubmit={confirmarPausar}
+        submitLabel="Pausar"
+        isPending={pausas.pausar.isPending}
+        submitDisabled={!motivoPausa.trim()}
+      >
+        <div className="space-y-2">
+          <Label htmlFor="motivo-pausa">Motivo</Label>
+          <Textarea
+            id="motivo-pausa"
+            value={motivoPausa}
+            onChange={(e) => setMotivoPausa(e.target.value)}
+            placeholder="Ex.: aguardando confirmação do cliente sobre o briefing"
+            rows={3}
+            autoFocus
+          />
+        </div>
+      </FormDialog>
     </div>
   );
 }

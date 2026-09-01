@@ -4915,6 +4915,89 @@ export type Database = {
           },
         ]
       }
+      projeto_disciplina_pausas: {
+        Row: {
+          created_at: string
+          id: string
+          motivo: string
+          pausado_em: string
+          pausado_por: string | null
+          projeto_disciplina_id: string
+          retomado_em: string | null
+          retomado_por: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          motivo: string
+          pausado_em?: string
+          pausado_por?: string | null
+          projeto_disciplina_id: string
+          retomado_em?: string | null
+          retomado_por?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          motivo?: string
+          pausado_em?: string
+          pausado_por?: string | null
+          projeto_disciplina_id?: string
+          retomado_em?: string | null
+          retomado_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_disciplina_pausas_pausado_por_fkey"
+            columns: ["pausado_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_pausas_pausado_por_fkey"
+            columns: ["pausado_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_pausas_pausado_por_fkey"
+            columns: ["pausado_por"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_pausas_projeto_disciplina_id_fkey"
+            columns: ["projeto_disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_disciplinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_pausas_retomado_por_fkey"
+            columns: ["retomado_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_pausas_retomado_por_fkey"
+            columns: ["retomado_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_pausas_retomado_por_fkey"
+            columns: ["retomado_por"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
+          },
+        ]
+      }
       projeto_disciplina_responsaveis: {
         Row: {
           id: string
@@ -7880,6 +7963,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      rpc_pausar_disciplina: {
+        Args: { p_disciplina_id: string; p_motivo: string }
+        Returns: string
+      }
       rpc_projeto_rentabilidade: {
         Args: { p_projeto_id: string }
         Returns: Json
@@ -7889,6 +7976,10 @@ export type Database = {
         Returns: undefined
       }
       rpc_restaurar_projeto: { Args: { p_id: string }; Returns: undefined }
+      rpc_retomar_disciplina: {
+        Args: { p_disciplina_id: string }
+        Returns: undefined
+      }
       rpc_salvar_proposta_disciplinas: {
         Args: { p_disciplinas: Json; p_proposta_id: string }
         Returns: undefined
