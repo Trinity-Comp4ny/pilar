@@ -25,6 +25,7 @@ import {
   urgenciaLabel,
   desembolsoAcumuladoPorMes,
   mesclarExtracaoVoz,
+  resumoFeedRdo,
   type RdoVozExtracao,
 } from "./obras";
 import { statusLabel } from "./status";
@@ -587,5 +588,30 @@ describe("desembolsoAcumuladoPorMes (spec 066)", () => {
     const ultimo = pontos[pontos.length - 1];
     expect(ultimo.mes >= mesAtual).toBe(true);
     expect(ultimo.acumuladoRealizado).toBe(1000);
+  });
+});
+
+describe("resumoFeedRdo (spec 087)", () => {
+  it("usa atividades quando presente", () => {
+    expect(resumoFeedRdo("Concretagem da laje", "Caminhão atrasou")).toBe("Concretagem da laje");
+  });
+
+  it("cai pra ocorrências quando atividades está vazio", () => {
+    expect(resumoFeedRdo(null, "Caminhão atrasou")).toBe("Caminhão atrasou");
+    expect(resumoFeedRdo("", "Caminhão atrasou")).toBe("Caminhão atrasou");
+  });
+
+  it("nunca vaza ocorrências do cliente — chamado com null não usa nada além disso", () => {
+    // O card do portal chama resumoFeedRdo(atividades, null): sem atividades,
+    // cai direto pro texto padrão, nunca pega ocorrências de lugar nenhum.
+    expect(resumoFeedRdo(null, null)).toBe("Sem observações registradas.");
+    expect(resumoFeedRdo("", null)).toBe("Sem observações registradas.");
+  });
+
+  it("trunca texto muito longo com reticências", () => {
+    const longo = "a".repeat(200);
+    const resumo = resumoFeedRdo(longo, null);
+    expect(resumo.length).toBe(141);
+    expect(resumo.endsWith("…")).toBe(true);
   });
 });

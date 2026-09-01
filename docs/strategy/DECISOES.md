@@ -11,17 +11,43 @@ Regras de manutenção:
 
 ---
 
+## 2026-09-01 (mais tarde ainda) · Diário da obra vira feed visual (tipo Instagram), interno + versão curada no portal do cliente
+
+**Decisão:** o Diário (RDO) ganha uma segunda forma de exibição, tipo feed de rede social
+(um card por dia: data, status, resumo curto, fotos, quem lançou) — em duas superfícies:
+
+1. **Dentro do sistema** (aba Diário, interno): feed mostra tudo, sem filtro — mesmo dado
+   operacional que já existe hoje (efetivo, impedimento, visita, tarefas), só num formato mais
+   visual.
+2. **No portal do cliente**: feed com **resumo curado**, não o RDO cru. Mostra atividades do
+   dia + fotos + clima; impedimento, efetivo por fornecedor e fornecedor específico ficam de
+   fora. Mantém a fronteira que a spec 030 já tinha fechado ("cliente vê avanço e conta, não o
+   diário operacional inteiro") — não reabre essa decisão, só adiciona um formato novo de
+   exibir o que já era permitido mostrar.
+
+**Contexto:** benchmark competitivo do Obra Guru (que expõe até ocorrência/impedimento como
+card próprio no feed do cliente — considerado e descartado aqui) + pedido direto do CEO:
+reduzir a pergunta recorrente do dono da obra pro gestor ("como foi hoje?"), que hoje só se
+resolve com o cliente ligando ou o gestor mandando mensagem solta. RDO por voz (specs 080/086,
+01/09) já captura o material bruto pro feed funcionar sem esforço extra de lançamento: resumo
+de atividades, fotos, clima.
+
+**Supera:** nada de direção — é uma extensão aditiva da spec 030 (que continua valendo pro que
+NÃO aparece no portal), não uma reversão.
+
+---
+
 ## 2026-09-01 (mais tarde) · Pacote de tokens vira 4 tiers fixos com desconto por volume
 
 **Decisão:** a compra avulsa de tokens deixa de ser "quantidade livre de pacotes de 500k a
 R$49 cada" e vira 4 tiers fixos, com preço por milhão de tokens caindo conforme o tier sobe:
 
-| Tier | Tokens | Preço | R$/milhão | Desconto vs. tier 1 |
-|---|---|---|---|---|
-| 1 | 500 mil | R$49 | R$98,00 | — (preço-base inalterado) |
-| 2 | 1,5 milhão | R$129 | R$86,00 | ~12% |
-| 3 | 3 milhões | R$228 | R$76,00 | ~22% |
-| 4 | 6 milhões | R$399 | R$66,50 | ~32% |
+| Tier | Tokens     | Preço | R$/milhão | Desconto vs. tier 1       |
+| ---- | ---------- | ----- | --------- | ------------------------- |
+| 1    | 500 mil    | R$49  | R$98,00   | — (preço-base inalterado) |
+| 2    | 1,5 milhão | R$129 | R$86,00   | ~12%                      |
+| 3    | 3 milhões  | R$228 | R$76,00   | ~22%                      |
+| 4    | 6 milhões  | R$399 | R$66,50   | ~32%                      |
 
 **Contexto:** feedback direto do CEO testando o fluxo de compra em staging — selecionar
 quantidade num campo numérico e forma de pagamento num radio genérico "ficou muito ruim"
@@ -88,6 +114,7 @@ Fase 3 usaria.
 **Como aplicar:** próximo passo é o checklist de sandbox da auditoria (chave sandbox +
 3 secrets + webhook de teste); a Fase 3 de tokens só volta à mesa depois disso estar rodando,
 e reusa a mesma base de credencial.
+
 - Decisão que muda arquitetura/stack vira ADR (`docs/architecture/adr/`) e ganha só um ponteiro aqui.
 - Decisão sensível (segurança, marca não registrada, dado de cliente) NÃO entra aqui: o repo é
   público. Fica na memória do projeto e é passada no prompt quando relevante.
