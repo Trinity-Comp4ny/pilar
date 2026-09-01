@@ -11,8 +11,11 @@
 -- O orçamento vivo de verdade é projeto_orcamento_fases (populado pelo
 -- agente de Orçamento de Honorários e por aditivos aprovados via o trigger
 -- handle_escopo_aprovado) — é a mesma fonte que v_budget_vs_actual já usa
--- corretamente. Esta migration troca só essa fonte; o resto da função (todos
--- os outros 9 blocos de alerta) é reproduzido byte a byte da versão anterior.
+-- corretamente. Esta migration troca só essa fonte; o resto da função é
+-- reproduzido byte a byte da versão vigente em 20260881000000 (a última a
+-- redefinir esta função — não a 20260865000000, achado corrigido depois do
+-- CI falhar: minha primeira versão tinha regredido o bloco 'tokens_baixo'
+-- que 20260881000000 acrescentou, por eu ter partido da versão errada).
 CREATE OR REPLACE FUNCTION public.gerar_notificacoes_ambient()
 RETURNS integer
 LANGUAGE plpgsql
@@ -227,6 +230,34 @@ BEGIN
       'Despesas já passam do orçado (R$ ' || to_char(rec.despesas_diretas, fmt) ||
         ' de R$ ' || to_char(rec.custo_orcado, fmt) || ') e não há aditivo em análise.',
       'projeto', rec.id, '/projetos/' || rec.id);
+  END LOOP;
+
+  -- ── Motor de tokens (spec 076): saldo abaixo de 10% da cota do ciclo (gestão) ──
+  -- Mesma resolução de cota do gate_tokens: assinatura ativa/trialing → plano dela;
+  -- sem assinatura → plano 'starter'; sem plano nenhum cadastrado → 500000 (fallback).
+  -- referencia_id NULL (agregado por empresa, mesmo padrão de custo_nao_lancado):
+  -- dedupe por (destinatário, tipo) enquanto a notificação anterior não for lida.
+  FOR rec IN
+    SELECT s.empresa_id,
+           (s.saldo_plano + s.saldo_comprado) AS saldo_total,
+           COALESCE(
+             (SELECT p.tokens_mensais FROM public.pilar_subscriptions sub
+              JOIN public.pilar_subscription_plans p ON p.id = sub.plan_id
+              WHERE sub.empresa_id = s.empresa_id AND sub.status IN ('trialing', 'active')
+              LIMIT 1),
+             (SELECT p.tokens_mensais FROM public.pilar_subscription_plans p WHERE p.slug = 'starter'),
+             500000
+           ) AS cota
+    FROM public.ai_token_saldo s
+  LOOP
+    CONTINUE WHEN rec.cota <= 0 OR rec.saldo_total >= rec.cota * 0.10;
+    v_total := v_total + public.notificar(
+      rec.empresa_id, public._notif_gestao(rec.empresa_id),
+      'tokens_baixo', 'financeiro', 'high',
+      'Tokens de IA acabando',
+      'Restam ' || rec.saldo_total || ' tokens de IA neste ciclo (menos de 10% da cota). ' ||
+        'A renovação acontece no próximo ciclo mensal.',
+      'empresa', NULL, NULL);
   END LOOP;
 
   RETURN v_total;
