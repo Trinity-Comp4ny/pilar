@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { Sparkles, User, ScrollText, Check } from "lucide-react";
+import { ScrollText, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { StatusBadge } from "@/components/StatusBadge";
 import { KPICard } from "@/components/KPICard";
 import { MoneyInput } from "@/components/forms/MoneyInput";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { AditivoReviewCard } from "@/components/AditivoReviewCard";
+import { formatCurrency } from "@/lib/format";
 import { parseCurrencyString } from "@/lib/currencyUtils";
 import {
   useEscopos,
@@ -94,86 +94,11 @@ function OrcamentoDisciplinaRow({
   );
 }
 
-const STATUS_ATIVOS = ["rascunho", "pendente_aprovacao"];
-
-function AditivoCard({
-  escopo,
-  canEdit,
-  onAprovar,
-  onRejeitar,
-}: {
-  escopo: EscopoRow;
-  canEdit: boolean;
-  onAprovar: () => void;
-  onRejeitar: () => void;
-}) {
-  const isPendente = STATUS_ATIVOS.includes(escopo.status ?? "");
-  const origemAgente = escopo.created_by === null;
-
-  return (
-    <Card>
-      <CardContent className="space-y-3 p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-medium text-foreground">{escopo.descricao}</p>
-              <StatusBadge domain="escopo" status={escopo.status ?? "rascunho"} />
-            </div>
-            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              {origemAgente ? (
-                <>
-                  <Sparkles className="h-3 w-3" /> Sugerido pelo agente
-                </>
-              ) : (
-                <>
-                  <User className="h-3 w-3" /> Criado manualmente
-                </>
-              )}
-              {" · "}
-              {formatDate(escopo.created_at ?? undefined)}
-            </p>
-          </div>
-          <p className="whitespace-nowrap text-sm font-medium text-foreground">
-            {formatCurrency(escopo.valor_aditivo ?? 0)}
-          </p>
-        </div>
-
-        {escopo.justificativa && <p className="text-sm text-muted-foreground">{escopo.justificativa}</p>}
-
-        {escopo.escopo_itens.length > 0 && (
-          <ul className="space-y-1 rounded-lg border border-dashed border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-            {escopo.escopo_itens.map((item) => (
-              <li key={item.id} className="flex items-center justify-between gap-2">
-                <span>
-                  {item.descricao}
-                  {item.disciplina ? ` (${item.disciplina})` : ""}
-                </span>
-                <span className="whitespace-nowrap">{formatCurrency(item.custo ?? 0)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {isPendente && canEdit && (
-          <div className="flex items-center justify-end gap-2 border-t border-border pt-3">
-            <Button variant="ghost" size="sm" onClick={onRejeitar}>
-              Rejeitar
-            </Button>
-            <Button variant="brand" size="sm" onClick={onAprovar}>
-              Aprovar
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
 export function EscopoTab({ projetoId, canEdit, disciplinas }: EscopoTabProps) {
   const escopos = useEscopos(projetoId);
   const orcamentoFases = useOrcamentoFases(projetoId);
-  const aprovar = useAprovarEscopo(projetoId);
-  const rejeitar = useRejeitarEscopo(projetoId);
+  const aprovar = useAprovarEscopo();
+  const rejeitar = useRejeitarEscopo();
 
   const [confirmAprovar, setConfirmAprovar] = useState<EscopoRow | null>(null);
   const [confirmRejeitar, setConfirmRejeitar] = useState<EscopoRow | null>(null);
@@ -181,7 +106,7 @@ export function EscopoTab({ projetoId, canEdit, disciplinas }: EscopoTabProps) {
   const handleAprovar = async () => {
     if (!confirmAprovar) return;
     try {
-      await aprovar.mutateAsync(confirmAprovar.id);
+      await aprovar.mutateAsync({ escopoId: confirmAprovar.id, projetoId });
       toast.success("Aditivo aprovado — contrato e orçamento atualizados");
       setConfirmAprovar(null);
     } catch {
@@ -192,7 +117,7 @@ export function EscopoTab({ projetoId, canEdit, disciplinas }: EscopoTabProps) {
   const handleRejeitar = async () => {
     if (!confirmRejeitar) return;
     try {
-      await rejeitar.mutateAsync(confirmRejeitar.id);
+      await rejeitar.mutateAsync({ escopoId: confirmRejeitar.id, projetoId });
       toast.success("Aditivo rejeitado");
       setConfirmRejeitar(null);
     } catch {
@@ -252,7 +177,7 @@ export function EscopoTab({ projetoId, canEdit, disciplinas }: EscopoTabProps) {
       ) : (
         <div className="space-y-3">
           {aditivos.map((escopo) => (
-            <AditivoCard
+            <AditivoReviewCard
               key={escopo.id}
               escopo={escopo}
               canEdit={canEdit}

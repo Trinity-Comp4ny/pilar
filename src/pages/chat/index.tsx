@@ -25,6 +25,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PageHeader } from "@/components/PageHeader";
 import { useChat } from "./useChat";
 import { MarkdownResposta } from "./MarkdownResposta";
+import { PendenciasTab } from "./PendenciasTab";
+import { usePendenciasAgentes } from "@/hooks/useEscopos";
 
 // Saldo de tokens no chip: compacto no rótulo ("1,9 mi"), cheio no title.
 const fmtTokens = new Intl.NumberFormat("pt-BR", { notation: "compact", maximumFractionDigits: 1 });
@@ -75,6 +77,9 @@ export default function ChatPage() {
     executarAcao,
     cancelarAcao,
   } = useChat();
+  const [aba, setAba] = useState<"conversar" | "pendencias">("conversar");
+  const pendencias = usePendenciasAgentes();
+  const numPendencias = pendencias.data?.length ?? 0;
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -186,19 +191,40 @@ export default function ChatPage() {
               {fmtTokens.format(saldo.tokens_restantes)} tokens
             </span>
           )}
-          <button
-            type="button"
-            onClick={handleReset}
-            disabled={loading}
-            className="flex h-9 items-center gap-1.5 rounded-full border border-border px-3 text-[13px] font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
-          >
-            <PenLine className="h-3.5 w-3.5" />
-            Nova conversa
-          </button>
+          {aba === "conversar" && (
+            <button
+              type="button"
+              onClick={handleReset}
+              disabled={loading}
+              className="flex h-9 items-center gap-1.5 rounded-full border border-border px-3 text-[13px] font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
+            >
+              <PenLine className="h-3.5 w-3.5" />
+              Nova conversa
+            </button>
+          )}
         </PageHeader>
+        {/* Pendências (spec 084): trabalho de agente esperando decisão, cruzando projetos —
+            sem isso, quem só abre /agentes nunca descobre que o guardião de margem preparou algo. */}
+        <div className="flex items-center gap-1 px-4 pb-3">
+          <AbaAgentesBtn ativo={aba === "conversar"} onClick={() => setAba("conversar")}>
+            Conversar
+          </AbaAgentesBtn>
+          <AbaAgentesBtn ativo={aba === "pendencias"} onClick={() => setAba("pendencias")}>
+            Pendências
+            {numPendencias > 0 && (
+              <span className="ml-1.5 rounded-full bg-brand px-1.5 py-0.5 text-[11px] font-semibold text-ink">
+                {numPendencias}
+              </span>
+            )}
+          </AbaAgentesBtn>
+        </div>
       </div>
 
-      {vazio ? (
+      {aba === "pendencias" ? (
+        <div className="flex-1 overflow-y-auto">
+          <PendenciasTab />
+        </div>
+      ) : vazio ? (
         /* ── Estado vazio: herói centralizado (padrão agent-first) ── */
         <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-10">
           <div className="w-full max-w-2xl">
@@ -352,6 +378,30 @@ export default function ChatPage() {
         </>
       )}
     </div>
+  );
+}
+
+/** Alternador Conversar/Pendências (spec 084). */
+function AbaAgentesBtn({
+  ativo,
+  onClick,
+  children,
+}: {
+  ativo: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex h-8 items-center rounded-full px-3 text-[13px] font-medium transition-colors",
+        ativo ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/60"
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
