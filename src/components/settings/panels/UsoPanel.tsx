@@ -175,9 +175,9 @@ export function UsoPanel() {
               </span>
               {canComprar && (
                 <Button
-                  variant="ghost"
+                  variant="brand"
                   size="sm"
-                  className="h-7 px-2 text-xs text-brand hover:text-brand"
+                  className="h-7 px-2.5 text-xs rounded-full"
                   onClick={() => {
                     closeSettings();
                     navigate("/comprar-tokens");
