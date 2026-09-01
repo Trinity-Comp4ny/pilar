@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { climaLabel } from "@/lib/obras";
 import { useObraFrentes } from "@/hooks/useObraFrentes";
 import { useObraTarefas } from "@/hooks/useObraTarefas";
@@ -42,6 +43,7 @@ function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode
 }
 
 export function ObraTimelineTab({ obra, onIrParaDiario }: { obra: ObraResumo; onIrParaDiario: () => void }) {
+  const formatCurrency = useMoneyMask();
   const { data: frentes = [] } = useObraFrentes(obra.id);
   const { data: tarefas = [] } = useObraTarefas(obra.id);
   const { data: rdos = [] } = useObraRdos(obra.id);

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { formatCurrency, formatDate, formatDecimal } from "@/lib/format";
+import { formatDate, formatDecimal } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,6 +101,7 @@ const suggestNextCodigo = (list: { codigo: string | null }[]) => {
 };
 
 export default function Propostas() {
+  const formatCurrency = useMoneyMask();
   usePageTitle("Propostas");
   useRegistrarPagina("pagina", "/documentos", "Documentos");
   const queryClient = useQueryClient();

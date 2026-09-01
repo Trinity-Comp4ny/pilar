@@ -2,8 +2,8 @@ import { useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/format";
 import { formatDate } from "@/lib/dateUtils";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
 import { type Projeto, getDeadlineStatus } from "@/types/projetos";
 import { type ProjetoEtapa } from "@/pages/projetos/hooks/useProjetoEtapas";
@@ -18,6 +18,7 @@ interface ListaProjetosProps {
 // Visão Lista (desktop): tabela dos projetos filtrados/ordenados. Espelha o
 // padrão de tabela de "Meu trabalho". A coluna "Coluna" mostra a etapa (nome+cor).
 export function ListaProjetos({ projetos, etapas, rentabilidadeMap, onCardClick }: ListaProjetosProps) {
+  const formatCurrency = useMoneyMask();
   const etapaById = useMemo(() => new Map(etapas.map((e) => [e.id, e])), [etapas]);
 
   return (

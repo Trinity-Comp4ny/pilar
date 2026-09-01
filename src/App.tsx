@@ -21,6 +21,7 @@ import { AdminOnlyRoute } from "./components/AdminOnlyRoute";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { TrialBanner } from "./components/TrialBanner";
 import { SettingsModalProvider, useSettingsModal, type SettingsSection } from "./contexts/SettingsModalContext";
+import { ValoresOcultosProvider } from "./contexts/ValoresOcultosContext";
 import { MARKETING_URL, isProductionAppHost } from "./lib/marketingSite";
 
 // Modal de configuracoes: so monta quando o usuario abre. Estatico, arrastava os
@@ -159,195 +160,203 @@ const App = () => {
             <AuthProvider>
               <ImpersonationProvider>
                 <SettingsModalProvider>
-                  <ImpersonationBanner />
-                  <TrialBanner />
-                  <Suspense fallback={<PageSkeleton />}>
-                    <Routes>
-                      <Route path="/" element={<ExternalRedirect />} />
-                      <Route path="/planos" element={<ExternalRedirect path="/planos" />} />
-                      <Route path="/termos" element={<ExternalRedirect path="/termos" />} />
-                      <Route path="/privacidade" element={<ExternalRedirect path="/privacidade" />} />
-                      <Route path="/checkout" element={<Checkout />} />
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/cadastro" element={<Signup />} />
-                      <Route path="/auth/callback" element={<AuthCallback />} />
-                      <Route path="/forgot-password" element={<ForgotPassword />} />
-                      <Route path="/reset-password" element={<PasswordReset />} />
-                      <Route path="/status" element={<StatusPage />} />
+                  <ValoresOcultosProvider>
+                    <ImpersonationBanner />
+                    <TrialBanner />
+                    <Suspense fallback={<PageSkeleton />}>
+                      <Routes>
+                        <Route path="/" element={<ExternalRedirect />} />
+                        <Route path="/planos" element={<ExternalRedirect path="/planos" />} />
+                        <Route path="/termos" element={<ExternalRedirect path="/termos" />} />
+                        <Route path="/privacidade" element={<ExternalRedirect path="/privacidade" />} />
+                        <Route path="/checkout" element={<Checkout />} />
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/cadastro" element={<Signup />} />
+                        <Route path="/auth/callback" element={<AuthCallback />} />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="/reset-password" element={<PasswordReset />} />
+                        <Route path="/status" element={<StatusPage />} />
 
-                      {/* Fora do grupo PrivateRoute de propósito: checkout de compra de
+                        {/* Fora do grupo PrivateRoute de propósito: checkout de compra de
                           tokens é full-bleed (mesmo tratamento visual do /checkout público,
                           SPEC 082), sem a sidebar do app. Guarda de autenticação própria
                           dentro do componente, mesmo padrão de /profile-setup. */}
-                      <Route path="/comprar-tokens" element={<ComprarTokens />} />
+                        <Route path="/comprar-tokens" element={<ComprarTokens />} />
 
-                      <Route element={<PrivateRoute />}>
-                        <Route path="/inicio" element={<Inicio />} />
+                        <Route element={<PrivateRoute />}>
+                          <Route path="/inicio" element={<Inicio />} />
 
-                        {/* ===== Rotas aninhadas por módulo (ADR 0016) ===== */}
+                          {/* ===== Rotas aninhadas por módulo (ADR 0016) ===== */}
 
-                        {/* Obras (reaberto — ADR 0011, spec 015): fase de execução do projeto. */}
-                        <Route element={<FeatureRoute feature="obras" />}>
-                          <Route path="/obras" element={<Obras />} />
-                          {/* Sub-features do módulo Obras (spec 035): gate próprio,
+                          {/* Obras (reaberto — ADR 0011, spec 015): fase de execução do projeto. */}
+                          <Route element={<FeatureRoute feature="obras" />}>
+                            <Route path="/obras" element={<Obras />} />
+                            {/* Sub-features do módulo Obras (spec 035): gate próprio,
                               herda o módulo ligado via parent em features.ts. */}
-                          <Route element={<FeatureRoute feature="obras_clima" />}>
-                            <Route path="/obras/clima" element={<ObraClima />} />
+                            <Route element={<FeatureRoute feature="obras_clima" />}>
+                              <Route path="/obras/clima" element={<ObraClima />} />
+                            </Route>
+                            {/* Fornecedor mora no módulo Obra (spec 026). */}
+                            <Route element={<FeatureRoute feature="obras_fornecedores" />}>
+                              <Route path="/obras/fornecedores" element={<Fornecedores />} />
+                              <Route path="/obras/fornecedores/:id" element={<FornecedorDetalhe />} />
+                            </Route>
+                            <Route path="/obras/:id" element={<ObraDetalhe />} />
                           </Route>
-                          {/* Fornecedor mora no módulo Obra (spec 026). */}
-                          <Route element={<FeatureRoute feature="obras_fornecedores" />}>
-                            <Route path="/obras/fornecedores" element={<Fornecedores />} />
-                            <Route path="/obras/fornecedores/:id" element={<FornecedorDetalhe />} />
-                          </Route>
-                          <Route path="/obras/:id" element={<ObraDetalhe />} />
-                        </Route>
 
-                        {/* Gestão: /gestao abre a primeira aba; cada aba vive em /gestao/*. */}
-                        <Route path="/gestao" element={<Navigate to="/gestao/meu-trabalho" replace />} />
-                        <Route element={<FeatureRoute feature="meu_trabalho" />}>
-                          <Route path="/gestao/meu-trabalho" element={<MeuTrabalho />} />
-                        </Route>
-                        <Route element={<FeatureRoute feature="leads" />}>
-                          <Route path="/gestao/leads" element={<Leads />} />
-                        </Route>
-                        <Route element={<FeatureRoute feature="clientes" />}>
-                          <Route path="/gestao/clientes" element={<Clientes />} />
-                          <Route path="/gestao/clientes/:id" element={<ClienteDetalhe />} />
-                        </Route>
-                        <Route element={<FeatureRoute feature="propostas" />}>
-                          <Route path="/gestao/propostas" element={<Propostas />} />
-                        </Route>
-                        {/* Financeiro: gate de módulo da empresa + RLS. Desde o
+                          {/* Gestão: /gestao abre a primeira aba; cada aba vive em /gestao/*. */}
+                          <Route path="/gestao" element={<Navigate to="/gestao/meu-trabalho" replace />} />
+                          <Route element={<FeatureRoute feature="meu_trabalho" />}>
+                            <Route path="/gestao/meu-trabalho" element={<MeuTrabalho />} />
+                          </Route>
+                          <Route element={<FeatureRoute feature="leads" />}>
+                            <Route path="/gestao/leads" element={<Leads />} />
+                          </Route>
+                          <Route element={<FeatureRoute feature="clientes" />}>
+                            <Route path="/gestao/clientes" element={<Clientes />} />
+                            <Route path="/gestao/clientes/:id" element={<ClienteDetalhe />} />
+                          </Route>
+                          <Route element={<FeatureRoute feature="propostas" />}>
+                            <Route path="/gestao/propostas" element={<Propostas />} />
+                          </Route>
+                          {/* Financeiro: gate de módulo da empresa + RLS. Desde o
                           ADR 0029 não há recorte por usuário. */}
-                        <Route element={<FeatureRoute feature="financeiro" />}>
-                          <Route path="/gestao/financeiro" element={<Financeiro />} />
-                        </Route>
-                        {/* Equipe (RH: cadastro e salário) é só admin da empresa. */}
-                        <Route element={<AdminOnlyRoute />}>
-                          <Route path="/gestao/equipe" element={<Pessoas />} />
-                        </Route>
-                        <Route element={<FeatureRoute feature="metas" />}>
+                          <Route element={<FeatureRoute feature="financeiro" />}>
+                            <Route path="/gestao/financeiro" element={<Financeiro />} />
+                          </Route>
+                          {/* Equipe (RH: cadastro e salário) é só admin da empresa. */}
                           <Route element={<AdminOnlyRoute />}>
-                            <Route path="/gestao/metas" element={<Metas />} />
+                            <Route path="/gestao/equipe" element={<Pessoas />} />
+                          </Route>
+                          <Route element={<FeatureRoute feature="metas" />}>
+                            <Route element={<AdminOnlyRoute />}>
+                              <Route path="/gestao/metas" element={<Metas />} />
+                            </Route>
+                          </Route>
+                          <Route element={<FeatureRoute feature="timesheet" />}>
+                            <Route path="/gestao/timesheet" element={<Timesheet />} />
+                          </Route>
+                          {/* Projetos (coleção + lentes de recorte; a lente vem do pathname).
+                          Estáticas antes de /projetos/:id para o segmento estático vencer. */}
+                          <Route element={<FeatureRoute feature="projetos" />}>
+                            <Route path="/projetos" element={<Projetos />} />
+                            <Route path="/projetos/disciplinas" element={<Projetos />} />
+                            <Route path="/projetos/cronograma" element={<Projetos />} />
+                            <Route
+                              path="/projetos/calendario"
+                              element={<Navigate to="/projetos/cronograma" replace />}
+                            />
+                            <Route path="/projetos/:id" element={<ProjetoDetail />} />
+                          </Route>
+                          <Route element={<FeatureRoute feature="mapa" />}>
+                            <Route path="/projetos/mapa" element={<Projetos />} />
+                          </Route>
+
+                          {/* Agentes (transversal, fora do switcher de módulo). */}
+                          <Route element={<FeatureRoute feature="ai_chat" />}>
+                            <Route path="/agentes" element={<Chat />} />
+                          </Route>
+
+                          {/* ===== Compat: rotas flat antigas → aninhadas. RedirectPrefix
+                          preserva o sufixo (/:id) e a query. ===== */}
+                          <Route path="/dashboard" element={<Navigate to="/inicio" replace />} />
+                          <Route path="/chat" element={<Navigate to="/agentes" replace />} />
+                          <Route
+                            path="/meu-trabalho/*"
+                            element={<RedirectPrefix from="/meu-trabalho" to="/gestao/meu-trabalho" />}
+                          />
+                          <Route path="/leads/*" element={<RedirectPrefix from="/leads" to="/gestao/leads" />} />
+                          <Route
+                            path="/clientes/*"
+                            element={<RedirectPrefix from="/clientes" to="/gestao/clientes" />}
+                          />
+                          <Route
+                            path="/financeiro/*"
+                            element={<RedirectPrefix from="/financeiro" to="/gestao/financeiro" />}
+                          />
+                          <Route path="/equipe/*" element={<RedirectPrefix from="/equipe" to="/gestao/equipe" />} />
+                          <Route path="/pessoas/*" element={<RedirectPrefix from="/pessoas" to="/gestao/equipe" />} />
+                          <Route path="/metas/*" element={<RedirectPrefix from="/metas" to="/gestao/metas" />} />
+                          <Route
+                            path="/documentos/*"
+                            element={<RedirectPrefix from="/documentos" to="/gestao/propostas" />}
+                          />
+                          <Route
+                            path="/propostas/*"
+                            element={<RedirectPrefix from="/propostas" to="/gestao/propostas" />}
+                          />
+                          <Route
+                            path="/timesheet/*"
+                            element={<RedirectPrefix from="/timesheet" to="/gestao/timesheet" />}
+                          />
+                          <Route
+                            path="/fornecedores/*"
+                            element={<RedirectPrefix from="/fornecedores" to="/obras/fornecedores" />}
+                          />
+                          <Route path="/calendario/*" element={<Navigate to="/projetos/cronograma" replace />} />
+                          <Route path="/disciplinas" element={<Navigate to="/projetos/disciplinas" replace />} />
+                          <Route path="/cronograma" element={<Navigate to="/projetos/cronograma" replace />} />
+                          <Route path="/mapa" element={<Navigate to="/projetos/mapa" replace />} />
+                          <Route
+                            path="/relatorios"
+                            element={<Navigate to="/gestao/financeiro?tab=relatorios" replace />}
+                          />
+
+                          {/* Revisão IA virou aba dentro de Agentes; redireciona links antigos.
+                          O gate de owner (ACH-ADM-01) agora vive na própria aba. */}
+                          <Route path="/revisao-ia" element={<Navigate to="/agentes" replace />} />
+                          <Route path="/company-setup" element={<CompanySetup />} />
+                          <Route path="/profile-setup" element={<ProfileSetup />} />
+                          <Route path="/profile" element={<SettingsRedirect section="conta" />} />
+                          <Route path="/company" element={<SettingsRedirect section="empresa" />} />
+                          <Route path="/billing" element={<SettingsRedirect section="pagamento" />} />
+
+                          <Route path="/mfa" element={<MfaChallengePage />} />
+                          <Route path="/mfa/setup" element={<MfaSetupPage />} />
+                          <Route path="/sem-acesso" element={<SemAcesso />} />
+
+                          <Route element={<AdminRoute />}>
+                            <Route path="/admin" element={<Admin />} />
+                          </Route>
+
+                          <Route element={<UltraAdminRoute />}>
+                            <Route path="/ultra-admin" element={<UltraAdmin />} />
                           </Route>
                         </Route>
-                        <Route element={<FeatureRoute feature="timesheet" />}>
-                          <Route path="/gestao/timesheet" element={<Timesheet />} />
-                        </Route>
-                        {/* Projetos (coleção + lentes de recorte; a lente vem do pathname).
-                          Estáticas antes de /projetos/:id para o segmento estático vencer. */}
-                        <Route element={<FeatureRoute feature="projetos" />}>
-                          <Route path="/projetos" element={<Projetos />} />
-                          <Route path="/projetos/disciplinas" element={<Projetos />} />
-                          <Route path="/projetos/cronograma" element={<Projetos />} />
-                          <Route path="/projetos/calendario" element={<Navigate to="/projetos/cronograma" replace />} />
-                          <Route path="/projetos/:id" element={<ProjetoDetail />} />
-                        </Route>
-                        <Route element={<FeatureRoute feature="mapa" />}>
-                          <Route path="/projetos/mapa" element={<Projetos />} />
-                        </Route>
 
-                        {/* Agentes (transversal, fora do switcher de módulo). */}
-                        <Route element={<FeatureRoute feature="ai_chat" />}>
-                          <Route path="/agentes" element={<Chat />} />
-                        </Route>
-
-                        {/* ===== Compat: rotas flat antigas → aninhadas. RedirectPrefix
-                          preserva o sufixo (/:id) e a query. ===== */}
-                        <Route path="/dashboard" element={<Navigate to="/inicio" replace />} />
-                        <Route path="/chat" element={<Navigate to="/agentes" replace />} />
                         <Route
-                          path="/meu-trabalho/*"
-                          element={<RedirectPrefix from="/meu-trabalho" to="/gestao/meu-trabalho" />}
-                        />
-                        <Route path="/leads/*" element={<RedirectPrefix from="/leads" to="/gestao/leads" />} />
-                        <Route path="/clientes/*" element={<RedirectPrefix from="/clientes" to="/gestao/clientes" />} />
-                        <Route
-                          path="/financeiro/*"
-                          element={<RedirectPrefix from="/financeiro" to="/gestao/financeiro" />}
-                        />
-                        <Route path="/equipe/*" element={<RedirectPrefix from="/equipe" to="/gestao/equipe" />} />
-                        <Route path="/pessoas/*" element={<RedirectPrefix from="/pessoas" to="/gestao/equipe" />} />
-                        <Route path="/metas/*" element={<RedirectPrefix from="/metas" to="/gestao/metas" />} />
-                        <Route
-                          path="/documentos/*"
-                          element={<RedirectPrefix from="/documentos" to="/gestao/propostas" />}
-                        />
-                        <Route
-                          path="/propostas/*"
-                          element={<RedirectPrefix from="/propostas" to="/gestao/propostas" />}
-                        />
-                        <Route
-                          path="/timesheet/*"
-                          element={<RedirectPrefix from="/timesheet" to="/gestao/timesheet" />}
-                        />
-                        <Route
-                          path="/fornecedores/*"
-                          element={<RedirectPrefix from="/fornecedores" to="/obras/fornecedores" />}
-                        />
-                        <Route path="/calendario/*" element={<Navigate to="/projetos/cronograma" replace />} />
-                        <Route path="/disciplinas" element={<Navigate to="/projetos/disciplinas" replace />} />
-                        <Route path="/cronograma" element={<Navigate to="/projetos/cronograma" replace />} />
-                        <Route path="/mapa" element={<Navigate to="/projetos/mapa" replace />} />
-                        <Route
-                          path="/relatorios"
-                          element={<Navigate to="/gestao/financeiro?tab=relatorios" replace />}
+                          path="/rentabilidade"
+                          element={<Navigate to="/gestao/financeiro?tab=rentabilidade" replace />}
                         />
 
-                        {/* Revisão IA virou aba dentro de Agentes; redireciona links antigos.
-                          O gate de owner (ACH-ADM-01) agora vive na própria aba. */}
-                        <Route path="/revisao-ia" element={<Navigate to="/agentes" replace />} />
-                        <Route path="/company-setup" element={<CompanySetup />} />
-                        <Route path="/profile-setup" element={<ProfileSetup />} />
-                        <Route path="/profile" element={<SettingsRedirect section="conta" />} />
-                        <Route path="/company" element={<SettingsRedirect section="empresa" />} />
-                        <Route path="/billing" element={<SettingsRedirect section="pagamento" />} />
-
-                        <Route path="/mfa" element={<MfaChallengePage />} />
-                        <Route path="/mfa/setup" element={<MfaSetupPage />} />
-                        <Route path="/sem-acesso" element={<SemAcesso />} />
-
-                        <Route element={<AdminRoute />}>
-                          <Route path="/admin" element={<Admin />} />
-                        </Route>
-
-                        <Route element={<UltraAdminRoute />}>
-                          <Route path="/ultra-admin" element={<UltraAdmin />} />
-                        </Route>
-                      </Route>
-
-                      <Route
-                        path="/rentabilidade"
-                        element={<Navigate to="/gestao/financeiro?tab=rentabilidade" replace />}
-                      />
-
-                      {/* Portal do Cliente — Autenticado. O splat cobre o portal público
+                        {/* Portal do Cliente — Autenticado. O splat cobre o portal público
                         por token legado (/portal/:token/*), removido em 2026-05-06:
                         cliente com link antigo salvo cai aqui em vez de 404. */}
-                      <Route path="/portal/*" element={<Navigate to="/cliente/login" replace />} />
-                      <Route path="/cliente/login" element={<ClienteLogin />} />
-                      <Route path="/cliente" element={<ClientePrivateRoute />}>
-                        <Route path="dashboard" element={<ClienteDashboard />} />
-                        <Route path="projeto/:id" element={<ClienteProjetoDetail />} />
-                        <Route path="projeto/:id/financeiro" element={<ClienteProjetoDetail />} />
-                        <Route path="projeto/:id/entregas" element={<ClienteProjetoDetail />} />
-                        <Route path="obra/:id" element={<ClienteObraDetail />} />
-                      </Route>
+                        <Route path="/portal/*" element={<Navigate to="/cliente/login" replace />} />
+                        <Route path="/cliente/login" element={<ClienteLogin />} />
+                        <Route path="/cliente" element={<ClientePrivateRoute />}>
+                          <Route path="dashboard" element={<ClienteDashboard />} />
+                          <Route path="projeto/:id" element={<ClienteProjetoDetail />} />
+                          <Route path="projeto/:id/financeiro" element={<ClienteProjetoDetail />} />
+                          <Route path="projeto/:id/entregas" element={<ClienteProjetoDetail />} />
+                          <Route path="obra/:id" element={<ClienteObraDetail />} />
+                        </Route>
 
-                      {/* Pilar Campo — app de campo (conta própria, escopo por obra) */}
-                      <Route path="/campo/login" element={<CampoLogin />} />
-                      <Route path="/campo/senha" element={<CampoTrocarSenha />} />
-                      <Route path="/campo" element={<CampoPrivateRoute />}>
-                        <Route index element={<CampoHome />} />
-                        <Route path="dia" element={<CampoRegistrarDia />} />
-                      </Route>
+                        {/* Pilar Campo — app de campo (conta própria, escopo por obra) */}
+                        <Route path="/campo/login" element={<CampoLogin />} />
+                        <Route path="/campo/senha" element={<CampoTrocarSenha />} />
+                        <Route path="/campo" element={<CampoPrivateRoute />}>
+                          <Route index element={<CampoHome />} />
+                          <Route path="dia" element={<CampoRegistrarDia />} />
+                        </Route>
 
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Suspense>
-                  <Suspense fallback={null}>
-                    <SettingsDialog />
-                  </Suspense>
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </Suspense>
+                    <Suspense fallback={null}>
+                      <SettingsDialog />
+                    </Suspense>
+                  </ValoresOcultosProvider>
                 </SettingsModalProvider>
               </ImpersonationProvider>
             </AuthProvider>

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency } from "@/lib/currencyUtils";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { msgErro } from "./erros";
 import type { AditivoItem, Draft, DraftCampos, Entidade } from "./useChat";
 
@@ -32,6 +32,7 @@ export function AditivoCard({ index, draft, onConfirmar, onCancelar, onDesfazer 
   const [projetoId, setProjetoId] = useState(campos.projeto_id ?? "");
   const [descricao, setDescricao] = useState(campos.descricao ?? "");
   const [justificativa, setJustificativa] = useState(campos.justificativa ?? "");
+  const formatCurrency = useMoneyMask();
   const [itens, setItens] = useState<AditivoItem[]>(campos.itens?.length ? campos.itens : [{ descricao: "" }]);
   const [salvando, setSalvando] = useState(false);
   const [desfazendo, setDesfazendo] = useState(false);

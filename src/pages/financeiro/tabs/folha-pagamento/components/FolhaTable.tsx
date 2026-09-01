@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatCurrency } from "@/lib/utils";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import type { FolhaItem } from "../types";
 
 interface FolhaTableProps {
@@ -33,6 +33,7 @@ export function FolhaTable({
   onStatusChange,
   onDownloadComprovante,
 }: FolhaTableProps) {
+  const formatCurrency = useMoneyMask();
   const isEdited = (item: FolhaItem, field: string) => item.edited_fields?.includes(field);
   const isPreview = statusFolha === "preview";
 
@@ -119,7 +120,9 @@ export function FolhaTable({
                             <span className="font-medium">
                               {area.toLocaleString("pt-BR")} m² {isEdited(item, "area") && "*"}
                             </span>
-                            <span className="text-xs text-muted-foreground">x {formatCurrency(item.p_valor_m2)}/m²</span>
+                            <span className="text-xs text-muted-foreground">
+                              x {formatCurrency(item.p_valor_m2)}/m²
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell
@@ -143,11 +146,7 @@ export function FolhaTable({
                                   delta > 0 ? "text-positive-strong" : "text-destructive"
                                 }`}
                               >
-                                {delta > 0 ? (
-                                  <TrendingUp className="h-3 w-3" />
-                                ) : (
-                                  <TrendingDown className="h-3 w-3" />
-                                )}
+                                {delta > 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                                 {delta > 0 ? "+" : ""}
                                 {formatCurrency(delta)}
                               </span>

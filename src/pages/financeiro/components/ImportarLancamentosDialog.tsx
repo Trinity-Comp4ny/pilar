@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { reportInvokeError } from "@/lib/monitoring";
-import { formatCurrency } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { formatCurrencyInput, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { lineHash, type ImportTipoDoc } from "@/lib/importFinanceiro";
 import { extrairTextoPdf } from "@/lib/pdfText";
@@ -54,6 +54,7 @@ interface Props {
 }
 
 export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Props) {
+  const formatCurrency = useMoneyMask();
   const { auxQuery, extrairArquivo, extrairTextoIA, gravarLote, desfazer, gravando, temDesfazer } =
     useImportFinanceiro();
 

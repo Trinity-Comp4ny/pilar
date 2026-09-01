@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useParams, useOutletContext, useLocation } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import type { ClienteProjetoData } from "./useClienteProjetoData";
 const formatDataProjeto = (d: string | null | undefined) => (d ? formatDate(d) : "A definir");
 
 function AprovarPropostaCard({ projeto, refresh }: { projeto: ClienteProjetoData; refresh: () => void }) {
+  const formatCurrency = useMoneyMask();
   const [loading, setLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 

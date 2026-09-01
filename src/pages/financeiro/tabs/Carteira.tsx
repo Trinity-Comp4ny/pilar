@@ -15,7 +15,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { formatValorToInput, formatCurrency } from "@/lib/currencyUtils";
+import { formatValorToInput } from "@/lib/currencyUtils";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { FinanceErrorState } from "../components/FinanceErrorState";
 import { ContasSidebar } from "../components/ContasSidebar";
@@ -38,6 +39,7 @@ import {
 import { useContas, useFaturasPendentes, type Fatura } from "../hooks/useFaturas";
 
 export default function Carteira() {
+  const formatCurrency = useMoneyMask();
   const contasQuery = useContasResumo();
   const cartoesQuery = useCartoesResumoDetalhado();
   const faturasPendentesQuery = useFaturasPendentes();

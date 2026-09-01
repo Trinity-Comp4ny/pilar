@@ -1,8 +1,9 @@
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import type { DashboardVencimento } from "@/hooks/useDashboardData";
-import { formatCurrency } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 
 export function VencimentoRow({ item }: { item: DashboardVencimento }) {
+  const formatCurrency = useMoneyMask();
   const isReceita = item.tipo === "receita";
   return (
     <div className="flex items-center gap-3 py-2.5 border-b border-border/50 last:border-0">

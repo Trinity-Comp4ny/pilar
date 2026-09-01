@@ -4,7 +4,8 @@ import { Calendar, DollarSign, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { toDataSourceResult } from "@/types/dataSource";
-import { formatCurrency, formatDate, formatDateShort } from "@/lib/format";
+import { formatDate, formatDateShort } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useFaturas, useInvalidateFaturas, gerarFaturasCartao, type Fatura } from "../hooks/useFaturas";
 import { MESES, getStatusBadge } from "./faturaHelpers";
 
@@ -15,6 +16,7 @@ interface FaturasCartaoTableProps {
 }
 
 export function FaturasCartaoTable({ cartaoId, onDetalhe, onPagar }: FaturasCartaoTableProps) {
+  const formatCurrency = useMoneyMask();
   const { data: faturas = [], isLoading, error } = useFaturas(cartaoId);
   const invalidateFaturas = useInvalidateFaturas();
 
@@ -48,8 +50,7 @@ export function FaturasCartaoTable({ cartaoId, onDetalhe, onPagar }: FaturasCart
       cell: (f) => (
         <span className="flex items-center gap-1 text-muted-foreground">
           <Calendar className="h-3 w-3" />
-          {formatDateShort(f.data_inicio)} a{" "}
-          {formatDateShort(f.data_fim)}
+          {formatDateShort(f.data_inicio)} a {formatDateShort(f.data_fim)}
         </span>
       ),
     },

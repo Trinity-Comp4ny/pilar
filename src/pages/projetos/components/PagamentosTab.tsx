@@ -38,7 +38,8 @@ import {
   getDiasStatus,
   type PagamentoProjeto,
 } from "@/hooks/usePagamentosProjeto";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { statusBadgeClasses } from "@/lib/status";
 
 interface PagamentosTabProps {
@@ -100,6 +101,7 @@ function StatusBadgeAlerta({ pagamento }: { pagamento: PagamentoProjeto }) {
 }
 
 export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
+  const formatCurrency = useMoneyMask();
   const [filtro, setFiltro] = useState<FiltroStatus>("todos");
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const { data, isLoading } = usePagamentosProjeto(projetoId);

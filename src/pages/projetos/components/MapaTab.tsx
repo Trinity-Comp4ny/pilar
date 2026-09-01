@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { formatCurrency as fmtMoeda } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -41,10 +41,6 @@ import { cn } from "@/lib/utils";
 // demanda: só entram no bundle quando a aba do Mapa monta, não no inicial.
 const MapCanvas = lazy(() => import("@/pages/mapa/MapCanvas"));
 
-function formatCurrency(v: number | null) {
-  return v ? fmtMoeda(v) : null;
-}
-
 function formatDate(d: string | null) {
   if (!d) return null;
   // Parse local (T00:00:00): sem isso, uma data-only em UTC-3 exibia o dia anterior.
@@ -52,6 +48,8 @@ function formatDate(d: string | null) {
 }
 
 export function MapaTab() {
+  const moneyMask = useMoneyMask();
+  const formatCurrency = (v: number | null) => (v ? moneyMask(v) : null);
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [searchOpen, setSearchOpen] = useState(false);

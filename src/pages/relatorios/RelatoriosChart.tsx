@@ -1,7 +1,6 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
-import { formatCurrency, formatNumberCompact } from "@/lib/format";
-
-const toCurrency = (value: number) => formatCurrency(value);
+import { formatNumberCompact } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 
 interface ChartDatum {
   mes: string;
@@ -17,6 +16,7 @@ interface RelatoriosChartProps {
 // Gráfico isolado num chunk próprio: recharts (~pesado) só é baixado quando há
 // dados suficientes para renderizar, via React.lazy no componente pai.
 export default function RelatoriosChart({ chartData, tipoRelatorio }: RelatoriosChartProps) {
+  const toCurrency = useMoneyMask();
   const hasBoth = tipoRelatorio === "financeiro";
 
   return (

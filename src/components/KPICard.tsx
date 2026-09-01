@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCurrency } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { TONE_BADGE, TONE_VALUE, type StatusTone } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +51,7 @@ export function KPICard({
   valueSlot,
   density = "default",
 }: KPICardProps) {
+  const formatCurrency = useMoneyMask();
   const subiu = (delta?.value ?? 0) > 0;
   const bom = delta?.invert ? !subiu : subiu;
 

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { KPICard } from "@/components/KPICard";
 import { DataFrescor } from "@/components/DataFrescor";
 import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowUpRight, ArrowDownRight, ArrowRight, BarChart3, Trophy, CalendarClock, Receipt } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
@@ -84,6 +84,7 @@ interface DonutProps {
 }
 
 function DonutChart({ data, totalLabel }: DonutProps) {
+  const formatCurrency = useMoneyMask();
   const total = data.reduce((acc, item) => acc + item.value, 0);
 
   return (
@@ -175,6 +176,7 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
   // cache que a Início já mantém; a lista independe do filtro de período (é a partir de hoje).
   const { data: radar } = useDashboardData();
   const { data: recentes = [], isLoading: recentesLoading } = useLancamentosRecentes();
+  const formatCurrency = useMoneyMask();
 
   const [detalheCategoria, setDetalheCategoria] = useState<"receitas" | "despesas" | null>(null);
   const [chartView, setChartView] = useState<"comparativo" | "performance">("comparativo");

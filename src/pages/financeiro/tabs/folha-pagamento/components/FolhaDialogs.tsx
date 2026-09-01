@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Loader2, CheckCircle2, FileDown } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import type { FolhaItem, HistoryItem } from "../types";
 import { getMonthLabel } from "../types";
 import { calcularVariavel, calcularTotal, subtotalProjeto } from "../folhaCalc";
@@ -38,6 +38,7 @@ export function CloseMonthDialog({
   saving,
   onConfirm,
 }: CloseMonthDialogProps) {
+  const formatCurrency = useMoneyMask();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
@@ -102,6 +103,7 @@ export function DetailEditDialog({
   onSaveEditing,
   onEditFormChange,
 }: DetailEditDialogProps) {
+  const formatCurrency = useMoneyMask();
   // Fórmula: variável = área × valor/m²; total = fixo + variável. Ao editar,
   // recalculamos os derivados para não fechar folha com total inconsistente.
   const salario = editForm.p_salario_fixo ?? person?.p_salario_fixo ?? 0;
@@ -169,8 +171,8 @@ export function DetailEditDialog({
 
             {isEditing && (
               <p className="text-xs text-muted-foreground">
-                Variável recalculado de área × {formatCurrency(valorM2)}/m². Total sugerido:{" "}
-                {formatCurrency(totalCalc)}.
+                Variável recalculado de área × {formatCurrency(valorM2)}/m². Total sugerido: {formatCurrency(totalCalc)}
+                .
               </p>
             )}
             {totalDesacoplado && (
@@ -244,6 +246,7 @@ function EditableField({
   suffix?: string;
   readOnlyWhenEditing?: boolean;
 }) {
+  const formatCurrency = useMoneyMask();
   return (
     <div className="space-y-2">
       <span className="text-xs font-semibold text-muted-foreground">{label}</span>
@@ -279,6 +282,7 @@ export function HistoryDetailDialog({
   onDownloadLote,
   onDownloadComprovante,
 }: HistoryDetailDialogProps) {
+  const formatCurrency = useMoneyMask();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
