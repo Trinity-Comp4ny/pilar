@@ -17,13 +17,14 @@ Auditoria do setup Sentry (ADR 0004, ADR 0027) achou quatro lacunas, todas de ba
 **Environment**: `vite.config.ts` calcula `SENTRY_ENVIRONMENT = process.env.VERCEL_ENV ?? process.env.SENTRY_ENV ?? "development"` e injeta via `define` como `__SENTRY_ENVIRONMENT__`, consumido em `src/lib/monitoring.ts` (com `VITE_SENTRY_ENV` como override explícito, se setado). `VERCEL_ENV` já vem de graça em todo build da Vercel (`"production"` ou `"preview"`), sem exigir configurar nada manualmente por ambiente no dashboard. No backend, `ci.yml` passa a setar `SENTRY_ENV=staging`/`SENTRY_ENV=production` junto do `SENTRY_RELEASE` já existente, um por job de deploy.
 
 **Crons**: função `public.sentry_cron_checkin(slug, status, check_in_id)`, criada via migration, que:
+
 - Lê `current_setting('app.sentry_dsn', true)` (mesmo padrão manual-por-ambiente de `app.supabase_url`/`app.service_role_key`, ver `20260514300002_setup_trial_expiry_cron.sql`). Sem o setting, é no-op silencioso: dev local nunca quebra.
 - Faz parse do DSN via regex e monta a URL de check-in HTTP nativa do Sentry Crons (`https://<host>/api/<project>/cron/<slug>/<public_key>/?status=<status>&check_in_id=<uuid>`), documentada em `docs.sentry.io/product/crons/getting-started/http/`. Sem SDK, só `net.http_post` (pg_net já é dependência existente, mesmo pacote usado pelo trigger de deleção de dados e pelo cron de trial).
 - Cada job vira um wrapper (`<job>_monitored()`) que faz check-in `in_progress`, roda o trabalho real dentro de um `BEGIN/EXCEPTION`, e faz check-in `ok` ou `error`. `cron.schedule` passa a chamar o wrapper, não a função original.
 
 Trade-off aceito: o DSN vira um setting de banco (`ALTER DATABASE postgres SET app.sentry_dsn = '...'`, manual por ambiente). Não é segredo crítico, é a mesma DSN pública já embutida no bundle do browser (`VITE_SENTRY_DSN`), mas passa a viver também na config do Postgres, não só em variável de ambiente de aplicação.
 
-**Profiling**: `Sentry.browserProfilingIntegration()` adicionado às integrations do `Sentry.init` em `src/lib/monitoring.ts`, com `profilesSampleRate` amarrado à mesma env var de tracing (não introduz sample rate novo pra configurar).
+**Profiling**: `Sentry.lazyLoadIntegration("browserProfilingIntegration")` chamado logo depois do `Sentry.init` em `src/lib/monitoring.ts`, com `profilesSampleRate` amarrado à mesma env var de tracing (não introduz sample rate novo pra configurar). Fica fora do array `integrations` do `init` de propósito: colocar direto ali estourava o orçamento de bundle de entrada (`scripts/check-bundle-size.mjs`) em ~4kB pra todo usuário, mesmo quem nunca cai na amostra. `lazyLoadIntegration` busca o código via CDN da própria Sentry (`browser.sentry-cdn.com`/`js.sentry-cdn.com`, já liberados no CSP de `vercel.json`); falha de rede aí é não fatal e não afeta o resto do SDK, já ativo.
 
 **Deploy tracking**: `sentryVitePlugin` em `vite.config.ts` ganha `release.deploy = { env: SENTRY_ENVIRONMENT }` (o mesmo valor calculado pro environment split acima). Roda automaticamente em todo build de produção na Vercel, sem tocar `ci.yml` (que não builda o frontend).
 
@@ -41,6 +42,7 @@ Trade-off aceito: o DSN vira um setting de banco (`ALTER DATABASE postgres SET a
 - Mais uma chamada de rede (fire-and-forget via `pg_net`) por execução de cron: falha de rede na checagem não derruba o job (envolto em bloco separado, nunca re-lança), mas adiciona uma dependência externa a mais no caminho crítico do agendador.
 - `app.sentry_dsn` precisa ser setado manualmente em staging e produção (mesma dívida operacional já existente pros outros `app.*` settings, ver `project_pg_cron_alertas_ambient` na memória do projeto). Sem o setting, cron monitoring fica silenciosamente inativo, mitigado pelo no-op ser seguro, não pelo esquecimento ser impossível.
 - `VERCEL_ENV="preview"` cobre staging e qualquer PR preview no mesmo bucket. Suficiente pra separar de produção, mas não distingue staging de um preview avulso caso isso vire relevante no futuro.
+- Profiling depende do CDN da Sentry estar acessível no browser do usuário (bloqueio por ad-blocker ou extensão de privacidade é possível, ainda que raro). Trade-off aceito: o custo de carregar sempre no bundle de entrada, pra 100% dos usuários, era pior que perder o dado em uma fração deles.
 
 ## Decisões relacionadas
 
