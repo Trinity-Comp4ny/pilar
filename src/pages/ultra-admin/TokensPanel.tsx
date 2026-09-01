@@ -58,7 +58,9 @@ export function TokensPanel() {
           .from("v_uso_tokens_por_empresa")
           .select("empresa_id, mes, tokens_input, tokens_output, custo_estimado"),
         supabase.from("empresas").select("id, nome"),
-        supabase.from("pilar_subscriptions").select("empresa_id, status, pilar_subscription_plans(nome, preco_mensal)"),
+        supabase
+          .from("pilar_subscriptions")
+          .select("empresa_id, status, asaas_subscription_id, pilar_subscription_plans(nome, preco_mensal)"),
         supabase
           .from("v_uso_tokens_por_agente")
           .select("agent_key, mes, eventos, tokens_input, tokens_output, custo_estimado"),
@@ -74,18 +76,24 @@ export function TokensPanel() {
           .filter((s) => s.status === "active" || s.status === "trialing")
           .map((s) => [
             s.empresa_id as string,
-            s.pilar_subscription_plans as { nome: string; preco_mensal: number } | null,
+            {
+              plano: s.pilar_subscription_plans as { nome: string; preco_mensal: number } | null,
+              // Isenta (spec 078): sem asaas_subscription_id não gera receita de verdade,
+              // mesmo tendo plano/status ativo — nunca contar preço de tabela dela.
+              isPaying: !!s.asaas_subscription_id,
+            },
           ])
       );
 
       const porEmpresa: UsoEmpresaRow[] = (usoEmpresa ?? [])
         .filter((r) => mesmoMes(r.mes as string))
         .map((r) => {
-          const plano = planoAtivo.get(r.empresa_id as string) ?? null;
+          const info = planoAtivo.get(r.empresa_id as string) ?? null;
           // custo_estimado vem em USD (COGS nativo do provedor); receita é BRL
           // (preco_mensal do plano) — converte ANTES de subtrair, nunca mistura moeda.
           const custoBrl = custoEmBrl(Number(r.custo_estimado ?? 0));
-          const receita = plano?.preco_mensal ?? null;
+          const plano = info?.plano ?? null;
+          const receita = info?.isPaying ? (plano?.preco_mensal ?? null) : null;
           return {
             empresaId: r.empresa_id as string,
             empresaNome: nomeEmpresa.get(r.empresa_id as string) ?? (r.empresa_id as string),
