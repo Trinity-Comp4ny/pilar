@@ -20,7 +20,7 @@ export function Home() {
   usePageMeta({
     titulo: "Pilar | Gestão integrada para empresas de engenharia",
     descricao:
-      "Saiba se cada projeto está dando lucro antes de terminar. Gestão financeira para escritórios de engenharia multidisciplinar.",
+      "Saiba se cada projeto está dando lucro antes de terminar. Gestão financeira para escritórios de engenharia e arquitetura.",
     caminho: "/",
     ogTitulo: "Pilar | Onde times e agentes centralizam gestão, projetos e obras.",
     ogDescricao:

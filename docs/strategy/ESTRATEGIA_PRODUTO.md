@@ -6,8 +6,8 @@
 
 ## ICP (Ideal Customer Profile)
 
-**Empresas de engenharia multidisciplinar** (civil + estrutural + MEP/HVAC)  
-Excluídos no momento: escritórios de arquitetura puros, construtoras/incorporadoras.
+**Escritórios de projeto técnico** — engenharia multidisciplinar (civil + estrutural + MEP/HVAC) e arquitetura (desde 2026-09-01, ver `DECISOES.md`).
+Excluídos: construtoras/incorporadoras.
 
 ### Tamanho
 Horizontal — funciona para qualquer porte. Não segmentar por tamanho agora.

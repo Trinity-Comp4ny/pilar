@@ -97,7 +97,8 @@ voz/tom → `brand/voice-tone.md`, visual → `brand/visual.md`, mensagens → `
 público → `brand/personas.md`. Cor/token: a verdade é `src/styles/tokens.css`.
 
 - Tagline: "Saiba se cada projeto está dando lucro antes de terminar."
-- ICP: engenharia multidisciplinar (civil/estrutural/MEP) — NÃO arquitetura nem construtora.
+- ICP: escritórios de projeto técnico — engenharia multidisciplinar (civil/estrutural/MEP) e
+  arquitetura (desde 2026-09-01, ver DECISOES.md) — NÃO construtora/incorporadora.
 - Voz: direta, técnica na medida, confiante, sem hype. Ver palavras banidas em voice-tone.md.
 
 ## DB

@@ -38,8 +38,8 @@ export function LandingFooter() {
           <div>
             <Logo size="sm" className="text-ink mb-5" />
             <p className="text-[13.5px] text-ink/65 max-w-xs leading-relaxed">
-              Saiba se cada projeto está dando lucro antes de terminar. Feito para escritórios de engenharia
-              multidisciplinar, com agentes que preparam o trabalho e esperam o seu aval.
+              Saiba se cada projeto está dando lucro antes de terminar. Feito para escritórios de engenharia e
+              arquitetura, com agentes que preparam o trabalho e esperam o seu aval.
             </p>
           </div>
 

@@ -41,6 +41,33 @@ confirmar o COGS medido.
 
 ---
 
+## 2026-09-01 (mais tarde) · ICP expande de "engenharia multidisciplinar" para incluir arquitetura
+
+**Decisão:** arquitetura deixa de ser anti-persona. O ICP passa a ser escritórios de projeto
+técnico em geral — engenharia multidisciplinar (civil/estrutural/MEP) e arquitetura — que vendem
+projeto por proposta e têm fluxo de disciplina/etapa, não só engenharia pura.
+
+**Contexto:** Rafael (Mawe Arquitetura) é design partner desde 18/08 e é hoje o sinal de produto
+mais forte que o Pilar tem: validou a metodologia de cronograma com pausa por etapa de forma
+cruzada (prototipou o mesmo padrão fora do Pilar, sem ver o código), é a primeira reação
+espontânea positiva forte ao portal do cliente (0% de adoção nas outras 4 empresas), e gerou
+stories promovendo o Pilar por conta própria. `brand/personas.md` (mesa redonda 13/05) descartava
+arquitetura por "fluxo criativo, fases diferentes" — na prática, o fluxo de disciplina→etapa que
+o Pilar já modela serve os dois igualmente bem; a divergência prevista não se confirmou com uso
+real.
+
+**Supera:** a linha ❌ "Não é: arquitetura pura" de `brand/personas.md` e a tensão #1 de
+`brand/BRAND.md` ("recomendo alinhar a copy pra engenharia") — o caminho inverso venceu: expandir
+o ICP oficial, não estreitar a copy. Construtora/incorporadora (gestão de obra como núcleo)
+continua fora — isso não mudou.
+
+**Como aplicar:** copy, onboarding e priorização de feature passam a considerar arquitetura como
+público primário, não caso lateral. `personas.md` e `BRAND.md` atualizados nesta mesma entrada.
+Não implica perseguir arquitetura ativamente em GTM ainda — é ICP oficial, a validar com mais
+design partners antes de virar mensagem de aquisição.
+
+---
+
 ## 2026-09-01 · Ativação do Asaas de plataforma é iniciativa própria, sandbox primeiro
 
 **Decisão:** ligar o Asaas que cobra a assinatura do Pilar (não o Asaas por-empresa, que já

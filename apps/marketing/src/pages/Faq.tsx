@@ -6,20 +6,21 @@ import { useJsonLd, usePageMeta } from "../lib/seo";
 /**
  * FAQ e qualificação de público, que saíram da home (decisão do CEO, 18/08).
  * "Para quem é" virou a primeira pergunta daqui, e continua sendo o filtro que
- * afasta arquitetura pura e construtora de grande porte.
+ * afasta construtora de grande porte (arquitetura entrou no ICP em 01/09, ver
+ * DECISOES.md).
  */
 
 const FEITO_PARA = [
-  "Escritório multidisciplinar: civil, estrutural, elétrico, hidrossanitário, climatização.",
+  "Escritório de engenharia (civil, estrutural, elétrico, hidrossanitário, climatização) ou arquitetura.",
   "Quem vende projeto técnico por proposta e emite nota.",
   "De 3 a 30 profissionais, com sócio olhando margem.",
   "Quem também administra obra e presta contas ao cliente.",
 ];
 
 const NAO_E_PARA = [
-  "Arquitetura pura, que tem fluxo criativo e etapas diferentes.",
   "Construtora ou incorporadora de grande porte.",
   "Freelancer solo sem fluxo de proposta.",
+  "Grande empresa que quer ERP completo customizado.",
 ];
 
 const FAQS = [
