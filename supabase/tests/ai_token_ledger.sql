@@ -11,7 +11,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(22);
+SELECT plan(28);
 
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
 VALUES
@@ -289,6 +289,91 @@ SELECT throws_ok(
   '42501',
   NULL,
   'gate_tokens como authenticated é bloqueada (grant + guard no corpo)'
+);
+
+-- =============================================
+-- 11. Fase 4/5 (spec 076): bypass de RLS pra ultra_admin no ledger/saldo/extrato
+-- =============================================
+-- Volta a postgres (superuser) antes de mexer em session_replication_role: o teste
+-- anterior deixou o role como 'authenticated', que não tem esse privilégio.
+SELECT test_set_postgres();
+
+SET LOCAL session_replication_role = 'replica';
+INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role)
+VALUES ('a70e1111-0000-0000-0000-0000000000ff', 'ultra@test.com', '{}'::jsonb, 'authenticated', 'authenticated')
+ON CONFLICT (id) DO NOTHING;
+SET LOCAL session_replication_role = 'origin';
+
+INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed)
+VALUES ('a70e1111-0000-0000-0000-0000000000ff', 'a70e0000-0000-0000-0000-00000000000b', 'Ultra', 'Admin', 'ultra@test.com', 'ultra_admin', TRUE)
+ON CONFLICT (id) DO UPDATE SET role = 'ultra_admin';
+
+SELECT test_set_auth('a70e1111-0000-0000-0000-0000000000ff');
+
+SELECT ok(
+  (SELECT count(*) FROM public.ai_token_ledger WHERE empresa_id = 'a70e0000-0000-0000-0000-00000000000a') > 0,
+  'ultra_admin vê linhas do ledger de empresa que não é a sua (bypass de RLS)'
+);
+
+SELECT ok(
+  (SELECT count(*) FROM public.ai_token_saldo WHERE empresa_id = 'a70e0000-0000-0000-0000-00000000000a') > 0,
+  'ultra_admin vê o saldo de empresa que não é a sua (bypass de RLS)'
+);
+
+SELECT ok(
+  (SELECT count(*) FROM public.v_extrato_tokens WHERE empresa_id = 'a70e0000-0000-0000-0000-00000000000a') > 0,
+  'ultra_admin vê o extrato (view) de empresa que não é a sua'
+);
+
+-- Volta pro usuário comum: continua sem ver a empresa alheia (a policy é OR, não troca).
+SELECT test_set_auth('a70e1111-0000-0000-0000-00000000000b');
+
+SELECT is(
+  (SELECT count(*)::int FROM public.ai_token_ledger WHERE empresa_id = 'a70e0000-0000-0000-0000-00000000000a'),
+  0,
+  'usuário comum da empresa B continua sem ver o ledger da empresa A'
+);
+
+-- =============================================
+-- 12. Fase 4/5 (spec 076): alerta de saldo baixo, idempotente
+-- =============================================
+SELECT test_set_postgres();
+
+-- Empresa C (spec 075) já tem assinatura ausente → cota starter. Debita quase tudo
+-- pra ficar abaixo de 10%.
+SELECT test_set_service();
+SELECT public.debitar_tokens(
+  'a70e0000-0000-0000-0000-00000000000c', NULL, 'consumo-total', NULL, 'gemini-2.5-flash',
+  1, 999000, 'zera-saldo-c');
+SELECT test_set_postgres();
+
+-- Empresa C precisa de um dono pra receber a notificação (_notif_gestao exige owner/admin).
+SET LOCAL session_replication_role = 'replica';
+INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role)
+VALUES ('a70e1111-0000-0000-0000-00000000000c', 'dono_c@test.com', '{}'::jsonb, 'authenticated', 'authenticated')
+ON CONFLICT (id) DO NOTHING;
+SET LOCAL session_replication_role = 'origin';
+
+INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed)
+VALUES ('a70e1111-0000-0000-0000-00000000000c', 'a70e0000-0000-0000-0000-00000000000c', 'Dono', 'C', 'dono_c@test.com', 'owner', TRUE)
+ON CONFLICT (id) DO UPDATE SET empresa_id = EXCLUDED.empresa_id, role = 'owner';
+
+SELECT public.gerar_notificacoes_ambient();
+
+SELECT is(
+  (SELECT count(*)::int FROM public.notificacoes
+   WHERE destinatario_id = 'a70e1111-0000-0000-0000-00000000000c' AND tipo = 'tokens_baixo'),
+  1,
+  'saldo abaixo de 10% da cota gera notificação tokens_baixo pro dono da empresa'
+);
+
+SELECT public.gerar_notificacoes_ambient();
+
+SELECT is(
+  (SELECT count(*)::int FROM public.notificacoes
+   WHERE destinatario_id = 'a70e1111-0000-0000-0000-00000000000c' AND tipo = 'tokens_baixo'),
+  1,
+  'rodar de novo sem ler a notificação anterior não duplica (dedupe do notificar())'
 );
 
 SELECT * FROM finish();

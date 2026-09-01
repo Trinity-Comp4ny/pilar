@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { KPICard } from "@/components/KPICard";
+import { TokensPanel } from "./TokensPanel";
 import {
   Dialog,
   DialogContent,
@@ -62,11 +63,7 @@ import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { reportInvokeError } from "@/lib/monitoring";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import {
-  parseCompanyFeatures,
-  type CompanyFeatures,
-  type SubscriptionPlanSlug,
-} from "@/lib/features";
+import { parseCompanyFeatures, type CompanyFeatures, type SubscriptionPlanSlug } from "@/lib/features";
 import type { PilarRole } from "@/lib/roles";
 import { env } from "@/lib/env";
 
@@ -232,7 +229,7 @@ export default function UltraAdmin() {
   const [savingFeatures, setSavingFeatures] = useState(false);
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<
-    "dashboard" | "empresas" | "funcionalidades" | "usuarios" | "atividade" | "feedback" | "status"
+    "dashboard" | "empresas" | "funcionalidades" | "usuarios" | "atividade" | "feedback" | "status" | "tokens"
   >("dashboard");
   const [audit, setAudit] = useState<AuditRow[]>([]);
   const [auditFull, setAuditFull] = useState<AuditRow[]>([]);
@@ -948,11 +945,7 @@ export default function UltraAdmin() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <CompanyFeatureToggles
-              value={detail.features}
-              onChange={handleChangeFeatures}
-              disabled={savingFeatures}
-            />
+            <CompanyFeatureToggles value={detail.features} onChange={handleChangeFeatures} disabled={savingFeatures} />
           </CardContent>
         </Card>
 
@@ -1046,7 +1039,12 @@ export default function UltraAdmin() {
     >
       <Tabs
         value={tab}
-        onValueChange={(v) => setTab(v as "dashboard" | "empresas" | "funcionalidades" | "usuarios" | "atividade")}
+        onValueChange={(v) =>
+          setTab(
+            v as
+              "dashboard" | "empresas" | "funcionalidades" | "usuarios" | "atividade" | "feedback" | "status" | "tokens"
+          )
+        }
       >
         <TabsList>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
@@ -1056,7 +1054,12 @@ export default function UltraAdmin() {
           <TabsTrigger value="atividade">Atividade</TabsTrigger>
           <TabsTrigger value="feedback">Feedback</TabsTrigger>
           <TabsTrigger value="status">Status</TabsTrigger>
+          <TabsTrigger value="tokens">Tokens</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="tokens" className="mt-4">
+          <TokensPanel />
+        </TabsContent>
 
         <TabsContent value="dashboard" className="mt-4 space-y-4">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
