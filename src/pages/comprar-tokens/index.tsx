@@ -1,10 +1,9 @@
 import { useCallback, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CheckCircle2, CreditCard, QrCode, FileText, Loader2, Lock, Eye, EyeOff, MapPin } from "lucide-react";
-import { PilarPage } from "@/components/PilarPage";
-import { Card, CardContent } from "@/components/ui/card";
+import { CheckCircle2, CreditCard, QrCode, FileText, Loader2, Lock, Eye, EyeOff, MapPin, Mail } from "lucide-react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import { lookupCEP } from "@/lib/brasilApi";
+import { CheckoutShell } from "@/pages/checkout/components/CheckoutShell";
 import { PixPayment } from "@/pages/checkout/components/PixPayment";
 import { BoletoPayment } from "@/pages/checkout/components/BoletoPayment";
 import {
@@ -91,7 +91,10 @@ function detectCardBrand(number: string): "visa" | "mastercard" | "amex" | "elo"
 }
 
 function formatCardNumber(value: string): string {
-  return onlyDigits(value).slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
+  return onlyDigits(value)
+    .slice(0, 16)
+    .replace(/(.{4})/g, "$1 ")
+    .trim();
 }
 
 function formatExpiry(value: string): string {
@@ -113,8 +116,9 @@ const PAYMENT_METHODS: { value: TokenPackBillingType; label: string; icon: React
 ];
 
 export default function ComprarTokens() {
+  usePageTitle("Comprar tokens");
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const { profile, isAuthenticated, loading } = useAuth();
   const queryClient = useQueryClient();
   const createPack = useTokenPackCreate();
 
@@ -130,14 +134,18 @@ export default function ComprarTokens() {
   const [cpfCnpj, setCpfCnpj] = useState(profile?.empresas?.cnpj ?? "");
   const [holderPostalCode, setHolderPostalCode] = useState("");
   const [holderAddressNumber, setHolderAddressNumber] = useState("");
-  const [cepAddress, setCepAddress] = useState<{ logradouro: string; bairro: string; cidade: string; uf: string } | null>(
-    null
-  );
+  const [cepAddress, setCepAddress] = useState<{
+    logradouro: string;
+    bairro: string;
+    cidade: string;
+    uf: string;
+  } | null>(null);
   const [isFetchingCep, setIsFetchingCep] = useState(false);
 
   const cardBrand = detectCardBrand(ccNumber);
   const status = useTokenPackStatus(result?.purchase_id ?? null);
   const paid = result?.payment_status === "paid" || status.data?.status === "paid";
+  const tier = TIER_CATALOG[tierId];
 
   const fetchCep = useCallback(async (cep: string) => {
     const digits = onlyDigits(cep);
@@ -155,7 +163,18 @@ export default function ComprarTokens() {
     }
   }, []);
 
-  const voltar = () => navigate("/inicio");
+  // Rota fora do grupo PrivateRoute de propósito (checkout full-bleed, sem sidebar —
+  // ver App.tsx), então a guarda de autenticação é própria, mesmo padrão de /profile-setup.
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-paper flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-ink-disabled" />
+      </div>
+    );
+  }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -214,282 +233,326 @@ export default function ComprarTokens() {
     createPack.mutate({ tier_id: tierId, billing_type: billingType }, { onSuccess: (data) => setResult(data) });
   };
 
-  const tier = TIER_CATALOG[tierId];
-
-  if (paid && result) {
-    return (
-      <PilarPage title="Comprar tokens" breadcrumbs={[{ label: "Início", to: "/inicio" }]}>
-        <div className="max-w-md mx-auto text-center space-y-4 py-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand/10 text-positive-strong">
-            <CheckCircle2 className="w-8 h-8" />
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold text-ink">Tokens creditados</h2>
-            <p className="text-sm text-black/55 mt-1">{formatNumber(result.tokens)} tokens já estão no seu saldo.</p>
-          </div>
-          <Button
-            variant="brand"
-            className="rounded-full"
-            onClick={() => {
-              queryClient.invalidateQueries({ queryKey: ["uso-empresa", profile?.empresa_id] });
-              voltar();
-            }}
-          >
-            Voltar ao Pilar
-          </Button>
-        </div>
-      </PilarPage>
-    );
-  }
-
-  if (result) {
-    return (
-      <PilarPage title="Comprar tokens" breadcrumbs={[{ label: "Início", to: "/inicio" }]}>
-        <div className="max-w-md mx-auto">
-          {result.billing_type === "PIX" && result.metadata.pix ? (
-            <PixPayment
-              encodedImage={result.metadata.pix.encoded_image}
-              payload={result.metadata.pix.payload}
-              expirationDate={result.metadata.pix.expiration_date}
-              value={result.value}
-              isPolling={status.isFetching || !status.data}
-            />
-          ) : result.billing_type === "BOLETO" && result.metadata.boleto ? (
-            <BoletoPayment
-              bankSlipUrl={result.metadata.boleto.bank_slip_url}
-              identificationField={result.metadata.boleto.identification_field}
-              value={result.value}
-              isPolling={status.isFetching || !status.data}
-            />
-          ) : (
-            <div className="flex items-center justify-center py-10">
-              <Loader2 className="h-5 w-5 animate-spin text-black/30" />
-            </div>
-          )}
-        </div>
-      </PilarPage>
-    );
-  }
-
   return (
-    <PilarPage title="Comprar tokens" breadcrumbs={[{ label: "Início", to: "/inicio" }]}>
-      <div className="grid lg:grid-cols-[1fr_360px] gap-6 items-start">
-        <form onSubmit={handleSubmit} className="space-y-6 order-2 lg:order-1">
-          <Card className="border border-black/5">
-            <CardContent className="pt-5 space-y-4">
-              <h3 className="text-sm font-semibold text-ink">Forma de pagamento</h3>
-              <div className="grid grid-cols-3 gap-2">
-                {PAYMENT_METHODS.map(({ value, label, icon }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setBillingType(value)}
-                    className={cn(
-                      "flex items-center justify-center gap-2 py-3 px-4 rounded-xl border text-sm font-medium transition-all",
-                      billingType === value
-                        ? "border-brand bg-brand/5 text-ink shadow-sm"
-                        : "border-black/10 text-black/55 hover:border-black/20"
-                    )}
-                  >
-                    {icon}
-                    {label}
-                  </button>
-                ))}
+    <CheckoutShell backTo="/inicio" logoTo="/inicio" badgeLabel="Compra segura">
+      <div className={cn("grid gap-8 items-start", result ? "max-w-md mx-auto" : "lg:grid-cols-[1fr_360px]")}>
+        <section className="bg-white rounded-2xl border border-paper-border p-8 shadow-sm">
+          {paid && result ? (
+            <div className="text-center space-y-6 py-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-brand/10 text-positive-strong">
+                <CheckCircle2 className="w-8 h-8" />
               </div>
+              <div>
+                <h2 className="text-3xl font-medium text-ink">Tokens creditados</h2>
+                <p className="text-ink-muted mt-2">
+                  {formatNumber(result.tokens)} tokens já estão disponíveis no seu saldo.
+                </p>
+              </div>
+              <Button
+                variant="brand"
+                className="rounded-full"
+                onClick={() => {
+                  queryClient.invalidateQueries({ queryKey: ["uso-empresa", profile?.empresa_id] });
+                  navigate("/inicio");
+                }}
+              >
+                Voltar ao Pilar
+              </Button>
+            </div>
+          ) : result ? (
+            result.billing_type === "PIX" && result.metadata.pix ? (
+              <PixPayment
+                encodedImage={result.metadata.pix.encoded_image}
+                payload={result.metadata.pix.payload}
+                expirationDate={result.metadata.pix.expiration_date}
+                value={result.value}
+                isPolling={status.isFetching || !status.data}
+              />
+            ) : result.billing_type === "BOLETO" && result.metadata.boleto ? (
+              <BoletoPayment
+                bankSlipUrl={result.metadata.boleto.bank_slip_url}
+                identificationField={result.metadata.boleto.identification_field}
+                value={result.value}
+                isPolling={status.isFetching || !status.data}
+              />
+            ) : (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="h-6 w-6 animate-spin text-ink-disabled" />
+              </div>
+            )
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <section className="space-y-4">
+                <div>
+                  <h2 className="text-base font-semibold text-ink">Pagamento</h2>
+                  <p className="text-xs text-ink-muted mt-0.5">
+                    {formatCurrency(tier.valorCentavos / 100, { decimals: 2 })} — {tier.label}
+                  </p>
+                </div>
 
-              {billingType === "CREDIT_CARD" && (
-                <div className="space-y-4 pt-1">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="ccHolder">Nome impresso no cartão</Label>
-                    <Input
-                      id="ccHolder"
-                      value={ccHolder}
-                      onChange={(e) => setCcHolder(e.target.value)}
-                      required
-                      autoComplete="cc-name"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="ccNumber" className="flex items-center justify-between">
-                      Número do cartão
-                      {cardBrand && (
-                        <span className="text-[11px] font-medium text-black/40 uppercase tracking-wider">
-                          {cardBrand}
-                        </span>
+                <div className="grid grid-cols-3 gap-2">
+                  {PAYMENT_METHODS.map(({ value, label, icon }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setBillingType(value)}
+                      className={cn(
+                        "flex items-center justify-center gap-2 py-3 px-4 rounded-xl border text-sm font-medium transition-all",
+                        billingType === value
+                          ? "border-brand bg-brand/5 text-ink-soft shadow-sm"
+                          : "border-border text-ink-muted hover:border-border hover:bg-muted"
                       )}
-                    </Label>
-                    <Input
-                      id="ccNumber"
-                      value={ccNumber}
-                      onChange={(e) => setCcNumber(formatCardNumber(e.target.value))}
-                      required
-                      inputMode="numeric"
-                      maxLength={19}
-                      autoComplete="cc-number"
-                      placeholder="0000 0000 0000 0000"
-                    />
-                  </div>
+                    >
+                      {icon}
+                      {label}
+                    </button>
+                  ))}
+                </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                {billingType === "CREDIT_CARD" && (
+                  <div className="space-y-4 pt-1">
                     <div className="space-y-1.5">
-                      <Label htmlFor="ccExpiry">Validade</Label>
+                      <Label htmlFor="ccHolder">Nome impresso no cartão</Label>
                       <Input
-                        id="ccExpiry"
-                        value={ccExpiry}
-                        onChange={(e) => setCcExpiry(formatExpiry(e.target.value))}
+                        id="ccHolder"
+                        value={ccHolder}
+                        onChange={(e) => setCcHolder(e.target.value)}
                         required
-                        maxLength={5}
-                        placeholder="MM/AA"
-                        inputMode="numeric"
-                        autoComplete="cc-exp"
+                        autoComplete="cc-name"
+                        placeholder="Ex: Ricardo A. Silva"
                       />
                     </div>
+
                     <div className="space-y-1.5">
-                      <Label htmlFor="ccCcv">CVV</Label>
-                      <div className="relative">
-                        <Input
-                          id="ccCcv"
-                          type={showCcv ? "text" : "password"}
-                          value={ccCcv}
-                          onChange={(e) => setCcCcv(onlyDigits(e.target.value))}
-                          required
-                          maxLength={4}
-                          inputMode="numeric"
-                          autoComplete="cc-csc"
-                          placeholder="•••"
-                          className="pr-10"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowCcv((v) => !v)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-black/35 hover:text-black/60 transition-colors"
-                          tabIndex={-1}
-                          aria-label={showCcv ? "Ocultar CVV" : "Mostrar CVV"}
-                        >
-                          {showCcv ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
+                      <Label htmlFor="ccNumber" className="flex items-center justify-between">
+                        Número do cartão
+                        {cardBrand && (
+                          <span className="text-[11px] font-medium text-ink-disabled uppercase tracking-wider">
+                            {cardBrand}
+                          </span>
+                        )}
+                      </Label>
+                      <Input
+                        id="ccNumber"
+                        value={ccNumber}
+                        onChange={(e) => setCcNumber(formatCardNumber(e.target.value))}
+                        required
+                        inputMode="numeric"
+                        maxLength={19}
+                        autoComplete="cc-number"
+                        placeholder="0000 0000 0000 0000"
+                      />
                     </div>
-                  </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="cpfCnpj">CPF ou CNPJ do titular</Label>
-                    <Input
-                      id="cpfCnpj"
-                      value={cpfCnpj}
-                      onChange={(e) => setCpfCnpj(e.target.value)}
-                      required
-                      inputMode="numeric"
-                      placeholder="000.000.000-00"
-                    />
-                  </div>
-
-                  <div className="pt-1 border-t border-black/5">
-                    <p className="text-xs text-black/45 mb-3">Endereço de cobrança do titular</p>
-                    <div className="grid grid-cols-[1fr_110px] gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <Label htmlFor="holderPostalCode">CEP</Label>
+                        <Label htmlFor="ccExpiry">Validade</Label>
+                        <Input
+                          id="ccExpiry"
+                          value={ccExpiry}
+                          onChange={(e) => setCcExpiry(formatExpiry(e.target.value))}
+                          required
+                          maxLength={5}
+                          placeholder="MM/AA"
+                          inputMode="numeric"
+                          autoComplete="cc-exp"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="ccCcv">CVV</Label>
                         <div className="relative">
                           <Input
-                            id="holderPostalCode"
-                            value={holderPostalCode}
-                            onChange={(e) => {
-                              const formatted = formatCEP(e.target.value);
-                              setHolderPostalCode(formatted);
-                              if (onlyDigits(formatted).length === 8) fetchCep(formatted);
-                            }}
+                            id="ccCcv"
+                            type={showCcv ? "text" : "password"}
+                            value={ccCcv}
+                            onChange={(e) => setCcCcv(onlyDigits(e.target.value))}
                             required
+                            maxLength={4}
                             inputMode="numeric"
-                            maxLength={9}
-                            placeholder="00000-000"
-                            className={isFetchingCep ? "pr-8" : ""}
+                            autoComplete="cc-csc"
+                            placeholder="•••"
+                            className="pr-10"
                           />
-                          {isFetchingCep && (
-                            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin text-black/35" />
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => setShowCcv((v) => !v)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-disabled hover:text-ink-muted transition-colors"
+                            tabIndex={-1}
+                            aria-label={showCcv ? "Ocultar CVV" : "Mostrar CVV"}
+                          >
+                            {showCcv ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
                         </div>
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="holderAddressNumber">Número</Label>
-                        <Input
-                          id="holderAddressNumber"
-                          value={holderAddressNumber}
-                          onChange={(e) => setHolderAddressNumber(e.target.value)}
-                          required
-                          placeholder="123"
-                        />
                       </div>
                     </div>
 
-                    {cepAddress && (
-                      <div className="mt-3 flex items-start gap-2 px-3 py-2.5 bg-black/[0.02] border border-black/5 rounded-lg text-xs text-black/55">
-                        <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                        <span>
-                          {cepAddress.logradouro && `${cepAddress.logradouro}, `}
-                          {cepAddress.bairro && `${cepAddress.bairro}, `}
-                          {cepAddress.cidade}/{cepAddress.uf}
-                        </span>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="cpfCnpj">CPF ou CNPJ do titular</Label>
+                      <Input
+                        id="cpfCnpj"
+                        value={cpfCnpj}
+                        onChange={(e) => setCpfCnpj(e.target.value)}
+                        required
+                        inputMode="numeric"
+                        placeholder="000.000.000-00"
+                      />
+                    </div>
+
+                    <div className="pt-1 border-t border-border">
+                      <p className="text-xs text-ink-muted mb-3">Endereço de cobrança do titular</p>
+                      <div className="grid grid-cols-[1fr_110px] gap-4">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="holderPostalCode">CEP</Label>
+                          <div className="relative">
+                            <Input
+                              id="holderPostalCode"
+                              value={holderPostalCode}
+                              onChange={(e) => {
+                                const formatted = formatCEP(e.target.value);
+                                setHolderPostalCode(formatted);
+                                if (onlyDigits(formatted).length === 8) fetchCep(formatted);
+                              }}
+                              required
+                              inputMode="numeric"
+                              maxLength={9}
+                              placeholder="00000-000"
+                              className={isFetchingCep ? "pr-8" : ""}
+                            />
+                            {isFetchingCep && (
+                              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin text-ink-disabled" />
+                            )}
+                          </div>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="holderAddressNumber">Número</Label>
+                          <Input
+                            id="holderAddressNumber"
+                            value={holderAddressNumber}
+                            onChange={(e) => setHolderAddressNumber(e.target.value)}
+                            required
+                            placeholder="123"
+                          />
+                        </div>
                       </div>
-                    )}
+
+                      {cepAddress && (
+                        <div className="mt-3 flex items-start gap-2 px-3 py-2.5 bg-muted border border-border rounded-lg text-xs text-ink-muted">
+                          <MapPin className="w-3.5 h-3.5 text-foreground shrink-0 mt-0.5" />
+                          <span>
+                            {cepAddress.logradouro && `${cepAddress.logradouro}, `}
+                            {cepAddress.bairro && `${cepAddress.bairro}, `}
+                            {cepAddress.cidade}/{cepAddress.uf}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
-
-              {billingType === "PIX" && (
-                <p className="text-sm text-black/55 bg-black/[0.02] border border-black/5 rounded-xl p-4">
-                  Após confirmar, você recebe o QR Code e o código copia-e-cola. Liberação automática em segundos.
-                </p>
-              )}
-
-              {billingType === "BOLETO" && (
-                <p className="text-sm text-black/55 bg-black/[0.02] border border-black/5 rounded-xl p-4">
-                  Após confirmar, você recebe a linha digitável e o link do PDF. Liberação em 1 a 3 dias úteis.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {createPack.isError && (
-            <p className="text-sm text-danger-strong bg-danger-soft border border-danger-mid-border rounded-lg p-3">
-              {(createPack.error as Error).message}
-            </p>
-          )}
-
-          <Button type="submit" variant="brand" loading={createPack.isPending} className="w-full h-12">
-            <Lock className="w-4 h-4 mr-2" /> Pagar {formatCurrency(tier.valorCentavos / 100, { decimals: 2 })}
-          </Button>
-        </form>
-
-        <aside className="space-y-3 order-1 lg:order-2">
-          <p className="text-sm font-medium text-ink px-1">Escolha o pacote</p>
-          {TIER_ORDER.map((id) => {
-            const t = TIER_CATALOG[id];
-            const desconto = descontoPct(id);
-            const selected = tierId === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setTierId(id)}
-                className={cn(
-                  "relative flex w-full items-center justify-between rounded-xl border p-4 text-left transition-colors",
-                  selected ? "border-brand bg-brand/5" : "border-black/10 hover:border-black/20"
                 )}
-              >
-                <div>
-                  <p className="text-sm font-semibold text-ink">{t.label}</p>
-                  {desconto > 0 && <p className="text-xs text-positive-strong">{desconto}% de desconto</p>}
+
+                {billingType === "PIX" && (
+                  <div className="rounded-xl border border-border bg-muted p-4 text-sm text-ink-muted space-y-1">
+                    <p className="font-medium text-ink">Como funciona</p>
+                    <p>
+                      Após confirmar, você recebe o QR Code e o código copia-e-cola. Liberação automática em segundos.
+                    </p>
+                  </div>
+                )}
+
+                {billingType === "BOLETO" && (
+                  <div className="rounded-xl border border-border bg-muted p-4 text-sm text-ink-muted space-y-1">
+                    <p className="font-medium text-ink">Como funciona</p>
+                    <p>Após confirmar, você recebe a linha digitável e o link do PDF. Liberação em 1 a 3 dias úteis.</p>
+                  </div>
+                )}
+              </section>
+
+              {createPack.isError && (
+                <div className="text-sm text-danger-strong bg-danger-soft border border-danger-mid-border rounded-lg p-3">
+                  {(createPack.error as Error).message}
                 </div>
-                <p className="text-base font-semibold text-ink">
-                  {formatCurrency(t.valorCentavos / 100, { decimals: 2 })}
-                </p>
-              </button>
-            );
-          })}
-          <p className="text-xs text-black/45 px-1">Sem expiração no ciclo. Não afeta os tokens do plano.</p>
-        </aside>
+              )}
+
+              <div className="space-y-3">
+                <Button
+                  type="submit"
+                  variant="brand"
+                  disabled={createPack.isPending}
+                  className="w-full h-12 text-sm font-semibold"
+                >
+                  {createPack.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processando...
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="w-4 h-4 mr-2" /> Pagar{" "}
+                      {formatCurrency(tier.valorCentavos / 100, { decimals: 2 })}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          )}
+        </section>
+
+        {!result && (
+          <aside className="sticky top-[73px] space-y-4">
+            <div className="bg-white rounded-2xl border border-paper-border p-6 shadow-sm">
+              <p className="text-[10px] uppercase tracking-widest text-ink-disabled mb-4">Escolha o pacote</p>
+
+              <div className="space-y-2.5">
+                {TIER_ORDER.map((id) => {
+                  const t = TIER_CATALOG[id];
+                  const desconto = descontoPct(id);
+                  const selected = tierId === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setTierId(id)}
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-xl border p-3.5 text-left transition-colors",
+                        selected ? "border-brand bg-brand/5" : "border-border hover:bg-muted"
+                      )}
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-ink">{t.label}</p>
+                        {desconto > 0 && <p className="text-xs text-positive-strong">{desconto}% de desconto</p>}
+                      </div>
+                      <p className="text-sm font-semibold text-ink whitespace-nowrap">
+                        {formatCurrency(t.valorCentavos / 100, { decimals: 2 })}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-5 pt-4 border-t border-border flex justify-between items-baseline">
+                <span className="text-xs uppercase tracking-wider text-ink-muted">Total</span>
+                <div className="text-right">
+                  <p className="text-2xl font-semibold text-ink">
+                    {formatCurrency(tier.valorCentavos / 100, { decimals: 2 })}
+                  </p>
+                  <p className="text-[11px] text-ink-disabled">pagamento único</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl border border-paper-border p-4 space-y-2.5">
+              {[
+                { icon: Lock, text: "Pagamento 100% seguro, criptografia SSL" },
+                { icon: CheckCircle2, text: "Sem expiração no ciclo mensal" },
+                { icon: Mail, text: "Recibo enviado por email" },
+              ].map(({ icon: Icon, text }) => (
+                <div key={text} className="flex items-center gap-2 text-xs text-ink-muted">
+                  <Icon className="w-3.5 h-3.5 text-foreground flex-shrink-0" />
+                  {text}
+                </div>
+              ))}
+            </div>
+          </aside>
+        )}
       </div>
-    </PilarPage>
+    </CheckoutShell>
   );
 }
