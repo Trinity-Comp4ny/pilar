@@ -375,13 +375,6 @@ export function useProjetoDetail(id: string | undefined) {
           `Status: ${PROJECT_STATUS_CONFIG[newStatus as keyof typeof PROJECT_STATUS_CONFIG]?.label ?? newStatus}`
         );
         invalidateProjeto();
-        if (newStatus !== PROJECT_STATUS.CANCELADO) {
-          const { error: notifyError } = await supabase.rpc("rpc_notificar_projeto_status", {
-            p_projeto_id: projeto.id,
-            p_novo_status: newStatus,
-          });
-          if (notifyError) monitoring.captureException(notifyError, { context: "notifyProjectStatusChange" });
-        }
       } catch (err: unknown) {
         toast.error("Erro ao mudar status", { description: errorMessage(err) });
       }

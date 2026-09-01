@@ -3,7 +3,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { type DropResult } from "@hello-pangea/dnd";
 import { supabase } from "@/integrations/supabase/client";
-import { monitoring } from "@/lib/monitoring";
 import { PROJECT_STATUS, PROJECT_STATUS_CONFIG } from "@/constants";
 import { type Projeto } from "@/types/projetos";
 import { type ProjetoEtapa } from "@/pages/projetos/hooks/useProjetoEtapas";
@@ -21,9 +20,8 @@ type PendingMove = {
 };
 
 // Regra de mudança de status/coluna do projeto: update otimista no cache + banco,
-// notificação in-app automática dos responsáveis (sem perguntar, sem email — ver
-// rpc_notificar_projeto_status), e confirmação de reabertura ao sair de uma coluna
-// do bucket "Concluído" (pendingReopen, que zera data_final). No desktop o board
+// e confirmação de reabertura ao sair de uma coluna do bucket "Concluído"
+// (pendingReopen, que zera data_final). No desktop o board
 // move por etapa_id (o status deriva do bucket no banco); no mobile, que agrupa
 // pelos 6 status canônicos, move por status direto.
 export function useProjetoStatusMove(projetos: Projeto[], canEdit: boolean, etapas: ProjetoEtapa[] = []) {
@@ -99,12 +97,7 @@ export function useProjetoStatusMove(projetos: Projeto[], canEdit: boolean, etap
       return;
     }
 
-    const ok = await applyStatusMove(projetoId, newStatus);
-    if (!ok) return;
-
-    if (newStatus !== PROJECT_STATUS.CANCELADO) {
-      void notifyProjectStatusChange(projetoId, newStatus);
-    }
+    await applyStatusMove(projetoId, newStatus);
   };
 
   // Desktop: move por etapa (droppableId = etapa.id). As âncoras (reabrir concluído,
@@ -133,28 +126,7 @@ export function useProjetoStatusMove(projetos: Projeto[], canEdit: boolean, etap
       return;
     }
 
-    const ok = await applyStatusMove(draggableId, bucketDestino, false, etapaDestino);
-    if (!ok) return;
-
-    if (bucketDestino !== PROJECT_STATUS.CANCELADO) {
-      void notifyProjectStatusChange(draggableId, bucketDestino);
-    }
-  };
-
-  // Notifica in-app os responsáveis das disciplinas do projeto (sino), silenciosamente —
-  // sem diálogo de confirmação e sem email. Falha aqui não deve travar o fluxo de mover.
-  const notifyProjectStatusChange = async (projetoId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase.rpc("rpc_notificar_projeto_status", {
-        p_projeto_id: projetoId,
-        p_novo_status: newStatus,
-      });
-      if (error) {
-        monitoring.captureException(error, { context: "notifyProjectStatusChange" });
-      }
-    } catch (err) {
-      monitoring.captureException(err, { context: "notifyProjectStatusChange" });
-    }
+    await applyStatusMove(draggableId, bucketDestino, false, etapaDestino);
   };
 
   return {
