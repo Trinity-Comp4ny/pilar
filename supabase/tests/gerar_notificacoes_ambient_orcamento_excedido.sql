@@ -1,6 +1,6 @@
 -- pgTAP: notificação `orcamento_excedido` em gerar_notificacoes_ambient()
 -- (migration 20260865000000, spec 067; fonte de custo_orcado corrigida na
--- migration 20260887000000, spec 081).
+-- migration 20260889000000, spec 081).
 --
 -- CORREÇÃO (spec 081): a versão original comparava despesas contra
 -- SUM(escopos.custo_estimado) WHERE tipo='original' — mas nada no sistema

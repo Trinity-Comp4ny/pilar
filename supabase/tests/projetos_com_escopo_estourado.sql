@@ -1,4 +1,4 @@
--- pgTAP: public.projetos_com_escopo_estourado() (migration 20260887000000, spec 081)
+-- pgTAP: public.projetos_com_escopo_estourado() (migration 20260889000000, spec 081)
 --
 -- Fonte única de "quais projetos estouraram o orçamento vivo", consumida pelo
 -- guardiao-margem-cron (agente que prepara o rascunho de aditivo) e conceitualmente
