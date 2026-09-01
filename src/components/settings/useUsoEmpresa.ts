@@ -9,6 +9,8 @@ export interface UsoEmpresa {
   maxProjetos: number | null;
   maxUsuarios: number | null;
   planoNome: string | null;
+  tokensPlano: number;
+  tokensComprado: number;
 }
 
 // "Projeto ativo" = não removido (deleted_at IS NULL). É o mesmo critério que o
@@ -23,16 +25,31 @@ export function useUsoEmpresa() {
     queryKey: ["uso-empresa", empresaId],
     enabled: !!empresaId,
     staleTime: 1000 * 60,
-    queryFn: async (): Promise<{ projetosAtivos: number; usuarios: number }> => {
-      const [{ count: projetosAtivos }, { count: usuarios }] = await Promise.all([
+    queryFn: async (): Promise<{
+      projetosAtivos: number;
+      usuarios: number;
+      tokensPlano: number;
+      tokensComprado: number;
+    }> => {
+      const [{ count: projetosAtivos }, { count: usuarios }, { data: saldo }] = await Promise.all([
         supabase
           .from("projetos")
           .select("*", { count: "exact", head: true })
           .eq("empresa_id", empresaId!)
           .is("deleted_at", null),
         supabase.from("profiles").select("*", { count: "exact", head: true }).eq("empresa_id", empresaId!),
+        supabase
+          .from("ai_token_saldo")
+          .select("saldo_plano, saldo_comprado")
+          .eq("empresa_id", empresaId!)
+          .maybeSingle(),
       ]);
-      return { projetosAtivos: projetosAtivos ?? 0, usuarios: usuarios ?? 0 };
+      return {
+        projetosAtivos: projetosAtivos ?? 0,
+        usuarios: usuarios ?? 0,
+        tokensPlano: saldo?.saldo_plano ?? 0,
+        tokensComprado: saldo?.saldo_comprado ?? 0,
+      };
     },
   });
 
@@ -42,6 +59,8 @@ export function useUsoEmpresa() {
     maxProjetos: subscription?.plan?.max_projetos ?? null,
     maxUsuarios: subscription?.plan?.max_usuarios ?? null,
     planoNome: subscription?.plan?.nome ?? null,
+    tokensPlano: query.data?.tokensPlano ?? 0,
+    tokensComprado: query.data?.tokensComprado ?? 0,
   };
 
   return { uso, isLoading: query.isLoading, error: query.error as Error | null };

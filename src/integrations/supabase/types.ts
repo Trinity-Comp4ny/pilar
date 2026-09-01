@@ -6664,6 +6664,31 @@ export type Database = {
           },
         ]
       }
+      v_extrato_tokens: {
+        Row: {
+          agent_key: string | null
+          created_at: string | null
+          custo_estimado: number | null
+          empresa_id: string | null
+          id: string | null
+          model: string | null
+          source: string | null
+          tokens_input: number | null
+          tokens_output: number | null
+          tokens_total: number | null
+          user_id: string | null
+          user_nome: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_token_ledger_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_uso_tokens_por_agente: {
         Row: {
           agent_key: string | null
