@@ -1,18 +1,22 @@
 # ICP & Personas
 
 > Pra quem o Pilar fala. Filtro de toda feature e toda copy.
-> Ref: [BRAND.md](./BRAND.md) · memória `project-icp-positioning` · Última atualização: `2026-06-10` · `v0`
+> Ref: [BRAND.md](./BRAND.md) · `docs/strategy/DECISOES.md` (2026-09-01) · Última atualização: `2026-09-01` · `v1`
 
 ## ICP
 
-**Empresas de engenharia multidisciplinar** — civil + estrutural + MEP/HVAC.
+**Escritórios de projeto técnico** — engenharia multidisciplinar (civil + estrutural + MEP/HVAC) e arquitetura.
 
-- ✅ **É:** escritório de engenharia de projetos, multidisciplinar, que vende projeto técnico por proposta.
-- ❌ **Não é:** arquitetura pura (fluxo criativo, fases diferentes), construtora (precisa gestão de obra, fora do escopo).
+- ✅ **É:** escritório de engenharia ou arquitetura que vende projeto técnico por proposta, com fluxo de disciplina/etapa.
+- ❌ **Não é:** construtora / incorporadora (precisa gestão de obra como núcleo do negócio, fora do escopo).
 - **Porte:** pequeno a médio. Planos por usuário — Starter ≤3, Pro ≤15, Enterprise ilimitado.
 - **Maturidade digital:** sai de planilha + WhatsApp; conservador, técnico, cético com hype.
 
-> Decidido em mesa redonda 2026-05-13 (10+ agentes cruzando código, fluxos e entrevistas simuladas). Arquitetura e construtora descartadas por fluxo divergente.
+> ICP original decidido em mesa redonda 2026-05-13, descartando arquitetura por "fluxo criativo,
+> fases diferentes". Expandido em 2026-09-01 (`DECISOES.md`): Rafael (Mawe Arquitetura, design
+> partner desde 18/08) validou o mesmo fluxo de disciplina→etapa fora do Pilar, é o sinal de
+> produto mais forte hoje (metodologia cruzada, primeira reação forte ao portal). A divergência
+> prevista não se confirmou com uso real — construtora continua fora.
 
 ## Persona primária — Dono / Sócio-engenheiro
 
@@ -45,7 +49,6 @@
 
 ## Anti-persona (não perseguir)
 
-- Arquiteto / escritório de arquitetura pura.
-- Construtora / incorporadora (gestão de obra).
+- Construtora / incorporadora (gestão de obra como núcleo).
 - Freelancer solo sem fluxo de proposta.
 - Grande empresa que quer ERP completo customizado.

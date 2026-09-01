@@ -71,7 +71,7 @@
 
 Tensões reais entre o que está em produção e a estratégia. **Resolver antes de v1.**
 
-1. **ICP na copy diverge da estratégia.** Landing diz _"engenharia **e arquitetura**"_; estratégia (memória `project-icp-positioning`) descartou arquitetura pura (fluxo criativo ≠ técnico). → Decidir: alinhar copy pra "engenharia" ou expandir ICP oficial. **Recomendo alinhar a copy.**
+1. ~~**ICP na copy diverge da estratégia.**~~ **Resolvido em 2026-09-01** (`DECISOES.md`): o ICP oficial expandiu pra incluir arquitetura — a landing já estava certa, a estratégia é que ficou pra trás. Ver `personas.md`.
 2. **Tagline vs hero.** Tagline oficial é "saiba se dá lucro antes de terminar"; hero vende "pare do caos / único fluxo". São ângulos diferentes (resultado financeiro vs organização). → Decidir hierarquia: qual é a promessa #1?
 3. **Empresa vs produto.** Labrynth AI (empresa) × Pilar (produto). Definir como a marca-mãe aparece (ou não) no material.
 4. **Eixo AI-native na comunicação.** Estratégia aposta em "agentes que executam"; landing atual não comunica isso. → Decidir quando/quanto expor (IA Hub ainda dormente em produção — ver `CLAUDE.md`).
