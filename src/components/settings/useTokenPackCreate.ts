@@ -2,9 +2,10 @@ import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export type TokenPackBillingType = "PIX" | "BOLETO";
+export type TokenPackTierId = "starter" | "cresce" | "escala" | "maximo";
 
 export interface TokenPackCreatePayload {
-  quantidade_pacotes: number;
+  tier_id: TokenPackTierId;
   billing_type: TokenPackBillingType;
 }
 

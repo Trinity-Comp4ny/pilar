@@ -3,23 +3,37 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { FormDialog } from "@/components/FormDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { formatCurrency, formatNumber } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { formatCurrency, formatNumberCompact } from "@/lib/format";
 import { PixPayment } from "@/pages/checkout/components/PixPayment";
 import { BoletoPayment } from "@/pages/checkout/components/BoletoPayment";
 import {
   useTokenPackCreate,
   type TokenPackBillingType,
   type TokenPackCreateResponse,
+  type TokenPackTierId,
 } from "@/components/settings/useTokenPackCreate";
 import { useTokenPackStatus } from "@/components/settings/useTokenPackStatus";
 
-const TOKENS_POR_PACOTE = 500_000;
-const VALOR_POR_PACOTE = 49;
+// Espelha o catálogo do backend (pilar-token-pack-create) só pra exibição — o preço
+// que vale de verdade é sempre resolvido no servidor a partir do tier_id (SPEC 080).
+const TIER_CATALOG: Record<TokenPackTierId, { tokens: number; valorCentavos: number; label: string }> = {
+  starter: { tokens: 500_000, valorCentavos: 4900, label: "500 mil tokens" },
+  cresce: { tokens: 1_500_000, valorCentavos: 12900, label: "1,5 milhão de tokens" },
+  escala: { tokens: 3_000_000, valorCentavos: 22800, label: "3 milhões de tokens" },
+  maximo: { tokens: 6_000_000, valorCentavos: 39900, label: "6 milhões de tokens" },
+};
+
+const TIER_ORDER: TokenPackTierId[] = ["starter", "cresce", "escala", "maximo"];
+const BASE_RATE = TIER_CATALOG.starter.valorCentavos / TIER_CATALOG.starter.tokens;
+
+function descontoPct(tierId: TokenPackTierId): number {
+  const tier = TIER_CATALOG[tierId];
+  const taxa = tier.valorCentavos / tier.tokens;
+  return Math.round((1 - taxa / BASE_RATE) * 100);
+}
 
 interface ComprarTokensDialogProps {
   open: boolean;
@@ -31,7 +45,7 @@ export function ComprarTokensDialog({ open, onOpenChange }: ComprarTokensDialogP
   const queryClient = useQueryClient();
   const createPack = useTokenPackCreate();
 
-  const [quantidade, setQuantidade] = useState(1);
+  const [tierId, setTierId] = useState<TokenPackTierId>("cresce");
   const [billingType, setBillingType] = useState<TokenPackBillingType>("PIX");
   const [result, setResult] = useState<TokenPackCreateResponse | null>(null);
 
@@ -39,7 +53,7 @@ export function ComprarTokensDialog({ open, onOpenChange }: ComprarTokensDialogP
   const paid = status.data?.status === "paid";
 
   const reset = () => {
-    setQuantidade(1);
+    setTierId("cresce");
     setBillingType("PIX");
     setResult(null);
     createPack.reset();
@@ -51,10 +65,7 @@ export function ComprarTokensDialog({ open, onOpenChange }: ComprarTokensDialogP
   };
 
   const handleSubmit = () => {
-    createPack.mutate(
-      { quantidade_pacotes: quantidade, billing_type: billingType },
-      { onSuccess: (data) => setResult(data) }
-    );
+    createPack.mutate({ tier_id: tierId, billing_type: billingType }, { onSuccess: (data) => setResult(data) });
   };
 
   if (paid && result) {
@@ -68,7 +79,7 @@ export function ComprarTokensDialog({ open, onOpenChange }: ComprarTokensDialogP
             <div>
               <h3 className="text-lg font-semibold text-ink">Tokens creditados</h3>
               <p className="text-sm text-black/55 mt-1">
-                {formatNumber(result.tokens)} tokens já estão disponíveis no seu saldo.
+                {formatNumberCompact(result.tokens)} tokens já estão disponíveis no seu saldo.
               </p>
             </div>
             <Button
@@ -125,56 +136,80 @@ export function ComprarTokensDialog({ open, onOpenChange }: ComprarTokensDialogP
     );
   }
 
-  const totalTokens = quantidade * TOKENS_POR_PACOTE;
-  const totalValor = quantidade * VALOR_POR_PACOTE;
-
   return (
     <FormDialog
       open={open}
       onOpenChange={handleClose}
       title="Comprar mais tokens"
-      description="Pacote de 500 mil tokens, sem expiração. Pague por Pix ou boleto."
-      size="sm"
+      description="Sem expiração no ciclo. Quanto maior o pacote, menor o preço por token."
+      size="md"
       onSubmit={handleSubmit}
       submitLabel="Comprar"
       isPending={createPack.isPending}
       zClassName="z-[70]"
     >
-      <div className="space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="quantidade-pacotes">Quantidade de pacotes</Label>
-          <Input
-            id="quantidade-pacotes"
-            type="number"
-            min={1}
-            max={20}
-            value={quantidade}
-            onChange={(e) => {
-              const next = Number(e.target.value);
-              setQuantidade(Number.isFinite(next) ? Math.min(20, Math.max(1, next)) : 1);
-            }}
-          />
-          <p className="text-xs text-black/45">
-            {formatNumber(totalTokens)} tokens por {formatCurrency(totalValor)}
-          </p>
+      <div className="space-y-5">
+        <div
+          role="radiogroup"
+          aria-label="Quantidade de tokens"
+          className="grid grid-cols-2 gap-3"
+        >
+          {TIER_ORDER.map((id) => {
+            const tier = TIER_CATALOG[id];
+            const desconto = descontoPct(id);
+            const selected = tierId === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => setTierId(id)}
+                className={cn(
+                  "relative flex flex-col items-start gap-1 rounded-xl border p-4 text-left transition-colors",
+                  selected ? "border-brand bg-brand/5" : "border-black/10 hover:border-black/20"
+                )}
+              >
+                {desconto > 0 && (
+                  <span className="absolute -top-2.5 right-3 rounded-full bg-brand px-2 py-0.5 text-[10px] font-semibold text-ink">
+                    -{desconto}%
+                  </span>
+                )}
+                <span className="text-sm font-semibold text-ink">{tier.label}</span>
+                <span className="text-lg font-semibold text-ink">
+                  {formatCurrency(tier.valorCentavos / 100, { decimals: 2 })}
+                </span>
+                <span className="text-xs text-black/45">
+                  {formatCurrency((tier.valorCentavos / tier.tokens) * 1_000_000, { decimals: 2 })}/milhão
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         <div className="space-y-1.5">
-          <Label>Forma de pagamento</Label>
-          <RadioGroup value={billingType} onValueChange={(v) => setBillingType(v as TokenPackBillingType)}>
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value="PIX" id="pack-pix" />
-              <Label htmlFor="pack-pix" className="font-normal">
-                Pix
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <RadioGroupItem value="BOLETO" id="pack-boleto" />
-              <Label htmlFor="pack-boleto" className="font-normal">
-                Boleto
-              </Label>
-            </div>
-          </RadioGroup>
+          <span className="text-sm font-medium text-ink">Forma de pagamento</span>
+          <div
+            role="tablist"
+            aria-label="Forma de pagamento"
+            className="inline-flex items-center rounded-full border border-black/10 bg-black/[0.02] p-1"
+          >
+            {(["PIX", "BOLETO"] as const).map((type) => (
+              <button
+                key={type}
+                type="button"
+                role="tab"
+                aria-selected={billingType === type}
+                onClick={() => setBillingType(type)}
+                className={cn(
+                  "px-5 py-1.5 rounded-full text-sm font-medium transition-colors",
+                  billingType === type ? "bg-white text-ink shadow-sm" : "text-black/50 hover:text-ink"
+                )}
+              >
+                {type === "PIX" ? "Pix" : "Boleto"}
+              </button>
+            ))}
+          </div>
         </div>
 
         {createPack.isError && (
