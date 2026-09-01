@@ -1,4 +1,4 @@
--- pgTAP: notificações removidas por baixo engajamento (migration 20260893000000)
+-- pgTAP: notificações removidas por baixo engajamento (migration 20260894000000)
 --
 -- Guarda de regressão: confirma que rpc_notificar_projeto_status e o trigger de
 -- disciplina_atribuida realmente sumiram (não voltam por acidente numa migration
