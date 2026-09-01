@@ -8,44 +8,34 @@ Regras de manutenção:
 
 - Toda decisão de direção nova entra aqui NA HORA, no topo, com data, decisão em 1 frase,
   contexto em 2-3 linhas e o que ela supera.
+
+---
+
+## 2026-09-01 · Ativação do Asaas de plataforma é iniciativa própria, sandbox primeiro
+
+**Decisão:** ligar o Asaas que cobra a assinatura do Pilar (não o Asaas por-empresa, que já
+tem UI e é opt-in do cliente) é trabalho separado do motor de tokens, começando por sandbox.
+Produção só entra com um cliente concreto pronto pra pagar de verdade.
+
+**Contexto:** testando o motor de tokens em staging, ficou claro que nenhum ambiente
+(staging ou produção) tem qualquer credencial `ASAAS_PLATFORM_*` configurada — o checkout de
+assinatura (`pilar-checkout-create`/`pilar-subscription-manage`) nunca foi ligado em lugar
+nenhum, o que bate com "zero pagante". Levantamento completo em
+`docs/operations/AUDITORIA_ATIVACAO_ASAAS_2026-09-01.md`, que também corrige um erro anterior:
+a Fase 3 do motor de tokens (compra de pacote) tinha sido descrita usando o Asaas por-empresa
+(`asaas-criar-cobranca`); o certo é o Asaas de plataforma, o mesmo da assinatura.
+
+**Supera:** a suposição registrada nas specs 074/075 do motor de tokens sobre qual Asaas a
+Fase 3 usaria.
+
+**Como aplicar:** próximo passo é o checklist de sandbox da auditoria (chave sandbox +
+3 secrets + webhook de teste); a Fase 3 de tokens só volta à mesa depois disso estar rodando,
+e reusa a mesma base de credencial.
 - Decisão que muda arquitetura/stack vira ADR (`docs/architecture/adr/`) e ganha só um ponteiro aqui.
 - Decisão sensível (segurança, marca não registrada, dado de cliente) NÃO entra aqui: o repo é
   público. Fica na memória do projeto e é passada no prompt quando relevante.
 - Os agentes de time (`.claude/agents/`) leem este arquivo antes de qualquer análise, por
   protocolo escrito nos próprios agentes.
-
----
-
-## 2026-09-01 · Números da Camada 2 de tokens: cotas 500k/2M/8M mantidas, pacote único R$49/500 mil
-
-**Decisão:** manter as cotas mensais de token por plano em 500 mil (Essencial),
-2 milhões (Profissional) e 8 milhões (Escala) — os valores hipotéticos já seedados na
-migration da Fase 2 (spec 075) viram a referência de lançamento. Pacote extra: **um SKU
-único, R$49 por 500 mil tokens, sem expiração**. Nenhum cardápio de blocos.
-
-**Contexto:** com o Gemini 2.5 Flash e o mix real medido em produção via ledger (~86%
-input / 14% output no turno de chat de referência), o custo é ~R$3,50 por milhão de
-tokens. Isso deixa a cota do Essencial custando ~R$1,75/mês (0,4% do preço) e a do
-Escala ~R$28/mês (2,2%) — o COGS deixou de ser a força que dita a cota; quem manda é
-adoção e degrau de upsell, não proteção de margem. No pacote extra, a regra antiga
-"~2,5x o COGS" (do PRICING.md v3) daria algo perto de R$8-9, preço baixo demais pra
-cobrir o fee do Asaas e sem função comercial; R$49 mantém a âncora que já existia na v3,
-entrega margem ~96% no pacote, e o custo por ação (~R$0,15-0,40) fica desprezível
-contra a hora do sócio/orçamentista — o value gap que sustenta o modelo inteiro.
-
-**Supera:** a hipótese de preço de pacote da Camada 2 no PRICING.md (~R$49/50 "ações",
-regra de margem 2,5x custo) — o número R$49 sobrevive, a régua de cálculo por trás
-muda: de "múltiplo do COGS" pra "âncora comercial com custo desprezível". As cotas por
-plano registradas na migration `20260880000000_token_enforcement_gate_e_ciclo.sql`
-deixam de ser só placeholder técnico e passam a ser o número de lançamento, sujeito
-a recalibrar com o dado real da Fase 0 (instrumentação em produção) antes de qualquer
-tabela pública ou copy de venda — nenhum desses números vai pra LP ainda.
-
-**Como aplicar:** gatilho de revisão do preço do pacote é o COGS por milhão passar de
-~R$20 (troca de modelo mais caro, ex. Gemini 2.5 Pro) — nesse ponto reabrir a conta,
-não antes. Trocar de modelo LLM não muda os números aqui sozinho: exige inserir o preço
-novo em `ai_model_precos` (com `vigente_desde`) antes de apontar `GEMINI_MODEL` pro
-modelo novo, para o custo por evento continuar exato desde a primeira chamada.
 
 ---
 
