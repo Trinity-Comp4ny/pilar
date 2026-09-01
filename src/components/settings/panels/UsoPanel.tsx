@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FolderKanban, Users, Loader2, ArrowUpRight, Coins, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useUsoEmpresa } from "@/components/settings/useUsoEmpresa";
 import { useExtratoTokens, agentKeyLabel } from "@/components/settings/useExtratoTokens";
-import { ComprarTokensDialog } from "@/components/settings/ComprarTokensDialog";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatNumberCompact, formatNumber, formatDateTime } from "@/lib/format";
@@ -101,9 +100,9 @@ const extratoColumns: ColumnDef<ExtratoTokenEvento>[] = [
 export function UsoPanel() {
   const { uso, isLoading, error } = useUsoEmpresa();
   const { eventos, isLoading: extratoLoading, error: extratoError } = useExtratoTokens();
-  const { openSettings } = useSettingsModal();
+  const { openSettings, closeSettings } = useSettingsModal();
   const { profile } = useAuth();
-  const [comprarOpen, setComprarOpen] = useState(false);
+  const navigate = useNavigate();
   const canComprar = profile?.role === "admin" || profile?.role === "ultra_admin";
 
   if (isLoading) {
@@ -179,7 +178,10 @@ export function UsoPanel() {
                   variant="ghost"
                   size="sm"
                   className="h-7 px-2 text-xs text-brand hover:text-brand"
-                  onClick={() => setComprarOpen(true)}
+                  onClick={() => {
+                    closeSettings();
+                    navigate("/comprar-tokens");
+                  }}
                 >
                   <Plus size={14} className="mr-1" /> Comprar mais
                 </Button>
@@ -190,8 +192,6 @@ export function UsoPanel() {
           </CardContent>
         </Card>
       </div>
-
-      <ComprarTokensDialog open={comprarOpen} onOpenChange={setComprarOpen} />
 
       <div>
         <h4 className="text-sm font-medium text-ink mb-2">Extrato recente</h4>

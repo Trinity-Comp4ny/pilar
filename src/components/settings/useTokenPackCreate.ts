@@ -1,12 +1,31 @@
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type TokenPackBillingType = "PIX" | "BOLETO";
+export type TokenPackBillingType = "PIX" | "BOLETO" | "CREDIT_CARD";
 export type TokenPackTierId = "starter" | "cresce" | "escala" | "maximo";
+
+export interface TokenPackCreditCardData {
+  holderName: string;
+  number: string;
+  expiryMonth: string;
+  expiryYear: string;
+  ccv: string;
+}
+
+export interface TokenPackCreditCardHolderInfo {
+  name: string;
+  email: string;
+  cpfCnpj: string;
+  postalCode: string;
+  addressNumber: string;
+  phone?: string;
+}
 
 export interface TokenPackCreatePayload {
   tier_id: TokenPackTierId;
   billing_type: TokenPackBillingType;
+  credit_card?: TokenPackCreditCardData;
+  credit_card_holder_info?: TokenPackCreditCardHolderInfo;
 }
 
 export interface TokenPackCreateResponse {
