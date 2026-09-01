@@ -13,6 +13,8 @@ interface UsoEmpresaRow {
   planoNome: string | null;
   tokensTotal: number;
   custoEstimado: number;
+  receitaPlano: number | null;
+  receitaPacotes: number;
   receitaEstimada: number | null;
   margemEstimada: number | null;
 }
@@ -53,6 +55,7 @@ export function TokensPanel() {
         { data: empresas, error: e2 },
         { data: subs, error: e3 },
         { data: usoAgente, error: e4 },
+        { data: compras, error: e5 },
       ] = await Promise.all([
         supabase
           .from("v_uso_tokens_por_empresa")
@@ -64,11 +67,27 @@ export function TokensPanel() {
         supabase
           .from("v_uso_tokens_por_agente")
           .select("agent_key, mes, eventos, tokens_input, tokens_output, custo_estimado"),
+        supabase
+          .from("pilar_token_pack_purchases")
+          .select("empresa_id, valor_centavos, paid_at")
+          .eq("status", "paid"),
       ]);
       if (e1) throw e1;
       if (e2) throw e2;
       if (e3) throw e3;
       if (e4) throw e4;
+      if (e5) throw e5;
+
+      // Receita de pacote avulso (SPEC 077) por empresa, só do mês corrente — a mesma
+      // janela que o resto do painel usa. Dinheiro de verdade (paid), nunca chuta com
+      // pending/failed/canceled.
+      const receitaPacotesPorEmpresa = new Map<string, number>();
+      for (const c of compras ?? []) {
+        if (!c.paid_at || !mesmoMes(c.paid_at as string)) continue;
+        const empresaId = c.empresa_id as string;
+        const atual = receitaPacotesPorEmpresa.get(empresaId) ?? 0;
+        receitaPacotesPorEmpresa.set(empresaId, atual + Number(c.valor_centavos ?? 0) / 100);
+      }
 
       const nomeEmpresa = new Map((empresas ?? []).map((e) => [e.id as string, e.nome as string]));
       const planoAtivo = new Map(
@@ -93,13 +112,21 @@ export function TokensPanel() {
           // (preco_mensal do plano) — converte ANTES de subtrair, nunca mistura moeda.
           const custoBrl = custoEmBrl(Number(r.custo_estimado ?? 0));
           const plano = info?.plano ?? null;
-          const receita = info?.isPaying ? (plano?.preco_mensal ?? null) : null;
+          const receitaPlano = info?.isPaying ? (plano?.preco_mensal ?? null) : null;
+          const receitaPacotes = receitaPacotesPorEmpresa.get(r.empresa_id as string) ?? 0;
+          // "—" só quando não há NENHUMA receita de verdade (nem mensalidade, nem
+          // pacote); pacote avulso sozinho já é dinheiro real, não fica escondido
+          // atrás do null de "sem assinatura paga".
+          const temReceita = receitaPlano != null || receitaPacotes > 0;
+          const receita = temReceita ? (receitaPlano ?? 0) + receitaPacotes : null;
           return {
             empresaId: r.empresa_id as string,
             empresaNome: nomeEmpresa.get(r.empresa_id as string) ?? (r.empresa_id as string),
             planoNome: plano?.nome ?? null,
             tokensTotal: Number(r.tokens_input ?? 0) + Number(r.tokens_output ?? 0),
             custoEstimado: custoBrl,
+            receitaPlano,
+            receitaPacotes,
             receitaEstimada: receita,
             margemEstimada: receita != null ? receita - custoBrl : null,
           };
@@ -143,6 +170,16 @@ export function TokensPanel() {
         <span className="tabular-nums text-black/70">{formatCurrency(r.custoEstimado, { decimals: 2 })}</span>
       ),
       getSortValue: (r) => r.custoEstimado,
+    },
+    {
+      key: "receitaPacotes",
+      header: "Pacotes (mês)",
+      cell: (r) => (
+        <span className="tabular-nums text-black/70">
+          {r.receitaPacotes > 0 ? formatCurrency(r.receitaPacotes, { decimals: 2 }) : "—"}
+        </span>
+      ),
+      getSortValue: (r) => r.receitaPacotes,
     },
     {
       key: "receitaEstimada",
@@ -197,9 +234,10 @@ export function TokensPanel() {
           <Coins size={18} className="text-black/40" /> Motor de tokens — uso e margem (mês corrente)
         </h3>
         <p className="text-sm text-black/55">
-          Receita estimada é o preço de tabela do plano ativo, não o valor de fato cobrado no Asaas. COGS convertido de
-          USD (câmbio de referência R$5,50) — o ledger guarda o custo em USD, moeda nativa do provedor. Números de
-          lançamento (DECISOES.md 2026-09-01), calibrar com dado real de produção.
+          Receita estimada soma o preço de tabela do plano ativo (não o valor de fato cobrado no Asaas) com a receita
+          real de pacotes de tokens pagos no mês. COGS convertido de USD (câmbio de referência R$5,50) — o ledger
+          guarda o custo em USD, moeda nativa do provedor. Números de lançamento (DECISOES.md 2026-09-01), calibrar
+          com dado real de produção.
         </p>
       </div>
 
