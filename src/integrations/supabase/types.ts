@@ -4558,6 +4558,59 @@ export type Database = {
           },
         ]
       }
+      pilar_token_pack_purchases: {
+        Row: {
+          asaas_payment_id: string | null
+          billing_type: string
+          created_at: string
+          empresa_id: string
+          id: string
+          paid_at: string | null
+          payment_metadata: Json | null
+          quantidade_pacotes: number
+          status: string
+          tokens_pacote: number
+          user_id: string | null
+          valor_centavos: number
+        }
+        Insert: {
+          asaas_payment_id?: string | null
+          billing_type: string
+          created_at?: string
+          empresa_id: string
+          id?: string
+          paid_at?: string | null
+          payment_metadata?: Json | null
+          quantidade_pacotes: number
+          status?: string
+          tokens_pacote?: number
+          user_id?: string | null
+          valor_centavos: number
+        }
+        Update: {
+          asaas_payment_id?: string | null
+          billing_type?: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          paid_at?: string | null
+          payment_metadata?: Json | null
+          quantidade_pacotes?: number
+          status?: string
+          tokens_pacote?: number
+          user_id?: string | null
+          valor_centavos?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pilar_token_pack_purchases_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_download_logs: {
         Row: {
           arquivo_path: string | null
