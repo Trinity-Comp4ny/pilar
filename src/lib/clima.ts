@@ -98,6 +98,15 @@ const historicoResponseSchema = z
   })
   .passthrough();
 
+const climaDoDiaResponseSchema = z
+  .object({
+    daily: z
+      .object({ time: strArr, weather_code: z.array(z.number()) })
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+
 const reverseGeoResponseSchema = z
   .object({
     city: z.string().optional(),
@@ -407,6 +416,52 @@ export async function buscarHistorico(latitude: number, longitude: number, dias 
   const comChuva = somas.filter((mm) => (mm ?? 0) >= 1).length;
   const total = somas.reduce<number>((acc, mm) => acc + (mm ?? 0), 0);
   return { totalDias: dias, diasChuva: comChuva, chuvaMm: Math.round(total) };
+}
+
+// --- Clima automático do RDO (spec 080) ---------------------------------------
+
+/** Acha o clima do RDO numa série diária já buscada, pela data exata. Puro/testável. */
+export function climaDoDiaEmSerie(
+  serieDiaria: { time: string[]; weather_code: number[] } | undefined,
+  dataISO: string
+): ClimaRdo | null {
+  if (!serieDiaria) return null;
+  const idx = serieDiaria.time.indexOf(dataISO);
+  if (idx < 0) return null;
+  return climaPorCodigo(serieDiaria.weather_code[idx]).rdo;
+}
+
+/**
+ * Clima do RDO para uma data específica (hoje ou até ~92 dias atrás, teto do
+ * Open-Meteo para `past_days`), para autofill do formulário do dia (spec 080).
+ * `null` quando a data está fora do alcance da API ou a chamada falha — o
+ * formulário simplesmente não sugere nada, sem travar nem avisar: é um atalho
+ * editável, não uma obrigação.
+ */
+export async function buscarClimaDoDia(latitude: number, longitude: number, dataISO: string): Promise<ClimaRdo | null> {
+  const diasAtras = Math.round((Date.now() - new Date(`${dataISO}T00:00:00`).getTime()) / 86_400_000);
+  const pastDays = Math.min(92, Math.max(0, diasAtras));
+  try {
+    const params = new URLSearchParams({
+      latitude: String(latitude),
+      longitude: String(longitude),
+      daily: "weather_code",
+      past_days: String(pastDays),
+      forecast_days: "1",
+      timezone: "auto",
+    });
+    const res = await fetch(`${FORECAST_BASE}?${params.toString()}`);
+    if (!res.ok) return null;
+    const raw = await res.json();
+    const parsed = climaDoDiaResponseSchema.safeParse(raw);
+    if (!parsed.success) {
+      reportShapeMismatch("buscarClimaDoDia", "open-meteo-forecast", parsed.error.issues, raw);
+      return null;
+    }
+    return climaDoDiaEmSerie(parsed.data.daily, dataISO);
+  } catch {
+    return null;
+  }
 }
 
 // --- Clima × cronograma (spec 040): alerta de etapa sensível vs previsão ------

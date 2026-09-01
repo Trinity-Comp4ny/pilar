@@ -24,6 +24,8 @@ import {
   ordenarCotacoesPendentes,
   urgenciaLabel,
   desembolsoAcumuladoPorMes,
+  mesclarExtracaoVoz,
+  type RdoVozExtracao,
 } from "./obras";
 import { statusLabel } from "./status";
 
@@ -182,6 +184,60 @@ describe("somaEfetivo (spec 062)", () => {
 
   it("soma a quantidade de todas as linhas", () => {
     expect(somaEfetivo([{ quantidade: 5 }, { quantidade: 3 }])).toBe(8);
+  });
+});
+
+describe("mesclarExtracaoVoz (spec 080)", () => {
+  const extracaoVazia: RdoVozExtracao = {
+    transcricao: "",
+    clima: null,
+    condicao_trabalho: null,
+    efetivo: null,
+    atividades: null,
+    ocorrencias: null,
+    pendencias: null,
+    sugestoes: { efetivo_por_fornecedor: [], impedimentos: [], visitas: [], tarefas: [] },
+  };
+
+  it("não sobrescreve campo que a IA devolveu null (o que o usuário digitou permanece)", () => {
+    const patch = mesclarExtracaoVoz(
+      { ...extracaoVazia, atividades: "Concretagem do bloco B" },
+      { permiteEfetivo: true }
+    );
+    expect(patch).toEqual({ atividades: "Concretagem do bloco B" });
+    expect(patch.ocorrencias).toBeUndefined();
+    expect(patch.pendencias).toBeUndefined();
+  });
+
+  it("sobrescreve clima, condição e textos quando a IA identificou algo", () => {
+    const patch = mesclarExtracaoVoz(
+      {
+        ...extracaoVazia,
+        clima: "chuvoso",
+        condicao_trabalho: "parcial",
+        atividades: "Concretagem da laje",
+        ocorrencias: "Falta de cimento",
+        pendencias: "Revisar projeto elétrico",
+      },
+      { permiteEfetivo: true }
+    );
+    expect(patch).toEqual({
+      clima: "chuvoso",
+      condicao_trabalho: "parcial",
+      atividades: "Concretagem da laje",
+      ocorrencias: "Falta de cimento",
+      pendencias: "Revisar projeto elétrico",
+    });
+  });
+
+  it("aplica efetivo quando permitido (sem linha de efetivo por fornecedor lançada)", () => {
+    const patch = mesclarExtracaoVoz({ ...extracaoVazia, efetivo: 8 }, { permiteEfetivo: true });
+    expect(patch.efetivo).toBe("8");
+  });
+
+  it("NÃO aplica efetivo quando já há linha de efetivo por fornecedor (total é derivado)", () => {
+    const patch = mesclarExtracaoVoz({ ...extracaoVazia, efetivo: 8 }, { permiteEfetivo: false });
+    expect(patch.efetivo).toBeUndefined();
   });
 });
 

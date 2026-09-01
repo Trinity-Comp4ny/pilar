@@ -463,6 +463,81 @@ export function somaEfetivo(linhas: ReadonlyArray<{ quantidade: number }>): numb
   return linhas.reduce((total, l) => total + l.quantidade, 0);
 }
 
+// --- RDO por voz (spec 080) ---------------------------------------------------
+
+/**
+ * Sugestões estruturadas da fala (spec 086): cada uma casada contra o
+ * cadastro real (fornecedor/tarefa) enviado no request, ou `null` quando o
+ * nome dito não bate com nada — nunca inventa um id. Nada disso vira dado
+ * sozinho; o usuário aceita item a item no painel de revisão.
+ */
+export interface SugestaoEfetivoVoz {
+  fornecedor_id: string | null;
+  fornecedor_nome: string;
+  quantidade: number;
+}
+export interface SugestaoImpedimentoVoz {
+  descricao: string;
+  tipo: TipoImpedimento;
+}
+export interface SugestaoVisitaVoz {
+  fornecedor_id: string | null;
+  fornecedor_nome: string;
+  observacao: string | null;
+}
+export interface SugestaoTarefaVoz {
+  tarefa_id: string;
+  resultado: "avancou" | "concluiu" | "parou";
+}
+export interface SugestoesRdoVoz {
+  efetivo_por_fornecedor: SugestaoEfetivoVoz[];
+  impedimentos: SugestaoImpedimentoVoz[];
+  visitas: SugestaoVisitaVoz[];
+  tarefas: SugestaoTarefaVoz[];
+}
+
+/** O que a edge `ai-rdo-voz` extrai da fala. Campo não mencionado vem `null`. */
+export interface RdoVozExtracao {
+  transcricao: string;
+  clima: string | null;
+  condicao_trabalho: string | null;
+  efetivo: number | null;
+  atividades: string | null;
+  ocorrencias: string | null;
+  pendencias: string | null;
+  sugestoes: SugestoesRdoVoz;
+}
+
+interface RdoVozCamposForm {
+  clima: string;
+  condicao_trabalho: string;
+  efetivo: string;
+  atividades: string;
+  ocorrencias: string;
+  pendencias: string;
+}
+
+/**
+ * Aplica a extração de voz sobre os campos do formulário do RDO: só
+ * sobrescreve o que a IA identificou na fala (não-nulo); o que o usuário já
+ * tinha digitado num campo que a IA não mencionou permanece intacto (spec
+ * 080, requisito 4). `efetivo` só entra no patch quando `permiteEfetivo` for
+ * true (sem nenhuma linha de efetivo por fornecedor lançada — requisito 5).
+ */
+export function mesclarExtracaoVoz(
+  extraido: RdoVozExtracao,
+  opts: { permiteEfetivo: boolean }
+): Partial<RdoVozCamposForm> {
+  const patch: Partial<RdoVozCamposForm> = {};
+  if (extraido.clima) patch.clima = extraido.clima;
+  if (extraido.condicao_trabalho) patch.condicao_trabalho = extraido.condicao_trabalho;
+  if (extraido.atividades) patch.atividades = extraido.atividades;
+  if (extraido.ocorrencias) patch.ocorrencias = extraido.ocorrencias;
+  if (extraido.pendencias) patch.pendencias = extraido.pendencias;
+  if (opts.permiteEfetivo && extraido.efetivo != null) patch.efetivo = String(extraido.efetivo);
+  return patch;
+}
+
 // --- Fila de cotações pendentes, cross-obra (spec 064) -----------------------
 
 interface CotacaoParaOrdenar {
