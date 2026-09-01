@@ -62,6 +62,7 @@ export type StatusDomain =
   | "tipo"
   | "obra"
   | "cotacao"
+  | "escopo"
   | "status_componente"
   | "status_incidente";
 
@@ -114,6 +115,12 @@ export const STATUS_REGISTRY: Record<StatusDomain, Record<string, StatusDef>> = 
     aberta: { label: "Aberta", tone: "info" },
     decidida: { label: "Decidida", tone: "positive" },
     cancelada: { label: "Cancelada", tone: "neutral" },
+  },
+  escopo: {
+    rascunho: { label: "Rascunho", tone: "neutral" },
+    pendente_aprovacao: { label: "Pendente de aprovação", tone: "warning" },
+    aprovado: { label: "Aprovado", tone: "positive" },
+    rejeitado: { label: "Rejeitado", tone: "danger" },
   },
   status_componente: {
     operacional: { label: "Operacional", tone: "positive" },

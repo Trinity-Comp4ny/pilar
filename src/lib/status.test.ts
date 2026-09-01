@@ -44,6 +44,13 @@ describe("registry de status", () => {
     expect(statusBadgeClasses("lead", "Perdido")).toBe("bg-danger-soft text-danger-strong");
   });
 
+  it("escopo (aditivos, spec 081): pendente chama atenção, aprovado e rejeitado são inequívocos", () => {
+    expect(statusBadgeClasses("escopo", "rascunho")).toBe(TONE_BADGE.neutral);
+    expect(statusBadgeClasses("escopo", "pendente_aprovacao")).toBe(TONE_BADGE.warning);
+    expect(statusBadgeClasses("escopo", "aprovado")).toBe(TONE_BADGE.positive);
+    expect(statusBadgeClasses("escopo", "rejeitado")).toBe(TONE_BADGE.danger);
+  });
+
   it("colunas do kanban de projeto seguem o mesmo tom do badge", () => {
     expect(statusColumnClasses("projeto", "Concluído")).toBe(TONE_COLUMN.done);
     expect(statusColumnClasses("projeto", "Paralisado")).toBe(TONE_COLUMN.brand);
