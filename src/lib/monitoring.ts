@@ -151,7 +151,6 @@ const sentryMonitoring: Monitoring = {
       integrations: [
         Sentry.browserTracingIntegration(),
         Sentry.replayIntegration({ maskAllText: false, blockAllMedia: false }),
-        Sentry.browserProfilingIntegration(),
       ],
       beforeSendTransaction(event) {
         const txName = event.transaction ?? "";
@@ -171,6 +170,14 @@ const sentryMonitoring: Monitoring = {
         return event;
       },
     });
+    // Profiling via CDN da própria Sentry (script já liberado no CSP, vercel.json),
+    // fora do bundle de entrada: adicionar direto em `integrations` acima estourava
+    // o orçamento de bundle (ver scripts/check-bundle-size.mjs) por ~4kB pra todo
+    // usuário, mesmo quem nunca cai na amostra de profilesSampleRate. Falha de rede
+    // aqui é não-fatal: resto do Sentry (erro, tracing, replay) já está ativo.
+    Sentry.lazyLoadIntegration("browserProfilingIntegration")
+      .then((integrationFn) => Sentry.addIntegration(integrationFn()))
+      .catch(() => undefined);
     // beforeSend só roda pra eventos de erro: sendFeedback() emite um evento
     // tipo "feedback" à parte, que precisa do próprio scrub aqui.
     Sentry.getClient()?.on("beforeSendFeedback", (feedback) => {

@@ -7174,6 +7174,7 @@ export type Database = {
       }
       aprovar_orcamento_agente: { Args: { p_run_id: string }; Returns: Json }
       audit_log_cleanup: { Args: never; Returns: number }
+      audit_log_cleanup_monitored: { Args: never; Returns: undefined }
       audit_logs_archive_old: { Args: never; Returns: number }
       campo_criar_tarefa: {
         Args: { p_titulo: string; p_token: string }
@@ -7296,6 +7297,10 @@ export type Database = {
         }
       }
       cleanup_expired_pending_signups: { Args: never; Returns: number }
+      cleanup_expired_pending_signups_monitored: {
+        Args: never
+        Returns: undefined
+      }
       cleanup_pending_signups: { Args: never; Returns: number }
       create_convite: {
         Args: { p_cargo: string; p_email: string; p_nome?: string }
@@ -7436,6 +7441,7 @@ export type Database = {
         Returns: string
       }
       gerar_notificacoes_ambient: { Args: never; Returns: number }
+      gerar_notificacoes_ambient_monitored: { Args: never; Returns: undefined }
       get_asaas_api_key: { Args: { p_empresa_id: string }; Returns: string }
       get_cliente_obra_detail: {
         Args: { p_obra_id: string; p_token: string }
@@ -7813,6 +7819,7 @@ export type Database = {
         }[]
       }
       rate_limit_cleanup: { Args: never; Returns: undefined }
+      rate_limit_cleanup_monitored: { Args: never; Returns: undefined }
       recalc_disciplina_status_por_checklist: {
         Args: { p_disciplina_id: string }
         Returns: undefined
@@ -8021,6 +8028,14 @@ export type Database = {
         Returns: number
       }
       rpc_sync_metas: { Args: never; Returns: number }
+      sentry_cron_checkin: {
+        Args: {
+          p_check_in_id?: string
+          p_monitor_slug: string
+          p_status: string
+        }
+        Returns: string
+      }
       set_access_profile: {
         Args: { p_perfil: string; p_user_id: string }
         Returns: undefined
