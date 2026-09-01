@@ -85,6 +85,12 @@ type EmpresaDetail = EmpresaRow & {
   /** Padrão do plano atual, só leitura (mostrado pra dar contexto do override). */
   planoMaxProjetos: number | null;
   planoMaxUsuarios: number | null;
+  /** Estado de cobrança (spec 078). "Isenta" é computado: status active sem asaas_subscription_id. */
+  cobranca: {
+    status: "active" | "trialing" | "overdue" | "canceled" | "expired" | null;
+    trialEndsAt: string | null;
+    isPaying: boolean;
+  };
 };
 
 type AuditRow = {
@@ -508,6 +514,11 @@ export default function UltraAdmin() {
         plano: SubscriptionPlanSlug | null;
         planoMaxProjetos: number | null;
         planoMaxUsuarios: number | null;
+        cobranca: {
+          status: "active" | "trialing" | "overdue" | "canceled" | "expired" | null;
+          trial_ends_at: string | null;
+          is_paying: boolean;
+        };
         usuarios: Array<{
           id: string;
           nome: string | null;
@@ -535,6 +546,11 @@ export default function UltraAdmin() {
         maxUsuariosOverride: raw.empresa.max_usuarios_override,
         planoMaxProjetos: raw.planoMaxProjetos,
         planoMaxUsuarios: raw.planoMaxUsuarios,
+        cobranca: {
+          status: raw.cobranca?.status ?? null,
+          trialEndsAt: raw.cobranca?.trial_ends_at ?? null,
+          isPaying: raw.cobranca?.is_paying ?? false,
+        },
         usersCount: raw.usuarios.length,
         usuarios: (
           raw.usuarios as Array<{
@@ -778,12 +794,39 @@ export default function UltraAdmin() {
     [detail]
   );
 
+  // Converte empresa isenta em pagante (spec 078): inicia o mesmo prazo de
+  // graça do trial (aviso 7/3/1 dias, corta acesso se não pagar). Refetch do
+  // detalhe porque o retorno da RPC não traz o objeto completo de novo.
+  const handleConverterPagante = useCallback(
+    async (diasPrazo: number, confirmName: string) => {
+      if (!detail) return;
+      try {
+        await edgeFetch("ultra-admin-empresas", {
+          method: "PUT",
+          body: { empresa_id: detail.id, converter_pagante: { dias_prazo: diasPrazo, confirm_name: confirmName } },
+        });
+        toast.success("Empresa em conversão", {
+          description: `Prazo de ${diasPrazo} dia(s) iniciado. O acesso continua normal até vencer.`,
+        });
+        await fetchDetail(detail.id);
+      } catch (err) {
+        reportInvokeError(err, "ultra-admin-empresas:converter-pagante");
+        toast.error("Erro ao converter empresa", {
+          description: getSafeErrorMessage(err, "Tente de novo em instantes."),
+        });
+        throw err;
+      }
+    },
+    [detail, fetchDetail]
+  );
+
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ nome: "", cnpj: "", ownerEmail: "", ownerNome: "" });
 
   const [editCompanyOpen, setEditCompanyOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [converterPaganteOpen, setConverterPaganteOpen] = useState(false);
   const [companyForm, setCompanyForm] = useState<{
     nome: string;
     cnpj: string;
@@ -938,6 +981,30 @@ export default function UltraAdmin() {
 
         <Card className="border border-black/5">
           <CardHeader>
+            <CardTitle className="text-base">Cobrança</CardTitle>
+            <CardDescription>
+              Empresa convidada pelo ultra-admin nasce isenta (sem Asaas vinculado). Converter para pagante inicia um
+              prazo de graça — acesso normal até vencer, aviso de contagem regressiva pro usuário, corta se não assinar
+              (spec 078).
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap items-center justify-between gap-3">
+            <CobrancaBadge cobranca={detail.cobranca} />
+            {!detail.cobranca.isPaying && detail.cobranca.status === "active" && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full"
+                onClick={() => setConverterPaganteOpen(true)}
+              >
+                Converter para pagante
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border border-black/5">
+          <CardHeader>
             <CardTitle className="text-base">Acesso antecipado</CardTitle>
             <CardDescription>
               Módulo maduro (Financeiro, Projetos, Obras...) é universal, toda empresa já tem, sem toggle. Aqui só dá
@@ -1020,6 +1087,16 @@ export default function UltraAdmin() {
           onConfirm={async (confirmName) => {
             await handleUpdateCompany({ status: "cancelled", confirm_name: confirmName });
             setArchiveOpen(false);
+          }}
+        />
+
+        <ConverterParaPaganteDialog
+          open={converterPaganteOpen}
+          onOpenChange={setConverterPaganteOpen}
+          companyName={detail.nome}
+          onConfirm={async (diasPrazo, confirmName) => {
+            await handleConverterPagante(diasPrazo, confirmName);
+            setConverterPaganteOpen(false);
           }}
         />
       </PageLayout>
@@ -1780,6 +1857,113 @@ function ArchiveCompanyDialog({
             className="bg-destructive hover:bg-destructive/90 focus:ring-destructive"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Arquivar empresa"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+// Badge de estado de cobrança (spec 078). "Isenta"/"Pagante" são computados
+// no backend (ver GET detalhe); os demais espelham o status de assinatura.
+function CobrancaBadge({ cobranca }: { cobranca: EmpresaDetail["cobranca"] }) {
+  if (cobranca.isPaying) {
+    return <Badge className="bg-fill-success text-fill-success-foreground">Pagante</Badge>;
+  }
+  if (cobranca.status === "trialing" && cobranca.trialEndsAt) {
+    const diasRestantes = Math.ceil((new Date(cobranca.trialEndsAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+    return (
+      <Badge className="bg-fill-warning text-fill-warning-foreground">
+        Em conversão · {diasRestantes > 0 ? `expira em ${diasRestantes}d` : "expira hoje"}
+      </Badge>
+    );
+  }
+  if (cobranca.status === "expired" || cobranca.status === "canceled" || cobranca.status === "overdue") {
+    return <Badge className="bg-fill-danger text-fill-danger-foreground">Vencido</Badge>;
+  }
+  return <Badge variant="outline">Isenta</Badge>;
+}
+
+function ConverterParaPaganteDialog({
+  open,
+  onOpenChange,
+  companyName,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  companyName: string;
+  onConfirm: (diasPrazo: number, confirmName: string) => Promise<void>;
+}) {
+  const [diasPrazo, setDiasPrazo] = useState("14");
+  const [confirmText, setConfirmText] = useState("");
+  const [saving, setSaving] = useState(false);
+  const diasValido = Number.isInteger(Number(diasPrazo)) && Number(diasPrazo) >= 1 && Number(diasPrazo) <= 365;
+  const nomeConfere = confirmText.trim() === (companyName ?? "").trim();
+
+  // Reseta os campos sempre que o dialog fecha.
+  useEffect(() => {
+    if (!open) {
+      setDiasPrazo("14");
+      setConfirmText("");
+    }
+  }, [open]);
+
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => !saving && onOpenChange(o)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Converter {companyName} para pagante?</AlertDialogTitle>
+          <AlertDialogDescription>
+            A empresa continua com acesso normal durante o prazo, com um aviso de contagem regressiva pro usuário. Se
+            ninguém completar a assinatura até o fim do prazo, o acesso é cortado (mesmo mecanismo do trial).
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="converter-dias" className="text-xs">
+              Prazo de graça (dias)
+            </Label>
+            <Input
+              id="converter-dias"
+              type="number"
+              min={1}
+              max={365}
+              value={diasPrazo}
+              onChange={(e) => setDiasPrazo(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="converter-confirm" className="text-xs">
+              Digite <span className="font-semibold">{companyName}</span> para confirmar
+            </Label>
+            <Input
+              id="converter-confirm"
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder={companyName}
+              autoComplete="off"
+            />
+          </div>
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={saving}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={async (e) => {
+              e.preventDefault();
+              if (!nomeConfere || !diasValido) return;
+              setSaving(true);
+              try {
+                await onConfirm(Number(diasPrazo), confirmText.trim());
+              } catch {
+                // handleConverterPagante já mostrou o toast de erro; dialog fica aberto pra retry.
+              } finally {
+                setSaving(false);
+              }
+            }}
+            disabled={saving || !nomeConfere || !diasValido}
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Converter para pagante"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
