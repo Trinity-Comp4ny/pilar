@@ -30,6 +30,16 @@ function mesmoMes(mes: string): boolean {
   return d.getUTCFullYear() === now.getUTCFullYear() && d.getUTCMonth() === now.getUTCMonth();
 }
 
+// ai_token_ledger.custo_estimado é calculado a partir de ai_model_precos, que segue
+// o preço público do provedor (USD — ver seed do Gemini 2.5 Flash na migration
+// 20260867000000). O câmbio de referência (R$5,50) é o mesmo usado no MOTOR_DE_TOKENS.md
+// e no DECISOES.md de 2026-09-01: só para leitura neste painel, nunca grava BRL no
+// ledger (o COGS snapshot fica em USD, moeda nativa do provedor, de propósito).
+const USD_BRL_REFERENCIA = 5.5;
+function custoEmBrl(custoUsd: number): number {
+  return custoUsd * USD_BRL_REFERENCIA;
+}
+
 // Painel cross-tenant de custo/margem da camada de IA (motor de tokens, spec 076,
 // Fase 5). Lê as views por empresa/agente (RLS com bypass de is_ultra_admin(), ver
 // migration 20260881000000) — nenhum edge function novo, mesmo padrão de leitura
@@ -72,16 +82,18 @@ export function TokensPanel() {
         .filter((r) => mesmoMes(r.mes as string))
         .map((r) => {
           const plano = planoAtivo.get(r.empresa_id as string) ?? null;
-          const custo = Number(r.custo_estimado ?? 0);
+          // custo_estimado vem em USD (COGS nativo do provedor); receita é BRL
+          // (preco_mensal do plano) — converte ANTES de subtrair, nunca mistura moeda.
+          const custoBrl = custoEmBrl(Number(r.custo_estimado ?? 0));
           const receita = plano?.preco_mensal ?? null;
           return {
             empresaId: r.empresa_id as string,
             empresaNome: nomeEmpresa.get(r.empresa_id as string) ?? (r.empresa_id as string),
             planoNome: plano?.nome ?? null,
             tokensTotal: Number(r.tokens_input ?? 0) + Number(r.tokens_output ?? 0),
-            custoEstimado: custo,
+            custoEstimado: custoBrl,
             receitaEstimada: receita,
-            margemEstimada: receita != null ? receita - custo : null,
+            margemEstimada: receita != null ? receita - custoBrl : null,
           };
         });
 
@@ -92,7 +104,7 @@ export function TokensPanel() {
         const atual = porAgenteMapa.get(key) ?? { agentKey: key, eventos: 0, tokensTotal: 0, custoEstimado: 0 };
         atual.eventos += Number(r.eventos ?? 0);
         atual.tokensTotal += Number(r.tokens_input ?? 0) + Number(r.tokens_output ?? 0);
-        atual.custoEstimado += Number(r.custo_estimado ?? 0);
+        atual.custoEstimado += custoEmBrl(Number(r.custo_estimado ?? 0));
         porAgenteMapa.set(key, atual);
       }
 
@@ -177,7 +189,8 @@ export function TokensPanel() {
           <Coins size={18} className="text-black/40" /> Motor de tokens — uso e margem (mês corrente)
         </h3>
         <p className="text-sm text-black/55">
-          Receita estimada é o preço de tabela do plano ativo, não o valor de fato cobrado no Asaas. Números de
+          Receita estimada é o preço de tabela do plano ativo, não o valor de fato cobrado no Asaas. COGS convertido de
+          USD (câmbio de referência R$5,50) — o ledger guarda o custo em USD, moeda nativa do provedor. Números de
           lançamento (DECISOES.md 2026-09-01), calibrar com dado real de produção.
         </p>
       </div>
