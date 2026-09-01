@@ -59,22 +59,30 @@ Regras:
 - Compra de pacote: item avulso no Asaas, crédito no ledger na confirmação do webhook,
   idempotente pelo id do pagamento.
 
-### Números (hipóteses, calibrar na Fase 0)
+### Números (fixados 2026-09-01, ver DECISOES.md; recalibrar com dado real da Fase 0)
 
-As cotas por plano e o preço do pacote **não se fixam antes de medir**. A tabela v3 do
-PRICING.md previa 40/150/500 "ações"; a conversão disso para tokens depende do custo médio
-real por operação de cada agente, que a Fase 0 mede em produção. Ordem de grandeza inicial
-(marcada como chute, não promessa):
+| Plano | Cota de tokens/mês | COGS máximo (mix atual) | % do preço do plano |
+|---|---|---|---|
+| Essencial (R$490) | 500 mil | ~R$1,75 | 0,4% |
+| Profissional (R$690) | 2 milhões | ~R$7,00 | 1,0% |
+| Escala (R$1.290) | 8 milhões | ~R$28,00 | 2,2% |
+| Enterprise | sob consulta | — | — |
+| **Pacote extra** | **R$49 por 500 mil tokens, sem expiração** | ~R$1,75 (margem ~96%) | — |
 
-| Plano | Cota de tokens/mês (hipótese) |
-|---|---|
-| Essencial | ~500 mil |
-| Profissional | ~2 milhões |
-| Escala | ~8 milhões |
-| Enterprise | sob consulta |
-| Pacote extra | ~R$ 49 por bloco (tamanho do bloco = f(COGS medido, margem 2,5x) |
+COGS calculado com o Gemini 2.5 Flash ($0,30/M input, $2,50/M output, câmbio R$5,50) no
+mix real observado via ledger (~86% input / 14% output): ~R$3,50/milhão de tokens. Com
+o custo nessa ordem de grandeza, a cota deixa de ser proteção de margem (é 0,4-2,2% do
+preço) e vira alavanca de adoção e degrau de upsell; o preço do pacote (R$49) mantém a
+âncora comercial da v3 do PRICING.md em vez de derivar de um múltiplo do COGS — o
+múltiplo daria ~R$8-9, preço baixo demais pra sustentar o SKU (fee do Asaas incluso).
 
-Nada disso entra em copy, LP ou proposta comercial antes do fim da Fase 0 e do ok de Pricing.
+**Gatilho de revisão:** se o COGS por milhão passar de ~R$20 (ex.: troca para um modelo
+mais caro como Gemini 2.5 Pro), reabrir o preço do pacote antes de qualquer coisa. Trocar
+de modelo exige inserir o preço novo em `ai_model_precos` (com `vigente_desde`) ANTES de
+apontar `GEMINI_MODEL` para ele — sem isso, eventos novos gravam custo NULL.
+
+Estes números já valem para o lançamento em staging; **nada vai para LP ou material de
+venda público** antes da Fase 0 confirmar o mix de uso real em produção (design partner).
 
 ## 4. Estado real do código (verificado 2026-08-31)
 

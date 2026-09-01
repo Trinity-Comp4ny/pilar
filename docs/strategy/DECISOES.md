@@ -16,6 +16,39 @@ Regras de manutenção:
 
 ---
 
+## 2026-09-01 · Números da Camada 2 de tokens: cotas 500k/2M/8M mantidas, pacote único R$49/500 mil
+
+**Decisão:** manter as cotas mensais de token por plano em 500 mil (Essencial),
+2 milhões (Profissional) e 8 milhões (Escala) — os valores hipotéticos já seedados na
+migration da Fase 2 (spec 075) viram a referência de lançamento. Pacote extra: **um SKU
+único, R$49 por 500 mil tokens, sem expiração**. Nenhum cardápio de blocos.
+
+**Contexto:** com o Gemini 2.5 Flash e o mix real medido em produção via ledger (~86%
+input / 14% output no turno de chat de referência), o custo é ~R$3,50 por milhão de
+tokens. Isso deixa a cota do Essencial custando ~R$1,75/mês (0,4% do preço) e a do
+Escala ~R$28/mês (2,2%) — o COGS deixou de ser a força que dita a cota; quem manda é
+adoção e degrau de upsell, não proteção de margem. No pacote extra, a regra antiga
+"~2,5x o COGS" (do PRICING.md v3) daria algo perto de R$8-9, preço baixo demais pra
+cobrir o fee do Asaas e sem função comercial; R$49 mantém a âncora que já existia na v3,
+entrega margem ~96% no pacote, e o custo por ação (~R$0,15-0,40) fica desprezível
+contra a hora do sócio/orçamentista — o value gap que sustenta o modelo inteiro.
+
+**Supera:** a hipótese de preço de pacote da Camada 2 no PRICING.md (~R$49/50 "ações",
+regra de margem 2,5x custo) — o número R$49 sobrevive, a régua de cálculo por trás
+muda: de "múltiplo do COGS" pra "âncora comercial com custo desprezível". As cotas por
+plano registradas na migration `20260880000000_token_enforcement_gate_e_ciclo.sql`
+deixam de ser só placeholder técnico e passam a ser o número de lançamento, sujeito
+a recalibrar com o dado real da Fase 0 (instrumentação em produção) antes de qualquer
+tabela pública ou copy de venda — nenhum desses números vai pra LP ainda.
+
+**Como aplicar:** gatilho de revisão do preço do pacote é o COGS por milhão passar de
+~R$20 (troca de modelo mais caro, ex. Gemini 2.5 Pro) — nesse ponto reabrir a conta,
+não antes. Trocar de modelo LLM não muda os números aqui sozinho: exige inserir o preço
+novo em `ai_model_precos` (com `vigente_desde`) antes de apontar `GEMINI_MODEL` pro
+modelo novo, para o custo por evento continuar exato desde a primeira chamada.
+
+---
+
 ## 2026-08-31 · IA Hub inteiro sai do repo, junto com Capacidade e Templates: matar em vez de deixar apodrecer
 
 **Decisão:** removidas as 11 edge functions do IA Hub (`ai-aditivo-copilot`, `ai-diagnostico-precificacao`,
