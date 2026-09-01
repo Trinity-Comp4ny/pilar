@@ -284,7 +284,11 @@ export function ProjetoDetailTabs({
           </TabsContent>
 
           <TabsContent value="escopo">
-            <EscopoTab projetoId={projeto.id} canEdit={canEdit} />
+            <EscopoTab
+              projetoId={projeto.id}
+              canEdit={canEdit}
+              disciplinas={Array.from(new Set(dbDisciplinas.map((d) => d.nome)))}
+            />
           </TabsContent>
         </div>
       </div>
