@@ -6828,6 +6828,24 @@ export type Database = {
           },
         ]
       }
+      v_uso_tokens_anomalia_diaria: {
+        Row: {
+          anomalia: boolean | null
+          dias_com_uso_anteriores: number | null
+          empresa_id: string | null
+          media_dias_anteriores: number | null
+          tokens_hoje: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_token_ledger_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_uso_tokens_por_agente: {
         Row: {
           agent_key: string | null

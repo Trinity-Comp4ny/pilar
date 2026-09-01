@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Coins } from "lucide-react";
+import { Coins, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { toDataSourceResult } from "@/types/dataSource";
+import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatNumberCompact } from "@/lib/format";
 import { agentKeyLabel } from "@/components/settings/useExtratoTokens";
 
@@ -17,6 +18,9 @@ interface UsoEmpresaRow {
   receitaPacotes: number;
   receitaEstimada: number | null;
   margemEstimada: number | null;
+  tokensHoje: number;
+  mediaAnteriorGasto: number;
+  anomaliaGasto: boolean;
 }
 
 interface UsoAgenteRow {
@@ -56,6 +60,7 @@ export function TokensPanel() {
         { data: subs, error: e3 },
         { data: usoAgente, error: e4 },
         { data: compras, error: e5 },
+        { data: anomalias, error: e6 },
       ] = await Promise.all([
         supabase
           .from("v_uso_tokens_por_empresa")
@@ -71,12 +76,29 @@ export function TokensPanel() {
           .from("pilar_token_pack_purchases")
           .select("empresa_id, valor_centavos, paid_at")
           .eq("status", "paid"),
+        supabase
+          .from("v_uso_tokens_anomalia_diaria")
+          .select("empresa_id, tokens_hoje, media_dias_anteriores, anomalia"),
       ]);
       if (e1) throw e1;
       if (e2) throw e2;
       if (e3) throw e3;
       if (e4) throw e4;
       if (e5) throw e5;
+      if (e6) throw e6;
+
+      // Gasto anômalo hoje (SPEC 085): 10x a média dos últimos dias, com baseline de
+      // 3+ dias e piso absoluto de 20000 tokens (view faz a conta, aqui só indexa).
+      const anomaliaPorEmpresa = new Map(
+        (anomalias ?? []).map((a) => [
+          a.empresa_id as string,
+          {
+            tokensHoje: Number(a.tokens_hoje ?? 0),
+            mediaAnteriorGasto: Number(a.media_dias_anteriores ?? 0),
+            anomaliaGasto: Boolean(a.anomalia),
+          },
+        ])
+      );
 
       // Receita de pacote avulso (SPEC 077) por empresa, só do mês corrente — a mesma
       // janela que o resto do painel usa. Dinheiro de verdade (paid), nunca chuta com
@@ -119,6 +141,7 @@ export function TokensPanel() {
           // atrás do null de "sem assinatura paga".
           const temReceita = receitaPlano != null || receitaPacotes > 0;
           const receita = temReceita ? (receitaPlano ?? 0) + receitaPacotes : null;
+          const anomalia = anomaliaPorEmpresa.get(r.empresa_id as string) ?? null;
           return {
             empresaId: r.empresa_id as string,
             empresaNome: nomeEmpresa.get(r.empresa_id as string) ?? (r.empresa_id as string),
@@ -129,6 +152,9 @@ export function TokensPanel() {
             receitaPacotes,
             receitaEstimada: receita,
             margemEstimada: receita != null ? receita - custoBrl : null,
+            tokensHoje: anomalia?.tokensHoje ?? 0,
+            mediaAnteriorGasto: anomalia?.mediaAnteriorGasto ?? 0,
+            anomaliaGasto: anomalia?.anomaliaGasto ?? false,
           };
         });
 
@@ -162,6 +188,24 @@ export function TokensPanel() {
       header: "Tokens (mês)",
       cell: (r) => <span className="tabular-nums text-ink">{formatNumberCompact(r.tokensTotal)}</span>,
       getSortValue: (r) => r.tokensTotal,
+    },
+    {
+      key: "tokensHoje",
+      header: "Hoje",
+      cell: (r) =>
+        r.anomaliaGasto ? (
+          <Badge
+            variant="warning"
+            className="gap-1"
+            title={`Gasto de hoje muito acima do normal (média dos últimos dias: ${formatNumberCompact(r.mediaAnteriorGasto)} tokens/dia)`}
+          >
+            <AlertTriangle size={12} />
+            {formatNumberCompact(r.tokensHoje)}
+          </Badge>
+        ) : (
+          <span className="tabular-nums text-black/50">{formatNumberCompact(r.tokensHoje)}</span>
+        ),
+      getSortValue: (r) => r.tokensHoje,
     },
     {
       key: "custoEstimado",
@@ -237,7 +281,8 @@ export function TokensPanel() {
           Receita estimada soma o preço de tabela do plano ativo (não o valor de fato cobrado no Asaas) com a receita
           real de pacotes de tokens pagos no mês. COGS convertido de USD (câmbio de referência R$5,50) — o ledger
           guarda o custo em USD, moeda nativa do provedor. Números de lançamento (DECISOES.md 2026-09-01), calibrar
-          com dado real de produção.
+          com dado real de produção. A coluna "Hoje" destaca quando o gasto do dia passa muito acima da média
+          recente da própria empresa (SPEC 085) — sinal de possível abuso ou anomalia, não bloqueia nada.
         </p>
       </div>
 
