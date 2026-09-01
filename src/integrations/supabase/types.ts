@@ -7687,6 +7687,16 @@ export type Database = {
         Args: { p_token: string }
         Returns: Json
       }
+      projetos_com_escopo_estourado: {
+        Args: never
+        Returns: {
+          custo_orcado: number
+          despesas_diretas: number
+          empresa_id: string
+          nome: string
+          projeto_id: string
+        }[]
+      }
       rate_limit_cleanup: { Args: never; Returns: undefined }
       recalc_disciplina_status_por_checklist: {
         Args: { p_disciplina_id: string }
