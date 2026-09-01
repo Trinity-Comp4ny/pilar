@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -96,6 +97,7 @@ function AdminFinanceiroContent({ projetoId }: { projetoId: string }) {
 // ─── Projeto Card ────────────────────────────────────────────────────────────
 
 function ProjetoCard({ projeto }: { projeto: ProjetoResumo }) {
+  const formatCurrency = useMoneyMask();
   const config = PROJECT_STATUS_CONFIG[projeto.status as keyof typeof PROJECT_STATUS_CONFIG];
   const progress =
     projeto.total_disciplinas > 0 ? Math.round((projeto.disciplinas_concluidas / projeto.total_disciplinas) * 100) : 0;
@@ -141,6 +143,7 @@ function ProjetoCard({ projeto }: { projeto: ProjetoResumo }) {
 // ─── Proposta Card ─────────────────────────────────────────────────────────
 
 function PropostaCard({ proposta, onOpen }: { proposta: PropostaResumo; onOpen: () => void }) {
+  const formatCurrency = useMoneyMask();
   const config = PROPOSTA_STATUS_CONFIG[proposta.status];
 
   return (

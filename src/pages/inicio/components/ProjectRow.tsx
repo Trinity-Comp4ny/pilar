@@ -3,9 +3,10 @@ import { Clock, ChevronRight } from "lucide-react";
 import type { DashboardProjeto } from "@/hooks/useDashboardData";
 import { PROJECT_STATUS_CONFIG, PROJECT_PRIORITY_CONFIG, type ProjectStatus, type ProjectPriority } from "@/constants";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 
 export function ProjectRow({ project, onClick }: { project: DashboardProjeto; onClick: () => void }) {
+  const formatCurrency = useMoneyMask();
   const statusConfig = PROJECT_STATUS_CONFIG[project.status as ProjectStatus];
   const priorityConfig = PROJECT_PRIORITY_CONFIG[project.prioridade as ProjectPriority];
   const isAtrasado = project.statusData === "em_atraso" || project.progressoPrazo > 100;
@@ -48,7 +49,10 @@ export function ProjectRow({ project, onClick }: { project: DashboardProjeto; on
               className={`text-xs flex items-center gap-0.5 ${isAtrasado ? "text-chart-danger" : "text-ink-disabled"}`}
             >
               <Clock size={10} />
-              {new Date(project.dataPrevisao + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+              {new Date(project.dataPrevisao + "T00:00:00").toLocaleDateString("pt-BR", {
+                day: "2-digit",
+                month: "short",
+              })}
             </span>
           )}
         </div>

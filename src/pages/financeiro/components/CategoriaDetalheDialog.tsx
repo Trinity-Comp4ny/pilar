@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { formatCurrency } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { cn } from "@/lib/utils";
 
 export interface CategoriaDetalhe {
@@ -18,7 +18,15 @@ interface CategoriaDetalheDialogProps {
   data: CategoriaDetalhe[];
 }
 
-export function CategoriaDetalheDialog({ open, onOpenChange, titulo, descricao, tone, data }: CategoriaDetalheDialogProps) {
+export function CategoriaDetalheDialog({
+  open,
+  onOpenChange,
+  titulo,
+  descricao,
+  tone,
+  data,
+}: CategoriaDetalheDialogProps) {
+  const formatCurrency = useMoneyMask();
   const ordered = [...data].sort((a, b) => b.value - a.value);
   const total = ordered.reduce((acc, c) => acc + c.value, 0);
   const totalCount = ordered.reduce((acc, c) => acc + c.count, 0);

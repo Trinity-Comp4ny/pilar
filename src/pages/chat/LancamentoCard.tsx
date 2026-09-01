@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency, formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useFinanceAuxData } from "@/pages/financeiro/hooks/useFinanceAuxData";
 import { msgErro } from "./erros";
 import type { Draft, DespesaCampos, ReceitaCampos } from "./useChat";
@@ -36,6 +37,7 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
   const isReceita = tipo === "receita";
   const aux = useFinanceAuxData(tipo);
   const campos = draft.campos as Campos;
+  const money = useMoneyMask();
   const [form, setForm] = useState<Campos>({ status: "Pendente", ...campos });
   const [valorDisplay, setValorDisplay] = useState(campos.valor != null ? formatCurrency(campos.valor) : "");
   const [mostrarMais, setMostrarMais] = useState(false);
@@ -164,7 +166,7 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
         </div>
         <p className="mt-1 pl-8 text-sm text-muted-foreground">
           {form.descricao}
-          {form.valor ? ` · ${formatCurrency(form.valor)}` : ""}
+          {form.valor ? ` · ${money(form.valor)}` : ""}
         </p>
         <div className="mt-3 flex items-center gap-2 pl-8">
           <NavLink
@@ -284,8 +286,8 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
 
         {parcelado && valorParcela != null && (
           <div className="sm:col-span-2 rounded-lg border border-dashed border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-            {nParcelas}x de {formatCurrency(valorParcela)} · total {formatCurrency(form.valor ?? 0)} · parcelas mensais,
-            criadas como Pendente
+            {nParcelas}x de {money(valorParcela)} · total {money(form.valor ?? 0)} · parcelas mensais, criadas como
+            Pendente
           </div>
         )}
 

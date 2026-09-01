@@ -19,12 +19,12 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   type Projeto,
-  formatCurrency,
   formatDateShort,
   getDeadlineStatus,
   getProjectProgress,
   getResponsaveisList,
 } from "@/types/projetos";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
 import { AvatarStack } from "@/components/AvatarStack";
 import { getPriorityDotColor } from "../lib/priorityColors";
@@ -50,6 +50,7 @@ export function ProjectCard({
   isDragging = false,
   margemBrutaPct = null,
 }: ProjectCardProps) {
+  const formatCurrency = useMoneyMask();
   const navigate = useNavigate();
   const priorityConfig = PROJECT_PRIORITY_CONFIG[projeto.prioridade as ProjectPriority];
   const priorityDot = getPriorityDotColor(projeto.prioridade);

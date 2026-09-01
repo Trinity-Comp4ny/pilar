@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Area, AreaChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { TrendingDown } from "lucide-react";
 import { desembolsoAcumuladoPorMes } from "@/lib/obras";
-import { formatCurrency } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import type { ObraLancamentoRow } from "@/hooks/useObraConta";
 import type { ObraOrcamentoRow } from "@/hooks/useObraOrcamento";
 
@@ -13,6 +13,7 @@ function mesLabel(mes: string): string {
 }
 
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: unknown[]; label?: string }) {
+  const formatCurrency = useMoneyMask();
   if (!active || !payload || payload.length === 0) return null;
   const p = payload[0] as { payload: { acumuladoRealizado: number } };
   return (
@@ -30,6 +31,7 @@ export function ObraDesembolsoChart({
   lancamentos: ObraLancamentoRow[];
   orcamentos: ObraOrcamentoRow[];
 }) {
+  const formatCurrency = useMoneyMask();
   const pontos = useMemo(() => desembolsoAcumuladoPorMes(lancamentos), [lancamentos]);
   const previstoTotal = useMemo(() => orcamentos.reduce((acc, o) => acc + Number(o.valor_previsto), 0), [orcamentos]);
   // O eixo Y tem que cobrir a linha de referência também: sem isso, um previsto

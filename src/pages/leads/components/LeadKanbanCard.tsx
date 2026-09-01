@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Mail, Phone, MoreVertical, ArrowRight, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/currencyUtils";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import type { Lead } from "@/hooks/useLeads";
 import { PROPOSTA_STATUS_CONFIG, type Proposta } from "@/hooks/usePropostas";
 import { statusExibido } from "@/lib/comercial";
@@ -55,6 +55,7 @@ export function LeadKanbanCard({
   proposta,
   responsavelNome,
 }: Props) {
+  const formatCurrency = useMoneyMask();
   const propStatus = proposta ? statusExibido(proposta) : null;
   const propStatusConfig = propStatus ? PROPOSTA_STATUS_CONFIG[propStatus] : null;
   const valor =

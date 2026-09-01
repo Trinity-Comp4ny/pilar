@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency } from "@/lib/currencyUtils";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { msgErro } from "./erros";
 import type { Draft, DraftCampos, FolhaLinhaPayload } from "./useChat";
 
@@ -29,6 +29,7 @@ type Linha = {
 };
 
 export function FolhaCard({ draft, onConfirmar, onCancelar, onDesfazerFolha }: Props) {
+  const formatCurrency = useMoneyMask();
   const mes = Number(draft.campos.mes);
   const ano = Number(draft.campos.ano);
   const [rows, setRows] = useState<Linha[]>([]);

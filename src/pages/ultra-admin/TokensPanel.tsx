@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { toDataSourceResult } from "@/types/dataSource";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency, formatNumberCompact } from "@/lib/format";
+import { formatNumberCompact } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { agentKeyLabel } from "@/components/settings/useExtratoTokens";
 
 interface UsoEmpresaRow {
@@ -72,10 +73,7 @@ export function TokensPanel() {
         supabase
           .from("v_uso_tokens_por_agente")
           .select("agent_key, mes, eventos, tokens_input, tokens_output, custo_estimado"),
-        supabase
-          .from("pilar_token_pack_purchases")
-          .select("empresa_id, valor_centavos, paid_at")
-          .eq("status", "paid"),
+        supabase.from("pilar_token_pack_purchases").select("empresa_id, valor_centavos, paid_at").eq("status", "paid"),
         supabase
           .from("v_uso_tokens_anomalia_diaria")
           .select("empresa_id, tokens_hoje, media_dias_anteriores, anomalia"),
@@ -173,6 +171,7 @@ export function TokensPanel() {
     },
   });
 
+  const formatCurrency = useMoneyMask();
   const porEmpresa = useMemo(() => query.data?.porEmpresa ?? [], [query.data]);
   const porAgente = useMemo(() => query.data?.porAgente ?? [], [query.data]);
 
@@ -279,10 +278,10 @@ export function TokensPanel() {
         </h3>
         <p className="text-sm text-black/55">
           Receita estimada soma o preço de tabela do plano ativo (não o valor de fato cobrado no Asaas) com a receita
-          real de pacotes de tokens pagos no mês. COGS convertido de USD (câmbio de referência R$5,50) — o ledger
-          guarda o custo em USD, moeda nativa do provedor. Números de lançamento (DECISOES.md 2026-09-01), calibrar
-          com dado real de produção. A coluna "Hoje" destaca quando o gasto do dia passa muito acima da média
-          recente da própria empresa (SPEC 085) — sinal de possível abuso ou anomalia, não bloqueia nada.
+          real de pacotes de tokens pagos no mês. COGS convertido de USD (câmbio de referência R$5,50) — o ledger guarda
+          o custo em USD, moeda nativa do provedor. Números de lançamento (DECISOES.md 2026-09-01), calibrar com dado
+          real de produção. A coluna "Hoje" destaca quando o gasto do dia passa muito acima da média recente da própria
+          empresa (SPEC 085) — sinal de possível abuso ou anomalia, não bloqueia nada.
         </p>
       </div>
 

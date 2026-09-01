@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { formatDateDisplay } from "@/lib/dateUtils";
 import type { Lancamento } from "../hooks/useLancamentosUnified";
 
@@ -25,7 +25,11 @@ interface Props {
   dataIndex: number;
   isPaidStatus: (l: Lancamento) => boolean;
   isOverdue: (l: Lancamento) => boolean;
-  getDisplayDate: (efetivacao: string | null | undefined, vencimento: string | null | undefined, status: string) => string | null | undefined;
+  getDisplayDate: (
+    efetivacao: string | null | undefined,
+    vencimento: string | null | undefined,
+    status: string
+  ) => string | null | undefined;
   rowKey: (l: Lancamento) => string;
   onToggleRow: (l: Lancamento) => void;
   onRowClick: (l: Lancamento) => void;
@@ -122,6 +126,7 @@ export function LancamentosItemRow({
   onDelete,
   onStatusChange,
 }: Props) {
+  const formatCurrency = useMoneyMask();
   const isReceita = l.tipo === "receita";
   const isTransf = l.tipo === "transferencia";
   const dataExibir = getDisplayDate(l.data_efetivacao, l.data_vencimento, l.status);
@@ -143,11 +148,7 @@ export function LancamentosItemRow({
     >
       {canEdit && (
         <td className={cellPad} onClick={(e) => e.stopPropagation()}>
-          <Checkbox
-            checked={isSel}
-            onCheckedChange={() => onToggleRow(l)}
-            aria-label="Selecionar linha"
-          />
+          <Checkbox checked={isSel} onCheckedChange={() => onToggleRow(l)} aria-label="Selecionar linha" />
         </td>
       )}
       <td className={cn(cellPad, isChild && "pl-8")}>

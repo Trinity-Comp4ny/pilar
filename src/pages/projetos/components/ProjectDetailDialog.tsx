@@ -49,7 +49,6 @@ import {
   type DisciplinaResponsavel,
   type ProjetoDisciplinaDB,
   type DisciplinaComentario,
-  formatCurrency,
   formatDateShort,
   getDeadlineStatus,
   getProjectProgress,
@@ -58,6 +57,7 @@ import {
   dbDisciplinaToLegacy,
 } from "@/types/projetos";
 import { useProjetoDisciplinas, useUpdateDisciplinaStatus } from "@/hooks/useProjetoDisciplinas";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useProjetoDetail } from "../hooks/useProjetoDetail";
 import { useAuth } from "@/contexts/AuthContext";
 import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
@@ -103,6 +103,7 @@ export function ProjectDetailDialog({
   onDelete,
   onProjectUpdated,
 }: ProjectDetailDialogProps) {
+  const formatCurrency = useMoneyMask();
   const navigate = useNavigate();
   const [, setUpdatingDisc] = useState<number | null>(null);
   const [justificativaDialog, setJustificativaDialog] = useState<{ discIdx: number; newStatus: string } | null>(null);
@@ -407,7 +408,12 @@ export function ProjectDetailDialog({
                     <div className="flex flex-col items-center gap-3 text-xs text-muted-foreground text-center py-8 border border-dashed rounded-lg">
                       <span>Nenhuma disciplina definida.</span>
                       {canEdit && (
-                        <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setIsAddingDisc(true)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs"
+                          onClick={() => setIsAddingDisc(true)}
+                        >
                           <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar disciplina
                         </Button>
                       )}
@@ -436,44 +442,44 @@ export function ProjectDetailDialog({
                             className="min-w-0 flex-1 rounded-lg p-3 text-left"
                           >
                             <div className="flex items-center justify-between gap-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-sm font-medium">{disc.disciplina}</span>
-                                {atrasada && (
-                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
-                                    <AlertTriangle size={10} /> Atrasada
-                                  </span>
-                                )}
-                              </div>
-                              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-                                <span className="inline-flex items-center gap-1">
-                                  <User className="h-3 w-3" />
-                                  {resps.map((r) => r.responsavel_nome).join(", ") || "Sem responsável"}
-                                </span>
-                                {disc.data_previsao && (
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-sm font-medium">{disc.disciplina}</span>
+                                  {atrasada && (
+                                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
+                                      <AlertTriangle size={10} /> Atrasada
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                                   <span className="inline-flex items-center gap-1">
-                                    <Calendar className="h-3 w-3" /> Previsão {formatDateShort(disc.data_previsao)}
+                                    <User className="h-3 w-3" />
+                                    {resps.map((r) => r.responsavel_nome).join(", ") || "Sem responsável"}
                                   </span>
-                                )}
-                                {disc.data_final && (
-                                  <span className="inline-flex items-center gap-1 text-positive-strong">
-                                    <Calendar className="h-3 w-3" /> Concluída {formatDateShort(disc.data_final)}
-                                  </span>
+                                  {disc.data_previsao && (
+                                    <span className="inline-flex items-center gap-1">
+                                      <Calendar className="h-3 w-3" /> Previsão {formatDateShort(disc.data_previsao)}
+                                    </span>
+                                  )}
+                                  {disc.data_final && (
+                                    <span className="inline-flex items-center gap-1 text-positive-strong">
+                                      <Calendar className="h-3 w-3" /> Concluída {formatDateShort(disc.data_final)}
+                                    </span>
+                                  )}
+                                </div>
+                                {atrasada && disc.justificativa_atraso && (
+                                  <p className="text-[10px] text-danger-mid mt-1 italic line-clamp-1">
+                                    {disc.justificativa_atraso}
+                                  </p>
                                 )}
                               </div>
-                              {atrasada && disc.justificativa_atraso && (
-                                <p className="text-[10px] text-danger-mid mt-1 italic line-clamp-1">
-                                  {disc.justificativa_atraso}
-                                </p>
-                              )}
-                            </div>
 
-                            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground flex-shrink-0">
-                              <span
-                                className={cn("h-2 w-2 rounded-full", DISC_STATUS_DOT[disc.status || "Não Iniciado"])}
-                              />
-                              {disc.status || "Não Iniciado"}
-                            </span>
+                              <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground flex-shrink-0">
+                                <span
+                                  className={cn("h-2 w-2 rounded-full", DISC_STATUS_DOT[disc.status || "Não Iniciado"])}
+                                />
+                                {disc.status || "Não Iniciado"}
+                              </span>
                             </div>
                           </button>
                           {canEdit && (

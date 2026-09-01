@@ -6,7 +6,7 @@ import { FormDialog } from "@/components/FormDialog";
 import { Separator } from "@/components/ui/separator";
 import { AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { formatCurrency } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { usePagarFatura } from "../hooks/usePagarFatura";
 import type { Conta, Fatura } from "../hooks/useFaturas";
 
@@ -34,6 +34,7 @@ interface FaturaPagamentoDialogProps {
 }
 
 export function FaturaPagamentoDialog({ fatura, contas, open, onOpenChange, onPaid }: FaturaPagamentoDialogProps) {
+  const formatCurrency = useMoneyMask();
   const [contaPagamentoId, setContaPagamentoId] = useState("");
   const [valorPagamento, setValorPagamento] = useState("");
   const [prefilledFor, setPrefilledFor] = useState<string | null>(null);

@@ -10,6 +10,8 @@ import {
   PanelLeftOpen,
   Settings,
   MessageSquare,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Logo } from "@/components/Logo";
@@ -27,6 +29,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useValoresOcultos } from "@/contexts/ValoresOcultosContext";
 import { ImpersonationPicker } from "@/components/ImpersonationPicker";
 import { NotificationInbox } from "@/components/NotificationInbox";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
@@ -57,6 +60,7 @@ export function AppSidebar() {
   // dos agentes proativos (ex. guardião de margem) fica invisível pra quem não abre /agentes.
   const { data: pendenciasAgentes } = usePendenciasAgentes();
   const numPendenciasAgentes = pendenciasAgentes?.length ?? 0;
+  const { ocultos: valoresOcultos, toggle: toggleValoresOcultos } = useValoresOcultos();
   const currentPath = location.pathname;
   const [sidebarWidth, setSidebarWidth] = useState(state === "collapsed" ? "64px" : "240px");
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -405,6 +409,18 @@ export function AppSidebar() {
                 <DropdownMenuItem onClick={() => setFeedbackOpen(true)} className="justify-between">
                   Feedback
                   <MessageSquare size={16} className="text-muted-foreground" />
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={toggleValoresOcultos}
+                  onSelect={(e) => e.preventDefault()}
+                  className="justify-between"
+                >
+                  {valoresOcultos ? "Mostrar valores financeiros" : "Ocultar valores financeiros"}
+                  {valoresOcultos ? (
+                    <EyeOff size={16} className="text-muted-foreground" />
+                  ) : (
+                    <Eye size={16} className="text-muted-foreground" />
+                  )}
                 </DropdownMenuItem>
                 {isAdmin && !isUltraAdmin && (
                   <DropdownMenuItem onClick={handleAdmin} className="justify-between">

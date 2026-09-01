@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { KPICard } from "@/components/KPICard";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -411,6 +412,7 @@ function ProjetoTable({
   margemColor: (v: number) => string;
   onRowClick?: (id: string, nome: string) => void;
 }) {
+  const toCurrency = useMoneyMask();
   return (
     <Table>
       <TableHeader>
@@ -500,6 +502,7 @@ function ClienteTable({
   totais: Totais;
   margemColor: (v: number) => string;
 }) {
+  const toCurrency = useMoneyMask();
   return (
     <Table>
       <TableHeader>
