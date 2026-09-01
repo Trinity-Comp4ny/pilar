@@ -175,9 +175,14 @@ const App = () => {
                       <Route path="/reset-password" element={<PasswordReset />} />
                       <Route path="/status" element={<StatusPage />} />
 
+                      {/* Fora do grupo PrivateRoute de propósito: checkout de compra de
+                          tokens é full-bleed (mesmo tratamento visual do /checkout público,
+                          SPEC 082), sem a sidebar do app. Guarda de autenticação própria
+                          dentro do componente, mesmo padrão de /profile-setup. */}
+                      <Route path="/comprar-tokens" element={<ComprarTokens />} />
+
                       <Route element={<PrivateRoute />}>
                         <Route path="/inicio" element={<Inicio />} />
-                        <Route path="/comprar-tokens" element={<ComprarTokens />} />
 
                         {/* ===== Rotas aninhadas por módulo (ADR 0016) ===== */}
 
