@@ -9,6 +9,12 @@
 > tokens (fases, economia, arquitetura) está em [MOTOR_DE_TOKENS.md](./MOTOR_DE_TOKENS.md).
 > O resto deste documento (base flat por projetos ativos, margem do pacote, teto claro)
 > continua valendo; incorporar na v4.
+>
+> ⚠️ **Números da Camada 2 fixados (2026-09-01):** cotas 500k/2M/8M tokens/mês
+> (Essencial/Profissional/Escala) e pacote extra único de **R$49 por 500 mil tokens,
+> sem expiração** ([DECISOES.md](./DECISOES.md), entrada 2026-09-01). Substitui a
+> tabela de "ações de IA" e a regra de margem "2,5x o custo" da revisão 17/08 abaixo.
+> Ainda não vai para LP/material de venda até a Fase 0 confirmar o mix de uso real.
 
 ---
 
