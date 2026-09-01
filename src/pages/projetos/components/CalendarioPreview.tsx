@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, ChevronRight, Building2, Layers } from "lucide-react";
+import { CalendarDays, ChevronRight, Building2, Layers, HardHat } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 function fmtKey(d: Date): string {
@@ -20,8 +20,8 @@ function fmtLabel(key: string): string {
 type EventoPreview = {
   id: string;
   nome: string;
-  projetoId: string;
-  tipo: "projeto" | "disciplina";
+  href: string;
+  tipo: "projeto" | "disciplina" | "obra";
   atrasado: boolean;
   proximo: boolean;
 };
@@ -32,7 +32,7 @@ async function fetchPrazos() {
   in30.setDate(in30.getDate() + 30);
   const in30Key = fmtKey(in30);
 
-  const [projRes, discRes] = await Promise.all([
+  const [projRes, discRes, obraRes] = await Promise.all([
     supabase
       .from("projetos")
       .select("id, nome, status, data_previsao")
@@ -44,10 +44,17 @@ async function fetchPrazos() {
       .select("id, nome, status, data_fim, projeto_id, projetos(nome)")
       .not("data_fim", "is", null)
       .not("status", "eq", "Concluído"),
+    supabase
+      .from("obras")
+      .select("id, nome, status, data_fim_prevista")
+      .is("deleted_at", null)
+      .not("data_fim_prevista", "is", null)
+      .not("status", "in", '("concluida","paralisada")'),
   ]);
 
   if (projRes.error) throw projRes.error;
   if (discRes.error) throw discRes.error;
+  if (obraRes.error) throw obraRes.error;
 
   const eventos: { data: string; evento: EventoPreview }[] = [];
   const in7Key = fmtKey(
@@ -68,7 +75,7 @@ async function fetchPrazos() {
       evento: {
         id: p.id as string,
         nome: p.nome as string,
-        projetoId: p.id as string,
+        href: `/projetos/${p.id as string}`,
         tipo: "projeto",
         atrasado: overdue,
         proximo: data >= today && data <= in7Key,
@@ -87,8 +94,26 @@ async function fetchPrazos() {
       evento: {
         id: d.id as string,
         nome: `${d.nome as string}${proj ? ` · ${proj.nome}` : ""}`,
-        projetoId: d.projeto_id as string,
+        href: `/projetos/${d.projeto_id as string}`,
         tipo: "disciplina",
+        atrasado: overdue,
+        proximo: data >= today && data <= in7Key,
+      },
+    });
+  }
+
+  for (const o of obraRes.data ?? []) {
+    const data = o.data_fim_prevista as string;
+    const overdue = data < today;
+    const upcoming = data >= today && data <= in30Key;
+    if (!overdue && !upcoming) continue;
+    eventos.push({
+      data,
+      evento: {
+        id: o.id as string,
+        nome: o.nome as string,
+        href: `/obras/${o.id as string}`,
+        tipo: "obra",
         atrasado: overdue,
         proximo: data >= today && data <= in7Key,
       },
@@ -153,13 +178,15 @@ export function CalendarioPreview() {
                     <button
                       key={e.id}
                       type="button"
-                      onClick={() => navigate(`/projetos/${e.projetoId}`)}
+                      onClick={() => navigate(e.href)}
                       className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/50 text-left transition-colors group"
                     >
                       {e.tipo === "projeto" ? (
                         <Building2 size={13} className="text-muted-foreground flex-shrink-0" />
-                      ) : (
+                      ) : e.tipo === "disciplina" ? (
                         <Layers size={13} className="text-muted-foreground flex-shrink-0" />
+                      ) : (
+                        <HardHat size={13} className="text-muted-foreground flex-shrink-0" />
                       )}
                       <span className="text-sm flex-1 truncate">{e.nome}</span>
                       {e.atrasado && (
