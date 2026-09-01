@@ -54,6 +54,7 @@ import { ClienteFormDialog } from "@/pages/clientes/ClienteFormDialog";
 import { FinanceiroContent } from "@/pages/portal/PortalFinanceiro";
 import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
 import { EntregasContent } from "@/pages/portal/PortalEntregas";
+import { EntregaFormDialog } from "@/pages/portal/EntregaFormDialog";
 import { PROJECT_STATUS_CONFIG } from "@/constants";
 import { PROPOSTA_STATUS_CONFIG } from "@/hooks/usePropostas";
 import { cn } from "@/lib/utils";
@@ -491,7 +492,10 @@ export default function ClienteDetalhePage() {
   const navigate = useNavigate();
   const { isAdmin, can } = usePermissions();
   const canEdit = can("clientes", "edit");
+  const canEditEntregas = can("portal_cliente", "edit");
   const [tab, setTab] = useState("visao-geral");
+  const [novaEntregaProjetoId, setNovaEntregaProjetoId] = useState<string | null>(null);
+  const [entregasRefreshKey, setEntregasRefreshKey] = useState<Record<string, number>>({});
 
   const { cliente, projetos, isLoadingProjetos, propostas, isLoadingPropostas, isLoadingCliente } = useClienteDetalhe(
     id!
@@ -724,7 +728,16 @@ export default function ClienteDetalhePage() {
             <div className="space-y-3">
               {projetos.map((p) => (
                 <ProjetoAccordion key={p.id} projeto={p}>
-                  <EntregasContent projetoId={p.id} readOnly />
+                  <div className="space-y-3">
+                    {canEditEntregas && (
+                      <div className="flex justify-end">
+                        <Button size="sm" variant="outline" onClick={() => setNovaEntregaProjetoId(p.id)}>
+                          Nova entrega
+                        </Button>
+                      </div>
+                    )}
+                    <EntregasContent key={entregasRefreshKey[p.id] ?? 0} projetoId={p.id} readOnly />
+                  </div>
                 </ProjetoAccordion>
               ))}
             </div>
@@ -744,6 +757,20 @@ export default function ClienteDetalhePage() {
       />
 
       <ClienteFormDialog open={isEditOpen} onOpenChange={setIsEditOpen} cliente={cliente} />
+
+      {novaEntregaProjetoId && (
+        <EntregaFormDialog
+          open={novaEntregaProjetoId !== null}
+          onOpenChange={(v) => !v && setNovaEntregaProjetoId(null)}
+          projetoId={novaEntregaProjetoId}
+          onCreated={() =>
+            setEntregasRefreshKey((prev) => ({
+              ...prev,
+              [novaEntregaProjetoId]: (prev[novaEntregaProjetoId] ?? 0) + 1,
+            }))
+          }
+        />
+      )}
 
       <ConfirmDialog
         open={confirmDeleteOpen}

@@ -4664,12 +4664,15 @@ export type Database = {
       }
       portal_entregas: {
         Row: {
+          aprovado_ip: unknown
+          aprovado_user_agent: string | null
           created_at: string | null
           created_by: string | null
           descricao: string | null
           drive_url: string | null
           empresa_id: string
           id: string
+          projeto_disciplina_id: string | null
           projeto_id: string
           respondido_em: string | null
           resposta_cliente: string | null
@@ -4679,12 +4682,15 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          aprovado_ip?: unknown
+          aprovado_user_agent?: string | null
           created_at?: string | null
           created_by?: string | null
           descricao?: string | null
           drive_url?: string | null
           empresa_id: string
           id?: string
+          projeto_disciplina_id?: string | null
           projeto_id: string
           respondido_em?: string | null
           resposta_cliente?: string | null
@@ -4694,12 +4700,15 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          aprovado_ip?: unknown
+          aprovado_user_agent?: string | null
           created_at?: string | null
           created_by?: string | null
           descricao?: string | null
           drive_url?: string | null
           empresa_id?: string
           id?: string
+          projeto_disciplina_id?: string | null
           projeto_id?: string
           respondido_em?: string | null
           resposta_cliente?: string | null
@@ -4714,6 +4723,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_entregas_projeto_disciplina_id_fkey"
+            columns: ["projeto_disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_disciplinas"
             referencedColumns: ["id"]
           },
           {
@@ -7754,26 +7770,24 @@ export type Database = {
       portal_listar_entregas: {
         Args: { p_projeto_id: string; p_token: string }
         Returns: {
-          created_at: string | null
-          created_by: string | null
-          descricao: string | null
-          drive_url: string | null
+          aprovado_ip: unknown
+          aprovado_user_agent: string
+          created_at: string
+          created_by: string
+          descricao: string
+          disciplina_nome: string
+          drive_url: string
           empresa_id: string
           id: string
+          projeto_disciplina_id: string
           projeto_id: string
-          respondido_em: string | null
-          resposta_cliente: string | null
-          status: string | null
-          tipo: string | null
+          respondido_em: string
+          resposta_cliente: string
+          status: string
+          tipo: string
           titulo: string
-          updated_at: string | null
+          updated_at: string
         }[]
-        SetofOptions: {
-          from: "*"
-          to: "portal_entregas"
-          isOneToOne: false
-          isSetofReturn: true
-        }
       }
       portal_login: {
         Args: { p_email: string; p_senha: string }
