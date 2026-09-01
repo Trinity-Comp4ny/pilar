@@ -5,7 +5,7 @@ import { toPrioridade, type Prioridade, type StatusBucket } from "./status";
 import type { LinkItem } from "@/components/LinksEditor";
 import type { Json, TablesUpdate } from "@/integrations/supabase/types";
 
-export type PessoaOpcao = { id: string; nome: string };
+export type PessoaOpcao = { id: string; nome: string; avatarUrl?: string | null };
 
 /** Comentário estruturado da tarefa (spec 013). */
 export type Comentario = { id: string; texto: string; autor: string; data: string };
@@ -74,6 +74,9 @@ const KEY = {
   tarefas: (pessoaId: string | null) => ["meu-trabalho", "tarefas", pessoaId] as const,
 };
 
+/** Query key de `usePessoasEmpresa`, para invalidar de fora (ex.: depois de trocar o avatar_url). */
+export const PESSOAS_EMPRESA_QUERY_KEY = KEY.pessoas;
+
 /** Pessoa vinculada ao usuário logado (profile_id = auth.uid()). */
 export function useMinhaPessoa() {
   const { user } = useAuth();
@@ -100,11 +103,7 @@ export function useProjetosLite() {
     queryKey: ["meu-trabalho", "projetos-lite"],
     staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<PessoaOpcao[]> => {
-      const { data, error } = await supabase
-        .from("projetos")
-        .select("id, nome")
-        .is("deleted_at", null)
-        .order("nome");
+      const { data, error } = await supabase.from("projetos").select("id, nome").is("deleted_at", null).order("nome");
       if (error) throw error;
       return data ?? [];
     },
@@ -117,9 +116,19 @@ export function usePessoasEmpresa() {
     queryKey: KEY.pessoas,
     staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<PessoaOpcao[]> => {
-      const { data, error } = await supabase.from("pessoas").select("id, nome").is("deleted_at", null).order("nome");
+      const { data, error } = await supabase
+        .from("pessoas")
+        .select("id, nome, profiles!pessoas_profile_id_fkey(avatar_url)")
+        .is("deleted_at", null)
+        .order("nome");
       if (error) throw error;
-      return data ?? [];
+      // profile_id é opcional (pessoa sem login não tem profile); sem foto, o
+      // AvatarStack cai para iniciais.
+      return (data ?? []).map(({ id, nome, profiles }) => ({
+        id,
+        nome,
+        avatarUrl: profiles?.avatar_url ?? null,
+      }));
     },
   });
 }

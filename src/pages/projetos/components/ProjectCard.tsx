@@ -26,7 +26,7 @@ import {
   getResponsaveisList,
 } from "@/types/projetos";
 import { PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
-import { AvatarStack } from "./AvatarStack";
+import { AvatarStack } from "@/components/AvatarStack";
 import { getPriorityDotColor } from "../lib/priorityColors";
 
 interface ProjectCardProps {
@@ -181,7 +181,7 @@ export function ProjectCard({
                 const allNames = (projeto.disciplinas || [])
                   .flatMap((d) => getResponsaveisList(d).map((r) => r.responsavel_nome))
                   .filter(Boolean);
-                return allNames.length > 0 ? <AvatarStack names={allNames} max={3} size="xs" /> : null;
+                return allNames.length > 0 ? <AvatarStack pessoas={allNames} max={3} size="xs" /> : null;
               })()}
               {deadline && (
                 <Badge

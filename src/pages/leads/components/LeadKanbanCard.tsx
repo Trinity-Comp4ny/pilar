@@ -17,7 +17,7 @@ import { formatCurrency } from "@/lib/currencyUtils";
 import type { Lead } from "@/hooks/useLeads";
 import { PROPOSTA_STATUS_CONFIG, type Proposta } from "@/hooks/usePropostas";
 import { statusExibido } from "@/lib/comercial";
-import { AvatarStack } from "@/pages/projetos/components/AvatarStack";
+import { AvatarStack } from "@/components/AvatarStack";
 
 const statusLabels: Record<string, string> = {
   Novo: "Novo",
@@ -140,7 +140,7 @@ export function LeadKanbanCard({
               ) : (
                 <span />
               )}
-              {responsavelNome && <AvatarStack names={[responsavelNome]} max={1} size="xs" />}
+              {responsavelNome && <AvatarStack pessoas={[responsavelNome]} max={1} size="xs" />}
             </div>
           )}
         </Card>

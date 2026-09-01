@@ -126,6 +126,10 @@ Página de detalhe nova com mais de uma seção segue este padrão em vez de inv
 
 - **`DataTable`** (`src/components/data/DataTable.tsx`): tabela declarativa com `ColumnDef<T>`, sort, sticky column e os três estados (loading/erro/vazio). É a peça oficial de tabela read-only. Hoje subutilizada (1 uso); adotar nas listas.
 
+### Pessoas
+
+- **`AvatarStack`** (`src/components/AvatarStack.tsx`): círculo(s) de pessoa. Prop `pessoas: (string | { nome: string; avatarUrl?: string | null })[]`, `max?`, `size?: "xs" | "sm"`. Foto quando `avatarUrl` existe e carrega; iniciais coloridas como fallback (padrão Slack). Toda vez que a tela referenciar uma ou mais pessoas (responsável, assignee, membro), usa este componente, nunca monta círculo com iniciais à mão.
+
 ### Filtros
 
 - **`FiltroPeriodo`** / **`FiltroCompetencia`** (spec 024, `src/lib/periodo.ts` para presets): filtro por range de data e por mês/ano. Não reimplemente seletor de período.

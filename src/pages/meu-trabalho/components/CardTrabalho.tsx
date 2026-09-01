@@ -1,7 +1,7 @@
 import { CalendarDays, FolderOpen, Link2, MessageSquare, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AvatarStack } from "@/pages/projetos/components/AvatarStack";
+import { AvatarStack } from "@/components/AvatarStack";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -104,7 +104,7 @@ export function CardTrabalho({ item, onAbrir, onPrioridade, onExcluir }: Props) 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
         {item.responsaveis.length > 0 && (
           <span className="inline-flex items-center gap-1.5">
-            <AvatarStack names={item.responsaveis.map((r) => r.nome)} size="xs" />
+            <AvatarStack pessoas={item.responsaveis} size="xs" />
             {item.responsaveis.length === 1 && <span>{item.responsaveis[0].nome}</span>}
           </span>
         )}
