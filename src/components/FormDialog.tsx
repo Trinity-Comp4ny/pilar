@@ -37,6 +37,8 @@ interface FormDialogProps {
   isPending?: boolean;
   /** Desabilita só o submit (validação client) sem estado de loading. */
   submitDisabled?: boolean;
+  /** Dialog aberto de dentro de outro dialog (ex.: SettingsDialog, z-60): "z-[70]" nos dois. */
+  zClassName?: string;
   children: React.ReactNode;
 }
 
@@ -52,12 +54,13 @@ export function FormDialog({
   submitVariant = "brand",
   isPending = false,
   submitDisabled = false,
+  zClassName,
   children,
 }: FormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(next) => !isPending && onOpenChange(next)}>
       {/* max-w vem por último no cn: tailwind-merge sobrepõe o default do DialogContent. */}
-      <DialogContent className={cn(SIZE[size])}>
+      <DialogContent className={cn(SIZE[size], zClassName)} overlayClassName={zClassName}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}
