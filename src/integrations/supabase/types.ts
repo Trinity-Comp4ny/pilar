@@ -4569,6 +4569,7 @@ export type Database = {
           payment_metadata: Json | null
           quantidade_pacotes: number
           status: string
+          tier_id: string | null
           tokens_pacote: number
           user_id: string | null
           valor_centavos: number
@@ -4583,6 +4584,7 @@ export type Database = {
           payment_metadata?: Json | null
           quantidade_pacotes: number
           status?: string
+          tier_id?: string | null
           tokens_pacote?: number
           user_id?: string | null
           valor_centavos: number
@@ -4597,6 +4599,7 @@ export type Database = {
           payment_metadata?: Json | null
           quantidade_pacotes?: number
           status?: string
+          tier_id?: string | null
           tokens_pacote?: number
           user_id?: string | null
           valor_centavos?: number
