@@ -195,6 +195,7 @@ serve(
           : {}),
       });
     } catch (err) {
+      log.error("asaas create payment failed", err, { purchase_id: purchase.id });
       await admin.from("pilar_token_pack_purchases").update({ status: "failed" }).eq("id", purchase.id);
 
       const msg = err instanceof Error ? err.message : "Erro Asaas";

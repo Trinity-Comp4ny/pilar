@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Calendar as CalendarIcon, CheckCircle2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { monitoring } from "@/lib/monitoring";
 import { FiltroCompetencia } from "@/components/filters/FiltroCompetencia";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
@@ -150,10 +151,7 @@ export default function FolhaPagamento() {
         const personIds = existingData.map((d) => d.pessoa_id);
         // cpf/chaves_pix têm grant só para service_role (PII): o role autenticado
         // não pode lê-los aqui, senão o select inteiro falha e some com os nomes.
-        const { data: peopleData } = await supabase
-          .from("pessoas")
-          .select("id, nome, cargo")
-          .in("id", personIds);
+        const { data: peopleData } = await supabase.from("pessoas").select("id, nome, cargo").in("id", personIds);
         const peopleMap = new Map((peopleData || []).map((p) => [p.id, p]));
 
         setData(
@@ -176,9 +174,7 @@ export default function FolhaPagamento() {
               v_variavel,
               v_total,
               lista_projetos: [],
-              detalhe_projetos: parseDetalhe(
-                (item as unknown as { detalhe_projetos?: unknown }).detalhe_projetos
-              ),
+              detalhe_projetos: parseDetalhe((item as unknown as { detalhe_projetos?: unknown }).detalhe_projetos),
               status: item.status ?? undefined,
               data_pagamento: item.data_pagamento ?? undefined,
               folha_id: item.id,
@@ -397,10 +393,7 @@ export default function FolhaPagamento() {
         setHistoryDetailItems([]);
       } else {
         const personIds = existingData.map((d) => d.pessoa_id);
-        const { data: peopleData } = await supabase
-          .from("pessoas")
-          .select("id, nome, cargo")
-          .in("id", personIds);
+        const { data: peopleData } = await supabase.from("pessoas").select("id, nome, cargo").in("id", personIds);
         const peopleMap = new Map((peopleData || []).map((p) => [p.id, p]));
 
         setHistoryDetailItems(
@@ -445,7 +438,10 @@ export default function FolhaPagamento() {
   const withPii = async (items: FolhaItem[]): Promise<FolhaItem[]> => {
     const ids = items.map((i) => i.p_id).filter(Boolean);
     if (ids.length === 0) return items;
-    const { data: pii } = (await supabase.rpc("get_folha_pessoas_pii" as never, { p_ids: ids } as never)) as unknown as {
+    const { data: pii } = (await supabase.rpc(
+      "get_folha_pessoas_pii" as never,
+      { p_ids: ids } as never
+    )) as unknown as {
       data: Array<{ pessoa_id: string; cpf: string | null; chaves_pix: unknown }> | null;
     };
     const piiMap = new Map((pii || []).map((r) => [r.pessoa_id, r]));
@@ -459,7 +455,8 @@ export default function FolhaPagamento() {
     try {
       const [enriched] = await withPii([item]);
       await gerarComprovantePDF(enriched, { empresaNome, mes: selectedMonth, ano: selectedYear });
-    } catch {
+    } catch (err) {
+      monitoring.captureException(err, { source: "folha.downloadComprovante", pessoa_id: item.p_id });
       toast.error("Erro ao gerar comprovante");
     }
   };
@@ -469,7 +466,8 @@ export default function FolhaPagamento() {
     try {
       const [enriched] = await withPii([item]);
       await gerarComprovantePDF(enriched, { empresaNome, mes: selectedHistory.mes, ano: selectedHistory.ano });
-    } catch {
+    } catch (err) {
+      monitoring.captureException(err, { source: "folha.downloadComprovanteHistory", pessoa_id: item.p_id });
       toast.error("Erro ao gerar comprovante");
     }
   };
@@ -483,7 +481,8 @@ export default function FolhaPagamento() {
         mes: selectedHistory.mes,
         ano: selectedHistory.ano,
       });
-    } catch {
+    } catch (err) {
+      monitoring.captureException(err, { source: "folha.downloadLoteHistory", count: historyDetailItems.length });
       toast.error("Erro ao gerar lote de comprovantes");
     }
   };
