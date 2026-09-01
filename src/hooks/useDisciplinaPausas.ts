@@ -32,7 +32,7 @@ export function totalDiasParados(pausas: ProjetoDisciplinaPausa[]): number {
   }, 0);
 }
 
-/** Histórico de pausas de uma disciplina + ações de pausar/retomar (spec 083). */
+/** Histórico de pausas de uma disciplina + ações de pausar/retomar (spec 084). */
 export function useDisciplinaPausas(disciplinaId: string | undefined) {
   const queryClient = useQueryClient();
 

@@ -1,4 +1,4 @@
--- Pausa documentada por disciplina (spec 083): histórico auditável de "dias
+-- Pausa documentada por disciplina (spec 084): histórico auditável de "dias
 -- parados", motivo obrigatório, quem pausou/retomou. Só entra/sai do status
 -- "Pausada" via as duas RPCs abaixo, nunca por update direto de status, pra
 -- motivo e timestamps nunca ficarem inconsistentes com o histórico.

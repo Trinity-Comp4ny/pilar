@@ -226,7 +226,7 @@ export function dbDisciplinaToLegacy(d: ProjetoDisciplinaDB): DisciplinaResponsa
 
 export const disciplinaStatusOptions = ["Não Iniciado", "Em Andamento", "Concluído", "Pendente", "Pausada"];
 
-/** Registro de pausa da disciplina (spec 083): motivo obrigatório, quem pausou/retomou.
+/** Registro de pausa da disciplina (spec 084): motivo obrigatório, quem pausou/retomou.
  *  Só criado/fechado via rpc_pausar_disciplina/rpc_retomar_disciplina, nunca por update direto. */
 export interface ProjetoDisciplinaPausa {
   id: string;
