@@ -1,6 +1,17 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, CalendarClock, ClipboardList, Pencil, Plus, Trash2, UserCheck, Users } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarClock,
+  ClipboardList,
+  LayoutGrid,
+  List,
+  Pencil,
+  Plus,
+  Trash2,
+  UserCheck,
+  Users,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,6 +27,7 @@ import { useObraRdoEfetivo } from "@/hooks/useObraRdoEfetivo";
 import { useObraRdoImpedimentos } from "@/hooks/useObraRdoImpedimentos";
 import { useObraRdoVisitas } from "@/hooks/useObraRdoVisitas";
 import { RdoFormDialog } from "./RdoFormDialog";
+import { RdoFeedCard } from "./RdoFeedCard";
 
 const RESULTADO_LABEL: Record<ResultadoRdoTarefa, string> = {
   avancou: "Avançou",
@@ -50,6 +62,9 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<RdoRow | null>(null);
   const [confirm, setConfirm] = useState<RdoRow | null>(null);
+  // Feed visual (spec 087) além da lista densa já existente — não persiste
+  // entre sessões, reseta pro padrão a cada entrada na aba.
+  const [visualizacao, setVisualizacao] = useState<"lista" | "feed">("lista");
 
   const abrirNovo = () => {
     setEditing(null);
@@ -84,14 +99,36 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
 
   return (
     <div className="space-y-4">
-      {canEdit && (
-        <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-2">
+        <div className="inline-flex rounded-full bg-muted p-0.5">
+          <button
+            type="button"
+            onClick={() => setVisualizacao("lista")}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              visualizacao === "lista" ? "bg-white text-ink shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            <List className="h-3.5 w-3.5" />
+            Lista
+          </button>
+          <button
+            type="button"
+            onClick={() => setVisualizacao("feed")}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              visualizacao === "feed" ? "bg-white text-ink shadow-sm" : "text-muted-foreground"
+            }`}
+          >
+            <LayoutGrid className="h-3.5 w-3.5" />
+            Feed
+          </button>
+        </div>
+        {canEdit && (
           <Button variant="brand" size="sm" onClick={abrirNovo}>
             <Plus className="mr-1.5 h-4 w-4" />
             Registrar dia
           </Button>
-        </div>
-      )}
+        )}
+      </div>
 
       {rdos.length === 0 ? (
         <EmptyState
@@ -100,6 +137,41 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
           description="Registre o que aconteceu na obra: clima, efetivo, atividades e pendências."
           action={canEdit ? { label: "Registrar dia", onClick: abrirNovo } : undefined}
         />
+      ) : visualizacao === "feed" ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {rdos.map((r) => {
+            const nTarefas = vinculos.filter((v) => v.rdo_id === r.id).length;
+            const nEfetivo = efetivos.filter((e) => e.rdo_id === r.id).length;
+            const nImpedimentos = impedimentos.filter((i) => i.rdo_id === r.id).length;
+            const nVisitas = visitas.filter((v) => v.rdo_id === r.id).length;
+            const badges = [
+              nTarefas > 0 && `${nTarefas} tarefa${nTarefas > 1 ? "s" : ""}`,
+              nEfetivo > 0 && `${nEfetivo} equipe${nEfetivo > 1 ? "s" : ""}`,
+              nImpedimentos > 0 && `⚠ ${nImpedimentos} impedimento${nImpedimentos > 1 ? "s" : ""}`,
+              nVisitas > 0 && `${nVisitas} visita${nVisitas > 1 ? "s" : ""}`,
+            ].filter(Boolean) as string[];
+            return (
+              <RdoFeedCard
+                key={r.id}
+                data={r.data}
+                clima={r.clima}
+                atividades={r.atividades}
+                ocorrencias={r.ocorrencias}
+                fotos={fotosPorRdo[r.id] ?? []}
+                onClick={canEdit ? () => abrirEdicao(r) : undefined}
+                extra={
+                  badges.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 border-t border-black/5 pt-2 text-[11px] text-muted-foreground">
+                      {badges.map((b) => (
+                        <span key={b}>{b}</span>
+                      ))}
+                    </div>
+                  ) : undefined
+                }
+              />
+            );
+          })}
+        </div>
       ) : (
         <div className="space-y-3">
           {rdos.map((r) => (

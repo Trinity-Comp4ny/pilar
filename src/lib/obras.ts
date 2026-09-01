@@ -576,3 +576,19 @@ export function urgenciaLabel(prazoNecessidade: string | null, hoje: Date = new 
   if (dias === 0) return "vence hoje";
   return `vence em ${dias} dia${dias > 1 ? "s" : ""}`;
 }
+
+// --- Diário em feed (spec 087) -------------------------------------------------
+
+const RESUMO_FEED_LIMITE = 140;
+
+/**
+ * Resumo de 1-2 linhas pro card do feed do dia: usa `atividades`; sem
+ * atividades, cai pro começo de `ocorrencias`; sem nenhum dos dois, um texto
+ * padrão. Puro — o card do portal do cliente chama com `ocorrencias: null`
+ * (o campo nem chega até lá, spec 087 requisito 4), então nunca vaza.
+ */
+export function resumoFeedRdo(atividades: string | null, ocorrencias: string | null): string {
+  const base = (atividades?.trim() || ocorrencias?.trim() || "").trim();
+  if (!base) return "Sem observações registradas.";
+  return base.length > RESUMO_FEED_LIMITE ? `${base.slice(0, RESUMO_FEED_LIMITE).trimEnd()}…` : base;
+}
