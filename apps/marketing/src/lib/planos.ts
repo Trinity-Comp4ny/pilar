@@ -3,9 +3,11 @@
  *
  * Escrito à mão de propósito. A página lia isso do Supabase a cada visita, o
  * que custava um estado de carregamento visível antes de qualquer preço
- * aparecer, para buscar três linhas que mudam uma vez por semestre. Os valores
- * abaixo foram conferidos contra `pilar_subscription_plans` em 26/08 e batem
- * com a tabela da v3 de `docs/strategy/PRICING.md`.
+ * aparecer, para buscar três linhas que mudam uma vez por semestre. Preço e
+ * projetos conferidos contra `pilar_subscription_plans` em 26/08 (tabela v3 de
+ * `docs/strategy/PRICING.md`); cota de tokens atualizada em 01/09 conforme
+ * `tokens_mensais` real da mesma tabela (decisão do motor de tokens,
+ * DECISOES.md 31/08 — token é a unidade exposta, não mais "ação de IA").
  *
  * O que separa um plano do outro é **capacidade**, nunca funcionalidade: toda
  * empresa tem a plataforma inteira (ADR 0026). Por isso não existe lista de
@@ -21,8 +23,8 @@ export interface Plano {
   preco: number;
   /** Eixo de cobrança: faixa de projetos ativos. */
   projetos: string;
-  /** Cota mensal de ações de IA. */
-  acoesIA: string;
+  /** Cota mensal de tokens de IA (decisão 31/08, DECISOES.md — token é a unidade exposta). */
+  tokensMes: string;
   /** O que muda no atendimento, que é serviço e não feature. */
   atendimento: string;
   destaque?: boolean;
@@ -35,7 +37,7 @@ export const PLANOS: Plano[] = [
     publico: "Escritório de 5 a 8 pessoas",
     preco: 490,
     projetos: "Até 15 projetos ativos",
-    acoesIA: "40 ações de IA por mês",
+    tokensMes: "500 mil tokens de IA por mês",
     atendimento: "Suporte por e-mail e WhatsApp",
   },
   {
@@ -44,7 +46,7 @@ export const PLANOS: Plano[] = [
     publico: "O mais escolhido, e onde a maioria fica",
     preco: 690,
     projetos: "Até 40 projetos ativos",
-    acoesIA: "150 ações de IA por mês",
+    tokensMes: "2 milhões de tokens de IA por mês",
     atendimento: "Migração assistida da sua planilha",
     destaque: true,
   },
@@ -54,7 +56,7 @@ export const PLANOS: Plano[] = [
     publico: "Operação maior ou multiequipe",
     preco: 1290,
     projetos: "Projetos ativos ilimitados",
-    acoesIA: "500 ações de IA por mês",
+    tokensMes: "8 milhões de tokens de IA por mês",
     atendimento: "Implantação acompanhada e canal direto",
   },
 ];
