@@ -19,7 +19,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { formatDate } from "@/lib/format";
 import { climaLabel, condicaoLabel, tipoImpedimentoLabel } from "@/lib/obras";
-import { useObraRdos, useDeleteRdo, type RdoRow } from "@/hooks/useObraRdo";
+import { useObraRdos, useObraRdoAutores, useDeleteRdo, type RdoRow } from "@/hooks/useObraRdo";
 import { useObraRdoTarefas, type ResultadoRdoTarefa } from "@/hooks/useObraRdoTarefas";
 import { useObraFotos } from "@/hooks/useObraFotos";
 import { useObraMedicoes } from "@/hooks/useObraMedicoes";
@@ -58,6 +58,7 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
   const { data: efetivos = [] } = useObraRdoEfetivo(obraId);
   const { data: impedimentos = [] } = useObraRdoImpedimentos(obraId);
   const { data: visitas = [] } = useObraRdoVisitas(obraId);
+  const { data: autoresPorId = {} } = useObraRdoAutores(rdos);
   const del = useDeleteRdo(obraId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<RdoRow | null>(null);
@@ -138,8 +139,8 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
           action={canEdit ? { label: "Registrar dia", onClick: abrirNovo } : undefined}
         />
       ) : visualizacao === "feed" ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {rdos.map((r) => {
+        <div className="mx-auto max-w-xl">
+          {rdos.map((r, i) => {
             const nTarefas = vinculos.filter((v) => v.rdo_id === r.id).length;
             const nEfetivo = efetivos.filter((e) => e.rdo_id === r.id).length;
             const nImpedimentos = impedimentos.filter((i) => i.rdo_id === r.id).length;
@@ -158,6 +159,8 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
                 atividades={r.atividades}
                 ocorrencias={r.ocorrencias}
                 fotos={fotosPorRdo[r.id] ?? []}
+                autor={r.created_by ? autoresPorId[r.created_by] : undefined}
+                ultimo={i === rdos.length - 1}
                 onClick={canEdit ? () => abrirEdicao(r) : undefined}
                 extra={
                   badges.length > 0 ? (

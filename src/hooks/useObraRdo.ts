@@ -25,6 +25,22 @@ export function useObraRdos(obraId: string | undefined) {
   });
 }
 
+/** Nome de quem lançou cada RDO (feed, spec 087) — id → nome, a partir dos
+ * `created_by` já presentes nos RDOs carregados (sem query nova por linha). */
+export function useObraRdoAutores(rdos: RdoRow[]) {
+  const ids = [...new Set(rdos.map((r) => r.created_by).filter((v): v is string => !!v))].sort();
+  return useQuery({
+    queryKey: ["obra_rdo_autores", ids],
+    enabled: ids.length > 0,
+    staleTime: 1000 * 60 * 5,
+    queryFn: async (): Promise<Record<string, string>> => {
+      const { data, error } = await supabase.from("profiles").select("id, nome, first_name").in("id", ids);
+      if (error) throw error;
+      return Object.fromEntries((data ?? []).map((p) => [p.id, p.nome || p.first_name || "Alguém"]));
+    },
+  });
+}
+
 export function useCreateRdo() {
   const qc = useQueryClient();
   return useMutation({
