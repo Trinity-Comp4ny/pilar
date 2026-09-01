@@ -1,9 +1,12 @@
-import { FolderKanban, Users, Loader2, ArrowUpRight, Coins } from "lucide-react";
+import { useState } from "react";
+import { FolderKanban, Users, Loader2, ArrowUpRight, Coins, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useUsoEmpresa } from "@/components/settings/useUsoEmpresa";
 import { useExtratoTokens, agentKeyLabel } from "@/components/settings/useExtratoTokens";
+import { ComprarTokensDialog } from "@/components/settings/ComprarTokensDialog";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { formatNumberCompact, formatNumber, formatDateTime } from "@/lib/format";
 import { DataTable } from "@/components/data/DataTable";
 import { toDataSourceResult } from "@/types/dataSource";
@@ -99,6 +102,9 @@ export function UsoPanel() {
   const { uso, isLoading, error } = useUsoEmpresa();
   const { eventos, isLoading: extratoLoading, error: extratoError } = useExtratoTokens();
   const { openSettings } = useSettingsModal();
+  const { profile } = useAuth();
+  const [comprarOpen, setComprarOpen] = useState(false);
+  const canComprar = profile?.role === "admin" || profile?.role === "ultra_admin";
 
   if (isLoading) {
     return (
@@ -164,14 +170,28 @@ export function UsoPanel() {
         </Card>
         <Card className="border border-black/5">
           <CardContent className="pt-5 space-y-1">
-            <span className="flex items-center gap-2 text-sm font-medium text-black/70">
-              <Coins size={16} className="text-black/40" /> Tokens comprados
-            </span>
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2 text-sm font-medium text-black/70">
+                <Coins size={16} className="text-black/40" /> Tokens comprados
+              </span>
+              {canComprar && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs text-brand hover:text-brand"
+                  onClick={() => setComprarOpen(true)}
+                >
+                  <Plus size={14} className="mr-1" /> Comprar mais
+                </Button>
+              )}
+            </div>
             <p className="text-lg font-semibold text-ink">{formatNumberCompact(uso.tokensComprado)}</p>
             <p className="text-xs text-black/45">Pacote avulso, não expira no ciclo.</p>
           </CardContent>
         </Card>
       </div>
+
+      <ComprarTokensDialog open={comprarOpen} onOpenChange={setComprarOpen} />
 
       <div>
         <h4 className="text-sm font-medium text-ink mb-2">Extrato recente</h4>
