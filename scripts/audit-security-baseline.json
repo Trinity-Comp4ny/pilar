@@ -32,16 +32,16 @@
     ]
   },
   "staging": {
-    "verificado_em": "2026-08-24",
+    "verificado_em": "2026-09-01",
     "tabelas_sem_rls": 0,
     "anon_chamavel": 0,
-    "anon_trigger_inerte": 27,
+    "anon_trigger_inerte": 28,
     "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
-    "authenticated_chamavel": 140,
+    "authenticated_chamavel": 146,
     "search_path_mutavel": 0,
     "policy_auth_por_linha": 25,
-    "fk_sem_indice": 104,
+    "fk_sem_indice": 117,
     "extensoes": [
       "pg_cron@1.6.4",
       "pg_net@0.20.3",
@@ -57,9 +57,7 @@
   "_drift_2026_08_24": {
     "so_em_prod": [],
     "so_em_staging": [],
-    "diferenca_de_versao": [
-      "pg_net: 0.19.5 em prod, 0.20.3 em staging"
-    ],
+    "diferenca_de_versao": ["pg_net: 0.19.5 em prod, 0.20.3 em staging"],
     "impacto": "Drift de PRESENÇA acabou. O bloco anterior (19/08) registrava pg_graphql só em staging (~93 tabelas expostas por uma API que prod não tinha) e pgsodium só em staging, o que deixava a api_key do Asaas EM TEXTO PURO em produção. Os dois fecharam: pg_graphql não está em nenhum dos dois, pgsodium está nos dois, e a migration 20260850000000 chegou em prod no release de 24/08. Verificado em produção nesta data: asaas_config tem o segredo no Vault (api_key_secret_id preenchido) e a coluna api_key vazia. Sobra diferença de VERSÃO do pg_net, que o repo já trata como não bloqueante (commit e5c4060)."
   },
   "_mudou_em_2026_08_24": {
@@ -71,5 +69,13 @@
     "search_path_mutavel": "9 (prod) -> 0. Mesma explicação do item acima, mais _feature_catalog e _universal_features fixadas na 20260857000000.",
     "paridade": "Pela primeira vez os dois ambientes têm NÚMEROS IDÊNTICOS em todos os contadores. Era o objetivo do check de drift: staging só valida produção enquanto os dois forem parecidos.",
     "authenticated_chamavel_segundo_bump": "136 -> 140, no mesmo dia. A migration 20260859000000 (soft delete por RPC) criou 4 funções SECURITY DEFINER chamáveis por authenticated: _soft_delete_guard, rpc_soft_delete, rpc_soft_delete_grupo e rpc_restaurar. Todas com REVOKE de PUBLIC/anon e search_path fixo. _soft_delete_feature não conta: é SQL IMMUTABLE sem SECURITY DEFINER. Medido em staging nesta data; produção fica em 136 até o release passar, e ficar ABAIXO da baseline não reprova (o ratchet só barra crescimento). Lição de processo: PR que cria função SECURITY DEFINER precisa bumpar a baseline no MESMO PR, senão a auditoria reprova o release seguinte, que foi o que aconteceu aqui."
+  },
+  "_mudou_em_2026_09_01": {
+    "motivo": "Baseline não foi bumpada desde 24/08 apesar de 29 migrations em staging (specs 042 Pilar Campo, 067/083 guardião de margem e orçamento por disciplina, 073 financeiro delegado, 074 motor de tokens). O cron 'Auditoria de segurança do banco (Staging)' passou a reprovar (issue #366): duas causas eram bug real da allowlist do script (corrigido no mesmo PR, ver anon_chamavel e view_sem_invoker_nao_revisada abaixo), o resto é dívida de ratchet legítima, reconciliada função a função / FK a FK contra o schema real de staging antes de regravar.",
+    "anon_chamavel": "Achou 4 (invariante exige 0): campo_listar_fornecedores, campo_registrar_efetivo, campo_registrar_impedimento, campo_registrar_visita (spec 042, migrations 20260860/20260861). Não é regressão de segurança: são GRANT TO anon de propósito (conta de campo não tem auth.uid), já allowlistadas em supabase/tests/anon_function_grants.sql desde que foram criadas, só nunca foram espelhadas neste script. Fix: adicionadas ao ALLOWLIST do audit-security.mjs no mesmo PR que este bump.",
+    "view_sem_invoker_nao_revisada": "Achou 1 (invariante exige 0): projetos_safe (20260872000000, spec 073). Mesmo padrão já revisado de pessoas_safe: roda como dona pra mascarar valor_contrato/custo_indireto_pct via can_view_financeiro(), replica o predicado da policy projetos_select no WHERE (empresa_id, deleted_at, user_has_feature). Fix: adicionada a VIEW_SEM_INVOKER_REVISADA no mesmo PR.",
+    "authenticated_chamavel": "140 -> 146 (+6, líquido). Entraram 7: campo_listar_fornecedores/campo_registrar_efetivo/campo_registrar_impedimento/campo_registrar_visita (spec 042, anon+authenticated), rpc_pausar_disciplina e rpc_retomar_disciplina (20260891000000, spec 083, pausa documentada por disciplina), set_financeiro_delegado (20260870000000, spec 073). Saiu 1: rpc_notificar_projeto_status, removida por completo na limpeza de notificações de baixo engajamento (20260894000000_remove_notificacoes_baixo_engajamento, 0% de leitura em produção desde 20/08). Todas as 7 novas com REVOKE de PUBLIC/anon e search_path fixo. debitar_tokens e gate_tokens (spec 074, motor de tokens) também são SECURITY DEFINER novas mas NÃO contam aqui: têm REVOKE explícito de authenticated, só service_role/edge function chama.",
+    "fk_sem_indice": "104 -> 117 (+13, todas de tabela nova, nenhuma revogação compensando). obra_rdo_efetivo/obra_rdo_impedimento/obra_rdo_visita (spec 042): empresa_id + fornecedor_id + campo_account_id sem índice (8, rdo_id já tem). ai_token_ledger (spec 074): agent_run_id + user_id (2). pilar_token_pack_purchases (spec 074): user_id (1). projeto_disciplina_pausas (spec 083): pausado_por + retomado_por (2). Nenhuma é hot-path ainda (specs recém-entregues); entra na dívida existente, não é caso de indexar com urgência.",
+    "anon_trigger_inerte": "27 -> 28 (+1, líquido). Entraram 2 triggers SECURITY DEFINER novos com grant residual pra anon (default de PUBLIC não revogado, mesma classe de achado que os outros 27, não é caminho de exploração): tg_pessoas_protege_sensiveis (20260875000000) e tg_projetos_protege_valor (20260876000000), ambos da leva de financeiro delegado (spec 073). Saiu 1: tg_notificar_disciplina_atribuida, removido junto com rpc_notificar_projeto_status na mesma limpeza de notificações."
   }
 }
