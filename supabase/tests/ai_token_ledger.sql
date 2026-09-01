@@ -11,7 +11,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(28);
+SELECT plan(31);
 
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
 VALUES
@@ -374,6 +374,62 @@ SELECT is(
    WHERE destinatario_id = 'a70e1111-0000-0000-0000-00000000000c' AND tipo = 'tokens_baixo'),
   1,
   'rodar de novo sem ler a notificação anterior não duplica (dedupe do notificar())'
+);
+
+-- =============================================
+-- 13. SPEC 085: v_uso_tokens_anomalia_diaria (alerta de gasto anômalo, ultra-admin)
+-- =============================================
+SELECT test_set_postgres();
+
+INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
+VALUES
+  ('a70e0000-0000-0000-0000-00000000000d', 'Empresa Token D (anomalia)', NULL, TRUE, '{}'::jsonb),
+  ('a70e0000-0000-0000-0000-00000000000e', 'Empresa Token E (sem historico)', NULL, TRUE, '{}'::jsonb),
+  ('a70e0000-0000-0000-0000-00000000000f', 'Empresa Token F (uso normal)', NULL, TRUE, '{}'::jsonb)
+ON CONFLICT (id) DO NOTHING;
+
+-- Empresa D: 3 dias anteriores com 2000 tokens/dia (baseline suficiente) + hoje com
+-- 50000 (>10x a média de 2000 e acima do piso de 20000) → anomalia = true.
+INSERT INTO public.ai_token_ledger (empresa_id, agent_key, source, tokens_input, tokens_output, tokens_delta, created_at)
+VALUES
+  ('a70e0000-0000-0000-0000-00000000000d', 'chat', 'usage', 1000, 1000, -2000, now() - interval '3 days'),
+  ('a70e0000-0000-0000-0000-00000000000d', 'chat', 'usage', 1000, 1000, -2000, now() - interval '2 days'),
+  ('a70e0000-0000-0000-0000-00000000000d', 'chat', 'usage', 1000, 1000, -2000, now() - interval '1 days'),
+  ('a70e0000-0000-0000-0000-00000000000d', 'chat', 'usage', 25000, 25000, -50000, now());
+
+SELECT results_eq(
+  $$ SELECT tokens_hoje, dias_com_uso_anteriores, anomalia FROM public.v_uso_tokens_anomalia_diaria
+     WHERE empresa_id = 'a70e0000-0000-0000-0000-00000000000d' $$,
+  $$ VALUES (50000::bigint, 3, true) $$,
+  'gasto de hoje 25x a média com baseline de 3 dias marca anomalia'
+);
+
+-- Empresa E: só 1 dia de histórico anterior (baseline insuficiente) + hoje com salto
+-- gigante (100000) → não marca anomalia (falta de histórico impede o cálculo confiável).
+INSERT INTO public.ai_token_ledger (empresa_id, agent_key, source, tokens_input, tokens_output, tokens_delta, created_at)
+VALUES
+  ('a70e0000-0000-0000-0000-00000000000e', 'chat', 'usage', 250, 250, -500, now() - interval '1 days'),
+  ('a70e0000-0000-0000-0000-00000000000e', 'chat', 'usage', 50000, 50000, -100000, now());
+
+SELECT is(
+  (SELECT anomalia FROM public.v_uso_tokens_anomalia_diaria WHERE empresa_id = 'a70e0000-0000-0000-0000-00000000000e'),
+  false,
+  'menos de 3 dias de historico anterior nunca marca anomalia, mesmo com salto grande'
+);
+
+-- Empresa F: 3 dias anteriores com 5000 tokens/dia + hoje com 6000 (1.2x, dentro do
+-- normal) → não marca anomalia.
+INSERT INTO public.ai_token_ledger (empresa_id, agent_key, source, tokens_input, tokens_output, tokens_delta, created_at)
+VALUES
+  ('a70e0000-0000-0000-0000-00000000000f', 'chat', 'usage', 2500, 2500, -5000, now() - interval '3 days'),
+  ('a70e0000-0000-0000-0000-00000000000f', 'chat', 'usage', 2500, 2500, -5000, now() - interval '2 days'),
+  ('a70e0000-0000-0000-0000-00000000000f', 'chat', 'usage', 2500, 2500, -5000, now() - interval '1 days'),
+  ('a70e0000-0000-0000-0000-00000000000f', 'chat', 'usage', 3000, 3000, -6000, now());
+
+SELECT is(
+  (SELECT anomalia FROM public.v_uso_tokens_anomalia_diaria WHERE empresa_id = 'a70e0000-0000-0000-0000-00000000000f'),
+  false,
+  'gasto de hoje dentro da faixa normal (menos de 10x a media) nao marca anomalia'
 );
 
 SELECT * FROM finish();
