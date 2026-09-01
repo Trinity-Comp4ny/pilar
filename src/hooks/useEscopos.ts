@@ -7,9 +7,12 @@ export type OrcamentoFaseRow = Pick<
   Tables<"projeto_orcamento_fases">,
   "disciplina" | "horas_estimadas" | "custo_hora" | "custo_estimado"
 >;
+/** Aditivo pendente cruzando projetos (spec 084, aba Pendências de /agentes). */
+export type PendenciaAditivo = EscopoRow & { projeto_nome: string };
 
 const escoposKey = (projetoId: string) => ["escopos", projetoId] as const;
 const orcamentoVivoKey = (projetoId: string) => ["projeto_orcamento_fases", projetoId] as const;
+const pendenciasKey = ["escopos", "pendencias"] as const;
 
 /** Escopo original + aditivos (qualquer status) de um projeto, com itens. */
 export function useEscopos(projetoId: string | undefined) {
@@ -27,6 +30,33 @@ export function useEscopos(projetoId: string | undefined) {
       return (data ?? []) as EscopoRow[];
     },
     staleTime: 1000 * 60,
+  });
+}
+
+/**
+ * Todo aditivo aguardando decisão (rascunho/pendente_aprovacao), de qualquer projeto
+ * da empresa (spec 084). Mesma fonte que EscopoTab lê por projeto — aqui cruza todos,
+ * pra /agentes > Pendências não depender de abrir o projeto certo pra descobrir que
+ * existe algo esperando.
+ */
+export function usePendenciasAgentes() {
+  return useQuery({
+    queryKey: pendenciasKey,
+    queryFn: async (): Promise<PendenciaAditivo[]> => {
+      const { data, error } = await supabase
+        .from("escopos")
+        .select("*, escopo_itens(*), projetos(nome)")
+        .eq("tipo", "aditivo")
+        .in("status", ["rascunho", "pendente_aprovacao"])
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((row) => {
+        const { projetos, ...escopo } = row as EscopoRow & { projetos: { nome: string } | null };
+        return { ...escopo, projeto_nome: projetos?.nome ?? "Projeto" };
+      });
+    },
+    staleTime: 1000 * 30,
   });
 }
 
@@ -86,36 +116,43 @@ export function useSalvarOrcamentoFase(projetoId: string) {
  * projetos:editor; o trigger handle_escopo_aprovado (banco) soma os itens em
  * projeto_orcamento_fases e incrementa projetos.valor_contrato — nada disso
  * acontece aqui, é efeito colateral do UPDATE.
+ *
+ * `projetoId` vem por chamada (spec 084), não por instância do hook: a aba
+ * Pendências cruza vários projetos com o mesmo hook, a aba Escopo só usa o seu.
  */
-export function useAprovarEscopo(projetoId: string) {
+export function useAprovarEscopo() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (escopoId: string): Promise<void> => {
+    mutationFn: async (params: { escopoId: string; projetoId: string }): Promise<void> => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       const { error } = await supabase
         .from("escopos")
         .update({ status: "aprovado", aprovado_por: user?.id ?? null, aprovado_em: new Date().toISOString() })
-        .eq("id", escopoId);
+        .eq("id", params.escopoId);
       if (error) throw error;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: escoposKey(projetoId) });
-      qc.invalidateQueries({ queryKey: orcamentoVivoKey(projetoId) });
-      qc.invalidateQueries({ queryKey: ["projeto", projetoId] });
+    onSuccess: (_data, params) => {
+      qc.invalidateQueries({ queryKey: escoposKey(params.projetoId) });
+      qc.invalidateQueries({ queryKey: orcamentoVivoKey(params.projetoId) });
+      qc.invalidateQueries({ queryKey: ["projeto", params.projetoId] });
+      qc.invalidateQueries({ queryKey: pendenciasKey });
     },
   });
 }
 
 /** Rejeita um escopo (rascunho/pendente → rejeitado). Não altera contrato nem orçamento. */
-export function useRejeitarEscopo(projetoId: string) {
+export function useRejeitarEscopo() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (escopoId: string): Promise<void> => {
-      const { error } = await supabase.from("escopos").update({ status: "rejeitado" }).eq("id", escopoId);
+    mutationFn: async (params: { escopoId: string; projetoId: string }): Promise<void> => {
+      const { error } = await supabase.from("escopos").update({ status: "rejeitado" }).eq("id", params.escopoId);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: escoposKey(projetoId) }),
+    onSuccess: (_data, params) => {
+      qc.invalidateQueries({ queryKey: escoposKey(params.projetoId) });
+      qc.invalidateQueries({ queryKey: pendenciasKey });
+    },
   });
 }
