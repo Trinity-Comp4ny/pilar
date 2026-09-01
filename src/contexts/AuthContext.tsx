@@ -19,6 +19,7 @@ export type MfaLevel = "aal1" | "aal2";
 interface AuthContextValue {
   user: User | null;
   profile: ProfileWithEmpresa | null;
+  profileError: boolean;
   loading: boolean;
   isAuthenticated: boolean;
   mfaCurrentLevel: MfaLevel;
@@ -55,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<ProfileWithEmpresa | null>(null);
+  const [profileError, setProfileError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [mfaCurrentLevel, setMfaCurrentLevel] = useState<MfaLevel>("aal1");
   const [mfaNextLevel, setMfaNextLevel] = useState<MfaLevel>("aal1");
@@ -65,17 +67,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) {
       // "No rows" (PGRST116) é esperado (usuário sem profile ainda, ex.: durante
       // o onboarding). Qualquer outro erro é de infra: não engolir e não apagar
-      // um profile já carregado por causa de uma falha transitória de rede.
+      // um profile já carregado por causa de uma falha transitória de rede, mas
+      // marcar profileError para a UI parar de mostrar loading infinito.
       if (error.code === "PGRST116") {
         setProfile(null);
+        setProfileError(false);
         monitoring.setUser(null);
       } else {
+        setProfileError(true);
         monitoring.captureException(error, { context: "fetchProfile", userId });
       }
       return;
     }
     const p = data as ProfileWithEmpresa;
     setProfile(p);
+    setProfileError(false);
     monitoring.setUser({
       id: p.id,
       email: p.email ?? undefined,
@@ -108,6 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
     setUser(null);
     setProfile(null);
+    setProfileError(false);
     setMfaCurrentLevel("aal1");
     setMfaNextLevel("aal1");
     setHasVerifiedMfaFactor(false);
@@ -202,6 +209,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         profile,
+        profileError,
         loading,
         isAuthenticated,
         mfaCurrentLevel,

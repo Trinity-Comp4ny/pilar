@@ -12,7 +12,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { LabelsEditor } from "@/components/LabelsEditor";
 import { LinksEditor, type LinkItem } from "@/components/LinksEditor";
 import { AtividadeComposer } from "@/pages/projetos/components/AtividadeComposer";
-import { AvatarStack } from "@/pages/projetos/components/AvatarStack";
+import { AvatarStack } from "@/components/AvatarStack";
 import { HorasMinutosField } from "./HorasMinutosField";
 import {
   Calendar,
@@ -94,7 +94,7 @@ function SeletorResponsaveis({
       >
         {selecionadas.length > 0 ? (
           <>
-            <AvatarStack names={selecionadas.map((p) => p.nome)} size="xs" />
+            <AvatarStack pessoas={selecionadas} size="xs" />
             <span className="min-w-0 flex-1 truncate text-left">
               {selecionadas.length === 1 ? selecionadas[0].nome : `${selecionadas.length} responsáveis`}
             </span>
@@ -120,7 +120,7 @@ function SeletorResponsaveis({
                     onSelect={() => toggle(p.id)}
                     className={cn("gap-2", marcado && "font-medium")}
                   >
-                    <AvatarStack names={[p.nome]} size="xs" />
+                    <AvatarStack pessoas={[p]} size="xs" />
                     <span className="flex-1 truncate">{p.nome}</span>
                     {marcado && <Check className="h-4 w-4 text-brand" />}
                   </CommandItem>

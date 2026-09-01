@@ -11,6 +11,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { QuadroTrabalho } from "./components/QuadroTrabalho";
@@ -73,6 +74,7 @@ export default function MeuTrabalho() {
   const qc = useQueryClient();
   const { isAdmin } = usePermissions();
   const { canView: temProjetos } = useFeatureAccess("projetos");
+  const { profile } = useAuth();
   const { data: minhaPessoa } = useMinhaPessoa();
   const { data: pessoas } = usePessoasEmpresa();
   const { data: projetos } = useProjetosLite();
@@ -384,9 +386,7 @@ export default function MeuTrabalho() {
       search={
         visao !== "agenda" ? { value: busca, onChange: setBusca, placeholder: "Buscar no meu trabalho" } : undefined
       }
-      primaryAction={
-        visao !== "agenda" ? { label: "Nova tarefa", icon: Plus, onClick: () => abrirNova() } : undefined
-      }
+      primaryAction={visao !== "agenda" ? { label: "Nova tarefa", icon: Plus, onClick: () => abrirNova() } : undefined}
     >
       {/* Toolbar: visão + (no quadro) filtros de tipo e data */}
       <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -431,6 +431,7 @@ export default function MeuTrabalho() {
                 pessoas={pessoas ?? []}
                 minhaPessoaId={minhaPessoaId}
                 meuNome={autorNome}
+                meuAvatarUrl={profile?.avatar_url}
                 onChange={setFiltroPessoa}
               />
             )}

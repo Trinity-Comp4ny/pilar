@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LabelsEditor } from "@/components/LabelsEditor";
-import { AvatarStack } from "@/pages/projetos/components/AvatarStack";
+import { AvatarStack } from "@/components/AvatarStack";
 import { cn } from "@/lib/utils";
 import type { PessoaOpcao } from "../hooks";
 import { PRIORIDADE_DOT_CLASS, PRIORIDADE_LABEL, PRIORIDADE_ORDER, type Prioridade } from "../status";
@@ -50,7 +50,7 @@ export function ResponsavelCell({ responsaveis, pessoas, editavel, onChange }: R
   const conteudo =
     responsaveis.length > 0 ? (
       <span className="inline-flex min-w-0 items-center gap-1.5">
-        <AvatarStack names={responsaveis.map((r) => r.nome)} size="xs" />
+        <AvatarStack pessoas={responsaveis} size="xs" />
         <span className="truncate text-xs text-foreground">
           {responsaveis.length === 1 ? responsaveis[0].nome : `${responsaveis.length} responsáveis`}
         </span>
@@ -87,7 +87,7 @@ export function ResponsavelCell({ responsaveis, pessoas, editavel, onChange }: R
                       onSelect={() => toggle(p.id)}
                       className={cn("gap-2", marcado && "font-medium")}
                     >
-                      <AvatarStack names={[p.nome]} size="xs" />
+                      <AvatarStack pessoas={[p]} size="xs" />
                       <span className="flex-1 truncate">{p.nome}</span>
                       {marcado && <Check className="h-4 w-4 text-brand" />}
                     </CommandItem>

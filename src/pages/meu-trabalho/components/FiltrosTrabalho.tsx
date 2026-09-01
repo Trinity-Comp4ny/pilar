@@ -6,7 +6,7 @@ import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { AvatarStack } from "@/pages/projetos/components/AvatarStack";
+import { AvatarStack } from "@/components/AvatarStack";
 import { cn } from "@/lib/utils";
 import type { PessoaOpcao } from "../hooks";
 
@@ -66,17 +66,22 @@ export function FiltroPessoa({
   pessoas,
   minhaPessoaId,
   meuNome,
+  meuAvatarUrl,
   onChange,
 }: {
   value: string;
   pessoas: PessoaOpcao[];
   minhaPessoaId: string | null;
   meuNome: string;
+  /** Foto do usuário logado, direto do profile (não depende de existir uma
+   * `pessoa` vinculada — ultra_admin e outros perfis sem pessoa não têm uma). */
+  meuAvatarUrl?: string | null;
   onChange: (value: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const ehEu = value === "eu";
-  const selecionada = ehEu ? null : (pessoas.find((p) => p.id === value) ?? null);
+  const eu = { nome: meuNome, avatarUrl: meuAvatarUrl };
+  const selecionada = ehEu ? eu : (pessoas.find((p) => p.id === value) ?? null);
   const nome = ehEu ? meuNome : (selecionada?.nome ?? "Pessoa");
   const rotulo = ehEu ? "Eu" : nome;
 
@@ -88,7 +93,7 @@ export function FiltroPessoa({
           className="h-9 gap-1.5 rounded-full py-0 pl-1 pr-3.5 text-[13px] font-normal"
           aria-label="Filtrar por pessoa"
         >
-          <AvatarStack names={[nome]} size="xs" />
+          <AvatarStack pessoas={[selecionada ?? nome]} size="xs" />
           {rotulo}
         </Button>
       </PopoverTrigger>
@@ -106,7 +111,7 @@ export function FiltroPessoa({
                 }}
                 className={cn("gap-2", ehEu && "font-medium")}
               >
-                <AvatarStack names={[meuNome]} size="xs" /> Eu
+                <AvatarStack pessoas={[eu]} size="xs" /> Eu
               </CommandItem>
               {pessoas
                 .filter((p) => p.id !== minhaPessoaId)
@@ -120,7 +125,7 @@ export function FiltroPessoa({
                     }}
                     className={cn("gap-2", p.id === value && "font-medium")}
                   >
-                    <AvatarStack names={[p.nome]} size="xs" /> {p.nome}
+                    <AvatarStack pessoas={[p]} size="xs" /> {p.nome}
                   </CommandItem>
                 ))}
             </CommandGroup>

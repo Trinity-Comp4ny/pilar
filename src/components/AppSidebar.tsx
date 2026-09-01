@@ -3,7 +3,6 @@ import {
   Home,
   ShieldCheck,
   Zap,
-  UserCircle,
   LogOut,
   ChevronDown,
   Check,
@@ -14,6 +13,7 @@ import {
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Logo } from "@/components/Logo";
+import { AvatarStack } from "@/components/AvatarStack";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -355,7 +355,11 @@ export function AppSidebar() {
                   aria-label="Menu do usuário"
                   title={collapsed ? userName : ""}
                 >
-                  <UserCircle size={18} strokeWidth={1.5} className="text-black/70 w-[18px] h-[18px] flex-shrink-0" />
+                  <AvatarStack
+                    pessoas={[{ nome: userName, avatarUrl: profile?.avatar_url }]}
+                    size="xs"
+                    className="flex-shrink-0"
+                  />
                   {!collapsed && (
                     <>
                       <div className="flex-1 text-left min-w-0">
