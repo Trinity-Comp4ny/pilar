@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Layers, DollarSign, Table as TableIcon, GanttChart, GitBranch } from "lucide-react";
+import { Layers, DollarSign, ScrollText, Table as TableIcon, GanttChart, GitBranch } from "lucide-react";
 import { SecondSidebar, type SecondSidebarTab } from "@/components/SecondSidebar";
 import { cn } from "@/lib/utils";
 import {
@@ -16,6 +16,7 @@ import { type LinkItem } from "@/components/LinksEditor";
 import { useAuth } from "@/contexts/AuthContext";
 import { CronogramaTab } from "./CronogramaTab";
 import { PagamentosTab } from "./PagamentosTab";
+import { EscopoTab } from "./EscopoTab";
 import { DisciplinasTableView } from "./DisciplinasTableView";
 import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
 import { FluxoPipeline } from "./FluxoPipeline";
@@ -46,6 +47,7 @@ interface ProjetoDetailTabsProps {
 const PROJETO_TABS: SecondSidebarTab[] = [
   { id: "disciplinas", label: "Disciplinas", icon: Layers },
   { id: "pagamentos", label: "Pagamentos", icon: DollarSign },
+  { id: "escopo", label: "Escopo", icon: ScrollText },
 ];
 
 type DisciplinaView = "tabela" | "gantt" | "fluxo";
@@ -88,6 +90,7 @@ export function ProjetoDetailTabs({
     const h = hash.replace("#", "");
     if (h === "cronograma") return { tab: "disciplinas", view: "gantt" };
     if (h === "pagamentos") return { tab: "pagamentos", view: null };
+    if (h === "escopo") return { tab: "escopo", view: null };
     return { tab: "disciplinas", view: null };
   };
 
@@ -278,6 +281,10 @@ export function ProjetoDetailTabs({
 
           <TabsContent value="pagamentos">
             <PagamentosTab projetoId={projeto.id} canEdit={canEdit} />
+          </TabsContent>
+
+          <TabsContent value="escopo">
+            <EscopoTab projetoId={projeto.id} canEdit={canEdit} />
           </TabsContent>
         </div>
       </div>
