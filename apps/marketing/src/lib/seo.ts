@@ -18,6 +18,7 @@ export function usePageMeta({
   caminho,
   ogTitulo,
   ogDescricao,
+  noindex = false,
 }: {
   titulo: string;
   descricao: string;
@@ -25,6 +26,12 @@ export function usePageMeta({
   /** A home usa copy de compartilhamento diferente do title; as demais herdam. */
   ogTitulo?: string;
   ogDescricao?: string;
+  /**
+   * Página sem conteúdo indexável (ex.: 404). Não aponta canonical para a
+   * própria URL inventada: fazer isso diz ao Google que aquela URL quebrada
+   * é a versão canônica dela mesma, o sinal clássico de soft 404.
+   */
+  noindex?: boolean;
 }) {
   useEffect(() => {
     const url = `${BASE}${caminho}`;
@@ -35,8 +42,11 @@ export function usePageMeta({
     setMeta('meta[property="og:url"]', url);
     setMeta('meta[name="twitter:title"]', ogTitulo ?? titulo);
     setMeta('meta[name="twitter:description"]', ogDescricao ?? descricao);
-    document.head.querySelector('link[rel="canonical"]')?.setAttribute("href", url);
-  }, [titulo, descricao, caminho, ogTitulo, ogDescricao]);
+    setMeta('meta[name="robots"]', noindex ? "noindex, follow" : "index, follow");
+    if (!noindex) {
+      document.head.querySelector('link[rel="canonical"]')?.setAttribute("href", url);
+    }
+  }, [titulo, descricao, caminho, ogTitulo, ogDescricao, noindex]);
 }
 
 /**
