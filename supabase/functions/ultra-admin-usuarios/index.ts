@@ -13,6 +13,7 @@ import { isUUID, jsonResponse, optionsResponse, safeErrorResponse, getTrustedOri
 import { requireUltraAdmin } from "../_shared/admin-auth.ts";
 import { logAction } from "../_shared/audit.ts";
 import { withSentry } from "../_shared/sentry.ts";
+import { isEmailExistsError } from "../_shared/auth-errors.ts";
 
 serve(
   withSentry("ultra-admin-usuarios", async (req) => {
@@ -147,7 +148,13 @@ serve(
           redirectTo: `${redirectOriginResend}/profile-setup`,
           data: { invite_token: newToken, nome: conv.nome ?? "" },
         });
-        if (inviteError) return safeErrorResponse(400, "Falha ao reenviar o convite", req);
+        if (inviteError) {
+          return safeErrorResponse(
+            400,
+            isEmailExistsError(inviteError) ? "Esse e-mail já tem conta no Pilar" : "Falha ao reenviar o convite",
+            req
+          );
+        }
 
         await logAction(svc, {
           actorId: userId,
@@ -188,7 +195,22 @@ serve(
         data: { invite_token: inviteToken, nome: nome || "" },
       });
 
-      if (inviteError) return safeErrorResponse(400, "Falha ao enviar convite", req);
+      if (inviteError) {
+        // admin_create_convite já grava a linha "pendente" antes do e-mail sair. Sem
+        // isto, uma falha de envio deixava a linha órfã pra sempre (mesmo bug do
+        // invite-user, corrigido lá no PR #442; faltava aqui).
+        await svc
+          .from("convites")
+          .update({ usado_em: new Date().toISOString() })
+          .eq("empresa_id", empresa_id)
+          .eq("email", String(email).toLowerCase().trim())
+          .is("usado_em", null);
+        return safeErrorResponse(
+          400,
+          isEmailExistsError(inviteError) ? "Esse e-mail já tem conta no Pilar" : "Falha ao enviar convite",
+          req
+        );
+      }
 
       await logAction(svc, {
         actorId: userId,
