@@ -9,7 +9,7 @@ interface EmptyStateProps {
   action?: {
     label: string;
     onClick: () => void;
-    variant?: "default" | "outline" | "secondary";
+    variant?: "default" | "outline" | "secondary" | "brand";
   };
   children?: ReactNode;
   className?: string;

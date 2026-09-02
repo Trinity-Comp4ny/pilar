@@ -38,6 +38,7 @@ import {
 } from "../status";
 import type { Etapa } from "../useEtapas";
 import type { Comentario, PessoaOpcao, TarefaInput, TarefaItem } from "../hooks";
+import { notificarMencao } from "@/lib/notificarMencao";
 
 const SEM = "__none__";
 
@@ -198,16 +199,27 @@ function TarefaFormBody({
   const [labels, setLabels] = useState<string[]>(tarefa?.labels ?? []);
   const [links, setLinks] = useState<LinkItem[]>(tarefa?.links ?? []);
   const [comentarios, setComentarios] = useState<Comentario[]>(tarefa?.comentarios ?? []);
+  // Menções de comentários adicionados nesta sessão do dialog, ainda não notificadas: só
+  // notifica quando o Salvar do rodapé persistir de fato (comentário de tarefa não salva sozinho
+  // como em Projeto/Disciplina), e só as novas — reabrir uma tarefa antiga não deve renotificar.
+  const [pendentesMencao, setPendentesMencao] = useState<{ texto: string; mencionados: string[] }[]>([]);
 
   const podeSalvar = !readOnly && titulo.trim().length > 0 && !saving;
 
-  const adicionarComentario = (texto: string) => {
+  const adicionarComentario = (texto: string, mencionados: string[]) => {
     const t = texto.trim();
     if (!t) return;
     setComentarios((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), texto: t, autor: autorNome, data: new Date().toISOString() },
+      {
+        id: crypto.randomUUID(),
+        texto: t,
+        autor: autorNome,
+        data: new Date().toISOString(),
+        mencionados: mencionados.length ? mencionados : undefined,
+      },
     ]);
+    if (mencionados.length) setPendentesMencao((prev) => [...prev, { texto: t, mencionados }]);
   };
 
   const salvar = async () => {
@@ -227,6 +239,11 @@ function TarefaFormBody({
       links,
       comentarios,
     });
+    // Só notifica se a tarefa já existia: numa criação, o id definitivo não volta pro dialog.
+    if (tarefa?.id && pendentesMencao.length) {
+      await Promise.all(pendentesMencao.map((p) => notificarMencao("tarefa", tarefa.id, p.mencionados, p.texto)));
+      setPendentesMencao([]);
+    }
   };
 
   return (
@@ -397,7 +414,7 @@ function TarefaFormBody({
             </div>
             {!readOnly && (
               <div className="flex-shrink-0 border-t bg-background/60 p-4">
-                <AtividadeComposer pessoas={pessoas} onSubmit={(texto) => adicionarComentario(texto)} />
+                <AtividadeComposer pessoas={pessoas} onSubmit={adicionarComentario} />
               </div>
             )}
           </div>

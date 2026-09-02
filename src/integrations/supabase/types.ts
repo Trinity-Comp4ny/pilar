@@ -7954,6 +7954,15 @@ export type Database = {
         }
         Returns: number
       }
+      rpc_notificar_mencao: {
+        Args: {
+          p_entidade_id: string
+          p_entidade_tipo: string
+          p_mencionados: string[]
+          p_preview: string
+        }
+        Returns: number
+      }
       rpc_notificar_proxima_etapa: {
         Args: { p_disciplina_id: string }
         Returns: number

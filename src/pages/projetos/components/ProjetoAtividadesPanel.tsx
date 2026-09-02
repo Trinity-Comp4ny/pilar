@@ -1,5 +1,6 @@
 import { useProjetoAtividades } from "../hooks/useProjetoAtividades";
 import { AtividadeComposer } from "./AtividadeComposer";
+import { notificarMencao } from "@/lib/notificarMencao";
 
 interface ProjetoAtividadesPanelProps {
   projetoId: string;
@@ -12,18 +13,21 @@ export function ProjetoAtividadesPanel({ projetoId, pessoas, autorNome }: Projet
   const { comentarios, salvar } = useProjetoAtividades(projetoId);
 
   const adicionar = (texto: string, mencionados: string[]) => {
-    salvar.mutate({
-      comentarios: [
-        ...comentarios,
-        {
-          id: crypto.randomUUID(),
-          texto,
-          autor: autorNome,
-          data: new Date().toISOString(),
-          mencionados: mencionados.length ? mencionados : undefined,
-        },
-      ],
-    });
+    salvar.mutate(
+      {
+        comentarios: [
+          ...comentarios,
+          {
+            id: crypto.randomUUID(),
+            texto,
+            autor: autorNome,
+            data: new Date().toISOString(),
+            mencionados: mencionados.length ? mencionados : undefined,
+          },
+        ],
+      },
+      { onSuccess: () => notificarMencao("projeto", projetoId, mencionados, texto) }
+    );
   };
 
   return (
