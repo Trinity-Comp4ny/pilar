@@ -112,6 +112,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(STORAGE_KEYS.AUTH);
     localStorage.removeItem(STORAGE_KEYS.USER_NAME);
     localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
+    // Sem isto, o próximo login (mesmo de outro usuário) reabre a conversa de agentes de quem saiu.
+    localStorage.removeItem(STORAGE_KEYS.CHAT_SNAPSHOT);
     setUser(null);
     setProfile(null);
     setProfileError(false);
