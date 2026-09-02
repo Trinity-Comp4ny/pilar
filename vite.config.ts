@@ -88,7 +88,10 @@ export default defineConfig(({ mode }) => ({
     globals: true,
     environment: "jsdom",
     setupFiles: "./src/test/setup.ts",
-    exclude: ["node_modules", "dist", "e2e/**", "tests/**", ".next", ".git", ".claude/**"],
+    // supabase/functions roda em Deno (deno test, `npm run test:functions`), não em
+    // Vitest: os arquivos .test.ts de lá importam módulo remoto (https://) e usam API
+    // só do Deno, que o loader ESM do Node não resolve.
+    exclude: ["node_modules", "dist", "e2e/**", "tests/**", ".next", ".git", ".claude/**", "supabase/functions/**"],
     // Config mínima de ambiente para a suíte. `src/lib/env.ts` valida no import e
     // aborta sem URL/chave do Supabase, e qualquer teste que importe `supabase.ts`
     // (a maioria, transitivamente) morre sem isto. Na máquina do dev passava por

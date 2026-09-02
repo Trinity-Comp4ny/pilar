@@ -249,6 +249,16 @@ jobs:
       - name: deno check (com ratchet de dívida)
         run: scripts/deno-check.sh
         shell: bash
+      - name: deno test
+        # As Edge Functions não tinham NENHUM teste (46 funções, 0 cobertura — achado
+        # da triagem Sentry de 02/09, invite-user órfão ao falhar o envio). Começa pelo
+        # que reproduz bug real já visto em produção: assinatura do webhook de e-mail
+        # (auth-email-hook/webhook.ts) e fallback de provider (lookup-cep/providers.ts).
+        # Mesmo comando de `npm run test:functions`, chamado direto porque este job não
+        # tem Node instalado. --no-check porque deno-check.sh (acima) já cobre tipo com
+        # o ratchet de dívida; este step é só comportamento.
+        run: deno test --no-check --allow-env supabase/functions
+        shell: bash
 
   # Único required status check do branch protection. Adicionar ou renomear job
   # deixa de exigir mexer na configuração do repositório.

@@ -13,6 +13,7 @@ import { adminClient } from "../_shared/admin-auth.ts";
 import { logAction } from "../_shared/audit.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { withSentry } from "../_shared/sentry.ts";
+import { isEmailExistsError } from "../_shared/auth-errors.ts";
 
 const log = createLogger("invite-user");
 
@@ -98,7 +99,13 @@ serve(
           redirectTo: `${redirectOrigin}/profile-setup`,
           data: { invite_token: newToken, nome: conv.nome ?? "" },
         });
-        if (resendErr) return safeErrorResponse(400, "Falha ao reenviar o convite", req);
+        if (resendErr) {
+          return safeErrorResponse(
+            400,
+            isEmailExistsError(resendErr) ? "Esse e-mail já tem conta no Pilar" : "Falha ao reenviar o convite",
+            req
+          );
+        }
         await logAction(svc, {
           actorId: user.id,
           actorEmail: profile.email ?? user.email ?? "",
@@ -200,7 +207,11 @@ serve(
           .eq("empresa_id", profile.empresa_id)
           .eq("email", String(email).toLowerCase().trim())
           .is("usado_em", null);
-        return safeErrorResponse(400, "Falha ao enviar convite", req);
+        return safeErrorResponse(
+          400,
+          isEmailExistsError(inviteError) ? "Esse e-mail já tem conta no Pilar" : "Falha ao enviar convite",
+          req
+        );
       }
 
       await logAction(svc, {
