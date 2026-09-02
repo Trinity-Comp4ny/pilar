@@ -11,14 +11,17 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { QuadroTrabalho } from "./components/QuadroTrabalho";
-import { ListaTrabalho } from "./components/ListaTrabalho";
+import { ListaTrabalho, SeletorColunas } from "./components/ListaTrabalho";
 import { TarefaDialog } from "./components/TarefaDialog";
 import { AbaAgenda } from "./components/AbaAgenda";
 import { FiltroPessoa, FiltroPill } from "./components/FiltrosTrabalho";
 import {
+  disciplinasQueryKey,
+  tarefasQueryKey,
   useMinhaPessoa,
   usePessoasEmpresa,
   useProjetosLite,
@@ -68,11 +71,15 @@ function noPeriodo(prazo: string | null, filtro: FiltroData): boolean {
 }
 
 export default function MeuTrabalho() {
-  usePageTitle("Meu trabalho");
+  usePageTitle("Tarefas");
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { isAdmin } = usePermissions();
+  const { isAdmin, role } = usePermissions();
+  // Coordenador vê as tarefas de toda a empresa, igual admin (a RLS já libera;
+  // aqui é só a UI de filtro acompanhar).
+  const podeVerTudo = isAdmin || role === "coordenador";
   const { canView: temProjetos } = useFeatureAccess("projetos");
+  const { profile } = useAuth();
   const { data: minhaPessoa } = useMinhaPessoa();
   const { data: pessoas } = usePessoasEmpresa();
   const { data: projetos } = useProjetosLite();
@@ -104,23 +111,49 @@ export default function MeuTrabalho() {
     }
   };
 
-  // Filtro de pessoa: só admin escolhe. Não-admin fica preso a si mesmo.
-  const filtroPessoa = searchParams.get("pessoa") ?? EU;
-  const setFiltroPessoa = (v: string) =>
+  // Filtro de pessoa: só admin escolhe, e pode marcar mais de uma. Não-admin
+  // fica preso a si mesmo.
+  const filtroPessoas = useMemo(() => {
+    const raw = searchParams.get("pessoas");
+    return raw ? raw.split(",").filter(Boolean) : [EU];
+  }, [searchParams]);
+  const setFiltroPessoas = (v: string[]) =>
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
-        if (v === EU) next.delete("pessoa");
-        else next.set("pessoa", v);
+        if (v.length === 0 || (v.length === 1 && v[0] === EU)) next.delete("pessoas");
+        else next.set("pessoas", v.join(","));
         return next;
       },
       { replace: true }
     );
 
   const minhaPessoaId = minhaPessoa?.id ?? null;
-  const pessoaIdEfetiva = !isAdmin || filtroPessoa === EU ? minhaPessoaId : filtroPessoa;
+  // Conjunto efetivo de ids de pessoa a filtrar: "eu" vira a pessoa do usuário
+  // logado. null = nenhum filtro de pessoa ativo (mostra tudo que a RLS já
+  // libera); array (mesmo vazio) = filtro ativo, só quem estiver nele. Quem
+  // não pode ver tudo (não é admin nem coordenador) fica sempre preso à
+  // própria pessoa — [] se não tiver uma vinculada, nunca "sem filtro" (senão
+  // a RLS, que libera tudo pra admin/coordenador, vazaria a empresa inteira
+  // pra quem só devia ver o próprio; e mesmo pra quem não é admin, "eu" sem
+  // pessoa não é responsável de nada).
+  const pessoaIdsEfetivos = useMemo(() => {
+    if (!podeVerTudo) return minhaPessoaId ? [minhaPessoaId] : [];
+    if (filtroPessoas.length === 0) return null; // nenhuma pessoa marcada = sem filtro
+    const ids = new Set<string>();
+    for (const v of filtroPessoas) {
+      if (v === EU) {
+        if (minhaPessoaId) ids.add(minhaPessoaId);
+        // "eu" sem pessoa vinculada: não adiciona ninguém, mas o filtro
+        // continua ativo — sem outra pessoa junto, o resultado fica vazio.
+      } else {
+        ids.add(v);
+      }
+    }
+    return [...ids];
+  }, [podeVerTudo, filtroPessoas, minhaPessoaId]);
 
-  const { itens, isLoading, isError } = useItensTrabalho(pessoaIdEfetiva, {
+  const { itens, isLoading, isError } = useItensTrabalho(pessoaIdsEfetivos, {
     comDisciplinas: temProjetos,
     tipo,
   });
@@ -143,11 +176,11 @@ export default function MeuTrabalho() {
 
   // --- Cache otimista (o card salta de coluna na hora) ---
   const patchTarefa = (id: string, patch: Record<string, unknown>) =>
-    qc.setQueryData(["meu-trabalho", "tarefas", pessoaIdEfetiva], (old: unknown) =>
+    qc.setQueryData(tarefasQueryKey(pessoaIdsEfetivos), (old: unknown) =>
       Array.isArray(old) ? old.map((t) => (t.id === id ? { ...t, ...patch } : t)) : old
     );
   const patchDisciplina = (id: string, patch: Record<string, unknown>) =>
-    qc.setQueryData(["meu-trabalho", "disciplinas", pessoaIdEfetiva], (old: unknown) =>
+    qc.setQueryData(disciplinasQueryKey(pessoaIdsEfetivos), (old: unknown) =>
       Array.isArray(old) ? old.map((d) => (d.id === id ? { ...d, ...patch } : d)) : old
     );
 
@@ -380,13 +413,11 @@ export default function MeuTrabalho() {
 
   return (
     <PilarPage
-      title="Meu trabalho"
+      title="Tarefas"
       search={
         visao !== "agenda" ? { value: busca, onChange: setBusca, placeholder: "Buscar no meu trabalho" } : undefined
       }
-      primaryAction={
-        visao !== "agenda" ? { label: "Nova tarefa", icon: Plus, onClick: () => abrirNova() } : undefined
-      }
+      primaryAction={visao !== "agenda" ? { label: "Nova tarefa", icon: Plus, onClick: () => abrirNova() } : undefined}
     >
       {/* Toolbar: visão + (no quadro) filtros de tipo e data */}
       <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -425,13 +456,14 @@ export default function MeuTrabalho() {
 
         {visao !== "agenda" && (
           <>
-            {isAdmin && (
+            {podeVerTudo && (
               <FiltroPessoa
-                value={filtroPessoa}
+                value={filtroPessoas}
                 pessoas={pessoas ?? []}
                 minhaPessoaId={minhaPessoaId}
                 meuNome={autorNome}
-                onChange={setFiltroPessoa}
+                meuAvatarUrl={profile?.avatar_url}
+                onChange={setFiltroPessoas}
               />
             )}
 
@@ -450,12 +482,19 @@ export default function MeuTrabalho() {
               onChange={(v) => setFiltroData(v as FiltroData)}
               options={(Object.keys(DATA_LABEL) as FiltroData[]).map((d) => ({ value: d, label: DATA_LABEL[d] }))}
             />
+
+            {visao === "lista" && (
+              <>
+                <div className="mx-1 h-5 w-px bg-border" />
+                <SeletorColunas colunas={colunas} />
+              </>
+            )}
           </>
         )}
       </div>
 
       {visao === "agenda" ? (
-        <AbaAgenda pessoaId={pessoaIdEfetiva} minhaPessoaId={minhaPessoaId} canEdit temProjetos={temProjetos} />
+        <AbaAgenda pessoaIds={pessoaIdsEfetivos} minhaPessoaId={minhaPessoaId} canEdit temProjetos={temProjetos} />
       ) : isLoading ? (
         <p className="py-12 text-center text-sm text-muted-foreground">Carregando seu trabalho...</p>
       ) : isError ? (

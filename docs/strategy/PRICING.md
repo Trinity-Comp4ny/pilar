@@ -2,6 +2,19 @@
 
 > Rascunho **v3** · atualizado 2026-08-17 (v2 em 2026-08-10, v1 em 2026-07-13) · números indicativos para validação com o design partner, **não** é tabela final de preço.
 > Versão visual (para apresentar): artifact "Como o Pilar vai cobrar".
+>
+> ⚠️ **Superado em parte (2026-08-31):** a Camada 2 deixa de se chamar "ação de IA" e a
+> doutrina "o cliente nunca vê token" caiu por decisão do CEO ([DECISOES.md](./DECISOES.md),
+> entrada 2026-08-31). A unidade exposta e vendida é **token**. O plano completo do motor de
+> tokens (fases, economia, arquitetura) está em [MOTOR_DE_TOKENS.md](./MOTOR_DE_TOKENS.md).
+> O resto deste documento (base flat por projetos ativos, margem do pacote, teto claro)
+> continua valendo; incorporar na v4.
+>
+> ⚠️ **Números da Camada 2 fixados (2026-09-01):** cotas 500k/2M/8M tokens/mês
+> (Essencial/Profissional/Escala) e pacote extra único de **R$49 por 500 mil tokens,
+> sem expiração** ([DECISOES.md](./DECISOES.md), entrada 2026-09-01). Substitui a
+> tabela de "ações de IA" e a regra de margem "2,5x o custo" da revisão 17/08 abaixo.
+> Ainda não vai para LP/material de venda até a Fase 0 confirmar o mix de uso real.
 
 ---
 

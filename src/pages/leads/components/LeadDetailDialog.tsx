@@ -25,7 +25,7 @@ import {
   FolderPlus,
   Pencil as PencilIcon,
 } from "lucide-react";
-import { formatCurrency } from "@/lib/currencyUtils";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { type Lead } from "@/hooks/useLeads";
 import { PROPOSTA_STATUS_CONFIG, type Proposta } from "@/hooks/usePropostas";
 import { statusExibido } from "@/lib/comercial";
@@ -78,6 +78,7 @@ export function LeadDetailDialog({
   onConvertProjeto,
   convertProjetoPending = false,
 }: LeadDetailDialogProps) {
+  const formatCurrency = useMoneyMask();
   if (!lead) return null;
 
   const statusConfig = STATUS_CONFIG[lead.status];

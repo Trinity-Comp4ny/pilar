@@ -37,8 +37,9 @@ serve(
 
       if (targetErr || !target) return safeErrorResponse(404, "Usuário não encontrado", req);
 
-      // ADR 0029: só o role muda. Acesso é role + módulo da empresa.
-      const safeRole = ["admin", "user"].includes(role) ? role : target.role;
+      // ADR 0029/0034: role decide hierarquia; financeiro é eixo à parte
+      // (profiles.financeiro_delegado, não muda por aqui).
+      const safeRole = ["admin", "coordenador", "user"].includes(role) ? role : target.role;
 
       const { error } = await svc.from("profiles").update({ role: safeRole }).eq("id", user_id);
 
@@ -167,7 +168,7 @@ serve(
       if (!isUUID(empresa_id)) return safeErrorResponse(400, "empresa_id inválido", req);
       if (!email || typeof email !== "string") return safeErrorResponse(400, "email obrigatório", req);
 
-      const safeRole = ["admin", "user"].includes(role) ? role : "user";
+      const safeRole = ["admin", "coordenador", "user"].includes(role) ? role : "user";
 
       const redirectOrigin = getTrustedOrigin(req);
       if (!redirectOrigin) return safeErrorResponse(500, "Server CORS misconfigured", req);

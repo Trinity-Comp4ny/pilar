@@ -9,8 +9,9 @@
  *      * se pending_signup ainda pendente → marca pago, cria empresa_owners_pending,
  *        dispara inviteUserByEmail
  *      * se já linked a uma subscription ativa → atualiza current_period_end
+ *      * se for compra de pacote de tokens (SPEC 077) → credita ai_token_ledger
  *  - PAYMENT_OVERDUE → subscription.status = 'overdue'
- *  - PAYMENT_REFUNDED → pending cancelada / subscription cancelada
+ *  - PAYMENT_REFUNDED → pending cancelada / subscription cancelada / compra cancelada
  *  - SUBSCRIPTION_ENDED → subscription.status = 'canceled'
  */
 
@@ -163,6 +164,35 @@ serve(
         activeSub = data ?? null;
       }
 
+      // Compra de pacote de tokens (SPEC 077) — mutuamente exclusiva com signup:
+      // externalReference é ou um pilar_pending_signups.id ou um
+      // pilar_token_pack_purchases.id, nunca os dois.
+      let tokenPack: {
+        id: string;
+        empresa_id: string;
+        user_id: string | null;
+        quantidade_pacotes: number;
+        tokens_pacote: number;
+        status: string;
+      } | null = null;
+
+      if (!signup && extRef) {
+        const { data } = await admin
+          .from("pilar_token_pack_purchases")
+          .select("id, empresa_id, user_id, quantidade_pacotes, tokens_pacote, status")
+          .eq("id", extRef)
+          .maybeSingle();
+        tokenPack = data ?? null;
+      }
+      if (!signup && !tokenPack && paymentId) {
+        const { data } = await admin
+          .from("pilar_token_pack_purchases")
+          .select("id, empresa_id, user_id, quantidade_pacotes, tokens_pacote, status")
+          .eq("asaas_payment_id", paymentId)
+          .maybeSingle();
+        tokenPack = data ?? null;
+      }
+
       // --- Eventos de pagamento recebido ---
       if (event === "PAYMENT_CONFIRMED" || event === "PAYMENT_RECEIVED") {
         const paidAt = payment?.paymentDate ? new Date(payment.paymentDate).toISOString() : new Date().toISOString();
@@ -210,8 +240,19 @@ serve(
             throw new Error(`falha ao criar empresa_owners_pending: ${ownerErr?.message}`);
           }
 
+          // Grava empresa_owner_pending_id ANTES de disparar o invite: o
+          // inviteUserByEmail cria a linha em auth.users de forma síncrona, e o
+          // trigger handle_new_user (CENÁRIO 2) lê pilar_pending_signups por esse
+          // campo para confirmar o pagamento. Gravar depois é tarde demais — o
+          // trigger sempre acha o campo vazio e recusa o cadastro com "sem
+          // pagamento confirmado", mesmo com payment_status já 'paid' (achado
+          // testando o fluxo ponta a ponta em sandbox, 2026-09-01).
+          await admin
+            .from("pilar_pending_signups")
+            .update({ empresa_owner_pending_id: ownerPending.id })
+            .eq("id", signup.id);
+
           // Dispara email com magic link — falha não bloqueia o 200 (cron vai retentar)
-          let inviteDispatched = false;
           try {
             const { error: inviteErr } = await admin.auth.admin.inviteUserByEmail(signup.email, {
               redirectTo: `${appOrigin()}/profile-setup`,
@@ -226,14 +267,18 @@ serve(
               throw new Error(`inviteUserByEmail: ${inviteErr.message}`);
             }
 
-            inviteDispatched = true;
+            await admin
+              .from("pilar_pending_signups")
+              .update({ invite_dispatched_at: new Date().toISOString() })
+              .eq("id", signup.id);
           } catch (inviteEx) {
             const errMsg = inviteEx instanceof Error ? inviteEx.message : "invite dispatch failed";
             log.error("invite dispatch failed — will retry via cron", inviteEx, {
               email: signup.email,
               signup_id: signup.id,
             });
-            // Registra falha no audit log para visibilidade operacional
+            // Registra falha no audit log para visibilidade operacional. actor_id
+            // é nullable (migration 20260884000000): ação do sistema, sem ator humano.
             await admin.from("admin_audit_logs").insert({
               actor_id: null,
               actor_email: "system@pilar",
@@ -247,14 +292,6 @@ serve(
               metadata: { error: errMsg, owner_pending_id: ownerPending.id },
             });
           }
-
-          await admin
-            .from("pilar_pending_signups")
-            .update({
-              empresa_owner_pending_id: ownerPending.id,
-              ...(inviteDispatched && { invite_dispatched_at: new Date().toISOString() }),
-            })
-            .eq("id", signup.id);
         }
 
         // 3. trial_ends_at para novos signups
@@ -278,7 +315,38 @@ serve(
           }
         }
 
-        // 4. Renovação de subscription ativa → estender período
+        // 4. Compra de pacote de tokens → crédito no ledger
+        if (tokenPack) {
+          if (tokenPack.status !== "paid") {
+            await admin
+              .from("pilar_token_pack_purchases")
+              .update({
+                status: "paid",
+                paid_at: paidAt,
+                ...(paymentId && { asaas_payment_id: paymentId }),
+              })
+              .eq("id", tokenPack.id);
+          }
+
+          // Idempotência real: NÃO depende do status acima (uma cobrança já
+          // confirmada na criação, ex. cartão instantâneo, chegaria aqui com
+          // status já 'paid'). O UNIQUE em reference_id garante que o replay
+          // do webhook nunca credita duas vezes, mesmo reprocessando sempre.
+          const { error: creditErr } = await admin.from("ai_token_ledger").insert({
+            empresa_id: tokenPack.empresa_id,
+            user_id: tokenPack.user_id,
+            agent_key: "compra",
+            source: "purchase",
+            tokens_delta: tokenPack.quantidade_pacotes * tokenPack.tokens_pacote,
+            reference_id: `token_pack_purchase:${tokenPack.id}`,
+          });
+
+          if (creditErr && creditErr.code !== "23505") {
+            throw new Error(`falha ao creditar ledger da compra ${tokenPack.id}: ${creditErr.message}`);
+          }
+        }
+
+        // 5. Renovação de subscription ativa → estender período
         if (activeSub && !signup) {
           const periodEnd =
             activeSub.billing_cycle === "yearly"
@@ -304,6 +372,9 @@ serve(
         if (signup && signup.payment_status === "pending") {
           await admin.from("pilar_pending_signups").update({ payment_status: "failed" }).eq("id", signup.id);
         }
+        if (tokenPack && tokenPack.status === "pending") {
+          await admin.from("pilar_token_pack_purchases").update({ status: "failed" }).eq("id", tokenPack.id);
+        }
       }
 
       // --- Reembolso / deletado ---
@@ -316,6 +387,11 @@ serve(
             .from("pilar_subscriptions")
             .update({ status: "canceled", canceled_at: new Date().toISOString() })
             .eq("id", activeSub.id);
+        }
+        // Estorno de compra já creditada não é revertido automaticamente no ledger
+        // (mesmo risco aceito do fluxo de signup — SPEC 077, seção Decisões e riscos).
+        if (tokenPack && tokenPack.status !== "paid") {
+          await admin.from("pilar_token_pack_purchases").update({ status: "canceled" }).eq("id", tokenPack.id);
         }
       }
 

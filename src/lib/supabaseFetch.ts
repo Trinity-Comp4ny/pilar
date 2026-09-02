@@ -83,6 +83,37 @@ function isExpected(status: number, body: ErrorBody): boolean {
   return status === 406 && body.code === "PGRST116";
 }
 
+/**
+ * 401 + PGRST303 é o PostgREST rejeitando o JWT por `iat` no futuro (clock skew
+ * do dispositivo do usuário, ou uma corrida de refresh de sessão entre abas).
+ * `supabase.auth.refreshSession()` troca o token; um retry único recupera a
+ * chamada sem o usuário perceber, em vez de a tela ficar com dado vazio até
+ * um reload manual.
+ */
+function isFutureJwt(status: number, body: ErrorBody): boolean {
+  return status === 401 && body.code === "PGRST303";
+}
+
+let refreshInFlight: Promise<boolean> | null = null;
+
+/** Import dinâmico: `./supabase` importa este módulo, um import estático criaria ciclo. */
+async function refreshSessionOnce(): Promise<boolean> {
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      try {
+        const { supabase } = await import("./supabase");
+        const { error } = await supabase.auth.refreshSession();
+        return !error;
+      } catch {
+        return false;
+      } finally {
+        refreshInFlight = null;
+      }
+    })();
+  }
+  return refreshInFlight;
+}
+
 async function reportFailure(res: Response, method: string, url: string): Promise<void> {
   const body = await readErrorBody(res);
   if (isExpected(res.status, body)) return;
@@ -91,37 +122,45 @@ async function reportFailure(res: Response, method: string, url: string): Promis
   const code = body.code ?? body.error;
   const title = `${method} ${route} → ${res.status}${code ? ` (${code})` : ""}`;
 
-  monitoring.captureException(new SupabaseRequestError(title, res.status, route), {
-    source: "supabase.fetch",
-    method,
-    route,
-    status: res.status,
-    query: redactQuery(url),
-    code,
-    // Mensagem do PostgREST: passa pelo scrub do monitoring antes de sair.
-    detail: body.message ?? body.error_description,
-    request_id: res.headers.get("x-request-id") ?? undefined,
-  }, {
-    level: levelFor(res.status),
-    // Agrupa por rota + status: um issue por endpoint, não um por clique.
-    fingerprint: ["supabase", method, route, String(res.status)],
-    tags: { supabase_route: route, supabase_status: String(res.status) },
-  });
+  monitoring.captureException(
+    new SupabaseRequestError(title, res.status, route),
+    {
+      source: "supabase.fetch",
+      method,
+      route,
+      status: res.status,
+      query: redactQuery(url),
+      code,
+      // Mensagem do PostgREST: passa pelo scrub do monitoring antes de sair.
+      detail: body.message ?? body.error_description,
+      request_id: res.headers.get("x-request-id") ?? undefined,
+    },
+    {
+      level: levelFor(res.status),
+      // Agrupa por rota + status: um issue por endpoint, não um por clique.
+      fingerprint: ["supabase", method, route, String(res.status)],
+      tags: { supabase_route: route, supabase_status: String(res.status) },
+    }
+  );
 }
 
 function reportNetworkFailure(err: unknown, method: string, url: string): void {
   const route = routeOf(url);
-  monitoring.captureException(err, {
-    source: "supabase.fetch",
-    method,
-    route,
-    query: redactQuery(url),
-    network: true,
-  }, {
-    level: "error",
-    fingerprint: ["supabase", "network", method, route],
-    tags: { supabase_route: route, supabase_status: "network" },
-  });
+  monitoring.captureException(
+    err,
+    {
+      source: "supabase.fetch",
+      method,
+      route,
+      query: redactQuery(url),
+      network: true,
+    },
+    {
+      level: "error",
+      fingerprint: ["supabase", "network", method, route],
+      tags: { supabase_route: route, supabase_status: "network" },
+    }
+  );
 }
 
 /**
@@ -143,6 +182,22 @@ export function createInstrumentedFetch(baseFetch: typeof fetch = fetch): typeof
         /* instrumentação não altera o comportamento da chamada */
       }
       throw err;
+    }
+
+    if (res.status === 401) {
+      const body = await readErrorBody(res);
+      if (isFutureJwt(res.status, body) && (await refreshSessionOnce())) {
+        try {
+          res = await baseFetch(input, init);
+        } catch (err) {
+          try {
+            reportNetworkFailure(err, method, url);
+          } catch {
+            /* idem */
+          }
+          throw err;
+        }
+      }
     }
 
     if (!res.ok) {

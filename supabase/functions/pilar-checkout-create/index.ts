@@ -209,6 +209,7 @@ serve(
         customerId = created.id;
       }
     } catch (err) {
+      log.error("asaas create customer failed", err, { signup_id: signup.id });
       await admin.from("pilar_pending_signups").update({ payment_status: "failed" }).eq("id", signup.id);
 
       const msg = err instanceof Error ? err.message : "Erro Asaas";
@@ -245,6 +246,7 @@ serve(
       const payments = await getSubscriptionPayments(subscriptionId);
       firstPayment = payments[0] ?? null;
     } catch (err) {
+      log.error("asaas create subscription failed", err, { signup_id: signup.id });
       await admin.from("pilar_pending_signups").update({ payment_status: "failed" }).eq("id", signup.id);
 
       const msg = err instanceof Error ? err.message : "Erro Asaas";

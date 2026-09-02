@@ -1,24 +1,26 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Check, ChevronDown, X } from "lucide-react";
 import { Reveal } from "../components/Reveal";
+import { useJsonLd, usePageMeta } from "../lib/seo";
 
 /**
  * FAQ e qualificação de público, que saíram da home (decisão do CEO, 18/08).
  * "Para quem é" virou a primeira pergunta daqui, e continua sendo o filtro que
- * afasta arquitetura pura e construtora de grande porte.
+ * afasta construtora de grande porte (arquitetura entrou no ICP em 01/09, ver
+ * DECISOES.md).
  */
 
 const FEITO_PARA = [
-  "Escritório multidisciplinar: civil, estrutural, elétrico, hidrossanitário, climatização.",
+  "Escritório de engenharia (civil, estrutural, elétrico, hidrossanitário, climatização) ou arquitetura.",
   "Quem vende projeto técnico por proposta e emite nota.",
   "De 3 a 30 profissionais, com sócio olhando margem.",
   "Quem também administra obra e presta contas ao cliente.",
 ];
 
 const NAO_E_PARA = [
-  "Arquitetura pura, que tem fluxo criativo e etapas diferentes.",
   "Construtora ou incorporadora de grande porte.",
   "Freelancer solo sem fluxo de proposta.",
+  "Grande empresa que quer ERP completo customizado.",
 ];
 
 const FAQS = [
@@ -55,13 +57,28 @@ const FAQS = [
 export function Faq() {
   const [aberta, setAberta] = useState<number | null>(0);
 
-  useEffect(() => {
-    document.title = "Perguntas frequentes | Pilar";
-  }, []);
+  usePageMeta({
+    titulo: "Perguntas frequentes | Pilar",
+    descricao:
+      "Para quem é o Pilar, como os módulos se conectam e o que a IA faz (e o que ela nunca faz sem o seu aval). As respostas antes de testar.",
+    caminho: "/faq",
+  });
+
+  // FAQPage structured data: habilita rich result de FAQ na busca e dá aos
+  // assistentes de IA as respostas prontas na fonte.
+  useJsonLd({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQS.map((f) => ({
+      "@type": "Question",
+      name: f.pergunta,
+      acceptedAnswer: { "@type": "Answer", text: f.resposta },
+    })),
+  });
 
   return (
     <>
-      <section className="pt-32 pb-14 md:pt-40 md:pb-16">
+      <section className="pt-16 pb-14 md:pt-24 md:pb-16">
         <div className="container mx-auto px-6 md:px-10">
           <div className="max-w-3xl mx-auto">
             <h1 className="text-[clamp(30px,4.4vw,48px)] font-medium tracking-[-0.032em] text-ink leading-[1.06] mb-4">

@@ -1,7 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { KPICard } from "@/components/KPICard";
 import { Button } from "@/components/ui/button";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { ArrowDownCircle, ArrowUpCircle, Receipt, ExternalLink, Percent } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import type { ClienteObraConta } from "@/pages/cliente/useClienteObraData";
@@ -12,6 +13,7 @@ import type { ClienteObraConta } from "@/pages/cliente/useClienteObraData";
  * despesas já vêm filtradas pelo backend (só confirmada_portal = true).
  */
 export function ContaObraContent({ conta, taxaPct }: { conta: ClienteObraConta; taxaPct: number }) {
+  const formatCurrency = useMoneyMask();
   return (
     <div className="space-y-4">
       {/* Resumo */}

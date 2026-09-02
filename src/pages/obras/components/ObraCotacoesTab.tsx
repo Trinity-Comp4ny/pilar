@@ -6,19 +6,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/StatusBadge";
 import { EmptyState } from "@/components/EmptyState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { menorValorProposta } from "@/lib/obras";
 import { useObraFrentes } from "@/hooks/useObraFrentes";
-import {
-  useObraCotacoes,
-  useDeleteCotacao,
-  type CotacaoComPropostas,
-  type CotacaoRow,
-} from "@/hooks/useObraCotacoes";
+import { useObraCotacoes, useDeleteCotacao, type CotacaoComPropostas, type CotacaoRow } from "@/hooks/useObraCotacoes";
 import { CotacaoFormDialog } from "./CotacaoFormDialog";
 import { CotacaoDetailDialog } from "./CotacaoDetailDialog";
 
 export function ObraCotacoesTab({ obraId, canEdit }: { obraId: string; canEdit: boolean }) {
+  const formatCurrency = useMoneyMask();
   const { data: cotacoes = [], isLoading } = useObraCotacoes(obraId);
   const { data: frentes = [] } = useObraFrentes(obraId);
   const del = useDeleteCotacao(obraId);
@@ -30,7 +27,7 @@ export function ObraCotacoesTab({ obraId, canEdit }: { obraId: string; canEdit: 
   const frenteNome = useMemo(() => new Map(frentes.map((f) => [f.id, f.nome])), [frentes]);
 
   // Mantém o detalhe aberto em sincronia com os dados após adicionar proposta/decidir.
-  const detalheAtual = detalhe ? cotacoes.find((c) => c.id === detalhe.id) ?? detalhe : null;
+  const detalheAtual = detalhe ? (cotacoes.find((c) => c.id === detalhe.id) ?? detalhe) : null;
 
   if (isLoading) return <Skeleton className="h-40 w-full rounded-2xl" />;
 
@@ -57,8 +54,7 @@ export function ObraCotacoesTab({ obraId, canEdit }: { obraId: string; canEdit: 
           {cotacoes.map((c) => {
             const menor = menorValorProposta(c.propostas);
             const etapa = c.obra_frente_id ? frenteNome.get(c.obra_frente_id) : null;
-            const qtd =
-              c.quantidade != null ? `${c.quantidade}${c.unidade ? ` ${c.unidade}` : ""}` : null;
+            const qtd = c.quantidade != null ? `${c.quantidade}${c.unidade ? ` ${c.unidade}` : ""}` : null;
             return (
               <Card
                 key={c.id}
@@ -83,9 +79,7 @@ export function ObraCotacoesTab({ obraId, canEdit }: { obraId: string; canEdit: 
                       {c.propostas.length === 0
                         ? "Sem propostas"
                         : `${c.propostas.length} ${c.propostas.length === 1 ? "proposta" : "propostas"}`}
-                      {menor != null && (
-                        <span className="ml-1.5 text-ink">· menor {formatCurrency(menor)}</span>
-                      )}
+                      {menor != null && <span className="ml-1.5 text-ink">· menor {formatCurrency(menor)}</span>}
                     </div>
                     {canEdit && (
                       <div className="flex shrink-0 gap-0.5" onClick={(e) => e.stopPropagation()}>
@@ -106,12 +100,7 @@ export function ObraCotacoesTab({ obraId, canEdit }: { obraId: string; canEdit: 
       )}
 
       {form && (
-        <CotacaoFormDialog
-          open
-          onOpenChange={(v) => !v && setForm(null)}
-          obraId={obraId}
-          cotacao={form.cotacao}
-        />
+        <CotacaoFormDialog open onOpenChange={(v) => !v && setForm(null)} obraId={obraId} cotacao={form.cotacao} />
       )}
 
       {detalheAtual && (

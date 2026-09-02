@@ -38,7 +38,7 @@ export type Database = {
         Row: {
           action: string
           actor_email: string
-          actor_id: string
+          actor_id: string | null
           actor_role: string
           category: string
           created_at: string
@@ -53,7 +53,7 @@ export type Database = {
         Insert: {
           action: string
           actor_email: string
-          actor_id: string
+          actor_id?: string | null
           actor_role: string
           category: string
           created_at?: string
@@ -68,7 +68,7 @@ export type Database = {
         Update: {
           action?: string
           actor_email?: string
-          actor_id?: string
+          actor_id?: string | null
           actor_role?: string
           category?: string
           created_at?: string
@@ -189,6 +189,128 @@ export type Database = {
             foreignKeyName: "agent_runs_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_model_precos: {
+        Row: {
+          created_at: string
+          modelo: string
+          moeda: string
+          preco_input_por_milhao: number
+          preco_output_por_milhao: number
+          vigente_desde: string
+        }
+        Insert: {
+          created_at?: string
+          modelo: string
+          moeda?: string
+          preco_input_por_milhao: number
+          preco_output_por_milhao: number
+          vigente_desde: string
+        }
+        Update: {
+          created_at?: string
+          modelo?: string
+          moeda?: string
+          preco_input_por_milhao?: number
+          preco_output_por_milhao?: number
+          vigente_desde?: string
+        }
+        Relationships: []
+      }
+      ai_token_ledger: {
+        Row: {
+          agent_key: string
+          agent_run_id: string | null
+          created_at: string
+          custo_estimado: number | null
+          empresa_id: string
+          id: string
+          idempotency_key: string | null
+          model: string | null
+          reference_id: string | null
+          source: string
+          tokens_delta: number
+          tokens_input: number
+          tokens_output: number
+          user_id: string | null
+        }
+        Insert: {
+          agent_key: string
+          agent_run_id?: string | null
+          created_at?: string
+          custo_estimado?: number | null
+          empresa_id: string
+          id?: string
+          idempotency_key?: string | null
+          model?: string | null
+          reference_id?: string | null
+          source: string
+          tokens_delta: number
+          tokens_input?: number
+          tokens_output?: number
+          user_id?: string | null
+        }
+        Update: {
+          agent_key?: string
+          agent_run_id?: string | null
+          created_at?: string
+          custo_estimado?: number | null
+          empresa_id?: string
+          id?: string
+          idempotency_key?: string | null
+          model?: string | null
+          reference_id?: string | null
+          source?: string
+          tokens_delta?: number
+          tokens_input?: number
+          tokens_output?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_token_ledger_agent_run_id_fkey"
+            columns: ["agent_run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_token_ledger_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_token_saldo: {
+        Row: {
+          empresa_id: string
+          saldo_comprado: number
+          saldo_plano: number
+          updated_at: string
+        }
+        Insert: {
+          empresa_id: string
+          saldo_comprado?: number
+          saldo_plano?: number
+          updated_at?: string
+        }
+        Update: {
+          empresa_id?: string
+          saldo_comprado?: number
+          saldo_plano?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_token_saldo_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
             referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
@@ -1458,6 +1580,13 @@ export type Database = {
             referencedRelation: "projetos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "despesas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       disciplinas: {
@@ -1753,6 +1882,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escopos_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -2192,6 +2328,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "grupos_parcela_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "grupos_parcela_renegociado_de_fkey"
             columns: ["renegociado_de"]
             isOneToOne: false
@@ -2516,6 +2659,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "marcos_faturamento_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "marcos_faturamento_receita_id_fkey"
             columns: ["receita_id"]
             isOneToOne: false
@@ -2616,6 +2766,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -3441,6 +3598,71 @@ export type Database = {
           },
         ]
       }
+      obra_rdo_efetivo: {
+        Row: {
+          campo_account_id: string | null
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          fornecedor_id: string | null
+          fornecedor_nome: string | null
+          id: string
+          quantidade: number
+          rdo_id: string
+        }
+        Insert: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          fornecedor_id?: string | null
+          fornecedor_nome?: string | null
+          id?: string
+          quantidade: number
+          rdo_id: string
+        }
+        Update: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          fornecedor_id?: string | null
+          fornecedor_nome?: string | null
+          id?: string
+          quantidade?: number
+          rdo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_rdo_efetivo_campo_account_id_fkey"
+            columns: ["campo_account_id"]
+            isOneToOne: false
+            referencedRelation: "campo_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_efetivo_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_efetivo_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_efetivo_rdo_id_fkey"
+            columns: ["rdo_id"]
+            isOneToOne: false
+            referencedRelation: "obra_rdo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obra_rdo_foto: {
         Row: {
           campo_account_id: string | null
@@ -3496,6 +3718,61 @@ export type Database = {
           },
           {
             foreignKeyName: "obra_rdo_foto_rdo_id_fkey"
+            columns: ["rdo_id"]
+            isOneToOne: false
+            referencedRelation: "obra_rdo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_rdo_impedimento: {
+        Row: {
+          campo_account_id: string | null
+          created_at: string
+          created_by: string | null
+          descricao: string
+          empresa_id: string
+          id: string
+          rdo_id: string
+          tipo: string
+        }
+        Insert: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          descricao: string
+          empresa_id: string
+          id?: string
+          rdo_id: string
+          tipo: string
+        }
+        Update: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          descricao?: string
+          empresa_id?: string
+          id?: string
+          rdo_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_rdo_impedimento_campo_account_id_fkey"
+            columns: ["campo_account_id"]
+            isOneToOne: false
+            referencedRelation: "campo_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_impedimento_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_impedimento_rdo_id_fkey"
             columns: ["rdo_id"]
             isOneToOne: false
             referencedRelation: "obra_rdo"
@@ -3636,6 +3913,71 @@ export type Database = {
           },
         ]
       }
+      obra_rdo_visita: {
+        Row: {
+          campo_account_id: string | null
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          fornecedor_id: string | null
+          fornecedor_nome: string | null
+          id: string
+          observacao: string | null
+          rdo_id: string
+        }
+        Insert: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          fornecedor_id?: string | null
+          fornecedor_nome?: string | null
+          id?: string
+          observacao?: string | null
+          rdo_id: string
+        }
+        Update: {
+          campo_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          fornecedor_id?: string | null
+          fornecedor_nome?: string | null
+          id?: string
+          observacao?: string | null
+          rdo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_rdo_visita_campo_account_id_fkey"
+            columns: ["campo_account_id"]
+            isOneToOne: false
+            referencedRelation: "campo_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_visita_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_visita_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_rdo_visita_rdo_id_fkey"
+            columns: ["rdo_id"]
+            isOneToOne: false
+            referencedRelation: "obra_rdo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obras: {
         Row: {
           cep: string | null
@@ -3741,6 +4083,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "obras_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "obras_responsavel_id_fkey"
             columns: ["responsavel_id"]
             isOneToOne: false
@@ -3807,6 +4156,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orcamento_versoes_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -4081,6 +4437,7 @@ export type Database = {
           preco_anual: number | null
           preco_mensal: number
           slug: string
+          tokens_mensais: number | null
         }
         Insert: {
           ativo?: boolean
@@ -4096,6 +4453,7 @@ export type Database = {
           preco_anual?: number | null
           preco_mensal: number
           slug: string
+          tokens_mensais?: number | null
         }
         Update: {
           ativo?: boolean
@@ -4111,6 +4469,7 @@ export type Database = {
           preco_anual?: number | null
           preco_mensal?: number
           slug?: string
+          tokens_mensais?: number | null
         }
         Relationships: []
       }
@@ -4199,6 +4558,62 @@ export type Database = {
           },
         ]
       }
+      pilar_token_pack_purchases: {
+        Row: {
+          asaas_payment_id: string | null
+          billing_type: string
+          created_at: string
+          empresa_id: string
+          id: string
+          paid_at: string | null
+          payment_metadata: Json | null
+          quantidade_pacotes: number
+          status: string
+          tier_id: string | null
+          tokens_pacote: number
+          user_id: string | null
+          valor_centavos: number
+        }
+        Insert: {
+          asaas_payment_id?: string | null
+          billing_type: string
+          created_at?: string
+          empresa_id: string
+          id?: string
+          paid_at?: string | null
+          payment_metadata?: Json | null
+          quantidade_pacotes: number
+          status?: string
+          tier_id?: string | null
+          tokens_pacote?: number
+          user_id?: string | null
+          valor_centavos: number
+        }
+        Update: {
+          asaas_payment_id?: string | null
+          billing_type?: string
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          paid_at?: string | null
+          payment_metadata?: Json | null
+          quantidade_pacotes?: number
+          status?: string
+          tier_id?: string | null
+          tokens_pacote?: number
+          user_id?: string | null
+          valor_centavos?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pilar_token_pack_purchases_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_download_logs: {
         Row: {
           arquivo_path: string | null
@@ -4249,12 +4664,15 @@ export type Database = {
       }
       portal_entregas: {
         Row: {
+          aprovado_ip: unknown
+          aprovado_user_agent: string | null
           created_at: string | null
           created_by: string | null
           descricao: string | null
           drive_url: string | null
           empresa_id: string
           id: string
+          projeto_disciplina_id: string | null
           projeto_id: string
           respondido_em: string | null
           resposta_cliente: string | null
@@ -4264,12 +4682,15 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          aprovado_ip?: unknown
+          aprovado_user_agent?: string | null
           created_at?: string | null
           created_by?: string | null
           descricao?: string | null
           drive_url?: string | null
           empresa_id: string
           id?: string
+          projeto_disciplina_id?: string | null
           projeto_id: string
           respondido_em?: string | null
           resposta_cliente?: string | null
@@ -4279,12 +4700,15 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          aprovado_ip?: unknown
+          aprovado_user_agent?: string | null
           created_at?: string | null
           created_by?: string | null
           descricao?: string | null
           drive_url?: string | null
           empresa_id?: string
           id?: string
+          projeto_disciplina_id?: string | null
           projeto_id?: string
           respondido_em?: string | null
           resposta_cliente?: string | null
@@ -4302,10 +4726,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "portal_entregas_projeto_disciplina_id_fkey"
+            columns: ["projeto_disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_disciplinas"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "portal_entregas_projeto_id_fkey"
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_entregas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -4318,6 +4756,7 @@ export type Database = {
           created_by: string | null
           email: string
           empresa_id: string
+          financeiro_delegado: boolean
           first_name: string
           id: string
           last_name: string
@@ -4335,6 +4774,7 @@ export type Database = {
           created_by?: string | null
           email: string
           empresa_id: string
+          financeiro_delegado?: boolean
           first_name?: string
           id: string
           last_name?: string
@@ -4352,6 +4792,7 @@ export type Database = {
           created_by?: string | null
           email?: string
           empresa_id?: string
+          financeiro_delegado?: boolean
           first_name?: string
           id?: string
           last_name?: string
@@ -4378,6 +4819,8 @@ export type Database = {
           concluido_em: string | null
           concluido_por: string | null
           created_at: string
+          duracao_dias_uteis: number | null
+          horas_estimadas: number | null
           id: string
           ordem: number
           projeto_disciplina_id: string
@@ -4388,6 +4831,8 @@ export type Database = {
           concluido_em?: string | null
           concluido_por?: string | null
           created_at?: string
+          duracao_dias_uteis?: number | null
+          horas_estimadas?: number | null
           id?: string
           ordem?: number
           projeto_disciplina_id: string
@@ -4398,6 +4843,8 @@ export type Database = {
           concluido_em?: string | null
           concluido_por?: string | null
           created_at?: string
+          duracao_dias_uteis?: number | null
+          horas_estimadas?: number | null
           id?: string
           ordem?: number
           projeto_disciplina_id?: string
@@ -4431,6 +4878,139 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projeto_disciplinas"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      projeto_disciplina_checklist_responsaveis: {
+        Row: {
+          checklist_item_id: string
+          created_at: string
+          id: string
+          pessoa_id: string
+        }
+        Insert: {
+          checklist_item_id: string
+          created_at?: string
+          id?: string
+          pessoa_id: string
+        }
+        Update: {
+          checklist_item_id?: string
+          created_at?: string
+          id?: string
+          pessoa_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_disciplina_checklist_responsavei_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_disciplina_checklist"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_checklist_responsaveis_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_checklist_responsaveis_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_checklist_responsaveis_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
+          },
+        ]
+      }
+      projeto_disciplina_pausas: {
+        Row: {
+          created_at: string
+          id: string
+          motivo: string
+          pausado_em: string
+          pausado_por: string | null
+          projeto_disciplina_id: string
+          retomado_em: string | null
+          retomado_por: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          motivo: string
+          pausado_em?: string
+          pausado_por?: string | null
+          projeto_disciplina_id: string
+          retomado_em?: string | null
+          retomado_por?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          motivo?: string
+          pausado_em?: string
+          pausado_por?: string | null
+          projeto_disciplina_id?: string
+          retomado_em?: string | null
+          retomado_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_disciplina_pausas_pausado_por_fkey"
+            columns: ["pausado_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_pausas_pausado_por_fkey"
+            columns: ["pausado_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_pausas_pausado_por_fkey"
+            columns: ["pausado_por"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_pausas_projeto_disciplina_id_fkey"
+            columns: ["projeto_disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_disciplinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_pausas_retomado_por_fkey"
+            columns: ["retomado_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_pausas_retomado_por_fkey"
+            columns: ["retomado_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_pausas_retomado_por_fkey"
+            columns: ["retomado_por"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
           },
         ]
       }
@@ -4559,6 +5139,13 @@ export type Database = {
             referencedRelation: "projetos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "projeto_disciplinas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       projeto_etapas: {
@@ -4664,6 +5251,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_orcamento_fases_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -5005,6 +5599,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "propostas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "propostas_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
@@ -5189,6 +5790,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receitas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -5547,6 +6155,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "tarefas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tarefas_responsavel_id_fkey"
             columns: ["responsavel_id"]
             isOneToOne: false
@@ -5740,6 +6355,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timesheet_lancamentos_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
             referencedColumns: ["id"]
           },
           {
@@ -6018,6 +6640,124 @@ export type Database = {
           },
         ]
       }
+      projetos_safe: {
+        Row: {
+          area_m2: number | null
+          cliente_id: string | null
+          codigo_projeto: string | null
+          comentarios: Json | null
+          created_at: string | null
+          created_by: string | null
+          custo_indireto_pct: number | null
+          data_final: string | null
+          data_inicio: string | null
+          data_previsao: string | null
+          deleted_at: string | null
+          disciplinas: Json | null
+          empresa_id: string | null
+          etapa_id: string | null
+          id: string | null
+          latitude: number | null
+          links: Json | null
+          localizacao: string | null
+          longitude: number | null
+          nome: string | null
+          observacao: string | null
+          parcelas: string | null
+          pode_ver_valor: boolean | null
+          prioridade: string | null
+          status: Database["public"]["Enums"]["status_projeto"] | null
+          status_data: string | null
+          updated_at: string | null
+          updated_by: string | null
+          valor_contrato: number | null
+        }
+        Insert: {
+          area_m2?: number | null
+          cliente_id?: string | null
+          codigo_projeto?: string | null
+          comentarios?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          custo_indireto_pct?: never
+          data_final?: string | null
+          data_inicio?: string | null
+          data_previsao?: string | null
+          deleted_at?: string | null
+          disciplinas?: Json | null
+          empresa_id?: string | null
+          etapa_id?: string | null
+          id?: string | null
+          latitude?: number | null
+          links?: Json | null
+          localizacao?: string | null
+          longitude?: number | null
+          nome?: string | null
+          observacao?: string | null
+          parcelas?: string | null
+          pode_ver_valor?: never
+          prioridade?: string | null
+          status?: Database["public"]["Enums"]["status_projeto"] | null
+          status_data?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          valor_contrato?: never
+        }
+        Update: {
+          area_m2?: number | null
+          cliente_id?: string | null
+          codigo_projeto?: string | null
+          comentarios?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          custo_indireto_pct?: never
+          data_final?: string | null
+          data_inicio?: string | null
+          data_previsao?: string | null
+          deleted_at?: string | null
+          disciplinas?: Json | null
+          empresa_id?: string | null
+          etapa_id?: string | null
+          id?: string | null
+          latitude?: number | null
+          links?: Json | null
+          localizacao?: string | null
+          longitude?: number | null
+          nome?: string | null
+          observacao?: string | null
+          parcelas?: string | null
+          pode_ver_valor?: never
+          prioridade?: string | null
+          status?: Database["public"]["Enums"]["status_projeto"] | null
+          status_data?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          valor_contrato?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projetos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projetos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projetos_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_etapas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       status_current: {
         Row: {
           id: string | null
@@ -6064,7 +6804,117 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "projeto_orcamento_fases_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "projetos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_extrato_tokens: {
+        Row: {
+          agent_key: string | null
+          created_at: string | null
+          custo_estimado: number | null
+          empresa_id: string | null
+          id: string | null
+          model: string | null
+          source: string | null
+          tokens_input: number | null
+          tokens_output: number | null
+          tokens_total: number | null
+          user_id: string | null
+          user_nome: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_token_ledger_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_uso_tokens_anomalia_diaria: {
+        Row: {
+          anomalia: boolean | null
+          dias_com_uso_anteriores: number | null
+          empresa_id: string | null
+          media_dias_anteriores: number | null
+          tokens_hoje: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_token_ledger_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_uso_tokens_por_agente: {
+        Row: {
+          agent_key: string | null
+          custo_estimado: number | null
+          empresa_id: string | null
+          eventos: number | null
+          mes: string | null
+          tokens_input: number | null
+          tokens_output: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_token_ledger_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_uso_tokens_por_empresa: {
+        Row: {
+          custo_estimado: number | null
+          empresa_id: string | null
+          eventos: number | null
+          mes: string | null
+          tokens_input: number | null
+          tokens_output: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_token_ledger_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_uso_tokens_por_usuario: {
+        Row: {
+          agent_key: string | null
+          custo_estimado: number | null
+          empresa_id: string | null
+          eventos: number | null
+          mes: string | null
+          tokens_input: number | null
+          tokens_output: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_token_ledger_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
@@ -6284,6 +7134,10 @@ export type Database = {
         Returns: string
       }
       _notif_gestao: { Args: { p_empresa: string }; Returns: string[] }
+      _notif_gestao_operacional: {
+        Args: { p_empresa: string }
+        Returns: string[]
+      }
       _notif_resp_disciplina: {
         Args: { p_disciplina: string }
         Returns: string[]
@@ -6324,17 +7178,38 @@ export type Database = {
       }
       aprovar_orcamento_agente: { Args: { p_run_id: string }; Returns: Json }
       audit_log_cleanup: { Args: never; Returns: number }
+      audit_log_cleanup_monitored: { Args: never; Returns: undefined }
       audit_logs_archive_old: { Args: never; Returns: number }
       campo_criar_tarefa: {
         Args: { p_titulo: string; p_token: string }
         Returns: Json
       }
+      campo_listar_fornecedores: { Args: { p_token: string }; Returns: Json }
       campo_listar_rdos: {
         Args: { p_limite?: number; p_token: string }
         Returns: Json
       }
       campo_listar_tarefas: { Args: { p_token: string }; Returns: Json }
       campo_login: { Args: { p_email: string; p_senha: string }; Returns: Json }
+      campo_registrar_efetivo: {
+        Args: {
+          p_fornecedor_id: string
+          p_fornecedor_nome: string
+          p_quantidade: number
+          p_rdo_id: string
+          p_token: string
+        }
+        Returns: Json
+      }
+      campo_registrar_impedimento: {
+        Args: {
+          p_descricao: string
+          p_rdo_id: string
+          p_tipo: string
+          p_token: string
+        }
+        Returns: Json
+      }
       campo_registrar_medicao: {
         Args: {
           p_item: string
@@ -6351,6 +7226,16 @@ export type Database = {
           p_rdo_id: string
           p_resultado: string
           p_tarefa_id: string
+          p_token: string
+        }
+        Returns: Json
+      }
+      campo_registrar_visita: {
+        Args: {
+          p_fornecedor_id: string
+          p_fornecedor_nome: string
+          p_observacao: string
+          p_rdo_id: string
           p_token: string
         }
         Returns: Json
@@ -6416,6 +7301,10 @@ export type Database = {
         }
       }
       cleanup_expired_pending_signups: { Args: never; Returns: number }
+      cleanup_expired_pending_signups_monitored: {
+        Args: never
+        Returns: undefined
+      }
       cleanup_pending_signups: { Args: never; Returns: number }
       create_convite: {
         Args: { p_cargo: string; p_email: string; p_nome?: string }
@@ -6519,11 +7408,36 @@ export type Database = {
         }
       }
       current_pessoa_id: { Args: never; Returns: string }
+      debitar_tokens: {
+        Args: {
+          p_agent_key: string
+          p_agent_run_id: string
+          p_empresa_id: string
+          p_idempotency_key: string
+          p_model: string
+          p_tokens_input: number
+          p_tokens_output: number
+          p_user_id: string
+        }
+        Returns: {
+          custo_estimado: number
+          saldo_comprado: number
+          saldo_plano: number
+        }[]
+      }
       executar_acao_agente: { Args: { p_run_id: string }; Returns: Json }
       fechar_folha_agente: { Args: { p_run_id: string }; Returns: Json }
       find_or_create_fatura: {
         Args: { p_cartao_id: string; p_data_compra: string }
         Returns: string
+      }
+      gate_tokens: {
+        Args: { p_empresa_id: string }
+        Returns: {
+          cota_ciclo: number
+          saldo_comprado: number
+          saldo_plano: number
+        }[]
       }
       gerar_alertas_ambient: { Args: never; Returns: number }
       gerar_fatura: {
@@ -6531,6 +7445,7 @@ export type Database = {
         Returns: string
       }
       gerar_notificacoes_ambient: { Args: never; Returns: number }
+      gerar_notificacoes_ambient_monitored: { Args: never; Returns: undefined }
       get_asaas_api_key: { Args: { p_empresa_id: string }; Returns: string }
       get_cliente_obra_detail: {
         Args: { p_obra_id: string; p_token: string }
@@ -6865,26 +7780,24 @@ export type Database = {
       portal_listar_entregas: {
         Args: { p_projeto_id: string; p_token: string }
         Returns: {
-          created_at: string | null
-          created_by: string | null
-          descricao: string | null
-          drive_url: string | null
+          aprovado_ip: unknown
+          aprovado_user_agent: string
+          created_at: string
+          created_by: string
+          descricao: string
+          disciplina_nome: string
+          drive_url: string
           empresa_id: string
           id: string
+          projeto_disciplina_id: string
           projeto_id: string
-          respondido_em: string | null
-          resposta_cliente: string | null
-          status: string | null
-          tipo: string | null
+          respondido_em: string
+          resposta_cliente: string
+          status: string
+          tipo: string
           titulo: string
-          updated_at: string | null
+          updated_at: string
         }[]
-        SetofOptions: {
-          from: "*"
-          to: "portal_entregas"
-          isOneToOne: false
-          isSetofReturn: true
-        }
       }
       portal_login: {
         Args: { p_email: string; p_senha: string }
@@ -6899,7 +7812,18 @@ export type Database = {
         Args: { p_token: string }
         Returns: Json
       }
+      projetos_com_escopo_estourado: {
+        Args: never
+        Returns: {
+          custo_orcado: number
+          despesas_diretas: number
+          empresa_id: string
+          nome: string
+          projeto_id: string
+        }[]
+      }
       rate_limit_cleanup: { Args: never; Returns: undefined }
+      rate_limit_cleanup_monitored: { Args: never; Returns: undefined }
       recalc_disciplina_status_por_checklist: {
         Args: { p_disciplina_id: string }
         Returns: undefined
@@ -7034,8 +7958,13 @@ export type Database = {
         }
         Returns: number
       }
-      rpc_notificar_projeto_status: {
-        Args: { p_novo_status: string; p_projeto_id: string }
+      rpc_notificar_mencao: {
+        Args: {
+          p_entidade_id: string
+          p_entidade_tipo: string
+          p_mencionados: string[]
+          p_preview: string
+        }
         Returns: number
       }
       rpc_notificar_proxima_etapa: {
@@ -7082,6 +8011,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      rpc_pausar_disciplina: {
+        Args: { p_disciplina_id: string; p_motivo: string }
+        Returns: string
+      }
       rpc_projeto_rentabilidade: {
         Args: { p_projeto_id: string }
         Returns: Json
@@ -7091,6 +8024,10 @@ export type Database = {
         Returns: undefined
       }
       rpc_restaurar_projeto: { Args: { p_id: string }; Returns: undefined }
+      rpc_retomar_disciplina: {
+        Args: { p_disciplina_id: string }
+        Returns: undefined
+      }
       rpc_salvar_proposta_disciplinas: {
         Args: { p_disciplinas: Json; p_proposta_id: string }
         Returns: undefined
@@ -7104,6 +8041,14 @@ export type Database = {
         Returns: number
       }
       rpc_sync_metas: { Args: never; Returns: number }
+      sentry_cron_checkin: {
+        Args: {
+          p_check_in_id?: string
+          p_monitor_slug: string
+          p_status: string
+        }
+        Returns: string
+      }
       set_access_profile: {
         Args: { p_perfil: string; p_user_id: string }
         Returns: undefined
@@ -7114,6 +8059,10 @@ export type Database = {
       }
       set_disciplina_status: {
         Args: { p_bucket: string; p_disciplina_id: string }
+        Returns: undefined
+      }
+      set_financeiro_delegado: {
+        Args: { p_delegado: boolean; p_user_id: string }
         Returns: undefined
       }
       set_onboarding_state: { Args: { patch: Json }; Returns: Json }

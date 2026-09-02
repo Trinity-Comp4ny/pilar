@@ -4,6 +4,7 @@ import { msgErroChat } from "./erros";
 import { env } from "@/lib/env";
 import { reportInvokeError } from "@/lib/monitoring";
 import { softDelete, softDeleteGrupo } from "@/lib/softDelete";
+import { STORAGE_KEYS } from "@/constants";
 
 export type AgenteMeta = {
   agente: string;
@@ -200,8 +201,8 @@ export type ChatMessage = {
   acao?: Acao;
 };
 
-/** Saldo de créditos de IA do mês: teto, usado e restante. Vem no payload da edge. */
-export type Saldo = { usados: number; limite: number; restante: number };
+/** Saldo de tokens de IA da empresa (dois baldes, spec 075). Vem no payload da edge. */
+export type Saldo = { tokens_plano: number; tokens_comprado: number; tokens_restantes: number };
 
 type ChatResponse =
   | { sessionId: string; tipo: "resposta"; resposta: string; agentes: AgenteMeta[]; saldo?: Saldo | null }
@@ -225,7 +226,7 @@ type ChatResponse =
       saldo?: Saldo | null;
     };
 
-const STORAGE_KEY = "pilar.chat.v1";
+const STORAGE_KEY = STORAGE_KEYS.CHAT_SNAPSHOT;
 /** Corta o loading se a edge function travar (evita spinner infinito). */
 const SEND_TIMEOUT_MS = 45_000;
 
@@ -705,20 +706,12 @@ export function useChat() {
     setSessionId(undefined);
   }, [loading]);
 
-  // Créditos de IA debitados nesta conversa (só o que foi de fato criado/executado).
-  const creditosUsados = messages.reduce((total, m) => {
-    if (m.draft?.status === "criado") return total + (m.draft.custoCreditos ?? 0);
-    if (m.acao?.status === "feito") return total + (m.acao.custoCreditos ?? 0);
-    return total;
-  }, 0);
-
   return {
     messages,
     send,
     stop,
     loading,
     reset,
-    creditosUsados,
     saldo,
     confirmarDraft,
     cancelarDraft,

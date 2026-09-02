@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatCurrency, formatDateShort } from "@/lib/format";
+import { formatDateShort } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import type { Fatura } from "../hooks/useFaturas";
 import type { ContaItem } from "../hooks/useContasCartoes";
 import { MESES, vencimentoRelativo } from "./faturaHelpers";
@@ -14,6 +15,7 @@ interface CarteiraOverviewProps {
 }
 
 export function CarteiraOverview({ contas, faturas, onDetalhe, onPagar }: CarteiraOverviewProps) {
+  const formatCurrency = useMoneyMask();
   const saldoTotal = contas.reduce((acc, c) => acc + (c.saldo_atual || 0), 0);
   const totalAPagar = faturas.reduce((acc, f) => acc + (f.valor_total - f.valor_pago), 0);
 
@@ -30,7 +32,9 @@ export function CarteiraOverview({ contas, faturas, onDetalhe, onPagar }: Cartei
         </div>
         <div className="p-5 rounded-lg border bg-muted/30">
           <p className="text-xs text-muted-foreground mb-1">Faturas a pagar</p>
-          <p className={cn("text-3xl font-bold", totalAPagar > 0 && "text-negative-strong")}>{formatCurrency(totalAPagar)}</p>
+          <p className={cn("text-3xl font-bold", totalAPagar > 0 && "text-negative-strong")}>
+            {formatCurrency(totalAPagar)}
+          </p>
           <p className="text-xs text-muted-foreground mt-1">
             {faturas.length} fatura{faturas.length === 1 ? "" : "s"} em aberto
           </p>

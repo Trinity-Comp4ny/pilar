@@ -24,10 +24,15 @@ fi
 
 # `supabase start` só aplica migrations quando CRIA o banco (1ª vez / db reset).
 # Com o banco já existente, migrations novas ficam de fora até serem aplicadas.
-# `migration up` aplica as pendentes de forma incremental, SEM apagar dados —
+# `migration up` aplica as pendentes de forma incremental, SEM apagar dados,
 # assim toda migration nova entra sozinha ao rodar `npm run dev`.
+#
+# `--include-all` cobre o caso comum de trabalhar em várias branches: uma branch
+# traz migration com timestamp MENOR que a última já aplicada aqui, e sem a flag
+# o CLI aborta o dev inteiro pedindo confirmação. No banco local (descartável) a
+# ordem relativa não importa. Em staging/prod continua valendo o db push do CD.
 echo "▶ aplicando migrations pendentes no banco local…"
-supabase migration up --local
+supabase migration up --local --include-all
 
 echo "▶ servindo Edge Functions + app + LP marketing — Ctrl+C encerra tudo."
 supabase functions serve &

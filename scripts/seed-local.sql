@@ -5,7 +5,9 @@
 -- Logins (todos com senha 123456):
 --   dev@local.test    → ultra_admin (bypass total, telas de plataforma)
 --   admin@local.test  → admin da Empresa Dev (acesso total dentro da empresa)
---   user@local.test   → user comum: SEM financeiro e SEM obras (testa gating)
+--   user@local.test   → user comum: mesmas features que admin (acesso é
+--                       role + módulo da empresa, spec 058), mas sem
+--                       AdminOnlyRoute (ex.: /gestao/equipe, /gestao/metas)
 --
 -- Idempotente: se o usuário já existe, não faz nada.
 
@@ -68,15 +70,13 @@ begin
 
   -- role 'ultra_admin': superadmin com bypass total (is_ultra_admin lê direto de
   -- profiles.role, has_role dá bypass em qualquer verificação, e libera as telas
-  -- de plataforma/impersonation no front). profile.features fica vazio de propósito
-  -- (o validador de profile trata algumas chaves como nível, ex. mapa=viewer/editor,
-  --  então não dá para reusar o payload booleano da empresa aqui). O trigger
-  --  tg_protect_ultra_admin barra promoção a ultra_admin via SQL de usuário comum,
-  --  mas o seed roda como 'postgres' (conexão direta), que tem bypass.
+  -- de plataforma/impersonation no front). O trigger tg_protect_ultra_admin barra
+  -- promoção a ultra_admin via SQL de usuário comum, mas o seed roda como
+  -- 'postgres' (conexão direta), que tem bypass.
   insert into public.profiles (
-    id, empresa_id, email, first_name, last_name, role, onboarding_completed, features
+    id, empresa_id, email, first_name, last_name, role, onboarding_completed
   ) values (
-    v_user_id, v_empresa_id, v_email, 'Dev', 'Local', 'ultra_admin', true, '{}'::jsonb
+    v_user_id, v_empresa_id, v_email, 'Dev', 'Local', 'ultra_admin', true
   );
 end $$;
 
@@ -90,13 +90,13 @@ declare
 begin
   for r in
     select * from (values
-      -- id, email, role, features (JSONB por usuário; '{}' = admin dá bypass na empresa)
+      -- id, email, role, first_name, last_name (acesso é role + módulo da
+      -- empresa desde a spec 058; não há mais granularidade por usuário)
       ('00000000-0000-0000-0000-000000000011'::uuid, 'admin@local.test', 'admin'::public.user_role,
-       '{}'::jsonb, 'Admin', 'Empresa'),
+       'Admin', 'Empresa'),
       ('00000000-0000-0000-0000-000000000012'::uuid, 'user@local.test', 'user'::public.user_role,
-       '{"projetos":"editor","leads":"editor","propostas":"editor","clientes":"viewer"}'::jsonb,
        'User', 'Comum')
-    ) as t(id, email, role, features, first_name, last_name)
+    ) as t(id, email, role, first_name, last_name)
   loop
     if exists (select 1 from auth.users where id = r.id) then
       continue;
@@ -134,9 +134,9 @@ begin
     alter table auth.users enable trigger on_auth_user_created;
 
     insert into public.profiles (
-      id, empresa_id, email, first_name, last_name, role, onboarding_completed, features
+      id, empresa_id, email, first_name, last_name, role, onboarding_completed
     ) values (
-      r.id, v_empresa_id, r.email, r.first_name, r.last_name, r.role, true, r.features
+      r.id, v_empresa_id, r.email, r.first_name, r.last_name, r.role, true
     );
   end loop;
 end $$;

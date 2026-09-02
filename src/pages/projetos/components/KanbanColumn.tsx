@@ -137,7 +137,7 @@ export function KanbanColumn({
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={cn(
-              "flex-1 min-h-0 overflow-y-auto p-2 space-y-2 rounded-lg bg-muted/30 transition-all",
+              "flex-1 min-h-0 overflow-y-auto p-2 space-y-2 rounded-lg bg-muted transition-all",
               snapshot.isDraggingOver && "ring-2 ring-brand/40 bg-brand/5"
             )}
           >

@@ -18,7 +18,7 @@ import { useCreateObra, useObras, useUpdateObra, type ObraResumo } from "@/hooks
 import { STATUS_OBRA_OPCOES } from "@/lib/obras";
 import { lookupCEP } from "@/lib/brasilApi";
 import { geocodarCidade } from "@/lib/clima";
-import { onlyDigits } from "@/lib/maskUtils";
+import { formatCEP, onlyDigits } from "@/lib/maskUtils";
 
 const SEM_RESPONSAVEL = "__none__";
 const SEM_PROJETO = "__none__";
@@ -103,7 +103,7 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
         responsavel_id: obra.responsavel_id ?? SEM_RESPONSAVEL,
         cliente_id: obra.cliente_id ?? SEM_CLIENTE,
         visivel_portal: obra.visivel_portal ?? false,
-        cep: obra.cep ?? "",
+        cep: formatCEP(obra.cep ?? ""),
         data_inicio_prevista: obra.data_inicio_prevista ?? "",
         data_fim_prevista: obra.data_fim_prevista ?? "",
         observacoes: obra.observacoes ?? "",
@@ -141,7 +141,7 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
       let latitude: number | null = null;
       let longitude: number | null = null;
       try {
-        const geo = await geocodarCidade(`${end.city} ${end.state}`);
+        const geo = await geocodarCidade(`${end.city}, ${end.state}`);
         if (geo[0]) {
           latitude = geo[0].latitude;
           longitude = geo[0].longitude;
@@ -283,28 +283,53 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
         </p>
       )}
 
-      <div className="space-y-1.5">
-        <Label htmlFor="cep">CEP da obra</Label>
-        <div className="relative">
+      <div className="grid grid-cols-3 gap-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="cep">CEP da obra</Label>
+          <div className="relative">
+            <Input
+              id="cep"
+              inputMode="numeric"
+              placeholder="00000-000"
+              maxLength={9}
+              {...register("cep", {
+                onChange: (e) => {
+                  const formatado = formatCEP(e.target.value);
+                  e.target.value = formatado;
+                  setValue("cep", formatado, { shouldDirty: true });
+                  buscarCep(formatado);
+                },
+              })}
+            />
+            {buscandoCep && (
+              <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+            )}
+          </div>
+        </div>
+        <div className="col-span-2 space-y-1.5">
+          <Label htmlFor="endereco" className="inline-flex items-center gap-1.5">
+            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+            Endereço
+          </Label>
           <Input
-            id="cep"
-            inputMode="numeric"
-            placeholder="00000-000"
-            {...register("cep", {
-              onChange: (e) => buscarCep(e.target.value),
-            })}
+            id="endereco"
+            placeholder={buscandoCep ? "Buscando endereço..." : "Preenche pelo CEP, edite se precisar"}
+            value={local?.localizacao ?? ""}
+            onChange={(e) =>
+              setLocal((prev) => ({
+                cidade: prev?.cidade ?? "",
+                localizacao: e.target.value,
+                latitude: prev?.latitude ?? null,
+                longitude: prev?.longitude ?? null,
+              }))
+            }
           />
-          {buscandoCep && (
-            <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+          {local && local.localizacao && local.latitude == null && (
+            <p className="text-[11px] text-muted-foreground">
+              Sem coordenadas pra este endereço — a previsão de tempo na aba Clima fica indisponível.
+            </p>
           )}
         </div>
-        {local?.localizacao && (
-          <p className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <MapPin className="h-3.5 w-3.5" />
-            {local.localizacao}
-            {local.latitude == null && " (sem coordenadas — clima indisponível)"}
-          </p>
-        )}
       </div>
 
       {mostrarProjeto && (

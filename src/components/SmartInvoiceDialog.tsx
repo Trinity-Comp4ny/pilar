@@ -23,7 +23,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 
 // ---------- tipos ----------
 
@@ -67,6 +68,7 @@ const buildParcelas = (valor: number, qtd: number, inicio: Date): ParcelaPreview
 // ---------- componente ----------
 
 export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, propostaNome }: SmartInvoiceDialogProps) {
+  const formatCurrency = useMoneyMask();
   const queryClient = useQueryClient();
   const [opcao, setOpcao] = useState<Opcao>("parcelas");
   const [qtdParcelas, setQtdParcelas] = useState(1);
@@ -332,7 +334,9 @@ export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, pr
           </Button>
 
           {opcao === "manual" ? (
-            <Button variant="outline" onClick={onClose}>Fechar</Button>
+            <Button variant="outline" onClick={onClose}>
+              Fechar
+            </Button>
           ) : (
             <Button
               variant="brand"

@@ -1,7 +1,7 @@
 # SPEC: Cotações na obra
 
 **Data:** 2026-08-11
-**Status:** Em implementação
+**Status:** Entregue
 **Autor:** Matheus Rezende
 **Módulo:** obras
 
@@ -21,6 +21,7 @@ escolha direto como despesa na conta da obra. Depois desta feature o escritório
 mostra "peguei 3 orçamentos e escolhi este" sem sair do Pilar.
 
 **Fora de escopo:**
+
 - Cotação de cesta (vários itens numa cotação). MVP é **item único por cotação**.
 - Tela no portal do cliente. O schema já isola por `empresa_id` e nasce pronto
   para expor, mas a visão do cliente fica para V2 (inclusive a decisão de mostrar
@@ -81,11 +82,11 @@ Não-funcionais:
 Tabelas novas (migration `20260811120000_obra_cotacoes.sql`):
 
 - **`obra_cotacao`**: `id, empresa_id, obra_id, obra_frente_id?, descricao,
-  quantidade?, unidade?, prazo_necessidade?, status (aberta|decidida|cancelada),
-  proposta_vencedora_id?, observacoes?` + auditoria + `deleted_at`.
+quantidade?, unidade?, prazo_necessidade?, status (aberta|decidida|cancelada),
+proposta_vencedora_id?, observacoes?` + auditoria + `deleted_at`.
 - **`obra_cotacao_proposta`**: `id, empresa_id, cotacao_id, fornecedor_id?,
-  fornecedor_nome?, valor, prazo_entrega_dias?, condicao_pagamento?,
-  link_orcamento?, observacoes?` + auditoria + `deleted_at`.
+fornecedor_nome?, valor, prazo_entrega_dias?, condicao_pagamento?,
+link_orcamento?, observacoes?` + auditoria + `deleted_at`.
 
 A FK `proposta_vencedora_id → obra_cotacao_proposta` é adicionada depois das duas
 tabelas (dependência circular), com `ON DELETE SET NULL`.

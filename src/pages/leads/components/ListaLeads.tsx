@@ -1,7 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/format";
 import { formatDate } from "@/lib/dateUtils";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import type { Lead } from "@/hooks/useLeads";
 import type { Proposta } from "@/hooks/usePropostas";
 
@@ -26,6 +26,7 @@ export function ListaLeads({
   statusLabelOf,
   onRowClick,
 }: ListaLeadsProps) {
+  const formatCurrency = useMoneyMask();
   return (
     <div className="hidden md:block overflow-x-auto rounded-lg border">
       <Table>

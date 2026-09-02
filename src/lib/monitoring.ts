@@ -49,7 +49,11 @@ interface Monitoring {
 
 const DEV = import.meta.env.DEV;
 const DSN = env.VITE_SENTRY_DSN;
-const ENV = env.VITE_SENTRY_ENV ?? import.meta.env.MODE;
+// __SENTRY_ENVIRONMENT__ (injetado no build via VERCEL_ENV, ver vite.config.ts)
+// separa staging/preview de produção sem precisar configurar VITE_SENTRY_ENV por
+// ambiente na Vercel. VITE_SENTRY_ENV continua valendo como override explícito
+// (ex.: dev local testando um valor específico).
+const ENV = env.VITE_SENTRY_ENV ?? __SENTRY_ENVIRONMENT__;
 // Já validado como número em 0..1 por env.ts, que também resolve o nome legado
 // VITE_SENTRY_TRACES_RATE. Antes, `Number(undefined ?? ...)` podia render NaN e uma
 // var declarada vazia virava 0 sem ninguém notar.
@@ -137,6 +141,10 @@ const sentryMonitoring: Monitoring = {
       environment: ENV,
       release: __SENTRY_RELEASE__,
       tracesSampleRate: TRACES_RATE,
+      // Mesma taxa do tracing: profiling só faz sentido dentro de uma transaction
+      // amostrada (é isso que o Sentry usa pra decidir quando perfilar), então não
+      // introduz uma env var de sample rate própria pra configurar.
+      profilesSampleRate: TRACES_RATE,
       replaysSessionSampleRate: 0,
       replaysOnErrorSampleRate: 1.0,
       sendDefaultPii: false,
@@ -162,6 +170,14 @@ const sentryMonitoring: Monitoring = {
         return event;
       },
     });
+    // Profiling via CDN da própria Sentry (script já liberado no CSP, vercel.json),
+    // fora do bundle de entrada: adicionar direto em `integrations` acima estourava
+    // o orçamento de bundle (ver scripts/check-bundle-size.mjs) por ~4kB pra todo
+    // usuário, mesmo quem nunca cai na amostra de profilesSampleRate. Falha de rede
+    // aqui é não-fatal: resto do Sentry (erro, tracing, replay) já está ativo.
+    Sentry.lazyLoadIntegration("browserProfilingIntegration")
+      .then((integrationFn) => Sentry.addIntegration(integrationFn()))
+      .catch(() => undefined);
     // beforeSend só roda pra eventos de erro: sendFeedback() emite um evento
     // tipo "feedback" à parte, que precisa do próprio scrub aqui.
     Sentry.getClient()?.on("beforeSendFeedback", (feedback) => {

@@ -17,9 +17,6 @@ const KNOWN_FEATURES: Feature[] = [
   "pessoas",
   "metas",
   "portal_cliente",
-  "capacidade",
-  "templates",
-  "ai_hub",
   "ai_chat",
   "timesheet",
   "obras",
@@ -32,6 +29,7 @@ const KNOWN_FEATURES: Feature[] = [
   "obras_conta",
   "admin_portal",
   "billing",
+  "financeiro_folha",
 ];
 
 const FEATURE_LABEL: Record<Feature, string> = {
@@ -46,11 +44,8 @@ const FEATURE_LABEL: Record<Feature, string> = {
   pessoas: "Equipe",
   metas: "Metas",
   portal_cliente: "Portal do Cliente",
-  capacidade: "Capacidade",
-  templates: "Templates",
-  ai_hub: "IA",
   ai_chat: "Agentes",
-  meu_trabalho: "Meu trabalho",
+  meu_trabalho: "Tarefas",
   obras: "Obras",
   obras_fornecedores: "Fornecedores",
   obras_clima: "Clima",
@@ -62,6 +57,7 @@ const FEATURE_LABEL: Record<Feature, string> = {
   timesheet: "Timesheet",
   admin_portal: "Admin Portal",
   billing: "Assinatura",
+  financeiro_folha: "Folha de pagamento",
 };
 
 function isKnownFeature(value: string | null): value is Feature {

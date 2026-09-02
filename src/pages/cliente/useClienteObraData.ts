@@ -50,6 +50,17 @@ export interface ClienteObraConta {
   despesas: ClienteObraDespesa[];
 }
 
+/** Resumo curado de um dia (spec 087) — nunca ocorrências, pendências,
+ * efetivo por fornecedor, impedimento ou visita: o SQL de
+ * get_cliente_obra_detail nem devolve esses campos, não é filtro no front. */
+export interface ClienteObraDiarioDia {
+  id: string;
+  data: string;
+  clima: string | null;
+  atividades: string | null;
+  fotos: Array<{ id: string; path: string }>;
+}
+
 export interface ClienteObraData {
   obra_id: string;
   nome: string;
@@ -59,6 +70,7 @@ export interface ClienteObraData {
   taxa_administracao_pct: number;
   frentes: ClienteObraFrente[];
   conta: ClienteObraConta;
+  diario: ClienteObraDiarioDia[];
 }
 
 /** Lista de obras que o cliente pode acompanhar no portal (só administração + visíveis). */

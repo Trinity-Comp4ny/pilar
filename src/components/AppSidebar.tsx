@@ -3,7 +3,6 @@ import {
   Home,
   ShieldCheck,
   Zap,
-  UserCircle,
   LogOut,
   ChevronDown,
   Check,
@@ -11,9 +10,12 @@ import {
   PanelLeftOpen,
   Settings,
   MessageSquare,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Logo } from "@/components/Logo";
+import { AvatarStack } from "@/components/AvatarStack";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -27,9 +29,11 @@ import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useValoresOcultos } from "@/contexts/ValoresOcultosContext";
 import { ImpersonationPicker } from "@/components/ImpersonationPicker";
 import { NotificationInbox } from "@/components/NotificationInbox";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
+import { usePendenciasAgentes } from "@/hooks/useEscopos";
 import {
   EMPRESA_ITEMS,
   MODULE_ORDER,
@@ -52,6 +56,11 @@ export function AppSidebar() {
   const { user, profile, signOut } = useAuth();
   const { openSettings, isOpen: isSettingsOpen } = useSettingsModal();
   const { getNavItemProps, isAdmin, isUltraAdmin } = usePermissions();
+  // Contador de pendências de agente no item "Agentes" (spec 084) — sem isso, o trabalho
+  // dos agentes proativos (ex. guardião de margem) fica invisível pra quem não abre /agentes.
+  const { data: pendenciasAgentes } = usePendenciasAgentes();
+  const numPendenciasAgentes = pendenciasAgentes?.length ?? 0;
+  const { ocultos: valoresOcultos, toggle: toggleValoresOcultos } = useValoresOcultos();
   const currentPath = location.pathname;
   const [sidebarWidth, setSidebarWidth] = useState(state === "collapsed" ? "64px" : "240px");
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -210,12 +219,20 @@ export function AppSidebar() {
                 Em breve
               </span>
             )}
+            {item.url === "/agentes" && numPendenciasAgentes > 0 && (
+              <span className="rounded-full bg-brand px-1.5 py-0.5 text-[11px] font-semibold leading-none text-ink">
+                {numPendenciasAgentes}
+              </span>
+            )}
           </>
         )}
 
         {collapsed && (
           <>
             {item.badge === "novo" && <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-brand" />}
+            {item.url === "/agentes" && numPendenciasAgentes > 0 && (
+              <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-brand" />
+            )}
             <span className="absolute left-full ml-3 bg-black text-white text-xs py-1.5 px-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
               {item.title}
             </span>
@@ -355,7 +372,11 @@ export function AppSidebar() {
                   aria-label="Menu do usuário"
                   title={collapsed ? userName : ""}
                 >
-                  <UserCircle size={18} strokeWidth={1.5} className="text-black/70 w-[18px] h-[18px] flex-shrink-0" />
+                  <AvatarStack
+                    pessoas={[{ nome: userName, avatarUrl: profile?.avatar_url }]}
+                    size="xs"
+                    className="flex-shrink-0"
+                  />
                   {!collapsed && (
                     <>
                       <div className="flex-1 text-left min-w-0">
@@ -388,6 +409,18 @@ export function AppSidebar() {
                 <DropdownMenuItem onClick={() => setFeedbackOpen(true)} className="justify-between">
                   Feedback
                   <MessageSquare size={16} className="text-muted-foreground" />
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={toggleValoresOcultos}
+                  onSelect={(e) => e.preventDefault()}
+                  className="justify-between"
+                >
+                  {valoresOcultos ? "Mostrar valores financeiros" : "Ocultar valores financeiros"}
+                  {valoresOcultos ? (
+                    <EyeOff size={16} className="text-muted-foreground" />
+                  ) : (
+                    <Eye size={16} className="text-muted-foreground" />
+                  )}
                 </DropdownMenuItem>
                 {isAdmin && !isUltraAdmin && (
                   <DropdownMenuItem onClick={handleAdmin} className="justify-between">

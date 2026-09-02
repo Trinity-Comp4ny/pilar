@@ -36,6 +36,10 @@ WITH allowed(sig) AS (
     ('campo_salvar_rdo(text, date, text, text, integer, text, text, text)'),
     ('campo_registrar_tarefa_rdo(text, uuid, uuid, text, text)'),
     ('campo_registrar_medicao(text, uuid, text, numeric, text)'),
+    ('campo_listar_fornecedores(text)'),
+    ('campo_registrar_efetivo(text, uuid, uuid, text, integer)'),
+    ('campo_registrar_impedimento(text, uuid, text, text)'),
+    ('campo_registrar_visita(text, uuid, uuid, text, text)'),
     ('get_cliente_projetos(text)'), ('get_cliente_projeto_detail(uuid, text)'),
     ('get_cliente_obras(text)'), ('get_cliente_obra_detail(text, uuid)'),
     ('guard_login_attempt(text)')

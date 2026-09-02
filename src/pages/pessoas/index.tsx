@@ -11,6 +11,7 @@ import { PessoaFormDialog } from "./components/PessoaFormDialog";
 import { PessoaDetailDialog } from "./components/PessoaDetailDialog";
 import { PessoaTable } from "./components/PessoaTable";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { PESSOAS_EMPRESA_QUERY_KEY } from "@/pages/meu-trabalho/hooks";
 
 export default function Pessoas() {
   usePageTitle("Equipe");
@@ -86,6 +87,7 @@ export default function Pessoas() {
       toast.success("Pessoa excluída");
       setIsDetailOpen(false);
       queryClient.invalidateQueries({ queryKey: ["pessoas"] });
+      queryClient.invalidateQueries({ queryKey: PESSOAS_EMPRESA_QUERY_KEY });
     } else {
       toast.error("Não foi possível excluir a pessoa. Tente novamente.");
     }
@@ -98,7 +100,11 @@ export default function Pessoas() {
       className="overflow-y-hidden"
       containerClassName="h-full flex flex-col min-h-0"
       title="Equipe"
-      primaryAction={isAdmin ? { label: "Nova pessoa", onClick: handleNewPessoa, icon: Plus, dataTour: "onb-nova-pessoa" } : undefined}
+      primaryAction={
+        isAdmin
+          ? { label: "Nova pessoa", onClick: handleNewPessoa, icon: Plus, dataTour: "onb-nova-pessoa" }
+          : undefined
+      }
     >
       <PessoaTable
         pessoas={pessoas}
@@ -122,7 +128,10 @@ export default function Pessoas() {
         open={isFormDialogOpen}
         onOpenChange={setIsFormDialogOpen}
         editPessoa={editingPessoa}
-        onSaved={() => queryClient.invalidateQueries({ queryKey: ["pessoas"] })}
+        onSaved={() => {
+          queryClient.invalidateQueries({ queryKey: ["pessoas"] });
+          queryClient.invalidateQueries({ queryKey: PESSOAS_EMPRESA_QUERY_KEY });
+        }}
       />
 
       <ConfirmDialog

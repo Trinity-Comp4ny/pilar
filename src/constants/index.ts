@@ -209,9 +209,17 @@ export const NOTA_FISCAL = {
   NAO: "Não",
 } as const;
 
+// Origem (lead e cliente compartilham a mesma lista — BUG-3: a padronização
+// do Lead não vazava pro Cliente, que era texto livre). "Outro" é sentinela de
+// UI (abre um campo de texto livre), nunca vai pro banco como valor literal.
+export const ORIGENS = ["Indicação", "Instagram", "LinkedIn", "Site", "Google", "WhatsApp", "Evento", "Outro"] as const;
+export const ORIGEM_OUTRO = "Outro";
+export const ORIGENS_CONHECIDAS = ORIGENS.filter((o) => o !== ORIGEM_OUTRO);
+
 // Storage Keys
 export const STORAGE_KEYS = {
   REMEMBER_ME: "pilar-remember-me",
   AUTH: "pilar-auth",
   USER_NAME: "pilar-user-name",
+  CHAT_SNAPSHOT: "pilar.chat.v1",
 } as const;

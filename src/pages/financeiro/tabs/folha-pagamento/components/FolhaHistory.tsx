@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { History } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import type { HistoryItem } from "../types";
 import { getMonthLabel } from "../types";
 
@@ -13,6 +13,7 @@ interface FolhaHistoryProps {
 }
 
 export function FolhaHistory({ history, selectedMonth, selectedYear, onOpenDetail }: FolhaHistoryProps) {
+  const formatCurrency = useMoneyMask();
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold flex items-center gap-2">

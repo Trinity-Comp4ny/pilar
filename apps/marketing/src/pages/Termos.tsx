@@ -1,6 +1,6 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, FileText } from "lucide-react";
+import { usePageMeta } from "../lib/seo";
 
 const SECTIONS: { titulo: string; corpo: React.ReactNode }[] = [
   {
@@ -199,12 +199,14 @@ const SECTIONS: { titulo: string; corpo: React.ReactNode }[] = [
 ];
 
 export function Termos() {
-  useEffect(() => {
-    document.title = "Termos de Uso | Pilar";
-  }, []);
+  usePageMeta({
+    titulo: "Termos de Uso | Pilar",
+    descricao: "As condições de uso da plataforma Pilar: conta, trial, pagamento, dados e responsabilidades.",
+    caminho: "/termos",
+  });
 
   return (
-    <div className="min-h-screen bg-background pt-16">
+    <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-6 py-6 flex items-center gap-4">
           <Link

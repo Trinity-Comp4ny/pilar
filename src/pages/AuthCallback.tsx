@@ -2,11 +2,32 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { marcarLogin } from "@/lib/ultimoLogin";
 import { translateAuthError } from "@/lib/authErrors";
 import { Logo } from "@/components/Logo";
+
+// Foto do Google (raw_user_meta_data.avatar_url ou .picture) já é gravada no
+// profile no signup (trigger handle_new_user). Login subsequente não passa
+// pelo trigger, então repetimos aqui para cobrir quem criou a conta antes
+// dessa migration. Só grava se avatar_url ainda estiver NULL: upload manual
+// (spec 075) sempre vence, então login Google nunca sobrescreve uma foto que
+// o usuário escolheu.
+function sincronizarAvatarGoogle(user: User) {
+  const avatarUrl = (user.user_metadata?.avatar_url ?? user.user_metadata?.picture) as string | undefined;
+  if (!avatarUrl) return;
+
+  supabase
+    .from("profiles")
+    .update({ avatar_url: avatarUrl })
+    .eq("id", user.id)
+    .is("avatar_url", null)
+    .then(({ error }) => {
+      if (error) console.error("Falha ao sincronizar avatar do Google:", error);
+    });
+}
 
 // Retorno do OAuth (Google). O detectSessionInUrl (default do supabase-js) troca o
 // code/hash por sessão automaticamente; aqui só esperamos ela existir e roteamos.
@@ -43,7 +64,10 @@ export default function AuthCallback() {
       done = true;
 
       const provider = session.user.app_metadata?.provider;
-      if (provider === "google") marcarLogin("google");
+      if (provider === "google") {
+        marcarLogin("google");
+        sincronizarAvatarGoogle(session.user);
+      }
 
       navigate("/inicio", { replace: true });
     };

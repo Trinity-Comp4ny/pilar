@@ -95,7 +95,11 @@ export function PixPayment({ encodedImage, payload, expirationDate, value, isPol
       <div>
         <p className="text-xs text-ink-muted mb-2">Ou copie o código:</p>
         <div className="flex gap-2">
-          <div className="flex-1 px-3 py-2 bg-muted border border-border rounded-lg text-xs font-mono text-ink-soft truncate">
+          {/* min-w-0: sem isso, um flex item com texto longo em nowrap (truncate) não
+              encolhe abaixo do próprio conteúdo — o container inteiro estica pra caber
+              o payload Pix inteiro, empurrando tudo pra fora em containers estreitos
+              (ex.: dentro de um Dialog max-w-sm; nunca aparecia na página cheia do checkout). */}
+          <div className="flex-1 min-w-0 px-3 py-2 bg-muted border border-border rounded-lg text-xs font-mono text-ink-soft truncate">
             {payload}
           </div>
           <Button type="button" variant="outline" onClick={handleCopy} className="shrink-0">

@@ -2,7 +2,12 @@ import type { Database } from "@/integrations/supabase/types";
 
 export type LegacyUserRole = Database["public"]["Enums"]["user_role"];
 
-export type PilarRole = "ultra_admin" | "admin" | "user";
+/**
+ * coordenador (ADR 0034): papel operacional vivo entre user e admin. Não
+ * concede financeiro nem folha por si só — isso é um eixo à parte
+ * (profiles.financeiro_delegado, sempre admin-only pra folha).
+ */
+export type PilarRole = "ultra_admin" | "admin" | "coordenador" | "user";
 
 const ULTRA_ADMIN_PREVIEW_KEY = "pilar-ultra-admin-preview";
 

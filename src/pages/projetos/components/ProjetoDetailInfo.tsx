@@ -7,7 +7,8 @@ import { NumberInput } from "@/components/forms/NumberInput";
 import { User, DollarSign, Calendar, Ruler } from "lucide-react";
 import { formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import type { Projeto } from "@/types/projetos";
-import { formatCurrency, formatDate } from "@/types/projetos";
+import { formatDate } from "@/types/projetos";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 
 interface ProjetoDetailInfoProps {
   projeto: Projeto;
@@ -28,6 +29,7 @@ export function ProjetoDetailInfo({
   onUpdateContrato,
   onUpdateArea,
 }: ProjetoDetailInfoProps) {
+  const formatCurrency = useMoneyMask();
   const [valorInput, setValorInput] = useState(() => formatValorToInput(projeto.valor_contrato));
   const [areaInput, setAreaInput] = useState(() => String(projeto.area_m2 || ""));
   // Resincroniza os rascunhos quando o valor real muda por fora (save/refetch),

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency } from "@/lib/currencyUtils";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { msgErro } from "./erros";
 import type { AditivoItem, Draft, DraftCampos, Entidade } from "./useChat";
 
@@ -32,6 +32,7 @@ export function AditivoCard({ index, draft, onConfirmar, onCancelar, onDesfazer 
   const [projetoId, setProjetoId] = useState(campos.projeto_id ?? "");
   const [descricao, setDescricao] = useState(campos.descricao ?? "");
   const [justificativa, setJustificativa] = useState(campos.justificativa ?? "");
+  const formatCurrency = useMoneyMask();
   const [itens, setItens] = useState<AditivoItem[]>(campos.itens?.length ? campos.itens : [{ descricao: "" }]);
   const [salvando, setSalvando] = useState(false);
   const [desfazendo, setDesfazendo] = useState(false);
@@ -272,8 +273,7 @@ export function AditivoCard({ index, draft, onConfirmar, onCancelar, onDesfazer 
 
       <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-3">
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Coins className="h-3.5 w-3.5" /> Criar debita {draft.custoCreditos} crédito
-          {draft.custoCreditos === 1 ? "" : "s"} de IA
+          <Coins className="h-3.5 w-3.5" /> Criar consome tokens de IA
         </span>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={cancelar} disabled={salvando}>

@@ -16,9 +16,9 @@ import { withSentry } from "../_shared/sentry.ts";
 
 const log = createLogger("invite-user");
 
-// Apenas admin/user via UI. ultra_admin é exclusivo via SQL direto.
-// Roles legados (financeiro/marketing/operacional) caem no fallback 'user'.
-const ASSIGNABLE_ROLES = ["admin", "user"] as const;
+// admin/coordenador/user via UI (ADR 0034). ultra_admin é exclusivo via SQL direto.
+// Roles legados (owner/colaborador/financeiro/marketing/operacional) caem no fallback 'user'.
+const ASSIGNABLE_ROLES = ["admin", "coordenador", "user"] as const;
 type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
 
 serve(

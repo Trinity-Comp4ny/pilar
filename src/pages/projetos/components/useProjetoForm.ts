@@ -2,8 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { supabase } from "@/integrations/supabase/client";
-import { addBusinessDays, formatDateLocal, parseDateLocal } from "@/lib/businessDays";
-import { calcularDatasEtapasFluxo } from "@/lib/fluxoCascata";
+import { calcularDatasFluxo, responsaveisEfetivos } from "@/lib/fluxoCascata";
 import { PROJECT_STATUS, PROJECT_PRIORITY, type ProjectPriority } from "@/constants";
 import {
   type Projeto,
@@ -18,6 +17,7 @@ import { type TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
+import { lookupCEP } from "@/lib/brasilApi";
 import { useBulkSaveDisciplinas } from "@/hooks/useProjetoDisciplinas";
 import { useFormPersist, clearFormPersist } from "@/hooks/useFormPersist";
 
@@ -73,7 +73,6 @@ const EMPTY_FORM = {
   observacao: "",
   status: PROJECT_STATUS.PLANEJAMENTO as Projeto["status"],
   prioridade: PROJECT_PRIORITY.MEDIA as ProjectPriority,
-  prazo_dias_uteis: "",
   dia_pagamento: "",
 };
 
@@ -179,34 +178,28 @@ export function useProjetoForm({
     data_final: "",
   });
 
-  const fetchCep = useCallback(
-    async (cep: string) => {
-      const digits = cep.replace(/\D/g, "");
-      if (digits.length !== 8) return;
+  const fetchCep = useCallback(async (cep: string) => {
+    const digits = cep.replace(/\D/g, "");
+    if (digits.length !== 8) return;
 
-      setIsFetchingCep(true);
-      try {
-        const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
-        const data = await res.json();
-        if (data.erro) {
-          toast.error("CEP não encontrado");
-          return;
-        }
-        setFormData((prev) => ({
-          ...prev,
-          loc_logradouro: data.logradouro || prev.loc_logradouro,
-          loc_bairro: data.bairro || prev.loc_bairro,
-          loc_cidade: data.localidade || prev.loc_cidade,
-          loc_estado: data.uf || prev.loc_estado,
-        }));
-      } catch {
-        toast.error("Erro ao buscar CEP");
-      } finally {
-        setIsFetchingCep(false);
+    setIsFetchingCep(true);
+    try {
+      const end = await lookupCEP(digits);
+      if (!end) {
+        toast.error("CEP não encontrado");
+        return;
       }
-    },
-    [toast]
-  );
+      setFormData((prev) => ({
+        ...prev,
+        loc_logradouro: end.street || prev.loc_logradouro,
+        loc_bairro: end.neighborhood || prev.loc_bairro,
+        loc_cidade: end.city || prev.loc_cidade,
+        loc_estado: end.state || prev.loc_estado,
+      }));
+    } finally {
+      setIsFetchingCep(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -228,7 +221,6 @@ export function useProjetoForm({
         observacao: editProjeto.observacao || "",
         status: editProjeto.status,
         prioridade: editProjeto.prioridade || PROJECT_PRIORITY.MEDIA,
-        prazo_dias_uteis: "",
         dia_pagamento: "",
       };
       setFormData(nextForm);
@@ -261,26 +253,7 @@ export function useProjetoForm({
   });
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => {
-      const next = { ...prev, [field]: value };
-
-      if (field === "prazo_dias_uteis" || field === "data_inicio") {
-        const prazo = field === "prazo_dias_uteis" ? value : prev.prazo_dias_uteis;
-        const inicio = field === "data_inicio" ? value : prev.data_inicio;
-        const prazoNum = parseInt(prazo, 10);
-        if (inicio && prazoNum > 0 && prazoNum <= 999) {
-          try {
-            const startDate = parseDateLocal(inicio);
-            const endDate = addBusinessDays(startDate, prazoNum);
-            next.data_previsao = formatDateLocal(endDate);
-          } catch {
-            // ignore parse errors
-          }
-        }
-      }
-
-      return next;
-    });
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleOpenDisciplinaDetail = (index: number) => {
@@ -320,13 +293,18 @@ export function useProjetoForm({
     setProjetosDisciplinas(updatedDisciplinas);
   };
 
-  const updateDisciplinaResponsavel = (val: string, nome: string) => {
+  const updateDisciplinaResponsaveis = (ids: string[]) => {
     if (selectedDisciplinaIndex === null) return;
+    const resps = ids.map((id) => ({
+      responsavel_id: id,
+      responsavel_nome: pessoas.find((p) => p.id === id)?.nome || "",
+    }));
     const updatedDisciplinas = [...projetosDisciplinas];
     updatedDisciplinas[selectedDisciplinaIndex] = {
       ...updatedDisciplinas[selectedDisciplinaIndex],
-      responsavel_id: val,
-      responsavel_nome: nome,
+      responsavel_id: resps[0]?.responsavel_id || "",
+      responsavel_nome: resps[0]?.responsavel_nome || "",
+      responsaveis: resps,
     };
     setProjetosDisciplinas(updatedDisciplinas);
   };
@@ -475,39 +453,37 @@ export function useProjetoForm({
     const fluxo = fluxosData.find((f) => f.id === fluxoId);
     if (!fluxo) return;
 
-    const datasPorEtapa = new Map(
-      calcularDatasEtapasFluxo(fluxo.etapas, formData.data_inicio || undefined).map((e) => [e.ordem, e])
-    );
+    const datas = calcularDatasFluxo(fluxo.disciplinas, formData.data_inicio || undefined);
 
-    const novasDisciplinas: DisciplinaResponsavel[] = fluxo.etapas.flatMap((etapa) => {
-      const datas = datasPorEtapa.get(etapa.ordem);
-      return etapa.disciplinas.map((d) => ({
+    const novasDisciplinas: DisciplinaResponsavel[] = fluxo.disciplinas.map((d, i) => {
+      const dataDisc = datas[i];
+      // União dos responsáveis das tarefas (ou fallback manual da disciplina,
+      // se nenhuma tarefa tiver responsável) — spec 071 revisão.
+      const { ids: responsaveisIds, nomes: responsaveisNomes } = responsaveisEfetivos(d);
+      return {
         disciplina: d.nome,
-        responsavel_id: d.responsavel_id || "",
-        responsavel_nome: d.responsavel_nome || "",
+        responsavel_id: responsaveisIds[0] || "",
+        responsavel_nome: responsaveisNomes[0] || "",
         status: "Não Iniciado",
-        etapa: etapa.ordem,
-        data_inicio: datas?.data_inicio,
-        data_previsao: datas?.data_previsao,
+        etapa: d.ordem,
+        data_inicio: dataDisc?.data_inicio,
+        data_previsao: dataDisc?.data_previsao,
         checklist_padrao: d.checklist_padrao,
         observacoes: [],
-        responsaveis: d.responsavel_id
-          ? [
-              {
-                responsavel_id: d.responsavel_id,
-                responsavel_nome: d.responsavel_nome || "",
-                status: "Não Iniciado",
-                data_inicio: datas?.data_inicio,
-                data_previsao: datas?.data_previsao,
-              },
-            ]
-          : [],
-      }));
+        responsaveis: responsaveisIds.map((id, ri) => ({
+          responsavel_id: id,
+          responsavel_nome: responsaveisNomes[ri] || "",
+          status: "Não Iniciado",
+          data_inicio: dataDisc?.data_inicio,
+          data_previsao: dataDisc?.data_previsao,
+        })),
+      };
     });
 
+    const colunas = new Set(fluxo.disciplinas.map((d) => d.ordem)).size;
     setProjetosDisciplinas(novasDisciplinas);
     toast.success("Fluxo aplicado", {
-      description: `${novasDisciplinas.length} disciplina(s) em ${fluxo.etapas.length} etapa(s) de "${fluxo.nome}"`,
+      description: `${novasDisciplinas.length} disciplina(s) em ${colunas} coluna(s) de "${fluxo.nome}"`,
     });
   };
 
@@ -843,7 +819,7 @@ export function useProjetoForm({
     setIsDisciplinaDetailOpen,
     handleOpenDisciplinaDetail,
     updateDisciplinaField,
-    updateDisciplinaResponsavel,
+    updateDisciplinaResponsaveis,
     newObservation,
     setNewObservation,
     handleAddObservation,

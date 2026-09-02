@@ -2,7 +2,7 @@
 
 > Mensagens-chave, one-liners, objeções e provas. Reusar literalmente em landing,
 > deck, e-mail e venda — consistência > criatividade nova a cada peça.
-> Ref: [BRAND.md](./BRAND.md) · Última atualização: `2026-06-10` · `v0`
+> Ref: [BRAND.md](./BRAND.md) · Última atualização: `2026-09-01` · `v1`
 
 ## One-liner (elevator)
 
@@ -47,7 +47,7 @@ Variações de campanha (mesmo núcleo):
 | "É mais um sistema pra alimentar." | "Um fluxo só: o dado entra na proposta e segue até o financeiro. Você alimenta menos, não mais." |
 | "Confio no orçamento da IA?" | "A IA monta o rascunho; você revisa e aprova. Nada vai pro cliente sem seu OK." |
 | "É caro / mais um SaaS." | "Custa menos que um projeto no vermelho que você descobriu tarde demais." |
-| "Serve pro meu escritório?" | "Feito pra engenharia multidisciplinar — civil, estrutural, MEP/HVAC. Não é ERP de obra nem ferramenta de arquitetura." |
+| "Serve pro meu escritório?" | "Feito pra escritório de projeto técnico — engenharia (civil, estrutural, MEP/HVAC) e arquitetura. Não é ERP de obra." |
 
 ## CTAs padrão
 
@@ -56,6 +56,6 @@ Variações de campanha (mesmo núcleo):
 
 ## Não dizer
 
-- Não posicionar como ferramenta de arquitetura nem ERP de construção (gestão de obra está fora do escopo).
+- Não posicionar como ERP de construção (gestão de obra está fora do escopo).
 - Não prometer IA autônoma ("faz tudo sozinha"). Sempre HITL.
 - Não competir por lista de features — competir por clareza de lucro (ver arquétipo Hard Fact, BRAND.md §2).

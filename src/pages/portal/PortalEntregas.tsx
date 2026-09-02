@@ -1,20 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Loader2,
-  FileCheck,
-  CheckCircle2,
-  RotateCcw,
-  FileText,
-  Paperclip,
-  Download,
-  ChevronDown,
-  Clock,
-  ExternalLink,
-} from "lucide-react";
+import { Loader2, FileCheck, CheckCircle2, RotateCcw, FileText, ExternalLink, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { reportInvokeError } from "@/lib/monitoring";
@@ -29,16 +18,13 @@ interface Entrega {
   descricao: string | null;
   tipo: string | null;
   status: "pendente" | "aprovado" | "revisao_solicitada";
-  versao: number | null;
-  disciplina: string | null;
-  fase: string | null;
-  arquivo_path: string | null;
-  arquivo_nome: string | null;
   drive_url: string | null;
-  entregavel_pai_id: string | null;
+  projeto_disciplina_id: string | null;
+  disciplina_nome: string | null;
   resposta_cliente: string | null;
-  resposta_empresa: string | null;
   respondido_em: string | null;
+  aprovado_ip: string | null;
+  aprovado_user_agent: string | null;
   created_at: string;
 }
 
@@ -64,7 +50,6 @@ export function EntregasContent({
   const [entregas, setEntregas] = useState<Entrega[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [respondingId, setRespondingId] = useState<string | null>(null);
   const [resposta, setResposta] = useState("");
   const [saving, setSaving] = useState(false);
@@ -86,12 +71,19 @@ export function EntregasContent({
         const { data, error: fetchError } = await supabase
           .from("portal_entregas")
           .select(
-            "id, titulo, descricao, tipo, status, versao, disciplina, fase, arquivo_path, arquivo_nome, drive_url, entregavel_pai_id, resposta_cliente, resposta_empresa, respondido_em, created_at"
+            "id, titulo, descricao, tipo, status, drive_url, projeto_disciplina_id, resposta_cliente, respondido_em, aprovado_ip, aprovado_user_agent, created_at, projeto_disciplinas(nome)"
           )
           .eq("projeto_id", projetoId)
           .order("created_at", { ascending: true });
         if (fetchError) throw fetchError;
-        if (data) setEntregas(data as unknown as Entrega[]);
+        if (data)
+          setEntregas(
+            (
+              data as unknown as (Omit<Entrega, "disciplina_nome"> & {
+                projeto_disciplinas: { nome: string } | null;
+              })[]
+            ).map((d) => ({ ...d, disciplina_nome: d.projeto_disciplinas?.nome ?? null }))
+          );
       }
     } catch (err) {
       reportInvokeError(err, "portal-entregas:carregar");
@@ -104,8 +96,6 @@ export function EntregasContent({
   useEffect(() => {
     fetchEntregas();
   }, [fetchEntregas]);
-
-  const threads = useMemo(() => buildThreads(entregas), [entregas]);
 
   const handleAprovar = async (id: string) => {
     const portalToken = token ?? getPortalToken();
@@ -163,7 +153,7 @@ export function EntregasContent({
     );
   }
 
-  if (threads.length === 0) {
+  if (entregas.length === 0) {
     return (
       <Card>
         <CardContent className="p-0">
@@ -173,8 +163,8 @@ export function EntregasContent({
     );
   }
 
-  const pendentes = threads.filter((t) => t.current.status === "pendente");
-  const concluidos = threads.filter((t) => t.current.status !== "pendente");
+  const pendentes = entregas.filter((e) => e.status === "pendente");
+  const concluidos = entregas.filter((e) => e.status !== "pendente");
 
   return (
     <div className="space-y-6">
@@ -185,25 +175,22 @@ export function EntregasContent({
             Aguardando sua resposta ({pendentes.length})
           </h3>
           <div className="space-y-3">
-            {pendentes.map((thread) => (
-              <ThreadPortalCard
-                key={thread.root.id}
-                thread={thread}
-                token={token}
-                expanded={expandedId === thread.root.id}
-                onToggle={() => setExpandedId((prev) => (prev === thread.root.id ? null : thread.root.id))}
-                isResponding={respondingId === thread.current.id}
+            {pendentes.map((e) => (
+              <EntregaCard
+                key={e.id}
+                entrega={e}
+                isResponding={respondingId === e.id}
                 resposta={resposta}
                 setResposta={setResposta}
-                onStartRevisao={() => setRespondingId(thread.current.id)}
+                onStartRevisao={() => setRespondingId(e.id)}
                 onCancelRevisao={() => {
                   setRespondingId(null);
                   setResposta("");
                 }}
-                onAprovar={() => handleAprovar(thread.current.id)}
-                onSolicitar={() => handleSolicitarRevisao(thread.current.id)}
+                onAprovar={() => handleAprovar(e.id)}
+                onSolicitar={() => handleSolicitarRevisao(e.id)}
                 saving={saving}
-                historico={readOnly}
+                readOnly={readOnly}
               />
             ))}
           </div>
@@ -214,13 +201,10 @@ export function EntregasContent({
         <section>
           <h3 className="text-sm font-semibold mb-3">Histórico</h3>
           <div className="space-y-2">
-            {concluidos.map((thread) => (
-              <ThreadPortalCard
-                key={thread.root.id}
-                thread={thread}
-                token={token}
-                expanded={expandedId === thread.root.id}
-                onToggle={() => setExpandedId((prev) => (prev === thread.root.id ? null : thread.root.id))}
+            {concluidos.map((e) => (
+              <EntregaCard
+                key={e.id}
+                entrega={e}
                 isResponding={false}
                 resposta=""
                 setResposta={() => undefined}
@@ -229,7 +213,7 @@ export function EntregasContent({
                 onAprovar={() => undefined}
                 onSolicitar={() => undefined}
                 saving={false}
-                historico
+                readOnly={readOnly}
               />
             ))}
           </div>
@@ -239,40 +223,8 @@ export function EntregasContent({
   );
 }
 
-type Thread = { root: Entrega; versoes: Entrega[]; current: Entrega };
-
-function buildThreads(entregas: Entrega[]): Thread[] {
-  const byId = new Map<string, Entrega>(entregas.map((e) => [e.id, e]));
-  const threadsMap = new Map<string, { root: Entrega; versoes: Entrega[] }>();
-
-  for (const e of entregas) {
-    let rootId = e.id;
-    let current: Entrega | undefined = e;
-    while (current?.entregavel_pai_id) {
-      const parent = byId.get(current.entregavel_pai_id);
-      if (!parent) break;
-      rootId = parent.id;
-      current = parent;
-    }
-    if (!threadsMap.has(rootId)) {
-      threadsMap.set(rootId, { root: byId.get(rootId)!, versoes: [] });
-    }
-    threadsMap.get(rootId)!.versoes.push(e);
-  }
-
-  return Array.from(threadsMap.values())
-    .map(({ root, versoes }) => {
-      versoes.sort((a, b) => (a.versao ?? 1) - (b.versao ?? 1));
-      return { root, versoes, current: versoes[versoes.length - 1] };
-    })
-    .sort((a, b) => new Date(b.root.created_at).getTime() - new Date(a.root.created_at).getTime());
-}
-
-function ThreadPortalCard({
-  thread,
-  token,
-  expanded,
-  onToggle,
+function EntregaCard({
+  entrega,
   isResponding,
   resposta,
   setResposta,
@@ -281,12 +233,9 @@ function ThreadPortalCard({
   onAprovar,
   onSolicitar,
   saving,
-  historico,
+  readOnly,
 }: {
-  thread: Thread;
-  token?: string;
-  expanded: boolean;
-  onToggle: () => void;
+  entrega: Entrega;
   isResponding: boolean;
   resposta: string;
   setResposta: (v: string) => void;
@@ -295,86 +244,62 @@ function ThreadPortalCard({
   onAprovar: () => void;
   onSolicitar: () => void;
   saving: boolean;
-  historico?: boolean;
+  readOnly?: boolean;
 }) {
-  const current = thread.current;
-  const config = STATUS_CONFIG[current.status];
+  const config = STATUS_CONFIG[entrega.status];
   const StatusIcon = config.icon;
-  const hasHistory = thread.versoes.length > 1;
 
   return (
-    <Card className={cn(!historico && current.status === "pendente" && "border-warning-mid-border")}>
-      <CardContent className="p-4">
-        <div
-          role="button"
-          tabIndex={0}
-          aria-expanded={expanded}
-          className="flex items-start gap-3 cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          onClick={onToggle}
-          onKeyDown={(ev) => {
-            if (ev.key === "Enter" || ev.key === " ") {
-              ev.preventDefault();
-              onToggle();
-            }
-          }}
-        >
+    <Card className={cn(entrega.status === "pendente" && "border-warning-mid-border")}>
+      <CardContent className="p-4 space-y-2">
+        <div className="flex items-start gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-sm font-medium">{current.titulo}</p>
-              {current.disciplina && (
-                <Badge variant="secondary" className="text-[10px]" title="Área do projeto">
-                  {current.disciplina}
-                </Badge>
-              )}
-              {(current.versao ?? 1) > 1 && (
-                <Badge variant="outline" className="text-[10px]">
-                  v{current.versao}
+              <p className="text-sm font-medium">{entrega.titulo}</p>
+              {entrega.disciplina_nome && (
+                <Badge variant="secondary" className="text-[10px]" title="Etapa do projeto">
+                  {entrega.disciplina_nome}
                 </Badge>
               )}
             </div>
-            {current.descricao && !expanded && (
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{current.descricao}</p>
-            )}
+            {entrega.descricao && <p className="text-xs text-muted-foreground mt-1">{entrega.descricao}</p>}
             <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground flex-wrap">
-              <span>{new Date(current.created_at).toLocaleDateString("pt-BR")}</span>
-              {current.fase && <span>· {current.fase}</span>}
-              {current.arquivo_nome && (
-                <span className="flex items-center gap-1">
-                  · <Paperclip className="h-3 w-3" /> {current.arquivo_nome}
-                </span>
+              <span>{new Date(entrega.created_at).toLocaleDateString("pt-BR")}</span>
+              {entrega.drive_url && (
+                <a
+                  href={entrega.drive_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-info-strong hover:underline"
+                >
+                  <ExternalLink className="h-3 w-3" /> Abrir no Drive
+                </a>
               )}
-              {current.drive_url && (
-                <span className="flex items-center gap-1 text-info-strong">
-                  · <ExternalLink className="h-3 w-3" /> Google Drive
-                </span>
-              )}
-              {hasHistory && <span>· {thread.versoes.length} versões</span>}
             </div>
           </div>
-
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Badge className={cn("text-[10px] border", config.color)}>
-              <StatusIcon className="h-3 w-3 mr-1" />
-              {config.label}
-            </Badge>
-            <ChevronDown
-              className={cn("h-4 w-4 text-muted-foreground transition-transform", expanded && "rotate-180")}
-            />
-          </div>
+          <Badge className={cn("text-[10px] border flex-shrink-0", config.color)}>
+            <StatusIcon className="h-3 w-3 mr-1" />
+            {config.label}
+          </Badge>
         </div>
 
-        {expanded && (
-          <div className="mt-3 pt-3 border-t space-y-3">
-            {thread.versoes.map((v) => (
-              <VersionBlock key={v.id} entrega={v} isLatest={v.id === current.id} token={token} />
-            ))}
+        {entrega.resposta_cliente && (
+          <div className="rounded p-2 bg-attention-soft border border-attention-soft-border text-[11px] text-attention-strong">
+            <span className="font-medium">Solicitação do cliente:</span> {entrega.resposta_cliente}
           </div>
         )}
 
-        {!historico && current.status === "pendente" && (
-          <div className="mt-3 pt-3 border-t">
+        {readOnly && entrega.status === "aprovado" && entrega.respondido_em && (
+          <p className="text-[10px] text-muted-foreground">
+            Aprovado em {new Date(entrega.respondido_em).toLocaleString("pt-BR")}
+            {entrega.aprovado_ip ? ` · IP ${entrega.aprovado_ip}` : ""}
+          </p>
+        )}
+
+        {!readOnly && entrega.status === "pendente" && (
+          <div className="pt-2 border-t">
             {isResponding ? (
-              <div className="space-y-2">
+              <div className="space-y-2 pt-2">
                 <Textarea
                   value={resposta}
                   onChange={(ev) => setResposta(ev.target.value)}
@@ -398,7 +323,7 @@ function ThreadPortalCard({
                 </div>
               </div>
             ) : (
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-2 flex-wrap pt-2">
                 <Button
                   size="sm"
                   variant="brand"
@@ -417,128 +342,5 @@ function ThreadPortalCard({
         )}
       </CardContent>
     </Card>
-  );
-}
-
-function VersionBlock({ entrega, isLatest, token }: { entrega: Entrega; isLatest: boolean; token?: string }) {
-  const config = STATUS_CONFIG[entrega.status];
-
-  return (
-    <div className={cn("rounded-md p-3 bg-muted/30 border text-xs space-y-2", !isLatest && "opacity-70")}>
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-[10px]">
-            v{entrega.versao ?? 1}
-          </Badge>
-          <Badge className={cn("text-[10px] border", config.color)}>{config.label}</Badge>
-          <span className="text-muted-foreground">{new Date(entrega.created_at).toLocaleDateString("pt-BR")}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          {entrega.drive_url && (
-            <Button
-              asChild
-              size="sm"
-              variant="outline"
-              className="h-11 sm:h-7 text-[11px] border-info-mid-border text-info-strong hover:bg-info-soft"
-            >
-              <a href={entrega.drive_url} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-3 w-3" />
-                <span className="ml-1">Abrir no Drive</span>
-              </a>
-            </Button>
-          )}
-          {entrega.arquivo_path && (
-            <PortalDownloadButton
-              entregaId={entrega.id}
-              path={entrega.arquivo_path}
-              nome={entrega.arquivo_nome}
-              token={token}
-            />
-          )}
-        </div>
-      </div>
-
-      {entrega.descricao && <p className="text-foreground">{entrega.descricao}</p>}
-
-      {entrega.resposta_empresa && (
-        <div className="rounded p-2 bg-info-soft border border-info-soft-border text-[11px] text-info-strong">
-          <span className="font-medium">Observação do escritório:</span> {entrega.resposta_empresa}
-        </div>
-      )}
-
-      {entrega.resposta_cliente && (
-        <div className="rounded p-2 bg-attention-soft border border-attention-soft-border text-[11px] text-attention-strong">
-          <span className="font-medium">Sua solicitação:</span> {entrega.resposta_cliente}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function PortalDownloadButton({
-  entregaId,
-  path,
-  nome,
-  token,
-}: {
-  entregaId: string;
-  path: string;
-  nome: string | null;
-  token?: string;
-}) {
-  const [downloading, setDownloading] = useState(false);
-
-  const handleDownload = async () => {
-    setDownloading(true);
-    try {
-      let signedUrl: string | undefined;
-      const sessionToken = getPortalToken();
-
-      if (token) {
-        const { data, error } = await supabase.functions.invoke("portal-entrega-download", {
-          body: { token, entrega_id: entregaId },
-        });
-        if (error) throw error;
-        signedUrl = (data as { signed_url?: string })?.signed_url;
-      } else if (sessionToken) {
-        const { data, error } = await supabase.functions.invoke("portal-entrega-download", {
-          body: { session_token: sessionToken, entrega_id: entregaId },
-        });
-        if (error) throw error;
-        signedUrl = (data as { signed_url?: string })?.signed_url;
-      } else {
-        // Fallback: admin interno com JWT autenticado (fluxo inexistente aqui, mas seguro)
-        const { data, error } = await supabase.storage.from("portal-entregas").createSignedUrl(path, 300);
-        if (error) throw error;
-        signedUrl = data?.signedUrl;
-      }
-
-      if (!signedUrl) throw new Error("Link não gerado");
-      const link = document.createElement("a");
-      link.href = signedUrl;
-      link.download = nome || "entregavel";
-      link.target = "_blank";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (err) {
-      reportInvokeError(err, "portal-entrega-download");
-      toast.error("Não foi possível baixar o arquivo");
-    } finally {
-      setDownloading(false);
-    }
-  };
-
-  return (
-    <Button
-      size="sm"
-      variant="outline"
-      className="h-11 sm:h-7 text-[11px]"
-      onClick={handleDownload}
-      disabled={downloading}
-    >
-      {downloading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
-      <span className="ml-1">Baixar</span>
-    </Button>
   );
 }

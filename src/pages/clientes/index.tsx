@@ -1,24 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import type { SortingState } from "@tanstack/react-table";
 import { monitoring } from "@/lib/monitoring";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  Plus,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  ChevronLeft,
-  ChevronRight,
-  Mail,
-  Trash2,
-  Pencil,
-  UsersRound,
-  AlertCircle,
-} from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, Mail, Trash2, Pencil, UsersRound, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { formatDocument, formatPhone } from "@/lib/maskUtils";
 import { PilarPage } from "@/components/PilarPage";
@@ -34,7 +22,7 @@ import {
   type ClienteSortField,
   type FiltroTriplo,
 } from "@/hooks/useClientes";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { ClienteMessageDialog } from "./ClienteMessageDialog";
 import { ClienteFormDialog } from "./ClienteFormDialog";
 import { EmptyState } from "@/components/EmptyState";
@@ -85,7 +73,7 @@ export default function Clientes() {
     setPage(0);
   }, [debouncedSearch, filterOrigem, filterPortal, filterTipo, filterProjeto, sortField, sortDirection]);
 
-  const { clientes, total, isLoading, isFetching, isError, refetch } = useClientesPaginados({
+  const { clientes, total, isLoading, isFetching, isError, error, refetch } = useClientesPaginados({
     page,
     pageSize: CLIENTES_PAGE_SIZE,
     search: debouncedSearch,
@@ -215,18 +203,19 @@ export default function Clientes() {
     setClienteToDelete(null);
   };
 
-  const handleSort = (field: ClienteSortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
-  };
+  // Ordenação é server-side (a página em memória não pode ser reordenada
+  // localmente), então a tabela recebe estado + callback controlados em vez
+  // de deixar o DataTable ordenar sozinho.
+  const sortingState: SortingState = sortField ? [{ id: sortField, desc: sortDirection === "desc" }] : [];
 
-  const renderSortIcon = (field: ClienteSortField) => {
-    if (sortField !== field) return <ArrowUpDown className="ml-2 h-3 w-3 text-muted-foreground/50" />;
-    return sortDirection === "asc" ? <ArrowUp className="ml-2 h-3 w-3" /> : <ArrowDown className="ml-2 h-3 w-3" />;
+  const handleSortingChange = (next: SortingState) => {
+    const [first] = next;
+    if (!first) {
+      setSortField(null);
+      return;
+    }
+    setSortField(first.id as ClienteSortField);
+    setSortDirection(first.desc ? "desc" : "asc");
   };
 
   const handleRowClick = (cliente: Cliente) => {
@@ -240,6 +229,84 @@ export default function Clientes() {
     setFilterTipo("all");
     setFilterProjeto("all");
   };
+
+  const acoesColumn: ColumnDef<Cliente> = {
+    key: "acoes",
+    header: "Ações",
+    align: "end",
+    cell: (cliente) => (
+      <div className="flex justify-end gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          disabled={!cliente.email}
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedClienteForMessage(cliente);
+            setIsMessageModalOpen(true);
+          }}
+          aria-label="Enviar mensagem"
+          title={cliente.email ? "Enviar mensagem" : "Cliente sem e-mail cadastrado"}
+        >
+          <Mail className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={(e) => handleEditClick(cliente, e)}
+          aria-label="Editar cliente"
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+        <Can feature="clientes" action="delete">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-danger-mid"
+            onClick={(e) => handleDeleteClick(cliente.id, e)}
+            aria-label="Excluir cliente"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </Can>
+      </div>
+    ),
+  };
+
+  const columns: ColumnDef<Cliente>[] = [
+    {
+      key: "nome",
+      header: "Nome",
+      getSortValue: (cliente) => cliente.nome,
+      cell: (cliente) => (
+        <span className="font-medium">
+          {cliente.nome}
+          {cliente.sobrenome ? ` ${cliente.sobrenome}` : ""}
+        </span>
+      ),
+    },
+    {
+      key: "cpf_cnpj",
+      header: "CPF/CNPJ",
+      getSortValue: (cliente) => cliente.cpf_cnpj ?? "",
+      cell: (cliente) => formatDocument(cliente.cpf_cnpj),
+    },
+    {
+      key: "email",
+      header: "Email",
+      className: "hidden md:table-cell text-sm text-muted-foreground",
+      cell: (cliente) => cliente.email,
+    },
+    {
+      key: "contato",
+      header: "Contato",
+      className: "hidden lg:table-cell",
+      cell: (cliente) => formatPhone(cliente.contato),
+    },
+    ...(canShowActions ? [acoesColumn] : []),
+  ];
 
   return (
     <PilarPage
@@ -318,152 +385,46 @@ export default function Clientes() {
         </CardHeader>
         <CardContent className="flex-1 min-h-0 flex flex-col">
           <div className="overflow-x-auto overflow-y-auto w-full flex-1 min-h-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort("nome")}
-                      className="-ml-3 h-8 font-medium text-xs"
-                    >
-                      Nome
-                      {renderSortIcon("nome")}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort("cpf_cnpj")}
-                      className="-ml-3 h-8 font-medium text-xs"
-                    >
-                      CPF/CNPJ
-                      {renderSortIcon("cpf_cnpj")}
-                    </Button>
-                  </TableHead>
-                  <TableHead className="hidden md:table-cell">Email</TableHead>
-                  <TableHead className="hidden lg:table-cell">Contato</TableHead>
-                  {canShowActions && <TableHead className="text-right">Ações</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={`skeleton-${i}`}>
-                      <TableCell>
-                        <Skeleton className="h-4 w-40" />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton className="h-4 w-32" />
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <Skeleton className="h-4 w-48" />
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        <Skeleton className="h-4 w-28" />
-                      </TableCell>
-                      {canShowActions && (
-                        <TableCell className="text-right">
-                          <Skeleton className="ml-auto h-4 w-16" />
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))
-                ) : isError ? (
-                  <TableRow>
-                    <TableCell colSpan={canShowActions ? 5 : 4}>
-                      <EmptyState
-                        icon={AlertCircle}
-                        title="Erro ao carregar clientes"
-                        description="Não foi possível carregar a lista. Verifique sua conexão e tente novamente."
-                        action={{ label: "Tentar novamente", variant: "outline", onClick: () => refetch() }}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ) : clientes.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={canShowActions ? 5 : 4}>
-                      {hasActiveFilters ? (
-                        <EmptyState
-                          icon={UsersRound}
-                          title="Nenhum resultado encontrado"
-                          description="Tente ajustar os filtros aplicados."
-                          action={{ label: "Limpar filtros", variant: "outline", onClick: clearFilters }}
-                        />
-                      ) : (
-                        <EmptyState
-                          icon={UsersRound}
-                          title="Nenhum cliente cadastrado"
-                          description="Crie o primeiro cliente para começar."
-                          action={
-                            can("clientes", "create") ? { label: "Novo cliente", onClick: handleOpenCreate } : undefined
-                          }
-                        />
-                      )}
-                    </TableCell>
-                  </TableRow>
+            <DataTable
+              columns={columns}
+              data={{
+                rows: clientes,
+                isPending: isLoading,
+                error: isError ? (error ?? new Error("Erro desconhecido")) : null,
+              }}
+              rowKey={(cliente) => cliente.id}
+              onRowClick={handleRowClick}
+              sortingState={sortingState}
+              onSortingChange={handleSortingChange}
+              loadingRows={5}
+              errorState={
+                <EmptyState
+                  icon={AlertCircle}
+                  title="Erro ao carregar clientes"
+                  description="Não foi possível carregar a lista. Verifique sua conexão e tente novamente."
+                  action={{ label: "Tentar novamente", variant: "outline", onClick: () => refetch() }}
+                />
+              }
+              emptyState={
+                hasActiveFilters ? (
+                  <EmptyState
+                    icon={UsersRound}
+                    title="Nenhum resultado encontrado"
+                    description="Tente ajustar os filtros aplicados."
+                    action={{ label: "Limpar filtros", variant: "outline", onClick: clearFilters }}
+                  />
                 ) : (
-                  clientes.map((cliente) => (
-                    <TableRow
-                      key={cliente.id}
-                      className="cursor-pointer hover:bg-muted"
-                      onClick={() => handleRowClick(cliente)}
-                    >
-                      <TableCell className="font-medium">
-                        {cliente.nome}
-                        {cliente.sobrenome ? ` ${cliente.sobrenome}` : ""}
-                      </TableCell>
-                      <TableCell>{formatDocument(cliente.cpf_cnpj)}</TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                        {cliente.email}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">{formatPhone(cliente.contato)}</TableCell>
-                      {canShowActions && (
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-11 w-11"
-                              disabled={!cliente.email}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedClienteForMessage(cliente);
-                                setIsMessageModalOpen(true);
-                              }}
-                              aria-label="Enviar mensagem"
-                              title={cliente.email ? "Enviar mensagem" : "Cliente sem e-mail cadastrado"}
-                            >
-                              <Mail className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-11 w-11"
-                              onClick={(e) => handleEditClick(cliente, e)}
-                              aria-label="Editar cliente"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Can feature="clientes" action="delete">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-11 w-11 text-danger-mid"
-                                onClick={(e) => handleDeleteClick(cliente.id, e)}
-                                aria-label="Excluir cliente"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </Can>
-                          </div>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  <EmptyState
+                    icon={UsersRound}
+                    title="Nenhum cliente cadastrado"
+                    description="Crie o primeiro cliente para começar."
+                    action={
+                      can("clientes", "create") ? { label: "Novo cliente", onClick: handleOpenCreate } : undefined
+                    }
+                  />
+                )
+              }
+            />
           </div>
 
           {totalPages > 1 && (

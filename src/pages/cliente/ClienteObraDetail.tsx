@@ -3,8 +3,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, Building2 } from "lucide-react";
 import { ClienteShell } from "./ClienteShell";
 import { useClienteObraData, type ClienteObraFrente } from "./useClienteObraData";
+import { usePortalObraFotos } from "./usePortalObraFotos";
 import { TimelineContent, type TimelineDisciplina } from "@/pages/portal/PortalTimeline";
 import { ContaObraContent } from "@/pages/portal/PortalContaObra";
+import { RdoFeedCard } from "@/pages/obras/components/RdoFeedCard";
+import { EmptyState } from "@/components/EmptyState";
 import { estadoFrenteCronograma, type EstadoFrente } from "@/lib/obras";
 import type { ClienteAccount } from "@/hooks/useClienteAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -38,6 +41,8 @@ export default function ClienteObraDetail() {
   usePageTitle("Portal | Obra");
   const account = useOutletContext<ClienteAccount>();
   const { data, loading, error } = useClienteObraData(id);
+  const fotoIds = (data?.diario ?? []).flatMap((d) => d.fotos.map((f) => f.id));
+  const { data: urlPorFoto = {} } = usePortalObraFotos(fotoIds);
 
   if (loading) {
     return (
@@ -91,6 +96,33 @@ export default function ClienteObraDetail() {
         <div>
           <h2 className="text-sm font-semibold mb-3">Prestação de contas</h2>
           <ContaObraContent conta={data.conta} taxaPct={data.taxa_administracao_pct} />
+        </div>
+
+        <div>
+          <h2 className="text-sm font-semibold mb-3">Diário</h2>
+          {data.diario.length === 0 ? (
+            <EmptyState
+              icon={Building2}
+              title="Nenhum registro ainda"
+              description="Assim que a equipe lançar o dia, ele aparece aqui."
+            />
+          ) : (
+            <div className="mx-auto max-w-xl">
+              {data.diario.map((dia, i) => (
+                <RdoFeedCard
+                  key={dia.id}
+                  data={dia.data}
+                  clima={dia.clima}
+                  atividades={dia.atividades}
+                  fotos={dia.fotos.flatMap((f) => {
+                    const url = urlPorFoto[f.id];
+                    return url ? [{ id: f.id, url }] : [];
+                  })}
+                  ultimo={i === data.diario.length - 1}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </ClienteShell>

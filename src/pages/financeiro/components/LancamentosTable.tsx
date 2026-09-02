@@ -7,8 +7,11 @@ import { getSafeErrorMessage } from "@/lib/safeError";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { FormDialog } from "@/components/FormDialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Label } from "@/components/ui/label";
 import { getDisplayDate } from "@/lib/dateUtils";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import type { Lancamento } from "../hooks/useLancamentosUnified";
@@ -42,8 +45,7 @@ interface SortState {
 const ROW_HEIGHT = 56;
 
 type FlatRow =
-  | { kind: "item"; data: Lancamento; isChild: boolean }
-  | { kind: "group"; groupId: string; items: Lancamento[] };
+  { kind: "item"; data: Lancamento; isChild: boolean } | { kind: "group"; groupId: string; items: Lancamento[] };
 
 export const isPaidStatus = (l: Lancamento) =>
   (l.tipo === "receita" && (l.status === "Recebido" || l.status === "Recebida")) ||
@@ -98,7 +100,6 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
   const [deleteTarget, setDeleteTarget] = useState<Lancamento | null>(null);
   const [deleteGroupTarget, setDeleteGroupTarget] = useState<Lancamento[] | null>(null);
   const [bulkConfirm, setBulkConfirm] = useState(false);
-  const [bulkPaidConfirm, setBulkPaidConfirm] = useState(false);
   const [detailTarget, setDetailTarget] = useState<Lancamento | null>(null);
   const [editTarget, setEditTarget] = useState<Lancamento | null>(null);
   const [editTransferencia, setEditTransferencia] = useState<Lancamento | null>(null);
@@ -224,6 +225,12 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
     return sort.dir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />;
   };
 
+  // Pendência de data de efetivação: marcar como recebido/pago não grava mais a data de
+  // hoje direto — abre este diálogo pra confirmar a data REAL do pagamento (ex. cartão de
+  // crédito debitado semanas antes de alguém lembrar de marcar o lançamento no sistema).
+  const [pagamentoAlvo, setPagamentoAlvo] = useState<{ l: Lancamento; novoStatus: string } | Lancamento[] | null>(null);
+  const [dataEfetivacao, setDataEfetivacao] = useState(() => new Date().toISOString().slice(0, 10));
+
   const setStatus = async (l: Lancamento, novoStatus: string) => {
     if (l.tipo === "transferencia") {
       const { error } = await supabase.rpc("rpc_editar_transferencia", {
@@ -246,16 +253,22 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
       refetchAll();
       return;
     }
-    const table = l.tipo === "receita" ? "receitas" : "despesas";
-    const today = new Date().toISOString().slice(0, 10);
     const isPaying =
       (l.tipo === "receita" && (novoStatus === "Recebido" || novoStatus === "Recebida")) ||
       (l.tipo === "despesa" && novoStatus === "Pago");
+    if (isPaying) {
+      setDataEfetivacao(new Date().toISOString().slice(0, 10));
+      setPagamentoAlvo({ l, novoStatus });
+      return;
+    }
+    const table = l.tipo === "receita" ? "receitas" : "despesas";
     const dataField = l.tipo === "receita" ? "data_recebimento" : "data_pagamento";
     const normalized = l.tipo === "receita" && novoStatus === "Recebida" ? "Recebido" : novoStatus;
-    const payload: Record<string, unknown> = { status: normalized };
-    payload[dataField] = isPaying ? today : null;
-    const { error } = await supabase.from(table).update(payload as never).eq("id", l.id);
+    const payload: Record<string, unknown> = { status: normalized, [dataField]: null };
+    const { error } = await supabase
+      .from(table)
+      .update(payload as never)
+      .eq("id", l.id);
     if (error) {
       toast.error("Não foi possível atualizar o status", {
         description: getSafeErrorMessage(error, "Tente de novo em instantes."),
@@ -266,15 +279,24 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
     refetchAll();
   };
 
-  const markItemsPaid = async (rows: Lancamento[]) => {
-    const today = new Date().toISOString().slice(0, 10);
+  const executarMarcarPago = async (rows: Lancamento[], data: string) => {
     const recIds = rows.filter((l) => l.tipo === "receita" && !isPaidStatus(l)).map((l) => l.id);
     const despIds = rows.filter((l) => l.tipo === "despesa" && !isPaidStatus(l)).map((l) => l.id);
     const ops: PromiseLike<{ error: unknown }>[] = [];
     if (recIds.length)
-      ops.push(supabase.from("receitas").update({ status: "Recebido", data_recebimento: today } as never).in("id", recIds) as unknown as PromiseLike<{ error: unknown }>);
+      ops.push(
+        supabase
+          .from("receitas")
+          .update({ status: "Recebido", data_recebimento: data } as never)
+          .in("id", recIds) as unknown as PromiseLike<{ error: unknown }>
+      );
     if (despIds.length)
-      ops.push(supabase.from("despesas").update({ status: "Pago", data_pagamento: today } as never).in("id", despIds) as unknown as PromiseLike<{ error: unknown }>);
+      ops.push(
+        supabase
+          .from("despesas")
+          .update({ status: "Pago", data_pagamento: data } as never)
+          .in("id", despIds) as unknown as PromiseLike<{ error: unknown }>
+      );
     if (!ops.length) {
       toast.info("Nada a marcar — já efetivados");
       return;
@@ -288,17 +310,41 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
     refetchAll();
   };
 
-  const bulkMarkPaid = async () => {
-    if (selectedRows.length === 0) return;
-    await markItemsPaid(selectedRows);
-    setSelected(new Set());
-    setBulkPaidConfirm(false);
+  const markItemsPaid = (rows: Lancamento[]) => {
+    setDataEfetivacao(new Date().toISOString().slice(0, 10));
+    setPagamentoAlvo(rows);
   };
 
-  const selectedUnpaidCount = useMemo(
-    () => selectedRows.filter((l) => l.tipo !== "transferencia" && !isPaidStatus(l)).length,
-    [selectedRows]
-  );
+  const confirmarPagamento = async () => {
+    if (!pagamentoAlvo) return;
+    if (Array.isArray(pagamentoAlvo)) {
+      await executarMarcarPago(pagamentoAlvo, dataEfetivacao);
+      setSelected(new Set());
+    } else {
+      const { l, novoStatus } = pagamentoAlvo;
+      const table = l.tipo === "receita" ? "receitas" : "despesas";
+      const dataField = l.tipo === "receita" ? "data_recebimento" : "data_pagamento";
+      const normalized = l.tipo === "receita" && novoStatus === "Recebida" ? "Recebido" : novoStatus;
+      const { error } = await supabase
+        .from(table)
+        .update({ status: normalized, [dataField]: dataEfetivacao } as never)
+        .eq("id", l.id);
+      if (error) {
+        toast.error("Não foi possível atualizar o status", {
+          description: getSafeErrorMessage(error, "Tente de novo em instantes."),
+        });
+        return;
+      }
+      toast.success("Status atualizado");
+      refetchAll();
+    }
+    setPagamentoAlvo(null);
+  };
+
+  const bulkMarkPaid = () => {
+    if (selectedRows.length === 0) return;
+    markItemsPaid(selectedRows);
+  };
 
   const deleteItems = async (rows: Lancamento[]) => {
     const recIds = rows.filter((l) => l.tipo === "receita").map((l) => l.id);
@@ -311,7 +357,12 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
     if (despIds.length)
       ops.push(supabase.from("despesas").delete().in("id", despIds) as unknown as PromiseLike<{ error: unknown }>);
     if (transfIds.length)
-      ops.push(supabase.from("transferencias").update({ deleted_at: stamp } as never).in("id", transfIds) as unknown as PromiseLike<{ error: unknown }>);
+      ops.push(
+        supabase
+          .from("transferencias")
+          .update({ deleted_at: stamp } as never)
+          .in("id", transfIds) as unknown as PromiseLike<{ error: unknown }>
+      );
     const results = await Promise.all(ops);
     if (results.find((r) => (r as { error?: unknown }).error)) {
       toast.error("Falha em alguns registros");
@@ -405,7 +456,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
       <LancamentosBulkBar
         count={selected.size}
         canEdit={canEdit}
-        onMarkPaid={() => setBulkPaidConfirm(true)}
+        onMarkPaid={bulkMarkPaid}
         onDelete={() => setBulkConfirm(true)}
         onClear={() => setSelected(new Set())}
       />
@@ -426,12 +477,43 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
                 )}
                 <th className="w-[60px] px-3 py-2">Tipo</th>
                 <SortableTH label="Data" k="data" sort={sort} onSort={headerSort} icon={<SortIcon k="data" />} />
-                <SortableTH label="Descrição" k="descricao" sort={sort} onSort={headerSort} icon={<SortIcon k="descricao" />} />
-                <SortableTH label="Cliente/Fornecedor" k="contraparte" sort={sort} onSort={headerSort} icon={<SortIcon k="contraparte" />} />
-                <SortableTH label="Categoria" k="categoria" sort={sort} onSort={headerSort} icon={<SortIcon k="categoria" />} />
-                <SortableTH label="Projeto" k="projeto" sort={sort} onSort={headerSort} icon={<SortIcon k="projeto" />} />
+                <SortableTH
+                  label="Descrição"
+                  k="descricao"
+                  sort={sort}
+                  onSort={headerSort}
+                  icon={<SortIcon k="descricao" />}
+                />
+                <SortableTH
+                  label="Cliente/Fornecedor"
+                  k="contraparte"
+                  sort={sort}
+                  onSort={headerSort}
+                  icon={<SortIcon k="contraparte" />}
+                />
+                <SortableTH
+                  label="Categoria"
+                  k="categoria"
+                  sort={sort}
+                  onSort={headerSort}
+                  icon={<SortIcon k="categoria" />}
+                />
+                <SortableTH
+                  label="Projeto"
+                  k="projeto"
+                  sort={sort}
+                  onSort={headerSort}
+                  icon={<SortIcon k="projeto" />}
+                />
                 <th className="px-3 py-2">Parcela</th>
-                <SortableTH label="Valor" k="valor" sort={sort} onSort={headerSort} icon={<SortIcon k="valor" />} className="text-right" />
+                <SortableTH
+                  label="Valor"
+                  k="valor"
+                  sort={sort}
+                  onSort={headerSort}
+                  icon={<SortIcon k="valor" />}
+                  className="text-right"
+                />
                 <SortableTH label="Status" k="status" sort={sort} onSort={headerSort} icon={<SortIcon k="status" />} />
                 <th className="w-[60px] px-3 py-2" />
               </tr>
@@ -622,19 +704,24 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
         variant="destructive"
       />
 
-      <ConfirmDialog
-        open={bulkPaidConfirm}
-        onOpenChange={setBulkPaidConfirm}
-        onConfirm={bulkMarkPaid}
-        title={`Marcar ${selectedUnpaidCount} lançamento(s) como pago/recebido?`}
-        description={
-          selectedUnpaidCount > 0
-            ? "Vão receber a data de hoje como efetivação e entrar no caixa. Você pode reverter o status depois."
-            : "Nenhum dos selecionados está pendente — nada será alterado."
+      <FormDialog
+        open={pagamentoAlvo !== null}
+        onOpenChange={(v) => !v && setPagamentoAlvo(null)}
+        title={
+          Array.isArray(pagamentoAlvo)
+            ? `Marcar ${pagamentoAlvo.length} lançamento(s) como pago/recebido`
+            : "Confirmar recebimento/pagamento"
         }
-        confirmText="Marcar pago/recebido"
-        variant="default"
-      />
+        description="Confirme a data em que o pagamento realmente caiu — não precisa ser hoje. Você pode reverter o status depois."
+        size="sm"
+        onSubmit={confirmarPagamento}
+        submitLabel="Confirmar"
+      >
+        <div className="space-y-2">
+          <Label>Data</Label>
+          <DatePicker value={dataEfetivacao} onChange={setDataEfetivacao} />
+        </div>
+      </FormDialog>
 
       <ConfirmDialog
         open={deleteGroupTarget !== null}

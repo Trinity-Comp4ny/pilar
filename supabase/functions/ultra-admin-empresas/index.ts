@@ -73,10 +73,15 @@ serve(
         if (empErr || !empresa) return safeErrorResponse(404, "Empresa não encontrada", req);
         if (usrErr) return safeErrorResponse(500, "Falha ao buscar usuários da empresa", req);
 
-        // Buscar plano da empresa + limites de capacidade do plano
+        // Buscar plano da empresa + limites de capacidade do plano + estado de
+        // cobrança (spec 078): "isento" é computado (status active sem
+        // asaas_subscription_id), sem coluna nova — reusa o campo que a
+        // integração de assinatura real já preenche quando existir.
         const { data: sub } = await svc
           .from("pilar_subscriptions")
-          .select("plan_id, pilar_subscription_plans(slug, max_projetos, max_usuarios)")
+          .select(
+            "plan_id, status, trial_ends_at, asaas_subscription_id, pilar_subscription_plans(slug, max_projetos, max_usuarios)"
+          )
           .eq("empresa_id", id)
           .maybeSingle();
 
@@ -95,6 +100,11 @@ serve(
             // vale por cima quando não for null. Ver spec 052, requisito 8.
             planoMaxProjetos: plan?.max_projetos ?? null,
             planoMaxUsuarios: plan?.max_usuarios ?? null,
+            cobranca: {
+              status: sub?.status ?? null,
+              trial_ends_at: sub?.trial_ends_at ?? null,
+              is_paying: !!sub?.asaas_subscription_id,
+            },
             usuarios: usuarios ?? [],
             convites: convites ?? [],
           },
@@ -224,8 +234,7 @@ serve(
       const feature = typeof body?.feature === "string" ? body.feature.trim() : "";
       const value = body?.value;
       const scope = body?.scope; // "all" | "has_parent"
-      const parent =
-        typeof body?.parent === "string" && body.parent.trim() ? body.parent.trim() : null;
+      const parent = typeof body?.parent === "string" && body.parent.trim() ? body.parent.trim() : null;
 
       if (!/^[a-z][a-z_]*$/.test(feature)) return safeErrorResponse(400, "feature inválida", req);
       if (typeof value !== "boolean") return safeErrorResponse(400, "value deve ser boolean", req);
@@ -263,10 +272,12 @@ serve(
           const currently = isSub ? f[parent!] === true && f[feature] !== false : f[feature] === true;
           if (currently === value) return; // já no estado desejado: não escreve
           if (value) {
-            if (isSub) delete f[feature]; // herda o pai (ligado)
+            if (isSub)
+              delete f[feature]; // herda o pai (ligado)
             else f[feature] = true;
           } else {
-            if (isSub) f[feature] = false; // desliga explícito
+            if (isSub)
+              f[feature] = false; // desliga explícito
             else delete f[feature];
           }
           const { error } = await svc.from("empresas").update({ features: f }).eq("id", e.id);
@@ -310,15 +321,12 @@ serve(
         confirm_name,
         max_projetos_override,
         max_usuarios_override,
+        converter_pagante,
       } = body ?? {};
 
       if (!isUUID(empresa_id)) return safeErrorResponse(400, "empresa_id inválido", req);
 
-      const { data: emp } = await svc
-        .from("empresas")
-        .select("nome, features, status")
-        .eq("id", empresa_id)
-        .single();
+      const { data: emp } = await svc.from("empresas").select("nome, features, status").eq("id", empresa_id).single();
       if (!emp) return safeErrorResponse(404, "Empresa não encontrada", req);
 
       // Monta o update de empresas só com os campos enviados
@@ -347,8 +355,7 @@ serve(
           return safeErrorResponse(400, "status inválido", req);
         }
         // Guard destrutivo: suspender/cancelar exige confirmar digitando o nome.
-        const isDestructive =
-          (status === "suspended" || status === "cancelled") && status !== emp.status;
+        const isDestructive = (status === "suspended" || status === "cancelled") && status !== emp.status;
         if (isDestructive) {
           const typed = typeof confirm_name === "string" ? confirm_name.trim() : "";
           if (typed !== (emp.nome ?? "").trim()) {
@@ -372,11 +379,7 @@ serve(
         if (!["starter", "pro", "enterprise"].includes(plano)) {
           return safeErrorResponse(400, "plano inválido", req);
         }
-        const { data: plan } = await svc
-          .from("pilar_subscription_plans")
-          .select("id")
-          .eq("slug", plano)
-          .maybeSingle();
+        const { data: plan } = await svc.from("pilar_subscription_plans").select("id").eq("slug", plano).maybeSingle();
         if (!plan?.id) return safeErrorResponse(400, "plano não encontrado", req);
 
         const { data: existingSub } = await svc
@@ -390,6 +393,67 @@ serve(
         } else {
           await svc.from("pilar_subscriptions").insert({ empresa_id, plan_id: plan.id, status: "active" });
         }
+      }
+
+      // Converter empresa isenta em pagante (spec 078): reusa a máquina de
+      // estados do trial (mesmo cron de aviso/expiração, mesmo TrialBanner,
+      // mesmo gate de acesso) — a empresa continua com acesso normal até
+      // trial_ends_at, com aviso 7/3/1 dias, e perde acesso se não completar
+      // a assinatura no prazo. Não mexe em nada além do que um trial normal
+      // já mexe.
+      if (converter_pagante && typeof converter_pagante === "object") {
+        const diasPrazo = Number((converter_pagante as { dias_prazo?: unknown }).dias_prazo);
+        const confirmName = String((converter_pagante as { confirm_name?: unknown }).confirm_name ?? "").trim();
+
+        if (!Number.isInteger(diasPrazo) || diasPrazo < 1 || diasPrazo > 365) {
+          return safeErrorResponse(400, "dias_prazo deve ser um inteiro entre 1 e 365", req);
+        }
+        if (confirmName !== (emp.nome ?? "").trim()) {
+          return safeErrorResponse(422, "Digite o nome exato da empresa para confirmar a conversão.", req);
+        }
+
+        const { data: sub } = await svc
+          .from("pilar_subscriptions")
+          .select("id, status, asaas_subscription_id")
+          .eq("empresa_id", empresa_id)
+          .maybeSingle();
+
+        if (!sub) return safeErrorResponse(404, "Empresa não tem assinatura para converter.", req);
+        if (sub.asaas_subscription_id) {
+          return safeErrorResponse(409, "Empresa já é pagante (tem assinatura Asaas vinculada).", req);
+        }
+        if (sub.status !== "active") {
+          return safeErrorResponse(409, `Só é possível converter empresa isenta (status atual: ${sub.status}).`, req);
+        }
+
+        const trialEndsAt = new Date(Date.now() + diasPrazo * 24 * 60 * 60 * 1000).toISOString();
+        const { error: convErr } = await svc
+          .from("pilar_subscriptions")
+          .update({
+            status: "trialing",
+            trial_ends_at: trialEndsAt,
+            trial_warning_7d_sent_at: null,
+            trial_warning_3d_sent_at: null,
+            trial_warning_1d_sent_at: null,
+          })
+          .eq("id", sub.id);
+        if (convErr) return safeErrorResponse(400, convErr.message, req);
+
+        await logAction(svc, {
+          actorId: userId,
+          actorEmail,
+          actorRole: "ultra_admin",
+          action: "convert_to_paid",
+          category: "empresa",
+          targetType: "empresa",
+          targetId: empresa_id,
+          targetName: emp.nome || empresa_id,
+          empresaId: empresa_id,
+          metadata: { dias_prazo: diasPrazo, trial_ends_at: trialEndsAt },
+          req,
+        });
+
+        return jsonResponse({ success: true, trial_ends_at: trialEndsAt }, 200, req);
       }
 
       await logAction(svc, {

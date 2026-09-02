@@ -83,7 +83,7 @@ export function LinksEditor({ value, onChange, readOnly }: LinksEditorProps) {
             placeholder="Colar URL (repositório, drive...)"
             className="h-8 flex-1 text-xs"
           />
-          <Button type="button" size="sm" variant="outline" className="h-8 gap-1" onClick={add}>
+          <Button type="button" size="sm" variant="brand" className="h-8 gap-1" onClick={add}>
             <Plus className="h-3.5 w-3.5" /> Adicionar
           </Button>
         </div>

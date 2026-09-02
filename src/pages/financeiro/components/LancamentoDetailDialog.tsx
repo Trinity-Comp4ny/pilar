@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ArrowDownCircle, ArrowUpCircle, ExternalLink, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { formatDateDisplay } from "@/lib/dateUtils";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import type { Lancamento } from "../hooks/useLancamentosUnified";
@@ -28,6 +28,7 @@ export function LancamentoDetailDialog({
   onGroupChanged,
 }: Props) {
   const { canEdit } = useFeatureAccess("financeiro");
+  const formatCurrency = useMoneyMask();
   if (!l) return null;
 
   const isReceita = l.tipo === "receita";

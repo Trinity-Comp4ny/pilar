@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowRight, CalendarClock, CloudRain, Sparkles, Wind } from "lucide-react";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { analytics } from "@/lib/analytics";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -42,7 +43,11 @@ function saudacao(nome: string | null): string {
   return nome ? `${periodo}, ${nome}` : periodo;
 }
 
-function buildAchados(vencimentos: DashboardVencimento[], projetos: DashboardProjeto[]): Achado[] {
+function buildAchados(
+  vencimentos: DashboardVencimento[],
+  projetos: DashboardProjeto[],
+  money: (value: number) => string
+): Achado[] {
   const achados: Achado[] = [];
 
   for (const v of vencimentos) {
@@ -53,7 +58,7 @@ function buildAchados(vencimentos: DashboardVencimento[], projetos: DashboardPro
         id: `venc-${v.id}`,
         severidade: "critico",
         titulo: `${v.tipo === "receita" ? "Recebimento" : "Pagamento"} vencido: ${v.descricao}`,
-        detalhe: `${formatCurrency(v.valor)} · venceu há ${Math.abs(v.diasRestantes)} dia${Math.abs(v.diasRestantes) === 1 ? "" : "s"}`,
+        detalhe: `${money(v.valor)} · venceu há ${Math.abs(v.diasRestantes)} dia${Math.abs(v.diasRestantes) === 1 ? "" : "s"}`,
         rota,
       });
     } else if (v.diasRestantes <= 7) {
@@ -63,8 +68,8 @@ function buildAchados(vencimentos: DashboardVencimento[], projetos: DashboardPro
         titulo: `${v.tipo === "receita" ? "A receber" : "A pagar"}: ${v.descricao}`,
         detalhe:
           v.diasRestantes === 0
-            ? `${formatCurrency(v.valor)} · vence hoje`
-            : `${formatCurrency(v.valor)} · vence em ${v.diasRestantes} dia${v.diasRestantes === 1 ? "" : "s"}`,
+            ? `${money(v.valor)} · vence hoje`
+            : `${money(v.valor)} · vence em ${v.diasRestantes} dia${v.diasRestantes === 1 ? "" : "s"}`,
         rota,
       });
     }
@@ -101,10 +106,14 @@ export default function Inicio() {
   const { can } = usePermissions();
   const { data, isLoading, isFetching, dataUpdatedAt, refetch } = useDashboardData();
   const [pergunta, setPergunta] = useState("");
+  const formatCurrency = useMoneyMask();
 
   const primeiroNome = profile?.first_name || null;
 
-  const achados = useMemo(() => (data ? buildAchados(data.proximosVencimentos, data.projetos) : []), [data]);
+  const achados = useMemo(
+    () => (data ? buildAchados(data.proximosVencimentos, data.projetos, formatCurrency) : []),
+    [data, formatCurrency]
+  );
 
   const projetosAtrasados = useMemo(
     () => (data ? data.projetos.filter((p) => p.progressoPrazo >= 100 && !p.dataFinal).length : 0),
@@ -177,7 +186,7 @@ export default function Inicio() {
       });
     }
     return out;
-  }, [data, podeFinanceiro, podeProjetos, projetosAtrasados, vencido]);
+  }, [data, podeFinanceiro, podeProjetos, projetosAtrasados, vencido, formatCurrency]);
 
   // Rótulos estáticos p/ o esqueleto de carregamento (não dependem de dados).
   const loadingLabels = useMemo<string[]>(

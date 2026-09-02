@@ -3,7 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { DollarSign } from "lucide-react";
-import { formatCurrency, formatDate, formatDateShort } from "@/lib/format";
+import { formatDate, formatDateShort } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useDespesasFatura, type Fatura } from "../hooks/useFaturas";
 import { MESES, getStatusBadge } from "./faturaHelpers";
 
@@ -15,6 +16,7 @@ interface FaturaDetailDialogProps {
 }
 
 export function FaturaDetailDialog({ fatura, open, onOpenChange, onPagar }: FaturaDetailDialogProps) {
+  const formatCurrency = useMoneyMask();
   const { data: despesasFatura = [] } = useDespesasFatura(fatura?.id ?? null);
   const isPagavel = !!fatura && fatura.status !== "Paga" && fatura.status !== "Aberta" && fatura.valor_total > 0;
 
@@ -22,12 +24,8 @@ export function FaturaDetailDialog({ fatura, open, onOpenChange, onPagar }: Fatu
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            Fatura {fatura && `${MESES[fatura.mes_referencia - 1]} ${fatura.ano_referencia}`}
-          </DialogTitle>
-          <DialogDescription>
-            {fatura && `${fatura.cartao_nome} — ${fatura.qtd_despesas} despesa(s)`}
-          </DialogDescription>
+          <DialogTitle>Fatura {fatura && `${MESES[fatura.mes_referencia - 1]} ${fatura.ano_referencia}`}</DialogTitle>
+          <DialogDescription>{fatura && `${fatura.cartao_nome} — ${fatura.qtd_despesas} despesa(s)`}</DialogDescription>
         </DialogHeader>
         {fatura && (
           <div className="space-y-4">
@@ -43,15 +41,12 @@ export function FaturaDetailDialog({ fatura, open, onOpenChange, onPagar }: Fatu
               </div>
               <div className="p-3 bg-muted/50 rounded-lg">
                 <p className="text-xs text-muted-foreground">Vencimento</p>
-                <p className="text-sm font-medium mt-1">
-                  {formatDate(fatura.data_vencimento)}
-                </p>
+                <p className="text-sm font-medium mt-1">{formatDate(fatura.data_vencimento)}</p>
               </div>
               <div className="p-3 bg-muted/50 rounded-lg">
                 <p className="text-xs text-muted-foreground">Ciclo</p>
                 <p className="text-sm mt-1">
-                  {formatDateShort(fatura.data_inicio)} a{" "}
-                  {formatDateShort(fatura.data_fim)}
+                  {formatDateShort(fatura.data_inicio)} a {formatDateShort(fatura.data_fim)}
                 </p>
               </div>
             </div>
@@ -102,11 +97,7 @@ export function FaturaDetailDialog({ fatura, open, onOpenChange, onPagar }: Fatu
                     <p className="text-sm text-muted-foreground">Valor restante</p>
                     <p className="text-lg font-bold">{formatCurrency(fatura.valor_total - fatura.valor_pago)}</p>
                   </div>
-                  <Button
-                    variant="brand"
-                    className="rounded-full px-5 py-2.5 text-sm"
-                    onClick={() => onPagar(fatura)}
-                  >
+                  <Button variant="brand" className="rounded-full px-5 py-2.5 text-sm" onClick={() => onPagar(fatura)}>
                     <DollarSign className="h-4 w-4 mr-2" />
                     Pagar fatura
                   </Button>

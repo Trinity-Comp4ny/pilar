@@ -9,6 +9,7 @@ import {
 } from "@/types/projetos";
 import type { TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
+import { responsaveisEfetivos } from "@/lib/fluxoCascata";
 
 /**
  * Estado + handlers de edição de disciplinas de projeto, extraídos de useProjetoForm
@@ -94,20 +95,25 @@ export function useDisciplinasEditor({ pessoas, templatesData, fluxosData, curre
     [selectedDisciplinaIndex]
   );
 
-  const updateDisciplinaResponsavel = useCallback(
-    (val: string, nome: string) => {
+  const updateDisciplinaResponsaveis = useCallback(
+    (ids: string[]) => {
       if (selectedDisciplinaIndex === null) return;
+      const resps = ids.map((id) => ({
+        responsavel_id: id,
+        responsavel_nome: pessoas.find((p) => p.id === id)?.nome || "",
+      }));
       setProjetosDisciplinas((prev) => {
         const updated = [...prev];
         updated[selectedDisciplinaIndex] = {
           ...updated[selectedDisciplinaIndex],
-          responsavel_id: val,
-          responsavel_nome: nome,
+          responsavel_id: resps[0]?.responsavel_id || "",
+          responsavel_nome: resps[0]?.responsavel_nome || "",
+          responsaveis: resps,
         };
         return updated;
       });
     },
-    [selectedDisciplinaIndex]
+    [selectedDisciplinaIndex, pessoas]
   );
 
   const addProjetoDisciplina = useCallback(() => {
@@ -256,22 +262,26 @@ export function useDisciplinasEditor({ pessoas, templatesData, fluxosData, curre
       }
       const fluxo = fluxosData.find((f) => f.id === fluxoId);
       if (!fluxo) return;
-      const novas: DisciplinaResponsavel[] = fluxo.etapas.flatMap((etapa) =>
-        etapa.disciplinas.map((d) => ({
+      const novas: DisciplinaResponsavel[] = fluxo.disciplinas.map((d) => {
+        const { ids: responsaveisIds, nomes: responsaveisNomes } = responsaveisEfetivos(d);
+        return {
           disciplina: d.nome,
-          responsavel_id: d.responsavel_id || "",
-          responsavel_nome: d.responsavel_nome || "",
+          responsavel_id: responsaveisIds[0] || "",
+          responsavel_nome: responsaveisNomes[0] || "",
           status: "Não Iniciado",
-          etapa: etapa.ordem,
+          etapa: d.ordem,
           observacoes: [],
-          responsaveis: d.responsavel_id
-            ? [{ responsavel_id: d.responsavel_id, responsavel_nome: d.responsavel_nome || "", status: "Não Iniciado" }]
-            : [],
-        }))
-      );
+          responsaveis: responsaveisIds.map((id, i) => ({
+            responsavel_id: id,
+            responsavel_nome: responsaveisNomes[i] || "",
+            status: "Não Iniciado",
+          })),
+        };
+      });
+      const colunas = new Set(fluxo.disciplinas.map((d) => d.ordem)).size;
       setProjetosDisciplinas(novas);
       toast.success("Fluxo aplicado", {
-        description: `${novas.length} disciplina(s) em ${fluxo.etapas.length} etapa(s) de "${fluxo.nome}"`,
+        description: `${novas.length} disciplina(s) em ${colunas} coluna(s) de "${fluxo.nome}"`,
       });
     },
     [fluxosData]
@@ -315,7 +325,7 @@ export function useDisciplinasEditor({ pessoas, templatesData, fluxosData, curre
     setIsDisciplinaDetailOpen,
     handleOpenDisciplinaDetail,
     updateDisciplinaField,
-    updateDisciplinaResponsavel,
+    updateDisciplinaResponsaveis,
     newObservation,
     setNewObservation,
     handleAddObservation,

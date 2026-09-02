@@ -21,7 +21,7 @@ export type FeatureAccessResult = {
  *
  * @example
  *   const { canEdit, isViewerOnly } = useFeatureAccess("projetos");
- *   const { canView } = useFeatureAccess("ai_hub");
+ *   const { canView } = useFeatureAccess("timesheet");
  */
 export function useFeatureAccess(feature: FeatureKey): FeatureAccessResult {
   const { can, isAdmin } = usePermissions();

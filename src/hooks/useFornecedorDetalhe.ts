@@ -58,10 +58,10 @@ export function useCriarFornecedor() {
 export function useFornecedoresLite() {
   return useQuery({
     queryKey: ["fornecedores-lite"],
-    queryFn: async (): Promise<{ id: string; nome: string }[]> => {
+    queryFn: async (): Promise<{ id: string; nome: string; cnpj: string | null }[]> => {
       const { data, error } = await supabase
         .from("fornecedores")
-        .select("id, nome")
+        .select("id, nome, cnpj")
         .is("deleted_at", null)
         .order("nome");
       if (error) throw error;

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { lookupCEP } from "@/lib/brasilApi";
 import type { BillingType, CheckoutPayload, CreditCardData, CreditCardHolderInfo } from "../hooks/useCheckoutCreate";
 import type { BillingCycle } from "@/pages/planos/components/CycleToggle";
 
@@ -127,7 +128,12 @@ export function CheckoutForm({
   const [ccCcv, setCcCcv] = useState("");
   const [holderPostalCode, setHolderPostalCode] = useState("");
   const [holderAddressNumber, setHolderAddressNumber] = useState("");
-  const [cepAddress, setCepAddress] = useState<{ logradouro: string; bairro: string; cidade: string; uf: string } | null>(null);
+  const [cepAddress, setCepAddress] = useState<{
+    logradouro: string;
+    bairro: string;
+    cidade: string;
+    uf: string;
+  } | null>(null);
   const [isFetchingCep, setIsFetchingCep] = useState(false);
 
   const [showCcv, setShowCcv] = useState(false);
@@ -138,12 +144,12 @@ export function CheckoutForm({
     if (digits.length !== 8) return;
     setIsFetchingCep(true);
     try {
-      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
-      const data = await res.json();
-      if (data.erro) { toast.error("CEP não encontrado"); return; }
-      setCepAddress({ logradouro: data.logradouro, bairro: data.bairro, cidade: data.localidade, uf: data.uf });
-    } catch {
-      toast.error("Erro ao buscar CEP");
+      const end = await lookupCEP(digits);
+      if (!end) {
+        toast.error("CEP não encontrado");
+        return;
+      }
+      setCepAddress({ logradouro: end.street, bairro: end.neighborhood, cidade: end.city, uf: end.state });
     } finally {
       setIsFetchingCep(false);
     }
@@ -323,7 +329,9 @@ export function CheckoutForm({
               <Label htmlFor="ccNumber" className="flex items-center justify-between">
                 Número do cartão
                 {cardBrand && (
-                  <span className="text-[11px] font-medium text-ink-disabled uppercase tracking-wider">{cardBrand}</span>
+                  <span className="text-[11px] font-medium text-ink-disabled uppercase tracking-wider">
+                    {cardBrand}
+                  </span>
                 )}
               </Label>
               <Input
@@ -422,7 +430,7 @@ export function CheckoutForm({
                   <MapPin className="w-3.5 h-3.5 text-foreground shrink-0 mt-0.5" />
                   <span>
                     {cepAddress.logradouro && `${cepAddress.logradouro}, `}
-                    {cepAddress.bairro && `${cepAddress.bairro} — `}
+                    {cepAddress.bairro && `${cepAddress.bairro}, `}
                     {cepAddress.cidade}/{cepAddress.uf}
                   </span>
                 </div>
