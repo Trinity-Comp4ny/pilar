@@ -441,7 +441,7 @@ export function ProjetoConfirmationCard({ index, draft, onConfirmar, onCancelar,
         disciplinas={catalogoDisciplinas}
         pessoas={pessoas}
         onUpdateField={disc.updateDisciplinaField}
-        onUpdateResponsavel={disc.updateDisciplinaResponsavel}
+        onUpdateResponsaveis={disc.updateDisciplinaResponsaveis}
         newObservation={disc.newObservation}
         onNewObservationChange={disc.setNewObservation}
         onAddObservation={disc.handleAddObservation}

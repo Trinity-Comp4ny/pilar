@@ -9,13 +9,26 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { TarefasEditor } from "@/components/TarefasEditor";
-import { MultiSelectFilter } from "@/components/filters/MultiSelectFilter";
+import { SeletorResponsaveis } from "@/components/SeletorResponsaveis";
+import { AvatarStack } from "@/components/AvatarStack";
 import { toast } from "sonner";
 import { useFluxosDisciplinas, useCreateFluxo, useUpdateFluxo, useDeleteFluxo } from "@/hooks/useFluxosDisciplinas";
 import type { FluxoDisciplinas, FluxoDisciplinaTemplate, FluxoChecklistItemTemplate } from "@/types/fluxoDisciplinas";
 import { duracaoEfetiva, responsaveisEfetivos } from "@/lib/fluxoCascata";
 import { FluxoPipelineGraph, type FluxoPipelineStage } from "./FluxoPipelineGraph";
-import { Plus, Trash2, Edit, ArrowUp, ArrowDown, X, ArrowLeft, GitBranch, Layers, ListChecks } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Edit,
+  ArrowUp,
+  ArrowDown,
+  X,
+  ArrowLeft,
+  GitBranch,
+  Layers,
+  ListChecks,
+  Lock,
+} from "lucide-react";
 
 interface FluxoDisciplinasDialogProps {
   open: boolean;
@@ -187,8 +200,9 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
   };
 
   const updateDuracao = (key: string, raw: string) => {
-    const parsed = raw.trim() ? Math.max(1, parseInt(raw, 10)) : undefined;
-    updateDisciplina(key, { duracao_dias_uteis: Number.isNaN(parsed as number) ? undefined : parsed });
+    const parsed = raw.trim() ? parseInt(raw, 10) : NaN;
+    const clean = Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+    updateDisciplina(key, { duracao_dias_uteis: clean });
   };
 
   const updateChecklist = (key: string, checklist: FluxoChecklistItemTemplate[]) => {
@@ -406,7 +420,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                         <div className="flex items-center gap-1.5 rounded-full border bg-white px-2.5 h-8 flex-shrink-0">
                                           <Input
                                             type="number"
-                                            min={1}
+                                            min={0}
                                             disabled={duracaoTravada}
                                             value={duracaoTravada ? (efetiva ?? "") : (disc.duracao_dias_uteis ?? "")}
                                             onChange={(e) => updateDuracao(disc._key, e.target.value)}
@@ -416,8 +430,9 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                             }
                                             className="h-6 w-9 border-none p-0 text-xs text-right shadow-none focus-visible:ring-0 disabled:opacity-100"
                                           />
-                                          <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-                                            dias úteis{duracaoTravada ? " 🔒" : ""}
+                                          <span className="flex items-center gap-1 text-[11px] text-muted-foreground whitespace-nowrap">
+                                            dias úteis
+                                            {duracaoTravada && <Lock className="h-3 w-3" />}
                                           </span>
                                         </div>
                                         <button
@@ -430,23 +445,31 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                       </div>
 
                                       {responsavelTravado ? (
-                                        <p className="text-[11px] text-muted-foreground" title="Definidos por tarefa">
-                                          Responsáveis: {resp.nomes.join(", ")} 🔒
-                                        </p>
+                                        <div
+                                          className="flex items-center gap-2 text-[11px] text-muted-foreground"
+                                          title="Definidos por tarefa"
+                                        >
+                                          <AvatarStack pessoas={resp.nomes} size="xs" />
+                                          <span className="truncate">{resp.nomes.join(", ")}</span>
+                                          <Lock className="h-3 w-3 flex-shrink-0" />
+                                        </div>
                                       ) : (
-                                        <MultiSelectFilter
-                                          label="Responsáveis (sem tarefa definida ainda)"
-                                          options={pessoas.map((p) => ({ value: p.id, label: p.nome }))}
-                                          selected={disc.responsaveis_ids ?? []}
-                                          onChange={(ids) => updateResponsaveis(disc._key, ids)}
-                                          className="h-8 rounded-md w-full justify-start"
-                                        />
+                                        <div className="space-y-1">
+                                          <SeletorResponsaveis
+                                            value={disc.responsaveis_ids ?? []}
+                                            pessoas={pessoas}
+                                            onChange={(ids) => updateResponsaveis(disc._key, ids)}
+                                          />
+                                          <p className="text-[10px] text-muted-foreground">
+                                            Usado se nenhuma tarefa tiver responsável
+                                          </p>
+                                        </div>
                                       )}
 
                                       <div className="border-t pt-2">
                                         <Label className="text-[11px] text-muted-foreground mb-1 flex items-center gap-1">
                                           <ListChecks className="h-3 w-3" /> Tarefas (responsável e dias úteis por
-                                          tarefa; horas é só informativo)
+                                          tarefa)
                                         </Label>
                                         <TarefasEditor
                                           value={disc.checklist_padrao ?? []}

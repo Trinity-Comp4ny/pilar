@@ -168,11 +168,9 @@ export function ProjectDetailDialog({
     const dbField = DISC_DB_FIELD[field] ?? (field as keyof ProjetoDisciplinaDB);
     saveDiscPatch({ [dbField]: value } as Partial<ProjetoDisciplinaDB>);
   };
-  const discOnUpdateResponsavel = (val: string, nome: string) => {
+  const discOnUpdateResponsaveis = (ids: string[]) => {
     if (selectedDiscIdx == null) return;
-    const dbDisc = getDbDisc(selectedDiscIdx);
-    const resps = dbDisc?.responsaveis ?? [];
-    const updated = resps.length > 0 ? resps.map((r, i) => (i === 0 ? { id: val, nome } : r)) : [{ id: val, nome }];
+    const updated = ids.map((id) => ({ id, nome: pessoas.find((p) => p.id === id)?.nome || "" }));
     saveDiscPatch({ responsaveis: updated });
   };
 
@@ -552,7 +550,7 @@ export function ProjectDetailDialog({
         disciplinas={disciplinasCatalog}
         pessoas={pessoas}
         onUpdateField={discOnUpdateField}
-        onUpdateResponsavel={discOnUpdateResponsavel}
+        onUpdateResponsaveis={discOnUpdateResponsaveis}
         onUpdateLabels={(n) => saveDiscPatch({ labels: n })}
         onUpdateLinks={(n) => saveDiscPatch({ links: n })}
         onUpdateComentarios={(n: DisciplinaComentario[]) => saveDiscPatch({ comentarios: n })}

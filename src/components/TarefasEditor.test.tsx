@@ -89,21 +89,11 @@ describe("TarefasEditor", () => {
     expect(onChange).toHaveBeenLastCalledWith([{ texto: "Briefing", duracao_dias_uteis: 2 }]);
   });
 
-  it("preencher horas estimadas nunca aparece como dias úteis", async () => {
-    const onChange = vi.fn();
-    render(<TarefasEditor value={[{ texto: "Ligação rápida" }]} onChange={onChange} pessoas={pessoas} />);
-
-    const horasInput = screen.getByLabelText("Horas estimadas de Ligação rápida");
-    await userEvent.type(horasInput, "2");
-
-    expect(onChange).toHaveBeenLastCalledWith([{ texto: "Ligação rápida", horas_estimadas: 2 }]);
-  });
-
   it("escolher um responsável no item propaga ids e nomes", async () => {
     const onChange = vi.fn();
     render(<TarefasEditor value={[{ texto: "Concretagem" }]} onChange={onChange} pessoas={pessoas} />);
 
-    await userEvent.click(screen.getByRole("button", { name: "Responsáveis" }));
+    await userEvent.click(screen.getByRole("button", { name: "Responsável da tarefa" }));
     await userEvent.click(await screen.findByText("Beatriz Rocha"));
 
     expect(onChange).toHaveBeenLastCalledWith([

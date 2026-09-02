@@ -2,8 +2,6 @@ export interface FluxoChecklistItemTemplate {
   texto: string;
   /** Dias úteis que este item consome; participa da soma que vira a duração da disciplina. */
   duracao_dias_uteis?: number;
-  /** Só informativo (itens de poucas horas). Nunca soma em duracao_dias_uteis. */
-  horas_estimadas?: number;
   /** Responsáveis pela tarefa. Quando algum item da disciplina tem responsável, a
    *  disciplina não usa mais `responsaveis_ids` manual — vira a união dos das tarefas. */
   responsaveis_ids?: string[];

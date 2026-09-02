@@ -588,7 +588,7 @@ export function ProjetoFormDialog({
               disciplinas={disciplinas}
               pessoas={effectivePessoas}
               onUpdateField={form.updateDisciplinaField}
-              onUpdateResponsavel={form.updateDisciplinaResponsavel}
+              onUpdateResponsaveis={form.updateDisciplinaResponsaveis}
               newObservation={form.newObservation}
               onNewObservationChange={form.setNewObservation}
               onAddObservation={form.handleAddObservation}

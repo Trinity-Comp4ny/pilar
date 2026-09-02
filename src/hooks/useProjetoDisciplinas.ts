@@ -421,7 +421,6 @@ export function useBulkSaveDisciplinas() {
                   projeto_disciplina_id: discId!,
                   texto: item.texto,
                   duracao_dias_uteis: item.duracao_dias_uteis ?? null,
-                  horas_estimadas: item.horas_estimadas ?? null,
                   ordem: i,
                 }))
               )

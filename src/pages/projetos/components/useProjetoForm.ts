@@ -293,13 +293,18 @@ export function useProjetoForm({
     setProjetosDisciplinas(updatedDisciplinas);
   };
 
-  const updateDisciplinaResponsavel = (val: string, nome: string) => {
+  const updateDisciplinaResponsaveis = (ids: string[]) => {
     if (selectedDisciplinaIndex === null) return;
+    const resps = ids.map((id) => ({
+      responsavel_id: id,
+      responsavel_nome: pessoas.find((p) => p.id === id)?.nome || "",
+    }));
     const updatedDisciplinas = [...projetosDisciplinas];
     updatedDisciplinas[selectedDisciplinaIndex] = {
       ...updatedDisciplinas[selectedDisciplinaIndex],
-      responsavel_id: val,
-      responsavel_nome: nome,
+      responsavel_id: resps[0]?.responsavel_id || "",
+      responsavel_nome: resps[0]?.responsavel_nome || "",
+      responsaveis: resps,
     };
     setProjetosDisciplinas(updatedDisciplinas);
   };
@@ -814,7 +819,7 @@ export function useProjetoForm({
     setIsDisciplinaDetailOpen,
     handleOpenDisciplinaDetail,
     updateDisciplinaField,
-    updateDisciplinaResponsavel,
+    updateDisciplinaResponsaveis,
     newObservation,
     setNewObservation,
     handleAddObservation,

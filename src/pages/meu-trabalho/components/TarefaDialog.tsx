@@ -6,27 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DatePicker } from "@/components/ui/date-picker";
 import { LabelsEditor } from "@/components/LabelsEditor";
 import { LinksEditor, type LinkItem } from "@/components/LinksEditor";
 import { AtividadeComposer } from "@/pages/projetos/components/AtividadeComposer";
-import { AvatarStack } from "@/components/AvatarStack";
-import { HorasMinutosField } from "./HorasMinutosField";
-import {
-  Calendar,
-  Check,
-  CheckSquare,
-  Circle,
-  Clock,
-  Flag,
-  FolderOpen,
-  MessageSquare,
-  Tag,
-  User,
-  UserPlus,
-} from "lucide-react";
+import { SeletorResponsaveis } from "@/components/SeletorResponsaveis";
+import { HorasMinutosField } from "@/components/HorasMinutosField";
+import { Calendar, CheckSquare, Circle, Clock, Flag, FolderOpen, MessageSquare, Tag, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   PRIORIDADE_DOT_CLASS,
@@ -62,76 +48,6 @@ function Prop({
       </span>
       <div className="min-w-0 flex-1">{children}</div>
     </div>
-  );
-}
-
-/** Seleção de vários responsáveis: pilha de avatares no gatilho, toggle na lista. */
-function SeletorResponsaveis({
-  value,
-  pessoas,
-  disabled,
-  onChange,
-}: {
-  value: string[];
-  pessoas: PessoaOpcao[];
-  disabled?: boolean;
-  onChange: (ids: string[]) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const selecionadas = pessoas.filter((p) => value.includes(p.id));
-
-  const toggle = (id: string) => {
-    onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id]);
-  };
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        disabled={disabled}
-        className={cn(
-          "flex h-9 w-full items-center gap-2 rounded-md border bg-background px-3 text-sm",
-          disabled ? "cursor-not-allowed opacity-60" : "hover:bg-muted/40"
-        )}
-      >
-        {selecionadas.length > 0 ? (
-          <>
-            <AvatarStack pessoas={selecionadas} size="xs" />
-            <span className="min-w-0 flex-1 truncate text-left">
-              {selecionadas.length === 1 ? selecionadas[0].nome : `${selecionadas.length} responsáveis`}
-            </span>
-          </>
-        ) : (
-          <span className="flex flex-1 items-center gap-1.5 text-left text-muted-foreground">
-            <UserPlus className="h-4 w-4" /> Sem responsável
-          </span>
-        )}
-      </PopoverTrigger>
-      <PopoverContent align="start" className="w-64 p-0">
-        <Command>
-          <CommandInput placeholder="Buscar pessoa..." className="h-9" />
-          <CommandList>
-            <CommandEmpty>Ninguém encontrado.</CommandEmpty>
-            <CommandGroup>
-              {pessoas.map((p) => {
-                const marcado = value.includes(p.id);
-                return (
-                  <CommandItem
-                    key={p.id}
-                    value={p.nome}
-                    onSelect={() => toggle(p.id)}
-                    className={cn("gap-2", marcado && "font-medium")}
-                  >
-                    <AvatarStack pessoas={[p]} size="xs" />
-                    <span className="flex-1 truncate">{p.nome}</span>
-                    {marcado && <Check className="h-4 w-4 text-brand" />}
-                  </CommandItem>
-                );
-              })}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
   );
 }
 

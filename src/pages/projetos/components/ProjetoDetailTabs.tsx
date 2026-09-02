@@ -133,17 +133,23 @@ export function ProjetoDetailTabs({
     setSelectedDisc((prev) => prev && { ...prev, [field]: value });
   };
 
-  const handleDiscUpdateResponsavel = async (val: string, nome: string) => {
+  const handleDiscUpdateResponsaveis = async (ids: string[]) => {
     if (!selectedDisc) return;
     const discIdx = disciplinasLegacy.findIndex((d) => d.disciplina === selectedDisc.disciplina);
     if (discIdx < 0) return;
     const dbDisc = getDbDisc(discIdx);
     if (!dbDisc) return;
-    const existingResps = dbDisc.responsaveis ?? [];
-    const updatedResps =
-      existingResps.length > 0 ? existingResps.map((r, i) => (i === 0 ? { id: val, nome } : r)) : [{ id: val, nome }];
+    const updatedResps = ids.map((id) => ({ id, nome: pessoas.find((p) => p.id === id)?.nome || "" }));
     await handleSaveDiscChanges({ ...dbDisc, responsaveis: updatedResps });
-    setSelectedDisc((prev) => prev && { ...prev, responsavel_id: val, responsavel_nome: nome });
+    setSelectedDisc(
+      (prev) =>
+        prev && {
+          ...prev,
+          responsavel_id: updatedResps[0]?.id || "",
+          responsavel_nome: updatedResps[0]?.nome || "",
+          responsaveis: updatedResps.map((r) => ({ responsavel_id: r.id, responsavel_nome: r.nome })),
+        }
+    );
   };
 
   const handleAddObservation = async () => {
@@ -300,7 +306,7 @@ export function ProjetoDetailTabs({
         disciplinas={disciplinasCatalog}
         pessoas={pessoas}
         onUpdateField={handleDiscUpdateField}
-        onUpdateResponsavel={handleDiscUpdateResponsavel}
+        onUpdateResponsaveis={handleDiscUpdateResponsaveis}
         onUpdateLabels={handleDiscUpdateLabels}
         onUpdateLinks={handleDiscUpdateLinks}
         onUpdateComentarios={handleDiscUpdateComentarios}

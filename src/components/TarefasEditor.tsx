@@ -1,7 +1,7 @@
 import { useState, type KeyboardEvent } from "react";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
-import { MultiSelectFilter } from "@/components/filters/MultiSelectFilter";
+import { SeletorResponsaveis } from "@/components/SeletorResponsaveis";
 import type { FluxoChecklistItemTemplate } from "@/types/fluxoDisciplinas";
 
 interface TarefasEditorProps {
@@ -21,9 +21,9 @@ function parseOptionalNumber(raw: string): number | undefined {
  * um checkbox decorativo (nunca marcável, é um template, não uma execução real),
  * texto editável in-place, responsáveis (multi-select — a disciplina não pede
  * mais responsável direto, é a união dos das tarefas, spec 071), dias úteis
- * opcionais (somam na duração da disciplina) e horas opcionais (só informativo,
- * nunca soma em dias) e remoção. Visualmente diferente do LabelsEditor (tags
- * horizontais): aqui a leitura é vertical, como um checklist de verdade.
+ * opcionais (somam na duração da disciplina) e remoção. Visualmente diferente do
+ * LabelsEditor (tags horizontais): aqui a leitura é vertical, como um checklist
+ * de verdade.
  */
 export function TarefasEditor({ value, onChange, pessoas }: TarefasEditorProps) {
   const [draft, setDraft] = useState("");
@@ -65,31 +65,25 @@ export function TarefasEditor({ value, onChange, pessoas }: TarefasEditorProps) 
             onChange={(e) => updateItem(index, { texto: e.target.value })}
             className="h-7 flex-1 min-w-[80px] border-none bg-transparent px-1 text-xs shadow-none focus-visible:ring-1"
           />
-          <MultiSelectFilter
-            label="Responsáveis"
-            options={pessoas.map((p) => ({ value: p.id, label: p.nome }))}
-            selected={item.responsaveis_ids ?? []}
+          <SeletorResponsaveis
+            compact
+            value={item.responsaveis_ids ?? []}
+            pessoas={pessoas}
             onChange={(ids) => updateResponsaveis(index, ids)}
-            className="h-7 rounded-md flex-shrink-0 w-[120px] justify-start text-[11px]"
+            emptyLabel="Responsável da tarefa"
           />
-          <Input
-            type="number"
-            min={1}
-            value={item.duracao_dias_uteis ?? ""}
-            onChange={(e) => updateItem(index, { duracao_dias_uteis: parseOptionalNumber(e.target.value) })}
-            placeholder="dias"
-            aria-label={`Dias úteis de ${item.texto}`}
-            className="h-7 w-12 flex-shrink-0 border-none bg-transparent px-1 text-xs text-right shadow-none focus-visible:ring-1"
-          />
-          <Input
-            type="number"
-            min={1}
-            value={item.horas_estimadas ?? ""}
-            onChange={(e) => updateItem(index, { horas_estimadas: parseOptionalNumber(e.target.value) })}
-            placeholder="horas"
-            aria-label={`Horas estimadas de ${item.texto}`}
-            className="h-7 w-14 flex-shrink-0 border-none bg-transparent px-1 text-xs text-right shadow-none focus-visible:ring-1"
-          />
+          <div className="flex flex-shrink-0 items-center gap-1">
+            <Input
+              type="number"
+              min={0}
+              value={item.duracao_dias_uteis ?? ""}
+              onChange={(e) => updateItem(index, { duracao_dias_uteis: parseOptionalNumber(e.target.value) })}
+              placeholder="—"
+              aria-label={`Dias úteis de ${item.texto}`}
+              className="h-7 w-9 border-none bg-transparent px-1 text-xs text-right shadow-none focus-visible:ring-1"
+            />
+            <span className="text-[10px] text-muted-foreground">dias</span>
+          </div>
           <button
             type="button"
             onClick={() => removeItem(index)}
