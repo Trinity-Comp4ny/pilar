@@ -39,6 +39,8 @@ import { type DisciplinaComentario, type DisciplinaResponsavel, disciplinaStatus
 import { DatePicker } from "@/components/ui/date-picker";
 import { LabelsEditor } from "@/components/LabelsEditor";
 import { LinksEditor, type LinkItem } from "@/components/LinksEditor";
+import { SeletorResponsaveis } from "@/components/SeletorResponsaveis";
+import { HorasMinutosField } from "@/components/HorasMinutosField";
 import { AtividadeComposer } from "./AtividadeComposer";
 import { useDisciplinaChecklist } from "@/hooks/useProjetoDisciplinaChecklist";
 import { useDisciplinaPausas, totalDiasParados } from "@/hooks/useDisciplinaPausas";
@@ -53,7 +55,7 @@ interface DisciplinaDetailDialogProps {
   disciplinas: { id: string; nome: string }[];
   pessoas: { id: string; nome: string }[];
   onUpdateField: (field: keyof DisciplinaResponsavel, value: string) => void;
-  onUpdateResponsavel: (val: string, nome: string) => void;
+  onUpdateResponsaveis: (ids: string[]) => void;
   /** Opcionais: só a disciplina persistida (detalhe do projeto) edita estes. */
   onUpdateLabels?: (next: string[]) => void;
   onUpdateLinks?: (next: LinkItem[]) => void;
@@ -129,7 +131,7 @@ function DisciplinaDetailBody({
   disciplinas,
   pessoas,
   onUpdateField,
-  onUpdateResponsavel,
+  onUpdateResponsaveis,
   onUpdateLabels,
   onUpdateLinks,
   onUpdateComentarios,
@@ -146,12 +148,6 @@ function DisciplinaDetailBody({
 }: DisciplinaDetailDialogProps & { disciplina: DisciplinaResponsavel }) {
   const [descricao, setDescricao] = useState(disciplina.descricao ?? "");
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [horasEst, setHorasEst] = useState(
-    disciplina.horas_estimadas != null ? String(disciplina.horas_estimadas) : ""
-  );
-  const [horasReal, setHorasReal] = useState(
-    disciplina.horas_realizadas != null ? String(disciplina.horas_realizadas) : ""
-  );
   const persistida = !!disciplina.id;
   const comentarios = disciplina.comentarios ?? [];
   const temAtividades = persistida && !!onUpdateComentarios;
@@ -190,12 +186,6 @@ function DisciplinaDetailBody({
 
   const confirmarRetomar = () => {
     pausas.retomar.mutate(undefined, { onSuccess: () => onUpdateField("status", "Em Andamento") });
-  };
-
-  const salvarNumero = (raw: string, inicial: string, save?: (n: number) => void) => {
-    if (!save || raw.trim() === inicial.trim()) return;
-    const n = raw.trim() ? Number(raw) : 0;
-    save(Number.isNaN(n) ? 0 : n);
   };
 
   const salvarDescricao = () => {
@@ -250,14 +240,14 @@ function DisciplinaDetailBody({
           <div className="h-full space-y-7 overflow-y-auto px-8 py-6">
             {/* Propriedades em grade 2 colunas */}
             <div className="grid max-w-3xl grid-cols-1 gap-x-10 gap-y-4 md:grid-cols-2">
-              <Prop icon={CircleDot} label="Status">
+              <Prop icon={CircleDot} label="Status" className="md:col-span-2">
                 <div className="flex items-center gap-2">
                   <Select
                     value={estaPausada ? "Pausada" : disciplina.status}
                     onValueChange={(val) => onUpdateField("status", val)}
                     disabled={estaPausada}
                   >
-                    <SelectTrigger className="h-9">
+                    <SelectTrigger className="h-9 w-56 min-w-0 flex-shrink-0">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -283,7 +273,7 @@ function DisciplinaDetailBody({
                     (estaPausada ? (
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="brand"
                         size="sm"
                         className="h-9 flex-shrink-0 gap-1.5"
                         onClick={confirmarRetomar}
@@ -295,7 +285,7 @@ function DisciplinaDetailBody({
                       disciplina.status === "Em Andamento" && (
                         <Button
                           type="button"
-                          variant="outline"
+                          variant="brand"
                           size="sm"
                           className="h-9 flex-shrink-0 gap-1.5"
                           onClick={abrirPausar}
@@ -307,25 +297,12 @@ function DisciplinaDetailBody({
                 </div>
               </Prop>
 
-              <Prop icon={User} label="Responsável">
-                <Select
-                  value={disciplina.responsavel_id}
-                  onValueChange={(val) => {
-                    const pessoa = pessoas.find((p) => p.id === val);
-                    onUpdateResponsavel(val, pessoa?.nome || "");
-                  }}
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {pessoas.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <Prop icon={User} label="Responsáveis">
+                <SeletorResponsaveis
+                  value={(disciplina.responsaveis ?? []).map((r) => r.responsavel_id).filter(Boolean)}
+                  pessoas={pessoas}
+                  onChange={onUpdateResponsaveis}
+                />
               </Prop>
 
               <Prop icon={Flag} label="Prioridade">
@@ -364,52 +341,33 @@ function DisciplinaDetailBody({
                 </Select>
               </Prop>
 
-              {onUpdateHorasEstimadas && (
-                <Prop icon={Clock} label="Horas est.">
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.5"
-                    inputMode="decimal"
-                    value={horasEst}
-                    onChange={(e) => setHorasEst(e.target.value)}
-                    onBlur={() =>
-                      salvarNumero(
-                        horasEst,
-                        disciplina.horas_estimadas != null ? String(disciplina.horas_estimadas) : "",
-                        onUpdateHorasEstimadas
-                      )
-                    }
-                    className="h-9"
-                    placeholder="0"
-                  />
-                </Prop>
-              )}
-
-              {onUpdateHorasRealizadas && (
-                <Prop icon={Clock} label="Horas reais">
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.5"
-                    inputMode="decimal"
-                    value={horasReal}
-                    onChange={(e) => setHorasReal(e.target.value)}
-                    onBlur={() =>
-                      salvarNumero(
-                        horasReal,
-                        disciplina.horas_realizadas != null ? String(disciplina.horas_realizadas) : "",
-                        onUpdateHorasRealizadas
-                      )
-                    }
-                    className="h-9"
-                    placeholder="0"
-                  />
+              {(onUpdateHorasEstimadas || onUpdateHorasRealizadas) && (
+                <Prop icon={Clock} label="Horas" className="md:col-span-2">
+                  <div className="flex flex-wrap items-center gap-6">
+                    {onUpdateHorasEstimadas && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Estimadas</span>
+                        <HorasMinutosField
+                          value={disciplina.horas_estimadas ?? null}
+                          onChange={(n) => onUpdateHorasEstimadas(n ?? 0)}
+                        />
+                      </div>
+                    )}
+                    {onUpdateHorasRealizadas && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Reais</span>
+                        <HorasMinutosField
+                          value={disciplina.horas_realizadas ?? null}
+                          onChange={(n) => onUpdateHorasRealizadas(n ?? 0)}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </Prop>
               )}
 
               <Prop icon={Calendar} label="Datas" className="md:col-span-2">
-                <div className="grid grid-cols-3 gap-2 max-w-md">
+                <div className="grid grid-cols-3 gap-3 max-w-xl">
                   <DatePicker
                     value={(disciplina.data_inicio || "").slice(0, 10) || undefined}
                     onChange={(v) => onUpdateField("data_inicio", v)}

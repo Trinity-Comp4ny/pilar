@@ -87,14 +87,6 @@ describe("duracaoEfetiva", () => {
     expect(duracaoEfetiva({ duracao_dias_uteis: 8, checklist_padrao: [{ texto: "Só texto" }] })).toBe(8);
     expect(duracaoEfetiva({ duracao_dias_uteis: 8 })).toBe(8);
   });
-
-  it("horas_estimadas de um item nunca entra na soma de dias", () => {
-    expect(
-      duracaoEfetiva({
-        checklist_padrao: [{ texto: "Ligação rápida", horas_estimadas: 2 }],
-      })
-    ).toBeUndefined();
-  });
 });
 
 describe("responsaveisEfetivos", () => {

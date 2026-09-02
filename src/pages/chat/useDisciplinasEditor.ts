@@ -95,20 +95,25 @@ export function useDisciplinasEditor({ pessoas, templatesData, fluxosData, curre
     [selectedDisciplinaIndex]
   );
 
-  const updateDisciplinaResponsavel = useCallback(
-    (val: string, nome: string) => {
+  const updateDisciplinaResponsaveis = useCallback(
+    (ids: string[]) => {
       if (selectedDisciplinaIndex === null) return;
+      const resps = ids.map((id) => ({
+        responsavel_id: id,
+        responsavel_nome: pessoas.find((p) => p.id === id)?.nome || "",
+      }));
       setProjetosDisciplinas((prev) => {
         const updated = [...prev];
         updated[selectedDisciplinaIndex] = {
           ...updated[selectedDisciplinaIndex],
-          responsavel_id: val,
-          responsavel_nome: nome,
+          responsavel_id: resps[0]?.responsavel_id || "",
+          responsavel_nome: resps[0]?.responsavel_nome || "",
+          responsaveis: resps,
         };
         return updated;
       });
     },
-    [selectedDisciplinaIndex]
+    [selectedDisciplinaIndex, pessoas]
   );
 
   const addProjetoDisciplina = useCallback(() => {
@@ -320,7 +325,7 @@ export function useDisciplinasEditor({ pessoas, templatesData, fluxosData, curre
     setIsDisciplinaDetailOpen,
     handleOpenDisciplinaDetail,
     updateDisciplinaField,
-    updateDisciplinaResponsavel,
+    updateDisciplinaResponsaveis,
     newObservation,
     setNewObservation,
     handleAddObservation,
