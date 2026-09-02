@@ -13,15 +13,7 @@ import { AlertCircle, ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-reac
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { DataSourceResult } from "@/types/dataSource";
 
 export interface ColumnDef<T> {
@@ -59,6 +51,14 @@ interface DataTableProps<T> {
   /** Coluna de ordenação inicial. */
   defaultSortKey?: string;
   defaultSortDir?: "asc" | "desc";
+  /**
+   * Ordenação controlada pelo pai (opt-in, junto com `onSortingChange`). Uso
+   * típico: dado paginado no servidor, onde ordenar só a página em memória
+   * daria resultado errado — o clique no cabeçalho deve disparar uma nova
+   * busca em vez de reordenar localmente.
+   */
+  sortingState?: SortingState;
+  onSortingChange?: (sorting: SortingState) => void;
   /** Mensagem quando não há dados. */
   emptyMessage?: string;
   /**
@@ -125,6 +125,8 @@ export function DataTable<T>({
   onRowClick,
   defaultSortKey,
   defaultSortDir = "asc",
+  sortingState,
+  onSortingChange,
   emptyMessage = "Nenhum registro encontrado.",
   emptyState,
   errorTitle = "Não foi possível carregar os dados",
@@ -139,9 +141,16 @@ export function DataTable<T>({
 }: DataTableProps<T>) {
   const { rows, isPending = false, error = null } = data;
 
-  const [sorting, setSorting] = useState<SortingState>(
-    defaultSortKey ? [{ id: defaultSortKey, desc: defaultSortDir === "desc" }] : [],
+  const isManualSorting = sortingState !== undefined && !!onSortingChange;
+  const [internalSorting, setInternalSorting] = useState<SortingState>(
+    defaultSortKey ? [{ id: defaultSortKey, desc: defaultSortDir === "desc" }] : []
   );
+  const sorting = isManualSorting ? sortingState : internalSorting;
+  const handleSortingChange = (updater: SortingState | ((old: SortingState) => SortingState)) => {
+    const next = typeof updater === "function" ? updater(sorting) : updater;
+    if (isManualSorting) onSortingChange!(next);
+    else setInternalSorting(next);
+  };
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const tableColumns = useMemo<TanstackColumnDef<T>[]>(
@@ -162,20 +171,21 @@ export function DataTable<T>({
             }
           : undefined,
       })),
-    [columns],
+    [columns]
   );
 
   const table = useReactTable<T>({
     data: rows,
     columns: tableColumns,
     state: { sorting, rowSelection },
-    onSortingChange: setSorting,
+    onSortingChange: handleSortingChange,
     onRowSelectionChange: setRowSelection,
     getRowId: (row) => rowKey(row),
     enableRowSelection,
     enableSortingRemoval: false,
+    manualSorting: isManualSorting,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    getSortedRowModel: isManualSorting ? undefined : getSortedRowModel(),
   });
 
   // Notifica o consumidor sobre a seleção corrente (linhas originais).
@@ -185,9 +195,7 @@ export function DataTable<T>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rowSelection]);
 
-  const visibleColumns = columnVisibility
-    ? columns.filter((c) => columnVisibility[c.key] !== false)
-    : columns;
+  const visibleColumns = columnVisibility ? columns.filter((c) => columnVisibility[c.key] !== false) : columns;
   const totalCols = visibleColumns.length + (enableRowSelection ? 1 : 0);
   // `maxHeight` implica scroll vertical interno (ver wrapper abaixo); o header
   // gruda no topo desse scroll, senão ele "sobe" e some ao rolar a tabela.
@@ -196,13 +204,7 @@ export function DataTable<T>({
   const selectionHead = enableRowSelection ? (
     <TableHead className={cn("w-10 sticky left-0 z-20 bg-muted/50", stickyHeader && "top-0 z-30")}>
       <Checkbox
-        checked={
-          table.getIsAllRowsSelected()
-            ? true
-            : table.getIsSomeRowsSelected()
-              ? "indeterminate"
-              : false
-        }
+        checked={table.getIsAllRowsSelected() ? true : table.getIsSomeRowsSelected() ? "indeterminate" : false}
         onCheckedChange={(v) => table.toggleAllRowsSelected(!!v)}
         aria-label="Selecionar todas as linhas"
       />
@@ -223,7 +225,7 @@ export function DataTable<T>({
           col.stickyLeft && "sticky left-0 z-20 bg-muted/50",
           stickyHeader && "sticky top-0 z-10 bg-card",
           col.stickyLeft && stickyHeader && "z-30",
-          col.className,
+          col.className
         )}
       >
         {sortable ? (
@@ -233,7 +235,7 @@ export function DataTable<T>({
             className={cn(
               "inline-flex items-center gap-1 hover:text-foreground transition-colors",
               col.align === "end" && "flex-row-reverse",
-              isActive && "text-foreground",
+              isActive && "text-foreground"
             )}
           >
             {col.header}
@@ -272,10 +274,7 @@ export function DataTable<T>({
             </TableCell>
           )}
           {visibleColumns.map((col) => (
-            <TableCell
-              key={col.key}
-              className={cn(col.stickyLeft && "sticky left-0 z-10 bg-card", col.className)}
-            >
+            <TableCell key={col.key} className={cn(col.stickyLeft && "sticky left-0 z-10 bg-card", col.className)}>
               <Skeleton
                 className={cn("h-4 w-3/4", col.align === "end" && "ml-auto", col.align === "center" && "mx-auto")}
               />
@@ -321,7 +320,7 @@ export function DataTable<T>({
             className={cn(
               col.align && alignClass[col.align],
               col.stickyLeft && "sticky left-0 z-10 bg-card",
-              col.className,
+              col.className
             )}
           >
             {col.cell(row.original)}
