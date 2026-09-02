@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import {
   type GanttDragType,
   type ZoomLevel,
+  DISCIPLINA_STATUS_COLORS,
   parseDate,
   addDays,
   diffDays,
@@ -43,13 +44,6 @@ interface MarkerDef {
   chipClass: string;
   chipRow: 0 | 1;
 }
-
-const STATUS_COLORS: Record<string, { bar: string; text: string; bg: string }> = {
-  Concluído: { bar: "bg-positive/100", text: "text-positive-strong", bg: "bg-positive/10" },
-  "Em Andamento": { bar: "bg-status-progress", text: "text-info-strong", bg: "bg-info-soft" },
-  Pendente: { bar: "bg-status-planning", text: "text-warning-mid", bg: "bg-warning-soft" },
-  "Não Iniciado": { bar: "bg-status-unknown", text: "text-ink-muted", bg: "bg-muted" },
-};
 
 function formatDateBR(d: string | undefined | Date): string {
   if (!d) return "—";
@@ -134,7 +128,7 @@ export function CronogramaTab({
       const atrasada = isDiscAtrasada(disc);
       const deadlineStatus = getDiscDeadlineStatus(disc);
       const status = disc.status || "Não Iniciado";
-      const colors = STATUS_COLORS[status] || STATUS_COLORS["Não Iniciado"];
+      const colors = DISCIPLINA_STATUS_COLORS[status] || DISCIPLINA_STATUS_COLORS["Não Iniciado"];
       // Bar extends past project planned end (delayed)
       const beyondProjectEnd = !!(projEnd && end && end > projEnd);
 
@@ -703,7 +697,7 @@ export function CronogramaTab({
 
       {/* Legend */}
       <div className="flex items-center justify-center flex-wrap gap-4 text-xs text-muted-foreground">
-        {Object.entries(STATUS_COLORS).map(([status, colors]) => (
+        {Object.entries(DISCIPLINA_STATUS_COLORS).map(([status, colors]) => (
           <div key={status} className="flex items-center gap-1.5">
             <div className={cn("h-2.5 w-6 rounded-sm", colors.bar)} />
             <span>{status}</span>

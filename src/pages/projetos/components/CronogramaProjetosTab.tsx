@@ -8,14 +8,16 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calendar, ChevronDown, Layers, ZoomIn, ZoomOut, AlertTriangle } from "lucide-react";
+import { Calendar, ChevronDown, ChevronRight, Layers, ZoomIn, ZoomOut, AlertTriangle } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
-import { type Projeto, getDeadlineStatus, isDiscAtrasada } from "@/types/projetos";
+import { type Projeto, type ProjetoDisciplinaDB, getDeadlineStatus, isDiscAtrasada } from "@/types/projetos";
 import { PROJECT_STATUS, PROJECT_STATUS_CONFIG, type ProjectStatus } from "@/constants";
 import {
   addDays,
+  barPosition,
   diffDays,
+  DISCIPLINA_STATUS_COLORS,
   endOfMonth,
   generateColumns,
   parseDate,
@@ -25,6 +27,7 @@ import {
   type ZoomLevel,
 } from "@/lib/cronograma";
 import { useGanttDrag } from "@/components/gantt/useGanttDrag";
+import { useProjetoDisciplinas } from "@/hooks/useProjetoDisciplinas";
 
 interface MultiSelectProps {
   options: string[];
@@ -109,12 +112,108 @@ function formatDateBR(d: string | undefined | Date): string {
   return date.toLocaleDateString("pt-BR");
 }
 
+function discBarClass(d: ProjetoDisciplinaDB): string {
+  return (DISCIPLINA_STATUS_COLORS[d.status] || DISCIPLINA_STATUS_COLORS["Não Iniciado"]).bar;
+}
+
+/** Sub-linhas da coluna fixa esquerda (nomes) para as disciplinas de um projeto expandido. */
+function DisciplinaLeftRows({ projetoId }: { projetoId: string }) {
+  const { data: disciplinas, isLoading } = useProjetoDisciplinas(projetoId);
+
+  if (isLoading) {
+    return (
+      <div className="h-10 border-b pl-8 pr-3 flex items-center">
+        <div className="h-2 w-24 rounded bg-muted animate-pulse" />
+      </div>
+    );
+  }
+
+  if (!disciplinas || disciplinas.length === 0) {
+    return (
+      <div className="h-10 border-b pl-8 pr-3 flex items-center">
+        <span className="text-[10px] text-muted-foreground">Nenhuma disciplina cadastrada</span>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {disciplinas.map((d) => (
+        <div key={d.id} className="h-10 border-b pl-8 pr-3 flex items-center gap-1.5">
+          <span className={cn("inline-block h-1.5 w-1.5 rounded-full flex-shrink-0", discBarClass(d))} aria-hidden />
+          <span className="text-[11px] truncate">
+            {d.codigo && <span className="font-mono text-muted-foreground mr-1">{d.codigo}</span>}
+            {d.nome}
+          </span>
+        </div>
+      ))}
+    </>
+  );
+}
+
+/** Sub-linhas da timeline (barras) para as disciplinas de um projeto expandido. Mesma
+ *  query do useProjetoDisciplinas de DisciplinaLeftRows: o react-query dedupe evita
+ *  refetch duplicado das duas colunas. */
+function DisciplinaTimelineRows({
+  projetoId,
+  timelineStart,
+  timelineEnd,
+  onNavigate,
+}: {
+  projetoId: string;
+  timelineStart: Date;
+  timelineEnd: Date;
+  onNavigate: () => void;
+}) {
+  const { data: disciplinas, isLoading } = useProjetoDisciplinas(projetoId);
+
+  if (isLoading || !disciplinas || disciplinas.length === 0) {
+    return <div className="h-10 border-b relative" />;
+  }
+
+  return (
+    <>
+      {disciplinas.map((d) => {
+        const start = parseDate(d.data_inicio);
+        const end = parseDate(d.data_fim);
+
+        if (!start || !end) {
+          return (
+            <div key={d.id} className="h-10 border-b relative flex items-center justify-center">
+              <span className="text-[10px] text-muted-foreground/60">sem datas</span>
+            </div>
+          );
+        }
+
+        const { leftPct, widthPct } = barPosition(start, end, timelineStart, timelineEnd);
+
+        return (
+          <div key={d.id} className="h-10 border-b relative">
+            <button
+              type="button"
+              onClick={onNavigate}
+              className={cn(
+                "absolute top-2 h-6 rounded flex items-center overflow-hidden shadow-sm border border-black/5 cursor-pointer",
+                discBarClass(d)
+              )}
+              style={{ left: `${leftPct}%`, width: `${widthPct}%`, minWidth: "24px" }}
+            >
+              <span className="text-[9px] text-white font-medium truncate mx-2">{d.nome}</span>
+            </button>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
 export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaProjetosTabProps) {
   const navigate = useNavigate();
   const [zoom, setZoom] = useState<ZoomLevel>("months");
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "all">("all");
   const [clienteFilter, setClienteFilter] = useState<string[]>([]);
   const [responsavelFilter, setResponsavelFilter] = useState<string[]>([]);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
 
@@ -212,6 +311,18 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
     const pct = (diffDays(timelineStart, today) / totalDays) * 100;
     return pct >= 0 && pct <= 100 ? pct : -1;
   }, [timelineStart, timelineEnd]);
+
+  const toggleExpandDisciplinas = (projetoId: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(projetoId)) {
+        next.delete(projetoId);
+      } else {
+        next.add(projetoId);
+      }
+      return next;
+    });
+  };
 
   const scrollToToday = () => {
     if (!scrollRef.current || todayPct < 0) return;
@@ -393,7 +504,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
       ) : (
         <Card>
           <CardContent className="p-0">
-            <div className="flex">
+            <div className="flex items-start max-h-[calc(100svh-420px)] overflow-y-auto">
               {/* Fixed left column */}
               <div className="flex-shrink-0 w-[260px] border-r bg-muted/30">
                 <div className="h-10 border-b px-3 flex items-center">
@@ -403,35 +514,50 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                 </div>
                 {rows.map((row) => {
                   const cfg = PROJECT_STATUS_CONFIG[row.projeto.status];
+                  const isExpanded = expandedIds.has(row.projeto.id);
                   return (
-                    <button
-                      key={row.projeto.id}
-                      onClick={() => navigate(`/projetos/${row.projeto.id}#cronograma`)}
-                      className={cn(
-                        "w-full h-14 border-b px-3 flex flex-col justify-center text-left hover:bg-muted/50 transition-colors",
-                        row.atrasado && "bg-danger-soft/40"
-                      )}
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-mono text-muted-foreground">
-                          {row.projeto.codigo_projeto}
-                        </span>
-                        {row.atrasado && <AlertTriangle className="h-3 w-3 text-danger-mid flex-shrink-0" />}
+                    <div key={row.projeto.id} className={cn("border-b", row.atrasado && "bg-danger-soft/40")}>
+                      <div className="w-full h-14 flex items-stretch">
+                        <button
+                          type="button"
+                          onClick={() => toggleExpandDisciplinas(row.projeto.id)}
+                          className="flex-shrink-0 w-6 flex items-center justify-center hover:bg-muted/50 transition-colors"
+                          aria-label={isExpanded ? "Recolher disciplinas" : "Expandir disciplinas"}
+                        >
+                          <ChevronRight
+                            className={cn(
+                              "h-3.5 w-3.5 text-muted-foreground transition-transform",
+                              isExpanded && "rotate-90"
+                            )}
+                          />
+                        </button>
+                        <button
+                          onClick={() => navigate(`/projetos/${row.projeto.id}#cronograma`)}
+                          className="flex-1 min-w-0 h-full pr-3 flex flex-col justify-center text-left hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-mono text-muted-foreground">
+                              {row.projeto.codigo_projeto}
+                            </span>
+                            {row.atrasado && <AlertTriangle className="h-3 w-3 text-danger-mid flex-shrink-0" />}
+                          </div>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-xs font-medium truncate">{row.projeto.nome}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span
+                              className={cn("inline-block h-1.5 w-1.5 rounded-full flex-shrink-0", row.barClass)}
+                              aria-hidden
+                            />
+                            <span className="text-[10px] text-muted-foreground truncate">
+                              {cfg?.label || row.projeto.status}
+                              {row.projeto.cliente_nome && ` · ${row.projeto.cliente_nome}`}
+                            </span>
+                          </div>
+                        </button>
                       </div>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-xs font-medium truncate">{row.projeto.nome}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span
-                          className={cn("inline-block h-1.5 w-1.5 rounded-full flex-shrink-0", row.barClass)}
-                          aria-hidden
-                        />
-                        <span className="text-[10px] text-muted-foreground truncate">
-                          {cfg?.label || row.projeto.status}
-                          {row.projeto.cliente_nome && ` · ${row.projeto.cliente_nome}`}
-                        </span>
-                      </div>
-                    </button>
+                      {isExpanded && <DisciplinaLeftRows projetoId={row.projeto.id} />}
+                    </div>
                   );
                 })}
               </div>
@@ -502,145 +628,176 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                         const geo = getBarGeometry(row.projeto.id, base);
                         const isThisDragging = dragOverride?.key === row.projeto.id;
                         const canDrag = !!onDatesChange && !!geo;
-                        if (!geo) return <div key={row.projeto.id} className="h-14 border-b relative" />;
+                        const isExpanded = expandedIds.has(row.projeto.id);
+
+                        if (!geo) {
+                          return (
+                            <div key={row.projeto.id}>
+                              <div className="h-14 border-b relative" />
+                              {isExpanded && (
+                                <DisciplinaTimelineRows
+                                  projetoId={row.projeto.id}
+                                  timelineStart={timelineStart}
+                                  timelineEnd={timelineEnd}
+                                  onNavigate={() => navigate(`/projetos/${row.projeto.id}#cronograma`)}
+                                />
+                              )}
+                            </div>
+                          );
+                        }
 
                         return (
-                          <div
-                            key={row.projeto.id}
-                            className={cn("h-14 border-b relative", row.atrasado && "bg-danger-soft/20")}
-                          >
-                            <Tooltip open={isThisDragging ? false : undefined}>
-                              <TooltipTrigger asChild>
-                                <div
-                                  className={cn(
-                                    "absolute top-3 h-8 rounded-md flex items-center overflow-visible shadow-sm border border-black/5 transition-shadow",
-                                    row.barClass,
-                                    row.atrasado && "ring-2 ring-red-300 ring-offset-1",
-                                    isThisDragging && "opacity-90 ring-2 ring-white/60 shadow-md"
-                                  )}
-                                  style={{
-                                    left: `${geo.leftPct}%`,
-                                    width: `${geo.widthPct}%`,
-                                    minWidth: "32px",
-                                  }}
-                                >
-                                  {/* Left handle — arrasta o início */}
-                                  {canDrag && (
-                                    <div
-                                      className="absolute left-0 top-0 bottom-0 w-4 cursor-col-resize z-10 flex items-center justify-center group/handle rounded-l-md hover:bg-black/20 transition-colors"
-                                      onMouseDown={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        startDrag(e.clientX, row.projeto.id, "left", base);
-                                      }}
-                                      onTouchStart={(e) => {
-                                        e.stopPropagation();
-                                        startDrag(e.touches[0].clientX, row.projeto.id, "left", base);
-                                      }}
-                                    >
-                                      <div className="flex gap-[3px]">
-                                        <div className="w-px h-3.5 bg-white/55 rounded group-hover/handle:bg-white transition-colors" />
-                                        <div className="w-px h-3.5 bg-white/55 rounded group-hover/handle:bg-white transition-colors" />
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {/* Body — mover / clicar para abrir */}
+                          <div key={row.projeto.id}>
+                            <div className={cn("h-14 border-b relative", row.atrasado && "bg-danger-soft/20")}>
+                              <Tooltip open={isThisDragging ? false : undefined}>
+                                <TooltipTrigger asChild>
                                   <div
                                     className={cn(
-                                      "flex-1 flex items-center overflow-hidden",
-                                      canDrag ? "mx-4 cursor-grab active:cursor-grabbing" : "mx-2.5 cursor-pointer"
+                                      "absolute top-3 h-8 rounded-md flex items-center overflow-visible shadow-sm border border-black/5 transition-shadow",
+                                      row.barClass,
+                                      row.atrasado && "ring-2 ring-red-300 ring-offset-1",
+                                      isThisDragging && "opacity-90 ring-2 ring-white/60 shadow-md"
                                     )}
-                                    onMouseDown={
-                                      canDrag
-                                        ? (e) => {
-                                            e.preventDefault();
-                                            startDrag(e.clientX, row.projeto.id, "move", base);
-                                          }
-                                        : undefined
-                                    }
-                                    onTouchStart={
-                                      canDrag ? (e) => startDrag(e.touches[0].clientX, row.projeto.id, "move", base) : undefined
-                                    }
-                                    onClick={() => {
-                                      if (shouldSuppressClick()) return;
-                                      navigate(`/projetos/${row.projeto.id}#cronograma`);
+                                    style={{
+                                      left: `${geo.leftPct}%`,
+                                      width: `${geo.widthPct}%`,
+                                      minWidth: "32px",
                                     }}
                                   >
-                                    <span className="text-[10px] text-white font-medium truncate">
-                                      {row.projeto.nome}
-                                    </span>
-                                  </div>
+                                    {/* Left handle — arrasta o início */}
+                                    {canDrag && (
+                                      <div
+                                        className="absolute left-0 top-0 bottom-0 w-4 cursor-col-resize z-10 flex items-center justify-center group/handle rounded-l-md hover:bg-black/20 transition-colors"
+                                        onMouseDown={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          startDrag(e.clientX, row.projeto.id, "left", base);
+                                        }}
+                                        onTouchStart={(e) => {
+                                          e.stopPropagation();
+                                          startDrag(e.touches[0].clientX, row.projeto.id, "left", base);
+                                        }}
+                                      >
+                                        <div className="flex gap-[3px]">
+                                          <div className="w-px h-3.5 bg-white/55 rounded group-hover/handle:bg-white transition-colors" />
+                                          <div className="w-px h-3.5 bg-white/55 rounded group-hover/handle:bg-white transition-colors" />
+                                        </div>
+                                      </div>
+                                    )}
 
-                                  {/* Right handle — arrasta a previsão */}
-                                  {canDrag && (
+                                    {/* Body — mover / clicar para abrir */}
                                     <div
-                                      className="absolute right-0 top-0 bottom-0 w-4 cursor-col-resize z-10 flex items-center justify-center group/handle rounded-r-md hover:bg-black/20 transition-colors"
-                                      onMouseDown={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        startDrag(e.clientX, row.projeto.id, "right", base);
-                                      }}
-                                      onTouchStart={(e) => {
-                                        e.stopPropagation();
-                                        startDrag(e.touches[0].clientX, row.projeto.id, "right", base);
+                                      className={cn(
+                                        "flex-1 flex items-center overflow-hidden",
+                                        canDrag ? "mx-4 cursor-grab active:cursor-grabbing" : "mx-2.5 cursor-pointer"
+                                      )}
+                                      onMouseDown={
+                                        canDrag
+                                          ? (e) => {
+                                              e.preventDefault();
+                                              startDrag(e.clientX, row.projeto.id, "move", base);
+                                            }
+                                          : undefined
+                                      }
+                                      onTouchStart={
+                                        canDrag
+                                          ? (e) => startDrag(e.touches[0].clientX, row.projeto.id, "move", base)
+                                          : undefined
+                                      }
+                                      onClick={() => {
+                                        if (shouldSuppressClick()) return;
+                                        navigate(`/projetos/${row.projeto.id}#cronograma`);
                                       }}
                                     >
-                                      <div className="flex gap-[3px]">
-                                        <div className="w-px h-3.5 bg-white/55 rounded group-hover/handle:bg-white transition-colors" />
-                                        <div className="w-px h-3.5 bg-white/55 rounded group-hover/handle:bg-white transition-colors" />
-                                      </div>
+                                      <span className="text-[10px] text-white font-medium truncate">
+                                        {row.projeto.nome}
+                                      </span>
                                     </div>
-                                  )}
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="max-w-xs">
-                                <div className="space-y-1.5">
-                                  <p className="font-semibold text-sm">{row.projeto.nome}</p>
-                                  <div className="flex items-center gap-2">
-                                    {cfg && <Badge className={cn("text-[10px]", cfg.color)}>{cfg.label}</Badge>}
-                                    {row.deadlineStatus && (
-                                      <Badge className={cn("text-[10px]", row.deadlineStatus.color)}>
-                                        {row.deadlineStatus.label}
-                                        {row.deadlineStatus.days > 0 ? ` (${row.deadlineStatus.days}d)` : ""}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground space-y-0.5">
-                                    <p>Código: {row.projeto.codigo_projeto}</p>
-                                    {row.projeto.cliente_nome && <p>Cliente: {row.projeto.cliente_nome}</p>}
-                                    <p>Início: {formatDateBR(geo.start)}</p>
-                                    <p>Previsão: {formatDateBR(geo.end)}</p>
-                                    {row.projeto.data_final && <p>Conclusão: {formatDateBR(row.projeto.data_final)}</p>}
-                                    <p className="text-muted-foreground/60">Duração: {diffDays(geo.start, geo.end)} dias</p>
-                                    {row.totalDiscs > 0 && (
-                                      <p>
-                                        {row.totalDiscs} disciplina{row.totalDiscs === 1 ? "" : "s"}
-                                        {row.discAtrasadas > 0 && (
-                                          <span className="text-danger-mid ml-1">
-                                            · {row.discAtrasadas} atrasada{row.discAtrasadas === 1 ? "" : "s"}
-                                          </span>
-                                        )}
-                                      </p>
-                                    )}
-                                  </div>
-                                  <p className="text-[10px] text-muted-foreground/60 border-t pt-1 mt-1">
-                                    {canDrag ? "Arraste as bordas para ajustar as datas" : "Clique para abrir o cronograma"}
-                                  </p>
-                                </div>
-                              </TooltipContent>
-                            </Tooltip>
 
-                            {/* Floating drag label — segue o cursor */}
-                            {isThisDragging && guideX !== null && (
-                              <div
-                                className="absolute top-1/2 -translate-y-1/2 z-40 pointer-events-none"
-                                style={{ left: `${guideX + 14}px` }}
-                              >
-                                <div className="bg-gray-900/90 text-white text-[10px] px-2 py-1 rounded-md whitespace-nowrap shadow-lg font-medium">
-                                  {getDragLabel(geo, dragOverride.type)}
+                                    {/* Right handle — arrasta a previsão */}
+                                    {canDrag && (
+                                      <div
+                                        className="absolute right-0 top-0 bottom-0 w-4 cursor-col-resize z-10 flex items-center justify-center group/handle rounded-r-md hover:bg-black/20 transition-colors"
+                                        onMouseDown={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          startDrag(e.clientX, row.projeto.id, "right", base);
+                                        }}
+                                        onTouchStart={(e) => {
+                                          e.stopPropagation();
+                                          startDrag(e.touches[0].clientX, row.projeto.id, "right", base);
+                                        }}
+                                      >
+                                        <div className="flex gap-[3px]">
+                                          <div className="w-px h-3.5 bg-white/55 rounded group-hover/handle:bg-white transition-colors" />
+                                          <div className="w-px h-3.5 bg-white/55 rounded group-hover/handle:bg-white transition-colors" />
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-xs">
+                                  <div className="space-y-1.5">
+                                    <p className="font-semibold text-sm">{row.projeto.nome}</p>
+                                    <div className="flex items-center gap-2">
+                                      {cfg && <Badge className={cn("text-[10px]", cfg.color)}>{cfg.label}</Badge>}
+                                      {row.deadlineStatus && (
+                                        <Badge className={cn("text-[10px]", row.deadlineStatus.color)}>
+                                          {row.deadlineStatus.label}
+                                          {row.deadlineStatus.days > 0 ? ` (${row.deadlineStatus.days}d)` : ""}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground space-y-0.5">
+                                      <p>Código: {row.projeto.codigo_projeto}</p>
+                                      {row.projeto.cliente_nome && <p>Cliente: {row.projeto.cliente_nome}</p>}
+                                      <p>Início: {formatDateBR(geo.start)}</p>
+                                      <p>Previsão: {formatDateBR(geo.end)}</p>
+                                      {row.projeto.data_final && (
+                                        <p>Conclusão: {formatDateBR(row.projeto.data_final)}</p>
+                                      )}
+                                      <p className="text-muted-foreground/60">
+                                        Duração: {diffDays(geo.start, geo.end)} dias
+                                      </p>
+                                      {row.totalDiscs > 0 && (
+                                        <p>
+                                          {row.totalDiscs} disciplina{row.totalDiscs === 1 ? "" : "s"}
+                                          {row.discAtrasadas > 0 && (
+                                            <span className="text-danger-mid ml-1">
+                                              · {row.discAtrasadas} atrasada{row.discAtrasadas === 1 ? "" : "s"}
+                                            </span>
+                                          )}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground/60 border-t pt-1 mt-1">
+                                      {canDrag
+                                        ? "Arraste as bordas para ajustar as datas"
+                                        : "Clique para abrir o cronograma"}
+                                    </p>
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
+
+                              {/* Floating drag label — segue o cursor */}
+                              {isThisDragging && guideX !== null && (
+                                <div
+                                  className="absolute top-1/2 -translate-y-1/2 z-40 pointer-events-none"
+                                  style={{ left: `${guideX + 14}px` }}
+                                >
+                                  <div className="bg-gray-900/90 text-white text-[10px] px-2 py-1 rounded-md whitespace-nowrap shadow-lg font-medium">
+                                    {getDragLabel(geo, dragOverride.type)}
+                                  </div>
                                 </div>
-                              </div>
+                              )}
+                            </div>
+                            {isExpanded && (
+                              <DisciplinaTimelineRows
+                                projetoId={row.projeto.id}
+                                timelineStart={timelineStart}
+                                timelineEnd={timelineEnd}
+                                onNavigate={() => navigate(`/projetos/${row.projeto.id}#cronograma`)}
+                              />
                             )}
                           </div>
                         );
