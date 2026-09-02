@@ -536,7 +536,7 @@ export default function Leads() {
 
             {/* Busca de texto migrou para o PageHeader (spec 002). */}
             <Select value={origemFilter || "todas"} onValueChange={(v) => setOrigemFilter(v === "todas" ? "" : v)}>
-              <SelectTrigger className="h-9 w-auto min-w-[140px] text-sm" aria-label="Filtrar por origem">
+              <SelectTrigger className="h-9 w-auto min-w-[140px] rounded-full text-sm" aria-label="Filtrar por origem">
                 <SelectValue placeholder="Origem" />
               </SelectTrigger>
               <SelectContent>
@@ -553,7 +553,10 @@ export default function Leads() {
               value={responsavelFilter || "todos"}
               onValueChange={(v) => setResponsavelFilter(v === "todos" ? "" : v)}
             >
-              <SelectTrigger className="h-9 w-auto min-w-[150px] text-sm" aria-label="Filtrar por responsável">
+              <SelectTrigger
+                className="h-9 w-auto min-w-[150px] rounded-full text-sm"
+                aria-label="Filtrar por responsável"
+              >
                 <SelectValue placeholder="Responsável" />
               </SelectTrigger>
               <SelectContent>
@@ -569,7 +572,7 @@ export default function Leads() {
 
             <Select value={periodo} onValueChange={(v) => setPeriodo(v as PeriodoFilter)}>
               <SelectTrigger
-                className="h-9 w-auto min-w-[150px] text-sm"
+                className="h-9 w-auto min-w-[150px] rounded-full text-sm"
                 aria-label="Filtrar por previsão de fechamento"
               >
                 <SelectValue />
@@ -584,7 +587,7 @@ export default function Leads() {
             </Select>
 
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
-              <SelectTrigger className="h-9 w-auto min-w-[150px] text-sm" aria-label="Ordenar leads">
+              <SelectTrigger className="h-9 w-auto min-w-[150px] rounded-full text-sm" aria-label="Ordenar leads">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -740,7 +743,8 @@ export default function Leads() {
                                       leadNome={leadNome}
                                       onClick={() => handleCardClick(lead)}
                                       canEdit={canEdit}
-                                      onMoveStatus={handleMobileMove}
+                                      onEdit={handleOpenEdit}
+                                      onDelete={handleDelete}
                                       dragging={snapshot.isDragging}
                                       proposta={primariaDoLead(lead.id)}
                                       responsavelNome={responsavelNome(lead.responsavel_id)}
@@ -782,6 +786,8 @@ export default function Leads() {
                           leadNome={leadNome}
                           onClick={() => handleCardClick(lead)}
                           canEdit={canEdit}
+                          onEdit={handleOpenEdit}
+                          onDelete={handleDelete}
                           onMoveStatus={handleMobileMove}
                           proposta={primariaDoLead(lead.id)}
                           responsavelNome={responsavelNome(lead.responsavel_id)}
