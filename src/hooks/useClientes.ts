@@ -136,6 +136,7 @@ export function useClientesPaginados(options: UseClientesPaginadosOptions = {}) 
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     isError: query.isError,
+    error: query.error as Error | null,
     refetch: query.refetch,
   };
 }
