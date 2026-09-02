@@ -7134,6 +7134,10 @@ export type Database = {
         Returns: string
       }
       _notif_gestao: { Args: { p_empresa: string }; Returns: string[] }
+      _notif_gestao_operacional: {
+        Args: { p_empresa: string }
+        Returns: string[]
+      }
       _notif_resp_disciplina: {
         Args: { p_disciplina: string }
         Returns: string[]
