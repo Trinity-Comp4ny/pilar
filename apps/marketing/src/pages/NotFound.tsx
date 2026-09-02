@@ -14,6 +14,7 @@ export function NotFound() {
     titulo: "Página não encontrada | Pilar",
     descricao: "Não encontramos o endereço que você tentou acessar.",
     caminho: location.pathname,
+    noindex: true,
   });
 
   return (
