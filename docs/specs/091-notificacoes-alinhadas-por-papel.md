@@ -159,7 +159,7 @@ mesmo assim antes do PR por hábito do checklist do repo.
    rollback contra o Postgres local (sem persistir); aplicação real e conferência manual em
    `dev:local` com conta de coordenador ficam para o merge deste PR.
 5. PR para `staging` (#421). Rebase feito contra `origin/staging` depois que `tarefas_rls_multi_
-   responsavel`/`tarefas_coordenador_ve_tudo` (outra sessão) e a spec 089 (menção) já tinham
+responsavel`/`tarefas_coordenador_ve_tudo` (outra sessão) e a spec 089 (menção) já tinham
    mergeado lá — o risco de colisão de numeração previsto abaixo se confirmou e foi resolvido
    nesse rebase (migrations renumeradas de 898/899 para 901/902).
 
