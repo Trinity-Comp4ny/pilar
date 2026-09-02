@@ -67,15 +67,22 @@ export type TarefaInput = {
   comentarios?: Comentario[];
 };
 
+/** Chave de cache estável p/ um conjunto de pessoas: ordem não importa. */
+const chavePessoas = (pessoaIds: string[] | null) => (pessoaIds ? [...pessoaIds].sort() : null);
+
 const KEY = {
   minhaPessoa: (userId?: string) => ["meu-trabalho", "minha-pessoa", userId] as const,
   pessoas: ["meu-trabalho", "pessoas"] as const,
-  disciplinas: (pessoaId: string | null) => ["meu-trabalho", "disciplinas", pessoaId] as const,
-  tarefas: (pessoaId: string | null) => ["meu-trabalho", "tarefas", pessoaId] as const,
+  disciplinas: (pessoaIds: string[] | null) => ["meu-trabalho", "disciplinas", chavePessoas(pessoaIds)] as const,
+  tarefas: (pessoaIds: string[] | null) => ["meu-trabalho", "tarefas", chavePessoas(pessoaIds)] as const,
 };
 
 /** Query key de `usePessoasEmpresa`, para invalidar de fora (ex.: depois de trocar o avatar_url). */
 export const PESSOAS_EMPRESA_QUERY_KEY = KEY.pessoas;
+
+/** Query keys de tarefas/disciplinas, para patch otimista de fora deste módulo. */
+export const tarefasQueryKey = KEY.tarefas;
+export const disciplinasQueryKey = KEY.disciplinas;
 
 /** Pessoa vinculada ao usuário logado (profile_id = auth.uid()). */
 export function useMinhaPessoa() {
@@ -134,20 +141,33 @@ export function usePessoasEmpresa() {
 }
 
 /**
- * Disciplinas sob responsabilidade da pessoa (aba Projetos).
- * pessoaId null = pessoa do usuário logado (a RPC resolve o default).
+ * Disciplinas sob responsabilidade das pessoas selecionadas (aba Projetos).
+ * pessoaIds null = pessoa do usuário logado (a RPC resolve o default). Mais de
+ * um id: uma chamada por pessoa (a RPC só aceita uma de cada vez), mesclando e
+ * removendo duplicatas — raro ter mais de um responsável na mesma disciplina,
+ * mas não impossível.
  */
-export function useDisciplinas(pessoaId: string | null, options?: { enabled?: boolean }) {
+export function useDisciplinas(pessoaIds: string[] | null, options?: { enabled?: boolean }) {
   return useQuery({
-    queryKey: KEY.disciplinas(pessoaId),
+    queryKey: KEY.disciplinas(pessoaIds),
     enabled: options?.enabled ?? true,
     staleTime: 2 * 60 * 1000,
     queryFn: async (): Promise<DisciplinaItem[]> => {
-      const { data, error } = await supabase.rpc("get_minhas_disciplinas", {
-        p_pessoa_id: pessoaId ?? undefined,
+      const ids = pessoaIds && pessoaIds.length > 0 ? pessoaIds : [undefined];
+      const resultados = await Promise.all(
+        ids.map(async (id) => {
+          const { data, error } = await supabase.rpc("get_minhas_disciplinas", { p_pessoa_id: id });
+          if (error) throw error;
+          return data ?? [];
+        })
+      );
+      const vistos = new Set<string>();
+      const linhas = resultados.flat().filter((d) => {
+        if (vistos.has(d.id)) return false;
+        vistos.add(d.id);
+        return true;
       });
-      if (error) throw error;
-      return (data ?? []).map((d) => ({
+      return linhas.map((d) => ({
         id: d.id,
         titulo: d.titulo,
         status_bucket: d.status_bucket as StatusBucket,
@@ -180,32 +200,42 @@ export function useSetDisciplinaStatus() {
   });
 }
 
-/** Tarefas avulsas (aba Tarefas). Filtra por responsável quando informado. */
-export function useTarefas(pessoaId: string | null) {
+/**
+ * Tarefas avulsas (aba Tarefas). "Minhas tarefas" = tarefas em que a pessoa é
+ * responsável (via ponte), nunca as que ela só criou pra outro executar — não
+ * inflar o filtro com tarefas delegadas.
+ *
+ * `pessoaIds`: `null` = sem filtro (mostra tudo que a RLS libera); array = só
+ * as tarefas de quem está nele. Array VAZIO (não null) é o caso de "eu"
+ * selecionado sem ter uma `pessoa` vinculada (comum em admin/ultra_admin) —
+ * filtro ativo que não bate com ninguém, então o resultado é vazio, nunca
+ * "sem filtro" (senão a RLS, que libera tudo pra admin, mostraria a empresa
+ * inteira mesmo filtrando "eu").
+ */
+export function useTarefas(pessoaIds: string[] | null) {
   return useQuery({
-    queryKey: KEY.tarefas(pessoaId),
+    queryKey: tarefasQueryKey(pessoaIds),
     staleTime: 60 * 1000,
     queryFn: async (): Promise<TarefaItem[]> => {
-      // Filtro "minhas tarefas": tarefas em que a pessoa é um dos responsáveis
-      // (via ponte). Sem responsáveis não aparece pra ninguém, como antes.
-      let idsFiltro: string[] | null = null;
-      if (pessoaId) {
-        const { data: vinc, error: eVinc } = await supabase
-          .from("tarefa_responsaveis")
-          .select("tarefa_id")
-          .eq("pessoa_id", pessoaId);
-        if (eVinc) throw eVinc;
-        idsFiltro = (vinc ?? []).map((r) => r.tarefa_id);
-        if (idsFiltro.length === 0) return [];
-      }
-
       let q = supabase
         .from("tarefas")
         .select(
           "id, numero, titulo, descricao, status, prioridade, responsavel_id, projeto_id, etapa_id, prazo, horas_estimadas, horas_reais, labels, links, comentarios, projeto:projetos(id, nome), responsaveis:tarefa_responsaveis(pessoa:pessoas(id, nome))"
         )
         .order("prazo", { ascending: true, nullsFirst: false });
-      if (idsFiltro) q = q.in("id", idsFiltro);
+
+      if (pessoaIds !== null) {
+        if (pessoaIds.length === 0) return [];
+        const { data: vinc, error: eVinc } = await supabase
+          .from("tarefa_responsaveis")
+          .select("tarefa_id")
+          .in("pessoa_id", pessoaIds);
+        if (eVinc) throw eVinc;
+        const idsResponsavel = [...new Set((vinc ?? []).map((r) => r.tarefa_id))];
+        if (idsResponsavel.length === 0) return [];
+        q = q.in("id", idsResponsavel);
+      }
+
       const { data, error } = await q;
       if (error) throw error;
       return (data ?? []).map((t) => {

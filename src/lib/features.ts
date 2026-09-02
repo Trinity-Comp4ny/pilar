@@ -232,7 +232,7 @@ export const FEATURES: readonly FeatureDefinition[] = [
   },
   {
     key: "meu_trabalho",
-    label: "Meu trabalho",
+    label: "Tarefas",
     description: "Suas disciplinas de projeto e tarefas do dia, num lugar só",
     group: "operacao",
     // core: acesso liberado sem depender do catálogo de features do banco.

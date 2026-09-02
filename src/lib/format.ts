@@ -60,6 +60,19 @@ export function formatDecimal(value: number, decimals = 2): string {
   return v.toLocaleString("pt-BR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
+/** Decimal de horas (1.5) → "1h 30min", estilo ClickUp. Null/zero vira null. */
+export function formatHoras(dec: number | null): string | null {
+  if (dec == null || !Number.isFinite(dec)) return null;
+  const totalMin = Math.round(dec * 60);
+  if (totalMin <= 0) return null;
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  const partes: string[] = [];
+  if (h > 0) partes.push(`${h}h`);
+  if (m > 0) partes.push(`${m}min`);
+  return partes.join(" ");
+}
+
 export function formatPercent(value: number, decimals = 1): string {
   const v = Number.isFinite(value) ? value : 0;
   return `${v.toLocaleString("pt-BR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}%`;

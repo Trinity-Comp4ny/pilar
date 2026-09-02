@@ -19,6 +19,7 @@ import {
 import { LabelsEditor } from "@/components/LabelsEditor";
 import { AvatarStack } from "@/components/AvatarStack";
 import { cn } from "@/lib/utils";
+import { formatHoras } from "@/lib/format";
 import type { PessoaOpcao } from "../hooks";
 import { PRIORIDADE_DOT_CLASS, PRIORIDADE_LABEL, PRIORIDADE_ORDER, type Prioridade } from "../status";
 
@@ -358,23 +359,11 @@ export function EtiquetasCell({ labels, editavel, onChange }: EtiquetasCellProps
 
 // --- Horas (estimadas / reais) -------------------------------------------
 
-/** Decimal de horas -> "1h 30m". Null/zero vira null. */
-function formatHoras(dec: number | null): string | null {
-  if (dec == null) return null;
-  const totalMin = Math.round(dec * 60);
-  if (totalMin <= 0) return null;
-  const h = Math.floor(totalMin / 60);
-  const m = totalMin % 60;
-  const partes: string[] = [];
-  if (h > 0) partes.push(`${h}h`);
-  if (m > 0) partes.push(`${m}m`);
-  return partes.join(" ");
-}
-
-function decParaHM(dec: number | null): { h: string; m: string } {
-  if (dec == null) return { h: "", m: "" };
-  const totalMin = Math.round(dec * 60);
-  return { h: String(Math.floor(totalMin / 60)), m: String(totalMin % 60) };
+function paraDecimalDigitado(raw: string): number | null {
+  const normalizado = raw.trim().replace(",", ".");
+  if (!normalizado) return null;
+  const dec = Number(normalizado);
+  return Number.isFinite(dec) && dec >= 0 ? dec : null;
 }
 
 type HorasCellProps = {
@@ -383,36 +372,34 @@ type HorasCellProps = {
   onChange: (dec: number | null) => void;
 };
 
+/** Campo único em decimal, estilo ClickUp: "1" = 1h, "0.5" = 30min. */
 export function HorasCell({ valor, editavel, onChange }: HorasCellProps) {
   const [open, setOpen] = useState(false);
-  const inicial = decParaHM(valor);
-  const [h, setH] = useState(inicial.h);
-  const [m, setM] = useState(inicial.m);
-  const texto = formatHoras(valor);
+  const [texto, setTexto] = useState(valor == null ? "" : String(valor));
+  const textoAtual = valor == null ? "" : String(valor);
+  const conteudoTexto = formatHoras(valor);
+  const previewDigitando = formatHoras(paraDecimalDigitado(texto));
 
-  // Sincroniza os campos quando o popover abre (valor pode ter mudado fora daqui).
+  // Sincroniza o campo quando o popover abre (valor pode ter mudado fora daqui).
   const abrir = (aberto: boolean) => {
     if (aberto) {
-      const hm = decParaHM(valor);
-      setH(hm.h);
-      setM(hm.m);
+      setTexto(textoAtual);
     } else {
-      salvar();
+      salvar(texto);
     }
     setOpen(aberto);
   };
 
-  const salvar = () => {
-    const horas = Number(h) || 0;
-    const min = Number(m) || 0;
-    const totalMin = horas * 60 + min;
-    const dec = totalMin > 0 ? Math.round((totalMin / 60) * 1000) / 1000 : null;
-    // Só grava se mudou de fato.
-    if (dec !== valor) onChange(dec);
+  const salvar = (raw: string) => {
+    const normalizado = raw.trim().replace(",", ".");
+    const dec = normalizado ? Number(normalizado) : null;
+    if (normalizado && (!Number.isFinite(dec) || (dec as number) < 0)) return;
+    const arredondado = dec == null ? null : Math.round(dec * 1000) / 1000;
+    if (arredondado !== valor) onChange(arredondado);
   };
 
-  const conteudo = texto ? (
-    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">{texto}</span>
+  const conteudo = conteudoTexto ? (
+    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">{conteudoTexto}</span>
   ) : editavel ? (
     <span className="inline-flex items-center gap-1 text-muted-foreground/60 group-hover:text-muted-foreground">
       <Clock className="h-3.5 w-3.5" />
@@ -427,42 +414,30 @@ export function HorasCell({ valor, editavel, onChange }: HorasCellProps) {
     <div onClick={pararClique}>
       <Popover open={open} onOpenChange={abrir}>
         <PopoverTrigger className="flex items-center rounded px-1 py-0.5 hover:bg-muted">{conteudo}</PopoverTrigger>
-        <PopoverContent align="start" className="w-56 p-3">
-          <div className="flex items-end gap-2">
-            <label className="flex-1 space-y-1">
-              <span className="text-[11px] text-muted-foreground">Horas</span>
+        <PopoverContent align="start" className="w-40 p-3">
+          <label className="space-y-1">
+            <span className="text-[11px] text-muted-foreground">Horas</span>
+            <div className="flex items-center gap-1.5">
               <Input
                 type="number"
                 min="0"
-                inputMode="numeric"
-                value={h}
-                onChange={(e) => setH(e.target.value)}
-                onBlur={salvar}
+                step="0.25"
+                inputMode="decimal"
+                value={texto}
+                onChange={(e) => setTexto(e.target.value)}
+                onBlur={(e) => salvar(e.target.value)}
                 className="h-9"
                 placeholder="0"
+                autoFocus
               />
-            </label>
-            <label className="flex-1 space-y-1">
-              <span className="text-[11px] text-muted-foreground">Minutos</span>
-              <Input
-                type="number"
-                min="0"
-                max="59"
-                inputMode="numeric"
-                value={m}
-                onChange={(e) => setM(e.target.value)}
-                onBlur={salvar}
-                className="h-9"
-                placeholder="0"
-              />
-            </label>
-          </div>
-          {(h || m) && (
+              {previewDigitando && <span className="text-xs text-muted-foreground">{previewDigitando}</span>}
+            </div>
+          </label>
+          {texto && (
             <button
               type="button"
               onClick={() => {
-                setH("");
-                setM("");
+                setTexto("");
                 if (valor !== null) onChange(null);
               }}
               className="mt-2 text-xs text-muted-foreground hover:text-foreground"

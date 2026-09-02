@@ -193,7 +193,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
       const sobrenome = formData.sobrenome.trim();
       const payload = {
         primeiro_nome: primeiroNome,
-        sobrenome: sobrenome || null,
+        sobrenome,
         nome: [primeiroNome, sobrenome].filter(Boolean).join(" "),
         cpf: formData.cpf || null,
         data_nascimento: formData.data_nascimento || null,
@@ -293,7 +293,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="sobrenome" className="text-xs">
-                  Sobrenome
+                  Sobrenome *
                 </Label>
                 <Input
                   id="sobrenome"

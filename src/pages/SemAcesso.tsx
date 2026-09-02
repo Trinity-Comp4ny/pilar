@@ -45,7 +45,7 @@ const FEATURE_LABEL: Record<Feature, string> = {
   metas: "Metas",
   portal_cliente: "Portal do Cliente",
   ai_chat: "Agentes",
-  meu_trabalho: "Meu trabalho",
+  meu_trabalho: "Tarefas",
   obras: "Obras",
   obras_fornecedores: "Fornecedores",
   obras_clima: "Clima",
