@@ -60,7 +60,6 @@ export const pessoaSchema = z
         },
         { message: "CPF inválido" }
       ),
-    rg: z.string().optional().default(""),
     data_nascimento: z.string().optional().default(""),
     tipo_contrato: z
       .enum([
@@ -82,7 +81,6 @@ export const pessoaSchema = z
     valor_m2: z.string().optional().default(""),
     cnpj: z.string().optional().default(""),
     razao_social: z.string().optional().default(""),
-    pis_nit: z.string().optional().default(""),
   })
   .refine((data) => data.tipo_contrato !== CONTRACT_TYPES.PJ || data.cnpj.trim().length > 0, {
     message: "CNPJ é obrigatório para PJ",
@@ -111,7 +109,6 @@ export const pessoaDefaultValues: PessoaFormData = {
   primeiro_nome: "",
   sobrenome: "",
   cpf: "",
-  rg: "",
   data_nascimento: "",
   tipo_contrato: CONTRACT_TYPES.CLT,
   status: PESSOA_STATUS.ATIVO,
@@ -125,5 +122,4 @@ export const pessoaDefaultValues: PessoaFormData = {
   valor_m2: "",
   cnpj: "",
   razao_social: "",
-  pis_nit: "",
 };

@@ -167,7 +167,7 @@ export function CalendarioPreview() {
             <p className="text-sm">Sem prazos nos próximos 30 dias</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[420px] overflow-y-auto">
             {eventosPorDia.map(([key, eventos]) => (
               <div key={key}>
                 <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1.5">

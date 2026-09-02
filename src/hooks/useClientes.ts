@@ -46,7 +46,6 @@ export interface ClienteFormData {
   endereco: string;
   contato: string;
   email: string;
-  tipo_nf: string;
   origem: string;
   contas_bancarias: ContaBancaria[];
   chaves_pix: ChavePix[];
@@ -78,8 +77,7 @@ export interface UseClientesPaginadosOptions {
   enabled?: boolean;
 }
 
-const triploToBool = (v: FiltroTriplo | undefined): boolean | null =>
-  v === "com" ? true : v === "sem" ? false : null;
+const triploToBool = (v: FiltroTriplo | undefined): boolean | null => (v === "com" ? true : v === "sem" ? false : null);
 
 export function useClientesPaginados(options: UseClientesPaginadosOptions = {}) {
   const {
@@ -173,11 +171,7 @@ export const useClientes = (options: UseClientesOptions = {}) => {
   const clientesQuery = useQuery({
     queryKey: ["clientes"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("clientes")
-        .select("*")
-        .is("deleted_at", null)
-        .order("nome");
+      const { data, error } = await supabase.from("clientes").select("*").is("deleted_at", null).order("nome");
 
       if (error) throw error;
       // Tipos gerados marcam campos opcionais como `string | null`, mas a interface
@@ -204,7 +198,6 @@ export const useClientes = (options: UseClientesOptions = {}) => {
         endereco: nullIfEmpty(data.endereco),
         contato: nullIfEmpty(data.contato),
         email: nullIfEmpty(data.email),
-        tipo_nf: nullIfEmpty(data.tipo_nf),
         origem: nullIfEmpty(data.origem),
         contas_bancarias: data.contas_bancarias as unknown as Json,
         chaves_pix: data.chaves_pix as unknown as Json,
