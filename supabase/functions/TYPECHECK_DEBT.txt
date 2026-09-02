@@ -6,18 +6,11 @@
 # não só de tipo: Authorization passada como opção de `.rpc()`, que não existe nessa
 # posição, então nunca chegava a valer) passam limpo e são gate bloqueante desde então.
 #
-# Esta lista é um ratchet: só encolhe. `scripts/check-migration-safety.test.ts`
+# Esta lista é um ratchet: só encolhe. `scripts/typecheck-debt.test.ts`
 # afirma o tamanho máximo, então adicionar uma linha aqui quebra a suíte de testes.
 # Corrigir uma função é remover a linha dela e ver o CI continuar verde.
 #
-# As 3 restantes são dormentes (IA Hub) com o mesmo erro dominante: o resultado de
-# `.from().select()` do supabase-js sendo tratado como Promise já resolvida (falta
-# `await`, ou o tipo esperado não é `PostgrestFilterBuilder`). Ver TS2739/TS2345 no
-# log do run 30174544332.
+# As 3 que aqui estavam eram dormentes (IA Hub) e foram deletadas junto com o
+# resto do IA Hub, não corrigidas — a dívida delas some com o código.
 #
 # Um path por linha, relativo à raiz do repo. Linha vazia e # são ignorados.
-
-# Dormentes (IA Hub), consertar quando a feature voltar a ser trabalhada
-supabase/functions/ai-pauta-reuniao/index.ts
-supabase/functions/ai-aditivo-copilot/index.ts
-supabase/functions/ai-diagnostico-precificacao/index.ts

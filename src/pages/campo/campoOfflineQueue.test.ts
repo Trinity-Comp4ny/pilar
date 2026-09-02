@@ -3,10 +3,13 @@ import {
   sincronizarFila,
   sincronizarItem,
   type FilaDiaItem,
+  type FilaEfetivo,
   type FilaFoto,
+  type FilaImpedimento,
   type FilaMedicao,
   type FilaStore,
   type FilaTarefaVinculo,
+  type FilaVisita,
   type SincronizarDeps,
 } from "./campoOfflineQueue";
 
@@ -43,6 +46,29 @@ const tarefaVinculo = (over: Partial<FilaTarefaVinculo> = {}): FilaTarefaVinculo
   ...over,
 });
 
+const efetivo = (over: Partial<FilaEfetivo> = {}): FilaEfetivo => ({
+  fornecedorId: "fornecedor-1",
+  fornecedorNome: null,
+  quantidade: 5,
+  enviada: false,
+  ...over,
+});
+
+const impedimento = (over: Partial<FilaImpedimento> = {}): FilaImpedimento => ({
+  descricao: "Falta de cimento",
+  tipo: "falta_material",
+  enviada: false,
+  ...over,
+});
+
+const visita = (over: Partial<FilaVisita> = {}): FilaVisita => ({
+  fornecedorId: "fornecedor-1",
+  fornecedorNome: null,
+  observacao: null,
+  enviada: false,
+  ...over,
+});
+
 const item = (over: Partial<FilaDiaItem> = {}): FilaDiaItem => ({
   id: "item-1",
   criadoEm: 1000,
@@ -50,6 +76,9 @@ const item = (over: Partial<FilaDiaItem> = {}): FilaDiaItem => ({
   fotos: [],
   medicoes: [],
   tarefas: [],
+  efetivos: [],
+  impedimentos: [],
+  visitas: [],
   tentativas: 0,
   ...over,
 });
@@ -59,6 +88,9 @@ const depsOk = (): SincronizarDeps => ({
   subirFoto: async () => ({ ok: true }),
   registrarMedicao: async () => ({ ok: true }),
   registrarTarefa: async () => ({ ok: true }),
+  registrarEfetivo: async () => ({ ok: true }),
+  registrarImpedimento: async () => ({ ok: true }),
+  registrarVisita: async () => ({ ok: true }),
 });
 
 function memStore(itens: FilaDiaItem[] = []): FilaStore {
@@ -111,7 +143,10 @@ describe("sincronizarItem", () => {
       ...depsOk(),
       subirFoto: async (_rdoId, f) => (f.imageBase64 === "falha" ? { ok: false } : { ok: true }),
     };
-    const r = await sincronizarItem(item({ fotos: [foto({ imageBase64: "ok" }), foto({ imageBase64: "falha" })] }), deps);
+    const r = await sincronizarItem(
+      item({ fotos: [foto({ imageBase64: "ok" }), foto({ imageBase64: "falha" })] }),
+      deps
+    );
     expect(r.ok).toBe(false);
     if (!r.ok) {
       expect(r.item.rdoId).toBe("rdo-1");
@@ -190,25 +225,104 @@ describe("sincronizarItem", () => {
         return { ok: true };
       },
     };
-    const jaEnviada = item({ rdoId: "rdo-1", tarefas: [tarefaVinculo({ enviada: true }), tarefaVinculo({ enviada: false })] });
+    const jaEnviada = item({
+      rdoId: "rdo-1",
+      tarefas: [tarefaVinculo({ enviada: true }), tarefaVinculo({ enviada: false })],
+    });
     const r = await sincronizarItem(jaEnviada, deps);
     expect(r.ok).toBe(true);
     expect(chamadas).toBe(1);
   });
 
-  it("foto, medição e tarefa falham de forma independente: cada uma guarda seu próprio progresso", async () => {
+  it("registra o efetivo por fornecedor pendente quando tudo dá certo", async () => {
+    let chamadas = 0;
+    const deps: SincronizarDeps = {
+      ...depsOk(),
+      registrarEfetivo: async () => {
+        chamadas++;
+        return { ok: true };
+      },
+    };
+    const r = await sincronizarItem(
+      item({ efetivos: [efetivo(), efetivo({ fornecedorId: null, fornecedorNome: "Empreiteira sem cadastro" })] }),
+      deps
+    );
+    expect(r.ok).toBe(true);
+    expect(chamadas).toBe(2);
+  });
+
+  it("retry não reenvia efetivo já marcado enviado (idempotência)", async () => {
+    let chamadas = 0;
+    const deps: SincronizarDeps = {
+      ...depsOk(),
+      registrarEfetivo: async () => {
+        chamadas++;
+        return { ok: true };
+      },
+    };
+    const jaEnviada = item({ rdoId: "rdo-1", efetivos: [efetivo({ enviada: true }), efetivo({ enviada: false })] });
+    const r = await sincronizarItem(jaEnviada, deps);
+    expect(r.ok).toBe(true);
+    expect(chamadas).toBe(1);
+  });
+
+  it("registra os impedimentos pendentes quando tudo dá certo", async () => {
+    let chamadas = 0;
+    const deps: SincronizarDeps = {
+      ...depsOk(),
+      registrarImpedimento: async () => {
+        chamadas++;
+        return { ok: true };
+      },
+    };
+    const r = await sincronizarItem(item({ impedimentos: [impedimento(), impedimento({ tipo: "clima" })] }), deps);
+    expect(r.ok).toBe(true);
+    expect(chamadas).toBe(2);
+  });
+
+  it("registra as visitas pendentes quando tudo dá certo", async () => {
+    let chamadas = 0;
+    const deps: SincronizarDeps = {
+      ...depsOk(),
+      registrarVisita: async () => {
+        chamadas++;
+        return { ok: true };
+      },
+    };
+    const r = await sincronizarItem(item({ visitas: [visita(), visita({ observacao: "vistoria" })] }), deps);
+    expect(r.ok).toBe(true);
+    expect(chamadas).toBe(2);
+  });
+
+  it("foto, medição, tarefa, efetivo, impedimento e visita falham de forma independente: cada uma guarda seu próprio progresso", async () => {
     const deps: SincronizarDeps = {
       ...depsOk(),
       subirFoto: async () => ({ ok: false }),
       registrarMedicao: async () => ({ ok: true }),
       registrarTarefa: async () => ({ ok: false }),
+      registrarEfetivo: async () => ({ ok: true }),
+      registrarImpedimento: async () => ({ ok: false }),
+      registrarVisita: async () => ({ ok: true }),
     };
-    const r = await sincronizarItem(item({ fotos: [foto()], medicoes: [medicao()], tarefas: [tarefaVinculo()] }), deps);
+    const r = await sincronizarItem(
+      item({
+        fotos: [foto()],
+        medicoes: [medicao()],
+        tarefas: [tarefaVinculo()],
+        efetivos: [efetivo()],
+        impedimentos: [impedimento()],
+        visitas: [visita()],
+      }),
+      deps
+    );
     expect(r.ok).toBe(false);
     if (!r.ok) {
-      expect(r.item.fotos[0].enviada).toBe(false); // foto falhou, continua pendente
-      expect(r.item.medicoes[0].enviada).toBe(true); // medição não foi afetada pela falha da foto
-      expect(r.item.tarefas[0].enviada).toBe(false); // tarefa falhou, independente das outras
+      expect(r.item.fotos[0].enviada).toBe(false);
+      expect(r.item.medicoes[0].enviada).toBe(true);
+      expect(r.item.tarefas[0].enviada).toBe(false);
+      expect(r.item.efetivos[0].enviada).toBe(true);
+      expect(r.item.impedimentos[0].enviada).toBe(false);
+      expect(r.item.visitas[0].enviada).toBe(true);
     }
   });
 });

@@ -9,9 +9,12 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { TarefasEditor } from "@/components/TarefasEditor";
+import { SeletorResponsaveis } from "@/components/SeletorResponsaveis";
+import { AvatarStack } from "@/components/AvatarStack";
 import { toast } from "sonner";
 import { useFluxosDisciplinas, useCreateFluxo, useUpdateFluxo, useDeleteFluxo } from "@/hooks/useFluxosDisciplinas";
-import type { FluxoDisciplinas, FluxoEtapa } from "@/types/fluxoDisciplinas";
+import type { FluxoDisciplinas, FluxoDisciplinaTemplate, FluxoChecklistItemTemplate } from "@/types/fluxoDisciplinas";
+import { duracaoEfetiva, responsaveisEfetivos } from "@/lib/fluxoCascata";
 import { FluxoPipelineGraph, type FluxoPipelineStage } from "./FluxoPipelineGraph";
 import {
   Plus,
@@ -23,8 +26,8 @@ import {
   ArrowLeft,
   GitBranch,
   Layers,
-  User,
   ListChecks,
+  Lock,
 } from "lucide-react";
 
 interface FluxoDisciplinasDialogProps {
@@ -34,33 +37,46 @@ interface FluxoDisciplinasDialogProps {
   pessoas: { id: string; nome: string }[];
 }
 
-/** Etapa do form: `_key` é só de UI (estável ao reordenar), nunca persistida. */
-type FluxoEtapaForm = FluxoEtapa & { _key: string };
+/** Disciplina do form: `_key` é só de UI (estável ao reordenar), nunca persistida. */
+type FluxoDisciplinaForm = FluxoDisciplinaTemplate & { _key: string };
 
 interface FluxoFormState {
   nome: string;
   descricao: string;
-  etapas: FluxoEtapaForm[];
+  disciplinas: FluxoDisciplinaForm[];
 }
 
-function novaEtapaForm(ordem: number): FluxoEtapaForm {
-  return { ordem, nome: `Etapa ${ordem}`, disciplinas: [], _key: crypto.randomUUID() };
+const emptyForm: FluxoFormState = { nome: "", descricao: "", disciplinas: [] };
+
+/** Colunas (posições `ordem`) derivadas das disciplinas — não existe entidade "coluna" persistida. */
+function colunas(disciplinas: { ordem: number }[]): number[] {
+  return Array.from(new Set(disciplinas.map((d) => d.ordem))).sort((a, b) => a - b);
 }
 
-const emptyForm: FluxoFormState = { nome: "", descricao: "", etapas: [] };
+/** Reatribui `ordem` pra ficar contíguo (1..N) a partir das colunas em uso, sem buracos após remoção. */
+function renumerarOrdens(disciplinas: FluxoDisciplinaForm[]): FluxoDisciplinaForm[] {
+  const mapa = new Map(colunas(disciplinas).map((ordem, i) => [ordem, i + 1]));
+  return disciplinas.map((d) => ({ ...d, ordem: mapa.get(d.ordem)! }));
+}
 
-function buildPreviewStages(etapas: FluxoEtapaForm[]): FluxoPipelineStage[] {
-  return etapas.map((etapa, i) => ({
-    key: etapa._key,
-    titulo: etapa.nome || `Etapa ${i + 1}`,
-    subtitulo: etapa.duracao_dias_uteis ? `${etapa.duracao_dias_uteis} dias úteis` : undefined,
-    nodes: etapa.disciplinas.map((disc, di) => ({
-      key: `${etapa._key}-${di}`,
-      titulo: disc.nome,
-      status: "nao_iniciado" as const,
-      responsavelNome: disc.responsavel_nome || undefined,
-      checklistLabel: disc.checklist_padrao?.length ? `${disc.checklist_padrao.length} itens` : undefined,
-    })),
+function buildPreviewStages(disciplinas: FluxoDisciplinaForm[]): FluxoPipelineStage[] {
+  return colunas(disciplinas).map((ordem) => ({
+    key: String(ordem),
+    titulo: String(ordem),
+    nodes: disciplinas
+      .filter((d) => d.ordem === ordem)
+      .map((d) => {
+        const dias = duracaoEfetiva(d);
+        const resp = responsaveisEfetivos(d);
+        return {
+          key: d._key,
+          titulo: d.nome,
+          status: "nao_iniciado" as const,
+          responsavelNome: resp.nomes.length ? resp.nomes.join(", ") : undefined,
+          metaLabel: dias ? `${dias} dias úteis` : undefined,
+          checklistLabel: d.checklist_padrao?.length ? `${d.checklist_padrao.length} itens` : undefined,
+        };
+      }),
   }));
 }
 
@@ -73,7 +89,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
   const [mode, setMode] = useState<"list" | "form">("list");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FluxoFormState>(emptyForm);
-  const [expandedEtapas, setExpandedEtapas] = useState<string[]>([]);
+  const [expandedColunas, setExpandedColunas] = useState<string[]>([]);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const resetToList = () => {
@@ -83,22 +99,17 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
   };
 
   const handleEdit = (fluxo: FluxoDisciplinas) => {
-    const etapas = fluxo.etapas.map((e) => ({
-      ...e,
-      disciplinas: e.disciplinas.map((d) => ({ ...d })),
-      _key: crypto.randomUUID(),
-    }));
+    const disc = fluxo.disciplinas.map((d) => ({ ...d, _key: crypto.randomUUID() }));
     setEditingId(fluxo.id);
-    setForm({ nome: fluxo.nome, descricao: fluxo.descricao || "", etapas });
-    setExpandedEtapas(etapas.map((e) => e._key));
+    setForm({ nome: fluxo.nome, descricao: fluxo.descricao || "", disciplinas: disc });
+    setExpandedColunas(colunas(disc).map(String));
     setMode("form");
   };
 
   const handleNew = () => {
-    const etapa = novaEtapaForm(1);
     setEditingId(null);
-    setForm({ nome: "", descricao: "", etapas: [etapa] });
-    setExpandedEtapas([etapa._key]);
+    setForm(emptyForm);
+    setExpandedColunas([]);
     setMode("form");
   };
 
@@ -118,20 +129,15 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
       toast.error("Nome do fluxo é obrigatório");
       return;
     }
-    if (form.etapas.length === 0) {
-      toast.error("Adicione pelo menos uma etapa");
-      return;
-    }
-    const etapaVazia = form.etapas.find((e) => e.disciplinas.length === 0);
-    if (etapaVazia) {
-      toast.error(`Etapa "${etapaVazia.nome}" não tem disciplinas`);
+    if (form.disciplinas.length === 0) {
+      toast.error("Adicione pelo menos uma disciplina");
       return;
     }
 
     const payload = {
       nome: form.nome.trim(),
       descricao: form.descricao.trim() || undefined,
-      etapas: form.etapas.map(({ _key, ...etapa }, i) => ({ ...etapa, ordem: i + 1 })),
+      disciplinas: form.disciplinas.map(({ _key, ...d }) => d),
     };
 
     try {
@@ -148,95 +154,65 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
     }
   };
 
-  const addEtapa = () => {
-    const etapa = novaEtapaForm(form.etapas.length + 1);
-    setForm((prev) => ({ ...prev, etapas: [...prev.etapas, etapa] }));
-    setExpandedEtapas((prev) => [...prev, etapa._key]);
+  const addDisciplina = (ordem: number, nome: string) => {
+    const nova: FluxoDisciplinaForm = { ordem, nome, _key: crypto.randomUUID() };
+    setForm((prev) => ({ ...prev, disciplinas: [...prev.disciplinas, nova] }));
+    setExpandedColunas((prev) => (prev.includes(String(ordem)) ? prev : [...prev, String(ordem)]));
   };
 
-  const removeEtapa = (index: number) => {
-    setForm((prev) => ({ ...prev, etapas: prev.etapas.filter((_, i) => i !== index) }));
+  const addNovaColuna = (nome: string) => {
+    const ordens = colunas(form.disciplinas);
+    addDisciplina(ordens.length > 0 ? Math.max(...ordens) + 1 : 1, nome);
   };
 
-  const updateEtapaNome = (index: number, nome: string) => {
-    setForm((prev) => ({
-      ...prev,
-      etapas: prev.etapas.map((e, i) => (i === index ? { ...e, nome } : e)),
-    }));
+  const removeDisciplina = (key: string) => {
+    setForm((prev) => ({ ...prev, disciplinas: renumerarOrdens(prev.disciplinas.filter((d) => d._key !== key)) }));
   };
 
-  const updateEtapaDuracao = (index: number, raw: string) => {
-    const parsed = raw.trim() ? Math.max(1, parseInt(raw, 10)) : undefined;
-    setForm((prev) => ({
-      ...prev,
-      etapas: prev.etapas.map((e, i) =>
-        i === index ? { ...e, duracao_dias_uteis: Number.isNaN(parsed) ? undefined : parsed } : e
-      ),
-    }));
-  };
-
-  const moveEtapa = (index: number, direction: "up" | "down") => {
-    const target = direction === "up" ? index - 1 : index + 1;
-    if (target < 0 || target >= form.etapas.length) return;
+  const moveColuna = (ordem: number, direction: "up" | "down") => {
     setForm((prev) => {
-      const etapas = [...prev.etapas];
-      [etapas[index], etapas[target]] = [etapas[target], etapas[index]];
-      return { ...prev, etapas };
+      const ordens = colunas(prev.disciplinas);
+      const idx = ordens.indexOf(ordem);
+      const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+      if (targetIdx < 0 || targetIdx >= ordens.length) return prev;
+      const targetOrdem = ordens[targetIdx];
+      return {
+        ...prev,
+        disciplinas: prev.disciplinas.map((d) => {
+          if (d.ordem === ordem) return { ...d, ordem: targetOrdem };
+          if (d.ordem === targetOrdem) return { ...d, ordem };
+          return d;
+        }),
+      };
     });
   };
 
-  const addDisciplinaToEtapa = (etapaIndex: number, disciplinaNome: string) => {
+  const updateDisciplina = (key: string, patch: Partial<FluxoDisciplinaForm>) => {
     setForm((prev) => ({
       ...prev,
-      etapas: prev.etapas.map((e, i) =>
-        i === etapaIndex ? { ...e, disciplinas: [...e.disciplinas, { nome: disciplinaNome }] } : e
-      ),
+      disciplinas: prev.disciplinas.map((d) => (d._key === key ? { ...d, ...patch } : d)),
     }));
   };
 
-  const removeDisciplinaFromEtapa = (etapaIndex: number, discIndex: number) => {
-    setForm((prev) => ({
-      ...prev,
-      etapas: prev.etapas.map((e, i) =>
-        i === etapaIndex ? { ...e, disciplinas: e.disciplinas.filter((_, di) => di !== discIndex) } : e
-      ),
-    }));
+  const updateResponsaveis = (key: string, ids: string[]) => {
+    const nomes = ids.map((id) => pessoas.find((p) => p.id === id)?.nome).filter((n): n is string => !!n);
+    updateDisciplina(key, { responsaveis_ids: ids, responsaveis_nomes: nomes });
   };
 
-  const updateDisciplinaResponsavel = (etapaIndex: number, discIndex: number, pessoaId: string) => {
-    const pessoa = pessoas.find((p) => p.id === pessoaId);
-    setForm((prev) => ({
-      ...prev,
-      etapas: prev.etapas.map((e, i) =>
-        i === etapaIndex
-          ? {
-              ...e,
-              disciplinas: e.disciplinas.map((d, di) =>
-                di === discIndex ? { ...d, responsavel_id: pessoaId, responsavel_nome: pessoa?.nome || "" } : d
-              ),
-            }
-          : e
-      ),
-    }));
+  const updateDuracao = (key: string, raw: string) => {
+    const parsed = raw.trim() ? parseInt(raw, 10) : NaN;
+    const clean = Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+    updateDisciplina(key, { duracao_dias_uteis: clean });
   };
 
-  const updateDisciplinaChecklist = (etapaIndex: number, discIndex: number, checklist: string[]) => {
-    setForm((prev) => ({
-      ...prev,
-      etapas: prev.etapas.map((e, i) =>
-        i === etapaIndex
-          ? {
-              ...e,
-              disciplinas: e.disciplinas.map((d, di) => (di === discIndex ? { ...d, checklist_padrao: checklist } : d)),
-            }
-          : e
-      ),
-    }));
+  const updateChecklist = (key: string, checklist: FluxoChecklistItemTemplate[]) => {
+    updateDisciplina(key, { checklist_padrao: checklist });
   };
 
-  const usedDisciplinas = new Set(form.etapas.flatMap((e) => e.disciplinas.map((d) => d.nome)));
-  const totalDisciplinas = form.etapas.reduce((sum, e) => sum + e.disciplinas.length, 0);
-  const previewStages = useMemo(() => buildPreviewStages(form.etapas), [form.etapas]);
+  const usedNomes = new Set(form.disciplinas.map((d) => d.nome));
+  const selecionaveis = disciplinas.filter((d) => !usedNomes.has(d.nome));
+  const ordens = colunas(form.disciplinas);
+  const previewStages = useMemo(() => buildPreviewStages(form.disciplinas), [form.disciplinas]);
 
   return (
     <>
@@ -274,7 +250,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
               ) : (
                 <div className="space-y-2 max-h-[400px] overflow-y-auto">
                   {fluxos.map((fluxo) => {
-                    const totalDiscs = fluxo.etapas.reduce((s, e) => s + e.disciplinas.length, 0);
+                    const fluxoOrdens = colunas(fluxo.disciplinas);
                     return (
                       <div
                         key={fluxo.id}
@@ -288,18 +264,21 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                             )}
                             <div className="flex items-center gap-2 mt-2">
                               <Badge variant="secondary" className="text-[10px]">
-                                {fluxo.etapas.length} etapa{fluxo.etapas.length !== 1 ? "s" : ""}
+                                {fluxoOrdens.length} coluna{fluxoOrdens.length !== 1 ? "s" : ""}
                               </Badge>
                               <Badge variant="outline" className="text-[10px]">
-                                {totalDiscs} disciplina{totalDiscs !== 1 ? "s" : ""}
+                                {fluxo.disciplinas.length} disciplina{fluxo.disciplinas.length !== 1 ? "s" : ""}
                               </Badge>
                             </div>
                             <div className="flex items-center gap-1 mt-2 flex-wrap">
-                              {fluxo.etapas.map((etapa, i) => (
-                                <div key={i} className="flex items-center gap-1">
+                              {fluxoOrdens.map((ordem, i) => (
+                                <div key={ordem} className="flex items-center gap-1">
                                   {i > 0 && <span className="text-muted-foreground text-[10px]">→</span>}
                                   <span className="text-[10px] bg-white border rounded px-1.5 py-0.5">
-                                    {etapa.disciplinas.map((d) => d.nome).join(", ")}
+                                    {fluxo.disciplinas
+                                      .filter((d) => d.ordem === ordem)
+                                      .map((d) => d.nome)
+                                      .join(", ")}
                                   </span>
                                 </div>
                               ))}
@@ -368,59 +347,42 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                 <ResizablePanel defaultSize={62} minSize={40}>
                   <div className="h-full overflow-y-auto p-5 space-y-3">
                     <Label className="text-sm font-semibold block">
-                      Etapas ({form.etapas.length}), {totalDisciplinas} disciplina{totalDisciplinas !== 1 ? "s" : ""}
+                      {ordens.length} coluna{ordens.length !== 1 ? "s" : ""}, {form.disciplinas.length} disciplina
+                      {form.disciplinas.length !== 1 ? "s" : ""}
                     </Label>
 
                     <Accordion
                       type="multiple"
-                      value={expandedEtapas}
-                      onValueChange={setExpandedEtapas}
+                      value={expandedColunas}
+                      onValueChange={setExpandedColunas}
                       className="space-y-3"
                     >
-                      {form.etapas.map((etapa, etapaIdx) => {
-                        const selectableDisciplinas = disciplinas
-                          .filter(
-                            (d) => !usedDisciplinas.has(d.nome) || etapa.disciplinas.some((ed) => ed.nome === d.nome)
-                          )
-                          .filter((d) => !etapa.disciplinas.some((ed) => ed.nome === d.nome));
+                      {ordens.map((ordem, ordemIdx) => {
+                        const discsDaColuna = form.disciplinas.filter((d) => d.ordem === ordem);
 
                         return (
                           <AccordionItem
-                            key={etapa._key}
-                            value={etapa._key}
+                            key={ordem}
+                            value={String(ordem)}
                             className="rounded-lg border bg-white overflow-hidden"
                           >
                             <div className="flex items-center gap-2 px-3 py-2 bg-muted/30">
                               <AccordionTrigger className="p-0 hover:no-underline flex-shrink-0">
                                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-info-soft text-info-strong text-sm font-bold">
-                                  {etapaIdx + 1}
+                                  {ordem}
                                 </span>
                               </AccordionTrigger>
-                              <Input
-                                value={etapa.nome}
-                                onChange={(e) => updateEtapaNome(etapaIdx, e.target.value)}
-                                placeholder="Nome da etapa"
-                                className="h-9 text-sm font-medium flex-1"
-                              />
-                              <div className="flex items-center gap-1.5 rounded-full border bg-white px-2.5 h-8 flex-shrink-0">
-                                <Input
-                                  type="number"
-                                  min={1}
-                                  value={etapa.duracao_dias_uteis ?? ""}
-                                  onChange={(e) => updateEtapaDuracao(etapaIdx, e.target.value)}
-                                  placeholder="—"
-                                  className="h-6 w-9 border-none p-0 text-xs text-right shadow-none focus-visible:ring-0"
-                                />
-                                <span className="text-[11px] text-muted-foreground whitespace-nowrap">dias úteis</span>
-                              </div>
+                              <span className="flex-1 text-xs text-muted-foreground">
+                                {discsDaColuna.length > 1 ? "Disciplinas em paralelo" : "Disciplina"}
+                              </span>
                               <div className="flex gap-0.5 flex-shrink-0">
                                 <Button
                                   type="button"
                                   variant="ghost"
                                   size="sm"
                                   className="h-8 w-8 p-0"
-                                  disabled={etapaIdx === 0}
-                                  onClick={() => moveEtapa(etapaIdx, "up")}
+                                  disabled={ordemIdx === 0}
+                                  onClick={() => moveColuna(ordem, "up")}
                                 >
                                   <ArrowUp size={14} />
                                 </Button>
@@ -429,94 +391,109 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                   variant="ghost"
                                   size="sm"
                                   className="h-8 w-8 p-0"
-                                  disabled={etapaIdx === form.etapas.length - 1}
-                                  onClick={() => moveEtapa(etapaIdx, "down")}
+                                  disabled={ordemIdx === ordens.length - 1}
+                                  onClick={() => moveColuna(ordem, "down")}
                                 >
                                   <ArrowDown size={14} />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 text-danger-mid"
-                                  onClick={() => removeEtapa(etapaIdx)}
-                                >
-                                  <Trash2 size={14} />
                                 </Button>
                               </div>
                             </div>
 
                             <AccordionContent className="px-3">
                               <div className="space-y-2 pt-1">
-                                {etapa.disciplinas.map((disc, discIdx) => (
-                                  <div key={discIdx} className="rounded-md border bg-muted/30 p-2.5 space-y-2">
-                                    <div className="flex items-center gap-2">
-                                      <Badge variant="secondary" className="text-sm flex-shrink-0">
-                                        {disc.nome}
-                                      </Badge>
-                                      <Select
-                                        value={disc.responsavel_id || ""}
-                                        onValueChange={(val) => updateDisciplinaResponsavel(etapaIdx, discIdx, val)}
-                                      >
-                                        <SelectTrigger className="h-8 text-xs flex-1 min-w-[140px]">
-                                          <SelectValue placeholder="Responsável (opcional)">
-                                            {disc.responsavel_nome ? (
-                                              <span className="flex items-center gap-1">
-                                                <User className="h-3 w-3" />
-                                                {disc.responsavel_nome}
-                                              </span>
-                                            ) : (
-                                              "Responsável (opcional)"
-                                            )}
-                                          </SelectValue>
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {pessoas.map((p) => (
-                                            <SelectItem key={p.id} value={p.id} className="text-sm">
-                                              {p.nome}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                      <button
-                                        type="button"
-                                        className="text-muted-foreground hover:text-danger-mid flex-shrink-0"
-                                        onClick={() => removeDisciplinaFromEtapa(etapaIdx, discIdx)}
-                                      >
-                                        <X size={14} />
-                                      </button>
-                                    </div>
-                                    <div className="border-t pt-2">
-                                      <Label className="text-[11px] text-muted-foreground mb-1 flex items-center gap-1">
-                                        <ListChecks className="h-3 w-3" /> Tarefas do checklist
-                                      </Label>
-                                      <TarefasEditor
-                                        value={disc.checklist_padrao ?? []}
-                                        onChange={(next) => updateDisciplinaChecklist(etapaIdx, discIdx, next)}
-                                      />
-                                    </div>
-                                  </div>
-                                ))}
+                                {discsDaColuna.map((disc) => {
+                                  const duracaoTravada = (disc.checklist_padrao ?? []).some(
+                                    (i) => typeof i.duracao_dias_uteis === "number" && i.duracao_dias_uteis > 0
+                                  );
+                                  const responsavelTravado = (disc.checklist_padrao ?? []).some(
+                                    (i) => (i.responsaveis_ids ?? []).length > 0
+                                  );
+                                  const efetiva = duracaoEfetiva(disc);
+                                  const resp = responsaveisEfetivos(disc);
 
-                                {selectableDisciplinas.length > 0 && (
-                                  <Select onValueChange={(val) => addDisciplinaToEtapa(etapaIdx, val)} value="">
+                                  return (
+                                    <div key={disc._key} className="rounded-md border bg-muted/30 p-2.5 space-y-2">
+                                      <div className="flex items-center gap-2">
+                                        <Badge variant="secondary" className="text-sm flex-shrink-0">
+                                          {disc.nome}
+                                        </Badge>
+                                        <div className="flex items-center gap-1.5 rounded-full border bg-white px-2.5 h-8 flex-shrink-0">
+                                          <Input
+                                            type="number"
+                                            min={0}
+                                            disabled={duracaoTravada}
+                                            value={duracaoTravada ? (efetiva ?? "") : (disc.duracao_dias_uteis ?? "")}
+                                            onChange={(e) => updateDuracao(disc._key, e.target.value)}
+                                            placeholder="—"
+                                            title={
+                                              duracaoTravada ? "Resolvida pela soma dos dias das tarefas" : undefined
+                                            }
+                                            className="h-6 w-9 border-none p-0 text-xs text-right shadow-none focus-visible:ring-0 disabled:opacity-100"
+                                          />
+                                          <span className="flex items-center gap-1 text-[11px] text-muted-foreground whitespace-nowrap">
+                                            dias úteis
+                                            {duracaoTravada && <Lock className="h-3 w-3" />}
+                                          </span>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          className="ml-auto text-muted-foreground hover:text-danger-mid flex-shrink-0"
+                                          onClick={() => removeDisciplina(disc._key)}
+                                        >
+                                          <X size={14} />
+                                        </button>
+                                      </div>
+
+                                      {responsavelTravado ? (
+                                        <div
+                                          className="flex items-center gap-2 text-[11px] text-muted-foreground"
+                                          title="Definidos por tarefa"
+                                        >
+                                          <AvatarStack pessoas={resp.nomes} size="xs" />
+                                          <span className="truncate">{resp.nomes.join(", ")}</span>
+                                          <Lock className="h-3 w-3 flex-shrink-0" />
+                                        </div>
+                                      ) : (
+                                        <div className="space-y-1">
+                                          <SeletorResponsaveis
+                                            value={disc.responsaveis_ids ?? []}
+                                            pessoas={pessoas}
+                                            onChange={(ids) => updateResponsaveis(disc._key, ids)}
+                                          />
+                                          <p className="text-[10px] text-muted-foreground">
+                                            Usado se nenhuma tarefa tiver responsável
+                                          </p>
+                                        </div>
+                                      )}
+
+                                      <div className="border-t pt-2">
+                                        <Label className="text-[11px] text-muted-foreground mb-1 flex items-center gap-1">
+                                          <ListChecks className="h-3 w-3" /> Tarefas (responsável e dias úteis por
+                                          tarefa)
+                                        </Label>
+                                        <TarefasEditor
+                                          value={disc.checklist_padrao ?? []}
+                                          onChange={(next) => updateChecklist(disc._key, next)}
+                                          pessoas={pessoas}
+                                        />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+
+                                {selecionaveis.length > 0 && (
+                                  <Select onValueChange={(val) => addDisciplina(ordem, val)} value="">
                                     <SelectTrigger className="h-9 text-sm">
-                                      <SelectValue placeholder="Adicionar disciplina..." />
+                                      <SelectValue placeholder="+ disciplina em paralelo aqui" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {selectableDisciplinas.map((d) => (
+                                      {selecionaveis.map((d) => (
                                         <SelectItem key={d.id} value={d.nome} className="text-sm">
                                           {d.nome}
                                         </SelectItem>
                                       ))}
                                     </SelectContent>
                                   </Select>
-                                )}
-
-                                {etapa.disciplinas.length > 1 && (
-                                  <p className="text-xs text-muted-foreground">
-                                    Disciplinas nesta etapa rodam em paralelo
-                                  </p>
                                 )}
                               </div>
                             </AccordionContent>
@@ -525,9 +502,20 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                       })}
                     </Accordion>
 
-                    <Button type="button" variant="outline" size="sm" className="w-full h-9" onClick={addEtapa}>
-                      <Plus className="mr-1 h-4 w-4" /> Adicionar etapa
-                    </Button>
+                    {selecionaveis.length > 0 && (
+                      <Select onValueChange={(val) => addNovaColuna(val)} value="">
+                        <SelectTrigger className="h-9 text-sm w-full border-dashed">
+                          <SelectValue placeholder="+ próxima coluna" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {selecionaveis.map((d) => (
+                            <SelectItem key={d.id} value={d.nome} className="text-sm">
+                              {d.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                 </ResizablePanel>
 
@@ -539,12 +527,10 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                       <Label className="text-xs font-semibold text-muted-foreground">Prévia ao vivo</Label>
                     </div>
                     <div className="flex-1 min-h-0 overflow-auto p-4">
-                      {previewStages.length === 0 || totalDisciplinas === 0 ? (
+                      {previewStages.length === 0 || form.disciplinas.length === 0 ? (
                         <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground px-6">
                           <GitBranch className="h-8 w-8 opacity-30" />
-                          <p className="text-xs max-w-[200px]">
-                            Adicione etapas e disciplinas para ver o fluxo montado aqui
-                          </p>
+                          <p className="text-xs max-w-[200px]">Adicione disciplinas para ver o fluxo montado aqui</p>
                         </div>
                       ) : (
                         <FluxoPipelineGraph stages={previewStages} />

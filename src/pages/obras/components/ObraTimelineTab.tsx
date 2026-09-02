@@ -4,12 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { climaLabel } from "@/lib/obras";
 import { useObraFrentes } from "@/hooks/useObraFrentes";
 import { useObraTarefas } from "@/hooks/useObraTarefas";
 import { useObraRdos } from "@/hooks/useObraRdo";
 import type { ObraResumo } from "@/hooks/useObras";
+import { ObraCurvaS } from "./ObraCurvaS";
 
 /** Marcos de faturamento do projeto (somente leitura no MVP — spec 015). */
 function useMarcosProjeto(projetoId: string | null) {
@@ -41,6 +43,7 @@ function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode
 }
 
 export function ObraTimelineTab({ obra, onIrParaDiario }: { obra: ObraResumo; onIrParaDiario: () => void }) {
+  const formatCurrency = useMoneyMask();
   const { data: frentes = [] } = useObraFrentes(obra.id);
   const { data: tarefas = [] } = useObraTarefas(obra.id);
   const { data: rdos = [] } = useObraRdos(obra.id);
@@ -61,6 +64,12 @@ export function ObraTimelineTab({ obra, onIrParaDiario }: { obra: ObraResumo; on
         </div>
         <Progress value={obra.avanco} className="h-2" />
       </Bloco>
+
+      <div className="lg:col-span-2">
+        <Bloco titulo="Curva S — planejado × realizado">
+          <ObraCurvaS obraId={obra.id} />
+        </Bloco>
+      </div>
 
       <Bloco titulo="Etapas">
         {frentes.length === 0 ? (
@@ -117,19 +126,25 @@ export function ObraTimelineTab({ obra, onIrParaDiario }: { obra: ObraResumo; on
         ) : marcos.length === 0 ? (
           <p className="text-sm text-muted-foreground">O projeto não tem marcos cadastrados.</p>
         ) : (
-          <ul className="space-y-1.5">
-            {marcos.map((m) => (
-              <li key={m.id} className="flex items-center justify-between gap-2 text-sm">
-                <span className="inline-flex min-w-0 items-center gap-1.5">
-                  <Flag className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                  <span className="truncate text-ink">{m.nome}</span>
-                </span>
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {m.data_prevista ? formatDate(m.data_prevista) : "sem data"} · {formatCurrency(m.valor)}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <>
+            {/* Contexto pra decidir se já é hora de faturar (spec 065) — avanço
+                da OBRA inteira, não do marco específico: a UI não pode implicar
+                uma precisão por marco que o dado não sustenta. */}
+            <p className="-mt-1 text-xs text-muted-foreground">Obra {obra.avanco}% concluída</p>
+            <ul className="space-y-1.5">
+              {marcos.map((m) => (
+                <li key={m.id} className="flex items-center justify-between gap-2 text-sm">
+                  <span className="inline-flex min-w-0 items-center gap-1.5">
+                    <Flag className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="truncate text-ink">{m.nome}</span>
+                  </span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {m.data_prevista ? formatDate(m.data_prevista) : "sem data"} · {formatCurrency(m.valor)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </Bloco>
     </div>

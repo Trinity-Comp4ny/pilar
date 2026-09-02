@@ -171,6 +171,27 @@ export async function getSubscriptionPayments(subscriptionId: string): Promise<A
   return resp.data ?? [];
 }
 
+// Cobrança avulsa (não recorrente) — usada pela compra de pacote de tokens (SPEC 077),
+// diferente de createSubscription que gera cobranças recorrentes.
+export interface CreatePaymentParams {
+  customer: string;
+  billingType: "CREDIT_CARD" | "PIX" | "BOLETO";
+  value: number;
+  dueDate: string; // YYYY-MM-DD
+  description?: string;
+  externalReference?: string;
+  creditCard?: CreateSubscriptionParams["creditCard"];
+  creditCardHolderInfo?: CreateSubscriptionParams["creditCardHolderInfo"];
+  remoteIp?: string;
+}
+
+export async function createPayment(params: CreatePaymentParams): Promise<AsaasPayment> {
+  return asaasFetch<AsaasPayment>("/payments", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}
+
 export interface AsaasPixQrCode {
   encodedImage: string;
   payload: string;

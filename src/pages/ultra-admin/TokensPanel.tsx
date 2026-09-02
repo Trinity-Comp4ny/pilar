@@ -1,0 +1,315 @@
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Coins, AlertTriangle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { DataTable, type ColumnDef } from "@/components/data/DataTable";
+import { toDataSourceResult } from "@/types/dataSource";
+import { Badge } from "@/components/ui/badge";
+import { formatNumberCompact } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
+import { agentKeyLabel } from "@/components/settings/useExtratoTokens";
+
+interface UsoEmpresaRow {
+  empresaId: string;
+  empresaNome: string;
+  planoNome: string | null;
+  tokensTotal: number;
+  custoEstimado: number;
+  receitaPlano: number | null;
+  receitaPacotes: number;
+  receitaEstimada: number | null;
+  margemEstimada: number | null;
+  tokensHoje: number;
+  mediaAnteriorGasto: number;
+  anomaliaGasto: boolean;
+}
+
+interface UsoAgenteRow {
+  agentKey: string;
+  eventos: number;
+  tokensTotal: number;
+  custoEstimado: number;
+}
+
+function mesmoMes(mes: string): boolean {
+  const d = new Date(mes);
+  const now = new Date();
+  return d.getUTCFullYear() === now.getUTCFullYear() && d.getUTCMonth() === now.getUTCMonth();
+}
+
+// ai_token_ledger.custo_estimado é calculado a partir de ai_model_precos, que segue
+// o preço público do provedor (USD — ver seed do Gemini 2.5 Flash na migration
+// 20260867000000). O câmbio de referência (R$5,50) é o mesmo usado no MOTOR_DE_TOKENS.md
+// e no DECISOES.md de 2026-09-01: só para leitura neste painel, nunca grava BRL no
+// ledger (o COGS snapshot fica em USD, moeda nativa do provedor, de propósito).
+const USD_BRL_REFERENCIA = 5.5;
+function custoEmBrl(custoUsd: number): number {
+  return custoUsd * USD_BRL_REFERENCIA;
+}
+
+// Painel cross-tenant de custo/margem da camada de IA (motor de tokens, spec 076,
+// Fase 5). Lê as views por empresa/agente (RLS com bypass de is_ultra_admin(), ver
+// migration 20260881000000) — nenhum edge function novo, mesmo padrão de leitura
+// direta já usado pelo ultra-admin em admin_audit_logs/profiles.
+export function TokensPanel() {
+  const query = useQuery({
+    queryKey: ["ultra-admin-tokens"],
+    queryFn: async () => {
+      const [
+        { data: usoEmpresa, error: e1 },
+        { data: empresas, error: e2 },
+        { data: subs, error: e3 },
+        { data: usoAgente, error: e4 },
+        { data: compras, error: e5 },
+        { data: anomalias, error: e6 },
+      ] = await Promise.all([
+        supabase
+          .from("v_uso_tokens_por_empresa")
+          .select("empresa_id, mes, tokens_input, tokens_output, custo_estimado"),
+        supabase.from("empresas").select("id, nome"),
+        supabase
+          .from("pilar_subscriptions")
+          .select("empresa_id, status, asaas_subscription_id, pilar_subscription_plans(nome, preco_mensal)"),
+        supabase
+          .from("v_uso_tokens_por_agente")
+          .select("agent_key, mes, eventos, tokens_input, tokens_output, custo_estimado"),
+        supabase.from("pilar_token_pack_purchases").select("empresa_id, valor_centavos, paid_at").eq("status", "paid"),
+        supabase
+          .from("v_uso_tokens_anomalia_diaria")
+          .select("empresa_id, tokens_hoje, media_dias_anteriores, anomalia"),
+      ]);
+      if (e1) throw e1;
+      if (e2) throw e2;
+      if (e3) throw e3;
+      if (e4) throw e4;
+      if (e5) throw e5;
+      if (e6) throw e6;
+
+      // Gasto anômalo hoje (SPEC 085): 10x a média dos últimos dias, com baseline de
+      // 3+ dias e piso absoluto de 20000 tokens (view faz a conta, aqui só indexa).
+      const anomaliaPorEmpresa = new Map(
+        (anomalias ?? []).map((a) => [
+          a.empresa_id as string,
+          {
+            tokensHoje: Number(a.tokens_hoje ?? 0),
+            mediaAnteriorGasto: Number(a.media_dias_anteriores ?? 0),
+            anomaliaGasto: Boolean(a.anomalia),
+          },
+        ])
+      );
+
+      // Receita de pacote avulso (SPEC 077) por empresa, só do mês corrente — a mesma
+      // janela que o resto do painel usa. Dinheiro de verdade (paid), nunca chuta com
+      // pending/failed/canceled.
+      const receitaPacotesPorEmpresa = new Map<string, number>();
+      for (const c of compras ?? []) {
+        if (!c.paid_at || !mesmoMes(c.paid_at as string)) continue;
+        const empresaId = c.empresa_id as string;
+        const atual = receitaPacotesPorEmpresa.get(empresaId) ?? 0;
+        receitaPacotesPorEmpresa.set(empresaId, atual + Number(c.valor_centavos ?? 0) / 100);
+      }
+
+      const nomeEmpresa = new Map((empresas ?? []).map((e) => [e.id as string, e.nome as string]));
+      const planoAtivo = new Map(
+        (subs ?? [])
+          .filter((s) => s.status === "active" || s.status === "trialing")
+          .map((s) => [
+            s.empresa_id as string,
+            {
+              plano: s.pilar_subscription_plans as { nome: string; preco_mensal: number } | null,
+              // Isenta (spec 078): sem asaas_subscription_id não gera receita de verdade,
+              // mesmo tendo plano/status ativo — nunca contar preço de tabela dela.
+              isPaying: !!s.asaas_subscription_id,
+            },
+          ])
+      );
+
+      const porEmpresa: UsoEmpresaRow[] = (usoEmpresa ?? [])
+        .filter((r) => mesmoMes(r.mes as string))
+        .map((r) => {
+          const info = planoAtivo.get(r.empresa_id as string) ?? null;
+          // custo_estimado vem em USD (COGS nativo do provedor); receita é BRL
+          // (preco_mensal do plano) — converte ANTES de subtrair, nunca mistura moeda.
+          const custoBrl = custoEmBrl(Number(r.custo_estimado ?? 0));
+          const plano = info?.plano ?? null;
+          const receitaPlano = info?.isPaying ? (plano?.preco_mensal ?? null) : null;
+          const receitaPacotes = receitaPacotesPorEmpresa.get(r.empresa_id as string) ?? 0;
+          // "—" só quando não há NENHUMA receita de verdade (nem mensalidade, nem
+          // pacote); pacote avulso sozinho já é dinheiro real, não fica escondido
+          // atrás do null de "sem assinatura paga".
+          const temReceita = receitaPlano != null || receitaPacotes > 0;
+          const receita = temReceita ? (receitaPlano ?? 0) + receitaPacotes : null;
+          const anomalia = anomaliaPorEmpresa.get(r.empresa_id as string) ?? null;
+          return {
+            empresaId: r.empresa_id as string,
+            empresaNome: nomeEmpresa.get(r.empresa_id as string) ?? (r.empresa_id as string),
+            planoNome: plano?.nome ?? null,
+            tokensTotal: Number(r.tokens_input ?? 0) + Number(r.tokens_output ?? 0),
+            custoEstimado: custoBrl,
+            receitaPlano,
+            receitaPacotes,
+            receitaEstimada: receita,
+            margemEstimada: receita != null ? receita - custoBrl : null,
+            tokensHoje: anomalia?.tokensHoje ?? 0,
+            mediaAnteriorGasto: anomalia?.mediaAnteriorGasto ?? 0,
+            anomaliaGasto: anomalia?.anomaliaGasto ?? false,
+          };
+        });
+
+      const porAgenteMapa = new Map<string, UsoAgenteRow>();
+      for (const r of usoAgente ?? []) {
+        if (!mesmoMes(r.mes as string)) continue;
+        const key = r.agent_key as string;
+        const atual = porAgenteMapa.get(key) ?? { agentKey: key, eventos: 0, tokensTotal: 0, custoEstimado: 0 };
+        atual.eventos += Number(r.eventos ?? 0);
+        atual.tokensTotal += Number(r.tokens_input ?? 0) + Number(r.tokens_output ?? 0);
+        atual.custoEstimado += custoEmBrl(Number(r.custo_estimado ?? 0));
+        porAgenteMapa.set(key, atual);
+      }
+
+      return { porEmpresa, porAgente: Array.from(porAgenteMapa.values()) };
+    },
+  });
+
+  const formatCurrency = useMoneyMask();
+  const porEmpresa = useMemo(() => query.data?.porEmpresa ?? [], [query.data]);
+  const porAgente = useMemo(() => query.data?.porAgente ?? [], [query.data]);
+
+  const columnsEmpresa: ColumnDef<UsoEmpresaRow>[] = [
+    { key: "empresaNome", header: "Empresa", cell: (r) => <span className="text-ink">{r.empresaNome}</span> },
+    {
+      key: "planoNome",
+      header: "Plano",
+      cell: (r) => <span className="text-black/60">{r.planoNome ?? "sem assinatura"}</span>,
+    },
+    {
+      key: "tokensTotal",
+      header: "Tokens (mês)",
+      cell: (r) => <span className="tabular-nums text-ink">{formatNumberCompact(r.tokensTotal)}</span>,
+      getSortValue: (r) => r.tokensTotal,
+    },
+    {
+      key: "tokensHoje",
+      header: "Hoje",
+      cell: (r) =>
+        r.anomaliaGasto ? (
+          <Badge
+            variant="warning"
+            className="gap-1"
+            title={`Gasto de hoje muito acima do normal (média dos últimos dias: ${formatNumberCompact(r.mediaAnteriorGasto)} tokens/dia)`}
+          >
+            <AlertTriangle size={12} />
+            {formatNumberCompact(r.tokensHoje)}
+          </Badge>
+        ) : (
+          <span className="tabular-nums text-black/50">{formatNumberCompact(r.tokensHoje)}</span>
+        ),
+      getSortValue: (r) => r.tokensHoje,
+    },
+    {
+      key: "custoEstimado",
+      header: "COGS",
+      cell: (r) => (
+        <span className="tabular-nums text-black/70">{formatCurrency(r.custoEstimado, { decimals: 2 })}</span>
+      ),
+      getSortValue: (r) => r.custoEstimado,
+    },
+    {
+      key: "receitaPacotes",
+      header: "Pacotes (mês)",
+      cell: (r) => (
+        <span className="tabular-nums text-black/70">
+          {r.receitaPacotes > 0 ? formatCurrency(r.receitaPacotes, { decimals: 2 }) : "—"}
+        </span>
+      ),
+      getSortValue: (r) => r.receitaPacotes,
+    },
+    {
+      key: "receitaEstimada",
+      header: "Receita est.",
+      cell: (r) => (
+        <span className="tabular-nums text-black/70">
+          {r.receitaEstimada != null ? formatCurrency(r.receitaEstimada, { decimals: 2 }) : "—"}
+        </span>
+      ),
+      getSortValue: (r) => r.receitaEstimada ?? 0,
+    },
+    {
+      key: "margemEstimada",
+      header: "Margem est.",
+      cell: (r) => (
+        <span className="tabular-nums text-ink">
+          {r.margemEstimada != null ? formatCurrency(r.margemEstimada, { decimals: 2 }) : "—"}
+        </span>
+      ),
+      getSortValue: (r) => r.margemEstimada ?? 0,
+    },
+  ];
+
+  const columnsAgente: ColumnDef<UsoAgenteRow>[] = [
+    { key: "agentKey", header: "Agente", cell: (r) => <span className="text-ink">{agentKeyLabel(r.agentKey)}</span> },
+    {
+      key: "eventos",
+      header: "Chamadas",
+      cell: (r) => <span className="tabular-nums text-black/70">{formatNumberCompact(r.eventos)}</span>,
+      getSortValue: (r) => r.eventos,
+    },
+    {
+      key: "tokensTotal",
+      header: "Tokens",
+      cell: (r) => <span className="tabular-nums text-ink">{formatNumberCompact(r.tokensTotal)}</span>,
+      getSortValue: (r) => r.tokensTotal,
+    },
+    {
+      key: "custoEstimado",
+      header: "COGS",
+      cell: (r) => (
+        <span className="tabular-nums text-black/70">{formatCurrency(r.custoEstimado, { decimals: 2 })}</span>
+      ),
+      getSortValue: (r) => r.custoEstimado,
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="flex items-center gap-2 text-base font-semibold text-ink">
+          <Coins size={18} className="text-black/40" /> Motor de tokens — uso e margem (mês corrente)
+        </h3>
+        <p className="text-sm text-black/55">
+          Receita estimada soma o preço de tabela do plano ativo (não o valor de fato cobrado no Asaas) com a receita
+          real de pacotes de tokens pagos no mês. COGS convertido de USD (câmbio de referência R$5,50) — o ledger guarda
+          o custo em USD, moeda nativa do provedor. Números de lançamento (DECISOES.md 2026-09-01), calibrar com dado
+          real de produção. A coluna "Hoje" destaca quando o gasto do dia passa muito acima da média recente da própria
+          empresa (SPEC 085) — sinal de possível abuso ou anomalia, não bloqueia nada.
+        </p>
+      </div>
+
+      <div>
+        <h4 className="text-sm font-medium text-ink mb-2">Por empresa</h4>
+        <DataTable
+          columns={columnsEmpresa}
+          data={toDataSourceResult<UsoEmpresaRow>({ data: porEmpresa, isLoading: query.isLoading, error: query.error })}
+          rowKey={(r) => r.empresaId}
+          defaultSortKey="tokensTotal"
+          defaultSortDir="desc"
+          emptyMessage="Nenhum uso de IA registrado neste mês."
+          errorTitle="Não foi possível carregar o uso por empresa"
+        />
+      </div>
+
+      <div>
+        <h4 className="text-sm font-medium text-ink mb-2">Por agente (todas as empresas)</h4>
+        <DataTable
+          columns={columnsAgente}
+          data={toDataSourceResult<UsoAgenteRow>({ data: porAgente, isLoading: query.isLoading, error: query.error })}
+          rowKey={(r) => r.agentKey}
+          defaultSortKey="tokensTotal"
+          defaultSortDir="desc"
+          emptyMessage="Nenhum uso de IA registrado neste mês."
+          errorTitle="Não foi possível carregar o uso por agente"
+        />
+      </div>
+    </div>
+  );
+}

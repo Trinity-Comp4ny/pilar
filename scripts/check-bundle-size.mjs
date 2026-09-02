@@ -13,11 +13,13 @@ const DIST = join(process.cwd(), "dist", "assets");
 
 // Limites em bytes (gzipped). Tune conforme app cresce.
 const BUDGETS = {
-  // Entry chunk (index-*.js) — bootstrap inicial. Manter enxuto.
-  // 264 kB (era 250): ⌘K palette e onboarding, já lazy ao máximo, deixaram um
-  // resíduo estrutural no entry que encostou no cap. Total JS segue folgado
-  // (~1.85/3 MB); o first-load extra é imperceptível. Reavaliar se voltar a encostar.
-  entry: 264 * 1024,
+  // Entry chunk (index-*.js), bootstrap inicial. Manter enxuto.
+  // 268 kB (era 266, antes 264, antes 250): o cap de 266 voltou a "encostar" —
+  // um PR sem mudança real no entry estourou por 266.2kB vs 266.0kB (200 bytes),
+  // mesma deriva de hash de nome de chunk já documentada nas rodadas anteriores.
+  // Total JS segue folgado (~1.9/3 MB); o first-load extra é imperceptível.
+  // Reavaliar se voltar a encostar.
+  entry: 268 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app

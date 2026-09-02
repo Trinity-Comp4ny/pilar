@@ -1,7 +1,6 @@
 import {
   BarChart,
   Boxes,
-  Brain,
   Building2,
   Calendar,
   ClipboardList,
@@ -11,7 +10,6 @@ import {
   Globe,
   HardHat,
   Home,
-  LayoutTemplate,
   ListTodo,
   MapPin,
   Scale,
@@ -37,9 +35,6 @@ export type FeatureKey =
   | "pessoas"
   | "metas"
   | "portal_cliente"
-  | "ai_hub"
-  | "capacidade"
-  | "templates"
   | "timesheet"
   | "ai_chat"
   | "meu_trabalho"
@@ -237,7 +232,7 @@ export const FEATURES: readonly FeatureDefinition[] = [
   },
   {
     key: "meu_trabalho",
-    label: "Meu trabalho",
+    label: "Tarefas",
     description: "Suas disciplinas de projeto e tarefas do dia, num lugar só",
     group: "operacao",
     // core: acesso liberado sem depender do catálogo de features do banco.
@@ -341,42 +336,6 @@ export const FEATURES: readonly FeatureDefinition[] = [
     parent: "obras",
   },
   {
-    key: "ai_hub",
-    label: "IA Hub",
-    description: "Assistentes de IA para propostas, relatórios e análises",
-    group: "extras",
-    icon: Brain,
-    core: false,
-    universal: false,
-    addon: true,
-    addonPriceLabel: "+R$ 97/mês",
-    dormant: true,
-  },
-  {
-    key: "capacidade",
-    label: "Capacidade",
-    description: "Alocação vs disponibilidade do time",
-    group: "extras",
-    icon: Workflow,
-    core: false,
-    universal: false,
-    addon: true,
-    addonPriceLabel: "+R$ 49/mês",
-    dormant: true,
-  },
-  {
-    key: "templates",
-    label: "Templates",
-    description: "Modelos reutilizáveis de propostas e projetos",
-    group: "extras",
-    icon: LayoutTemplate,
-    core: false,
-    universal: false,
-    addon: true,
-    addonPriceLabel: "+R$ 29/mês",
-    dormant: true,
-  },
-  {
     key: "timesheet",
     label: "Timesheet",
     description: "Registro de horas por projeto e colaborador",
@@ -430,9 +389,6 @@ export const FEATURE_MODULE: Record<FeatureKey, FeatureModuleId | null> = {
   relatorios: null,
   portal_cliente: null,
   ai_chat: null,
-  ai_hub: null,
-  capacidade: null,
-  templates: null,
   timesheet: null,
 };
 
@@ -504,11 +460,7 @@ export function isFeatureEnabledForCompany(
  * - Feature-raiz: ligar grava `true` e limpa os `false` das sub-features (o macro
  *   liga tudo); desligar remove a chave.
  */
-export function applyFeatureToggle(
-  features: CompanyFeatures,
-  key: FeatureKey,
-  value: boolean
-): CompanyFeatures {
+export function applyFeatureToggle(features: CompanyFeatures, key: FeatureKey, value: boolean): CompanyFeatures {
   const feature = FEATURES_BY_KEY[key];
   const next: CompanyFeatures = { ...features };
   if (feature?.parent) {

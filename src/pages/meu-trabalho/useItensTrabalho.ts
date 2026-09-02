@@ -105,9 +105,9 @@ type Options = {
   tipo: FiltroTipo;
 };
 
-export function useItensTrabalho(pessoaId: string | null, { comDisciplinas, tipo }: Options) {
-  const tarefasQ = useTarefas(pessoaId);
-  const disciplinasQ = useDisciplinas(pessoaId, { enabled: comDisciplinas });
+export function useItensTrabalho(pessoaIds: string[] | null, { comDisciplinas, tipo }: Options) {
+  const tarefasQ = useTarefas(pessoaIds);
+  const disciplinasQ = useDisciplinas(pessoaIds, { enabled: comDisciplinas });
   const { data: pessoas } = usePessoasEmpresa();
 
   const itens = useMemo<ItemTrabalho[]>(() => {

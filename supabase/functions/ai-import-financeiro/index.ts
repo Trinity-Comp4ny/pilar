@@ -6,8 +6,10 @@ import {
   createAuthClient,
   createAdminClient,
   checkRateLimit,
+  verificarTokens,
   callGeminiStructured,
-  recordAiUsage,
+  debitarTokens,
+  GEMINI_MODEL,
   recordAgentRun,
   type AiRequest,
 } from "../_shared/ai-client.ts";
@@ -94,10 +96,21 @@ serve(
 
       const canProceed = await checkRateLimit(adminClient, empresaId);
       if (!canProceed) {
-        return new Response(JSON.stringify({ error: "Limite mensal de IA atingido" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 429,
-        });
+        return new Response(
+          JSON.stringify({ error: "Muitas chamadas de IA em sequência. Aguarde um minuto e tente de novo." }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 429 }
+        );
+      }
+
+      // Gate de tokens (Fase 2, spec 075): bloqueia ANTES de gastar no provider.
+      const gateTokens = await verificarTokens(adminClient, empresaId);
+      if (!gateTokens.ok) {
+        return new Response(
+          JSON.stringify({
+            error: "Os tokens de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador.",
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 402 }
+        );
       }
 
       const body = await req.json().catch(() => ({}));
@@ -132,17 +145,13 @@ serve(
         tipo: "import-financeiro",
       };
 
-      const result = await callGeminiStructured(aiRequest, ResultSchema, { maxRetries: 1 });
+      // maxOutputTokens: 4096 (default) corta no meio de extratos com muitos
+      // lançamentos e derruba em "JSON inválido (Unexpected end of JSON input)";
+      // mesmo teto do ai-cotacao-import, que extrai a mesma forma de dado (lista
+      // de itens de um documento).
+      const result = await callGeminiStructured(aiRequest, ResultSchema, { maxRetries: 1, maxOutputTokens: 8192 });
 
-      await recordAiUsage(
-        adminClient,
-        empresaId,
-        "import-financeiro",
-        result.tokensEntrada,
-        result.tokensSaida,
-        result.attempts
-      );
-      await recordAgentRun(
+      const runId = await recordAgentRun(
         adminClient,
         aiRequest,
         {
@@ -153,6 +162,17 @@ serve(
         },
         user.id
       );
+      await debitarTokens(adminClient, {
+        empresaId,
+        userId: user.id,
+        agentKey: "import-financeiro",
+        agentRunId: runId,
+        model: GEMINI_MODEL,
+        tokensInput: result.tokensEntrada,
+        tokensOutput: result.tokensSaida,
+        idempotencyKey: crypto.randomUUID(),
+        calls: result.attempts,
+      });
 
       return new Response(JSON.stringify(result.data), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

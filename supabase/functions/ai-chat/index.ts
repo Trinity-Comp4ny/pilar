@@ -18,8 +18,9 @@ import {
   checkRateLimit,
   callGeminiStructured,
   streamGeminiText,
-  recordAiUsage,
+  debitarTokens,
   getAiSaldo,
+  verificarTokens,
   GEMINI_MODEL,
   type AiSaldo,
 } from "../_shared/ai-client.ts";
@@ -38,7 +39,7 @@ const RequestSchema = z.object({
   projetoId: z.string().uuid().optional(),
 });
 
-const AGENTES = ["financeiro", "projetos", "comercial", "geral"] as const;
+const AGENTES = ["financeiro", "projetos", "comercial", "obras", "equipe", "geral"] as const;
 type Agente = (typeof AGENTES)[number];
 
 const ENTIDADES_CRIAVEIS = [
@@ -293,6 +294,8 @@ const AGENTE_LABEL: Record<Agente, string> = {
   financeiro: "Agente Financeiro",
   projetos: "Agente de Projetos",
   comercial: "Agente Comercial",
+  obras: "Agente de Obras",
+  equipe: "Agente de Equipe",
   geral: "Agente",
 };
 
@@ -304,8 +307,13 @@ Sua tarefa: classificar a mensagem do usuário no domínio (agente) e no modo. R
 
 Domínios:
 - "financeiro": receitas, despesas, lucro, margem, caixa, faturas, contas a pagar/receber, quanto ganhou/gastou.
-- "projetos": projetos, status, prazos, disciplinas, andamento, quantos projetos.
+- "projetos": CONTRATO/comercial do projeto — status, prazo, escopo, disciplinas, quantos projetos, valor de contrato.
 - "comercial": propostas, leads, vendas, novos clientes, pipeline.
+- "obras": EXECUÇÃO EM CAMPO da obra — RDO (diário de obra), clima, efetivo no canteiro, frente de
+  serviço, ocorrência, se a obra está atrasada. Se a pergunta cita campo/canteiro/RDO/clima/efetivo,
+  é "obras", mesmo que mencione o nome de um projeto — obra é a fase de execução DENTRO de um projeto.
+- "equipe": pessoas do time, cargo, tipo de contrato, quantas pessoas na equipe (não confundir com
+  "efetivo no canteiro", que é "obras").
 - "geral": saudação, ajuda, ou algo fora dos domínios acima.
 
 Modo:
@@ -970,6 +978,81 @@ async function coletarEquipe(db: SupabaseClient, empresaId: string): Promise<Rec
   };
 }
 
+type ObraRow = {
+  id: string;
+  nome: string;
+  status: string;
+  data_fim_prevista: string | null;
+  data_fim_real: string | null;
+  projetos: { nome: string } | null;
+};
+
+type ObraRdoRow = {
+  obra_id: string;
+  data: string;
+  clima: string | null;
+  condicao_trabalho: string | null;
+  efetivo: number | null;
+  ocorrencias: string | null;
+};
+
+/** Obras ativas da empresa + o RDO mais recente de cada uma (cap 30 pra caber no contexto). */
+async function coletarObras(db: SupabaseClient, empresaId: string): Promise<Record<string, unknown>> {
+  const hoje = new Date().toISOString().slice(0, 10);
+  const { data } = await db
+    .from("obras")
+    .select("id, nome, status, data_fim_prevista, data_fim_real, projetos(nome)")
+    .eq("empresa_id", empresaId)
+    .is("deleted_at", null)
+    .order("updated_at", { ascending: false })
+    .limit(30);
+  const obras = (data ?? []) as unknown as ObraRow[];
+
+  const porStatus: Record<string, number> = {};
+  for (const o of obras) porStatus[o.status] = (porStatus[o.status] ?? 0) + 1;
+  const atrasada = (o: ObraRow) => !!o.data_fim_prevista && !o.data_fim_real && o.data_fim_prevista < hoje;
+
+  // Um RDO por obra (o mais recente): busca todos de uma vez (evita N+1) e fica só com o 1º de
+  // cada, já que a query vem ordenada por data desc.
+  const ids = obras.map((o) => o.id);
+  const rdoPorObra = new Map<string, ObraRdoRow>();
+  if (ids.length > 0) {
+    const { data: rdos } = await db
+      .from("obra_rdo")
+      .select("obra_id, data, clima, condicao_trabalho, efetivo, ocorrencias")
+      .in("obra_id", ids)
+      .order("data", { ascending: false });
+    for (const r of (rdos ?? []) as ObraRdoRow[]) {
+      if (!rdoPorObra.has(r.obra_id)) rdoPorObra.set(r.obra_id, r);
+    }
+  }
+
+  return {
+    hoje,
+    total_obras: obras.length,
+    por_status: porStatus,
+    obras_atrasadas: obras.filter(atrasada).length,
+    obras_detalhe: obras.map((o) => {
+      const rdo = rdoPorObra.get(o.id);
+      return {
+        nome: o.nome,
+        projeto: o.projetos?.nome ?? null,
+        status: o.status,
+        atrasada: atrasada(o),
+        ultimo_rdo: rdo
+          ? {
+              data: rdo.data,
+              clima: rdo.clima,
+              condicao_trabalho: rdo.condicao_trabalho,
+              efetivo: rdo.efetivo,
+              ocorrencias: rdo.ocorrencias,
+            }
+          : null,
+      };
+    }),
+  };
+}
+
 async function coletarDados(agente: Agente, db: SupabaseClient, empresaId: string): Promise<Record<string, unknown>> {
   switch (agente) {
     case "financeiro":
@@ -978,15 +1061,20 @@ async function coletarDados(agente: Agente, db: SupabaseClient, empresaId: strin
       return coletarProjetos(db, empresaId);
     case "comercial":
       return coletarComercial(db, empresaId);
+    case "obras":
+      return coletarObras(db, empresaId);
+    case "equipe":
+      return coletarEquipe(db, empresaId);
     case "geral": {
       // Pergunta genérica: dá ao agente uma visão dos domínios de uma vez.
-      const [financeiro, projetos, comercial, equipe] = await Promise.all([
+      const [financeiro, projetos, comercial, obras, equipe] = await Promise.all([
         coletarFinanceiro(db, empresaId),
         coletarProjetos(db, empresaId),
         coletarComercial(db, empresaId),
+        coletarObras(db, empresaId),
         coletarEquipe(db, empresaId),
       ]);
-      return { financeiro, projetos, comercial, equipe };
+      return { financeiro, projetos, comercial, obras, equipe };
     }
   }
 }
@@ -1001,7 +1089,7 @@ Valores em reais (R$). Se os dados não permitirem responder, diga isso com hone
 Não invente números. Seja conciso. Responda APENAS em JSON no formato {"resposta": "<texto>"}.`;
   if (agente === "geral") {
     return `${base}
-Você pode ajudar com: finanças (receitas, despesas, lucro do mês), projetos (status, quantos ativos) e comercial (propostas, leads). Oriente o usuário sobre isso quando fizer sentido.`;
+Você pode ajudar com: finanças (receitas, despesas, lucro do mês), projetos (status, quantos ativos), comercial (propostas, leads), obras (RDO, clima, efetivo, atraso) e equipe (pessoas, cargos). Oriente o usuário sobre isso quando fizer sentido.`;
   }
   return base;
 }
@@ -1015,7 +1103,7 @@ Valores em reais (R$). Se os dados não permitirem responder, diga isso com hone
 Não invente números. Seja conciso.`;
   if (agente === "geral") {
     return `${base}
-Você pode ajudar com: finanças (receitas, despesas, lucro do mês), projetos (status, quantos ativos) e comercial (propostas, leads). Oriente o usuário sobre isso quando fizer sentido.`;
+Você pode ajudar com: finanças (receitas, despesas, lucro do mês), projetos (status, quantos ativos), comercial (propostas, leads), obras (RDO, clima, efetivo, atraso) e equipe (pessoas, cargos). Oriente o usuário sobre isso quando fizer sentido.`;
   }
   return base;
 }
@@ -1051,15 +1139,29 @@ function respondFinal(payload: Record<string, unknown>, req: Request, wantsStrea
   return wantsStream ? sseFinal(payload, req) : jsonResponse(payload, 200, req);
 }
 
-// Registra o uso e devolve o saldo restante (best-effort — nunca quebra o fluxo).
+// Debita o uso no ledger de tokens (fonte única, ADR 0035) e devolve o saldo restante.
+// Cada turno termina em EXATAMENTE um chamador deste helper → um débito por turno.
+// debitarTokens nunca lança (reporta ao Sentry por dentro); a leitura do saldo é best-effort.
 async function recordAndSaldo(
   admin: SupabaseClient,
   empresaId: string,
+  userId: string | null,
+  runId: string | undefined,
   tokIn: number,
   tokOut: number,
   calls: number
 ): Promise<AiSaldo | null> {
-  await recordAiUsageSafe(admin, empresaId, tokIn, tokOut, calls);
+  await debitarTokens(admin, {
+    empresaId,
+    userId,
+    agentKey: FEATURE_KEY,
+    agentRunId: runId ?? null,
+    model: GEMINI_MODEL,
+    tokensInput: tokIn,
+    tokensOutput: tokOut,
+    idempotencyKey: crypto.randomUUID(),
+    calls,
+  });
   try {
     return await getAiSaldo(admin, empresaId);
   } catch {
@@ -1114,7 +1216,23 @@ serve(
       setSentryUser({ id: user.id, email: user.email, empresa_id: empresaId });
 
       if (!(await checkRateLimit(adminClient, empresaId))) {
-        return jsonResponse({ error: "Limite mensal de IA atingido" }, 429, req);
+        return jsonResponse(
+          { error: "Muitas chamadas de IA em sequência. Aguarde um minuto e tente de novo." },
+          429,
+          req
+        );
+      }
+
+      // Gate de tokens (Fase 2, spec 075): bloqueia ANTES de gastar no provider.
+      const gateTokens = await verificarTokens(adminClient, empresaId);
+      if (!gateTokens.ok) {
+        return jsonResponse(
+          {
+            error: "Os tokens de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador.",
+          },
+          402,
+          req
+        );
       }
 
       const body = await req.json().catch(() => ({}));
@@ -1204,7 +1322,15 @@ serve(
           content: aviso,
           meta: { agente, agente_label: AGENTE_LABEL[agente], motivo: rota.data.motivo, model: GEMINI_MODEL },
         });
-        const saldo = await recordAndSaldo(adminClient, empresaId, rota.tokensEntrada, rota.tokensSaida, rota.attempts);
+        const saldo = await recordAndSaldo(
+          adminClient,
+          empresaId,
+          user.id,
+          undefined,
+          rota.tokensEntrada,
+          rota.tokensSaida,
+          rota.attempts
+        );
         return respondFinal(
           {
             sessionId,
@@ -1244,7 +1370,15 @@ serve(
           content: "Escolha o alvo e confirme a ação.",
           meta: { agente, agente_label: label, model: GEMINI_MODEL, acao_run_id: run.id, operacao: rota.data.operacao },
         });
-        const saldo = await recordAndSaldo(adminClient, empresaId, rota.tokensEntrada, rota.tokensSaida, rota.attempts);
+        const saldo = await recordAndSaldo(
+          adminClient,
+          empresaId,
+          user.id,
+          run.id as string,
+          rota.tokensEntrada,
+          rota.tokensSaida,
+          rota.attempts
+        );
         return respondFinal(
           {
             sessionId,
@@ -1319,6 +1453,7 @@ serve(
           agente,
           meta,
           userMessage,
+          userId: user.id,
           runId: consultaRunId,
           rotaTok: { in: rota.tokensEntrada, out: rota.tokensSaida, calls: rota.attempts },
         });
@@ -1350,8 +1485,8 @@ serve(
         tokens_output: tokensOut,
       });
 
-      // Contabiliza uso (rate limit + log granular por feature) e lê o saldo restante.
-      const saldo = await recordAndSaldo(adminClient, empresaId, tokensIn, tokensOut, chamadas);
+      // Contabiliza uso (débito no ledger de tokens) e lê o saldo restante.
+      const saldo = await recordAndSaldo(adminClient, empresaId, user.id, consultaRunId, tokensIn, tokensOut, chamadas);
 
       await logAction(authClient, consultaRunId, "gerar_resposta", undefined, { chars: resp.data.resposta.length });
       if (consultaRunId) {
@@ -1380,20 +1515,6 @@ serve(
   })
 );
 
-async function recordAiUsageSafe(
-  admin: SupabaseClient,
-  empresaId: string,
-  tokIn: number,
-  tokOut: number,
-  calls: number
-) {
-  try {
-    await recordAiUsage(admin, empresaId, FEATURE_KEY, tokIn, tokOut, calls);
-  } catch {
-    // não bloqueia a resposta ao usuário
-  }
-}
-
 type ChatMeta = {
   agente: string;
   agente_label: string;
@@ -1414,6 +1535,7 @@ function streamConsulta(o: {
   agente: Agente;
   meta: ChatMeta;
   userMessage: string;
+  userId: string;
   runId?: string;
   rotaTok: { in: number; out: number; calls: number };
 }): Response {
@@ -1473,7 +1595,7 @@ function streamConsulta(o: {
           tokens_output: tokOut,
         });
 
-        const saldo = await recordAndSaldo(o.admin, o.empresaId, tokIn, tokOut, chamadas);
+        const saldo = await recordAndSaldo(o.admin, o.empresaId, o.userId, o.runId, tokIn, tokOut, chamadas);
 
         await logAction(o.db, o.runId, "gerar_resposta", undefined, { chars: resposta.length });
         if (o.runId) {
@@ -1561,7 +1683,7 @@ async function processarCriacao(o: {
       tokens_input: tokIn,
       tokens_output: tokOut,
     });
-    const saldo = await recordAndSaldo(o.admin, o.empresaId, tokIn, tokOut, chamadas);
+    const saldo = await recordAndSaldo(o.admin, o.empresaId, o.userId, undefined, tokIn, tokOut, chamadas);
     return respondFinal(
       {
         sessionId: o.sessionId,
@@ -1632,7 +1754,7 @@ async function processarCriacao(o: {
     tokens_input: tokIn,
     tokens_output: tokOut,
   });
-  const saldo = await recordAndSaldo(o.admin, o.empresaId, tokIn, tokOut, chamadas);
+  const saldo = await recordAndSaldo(o.admin, o.empresaId, o.userId, runId, tokIn, tokOut, chamadas);
 
   return respondFinal(
     {

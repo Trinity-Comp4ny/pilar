@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency } from "@/lib/currencyUtils";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { msgErro } from "./erros";
 import type { Acao } from "./useChat";
 
@@ -18,7 +18,7 @@ type Props = {
   onCancelar: (runId: string) => Promise<void>;
 };
 
-type Candidato = { id: string; label: string; email?: string };
+type Candidato = { id: string; label: string; valor?: number; email?: string };
 
 const META: Record<string, { titulo: string; verbo: string; targetKey: string; vazio: string; alvoLabel: string }> = {
   converter_lead: {
@@ -100,7 +100,8 @@ async function fetchCandidatos(op: string): Promise<Candidato[]> {
       .order("data_vencimento");
     return (data ?? []).map((r: { id: string; descricao: string; valor: number }) => ({
       id: r.id,
-      label: `${r.descricao} · ${formatCurrency(Number(r.valor))}`,
+      label: r.descricao,
+      valor: Number(r.valor),
     }));
   }
   if (op === "marcar_pago") {
@@ -113,7 +114,8 @@ async function fetchCandidatos(op: string): Promise<Candidato[]> {
       .order("data_vencimento");
     return (data ?? []).map((d: { id: string; descricao: string; valor: number }) => ({
       id: d.id,
-      label: `${d.descricao} · ${formatCurrency(Number(d.valor))}`,
+      label: d.descricao,
+      valor: Number(d.valor),
     }));
   }
   if (op === "quitar_parcela") {
@@ -136,7 +138,8 @@ async function fetchCandidatos(op: string): Promise<Candidato[]> {
     return (data ?? []).map(
       (f: { id: string; mes_referencia: number; ano_referencia: number; valor_total: number }) => ({
         id: f.id,
-        label: `Fatura ${f.mes_referencia}/${f.ano_referencia} · ${formatCurrency(Number(f.valor_total))}`,
+        label: `Fatura ${f.mes_referencia}/${f.ano_referencia}`,
+        valor: Number(f.valor_total),
       })
     );
   }
@@ -152,6 +155,7 @@ async function fetchCandidatos(op: string): Promise<Candidato[]> {
 }
 
 export function AcaoCard({ index, acao, onExecutar, onCancelar }: Props) {
+  const money = useMoneyMask();
   const meta = META[acao.operacao];
   const [alvo, setAlvo] = useState("");
   const [contaId, setContaId] = useState("");
@@ -264,6 +268,7 @@ export function AcaoCard({ index, acao, onExecutar, onCancelar }: Props) {
                 {(candidatos.data ?? []).map((c) => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.label}
+                    {c.valor != null ? ` · ${money(c.valor)}` : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -325,8 +330,7 @@ export function AcaoCard({ index, acao, onExecutar, onCancelar }: Props) {
 
       <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-3">
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Coins className="h-3.5 w-3.5" /> Debita {acao.custoCreditos} crédito{acao.custoCreditos === 1 ? "" : "s"} de
-          IA
+          <Coins className="h-3.5 w-3.5" /> Executar consome tokens de IA
         </span>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={cancelar} disabled={salvando}>

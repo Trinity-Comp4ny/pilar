@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import type { ObraResumo } from "@/hooks/useObras";
 import { useObraFrentes } from "@/hooks/useObraFrentes";
 import { useObraConta, useDeleteLancamento, type ObraLancamentoRow } from "@/hooks/useObraConta";
@@ -20,6 +21,7 @@ import {
   totalAdiantadoEscritorio,
 } from "@/lib/obras";
 import { LancamentoContaDialog } from "./LancamentoContaDialog";
+import { ObraDesembolsoChart } from "./ObraDesembolsoChart";
 
 function Kpi({ label, value, tone }: { label: string; value: string; tone?: "danger" | "muted" }) {
   return (
@@ -46,6 +48,7 @@ function EtapaOrcamentoRow({
   canEdit: boolean;
   onSave: (v: number) => void;
 }) {
+  const formatCurrency = useMoneyMask();
   const [draft, setDraft] = useState<string>(previsto ? String(previsto) : "");
   const desvio = desvioOrcamento(previsto, realizado);
   const estourou = desvio.valor > 0 && previsto > 0;
@@ -80,6 +83,7 @@ function EtapaOrcamentoRow({
 }
 
 export function ObraContaTab({ obra, canEdit }: { obra: ObraResumo; canEdit: boolean }) {
+  const formatCurrency = useMoneyMask();
   const obraId = obra.id;
   const { data: lancamentos = [], isLoading } = useObraConta(obraId);
   const { data: frentes = [] } = useObraFrentes(obraId);
@@ -122,6 +126,13 @@ export function ObraContaTab({ obra, canEdit }: { obra: ObraResumo; canEdit: boo
         <Kpi label="Despesas" value={formatCurrency(totalDespesas)} />
         {adiantado > 0 && <Kpi label="Escritório adiantou" value={formatCurrency(adiantado)} tone="danger" />}
       </div>
+
+      <Card className="rounded-2xl border border-black/5 bg-white">
+        <CardContent className="p-4">
+          <h3 className="mb-1 text-sm font-medium text-ink">Desembolso realizado</h3>
+          <ObraDesembolsoChart lancamentos={lancamentos} orcamentos={orcamentos} />
+        </CardContent>
+      </Card>
 
       {taxaAtiva && (
         <p className="text-xs text-muted-foreground">

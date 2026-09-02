@@ -2,11 +2,11 @@
 // resto da plataforma (pill arredondada + popover, como o FiltroPeriodo do
 // Financeiro). O filtro de pessoa usa avatar de iniciais, estilo ClickUp.
 import { useState } from "react";
-import type { LucideIcon } from "lucide-react";
+import { Check, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { AvatarStack } from "@/pages/projetos/components/AvatarStack";
+import { AvatarStack } from "@/components/AvatarStack";
 import { cn } from "@/lib/utils";
 import type { PessoaOpcao } from "../hooks";
 
@@ -60,25 +60,43 @@ export function FiltroPill({
   );
 }
 
-/** Filtro de pessoa com avatar de iniciais (estilo ClickUp). "eu" = a mim. */
+/** Filtro de pessoa com avatar de iniciais (estilo ClickUp). Múltipla escolha;
+ * "eu" é uma opção como outra qualquer, marcando a pessoa do usuário logado. */
 export function FiltroPessoa({
   value,
   pessoas,
   minhaPessoaId,
   meuNome,
+  meuAvatarUrl,
   onChange,
 }: {
-  value: string;
+  value: string[];
   pessoas: PessoaOpcao[];
   minhaPessoaId: string | null;
   meuNome: string;
-  onChange: (value: string) => void;
+  /** Foto do usuário logado, direto do profile (não depende de existir uma
+   * `pessoa` vinculada — ultra_admin e outros perfis sem pessoa não têm uma). */
+  meuAvatarUrl?: string | null;
+  onChange: (value: string[]) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const ehEu = value === "eu";
-  const selecionada = ehEu ? null : (pessoas.find((p) => p.id === value) ?? null);
-  const nome = ehEu ? meuNome : (selecionada?.nome ?? "Pessoa");
-  const rotulo = ehEu ? "Eu" : nome;
+  const eu = { nome: meuNome, avatarUrl: meuAvatarUrl };
+  const ehEuSelecionado = value.includes("eu");
+  const selecionadas = [
+    ...(ehEuSelecionado ? [eu] : []),
+    ...pessoas.filter((p) => p.id !== minhaPessoaId && value.includes(p.id)),
+  ];
+
+  const toggle = (v: string) => onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]);
+
+  const rotulo =
+    selecionadas.length === 0
+      ? "Filtrar"
+      : selecionadas.length === 1
+        ? ehEuSelecionado
+          ? "Eu"
+          : selecionadas[0].nome
+        : `${selecionadas.length} pessoas`;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -88,7 +106,7 @@ export function FiltroPessoa({
           className="h-9 gap-1.5 rounded-full py-0 pl-1 pr-3.5 text-[13px] font-normal"
           aria-label="Filtrar por pessoa"
         >
-          <AvatarStack names={[nome]} size="xs" />
+          <AvatarStack pessoas={selecionadas.length > 0 ? selecionadas : [rotulo]} size="xs" />
           {rotulo}
         </Button>
       </PopoverTrigger>
@@ -100,29 +118,30 @@ export function FiltroPessoa({
             <CommandGroup>
               <CommandItem
                 value="eu"
-                onSelect={() => {
-                  onChange("eu");
-                  setOpen(false);
-                }}
-                className={cn("gap-2", ehEu && "font-medium")}
+                onSelect={() => toggle("eu")}
+                className={cn("gap-2", ehEuSelecionado && "font-medium")}
               >
-                <AvatarStack names={[meuNome]} size="xs" /> Eu
+                <AvatarStack pessoas={[eu]} size="xs" />
+                <span className="flex-1 truncate">Eu</span>
+                {ehEuSelecionado && <Check className="h-4 w-4 text-brand" />}
               </CommandItem>
               {pessoas
                 .filter((p) => p.id !== minhaPessoaId)
-                .map((p) => (
-                  <CommandItem
-                    key={p.id}
-                    value={p.nome}
-                    onSelect={() => {
-                      onChange(p.id);
-                      setOpen(false);
-                    }}
-                    className={cn("gap-2", p.id === value && "font-medium")}
-                  >
-                    <AvatarStack names={[p.nome]} size="xs" /> {p.nome}
-                  </CommandItem>
-                ))}
+                .map((p) => {
+                  const marcada = value.includes(p.id);
+                  return (
+                    <CommandItem
+                      key={p.id}
+                      value={p.nome}
+                      onSelect={() => toggle(p.id)}
+                      className={cn("gap-2", marcada && "font-medium")}
+                    >
+                      <AvatarStack pessoas={[p]} size="xs" />
+                      <span className="flex-1 truncate">{p.nome}</span>
+                      {marcada && <Check className="h-4 w-4 text-brand" />}
+                    </CommandItem>
+                  );
+                })}
             </CommandGroup>
           </CommandList>
         </Command>

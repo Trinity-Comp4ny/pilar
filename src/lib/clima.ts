@@ -4,10 +4,116 @@
  * trabalha por COORDENADA; a cidade só serve para achar a lat/long.
  * O mapeamento dos códigos WMO e utilitários são puros e testáveis.
  * Docs: https://open-meteo.com/en/docs
+ *
+ * Chamadas direto do browser (sem proxy de edge function): CSP já libera os
+ * domínios e nenhum já quebrou em produção, diferente do CEP (ADR 0033). Toda
+ * resposta passa por schema Zod na fronteira; se o formato mudar, reporta pro
+ * Sentry em vez de deixar `undefined` se propagar silencioso pela UI.
  */
+
+import { z } from "zod";
+import { monitoring } from "./monitoring";
 
 const GEO_BASE = "https://geocoding-api.open-meteo.com/v1/search";
 const FORECAST_BASE = "https://api.open-meteo.com/v1/forecast";
+
+/** Reporta mudança de formato de resposta de API externa (não captura sozinho, chame no catch/branch de falha). */
+function reportShapeMismatch(fn: string, provider: string, issues: unknown, raw: unknown): void {
+  monitoring.captureException(
+    new Error(`${provider}: formato de resposta mudou`),
+    { fn, provider, issues, raw },
+    { tags: { provider, reason: "shape-mismatch" } }
+  );
+}
+
+const numArr = z.array(z.number().nullable());
+const strArr = z.array(z.string());
+
+const geoResponseSchema = z
+  .object({
+    results: z
+      .array(
+        z
+          .object({
+            name: z.string(),
+            latitude: z.number(),
+            longitude: z.number(),
+            admin1: z.string().optional(),
+            country: z.string().optional(),
+          })
+          .passthrough()
+      )
+      .optional(),
+  })
+  .passthrough();
+
+const forecastResponseSchema = z
+  .object({
+    current: z
+      .object({
+        temperature_2m: z.number().optional(),
+        apparent_temperature: z.number().optional(),
+        relative_humidity_2m: z.number().optional(),
+        precipitation: z.number().optional(),
+        weather_code: z.number().optional(),
+        wind_speed_10m: z.number().optional(),
+        wind_gusts_10m: z.number().optional(),
+        wind_direction_10m: z.number().optional(),
+        is_day: z.number().optional(),
+      })
+      .passthrough()
+      .optional(),
+    hourly: z
+      .object({
+        time: strArr,
+        temperature_2m: z.array(z.number()),
+        weather_code: z.array(z.number()),
+        precipitation_probability: numArr,
+        precipitation: numArr,
+        is_day: numArr,
+      })
+      .passthrough()
+      .optional(),
+    daily: z
+      .object({
+        time: strArr,
+        weather_code: z.array(z.number()),
+        temperature_2m_max: z.array(z.number()),
+        temperature_2m_min: z.array(z.number()),
+        precipitation_probability_max: numArr,
+        precipitation_sum: numArr,
+        wind_speed_10m_max: numArr,
+        uv_index_max: numArr,
+        sunrise: strArr,
+        sunset: strArr,
+      })
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+
+const historicoResponseSchema = z
+  .object({
+    daily: z.object({ precipitation_sum: numArr }).passthrough().optional(),
+  })
+  .passthrough();
+
+const climaDoDiaResponseSchema = z
+  .object({
+    daily: z
+      .object({ time: strArr, weather_code: z.array(z.number()) })
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+
+const reverseGeoResponseSchema = z
+  .object({
+    city: z.string().optional(),
+    locality: z.string().optional(),
+    principalSubdivision: z.string().optional(),
+  })
+  .passthrough();
 
 export type CategoriaClima = "sol" | "nuvem" | "chuva" | "tempestade" | "neve" | "nevoa";
 /** Enum de clima do RDO (spec 015), para autofill futuro do diário. */
@@ -84,9 +190,13 @@ export async function buscarLocais(consulta: string): Promise<LocalGeo[]> {
   const url = `${GEO_BASE}?name=${encodeURIComponent(nome)}&count=10&language=pt&format=json`;
   const res = await fetch(url);
   if (!res.ok) throw new Error("Falha ao buscar a cidade");
-  const json = (await res.json()) as {
-    results?: Array<{ name: string; latitude: number; longitude: number; admin1?: string; country?: string }>;
-  };
+  const raw = await res.json();
+  const parsed = geoResponseSchema.safeParse(raw);
+  if (!parsed.success) {
+    reportShapeMismatch("buscarLocais", "open-meteo-geocoding", parsed.error.issues, raw);
+    throw new Error("Falha ao buscar a cidade");
+  }
+  const json = parsed.data;
   const locais: LocalGeo[] = (json.results ?? []).map((r) => ({
     nome: r.name,
     latitude: r.latitude,
@@ -199,29 +309,13 @@ export async function buscarPrevisao(latitude: number, longitude: number): Promi
   });
   const res = await fetch(`${FORECAST_BASE}?${params.toString()}`);
   if (!res.ok) throw new Error("Falha ao buscar a previsão");
-  const j = (await res.json()) as {
-    current?: Record<string, number>;
-    hourly?: {
-      time: string[];
-      temperature_2m: number[];
-      weather_code: number[];
-      precipitation_probability: (number | null)[];
-      precipitation: (number | null)[];
-      is_day: (number | null)[];
-    };
-    daily?: {
-      time: string[];
-      weather_code: number[];
-      temperature_2m_max: number[];
-      temperature_2m_min: number[];
-      precipitation_probability_max: (number | null)[];
-      precipitation_sum: (number | null)[];
-      wind_speed_10m_max: (number | null)[];
-      uv_index_max: (number | null)[];
-      sunrise: string[];
-      sunset: string[];
-    };
-  };
+  const raw = await res.json();
+  const parsed = forecastResponseSchema.safeParse(raw);
+  if (!parsed.success) {
+    reportShapeMismatch("buscarPrevisao", "open-meteo-forecast", parsed.error.issues, raw);
+    throw new Error("Falha ao buscar a previsão");
+  }
+  const j = parsed.data;
 
   const cur = j.current ?? {};
   const d = j.daily;
@@ -311,11 +405,63 @@ export async function buscarHistorico(latitude: number, longitude: number, dias 
   });
   const res = await fetch(`${FORECAST_BASE}?${params.toString()}`);
   if (!res.ok) throw new Error("Falha ao buscar o histórico");
-  const j = (await res.json()) as { daily?: { precipitation_sum: (number | null)[] } };
+  const raw = await res.json();
+  const parsed = historicoResponseSchema.safeParse(raw);
+  if (!parsed.success) {
+    reportShapeMismatch("buscarHistorico", "open-meteo-forecast", parsed.error.issues, raw);
+    throw new Error("Falha ao buscar o histórico");
+  }
+  const j = parsed.data;
   const somas = (j.daily?.precipitation_sum ?? []).slice(0, dias);
   const comChuva = somas.filter((mm) => (mm ?? 0) >= 1).length;
   const total = somas.reduce<number>((acc, mm) => acc + (mm ?? 0), 0);
   return { totalDias: dias, diasChuva: comChuva, chuvaMm: Math.round(total) };
+}
+
+// --- Clima automático do RDO (spec 080) ---------------------------------------
+
+/** Acha o clima do RDO numa série diária já buscada, pela data exata. Puro/testável. */
+export function climaDoDiaEmSerie(
+  serieDiaria: { time: string[]; weather_code: number[] } | undefined,
+  dataISO: string
+): ClimaRdo | null {
+  if (!serieDiaria) return null;
+  const idx = serieDiaria.time.indexOf(dataISO);
+  if (idx < 0) return null;
+  return climaPorCodigo(serieDiaria.weather_code[idx]).rdo;
+}
+
+/**
+ * Clima do RDO para uma data específica (hoje ou até ~92 dias atrás, teto do
+ * Open-Meteo para `past_days`), para autofill do formulário do dia (spec 080).
+ * `null` quando a data está fora do alcance da API ou a chamada falha — o
+ * formulário simplesmente não sugere nada, sem travar nem avisar: é um atalho
+ * editável, não uma obrigação.
+ */
+export async function buscarClimaDoDia(latitude: number, longitude: number, dataISO: string): Promise<ClimaRdo | null> {
+  const diasAtras = Math.round((Date.now() - new Date(`${dataISO}T00:00:00`).getTime()) / 86_400_000);
+  const pastDays = Math.min(92, Math.max(0, diasAtras));
+  try {
+    const params = new URLSearchParams({
+      latitude: String(latitude),
+      longitude: String(longitude),
+      daily: "weather_code",
+      past_days: String(pastDays),
+      forecast_days: "1",
+      timezone: "auto",
+    });
+    const res = await fetch(`${FORECAST_BASE}?${params.toString()}`);
+    if (!res.ok) return null;
+    const raw = await res.json();
+    const parsed = climaDoDiaResponseSchema.safeParse(raw);
+    if (!parsed.success) {
+      reportShapeMismatch("buscarClimaDoDia", "open-meteo-forecast", parsed.error.issues, raw);
+      return null;
+    }
+    return climaDoDiaEmSerie(parsed.data.daily, dataISO);
+  } catch {
+    return null;
+  }
 }
 
 // --- Clima × cronograma (spec 040): alerta de etapa sensível vs previsão ------
@@ -396,10 +542,21 @@ export async function nomeDaCoordenada(latitude: number, longitude: number): Pro
       `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=pt`
     );
     if (!res.ok) return "Minha localização";
-    const j = (await res.json()) as { city?: string; locality?: string; principalSubdivision?: string };
+    const raw = await res.json();
+    const parsed = reverseGeoResponseSchema.safeParse(raw);
+    if (!parsed.success) {
+      reportShapeMismatch("nomeDaCoordenada", "bigdatacloud", parsed.error.issues, raw);
+      return "Minha localização";
+    }
+    const j = parsed.data;
     const cidade = j.city || j.locality;
     return cidade ? [cidade, j.principalSubdivision].filter(Boolean).join(", ") : "Minha localização";
-  } catch {
+  } catch (err) {
+    monitoring.captureException(
+      err,
+      { fn: "nomeDaCoordenada" },
+      { tags: { provider: "bigdatacloud", reason: "request-failed" } }
+    );
     return "Minha localização";
   }
 }

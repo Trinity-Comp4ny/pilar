@@ -3,18 +3,12 @@
  * dependência de rede, para serem testáveis e reusados por hooks e telas.
  */
 
-import { parseDate, startOfDay } from "./cronograma";
+import { addDays, diffDays, parseDate, startOfDay, startOfWeek, toIso } from "./cronograma";
 
 export type ObraStatus = "planejada" | "em_andamento" | "paralisada" | "concluida";
 
 /** Sensibilidade de uma tarefa ao clima (spec 040): dirige o alerta do cronograma. */
-export type SensivelClima =
-  | "concretagem"
-  | "impermeabilizacao"
-  | "pintura_externa"
-  | "icamento"
-  | "telhado"
-  | "outro";
+export type SensivelClima = "concretagem" | "impermeabilizacao" | "pintura_externa" | "icamento" | "telhado" | "outro";
 
 export const SENSIVEL_CLIMA_OPCOES: ReadonlyArray<{ value: SensivelClima; label: string }> = [
   { value: "concretagem", label: "Concretagem" },
@@ -28,8 +22,7 @@ export const SENSIVEL_CLIMA_OPCOES: ReadonlyArray<{ value: SensivelClima; label:
 const SENSIVEL_CLIMA_LABEL: Record<string, string> = Object.fromEntries(
   SENSIVEL_CLIMA_OPCOES.map((o) => [o.value, o.label])
 );
-export const sensivelClimaLabel = (v: string | null | undefined): string =>
-  v ? (SENSIVEL_CLIMA_LABEL[v] ?? v) : "";
+export const sensivelClimaLabel = (v: string | null | undefined): string => (v ? (SENSIVEL_CLIMA_LABEL[v] ?? v) : "");
 export type ClimaRdo = "ensolarado" | "nublado" | "chuvoso" | "chuva_forte";
 export type CondicaoTrabalho = "normal" | "parcial" | "paralisada";
 
@@ -58,6 +51,22 @@ const CONDICAO_LABEL: Record<string, string> = Object.fromEntries(CONDICAO_OPCOE
 
 export const climaLabel = (v: string | null | undefined): string => (v ? (CLIMA_LABEL[v] ?? v) : "");
 export const condicaoLabel = (v: string | null | undefined): string => (v ? (CONDICAO_LABEL[v] ?? v) : "");
+
+export type TipoImpedimento = "falta_material" | "clima" | "pendencia_projeto" | "mao_de_obra" | "outro";
+
+export const TIPO_IMPEDIMENTO_OPCOES: ReadonlyArray<{ value: TipoImpedimento; label: string }> = [
+  { value: "falta_material", label: "Falta de material" },
+  { value: "clima", label: "Clima" },
+  { value: "pendencia_projeto", label: "Pendência de projeto" },
+  { value: "mao_de_obra", label: "Mão de obra" },
+  { value: "outro", label: "Outro" },
+];
+
+const TIPO_IMPEDIMENTO_LABEL: Record<string, string> = Object.fromEntries(
+  TIPO_IMPEDIMENTO_OPCOES.map((o) => [o.value, o.label])
+);
+export const tipoImpedimentoLabel = (v: string | null | undefined): string =>
+  v ? (TIPO_IMPEDIMENTO_LABEL[v] ?? v) : "";
 
 /**
  * Avanço da obra = tarefas concluídas / total, em % inteiro (spec 015: avanço é
@@ -231,6 +240,54 @@ export function totalAdiantadoEscritorio(lancamentos: ReadonlyArray<LancamentoCa
     .reduce((acc, l) => acc + num(l.valor), 0);
 }
 
+// --- Desembolso realizado por período (spec 066) -------------------------------
+
+export interface PontoDesembolso {
+  mes: string; // "YYYY-MM"
+  acumuladoRealizado: number;
+}
+
+type LancamentoComData = { tipo: string; valor: number | string; data: string };
+
+/**
+ * Desembolso (despesas) acumulado mês a mês, do mês do lançamento mais antigo
+ * até o mês atual — mesmo sem despesa recente, o gráfico chega até hoje pra
+ * não parecer que a obra parou de gastar.
+ */
+export function desembolsoAcumuladoPorMes(lancamentos: ReadonlyArray<LancamentoComData>): PontoDesembolso[] {
+  const despesas = lancamentos.filter((l) => l.tipo === "despesa");
+  if (despesas.length === 0) return [];
+
+  const mesDe = (data: string): string => data.slice(0, 7);
+  const porMes = new Map<string, number>();
+  for (const d of despesas) {
+    const mes = mesDe(d.data);
+    porMes.set(mes, (porMes.get(mes) ?? 0) + num(d.valor));
+  }
+
+  const mesAtual = mesDe(toIso(new Date()));
+  const mesesComDespesa = [...porMes.keys()].sort();
+  const primeiroMes = mesesComDespesa[0];
+  const ultimoMesComDespesa = mesesComDespesa[mesesComDespesa.length - 1];
+  const ultimoMes = ultimoMesComDespesa > mesAtual ? ultimoMesComDespesa : mesAtual;
+
+  const pontos: PontoDesembolso[] = [];
+  let acumulado = 0;
+  let [ano, mes] = primeiroMes.split("-").map(Number);
+  for (;;) {
+    const chave = `${ano}-${String(mes).padStart(2, "0")}`;
+    acumulado += porMes.get(chave) ?? 0;
+    pontos.push({ mes: chave, acumuladoRealizado: acumulado });
+    if (chave === ultimoMes) break;
+    mes += 1;
+    if (mes > 12) {
+      mes = 1;
+      ano += 1;
+    }
+  }
+  return pontos;
+}
+
 // --- Cotações (spec 018) ------------------------------------------------------
 
 export type CotacaoStatus = "aberta" | "decidida" | "cancelada";
@@ -309,4 +366,229 @@ export function saldoMaterial(movs: ReadonlyArray<MovimentoCalc>): {
   const saldo = comprado - aplicado;
   const custoMedio = custoMedioEntradas(movs);
   return { comprado, aplicado, saldo, valorParado: custoMedio == null ? null : saldo * custoMedio };
+}
+
+// --- Curva S da obra (spec 063: planejado × realizado, sem tabela nova) -----
+
+export interface PontoCurvaS {
+  /** ISO (YYYY-MM-DD) da segunda-feira da semana. */
+  semana: string;
+  planejadoPct: number;
+  realizadoPct: number;
+}
+
+interface TarefaCurvaS {
+  id: string;
+  status: string;
+  data_inicio: string | null;
+  prazo: string | null;
+  updated_at: string;
+}
+
+const dataDoTimestamp = (iso: string): string => iso.slice(0, 10);
+
+/**
+ * Curva S: planejado (% de tarefas com prazo cujo prazo já passou) contra
+ * realizado (% de todas as tarefas concluídas, mesmo denominador do header
+ * "Avanço") acumulados semana a semana. `concluidasPorRdo` mapeia
+ * tarefa_id → data (YYYY-MM-DD) do RDO mais antigo que marcou `concluiu`;
+ * tarefa concluída sem entrada nesse mapa cai para `updated_at`.
+ *
+ * `[]` quando não há nenhuma tarefa com prazo definido — nesse caso não dá
+ * pra desenhar planejado no tempo, e a tela mostra o empty state em vez do
+ * gráfico (spec 063, critério de borda).
+ */
+export function curvaSObra(
+  tarefas: ReadonlyArray<TarefaCurvaS>,
+  concluidasPorRdo: ReadonlyMap<string, string>
+): PontoCurvaS[] {
+  const comPrazo = tarefas.filter((t) => t.prazo != null);
+  if (comPrazo.length === 0) return [];
+
+  const conclusaoDe = (t: TarefaCurvaS): Date | null => {
+    if (t.status !== "concluida") return null;
+    const dataRdo = concluidasPorRdo.get(t.id);
+    return parseDate(dataRdo ?? dataDoTimestamp(t.updated_at));
+  };
+
+  const datas: Date[] = [];
+  for (const t of comPrazo) {
+    const inicio = parseDate(t.data_inicio);
+    const prazo = parseDate(t.prazo);
+    if (inicio) datas.push(inicio);
+    if (prazo) datas.push(prazo);
+  }
+  for (const t of tarefas) {
+    const c = conclusaoDe(t);
+    if (c) datas.push(c);
+  }
+  if (datas.length === 0) return [];
+
+  const hoje = startOfDay(new Date());
+  const inicioRange = startOfWeek(datas.reduce((a, b) => (b < a ? b : a)));
+  const fimDados = datas.reduce((a, b) => (b > a ? b : a));
+  const fimRange = startOfWeek(fimDados > hoje ? fimDados : hoje);
+
+  const pontos: PontoCurvaS[] = [];
+  for (let semana = inicioRange; semana <= fimRange; semana = addDays(semana, 7)) {
+    const cutoff = addDays(semana, 6); // domingo, "fim daquela semana"
+
+    const planejadas = comPrazo.filter((t) => {
+      const prazo = parseDate(t.prazo);
+      return prazo != null && prazo <= cutoff;
+    }).length;
+
+    const realizadas = tarefas.filter((t) => {
+      const c = conclusaoDe(t);
+      return c != null && c <= cutoff;
+    }).length;
+
+    pontos.push({
+      semana: toIso(semana),
+      planejadoPct: Math.round((planejadas / comPrazo.length) * 100),
+      realizadoPct: Math.round((realizadas / tarefas.length) * 100),
+    });
+  }
+  return pontos;
+}
+
+/**
+ * Soma o efetivo por fornecedor lançado no dia (spec 062). Quando não há
+ * nenhuma linha, devolve `null` para o form manter o campo `efetivo` (total)
+ * como número solto editável — só passa a ser derivado quando há ao menos uma
+ * linha.
+ */
+export function somaEfetivo(linhas: ReadonlyArray<{ quantidade: number }>): number | null {
+  if (linhas.length === 0) return null;
+  return linhas.reduce((total, l) => total + l.quantidade, 0);
+}
+
+// --- RDO por voz (spec 080) ---------------------------------------------------
+
+/**
+ * Sugestões estruturadas da fala (spec 086): cada uma casada contra o
+ * cadastro real (fornecedor/tarefa) enviado no request, ou `null` quando o
+ * nome dito não bate com nada — nunca inventa um id. Nada disso vira dado
+ * sozinho; o usuário aceita item a item no painel de revisão.
+ */
+export interface SugestaoEfetivoVoz {
+  fornecedor_id: string | null;
+  fornecedor_nome: string;
+  quantidade: number;
+}
+export interface SugestaoImpedimentoVoz {
+  descricao: string;
+  tipo: TipoImpedimento;
+}
+export interface SugestaoVisitaVoz {
+  fornecedor_id: string | null;
+  fornecedor_nome: string;
+  observacao: string | null;
+}
+export interface SugestaoTarefaVoz {
+  tarefa_id: string;
+  resultado: "avancou" | "concluiu" | "parou";
+}
+export interface SugestoesRdoVoz {
+  efetivo_por_fornecedor: SugestaoEfetivoVoz[];
+  impedimentos: SugestaoImpedimentoVoz[];
+  visitas: SugestaoVisitaVoz[];
+  tarefas: SugestaoTarefaVoz[];
+}
+
+/** O que a edge `ai-rdo-voz` extrai da fala. Campo não mencionado vem `null`. */
+export interface RdoVozExtracao {
+  transcricao: string;
+  clima: string | null;
+  condicao_trabalho: string | null;
+  efetivo: number | null;
+  atividades: string | null;
+  ocorrencias: string | null;
+  pendencias: string | null;
+  sugestoes: SugestoesRdoVoz;
+}
+
+interface RdoVozCamposForm {
+  clima: string;
+  condicao_trabalho: string;
+  efetivo: string;
+  atividades: string;
+  ocorrencias: string;
+  pendencias: string;
+}
+
+/**
+ * Aplica a extração de voz sobre os campos do formulário do RDO: só
+ * sobrescreve o que a IA identificou na fala (não-nulo); o que o usuário já
+ * tinha digitado num campo que a IA não mencionou permanece intacto (spec
+ * 080, requisito 4). `efetivo` só entra no patch quando `permiteEfetivo` for
+ * true (sem nenhuma linha de efetivo por fornecedor lançada — requisito 5).
+ */
+export function mesclarExtracaoVoz(
+  extraido: RdoVozExtracao,
+  opts: { permiteEfetivo: boolean }
+): Partial<RdoVozCamposForm> {
+  const patch: Partial<RdoVozCamposForm> = {};
+  if (extraido.clima) patch.clima = extraido.clima;
+  if (extraido.condicao_trabalho) patch.condicao_trabalho = extraido.condicao_trabalho;
+  if (extraido.atividades) patch.atividades = extraido.atividades;
+  if (extraido.ocorrencias) patch.ocorrencias = extraido.ocorrencias;
+  if (extraido.pendencias) patch.pendencias = extraido.pendencias;
+  if (opts.permiteEfetivo && extraido.efetivo != null) patch.efetivo = String(extraido.efetivo);
+  return patch;
+}
+
+// --- Fila de cotações pendentes, cross-obra (spec 064) -----------------------
+
+interface CotacaoParaOrdenar {
+  id: string;
+  prazo_necessidade: string | null;
+  created_at: string;
+}
+
+/**
+ * Ordena cotações abertas por urgência: prazo de necessidade mais próximo
+ * (ou já vencido) primeiro; sem prazo vai por último, ordenado por criação
+ * mais antiga primeiro (spec 064, requisito 1).
+ */
+export function ordenarCotacoesPendentes<T extends CotacaoParaOrdenar>(cotacoes: ReadonlyArray<T>): T[] {
+  return [...cotacoes].sort((a, b) => {
+    if (a.prazo_necessidade && b.prazo_necessidade) {
+      return a.prazo_necessidade < b.prazo_necessidade ? -1 : a.prazo_necessidade > b.prazo_necessidade ? 1 : 0;
+    }
+    if (a.prazo_necessidade) return -1;
+    if (b.prazo_necessidade) return 1;
+    return a.created_at < b.created_at ? -1 : a.created_at > b.created_at ? 1 : 0;
+  });
+}
+
+/**
+ * Texto de urgência de uma cotação frente ao prazo de necessidade (spec 064,
+ * requisito 2). `null` quando não há prazo definido — sem alarmar com uma
+ * data que não existe.
+ */
+export function urgenciaLabel(prazoNecessidade: string | null, hoje: Date = new Date()): string {
+  if (!prazoNecessidade) return "sem prazo";
+  const prazo = parseDate(prazoNecessidade);
+  if (!prazo) return "sem prazo";
+  const dias = diffDays(startOfDay(hoje), prazo);
+  if (dias < 0) return `atrasada há ${Math.abs(dias)} dia${Math.abs(dias) > 1 ? "s" : ""}`;
+  if (dias === 0) return "vence hoje";
+  return `vence em ${dias} dia${dias > 1 ? "s" : ""}`;
+}
+
+// --- Diário em feed (spec 087) -------------------------------------------------
+
+const RESUMO_FEED_LIMITE = 140;
+
+/**
+ * Resumo de 1-2 linhas pro card do feed do dia: usa `atividades`; sem
+ * atividades, cai pro começo de `ocorrencias`; sem nenhum dos dois, um texto
+ * padrão. Puro — o card do portal do cliente chama com `ocorrencias: null`
+ * (o campo nem chega até lá, spec 087 requisito 4), então nunca vaza.
+ */
+export function resumoFeedRdo(atividades: string | null, ocorrencias: string | null): string {
+  const base = (atividades?.trim() || ocorrencias?.trim() || "").trim();
+  if (!base) return "Sem observações registradas.";
+  return base.length > RESUMO_FEED_LIMITE ? `${base.slice(0, RESUMO_FEED_LIMITE).trimEnd()}…` : base;
 }

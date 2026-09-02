@@ -1,8 +1,16 @@
-import { FolderKanban, Users, Loader2, ArrowUpRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { FolderKanban, Users, Loader2, ArrowUpRight, Coins, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useUsoEmpresa } from "@/components/settings/useUsoEmpresa";
+import { useExtratoTokens, agentKeyLabel } from "@/components/settings/useExtratoTokens";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { formatNumberCompact, formatNumber, formatDateTime } from "@/lib/format";
+import { DataTable } from "@/components/data/DataTable";
+import { toDataSourceResult } from "@/types/dataSource";
+import type { ColumnDef } from "@/components/data/DataTable";
+import type { ExtratoTokenEvento } from "@/components/settings/useExtratoTokens";
 
 // Barra de consumo de um recurso contra o teto da faixa do plano. Sem teto (plano
 // não define limite ou não há assinatura), vira um contador simples.
@@ -52,18 +60,50 @@ function Medidor({
           </div>
         )}
         {hint && <p className="text-xs text-black/45">{hint}</p>}
-        {near && !full && <p className="text-xs font-medium text-warning-mid">Você está perto do limite da sua faixa.</p>}
+        {near && !full && (
+          <p className="text-xs font-medium text-warning-mid">Você está perto do limite da sua faixa.</p>
+        )}
         {full && <p className="text-xs font-medium text-danger-mid">Faixa cheia. Suba de plano para abrir mais.</p>}
       </CardContent>
     </Card>
   );
 }
 
-// Aba Uso: medidor do eixo de cobrança (faixa de projetos ativos, PRICING v2).
-// Usuários são ilimitados no modelo, então aparecem só como contagem informativa.
+const extratoColumns: ColumnDef<ExtratoTokenEvento>[] = [
+  {
+    key: "createdAt",
+    header: "Quando",
+    cell: (e) => <span className="text-black/70">{formatDateTime(e.createdAt)}</span>,
+    getSortValue: (e) => e.createdAt,
+  },
+  {
+    key: "userNome",
+    header: "Quem",
+    cell: (e) => <span className="text-black/70">{e.userNome ?? "—"}</span>,
+  },
+  {
+    key: "agentKey",
+    header: "Agente",
+    cell: (e) => <span className="text-black/70">{agentKeyLabel(e.agentKey)}</span>,
+  },
+  {
+    key: "tokensTotal",
+    header: "Tokens",
+    cell: (e) => <span className="tabular-nums text-ink">{formatNumber(e.tokensTotal)}</span>,
+    getSortValue: (e) => e.tokensTotal,
+  },
+];
+
+// Aba Uso: medidor do eixo de cobrança (faixa de projetos ativos, PRICING v2) + saldo
+// e extrato de tokens de IA (motor de tokens, spec 076). Usuários são ilimitados no
+// modelo, então aparecem só como contagem informativa.
 export function UsoPanel() {
   const { uso, isLoading, error } = useUsoEmpresa();
-  const { openSettings } = useSettingsModal();
+  const { eventos, isLoading: extratoLoading, error: extratoError } = useExtratoTokens();
+  const { openSettings, closeSettings } = useSettingsModal();
+  const { profile } = useAuth();
+  const navigate = useNavigate();
+  const canComprar = profile?.role === "admin" || profile?.role === "ultra_admin";
 
   if (isLoading) {
     return (
@@ -107,6 +147,66 @@ export function UsoPanel() {
           used={uso.usuarios}
           max={uso.maxUsuarios}
           hint="Usuários são ilimitados no Pilar; convide a firma inteira sem custo por cabeça."
+        />
+      </div>
+
+      <div>
+        <h3 className="text-base font-semibold text-ink">Tokens de IA</h3>
+        <p className="text-sm text-black/55">
+          Consumo dos agentes de IA (chat, leitura de cotação, importação financeira) neste ciclo.
+        </p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card className="border border-black/5">
+          <CardContent className="pt-5 space-y-1">
+            <span className="flex items-center gap-2 text-sm font-medium text-black/70">
+              <Coins size={16} className="text-black/40" /> Tokens do plano
+            </span>
+            <p className="text-lg font-semibold text-ink">{formatNumberCompact(uso.tokensPlano)}</p>
+            <p className="text-xs text-black/45">Renovados a cada ciclo mensal; o que sobra não acumula.</p>
+          </CardContent>
+        </Card>
+        <Card className="border border-black/5">
+          <CardContent className="pt-5 space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2 text-sm font-medium text-black/70">
+                <Coins size={16} className="text-black/40" /> Tokens comprados
+              </span>
+              {canComprar && (
+                <Button
+                  variant="brand"
+                  size="sm"
+                  className="h-7 px-2.5 text-xs rounded-full"
+                  onClick={() => {
+                    closeSettings();
+                    navigate("/comprar-tokens");
+                  }}
+                >
+                  <Plus size={14} className="mr-1" /> Comprar mais
+                </Button>
+              )}
+            </div>
+            <p className="text-lg font-semibold text-ink">{formatNumberCompact(uso.tokensComprado)}</p>
+            <p className="text-xs text-black/45">Pacote avulso, não expira no ciclo.</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div>
+        <h4 className="text-sm font-medium text-ink mb-2">Extrato recente</h4>
+        <DataTable
+          columns={extratoColumns}
+          data={toDataSourceResult<ExtratoTokenEvento>({
+            data: eventos,
+            isLoading: extratoLoading,
+            error: extratoError,
+          })}
+          rowKey={(e) => e.id}
+          defaultSortKey="createdAt"
+          defaultSortDir="desc"
+          emptyMessage="Nenhum uso de IA registrado ainda."
+          errorTitle="Não foi possível carregar o extrato"
         />
       </div>
 

@@ -78,7 +78,13 @@ usar, o que é proibido). Regras que valem sempre:
 ## Documentação
 
 Toda a documentação vive em `docs/`, organizada por tema com índices navegáveis.
-Comece por `docs/README.md` (índice mestre). Temas: `strategy/` (produto, ICP,
+Comece por `docs/README.md` (índice mestre).
+
+**Decisões de direção do CEO: `docs/strategy/DECISOES.md`** (log vivo, mais recente primeiro).
+Toda decisão de direção nova entra lá na hora; quando conflitar com doc de estratégia mais
+antigo, vale o DECISOES.md. Os agentes de time (`.claude/agents/`) leem esse arquivo antes de
+qualquer análise (protocolo escrito nos próprios agentes). Decisão sensível (segurança, marca)
+fica fora do repo público, na memória do projeto. Temas: `strategy/` (produto, ICP,
 roadmap, **pricing**, concorrência), `security/` (segurança, compliance, auditoria),
 `operations/` (deploy, DR, incident, runbooks, monitoring), `architecture/` (ADRs),
 `legal/`. Inteligência de mercado em `research/` (índice `research/INDEX.md`).
@@ -91,7 +97,8 @@ voz/tom → `brand/voice-tone.md`, visual → `brand/visual.md`, mensagens → `
 público → `brand/personas.md`. Cor/token: a verdade é `src/styles/tokens.css`.
 
 - Tagline: "Saiba se cada projeto está dando lucro antes de terminar."
-- ICP: engenharia multidisciplinar (civil/estrutural/MEP) — NÃO arquitetura nem construtora.
+- ICP: escritórios de projeto técnico — engenharia multidisciplinar (civil/estrutural/MEP) e
+  arquitetura (desde 2026-09-01, ver DECISOES.md) — NÃO construtora/incorporadora.
 - Voz: direta, técnica na medida, confiante, sem hype. Ver palavras banidas em voice-tone.md.
 
 ## DB

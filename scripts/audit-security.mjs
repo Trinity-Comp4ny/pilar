@@ -94,6 +94,10 @@ const ANON_ESPERADO = new Set([
   "campo_listar_tarefas",
   "campo_registrar_medicao",
   "campo_registrar_tarefa_rdo",
+  "campo_listar_fornecedores",
+  "campo_registrar_efetivo",
+  "campo_registrar_impedimento",
+  "campo_registrar_visita",
   // Roda ANTES do signInWithPassword, por definição sem sessão.
   "guard_login_attempt",
 ]);
@@ -107,6 +111,13 @@ const VIEW_SEM_INVOKER_REVISADA = new Map([
     "roda como dona de propósito, pra mascarar coluna por papel (CPF, salário, PIX, conta) " +
       "via can_view_folha(); compensa com WHERE empresa_id = get_user_empresa_id() " +
       "AND user_has_feature('pessoas','viewer'). Revisado em 2026-08-19.",
+  ],
+  [
+    "projetos_safe",
+    "roda como dona de propósito, pra mascarar valor_contrato e custo_indireto_pct " +
+      "via can_view_financeiro(); compensa com WHERE empresa_id = get_user_empresa_id() " +
+      "AND deleted_at IS NULL AND user_has_feature('projetos','viewer'), mesmo predicado " +
+      "da policy projetos_select (20260507300000). Revisado em 2026-09-01.",
   ],
 ]);
 

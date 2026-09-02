@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -152,6 +153,7 @@ export function PropostaDetailDialog({
   isUpdating,
 }: PropostaDetailDialogProps) {
   const [confirmRecusar, setConfirmRecusar] = useState(false);
+  const formatCurrency = useMoneyMask();
 
   if (!proposta) return null;
 
@@ -411,7 +413,9 @@ export function PropostaDetailDialog({
               ) : (
                 <div className="flex items-center gap-2 rounded-lg border border-dashed border-warning-mid-border bg-warning-soft/50 px-3 py-2.5">
                   <AlertCircle className="h-4 w-4 text-warning-mid flex-shrink-0" />
-                  <p className="text-xs text-warning-mid">Nenhum contrato enviado. Gere e envie o contrato ao cliente.</p>
+                  <p className="text-xs text-warning-mid">
+                    Nenhum contrato enviado. Gere e envie o contrato ao cliente.
+                  </p>
                 </div>
               )}
 

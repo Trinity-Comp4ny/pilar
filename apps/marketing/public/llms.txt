@@ -1,15 +1,29 @@
 # Pilar
 
-> Sistema de gestão para empresas de engenharia multidisciplinar. Conecta lead, proposta, projeto, cobrança e portal do cliente em um único fluxo, com agentes de IA que preparam o trabalho sob aprovação da equipe, e mostra ao dono se cada projeto está dando lucro antes de terminar.
+> Sistema de gestão para empresas de engenharia multidisciplinar (civil, estrutural, MEP/HVAC). Conecta lead, proposta, projeto, obra, cobrança e portal do cliente em um único fluxo, com agentes de IA que preparam o trabalho e esperam a aprovação da equipe. A promessa central: saber se cada projeto está dando lucro antes de terminar.
 
 ## Produto
 
-- [Visão geral](https://www.pilarsoft.com.br/)
-- [Módulos](https://www.pilarsoft.com.br/#modulos)
-- [Agentes de IA](https://www.pilarsoft.com.br/#ia)
-- [Rentabilidade](https://www.pilarsoft.com.br/#rentabilidade)
-- [Perguntas frequentes](https://www.pilarsoft.com.br/#faq)
+- [Visão geral](https://www.pilarsoft.com.br/): a home, com os cinco módulos e os agentes de IA
+- [Módulo Gestão](https://www.pilarsoft.com.br/gestao): funil de leads, proposta por disciplina, financeiro, folha e relatórios
+- [Módulo Projetos](https://www.pilarsoft.com.br/projetos): quadro por status, Gantt da carteira, disciplinas com prazo e responsável
+- [Módulo Obra](https://www.pilarsoft.com.br/obra): diário de obra vindo do campo, cotação de material comparada, conta da obra com prestação de contas
+- [Portal do cliente](https://www.pilarsoft.com.br/portal): link só de leitura em que o cliente acompanha andamento, parcelas e prestação de contas
+- [Pilar Campo](https://www.pilarsoft.com.br/campo): app de celular do canteiro, funciona sem sinal e sem e-mail corporativo
+
+## Comparações
+
+- [Pilar vs Planilha](https://www.pilarsoft.com.br/vs/planilha): diferença lado a lado para quem hoje controla projeto em Excel ou Google Sheets
+- [Pilar vs Trello](https://www.pilarsoft.com.br/vs/trello): diferença lado a lado para quem hoje usa um quadro genérico de tarefas
+
+## Planos
+
+- [Planos e preços](https://www.pilarsoft.com.br/planos): preço por escritório, sem cobrança por usuário; o que muda entre planos é a quantidade de projetos ativos e a cota mensal de IA. Todo plano tem a plataforma inteira e trial de 14 dias sem cartão.
+
+## Perguntas frequentes
+
+- [FAQ](https://www.pilarsoft.com.br/faq)
 
 ## Informações
 
-O Pilar atende empresas e escritórios de engenharia multidisciplinar (civil, estrutural, MEP/HVAC) que vendem projeto técnico por proposta. Não é ferramenta de arquitetura nem ERP de construção, e não substitui ferramentas de cálculo, CAD ou BIM. A IA consulta dados reais do escritório e prepara ações (proposta, orçamento, lançamento); nada é executado sem revisão e aprovação da equipe.
+O Pilar atende empresas e escritórios de engenharia multidisciplinar que vendem projeto técnico por proposta e administram obra por taxa. Não é ferramenta de arquitetura nem ERP de construtora, e não substitui ferramentas de cálculo, CAD ou BIM. Os agentes de IA consultam dados reais do escritório e preparam ações (proposta, orçamento, lançamento financeiro); nada é executado sem revisão e aprovação de uma pessoa da equipe.

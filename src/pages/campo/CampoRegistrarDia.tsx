@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, Camera, Loader2, Plus, Ruler, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Camera, Loader2, Plus, Ruler, UserCheck, Users, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { CLIMA_OPCOES } from "@/lib/obras";
+import { CLIMA_OPCOES, TIPO_IMPEDIMENTO_OPCOES, somaEfetivo, type TipoImpedimento } from "@/lib/obras";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { getCampoToken } from "./useCampoAuth";
 import { filaOfflineDb } from "./campoOfflineDb";
-import type { FilaDiaPayload, FilaFoto, FilaMedicao, FilaTarefaVinculo } from "./campoOfflineQueue";
+import type {
+  FilaDiaPayload,
+  FilaEfetivo,
+  FilaFoto,
+  FilaImpedimento,
+  FilaMedicao,
+  FilaTarefaVinculo,
+  FilaVisita,
+} from "./campoOfflineQueue";
 
 interface TarefaCronograma {
   id: string;
@@ -24,6 +32,35 @@ interface TarefaCronograma {
   status: string;
   frente_nome: string | null;
 }
+
+interface FornecedorCampo {
+  id: string;
+  nome: string;
+  cnpj: string | null;
+}
+
+const OUTRO = "__outro__";
+const NAO_INFORMADO = "__none__";
+
+interface EfetivoLocal {
+  fornecedorId: string;
+  nomeLivre: string;
+  quantidade: string;
+}
+const efetivoVazio = (): EfetivoLocal => ({ fornecedorId: "", nomeLivre: "", quantidade: "" });
+
+interface ImpedimentoLocal {
+  descricao: string;
+  tipo: TipoImpedimento;
+}
+const impedimentoVazio = (): ImpedimentoLocal => ({ descricao: "", tipo: "falta_material" });
+
+interface VisitaLocal {
+  fornecedorId: string;
+  nomeLivre: string;
+  observacao: string;
+}
+const visitaVazia = (): VisitaLocal => ({ fornecedorId: "", nomeLivre: "", observacao: "" });
 
 type ResultadoTarefa = "avancou" | "concluiu" | "parou";
 const RESULTADO_OPCOES: ReadonlyArray<{ value: ResultadoTarefa; label: string }> = [
@@ -90,6 +127,54 @@ export default function CampoRegistrarDia() {
   const [criandoTarefa, setCriandoTarefa] = useState(false);
   const [tarefasExtras, setTarefasExtras] = useState<TarefaCronograma[]>([]);
   const [saving, setSaving] = useState(false);
+
+  const [efetivos, setEfetivos] = useState<EfetivoLocal[]>([]);
+  const [novoEfetivo, setNovoEfetivo] = useState<EfetivoLocal>(efetivoVazio());
+  const [impedimentos, setImpedimentos] = useState<ImpedimentoLocal[]>([]);
+  const [novoImpedimento, setNovoImpedimento] = useState<ImpedimentoLocal>(impedimentoVazio());
+  const [visitas, setVisitas] = useState<VisitaLocal[]>([]);
+  const [novaVisita, setNovaVisita] = useState<VisitaLocal>(visitaVazia());
+
+  const { data: fornecedores = [] } = useQuery({
+    queryKey: ["campo_fornecedores"],
+    queryFn: async (): Promise<FornecedorCampo[]> => {
+      const token = getCampoToken();
+      if (!token) return [];
+      const { data, error } = await callUntypedRpc<{ ok: boolean; fornecedores?: FornecedorCampo[] }>(
+        "campo_listar_fornecedores",
+        { p_token: token }
+      );
+      if (error || !data?.ok) return [];
+      return data.fornecedores ?? [];
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+  const nomeFornecedor = (id: string) => fornecedores.find((f) => f.id === id)?.nome;
+
+  const addEfetivo = () => {
+    const usaLivre = novoEfetivo.fornecedorId === OUTRO;
+    if (!novoEfetivo.fornecedorId || !novoEfetivo.quantidade.trim()) return;
+    if (usaLivre && !novoEfetivo.nomeLivre.trim()) return;
+    setEfetivos((prev) => [...prev, novoEfetivo]);
+    setNovoEfetivo(efetivoVazio());
+  };
+  const removerEfetivo = (i: number) => setEfetivos((prev) => prev.filter((_, k) => k !== i));
+
+  const addImpedimento = () => {
+    if (!novoImpedimento.descricao.trim()) return;
+    setImpedimentos((prev) => [...prev, novoImpedimento]);
+    setNovoImpedimento(impedimentoVazio());
+  };
+  const removerImpedimento = (i: number) => setImpedimentos((prev) => prev.filter((_, k) => k !== i));
+
+  const addVisita = () => {
+    const usaLivre = novaVisita.fornecedorId === OUTRO;
+    if (!novaVisita.fornecedorId) return;
+    if (usaLivre && !novaVisita.nomeLivre.trim()) return;
+    setVisitas((prev) => [...prev, novaVisita]);
+    setNovaVisita(visitaVazia());
+  };
+  const removerVisita = (i: number) => setVisitas((prev) => prev.filter((_, k) => k !== i));
 
   // Cacheada (react-query): se a conexão cair bem na hora de registrar, a lista
   // já buscada continua disponível — só a criação de tarefa nova exige rede.
@@ -180,11 +265,14 @@ export default function CampoRegistrarDia() {
       return;
     }
 
+    // efetivo (total) é derivado da soma das linhas por fornecedor quando há
+    // alguma lançada; sem nenhuma linha, continua o número solto (spec 062).
+    const efetivoDerivado = somaEfetivo(efetivos.map((ef) => ({ quantidade: Number(ef.quantidade) || 0 })));
     const dia: FilaDiaPayload = {
       p_data: data,
       p_clima: clima,
       p_condicao: null,
-      p_efetivo: efetivo.trim() === "" ? null : Number(efetivo),
+      p_efetivo: efetivoDerivado ?? (efetivo.trim() === "" ? null : Number(efetivo)),
       p_atividades: atividades,
       p_ocorrencias: ocorrencias,
       p_pendencias: null,
@@ -194,12 +282,35 @@ export default function CampoRegistrarDia() {
     // deixada de lado em silêncio (o usuário só clicou "+" e não preencheu).
     const medicoesValidas: FilaMedicao[] = medicoes
       .filter((m) => m.item.trim() !== "" && m.quantidade.trim() !== "" && m.unidade.trim() !== "")
-      .map((m) => ({ item: m.item.trim(), quantidade: Number(m.quantidade), unidade: m.unidade.trim(), enviada: false }));
+      .map((m) => ({
+        item: m.item.trim(),
+        quantidade: Number(m.quantidade),
+        unidade: m.unidade.trim(),
+        enviada: false,
+      }));
 
     const tarefasSelecionadas: FilaTarefaVinculo[] = Object.entries(selTarefas).map(([tarefaId, s]) => ({
       tarefaId,
       resultado: s.resultado,
       observacao: s.observacao.trim(),
+      enviada: false,
+    }));
+
+    const efetivosValidos: FilaEfetivo[] = efetivos.map((ef) => ({
+      fornecedorId: ef.fornecedorId === OUTRO ? null : ef.fornecedorId,
+      fornecedorNome: ef.fornecedorId === OUTRO ? ef.nomeLivre.trim() : null,
+      quantidade: Number(ef.quantidade),
+      enviada: false,
+    }));
+    const impedimentosValidos: FilaImpedimento[] = impedimentos.map((i) => ({
+      descricao: i.descricao.trim(),
+      tipo: i.tipo,
+      enviada: false,
+    }));
+    const visitasValidas: FilaVisita[] = visitas.map((v) => ({
+      fornecedorId: v.fornecedorId === OUTRO ? null : v.fornecedorId,
+      fornecedorNome: v.fornecedorId === OUTRO ? v.nomeLivre.trim() : null,
+      observacao: v.observacao.trim() || null,
       enviada: false,
     }));
 
@@ -213,7 +324,15 @@ export default function CampoRegistrarDia() {
       );
 
       if (!navigator.onLine) {
-        await enfileirarOffline(dia, fotosComprimidas, medicoesValidas, tarefasSelecionadas);
+        await enfileirarOffline({
+          dia,
+          fotos: fotosComprimidas,
+          medicoes: medicoesValidas,
+          tarefas: tarefasSelecionadas,
+          efetivos: efetivosValidos,
+          impedimentos: impedimentosValidos,
+          visitas: visitasValidas,
+        });
         toast.success("Sem conexão agora", {
           description: "Salvo no aparelho. Envia sozinho quando a internet voltar.",
         });
@@ -283,8 +402,64 @@ export default function CampoRegistrarDia() {
         }
       }
 
+      const efetivosAtualizados = [...efetivosValidos];
+      for (let i = 0; i < efetivosAtualizados.length; i++) {
+        const { data: eRes, error: eErr } = await callUntypedRpc<{ ok: boolean }>("campo_registrar_efetivo", {
+          p_token: token,
+          p_rdo_id: res.rdo_id,
+          p_fornecedor_id: efetivosAtualizados[i].fornecedorId,
+          p_fornecedor_nome: efetivosAtualizados[i].fornecedorNome,
+          p_quantidade: efetivosAtualizados[i].quantidade,
+        });
+        if (!eErr && eRes?.ok) {
+          efetivosAtualizados[i] = { ...efetivosAtualizados[i], enviada: true };
+        } else {
+          falhas++;
+        }
+      }
+
+      const impedimentosAtualizados = [...impedimentosValidos];
+      for (let i = 0; i < impedimentosAtualizados.length; i++) {
+        const { data: iRes, error: iErr } = await callUntypedRpc<{ ok: boolean }>("campo_registrar_impedimento", {
+          p_token: token,
+          p_rdo_id: res.rdo_id,
+          p_descricao: impedimentosAtualizados[i].descricao,
+          p_tipo: impedimentosAtualizados[i].tipo,
+        });
+        if (!iErr && iRes?.ok) {
+          impedimentosAtualizados[i] = { ...impedimentosAtualizados[i], enviada: true };
+        } else {
+          falhas++;
+        }
+      }
+
+      const visitasAtualizadas = [...visitasValidas];
+      for (let i = 0; i < visitasAtualizadas.length; i++) {
+        const { data: vRes, error: vErr } = await callUntypedRpc<{ ok: boolean }>("campo_registrar_visita", {
+          p_token: token,
+          p_rdo_id: res.rdo_id,
+          p_fornecedor_id: visitasAtualizadas[i].fornecedorId,
+          p_fornecedor_nome: visitasAtualizadas[i].fornecedorNome,
+          p_observacao: visitasAtualizadas[i].observacao,
+        });
+        if (!vErr && vRes?.ok) {
+          visitasAtualizadas[i] = { ...visitasAtualizadas[i], enviada: true };
+        } else {
+          falhas++;
+        }
+      }
+
       if (falhas > 0) {
-        await enfileirarOffline(dia, fotosAtualizadas, medicoesAtualizadas, tarefasAtualizadas, res.rdo_id);
+        await enfileirarOffline({
+          dia,
+          fotos: fotosAtualizadas,
+          medicoes: medicoesAtualizadas,
+          tarefas: tarefasAtualizadas,
+          efetivos: efetivosAtualizados,
+          impedimentos: impedimentosAtualizados,
+          visitas: visitasAtualizadas,
+          rdoId: res.rdo_id,
+        });
         toast.warning(`Dia salvo, mas ${falhas} item${falhas > 1 ? "ns" : ""} não subiu`, {
           description: "Vamos tentar de novo automaticamente.",
         });
@@ -294,7 +469,15 @@ export default function CampoRegistrarDia() {
       navigate("/campo", { replace: true });
     } catch {
       // Falha de rede no meio do caminho: não perde o que foi preenchido.
-      await enfileirarOffline(dia, fotosComprimidas, medicoesValidas, tarefasSelecionadas);
+      await enfileirarOffline({
+        dia,
+        fotos: fotosComprimidas,
+        medicoes: medicoesValidas,
+        tarefas: tarefasSelecionadas,
+        efetivos: efetivosValidos,
+        impedimentos: impedimentosValidos,
+        visitas: visitasValidas,
+      });
       toast.success("Sem conexão agora", {
         description: "Salvo no aparelho. Envia sozinho quando a internet voltar.",
       });
@@ -355,11 +538,19 @@ export default function CampoRegistrarDia() {
             type="number"
             inputMode="numeric"
             min={0}
-            value={efetivo}
+            disabled={efetivos.length > 0}
+            value={
+              efetivos.length > 0
+                ? String(somaEfetivo(efetivos.map((ef) => ({ quantidade: Number(ef.quantidade) || 0 }))))
+                : efetivo
+            }
             onChange={(e) => setEfetivo(e.target.value)}
             placeholder="Ex: 8"
             className="h-12 text-base"
           />
+          {efetivos.length > 0 && (
+            <p className="text-xs text-muted-foreground">Somado a partir do efetivo por fornecedor abaixo.</p>
+          )}
         </div>
 
         <div className="space-y-1.5">
@@ -397,7 +588,9 @@ export default function CampoRegistrarDia() {
                       />
                       <label htmlFor={`ct-${t.id}`} className="min-w-0 flex-1 cursor-pointer">
                         <span className="block truncate text-sm text-ink">{t.titulo}</span>
-                        {t.frente_nome && <span className="block text-[11px] text-muted-foreground">{t.frente_nome}</span>}
+                        {t.frente_nome && (
+                          <span className="block text-[11px] text-muted-foreground">{t.frente_nome}</span>
+                        )}
                       </label>
                     </div>
                     {marcada && (
@@ -455,6 +648,79 @@ export default function CampoRegistrarDia() {
             >
               {criandoTarefa ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             </Button>
+          </div>
+        </div>
+
+        <div className="space-y-2 rounded-xl border border-black/5 p-3">
+          <Label className="inline-flex items-center gap-1.5 text-sm">
+            <Users className="h-3.5 w-3.5 text-muted-foreground" />
+            Efetivo por fornecedor
+          </Label>
+          {efetivos.map((ef, i) => (
+            <div key={i} className="flex items-center justify-between gap-2 rounded-lg bg-muted/40 px-2.5 py-2 text-sm">
+              <span className="min-w-0 truncate text-ink">
+                {ef.fornecedorId === OUTRO ? ef.nomeLivre : (nomeFornecedor(ef.fornecedorId) ?? "Sem nome")}:{" "}
+                {ef.quantidade}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={() => removerEfetivo(i)}
+                aria-label="Remover"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <div className="flex flex-col gap-2">
+            <Select
+              value={novoEfetivo.fornecedorId || NAO_INFORMADO}
+              onValueChange={(v) => setNovoEfetivo((p) => ({ ...p, fornecedorId: v === NAO_INFORMADO ? "" : v }))}
+            >
+              <SelectTrigger className="h-10">
+                <SelectValue placeholder="Fornecedor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NAO_INFORMADO}>Selecione</SelectItem>
+                {fornecedores.map((f) => (
+                  <SelectItem key={f.id} value={f.id}>
+                    {f.nome}
+                  </SelectItem>
+                ))}
+                <SelectItem value={OUTRO}>Outro (digitar nome)</SelectItem>
+              </SelectContent>
+            </Select>
+            {novoEfetivo.fornecedorId === OUTRO && (
+              <Input
+                className="h-10 text-sm"
+                placeholder="Nome do prestador"
+                value={novoEfetivo.nomeLivre}
+                onChange={(e) => setNovoEfetivo((p) => ({ ...p, nomeLivre: e.target.value }))}
+              />
+            )}
+            <div className="flex items-center gap-2">
+              <Input
+                type="text"
+                inputMode="numeric"
+                className="h-10 flex-1 text-sm"
+                placeholder="Quantas pessoas"
+                value={novoEfetivo.quantidade}
+                onChange={(e) => setNovoEfetivo((p) => ({ ...p, quantidade: e.target.value }))}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 shrink-0"
+                onClick={addEfetivo}
+                disabled={!novoEfetivo.fornecedorId || !novoEfetivo.quantidade.trim()}
+                aria-label="Adicionar"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -542,6 +808,138 @@ export default function CampoRegistrarDia() {
           </Button>
         </div>
 
+        <div className="space-y-2 rounded-xl border border-warning-mid-border bg-warning-soft p-3">
+          <Label className="inline-flex items-center gap-1.5 text-sm text-warning-strong">
+            <AlertTriangle className="h-3.5 w-3.5" />
+            Impedimentos
+          </Label>
+          {impedimentos.map((imp, i) => (
+            <div key={i} className="flex items-start justify-between gap-2 rounded-lg bg-white/60 px-2.5 py-2 text-sm">
+              <span className="min-w-0 text-ink">
+                <span className="font-medium">{TIPO_IMPEDIMENTO_OPCOES.find((o) => o.value === imp.tipo)?.label}:</span>{" "}
+                {imp.descricao}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={() => removerImpedimento(i)}
+                aria-label="Remover"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <div className="flex flex-col gap-2">
+            <Select
+              value={novoImpedimento.tipo}
+              onValueChange={(v) => setNovoImpedimento((p) => ({ ...p, tipo: v as TipoImpedimento }))}
+            >
+              <SelectTrigger className="h-10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TIPO_IMPEDIMENTO_OPCOES.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-2">
+              <Input
+                className="h-10 flex-1 text-sm"
+                placeholder="O que travou (ex: falta de cimento)"
+                value={novoImpedimento.descricao}
+                onChange={(e) => setNovoImpedimento((p) => ({ ...p, descricao: e.target.value }))}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 shrink-0"
+                onClick={addImpedimento}
+                disabled={!novoImpedimento.descricao.trim()}
+                aria-label="Adicionar"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2 rounded-xl border border-black/5 p-3">
+          <Label className="inline-flex items-center gap-1.5 text-sm">
+            <UserCheck className="h-3.5 w-3.5 text-muted-foreground" />
+            Visitas
+          </Label>
+          {visitas.map((v, i) => (
+            <div key={i} className="flex items-center justify-between gap-2 rounded-lg bg-muted/40 px-2.5 py-2 text-sm">
+              <span className="min-w-0 truncate text-ink">
+                {v.fornecedorId === OUTRO ? v.nomeLivre : (nomeFornecedor(v.fornecedorId) ?? "Sem nome")}
+                {v.observacao && <span className="text-muted-foreground"> — {v.observacao}</span>}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={() => removerVisita(i)}
+                aria-label="Remover"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+          <div className="flex flex-col gap-2">
+            <Select
+              value={novaVisita.fornecedorId || NAO_INFORMADO}
+              onValueChange={(v) => setNovaVisita((p) => ({ ...p, fornecedorId: v === NAO_INFORMADO ? "" : v }))}
+            >
+              <SelectTrigger className="h-10">
+                <SelectValue placeholder="Visitante" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NAO_INFORMADO}>Selecione</SelectItem>
+                {fornecedores.map((f) => (
+                  <SelectItem key={f.id} value={f.id}>
+                    {f.nome}
+                  </SelectItem>
+                ))}
+                <SelectItem value={OUTRO}>Outro (digitar nome)</SelectItem>
+              </SelectContent>
+            </Select>
+            {novaVisita.fornecedorId === OUTRO && (
+              <Input
+                className="h-10 text-sm"
+                placeholder="Nome do visitante"
+                value={novaVisita.nomeLivre}
+                onChange={(e) => setNovaVisita((p) => ({ ...p, nomeLivre: e.target.value }))}
+              />
+            )}
+            <div className="flex items-center gap-2">
+              <Input
+                className="h-10 flex-1 text-sm"
+                placeholder="Motivo (opcional)"
+                value={novaVisita.observacao}
+                onChange={(e) => setNovaVisita((p) => ({ ...p, observacao: e.target.value }))}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 shrink-0"
+                onClick={addVisita}
+                disabled={!novaVisita.fornecedorId}
+                aria-label="Adicionar"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
         <div className="space-y-1.5">
           <Label htmlFor="ocorrencias">Ocorrências (opcional)</Label>
           <Textarea
@@ -564,21 +962,27 @@ export default function CampoRegistrarDia() {
 }
 
 /** Grava o dia na fila offline (IndexedDB) para o `useCampoSync` reenviar depois. */
-async function enfileirarOffline(
-  dia: FilaDiaPayload,
-  fotos: FilaFoto[],
-  medicoes: FilaMedicao[] = [],
-  tarefas: FilaTarefaVinculo[] = [],
-  rdoId?: string
-): Promise<void> {
+async function enfileirarOffline(args: {
+  dia: FilaDiaPayload;
+  fotos: FilaFoto[];
+  medicoes?: FilaMedicao[];
+  tarefas?: FilaTarefaVinculo[];
+  efetivos?: FilaEfetivo[];
+  impedimentos?: FilaImpedimento[];
+  visitas?: FilaVisita[];
+  rdoId?: string;
+}): Promise<void> {
   await filaOfflineDb.salvar({
     id: crypto.randomUUID(),
     criadoEm: Date.now(),
-    dia,
-    fotos,
-    medicoes,
-    tarefas,
-    rdoId,
+    dia: args.dia,
+    fotos: args.fotos,
+    medicoes: args.medicoes ?? [],
+    tarefas: args.tarefas ?? [],
+    efetivos: args.efetivos ?? [],
+    impedimentos: args.impedimentos ?? [],
+    visitas: args.visitas ?? [],
+    rdoId: args.rdoId,
     tentativas: 0,
   });
 }

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { formatCurrency as fmtMoeda } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,7 +26,6 @@ import {
 import type { Map as LeafletMap } from "leaflet";
 import {
   STATUS_MARKER_COLORS,
-  STATUS_SYMBOLS,
   TILE_LAYERS,
   temCoordenadaValida,
   type ProjetoMapa,
@@ -41,10 +40,6 @@ import { cn } from "@/lib/utils";
 // demanda: só entram no bundle quando a aba do Mapa monta, não no inicial.
 const MapCanvas = lazy(() => import("@/pages/mapa/MapCanvas"));
 
-function formatCurrency(v: number | null) {
-  return v ? fmtMoeda(v) : null;
-}
-
 function formatDate(d: string | null) {
   if (!d) return null;
   // Parse local (T00:00:00): sem isso, uma data-only em UTC-3 exibia o dia anterior.
@@ -52,6 +47,8 @@ function formatDate(d: string | null) {
 }
 
 export function MapaTab() {
+  const moneyMask = useMoneyMask();
+  const formatCurrency = (v: number | null) => (v ? moneyMask(v) : null);
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -85,15 +82,23 @@ export function MapaTab() {
   } = useQuery({
     queryKey: ["projetos-mapa"],
     queryFn: async () => {
+      // projetos_safe mascara valor_contrato sem financeiro. View não embeda
+      // clientes(nome) via PostgREST (sem FK visível) — resolve à parte.
       const { data, error } = await supabase
-        .from("projetos")
+        .from("projetos_safe")
         .select(
-          "id, nome, codigo_projeto, status, localizacao, latitude, longitude, valor_contrato, area_m2, prioridade, data_inicio, data_previsao, cliente_id, clientes(nome)"
+          "id, nome, codigo_projeto, status, localizacao, latitude, longitude, valor_contrato, area_m2, prioridade, data_inicio, data_previsao, cliente_id"
         )
-        .is("deleted_at", null)
         .limit(1000);
 
       if (error) throw error;
+
+      const clienteIds = [...new Set((data ?? []).map((p) => p.cliente_id).filter((id): id is string => !!id))];
+      const nomeByClienteId = new Map<string, string>();
+      if (clienteIds.length > 0) {
+        const { data: clientesData } = await supabase.from("clientes").select("id, nome").in("id", clienteIds);
+        for (const c of clientesData ?? []) nomeByClienteId.set(c.id, c.nome);
+      }
 
       return (data || []).map((p) => ({
         id: p.id,
@@ -104,7 +109,7 @@ export function MapaTab() {
         latitude: p.latitude,
         longitude: p.longitude,
         valor_contrato: p.valor_contrato,
-        cliente_nome: p.clientes?.nome ?? null,
+        cliente_nome: p.cliente_id ? (nomeByClienteId.get(p.cliente_id) ?? null) : null,
         cliente_id: p.cliente_id,
         data_inicio: p.data_inicio,
         data_previsao: p.data_previsao,
@@ -342,17 +347,13 @@ export function MapaTab() {
                   )}
                 >
                   <span
-                    className="w-3.5 h-3.5 rounded-full shrink-0 flex items-center justify-center text-white transition-transform"
+                    className="w-3.5 h-3.5 rounded-full shrink-0 transition-transform"
                     style={{
                       background: color,
-                      fontSize: "9px",
-                      lineHeight: 1,
                       transform: isActive ? "scale(1.2)" : "scale(1)",
                       boxShadow: isActive ? `0 0 0 2px ${color}40` : "none",
                     }}
-                  >
-                    {STATUS_SYMBOLS[status] ?? ""}
-                  </span>
+                  />
                   {status} ({count})
                 </button>
               );

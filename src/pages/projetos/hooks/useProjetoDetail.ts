@@ -34,20 +34,26 @@ export function useProjetoDetail(id: string | undefined) {
     queryKey: ["projeto-detail", id],
     queryFn: async () => {
       if (!id) return null;
-      const { data, error } = await supabase.from("projetos").select("*, clientes(nome, email)").eq("id", id).single();
+      // projetos_safe mascara valor_contrato sem financeiro; view não embeda
+      // clientes(nome,email) via PostgREST (sem FK visível), resolve à parte.
+      const { data, error } = await supabase.from("projetos_safe").select("*").eq("id", id).single();
 
       if (error || !data) {
         navigate("/projetos");
         return null;
       }
 
+      const cliente = data.cliente_id
+        ? (await supabase.from("clientes").select("nome, email").eq("id", data.cliente_id).maybeSingle()).data
+        : null;
+
       return {
-        id: data.id,
+        id: data.id ?? id,
         codigo_projeto: data.codigo_projeto ?? "",
-        nome: data.nome,
+        nome: data.nome ?? "",
         cliente_id: data.cliente_id ?? "",
-        cliente_nome: Array.isArray(data.clientes) ? data.clientes[0]?.nome : data.clientes?.nome,
-        cliente_email: Array.isArray(data.clientes) ? data.clientes[0]?.email : data.clientes?.email,
+        cliente_nome: cliente?.nome ?? undefined,
+        cliente_email: cliente?.email ?? undefined,
         localizacao: data.localizacao || undefined,
         parcelas: data.parcelas || undefined,
         area_m2: data.area_m2 || undefined,
@@ -369,13 +375,6 @@ export function useProjetoDetail(id: string | undefined) {
           `Status: ${PROJECT_STATUS_CONFIG[newStatus as keyof typeof PROJECT_STATUS_CONFIG]?.label ?? newStatus}`
         );
         invalidateProjeto();
-        if (newStatus !== PROJECT_STATUS.CANCELADO) {
-          const { error: notifyError } = await supabase.rpc("rpc_notificar_projeto_status", {
-            p_projeto_id: projeto.id,
-            p_novo_status: newStatus,
-          });
-          if (notifyError) monitoring.captureException(notifyError, { context: "notifyProjectStatusChange" });
-        }
       } catch (err: unknown) {
         toast.error("Erro ao mudar status", { description: errorMessage(err) });
       }

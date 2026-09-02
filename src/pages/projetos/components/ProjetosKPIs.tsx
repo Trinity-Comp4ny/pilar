@@ -35,9 +35,10 @@ export function ProjetosKPIs({ projetos, onFilterAtraso, onFilterProximos }: Pro
   }, [projetos]);
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
-      <KPICard icon={Layers} label="Projetos ativos" value={stats.total.toString()} tone="neutral" />
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+      <KPICard density="compact" icon={Layers} label="Projetos ativos" value={stats.total.toString()} tone="neutral" />
       <KPICard
+        density="compact"
         icon={AlertTriangle}
         label="Em atraso"
         value={stats.atrasados.toString()}
@@ -45,13 +46,14 @@ export function ProjetosKPIs({ projetos, onFilterAtraso, onFilterProximos }: Pro
         onClick={stats.atrasados > 0 ? onFilterAtraso : undefined}
       />
       <KPICard
+        density="compact"
         icon={CalendarClock}
         label="Próximas entregas (7d)"
         value={stats.proximos.toString()}
         tone="warning"
         onClick={stats.proximos > 0 ? onFilterProximos : undefined}
       />
-      <KPICard icon={TrendingUp} label="Valor pipeline" value={stats.valorPipeline} tone="positive" />
+      <KPICard density="compact" icon={TrendingUp} label="Valor pipeline" value={stats.valorPipeline} tone="positive" />
     </div>
   );
 }

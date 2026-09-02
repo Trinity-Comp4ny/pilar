@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Cookie, ShieldCheck } from "lucide-react";
 import { APP_URL } from "../config";
 import { getCookieConsent, CONSENT_CHANGED_EVENT, requestCookieConsentReview } from "../cookieConsent";
+import { usePageMeta } from "../lib/seo";
 
 type DataItem = {
   categoria: string;
@@ -43,9 +44,11 @@ const DATA_TABLE: DataItem[] = [
 export function Privacidade() {
   const [analyticsConsent, setAnalyticsConsent] = useState(() => getCookieConsent()?.analytics ?? false);
 
-  useEffect(() => {
-    document.title = "Política de Privacidade | Pilar";
-  }, []);
+  usePageMeta({
+    titulo: "Política de Privacidade | Pilar",
+    descricao: "Como o Pilar coleta, usa e protege os dados do seu escritório, e os seus direitos pela LGPD.",
+    caminho: "/privacidade",
+  });
 
   useEffect(() => {
     const onConsentChanged = () => setAnalyticsConsent(getCookieConsent()?.analytics ?? false);
@@ -54,7 +57,7 @@ export function Privacidade() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background pt-16">
+    <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="container mx-auto px-6 py-6 flex items-center gap-4">
           <Link

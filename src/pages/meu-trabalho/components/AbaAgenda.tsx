@@ -38,7 +38,7 @@ import { useEtapas } from "../useEtapas";
 import { TarefaDialog } from "./TarefaDialog";
 
 type Props = {
-  pessoaId: string | null;
+  pessoaIds: string[] | null;
   minhaPessoaId: string | null;
   canEdit: boolean;
   /** Empresa só-Gestão (sem módulo Projetos) não tem camada de disciplinas. */
@@ -51,10 +51,10 @@ type Props = {
  * pra ligar/desligar. Clicar numa tarefa abre a edição; numa disciplina, o
  * projeto de origem.
  */
-export function AbaAgenda({ pessoaId, minhaPessoaId, canEdit, temProjetos }: Props) {
+export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos }: Props) {
   const navigate = useNavigate();
-  const { data: disciplinas } = useDisciplinas(temProjetos ? pessoaId : null, { enabled: temProjetos });
-  const { data: tarefas } = useTarefas(pessoaId);
+  const { data: disciplinas } = useDisciplinas(temProjetos ? pessoaIds : null, { enabled: temProjetos });
+  const { data: tarefas } = useTarefas(pessoaIds);
   const { data: pessoas } = usePessoasEmpresa();
   const { data: projetos } = useProjetosLite();
   const { data: etapas } = useEtapas();

@@ -139,7 +139,7 @@ export function DisciplinasTableView({
             {disciplinasLegacy.length} disciplina{disciplinasLegacy.length !== 1 ? "s" : ""}
           </p>
           {canEdit && !isAddingDisc && (
-            <Button size="sm" variant="outline" onClick={() => setIsAddingDisc(true)}>
+            <Button size="sm" variant="brand" onClick={() => setIsAddingDisc(true)}>
               <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar disciplina
             </Button>
           )}
@@ -151,7 +151,11 @@ export function DisciplinasTableView({
               icon={Layers}
               title="Nenhuma disciplina definida"
               description="Adicione as disciplinas deste projeto para acompanhar prazos e responsáveis."
-              action={canEdit ? { label: "Adicionar disciplina", onClick: () => setIsAddingDisc(true) } : undefined}
+              action={
+                canEdit
+                  ? { label: "Adicionar disciplina", onClick: () => setIsAddingDisc(true), variant: "brand" }
+                  : undefined
+              }
             />
           </div>
         ) : (

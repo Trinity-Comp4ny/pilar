@@ -1,13 +1,11 @@
 import type { ReactNode } from "react";
-import { formatCurrency } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { CreditCard, Wallet } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
 import type { ContaItem, CartaoItem } from "../hooks/useContasCartoes";
 import type { Fatura } from "../hooks/useFaturas";
 import { vencimentoRelativo } from "./faturaHelpers";
-
-const fmtCompactBRL = { format: (v: number) => formatCurrency(v, { compact: true }) };
 
 interface ContasSidebarProps {
   contas: ContaItem[];
@@ -92,6 +90,7 @@ export function ContasSidebar({
   onSelectCartao,
   contaDialog,
 }: ContasSidebarProps) {
+  const formatCurrency = useMoneyMask();
   const faturaPorCartao = proximaFaturaPorCartao(faturasPendentes);
   const contaIds = new Set(contas.map((c) => c.id));
 
@@ -139,7 +138,7 @@ export function ContasSidebar({
                   </div>
                   <span className="text-sm font-medium truncate flex-1">{conta.nome}</span>
                   <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
-                    {fmtCompactBRL.format(conta.saldo_atual)}
+                    {formatCurrency(conta.saldo_atual, { compact: true })}
                   </span>
                 </button>
                 {cartoesDaConta.map((cartao) => (

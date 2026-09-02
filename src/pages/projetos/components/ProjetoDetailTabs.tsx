@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Layers, DollarSign, Table as TableIcon, GanttChart, GitBranch } from "lucide-react";
+import { Layers, DollarSign, ScrollText, Table as TableIcon, GanttChart, GitBranch } from "lucide-react";
 import { SecondSidebar, type SecondSidebarTab } from "@/components/SecondSidebar";
 import { cn } from "@/lib/utils";
 import {
@@ -16,6 +16,7 @@ import { type LinkItem } from "@/components/LinksEditor";
 import { useAuth } from "@/contexts/AuthContext";
 import { CronogramaTab } from "./CronogramaTab";
 import { PagamentosTab } from "./PagamentosTab";
+import { EscopoTab } from "./EscopoTab";
 import { DisciplinasTableView } from "./DisciplinasTableView";
 import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
 import { FluxoPipeline } from "./FluxoPipeline";
@@ -46,6 +47,7 @@ interface ProjetoDetailTabsProps {
 const PROJETO_TABS: SecondSidebarTab[] = [
   { id: "disciplinas", label: "Disciplinas", icon: Layers },
   { id: "pagamentos", label: "Pagamentos", icon: DollarSign },
+  { id: "escopo", label: "Escopo", icon: ScrollText },
 ];
 
 type DisciplinaView = "tabela" | "gantt" | "fluxo";
@@ -88,6 +90,7 @@ export function ProjetoDetailTabs({
     const h = hash.replace("#", "");
     if (h === "cronograma") return { tab: "disciplinas", view: "gantt" };
     if (h === "pagamentos") return { tab: "pagamentos", view: null };
+    if (h === "escopo") return { tab: "escopo", view: null };
     return { tab: "disciplinas", view: null };
   };
 
@@ -130,17 +133,23 @@ export function ProjetoDetailTabs({
     setSelectedDisc((prev) => prev && { ...prev, [field]: value });
   };
 
-  const handleDiscUpdateResponsavel = async (val: string, nome: string) => {
+  const handleDiscUpdateResponsaveis = async (ids: string[]) => {
     if (!selectedDisc) return;
     const discIdx = disciplinasLegacy.findIndex((d) => d.disciplina === selectedDisc.disciplina);
     if (discIdx < 0) return;
     const dbDisc = getDbDisc(discIdx);
     if (!dbDisc) return;
-    const existingResps = dbDisc.responsaveis ?? [];
-    const updatedResps =
-      existingResps.length > 0 ? existingResps.map((r, i) => (i === 0 ? { id: val, nome } : r)) : [{ id: val, nome }];
+    const updatedResps = ids.map((id) => ({ id, nome: pessoas.find((p) => p.id === id)?.nome || "" }));
     await handleSaveDiscChanges({ ...dbDisc, responsaveis: updatedResps });
-    setSelectedDisc((prev) => prev && { ...prev, responsavel_id: val, responsavel_nome: nome });
+    setSelectedDisc(
+      (prev) =>
+        prev && {
+          ...prev,
+          responsavel_id: updatedResps[0]?.id || "",
+          responsavel_nome: updatedResps[0]?.nome || "",
+          responsaveis: updatedResps.map((r) => ({ responsavel_id: r.id, responsavel_nome: r.nome })),
+        }
+    );
   };
 
   const handleAddObservation = async () => {
@@ -279,6 +288,14 @@ export function ProjetoDetailTabs({
           <TabsContent value="pagamentos">
             <PagamentosTab projetoId={projeto.id} canEdit={canEdit} />
           </TabsContent>
+
+          <TabsContent value="escopo">
+            <EscopoTab
+              projetoId={projeto.id}
+              canEdit={canEdit}
+              disciplinas={Array.from(new Set(dbDisciplinas.map((d) => d.nome)))}
+            />
+          </TabsContent>
         </div>
       </div>
 
@@ -289,7 +306,7 @@ export function ProjetoDetailTabs({
         disciplinas={disciplinasCatalog}
         pessoas={pessoas}
         onUpdateField={handleDiscUpdateField}
-        onUpdateResponsavel={handleDiscUpdateResponsavel}
+        onUpdateResponsaveis={handleDiscUpdateResponsaveis}
         onUpdateLabels={handleDiscUpdateLabels}
         onUpdateLinks={handleDiscUpdateLinks}
         onUpdateComentarios={handleDiscUpdateComentarios}

@@ -7,6 +7,14 @@
 
 export type ZoomLevel = "months" | "weeks";
 
+/** Cor por status de disciplina, usada pelo cronograma do projeto e pelo cronograma agregado. */
+export const DISCIPLINA_STATUS_COLORS: Record<string, { bar: string; text: string; bg: string }> = {
+  Concluído: { bar: "bg-positive/100", text: "text-positive-strong", bg: "bg-positive/10" },
+  "Em Andamento": { bar: "bg-status-progress", text: "text-info-strong", bg: "bg-info-soft" },
+  Pendente: { bar: "bg-status-planning", text: "text-warning-mid", bg: "bg-warning-soft" },
+  "Não Iniciado": { bar: "bg-status-unknown", text: "text-ink-muted", bg: "bg-muted" },
+};
+
 export interface TimelineColumn {
   label: string;
   start: Date;
@@ -58,8 +66,11 @@ export function toIso(date: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-const SNAP_BOUNDARY_MONTHS = 4;
-const SNAP_BOUNDARY_WEEKS = 2;
+// Tolerância curta de propósito: só gruda quando solta bem em cima da borda do
+// mês/semana. Valor maior fazia o arraste "travar" vários dias antes de saltar
+// pra data real (ex.: 4 dias fazia parecer que ia de 01/09 direto pro 06/09).
+const SNAP_BOUNDARY_MONTHS = 1;
+const SNAP_BOUNDARY_WEEKS = 1;
 
 /**
  * Encaixa uma data na borda de mês/semana quando o drag chega perto dela, para

@@ -20,6 +20,7 @@ import { DisciplinasTab } from "@/pages/projetos/components/DisciplinasTab";
 import { CronogramaProjetosTab } from "@/pages/projetos/components/CronogramaProjetosTab";
 import { ProjetosFilterBar, EMPTY_FILTERS, type DeadlineFilter } from "@/pages/projetos/components/ProjetosFilterBar";
 import { ProjetosKPIs } from "@/pages/projetos/components/ProjetosKPIs";
+import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
 import { ProjetosEmptyState } from "@/pages/projetos/components/ProjetosEmptyState";
 import { KanbanBoard } from "@/pages/projetos/components/KanbanBoard";
 import { ListaProjetos } from "@/pages/projetos/components/ListaProjetos";
@@ -382,51 +383,56 @@ export default function ProjetosKanban() {
         </PageHeader>
       }
     >
-      {/* KPIs (só na coleção /projetos; as lentes têm métricas próprias) */}
-      {isColecao && !loadingProjetos && projetos.length > 0 && (
-        <ProjetosKPIs
-          projetos={projetos}
-          onFilterAtraso={() => setFilters((f) => ({ ...f, deadlineStatus: ["em_atraso"] }))}
-          onFilterProximos={() => {
-            const today = new Date().toISOString().slice(0, 10);
-            const in7 = new Date();
-            in7.setDate(in7.getDate() + 7);
-            setFilters((f) => ({
-              ...f,
-              dataInicio: today,
-              dataFim: in7.toISOString().slice(0, 10),
-            }));
-          }}
-        />
-      )}
-
-      {/* Toggle Quadro/Lista + ordenação (a navegação entre recortes vive na sidebar). */}
+      {/* KPIs + toggle Quadro/Lista + ordenação numa linha só (a navegação entre
+          recortes vive na sidebar; os KPIs só entram quando há dado pra mostrar). */}
       {isColecao && (
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <div className="inline-flex rounded-full border p-0.5">
-            <button
-              type="button"
-              onClick={() => setViewMode("quadro")}
-              className={cn(
-                "rounded-full px-3 py-1 text-sm transition-colors",
-                viewMode === "quadro" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Quadro
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("lista")}
-              className={cn(
-                "rounded-full px-3 py-1 text-sm transition-colors",
-                viewMode === "lista" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Lista
-            </button>
-          </div>
-          <SortControl sort={sort} onChange={setSort} />
-        </div>
+        <CollapsibleKpiSection
+          storageKey="projetos"
+          controls={
+            <>
+              <div className="inline-flex rounded-full border p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("quadro")}
+                  className={cn(
+                    "rounded-full px-3 py-1 text-sm transition-colors",
+                    viewMode === "quadro" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Quadro
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("lista")}
+                  className={cn(
+                    "rounded-full px-3 py-1 text-sm transition-colors",
+                    viewMode === "lista" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Lista
+                </button>
+              </div>
+              <SortControl sort={sort} onChange={setSort} />
+            </>
+          }
+        >
+          {!loadingProjetos && projetos.length > 0 && (
+            <ProjetosKPIs
+              projetos={projetos}
+              onFilterAtraso={() => setFilters((f) => ({ ...f, deadlineStatus: ["em_atraso"] }))}
+              onFilterProximos={() => {
+                const today = new Date().toISOString().slice(0, 10);
+                const in7 = new Date();
+                in7.setDate(in7.getDate() + 7);
+                setFilters((f) => ({
+                  ...f,
+                  dataInicio: today,
+                  dataFim: in7.toISOString().slice(0, 10),
+                }));
+              }}
+            />
+          )}
+        </CollapsibleKpiSection>
       )}
 
       {/* Erro de carregamento: estado distinto do empty, com opção de tentar de novo */}

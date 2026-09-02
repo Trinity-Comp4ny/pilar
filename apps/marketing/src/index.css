@@ -3,11 +3,27 @@
 @import "../../../src/styles/tokens.css";
 @import "../../../src/styles/landing.css";
 
-/* Inter autohospedada, sem fonts.googleapis.com nem fonts.gstatic.com (ver
-   docs/specs/043-marketing-site-separado.md, Fase 1b). Variável, cobre os
-   pesos 300 a 600 usados na landing (light/normal/medium/semibold) num único
-   arquivo por estilo, roman e italic. Subset latin: cobre acentuação do
-   português (U+0000-00FF já inclui ã, ç, õ etc). */
+/* Geist autohospedada, sem fonts.googleapis.com nem fonts.gstatic.com (mesma
+   regra da Inter, ver docs/specs/043). Licença SIL OFL 1.1, copiada em
+   public/fonts/GEIST-LICENSE.txt. Um arquivo variável por estilo cobre toda a
+   escala de peso que a landing usa. */
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/geist-variable.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Geist";
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/geist-variable-italic.woff2") format("woff2");
+}
+
+/* Inter continua carregada: o app raiz e as páginas legais ainda a usam. */
 @font-face {
   font-family: "Inter";
   font-style: normal;
@@ -33,3 +49,80 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ============================================================
+ * Moldura do site
+ * ============================================================
+ * Quatro barras brancas fixas nas bordas, e quatro cantos em SVG que arredondam
+ * o vão interno. O conteúdo rola por baixo, então a página inteira parece um
+ * cartão encaixado na janela. Some abaixo de 850px, onde a moldura só roubaria
+ * largura de leitura.
+ */
+.site-frame {
+  position: fixed;
+  z-index: 60;
+  display: block;
+  pointer-events: none;
+  background-color: hsl(var(--surface-landing-white));
+}
+
+.site-frame--top {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--frame-w);
+}
+.site-frame--bottom {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--frame-w);
+}
+.site-frame--left {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--frame-w);
+}
+.site-frame--right {
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: var(--frame-w);
+}
+
+.site-corner {
+  position: fixed;
+  z-index: 61;
+  pointer-events: none;
+  width: var(--frame-r);
+  height: var(--frame-r);
+  color: hsl(var(--surface-landing-white));
+}
+
+:root {
+  --frame-w: 10px;
+  --frame-r: 22px;
+}
+
+@media (max-width: 850px) {
+  .site-frame,
+  .site-corner {
+    display: none;
+  }
+  :root {
+    --frame-w: 0px;
+  }
+}
+
+/* Lenis: o wrapper controla o scroll, então o html não pode ter smooth nativo. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}

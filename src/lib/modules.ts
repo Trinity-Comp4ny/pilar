@@ -66,10 +66,10 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     id: "gestao",
     label: "Gestão",
     icon: Briefcase,
-    homeRoute: "/gestao/meu-trabalho",
+    homeRoute: "/gestao/tarefas",
     items: [
-      // Empresa (primeiro grupo: Meu trabalho é a home do módulo)
-      { title: "Meu trabalho", url: "/gestao/meu-trabalho", icon: ListTodo, feature: "meu_trabalho", group: "Empresa" },
+      // Empresa (primeiro grupo: Tarefas é a home do módulo)
+      { title: "Tarefas", url: "/gestao/tarefas", icon: ListTodo, feature: "meu_trabalho", group: "Empresa" },
       { title: "Financeiro", url: "/gestao/financeiro", icon: Wallet, feature: "financeiro", group: "Empresa" },
       { title: "Equipe", url: "/gestao/equipe", icon: Users, feature: "pessoas", adminOnly: true, group: "Empresa" },
       { title: "Metas", url: "/gestao/metas", icon: Target, feature: "metas", adminOnly: true, group: "Empresa" },

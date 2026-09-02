@@ -504,7 +504,7 @@ export function ProjetoFormDialog({
                   <Label className="text-[10px] uppercase text-muted-foreground tracking-wider flex items-center gap-1.5">
                     <Calendar size={12} /> Prazos
                   </Label>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
                     <div className="space-y-1.5">
                       <Label htmlFor="dataInicio" className="text-xs">
                         Início
@@ -515,23 +515,6 @@ export function ProjetoFormDialog({
                         onChange={(v) => form.handleInputChange("data_inicio", v)}
                       />
                     </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="prazoDiasUteis" className="text-xs">
-                        Prazo (dias úteis)
-                      </Label>
-                      <Input
-                        id="prazoDiasUteis"
-                        type="number"
-                        min="1"
-                        max="999"
-                        value={form.formData.prazo_dias_uteis}
-                        onChange={(e) => form.handleInputChange("prazo_dias_uteis", e.target.value)}
-                        placeholder="60"
-                        className="h-9"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <Label htmlFor="dataPrevisao" className="text-xs">
                         Previsão
@@ -605,7 +588,7 @@ export function ProjetoFormDialog({
               disciplinas={disciplinas}
               pessoas={effectivePessoas}
               onUpdateField={form.updateDisciplinaField}
-              onUpdateResponsavel={form.updateDisciplinaResponsavel}
+              onUpdateResponsaveis={form.updateDisciplinaResponsaveis}
               newObservation={form.newObservation}
               onNewObservationChange={form.setNewObservation}
               onAddObservation={form.handleAddObservation}

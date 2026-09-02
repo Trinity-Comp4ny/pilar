@@ -1,22 +1,32 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, ChevronDown, Menu, Smartphone, Sparkles, X } from "lucide-react";
+import { ArrowRight, ChevronDown, Menu, X } from "lucide-react";
 import { APP_URL } from "../config";
 import { trackCta } from "../analytics";
 import { useLoginHint } from "../loginHint";
 import { MODULOS } from "../lib/modules";
 import { Logo } from "./Logo";
+import { SplitButton } from "./ui/SplitButton";
+
+type MenuNome = "produto";
 
 /** Atraso no fechar, pra dar tempo do mouse atravessar o vão até o painel. */
 const FECHAR_MS = 160;
 
+/**
+ * Header em pílula flutuante, encaixado dentro da moldura branca do site.
+ *
+ * Não é mais uma barra de ponta a ponta: é um cartão branco centralizado, com
+ * largura própria, que paira sobre o conteúdo. Continua `fixed`, mas colado à
+ * borda interna da moldura (`top: var(--frame-w)`), então nunca há a faixa de
+ * conteúdo aparecendo acima dele que o iOS Safari criava.
+ */
 export function LandingHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [produtoAberto, setProdutoAberto] = useState(false);
+  const [menuAberto, setMenuAberto] = useState<MenuNome | null>(null);
   const [rolou, setRolou] = useState(false);
   const loggedIn = useLoginHint();
   const fecharTimer = useRef<number | null>(null);
-  const produtoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onScroll = () => setRolou(window.scrollY > 8);
@@ -25,17 +35,17 @@ export function LandingHeader() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const abrir = () => {
+  const abrir = (nome: MenuNome) => {
     if (fecharTimer.current) {
       window.clearTimeout(fecharTimer.current);
       fecharTimer.current = null;
     }
-    setProdutoAberto(true);
+    setMenuAberto(nome);
   };
 
   const fechar = (delay = 0) => {
     if (fecharTimer.current) window.clearTimeout(fecharTimer.current);
-    fecharTimer.current = window.setTimeout(() => setProdutoAberto(false), delay);
+    fecharTimer.current = window.setTimeout(() => setMenuAberto(null), delay);
   };
 
   useEffect(
@@ -47,225 +57,146 @@ export function LandingHeader() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setProdutoAberto(false);
+      if (e.key === "Escape") setMenuAberto(null);
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
   const navLink =
-    "text-[13.5px] font-normal text-ink-soft px-3.5 py-2 rounded-full hover:bg-paper-alt hover:text-ink transition-colors";
+    "flex items-center gap-1 text-[14px] text-ink-soft px-3 py-2 rounded-full hover:text-ink transition-colors";
+
+  /** Os três módulos de escritório levam o prefixo; Portal e Campo são nomes próprios. */
+  const rotuloDe = (slug: string, nome: string) =>
+    slug === "gestao" || slug === "projetos" || slug === "obra" ? `Módulo ${nome}` : nome;
 
   return (
-    <header
-      className={`fixed top-0 inset-x-0 z-50 bg-paper-white border-b transition-colors duration-300 transform-gpu ${
-        rolou ? "border-paper-border/70" : "border-transparent"
-      }`}
-      style={{ paddingTop: "env(safe-area-inset-top)" }}
-    >
-      {/* Grade de 3 colunas: as laterais equilibram, então a navegação fica
-          opticamente centralizada mesmo com logo e CTAs de larguras diferentes. */}
-      <div className="container mx-auto px-6 md:px-10 h-16 flex md:grid md:grid-cols-[1fr_auto_1fr] items-center gap-6">
-        <Link
-          to="/"
-          className="flex items-center gap-2 shrink-0 justify-self-start"
-          onClick={() => setMobileMenuOpen(false)}
-        >
-          <Logo size="sm" className="text-ink-soft" />
-        </Link>
-
-        <nav className="hidden md:flex items-center gap-1 justify-self-center">
-          <div
-            ref={produtoRef}
-            className="relative"
-            onMouseEnter={abrir}
-            onMouseLeave={() => fechar(FECHAR_MS)}
-            onFocus={abrir}
-            onBlur={(e) => {
-              if (!produtoRef.current?.contains(e.relatedTarget as Node)) setProdutoAberto(false);
-            }}
-          >
-            <button
-              type="button"
-              aria-expanded={produtoAberto}
-              aria-haspopup="true"
-              onClick={() => setProdutoAberto((v) => !v)}
-              className={`${navLink} inline-flex items-center gap-1.5 ${produtoAberto ? "bg-paper-alt text-ink" : ""}`}
-            >
-              Produto
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${produtoAberto ? "rotate-180" : ""}`} />
-            </button>
-
-            <div
-              className={`absolute top-[calc(100%+9px)] left-1/2 -translate-x-1/2 w-[760px] max-w-[calc(100vw-3rem)] bg-white border border-paper-border rounded-xl shadow-xl overflow-hidden transition-all duration-200 ${
-                produtoAberto ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1.5"
-              }`}
-            >
-              <div className="p-4">
-                <div className="flex justify-between items-center px-1 mb-3">
-                  <span className="text-xs text-ink-muted">Módulos</span>
-                  <Link to="/" className="text-xs text-modulo-projetos-strong inline-flex items-center gap-1">
-                    Ver a plataforma
-                    <ArrowRight className="w-3 h-3" />
-                  </Link>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2.5">
-                  {MODULOS.map((mo) => (
-                    <Link
-                      key={mo.slug}
-                      to={`/${mo.slug}`}
-                      onClick={() => setProdutoAberto(false)}
-                      className={`rounded-xl p-3.5 text-left hover:-translate-y-0.5 transition-transform ${mo.cor.fill}`}
-                    >
-                      <span className="block h-[76px] rounded-lg bg-white/80 border border-ink/5 mb-3 p-2 overflow-hidden">
-                        <span className="block h-1 w-3/5 rounded-full bg-ink/10 mb-1.5" />
-                        <span className="block h-1 w-2/5 rounded-full bg-ink/10 mb-2" />
-                        <span className="grid grid-cols-3 gap-1">
-                          <span className={`h-6 rounded ${mo.cor.strong} opacity-50`} />
-                          <span className="h-6 rounded bg-ink/5" />
-                          <span className="h-6 rounded bg-ink/5" />
-                        </span>
-                      </span>
-                      <span className="block text-base font-semibold text-ink tracking-tight mb-0.5">{mo.nome}</span>
-                      <span className="block text-xs text-ink-soft leading-snug">{mo.resumo}</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              <div className="border-t border-paper-border/60 bg-paper-alt px-5 py-3 flex flex-wrap gap-6">
-                <Link
-                  to="/"
-                  onClick={() => setProdutoAberto(false)}
-                  className="inline-flex items-center gap-2 text-[12.5px] text-ink-soft"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-ink-muted shrink-0" strokeWidth={1.8} />
-                  Agentes de IA. <span className="text-modulo-projetos-strong">Veja o que cada um faz →</span>
-                </Link>
-                <Link
-                  to="/obra"
-                  onClick={() => setProdutoAberto(false)}
-                  className="inline-flex items-center gap-2 text-[12.5px] text-ink-soft"
-                >
-                  <Smartphone className="w-3.5 h-3.5 text-ink-muted shrink-0" strokeWidth={1.8} />
-                  Pilar Campo, offline no canteiro. <span className="text-modulo-projetos-strong">Conhecer →</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          <Link to="/planos" className={navLink}>
-            Planos
-          </Link>
-          <Link to="/faq" className={navLink}>
-            Perguntas frequentes
-          </Link>
-        </nav>
-
-        <div className="hidden md:flex items-center gap-2 shrink-0 justify-self-end">
-          {loggedIn ? (
-            <a
-              href={`${APP_URL}/inicio`}
-              onClick={() => trackCta("abrir_pilar", "header_desktop")}
-              className="px-5 py-2.5 bg-brand text-ink rounded-full font-medium text-[13.5px] hover:bg-brand/80 transition-colors"
-            >
-              Abrir Pilar
-            </a>
-          ) : (
-            <>
-              <a href={`${APP_URL}/login`} className={navLink}>
-                Entrar
-              </a>
-              <a
-                href={`${APP_URL}/cadastro`}
-                onClick={() => trackCta("comecar_gratis", "header_desktop")}
-                className="px-5 py-2.5 bg-brand text-ink rounded-full font-medium text-[13.5px] hover:bg-brand/80 transition-colors"
-              >
-                Testar grátis
-              </a>
-            </>
-          )}
-        </div>
-
-        <button
-          type="button"
-          className="md:hidden relative w-9 h-9 shrink-0 flex items-center justify-center text-ink-soft ml-auto"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
-          aria-expanded={mobileMenuOpen}
-          aria-controls="landing-mobile-menu"
-        >
-          <Menu
-            className={`absolute w-5 h-5 transition-all duration-300 ${
-              mobileMenuOpen ? "opacity-0 rotate-45 scale-75" : "opacity-100 rotate-0 scale-100"
-            }`}
-          />
-          <X
-            className={`absolute w-5 h-5 transition-all duration-300 ${
-              mobileMenuOpen ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-45 scale-75"
-            }`}
-          />
-        </button>
-      </div>
-
+    <header className="fixed inset-x-0 z-50 flex justify-center px-3 md:px-6" style={{ top: "var(--frame-w)" }}>
       <div
-        id="landing-mobile-menu"
-        className={`md:hidden absolute top-full left-0 right-0 bg-paper-white p-6 flex flex-col gap-1 shadow-xl transition-all duration-200 ${
-          mobileMenuOpen ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1.5"
+        className={`relative w-full max-w-[1216px] rounded-b-[22px] bg-frame transition-shadow duration-300 ${
+          rolou ? "shadow-[0_10px_36px_-16px_rgba(0,0,0,0.28)]" : "shadow-[0_2px_10px_-6px_rgba(0,0,0,0.14)]"
         }`}
       >
-        <p className="text-[10px] uppercase tracking-[0.14em] text-ink-muted font-medium mb-2">Módulos</p>
-        {MODULOS.map((mo) => (
-          <Link
-            key={mo.slug}
-            to={`/${mo.slug}`}
-            onClick={() => setMobileMenuOpen(false)}
-            className="flex items-center gap-3 py-2.5"
-          >
-            <span className={`w-7 h-7 rounded-lg shrink-0 ${mo.cor.fill}`} />
-            <span>
-              <span className="block text-base font-medium text-ink">{mo.nome}</span>
-              <span className="block text-xs text-ink-muted">{mo.resumo}</span>
-            </span>
+        <div className="flex h-16 md:h-20 items-center gap-6 px-5 md:px-7">
+          <Link to="/" className="shrink-0" onClick={() => setMobileMenuOpen(false)}>
+            <Logo size="sm" className="text-ink" />
           </Link>
-        ))}
 
-        <div className="h-px bg-paper-border my-3" />
+          <nav className="hidden md:flex items-center gap-1 mx-auto">
+            <div className="relative" onMouseEnter={() => abrir("produto")} onMouseLeave={() => fechar(FECHAR_MS)}>
+              <button
+                type="button"
+                className={navLink}
+                aria-expanded={menuAberto === "produto"}
+                onClick={() => (menuAberto === "produto" ? fechar() : abrir("produto"))}
+              >
+                Produto
+                <ChevronDown
+                  className={`w-3.5 h-3.5 transition-transform duration-200 ${menuAberto === "produto" ? "rotate-180" : ""}`}
+                />
+              </button>
 
-        <Link
-          to="/planos"
-          onClick={() => setMobileMenuOpen(false)}
-          className="text-base font-medium text-ink-soft py-2"
-        >
-          Planos
-        </Link>
-        <Link to="/faq" onClick={() => setMobileMenuOpen(false)} className="text-base font-medium text-ink-soft py-2">
-          Perguntas frequentes
-        </Link>
+              {/* Painel do Produto: uma linha por módulo, com resumo e a seta
+                  redonda da casa aparecendo no hover. O grid de 3 colunas
+                  anterior espremia "Portal do cliente" e "Pilar Campo" e
+                  deixava tudo com o mesmo peso de miniatura. */}
+              <div
+                className={`absolute top-[calc(100%+10px)] left-1/2 -translate-x-1/2 w-[420px] rounded-[22px] border border-paper-border bg-frame p-2 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.35)] transition-all duration-200 ${
+                  menuAberto === "produto" ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1"
+                }`}
+              >
+                {MODULOS.map((mo) => (
+                  <Link
+                    key={mo.slug}
+                    to={`/${mo.slug}`}
+                    onClick={() => fechar()}
+                    className="group flex items-center gap-3.5 rounded-[16px] px-3.5 py-3 hover:bg-card-brand-soft transition-colors"
+                  >
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${mo.cor.strong}`} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[13.5px] font-medium text-ink">{rotuloDe(mo.slug, mo.nome)}</span>
+                      <span className="block truncate text-[12px] leading-snug text-ink-muted">{mo.resumo}</span>
+                    </span>
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-ink/15 text-ink opacity-0 transition-opacity group-hover:opacity-100">
+                      <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.9} />
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
 
-        {loggedIn ? (
-          <a
-            href={`${APP_URL}/inicio`}
-            onClick={() => trackCta("abrir_pilar", "header_mobile")}
-            className="mt-3 px-6 py-3 bg-brand text-ink rounded-full text-center font-medium text-sm hover:bg-brand/80 transition-colors"
-          >
-            Abrir Pilar
-          </a>
-        ) : (
-          <>
-            <a
-              href={`${APP_URL}/cadastro`}
-              onClick={() => trackCta("comecar_gratis", "header_mobile")}
-              className="mt-3 px-6 py-3 bg-brand text-ink rounded-full text-center font-medium text-sm hover:bg-brand/80 transition-colors"
+            <Link to="/planos" className={navLink}>
+              Planos
+            </Link>
+          </nav>
+
+          <div className="hidden md:flex items-center gap-3 shrink-0">
+            {!loggedIn && (
+              <a
+                href={`${APP_URL}/login`}
+                onClick={() => trackCta("entrar", "header")}
+                className="text-[14px] text-ink-soft hover:text-ink transition-colors"
+              >
+                Entrar
+              </a>
+            )}
+            <SplitButton
+              tamanho="sm"
+              href={loggedIn ? `${APP_URL}/inicio` : `${APP_URL}/cadastro`}
+              onClick={() => trackCta(loggedIn ? "abrir_pilar" : "testar_gratis", "header")}
             >
-              Testar grátis
-            </a>
-            <a href={`${APP_URL}/login`} className="text-center text-sm font-medium text-ink-soft py-2">
-              Já tenho conta, entrar
-            </a>
-          </>
-        )}
+              {loggedIn ? "Abrir Pilar" : "Testar grátis"}
+            </SplitButton>
+          </div>
+
+          <button
+            type="button"
+            className="md:hidden relative w-9 h-9 shrink-0 flex items-center justify-center text-ink ml-auto"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={mobileMenuOpen}
+          >
+            <Menu
+              className={`absolute w-5 h-5 transition-all duration-300 ${
+                mobileMenuOpen ? "opacity-0 rotate-45 scale-75" : "opacity-100 rotate-0 scale-100"
+              }`}
+            />
+            <X
+              className={`absolute w-5 h-5 transition-all duration-300 ${
+                mobileMenuOpen ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-45 scale-75"
+              }`}
+            />
+          </button>
+        </div>
+
+        <div
+          className={`md:hidden absolute top-full left-0 right-0 mt-2 rounded-2xl border border-paper-border bg-frame p-5 flex flex-col gap-1 shadow-xl transition-all duration-200 ${
+            mobileMenuOpen ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1.5"
+          }`}
+        >
+          {MODULOS.map((mo) => (
+            <Link
+              key={mo.slug}
+              to={`/${mo.slug}`}
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-2.5 py-2.5 text-[15px] text-ink"
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${mo.cor.strong}`} />
+              {rotuloDe(mo.slug, mo.nome)}
+            </Link>
+          ))}
+          <span className="h-px bg-paper-border my-2" />
+          <Link to="/planos" onClick={() => setMobileMenuOpen(false)} className="py-2.5 text-[15px] text-ink">
+            Planos
+          </Link>
+          <SplitButton
+            className="mt-3"
+            href={loggedIn ? `${APP_URL}/inicio` : `${APP_URL}/cadastro`}
+            onClick={() => trackCta(loggedIn ? "abrir_pilar" : "testar_gratis", "header_mobile")}
+          >
+            {loggedIn ? "Abrir Pilar" : "Testar grátis por 14 dias"}
+          </SplitButton>
+        </div>
       </div>
     </header>
   );

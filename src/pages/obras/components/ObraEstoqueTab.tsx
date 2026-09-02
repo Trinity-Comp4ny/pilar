@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { formatCurrency, formatDate, formatDecimal } from "@/lib/format";
+import { formatDate, formatDecimal } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { saldoMaterial } from "@/lib/obras";
 import { useObraFrentes } from "@/hooks/useObraFrentes";
 import {
@@ -20,6 +21,7 @@ import { MaterialMovDialog } from "./MaterialMovDialog";
 type MovDialogState = { movInicial?: MovimentoRow | null; materialIdInicial?: string | null };
 
 export function ObraEstoqueTab({ obraId, canEdit }: { obraId: string; canEdit: boolean }) {
+  const formatCurrency = useMoneyMask();
   const { data: materiais = [], isLoading } = useObraEstoque(obraId);
   const { data: frentes = [] } = useObraFrentes(obraId);
   const delMaterial = useDeleteMaterial(obraId);
@@ -34,7 +36,7 @@ export function ObraEstoqueTab({ obraId, canEdit }: { obraId: string; canEdit: b
   // "Dinheiro do cliente parado no canteiro": soma dos saldos valorizados.
   const totalParado = useMemo(
     () => materiais.reduce((acc, m) => acc + (saldoMaterial(m.movimentos).valorParado ?? 0), 0),
-    [materiais],
+    [materiais]
   );
 
   if (isLoading) return <Skeleton className="h-40 w-full rounded-2xl" />;
@@ -78,8 +80,12 @@ export function ObraEstoqueTab({ obraId, canEdit }: { obraId: string; canEdit: b
                         {m.categoria && <span className="text-xs text-muted-foreground">· {m.categoria}</span>}
                       </p>
                       <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
-                        <span>Comprado {formatDecimal(comprado, 3)} {m.unidade}</span>
-                        <span>Aplicado {formatDecimal(aplicado, 3)} {m.unidade}</span>
+                        <span>
+                          Comprado {formatDecimal(comprado, 3)} {m.unidade}
+                        </span>
+                        <span>
+                          Aplicado {formatDecimal(aplicado, 3)} {m.unidade}
+                        </span>
                         <span className={saldo < 0 ? "text-danger-strong" : "text-ink"}>
                           Saldo {formatDecimal(saldo, 3)} {m.unidade}
                           {valorParado != null && saldo !== 0 && <> · {formatCurrency(valorParado)}</>}
@@ -128,7 +134,9 @@ export function ObraEstoqueTab({ obraId, canEdit }: { obraId: string; canEdit: b
                               <span className="truncate text-xs text-muted-foreground">
                                 {formatDate(mv.data)}
                                 {mv.obra_frente_id && ` · ${frenteNome.get(mv.obra_frente_id) ?? ""}`}
-                                {isEntrada && mv.valor_unitario != null && ` · ${formatCurrency(Number(mv.valor_unitario))}/${m.unidade}`}
+                                {isEntrada &&
+                                  mv.valor_unitario != null &&
+                                  ` · ${formatCurrency(Number(mv.valor_unitario))}/${m.unidade}`}
                               </span>
                             </span>
                             {canEdit && (

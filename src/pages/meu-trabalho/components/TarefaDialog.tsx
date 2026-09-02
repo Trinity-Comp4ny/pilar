@@ -6,27 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DatePicker } from "@/components/ui/date-picker";
 import { LabelsEditor } from "@/components/LabelsEditor";
 import { LinksEditor, type LinkItem } from "@/components/LinksEditor";
 import { AtividadeComposer } from "@/pages/projetos/components/AtividadeComposer";
-import { AvatarStack } from "@/pages/projetos/components/AvatarStack";
-import { HorasMinutosField } from "./HorasMinutosField";
-import {
-  Calendar,
-  Check,
-  CheckSquare,
-  Circle,
-  Clock,
-  Flag,
-  FolderOpen,
-  MessageSquare,
-  Tag,
-  User,
-  UserPlus,
-} from "lucide-react";
+import { SeletorResponsaveis } from "@/components/SeletorResponsaveis";
+import { HorasMinutosField } from "@/components/HorasMinutosField";
+import { Calendar, CheckSquare, Circle, Clock, Flag, FolderOpen, MessageSquare, Tag, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   PRIORIDADE_DOT_CLASS,
@@ -38,6 +24,7 @@ import {
 } from "../status";
 import type { Etapa } from "../useEtapas";
 import type { Comentario, PessoaOpcao, TarefaInput, TarefaItem } from "../hooks";
+import { notificarMencao } from "@/lib/notificarMencao";
 
 const SEM = "__none__";
 
@@ -61,76 +48,6 @@ function Prop({
       </span>
       <div className="min-w-0 flex-1">{children}</div>
     </div>
-  );
-}
-
-/** Seleção de vários responsáveis: pilha de avatares no gatilho, toggle na lista. */
-function SeletorResponsaveis({
-  value,
-  pessoas,
-  disabled,
-  onChange,
-}: {
-  value: string[];
-  pessoas: PessoaOpcao[];
-  disabled?: boolean;
-  onChange: (ids: string[]) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const selecionadas = pessoas.filter((p) => value.includes(p.id));
-
-  const toggle = (id: string) => {
-    onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id]);
-  };
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger
-        disabled={disabled}
-        className={cn(
-          "flex h-9 w-full items-center gap-2 rounded-md border bg-background px-3 text-sm",
-          disabled ? "cursor-not-allowed opacity-60" : "hover:bg-muted/40"
-        )}
-      >
-        {selecionadas.length > 0 ? (
-          <>
-            <AvatarStack names={selecionadas.map((p) => p.nome)} size="xs" />
-            <span className="min-w-0 flex-1 truncate text-left">
-              {selecionadas.length === 1 ? selecionadas[0].nome : `${selecionadas.length} responsáveis`}
-            </span>
-          </>
-        ) : (
-          <span className="flex flex-1 items-center gap-1.5 text-left text-muted-foreground">
-            <UserPlus className="h-4 w-4" /> Sem responsável
-          </span>
-        )}
-      </PopoverTrigger>
-      <PopoverContent align="start" className="w-64 p-0">
-        <Command>
-          <CommandInput placeholder="Buscar pessoa..." className="h-9" />
-          <CommandList>
-            <CommandEmpty>Ninguém encontrado.</CommandEmpty>
-            <CommandGroup>
-              {pessoas.map((p) => {
-                const marcado = value.includes(p.id);
-                return (
-                  <CommandItem
-                    key={p.id}
-                    value={p.nome}
-                    onSelect={() => toggle(p.id)}
-                    className={cn("gap-2", marcado && "font-medium")}
-                  >
-                    <AvatarStack names={[p.nome]} size="xs" />
-                    <span className="flex-1 truncate">{p.nome}</span>
-                    {marcado && <Check className="h-4 w-4 text-brand" />}
-                  </CommandItem>
-                );
-              })}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
   );
 }
 
@@ -198,16 +115,27 @@ function TarefaFormBody({
   const [labels, setLabels] = useState<string[]>(tarefa?.labels ?? []);
   const [links, setLinks] = useState<LinkItem[]>(tarefa?.links ?? []);
   const [comentarios, setComentarios] = useState<Comentario[]>(tarefa?.comentarios ?? []);
+  // Menções de comentários adicionados nesta sessão do dialog, ainda não notificadas: só
+  // notifica quando o Salvar do rodapé persistir de fato (comentário de tarefa não salva sozinho
+  // como em Projeto/Disciplina), e só as novas — reabrir uma tarefa antiga não deve renotificar.
+  const [pendentesMencao, setPendentesMencao] = useState<{ texto: string; mencionados: string[] }[]>([]);
 
   const podeSalvar = !readOnly && titulo.trim().length > 0 && !saving;
 
-  const adicionarComentario = (texto: string) => {
+  const adicionarComentario = (texto: string, mencionados: string[]) => {
     const t = texto.trim();
     if (!t) return;
     setComentarios((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), texto: t, autor: autorNome, data: new Date().toISOString() },
+      {
+        id: crypto.randomUUID(),
+        texto: t,
+        autor: autorNome,
+        data: new Date().toISOString(),
+        mencionados: mencionados.length ? mencionados : undefined,
+      },
     ]);
+    if (mencionados.length) setPendentesMencao((prev) => [...prev, { texto: t, mencionados }]);
   };
 
   const salvar = async () => {
@@ -227,6 +155,11 @@ function TarefaFormBody({
       links,
       comentarios,
     });
+    // Só notifica se a tarefa já existia: numa criação, o id definitivo não volta pro dialog.
+    if (tarefa?.id && pendentesMencao.length) {
+      await Promise.all(pendentesMencao.map((p) => notificarMencao("tarefa", tarefa.id, p.mencionados, p.texto)));
+      setPendentesMencao([]);
+    }
   };
 
   return (
@@ -253,7 +186,7 @@ function TarefaFormBody({
           placeholder="Nome da tarefa"
           autoFocus={!readOnly}
           disabled={readOnly}
-          className="h-auto border-0 bg-transparent px-1 text-2xl font-semibold shadow-none focus-visible:ring-0"
+          className="h-auto border-0 bg-transparent px-1 text-2xl font-medium shadow-none focus-visible:ring-0 md:text-2xl"
         />
       </div>
 
@@ -365,9 +298,7 @@ function TarefaFormBody({
 
             <div className="space-y-2 border-t pt-6">
               <Label className="text-sm font-semibold">Links (Drive, planilha, referência...)</Label>
-              <div className="max-w-2xl">
-                <LinksEditor value={links} onChange={setLinks} readOnly={readOnly} />
-              </div>
+              <LinksEditor value={links} onChange={setLinks} readOnly={readOnly} />
             </div>
           </div>
         </ResizablePanel>
@@ -399,7 +330,7 @@ function TarefaFormBody({
             </div>
             {!readOnly && (
               <div className="flex-shrink-0 border-t bg-background/60 p-4">
-                <AtividadeComposer pessoas={pessoas} onSubmit={(texto) => adicionarComentario(texto)} />
+                <AtividadeComposer pessoas={pessoas} onSubmit={adicionarComentario} />
               </div>
             )}
           </div>

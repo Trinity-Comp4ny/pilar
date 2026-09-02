@@ -11,6 +11,7 @@ Deploy, resposta a incidentes, runbooks e monitoramento. ← [voltar ao índice]
 | [api-versioning.md](./api-versioning.md) | Estratégia de versionamento de API das edge functions |
 | [STAGING_SETUP.md](./STAGING_SETUP.md) | Setup do ambiente de staging (2º projeto Supabase) |
 | [PLANO_ENGENHARIA_2026-07.md](./PLANO_ENGENHARIA_2026-07.md) | Gap de CI/CD, secrets, migrations e ambientes contra o padrão dos repos AWS da Labrynth, com plano em 5 fases |
+| [AUDITORIA_ATIVACAO_ASAAS_2026-09-01.md](./AUDITORIA_ATIVACAO_ASAAS_2026-09-01.md) | Duas integrações Asaas distintas (cliente vs plataforma); checklist pra ligar a cobrança de assinatura em sandbox |
 
 ## Subpastas
 

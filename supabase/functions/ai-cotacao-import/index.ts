@@ -6,8 +6,10 @@ import {
   createAuthClient,
   createAdminClient,
   checkRateLimit,
+  verificarTokens,
   callGeminiStructured,
-  recordAiUsage,
+  debitarTokens,
+  GEMINI_MODEL,
   recordAgentRun,
   type AiRequest,
 } from "../_shared/ai-client.ts";
@@ -268,7 +270,17 @@ serve(
 
       const canProceed = await checkRateLimit(adminClient, empresaId);
       if (!canProceed) {
-        return jsonResponse({ error: "Limite mensal de IA atingido" }, 429, req);
+        return jsonResponse({ error: "Muitas chamadas de IA em sequência. Aguarde um minuto e tente de novo." }, 429, req);
+      }
+
+      // Gate de tokens (Fase 2, spec 075): bloqueia ANTES de gastar no provider.
+      const gateTokens = await verificarTokens(adminClient, empresaId);
+      if (!gateTokens.ok) {
+        return jsonResponse(
+          { error: "Os tokens de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador." },
+          402,
+          req
+        );
       }
 
       const body = await req.json().catch(() => ({}));
@@ -336,8 +348,7 @@ serve(
       chamadas += ex.chamadas;
 
       console.log(`[ai-cotacao-import] modo=${ex.modo} concluído em ${chamadas} chamada(s)`);
-      await recordAiUsage(adminClient, empresaId, "cotacao-import", tokensEntrada, tokensSaida, chamadas);
-      await recordAgentRun(
+      const runId = await recordAgentRun(
         adminClient,
         { systemPrompt: "", userMessage: contexto, empresaId, tipo: "cotacao-import" },
         {
@@ -348,6 +359,17 @@ serve(
         },
         user.id
       );
+      await debitarTokens(adminClient, {
+        empresaId,
+        userId: user.id,
+        agentKey: "cotacao-import",
+        agentRunId: runId,
+        model: GEMINI_MODEL,
+        tokensInput: tokensEntrada,
+        tokensOutput: tokensSaida,
+        idempotencyKey: crypto.randomUUID(),
+        calls: chamadas,
+      });
 
       return jsonResponse({ modo: ex.modo, classificacao, ...ex.data }, 200, req);
     } catch (err) {

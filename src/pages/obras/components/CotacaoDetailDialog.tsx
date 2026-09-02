@@ -25,7 +25,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { menorValorProposta, nomeFornecedorProposta } from "@/lib/obras";
 import {
   useSaveProposta,
@@ -56,6 +57,7 @@ interface Props {
 
 /** Detalhe da cotação: compara propostas lado a lado, adiciona novas e decide a vencedora. */
 export function CotacaoDetailDialog({ open, onOpenChange, obraId, cotacao, canEdit }: Props) {
+  const formatCurrency = useMoneyMask();
   const [propostaForm, setPropostaForm] = useState<{ proposta?: PropostaComFornecedor | null } | null>(null);
   const [confirmDel, setConfirmDel] = useState<PropostaComFornecedor | null>(null);
   const [decisao, setDecisao] = useState<PropostaComFornecedor | null>(null);
@@ -435,6 +437,7 @@ function ItensEditor({
   itens: ItemDraft[];
   setItens: React.Dispatch<React.SetStateAction<ItemDraft[]>>;
 }) {
+  const formatCurrency = useMoneyMask();
   const total = itens.reduce((s, it) => s + (Number(it.valor_total) || 0), 0);
   const setItem = (idx: number, patch: Partial<ItemDraft>) => {
     setItens((prev) =>
@@ -1121,6 +1124,7 @@ function DecisaoDialog({
   proposta: PropostaComFornecedor;
   onDone: () => void;
 }) {
+  const formatCurrency = useMoneyMask();
   const decidir = useDecidirCotacao(obraId);
 
   const decidirCom = async (lancarDespesa: boolean) => {

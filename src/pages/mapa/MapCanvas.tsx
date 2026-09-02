@@ -17,15 +17,15 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-const markerHtml = (color: string, symbol: string) =>
-  `<div style="background:${color};width:24px;height:24px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700;line-height:1;">${symbol}</div>`;
+const markerHtml = (color: string) =>
+  `<div style="background:${color};width:24px;height:24px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`;
 
 const STATUS_ICONS: Record<string, L.DivIcon> = Object.fromEntries(
   Object.entries(STATUS_MARKER_COLORS).map(([status, color]) => [
     status,
     L.divIcon({
       className: "custom-marker",
-      html: markerHtml(color, STATUS_SYMBOLS[status] ?? ""),
+      html: markerHtml(color),
       iconSize: [24, 24],
       iconAnchor: [12, 12],
       popupAnchor: [0, -12],
@@ -35,7 +35,7 @@ const STATUS_ICONS: Record<string, L.DivIcon> = Object.fromEntries(
 
 const FALLBACK_ICON = L.divIcon({
   className: "custom-marker",
-  html: markerHtml("hsl(var(--status-unknown))", "?"),
+  html: markerHtml("hsl(var(--status-unknown))"),
   iconSize: [24, 24],
   iconAnchor: [12, 12],
   popupAnchor: [0, -12],

@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
-import { formatCurrency, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { MoneyInput } from "@/components/forms/MoneyInput";
 import { NumberInput } from "@/components/forms/NumberInput";
 import { calcDisciplinasTotais, custoLinha, type DisciplinaLinha } from "../lib/disciplinasCalc";
@@ -46,6 +47,7 @@ const novaLinha = (): DisciplinaLinha => ({
 });
 
 export function DisciplinasEditor({ rows, onChange, disabled }: DisciplinasEditorProps) {
+  const formatCurrency = useMoneyMask();
   const totais = calcDisciplinasTotais(rows);
 
   const updateRow = (id: string, patch: Partial<DisciplinaLinha>) =>
@@ -180,7 +182,9 @@ export function DisciplinasEditor({ rows, onChange, disabled }: DisciplinasEdito
             Soma venda: {formatCurrency(totais.totalValor)}
           </Badge>
           {totais.margemPct !== null && (
-            <Badge className={`text-xs ${totais.margemPct >= 0 ? "bg-positive/10 text-positive-strong" : "bg-danger-soft text-danger-strong"}`}>
+            <Badge
+              className={`text-xs ${totais.margemPct >= 0 ? "bg-positive/10 text-positive-strong" : "bg-danger-soft text-danger-strong"}`}
+            >
               Margem: {totais.margemPct.toFixed(1)}%
             </Badge>
           )}

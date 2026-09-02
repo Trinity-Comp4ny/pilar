@@ -22,7 +22,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useFornecedorDetalhe, type CotacaoView } from "@/hooks/useFornecedorDetalhe";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { formatCNPJ, formatPhone } from "@/lib/maskUtils";
 import type { StatusProposta } from "@/lib/fornecedorInsights";
 
@@ -52,6 +53,7 @@ export default function FornecedorDetalhePage() {
   const navigate = useNavigate();
   const { data, isLoading, isError } = useFornecedorDetalhe(id);
   usePageTitle(data?.fornecedor.nome ?? "Fornecedor");
+  const formatCurrency = useMoneyMask();
 
   const [obraFiltro, setObraFiltro] = useState<string>(TODAS);
   const [expandida, setExpandida] = useState<Set<string>>(new Set());
@@ -300,6 +302,7 @@ function CotacaoLinha({
   onToggle: () => void;
   onAbrirObra: () => void;
 }) {
+  const formatCurrency = useMoneyMask();
   const badge = statusBadge(cotacao.status);
   const temItens = cotacao.itens.length > 0;
 

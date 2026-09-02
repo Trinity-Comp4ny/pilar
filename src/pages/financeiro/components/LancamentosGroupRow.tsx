@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { formatDateDisplay } from "@/lib/dateUtils";
 import type { Lancamento } from "../hooks/useLancamentosUnified";
 import type { GrupoParcelaResumo } from "../hooks/useGruposParcelaResumo";
@@ -61,6 +61,7 @@ export function LancamentosGroupRow({
   onMarkPaid,
   onDeleteGroup,
 }: Props) {
+  const formatCurrency = useMoneyMask();
   const first = items[0];
   const isReceita = first.tipo === "receita";
   const groupDesc = stripParcelaSuffix(first.descricao);
@@ -76,11 +77,7 @@ export function LancamentosGroupRow({
 
   const parcelaLabel = `${pagas} de ${totalParcelas} pagas`;
   const proximaLabel =
-    status === "quitado"
-      ? "quitado"
-      : resumo?.proximaVenc
-        ? `vence ${formatDateDisplay(resumo.proximaVenc)}`
-        : "—";
+    status === "quitado" ? "quitado" : resumo?.proximaVenc ? `vence ${formatDateDisplay(resumo.proximaVenc)}` : "—";
 
   return (
     <tr

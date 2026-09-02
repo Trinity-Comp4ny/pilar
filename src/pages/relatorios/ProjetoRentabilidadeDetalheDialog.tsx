@@ -1,13 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { formatDate } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -65,6 +60,7 @@ function Bloco({
   tone: "positive" | "danger" | "neutral";
   vazioMsg: string;
 }) {
+  const formatCurrency = useMoneyMask();
   const subtotal = linhas.reduce((acc, l) => acc + Number(l.valor ?? 0), 0);
   const toneClass =
     tone === "positive" ? "text-positive-strong" : tone === "danger" ? "text-danger-strong" : "text-ink";

@@ -1,4 +1,4 @@
-import { Building2, CreditCard, Gauge, Info, Lock, ShieldCheck, User } from "lucide-react";
+import { Building2, CreditCard, Gauge, Lock, ShieldCheck, User } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useSettingsModal, type SettingsSection } from "@/contexts/SettingsModalContext";
@@ -8,7 +8,6 @@ import { EmpresaPanel } from "./panels/EmpresaPanel";
 import { UsoPanel } from "./panels/UsoPanel";
 import { PagamentoPanel } from "./panels/PagamentoPanel";
 import { PrivacidadePanel } from "./panels/PrivacidadePanel";
-import { NovidadesPanel } from "./panels/NovidadesPanel";
 
 type SectionDef = {
   id: SettingsSection;
@@ -24,7 +23,6 @@ const SECTIONS: SectionDef[] = [
   { id: "uso", label: "Uso", icon: Gauge, Panel: UsoPanel },
   { id: "pagamento", label: "Pagamento", icon: CreditCard, Panel: PagamentoPanel },
   { id: "privacidade", label: "Privacidade", icon: Lock, Panel: PrivacidadePanel },
-  { id: "informacoes", label: "Informações", icon: Info, Panel: NovidadesPanel },
 ];
 
 // Modal de configurações da conta: rail de seções à esquerda, painel ativo à direita.

@@ -24,10 +24,10 @@ export function msgErroChat(e: unknown, porTimeout = false): string {
   const err = e as { name?: string; context?: { status?: number } } | null;
   const status = err?.context?.status;
   if (status === 429) {
-    return "Você atingiu o limite de IA deste mês. Fale com o admin da empresa para liberar mais.";
+    return "Muitas chamadas de IA em sequência. Aguarde um minuto e tente de novo.";
   }
   if (status === 402) {
-    return "Sem créditos de IA suficientes para concluir. Fale com o admin da empresa para recarregar.";
+    return "Os tokens de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador.";
   }
   if (status === 401 || status === 403) {
     return "Você não tem permissão para essa ação. Fale com um administrador da empresa.";

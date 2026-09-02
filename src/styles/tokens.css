@@ -146,6 +146,9 @@
 
   /* ── Brand ────────────────────────────────────────────────── */
   --brand-accent: var(--c-brand-500);
+  /* Lavagem clara do verde, para superfície grande (cartão do bento, faixa).
+     O verde cheio só aguenta área pequena; em bloco grande cansa a vista. */
+  --brand-accent-soft: 102 62% 91%;
 
   /* ── Módulos (landing) ────────────────────────────────────── */
   --modulo-gestao: var(--c-modulo-gestao-fill);

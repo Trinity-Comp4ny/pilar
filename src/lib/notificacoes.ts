@@ -4,7 +4,11 @@
  */
 import { Bell, HardHat, Layers, ListTodo, FolderKanban, Wallet, type LucideIcon } from "lucide-react";
 
-export type CategoriaNotificacao = "tarefa" | "projeto" | "disciplina" | "financeiro" | "obra" | "sistema";
+// "sistema" saiu da lista (spec 091): nenhum evento no sistema cria notificação com essa
+// categoria, e mantê-la em Preferências fazia parecer que havia algo pra controlar ali. Se um
+// evento de categoria "sistema" existir de novo no futuro, iconeCategoria/rotuloCategoria abaixo
+// seguem cobrindo com fallback (Bell / "Notificação") mesmo sem entrada explícita no mapa.
+export type CategoriaNotificacao = "tarefa" | "projeto" | "disciplina" | "financeiro" | "obra";
 
 export const CATEGORIAS: readonly CategoriaNotificacao[] = [
   "tarefa",
@@ -12,7 +16,6 @@ export const CATEGORIAS: readonly CategoriaNotificacao[] = [
   "disciplina",
   "financeiro",
   "obra",
-  "sistema",
 ] as const;
 
 export const CATEGORIA_LABEL: Record<CategoriaNotificacao, string> = {
@@ -21,7 +24,6 @@ export const CATEGORIA_LABEL: Record<CategoriaNotificacao, string> = {
   disciplina: "Disciplinas",
   financeiro: "Financeiro",
   obra: "Obras",
-  sistema: "Sistema",
 };
 
 const CATEGORIA_ICON: Record<CategoriaNotificacao, LucideIcon> = {
@@ -30,7 +32,6 @@ const CATEGORIA_ICON: Record<CategoriaNotificacao, LucideIcon> = {
   disciplina: Layers,
   financeiro: Wallet,
   obra: HardHat,
-  sistema: Bell,
 };
 
 /** Ícone da categoria, com fallback para categorias desconhecidas (dado do banco). */

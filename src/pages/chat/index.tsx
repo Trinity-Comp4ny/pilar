@@ -5,27 +5,35 @@ import {
   Calendar,
   Coins,
   FileText,
+  HardHat,
   Loader2,
-  PenLine,
+  Plus,
   Sparkles,
   Square,
+  Users,
   Wallet,
   FolderKanban,
   X,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useAgentInbox } from "@/pages/revisao-ia/useAgentRuns";
-import { useAlertasNaoLidos } from "@/hooks/useAlertas";
-import { RevisaoInbox } from "@/pages/revisao-ia/RevisaoInbox";
+import { PageHeader } from "@/components/PageHeader";
+import { Button } from "@/components/ui/button";
 import { useChat } from "./useChat";
+import { MarkdownResposta } from "./MarkdownResposta";
+import { PendenciasTab } from "./PendenciasTab";
+import { usePendenciasAgentes } from "@/hooks/useEscopos";
+
+// Saldo de tokens no chip: compacto no rótulo ("1,9 mi"), cheio no title.
+const fmtTokens = new Intl.NumberFormat("pt-BR", { notation: "compact", maximumFractionDigits: 1 });
+const fmtTokensCheio = new Intl.NumberFormat("pt-BR");
 import { LeadConfirmationCard } from "./LeadConfirmationCard";
 import { ProjetoConfirmationCard } from "./ProjetoConfirmationCard";
 import { LancamentoCard } from "./LancamentoCard";
@@ -40,6 +48,8 @@ const DOMINIOS: { key: string; label: string; icon: LucideIcon; hint: string }[]
   { key: "financeiro", label: "Financeiro", icon: Wallet, hint: "receitas, despesas, lucro, caixa" },
   { key: "projetos", label: "Projetos", icon: Calendar, hint: "status, prazos, projetos ativos" },
   { key: "comercial", label: "Comercial", icon: FileText, hint: "propostas, leads, pipeline" },
+  { key: "obras", label: "Obras", icon: HardHat, hint: "RDO, clima, efetivo, atraso" },
+  { key: "equipe", label: "Equipe", icon: Users, hint: "pessoas, cargos, contratos" },
 ];
 
 const ICONE_DOMINIO: Record<string, LucideIcon> = {
@@ -58,32 +68,12 @@ export default function ChatPage() {
   const left = isMobile ? "0px" : state === "collapsed" ? "64px" : "240px";
   const { profile } = useAuth();
 
-  // Revisão IA fundida como aba. Só admin da empresa (ou ultra_admin) revisa —
-  // preserva o gate ACH-ADM-01 que antes era o RequireRole da rota /revisao-ia.
-  const podeRevisar = profile?.role === "admin" || profile?.role === "ultra_admin";
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [aba, setAba] = useState<"conversa" | "revisao">(() => {
-    if (!podeRevisar) return "conversa";
-    // Inbox-first (spec 007): a mesa de trabalho é a landing; ?tab=conversa força o chat.
-    return searchParams.get("tab") === "conversa" ? "conversa" : "revisao";
-  });
-  // Badge = tudo que espera você: alertas do agente (não lidos) + orçamentos a revisar.
-  const { data: pendentes } = useAgentInbox({ enabled: podeRevisar });
-  const { data: alertasNaoLidos = 0 } = useAlertasNaoLidos();
-  const totalPendentes = (pendentes?.length ?? 0) + (podeRevisar ? alertasNaoLidos : 0);
-
-  const trocarAba = (nova: "conversa" | "revisao") => {
-    setAba(nova);
-    setSearchParams(nova === "conversa" ? { tab: "conversa" } : {}, { replace: true });
-  };
-
   const {
     messages,
     send,
     stop,
     loading,
     reset,
-    creditosUsados,
     saldo,
     confirmarDraft,
     cancelarDraft,
@@ -92,6 +82,9 @@ export default function ChatPage() {
     executarAcao,
     cancelarAcao,
   } = useChat();
+  const [aba, setAba] = useState<"conversar" | "pendencias">("conversar");
+  const pendencias = usePendenciasAgentes();
+  const numPendencias = pendencias.data?.length ?? 0;
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -121,7 +114,6 @@ export default function ChatPage() {
     const prompt = (location.state as { prompt?: string } | null)?.prompt?.trim();
     if (!prompt || promptInicialEnviado.current) return;
     promptInicialEnviado.current = true;
-    setAba("conversa"); // pergunta vinda do Início abre a conversa, não a fila
     send(prompt);
     navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -172,10 +164,25 @@ export default function ChatPage() {
 
   const vazio = messages.length === 0;
   const primeiroNome = profile?.first_name || profile?.nome?.split(" ")[0] || null;
-  // Header some no herói vazio, mas reaparece na aba Revisão ou quando há pendências.
-  // Quem revisa tem o toggle Conversa/Trabalho no header, então ele fica sempre visível
-  // (inclusive no herói vazio). Quem não revisa mantém o herói limpo, sem header.
-  const mostrarHeader = podeRevisar || !vazio || aba === "revisao";
+
+  // Alternador Conversar/Pendências (spec 084): centralizado na mesma linha do
+  // título a partir de sm; em telas menores não cabe centralizado, então cai
+  // numa segunda linha só no mobile (ver uso abaixo).
+  const abas = (
+    <>
+      <AbaAgentesBtn ativo={aba === "conversar"} onClick={() => setAba("conversar")}>
+        Conversar
+      </AbaAgentesBtn>
+      <AbaAgentesBtn ativo={aba === "pendencias"} onClick={() => setAba("pendencias")}>
+        Pendências
+        {numPendencias > 0 && (
+          <span className="ml-1.5 rounded-full bg-brand px-1.5 py-0.5 text-[11px] font-semibold text-ink">
+            {numPendencias}
+          </span>
+        )}
+      </AbaAgentesBtn>
+    </>
+  );
 
   const inputPanel = (
     <InputPanel
@@ -196,91 +203,40 @@ export default function ChatPage() {
       className="fixed inset-y-0 right-0 z-40 flex flex-col bg-background transition-[left] duration-300 ease-in-out"
       style={{ left }}
     >
-      {/* Cabeçalho — no herói vazio some para o input virar herói, mas reaparece
-          quando a aba Revisão está ativa ou há pendências a mostrar. */}
-      {mostrarHeader && (
-        <header className="relative flex items-center gap-3 border-b border-border px-6 py-3.5">
-          <div className="min-w-0 flex-1">
-            <h1 className="text-base font-medium tracking-tight text-foreground">Agentes</h1>
-          </div>
-
-          {/* Toggle central Conversa/Trabalho (spec 007, inspirado no ChatGPT Chat/Work). */}
-          {podeRevisar && (
-            <div className="shrink-0">
-              <div className="inline-flex rounded-full bg-black/5 p-0.5 text-xs font-medium">
-                <button
-                  type="button"
-                  onClick={() => trocarAba("revisao")}
-                  aria-current={aba === "revisao" ? "page" : undefined}
-                  className={cn(
-                    "flex min-h-8 items-center gap-1.5 rounded-full px-4 py-1.5 transition-colors",
-                    aba === "revisao" ? "bg-brand text-ink" : "text-ink-soft hover:text-ink"
-                  )}
-                >
-                  Trabalho
-                  {totalPendentes > 0 && (
-                    <span className="rounded-full bg-black/10 px-1.5 py-0.5 text-[10px] leading-none">
-                      {totalPendentes}
-                    </span>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => trocarAba("conversa")}
-                  aria-current={aba === "conversa" ? "page" : undefined}
-                  className={cn(
-                    "flex min-h-8 items-center rounded-full px-4 py-1.5 transition-colors",
-                    aba === "conversa" ? "bg-brand text-ink" : "text-ink-soft hover:text-ink"
-                  )}
-                >
-                  Conversa
-                </button>
-              </div>
-            </div>
+      {/* Header padrão da casa (spec 002 via PageHeader), sempre visível. */}
+      <div className="border-b border-border">
+        <PageHeader title="Agentes" center={<div className="hidden items-center gap-1 sm:flex">{abas}</div>}>
+          {saldo && (
+            <span
+              className="hidden lg:flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
+              title={`Tokens de IA: ${fmtTokensCheio.format(saldo.tokens_plano)} do plano + ${fmtTokensCheio.format(saldo.tokens_comprado)} avulsos`}
+            >
+              <Coins className="h-3.5 w-3.5" />
+              {fmtTokens.format(saldo.tokens_restantes)} tokens
+            </span>
           )}
+          {aba === "conversar" && (
+            <Button
+              onClick={handleReset}
+              disabled={loading}
+              variant="brand"
+              className="h-9 rounded-full px-4 text-[13px] font-medium"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Nova conversa
+            </Button>
+          )}
+        </PageHeader>
+        {/* Pendências (spec 084): trabalho de agente esperando decisão, cruzando projetos —
+            sem isso, quem só abre /agentes nunca descobre que o guardião de margem preparou algo.
+            Em telas >= sm o alternador já está centralizado no header (acima); esta linha só
+            existe pro mobile, onde não cabe centralizado na mesma linha do título. */}
+        <div className="flex items-center gap-1 px-4 pb-3 sm:hidden">{abas}</div>
+      </div>
 
-          <div className="flex flex-1 items-center justify-end gap-2">
-            {aba === "conversa" && (
-              <>
-                {saldo && (
-                  <span
-                    className="hidden lg:flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
-                    title={`Créditos de IA restantes este mês (${saldo.usados} de ${saldo.limite} usados)`}
-                  >
-                    <Coins className="h-3.5 w-3.5" />
-                    {saldo.restante} crédito{saldo.restante === 1 ? "" : "s"} restantes
-                  </span>
-                )}
-                {creditosUsados > 0 && (
-                  <span
-                    className="hidden lg:flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
-                    title="Créditos de IA debitados nesta conversa"
-                  >
-                    <Coins className="h-3.5 w-3.5" />
-                    {creditosUsados} usado{creditosUsados === 1 ? "" : "s"} agora
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  disabled={loading}
-                  className="flex min-h-11 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
-                >
-                  <PenLine className="h-3.5 w-3.5" />
-                  Nova conversa
-                </button>
-              </>
-            )}
-          </div>
-        </header>
-      )}
-
-      {aba === "revisao" ? (
-        /* ── Aba Revisão: fila persistente de trabalho aguardando aprovação ── */
-        <div className="flex-1 overflow-y-auto px-4 py-6">
-          <div className="mx-auto max-w-7xl">
-            <RevisaoInbox enabled={podeRevisar} />
-          </div>
+      {aba === "pendencias" ? (
+        <div className="flex-1 overflow-y-auto">
+          <PendenciasTab />
         </div>
       ) : vazio ? (
         /* ── Estado vazio: herói centralizado (padrão agent-first) ── */
@@ -292,8 +248,8 @@ export default function ChatPage() {
               </span>
               <h1 className="text-2xl font-semibold tracking-tight text-foreground">{saudacao(primeiroNome)}</h1>
               <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                3 agentes prontos: Financeiro, Projetos e Comercial. Pergunte em linguagem natural e eles consultam seus
-                dados e respondem na hora.
+                5 agentes prontos: Financeiro, Projetos, Comercial, Obras e Equipe. Pergunte em linguagem natural e eles
+                consultam seus dados e respondem na hora.
               </p>
             </div>
 
@@ -383,7 +339,7 @@ export default function ChatPage() {
                                 </div>
                               );
                             })()}
-                          <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
+                          <MarkdownResposta>{m.content}</MarkdownResposta>
                         </div>
                       )}
                     </div>
@@ -436,6 +392,30 @@ export default function ChatPage() {
         </>
       )}
     </div>
+  );
+}
+
+/** Alternador Conversar/Pendências (spec 084). */
+function AbaAgentesBtn({
+  ativo,
+  onClick,
+  children,
+}: {
+  ativo: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex h-8 items-center rounded-full px-3 text-[13px] font-medium transition-colors",
+        ativo ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted/60"
+      )}
+    >
+      {children}
+    </button>
   );
 }
 

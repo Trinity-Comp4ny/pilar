@@ -1,7 +1,7 @@
 [extend]
 useDefault = true
 
-[allowlist]
+[[allowlists]]
 description = "Paths conhecidos com placeholders seguros"
 paths = [
   '''.*\.test\.ts$''',
@@ -13,9 +13,9 @@ paths = [
   '''dist/.*''',
 ]
 
-# Supabase anon key é JWT com role=anon — NÃO é secret (público por design)
-# Regex do gitleaks default detecta JWTs — precisa allowlist específica
-[[rules.allowlists]]
+# Supabase anon key é JWT com role=anon, não é secret (público por design)
+# Regex do gitleaks default detecta JWTs, precisa allowlist específica
+[[allowlists]]
 description = "Supabase anon JWT tem role=anon — não é sensível"
 regexes = ['''eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+''']
 paths = ['''\.env\.example$''', '''.*\.test\..*''', '''dist/.*''', '''^\.env$''']

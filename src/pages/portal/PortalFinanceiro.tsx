@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { KPICard } from "@/components/KPICard";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -10,6 +11,7 @@ import { EmptyState } from "@/components/EmptyState";
 import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
 
 export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) {
+  const formatCurrency = useMoneyMask();
   // Data local (BRT) no formato YYYY-MM-DD para comparar vencimento sem erro de fuso.
   const agora = new Date();
   const hojeLocal = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, "0")}-${String(
