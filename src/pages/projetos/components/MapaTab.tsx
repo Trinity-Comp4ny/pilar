@@ -26,7 +26,6 @@ import {
 import type { Map as LeafletMap } from "leaflet";
 import {
   STATUS_MARKER_COLORS,
-  STATUS_SYMBOLS,
   TILE_LAYERS,
   temCoordenadaValida,
   type ProjetoMapa,
@@ -348,17 +347,13 @@ export function MapaTab() {
                   )}
                 >
                   <span
-                    className="w-3.5 h-3.5 rounded-full shrink-0 flex items-center justify-center text-white transition-transform"
+                    className="w-3.5 h-3.5 rounded-full shrink-0 transition-transform"
                     style={{
                       background: color,
-                      fontSize: "9px",
-                      lineHeight: 1,
                       transform: isActive ? "scale(1.2)" : "scale(1)",
                       boxShadow: isActive ? `0 0 0 2px ${color}40` : "none",
                     }}
-                  >
-                    {STATUS_SYMBOLS[status] ?? ""}
-                  </span>
+                  />
                   {status} ({count})
                 </button>
               );

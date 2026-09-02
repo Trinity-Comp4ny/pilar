@@ -1,4 +1,4 @@
-import { Map as MapIcon, Satellite, Sun, Moon } from "lucide-react";
+import { Map as MapIcon, Satellite } from "lucide-react";
 import type { ProjectStatus } from "@/constants";
 
 // Constantes puras (sem dependência do Leaflet) compartilhadas entre a casca da
@@ -17,20 +17,6 @@ export const TILE_LAYERS = {
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     attribution:
       "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
-  },
-  claro: {
-    label: "Claro",
-    icon: Sun,
-    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-  },
-  escuro: {
-    label: "Escuro",
-    icon: Moon,
-    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
   },
 } as const;
 
