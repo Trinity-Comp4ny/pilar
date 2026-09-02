@@ -28,6 +28,12 @@ interface PageHeaderProps {
   children?: React.ReactNode;
   /** Busca controlada pela página: liga no estado de filtro que a página já tem. */
   search?: { value: string; onChange: (v: string) => void; placeholder?: string };
+  /**
+   * Conteúdo centralizado na mesma linha do título (ex.: alternador de abas).
+   * Fica sobreposto ao resto da linha via posicionamento absoluto; a página
+   * controla a própria responsividade (ex.: esconder em telas pequenas).
+   */
+  center?: React.ReactNode;
   /** Ação primária. Com `feature`, aplica getButtonProps(feature, "edit"). */
   primaryAction?: {
     label: string;
@@ -45,7 +51,7 @@ function isTypingTarget(el: Element | null): boolean {
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (el as HTMLElement).isContentEditable;
 }
 
-export function PageHeader({ title, breadcrumbs, children, search, primaryAction }: PageHeaderProps) {
+export function PageHeader({ title, breadcrumbs, children, search, center, primaryAction }: PageHeaderProps) {
   const { isMobile } = useSidebar();
   const { getButtonProps } = usePermissions();
   const searchRef = useRef<HTMLInputElement>(null);
@@ -75,9 +81,15 @@ export function PageHeader({ title, breadcrumbs, children, search, primaryAction
   const gate = primaryAction?.feature ? getButtonProps(primaryAction.feature, "edit") : undefined;
 
   return (
-    <div className="px-4 md:px-6 h-14 w-full flex items-center gap-3">
+    <div className="relative px-4 md:px-6 h-14 w-full flex items-center gap-3">
       {isMobile && (
         <SidebarTrigger className="text-black/80 hover:text-brand hover:bg-black/5 transition-colors rounded-full h-9 w-9 shrink-0" />
+      )}
+
+      {center && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="pointer-events-auto">{center}</div>
+        </div>
       )}
 
       {/* Trilha (breadcrumb) ou título + descrição compacta */}

@@ -221,4 +221,5 @@ export const STORAGE_KEYS = {
   REMEMBER_ME: "pilar-remember-me",
   AUTH: "pilar-auth",
   USER_NAME: "pilar-user-name",
+  CHAT_SNAPSHOT: "pilar.chat.v1",
 } as const;

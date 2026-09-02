@@ -4,6 +4,7 @@ import { msgErroChat } from "./erros";
 import { env } from "@/lib/env";
 import { reportInvokeError } from "@/lib/monitoring";
 import { softDelete, softDeleteGrupo } from "@/lib/softDelete";
+import { STORAGE_KEYS } from "@/constants";
 
 export type AgenteMeta = {
   agente: string;
@@ -225,7 +226,7 @@ type ChatResponse =
       saldo?: Saldo | null;
     };
 
-const STORAGE_KEY = "pilar.chat.v1";
+const STORAGE_KEY = STORAGE_KEYS.CHAT_SNAPSHOT;
 /** Corta o loading se a edge function travar (evita spinner infinito). */
 const SEND_TIMEOUT_MS = 45_000;
 

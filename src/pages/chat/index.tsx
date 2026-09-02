@@ -5,10 +5,12 @@ import {
   Calendar,
   Coins,
   FileText,
+  HardHat,
   Loader2,
-  PenLine,
+  Plus,
   Sparkles,
   Square,
+  Users,
   Wallet,
   FolderKanban,
   X,
@@ -23,6 +25,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader } from "@/components/PageHeader";
+import { Button } from "@/components/ui/button";
 import { useChat } from "./useChat";
 import { MarkdownResposta } from "./MarkdownResposta";
 import { PendenciasTab } from "./PendenciasTab";
@@ -45,6 +48,8 @@ const DOMINIOS: { key: string; label: string; icon: LucideIcon; hint: string }[]
   { key: "financeiro", label: "Financeiro", icon: Wallet, hint: "receitas, despesas, lucro, caixa" },
   { key: "projetos", label: "Projetos", icon: Calendar, hint: "status, prazos, projetos ativos" },
   { key: "comercial", label: "Comercial", icon: FileText, hint: "propostas, leads, pipeline" },
+  { key: "obras", label: "Obras", icon: HardHat, hint: "RDO, clima, efetivo, atraso" },
+  { key: "equipe", label: "Equipe", icon: Users, hint: "pessoas, cargos, contratos" },
 ];
 
 const ICONE_DOMINIO: Record<string, LucideIcon> = {
@@ -160,6 +165,25 @@ export default function ChatPage() {
   const vazio = messages.length === 0;
   const primeiroNome = profile?.first_name || profile?.nome?.split(" ")[0] || null;
 
+  // Alternador Conversar/Pendências (spec 084): centralizado na mesma linha do
+  // título a partir de sm; em telas menores não cabe centralizado, então cai
+  // numa segunda linha só no mobile (ver uso abaixo).
+  const abas = (
+    <>
+      <AbaAgentesBtn ativo={aba === "conversar"} onClick={() => setAba("conversar")}>
+        Conversar
+      </AbaAgentesBtn>
+      <AbaAgentesBtn ativo={aba === "pendencias"} onClick={() => setAba("pendencias")}>
+        Pendências
+        {numPendencias > 0 && (
+          <span className="ml-1.5 rounded-full bg-brand px-1.5 py-0.5 text-[11px] font-semibold text-ink">
+            {numPendencias}
+          </span>
+        )}
+      </AbaAgentesBtn>
+    </>
+  );
+
   const inputPanel = (
     <InputPanel
       value={input}
@@ -181,7 +205,7 @@ export default function ChatPage() {
     >
       {/* Header padrão da casa (spec 002 via PageHeader), sempre visível. */}
       <div className="border-b border-border">
-        <PageHeader title="Agentes">
+        <PageHeader title="Agentes" center={<div className="hidden items-center gap-1 sm:flex">{abas}</div>}>
           {saldo && (
             <span
               className="hidden lg:flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
@@ -192,32 +216,22 @@ export default function ChatPage() {
             </span>
           )}
           {aba === "conversar" && (
-            <button
-              type="button"
+            <Button
               onClick={handleReset}
               disabled={loading}
-              className="flex h-9 items-center gap-1.5 rounded-full border border-border px-3 text-[13px] font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-40"
+              variant="brand"
+              className="h-9 rounded-full px-4 text-[13px] font-medium"
             >
-              <PenLine className="h-3.5 w-3.5" />
+              <Plus className="h-3.5 w-3.5" />
               Nova conversa
-            </button>
+            </Button>
           )}
         </PageHeader>
         {/* Pendências (spec 084): trabalho de agente esperando decisão, cruzando projetos —
-            sem isso, quem só abre /agentes nunca descobre que o guardião de margem preparou algo. */}
-        <div className="flex items-center gap-1 px-4 pb-3">
-          <AbaAgentesBtn ativo={aba === "conversar"} onClick={() => setAba("conversar")}>
-            Conversar
-          </AbaAgentesBtn>
-          <AbaAgentesBtn ativo={aba === "pendencias"} onClick={() => setAba("pendencias")}>
-            Pendências
-            {numPendencias > 0 && (
-              <span className="ml-1.5 rounded-full bg-brand px-1.5 py-0.5 text-[11px] font-semibold text-ink">
-                {numPendencias}
-              </span>
-            )}
-          </AbaAgentesBtn>
-        </div>
+            sem isso, quem só abre /agentes nunca descobre que o guardião de margem preparou algo.
+            Em telas >= sm o alternador já está centralizado no header (acima); esta linha só
+            existe pro mobile, onde não cabe centralizado na mesma linha do título. */}
+        <div className="flex items-center gap-1 px-4 pb-3 sm:hidden">{abas}</div>
       </div>
 
       {aba === "pendencias" ? (
@@ -234,8 +248,8 @@ export default function ChatPage() {
               </span>
               <h1 className="text-2xl font-semibold tracking-tight text-foreground">{saudacao(primeiroNome)}</h1>
               <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                3 agentes prontos: Financeiro, Projetos e Comercial. Pergunte em linguagem natural e eles consultam seus
-                dados e respondem na hora.
+                5 agentes prontos: Financeiro, Projetos, Comercial, Obras e Equipe. Pergunte em linguagem natural e eles
+                consultam seus dados e respondem na hora.
               </p>
             </div>
 
