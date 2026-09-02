@@ -44,6 +44,7 @@ import { useDisciplinaChecklist } from "@/hooks/useProjetoDisciplinaChecklist";
 import { useDisciplinaPausas, totalDiasParados } from "@/hooks/useDisciplinaPausas";
 import { FormDialog } from "@/components/FormDialog";
 import { formatDateTime } from "@/lib/format";
+import { notificarMencao } from "@/lib/notificarMencao";
 
 interface DisciplinaDetailDialogProps {
   open: boolean;
@@ -56,7 +57,7 @@ interface DisciplinaDetailDialogProps {
   /** Opcionais: só a disciplina persistida (detalhe do projeto) edita estes. */
   onUpdateLabels?: (next: string[]) => void;
   onUpdateLinks?: (next: LinkItem[]) => void;
-  onUpdateComentarios?: (next: DisciplinaComentario[]) => void;
+  onUpdateComentarios?: (next: DisciplinaComentario[]) => void | Promise<void>;
   onUpdateDescricao?: (next: string) => void;
   onUpdateHorasEstimadas?: (n: number) => void;
   onUpdateHorasRealizadas?: (n: number) => void;
@@ -202,9 +203,9 @@ function DisciplinaDetailBody({
     onUpdateDescricao(descricao);
   };
 
-  const adicionarComentario = (texto: string, mencionados: string[]) => {
+  const adicionarComentario = async (texto: string, mencionados: string[]) => {
     if (!onUpdateComentarios) return;
-    onUpdateComentarios([
+    await onUpdateComentarios([
       ...comentarios,
       {
         id: crypto.randomUUID(),
@@ -214,6 +215,7 @@ function DisciplinaDetailBody({
         mencionados: mencionados.length ? mencionados : undefined,
       },
     ]);
+    if (disciplina.id) await notificarMencao("disciplina", disciplina.id, mencionados, texto);
   };
 
   return (

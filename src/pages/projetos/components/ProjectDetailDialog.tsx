@@ -340,7 +340,7 @@ export function ProjectDetailDialog({
                     Disciplinas ({disciplinasLegacy.length})
                   </Label>
                   {canEdit && !isAddingDisc && (
-                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setIsAddingDisc(true)}>
+                    <Button size="sm" variant="brand" className="h-7 text-xs" onClick={() => setIsAddingDisc(true)}>
                       <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar
                     </Button>
                   )}
@@ -408,12 +408,7 @@ export function ProjectDetailDialog({
                     <div className="flex flex-col items-center gap-3 text-xs text-muted-foreground text-center py-8 border border-dashed rounded-lg">
                       <span>Nenhuma disciplina definida.</span>
                       {canEdit && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-xs"
-                          onClick={() => setIsAddingDisc(true)}
-                        >
+                        <Button size="sm" variant="brand" className="h-7 text-xs" onClick={() => setIsAddingDisc(true)}>
                           <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar disciplina
                         </Button>
                       )}
@@ -510,9 +505,7 @@ export function ProjectDetailDialog({
                   <Label className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase text-muted-foreground">
                     <Link2 className="h-3.5 w-3.5" /> Links
                   </Label>
-                  <div className="max-w-2xl">
-                    <LinksEditor value={projetoLinks} onChange={(n) => salvarAtividades.mutate({ links: n })} />
-                  </div>
+                  <LinksEditor value={projetoLinks} onChange={(n) => salvarAtividades.mutate({ links: n })} />
                 </div>
               </div>
             </ResizablePanel>
