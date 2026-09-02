@@ -132,8 +132,9 @@ serve(
         .eq("status", "active")
         .maybeSingle();
 
-      const maxUsuarios = (planLimit as { pilar_subscription_plans?: { max_usuarios?: number | null } } | null)
-        ?.pilar_subscription_plans?.max_usuarios ?? null;
+      const maxUsuarios =
+        (planLimit as { pilar_subscription_plans?: { max_usuarios?: number | null } } | null)?.pilar_subscription_plans
+          ?.max_usuarios ?? null;
 
       if (maxUsuarios !== null) {
         const { count: activeCount, error: countErr } = await supabaseClient
@@ -190,6 +191,15 @@ serve(
 
       if (inviteError) {
         log.error("inviteUserByEmail failed", inviteError, { actor: user.id });
+        // create_convite já grava a linha "pendente" antes do e-mail sair. Sem isto, uma
+        // falha de envio deixava a linha órfã pra sempre: nenhum e-mail chegou, mas a UI
+        // seguia mostrando convite pendente e ninguém sabia que precisava reenviar.
+        await svc
+          .from("convites")
+          .update({ usado_em: new Date().toISOString() })
+          .eq("empresa_id", profile.empresa_id)
+          .eq("email", String(email).toLowerCase().trim())
+          .is("usado_em", null);
         return safeErrorResponse(400, "Falha ao enviar convite", req);
       }
 
