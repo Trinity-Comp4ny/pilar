@@ -32,13 +32,13 @@
     ]
   },
   "staging": {
-    "verificado_em": "2026-09-01",
+    "verificado_em": "2026-09-02",
     "tabelas_sem_rls": 0,
     "anon_chamavel": 0,
     "anon_trigger_inerte": 28,
     "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
-    "authenticated_chamavel": 146,
+    "authenticated_chamavel": 148,
     "search_path_mutavel": 0,
     "policy_auth_por_linha": 25,
     "fk_sem_indice": 117,
