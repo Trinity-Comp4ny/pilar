@@ -1,4 +1,4 @@
--- Spec 090: coordenador virou "gestão de tarefa" na RLS (tarefas_coordenador_ve_tudo), mas o
+-- Spec 091: coordenador virou "gestão de tarefa" na RLS (tarefas_coordenador_ve_tudo), mas o
 -- roteamento de notificação ambient só conhecia owner/admin como gestão. Cria um segundo helper
 -- pra "gestão operacional" (prazo de projeto/disciplina/obra) sem mexer no helper de gestão
 -- financeira (custo_nao_lancado/tokens_baixo continuam owner+admin só). Aproveita a mesma
@@ -107,7 +107,7 @@ BEGIN
   END LOOP;
 
   -- ── Projeto: atrasado e a vencer em 7 dias (gestão OPERACIONAL + responsáveis) ───
-  -- (spec 090: coordenador entra aqui, ele já vê tudo na RLS de tarefas)
+  -- (spec 091: coordenador entra aqui, ele já vê tudo na RLS de tarefas)
   FOR rec IN
     SELECT p.id, p.empresa_id, p.nome, p.data_previsao
     FROM public.projetos p
@@ -184,7 +184,7 @@ BEGIN
       'tarefa', rec.id, '/obras/' || rec.obra_id);
   END LOOP;
 
-  -- ── Obra (spec 090, NOVO): a obra em si atrasada — data_fim_prevista/responsavel_id
+  -- ── Obra (spec 091, NOVO): a obra em si atrasada — data_fim_prevista/responsavel_id
   --    existem desde o MVP (spec 015) e nunca alimentaram notificação nenhuma; só o
   --    passo/tarefa vinculado avisava, a obra como um todo ficava muda. ────────────
   FOR rec IN
@@ -208,9 +208,9 @@ BEGIN
       'obra', rec.id, '/obras/' || rec.id);
   END LOOP;
 
-  -- ── Obra (spec 090, NOVO): RDO em atraso — obra em andamento há mais de 3 dias sem
+  -- ── Obra (spec 091, NOVO): RDO em atraso — obra em andamento há mais de 3 dias sem
   --    diário lançado nos últimos 3 dias (nem nunca lançou nenhum). Janela de 3 dias,
-  --    não 7, porque RDO é lançamento diário (ver decisões da spec 090). ─────────────
+  --    não 7, porque RDO é lançamento diário (ver decisões da spec 091). ─────────────
   FOR rec IN
     SELECT o.id, o.empresa_id, o.nome, o.responsavel_id,
       (SELECT MAX(r.data) FROM public.obra_rdo r WHERE r.obra_id = o.id) AS ultimo_rdo
@@ -253,7 +253,7 @@ BEGIN
       'projetos', NULL, '/gestao/financeiro');
   END LOOP;
 
-  -- ── Guardião de escopo (spec 067/081, FIN-5; roteamento corrigido spec 090): categoria
+  -- ── Guardião de escopo (spec 067/081, FIN-5; roteamento corrigido spec 091): categoria
   --    financeiro, então só quem vê financeiro (_notif_ve_financeiro) — nunca
   --    _notif_resp_projeto puro, que vazava o valor do orçamento pra responsável de
   --    disciplina que é coordenador/colaborador (sem acesso a financeiro). ─────────────

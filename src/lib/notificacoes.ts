@@ -4,7 +4,7 @@
  */
 import { Bell, HardHat, Layers, ListTodo, FolderKanban, Wallet, type LucideIcon } from "lucide-react";
 
-// "sistema" saiu da lista (spec 090): nenhum evento no sistema cria notificação com essa
+// "sistema" saiu da lista (spec 091): nenhum evento no sistema cria notificação com essa
 // categoria, e mantê-la em Preferências fazia parecer que havia algo pra controlar ali. Se um
 // evento de categoria "sistema" existir de novo no futuro, iconeCategoria/rotuloCategoria abaixo
 // seguem cobrindo com fallback (Bell / "Notificação") mesmo sem entrada explícita no mapa.

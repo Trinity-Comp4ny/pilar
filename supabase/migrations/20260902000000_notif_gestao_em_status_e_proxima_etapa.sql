@@ -1,4 +1,4 @@
--- Spec 090: rpc_notificar_proxima_etapa (20260848000000) só avisava responsáveis da próxima
+-- Spec 091: rpc_notificar_proxima_etapa (20260848000000) só avisava responsáveis da próxima
 -- disciplina — admin/owner/coordenador só sabiam que uma etapa liberou se por acaso fossem
 -- responsáveis diretos, o que normalmente não são. Passa a somar
 -- _notif_gestao_operacional(empresa) (criado em 20260901000000) aos responsáveis, sempre
