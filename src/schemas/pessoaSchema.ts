@@ -45,9 +45,8 @@ export type ContaBancariaFormData = z.infer<typeof contaBancariaSchema>;
 export const pessoaSchema = z
   .object({
     primeiro_nome: z.string().min(1, "Nome é obrigatório"),
-    // Opcional: o cadastro leve pede só nome, email e cargo. Sobrenome vazio é
-    // aceito (o payload grava "" e o nome completo fica só com o primeiro nome).
-    sobrenome: z.string().optional().default(""),
+    // Obrigatório: a coluna pessoas.sobrenome é NOT NULL no banco.
+    sobrenome: z.string().min(1, "Sobrenome é obrigatório"),
     cpf: z
       .string()
       .optional()

@@ -1,7 +1,8 @@
 import { useState, type KeyboardEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface LabelsEditorProps {
   value: string[];
@@ -49,14 +50,31 @@ export function LabelsEditor({ value, onChange, readOnly }: LabelsEditorProps) {
         </Badge>
       ))}
       {!readOnly && (
-        <Input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={onKeyDown}
-          onBlur={add}
-          placeholder={value.length === 0 ? "Adicionar etiqueta…" : "+ etiqueta"}
-          className="h-8 w-44 border-dashed text-xs"
-        />
+        <div className="relative">
+          <Input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={onKeyDown}
+            onBlur={add}
+            placeholder={value.length === 0 ? "Adicionar etiqueta…" : "+ etiqueta"}
+            className={cn("h-8 w-44 border-dashed text-xs", draft && "pr-7")}
+          />
+          {draft && (
+            <button
+              type="button"
+              // onMouseDown (não onClick): dispara antes do onBlur do input, que
+              // já adiciona a etiqueta — evita clique perdido por perda de foco.
+              onMouseDown={(e) => {
+                e.preventDefault();
+                add();
+              }}
+              aria-label="Adicionar etiqueta"
+              className="absolute right-1 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-brand text-ink"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
       )}
       {readOnly && value.length === 0 && <span className="text-xs text-muted-foreground">Sem etiquetas</span>}
     </div>

@@ -253,7 +253,7 @@ function TarefaFormBody({
           placeholder="Nome da tarefa"
           autoFocus={!readOnly}
           disabled={readOnly}
-          className="h-auto border-0 bg-transparent px-1 text-2xl font-semibold shadow-none focus-visible:ring-0"
+          className="h-auto border-0 bg-transparent px-1 text-2xl font-medium shadow-none focus-visible:ring-0 md:text-2xl"
         />
       </div>
 
@@ -365,9 +365,7 @@ function TarefaFormBody({
 
             <div className="space-y-2 border-t pt-6">
               <Label className="text-sm font-semibold">Links (Drive, planilha, referência...)</Label>
-              <div className="max-w-2xl">
-                <LinksEditor value={links} onChange={setLinks} readOnly={readOnly} />
-              </div>
+              <LinksEditor value={links} onChange={setLinks} readOnly={readOnly} />
             </div>
           </div>
         </ResizablePanel>

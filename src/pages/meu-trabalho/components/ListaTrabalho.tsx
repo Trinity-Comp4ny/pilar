@@ -79,7 +79,7 @@ function gridTemplate(ativas: ColunaLista[]): string {
   return `minmax(240px, 1.6fr) ${cols} 36px`;
 }
 
-function SeletorColunas({ colunas }: { colunas: ColunasLista }) {
+export function SeletorColunas({ colunas }: { colunas: ColunasLista }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -423,11 +423,6 @@ export function ListaTrabalho({
   return (
     <div className="overflow-x-auto">
       <div className="min-w-[760px] space-y-4">
-        {/* Barra do seletor de colunas */}
-        <div className="flex justify-end">
-          <SeletorColunas colunas={colunas} />
-        </div>
-
         <DragDropContext onDragEnd={onDragEnd}>
           {grupos.map((grupo, idx) => {
             const etapa = etapas.find((e) => e.id === grupo.chave);

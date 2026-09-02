@@ -1,19 +1,19 @@
-// Campo de horas em horas + minutos (mesmo formato do dropdown de horas da linha,
-// CelulasLista/HorasCell), para uso inline no modal. Guarda/entrega decimal.
+// Campo de horas único, estilo ClickUp: digita a hora em decimal (1 = 1h,
+// 0.5 = 30min) e uma dica ao lado mostra a leitura ("1h", "30min"...) — sem
+// unidade fixa colada no campo, o valor já fala por si.
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { formatHoras } from "@/lib/format";
 
-function decParaHM(dec: number | null): { h: string; m: string } {
-  if (dec == null) return { h: "", m: "" };
-  const total = Math.round(dec * 60);
-  return { h: String(Math.floor(total / 60)), m: String(total % 60) };
+function paraTexto(dec: number | null): string {
+  return dec == null ? "" : String(dec);
 }
 
-function hmParaDec(h: string, m: string): number | null {
-  const horas = Number(h) || 0;
-  const min = Number(m) || 0;
-  const total = horas * 60 + min;
-  return total > 0 ? Math.round((total / 60) * 1000) / 1000 : null;
+function paraDecimal(raw: string): number | null {
+  const normalizado = raw.trim().replace(",", ".");
+  if (!normalizado) return null;
+  const dec = Number(normalizado);
+  return Number.isFinite(dec) && dec >= 0 ? dec : null;
 }
 
 type Props = {
@@ -23,45 +23,35 @@ type Props = {
 };
 
 export function HorasMinutosField({ value, onChange, disabled }: Props) {
-  const inicial = decParaHM(value);
-  const [h, setH] = useState(inicial.h);
-  const [m, setM] = useState(inicial.m);
+  const [texto, setTexto] = useState(paraTexto(value));
+  const preview = formatHoras(paraDecimal(texto));
 
-  const commit = (nh: string, nm: string) => onChange(hmParaDec(nh, nm));
+  const commit = (raw: string) => {
+    setTexto(raw);
+    const normalizado = raw.trim().replace(",", ".");
+    if (!normalizado) {
+      onChange(null);
+      return;
+    }
+    const dec = Number(normalizado);
+    if (Number.isFinite(dec) && dec >= 0) onChange(Math.round(dec * 1000) / 1000);
+  };
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-2">
       <Input
         type="number"
         min="0"
-        inputMode="numeric"
-        value={h}
+        step="0.25"
+        inputMode="decimal"
+        value={texto}
         disabled={disabled}
-        onChange={(e) => {
-          setH(e.target.value);
-          commit(e.target.value, m);
-        }}
-        className="h-9 w-16"
+        onChange={(e) => commit(e.target.value)}
+        className="h-9 w-20"
         placeholder="0"
         aria-label="Horas"
       />
-      <span className="text-sm text-muted-foreground">h</span>
-      <Input
-        type="number"
-        min="0"
-        max="59"
-        inputMode="numeric"
-        value={m}
-        disabled={disabled}
-        onChange={(e) => {
-          setM(e.target.value);
-          commit(h, e.target.value);
-        }}
-        className="h-9 w-16"
-        placeholder="0"
-        aria-label="Minutos"
-      />
-      <span className="text-sm text-muted-foreground">min</span>
+      {preview && <span className="text-xs text-muted-foreground">{preview}</span>}
     </div>
   );
 }

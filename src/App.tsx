@@ -205,9 +205,9 @@ const App = () => {
                           </Route>
 
                           {/* Gestão: /gestao abre a primeira aba; cada aba vive em /gestao/*. */}
-                          <Route path="/gestao" element={<Navigate to="/gestao/meu-trabalho" replace />} />
+                          <Route path="/gestao" element={<Navigate to="/gestao/tarefas" replace />} />
                           <Route element={<FeatureRoute feature="meu_trabalho" />}>
-                            <Route path="/gestao/meu-trabalho" element={<MeuTrabalho />} />
+                            <Route path="/gestao/tarefas" element={<MeuTrabalho />} />
                           </Route>
                           <Route element={<FeatureRoute feature="leads" />}>
                             <Route path="/gestao/leads" element={<Leads />} />
@@ -263,7 +263,11 @@ const App = () => {
                           <Route path="/chat" element={<Navigate to="/agentes" replace />} />
                           <Route
                             path="/meu-trabalho/*"
-                            element={<RedirectPrefix from="/meu-trabalho" to="/gestao/meu-trabalho" />}
+                            element={<RedirectPrefix from="/meu-trabalho" to="/gestao/tarefas" />}
+                          />
+                          <Route
+                            path="/gestao/meu-trabalho/*"
+                            element={<RedirectPrefix from="/gestao/meu-trabalho" to="/gestao/tarefas" />}
                           />
                           <Route path="/leads/*" element={<RedirectPrefix from="/leads" to="/gestao/leads" />} />
                           <Route
