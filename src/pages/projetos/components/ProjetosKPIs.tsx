@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { AlertTriangle, CalendarClock, Layers, TrendingUp } from "lucide-react";
 import { KPICard } from "@/components/KPICard";
+import { usePermissions } from "@/hooks/usePermissions";
+import { cn } from "@/lib/utils";
 import { type Projeto, getDeadlineStatus } from "@/types/projetos";
 
 interface ProjetosKPIsProps {
@@ -10,6 +12,8 @@ interface ProjetosKPIsProps {
 }
 
 export function ProjetosKPIs({ projetos, onFilterAtraso, onFilterProximos }: ProjetosKPIsProps) {
+  const { can } = usePermissions();
+  const podeVerValor = can("financeiro");
   const stats = useMemo(() => {
     const ativos = projetos.filter((p) => p.status !== "Cancelado" && p.status !== "Concluído");
     const atrasados = ativos.filter((p) => {
@@ -35,7 +39,7 @@ export function ProjetosKPIs({ projetos, onFilterAtraso, onFilterProximos }: Pro
   }, [projetos]);
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+    <div className={cn("grid grid-cols-2 gap-2", podeVerValor ? "md:grid-cols-4" : "md:grid-cols-3")}>
       <KPICard density="compact" icon={Layers} label="Projetos ativos" value={stats.total.toString()} tone="neutral" />
       <KPICard
         density="compact"
@@ -53,7 +57,17 @@ export function ProjetosKPIs({ projetos, onFilterAtraso, onFilterProximos }: Pro
         tone="warning"
         onClick={stats.proximos > 0 ? onFilterProximos : undefined}
       />
-      <KPICard density="compact" icon={TrendingUp} label="Valor pipeline" value={stats.valorPipeline} tone="positive" />
+      {/* Sem acesso a financeiro, valor_contrato já vem mascarado (null) de
+          projetos_safe — esconder o card evita mostrar "R$ 0,00" enganoso. */}
+      {podeVerValor && (
+        <KPICard
+          density="compact"
+          icon={TrendingUp}
+          label="Valor pipeline"
+          value={stats.valorPipeline}
+          tone="positive"
+        />
+      )}
     </div>
   );
 }

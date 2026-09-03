@@ -55,7 +55,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
   const { openSettings, isOpen: isSettingsOpen } = useSettingsModal();
-  const { getNavItemProps, isAdmin, isUltraAdmin } = usePermissions();
+  const { getNavItemProps, isAdmin, isUltraAdmin, role } = usePermissions();
   // Contador de pendências de agente no item "Agentes" (spec 084) — sem isso, o trabalho
   // dos agentes proativos (ex. guardião de margem) fica invisível pra quem não abre /agentes.
   const { data: pendenciasAgentes } = usePendenciasAgentes();
@@ -115,12 +115,18 @@ export function AppSidebar() {
     item.feature ? getNavItemProps(item.feature) : { disabled: false, title: "" };
 
   const withNav = (items: ModuleMenuItem[]) =>
-    items.filter((item) => !item.adminOnly || isAdmin).map((item) => ({ item, nav: navFor(item) }));
+    items
+      .filter((item) => !item.adminOnly || isAdmin)
+      .map((item) => ({ item, nav: navFor(item) }))
+      // Feature delegável (financeiro/equipe/metas) bloqueada: "user" nunca
+      // recebe concessão, então ficaria cinza pra sempre — melhor nem mostrar.
+      // Coordenador continua vendo cinza até o admin conceder.
+      .filter(({ item, nav }) => !(item.hiddenWhenLockedForUser && nav.disabled && role === "user"));
 
   const moduleItems = useMemo(
     () => withNav(MODULES[activeModule].items),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activeModule, getNavItemProps, isAdmin]
+    [activeModule, getNavItemProps, isAdmin, role]
   );
 
   // Agrupa itens consecutivos pelo rótulo `group`, preservando a ordem. Itens sem
@@ -139,7 +145,7 @@ export function AppSidebar() {
   const empresaItems = useMemo(
     () => withNav(EMPRESA_ITEMS).filter(({ nav }) => !nav.disabled),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [getNavItemProps, isAdmin]
+    [getNavItemProps, isAdmin, role]
   );
 
   // Módulo some do switcher se nenhuma feature dele está liberada; Obras (em breve) fica sempre.
@@ -151,7 +157,7 @@ export function AppSidebar() {
         return withNav(m.items).some(({ nav }) => !nav.disabled);
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [getNavItemProps, isAdmin]
+    [getNavItemProps, isAdmin, role]
   );
 
   const selectModule = (id: ModuleId) => {
