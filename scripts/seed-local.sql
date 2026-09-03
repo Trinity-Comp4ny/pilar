@@ -1,6 +1,7 @@
 -- Seed de DESENVOLVIMENTO LOCAL. Não usar em staging/prod.
--- Roda automaticamente em `supabase start` e `supabase db reset`, então o banco
--- local sempre nasce com uma empresa demo e um usuário owner que loga por senha.
+-- Chamado por `npm run dev`/`dev:local` (via `npm run seed:local`) logo após as
+-- migrations, então o banco local sempre acaba com uma empresa demo e um
+-- usuário owner que loga por senha.
 --
 -- Logins (todos com senha 123456):
 --   dev@local.test    → ultra_admin (bypass total, telas de plataforma)

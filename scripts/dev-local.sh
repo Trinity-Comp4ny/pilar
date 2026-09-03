@@ -32,6 +32,11 @@ fi
 echo "▶ aplicando migrations pendentes no banco local…"
 supabase migration up --local
 
+# Idempotente: se dev@local.test já existe, não faz nada. Garante que o login
+# local sempre funciona, mesmo depois de um `supabase db reset`/`stop --no-backup`.
+echo "▶ garantindo seed local (dev@local.test)…"
+npm run seed:local
+
 echo "▶ servindo Edge Functions + Vite (só o app, sem LP marketing) — Ctrl+C encerra os dois."
 supabase functions serve &
 FUNCS_PID=$!
