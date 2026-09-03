@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { untypedFrom } from "@/lib/supabaseRpc";
 import { toast } from "sonner";
-import { Building2, CreditCard, Link2, ShieldCheck, SlidersHorizontal, Users, Zap } from "lucide-react";
+import { Building2, CreditCard, ShieldCheck, Users } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -13,11 +13,8 @@ import type { CompanyData } from "@/pages/company/types";
 import { type SubscriptionPlanSlug } from "@/lib/features";
 import { UsuariosTab } from "./tabs/Usuarios";
 import { EmpresaTab } from "./tabs/Empresa";
-import { ParametrosTab } from "./tabs/Parametros";
-import { AutomacoesTab } from "./tabs/Automacoes";
 import { AuditoriaTab } from "./tabs/Auditoria";
 import { PlanoTab } from "./tabs/Plano";
-import { IntegracoesTab } from "./tabs/Integracoes";
 import { monitoring } from "@/lib/monitoring";
 
 type RawUser = {
@@ -33,15 +30,12 @@ type RawUser = {
   inviteId?: string | null;
 };
 
-const VALID_TABS = ["usuarios", "empresa", "parametros", "automacoes", "auditoria", "plano", "integracoes"] as const;
+const VALID_TABS = ["usuarios", "empresa", "auditoria", "plano"] as const;
 type AdminTab = (typeof VALID_TABS)[number];
 
 const ADMIN_TABS: SecondSidebarTab[] = [
   { id: "usuarios", label: "Usuários", icon: Users },
   { id: "empresa", label: "Empresa", icon: Building2 },
-  { id: "parametros", label: "Parâmetros", icon: SlidersHorizontal },
-  { id: "automacoes", label: "Automações", icon: Zap },
-  { id: "integracoes", label: "Integrações", icon: Link2 },
   { id: "auditoria", label: "Auditoria", icon: ShieldCheck },
   { id: "plano", label: "Plano", icon: CreditCard },
 ];
@@ -216,18 +210,6 @@ export default function Admin() {
             usersCount={users.length}
             isLoading={isLoading}
           />
-        </TabsContent>
-
-        <TabsContent value="parametros" className="mt-6">
-          <ParametrosTab />
-        </TabsContent>
-
-        <TabsContent value="automacoes" className="mt-6">
-          <AutomacoesTab />
-        </TabsContent>
-
-        <TabsContent value="integracoes" className="mt-6">
-          <IntegracoesTab />
         </TabsContent>
 
         <TabsContent value="auditoria" className="mt-6">
