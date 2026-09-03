@@ -69,9 +69,14 @@ function calcularMargens(raw: RpcRentabilidadeRow, custoIndiretoPct = 15): Proje
   };
 }
 
-export const useDashboardRentabilidade = () => {
+export const useDashboardRentabilidade = (enabled = true) => {
   return useQuery({
     queryKey: ["dashboard-rentabilidade"],
+    // Sem `enabled`, todo visitante de /projetos disparava esse RPC mesmo sem
+    // permissão financeira: rpc_dashboard_rentabilidade rejeita (can_view_financeiro),
+    // e o 400 virava erro no Sentry a cada carregamento de página pra usuário comum
+    // (achado 03/09: PILAR-2C/2D/7, crescendo a cada novo usuário sem delegação).
+    enabled,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("rpc_dashboard_rentabilidade");
       if (error) throw error;
@@ -216,7 +221,7 @@ export const useProjetosDrenandoCaixa = () => {
   });
 };
 
-export const useProjetoRentabilidade = (projetoId: string | undefined) => {
+export const useProjetoRentabilidade = (projetoId: string | undefined, enabled = true) => {
   return useQuery({
     queryKey: ["projeto-rentabilidade", projetoId],
     queryFn: async () => {
@@ -228,7 +233,10 @@ export const useProjetoRentabilidade = (projetoId: string | undefined) => {
       if (!data) return null;
       return calcularMargens(data as unknown as RpcRentabilidadeRow);
     },
-    enabled: !!projetoId,
+    // Mesmo motivo do enabled em useDashboardRentabilidade: sem checar permissão
+    // aqui, todo visitante do detalhe do projeto sem acesso financeiro disparava o
+    // RPC, levava 400 de can_view_financeiro, e virava erro no Sentry (PILAR-2C).
+    enabled: !!projetoId && enabled,
     staleTime: 2 * 60 * 1000,
     refetchInterval: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
