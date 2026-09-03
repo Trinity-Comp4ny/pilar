@@ -77,7 +77,7 @@ SELECT is(
 -- explicitamente. Adicionar nome nesta lista exige ler a definição e confirmar
 -- o filtro, igual à allowlist de anon_function_grants.sql.
 WITH revisada(nome) AS (
-  VALUES ('pessoas_safe'), ('projetos_safe')
+  VALUES ('pessoas_safe'), ('projetos_safe'), ('leads_safe')
 ),
 sem_invoker AS (
   SELECT c.relname::text AS relname
