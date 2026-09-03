@@ -11,6 +11,33 @@ Regras de manutenção:
 
 ---
 
+## 2026-09-03 · Asaas não conecta por empresa; serve só para a Pilar cobrar seus clientes
+
+**Decisão:** a integração de Asaas por empresa (cada cliente do Pilar traz sua própria conta/API
+key Asaas para cobrar os próprios clientes deles) é abandonada. Asaas serve exclusivamente para
+a Pilar cobrar SEUS clientes (checkout, assinatura, compra de pacote de tokens) — o que já é como
+o motor de tokens e o checkout funcionam hoje.
+
+**Contexto:** achado em QA no admin da empresa (`/admin` → aba Integrações) — a tela de config
+por empresa (`AsaasConfigForm`) nunca foi ligada a nenhum caso de uso real: nenhuma empresa em
+produção tem `asaas_config` preenchido, e o hook que a alimentava (`useAsaasConfig`) não tinha
+outro consumidor. Confirmado com o CEO: não é prioridade, não entra no roadmap.
+
+**O que isso supera:** qualquer menção a "empresa conecta o próprio Asaas" em docs de estratégia
+mais antigos. Removidas do admin da empresa as abas Parâmetros, Automações e Integrações (a
+segunda mostrava "Integrações ativas" redundante com a terceira; a primeira eram só atalhos para
+telas que já existem em outro lugar) — `ParametrosTab`, `AutomacoesTab`, `IntegracoesTab`,
+`AsaasConfigForm` e `useAsaasConfig` removidos do código. `asaas_config` (tabela), o RLS, e as
+edge functions `asaas-config`/`asaas-webhook`/`asaas-criar-cobranca` NÃO foram tocados nesta
+limpeza (risco de quebrar o motor de tokens/checkout de plataforma, que pode reusar a mesma
+tabela para a config da própria Pilar) — se sobrar código morto ligado a cobrança por empresa
+(`useAsaasCriarCobranca`, não tinha consumidor nem antes desta limpeza), é auditoria separada.
+
+O que substitui "Parâmetros/Automações/Integrações" no admin da empresa (provavelmente uso por
+usuário e consumo de tokens) ainda não foi decidido — o CEO vai pensar numa seção nova.
+
+---
+
 ## 2026-09-01 (mais tarde ainda) · Diário da obra vira feed visual (tipo Instagram), interno + versão curada no portal do cliente
 
 **Decisão:** o Diário (RDO) ganha uma segunda forma de exibição, tipo feed de rede social
