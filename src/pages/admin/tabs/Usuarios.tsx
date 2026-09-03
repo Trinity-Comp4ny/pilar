@@ -14,6 +14,8 @@ type RawUser = {
   email: string;
   role: string | null;
   financeiroDelegado?: boolean;
+  equipeDelegado?: boolean;
+  metasDelegado?: boolean;
   isPending?: boolean;
   inviteId?: string | null;
 };
@@ -43,20 +45,28 @@ export function UsuariosTab({ users, setUsers, currentUserId }: Props) {
         email: u.email,
         role: normalizeRole(u.role),
         financeiroDelegado: u.financeiroDelegado ?? false,
+        equipeDelegado: u.equipeDelegado ?? false,
+        metasDelegado: u.metasDelegado ?? false,
         isPending: u.isPending ?? u.id.startsWith("pending-"),
         inviteId: u.inviteId,
       })),
     [users]
   );
 
-  const handleInvite = async (payload: { name: string; email: string; role: "admin" | "coordenador" | "user" }) => {
+  const handleInvite = async (payload: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: "admin" | "coordenador" | "user";
+  }) => {
     if (!(await requireAal2())) return;
     setIsInviting(true);
+    const nomeCompleto = [payload.firstName, payload.lastName].filter(Boolean).join(" ");
     try {
       const { error } = await supabase.functions.invoke("invite-user", {
         body: {
           email: payload.email,
-          nome: payload.name,
+          nome: nomeCompleto,
           role: payload.role,
         },
       });
@@ -67,7 +77,7 @@ export function UsuariosTab({ users, setUsers, currentUserId }: Props) {
         ...prev,
         {
           id: `pending-${Date.now()}`,
-          nome: payload.name,
+          nome: nomeCompleto,
           email: payload.email,
           role: payload.role,
           isPending: true,
@@ -163,6 +173,45 @@ export function UsuariosTab({ users, setUsers, currentUserId }: Props) {
     }
   };
 
+  // Mesmo padrão de handleSetFinanceiroDelegado, para equipe e metas.
+  const handleSetEquipeDelegado = async (userId: string, delegado: boolean) => {
+    if (!(await requireAal2())) return;
+    try {
+      // gen:types ainda não inclui set_equipe_delegado
+      const { error } = await callUntypedRpc("set_equipe_delegado", {
+        p_user_id: userId,
+        p_delegado: delegado,
+      });
+      if (error) throw error;
+
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, equipeDelegado: delegado } : u)));
+      toast.success(delegado ? "Acesso de equipe concedido" : "Acesso de equipe revogado");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro inesperado";
+      reportInvokeError(err, "set_equipe_delegado");
+      toast.error("Erro ao salvar", { description: msg });
+    }
+  };
+
+  const handleSetMetasDelegado = async (userId: string, delegado: boolean) => {
+    if (!(await requireAal2())) return;
+    try {
+      // gen:types ainda não inclui set_metas_delegado
+      const { error } = await callUntypedRpc("set_metas_delegado", {
+        p_user_id: userId,
+        p_delegado: delegado,
+      });
+      if (error) throw error;
+
+      setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, metasDelegado: delegado } : u)));
+      toast.success(delegado ? "Acesso a metas concedido" : "Acesso a metas revogado");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro inesperado";
+      reportInvokeError(err, "set_metas_delegado");
+      toast.error("Erro ao salvar", { description: msg });
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!(await requireAal2())) return;
     try {
@@ -188,6 +237,8 @@ export function UsuariosTab({ users, setUsers, currentUserId }: Props) {
       onInvite={handleInvite}
       onUpdate={handleUpdate}
       onSetFinanceiroDelegado={handleSetFinanceiroDelegado}
+      onSetEquipeDelegado={handleSetEquipeDelegado}
+      onSetMetasDelegado={handleSetMetasDelegado}
       onDelete={handleDelete}
       onResendInvite={handleResendInvite}
       onCancelInvite={handleCancelInvite}

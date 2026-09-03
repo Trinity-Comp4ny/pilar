@@ -17,7 +17,6 @@ import { CampoPrivateRoute } from "./components/CampoPrivateRoute";
 import { AdminRoute } from "./components/AdminRoute";
 import { UltraAdminRoute } from "./components/UltraAdminRoute";
 import { FeatureRoute } from "./components/FeatureRoute";
-import { AdminOnlyRoute } from "./components/AdminOnlyRoute";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { TrialBanner } from "./components/TrialBanner";
 import { SettingsModalProvider, useSettingsModal, type SettingsSection } from "./contexts/SettingsModalContext";
@@ -224,14 +223,14 @@ const App = () => {
                           <Route element={<FeatureRoute feature="financeiro" />}>
                             <Route path="/gestao/financeiro" element={<Financeiro />} />
                           </Route>
-                          {/* Equipe (RH: cadastro e salário) é só admin da empresa. */}
-                          <Route element={<AdminOnlyRoute />}>
+                          {/* Equipe (RH: cadastro; salário nunca sai daqui, é mascarado por
+                          can_view_folha() em pessoas_safe independente de role): admin sempre
+                          vê, coordenador só com concessão explícita (financeiro/equipe/metas). */}
+                          <Route element={<FeatureRoute feature="pessoas" />}>
                             <Route path="/gestao/equipe" element={<Pessoas />} />
                           </Route>
                           <Route element={<FeatureRoute feature="metas" />}>
-                            <Route element={<AdminOnlyRoute />}>
-                              <Route path="/gestao/metas" element={<Metas />} />
-                            </Route>
+                            <Route path="/gestao/metas" element={<Metas />} />
                           </Route>
                           <Route element={<FeatureRoute feature="timesheet" />}>
                             <Route path="/gestao/timesheet" element={<Timesheet />} />

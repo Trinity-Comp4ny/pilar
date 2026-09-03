@@ -2,6 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/dateUtils";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
+import { usePermissions } from "@/hooks/usePermissions";
 import type { Lead } from "@/hooks/useLeads";
 import type { Proposta } from "@/hooks/usePropostas";
 
@@ -27,6 +28,8 @@ export function ListaLeads({
   onRowClick,
 }: ListaLeadsProps) {
   const formatCurrency = useMoneyMask();
+  const { can } = usePermissions();
+  const podeVerValor = can("financeiro");
   return (
     <div className="hidden md:block overflow-x-auto rounded-lg border">
       <Table>
@@ -35,7 +38,7 @@ export function ListaLeads({
             <TableHead>Nome</TableHead>
             <TableHead>Empresa</TableHead>
             <TableHead>Etapa</TableHead>
-            <TableHead className="text-right">Valor estimado</TableHead>
+            {podeVerValor && <TableHead className="text-right">Valor estimado</TableHead>}
             <TableHead>Responsável</TableHead>
             <TableHead>Previsão</TableHead>
             <TableHead>Origem</TableHead>
@@ -56,7 +59,9 @@ export function ListaLeads({
                     <span className="text-sm">{statusLabelOf(lead.status)}</span>
                   </span>
                 </TableCell>
-                <TableCell className="text-right tabular-nums">{valor ? formatCurrency(valor) : "—"}</TableCell>
+                {podeVerValor && (
+                  <TableCell className="text-right tabular-nums">{valor ? formatCurrency(valor) : "—"}</TableCell>
+                )}
                 <TableCell className="text-muted-foreground">{responsavel ?? "—"}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {lead.previsao_fechamento ? formatDate(lead.previsao_fechamento) : "—"}

@@ -1,5 +1,15 @@
 import { useEffect, useState } from "react";
-import { Pencil, Trash2, UserPlus, Users as UsersIcon, ShieldCheck, ShieldAlert, Briefcase, Wallet } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  UserPlus,
+  Users as UsersIcon,
+  ShieldCheck,
+  ShieldAlert,
+  Briefcase,
+  Wallet,
+  Target,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PilarRole } from "@/lib/roles";
 import { Button } from "@/components/ui/button";
@@ -26,6 +36,9 @@ export type ManagedUser = {
   role: PilarRole;
   /** ADR 0034: acesso financeiro geral (não inclui folha, sempre admin-only). */
   financeiroDelegado?: boolean;
+  /** Extensão do ADR 0034: mesma concessão pontual, para equipe e metas. */
+  equipeDelegado?: boolean;
+  metasDelegado?: boolean;
   isPending?: boolean;
   /** id do convite (quando isPending) — necessário para reenviar/cancelar */
   inviteId?: string | null;
@@ -48,7 +61,8 @@ const ROLE_BADGE: Record<PilarRole, string> = {
 export type AssignableRole = Exclude<PilarRole, "ultra_admin">;
 
 export type InvitePayload = {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   role: AssignableRole;
 };
@@ -69,6 +83,9 @@ export type UsersAccessManagerProps = {
   onUpdate: (payload: UpdatePayload) => void;
   /** ADR 0034: concessão/revogação de acesso financeiro, sempre pela RPC dedicada. */
   onSetFinanceiroDelegado?: (userId: string, delegado: boolean) => void | Promise<void>;
+  /** Extensão do ADR 0034: mesmo padrão, para equipe e metas. */
+  onSetEquipeDelegado?: (userId: string, delegado: boolean) => void | Promise<void>;
+  onSetMetasDelegado?: (userId: string, delegado: boolean) => void | Promise<void>;
   onDelete: (userId: string) => void;
   /** Reenviar convite pendente (opcional — só habilita a ação se fornecido) */
   onResendInvite?: (user: ManagedUser) => void | Promise<void>;
@@ -85,6 +102,8 @@ export function UsersAccessManager({
   onInvite,
   onUpdate,
   onSetFinanceiroDelegado,
+  onSetEquipeDelegado,
+  onSetMetasDelegado,
   onDelete,
   onResendInvite,
   onCancelInvite,
@@ -164,10 +183,31 @@ export function UsersAccessManager({
                           <Badge variant="outline" className="rounded-full border-black/10 bg-black/5 text-black/70">
                             {ROLE_BADGE[u.role]}
                           </Badge>
-                          {u.role !== "admin" && u.role !== "ultra_admin" && u.financeiroDelegado && (
-                            <Badge variant="outline" className="rounded-full border-brand/20 bg-brand/10 text-ink gap-1">
+                          {u.role === "coordenador" && u.financeiroDelegado && (
+                            <Badge
+                              variant="outline"
+                              className="rounded-full border-brand/20 bg-brand/10 text-ink gap-1"
+                            >
                               <Wallet size={11} strokeWidth={1.75} />
                               Financeiro
+                            </Badge>
+                          )}
+                          {u.role === "coordenador" && u.equipeDelegado && (
+                            <Badge
+                              variant="outline"
+                              className="rounded-full border-brand/20 bg-brand/10 text-ink gap-1"
+                            >
+                              <UsersIcon size={11} strokeWidth={1.75} />
+                              Equipe
+                            </Badge>
+                          )}
+                          {u.role === "coordenador" && u.metasDelegado && (
+                            <Badge
+                              variant="outline"
+                              className="rounded-full border-brand/20 bg-brand/10 text-ink gap-1"
+                            >
+                              <Target size={11} strokeWidth={1.75} />
+                              Metas
                             </Badge>
                           )}
                         </div>
@@ -340,6 +380,8 @@ export function UsersAccessManager({
         onToggleFinanceiro={
           onSetFinanceiroDelegado ? (delegado) => onSetFinanceiroDelegado(editTarget!.id, delegado) : undefined
         }
+        onToggleEquipe={onSetEquipeDelegado ? (delegado) => onSetEquipeDelegado(editTarget!.id, delegado) : undefined}
+        onToggleMetas={onSetMetasDelegado ? (delegado) => onSetMetasDelegado(editTarget!.id, delegado) : undefined}
       />
 
       <ConfirmDialog
@@ -371,21 +413,23 @@ type InviteDialogProps = {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function InviteDialog({ open, onClose, isSubmitting, onSubmit }: InviteDialogProps) {
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
   const [role, setRole] = useState<AssignableRole>("user");
 
   useEffect(() => {
     if (!open) {
-      setName("");
+      setFirstName("");
+      setLastName("");
       setEmail("");
       setEmailError("");
       setRole("user");
     }
   }, [open]);
 
-  const canSubmit = name.trim().length > 0 && email.trim().length > 0 && !isSubmitting;
+  const canSubmit = firstName.trim().length > 0 && email.trim().length > 0 && !isSubmitting;
 
   const handleEmailChange = (value: string) => {
     setEmail(value);
@@ -403,34 +447,43 @@ function InviteDialog({ open, onClose, isSubmitting, onSubmit }: InviteDialogPro
       setEmailError("Email inválido");
       return;
     }
-    onSubmit({ name: name.trim(), email: trimmed, role });
+    onSubmit({ firstName: firstName.trim(), lastName: lastName.trim(), email: trimmed, role });
   };
 
   return (
     <Dialog open={open} onOpenChange={(v) => (!v ? onClose() : undefined)}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Convidar usuário</DialogTitle>
           <DialogDescription>
-            Envie um convite por email. Quem entra acessa os módulos da empresa; o tipo de conta define quem
-            administra usuários e plano.
+            Envie um convite por email. Quem entra acessa os módulos da empresa; o tipo de conta define quem administra
+            usuários e plano.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5">
+        <div className="space-y-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="invite-name">
-                Nome completo <span className="text-destructive">*</span>
+              <Label htmlFor="invite-first-name">
+                Nome <span className="text-destructive">*</span>
               </Label>
               <Input
-                id="invite-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Nome completo"
+                id="invite-first-name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Nome"
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="invite-last-name">Sobrenome</Label>
+              <Input
+                id="invite-last-name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Sobrenome"
+              />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="invite-email">
                 Email <span className="text-destructive">*</span>
               </Label>
@@ -451,7 +504,7 @@ function InviteDialog({ open, onClose, isSubmitting, onSubmit }: InviteDialogPro
           <RoleSelector value={role} onChange={setRole} />
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="mt-2">
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
@@ -470,9 +523,11 @@ type EditDialogProps = {
   onSubmit: (payload: UpdatePayload) => void;
   /** ADR 0034: ausente = tela não oferece o toggle (ex.: sem permissão). */
   onToggleFinanceiro?: (delegado: boolean) => void;
+  onToggleEquipe?: (delegado: boolean) => void;
+  onToggleMetas?: (delegado: boolean) => void;
 };
 
-function EditDialog({ user, onClose, onSubmit, onToggleFinanceiro }: EditDialogProps) {
+function EditDialog({ user, onClose, onSubmit, onToggleFinanceiro, onToggleEquipe, onToggleMetas }: EditDialogProps) {
   const [role, setRole] = useState<AssignableRole>("user");
 
   useEffect(() => {
@@ -499,7 +554,9 @@ function EditDialog({ user, onClose, onSubmit, onToggleFinanceiro }: EditDialogP
             evita que admins de empresa promovam ou rebaixem ultra admins pela UI.
           </p>
           <DialogFooter>
-            <Button onClick={onClose} variant="brand">Entendi</Button>
+            <Button onClick={onClose} variant="brand">
+              Entendi
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -508,7 +565,7 @@ function EditDialog({ user, onClose, onSubmit, onToggleFinanceiro }: EditDialogP
 
   return (
     <Dialog open onOpenChange={(v) => (!v ? onClose() : undefined)}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Tipo de conta: {user.name}</DialogTitle>
           <DialogDescription>Define quem administra usuários, plano e configuração da empresa.</DialogDescription>
@@ -517,24 +574,72 @@ function EditDialog({ user, onClose, onSubmit, onToggleFinanceiro }: EditDialogP
         <div className="space-y-5">
           <RoleSelector value={role} onChange={setRole} />
 
-          {onToggleFinanceiro && role !== "admin" && (
-            <div className="flex items-start justify-between gap-4 rounded-lg border border-black/10 p-3">
-              <div className="space-y-0.5">
-                <Label htmlFor="toggle-financeiro" className="flex items-center gap-1.5 text-sm font-medium">
-                  <Wallet size={14} strokeWidth={1.75} />
-                  Acesso financeiro
-                </Label>
-                <p className="text-xs text-black/50">
-                  Contas, faturas, valor de contrato e margem de projeto. Não inclui folha de pagamento — isso é só
-                  para administradores.
-                </p>
-              </div>
-              <Switch
-                id="toggle-financeiro"
-                checked={Boolean(user.financeiroDelegado)}
-                onCheckedChange={onToggleFinanceiro}
-                aria-label={`Acesso financeiro de ${user.name}`}
-              />
+          {/* Financeiro/equipe/metas são liberados por padrão só pra admin; um
+              coordenador pode receber cada um por concessão individual — nunca
+              um "user" comum (o próprio backend recusa a concessão nesse caso). */}
+          {role === "coordenador" && (onToggleFinanceiro || onToggleEquipe || onToggleMetas) && (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Acesso concedido por você</Label>
+
+              {onToggleFinanceiro && (
+                <div className="flex items-start justify-between gap-4 rounded-lg border border-black/10 p-3">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="toggle-financeiro" className="flex items-center gap-1.5 text-sm font-medium">
+                      <Wallet size={14} strokeWidth={1.75} />
+                      Financeiro
+                    </Label>
+                    <p className="text-xs text-black/50">
+                      Contas, faturas, valor de contrato e margem de projeto. Nunca inclui folha de pagamento — isso é
+                      só para administradores.
+                    </p>
+                  </div>
+                  <Switch
+                    id="toggle-financeiro"
+                    checked={Boolean(user.financeiroDelegado)}
+                    onCheckedChange={onToggleFinanceiro}
+                    aria-label={`Acesso financeiro de ${user.name}`}
+                  />
+                </div>
+              )}
+
+              {onToggleEquipe && (
+                <div className="flex items-start justify-between gap-4 rounded-lg border border-black/10 p-3">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="toggle-equipe" className="flex items-center gap-1.5 text-sm font-medium">
+                      <UsersIcon size={14} strokeWidth={1.75} />
+                      Equipe
+                    </Label>
+                    <p className="text-xs text-black/50">
+                      Nome, cargo e disciplina de cada pessoa. Nunca inclui salário, CPF completo, PIX ou conta bancária
+                      — isso é só para administradores.
+                    </p>
+                  </div>
+                  <Switch
+                    id="toggle-equipe"
+                    checked={Boolean(user.equipeDelegado)}
+                    onCheckedChange={onToggleEquipe}
+                    aria-label={`Acesso de equipe de ${user.name}`}
+                  />
+                </div>
+              )}
+
+              {onToggleMetas && (
+                <div className="flex items-start justify-between gap-4 rounded-lg border border-black/10 p-3">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="toggle-metas" className="flex items-center gap-1.5 text-sm font-medium">
+                      <Target size={14} strokeWidth={1.75} />
+                      Metas
+                    </Label>
+                    <p className="text-xs text-black/50">Metas financeiras e de projeto, por pessoa e por período.</p>
+                  </div>
+                  <Switch
+                    id="toggle-metas"
+                    checked={Boolean(user.metasDelegado)}
+                    onCheckedChange={onToggleMetas}
+                    aria-label={`Acesso a metas de ${user.name}`}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -566,19 +671,19 @@ const ROLE_OPTIONS: readonly {
   {
     value: "user",
     title: "Usuário",
-    description: "Usa os módulos da empresa; sem financeiro por padrão",
+    description: "Executa nos módulos liberados pela empresa. Nunca vê financeiro, equipe ou metas.",
     icon: UsersIcon,
   },
   {
     value: "coordenador",
     title: "Coordenador",
-    description: "Gerencia projeto e equipe; sem financeiro por padrão",
+    description: "Gerencia projetos. Financeiro, equipe e metas só com concessão individual sua, abaixo.",
     icon: Briefcase,
   },
   {
     value: "admin",
     title: "Admin da empresa",
-    description: "Usa tudo, inclusive financeiro e folha, e gerencia usuários",
+    description: "Acesso total: financeiro, folha, equipe, metas, usuários e plano.",
     icon: ShieldCheck,
   },
 ];

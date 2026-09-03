@@ -27,19 +27,13 @@ type RawUser = {
   role: string | null;
   contato?: string | null;
   financeiroDelegado?: boolean;
+  equipeDelegado?: boolean;
+  metasDelegado?: boolean;
   isPending?: boolean;
   inviteId?: string | null;
 };
 
-const VALID_TABS = [
-  "usuarios",
-  "empresa",
-  "parametros",
-  "automacoes",
-  "auditoria",
-  "plano",
-  "integracoes",
-] as const;
+const VALID_TABS = ["usuarios", "empresa", "parametros", "automacoes", "auditoria", "plano", "integracoes"] as const;
 type AdminTab = (typeof VALID_TABS)[number];
 
 const ADMIN_TABS: SecondSidebarTab[] = [
@@ -133,7 +127,9 @@ export default function Admin() {
           const [{ data: companyUsers }, { data: pendingConvites }] = await Promise.all([
             supabase
               .from("profiles")
-              .select("id, first_name, last_name, email, role, contato, onboarding_completed, financeiro_delegado")
+              .select(
+                "id, first_name, last_name, email, role, contato, onboarding_completed, financeiro_delegado, equipe_delegado, metas_delegado"
+              )
               .eq("empresa_id", profile.empresa_id),
             supabase
               .from("convites")
@@ -154,6 +150,8 @@ export default function Admin() {
             role: u.role,
             contato: (u as { contato?: string | null }).contato,
             financeiroDelegado: (u as { financeiro_delegado?: boolean | null }).financeiro_delegado ?? false,
+            equipeDelegado: (u as { equipe_delegado?: boolean | null }).equipe_delegado ?? false,
+            metasDelegado: (u as { metas_delegado?: boolean | null }).metas_delegado ?? false,
             isPending: (u as { onboarding_completed?: boolean | null }).onboarding_completed === false,
           }));
 

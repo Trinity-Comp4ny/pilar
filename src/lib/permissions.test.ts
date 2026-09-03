@@ -14,8 +14,10 @@ import type { UserRole } from "./permissions";
 const ctx = (
   role: UserRole | null,
   companyFeatures: CompanyFeatures = {},
-  financeiroDelegado = false
-) => ({ role, companyFeatures, financeiroDelegado });
+  financeiroDelegado = false,
+  equipeDelegado = false,
+  metasDelegado = false
+) => ({ role, companyFeatures, financeiroDelegado, equipeDelegado, metasDelegado });
 
 describe("canDo", () => {
   it("membro sem nenhuma feature concedida usa e escreve no que é universal", () => {
@@ -76,6 +78,41 @@ describe("canDo — financeiro delegado (ADR 0034)", () => {
 
   it("ultra_admin passa em financeiro e folha sem delegação", () => {
     expect(canDo(ctx("ultra_admin" as UserRole), "financeiro_folha", "view")).toBe(true);
+  });
+});
+
+describe("canDo — equipe e metas delegados (extensão do ADR 0034)", () => {
+  it("admin vê equipe e metas sem precisar de delegação", () => {
+    expect(canDo(ctx("admin"), "pessoas", "view")).toBe(true);
+    expect(canDo(ctx("admin"), "metas", "view")).toBe(true);
+  });
+
+  it("user nunca vê equipe nem metas, mesmo com o flag marcado (não deveria acontecer)", () => {
+    expect(canDo(ctx("user"), "pessoas", "view")).toBe(false);
+    expect(canDo(ctx("user", {}, false, true, true), "pessoas", "view")).toBe(false);
+    expect(canDo(ctx("user", {}, false, true, true), "metas", "view")).toBe(false);
+  });
+
+  it("coordenador sem delegação não vê equipe nem metas", () => {
+    expect(canDo(ctx("coordenador" as UserRole), "pessoas", "view")).toBe(false);
+    expect(canDo(ctx("coordenador" as UserRole), "metas", "view")).toBe(false);
+  });
+
+  it("coordenador com equipeDelegado vê equipe mas não metas", () => {
+    const delegado = ctx("coordenador" as UserRole, {}, false, true, false);
+    expect(canDo(delegado, "pessoas", "view")).toBe(true);
+    expect(canDo(delegado, "metas", "view")).toBe(false);
+  });
+
+  it("coordenador com metasDelegado vê metas mas não equipe", () => {
+    const delegado = ctx("coordenador" as UserRole, {}, false, false, true);
+    expect(canDo(delegado, "metas", "view")).toBe(true);
+    expect(canDo(delegado, "pessoas", "view")).toBe(false);
+  });
+
+  it("ultra_admin passa em equipe e metas sem delegação", () => {
+    expect(canDo(ctx("ultra_admin" as UserRole), "pessoas", "view")).toBe(true);
+    expect(canDo(ctx("ultra_admin" as UserRole), "metas", "view")).toBe(true);
   });
 });
 

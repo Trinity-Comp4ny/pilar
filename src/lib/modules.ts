@@ -45,6 +45,13 @@ export type ModuleMenuItem = {
   feature?: Feature;
   badge?: "novo" | "em breve";
   adminOnly?: boolean;
+  /**
+   * Feature delegável (financeiro/pessoas/metas, ver permissions.ts): admin
+   * sempre vê habilitado; coordenador vê o item cinza/desabilitado até
+   * receber a concessão; "user" não vê o item (não existe concessão pra
+   * "user", então ficaria cinza pra sempre — melhor nem mostrar).
+   */
+  hiddenWhenLockedForUser?: boolean;
   /** Rótulo do sub-grupo na sidebar (ex.: "Comercial"). Itens sem grupo ficam soltos. */
   group?: string;
 };
@@ -70,9 +77,30 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     items: [
       // Empresa (primeiro grupo: Tarefas é a home do módulo)
       { title: "Tarefas", url: "/gestao/tarefas", icon: ListTodo, feature: "meu_trabalho", group: "Empresa" },
-      { title: "Financeiro", url: "/gestao/financeiro", icon: Wallet, feature: "financeiro", group: "Empresa" },
-      { title: "Equipe", url: "/gestao/equipe", icon: Users, feature: "pessoas", adminOnly: true, group: "Empresa" },
-      { title: "Metas", url: "/gestao/metas", icon: Target, feature: "metas", adminOnly: true, group: "Empresa" },
+      {
+        title: "Financeiro",
+        url: "/gestao/financeiro",
+        icon: Wallet,
+        feature: "financeiro",
+        hiddenWhenLockedForUser: true,
+        group: "Empresa",
+      },
+      {
+        title: "Equipe",
+        url: "/gestao/equipe",
+        icon: Users,
+        feature: "pessoas",
+        hiddenWhenLockedForUser: true,
+        group: "Empresa",
+      },
+      {
+        title: "Metas",
+        url: "/gestao/metas",
+        icon: Target,
+        feature: "metas",
+        hiddenWhenLockedForUser: true,
+        group: "Empresa",
+      },
       // Comercial (movido de Projetos: dono da relação com o cliente é gestão/comercial)
       { title: "Leads", url: "/gestao/leads", icon: UserPlus, feature: "leads", group: "Comercial" },
       { title: "Clientes", url: "/gestao/clientes", icon: Building2, feature: "clientes", group: "Comercial" },
