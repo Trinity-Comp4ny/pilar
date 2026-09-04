@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { msgErroChat } from "./erros";
+import { msgErroChat, extrairMotivoBloqueioTokens } from "./erros";
 import { env } from "@/lib/env";
 import { reportInvokeError } from "@/lib/monitoring";
 import { softDelete, softDeleteGrupo } from "@/lib/softDelete";
@@ -239,8 +239,8 @@ const AI_CHAT_URL = `${SUPABASE_URL}/functions/v1/ai-chat`;
 class StreamIndisponivel extends Error {}
 
 /** Erro com status HTTP, para reaproveitar o mapeamento de msgErroChat (429/402/401...). */
-function erroComStatus(status: number): Error {
-  return Object.assign(new Error(`HTTP ${status}`), { context: { status } });
+function erroComStatus(status: number, motivo?: string): Error {
+  return Object.assign(new Error(`HTTP ${status}`), { context: { status, motivo } });
 }
 
 type SseEvento = { event: string; data: unknown };
@@ -309,7 +309,10 @@ async function enviarStream(
 
   if (!res.ok) {
     // Auth/limite: definitivo — mostra o erro (buffered daria o mesmo).
-    if ([401, 402, 403, 429].includes(res.status)) throw erroComStatus(res.status);
+    if ([401, 402, 403, 429].includes(res.status)) {
+      const body = await res.json().catch(() => null);
+      throw erroComStatus(res.status, typeof body?.motivo === "string" ? body.motivo : undefined);
+    }
     throw new StreamIndisponivel(`status ${res.status}`);
   }
   if (!res.body) throw new StreamIndisponivel("sem corpo no stream");
@@ -519,16 +522,17 @@ export function useChat() {
         }
       };
 
-      const tratarErro = (err: unknown) => {
+      const tratarErro = async (err: unknown) => {
         // Parada manual (botão "Parar"): encerra sem card de erro alarmante.
         if (canceladoRef.current && !porTimeout) {
           setMessages((prev) => [...prev, { id: novoId(), role: "assistant", content: "Geração interrompida." }]);
           return;
         }
         reportInvokeError(err, "ai-chat", { porTimeout });
+        const motivoBloqueio = await extrairMotivoBloqueioTokens(err);
         setMessages((prev) => [
           ...prev,
-          { id: novoId(), role: "assistant", content: msgErroChat(err, porTimeout), erro: true },
+          { id: novoId(), role: "assistant", content: msgErroChat(err, porTimeout, motivoBloqueio), erro: true },
         ]);
       };
 
@@ -551,10 +555,10 @@ export function useChat() {
             if (error) throw error;
             aplicarResposta(data as ChatResponse);
           } catch (e2) {
-            tratarErro(e2);
+            await tratarErro(e2);
           }
         } else {
-          tratarErro(e);
+          await tratarErro(e);
         }
       } finally {
         clearTimeout(timeoutId);

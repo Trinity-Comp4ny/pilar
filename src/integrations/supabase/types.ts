@@ -287,6 +287,69 @@ export type Database = {
           },
         ]
       }
+      ai_token_limite_usuario: {
+        Row: {
+          created_at: string
+          criado_por: string | null
+          empresa_id: string
+          limite_mensal: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          criado_por?: string | null
+          empresa_id: string
+          limite_mensal: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string | null
+          empresa_id?: string
+          limite_mensal?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_token_limite_usuario_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_token_limite_usuario_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "ai_token_limite_usuario_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_token_limite_usuario_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_token_limite_usuario_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       ai_token_saldo: {
         Row: {
           empresa_id: string
@@ -313,6 +376,81 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "empresas"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_token_solicitacao: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          limite_sugerido: number | null
+          mensagem: string | null
+          novo_limite: number | null
+          resolvido_em: string | null
+          resolvido_por: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          limite_sugerido?: number | null
+          mensagem?: string | null
+          novo_limite?: number | null
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          limite_sugerido?: number | null
+          mensagem?: string | null
+          novo_limite?: number | null
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_token_solicitacao_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_token_solicitacao_resolvido_por_fkey"
+            columns: ["resolvido_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_token_solicitacao_resolvido_por_fkey"
+            columns: ["resolvido_por"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "ai_token_solicitacao_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_token_solicitacao_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -7111,6 +7249,26 @@ export type Database = {
           },
         ]
       }
+      v_uso_tokens_usuario_ciclo: {
+        Row: {
+          empresa_id: string | null
+          limite_mensal: number | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          solicitacao_pendente: boolean | null
+          tokens_ciclo: number | null
+          user_id: string | null
+          user_nome: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       view_cartao_resumo: {
         Row: {
           conta_pagamento_id: string | null
@@ -7447,6 +7605,7 @@ export type Database = {
         Returns: Json
       }
       campo_verify_session: { Args: { p_token: string }; Returns: Json }
+      can_manage_equipe: { Args: never; Returns: boolean }
       can_view_financeiro: { Args: never; Returns: boolean }
       can_view_folha: { Args: never; Returns: boolean }
       check_convite_rate_limit: {
@@ -7621,8 +7780,9 @@ export type Database = {
         Returns: string
       }
       gate_tokens: {
-        Args: { p_empresa_id: string }
+        Args: { p_empresa_id: string; p_user_id?: string }
         Returns: {
+          bloqueado_motivo: string
           cota_ciclo: number
           saldo_comprado: number
           saldo_plano: number
@@ -8029,6 +8189,14 @@ export type Database = {
       }
       request_data_deletion: { Args: { p_motivo?: string }; Returns: string }
       request_data_export: { Args: never; Returns: Json }
+      resolver_solicitacao_tokens: {
+        Args: {
+          p_aprovar: boolean
+          p_novo_limite?: number
+          p_solicitacao_id: string
+        }
+        Returns: undefined
+      }
       rpc_atualizar_status_atrasados: { Args: never; Returns: Json }
       rpc_calcular_wip: {
         Args: { p_ano: number; p_mes: number }
@@ -8280,6 +8448,10 @@ export type Database = {
       set_painel_layout: { Args: { p_layout: Json }; Returns: undefined }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      solicitar_mais_tokens: {
+        Args: { p_limite_sugerido?: number; p_mensagem?: string }
+        Returns: string
+      }
       start_impersonation: {
         Args: { p_ip?: string; p_target_role: string; p_user_agent?: string }
         Returns: string

@@ -7,6 +7,7 @@ import {
   createAdminClient,
   checkRateLimit,
   verificarTokens,
+  mensagemBloqueioTokens,
   callGeminiStructured,
   debitarTokens,
   GEMINI_MODEL,
@@ -190,15 +191,9 @@ serve(
         );
       }
 
-      const gateTokens = await verificarTokens(adminClient, empresaId);
-      if (!gateTokens.ok) {
-        return jsonResponse(
-          {
-            error: "Os tokens de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador.",
-          },
-          402,
-          req
-        );
+      const gateTokens = await verificarTokens(adminClient, empresaId, user.id);
+      if (!gateTokens.ok && gateTokens.motivo) {
+        return jsonResponse({ error: mensagemBloqueioTokens(gateTokens.motivo), motivo: gateTokens.motivo }, 402, req);
       }
 
       const body = await req.json().catch(() => ({}));

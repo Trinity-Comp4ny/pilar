@@ -7,6 +7,7 @@ import {
   createAdminClient,
   checkRateLimit,
   verificarTokens,
+  mensagemBloqueioTokens,
   callGeminiStructured,
   debitarTokens,
   GEMINI_MODEL,
@@ -102,13 +103,12 @@ serve(
         );
       }
 
-      // Gate de tokens (Fase 2, spec 075): bloqueia ANTES de gastar no provider.
-      const gateTokens = await verificarTokens(adminClient, empresaId);
-      if (!gateTokens.ok) {
+      // Gate de tokens (Fase 2, spec 075; teto por usuário na spec 094): bloqueia
+      // ANTES de gastar no provider.
+      const gateTokens = await verificarTokens(adminClient, empresaId, user.id);
+      if (!gateTokens.ok && gateTokens.motivo) {
         return new Response(
-          JSON.stringify({
-            error: "Os tokens de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador.",
-          }),
+          JSON.stringify({ error: mensagemBloqueioTokens(gateTokens.motivo), motivo: gateTokens.motivo }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 402 }
         );
       }
