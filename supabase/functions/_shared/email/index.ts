@@ -6,7 +6,7 @@
 export { sendEmail, type EmailClasse, type EmailEmpresa, type SendEmailInput, type SendEmailResult } from "./client.ts";
 export { BRAND } from "./brand.ts";
 export { em } from "./layout.ts";
-export type { EmailTemplate, EmpresaHeader } from "./templates/types.ts";
+export type { EmailTemplate } from "./templates/types.ts";
 
 export {
   templateConfirmacaoCadastro,

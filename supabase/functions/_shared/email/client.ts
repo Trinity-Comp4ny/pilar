@@ -25,7 +25,6 @@ export interface EmailEmpresa {
   id?: string;
   nome: string;
   email?: string | null;
-  logo_url?: string | null;
 }
 
 export interface SendEmailInput {

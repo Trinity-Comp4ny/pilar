@@ -35,14 +35,9 @@ Deno.env.set("PUBLIC_SITE_URL", "https://www.pilarsoft.com.br");
 
 const T = await import("../supabase/functions/_shared/email/index.ts");
 
-// Logo fictício de escritório (SVG inline vira data URI; em e-mail real seria PNG hospedado).
-const logoEscritorio = `data:image/svg+xml;base64,${encodeBase64(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 72 72"><rect width="72" height="72" rx="14" fill="#1F3A5F"/><path d="M18 50 L36 20 L54 50 Z" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linejoin="round"/><path d="M26 50 L36 34 L46 50" fill="none" stroke="#A4EC86" stroke-width="4"/></svg>`
-)}`;
-
 const APP = "https://app.pilarsoft.com.br";
-const escritorio = { nome: "Meridiana Engenharia", logoUrl: logoEscritorio };
-const escritorioSemLogo = { nome: "Atelier Sul Arquitetura", logoUrl: null };
+const escritorio = "Meridiana Engenharia";
+const escritorioOutro = "Atelier Sul Arquitetura";
 const agora = new Date("2026-09-04T11:00:00-03:00");
 const minAgo = (m: number) => new Date(agora.getTime() - m * 60000).toISOString();
 
@@ -84,10 +79,10 @@ const previews: Preview[] = [
   {
     slug: "cobranca-lembrete",
     grupo: "Escritório → cliente",
-    nota: "Lembrete de pagamento, com logo do escritório e chave Pix",
+    nota: "Lembrete de pagamento com chave Pix; o escritório é nomeado no texto",
     email: T.templateCobrancaDireta({
       clienteNome: "Construtora Horizonte",
-      empresa: escritorio,
+      empresaNome: escritorio,
       descricao: "Projeto estrutural, Residencial Vila Nova, parcela 3/6",
       valorFormatado: "R$ 18.500,00",
       dataVencimento: "12/09/2026",
@@ -99,10 +94,10 @@ const previews: Preview[] = [
   {
     slug: "cobranca-atraso",
     grupo: "Escritório → cliente",
-    nota: "Fatura vencida (estado negativo), escritório sem logo (iniciais)",
+    nota: "Fatura vencida, estado negativo",
     email: T.templateCobrancaDireta({
       clienteNome: "Rafael Duarte",
-      empresa: escritorioSemLogo,
+      empresaNome: escritorioOutro,
       descricao: "Projeto de arquitetura, Casa Jardim das Acácias, parcela 2/4",
       valorFormatado: "R$ 7.200,00",
       dataVencimento: "28/08/2026",
@@ -116,7 +111,7 @@ const previews: Preview[] = [
     email: T.templatePropostaEnvio({
       nomeCliente: "Construtora Horizonte",
       tituloProposta: "Proposta 2026-041: projeto estrutural e fundações, Torre B",
-      empresa: escritorio,
+      empresaNome: escritorio,
       mensagem:
         "Olá, Marcos.\n\nSegue a proposta revisada com o escopo de fundações que conversamos na terça. Prazo de validade: 15 dias.\n\nQualquer ajuste, é só responder aqui.",
     }),
@@ -130,7 +125,7 @@ const previews: Preview[] = [
       email: "marcos@horizonte.eng.br",
       senha: "Kx7mP2vQ",
       loginUrl: "https://www.pilarsoft.com.br/cliente/login",
-      empresa: escritorio,
+      empresaNome: escritorio,
     }),
   },
   {
@@ -141,7 +136,7 @@ const previews: Preview[] = [
       assunto: "Revisão R02 da planta de formas liberada",
       mensagem:
         "Olá, Marcos.\n\nA revisão R02 da planta de formas do 3º pavimento já está no portal. Mudou o detalhe da viga V12 conforme a compatibilização com o hidráulico.\n\nAguardamos sua aprovação até sexta para não impactar o cronograma.",
-      empresa: escritorio,
+      empresaNome: escritorio,
     }),
   },
 

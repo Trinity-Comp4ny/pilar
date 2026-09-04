@@ -61,11 +61,7 @@ serve(
       // com a Authorization do caller, é o client certo pra essa chamada.
       const { data: empresaId } = await auth.supabase.rpc("get_user_empresa_id");
       if (!empresaId) return safeErrorResponse(403, "Empresa não identificada", req);
-      const { data: empresa } = await supabase
-        .from("empresas")
-        .select("nome, email, logo_url")
-        .eq("id", empresaId)
-        .single();
+      const { data: empresa } = await supabase.from("empresas").select("nome, email").eq("id", empresaId).single();
 
       const empresaNome = empresa?.nome ?? "Pilar";
 
@@ -73,11 +69,11 @@ serve(
         classe: "escritorio",
         tipo: doc_mode === "contrato" ? "contrato_envio" : "proposta_envio",
         to: email,
-        empresa: { id: empresaId, nome: empresaNome, email: empresa?.email, logo_url: empresa?.logo_url },
+        empresa: { id: empresaId, nome: empresaNome, email: empresa?.email },
         ...templatePropostaEnvio({
           nomeCliente: nome_cliente ?? "Cliente",
           tituloProposta: subject.trim(),
-          empresa: { nome: empresaNome, logoUrl: empresa?.logo_url },
+          empresaNome,
           mensagem: mensagem?.trim() || undefined,
         }),
         attachments: [{ filename: filename ?? "proposta.docx", content: attachment_base64 }],
