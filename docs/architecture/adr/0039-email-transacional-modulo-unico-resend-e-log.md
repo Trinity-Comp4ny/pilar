@@ -35,8 +35,8 @@ Problemas medidos nessa auditoria:
 - A marca no e-mail é um quadrado preto com "P": o ativo real (`public/pilar-logo.svg`) não é usado,
   e `brand/visual.md` ainda tem o logo como `[A DEFINIR]`. O rebrand para "Prumeo" está pendente.
 - E-mail que o escritório manda ao cliente final (cobrança, proposta, acesso ao portal, mensagem
-  manual) sai com a cara do Pilar, não do escritório. `empresas.logo_url` e `empresas.email` existem
-  e não são usados.
+  manual) sai com a cara do Pilar, não do escritório. `empresas.email` existe e não é usado, então
+  a resposta do cliente final não chega ao escritório.
 
 Opções consideradas para o motor de template:
 
