@@ -38,9 +38,10 @@ export interface HookPayload {
   };
 }
 
-// Uint8Array<ArrayBuffer> explícito: com o lib do Deno 2.x, o `Uint8Array` genérico
-// (ArrayBufferLike) não é aceito como BufferSource em crypto.subtle.importKey.
-function decodeSecret(secret: string): Uint8Array<ArrayBuffer> {
+// Sem anotação de retorno de propósito: `new Uint8Array(n)` infere o tipo aceito por
+// crypto.subtle.importKey tanto no Deno 1.45 (CI e runtime do Supabase) quanto no 2.x
+// local, onde `Uint8Array` genérico (ArrayBufferLike) deixou de ser BufferSource.
+function decodeSecret(secret: string) {
   const b64 = secret.replace(/^v1,whsec_/, "").replace(/^whsec_/, "");
   const chars = atob(b64);
   const arr = new Uint8Array(chars.length);

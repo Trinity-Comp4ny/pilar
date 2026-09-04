@@ -57,3 +57,6 @@ graphify-out/
 
 # Preview local dos templates de e-mail (npm run email:preview)
 .email-preview/
+
+# Deno 2.x local gera lockfile v5; o CI e o runtime do Supabase rodam Deno 1.45
+deno.lock
