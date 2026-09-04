@@ -6,6 +6,7 @@ import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useRecentes } from "@/hooks/useRecentes";
 import { useProjetoDetail } from "./hooks/useProjetoDetail";
 import { ProjetoDetailHeader } from "./components/ProjetoDetailHeader";
@@ -16,6 +17,8 @@ import { ProjetoFormDialog } from "./components/ProjetoFormDialog";
 export default function ProjetoDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { can } = usePermissions();
+  const podeEditarValor = can("financeiro");
 
   const {
     projeto,
@@ -105,7 +108,11 @@ export default function ProjetoDetail() {
         margemBrutaPct={margemBrutaPct}
         canEdit={canEdit}
         onUpdatePrazo={(data_previsao) => handleQuickUpdateProjeto({ data_previsao })}
-        onUpdateContrato={(valor_contrato) => handleQuickUpdateProjeto({ valor_contrato })}
+        // Sem financeiro o valor vem mascarado (null): deixar o campo editável
+        // faria o blur enviar 0 e tentar zerar o contrato.
+        onUpdateContrato={
+          podeEditarValor ? (valor_contrato) => handleQuickUpdateProjeto({ valor_contrato }) : undefined
+        }
         onUpdateArea={(area_m2) => handleQuickUpdateProjeto({ area_m2 })}
       />
 
