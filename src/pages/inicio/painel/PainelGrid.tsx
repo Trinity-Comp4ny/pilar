@@ -9,7 +9,6 @@ import type { PainelGestao } from "@/hooks/usePainelGestao";
 import { sobraDaLinha } from "./grade";
 import { SeletorWidget } from "./SeletorWidget";
 import {
-  CATALOGO,
   COLUNAS,
   LARGURA,
   PODE_FIXAR,
@@ -216,7 +215,6 @@ export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalva
     });
   };
 
-  const disponiveis = CATALOGO.filter((w) => w.feature === null || can(w.feature));
   const jaUsados = new Set(rascunho.map((i) => i.w));
 
   const abrirSeletor = (secao: Secao | null) => {
@@ -356,10 +354,18 @@ export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalva
 
       {/* ── Grade, agrupada por módulo ───────────────────────────────────── */}
       {grupos.length === 0 && fixos.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-8 text-center text-sm text-muted-foreground">
-          Nenhum indicador no painel.{" "}
-          {editando ? "Use Adicionar widget." : "Clique em Personalizar para escolher os seus."}
-        </p>
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-black/15 bg-white px-4 py-10 text-center">
+          <p className="text-sm text-muted-foreground">Nenhum indicador no painel.</p>
+          {editando ? (
+            <Button variant="outline" size="sm" onClick={() => abrirSeletor(null)}>
+              <Plus size={14} /> Adicionar widget
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" onClick={entrarEdicao}>
+              Escolher indicadores
+            </Button>
+          )}
+        </div>
       ) : (
         <DragDropContext onDragEnd={mover}>
           <div className="flex flex-col gap-6">
@@ -437,21 +443,6 @@ export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalva
               );
             })}
 
-            {/* Seção que ainda não tem widget nenhum: um convite discreto. */}
-            {editando && (
-              <div className="flex flex-wrap gap-2">
-                {SECOES.filter(
-                  (s) =>
-                    (s.feature === null || can(s.feature)) &&
-                    !grupos.some((g) => g.key === s.key) &&
-                    disponiveis.some((w) => w.secao === s.key)
-                ).map((s) => (
-                  <Button key={s.key} variant="outline" size="sm" onClick={() => abrirSeletor(s.key)}>
-                    <Plus size={14} /> {s.label}
-                  </Button>
-                ))}
-              </div>
-            )}
           </div>
         </DragDropContext>
       )}
