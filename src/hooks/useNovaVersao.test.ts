@@ -5,12 +5,25 @@ import { useNovaVersao } from "./useNovaVersao";
 const info = vi.hoisted(() => vi.fn());
 vi.mock("sonner", () => ({ toast: { info } }));
 
+const captureMessage = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/monitoring", () => ({ monitoring: { captureMessage } }));
+
+function resposta(headers: Record<string, string>, body: unknown) {
+  return {
+    ok: true,
+    status: 200,
+    headers: { get: (k: string) => headers[k.toLowerCase()] ?? null },
+    json: () => Promise.resolve(body),
+  };
+}
+
 function servidorRespondendo(release: string) {
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({ release }) }));
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(resposta({ "content-type": "application/json" }, { release })));
 }
 
 beforeEach(() => {
   info.mockClear();
+  captureMessage.mockClear();
   vi.stubGlobal("__SENTRY_RELEASE__", "sha-do-bundle");
 });
 
@@ -45,6 +58,19 @@ describe("useNovaVersao", () => {
 
     await new Promise((r) => setTimeout(r, 20));
     expect(fetchSpy).not.toHaveBeenCalled();
+    expect(info).not.toHaveBeenCalled();
+  });
+
+  it("reporta em vez de morrer calado quando vem HTML no lugar do JSON", async () => {
+    // Foi o que um curl em produção devolveu: o rewrite do SPA responde o
+    // index.html com 200 quando o arquivo não existe, e um JSON.parse quebrado
+    // no catch deixaria o aviso morto sem ninguém saber.
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(resposta({ "content-type": "text/html; charset=utf-8" }, {})));
+    renderHook(() => useNovaVersao());
+
+    await waitFor(() => expect(captureMessage).toHaveBeenCalledTimes(1));
+    expect(captureMessage.mock.calls[0][0]).toContain("version.json");
+    expect(captureMessage.mock.calls[0][1]).toBe("warning");
     expect(info).not.toHaveBeenCalled();
   });
 

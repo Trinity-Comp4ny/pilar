@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { monitoring } from "@/lib/monitoring";
 
 /**
  * Avisa quem está com a aba aberta que saiu deploy novo.
@@ -20,12 +21,30 @@ import { toast } from "sonner";
 
 const INTERVALO_MS = 15 * 60 * 1000;
 
+// O SPA reescreve tudo que não é arquivo para o index.html, então um
+// /version.json ausente ou capturado pelo rewrite responde HTML com 200. Sem
+// esta checagem o aviso de versão nova morre calado, e ninguém descobre: por
+// isso o caso é reportado (uma vez por sessão, pra não virar ruído).
+let avisouQueNaoEhJson = false;
+
 async function releaseDoServidor(): Promise<string | null> {
   try {
     // no-store: sem isto o próprio arquivo de versão vem do cache e o aviso
     // nunca aparece.
     const res = await fetch(`/version.json?t=${Date.now()}`, { cache: "no-store" });
     if (!res.ok) return null;
+
+    if (!res.headers.get("content-type")?.includes("json")) {
+      if (!avisouQueNaoEhJson) {
+        avisouQueNaoEhJson = true;
+        monitoring.captureMessage("version.json não está sendo servido como JSON", "warning", {
+          contentType: res.headers.get("content-type") ?? "(ausente)",
+          status: res.status,
+        });
+      }
+      return null;
+    }
+
     const body: unknown = await res.json();
     const release = (body as { release?: unknown })?.release;
     return typeof release === "string" && release ? release : null;
