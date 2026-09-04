@@ -75,15 +75,15 @@ export function SeletorWidget({
 
   return (
     <Dialog open={aberto} onOpenChange={(v) => (v ? undefined : fechar())}>
-      <DialogContent className="max-h-[85vh] max-w-3xl overflow-hidden p-0">
+      <DialogContent className="flex max-h-[85vh] max-w-3xl flex-col gap-0 overflow-hidden p-0">
         {preview ? (
-          <div className="flex max-h-[85vh] flex-col">
-            <DialogHeader className="border-b border-border px-5 py-4 text-left">
+          <>
+            <DialogHeader className="shrink-0 border-b border-border px-5 py-4 pr-12 text-left">
               <DialogTitle className="text-base">{preview.titulo}</DialogTitle>
               <DialogDescription className="text-[12.5px]">{preview.descricao}</DialogDescription>
             </DialogHeader>
 
-            <div className="flex-1 overflow-y-auto bg-black/[0.02] p-5">
+            <div className="min-h-0 flex-1 overflow-y-auto bg-black/[0.02] p-5">
               <div className="rounded-2xl border border-black/10 bg-white p-4 shadow-sm">
                 <div className="mb-3 flex flex-wrap items-baseline gap-2">
                   <h3 className="text-sm font-medium tracking-tight">{preview.titulo}</h3>
@@ -104,7 +104,7 @@ export function SeletorWidget({
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border px-5 py-3">
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-border px-5 py-3">
               <Button variant="outline" size="sm" onClick={() => setPreview(null)}>
                 <ArrowLeft size={14} /> Voltar
               </Button>
@@ -118,17 +118,17 @@ export function SeletorWidget({
                 {jaNoPainel.has(preview.id) ? "Já está no painel" : "Adicionar ao painel"}
               </Button>
             </div>
-          </div>
+          </>
         ) : (
-          <div className="flex max-h-[85vh] flex-col">
-            <DialogHeader className="border-b border-border px-5 py-4 text-left">
+          <>
+            <DialogHeader className="shrink-0 border-b border-border px-5 py-4 pr-12 text-left">
               <DialogTitle className="text-base">Adicionar widget</DialogTitle>
               <DialogDescription className="text-[12.5px]">
                 Escolha um indicador para ver o formato antes de colocar no painel.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="flex-1 overflow-y-auto px-5 py-4">
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
               <div className="flex flex-col gap-5">
                 {grupos.map((grupo) => (
                   <div key={grupo.key}>
@@ -171,7 +171,7 @@ export function SeletorWidget({
                 ))}
               </div>
             </div>
-          </div>
+          </>
         )}
       </DialogContent>
     </Dialog>
