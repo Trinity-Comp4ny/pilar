@@ -112,7 +112,7 @@ const casos: Array<[string, () => { subject: string; html: string }]> = [
     () =>
       T.templateNotificacoes({
         nome: XSS,
-        modo: "digest",
+        modo: "semanal",
         totalOculto: 2,
         gerenciarUrl: "https://l/g",
         sinoUrl: "https://l/s",
@@ -191,7 +191,7 @@ Deno.test("agruparPorCategoria segue a ordem fixa e junta desconhecidas em siste
   );
 });
 
-Deno.test("assunto: imediato com 1 item usa o título; digest conta total incluindo ocultos", () => {
+Deno.test("assunto: imediato com 1 item usa o título; semanal conta total incluindo ocultos", () => {
   assertEquals(
     N.assuntoNotificacoes({
       modo: "imediato",
@@ -205,8 +205,8 @@ Deno.test("assunto: imediato com 1 item usa o título; digest conta total inclui
     "2 alertas importantes no Pilar"
   );
   assertEquals(
-    N.assuntoNotificacoes({ modo: "digest", itens: [item("financeiro")], totalOculto: 4 }),
-    "Seu resumo do Pilar: 5 pendências"
+    N.assuntoNotificacoes({ modo: "semanal", itens: [item("financeiro")], totalOculto: 4 }),
+    "Seu resumo da semana: 5 pendências"
   );
 });
 
@@ -217,10 +217,10 @@ Deno.test("severidadeTone: high/critical negativo, medium aviso, low neutro", ()
   assertEquals(N.severidadeTone("low"), "neutral");
 });
 
-Deno.test("digest mostra 'E mais N' quando há ocultos e link de gerenciar", () => {
+Deno.test("resumo semanal mostra 'E mais N' quando há ocultos e link de gerenciar", () => {
   const { html: out } = T.templateNotificacoes({
     nome: null,
-    modo: "digest",
+    modo: "semanal",
     totalOculto: 5,
     gerenciarUrl: "https://l/gerenciar",
     sinoUrl: "https://l/sino",
@@ -334,7 +334,7 @@ Deno.test("copy não usa 'no Pilar' nem 'Entrar no Pilar'", () => {
     T.templateTrialAviso({ empresaNome: "X", daysLeft: 3, billingUrl: "https://l" }).html,
     T.templateNotificacoes({
       nome: "Ana",
-      modo: "digest",
+      modo: "semanal",
       itens: [item("projeto")],
       totalOculto: 1,
       gerenciarUrl: "https://l/g",

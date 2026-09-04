@@ -34,6 +34,7 @@ Deno.env.set("APP_URL", "https://app.pilarsoft.com.br");
 Deno.env.set("PUBLIC_SITE_URL", "https://www.pilarsoft.com.br");
 
 const T = await import("../supabase/functions/_shared/email/index.ts");
+const { escapeHtml } = await import("../supabase/functions/_shared/email/html.ts");
 
 const APP = "https://app.pilarsoft.com.br";
 const escritorio = "Meridiana Engenharia";
@@ -197,13 +198,13 @@ const previews: Preview[] = [
     ),
   },
   {
-    slug: "notificacao-digest",
+    slug: "notificacao-semanal",
     grupo: "Notificações",
-    nota: "Resumo diário, 6 itens em 4 categorias + 3 ocultos",
+    nota: "Resumo semanal, 6 itens em 5 categorias e 3 ocultos",
     email: T.templateNotificacoes(
       {
         nome: "Carla",
-        modo: "digest",
+        modo: "semanal",
         totalOculto: 3,
         gerenciarUrl: `${APP}/?abrir=preferencias-notificacao`,
         sinoUrl: `${APP}/inicio`,
@@ -268,6 +269,108 @@ for (const p of previews) {
   await Deno.writeTextFile(`${OUT_DIR}/${p.slug}.html`, p.email.html);
 }
 
+/**
+ * Renderiza o catálogo `docs/operations/EMAILS.md` na galeria: a matriz de quem
+ * recebe o quê vive no doc versionado, aqui ela só é exibida junto dos templates.
+ * Parser mínimo, cobre o que o doc usa: título, parágrafo, lista e tabela.
+ */
+function markdownParaHtml(md: string): string {
+  const inline = (t: string) =>
+    escapeHtml(t)
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/`(.+?)`/g, "<code>$1</code>")
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_m, label: string, href: string) =>
+        href.startsWith("http") ? `<a href="${href}" target="_blank" rel="noopener">${label}</a>` : label
+      );
+
+  const out: string[] = [];
+  const linhas = md.split("\n");
+  let i = 0;
+  let lista: string[] = [];
+  let paragrafo: string[] = [];
+  const fechaLista = () => {
+    if (lista.length) {
+      out.push(`<ol>${lista.map((l) => `<li>${l}</li>`).join("")}</ol>`);
+      lista = [];
+    }
+  };
+  const fechaParagrafo = () => {
+    if (paragrafo.length) {
+      out.push(`<p>${inline(paragrafo.join(" "))}</p>`);
+      paragrafo = [];
+    }
+  };
+  const fecha = () => {
+    fechaLista();
+    fechaParagrafo();
+  };
+
+  const celulas = (linha: string) =>
+    linha
+      .split("|")
+      .slice(1, -1)
+      .map((c) => c.trim());
+
+  while (i < linhas.length) {
+    const l = linhas[i];
+
+    if (l.startsWith("|") && linhas[i + 1]?.startsWith("|")) {
+      fecha();
+      const head = celulas(l);
+      i += 2;
+      const rows: string[][] = [];
+      while (i < linhas.length && linhas[i].startsWith("|")) rows.push(celulas(linhas[i++]));
+      out.push(
+        `<div class="tabela"><table><thead><tr>${head.map((h) => `<th>${inline(h)}</th>`).join("")}</tr></thead>` +
+          `<tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`
+      );
+      continue;
+    }
+
+    if (/^#{1,3} /.test(l)) {
+      fecha();
+      const nivel = l.match(/^#+/)![0].length;
+      // o h1 e o parágrafo de procedência já estão no cabeçalho da galeria
+      if (nivel > 1) out.push(`<h${nivel}>${inline(l.replace(/^#+ /, ""))}</h${nivel}>`);
+      i++;
+      continue;
+    }
+
+    if (/^\d+\. /.test(l)) {
+      fechaParagrafo();
+      lista.push(inline(l.replace(/^\d+\. /, "")));
+      i++;
+      continue;
+    }
+
+    if (l.trim() === "") {
+      fecha();
+      i++;
+      continue;
+    }
+
+    // continuação de item de lista (o doc indenta com 3 espaços)
+    if (lista.length && /^\s{2,}/.test(l)) {
+      lista[lista.length - 1] += " " + inline(l.trim());
+      i++;
+      continue;
+    }
+
+    // pula o bloco de procedência (links de ADR/SPEC) e a linha de volta ao índice
+    if (l.startsWith("Fonte única") || l.startsWith("Todo e-mail que")) {
+      while (i < linhas.length && linhas[i].trim() !== "") i++;
+      continue;
+    }
+
+    paragrafo.push(l.trim());
+    i++;
+  }
+  fecha();
+  return out.join("\n");
+}
+
+const catalogo = markdownParaHtml(await Deno.readTextFile(new URL("../docs/operations/EMAILS.md", import.meta.url)));
+
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const grupos = [...new Set(previews.map((p) => p.grupo))];
 
@@ -317,10 +420,29 @@ function galleryBody(inlineSrcdoc: boolean): string {
   iframe{width:100%;height:880px;border:0;background:#F7F7F7;color-scheme:light}
   .legenda{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
   .legenda span{font-size:12px;color:var(--soft);border:1px solid var(--border);border-radius:999px;padding:3px 10px}
+  .doc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px 22px}
+  .doc h2{font-size:15px;font-weight:600;letter-spacing:-0.01em;text-transform:none;color:var(--ink);margin:26px 0 10px;padding:0;border:0}
+  .doc h2:first-child{margin-top:0}
+  .doc p{font-size:13.5px;line-height:1.6;color:var(--soft);margin:0 0 10px;max-width:80ch}
+  .doc ol{font-size:13.5px;line-height:1.6;color:var(--soft);margin:0;padding-left:20px}
+  .doc ol li{margin-bottom:7px}
+  .doc code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1px 4px}
+  .doc a{color:var(--ink)}
+  .tabela{overflow-x:auto;margin:0 0 14px}
+  .doc table{border-collapse:collapse;width:100%;font-size:13px}
+  .doc th{text-align:left;font-weight:600;color:var(--muted);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;padding:7px 12px 7px 0;border-bottom:1px solid var(--border);white-space:nowrap}
+  .doc td{padding:9px 12px 9px 0;border-bottom:1px solid var(--border);color:var(--soft);vertical-align:top;line-height:1.45}
+  .doc td:first-child{color:var(--ink);font-weight:500}
+  .fonte{font-size:12px;color:var(--muted);margin-top:10px}
 </style>
 <h1>E-mails da Pilar</h1>
 <p class="sub">Todos os templates renderizados com dados de exemplo pelo mesmo módulo (<code>_shared/email/</code>). A identidade é a da landing: fonte Geist, título com itálico de destaque, paisagem de morros fechando o cabeçalho, botão em pílula verde. O layout varia por tipo; o design system é um só. Cada quadro é o e-mail exatamente como sai, em 600px.</p>
 <div class="legenda"><span>${previews.length} templates</span><span>${grupos.length} grupos</span><span>Geist embutida na prévia</span><span>tema claro fixo</span><span>assets: public/email/</span></div>
+<section class="grupo" id="catalogo">
+  <h2>Quem recebe o quê</h2>
+  <div class="doc">${catalogo}</div>
+  <p class="fonte">Fonte: <code>docs/operations/EMAILS.md</code>, renderizado aqui direto do arquivo.</p>
+</section>
 ${cards}`;
 }
 

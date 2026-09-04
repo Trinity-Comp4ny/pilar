@@ -11,6 +11,8 @@ padronizar, reaproveitar, e ter controle do design"). Inventário completo está
 ADR 0039. Esta spec é o COMO daquela decisão. A feature de notificação por e-mail é a SPEC 096,
 que depende desta. -->
 
+> Catálogo de quem recebe cada e-mail: [docs/operations/EMAILS.md](../operations/EMAILS.md).
+
 ## Problema
 
 O Pilar manda e-mail por três caminhos de template diferentes (string HTML, React Email órfão,

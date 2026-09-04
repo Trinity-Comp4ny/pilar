@@ -1,7 +1,7 @@
 /**
  * E-mail de notificação da central (SPEC 096). Dois modos:
- * - "imediato": 1..n itens high/critical que ainda não foram lidos no app.
- * - "digest": resumo diário, itens agrupados por categoria.
+ * - "imediato": itens high/critical que ainda não foram lidos no app.
+ * - "semanal": resumo de segunda-feira, itens agrupados por categoria.
  * Layout de lista, sem card: cada item tem barra de severidade, título com link e mensagem.
  */
 
@@ -25,7 +25,7 @@ export interface NotifItem {
 
 export interface NotificacoesParams {
   nome: string | null;
-  modo: "imediato" | "digest";
+  modo: "imediato" | "semanal";
   itens: NotifItem[];
   /** Itens além dos exibidos. */
   totalOculto: number;
@@ -90,7 +90,7 @@ export function assuntoNotificacoes(params: Pick<NotificacoesParams, "modo" | "i
   if (params.modo === "imediato") {
     return total === 1 ? params.itens[0].titulo : `${total} alertas importantes no ${BRAND.nome}`;
   }
-  return `Seu resumo do ${BRAND.nome}: ${total} ${total === 1 ? "pendência" : "pendências"}`;
+  return `Seu resumo da semana: ${total} ${total === 1 ? "pendência" : "pendências"}`;
 }
 
 export function templateNotificacoes(params: NotificacoesParams, agora = new Date()): EmailTemplate {
@@ -103,7 +103,7 @@ export function templateNotificacoes(params: NotificacoesParams, agora = new Dat
       ? total === 1
         ? html`Um alerta ${em("importante")}`
         : html`${total} alertas ${em("importantes")}`
-      : html`Seu ${em("resumo")} de hoje`;
+      : html`Seu ${em("resumo")} da semana`;
 
   const leadHtml =
     modo === "imediato"
