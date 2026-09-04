@@ -309,3 +309,19 @@ describe("sobraDaLinha", () => {
     expect(sobraDaLinha([])).toBe(0);
   });
 });
+
+describe("painel vazio", () => {
+  it("em leitura, oferece escolher indicadores em vez de deixar o usuário sem saída", () => {
+    montar({ layout: [] });
+    expect(screen.getByText("Nenhum indicador no painel.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Escolher indicadores" })).toBeInTheDocument();
+  });
+
+  it("em edição, abre o catálogo direto: sem widget não existe cartão de seção para clicar", async () => {
+    const user = userEvent.setup();
+    montar({ layout: [], editando: true });
+
+    await user.click(screen.getByRole("button", { name: /Adicionar widget/ }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+  });
+});
