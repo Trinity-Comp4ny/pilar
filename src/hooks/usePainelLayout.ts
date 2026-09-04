@@ -16,12 +16,17 @@ import { toast } from "sonner";
 export const TAMANHOS = ["kpi", "terco", "meia", "inteira"] as const;
 export type Tamanho = (typeof TAMANHOS)[number];
 
-export type ItemLayout = { w: string; s: Tamanho };
+export const ZONAS = ["topo", "grade"] as const;
+export type Zona = (typeof ZONAS)[number];
 
-const itemSchema = z.object({ w: z.string().min(1), s: z.enum(TAMANHOS) });
+/** `z` ausente significa grade: mantém válido o layout de quem salvou antes. */
+export type ItemLayout = { w: string; s: Tamanho; z?: Zona };
+
+const itemSchema = z.object({ w: z.string().min(1), s: z.enum(TAMANHOS), z: z.enum(ZONAS).optional() });
 const layoutSchema = z.array(itemSchema);
 
 export const LIMITE_WIDGETS = 40;
+export const LIMITE_FIXOS = 6;
 
 export function usePainelLayout(padrao: ItemLayout[]) {
   const { profile, refreshProfile } = useAuth();

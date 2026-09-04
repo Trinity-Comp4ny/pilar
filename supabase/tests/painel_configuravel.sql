@@ -10,7 +10,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(12);
+SELECT plan(16);
 
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
 VALUES ('00000000-0000-0000-0000-0000000cf001'::uuid, 'Empresa Painel Config', NULL, TRUE,
@@ -124,6 +124,36 @@ SELECT throws_like(
 SELECT lives_ok(
   $$SELECT public.set_painel_layout('[]'::jsonb)$$,
   'lista vazia e aceita, e significa voltar ao padrao'
+);
+
+-- ── Zona: a faixa fixa do topo (migration 20260909000000) ──────────────────
+SELECT lives_ok(
+  $$SELECT public.set_painel_layout('[{"w":"projetos_numeros","s":"meia","z":"topo"},{"w":"gestao_funil","s":"meia","z":"grade"}]'::jsonb)$$,
+  'zona topo e grade sao aceitas'
+);
+
+SELECT is(
+  (SELECT painel_layout -> 0 ->> 'z' FROM public.profiles WHERE id = 'dddddddd-0000-0000-0000-0000000cf0be'::uuid),
+  'topo',
+  'a zona escolhida e gravada'
+);
+
+SELECT throws_like(
+  $$SELECT public.set_painel_layout('[{"w":"projetos_numeros","s":"meia","z":"rodape"}]'::jsonb)$$,
+  '%zona inválida%',
+  'zona fora do conjunto e rejeitada'
+);
+
+-- A dock tem que caber numa linha, senão deixa de ser dock.
+SELECT throws_like(
+  $$SELECT public.set_painel_layout('[
+      {"w":"a","s":"kpi","z":"topo"},{"w":"b","s":"kpi","z":"topo"},
+      {"w":"c","s":"kpi","z":"topo"},{"w":"d","s":"kpi","z":"topo"},
+      {"w":"e","s":"kpi","z":"topo"},{"w":"f","s":"kpi","z":"topo"},
+      {"w":"g","s":"kpi","z":"topo"}
+    ]'::jsonb)$$,
+  '%faixa fixa aceita no máximo%',
+  'mais de 6 indicadores fixos e rejeitado'
 );
 
 SELECT set_config('role', 'postgres', true);

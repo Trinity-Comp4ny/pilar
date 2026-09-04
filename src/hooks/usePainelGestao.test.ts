@@ -6,6 +6,15 @@ import { createElement, type ReactNode } from "react";
 const rpc = vi.fn();
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: (...args: unknown[]) => rpc(...args) } }));
 
+/** A tela faz duas chamadas: a principal e a dos blocos extra. */
+function responder(principal: unknown, extra: unknown = { efetivoObra: [], projetosPorCliente: [] }) {
+  rpc.mockImplementation((nome: string) =>
+    nome === "get_painel_extra"
+      ? Promise.resolve({ data: extra, error: null })
+      : Promise.resolve({ data: principal, error: null })
+  );
+}
+
 import { usePainelGestao } from "./usePainelGestao";
 
 /** Retorno mínimo válido da RPC, no shape que o SQL produz. */
@@ -70,12 +79,13 @@ describe("usePainelGestao", () => {
   beforeEach(() => rpc.mockReset());
 
   it("aceita o retorno da RPC e converte horas de string numérica para número", async () => {
-    rpc.mockResolvedValue({ data: retorno(), error: null });
+    responder(retorno());
 
     const { result } = renderHook(() => usePainelGestao(), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(rpc).toHaveBeenCalledWith("get_painel_gestao");
+    expect(rpc).toHaveBeenCalledWith("get_painel_extra");
     expect(result.current.data?.projetos.totais.atrasados).toBe(1);
     // numeric do Postgres chega como string: sem coerção, a subtração de horas
     // na tela viraria concatenação.
@@ -84,7 +94,7 @@ describe("usePainelGestao", () => {
   });
 
   it("aceita financeiro nulo, que é como a RPC responde a quem não pode ver dinheiro", async () => {
-    rpc.mockResolvedValue({ data: retorno(), error: null });
+    responder(retorno());
 
     const { result } = renderHook(() => usePainelGestao(), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -92,17 +102,14 @@ describe("usePainelGestao", () => {
   });
 
   it("aceita o bloco financeiro preenchido quando ele vem", async () => {
-    rpc.mockResolvedValue({
-      data: retorno({
+    responder(retorno({
         financeiro: {
           mes: { recebido: 1000, aReceber: 2000, receberVencido: 300 },
           despesaMes: { pago: 500, aPagar: 700, pagarVencido: 0 },
           faturamento: [{ mes: "2026-09-01", previsto: 5000, faturado: 4000 }],
           margemPorProjeto: [{ projetoId: "p1", projeto: "Vila Rica", pct: -7 }],
         },
-      }),
-      error: null,
-    });
+      }));
 
     const { result } = renderHook(() => usePainelGestao(), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -116,7 +123,7 @@ describe("usePainelGestao", () => {
       gestao: { ...retorno().gestao, propostasTotais: { ...retorno().gestao.propostasTotais, conversaoPct: null } },
       projetos: { ...retorno().projetos, pontualidadeMensal: [{ mes: "2026-09-01", pct: null, total: 0 }] },
     });
-    rpc.mockResolvedValue({ data: vazio, error: null });
+    responder(vazio);
 
     const { result } = renderHook(() => usePainelGestao(), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -127,7 +134,7 @@ describe("usePainelGestao", () => {
     const quebrado = retorno();
     // @ts-expect-error simula o SQL renomeando um bloco
     delete quebrado.projetos.totais;
-    rpc.mockResolvedValue({ data: quebrado, error: null });
+    responder(quebrado);
 
     const { result } = renderHook(() => usePainelGestao(), { wrapper });
     await waitFor(() => expect(result.current.isError).toBe(true));
