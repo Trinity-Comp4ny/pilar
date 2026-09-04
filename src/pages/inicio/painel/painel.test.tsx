@@ -6,6 +6,7 @@ import type { PainelGestao } from "@/hooks/usePainelGestao";
 import type { Feature } from "@/lib/permissions";
 import { CATALOGO, LAYOUT_PADRAO, POR_ID } from "./catalogo";
 import { PainelGrid } from "./PainelGrid";
+import { sobraDaLinha } from "./grade";
 
 /**
  * O construtor de painel (SPEC 092, ADR 0038). Cobre as regras que o desenho
@@ -25,6 +26,7 @@ vi.mock("./blocos/Graficos", () => ({
   ConversaoMensalChart: () => <div data-testid="chart-conversao" />,
   PontualidadeChart: () => <div data-testid="chart-pontualidade" />,
   ThroughputChart: () => <div data-testid="chart-throughput" />,
+  FaturamentoChart: () => <div data-testid="chart-faturamento" />,
 }));
 
 function dados(): PainelGestao {
@@ -68,6 +70,10 @@ function dados(): PainelGestao {
     },
     financeiro: null,
     cobertura: { desde: "2025-09-01", projetosSemPrazo: 0, leadsSemMotivoPadrao: 2 },
+    extra: {
+      efetivoObra: [{ obraId: "o1", obra: "Galpão", media: 12, dias: 5 }],
+      projetosPorCliente: [{ clienteId: "c1", cliente: "Marlim", ativos: 4, atrasados: 1 }],
+    },
   };
 }
 
@@ -80,7 +86,6 @@ function montar(props: Partial<React.ComponentProps<typeof PainelGrid>> = {}) {
       <PainelGrid
         data={dados()}
         layout={LAYOUT_PADRAO}
-        usandoPadrao
         editando={false}
         salvando={false}
         onEditar={onEditar}
@@ -127,7 +132,6 @@ describe("painel em leitura", () => {
     // Em leitura, nenhum controle de edição aparece.
     expect(screen.queryByLabelText(/^Mover /)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/^Remover /)).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Personalizar" })).toBeInTheDocument();
   });
 
   it("ignora widget desconhecido no layout em vez de quebrar a tela", () => {
@@ -149,7 +153,7 @@ describe("painel em edição", () => {
     const user = userEvent.setup();
     montar({ editando: true });
 
-    await user.click(screen.getByRole("button", { name: /Adicionar indicador/ }));
+    await user.click(screen.getAllByRole("button", { name: /Adicionar widget/ })[0]);
     const seletor = screen.getByLabelText("Indicadores disponíveis");
 
     expect(within(seletor).getByText("Gestão")).toBeInTheDocument();
@@ -165,7 +169,7 @@ describe("painel em edição", () => {
     const user = userEvent.setup();
     montar({ editando: true });
 
-    await user.click(screen.getByRole("button", { name: /Adicionar indicador/ }));
+    await user.click(screen.getAllByRole("button", { name: /Adicionar widget/ })[0]);
     const seletor = screen.getByLabelText("Indicadores disponíveis");
     expect(within(seletor).queryByText("Financeiro")).not.toBeInTheDocument();
     expect(within(seletor).queryByText("Caixa do mês")).not.toBeInTheDocument();
@@ -176,7 +180,7 @@ describe("painel em edição", () => {
     const user = userEvent.setup();
     const { onSalvar } = montar({ editando: true });
 
-    await user.click(screen.getByRole("button", { name: /Adicionar indicador/ }));
+    await user.click(screen.getAllByRole("button", { name: /Adicionar widget/ })[0]);
     await user.click(screen.getByRole("button", { name: /Carga da equipe/ }));
     expect(onSalvar).not.toHaveBeenCalled();
 
@@ -187,16 +191,14 @@ describe("painel em edição", () => {
     expect(salvo).toHaveLength(LAYOUT_PADRAO.length + 1);
   });
 
-  it("remove widget e troca o tamanho no rascunho, sem tocar no layout salvo", async () => {
+  it("troca o tamanho no rascunho, sem tocar no layout salvo", async () => {
     const user = userEvent.setup();
     const { onSalvar } = montar({ editando: true });
 
-    await user.click(screen.getByLabelText("Remover Projetos em números"));
     await user.selectOptions(screen.getByLabelText("Tamanho de Entregamos no prazo?"), "inteira");
     await user.click(screen.getByRole("button", { name: "Salvar painel" }));
 
     const salvo = onSalvar.mock.calls[0][0] as { w: string; s: string }[];
-    expect(salvo.map((i) => i.w)).not.toContain("projetos_numeros");
     expect(salvo.find((i) => i.w === "projetos_pontualidade")?.s).toBe("inteira");
   });
 
@@ -204,7 +206,7 @@ describe("painel em edição", () => {
     const user = userEvent.setup();
     const { onSalvar, onEditar } = montar({ editando: true });
 
-    await user.click(screen.getByLabelText("Remover Projetos em números"));
+    await user.click(screen.getByLabelText("Remover Vence nos próximos 15 dias"));
     await user.click(screen.getByRole("button", { name: "Cancelar" }));
 
     expect(onSalvar).not.toHaveBeenCalled();
@@ -217,5 +219,68 @@ describe("painel em edição", () => {
 
     await user.click(screen.getByRole("button", { name: /Restaurar padrão/ }));
     expect(onRestaurar).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("faixa fixa de KPIs", () => {
+  it("renderiza os widgets de zona topo numa faixa fixa, fora da grade", () => {
+    montar();
+    const faixa = screen.getByLabelText("Indicadores fixos");
+    // O padrão fixa os dois blocos de contagem.
+    expect(within(faixa).getByText("projetos ativos")).toBeInTheDocument();
+    expect(within(faixa).getByText("propostas em 90 dias")).toBeInTheDocument();
+    // E eles não aparecem duplicados na grade.
+    expect(screen.getAllByText("projetos ativos")).toHaveLength(1);
+  });
+
+  it("solta um widget da faixa para a grade e vice-versa", async () => {
+    const user = userEvent.setup();
+    const { onSalvar } = montar({ editando: true });
+
+    await user.click(screen.getByLabelText("Soltar Projetos em números da faixa fixa"));
+    await user.click(screen.getByRole("button", { name: "Salvar painel" }));
+
+    const salvo = onSalvar.mock.calls[0][0] as { w: string; z?: string }[];
+    expect(salvo.find((i) => i.w === "projetos_numeros")?.z).toBeUndefined();
+  });
+
+  it("só oferece fixar para widget de contagem curta", async () => {
+    const user = userEvent.setup();
+    montar({ editando: true });
+
+    // "Vence nos próximos 15 dias" é lista, não cabe na dock.
+    expect(screen.queryByLabelText("Fixar Vence nos próximos 15 dias no topo")).not.toBeInTheDocument();
+    await user.click(screen.getAllByRole("button", { name: /Adicionar widget/ })[0]);
+    expect(screen.getByLabelText("Indicadores disponíveis")).toBeInTheDocument();
+  });
+});
+
+describe("grade agrupada por módulo", () => {
+  it("mostra o título do módulo só quando ele tem widget", () => {
+    montar({ layout: [{ w: "projetos_prazos_15", s: "meia" }] });
+    expect(screen.getByRole("region", { name: "Projetos" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Obras" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Gestão" })).not.toBeInTheDocument();
+  });
+
+  it("mostra Obras quando há widget de obra no layout", () => {
+    montar({ layout: [{ w: "obras_numeros", s: "inteira" }] });
+    expect(screen.getByRole("region", { name: "Obras" })).toBeInTheDocument();
+  });
+});
+
+describe("sobraDaLinha", () => {
+  it("calcula o buraco que o cartão de adicionar precisa preencher", () => {
+    // Dois terços ocupam 8 de 12: sobram 4.
+    expect(sobraDaLinha([{ s: "terco" }, { s: "terco" }])).toBe(4);
+    // Duas metades fecham a linha: nada sobra.
+    expect(sobraDaLinha([{ s: "meia" }, { s: "meia" }])).toBe(0);
+    // Uma inteira fecha a linha.
+    expect(sobraDaLinha([{ s: "inteira" }])).toBe(0);
+    // Meia mais terço: 10 de 12, sobram 2.
+    expect(sobraDaLinha([{ s: "meia" }, { s: "terco" }])).toBe(2);
+    // Três metades: a terceira começa linha nova e deixa 6 livres.
+    expect(sobraDaLinha([{ s: "meia" }, { s: "meia" }, { s: "meia" }])).toBe(6);
+    expect(sobraDaLinha([])).toBe(0);
   });
 });

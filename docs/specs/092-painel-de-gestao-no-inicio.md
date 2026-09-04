@@ -70,6 +70,23 @@ Todo bloco do painel é uma das três coisas, nesta ordem de importância:
 
 Bloco que não é nenhuma das três não entra. Máximo 3 séries por gráfico.
 
+### Duas zonas: faixa fixa e grade
+
+O painel tem uma **faixa fixa** no topo (a dock) e a **grade** abaixo. A faixa gruda sob o
+header e acompanha a rolagem, então o número que importa não sai da tela quando se desce
+até o último gráfico. Só widget de contagem curta pode ser fixado (`PODE_FIXAR`), no
+máximo 6, porque a faixa precisa caber numa linha para continuar sendo dock e não virar
+uma segunda tela.
+
+Cada item do layout declara a zona (`z: "topo" | "grade"`); ausente significa grade, o que
+mantém válido o layout de quem salvou antes.
+
+### A grade é agrupada por módulo
+
+Gestão, Projetos, Obras e Financeiro, nessa ordem, com o título do módulo acima do grupo.
+**Título de módulo sem widget não aparece**: um painel sem nada de Obras não mostra
+"Obras". Arrastar reordena dentro do módulo, então o widget não pula de seção sozinho.
+
 ### Layout: grade de 12 colunas, quatro tamanhos
 
 O usuário escolhe o tamanho de cada widget, e o catálogo declara quais tamanhos cada um
@@ -81,6 +98,17 @@ aceita (um gráfico de 12 meses não cabe em KPI, e o sistema não deixa tentar)
 | `terco` | 4 | lista média, barras com poucas categorias |
 | `meia` | 6 | o tamanho natural de um gráfico |
 | `inteira` | 12 | faixa de números, série longa |
+
+Duas regras fecham os buracos que apareceram na primeira versão:
+
+- **O cartão "Adicionar widget" ocupa exatamente o que sobrou da última linha.** Dois
+  widgets de um terço deixavam 4 colunas mortas; agora o cartão preenche as 4.
+- **Widget sem dado encolhe.** Antes, "Nenhuma obra em andamento" ocupava meia tela de
+  altura para dizer que não tinha nada. Agora o card colapsa para a altura do conteúdo.
+
+O mapa de largura por sobra é estático de propósito: o Tailwind não gera CSS para classe
+montada em runtime (`col-span-${n}`), e interpolar ali faria o cartão perder a largura sem
+erro nenhum.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -118,6 +146,13 @@ e o resultado não parecia Pilar. A regra agora é uma só:
 
 - **Gráfico tem uma cor**: `--chart-info`. Uma segunda série, quando existe, é
   `--chart-neutral` (cinza). Referência (meta, média) é linha tracejada cinza.
+- **Destaque vermelho é do líder, e só quando existe líder.** Marcar "o maior" pintava a
+  lista inteira quando havia empate, o que não aponta nada: agora o item só é pintado se
+  ele se destaca do segundo colocado.
+- **Valor e contexto ficam em colunas separadas**, com cabeçalho. Empilhar "7" e "29%
+  ganho" num espaço de 60px virava borrão.
+- **Série temporal usa linha reta, não curva suave.** `monotone` desenha movimento entre
+  meses sem medição, e inventa tendência que o dado não tem.
 - **Cor semântica só onde carrega estado**, e sempre como badge do registry
   (`statusBadgeClasses`) ou borda-esquerda de 3px. Nunca como cor de número, nunca como
   fundo de card.

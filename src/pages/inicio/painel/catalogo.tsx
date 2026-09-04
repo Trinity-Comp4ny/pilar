@@ -3,8 +3,8 @@ import type { Feature } from "@/lib/permissions";
 import type { ItemLayout, Tamanho } from "@/hooks/usePainelLayout";
 import type { PainelGestao } from "@/hooks/usePainelGestao";
 import { BarrasDivergentes, BarrasHorizontais, CargaPorPessoa, LegendaPainel } from "./blocos/Primitivas";
-import { ConversaoMensalChart, PontualidadeChart, ThroughputChart } from "./blocos/Graficos";
-import { ListaStatusProjetos, NumerosObras, NumerosProjetos, NumerosPropostas, Vazio } from "./blocos/Numeros";
+import { ConversaoMensalChart, FaturamentoChart, PontualidadeChart, ThroughputChart } from "./blocos/Graficos";
+import { NumerosObras, NumerosProjetos, NumerosPropostas, Vazio } from "./blocos/Numeros";
 import { ListaAprovacoes, ListaPrazos, ListaRdo } from "./blocos/Listas";
 
 /**
@@ -72,11 +72,12 @@ export const CATALOGO: Widget[] = [
         <Vazio>Nenhuma proposta criada nos últimos 90 dias.</Vazio>
       ) : (
         <BarrasHorizontais
+          colunas={{ valor: "propostas" }}
           itens={d.gestao.funil.map((f) => ({
             id: f.etapa,
             nome: ROTULO_FUNIL[f.etapa] ?? f.etapa,
             valor: f.n,
-            tone: f.etapa === "recusada" || f.etapa === "expirada" ? "estado" : "main",
+            alerta: f.etapa === "expirada" && f.n > 0,
           }))}
         />
       ),
@@ -119,14 +120,20 @@ export const CATALOGO: Widget[] = [
     render: (d) => {
       const total = d.gestao.motivosPerda.reduce((s, m) => s + m.n, 0);
       if (total === 0) return <Vazio>Nenhum lead marcado como perdido nos últimos 12 meses.</Vazio>;
+      const maior = d.gestao.motivosPerda[0]?.n ?? 0;
+      const segundo = d.gestao.motivosPerda[1]?.n ?? 0;
+      // Destaque só quando existe um líder claro. Em empate (todos com o mesmo
+      // número), pintar "o maior" pintaria a lista inteira e não diria nada.
+      const temLider = maior > segundo;
       return (
         <BarrasHorizontais
-          tone="estado"
-          itens={d.gestao.motivosPerda.map((m) => ({
+          colunas={{ valor: "perdas", detalhe: "do total" }}
+          itens={d.gestao.motivosPerda.map((m, i) => ({
             id: m.motivo,
             nome: m.motivo,
             valor: m.n,
             detalhe: `${Math.round((m.n / total) * 100)}%`,
+            alerta: temLider && i === 0,
           }))}
         />
       );
@@ -145,11 +152,12 @@ export const CATALOGO: Widget[] = [
         <Vazio>Nenhuma proposta aguardando decisão.</Vazio>
       ) : (
         <BarrasHorizontais
+          colunas={{ valor: "propostas" }}
           itens={d.gestao.esperaProposta.map((e) => ({
             id: e.faixa,
             nome: e.faixa,
             valor: e.n,
-            tone: e.faixa === "Mais de 30 dias" ? "estado" : "main",
+            alerta: e.faixa === "Mais de 30 dias" && e.n > 0,
           }))}
         />
       ),
@@ -167,11 +175,12 @@ export const CATALOGO: Widget[] = [
         <Vazio>Precisa de pelo menos 2 leads por origem para comparar.</Vazio>
       ) : (
         <BarrasHorizontais
+          colunas={{ valor: "leads", detalhe: "viraram contrato" }}
           itens={d.gestao.origemGanho.map((o) => ({
             id: o.origem,
             nome: o.origem,
             valor: o.leads,
-            detalhe: o.ganhoPct === null ? undefined : `${o.ganhoPct}% ganho`,
+            detalhe: o.ganhoPct === null ? "sem decisão" : `${o.ganhoPct}%`,
           }))}
         />
       ),
@@ -237,16 +246,6 @@ export const CATALOGO: Widget[] = [
     render: (d) => <NumerosProjetos data={d} />,
   },
   {
-    id: "projetos_status",
-    titulo: "Status dos ativos",
-    descricao: "Quantos projetos em cada status.",
-    secao: "projetos",
-    tamanhos: ["kpi", "terco"],
-    padrao: "terco",
-    feature: "projetos",
-    render: (d) => <ListaStatusProjetos data={d} />,
-  },
-  {
     id: "projetos_pontualidade",
     titulo: "Entregamos no prazo?",
     descricao: "Percentual dos concluídos que saiu no prazo, mês a mês.",
@@ -277,13 +276,18 @@ export const CATALOGO: Widget[] = [
         <Vazio>Nenhuma disciplina concluída com atraso nos últimos 12 meses.</Vazio>
       ) : (
         <BarrasHorizontais
-          tone="estado"
-          itens={d.projetos.atrasoPorDisciplina.map((x) => ({
+          unidade="d"
+          colunas={{ valor: "atraso", detalhe: "entregas" }}
+          itens={d.projetos.atrasoPorDisciplina.map((x, i) => ({
             id: x.disciplina,
             nome: x.disciplina,
             valor: x.diasMedio,
-            detalhe: "dias",
-            titulo: `${x.entregas} entrega${x.entregas === 1 ? "" : "s"} com atraso`,
+            detalhe: String(x.entregas),
+            // Só a pior disciplina fica vermelha, e só se ela se destaca das
+            // outras: em empate, a lista toda vermelha não aponta nada.
+            alerta:
+              i === 0 && x.diasMedio > 0 && x.diasMedio > (d.projetos.atrasoPorDisciplina[1]?.diasMedio ?? 0),
+            titulo: `${x.entregas} entrega${x.entregas === 1 ? "" : "s"} concluída${x.entregas === 1 ? "" : "s"} com atraso`,
           }))}
         />
       ),
@@ -311,6 +315,7 @@ export const CATALOGO: Widget[] = [
         <Vazio>Nenhum projeto ativo tem horas estimadas nas disciplinas.</Vazio>
       ) : (
         <BarrasDivergentes
+          legenda={{ esquerda: "sobrou hora", direita: "estourou" }}
           itens={d.projetos.horasPorProjeto.map((h) => ({
             id: h.projetoId,
             nome: h.projeto,
@@ -356,12 +361,72 @@ export const CATALOGO: Widget[] = [
         <Vazio>Nenhuma obra em andamento com tarefa cadastrada.</Vazio>
       ) : (
         <BarrasHorizontais
+          colunas={{ valor: "avanço", detalhe: "tarefas" }}
           itens={d.obras.avancoPorObra.map((o) => ({
             id: o.obraId,
             nome: o.obra,
             valor: o.pct ?? 0,
             rotulo: `${o.pct ?? 0}%`,
-            detalhe: `${o.concluidas} de ${o.total}`,
+            detalhe: `${o.concluidas}/${o.total}`,
+          }))}
+        />
+      ),
+  },
+
+  {
+    id: "projetos_por_cliente",
+    titulo: "Projetos por cliente",
+    descricao: "Quantos projetos ativos cada cliente tem, e quantos estão atrasados.",
+    secao: "projetos",
+    tamanhos: ["terco", "meia"],
+    padrao: "meia",
+    feature: "projetos",
+    render: (d) =>
+      !d.extra || d.extra.projetosPorCliente.length === 0 ? (
+        <Vazio>Nenhum projeto ativo com cliente vinculado.</Vazio>
+      ) : (
+        <BarrasHorizontais
+          colunas={{ valor: "ativos", detalhe: "atrasados" }}
+          itens={d.extra.projetosPorCliente.map((c) => ({
+            id: c.clienteId,
+            nome: c.cliente,
+            valor: c.ativos,
+            detalhe: c.atrasados > 0 ? String(c.atrasados) : "nenhum",
+            alerta: c.atrasados > 0,
+          }))}
+        />
+      ),
+    leitura: (d) => {
+      const total = d.extra?.projetosPorCliente.reduce((s, c) => s + c.ativos, 0) ?? 0;
+      const maior = d.extra?.projetosPorCliente[0];
+      if (!maior || total === 0) return null;
+      const pct = Math.round((maior.ativos / total) * 100);
+      return pct >= 40
+        ? `${maior.cliente} concentra ${pct}% dos projetos ativos: se ele parar, o escritório sente.`
+        : "Carteira distribuída entre os clientes.";
+    },
+  },
+
+  // ── Obras ─────────────────────────────────────────────────────────────────
+  {
+    id: "obras_efetivo",
+    titulo: "Efetivo em obra",
+    descricao: "Média de gente no campo por obra nos últimos 7 dias, pelo RDO.",
+    secao: "obras",
+    tamanhos: ["terco", "meia"],
+    padrao: "terco",
+    feature: "obras",
+    render: (d) =>
+      !d.extra || d.extra.efetivoObra.length === 0 ? (
+        <Vazio>Nenhum RDO com efetivo lançado nos últimos 7 dias.</Vazio>
+      ) : (
+        <BarrasHorizontais
+          colunas={{ valor: "pessoas", detalhe: "dias com RDO" }}
+          itens={d.extra.efetivoObra.map((o) => ({
+            id: o.obraId,
+            nome: o.obra,
+            valor: o.media,
+            detalhe: String(o.dias),
           }))}
         />
       ),
@@ -405,6 +470,35 @@ export const CATALOGO: Widget[] = [
     },
   },
   {
+    id: "fin_faturamento",
+    titulo: "Faturamento previsto contra realizado",
+    descricao: "Marco de faturamento previsto em contrato contra o que virou fatura.",
+    secao: "financeiro",
+    tamanhos: ["meia", "inteira"],
+    padrao: "meia",
+    feature: "financeiro",
+    render: (d) =>
+      !d.financeiro || d.financeiro.faturamento.length === 0 ? (
+        <Vazio>Nenhum marco de faturamento lançado neste ano.</Vazio>
+      ) : (
+        <>
+          <FaturamentoChart dados={d.financeiro.faturamento} />
+          <LegendaPainel
+            itens={[
+              { label: "Previsto em contrato", cls: "bg-chart-neutral", linha: true },
+              { label: "Faturado", cls: "bg-chart-info", linha: true },
+            ]}
+          />
+        </>
+      ),
+    leitura: (d) => {
+      if (!d.financeiro || d.financeiro.faturamento.length === 0) return null;
+      const gap = d.financeiro.faturamento.reduce((s, m) => s + (m.previsto - m.faturado), 0);
+      if (gap <= 0) return "Faturamento em dia com o previsto em contrato.";
+      return `${fmtMoeda(gap)} de marco previsto que ainda não virou fatura.`;
+    },
+  },
+  {
     id: "fin_margem",
     titulo: "Margem por projeto ativo",
     descricao: "Orçado contra custo real, do pior para o melhor.",
@@ -417,6 +511,7 @@ export const CATALOGO: Widget[] = [
         <Vazio>Nenhum projeto ativo com orçamento por disciplina lançado.</Vazio>
       ) : (
         <BarrasDivergentes
+          legenda={{ esquerda: "com margem", direita: "no prejuízo" }}
           itens={d.financeiro.margemPorProjeto.map((m) => ({
             id: m.projetoId,
             nome: m.projeto,
@@ -444,12 +539,26 @@ export const POR_ID = new Map(CATALOGO.map((w) => [w.id, w]));
  * por módulo, e nada de financeiro (ADR 0038). Quem quiser mais, adiciona.
  */
 export const LAYOUT_PADRAO: ItemLayout[] = [
-  { w: "projetos_numeros", s: "inteira" },
-  { w: "gestao_propostas_numeros", s: "meia" },
+  // Faixa fixa: os números que o sócio cobra de cabeça, sempre visíveis.
+  { w: "projetos_numeros", s: "meia", z: "topo" },
+  { w: "gestao_propostas_numeros", s: "meia", z: "topo" },
+  // Grade: um bloco acionável por módulo, e nada de financeiro (ADR 0038).
   { w: "projetos_prazos_15", s: "meia" },
   { w: "projetos_pontualidade", s: "meia" },
   { w: "gestao_motivo_perda", s: "meia" },
+  { w: "gestao_aprovacoes", s: "meia" },
 ];
+
+/** Widgets que podem ir na faixa fixa: só os de contagem curta. */
+export const PODE_FIXAR = new Set([
+  "projetos_numeros",
+  "gestao_propostas_numeros",
+  "obras_numeros",
+  "fin_mes",
+]);
+
+/** Quantas colunas de 12 cada tamanho ocupa, para calcular o buraco da linha. */
+export const COLUNAS: Record<Tamanho, number> = { kpi: 3, terco: 4, meia: 6, inteira: 12 };
 
 export const LARGURA: Record<Tamanho, string> = {
   kpi: "lg:col-span-3",

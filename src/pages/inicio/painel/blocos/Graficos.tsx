@@ -6,6 +6,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  LabelList,
   Line,
   LineChart,
   ReferenceLine,
@@ -73,10 +74,10 @@ export function ConversaoMensalChart({
         propostas decididas no mês
       </p>
       <ResponsiveContainer width="100%" height={132}>
-        <BarChart data={linhas} margin={{ top: 4, right: 8, left: -22, bottom: 0 }} barCategoryGap="28%">
+        <BarChart data={linhas} margin={{ top: 4, right: 10, left: 0, bottom: 0 }} barCategoryGap="26%">
           <CartesianGrid stroke={GRID} vertical={false} />
           <XAxis dataKey="mes" tick={false} axisLine={false} height={0} />
-          <YAxis tick={EIXO} axisLine={false} tickLine={false} allowDecimals={false} width={34} />
+          <YAxis tick={EIXO} axisLine={false} tickLine={false} allowDecimals={false} width={30} />
           <Tooltip
             content={({ active, payload, label }) => {
               if (!active || !payload?.length) return null;
@@ -100,7 +101,7 @@ export function ConversaoMensalChart({
         taxa de conversão
       </p>
       <ResponsiveContainer width="100%" height={64}>
-        <LineChart data={linhas} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>
+        <LineChart data={linhas} margin={{ top: 6, right: 10, left: 0, bottom: 0 }}>
           <CartesianGrid stroke={GRID} vertical={false} />
           <XAxis dataKey="mes" tick={EIXO} axisLine={false} tickLine={false} interval={0} />
           <YAxis
@@ -110,7 +111,7 @@ export function ConversaoMensalChart({
             tick={EIXO}
             axisLine={false}
             tickLine={false}
-            width={34}
+            width={30}
           />
           <Tooltip
             content={({ active, payload, label }) => {
@@ -126,7 +127,7 @@ export function ConversaoMensalChart({
             }}
           />
           <Line
-            type="monotone"
+            type="linear"
             dataKey="taxa"
             stroke="hsl(var(--chart-info))"
             strokeWidth={2}
@@ -155,7 +156,7 @@ export function PontualidadeChart({
 
   return (
     <ResponsiveContainer width="100%" height={168}>
-      <AreaChart data={linhas} margin={{ top: 8, right: 12, left: -18, bottom: 0 }}>
+      <AreaChart data={linhas} margin={{ top: 8, right: 46, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id="grad-pontualidade" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="hsl(var(--chart-info))" stopOpacity={0.22} />
@@ -171,7 +172,7 @@ export function PontualidadeChart({
           tick={EIXO}
           axisLine={false}
           tickLine={false}
-          width={38}
+          width={34}
         />
         <ReferenceLine
           y={meta}
@@ -197,7 +198,9 @@ export function PontualidadeChart({
           }}
         />
         <Area
-          type="monotone"
+          // Linear de propósito: com meses sem entrega, `monotone` desenha
+          // curva onde não existe medição e sugere movimento inventado.
+          type="linear"
           dataKey="pct"
           stroke="hsl(var(--chart-info))"
           strokeWidth={2}
@@ -221,21 +224,28 @@ export function ThroughputChart({
 }) {
   const linhas = useMemo(
     () =>
-      dados.map((d, i) => ({
-        rotulo: i === dados.length - 1 ? "atual" : "",
-        semana: new Date(`${d.semana}T00:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
-        n: d.n,
-        abaixo: media !== null && d.n < media,
-      })),
+      dados.map((d, i) => {
+        const semana = new Date(`${d.semana}T00:00:00`).toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+        });
+        return {
+          // Rótulo de 3 em 3 e sempre na última: 12 datas seguidas viram borrão.
+          rotulo: i === dados.length - 1 ? "esta" : i % 3 === 0 ? semana : "",
+          semana,
+          n: d.n,
+          abaixo: media !== null && d.n < media,
+        };
+      }),
     [dados, media]
   );
 
   return (
     <ResponsiveContainer width="100%" height={150}>
-      <BarChart data={linhas} margin={{ top: 8, right: 34, left: -24, bottom: 0 }} barCategoryGap="26%">
+      <BarChart data={linhas} margin={{ top: 16, right: 52, left: 0, bottom: 0 }} barCategoryGap="24%">
         <CartesianGrid stroke={GRID} vertical={false} />
         <XAxis dataKey="rotulo" tick={EIXO} axisLine={false} tickLine={false} interval={0} />
-        <YAxis tick={EIXO} axisLine={false} tickLine={false} allowDecimals={false} width={34} />
+        <YAxis tick={EIXO} axisLine={false} tickLine={false} allowDecimals={false} width={30} />
         {media !== null && (
           <ReferenceLine
             y={media}
@@ -261,11 +271,87 @@ export function ThroughputChart({
           }}
         />
         <Bar dataKey="n" radius={[4, 4, 0, 0]}>
+          <LabelList
+            dataKey="n"
+            position="top"
+            fontSize={10.5}
+            fill="hsl(var(--text-muted))"
+            formatter={(v: number, _n: unknown, i?: { index?: number }) =>
+              i?.index === linhas.length - 1 ? String(v) : ""
+            }
+          />
           {linhas.map((l, i) => (
             <Cell key={i} fill={l.abaixo ? "hsl(var(--chart-neutral))" : "hsl(var(--chart-info))"} />
           ))}
         </Bar>
       </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+
+/* ── Faturamento previsto contra realizado ───────────────────────────────────
+ * Duas séries na MESMA unidade (reais), então um eixo só. Previsto é a linha
+ * tracejada de referência, faturado é a série cheia: a distância entre as duas
+ * é o dinheiro contratado que ninguém cobrou.
+ */
+export function FaturamentoChart({
+  dados,
+}: {
+  dados: { mes: string; previsto: number; faturado: number }[];
+}) {
+  const linhas = useMemo(
+    () =>
+      dados.map((d) => ({
+        mes: mesCurto(d.mes),
+        previsto: d.previsto,
+        faturado: d.faturado,
+        gap: d.previsto - d.faturado,
+      })),
+    [dados]
+  );
+
+  const emMil = (v: number) => (Math.abs(v) >= 1000 ? `${Math.round(v / 1000)}k` : String(Math.round(v)));
+  const emReais = (v: number) =>
+    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+
+  return (
+    <ResponsiveContainer width="100%" height={168}>
+      <LineChart data={linhas} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+        <CartesianGrid stroke={GRID} vertical={false} />
+        <XAxis dataKey="mes" tick={EIXO} axisLine={false} tickLine={false} interval={0} />
+        <YAxis tickFormatter={emMil} tick={EIXO} axisLine={false} tickLine={false} width={44} />
+        <Tooltip
+          content={({ active, payload, label }) => {
+            if (!active || !payload?.length) return null;
+            const p = payload[0]?.payload as (typeof linhas)[number];
+            return (
+              <CaixaTooltip>
+                <p className="mb-0.5 font-medium text-ink">{label}</p>
+                <p className="text-muted-foreground">previsto {emReais(p.previsto)}</p>
+                <p className="text-info-mid">faturado {emReais(p.faturado)}</p>
+                {p.gap > 0 && <p className="mt-0.5 text-danger-mid">falta faturar {emReais(p.gap)}</p>}
+              </CaixaTooltip>
+            );
+          }}
+        />
+        <Line
+          type="linear"
+          dataKey="previsto"
+          stroke="hsl(var(--chart-neutral))"
+          strokeWidth={2}
+          strokeDasharray="5 4"
+          dot={false}
+        />
+        <Line
+          type="linear"
+          dataKey="faturado"
+          stroke="hsl(var(--chart-info))"
+          strokeWidth={2}
+          dot={false}
+          activeDot={{ r: 4 }}
+        />
+      </LineChart>
     </ResponsiveContainer>
   );
 }

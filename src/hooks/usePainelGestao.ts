@@ -124,7 +124,17 @@ const painelSchema = z.object({
   }),
 });
 
-export type PainelGestao = z.infer<typeof painelSchema>;
+const extraSchema = z.object({
+  efetivoObra: z.array(
+    z.object({ obraId: z.string(), obra: z.string(), media: z.number(), dias: z.number() })
+  ),
+  projetosPorCliente: z.array(
+    z.object({ clienteId: z.string(), cliente: z.string(), ativos: z.number(), atrasados: z.number() })
+  ),
+});
+
+export type PainelExtra = z.infer<typeof extraSchema>;
+export type PainelGestao = z.infer<typeof painelSchema> & { extra: PainelExtra | null };
 export type PainelSecao = "gestao" | "projetos" | "obras" | "financeiro";
 
 export function usePainelGestao(enabled = true) {
@@ -132,14 +142,21 @@ export function usePainelGestao(enabled = true) {
     queryKey: ["painel-gestao"],
     enabled,
     queryFn: async (): Promise<PainelGestao> => {
-      const { data, error } = await supabase.rpc("get_painel_gestao");
-      if (error) throw error;
+      // Duas chamadas em paralelo: a principal e a dos blocos que vieram depois.
+      // Se a extra falhar, o painel inteiro não cai: os widgets dela mostram
+      // estado vazio e o resto da tela continua servindo.
+      const [principal, extra] = await Promise.all([
+        supabase.rpc("get_painel_gestao"),
+        supabase.rpc("get_painel_extra"),
+      ]);
+      if (principal.error) throw principal.error;
 
-      const parsed = painelSchema.safeParse(data);
+      const parsed = painelSchema.safeParse(principal.data);
       if (!parsed.success) {
         throw new Error(`Painel veio em formato inesperado: ${parsed.error.issues[0]?.message}`);
       }
-      return parsed.data;
+      const parsedExtra = extra.error ? null : extraSchema.safeParse(extra.data);
+      return { ...parsed.data, extra: parsedExtra?.success ? parsedExtra.data : null };
     },
     staleTime: 1000 * 60 * 5,
     refetchInterval: 1000 * 60 * 5,

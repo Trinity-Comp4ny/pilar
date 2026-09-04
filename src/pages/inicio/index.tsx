@@ -10,6 +10,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { DataFrescor } from "@/components/DataFrescor";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PainelGrid } from "./painel/PainelGrid";
 import { LAYOUT_PADRAO } from "./painel/catalogo";
@@ -39,7 +40,7 @@ export default function Inicio() {
   const { can } = usePermissions();
 
   const painel = usePainelGestao();
-  const { layout, usandoPadrao, salvar, restaurarPadrao, salvando } = usePainelLayout(LAYOUT_PADRAO);
+  const { layout, salvar, restaurarPadrao, salvando } = usePainelLayout(LAYOUT_PADRAO);
   const [editando, setEditando] = useState(false);
   const [pergunta, setPergunta] = useState("");
 
@@ -56,16 +57,23 @@ export default function Inicio() {
     <PageLayout
       header={
         <PageHeader title="Início">
+          <span className="mr-auto hidden text-sm text-ink sm:inline">
+            {saudacao(profile?.first_name ?? null)}
+          </span>
           <DataFrescor
             updatedAt={painel.dataUpdatedAt}
             isFetching={painel.isFetching}
             onRefresh={() => void painel.refetch()}
           />
+          {!editando && painel.data && (
+            <Button variant="outline" size="sm" onClick={() => setEditando(true)}>
+              Personalizar
+            </Button>
+          )}
         </PageHeader>
       }
     >
-      <div className="flex flex-col gap-5">
-        <p className="text-sm text-ink-muted">{saudacao(profile?.first_name ?? null)}</p>
+      <div className="flex flex-col gap-4">
 
         {painel.isLoading ? (
           <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-12">
@@ -89,7 +97,6 @@ export default function Inicio() {
           <PainelGrid
             data={painel.data}
             layout={layout}
-            usandoPadrao={usandoPadrao}
             editando={editando}
             salvando={salvando}
             onEditar={setEditando}

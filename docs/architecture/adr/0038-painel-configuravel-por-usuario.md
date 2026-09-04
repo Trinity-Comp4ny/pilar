@@ -47,7 +47,10 @@ catálogo dele.
 5. **Uma seção por módulo do produto: Gestão, Projetos e Obras** (mais Financeiro no catálogo,
    para quem tem). Substitui o corte anterior por Comercial / Entrega / Produtividade, que era
    uma taxonomia analítica e não batia com os módulos que o usuário navega.
-6. **Modo TV e a máscara de nomes saem.** O painel passa a ser privado por usuário, então não
+6. **O layout tem duas zonas.** Uma faixa fixa no topo (dock, no máximo 6 widgets de
+   contagem, grudada sob o header) e a grade abaixo, agrupada por módulo, onde o título do
+   módulo só aparece se houver widget dele. `z` ausente significa grade.
+7. **Modo TV e a máscara de nomes saem.** O painel passa a ser privado por usuário, então não
    há parede pública a proteger. Se a TV do escritório voltar, volta como decisão própria.
 
 ```sql
