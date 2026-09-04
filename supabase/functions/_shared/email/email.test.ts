@@ -262,7 +262,7 @@ Deno.test("resolveReplyTo: explícito > e-mail da empresa > padrão da plataform
 
 Deno.test("sendEmail em dry-run não envia e devolve skipped", async () => {
   const r = await sendEmail({ classe: "plataforma", tipo: "t", to: "a@b.c", subject: "s", html: "<p>x</p>" });
-  assertEquals(r, { ok: false, skipped: "dry_run" });
+  assertEquals(r, { ok: false, skipped: "dry_run", envioId: null });
 });
 
 Deno.test("sendEmail escritório sem empresa lança", async () => {

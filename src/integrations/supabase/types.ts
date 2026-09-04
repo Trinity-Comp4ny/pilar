@@ -1700,6 +1700,86 @@ export type Database = {
           },
         ]
       }
+      email_envios: {
+        Row: {
+          assunto: string
+          classe: string
+          created_at: string
+          destinatario: string
+          empresa_id: string | null
+          erro: string | null
+          id: string
+          idempotency_key: string | null
+          referencia_id: string | null
+          referencia_tipo: string | null
+          resend_id: string | null
+          status: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          assunto: string
+          classe: string
+          created_at?: string
+          destinatario: string
+          empresa_id?: string | null
+          erro?: string | null
+          id?: string
+          idempotency_key?: string | null
+          referencia_id?: string | null
+          referencia_tipo?: string | null
+          resend_id?: string | null
+          status: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          assunto?: string
+          classe?: string
+          created_at?: string
+          destinatario?: string
+          empresa_id?: string | null
+          erro?: string | null
+          id?: string
+          idempotency_key?: string | null
+          referencia_id?: string | null
+          referencia_tipo?: string | null
+          resend_id?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_envios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_supressoes: {
+        Row: {
+          created_at: string
+          detalhe: string | null
+          email: string
+          motivo: string
+        }
+        Insert: {
+          created_at?: string
+          detalhe?: string | null
+          email: string
+          motivo: string
+        }
+        Update: {
+          created_at?: string
+          detalhe?: string | null
+          email?: string
+          motivo?: string
+        }
+        Relationships: []
+      }
       empresa_owners_pending: {
         Row: {
           company_name: string
@@ -2887,7 +2967,7 @@ export type Database = {
         Row: {
           categoria: string
           created_at: string
-          email: boolean
+          email: boolean | null
           empresa_id: string
           id: string
           in_app: boolean
@@ -2897,7 +2977,7 @@ export type Database = {
         Insert: {
           categoria: string
           created_at?: string
-          email?: boolean
+          email?: boolean | null
           empresa_id: string
           id?: string
           in_app?: boolean
@@ -2907,7 +2987,7 @@ export type Database = {
         Update: {
           categoria?: string
           created_at?: string
-          email?: boolean
+          email?: boolean | null
           empresa_id?: string
           id?: string
           in_app?: boolean
@@ -2944,6 +3024,7 @@ export type Database = {
           categoria: string
           created_at: string
           destinatario_id: string
+          email_enviado_em: string | null
           empresa_id: string
           expires_at: string | null
           id: string
@@ -2961,6 +3042,7 @@ export type Database = {
           categoria: string
           created_at?: string
           destinatario_id: string
+          email_enviado_em?: string | null
           empresa_id: string
           expires_at?: string | null
           id?: string
@@ -2978,6 +3060,7 @@ export type Database = {
           categoria?: string
           created_at?: string
           destinatario_id?: string
+          email_enviado_em?: string | null
           empresa_id?: string
           expires_at?: string | null
           id?: string
@@ -8059,6 +8142,32 @@ export type Database = {
       mfa_consume_backup_code: { Args: { p_code: string }; Returns: boolean }
       mfa_generate_backup_codes: { Args: never; Returns: string[] }
       my_empresa_id: { Args: never; Returns: string }
+      notificacao_email_padrao: {
+        Args: { p_categoria: string }
+        Returns: boolean
+      }
+      notificacoes_email_disparar: {
+        Args: { p_modo: string }
+        Returns: undefined
+      }
+      notificacoes_email_imediato_monitored: { Args: never; Returns: undefined }
+      notificacoes_email_semanal_monitored: { Args: never; Returns: undefined }
+      notificacoes_pendentes_email: {
+        Args: { p_modo: string }
+        Returns: {
+          categoria: string
+          created_at: string
+          destinatario_id: string
+          email: string
+          empresa_id: string
+          link: string
+          mensagem: string
+          nome: string
+          notificacao_id: string
+          severidade: string
+          titulo: string
+        }[]
+      }
       notificar: {
         Args: {
           p_categoria: string
@@ -8682,3 +8791,4 @@ export const Constants = {
     },
   },
 } as const
+

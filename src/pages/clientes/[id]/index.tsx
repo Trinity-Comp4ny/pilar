@@ -4,6 +4,7 @@ import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { mensagemDaFunction } from "@/lib/edgeError";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { useRecentes } from "@/hooks/useRecentes";
@@ -533,13 +534,15 @@ export default function ClienteDetalhePage() {
     if (!cliente || !messageText || !messageSubject) return;
     try {
       const { error } = await supabase.functions.invoke("send-manual-client-email", {
-        body: { email: cliente.email, subject: messageSubject, message: messageText },
+        body: { cliente_id: cliente.id, subject: messageSubject, message: messageText },
       });
       if (error) throw error;
       toast.success(`Mensagem enviada para ${clienteNomeCompleto}`);
     } catch (err) {
       reportInvokeError(err, "send-manual-client-email");
-      toast.error("Erro ao enviar mensagem");
+      toast.error("Não foi possível enviar a mensagem", {
+        description: await mensagemDaFunction(err, "Tente novamente em instantes."),
+      });
     }
     closeMessageDialog();
   };

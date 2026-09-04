@@ -44,6 +44,12 @@ Todas as ações que **precisam** ser feitas manualmente (config de dashboards) 
 - [ ] `ALLOWED_ORIGINS` = `https://pilarsoft.com.br,https://app.pilarsoft.com.br`
 - [x] `TURNSTILE_SECRET_KEY` = (copiar de Cloudflare após criar widget) (17/08)
 - [ ] `ASAAS_WEBHOOK_TOKEN` = fallback global (opcional; por empresa já tem)
+- [ ] `RESEND_API_KEY` = chave do Resend (staging e prod têm chaves distintas)
+- [ ] `RESEND_FROM` = `Pilar <no-reply@pilarsoft.com.br>` (formato "Nome <endereco>")
+- [ ] `RESEND_REPLY_TO` = caixa real que recebe resposta dos e-mails de plataforma (só depois do MX, ver E-mail abaixo)
+- [ ] `RESEND_WEBHOOK_SECRET` = o `whsec_...` que o Resend mostra ao criar o webhook (ver seção E-mail)
+- [ ] `APP_URL` = `https://app.pilarsoft.com.br`; `PUBLIC_SITE_URL` = `https://www.pilarsoft.com.br` (assets e fontes do e-mail vêm daqui)
+- [ ] NUNCA `EMAIL_DRY_RUN` em staging/prod (só no `.env` local: sem ele e sem chave, `sendEmail` lança de propósito)
 
 ### Database → Backups
 
@@ -157,6 +163,49 @@ Configurar os Environments `staging` e `production` conforme
 - [ ] Testar fluxo end-to-end em staging antes de prod
 
 ---
+
+## 📧 E-mail (SPEC 095 / 096, ADR 0039)
+
+Checklist por ambiente, na ordem. Tudo aqui é fora do repo; o código já espera cada item.
+
+### Resend
+
+- [ ] Domínio `pilarsoft.com.br` verificado no Resend (SPF/DKIM do subdomínio `send.` já existem)
+- [ ] Webhook criado em **Resend → Webhooks** apontando para `https://<project-ref>.supabase.co/functions/v1/resend-webhook`,
+      eventos `email.delivered`, `email.delivery_delayed`, `email.bounced`, `email.complained`.
+      Copiar o signing secret para `RESEND_WEBHOOK_SECRET` e redeployar a function.
+- [ ] Testar: mandar um e-mail para `bounce@resend.dev` (endereço de teste do Resend) e conferir
+      `email_envios.status = 'bounce'` e a linha em `email_supressoes`.
+
+### DNS (deliverability; hoje o apex não tem MX nem DMARC, ver gate de lançamento de 28/08)
+
+- [ ] SPF no apex: `v=spf1 include:amazonses.com ~all` (o `send.` do Resend já tem o dele)
+- [ ] DMARC: `_dmarc.pilarsoft.com.br TXT "v=DMARC1; p=none; rua=mailto:dmarc@pilarsoft.com.br"`.
+      Depois de 2 semanas de relatório limpo, subir para `p=quarantine`.
+- [ ] MX: Cloudflare Email Routing (gratuito) encaminhando `contato@`, `privacidade@` e `dmarc@` para
+      uma caixa real. Só então preencher `RESEND_REPLY_TO`: reply-to que não recebe é pior que nenhum.
+
+### Banco (uma vez por ambiente, SQL Editor)
+
+- [ ] `ALTER DATABASE postgres SET app.supabase_url = 'https://<project-ref>.supabase.co';`
+- [ ] `ALTER DATABASE postgres SET app.service_role_key = '<service_role_key>';`
+      (os crons de e-mail chamam a edge function com esses dois; sem eles, `notificacoes_email_disparar()`
+      pula com NOTICE e nenhum e-mail de notificação sai)
+- [ ] Conferir `SELECT jobname, schedule FROM cron.job WHERE jobname LIKE 'notificacoes-email-%';`
+      → `*/5 * * * *` (imediato) e `0 11 * * 1` (semanal, segunda 08:00 BRT)
+- [ ] Sentry → Crons: monitores `notificacoes-email-imediato` e `notificacoes-email-semanal` aparecem no
+      primeiro check-in (ADR 0036)
+
+### Verificação ponta a ponta em staging
+
+- [ ] `npm run email:preview` local bate com o que chega: mandar um de cada (auth, cobrança, notificação)
+      e abrir no Gmail web, Gmail Android, Apple Mail e Outlook. Geist só aparece nos Apple/Outlook Mac
+      (esperado); a faixa de morros carrega de `www.pilarsoft.com.br/email/wave-v1.png`.
+- [ ] Criar uma notificação `high` numa empresa de teste, esperar 5 minutos sem ler, receber o e-mail
+      imediato, e conferir `notificacoes.email_enviado_em` preenchido e `email_envios.tipo = 'notificacao_imediata'`.
+- [ ] Rodar o semanal na mão: `SELECT public.notificacoes_email_disparar('semanal');` e receber o resumo.
+- [ ] Clicar em "Gerenciar notificações por e-mail" no rodapé → app abre o diálogo de preferências.
+- [ ] Empresa sem e-mail cadastrado tentando enviar cobrança → 422 com a mensagem certa no toast.
 
 ## 🕐 Edge Functions — Agendamentos (Cron)
 

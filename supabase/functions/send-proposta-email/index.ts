@@ -64,6 +64,8 @@ serve(
       const { data: empresa } = await supabase.from("empresas").select("nome, email").eq("id", empresaId).single();
 
       const empresaNome = empresa?.nome ?? "Pilar";
+      if (!empresa?.email)
+        return safeErrorResponse(422, "Cadastre o e-mail da empresa em Configurações para enviar ao cliente", req);
 
       await sendEmail({
         classe: "escritorio",

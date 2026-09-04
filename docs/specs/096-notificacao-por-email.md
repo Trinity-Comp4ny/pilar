@@ -1,7 +1,7 @@
 # SPEC 096: Notificação por e-mail (imediata por severidade + resumo semanal)
 
 **Data:** 2026-09-04
-**Status:** Draft
+**Status:** Em implementação (código completo em `feat/email-module-design-system`; falta a verificação em staging)
 **Autor:** Matheus (CEO) + Claude
 **Módulo:** notificações (transversal)
 **Depende de:** [SPEC 095](095-padronizacao-de-email-transacional.md) (Fases 0 a 2), [ADR 0015](../architecture/adr/0015-notificacoes-por-destinatario.md), [ADR 0039](../architecture/adr/0039-email-transacional-modulo-unico-resend-e-log.md), [SPEC 029](029-central-de-notificacoes.md), [SPEC 091](091-notificacoes-alinhadas-por-papel.md)
@@ -47,7 +47,8 @@ Funcionais:
    ainda não foi por e-mail). Nenhuma tabela de fila nova: a linha da notificação já tem
    destinatário, categoria, severidade, título, mensagem e link.
 2. **Preferência por categoria, canal e-mail.** `notificacao_preferencias.email` (já existe) passa
-   a valer. Sem linha para a categoria, vale o padrão: e-mail **ligado** para `financeiro`,
+   a valer e vira **nullable**: NULL = nunca escolheu, vale o padrão da categoria (antes era `NOT NULL
+DEFAULT false`, e toda linha criada pelo toggle do sino desligaria o e-mail em silêncio). Sem linha para a categoria, vale o padrão: e-mail **ligado** para `financeiro`,
    `projeto`, `disciplina`, `obra`; **desligado** para `tarefa` e `sistema`. O `Switch` de e-mail em
    `PreferenciasDialog` deixa de ser `disabled`, mostra o padrão e grava.
 3. **Dois modos, uma function.** Edge function `notificacoes-email-cron` recebe `{ modo:
@@ -123,7 +124,7 @@ is null and arquivada_em is null`; a function de seleção roda em < 1s com 10k 
       `email_envios.status='falhou'`, e a próxima rodada tenta de novo com a mesma `Idempotency-Key`.
 - [ ] Dado e-mail do destinatário em `email_supressoes`, então é pulado e registrado `suprimido`.
 - [ ] Dado `authenticated` chamando `notificacoes_pendentes_email('semanal')`, então `permission
-  denied` (pgTAP).
+denied` (pgTAP).
 - [ ] Dado o link "Gerenciar notificações por e-mail", quando o usuário logado abre, então o
       `PreferenciasDialog` aparece aberto na coluna E-mail.
 - [ ] Dado a migration aplicada em base com notificações antigas, então nenhuma delas entra no
@@ -205,7 +206,7 @@ padrão por categoria; leitura de `?abrir=preferencias-notificacao` no shell do 
   [docs/operations/EMAILS.md](../operations/EMAILS.md), levantada do roteamento real das
   migrations. Categoria financeiro nunca sai para coordenador nem colaborador: o e-mail não
   decide destinatário, só transporta o que o sino já roteou.
-- **Decisão de produto (recomendação, a confirmar pelo CEO):** padrão LIGADO para financeiro,
+- **Decisão de produto (CEO, 04/09, "pode seguir"):** padrão LIGADO para financeiro,
   projeto, disciplina e obra. Motivo: o ICP não abre o app todo dia e essas categorias são o que
   ele pagaria pra saber; `tarefa` é ruidosa e `sistema` está sem evento. Alternativa
   conservadora: tudo desligado com anúncio in-app. Registrar em `DECISOES.md` quando decidir.
