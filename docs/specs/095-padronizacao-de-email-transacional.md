@@ -54,15 +54,17 @@ Funcionais:
    gera `sha256(to+subject+html)` válido pela janela de retry.
 5. **Duas classes e `replyTo` obrigatório.** `sendEmail({ classe: 'plataforma' | 'escritorio', ... })`.
    - `plataforma`: `from` e `replyTo` vêm de `brand.ts`.
-   - `escritorio`: exige `empresa: { id, nome, email, logo_url }`. `from` =
+   - `escritorio`: exige `empresa: { id, nome, email }`. `from` =
      `"<nome> via Pilar" <no-reply@dominio>`, `replyTo` = `empresa.email`. Sem `empresa.email`
      válido a function devolve 422 `"Cadastre o e-mail da empresa em Configurações para enviar ao
 cliente"` e o front mostra esse aviso com atalho para Configurações > Empresa.
    - Aplica a: `send-invoice-reminder`, `send-proposta-email`, `send-manual-client-email`,
      `invite-cliente-portal`, `reset-cliente-portal-password`.
-6. **Co-branding no shell.** Para `escritorio`, o header mostra `logo_url` da empresa (img 44px,
-   fallback: iniciais em quadrado neutro) e o nome; rodapé fixo "Enviado por <Empresa> via Pilar".
-   Para `plataforma`, header com o logo do Pilar (PNG 2x hospedado, ver req. 9) e wordmark.
+6. **Cabeçalho sempre da Pilar; o escritório vive no texto.** Nenhum e-mail mostra logo de
+   terceiro. Na classe `escritorio` o nome da empresa aparece na frase de abertura, no rodapé
+   ("Enviado por X via Pilar") e no remetente, e a resposta vai para o e-mail dela. Motivo no
+   ADR 0039: logo por cliente é ativo para curar, quebra com imagem bloqueada e embaralha quem
+   está enviando.
 7. **Mensagem manual só para cliente da empresa.** `send-manual-client-email` passa a receber
    `cliente_id` (não e-mail livre), resolve o e-mail pelo `clientes` da `empresa_id` do caller e
    grava `referencia_tipo='cliente'`. Motivo: hoje qualquer usuário autenticado envia texto livre
@@ -187,7 +189,7 @@ export interface SendEmailInput {
   html: string;
   text?: string;
   tipo: string; // vai para email_envios.tipo e para tags do Resend
-  empresa?: { id: string; nome: string; email: string | null; logo_url: string | null };
+  empresa?: { id: string; nome: string; email: string | null };
   referencia?: { tipo: string; id: string };
   idempotencyKey?: string;
   attachments?: { filename: string; content: string }[];
@@ -231,8 +233,8 @@ Fases pequenas, cada uma um PR para `staging`, testadas com envio real em stagin
 3. **Fase 2, log + webhook:** migration `email_envios`/`email_supressoes` (+ pgTAP de RLS),
    `client.ts` grava, `resend-webhook` atualiza. Registrar webhook no Resend de staging. UI mínima:
    aba "E-mails" em Administração (ultra admin) usando `DataTable`, filtro por status.
-4. **Fase 3, classes e co-branding:** `classe`, `replyTo`, header de escritório nas 5 functions de
-   cliente final; 422 sem e-mail da empresa; `send-manual-client-email` por `cliente_id` (ajuste
+4. **Fase 3, classes e reply-to:** `classe` e `replyTo` nas 5 functions de cliente final (feito
+   na Fase 1); falta o 422 sem e-mail da empresa e `send-manual-client-email` por `cliente_id` (ajuste
    no front que chama). Lint de fronteira no CI. Remover `PUBLIC_SITE_URL`.
 5. **Operação (paralelo, fora do repo):** SPF no apex, DMARC `p=none`, Email Routing para
    `contato@`/`privacidade@`; anotar no `DEPLOY_CHECKLIST.md`. Depois de 2 semanas limpas de

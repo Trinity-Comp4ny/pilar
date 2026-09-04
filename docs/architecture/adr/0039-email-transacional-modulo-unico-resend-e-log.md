@@ -71,14 +71,17 @@ Opções consideradas para o motor de template:
    motivo novo. Tema claro é o padrão (decisão já tomada em `email.ts`; "light only" evita
    inversão em dark mode de cliente de e-mail).
 
-3. **Duas classes de e-mail, um shell.**
-   - **Plataforma** (Pilar → usuário do Pilar): auth, trial, LGPD, notificação. Header com marca
-     do Pilar, `from` = `Pilar <no-reply@...>`, `replyTo` = caixa suportada do Pilar.
+3. **Duas classes de e-mail, um shell, um cabeçalho.**
+   - **Plataforma** (Pilar → usuário do Pilar): auth, trial, LGPD, notificação. `from` =
+     `Pilar <no-reply@...>`, `replyTo` = caixa suportada do Pilar.
    - **Escritório** (Empresa → cliente final, via Pilar): cobrança, proposta, acesso ao portal,
-     mensagem manual. Header com nome e `logo_url` da empresa (fallback: só o nome), `from` =
-     `"<Empresa> via Pilar" <no-reply@...>`, `replyTo` = `empresas.email` (obrigatório para
-     enviar; sem e-mail cadastrado a function devolve 422 com instrução). Rodapé "enviado via
-     Pilar". Domínio de envio continua o do Pilar (sem domínio por tenant nesta decisão: DMARC
+     mensagem manual. `from` = `"<Empresa> via Pilar" <no-reply@...>`, `replyTo` =
+     `empresas.email` (obrigatório para enviar; sem e-mail cadastrado a function devolve 422 com
+     instrução). O escritório aparece **nomeado no texto** ("A Meridiana Engenharia enviou esta
+     cobrança"), no rodapé e no remetente. **Não** há logo de terceiro no cabeçalho: seria um
+     ativo por cliente para curar (proporção, fundo, resolução), quebra quando a imagem é
+     bloqueada e confunde a origem do e-mail. O cabeçalho é sempre o da Pilar, que é quem
+     entrega. Domínio de envio continua o do Pilar (sem domínio por tenant nesta decisão: DMARC
      alinhado e um só DNS pra cuidar).
 
 4. **Escapar é o padrão.** Funções de template recebem dados crus e escapam tudo. Só `raw()`
@@ -127,7 +130,7 @@ referencia_id, idempotency_key, created_at, updated_at`. RLS: `ultra_admin` vê 
 - Auditoria de envio: "o e-mail saiu? entregou? quicou?" respondido por query, não por Sentry.
 - Bounce não queima reputação do domínio duas vezes.
 - Injeção de HTML em e-mail deixa de ser possível por construção.
-- Cliente final do escritório recebe cobrança com a cara do escritório e consegue responder.
+- Cliente final do escritório sabe de quem é a cobrança pelo remetente e pelo texto, e a resposta chega no escritório, não num `no-reply`.
 
 **Negativas:**
 

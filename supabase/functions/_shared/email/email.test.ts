@@ -52,20 +52,23 @@ Deno.test("htmlToText extrai texto e links legíveis", () => {
 // Templates: nenhum campo entra sem escape
 // ---------------------------------------------------------------------------
 
-const empresaX = { nome: XSS, logoUrl: null };
+const empresaX = XSS;
 
 const casos: Array<[string, () => { subject: string; html: string }]> = [
   ["convite", () => T.templateConviteUsuario("https://l", XSS)],
   ["recuperacao", () => T.templateRecuperacaoSenha(`https://l?x=${XSS}`)],
   ["magic", () => T.templateMagicLink(`https://l?x=${XSS}`)],
   ["confirmacao", () => T.templateConfirmacaoCadastro(`https://l?x=${XSS}`)],
-  ["mensagem-manual", () => T.templateMensagemManual({ assunto: XSS, mensagem: `linha1\n${XSS}`, empresa: empresaX })],
+  [
+    "mensagem-manual",
+    () => T.templateMensagemManual({ assunto: XSS, mensagem: `linha1\n${XSS}`, empresaNome: empresaX }),
+  ],
   [
     "cobranca",
     () =>
       T.templateCobrancaDireta({
         clienteNome: XSS,
-        empresa: empresaX,
+        empresaNome: empresaX,
         descricao: XSS,
         valorFormatado: XSS,
         dataVencimento: XSS,
@@ -82,12 +85,12 @@ const casos: Array<[string, () => { subject: string; html: string }]> = [
         email: XSS,
         senha: XSS,
         loginUrl: "https://l",
-        empresa: empresaX,
+        empresaNome: empresaX,
       }),
   ],
   [
     "proposta",
-    () => T.templatePropostaEnvio({ nomeCliente: XSS, tituloProposta: XSS, empresa: empresaX, mensagem: XSS }),
+    () => T.templatePropostaEnvio({ nomeCliente: XSS, tituloProposta: XSS, empresaNome: empresaX, mensagem: XSS }),
   ],
   ["trial", () => T.templateTrialAviso({ empresaNome: XSS, daysLeft: 3, billingUrl: "https://l" })],
   [
@@ -141,27 +144,24 @@ for (const [nome, build] of casos) {
   });
 }
 
-Deno.test("template escritório mostra header da empresa e 'via Pilar'", () => {
+Deno.test("e-mail de escritório nomeia a empresa no texto e no rodapé, sem logo de terceiro", () => {
   const { html: out } = T.templateCobrancaDireta({
-    clienteNome: "A",
-    empresa: { nome: "Meridiana Engenharia", logoUrl: null },
+    clienteNome: "Construtora Horizonte",
+    empresaNome: "Meridiana Engenharia",
     descricao: "d",
     valorFormatado: "R$ 1,00",
     dataVencimento: "01/01/2026",
     vencida: false,
   });
-  assertStringIncludes(out, "Meridiana Engenharia");
-  assertStringIncludes(out, ">ME<"); // iniciais no lugar do logo
-  assertStringIncludes(out, "via Pilar");
-});
-
-Deno.test("template escritório com logo usa <img> do logo da empresa", () => {
-  const { html: out } = T.templatePropostaEnvio({
-    nomeCliente: "A",
-    tituloProposta: "P",
-    empresa: { nome: "X", logoUrl: "https://cdn.test/logo.png" },
-  });
-  assertStringIncludes(out, 'src="https://cdn.test/logo.png"');
+  assertStringIncludes(out, "Meridiana Engenharia</strong> enviou esta cobrança");
+  assertStringIncludes(out, "Você recebeu esta cobrança de Meridiana Engenharia via Pilar.");
+  // o único <img> além da faixa de morros é o símbolo da Pilar
+  const imgs = [...out.matchAll(/<img[^>]+src="([^"]+)"/g)].map((m) => m[1]);
+  assertEquals(imgs.length, 2);
+  assert(
+    imgs.every((src) => src.includes("/email/")),
+    `img inesperada: ${imgs.join(", ")}`
+  );
 });
 
 // ---------------------------------------------------------------------------

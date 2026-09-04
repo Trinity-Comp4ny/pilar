@@ -66,7 +66,7 @@ serve(
       const { data: receita, error: receitaError } = await supabaseAdmin
         .from("receitas")
         .select(
-          "id, descricao, valor, data_vencimento, status, empresa_id, cliente_id, clientes(nome, email), empresas(nome, email, logo_url, pix_chave, pix_instrucoes)"
+          "id, descricao, valor, data_vencimento, status, empresa_id, cliente_id, clientes(nome, email), empresas(nome, email, pix_chave, pix_instrucoes)"
         )
         .eq("id", receita_id)
         .single();
@@ -84,7 +84,6 @@ serve(
         empresas: {
           nome: string;
           email: string | null;
-          logo_url: string | null;
           pix_chave: string | null;
           pix_instrucoes: string | null;
         };
@@ -108,12 +107,11 @@ serve(
           id: rec.empresa_id,
           nome: rec.empresas.nome,
           email: rec.empresas.email,
-          logo_url: rec.empresas.logo_url,
         },
         idempotencyKey: `cobranca-${rec.id}-${hoje}`,
         ...templateCobrancaDireta({
           clienteNome: rec.clientes?.nome || "Cliente",
-          empresa: { nome: rec.empresas.nome, logoUrl: rec.empresas.logo_url },
+          empresaNome: rec.empresas.nome,
           descricao: rec.descricao,
           valorFormatado: formatCurrency(Number(rec.valor)),
           dataVencimento: formatDate(rec.data_vencimento),

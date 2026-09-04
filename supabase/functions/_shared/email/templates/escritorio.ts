@@ -1,6 +1,9 @@
 /**
- * E-mails que o escritório manda ao cliente final, via Pilar. Classe "escritorio":
- * cabeçalho com nome e logo da empresa, rodapé "Enviado por X via Pilar".
+ * E-mails que o escritório manda ao cliente final, via Pilar.
+ *
+ * O cabeçalho é sempre o da Pilar: o escritório aparece nomeado no texto, no
+ * rodapé e no remetente ("<Empresa> via Pilar", com reply-to no e-mail dela).
+ * Sem logo de terceiro no cabeçalho, que exigiria curar o ativo de cada cliente.
  */
 
 import { BRAND } from "../brand.ts";
@@ -22,28 +25,29 @@ import {
   spacer,
   strong,
 } from "../layout.ts";
-import type { EmailTemplate, EmpresaHeader } from "./types.ts";
+import type { EmailTemplate } from "./types.ts";
 
-function header(empresa: EmpresaHeader) {
-  return { tipo: "escritorio" as const, nome: empresa.nome, logoUrl: empresa.logoUrl };
-}
+const rodape = (empresaNome: string) => `Enviado por ${empresaNome} via ${BRAND.nome}.`;
 
 export function templateMensagemManual(params: {
   assunto: string;
   mensagem: string;
-  empresa: EmpresaHeader;
+  empresaNome: string;
 }): EmailTemplate {
-  const { assunto, mensagem, empresa } = params;
+  const { assunto, mensagem, empresaNome } = params;
   return {
     subject: assunto,
     html: shell({
       preview: mensagem.slice(0, 140),
-      header: header(empresa),
-      hero: { titulo: assunto },
+      footerNote: rodape(empresaNome),
+      hero: {
+        titulo: assunto,
+        lead: html`${strong(empresaNome)} enviou esta mensagem para você.`,
+      },
       content: [
         paragraph(multiline(mensagem), { mt: 0 }),
         divider(),
-        small(html`Mensagem de ${strong(empresa.nome)}. Responda este e-mail para falar com a equipe.`, { mt: 0 }),
+        small(html`Responda este e-mail para falar com a equipe de ${strong(empresaNome)}.`, { mt: 0 }),
       ],
     }),
   };
@@ -51,7 +55,7 @@ export function templateMensagemManual(params: {
 
 export function templateCobrancaDireta(params: {
   clienteNome: string;
-  empresa: EmpresaHeader;
+  empresaNome: string;
   descricao: string;
   valorFormatado: string;
   dataVencimento: string;
@@ -59,7 +63,8 @@ export function templateCobrancaDireta(params: {
   pixChave?: string;
   pixInstrucoes?: string;
 }): EmailTemplate {
-  const { clienteNome, empresa, descricao, valorFormatado, dataVencimento, vencida, pixChave, pixInstrucoes } = params;
+  const { clienteNome, empresaNome, descricao, valorFormatado, dataVencimento, vencida, pixChave, pixInstrucoes } =
+    params;
 
   const pix = pixChave
     ? [spacer(26), label("Chave Pix"), codeBox(pixChave), ...(pixInstrucoes ? [small(pixInstrucoes, { mt: 8 })] : [])]
@@ -69,13 +74,12 @@ export function templateCobrancaDireta(params: {
     subject: vencida ? `Fatura em atraso: ${descricao}` : `Lembrete de pagamento: ${descricao}`,
     html: shell({
       preview: vencida ? `Fatura em atraso, ${valorFormatado}` : `Vence em ${dataVencimento}, ${valorFormatado}`,
-      header: header(empresa),
-      footerNote: `Você recebeu esta cobrança de ${empresa.nome} via ${BRAND.nome}.`,
+      footerNote: `Você recebeu esta cobrança de ${empresaNome} via ${BRAND.nome}.`,
       hero: {
         titulo: vencida ? html`Fatura ${emphasis(em("em atraso"), "negative")}` : html`${em("Lembrete")} de pagamento`,
         lead: vencida
-          ? html`Olá, ${strong(clienteNome)}. A fatura abaixo venceu e continua em aberto.`
-          : html`Olá, ${strong(clienteNome)}. Segue a cobrança referente ao serviço abaixo.`,
+          ? html`Olá, ${strong(clienteNome)}. A fatura de ${strong(empresaNome)} abaixo venceu e continua em aberto.`
+          : html`Olá, ${strong(clienteNome)}. ${strong(empresaNome)} enviou esta cobrança referente ao serviço abaixo.`,
       },
       content: [
         card(
@@ -90,7 +94,7 @@ export function templateCobrancaDireta(params: {
         ),
         ...pix,
         divider(),
-        small(html`Enviado por ${strong(empresa.nome)}. Em caso de dúvida, responda este e-mail.`, { mt: 0 }),
+        small(html`Em caso de dúvida, responda este e-mail: ele vai direto para ${strong(empresaNome)}.`, { mt: 0 }),
       ],
     }),
   };
@@ -102,23 +106,24 @@ export function templateAcessoPortalCliente(params: {
   senha: string;
   loginUrl: string;
   isReset?: boolean;
-  empresa?: EmpresaHeader;
+  empresaNome?: string;
 }): EmailTemplate {
-  const { nomeCliente, email, senha, loginUrl, isReset = false, empresa } = params;
+  const { nomeCliente, email, senha, loginUrl, isReset = false, empresaNome } = params;
+  const quem = empresaNome ? strong(empresaNome) : "Seu escritório";
 
   return {
     subject: isReset ? "Sua senha do portal foi redefinida" : "Seu acesso ao portal do cliente",
     html: shell({
       preview: isReset ? "Nova senha do portal do cliente" : "Credenciais de acesso ao portal",
-      header: empresa ? header(empresa) : { tipo: "plataforma" },
-      footerNote: empresa
-        ? `Acesso criado por ${empresa.nome} via ${BRAND.nome}.`
-        : `Você recebeu este e-mail porque um escritório criou seu acesso ao portal.`,
+      footerNote: empresaNome
+        ? `Acesso criado por ${empresaNome} via ${BRAND.nome}.`
+        : "Você recebeu este e-mail porque um escritório criou seu acesso ao portal.",
       hero: {
         titulo: isReset ? html`Sua senha foi ${em("redefinida")}` : html`Seu acesso ao ${em("portal do cliente")}`,
         lead: isReset
-          ? html`Olá, ${strong(nomeCliente)}. A senha do seu acesso foi trocada. Use as credenciais abaixo.`
-          : html`Olá, ${strong(nomeCliente)}. Pelo portal você acompanha o andamento do projeto, entregas e aprovações.`,
+          ? html`Olá, ${strong(nomeCliente)}. ${quem} redefiniu a senha do seu acesso. Use as credenciais abaixo.`
+          : html`Olá, ${strong(nomeCliente)}. ${quem} criou seu acesso ao portal, onde você acompanha o andamento do
+            projeto, entregas e aprovações.`,
       },
       content: [
         card([kv("E-mail", email), kvDivider(), kv("Senha temporária", senha, { mono: true, size: "lg" })], { mt: 0 }),
@@ -132,26 +137,25 @@ export function templateAcessoPortalCliente(params: {
 export function templatePropostaEnvio(params: {
   nomeCliente: string;
   tituloProposta: string;
-  empresa: EmpresaHeader;
+  empresaNome: string;
   mensagem?: string;
 }): EmailTemplate {
-  const { nomeCliente, tituloProposta, empresa, mensagem } = params;
+  const { nomeCliente, tituloProposta, empresaNome, mensagem } = params;
   return {
     subject: tituloProposta,
     html: shell({
-      preview: `${tituloProposta}, enviada por ${empresa.nome}`,
-      header: header(empresa),
-      footerNote: `Você recebeu esta proposta de ${empresa.nome} via ${BRAND.nome}.`,
+      preview: `${tituloProposta}, enviada por ${empresaNome}`,
+      footerNote: `Você recebeu esta proposta de ${empresaNome} via ${BRAND.nome}.`,
       hero: {
         titulo: html`Sua ${em("proposta")} chegou`,
-        lead: html`Olá, ${strong(nomeCliente)}. ${strong(empresa.nome)} enviou uma proposta para você. O documento está
+        lead: html`Olá, ${strong(nomeCliente)}. ${strong(empresaNome)} enviou uma proposta para você. O documento está
         anexo a este e-mail.`,
       },
       content: [
         card([kv("Proposta", tituloProposta)], { mt: 0 }),
         ...(mensagem ? [paragraph(multiline(mensagem), { mt: 24 })] : []),
         divider(),
-        small(html`Enviado por ${strong(empresa.nome)}. Dúvidas? Responda este e-mail.`, { mt: 0 }),
+        small(html`Dúvidas? Responda este e-mail: ele vai direto para ${strong(empresaNome)}.`, { mt: 0 }),
       ],
     }),
   };

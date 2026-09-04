@@ -116,7 +116,7 @@ serve(
 
       const { data: empresa } = await supabaseAdmin
         .from("empresas")
-        .select("nome, email, logo_url")
+        .select("nome, email")
         .eq("id", profile.empresa_id)
         .maybeSingle();
 
@@ -133,14 +133,13 @@ serve(
             id: profile.empresa_id,
             nome: empresa?.nome ?? "Seu escritório",
             email: empresa?.email,
-            logo_url: empresa?.logo_url,
           },
           ...templateAcessoPortalCliente({
             nomeCliente: cliente.nome,
             email: normalizedEmail,
             senha,
             loginUrl,
-            empresa: empresa ? { nome: empresa.nome, logoUrl: empresa.logo_url } : undefined,
+            empresaNome: empresa?.nome,
           }),
         });
       } catch (emailErr) {

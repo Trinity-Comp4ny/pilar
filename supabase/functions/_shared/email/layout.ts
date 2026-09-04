@@ -23,12 +23,9 @@ import { Html, html, raw, render, type Renderable } from "./html.ts";
 export type Tone = "neutral" | "brand" | "info" | "warning" | "negative" | "positive";
 export type Modulo = "gestao" | "projetos" | "obra" | "neutro";
 
-export type Header = { tipo: "plataforma" } | { tipo: "escritorio"; nome: string; logoUrl?: string | null };
-
 export interface ShellOptions {
   /** Texto do preheader: aparece na lista de e-mails, escondido no corpo. */
   preview?: string;
-  header?: Header;
   /** Cabeçalho editorial. `titulo` aceita `em()` para o itálico de destaque. */
   hero: { titulo: Html | string; lead?: Html | string };
   content?: Html | Html[];
@@ -332,18 +329,8 @@ export function listItem(item: {
 // Cabeçalho, faixa de morros e rodapé
 // ---------------------------------------------------------------------------
 
-function initials(nome: string): string {
-  return nome
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? "")
-    .join("");
-}
-
-function headerHtml(header: Header): string {
-  if (header.tipo === "plataforma") {
-    return `
+function headerHtml(): string {
+  return `
 <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
   <tr>
     <td valign="middle" style="vertical-align:middle;padding-right:11px">
@@ -351,24 +338,6 @@ function headerHtml(header: Header): string {
     </td>
     <td valign="middle" style="vertical-align:middle">
       <span style="font-size:19px;font-weight:500;color:${C.ink};letter-spacing:-0.025em;font-family:${FONT};line-height:1">${render(BRAND.nome)}</span>
-    </td>
-  </tr>
-</table>`;
-  }
-
-  const logo = header.logoUrl
-    ? `<img src="${render(header.logoUrl)}" width="34" height="34" alt="${render(header.nome)}" style="display:block;width:34px;height:34px;border-radius:8px;border:1px solid ${C.border};background:${C.card}"/>`
-    : `<table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-collapse:separate"><tr><td width="34" height="34" align="center" valign="middle" bgcolor="${C.muted}" style="background-color:${C.muted};width:34px;height:34px;border-radius:8px;text-align:center;vertical-align:middle"><span style="font-size:12.5px;font-weight:600;color:${C.inkSoft};font-family:${FONT};line-height:34px">${render(initials(header.nome))}</span></td></tr></table>`;
-
-  return `
-<table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
-  <tr>
-    <td valign="middle" style="vertical-align:middle;padding-right:11px;width:34px">${logo}</td>
-    <td valign="middle" style="vertical-align:middle">
-      <span style="font-size:16px;font-weight:500;color:${C.ink};letter-spacing:-0.02em;font-family:${FONT};line-height:1.25">${render(header.nome)}</span>
-    </td>
-    <td valign="middle" align="right" style="vertical-align:middle;text-align:right;white-space:nowrap">
-      <span style="font-size:11.5px;color:${C.textDisabled};font-family:${FONT}">via ${render(BRAND.nome)}</span>
     </td>
   </tr>
 </table>`;
@@ -416,16 +385,11 @@ function footerHtml(note: string, links: Array<{ label: string; href: string }>)
 // ---------------------------------------------------------------------------
 
 export function shell(opts: ShellOptions): string {
-  const header = opts.header ?? { tipo: "plataforma" };
   const contentBlocks = opts.content ? (Array.isArray(opts.content) ? opts.content : [opts.content]) : [];
   const contentHtml = contentBlocks.length
     ? `<tr><td class="px py" style="padding:34px 40px 40px">${contentBlocks.map((c) => c.value).join("\n")}</td></tr>`
     : "";
-  const note =
-    opts.footerNote ??
-    (header.tipo === "escritorio"
-      ? `Enviado por ${header.nome} via ${BRAND.nome}.`
-      : `Você recebeu este e-mail porque tem uma conta na ${BRAND.nome}.`);
+  const note = opts.footerNote ?? `Você recebeu este e-mail porque tem uma conta na ${BRAND.nome}.`;
   const previewHtml = opts.preview
     ? `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all">${render(opts.preview)}&nbsp;&#8203;&zwnj;&zwnj;&zwnj;&zwnj;&zwnj;&zwnj;&zwnj;&zwnj;&zwnj;&zwnj;</div>`
     : "";
@@ -462,7 +426,7 @@ ${previewHtml}
 <tr>
 <td class="outer" align="center" style="padding:40px 16px 56px">
   <table role="presentation" class="container" border="0" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;border-collapse:separate;background-color:${C.card};border:1px solid ${C.border};border-radius:18px;overflow:hidden">
-    <tr><td class="px" style="padding:24px 40px 22px">${headerHtml(header)}</td></tr>
+    <tr><td class="px" style="padding:24px 40px 22px">${headerHtml()}</td></tr>
     ${heroHtml(opts.hero)}
     ${contentHtml}
     <tr><td class="px" bgcolor="${C.surface}" style="background-color:${C.surface};padding:22px 40px 24px;border-top:1px solid ${C.border}">${footerHtml(note, opts.footerLinks ?? [])}</td></tr>

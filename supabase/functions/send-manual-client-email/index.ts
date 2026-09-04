@@ -56,7 +56,7 @@ serve(
       if (!empresaId) return safeErrorResponse(403, "Empresa não identificada", req);
       const { data: empresa } = await auth.supabase
         .from("empresas")
-        .select("nome, email, logo_url")
+        .select("nome, email")
         .eq("id", empresaId)
         .maybeSingle();
       const empresaNome = empresa?.nome ?? "Seu escritório";
@@ -65,11 +65,11 @@ serve(
         classe: "escritorio",
         tipo: "mensagem_manual",
         to: email,
-        empresa: { id: empresaId, nome: empresaNome, email: empresa?.email, logo_url: empresa?.logo_url },
+        empresa: { id: empresaId, nome: empresaNome, email: empresa?.email },
         ...templateMensagemManual({
           assunto: subject.trim(),
           mensagem: message.trim(),
-          empresa: { nome: empresaNome, logoUrl: empresa?.logo_url },
+          empresaNome,
         }),
       });
 
