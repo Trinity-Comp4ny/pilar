@@ -275,6 +275,19 @@ original desta spec:
   sempre grava o `user_id` real de quem está logado, então não existe o cenário
   de consumo atribuído à pessoa errada. O passo 3 do plano de implementação foi
   cumprido só com essa verificação, sem mudança de código.
+- **Achado crítico só visível testando o app de verdade, não em pgTAP:** a
+  primeira versão de `ai_token_limite_usuario`/`ai_token_solicitacao` tinha
+  `user_id` referenciando `public.profiles(id)`. Uma tabela com FK simultânea
+  para `profiles` E `empresas` faz o PostgREST detectar uma falsa relação
+  many-to-many entre as duas (heurística de "tabela de junção"), o que quebrou
+  com `PGRST201` (embedding ambíguo) **qualquer** `profiles?select=*,empresas(*)`
+  no app inteiro — inclusive o carregamento de perfil no login. `ai_token_ledger`
+  já evitava isso referenciando `auth.users(id)` em vez de `profiles(id)`; as
+  duas tabelas novas foram corrigidas para o mesmo padrão. pgTAP não detecta
+  isso (não faz embed via PostgREST); só apareceu ao exercitar o fluxo real no
+  browser. Lição: qualquer tabela nova com FK para `profiles` **e** `empresas`
+  ao mesmo tempo deve apontar para `auth.users` em vez de `profiles`, ou o app
+  quebra de forma não óbvia e distante do PR que introduziu a mudança.
 
 Suposições da seção anterior mantidas: cap desligado por padrão (nenhuma linha
 nasce sozinha), owner/admin sem teto (RLS/RPC não impedem tecnicamente, mas
