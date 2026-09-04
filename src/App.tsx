@@ -22,6 +22,7 @@ import { TrialBanner } from "./components/TrialBanner";
 import { SettingsModalProvider, useSettingsModal, type SettingsSection } from "./contexts/SettingsModalContext";
 import { ValoresOcultosProvider } from "./contexts/ValoresOcultosContext";
 import { MARKETING_URL, isProductionAppHost } from "./lib/marketingSite";
+import { useNovaVersao } from "./hooks/useNovaVersao";
 
 // Modal de configuracoes: so monta quando o usuario abre. Estatico, arrastava os
 // 6 paineis (empresa, pagamento, uso...) pro entry chunk e estourava o budget.
@@ -148,12 +149,21 @@ function SettingsRedirect({ section }: { section: SettingsSection }) {
   return null;
 }
 
+// Avisa o usuário quando o servidor já está servindo outro deploy. Fica aqui
+// fora dos providers de auth porque não depende de sessão: bundle velho é
+// bundle velho, logado ou não.
+function AvisoDeVersao() {
+  useNovaVersao();
+  return null;
+}
+
 const App = () => {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />
+          <AvisoDeVersao />
           <BrowserRouter>
             <PageTracker />
             <AuthProvider>
