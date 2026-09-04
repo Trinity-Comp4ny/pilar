@@ -28,8 +28,8 @@ Deno.env.set(
   `@font-face{font-family:'Geist';font-style:normal;font-weight:100 900;src:url(${geist}) format('woff2');}\n` +
     `@font-face{font-family:'Geist';font-style:italic;font-weight:100 900;src:url(${geistItalic}) format('woff2');}`
 );
-Deno.env.set("EMAIL_LOGO_URL", await dataUri("../public/email/logo-v1.png", "image/png"));
-Deno.env.set("EMAIL_WAVE_URL", await dataUri("../public/email/wave-v1.png", "image/png"));
+Deno.env.set("EMAIL_LOGO_URL", await dataUri("../apps/marketing/public/email/logo-v1.png", "image/png"));
+Deno.env.set("EMAIL_WAVE_URL", await dataUri("../apps/marketing/public/email/wave-v1.png", "image/png"));
 Deno.env.set("APP_URL", "https://app.pilarsoft.com.br");
 Deno.env.set("PUBLIC_SITE_URL", "https://www.pilarsoft.com.br");
 
