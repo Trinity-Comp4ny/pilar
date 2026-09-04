@@ -162,8 +162,9 @@ serve(
             .from("profiles")
             .select("email, nome")
             .eq("empresa_id", sub.empresa_id)
-            .in("role", ["admin", "ultra_admin"])
-            .is("deleted_at", null)) as { data: ProfileRow[] | null; error: unknown };
+            // profiles não tem deleted_at: o filtro antigo por essa coluna fazia o
+            // PostgREST devolver erro e a lista vir vazia, então nenhum aviso de trial saía.
+            .in("role", ["owner", "admin", "ultra_admin"])) as { data: ProfileRow[] | null; error: unknown };
 
           const recipients = (admins ?? []).map((p) => p.email).filter((e): e is string => !!e);
 

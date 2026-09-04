@@ -1,7 +1,7 @@
 # SPEC 095: Padronização do e-mail transacional (módulo único, marca, log, entrega)
 
 **Data:** 2026-09-04
-**Status:** Em implementação (Fases 0 e 1 em `feat/email-module-design-system`)
+**Status:** Em implementação (Fases 0 a 3 em `feat/email-module-design-system`; falta só a verificação em staging e o DNS)
 **Autor:** Matheus (CEO) + Claude
 **Módulo:** transversal (edge functions, auth, financeiro, propostas, portal)
 **Depende de:** [ADR 0039](../architecture/adr/0039-email-transacional-modulo-unico-resend-e-log.md), [ADR 0004](../architecture/adr/0004-edge-function-observability.md)
@@ -232,11 +232,11 @@ Fases pequenas, cada uma um PR para `staging`, testadas com envio real em stagin
    mais `notificacoes.ts` (para a SPEC 096), todos escapando e no shell novo. Falta o passo de
    staging: `email:test-send` de cada um para Gmail, Apple Mail e Outlook, e conferir a Geist e a
    faixa de morros no cliente real.
-3. **Fase 2, log + webhook:** migration `email_envios`/`email_supressoes` (+ pgTAP de RLS),
+3. **Fase 2, log + webhook (feita, falta registrar o webhook no Resend de staging):** migration `email_envios`/`email_supressoes` (+ pgTAP de RLS),
    `client.ts` grava, `resend-webhook` atualiza. Registrar webhook no Resend de staging. UI mínima:
    aba "E-mails" em Administração (ultra admin) usando `DataTable`, filtro por status.
-4. **Fase 3, classes e reply-to:** `classe` e `replyTo` nas 5 functions de cliente final (feito
-   na Fase 1); falta o 422 sem e-mail da empresa e `send-manual-client-email` por `cliente_id` (ajuste
+4. **Fase 3, classes e reply-to (feita):** `classe` e `replyTo` nas 5 functions de cliente final, 422 sem
+   e-mail da empresa, e `send-manual-client-email` por `cliente_id` (ajuste
    no front que chama). Lint de fronteira no CI. Remover `PUBLIC_SITE_URL`.
 5. **Operação (paralelo, fora do repo):** SPF no apex, DMARC `p=none`, Email Routing para
    `contato@`/`privacidade@`; anotar no `DEPLOY_CHECKLIST.md`. Depois de 2 semanas limpas de

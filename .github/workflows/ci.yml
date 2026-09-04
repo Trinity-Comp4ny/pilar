@@ -257,7 +257,9 @@ jobs:
         # Mesmo comando de `npm run test:functions`, chamado direto porque este job não
         # tem Node instalado. --no-check porque deno-check.sh (acima) já cobre tipo com
         # o ratchet de dívida; este step é só comportamento.
-        run: deno test --no-check --allow-env supabase/functions
+        # --allow-read: o teste de fronteira do módulo de e-mail (ADR 0039) varre os
+        # arquivos das functions para reprovar HTML de e-mail fora de _shared/email/.
+        run: deno test --no-check --allow-env --allow-read supabase/functions
         shell: bash
 
   # Único required status check do branch protection. Adicionar ou renomear job

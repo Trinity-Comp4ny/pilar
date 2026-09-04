@@ -120,6 +120,9 @@ serve(
         .eq("id", profile.empresa_id)
         .maybeSingle();
 
+      if (!empresa?.email)
+        return safeErrorResponse(422, "Cadastre o e-mail da empresa em Configurações para enviar ao cliente", req);
+
       const siteUrl = Deno.env.get("PUBLIC_SITE_URL");
       if (!siteUrl) log.error("PUBLIC_SITE_URL secret not set — email button will be broken", null, {});
       const loginUrl = `${siteUrl ?? "https://www.pilarsoft.com.br"}/cliente/login`;

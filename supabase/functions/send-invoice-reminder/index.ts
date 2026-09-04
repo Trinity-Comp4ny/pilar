@@ -96,6 +96,9 @@ serve(
         return safeErrorResponse(400, "Cliente sem email válido cadastrado", req);
       }
 
+      if (!rec.empresas.email)
+        return safeErrorResponse(422, "Cadastre o e-mail da empresa em Configurações para enviar ao cliente", req);
+
       const hoje = new Date().toISOString().split("T")[0];
       const vencida = rec.data_vencimento < hoje && rec.status === "Pendente";
 
@@ -109,6 +112,7 @@ serve(
           email: rec.empresas.email,
         },
         idempotencyKey: `cobranca-${rec.id}-${hoje}`,
+        referencia: { tipo: "receita", id: rec.id },
         ...templateCobrancaDireta({
           clienteNome: rec.clientes?.nome || "Cliente",
           empresaNome: rec.empresas.nome,
