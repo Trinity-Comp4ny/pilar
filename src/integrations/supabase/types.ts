@@ -5067,6 +5067,89 @@ export type Database = {
           },
         ]
       }
+      projeto_disciplina_revisoes: {
+        Row: {
+          concluida_em: string | null
+          concluida_por: string | null
+          created_at: string
+          id: string
+          motivo: string
+          projeto_disciplina_id: string
+          registrada_por: string | null
+          solicitada_em: string
+        }
+        Insert: {
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string
+          id?: string
+          motivo: string
+          projeto_disciplina_id: string
+          registrada_por?: string | null
+          solicitada_em?: string
+        }
+        Update: {
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string
+          id?: string
+          motivo?: string
+          projeto_disciplina_id?: string
+          registrada_por?: string | null
+          solicitada_em?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_disciplina_revisoes_concluida_por_fkey"
+            columns: ["concluida_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_revisoes_concluida_por_fkey"
+            columns: ["concluida_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_revisoes_concluida_por_fkey"
+            columns: ["concluida_por"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_revisoes_projeto_disciplina_id_fkey"
+            columns: ["projeto_disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_disciplinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_revisoes_registrada_por_fkey"
+            columns: ["registrada_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_revisoes_registrada_por_fkey"
+            columns: ["registrada_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_revisoes_registrada_por_fkey"
+            columns: ["registrada_por"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
+          },
+        ]
+      }
       projeto_disciplinas: {
         Row: {
           codigo: string | null
@@ -7946,6 +8029,10 @@ export type Database = {
         Args: { p_ano: number; p_mes: number }
         Returns: number
       }
+      rpc_concluir_revisao: {
+        Args: { p_concluida_em?: string; p_revisao_id: string }
+        Returns: undefined
+      }
       rpc_converter_lead_cliente: {
         Args: { p_lead_id: string; p_omit_cnpj?: boolean }
         Returns: string
@@ -8121,6 +8208,14 @@ export type Database = {
       rpc_projeto_rentabilidade: {
         Args: { p_projeto_id: string }
         Returns: Json
+      }
+      rpc_registrar_revisao: {
+        Args: {
+          p_disciplina_id: string
+          p_motivo: string
+          p_solicitada_em?: string
+        }
+        Returns: string
       }
       rpc_restaurar: {
         Args: { p_id: string; p_tabela: string }
