@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { analytics } from "@/lib/analytics";
-import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { usePainelGestao } from "@/hooks/usePainelGestao";
 import { usePainelLayout } from "@/hooks/usePainelLayout";
@@ -10,7 +9,6 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { DataFrescor } from "@/components/DataFrescor";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PainelGrid } from "./painel/PainelGrid";
 import { LAYOUT_PADRAO } from "./painel/catalogo";
@@ -27,16 +25,9 @@ import { LAYOUT_PADRAO } from "./painel/catalogo";
  * /inicio é opt-in de quem já pode ver dinheiro em qualquer outra tela.
  */
 
-function saudacao(nome: string | null): string {
-  const h = new Date().getHours();
-  const periodo = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
-  return nome ? `${periodo}, ${nome}` : periodo;
-}
-
 export default function Inicio() {
   usePageTitle("Início");
   const navigate = useNavigate();
-  const { profile } = useAuth();
   const { can } = usePermissions();
 
   const painel = usePainelGestao();
@@ -57,19 +48,11 @@ export default function Inicio() {
     <PageLayout
       header={
         <PageHeader title="Início">
-          <span className="mr-auto hidden text-sm text-ink sm:inline">
-            {saudacao(profile?.first_name ?? null)}
-          </span>
           <DataFrescor
             updatedAt={painel.dataUpdatedAt}
             isFetching={painel.isFetching}
             onRefresh={() => void painel.refetch()}
           />
-          {!editando && painel.data && (
-            <Button variant="outline" size="sm" onClick={() => setEditando(true)}>
-              Personalizar
-            </Button>
-          )}
         </PageHeader>
       }
     >

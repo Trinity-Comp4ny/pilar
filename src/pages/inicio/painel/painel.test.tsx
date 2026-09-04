@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
@@ -14,8 +14,15 @@ import { sobraDaLinha } from "./grade";
  * layout que sobrevive a widget desconhecido, e edição que só grava ao salvar.
  */
 
-const podeTudo = new Set<Feature>(["projetos", "propostas", "leads", "obras", "financeiro", "ai_chat"]);
+const podeTudo: Feature[] = ["projetos", "propostas", "leads", "obras", "financeiro", "ai_chat"];
 let permitidas = new Set<Feature>(podeTudo);
+
+// Reset por teste: restaurar no fim do corpo vaza a permissão para o próximo
+// caso quando um teste falha antes de chegar lá, e foi assim que o teste de
+// Obras quebrou por causa do teste de Financeiro.
+beforeEach(() => {
+  permitidas = new Set<Feature>(podeTudo);
+});
 
 vi.mock("@/hooks/usePermissions", () => ({
   usePermissions: () => ({ can: (f: Feature) => permitidas.has(f) }),
@@ -144,24 +151,41 @@ describe("painel em leitura", () => {
     montar({ layout: [{ w: "fin_mes", s: "meia" }, { w: "projetos_numeros", s: "inteira" }] });
     expect(screen.queryByText("Caixa do mês")).not.toBeInTheDocument();
     expect(screen.getByText("projetos ativos")).toBeInTheDocument();
-    permitidas = new Set<Feature>(podeTudo);
   });
 });
 
 describe("painel em edição", () => {
-  it("oferece o catálogo agrupado por módulo e marca o que já está no painel", async () => {
+  it("abre o catálogo num popup, agrupado por módulo, marcando o que já está no painel", async () => {
     const user = userEvent.setup();
     montar({ editando: true });
 
     await user.click(screen.getAllByRole("button", { name: /Adicionar widget/ })[0]);
-    const seletor = screen.getByLabelText("Indicadores disponíveis");
+    const popup = await screen.findByRole("dialog");
 
-    expect(within(seletor).getByText("Gestão")).toBeInTheDocument();
-    expect(within(seletor).getByText("Projetos")).toBeInTheDocument();
-    expect(within(seletor).getByText("Obras")).toBeInTheDocument();
-    // "Projetos em números" está no padrão, então vem marcado e desabilitado.
-    const jaUsado = within(seletor).getByRole("button", { name: /Projetos em números/ });
-    expect(jaUsado).toBeDisabled();
+    expect(within(popup).getByText("Adicionar widget")).toBeInTheDocument();
+    expect(within(popup).getByText("Gestão")).toBeInTheDocument();
+    expect(within(popup).getByText("Projetos")).toBeInTheDocument();
+    expect(within(popup).getByText("Obras")).toBeInTheDocument();
+    // Os widgets do padrão aparecem marcados como já no painel (o layout padrão
+    // tem 6, então há mais de uma marca).
+    expect(within(popup).getAllByText("no painel").length).toBeGreaterThan(0);
+  });
+
+  it("mostra o preview do indicador com dados de exemplo antes de adicionar", async () => {
+    const user = userEvent.setup();
+    montar({ editando: true });
+
+    await user.click(screen.getAllByRole("button", { name: /Adicionar widget/ })[0]);
+    const popup = await screen.findByRole("dialog");
+    await user.click(within(popup).getByRole("button", { name: /Carga da equipe.*Ver preview/s }));
+
+    // O preview é rotulado como exemplo, para o número não ser confundido com
+    // o dado da empresa.
+    expect(within(popup).getByText("exemplo")).toBeInTheDocument();
+    expect(within(popup).getByText(/Números de exemplo/)).toBeInTheDocument();
+    // E o widget aparece montado: a carga de exemplo tem nomes fictícios.
+    expect(within(popup).getByText("Marcos A.")).toBeInTheDocument();
+    expect(within(popup).getByRole("button", { name: /Voltar/ })).toBeInTheDocument();
   });
 
   it("esconde a seção Financeiro do catálogo de quem não pode ver dinheiro", async () => {
@@ -170,18 +194,19 @@ describe("painel em edição", () => {
     montar({ editando: true });
 
     await user.click(screen.getAllByRole("button", { name: /Adicionar widget/ })[0]);
-    const seletor = screen.getByLabelText("Indicadores disponíveis");
-    expect(within(seletor).queryByText("Financeiro")).not.toBeInTheDocument();
-    expect(within(seletor).queryByText("Caixa do mês")).not.toBeInTheDocument();
-    permitidas = new Set<Feature>(podeTudo);
+    const popup = await screen.findByRole("dialog");
+    expect(within(popup).queryByText("Financeiro")).not.toBeInTheDocument();
+    expect(within(popup).queryByText("Caixa do mês")).not.toBeInTheDocument();
   });
 
-  it("adiciona widget e só grava quando o usuário salva", async () => {
+  it("adiciona widget pelo preview e só grava quando o usuário salva", async () => {
     const user = userEvent.setup();
     const { onSalvar } = montar({ editando: true });
 
     await user.click(screen.getAllByRole("button", { name: /Adicionar widget/ })[0]);
-    await user.click(screen.getByRole("button", { name: /Carga da equipe/ }));
+    const popup = await screen.findByRole("dialog");
+    await user.click(within(popup).getByRole("button", { name: /Carga da equipe.*Ver preview/s }));
+    await user.click(within(popup).getByRole("button", { name: /Adicionar ao painel/ }));
     expect(onSalvar).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole("button", { name: "Salvar painel" }));
@@ -251,7 +276,7 @@ describe("faixa fixa de KPIs", () => {
     // "Vence nos próximos 15 dias" é lista, não cabe na dock.
     expect(screen.queryByLabelText("Fixar Vence nos próximos 15 dias no topo")).not.toBeInTheDocument();
     await user.click(screen.getAllByRole("button", { name: /Adicionar widget/ })[0]);
-    expect(screen.getByLabelText("Indicadores disponíveis")).toBeInTheDocument();
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
   });
 });
 

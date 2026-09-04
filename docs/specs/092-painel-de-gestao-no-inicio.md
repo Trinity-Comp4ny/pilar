@@ -70,13 +70,19 @@ Todo bloco do painel é uma das três coisas, nesta ordem de importância:
 
 Bloco que não é nenhuma das três não entra. Máximo 3 séries por gráfico.
 
-### Duas zonas: faixa fixa e grade
+### Duas zonas: faixa de KPIs e grade
 
-O painel tem uma **faixa fixa** no topo (a dock) e a **grade** abaixo. A faixa gruda sob o
-header e acompanha a rolagem, então o número que importa não sai da tela quando se desce
-até o último gráfico. Só widget de contagem curta pode ser fixado (`PODE_FIXAR`), no
-máximo 6, porque a faixa precisa caber numa linha para continuar sendo dock e não virar
-uma segunda tela.
+O painel tem uma **faixa de KPIs** no topo e a **grade** abaixo. Só widget de contagem
+curta pode entrar na faixa (`PODE_FIXAR`), no máximo 6, porque ela precisa caber numa
+linha.
+
+A faixa **não gruda na rolagem**. A primeira versão era `sticky` e, ao rolar, flutuava
+sobre o seletor de widget e cobria a lista de indicadores: perder os números de vista ao
+descer é menos ruim que cobrir o conteúdo com que o usuário está interagindo. Se a fixação
+voltar, ela precisa resolver a sobreposição, não só o `z-index`.
+
+As ações do painel (Personalizar, e depois Salvar / Cancelar / Restaurar) ficam **acima da
+faixa de KPIs**, para a barra de controle não separar os números do resto da leitura.
 
 Cada item do layout declara a zona (`z: "topo" | "grade"`); ausente significa grade, o que
 mantém válido o layout de quem salvou antes.
@@ -186,6 +192,10 @@ e o resultado não parecia Pilar. A regra agora é uma só:
    contém nenhum widget financeiro.
 3. Em "Personalizar", o usuário pode adicionar, remover, reordenar por arrasto e trocar o
    tamanho de cada widget, entre os tamanhos que aquele widget declara aceitar.
+3b. "Adicionar widget" abre um **popup em duas etapas**: lista do catálogo por módulo, e o
+   **preview do indicador montado** antes de adicionar. O preview usa dados de exemplo
+   (`exemplo.ts`) e é rotulado como tal: com dado real, um indicador que a empresa ainda
+   não alimenta apareceria vazio justamente na hora de escolher.
 4. Nada é gravado até "Salvar painel". "Cancelar" descarta, "Restaurar padrão" grava lista
    vazia.
 5. O catálogo mostra só widgets cuja `feature` o usuário tem. Widget financeiro aparece
@@ -196,6 +206,8 @@ e o resultado não parecia Pilar. A regra agora é uma só:
 8. Todo widget sem dado suficiente diz o que falta, em vez de desenhar série vazia ou 0%.
 9. A barra "pergunte aos agentes" fica fora do painel, fixa no rodapé: é ação, não
    indicador.
+10. A página não repete saudação nem nome de usuário: quem abre o `/inicio` sabe quem é, e
+   a linha custava uma faixa inteira da primeira dobra.
 
 Não-funcionais:
 
