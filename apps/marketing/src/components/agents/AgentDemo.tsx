@@ -69,7 +69,7 @@ export function AgentDemo() {
       <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
         <Sparkles className="w-3.5 h-3.5 text-brand" strokeWidth={1.9} />
         <span className="text-[11px] font-medium text-white">Agentes</span>
-        <span className="ml-auto flex items-center gap-1.5 text-[9.5px] text-white/40">
+        <span className="ml-auto flex items-center gap-1.5 text-[9.5px] text-white/70">
           <m.span
             className="w-1.5 h-1.5 rounded-full bg-brand"
             animate={reducedMotion ? undefined : { opacity: [1, 0.3, 1] }}
@@ -126,7 +126,7 @@ export function AgentDemo() {
                 animate={p >= 3 ? { opacity: 1, x: 0 } : { opacity: 0, x: 8 }}
                 transition={{ duration: 0.32, delay: p >= 3 ? 0.15 + i * 0.11 : 0, ease: EASE.out }}
               >
-                <span className="text-white/45">{k}</span>
+                <span className="text-white/70">{k}</span>
                 <span className="font-medium tabular-nums text-white">{v}</span>
               </m.div>
             ))}
@@ -145,7 +145,7 @@ export function AgentDemo() {
                 {p >= 5 && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
                 {p >= 5 ? "Gravado no financeiro" : "Confirmar"}
               </m.span>
-              <span className="flex h-8 items-center rounded-full border border-white/15 px-3.5 text-[11.5px] text-white/45">
+              <span className="flex h-8 items-center rounded-full border border-white/15 px-3.5 text-[11.5px] text-white/70">
                 Editar
               </span>
             </div>
@@ -153,13 +153,17 @@ export function AgentDemo() {
         </m.div>
 
         {/* 6. O que mudou no sistema depois do aval. */}
-        <m.div className="mt-auto grid grid-cols-2 gap-2" animate={surge(5)} transition={{ duration: 0.45, ease: EASE.out }}>
+        <m.div
+          className="mt-auto grid grid-cols-2 gap-2"
+          animate={surge(5)}
+          transition={{ duration: 0.45, ease: EASE.out }}
+        >
           {[
             { r: "Recebido no mês", v: "R$ 412.900" },
             { r: "Margem do projeto", v: "31,4%" },
           ].map((k) => (
             <div key={k.r} className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5">
-              <p className="mb-1 text-[8.5px] uppercase tracking-wider text-white/35">{k.r}</p>
+              <p className="mb-1 text-[8.5px] uppercase tracking-wider text-white/65">{k.r}</p>
               <p className="text-[14px] font-semibold tabular-nums text-brand">{k.v}</p>
             </div>
           ))}
