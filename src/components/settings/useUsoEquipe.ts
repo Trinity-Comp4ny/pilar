@@ -65,23 +65,35 @@ export function useUsoEquipe() {
     queryFn: async (): Promise<SolicitacaoTokenPendente[]> => {
       const { data, error } = await supabase
         .from("ai_token_solicitacao")
-        .select("id, user_id, mensagem, limite_sugerido, created_at, profiles:user_id(first_name, last_name)")
+        .select("id, user_id, mensagem, limite_sugerido, created_at")
         .eq("empresa_id", empresaId!)
         .eq("status", "pendente")
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return (data ?? []).map((r) => {
-        const perfil = r.profiles as { first_name: string | null; last_name: string | null } | null;
-        const nome = [perfil?.first_name, perfil?.last_name].filter(Boolean).join(" ").trim();
-        return {
-          id: r.id,
-          userId: r.user_id,
-          nome: nome || "(sem nome)",
-          mensagem: r.mensagem,
-          limiteSugerido: r.limite_sugerido,
-          criadaEm: r.created_at,
-        };
-      });
+      if (!data || data.length === 0) return [];
+
+      // ai_token_solicitacao.user_id referencia auth.users (não profiles — mesmo
+      // motivo do comentário na migration: FK dupla para profiles+empresas faz o
+      // PostgREST detectar uma falsa relação many-to-many entre as duas), então
+      // não há embed automático; busca os nomes à parte.
+      const userIds = [...new Set(data.map((r) => r.user_id))];
+      const { data: perfis, error: perfisError } = await supabase
+        .from("profiles")
+        .select("id, first_name, last_name")
+        .in("id", userIds);
+      if (perfisError) throw perfisError;
+      const nomePorId = new Map(
+        (perfis ?? []).map((p) => [p.id, [p.first_name, p.last_name].filter(Boolean).join(" ").trim()])
+      );
+
+      return data.map((r) => ({
+        id: r.id,
+        userId: r.user_id,
+        nome: nomePorId.get(r.user_id) || "(sem nome)",
+        mensagem: r.mensagem,
+        limiteSugerido: r.limite_sugerido,
+        criadaEm: r.created_at,
+      }));
     },
   });
 

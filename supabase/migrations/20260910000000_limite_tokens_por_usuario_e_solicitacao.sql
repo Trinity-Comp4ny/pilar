@@ -9,11 +9,18 @@
 --    Só existe linha quando o admin trava alguém deliberadamente.
 -- =============================================
 
+-- user_id/criado_por referenciam auth.users, NUNCA public.profiles: mesmo padrão
+-- já usado por ai_token_ledger.user_id_fkey (20260867000000). Uma tabela com FK
+-- simultânea para profiles E empresas faz o PostgREST detectar uma falsa relação
+-- many-to-many entre as duas (heurística de "tabela de junção"), quebrando com
+-- PGRST201 qualquer embed existente no app que faça `profiles?select=*,empresas(*)`
+-- (o AuthContext faz exatamente isso no login) — achado ao testar o fluxo real
+-- antes do merge, não é uma escolha estética.
 CREATE TABLE IF NOT EXISTS public.ai_token_limite_usuario (
   empresa_id    uuid NOT NULL REFERENCES public.empresas(id) ON DELETE CASCADE,
-  user_id       uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  user_id       uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   limite_mensal bigint NOT NULL CHECK (limite_mensal > 0),
-  criado_por    uuid REFERENCES public.profiles(id),
+  criado_por    uuid REFERENCES auth.users(id),
   created_at    timestamptz NOT NULL DEFAULT now(),
   updated_at    timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (empresa_id, user_id)
@@ -30,15 +37,17 @@ REVOKE ALL ON TABLE public.ai_token_limite_usuario FROM anon;
 --    teto. Único pendente por vez (o botão não vira canal de spam pro admin).
 -- =============================================
 
+-- user_id/resolvido_por também apontam para auth.users, mesmo motivo do
+-- comentário acima em ai_token_limite_usuario.
 CREATE TABLE IF NOT EXISTS public.ai_token_solicitacao (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   empresa_id      uuid NOT NULL REFERENCES public.empresas(id) ON DELETE CASCADE,
-  user_id         uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  user_id         uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   mensagem        text,
   limite_sugerido bigint CHECK (limite_sugerido IS NULL OR limite_sugerido > 0),
   status          text NOT NULL DEFAULT 'pendente' CHECK (status IN ('pendente', 'aprovado', 'negado')),
   novo_limite     bigint CHECK (novo_limite IS NULL OR novo_limite > 0),
-  resolvido_por   uuid REFERENCES public.profiles(id),
+  resolvido_por   uuid REFERENCES auth.users(id),
   resolvido_em    timestamptz,
   created_at      timestamptz NOT NULL DEFAULT now()
 );

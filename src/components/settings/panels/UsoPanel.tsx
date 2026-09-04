@@ -26,12 +26,16 @@ function Medidor({
   used,
   max,
   hint,
+  nearMessage = "Você está perto do limite da sua faixa.",
+  fullMessage = "Faixa cheia. Suba de plano para abrir mais.",
 }: {
   icon: typeof FolderKanban;
   label: string;
   used: number;
   max: number | null;
   hint?: string;
+  nearMessage?: string;
+  fullMessage?: string;
 }) {
   const hasLimit = typeof max === "number" && max > 0;
   const pct = hasLimit ? Math.min(100, Math.round((used / max!) * 100)) : 0;
@@ -66,10 +70,8 @@ function Medidor({
           </div>
         )}
         {hint && <p className="text-xs text-black/45">{hint}</p>}
-        {near && !full && (
-          <p className="text-xs font-medium text-warning-mid">Você está perto do limite da sua faixa.</p>
-        )}
-        {full && <p className="text-xs font-medium text-danger-mid">Faixa cheia. Suba de plano para abrir mais.</p>}
+        {near && !full && <p className="text-xs font-medium text-warning-mid">{nearMessage}</p>}
+        {full && <p className="text-xs font-medium text-danger-mid">{fullMessage}</p>}
       </CardContent>
     </Card>
   );
@@ -214,6 +216,8 @@ export function UsoPanel() {
             used={meuUso.tokensCiclo}
             max={meuUso.limiteMensal}
             hint="Teto pessoal definido pelo administrador da sua empresa, sobre o saldo acima."
+            nearMessage="Você está perto do seu limite pessoal de tokens."
+            fullMessage="Limite pessoal atingido. Peça mais tokens ao administrador abaixo."
           />
           {nearLimitePessoal &&
             (pedindoTokens ? (

@@ -314,39 +314,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "ai_token_limite_usuario_criado_por_fkey"
-            columns: ["criado_por"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_token_limite_usuario_criado_por_fkey"
-            columns: ["criado_por"]
-            isOneToOne: false
-            referencedRelation: "v_uso_tokens_usuario_ciclo"
-            referencedColumns: ["user_id"]
-          },
-          {
             foreignKeyName: "ai_token_limite_usuario_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_token_limite_usuario_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_token_limite_usuario_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "v_uso_tokens_usuario_ciclo"
-            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -423,34 +395,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_token_solicitacao_resolvido_por_fkey"
-            columns: ["resolvido_por"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_token_solicitacao_resolvido_por_fkey"
-            columns: ["resolvido_por"]
-            isOneToOne: false
-            referencedRelation: "v_uso_tokens_usuario_ciclo"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "ai_token_solicitacao_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_token_solicitacao_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "v_uso_tokens_usuario_ciclo"
-            referencedColumns: ["user_id"]
           },
         ]
       }
