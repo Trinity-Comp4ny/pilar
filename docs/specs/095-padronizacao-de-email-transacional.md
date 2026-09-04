@@ -81,8 +81,8 @@ cliente"` e o front mostra esse aviso com atalho para Configurações > Empresa.
     declaração de fonte (detalhe e trade-offs no ADR 0039):
     - Fonte **Geist** por `@font-face` apontando para `/fonts/geist-variable.woff2` do site, com
       fallback `Inter` e grotesca do sistema. Sem Google Fonts (SPEC 043).
-    - `public/email/logo-v1.png` (símbolo, 96px, exportado de `public/pilar-logo.svg`) e
-      `public/email/wave-v1.png` (faixa de morros da hero, 1200x225, exportada do mesmo SVG de
+    - `apps/marketing/public/email/logo-v1.png` (símbolo, 96px, exportado de `pilar-logo.svg`) e
+      `apps/marketing/public/email/wave-v1.png` (faixa de morros da hero, 1200x225, exportada do mesmo SVG de
       `HeroBackdrop.tsx` com os tokens resolvidos em hex). Nada de SVG em `<img>` de e-mail.
     - Botão em pílula verde com seta, título com itálico de destaque, wordmark em peso 500.
     - Ao fechar o logo definitivo em `brand/visual.md`, troca-se o arquivo e sobe a versão
@@ -222,7 +222,7 @@ Fases pequenas, cada uma um PR para `staging`, testadas com envio real em stagin
 1. **Fase 0, infra e marca (feita):** pasta `_shared/email/` com `brand.ts`, `html.ts` (escape),
    `layout.ts` (shell + componentes na identidade da landing), `client.ts` (`text/plain`,
    `Idempotency-Key`, classe, falha alta, `EMAIL_DRY_RUN`). `email.ts` e `_shared/emails/*.tsx`
-   apagados. PNGs do logo e da faixa de morros em `public/email/`. Script `email:preview` com a
+   apagados. PNGs do logo e da faixa de morros em `apps/marketing/public/email/` (mesma origem das fontes, `www`). Script `email:preview` com a
    Geist embutida na prévia. Testes Deno de escape, `text/plain`, remetente e identidade.
 2. **Fase 1, templates (feita):** os 8 + os 2 inline em `templates/{auth,escritorio,plataforma}`,
    mais `notificacoes.ts` (para a SPEC 096), todos escapando e no shell novo. Falta o passo de
