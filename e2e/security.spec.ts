@@ -16,7 +16,9 @@ test.describe("Security — rotas autenticadas bloqueadas sem sessão", () => {
     "/financeiro",
     "/admin",
     "/ultra-admin",
-    "/templates",
+    // /templates saiu da lista: o módulo foi removido em 31/08 e a rota não
+    // existe mais, então o anônimo cai no NotFound sem redirect. Testar rota
+    // morta não prova guard nenhum.
     "/mapa",
     "/documentos",
   ];
@@ -35,14 +37,19 @@ test.describe("Security — portal cliente isolado", () => {
   });
 });
 
-test.describe("Security — a raiz do app manda pro site de marketing", () => {
-  // Não é mais "landing pública": o app não tem landing (ADR 0021/0025).
-  test("rota / sem auth vai pro marketing, não pro login", async ({ page }) => {
+test.describe("Security — a raiz do app não é landing pública", () => {
+  // O app não tem landing própria (ADR 0021/0025): a raiz é um ExternalRedirect.
+  // O destino depende do host, de propósito: em app.pilarsoft.com.br vai pro
+  // marketing, e fora dele (este E2E roda em localhost) vai pro /login, pra não
+  // jogar quem testa em staging no site de PRODUÇÃO. Ver appEnvironmentFromHost
+  // e o unit test de marketingSite. Aqui o que se prova é que a raiz não
+  // renderiza conteúdo de app: ela sempre sai de "/".
+  test("rota / sem auth sai da raiz", async ({ page }) => {
     await page.route(/pilarsoft\.com\.br/, (route) =>
       route.fulfill({ status: 200, contentType: "text/html", body: "<html><body>stub</body></html>" })
     );
     await page.goto("/");
-    await expect(page).toHaveURL(/pilarsoft\.com\.br/);
+    await expect(page).toHaveURL(/pilarsoft\.com\.br|\/login(\?|$)/);
   });
 
   test("/login acessível sem auth", async ({ page }) => {
