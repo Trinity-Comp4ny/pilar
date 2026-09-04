@@ -11,6 +11,21 @@ Regras de manutenção:
 
 ---
 
+## 2026-09-04 · Valor de contrato é campo de quem tem Financeiro; quem só cadastra projeto não informa
+
+**Decisão:** quem cadastra projeto sem acesso ao módulo Financeiro não vê nem informa valor de
+contrato e margem. Cadastra o projeto sem valor e um admin completa depois. Não vamos abrir
+exceção para o momento da criação nem delegar financeiro só para liberar esse campo.
+
+**Contexto:** a Liz (VRZ) é quem cadastra todos os projetos do escritório e tem role `user`. O
+hardening da SPEC 073 / ADR 0034 passou a barrar escrita de `valor_contrato` sem
+`can_view_financeiro()`, e em produção o campo continuava visível para ela porque o guard de
+front ficou em staging: ela preenchia e tomava erro. Considerada a alternativa de dar
+`financeiro_delegado` para ela, foi recusada porque a flag libera o Financeiro inteiro, não só o
+campo de valor, e a VRZ tem três admins que podem preencher.
+
+**Supera:** nada anterior. Fecha a dúvida de fluxo que o PR #448 deixou aberta.
+
 ## 2026-09-03 · Asaas não conecta por empresa; serve só para a Pilar cobrar seus clientes
 
 **Decisão:** a integração de Asaas por empresa (cada cliente do Pilar traz sua própria conta/API
