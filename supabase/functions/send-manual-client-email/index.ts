@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 
 import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
-import { sendEmail, templateMensagemManual } from "../_shared/email.ts";
+import { sendEmail, templateMensagemManual } from "../_shared/email/index.ts";
 import { EMAIL_RE } from "../_shared/validators.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { getRateLimitKey, RateLimiter } from "../_shared/rate-limiter.ts";
@@ -51,10 +51,26 @@ serve(
         return safeErrorResponse(400, `Mensagem excede ${MAX_MESSAGE_LEN} caracteres`, req);
       }
 
+      // Empresa do caller (via JWT) assina o e-mail: header, remetente e reply-to.
+      const { data: empresaId } = await auth.supabase.rpc("get_user_empresa_id");
+      if (!empresaId) return safeErrorResponse(403, "Empresa não identificada", req);
+      const { data: empresa } = await auth.supabase
+        .from("empresas")
+        .select("nome, email, logo_url")
+        .eq("id", empresaId)
+        .maybeSingle();
+      const empresaNome = empresa?.nome ?? "Seu escritório";
+
       await sendEmail({
+        classe: "escritorio",
+        tipo: "mensagem_manual",
         to: email,
-        subject: subject.trim(),
-        html: templateMensagemManual(message.trim()),
+        empresa: { id: empresaId, nome: empresaNome, email: empresa?.email, logo_url: empresa?.logo_url },
+        ...templateMensagemManual({
+          assunto: subject.trim(),
+          mensagem: message.trim(),
+          empresa: { nome: empresaNome, logoUrl: empresa?.logo_url },
+        }),
       });
 
       return jsonResponse({ success: true }, 200, req);

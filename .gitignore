@@ -54,3 +54,6 @@ backups/
 # sem barra inicial: cobre o graphify-out/ da raiz E o cache de AST que ele
 # cria dentro de src/graphify-out/ quando roda escopado numa subpasta
 graphify-out/
+
+# Preview local dos templates de e-mail (npm run email:preview)
+.email-preview/

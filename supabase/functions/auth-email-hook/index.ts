@@ -21,7 +21,7 @@ import {
   templateConviteUsuario,
   templateMagicLink,
   templateRecuperacaoSenha,
-} from "../_shared/email.ts";
+} from "../_shared/email/index.ts";
 import { buildVerifyUrl, verifyWebhook, type HookPayload } from "./webhook.ts";
 
 const log = createLogger("auth-email-hook");
@@ -66,28 +66,16 @@ serve(
     try {
       switch (email_data.email_action_type) {
         case "recovery":
-          await sendEmail({
-            to,
-            subject: "Redefinir senha — Pilar",
-            html: templateRecuperacaoSenha(link),
-          });
+          await sendEmail({ classe: "plataforma", tipo: "auth_recovery", to, ...templateRecuperacaoSenha(link) });
           break;
 
         case "invite":
-          await sendEmail({
-            to,
-            subject: "Você foi convidado para o Pilar",
-            html: templateConviteUsuario(link, userName),
-          });
+          await sendEmail({ classe: "plataforma", tipo: "auth_invite", to, ...templateConviteUsuario(link, userName) });
           break;
 
         case "magic_link":
         case "magiclink":
-          await sendEmail({
-            to,
-            subject: "Seu link de acesso — Pilar",
-            html: templateMagicLink(link),
-          });
+          await sendEmail({ classe: "plataforma", tipo: "auth_magic_link", to, ...templateMagicLink(link) });
           break;
 
         case "signup":
@@ -95,9 +83,10 @@ serve(
         case "email_change_new":
         case "email_change_current":
           await sendEmail({
+            classe: "plataforma",
+            tipo: `auth_${email_data.email_action_type}`,
             to,
-            subject: "Confirme seu email — Pilar",
-            html: templateConfirmacaoCadastro(link),
+            ...templateConfirmacaoCadastro(link),
           });
           break;
 
