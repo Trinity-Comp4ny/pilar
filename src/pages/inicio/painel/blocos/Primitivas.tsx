@@ -8,14 +8,18 @@ import { cn } from "@/lib/utils";
  * temporais do painel usam recharts (a lib já instalada), em PainelCharts.tsx.
  */
 
-type Tone = "main" | "good" | "bad" | "warn" | "neutral";
+type Tone = "main" | "neutral" | "estado";
 
+/**
+ * Cor de barra nesta tela: azul é a série, cinza é o resto. `estado` existe
+ * só para a barra que representa algo ruim por definição (perda, atraso), e é
+ * o único desvio. Não há paleta de 5 cores em gráfico: isso era o que deixava
+ * a tela com ar de não padronizada.
+ */
 const FILL: Record<Tone, string> = {
   main: "bg-chart-info",
-  good: "bg-positive",
-  bad: "bg-negative",
-  warn: "bg-chart-warning",
   neutral: "bg-chart-neutral",
+  estado: "bg-negative",
 };
 
 export type BarraItem = {
@@ -126,52 +130,11 @@ export function BarrasDivergentes({ itens }: { itens: DivergenteItem[] }) {
   );
 }
 
-/** Semáforo de prazo: três tiles com tom de status e rótulo textual. */
-export function SemaforoPrazo({
-  noPrazo,
-  risco,
-  estourado,
-  onSelect,
-}: {
-  noPrazo: number;
-  risco: number;
-  estourado: number;
-  onSelect?: (faixa: "no_prazo" | "risco" | "estourado") => void;
-}) {
-  const tiles = [
-    { key: "no_prazo" as const, n: noPrazo, label: "no prazo", cls: "border-success-soft-border bg-success-soft text-success-strong" },
-    { key: "risco" as const, n: risco, label: "em risco", cls: "border-warning-soft-border bg-warning-soft text-warning-strong" },
-    { key: "estourado" as const, n: estourado, label: "estourado", cls: "border-danger-soft-border bg-danger-soft text-danger-strong" },
-  ];
-
-  return (
-    <div className="grid grid-cols-3 gap-2">
-      {tiles.map((t) => (
-        <button
-          key={t.key}
-          type="button"
-          onClick={onSelect ? () => onSelect(t.key) : undefined}
-          className={cn(
-            "flex flex-col gap-px rounded-xl border px-3 py-2.5 text-left",
-            t.cls,
-            onSelect && "transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-          )}
-        >
-          <span className="text-[22px] font-bold leading-tight tabular-nums">{t.n}</span>
-          <span className="text-[11.5px]">{t.label}</span>
-        </button>
-      ))}
-    </div>
-  );
-}
-
 /** Barra empilhada por linha: em dia contra atrasada, por pessoa. */
 export function CargaPorPessoa({
   itens,
-  ocultarNomes,
 }: {
-  itens: { pessoaId: string; nome: string; iniciais: string; emDia: number; atrasada: number }[];
-  ocultarNomes: boolean;
+  itens: { pessoaId: string; nome: string; emDia: number; atrasada: number }[];
 }) {
   const max = Math.max(...itens.map((p) => p.emDia + p.atrasada), 1);
 
@@ -183,7 +146,7 @@ export function CargaPorPessoa({
           title={`${p.emDia} em dia, ${p.atrasada} atrasada${p.atrasada === 1 ? "" : "s"}`}
           className="grid grid-cols-[minmax(84px,24%)_1fr_auto] items-center gap-2.5"
         >
-          <span className="truncate text-[12.5px] text-ink-soft">{ocultarNomes ? p.iniciais : p.nome}</span>
+          <span className="truncate text-[12.5px] text-ink-soft">{p.nome}</span>
           <span className="flex h-3.5 min-w-0 gap-0.5">
             <span className="block rounded bg-chart-info" style={{ width: `${((p.emDia / max) * 100).toFixed(1)}%` }} />
             {p.atrasada > 0 && (

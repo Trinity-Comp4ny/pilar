@@ -19,6 +19,11 @@ import {
  * Gráficos temporais do painel (SPEC 092), em recharts (a lib já instalada,
  * ADR 0008: problema universal usa a biblioteca do projeto).
  *
+ * Paleta: UMA série em `--chart-info`, contraponto em `--chart-neutral`,
+ * referência tracejada em cinza. Verde e vermelho não entram como paleta de
+ * série; eles ficam reservados para o divergente de horas, onde o sinal do
+ * número é literalmente bom ou ruim.
+ *
  * Regras de leitura aplicadas em todos:
  * - Uma escala por painel. A conversão é DOIS gráficos empilhados que
  *   compartilham o eixo x, nunca dois eixos y no mesmo gráfico.
@@ -79,15 +84,15 @@ export function ConversaoMensalChart({
               return (
                 <CaixaTooltip>
                   <p className="mb-0.5 font-medium text-ink">{label}</p>
-                  <p className="text-success-mid">{p.ganhas} ganhas</p>
-                  <p className="text-danger-mid">{p.perdidas} perdidas</p>
+                  <p className="text-ink-soft">{p.ganhas} ganhas</p>
+                  <p className="text-muted-foreground">{p.perdidas} perdidas</p>
                   {p.taxa !== null && <p className="mt-0.5 text-ink-soft">{p.taxa}% de conversão</p>}
                 </CaixaTooltip>
               );
             }}
           />
-          <Bar dataKey="ganhas" stackId="d" fill="hsl(var(--chart-success))" radius={[0, 0, 3, 3]} />
-          <Bar dataKey="perdidas" stackId="d" fill="hsl(var(--chart-danger))" radius={[3, 3, 0, 0]} />
+          <Bar dataKey="ganhas" stackId="d" fill="hsl(var(--chart-info))" radius={[0, 0, 3, 3]} />
+          <Bar dataKey="perdidas" stackId="d" fill="hsl(var(--chart-neutral))" radius={[3, 3, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
 
@@ -250,14 +255,14 @@ export function ThroughputChart({
                 <p className="text-ink-soft">
                   {p.n} tarefa{p.n === 1 ? "" : "s"} concluída{p.n === 1 ? "" : "s"}
                 </p>
-                {p.abaixo && <p className="text-warning-mid">abaixo da média</p>}
+                {p.abaixo && <p className="text-muted-foreground">abaixo da média</p>}
               </CaixaTooltip>
             );
           }}
         />
         <Bar dataKey="n" radius={[4, 4, 0, 0]}>
           {linhas.map((l, i) => (
-            <Cell key={i} fill={l.abaixo ? "hsl(var(--chart-warning))" : "hsl(var(--chart-info))"} />
+            <Cell key={i} fill={l.abaixo ? "hsl(var(--chart-neutral))" : "hsl(var(--chart-info))"} />
           ))}
         </Bar>
       </BarChart>

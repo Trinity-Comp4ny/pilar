@@ -28,11 +28,10 @@ SELECT is(
       AND (
         p.prosrc ~* '\m(valor_proposto|valor_contrato|valor_aditivo|salario_fixo|valor_m2)\M'
         OR p.prosrc ~* '\mcusto_(estimado|hora|indireto_pct)\M'
-        OR p.prosrc ~* '\mFROM\s+public\.(receitas|despesas|faturas|contas|folha_pagamento|marcos_faturamento)\M'
       )
   ),
   0,
-  'get_painel_gestao nao toca em nenhuma coluna ou tabela monetaria'
+  'get_painel_gestao nao le coluna de custo nem PII de folha (dinheiro agora entra so pelo bloco financeiro gated, ver painel_configuravel.sql)'
 );
 
 -- ── Cenário ────────────────────────────────────────────────────────────────
@@ -117,55 +116,55 @@ SELECT test_set_auth('dddddddd-0000-0000-0000-0000000ba001'::uuid);
 CREATE TEMP TABLE painel AS SELECT public.get_painel_gestao() AS j;
 
 SELECT is(
-  (SELECT (j #>> '{ancoras,conversao,decididas}')::int FROM painel),
+  (SELECT ((j #>> '{gestao,propostasTotais,ganhas}')::int + (j #>> '{gestao,propostasTotais,perdidas}')::int) FROM painel),
   3,
   'painel soma so a propria empresa: as 30 propostas da vizinha ficam de fora'
 );
 
 SELECT is(
-  (SELECT (j -> 'comercial' -> 'funil') @> '[{"etapa": "expirada", "n": 1}]'::jsonb FROM painel),
+  (SELECT (j -> 'gestao' -> 'funil') @> '[{"etapa": "expirada", "n": 1}]'::jsonb FROM painel),
   true,
   'proposta enviada com validade no passado conta como expirada'
 );
 
 SELECT is(
-  (SELECT (j #>> '{ancoras,conversao,valor}')::int FROM painel),
+  (SELECT (j #>> '{gestao,propostasTotais,conversaoPct}')::int FROM painel),
   33,
   'conversao = 1 aceita de 3 decididas (aceita + recusada + expirada)'
 );
 
 SELECT is(
-  (SELECT (j #>> '{ancoras,aguardandoCliente,valor}')::int FROM painel),
+  (SELECT (j #>> '{gestao,propostasTotais,aguardando}')::int FROM painel),
   1,
   'so a proposta enviada dentro da validade conta como na mao do cliente'
 );
 
 SELECT is(
-  (SELECT (j #>> '{ancoras,aguardandoCliente,parados}')::int FROM painel),
-  1,
-  'proposta enviada ha 40 dias entra na contagem de parados'
+  (SELECT (j -> 'gestao' -> 'esperaProposta') @> '[{"faixa": "Mais de 30 dias", "n": 1}]'::jsonb FROM painel),
+  true,
+  'proposta aberta ha 40 dias cai na faixa de mais de 30 dias'
 );
 
 SELECT is(
-  (SELECT (j #>> '{ancoras,prazo,valor}')::int FROM painel),
-  50,
-  'pontualidade = 1 no prazo de 2 concluidos com previsao'
+  (SELECT (j -> 'projetos' -> 'pontualidadeMensal') @> '[{"pct": 100}]'::jsonb FROM painel),
+  true,
+  'pontualidade separa o mes com entrega no prazo do mes com atraso'
 );
 
 SELECT is(
-  (SELECT (j -> 'entrega' -> 'atrasoPorDisciplina') @> '[{"disciplina": "Eletrica", "diasMedio": 5}]'::jsonb FROM painel),
+  (SELECT (j -> 'projetos' -> 'atrasoPorDisciplina') @> '[{"disciplina": "Eletrica", "diasMedio": 5}]'::jsonb FROM painel),
   true,
   'atraso por disciplina desconta os 15 dias de pausa documentada'
 );
 
 SELECT is(
-  (SELECT (j #>> '{entrega,semaforo,semPrazo}')::int FROM painel),
+  (SELECT (j #>> '{projetos,totais,semPrazo}')::int FROM painel),
   1,
   'projeto ativo sem data_previsao entra em semPrazo, nao em no prazo'
 );
 
 SELECT is(
-  (SELECT (j -> 'produtividade' -> 'horasPorProjeto') @> '[{"desvioPct": 25}]'::jsonb FROM painel),
+  (SELECT (j -> 'projetos' -> 'horasPorProjeto') @> '[{"desvioPct": 25}]'::jsonb FROM painel),
   true,
   'desvio de horas do projeto ativo = 250 realizadas sobre 200 estimadas'
 );
