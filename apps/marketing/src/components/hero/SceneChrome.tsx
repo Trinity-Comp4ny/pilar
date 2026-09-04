@@ -132,7 +132,7 @@ export function AppSidebar({ ato }: { ato: number }) {
         {grupos.map((grupo) => (
           <div key={grupo || "sem-grupo"} className="mt-3">
             {grupo && (
-              <p className="px-3 pt-1 pb-1.5 text-[10px] font-medium uppercase tracking-wider text-black/35">{grupo}</p>
+              <p className="px-3 pt-1 pb-1.5 text-[10px] font-medium uppercase tracking-wider text-black/60">{grupo}</p>
             )}
             {itens
               .filter((n) => (n.grupo ?? "") === grupo)
@@ -170,7 +170,7 @@ export function AppSidebar({ ato }: { ato: number }) {
           <UserCircle className="w-6 h-6 text-black/35 shrink-0" strokeWidth={1.5} />
           <span className="min-w-0">
             <span className="block text-[12px] font-medium text-black/70 truncate">Marina Alves</span>
-            <span className="block text-[10.5px] text-black/40 truncate">marina@vrzengenharia.com.br</span>
+            <span className="block text-[10.5px] text-black/60 truncate">marina@vrzengenharia.com.br</span>
           </span>
           <ChevronDown className="ml-auto w-3 h-3 text-black/30 shrink-0" strokeWidth={1.5} />
         </div>
@@ -207,7 +207,7 @@ export function PageHeader({
       {busca && (
         <div className="ml-auto flex items-center gap-2 h-9 w-[290px] rounded-full border border-black/10 bg-black/[0.02] px-3">
           <Search className="w-3.5 h-3.5 text-black/30 shrink-0" strokeWidth={1.6} />
-          <span className="text-[12px] text-black/30 truncate">{busca}</span>
+          <span className="text-[12px] text-black/60 truncate">{busca}</span>
         </div>
       )}
 
