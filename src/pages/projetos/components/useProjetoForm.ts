@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { lookupCEP } from "@/lib/brasilApi";
 import { useBulkSaveDisciplinas } from "@/hooks/useProjetoDisciplinas";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useFormPersist, clearFormPersist } from "@/hooks/useFormPersist";
 
 const PROJETO_DRAFT_KEY = "projeto-novo";
@@ -156,6 +157,11 @@ export function useProjetoForm({
 }: UseProjetoFormProps) {
   const queryClient = useQueryClient();
   const bulkSaveDisciplinas = useBulkSaveDisciplinas();
+  const { can } = usePermissions();
+  // Sem financeiro o valor chega mascarado (null) de projetos_safe. Enviar o 0
+  // que o form monta a partir desse null seria pedir pra zerar o contrato, e a
+  // RPC barraria a edição inteira. null = "não mexe no valor".
+  const podeEditarValor = can("financeiro");
   const isEditMode = editProjeto !== null;
   const [isSaving, setIsSaving] = useState(false);
   const [isFetchingCep, setIsFetchingCep] = useState(false);
@@ -579,7 +585,9 @@ export function useProjetoForm({
           p_data_inicio: formData.data_inicio || undefined,
           p_data_previsao: formData.data_previsao || undefined,
           p_data_final: formData.data_final || undefined,
-          p_valor_contrato: parseCurrencyString(formData.valor_contrato) || 0,
+          p_valor_contrato: podeEditarValor
+            ? parseCurrencyString(formData.valor_contrato) || 0
+            : (null as unknown as number),
           p_observacao: formData.observacao,
           p_localizacao: localizacaoComposta,
           p_parcelas: formData.parcelas || undefined,
@@ -617,27 +625,20 @@ export function useProjetoForm({
 
         toast.success("Projeto atualizado", { description: "Projeto foi atualizado com sucesso" });
       } else {
-        // Código gerado automático (PRJ-XXXX sequencial por empresa): não se pede
-        // ao usuário. A RLS de projetos escopa a busca à empresa do chamador.
-        const { data: codigosExistentes } = await supabase
-          .from("projetos")
-          .select("codigo_projeto")
-          .is("deleted_at", null);
-        let maxSeq = 0;
-        for (const c of codigosExistentes ?? []) {
-          const m = /^PRJ-(\d+)$/i.exec((c.codigo_projeto ?? "").trim());
-          if (m) maxSeq = Math.max(maxSeq, parseInt(m[1], 10));
-        }
-        const codigoAuto = `PRJ-${String(maxSeq + 1).padStart(4, "0")}`;
-
+        // Código PRJ-XXXX sequencial por empresa é gerado no servidor. Calcular
+        // aqui era o bug que travou a VRZ por 6 dias: o client lia o máximo
+        // filtrando deleted_at, mas o unique da tabela conta soft-deletado, então
+        // soft-deletar o maior código fazia toda criação seguinte colidir.
         const { data: newProjetoId, error } = await supabase.rpc("create_projeto_completo", {
-          p_codigo: codigoAuto,
+          p_codigo: "",
           p_nome: formData.nome,
           p_cliente_id: (formData.cliente_id || null) as unknown as string,
           p_data_inicio: formData.data_inicio || undefined,
           p_data_previsao: formData.data_previsao || undefined,
           p_data_final: formData.data_final || undefined,
-          p_valor_contrato: parseCurrencyString(formData.valor_contrato) || 0,
+          p_valor_contrato: podeEditarValor
+            ? parseCurrencyString(formData.valor_contrato) || 0
+            : (null as unknown as number),
           p_observacao: formData.observacao,
           p_localizacao: localizacaoComposta,
           p_parcelas: formData.parcelas || undefined,
@@ -780,8 +781,7 @@ export function useProjetoForm({
           .then(() => onSaved());
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      toast.error("Erro ao salvar", { description: message });
+      toast.error("Erro ao salvar", { description: getSafeErrorMessage(err) });
     } finally {
       setIsSaving(false);
     }

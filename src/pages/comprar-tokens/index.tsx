@@ -1,4 +1,4 @@
-import { useCallback, useState, type FormEvent } from "react";
+import { useCallback, useRef, useState, type FormEvent } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -141,6 +141,7 @@ export default function ComprarTokens() {
     uf: string;
   } | null>(null);
   const [isFetchingCep, setIsFetchingCep] = useState(false);
+  const cepLookupRef = useRef<string | null>(null);
 
   const cardBrand = detectCardBrand(ccNumber);
   const status = useTokenPackStatus(result?.purchase_id ?? null);
@@ -149,17 +150,22 @@ export default function ComprarTokens() {
 
   const fetchCep = useCallback(async (cep: string) => {
     const digits = onlyDigits(cep);
-    if (digits.length !== 8) return;
+    // Sem esta guarda, cada correção de dígito que ainda somava 8 (ex.: apagar e
+    // redigitar) disparava uma busca nova em paralelo à anterior; respostas fora de
+    // ordem faziam o spinner e o endereço "piscarem" entre dois resultados.
+    if (digits.length !== 8 || digits === cepLookupRef.current) return;
+    cepLookupRef.current = digits;
     setIsFetchingCep(true);
     try {
       const end = await lookupCEP(digits);
+      if (cepLookupRef.current !== digits) return;
       if (!end) {
         toast.error("CEP não encontrado");
         return;
       }
       setCepAddress({ logradouro: end.street, bairro: end.neighborhood, cidade: end.city, uf: end.state });
     } finally {
-      setIsFetchingCep(false);
+      if (cepLookupRef.current === digits) setIsFetchingCep(false);
     }
   }, []);
 

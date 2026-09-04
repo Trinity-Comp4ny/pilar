@@ -26,7 +26,7 @@ export function ModulesSection() {
                 as="h2"
                 text="Cada módulo resolve uma fase. Juntos, fecham o ciclo."
                 highlight="Juntos, fecham o ciclo."
-                highlightClassName="italic text-ink/45"
+                highlightClassName="italic text-ink/70"
                 className="text-3xl md:text-[44px] font-medium text-ink leading-[1.1] tracking-tight"
               />
             </div>

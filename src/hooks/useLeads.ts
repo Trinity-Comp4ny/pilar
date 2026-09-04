@@ -73,10 +73,11 @@ export function useLeadsPaginados(options: UseLeadsPaginadosOptions = {}) {
   return useInfiniteQuery({
     queryKey: ["leads-paginados", pageSize, searchTerm, statusFilter],
     queryFn: async ({ pageParam = 0 }) => {
+      // leads_safe mascara valor_estimado pra quem não tem can_view_financeiro()
+      // (achado em QA: leads vazava valor pra qualquer membro do módulo).
       let query = supabase
-        .from("leads")
+        .from("leads_safe")
         .select("*", { count: "exact" })
-        .is("deleted_at", null)
         .order("created_at", { ascending: false })
         .range(pageParam * pageSize, (pageParam + 1) * pageSize - 1);
 
@@ -107,11 +108,8 @@ export const useLeads = () => {
   return useQuery({
     queryKey: ["leads"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("leads")
-        .select("*")
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false });
+      // leads_safe mascara valor_estimado pra quem não tem can_view_financeiro().
+      const { data, error } = await supabase.from("leads_safe").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []) as Lead[];
     },
@@ -163,9 +161,7 @@ export const useCreateLead = () => {
     },
     onError: (err: unknown) => {
       toast.error("Erro ao salvar", {
-        description: isDuplicateEmailError(err)
-          ? "Já existe um lead ativo com este email."
-          : getSafeErrorMessage(err),
+        description: isDuplicateEmailError(err) ? "Já existe um lead ativo com este email." : getSafeErrorMessage(err),
       });
     },
   });
@@ -199,9 +195,7 @@ export const useUpdateLeadStatus = () => {
 
       queryClient.setQueryData(["leads"], (old: Lead[] | undefined) =>
         (old || []).map((lead) =>
-          lead.id === leadId
-            ? { ...lead, status: newStatus, ...statusSideEffects(newStatus), ...extraFields }
-            : lead
+          lead.id === leadId ? { ...lead, status: newStatus, ...statusSideEffects(newStatus), ...extraFields } : lead
         )
       );
 
@@ -303,7 +297,10 @@ export const useUpdateLead = () => {
       const payload: Record<string, unknown> = { ...data };
       // Email vazio vira null para não colidir no índice único por empresa.
       if ("email" in payload) payload.email = (payload.email as string | undefined)?.trim() || null;
-      const { error } = await supabase.from("leads").update(payload as never).eq("id", id);
+      const { error } = await supabase
+        .from("leads")
+        .update(payload as never)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -312,9 +309,7 @@ export const useUpdateLead = () => {
     },
     onError: (err: unknown) => {
       toast.error("Erro ao atualizar", {
-        description: isDuplicateEmailError(err)
-          ? "Já existe um lead ativo com este email."
-          : getSafeErrorMessage(err),
+        description: isDuplicateEmailError(err) ? "Já existe um lead ativo com este email." : getSafeErrorMessage(err),
       });
     },
   });

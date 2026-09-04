@@ -4756,13 +4756,16 @@ export type Database = {
           created_by: string | null
           email: string
           empresa_id: string
+          equipe_delegado: boolean
           financeiro_delegado: boolean
           first_name: string
           id: string
           last_name: string
+          metas_delegado: boolean
           nome: string | null
           onboarding_completed: boolean | null
           onboarding_state: Json
+          painel_layout: Json
           role: Database["public"]["Enums"]["user_role"] | null
           updated_at: string | null
           updated_by: string | null
@@ -4774,13 +4777,16 @@ export type Database = {
           created_by?: string | null
           email: string
           empresa_id: string
+          equipe_delegado?: boolean
           financeiro_delegado?: boolean
           first_name?: string
           id: string
           last_name?: string
+          metas_delegado?: boolean
           nome?: string | null
           onboarding_completed?: boolean | null
           onboarding_state?: Json
+          painel_layout?: Json
           role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
           updated_by?: string | null
@@ -4792,13 +4798,16 @@ export type Database = {
           created_by?: string | null
           email?: string
           empresa_id?: string
+          equipe_delegado?: boolean
           financeiro_delegado?: boolean
           first_name?: string
           id?: string
           last_name?: string
+          metas_delegado?: boolean
           nome?: string | null
           onboarding_completed?: boolean | null
           onboarding_state?: Json
+          painel_layout?: Json
           role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
           updated_by?: string | null
@@ -5058,6 +5067,89 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projeto_disciplinas"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      projeto_disciplina_revisoes: {
+        Row: {
+          concluida_em: string | null
+          concluida_por: string | null
+          created_at: string
+          id: string
+          motivo: string
+          projeto_disciplina_id: string
+          registrada_por: string | null
+          solicitada_em: string
+        }
+        Insert: {
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string
+          id?: string
+          motivo: string
+          projeto_disciplina_id: string
+          registrada_por?: string | null
+          solicitada_em?: string
+        }
+        Update: {
+          concluida_em?: string | null
+          concluida_por?: string | null
+          created_at?: string
+          id?: string
+          motivo?: string
+          projeto_disciplina_id?: string
+          registrada_por?: string | null
+          solicitada_em?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_disciplina_revisoes_concluida_por_fkey"
+            columns: ["concluida_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_revisoes_concluida_por_fkey"
+            columns: ["concluida_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_revisoes_concluida_por_fkey"
+            columns: ["concluida_por"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_revisoes_projeto_disciplina_id_fkey"
+            columns: ["projeto_disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_disciplinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_revisoes_registrada_por_fkey"
+            columns: ["registrada_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_revisoes_registrada_por_fkey"
+            columns: ["registrada_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_revisoes_registrada_por_fkey"
+            columns: ["registrada_por"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
           },
         ]
       }
@@ -5589,6 +5681,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "propostas_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads_safe"
             referencedColumns: ["id"]
           },
           {
@@ -6528,6 +6627,96 @@ export type Database = {
           valor: number | null
         }
         Relationships: []
+      }
+      leads_safe: {
+        Row: {
+          cliente_id: string | null
+          cnpj: string | null
+          contato: string | null
+          convertido_em: string | null
+          created_at: string | null
+          created_by: string | null
+          deleted_at: string | null
+          email: string | null
+          empresa_id: string | null
+          empresa_lead: string | null
+          id: string | null
+          motivo_perda: string | null
+          nome: string | null
+          notas: string | null
+          origem: string | null
+          pode_ver_valor: boolean | null
+          previsao_fechamento: string | null
+          responsavel_id: string | null
+          sobrenome: string | null
+          status: string | null
+          updated_at: string | null
+          valor_estimado: number | null
+        }
+        Insert: {
+          cliente_id?: string | null
+          cnpj?: string | null
+          contato?: string | null
+          convertido_em?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          email?: string | null
+          empresa_id?: string | null
+          empresa_lead?: string | null
+          id?: string | null
+          motivo_perda?: string | null
+          nome?: string | null
+          notas?: string | null
+          origem?: string | null
+          pode_ver_valor?: never
+          previsao_fechamento?: string | null
+          responsavel_id?: string | null
+          sobrenome?: string | null
+          status?: string | null
+          updated_at?: string | null
+          valor_estimado?: never
+        }
+        Update: {
+          cliente_id?: string | null
+          cnpj?: string | null
+          contato?: string | null
+          convertido_em?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          email?: string | null
+          empresa_id?: string | null
+          empresa_lead?: string | null
+          id?: string | null
+          motivo_perda?: string | null
+          nome?: string | null
+          notas?: string | null
+          origem?: string | null
+          pode_ver_valor?: never
+          previsao_fechamento?: string | null
+          responsavel_id?: string | null
+          sobrenome?: string | null
+          status?: string | null
+          updated_at?: string | null
+          valor_estimado?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pessoas_safe: {
         Row: {
@@ -7643,6 +7832,8 @@ export type Database = {
           titulo: string
         }[]
       }
+      get_painel_extra: { Args: never; Returns: Json }
+      get_painel_gestao: { Args: never; Returns: Json }
       get_projeto_rentabilidade_detalhe: {
         Args: { p_projeto_id: string }
         Returns: Json
@@ -7843,6 +8034,10 @@ export type Database = {
         Args: { p_ano: number; p_mes: number }
         Returns: number
       }
+      rpc_concluir_revisao: {
+        Args: { p_concluida_em?: string; p_revisao_id: string }
+        Returns: undefined
+      }
       rpc_converter_lead_cliente: {
         Args: { p_lead_id: string; p_omit_cnpj?: boolean }
         Returns: string
@@ -8019,6 +8214,14 @@ export type Database = {
         Args: { p_projeto_id: string }
         Returns: Json
       }
+      rpc_registrar_revisao: {
+        Args: {
+          p_disciplina_id: string
+          p_motivo: string
+          p_solicitada_em?: string
+        }
+        Returns: string
+      }
       rpc_restaurar: {
         Args: { p_id: string; p_tabela: string }
         Returns: undefined
@@ -8061,11 +8264,20 @@ export type Database = {
         Args: { p_bucket: string; p_disciplina_id: string }
         Returns: undefined
       }
+      set_equipe_delegado: {
+        Args: { p_delegado: boolean; p_user_id: string }
+        Returns: undefined
+      }
       set_financeiro_delegado: {
         Args: { p_delegado: boolean; p_user_id: string }
         Returns: undefined
       }
+      set_metas_delegado: {
+        Args: { p_delegado: boolean; p_user_id: string }
+        Returns: undefined
+      }
       set_onboarding_state: { Args: { patch: Json }; Returns: Json }
+      set_painel_layout: { Args: { p_layout: Json }; Returns: undefined }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       start_impersonation: {

@@ -4,6 +4,7 @@ import { monitoring } from "@/lib/monitoring";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "sonner";
 import { useProjetoRentabilidade } from "@/hooks/useRentabilidade";
 import { useTemplates } from "@/hooks/useTemplates";
@@ -27,6 +28,7 @@ import {
 export function useProjetoDetail(id: string | undefined) {
   const navigate = useNavigate();
   const { canEdit } = useFeatureAccess("projetos");
+  const { can } = usePermissions();
   const queryClient = useQueryClient();
 
   // ---- Project data via React Query ----
@@ -72,7 +74,7 @@ export function useProjetoDetail(id: string | undefined) {
   });
 
   // ---- Rentabilidade ----
-  const { data: rentabilidade, isLoading: rentabilidadeLoading } = useProjetoRentabilidade(id);
+  const { data: rentabilidade, isLoading: rentabilidadeLoading } = useProjetoRentabilidade(id, can("financeiro"));
 
   // ---- Relational disciplinas ----
   const { data: dbDisciplinas = [] } = useProjetoDisciplinas(id);

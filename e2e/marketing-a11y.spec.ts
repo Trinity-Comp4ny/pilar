@@ -5,7 +5,12 @@ import AxeBuilder from "@axe-core/playwright";
 // via webServer local: é um app Vite separado do resto do e2e (porta e comando
 // de build diferentes), e testar a URL real garante que o teste reflete o que
 // o visitante vê de fato, não um build local que pode divergir do deploy.
-test.use({ baseURL: "https://www.pilarsoft.com.br" });
+// reducedMotion: a landing entra com fade palavra por palavra (motion system da
+// spec 060). Sem isto o Axe fotografa a página no meio da animação e mede o
+// contraste de um estado transitório: numa medição real deu 89 violações contra
+// 9 de verdade, 29 delas só palavras paradas em `opacity: 0.16`. O estado que
+// interessa ao visitante é o final, e é ele que precisa passar em AA.
+test.use({ baseURL: "https://www.pilarsoft.com.br", reducedMotion: "reduce" });
 
 test("landing de marketing não tem violação de acessibilidade critical ou serious", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });

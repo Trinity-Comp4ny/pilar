@@ -30,12 +30,15 @@ export function usePermissions() {
     [profile]
   );
 
-  // ADR 0034: concessão de financeiro é do PRÓPRIO usuário (não muda com
-  // impersonation de role, que só troca a hierarquia simulada).
+  // ADR 0034 (e sua extensão para equipe/metas): concessão é do PRÓPRIO
+  // usuário (não muda com impersonation de role, que só troca a hierarquia
+  // simulada).
   const financeiroDelegado = Boolean((profile as { financeiro_delegado?: boolean } | null)?.financeiro_delegado);
+  const equipeDelegado = Boolean((profile as { equipe_delegado?: boolean } | null)?.equipe_delegado);
+  const metasDelegado = Boolean((profile as { metas_delegado?: boolean } | null)?.metas_delegado);
 
   return useMemo(() => {
-    const ctx = { role: effectiveRole, companyFeatures, financeiroDelegado };
+    const ctx = { role: effectiveRole, companyFeatures, financeiroDelegado, equipeDelegado, metasDelegado };
 
     const can = (feature: Feature, action: Action = "view") => canDo(ctx, feature, action);
     const cannot = (feature: Feature, action: Action = "view") => !can(feature, action);
@@ -69,5 +72,13 @@ export function usePermissions() {
       getButtonProps,
       getNavItemProps,
     };
-  }, [effectiveRole, realRole, impersonation?.isImpersonating, companyFeatures, financeiroDelegado]);
+  }, [
+    effectiveRole,
+    realRole,
+    impersonation?.isImpersonating,
+    companyFeatures,
+    financeiroDelegado,
+    equipeDelegado,
+    metasDelegado,
+  ]);
 }

@@ -14,6 +14,16 @@ import { expect, type Page } from "@playwright/test";
  */
 const MARKETING_URL_RE = /pilarsoft\.com\.br/;
 
+/**
+ * Onde o anônimo pode legitimamente cair. Fora de app.pilarsoft.com.br o
+ * `ExternalRedirect` manda pro `/login` local de propósito, pra não jogar quem
+ * testa em staging/preview/localhost no marketing de PRODUÇÃO (App.tsx). O E2E
+ * roda em localhost, então exigir só a URL de marketing fazia estes 4 testes
+ * falharem em todo push, por construção: o job ficou vermelho por defasagem e
+ * parou de valer como sinal.
+ */
+const REDIRECTED_OUT_RE = /pilarsoft\.com\.br|\/login(\?|$)/;
+
 async function stubMarketingSite(page: Page): Promise<void> {
   await page.route(MARKETING_URL_RE, (route) =>
     route.fulfill({
@@ -29,6 +39,8 @@ export async function expectAnonRedirectedOut(page: Page, path: string): Promise
   await stubMarketingSite(page);
   await page.goto(path);
 
-  await expect(page).toHaveURL(MARKETING_URL_RE);
+  // A propriedade que interessa: saiu da rota protegida (e não renderizou nada
+  // dela), seja pro marketing em produção, seja pro /login fora dela.
+  await expect(page).toHaveURL(REDIRECTED_OUT_RE);
   await expect(page).not.toHaveURL(new RegExp(`${path.replace("/", "\\/")}$`));
 }

@@ -18,7 +18,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { AlertTriangle, MessageSquare, Plus, Trash2, User, X, Layers } from "lucide-react";
+import { AlertTriangle, MessageSquare, Plus, RotateCcw, Trash2, User, X, Layers } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
 import { PROJECT_PRIORITY, PROJECT_PRIORITY_CONFIG, PRIORITY_OPTIONS, type ProjectPriority } from "@/constants";
@@ -39,6 +39,8 @@ interface DisciplinasTableViewProps {
   pessoas: { id: string; nome: string }[];
   /** Chave = projeto_disciplina.id. Ausente = disciplina sem checklist (status manual sem restrição). */
   checklistCounts?: Record<string, ChecklistCounts>;
+  /** Chave = projeto_disciplina.id. Ausente = disciplina sem revisão registrada (spec 093). */
+  revisoesCounts?: Record<string, { total: number; abertas: number }>;
   applyDiscStatusChange: (
     idx: number,
     newStatus: string,
@@ -85,6 +87,7 @@ export function DisciplinasTableView({
   disciplinasCatalog,
   pessoas,
   checklistCounts,
+  revisoesCounts,
   applyDiscStatusChange,
   handleRemoveDisc,
   handleAddDisc,
@@ -182,6 +185,7 @@ export function DisciplinasTableView({
                   const obsCount = dbDisc?.observacoes ? dbDisc.observacoes.split("\n").filter(Boolean).length : 0;
                   const counts = dbDisc?.id ? checklistCounts?.[dbDisc.id] : undefined;
                   const checklistIncompleto = !!counts && counts.total > 0 && counts.concluidos < counts.total;
+                  const revisoes = dbDisc?.id ? revisoesCounts?.[dbDisc.id] : undefined;
 
                   return (
                     <TableRow key={dbDisc?.id || idx} className={cn(atrasada && "bg-danger-soft/40")}>
@@ -212,6 +216,23 @@ export function DisciplinasTableView({
                           {atrasada && (
                             <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
                               <AlertTriangle size={10} /> Atrasada
+                            </span>
+                          )}
+                          {!!revisoes?.total && (
+                            <span
+                              title={
+                                revisoes.abertas > 0
+                                  ? "Revisão em aberto nesta disciplina"
+                                  : "Revisões já concluídas nesta disciplina"
+                              }
+                              className={cn(
+                                "text-[9px] px-1.5 py-0.5 rounded-full font-semibold flex items-center gap-1",
+                                revisoes.abertas > 0
+                                  ? "bg-warning-soft text-warning-strong"
+                                  : "bg-muted text-muted-foreground"
+                              )}
+                            >
+                              <RotateCcw size={10} /> {revisoes.total}
                             </span>
                           )}
                         </div>

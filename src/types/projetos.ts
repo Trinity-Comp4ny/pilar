@@ -237,6 +237,19 @@ export interface ProjetoDisciplinaPausa {
   retomado_por_nome: string | null;
 }
 
+/** Registro de revisão da disciplina (spec 093): retrabalho documentado, motivo
+ *  obrigatório em texto livre. Sem numeração formal e sem vínculo com contrato:
+ *  o contador é derivado por count, nunca persistido. Só criado/fechado via
+ *  rpc_registrar_revisao/rpc_concluir_revisao, nunca por update direto. */
+export interface ProjetoDisciplinaRevisao {
+  id: string;
+  motivo: string;
+  solicitada_em: string;
+  registrada_por_nome: string | null;
+  concluida_em: string | null;
+  concluida_por_nome: string | null;
+}
+
 // Re-export de utilitários centralizados para manter compatibilidade de imports existentes
 export { formatCurrency } from "@/lib/currencyUtils";
 export { formatDate, formatDateShort } from "@/lib/dateUtils";

@@ -29,6 +29,7 @@ import {
   Pause,
   Play,
   Plus,
+  RotateCcw,
   Tag,
   Trash2,
   User,
@@ -44,8 +45,9 @@ import { HorasMinutosField } from "@/components/HorasMinutosField";
 import { AtividadeComposer } from "./AtividadeComposer";
 import { useDisciplinaChecklist } from "@/hooks/useProjetoDisciplinaChecklist";
 import { useDisciplinaPausas, totalDiasParados } from "@/hooks/useDisciplinaPausas";
+import { useDisciplinaRevisoes, revisaoAberta } from "@/hooks/useDisciplinaRevisoes";
 import { FormDialog } from "@/components/FormDialog";
-import { formatDateTime } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import { notificarMencao } from "@/lib/notificarMencao";
 
 interface DisciplinaDetailDialogProps {
@@ -188,6 +190,32 @@ function DisciplinaDetailBody({
     pausas.retomar.mutate(undefined, { onSuccess: () => onUpdateField("status", "Em Andamento") });
   };
 
+  const revisoes = useDisciplinaRevisoes(persistida ? disciplina.id : undefined);
+  const historicoRevisoes = revisoes.data ?? [];
+  const revisaoEmAberto = revisaoAberta(historicoRevisoes);
+  const [revisarOpen, setRevisarOpen] = useState(false);
+  const [motivoRevisao, setMotivoRevisao] = useState("");
+  const [dataRevisao, setDataRevisao] = useState<string | undefined>(undefined);
+
+  const abrirRevisar = () => {
+    setMotivoRevisao("");
+    setDataRevisao(undefined);
+    setRevisarOpen(true);
+  };
+
+  const confirmarRevisar = () => {
+    if (!motivoRevisao.trim()) return;
+    revisoes.registrar.mutate(
+      { motivo: motivoRevisao.trim(), solicitadaEm: dataRevisao },
+      { onSuccess: () => setRevisarOpen(false) }
+    );
+  };
+
+  const confirmarConcluirRevisao = () => {
+    if (!revisaoEmAberto) return;
+    revisoes.concluir.mutate(revisaoEmAberto.id);
+  };
+
   const salvarDescricao = () => {
     if (!onUpdateDescricao || descricao === (disciplina.descricao ?? "")) return;
     onUpdateDescricao(descricao);
@@ -293,6 +321,30 @@ function DisciplinaDetailBody({
                           <Pause className="h-3.5 w-3.5" /> Pausar
                         </Button>
                       )
+                    ))}
+                  {persistida &&
+                    disciplina.status !== "Não Iniciado" &&
+                    (revisaoEmAberto ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-9 flex-shrink-0 gap-1.5"
+                        onClick={confirmarConcluirRevisao}
+                        disabled={revisoes.concluir.isPending}
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" /> Concluir revisão
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-9 flex-shrink-0 gap-1.5"
+                        onClick={abrirRevisar}
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" /> Registrar revisão
+                      </Button>
                     ))}
                 </div>
               </Prop>
@@ -420,6 +472,39 @@ function DisciplinaDetailBody({
                             {" "}
                             · retomado {p.retomado_por_nome ? `por ${p.retomado_por_nome} ` : ""}em{" "}
                             {formatDateTime(p.retomado_em)}
+                          </>
+                        ) : (
+                          " · em aberto"
+                        )}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {persistida && historicoRevisoes.length > 0 && (
+              <div className="space-y-2 border-t pt-6">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-1.5 text-sm font-semibold">
+                    <RotateCcw className="h-4 w-4" /> Histórico de revisões
+                  </Label>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {historicoRevisoes.length} {historicoRevisoes.length === 1 ? "revisão" : "revisões"}
+                  </span>
+                </div>
+                <ul className="space-y-2">
+                  {historicoRevisoes.map((r) => (
+                    <li key={r.id} className="rounded-md border bg-muted/30 px-3 py-2 text-sm">
+                      <p className="text-ink">{r.motivo}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        Registrada {r.registrada_por_nome ? `por ${r.registrada_por_nome} ` : ""}em{" "}
+                        {formatDate(r.solicitada_em)}
+                        {r.concluida_em ? (
+                          <>
+                            {" "}
+                            · concluída {r.concluida_por_nome ? `por ${r.concluida_por_nome} ` : ""}em{" "}
+                            {formatDate(r.concluida_em)}
                           </>
                         ) : (
                           " · em aberto"
@@ -626,6 +711,36 @@ function DisciplinaDetailBody({
             rows={3}
             autoFocus
           />
+        </div>
+      </FormDialog>
+
+      <FormDialog
+        open={revisarOpen}
+        onOpenChange={setRevisarOpen}
+        title="Registrar revisão"
+        description="Documenta um retrabalho nesta disciplina. Fica no histórico até você concluir."
+        size="sm"
+        onSubmit={confirmarRevisar}
+        submitLabel="Registrar"
+        isPending={revisoes.registrar.isPending}
+        submitDisabled={!motivoRevisao.trim()}
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="motivo-revisao">Motivo</Label>
+            <Textarea
+              id="motivo-revisao"
+              value={motivoRevisao}
+              onChange={(e) => setMotivoRevisao(e.target.value)}
+              placeholder="Ex.: cliente pediu mudar a posição do pilar P12"
+              rows={3}
+              autoFocus
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Data da solicitação</Label>
+            <DatePicker value={dataRevisao} onChange={setDataRevisao} placeholder="Hoje" />
+          </div>
         </div>
       </FormDialog>
     </div>

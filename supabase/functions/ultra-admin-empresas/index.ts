@@ -61,7 +61,10 @@ serve(
         const [{ data: empresa, error: empErr }, { data: usuarios, error: usrErr }, { data: convites }] =
           await Promise.all([
             svc.from("empresas").select("*").eq("id", id).single(),
-            svc.from("profiles").select("id, nome, email, role").eq("empresa_id", id),
+            svc
+              .from("profiles")
+              .select("id, nome, email, role, financeiro_delegado, equipe_delegado, metas_delegado")
+              .eq("empresa_id", id),
             svc
               .from("convites")
               .select("id, email, nome, cargo, expira_em")

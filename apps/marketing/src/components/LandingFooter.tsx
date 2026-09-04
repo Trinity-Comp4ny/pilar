@@ -37,14 +37,14 @@ export function LandingFooter() {
         <div className="grid md:grid-cols-[1.2fr_1fr_1fr_1fr_1fr] gap-10 md:gap-8 mb-14">
           <div>
             <Logo size="sm" className="text-ink mb-5" />
-            <p className="text-[13.5px] text-ink/65 max-w-xs leading-relaxed">
+            <p className="text-[13.5px] text-ink/80 max-w-xs leading-relaxed">
               Saiba se cada projeto está dando lucro antes de terminar. Feito para escritórios de engenharia e
               arquitetura, com agentes que preparam o trabalho e esperam o seu aval.
             </p>
           </div>
 
           <div>
-            <h3 className="text-[10.5px] uppercase tracking-[0.14em] text-ink/50 mb-4">Produto</h3>
+            <h3 className="text-[10.5px] uppercase tracking-[0.14em] text-ink/70 mb-4">Produto</h3>
             <ul className="flex flex-col gap-3">
               {MODULOS.map((mo) => (
                 <li key={mo.slug}>
@@ -58,7 +58,7 @@ export function LandingFooter() {
 
           {COLUNAS.map((coluna) => (
             <div key={coluna.titulo}>
-              <h3 className="text-[10.5px] uppercase tracking-[0.14em] text-ink/50 mb-4">{coluna.titulo}</h3>
+              <h3 className="text-[10.5px] uppercase tracking-[0.14em] text-ink/70 mb-4">{coluna.titulo}</h3>
               <ul className="flex flex-col gap-3">
                 {coluna.links.map((l) => (
                   <li key={l.label}>
@@ -72,7 +72,7 @@ export function LandingFooter() {
           ))}
 
           <div>
-            <h3 className="text-[10.5px] uppercase tracking-[0.14em] text-ink/50 mb-4">Comparações</h3>
+            <h3 className="text-[10.5px] uppercase tracking-[0.14em] text-ink/70 mb-4">Comparações</h3>
             <ul className="flex flex-col gap-3">
               {COMPARATIVOS.map((c) => (
                 <li key={c.slug}>
@@ -85,7 +85,7 @@ export function LandingFooter() {
           </div>
 
           <div>
-            <h3 className="text-[10.5px] uppercase tracking-[0.14em] text-ink/50 mb-4">Conta</h3>
+            <h3 className="text-[10.5px] uppercase tracking-[0.14em] text-ink/70 mb-4">Conta</h3>
             <ul className="flex flex-col gap-3">
               <li>
                 <a href={`${APP_URL}/login`} className="text-[13.5px] text-ink/75 hover:text-ink transition-colors">
@@ -111,7 +111,7 @@ export function LandingFooter() {
         </div>
 
         <div className="pt-7 border-t border-ink/10">
-          <p className="text-[12.5px] text-ink/55">© 2026 Pilar. Todos os direitos reservados.</p>
+          <p className="text-[12.5px] text-ink/75">© 2026 Pilar. Todos os direitos reservados.</p>
         </div>
       </div>
     </footer>

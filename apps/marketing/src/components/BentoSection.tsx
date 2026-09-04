@@ -38,7 +38,10 @@ function CabecalhoCartao({
   return (
     <div className="flex items-start justify-between gap-4">
       <div>
-        <p className={`mb-1.5 text-[10px] uppercase tracking-[0.16em] ${escuro ? "text-white/45" : "text-ink/50"}`}>
+        {/* Alphas no piso de 4.5:1 do WCAG AA: sobre o verde da marca e sobre o
+            paper, ink precisa de 65 e white de 50. Rótulo e legenda mantêm a
+            diferença de peso, só uma faixa acima. */}
+        <p className={`mb-1.5 text-[10px] uppercase tracking-[0.16em] ${escuro ? "text-white/70" : "text-ink/70"}`}>
           {rotulo}
         </p>
         <h3
@@ -48,7 +51,7 @@ function CabecalhoCartao({
         >
           {titulo}
         </h3>
-        <p className={`text-[12.5px] leading-snug ${escuro ? "text-white/55" : "text-ink/60"}`}>{legenda}</p>
+        <p className={`text-[12.5px] leading-snug ${escuro ? "text-white/85" : "text-ink/85"}`}>{legenda}</p>
       </div>
       <Link
         to={href}
@@ -164,7 +167,7 @@ function CartaoGestao() {
               viewport={VISTA}
               transition={{ duration: 0.5, delay: 0.55, ease: EASE.out }}
             >
-              <p className="text-[8.5px] uppercase tracking-wider text-white/45">Fechado</p>
+              <p className="text-[8.5px] uppercase tracking-wider text-white/70">Fechado</p>
               <p className="text-[15px] font-semibold tabular-nums text-brand">R$ 128.400</p>
             </m.div>
           </div>
@@ -367,7 +370,7 @@ function CartaoCampo() {
             ))}
             <div className="min-w-0">
               <p className="truncate text-[11px] font-medium text-white">Diário de hoje</p>
-              <p className="text-[9.5px] text-white/45">3 fotos · frente Estrutura</p>
+              <p className="text-[9.5px] text-white/70">3 fotos · frente Estrutura</p>
             </div>
           </div>
         </div>
@@ -398,7 +401,7 @@ function CartaoPortal() {
         <div className="mt-6 rounded-2xl border border-paper-border/70 bg-frame p-4">
           <div className="mb-3.5 flex items-center gap-2 rounded-full bg-paper-alt px-3.5 py-2">
             <span className="h-2 w-2 shrink-0 rounded-full bg-brand" />
-            <span className="truncate text-[10.5px] text-ink-muted">pilar.app/portal/centro-cirurgico</span>
+            <span className="truncate text-[10.5px] text-ink-soft">pilar.app/portal/centro-cirurgico</span>
           </div>
 
           <div className="flex items-center gap-3.5">
@@ -449,7 +452,7 @@ export function BentoSection() {
       <div className="max-w-6xl mx-auto">
         <Reveal variant="up" className="max-w-2xl mb-8">
           <h2 className="text-[52px] max-[1100px]:text-[42px] max-[850px]:text-[29px] max-[420px]:text-[25px] font-medium tracking-[-0.035em] leading-[1.08] text-ink">
-            Cada módulo resolve uma fase. <span className="italic text-ink/45">Juntos, fecham o ciclo.</span>
+            Cada módulo resolve uma fase. <span className="italic text-ink/70">Juntos, fecham o ciclo.</span>
           </h2>
         </Reveal>
 

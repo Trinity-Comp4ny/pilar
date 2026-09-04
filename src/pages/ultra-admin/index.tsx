@@ -59,6 +59,7 @@ import {
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { supabase } from "@/integrations/supabase/client";
+import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { reportInvokeError } from "@/lib/monitoring";
@@ -525,6 +526,9 @@ export default function UltraAdmin() {
           email: string | null;
           role: string | null;
           features: unknown;
+          financeiro_delegado: boolean | null;
+          equipe_delegado: boolean | null;
+          metas_delegado: boolean | null;
         }>;
         convites?: Array<{
           id: string;
@@ -552,18 +556,14 @@ export default function UltraAdmin() {
           isPaying: raw.cobranca?.is_paying ?? false,
         },
         usersCount: raw.usuarios.length,
-        usuarios: (
-          raw.usuarios as Array<{
-            id: string;
-            nome: string | null;
-            email: string | null;
-            role: string | null;
-          }>
-        ).map((u) => ({
+        usuarios: raw.usuarios.map((u) => ({
           id: u.id,
           name: u.nome ?? u.email ?? u.id,
           email: u.email ?? "",
           role: normalizeRole(u.role),
+          financeiroDelegado: u.financeiro_delegado ?? false,
+          equipeDelegado: u.equipe_delegado ?? false,
+          metasDelegado: u.metas_delegado ?? false,
         })),
       };
 
@@ -673,14 +673,14 @@ export default function UltraAdmin() {
   );
 
   const handleInviteUser = useCallback(
-    async (payload: { name: string; email: string; role: "admin" | "coordenador" | "user" }) => {
+    async (payload: { firstName: string; lastName: string; email: string; role: "admin" | "coordenador" | "user" }) => {
       if (!detail) return;
       try {
         await edgeFetch("ultra-admin-usuarios", {
           body: {
             empresa_id: detail.id,
             email: payload.email,
-            nome: payload.name,
+            nome: [payload.firstName, payload.lastName].filter(Boolean).join(" "),
             role: payload.role,
           },
         });
@@ -695,6 +695,62 @@ export default function UltraAdmin() {
     },
     [detail, fetchDetail]
   );
+
+  // As RPCs set_*_delegado se auto-autorizam pra ultra_admin (is_ultra_admin()
+  // dentro da função, SECURITY DEFINER) — chamar direto pelo cliente do
+  // usuário em vez de rotear pela edge function ultra-admin-usuarios (que usa
+  // service_role e não tem essa ação hoje). Fecha o bug em que só o admin da
+  // própria empresa conseguia mexer nesse toggle, nunca o ultra-admin.
+  const handleSetFinanceiroDelegado = useCallback(async (userId: string, delegado: boolean) => {
+    try {
+      const { error } = await callUntypedRpc("set_financeiro_delegado", { p_user_id: userId, p_delegado: delegado });
+      if (error) throw error;
+      setDetail((prev) =>
+        prev
+          ? {
+              ...prev,
+              usuarios: prev.usuarios.map((u) => (u.id === userId ? { ...u, financeiroDelegado: delegado } : u)),
+            }
+          : prev
+      );
+      toast.success(delegado ? "Acesso financeiro concedido" : "Acesso financeiro revogado");
+    } catch (err) {
+      reportInvokeError(err, "set_financeiro_delegado");
+      toast.error("Erro ao salvar", { description: getSafeErrorMessage(err, "Tente de novo em instantes.") });
+    }
+  }, []);
+
+  const handleSetEquipeDelegado = useCallback(async (userId: string, delegado: boolean) => {
+    try {
+      const { error } = await callUntypedRpc("set_equipe_delegado", { p_user_id: userId, p_delegado: delegado });
+      if (error) throw error;
+      setDetail((prev) =>
+        prev
+          ? { ...prev, usuarios: prev.usuarios.map((u) => (u.id === userId ? { ...u, equipeDelegado: delegado } : u)) }
+          : prev
+      );
+      toast.success(delegado ? "Acesso de equipe concedido" : "Acesso de equipe revogado");
+    } catch (err) {
+      reportInvokeError(err, "set_equipe_delegado");
+      toast.error("Erro ao salvar", { description: getSafeErrorMessage(err, "Tente de novo em instantes.") });
+    }
+  }, []);
+
+  const handleSetMetasDelegado = useCallback(async (userId: string, delegado: boolean) => {
+    try {
+      const { error } = await callUntypedRpc("set_metas_delegado", { p_user_id: userId, p_delegado: delegado });
+      if (error) throw error;
+      setDetail((prev) =>
+        prev
+          ? { ...prev, usuarios: prev.usuarios.map((u) => (u.id === userId ? { ...u, metasDelegado: delegado } : u)) }
+          : prev
+      );
+      toast.success(delegado ? "Acesso a metas concedido" : "Acesso a metas revogado");
+    } catch (err) {
+      reportInvokeError(err, "set_metas_delegado");
+      toast.error("Erro ao salvar", { description: getSafeErrorMessage(err, "Tente de novo em instantes.") });
+    }
+  }, []);
 
   const handleResendInvite = useCallback(
     async (user: ManagedUser) => {
@@ -822,7 +878,7 @@ export default function UltraAdmin() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ nome: "", cnpj: "", ownerEmail: "", ownerNome: "" });
+  const [form, setForm] = useState({ nome: "", ownerEmail: "" });
 
   const [editCompanyOpen, setEditCompanyOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
@@ -837,7 +893,7 @@ export default function UltraAdmin() {
     maxUsuariosOverride: string;
   }>({ nome: "", cnpj: "", status: "active", plano: "starter", maxProjetosOverride: "", maxUsuariosOverride: "" });
 
-  const resetForm = () => setForm({ nome: "", cnpj: "", ownerEmail: "", ownerNome: "" });
+  const resetForm = () => setForm({ nome: "", ownerEmail: "" });
 
   const handleCreateEmpresa = useCallback(async () => {
     if (!form.nome.trim() || !form.ownerEmail.trim()) {
@@ -854,9 +910,7 @@ export default function UltraAdmin() {
         method: "POST",
         body: {
           nome: form.nome.trim(),
-          cnpj: form.cnpj.trim() || undefined,
           owner_email: form.ownerEmail.trim(),
-          owner_nome: form.ownerNome.trim() || undefined,
         },
       })) as { warning?: string | null };
 
@@ -1022,6 +1076,9 @@ export default function UltraAdmin() {
           canManage
           onInvite={handleInviteUser}
           onUpdate={handleUpdateUser}
+          onSetFinanceiroDelegado={handleSetFinanceiroDelegado}
+          onSetEquipeDelegado={handleSetEquipeDelegado}
+          onSetMetasDelegado={handleSetMetasDelegado}
           onDelete={handleDeleteUser}
           onResendInvite={handleResendInvite}
           onCancelInvite={handleCancelInvite}
@@ -1567,15 +1624,6 @@ export default function UltraAdmin() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="empresa-cnpj">CNPJ (opcional)</Label>
-              <Input
-                id="empresa-cnpj"
-                value={form.cnpj}
-                onChange={(e) => setForm((f) => ({ ...f, cnpj: e.target.value }))}
-                placeholder="00.000.000/0000-00"
-              />
-            </div>
-            <div className="space-y-1.5">
               <Label htmlFor="owner-email">E-mail do dono/admin *</Label>
               <Input
                 id="owner-email"
@@ -1583,15 +1631,6 @@ export default function UltraAdmin() {
                 value={form.ownerEmail}
                 onChange={(e) => setForm((f) => ({ ...f, ownerEmail: e.target.value }))}
                 placeholder="dono@empresa.com.br"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="owner-nome">Nome do dono (opcional)</Label>
-              <Input
-                id="owner-nome"
-                value={form.ownerNome}
-                onChange={(e) => setForm((f) => ({ ...f, ownerNome: e.target.value }))}
-                placeholder="Como aparecerá no convite"
               />
             </div>
           </div>

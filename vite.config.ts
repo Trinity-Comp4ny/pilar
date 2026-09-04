@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import path from "path";
@@ -13,6 +13,24 @@ const SENTRY_RELEASE = process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.SENTRY_R
 // Vercel (build local), cai em "development". Ver ADR 0036.
 const SENTRY_ENVIRONMENT = process.env.VERCEL_ENV ?? process.env.SENTRY_ENV ?? "development";
 
+// Escreve o SHA do deploy num arquivo que o app busca sem cache pra saber que
+// já existe versão mais nova que a do bundle carregado (ver useNovaVersao).
+// Sem isto, uma aba aberta segue rodando bundle antigo por dias: foi assim que
+// uma conta ficou batendo 403 depois de uma migration de hardening.
+function emitVersionJson(): Plugin {
+  return {
+    name: "pilar-version-json",
+    apply: "build",
+    generateBundle() {
+      this.emitFile({
+        type: "asset",
+        fileName: "version.json",
+        source: JSON.stringify({ release: SENTRY_RELEASE }),
+      });
+    },
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
@@ -21,6 +39,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    emitVersionJson(),
     // Sourcemap upload só roda com token presente (build local/dev nunca tem).
     // Sem authToken o plugin não falha o build, só pula o upload — mas manter o
     // guard explícito evita rodar em `vite dev`/testes onde não faz sentido.
@@ -88,7 +107,10 @@ export default defineConfig(({ mode }) => ({
     globals: true,
     environment: "jsdom",
     setupFiles: "./src/test/setup.ts",
-    exclude: ["node_modules", "dist", "e2e/**", "tests/**", ".next", ".git", ".claude/**"],
+    // supabase/functions roda em Deno (deno test, `npm run test:functions`), não em
+    // Vitest: os arquivos .test.ts de lá importam módulo remoto (https://) e usam API
+    // só do Deno, que o loader ESM do Node não resolve.
+    exclude: ["node_modules", "dist", "e2e/**", "tests/**", ".next", ".git", ".claude/**", "supabase/functions/**"],
     // Config mínima de ambiente para a suíte. `src/lib/env.ts` valida no import e
     // aborta sem URL/chave do Supabase, e qualquer teste que importe `supabase.ts`
     // (a maioria, transitivamente) morre sem isto. Na máquina do dev passava por
