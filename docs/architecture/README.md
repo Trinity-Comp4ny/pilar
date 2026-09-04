@@ -41,6 +41,8 @@ Um ADR documenta uma decisão técnica relevante, seu contexto e consequências.
 | [0035](./adr/0035-ledger-de-tokens-fonte-unica-de-uso-de-ia.md)                  | Ledger append-only (`ai_token_ledger`) como fonte única de tokens de IA; saldo por empresa cacheado só por trigger; débito idempotente via RPC; `ai_usage`/`ai_usage_logs` serão absorvidas   |
 | [0033](./adr/0033-resiliencia-de-integracao-com-api-externa.md)                  | CEP passa a ter proxy via edge function com fallback entre provedores; toda resposta de API externa (CEP, clima) valida schema Zod na fronteira e reporta ao Sentry se o formato mudar  |
 | [0034](./adr/0034-financeiro-delegado-eixo-separado-do-role.md)                  | Acesso a dinheiro vira eixo separado do papel: `financeiro_delegado` (boolean, sem JSONB) + papel `coordenador` reaproveitado; folha/PII só admin; complementa o 0029                   |
+| [0036](./adr/0036-sentry-cron-monitoring-profiling-deploy-tracking.md)        | Ativar Cron Monitoring, profiling e deploy tracking no Sentry; complementa o 0027 |
+| [0037](./adr/0037-inicio-e-painel-de-gestao-nao-atalho.md)                   | `/inicio` é painel de gestão servido por uma RPC agregada (`get_painel_gestao`), sem nenhum dado financeiro (o eixo é comercial/entrega/produtividade); indicador histórico exige baseline imutável (`data_previsao_original`) |
 
 ## Guias de reúso
 

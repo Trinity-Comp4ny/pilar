@@ -7829,6 +7829,7 @@ export type Database = {
           titulo: string
         }[]
       }
+      get_painel_gestao: { Args: never; Returns: Json }
       get_projeto_rentabilidade_detalhe: {
         Args: { p_projeto_id: string }
         Returns: Json
