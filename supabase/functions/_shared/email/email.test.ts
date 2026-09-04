@@ -1,0 +1,301 @@
+// Roda com: deno test --no-check --allow-env --allow-read supabase/functions/_shared/email
+//
+// O que importa aqui: (1) nenhum dado de entrada vira HTML sem escape, em NENHUM
+// template; (2) o client falha alto sem chave e respeita dry-run; (3) remetente e
+// reply-to por classe; (4) text/plain sai do HTML; (5) nenhum HTML de e-mail fora do módulo.
+
+import {
+  assert,
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+} from "https://deno.land/std@0.168.0/testing/asserts.ts";
+
+Deno.env.set("EMAIL_DRY_RUN", "true");
+Deno.env.set("APP_URL", "https://app.test");
+Deno.env.set("RESEND_FROM", "Pilar <no-reply@test.dev>");
+Deno.env.delete("RESEND_REPLY_TO");
+
+const { escapeHtml, html, htmlToText, multiline, raw } = await import("./html.ts");
+const { fromAddress, resolveFrom, resolveReplyTo, sendEmail } = await import("./client.ts");
+const T = await import("./index.ts");
+const N = await import("./templates/notificacoes.ts");
+
+const XSS = `<img src=x onerror="alert(1)">`;
+const XSS_ESCAPED = escapeHtml(XSS);
+
+// ---------------------------------------------------------------------------
+// html.ts
+// ---------------------------------------------------------------------------
+
+Deno.test("escapeHtml escapa os 5 caracteres", () => {
+  assertEquals(escapeHtml(`<a href="x">'&'</a>`), "&lt;a href=&quot;x&quot;&gt;&#39;&amp;&#39;&lt;/a&gt;");
+});
+
+Deno.test("html`` escapa interpolação comum e preserva Html", () => {
+  const out = html`<p>${"<b>"}${raw("<i>ok</i>")}</p>`.value;
+  assertEquals(out, "<p>&lt;b&gt;<i>ok</i></p>");
+});
+
+Deno.test("multiline escapa antes de trocar quebra de linha", () => {
+  assertEquals(multiline("a<b\nc").value, "a&lt;b<br/>c");
+});
+
+Deno.test("htmlToText extrai texto e links legíveis", () => {
+  const text = htmlToText(
+    `<html><head><style>p{}</style></head><body><p>Olá, <strong>Ana</strong>.</p><a href="https://x.dev/a">Abrir</a><br/>fim &amp; tal</body></html>`
+  );
+  assertEquals(text, "Olá, Ana.\nAbrir: https://x.dev/a\nfim & tal");
+});
+
+// ---------------------------------------------------------------------------
+// Templates: nenhum campo entra sem escape
+// ---------------------------------------------------------------------------
+
+const empresaX = { nome: XSS, logoUrl: null };
+
+const casos: Array<[string, () => { subject: string; html: string }]> = [
+  ["convite", () => T.templateConviteUsuario("https://l", XSS)],
+  ["recuperacao", () => T.templateRecuperacaoSenha(`https://l?x=${XSS}`)],
+  ["magic", () => T.templateMagicLink(`https://l?x=${XSS}`)],
+  ["confirmacao", () => T.templateConfirmacaoCadastro(`https://l?x=${XSS}`)],
+  ["mensagem-manual", () => T.templateMensagemManual({ assunto: XSS, mensagem: `linha1\n${XSS}`, empresa: empresaX })],
+  [
+    "cobranca",
+    () =>
+      T.templateCobrancaDireta({
+        clienteNome: XSS,
+        empresa: empresaX,
+        descricao: XSS,
+        valorFormatado: XSS,
+        dataVencimento: XSS,
+        vencida: true,
+        pixChave: XSS,
+        pixInstrucoes: XSS,
+      }),
+  ],
+  [
+    "portal",
+    () =>
+      T.templateAcessoPortalCliente({
+        nomeCliente: XSS,
+        email: XSS,
+        senha: XSS,
+        loginUrl: "https://l",
+        empresa: empresaX,
+      }),
+  ],
+  [
+    "proposta",
+    () => T.templatePropostaEnvio({ nomeCliente: XSS, tituloProposta: XSS, empresa: empresaX, mensagem: XSS }),
+  ],
+  ["trial", () => T.templateTrialAviso({ empresaNome: XSS, daysLeft: 3, billingUrl: "https://l" })],
+  [
+    "lgpd",
+    () =>
+      T.templateLgpdExclusaoDados({
+        adminNome: XSS,
+        empresaNome: XSS,
+        solicitanteEmail: XSS,
+        solicitanteNome: XSS,
+        motivo: XSS,
+        requestedAt: XSS,
+        adminPanelUrl: "https://l",
+        requestId: XSS,
+      }),
+  ],
+  [
+    "notificacoes",
+    () =>
+      T.templateNotificacoes({
+        nome: XSS,
+        modo: "digest",
+        totalOculto: 2,
+        gerenciarUrl: "https://l/g",
+        sinoUrl: "https://l/s",
+        itens: [
+          {
+            categoria: "financeiro",
+            severidade: "high",
+            titulo: XSS,
+            mensagem: XSS,
+            url: "https://l/i",
+            criadoEm: new Date().toISOString(),
+          },
+        ],
+      }),
+  ],
+];
+
+for (const [nome, build] of casos) {
+  Deno.test(`template ${nome}: escapa todo dado de entrada`, () => {
+    const { subject, html: out } = build();
+    assert(!out.includes(XSS), `HTML cru vazou em ${nome}`);
+    assertStringIncludes(out, XSS_ESCAPED);
+    assert(subject.length > 0);
+    assertStringIncludes(out, "<!DOCTYPE html>");
+    assertStringIncludes(out, 'color-scheme" content="light only"');
+  });
+}
+
+Deno.test("template escritório mostra header da empresa e 'via Pilar'", () => {
+  const { html: out } = T.templateCobrancaDireta({
+    clienteNome: "A",
+    empresa: { nome: "Meridiana Engenharia", logoUrl: null },
+    descricao: "d",
+    valorFormatado: "R$ 1,00",
+    dataVencimento: "01/01/2026",
+    vencida: false,
+  });
+  assertStringIncludes(out, "Meridiana Engenharia");
+  assertStringIncludes(out, ">ME<"); // iniciais no lugar do logo
+  assertStringIncludes(out, "via Pilar");
+});
+
+Deno.test("template escritório com logo usa <img> do logo da empresa", () => {
+  const { html: out } = T.templatePropostaEnvio({
+    nomeCliente: "A",
+    tituloProposta: "P",
+    empresa: { nome: "X", logoUrl: "https://cdn.test/logo.png" },
+  });
+  assertStringIncludes(out, 'src="https://cdn.test/logo.png"');
+});
+
+// ---------------------------------------------------------------------------
+// Notificações: agrupamento, assunto, limite
+// ---------------------------------------------------------------------------
+
+type NotifItem = import("./templates/notificacoes.ts").NotifItem;
+const item = (categoria: string, severidade = "medium", titulo = "t"): NotifItem => ({
+  categoria,
+  severidade,
+  titulo,
+  mensagem: null,
+  url: "https://l",
+  criadoEm: new Date().toISOString(),
+});
+
+Deno.test("agruparPorCategoria segue a ordem fixa e junta desconhecidas em sistema", () => {
+  const g = N.agruparPorCategoria([item("tarefa"), item("obra"), item("financeiro"), item("xyz"), item("obra")]);
+  assertEquals(
+    g.map((x) => [x.categoria, x.itens.length]),
+    [
+      ["financeiro", 1],
+      ["obra", 2],
+      ["tarefa", 1],
+      ["sistema", 1],
+    ]
+  );
+});
+
+Deno.test("assunto: imediato com 1 item usa o título; digest conta total incluindo ocultos", () => {
+  assertEquals(
+    N.assuntoNotificacoes({
+      modo: "imediato",
+      itens: [item("financeiro", "high", "Orçamento excedido")],
+      totalOculto: 0,
+    }),
+    "Orçamento excedido"
+  );
+  assertEquals(
+    N.assuntoNotificacoes({ modo: "imediato", itens: [item("financeiro"), item("obra")], totalOculto: 0 }),
+    "2 alertas importantes no Pilar"
+  );
+  assertEquals(
+    N.assuntoNotificacoes({ modo: "digest", itens: [item("financeiro")], totalOculto: 4 }),
+    "Seu resumo do Pilar: 5 pendências"
+  );
+});
+
+Deno.test("severidadeTone: high/critical negativo, medium aviso, low neutro", () => {
+  assertEquals(N.severidadeTone("critical"), "negative");
+  assertEquals(N.severidadeTone("high"), "negative");
+  assertEquals(N.severidadeTone("medium"), "warning");
+  assertEquals(N.severidadeTone("low"), "neutral");
+});
+
+Deno.test("digest mostra 'E mais N' quando há ocultos e link de gerenciar", () => {
+  const { html: out } = T.templateNotificacoes({
+    nome: null,
+    modo: "digest",
+    totalOculto: 5,
+    gerenciarUrl: "https://l/gerenciar",
+    sinoUrl: "https://l/sino",
+    itens: [item("projeto")],
+  });
+  assertStringIncludes(out, "E mais");
+  assertStringIncludes(out, "https://l/gerenciar");
+  assertStringIncludes(out, "Gerenciar notificações por e-mail");
+});
+
+// ---------------------------------------------------------------------------
+// client.ts
+// ---------------------------------------------------------------------------
+
+Deno.test("fromAddress extrai o endereço", () => {
+  assertEquals(fromAddress("Pilar <no-reply@test.dev>"), "no-reply@test.dev");
+  assertEquals(fromAddress("no-reply@test.dev"), "no-reply@test.dev");
+});
+
+Deno.test("resolveFrom: escritório vira '<Empresa> via Pilar' no mesmo endereço", () => {
+  assertEquals(resolveFrom({ classe: "plataforma" }), "Pilar <no-reply@test.dev>");
+  assertEquals(
+    resolveFrom({ classe: "escritorio", empresa: { nome: 'Meridiana "Eng" <x>' } }),
+    '"Meridiana Eng x via Pilar" <no-reply@test.dev>'
+  );
+});
+
+Deno.test("resolveReplyTo: explícito > e-mail da empresa > padrão da plataforma (vazio = undefined)", () => {
+  assertEquals(
+    resolveReplyTo({ classe: "escritorio", empresa: { nome: "X", email: "contato@x.dev" } }),
+    "contato@x.dev"
+  );
+  assertEquals(
+    resolveReplyTo({ classe: "escritorio", empresa: { nome: "X", email: "contato@x.dev" }, replyTo: "outro@x.dev" }),
+    "outro@x.dev"
+  );
+  assertEquals(resolveReplyTo({ classe: "plataforma" }), undefined);
+});
+
+Deno.test("sendEmail em dry-run não envia e devolve skipped", async () => {
+  const r = await sendEmail({ classe: "plataforma", tipo: "t", to: "a@b.c", subject: "s", html: "<p>x</p>" });
+  assertEquals(r, { ok: false, skipped: "dry_run" });
+});
+
+Deno.test("sendEmail escritório sem empresa lança", async () => {
+  await assertRejects(
+    () => sendEmail({ classe: "escritorio", tipo: "t", to: "a@b.c", subject: "s", html: "<p>x</p>" }),
+    Error,
+    "exige `empresa`"
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Fronteira: nenhum HTML de e-mail fora do módulo (ADR 0039)
+// ---------------------------------------------------------------------------
+
+Deno.test({
+  name: "nenhuma edge function monta HTML de e-mail ou chama o Resend fora de _shared/email/",
+  permissions: { read: true, env: true },
+  fn: async () => {
+    const root = new URL("../../", import.meta.url);
+    const ofensores: string[] = [];
+    async function walk(dir: URL) {
+      for await (const e of Deno.readDir(dir)) {
+        const p = new URL(e.name + (e.isDirectory ? "/" : ""), dir);
+        if (e.isDirectory) {
+          if (e.name === "email" && dir.pathname.endsWith("/_shared/")) continue;
+          await walk(p);
+        } else if (e.name.endsWith(".ts") && !e.name.endsWith(".test.ts")) {
+          const src = await Deno.readTextFile(p);
+          const isHealth = p.pathname.endsWith("/_shared/healthcheck.ts");
+          if (/<!DOCTYPE html|<html[\s>]/i.test(src) || (!isHealth && src.includes("api.resend.com/emails"))) {
+            ofensores.push(p.pathname.split("/functions/")[1]);
+          }
+        }
+      }
+    }
+    await walk(root);
+    assertEquals(ofensores, [], `HTML de e-mail fora do módulo: ${ofensores.join(", ")}`);
+  },
+});
