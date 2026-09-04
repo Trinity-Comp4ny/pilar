@@ -8,7 +8,17 @@ import {
   formatTimeAgo,
   toneSeveridade,
   SEVERIDADE_TONE,
+  emailPadraoCategoria,
 } from "./notificacoes";
+
+describe("emailPadraoCategoria", () => {
+  it("liga financeiro, projeto, disciplina e obra; desliga tarefa e desconhecidas", () => {
+    expect(["financeiro", "projeto", "disciplina", "obra"].every(emailPadraoCategoria)).toBe(true);
+    expect(emailPadraoCategoria("tarefa")).toBe(false);
+    expect(emailPadraoCategoria("sistema")).toBe(false);
+    expect(emailPadraoCategoria("qualquer")).toBe(false);
+  });
+});
 
 describe("rotuloCategoria", () => {
   it("tem rótulo para toda categoria conhecida", () => {

@@ -287,6 +287,41 @@ export type Database = {
           },
         ]
       }
+      ai_token_limite_usuario: {
+        Row: {
+          created_at: string
+          criado_por: string | null
+          empresa_id: string
+          limite_mensal: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          criado_por?: string | null
+          empresa_id: string
+          limite_mensal: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string | null
+          empresa_id?: string
+          limite_mensal?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_token_limite_usuario_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_token_saldo: {
         Row: {
           empresa_id: string
@@ -311,6 +346,53 @@ export type Database = {
             foreignKeyName: "ai_token_saldo_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: true
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_token_solicitacao: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          limite_sugerido: number | null
+          mensagem: string | null
+          novo_limite: number | null
+          resolvido_em: string | null
+          resolvido_por: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          limite_sugerido?: number | null
+          mensagem?: string | null
+          novo_limite?: number | null
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          limite_sugerido?: number | null
+          mensagem?: string | null
+          novo_limite?: number | null
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_token_solicitacao_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
@@ -1618,6 +1700,86 @@ export type Database = {
           },
         ]
       }
+      email_envios: {
+        Row: {
+          assunto: string
+          classe: string
+          created_at: string
+          destinatario: string
+          empresa_id: string | null
+          erro: string | null
+          id: string
+          idempotency_key: string | null
+          referencia_id: string | null
+          referencia_tipo: string | null
+          resend_id: string | null
+          status: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          assunto: string
+          classe: string
+          created_at?: string
+          destinatario: string
+          empresa_id?: string | null
+          erro?: string | null
+          id?: string
+          idempotency_key?: string | null
+          referencia_id?: string | null
+          referencia_tipo?: string | null
+          resend_id?: string | null
+          status: string
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          assunto?: string
+          classe?: string
+          created_at?: string
+          destinatario?: string
+          empresa_id?: string | null
+          erro?: string | null
+          id?: string
+          idempotency_key?: string | null
+          referencia_id?: string | null
+          referencia_tipo?: string | null
+          resend_id?: string | null
+          status?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_envios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_supressoes: {
+        Row: {
+          created_at: string
+          detalhe: string | null
+          email: string
+          motivo: string
+        }
+        Insert: {
+          created_at?: string
+          detalhe?: string | null
+          email: string
+          motivo: string
+        }
+        Update: {
+          created_at?: string
+          detalhe?: string | null
+          email?: string
+          motivo?: string
+        }
+        Relationships: []
+      }
       empresa_owners_pending: {
         Row: {
           company_name: string
@@ -2805,7 +2967,7 @@ export type Database = {
         Row: {
           categoria: string
           created_at: string
-          email: boolean
+          email: boolean | null
           empresa_id: string
           id: string
           in_app: boolean
@@ -2815,7 +2977,7 @@ export type Database = {
         Insert: {
           categoria: string
           created_at?: string
-          email?: boolean
+          email?: boolean | null
           empresa_id: string
           id?: string
           in_app?: boolean
@@ -2825,7 +2987,7 @@ export type Database = {
         Update: {
           categoria?: string
           created_at?: string
-          email?: boolean
+          email?: boolean | null
           empresa_id?: string
           id?: string
           in_app?: boolean
@@ -2847,6 +3009,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "notificacao_preferencias_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       notificacoes: {
@@ -2855,6 +3024,7 @@ export type Database = {
           categoria: string
           created_at: string
           destinatario_id: string
+          email_enviado_em: string | null
           empresa_id: string
           expires_at: string | null
           id: string
@@ -2872,6 +3042,7 @@ export type Database = {
           categoria: string
           created_at?: string
           destinatario_id: string
+          email_enviado_em?: string | null
           empresa_id: string
           expires_at?: string | null
           id?: string
@@ -2889,6 +3060,7 @@ export type Database = {
           categoria?: string
           created_at?: string
           destinatario_id?: string
+          email_enviado_em?: string | null
           empresa_id?: string
           expires_at?: string | null
           id?: string
@@ -2908,6 +3080,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificacoes_destinatario_id_fkey"
+            columns: ["destinatario_id"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "notificacoes_empresa_id_fkey"
@@ -4278,6 +4457,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pessoas_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -6429,6 +6615,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "timesheet_lancamentos_aprovado_por_fkey"
+            columns: ["aprovado_por"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "timesheet_lancamentos_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
@@ -6469,6 +6662,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timesheet_lancamentos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -6827,6 +7027,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "pessoas_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       projetos_safe: {
@@ -7104,6 +7311,26 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ai_token_ledger_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_uso_tokens_usuario_ciclo: {
+        Row: {
+          empresa_id: string | null
+          limite_mensal: number | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          solicitacao_pendente: boolean | null
+          tokens_ciclo: number | null
+          user_id: string | null
+          user_nome: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
@@ -7447,6 +7674,7 @@ export type Database = {
         Returns: Json
       }
       campo_verify_session: { Args: { p_token: string }; Returns: Json }
+      can_manage_equipe: { Args: never; Returns: boolean }
       can_view_financeiro: { Args: never; Returns: boolean }
       can_view_folha: { Args: never; Returns: boolean }
       check_convite_rate_limit: {
@@ -7621,8 +7849,9 @@ export type Database = {
         Returns: string
       }
       gate_tokens: {
-        Args: { p_empresa_id: string }
+        Args: { p_empresa_id: string; p_user_id?: string }
         Returns: {
+          bloqueado_motivo: string
           cota_ciclo: number
           saldo_comprado: number
           saldo_plano: number
@@ -7913,6 +8142,32 @@ export type Database = {
       mfa_consume_backup_code: { Args: { p_code: string }; Returns: boolean }
       mfa_generate_backup_codes: { Args: never; Returns: string[] }
       my_empresa_id: { Args: never; Returns: string }
+      notificacao_email_padrao: {
+        Args: { p_categoria: string }
+        Returns: boolean
+      }
+      notificacoes_email_disparar: {
+        Args: { p_modo: string }
+        Returns: undefined
+      }
+      notificacoes_email_imediato_monitored: { Args: never; Returns: undefined }
+      notificacoes_email_semanal_monitored: { Args: never; Returns: undefined }
+      notificacoes_pendentes_email: {
+        Args: { p_modo: string }
+        Returns: {
+          categoria: string
+          created_at: string
+          destinatario_id: string
+          email: string
+          empresa_id: string
+          link: string
+          mensagem: string
+          nome: string
+          notificacao_id: string
+          severidade: string
+          titulo: string
+        }[]
+      }
       notificar: {
         Args: {
           p_categoria: string
@@ -8029,6 +8284,14 @@ export type Database = {
       }
       request_data_deletion: { Args: { p_motivo?: string }; Returns: string }
       request_data_export: { Args: never; Returns: Json }
+      resolver_solicitacao_tokens: {
+        Args: {
+          p_aprovar: boolean
+          p_novo_limite?: number
+          p_solicitacao_id: string
+        }
+        Returns: undefined
+      }
       rpc_atualizar_status_atrasados: { Args: never; Returns: Json }
       rpc_calcular_wip: {
         Args: { p_ano: number; p_mes: number }
@@ -8280,6 +8543,10 @@ export type Database = {
       set_painel_layout: { Args: { p_layout: Json }; Returns: undefined }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      solicitar_mais_tokens: {
+        Args: { p_limite_sugerido?: number; p_mensagem?: string }
+        Returns: string
+      }
       start_impersonation: {
         Args: { p_ip?: string; p_target_role: string; p_user_agent?: string }
         Returns: string

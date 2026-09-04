@@ -54,3 +54,9 @@ backups/
 # sem barra inicial: cobre o graphify-out/ da raiz E o cache de AST que ele
 # cria dentro de src/graphify-out/ quando roda escopado numa subpasta
 graphify-out/
+
+# Preview local dos templates de e-mail (npm run email:preview)
+.email-preview/
+
+# Deno 2.x local gera lockfile v5; o CI e o runtime do Supabase rodam Deno 1.45
+deno.lock

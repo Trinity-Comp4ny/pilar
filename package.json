@@ -44,9 +44,10 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:functions": "deno test --no-check --allow-env supabase/functions",
+    "test:functions": "deno test --no-check --allow-env --allow-read supabase/functions",
     "prepare": "husky || true",
-    "email:dev": "email dev --dir supabase/functions/_shared/emails"
+    "email:dev": "email dev --dir supabase/functions/_shared/emails",
+    "email:preview": "deno run --allow-read --allow-write --allow-env scripts/email-preview.ts"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",

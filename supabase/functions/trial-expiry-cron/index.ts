@@ -17,7 +17,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from "../_shared/logger.ts";
 import { withSentry } from "../_shared/sentry.ts";
-import { sendEmail } from "../_shared/email.ts";
+import { sendEmail, templateTrialAviso } from "../_shared/email/index.ts";
 
 const log = createLogger("trial-expiry-cron");
 
@@ -44,63 +44,6 @@ interface EmpresaInfo {
 interface ProfileRow {
   email: string | null;
   nome: string | null;
-}
-
-function trialWarningEmailHtml(params: {
-  empresaNome: string;
-  daysLeft: number;
-  billingUrl: string;
-}): string {
-  const { empresaNome, daysLeft, billingUrl } = params;
-  const urgency =
-    daysLeft === 1
-      ? "⚠️ <strong>Último dia!</strong> Seu trial expira amanhã."
-      : `Seu trial expira em <strong>${daysLeft} dias</strong>.`;
-
-  return `<!DOCTYPE html>
-<html lang="pt-BR">
-<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/></head>
-<body style="margin:0;padding:0;background-color:#F5F5F5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F5F5F5">
-<tr><td align="center" style="padding:48px 16px 64px">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background-color:#FFFFFF;border:1px solid #E5E5E5;border-radius:16px;overflow:hidden">
-  <tr><td bgcolor="#A4EC86" style="background-color:#A4EC86;height:5px;line-height:1px;font-size:1px">&nbsp;</td></tr>
-  <tr><td style="padding:32px 40px 28px">
-    <table role="presentation" border="0" cellpadding="0" cellspacing="0">
-      <tr>
-        <td width="44" height="44" bgcolor="#0A0A0A" align="center" valign="middle" style="background-color:#0A0A0A;width:44px;height:44px;border-radius:10px;text-align:center;vertical-align:middle">
-          <span style="color:#A4EC86;font-size:24px;font-weight:900;line-height:44px;display:inline-block;vertical-align:middle">P</span>
-        </td>
-        <td width="14" style="width:14px">&nbsp;</td>
-        <td valign="middle">
-          <span style="font-size:20px;font-weight:700;color:#0A0A0A;letter-spacing:-0.025em">Pilar</span>
-          <span style="font-size:10px;font-weight:500;color:#A3A3A3;letter-spacing:0.18em;margin-left:8px;text-transform:uppercase">SOFT</span>
-        </td>
-      </tr>
-    </table>
-  </td></tr>
-  <tr><td style="padding:48px 40px 44px">
-    <p style="margin:0;font-size:34px;font-weight:600;color:#0A0A0A;letter-spacing:-0.025em;line-height:1.15">Seu trial está <span style="color:#0A0A0A;font-weight:600;background-color:#A4EC86;padding:2px 8px;border-radius:4px">expirando</span></p>
-    <p style="margin:20px 0 0;font-size:16px;line-height:1.65;color:#404040">${urgency}</p>
-    <p style="margin:12px 0 0;font-size:16px;line-height:1.65;color:#404040">A empresa <strong>${empresaNome}</strong> tem acesso ao Pilar até o fim do período de trial. Para continuar usando sem interrupção, assine um plano antes do vencimento.</p>
-    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin-top:32px">
-      <tr>
-        <td align="center" valign="middle" bgcolor="#0A0A0A" style="background-color:#0A0A0A;border-radius:100px;padding:16px 40px">
-          <a href="${billingUrl}" target="_blank" style="color:#FFFFFF;font-weight:700;font-size:13px;letter-spacing:0.1em;text-decoration:none;text-transform:uppercase;display:inline-block;line-height:18px">ASSINAR AGORA</a>
-        </td>
-      </tr>
-    </table>
-    <p style="margin:32px 0 0;font-size:14px;line-height:1.6;color:#737373">Dúvidas? Responda este email ou acesse nossa central de ajuda.</p>
-  </td></tr>
-  <tr><td bgcolor="#FAFAFA" style="background-color:#FAFAFA;padding:24px 40px;border-top:1px solid #F0F0F0">
-    <p style="margin:0;font-size:12px;line-height:1.6;color:#737373">Você recebeu este email por ser administrador da empresa ${empresaNome} no Pilar.</p>
-    <span style="font-size:11px;color:#A3A3A3;letter-spacing:0.14em;text-transform:uppercase;font-weight:600">pilarsoft.com.br</span>
-  </td></tr>
-</table>
-</td></tr>
-</table>
-</body>
-</html>`;
 }
 
 serve(
@@ -135,10 +78,7 @@ serve(
     } else if (toExpire && toExpire.length > 0) {
       const ids = toExpire.map((r) => r.id);
 
-      const { error: updateErr } = await admin
-        .from("pilar_subscriptions")
-        .update({ status: "expired" })
-        .in("id", ids);
+      const { error: updateErr } = await admin.from("pilar_subscriptions").update({ status: "expired" }).in("id", ids);
 
       if (updateErr) {
         log.error("falha ao marcar trials como expired", updateErr, { count: ids.length });
@@ -189,13 +129,15 @@ serve(
       const windowStart = new Date(now.getTime() + (window.days - 1) * 24 * 60 * 60 * 1000).toISOString();
       const windowEnd = new Date(now.getTime() + (window.days + 1) * 24 * 60 * 60 * 1000).toISOString();
 
-      const { data: toWarn, error: warnQueryErr } = await admin
+      const { data: toWarn, error: warnQueryErr } = (await admin
         .from("pilar_subscriptions")
-        .select("id, empresa_id, trial_ends_at, trial_warning_7d_sent_at, trial_warning_3d_sent_at, trial_warning_1d_sent_at")
+        .select(
+          "id, empresa_id, trial_ends_at, trial_warning_7d_sent_at, trial_warning_3d_sent_at, trial_warning_1d_sent_at"
+        )
         .eq("status", "trialing")
         .gte("trial_ends_at", windowStart)
         .lte("trial_ends_at", windowEnd)
-        .is(window.column, null) as { data: SubscriptionRow[] | null; error: unknown };
+        .is(window.column, null)) as { data: SubscriptionRow[] | null; error: unknown };
 
       if (warnQueryErr) {
         log.error(`falha ao buscar trials para aviso ${window.days}d`, warnQueryErr as Error);
@@ -207,38 +149,33 @@ serve(
       for (const sub of toWarn) {
         try {
           // Buscar nome da empresa
-          const { data: empresa } = await admin
+          const { data: empresa } = (await admin
             .from("empresas")
             .select("nome")
             .eq("id", sub.empresa_id)
-            .maybeSingle() as { data: EmpresaInfo | null; error: unknown };
+            .maybeSingle()) as { data: EmpresaInfo | null; error: unknown };
 
           const empresaNome = empresa?.nome ?? "sua empresa";
 
           // Buscar emails dos admins da empresa
-          const { data: admins } = await admin
+          const { data: admins } = (await admin
             .from("profiles")
             .select("email, nome")
             .eq("empresa_id", sub.empresa_id)
-            .in("role", ["admin", "ultra_admin"])
-            .is("deleted_at", null) as { data: ProfileRow[] | null; error: unknown };
+            // profiles não tem deleted_at: o filtro antigo por essa coluna fazia o
+            // PostgREST devolver erro e a lista vir vazia, então nenhum aviso de trial saía.
+            .in("role", ["owner", "admin", "ultra_admin"])) as { data: ProfileRow[] | null; error: unknown };
 
-          const recipients = (admins ?? [])
-            .map((p) => p.email)
-            .filter((e): e is string => !!e);
+          const recipients = (admins ?? []).map((p) => p.email).filter((e): e is string => !!e);
 
           if (recipients.length > 0) {
             const billingUrl = `${APP_URL}/billing`;
-            const html = trialWarningEmailHtml({
-              empresaNome,
-              daysLeft: window.days,
-              billingUrl,
-            });
-
             await sendEmail({
+              classe: "plataforma",
+              tipo: `trial_aviso_${window.days}d`,
               to: recipients,
-              subject: `Seu trial expira em ${window.days} dia${window.days > 1 ? "s" : ""} — Pilar`,
-              html,
+              idempotencyKey: `trial-${sub.id}-${window.days}d`,
+              ...templateTrialAviso({ empresaNome, daysLeft: window.days, billingUrl }),
             });
           }
 

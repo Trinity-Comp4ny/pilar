@@ -21,6 +21,7 @@ import { usePropostaTemplates, downloadTemplateFile } from "@/hooks/usePropostaT
 import { AUTO_VARIABLES, buildVariableData, generateDocx } from "@/lib/docxUtils";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { supabase } from "@/integrations/supabase/client";
+import { mensagemDaFunction } from "@/lib/edgeError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import mammoth from "mammoth";
@@ -280,7 +281,7 @@ export function GerarPropostaDialog({
         },
       });
 
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(await mensagemDaFunction(error, error.message));
 
       toast.success(`${label} enviada!`, { description: `Email enviado para ${sendEmail}` });
       onSent?.();

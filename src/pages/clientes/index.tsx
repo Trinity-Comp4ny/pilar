@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import type { SortingState } from "@tanstack/react-table";
 import { monitoring } from "@/lib/monitoring";
 import { supabase } from "@/integrations/supabase/client";
+import { mensagemDaFunction } from "@/lib/edgeError";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -155,7 +156,7 @@ export default function Clientes() {
     try {
       const { error } = await supabase.functions.invoke("send-manual-client-email", {
         body: {
-          email: selectedClienteForMessage.email,
+          cliente_id: selectedClienteForMessage.id,
           subject: subjectText,
           message: messageText,
         },
@@ -163,7 +164,9 @@ export default function Clientes() {
 
       if (error) {
         resetMessageModal();
-        toast.error(`Erro ao enviar mensagem para ${nomeCompleto}`);
+        toast.error(`Não foi possível enviar a mensagem para ${nomeCompleto}`, {
+          description: await mensagemDaFunction(error, "Tente novamente em instantes."),
+        });
         monitoring.captureException(error, { context: "sendClientMessage" });
         return;
       }
