@@ -97,15 +97,32 @@ referencia_id, idempotency_key, created_at, updated_at`. RLS: `ultra_admin` vê 
    `EMAIL_DRY_RUN=true` (só em `.env` local): nesse modo grava o HTML em log e no `email_envios`
    com `status='dry_run'`. `APP_URL` é a única variável para link de app; `PUBLIC_SITE_URL` sai.
 
-7. **Marca em um arquivo.** `brand.ts` concentra nome, wordmark, URL do logo (PNG 2x hospedado no
-   app, ex.: `${APP_URL}/email/logo-v1.png`), cores e domínio. Rebrand Pilar → Prumeo é um diff
-   nesse arquivo mais o PNG.
+7. **Marca em um arquivo, e a identidade é a da landing.** `brand.ts` concentra nome, cores
+   (hex espelhando `src/styles/tokens.css`), URLs de asset e a declaração da fonte. O e-mail
+   deixa de ter visual próprio e passa a ser a landing traduzida para tabela HTML:
+
+   - **Fonte Geist**, a mesma da landing, autohospedada no site (`/fonts/geist-variable.woff2`),
+     sem `fonts.googleapis.com` (regra da SPEC 043). Apple Mail, iOS Mail e Outlook macOS
+     renderizam a Geist; Gmail e Outlook Windows ignoram `@font-face` e caem no fallback
+     (`Inter`, depois a grotesca do sistema), que tem o mesmo desenho. Aceito: nenhum cliente
+     recebe fonte errada, só fonte menos específica.
+   - **Faixa de morros da hero** fechando o cabeçalho, como PNG (`public/email/wave-v1.png`,
+     1200x225 servido a 600px) gerada a partir do mesmo SVG de `HeroBackdrop.tsx`. É imagem
+     decorativa, nunca com texto por cima: cliente que bloqueia imagem mostra o céu claro
+     (`#EFF9FB`, o mesmo `bgcolor` do bloco do título) e nada quebra.
+   - **Botão em pílula verde** (`--brand-accent`) com tinta escura e seta à direita, igual ao
+     `SplitButton`. Verde é fundo, nunca texto: para verde em texto existe `C.brandStrong`.
+   - **Título grande com itálico de destaque** (peso 500, tracking -0.035em), a assinatura
+     tipográfica da landing, em lugar do antigo destaque com fundo verde na palavra-chave.
+   - Wordmark ao lado do símbolo em peso 500, não 700; domínio no rodapé como link.
+
+   Rebrand Pilar → Prumeo é um diff nesse arquivo mais a troca dos PNGs.
 
 ## Consequências
 
 **Positivas:**
 
-- Visual único e mudança de marca em um lugar. Preview de todos os templates com um comando
+- Visual único, igual ao da landing, e mudança de marca em um lugar. Preview de todos os templates com um comando
   (`npm run email:preview`, script Deno que renderiza fixtures em `.email-preview/`).
 - Auditoria de envio: "o e-mail saiu? entregou? quicou?" respondido por query, não por Sentry.
 - Bounce não queima reputação do domínio duas vezes.

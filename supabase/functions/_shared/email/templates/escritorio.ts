@@ -1,28 +1,26 @@
 /**
  * E-mails que o escritório manda ao cliente final, via Pilar. Classe "escritorio":
- * header com nome/logo da empresa, rodapé "Enviado por X via Pilar".
+ * cabeçalho com nome e logo da empresa, rodapé "Enviado por X via Pilar".
  */
 
 import { BRAND } from "../brand.ts";
 import { html, multiline } from "../html.ts";
 import {
-  accent,
   button,
   callout,
   card,
   codeBox,
   divider,
+  em,
   emphasis,
   kv,
   kvDivider,
   label,
-  lead,
   paragraph,
   shell,
   small,
   spacer,
   strong,
-  title,
 } from "../layout.ts";
 import type { EmailTemplate, EmpresaHeader } from "./types.ts";
 
@@ -39,16 +37,13 @@ export function templateMensagemManual(params: {
   return {
     subject: assunto,
     html: shell({
-      preview: mensagem.slice(0, 120),
+      preview: mensagem.slice(0, 140),
       header: header(empresa),
+      hero: { titulo: assunto },
       content: [
-        title(assunto),
-        paragraph(multiline(mensagem), { mt: 20 }),
+        paragraph(multiline(mensagem), { mt: 0 }),
         divider(),
-        small(
-          html`Mensagem enviada por ${strong(empresa.nome)}. Para responder, use o botão de resposta do seu e-mail.`,
-          { mt: 0 }
-        ),
+        small(html`Mensagem de ${strong(empresa.nome)}. Responda este e-mail para falar com a equipe.`, { mt: 0 }),
       ],
     }),
   };
@@ -66,26 +61,23 @@ export function templateCobrancaDireta(params: {
 }): EmailTemplate {
   const { clienteNome, empresa, descricao, valorFormatado, dataVencimento, vencida, pixChave, pixInstrucoes } = params;
 
-  const tituloHtml = vencida
-    ? html`Fatura ${emphasis("em atraso", "negative")}`
-    : html`${accent("Lembrete")} de pagamento`;
-  const intro = vencida
-    ? html`Olá, ${strong(clienteNome)}. A fatura abaixo venceu e continua em aberto.`
-    : html`Olá, ${strong(clienteNome)}. Segue a cobrança referente ao serviço abaixo.`;
-
   const pix = pixChave
-    ? [spacer(28), label("Chave Pix"), codeBox(pixChave), ...(pixInstrucoes ? [small(pixInstrucoes, { mt: 8 })] : [])]
+    ? [spacer(26), label("Chave Pix"), codeBox(pixChave), ...(pixInstrucoes ? [small(pixInstrucoes, { mt: 8 })] : [])]
     : [];
 
   return {
     subject: vencida ? `Fatura em atraso: ${descricao}` : `Lembrete de pagamento: ${descricao}`,
     html: shell({
-      preview: vencida ? `Fatura em atraso, ${valorFormatado}` : `Lembrete de pagamento, ${valorFormatado}`,
+      preview: vencida ? `Fatura em atraso, ${valorFormatado}` : `Vence em ${dataVencimento}, ${valorFormatado}`,
       header: header(empresa),
       footerNote: `Você recebeu esta cobrança de ${empresa.nome} via ${BRAND.nome}.`,
+      hero: {
+        titulo: vencida ? html`Fatura ${emphasis(em("em atraso"), "negative")}` : html`${em("Lembrete")} de pagamento`,
+        lead: vencida
+          ? html`Olá, ${strong(clienteNome)}. A fatura abaixo venceu e continua em aberto.`
+          : html`Olá, ${strong(clienteNome)}. Segue a cobrança referente ao serviço abaixo.`,
+      },
       content: [
-        title(tituloHtml),
-        lead(intro),
         card(
           [
             kv("Descrição", descricao),
@@ -94,7 +86,7 @@ export function templateCobrancaDireta(params: {
             kvDivider(),
             kv("Vencimento", dataVencimento, { tone: vencida ? "negative" : undefined }),
           ],
-          { accent: vencida ? "negative" : "brand" }
+          { accent: vencida ? "negative" : "brand", mt: 0 }
         ),
         ...pix,
         divider(),
@@ -113,26 +105,23 @@ export function templateAcessoPortalCliente(params: {
   empresa?: EmpresaHeader;
 }): EmailTemplate {
   const { nomeCliente, email, senha, loginUrl, isReset = false, empresa } = params;
-  const tituloHtml = isReset
-    ? html`Sua senha foi ${accent("redefinida")}`
-    : html`Seu acesso ao ${accent("portal do cliente")}`;
-  const intro = isReset
-    ? html`Olá, ${strong(nomeCliente)}. A senha do seu acesso ao portal foi redefinida. Use as credenciais abaixo.`
-    : html`Olá, ${strong(nomeCliente)}. Seu acesso ao portal foi criado. Por ele você acompanha o andamento do projeto,
-      entregas e aprovações.`;
 
   return {
-    subject: isReset ? "Sua senha do portal do cliente foi redefinida" : "Seu acesso ao portal do cliente",
+    subject: isReset ? "Sua senha do portal foi redefinida" : "Seu acesso ao portal do cliente",
     html: shell({
-      preview: isReset ? "Senha redefinida, portal do cliente" : "Acesso ao portal do cliente",
+      preview: isReset ? "Nova senha do portal do cliente" : "Credenciais de acesso ao portal",
       header: empresa ? header(empresa) : { tipo: "plataforma" },
       footerNote: empresa
         ? `Acesso criado por ${empresa.nome} via ${BRAND.nome}.`
-        : `Você recebeu este e-mail porque um escritório criou seu acesso ao portal do ${BRAND.nome}.`,
+        : `Você recebeu este e-mail porque um escritório criou seu acesso ao portal.`,
+      hero: {
+        titulo: isReset ? html`Sua senha foi ${em("redefinida")}` : html`Seu acesso ao ${em("portal do cliente")}`,
+        lead: isReset
+          ? html`Olá, ${strong(nomeCliente)}. A senha do seu acesso foi trocada. Use as credenciais abaixo.`
+          : html`Olá, ${strong(nomeCliente)}. Pelo portal você acompanha o andamento do projeto, entregas e aprovações.`,
+      },
       content: [
-        title(tituloHtml),
-        lead(intro),
-        card([kv("E-mail", email), kvDivider(), kv("Senha temporária", senha, { mono: true, size: "lg" })]),
+        card([kv("E-mail", email), kvDivider(), kv("Senha temporária", senha, { mono: true, size: "lg" })], { mt: 0 }),
         button("Acessar portal", loginUrl),
         callout("Troque a senha no primeiro acesso. Esta senha é temporária e foi enviada só para você.", "info"),
       ],
@@ -150,16 +139,16 @@ export function templatePropostaEnvio(params: {
   return {
     subject: tituloProposta,
     html: shell({
-      preview: `${tituloProposta}, proposta enviada por ${empresa.nome}`,
+      preview: `${tituloProposta}, enviada por ${empresa.nome}`,
       header: header(empresa),
       footerNote: `Você recebeu esta proposta de ${empresa.nome} via ${BRAND.nome}.`,
+      hero: {
+        titulo: html`Sua ${em("proposta")} chegou`,
+        lead: html`Olá, ${strong(nomeCliente)}. ${strong(empresa.nome)} enviou uma proposta para você. O documento está
+        anexo a este e-mail.`,
+      },
       content: [
-        title(html`Nova ${accent("proposta")}`),
-        lead(
-          html`Olá, ${strong(nomeCliente)}. ${strong(empresa.nome)} enviou uma proposta para você. O documento está
-          anexo a este e-mail.`
-        ),
-        card([kv("Proposta", tituloProposta)]),
+        card([kv("Proposta", tituloProposta)], { mt: 0 }),
         ...(mensagem ? [paragraph(multiline(mensagem), { mt: 24 })] : []),
         divider(),
         small(html`Enviado por ${strong(empresa.nome)}. Dúvidas? Responda este e-mail.`, { mt: 0 }),

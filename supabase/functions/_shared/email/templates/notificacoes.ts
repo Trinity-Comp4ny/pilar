@@ -7,19 +7,7 @@
 
 import { BRAND } from "../brand.ts";
 import { html } from "../html.ts";
-import {
-  accent,
-  button,
-  lead,
-  listItem,
-  sectionHeading,
-  shell,
-  small,
-  strong,
-  title,
-  type Modulo,
-  type Tone,
-} from "../layout.ts";
+import { button, em, listItem, sectionHeading, shell, small, strong, type Modulo, type Tone } from "../layout.ts";
 import type { EmailTemplate } from "./types.ts";
 
 export type NotifCategoria = "financeiro" | "projeto" | "disciplina" | "tarefa" | "obra" | "sistema";
@@ -113,20 +101,24 @@ export function templateNotificacoes(params: NotificacoesParams, agora = new Dat
   const tituloHtml =
     modo === "imediato"
       ? total === 1
-        ? html`Um alerta ${accent("importante")}`
-        : html`${total} alertas ${accent("importantes")}`
-      : html`Seu ${accent("resumo")} de hoje`;
+        ? html`Um alerta ${em("importante")}`
+        : html`${total} alertas ${em("importantes")}`
+      : html`Seu ${em("resumo")} de hoje`;
 
   const leadHtml =
     modo === "imediato"
-      ? html`${saudacao} ${total === 1 ? "Este item" : "Estes itens"} ${total === 1 ? "precisa" : "precisam"} da sua
-        atenção e ainda não ${total === 1 ? "foi visto" : "foram vistos"} no ${BRAND.nome}.`
-      : html`${saudacao} Você tem ${strong(`${total} ${total === 1 ? "pendência" : "pendências"}`)} não
-        ${total === 1 ? "lida" : "lidas"} no ${BRAND.nome}. Clique num item para abrir direto.`;
+      ? html`${saudacao} ${total === 1 ? "Este item precisa" : "Estes itens precisam"} da sua atenção e ainda
+        ${total === 1 ? "não foi visto" : "não foram vistos"} na ${BRAND.nome}.`
+      : html`${saudacao} Você tem ${strong(`${total} ${total === 1 ? "pendência" : "pendências"}`)}
+        ${total === 1 ? "não lida" : "não lidas"}. Clique num item para abrir direto.`;
 
   const grupos = agruparPorCategoria(itens);
-  const lista = grupos.flatMap((g) => [
-    sectionHeading(CATEGORIA_LABEL[g.categoria], { modulo: CATEGORIA_MODULO[g.categoria], count: g.itens.length }),
+  const lista = grupos.flatMap((g, i) => [
+    sectionHeading(CATEGORIA_LABEL[g.categoria], {
+      modulo: CATEGORIA_MODULO[g.categoria],
+      count: g.itens.length,
+      mt: i === 0 ? 0 : 30,
+    }),
     ...g.itens.map((it) =>
       listItem({
         titulo: it.titulo,
@@ -141,7 +133,7 @@ export function templateNotificacoes(params: NotificacoesParams, agora = new Dat
   const oculto =
     totalOculto > 0
       ? small(
-          html`E mais ${strong(String(totalOculto))} ${totalOculto === 1 ? "pendência" : "pendências"} no ${BRAND.nome}.`,
+          html`E mais ${strong(String(totalOculto))} ${totalOculto === 1 ? "pendência" : "pendências"} aguardando.`,
           { mt: 16 }
         )
       : null;
@@ -152,15 +144,14 @@ export function templateNotificacoes(params: NotificacoesParams, agora = new Dat
       preview: itens[0]?.titulo ?? assuntoNotificacoes(params),
       footerNote:
         modo === "imediato"
-          ? `Alertas de alta prioridade chegam por e-mail quando não são lidos no ${BRAND.nome} em alguns minutos.`
-          : `Resumo diário das suas notificações no ${BRAND.nome}.`,
+          ? `Alerta de alta prioridade sai por e-mail quando não é lido no aplicativo em alguns minutos.`
+          : `Resumo diário das suas notificações.`,
       footerLinks: [{ label: "Gerenciar notificações por e-mail", href: gerenciarUrl }],
+      hero: { titulo: tituloHtml, lead: leadHtml },
       content: [
-        title(tituloHtml),
-        lead(leadHtml),
         ...lista,
         ...(oculto ? [oculto] : []),
-        button(`Abrir no ${BRAND.nome}`, sinoUrl, { variant: total > 1 ? "primary" : "secondary" }),
+        button(`Abrir ${BRAND.nome}`, sinoUrl, { variant: total > 1 ? "brand" : "quiet" }),
       ],
     }),
   };

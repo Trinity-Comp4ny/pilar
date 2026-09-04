@@ -77,10 +77,16 @@ cliente"` e o front mostra esse aviso com atalho para Configurações > Empresa.
    `email.delivered`, `email.bounced`, `email.complained`, `email.delivery_delayed`: atualiza
    `email_envios.status` pelo `resend_id`; `bounced` (hard) e `complained` inserem em
    `email_supressoes`.
-10. **Kit de marca do e-mail.** Exportar `public/pilar-logo.svg` para `public/email/logo-v1.png`
-    (88×88, fundo transparente, traço preto) e servir pelo app (`${APP_URL}/email/logo-v1.png`).
-    `brand.ts` referencia. Quando `brand/visual.md` fechar o logo definitivo, troca-se o arquivo
-    e sobe a versão (`-v2`). Nada de SVG em `<img>` de e-mail (Gmail bloqueia).
+10. **Kit de marca do e-mail = identidade da landing.** `brand.ts` guarda cores, URLs e a
+    declaração de fonte (detalhe e trade-offs no ADR 0039):
+    - Fonte **Geist** por `@font-face` apontando para `/fonts/geist-variable.woff2` do site, com
+      fallback `Inter` e grotesca do sistema. Sem Google Fonts (SPEC 043).
+    - `public/email/logo-v1.png` (símbolo, 96px, exportado de `public/pilar-logo.svg`) e
+      `public/email/wave-v1.png` (faixa de morros da hero, 1200x225, exportada do mesmo SVG de
+      `HeroBackdrop.tsx` com os tokens resolvidos em hex). Nada de SVG em `<img>` de e-mail.
+    - Botão em pílula verde com seta, título com itálico de destaque, wordmark em peso 500.
+    - Ao fechar o logo definitivo em `brand/visual.md`, troca-se o arquivo e sobe a versão
+      (`-v2`), sem tocar em template.
 11. **Preview local.** Script `scripts/email-preview.ts` (Deno) renderiza TODOS os templates com
     fixtures em `.email-preview/<template>.html` (gitignored) e imprime o caminho; `npm run
 email:preview`. Script `npm run email:test-send -- --to <email> --template <nome>` envia pelo
@@ -213,14 +219,15 @@ Edge functions novas: `resend-webhook` (POST, Svix). Secrets novos: `RESEND_WEBH
 
 Fases pequenas, cada uma um PR para `staging`, testadas com envio real em staging.
 
-1. **Fase 0, infra e marca (sem mudar comportamento):** criar a pasta `_shared/email/` com
-   `brand.ts`, `escape.ts`, `layout.ts` (movendo o shell de `email.ts`), `client.ts` (movendo
-   `sendEmail`, agora com `text`, `Idempotency-Key`, falha alta e `EMAIL_DRY_RUN`). `email.ts`
-   vira re-export. Exportar o PNG do logo e ligar no header. Script `email:preview`. Apagar
-   `_shared/emails/*.tsx`. Testes Deno de escape e de `text/plain`.
-2. **Fase 1, templates:** migrar os 8 + 2 inline para `templates/`, com escape. Trial e LGPD
-   passam a usar o shell. Snapshot leve por template (contém título, botão, rodapé). Deploy em
-   staging, `email:test-send` de cada um pro Gmail e Outlook.
+1. **Fase 0, infra e marca (feita):** pasta `_shared/email/` com `brand.ts`, `html.ts` (escape),
+   `layout.ts` (shell + componentes na identidade da landing), `client.ts` (`text/plain`,
+   `Idempotency-Key`, classe, falha alta, `EMAIL_DRY_RUN`). `email.ts` e `_shared/emails/*.tsx`
+   apagados. PNGs do logo e da faixa de morros em `public/email/`. Script `email:preview` com a
+   Geist embutida na prévia. Testes Deno de escape, `text/plain`, remetente e identidade.
+2. **Fase 1, templates (feita):** os 8 + os 2 inline em `templates/{auth,escritorio,plataforma}`,
+   mais `notificacoes.ts` (para a SPEC 096), todos escapando e no shell novo. Falta o passo de
+   staging: `email:test-send` de cada um para Gmail, Apple Mail e Outlook, e conferir a Geist e a
+   faixa de morros no cliente real.
 3. **Fase 2, log + webhook:** migration `email_envios`/`email_supressoes` (+ pgTAP de RLS),
    `client.ts` grava, `resend-webhook` atualiza. Registrar webhook no Resend de staging. UI mínima:
    aba "E-mails" em Administração (ultra admin) usando `DataTable`, filtro por status.
