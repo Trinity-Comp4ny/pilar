@@ -3,86 +3,48 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Painel de gestão do /inicio (SPEC 092, ADR 0037).
+ * Dados do painel do /inicio (SPEC 092, ADR 0037 e 0038).
  *
- * Uma chamada agregada para a tela inteira, em vez das ~12 queries de linha do
- * `useDashboardData`. O shape é validado com Zod na fronteira (ADR 0033): se o
- * SQL mudar de formato, a tela falha aqui com erro claro em vez de renderizar
- * `undefined` no meio de um gráfico.
+ * Uma chamada agregada para a tela inteira, por módulo do produto: gestao,
+ * projetos, obras, mais financeiro. O bloco `financeiro` vem NULO para quem não
+ * passa em `can_view_financeiro()` no servidor, então a tela não precisa
+ * esconder nada: o dado não chega.
  *
- * Nenhum campo é monetário, de propósito. Ver ADR 0037.
+ * O shape é validado com Zod na fronteira (ADR 0033): se o SQL mudar de
+ * formato, falha aqui com erro claro em vez de renderizar `undefined` no meio
+ * de um gráfico.
  */
 
-const numeroOuNulo = z.number().nullable().default(null);
+const num = z.number().nullable().default(null);
 
-const ancoraConversao = z.object({
-  valor: numeroOuNulo,
-  anterior: numeroOuNulo,
-  decididas: z.number().default(0),
+const totaisProjetos = z.object({
+  ativos: z.number(),
+  emAndamento: z.number(),
+  planejamento: z.number(),
+  paralisado: z.number(),
+  atrasados: z.number(),
+  risco: z.number(),
+  semPrazo: z.number(),
+  concluidosAno: z.number(),
 });
-const ancoraPrazo = z.object({ valor: numeroOuNulo, anterior: numeroOuNulo });
-const ancoraSemana = z.object({ valor: z.number().default(0), media: numeroOuNulo });
-const ancoraDesvio = z.object({ valor: numeroOuNulo });
-const ancoraEspera = z.object({ valor: z.number().default(0), parados: z.number().default(0) });
 
 const painelSchema = z.object({
-  ancoras: z.object({
-    conversao: ancoraConversao,
-    prazo: ancoraPrazo,
-    concluidasSemana: ancoraSemana,
-    desvioHoras: ancoraDesvio,
-    aguardandoCliente: ancoraEspera,
-  }),
-  comercial: z.object({
+  gestao: z.object({
+    propostasTotais: z.object({
+      enviadas: z.number(),
+      ganhas: z.number(),
+      perdidas: z.number(),
+      aguardando: z.number(),
+      conversaoPct: num,
+    }),
     funil: z.array(z.object({ etapa: z.string(), n: z.number() })),
     conversaoMensal: z.array(z.object({ mes: z.string(), ganhas: z.number(), perdidas: z.number() })),
     motivosPerda: z.array(z.object({ motivo: z.string(), n: z.number() })),
     esperaProposta: z.array(z.object({ faixa: z.string(), n: z.number() })),
-    origemGanho: z.array(z.object({ origem: z.string(), leads: z.number(), ganhoPct: numeroOuNulo })),
-  }),
-  entrega: z.object({
-    semaforo: z.object({
-      noPrazo: z.number(),
-      risco: z.number(),
-      estourado: z.number(),
-      semPrazo: z.number(),
-    }),
-    statusAtivos: z.array(z.object({ status: z.string(), n: z.number() })),
-    pontualidadeMensal: z.array(z.object({ mes: z.string(), pct: numeroOuNulo, total: z.number() })),
-    atrasoPorDisciplina: z.array(
-      z.object({ disciplina: z.string(), diasMedio: z.number(), entregas: z.number() })
-    ),
-    prazos15Dias: z.array(
-      z.object({
-        disciplinaId: z.string(),
-        disciplina: z.string(),
-        projetoId: z.string(),
-        projeto: z.string(),
-        dias: z.number(),
-        responsavel: z.string().nullable().default(null),
-        iniciais: z.string().nullable().default(null),
-      })
-    ),
-  }),
-  produtividade: z.object({
+    origemGanho: z.array(z.object({ origem: z.string(), leads: z.number(), ganhoPct: num })),
     throughputSemanal: z.array(z.object({ semana: z.string(), n: z.number() })),
-    horasPorProjeto: z.array(
-      z.object({
-        projetoId: z.string(),
-        projeto: z.string(),
-        estimadas: z.coerce.number(),
-        realizadas: z.coerce.number(),
-        desvioPct: numeroOuNulo,
-      })
-    ),
     cargaEquipe: z.array(
-      z.object({
-        pessoaId: z.string(),
-        nome: z.string(),
-        iniciais: z.string(),
-        emDia: z.number(),
-        atrasada: z.number(),
-      })
+      z.object({ pessoaId: z.string(), nome: z.string(), emDia: z.number(), atrasada: z.number() })
     ),
     filaAprovacao: z.array(
       z.object({
@@ -94,19 +56,76 @@ const painelSchema = z.object({
       })
     ),
   }),
+  projetos: z.object({
+    totais: totaisProjetos,
+    statusAtivos: z.array(z.object({ status: z.string(), n: z.number() })),
+    pontualidadeMensal: z.array(z.object({ mes: z.string(), pct: num, total: z.number() })),
+    atrasoPorDisciplina: z.array(
+      z.object({ disciplina: z.string(), diasMedio: z.number(), entregas: z.number() })
+    ),
+    prazos15Dias: z.array(
+      z.object({
+        disciplinaId: z.string(),
+        disciplina: z.string(),
+        projetoId: z.string(),
+        projeto: z.string(),
+        dias: z.number(),
+        responsavel: z.string().nullable().default(null),
+      })
+    ),
+    horasPorProjeto: z.array(
+      z.object({
+        projetoId: z.string(),
+        projeto: z.string(),
+        estimadas: z.coerce.number(),
+        realizadas: z.coerce.number(),
+        desvioPct: num,
+      })
+    ),
+  }),
+  obras: z.object({
+    totais: z.object({
+      emAndamento: z.number(),
+      planejadas: z.number(),
+      paralisadas: z.number(),
+      atrasadas: z.number(),
+    }),
+    rdoPorObra: z.array(
+      z.object({
+        obraId: z.string(),
+        obra: z.string(),
+        ultimoRdo: z.string().nullable().default(null),
+        diasSemRdo: num,
+      })
+    ),
+    avancoPorObra: z.array(
+      z.object({
+        obraId: z.string(),
+        obra: z.string(),
+        concluidas: z.number(),
+        total: z.number(),
+        pct: num,
+      })
+    ),
+  }),
+  // Nulo, e não ausente, quando o usuário não pode ver dinheiro.
+  financeiro: z
+    .object({
+      mes: z.object({ recebido: z.number(), aReceber: z.number(), receberVencido: z.number() }),
+      despesaMes: z.object({ pago: z.number(), aPagar: z.number(), pagarVencido: z.number() }),
+      faturamento: z.array(z.object({ mes: z.string(), previsto: z.number(), faturado: z.number() })),
+      margemPorProjeto: z.array(z.object({ projetoId: z.string(), projeto: z.string(), pct: num })),
+    })
+    .nullable(),
   cobertura: z.object({
     desde: z.string().nullable().default(null),
     projetosSemPrazo: z.number(),
-    propostasSemHistorico: z.number(),
     leadsSemMotivoPadrao: z.number(),
   }),
 });
 
 export type PainelGestao = z.infer<typeof painelSchema>;
-export type PrazoDisciplina = PainelGestao["entrega"]["prazos15Dias"][number];
-export type CargaPessoa = PainelGestao["produtividade"]["cargaEquipe"][number];
-export type HorasProjeto = PainelGestao["produtividade"]["horasPorProjeto"][number];
-export type Aprovacao = PainelGestao["produtividade"]["filaAprovacao"][number];
+export type PainelSecao = "gestao" | "projetos" | "obras" | "financeiro";
 
 export function usePainelGestao(enabled = true) {
   return useQuery({
@@ -118,9 +137,7 @@ export function usePainelGestao(enabled = true) {
 
       const parsed = painelSchema.safeParse(data);
       if (!parsed.success) {
-        // Formato do SQL divergiu do que a tela espera: falha cedo e clara
-        // (ADR 0033), em vez de quebrar dentro de um gráfico.
-        throw new Error(`Painel de gestão veio em formato inesperado: ${parsed.error.issues[0]?.message}`);
+        throw new Error(`Painel veio em formato inesperado: ${parsed.error.issues[0]?.message}`);
       }
       return parsed.data;
     },

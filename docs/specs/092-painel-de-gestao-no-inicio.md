@@ -22,22 +22,33 @@ mal e onde precisa melhorar."
 
 ## Objetivo
 
-`/inicio` passa a responder, sem clique, quatro perguntas de sócio: **estamos
-vendendo? estamos entregando no prazo? o escritório está rendendo, e quem está
-sobrecarregado? e onde exatamente estamos indo mal?** Cada indicador vem com tendência
-(série histórica), não com número solto, e cada bloco leva à tela-fonte já filtrada.
+`/inicio` deixa de ser página de atalho e passa a ser **o painel do escritório, montado
+pelo usuário**: a tela nasce enxuta, com os números que o sócio cobra de cabeça (projetos
+ativos, concluídos no ano, com prazo estourado, conversão de proposta), e cresce só onde
+a pessoa escolhe, escolhendo também o tamanho de cada bloco. Ver
+[ADR 0038](../architecture/adr/0038-painel-configuravel-por-usuario.md).
 
-**O painel não tem nenhum dado financeiro.** Receita, custo, margem, caixa e faturamento
-não entram, nem mascarados: seguem no Financeiro, visível só para admin e coordenador com
-`financeiro_delegado` (ADR 0034). Consequência direta: a tela serve a qualquer papel, sem
-bloco condicional, e pode ficar numa TV do escritório sem expor dinheiro a estagiário,
-cliente ou visitante.
+Três seções, uma por módulo do produto: **Gestão, Projetos e Obras**, mais **Financeiro**
+no catálogo de quem pode ver dinheiro. Esse corte substitui o anterior (Comercial /
+Entrega / Produtividade), que era taxonomia analítica e não batia com os módulos que o
+usuário navega no resto do sistema.
+
+**O layout padrão não tem nenhum widget financeiro.** Dinheiro no `/inicio` é opt-in de
+quem já pode ver dinheiro em qualquer outra tela: os widgets `fin_*` existem no catálogo,
+mas só são servidos a quem passa em `can_view_financeiro()` (ADR 0034), e o filtro é no
+servidor, não na renderização.
 
 **Fora de escopo:**
 
-- Qualquer indicador financeiro. Não é "esconder por permissão", é não existir aqui.
-- Construtor de dashboard (usuário escolhe/arrasta widget). O painel é fixo por
-  módulo habilitado.
+- Widget financeiro no layout **padrão**. Ele existe no catálogo, mas ninguém abre a tela
+  pela primeira vez com dinheiro nela.
+- Layout por empresa, ou herança de layout entre papéis. O layout é do usuário, e o
+  padrão é do front (ADR 0038).
+- Modo TV e máscara de nomes. Saíram: o painel é privado por usuário, então não há
+  parede pública a proteger. Se a TV voltar, volta por decisão própria.
+- Gráfico com dimensão livre escolhida pelo usuário (eixo, filtro, agrupamento). O
+  catálogo é fechado: o usuário escolhe QUAIS indicadores e o tamanho, não redefine o
+  que cada um mede.
 - Relatório exportável novo. Export continua em `/relatorios`.
 - Reviver módulo dormente (Projeção de caixa, DRE, WIP, Capacidade, Timesheet, Metas).
   O painel só consome o que está vivo, com uma exceção declarada (`metas` como linha
@@ -59,84 +70,63 @@ Todo bloco do painel é uma das três coisas, nesta ordem de importância:
 
 Bloco que não é nenhuma das três não entra. Máximo 3 séries por gráfico.
 
-### Layout (desktop, 12 colunas)
+### Layout: grade de 12 colunas, quatro tamanhos
+
+O usuário escolhe o tamanho de cada widget, e o catálogo declara quais tamanhos cada um
+aceita (um gráfico de 12 meses não cabe em KPI, e o sistema não deixa tentar):
+
+| Tamanho | Colunas | Para |
+|---|---|---|
+| `kpi` | 3 | contagem curta, lista de 3 ou 4 linhas |
+| `terco` | 4 | lista média, barras com poucas categorias |
+| `meia` | 6 | o tamanho natural de um gráfico |
+| `inteira` | 12 | faixa de números, série longa |
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ Início                                        [Mês ▾] [Modo TV] [atualizado│
+│ Início                                     atualizado agora  [Personalizar] │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ LEITURA DO PAINEL (1 frase, gerada 1x/dia pelos agentes, fase 3)          │
-│ "3 de 9 propostas decididas foram ganhas este mês (33%), abaixo dos 46% do │
-│  trimestre. 2 projetos com prazo estourado, ambos em Elétrica."            │
-├──────────────┬──────────────┬──────────────┬──────────────┬────────────────┤
-│ CONVERSÃO    │ NO PRAZO     │ CONCLUÍDAS   │ DESVIO HORAS │ NA MÃO DO      │
-│ 41%          │ 71%          │ 34           │ +14%         │ CLIENTE: 11    │
-│ ▁▂▃▅▄▆ +6pp  │ ▆▅▃▂▂▁ -7pp  │ ▅▆▄▅▃▄ -15%  │ ▂▃▃▄▅▅ +3pp  │ ▃▄▄▅▅▆ +2      │
-│ decid., 90d  │ concl., 6m   │ esta semana  │ acima do est.│ 4 há +30 dias  │
-├──────────────┴──────────────┴──────────────┴──────────────┴────────────────┤
+│ Bom dia, Matheus                                                            │
 │                                                                             │
-│  ── COMERCIAL ──────────────────────────────────────────────────────────    │
-│  ┌───────────────────────────────┬───────────────────────────────────────┐  │
-│  │ Funil de propostas (em nº)    │ Conversão mês a mês (12m)             │  │
-│  │ Rascunho, nunca enviada  ██ 6│  ██ ganhas  ██ perdidas               │  │
-│  │ Enviada, sem decisão  █████ 11│  painel de baixo: ─ taxa de conversão │  │
-│  │ Aceita                ████  9 │                                       │  │
-│  │ Recusada              ████ 10 │  (duas escalas, dois painéis, um eixo │  │
-│  │ Expirada              █     3 │   x compartilhado; nunca eixo duplo)  │  │
-│  └───────────────────────────────┴───────────────────────────────────────┘  │
-│  ┌───────────────────────────────┬───────────────────────────────────────┐  │
-│  │ Por que perdemos (Pareto)     │ Origem do lead × taxa de ganho        │  │
-│  │ Preço          ███████ 9      │ Indicação   ████████ 12  (58% ganho)  │  │
-│  │ Prazo          ████ 5         │ Instagram   █████ 8      (12% ganho)  │  │
-│  │ Sem resposta   ███ 4          │ Site        ███ 4        (25% ganho)  │  │
-│  │ Escopo         ██ 2           │ ← onde investir esforço comercial     │  │
-│  └───────────────────────────────┴───────────────────────────────────────┘  │
+│ ┌─────────────────────────────────────────────────────────────────────────┐ │
+│ │ Projetos em números                                          (inteira)  │ │
+│ │   6            3              10                2  ⌐em risco: 1        │ │
+│ │   ativos       em andamento   concluídos/ano    prazo estourado         │ │
+│ └─────────────────────────────────────────────────────────────────────────┘ │
+│ ┌───────────────────────────────┐ ┌───────────────────────────────────────┐ │
+│ │ Propostas em números  (meia)  │ │ Vence nos próximos 15 dias   (meia)   │ │
+│ │  9      2       4      33%    │ │ Elétrica · Vila Rica      em 2 d      │ │
+│ │  env.   ganhas  perd.  conv.  │ │ Estrutural · CD BR-101    em 4 d      │ │
+│ └───────────────────────────────┘ └───────────────────────────────────────┘ │
+│ ┌───────────────────────────────┐ ┌───────────────────────────────────────┐ │
+│ │ Entregamos no prazo?  (meia)  │ │ Por que perdemos             (meia)   │ │
+│ │ área azul + meta tracejada    │ │ barras, uma cor                       │ │
+│ └───────────────────────────────┘ └───────────────────────────────────────┘ │
 │                                                                             │
-│  ── ENTREGA ────────────────────────────────────────────────────────────     │
-│  ┌──────────────┬──────────────────┬─────────────────────────────────────┐  │
-│  │ Semáforo de  │ Pontualidade 12m │ Atraso médio por disciplina (dias)  │  │
-│  │ prazo        │ ─ % no prazo     │ Elétrica    ████████ 14             │  │
-│  │ 12 no prazo  │ ▁▃▅▆▄▃▂▁▂▃▄▅     │ Hidráulica  █████ 9                 │  │
-│  │  3 em risco  │                  │ Estrutural  ██ 3                    │  │
-│  │  2 estourado │                  │ Arquitetura █ 1                     │  │
-│  └──────────────┴──────────────────┴─────────────────────────────────────┘  │
-│  ┌───────────────────────────────┬───────────────────────────────────────┐  │
-│  │ Status dos ativos (empilhada) │ Horas: estimado vs real (top 8)       │  │
-│  │ ██ Planej ██ Andam ██ Revisão │ barras divergentes por projeto        │  │
-│  │ ██ Paralisado                 │ ← onde o escopo está corroendo        │  │
-│  └───────────────────────────────┴───────────────────────────────────────┘  │
-│                                                                             │
-│  ── PRODUTIVIDADE ─────────────────────────────────────────────────────────     │
-│  ┌───────────────────────────────┬───────────────────────────────────────┐  │
-│  │ Ritmo de entrega (12 semanas) │ Horas: estimado x real (top 8)        │  │
-│  │ tarefas concluídas/semana     │ divergente no zero, em %              │  │
-│  │ ██ ██ ██ ▓▓ ██ ██  ─ média 40 │ Vila Rica      ████ +38%              │  │
-│  │ (âmbar = semana abaixo)       │ Ponte C. Fundo ██ -12%                │  │
-│  └───────────────────────────────┴───────────────────────────────────────┘  │
-│  ┌───────────────────────────────┬──────────────┬────────────────────────┐  │
-│  │ Carga da equipe               │ Esperando    │ Retrabalho/disciplina  │  │
-│  │ Marcos A.  ██████▓▓  9        │ aprovação    │ Elétrica    ████ 2,4   │  │
-│  │ Fernando L ████▓▓▓   8  ← 3   │ 22 d, 18 d,  │ Arquitetura █ 0,8      │  │
-│  │ Júlia R.   ██████    6    atr.│ 11 d, 6 d... │ revisões por entrega   │  │
-│  │ ██ em dia  ██ atrasada        │ 6 pendentes  │                        │  │
-│  └───────────────────────────────┴──────────────┴────────────────────────┘  │
-│                                                                             │
-│  ── AÇÃO (o que já existe hoje, mantido no rodapé) ─────────────────────     │
-│  Radar dos agentes · barra "pergunte aos agentes" · calendário de prazos    │
+│ [✦ Pergunte aos agentes ..................................................] │
 └─────────────────────────────────────────────────────────────────────────────┘
+
+Em "Personalizar": cada card ganha alça de arrastar, seletor de tamanho e remover,
+e "Adicionar indicador" abre o catálogo agrupado por Gestão / Projetos / Obras /
+Financeiro. Nada é gravado até Salvar; "Restaurar padrão" grava lista vazia.
 ```
 
-### Modo TV (`/inicio?tv=1`)
+### Regra de cor (o que estava errado antes)
 
-Mesma fonte de dados, layout separado: tela cheia, tipografia grande (número âncora
-em 72px+), zero campo de input, sem hover. As seções viram **cenas** que rotacionam
-sozinhas a cada 20 s (Comercial → Entrega → Produtividade), com a faixa de âncoras
-sempre fixa no topo. Auto-refresh de 5 min com marca de frescor visível.
+A primeira versão usava cinco cores de série e três níveis de transparência diferentes,
+e o resultado não parecia Pilar. A regra agora é uma só:
 
-Em modo TV o painel **troca nome de pessoa por iniciais** por padrão. Carga da equipe e
-prazo por responsável são úteis para o sócio redistribuir trabalho, e viram exposição
-pública quando ficam numa parede que estagiário, cliente e visitante enxergam. Não há
-máscara de dinheiro a aplicar, porque não há dinheiro na tela.
+- **Gráfico tem uma cor**: `--chart-info`. Uma segunda série, quando existe, é
+  `--chart-neutral` (cinza). Referência (meta, média) é linha tracejada cinza.
+- **Cor semântica só onde carrega estado**, e sempre como badge do registry
+  (`statusBadgeClasses`) ou borda-esquerda de 3px. Nunca como cor de número, nunca como
+  fundo de card.
+- **Número é sempre tinta** (`TONE_VALUE`: só dinheiro colore, e o padrão não tem dinheiro).
+- **Uma borda, uma sombra**: `border-black/10` + `shadow-sm` em todo card. Sem tint de
+  fundo, sem opacidade avulsa.
+- Verde e vermelho sobrevivem em exatamente um lugar: a barra divergente ancorada no zero
+  (horas e margem), onde o sinal do número é literalmente bom ou ruim, e a posição já
+  separa os dois lados sem depender da cor.
 
 ### O que o pedido do Bruno não tinha e entra
 
@@ -155,76 +145,66 @@ máscara de dinheiro a aplicar, porque não há dinheiro na tela.
 
 ## Requisitos
 
-1. `/inicio` mostra a faixa de 5 números-âncora, cada um com série curta (sparkline) e
-   variação vs período anterior.
-2. O painel mostra as seções Comercial, Entrega e Produtividade, cada uma só se o
-   módulo correspondente está habilitado na empresa (`can()`). Nenhuma seção depende de
-   acesso financeiro, porque nenhuma exibe dinheiro.
-3. Todo bloco clicável navega para a tela-fonte com o filtro equivalente aplicado
-   (ex.: clicar em "2 estourado" abre `/projetos` filtrado por prazo estourado).
-4. Todo bloco que depende de histórico e não tem dado suficiente mostra estado vazio
-   explicando o que falta ("precisa de 3 meses de propostas decididas"), nunca gráfico
-   vazio ou 0%.
-5. Nenhum bloco exibe valor monetário, percentual de margem ou qualquer derivada de
-   receita e custo. Onde a medida natural seria dinheiro, o painel usa a medida física
-   equivalente: proposta em contagem (não em R$), esforço em horas (não em custo).
-6. `/inicio?tv=1` renderiza o modo TV com rotação de cenas, sem input, e com nome de
-   pessoa reduzido a iniciais por padrão.
-7. Seleção de período (mês / trimestre / ano) afeta as seções, não as âncoras de
-   janela fixa (90 dias, 6 meses, 12 meses), que declaram a própria janela no rótulo.
-8. Os blocos de hoje (radar, barra dos agentes, calendário) continuam na página, no
-   rodapé.
+1. `/inicio` renderiza os widgets de `profiles.painel_layout`, na ordem e no tamanho
+   salvos. Lista vazia renderiza o layout padrão do front.
+2. O layout padrão tem no máximo 6 widgets, começa por contagem (não por gráfico) e não
+   contém nenhum widget financeiro.
+3. Em "Personalizar", o usuário pode adicionar, remover, reordenar por arrasto e trocar o
+   tamanho de cada widget, entre os tamanhos que aquele widget declara aceitar.
+4. Nada é gravado até "Salvar painel". "Cancelar" descarta, "Restaurar padrão" grava lista
+   vazia.
+5. O catálogo mostra só widgets cuja `feature` o usuário tem. Widget financeiro aparece
+   somente para quem passa em `financeiro` (role + `financeiro_delegado`, ADR 0034).
+6. Um id de widget desconhecido no layout salvo é ignorado na renderização, nunca quebra
+   a tela: é assim que um release pode remover widget sem migrar dado de ninguém.
+7. Todo widget clicável leva à tela de origem com o filtro equivalente.
+8. Todo widget sem dado suficiente diz o que falta, em vez de desenhar série vazia ou 0%.
+9. A barra "pergunte aos agentes" fica fora do painel, fixa no rodapé: é ação, não
+   indicador.
 
 Não-funcionais:
 
-- **Segurança / RLS:** toda agregação roda em RPC `SECURITY DEFINER` com `empresa_id`
-  vindo de `auth.uid()`, nunca de parâmetro. Nenhuma coluna de folha/PII entra no
-  retorno. A RPC **não seleciona coluna monetária de nenhuma tabela**: sem `valor`,
-  `valor_proposto`, `custo_*`, `valor_contrato` ou `valor_aditivo` em nenhuma CTE. É a
-  forma mais forte de respeitar o ADR 0034 aqui, porque não existe caminho de vazamento
-  a proteger, nem sob impersonation.
-- **Performance:** o painel faz **uma** chamada agregada, não N queries de linhas
-  (o `useDashboardData` atual traz linhas e soma no client, o que não escala para 12
-  meses). Orçamento: p95 < 800 ms com 200 projetos e 5 anos de lançamentos. Exige
-  índice por `(empresa_id, <coluna de data>)` nas tabelas agregadas.
-- **Multi-tenant:** isolamento por `empresa_id` em cada CTE da RPC.
-- **Cache:** `staleTime` 5 min, `refetchInterval` 5 min em modo TV; a leitura em
-  linguagem natural (fase 3) é gerada 1x/dia e persistida, para não queimar token a
-  cada refresh (ADR 0035).
+- **Segurança / RLS:** a RPC de dados é `SECURITY INVOKER STABLE` (o RLS filtra a
+  empresa). O bloco `financeiro` do retorno é **nulo**, não zerado, para quem não pode
+  ver dinheiro: zerado faria a tela afirmar que a empresa não tem dinheiro.
+  `set_painel_layout` é `SECURITY DEFINER` de escopo mínimo, porque `authenticated` não
+  tem (e não deve ter) `UPDATE` em `profiles`: dar essa permissão abriria `role` e
+  `empresa_id` na mesma tacada. A função escreve uma coluna, sempre em `auth.uid()`.
+- **Validação na escrita:** `set_painel_layout` recusa o que não é lista, item sem id,
+  tamanho fora do conjunto e mais de 40 widgets. É entrada livre vinda do cliente.
+- **Performance:** uma chamada agregada para a tela inteira, independente de quantos
+  widgets o layout tem. O layout vem junto do profile, sem query extra.
+- **Multi-tenant:** isolamento por `empresa_id` via RLS em cada CTE.
 
 ## Critérios de aceite
 
-- [ ] Dado usuário admin, quando abre `/inicio`, então vê as 5 âncoras e as 3 seções, e
-      a página faz 1 chamada de dado agregado (verificável na aba Network).
-- [ ] Dado usuário **sem** acesso a financeiro (equipe, ou coordenador sem delegação),
-      quando abre `/inicio`, então vê exatamente a mesma tela do admin: nenhuma seção
-      falta, porque nenhuma depende de dinheiro.
-- [ ] Dado qualquer papel, quando se inspeciona a resposta da RPC, então ela não contém
-      nenhum campo monetário. Este teste roda no SQL, não na tela (grep de coluna
-      proibida no corpo da função, mais um teste pgTAP sobre o JSON retornado).
+- [ ] Dado perfil sem layout salvo, quando abre `/inicio`, então vê o layout padrão e o
+      aviso de que pode personalizar.
+- [ ] Dado layout salvo com um id que não existe mais no catálogo, quando abre `/inicio`,
+      então os outros widgets renderizam normalmente.
+- [ ] Dado usuário sem acesso a financeiro, quando abre o catálogo, então a seção
+      Financeiro não aparece **e** a resposta da RPC traz `financeiro: null`.
+- [ ] Dado admin da mesma empresa, quando abre o catálogo, então a seção Financeiro
+      aparece e a RPC traz o bloco preenchido. Os dois casos rodam no mesmo teste pgTAP,
+      com dois usuários da mesma empresa.
+- [ ] Dado receita pendente vencida no mês anterior, quando o admin abre o widget de
+      caixa, então o valor vencido aparece: vencido é estoque, não fluxo do mês.
+- [ ] Dado modo de edição, quando o usuário remove um widget e cancela, então o layout
+      salvo não muda.
+- [ ] Dado modo de edição, quando o usuário adiciona um widget e salva, então
+      `set_painel_layout` recebe a lista com o novo id.
+- [ ] Dado layout inválido (não-lista, item sem id, tamanho desconhecido, 41 widgets),
+      quando chega na RPC, então ela levanta erro com mensagem própria, e o teste verifica
+      a mensagem (um `throws_ok` sem texto passaria por qualquer erro, inclusive
+      permissão).
 - [ ] Dada uma segunda empresa com dado no banco, quando o sócio da primeira abre o
-      painel, então nenhum número inclui a linha da outra empresa. A RPC é
-      `SECURITY INVOKER`: o teste roda como usuário autenticado, nunca como superuser,
-      senão o RLS não se aplica e o teste passa por acidente.
-- [ ] Dada empresa com 1 mês de uso, quando abre `/inicio`, então os blocos de série
-      mostram o estado vazio com o que falta, e a página não exibe 0% nem gráfico
-      chapado.
-- [ ] Dado projeto concluído com `data_final <= data_previsao_original`, quando o
-      painel calcula pontualidade, então ele conta como "no prazo"; com
-      `data_final > data_previsao_original`, conta como atrasado.
-- [ ] Dada disciplina com `data_fim_real > data_fim`, quando o painel agrega atraso por
-      disciplina, então o atraso desconta os dias em `projeto_disciplina_pausas`
-      (pausa documentada não é atraso da equipe, spec 084).
-- [ ] Dada proposta com `validade` no passado e status `enviada`, quando o painel monta
-      o funil, então ela aparece como "Expirada", igual à regra da tela de propostas.
-- [ ] Dado `/inicio?tv=1`, quando passam 20 s, então a cena troca sozinha e nenhum
-      campo de texto está focável.
-- [ ] Dado `/inicio?tv=1`, quando a cena Produtividade aparece, então nome de pessoa
-      está reduzido a iniciais em todo bloco (carga da equipe e prazo por responsável).
-- [ ] Caso de borda: empresa com 0 propostas decididas no período → âncora de conversão
-      mostra "sem decisão no período", não "0%".
-- [ ] Caso de borda: projeto sem `data_previsao` não entra em nenhum cálculo de prazo
-      (nem como no prazo, nem como atrasado) e o rótulo informa quantos foram ignorados.
+      painel, então nenhum número inclui a linha da outra empresa.
+- [ ] Dado projeto concluído com `data_final <= data_previsao`, quando o painel calcula
+      pontualidade, então conta como no prazo.
+- [ ] Dada disciplina com `data_fim_real > data_fim`, quando o painel agrega atraso, então
+      desconta os dias em `projeto_disciplina_pausas` (spec 084).
+- [ ] Caso de borda: empresa sem histórico → cada widget diz o que falta, e nenhum mostra
+      0% como se fosse resultado.
 
 ## Dados e contratos
 
@@ -301,22 +281,6 @@ type CargaPessoa = { pessoaId: string; nome: string; iniciais: string; emDia: nu
 `cobertura` é o que alimenta os estados vazios honestos do requisito 4.
 
 ## Plano de implementação
-
-A preencher em plan mode. Fatiamento proposto:
-
-1. **Fase 1, painel com o schema atual.** RPC `get_painel_gestao` (só os blocos da
-   tabela "já dá"), hook `usePainelGestao`, seções Comercial/Entrega/Produtividade em
-   `/inicio`, blocos de hoje para o rodapé. Pontualidade sai já usando
-   `data_previsao_original` se existir, com fallback declarado para `data_previsao`.
-2. **Fase 2, fechar os buracos.** Migration com `propostas.enviada_em`/`decidida_em`
-   + trigger, `projetos.data_previsao_original` + backfill, `leads.motivo_perda`
-   controlado (com migração dos textos existentes para o vocabulário). Liga ciclo de
-   venda, conversão mensal honesta e Pareto de perda.
-3. **Fase 3, modo TV e leitura automática.** `/inicio?tv=1` com rotação de cenas e
-   iniciais no lugar de nome, e a frase de leitura gerada 1x/dia pelos agentes,
-   persistida (ADR 0035). Linha de alvo nos gráficos a partir de `metas`, se o módulo
-   for reativado. O bloco de retrabalho por disciplina entra quando a SPEC 093 gravar
-   o ciclo de revisão.
 
 ## Decisões e riscos
 

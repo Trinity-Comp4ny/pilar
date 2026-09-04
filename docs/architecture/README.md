@@ -43,6 +43,7 @@ Um ADR documenta uma decisão técnica relevante, seu contexto e consequências.
 | [0034](./adr/0034-financeiro-delegado-eixo-separado-do-role.md)                  | Acesso a dinheiro vira eixo separado do papel: `financeiro_delegado` (boolean, sem JSONB) + papel `coordenador` reaproveitado; folha/PII só admin; complementa o 0029                   |
 | [0036](./adr/0036-sentry-cron-monitoring-profiling-deploy-tracking.md)        | Ativar Cron Monitoring, profiling e deploy tracking no Sentry; complementa o 0027 |
 | [0037](./adr/0037-inicio-e-painel-de-gestao-nao-atalho.md)                   | `/inicio` é painel de gestão servido por uma RPC agregada (`get_painel_gestao`), sem nenhum dado financeiro (o eixo é comercial/entrega/produtividade); indicador histórico exige baseline imutável (`data_previsao_original`) |
+| [0038](./adr/0038-painel-configuravel-por-usuario.md)                      | Painel do `/inicio` é montado pelo usuário (`profiles.painel_layout`, padrão no front por papel), seções Gestão/Projetos/Obras, e widget financeiro existe no catálogo mas fora do padrão; revisa o 0037 |
 
 ## Guias de reúso
 

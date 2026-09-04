@@ -4765,6 +4765,7 @@ export type Database = {
           nome: string | null
           onboarding_completed: boolean | null
           onboarding_state: Json
+          painel_layout: Json
           role: Database["public"]["Enums"]["user_role"] | null
           updated_at: string | null
           updated_by: string | null
@@ -4785,6 +4786,7 @@ export type Database = {
           nome?: string | null
           onboarding_completed?: boolean | null
           onboarding_state?: Json
+          painel_layout?: Json
           role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
           updated_by?: string | null
@@ -4805,6 +4807,7 @@ export type Database = {
           nome?: string | null
           onboarding_completed?: boolean | null
           onboarding_state?: Json
+          painel_layout?: Json
           role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
           updated_by?: string | null
@@ -8273,6 +8276,7 @@ export type Database = {
         Returns: undefined
       }
       set_onboarding_state: { Args: { patch: Json }; Returns: Json }
+      set_painel_layout: { Args: { p_layout: Json }; Returns: undefined }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       start_impersonation: {
