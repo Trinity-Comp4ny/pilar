@@ -1,4 +1,4 @@
-import { useState, useCallback, type FormEvent } from "react";
+import { useState, useCallback, useRef, type FormEvent } from "react";
 import { toast } from "sonner";
 import { CreditCard, QrCode, FileText, Loader2, Lock, ShieldCheck, Eye, EyeOff, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -135,23 +135,29 @@ export function CheckoutForm({
     uf: string;
   } | null>(null);
   const [isFetchingCep, setIsFetchingCep] = useState(false);
+  const cepLookupRef = useRef<string | null>(null);
 
   const [showCcv, setShowCcv] = useState(false);
   const cardBrand = detectCardBrand(ccNumber);
 
   const fetchCep = useCallback(async (cep: string) => {
     const digits = onlyDigits(cep);
-    if (digits.length !== 8) return;
+    // Sem esta guarda, cada correção de dígito que ainda somava 8 (ex.: apagar e
+    // redigitar) disparava uma busca nova em paralelo à anterior; respostas fora de
+    // ordem faziam o spinner e o endereço "piscarem" entre dois resultados.
+    if (digits.length !== 8 || digits === cepLookupRef.current) return;
+    cepLookupRef.current = digits;
     setIsFetchingCep(true);
     try {
       const end = await lookupCEP(digits);
+      if (cepLookupRef.current !== digits) return;
       if (!end) {
         toast.error("CEP não encontrado");
         return;
       }
       setCepAddress({ logradouro: end.street, bairro: end.neighborhood, cidade: end.city, uf: end.state });
     } finally {
-      setIsFetchingCep(false);
+      if (cepLookupRef.current === digits) setIsFetchingCep(false);
     }
   }, []);
 

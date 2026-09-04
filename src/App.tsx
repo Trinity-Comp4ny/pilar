@@ -17,12 +17,12 @@ import { CampoPrivateRoute } from "./components/CampoPrivateRoute";
 import { AdminRoute } from "./components/AdminRoute";
 import { UltraAdminRoute } from "./components/UltraAdminRoute";
 import { FeatureRoute } from "./components/FeatureRoute";
-import { AdminOnlyRoute } from "./components/AdminOnlyRoute";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { TrialBanner } from "./components/TrialBanner";
 import { SettingsModalProvider, useSettingsModal, type SettingsSection } from "./contexts/SettingsModalContext";
 import { ValoresOcultosProvider } from "./contexts/ValoresOcultosContext";
 import { MARKETING_URL, isProductionAppHost } from "./lib/marketingSite";
+import { useNovaVersao } from "./hooks/useNovaVersao";
 
 // Modal de configuracoes: so monta quando o usuario abre. Estatico, arrastava os
 // 6 paineis (empresa, pagamento, uso...) pro entry chunk e estourava o budget.
@@ -149,12 +149,21 @@ function SettingsRedirect({ section }: { section: SettingsSection }) {
   return null;
 }
 
+// Avisa o usuário quando o servidor já está servindo outro deploy. Fica aqui
+// fora dos providers de auth porque não depende de sessão: bundle velho é
+// bundle velho, logado ou não.
+function AvisoDeVersao() {
+  useNovaVersao();
+  return null;
+}
+
 const App = () => {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />
+          <AvisoDeVersao />
           <BrowserRouter>
             <PageTracker />
             <AuthProvider>
@@ -224,14 +233,14 @@ const App = () => {
                           <Route element={<FeatureRoute feature="financeiro" />}>
                             <Route path="/gestao/financeiro" element={<Financeiro />} />
                           </Route>
-                          {/* Equipe (RH: cadastro e salário) é só admin da empresa. */}
-                          <Route element={<AdminOnlyRoute />}>
+                          {/* Equipe (RH: cadastro; salário nunca sai daqui, é mascarado por
+                          can_view_folha() em pessoas_safe independente de role): admin sempre
+                          vê, coordenador só com concessão explícita (financeiro/equipe/metas). */}
+                          <Route element={<FeatureRoute feature="pessoas" />}>
                             <Route path="/gestao/equipe" element={<Pessoas />} />
                           </Route>
                           <Route element={<FeatureRoute feature="metas" />}>
-                            <Route element={<AdminOnlyRoute />}>
-                              <Route path="/gestao/metas" element={<Metas />} />
-                            </Route>
+                            <Route path="/gestao/metas" element={<Metas />} />
                           </Route>
                           <Route element={<FeatureRoute feature="timesheet" />}>
                             <Route path="/gestao/timesheet" element={<Timesheet />} />

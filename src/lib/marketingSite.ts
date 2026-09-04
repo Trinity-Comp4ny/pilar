@@ -18,3 +18,23 @@ const PRODUCTION_APP_HOST = "app.pilarsoft.com.br";
 export function isProductionAppHost(): boolean {
   return window.location.hostname === PRODUCTION_APP_HOST;
 }
+
+const STAGING_APP_HOST = "staging.app.pilarsoft.com.br";
+
+/**
+ * Ambiente observado pelo HOST, não pelo build. Existe porque a separação por
+ * VERCEL_ENV (ADR 0036) não pegou o staging: 357 erros chegaram no Sentry como
+ * "production" contra 1 como "staging", incluindo sessões em
+ * staging.app.pilarsoft.com.br, então a triagem de produção vinha misturada com
+ * teste em staging. Host é a única fonte que não depende de env var de painel
+ * nem sobrevive a um build promovido de um ambiente para outro.
+ *
+ * Retorna null quando o host não é conhecido (preview da Vercel, localhost),
+ * para o chamador cair no valor do build, que ali está certo.
+ */
+export function appEnvironmentFromHost(): "production" | "staging" | null {
+  const host = window.location.hostname;
+  if (host === PRODUCTION_APP_HOST) return "production";
+  if (host === STAGING_APP_HOST) return "staging";
+  return null;
+}

@@ -54,6 +54,40 @@ const CATEGORY_COLOR: Record<string, string> = {
   impersonation: "bg-attention-soft text-attention-strong",
 };
 
+const CATEGORY_LABEL_PT: Record<string, string> = {
+  user: "Usuário",
+  empresa: "Empresa",
+  member: "Membro",
+  billing: "Cobrança",
+  impersonation: "Impersonation",
+};
+
+// Achado em QA: a tabela de auditoria mostrava a ação e a categoria cruas
+// (snake_case, em inglês) — só quem lê o código do backend entendia.
+const ACTION_LABEL_PT: Record<string, string> = {
+  bulk_toggle_feature: "Alternância de feature em massa",
+  cancel_invite: "Convite cancelado",
+  convert_to_paid: "Conversão para pagante",
+  create_company: "Empresa criada",
+  delete_user: "Usuário removido",
+  invite_dispatch_failed: "Falha no envio do convite",
+  invite_user: "Convite enviado",
+  portal_proposta_aprovada: "Proposta aprovada no portal",
+  resend_invite: "Convite reenviado",
+  update_company: "Empresa atualizada",
+  update_plan: "Plano atualizado",
+  update_user_access: "Acesso do usuário atualizado",
+  impersonation_start: "Início de impersonation",
+  impersonation_stop: "Fim de impersonation",
+};
+
+const ROLE_LABEL_PT: Record<string, string> = {
+  ultra_admin: "Ultra admin",
+  admin: "Admin",
+  coordenador: "Coordenador",
+  user: "Usuário",
+};
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function csvEscape(v: unknown): string {
@@ -390,14 +424,16 @@ function AdminActionsTab() {
                         {format(parseISO(log.created_at), "dd/MM HH:mm:ss", { locale: ptBR })}
                       </TableCell>
                       <TableCell className="text-xs">{log.actor_email}</TableCell>
-                      <TableCell className="text-xs font-medium">{log.actor_role}</TableCell>
-                      <TableCell className="text-xs font-mono">{log.action}</TableCell>
+                      <TableCell className="text-xs font-medium">
+                        {ROLE_LABEL_PT[log.actor_role] ?? log.actor_role}
+                      </TableCell>
+                      <TableCell className="text-xs">{ACTION_LABEL_PT[log.action] ?? log.action}</TableCell>
                       <TableCell>
                         <Badge
                           className={CATEGORY_COLOR[log.category] ?? "bg-muted text-muted-foreground"}
                           variant="secondary"
                         >
-                          {log.category}
+                          {CATEGORY_LABEL_PT[log.category] ?? log.category}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">

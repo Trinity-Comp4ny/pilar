@@ -21,6 +21,7 @@ import { DisciplinasTableView } from "./DisciplinasTableView";
 import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
 import { FluxoPipeline } from "./FluxoPipeline";
 import { useProjetoDisciplinaChecklistCounts } from "@/hooks/useProjetoDisciplinaChecklist";
+import { useProjetoDisciplinaRevisoesCounts } from "@/hooks/useDisciplinaRevisoes";
 
 interface ProjetoDetailTabsProps {
   projeto: Projeto;
@@ -69,6 +70,7 @@ export function ProjetoDetailTabs({
 }: ProjetoDetailTabsProps) {
   const { profile } = useAuth();
   const { data: checklistCounts } = useProjetoDisciplinaChecklistCounts(projeto.id);
+  const { data: revisoesCounts } = useProjetoDisciplinaRevisoesCounts(projeto.id);
 
   const handleCronogramaDatesChange = async (
     discIdx: number,
@@ -256,6 +258,7 @@ export function ProjetoDetailTabs({
                       disciplinasCatalog={disciplinasCatalog}
                       pessoas={pessoas}
                       checklistCounts={checklistCounts}
+                      revisoesCounts={revisoesCounts}
                       applyDiscStatusChange={applyDiscStatusChange}
                       handleRemoveDisc={handleRemoveDisc}
                       handleAddDisc={handleAddDisc}

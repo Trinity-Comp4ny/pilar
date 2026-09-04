@@ -6,15 +6,17 @@ import { type Projeto, type ProjetoDisciplinaDB, dbDisciplinaToLegacy } from "@/
 import { useTemplates } from "@/hooks/useTemplates";
 import { useFluxosDisciplinas } from "@/hooks/useFluxosDisciplinas";
 import { useDashboardRentabilidade } from "@/hooks/useRentabilidade";
+import { usePermissions } from "@/hooks/usePermissions";
 
 // Todas as queries de dados da página Projetos: usuário atual, projetos (com
 // disciplinas e responsáveis), clientes, pessoas, disciplinas, além de templates,
 // fluxos e o mapa de margem bruta por projeto. Mantém as mesmas query keys e a
 // mesma transformação de dados da página original.
 export function useProjetosData() {
+  const { can } = usePermissions();
   const { data: templatesData = [] } = useTemplates();
   const { data: fluxosData = [] } = useFluxosDisciplinas();
-  const { data: rentabilidadeData } = useDashboardRentabilidade();
+  const { data: rentabilidadeData } = useDashboardRentabilidade(can("financeiro"));
 
   const rentabilidadeMap = useMemo<Record<string, number>>(() => {
     if (!rentabilidadeData?.projetos) return {};

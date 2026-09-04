@@ -1,6 +1,9 @@
 {
   "ignoreCommand": "sha=\"${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}\"; git cat-file -e \"$sha\" 2>/dev/null || git fetch --depth=1 origin \"$sha\" 2>/dev/null; git diff --quiet \"$sha\" HEAD -- . ':!apps/marketing' 2>/dev/null; [ $? -eq 0 ] && exit 0 || exit 1",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "rewrites": [
+    { "source": "/version.json", "destination": "/version.json" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/assets/(.*)",
@@ -12,6 +15,10 @@
     },
     {
       "source": "/index.html",
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+    },
+    {
+      "source": "/version.json",
       "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     },
     {

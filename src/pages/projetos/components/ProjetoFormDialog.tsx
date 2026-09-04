@@ -19,6 +19,7 @@ import { Calendar, Check, DollarSign, FileText, Layers, Loader2, MapPin } from "
 import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 import { MoneyInput } from "@/components/forms/MoneyInput";
+import { usePermissions } from "@/hooks/usePermissions";
 import { PRIORITY_OPTIONS, PROJECT_PRIORITY_CONFIG } from "@/constants";
 import { type Projeto, type ProjetoDisciplinaDB } from "@/types/projetos";
 import { type TemplateProjeto } from "@/hooks/useTemplates";
@@ -67,6 +68,9 @@ export function ProjetoFormDialog({
   onSaved,
   existingDisciplinas: existingDisciplinasProp,
 }: ProjetoFormDialogProps) {
+  const { can } = usePermissions();
+  const podeVerValor = can("financeiro");
+
   // Garante hidratação em edição mesmo quando o caller (ex: Projetos.tsx lista)
   // não passa existingDisciplinas — busca direto pelo id do projeto editado.
   const { data: fetchedDisciplinas } = useProjetoDisciplinas(
@@ -450,55 +454,60 @@ export function ProjetoFormDialog({
             {/* STEP 2 — Escopo & Prazo */}
             {step === 2 && (
               <div className="space-y-5">
-                <div className="space-y-3">
-                  <Label className="text-[10px] uppercase text-muted-foreground tracking-wider flex items-center gap-1.5">
-                    <DollarSign size={12} /> Financeiro
-                  </Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="valorTotal" className="text-xs">
-                        Valor (R$)
-                      </Label>
-                      <MoneyInput
-                        id="valorTotal"
-                        value={form.formData.valor_contrato}
-                        onChange={(v) => form.handleInputChange("valor_contrato", v)}
-                      />
+                {/* Sem acesso a financeiro a escrita é bloqueada no banco mesmo (projetos_safe
+                    não revoga a tabela base, mas RLS/coluna nega); esconder evita o erro
+                    confuso de salvar um campo que a UI nunca deveria ter oferecido. */}
+                {podeVerValor && (
+                  <div className="space-y-3">
+                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider flex items-center gap-1.5">
+                      <DollarSign size={12} /> Financeiro
+                    </Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="valorTotal" className="text-xs">
+                          Valor (R$)
+                        </Label>
+                        <MoneyInput
+                          id="valorTotal"
+                          value={form.formData.valor_contrato}
+                          onChange={(v) => form.handleInputChange("valor_contrato", v)}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="parcelas" className="text-xs">
+                          Parcelas
+                        </Label>
+                        <Input
+                          id="parcelas"
+                          type="number"
+                          min="1"
+                          value={form.formData.parcelas}
+                          onChange={(e) => form.handleInputChange("parcelas", e.target.value)}
+                          placeholder="1"
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="parcelas" className="text-xs">
-                        Parcelas
-                      </Label>
-                      <Input
-                        id="parcelas"
-                        type="number"
-                        min="1"
-                        value={form.formData.parcelas}
-                        onChange={(e) => form.handleInputChange("parcelas", e.target.value)}
-                        placeholder="1"
-                      />
-                    </div>
+                    {!form.isEditMode && (
+                      <div className="space-y-1.5">
+                        <Label htmlFor="diaPagamento" className="text-xs">
+                          Dia fixo de pagamento (opcional)
+                        </Label>
+                        <Input
+                          id="diaPagamento"
+                          type="number"
+                          min="1"
+                          max="31"
+                          value={form.formData.dia_pagamento}
+                          onChange={(e) => form.handleInputChange("dia_pagamento", e.target.value)}
+                          placeholder="Ex: 25"
+                        />
+                        <p className="text-[10px] text-muted-foreground">
+                          Gera parcelas automáticas vencendo neste dia de cada mês. Pula fim de semana.
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  {!form.isEditMode && (
-                    <div className="space-y-1.5">
-                      <Label htmlFor="diaPagamento" className="text-xs">
-                        Dia fixo de pagamento (opcional)
-                      </Label>
-                      <Input
-                        id="diaPagamento"
-                        type="number"
-                        min="1"
-                        max="31"
-                        value={form.formData.dia_pagamento}
-                        onChange={(e) => form.handleInputChange("dia_pagamento", e.target.value)}
-                        placeholder="Ex: 25"
-                      />
-                      <p className="text-[10px] text-muted-foreground">
-                        Gera parcelas automáticas vencendo neste dia de cada mês. Pula fim de semana.
-                      </p>
-                    </div>
-                  )}
-                </div>
+                )}
 
                 <div className="space-y-3 pt-3 border-t">
                   <Label className="text-[10px] uppercase text-muted-foreground tracking-wider flex items-center gap-1.5">

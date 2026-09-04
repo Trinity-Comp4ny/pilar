@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { type Projeto, getDeadlineStatus, getProjectProgress, getResponsaveisList } from "@/types/projetos";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
+import { usePermissions } from "@/hooks/usePermissions";
 import { PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
 import { AvatarStack } from "@/components/AvatarStack";
 import { getPriorityDotColor } from "../lib/priorityColors";
@@ -44,6 +45,8 @@ export function ProjectCard({
   margemBrutaPct = null,
 }: ProjectCardProps) {
   const formatCurrency = useMoneyMask();
+  const { can } = usePermissions();
+  const podeVerValor = can("financeiro");
   const navigate = useNavigate();
   const priorityConfig = PROJECT_PRIORITY_CONFIG[projeto.prioridade as ProjectPriority];
   const priorityDot = getPriorityDotColor(projeto.prioridade);
@@ -162,9 +165,15 @@ export function ProjectCard({
 
       {/* Linha 4: valor + avatares + deadline */}
       <div className="flex items-center justify-between gap-2 pt-0.5">
-        <span className="text-xs font-medium text-foreground/80 tabular-nums">
-          {formatCurrency(projeto.valor_contrato)}
-        </span>
+        {/* Sem acesso a financeiro, valor_contrato já vem mascarado (null) de
+            projetos_safe — esconder em vez de mostrar "R$ 0,00" enganoso. */}
+        {podeVerValor ? (
+          <span className="text-xs font-medium text-foreground/80 tabular-nums">
+            {formatCurrency(projeto.valor_contrato)}
+          </span>
+        ) : (
+          <span />
+        )}
         <div className="flex items-center gap-2">
           {(() => {
             const allNames = (projeto.disciplinas || [])

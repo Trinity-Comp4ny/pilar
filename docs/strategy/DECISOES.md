@@ -11,6 +11,91 @@ Regras de manutenção:
 
 ---
 
+## 2026-09-04 · `/inicio` vira painel de gestão da empresa, não página de atalho
+
+**Decisão:** `/inicio` deixa de ser porta de entrada com atalhos e passa a ser o painel
+informativo que a empresa monitora, inclusive numa TV na parede do escritório: comercial
+(conversão de proposta, motivo de perda, origem de lead), entrega (prazo, atraso por
+disciplina, pontualidade histórica) e dinheiro (faturamento previsto vs real, margem por
+projeto, concentração de cliente). Os blocos de atalho de hoje (barra dos agentes, radar,
+calendário) continuam, no rodapé.
+
+**Contexto:** pedido do Bruno (VRZ) em 04/09: quer indicador de gestão numa tela só, com
+gráfico ou porcentagem, "porque aí a gente consegue entender onde a gente tá indo mal e
+onde precisa melhorar". O CEO expandiu o pedido: além das métricas que ele listou, a tela
+tem que servir de painel de TV para o escritório inteiro. Virou [SPEC 092](../specs/092-painel-de-gestao-no-inicio.md)
+e [ADR 0037](../architecture/adr/0037-inicio-e-painel-de-gestao-nao-atalho.md).
+
+**Sem nenhum dado financeiro (decidido no mesmo dia, depois do primeiro mockup):** o
+painel não exibe receita, custo, margem, caixa nem faturamento, e a RPC não seleciona
+coluna monetária de tabela alguma. Dinheiro tem acesso restrito por eixo próprio
+(`financeiro_delegado`, ADR 0034) e a tela é para ficar numa TV do escritório, vista por
+estagiário, cliente e visitante. Onde a medida natural seria dinheiro, o painel usa a
+medida física: proposta em contagem, esforço em horas, escopo pendente em quantidade e
+dias de espera. O eixo que entrou no lugar é **produtividade**: ritmo de entrega semanal,
+horas estimado contra real, carga da equipe (em dia contra atrasada), fila de aprovação
+de escopo e retrabalho por disciplina. Em modo TV, nome de pessoa vira iniciais.
+
+**O que isso supera:** a intenção original da spec 001 para o Início (página de atalho
+centrada na barra dos agentes). A barra continua existindo, mas não é mais o herói da
+tela: o número é. Supera também a primeira versão da SPEC 092, que tinha uma seção
+Dinheiro (faturamento previsto vs real, margem por projeto, aging, concentração de
+cliente, aditivos); os blocos seguem válidos como ideia, e o lugar deles é o Financeiro.
+
+**Consequência de produto que ficou registrada:** dois indicadores só podem existir depois
+de migration, porque o schema atual não guarda a informação. `propostas` não registra
+quando foi enviada nem quando foi decidida (só o status atual), então "propostas enviadas
+no mês" e ciclo de venda não são calculáveis hoje. E `projetos.data_previsao` é editável
+sem baseline, então medir pontualidade contra ela faz todo projeto com prazo empurrado
+contar como entregue no prazo. Indicador de prazo só entra com `data_previsao_original`
+congelada.
+
+---
+
+---
+
+## 2026-09-04 · Valor de contrato é campo de quem tem Financeiro; quem só cadastra projeto não informa
+
+**Decisão:** quem cadastra projeto sem acesso ao módulo Financeiro não vê nem informa valor de
+contrato e margem. Cadastra o projeto sem valor e um admin completa depois. Não vamos abrir
+exceção para o momento da criação nem delegar financeiro só para liberar esse campo.
+
+**Contexto:** a Liz (VRZ) é quem cadastra todos os projetos do escritório e tem role `user`. O
+hardening da SPEC 073 / ADR 0034 passou a barrar escrita de `valor_contrato` sem
+`can_view_financeiro()`, e em produção o campo continuava visível para ela porque o guard de
+front ficou em staging: ela preenchia e tomava erro. Considerada a alternativa de dar
+`financeiro_delegado` para ela, foi recusada porque a flag libera o Financeiro inteiro, não só o
+campo de valor, e a VRZ tem três admins que podem preencher.
+
+**Supera:** nada anterior. Fecha a dúvida de fluxo que o PR #448 deixou aberta.
+
+## 2026-09-03 · Asaas não conecta por empresa; serve só para a Pilar cobrar seus clientes
+
+**Decisão:** a integração de Asaas por empresa (cada cliente do Pilar traz sua própria conta/API
+key Asaas para cobrar os próprios clientes deles) é abandonada. Asaas serve exclusivamente para
+a Pilar cobrar SEUS clientes (checkout, assinatura, compra de pacote de tokens) — o que já é como
+o motor de tokens e o checkout funcionam hoje.
+
+**Contexto:** achado em QA no admin da empresa (`/admin` → aba Integrações) — a tela de config
+por empresa (`AsaasConfigForm`) nunca foi ligada a nenhum caso de uso real: nenhuma empresa em
+produção tem `asaas_config` preenchido, e o hook que a alimentava (`useAsaasConfig`) não tinha
+outro consumidor. Confirmado com o CEO: não é prioridade, não entra no roadmap.
+
+**O que isso supera:** qualquer menção a "empresa conecta o próprio Asaas" em docs de estratégia
+mais antigos. Removidas do admin da empresa as abas Parâmetros, Automações e Integrações (a
+segunda mostrava "Integrações ativas" redundante com a terceira; a primeira eram só atalhos para
+telas que já existem em outro lugar) — `ParametrosTab`, `AutomacoesTab`, `IntegracoesTab`,
+`AsaasConfigForm` e `useAsaasConfig` removidos do código. `asaas_config` (tabela), o RLS, e as
+edge functions `asaas-config`/`asaas-webhook`/`asaas-criar-cobranca` NÃO foram tocados nesta
+limpeza (risco de quebrar o motor de tokens/checkout de plataforma, que pode reusar a mesma
+tabela para a config da própria Pilar) — se sobrar código morto ligado a cobrança por empresa
+(`useAsaasCriarCobranca`, não tinha consumidor nem antes desta limpeza), é auditoria separada.
+
+O que substitui "Parâmetros/Automações/Integrações" no admin da empresa (provavelmente uso por
+usuário e consumo de tokens) ainda não foi decidido — o CEO vai pensar numa seção nova.
+
+---
+
 ## 2026-09-01 (mais tarde ainda) · Diário da obra vira feed visual (tipo Instagram), interno + versão curada no portal do cliente
 
 **Decisão:** o Diário (RDO) ganha uma segunda forma de exibição, tipo feed de rede social

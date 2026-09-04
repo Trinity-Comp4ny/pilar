@@ -15,6 +15,7 @@
 
 import * as Sentry from "@sentry/react";
 import { env, sentryTracesSampleRate } from "./env";
+import { appEnvironmentFromHost } from "./marketingSite";
 
 type Extra = Record<string, unknown>;
 /** Ajustes de agrupamento/severidade para um evento específico. */
@@ -49,11 +50,12 @@ interface Monitoring {
 
 const DEV = import.meta.env.DEV;
 const DSN = env.VITE_SENTRY_DSN;
-// __SENTRY_ENVIRONMENT__ (injetado no build via VERCEL_ENV, ver vite.config.ts)
-// separa staging/preview de produção sem precisar configurar VITE_SENTRY_ENV por
-// ambiente na Vercel. VITE_SENTRY_ENV continua valendo como override explícito
-// (ex.: dev local testando um valor específico).
-const ENV = env.VITE_SENTRY_ENV ?? __SENTRY_ENVIRONMENT__;
+// O host manda quando é um dos dois domínios conhecidos: a separação só por
+// build (__SENTRY_ENVIRONMENT__ via VERCEL_ENV, ADR 0036) deixou sessão de
+// staging.app.pilarsoft.com.br chegar como "production" e sujar a triagem.
+// Fora deles (preview, localhost) vale VITE_SENTRY_ENV como override explícito
+// e depois o valor do build.
+const ENV = appEnvironmentFromHost() ?? env.VITE_SENTRY_ENV ?? __SENTRY_ENVIRONMENT__;
 // Já validado como número em 0..1 por env.ts, que também resolve o nome legado
 // VITE_SENTRY_TRACES_RATE. Antes, `Number(undefined ?? ...)` podia render NaN e uma
 // var declarada vazia virava 0 sem ninguém notar.

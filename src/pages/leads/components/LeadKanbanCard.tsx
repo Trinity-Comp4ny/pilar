@@ -14,6 +14,7 @@ import {
 import { MoreVertical, ArrowRight, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
+import { usePermissions } from "@/hooks/usePermissions";
 import type { Lead } from "@/hooks/useLeads";
 import { PROPOSTA_STATUS_CONFIG, type Proposta } from "@/hooks/usePropostas";
 import { statusExibido } from "@/lib/comercial";
@@ -59,10 +60,13 @@ export function LeadKanbanCard({
   responsavelNome,
 }: Props) {
   const formatCurrency = useMoneyMask();
+  const { can } = usePermissions();
+  const podeVerValor = can("financeiro");
   const propStatus = proposta ? statusExibido(proposta) : null;
   const propStatusConfig = propStatus ? PROPOSTA_STATUS_CONFIG[propStatus] : null;
-  const valor =
-    proposta && proposta.valor_proposto != null
+  const valor = !podeVerValor
+    ? null
+    : proposta && proposta.valor_proposto != null
       ? proposta.valor_proposto
       : lead.valor_estimado != null
         ? lead.valor_estimado

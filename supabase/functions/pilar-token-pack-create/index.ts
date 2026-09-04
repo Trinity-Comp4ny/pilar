@@ -13,7 +13,14 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { jsonResponse, optionsResponse } from "../_shared/cors.ts";
-import { createPayment, getPixQrCode, type AsaasPayment } from "../_shared/asaas-platform.ts";
+import {
+  createCustomer,
+  createPayment,
+  findCustomerByCpfCnpj,
+  getPixQrCode,
+  type AsaasPayment,
+} from "../_shared/asaas-platform.ts";
+import { resolverDadosCliente } from "./customer.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
 import { parseOr400, z } from "../_shared/schemas.ts";
@@ -62,10 +69,9 @@ const purchaseSchema = z
     credit_card: creditCardSchema.optional(),
     credit_card_holder_info: holderInfoSchema.optional(),
   })
-  .refine(
-    (v) => v.billing_type !== "CREDIT_CARD" || (v.credit_card && v.credit_card_holder_info),
-    { message: "Dados do cartão e do titular são obrigatórios para CREDIT_CARD" }
-  );
+  .refine((v) => v.billing_type !== "CREDIT_CARD" || (v.credit_card && v.credit_card_holder_info), {
+    message: "Dados do cartão e do titular são obrigatórios para CREDIT_CARD",
+  });
 
 type PurchasePayload = z.infer<typeof purchaseSchema>;
 
@@ -140,15 +146,74 @@ serve(
       .eq("empresa_id", profile.empresa_id)
       .maybeSingle();
 
-    if (!sub?.asaas_customer_id) {
+    if (!sub) {
       return jsonResponse(
         {
-          error:
-            "Sua empresa ainda não tem cobrança ativa. Fale com o suporte para ativar antes de comprar tokens.",
+          error: "Sua empresa ainda não tem cobrança ativa. Fale com o suporte para ativar antes de comprar tokens.",
         },
         400,
         req
       );
+    }
+
+    // Empresa criada pelo /ultra-admin nunca passou pelo checkout pago, então
+    // não tem cliente na Asaas: em 03/09 isso era 5 de 5 empresas ativas em
+    // produção, ou seja, ninguém conseguia comprar pacote nenhum. Cria o
+    // cliente na hora da primeira compra, com o CPF/CNPJ que já vem no
+    // pagamento (cartão) ou o CNPJ cadastrado da empresa.
+    let asaasCustomerId = sub.asaas_customer_id;
+    if (!asaasCustomerId) {
+      const { data: empresa } = await admin
+        .from("empresas")
+        .select("nome, cnpj, email")
+        .eq("id", profile.empresa_id)
+        .maybeSingle();
+
+      // Asaas não cria cliente sem CPF/CNPJ, e PIX/boleto não pedem esse dado
+      // na tela hoje. A precedência e as mensagens vivem em customer.ts, com
+      // teste próprio.
+      const resolucao = resolverDadosCliente({
+        holder: body.credit_card_holder_info,
+        empresa,
+        userEmail: user.email,
+      });
+      if (!resolucao.ok) {
+        return jsonResponse({ error: resolucao.error }, 400, req);
+      }
+
+      try {
+        // Reusa o cliente que já existir com esse CPF/CNPJ (a empresa pode ter
+        // sido cadastrada na Asaas por fora): criar outro duplicaria cobrança.
+        const existente = await findCustomerByCpfCnpj(resolucao.dados.cpfCnpj);
+        const customer =
+          existente ??
+          (await createCustomer({
+            ...resolucao.dados,
+            externalReference: profile.empresa_id,
+          }));
+        asaasCustomerId = customer.id;
+      } catch (err) {
+        log.error("falha ao criar cliente Asaas na compra de pacote", {
+          empresaId: profile.empresa_id,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        return jsonResponse({ error: "Não foi possível iniciar a cobrança. Tente novamente em instantes." }, 502, req);
+      }
+
+      // Guarda pra próxima compra não criar cliente de novo. Se este UPDATE
+      // falhar, a compra segue: o pior caso é um findCustomerByCpfCnpj a mais
+      // na próxima, não cobrança duplicada.
+      const { error: linkErr } = await admin
+        .from("pilar_subscriptions")
+        .update({ asaas_customer_id: asaasCustomerId })
+        .eq("empresa_id", profile.empresa_id);
+      if (linkErr) {
+        log.error("cliente Asaas criado mas não vinculado à subscription", {
+          empresaId: profile.empresa_id,
+          asaasCustomerId,
+          error: linkErr.message,
+        });
+      }
     }
 
     const tier = TIER_CATALOG[body.tier_id as TierId];
@@ -184,7 +249,7 @@ serve(
     let payment: AsaasPayment;
     try {
       payment = await createPayment({
-        customer: sub.asaas_customer_id,
+        customer: asaasCustomerId,
         billingType: body.billing_type,
         value: valor,
         dueDate: todayISO(),

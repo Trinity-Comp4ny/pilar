@@ -1,10 +1,5 @@
 import type { Database } from "@/integrations/supabase/types";
-import {
-  FEATURES_BY_KEY,
-  type CompanyFeatures,
-  type FeatureKey,
-  isFeatureEnabledForCompany,
-} from "@/lib/features";
+import { FEATURES_BY_KEY, type CompanyFeatures, type FeatureKey, isFeatureEnabledForCompany } from "@/lib/features";
 
 export type UserRole = Database["public"]["Enums"]["user_role"];
 
@@ -38,7 +33,24 @@ type AccessContext = {
   companyFeatures: CompanyFeatures;
   /** ADR 0034: concessão pontual de financeiro geral, independente do role. */
   financeiroDelegado?: boolean | null;
+  /** Extensão do ADR 0034: mesma concessão pontual, para equipe e metas. */
+  equipeDelegado?: boolean | null;
+  metasDelegado?: boolean | null;
 };
+
+/** Features que só admin usa por padrão; coordenador precisa de concessão explícita (nunca "user"). */
+const DELEGABLE_FEATURES = ["financeiro", "pessoas", "metas"] as const;
+type DelegableFeature = (typeof DELEGABLE_FEATURES)[number];
+
+function isDelegableFeature(feature: Feature): feature is DelegableFeature {
+  return (DELEGABLE_FEATURES as readonly string[]).includes(feature);
+}
+
+function delegadoFor(ctx: AccessContext, feature: DelegableFeature): boolean {
+  if (feature === "financeiro") return Boolean(ctx.financeiroDelegado);
+  if (feature === "pessoas") return Boolean(ctx.equipeDelegado);
+  return Boolean(ctx.metasDelegado);
+}
 
 /**
  * Verifica acesso: role + módulo habilitado na empresa. Mesma regra que a RLS
@@ -48,10 +60,11 @@ type AccessContext = {
  *   fica na assinatura porque as telas passam, e para um RBAC por role no futuro.
  * - sem role: nada.
  *
- * 'financeiro' e 'financeiro_folha' (ADR 0034) são exceção: não passam mais
- * pelo toggle de módulo da empresa (era universal, sempre true na prática) —
- * decidem por role + concessão financeira, igual can_view_financeiro()/
- * can_view_folha() no banco.
+ * 'financeiro', 'pessoas' (Equipe) e 'metas' são exceção: não passam pelo
+ * toggle de módulo da empresa — decidem por role + concessão pontual ao
+ * coordenador (ADR 0034 e sua extensão), igual can_view_financeiro() no
+ * banco. Um "user" nunca recebe essas três, só admin ou coordenador com
+ * concessão.
  */
 export function canDo(ctx: AccessContext | null, feature: Feature, _action: Action = "view"): boolean {
   if (!ctx) return false;
@@ -65,8 +78,8 @@ export function canDo(ctx: AccessContext | null, feature: Feature, _action: Acti
 
   if ((role as string) === "ultra_admin") return true;
 
-  if (feature === "financeiro") {
-    return role === "admin" || Boolean(ctx.financeiroDelegado);
+  if (isDelegableFeature(feature)) {
+    return role === "admin" || (role === "coordenador" && delegadoFor(ctx, feature));
   }
 
   const isCore = FEATURES_BY_KEY[feature]?.core ?? false;
@@ -83,6 +96,12 @@ export function reasonFor(feature: Feature, _action: Action = "view"): string {
   }
   if (feature === "financeiro") {
     return "Requer perfil Admin ou acesso financeiro concedido por um administrador";
+  }
+  if (feature === "pessoas") {
+    return "Requer perfil Admin ou acesso de equipe concedido por um administrador";
+  }
+  if (feature === "metas") {
+    return "Requer perfil Admin ou acesso a metas concedido por um administrador";
   }
   return `${FEATURES_BY_KEY[feature]?.label ?? feature} não está habilitado para esta empresa`;
 }
