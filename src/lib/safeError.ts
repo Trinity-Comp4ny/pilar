@@ -1,4 +1,8 @@
 const KNOWN_USER_ERRORS: Record<string, string> = {
+  // Chaves específicas vêm antes das genéricas: o loop devolve o primeiro match
+  // e "duplicate key value" abaixo casaria com o código de projeto também.
+  projetos_unique_empresa_codigo: "Já existe um projeto com esse código.",
+  "valor de contrato": "Só quem tem acesso ao Financeiro pode informar valor de contrato ou margem.",
   "duplicate key value": "Já existe um registro com esses dados.",
   "violates foreign key": "Este registro está vinculado a outros dados e não pode ser alterado.",
   "violates not-null": "Preencha todos os campos obrigatórios.",
