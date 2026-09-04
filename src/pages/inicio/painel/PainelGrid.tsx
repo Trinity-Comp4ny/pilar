@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-pangea/dnd";
-import { GripVertical, Pin, PinOff, Plus, RotateCcw, Trash2, X } from "lucide-react";
+import { GripVertical, Pin, PinOff, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { usePermissions } from "@/hooks/usePermissions";
 import { LIMITE_FIXOS, LIMITE_WIDGETS, type ItemLayout, type Tamanho } from "@/hooks/usePainelLayout";
 import type { PainelGestao } from "@/hooks/usePainelGestao";
 import { sobraDaLinha } from "./grade";
+import { SeletorWidget } from "./SeletorWidget";
 import {
   CATALOGO,
   COLUNAS,
@@ -162,6 +163,10 @@ export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalva
 
   const indiceReal = (item: ItemLayout) => atual.findIndex((x) => x === item);
 
+  const entrarEdicao = () => {
+    setRascunho(layout);
+    onEditar(true);
+  };
   const cancelar = () => {
     setRascunho(layout);
     setSeletorAberto(false);
@@ -266,14 +271,39 @@ export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalva
 
   return (
     <div className="flex flex-col gap-4">
-      {/* ── Faixa fixa: a dock do painel ─────────────────────────────────── */}
+      {/* ── Ações do painel: acima dos KPIs, para não empurrar a leitura ── */}
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {editando ? (
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => void onRestaurar().then(() => onEditar(false))}
+              disabled={salvando}
+            >
+              <RotateCcw size={14} /> Restaurar padrão
+            </Button>
+            <Button variant="ghost" size="sm" onClick={cancelar} disabled={salvando}>
+              Cancelar
+            </Button>
+            <Button variant="brand" size="sm" onClick={() => void salvar()} disabled={salvando}>
+              {salvando ? "Salvando..." : "Salvar painel"}
+            </Button>
+          </>
+        ) : (
+          <Button variant="outline" size="sm" onClick={entrarEdicao}>
+            Personalizar
+          </Button>
+        )}
+      </div>
+
+      {/* ── Faixa de KPIs: primeira coisa da página, e não grudada ────────
+       * O sticky saiu: ao rolar, ela flutuava sobre o seletor de widget e
+       * cobria a lista, o que era pior que perder os números de vista. */}
       {fixos.length > 0 && (
         <section
           aria-label="Indicadores fixos"
-          className={cn(
-            "sticky top-0 z-10 -mx-4 border-b border-black/5 bg-background px-4 pb-3 pt-1",
-            editando && "rounded-xl border border-dashed border-brand/60"
-          )}
+          className={cn(editando && "rounded-2xl border border-dashed border-brand/60 p-2")}
         >
           <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-12">
             {fixos.map((item) => {
@@ -314,85 +344,15 @@ export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalva
         </section>
       )}
 
-      {editando && (
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => void onRestaurar().then(() => onEditar(false))}
-            disabled={salvando}
-          >
-            <RotateCcw size={14} /> Restaurar padrão
-          </Button>
-          <Button variant="ghost" size="sm" onClick={cancelar} disabled={salvando}>
-            Cancelar
-          </Button>
-          <Button variant="brand" size="sm" onClick={() => void salvar()} disabled={salvando}>
-            {salvando ? "Salvando..." : "Salvar painel"}
-          </Button>
-        </div>
-      )}
-
-      {/* ── Seletor do catálogo ──────────────────────────────────────────── */}
-      {editando && seletorAberto && (
-        <section
-          aria-label="Indicadores disponíveis"
-          className="rounded-2xl border border-black/10 bg-white p-4 shadow-sm"
-        >
-          <div className="mb-3 flex items-center gap-2">
-            <h3 className="text-sm font-medium">Indicadores disponíveis</h3>
-            <span className="text-xs text-muted-foreground">
-              {rascunho.length} de {LIMITE_WIDGETS} no painel
-            </span>
-            <button
-              type="button"
-              onClick={() => setSeletorAberto(false)}
-              aria-label="Fechar"
-              className="ml-auto rounded p-1 text-muted-foreground hover:bg-black/5 hover:text-ink"
-            >
-              <X size={15} />
-            </button>
-          </div>
-          <div className="flex flex-col gap-4">
-            {SECOES.map((secao) => {
-              const doGrupo = disponiveis.filter((w) => w.secao === secao.key);
-              if (doGrupo.length === 0) return null;
-              return (
-                <div key={secao.key}>
-                  <h4 className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-muted">
-                    {secao.label}
-                  </h4>
-                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {doGrupo.map((w) => {
-                      const usado = jaUsados.has(w.id);
-                      return (
-                        <button
-                          key={w.id}
-                          type="button"
-                          disabled={usado || rascunho.length >= LIMITE_WIDGETS}
-                          onClick={() => adicionar(w.id)}
-                          className={cn(
-                            "flex flex-col gap-0.5 rounded-xl border border-black/10 p-3 text-left transition-colors",
-                            usado
-                              ? "cursor-default opacity-45"
-                              : "hover:bg-black/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                          )}
-                        >
-                          <span className="flex items-center gap-2 text-[13px] font-medium text-ink">
-                            {w.titulo}
-                            {usado && <span className="text-[10px] font-normal text-muted-foreground">no painel</span>}
-                          </span>
-                          <span className="text-[11.5px] leading-snug text-muted-foreground">{w.descricao}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
+      <SeletorWidget
+        aberto={editando && seletorAberto}
+        onFechar={() => setSeletorAberto(false)}
+        secaoInicial={secaoAlvo}
+        jaNoPainel={jaUsados}
+        podeAdicionar={rascunho.length < LIMITE_WIDGETS}
+        can={can}
+        onAdicionar={adicionar}
+      />
 
       {/* ── Grade, agrupada por módulo ───────────────────────────────────── */}
       {grupos.length === 0 && fixos.length === 0 ? (
