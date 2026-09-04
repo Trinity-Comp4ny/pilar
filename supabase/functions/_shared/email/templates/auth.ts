@@ -1,25 +1,27 @@
 /**
  * E-mails de autenticação (Supabase Auth via auth-email-hook). Classe plataforma.
- * Layout curto: título, uma frase, botão, aviso de segurança.
+ * Layout curto: cabeçalho editorial com o título, botão no corpo, aviso de segurança.
  */
 
 import { BRAND } from "../brand.ts";
 import { html } from "../html.ts";
-import { accent, button, lead, shell, small, strong, title } from "../layout.ts";
+import { button, em, shell, small, strong } from "../layout.ts";
 import type { EmailTemplate } from "./types.ts";
 
-const FOOTER_AUTH = `Este e-mail foi enviado pelo ${BRAND.nome} em resposta a uma ação na sua conta.`;
+const FOOTER_AUTH = `Este e-mail foi enviado pela ${BRAND.nome} em resposta a uma ação na sua conta.`;
 
 export function templateRecuperacaoSenha(link: string): EmailTemplate {
   return {
-    subject: `Redefinir senha, ${BRAND.nome}`,
+    subject: "Redefinir sua senha",
     html: shell({
-      preview: `Redefina sua senha no ${BRAND.nome}`,
+      preview: "Crie uma nova senha de acesso",
       footerNote: FOOTER_AUTH,
+      hero: {
+        titulo: html`Redefinir sua ${em("senha")}`,
+        lead: html`Crie uma nova senha pelo botão abaixo. O link vale por ${strong("1 hora")}.`,
+      },
       content: [
-        title(html`Redefinir ${accent("senha")}`),
-        lead(html`Clique no botão para criar uma nova senha. O link expira em ${strong("1 hora")}.`),
-        button("Redefinir senha", link),
+        button("Redefinir senha", link, { mt: 0 }),
         small("Se você não pediu a redefinição, ignore este e-mail. Sua senha atual continua valendo."),
       ],
     }),
@@ -27,19 +29,21 @@ export function templateRecuperacaoSenha(link: string): EmailTemplate {
 }
 
 export function templateConviteUsuario(link: string, nome?: string): EmailTemplate {
-  const saudacao = nome ? html`Olá, ${strong(nome)}.` : html`Olá.`;
   return {
-    subject: `Você foi convidado para o ${BRAND.nome}`,
+    subject: `Seu convite para a ${BRAND.nome}`,
     html: shell({
-      preview: `Você foi convidado para o ${BRAND.nome}`,
+      preview: `Você foi convidado para a ${BRAND.nome}`,
       footerNote: FOOTER_AUTH,
+      hero: {
+        titulo: html`Seu ${em("convite")} chegou`,
+        lead: nome
+          ? html`Olá, ${strong(nome)}. Sua equipe abriu um acesso para você. Aceite o convite para criar sua senha e
+            começar.`
+          : html`Sua equipe abriu um acesso para você. Aceite o convite para criar sua senha e começar.`,
+      },
       content: [
-        title(html`Bem-vindo ao ${accent(BRAND.nome)}`),
-        lead(
-          html`${saudacao} Você foi convidado a acessar o ${BRAND.nome}. Aceite o convite para criar sua senha e entrar.`
-        ),
-        button("Aceitar convite", link),
-        small(html`O convite expira em ${strong("24 horas")}. Se você não esperava este e-mail, ignore.`),
+        button("Aceitar convite", link, { mt: 0 }),
+        small(html`O convite vale por ${strong("24 horas")}. Se você não esperava este e-mail, ignore.`),
       ],
     }),
   };
@@ -47,31 +51,32 @@ export function templateConviteUsuario(link: string, nome?: string): EmailTempla
 
 export function templateMagicLink(link: string): EmailTemplate {
   return {
-    subject: `Seu link de acesso, ${BRAND.nome}`,
+    subject: "Seu link de acesso",
     html: shell({
-      preview: `Seu link de acesso ao ${BRAND.nome}`,
+      preview: "Entre sem senha por este link",
       footerNote: FOOTER_AUTH,
-      content: [
-        title(html`Seu link de ${accent("acesso")}`),
-        lead(html`Clique no botão para entrar. O link expira em ${strong("10 minutos")} e só funciona uma vez.`),
-        button(`Entrar no ${BRAND.nome}`, link),
-        small("Se você não pediu este link, ignore este e-mail."),
-      ],
+      hero: {
+        titulo: html`Seu link de ${em("acesso")}`,
+        lead: html`Entre pelo botão abaixo. O link vale por ${strong("10 minutos")} e funciona uma vez só.`,
+      },
+      content: [button("Entrar", link, { mt: 0 }), small("Se você não pediu este link, ignore este e-mail.")],
     }),
   };
 }
 
 export function templateConfirmacaoCadastro(link: string): EmailTemplate {
   return {
-    subject: `Confirme seu e-mail, ${BRAND.nome}`,
+    subject: "Confirme seu e-mail",
     html: shell({
-      preview: `Confirme seu e-mail para ativar a conta`,
+      preview: "Confirme seu endereço para ativar a conta",
       footerNote: FOOTER_AUTH,
+      hero: {
+        titulo: html`Confirme seu ${em("e-mail")}`,
+        lead: "Falta um passo: confirme este endereço para ativar sua conta.",
+      },
       content: [
-        title(html`Confirme seu ${accent("e-mail")}`),
-        lead("Clique no botão para confirmar seu endereço e ativar a conta."),
-        button("Confirmar e-mail", link),
-        small(html`Se você não criou uma conta no ${BRAND.nome}, ignore este e-mail.`),
+        button("Confirmar e-mail", link, { mt: 0 }),
+        small(html`Se você não criou uma conta na ${BRAND.nome}, ignore este e-mail.`),
       ],
     }),
   };

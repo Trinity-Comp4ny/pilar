@@ -135,6 +135,9 @@ for (const [nome, build] of casos) {
     assert(subject.length > 0);
     assertStringIncludes(out, "<!DOCTYPE html>");
     assertStringIncludes(out, 'color-scheme" content="light only"');
+    // identidade da landing: Geist declarada, faixa de morros e botão/pílula verde
+    assertStringIncludes(out, "font-family:'Geist'");
+    assertStringIncludes(out, "/email/wave-v1.png");
   });
 }
 
@@ -298,4 +301,48 @@ Deno.test({
     await walk(root);
     assertEquals(ofensores, [], `HTML de e-mail fora do módulo: ${ofensores.join(", ")}`);
   },
+});
+
+// ---------------------------------------------------------------------------
+// Identidade da marca no shell (landing traduzida para e-mail)
+// ---------------------------------------------------------------------------
+
+Deno.test("botão é pílula verde com tinta escura e seta, nunca verde no texto", () => {
+  const { html: out } = T.templateMagicLink("https://l");
+  assertStringIncludes(out, "background-color:#A6EC88");
+  assertStringIncludes(out, "border-radius:999px");
+  assertStringIncludes(out, "&rarr;");
+  assert(!/[^-]color:#A6EC88/.test(out), "verde não pode ser cor de texto (regra da marca)");
+});
+
+Deno.test("cabeçalho de plataforma usa peso 500 no wordmark, não negrito", () => {
+  const { html: out } = T.templateRecuperacaoSenha("https://l");
+  assertStringIncludes(out, "font-weight:500;color:#1A1A1A;letter-spacing:-0.025em");
+  assert(!out.includes("font-weight:700"), "wordmark não usa 700");
+});
+
+Deno.test("rodapé mostra o domínio como link para o site", () => {
+  const { html: out } = T.templateConfirmacaoCadastro("https://l");
+  assertStringIncludes(out, '<a href="https://www.pilarsoft.com.br"');
+  assertStringIncludes(out, "pilarsoft.com.br</a>");
+});
+
+Deno.test("copy não usa 'no Pilar' nem 'Entrar no Pilar'", () => {
+  const amostras = [
+    T.templateMagicLink("https://l").html,
+    T.templateConviteUsuario("https://l", "Ana").html,
+    T.templateTrialAviso({ empresaNome: "X", daysLeft: 3, billingUrl: "https://l" }).html,
+    T.templateNotificacoes({
+      nome: "Ana",
+      modo: "digest",
+      itens: [item("projeto")],
+      totalOculto: 1,
+      gerenciarUrl: "https://l/g",
+      sinoUrl: "https://l/s",
+    }).html,
+  ];
+  for (const out of amostras) {
+    assert(!/no Pilar/.test(out), `copy com "no Pilar": ${out.match(/.{0,40}no Pilar.{0,20}/)?.[0]}`);
+  }
+  assertStringIncludes(T.templateMagicLink("https://l").html, ">Entrar&nbsp;&nbsp;&rarr;<");
 });

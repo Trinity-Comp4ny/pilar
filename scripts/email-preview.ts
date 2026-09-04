@@ -14,9 +14,22 @@ const args = [...Deno.args];
 const galleryIdx = args.indexOf("--gallery");
 const galleryPath = galleryIdx >= 0 ? args[galleryIdx + 1] : null;
 
-// Logo como data URI: preview não depende de host nem de deploy.
-const logoPng = await Deno.readFile(new URL("../public/email/logo-v1.png", import.meta.url));
-Deno.env.set("EMAIL_LOGO_URL", `data:image/png;base64,${encodeBase64(logoPng)}`);
+// Assets e fonte embutidos como data URI: a revisão visual não depende de host,
+// de deploy nem de rede, e mostra a Geist de verdade (no e-mail real a fonte vem
+// por @font-face do próprio site, e o Gmail cai no fallback do sistema).
+const dataUri = async (rel: string, mime: string) =>
+  `data:${mime};base64,${encodeBase64(await Deno.readFile(new URL(rel, import.meta.url)))}`;
+
+const geist = await dataUri("../apps/marketing/public/fonts/geist-variable.woff2", "font/woff2");
+const geistItalic = await dataUri("../apps/marketing/public/fonts/geist-variable-italic.woff2", "font/woff2");
+
+Deno.env.set(
+  "EMAIL_FONT_CSS",
+  `@font-face{font-family:'Geist';font-style:normal;font-weight:100 900;src:url(${geist}) format('woff2');}\n` +
+    `@font-face{font-family:'Geist';font-style:italic;font-weight:100 900;src:url(${geistItalic}) format('woff2');}`
+);
+Deno.env.set("EMAIL_LOGO_URL", await dataUri("../public/email/logo-v1.png", "image/png"));
+Deno.env.set("EMAIL_WAVE_URL", await dataUri("../public/email/wave-v1.png", "image/png"));
 Deno.env.set("APP_URL", "https://app.pilarsoft.com.br");
 Deno.env.set("PUBLIC_SITE_URL", "https://www.pilarsoft.com.br");
 
@@ -45,7 +58,7 @@ const previews: Preview[] = [
   {
     slug: "convite-usuario",
     grupo: "Autenticação",
-    nota: "Convite para a equipe (auth hook)",
+    nota: "Convite para a equipe, disparado pelo auth hook",
     email: T.templateConviteUsuario(`${APP}/auth/confirm?token=abc`, "Carla Menezes"),
   },
   {
@@ -63,7 +76,7 @@ const previews: Preview[] = [
   {
     slug: "magic-link",
     grupo: "Autenticação",
-    nota: "Login sem senha",
+    nota: 'Login sem senha, botão "Entrar"',
     email: T.templateMagicLink(`${APP}/auth/confirm?token=abc`),
   },
 
@@ -165,7 +178,7 @@ const previews: Preview[] = [
   {
     slug: "notificacao-imediata-1",
     grupo: "Notificações",
-    nota: "Alerta imediato, 1 item high",
+    nota: "Alerta imediato, um item de alta prioridade",
     email: T.templateNotificacoes(
       {
         nome: "Carla",
@@ -289,12 +302,13 @@ function galleryBody(inlineSrcdoc: boolean): string {
     )
     .join("");
 
-  return `<title>E-mails do Pilar</title>
+  return `<title>E-mails da Pilar</title>
 <style>
+  @font-face{font-family:'GeistPreview';font-style:normal;font-weight:100 900;src:url(${geist}) format('woff2')}
   :root{--bg:#F7F7F7;--card:#fff;--ink:#1A1A1A;--soft:#3D3D3D;--muted:#6B7280;--border:#E5E7EB;--brand:#A4EC86}
   @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#111;--card:#1A1A1A;--ink:#F5F5F5;--soft:#D4D4D4;--muted:#9CA3AF;--border:#2A2A2A}}
   :root[data-theme="dark"]{--bg:#111;--card:#1A1A1A;--ink:#F5F5F5;--soft:#D4D4D4;--muted:#9CA3AF;--border:#2A2A2A}
-  body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;margin:0;padding:32px 24px 64px}
+  body{background:var(--bg);color:var(--ink);font-family:'GeistPreview',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;margin:0;padding:32px 24px 64px;letter-spacing:-0.01em}
   h1{font-size:22px;font-weight:600;letter-spacing:-0.02em;margin:0 0 4px}
   .sub{color:var(--muted);font-size:14px;margin:0 0 28px;max-width:70ch;line-height:1.5}
   .grupo{margin-top:36px}
@@ -305,13 +319,13 @@ function galleryBody(inlineSrcdoc: boolean): string {
   .slug{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--muted)}
   .assunto{font-size:14px;font-weight:600;margin-top:2px;color:var(--ink)}
   .nota{font-size:12px;color:var(--soft);margin-top:2px}
-  iframe{width:100%;height:820px;border:0;background:#F7F7F7;color-scheme:light}
+  iframe{width:100%;height:880px;border:0;background:#F7F7F7;color-scheme:light}
   .legenda{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
   .legenda span{font-size:12px;color:var(--soft);border:1px solid var(--border);border-radius:999px;padding:3px 10px}
 </style>
-<h1>E-mails do Pilar</h1>
-<p class="sub">Todos os templates renderizados com dados de exemplo pelo mesmo módulo (<code>_shared/email/</code>). Layout varia por tipo, design system é um só: Paper + Ink, verde da marca como acento, botão preto, tabela à prova de Outlook. Cada quadro é o e-mail exatamente como sai, em 600px.</p>
-<div class="legenda"><span>${previews.length} templates</span><span>${grupos.length} grupos</span><span>tema claro fixo (color-scheme: light only)</span><span>logo: public/email/logo-v1.png</span></div>
+<h1>E-mails da Pilar</h1>
+<p class="sub">Todos os templates renderizados com dados de exemplo pelo mesmo módulo (<code>_shared/email/</code>). A identidade é a da landing: fonte Geist, título com itálico de destaque, paisagem de morros fechando o cabeçalho, botão em pílula verde. O layout varia por tipo; o design system é um só. Cada quadro é o e-mail exatamente como sai, em 600px.</p>
+<div class="legenda"><span>${previews.length} templates</span><span>${grupos.length} grupos</span><span>Geist embutida na prévia</span><span>tema claro fixo</span><span>assets: public/email/</span></div>
 ${cards}`;
 }
 

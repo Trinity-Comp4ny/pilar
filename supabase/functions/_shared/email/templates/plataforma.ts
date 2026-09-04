@@ -1,25 +1,23 @@
 /**
- * E-mails do Pilar para quem administra uma empresa: trial e LGPD. Classe plataforma.
+ * E-mails da Pilar para quem administra uma empresa: trial e LGPD. Classe plataforma.
  */
 
 import { BRAND } from "../brand.ts";
 import { html } from "../html.ts";
 import {
-  accent,
   button,
   callout,
   card,
   divider,
+  em,
   emphasis,
   kv,
   kvDivider,
-  lead,
   link,
   paragraph,
   shell,
   small,
   strong,
-  title,
 } from "../layout.ts";
 import type { EmailTemplate } from "./types.ts";
 
@@ -33,26 +31,25 @@ export function templateTrialAviso(params: {
   const prazo = ultimoDia ? emphasis("amanhã", "negative") : strong(`em ${daysLeft} dias`);
 
   return {
-    subject: ultimoDia
-      ? `Seu trial expira amanhã, ${BRAND.nome}`
-      : `Seu trial expira em ${daysLeft} dias, ${BRAND.nome}`,
+    subject: ultimoDia ? "Seu trial expira amanhã" : `Seu trial expira em ${daysLeft} dias`,
     html: shell({
       preview: ultimoDia ? "Último dia de trial" : `Faltam ${daysLeft} dias de trial`,
-      footerNote: `Você recebeu este e-mail por administrar a empresa ${empresaNome} no ${BRAND.nome}.`,
+      footerNote: `Você recebeu este e-mail por administrar a empresa ${empresaNome} na ${BRAND.nome}.`,
+      hero: {
+        titulo: ultimoDia ? html`Seu trial termina ${em("amanhã")}` : html`Seu trial está ${em("acabando")}`,
+        lead: html`O período de teste da ${strong(empresaNome)} expira ${prazo}. Assine um plano para seguir sem
+        interrupção.`,
+      },
       content: [
-        title(html`Seu trial está ${accent("acabando")}`),
-        lead(
-          html`O período de teste da ${strong(empresaNome)} expira ${prazo}. Para continuar usando sem interrupção,
-          assine um plano antes do vencimento.`
-        ),
         callout(
           ultimoDia
             ? "Depois do vencimento a conta fica em modo leitura: seus dados continuam guardados, mas ninguém edita nada."
             : "Ao vencer, a conta entra em modo leitura. Os dados continuam guardados.",
-          ultimoDia ? "negative" : "warning"
+          ultimoDia ? "negative" : "warning",
+          { mt: 0 }
         ),
-        button("Assinar agora", billingUrl),
-        small("Dúvidas sobre planos? Responda este e-mail."),
+        button("Ver planos", billingUrl),
+        small("Dúvidas sobre planos ou nota fiscal? Responda este e-mail."),
       ],
     }),
   };
@@ -75,14 +72,14 @@ export function templateLgpdExclusaoDados(params: {
   return {
     subject: `[LGPD] Solicitação de exclusão de dados, ${empresaNome}`,
     html: shell({
-      preview: `Solicitação de exclusão de dados em ${empresaNome}`,
-      footerNote: `Notificação automática do ${BRAND.nome} para o admin responsável (LGPD, art. 18, IV).`,
+      preview: `Um usuário da ${empresaNome} pediu a exclusão dos próprios dados`,
+      footerNote: `Notificação automática da ${BRAND.nome} para o admin responsável (LGPD, art. 18, IV).`,
+      hero: {
+        titulo: html`Pedido de ${em("exclusão de dados")}`,
+        lead: html`Olá, ${strong(adminNome)}. Um usuário da ${strong(empresaNome)} pediu a eliminação dos próprios
+        dados, direito previsto no art. 18, IV da LGPD.`,
+      },
       content: [
-        title(html`Solicitação de ${accent("exclusão de dados")}`),
-        lead(
-          html`Olá, ${strong(adminNome)}. Um usuário da ${strong(empresaNome)} pediu a eliminação dos próprios dados,
-          direito previsto no art. 18, IV da LGPD.`
-        ),
         card(
           [
             kv("Solicitante", solicitante),
@@ -92,9 +89,9 @@ export function templateLgpdExclusaoDados(params: {
             kvDivider(),
             kv("ID da solicitação", requestId, { mono: true }),
           ],
-          { accent: "warning" }
+          { accent: "warning", mt: 0 }
         ),
-        button("Abrir painel administrativo", adminPanelUrl),
+        button("Abrir painel", adminPanelUrl),
         divider(),
         paragraph(
           html`Você tem ${strong("até 15 dias")} para processar a solicitação. Dados sob retenção legal (fiscal,
