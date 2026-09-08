@@ -1163,12 +1163,10 @@ export default function UltraAdmin() {
   return (
     <PageLayout
       header={
-        <PageHeader title="Gestão Pilar">
-          <Button variant="brand" className="rounded-full gap-2" onClick={() => setCreateOpen(true)}>
-            <Plus size={16} />
-            Criar empresa
-          </Button>
-        </PageHeader>
+        <PageHeader
+          title="Gestão Pilar"
+          primaryAction={{ label: "Criar empresa", onClick: () => setCreateOpen(true), icon: Plus }}
+        />
       }
     >
       <Tabs

@@ -24,11 +24,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useObra, useDeleteObra } from "@/hooks/useObras";
 import { useObraTarefas } from "@/hooks/useObraTarefas";
 import { useAlertasClimaCronograma } from "@/hooks/useAlertasClima";
 import { formatDate } from "@/lib/format";
 import { sensivelClimaLabel } from "@/lib/obras";
+import { cn } from "@/lib/utils";
 import { ObraFormDialog } from "../components/ObraFormDialog";
 import { CriarAcessoCampoDialog } from "../components/CriarAcessoCampoDialog";
 import { ObraTimelineTab } from "../components/ObraTimelineTab";
@@ -44,6 +46,7 @@ export default function ObraDetalhePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { can } = usePermissions();
+  const isMobile = useIsMobile();
   const canEdit = can("obras", "edit");
   const canDelete = can("obras", "delete");
   // Sub-features do módulo Obras (spec 035): a aba some quando desligada para a
@@ -108,23 +111,44 @@ export default function ObraDetalhePage() {
     <PageLayout
       header={
         <PageHeader title={obra.nome} breadcrumbs={BREADCRUMB}>
+          {/* Ícone-only em mobile: os 3 botões com texto completo estouravam o
+              header em 390px, escondidos até um swipe revelar (achado da
+              auditoria, mesmo padrão já corrigido no cabeçalho do Gantt). */}
           <div className="flex items-center gap-2">
             {canEdit && (
-              <Button variant="outline" size="sm" onClick={() => setAcessoCampoOpen(true)}>
-                <HardHat className="mr-1.5 h-4 w-4" />
-                Acesso de campo
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(isMobile && "w-9 px-0")}
+                onClick={() => setAcessoCampoOpen(true)}
+                aria-label="Acesso de campo"
+              >
+                <HardHat className={cn("h-4 w-4", !isMobile && "mr-1.5")} />
+                {!isMobile && "Acesso de campo"}
               </Button>
             )}
             {canEdit && (
-              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-                <Pencil className="mr-1.5 h-4 w-4" />
-                Editar
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(isMobile && "w-9 px-0")}
+                onClick={() => setEditOpen(true)}
+                aria-label="Editar"
+              >
+                <Pencil className={cn("h-4 w-4", !isMobile && "mr-1.5")} />
+                {!isMobile && "Editar"}
               </Button>
             )}
             {canDelete && (
-              <Button variant="outline" size="sm" onClick={() => setConfirmDel(true)}>
-                <Trash2 className="mr-1.5 h-4 w-4" />
-                Excluir
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(isMobile && "w-9 px-0")}
+                onClick={() => setConfirmDel(true)}
+                aria-label="Excluir"
+              >
+                <Trash2 className={cn("h-4 w-4", !isMobile && "mr-1.5")} />
+                {!isMobile && "Excluir"}
               </Button>
             )}
           </div>
