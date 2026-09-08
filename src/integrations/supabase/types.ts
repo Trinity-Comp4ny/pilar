@@ -7544,6 +7544,7 @@ export type Database = {
         Args: { p_path: string; p_rdo_id: string; p_token: string }
         Returns: Json
       }
+      _cron_secret: { Args: { p_name: string }; Returns: string }
       _feature_catalog: { Args: never; Returns: string[] }
       _finance_display_date: {
         Args: { p_efetivacao: string; p_status: string; p_vencimento: string }
@@ -8071,6 +8072,7 @@ export type Database = {
       get_user_empresa_id_text: { Args: never; Returns: string }
       get_user_role: { Args: never; Returns: string }
       guard_login_attempt: { Args: { p_email: string }; Returns: boolean }
+      guardiao_margem_disparar: { Args: never; Returns: undefined }
       has_aal2: { Args: never; Returns: boolean }
       has_role: {
         Args: { allowed_roles: Database["public"]["Enums"]["user_role"][] }
@@ -8556,6 +8558,7 @@ export type Database = {
         Args: { p_disciplina_id: string; p_pessoa_ids: string[] }
         Returns: undefined
       }
+      trial_expiry_disparar: { Args: never; Returns: undefined }
       update_company_features: {
         Args: { p_features: Json }
         Returns: undefined

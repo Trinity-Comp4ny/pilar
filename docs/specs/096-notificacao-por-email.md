@@ -149,9 +149,12 @@ returns table (
 ) language sql security definer set search_path = public as $$ ... $$;
 revoke all on function public.notificacoes_pendentes_email(text) from public, authenticated;
 
--- pg_cron (padrão ADR 0036, wrappers *_monitored):
---   'notificacoes-email-imediato'  '*/5 * * * *'   → net.http_post(.../notificacoes-email-cron, {"modo":"imediato"})
---   'notificacoes-email-semanal'   '0 11 * * 1'    → net.http_post(.../notificacoes-email-cron, {"modo":"semanal"})
+-- pg_cron (padrão ADR 0036, wrappers *_monitored), disparo por
+-- public.notificacoes_email_disparar(p_modo), que lê app_supabase_url/
+-- app_service_role_key do Supabase Vault (migration 20260913000000; não usa
+-- ALTER DATABASE, que o Supabase gerenciado bloqueia por privilégio):
+--   'notificacoes-email-imediato'  '*/5 * * * *'   → notificacoes_email_disparar('imediato')
+--   'notificacoes-email-semanal'   '0 11 * * 1'    → notificacoes_email_disparar('semanal')
 ```
 
 ```ts
