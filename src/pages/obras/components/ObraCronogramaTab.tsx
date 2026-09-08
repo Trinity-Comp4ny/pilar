@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   AlertTriangle,
   CalendarClock,
@@ -107,6 +108,7 @@ export function ObraCronogramaTab({
   projetoId: string | null;
   canEdit: boolean;
 }) {
+  const isMobile = useIsMobile();
   const { data: frentes = [], isLoading } = useObraFrentes(obraId);
   const { data: tarefas = [] } = useObraTarefas(obraId);
   const createFrente = useCreateFrente(obraId);
@@ -214,13 +216,7 @@ export function ObraCronogramaTab({
   }, [todayPct, scrollToToday]);
 
   // ── Drag: motor compartilhado (etapa e tarefa) ──────────────────────────────
-  const {
-    isSaving,
-    isDragging,
-    startDrag,
-    getBarGeometry,
-    shouldSuppressClick,
-  } = useGanttDrag<string>({
+  const { isSaving, isDragging, startDrag, getBarGeometry, shouldSuppressClick } = useGanttDrag<string>({
     timelineStart: tlStart,
     timelineEnd: tlEnd,
     zoom,
@@ -360,8 +356,10 @@ export function ObraCronogramaTab({
                 </div>
 
                 <div className="flex">
-                  {/* Coluna fixa: etapas + tarefas */}
-                  <div className="w-[260px] flex-shrink-0 border-r bg-muted/30">
+                  {/* Coluna fixa: etapas + tarefas. Colapsa em mobile (achado da
+                      auditoria: 260px sozinha consumia 66% de uma tela de 390px,
+                      sobrando só uma faixa estreita pra timeline). */}
+                  <div className={cn("flex-shrink-0 border-r bg-muted/30", isMobile ? "w-[104px]" : "w-[260px]")}>
                     <div className="flex h-10 items-center border-b px-3">
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                         Etapa / tarefa
@@ -385,20 +383,22 @@ export function ObraCronogramaTab({
                               className="flex min-w-0 flex-1 flex-col justify-center py-1 text-left"
                             >
                               <span className="truncate text-xs font-semibold text-ink">{row.frente.nome}</span>
-                              <div className="mt-0.5 flex items-center gap-1.5">
-                                <span
-                                  className={cn(
-                                    "inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full",
-                                    ESTADO_BAR[row.estado]
-                                  )}
-                                  aria-hidden
-                                />
-                                <span className="truncate text-[10px] text-muted-foreground">
-                                  {ESTADO_LABEL[row.estado]}
-                                  {row.total > 0 &&
-                                    ` · ${row.progresso}% · ${row.total} tarefa${row.total === 1 ? "" : "s"}`}
-                                </span>
-                              </div>
+                              {!isMobile && (
+                                <div className="mt-0.5 flex items-center gap-1.5">
+                                  <span
+                                    className={cn(
+                                      "inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full",
+                                      ESTADO_BAR[row.estado]
+                                    )}
+                                    aria-hidden
+                                  />
+                                  <span className="truncate text-[10px] text-muted-foreground">
+                                    {ESTADO_LABEL[row.estado]}
+                                    {row.total > 0 &&
+                                      ` · ${row.progresso}% · ${row.total} tarefa${row.total === 1 ? "" : "s"}`}
+                                  </span>
+                                </div>
+                              )}
                             </button>
                             {canEdit && (
                               <button
