@@ -403,3 +403,17 @@ Deno.test("tema escuro: media query declarada e cobre fundo, card, texto e um to
   assertStringIncludes(out, ".pe-wave{display:none !important}");
   assertStringIncludes(out, 'class="pe-wave"');
 });
+
+Deno.test(
+  "tema escuro: cobre também o mecanismo do Outlook novo/Windows Mail (data-ogsc/data-ogsb), fora da media query",
+  () => {
+    const { html: out } = T.templateRecuperacaoSenha("https://l");
+    assertStringIncludes(out, "[data-ogsc] .pe-sky, [data-ogsb] .pe-sky");
+    assertStringIncludes(out, "[data-ogsc] .pe-ink, [data-ogsb] .pe-ink");
+    // O Outlook novo/Windows Mail não avaliam @media pra e-mail: a regra
+    // data-ogsc/data-ogsb precisa existir FORA do bloco @media, não só dentro.
+    const fimDoMedia = out.indexOf("@media (prefers-color-scheme: dark)");
+    const fechaChave = out.indexOf("}\n  [data-ogsc]", fimDoMedia);
+    assert(fechaChave > fimDoMedia, "regra data-ogsc não está fora do bloco @media");
+  }
+);
