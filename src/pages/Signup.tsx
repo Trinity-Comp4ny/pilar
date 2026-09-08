@@ -17,6 +17,7 @@ import { TurnstileWidget } from "@/components/TurnstileWidget";
 import { env } from "@/lib/env";
 import { signupSchema, signupDefaultValues, type SignupFormData } from "@/schemas";
 import { translateAuthError } from "@/lib/authErrors";
+import { analytics } from "@/lib/analytics";
 import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legalVersions";
 import { Logo } from "@/components/Logo";
 
@@ -77,6 +78,7 @@ export default function Signup() {
       return;
     }
 
+    analytics.track("signup_completed", { method: "email" });
     setEmailEnviado(true);
     setIsLoading(false);
   };

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ import {
   type TokenPackTierId,
 } from "@/components/settings/useTokenPackCreate";
 import { useTokenPackStatus } from "@/components/settings/useTokenPackStatus";
+import { analytics } from "@/lib/analytics";
 
 // Espelha o catálogo do backend (pilar-token-pack-create) só pra exibição — o preço
 // que vale de verdade é sempre resolvido no servidor a partir do tier_id (SPEC 080).
@@ -147,6 +148,16 @@ export default function ComprarTokens() {
   const status = useTokenPackStatus(result?.purchase_id ?? null);
   const paid = result?.payment_status === "paid" || status.data?.status === "paid";
   const tier = TIER_CATALOG[tierId];
+
+  // Guard por ref: `paid` continua true em re-renders subsequentes, sem isso o
+  // evento disparava de novo a cada render (mesmo padrão do checkout de assinatura).
+  const purchaseCompletedRef = useRef(false);
+  useEffect(() => {
+    if (paid && !purchaseCompletedRef.current) {
+      purchaseCompletedRef.current = true;
+      analytics.track("pacote_tokens_comprado", { tier: tierId, tokens: tier.tokens });
+    }
+  }, [paid, tierId, tier.tokens]);
 
   const fetchCep = useCallback(async (cep: string) => {
     const digits = onlyDigits(cep);

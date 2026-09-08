@@ -8,6 +8,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
+import { analytics } from "@/lib/analytics";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Building2, Hash, Loader2 } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -75,6 +76,8 @@ export default function CompanySetup() {
 
       // Atualiza o contexto antes de navegar para evitar loop no PrivateRoute
       await refreshProfile();
+
+      analytics.track("empresa_onboarding_concluido", { empresa_id: profile.empresa_id });
 
       toast.success("Empresa configurada!", {
         description: "Bem-vindo ao sistema Pilar.",

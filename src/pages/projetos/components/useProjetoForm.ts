@@ -17,6 +17,7 @@ import { type TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
+import { analytics } from "@/lib/analytics";
 import { lookupCEP } from "@/lib/brasilApi";
 import { useBulkSaveDisciplinas } from "@/hooks/useProjetoDisciplinas";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -650,6 +651,10 @@ export function useProjetoForm({
         if (error) throw new Error(error.message || String(error));
 
         novoProjetoId = (newProjetoId as string) ?? null;
+
+        if (novoProjetoId) {
+          analytics.track("projeto_criado", { projeto_id: novoProjetoId, disciplinas: finalDisciplinas.length });
+        }
 
         // Sync disciplinas to relational table for new project.
         // Se falhar, faz rollback do projeto pra não deixar registro órfão sem disciplinas.
