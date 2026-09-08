@@ -1,8 +1,9 @@
 # SPEC: Navegação mobile — bottom bar + chip-nav por módulo
 
 **Data:** 2026-09-08
-**Status:** Draft
+**Status:** Aprovada
 **Autor:** Matheus (decisão) + Claude (redação)
+**Decisão de arquitetura:** [ADR 0040](../architecture/adr/0040-navegacao-mobile-bottom-bar-substitui-sidebar.md)
 **Módulo:** shell (transversal — afeta `AppSidebar`, `PageLayout`, `PageHeader`)
 
 ## Problema
@@ -47,7 +48,7 @@ Requisitos não-funcionais:
 - [ ] Dado um usuário sem a feature Financeiro liberada, quando olha o chip-nav de Gestão, então o chip "Financeiro" se comporta como hoje na sidebar (oculto ou cinza, conforme `hiddenWhenLockedForUser` e o role do usuário).
 - [ ] Dado um usuário em mobile, quando toca em "Menu", então abre um painel com conta, notificações (com badge), feedback, toggle de ocultar valores e sair — e Portal Admin/Ultra/Impersonation aparecem só quando aplicável ao role do usuário.
 - [ ] Dado um usuário em mobile em `/admin`, quando olha a barra, então nenhum item de módulo fica marcado como ativo indevidamente (mantém o último módulo usado, mesma regra de `readUltimoModulo` de hoje).
-- [ ] Caso de borda: usuário sem nenhuma feature de um módulo inteiro liberada (ex. Obra desligada para a empresa) — decidir e testar se o módulo mantém o slot fixo na barra (ver "Decisões e riscos").
+- [ ] Caso de borda: usuário sem nenhuma feature de um módulo inteiro liberada (ex. Obra desligada para a empresa) — decidido: o módulo **mantém o slot fixo** na barra e mostra um estado vazio/bloqueado ao tocar (ver ADR 0040).
 
 ## Dados e contratos
 
@@ -68,7 +69,7 @@ A aprovar com o Matheus antes de gerar código (rascunho inicial):
 
 ## Decisões e riscos
 
-- **Pendente de decisão com o Matheus:** um módulo sem nenhuma feature liberada para a empresa mantém o slot fixo na barra (mostrando um estado vazio/bloqueado ao tocar) ou o slot desaparece, como a sidebar já faz hoje (`visibleModules`)? Manter o slot fixo evita a barra "pular" de posição entre empresas com planos diferentes, mas pode expor um módulo que a empresa nem contratou.
+- **Decidido:** um módulo sem nenhuma feature liberada para a empresa mantém o slot fixo na barra, mostrando um estado vazio/bloqueado ao tocar, em vez de sumir como a sidebar já faz hoje (`visibleModules`). Ver [ADR 0040](../architecture/adr/0040-navegacao-mobile-bottom-bar-substitui-sidebar.md).
 - **Risco de duplicação:** o conteúdo do Menu (passo 4) precisa ficar compartilhado com o dropdown desktop, ou a manutenção diverge com o tempo (um ganha uma opção nova, o outro não).
-- **Decisão de arquitetura relevante?** Esta troca de padrão de navegação é transversal a todo o app mobile; se o Matheus quiser, isso também justifica um ADR curto (contexto/decisão/consequências) além desta spec — a spec já registra o "quê" e o "porquê" com detalhe suficiente pra codar, o ADR seria só pra deixar a decisão arquitetural achável fora do histórico de specs.
+- **Decisão de arquitetura:** registrada em [ADR 0040](../architecture/adr/0040-navegacao-mobile-bottom-bar-substitui-sidebar.md), por ser transversal a todo o app mobile.
 - Base do design e do racional completo: artifact "Pilar no bolso" (link na memória do projeto), seção 4 (Navegação) e seção 3 (benchmark dos 12 apps).
