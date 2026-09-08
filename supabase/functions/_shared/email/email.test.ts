@@ -137,7 +137,7 @@ for (const [nome, build] of casos) {
     assertStringIncludes(out, XSS_ESCAPED);
     assert(subject.length > 0);
     assertStringIncludes(out, "<!DOCTYPE html>");
-    assertStringIncludes(out, 'color-scheme" content="light only"');
+    assertStringIncludes(out, 'color-scheme" content="light dark"');
     // identidade da landing: Geist declarada, faixa de morros e botão/pílula verde
     assertStringIncludes(out, "font-family:'Geist'");
     assertStringIncludes(out, "/email/wave-v1.png");
@@ -307,12 +307,15 @@ Deno.test({
 // Identidade da marca no shell (landing traduzida para e-mail)
 // ---------------------------------------------------------------------------
 
-Deno.test("botão é pílula verde com tinta escura e seta, nunca verde no texto", () => {
+Deno.test("botão é pílula verde com tinta escura e seta, nunca verde no texto no tema claro", () => {
   const { html: out } = T.templateMagicLink("https://l");
   assertStringIncludes(out, "background-color:#A6EC88");
   assertStringIncludes(out, "border-radius:999px");
   assertStringIncludes(out, "&rarr;");
-  assert(!/[^-]color:#A6EC88/.test(out), "verde não pode ser cor de texto (regra da marca)");
+  // Fora do bloco <style> (que carrega o override do tema escuro, onde verde
+  // vira texto de propósito, ver brand.ts CD.brandStrong), a regra vale sempre.
+  const semStyle = out.replace(/<style>[\s\S]*?<\/style>/, "");
+  assert(!/[^-]color:#A6EC88/.test(semStyle), "verde não pode ser cor de texto no tema claro (regra da marca)");
 });
 
 Deno.test("cabeçalho de plataforma usa peso 500 no wordmark, não negrito", () => {
@@ -323,7 +326,7 @@ Deno.test("cabeçalho de plataforma usa peso 500 no wordmark, não negrito", () 
 
 Deno.test("rodapé mostra o domínio como link para o site", () => {
   const { html: out } = T.templateConfirmacaoCadastro("https://l");
-  assertStringIncludes(out, '<a href="https://www.pilarsoft.com.br"');
+  assertStringIncludes(out, 'href="https://www.pilarsoft.com.br"');
   assertStringIncludes(out, "pilarsoft.com.br</a>");
 });
 
@@ -370,4 +373,33 @@ Deno.test("logo, faixa de morros e fonte ignoram PUBLIC_SITE_URL de ambiente e u
     if (envAntes === undefined) Deno.env.delete("PUBLIC_SITE_URL");
     else Deno.env.set("PUBLIC_SITE_URL", envAntes);
   }
+});
+
+Deno.test("tema escuro: media query declarada e cobre fundo, card, texto e um tom semântico", () => {
+  const { html: out } = T.templateNotificacoes({
+    nome: "Ana",
+    modo: "semanal",
+    itens: [
+      {
+        categoria: "financeiro",
+        severidade: "high",
+        titulo: "t",
+        mensagem: null,
+        url: "https://l",
+        criadoEm: new Date().toISOString(),
+      },
+    ],
+    totalOculto: 0,
+    gerenciarUrl: "https://l/g",
+    sinoUrl: "https://l/s",
+  });
+  assertStringIncludes(out, "@media (prefers-color-scheme: dark)");
+  assertStringIncludes(out, "color-scheme: light dark");
+  assertStringIncludes(out, ".pe-bg{background-color:#0D0D0D !important}");
+  assertStringIncludes(out, ".pe-card{background-color:#161616");
+  assertStringIncludes(out, ".pe-ink{color:#F5F5F5 !important}");
+  assertStringIncludes(out, ".pe-tone-negative-fg{color:#F87171 !important}");
+  // A faixa de morros é ativo fixo (sem versão escura): some no tema escuro.
+  assertStringIncludes(out, ".pe-wave{display:none !important}");
+  assertStringIncludes(out, 'class="pe-wave"');
 });

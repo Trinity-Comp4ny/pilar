@@ -6,18 +6,33 @@
  * Anatomia do shell, de cima para baixo:
  *   1. Cabeçalho branco: símbolo + "Pilar" (peso 500, como na landing).
  *   2. Cabeçalho editorial: céu claro, título e uma frase de apoio.
- *   3. Faixa de morros: imagem decorativa, sem texto por cima. Cliente que
- *      bloqueia imagem mostra só o céu claro, e nada quebra.
- *   4. Corpo branco: cards, listas, botão.
+ *   3. Faixa de morros: imagem decorativa, sem texto por cima. Some no tema
+ *      escuro (ver abaixo); cliente que bloqueia imagem mostra só o céu, e
+ *      nada quebra.
+ *   4. Corpo: cards, listas, botão.
  *   5. Rodapé: nota, links e o domínio como link.
+ *
+ * Tema escuro: o Outlook novo e o Windows Mail reescrevem e-mail em dark mode
+ * por conta própria, ignorando `color-scheme: light`, e o resultado dessa
+ * reescrita automática é um cinza sem cara nenhuma. Em vez de brigar por
+ * "claro sempre" (perdida nesses dois clientes), todo componente que carrega
+ * cor ganha uma classe (`pe-*`), e `shell()` declara as duas paletas via
+ * `@media (prefers-color-scheme: dark)`: no Gmail e no Apple Mail mostra o
+ * claro (comportamento padrão deles), no Outlook novo e Windows Mail mostra O
+ * NOSSO escuro, desenhado, não o deles. A técnica funciona porque `!important`
+ * numa regra de `<style>` bate um `style=""` inline sem `!important`: cada
+ * componente mantém a cor clara inline (fallback pra cliente que não lê
+ * `<style>`, e é o que o MSO/Outlook desktop clássico sempre vê) e a classe
+ * só entra em ação quando o `@media` bate.
  *
  * Regras:
  * - Template não escreve HTML cru: compõe estes componentes. Se falta um, cria aqui.
  * - Todo componente escapa o que recebe (`render`). Só `raw()` passa HTML, e só o layout usa.
  * - Verde é fundo, nunca texto (regra da marca). Para verde em texto, `C.brandStrong`.
+ * - Cor nova num componente = par claro (`C`) e escuro (`CD`) em `brand.ts`, mais a classe aqui.
  */
 
-import { BRAND, C, FONT, FONT_FACE_CSS, MONO } from "./brand.ts";
+import { BRAND, C, CD, FONT, FONT_FACE_CSS, MONO } from "./brand.ts";
 import { Html, html, raw, render, type Renderable } from "./html.ts";
 
 export type Tone = "neutral" | "brand" | "info" | "warning" | "negative" | "positive";
@@ -33,21 +48,40 @@ export interface ShellOptions {
   footerLinks?: Array<{ label: string; href: string }>;
 }
 
-const TONE: Record<Tone, { fg: string; bg: string; bar: string }> = {
-  neutral: { fg: C.inkSoft, bg: C.muted, bar: C.border },
-  brand: { fg: C.brandStrong, bg: C.brandSoft, bar: C.brand },
-  info: { fg: C.info, bg: C.infoSoft, bar: C.info },
-  warning: { fg: C.warning, bg: C.warningSoft, bar: C.warning },
-  negative: { fg: C.negative, bg: C.negativeSoft, bar: C.negative },
-  positive: { fg: C.positive, bg: C.positiveSoft, bar: C.positive },
-};
+type Palette = Record<keyof typeof C, string>;
 
-const MODULO: Record<Modulo, { fg: string; bg: string }> = {
-  gestao: { fg: C.moduloGestaoStrong, bg: C.moduloGestao },
-  projetos: { fg: C.moduloProjetosStrong, bg: C.moduloProjetos },
-  obra: { fg: C.moduloObraStrong, bg: C.moduloObra },
-  neutro: { fg: C.inkSoft, bg: C.muted },
-};
+function toneMap(p: Palette): Record<Tone, { fg: string; bg: string; bar: string }> {
+  return {
+    neutral: { fg: p.inkSoft, bg: p.muted, bar: p.border },
+    brand: { fg: p.brandStrong, bg: p.brandSoft, bar: p.brand },
+    info: { fg: p.info, bg: p.infoSoft, bar: p.info },
+    warning: { fg: p.warning, bg: p.warningSoft, bar: p.warning },
+    negative: { fg: p.negative, bg: p.negativeSoft, bar: p.negative },
+    positive: { fg: p.positive, bg: p.positiveSoft, bar: p.positive },
+  };
+}
+
+function moduloMap(p: Palette): Record<Modulo, { fg: string; bg: string }> {
+  return {
+    gestao: { fg: p.moduloGestaoStrong, bg: p.moduloGestao },
+    projetos: { fg: p.moduloProjetosStrong, bg: p.moduloProjetos },
+    obra: { fg: p.moduloObraStrong, bg: p.moduloObra },
+    neutro: { fg: p.inkSoft, bg: p.muted },
+  };
+}
+
+const TONE = toneMap(C);
+const TONE_DARK = toneMap(CD);
+const MODULO = moduloMap(C);
+const MODULO_DARK = moduloMap(CD);
+
+/** Classe do par claro/escuro de um tom, pra `bg`, `fg` ou `bar`. */
+function toneClass(tone: Tone, slot: "bg" | "fg" | "bar"): string {
+  return `pe-tone-${tone}-${slot}`;
+}
+function moduloClass(modulo: Modulo, slot: "bg" | "fg"): string {
+  return `pe-modulo-${modulo}-${slot}`;
+}
 
 // ---------------------------------------------------------------------------
 // Tipografia
@@ -60,6 +94,7 @@ export function em(text: Renderable): Html {
 
 export function paragraph(text: Renderable, opts: { mt?: number } = {}): Html {
   return html`<p
+    class="pe-inksoft"
     style="margin:${opts.mt ?? 14}px 0 0;font-size:15px;line-height:1.65;color:${C.inkSoft};font-family:${FONT}"
   >
     ${text}
@@ -69,6 +104,7 @@ export function paragraph(text: Renderable, opts: { mt?: number } = {}): Html {
 /** Texto auxiliar (aviso de expiração, "se não foi você, ignore"). */
 export function small(text: Renderable, opts: { mt?: number } = {}): Html {
   return html`<p
+    class="pe-textmuted"
     style="margin:${opts.mt ?? 24}px 0 0;font-size:13px;line-height:1.6;color:${C.textMuted};font-family:${FONT}"
   >
     ${text}
@@ -78,6 +114,7 @@ export function small(text: Renderable, opts: { mt?: number } = {}): Html {
 /** Rótulo em caixa alta, acima de um valor. */
 export function label(text: Renderable): Html {
   return html`<p
+    class="pe-textmuted"
     style="margin:0 0 5px;font-size:10.5px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:${C.textMuted};font-family:${FONT}"
   >
     ${text}
@@ -85,16 +122,17 @@ export function label(text: Renderable): Html {
 }
 
 export function strong(text: Renderable): Html {
-  return html`<strong style="color:${C.ink};font-weight:600">${text}</strong>`;
+  return html`<strong class="pe-ink" style="color:${C.ink};font-weight:600">${text}</strong>`;
 }
 
 /** Palavra-chave em tom semântico (ex.: "em atraso" em vermelho). */
 export function emphasis(text: Renderable, tone: Tone): Html {
-  return html`<span style="color:${TONE[tone].fg};font-weight:600">${text}</span>`;
+  return html`<span class="${toneClass(tone, "fg")}" style="color:${TONE[tone].fg};font-weight:600">${text}</span>`;
 }
 
 export function link(text: Renderable, href: string): Html {
   return html`<a
+    class="pe-ink"
     href="${href}"
     target="_blank"
     style="color:${C.ink};text-decoration:underline;text-underline-offset:2px;font-weight:500"
@@ -108,7 +146,8 @@ export function link(text: Renderable, href: string): Html {
 
 /**
  * Botão da marca: pílula verde com tinta escura e seta à direita, igual ao da
- * landing. `variant: "quiet"` é o contorno claro, para ação secundária.
+ * landing. O verde não muda de tema (já funciona nos dois). `variant: "quiet"`
+ * é o contorno claro, para ação secundária, e esse sim flipa no escuro.
  */
 export function button(
   labelText: Renderable,
@@ -118,6 +157,7 @@ export function button(
   const quiet = opts.variant === "quiet";
   const bg = quiet ? C.card : C.brand;
   const border = quiet ? C.border : C.brand;
+  const cls = quiet ? ' class="pe-card"' : "";
   const mt = opts.mt ?? 28;
   const texto = `${render(labelText)}&nbsp;&nbsp;&rarr;`;
   return raw(`
@@ -132,8 +172,8 @@ export function button(
 <!--[if !mso]><!-- -->
 <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin-top:${mt}px;border-collapse:separate">
   <tr>
-    <td align="center" valign="middle" bgcolor="${bg}" style="background-color:${bg};border:1px solid ${border};border-radius:999px;padding:14px 26px;mso-padding-alt:14px 26px">
-      <a href="${render(href)}" target="_blank" style="color:${C.ink};font-weight:500;font-size:15px;letter-spacing:-0.01em;text-decoration:none;font-family:${FONT};display:inline-block;line-height:20px">${texto}</a>
+    <td${cls} align="center" valign="middle" bgcolor="${bg}" style="background-color:${bg};border:1px solid ${border};border-radius:999px;padding:14px 26px;mso-padding-alt:14px 26px">
+      <a class="pe-ink" href="${render(href)}" target="_blank" style="color:${C.ink};font-weight:500;font-size:15px;letter-spacing:-0.01em;text-decoration:none;font-family:${FONT};display:inline-block;line-height:20px">${texto}</a>
     </td>
   </tr>
 </table>
@@ -143,7 +183,7 @@ export function button(
 export function divider(opts: { my?: number } = {}): Html {
   const my = opts.my ?? 28;
   return raw(
-    `<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin:${my}px 0;border-collapse:collapse"><tr><td style="border-top:1px solid ${C.border};font-size:1px;line-height:1px">&nbsp;</td></tr></table>`
+    `<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin:${my}px 0;border-collapse:collapse"><tr><td class="pe-divider" style="border-top:1px solid ${C.border};font-size:1px;line-height:1px">&nbsp;</td></tr></table>`
   );
 }
 
@@ -158,10 +198,10 @@ export function card(children: Html[], opts: { accent?: Tone; mt?: number; paddi
   const pad = opts.padding ?? 22;
   const inner = children.map((c) => c.value).join("");
   const bar = opts.accent
-    ? `<td bgcolor="${TONE[opts.accent].bar}" width="3" style="background-color:${TONE[opts.accent].bar};width:3px;border-top-left-radius:14px;border-bottom-left-radius:14px;font-size:1px;line-height:1px">&nbsp;</td>`
+    ? `<td class="${toneClass(opts.accent, "bar")}" bgcolor="${TONE[opts.accent].bar}" width="3" style="background-color:${TONE[opts.accent].bar};width:3px;border-top-left-radius:14px;border-bottom-left-radius:14px;font-size:1px;line-height:1px">&nbsp;</td>`
     : "";
   return raw(`
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.surface}" style="background-color:${C.surface};border:1px solid ${C.border};border-radius:14px;margin-top:${opts.mt ?? 26}px;border-collapse:separate">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.surface}" class="pe-surface" style="background-color:${C.surface};border:1px solid ${C.border};border-radius:14px;margin-top:${opts.mt ?? 26}px;border-collapse:separate">
   <tr>${bar}<td style="padding:${pad}px ${pad + 2}px">${inner}</td></tr>
 </table>`);
 }
@@ -175,6 +215,7 @@ export function kv(
   const size = opts.size === "xl" ? 32 : opts.size === "lg" ? 20 : 15;
   const weight = opts.size === "xl" ? 500 : 600;
   const color = opts.tone ? TONE[opts.tone].fg : C.ink;
+  const cls = opts.tone ? toneClass(opts.tone, "fg") : "pe-ink";
   const font = opts.mono ? MONO : FONT;
   const tracking = opts.size === "xl" ? "-0.03em" : opts.mono ? "0.03em" : "-0.01em";
   return html`<table
@@ -189,6 +230,7 @@ export function kv(
       <td>
         ${label(labelText)}
         <p
+          class="${cls}"
           style="margin:0;font-size:${size}px;font-weight:${weight};color:${color};font-family:${font};line-height:1.3;letter-spacing:${tracking};word-break:break-word"
         >
           ${value}
@@ -201,7 +243,7 @@ export function kv(
 /** Separador fino entre `kv` dentro do card. */
 export function kvDivider(): Html {
   return raw(
-    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin:15px 0"><tr><td style="border-top:1px solid ${C.border};font-size:1px;line-height:1px">&nbsp;</td></tr></table>`
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin:15px 0"><tr><td class="pe-divider" style="border-top:1px solid ${C.border};font-size:1px;line-height:1px">&nbsp;</td></tr></table>`
   );
 }
 
@@ -215,11 +257,17 @@ export function callout(text: Renderable, tone: Tone = "info", opts: { mt?: numb
     cellspacing="0"
     border="0"
     bgcolor="${t.bg}"
+    class="${toneClass(tone, "bg")}"
     style="background-color:${t.bg};border-radius:12px;margin-top:${opts.mt ?? 24}px;border-collapse:separate"
   >
     <tr>
       <td style="padding:14px 18px">
-        <p style="margin:0;font-size:14px;line-height:1.6;color:${t.fg};font-family:${FONT}">${text}</p>
+        <p
+          class="${toneClass(tone, "fg")}"
+          style="margin:0;font-size:14px;line-height:1.6;color:${t.fg};font-family:${FONT}"
+        >
+          ${text}
+        </p>
       </td>
     </tr>
   </table>`;
@@ -234,11 +282,14 @@ export function codeBox(text: Renderable, opts: { mt?: number } = {}): Html {
     cellspacing="0"
     border="0"
     bgcolor="${C.muted}"
+    class="pe-muted"
     style="background-color:${C.muted};border-radius:10px;margin-top:${opts.mt ?? 8}px;border-collapse:separate"
   >
     <tr>
       <td style="padding:13px 16px">
-        <span style="font-family:${MONO};font-size:15px;color:${C.ink};letter-spacing:0.03em;word-break:break-all"
+        <span
+          class="pe-ink"
+          style="font-family:${MONO};font-size:15px;color:${C.ink};letter-spacing:0.03em;word-break:break-all"
           >${text}</span
         >
       </td>
@@ -249,7 +300,10 @@ export function codeBox(text: Renderable, opts: { mt?: number } = {}): Html {
 /** Chip pequeno (categoria, severidade). */
 export function badge(text: Renderable, opts: { tone?: Tone; modulo?: Modulo } = {}): Html {
   const c = opts.modulo ? MODULO[opts.modulo] : TONE[opts.tone ?? "neutral"];
+  const clsBg = opts.modulo ? moduloClass(opts.modulo, "bg") : toneClass(opts.tone ?? "neutral", "bg");
+  const clsFg = opts.modulo ? moduloClass(opts.modulo, "fg") : toneClass(opts.tone ?? "neutral", "fg");
   return html`<span
+    class="${clsBg} ${clsFg}"
     style="display:inline-block;font-size:10.5px;font-weight:500;letter-spacing:0.09em;text-transform:uppercase;color:${c.fg};background-color:${c.bg};padding:4px 9px;border-radius:999px;font-family:${FONT};line-height:1.3"
     >${text}</span
   >`;
@@ -260,7 +314,9 @@ export function sectionHeading(text: Renderable, opts: { modulo?: Modulo; count?
   const chip = badge(text, { modulo: opts.modulo ?? "neutro" });
   const count =
     opts.count !== undefined
-      ? html`<span style="font-size:12px;color:${C.textDisabled};font-family:${FONT};margin-left:9px"
+      ? html`<span
+          class="pe-textdisabled"
+          style="font-size:12px;color:${C.textDisabled};font-family:${FONT};margin-left:9px"
           >${opts.count}</span
         >`
       : raw("");
@@ -273,7 +329,7 @@ export function sectionHeading(text: Renderable, opts: { modulo?: Modulo; count?
     style="border-collapse:collapse;margin-top:${opts.mt ?? 30}px"
   >
     <tr>
-      <td style="padding-bottom:8px;border-bottom:1px solid ${C.border}">${chip}${count}</td>
+      <td class="pe-divider" style="padding-bottom:8px;border-bottom:1px solid ${C.border}">${chip}${count}</td>
     </tr>
   </table>`;
 }
@@ -290,23 +346,30 @@ export function listItem(item: {
   const bar = TONE[tone].bar;
   const tituloHtml = item.href
     ? html`<a
+        class="pe-ink"
         href="${item.href}"
         target="_blank"
         style="color:${C.ink};text-decoration:none;font-weight:500;font-size:15px;line-height:1.45;letter-spacing:-0.01em;font-family:${FONT}"
         >${item.titulo}</a
       >`
     : html`<span
+        class="pe-ink"
         style="color:${C.ink};font-weight:500;font-size:15px;line-height:1.45;letter-spacing:-0.01em;font-family:${FONT}"
         >${item.titulo}</span
       >`;
   const msg = item.mensagem
-    ? html`<p style="margin:4px 0 0;font-size:13px;line-height:1.55;color:${C.textMuted};font-family:${FONT}">
+    ? html`<p
+        class="pe-textmuted"
+        style="margin:4px 0 0;font-size:13px;line-height:1.55;color:${C.textMuted};font-family:${FONT}"
+      >
         ${item.mensagem}
       </p>`
     : raw("");
   const meta = item.meta
     ? html`<td align="right" valign="top" style="padding:13px 0 13px 12px;white-space:nowrap">
-        <span style="font-size:12px;color:${C.textDisabled};font-family:${FONT}">${item.meta}</span>
+        <span class="pe-textdisabled" style="font-size:12px;color:${C.textDisabled};font-family:${FONT}"
+          >${item.meta}</span
+        >
       </td>`
     : raw("");
   return html`<table
@@ -316,9 +379,17 @@ export function listItem(item: {
     cellspacing="0"
     border="0"
     style="border-collapse:collapse;border-bottom:1px solid ${C.borderSubtle}"
+    class="pe-divider-subtle"
   >
     <tr>
-      <td width="2" bgcolor="${bar}" style="background-color:${bar};width:2px;font-size:1px;line-height:1px">&nbsp;</td>
+      <td
+        width="2"
+        bgcolor="${bar}"
+        class="${toneClass(tone, "bar")}"
+        style="background-color:${bar};width:2px;font-size:1px;line-height:1px"
+      >
+        &nbsp;
+      </td>
       <td style="padding:13px 0 13px 14px">${tituloHtml}${msg}</td>
       ${meta}
     </tr>
@@ -337,27 +408,32 @@ function headerHtml(): string {
       <img src="${render(BRAND.logoUrl)}" width="30" height="30" alt="${render(BRAND.nome)}" style="display:block;width:30px;height:30px;border:0"/>
     </td>
     <td valign="middle" style="vertical-align:middle">
-      <span style="font-size:19px;font-weight:500;color:${C.ink};letter-spacing:-0.025em;font-family:${FONT};line-height:1">${render(BRAND.nome)}</span>
+      <span class="pe-ink" style="font-size:19px;font-weight:500;color:${C.ink};letter-spacing:-0.025em;font-family:${FONT};line-height:1">${render(BRAND.nome)}</span>
     </td>
   </tr>
 </table>`;
 }
 
-/** Cabeçalho editorial: céu claro, título grande, frase de apoio, faixa de morros. */
+/**
+ * Cabeçalho editorial: céu claro, título grande, frase de apoio, faixa de
+ * morros. A imagem da faixa é um ativo fixo (não tem versão escura): no tema
+ * escuro ela some (`pe-wave`) e sobra só o céu escuro, um respiro sólido em
+ * vez de uma janela clara destoando do resto do e-mail.
+ */
 function heroHtml(hero: ShellOptions["hero"]): string {
   const leadHtml = hero.lead
-    ? `<p style="margin:14px 0 0;font-size:15.5px;line-height:1.6;color:${C.inkSoft};font-family:${FONT}">${render(hero.lead)}</p>`
+    ? `<p class="pe-inksoft" style="margin:14px 0 0;font-size:15.5px;line-height:1.6;color:${C.inkSoft};font-family:${FONT}">${render(hero.lead)}</p>`
     : "";
   return `
 <tr>
-  <td class="px" bgcolor="${C.sky}" style="background-color:${C.sky};padding:36px 40px 32px">
-    <h1 class="h1" style="margin:0;font-size:29px;font-weight:500;color:${C.ink};letter-spacing:-0.035em;line-height:1.15;font-family:${FONT}">${render(hero.titulo)}</h1>
+  <td class="px pe-sky" bgcolor="${C.sky}" style="background-color:${C.sky};padding:36px 40px 32px">
+    <h1 class="h1 pe-ink" style="margin:0;font-size:29px;font-weight:500;color:${C.ink};letter-spacing:-0.035em;line-height:1.15;font-family:${FONT}">${render(hero.titulo)}</h1>
     ${leadHtml}
   </td>
 </tr>
 <tr>
-  <td bgcolor="${C.sky}" style="background-color:${C.sky};line-height:0;font-size:0">
-    <img src="${render(BRAND.waveUrl)}" width="600" alt="" style="display:block;width:100%;max-width:600px;height:auto;border:0"/>
+  <td class="pe-sky" bgcolor="${C.sky}" style="background-color:${C.sky};line-height:0;font-size:0">
+    <img class="pe-wave" src="${render(BRAND.waveUrl)}" width="600" alt="" style="display:block;width:100%;max-width:600px;height:auto;border:0"/>
   </td>
 </tr>`;
 }
@@ -367,17 +443,45 @@ function footerHtml(note: string, links: Array<{ label: string; href: string }>)
     ? `<p style="margin:10px 0 0;font-size:12.5px;line-height:1.6;font-family:${FONT}">${links
         .map(
           (l) =>
-            `<a href="${render(l.href)}" target="_blank" style="color:${C.inkSoft};text-decoration:underline;text-underline-offset:2px">${render(l.label)}</a>`
+            `<a class="pe-inksoft" href="${render(l.href)}" target="_blank" style="color:${C.inkSoft};text-decoration:underline;text-underline-offset:2px">${render(l.label)}</a>`
         )
-        .join(`<span style="color:${C.textDisabled};padding:0 8px">·</span>`)}</p>`
+        .join(`<span class="pe-textdisabled" style="color:${C.textDisabled};padding:0 8px">·</span>`)}</p>`
     : "";
   return `
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse">
-  <tr><td><p style="margin:0;font-size:12.5px;line-height:1.65;color:${C.textMuted};font-family:${FONT}">${render(note)}</p>${linksHtml}</td></tr>
+  <tr><td><p class="pe-textmuted" style="margin:0;font-size:12.5px;line-height:1.65;color:${C.textMuted};font-family:${FONT}">${render(note)}</p>${linksHtml}</td></tr>
   <tr><td style="padding-top:16px">
-    <a href="${BRAND.siteUrl}" target="_blank" style="font-size:12.5px;color:${C.textMuted};font-family:${FONT};text-decoration:underline;text-underline-offset:2px">${render(BRAND.dominio)}</a>
+    <a class="pe-textmuted" href="${BRAND.siteUrl}" target="_blank" style="font-size:12.5px;color:${C.textMuted};font-family:${FONT};text-decoration:underline;text-underline-offset:2px">${render(BRAND.dominio)}</a>
   </td></tr>
 </table>`;
+}
+
+/** Gera as regras `@media (prefers-color-scheme: dark)` a partir de CD, TONE_DARK, MODULO_DARK. */
+function darkModeCss(): string {
+  const rules: string[] = [
+    `.pe-bg{background-color:${CD.bg} !important}`,
+    `.pe-card{background-color:${CD.card} !important;border-color:${CD.border} !important}`,
+    `.pe-surface{background-color:${CD.surface} !important;border-color:${CD.border} !important}`,
+    `.pe-muted{background-color:${CD.muted} !important}`,
+    `.pe-sky{background-color:${CD.sky} !important}`,
+    `.pe-wave{display:none !important}`,
+    `.pe-divider{border-color:${CD.border} !important}`,
+    `.pe-divider-subtle{border-color:${CD.borderSubtle} !important}`,
+    `.pe-ink{color:${CD.ink} !important}`,
+    `.pe-inksoft{color:${CD.inkSoft} !important}`,
+    `.pe-textmuted{color:${CD.textMuted} !important}`,
+    `.pe-textdisabled{color:${CD.textDisabled} !important}`,
+  ];
+  for (const [tone, v] of Object.entries(TONE_DARK) as [Tone, { fg: string; bg: string; bar: string }][]) {
+    rules.push(`.${toneClass(tone, "bg")}{background-color:${v.bg} !important}`);
+    rules.push(`.${toneClass(tone, "fg")}{color:${v.fg} !important}`);
+    rules.push(`.${toneClass(tone, "bar")}{background-color:${v.bar} !important}`);
+  }
+  for (const [modulo, v] of Object.entries(MODULO_DARK) as [Modulo, { fg: string; bg: string }][]) {
+    rules.push(`.${moduloClass(modulo, "bg")}{background-color:${v.bg} !important}`);
+    rules.push(`.${moduloClass(modulo, "fg")}{color:${v.fg} !important}`);
+  }
+  return `@media (prefers-color-scheme: dark) {\n  body{background-color:${CD.bg} !important}\n  ${rules.join("\n  ")}\n}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -400,13 +504,13 @@ export function shell(opts: ShellOptions): string {
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-<meta name="color-scheme" content="light only"/>
-<meta name="supported-color-schemes" content="light"/>
+<meta name="color-scheme" content="light dark"/>
+<meta name="supported-color-schemes" content="light dark"/>
 <title>${render(BRAND.nome)}</title>
 <!--[if mso]><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch><o:AllowPNG/></o:OfficeDocumentSettings></xml><![endif]-->
 <style>
 ${FONT_FACE_CSS}
-  :root { color-scheme: light only; supported-color-schemes: light; }
+  :root { color-scheme: light dark; supported-color-schemes: light dark; }
   body, table, td, a, p, h1 { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; -webkit-font-smoothing: antialiased; }
   table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
   img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
@@ -418,18 +522,19 @@ ${FONT_FACE_CSS}
     .h1 { font-size: 25px !important; }
     .outer { padding: 0 !important; }
   }
+  ${darkModeCss()}
 </style>
 </head>
-<body bgcolor="${C.bg}" style="margin:0;padding:0;background-color:${C.bg};font-family:${FONT};color:${C.ink}">
+<body class="pe-bg" bgcolor="${C.bg}" style="margin:0;padding:0;background-color:${C.bg};font-family:${FONT};color:${C.ink}">
 ${previewHtml}
-<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="${C.bg}" style="background-color:${C.bg};border-collapse:collapse">
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="${C.bg}" class="pe-bg" style="background-color:${C.bg};border-collapse:collapse">
 <tr>
 <td class="outer" align="center" style="padding:40px 16px 56px">
-  <table role="presentation" class="container" border="0" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;border-collapse:separate;background-color:${C.card};border:1px solid ${C.border};border-radius:18px;overflow:hidden">
+  <table role="presentation" class="container pe-card" border="0" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;border-collapse:separate;background-color:${C.card};border:1px solid ${C.border};border-radius:18px;overflow:hidden">
     <tr><td class="px" style="padding:24px 40px 22px">${headerHtml()}</td></tr>
     ${heroHtml(opts.hero)}
     ${contentHtml}
-    <tr><td class="px" bgcolor="${C.surface}" style="background-color:${C.surface};padding:22px 40px 24px;border-top:1px solid ${C.border}">${footerHtml(note, opts.footerLinks ?? [])}</td></tr>
+    <tr><td class="px pe-surface" bgcolor="${C.surface}" style="background-color:${C.surface};padding:22px 40px 24px;border-top:1px solid ${C.border}">${footerHtml(note, opts.footerLinks ?? [])}</td></tr>
   </table>
 </td>
 </tr>
