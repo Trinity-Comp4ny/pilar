@@ -187,10 +187,21 @@ Checklist por ambiente, na ordem. Tudo aqui é fora do repo; o código já esper
 
 ### Banco (uma vez por ambiente, SQL Editor)
 
-- [ ] `ALTER DATABASE postgres SET app.supabase_url = 'https://<project-ref>.supabase.co';`
-- [ ] `ALTER DATABASE postgres SET app.service_role_key = '<service_role_key>';`
-      (os crons de e-mail chamam a edge function com esses dois; sem eles, `notificacoes_email_disparar()`
-      pula com NOTICE e nenhum e-mail de notificação sai)
+`ALTER DATABASE ... SET` exige superuser, que o Supabase gerenciado não concede
+(nem no SQL Editor, nem por `psql` direto com a senha do banco: é bloqueio do
+papel `postgres` no projeto, não da sua conta). As duas credenciais que os
+crons (`notificacoes-email-*`, `trial-expiry-daily`, `guardiao-margem-daily`)
+precisam para chamar suas edge functions vêm do **Supabase Vault** em vez
+disso (migration `20260913000000_cron_secrets_via_vault.sql`). É um `SELECT`
+comum, não uma `ALTER DATABASE`, então não esbarra no mesmo bloqueio:
+
+- [ ] No SQL Editor, um de cada vez:
+      `sql
+    SELECT vault.create_secret('https://<project-ref>.supabase.co', 'app_supabase_url', 'URL do próprio projeto');
+    SELECT vault.create_secret('<service_role_key>', 'app_service_role_key', 'Service role key p/ cron chamar edge functions');
+    `
+      (sem eles, `notificacoes_email_disparar()`, `trial_expiry_disparar()` e
+      `guardiao_margem_disparar()` pulam com `NOTICE`, sem lançar erro)
 - [ ] Conferir `SELECT jobname, schedule FROM cron.job WHERE jobname LIKE 'notificacoes-email-%';`
       → `*/5 * * * *` (imediato) e `0 11 * * 1` (semanal, segunda 08:00 BRT)
 - [ ] Sentry → Crons: monitores `notificacoes-email-imediato` e `notificacoes-email-semanal` aparecem no
@@ -226,26 +237,12 @@ Se `pg_cron` não estiver disponível, configure manualmente:
 
 **Opção B — pg_cron manual via SQL Editor**
 
-```sql
--- Configurar variáveis de runtime (uma única vez, usuário postgres)
-ALTER DATABASE postgres SET app.supabase_url = 'https://<project-ref>.supabase.co';
-ALTER DATABASE postgres SET app.service_role_key = '<service_role_key>';
+A migration `20260913000000_cron_secrets_via_vault.sql` já cria o job chamando
+`public.trial_expiry_disparar()`, que lê as credenciais do Vault (ver seção
+"Banco" acima). Só rode isto se o `pg_cron` não tiver aplicado a migration:
 
--- Criar job
-SELECT cron.schedule(
-  'trial-expiry-daily',
-  '0 7 * * *',
-  $$
-  SELECT net.http_post(
-    url        := current_setting('app.supabase_url') || '/functions/v1/trial-expiry-cron',
-    headers    := jsonb_build_object(
-      'Content-Type',  'application/json',
-      'Authorization', 'Bearer ' || current_setting('app.service_role_key')
-    ),
-    body       := '{}'::jsonb
-  );
-  $$
-);
+```sql
+SELECT cron.schedule('trial-expiry-daily', '0 7 * * *', 'SELECT public.trial_expiry_disparar();');
 ```
 
 **Variáveis de ambiente obrigatórias na Edge Function**
