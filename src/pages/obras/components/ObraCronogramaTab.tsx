@@ -310,11 +310,15 @@ export function ObraCronogramaTab({
           {temTimeline && (
             <Card>
               <CardContent className="p-0">
-                <div className="flex items-center justify-between gap-3 border-b p-3">
-                  <div className="flex items-center gap-2">
-                    <CalendarClock className="h-4 w-4 text-muted-foreground" />
-                    <h3 className="text-sm font-semibold text-ink">Linha do tempo</h3>
-                    <span className="text-[11px] text-muted-foreground">
+                {/* Título e controles empilham em mobile (achado da auditoria:
+                    "Linha do tempo" + "Hoje" + "Meses"/"Semanas" não cabiam em
+                    390px sem quebrar linha, e o excesso vazava em vez de ficar
+                    contido). */}
+                <div className="flex flex-col items-start gap-2 border-b p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <CalendarClock className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <h3 className="truncate text-sm font-semibold text-ink">Linha do tempo</h3>
+                    <span className="shrink-0 text-[11px] text-muted-foreground">
                       {frenteRows.length} etapa{frenteRows.length === 1 ? "" : "s"}
                     </span>
                     {isSaving && <span className="animate-pulse text-[10px] text-muted-foreground">Salvando…</span>}
@@ -324,7 +328,7 @@ export function ObraCronogramaTab({
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -340,16 +344,18 @@ export function ObraCronogramaTab({
                         size="sm"
                         className="h-7 rounded-none px-2 text-xs"
                         onClick={() => setZoom("months")}
+                        aria-label="Meses"
                       >
-                        <ZoomOut className="mr-1 h-3 w-3" /> Meses
+                        <ZoomOut className="sm:mr-1 h-3 w-3" /> <span className="hidden sm:inline">Meses</span>
                       </Button>
                       <Button
                         variant={zoom === "weeks" ? "secondary" : "ghost"}
                         size="sm"
                         className="h-7 rounded-none px-2 text-xs"
                         onClick={() => setZoom("weeks")}
+                        aria-label="Semanas"
                       >
-                        <ZoomIn className="mr-1 h-3 w-3" /> Semanas
+                        <ZoomIn className="sm:mr-1 h-3 w-3" /> <span className="hidden sm:inline">Semanas</span>
                       </Button>
                     </div>
                   </div>
