@@ -44,7 +44,10 @@ export const BRAND = {
   waveUrl: Deno.env.get("EMAIL_WAVE_URL") ?? `${assetHost}/email/wave-v1.png`,
 } as const;
 
-/** Paleta do e-mail. Hex espelhando tokens.css (Paper + Ink, verde como acento). */
+/**
+ * Paleta do e-mail, tema claro. Hex espelhando tokens.css (Paper + Ink, verde
+ * como acento). `CD` logo abaixo é o par escuro: mesmas chaves, outro valor.
+ */
 export const C = {
   // Superfícies
   bg: "#F2F2F2", // fundo fora do card (um passo abaixo de --c-paper-100)
@@ -82,6 +85,49 @@ export const C = {
   moduloProjetosStrong: "#295485",
   moduloObra: "#F7DDBF",
   moduloObraStrong: "#884E1C",
+} as const;
+
+/**
+ * Par escuro de `C`, mesmas chaves. Existe porque o Outlook novo e o Windows
+ * Mail reprocessam e-mail em dark mode por conta própria, ignorando
+ * `color-scheme: light`, e o resultado dessa reescrita automática (cinza sujo,
+ * contraste ruim) é pior que assumir o controle: `shell()` declara os dois
+ * temas via `@media (prefers-color-scheme: dark)` e o cliente aplica O NOSSO
+ * escuro, não o dele. Gmail e Apple Mail continuam mostrando o claro, que é o
+ * padrão deles quando o e-mail declara suporte aos dois.
+ */
+type Palette = Record<keyof typeof C, string>;
+
+export const CD: Palette = {
+  bg: "#0D0D0D",
+  card: "#161616",
+  surface: "#1C1C1C",
+  muted: "#242424",
+  sky: "#182015", // hero escuro: mesma família do verde da marca, bem escurecida
+  border: "rgba(255,255,255,0.12)",
+  borderSubtle: "rgba(255,255,255,0.08)",
+  ink: "#F5F5F5",
+  inkSoft: "#D4D4D4",
+  textMuted: "#9CA3AF",
+  textDisabled: "#6B7280",
+  brand: "#A6EC88", // verde funciona igual nos dois temas, alto contraste no escuro
+  brandHover: "#B8F29E",
+  brandSoft: "rgba(166,236,136,0.14)",
+  brandStrong: "#A6EC88", // no escuro o texto verde é o próprio brand, não a variante AA do claro
+  negative: "#F87171",
+  negativeSoft: "rgba(248,113,113,0.12)",
+  warning: "#FBBF24",
+  warningSoft: "rgba(251,191,36,0.12)",
+  info: "#60A5FA",
+  infoSoft: "rgba(96,165,250,0.12)",
+  positive: "#4ADE80",
+  positiveSoft: "rgba(74,222,128,0.12)",
+  moduloGestao: "rgba(166,236,136,0.14)",
+  moduloGestaoStrong: "#A6EC88",
+  moduloProjetos: "rgba(96,165,250,0.14)",
+  moduloProjetosStrong: "#93C5FD",
+  moduloObra: "rgba(251,146,60,0.14)",
+  moduloObraStrong: "#FDBA74",
 } as const;
 
 /**
