@@ -43,6 +43,7 @@ import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { useUserRole } from "@/hooks/useUserRole";
 import { toast } from "sonner";
+import { analytics } from "@/lib/analytics";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import {
@@ -320,7 +321,10 @@ export default function Propostas() {
     updateProposta.mutate(
       { id, status },
       {
-        onSuccess: () => toast.success(`Proposta ${PROPOSTA_STATUS_CONFIG[status]?.label || status}`),
+        onSuccess: () => {
+          analytics.track("proposta_status_alterado", { proposta_id: id, status });
+          toast.success(`Proposta ${PROPOSTA_STATUS_CONFIG[status]?.label || status}`);
+        },
         onError: () => toast.error("Erro"),
       }
     );

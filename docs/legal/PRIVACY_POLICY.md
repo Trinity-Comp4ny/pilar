@@ -68,12 +68,15 @@ Compartilhamos dados apenas com:
 - **Vercel** (hospedagem do app e do site): DPA a confirmar
 - **Sentry** (monitoramento de erros, PII filtrada antes de sair): DPA a confirmar
 - **PostHog** (análise de uso, só com consentimento do usuário): DPA a confirmar
+- **Resend** (envio de e-mail transacional): DPA a confirmar
+- **Google (Gemini API)** (modelo de IA por trás do chat/copiloto): DPA a confirmar
 - **Asaas** (gateway de pagamento, quando a integração está ativa): DPA a confirmar
 - **Autoridades:** apenas sob ordem judicial
 
-Status real de cada DPA (assinado, aceito via termos do próprio vendor, ou
-ainda pendente) fica rastreado em `docs/security/COMPLIANCE.md`, não repetido
-aqui para não haver dois lugares que podem ficar desalinhados de novo.
+Lista completa e sempre atualizada em [`SUBPROCESSADORES.md`](./SUBPROCESSADORES.md). Status
+real de cada DPA (assinado, aceito via termos do próprio vendor, ou ainda pendente) fica
+rastreado em `docs/security/COMPLIANCE.md`, não repetido aqui para não haver dois lugares que
+podem ficar desalinhados de novo.
 
 **Nunca vendemos** dados a terceiros.
 
@@ -135,9 +138,9 @@ Detalhes de cada cookie/tecnologia usada: ver Política de Cookies
 ## 9. Transferência internacional
 
 Dados permanecem no Brasil (Supabase, região São Paulo). Algumas funcionalidades
-(edge functions na Vercel, Sentry, PostHog) podem processar dados temporariamente
-fora do Brasil, sempre cifrado em trânsito e sob contrato que impõe proteção
-equivalente à LGPD.
+(edge functions na Vercel, Sentry, PostHog, e a API do Google Gemini quando você
+usa o chat/copiloto de IA) podem processar dados temporariamente fora do Brasil,
+sempre cifrado em trânsito e sob contrato que impõe proteção equivalente à LGPD.
 
 ## 10. Menores de idade
 

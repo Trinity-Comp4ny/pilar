@@ -20,10 +20,9 @@ Status de conformidade LGPD + roadmap SOC2/ISO.
 
 ### Direitos do titular implementados
 
-- [x] **Acesso:** user exporta próprios dados via Perfil → Exportar (TODO: implementar export JSON)
+- [x] **Acesso/Portabilidade:** self-service em Configurações → Privacidade, `request_data_export`
 - [x] **Correção:** edição direta no Perfil
-- [ ] **Exclusão:** cliente solicita, admin deleta via `/admin` (TODO: UI + audit log)
-- [ ] **Portabilidade:** export JSON (TODO)
+- [x] **Exclusão:** self-service em Configurações → Privacidade, `request_data_deletion`
 - [x] **Informação:** Política de Privacidade pública
 - [x] **Revogação de consentimento:** desativa conta → dados retidos só por obrigação legal
 
@@ -34,11 +33,13 @@ Status de conformidade LGPD + roadmap SOC2/ISO.
 
 ### ROPA (Record of Processing Activities)
 
-Ver `docs/ROPA.md` (TODO criar)
+✅ Ver [`../ROPA.md`](../ROPA.md) (v1, 2026-09-08, levantado do schema real; falta revisão de
+advogado/DPO antes de fiscalização).
 
 ### DPA (Data Processing Agreement)
 
-Template em `docs/templates/DPA_TEMPLATE.md` (TODO)
+✅ Template em [`../templates/DPA_TEMPLATE.md`](../templates/DPA_TEMPLATE.md) (v1, 2026-09-08;
+não assinável de verdade até o CNPJ próprio sair, ver `../legal/README.md`).
 
 ### Incidentes e notificação
 
@@ -99,10 +100,12 @@ até alguém confirmar contrato/aceite de cada vendor.
 ### 2026-Q2
 
 - [ ] DPO nomeado oficial
-- [ ] Política de privacidade pública publicada
-- [ ] ROPA documentado
-- [ ] Template DPA pra assinar com clientes
-- [ ] Export JSON de dados pessoais (direito de portabilidade)
+- [x] Política de privacidade pública publicada
+- [x] ROPA documentado (`../ROPA.md`, 2026-09-08)
+- [x] Template DPA pra assinar com clientes (`../templates/DPA_TEMPLATE.md`, 2026-09-08 — falta
+      CNPJ próprio pra assinar de verdade)
+- [x] Export JSON de dados pessoais (direito de portabilidade) — self-service em Configurações →
+      Privacidade (`request_data_export`)
 
 ### 2026-Q3
 
