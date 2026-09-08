@@ -346,3 +346,28 @@ Deno.test("copy não usa 'no Pilar' nem 'Entrar no Pilar'", () => {
   }
   assertStringIncludes(T.templateMagicLink("https://l").html, ">Entrar&nbsp;&nbsp;&rarr;<");
 });
+
+// ---------------------------------------------------------------------------
+// Assets de e-mail sempre em produção, nunca no domínio de staging (achado em
+// staging real 08/09: PUBLIC_SITE_URL apontando pra um preview da Vercel deixa
+// logo/faixa de morros/fonte quebrados pra QUALQUER destinatário, porque o
+// provedor de e-mail busca a imagem sem sessão de navegador, e cai no login
+// SSO da Vercel. Assets de marca são os mesmos nos dois ambientes: hospedar em
+// produção, que é público, resolve pra sempre, independente do palpite de URL
+// de cada ambiente novo.
+// ---------------------------------------------------------------------------
+
+Deno.test("logo, faixa de morros e fonte ignoram PUBLIC_SITE_URL de ambiente e usam produção", async () => {
+  const envAntes = Deno.env.get("PUBLIC_SITE_URL");
+  Deno.env.set("PUBLIC_SITE_URL", "https://staging-preview-que-pode-nao-existir.vercel.app");
+  try {
+    const mod = await import(`./brand.ts?cachebust=${crypto.randomUUID()}`);
+    assertStringIncludes(mod.BRAND.logoUrl, "https://www.pilarsoft.com.br/email/logo-v1.png");
+    assertStringIncludes(mod.BRAND.waveUrl, "https://www.pilarsoft.com.br/email/wave-v1.png");
+    assertStringIncludes(mod.FONT_FACE_CSS, "https://www.pilarsoft.com.br/fonts/geist-variable.woff2");
+    assertEquals(mod.BRAND.siteUrl, "https://staging-preview-que-pode-nao-existir.vercel.app");
+  } finally {
+    if (envAntes === undefined) Deno.env.delete("PUBLIC_SITE_URL");
+    else Deno.env.set("PUBLIC_SITE_URL", envAntes);
+  }
+});
