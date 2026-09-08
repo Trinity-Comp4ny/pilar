@@ -42,10 +42,23 @@ export function ResponsiveDetailPanels({
           <TabsTrigger value="primary">{primaryLabel}</TabsTrigger>
           <TabsTrigger value="secondary">{secondaryLabel}</TabsTrigger>
         </TabsList>
-        <TabsContent value="primary" className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden">
+        {/* Radix esconde a aba inativa via atributo `hidden`, mas a classe
+            `flex` (especificidade de classe) vencia o `[hidden]{display:none}`
+            do user-agent stylesheet (especificidade de atributo) e as duas
+            abas ficavam abertas ao mesmo tempo, dividindo a altura ao meio
+            (achado: conteúdo sumia depois de "Prazo" sem nenhum erro visível).
+            `hidden` + `data-[state=active]:flex` resolve porque usa o próprio
+            data-state do Radix em vez de disputar com o atributo nativo. */}
+        <TabsContent
+          value="primary"
+          className="mt-0 hidden min-h-0 flex-1 flex-col overflow-hidden data-[state=active]:flex"
+        >
           {primary}
         </TabsContent>
-        <TabsContent value="secondary" className="mt-0 flex min-h-0 flex-1 flex-col overflow-hidden">
+        <TabsContent
+          value="secondary"
+          className="mt-0 hidden min-h-0 flex-1 flex-col overflow-hidden data-[state=active]:flex"
+        >
           {secondary}
         </TabsContent>
       </Tabs>
