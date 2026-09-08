@@ -151,7 +151,8 @@ revoke all on function public.notificacoes_pendentes_email(text) from public, au
 
 -- pg_cron (padrão ADR 0036, wrappers *_monitored), disparo por
 -- public.notificacoes_email_disparar(p_modo), que lê app_supabase_url/
--- app_service_role_key do Supabase Vault (migration 20260913000000; não usa
+-- app_cron_secret do Supabase Vault (migration 20260913000000, ajustada em
+-- 20260914000000 pra um CRON_SECRET próprio; não usa
 -- ALTER DATABASE, que o Supabase gerenciado bloqueia por privilégio):
 --   'notificacoes-email-imediato'  '*/5 * * * *'   → notificacoes_email_disparar('imediato')
 --   'notificacoes-email-semanal'   '0 11 * * 1'    → notificacoes_email_disparar('semanal')

@@ -24,7 +24,7 @@ SELECT ok(
 );
 
 -- Sem secrets configurados, notificacoes_email_disparar não lança (fail-closed).
-DELETE FROM vault.decrypted_secrets WHERE name IN ('app_supabase_url', 'app_service_role_key');
+DELETE FROM vault.decrypted_secrets WHERE name IN ('app_supabase_url', 'app_cron_secret');
 SELECT lives_ok(
   $$ SELECT public.notificacoes_email_disparar('imediato') $$,
   'notificacoes_email_disparar não lança quando os secrets do vault estão ausentes'
@@ -58,7 +58,7 @@ SELECT throws_ok(
 );
 
 RESET ROLE;
-DELETE FROM vault.decrypted_secrets WHERE name IN ('app_test_secret_pgtap', 'app_supabase_url', 'app_service_role_key');
+DELETE FROM vault.decrypted_secrets WHERE name IN ('app_test_secret_pgtap', 'app_supabase_url', 'app_cron_secret');
 
 SELECT * FROM finish();
 ROLLBACK;
