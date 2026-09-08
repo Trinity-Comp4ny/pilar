@@ -11,6 +11,40 @@ Regras de manutenção:
 
 ---
 
+## 2026-09-08 · Cadastro fica aberto; o trial sobe por nível de confiança (Bronze, Prata, Ouro)
+
+**Decisão:** o cadastro self-serve continua aberto no lançamento (outubro/2026). Não haverá
+waitlist, convite nem demo obrigatória antes do acesso. Em troca, o trial deixa de liberar a
+capacidade de um plano pago para qualquer e-mail: a conta entra na hora com o básico
+(Bronze: 2 projetos, 1 obra, 2 usuários, teto total de IA), sobe ao informar CNPJ ou CPF
+(Prata) e chega à capacidade do plano ao cadastrar forma de pagamento sem cobrança ou ser
+aprovada no ultra-admin (Ouro). Forma de pagamento cadastrada torna o trial opt-out: no dia
+14 cobra o plano escolhido, com aviso D-3 e D-1. Cada verificação é pedida no momento em que
+o usuário bate no limite, nunca adiantada no cadastro. Nenhuma feature é gateada; só
+capacidade (ADR 0026 mantido). Virou [SPEC 098](../specs/098-trial-em-niveis-de-confianca.md)
+e [ADR 0041](../architecture/adr/0041-acesso-no-trial-por-nivel-de-confianca-derivado-de-fatos.md).
+
+**Contexto:** discussão do CEO com o time (mercado, vendas, pricing, red team) em 08/09
+sobre exposição do software com cadastro aberto e trial tudo liberado. Convergência: fechar
+cadastro protege de um risco que não existe na escala atual (zero pagante, ninguém acha o
+Pilar organicamente) e mata a indicação que quer testar na hora; gate por feature contradiz
+o ADR 0026 e converte pior para o sócio do escritório, que decide vendo o produto inteiro. O
+risco real é abuso (várias contas queimando cota de IA) e ausência de degrau até o pagamento.
+O modelo em níveis do gov.br resolve os dois sem fechar a porta. Proteção contra cópia de
+interface foi explicitamente descartada como objetivo: UI é visível na landing e em demo; a
+proteção real é o que roda no servidor mais a cláusula de uso restrito nos termos.
+
+**Ordem de entrega:** Fase 0 (cota de IA por nível, circuit breaker, e-mail confirmado
+obrigatório, recusa de domínio descartável) é bloqueadora do lançamento. Níveis com
+capacidade e Ouro via Asaas podem entrar depois do lançamento sem quebrar nada.
+
+**O que isso supera:** a decisão de 13/08 de deixar o trial "aberto por ora" com controle
+manual, e a leitura de que "14 dias grátis com tudo liberado" era o desenho de lançamento.
+Também descarta, por ora, SMS como verificação (custo e sinal fraco) e qualquer forma de
+waitlist.
+
+---
+
 ## 2026-09-04 · `/inicio` vira painel de gestão da empresa, não página de atalho
 
 **Decisão:** `/inicio` deixa de ser porta de entrada com atalhos e passa a ser o painel
