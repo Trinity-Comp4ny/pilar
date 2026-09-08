@@ -29,22 +29,38 @@ depender de segredo.
 
 ## Decisão
 
-Adotar a Opção C com quatro regras fixas:
+Adotar a Opção C com sete regras fixas:
 
 1. **Nível é função de fatos, nunca estado guardado.** `nivel_confianca(empresa_id)` calcula
    a partir de: override manual do ultra-admin, forma de pagamento no Asaas, documento
    (CNPJ ou CPF) em `empresas`, e-mail confirmado. Não existe coluna `nivel` que possa
    divergir da realidade. O único estado gravado é o override, com autor, motivo e data.
+   O nível é da **empresa**; usuário convidado herda e nunca cria trial próprio. Só `admin`
+   age no desbloqueio; `user` avisa o admin.
 2. **Limites vivem em tabela (`trial_niveis`), não em código.** Os números são hipótese e
-   vão mudar com telemetria; mudar número não pode exigir deploy.
+   vão mudar com telemetria; mudar número não pode exigir deploy. Ponto de partida:
+   Bronze 2 projetos / 1 obra / 2 usuários / 50 mil tokens; Prata 5 / 2 / 5 / 150 mil;
+   Ouro capacidade do plano com 10 usuários no período de teste.
 3. **Enforcement no banco, não no cliente.** Capacidade por trigger `BEFORE INSERT`
-   (`projetos`, `obras`, membros) que consulta `limites_empresa()`; IA pelo `gate_tokens`
-   com concessão `trial_grant:<empresa>:<nivel>` idempotente; circuit breaker diário
-   agregado para contas `trialing`. O front só traduz o erro tipado (`capacidade:*`) em
-   convite de desbloqueio. Overlay client-side nunca é a única barreira.
-4. **Forma de pagamento libera Ouro e torna o trial opt-out.** Sem cobrança no cadastro;
-   no dia 14 a assinatura vira `active` e cobra, com aviso D-3 e D-1. Quem não quer cartão
-   sobe até Prata sozinho e chega a Ouro por aprovação manual.
+   (`projetos`, `obras`) e pela edge `invite-user` consultando `limites_empresa()`; IA pelo
+   `gate_tokens` com concessão `trial_grant:<empresa>:<nivel>` idempotente; circuit breaker
+   diário agregado para contas `trialing`. O front só traduz o erro tipado (`capacidade:*`)
+   em convite de desbloqueio. Overlay client-side nunca é a única barreira.
+4. **Trial nasce no plano de entrada**, não no `destaque`. O plano só é escolhido de
+   verdade no passo "Ativar plano". Evita testar com capacidade de Profissional e pagar
+   Essencial.
+5. **Documento verificado e único.** CNPJ é conferido na Receita via BrasilAPI (situação
+   `ATIVA`), com fallback `pendente` se a API cair, e é único entre empresas (índice
+   parcial). CPF passa só por dígito verificador e fica marcado como sem verificação
+   externa. Um trial por e-mail e um por CNPJ.
+6. **"Ativar plano" libera Ouro e torna o trial opt-out.** Sem cobrança no cadastro; o
+   admin escolhe o plano, informa a forma de pagamento e marca um consentimento com data e
+   valor da primeira cobrança (`consentimentos_cobranca`, append-only). No dia 14 a
+   assinatura vira `active` e cobra, sem nova aprovação, com aviso D-3 e D-1 e arrependimento
+   de 7 dias. Quem não quer cartão sobe até Prata sozinho e chega a Ouro por aprovação manual.
+7. **Retenção com prazo.** Trial vencido sem pagar fica 90 dias em somente leitura com
+   export, avisos no dia 60 e 85, exclusão no dia 90 salvo `preservar_dados` do ultra-admin.
+   Reativar dentro do prazo restaura tudo.
 
 ```sql
 -- Forma da função (ilustrativa; contrato completo na SPEC 098)
@@ -82,8 +98,14 @@ real é o que roda no servidor mais a cláusula de uso restrito nos termos).
 
 **Negativas:**
 
-- Trigger de capacidade adiciona uma contagem por insert em `projetos`/`obras`/membros.
+- Trigger de capacidade adiciona uma contagem por insert em `projetos`/`obras`.
   Aceitável com índice em `(empresa_id, status)`; volume é baixo.
+- Dependência de dois terceiros (BrasilAPI, Asaas), ambos com fallback que nunca trava o
+  usuário; o custo é mais estado para reconciliar (`pendente`, cron de reverificação).
+- Fluxo de tokenização sem cobrança é alvo de teste de cartão roubado; exige Turnstile,
+  rate limit e antifraude, ou pré-autorização estornada.
+- Índice único de CNPJ pode colidir com dado legado em produção; precisa de saneamento
+  antes de aplicar.
 - Mais um ramo no `gate_tokens`, que já é a função mais sensível do motor de tokens.
   Exige `DROP` + `CREATE` (overloads) e pgTAP de idempotência.
 - Confirmação de e-mail obrigatória em produção é mudança de comportamento para contas

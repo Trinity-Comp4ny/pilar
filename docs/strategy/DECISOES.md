@@ -15,13 +15,17 @@ Regras de manutenção:
 
 **Decisão:** o cadastro self-serve continua aberto no lançamento (outubro/2026). Não haverá
 waitlist, convite nem demo obrigatória antes do acesso. Em troca, o trial deixa de liberar a
-capacidade de um plano pago para qualquer e-mail: a conta entra na hora com o básico
-(Bronze: 2 projetos, 1 obra, 2 usuários, teto total de IA), sobe ao informar CNPJ ou CPF
-(Prata) e chega à capacidade do plano ao cadastrar forma de pagamento sem cobrança ou ser
-aprovada no ultra-admin (Ouro). Forma de pagamento cadastrada torna o trial opt-out: no dia
-14 cobra o plano escolhido, com aviso D-3 e D-1. Cada verificação é pedida no momento em que
-o usuário bate no limite, nunca adiantada no cadastro. Nenhuma feature é gateada; só
-capacidade (ADR 0026 mantido). Virou [SPEC 098](../specs/098-trial-em-niveis-de-confianca.md)
+capacidade de um plano pago para qualquer e-mail: a conta nasce no plano de entrada
+(Essencial), entra na hora com o básico (Bronze: 2 projetos, 1 obra, 2 usuários, teto total
+de IA), sobe ao informar CNPJ verificado na Receita ou CPF (Prata: 5 / 2 / 5) e chega à
+capacidade do plano ao "ativar plano" com forma de pagamento sem cobrança ou ser aprovada no
+ultra-admin (Ouro, 10 usuários no teste). Ativar plano torna o trial opt-out: no dia 14 cobra
+o plano escolhido, sem nova aprovação, com consentimento datado no ato, aviso D-3 e D-1 e
+arrependimento de 7 dias. Um trial por e-mail e um por CNPJ. Trial vencido sem pagar fica 90
+dias em somente leitura com export, depois é excluído. Cada verificação é pedida no momento
+em que o admin bate no limite, nunca adiantada no cadastro; usuário comum só avisa o admin.
+Export liberado em todo nível; nenhuma feature é gateada; só capacidade (ADR 0026 mantido).
+Virou [SPEC 098](../specs/098-trial-em-niveis-de-confianca.md)
 e [ADR 0041](../architecture/adr/0041-acesso-no-trial-por-nivel-de-confianca-derivado-de-fatos.md).
 
 **Contexto:** discussão do CEO com o time (mercado, vendas, pricing, red team) em 08/09
@@ -34,9 +38,10 @@ O modelo em níveis do gov.br resolve os dois sem fechar a porta. Proteção con
 interface foi explicitamente descartada como objetivo: UI é visível na landing e em demo; a
 proteção real é o que roda no servidor mais a cláusula de uso restrito nos termos.
 
-**Ordem de entrega:** Fase 0 (cota de IA por nível, circuit breaker, e-mail confirmado
-obrigatório, recusa de domínio descartável) é bloqueadora do lançamento. Níveis com
-capacidade e Ouro via Asaas podem entrar depois do lançamento sem quebrar nada.
+**Ordem de entrega:** Fase 0 (trial nasce no Essencial, cota de IA por nível, circuit
+breaker, e-mail confirmado obrigatório, recusa de domínio descartável, contas existentes
+marcadas como Ouro legado) é bloqueadora do lançamento. Níveis com capacidade, Ouro via
+Asaas e retenção podem entrar depois do lançamento sem quebrar nada.
 
 **O que isso supera:** a decisão de 13/08 de deixar o trial "aberto por ora" com controle
 manual, e a leitura de que "14 dias grátis com tudo liberado" era o desenho de lançamento.
