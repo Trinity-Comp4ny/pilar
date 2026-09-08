@@ -44,6 +44,12 @@ Todas as ações que **precisam** ser feitas manualmente (config de dashboards) 
 - [ ] `ALLOWED_ORIGINS` = `https://pilarsoft.com.br,https://app.pilarsoft.com.br`
 - [x] `TURNSTILE_SECRET_KEY` = (copiar de Cloudflare após criar widget) (17/08)
 - [ ] `ASAAS_WEBHOOK_TOKEN` = fallback global (opcional; por empresa já tem)
+- [ ] `RESEND_API_KEY` = chave do Resend (staging e prod têm chaves distintas)
+- [ ] `RESEND_FROM` = `Pilar <no-reply@pilarsoft.com.br>` (formato "Nome <endereco>")
+- [ ] `RESEND_REPLY_TO` = caixa real que recebe resposta dos e-mails de plataforma (só depois do MX, ver E-mail abaixo)
+- [ ] `RESEND_WEBHOOK_SECRET` = o `whsec_...` que o Resend mostra ao criar o webhook (ver seção E-mail)
+- [ ] `APP_URL` = `https://app.pilarsoft.com.br`; `PUBLIC_SITE_URL` = `https://www.pilarsoft.com.br` (assets e fontes do e-mail vêm daqui)
+- [ ] NUNCA `EMAIL_DRY_RUN` em staging/prod (só no `.env` local: sem ele e sem chave, `sendEmail` lança de propósito)
 
 ### Database → Backups
 
@@ -158,6 +164,71 @@ Configurar os Environments `staging` e `production` conforme
 
 ---
 
+## 📧 E-mail (SPEC 095 / 096, ADR 0039)
+
+Checklist por ambiente, na ordem. Tudo aqui é fora do repo; o código já espera cada item.
+
+### Resend
+
+- [ ] Domínio `pilarsoft.com.br` verificado no Resend (SPF/DKIM do subdomínio `send.` já existem)
+- [ ] Webhook criado em **Resend → Webhooks** apontando para `https://<project-ref>.supabase.co/functions/v1/resend-webhook`,
+      eventos `email.delivered`, `email.delivery_delayed`, `email.bounced`, `email.complained`.
+      Copiar o signing secret para `RESEND_WEBHOOK_SECRET` e redeployar a function.
+- [ ] Testar: mandar um e-mail para `bounce@resend.dev` (endereço de teste do Resend) e conferir
+      `email_envios.status = 'bounce'` e a linha em `email_supressoes`.
+
+### DNS (deliverability; hoje o apex não tem MX nem DMARC, ver gate de lançamento de 28/08)
+
+- [ ] SPF no apex: `v=spf1 include:amazonses.com ~all` (o `send.` do Resend já tem o dele)
+- [ ] DMARC: `_dmarc.pilarsoft.com.br TXT "v=DMARC1; p=none; rua=mailto:dmarc@pilarsoft.com.br"`.
+      Depois de 2 semanas de relatório limpo, subir para `p=quarantine`.
+- [ ] MX: Cloudflare Email Routing (gratuito) encaminhando `contato@`, `privacidade@` e `dmarc@` para
+      uma caixa real. Só então preencher `RESEND_REPLY_TO`: reply-to que não recebe é pior que nenhum.
+
+### Banco (uma vez por ambiente, SQL Editor + terminal)
+
+`ALTER DATABASE ... SET` exige superuser, que o Supabase gerenciado não concede
+(nem no SQL Editor, nem por `psql` direto com a senha do banco: é bloqueio do
+papel `postgres` no projeto, não da sua conta). As credenciais que os crons
+(`notificacoes-email-*`, `trial-expiry-daily`, `guardiao-margem-daily`)
+precisam para chamar suas edge functions vêm do **Supabase Vault** em vez
+disso (migration `20260913000000_cron_secrets_via_vault.sql`). É um `SELECT`
+comum, não uma `ALTER DATABASE`, então não esbarra no mesmo bloqueio.
+
+A verificação de quem chama o endpoint usa um segredo **próprio do cron**
+(`CRON_SECRET`), não o `SUPABASE_SERVICE_ROLE_KEY` da Supabase: esse env,
+mesmo com o nome antigo, silenciosamente passou a valer o formato novo de
+chave (`sb_secret_...`, curto) em vez do JWT que a tela de API Keys ainda
+mostra, e nenhuma function que comparava contra o JWT nunca mais bateu (achado
+em staging 08/09, migration `20260914000000_cron_secret_proprio.sql`). Gerar
+uma vez por ambiente e gravar **o mesmo valor** nos dois lados:
+
+- [ ] Gerar: `openssl rand -hex 32`
+- [ ] Terminal: `supabase secrets set CRON_SECRET='<valor>' --project-ref <project-ref>`
+- [ ] SQL Editor:
+      `sql
+    SELECT vault.create_secret('https://<project-ref>.supabase.co', 'app_supabase_url', 'URL do próprio projeto');
+    SELECT vault.create_secret('<mesmo valor de CRON_SECRET>', 'app_cron_secret', 'Segredo compartilhado só entre os cron jobs e as edge functions de cron');
+    `
+      (sem eles, `notificacoes_email_disparar()`, `trial_expiry_disparar()` e
+      `guardiao_margem_disparar()` pulam com `NOTICE`, sem lançar erro; se os
+      dois lados não baterem, a edge function responde 401)
+- [ ] Conferir `SELECT jobname, schedule FROM cron.job WHERE jobname LIKE 'notificacoes-email-%';`
+      → `*/5 * * * *` (imediato) e `0 11 * * 1` (semanal, segunda 08:00 BRT)
+- [ ] Sentry → Crons: monitores `notificacoes-email-imediato` e `notificacoes-email-semanal` aparecem no
+      primeiro check-in (ADR 0036)
+
+### Verificação ponta a ponta em staging
+
+- [ ] `npm run email:preview` local bate com o que chega: mandar um de cada (auth, cobrança, notificação)
+      e abrir no Gmail web, Gmail Android, Apple Mail e Outlook. Geist só aparece nos Apple/Outlook Mac
+      (esperado); a faixa de morros carrega de `www.pilarsoft.com.br/email/wave-v1.png`.
+- [ ] Criar uma notificação `high` numa empresa de teste, esperar 5 minutos sem ler, receber o e-mail
+      imediato, e conferir `notificacoes.email_enviado_em` preenchido e `email_envios.tipo = 'notificacao_imediata'`.
+- [ ] Rodar o semanal na mão: `SELECT public.notificacoes_email_disparar('semanal');` e receber o resumo.
+- [ ] Clicar em "Gerenciar notificações por e-mail" no rodapé → app abre o diálogo de preferências.
+- [ ] Empresa sem e-mail cadastrado tentando enviar cobrança → 422 com a mensagem certa no toast.
+
 ## 🕐 Edge Functions — Agendamentos (Cron)
 
 ### trial-expiry-cron
@@ -177,26 +248,12 @@ Se `pg_cron` não estiver disponível, configure manualmente:
 
 **Opção B — pg_cron manual via SQL Editor**
 
-```sql
--- Configurar variáveis de runtime (uma única vez, usuário postgres)
-ALTER DATABASE postgres SET app.supabase_url = 'https://<project-ref>.supabase.co';
-ALTER DATABASE postgres SET app.service_role_key = '<service_role_key>';
+A migration `20260913000000_cron_secrets_via_vault.sql` já cria o job chamando
+`public.trial_expiry_disparar()`, que lê as credenciais do Vault (ver seção
+"Banco" acima). Só rode isto se o `pg_cron` não tiver aplicado a migration:
 
--- Criar job
-SELECT cron.schedule(
-  'trial-expiry-daily',
-  '0 7 * * *',
-  $$
-  SELECT net.http_post(
-    url        := current_setting('app.supabase_url') || '/functions/v1/trial-expiry-cron',
-    headers    := jsonb_build_object(
-      'Content-Type',  'application/json',
-      'Authorization', 'Bearer ' || current_setting('app.service_role_key')
-    ),
-    body       := '{}'::jsonb
-  );
-  $$
-);
+```sql
+SELECT cron.schedule('trial-expiry-daily', '0 7 * * *', 'SELECT public.trial_expiry_disparar();');
 ```
 
 **Variáveis de ambiente obrigatórias na Edge Function**
@@ -205,10 +262,11 @@ SELECT cron.schedule(
 - [ ] `SUPABASE_SERVICE_ROLE_KEY` — gerado automaticamente pelo Supabase (já disponível em Edge Functions)
 - [ ] `SUPABASE_URL` — gerado automaticamente pelo Supabase (já disponível em Edge Functions)
 - [ ] `ALLOWED_ORIGINS` — ex: `https://app.pilarsoft.com.br` (para montar billingUrl no email)
+- [ ] `CRON_SECRET` — gerado por você (`openssl rand -hex 32`), o mesmo valor que vai no Vault como `app_cron_secret` (ver "Banco" acima)
 
 **Validação**
 
-- [ ] Invocar manualmente via Dashboard: body `{}`, header `Authorization: Bearer <service_role_key>`
+- [ ] Invocar manualmente via Dashboard: body `{}`, header `Authorization: Bearer <CRON_SECRET>` (não o service_role_key, ver seção "Banco" acima)
 - [ ] Checar resposta `{ "processed": N, "expired": N, "warned": N }`
 - [ ] Verificar `admin_audit_logs` para entradas de `trial_expired` / `trial_warning_sent_d*`
 

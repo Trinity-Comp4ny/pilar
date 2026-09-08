@@ -7,6 +7,7 @@ import {
   createAdminClient,
   checkRateLimit,
   verificarTokens,
+  mensagemBloqueioTokens,
   callGeminiStructured,
   debitarTokens,
   GEMINI_MODEL,
@@ -270,17 +271,18 @@ serve(
 
       const canProceed = await checkRateLimit(adminClient, empresaId);
       if (!canProceed) {
-        return jsonResponse({ error: "Muitas chamadas de IA em sequência. Aguarde um minuto e tente de novo." }, 429, req);
-      }
-
-      // Gate de tokens (Fase 2, spec 075): bloqueia ANTES de gastar no provider.
-      const gateTokens = await verificarTokens(adminClient, empresaId);
-      if (!gateTokens.ok) {
         return jsonResponse(
-          { error: "Os tokens de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador." },
-          402,
+          { error: "Muitas chamadas de IA em sequência. Aguarde um minuto e tente de novo." },
+          429,
           req
         );
+      }
+
+      // Gate de tokens (Fase 2, spec 075; teto por usuário na spec 094): bloqueia
+      // ANTES de gastar no provider.
+      const gateTokens = await verificarTokens(adminClient, empresaId, user.id);
+      if (!gateTokens.ok && gateTokens.motivo) {
+        return jsonResponse({ error: mensagemBloqueioTokens(gateTokens.motivo), motivo: gateTokens.motivo }, 402, req);
       }
 
       const body = await req.json().catch(() => ({}));

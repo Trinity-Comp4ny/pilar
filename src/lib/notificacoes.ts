@@ -18,6 +18,15 @@ export const CATEGORIAS: readonly CategoriaNotificacao[] = [
   "obra",
 ] as const;
 
+/**
+ * Padrão do canal e-mail quando o usuário nunca escolheu (linha ausente ou
+ * `email` NULL). Espelho de `public.notificacao_email_padrao()` (SPEC 096):
+ * financeiro, projeto, disciplina e obra chegam por e-mail; tarefa não.
+ */
+export function emailPadraoCategoria(categoria: string): boolean {
+  return categoria === "financeiro" || categoria === "projeto" || categoria === "disciplina" || categoria === "obra";
+}
+
 export const CATEGORIA_LABEL: Record<CategoriaNotificacao, string> = {
   tarefa: "Tarefas",
   projeto: "Projetos",

@@ -3,7 +3,7 @@ import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
-import { sendEmail, templateCobrancaDireta } from "../_shared/email.ts";
+import { sendEmail, templateCobrancaDireta } from "../_shared/email/index.ts";
 import { EMAIL_RE } from "../_shared/validators.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { getRateLimitKey, RateLimiter } from "../_shared/rate-limiter.ts";
@@ -66,7 +66,7 @@ serve(
       const { data: receita, error: receitaError } = await supabaseAdmin
         .from("receitas")
         .select(
-          "id, descricao, valor, data_vencimento, status, empresa_id, cliente_id, clientes(nome, email), empresas(nome, pix_chave, pix_instrucoes)"
+          "id, descricao, valor, data_vencimento, status, empresa_id, cliente_id, clientes(nome, email), empresas(nome, email, pix_chave, pix_instrucoes)"
         )
         .eq("id", receita_id)
         .single();
@@ -81,7 +81,12 @@ serve(
         status: string;
         empresa_id: string;
         clientes: { nome: string; email: string | null } | null;
-        empresas: { nome: string; pix_chave: string | null; pix_instrucoes: string | null };
+        empresas: {
+          nome: string;
+          email: string | null;
+          pix_chave: string | null;
+          pix_instrucoes: string | null;
+        };
       };
 
       if (rec.empresa_id !== profile.empresa_id) return safeErrorResponse(403, "Acesso negado", req);
@@ -91,14 +96,25 @@ serve(
         return safeErrorResponse(400, "Cliente sem email válido cadastrado", req);
       }
 
+      if (!rec.empresas.email)
+        return safeErrorResponse(422, "Cadastre o e-mail da empresa em Configurações para enviar ao cliente", req);
+
       const hoje = new Date().toISOString().split("T")[0];
       const vencida = rec.data_vencimento < hoje && rec.status === "Pendente";
 
       await sendEmail({
+        classe: "escritorio",
+        tipo: vencida ? "cobranca_atraso" : "cobranca_lembrete",
         to: clienteEmail,
-        subject: vencida ? `Fatura em atraso: ${rec.descricao}` : `Lembrete de pagamento: ${rec.descricao}`,
-        html: templateCobrancaDireta({
-          clienteNome: rec.clientes?.nome || "",
+        empresa: {
+          id: rec.empresa_id,
+          nome: rec.empresas.nome,
+          email: rec.empresas.email,
+        },
+        idempotencyKey: `cobranca-${rec.id}-${hoje}`,
+        referencia: { tipo: "receita", id: rec.id },
+        ...templateCobrancaDireta({
+          clienteNome: rec.clientes?.nome || "Cliente",
           empresaNome: rec.empresas.nome,
           descricao: rec.descricao,
           valorFormatado: formatCurrency(Number(rec.valor)),

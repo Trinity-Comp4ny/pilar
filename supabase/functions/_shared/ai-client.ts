@@ -80,9 +80,21 @@ export interface AiSaldo {
 }
 
 /**
- * Gate de tokens (Fase 2, spec 075): garante a concessão do ciclo corrente via RPC
- * gate_tokens (idempotente por mês; cobre a virada de ciclo on-demand, sem depender
- * de cron) e devolve o saldo. `ok=false` = responder 402 ANTES de chamar o modelo.
+ * Motivo do bloqueio (spec 094): `saldo_empresa` = pool da empresa zerado (mensagem
+ * atual, comprar pacote/aguardar renovação); `limite_usuario` = teto pessoal batido
+ * com saldo de empresa ainda disponível (mensagem nova, pedir mais ao admin).
+ * `gate_tokens` já resolve a prioridade (saldo_empresa vence quando os dois estouram
+ * juntos): o front só troca a mensagem por este campo, não recalcula nada.
+ */
+export type TokenBlockMotivo = "saldo_empresa" | "limite_usuario";
+
+/**
+ * Gate de tokens (Fase 2, spec 075; extensão por usuário na spec 094): garante a
+ * concessão do ciclo corrente via RPC gate_tokens (idempotente por mês; cobre a
+ * virada de ciclo on-demand, sem depender de cron) e devolve o saldo. `ok=false` =
+ * responder 402 ANTES de chamar o modelo. `userId` é opcional: sem ele (ou para
+ * quem nunca configurou teto pessoal), o gate por usuário é um no-op no banco —
+ * zero custo extra no hot path.
  *
  * Falha de infra aqui NÃO bloqueia o usuário (fail-open consciente: melhor deixar
  * passar uma chamada do que travar a IA inteira por erro de RPC), mas é reportada
@@ -90,25 +102,44 @@ export interface AiSaldo {
  */
 export async function verificarTokens(
   supabaseAdmin: SupabaseClient,
-  empresaId: string
-): Promise<{ ok: boolean; saldo: AiSaldo | null }> {
+  empresaId: string,
+  userId?: string | null
+): Promise<{ ok: boolean; saldo: AiSaldo | null; motivo: TokenBlockMotivo | null }> {
   try {
-    const { data, error } = await supabaseAdmin.rpc("gate_tokens", { p_empresa_id: empresaId });
+    const { data, error } = await supabaseAdmin.rpc("gate_tokens", {
+      p_empresa_id: empresaId,
+      p_user_id: userId ?? null,
+    });
     if (error) {
       throw new Error(`gate_tokens falhou: ${error.message}`);
     }
-    const row = (data as Array<{ saldo_plano: number; saldo_comprado: number }> | null)?.[0];
-    if (!row) return { ok: true, saldo: null };
+    const row = (
+      data as Array<{ saldo_plano: number; saldo_comprado: number; bloqueado_motivo: TokenBlockMotivo | null }> | null
+    )?.[0];
+    if (!row) return { ok: true, saldo: null, motivo: null };
     const saldo: AiSaldo = {
       tokens_plano: Number(row.saldo_plano),
       tokens_comprado: Number(row.saldo_comprado),
       tokens_restantes: Number(row.saldo_plano) + Number(row.saldo_comprado),
     };
-    return { ok: saldo.tokens_restantes > 0, saldo };
+    const motivo = row.bloqueado_motivo ?? null;
+    return { ok: motivo === null, saldo, motivo };
   } catch (e) {
     await captureException(e, { fn: "verificarTokens", tags: { empresa_id: empresaId } });
-    return { ok: true, saldo: null };
+    return { ok: true, saldo: null, motivo: null };
   }
+}
+
+/**
+ * Mensagem de bloqueio 402, uma fonte só para as edge functions que chamam
+ * verificarTokens (evita 4 cópias divergindo entre si). Diz o que houve + o
+ * próximo passo, sem culpar o usuário (padrão de mensagem de erro da casa).
+ */
+export function mensagemBloqueioTokens(motivo: TokenBlockMotivo): string {
+  if (motivo === "limite_usuario") {
+    return "Você atingiu seu limite de tokens de IA deste mês. Peça mais tokens ao administrador da sua empresa.";
+  }
+  return "Os tokens de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador.";
 }
 
 /**

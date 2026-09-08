@@ -45,3 +45,27 @@ export function useSetPreferenciaInApp() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),
   });
 }
+
+/**
+ * Liga/desliga uma categoria no canal e-mail (SPEC 096). Upsert por
+ * (user_id, categoria); só a coluna `email` muda, `in_app` mantém o que estiver
+ * (default true numa linha nova). NULL nunca é gravado por aqui: o usuário
+ * escolheu, então a coluna sai do "vale o padrão".
+ */
+export function useSetPreferenciaEmail() {
+  const queryClient = useQueryClient();
+  const { user, profile } = useAuth();
+  return useMutation({
+    mutationFn: async ({ categoria, email }: { categoria: CategoriaNotificacao; email: boolean }) => {
+      if (!user?.id || !profile?.empresa_id) throw new Error("Sessão sem empresa definida.");
+      const { error } = await supabase
+        .from("notificacao_preferencias")
+        .upsert(
+          { user_id: user.id, empresa_id: profile.empresa_id, categoria, email },
+          { onConflict: "user_id,categoria" }
+        );
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: KEY }),
+  });
+}

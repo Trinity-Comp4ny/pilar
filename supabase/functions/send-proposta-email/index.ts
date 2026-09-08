@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
-import { sendEmail, templatePropostaEnvio } from "../_shared/email.ts";
+import { sendEmail, templatePropostaEnvio } from "../_shared/email/index.ts";
 import { EMAIL_RE } from "../_shared/validators.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { getRateLimitKey, RateLimiter } from "../_shared/rate-limiter.ts";
@@ -61,14 +61,18 @@ serve(
       // com a Authorization do caller, é o client certo pra essa chamada.
       const { data: empresaId } = await auth.supabase.rpc("get_user_empresa_id");
       if (!empresaId) return safeErrorResponse(403, "Empresa não identificada", req);
-      const { data: empresa } = await supabase.from("empresas").select("nome").eq("id", empresaId).single();
+      const { data: empresa } = await supabase.from("empresas").select("nome, email").eq("id", empresaId).single();
 
       const empresaNome = empresa?.nome ?? "Pilar";
+      if (!empresa?.email)
+        return safeErrorResponse(422, "Cadastre o e-mail da empresa em Configurações para enviar ao cliente", req);
 
       await sendEmail({
+        classe: "escritorio",
+        tipo: doc_mode === "contrato" ? "contrato_envio" : "proposta_envio",
         to: email,
-        subject: subject.trim(),
-        html: templatePropostaEnvio({
+        empresa: { id: empresaId, nome: empresaNome, email: empresa?.email },
+        ...templatePropostaEnvio({
           nomeCliente: nome_cliente ?? "Cliente",
           tituloProposta: subject.trim(),
           empresaNome,

@@ -3,7 +3,7 @@ import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
-import { sendEmail, templateAcessoPortalCliente } from "../_shared/email.ts";
+import { sendEmail, templateAcessoPortalCliente } from "../_shared/email/index.ts";
 import { createLogger } from "../_shared/logger.ts";
 
 const log = createLogger("reset-cliente-portal-password");
@@ -56,6 +56,15 @@ serve(
 
       const novaSenha = generatePassword(10);
 
+      const { data: empresa } = await supabaseAdmin
+        .from("empresas")
+        .select("nome, email")
+        .eq("id", profile.empresa_id)
+        .maybeSingle();
+
+      if (!empresa?.email)
+        return safeErrorResponse(422, "Cadastre o e-mail da empresa em Configurações para enviar ao cliente", req);
+
       const siteUrl = Deno.env.get("PUBLIC_SITE_URL");
       if (!siteUrl) log.error("PUBLIC_SITE_URL secret not set — email button will be broken", null, {});
       const loginUrl = `${siteUrl ?? "https://www.pilarsoft.com.br"}/cliente/login`;
@@ -64,14 +73,21 @@ serve(
       // continua válida (não fica trancado fora) e o admin recebe erro claro para reenviar.
       try {
         await sendEmail({
+          classe: "escritorio",
+          tipo: "portal_senha_redefinida",
           to: account.email,
-          subject: "Sua senha do Portal do Cliente foi redefinida",
-          html: templateAcessoPortalCliente({
+          empresa: {
+            id: profile.empresa_id,
+            nome: empresa?.nome ?? "Seu escritório",
+            email: empresa?.email,
+          },
+          ...templateAcessoPortalCliente({
             nomeCliente: nome_cliente ?? "Cliente",
             email: account.email,
             senha: novaSenha,
             loginUrl,
             isReset: true,
+            empresaNome: empresa?.nome,
           }),
         });
       } catch (emailErr) {
