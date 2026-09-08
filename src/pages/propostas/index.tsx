@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { formatDate, formatDecimal } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -102,6 +104,7 @@ const suggestNextCodigo = (list: { codigo: string | null }[]) => {
 
 export default function Propostas() {
   const formatCurrency = useMoneyMask();
+  const isMobile = useIsMobile();
   usePageTitle("Propostas");
   useRegistrarPagina("pagina", "/documentos", "Documentos");
   const queryClient = useQueryClient();
@@ -459,7 +462,7 @@ export default function Propostas() {
 
   const header = (
     <PageHeader
-      title="Documentos"
+      title="Propostas"
       search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "Buscar por título ou cliente" }}
       primaryAction={{
         label: "Nova proposta",
@@ -472,9 +475,17 @@ export default function Propostas() {
         },
       }}
     >
-      <Button variant="outline" className="rounded-full text-sm h-9" onClick={() => setIsTemplatesOpen(true)}>
-        <LayoutTemplate className="h-4 w-4 mr-1.5" />
-        Templates
+      {/* Ícone-only em mobile: com busca + "Nova proposta" na mesma linha, o label
+          "Templates" era o que sobrava, deixando o título ("Documentos", corrigido pra
+          "Propostas" no mesmo commit) esmagado a 0px de largura (achado da auditoria). */}
+      <Button
+        variant="outline"
+        className={cn("rounded-full text-sm h-9", isMobile && "w-9 px-0 justify-center")}
+        onClick={() => setIsTemplatesOpen(true)}
+        aria-label={isMobile ? "Templates" : undefined}
+      >
+        <LayoutTemplate className={cn("h-4 w-4", !isMobile && "mr-1.5")} />
+        <span className={cn(isMobile && "sr-only")}>Templates</span>
       </Button>
     </PageHeader>
   );
