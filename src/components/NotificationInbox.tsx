@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Bell, CheckCheck, Archive, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -27,8 +27,19 @@ import { PreferenciasDialog } from "@/pages/notificacoes/PreferenciasDialog";
 export function NotificationInbox() {
   const [open, setOpen] = useState(false);
   const [aba, setAba] = useState<AbaNotificacao>("inbox");
-  const [prefsOpen, setPrefsOpen] = useState(false);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // "Gerenciar notificações por e-mail" no rodapé do e-mail (SPEC 096) chega com
+  // ?abrir=preferencias-notificacao: abre direto as preferências.
+  const [prefsOpen, setPrefsOpen] = useState(() => searchParams.get("abrir") === "preferencias-notificacao");
+
+  // Limpa o parâmetro para o refresh não reabrir o diálogo.
+  useEffect(() => {
+    if (!searchParams.has("abrir")) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("abrir");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const { data: itens = [] } = useNotificacoes(aba, 50);
   const { data: naoLidas = 0 } = useNotificacoesNaoLidas();

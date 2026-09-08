@@ -11,7 +11,7 @@ const LISTA_KEY = ["notificacoes"];
 const NAO_LIDAS_KEY = ["notificacoes-nao-lidas"];
 
 const SELECT =
-  "id, empresa_id, destinatario_id, tipo, categoria, severidade, titulo, mensagem, referencia_tipo, referencia_id, link, lido_em, arquivada_em, created_at, expires_at";
+  "id, empresa_id, destinatario_id, tipo, categoria, severidade, titulo, mensagem, referencia_tipo, referencia_id, link, lido_em, arquivada_em, email_enviado_em, created_at, expires_at";
 
 /** Lista as notificações da aba (RLS restringe ao destinatário). Inbox = não
  * arquivadas; Arquivadas = arquivadas. */

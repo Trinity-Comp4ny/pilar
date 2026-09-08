@@ -1,11 +1,17 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FolderKanban, Users, Loader2, ArrowUpRight, Coins, Plus } from "lucide-react";
+import { FolderKanban, Users, Loader2, ArrowUpRight, Coins, Plus, Lock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { useUsoEmpresa } from "@/components/settings/useUsoEmpresa";
 import { useExtratoTokens, agentKeyLabel } from "@/components/settings/useExtratoTokens";
+import { useMeuUsoTokens } from "@/components/settings/useMeuUsoTokens";
+import { useSolicitarTokens } from "@/components/settings/useSolicitarTokens";
+import { EquipeTokensSection } from "@/components/settings/panels/EquipeTokensSection";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
 import { formatNumberCompact, formatNumber, formatDateTime } from "@/lib/format";
 import { DataTable } from "@/components/data/DataTable";
 import { toDataSourceResult } from "@/types/dataSource";
@@ -20,12 +26,16 @@ function Medidor({
   used,
   max,
   hint,
+  nearMessage = "Você está perto do limite da sua faixa.",
+  fullMessage = "Faixa cheia. Suba de plano para abrir mais.",
 }: {
   icon: typeof FolderKanban;
   label: string;
   used: number;
   max: number | null;
   hint?: string;
+  nearMessage?: string;
+  fullMessage?: string;
 }) {
   const hasLimit = typeof max === "number" && max > 0;
   const pct = hasLimit ? Math.min(100, Math.round((used / max!) * 100)) : 0;
@@ -60,10 +70,8 @@ function Medidor({
           </div>
         )}
         {hint && <p className="text-xs text-black/45">{hint}</p>}
-        {near && !full && (
-          <p className="text-xs font-medium text-warning-mid">Você está perto do limite da sua faixa.</p>
-        )}
-        {full && <p className="text-xs font-medium text-danger-mid">Faixa cheia. Suba de plano para abrir mais.</p>}
+        {near && !full && <p className="text-xs font-medium text-warning-mid">{nearMessage}</p>}
+        {full && <p className="text-xs font-medium text-danger-mid">{fullMessage}</p>}
       </CardContent>
     </Card>
   );
@@ -100,10 +108,17 @@ const extratoColumns: ColumnDef<ExtratoTokenEvento>[] = [
 export function UsoPanel() {
   const { uso, isLoading, error } = useUsoEmpresa();
   const { eventos, isLoading: extratoLoading, error: extratoError } = useExtratoTokens();
+  const { meuUso } = useMeuUsoTokens();
+  const solicitarTokens = useSolicitarTokens();
   const { openSettings, closeSettings } = useSettingsModal();
   const { profile } = useAuth();
+  const { can } = usePermissions();
   const navigate = useNavigate();
   const canComprar = profile?.role === "admin" || profile?.role === "ultra_admin";
+
+  const [pedindoTokens, setPedindoTokens] = useState(false);
+  const [mensagemPedido, setMensagemPedido] = useState("");
+  const nearLimitePessoal = meuUso.limiteMensal !== null && meuUso.tokensCiclo / meuUso.limiteMensal >= 0.8;
 
   if (isLoading) {
     return (
@@ -193,6 +208,57 @@ export function UsoPanel() {
         </Card>
       </div>
 
+      {meuUso.limiteMensal !== null && (
+        <div className="space-y-3">
+          <Medidor
+            icon={Lock}
+            label="Seu limite de tokens"
+            used={meuUso.tokensCiclo}
+            max={meuUso.limiteMensal}
+            hint="Teto pessoal definido pelo administrador da sua empresa, sobre o saldo acima."
+            nearMessage="Você está perto do seu limite pessoal de tokens."
+            fullMessage="Limite pessoal atingido. Peça mais tokens ao administrador abaixo."
+          />
+          {nearLimitePessoal &&
+            (pedindoTokens ? (
+              <Card className="border border-black/5">
+                <CardContent className="pt-4 space-y-2">
+                  <Textarea
+                    value={mensagemPedido}
+                    onChange={(e) => setMensagemPedido(e.target.value)}
+                    placeholder="Motivo do pedido (opcional)"
+                    className="text-sm"
+                    rows={2}
+                  />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="brand"
+                      size="sm"
+                      className="rounded-full"
+                      disabled={solicitarTokens.isPending}
+                      onClick={() => {
+                        solicitarTokens.mutate(
+                          { mensagem: mensagemPedido.trim() || undefined },
+                          { onSuccess: () => setPedindoTokens(false) }
+                        );
+                      }}
+                    >
+                      Enviar pedido
+                    </Button>
+                    <Button variant="ghost" size="sm" className="rounded-full" onClick={() => setPedindoTokens(false)}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Button variant="outline" size="sm" className="rounded-full" onClick={() => setPedindoTokens(true)}>
+                Pedir mais tokens ao administrador
+              </Button>
+            ))}
+        </div>
+      )}
+
       <div>
         <h4 className="text-sm font-medium text-ink mb-2">Extrato recente</h4>
         <DataTable
@@ -209,6 +275,8 @@ export function UsoPanel() {
           errorTitle="Não foi possível carregar o extrato"
         />
       </div>
+
+      {can("pessoas") && <EquipeTokensSection />}
 
       {(nearProjetos || !uso.planoNome) && (
         <Card className="border border-black/5 bg-black/[0.02]">

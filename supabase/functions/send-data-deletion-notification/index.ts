@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
-import { sendEmail } from "../_shared/email.ts";
+import { sendEmail, templateLgpdExclusaoDados } from "../_shared/email/index.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { withSentry } from "../_shared/sentry.ts";
 
@@ -62,93 +62,6 @@ function formatDate(iso: string): string {
   } catch {
     return iso;
   }
-}
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-function buildHtml(args: {
-  adminNome: string;
-  empresaNome: string;
-  solicitanteEmail: string;
-  solicitanteNome?: string;
-  motivo: string | null;
-  requestedAt: string;
-  adminPanelUrl: string;
-  requestId: string;
-}): string {
-  const T = {
-    bg: "#0E0E0E",
-    card: "#161616",
-    inner: "#1C1C1C",
-    border: "rgba(255,255,255,0.08)",
-    white: "#FFFFFF",
-    w65: "rgba(255,255,255,0.65)",
-    w40: "rgba(255,255,255,0.40)",
-    brand: "#A4EC86",
-    font: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif",
-  };
-
-  const motivoBlock = args.motivo
-    ? `
-      <hr style="border:none;border-top:1px solid ${T.border};margin:12px 0" />
-      <p style="margin:0 0 3px;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${T.w40};font-family:${T.font}">Motivo informado</p>
-      <p style="margin:0;font-size:15px;color:${T.w65};font-family:${T.font}">${escapeHtml(args.motivo)}</p>
-    `
-    : "";
-
-  return `<!doctype html>
-<html lang="pt-BR">
-<head>
-<meta charset="utf-8" />
-<meta name="color-scheme" content="dark" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-</head>
-<body style="background:${T.bg};margin:0;padding:48px 16px 64px;font-family:${T.font}">
-  <div style="max-width:560px;margin:0 auto;background:${T.card};border-radius:16px;overflow:hidden;border:1px solid ${T.border}">
-    <div style="padding:22px 32px;border-bottom:1px solid ${T.border};background:#0F0F0F">
-      <span style="font-size:16px;font-weight:700;color:${T.white};letter-spacing:-0.02em">Pilar</span>
-      <sup style="font-size:8px;color:${T.w40};margin-left:2px;vertical-align:super">&reg;</sup>
-    </div>
-    <div style="padding:40px 32px 36px">
-      <p style="margin:0;font-size:26px;font-weight:500;color:${T.white};letter-spacing:-0.02em;line-height:1.2">
-        Solicitação de <span style="color:${T.brand}">exclusão de dados</span>
-      </p>
-      <p style="margin:16px 0 0;font-size:15px;line-height:1.65;color:${T.w65}">
-        Olá, ${escapeHtml(args.adminNome)}. Um usuário da empresa <strong style="color:${T.white}">${escapeHtml(args.empresaNome)}</strong> solicitou a eliminação dos próprios dados, conforme direito previsto no Art. 18, IV da LGPD.
-      </p>
-      <div style="background:${T.inner};border-radius:10px;border:1px solid ${T.border};border-left:3px solid ${T.brand};padding:18px 20px;margin-top:24px">
-        <p style="margin:0 0 3px;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${T.w40}">Solicitante</p>
-        <p style="margin:0;font-size:15px;font-weight:600;color:${T.white}">${args.solicitanteNome ? escapeHtml(args.solicitanteNome) + " &mdash; " : ""}${escapeHtml(args.solicitanteEmail)}</p>
-        <hr style="border:none;border-top:1px solid ${T.border};margin:12px 0" />
-        <p style="margin:0 0 3px;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${T.w40}">Solicitado em</p>
-        <p style="margin:0;font-size:15px;font-weight:600;color:${T.white}">${escapeHtml(args.requestedAt)}</p>
-        ${motivoBlock}
-        <hr style="border:none;border-top:1px solid ${T.border};margin:12px 0" />
-        <p style="margin:0 0 3px;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:${T.w40}">ID da solicitação</p>
-        <p style="margin:0;font-size:13px;font-weight:600;color:${T.white};font-family:'Courier New',Courier,monospace">${escapeHtml(args.requestId)}</p>
-      </div>
-      <p style="margin:28px 0 0;font-size:14px">
-        <a href="${escapeHtml(args.adminPanelUrl)}" style="color:${T.brand};text-decoration:underline;font-weight:600">Abrir painel administrativo</a>
-      </p>
-      <hr style="border:none;border-top:1px solid ${T.border};margin:28px 0" />
-      <p style="margin:0;font-size:13px;line-height:1.65;color:${T.w40}">
-        Você tem <strong style="color:${T.white}">até 15 dias</strong> para processar a solicitação. Dados sujeitos a retenção legal (fiscal, auditoria) podem ser mantidos pelo prazo exigido &mdash; registre a justificativa no painel.
-      </p>
-    </div>
-    <div style="padding:18px 32px;border-top:1px solid ${T.border};background:#0F0F0F">
-      <p style="margin:0;font-size:12px;line-height:1.7;color:${T.w40}">Notificação automática enviada pelo Pilar para o admin responsável (LGPD Art. 18, IV).</p>
-      <p style="margin:4px 0 0;font-size:11px;color:rgba(255,255,255,0.20);letter-spacing:0.05em">pilarsoft.com.br</p>
-    </div>
-  </div>
-</body>
-</html>`;
 }
 
 serve(
@@ -263,7 +176,7 @@ serve(
 
     const adminPanelUrl = `${APP_URL.replace(/\/$/, "")}/admin?tab=privacidade&request=${ddr.id}`;
 
-    const html = buildHtml({
+    const email = templateLgpdExclusaoDados({
       adminNome,
       empresaNome,
       solicitanteEmail: solicitanteEmail ?? "(email não disponível)",
@@ -276,9 +189,11 @@ serve(
 
     try {
       await sendEmail({
+        classe: "plataforma",
+        tipo: "lgpd_exclusao_dados",
         to: recipients,
-        subject: `[LGPD] Solicitação de exclusão de dados — ${empresaNome}`,
-        html,
+        idempotencyKey: `lgpd-exclusao-${ddr.id}`,
+        ...email,
       });
     } catch (err) {
       reqLog.error("resend send failed", err);

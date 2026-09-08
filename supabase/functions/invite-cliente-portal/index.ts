@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { EMAIL_RE } from "../_shared/validators.ts";
-import { sendEmail, templateAcessoPortalCliente } from "../_shared/email.ts";
+import { sendEmail, templateAcessoPortalCliente } from "../_shared/email/index.ts";
 import { createLogger } from "../_shared/logger.ts";
 
 const log = createLogger("invite-cliente-portal");
@@ -114,19 +114,35 @@ serve(
         }
       }
 
+      const { data: empresa } = await supabaseAdmin
+        .from("empresas")
+        .select("nome, email")
+        .eq("id", profile.empresa_id)
+        .maybeSingle();
+
+      if (!empresa?.email)
+        return safeErrorResponse(422, "Cadastre o e-mail da empresa em Configurações para enviar ao cliente", req);
+
       const siteUrl = Deno.env.get("PUBLIC_SITE_URL");
       if (!siteUrl) log.error("PUBLIC_SITE_URL secret not set — email button will be broken", null, {});
       const loginUrl = `${siteUrl ?? "https://www.pilarsoft.com.br"}/cliente/login`;
 
       try {
         await sendEmail({
+          classe: "escritorio",
+          tipo: "portal_acesso_criado",
           to: normalizedEmail,
-          subject: "Seu acesso ao Portal do Cliente",
-          html: templateAcessoPortalCliente({
+          empresa: {
+            id: profile.empresa_id,
+            nome: empresa?.nome ?? "Seu escritório",
+            email: empresa?.email,
+          },
+          ...templateAcessoPortalCliente({
             nomeCliente: cliente.nome,
             email: normalizedEmail,
             senha,
             loginUrl,
+            empresaNome: empresa?.nome,
           }),
         });
       } catch (emailErr) {
