@@ -484,7 +484,10 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
             {projetosSemDatas.length} projeto{projetosSemDatas.length > 1 ? "s" : ""} sem data de início ou previsão:{" "}
             {projetosSemDatas
               .slice(0, 3)
-              .map((p) => p.codigo_projeto)
+              // codigo_projeto é opcional e a maioria dos projetos não o preenche; sem
+              // fallback, o aviso listava vírgulas vazias ("19 projetos ..., , e mais
+              // 16", achado da auditoria) em vez dos nomes.
+              .map((p) => p.codigo_projeto || p.nome)
               .join(", ")}
             {projetosSemDatas.length > 3 ? ` e mais ${projetosSemDatas.length - 3}` : ""}
           </span>

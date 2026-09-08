@@ -108,7 +108,10 @@ export function ContasSidebar({
   }
 
   return (
-    <div className="w-72 shrink-0 border-r flex flex-col">
+    // Largura fixa (w-72) sem breakpoint deixava o painel de detalhes ao lado com só
+    // ~100px em 390px, quebrando texto letra por letra (achado da auditoria mobile,
+    // 08/09). Empilha em mobile, largura fixa só a partir de md.
+    <div className="w-full md:w-72 md:shrink-0 border-b md:border-b-0 md:border-r flex flex-col">
       {/* Contas + cartões aninhados */}
       <div className="p-4 border-b">
         <div className="flex items-center justify-between mb-3">

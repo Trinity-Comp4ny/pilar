@@ -1,14 +1,21 @@
 import { useMemo, useState } from "react";
-import { GitBranch, Plus, Settings2 } from "lucide-react";
+import { GitBranch, MoreHorizontal, Plus, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { DragDropContext } from "@hello-pangea/dnd";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { Can } from "@/components/Can";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
 import { type Projeto, getDeadlineStatus } from "@/types/projetos";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -67,6 +74,7 @@ export default function ProjetosKanban() {
 
   const { data: etapas = [] } = useProjetoEtapas();
   const etapaMut = useProjetoEtapaMutations();
+  const isMobile = useIsMobile();
 
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [editingProjeto, setEditingProjeto] = useState<Projeto | null>(null);
@@ -362,23 +370,50 @@ export default function ProjetosKanban() {
             onChange={setFilters}
           />
 
+          {/* Em telas estreitas, "Disciplinas" e "Fluxos" cabendo inline ao lado da busca
+              empurravam "Novo projeto" pra fora do viewport, sem scroll pra alcançar
+              (achado da auditoria mobile, 08/09). Colapsam num único menu "⋯" abaixo de md. */}
           <Can feature="projetos" action="edit">
-            <Button variant="outline" className="rounded-full text-sm h-9" onClick={() => setIsDisciplinasOpen(true)}>
-              <Settings2 className="mr-2 h-4 w-4" />
-              Disciplinas
-            </Button>
-          </Can>
-
-          <Can feature="projetos" action="edit">
-            <Button
-              variant="outline"
-              className="rounded-full text-sm h-9"
-              data-tour="onb-fluxos"
-              onClick={() => setIsFluxosOpen(true)}
-            >
-              <GitBranch className="mr-2 h-4 w-4" />
-              Fluxos
-            </Button>
+            {isMobile ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="rounded-full h-9 w-9 shrink-0">
+                    <MoreHorizontal className="h-4 w-4" />
+                    <span className="sr-only">Mais ações</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setIsDisciplinasOpen(true)}>
+                    <Settings2 className="mr-2 h-4 w-4" />
+                    Disciplinas
+                  </DropdownMenuItem>
+                  <DropdownMenuItem data-tour="onb-fluxos" onClick={() => setIsFluxosOpen(true)}>
+                    <GitBranch className="mr-2 h-4 w-4" />
+                    Fluxos
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  className="rounded-full text-sm h-9"
+                  onClick={() => setIsDisciplinasOpen(true)}
+                >
+                  <Settings2 className="mr-2 h-4 w-4" />
+                  Disciplinas
+                </Button>
+                <Button
+                  variant="outline"
+                  className="rounded-full text-sm h-9"
+                  data-tour="onb-fluxos"
+                  onClick={() => setIsFluxosOpen(true)}
+                >
+                  <GitBranch className="mr-2 h-4 w-4" />
+                  Fluxos
+                </Button>
+              </>
+            )}
           </Can>
         </PageHeader>
       }
@@ -447,12 +482,27 @@ export default function ProjetosKanban() {
         noResults ? (
           <ProjetosEmptyState variant="no-results" onClearFilters={() => setFilters(EMPTY_FILTERS)} />
         ) : viewMode === "lista" ? (
-          <ListaProjetos
-            projetos={filteredProjetos}
-            etapas={etapas}
-            rentabilidadeMap={rentabilidadeMap}
-            onCardClick={handleCardClick}
-          />
+          <div className="flex-1 min-h-0">
+            <ListaProjetos
+              projetos={filteredProjetos}
+              etapas={etapas}
+              rentabilidadeMap={rentabilidadeMap}
+              onCardClick={handleCardClick}
+            />
+            {/* ListaProjetos é "hidden md:block" (tabela, só faz sentido em desktop). Sem
+                este fallback, a visão Lista em mobile ficava em branco: nenhum card, sem
+                aviso (achado da auditoria, 08/09). Reusa o mesmo agrupamento por status
+                que a visão Quadro já usa em mobile. */}
+            <ProjetosMobileList
+              canEdit={canEdit}
+              rentabilidadeMap={rentabilidadeMap}
+              getProjetosByStatus={getProjetosByStatus}
+              onCardClick={handleCardClick}
+              onEditClick={handleEditClick}
+              onDelete={handleDelete}
+              onMoveStatus={handleMoveStatus}
+            />
+          </div>
         ) : (
           <DragDropContext onDragEnd={onDragEnd}>
             <div className="flex-1 min-h-0">

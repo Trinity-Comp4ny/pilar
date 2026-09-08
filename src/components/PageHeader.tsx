@@ -92,9 +92,15 @@ export function PageHeader({ title, breadcrumbs, children, search, center, prima
         </div>
       )}
 
-      {/* Trilha (breadcrumb) ou título + descrição compacta */}
+      {/* Trilha (breadcrumb) ou título + descrição compacta.
+          min-w-0 sozinho deixava o título perder a disputa de espaço pra busca: o
+          input tem w-full (base grande antes do shrink), então o flexbox dava quase
+          todo o espaço livre a ela e esmagava o título a poucos px, às vezes 0
+          (achado da auditoria: título ficava invisível mesmo com o texto certo).
+          min-w-[80px] garante um piso; o texto ainda trunca com "truncate" se for
+          maior que isso. */}
       {temTrilha ? (
-        <nav aria-label="Trilha de navegação" className="flex items-baseline gap-1.5 min-w-0">
+        <nav aria-label="Trilha de navegação" className="flex items-baseline gap-1.5 min-w-[80px] shrink">
           <ol className="hidden sm:flex items-baseline gap-1.5 shrink-0">
             {breadcrumbs!.map((bc) => (
               <li key={bc.label} className="flex items-baseline gap-1.5">
@@ -120,14 +126,15 @@ export function PageHeader({ title, breadcrumbs, children, search, center, prima
           </h1>
         </nav>
       ) : (
-        <div className="flex items-baseline gap-2.5 min-w-0">
+        <div className="flex items-baseline gap-2.5 min-w-[80px] shrink">
           <h1 className="text-base font-medium tracking-tight text-ink truncate">{title}</h1>
         </div>
       )}
 
-      {/* Busca controlada pela página */}
+      {/* Busca controlada pela página. max-w menor em mobile: 16rem inteiro competia
+          demais com o título pelo espaço livre (ver nota acima). */}
       {search && (
-        <div className="relative ml-auto w-full max-w-[16rem] shrink">
+        <div className="relative ml-auto w-full max-w-[9rem] shrink md:max-w-[16rem]">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/35 pointer-events-none" />
           <input
             ref={searchRef}
@@ -161,12 +168,21 @@ export function PageHeader({ title, breadcrumbs, children, search, center, prima
           <Button
             onClick={primaryAction.onClick}
             variant="brand"
-            className="rounded-full h-9 px-4 text-[13px] font-medium"
+            className={cn(
+              "rounded-full h-9 text-[13px] font-medium",
+              // Com título + busca + ações secundárias na mesma linha, o label da ação
+              // primária era o que sobrava de fora do viewport em mobile (achado da
+              // auditoria: "Novo projeto" ficava inalcançável em 390px, sem scroll pra
+              // chegar nele). Ícone-only com o ícone sempre presente garante alvo de
+              // toque claro sem depender de o texto caber.
+              isMobile && PrimaryIcon ? "w-9 px-0 justify-center" : "px-4"
+            )}
             data-tour={primaryAction.dataTour}
+            aria-label={isMobile && PrimaryIcon ? primaryAction.label : undefined}
             {...gate}
           >
-            {PrimaryIcon && <PrimaryIcon size={14} className="mr-1.5" />}
-            {primaryAction.label}
+            {PrimaryIcon && <PrimaryIcon size={14} className={cn(isMobile ? undefined : "mr-1.5")} />}
+            <span className={cn(isMobile && PrimaryIcon && "sr-only")}>{primaryAction.label}</span>
           </Button>
         )}
       </div>

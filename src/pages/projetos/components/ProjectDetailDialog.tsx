@@ -87,12 +87,32 @@ interface ProjectDetailDialogProps {
   onProjectUpdated?: () => void;
 }
 
-const DISC_STATUS_DOT: Record<string, string> = {
-  Concluído: "bg-status-done",
-  "Em Andamento": "bg-status-progress",
-  Pendente: "bg-status-planning",
-  "Não Iniciado": "bg-status-unknown",
+type DiscStatusKey = "nao_iniciado" | "em_andamento" | "concluido" | "pendente";
+
+const DISC_STATUS_INFO: Record<DiscStatusKey, { label: string; dot: string }> = {
+  nao_iniciado: { label: "Não iniciado", dot: "bg-status-unknown" },
+  em_andamento: { label: "Em andamento", dot: "bg-status-progress" },
+  concluido: { label: "Concluído", dot: "bg-status-done" },
+  pendente: { label: "Pendente", dot: "bg-status-planning" },
 };
+
+/**
+ * projeto_disciplinas.status é `text` livre no banco (sem enum), e hoje convivem
+ * dois formatos no mesmo dado: "Em Andamento" (legado, Título Case) e
+ * "em_andamento"/"concluida" (snake_case, sem acento) — achado da auditoria mobile
+ * (08/09), que via o valor cru aparecer na tela porque nenhum batia com o mapa
+ * antigo. Normaliza por substring em vez de listar literais, pra não quebrar nas
+ * próximas variações de grafia.
+ */
+function normalizeDiscStatus(raw: string | null | undefined): DiscStatusKey {
+  // Compara por substring sem acento nos dois lados ("conclu" casa "Concluído" e
+  // "concluida"), então não precisa normalizar diacríticos aqui.
+  const s = (raw ?? "").toLowerCase();
+  if (s.includes("conclu")) return "concluido";
+  if (s.includes("andamento")) return "em_andamento";
+  if (s.includes("pendente")) return "pendente";
+  return "nao_iniciado";
+}
 
 export function ProjectDetailDialog({
   open,
@@ -469,9 +489,12 @@ export function ProjectDetailDialog({
 
                               <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground flex-shrink-0">
                                 <span
-                                  className={cn("h-2 w-2 rounded-full", DISC_STATUS_DOT[disc.status || "Não Iniciado"])}
+                                  className={cn(
+                                    "h-2 w-2 rounded-full",
+                                    DISC_STATUS_INFO[normalizeDiscStatus(disc.status)].dot
+                                  )}
                                 />
-                                {disc.status || "Não Iniciado"}
+                                {DISC_STATUS_INFO[normalizeDiscStatus(disc.status)].label}
                               </span>
                             </div>
                           </button>
