@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   AlertTriangle,
   CalendarClock,
@@ -51,6 +52,7 @@ function Campo({ titulo, texto }: { titulo: string; texto: string | null }) {
 }
 
 export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: boolean }) {
+  const isMobile = useIsMobile();
   const { data: rdos = [], isLoading } = useObraRdos(obraId);
   const { data: vinculos = [] } = useObraRdoTarefas(obraId);
   const { data: fotosPorRdo = {} } = useObraFotos(obraId);
@@ -123,10 +125,19 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
             Feed
           </button>
         </div>
+        {/* Ícone-only em mobile: toggle Lista/Feed + "Registrar dia" não
+            cabiam numa linha em 390px, e o botão cortava na borda (achado da
+            auditoria, mesmo padrão já corrigido no cabeçalho do Gantt). */}
         {canEdit && (
-          <Button variant="brand" size="sm" onClick={abrirNovo}>
-            <Plus className="mr-1.5 h-4 w-4" />
-            Registrar dia
+          <Button
+            variant="brand"
+            size="sm"
+            className={isMobile ? "w-9 px-0" : undefined}
+            onClick={abrirNovo}
+            aria-label="Registrar dia"
+          >
+            <Plus className={isMobile ? "h-4 w-4" : "mr-1.5 h-4 w-4"} />
+            {!isMobile && "Registrar dia"}
           </Button>
         )}
       </div>
