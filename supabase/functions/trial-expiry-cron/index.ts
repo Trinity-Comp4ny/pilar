@@ -4,7 +4,7 @@
  * Deploy: supabase functions deploy trial-expiry-cron --no-verify-jwt
  *
  * Deve ser chamada via cron com:
- *   Authorization: Bearer <SERVICE_ROLE_KEY>
+ *   Authorization: Bearer <CRON_SECRET>
  *
  * Responsabilidades:
  *  - Marca status = 'expired' em empresas cujo trial_ends_at já passou
@@ -23,6 +23,8 @@ const log = createLogger("trial-expiry-cron");
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+// Segredo próprio do cron: ver notificacoes-email-cron/index.ts.
+const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 const APP_URL = (Deno.env.get("ALLOWED_ORIGINS") ?? "https://app.pilarsoft.com.br")
   .split(",")[0]
   .trim()
@@ -54,7 +56,7 @@ serve(
 
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (!token || token !== SERVICE_ROLE_KEY) {
+    if (!token || !CRON_SECRET || token !== CRON_SECRET) {
       return new Response("Unauthorized", { status: 401 });
     }
 

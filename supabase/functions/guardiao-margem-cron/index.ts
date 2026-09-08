@@ -5,7 +5,7 @@
  * Deploy: supabase functions deploy guardiao-margem-cron --no-verify-jwt
  *
  * Deve ser chamada via cron com:
- *   Authorization: Bearer <SERVICE_ROLE_KEY>
+ *   Authorization: Bearer <CRON_SECRET>
  *
  * Responsabilidades:
  *  - Consulta projetos_com_escopo_estourado() (mesma condição do alerta
@@ -29,6 +29,8 @@ const log = createLogger("guardiao-margem-cron");
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+// Segredo próprio do cron: ver notificacoes-email-cron/index.ts.
+const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 
 interface ProjetoEstourado {
   projeto_id: string;
@@ -75,7 +77,7 @@ serve(
 
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (!token || token !== SERVICE_ROLE_KEY) {
+    if (!token || !CRON_SECRET || token !== CRON_SECRET) {
       return new Response("Unauthorized", { status: 401 });
     }
 

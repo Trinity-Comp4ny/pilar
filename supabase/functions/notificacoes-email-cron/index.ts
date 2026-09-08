@@ -23,6 +23,10 @@ const log = createLogger("notificacoes-email-cron");
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+// Segredo próprio do cron, independente do formato que a Supabase usa hoje pra
+// SUPABASE_SERVICE_ROLE_KEY (mudou de JWT pra sb_secret_... sem aviso). Ver ADR
+// no commit desta mudança.
+const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 
 /** Teto por rodada. Corta por pessoa; o resto entra na próxima (nada é perdido). */
 const MAX_PESSOAS_IMEDIATO = 200;
@@ -36,9 +40,11 @@ serve(
   withSentry("notificacoes-email-cron", async (req) => {
     if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
-    // Só o cron (service role) chama. Sem CORS: não é chamada de browser.
+    // Só o cron chama, com CRON_SECRET próprio (não o service_role_key da
+    // Supabase: formato pode mudar por conta deles, isto não). Sem CORS: não é
+    // chamada de browser.
     const auth = req.headers.get("Authorization") ?? "";
-    if (!SERVICE_ROLE_KEY || auth !== `Bearer ${SERVICE_ROLE_KEY}`) {
+    if (!CRON_SECRET || auth !== `Bearer ${CRON_SECRET}`) {
       log.warn("chamada não autorizada");
       return json({ error: "Unauthorized" }, 401);
     }

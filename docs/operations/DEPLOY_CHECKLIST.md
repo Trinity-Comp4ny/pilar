@@ -185,23 +185,34 @@ Checklist por ambiente, na ordem. Tudo aqui é fora do repo; o código já esper
 - [ ] MX: Cloudflare Email Routing (gratuito) encaminhando `contato@`, `privacidade@` e `dmarc@` para
       uma caixa real. Só então preencher `RESEND_REPLY_TO`: reply-to que não recebe é pior que nenhum.
 
-### Banco (uma vez por ambiente, SQL Editor)
+### Banco (uma vez por ambiente, SQL Editor + terminal)
 
 `ALTER DATABASE ... SET` exige superuser, que o Supabase gerenciado não concede
 (nem no SQL Editor, nem por `psql` direto com a senha do banco: é bloqueio do
-papel `postgres` no projeto, não da sua conta). As duas credenciais que os
-crons (`notificacoes-email-*`, `trial-expiry-daily`, `guardiao-margem-daily`)
+papel `postgres` no projeto, não da sua conta). As credenciais que os crons
+(`notificacoes-email-*`, `trial-expiry-daily`, `guardiao-margem-daily`)
 precisam para chamar suas edge functions vêm do **Supabase Vault** em vez
 disso (migration `20260913000000_cron_secrets_via_vault.sql`). É um `SELECT`
-comum, não uma `ALTER DATABASE`, então não esbarra no mesmo bloqueio:
+comum, não uma `ALTER DATABASE`, então não esbarra no mesmo bloqueio.
 
-- [ ] No SQL Editor, um de cada vez:
+A verificação de quem chama o endpoint usa um segredo **próprio do cron**
+(`CRON_SECRET`), não o `SUPABASE_SERVICE_ROLE_KEY` da Supabase: esse env,
+mesmo com o nome antigo, silenciosamente passou a valer o formato novo de
+chave (`sb_secret_...`, curto) em vez do JWT que a tela de API Keys ainda
+mostra, e nenhuma function que comparava contra o JWT nunca mais bateu (achado
+em staging 08/09, migration `20260914000000_cron_secret_proprio.sql`). Gerar
+uma vez por ambiente e gravar **o mesmo valor** nos dois lados:
+
+- [ ] Gerar: `openssl rand -hex 32`
+- [ ] Terminal: `supabase secrets set CRON_SECRET='<valor>' --project-ref <project-ref>`
+- [ ] SQL Editor:
       `sql
     SELECT vault.create_secret('https://<project-ref>.supabase.co', 'app_supabase_url', 'URL do próprio projeto');
-    SELECT vault.create_secret('<service_role_key>', 'app_service_role_key', 'Service role key p/ cron chamar edge functions');
+    SELECT vault.create_secret('<mesmo valor de CRON_SECRET>', 'app_cron_secret', 'Segredo compartilhado só entre os cron jobs e as edge functions de cron');
     `
       (sem eles, `notificacoes_email_disparar()`, `trial_expiry_disparar()` e
-      `guardiao_margem_disparar()` pulam com `NOTICE`, sem lançar erro)
+      `guardiao_margem_disparar()` pulam com `NOTICE`, sem lançar erro; se os
+      dois lados não baterem, a edge function responde 401)
 - [ ] Conferir `SELECT jobname, schedule FROM cron.job WHERE jobname LIKE 'notificacoes-email-%';`
       → `*/5 * * * *` (imediato) e `0 11 * * 1` (semanal, segunda 08:00 BRT)
 - [ ] Sentry → Crons: monitores `notificacoes-email-imediato` e `notificacoes-email-semanal` aparecem no
@@ -251,10 +262,11 @@ SELECT cron.schedule('trial-expiry-daily', '0 7 * * *', 'SELECT public.trial_exp
 - [ ] `SUPABASE_SERVICE_ROLE_KEY` — gerado automaticamente pelo Supabase (já disponível em Edge Functions)
 - [ ] `SUPABASE_URL` — gerado automaticamente pelo Supabase (já disponível em Edge Functions)
 - [ ] `ALLOWED_ORIGINS` — ex: `https://app.pilarsoft.com.br` (para montar billingUrl no email)
+- [ ] `CRON_SECRET` — gerado por você (`openssl rand -hex 32`), o mesmo valor que vai no Vault como `app_cron_secret` (ver "Banco" acima)
 
 **Validação**
 
-- [ ] Invocar manualmente via Dashboard: body `{}`, header `Authorization: Bearer <service_role_key>`
+- [ ] Invocar manualmente via Dashboard: body `{}`, header `Authorization: Bearer <CRON_SECRET>` (não o service_role_key, ver seção "Banco" acima)
 - [ ] Checar resposta `{ "processed": N, "expired": N, "warned": N }`
 - [ ] Verificar `admin_audit_logs` para entradas de `trial_expired` / `trial_warning_sent_d*`
 
