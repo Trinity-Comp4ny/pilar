@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { NavLink } from "react-router-dom";
 import { useModuleNav, type ModuleGroup } from "@/hooks/useModuleNav";
 import { cn } from "@/lib/utils";
@@ -14,11 +15,23 @@ import { cn } from "@/lib/utils";
  */
 export function ModuleChipNav() {
   const { routeModule, currentPath, currentView, moduleGroups } = useModuleNav();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const activeRef = useRef<HTMLAnchorElement>(null);
+
+  // O chip ativo pode nascer fora da área visível do scroll horizontal (ex.:
+  // entrando direto numa rota no fim do grupo) — sem isso, ele aparece cortado
+  // na borda em vez de centralizado (achado da auditoria mobile).
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [currentPath, currentView]);
 
   if (!routeModule) return null;
 
   return (
-    <div className="flex gap-1.5 overflow-x-auto px-4 pb-2 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:hidden">
+    <div
+      ref={containerRef}
+      className="flex gap-1.5 overflow-x-auto px-4 pb-2 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:hidden"
+    >
       {moduleGroups.map((group, i) => (
         <ModuleChipGroup
           key={group.label ?? `grupo-${i}`}
@@ -26,6 +39,7 @@ export function ModuleChipNav() {
           showSeparatorBefore={i > 0}
           currentPath={currentPath}
           currentView={currentView}
+          activeRef={activeRef}
         />
       ))}
     </div>
@@ -37,11 +51,13 @@ function ModuleChipGroup({
   showSeparatorBefore,
   currentPath,
   currentView,
+  activeRef,
 }: {
   group: ModuleGroup;
   showSeparatorBefore: boolean;
   currentPath: string;
   currentView: string | null;
+  activeRef: React.RefObject<HTMLAnchorElement>;
 }) {
   return (
     <div className="flex shrink-0 items-center gap-1.5">
@@ -67,6 +83,7 @@ function ModuleChipGroup({
         return (
           <NavLink
             key={item.title}
+            ref={isActive ? activeRef : undefined}
             to={item.url}
             className={cn(
               "shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -209,6 +210,7 @@ function DisciplinaTimelineRows({
 
 export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaProjetosTabProps) {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [zoom, setZoom] = useState<ZoomLevel>("months");
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "all">("all");
   const [clienteFilter, setClienteFilter] = useState<string[]>([]);
@@ -508,8 +510,11 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
         <Card>
           <CardContent className="p-0">
             <div className="flex items-start max-h-[calc(100svh-420px)] overflow-y-auto">
-              {/* Fixed left column */}
-              <div className="flex-shrink-0 w-[260px] border-r bg-muted/30">
+              {/* Fixed left column: colapsa em mobile (achado da auditoria: a coluna
+                  fixa de 260px sozinha consumia 66% de uma tela de 390px, sobrando
+                  só uma faixa estreita pra timeline). Some código e status/cliente,
+                  mantém só o nome truncado. */}
+              <div className={cn("flex-shrink-0 border-r bg-muted/30", isMobile ? "w-[104px]" : "w-[260px]")}>
                 <div className="h-10 border-b px-3 flex items-center">
                   <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Projeto
@@ -538,25 +543,32 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                           onClick={() => navigate(`/projetos/${row.projeto.id}#cronograma`)}
                           className="flex-1 min-w-0 h-full pr-3 flex flex-col justify-center text-left hover:bg-muted/50 transition-colors"
                         >
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] font-mono text-muted-foreground">
-                              {row.projeto.codigo_projeto}
-                            </span>
-                            {row.atrasado && <AlertTriangle className="h-3 w-3 text-danger-mid flex-shrink-0" />}
-                          </div>
+                          {!isMobile && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-mono text-muted-foreground">
+                                {row.projeto.codigo_projeto}
+                              </span>
+                              {row.atrasado && <AlertTriangle className="h-3 w-3 text-danger-mid flex-shrink-0" />}
+                            </div>
+                          )}
                           <div className="flex items-center gap-1.5 mt-0.5">
+                            {isMobile && row.atrasado && (
+                              <AlertTriangle className="h-3 w-3 text-danger-mid flex-shrink-0" />
+                            )}
                             <span className="text-xs font-medium truncate">{row.projeto.nome}</span>
                           </div>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span
-                              className={cn("inline-block h-1.5 w-1.5 rounded-full flex-shrink-0", row.barClass)}
-                              aria-hidden
-                            />
-                            <span className="text-[10px] text-muted-foreground truncate">
-                              {cfg?.label || row.projeto.status}
-                              {row.projeto.cliente_nome && ` · ${row.projeto.cliente_nome}`}
-                            </span>
-                          </div>
+                          {!isMobile && (
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span
+                                className={cn("inline-block h-1.5 w-1.5 rounded-full flex-shrink-0", row.barClass)}
+                                aria-hidden
+                              />
+                              <span className="text-[10px] text-muted-foreground truncate">
+                                {cfg?.label || row.projeto.status}
+                                {row.projeto.cliente_nome && ` · ${row.projeto.cliente_nome}`}
+                              </span>
+                            </div>
+                          )}
                         </button>
                       </div>
                       {isExpanded && <DisciplinaLeftRows projetoId={row.projeto.id} />}

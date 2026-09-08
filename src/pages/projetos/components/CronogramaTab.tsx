@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +63,7 @@ export function CronogramaTab({
   onDatesChange,
   onDisciplinaClick,
 }: CronogramaTabProps) {
+  const isMobile = useIsMobile();
   const [zoom, setZoom] = useState<ZoomLevel>("months");
   const scrollRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -398,8 +400,11 @@ export function CronogramaTab({
       <Card>
         <CardContent className="p-0">
           <div className="flex">
-            {/* Fixed label column */}
-            <div className="flex-shrink-0 w-[220px] border-r bg-muted/30">
+            {/* Fixed label column: colapsa em mobile (achado da auditoria: a coluna
+                fixa de 220px sozinha consumia mais da metade de uma tela de 390px,
+                sobrando só uma faixa estreita pra timeline). Some o responsável,
+                mantém só o nome truncado. */}
+            <div className={cn("flex-shrink-0 border-r bg-muted/30", isMobile ? "w-[104px]" : "w-[220px]")}>
               <div className="h-10 border-b px-3 flex items-center">
                 <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Disciplina
@@ -414,12 +419,14 @@ export function CronogramaTab({
                     <span className="text-xs font-medium truncate">{row.disc.disciplina}</span>
                     {row.atrasada && <AlertTriangle className="h-3 w-3 text-danger-mid flex-shrink-0" />}
                   </div>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <User className="h-2.5 w-2.5 text-muted-foreground" />
-                    <span className="text-[10px] text-muted-foreground truncate">
-                      {row.resps.map((r) => r.responsavel_nome).join(", ") || "—"}
-                    </span>
-                  </div>
+                  {!isMobile && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <User className="h-2.5 w-2.5 text-muted-foreground" />
+                      <span className="text-[10px] text-muted-foreground truncate">
+                        {row.resps.map((r) => r.responsavel_nome).join(", ") || "—"}
+                      </span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

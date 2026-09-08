@@ -463,7 +463,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
 
       <div className="rounded-xl border border-black/10 bg-white overflow-hidden">
         <div ref={scrollRef} className="overflow-auto" style={{ maxHeight: "min(70vh, 720px)" }}>
-          <table className="w-full text-left border-collapse">
+          <table className="min-w-full text-left border-collapse">
             <thead className="sticky top-0 bg-white z-10 shadow-[0_1px_0_rgba(0,0,0,0.06)]">
               <tr className="text-xs text-muted-foreground">
                 {canEdit && (
@@ -475,14 +475,22 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
                     />
                   </th>
                 )}
-                <th className="w-[60px] px-3 py-2">Tipo</th>
-                <SortableTH label="Data" k="data" sort={sort} onSort={headerSort} icon={<SortIcon k="data" />} />
+                <th className="w-[60px] px-3 py-2 whitespace-nowrap">Tipo</th>
+                <SortableTH
+                  label="Data"
+                  k="data"
+                  sort={sort}
+                  onSort={headerSort}
+                  icon={<SortIcon k="data" />}
+                  className="min-w-[90px]"
+                />
                 <SortableTH
                   label="Descrição"
                   k="descricao"
                   sort={sort}
                   onSort={headerSort}
                   icon={<SortIcon k="descricao" />}
+                  className="min-w-[220px]"
                 />
                 <SortableTH
                   label="Cliente/Fornecedor"
@@ -490,6 +498,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
                   sort={sort}
                   onSort={headerSort}
                   icon={<SortIcon k="contraparte" />}
+                  className="min-w-[160px]"
                 />
                 <SortableTH
                   label="Categoria"
@@ -497,6 +506,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
                   sort={sort}
                   onSort={headerSort}
                   icon={<SortIcon k="categoria" />}
+                  className="min-w-[110px]"
                 />
                 <SortableTH
                   label="Projeto"
@@ -504,17 +514,25 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
                   sort={sort}
                   onSort={headerSort}
                   icon={<SortIcon k="projeto" />}
+                  className="min-w-[120px]"
                 />
-                <th className="px-3 py-2">Parcela</th>
+                <th className="px-3 py-2 min-w-[80px] whitespace-nowrap">Parcela</th>
                 <SortableTH
                   label="Valor"
                   k="valor"
                   sort={sort}
                   onSort={headerSort}
                   icon={<SortIcon k="valor" />}
-                  className="text-right"
+                  className="min-w-[110px] text-right"
                 />
-                <SortableTH label="Status" k="status" sort={sort} onSort={headerSort} icon={<SortIcon k="status" />} />
+                <SortableTH
+                  label="Status"
+                  k="status"
+                  sort={sort}
+                  onSort={headerSort}
+                  icon={<SortIcon k="status" />}
+                  className="min-w-[90px]"
+                />
                 <th className="w-[60px] px-3 py-2" />
               </tr>
             </thead>
@@ -753,7 +771,10 @@ function SortableTH({
 }) {
   const active = sort.key === k;
   return (
-    <th className={cn("px-3 py-2 cursor-pointer select-none font-medium text-xs", className)} onClick={() => onSort(k)}>
+    <th
+      className={cn("px-3 py-2 cursor-pointer select-none whitespace-nowrap font-medium text-xs", className)}
+      onClick={() => onSort(k)}
+    >
       <span
         className={cn(
           "inline-flex items-center gap-1 hover:text-foreground transition-colors",
