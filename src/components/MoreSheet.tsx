@@ -47,8 +47,11 @@ function MoreSheetRow({
  * avatar na sidebar desktop (`AppSidebar.tsx`), num bottom sheet. Nunca uma tela
  * de módulo — cada pilar (Gestão/Projetos/Obra) já tem slot próprio na barra.
  *
- * `NotificationInbox` é self-contained (ícone + popover próprio, side="right"),
- * então fica no cabeçalho do sheet em vez de virar uma linha de lista.
+ * `NotificationInbox` é self-contained (ícone + popover próprio), então fica no
+ * cabeçalho do sheet em vez de virar uma linha de lista — passa `side="bottom"`
+ * porque o default (`"right"`) é pensado pro sino da sidebar desktop, que tem
+ * espaço sobrando à direita; aqui o sino já nasce colado na borda direita de
+ * uma tela de largura total, então abrir "pra direita" cortava o popover.
  * `ImpersonationPicker` fica de fora por ora: depende de `DropdownMenuSub`
  * (contexto Radix do dropdown desktop) e é ferramenta interna de suporte
  * (só ultra_admin, uso raro) — não crítica pro fluxo mobile do dia a dia.
@@ -79,7 +82,12 @@ export function MoreSheet({ open, onOpenChange }: MoreSheetProps) {
             <SheetTitle>Menu</SheetTitle>
           </SheetHeader>
 
-          <div className="flex items-center gap-2">
+          {/* SheetContent sempre injeta um botão "X" em absolute right-4 top-4
+              (src/components/ui/sheet.tsx) — sem este espaço reservado, o sino
+              de notificações ficava embaixo dele. pr-11 abre lugar pro X;
+              o cabeçalho por si só já cai abaixo dele por causa do próprio
+              padding do botão de conta. */}
+          <div className="flex items-center gap-2 pr-11">
             <button
               type="button"
               onClick={closeAnd(() => openSettings("conta"))}
@@ -92,7 +100,7 @@ export function MoreSheet({ open, onOpenChange }: MoreSheetProps) {
               </div>
               <Settings size={16} className="shrink-0 text-muted-foreground" />
             </button>
-            <NotificationInbox />
+            <NotificationInbox side="bottom" align="end" />
           </div>
 
           <div className="my-1 border-t" />
