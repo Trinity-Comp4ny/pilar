@@ -119,7 +119,10 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
       cell: (p) => (
         <Badge
           variant="outline"
-          className={cn("border", CONTRACT_TYPE_COLORS[p.tipo_contrato as ContractType] || "bg-muted text-ink-soft border-border")}
+          className={cn(
+            "border",
+            CONTRACT_TYPE_COLORS[p.tipo_contrato as ContractType] || "bg-muted text-ink-soft border-border"
+          )}
         >
           {CONTRACT_TYPE_LABELS[p.tipo_contrato as ContractType] || p.tipo_contrato}
         </Badge>
@@ -160,7 +163,13 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
             align: "end" as const,
             cell: (p: Pessoa) => (
               <div className="flex gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => onEditClick(p, e)} aria-label="Editar">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={(e) => onEditClick(p, e)}
+                  aria-label="Editar"
+                >
                   <Pencil className="h-4 w-4" />
                 </Button>
                 <Button
@@ -194,7 +203,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
     );
 
   return (
-    <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col min-h-0">
+    <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden">
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -231,8 +240,12 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
           </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 min-h-0">
-        <div className="overflow-x-auto overflow-y-auto w-full max-h-[calc(100svh-260px)]">
+      <CardContent className="flex-1 min-h-0 flex flex-col">
+        {/* A página é de altura fixa (main com overflow-y-hidden): o scroll vive
+            aqui e a altura vem do flex, não de um calc() com número mágico que
+            estourava no mobile (header + chip-nav + BottomNav) e cortava as
+            últimas linhas. Mesmo padrão de clientes/fornecedores. */}
+        <div className="overflow-x-auto overflow-y-auto w-full flex-1 min-h-0">
           <DataTable
             columns={columns}
             data={{ rows: filteredPessoas, isPending: isLoading }}
