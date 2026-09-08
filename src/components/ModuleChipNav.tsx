@@ -21,8 +21,20 @@ export function ModuleChipNav() {
   // O chip ativo pode nascer fora da área visível do scroll horizontal (ex.:
   // entrando direto numa rota no fim do grupo) — sem isso, ele aparece cortado
   // na borda em vez de centralizado (achado da auditoria mobile).
+  // `scrollIntoView` teria sido mais simples, mas ele sobe a árvore de
+  // ancestrais scrolláveis (inclusive um com `overflow: hidden`, que ainda
+  // aceita scroll programático mesmo sem esconder barra) e rola qualquer um
+  // deles — foi assim que uma tela inteira apareceu deslocada horizontalmente
+  // sem nenhum scroll real do usuário (achado da auditoria mobile). Calcular
+  // e aplicar o `scrollLeft` direto no container certo evita esse vazamento.
   useEffect(() => {
-    activeRef.current?.scrollIntoView({ inline: "center", block: "nearest" });
+    const container = containerRef.current;
+    const active = activeRef.current;
+    if (!container || !active) return;
+    const containerRect = container.getBoundingClientRect();
+    const activeRect = active.getBoundingClientRect();
+    const activeCenter = activeRect.left - containerRect.left + container.scrollLeft + activeRect.width / 2;
+    container.scrollLeft = activeCenter - container.clientWidth / 2;
   }, [currentPath, currentView]);
 
   if (!routeModule) return null;
