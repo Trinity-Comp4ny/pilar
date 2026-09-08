@@ -9,8 +9,22 @@
  */
 
 const appUrl = (Deno.env.get("APP_URL") ?? "https://app.pilarsoft.com.br").replace(/\/$/, "");
-// Site público: landing, portal do cliente (/cliente) e os assets de e-mail.
+// Site público: usado para link de app (/cliente, etc). NÃO usar para hospedar
+// asset de e-mail: ver ASSET_HOST abaixo.
 const siteUrl = (Deno.env.get("PUBLIC_SITE_URL") ?? "https://www.pilarsoft.com.br").replace(/\/$/, "");
+
+/**
+ * Host dos assets estáticos do e-mail (logo, faixa de morros, fontes).
+ *
+ * SEMPRE a produção, mesmo quando o e-mail é disparado por staging: são ativos
+ * de marca, idênticos nos dois ambientes, e staging/preview da Vercel fica
+ * atrás de Deployment Protection (SSO). Uma imagem de e-mail é buscada pelo
+ * servidor do provedor (Gmail, Apple Mail), sem sessão de navegador nenhuma —
+ * contra um host protegido, o pedido cai no login da Vercel e a imagem quebra
+ * pra QUALQUER destinatário, sempre, não só em teste. `EMAIL_ASSET_HOST`
+ * sobrescreve só se um dia existir um host dedicado pra isso.
+ */
+const assetHost = (Deno.env.get("EMAIL_ASSET_HOST") ?? "https://www.pilarsoft.com.br").replace(/\/$/, "");
 
 export const BRAND = {
   nome: "Pilar",
@@ -25,9 +39,9 @@ export const BRAND = {
    * Símbolo em PNG 3x (apps/marketing/public/email/logo-v1.png, 96px). SVG não entra em <img> de
    * e-mail (Gmail bloqueia). Versionar o nome ao trocar de logo.
    */
-  logoUrl: Deno.env.get("EMAIL_LOGO_URL") ?? `${siteUrl}/email/logo-v1.png`,
+  logoUrl: Deno.env.get("EMAIL_LOGO_URL") ?? `${assetHost}/email/logo-v1.png`,
   /** Faixa de morros da hero, 1200x225 (apps/marketing/public/email/wave-v1.png), servida a 600px. */
-  waveUrl: Deno.env.get("EMAIL_WAVE_URL") ?? `${siteUrl}/email/wave-v1.png`,
+  waveUrl: Deno.env.get("EMAIL_WAVE_URL") ?? `${assetHost}/email/wave-v1.png`,
 } as const;
 
 /** Paleta do e-mail. Hex espelhando tokens.css (Paper + Ink, verde como acento). */
@@ -75,12 +89,13 @@ export const C = {
  * regra da SPEC 043). Apple Mail, iOS Mail e Outlook macOS renderizam a Geist;
  * Gmail e Outlook Windows ignoram @font-face e caem no fallback do sistema, que
  * é uma grotesca neutra do mesmo desenho. EMAIL_FONT_CSS troca isto no preview
- * (lá a fonte entra embutida, para a revisão visual ser fiel).
+ * (lá a fonte entra embutida, para a revisão visual ser fiel). Serve de
+ * `assetHost` (produção), pelo mesmo motivo do logo/faixa de morros acima.
  */
 export const FONT_FACE_CSS =
   Deno.env.get("EMAIL_FONT_CSS") ??
-  `@font-face{font-family:'Geist';font-style:normal;font-weight:100 900;font-display:swap;src:url('${BRAND.siteUrl}/fonts/geist-variable.woff2') format('woff2');}
-@font-face{font-family:'Geist';font-style:italic;font-weight:100 900;font-display:swap;src:url('${BRAND.siteUrl}/fonts/geist-variable-italic.woff2') format('woff2');}`;
+  `@font-face{font-family:'Geist';font-style:normal;font-weight:100 900;font-display:swap;src:url('${assetHost}/fonts/geist-variable.woff2') format('woff2');}
+@font-face{font-family:'Geist';font-style:italic;font-weight:100 900;font-display:swap;src:url('${assetHost}/fonts/geist-variable-italic.woff2') format('woff2');}`;
 
 export const FONT = "'Geist','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 export const MONO = "'Geist Mono','SFMono-Regular',Menlo,Consolas,'Courier New',monospace";
