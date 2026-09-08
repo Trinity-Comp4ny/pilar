@@ -15,8 +15,20 @@ const TabsList = React.forwardRef<
   // mais itens do que cabe em 390px) — sem isso, ela aparece cortada na borda
   // em vez de inteira (mesmo achado do ModuleChipNav, corrigido aqui no
   // primitivo base para valer em toda tela que usa TabsList, ex. Obra/6 abas).
+  // `scrollIntoView` teria sido mais simples, mas ele sobe a árvore de
+  // ancestrais scrolláveis (inclusive um com `overflow: hidden`, que ainda
+  // aceita scroll programático mesmo sem esconder barra) e rola qualquer um
+  // deles — foi assim que uma tela inteira apareceu deslocada horizontalmente
+  // sem nenhum scroll real do usuário (achado da auditoria mobile). Calcular
+  // e aplicar o `scrollLeft` direto no container certo evita esse vazamento.
   React.useEffect(() => {
-    innerRef.current?.querySelector('[data-state="active"]')?.scrollIntoView({ inline: "center", block: "nearest" });
+    const container = innerRef.current;
+    const active = container?.querySelector<HTMLElement>('[data-state="active"]');
+    if (!container || !active) return;
+    const containerRect = container.getBoundingClientRect();
+    const activeRect = active.getBoundingClientRect();
+    const activeCenter = activeRect.left - containerRect.left + container.scrollLeft + activeRect.width / 2;
+    container.scrollLeft = activeCenter - container.clientWidth / 2;
   });
 
   return (
