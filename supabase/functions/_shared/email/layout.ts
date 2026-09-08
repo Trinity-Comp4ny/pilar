@@ -458,30 +458,50 @@ function footerHtml(note: string, links: Array<{ label: string; href: string }>)
 
 /** Gera as regras `@media (prefers-color-scheme: dark)` a partir de CD, TONE_DARK, MODULO_DARK. */
 function darkModeCss(): string {
-  const rules: string[] = [
-    `.pe-bg{background-color:${CD.bg} !important}`,
-    `.pe-card{background-color:${CD.card} !important;border-color:${CD.border} !important}`,
-    `.pe-surface{background-color:${CD.surface} !important;border-color:${CD.border} !important}`,
-    `.pe-muted{background-color:${CD.muted} !important}`,
-    `.pe-sky{background-color:${CD.sky} !important}`,
-    `.pe-wave{display:none !important}`,
-    `.pe-divider{border-color:${CD.border} !important}`,
-    `.pe-divider-subtle{border-color:${CD.borderSubtle} !important}`,
-    `.pe-ink{color:${CD.ink} !important}`,
-    `.pe-inksoft{color:${CD.inkSoft} !important}`,
-    `.pe-textmuted{color:${CD.textMuted} !important}`,
-    `.pe-textdisabled{color:${CD.textDisabled} !important}`,
+  const rules: { sel: string; decl: string }[] = [
+    { sel: ".pe-bg", decl: `background-color:${CD.bg} !important` },
+    { sel: ".pe-card", decl: `background-color:${CD.card} !important;border-color:${CD.border} !important` },
+    { sel: ".pe-surface", decl: `background-color:${CD.surface} !important;border-color:${CD.border} !important` },
+    { sel: ".pe-muted", decl: `background-color:${CD.muted} !important` },
+    { sel: ".pe-sky", decl: `background-color:${CD.sky} !important` },
+    { sel: ".pe-wave", decl: "display:none !important" },
+    { sel: ".pe-divider", decl: `border-color:${CD.border} !important` },
+    { sel: ".pe-divider-subtle", decl: `border-color:${CD.borderSubtle} !important` },
+    { sel: ".pe-ink", decl: `color:${CD.ink} !important` },
+    { sel: ".pe-inksoft", decl: `color:${CD.inkSoft} !important` },
+    { sel: ".pe-textmuted", decl: `color:${CD.textMuted} !important` },
+    { sel: ".pe-textdisabled", decl: `color:${CD.textDisabled} !important` },
   ];
   for (const [tone, v] of Object.entries(TONE_DARK) as [Tone, { fg: string; bg: string; bar: string }][]) {
-    rules.push(`.${toneClass(tone, "bg")}{background-color:${v.bg} !important}`);
-    rules.push(`.${toneClass(tone, "fg")}{color:${v.fg} !important}`);
-    rules.push(`.${toneClass(tone, "bar")}{background-color:${v.bar} !important}`);
+    rules.push({ sel: `.${toneClass(tone, "bg")}`, decl: `background-color:${v.bg} !important` });
+    rules.push({ sel: `.${toneClass(tone, "fg")}`, decl: `color:${v.fg} !important` });
+    rules.push({ sel: `.${toneClass(tone, "bar")}`, decl: `background-color:${v.bar} !important` });
   }
   for (const [modulo, v] of Object.entries(MODULO_DARK) as [Modulo, { fg: string; bg: string }][]) {
-    rules.push(`.${moduloClass(modulo, "bg")}{background-color:${v.bg} !important}`);
-    rules.push(`.${moduloClass(modulo, "fg")}{color:${v.fg} !important}`);
+    rules.push({ sel: `.${moduloClass(modulo, "bg")}`, decl: `background-color:${v.bg} !important` });
+    rules.push({ sel: `.${moduloClass(modulo, "fg")}`, decl: `color:${v.fg} !important` });
   }
-  return `@media (prefers-color-scheme: dark) {\n  body{background-color:${CD.bg} !important}\n  ${rules.join("\n  ")}\n}`;
+
+  // Padrão: clientes que respeitam prefers-color-scheme (Gmail, Apple Mail em
+  // modo escuro do sistema, Yahoo).
+  const media = `@media (prefers-color-scheme: dark) {\n  body{background-color:${CD.bg} !important}\n  ${rules
+    .map((r) => `${r.sel}{${r.decl}}`)
+    .join("\n  ")}\n}`;
+
+  // Outlook novo e Windows Mail NÃO avaliam @media pra e-mail: eles rodam o
+  // próprio reescritor de dark mode sobre o DOM já renderizado, marcando os
+  // elementos que tocaram com os atributos `data-ogsc` (cor de texto) e
+  // `data-ogsb` (cor de fundo), e SÓ então aplicam o `<style>` de novo por
+  // cima. `[data-ogsc]`/`[data-ogsb]` como ancestral (caso a marca caia num
+  // container acima, ex. <body>) e como seletor composto (caso caia no próprio
+  // elemento) cobre os dois jeitos documentados sem depender de qual vai
+  // acontecer. Fora de @media de propósito: não é condicionado por
+  // prefers-color-scheme, e sim por essa reescrita acontecer ou não.
+  const outlookOverride = rules
+    .map((r) => `[data-ogsc] ${r.sel}, [data-ogsb] ${r.sel}, [data-ogsc]${r.sel}, [data-ogsb]${r.sel}{${r.decl}}`)
+    .join("\n  ");
+
+  return `${media}\n  ${outlookOverride}`;
 }
 
 // ---------------------------------------------------------------------------
