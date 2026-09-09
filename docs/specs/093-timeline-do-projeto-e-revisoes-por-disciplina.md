@@ -6,6 +6,12 @@
 **Módulo:** projetos
 
 <!-- Origem: feedback do Victor (sócio da VRZ, design partner) em 2026-09-04. -->
+<!-- Atualização 2026-09-08: escopo estendido para incluir eventos do Portal do Cliente
+     (aprovação de proposta, aprovação/revisão de entrega) e responsável por disciplina,
+     a pedido do Matheus, junto com a investigação de auth do Portal e do Pilar Campo
+     (ver spec 099). A PR 1 (revisão por disciplina) já estava mergeada; a PR 2 (histórico
+     de status + view + aba Histórico) ainda não tinha sido construída, então a extensão
+     entra no v1 da PR 2 em vez de virar retrabalho depois. -->
 
 ## Problema
 
@@ -47,7 +53,11 @@ começou, quanto tempo ficou parada e por quê, e quantas revisões teve.
   pendência já registrada como fast-follow na spec 084.
 - **Anexo de arquivo por revisão.** Isso é gerenciador de documentos, outra feature.
 - **Timeline no Portal do Cliente.** O portal está em 0% de uso na VRZ; não vale a
-  superfície extra agora.
+  superfície extra agora. Atenção: isso é sobre o _cliente ver_ a timeline — diferente do
+  requisito 9 abaixo, que é o _escritório_ enxergar, na sua própria timeline, ações que o
+  cliente tomou no portal.
+- **Nível de acesso/papel dentro do Pilar Campo.** Avaliado junto com a spec 099 e
+  descartado: nenhuma ação hoje distingue conta de campo entre si.
 
 ## Requisitos
 
@@ -66,6 +76,17 @@ começou, quanto tempo ficou parada e por quê, e quantas revisões teve.
 7. Mudança de status do projeto passa a ser **gravada como evento**, a partir da entrega
    desta spec. Não há reconstrução retroativa (ver "Decisões e riscos").
 8. Estado vazio orienta a primeira ação, em vez de mostrar lista em branco.
+9. **Ações do cliente pelo Portal entram na timeline do escritório** como mais três tipos
+   de evento: proposta aprovada, entrega aprovada, revisão de entrega solicitada (com o
+   texto que o cliente escreveu). Hoje essas três ações gravam no banco e não avisam
+   ninguém — o escritório só percebe abrindo a proposta ou a entrega específica.
+10. Cada disciplina passa a ter um **responsável** (`projeto_disciplinas.responsavel_id`,
+    FK `pessoas`, nullable — nem toda disciplina precisa ter um definido). O escritório
+    define/troca o responsável no dialog da disciplina.
+11. Quando um dos três eventos do requisito 9 acontece, a **Central de Notificações**
+    (`gerar_notificacoes_ambient()`) avisa o responsável da disciplina do projeto (ou, se
+    a disciplina não tiver responsável definido, cai no roteamento por role já existente:
+    `owner`/`admin`/`coordenador` da empresa).
 
 Não-funcionais:
 
@@ -105,21 +126,31 @@ Não-funcionais:
 - [ ] Caso de borda: disciplina excluída (`ON DELETE CASCADE`) não deixa evento órfão na view.
 - [ ] Caso de borda: revisão registrada com data retroativa aparece na posição cronológica
       correta, não no topo.
+- [ ] Dado um cliente que aprova uma proposta pelo portal, quando o escritório abre a aba
+      Histórico do projeto, então vê o evento "proposta aprovada" e o responsável da
+      disciplina recebe notificação.
+- [ ] Dado um cliente que solicita revisão de uma entrega pelo portal, quando o escritório
+      abre a aba Histórico, então vê o evento com o texto que o cliente escreveu.
+- [ ] Dado uma disciplina sem responsável definido, quando um evento do portal ocorre para
+      o projeto dela, então a notificação cai no roteamento por role (owner/admin/coordenador),
+      não fica sem destinatário nenhum.
+- [ ] Dado um usuário de outra empresa, quando chama a RPC de definir responsável com o id
+      de uma disciplina que não é da sua empresa, então recebe erro de permissão.
 
 ## Dados e contratos
 
 **Tabela nova** `projeto_disciplina_revisoes`:
 
-| coluna | tipo | nota |
-|---|---|---|
-| `id` | uuid pk | |
-| `projeto_disciplina_id` | uuid not null | FK `projeto_disciplinas`, `ON DELETE CASCADE` |
-| `motivo` | text not null | livre; é o "campo que especifica" a revisão |
-| `solicitada_em` | date not null default `current_date` | aceita retroativo |
-| `registrada_por` | uuid null | FK `pessoas`, `ON DELETE SET NULL` |
-| `concluida_em` | date null | null = em aberto |
-| `concluida_por` | uuid null | FK `pessoas` |
-| `created_at` | timestamptz not null default `now()` | |
+| coluna                  | tipo                                 | nota                                          |
+| ----------------------- | ------------------------------------ | --------------------------------------------- |
+| `id`                    | uuid pk                              |                                               |
+| `projeto_disciplina_id` | uuid not null                        | FK `projeto_disciplinas`, `ON DELETE CASCADE` |
+| `motivo`                | text not null                        | livre; é o "campo que especifica" a revisão   |
+| `solicitada_em`         | date not null default `current_date` | aceita retroativo                             |
+| `registrada_por`        | uuid null                            | FK `pessoas`, `ON DELETE SET NULL`            |
+| `concluida_em`          | date null                            | null = em aberto                              |
+| `concluida_por`         | uuid null                            | FK `pessoas`                                  |
+| `created_at`            | timestamptz not null default `now()` |                                               |
 
 Índice único parcial em `(projeto_disciplina_id) WHERE concluida_em IS NULL`: garante o
 requisito 3 no banco, não só na UI.
@@ -129,10 +160,16 @@ requisito 3 no banco, não só na UI.
 guarda só o valor atual e `status_data` só a última mudança: sem essa tabela, a coluna
 "mudança de status" da timeline é impossível, agora e no futuro.
 
+**`projeto_disciplinas` ganha coluna:** `responsavel_id uuid null` (FK `pessoas`,
+`ON DELETE SET NULL`). Não confundir com o `responsavel_id` legado que hoje só existe
+dentro do JSONB deprecated `projetos.disciplinas` — esta é a primeira vez que a tabela
+própria (fonte de verdade atual) ganha essa coluna.
+
 **RPCs** (`SECURITY DEFINER`, check de tenant no corpo, `REVOKE ALL` + `GRANT EXECUTE TO authenticated`):
 
 - `rpc_registrar_revisao(p_disciplina_id uuid, p_motivo text, p_solicitada_em date default current_date) returns uuid`
 - `rpc_concluir_revisao(p_revisao_id uuid, p_concluida_em date default current_date) returns void`
+- `rpc_definir_responsavel_disciplina(p_disciplina_id uuid, p_pessoa_id uuid) returns void`
 
 **View** `v_projeto_timeline` (`security_invoker = true`), shape que o front consome:
 
@@ -145,14 +182,27 @@ tipo              text        -- 'projeto_iniciado' | 'projeto_concluido' | 'sta
                               -- | 'pausa_iniciada' | 'pausa_retomada'
                               -- | 'revisao_registrada' | 'revisao_concluida'
                               -- | 'escopo_alterado'
+                              -- | 'portal_proposta_aprovada' | 'portal_entrega_aprovada'
+                              -- | 'portal_entrega_revisao_solicitada'
 ocorrido_em       timestamptz
-detalhe           text null   -- motivo da pausa, motivo da revisão, "de X para Y"
-autor_nome        text null
+detalhe           text null   -- motivo da pausa, motivo da revisão, "de X para Y",
+                              -- texto da revisão solicitada pelo cliente
+autor_nome        text null   -- para eventos do portal: nome do cliente, não do escritório
 ```
 
 `UNION ALL` das fontes que já existem (`projetos`, `projeto_disciplinas`,
-`projeto_disciplina_pausas`, `escopo_historico`) mais as duas tabelas novas. Nenhuma fonte
-existente é duplicada em tabela de evento: a verdade continua na tabela dona, a view só lê.
+`projeto_disciplina_pausas`, `escopo_historico`) mais as duas tabelas novas, mais um braço
+lendo `propostas`/`admin_audit_logs` (evento `portal_proposta_aprovada`) e outro lendo
+`portal_entregas` (eventos `portal_entrega_aprovada` e `portal_entrega_revisao_solicitada`,
+este usando `resposta_cliente` como `detalhe`). Nenhuma fonte existente é duplicada em
+tabela de evento: a verdade continua na tabela dona, a view só lê.
+
+**Notificação:** `gerar_notificacoes_ambient()` ganha um novo bloco que lê os mesmos três
+eventos do portal (via as tabelas de origem, não via a view — a função de notificação já
+não depende de `v_projeto_timeline` para os outros eventos) e roteia para
+`projeto_disciplinas.responsavel_id`; quando nulo, cai no `owner`/`admin`/`coordenador` já
+usado pelos outros blocos da função (mesmo helper descrito em
+`supabase/migrations/20260901000000_notif_gestao_operacional_e_roteamento.sql`).
 
 ## Plano de implementação
 
@@ -172,6 +222,13 @@ A preencher em plan mode antes de gerar código. Ordem pretendida:
 8. Aba Histórico em `ProjetoDetailTabs.tsx` (hoje: disciplinas, pagamentos, escopo), com
    filtro por disciplina e `EmptyState`.
 9. Contador de revisões no card da disciplina.
+10. Migration: coluna `responsavel_id` em `projeto_disciplinas` + RPC
+    `rpc_definir_responsavel_disciplina` + RLS.
+11. Migration: braços do `UNION` para os três eventos do portal + ajuste em
+    `gerar_notificacoes_ambient()` para rotear por `responsavel_id`.
+12. UI: seletor de responsável no `DisciplinaDetailDialog.tsx` (mesmo lugar da revisão).
+13. pgTAP dos novos braços: evento de portal aparece na view, notificação chega ao
+    responsável certo, cai no fallback por role quando `responsavel_id` é nulo.
 
 ## Decisões e riscos
 
@@ -195,3 +252,14 @@ A preencher em plan mode antes de gerar código. Ordem pretendida:
 - **Débito de segurança herdado:** a spec 084 registrou que
   `recalc_disciplina_status_por_checklist` é `SECURITY DEFINER` sem check de tenant.
   Continua aberto e não é resolvido aqui.
+- **Responsável de disciplina é novo, não uma migração do campo legado.** O
+  `responsavel_id` que hoje mora dentro do JSONB deprecated `projetos.disciplinas` não é
+  copiado automaticamente para a coluna nova — são fontes independentes; se algum dia fizer
+  sentido aposentar de vez o JSONB, o backfill é decisão à parte.
+- **Notificação de evento de portal é decisão consciente de rotear por pessoa, não por
+  papel.** Diferente dos outros blocos de `gerar_notificacoes_ambient()` (roteados só por
+  role), este é o primeiro a tentar uma pessoa específica primeiro. Decisão de 2026-09-08
+  porque o interesse em "cliente aprovou/pediu revisão" é do responsável
+  daquela disciplina, não de todo mundo com role de gestão — mas o fallback por role evita
+  que o evento fique sem destinatário quando o campo está vazio (projetos antigos, por
+  exemplo).
