@@ -37,8 +37,15 @@ export function TrialBanner() {
 
   if (status === "active") return null;
 
-  // Bloqueio total — trial expirado
-  if (status === "expired") {
+  // SPEC 098 Fase 3 (ADR 0042): trial vencido com leitura_desde setado está
+  // em modo somente leitura (90 dias antes da exclusão), não bloqueado por
+  // completo — o PrivateRoute já libera <Layout /> com o banner fixo
+  // (ReadOnlyBanner) nesse caso, então este modal de bloqueio total não deve
+  // cobrir a tela.
+  const emLeitura = status === "expired" && profile?.empresas?.leitura_desde != null;
+
+  // Bloqueio total — trial expirado sem entrar em modo leitura
+  if (status === "expired" && !emLeitura) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
         <div className="mx-4 max-w-md w-full rounded-2xl bg-white p-8 shadow-2xl text-center space-y-5">
