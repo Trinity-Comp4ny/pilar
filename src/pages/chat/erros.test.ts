@@ -23,6 +23,13 @@ describe("msgErroChat", () => {
     );
   });
 
+  it("402 com motivo trial_pausado: mensagem de circuit breaker do trial (spec 098)", () => {
+    const err = { context: { status: 402 } };
+    expect(msgErroChat(err, false, "trial_pausado")).toBe(
+      "Uso de IA em contas de teste está pausado por hoje. Volta amanhã, ou fale com a gente pra liberar antes."
+    );
+  });
+
   it("429 continua com a mensagem de rate limit, motivo é ignorado fora do 402", () => {
     const err = { context: { status: 429 } };
     expect(msgErroChat(err, false, "limite_usuario")).toBe(
