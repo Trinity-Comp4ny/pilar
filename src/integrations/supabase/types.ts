@@ -1960,6 +1960,8 @@ export type Database = {
           preservar_dados_motivo: string | null
           preservar_dados_por: string | null
           razao_social: string | null
+          retencao_aviso_60d_sent_at: string | null
+          retencao_aviso_85d_sent_at: string | null
           situacao_cadastral: string | null
           status: Database["public"]["Enums"]["status_empresa"] | null
           updated_at: string | null
@@ -2000,6 +2002,8 @@ export type Database = {
           preservar_dados_motivo?: string | null
           preservar_dados_por?: string | null
           razao_social?: string | null
+          retencao_aviso_60d_sent_at?: string | null
+          retencao_aviso_85d_sent_at?: string | null
           situacao_cadastral?: string | null
           status?: Database["public"]["Enums"]["status_empresa"] | null
           updated_at?: string | null
@@ -2040,6 +2044,8 @@ export type Database = {
           preservar_dados_motivo?: string | null
           preservar_dados_por?: string | null
           razao_social?: string | null
+          retencao_aviso_60d_sent_at?: string | null
+          retencao_aviso_85d_sent_at?: string | null
           situacao_cadastral?: string | null
           status?: Database["public"]["Enums"]["status_empresa"] | null
           updated_at?: string | null
@@ -8683,6 +8689,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      retencao_pos_trial_disparar: { Args: never; Returns: undefined }
       rpc_atualizar_status_atrasados: { Args: never; Returns: Json }
       rpc_calcular_wip: {
         Args: { p_ano: number; p_mes: number }
@@ -8959,6 +8966,18 @@ export type Database = {
           p_novo_trial_ends_at: string
         }
         Returns: undefined
+      }
+      ultra_admin_listar_retencao: {
+        Args: never
+        Returns: {
+          aviso_60d_enviado: boolean
+          aviso_85d_enviado: boolean
+          dias_em_leitura: number
+          empresa_id: string
+          empresa_nome: string
+          leitura_desde: string
+          preservar_dados: boolean
+        }[]
       }
       ultra_admin_listar_trials: {
         Args: never
