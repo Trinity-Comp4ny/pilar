@@ -55,6 +55,42 @@ export function templateTrialAviso(params: {
   };
 }
 
+export function templateRetencaoAviso(params: {
+  empresaNome: string;
+  diasRestantes: number;
+  billingUrl: string;
+}): EmailTemplate {
+  const { empresaNome, diasRestantes, billingUrl } = params;
+  const ultimoAviso = diasRestantes <= 5;
+
+  return {
+    subject: ultimoAviso
+      ? `Em ${diasRestantes} dias os dados da ${empresaNome} serão excluídos`
+      : `Sua conta está em modo leitura há alguns dias`,
+    html: shell({
+      preview: `Faltam ${diasRestantes} dias antes da exclusão dos dados`,
+      footerNote: `Você recebeu este e-mail por administrar a empresa ${empresaNome} na ${BRAND.nome}.`,
+      hero: {
+        titulo: ultimoAviso
+          ? html`Seus dados serão ${em("excluídos")} em breve`
+          : html`Sua conta segue em ${em("modo leitura")}`,
+        lead: html`A ${strong(empresaNome)} está em modo somente leitura desde o fim do período de teste. Em
+        ${strong(`${diasRestantes} dias`)}, sem um plano ativo, os dados fiscais são anonimizados e o restante é
+        excluído permanentemente.`,
+      },
+      content: [
+        callout(
+          "Ative um plano a qualquer momento para voltar a editar e cancelar a exclusão.",
+          ultimoAviso ? "negative" : "warning",
+          { mt: 0 }
+        ),
+        button("Ativar plano", billingUrl),
+        small("Dúvidas? Responda este e-mail."),
+      ],
+    }),
+  };
+}
+
 function formatBRL(valor: number): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }

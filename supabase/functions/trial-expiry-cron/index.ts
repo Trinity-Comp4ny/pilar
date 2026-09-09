@@ -188,6 +188,20 @@ serve(
           expired = ids.length;
           log.info("trials expirados", { count: expired });
 
+          // SPEC 098 Fase 3 (ADR 0042): empresa entra em somente leitura no
+          // exato momento em que expira sem forma de pagamento tokenizada.
+          // leitura_desde é a fonte de verdade que a retencao-pos-trial usa
+          // pra contar os 90 dias até a exclusão (ADR 0043).
+          const empresaIds = toExpire.map((r) => r.empresa_id);
+          const { error: leituraErr } = await admin
+            .from("empresas")
+            .update({ leitura_desde: new Date().toISOString() })
+            .in("id", empresaIds)
+            .is("leitura_desde", null);
+          if (leituraErr) {
+            log.error("falha ao marcar leitura_desde", leituraErr, { count: empresaIds.length });
+          }
+
           for (const row of toExpire) {
             try {
               await admin.from("admin_audit_logs").insert({
