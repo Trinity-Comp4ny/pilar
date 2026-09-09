@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ChevronDown, ShieldCheck, Lock } from "lucide-react";
+import { AlertTriangle, ChevronDown, ShieldCheck, Lock, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
@@ -8,6 +8,7 @@ import { toDataSourceResult } from "@/types/dataSource";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -45,6 +46,16 @@ interface TrialRow {
   tokensTotal: number | null;
 }
 
+interface RetencaoRow {
+  empresaId: string;
+  empresaNome: string;
+  leituraDesde: string;
+  diasEmLeitura: number;
+  preservarDados: boolean;
+  aviso60dEnviado: boolean;
+  aviso85dEnviado: boolean;
+}
+
 const NIVEL_LABEL: Record<string, string> = { bronze: "Bronze", prata: "Prata", ouro: "Ouro" };
 
 function capacidade(usado: number, limite: number | null): string {
@@ -76,6 +87,10 @@ export function TrialsPanel() {
 
   const [preservarAlvo, setPreservarAlvo] = useState<TrialRow | null>(null);
   const [preservarMotivo, setPreservarMotivo] = useState("");
+
+  const [excluirAlvo, setExcluirAlvo] = useState<RetencaoRow | null>(null);
+  const [excluirMotivo, setExcluirMotivo] = useState("");
+  const [excluirConfirmacao, setExcluirConfirmacao] = useState("");
 
   const query = useQuery({
     queryKey: ["ultra-admin-trials"],
@@ -109,7 +124,26 @@ export function TrialsPanel() {
     staleTime: 1000 * 30,
   });
 
+  const retencaoQuery = useQuery({
+    queryKey: ["ultra-admin-retencao"],
+    queryFn: async (): Promise<RetencaoRow[]> => {
+      const { data, error } = await supabase.rpc("ultra_admin_listar_retencao");
+      if (error) throw error;
+      return (data ?? []).map((r) => ({
+        empresaId: r.empresa_id,
+        empresaNome: r.empresa_nome,
+        leituraDesde: r.leitura_desde,
+        diasEmLeitura: r.dias_em_leitura,
+        preservarDados: r.preservar_dados,
+        aviso60dEnviado: r.aviso_60d_enviado,
+        aviso85dEnviado: r.aviso_85d_enviado,
+      }));
+    },
+    staleTime: 1000 * 30,
+  });
+
   const invalidar = () => qc.invalidateQueries({ queryKey: ["ultra-admin-trials"] });
+  const invalidarRetencao = () => qc.invalidateQueries({ queryKey: ["ultra-admin-retencao"] });
 
   const overrideMutation = useMutation({
     mutationFn: async (input: { empresaId: string; nivel: string | null; motivo: string | null }) => {
@@ -172,7 +206,26 @@ export function TrialsPanel() {
     },
   });
 
+  const excluirMutation = useMutation({
+    mutationFn: async (input: { empresaId: string; motivo: string }) => {
+      const { error } = await supabase.rpc("excluir_empresa_retencao", {
+        p_empresa_id: input.empresaId,
+        p_motivo: input.motivo,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Dados da empresa excluídos");
+      invalidarRetencao();
+      setExcluirAlvo(null);
+    },
+    onError: (error) => {
+      toast.error("Não foi possível excluir os dados", { description: getSafeErrorMessage(error) });
+    },
+  });
+
   const rows = useMemo(() => query.data ?? [], [query.data]);
+  const retencaoRows = useMemo(() => retencaoQuery.data ?? [], [retencaoQuery.data]);
 
   const abrirOverride = (row: TrialRow) => {
     setOverrideAlvo(row);
@@ -223,6 +276,17 @@ export function TrialsPanel() {
       preservar: !preservarAlvo.preservarDados,
       motivo: preservarMotivo,
     });
+  };
+
+  const abrirExcluir = (row: RetencaoRow) => {
+    setExcluirAlvo(row);
+    setExcluirMotivo("");
+    setExcluirConfirmacao("");
+  };
+
+  const confirmarExcluir = () => {
+    if (!excluirAlvo) return;
+    excluirMutation.mutate({ empresaId: excluirAlvo.empresaId, motivo: excluirMotivo });
   };
 
   const columns: ColumnDef<TrialRow>[] = [
@@ -333,8 +397,61 @@ export function TrialsPanel() {
     },
   ];
 
+  const retencaoColumns: ColumnDef<RetencaoRow>[] = [
+    {
+      key: "empresaNome",
+      header: "Empresa",
+      cell: (r) => (
+        <div className="flex items-center gap-2">
+          <span className="text-ink">{r.empresaNome}</span>
+          {r.preservarDados && (
+            <span title={"Dados preservados: relógio de retenção suspenso"}>
+              <Lock className="h-3.5 w-3.5 text-ink-muted" />
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "diasEmLeitura",
+      header: "Dias em leitura",
+      cell: (r) => (
+        <span className={r.diasEmLeitura >= 85 ? "text-destructive font-medium" : "tabular-nums"}>
+          {r.diasEmLeitura} / 90
+        </span>
+      ),
+      getSortValue: (r) => r.diasEmLeitura,
+    },
+    {
+      key: "avisos",
+      header: "Avisos enviados",
+      cell: (r) => (
+        <span className="text-sm text-black/60">
+          {[r.aviso60dEnviado && "60d", r.aviso85dEnviado && "85d"].filter(Boolean).join(", ") || "—"}
+        </span>
+      ),
+    },
+    {
+      key: "acoes",
+      header: "",
+      cell: (r) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-destructive hover:text-destructive"
+          disabled={r.preservarDados}
+          title={r.preservarDados ? "Dados preservados: remova a preservação antes de excluir" : undefined}
+          onClick={() => abrirExcluir(r)}
+        >
+          <Trash2 className="mr-1 h-3.5 w-3.5" />
+          Excluir dados agora
+        </Button>
+      ),
+    },
+  ];
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       <DataTable
         columns={columns}
         data={toDataSourceResult<TrialRow>({ data: rows, isLoading: query.isLoading, error: query.error })}
@@ -344,6 +461,29 @@ export function TrialsPanel() {
         emptyMessage="Nenhuma empresa em trial no momento."
         errorTitle="Não foi possível carregar os trials"
       />
+
+      <div className="space-y-2">
+        <div>
+          <h3 className="text-sm font-medium text-ink">Em retenção (pós-trial)</h3>
+          <p className="text-xs text-ink-muted">
+            Trial vencido sem plano ativo, em modo somente leitura (SPEC 098 Fase 3). Excluídas automaticamente no dia
+            90 pelo cron; o botão abaixo dispara a mesma exclusão manualmente, para testar numa empresa isolada.
+          </p>
+        </div>
+        <DataTable
+          columns={retencaoColumns}
+          data={toDataSourceResult<RetencaoRow>({
+            data: retencaoRows,
+            isLoading: retencaoQuery.isLoading,
+            error: retencaoQuery.error,
+          })}
+          rowKey={(r) => r.empresaId}
+          defaultSortKey="diasEmLeitura"
+          defaultSortDir="desc"
+          emptyMessage="Nenhuma empresa em retenção pós-trial no momento."
+          errorTitle="Não foi possível carregar a retenção"
+        />
+      </div>
 
       <FormDialog
         open={!!overrideAlvo}
@@ -468,6 +608,44 @@ export function TrialsPanel() {
             rows={3}
             autoFocus
           />
+        </div>
+      </FormDialog>
+
+      <FormDialog
+        open={!!excluirAlvo}
+        onOpenChange={(o) => !o && setExcluirAlvo(null)}
+        title={`Excluir dados agora — ${excluirAlvo?.empresaNome ?? ""}`}
+        description="Irreversível: dados fiscais são anonimizados (retenção de 5 anos), o resto é apagado de verdade. Use só pra testar o fluxo numa empresa isolada antes do 1º disparo automático do cron."
+        size="sm"
+        onSubmit={confirmarExcluir}
+        submitLabel="Excluir permanentemente"
+        submitVariant="destructive"
+        isPending={excluirMutation.isPending}
+        submitDisabled={!excluirMotivo.trim() || excluirConfirmacao.trim() !== excluirAlvo?.empresaNome}
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="excluir-motivo">Motivo</Label>
+            <Textarea
+              id="excluir-motivo"
+              value={excluirMotivo}
+              onChange={(e) => setExcluirMotivo(e.target.value)}
+              placeholder="Ex.: teste do fluxo de retenção antes do lançamento"
+              rows={3}
+              autoFocus
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="excluir-confirmacao">
+              Digite <span className="font-medium text-ink">{excluirAlvo?.empresaNome}</span> para confirmar
+            </Label>
+            <Input
+              id="excluir-confirmacao"
+              value={excluirConfirmacao}
+              onChange={(e) => setExcluirConfirmacao(e.target.value)}
+              placeholder={excluirAlvo?.empresaNome}
+            />
+          </div>
         </div>
       </FormDialog>
     </div>
