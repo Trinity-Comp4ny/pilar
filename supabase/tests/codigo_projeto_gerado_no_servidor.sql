@@ -24,10 +24,10 @@ ON CONFLICT (id) DO UPDATE SET features = EXCLUDED.features;
 
 SET LOCAL session_replication_role = 'replica';
 
-INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role)
+INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role, email_confirmed_at)
 VALUES
-  ('88888888-0000-0000-0000-00000000c001', 'cod_user@test.com', '{}'::jsonb, 'authenticated', 'authenticated'),
-  ('88888888-0000-0000-0000-00000000c002', 'cod_admin@test.com', '{}'::jsonb, 'authenticated', 'authenticated')
+  ('88888888-0000-0000-0000-00000000c001', 'cod_user@test.com', '{}'::jsonb, 'authenticated', 'authenticated', now()),
+  ('88888888-0000-0000-0000-00000000c002', 'cod_admin@test.com', '{}'::jsonb, 'authenticated', 'authenticated', now())
 ON CONFLICT (id) DO NOTHING;
 
 -- Fixture do projeto que já tem valor: entra com os triggers desligados de

@@ -20,12 +20,12 @@ ON CONFLICT (id) DO UPDATE SET features = EXCLUDED.features;
 
 SET LOCAL session_replication_role = 'replica';
 
-INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role)
+INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role, email_confirmed_at)
 VALUES
-  ('66666666-0000-0000-0000-000000000001', 'proj_editor@test.com', '{}'::jsonb, 'authenticated', 'authenticated'),
-  ('66666666-0000-0000-0000-000000000002', 'proj_viewer@test.com', '{}'::jsonb, 'authenticated', 'authenticated'),
-  ('66666666-0000-0000-0000-000000000003', 'no_proj@test.com', '{}'::jsonb, 'authenticated', 'authenticated'),
-  ('66666666-0000-0000-0000-000000000004', 'ultra_proj@test.com', '{}'::jsonb, 'authenticated', 'authenticated')
+  ('66666666-0000-0000-0000-000000000001', 'proj_editor@test.com', '{}'::jsonb, 'authenticated', 'authenticated', now()),
+  ('66666666-0000-0000-0000-000000000002', 'proj_viewer@test.com', '{}'::jsonb, 'authenticated', 'authenticated', now()),
+  ('66666666-0000-0000-0000-000000000003', 'no_proj@test.com', '{}'::jsonb, 'authenticated', 'authenticated', now()),
+  ('66666666-0000-0000-0000-000000000004', 'ultra_proj@test.com', '{}'::jsonb, 'authenticated', 'authenticated', now())
 ON CONFLICT (id) DO NOTHING;
 
 SET LOCAL session_replication_role = 'origin';

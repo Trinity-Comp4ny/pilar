@@ -1700,6 +1700,24 @@ export type Database = {
           },
         ]
       }
+      email_dominios_bloqueados: {
+        Row: {
+          created_at: string
+          dominio: string
+          motivo: string | null
+        }
+        Insert: {
+          created_at?: string
+          dominio: string
+          motivo?: string | null
+        }
+        Update: {
+          created_at?: string
+          dominio?: string
+          motivo?: string | null
+        }
+        Relationships: []
+      }
       email_envios: {
         Row: {
           assunto: string
@@ -1835,6 +1853,10 @@ export type Database = {
           logo_url: string | null
           max_projetos_override: number | null
           max_usuarios_override: number | null
+          nivel_override: string | null
+          nivel_override_em: string | null
+          nivel_override_motivo: string | null
+          nivel_override_por: string | null
           nome: string
           onboarding_completed: boolean | null
           owner_id: string | null
@@ -1859,6 +1881,10 @@ export type Database = {
           logo_url?: string | null
           max_projetos_override?: number | null
           max_usuarios_override?: number | null
+          nivel_override?: string | null
+          nivel_override_em?: string | null
+          nivel_override_motivo?: string | null
+          nivel_override_por?: string | null
           nome: string
           onboarding_completed?: boolean | null
           owner_id?: string | null
@@ -1883,6 +1909,10 @@ export type Database = {
           logo_url?: string | null
           max_projetos_override?: number | null
           max_usuarios_override?: number | null
+          nivel_override?: string | null
+          nivel_override_em?: string | null
+          nivel_override_motivo?: string | null
+          nivel_override_por?: string | null
           nome?: string
           onboarding_completed?: boolean | null
           owner_id?: string | null
@@ -4799,6 +4829,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      platform_settings: {
+        Row: {
+          id: string
+          trial_ai_daily_cap_tokens: number
+          trial_tokens_bronze: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          trial_ai_daily_cap_tokens?: number
+          trial_tokens_bronze?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          trial_ai_daily_cap_tokens?: number
+          trial_tokens_bronze?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       portal_download_logs: {
         Row: {
