@@ -1905,6 +1905,10 @@ export type Database = {
           owner_id: string | null
           pix_chave: string | null
           pix_instrucoes: string | null
+          preservar_dados: boolean
+          preservar_dados_em: string | null
+          preservar_dados_motivo: string | null
+          preservar_dados_por: string | null
           razao_social: string | null
           situacao_cadastral: string | null
           status: Database["public"]["Enums"]["status_empresa"] | null
@@ -1939,6 +1943,10 @@ export type Database = {
           owner_id?: string | null
           pix_chave?: string | null
           pix_instrucoes?: string | null
+          preservar_dados?: boolean
+          preservar_dados_em?: string | null
+          preservar_dados_motivo?: string | null
+          preservar_dados_por?: string | null
           razao_social?: string | null
           situacao_cadastral?: string | null
           status?: Database["public"]["Enums"]["status_empresa"] | null
@@ -1973,6 +1981,10 @@ export type Database = {
           owner_id?: string | null
           pix_chave?: string | null
           pix_instrucoes?: string | null
+          preservar_dados?: boolean
+          preservar_dados_em?: string | null
+          preservar_dados_motivo?: string | null
+          preservar_dados_por?: string | null
           razao_social?: string | null
           situacao_cadastral?: string | null
           status?: Database["public"]["Enums"]["status_empresa"] | null
@@ -4765,6 +4777,9 @@ export type Database = {
           plan_id: string
           status: string
           trial_ends_at: string | null
+          trial_estendido_em: string | null
+          trial_estendido_motivo: string | null
+          trial_estendido_por: string | null
           trial_warning_1d_sent_at: string | null
           trial_warning_3d_sent_at: string | null
           trial_warning_7d_sent_at: string | null
@@ -4785,6 +4800,9 @@ export type Database = {
           plan_id: string
           status?: string
           trial_ends_at?: string | null
+          trial_estendido_em?: string | null
+          trial_estendido_motivo?: string | null
+          trial_estendido_por?: string | null
           trial_warning_1d_sent_at?: string | null
           trial_warning_3d_sent_at?: string | null
           trial_warning_7d_sent_at?: string | null
@@ -4805,6 +4823,9 @@ export type Database = {
           plan_id?: string
           status?: string
           trial_ends_at?: string | null
+          trial_estendido_em?: string | null
+          trial_estendido_motivo?: string | null
+          trial_estendido_por?: string | null
           trial_warning_1d_sent_at?: string | null
           trial_warning_3d_sent_at?: string | null
           trial_warning_7d_sent_at?: string | null
@@ -8854,6 +8875,14 @@ export type Database = {
         Args: { p_empresa_id: string; p_motivo: string; p_nivel: string }
         Returns: undefined
       }
+      ultra_admin_estender_trial: {
+        Args: {
+          p_empresa_id: string
+          p_motivo: string
+          p_novo_trial_ends_at: string
+        }
+        Returns: undefined
+      }
       ultra_admin_listar_trials: {
         Args: never
         Returns: {
@@ -8869,14 +8898,20 @@ export type Database = {
           nivel_override: string
           nivel_override_motivo: string
           obras_ativas: number
+          preservar_dados: boolean
           projetos_ativos: number
           razao_social: string
           razao_social_divergente: boolean
           tokens_gastos: number
           tokens_total: number
           trial_ends_at: string
+          trial_estendido_motivo: string
           usuarios: number
         }[]
+      }
+      ultra_admin_marcar_preservar_dados: {
+        Args: { p_empresa_id: string; p_motivo: string; p_preservar: boolean }
+        Returns: undefined
       }
       update_company_features: {
         Args: { p_features: Json }

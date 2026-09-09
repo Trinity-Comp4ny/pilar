@@ -10,7 +10,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(16);
+SELECT plan(32);
 
 CREATE OR REPLACE FUNCTION test_set_auth(p_user_id UUID)
 RETURNS VOID LANGUAGE plpgsql AS $$
@@ -63,6 +63,22 @@ SELECT throws_ok(
   )$$,
   '42501', NULL,
   'admin comum não pode alterar nível de outra empresa'
+);
+SELECT throws_ok(
+  $$SELECT public.ultra_admin_estender_trial(
+    (SELECT id FROM public.empresas WHERE owner_id = 'fad01111-0000-0000-0000-00000000000a'),
+    now() + interval '30 days', 'teste'
+  )$$,
+  '42501', NULL,
+  'admin comum não pode estender trial de outra empresa'
+);
+SELECT throws_ok(
+  $$SELECT public.ultra_admin_marcar_preservar_dados(
+    (SELECT id FROM public.empresas WHERE owner_id = 'fad01111-0000-0000-0000-00000000000a'),
+    TRUE, 'teste'
+  )$$,
+  '42501', NULL,
+  'admin comum não pode marcar preservar dados de outra empresa'
 );
 
 SELECT test_set_service();
@@ -170,6 +186,115 @@ SELECT is(
      WHERE empresa_id = (SELECT id FROM public.empresas WHERE owner_id = 'fad01111-0000-0000-0000-00000000000a')),
   'bronze',
   'sem override, volta a derivar bronze (sem documento)'
+);
+
+-- =============================================
+-- 4. Estender trial, auditado.
+-- =============================================
+SELECT lives_ok(
+  $$SELECT public.ultra_admin_estender_trial(
+    (SELECT id FROM public.empresas WHERE owner_id = 'fad01111-0000-0000-0000-00000000000a'),
+    now() + interval '30 days', 'negociação em andamento'
+  )$$,
+  'ultra_admin estende o trial com motivo'
+);
+-- pilar_subscriptions só tem policy de leitura por dono (empresa_id =
+-- get_user_empresa_id()), sem exceção pra ultra_admin — ao contrário de
+-- empresas. Ler direto exige contexto elevado; a UPDATE em si já rodou
+-- dentro da RPC SECURITY DEFINER (bypassa RLS), o que muda aqui é só a
+-- leitura de verificação do teste.
+SELECT test_set_postgres();
+SELECT ok(
+  (SELECT trial_ends_at FROM public.pilar_subscriptions
+     WHERE empresa_id = (SELECT id FROM public.empresas WHERE owner_id = 'fad01111-0000-0000-0000-00000000000a'))
+  > now() + interval '29 days',
+  'trial_ends_at foi movido pra frente'
+);
+SELECT is(
+  (SELECT trial_estendido_motivo FROM public.pilar_subscriptions
+     WHERE empresa_id = (SELECT id FROM public.empresas WHERE owner_id = 'fad01111-0000-0000-0000-00000000000a')),
+  'negociação em andamento',
+  'motivo da extensão gravado'
+);
+SELECT is(
+  (SELECT trial_estendido_por FROM public.pilar_subscriptions
+     WHERE empresa_id = (SELECT id FROM public.empresas WHERE owner_id = 'fad01111-0000-0000-0000-00000000000a')),
+  'fad01111-0000-0000-0000-00000000000b'::uuid,
+  'quem estendeu fica registrado'
+);
+SELECT test_set_auth('fad01111-0000-0000-0000-00000000000b');
+
+SELECT throws_ok(
+  $$SELECT public.ultra_admin_estender_trial(
+    (SELECT id FROM public.empresas WHERE owner_id = 'fad01111-0000-0000-0000-00000000000a'),
+    now() + interval '30 days', NULL
+  )$$,
+  '22023', 'Informe o motivo da extensão',
+  'estender sem motivo é recusado'
+);
+SELECT throws_ok(
+  $$SELECT public.ultra_admin_estender_trial(
+    (SELECT id FROM public.empresas WHERE owner_id = 'fad01111-0000-0000-0000-00000000000a'),
+    now() - interval '1 day', 'teste'
+  )$$,
+  '22023', 'A nova data precisa ser no futuro',
+  'estender pra data passada é recusado'
+);
+SELECT throws_ok(
+  $$SELECT public.ultra_admin_estender_trial(
+    gen_random_uuid(), now() + interval '30 days', 'teste'
+  )$$,
+  '22023', 'Empresa não encontrada ou não está em trial',
+  'estender empresa inexistente é recusado'
+);
+
+-- =============================================
+-- 5. Preservar dados, auditado.
+-- =============================================
+SELECT lives_ok(
+  $$SELECT public.ultra_admin_marcar_preservar_dados(
+    (SELECT id FROM public.empresas WHERE owner_id = 'fad01111-0000-0000-0000-00000000000a'),
+    TRUE, 'prospect em negociação avançada'
+  )$$,
+  'ultra_admin marca preservar dados com motivo'
+);
+SELECT is(
+  (SELECT preservar_dados FROM public.empresas WHERE owner_id = 'fad01111-0000-0000-0000-00000000000a'),
+  TRUE,
+  'preservar_dados gravado como true'
+);
+SELECT is(
+  (SELECT preservar_dados_motivo FROM public.empresas WHERE owner_id = 'fad01111-0000-0000-0000-00000000000a'),
+  'prospect em negociação avançada',
+  'motivo de preservar dados gravado'
+);
+SELECT is(
+  (SELECT preservar_dados FROM public.ultra_admin_listar_trials()
+     WHERE empresa_id = (SELECT id FROM public.empresas WHERE owner_id = 'fad01111-0000-0000-0000-00000000000a')),
+  TRUE,
+  'lista reflete preservar_dados na mesma hora'
+);
+
+SELECT lives_ok(
+  $$SELECT public.ultra_admin_marcar_preservar_dados(
+    (SELECT id FROM public.empresas WHERE owner_id = 'fad01111-0000-0000-0000-00000000000a'),
+    FALSE, 'reativou sozinho'
+  )$$,
+  'ultra_admin remove preservar dados'
+);
+SELECT is(
+  (SELECT preservar_dados FROM public.empresas WHERE owner_id = 'fad01111-0000-0000-0000-00000000000a'),
+  FALSE,
+  'preservar_dados volta a false'
+);
+
+SELECT throws_ok(
+  $$SELECT public.ultra_admin_marcar_preservar_dados(
+    (SELECT id FROM public.empresas WHERE owner_id = 'fad01111-0000-0000-0000-00000000000a'),
+    TRUE, NULL
+  )$$,
+  '22023', 'Informe o motivo',
+  'marcar preservar dados sem motivo é recusado'
 );
 
 SELECT * FROM finish();
