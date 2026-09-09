@@ -22,6 +22,7 @@ import { formatCEP, onlyDigits } from "@/lib/maskUtils";
 import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
 import { DesbloqueioNivel } from "@/components/trial/DesbloqueioNivel";
 import { useNivelConfianca } from "@/hooks/useNivelConfianca";
+import { analytics } from "@/lib/analytics";
 
 const SEM_RESPONSAVEL = "__none__";
 const SEM_PROJETO = "__none__";
@@ -194,6 +195,7 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
     } catch (e) {
       const capacidade = parseCapacidadeError(e);
       if (capacidade) {
+        analytics.track("trial_limite_atingido", { recurso: capacidade.recurso, limite: capacidade.limite });
         setCapacidadeErro(capacidade);
       } else {
         toast.error("Não foi possível salvar", {
