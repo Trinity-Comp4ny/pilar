@@ -37,6 +37,12 @@ const DATA_TABLE: DataItem[] = [
     retencao: "Até 30 dias após logout",
     baseLegal: "Legítimo interesse (LGPD Art. 7, IX)",
   },
+  {
+    categoria: "Conta com período de teste encerrado sem plano ativado",
+    retencao:
+      "90 dias em modo somente leitura (exportação disponível). Depois: dados fiscais/financeiros são anonimizados, o restante é eliminado",
+    baseLegal: "Execução de contrato e obrigação legal fiscal (LGPD Art. 7, II e V)",
+  },
 ];
 
 // Texto legal público. As ações de exportar/excluir dados (que exigem sessão
@@ -201,7 +207,7 @@ export function Privacidade() {
           </div>
         </section>
 
-        <p className="text-xs text-muted-foreground pt-8 border-t">Última atualização: 05 de maio de 2026.</p>
+        <p className="text-xs text-muted-foreground pt-8 border-t">Última atualização: 9 de setembro de 2026.</p>
       </main>
     </div>
   );
