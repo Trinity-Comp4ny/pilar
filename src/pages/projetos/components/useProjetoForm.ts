@@ -22,6 +22,7 @@ import { lookupCEP } from "@/lib/brasilApi";
 import { useBulkSaveDisciplinas } from "@/hooks/useProjetoDisciplinas";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useFormPersist, clearFormPersist } from "@/hooks/useFormPersist";
+import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
 
 const PROJETO_DRAFT_KEY = "projeto-novo";
 
@@ -166,6 +167,7 @@ export function useProjetoForm({
   const isEditMode = editProjeto !== null;
   const [isSaving, setIsSaving] = useState(false);
   const [isFetchingCep, setIsFetchingCep] = useState(false);
+  const [capacidadeErro, setCapacidadeErro] = useState<CapacidadeErro | null>(null);
   const geocodeAbortRef = useRef<AbortController | null>(null);
   // Snapshot do estado inicial do formulário ao abrir, para detectar alterações
   // não salvas e confirmar antes de descartar.
@@ -648,7 +650,11 @@ export function useProjetoForm({
           p_prioridade: formData.prioridade,
         });
 
-        if (error) throw new Error(error.message || String(error));
+        // Não reembrulhar em `new Error`: perderia `.hint`/`.code` do
+        // PostgrestError, que é como o catch abaixo reconhece um erro de
+        // capacidade do trial (SPEC 098) pra abrir o desbloqueio em vez de
+        // um toast genérico.
+        if (error) throw error;
 
         novoProjetoId = (newProjetoId as string) ?? null;
 
@@ -786,7 +792,12 @@ export function useProjetoForm({
           .then(() => onSaved());
       }
     } catch (err: unknown) {
-      toast.error("Erro ao salvar", { description: getSafeErrorMessage(err) });
+      const capacidade = parseCapacidadeError(err);
+      if (capacidade) {
+        setCapacidadeErro(capacidade);
+      } else {
+        toast.error("Erro ao salvar", { description: getSafeErrorMessage(err) });
+      }
     } finally {
       setIsSaving(false);
     }
@@ -805,6 +816,8 @@ export function useProjetoForm({
     isDirty,
     handleInputChange,
     fetchCep,
+    capacidadeErro,
+    fecharCapacidadeErro: () => setCapacidadeErro(null),
     // Disciplinas
     projetosDisciplinas,
     tempDisciplina,

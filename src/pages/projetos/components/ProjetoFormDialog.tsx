@@ -27,6 +27,8 @@ import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { useProjetoForm, ESTADOS_BR } from "./useProjetoForm";
 import { getPriorityDotColor } from "../lib/priorityColors";
 import { DisciplinasSection } from "./DisciplinasSection";
+import { DesbloqueioNivel } from "@/components/trial/DesbloqueioNivel";
+import { useNivelConfianca } from "@/hooks/useNivelConfianca";
 import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
 import { useProjetoDisciplinas } from "@/hooks/useProjetoDisciplinas";
 import { useQuery } from "@tanstack/react-query";
@@ -105,6 +107,7 @@ export function ProjetoFormDialog({
     currentUser,
     onSaved,
   });
+  const { isAdmin } = useNivelConfianca();
 
   const [step, setStep] = useState<Step>(1);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
@@ -660,6 +663,16 @@ export function ProjetoFormDialog({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {form.capacidadeErro && (
+        <DesbloqueioNivel
+          open
+          onOpenChange={(o) => !o && form.fecharCapacidadeErro()}
+          recurso={form.capacidadeErro.recurso}
+          limite={form.capacidadeErro.limite}
+          isAdmin={isAdmin}
+        />
+      )}
     </>
   );
 }

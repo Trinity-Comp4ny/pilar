@@ -18,7 +18,10 @@ type SubStatus = "active" | "trialing" | "overdue" | "canceled" | "expired" | nu
 // Objeto mutável: property .v é escrita pelo check(), const no binding.
 const subStatusCache: { v: SubStatus | undefined } = { v: undefined };
 
-function SubscriptionSuspendedScreen() {
+// SPEC 098: quem não pode regularizar a assinatura (não é admin) não vê o
+// atalho pra tela de pagamento, que ele não tem acesso mesmo. Só orienta a
+// falar com quem administra a empresa.
+function SubscriptionSuspendedScreen({ isAdmin }: { isAdmin: boolean }) {
   const { openSettings } = useSettingsModal();
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted p-8">
@@ -31,13 +34,17 @@ function SubscriptionSuspendedScreen() {
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold text-ink">Acesso suspenso</h1>
           <p className="text-ink-muted text-sm leading-relaxed">
-            Sua assinatura está suspensa ou cancelada. Regularize o pagamento para retomar o acesso à plataforma.
+            {isAdmin
+              ? "Sua assinatura está suspensa ou cancelada. Regularize o pagamento para retomar o acesso à plataforma."
+              : "A assinatura da sua empresa está suspensa ou cancelada. Fale com o administrador da sua empresa para regularizar o pagamento."}
           </p>
         </div>
         <div className="flex flex-col gap-3">
-          <Button variant="brand" onClick={() => openSettings("pagamento")}>
-            Ver assinatura
-          </Button>
+          {isAdmin && (
+            <Button variant="brand" onClick={() => openSettings("pagamento")}>
+              Ver assinatura
+            </Button>
+          )}
           <Button variant="ghost" asChild className="text-ink-muted">
             <Link to="/" onClick={() => supabase.auth.signOut()}>
               Sair da conta
@@ -136,7 +143,8 @@ export function PrivateRoute() {
   // (montado na raiz, fora das rotas) para o cliente regularizar sem sair daqui.
   const suspended = subStatus === "canceled" || subStatus === "expired";
   if (suspended) {
-    return <SubscriptionSuspendedScreen />;
+    const isAdmin = profile?.role === "admin" || profile?.role === "ultra_admin";
+    return <SubscriptionSuspendedScreen isAdmin={isAdmin} />;
   }
 
   const justLoggedIn = sessionStorage.getItem("pilar_post_login") === "1";
