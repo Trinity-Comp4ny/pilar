@@ -1933,6 +1933,7 @@ export type Database = {
           contato: string | null
           created_at: string | null
           created_by: string | null
+          deleted_at: string | null
           documento_tipo: string | null
           documento_verificacao: string | null
           documento_verificado_em: string | null
@@ -1941,6 +1942,7 @@ export type Database = {
           estado: string | null
           features: Json
           id: string
+          leitura_desde: string | null
           logo_url: string | null
           max_projetos_override: number | null
           max_usuarios_override: number | null
@@ -1971,6 +1973,7 @@ export type Database = {
           contato?: string | null
           created_at?: string | null
           created_by?: string | null
+          deleted_at?: string | null
           documento_tipo?: string | null
           documento_verificacao?: string | null
           documento_verificado_em?: string | null
@@ -1979,6 +1982,7 @@ export type Database = {
           estado?: string | null
           features?: Json
           id?: string
+          leitura_desde?: string | null
           logo_url?: string | null
           max_projetos_override?: number | null
           max_usuarios_override?: number | null
@@ -2009,6 +2013,7 @@ export type Database = {
           contato?: string | null
           created_at?: string | null
           created_by?: string | null
+          deleted_at?: string | null
           documento_tipo?: string | null
           documento_verificacao?: string | null
           documento_verificado_em?: string | null
@@ -2017,6 +2022,7 @@ export type Database = {
           estado?: string | null
           features?: Json
           id?: string
+          leitura_desde?: string | null
           logo_url?: string | null
           max_projetos_override?: number | null
           max_usuarios_override?: number | null
@@ -2424,7 +2430,7 @@ export type Database = {
           empresa_id: string
           id: string
           mes: number
-          pessoa_id: string
+          pessoa_id: string | null
           salario_fixo: number | null
           status: string | null
           total_area_projetada: number | null
@@ -2441,7 +2447,7 @@ export type Database = {
           empresa_id: string
           id?: string
           mes: number
-          pessoa_id: string
+          pessoa_id?: string | null
           salario_fixo?: number | null
           status?: string | null
           total_area_projetada?: number | null
@@ -2458,7 +2464,7 @@ export type Database = {
           empresa_id?: string
           id?: string
           mes?: number
-          pessoa_id?: string
+          pessoa_id?: string | null
           salario_fixo?: number | null
           status?: string | null
           total_area_projetada?: number | null
@@ -2912,7 +2918,7 @@ export type Database = {
           id: string
           nome: string
           percentual: number | null
-          projeto_id: string
+          projeto_id: string | null
           receita_id: string | null
           status: string | null
           updated_at: string | null
@@ -2930,7 +2936,7 @@ export type Database = {
           id?: string
           nome: string
           percentual?: number | null
-          projeto_id: string
+          projeto_id?: string | null
           receita_id?: string | null
           status?: string | null
           updated_at?: string | null
@@ -2948,7 +2954,7 @@ export type Database = {
           id?: string
           nome?: string
           percentual?: number | null
-          projeto_id?: string
+          projeto_id?: string | null
           receita_id?: string | null
           status?: string | null
           updated_at?: string | null
@@ -8178,6 +8184,10 @@ export type Database = {
           saldo_comprado: number
           saldo_plano: number
         }[]
+      }
+      excluir_empresa_retencao: {
+        Args: { p_empresa_id: string; p_motivo: string }
+        Returns: undefined
       }
       executar_acao_agente: { Args: { p_run_id: string }; Returns: Json }
       fechar_folha_agente: { Args: { p_run_id: string }; Returns: Json }
