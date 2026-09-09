@@ -8815,6 +8815,34 @@ export type Database = {
         Returns: undefined
       }
       trial_expiry_disparar: { Args: never; Returns: undefined }
+      ultra_admin_definir_nivel_override: {
+        Args: { p_empresa_id: string; p_motivo: string; p_nivel: string }
+        Returns: undefined
+      }
+      ultra_admin_listar_trials: {
+        Args: never
+        Returns: {
+          dias_restantes: number
+          documento_tipo: string
+          documento_verificacao: string
+          empresa_id: string
+          empresa_nome: string
+          max_obras: number
+          max_projetos: number
+          max_usuarios: number
+          nivel: string
+          nivel_override: string
+          nivel_override_motivo: string
+          obras_ativas: number
+          projetos_ativos: number
+          razao_social: string
+          razao_social_divergente: boolean
+          tokens_gastos: number
+          tokens_total: number
+          trial_ends_at: string
+          usuarios: number
+        }[]
+      }
       update_company_features: {
         Args: { p_features: Json }
         Returns: undefined

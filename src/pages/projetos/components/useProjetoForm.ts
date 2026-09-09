@@ -794,6 +794,7 @@ export function useProjetoForm({
     } catch (err: unknown) {
       const capacidade = parseCapacidadeError(err);
       if (capacidade) {
+        analytics.track("trial_limite_atingido", { recurso: capacidade.recurso, limite: capacidade.limite });
         setCapacidadeErro(capacidade);
       } else {
         toast.error("Erro ao salvar", { description: getSafeErrorMessage(err) });

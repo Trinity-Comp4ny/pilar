@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { FormDialog } from "@/components/FormDialog";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDocument, onlyDigits, validateCNPJ, validateCPF } from "@/lib/maskUtils";
 import { edgeFunctionErrorMessage } from "@/lib/edgeFunctionError";
+import { analytics } from "@/lib/analytics";
 import type { RecursoCapacidade } from "@/lib/capacidade";
 
 const NOME_RECURSO: Record<RecursoCapacidade, string> = {
@@ -43,8 +44,16 @@ function limiteFrase(recurso: RecursoCapacidade, limite: number | null): string 
 function DesbloqueioDocumento({ open, onOpenChange, recurso, limite }: Omit<DesbloqueioNivelProps, "isAdmin">) {
   const [documento, setDocumento] = useState("");
   const [isPending, setIsPending] = useState(false);
+  const sucedeu = useRef(false);
   const digits = onlyDigits(documento);
   const valido = digits.length === 14 ? validateCNPJ(digits) : digits.length === 11 ? validateCPF(digits) : false;
+
+  const handleOpenChange = (v: boolean) => {
+    if (!v && !sucedeu.current) {
+      analytics.track("trial_desbloqueio_abandonado", { recurso, via: "documento" });
+    }
+    onOpenChange(v);
+  };
 
   const handleSubmit = async () => {
     if (!valido) return;
@@ -60,6 +69,8 @@ function DesbloqueioDocumento({ open, onOpenChange, recurso, limite }: Omit<Desb
       if (data?.error) {
         throw new Error(data.error);
       }
+      sucedeu.current = true;
+      analytics.track("trial_nivel_subiu", { recurso, status: data?.status ?? "verificado" });
       toast.success("Documento confirmado", {
         description:
           data?.status === "pendente"
@@ -80,7 +91,7 @@ function DesbloqueioDocumento({ open, onOpenChange, recurso, limite }: Omit<Desb
   return (
     <FormDialog
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
       title="Você atingiu um limite do período de teste"
       description={`Sua empresa bateu ${limiteFrase(recurso, limite)}. Informe o CNPJ ou CPF da empresa para liberar mais capacidade.`}
       size="sm"
@@ -106,12 +117,22 @@ function DesbloqueioDocumento({ open, onOpenChange, recurso, limite }: Omit<Desb
 
 function AvisarAdministrador({ open, onOpenChange, recurso, limite }: Omit<DesbloqueioNivelProps, "isAdmin">) {
   const [isPending, setIsPending] = useState(false);
+  const sucedeu = useRef(false);
+
+  const handleOpenChange = (v: boolean) => {
+    if (!v && !sucedeu.current) {
+      analytics.track("trial_desbloqueio_abandonado", { recurso, via: "avisar_admin" });
+    }
+    onOpenChange(v);
+  };
 
   const handleConfirm = async () => {
     setIsPending(true);
     try {
       const { error } = await supabase.rpc("avisar_admin_capacidade", { p_recurso: recurso });
       if (error) throw error;
+      sucedeu.current = true;
+      analytics.track("trial_admin_avisado", { recurso });
       toast.success("Administrador avisado", {
         description: "Quem administra sua empresa foi notificado para liberar mais capacidade.",
       });
@@ -128,7 +149,7 @@ function AvisarAdministrador({ open, onOpenChange, recurso, limite }: Omit<Desbl
   return (
     <ConfirmDialog
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
       onConfirm={handleConfirm}
       title="Você atingiu um limite do período de teste"
       description={`Sua empresa bateu ${limiteFrase(recurso, limite)}. Só um administrador pode liberar mais capacidade; avise agora e continue depois.`}
