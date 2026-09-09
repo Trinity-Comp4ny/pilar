@@ -21,7 +21,7 @@ export {
   templateMensagemManual,
   templatePropostaEnvio,
 } from "./templates/escritorio.ts";
-export { templateLgpdExclusaoDados, templateTrialAviso } from "./templates/plataforma.ts";
+export { templateLgpdExclusaoDados, templateTrialAviso, templateAtivarPlanoRecibo } from "./templates/plataforma.ts";
 export {
   MAX_ITENS_EMAIL,
   templateNotificacoes,
