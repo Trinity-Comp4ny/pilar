@@ -272,13 +272,17 @@ function DisciplinaDetailBody({
             {/* Propriedades em grade 2 colunas */}
             <div className="grid max-w-3xl grid-cols-1 gap-x-10 gap-y-4 md:grid-cols-2">
               <Prop icon={CircleDot} label="Status" className="md:col-span-2">
-                <div className="flex items-center gap-2">
+                {/* flex-wrap + Select w-full em mobile: o dropdown (224px)
+                    somado aos botões de ação (Pausar/Retomar, Concluir
+                    revisão) não cabia numa linha em 390px e cortava na borda
+                    (achado da auditoria mobile). */}
+                <div className="flex flex-wrap items-center gap-2">
                   <Select
                     value={estaPausada ? "Pausada" : disciplina.status}
                     onValueChange={(val) => onUpdateField("status", val)}
                     disabled={estaPausada}
                   >
-                    <SelectTrigger className="h-9 w-56 min-w-0 flex-shrink-0">
+                    <SelectTrigger className="h-9 w-full min-w-0 flex-shrink-0 sm:w-56">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
