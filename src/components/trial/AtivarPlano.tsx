@@ -53,7 +53,8 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
       ? (planoSelecionado.preco_anual ?? planoSelecionado.preco_mensal * 12)
       : planoSelecionado.preco_mensal
     : 0;
-  const dataPrimeiraCobranca = subscription.trial_ends_at ? formatDate(subscription.trial_ends_at) : "-";
+  // formatDate espera data pura (YYYY-MM-DD); trial_ends_at é timestamptz completo.
+  const dataPrimeiraCobranca = subscription.trial_ends_at ? formatDate(subscription.trial_ends_at.slice(0, 10)) : "-";
 
   const handleOpenChange = (v: boolean) => {
     if (!v && !sucedeu.current) {
@@ -141,6 +142,7 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
       title="Ativar plano"
       description="Nada é cobrado agora. Escolha o plano e informe o cartão para garantir a continuidade sem interrupção."
       size="md"
+      zClassName="z-[70]"
       onSubmit={handleSubmit}
       submitLabel="Ativar plano"
       isPending={isPending}
