@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ChevronDown, ShieldCheck, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
@@ -10,6 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { FormDialog } from "@/components/FormDialog";
 import { formatNumberCompact } from "@/lib/format";
 import { getSafeErrorMessage } from "@/lib/safeError";
@@ -25,7 +32,9 @@ interface TrialRow {
   razaoSocial: string | null;
   razaoSocialDivergente: boolean;
   trialEndsAt: string | null;
+  trialEstendidoMotivo: string | null;
   diasRestantes: number;
+  preservarDados: boolean;
   projetosAtivos: number;
   maxProjetos: number | null;
   obrasAtivas: number;
@@ -42,6 +51,12 @@ function capacidade(usado: number, limite: number | null): string {
   return limite == null ? `${usado}` : `${usado}/${limite}`;
 }
 
+function amanha(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
 // SPEC 098, requisito 25: aba "Trials" cross-tenant. Mesmo padrão de leitura
 // direta que TokensPanel (RPC com bypass via is_ultra_admin() em vez de RLS
 // de tabela — os fatos vêm de várias tabelas/funções, uma view não dava
@@ -51,6 +66,16 @@ export function TrialsPanel() {
   const [overrideAlvo, setOverrideAlvo] = useState<TrialRow | null>(null);
   const [novoNivel, setNovoNivel] = useState<string>("__manter__");
   const [motivo, setMotivo] = useState("");
+
+  const [liberarAlvo, setLiberarAlvo] = useState<TrialRow | null>(null);
+  const [liberarMotivo, setLiberarMotivo] = useState("");
+
+  const [estenderAlvo, setEstenderAlvo] = useState<TrialRow | null>(null);
+  const [novaData, setNovaData] = useState("");
+  const [estenderMotivo, setEstenderMotivo] = useState("");
+
+  const [preservarAlvo, setPreservarAlvo] = useState<TrialRow | null>(null);
+  const [preservarMotivo, setPreservarMotivo] = useState("");
 
   const query = useQuery({
     queryKey: ["ultra-admin-trials"],
@@ -68,7 +93,9 @@ export function TrialsPanel() {
         razaoSocial: r.razao_social,
         razaoSocialDivergente: r.razao_social_divergente,
         trialEndsAt: r.trial_ends_at,
+        trialEstendidoMotivo: r.trial_estendido_motivo,
         diasRestantes: r.dias_restantes,
+        preservarDados: r.preservar_dados,
         projetosAtivos: r.projetos_ativos,
         maxProjetos: r.max_projetos,
         obrasAtivas: r.obras_ativas,
@@ -81,6 +108,8 @@ export function TrialsPanel() {
     },
     staleTime: 1000 * 30,
   });
+
+  const invalidar = () => qc.invalidateQueries({ queryKey: ["ultra-admin-trials"] });
 
   const overrideMutation = useMutation({
     mutationFn: async (input: { empresaId: string; nivel: string | null; motivo: string | null }) => {
@@ -96,11 +125,50 @@ export function TrialsPanel() {
     },
     onSuccess: () => {
       toast.success("Nível atualizado");
-      qc.invalidateQueries({ queryKey: ["ultra-admin-trials"] });
+      invalidar();
       setOverrideAlvo(null);
+      setLiberarAlvo(null);
     },
     onError: (error) => {
       toast.error("Não foi possível atualizar o nível", { description: getSafeErrorMessage(error) });
+    },
+  });
+
+  const estenderMutation = useMutation({
+    mutationFn: async (input: { empresaId: string; novoTrialEndsAt: string; motivo: string }) => {
+      const { error } = await supabase.rpc("ultra_admin_estender_trial", {
+        p_empresa_id: input.empresaId,
+        p_novo_trial_ends_at: input.novoTrialEndsAt,
+        p_motivo: input.motivo,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Trial estendido");
+      invalidar();
+      setEstenderAlvo(null);
+    },
+    onError: (error) => {
+      toast.error("Não foi possível estender o trial", { description: getSafeErrorMessage(error) });
+    },
+  });
+
+  const preservarMutation = useMutation({
+    mutationFn: async (input: { empresaId: string; preservar: boolean; motivo: string }) => {
+      const { error } = await supabase.rpc("ultra_admin_marcar_preservar_dados", {
+        p_empresa_id: input.empresaId,
+        p_preservar: input.preservar,
+        p_motivo: input.motivo,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_data, variables) => {
+      toast.success(variables.preservar ? "Dados marcados para preservar" : "Preservação removida");
+      invalidar();
+      setPreservarAlvo(null);
+    },
+    onError: (error) => {
+      toast.error("Não foi possível atualizar preservar dados", { description: getSafeErrorMessage(error) });
     },
   });
 
@@ -118,6 +186,45 @@ export function TrialsPanel() {
     overrideMutation.mutate({ empresaId: overrideAlvo.empresaId, nivel, motivo: nivel ? motivo : null });
   };
 
+  const abrirLiberar = (row: TrialRow) => {
+    setLiberarAlvo(row);
+    setLiberarMotivo("");
+  };
+
+  const confirmarLiberar = () => {
+    if (!liberarAlvo) return;
+    overrideMutation.mutate({ empresaId: liberarAlvo.empresaId, nivel: "ouro", motivo: liberarMotivo });
+  };
+
+  const abrirEstender = (row: TrialRow) => {
+    setEstenderAlvo(row);
+    setNovaData(amanha());
+    setEstenderMotivo("");
+  };
+
+  const confirmarEstender = () => {
+    if (!estenderAlvo || !novaData) return;
+    estenderMutation.mutate({
+      empresaId: estenderAlvo.empresaId,
+      novoTrialEndsAt: `${novaData}T23:59:59-03:00`,
+      motivo: estenderMotivo,
+    });
+  };
+
+  const abrirPreservar = (row: TrialRow) => {
+    setPreservarAlvo(row);
+    setPreservarMotivo("");
+  };
+
+  const confirmarPreservar = () => {
+    if (!preservarAlvo) return;
+    preservarMutation.mutate({
+      empresaId: preservarAlvo.empresaId,
+      preservar: !preservarAlvo.preservarDados,
+      motivo: preservarMotivo,
+    });
+  };
+
   const columns: ColumnDef<TrialRow>[] = [
     {
       key: "empresaNome",
@@ -128,6 +235,11 @@ export function TrialsPanel() {
           {r.razaoSocialDivergente && (
             <span title={`Razão social na Receita: ${r.razaoSocial}`}>
               <AlertTriangle className="h-3.5 w-3.5 text-warning-mid" />
+            </span>
+          )}
+          {r.preservarDados && (
+            <span title={"Dados preservados: relógio de retenção suspenso"}>
+              <Lock className="h-3.5 w-3.5 text-ink-muted" />
             </span>
           )}
         </div>
@@ -187,16 +299,36 @@ export function TrialsPanel() {
     {
       key: "diasRestantes",
       header: "Dias restantes",
-      cell: (r) => <span className={r.diasRestantes <= 3 ? "text-destructive font-medium" : ""}>{r.diasRestantes}</span>,
+      cell: (r) => (
+        <span
+          className={r.diasRestantes <= 3 ? "text-destructive font-medium" : ""}
+          title={r.trialEstendidoMotivo ? `Estendido: ${r.trialEstendidoMotivo}` : undefined}
+        >
+          {r.diasRestantes}
+        </span>
+      ),
       getSortValue: (r) => r.diasRestantes,
     },
     {
       key: "acoes",
       header: "",
       cell: (r) => (
-        <Button variant="ghost" size="sm" onClick={() => abrirOverride(r)}>
-          Ajustar nível
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm">
+              Ações
+              <ChevronDown className="ml-1 h-3.5 w-3.5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => abrirOverride(r)}>Ajustar nível</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => abrirLiberar(r)}>Liberar trial completo</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => abrirEstender(r)}>Estender trial</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => abrirPreservar(r)}>
+              {r.preservarDados ? "Remover preservação de dados" : "Preservar dados"}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ),
     },
   ];
@@ -251,6 +383,91 @@ export function TrialsPanel() {
               />
             </div>
           )}
+        </div>
+      </FormDialog>
+
+      <FormDialog
+        open={!!liberarAlvo}
+        onOpenChange={(o) => !o && setLiberarAlvo(null)}
+        title={`Liberar trial completo — ${liberarAlvo?.empresaNome ?? ""}`}
+        description="Sobe a empresa direto para Ouro (capacidade e cota do plano escolhido), sem passar por CNPJ ou forma de pagamento."
+        size="sm"
+        onSubmit={confirmarLiberar}
+        submitLabel="Liberar"
+        isPending={overrideMutation.isPending}
+        submitDisabled={!liberarMotivo.trim()}
+      >
+        <div className="space-y-2">
+          <Label htmlFor="liberar-motivo">Motivo</Label>
+          <Textarea
+            id="liberar-motivo"
+            value={liberarMotivo}
+            onChange={(e) => setLiberarMotivo(e.target.value)}
+            placeholder="Ex.: aprovação manual combinada com o cliente"
+            rows={3}
+            autoFocus
+          />
+        </div>
+      </FormDialog>
+
+      <FormDialog
+        open={!!estenderAlvo}
+        onOpenChange={(o) => !o && setEstenderAlvo(null)}
+        title={`Estender trial — ${estenderAlvo?.empresaNome ?? ""}`}
+        description="Move a data de expiração do trial para frente. Fica registrado com motivo, quem fez e quando."
+        size="sm"
+        onSubmit={confirmarEstender}
+        submitLabel="Estender"
+        isPending={estenderMutation.isPending}
+        submitDisabled={!novaData || !estenderMotivo.trim()}
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="estender-data">Nova data de expiração</Label>
+            <DatePicker id="estender-data" value={novaData} onChange={setNovaData} minDate={amanha()} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="estender-motivo">Motivo</Label>
+            <Textarea
+              id="estender-motivo"
+              value={estenderMotivo}
+              onChange={(e) => setEstenderMotivo(e.target.value)}
+              placeholder="Ex.: negociação em andamento, mais tempo para decidir"
+              rows={3}
+            />
+          </div>
+        </div>
+      </FormDialog>
+
+      <FormDialog
+        open={!!preservarAlvo}
+        onOpenChange={(o) => !o && setPreservarAlvo(null)}
+        title={
+          preservarAlvo?.preservarDados
+            ? `Remover preservação de dados — ${preservarAlvo?.empresaNome ?? ""}`
+            : `Preservar dados — ${preservarAlvo?.empresaNome ?? ""}`
+        }
+        description={
+          preservarAlvo?.preservarDados
+            ? "O relógio de retenção pós-trial volta a correr normalmente para esta empresa."
+            : "Suspende o relógio de retenção pós-trial (90 dias). A empresa não será excluída enquanto isso estiver marcado."
+        }
+        size="sm"
+        onSubmit={confirmarPreservar}
+        submitLabel={preservarAlvo?.preservarDados ? "Remover" : "Preservar"}
+        isPending={preservarMutation.isPending}
+        submitDisabled={!preservarMotivo.trim()}
+      >
+        <div className="space-y-2">
+          <Label htmlFor="preservar-motivo">Motivo</Label>
+          <Textarea
+            id="preservar-motivo"
+            value={preservarMotivo}
+            onChange={(e) => setPreservarMotivo(e.target.value)}
+            placeholder="Ex.: prospect em negociação avançada"
+            rows={3}
+            autoFocus
+          />
         </div>
       </FormDialog>
     </div>
