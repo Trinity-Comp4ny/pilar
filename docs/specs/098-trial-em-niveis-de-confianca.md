@@ -1,7 +1,7 @@
 # SPEC 098: Trial em níveis de confiança (Bronze, Prata, Ouro)
 
 **Data:** 2026-09-08 (v2 no mesmo dia, depois da revisão do CEO)  
-**Status:** Draft  
+**Status:** Em implementação (Fase 0 entregue, ver nota abaixo; Fase 1+ ainda Draft)  
 **Autor:** Matheus Rezende (CEO)  
 **Módulo:** plataforma (auth, assinatura, tokens, convites, ultra-admin)
 
@@ -433,20 +433,32 @@ Front:
 Fases em ordem de risco. Fase 0 é bloqueadora do lançamento; as outras podem entrar depois
 dele sem quebrar nada.
 
-**Fase 0, antes do lançamento (fecha custo e abuso, sem UI nova):**
+**Fase 0, antes do lançamento (fecha custo e abuso, sem UI nova) — ENTREGUE
+(migration `20260920000000_trial_niveis_fase0.sql`, branch
+`feat/spec-098-fase-0-trial-niveis`, 24 pgTAP novos, suite completa verde):**
 
-1. Migration: `trial_niveis` com seed dos 3 níveis; `email_dominios_bloqueados` com seed;
-   `platform_settings.trial_ai_daily_cap_tokens`; override `ouro`/`legado` para todas as
-   empresas existentes (requisito 24).
-2. Trial nasce no plano de menor preço (mudança no trigger). pgTAP.
-3. `gate_tokens` com ramo `trial_grant` por nível e circuit breaker. pgTAP: idempotência,
-   diferença ao subir, pagante não afetado pelo breaker, legado não afetado.
-4. Confirmação de e-mail em staging e produção; marcar contas atuais como confirmadas
-   antes; gate de escrita para não confirmado; testar Google OAuth.
-5. Recusa de domínio bloqueado e de e-mail repetido no signup. Notificação ao ultra-admin
-   por cadastro. pgTAP + teste de UI.
-6. `gen:types`, PR para `staging`, validar em staging com 3 contas reais (Bronze puro,
-   Bronze que sobe por override, breaker disparando), depois release.
+1. ~~`trial_niveis` com seed dos 3 níveis~~ — adiado pra Fase 1 de propósito: sem
+   nível Prata/Ouro ainda, um teto fixo único (`platform_settings.trial_tokens_bronze`,
+   50k) já fecha o custo. `email_dominios_bloqueados` com seed de domínios descartáveis:
+   feito. `platform_settings.trial_ai_daily_cap_tokens`: feito. Override `ouro`/`legado`
+   pra toda empresa existente antes do deploy (requisito 24): feito.
+2. Trial nasce no plano ativo de menor preço (Essencial), não mais no destaque
+   (Profissional). `handle_new_user` mudou só o `ORDER BY` do SELECT do plano.
+3. `gate_tokens` com ramo de teto fixo (não mensal, referência sem mês) pra trial novo
+   (status `trialing` e sem `nivel_override`) + circuit breaker diário agregado. pgTAP:
+   idempotência, legado mantém cota mensal do plano, pagante não afetado pelo breaker,
+   legado não afetado pelo breaker.
+4. Confirmação de e-mail: contas existentes marcadas confirmadas no próprio deploy
+   (`UPDATE auth.users`); gate de escrita exige e-mail confirmado pra criar projeto
+   (sessão `authenticated`; `service_role`/`postgres` passam direto). **Pendente, fora do
+   alcance de qualquer migration:** ligar "Confirm email" no Supabase Dashboard (Auth →
+   Providers → Email) em staging E produção — `db push` não aplica config de Auth no
+   servidor. Ação manual do CEO nos dois projetos antes do lançamento.
+5. Recusa de domínio de e-mail descartável no signup self-serve (convite/checkout pago
+   fora do escopo). **Adiado pra Fase 1** (não bloqueia lançamento): notificação ao
+   ultra-admin por cadastro (mecanismo de destinatário cross-tenant ainda não desenhado)
+   e "um trial por CNPJ" (não existe CNPJ ainda nesta fase).
+6. `gen:types:local` feito. PR pendente de abertura.
 
 **Fase 1, níveis Bronze e Prata (capacidade, documento, equipe):**
 
