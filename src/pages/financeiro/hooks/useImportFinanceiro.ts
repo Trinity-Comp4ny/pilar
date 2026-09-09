@@ -180,32 +180,19 @@ export function useImportFinanceiro() {
   const [temDesfazer, setTemDesfazer] = useState(false);
 
   /**
-   * Lista as abas de um Excel sem processar nada. Array vazio para CSV/PDF (não
-   * se aplica) ou planilha com uma aba só (não vale perguntar). O SheetJS é
-   * carregado sob demanda para não pesar o bundle inicial.
+   * Caminho determinístico: CSV ou Excel parseado no client, sem IA. Excel é
+   * convertido em CSV (primeira aba) e cai no mesmo pipeline do CSV. O SheetJS
+   * é carregado sob demanda para não pesar o bundle inicial.
    */
-  const listarAbas = useCallback(async (file: File): Promise<string[]> => {
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-    if (ext !== "xlsx" && ext !== "xls") return [];
-    const XLSX = await import("xlsx");
-    const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
-    return wb.SheetNames.length > 1 ? wb.SheetNames : [];
-  }, []);
-
-  /**
-   * Caminho determinístico: CSV ou Excel parseado no client, sem IA. Excel usa a
-   * aba indicada em `sheetName` (ou a primeira, se omitida ou inexistente) e cai
-   * no mesmo pipeline do CSV.
-   */
-  const extrairArquivo = useCallback(async (file: File, aux: AuxData, sheetName?: string) => {
+  const extrairArquivo = useCallback(async (file: File, aux: AuxData) => {
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
     let texto: string;
     if (ext === "xlsx" || ext === "xls") {
       const XLSX = await import("xlsx");
       const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
-      const aba = sheetName && wb.Sheets[sheetName] ? sheetName : wb.SheetNames[0];
-      if (!aba) throw new Error("Planilha sem abas legíveis.");
-      texto = XLSX.utils.sheet_to_csv(wb.Sheets[aba]);
+      const primeira = wb.SheetNames[0];
+      if (!primeira) throw new Error("Planilha sem abas legíveis.");
+      texto = XLSX.utils.sheet_to_csv(wb.Sheets[primeira]);
     } else {
       texto = await file.text();
     }
@@ -334,10 +321,7 @@ export function useImportFinanceiro() {
             const { data, error } = await supabase
               .from("despesas")
               .select("id, conta_id")
-              .in(
-                "id",
-                conciliarDespesas.map((c) => c.id)
-              );
+              .in("id", conciliarDespesas.map((c) => c.id));
             if (error) throw error;
             for (const d of data ?? []) contaOrigDespesas.set(d.id, d.conta_id);
           }
@@ -345,10 +329,7 @@ export function useImportFinanceiro() {
             const { data, error } = await supabase
               .from("receitas")
               .select("id, conta_id")
-              .in(
-                "id",
-                conciliarReceitas.map((c) => c.id)
-              );
+              .in("id", conciliarReceitas.map((c) => c.id));
             if (error) throw error;
             for (const r of data ?? []) contaOrigReceitas.set(r.id, r.conta_id);
           }
@@ -431,5 +412,5 @@ export function useImportFinanceiro() {
     await auxQuery.refetch();
   }, [auxQuery]);
 
-  return { auxQuery, listarAbas, extrairArquivo, extrairTextoIA, gravarLote, desfazer, gravando, temDesfazer };
+  return { auxQuery, extrairArquivo, extrairTextoIA, gravarLote, desfazer, gravando, temDesfazer };
 }
