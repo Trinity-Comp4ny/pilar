@@ -8429,6 +8429,15 @@ export type Database = {
         }
         Returns: number
       }
+      notificar_aditivo_pronto: {
+        Args: {
+          p_empresa_id: string
+          p_projeto_id: string
+          p_projeto_nome: string
+          p_valor: number
+        }
+        Returns: number
+      }
       pagar_fatura: {
         Args: {
           p_conta_id: string
