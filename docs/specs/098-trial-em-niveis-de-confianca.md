@@ -504,7 +504,10 @@ novos mais 11 Deno test novos, suites inteiras verdes); front (itens 11-12) e ul
 18. Política de arrependimento de 7 dias no fluxo de cancelamento.
 19. "Liberar trial completo", "Estender trial" e "Preservar dados" no ultra-admin.
 
-**Fase 3, retenção e acabamento:**
+**Fase 3, retenção e acabamento (mecanismo de leitura e de exclusão desenhados em
+[ADR 0042](../architecture/adr/0042-somente-leitura-pos-trial-via-trigger-generico.md) e
+[ADR 0043](../architecture/adr/0043-exclusao-de-empresa-anonimiza-financeiro-apaga-o-resto.md)
+— a spec pressupunha "fluxo já existente", que não existia; os ADRs registram por que):**
 
 20. `leitura_desde`, modo somente leitura (RLS de escrita bloqueada para empresa em
     leitura), cron `retencao-pos-trial` (avisos 60/85, exclusão 90), `preservar_dados`.
@@ -528,8 +531,10 @@ Métricas que a spec precisa produzir (PostHog, já instrumentado):
 
 ## Decisões e riscos
 
-- Decisão de arquitetura: [ADR 0041](../architecture/adr/0041-acesso-no-trial-por-nivel-de-confianca-derivado-de-fatos.md).
-  Decisão de direção: `DECISOES.md`, 2026-09-08.
+- Decisão de arquitetura: [ADR 0041](../architecture/adr/0041-acesso-no-trial-por-nivel-de-confianca-derivado-de-fatos.md)
+  (nível por fatos), [ADR 0042](../architecture/adr/0042-somente-leitura-pos-trial-via-trigger-generico.md)
+  (modo leitura), [ADR 0043](../architecture/adr/0043-exclusao-de-empresa-anonimiza-financeiro-apaga-o-resto.md)
+  (exclusão no dia 90). Decisão de direção: `DECISOES.md`, 2026-09-08.
 - **Risco: Bronze capado demais.** Mitigação: projeto exemplo fora da cota, números em
   tabela, revisão após 20 trials, critério de 10 minutos até a margem.
 - **Risco: "Ativar plano" lido como "já estou pagando".** Mitigação: nome do passo, data e
