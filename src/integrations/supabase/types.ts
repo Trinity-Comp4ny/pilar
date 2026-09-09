@@ -777,11 +777,14 @@ export type Database = {
       campo_accounts: {
         Row: {
           ativo: boolean
+          convite_expira_em: string | null
+          convite_token_hash: string | null
           created_at: string
           created_by: string | null
           email: string | null
           empresa_id: string
           id: string
+          login_gerado: boolean
           must_change_senha: boolean
           nome: string
           obra_id: string
@@ -793,11 +796,14 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          convite_expira_em?: string | null
+          convite_token_hash?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
           empresa_id: string
           id?: string
+          login_gerado?: boolean
           must_change_senha?: boolean
           nome: string
           obra_id: string
@@ -809,11 +815,14 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          convite_expira_em?: string | null
+          convite_token_hash?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
           empresa_id?: string
           id?: string
+          login_gerado?: boolean
           must_change_senha?: boolean
           nome?: string
           obra_id?: string
@@ -1078,6 +1087,8 @@ export type Database = {
         Row: {
           ativo: boolean | null
           cliente_id: string
+          convite_expira_em: string | null
+          convite_token_hash: string | null
           created_at: string | null
           created_by: string | null
           email: string | null
@@ -1094,6 +1105,8 @@ export type Database = {
         Insert: {
           ativo?: boolean | null
           cliente_id: string
+          convite_expira_em?: string | null
+          convite_token_hash?: string | null
           created_at?: string | null
           created_by?: string | null
           email?: string | null
@@ -1110,6 +1123,8 @@ export type Database = {
         Update: {
           ativo?: boolean | null
           cliente_id?: string
+          convite_expira_em?: string | null
+          convite_token_hash?: string | null
           created_at?: string | null
           created_by?: string | null
           email?: string | null
@@ -7645,6 +7660,17 @@ export type Database = {
         }
         Returns: string
       }
+      _campo_create_account_convite: {
+        Args: {
+          p_created_by: string
+          p_email: string
+          p_empresa_id: string
+          p_nome: string
+          p_obra_id: string
+          p_token_hash: string
+        }
+        Returns: undefined
+      }
       _campo_registrar_foto: {
         Args: { p_path: string; p_rdo_id: string; p_token: string }
         Returns: Json
@@ -7678,8 +7704,23 @@ export type Database = {
         }
         Returns: undefined
       }
+      _portal_create_account_convite: {
+        Args: {
+          p_cliente_id: string
+          p_created_by: string
+          p_email: string
+          p_empresa_id: string
+          p_nome: string
+          p_token_hash: string
+        }
+        Returns: undefined
+      }
       _portal_reset_password: {
         Args: { p_account_id: string; p_nova_senha: string }
+        Returns: undefined
+      }
+      _portal_reset_password_convite: {
+        Args: { p_account_id: string; p_token_hash: string }
         Returns: undefined
       }
       _soft_delete_feature: { Args: { p_tabela: string }; Returns: string }
@@ -7702,10 +7743,15 @@ export type Database = {
       audit_log_cleanup: { Args: never; Returns: number }
       audit_log_cleanup_monitored: { Args: never; Returns: undefined }
       audit_logs_archive_old: { Args: never; Returns: number }
+      campo_convite_definir_senha: {
+        Args: { p_senha: string; p_token: string }
+        Returns: Json
+      }
       campo_criar_tarefa: {
         Args: { p_titulo: string; p_token: string }
         Returns: Json
       }
+      campo_listar_contas_obra: { Args: { p_obra_id: string }; Returns: Json[] }
       campo_listar_fornecedores: { Args: { p_token: string }; Returns: Json }
       campo_listar_rdos: {
         Args: { p_limite?: number; p_token: string }
@@ -7761,6 +7807,10 @@ export type Database = {
           p_token: string
         }
         Returns: Json
+      }
+      campo_revogar_acesso: {
+        Args: { p_account_id: string }
+        Returns: undefined
       }
       campo_salvar_rdo: {
         Args: {
@@ -8332,6 +8382,10 @@ export type Database = {
       }
       portal_change_password: {
         Args: { p_nova_senha: string; p_senha_atual: string; p_token: string }
+        Returns: Json
+      }
+      portal_convite_definir_senha: {
+        Args: { p_senha: string; p_token: string }
         Returns: Json
       }
       portal_get_projeto_disciplinas: {

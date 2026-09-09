@@ -17,6 +17,7 @@ export {
 export {
   templateAcessoPortalCliente,
   templateCobrancaDireta,
+  templateConviteAcessoCampo,
   templateMensagemManual,
   templatePropostaEnvio,
 } from "./templates/escritorio.ts";
