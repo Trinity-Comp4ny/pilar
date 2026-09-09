@@ -55,6 +55,42 @@ export function templateTrialAviso(params: {
   };
 }
 
+function formatBRL(valor: number): string {
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+export function templateAtivarPlanoRecibo(params: {
+  empresaNome: string;
+  planoNome: string;
+  valor: number;
+  billingUrl: string;
+}): EmailTemplate {
+  const { empresaNome, planoNome, valor, billingUrl } = params;
+
+  return {
+    subject: `Assinatura confirmada — ${planoNome}`,
+    html: shell({
+      preview: `Primeira cobrança de ${formatBRL(valor)} confirmada`,
+      footerNote: `Você recebeu este e-mail por administrar a empresa ${empresaNome} na ${BRAND.nome}.`,
+      hero: {
+        titulo: html`Sua assinatura está ${em("ativa")}`,
+        lead: html`O trial da ${strong(empresaNome)} virou assinatura ${strong(planoNome)}. A primeira cobrança já foi
+        processada com o cartão que você cadastrou.`,
+      },
+      content: [
+        card([kv("Plano", planoNome), kvDivider(), kv("Valor cobrado", formatBRL(valor))], {
+          accent: "positive",
+          mt: 0,
+        }),
+        button("Ver assinatura", billingUrl),
+        small(
+          "Pode cancelar quando quiser em Configurações. Cancelamento em até 7 dias desta cobrança gera estorno integral."
+        ),
+      ],
+    }),
+  };
+}
+
 export function templateLgpdExclusaoDados(params: {
   adminNome: string;
   empresaNome: string;

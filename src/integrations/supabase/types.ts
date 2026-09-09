@@ -1253,6 +1253,54 @@ export type Database = {
           },
         ]
       }
+      consentimentos_cobranca: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          plan_id: string
+          primeira_cobranca_em: string
+          texto_versao: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          plan_id: string
+          primeira_cobranca_em: string
+          texto_versao: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          plan_id?: string
+          primeira_cobranca_em?: string
+          texto_versao?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consentimentos_cobranca_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consentimentos_cobranca_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "pilar_subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contas: {
         Row: {
           banco: string
@@ -4763,6 +4811,9 @@ export type Database = {
       }
       pilar_subscriptions: {
         Row: {
+          asaas_credit_card_brand: string | null
+          asaas_credit_card_last4: string | null
+          asaas_credit_card_token: string | null
           asaas_customer_id: string | null
           asaas_subscription_id: string | null
           billing_cycle: string | null
@@ -4786,6 +4837,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          asaas_credit_card_brand?: string | null
+          asaas_credit_card_last4?: string | null
+          asaas_credit_card_token?: string | null
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
           billing_cycle?: string | null
@@ -4809,6 +4863,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          asaas_credit_card_brand?: string | null
+          asaas_credit_card_last4?: string | null
+          asaas_credit_card_token?: string | null
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
           billing_cycle?: string | null
@@ -8488,6 +8545,16 @@ export type Database = {
       }
       notificar_guardiao_sem_creditos: {
         Args: { p_empresa_id: string; p_qtd_projetos: number }
+        Returns: number
+      }
+      notificar_ultra_admins: {
+        Args: {
+          p_empresa_id: string
+          p_link?: string
+          p_mensagem: string
+          p_tipo: string
+          p_titulo: string
+        }
         Returns: number
       }
       pagar_fatura: {

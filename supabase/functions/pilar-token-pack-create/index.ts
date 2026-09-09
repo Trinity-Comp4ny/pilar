@@ -20,7 +20,8 @@ import {
   getPixQrCode,
   type AsaasPayment,
 } from "../_shared/asaas-platform.ts";
-import { resolverDadosCliente } from "./customer.ts";
+import { resolverDadosCliente } from "../_shared/asaas-customer.ts";
+import { creditCardSchema, creditCardHolderInfoSchema as holderInfoSchema } from "../_shared/asaas-card-schemas.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
 import { parseOr400, z } from "../_shared/schemas.ts";
@@ -38,29 +39,6 @@ const TIER_CATALOG = {
 } as const;
 
 type TierId = keyof typeof TIER_CATALOG;
-
-const creditCardSchema = z.object({
-  holderName: z.string().trim().min(2).max(200),
-  number: z.string().regex(/^\d{13,19}$/, "número de cartão inválido"),
-  expiryMonth: z.string().regex(/^(0[1-9]|1[0-2])$/, "mês inválido"),
-  expiryYear: z.string().regex(/^\d{4}$/, "ano inválido"),
-  ccv: z.string().regex(/^\d{3,4}$/, "CCV inválido"),
-});
-
-const holderInfoSchema = z.object({
-  name: z.string().trim().min(2).max(200),
-  email: z.string().trim().toLowerCase().email(),
-  cpfCnpj: z
-    .string()
-    .transform((v) => v.replace(/\D/g, ""))
-    .refine((v) => v.length === 11 || v.length === 14, "CPF/CNPJ inválido"),
-  postalCode: z
-    .string()
-    .transform((v) => v.replace(/\D/g, ""))
-    .refine((v) => v.length === 8, "CEP inválido"),
-  addressNumber: z.string().trim().min(1).max(20),
-  phone: z.string().trim().max(20).optional(),
-});
 
 const purchaseSchema = z
   .object({

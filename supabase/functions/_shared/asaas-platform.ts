@@ -135,6 +135,10 @@ export interface CreateSubscriptionParams {
     addressNumber: string;
     phone?: string;
   };
+  // Substitui creditCard + creditCardHolderInfo quando já existe um token
+  // (SPEC 098 Fase 2: "Ativar plano" tokeniza sem cobrar, a conversão automática
+  // do trial-expiry-cron cobra depois só com o token, sem pedir o cartão de novo).
+  creditCardToken?: string;
   remoteIp?: string;
 }
 
@@ -230,5 +234,56 @@ export async function updateSubscription(
 export async function cancelSubscription(subscriptionId: string): Promise<{ deleted: boolean; id: string }> {
   return asaasFetch<{ deleted: boolean; id: string }>(`/subscriptions/${subscriptionId}`, {
     method: "DELETE",
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Tokenização sem cobrança (SPEC 098, requisito 15: "Ativar plano" tokeniza
+// o cartão na hora sem gerar nenhuma cobrança; a cobrança real só acontece
+// no trial-expiry-cron, no dia 14, usando o token salvo).
+// ---------------------------------------------------------------------------
+
+export interface TokenizeCreditCardParams {
+  customer: string;
+  creditCard: {
+    holderName: string;
+    number: string;
+    expiryMonth: string;
+    expiryYear: string;
+    ccv: string;
+  };
+  creditCardHolderInfo: {
+    name: string;
+    email: string;
+    cpfCnpj: string;
+    postalCode: string;
+    addressNumber: string;
+    phone?: string;
+    addressComplement?: string;
+    mobilePhone?: string;
+  };
+  remoteIp: string;
+}
+
+export interface TokenizeCreditCardResult {
+  creditCardNumber: string; // últimos 4 dígitos
+  creditCardBrand: string;
+  creditCardToken: string;
+}
+
+export async function tokenizeCreditCard(params: TokenizeCreditCardParams): Promise<TokenizeCreditCardResult> {
+  return asaasFetch<TokenizeCreditCardResult>("/creditCard/tokenizeCreditCard", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Estorno (SPEC 098, requisito 18: arrependimento de 7 dias após a 1ª cobrança).
+// ---------------------------------------------------------------------------
+
+export async function refundPayment(paymentId: string): Promise<AsaasPayment> {
+  return asaasFetch<AsaasPayment>(`/payments/${paymentId}/refund`, {
+    method: "POST",
   });
 }

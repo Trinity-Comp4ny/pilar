@@ -1,13 +1,14 @@
-// Roda com: deno test --allow-env supabase/functions/pilar-token-pack-create
+// Roda com: deno test --allow-env supabase/functions/_shared
 //
 // Cobre o bug real de 03/09 (Sentry PILAR-1Y/2K): nenhuma das 5 empresas
 // ativas em produção tinha asaas_customer_id, então toda compra de pacote
 // morria em "Sua empresa ainda não tem cobrança ativa". O cliente passou a ser
 // criado na primeira compra, e o que decide se isso é possível é de onde vem o
-// CPF/CNPJ.
+// CPF/CNPJ. Movido de pilar-token-pack-create/ pra _shared/ (SPEC 098 Fase 2B):
+// ativar-plano também precisa resolver os dados do cliente Asaas.
 
 import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
-import { resolverDadosCliente } from "./customer.ts";
+import { resolverDadosCliente } from "./asaas-customer.ts";
 
 const holder = {
   name: "Liz Almendro",
