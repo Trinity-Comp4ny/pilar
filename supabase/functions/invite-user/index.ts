@@ -131,17 +131,19 @@ serve(
       // empresa; não existe mais nível por feature no usuário.
       const safeRole: AssignableRole = ASSIGNABLE_ROLES.includes(role) ? role : "user";
 
-      // Verificar limite de usuários do plano da empresa
-      const { data: planLimit } = await supabaseClient
-        .from("pilar_subscriptions")
-        .select("pilar_subscription_plans(max_usuarios)")
-        .eq("empresa_id", profile.empresa_id)
-        .eq("status", "active")
+      // Limite de usuários (SPEC 098): limites_empresa() cobre pagante (plano +
+      // override) e trial por nível — antes só pagante era checado aqui, trial
+      // convidava sem teto nenhum.
+      const { data: limites, error: limitesError } = await supabaseClient
+        .rpc("limites_empresa", { p_empresa_id: profile.empresa_id })
         .maybeSingle();
 
-      const maxUsuarios =
-        (planLimit as { pilar_subscription_plans?: { max_usuarios?: number | null } } | null)?.pilar_subscription_plans
-          ?.max_usuarios ?? null;
+      if (limitesError) {
+        log.error("limites_empresa failed", limitesError, { empresa_id: profile.empresa_id });
+        return safeErrorResponse(500, "Erro ao verificar limite de usuários", req);
+      }
+
+      const maxUsuarios = (limites as { max_usuarios?: number | null } | null)?.max_usuarios ?? null;
 
       if (maxUsuarios !== null) {
         const { count: activeCount, error: countErr } = await supabaseClient

@@ -22,6 +22,12 @@ INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
 VALUES ('00000000-0000-0000-0000-00000000c0d1', 'Empresa Codigo', NULL, TRUE, '{"projetos": true, "financeiro": true}'::jsonb)
 ON CONFLICT (id) DO UPDATE SET features = EXCLUDED.features;
 
+-- SPEC 098 Fase 1: empresa de teste pré-existente, sem relação com trial.
+-- Override ouro evita que o novo gate de capacidade por nível quebre fixtures
+-- que criam mais projetos/obras do que o teto do Bronze permitiria.
+UPDATE public.empresas SET nivel_override = 'ouro', nivel_override_motivo = 'fixture_pre_existente'
+WHERE id = '00000000-0000-0000-0000-00000000c0d1';
+
 SET LOCAL session_replication_role = 'replica';
 
 INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role, email_confirmed_at)
