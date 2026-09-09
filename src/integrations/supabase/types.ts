@@ -1841,10 +1841,14 @@ export type Database = {
         Row: {
           cep: string | null
           cidade: string | null
+          cnae_principal: string | null
           cnpj: string | null
           contato: string | null
           created_at: string | null
           created_by: string | null
+          documento_tipo: string | null
+          documento_verificacao: string | null
+          documento_verificado_em: string | null
           email: string | null
           endereco: string | null
           estado: string | null
@@ -1862,6 +1866,8 @@ export type Database = {
           owner_id: string | null
           pix_chave: string | null
           pix_instrucoes: string | null
+          razao_social: string | null
+          situacao_cadastral: string | null
           status: Database["public"]["Enums"]["status_empresa"] | null
           updated_at: string | null
           updated_by: string | null
@@ -1869,10 +1875,14 @@ export type Database = {
         Insert: {
           cep?: string | null
           cidade?: string | null
+          cnae_principal?: string | null
           cnpj?: string | null
           contato?: string | null
           created_at?: string | null
           created_by?: string | null
+          documento_tipo?: string | null
+          documento_verificacao?: string | null
+          documento_verificado_em?: string | null
           email?: string | null
           endereco?: string | null
           estado?: string | null
@@ -1890,6 +1900,8 @@ export type Database = {
           owner_id?: string | null
           pix_chave?: string | null
           pix_instrucoes?: string | null
+          razao_social?: string | null
+          situacao_cadastral?: string | null
           status?: Database["public"]["Enums"]["status_empresa"] | null
           updated_at?: string | null
           updated_by?: string | null
@@ -1897,10 +1909,14 @@ export type Database = {
         Update: {
           cep?: string | null
           cidade?: string | null
+          cnae_principal?: string | null
           cnpj?: string | null
           contato?: string | null
           created_at?: string | null
           created_by?: string | null
+          documento_tipo?: string | null
+          documento_verificacao?: string | null
+          documento_verificado_em?: string | null
           email?: string | null
           endereco?: string | null
           estado?: string | null
@@ -1918,6 +1934,8 @@ export type Database = {
           owner_id?: string | null
           pix_chave?: string | null
           pix_instrucoes?: string | null
+          razao_social?: string | null
+          situacao_cadastral?: string | null
           status?: Database["public"]["Enums"]["status_empresa"] | null
           updated_at?: string | null
           updated_by?: string | null
@@ -5607,6 +5625,7 @@ export type Database = {
           disciplinas: Json | null
           empresa_id: string
           etapa_id: string | null
+          exemplo: boolean
           id: string
           latitude: number | null
           links: Json
@@ -5637,6 +5656,7 @@ export type Database = {
           disciplinas?: Json | null
           empresa_id: string
           etapa_id?: string | null
+          exemplo?: boolean
           id?: string
           latitude?: number | null
           links?: Json
@@ -5667,6 +5687,7 @@ export type Database = {
           disciplinas?: Json | null
           empresa_id?: string
           etapa_id?: string | null
+          exemplo?: boolean
           id?: string
           latitude?: number | null
           links?: Json
@@ -6809,6 +6830,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      trial_niveis: {
+        Row: {
+          import_habilitado: boolean
+          max_obras: number | null
+          max_projetos: number | null
+          max_usuarios: number | null
+          nivel: string
+          portal_habilitado: boolean
+          tokens_total: number | null
+          updated_at: string
+        }
+        Insert: {
+          import_habilitado?: boolean
+          max_obras?: number | null
+          max_projetos?: number | null
+          max_usuarios?: number | null
+          nivel: string
+          portal_habilitado?: boolean
+          tokens_total?: number | null
+          updated_at?: string
+        }
+        Update: {
+          import_habilitado?: boolean
+          max_obras?: number | null
+          max_projetos?: number | null
+          max_usuarios?: number | null
+          nivel?: string
+          portal_habilitado?: boolean
+          tokens_total?: number | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       ultra_admin_modes: {
         Row: {
@@ -8156,6 +8210,17 @@ export type Database = {
       is_impersonating: { Args: never; Returns: boolean }
       is_ultra_admin: { Args: never; Returns: boolean }
       is_ultra_admin_scoped: { Args: never; Returns: boolean }
+      limites_empresa: {
+        Args: { p_empresa_id: string }
+        Returns: {
+          import_habilitado: boolean
+          max_obras: number
+          max_projetos: number
+          max_usuarios: number
+          portal_habilitado: boolean
+          tokens_total: number
+        }[]
+      }
       listar_clientes_paginado: {
         Args: {
           p_com_projeto?: boolean
@@ -8195,6 +8260,7 @@ export type Database = {
       mfa_consume_backup_code: { Args: { p_code: string }; Returns: boolean }
       mfa_generate_backup_codes: { Args: never; Returns: string[] }
       my_empresa_id: { Args: never; Returns: string }
+      nivel_confianca: { Args: { p_empresa_id: string }; Returns: string }
       notificacao_email_padrao: {
         Args: { p_categoria: string }
         Returns: boolean

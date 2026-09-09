@@ -159,7 +159,7 @@ SELECT lives_ok(
 SELECT test_set_auth('fa5e1111-0000-0000-0000-00000000000a'); -- e-mail_confirmed_at NULL
 SELECT throws_ok(
   $$INSERT INTO public.projetos (empresa_id, nome)
-    VALUES ('fa5e0000-0000-0000-0000-00000000000e', 'Projeto sem confirmar')$$,
+    VALUES ((SELECT empresa_id FROM public.profiles WHERE id = 'fa5e1111-0000-0000-0000-00000000000a'), 'Projeto sem confirmar')$$,
   'P0001',
   'Confirme seu e-mail para continuar.',
   'criar projeto falha pra usuário autenticado com e-mail não confirmado'
@@ -186,10 +186,13 @@ SELECT test_set_postgres();
 -- =============================================
 -- 4. gate_tokens: trial novo ganha teto FIXO (não mensal), uma vez só.
 -- =============================================
+-- SPEC 098 Fase 1 substituiu o teto único (platform_settings.trial_tokens_bronze,
+-- coluna dropada) por teto por nível em trial_niveis. Bronze é o nível de quem
+-- ainda não informou documento nenhum (caso das empresas deste arquivo).
 SELECT is(
-  (SELECT ps.trial_tokens_bronze FROM public.platform_settings ps WHERE ps.id = 'default'),
+  (SELECT t.tokens_total FROM public.trial_niveis t WHERE t.nivel = 'bronze'),
   50000::bigint,
-  'seed de platform_settings: teto do trial = 50.000 tokens'
+  'trial_niveis (Fase 1): teto do trial Bronze = 50.000 tokens'
 );
 
 DO $$

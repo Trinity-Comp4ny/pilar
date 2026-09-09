@@ -433,15 +433,17 @@ Front:
 Fases em ordem de risco. Fase 0 é bloqueadora do lançamento; as outras podem entrar depois
 dele sem quebrar nada.
 
-**Fase 0, antes do lançamento (fecha custo e abuso, sem UI nova) — ENTREGUE
+**Fase 0, antes do lançamento (fecha custo e abuso, sem UI nova), ENTREGUE
 (migration `20260920000000_trial_niveis_fase0.sql`, branch
 `feat/spec-098-fase-0-trial-niveis`, 24 pgTAP novos, suite completa verde):**
 
-1. ~~`trial_niveis` com seed dos 3 níveis~~ — adiado pra Fase 1 de propósito: sem
-   nível Prata/Ouro ainda, um teto fixo único (`platform_settings.trial_tokens_bronze`,
-   50k) já fecha o custo. `email_dominios_bloqueados` com seed de domínios descartáveis:
-   feito. `platform_settings.trial_ai_daily_cap_tokens`: feito. Override `ouro`/`legado`
-   pra toda empresa existente antes do deploy (requisito 24): feito.
+1. `trial_niveis` com seed dos 3 níveis: adiado de propósito pra Fase 1 (sem nível
+   Prata/Ouro ainda nesta fase, um teto fixo único bastava pra fechar o custo, feito
+   via `platform_settings.trial_tokens_bronze`; essa coluna foi substituída por
+   `trial_niveis` assim que a Fase 1 chegou, ver abaixo). `email_dominios_bloqueados`
+   com seed de domínios descartáveis: feito. `platform_settings.trial_ai_daily_cap_tokens`:
+   feito. Override `ouro`/`legado` pra toda empresa existente antes do deploy
+   (requisito 24): feito.
 2. Trial nasce no plano ativo de menor preço (Essencial), não mais no destaque
    (Profissional). `handle_new_user` mudou só o `ORDER BY` do SELECT do plano.
 3. `gate_tokens` com ramo de teto fixo (não mensal, referência sem mês) pra trial novo
@@ -452,28 +454,42 @@ dele sem quebrar nada.
    (`UPDATE auth.users`); gate de escrita exige e-mail confirmado pra criar projeto
    (sessão `authenticated`; `service_role`/`postgres` passam direto). **Pendente, fora do
    alcance de qualquer migration:** ligar "Confirm email" no Supabase Dashboard (Auth →
-   Providers → Email) em staging E produção — `db push` não aplica config de Auth no
-   servidor. Ação manual do CEO nos dois projetos antes do lançamento.
+   Providers → Email) em staging E produção, já que `db push` não aplica config de
+   Auth no servidor. Ação manual do CEO nos dois projetos antes do lançamento.
 5. Recusa de domínio de e-mail descartável no signup self-serve (convite/checkout pago
    fora do escopo). **Adiado pra Fase 1** (não bloqueia lançamento): notificação ao
    ultra-admin por cadastro (mecanismo de destinatário cross-tenant ainda não desenhado)
    e "um trial por CNPJ" (não existe CNPJ ainda nesta fase).
 6. `gen:types:local` feito. PR pendente de abertura.
 
-**Fase 1, níveis Bronze e Prata (capacidade, documento, equipe):**
+**Fase 1, níveis Bronze e Prata (capacidade, documento, equipe), BACKEND ENTREGUE
+(migration `20260921000000_trial_niveis_fase1_capacidade_documento.sql`, branch
+`feat/spec-098-fase-0-trial-niveis`, Fase 0 e Fase 1 na mesma branch/PR, 32 pgTAP
+novos mais 11 Deno test novos, suites inteiras verdes); front (itens 11-12) e ultra-admin
+(13) ainda Draft:**
 
-7. `nivel_confianca`, `limites_empresa`, colunas em `empresas`, índice único de CNPJ (após
-   checar duplicatas em produção), `projetos.exemplo`. pgTAP com papel autenticado cobrindo
-   isolamento entre empresas.
-8. Triggers de capacidade em `projetos` e `obras`; `invite-user` lendo `limites_empresa()`.
-   pgTAP: 3º projeto Bronze falha, exemplo e arquivado não contam, Prata passa, 3º usuário
-   Bronze falha.
-9. Edge `verificar-documento` com BrasilAPI, unicidade, `pendente` e cron de reverificação.
-   Teste com CNPJ ativo, baixado, duplicado e API fora.
-10. Projeto exemplo criado no signup, fora da contagem.
-11. `useNivelConfianca`, `DesbloqueioNivel` (admin e `user`), "Avisar administrador",
-    interceptação de `capacidade:*`, formulário de documento com validação de dígito.
-12. `SubscriptionSuspendedScreen` em duas variantes; portal em modo vitrine no Bronze.
+7. ✅ `nivel_confianca`, `limites_empresa`, colunas em `empresas`, `projetos.exemplo`.
+   Índice único de CNPJ criado (checagem de duplicata é defensiva: se achar duplicata
+   em produção, a migration só avisa e pula, não bloqueia o deploy). pgTAP com papel
+   autenticado cobrindo isolamento entre empresas achou e corrigiu um bug real do
+   guard (`current_user` dentro de função `SECURITY DEFINER` é sempre o dono da
+   função, nunca quem chamou; o teste certo é `auth.role() = 'authenticated'`).
+8. ✅ Triggers de capacidade em `projetos` e `obras`; `invite-user` lendo
+   `limites_empresa()` (antes só checava `max_usuarios` pra assinatura `active`,
+   trial convidava sem teto nenhum). pgTAP: 3º projeto Bronze falha, exemplo e
+   Concluído não contam, Prata passa, 2ª obra Bronze falha.
+9. ✅ Edge `verificar-documento` com BrasilAPI (dígito verificador local primeiro,
+   situação ATIVA sobe/BAIXADA-INAPTA-SUSPENSA recusa/API fora vira `pendente`),
+   unicidade (índice do banco, edge traduz a violação em mensagem clara), alerta de
+   razão social divergente. Cron `reverificar-documentos-pendentes` diário (agendamento
+   manual por ambiente, mesmo padrão do `trial-expiry-cron`). 11 testes Deno cobrindo
+   dígito de CNPJ/CPF real, 404, shape-mismatch e rede fora.
+10. ✅ Projeto exemplo criado no signup (self-serve), fora da contagem.
+11. **Draft.** `useNivelConfianca`, `DesbloqueioNivel` (admin e `user`), "Avisar
+    administrador", interceptação de `capacidade:*`, formulário de documento com
+    validação de dígito.
+12. **Draft.** `SubscriptionSuspendedScreen` em duas variantes; portal em modo
+    vitrine no Bronze.
 13. Aba "Trials" no ultra-admin (nível, fatos, uso, alertas, ações, edição de tabelas).
 14. Telemetria: `trial_limite_atingido`, `trial_nivel_subiu`, `trial_desbloqueio_abandonado`,
     `trial_admin_avisado`.
