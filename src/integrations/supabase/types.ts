@@ -117,6 +117,30 @@ export type Database = {
           },
         ]
       }
+      agent_cron_heartbeats: {
+        Row: {
+          agent_type: string
+          detail: Json | null
+          last_run_at: string
+          last_status: string
+          updated_at: string
+        }
+        Insert: {
+          agent_type: string
+          detail?: Json | null
+          last_run_at: string
+          last_status: string
+          updated_at?: string
+        }
+        Update: {
+          agent_type?: string
+          detail?: Json | null
+          last_run_at?: string
+          last_status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agent_runs: {
         Row: {
           agent_type: string
@@ -2035,6 +2059,7 @@ export type Database = {
       }
       escopos: {
         Row: {
+          adiado_ate: string | null
           aprovado_em: string | null
           aprovado_por: string | null
           created_at: string | null
@@ -2055,6 +2080,7 @@ export type Database = {
           valor_aditivo: number | null
         }
         Insert: {
+          adiado_ate?: string | null
           aprovado_em?: string | null
           aprovado_por?: string | null
           created_at?: string | null
@@ -2075,6 +2101,7 @@ export type Database = {
           valor_aditivo?: number | null
         }
         Update: {
+          adiado_ate?: string | null
           aprovado_em?: string | null
           aprovado_por?: string | null
           created_at?: string | null
@@ -8438,6 +8465,10 @@ export type Database = {
         }
         Returns: number
       }
+      notificar_guardiao_sem_creditos: {
+        Args: { p_empresa_id: string; p_qtd_projetos: number }
+        Returns: number
+      }
       pagar_fatura: {
         Args: {
           p_conta_id: string
@@ -8539,6 +8570,10 @@ export type Database = {
       regenerate_convite_token: {
         Args: { p_convite_id: string }
         Returns: string
+      }
+      registrar_heartbeat_agente: {
+        Args: { p_agent_type: string; p_detail?: Json; p_status: string }
+        Returns: undefined
       }
       request_data_deletion: { Args: { p_motivo?: string }; Returns: string }
       request_data_export: { Args: never; Returns: Json }

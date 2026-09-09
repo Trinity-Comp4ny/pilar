@@ -96,6 +96,11 @@ serve(
     if (queryErr) {
       log.error("falha ao consultar projetos_com_escopo_estourado", queryErr);
       await cronCheckin("guardiao-margem-daily", "error", checkInId);
+      await admin.rpc("registrar_heartbeat_agente", {
+        p_agent_type: "guardiao_margem_cron",
+        p_status: "failed",
+        p_detail: { error: queryErr.message },
+      });
       return new Response(JSON.stringify({ error: queryErr.message }), { status: 500 });
     }
 
@@ -104,12 +109,17 @@ serve(
 
     let criados = 0;
     let falhas = 0;
+    // empresa_id -> qtd de projetos pulados por falta de créditos de IA. Antes disso
+    // era só um log.warn interno: o usuário nunca ficava sabendo que um projeto
+    // estourado ficou sem análise.
+    const puladosSemCreditos = new Map<string, number>();
 
     for (const p of projetos) {
       try {
         const gate = await verificarTokens(admin, p.empresa_id);
         if (!gate.ok) {
           log.warn("empresa sem tokens, pulando", { empresa_id: p.empresa_id, projeto_id: p.projeto_id });
+          puladosSemCreditos.set(p.empresa_id, (puladosSemCreditos.get(p.empresa_id) ?? 0) + 1);
           continue;
         }
 
@@ -214,6 +224,22 @@ serve(
     }
 
     await cronCheckin("guardiao-margem-daily", "ok", checkInId);
+
+    for (const [empresaId, qtd] of puladosSemCreditos) {
+      const { error: notifErr } = await admin.rpc("notificar_guardiao_sem_creditos", {
+        p_empresa_id: empresaId,
+        p_qtd_projetos: qtd,
+      });
+      if (notifErr) {
+        log.error("falha ao notificar créditos insuficientes", notifErr, { empresa_id: empresaId });
+      }
+    }
+
+    await admin.rpc("registrar_heartbeat_agente", {
+      p_agent_type: "guardiao_margem_cron",
+      p_status: falhas > 0 ? "partial_failure" : "ok",
+      p_detail: { encontrados: projetos.length, criados, falhas, pulados_sem_creditos: puladosSemCreditos.size },
+    });
 
     return new Response(JSON.stringify({ encontrados: projetos.length, criados, falhas }), {
       status: 200,
