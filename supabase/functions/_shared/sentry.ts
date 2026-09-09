@@ -385,35 +385,6 @@ export function withSentry(
   };
 }
 
-/**
- * Check-in HTTP no Sentry Crons (Insights > Crons), lado Edge Function.
- *
- * Espelha public.sentry_cron_checkin() do lado SQL (ver
- * 20260897000000_sentry_cron_monitoring.sql — mesma DSN, mesmo formato de URL).
- * Existe uma versão em SQL e uma aqui porque nem todo cron roda como função
- * Postgres: os que disparam uma Edge Function via net.http_post (fire-and-forget)
- * não têm como confirmar sucesso no lado SQL, então o check-in tem que vir de
- * dentro da própria function, que sabe se realmente terminou.
- */
-export async function cronCheckin(
-  monitorSlug: string,
-  status: "in_progress" | "ok" | "error",
-  checkInId?: string
-): Promise<string | undefined> {
-  if (!PARSED) return checkInId;
-  const id = checkInId ?? crypto.randomUUID();
-  const url =
-    `https://${PARSED.host}/api/${PARSED.projectId}/cron/${monitorSlug}/${PARSED.publicKey}/` +
-    `?status=${status}&check_in_id=${id}&environment=${ENVIRONMENT}`;
-  try {
-    const res = await fetch(url);
-    if (!res.ok) console.warn(`[sentry] cron check-in rejeitado ${res.status}`);
-  } catch (e) {
-    console.warn(`[sentry] cron check-in falhou: ${e instanceof Error ? e.message : String(e)}`);
-  }
-  return id;
-}
-
 export type MetricType = "counter" | "gauge" | "distribution";
 
 /**

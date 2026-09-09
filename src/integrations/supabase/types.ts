@@ -777,11 +777,14 @@ export type Database = {
       campo_accounts: {
         Row: {
           ativo: boolean
+          convite_expira_em: string | null
+          convite_token_hash: string | null
           created_at: string
           created_by: string | null
           email: string | null
           empresa_id: string
           id: string
+          login_gerado: boolean
           must_change_senha: boolean
           nome: string
           obra_id: string
@@ -793,11 +796,14 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          convite_expira_em?: string | null
+          convite_token_hash?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
           empresa_id: string
           id?: string
+          login_gerado?: boolean
           must_change_senha?: boolean
           nome: string
           obra_id: string
@@ -809,11 +815,14 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          convite_expira_em?: string | null
+          convite_token_hash?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
           empresa_id?: string
           id?: string
+          login_gerado?: boolean
           must_change_senha?: boolean
           nome?: string
           obra_id?: string
@@ -1078,6 +1087,8 @@ export type Database = {
         Row: {
           ativo: boolean | null
           cliente_id: string
+          convite_expira_em: string | null
+          convite_token_hash: string | null
           created_at: string | null
           created_by: string | null
           email: string | null
@@ -1094,6 +1105,8 @@ export type Database = {
         Insert: {
           ativo?: boolean | null
           cliente_id: string
+          convite_expira_em?: string | null
+          convite_token_hash?: string | null
           created_at?: string | null
           created_by?: string | null
           email?: string | null
@@ -1110,6 +1123,8 @@ export type Database = {
         Update: {
           ativo?: boolean | null
           cliente_id?: string
+          convite_expira_em?: string | null
+          convite_token_hash?: string | null
           created_at?: string | null
           created_by?: string | null
           email?: string | null
@@ -5609,6 +5624,69 @@ export type Database = {
           },
         ]
       }
+      projeto_status_historico: {
+        Row: {
+          de: Database["public"]["Enums"]["status_projeto"] | null
+          id: string
+          mudado_em: string
+          mudado_por: string | null
+          para: Database["public"]["Enums"]["status_projeto"]
+          projeto_id: string
+        }
+        Insert: {
+          de?: Database["public"]["Enums"]["status_projeto"] | null
+          id?: string
+          mudado_em?: string
+          mudado_por?: string | null
+          para: Database["public"]["Enums"]["status_projeto"]
+          projeto_id: string
+        }
+        Update: {
+          de?: Database["public"]["Enums"]["status_projeto"] | null
+          id?: string
+          mudado_em?: string
+          mudado_por?: string | null
+          para?: Database["public"]["Enums"]["status_projeto"]
+          projeto_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_status_historico_mudado_por_fkey"
+            columns: ["mudado_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_status_historico_mudado_por_fkey"
+            columns: ["mudado_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_status_historico_mudado_por_fkey"
+            columns: ["mudado_por"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
+          },
+          {
+            foreignKeyName: "projeto_status_historico_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_status_historico_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projetos: {
         Row: {
           area_m2: number | null
@@ -7345,6 +7423,18 @@ export type Database = {
           },
         ]
       }
+      v_projeto_timeline: {
+        Row: {
+          autor_nome: string | null
+          detalhe: string | null
+          disciplina_id: string | null
+          disciplina_nome: string | null
+          ocorrido_em: string | null
+          projeto_id: string | null
+          tipo: string | null
+        }
+        Relationships: []
+      }
       v_uso_tokens_anomalia_diaria: {
         Row: {
           anomalia: boolean | null
@@ -7645,6 +7735,17 @@ export type Database = {
         }
         Returns: string
       }
+      _campo_create_account_convite: {
+        Args: {
+          p_created_by: string
+          p_email: string
+          p_empresa_id: string
+          p_nome: string
+          p_obra_id: string
+          p_token_hash: string
+        }
+        Returns: undefined
+      }
       _campo_registrar_foto: {
         Args: { p_path: string; p_rdo_id: string; p_token: string }
         Returns: Json
@@ -7678,8 +7779,23 @@ export type Database = {
         }
         Returns: undefined
       }
+      _portal_create_account_convite: {
+        Args: {
+          p_cliente_id: string
+          p_created_by: string
+          p_email: string
+          p_empresa_id: string
+          p_nome: string
+          p_token_hash: string
+        }
+        Returns: undefined
+      }
       _portal_reset_password: {
         Args: { p_account_id: string; p_nova_senha: string }
+        Returns: undefined
+      }
+      _portal_reset_password_convite: {
+        Args: { p_account_id: string; p_token_hash: string }
         Returns: undefined
       }
       _soft_delete_feature: { Args: { p_tabela: string }; Returns: string }
@@ -7703,10 +7819,15 @@ export type Database = {
       audit_log_cleanup_monitored: { Args: never; Returns: undefined }
       audit_logs_archive_old: { Args: never; Returns: number }
       avisar_admin_capacidade: { Args: { p_recurso: string }; Returns: number }
+      campo_convite_definir_senha: {
+        Args: { p_senha: string; p_token: string }
+        Returns: Json
+      }
       campo_criar_tarefa: {
         Args: { p_titulo: string; p_token: string }
         Returns: Json
       }
+      campo_listar_contas_obra: { Args: { p_obra_id: string }; Returns: Json[] }
       campo_listar_fornecedores: { Args: { p_token: string }; Returns: Json }
       campo_listar_rdos: {
         Args: { p_limite?: number; p_token: string }
@@ -7762,6 +7883,10 @@ export type Database = {
           p_token: string
         }
         Returns: Json
+      }
+      campo_revogar_acesso: {
+        Args: { p_account_id: string }
+        Returns: undefined
       }
       campo_salvar_rdo: {
         Args: {
@@ -8304,15 +8429,6 @@ export type Database = {
         }
         Returns: number
       }
-      notificar_aditivo_pronto: {
-        Args: {
-          p_empresa_id: string
-          p_projeto_id: string
-          p_projeto_nome: string
-          p_valor: number
-        }
-        Returns: number
-      }
       pagar_fatura: {
         Args: {
           p_conta_id: string
@@ -8342,6 +8458,10 @@ export type Database = {
       }
       portal_change_password: {
         Args: { p_nova_senha: string; p_senha_atual: string; p_token: string }
+        Returns: Json
+      }
+      portal_convite_definir_senha: {
+        Args: { p_senha: string; p_token: string }
         Returns: Json
       }
       portal_get_projeto_disciplinas: {
