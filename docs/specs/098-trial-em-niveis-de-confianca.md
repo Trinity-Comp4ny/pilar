@@ -506,8 +506,8 @@ novos mais 11 Deno test novos, suites inteiras verdes); front (itens 11-12) e ul
 
 **Fase 3, retenção e acabamento (mecanismo de leitura e de exclusão desenhados em
 [ADR 0042](../architecture/adr/0042-somente-leitura-pos-trial-via-trigger-generico.md) e
-[ADR 0043](../architecture/adr/0043-exclusao-de-empresa-anonimiza-financeiro-apaga-o-resto.md)
-— a spec pressupunha "fluxo já existente", que não existia; os ADRs registram por que):**
+[ADR 0043](../architecture/adr/0043-exclusao-de-empresa-anonimiza-financeiro-apaga-o-resto.md),
+já que a spec pressupunha "fluxo já existente" que não existia; os ADRs registram por que):**
 
 20. `leitura_desde`, modo somente leitura (RLS de escrita bloqueada para empresa em
     leitura), cron `retencao-pos-trial` (avisos 60/85, exclusão 90), `preservar_dados`.
