@@ -80,13 +80,21 @@ começou, quanto tempo ficou parada e por quê, e quantas revisões teve.
    de evento: proposta aprovada, entrega aprovada, revisão de entrega solicitada (com o
    texto que o cliente escreveu). Hoje essas três ações gravam no banco e não avisam
    ninguém — o escritório só percebe abrindo a proposta ou a entrega específica.
-10. Cada disciplina passa a ter um **responsável** (`projeto_disciplinas.responsavel_id`,
-    FK `pessoas`, nullable — nem toda disciplina precisa ter um definido). O escritório
-    define/troca o responsável no dialog da disciplina.
+10. ~~Cada disciplina passa a ter um responsável~~ **Correção de recon (2026-09-08,
+    durante a implementação): já existe.** `projeto_disciplina_responsaveis` (ponte
+    multi-responsável, `supabase/migrations/003_projetos_completo.sql`) e o helper
+    `_notif_resp_disciplina`/`_notif_resp_projeto`
+    (`supabase/migrations/20260817000100_notificacoes_ambient.sql`) já resolvem isso, com
+    UI própria (`useDisciplinasEditor`, `ProjetoFormDialog`). Não criar coluna nem RPC
+    nova — reusar o que já existe.
 11. Quando um dos três eventos do requisito 9 acontece, a **Central de Notificações**
-    (`gerar_notificacoes_ambient()`) avisa o responsável da disciplina do projeto (ou, se
-    a disciplina não tiver responsável definido, cai no roteamento por role já existente:
-    `owner`/`admin`/`coordenador` da empresa).
+    (`gerar_notificacoes_ambient()`) avisa: para entrega, o(s) responsável(is) da
+    disciplina vinculada via `portal_entregas.projeto_disciplina_id` (`_notif_resp_disciplina`),
+    caindo em `_notif_resp_projeto` quando a entrega não está ligada a nenhuma disciplina;
+    para proposta, o(s) responsável(is) do projeto (`_notif_resp_projeto`, já é a união dos
+    responsáveis de todas as disciplinas). Em qualquer caso, soma-se
+    `_notif_gestao_operacional` (mesmo padrão dos outros blocos da função), então nunca
+    fica sem destinatário.
 
 Não-funcionais:
 
@@ -134,8 +142,6 @@ Não-funcionais:
 - [ ] Dado uma disciplina sem responsável definido, quando um evento do portal ocorre para
       o projeto dela, então a notificação cai no roteamento por role (owner/admin/coordenador),
       não fica sem destinatário nenhum.
-- [ ] Dado um usuário de outra empresa, quando chama a RPC de definir responsável com o id
-      de uma disciplina que não é da sua empresa, então recebe erro de permissão.
 
 ## Dados e contratos
 
@@ -160,16 +166,14 @@ requisito 3 no banco, não só na UI.
 guarda só o valor atual e `status_data` só a última mudança: sem essa tabela, a coluna
 "mudança de status" da timeline é impossível, agora e no futuro.
 
-**`projeto_disciplinas` ganha coluna:** `responsavel_id uuid null` (FK `pessoas`,
-`ON DELETE SET NULL`). Não confundir com o `responsavel_id` legado que hoje só existe
-dentro do JSONB deprecated `projetos.disciplinas` — esta é a primeira vez que a tabela
-própria (fonte de verdade atual) ganha essa coluna.
+**Responsável de disciplina/projeto:** nenhuma tabela/coluna nova — reusa
+`projeto_disciplina_responsaveis` e os helpers `_notif_resp_disciplina(p_disciplina)` /
+`_notif_resp_projeto(p_projeto)` já existentes (ver requisito 10).
 
 **RPCs** (`SECURITY DEFINER`, check de tenant no corpo, `REVOKE ALL` + `GRANT EXECUTE TO authenticated`):
 
-- `rpc_registrar_revisao(p_disciplina_id uuid, p_motivo text, p_solicitada_em date default current_date) returns uuid`
-- `rpc_concluir_revisao(p_revisao_id uuid, p_concluida_em date default current_date) returns void`
-- `rpc_definir_responsavel_disciplina(p_disciplina_id uuid, p_pessoa_id uuid) returns void`
+- `rpc_registrar_revisao(p_disciplina_id uuid, p_motivo text, p_solicitada_em date default current_date) returns uuid` — **já existe** (PR 1, `20260906000000_projeto_disciplina_revisoes.sql`), não recriar.
+- `rpc_concluir_revisao(p_revisao_id uuid, p_concluida_em date default current_date) returns void` — **já existe**, idem.
 
 **View** `v_projeto_timeline` (`security_invoker = true`), shape que o front consome:
 
@@ -222,13 +226,12 @@ A preencher em plan mode antes de gerar código. Ordem pretendida:
 8. Aba Histórico em `ProjetoDetailTabs.tsx` (hoje: disciplinas, pagamentos, escopo), com
    filtro por disciplina e `EmptyState`.
 9. Contador de revisões no card da disciplina.
-10. Migration: coluna `responsavel_id` em `projeto_disciplinas` + RPC
-    `rpc_definir_responsavel_disciplina` + RLS.
+10. ~~Migration de responsável~~ **não é necessária** (já existe, ver "Decisões e riscos").
 11. Migration: braços do `UNION` para os três eventos do portal + ajuste em
-    `gerar_notificacoes_ambient()` para rotear por `responsavel_id`.
-12. UI: seletor de responsável no `DisciplinaDetailDialog.tsx` (mesmo lugar da revisão).
-13. pgTAP dos novos braços: evento de portal aparece na view, notificação chega ao
-    responsável certo, cai no fallback por role quando `responsavel_id` é nulo.
+    `gerar_notificacoes_ambient()` para rotear por `_notif_resp_disciplina`/`_notif_resp_projeto`.
+12. ~~UI de seletor de responsável~~ **não é necessária** — já existe em `ProjetoFormDialog`/`useDisciplinasEditor`.
+13. pgTAP dos novos braços: evento de portal aparece na view, notificação chega ao(s)
+    responsável(is) certo(s), cai no fallback por role quando não há responsável.
 
 ## Decisões e riscos
 
@@ -252,14 +255,14 @@ A preencher em plan mode antes de gerar código. Ordem pretendida:
 - **Débito de segurança herdado:** a spec 084 registrou que
   `recalc_disciplina_status_por_checklist` é `SECURITY DEFINER` sem check de tenant.
   Continua aberto e não é resolvido aqui.
-- **Responsável de disciplina é novo, não uma migração do campo legado.** O
-  `responsavel_id` que hoje mora dentro do JSONB deprecated `projetos.disciplinas` não é
-  copiado automaticamente para a coluna nova — são fontes independentes; se algum dia fizer
-  sentido aposentar de vez o JSONB, o backfill é decisão à parte.
-- **Notificação de evento de portal é decisão consciente de rotear por pessoa, não por
-  papel.** Diferente dos outros blocos de `gerar_notificacoes_ambient()` (roteados só por
-  role), este é o primeiro a tentar uma pessoa específica primeiro. Decisão de 2026-09-08
-  porque o interesse em "cliente aprovou/pediu revisão" é do responsável
-  daquela disciplina, não de todo mundo com role de gestão — mas o fallback por role evita
-  que o evento fique sem destinatário quando o campo está vazio (projetos antigos, por
-  exemplo).
+- **Responsável de disciplina/projeto já existia — engano de recon corrigido na
+  implementação.** A investigação inicial (08/09) concluiu, olhando só o schema base de
+  `projeto_disciplinas`, que não havia responsável modelado. Ao implementar, achamos
+  `projeto_disciplina_responsaveis` + `_notif_resp_disciplina`/`_notif_resp_projeto`
+  (já usados por outros blocos de `gerar_notificacoes_ambient()` desde a spec 029/090) e a
+  UI já existente. Nenhuma coluna/RPC/UI nova para responsável — só reuso.
+- **Notificação de evento de portal roteia por pessoa (responsável), com fallback por
+  papel.** Mesmo padrão já usado pelos blocos de prazo de projeto/disciplina (não é
+  precedente novo, ao contrário do que a v1 desta spec presumia): `_notif_resp_disciplina`
+  ou `_notif_resp_projeto` primeiro, somado a `_notif_gestao_operacional` sempre — nunca
+  fica sem destinatário quando não há responsável definido.
