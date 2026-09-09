@@ -1,6 +1,12 @@
 const KNOWN_USER_ERRORS: Record<string, string> = {
   // Chaves específicas vêm antes das genéricas: o loop devolve o primeiro match
   // e "duplicate key value" abaixo casaria com o código de projeto também.
+  // capacidade:* (SPEC 098): quem usa useMutation cai aqui via o onError global
+  // do queryClient (App.tsx) MESMO já tratando o erro localmente pra abrir o
+  // desbloqueio (ver src/lib/capacidade.ts) — os dois toasts/diálogos coexistem,
+  // então a mensagem aqui precisa fazer sentido sozinha, não repetir o diálogo.
+  "capacidade:projetos": "Limite de projetos do período de teste atingido.",
+  "capacidade:obras": "Limite de obras do período de teste atingido.",
   projetos_unique_empresa_codigo: "Já existe um projeto com esse código.",
   "valor de contrato": "Só quem tem acesso ao Financeiro pode informar valor de contrato ou margem.",
   "duplicate key value": "Já existe um registro com esses dados.",

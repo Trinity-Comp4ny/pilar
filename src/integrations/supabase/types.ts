@@ -7702,6 +7702,7 @@ export type Database = {
       audit_log_cleanup: { Args: never; Returns: number }
       audit_log_cleanup_monitored: { Args: never; Returns: undefined }
       audit_logs_archive_old: { Args: never; Returns: number }
+      avisar_admin_capacidade: { Args: { p_recurso: string }; Returns: number }
       campo_criar_tarefa: {
         Args: { p_titulo: string; p_token: string }
         Returns: Json

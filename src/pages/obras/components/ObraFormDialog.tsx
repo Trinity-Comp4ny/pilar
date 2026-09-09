@@ -19,6 +19,9 @@ import { STATUS_OBRA_OPCOES } from "@/lib/obras";
 import { lookupCEP } from "@/lib/brasilApi";
 import { geocodarCidade } from "@/lib/clima";
 import { formatCEP, onlyDigits } from "@/lib/maskUtils";
+import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
+import { DesbloqueioNivel } from "@/components/trial/DesbloqueioNivel";
+import { useNivelConfianca } from "@/hooks/useNivelConfianca";
 
 const SEM_RESPONSAVEL = "__none__";
 const SEM_PROJETO = "__none__";
@@ -79,6 +82,8 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
   const [local, setLocal] = useState<Local | null>(null);
   const [buscandoCep, setBuscandoCep] = useState(false);
   const ultimoCep = useRef("");
+  const [capacidadeErro, setCapacidadeErro] = useState<CapacidadeErro | null>(null);
+  const { isAdmin } = useNivelConfianca();
 
   const form = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: VAZIO });
   const { register, handleSubmit, reset, watch, setValue, formState } = form;
@@ -187,15 +192,21 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
       onOpenChange(false);
       onSaved?.();
     } catch (e) {
-      toast.error("Não foi possível salvar", {
-        description: e instanceof Error ? e.message : "Tente novamente",
-      });
+      const capacidade = parseCapacidadeError(e);
+      if (capacidade) {
+        setCapacidadeErro(capacidade);
+      } else {
+        toast.error("Não foi possível salvar", {
+          description: e instanceof Error ? e.message : "Tente novamente",
+        });
+      }
     }
   });
 
   const saving = criar.isPending || atualizar.isPending;
 
   return (
+    <>
     <FormDialog
       open={open}
       onOpenChange={onOpenChange}
@@ -403,6 +414,17 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
         <Textarea id="obs" rows={2} {...register("observacoes")} />
       </div>
     </FormDialog>
+
+    {capacidadeErro && (
+      <DesbloqueioNivel
+        open
+        onOpenChange={(o) => !o && setCapacidadeErro(null)}
+        recurso={capacidadeErro.recurso}
+        limite={capacidadeErro.limite}
+        isAdmin={isAdmin}
+      />
+    )}
+    </>
   );
 }
 
