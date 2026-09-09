@@ -7,6 +7,7 @@ import { isUltraAdmin } from "@/lib/roles";
 import { mfaDevBypass } from "@/lib/mfaDevBypass";
 import { monitoring } from "@/lib/monitoring";
 import Layout from "./Layout";
+import { ReadOnlyBanner } from "./ReadOnlyBanner";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -139,9 +140,17 @@ export function PrivateRoute() {
     return <Outlet />;
   }
 
+  // SPEC 098 Fase 3 (ADR 0042): trial vencido sem cartão tokenizado entra em
+  // 90 dias de somente leitura antes da exclusão, em vez de bloquear o
+  // acesso por completo — distinto de cancelamento/inadimplência abaixo.
+  // leitura_desde é a fonte de verdade (setada pelo trial-expiry-cron);
+  // sem ela, "expired" ainda cai no bloqueio total de sempre.
+  const leituraDesde = profile?.empresas?.leitura_desde ?? null;
+  const emLeitura = subStatus === "expired" && leituraDesde !== null;
+
   // Assinatura suspensa bloqueia a app; a própria tela abre o modal de pagamento
   // (montado na raiz, fora das rotas) para o cliente regularizar sem sair daqui.
-  const suspended = subStatus === "canceled" || subStatus === "expired";
+  const suspended = subStatus === "canceled" || (subStatus === "expired" && !emLeitura);
   if (suspended) {
     const isAdmin = profile?.role === "admin" || profile?.role === "ultra_admin";
     return <SubscriptionSuspendedScreen isAdmin={isAdmin} />;
@@ -152,6 +161,16 @@ export function PrivateRoute() {
     sessionStorage.removeItem("pilar_post_login");
     sessionStorage.setItem(ULTRA_PLATFORM_MODE_KEY, "true");
     return <Navigate to="/ultra-admin" replace />;
+  }
+
+  if (emLeitura) {
+    const isAdmin = profile?.role === "admin" || profile?.role === "ultra_admin";
+    return (
+      <>
+        <ReadOnlyBanner isAdmin={isAdmin} />
+        <Layout />
+      </>
+    );
   }
 
   return <Layout />;
