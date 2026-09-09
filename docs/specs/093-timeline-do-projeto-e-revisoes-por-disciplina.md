@@ -110,8 +110,11 @@ Não-funcionais:
   catalogam views que rodam como dona, ou seja, **sem** invoker. `leads_safe` está lá
   porque usa `security_barrier`, não invoker.
 - **Performance:** a aba consulta sempre com `projeto_id` fixo. Cada braço do `UNION ALL`
-  precisa filtrar por projeto usando índice; validar com `EXPLAIN` que não há seq scan em
-  `projeto_disciplinas` nem em `escopo_historico`.
+  precisa filtrar por projeto usando índice; validado com `EXPLAIN` (índices existentes já
+  cobrem `projeto_disciplinas`, `escopos`, `propostas`, `portal_entregas`, pausas e
+  revisões — nenhum seq scan além das tabelas pequenas `projetos`/`pessoas`, aceitável).
+  O braço de escopo lê `escopos` diretamente (`aprovado_em`/`aprovado_por`, já indexado por
+  `idx_escopos_projeto`), não `escopo_historico` — ver "Decisões e riscos".
 - **Multi-tenant:** nenhum braço da view pode retornar linha sem passar por `projetos.empresa_id`.
 
 ## Critérios de aceite
@@ -195,17 +198,20 @@ autor_nome        text null   -- para eventos do portal: nome do cliente, não d
 ```
 
 `UNION ALL` das fontes que já existem (`projetos`, `projeto_disciplinas`,
-`projeto_disciplina_pausas`, `escopo_historico`) mais as duas tabelas novas, mais um braço
-lendo `propostas`/`admin_audit_logs` (evento `portal_proposta_aprovada`) e outro lendo
-`portal_entregas` (eventos `portal_entrega_aprovada` e `portal_entrega_revisao_solicitada`,
-este usando `resposta_cliente` como `detalhe`). Nenhuma fonte existente é duplicada em
-tabela de evento: a verdade continua na tabela dona, a view só lê.
+`projeto_disciplina_pausas`, `escopos` — não `escopo_historico`, ver "Decisões e riscos")
+mais as duas tabelas novas, mais um braço lendo `propostas` (evento
+`portal_proposta_aprovada`, status `aceita`) e outro lendo `portal_entregas` (eventos
+`portal_entrega_aprovada` e `portal_entrega_revisao_solicitada`, este usando
+`resposta_cliente` como `detalhe`) — não `admin_audit_logs`: sua RLS restringe SELECT a
+admin/owner, o que esconderia o evento de coordenador/colaborador com acesso normal ao
+projeto (ver "Decisões e riscos"). Nenhuma fonte existente é duplicada em tabela de evento:
+a verdade continua na tabela dona, a view só lê.
 
 **Notificação:** `gerar_notificacoes_ambient()` ganha um novo bloco que lê os mesmos três
 eventos do portal (via as tabelas de origem, não via a view — a função de notificação já
-não depende de `v_projeto_timeline` para os outros eventos) e roteia para
-`projeto_disciplinas.responsavel_id`; quando nulo, cai no `owner`/`admin`/`coordenador` já
-usado pelos outros blocos da função (mesmo helper descrito em
+não depende de `v_projeto_timeline` para os outros eventos) e roteia via
+`_notif_resp_disciplina`/`_notif_resp_projeto` (reuso, ver requisito 10); somado sempre a
+`_notif_gestao_operacional`, já usado pelos outros blocos da função (descrita em
 `supabase/migrations/20260901000000_notif_gestao_operacional_e_roteamento.sql`).
 
 ## Plano de implementação
@@ -214,9 +220,7 @@ A preencher em plan mode antes de gerar código. Ordem pretendida:
 
 1. Migration: `projeto_disciplina_revisoes` + índice único parcial + RLS + as 2 RPCs.
 2. Migration: `projeto_status_historico` + trigger em `projetos` + RLS.
-3. Migration: índice em `escopo_historico(escopo_id)` (hoje a tabela só tem PK, e sem esse
-   índice o braço de escopo do UNION cai em seq scan) e `v_projeto_timeline` com
-   `security_invoker = true`.
+3. Migration: `v_projeto_timeline` com `security_invoker = true`.
 4. `npm run gen:types:local`, validar, depois `gen:types` contra staging antes do PR (o job
    `types-sync` do CI bloqueia divergência).
 5. pgTAP das RPCs: motivo vazio, revisão duplicada em aberto, tenant errado, conclusão.
@@ -266,3 +270,15 @@ A preencher em plan mode antes de gerar código. Ordem pretendida:
   precedente novo, ao contrário do que a v1 desta spec presumia): `_notif_resp_disciplina`
   ou `_notif_resp_projeto` primeiro, somado a `_notif_gestao_operacional` sempre — nunca
   fica sem destinatário quando não há responsável definido.
+- **Evento de notificação de portal é pontual, não estado — dedup extra necessário.** O
+  dedup padrão de `notificar()` (não empilha enquanto a notificação anterior não foi lida)
+  não basta aqui: diferente de "pagamento ainda pendente" (que faz sentido renotificar),
+  "proposta aceita" é um fato que não desfaz — sem um `NOT EXISTS` extra contra
+  `notificacoes` (lida ou não), o cron recriaria a notificação para sempre depois que o
+  destinatário a lesse. Os três blocos novos de `gerar_notificacoes_ambient()` têm essa
+  guarda; os blocos de prazo (existentes) não precisam, porque descrevem estado.
+- **Índice em `escopo_historico` não foi necessário — plano original ajustado.** O braço de
+  escopo/aditivo da view lê `escopos` diretamente (`aprovado_em`/`aprovado_por`, já indexado
+  por `idx_escopos_projeto`), não `escopo_historico` (texto livre em `acao`, sem valor fixo
+  de "aprovado" gravado hoje, e sem nenhum consumo no frontend). Mais preciso e sem precisar
+  de índice novo. `escopo_historico` fica como está, fora do escopo desta spec.
