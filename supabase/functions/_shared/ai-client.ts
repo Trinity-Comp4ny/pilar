@@ -80,13 +80,14 @@ export interface AiSaldo {
 }
 
 /**
- * Motivo do bloqueio (spec 094): `saldo_empresa` = pool da empresa zerado (mensagem
- * atual, comprar pacote/aguardar renovação); `limite_usuario` = teto pessoal batido
- * com saldo de empresa ainda disponível (mensagem nova, pedir mais ao admin).
- * `gate_tokens` já resolve a prioridade (saldo_empresa vence quando os dois estouram
- * juntos): o front só troca a mensagem por este campo, não recalcula nada.
+ * Motivo do bloqueio (spec 094 + spec 098): `saldo_empresa` = pool da empresa zerado
+ * (mensagem atual, comprar pacote/aguardar renovação); `limite_usuario` = teto pessoal
+ * batido com saldo de empresa ainda disponível (mensagem nova, pedir mais ao admin);
+ * `trial_pausado` = circuit breaker diário de contas em trial estourou (não afeta
+ * quem paga). `gate_tokens` já resolve a prioridade (trial_pausado > saldo_empresa >
+ * limite_usuario): o front só troca a mensagem por este campo, não recalcula nada.
  */
-export type TokenBlockMotivo = "saldo_empresa" | "limite_usuario";
+export type TokenBlockMotivo = "saldo_empresa" | "limite_usuario" | "trial_pausado";
 
 /**
  * Gate de tokens (Fase 2, spec 075; extensão por usuário na spec 094): garante a
@@ -138,6 +139,9 @@ export async function verificarTokens(
 export function mensagemBloqueioTokens(motivo: TokenBlockMotivo): string {
   if (motivo === "limite_usuario") {
     return "Você atingiu seu limite de tokens de IA deste mês. Peça mais tokens ao administrador da sua empresa.";
+  }
+  if (motivo === "trial_pausado") {
+    return "Uso de IA em contas de teste está pausado por hoje. Volta amanhã, ou fale com a gente pra liberar antes.";
   }
   return "Os tokens de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador.";
 }

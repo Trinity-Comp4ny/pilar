@@ -172,22 +172,22 @@ export function LancamentosItemRow({
           )}
         </span>
       </td>
-      <td className={cn(cellPad, cellTextSize, overdue && "text-danger-mid font-medium")}>
+      <td className={cn(cellPad, cellTextSize, "whitespace-nowrap", overdue && "text-danger-mid font-medium")}>
         {formatDateDisplay(dataExibir)}
         {overdue && <span className="ml-1 text-[10px] uppercase">atrasado</span>}
       </td>
-      <td className={cn(cellPad, "font-medium", cellTextSize)}>
+      <td className={cn(cellPad, "font-medium max-w-[220px] truncate", cellTextSize)}>
         {l.descricao}
         {isTransf && l.conta_nome && (
           <span className="ml-1 text-[10px] text-muted-foreground font-normal">({l.conta_nome})</span>
         )}
       </td>
-      <td className={cn(cellPad, cellTextSize)}>
+      <td className={cn(cellPad, "max-w-[160px] truncate", cellTextSize)}>
         {isTransf ? (l.contraparte_nome ?? "-") : l.contraparte_nome || "-"}
       </td>
-      <td className={cn(cellPad, cellTextSize)}>{isTransf ? "-" : l.categoria_nome || "-"}</td>
-      <td className={cn(cellPad, cellTextSize)}>{isTransf ? "-" : l.projeto_codigo || "-"}</td>
-      <td className={cn(cellPad, "text-xs text-muted-foreground")}>
+      <td className={cn(cellPad, "whitespace-nowrap", cellTextSize)}>{isTransf ? "-" : l.categoria_nome || "-"}</td>
+      <td className={cn(cellPad, "whitespace-nowrap", cellTextSize)}>{isTransf ? "-" : l.projeto_codigo || "-"}</td>
+      <td className={cn(cellPad, "whitespace-nowrap text-xs text-muted-foreground")}>
         {!isTransf && l.parcela_numero && l.parcela_total && l.parcela_total > 1
           ? `${l.parcela_numero}/${l.parcela_total}`
           : ""}
@@ -195,7 +195,7 @@ export function LancamentosItemRow({
       <td
         className={cn(
           cellPad,
-          "text-right font-semibold tabular-nums",
+          "whitespace-nowrap text-right font-semibold tabular-nums",
           cellTextSize,
           isTransf ? "text-info-mid" : isReceita ? "text-positive-strong" : "text-negative-strong"
         )}

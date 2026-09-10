@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, ChevronLeft, ChevronRight, Mail, Trash2, Pencil, UsersRound, AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { formatDocument, formatPhone } from "@/lib/maskUtils";
 import { PilarPage } from "@/components/PilarPage";
@@ -37,8 +38,9 @@ export default function Clientes() {
   const canShowActions = can("clientes", "edit");
 
   // Mutations e ações de portal. enableListQueries: false porque a lista agora
-  // vem paginada do servidor; este hook aqui é só para deleteCliente.
-  const { deleteCliente } = useClientes({ enableListQueries: false });
+  // vem paginada do servidor; este hook aqui é só para deleteCliente e o status
+  // do portal (query própria, sempre ligada, independente de enableListQueries).
+  const { deleteCliente, portalStatusPorCliente } = useClientes({ enableListQueries: false });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
@@ -307,6 +309,17 @@ export default function Clientes() {
       header: "Contato",
       className: "hidden lg:table-cell",
       cell: (cliente) => formatPhone(cliente.contato),
+    },
+    {
+      key: "portal",
+      header: "Portal",
+      className: "hidden md:table-cell",
+      cell: (cliente) => {
+        const status = portalStatusPorCliente.get(cliente.id);
+        if (status === "ativo") return <Badge variant="success">Ativo</Badge>;
+        if (status === "convite_pendente") return <Badge variant="warning">Convite pendente</Badge>;
+        return <Badge variant="neutral">Sem acesso</Badge>;
+      },
     },
     ...(canShowActions ? [acoesColumn] : []),
   ];

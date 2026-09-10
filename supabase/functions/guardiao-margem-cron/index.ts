@@ -16,11 +16,15 @@
  *  - Idempotente: projetos_com_escopo_estourado() já exclui quem tem aditivo em
  *    aberto, então rodar duas vezes no mesmo dia não duplica.
  *  - Aprovação é humana, na aba Escopo do projeto — este cron nunca aprova nada.
+ *  - Notifica quem vê financeiro (notificar_aditivo_pronto, categoria financeiro)
+ *    que há um rascunho esperando decisão — sem isso, só descobre quem abre /agentes.
+ *  - Faz check-in no Sentry Crons (monitor guardiao-margem-daily) pra detectar se o
+ *    job parou de rodar, já que ele é fire-and-forget do lado do agendador SQL.
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { withSentry, captureException } from "../_shared/sentry.ts";
+import { withSentry, captureException, cronCheckin } from "../_shared/sentry.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { callGeminiStructured, verificarTokens, debitarTokens, GEMINI_MODEL } from "../_shared/ai-client.ts";
 import { AditivoSugeridoSchema } from "../_shared/agent-schemas.ts";
@@ -81,11 +85,22 @@ serve(
       return new Response("Unauthorized", { status: 401 });
     }
 
+    // Check-in de heartbeat (Sentry Crons): este job só dispara via net.http_post
+    // (fire-and-forget) do lado SQL, então o check-in em SQL não confirmaria que a
+    // function de fato terminou — por isso ele vem de dentro dela mesma.
+    const checkInId = await cronCheckin("guardiao-margem-daily", "in_progress");
+
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     const { data: estourados, error: queryErr } = await admin.rpc("projetos_com_escopo_estourado");
     if (queryErr) {
       log.error("falha ao consultar projetos_com_escopo_estourado", queryErr);
+      await cronCheckin("guardiao-margem-daily", "error", checkInId);
+      await admin.rpc("registrar_heartbeat_agente", {
+        p_agent_type: "guardiao_margem_cron",
+        p_status: "failed",
+        p_detail: { error: queryErr.message },
+      });
       return new Response(JSON.stringify({ error: queryErr.message }), { status: 500 });
     }
 
@@ -94,12 +109,17 @@ serve(
 
     let criados = 0;
     let falhas = 0;
+    // empresa_id -> qtd de projetos pulados por falta de créditos de IA. Antes disso
+    // era só um log.warn interno: o usuário nunca ficava sabendo que um projeto
+    // estourado ficou sem análise.
+    const puladosSemCreditos = new Map<string, number>();
 
     for (const p of projetos) {
       try {
         const gate = await verificarTokens(admin, p.empresa_id);
         if (!gate.ok) {
           log.warn("empresa sem tokens, pulando", { empresa_id: p.empresa_id, projeto_id: p.projeto_id });
+          puladosSemCreditos.set(p.empresa_id, (puladosSemCreditos.get(p.empresa_id) ?? 0) + 1);
           continue;
         }
 
@@ -181,6 +201,19 @@ serve(
           calls: result.attempts,
         });
 
+        // Avisa quem vê financeiro que há um rascunho esperando decisão: sem isso, a
+        // única forma de descobrir é abrir /agentes por conta própria (o badge no
+        // sidebar já ajuda, mas ninguém é avisado ativamente).
+        const { error: notifErr } = await admin.rpc("notificar_aditivo_pronto", {
+          p_empresa_id: p.empresa_id,
+          p_projeto_id: p.projeto_id,
+          p_projeto_nome: p.nome,
+          p_valor: result.data.itens.reduce((s, i) => s + i.custo, 0),
+        });
+        if (notifErr) {
+          log.error("falha ao notificar aditivo pronto (escopo já criado)", notifErr, { escopo_id: escopo.id });
+        }
+
         criados++;
         log.info("aditivo rascunho criado", { projeto_id: p.projeto_id, escopo_id: escopo.id });
       } catch (e) {
@@ -189,6 +222,24 @@ serve(
         await captureException(e, { fn: "guardiao-margem-cron", tags: { projeto_id: p.projeto_id } });
       }
     }
+
+    await cronCheckin("guardiao-margem-daily", "ok", checkInId);
+
+    for (const [empresaId, qtd] of puladosSemCreditos) {
+      const { error: notifErr } = await admin.rpc("notificar_guardiao_sem_creditos", {
+        p_empresa_id: empresaId,
+        p_qtd_projetos: qtd,
+      });
+      if (notifErr) {
+        log.error("falha ao notificar créditos insuficientes", notifErr, { empresa_id: empresaId });
+      }
+    }
+
+    await admin.rpc("registrar_heartbeat_agente", {
+      p_agent_type: "guardiao_margem_cron",
+      p_status: falhas > 0 ? "partial_failure" : "ok",
+      p_detail: { encontrados: projetos.length, criados, falhas, pulados_sem_creditos: puladosSemCreditos.size },
+    });
 
     return new Response(JSON.stringify({ encontrados: projetos.length, criados, falhas }), {
       status: 200,

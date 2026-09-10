@@ -267,7 +267,15 @@ SELECT is(
 -- que não tem INSERT em auth.users, então o teste morria com "permission denied for
 -- table users" antes de chegar no trigger. O que se quer provar é o comportamento do
 -- handle_new_user, não a permissão de tabela.
+--
+-- RESET ROLE só desfaz um SET ROLE de verdade; não limpa `request.jwt.claims`, que é
+-- o que `auth.role()` lê de fato. Sem isso, o handle_new_user desta linha ainda
+-- enxergava auth.role() = 'authenticated' (deixado por um teste anterior) na hora de
+-- inserir o projeto de exemplo (SPEC 098 Fase 1), e caía no gate de e-mail confirmado
+-- feito pra sessão de usuário de verdade — o mesmo motivo por que um signup real (via
+-- GoTrue, nunca como 'authenticated') nunca passa por esse gate.
 RESET ROLE;
+SELECT set_config('request.jwt.claims', '', true);
 
 -- Spec 039: signup SEM token deixou de ser rejeitado — agora é self-serve legítimo,
 -- que cria uma empresa NOVA + admin + trial (Cenário 3 do handle_new_user). O que ESTE

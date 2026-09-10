@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { ResponsiveDetailPanels } from "@/components/ui/responsive-detail-panels";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { TarefasEditor } from "@/components/TarefasEditor";
 import { SeletorResponsaveis } from "@/components/SeletorResponsaveis";
@@ -343,8 +343,15 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                 </div>
               </div>
 
-              <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
-                <ResizablePanel defaultSize={62} minSize={40}>
+              <ResponsiveDetailPanels
+                className="flex-1 min-h-0"
+                primaryLabel="Fluxo"
+                secondaryLabel="Prévia"
+                primaryDefaultSize={62}
+                primaryMinSize={40}
+                secondaryDefaultSize={38}
+                secondaryMinSize={25}
+                primary={
                   <div className="h-full overflow-y-auto p-5 space-y-3">
                     <Label className="text-sm font-semibold block">
                       {ordens.length} coluna{ordens.length !== 1 ? "s" : ""}, {form.disciplinas.length} disciplina
@@ -517,11 +524,8 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                       </Select>
                     )}
                   </div>
-                </ResizablePanel>
-
-                <ResizableHandle withHandle />
-
-                <ResizablePanel defaultSize={38} minSize={25}>
+                }
+                secondary={
                   <div className="flex h-full flex-col bg-muted/20">
                     <div className="flex-shrink-0 border-b px-4 py-3">
                       <Label className="text-xs font-semibold text-muted-foreground">Prévia ao vivo</Label>
@@ -537,8 +541,8 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                       )}
                     </div>
                   </div>
-                </ResizablePanel>
-              </ResizablePanelGroup>
+                }
+              />
 
               <div className="flex-shrink-0 border-t px-6 py-4 flex items-center justify-end gap-2">
                 <Button variant="outline" onClick={resetToList}>

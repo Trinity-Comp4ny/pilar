@@ -6,6 +6,12 @@
 **Módulo:** projetos
 
 <!-- Origem: feedback do Victor (sócio da VRZ, design partner) em 2026-09-04. -->
+<!-- Atualização 2026-09-08: escopo estendido para incluir eventos do Portal do Cliente
+     (aprovação de proposta, aprovação/revisão de entrega) e responsável por disciplina,
+     a pedido do Matheus, junto com a investigação de auth do Portal e do Pilar Campo
+     (ver spec 099). A PR 1 (revisão por disciplina) já estava mergeada; a PR 2 (histórico
+     de status + view + aba Histórico) ainda não tinha sido construída, então a extensão
+     entra no v1 da PR 2 em vez de virar retrabalho depois. -->
 
 ## Problema
 
@@ -47,7 +53,11 @@ começou, quanto tempo ficou parada e por quê, e quantas revisões teve.
   pendência já registrada como fast-follow na spec 084.
 - **Anexo de arquivo por revisão.** Isso é gerenciador de documentos, outra feature.
 - **Timeline no Portal do Cliente.** O portal está em 0% de uso na VRZ; não vale a
-  superfície extra agora.
+  superfície extra agora. Atenção: isso é sobre o _cliente ver_ a timeline — diferente do
+  requisito 9 abaixo, que é o _escritório_ enxergar, na sua própria timeline, ações que o
+  cliente tomou no portal.
+- **Nível de acesso/papel dentro do Pilar Campo.** Avaliado junto com a spec 099 e
+  descartado: nenhuma ação hoje distingue conta de campo entre si.
 
 ## Requisitos
 
@@ -66,6 +76,25 @@ começou, quanto tempo ficou parada e por quê, e quantas revisões teve.
 7. Mudança de status do projeto passa a ser **gravada como evento**, a partir da entrega
    desta spec. Não há reconstrução retroativa (ver "Decisões e riscos").
 8. Estado vazio orienta a primeira ação, em vez de mostrar lista em branco.
+9. **Ações do cliente pelo Portal entram na timeline do escritório** como mais três tipos
+   de evento: proposta aprovada, entrega aprovada, revisão de entrega solicitada (com o
+   texto que o cliente escreveu). Hoje essas três ações gravam no banco e não avisam
+   ninguém — o escritório só percebe abrindo a proposta ou a entrega específica.
+10. ~~Cada disciplina passa a ter um responsável~~ **Correção de recon (2026-09-08,
+    durante a implementação): já existe.** `projeto_disciplina_responsaveis` (ponte
+    multi-responsável, `supabase/migrations/003_projetos_completo.sql`) e o helper
+    `_notif_resp_disciplina`/`_notif_resp_projeto`
+    (`supabase/migrations/20260817000100_notificacoes_ambient.sql`) já resolvem isso, com
+    UI própria (`useDisciplinasEditor`, `ProjetoFormDialog`). Não criar coluna nem RPC
+    nova — reusar o que já existe.
+11. Quando um dos três eventos do requisito 9 acontece, a **Central de Notificações**
+    (`gerar_notificacoes_ambient()`) avisa: para entrega, o(s) responsável(is) da
+    disciplina vinculada via `portal_entregas.projeto_disciplina_id` (`_notif_resp_disciplina`),
+    caindo em `_notif_resp_projeto` quando a entrega não está ligada a nenhuma disciplina;
+    para proposta, o(s) responsável(is) do projeto (`_notif_resp_projeto`, já é a união dos
+    responsáveis de todas as disciplinas). Em qualquer caso, soma-se
+    `_notif_gestao_operacional` (mesmo padrão dos outros blocos da função), então nunca
+    fica sem destinatário.
 
 Não-funcionais:
 
@@ -81,8 +110,11 @@ Não-funcionais:
   catalogam views que rodam como dona, ou seja, **sem** invoker. `leads_safe` está lá
   porque usa `security_barrier`, não invoker.
 - **Performance:** a aba consulta sempre com `projeto_id` fixo. Cada braço do `UNION ALL`
-  precisa filtrar por projeto usando índice; validar com `EXPLAIN` que não há seq scan em
-  `projeto_disciplinas` nem em `escopo_historico`.
+  precisa filtrar por projeto usando índice; validado com `EXPLAIN` (índices existentes já
+  cobrem `projeto_disciplinas`, `escopos`, `propostas`, `portal_entregas`, pausas e
+  revisões — nenhum seq scan além das tabelas pequenas `projetos`/`pessoas`, aceitável).
+  O braço de escopo lê `escopos` diretamente (`aprovado_em`/`aprovado_por`, já indexado por
+  `idx_escopos_projeto`), não `escopo_historico` — ver "Decisões e riscos".
 - **Multi-tenant:** nenhum braço da view pode retornar linha sem passar por `projetos.empresa_id`.
 
 ## Critérios de aceite
@@ -105,21 +137,29 @@ Não-funcionais:
 - [ ] Caso de borda: disciplina excluída (`ON DELETE CASCADE`) não deixa evento órfão na view.
 - [ ] Caso de borda: revisão registrada com data retroativa aparece na posição cronológica
       correta, não no topo.
+- [ ] Dado um cliente que aprova uma proposta pelo portal, quando o escritório abre a aba
+      Histórico do projeto, então vê o evento "proposta aprovada" e o responsável da
+      disciplina recebe notificação.
+- [ ] Dado um cliente que solicita revisão de uma entrega pelo portal, quando o escritório
+      abre a aba Histórico, então vê o evento com o texto que o cliente escreveu.
+- [ ] Dado uma disciplina sem responsável definido, quando um evento do portal ocorre para
+      o projeto dela, então a notificação cai no roteamento por role (owner/admin/coordenador),
+      não fica sem destinatário nenhum.
 
 ## Dados e contratos
 
 **Tabela nova** `projeto_disciplina_revisoes`:
 
-| coluna | tipo | nota |
-|---|---|---|
-| `id` | uuid pk | |
-| `projeto_disciplina_id` | uuid not null | FK `projeto_disciplinas`, `ON DELETE CASCADE` |
-| `motivo` | text not null | livre; é o "campo que especifica" a revisão |
-| `solicitada_em` | date not null default `current_date` | aceita retroativo |
-| `registrada_por` | uuid null | FK `pessoas`, `ON DELETE SET NULL` |
-| `concluida_em` | date null | null = em aberto |
-| `concluida_por` | uuid null | FK `pessoas` |
-| `created_at` | timestamptz not null default `now()` | |
+| coluna                  | tipo                                 | nota                                          |
+| ----------------------- | ------------------------------------ | --------------------------------------------- |
+| `id`                    | uuid pk                              |                                               |
+| `projeto_disciplina_id` | uuid not null                        | FK `projeto_disciplinas`, `ON DELETE CASCADE` |
+| `motivo`                | text not null                        | livre; é o "campo que especifica" a revisão   |
+| `solicitada_em`         | date not null default `current_date` | aceita retroativo                             |
+| `registrada_por`        | uuid null                            | FK `pessoas`, `ON DELETE SET NULL`            |
+| `concluida_em`          | date null                            | null = em aberto                              |
+| `concluida_por`         | uuid null                            | FK `pessoas`                                  |
+| `created_at`            | timestamptz not null default `now()` |                                               |
 
 Índice único parcial em `(projeto_disciplina_id) WHERE concluida_em IS NULL`: garante o
 requisito 3 no banco, não só na UI.
@@ -129,10 +169,14 @@ requisito 3 no banco, não só na UI.
 guarda só o valor atual e `status_data` só a última mudança: sem essa tabela, a coluna
 "mudança de status" da timeline é impossível, agora e no futuro.
 
+**Responsável de disciplina/projeto:** nenhuma tabela/coluna nova — reusa
+`projeto_disciplina_responsaveis` e os helpers `_notif_resp_disciplina(p_disciplina)` /
+`_notif_resp_projeto(p_projeto)` já existentes (ver requisito 10).
+
 **RPCs** (`SECURITY DEFINER`, check de tenant no corpo, `REVOKE ALL` + `GRANT EXECUTE TO authenticated`):
 
-- `rpc_registrar_revisao(p_disciplina_id uuid, p_motivo text, p_solicitada_em date default current_date) returns uuid`
-- `rpc_concluir_revisao(p_revisao_id uuid, p_concluida_em date default current_date) returns void`
+- `rpc_registrar_revisao(p_disciplina_id uuid, p_motivo text, p_solicitada_em date default current_date) returns uuid` — **já existe** (PR 1, `20260906000000_projeto_disciplina_revisoes.sql`), não recriar.
+- `rpc_concluir_revisao(p_revisao_id uuid, p_concluida_em date default current_date) returns void` — **já existe**, idem.
 
 **View** `v_projeto_timeline` (`security_invoker = true`), shape que o front consome:
 
@@ -145,14 +189,30 @@ tipo              text        -- 'projeto_iniciado' | 'projeto_concluido' | 'sta
                               -- | 'pausa_iniciada' | 'pausa_retomada'
                               -- | 'revisao_registrada' | 'revisao_concluida'
                               -- | 'escopo_alterado'
+                              -- | 'portal_proposta_aprovada' | 'portal_entrega_aprovada'
+                              -- | 'portal_entrega_revisao_solicitada'
 ocorrido_em       timestamptz
-detalhe           text null   -- motivo da pausa, motivo da revisão, "de X para Y"
-autor_nome        text null
+detalhe           text null   -- motivo da pausa, motivo da revisão, "de X para Y",
+                              -- texto da revisão solicitada pelo cliente
+autor_nome        text null   -- para eventos do portal: nome do cliente, não do escritório
 ```
 
 `UNION ALL` das fontes que já existem (`projetos`, `projeto_disciplinas`,
-`projeto_disciplina_pausas`, `escopo_historico`) mais as duas tabelas novas. Nenhuma fonte
-existente é duplicada em tabela de evento: a verdade continua na tabela dona, a view só lê.
+`projeto_disciplina_pausas`, `escopos` — não `escopo_historico`, ver "Decisões e riscos")
+mais as duas tabelas novas, mais um braço lendo `propostas` (evento
+`portal_proposta_aprovada`, status `aceita`) e outro lendo `portal_entregas` (eventos
+`portal_entrega_aprovada` e `portal_entrega_revisao_solicitada`, este usando
+`resposta_cliente` como `detalhe`) — não `admin_audit_logs`: sua RLS restringe SELECT a
+admin/owner, o que esconderia o evento de coordenador/colaborador com acesso normal ao
+projeto (ver "Decisões e riscos"). Nenhuma fonte existente é duplicada em tabela de evento:
+a verdade continua na tabela dona, a view só lê.
+
+**Notificação:** `gerar_notificacoes_ambient()` ganha um novo bloco que lê os mesmos três
+eventos do portal (via as tabelas de origem, não via a view — a função de notificação já
+não depende de `v_projeto_timeline` para os outros eventos) e roteia via
+`_notif_resp_disciplina`/`_notif_resp_projeto` (reuso, ver requisito 10); somado sempre a
+`_notif_gestao_operacional`, já usado pelos outros blocos da função (descrita em
+`supabase/migrations/20260901000000_notif_gestao_operacional_e_roteamento.sql`).
 
 ## Plano de implementação
 
@@ -160,9 +220,7 @@ A preencher em plan mode antes de gerar código. Ordem pretendida:
 
 1. Migration: `projeto_disciplina_revisoes` + índice único parcial + RLS + as 2 RPCs.
 2. Migration: `projeto_status_historico` + trigger em `projetos` + RLS.
-3. Migration: índice em `escopo_historico(escopo_id)` (hoje a tabela só tem PK, e sem esse
-   índice o braço de escopo do UNION cai em seq scan) e `v_projeto_timeline` com
-   `security_invoker = true`.
+3. Migration: `v_projeto_timeline` com `security_invoker = true`.
 4. `npm run gen:types:local`, validar, depois `gen:types` contra staging antes do PR (o job
    `types-sync` do CI bloqueia divergência).
 5. pgTAP das RPCs: motivo vazio, revisão duplicada em aberto, tenant errado, conclusão.
@@ -172,6 +230,12 @@ A preencher em plan mode antes de gerar código. Ordem pretendida:
 8. Aba Histórico em `ProjetoDetailTabs.tsx` (hoje: disciplinas, pagamentos, escopo), com
    filtro por disciplina e `EmptyState`.
 9. Contador de revisões no card da disciplina.
+10. ~~Migration de responsável~~ **não é necessária** (já existe, ver "Decisões e riscos").
+11. Migration: braços do `UNION` para os três eventos do portal + ajuste em
+    `gerar_notificacoes_ambient()` para rotear por `_notif_resp_disciplina`/`_notif_resp_projeto`.
+12. ~~UI de seletor de responsável~~ **não é necessária** — já existe em `ProjetoFormDialog`/`useDisciplinasEditor`.
+13. pgTAP dos novos braços: evento de portal aparece na view, notificação chega ao(s)
+    responsável(is) certo(s), cai no fallback por role quando não há responsável.
 
 ## Decisões e riscos
 
@@ -195,3 +259,26 @@ A preencher em plan mode antes de gerar código. Ordem pretendida:
 - **Débito de segurança herdado:** a spec 084 registrou que
   `recalc_disciplina_status_por_checklist` é `SECURITY DEFINER` sem check de tenant.
   Continua aberto e não é resolvido aqui.
+- **Responsável de disciplina/projeto já existia — engano de recon corrigido na
+  implementação.** A investigação inicial (08/09) concluiu, olhando só o schema base de
+  `projeto_disciplinas`, que não havia responsável modelado. Ao implementar, achamos
+  `projeto_disciplina_responsaveis` + `_notif_resp_disciplina`/`_notif_resp_projeto`
+  (já usados por outros blocos de `gerar_notificacoes_ambient()` desde a spec 029/090) e a
+  UI já existente. Nenhuma coluna/RPC/UI nova para responsável — só reuso.
+- **Notificação de evento de portal roteia por pessoa (responsável), com fallback por
+  papel.** Mesmo padrão já usado pelos blocos de prazo de projeto/disciplina (não é
+  precedente novo, ao contrário do que a v1 desta spec presumia): `_notif_resp_disciplina`
+  ou `_notif_resp_projeto` primeiro, somado a `_notif_gestao_operacional` sempre — nunca
+  fica sem destinatário quando não há responsável definido.
+- **Evento de notificação de portal é pontual, não estado — dedup extra necessário.** O
+  dedup padrão de `notificar()` (não empilha enquanto a notificação anterior não foi lida)
+  não basta aqui: diferente de "pagamento ainda pendente" (que faz sentido renotificar),
+  "proposta aceita" é um fato que não desfaz — sem um `NOT EXISTS` extra contra
+  `notificacoes` (lida ou não), o cron recriaria a notificação para sempre depois que o
+  destinatário a lesse. Os três blocos novos de `gerar_notificacoes_ambient()` têm essa
+  guarda; os blocos de prazo (existentes) não precisam, porque descrevem estado.
+- **Índice em `escopo_historico` não foi necessário — plano original ajustado.** O braço de
+  escopo/aditivo da view lê `escopos` diretamente (`aprovado_em`/`aprovado_por`, já indexado
+  por `idx_escopos_projeto`), não `escopo_historico` (texto livre em `acao`, sem valor fixo
+  de "aprovado" gravado hoje, e sem nenhum consumo no frontend). Mais preciso e sem precisar
+  de índice novo. `escopo_historico` fica como está, fora do escopo desta spec.

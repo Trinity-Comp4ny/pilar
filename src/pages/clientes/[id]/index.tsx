@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDate } from "@/lib/format";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useParams, useNavigate, Link } from "react-router-dom";
@@ -497,6 +498,7 @@ export default function ClienteDetalhePage() {
   const { isAdmin, can } = usePermissions();
   const canEdit = can("clientes", "edit");
   const canEditEntregas = can("portal_cliente", "edit");
+  const isMobile = useIsMobile();
   const [tab, setTab] = useState("visao-geral");
   const [novaEntregaProjetoId, setNovaEntregaProjetoId] = useState<string | null>(null);
   const [entregasRefreshKey, setEntregasRefreshKey] = useState<Record<string, number>>({});
@@ -586,27 +588,46 @@ export default function ClienteDetalhePage() {
     <PageLayout
       header={
         <PageHeader title={clienteNomeCompleto} breadcrumbs={[{ label: "Clientes", to: "/clientes" }]}>
+          {/* Ícone-only em mobile: os 3 botões com texto completo estouravam o
+              header em 390px, escondidos até um swipe revelar (achado da
+              auditoria, mesmo padrão já corrigido no cabeçalho do Gantt). */}
           <div className="flex items-center gap-2">
             {canEdit && (
-              <Button variant="outline" size="sm" onClick={() => setIsMessageOpen(true)}>
-                <Mail className="h-4 w-4 mr-1.5" />
-                Mensagem
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(isMobile && "w-9 px-0")}
+                onClick={() => setIsMessageOpen(true)}
+                aria-label="Mensagem"
+              >
+                <Mail className={cn("h-4 w-4", !isMobile && "mr-1.5")} />
+                {!isMobile && "Mensagem"}
               </Button>
             )}
             {isAdmin && (
               <>
-                <Button variant="outline" size="sm" onClick={() => setIsEditOpen(true)}>
-                  <Pencil className="h-4 w-4 mr-1.5" />
-                  Editar
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={cn(isMobile && "w-9 px-0")}
+                  onClick={() => setIsEditOpen(true)}
+                  aria-label="Editar"
+                >
+                  <Pencil className={cn("h-4 w-4", !isMobile && "mr-1.5")} />
+                  {!isMobile && "Editar"}
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-danger-mid border-danger-mid-border hover:bg-danger-soft"
+                  className={cn(
+                    "text-danger-mid border-danger-mid-border hover:bg-danger-soft",
+                    isMobile && "w-9 px-0"
+                  )}
                   onClick={() => setConfirmDeleteOpen(true)}
+                  aria-label="Excluir"
                 >
-                  <Trash2 className="h-4 w-4 mr-1.5" />
-                  Excluir
+                  <Trash2 className={cn("h-4 w-4", !isMobile && "mr-1.5")} />
+                  {!isMobile && "Excluir"}
                 </Button>
               </>
             )}

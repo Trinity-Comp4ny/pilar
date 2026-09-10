@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { supabase } from "@/integrations/supabase/client";
+import { addBusinessDays, formatDateLocal, parseDateLocal } from "@/lib/businessDays";
 import { calcularDatasFluxo, responsaveisEfetivos } from "@/lib/fluxoCascata";
 import { PROJECT_STATUS, PROJECT_PRIORITY, type ProjectPriority } from "@/constants";
 import {
@@ -17,10 +18,12 @@ import { type TemplateProjeto } from "@/hooks/useTemplates";
 import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
+import { analytics } from "@/lib/analytics";
 import { lookupCEP } from "@/lib/brasilApi";
 import { useBulkSaveDisciplinas } from "@/hooks/useProjetoDisciplinas";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useFormPersist, clearFormPersist } from "@/hooks/useFormPersist";
+import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
 
 const PROJETO_DRAFT_KEY = "projeto-novo";
 
@@ -74,6 +77,7 @@ const EMPTY_FORM = {
   observacao: "",
   status: PROJECT_STATUS.PLANEJAMENTO as Projeto["status"],
   prioridade: PROJECT_PRIORITY.MEDIA as ProjectPriority,
+  prazo_dias_uteis: "",
   dia_pagamento: "",
 };
 
@@ -165,6 +169,7 @@ export function useProjetoForm({
   const isEditMode = editProjeto !== null;
   const [isSaving, setIsSaving] = useState(false);
   const [isFetchingCep, setIsFetchingCep] = useState(false);
+  const [capacidadeErro, setCapacidadeErro] = useState<CapacidadeErro | null>(null);
   const geocodeAbortRef = useRef<AbortController | null>(null);
   // Snapshot do estado inicial do formulário ao abrir, para detectar alterações
   // não salvas e confirmar antes de descartar.
@@ -227,6 +232,7 @@ export function useProjetoForm({
         observacao: editProjeto.observacao || "",
         status: editProjeto.status,
         prioridade: editProjeto.prioridade || PROJECT_PRIORITY.MEDIA,
+        prazo_dias_uteis: "",
         dia_pagamento: "",
       };
       setFormData(nextForm);
@@ -259,7 +265,26 @@ export function useProjetoForm({
   });
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [field]: value };
+
+      if (field === "prazo_dias_uteis" || field === "data_inicio") {
+        const prazo = field === "prazo_dias_uteis" ? value : prev.prazo_dias_uteis;
+        const inicio = field === "data_inicio" ? value : prev.data_inicio;
+        const prazoNum = parseInt(prazo, 10);
+        if (inicio && prazoNum > 0 && prazoNum <= 999) {
+          try {
+            const startDate = parseDateLocal(inicio);
+            const endDate = addBusinessDays(startDate, prazoNum);
+            next.data_previsao = formatDateLocal(endDate);
+          } catch {
+            // ignore parse errors
+          }
+        }
+      }
+
+      return next;
+    });
   };
 
   const handleOpenDisciplinaDetail = (index: number) => {
@@ -647,9 +672,17 @@ export function useProjetoForm({
           p_prioridade: formData.prioridade,
         });
 
-        if (error) throw new Error(error.message || String(error));
+        // Não reembrulhar em `new Error`: perderia `.hint`/`.code` do
+        // PostgrestError, que é como o catch abaixo reconhece um erro de
+        // capacidade do trial (SPEC 098) pra abrir o desbloqueio em vez de
+        // um toast genérico.
+        if (error) throw error;
 
         novoProjetoId = (newProjetoId as string) ?? null;
+
+        if (novoProjetoId) {
+          analytics.track("projeto_criado", { projeto_id: novoProjetoId, disciplinas: finalDisciplinas.length });
+        }
 
         // Sync disciplinas to relational table for new project.
         // Se falhar, faz rollback do projeto pra não deixar registro órfão sem disciplinas.
@@ -781,7 +814,13 @@ export function useProjetoForm({
           .then(() => onSaved());
       }
     } catch (err: unknown) {
-      toast.error("Erro ao salvar", { description: getSafeErrorMessage(err) });
+      const capacidade = parseCapacidadeError(err);
+      if (capacidade) {
+        analytics.track("trial_limite_atingido", { recurso: capacidade.recurso, limite: capacidade.limite });
+        setCapacidadeErro(capacidade);
+      } else {
+        toast.error("Erro ao salvar", { description: getSafeErrorMessage(err) });
+      }
     } finally {
       setIsSaving(false);
     }
@@ -800,6 +839,8 @@ export function useProjetoForm({
     isDirty,
     handleInputChange,
     fetchCep,
+    capacidadeErro,
+    fecharCapacidadeErro: () => setCapacidadeErro(null),
     // Disciplinas
     projetosDisciplinas,
     tempDisciplina,

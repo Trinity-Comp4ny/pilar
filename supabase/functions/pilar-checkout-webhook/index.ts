@@ -308,10 +308,7 @@ serve(
 
           if (newSub && !newSub.trial_ends_at) {
             const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
-            await admin
-              .from("pilar_subscriptions")
-              .update({ trial_ends_at: trialEnd })
-              .eq("id", newSub.id);
+            await admin.from("pilar_subscriptions").update({ trial_ends_at: trialEnd }).eq("id", newSub.id);
           }
         }
 
@@ -361,6 +358,14 @@ serve(
               current_period_end: periodEnd,
             })
             .eq("id", activeSub.id);
+
+          // SPEC 098 Fase 3 (ADR 0042): pagar dentro da janela de 90 dias
+          // tira a empresa do modo somente leitura.
+          await admin
+            .from("empresas")
+            .update({ leitura_desde: null })
+            .eq("id", activeSub.empresa_id)
+            .not("leitura_desde", "is", null);
         }
       }
 

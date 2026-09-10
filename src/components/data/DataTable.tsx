@@ -252,14 +252,22 @@ export function DataTable<T>({
     if (error) {
       return (
         <TableRow className="hover:bg-transparent">
+          {/* `sticky left-0` prende o conteúdo à borda esquerda VISÍVEL do
+              scroll horizontal em vez de deixá-lo centralizado dentro da
+              largura total da tabela (que os cabeçalhos de coluna esticam
+              além de 390px mesmo sem nenhuma linha de dado, achado da
+              auditoria mobile: texto de estado vazio/erro ficava fora da
+              área visível). */}
           <TableCell colSpan={totalCols} className="py-14">
-            {errorState ?? (
-              <div className="flex flex-col items-center justify-center text-center px-6" role="alert">
-                <AlertCircle className="h-8 w-8 text-destructive mb-3" aria-hidden />
-                <p className="text-sm font-semibold text-foreground mb-1">{errorTitle}</p>
-                <p className="text-sm text-muted-foreground max-w-md">{error.message}</p>
-              </div>
-            )}
+            <div className="sticky left-4 w-[calc(100vw-4rem)] max-w-lg">
+              {errorState ?? (
+                <div className="flex flex-col items-center justify-center text-center px-6" role="alert">
+                  <AlertCircle className="h-8 w-8 text-destructive mb-3" aria-hidden />
+                  <p className="text-sm font-semibold text-foreground mb-1">{errorTitle}</p>
+                  <p className="text-sm text-muted-foreground max-w-md">{error.message}</p>
+                </div>
+              )}
+            </div>
           </TableCell>
         </TableRow>
       );
@@ -288,11 +296,21 @@ export function DataTable<T>({
     if (bodyRows.length === 0) {
       return (
         <TableRow className="hover:bg-transparent">
-          <TableCell
-            colSpan={totalCols}
-            className={cn(!emptyState && "py-14 text-center text-sm text-muted-foreground")}
-          >
-            {emptyState ?? emptyMessage}
+          {/* `sticky left-4` prende o conteúdo à borda esquerda VISÍVEL do
+              scroll horizontal em vez de deixá-lo centralizado dentro da
+              largura total da tabela (que os cabeçalhos de coluna esticam
+              além de 390px mesmo sem nenhuma linha de dado, achado da
+              auditoria mobile: texto de estado vazio ficava fora da área
+              visível). */}
+          <TableCell colSpan={totalCols} className={cn(!emptyState && "py-14")}>
+            <div
+              className={cn(
+                "sticky left-4 w-[calc(100vw-4rem)] max-w-lg",
+                !emptyState && "text-center text-sm text-muted-foreground"
+              )}
+            >
+              {emptyState ?? emptyMessage}
+            </div>
           </TableCell>
         </TableRow>
       );

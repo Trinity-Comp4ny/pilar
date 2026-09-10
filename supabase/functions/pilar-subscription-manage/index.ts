@@ -13,7 +13,12 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { jsonResponse, optionsResponse } from "../_shared/cors.ts";
-import { cancelSubscription, updateSubscription } from "../_shared/asaas-platform.ts";
+import {
+  cancelSubscription,
+  updateSubscription,
+  getSubscriptionPayments,
+  refundPayment,
+} from "../_shared/asaas-platform.ts";
 import { createLogger } from "../_shared/logger.ts";
 
 const log = createLogger("pilar-subscription-manage");
@@ -68,7 +73,7 @@ serve(
     // --- Fetch subscription ---
     const { data: sub, error: subErr } = await admin
       .from("pilar_subscriptions")
-      .select("id, asaas_subscription_id, plan_id, billing_cycle, status")
+      .select("id, asaas_subscription_id, plan_id, billing_cycle, status, current_period_start")
       .eq("empresa_id", profile.empresa_id)
       .maybeSingle();
 
@@ -83,6 +88,29 @@ serve(
     if (body.action === "cancel") {
       if (sub.status === "canceled") {
         return jsonResponse({ error: "Assinatura já cancelada" }, 400, req);
+      }
+
+      // SPEC 098 requisito 18: cancelamento até 7 dias após a 1ª cobrança
+      // (current_period_start, gravado pelo trial-expiry-cron na conversão)
+      // gera estorno integral automático, sem o admin precisar pedir.
+      let refunded = false;
+      const dentroDoArrependimento =
+        !!sub.current_period_start &&
+        Date.now() - new Date(sub.current_period_start).getTime() <= 7 * 24 * 60 * 60 * 1000;
+
+      if (dentroDoArrependimento) {
+        try {
+          const payments = await getSubscriptionPayments(sub.asaas_subscription_id);
+          const primeiraCobranca = payments[0];
+          if (primeiraCobranca && (primeiraCobranca.status === "CONFIRMED" || primeiraCobranca.status === "RECEIVED")) {
+            await refundPayment(primeiraCobranca.id);
+            refunded = true;
+          }
+        } catch (err) {
+          // Não bloqueia o cancelamento por causa do estorno: loga alto e
+          // segue — o suporte processa manualmente se precisar.
+          log.error("falha ao estornar dentro do prazo de arrependimento", err, { subscription_id: sub.id });
+        }
       }
 
       try {
@@ -101,7 +129,7 @@ serve(
         })
         .eq("id", sub.id);
 
-      return jsonResponse({ success: true, status: "canceled" }, 200, req);
+      return jsonResponse({ success: true, status: "canceled", refunded }, 200, req);
     }
 
     // --- UPDATE PLAN ---

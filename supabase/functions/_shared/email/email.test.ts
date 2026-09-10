@@ -83,8 +83,17 @@ const casos: Array<[string, () => { subject: string; html: string }]> = [
       T.templateAcessoPortalCliente({
         nomeCliente: XSS,
         email: XSS,
-        senha: XSS,
-        loginUrl: "https://l",
+        conviteUrl: "https://l",
+        empresaNome: empresaX,
+      }),
+  ],
+  [
+    "convite-campo",
+    () =>
+      T.templateConviteAcessoCampo({
+        nome: XSS,
+        email: XSS,
+        conviteUrl: "https://l",
         empresaNome: empresaX,
       }),
   ],

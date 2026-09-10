@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react";
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { BottomNav } from "@/components/BottomNav";
 import { CommandPaletteHint } from "@/components/CommandPaletteHint";
 import { useCommandPalette } from "@/hooks/useCommandPalette";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -56,13 +57,16 @@ function LayoutContent() {
       <AppSidebar />
       <div className={`${marginLeft}`}>
         <UltraAdminPlatformBanner />
-        <main id="main-content" className="md:px-10 md:pb-10 md:pt-4">
+        <main id="main-content" className="pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:px-10 md:pb-10 md:pt-4">
           <ErrorBoundary>
             <DevErrorTrigger />
             <Outlet />
           </ErrorBoundary>
         </main>
       </div>
+      {/* Navegação mobile (spec 097 / ADR 0040): substitui o drawer da sidebar
+          abaixo de md. Fixa; PageLayout e este <main> reservam o espaço embaixo. */}
+      <BottomNav />
       <CommandPaletteMount />
       <Suspense fallback={null}>
         <OnboardingChecklist />

@@ -72,7 +72,7 @@ export function DatePicker({
             <span className="min-w-0 truncate">{displayValue ?? placeholder}</span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent className="w-auto max-w-[calc(100vw-2rem)] p-0" align="start" collisionPadding={12}>
           <Calendar
             mode="single"
             selected={selected}

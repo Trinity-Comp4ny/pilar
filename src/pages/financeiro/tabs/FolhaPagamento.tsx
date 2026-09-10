@@ -113,7 +113,9 @@ export default function FolhaPagamento() {
         .eq("mes", prevMonth)
         .eq("ano", prevYear);
       const map = new Map<string, number>();
-      (prev || []).forEach((r) => map.set(r.pessoa_id, Number(r.total_receber || 0)));
+      (prev || []).forEach((r) => {
+        if (r.pessoa_id) map.set(r.pessoa_id, Number(r.total_receber || 0));
+      });
       setPrevTotals(map);
     } catch {
       setPrevTotals(new Map());
@@ -148,7 +150,7 @@ export default function FolhaPagamento() {
 
       if (existingData && existingData.length > 0) {
         setStatusFolha("closed");
-        const personIds = existingData.map((d) => d.pessoa_id);
+        const personIds = existingData.map((d) => d.pessoa_id).filter((id): id is string => id !== null);
         // cpf/chaves_pix têm grant só para service_role (PII): o role autenticado
         // não pode lê-los aqui, senão o select inteiro falha e some com os nomes.
         const { data: peopleData } = await supabase.from("pessoas").select("id, nome, cargo").in("id", personIds);
@@ -161,9 +163,9 @@ export default function FolhaPagamento() {
             const soma_area = Number(item.total_area_projetada ?? 0);
             const v_variavel = Number(item.adicional_variavel ?? soma_area * valor_m2);
             const v_total = Number(item.total_receber ?? salario_fixo + v_variavel);
-            const pessoa = peopleMap.get(item.pessoa_id);
+            const pessoa = item.pessoa_id ? peopleMap.get(item.pessoa_id) : undefined;
             return {
-              p_id: item.pessoa_id,
+              p_id: item.pessoa_id ?? "",
               p_nome: pessoa?.nome || "Desconhecido",
               p_cargo: pessoa?.cargo || "-",
               p_cpf: null,
@@ -392,7 +394,7 @@ export default function FolhaPagamento() {
       if (!existingData || existingData.length === 0) {
         setHistoryDetailItems([]);
       } else {
-        const personIds = existingData.map((d) => d.pessoa_id);
+        const personIds = existingData.map((d) => d.pessoa_id).filter((id): id is string => id !== null);
         const { data: peopleData } = await supabase.from("pessoas").select("id, nome, cargo").in("id", personIds);
         const peopleMap = new Map((peopleData || []).map((p) => [p.id, p]));
 
@@ -403,9 +405,9 @@ export default function FolhaPagamento() {
             const soma_area = Number(item.total_area_projetada ?? 0);
             const v_variavel = Number(item.adicional_variavel ?? soma_area * valor_m2);
             const v_total = Number(item.total_receber ?? salario_fixo + v_variavel);
-            const pessoa = peopleMap.get(item.pessoa_id);
+            const pessoa = item.pessoa_id ? peopleMap.get(item.pessoa_id) : undefined;
             return {
-              p_id: item.pessoa_id,
+              p_id: item.pessoa_id ?? "",
               p_nome: pessoa?.nome || "Desconhecido",
               p_cargo: pessoa?.cargo || "-",
               p_cpf: null,

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   AlertTriangle,
   CalendarClock,
@@ -107,6 +108,7 @@ export function ObraCronogramaTab({
   projetoId: string | null;
   canEdit: boolean;
 }) {
+  const isMobile = useIsMobile();
   const { data: frentes = [], isLoading } = useObraFrentes(obraId);
   const { data: tarefas = [] } = useObraTarefas(obraId);
   const createFrente = useCreateFrente(obraId);
@@ -214,13 +216,7 @@ export function ObraCronogramaTab({
   }, [todayPct, scrollToToday]);
 
   // ── Drag: motor compartilhado (etapa e tarefa) ──────────────────────────────
-  const {
-    isSaving,
-    isDragging,
-    startDrag,
-    getBarGeometry,
-    shouldSuppressClick,
-  } = useGanttDrag<string>({
+  const { isSaving, isDragging, startDrag, getBarGeometry, shouldSuppressClick } = useGanttDrag<string>({
     timelineStart: tlStart,
     timelineEnd: tlEnd,
     zoom,
@@ -314,11 +310,15 @@ export function ObraCronogramaTab({
           {temTimeline && (
             <Card>
               <CardContent className="p-0">
-                <div className="flex items-center justify-between gap-3 border-b p-3">
-                  <div className="flex items-center gap-2">
-                    <CalendarClock className="h-4 w-4 text-muted-foreground" />
-                    <h3 className="text-sm font-semibold text-ink">Linha do tempo</h3>
-                    <span className="text-[11px] text-muted-foreground">
+                {/* Título e controles empilham em mobile (achado da auditoria:
+                    "Linha do tempo" + "Hoje" + "Meses"/"Semanas" não cabiam em
+                    390px sem quebrar linha, e o excesso vazava em vez de ficar
+                    contido). */}
+                <div className="flex flex-col items-start gap-2 border-b p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <CalendarClock className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <h3 className="truncate text-sm font-semibold text-ink">Linha do tempo</h3>
+                    <span className="shrink-0 text-[11px] text-muted-foreground">
                       {frenteRows.length} etapa{frenteRows.length === 1 ? "" : "s"}
                     </span>
                     {isSaving && <span className="animate-pulse text-[10px] text-muted-foreground">Salvando…</span>}
@@ -328,7 +328,7 @@ export function ObraCronogramaTab({
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -344,24 +344,28 @@ export function ObraCronogramaTab({
                         size="sm"
                         className="h-7 rounded-none px-2 text-xs"
                         onClick={() => setZoom("months")}
+                        aria-label="Meses"
                       >
-                        <ZoomOut className="mr-1 h-3 w-3" /> Meses
+                        <ZoomOut className="sm:mr-1 h-3 w-3" /> <span className="hidden sm:inline">Meses</span>
                       </Button>
                       <Button
                         variant={zoom === "weeks" ? "secondary" : "ghost"}
                         size="sm"
                         className="h-7 rounded-none px-2 text-xs"
                         onClick={() => setZoom("weeks")}
+                        aria-label="Semanas"
                       >
-                        <ZoomIn className="mr-1 h-3 w-3" /> Semanas
+                        <ZoomIn className="sm:mr-1 h-3 w-3" /> <span className="hidden sm:inline">Semanas</span>
                       </Button>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex">
-                  {/* Coluna fixa: etapas + tarefas */}
-                  <div className="w-[260px] flex-shrink-0 border-r bg-muted/30">
+                  {/* Coluna fixa: etapas + tarefas. Colapsa em mobile (achado da
+                      auditoria: 260px sozinha consumia 66% de uma tela de 390px,
+                      sobrando só uma faixa estreita pra timeline). */}
+                  <div className={cn("flex-shrink-0 border-r bg-muted/30", isMobile ? "w-[104px]" : "w-[260px]")}>
                     <div className="flex h-10 items-center border-b px-3">
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                         Etapa / tarefa
@@ -385,20 +389,22 @@ export function ObraCronogramaTab({
                               className="flex min-w-0 flex-1 flex-col justify-center py-1 text-left"
                             >
                               <span className="truncate text-xs font-semibold text-ink">{row.frente.nome}</span>
-                              <div className="mt-0.5 flex items-center gap-1.5">
-                                <span
-                                  className={cn(
-                                    "inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full",
-                                    ESTADO_BAR[row.estado]
-                                  )}
-                                  aria-hidden
-                                />
-                                <span className="truncate text-[10px] text-muted-foreground">
-                                  {ESTADO_LABEL[row.estado]}
-                                  {row.total > 0 &&
-                                    ` · ${row.progresso}% · ${row.total} tarefa${row.total === 1 ? "" : "s"}`}
-                                </span>
-                              </div>
+                              {!isMobile && (
+                                <div className="mt-0.5 flex items-center gap-1.5">
+                                  <span
+                                    className={cn(
+                                      "inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full",
+                                      ESTADO_BAR[row.estado]
+                                    )}
+                                    aria-hidden
+                                  />
+                                  <span className="truncate text-[10px] text-muted-foreground">
+                                    {ESTADO_LABEL[row.estado]}
+                                    {row.total > 0 &&
+                                      ` · ${row.progresso}% · ${row.total} tarefa${row.total === 1 ? "" : "s"}`}
+                                  </span>
+                                </div>
+                              )}
                             </button>
                             {canEdit && (
                               <button

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { monitoring } from "@/lib/monitoring";
 import { analytics } from "@/lib/analytics";
+import { routeToModule } from "@/lib/modules";
 
 /**
  * Registra breadcrumb Sentry + pageview PostHog a cada mudança de rota.
@@ -12,6 +13,6 @@ export function usePageTracking() {
 
   useEffect(() => {
     monitoring.addBreadcrumb("navigation", { path: location.pathname });
-    analytics.track("$pageview", { path: location.pathname });
+    analytics.track("$pageview", { path: location.pathname, modulo: routeToModule(location.pathname) });
   }, [location.pathname]);
 }
