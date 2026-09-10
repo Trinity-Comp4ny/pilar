@@ -55,7 +55,7 @@ interface Props {
 
 export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Props) {
   const formatCurrency = useMoneyMask();
-  const { auxQuery, extrairArquivo, extrairTextoIA, gravarLote, desfazer, gravando, temDesfazer } =
+  const { auxQuery, listarAbas, extrairArquivo, extrairTextoIA, gravarLote, desfazer, gravando, temDesfazer } =
     useImportFinanceiro();
 
   const [tipoDoc, setTipoDoc] = useState<ImportTipoDoc>("extrato");
@@ -63,6 +63,9 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
   const [avisos, setAvisos] = useState<string[]>([]);
   const [textoColado, setTextoColado] = useState("");
   const [fase, setFase] = useState<"idle" | "lendo" | "extraindo">("idle");
+  const [arquivoPendente, setArquivoPendente] = useState<File | null>(null);
+  const [abasDisponiveis, setAbasDisponiveis] = useState<string[]>([]);
+  const [abaEscolhida, setAbaEscolhida] = useState<string>("");
   const [contaId, setContaId] = useState<string>(NONE);
   const [projetoId, setProjetoId] = useState<string>(NONE);
   const [resumo, setResumo] = useState<ResumoImport | null>(null);
@@ -116,6 +119,28 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
     return lista.map((i) => (i.tipo === "despesa" ? i : { ...i, tipo: "despesa", categoriaId: null }));
   }
 
+  /** Processa a planilha/CSV escolhido (Excel usa a aba indicada, ou a primeira). */
+  async function processarPlanilha(file: File, sheetName?: string) {
+    if (!aux) return;
+    setFase("extraindo");
+    try {
+      const r = await extrairArquivo(file, aux, sheetName);
+      setItens(r.itens);
+      setAvisos(r.avisos);
+      setResumo(null);
+      if (r.itens.length === 0) {
+        toast.error("Nada reconhecido no arquivo", {
+          description: "Confira se a planilha tem data, descrição e valor.",
+        });
+      }
+    } catch (err) {
+      reportInvokeError(err, "financeiro-import:ler-arquivo");
+      toast.error("Erro ao ler arquivo", { description: msg(err) });
+    } finally {
+      setFase("idle");
+    }
+  }
+
   /** Um único seletor de arquivo: roteia por extensão. PDF → texto local + IA; CSV/Excel → parsing determinístico. */
   async function onArquivo(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -132,17 +157,20 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
           return;
         }
         await extrair(texto);
-      } else {
-        setFase("extraindo");
-        const r = await extrairArquivo(file, aux);
-        setItens(r.itens);
-        setAvisos(r.avisos);
-        setResumo(null);
-        if (r.itens.length === 0) {
-          toast.error("Nada reconhecido no arquivo", {
-            description: "Confira se a planilha tem data, descrição e valor.",
-          });
+      } else if (ext === "xlsx" || ext === "xls") {
+        setFase("lendo");
+        const abas = await listarAbas(file);
+        // Mais de uma aba: pausa pra perguntar qual usar em vez de processar a
+        // primeira (era exatamente o que confundia quem subia planilha com várias abas).
+        if (abas.length > 1) {
+          setArquivoPendente(file);
+          setAbasDisponiveis(abas);
+          setAbaEscolhida(abas[0]);
+          return;
         }
+        await processarPlanilha(file);
+      } else {
+        await processarPlanilha(file);
       }
     } catch (err) {
       reportInvokeError(err, "financeiro-import:ler-arquivo");
@@ -151,6 +179,22 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
       setFase("idle");
       if (fileRef.current) fileRef.current.value = "";
     }
+  }
+
+  async function onConfirmarAba() {
+    if (!arquivoPendente || !abaEscolhida) return;
+    const file = arquivoPendente;
+    const sheetName = abaEscolhida;
+    setArquivoPendente(null);
+    setAbasDisponiveis([]);
+    setAbaEscolhida("");
+    await processarPlanilha(file, sheetName);
+  }
+
+  function onCancelarAba() {
+    setArquivoPendente(null);
+    setAbasDisponiveis([]);
+    setAbaEscolhida("");
   }
 
   async function extrair(texto: string) {
@@ -253,6 +297,38 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
               PDF, CSV ou Excel. O PDF é lido no seu navegador e só o texto vai para a extração, nunca a imagem do
               documento.
             </p>
+
+            {/* Excel com mais de uma aba: pausa pra perguntar qual usar em vez de pegar a primeira. */}
+            {arquivoPendente && (
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription className="space-y-2">
+                  <p>
+                    Essa planilha tem <strong>{abasDisponiveis.length} abas</strong>. Qual delas tem os lançamentos?
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Select value={abaEscolhida} onValueChange={setAbaEscolhida}>
+                      <SelectTrigger className="w-64">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {abasDisponiveis.map((aba) => (
+                          <SelectItem key={aba} value={aba}>
+                            {aba}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" onClick={onConfirmarAba} disabled={ocupado}>
+                      Processar aba
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={onCancelarAba} disabled={ocupado}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
 
             <details className="text-sm">
               <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">

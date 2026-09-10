@@ -7,6 +7,7 @@ import { isUltraAdmin } from "@/lib/roles";
 import { mfaDevBypass } from "@/lib/mfaDevBypass";
 import { monitoring } from "@/lib/monitoring";
 import Layout from "./Layout";
+import { ReadOnlyBanner } from "./ReadOnlyBanner";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -18,7 +19,10 @@ type SubStatus = "active" | "trialing" | "overdue" | "canceled" | "expired" | nu
 // Objeto mutável: property .v é escrita pelo check(), const no binding.
 const subStatusCache: { v: SubStatus | undefined } = { v: undefined };
 
-function SubscriptionSuspendedScreen() {
+// SPEC 098: quem não pode regularizar a assinatura (não é admin) não vê o
+// atalho pra tela de pagamento, que ele não tem acesso mesmo. Só orienta a
+// falar com quem administra a empresa.
+function SubscriptionSuspendedScreen({ isAdmin }: { isAdmin: boolean }) {
   const { openSettings } = useSettingsModal();
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted p-8">
@@ -31,13 +35,17 @@ function SubscriptionSuspendedScreen() {
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold text-ink">Acesso suspenso</h1>
           <p className="text-ink-muted text-sm leading-relaxed">
-            Sua assinatura está suspensa ou cancelada. Regularize o pagamento para retomar o acesso à plataforma.
+            {isAdmin
+              ? "Sua assinatura está suspensa ou cancelada. Regularize o pagamento para retomar o acesso à plataforma."
+              : "A assinatura da sua empresa está suspensa ou cancelada. Fale com o administrador da sua empresa para regularizar o pagamento."}
           </p>
         </div>
         <div className="flex flex-col gap-3">
-          <Button variant="brand" onClick={() => openSettings("pagamento")}>
-            Ver assinatura
-          </Button>
+          {isAdmin && (
+            <Button variant="brand" onClick={() => openSettings("pagamento")}>
+              Ver assinatura
+            </Button>
+          )}
           <Button variant="ghost" asChild className="text-ink-muted">
             <Link to="/" onClick={() => supabase.auth.signOut()}>
               Sair da conta
@@ -132,11 +140,20 @@ export function PrivateRoute() {
     return <Outlet />;
   }
 
+  // SPEC 098 Fase 3 (ADR 0042): trial vencido sem cartão tokenizado entra em
+  // 90 dias de somente leitura antes da exclusão, em vez de bloquear o
+  // acesso por completo — distinto de cancelamento/inadimplência abaixo.
+  // leitura_desde é a fonte de verdade (setada pelo trial-expiry-cron);
+  // sem ela, "expired" ainda cai no bloqueio total de sempre.
+  const leituraDesde = profile?.empresas?.leitura_desde ?? null;
+  const emLeitura = subStatus === "expired" && leituraDesde !== null;
+
   // Assinatura suspensa bloqueia a app; a própria tela abre o modal de pagamento
   // (montado na raiz, fora das rotas) para o cliente regularizar sem sair daqui.
-  const suspended = subStatus === "canceled" || subStatus === "expired";
+  const suspended = subStatus === "canceled" || (subStatus === "expired" && !emLeitura);
   if (suspended) {
-    return <SubscriptionSuspendedScreen />;
+    const isAdmin = profile?.role === "admin" || profile?.role === "ultra_admin";
+    return <SubscriptionSuspendedScreen isAdmin={isAdmin} />;
   }
 
   const justLoggedIn = sessionStorage.getItem("pilar_post_login") === "1";
@@ -144,6 +161,16 @@ export function PrivateRoute() {
     sessionStorage.removeItem("pilar_post_login");
     sessionStorage.setItem(ULTRA_PLATFORM_MODE_KEY, "true");
     return <Navigate to="/ultra-admin" replace />;
+  }
+
+  if (emLeitura) {
+    const isAdmin = profile?.role === "admin" || profile?.role === "ultra_admin";
+    return (
+      <>
+        <ReadOnlyBanner isAdmin={isAdmin} />
+        <Layout />
+      </>
+    );
   }
 
   return <Layout />;

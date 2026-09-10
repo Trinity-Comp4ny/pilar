@@ -6,15 +6,9 @@ import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorRespo
 import { EMAIL_RE } from "../_shared/validators.ts";
 import { sendEmail, templateAcessoPortalCliente } from "../_shared/email/index.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { gerarConviteToken } from "../_shared/convite-token.ts";
 
 const log = createLogger("invite-cliente-portal");
-
-function generatePassword(length = 8): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-  const array = new Uint8Array(length);
-  crypto.getRandomValues(array);
-  return Array.from(array, (b) => chars[b % chars.length]).join("");
-}
 
 serve(
   withSentry("invite-cliente-portal", async (req) => {
@@ -65,54 +59,7 @@ serve(
 
       if (existingAccount?.ativo) return safeErrorResponse(409, "Este cliente já possui acesso ao portal", req);
 
-      const senha = generatePassword(8);
       const normalizedEmail = String(email).toLowerCase().trim();
-
-      if (existingAccount) {
-        // Conta revogada — reativar com nova senha e email
-        const { error: reactivateError } = await supabaseAdmin
-          .from("cliente_portal_accounts")
-          .update({
-            ativo: true,
-            email: normalizedEmail,
-            nome: cliente.nome,
-            senha_hash: null, // limpa; _portal_reset_password fará o hash
-            token_sessao: null,
-            token_expira_em: null,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", existingAccount.id);
-
-        if (reactivateError) {
-          log.error("reactivate account failed", reactivateError, { account_id: existingAccount.id, cliente_id });
-          return safeErrorResponse(400, `Falha ao reativar conta do portal: ${reactivateError.message}`, req);
-        }
-
-        // Aplica nova senha com hash via RPC
-        const { error: resetError } = await supabaseAdmin.rpc("_portal_reset_password", {
-          p_account_id: existingAccount.id,
-          p_nova_senha: senha,
-        });
-
-        if (resetError) {
-          log.error("reset password failed", resetError, { account_id: existingAccount.id });
-          return safeErrorResponse(400, `Falha ao definir senha: ${resetError.message}`, req);
-        }
-      } else {
-        const { error: insertError } = await supabaseAdmin.rpc("_portal_create_account", {
-          p_cliente_id: cliente.id,
-          p_empresa_id: profile.empresa_id,
-          p_nome: cliente.nome,
-          p_email: normalizedEmail,
-          p_senha: senha,
-          p_created_by: user.id,
-        });
-
-        if (insertError) {
-          log.error("_portal_create_account failed", insertError, { cliente_id, empresa_id: profile.empresa_id });
-          return safeErrorResponse(400, `Falha ao criar conta do portal: ${insertError.message}`, req);
-        }
-      }
 
       const { data: empresa } = await supabaseAdmin
         .from("empresas")
@@ -123,9 +70,14 @@ serve(
       if (!empresa?.email)
         return safeErrorResponse(422, "Cadastre o e-mail da empresa em Configurações para enviar ao cliente", req);
 
+      // Gera o token ANTES de mexer no banco e manda o e-mail primeiro: se o
+      // envio falhar, nada foi persistido (conta antiga, se houver, continua
+      // intacta) — mesma postura de segurança que o fluxo de senha legado já
+      // tinha (só grava depois de confirmar que o cliente vai receber o link).
+      const { token, hash } = await gerarConviteToken();
       const siteUrl = Deno.env.get("PUBLIC_SITE_URL");
       if (!siteUrl) log.error("PUBLIC_SITE_URL secret not set — email button will be broken", null, {});
-      const loginUrl = `${siteUrl ?? "https://www.pilarsoft.com.br"}/cliente/login`;
+      const conviteUrl = `${siteUrl ?? "https://www.pilarsoft.com.br"}/cliente/convite?token=${token}`;
 
       try {
         await sendEmail({
@@ -140,18 +92,58 @@ serve(
           ...templateAcessoPortalCliente({
             nomeCliente: cliente.nome,
             email: normalizedEmail,
-            senha,
-            loginUrl,
+            conviteUrl,
             empresaNome: empresa?.nome,
           }),
         });
       } catch (emailErr) {
-        log.error("sendEmail failed — convite criado mas e-mail não enviado", emailErr, { cliente_id });
-        return safeErrorResponse(
-          502,
-          "Conta do portal criada, mas o e-mail com as credenciais não foi enviado. Reenvie o convite ou redefina a senha.",
-          req
-        );
+        log.error("sendEmail failed — convite não enviado, nada foi gravado", emailErr, { cliente_id });
+        return safeErrorResponse(502, "Não foi possível enviar o e-mail de convite. Tente novamente.", req);
+      }
+
+      if (existingAccount) {
+        // Conta revogada — reativar com o convite recém-enviado
+        const { error: reactivateError } = await supabaseAdmin
+          .from("cliente_portal_accounts")
+          .update({
+            ativo: true,
+            email: normalizedEmail,
+            nome: cliente.nome,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", existingAccount.id);
+
+        if (reactivateError) {
+          log.error("reactivate account failed", reactivateError, { account_id: existingAccount.id, cliente_id });
+          return safeErrorResponse(400, `Falha ao reativar conta do portal: ${reactivateError.message}`, req);
+        }
+
+        const { error: resetError } = await supabaseAdmin.rpc("_portal_reset_password_convite", {
+          p_account_id: existingAccount.id,
+          p_token_hash: hash,
+        });
+
+        if (resetError) {
+          log.error("reset password convite failed", resetError, { account_id: existingAccount.id });
+          return safeErrorResponse(400, `Convite enviado, mas falhou ao gravar: ${resetError.message}`, req);
+        }
+      } else {
+        const { error: insertError } = await supabaseAdmin.rpc("_portal_create_account_convite", {
+          p_cliente_id: cliente.id,
+          p_empresa_id: profile.empresa_id,
+          p_nome: cliente.nome,
+          p_email: normalizedEmail,
+          p_token_hash: hash,
+          p_created_by: user.id,
+        });
+
+        if (insertError) {
+          log.error("_portal_create_account_convite failed", insertError, {
+            cliente_id,
+            empresa_id: profile.empresa_id,
+          });
+          return safeErrorResponse(400, `Convite enviado, mas falhou ao gravar: ${insertError.message}`, req);
+        }
       }
 
       return jsonResponse({ success: true, email: normalizedEmail }, 200, req);

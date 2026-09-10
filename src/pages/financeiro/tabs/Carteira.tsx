@@ -198,8 +198,8 @@ export default function Carteira() {
       <Card className="w-full">
         <CardContent className="p-0">
           {loading ? (
-            <div className="flex min-h-[480px]">
-              <div className="w-72 shrink-0 border-r p-4 space-y-2">
+            <div className="flex flex-col md:flex-row min-h-[480px]">
+              <div className="w-full md:w-72 md:shrink-0 border-b md:border-b-0 md:border-r p-4 space-y-2">
                 <Skeleton className="h-4 w-20" />
                 <Skeleton className="h-9 w-full" />
                 <Skeleton className="h-9 w-full" />
@@ -217,7 +217,7 @@ export default function Carteira() {
               <FinanceErrorState onRetry={reload} />
             </div>
           ) : (
-            <div className="flex min-h-[480px]">
+            <div className="flex flex-col md:flex-row min-h-[480px]">
               <ContasSidebar
                 contas={contas}
                 cartoes={cartoes}

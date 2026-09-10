@@ -5,15 +5,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { sendEmail, templateAcessoPortalCliente } from "../_shared/email/index.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { gerarConviteToken } from "../_shared/convite-token.ts";
 
 const log = createLogger("reset-cliente-portal-password");
-
-function generatePassword(length = 10): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-  const array = new Uint8Array(length);
-  crypto.getRandomValues(array);
-  return Array.from(array, (b) => chars[b % chars.length]).join("");
-}
 
 serve(
   withSentry("reset-cliente-portal-password", async (req) => {
@@ -54,8 +48,6 @@ serve(
 
       if (accountError || !account) return safeErrorResponse(404, "Conta do portal não encontrada", req);
 
-      const novaSenha = generatePassword(10);
-
       const { data: empresa } = await supabaseAdmin
         .from("empresas")
         .select("nome, email")
@@ -65,12 +57,14 @@ serve(
       if (!empresa?.email)
         return safeErrorResponse(422, "Cadastre o e-mail da empresa em Configurações para enviar ao cliente", req);
 
+      const { token, hash } = await gerarConviteToken();
       const siteUrl = Deno.env.get("PUBLIC_SITE_URL");
       if (!siteUrl) log.error("PUBLIC_SITE_URL secret not set — email button will be broken", null, {});
-      const loginUrl = `${siteUrl ?? "https://www.pilarsoft.com.br"}/cliente/login`;
+      const conviteUrl = `${siteUrl ?? "https://www.pilarsoft.com.br"}/cliente/convite?token=${token}`;
 
-      // Envia o e-mail ANTES de trocar a senha: se o envio falhar, a senha atual do cliente
-      // continua válida (não fica trancado fora) e o admin recebe erro claro para reenviar.
+      // Envia o e-mail ANTES de mexer na conta: se o envio falhar, nada muda pro
+      // cliente (senha atual continua valendo) e o admin recebe erro claro para
+      // reenviar, em vez de derrubar o acesso sem garantir que o link chegou.
       try {
         await sendEmail({
           classe: "escritorio",
@@ -84,8 +78,7 @@ serve(
           ...templateAcessoPortalCliente({
             nomeCliente: nome_cliente ?? "Cliente",
             email: account.email,
-            senha: novaSenha,
-            loginUrl,
+            conviteUrl,
             isReset: true,
             empresaNome: empresa?.nome,
           }),
@@ -97,23 +90,23 @@ serve(
         });
         return safeErrorResponse(
           502,
-          "Não foi possível enviar o e-mail com a nova senha. A senha atual foi mantida — tente novamente.",
+          "Não foi possível enviar o e-mail de convite. A senha atual foi mantida — tente novamente.",
           req
         );
       }
 
-      const { error: resetError } = await supabaseAdmin.rpc("_portal_reset_password", {
+      const { error: resetError } = await supabaseAdmin.rpc("_portal_reset_password_convite", {
         p_account_id: account.id,
-        p_nova_senha: novaSenha,
+        p_token_hash: hash,
       });
 
       if (resetError) {
-        log.error("_portal_reset_password failed", resetError, {
+        log.error("_portal_reset_password_convite failed", resetError, {
           account_id: account.id,
           empresa_id: profile.empresa_id,
           user_id: user.id,
         });
-        return safeErrorResponse(400, `Falha ao redefinir senha: ${resetError.message}`, req);
+        return safeErrorResponse(400, `Convite enviado, mas falhou ao gravar: ${resetError.message}`, req);
       }
 
       return jsonResponse({ success: true, email: account.email }, 200, req);

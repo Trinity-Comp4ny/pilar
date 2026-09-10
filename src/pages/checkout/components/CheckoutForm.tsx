@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { lookupCEP } from "@/lib/brasilApi";
+import { detectCardBrand, formatCardNumber, formatExpiry, validateCreditCard } from "@/lib/creditCard";
 import type { BillingType, CheckoutPayload, CreditCardData, CreditCardHolderInfo } from "../hooks/useCheckoutCreate";
 import type { BillingCycle } from "@/pages/planos/components/CycleToggle";
 
@@ -48,26 +49,6 @@ function validCpf(value: string): boolean {
   return parseInt(d[9]) === (r1 < 2 ? 0 : 11 - r1) && parseInt(d[10]) === (r2 < 2 ? 0 : 11 - r2);
 }
 
-function detectCardBrand(number: string): "visa" | "mastercard" | "amex" | "elo" | null {
-  const n = onlyDigits(number);
-  if (/^4/.test(n)) return "visa";
-  if (/^5[1-5]/.test(n) || /^2[2-7]/.test(n)) return "mastercard";
-  if (/^3[47]/.test(n)) return "amex";
-  if (/^(4011|4312|4389|4514|4576|5041|5066|5090|6277|6362|6363|650[0-3]|6504|6505|6516|6550)/.test(n)) return "elo";
-  return null;
-}
-
-function formatCardNumber(value: string): string {
-  const digits = onlyDigits(value).slice(0, 16);
-  return digits.replace(/(.{4})/g, "$1 ").trim();
-}
-
-function formatExpiry(value: string): string {
-  const digits = onlyDigits(value).slice(0, 4);
-  if (digits.length > 2) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return digits;
-}
-
 function formatTelefone(value: string): string {
   const d = onlyDigits(value).slice(0, 11);
   if (d.length <= 2) return d.length ? `(${d}` : "";
@@ -87,23 +68,6 @@ const PAYMENT_METHODS: { value: BillingType; label: string; icon: React.ReactNod
   { value: "PIX", label: "PIX", icon: <QrCode className="w-4 h-4" /> },
   { value: "BOLETO", label: "Boleto", icon: <FileText className="w-4 h-4" /> },
 ];
-
-// Algoritmo de Luhn: valida o dígito verificador do número do cartão.
-function luhnValid(digits: string): boolean {
-  if (!/^\d+$/.test(digits)) return false;
-  let sum = 0;
-  let double = false;
-  for (let i = digits.length - 1; i >= 0; i--) {
-    let d = digits.charCodeAt(i) - 48;
-    if (double) {
-      d *= 2;
-      if (d > 9) d -= 9;
-    }
-    sum += d;
-    double = !double;
-  }
-  return sum % 10 === 0;
-}
 
 export function CheckoutForm({
   planSlug,
@@ -185,22 +149,11 @@ export function CheckoutForm({
     if (billingType === "CREDIT_CARD") {
       const expiryDigits = onlyDigits(ccExpiry);
       const cardDigits = onlyDigits(ccNumber);
-      const expMonth = parseInt(expiryDigits.slice(0, 2), 10);
-      const expYear = 2000 + parseInt(expiryDigits.slice(2, 4), 10);
 
       // Validação local do cartão (ACH-AUTH-08): Luhn + comprimento + validade futura.
-      if (cardDigits.length < 13 || cardDigits.length > 19 || !luhnValid(cardDigits)) {
-        toast.error("Número do cartão inválido", { description: "Verifique os dígitos." });
-        return;
-      }
-      if (!(expMonth >= 1 && expMonth <= 12) || expiryDigits.length < 4) {
-        toast.error("Validade inválida", { description: "Use o formato MM/AA." });
-        return;
-      }
-      const now = new Date();
-      const lastValidDay = new Date(expYear, expMonth, 0, 23, 59, 59);
-      if (lastValidDay < now) {
-        toast.error("Cartão vencido", { description: "A validade informada já passou." });
+      const validation = validateCreditCard(ccNumber, ccExpiry);
+      if (!validation.ok) {
+        toast.error(validation.error ?? "Cartão inválido");
         return;
       }
 

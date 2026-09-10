@@ -3,6 +3,7 @@ import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { ArrowRight, Check, Loader2, ShieldCheck } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { monitoring } from "@/lib/monitoring";
+import { analytics } from "@/lib/analytics";
 import { usePlans } from "@/pages/planos/hooks/usePlans";
 import type { BillingCycle } from "@/pages/planos/components/CycleToggle";
 import { CheckoutShell } from "./components/CheckoutShell";
@@ -45,6 +46,11 @@ export default function Checkout() {
       checkoutCompletedRef.current = true;
       monitoring.recordMetric("checkout.completed", 1, {
         tags: { plan: planSlug, billing_type: checkoutResult?.billing_type ?? "", cycle },
+      });
+      analytics.track("assinatura_ativada", {
+        plano: planSlug,
+        billing_type: checkoutResult?.billing_type ?? null,
+        ciclo: cycle,
       });
     }
   }, [effectiveStatus, planSlug, checkoutResult?.billing_type, cycle]);
@@ -96,6 +102,11 @@ export default function Checkout() {
               planValue={planValue}
               cycle={cycle}
               onSubmit={(payload) => {
+                analytics.track("checkout_iniciado", {
+                  plano: plan.slug,
+                  ciclo: cycle,
+                  billing_type: payload.billing_type,
+                });
                 createCheckout.mutate(payload, {
                   onSuccess: (data) => setCheckoutResult(data),
                 });

@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Layers, DollarSign, ScrollText, Table as TableIcon, GanttChart, GitBranch } from "lucide-react";
+import { Layers, DollarSign, ScrollText, Table as TableIcon, GanttChart, GitBranch, History } from "lucide-react";
 import { SecondSidebar, type SecondSidebarTab } from "@/components/SecondSidebar";
 import { cn } from "@/lib/utils";
 import {
@@ -20,6 +20,7 @@ import { EscopoTab } from "./EscopoTab";
 import { DisciplinasTableView } from "./DisciplinasTableView";
 import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
 import { FluxoPipeline } from "./FluxoPipeline";
+import { ProjetoHistoricoTab } from "./ProjetoHistoricoTab";
 import { useProjetoDisciplinaChecklistCounts } from "@/hooks/useProjetoDisciplinaChecklist";
 import { useProjetoDisciplinaRevisoesCounts } from "@/hooks/useDisciplinaRevisoes";
 
@@ -49,6 +50,7 @@ const PROJETO_TABS: SecondSidebarTab[] = [
   { id: "disciplinas", label: "Disciplinas", icon: Layers },
   { id: "pagamentos", label: "Pagamentos", icon: DollarSign },
   { id: "escopo", label: "Escopo", icon: ScrollText },
+  { id: "historico", label: "Histórico", icon: History },
 ];
 
 type DisciplinaView = "tabela" | "gantt" | "fluxo";
@@ -93,6 +95,7 @@ export function ProjetoDetailTabs({
     if (h === "cronograma") return { tab: "disciplinas", view: "gantt" };
     if (h === "pagamentos") return { tab: "pagamentos", view: null };
     if (h === "escopo") return { tab: "escopo", view: null };
+    if (h === "historico") return { tab: "historico", view: null };
     return { tab: "disciplinas", view: null };
   };
 
@@ -297,6 +300,13 @@ export function ProjetoDetailTabs({
               projetoId={projeto.id}
               canEdit={canEdit}
               disciplinas={Array.from(new Set(dbDisciplinas.map((d) => d.nome)))}
+            />
+          </TabsContent>
+
+          <TabsContent value="historico">
+            <ProjetoHistoricoTab
+              projetoId={projeto.id}
+              disciplinas={dbDisciplinas.map((d) => ({ id: d.id, nome: d.nome }))}
             />
           </TabsContent>
         </div>

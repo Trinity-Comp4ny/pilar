@@ -481,12 +481,17 @@ export default function ObraClimaPage() {
             <Card className="rounded-2xl border border-black/5 bg-white">
               <CardContent className="p-4">
                 <h3 className="mb-3 text-sm font-medium text-ink">Próximos 16 dias</h3>
-                <ul className="divide-y divide-black/5">
+                {/* min-w-max + overflow-x-auto: as colunas (dia, temp, barra, %,
+                    mm) somam mais que 390px de largura fixa em mobile; sem isto,
+                    "mm" simplesmente vazava pra fora do card sem dar pra rolar
+                    até ele (achado do Matheus, 08/09). Fix pontual — o redesign
+                    dessa lista pro mobile fica pra outra rodada. */}
+                <ul className="divide-y divide-black/5 overflow-x-auto">
                   {dados.dias.map((d) => {
                     const info = climaPorCodigo(d.code);
                     const Icone = ICONE[info.categoria];
                     return (
-                      <li key={d.data} className="flex items-center gap-3 py-2">
+                      <li key={d.data} className="flex min-w-max items-center gap-3 py-2 pr-1">
                         <span className="w-24 shrink-0 whitespace-nowrap text-sm capitalize text-ink">
                           {diaSemana(d.data)} <span className="text-xs text-muted-foreground">{diaMes(d.data)}</span>
                         </span>
@@ -494,7 +499,7 @@ export default function ObraClimaPage() {
                         <span className="w-8 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
                           {d.tempMin}°
                         </span>
-                        <div className="min-w-0 flex-1">
+                        <div className="min-w-[80px] flex-1">
                           <BarraTemp dia={d} weekMin={weekMin} weekMax={weekMax} />
                         </div>
                         <span className="w-8 shrink-0 text-sm font-medium tabular-nums text-ink">{d.tempMax}°</span>

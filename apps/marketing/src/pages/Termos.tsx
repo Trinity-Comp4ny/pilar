@@ -65,6 +65,10 @@ const SECTIONS: { titulo: string; corpo: React.ReactNode }[] = [
             Plataforma.
           </li>
           <li>
+            Criar conta, inclusive em período de teste, com a finalidade de fazer engenharia reversa, benchmarking
+            comercial competitivo ou reprodução do produto, sem consentimento prévio e por escrito do Pilar.
+          </li>
+          <li>
             Sobrecarregar a infraestrutura de forma deliberada (scraping agressivo, testes de carga não autorizados).
           </li>
           <li>
@@ -92,9 +96,10 @@ const SECTIONS: { titulo: string; corpo: React.ReactNode }[] = [
           insere na Plataforma.
         </li>
         <li>
-          Ao encerrar o contrato, o Cliente pode exportar seus dados por até <strong>30 dias</strong>; depois disso, os
-          dados são anonimizados ou eliminados conforme a Política de Privacidade e obrigações legais de retenção (ex.:
-          fiscal, 5 anos).
+          Ao encerrar o contrato (incluindo o fim do período de teste sem ativação de plano), o Cliente pode exportar
+          seus dados por até <strong>90 dias</strong>, período em que a Conta fica em modo somente leitura. Depois
+          disso, os dados são anonimizados ou eliminados conforme a Política de Privacidade e obrigações legais de
+          retenção (ex.: fiscal, 5 anos).
         </li>
       </ul>
     ),
@@ -125,6 +130,10 @@ const SECTIONS: { titulo: string; corpo: React.ReactNode }[] = [
         <li>
           Cancelamento pode ser feito a qualquer momento; não há reembolso proporcional de período já pago, salvo
           disposição legal em contrário.
+        </li>
+        <li>
+          Ao ativar um plano ao final do período de teste, a primeira cobrança só ocorre na data informada no momento da
+          ativação. Cancelamentos em até <strong>7 dias</strong> dessa primeira cobrança geram estorno integral.
         </li>
       </ul>
     ),
@@ -226,9 +235,10 @@ export function Termos() {
       <main className="container mx-auto px-6 py-12 max-w-3xl space-y-12">
         <section className="rounded-lg border bg-muted/30 p-6">
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Estes Termos de Uso regem o uso da plataforma Pilar, oferecida por{" "}
-            <strong className="text-foreground">Pilar</strong> (razão social e CNPJ próprios em regularização), por
-            escritórios de engenharia e seus usuários. Ao criar uma conta ou usar a plataforma, você concorda com estes
+            <strong className="text-foreground">Finalidade deste documento:</strong> estabelecer as condições sob as
+            quais a plataforma Pilar, oferecida por <strong className="text-foreground">Pilar</strong> (razão social e
+            CNPJ próprios em regularização), pode ser usada por escritórios de engenharia e seus usuários — incluindo
+            durante o período de teste gratuito. Ao criar uma conta ou usar a plataforma, você concorda com estes
             Termos. Veja também a{" "}
             <Link to="/privacidade" className="text-ink underline">
               Política de Privacidade
@@ -244,7 +254,7 @@ export function Termos() {
           </section>
         ))}
 
-        <p className="text-xs text-muted-foreground pt-8 border-t">Última atualização: 18 de agosto de 2026.</p>
+        <p className="text-xs text-muted-foreground pt-8 border-t">Última atualização: 9 de setembro de 2026.</p>
       </main>
     </div>
   );

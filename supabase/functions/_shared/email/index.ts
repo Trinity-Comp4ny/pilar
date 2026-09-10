@@ -17,10 +17,16 @@ export {
 export {
   templateAcessoPortalCliente,
   templateCobrancaDireta,
+  templateConviteAcessoCampo,
   templateMensagemManual,
   templatePropostaEnvio,
 } from "./templates/escritorio.ts";
-export { templateLgpdExclusaoDados, templateTrialAviso } from "./templates/plataforma.ts";
+export {
+  templateLgpdExclusaoDados,
+  templateTrialAviso,
+  templateAtivarPlanoRecibo,
+  templateRetencaoAviso,
+} from "./templates/plataforma.ts";
 export {
   MAX_ITENS_EMAIL,
   templateNotificacoes,

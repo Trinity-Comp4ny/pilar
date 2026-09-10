@@ -22,6 +22,7 @@ export interface ChavePix {
 }
 
 export type TipoPessoa = "PF" | "PJ";
+export type PortalStatus = "sem_acesso" | "convite_pendente" | "ativo";
 
 export interface Cliente {
   id: string;
@@ -283,13 +284,21 @@ export const useClientes = (options: UseClientesOptions = {}) => {
     },
   });
 
-  const portalClienteIdsQuery = useQuery({
-    queryKey: ["portal-cliente-ids"],
+  // Status do portal por cliente (spec 099): distingue convite ainda não aceito
+  // (senha_hash nulo) de acesso já ativo, para a listagem mostrar os 3 estados.
+  const portalStatusQuery = useQuery({
+    queryKey: ["portal-status-por-cliente"],
     queryFn: async () => {
-      const { data } = await supabase.from("cliente_portal_accounts").select("cliente_id").eq("ativo", true);
-      return new Set((data ?? []).map((r) => r.cliente_id as string));
+      const { data } = await supabase
+        .from("cliente_portal_accounts")
+        .select("cliente_id, senha_hash")
+        .eq("ativo", true);
+      const map = new Map<string, PortalStatus>();
+      for (const row of data ?? []) {
+        map.set(row.cliente_id as string, row.senha_hash ? "ativo" : "convite_pendente");
+      }
+      return map;
     },
-    enabled: enableListQueries,
     staleTime: 1000 * 60 * 3,
   });
 
@@ -386,7 +395,7 @@ export const useClientes = (options: UseClientesOptions = {}) => {
     isLoading: clientesQuery.isLoading,
     isError: clientesQuery.isError,
     refetch: clientesQuery.refetch,
-    portalClienteIds: portalClienteIdsQuery.data ?? new Set<string>(),
+    portalStatusPorCliente: portalStatusQuery.data ?? new Map<string, PortalStatus>(),
     clienteIdsComProjeto: clienteIdsComProjetoQuery.data ?? new Set<string>(),
     upsertCliente: upsertMutation.mutateAsync,
     isSaving: upsertMutation.isPending,

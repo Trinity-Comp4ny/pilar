@@ -66,21 +66,30 @@ export function ClienteShell({
 
   return (
     <div className="min-h-screen bg-muted flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      {/* Header: subtítulo "Portal do Cliente" e o texto de "Voltar ao
+          painel" somem em mobile (achado da auditoria: "Portal do Cliente"
+          quebrava em 2 linhas coladas no logo, e o botão de admin espremia o
+          dropdown de conta contra a borda). */}
+      <header className="bg-white border-b px-4 py-4 sm:px-6">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-3">
             <Logo variant="mark" size="sm" />
-            <div>
+            <div className="min-w-0">
               <span className="text-lg font-semibold tracking-tight text-ink">Pilar</span>
-              <span className="text-xs text-muted-foreground ml-2">Portal do Cliente</span>
+              <span className="ml-2 hidden text-xs text-muted-foreground sm:inline">Portal do Cliente</span>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-4">
             {isAdminSession && (
-              <Button variant="outline" size="sm" onClick={() => navigate("/gestao/clientes")} className="text-xs">
-                <LayoutDashboard className="h-3.5 w-3.5 mr-1" />
-                Voltar ao painel
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/gestao/clientes")}
+                className="w-9 px-0 text-xs sm:w-auto sm:px-3"
+                aria-label="Voltar ao painel"
+              >
+                <LayoutDashboard className="h-3.5 w-3.5 sm:mr-1" />
+                <span className="hidden sm:inline">Voltar ao painel</span>
               </Button>
             )}
             <DropdownMenu>
@@ -116,7 +125,7 @@ export function ClienteShell({
       {/* Sub-header do projeto (quando dentro de um projeto) */}
       {projetoId && (
         <>
-          <div className="bg-white border-b px-6 py-3">
+          <div className="bg-white border-b px-4 sm:px-6 py-3">
             <div className="max-w-7xl mx-auto flex items-center gap-3">
               <Button
                 variant="ghost"
@@ -137,7 +146,7 @@ export function ClienteShell({
 
           {/* Nav do projeto */}
           <nav className="bg-white border-b">
-            <div className="max-w-7xl mx-auto flex gap-1 px-6 overflow-x-auto">
+            <div className="max-w-7xl mx-auto flex gap-1 px-4 sm:px-6 overflow-x-auto">
               {projetoNavItems.map((item) => (
                 <NavLink
                   key={item.path}
@@ -162,7 +171,7 @@ export function ClienteShell({
 
       {/* Sub-header da obra (página dedicada, sem abas) */}
       {obraNome && !projetoId && (
-        <div className="bg-white border-b px-6 py-3">
+        <div className="bg-white border-b px-4 sm:px-6 py-3">
           <div className="max-w-7xl mx-auto flex items-center gap-3">
             <Button
               variant="ghost"
@@ -183,11 +192,11 @@ export function ClienteShell({
       )}
 
       {/* Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-6">{children}</main>
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">{children}</main>
 
       {/* Footer */}
       <footer className="border-t bg-white">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <p className="text-xs text-muted-foreground text-center">
             &copy; {new Date().getFullYear()} Pilar. Todos os direitos reservados.
           </p>

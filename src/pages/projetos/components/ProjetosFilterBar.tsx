@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { PROJECT_PRIORITY_CONFIG, PRIORITY_OPTIONS, type ProjectPriority } from "@/constants";
 
 export type DeadlineFilter = "em_atraso" | "atencao" | "no_prazo";
@@ -67,6 +68,7 @@ const DEADLINE_OPTIONS: { id: DeadlineFilter; label: string; dot: string }[] = [
 export function ProjetosFilterBar({ pessoas, clientes, disciplinas, filters, onChange }: ProjetosFilterBarProps) {
   // A busca de texto (filters.search) vive no PageHeader (spec 002); aqui ficam
   // só os filtros estruturados. "Limpar" continua zerando tudo, busca incluída.
+  const isMobile = useIsMobile();
   const filtroCount =
     filters.pessoaIds.length +
     filters.prioridades.length +
@@ -80,29 +82,44 @@ export function ProjetosFilterBar({ pessoas, clientes, disciplinas, filters, onC
 
   return (
     <div className="flex items-center gap-2">
-      {/* Limpar — sempre ocupa espaço */}
+      {/* Limpar — reserva espaço fixo em telas médias+ pra não dar jank ao aparecer/sumir.
+          Em mobile o espaço reservado (120px) tira falta em telas já apertadas (achado da
+          auditoria: contribuía pra "Novo projeto" ficar inalcançável em 390px), então ali
+          colapsa a 0 quando inativo em vez de só ficar invisível. */}
       <Button
         variant="ghost"
         className={cn(
-          "h-9 rounded-full text-sm text-muted-foreground transition-opacity w-[120px] justify-center",
-          totalActive === 0 && "opacity-0 pointer-events-none"
+          "h-9 rounded-full text-sm text-muted-foreground transition-all justify-center overflow-hidden shrink-0 md:w-[120px]",
+          totalActive === 0 ? "w-0 px-0 opacity-0 pointer-events-none" : "w-[120px] px-4"
         )}
         onClick={() => onChange(EMPTY_FILTERS)}
       >
-        <X className="h-4 w-4 mr-1.5" /> Limpar ({totalActive})
+        <X className="h-4 w-4 mr-1.5 shrink-0" /> Limpar ({totalActive})
       </Button>
 
-      {/* Filtros — botão único */}
+      {/* Filtros — botão único. Ícone-only em mobile: com o "Novo projeto" do
+          PageHeader e o "Mais ações" na mesma linha, o texto "Filtros" era peso que
+          essa linha não tinha como pagar em 390px (achado da auditoria). */}
       <Popover>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className={cn("h-9 rounded-full text-sm gap-2", filtroCount > 0 && "border-foreground/40 bg-muted")}
+            aria-label={isMobile ? "Filtros" : undefined}
+            className={cn(
+              "h-9 rounded-full text-sm gap-2",
+              filtroCount > 0 && "border-foreground/40 bg-muted",
+              isMobile && "relative w-9 px-0 justify-center gap-0"
+            )}
           >
             <SlidersHorizontal className="h-4 w-4" />
-            <span>Filtros</span>
+            <span className={cn(isMobile && "sr-only")}>Filtros</span>
             {filtroCount > 0 && (
-              <span className="text-[11px] bg-foreground text-background rounded-full px-1.5 py-0.5 min-w-[20px] tabular-nums">
+              <span
+                className={cn(
+                  "text-[11px] bg-foreground text-background rounded-full px-1.5 py-0.5 min-w-[20px] tabular-nums",
+                  isMobile && "absolute -top-1 -right-1"
+                )}
+              >
                 {filtroCount}
               </span>
             )}

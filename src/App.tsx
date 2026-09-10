@@ -56,7 +56,9 @@ const Chat = lazy(() => import("./pages/chat"));
 const Propostas = lazy(() => import("./pages/propostas"));
 const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
 const ClienteLogin = lazy(() => import("./pages/cliente/ClienteLogin"));
+const ClienteConvite = lazy(() => import("./pages/cliente/ClienteConvite"));
 const CampoLogin = lazy(() => import("./pages/campo/CampoLogin"));
+const CampoConvite = lazy(() => import("./pages/campo/CampoConvite"));
 const CampoTrocarSenha = lazy(() => import("./pages/campo/CampoTrocarSenha"));
 const CampoHome = lazy(() => import("./pages/campo/CampoHome"));
 const CampoRegistrarDia = lazy(() => import("./pages/campo/CampoRegistrarDia"));
@@ -347,6 +349,7 @@ const App = () => {
                         cliente com link antigo salvo cai aqui em vez de 404. */}
                         <Route path="/portal/*" element={<Navigate to="/cliente/login" replace />} />
                         <Route path="/cliente/login" element={<ClienteLogin />} />
+                        <Route path="/cliente/convite" element={<ClienteConvite />} />
                         <Route path="/cliente" element={<ClientePrivateRoute />}>
                           <Route path="dashboard" element={<ClienteDashboard />} />
                           <Route path="projeto/:id" element={<ClienteProjetoDetail />} />
@@ -357,6 +360,7 @@ const App = () => {
 
                         {/* Pilar Campo — app de campo (conta própria, escopo por obra) */}
                         <Route path="/campo/login" element={<CampoLogin />} />
+                        <Route path="/campo/convite" element={<CampoConvite />} />
                         <Route path="/campo/senha" element={<CampoTrocarSenha />} />
                         <Route path="/campo" element={<CampoPrivateRoute />}>
                           <Route index element={<CampoHome />} />

@@ -19,12 +19,24 @@ import { iconeCategoria, toneSeveridade, resolveLink, formatTimeAgo } from "@/li
 import { setFaviconBadge } from "@/lib/favicon";
 import { PreferenciasDialog } from "@/pages/notificacoes/PreferenciasDialog";
 
+interface NotificationInboxProps {
+  /**
+   * Lado de abertura do popover. Default (`"right"`) é o da sidebar desktop,
+   * que tem espaço sobrando à direita do sino. Dentro do `MoreSheet` mobile
+   * (spec 097), o sino fica perto do topo/borda direita de uma tela de largura
+   * total, então `side="right"` não tinha pra onde abrir sem cortar — o
+   * chamador passa `side="bottom"` nesse caso.
+   */
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
+}
+
 /**
  * Sino de notificações no rodapé da sidebar (spec 029). Popover com duas abas:
  * Inbox (não arquivadas) e Arquivadas. Leitura e arquivamento por usuário (RLS).
  * Atualiza em tempo real. Preferências por categoria abrem pela engrenagem.
  */
-export function NotificationInbox() {
+export function NotificationInbox({ side = "right", align = "end" }: NotificationInboxProps = {}) {
   const [open, setOpen] = useState(false);
   const [aba, setAba] = useState<AbaNotificacao>("inbox");
   const navigate = useNavigate();
@@ -81,8 +93,8 @@ export function NotificationInbox() {
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          side="right"
-          align="end"
+          side={side}
+          align={align}
           sideOffset={12}
           collisionPadding={12}
           className="w-[380px] max-w-[calc(100vw-2rem)] p-0"

@@ -7,6 +7,7 @@ Documentos legais e de privacidade. ← [voltar ao índice](../README.md)
 | [PRIVACY_POLICY.md](./PRIVACY_POLICY.md)     | 🚧 Rascunho, não publicado como rota própria | Versão "Pilar" completa; a rota ao vivo é `src/pages/Privacidade.tsx` (conteúdo próprio, já usa marca Pilar) |
 | [TERMS_OF_SERVICE.md](./TERMS_OF_SERVICE.md) | ✅ Publicado em `/termos` (2026-08-18)       | `src/pages/Termos.tsx`; ainda sem revisão de advogado, ver risco abaixo                                      |
 | [COOKIE_POLICY.md](./COOKIE_POLICY.md)       | 🚧 Texto rascunho, mecanismo já ativo        | Política de Cookies; o banner de consentimento que ela descreve já roda em produção                          |
+| [SUBPROCESSADORES.md](./SUBPROCESSADORES.md) | ✅ v1, 2026-09-08                            | Lista pública dos fornecedores que processam dado pessoal em nome do Pilar                                   |
 
 ## Situação da identidade legal (CNPJ próprio pendente)
 

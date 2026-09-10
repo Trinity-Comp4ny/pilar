@@ -9,6 +9,7 @@ export interface MySubscription {
   status: "trialing" | "active" | "overdue" | "canceled" | "expired";
   billing_cycle: "monthly" | "yearly" | null;
   billing_type: string | null;
+  trial_ends_at: string | null;
   current_period_start: string | null;
   current_period_end: string | null;
   canceled_at: string | null;
@@ -23,6 +24,7 @@ interface SubscriptionRow {
   status: MySubscription["status"];
   billing_cycle: MySubscription["billing_cycle"];
   billing_type: string | null;
+  trial_ends_at: string | null;
   current_period_start: string | null;
   current_period_end: string | null;
   canceled_at: string | null;
@@ -37,7 +39,7 @@ export function useMySubscription() {
       // gen:types não inclui pilar_subscriptions/pilar_subscription_plans ainda.
       const { data, error } = await untypedFrom<SubscriptionRow>("pilar_subscriptions")
         .select(
-          `id, empresa_id, plan_id, status, billing_cycle, billing_type,
+          `id, empresa_id, plan_id, status, billing_cycle, billing_type, trial_ends_at,
            current_period_start, current_period_end, canceled_at, created_at,
            plan:pilar_subscription_plans(id, slug, nome, descricao, preco_mensal, preco_anual, max_usuarios, max_projetos, features, destaque, ordem)`
         )

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { CreditCard, Calendar, Package, ExternalLink, Loader2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { CreditCard, Calendar, Package, ExternalLink, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -7,6 +8,7 @@ import { useMySubscription } from "@/pages/billing/hooks/useMySubscription";
 import { StatusBadge } from "@/pages/billing/components/StatusBadge";
 import { ChangePlanDialog } from "@/pages/billing/components/ChangePlanDialog";
 import { CancelDialog } from "@/pages/billing/components/CancelDialog";
+import { AtivarPlano } from "@/components/trial/AtivarPlano";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { MARKETING_URL } from "@/lib/marketingSite";
 
@@ -38,12 +40,15 @@ export function PagamentoPanel() {
   const { data: role } = useUserRole();
   const isAdmin = role === "admin" || role === "ultra_admin";
 
+  const qc = useQueryClient();
   const { data: subscription, isLoading, error } = useMySubscription();
   const [changeOpen, setChangeOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [ativarOpen, setAtivarOpen] = useState(false);
 
   const isCanceled = subscription?.status === "canceled";
   const isOverdue = subscription?.status === "overdue";
+  const isTrialing = subscription?.status === "trialing";
 
   const goToPlanos = () => {
     closeSettings();
@@ -95,6 +100,19 @@ export function PagamentoPanel() {
           {isCanceled && (
             <div className="p-4 bg-muted border border-border rounded-xl text-sm text-ink-soft">
               <strong>Assinatura cancelada.</strong> Acesso mantido até {formatDate(subscription.current_period_end)}.
+            </div>
+          )}
+
+          {isTrialing && isAdmin && (
+            <div className="p-4 bg-brand/5 border border-brand/20 rounded-xl text-sm text-ink-soft flex items-start gap-3">
+              <Sparkles className="w-4 h-4 text-brand shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <strong className="text-ink">Você está no período de teste.</strong> Ative o plano agora e não perca
+                acesso quando o trial terminar em {formatDate(subscription.trial_ends_at)} — nada é cobrado até lá.
+              </div>
+              <Button variant="brand" size="sm" onClick={() => setAtivarOpen(true)}>
+                Ativar plano
+              </Button>
             </div>
           )}
 
@@ -160,7 +178,7 @@ export function PagamentoPanel() {
                     <Button
                       className="w-full justify-start"
                       variant="outline"
-                      disabled={isCanceled}
+                      disabled={isCanceled || isTrialing}
                       onClick={() => setChangeOpen(true)}
                     >
                       <Package className="w-4 h-4 mr-2" /> Mudar plano
@@ -171,7 +189,7 @@ export function PagamentoPanel() {
                     <Button
                       className="w-full justify-start text-danger-mid hover:text-danger-strong hover:bg-danger-soft"
                       variant="outline"
-                      disabled={isCanceled}
+                      disabled={isCanceled || isTrialing}
                       onClick={() => setCancelOpen(true)}
                     >
                       Cancelar assinatura
@@ -204,6 +222,12 @@ export function PagamentoPanel() {
             <>
               <ChangePlanDialog open={changeOpen} onOpenChange={setChangeOpen} current={subscription} />
               <CancelDialog open={cancelOpen} onOpenChange={setCancelOpen} current={subscription} />
+              <AtivarPlano
+                open={ativarOpen}
+                onOpenChange={setAtivarOpen}
+                subscription={subscription}
+                onAtivado={() => qc.invalidateQueries({ queryKey: ["pilar-my-subscription"] })}
+              />
             </>
           )}
         </div>

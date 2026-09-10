@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -53,6 +54,7 @@ type Props = {
  */
 export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos }: Props) {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { data: disciplinas } = useDisciplinas(temProjetos ? pessoaIds : null, { enabled: temProjetos });
   const { data: tarefas } = useTarefas(pessoaIds);
   const { data: pessoas } = usePessoasEmpresa();
@@ -65,6 +67,14 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos }: Pr
   const { visiveis, toggle } = useCamadasVisiveis({ disciplina: true, tarefa: true });
 
   const [tarefaAberta, setTarefaAberta] = useState<TarefaItem | null>(null);
+
+  // Mês/Semana usam grid de 7 colunas fixas: ilegível em 390px (achado da
+  // auditoria mobile). Agenda já é responsiva, então em mobile ela é a única
+  // opção; a view muda sozinha se o usuário girar a tela ou entrar direto
+  // pelo celular com uma view salva de outra sessão em desktop.
+  useEffect(() => {
+    if (isMobile && view !== "agenda") setView("agenda");
+  }, [isMobile, view, setView]);
 
   const eventos = useMemo(() => {
     const eventosDisc = buildEventosDisciplinas(
@@ -128,18 +138,22 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos }: Pr
           </Button>
         </div>
 
-        <Select value={view} onValueChange={(v) => setView(v as CalendarioView)}>
-          <SelectTrigger className="w-[120px] h-9 text-sm rounded-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {(Object.keys(VIEW_LABEL) as CalendarioView[]).map((v) => (
-              <SelectItem key={v} value={v}>
-                {VIEW_LABEL[v]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Mês/Semana ficam ilegíveis em 390px (grid de 7 colunas fixas); em
+            mobile só Agenda é oferecida, então o seletor vira redundante. */}
+        {!isMobile && (
+          <Select value={view} onValueChange={(v) => setView(v as CalendarioView)}>
+            <SelectTrigger className="w-[120px] h-9 text-sm rounded-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(VIEW_LABEL) as CalendarioView[]).map((v) => (
+                <SelectItem key={v} value={v}>
+                  {VIEW_LABEL[v]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       <div className="flex gap-4 rounded-lg border bg-white overflow-hidden min-h-[480px]">

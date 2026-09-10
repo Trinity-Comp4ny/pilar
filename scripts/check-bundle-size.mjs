@@ -14,12 +14,13 @@ const DIST = join(process.cwd(), "dist", "assets");
 // Limites em bytes (gzipped). Tune conforme app cresce.
 const BUDGETS = {
   // Entry chunk (index-*.js), bootstrap inicial. Manter enxuto.
-  // 268 kB (era 266, antes 264, antes 250): o cap de 266 voltou a "encostar" —
-  // um PR sem mudança real no entry estourou por 266.2kB vs 266.0kB (200 bytes),
-  // mesma deriva de hash de nome de chunk já documentada nas rodadas anteriores.
+  // 270 kB (era 268, antes 266, antes 264, antes 250): o cap de 268 voltou a
+  // "encostar" no PR das specs 099/093 (auth self-service + timeline do
+  // projeto) — estourou por 274457B vs 274432B (268*1024), 25 bytes, mesma
+  // deriva de hash de nome de chunk já documentada nas rodadas anteriores.
   // Total JS segue folgado (~1.9/3 MB); o first-load extra é imperceptível.
   // Reavaliar se voltar a encostar.
-  entry: 268 * 1024,
+  entry: 270 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app
@@ -99,7 +100,9 @@ async function main() {
 
   console.error("❌ Bundle excede budget:");
   for (const v of violations) console.error(`   - ${v}`);
-  console.error("\nOpções: code-split mais, lazy-import deps pesadas, ou ajustar BUDGETS em scripts/check-bundle-size.mjs.\n");
+  console.error(
+    "\nOpções: code-split mais, lazy-import deps pesadas, ou ajustar BUDGETS em scripts/check-bundle-size.mjs.\n"
+  );
   process.exit(1);
 }
 

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import { lookupCEP } from "@/lib/brasilApi";
+import { detectCardBrand, formatCardNumber, formatExpiry, validateCreditCard } from "@/lib/creditCard";
 import { CheckoutShell } from "@/pages/checkout/components/CheckoutShell";
 import { PixPayment } from "@/pages/checkout/components/PixPayment";
 import { BoletoPayment } from "@/pages/checkout/components/BoletoPayment";
@@ -21,6 +22,7 @@ import {
   type TokenPackTierId,
 } from "@/components/settings/useTokenPackCreate";
 import { useTokenPackStatus } from "@/components/settings/useTokenPackStatus";
+import { analytics } from "@/lib/analytics";
 
 // Espelha o catálogo do backend (pilar-token-pack-create) só pra exibição — o preço
 // que vale de verdade é sempre resolvido no servidor a partir do tier_id (SPEC 080).
@@ -63,44 +65,6 @@ function validCpf(value: string): boolean {
   const r1 = sum(d.slice(0, 9), 10) % 11;
   const r2 = sum(d.slice(0, 10), 11) % 11;
   return parseInt(d[9]) === (r1 < 2 ? 0 : 11 - r1) && parseInt(d[10]) === (r2 < 2 ? 0 : 11 - r2);
-}
-
-function luhnValid(digits: string): boolean {
-  if (!/^\d+$/.test(digits)) return false;
-  let sum = 0;
-  let double = false;
-  for (let i = digits.length - 1; i >= 0; i--) {
-    let d = digits.charCodeAt(i) - 48;
-    if (double) {
-      d *= 2;
-      if (d > 9) d -= 9;
-    }
-    sum += d;
-    double = !double;
-  }
-  return sum % 10 === 0;
-}
-
-function detectCardBrand(number: string): "visa" | "mastercard" | "amex" | "elo" | null {
-  const n = onlyDigits(number);
-  if (/^4/.test(n)) return "visa";
-  if (/^5[1-5]/.test(n) || /^2[2-7]/.test(n)) return "mastercard";
-  if (/^3[47]/.test(n)) return "amex";
-  if (/^(4011|4312|4389|4514|4576|5041|5066|5090|6277|6362|6363|650[0-3]|6504|6505|6516|6550)/.test(n)) return "elo";
-  return null;
-}
-
-function formatCardNumber(value: string): string {
-  return onlyDigits(value)
-    .slice(0, 16)
-    .replace(/(.{4})/g, "$1 ")
-    .trim();
-}
-
-function formatExpiry(value: string): string {
-  const digits = onlyDigits(value).slice(0, 4);
-  if (digits.length > 2) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return digits;
 }
 
 function formatCEP(value: string): string {
@@ -147,6 +111,16 @@ export default function ComprarTokens() {
   const status = useTokenPackStatus(result?.purchase_id ?? null);
   const paid = result?.payment_status === "paid" || status.data?.status === "paid";
   const tier = TIER_CATALOG[tierId];
+
+  // Guard por ref: `paid` continua true em re-renders subsequentes, sem isso o
+  // evento disparava de novo a cada render (mesmo padrão do checkout de assinatura).
+  const purchaseCompletedRef = useRef(false);
+  useEffect(() => {
+    if (paid && !purchaseCompletedRef.current) {
+      purchaseCompletedRef.current = true;
+      analytics.track("pacote_tokens_comprado", { tier: tierId, tokens: tier.tokens });
+    }
+  }, [paid, tierId, tier.tokens]);
 
   const fetchCep = useCallback(async (cep: string) => {
     const digits = onlyDigits(cep);
@@ -195,20 +169,10 @@ export default function ComprarTokens() {
 
       const expiryDigits = onlyDigits(ccExpiry);
       const cardDigits = onlyDigits(ccNumber);
-      const expMonth = parseInt(expiryDigits.slice(0, 2), 10);
-      const expYear = 2000 + parseInt(expiryDigits.slice(2, 4), 10);
 
-      if (cardDigits.length < 13 || cardDigits.length > 19 || !luhnValid(cardDigits)) {
-        toast.error("Número do cartão inválido", { description: "Verifique os dígitos." });
-        return;
-      }
-      if (!(expMonth >= 1 && expMonth <= 12) || expiryDigits.length < 4) {
-        toast.error("Validade inválida", { description: "Use o formato MM/AA." });
-        return;
-      }
-      const lastValidDay = new Date(expYear, expMonth, 0, 23, 59, 59);
-      if (lastValidDay < new Date()) {
-        toast.error("Cartão vencido", { description: "A validade informada já passou." });
+      const validation = validateCreditCard(ccNumber, ccExpiry);
+      if (!validation.ok) {
+        toast.error(validation.error ?? "Cartão inválido");
         return;
       }
 
