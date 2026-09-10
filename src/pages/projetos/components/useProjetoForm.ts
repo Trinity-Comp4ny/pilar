@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { supabase } from "@/integrations/supabase/client";
+import { addBusinessDays, formatDateLocal, parseDateLocal } from "@/lib/businessDays";
 import { calcularDatasFluxo, responsaveisEfetivos } from "@/lib/fluxoCascata";
 import { PROJECT_STATUS, PROJECT_PRIORITY, type ProjectPriority } from "@/constants";
 import {
@@ -76,6 +77,7 @@ const EMPTY_FORM = {
   observacao: "",
   status: PROJECT_STATUS.PLANEJAMENTO as Projeto["status"],
   prioridade: PROJECT_PRIORITY.MEDIA as ProjectPriority,
+  prazo_dias_uteis: "",
   dia_pagamento: "",
 };
 
@@ -230,6 +232,7 @@ export function useProjetoForm({
         observacao: editProjeto.observacao || "",
         status: editProjeto.status,
         prioridade: editProjeto.prioridade || PROJECT_PRIORITY.MEDIA,
+        prazo_dias_uteis: "",
         dia_pagamento: "",
       };
       setFormData(nextForm);
@@ -262,7 +265,26 @@ export function useProjetoForm({
   });
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [field]: value };
+
+      if (field === "prazo_dias_uteis" || field === "data_inicio") {
+        const prazo = field === "prazo_dias_uteis" ? value : prev.prazo_dias_uteis;
+        const inicio = field === "data_inicio" ? value : prev.data_inicio;
+        const prazoNum = parseInt(prazo, 10);
+        if (inicio && prazoNum > 0 && prazoNum <= 999) {
+          try {
+            const startDate = parseDateLocal(inicio);
+            const endDate = addBusinessDays(startDate, prazoNum);
+            next.data_previsao = formatDateLocal(endDate);
+          } catch {
+            // ignore parse errors
+          }
+        }
+      }
+
+      return next;
+    });
   };
 
   const handleOpenDisciplinaDetail = (index: number) => {
