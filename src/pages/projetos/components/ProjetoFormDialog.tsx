@@ -27,6 +27,8 @@ import type { FluxoDisciplinas } from "@/types/fluxoDisciplinas";
 import { useProjetoForm, ESTADOS_BR } from "./useProjetoForm";
 import { getPriorityDotColor } from "../lib/priorityColors";
 import { DisciplinasSection } from "./DisciplinasSection";
+import { DesbloqueioNivel } from "@/components/trial/DesbloqueioNivel";
+import { useNivelConfianca } from "@/hooks/useNivelConfianca";
 import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
 import { useProjetoDisciplinas } from "@/hooks/useProjetoDisciplinas";
 import { useQuery } from "@tanstack/react-query";
@@ -105,6 +107,7 @@ export function ProjetoFormDialog({
     currentUser,
     onSaved,
   });
+  const { isAdmin } = useNivelConfianca();
 
   const [step, setStep] = useState<Step>(1);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
@@ -513,7 +516,7 @@ export function ProjetoFormDialog({
                   <Label className="text-[10px] uppercase text-muted-foreground tracking-wider flex items-center gap-1.5">
                     <Calendar size={12} /> Prazos
                   </Label>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <Label htmlFor="dataInicio" className="text-xs">
                         Início
@@ -524,6 +527,26 @@ export function ProjetoFormDialog({
                         onChange={(v) => form.handleInputChange("data_inicio", v)}
                       />
                     </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="prazoDiasUteis" className="text-xs">
+                        Prazo (dias úteis)
+                      </Label>
+                      <Input
+                        id="prazoDiasUteis"
+                        type="number"
+                        min="1"
+                        max="999"
+                        value={form.formData.prazo_dias_uteis}
+                        onChange={(e) => form.handleInputChange("prazo_dias_uteis", e.target.value)}
+                        placeholder="60"
+                        className="h-9"
+                      />
+                      <p className="text-[10px] text-muted-foreground">
+                        Só calcula a Previsão ao lado; não fica salvo, por isso volta vazio ao reabrir.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                       <Label htmlFor="dataPrevisao" className="text-xs">
                         Previsão
@@ -660,6 +683,16 @@ export function ProjetoFormDialog({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {form.capacidadeErro && (
+        <DesbloqueioNivel
+          open
+          onOpenChange={(o) => !o && form.fecharCapacidadeErro()}
+          recurso={form.capacidadeErro.recurso}
+          limite={form.capacidadeErro.limite}
+          isAdmin={isAdmin}
+        />
+      )}
     </>
   );
 }

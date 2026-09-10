@@ -78,7 +78,7 @@ export function MesView({ cursor, eventosPorDia, onEventoClick }: MesViewProps) 
                   </button>
                 </PopoverTrigger>
                 {eventosDoDia.length > 0 && (
-                  <PopoverContent align="start" className="w-80 p-3">
+                  <PopoverContent align="start" collisionPadding={12} className="w-80 max-w-[calc(100vw-2rem)] p-3">
                     <div className="text-xs font-medium mb-2">
                       {d.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
                     </div>

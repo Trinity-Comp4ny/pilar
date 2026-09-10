@@ -358,7 +358,13 @@ export default function Fornecedores() {
         <PageHeader
           title="Fornecedores"
           search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "Buscar fornecedores" }}
-          primaryAction={{ label: "Novo fornecedor", onClick: handleOpenNew, icon: Plus, feature: "obras", dataTour: "onb-novo-fornecedor" }}
+          primaryAction={{
+            label: "Novo fornecedor",
+            onClick: handleOpenNew,
+            icon: Plus,
+            feature: "obras",
+            dataTour: "onb-novo-fornecedor",
+          }}
           children={
             <>
               {canEdit && (
@@ -504,8 +510,10 @@ export default function Fornecedores() {
             {/* Busca de texto migrou para o PageHeader (spec 002). */}
           </div>
         </CardHeader>
-        <CardContent className="flex-1 min-h-0">
-          <div className="w-full h-full">
+        <CardContent className="flex-1 min-h-0 flex flex-col">
+          {/* O main está com overflow-y-hidden (página de altura fixa), então o
+              scroll precisa viver aqui, senão a tabela é cortada sem rolar. */}
+          <div className="overflow-x-auto overflow-y-auto w-full flex-1 min-h-0">
             <DataTable
               columns={columns}
               data={{ rows: filtered }}

@@ -64,7 +64,7 @@ import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
 import { ProjetoAtividadesPanel } from "./ProjetoAtividadesPanel";
 import { LinksEditor } from "@/components/LinksEditor";
 import { useProjetoAtividades } from "../hooks/useProjetoAtividades";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { ResponsiveDetailPanels } from "@/components/ui/responsive-detail-panels";
 
 // Campo da UI → coluna do banco (espelha o mapa de ProjetoDetailTabs).
 const DISC_DB_FIELD: Partial<Record<keyof DisciplinaResponsavel, keyof ProjetoDisciplinaDB>> = {
@@ -87,12 +87,32 @@ interface ProjectDetailDialogProps {
   onProjectUpdated?: () => void;
 }
 
-const DISC_STATUS_DOT: Record<string, string> = {
-  Concluído: "bg-status-done",
-  "Em Andamento": "bg-status-progress",
-  Pendente: "bg-status-planning",
-  "Não Iniciado": "bg-status-unknown",
+type DiscStatusKey = "nao_iniciado" | "em_andamento" | "concluido" | "pendente";
+
+const DISC_STATUS_INFO: Record<DiscStatusKey, { label: string; dot: string }> = {
+  nao_iniciado: { label: "Não iniciado", dot: "bg-status-unknown" },
+  em_andamento: { label: "Em andamento", dot: "bg-status-progress" },
+  concluido: { label: "Concluído", dot: "bg-status-done" },
+  pendente: { label: "Pendente", dot: "bg-status-planning" },
 };
+
+/**
+ * projeto_disciplinas.status é `text` livre no banco (sem enum), e hoje convivem
+ * dois formatos no mesmo dado: "Em Andamento" (legado, Título Case) e
+ * "em_andamento"/"concluida" (snake_case, sem acento) — achado da auditoria mobile
+ * (08/09), que via o valor cru aparecer na tela porque nenhum batia com o mapa
+ * antigo. Normaliza por substring em vez de listar literais, pra não quebrar nas
+ * próximas variações de grafia.
+ */
+function normalizeDiscStatus(raw: string | null | undefined): DiscStatusKey {
+  // Compara por substring sem acento nos dois lados ("conclu" casa "Concluído" e
+  // "concluida"), então não precisa normalizar diacríticos aqui.
+  const s = (raw ?? "").toLowerCase();
+  if (s.includes("conclu")) return "concluido";
+  if (s.includes("andamento")) return "em_andamento";
+  if (s.includes("pendente")) return "pendente";
+  return "nao_iniciado";
+}
 
 export function ProjectDetailDialog({
   open,
@@ -328,9 +348,12 @@ export function ProjectDetailDialog({
             </div>
           </div>
 
-          {/* Conteúdo: disciplinas (redimensionável) + atividades do projeto */}
-          <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
-            <ResizablePanel defaultSize={68} minSize={45}>
+          {/* Conteúdo: disciplinas (redimensionável no desktop, abas no mobile) + atividades */}
+          <ResponsiveDetailPanels
+            className="flex-1 min-h-0"
+            primaryLabel="Disciplinas"
+            secondaryLabel="Atividades"
+            primary={
               <div className="h-full overflow-y-auto px-8 py-6">
                 <div className="flex items-center justify-between mb-3">
                   <Label className="text-xs font-semibold uppercase text-muted-foreground flex items-center gap-1.5">
@@ -469,9 +492,12 @@ export function ProjectDetailDialog({
 
                               <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground flex-shrink-0">
                                 <span
-                                  className={cn("h-2 w-2 rounded-full", DISC_STATUS_DOT[disc.status || "Não Iniciado"])}
+                                  className={cn(
+                                    "h-2 w-2 rounded-full",
+                                    DISC_STATUS_INFO[normalizeDiscStatus(disc.status)].dot
+                                  )}
                                 />
-                                {disc.status || "Não Iniciado"}
+                                {DISC_STATUS_INFO[normalizeDiscStatus(disc.status)].label}
                               </span>
                             </div>
                           </button>
@@ -506,9 +532,8 @@ export function ProjectDetailDialog({
                   <LinksEditor value={projetoLinks} onChange={(n) => salvarAtividades.mutate({ links: n })} />
                 </div>
               </div>
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={32} minSize={22}>
+            }
+            secondary={
               <div className="flex h-full flex-col bg-muted/10 px-6 py-5">
                 <Label className="mb-3 flex flex-shrink-0 items-center gap-2 text-sm font-semibold">
                   <MessageSquare className="h-4 w-4" /> Atividades
@@ -517,8 +542,8 @@ export function ProjectDetailDialog({
                   <ProjetoAtividadesPanel projetoId={projeto.id} pessoas={pessoas} autorNome={autorNome} />
                 </div>
               </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
+            }
+          />
 
           {/* Footer */}
           <div className="flex-shrink-0 flex items-center justify-end gap-2 px-6 py-3 border-t bg-muted/30">

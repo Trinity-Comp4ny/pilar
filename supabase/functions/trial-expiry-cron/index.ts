@@ -17,7 +17,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from "../_shared/logger.ts";
 import { withSentry } from "../_shared/sentry.ts";
-import { sendEmail, templateTrialAviso } from "../_shared/email/index.ts";
+import { sendEmail, templateTrialAviso, templateAtivarPlanoRecibo } from "../_shared/email/index.ts";
+import { createSubscription } from "../_shared/asaas-platform.ts";
 
 const log = createLogger("trial-expiry-cron");
 
@@ -64,52 +65,168 @@ serve(
 
     let processed = 0;
     let expired = 0;
+    let converted = 0;
     let warned = 0;
 
     // ------------------------------------------------------------------
-    // 1. Expirar trials vencidos
+    // 1. Trials vencidos: quem tem cartão tokenizado (Ativar plano, SPEC 098
+    //    Fase 2B) converte para active com a primeira cobrança; os demais
+    //    seguem pro modo leitura (marcados expired, igual já fazia).
     // ------------------------------------------------------------------
-    const { data: toExpire, error: expireQueryErr } = await admin
+    const { data: dueRows, error: dueQueryErr } = await admin
       .from("pilar_subscriptions")
-      .select("id, empresa_id")
+      .select("id, empresa_id, plan_id, billing_cycle, asaas_customer_id, asaas_credit_card_token")
       .eq("status", "trialing")
       .lt("trial_ends_at", new Date().toISOString());
 
-    if (expireQueryErr) {
-      log.error("falha ao buscar trials vencidos", expireQueryErr);
-    } else if (toExpire && toExpire.length > 0) {
-      const ids = toExpire.map((r) => r.id);
+    if (dueQueryErr) {
+      log.error("falha ao buscar trials vencidos", dueQueryErr);
+    } else if (dueRows && dueRows.length > 0) {
+      const toConvert = dueRows.filter((r) => r.asaas_credit_card_token && r.asaas_customer_id && r.plan_id);
+      const toExpire = dueRows.filter((r) => !(r.asaas_credit_card_token && r.asaas_customer_id && r.plan_id));
 
-      const { error: updateErr } = await admin.from("pilar_subscriptions").update({ status: "expired" }).in("id", ids);
+      // --- Conversão automática (cobra com o token salvo, sem pedir o cartão de novo) ---
+      for (const row of toConvert) {
+        try {
+          const { data: plan } = await admin
+            .from("pilar_subscription_plans")
+            .select("nome, preco_mensal, preco_anual")
+            .eq("id", row.plan_id)
+            .maybeSingle();
+          const { data: empresa } = await admin.from("empresas").select("nome").eq("id", row.empresa_id).maybeSingle();
 
-      if (updateErr) {
-        log.error("falha ao marcar trials como expired", updateErr, { count: ids.length });
-      } else {
-        expired = ids.length;
-        log.info("trials expirados", { count: expired });
+          const cycle = row.billing_cycle === "yearly" ? "YEARLY" : "MONTHLY";
+          const valor = row.billing_cycle === "yearly" ? plan?.preco_anual : plan?.preco_mensal;
+          if (!plan || valor == null) {
+            throw new Error("plano ou preço ausente na conversão");
+          }
 
-        // Audit log para cada empresa expirada
-        for (const row of toExpire) {
-          try {
-            await admin.from("admin_audit_logs").insert({
-              actor_id: null,
-              actor_email: "system@pilar",
-              actor_role: "ultra_admin",
-              action: "trial_expired",
-              category: "billing",
-              target_type: "subscription",
-              target_id: row.id,
-              target_name: row.empresa_id,
-              empresa_id: row.empresa_id,
-              metadata: { expired_at: new Date().toISOString() },
+          const subscription = await createSubscription({
+            customer: row.asaas_customer_id!,
+            billingType: "CREDIT_CARD",
+            value: valor,
+            cycle,
+            nextDueDate: new Date().toISOString().slice(0, 10),
+            description: `Pilar — assinatura ${plan.nome}`,
+            externalReference: row.empresa_id,
+            creditCardToken: row.asaas_credit_card_token!,
+            remoteIp: "0.0.0.0", // cobrança automática do servidor, sem IP de dispositivo pra reportar
+          });
+
+          const now = new Date();
+          const periodEnd = new Date(now);
+          periodEnd.setMonth(periodEnd.getMonth() + (row.billing_cycle === "yearly" ? 12 : 1));
+
+          await admin
+            .from("pilar_subscriptions")
+            .update({
+              status: "active",
+              asaas_subscription_id: subscription.id,
+              current_period_start: now.toISOString(),
+              current_period_end: periodEnd.toISOString(),
+            })
+            .eq("id", row.id);
+
+          await admin.from("admin_audit_logs").insert({
+            actor_id: null,
+            actor_email: "system@pilar",
+            actor_role: "ultra_admin",
+            action: "trial_converted_active",
+            category: "billing",
+            target_type: "subscription",
+            target_id: row.id,
+            target_name: row.empresa_id,
+            empresa_id: row.empresa_id,
+            metadata: { asaas_subscription_id: subscription.id, valor, converted_at: now.toISOString() },
+          });
+
+          const { data: admins } = (await admin
+            .from("profiles")
+            .select("email")
+            .eq("empresa_id", row.empresa_id)
+            .in("role", ["owner", "admin", "ultra_admin"])) as { data: { email: string | null }[] | null };
+          const recipients = (admins ?? []).map((p) => p.email).filter((e): e is string => !!e);
+          if (recipients.length > 0) {
+            await sendEmail({
+              classe: "plataforma",
+              tipo: "ativar_plano_recibo",
+              to: recipients,
+              idempotencyKey: `trial-convert-${row.id}`,
+              ...templateAtivarPlanoRecibo({
+                empresaNome: empresa?.nome ?? "sua empresa",
+                planoNome: plan.nome,
+                valor,
+                billingUrl: `${APP_URL}/billing`,
+              }),
             });
-          } catch (auditErr) {
-            log.warn("falha ao inserir audit log de expiração", { empresa_id: row.empresa_id, err: String(auditErr) });
+          }
+
+          converted++;
+        } catch (err) {
+          // Cobrança falhou (cartão recusado, Asaas fora do ar etc.) — cai no
+          // mesmo caminho de quem nunca tokenizou: expira e vai pro modo
+          // leitura. Não trava a empresa em trialing indefinidamente.
+          log.error("falha ao converter trial em assinatura ativa, expirando", err, {
+            empresa_id: row.empresa_id,
+            subscription_id: row.id,
+          });
+          toExpire.push(row);
+        }
+      }
+
+      // --- Expira quem não converteu (sem token, ou conversão falhou) ---
+      if (toExpire.length > 0) {
+        const ids = toExpire.map((r) => r.id);
+        const { error: updateErr } = await admin
+          .from("pilar_subscriptions")
+          .update({ status: "expired" })
+          .in("id", ids);
+
+        if (updateErr) {
+          log.error("falha ao marcar trials como expired", updateErr, { count: ids.length });
+        } else {
+          expired = ids.length;
+          log.info("trials expirados", { count: expired });
+
+          // SPEC 098 Fase 3 (ADR 0042): empresa entra em somente leitura no
+          // exato momento em que expira sem forma de pagamento tokenizada.
+          // leitura_desde é a fonte de verdade que a retencao-pos-trial usa
+          // pra contar os 90 dias até a exclusão (ADR 0043).
+          const empresaIds = toExpire.map((r) => r.empresa_id);
+          const { error: leituraErr } = await admin
+            .from("empresas")
+            .update({ leitura_desde: new Date().toISOString() })
+            .in("id", empresaIds)
+            .is("leitura_desde", null);
+          if (leituraErr) {
+            log.error("falha ao marcar leitura_desde", leituraErr, { count: empresaIds.length });
+          }
+
+          for (const row of toExpire) {
+            try {
+              await admin.from("admin_audit_logs").insert({
+                actor_id: null,
+                actor_email: "system@pilar",
+                actor_role: "ultra_admin",
+                action: "trial_expired",
+                category: "billing",
+                target_type: "subscription",
+                target_id: row.id,
+                target_name: row.empresa_id,
+                empresa_id: row.empresa_id,
+                metadata: { expired_at: new Date().toISOString() },
+              });
+            } catch (auditErr) {
+              log.warn("falha ao inserir audit log de expiração", {
+                empresa_id: row.empresa_id,
+                err: String(auditErr),
+              });
+            }
           }
         }
       }
 
-      processed += toExpire.length;
+      processed += dueRows.length;
     }
 
     // ------------------------------------------------------------------
@@ -218,9 +335,9 @@ serve(
       }
     }
 
-    log.info("cron finalizado", { processed, expired, warned });
+    log.info("cron finalizado", { processed, expired, converted, warned });
 
-    return new Response(JSON.stringify({ processed, expired, warned }), {
+    return new Response(JSON.stringify({ processed, expired, converted, warned }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

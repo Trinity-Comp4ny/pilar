@@ -49,6 +49,7 @@ export function usePendenciasAgentes() {
         .eq("tipo", "aditivo")
         .in("status", ["rascunho", "pendente_aprovacao"])
         .is("deleted_at", null)
+        .or(`adiado_ate.is.null,adiado_ate.lte.${new Date().toISOString()}`)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []).map((row) => {
@@ -154,5 +155,23 @@ export function useRejeitarEscopo() {
       qc.invalidateQueries({ queryKey: escoposKey(params.projetoId) });
       qc.invalidateQueries({ queryKey: pendenciasKey });
     },
+  });
+}
+
+/**
+ * Adia uma pendência (aba Pendências) por N dias sem aprovar nem rejeitar (a única
+ * alternativa antes disso era decidir na hora ou deixar acumulando na lista). Não muda
+ * o status: o rascunho continua "em aberto" pro guardião de margem não gerar outro
+ * pro mesmo projeto enquanto o usuário não decide de verdade.
+ */
+export function useAdiarEscopo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: { escopoId: string; dias: number }): Promise<void> => {
+      const adiadoAte = new Date(Date.now() + params.dias * 24 * 60 * 60 * 1000).toISOString();
+      const { error } = await supabase.from("escopos").update({ adiado_ate: adiadoAte }).eq("id", params.escopoId);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: pendenciasKey }),
   });
 }

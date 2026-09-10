@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -209,6 +210,7 @@ function DisciplinaTimelineRows({
 
 export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaProjetosTabProps) {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [zoom, setZoom] = useState<ZoomLevel>("months");
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "all">("all");
   const [clienteFilter, setClienteFilter] = useState<string[]>([]);
@@ -393,12 +395,15 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-col gap-3">
-            {/* Title + zoom controls */}
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <h3 className="text-sm font-semibold">Cronograma de Projetos</h3>
-                <span className="text-[11px] text-muted-foreground">
+            {/* Title + zoom controls: título e controles empilham em mobile
+                (achado da auditoria: "Cronograma de Projetos" + "Hoje" +
+                "Meses"/"Semanas" não cabiam em 390px sem quebrar linha nem
+                truncar, e o excesso vazava em vez de ficar contido). */}
+            <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <h3 className="truncate text-sm font-semibold">Cronograma de Projetos</h3>
+                <span className="shrink-0 text-[11px] text-muted-foreground">
                   {visibleProjetos.length} projeto{visibleProjetos.length === 1 ? "" : "s"}
                 </span>
                 {isSaving && <span className="text-[10px] text-muted-foreground animate-pulse">Salvando...</span>}
@@ -408,7 +413,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex shrink-0 items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -424,16 +429,18 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                     size="sm"
                     className="h-7 text-xs rounded-none px-2"
                     onClick={() => setZoom("months")}
+                    aria-label="Meses"
                   >
-                    <ZoomOut className="h-3 w-3 mr-1" /> Meses
+                    <ZoomOut className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Meses</span>
                   </Button>
                   <Button
                     variant={zoom === "weeks" ? "secondary" : "ghost"}
                     size="sm"
                     className="h-7 text-xs rounded-none px-2"
                     onClick={() => setZoom("weeks")}
+                    aria-label="Semanas"
                   >
-                    <ZoomIn className="h-3 w-3 mr-1" /> Semanas
+                    <ZoomIn className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Semanas</span>
                   </Button>
                 </div>
               </div>
@@ -484,7 +491,10 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
             {projetosSemDatas.length} projeto{projetosSemDatas.length > 1 ? "s" : ""} sem data de início ou previsão:{" "}
             {projetosSemDatas
               .slice(0, 3)
-              .map((p) => p.codigo_projeto)
+              // codigo_projeto é opcional e a maioria dos projetos não o preenche; sem
+              // fallback, o aviso listava vírgulas vazias ("19 projetos ..., , e mais
+              // 16", achado da auditoria) em vez dos nomes.
+              .map((p) => p.codigo_projeto || p.nome)
               .join(", ")}
             {projetosSemDatas.length > 3 ? ` e mais ${projetosSemDatas.length - 3}` : ""}
           </span>
@@ -505,8 +515,11 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
         <Card>
           <CardContent className="p-0">
             <div className="flex items-start max-h-[calc(100svh-420px)] overflow-y-auto">
-              {/* Fixed left column */}
-              <div className="flex-shrink-0 w-[260px] border-r bg-muted/30">
+              {/* Fixed left column: colapsa em mobile (achado da auditoria: a coluna
+                  fixa de 260px sozinha consumia 66% de uma tela de 390px, sobrando
+                  só uma faixa estreita pra timeline). Some código e status/cliente,
+                  mantém só o nome truncado. */}
+              <div className={cn("flex-shrink-0 border-r bg-muted/30", isMobile ? "w-[104px]" : "w-[260px]")}>
                 <div className="h-10 border-b px-3 flex items-center">
                   <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Projeto
@@ -535,25 +548,32 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                           onClick={() => navigate(`/projetos/${row.projeto.id}#cronograma`)}
                           className="flex-1 min-w-0 h-full pr-3 flex flex-col justify-center text-left hover:bg-muted/50 transition-colors"
                         >
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] font-mono text-muted-foreground">
-                              {row.projeto.codigo_projeto}
-                            </span>
-                            {row.atrasado && <AlertTriangle className="h-3 w-3 text-danger-mid flex-shrink-0" />}
-                          </div>
+                          {!isMobile && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-mono text-muted-foreground">
+                                {row.projeto.codigo_projeto}
+                              </span>
+                              {row.atrasado && <AlertTriangle className="h-3 w-3 text-danger-mid flex-shrink-0" />}
+                            </div>
+                          )}
                           <div className="flex items-center gap-1.5 mt-0.5">
+                            {isMobile && row.atrasado && (
+                              <AlertTriangle className="h-3 w-3 text-danger-mid flex-shrink-0" />
+                            )}
                             <span className="text-xs font-medium truncate">{row.projeto.nome}</span>
                           </div>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span
-                              className={cn("inline-block h-1.5 w-1.5 rounded-full flex-shrink-0", row.barClass)}
-                              aria-hidden
-                            />
-                            <span className="text-[10px] text-muted-foreground truncate">
-                              {cfg?.label || row.projeto.status}
-                              {row.projeto.cliente_nome && ` · ${row.projeto.cliente_nome}`}
-                            </span>
-                          </div>
+                          {!isMobile && (
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span
+                                className={cn("inline-block h-1.5 w-1.5 rounded-full flex-shrink-0", row.barClass)}
+                                aria-hidden
+                              />
+                              <span className="text-[10px] text-muted-foreground truncate">
+                                {cfg?.label || row.projeto.status}
+                                {row.projeto.cliente_nome && ` · ${row.projeto.cliente_nome}`}
+                              </span>
+                            </div>
+                          )}
                         </button>
                       </div>
                       {isExpanded && <DisciplinaLeftRows projetoId={row.projeto.id} />}

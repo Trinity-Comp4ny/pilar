@@ -16,6 +16,12 @@ INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
 VALUES ('00000000-0000-0000-0000-0000000fc001', 'Empresa Guardiao Margem RPC', NULL, TRUE, '{"projetos": true}'::jsonb)
 ON CONFLICT (id) DO UPDATE SET features = EXCLUDED.features;
 
+-- SPEC 098 Fase 1: empresa de teste pré-existente, sem relação com trial.
+-- Override ouro evita que o novo gate de capacidade por nível quebre fixtures
+-- que criam mais projetos/obras do que o teto do Bronze permitiria.
+UPDATE public.empresas SET nivel_override = 'ouro', nivel_override_motivo = 'fixture_pre_existente'
+WHERE id = '00000000-0000-0000-0000-0000000fc001';
+
 -- Projeto A: orçamento vivo R$10k (100h x R$100/h), despesa R$12k, sem aditivo aberto → aparece
 INSERT INTO public.projetos (id, empresa_id, nome, status)
 VALUES ('ffffffff-0000-0000-0000-0000000fc001', '00000000-0000-0000-0000-0000000fc001', 'Projeto Estourado', 'Em andamento');

@@ -1,4 +1,4 @@
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   Home,
   ShieldCheck,
@@ -16,7 +16,6 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 import { Logo } from "@/components/Logo";
 import { AvatarStack } from "@/components/AvatarStack";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -34,34 +33,29 @@ import { ImpersonationPicker } from "@/components/ImpersonationPicker";
 import { NotificationInbox } from "@/components/NotificationInbox";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { usePendenciasAgentes } from "@/hooks/useEscopos";
-import {
-  EMPRESA_ITEMS,
-  MODULE_ORDER,
-  MODULES,
-  readUltimoModulo,
-  routeToModule,
-  saveUltimoModulo,
-  type ModuleId,
-  type ModuleMenuItem,
-} from "@/lib/modules";
+import { useModuleNav } from "@/hooks/useModuleNav";
+import { MODULES, type ModuleMenuItem } from "@/lib/modules";
 
 // Shell dos 3 pilares (spec 001-shell-3-pilares): o menu vem do mapa central de
 // módulos. O switcher é apresentação; autorização continua em usePermissions.
+// Em mobile (< 768px), esta sidebar não renderiza mais nada: a navegação vira
+// `<BottomNav />` + `<ModuleChipNav />` (spec 097 / ADR 0040), montados direto no
+// shell (`Layout.tsx`/`PageLayout.tsx`). `useModuleNav` é o hook compartilhado
+// entre a sidebar desktop e os dois componentes mobile.
 type MenuItem = ModuleMenuItem;
 
 export function AppSidebar() {
-  const { state, isMobile, openMobile, setOpenMobile, toggleSidebar } = useSidebar();
-  const location = useLocation();
+  const { state, isMobile, toggleSidebar } = useSidebar();
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
   const { openSettings, isOpen: isSettingsOpen } = useSettingsModal();
-  const { getNavItemProps, isAdmin, isUltraAdmin, role } = usePermissions();
   // Contador de pendências de agente no item "Agentes" (spec 084) — sem isso, o trabalho
   // dos agentes proativos (ex. guardião de margem) fica invisível pra quem não abre /agentes.
   const { data: pendenciasAgentes } = usePendenciasAgentes();
   const numPendenciasAgentes = pendenciasAgentes?.length ?? 0;
   const { ocultos: valoresOcultos, toggle: toggleValoresOcultos } = useValoresOcultos();
-  const currentPath = location.pathname;
+  const { currentPath, currentView, activeModule, moduleGroups, empresaItems, visibleModules, selectModule } =
+    useModuleNav();
   const [sidebarWidth, setSidebarWidth] = useState(state === "collapsed" ? "64px" : "240px");
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -75,6 +69,7 @@ export function AppSidebar() {
 
   const userEmail = user?.email ?? null;
   const collapsed = state === "collapsed";
+  const { isAdmin, isUltraAdmin } = usePermissions();
 
   useEffect(() => {
     setSidebarWidth(collapsed ? "64px" : "240px");
@@ -96,78 +91,6 @@ export function AppSidebar() {
   const handleUltraAdmin = () => {
     navigate("/ultra-admin");
   };
-
-  const handleNavClick = () => {
-    if (isMobile) {
-      setOpenMobile(false);
-    }
-  };
-
-  // Módulo ativo: inferido da rota; rota transversal (/inicio, /agentes...) mantém o último usado.
-  const routeModule = routeToModule(currentPath);
-  const activeModule: ModuleId = routeModule ?? readUltimoModulo();
-
-  useEffect(() => {
-    if (routeModule) saveUltimoModulo(routeModule);
-  }, [routeModule]);
-
-  const navFor = (item: ModuleMenuItem) =>
-    item.feature ? getNavItemProps(item.feature) : { disabled: false, title: "" };
-
-  const withNav = (items: ModuleMenuItem[]) =>
-    items
-      .filter((item) => !item.adminOnly || isAdmin)
-      .map((item) => ({ item, nav: navFor(item) }))
-      // Feature delegável (financeiro/equipe/metas) bloqueada: "user" nunca
-      // recebe concessão, então ficaria cinza pra sempre — melhor nem mostrar.
-      // Coordenador continua vendo cinza até o admin conceder.
-      .filter(({ item, nav }) => !(item.hiddenWhenLockedForUser && nav.disabled && role === "user"));
-
-  const moduleItems = useMemo(
-    () => withNav(MODULES[activeModule].items),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activeModule, getNavItemProps, isAdmin, role]
-  );
-
-  // Agrupa itens consecutivos pelo rótulo `group`, preservando a ordem. Itens sem
-  // grupo (Projetos, Obras) caem num bloco único sem cabeçalho.
-  const moduleGroups = useMemo(() => {
-    const groups: { label: string | null; entries: typeof moduleItems }[] = [];
-    for (const entry of moduleItems) {
-      const label = entry.item.group ?? null;
-      const last = groups[groups.length - 1];
-      if (last && last.label === label) last.entries.push(entry);
-      else groups.push({ label, entries: [entry] });
-    }
-    return groups;
-  }, [moduleItems]);
-
-  const empresaItems = useMemo(
-    () => withNav(EMPRESA_ITEMS).filter(({ nav }) => !nav.disabled),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [getNavItemProps, isAdmin, role]
-  );
-
-  // Módulo some do switcher se nenhuma feature dele está liberada; Obras (em breve) fica sempre.
-  const visibleModules = useMemo(
-    () =>
-      MODULE_ORDER.filter((id) => {
-        const m = MODULES[id];
-        if (m.emBreve) return true;
-        return withNav(m.items).some(({ nav }) => !nav.disabled);
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [getNavItemProps, isAdmin, role]
-  );
-
-  const selectModule = (id: ModuleId) => {
-    saveUltimoModulo(id);
-    navigate(MODULES[id].homeRoute);
-    if (isMobile) setOpenMobile(false);
-  };
-
-  // View ativa da URL (?view=), usada para distinguir as lentes de /projetos na sidebar.
-  const currentView = new URLSearchParams(location.search).get("view");
 
   const renderItem = (item: MenuItem, navProps: { disabled: boolean; title: string }) => {
     const [itemPath, itemQuery] = item.url.split("?");
@@ -203,7 +126,6 @@ export function AppSidebar() {
         key={item.title}
         to={item.url}
         end={false}
-        onClick={handleNavClick}
         className={cn(
           "flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200 group relative",
           collapsed && "justify-center",
@@ -333,7 +255,6 @@ export function AppSidebar() {
         <div className="mt-3 space-y-1">
           <NavLink
             to="/inicio"
-            onClick={handleNavClick}
             className={cn(
               "flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200",
               collapsed && "justify-center",
@@ -459,15 +380,9 @@ export function AppSidebar() {
     </div>
   );
 
-  if (isMobile) {
-    return (
-      <Sheet open={openMobile} onOpenChange={setOpenMobile}>
-        <SheetContent side="left" className="p-0 w-[18rem] [&>button]:hidden">
-          <div className="h-full border-r border-black/5 bg-white">{sidebarInner}</div>
-        </SheetContent>
-      </Sheet>
-    );
-  }
+  // Mobile não tem mais drawer: navegação é <BottomNav /> + <ModuleChipNav />
+  // (spec 097 / ADR 0040), montados em Layout.tsx e PageLayout.tsx.
+  if (isMobile) return null;
 
   return (
     <div

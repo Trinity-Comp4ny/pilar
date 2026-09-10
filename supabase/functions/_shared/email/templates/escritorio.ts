@@ -103,32 +103,62 @@ export function templateCobrancaDireta(params: {
 export function templateAcessoPortalCliente(params: {
   nomeCliente: string;
   email: string;
-  senha: string;
-  loginUrl: string;
+  conviteUrl: string;
   isReset?: boolean;
   empresaNome?: string;
 }): EmailTemplate {
-  const { nomeCliente, email, senha, loginUrl, isReset = false, empresaNome } = params;
+  const { nomeCliente, email, conviteUrl, isReset = false, empresaNome } = params;
   const quem = empresaNome ? strong(empresaNome) : "Seu escritório";
 
   return {
-    subject: isReset ? "Sua senha do portal foi redefinida" : "Seu acesso ao portal do cliente",
+    subject: isReset ? "Defina sua nova senha do portal" : "Seu acesso ao portal do cliente",
     html: shell({
-      preview: isReset ? "Nova senha do portal do cliente" : "Credenciais de acesso ao portal",
+      preview: isReset ? "Defina uma nova senha para o portal do cliente" : "Defina sua senha de acesso ao portal",
       footerNote: empresaNome
         ? `Acesso criado por ${empresaNome} via ${BRAND.nome}.`
         : "Você recebeu este e-mail porque um escritório criou seu acesso ao portal.",
       hero: {
-        titulo: isReset ? html`Sua senha foi ${em("redefinida")}` : html`Seu acesso ao ${em("portal do cliente")}`,
+        titulo: isReset ? html`Defina sua ${em("nova senha")}` : html`Seu acesso ao ${em("portal do cliente")}`,
         lead: isReset
-          ? html`Olá, ${strong(nomeCliente)}. ${quem} redefiniu a senha do seu acesso. Use as credenciais abaixo.`
+          ? html`Olá, ${strong(nomeCliente)}. ${quem} pediu a redefinição da senha do seu acesso. Clique no botão abaixo
+            para escolher uma senha nova.`
           : html`Olá, ${strong(nomeCliente)}. ${quem} criou seu acesso ao portal, onde você acompanha o andamento do
-            projeto, entregas e aprovações.`,
+            projeto, entregas e aprovações. Clique no botão abaixo para escolher sua senha.`,
       },
       content: [
-        card([kv("E-mail", email), kvDivider(), kv("Senha temporária", senha, { mono: true, size: "lg" })], { mt: 0 }),
-        button("Acessar portal", loginUrl),
-        callout("Troque a senha no primeiro acesso. Esta senha é temporária e foi enviada só para você.", "info"),
+        card([kv("E-mail", email)], { mt: 0 }),
+        button(isReset ? "Definir nova senha" : "Definir minha senha", conviteUrl),
+        callout("Este link expira em 72 horas e só pode ser usado uma vez.", "info"),
+      ],
+    }),
+  };
+}
+
+export function templateConviteAcessoCampo(params: {
+  nome: string;
+  email: string;
+  conviteUrl: string;
+  empresaNome?: string;
+}): EmailTemplate {
+  const { nome, email, conviteUrl, empresaNome } = params;
+  const quem = empresaNome ? strong(empresaNome) : "O escritório";
+
+  return {
+    subject: "Seu acesso ao Pilar Campo",
+    html: shell({
+      preview: "Defina sua senha de acesso ao Pilar Campo",
+      footerNote: empresaNome
+        ? `Acesso criado por ${empresaNome} via ${BRAND.nome}.`
+        : "Você recebeu este e-mail porque um escritório criou seu acesso ao Pilar Campo.",
+      hero: {
+        titulo: html`Seu acesso ao ${em("Pilar Campo")}`,
+        lead: html`Olá, ${strong(nome)}. ${quem} criou seu acesso para registrar o dia da obra pelo celular. Clique no
+        botão abaixo para escolher sua senha.`,
+      },
+      content: [
+        card([kv("E-mail", email)], { mt: 0 }),
+        button("Definir minha senha", conviteUrl),
+        callout("Este link expira em 72 horas e só pode ser usado uma vez.", "info"),
       ],
     }),
   };

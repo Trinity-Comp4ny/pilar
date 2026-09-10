@@ -107,21 +107,21 @@ export function LancamentosGroupRow({
         </span>
       </td>
       <td className={cn(cellPad, cellTextSize, "text-muted-foreground whitespace-nowrap")}>{proximaLabel}</td>
-      <td className={cn(cellPad, "font-semibold", cellTextSize)}>
-        <span className="inline-flex items-center gap-1.5">
+      <td className={cn(cellPad, "font-semibold max-w-[220px]", cellTextSize)}>
+        <span className="inline-flex w-full items-center gap-1.5">
           {isExpanded ? (
             <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           ) : (
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           )}
-          {groupDesc}
+          <span className="truncate">{groupDesc}</span>
         </span>
       </td>
-      <td className={cn(cellPad, cellTextSize)}>{first.contraparte_nome || "-"}</td>
-      <td className={cn(cellPad, cellTextSize)}>{first.categoria_nome || "-"}</td>
-      <td className={cn(cellPad, cellTextSize)}>{first.projeto_codigo || "-"}</td>
+      <td className={cn(cellPad, "max-w-[160px] truncate", cellTextSize)}>{first.contraparte_nome || "-"}</td>
+      <td className={cn(cellPad, "whitespace-nowrap", cellTextSize)}>{first.categoria_nome || "-"}</td>
+      <td className={cn(cellPad, "whitespace-nowrap", cellTextSize)}>{first.projeto_codigo || "-"}</td>
       <td className={cn(cellPad, "text-xs text-muted-foreground whitespace-nowrap")}>{parcelaLabel}</td>
-      <td className={cn(cellPad, "text-right tabular-nums", cellTextSize)}>
+      <td className={cn(cellPad, "whitespace-nowrap text-right tabular-nums", cellTextSize)}>
         <div className={cn("font-semibold", isReceita ? "text-positive-strong" : "text-negative-strong")}>
           {isReceita ? "+" : "−"} {formatCurrency(totalPlano)}
         </div>

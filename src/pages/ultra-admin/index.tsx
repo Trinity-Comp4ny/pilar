@@ -23,6 +23,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { KPICard } from "@/components/KPICard";
 import { TokensPanel } from "./TokensPanel";
+import { TrialsPanel } from "./TrialsPanel";
 import {
   Dialog,
   DialogContent,
@@ -1163,12 +1164,10 @@ export default function UltraAdmin() {
   return (
     <PageLayout
       header={
-        <PageHeader title="Gestão Pilar">
-          <Button variant="brand" className="rounded-full gap-2" onClick={() => setCreateOpen(true)}>
-            <Plus size={16} />
-            Criar empresa
-          </Button>
-        </PageHeader>
+        <PageHeader
+          title="Gestão Pilar"
+          primaryAction={{ label: "Criar empresa", onClick: () => setCreateOpen(true), icon: Plus }}
+        />
       }
     >
       <Tabs
@@ -1189,10 +1188,15 @@ export default function UltraAdmin() {
           <TabsTrigger value="feedback">Feedback</TabsTrigger>
           <TabsTrigger value="status">Status</TabsTrigger>
           <TabsTrigger value="tokens">Tokens</TabsTrigger>
+          <TabsTrigger value="trials">Trials</TabsTrigger>
         </TabsList>
 
         <TabsContent value="tokens" className="mt-4">
           <TokensPanel />
+        </TabsContent>
+
+        <TabsContent value="trials" className="mt-4">
+          <TrialsPanel />
         </TabsContent>
 
         <TabsContent value="dashboard" className="mt-4 space-y-4">

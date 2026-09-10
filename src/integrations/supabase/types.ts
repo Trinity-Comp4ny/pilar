@@ -117,6 +117,30 @@ export type Database = {
           },
         ]
       }
+      agent_cron_heartbeats: {
+        Row: {
+          agent_type: string
+          detail: Json | null
+          last_run_at: string
+          last_status: string
+          updated_at: string
+        }
+        Insert: {
+          agent_type: string
+          detail?: Json | null
+          last_run_at: string
+          last_status: string
+          updated_at?: string
+        }
+        Update: {
+          agent_type?: string
+          detail?: Json | null
+          last_run_at?: string
+          last_status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agent_runs: {
         Row: {
           agent_type: string
@@ -777,11 +801,14 @@ export type Database = {
       campo_accounts: {
         Row: {
           ativo: boolean
+          convite_expira_em: string | null
+          convite_token_hash: string | null
           created_at: string
           created_by: string | null
           email: string | null
           empresa_id: string
           id: string
+          login_gerado: boolean
           must_change_senha: boolean
           nome: string
           obra_id: string
@@ -793,11 +820,14 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          convite_expira_em?: string | null
+          convite_token_hash?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
           empresa_id: string
           id?: string
+          login_gerado?: boolean
           must_change_senha?: boolean
           nome: string
           obra_id: string
@@ -809,11 +839,14 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          convite_expira_em?: string | null
+          convite_token_hash?: string | null
           created_at?: string
           created_by?: string | null
           email?: string | null
           empresa_id?: string
           id?: string
+          login_gerado?: boolean
           must_change_senha?: boolean
           nome?: string
           obra_id?: string
@@ -1078,6 +1111,8 @@ export type Database = {
         Row: {
           ativo: boolean | null
           cliente_id: string
+          convite_expira_em: string | null
+          convite_token_hash: string | null
           created_at: string | null
           created_by: string | null
           email: string | null
@@ -1094,6 +1129,8 @@ export type Database = {
         Insert: {
           ativo?: boolean | null
           cliente_id: string
+          convite_expira_em?: string | null
+          convite_token_hash?: string | null
           created_at?: string | null
           created_by?: string | null
           email?: string | null
@@ -1110,6 +1147,8 @@ export type Database = {
         Update: {
           ativo?: boolean | null
           cliente_id?: string
+          convite_expira_em?: string | null
+          convite_token_hash?: string | null
           created_at?: string | null
           created_by?: string | null
           email?: string | null
@@ -1210,6 +1249,54 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consentimentos_cobranca: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          id: string
+          plan_id: string
+          primeira_cobranca_em: string
+          texto_versao: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          id?: string
+          plan_id: string
+          primeira_cobranca_em: string
+          texto_versao: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          plan_id?: string
+          primeira_cobranca_em?: string
+          texto_versao?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consentimentos_cobranca_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consentimentos_cobranca_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "pilar_subscription_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -1700,6 +1787,24 @@ export type Database = {
           },
         ]
       }
+      email_dominios_bloqueados: {
+        Row: {
+          created_at: string
+          dominio: string
+          motivo: string | null
+        }
+        Insert: {
+          created_at?: string
+          dominio: string
+          motivo?: string | null
+        }
+        Update: {
+          created_at?: string
+          dominio?: string
+          motivo?: string | null
+        }
+        Relationships: []
+      }
       email_envios: {
         Row: {
           assunto: string
@@ -1823,23 +1928,41 @@ export type Database = {
         Row: {
           cep: string | null
           cidade: string | null
+          cnae_principal: string | null
           cnpj: string | null
           contato: string | null
           created_at: string | null
           created_by: string | null
+          deleted_at: string | null
+          documento_tipo: string | null
+          documento_verificacao: string | null
+          documento_verificado_em: string | null
           email: string | null
           endereco: string | null
           estado: string | null
           features: Json
           id: string
+          leitura_desde: string | null
           logo_url: string | null
           max_projetos_override: number | null
           max_usuarios_override: number | null
+          nivel_override: string | null
+          nivel_override_em: string | null
+          nivel_override_motivo: string | null
+          nivel_override_por: string | null
           nome: string
           onboarding_completed: boolean | null
           owner_id: string | null
           pix_chave: string | null
           pix_instrucoes: string | null
+          preservar_dados: boolean
+          preservar_dados_em: string | null
+          preservar_dados_motivo: string | null
+          preservar_dados_por: string | null
+          razao_social: string | null
+          retencao_aviso_60d_sent_at: string | null
+          retencao_aviso_85d_sent_at: string | null
+          situacao_cadastral: string | null
           status: Database["public"]["Enums"]["status_empresa"] | null
           updated_at: string | null
           updated_by: string | null
@@ -1847,23 +1970,41 @@ export type Database = {
         Insert: {
           cep?: string | null
           cidade?: string | null
+          cnae_principal?: string | null
           cnpj?: string | null
           contato?: string | null
           created_at?: string | null
           created_by?: string | null
+          deleted_at?: string | null
+          documento_tipo?: string | null
+          documento_verificacao?: string | null
+          documento_verificado_em?: string | null
           email?: string | null
           endereco?: string | null
           estado?: string | null
           features?: Json
           id?: string
+          leitura_desde?: string | null
           logo_url?: string | null
           max_projetos_override?: number | null
           max_usuarios_override?: number | null
+          nivel_override?: string | null
+          nivel_override_em?: string | null
+          nivel_override_motivo?: string | null
+          nivel_override_por?: string | null
           nome: string
           onboarding_completed?: boolean | null
           owner_id?: string | null
           pix_chave?: string | null
           pix_instrucoes?: string | null
+          preservar_dados?: boolean
+          preservar_dados_em?: string | null
+          preservar_dados_motivo?: string | null
+          preservar_dados_por?: string | null
+          razao_social?: string | null
+          retencao_aviso_60d_sent_at?: string | null
+          retencao_aviso_85d_sent_at?: string | null
+          situacao_cadastral?: string | null
           status?: Database["public"]["Enums"]["status_empresa"] | null
           updated_at?: string | null
           updated_by?: string | null
@@ -1871,23 +2012,41 @@ export type Database = {
         Update: {
           cep?: string | null
           cidade?: string | null
+          cnae_principal?: string | null
           cnpj?: string | null
           contato?: string | null
           created_at?: string | null
           created_by?: string | null
+          deleted_at?: string | null
+          documento_tipo?: string | null
+          documento_verificacao?: string | null
+          documento_verificado_em?: string | null
           email?: string | null
           endereco?: string | null
           estado?: string | null
           features?: Json
           id?: string
+          leitura_desde?: string | null
           logo_url?: string | null
           max_projetos_override?: number | null
           max_usuarios_override?: number | null
+          nivel_override?: string | null
+          nivel_override_em?: string | null
+          nivel_override_motivo?: string | null
+          nivel_override_por?: string | null
           nome?: string
           onboarding_completed?: boolean | null
           owner_id?: string | null
           pix_chave?: string | null
           pix_instrucoes?: string | null
+          preservar_dados?: boolean
+          preservar_dados_em?: string | null
+          preservar_dados_motivo?: string | null
+          preservar_dados_por?: string | null
+          razao_social?: string | null
+          retencao_aviso_60d_sent_at?: string | null
+          retencao_aviso_85d_sent_at?: string | null
+          situacao_cadastral?: string | null
           status?: Database["public"]["Enums"]["status_empresa"] | null
           updated_at?: string | null
           updated_by?: string | null
@@ -1972,6 +2131,7 @@ export type Database = {
       }
       escopos: {
         Row: {
+          adiado_ate: string | null
           aprovado_em: string | null
           aprovado_por: string | null
           created_at: string | null
@@ -1992,6 +2152,7 @@ export type Database = {
           valor_aditivo: number | null
         }
         Insert: {
+          adiado_ate?: string | null
           aprovado_em?: string | null
           aprovado_por?: string | null
           created_at?: string | null
@@ -2012,6 +2173,7 @@ export type Database = {
           valor_aditivo?: number | null
         }
         Update: {
+          adiado_ate?: string | null
           aprovado_em?: string | null
           aprovado_por?: string | null
           created_at?: string | null
@@ -2274,7 +2436,7 @@ export type Database = {
           empresa_id: string
           id: string
           mes: number
-          pessoa_id: string
+          pessoa_id: string | null
           salario_fixo: number | null
           status: string | null
           total_area_projetada: number | null
@@ -2291,7 +2453,7 @@ export type Database = {
           empresa_id: string
           id?: string
           mes: number
-          pessoa_id: string
+          pessoa_id?: string | null
           salario_fixo?: number | null
           status?: string | null
           total_area_projetada?: number | null
@@ -2308,7 +2470,7 @@ export type Database = {
           empresa_id?: string
           id?: string
           mes?: number
-          pessoa_id?: string
+          pessoa_id?: string | null
           salario_fixo?: number | null
           status?: string | null
           total_area_projetada?: number | null
@@ -2762,7 +2924,7 @@ export type Database = {
           id: string
           nome: string
           percentual: number | null
-          projeto_id: string
+          projeto_id: string | null
           receita_id: string | null
           status: string | null
           updated_at: string | null
@@ -2780,7 +2942,7 @@ export type Database = {
           id?: string
           nome: string
           percentual?: number | null
-          projeto_id: string
+          projeto_id?: string | null
           receita_id?: string | null
           status?: string | null
           updated_at?: string | null
@@ -2798,7 +2960,7 @@ export type Database = {
           id?: string
           nome?: string
           percentual?: number | null
-          projeto_id?: string
+          projeto_id?: string | null
           receita_id?: string | null
           status?: string | null
           updated_at?: string | null
@@ -4661,6 +4823,9 @@ export type Database = {
       }
       pilar_subscriptions: {
         Row: {
+          asaas_credit_card_brand: string | null
+          asaas_credit_card_last4: string | null
+          asaas_credit_card_token: string | null
           asaas_customer_id: string | null
           asaas_subscription_id: string | null
           billing_cycle: string | null
@@ -4675,12 +4840,18 @@ export type Database = {
           plan_id: string
           status: string
           trial_ends_at: string | null
+          trial_estendido_em: string | null
+          trial_estendido_motivo: string | null
+          trial_estendido_por: string | null
           trial_warning_1d_sent_at: string | null
           trial_warning_3d_sent_at: string | null
           trial_warning_7d_sent_at: string | null
           updated_at: string
         }
         Insert: {
+          asaas_credit_card_brand?: string | null
+          asaas_credit_card_last4?: string | null
+          asaas_credit_card_token?: string | null
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
           billing_cycle?: string | null
@@ -4695,12 +4866,18 @@ export type Database = {
           plan_id: string
           status?: string
           trial_ends_at?: string | null
+          trial_estendido_em?: string | null
+          trial_estendido_motivo?: string | null
+          trial_estendido_por?: string | null
           trial_warning_1d_sent_at?: string | null
           trial_warning_3d_sent_at?: string | null
           trial_warning_7d_sent_at?: string | null
           updated_at?: string
         }
         Update: {
+          asaas_credit_card_brand?: string | null
+          asaas_credit_card_last4?: string | null
+          asaas_credit_card_token?: string | null
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
           billing_cycle?: string | null
@@ -4715,6 +4892,9 @@ export type Database = {
           plan_id?: string
           status?: string
           trial_ends_at?: string | null
+          trial_estendido_em?: string | null
+          trial_estendido_motivo?: string | null
+          trial_estendido_por?: string | null
           trial_warning_1d_sent_at?: string | null
           trial_warning_3d_sent_at?: string | null
           trial_warning_7d_sent_at?: string | null
@@ -4799,6 +4979,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      platform_settings: {
+        Row: {
+          id: string
+          trial_ai_daily_cap_tokens: number
+          trial_tokens_bronze: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          trial_ai_daily_cap_tokens?: number
+          trial_tokens_bronze?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          trial_ai_daily_cap_tokens?: number
+          trial_tokens_bronze?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       portal_download_logs: {
         Row: {
@@ -5540,6 +5741,69 @@ export type Database = {
           },
         ]
       }
+      projeto_status_historico: {
+        Row: {
+          de: Database["public"]["Enums"]["status_projeto"] | null
+          id: string
+          mudado_em: string
+          mudado_por: string | null
+          para: Database["public"]["Enums"]["status_projeto"]
+          projeto_id: string
+        }
+        Insert: {
+          de?: Database["public"]["Enums"]["status_projeto"] | null
+          id?: string
+          mudado_em?: string
+          mudado_por?: string | null
+          para: Database["public"]["Enums"]["status_projeto"]
+          projeto_id: string
+        }
+        Update: {
+          de?: Database["public"]["Enums"]["status_projeto"] | null
+          id?: string
+          mudado_em?: string
+          mudado_por?: string | null
+          para?: Database["public"]["Enums"]["status_projeto"]
+          projeto_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_status_historico_mudado_por_fkey"
+            columns: ["mudado_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_status_historico_mudado_por_fkey"
+            columns: ["mudado_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_status_historico_mudado_por_fkey"
+            columns: ["mudado_por"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
+          },
+          {
+            foreignKeyName: "projeto_status_historico_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_status_historico_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projetos: {
         Row: {
           area_m2: number | null
@@ -5556,6 +5820,7 @@ export type Database = {
           disciplinas: Json | null
           empresa_id: string
           etapa_id: string | null
+          exemplo: boolean
           id: string
           latitude: number | null
           links: Json
@@ -5586,6 +5851,7 @@ export type Database = {
           disciplinas?: Json | null
           empresa_id: string
           etapa_id?: string | null
+          exemplo?: boolean
           id?: string
           latitude?: number | null
           links?: Json
@@ -5616,6 +5882,7 @@ export type Database = {
           disciplinas?: Json | null
           empresa_id?: string
           etapa_id?: string | null
+          exemplo?: boolean
           id?: string
           latitude?: number | null
           links?: Json
@@ -6759,6 +7026,39 @@ export type Database = {
           },
         ]
       }
+      trial_niveis: {
+        Row: {
+          import_habilitado: boolean
+          max_obras: number | null
+          max_projetos: number | null
+          max_usuarios: number | null
+          nivel: string
+          portal_habilitado: boolean
+          tokens_total: number | null
+          updated_at: string
+        }
+        Insert: {
+          import_habilitado?: boolean
+          max_obras?: number | null
+          max_projetos?: number | null
+          max_usuarios?: number | null
+          nivel: string
+          portal_habilitado?: boolean
+          tokens_total?: number | null
+          updated_at?: string
+        }
+        Update: {
+          import_habilitado?: boolean
+          max_obras?: number | null
+          max_projetos?: number | null
+          max_usuarios?: number | null
+          nivel?: string
+          portal_habilitado?: boolean
+          tokens_total?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ultra_admin_modes: {
         Row: {
           scoped: boolean
@@ -7240,6 +7540,18 @@ export type Database = {
           },
         ]
       }
+      v_projeto_timeline: {
+        Row: {
+          autor_nome: string | null
+          detalhe: string | null
+          disciplina_id: string | null
+          disciplina_nome: string | null
+          ocorrido_em: string | null
+          projeto_id: string | null
+          tipo: string | null
+        }
+        Relationships: []
+      }
       v_uso_tokens_anomalia_diaria: {
         Row: {
           anomalia: boolean | null
@@ -7540,6 +7852,17 @@ export type Database = {
         }
         Returns: string
       }
+      _campo_create_account_convite: {
+        Args: {
+          p_created_by: string
+          p_email: string
+          p_empresa_id: string
+          p_nome: string
+          p_obra_id: string
+          p_token_hash: string
+        }
+        Returns: undefined
+      }
       _campo_registrar_foto: {
         Args: { p_path: string; p_rdo_id: string; p_token: string }
         Returns: Json
@@ -7573,8 +7896,23 @@ export type Database = {
         }
         Returns: undefined
       }
+      _portal_create_account_convite: {
+        Args: {
+          p_cliente_id: string
+          p_created_by: string
+          p_email: string
+          p_empresa_id: string
+          p_nome: string
+          p_token_hash: string
+        }
+        Returns: undefined
+      }
       _portal_reset_password: {
         Args: { p_account_id: string; p_nova_senha: string }
+        Returns: undefined
+      }
+      _portal_reset_password_convite: {
+        Args: { p_account_id: string; p_token_hash: string }
         Returns: undefined
       }
       _soft_delete_feature: { Args: { p_tabela: string }; Returns: string }
@@ -7597,10 +7935,16 @@ export type Database = {
       audit_log_cleanup: { Args: never; Returns: number }
       audit_log_cleanup_monitored: { Args: never; Returns: undefined }
       audit_logs_archive_old: { Args: never; Returns: number }
+      avisar_admin_capacidade: { Args: { p_recurso: string }; Returns: number }
+      campo_convite_definir_senha: {
+        Args: { p_senha: string; p_token: string }
+        Returns: Json
+      }
       campo_criar_tarefa: {
         Args: { p_titulo: string; p_token: string }
         Returns: Json
       }
+      campo_listar_contas_obra: { Args: { p_obra_id: string }; Returns: Json[] }
       campo_listar_fornecedores: { Args: { p_token: string }; Returns: Json }
       campo_listar_rdos: {
         Args: { p_limite?: number; p_token: string }
@@ -7656,6 +8000,10 @@ export type Database = {
           p_token: string
         }
         Returns: Json
+      }
+      campo_revogar_acesso: {
+        Args: { p_account_id: string }
+        Returns: undefined
       }
       campo_salvar_rdo: {
         Args: {
@@ -7842,6 +8190,10 @@ export type Database = {
           saldo_comprado: number
           saldo_plano: number
         }[]
+      }
+      excluir_empresa_retencao: {
+        Args: { p_empresa_id: string; p_motivo: string }
+        Returns: undefined
       }
       executar_acao_agente: { Args: { p_run_id: string }; Returns: Json }
       fechar_folha_agente: { Args: { p_run_id: string }; Returns: Json }
@@ -8105,6 +8457,17 @@ export type Database = {
       is_impersonating: { Args: never; Returns: boolean }
       is_ultra_admin: { Args: never; Returns: boolean }
       is_ultra_admin_scoped: { Args: never; Returns: boolean }
+      limites_empresa: {
+        Args: { p_empresa_id: string }
+        Returns: {
+          import_habilitado: boolean
+          max_obras: number
+          max_projetos: number
+          max_usuarios: number
+          portal_habilitado: boolean
+          tokens_total: number
+        }[]
+      }
       listar_clientes_paginado: {
         Args: {
           p_com_projeto?: boolean
@@ -8144,6 +8507,7 @@ export type Database = {
       mfa_consume_backup_code: { Args: { p_code: string }; Returns: boolean }
       mfa_generate_backup_codes: { Args: never; Returns: string[] }
       my_empresa_id: { Args: never; Returns: string }
+      nivel_confianca: { Args: { p_empresa_id: string }; Returns: string }
       notificacao_email_padrao: {
         Args: { p_categoria: string }
         Returns: boolean
@@ -8186,6 +8550,29 @@ export type Database = {
         }
         Returns: number
       }
+      notificar_aditivo_pronto: {
+        Args: {
+          p_empresa_id: string
+          p_projeto_id: string
+          p_projeto_nome: string
+          p_valor: number
+        }
+        Returns: number
+      }
+      notificar_guardiao_sem_creditos: {
+        Args: { p_empresa_id: string; p_qtd_projetos: number }
+        Returns: number
+      }
+      notificar_ultra_admins: {
+        Args: {
+          p_empresa_id: string
+          p_link?: string
+          p_mensagem: string
+          p_tipo: string
+          p_titulo: string
+        }
+        Returns: number
+      }
       pagar_fatura: {
         Args: {
           p_conta_id: string
@@ -8215,6 +8602,10 @@ export type Database = {
       }
       portal_change_password: {
         Args: { p_nova_senha: string; p_senha_atual: string; p_token: string }
+        Returns: Json
+      }
+      portal_convite_definir_senha: {
+        Args: { p_senha: string; p_token: string }
         Returns: Json
       }
       portal_get_projeto_disciplinas: {
@@ -8284,6 +8675,10 @@ export type Database = {
         Args: { p_convite_id: string }
         Returns: string
       }
+      registrar_heartbeat_agente: {
+        Args: { p_agent_type: string; p_detail?: Json; p_status: string }
+        Returns: undefined
+      }
       request_data_deletion: { Args: { p_motivo?: string }; Returns: string }
       request_data_export: { Args: never; Returns: Json }
       resolver_solicitacao_tokens: {
@@ -8294,6 +8689,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      retencao_pos_trial_disparar: { Args: never; Returns: undefined }
       rpc_atualizar_status_atrasados: { Args: never; Returns: Json }
       rpc_calcular_wip: {
         Args: { p_ano: number; p_mes: number }
@@ -8559,6 +8955,60 @@ export type Database = {
         Returns: undefined
       }
       trial_expiry_disparar: { Args: never; Returns: undefined }
+      ultra_admin_definir_nivel_override: {
+        Args: { p_empresa_id: string; p_motivo: string; p_nivel: string }
+        Returns: undefined
+      }
+      ultra_admin_estender_trial: {
+        Args: {
+          p_empresa_id: string
+          p_motivo: string
+          p_novo_trial_ends_at: string
+        }
+        Returns: undefined
+      }
+      ultra_admin_listar_retencao: {
+        Args: never
+        Returns: {
+          aviso_60d_enviado: boolean
+          aviso_85d_enviado: boolean
+          dias_em_leitura: number
+          empresa_id: string
+          empresa_nome: string
+          leitura_desde: string
+          preservar_dados: boolean
+        }[]
+      }
+      ultra_admin_listar_trials: {
+        Args: never
+        Returns: {
+          dias_restantes: number
+          documento_tipo: string
+          documento_verificacao: string
+          empresa_id: string
+          empresa_nome: string
+          max_obras: number
+          max_projetos: number
+          max_usuarios: number
+          nivel: string
+          nivel_override: string
+          nivel_override_motivo: string
+          obras_ativas: number
+          preservar_dados: boolean
+          projetos_ativos: number
+          razao_social: string
+          razao_social_divergente: boolean
+          tokens_gastos: number
+          tokens_total: number
+          trial_ends_at: string
+          trial_estendido_motivo: string
+          usuarios: number
+        }[]
+      }
+      ultra_admin_marcar_preservar_dados: {
+        Args: { p_empresa_id: string; p_motivo: string; p_preservar: boolean }
+        Returns: undefined
+      }
       update_company_features: {
         Args: { p_features: Json }
         Returns: undefined

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +63,7 @@ export function CronogramaTab({
   onDatesChange,
   onDisciplinaClick,
 }: CronogramaTabProps) {
+  const isMobile = useIsMobile();
   const [zoom, setZoom] = useState<ZoomLevel>("months");
   const scrollRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -325,10 +327,14 @@ export function CronogramaTab({
       {/* Header */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold">Cronograma do Projeto</h3>
+          {/* Título e controles empilham em mobile (achado da auditoria:
+              "Cronograma do Projeto" + "Hoje" + "Meses"/"Semanas" não cabiam
+              em 390px sem quebrar linha, e o excesso vazava em vez de ficar
+              contido). */}
+          <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-2">
+              <Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <h3 className="truncate text-sm font-semibold">Cronograma do Projeto</h3>
               {isSaving && <span className="text-[10px] text-muted-foreground animate-pulse">Salvando...</span>}
               {isDragging && (
                 <span className="text-[10px] text-muted-foreground/60 border border-dashed border-muted-foreground/30 rounded px-1.5 py-0.5">
@@ -336,7 +342,7 @@ export function CronogramaTab({
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -352,16 +358,18 @@ export function CronogramaTab({
                   size="sm"
                   className="h-7 text-xs rounded-none px-2"
                   onClick={() => setZoom("months")}
+                  aria-label="Meses"
                 >
-                  <ZoomOut className="h-3 w-3 mr-1" /> Meses
+                  <ZoomOut className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Meses</span>
                 </Button>
                 <Button
                   variant={zoom === "weeks" ? "secondary" : "ghost"}
                   size="sm"
                   className="h-7 text-xs rounded-none px-2"
                   onClick={() => setZoom("weeks")}
+                  aria-label="Semanas"
                 >
-                  <ZoomIn className="h-3 w-3 mr-1" /> Semanas
+                  <ZoomIn className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Semanas</span>
                 </Button>
               </div>
             </div>
@@ -398,8 +406,11 @@ export function CronogramaTab({
       <Card>
         <CardContent className="p-0">
           <div className="flex">
-            {/* Fixed label column */}
-            <div className="flex-shrink-0 w-[220px] border-r bg-muted/30">
+            {/* Fixed label column: colapsa em mobile (achado da auditoria: a coluna
+                fixa de 220px sozinha consumia mais da metade de uma tela de 390px,
+                sobrando só uma faixa estreita pra timeline). Some o responsável,
+                mantém só o nome truncado. */}
+            <div className={cn("flex-shrink-0 border-r bg-muted/30", isMobile ? "w-[104px]" : "w-[220px]")}>
               <div className="h-10 border-b px-3 flex items-center">
                 <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Disciplina
@@ -414,12 +425,14 @@ export function CronogramaTab({
                     <span className="text-xs font-medium truncate">{row.disc.disciplina}</span>
                     {row.atrasada && <AlertTriangle className="h-3 w-3 text-danger-mid flex-shrink-0" />}
                   </div>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <User className="h-2.5 w-2.5 text-muted-foreground" />
-                    <span className="text-[10px] text-muted-foreground truncate">
-                      {row.resps.map((r) => r.responsavel_nome).join(", ") || "—"}
-                    </span>
-                  </div>
+                  {!isMobile && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <User className="h-2.5 w-2.5 text-muted-foreground" />
+                      <span className="text-[10px] text-muted-foreground truncate">
+                        {row.resps.map((r) => r.responsavel_nome).join(", ") || "—"}
+                      </span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { ResponsiveDetailPanels } from "@/components/ui/responsive-detail-panels";
 import {
   Calendar,
   CircleDot,
@@ -262,20 +262,27 @@ function DisciplinaDetailBody({
         </div>
       </div>
 
-      {/* Corpo: principal (redimensionável) + atividades */}
-      <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
-        <ResizablePanel defaultSize={68} minSize={45}>
+      {/* Corpo: principal (redimensionável no desktop, abas no mobile) + atividades */}
+      <ResponsiveDetailPanels
+        className="flex-1 min-h-0"
+        primaryLabel="Detalhes"
+        secondaryLabel="Atividades"
+        primary={
           <div className="h-full space-y-7 overflow-y-auto px-8 py-6">
             {/* Propriedades em grade 2 colunas */}
             <div className="grid max-w-3xl grid-cols-1 gap-x-10 gap-y-4 md:grid-cols-2">
               <Prop icon={CircleDot} label="Status" className="md:col-span-2">
-                <div className="flex items-center gap-2">
+                {/* flex-wrap + Select w-full em mobile: o dropdown (224px)
+                    somado aos botões de ação (Pausar/Retomar, Concluir
+                    revisão) não cabia numa linha em 390px e cortava na borda
+                    (achado da auditoria mobile). */}
+                <div className="flex flex-wrap items-center gap-2">
                   <Select
                     value={estaPausada ? "Pausada" : disciplina.status}
                     onValueChange={(val) => onUpdateField("status", val)}
                     disabled={estaPausada}
                   >
-                    <SelectTrigger className="h-9 w-56 min-w-0 flex-shrink-0">
+                    <SelectTrigger className="h-9 w-full min-w-0 flex-shrink-0 sm:w-56">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -601,12 +608,8 @@ function DisciplinaDetailBody({
               </div>
             )}
           </div>
-        </ResizablePanel>
-
-        <ResizableHandle withHandle />
-
-        {/* Atividades */}
-        <ResizablePanel defaultSize={32} minSize={22}>
+        }
+        secondary={
           <div className="flex h-full min-h-0 flex-col bg-muted/10">
             <div className="flex-shrink-0 border-b px-5 py-4">
               <Label className="flex items-center gap-2 text-sm font-semibold">
@@ -664,8 +667,8 @@ function DisciplinaDetailBody({
               <p className="p-5 text-xs text-muted-foreground">Salve a disciplina para comentar.</p>
             )}
           </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+        }
+      />
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>

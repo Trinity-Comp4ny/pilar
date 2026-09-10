@@ -56,6 +56,9 @@ export function msgErroChat(e: unknown, porTimeout = false, motivoBloqueio?: str
     if (motivoBloqueio === "limite_usuario") {
       return "Você atingiu seu limite de tokens de IA deste mês. Peça mais tokens ao administrador da sua empresa em Configurações > Uso.";
     }
+    if (motivoBloqueio === "trial_pausado") {
+      return "Uso de IA em contas de teste está pausado por hoje. Volta amanhã, ou fale com a gente pra liberar antes.";
+    }
     return "Os tokens de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador.";
   }
   if (status === 401 || status === 403) {

@@ -19,6 +19,10 @@ import { STATUS_OBRA_OPCOES } from "@/lib/obras";
 import { lookupCEP } from "@/lib/brasilApi";
 import { geocodarCidade } from "@/lib/clima";
 import { formatCEP, onlyDigits } from "@/lib/maskUtils";
+import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
+import { DesbloqueioNivel } from "@/components/trial/DesbloqueioNivel";
+import { useNivelConfianca } from "@/hooks/useNivelConfianca";
+import { analytics } from "@/lib/analytics";
 
 const SEM_RESPONSAVEL = "__none__";
 const SEM_PROJETO = "__none__";
@@ -79,6 +83,8 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
   const [local, setLocal] = useState<Local | null>(null);
   const [buscandoCep, setBuscandoCep] = useState(false);
   const ultimoCep = useRef("");
+  const [capacidadeErro, setCapacidadeErro] = useState<CapacidadeErro | null>(null);
+  const { isAdmin } = useNivelConfianca();
 
   const form = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: VAZIO });
   const { register, handleSubmit, reset, watch, setValue, formState } = form;
@@ -187,222 +193,240 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
       onOpenChange(false);
       onSaved?.();
     } catch (e) {
-      toast.error("Não foi possível salvar", {
-        description: e instanceof Error ? e.message : "Tente novamente",
-      });
+      const capacidade = parseCapacidadeError(e);
+      if (capacidade) {
+        analytics.track("trial_limite_atingido", { recurso: capacidade.recurso, limite: capacidade.limite });
+        setCapacidadeErro(capacidade);
+      } else {
+        toast.error("Não foi possível salvar", {
+          description: e instanceof Error ? e.message : "Tente novamente",
+        });
+      }
     }
   });
 
   const saving = criar.isPending || atualizar.isPending;
 
   return (
-    <FormDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title={isEdit ? "Editar obra" : "Nova obra"}
-      description="Registre a obra e a localização. O CEP alimenta a previsão do tempo na aba Clima."
-      size="md"
-      onSubmit={onSubmit}
-      isPending={saving}
-      submitLabel={isEdit ? "Salvar" : "Criar obra"}
-    >
-      <div className="space-y-1.5">
-        <Label htmlFor="nome">Nome da obra *</Label>
-        <Input id="nome" {...register("nome")} placeholder="Ex.: Residência Alphaville" />
-        {formState.errors.nome && <p className="text-xs text-danger-strong">{formState.errors.nome.message}</p>}
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
+    <>
+      <FormDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        title={isEdit ? "Editar obra" : "Nova obra"}
+        description="Registre a obra e a localização. O CEP alimenta a previsão do tempo na aba Clima."
+        size="md"
+        onSubmit={onSubmit}
+        isPending={saving}
+        submitLabel={isEdit ? "Salvar" : "Criar obra"}
+      >
         <div className="space-y-1.5">
-          <Label htmlFor="status">Status</Label>
-          <Select value={watch("status")} onValueChange={(v) => setValue("status", v as FormData["status"])}>
-            <SelectTrigger id="status">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUS_OBRA_OPCOES.map((s) => (
-                <SelectItem key={s.value} value={s.value}>
-                  {s.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label htmlFor="nome">Nome da obra *</Label>
+          <Input id="nome" {...register("nome")} placeholder="Ex.: Residência Alphaville" />
+          {formState.errors.nome && <p className="text-xs text-danger-strong">{formState.errors.nome.message}</p>}
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="responsavel">Responsável</Label>
-          <Select value={watch("responsavel_id")} onValueChange={(v) => setValue("responsavel_id", v)}>
-            <SelectTrigger id="responsavel">
-              <SelectValue placeholder="Ninguém" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={SEM_RESPONSAVEL}>Ninguém</SelectItem>
-              {pessoas.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="modelo_cobranca">Cobrança</Label>
-          <Select
-            value={watch("modelo_cobranca")}
-            onValueChange={(v) => setValue("modelo_cobranca", v as FormData["modelo_cobranca"])}
-          >
-            <SelectTrigger id="modelo_cobranca">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="administracao">Administração</SelectItem>
-              <SelectItem value="preco_fechado">Preço fechado</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="status">Status</Label>
+            <Select value={watch("status")} onValueChange={(v) => setValue("status", v as FormData["status"])}>
+              <SelectTrigger id="status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OBRA_OPCOES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="responsavel">Responsável</Label>
+            <Select value={watch("responsavel_id")} onValueChange={(v) => setValue("responsavel_id", v)}>
+              <SelectTrigger id="responsavel">
+                <SelectValue placeholder="Ninguém" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={SEM_RESPONSAVEL}>Ninguém</SelectItem>
+                {pessoas.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="modelo_cobranca">Cobrança</Label>
+            <Select
+              value={watch("modelo_cobranca")}
+              onValueChange={(v) => setValue("modelo_cobranca", v as FormData["modelo_cobranca"])}
+            >
+              <SelectTrigger id="modelo_cobranca">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="administracao">Administração</SelectItem>
+                <SelectItem value="preco_fechado">Preço fechado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {watch("modelo_cobranca") === "administracao" && (
+            <div className="space-y-1.5">
+              <Label htmlFor="taxa">Taxa de administração (%)</Label>
+              <Input
+                id="taxa"
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                placeholder="Ex.: 10"
+                {...register("taxa_administracao_pct")}
+              />
+            </div>
+          )}
         </div>
         {watch("modelo_cobranca") === "administracao" && (
-          <div className="space-y-1.5">
-            <Label htmlFor="taxa">Taxa de administração (%)</Label>
-            <Input
-              id="taxa"
-              type="number"
-              step="0.01"
-              min="0"
-              max="100"
-              placeholder="Ex.: 10"
-              {...register("taxa_administracao_pct")}
-            />
-          </div>
+          <p className="-mt-2 text-xs text-muted-foreground">
+            A taxa vira receita do escritório automaticamente a cada despesa lançada na conta da obra.
+          </p>
         )}
-      </div>
-      {watch("modelo_cobranca") === "administracao" && (
-        <p className="-mt-2 text-xs text-muted-foreground">
-          A taxa vira receita do escritório automaticamente a cada despesa lançada na conta da obra.
-        </p>
-      )}
 
-      <div className="grid grid-cols-3 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="cep">CEP da obra</Label>
-          <div className="relative">
+        <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="cep">CEP da obra</Label>
+            <div className="relative">
+              <Input
+                id="cep"
+                inputMode="numeric"
+                placeholder="00000-000"
+                maxLength={9}
+                {...register("cep", {
+                  onChange: (e) => {
+                    const formatado = formatCEP(e.target.value);
+                    e.target.value = formatado;
+                    setValue("cep", formatado, { shouldDirty: true });
+                    buscarCep(formatado);
+                  },
+                })}
+              />
+              {buscandoCep && (
+                <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+              )}
+            </div>
+          </div>
+          <div className="col-span-2 space-y-1.5">
+            <Label htmlFor="endereco" className="inline-flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+              Endereço
+            </Label>
             <Input
-              id="cep"
-              inputMode="numeric"
-              placeholder="00000-000"
-              maxLength={9}
-              {...register("cep", {
-                onChange: (e) => {
-                  const formatado = formatCEP(e.target.value);
-                  e.target.value = formatado;
-                  setValue("cep", formatado, { shouldDirty: true });
-                  buscarCep(formatado);
-                },
-              })}
+              id="endereco"
+              placeholder={buscandoCep ? "Buscando endereço..." : "Preenche pelo CEP, edite se precisar"}
+              value={local?.localizacao ?? ""}
+              onChange={(e) =>
+                setLocal((prev) => ({
+                  cidade: prev?.cidade ?? "",
+                  localizacao: e.target.value,
+                  latitude: prev?.latitude ?? null,
+                  longitude: prev?.longitude ?? null,
+                }))
+              }
             />
-            {buscandoCep && (
-              <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+            {local && local.localizacao && local.latitude == null && (
+              <p className="text-[11px] text-muted-foreground">
+                Sem coordenadas pra este endereço — a previsão de tempo na aba Clima fica indisponível.
+              </p>
             )}
           </div>
         </div>
-        <div className="col-span-2 space-y-1.5">
-          <Label htmlFor="endereco" className="inline-flex items-center gap-1.5">
-            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-            Endereço
-          </Label>
-          <Input
-            id="endereco"
-            placeholder={buscandoCep ? "Buscando endereço..." : "Preenche pelo CEP, edite se precisar"}
-            value={local?.localizacao ?? ""}
-            onChange={(e) =>
-              setLocal((prev) => ({
-                cidade: prev?.cidade ?? "",
-                localizacao: e.target.value,
-                latitude: prev?.latitude ?? null,
-                longitude: prev?.longitude ?? null,
-              }))
-            }
-          />
-          {local && local.localizacao && local.latitude == null && (
-            <p className="text-[11px] text-muted-foreground">
-              Sem coordenadas pra este endereço — a previsão de tempo na aba Clima fica indisponível.
-            </p>
-          )}
-        </div>
-      </div>
 
-      {mostrarProjeto && (
+        {mostrarProjeto && (
+          <div className="space-y-1.5">
+            <Label htmlFor="projeto">Projeto (opcional)</Label>
+            <Select value={watch("projeto_id")} onValueChange={(v) => setValue("projeto_id", v)}>
+              <SelectTrigger id="projeto">
+                <SelectValue placeholder="Sem projeto" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={SEM_PROJETO}>Sem projeto</SelectItem>
+                {projetosDisponiveis.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Vincule para conectar a execução ao faturamento e à margem do projeto.
+            </p>
+          </div>
+        )}
+
+        {/* Portal do cliente: quem vê e se está publicada */}
         <div className="space-y-1.5">
-          <Label htmlFor="projeto">Projeto (opcional)</Label>
-          <Select value={watch("projeto_id")} onValueChange={(v) => setValue("projeto_id", v)}>
-            <SelectTrigger id="projeto">
-              <SelectValue placeholder="Sem projeto" />
+          <Label htmlFor="cliente">Cliente</Label>
+          <Select value={watch("cliente_id")} onValueChange={(v) => setValue("cliente_id", v)}>
+            <SelectTrigger id="cliente">
+              <SelectValue placeholder="Sem cliente" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={SEM_PROJETO}>Sem projeto</SelectItem>
-              {projetosDisponiveis.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.nome}
+              <SelectItem value={SEM_CLIENTE}>Sem cliente</SelectItem>
+              {clientes.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.nome}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">
-            Vincule para conectar a execução ao faturamento e à margem do projeto.
-          </p>
         </div>
-      )}
 
-      {/* Portal do cliente: quem vê e se está publicada */}
-      <div className="space-y-1.5">
-        <Label htmlFor="cliente">Cliente</Label>
-        <Select value={watch("cliente_id")} onValueChange={(v) => setValue("cliente_id", v)}>
-          <SelectTrigger id="cliente">
-            <SelectValue placeholder="Sem cliente" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={SEM_CLIENTE}>Sem cliente</SelectItem>
-            {clientes.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.nome}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex items-start justify-between gap-3 rounded-lg border p-3">
-        <div className="space-y-0.5">
-          <Label htmlFor="visivel_portal">Visível no portal do cliente</Label>
-          <p className="text-xs text-muted-foreground">
-            O dono acompanha o andamento e a prestação de contas. Só vale para obra em administração com cliente
-            vinculado.
-          </p>
+        <div className="flex items-start justify-between gap-3 rounded-lg border p-3">
+          <div className="space-y-0.5">
+            <Label htmlFor="visivel_portal">Visível no portal do cliente</Label>
+            <p className="text-xs text-muted-foreground">
+              O dono acompanha o andamento e a prestação de contas. Só vale para obra em administração com cliente
+              vinculado.
+            </p>
+          </div>
+          <Switch
+            id="visivel_portal"
+            checked={watch("visivel_portal")}
+            onCheckedChange={(v) => setValue("visivel_portal", v)}
+          />
         </div>
-        <Switch
-          id="visivel_portal"
-          checked={watch("visivel_portal")}
-          onCheckedChange={(v) => setValue("visivel_portal", v)}
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="inicio">Início previsto</Label>
+            <Input id="inicio" type="date" {...register("data_inicio_prevista")} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="fim">Fim previsto</Label>
+            <Input id="fim" type="date" {...register("data_fim_prevista")} />
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="obs">Observações</Label>
+          <Textarea id="obs" rows={2} {...register("observacoes")} />
+        </div>
+      </FormDialog>
+
+      {capacidadeErro && (
+        <DesbloqueioNivel
+          open
+          onOpenChange={(o) => !o && setCapacidadeErro(null)}
+          recurso={capacidadeErro.recurso}
+          limite={capacidadeErro.limite}
+          isAdmin={isAdmin}
         />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="inicio">Início previsto</Label>
-          <Input id="inicio" type="date" {...register("data_inicio_prevista")} />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="fim">Fim previsto</Label>
-          <Input id="fim" type="date" {...register("data_fim_prevista")} />
-        </div>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="obs">Observações</Label>
-        <Textarea id="obs" rows={2} {...register("observacoes")} />
-      </div>
-    </FormDialog>
+      )}
+    </>
   );
 }
 

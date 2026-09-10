@@ -4,6 +4,7 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { monitoring } from "@/lib/monitoring";
+import { analytics } from "@/lib/analytics";
 import { syncConsentForUser } from "@/lib/cookieConsentSync";
 import { STORAGE_KEYS } from "@/constants";
 
@@ -88,6 +89,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       empresa_id: p.empresa_id ?? undefined,
       role: p.role ?? undefined,
     });
+    analytics.identify(p.id, {
+      email: p.email ?? undefined,
+      empresa_id: p.empresa_id ?? undefined,
+      role: p.role ?? undefined,
+    });
   }, []);
 
   const refreshMfaLevel = useCallback(async () => {
@@ -121,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setMfaNextLevel("aal1");
     setHasVerifiedMfaFactor(false);
     monitoring.setUser(null);
+    analytics.reset();
   }, [queryClient]);
 
   useEffect(() => {

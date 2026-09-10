@@ -18,14 +18,20 @@ VALUES (
 )
 ON CONFLICT (id) DO UPDATE SET features = EXCLUDED.features;
 
+-- SPEC 098 Fase 1: empresa de teste pré-existente, sem relação com trial.
+-- Override ouro evita que o novo gate de capacidade por nível quebre fixtures
+-- que criam mais projetos/obras do que o teto do Bronze permitiria.
+UPDATE public.empresas SET nivel_override = 'ouro', nivel_override_motivo = 'fixture_pre_existente'
+WHERE id = '00000000-0000-0000-0000-000000000aaa';
+
 SET LOCAL session_replication_role = 'replica';
 
-INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role)
+INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role, email_confirmed_at)
 VALUES
-  ('66666666-0000-0000-0000-000000000001', 'proj_editor@test.com', '{}'::jsonb, 'authenticated', 'authenticated'),
-  ('66666666-0000-0000-0000-000000000002', 'proj_viewer@test.com', '{}'::jsonb, 'authenticated', 'authenticated'),
-  ('66666666-0000-0000-0000-000000000003', 'no_proj@test.com', '{}'::jsonb, 'authenticated', 'authenticated'),
-  ('66666666-0000-0000-0000-000000000004', 'ultra_proj@test.com', '{}'::jsonb, 'authenticated', 'authenticated')
+  ('66666666-0000-0000-0000-000000000001', 'proj_editor@test.com', '{}'::jsonb, 'authenticated', 'authenticated', now()),
+  ('66666666-0000-0000-0000-000000000002', 'proj_viewer@test.com', '{}'::jsonb, 'authenticated', 'authenticated', now()),
+  ('66666666-0000-0000-0000-000000000003', 'no_proj@test.com', '{}'::jsonb, 'authenticated', 'authenticated', now()),
+  ('66666666-0000-0000-0000-000000000004', 'ultra_proj@test.com', '{}'::jsonb, 'authenticated', 'authenticated', now())
 ON CONFLICT (id) DO NOTHING;
 
 SET LOCAL session_replication_role = 'origin';
