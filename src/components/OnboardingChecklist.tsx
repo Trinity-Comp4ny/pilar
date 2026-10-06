@@ -3,15 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import {
-  CheckCircle2,
-  Circle,
-  ChevronRight,
-  ChevronDown,
-  ChevronUp,
-  X,
-  Rocket,
-} from "lucide-react";
+import { CheckCircle2, Circle, ChevronRight, ChevronDown, ChevronUp, X, Rocket } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/hooks/usePermissions";
 import {
@@ -30,8 +22,7 @@ import type { OnboardingPilar } from "@/lib/onboarding/steps";
 export function OnboardingChecklist() {
   const navigate = useNavigate();
   const { isAdmin } = usePermissions();
-  const { hasEmpresa, loading, sections, doneSteps, totalSteps, percent, allDone } =
-    useOnboardingProgress();
+  const { hasEmpresa, loading, sections, doneSteps, totalSteps, percent, allDone } = useOnboardingProgress();
   const { state, dismiss, setCompleted } = useOnboardingState();
 
   const [open, setOpen] = useState(true);
@@ -99,7 +90,7 @@ export function OnboardingChecklist() {
         <CardContent className="space-y-3 p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full bg-brand/15">
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand/15">
                 <Rocket className="h-4 w-4 text-ink" />
               </div>
               <div className="min-w-0">
@@ -109,7 +100,7 @@ export function OnboardingChecklist() {
                 </p>
               </div>
             </div>
-            <div className="flex flex-shrink-0 items-center gap-1">
+            <div className="flex shrink-0 items-center gap-1">
               <Button
                 size="icon"
                 variant="ghost"
@@ -166,27 +157,19 @@ function SectionBlock({
   const done = section.done === section.total;
   return (
     <div className="rounded-lg border border-border-subtle">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center justify-between gap-2 px-3 py-2"
-      >
+      <button type="button" onClick={onToggle} className="flex w-full items-center justify-between gap-2 px-3 py-2">
         <span className="flex items-center gap-2 text-sm font-medium text-ink">
           {section.label}
           <span
             className={cn(
               "rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
-              done ? "bg-success-soft text-positive-strong" : "bg-surface-muted text-ink/60",
+              done ? "bg-success-soft text-positive-strong" : "bg-surface-muted text-ink/60"
             )}
           >
             {section.done}/{section.total}
           </span>
         </span>
-        {collapsed ? (
-          <ChevronDown className="h-4 w-4 text-ink/40" />
-        ) : (
-          <ChevronUp className="h-4 w-4 text-ink/40" />
-        )}
+        {collapsed ? <ChevronDown className="h-4 w-4 text-ink/40" /> : <ChevronUp className="h-4 w-4 text-ink/40" />}
       </button>
 
       {!collapsed && (
@@ -209,31 +192,22 @@ function StepRow({ step, onClick }: { step: OnboardingStepView; onClick: () => v
       disabled={done}
       className={cn(
         "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors",
-        done ? "cursor-default bg-success-soft/50" : "hover:bg-brand/5",
+        done ? "cursor-default bg-success-soft/50" : "hover:bg-brand/5"
       )}
     >
       {done ? (
-        <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-positive-strong" />
+        <CheckCircle2 className="h-4 w-4 shrink-0 text-positive-strong" />
       ) : (
-        <Circle className="h-4 w-4 flex-shrink-0 text-ink/25" />
+        <Circle className="h-4 w-4 shrink-0 text-ink/25" />
       )}
       <span className="min-w-0 flex-1">
-        <span
-          className={cn(
-            "block text-[13px] font-medium",
-            done ? "text-positive-strong line-through" : "text-ink",
-          )}
-        >
+        <span className={cn("block text-[13px] font-medium", done ? "text-positive-strong line-through" : "text-ink")}>
           {step.titulo}
-          {step.opcional && !done && (
-            <span className="ml-1.5 text-[11px] font-normal text-ink/40">opcional</span>
-          )}
+          {step.opcional && !done && <span className="ml-1.5 text-[11px] font-normal text-ink/40">opcional</span>}
         </span>
-        {!done && (
-          <span className="mt-0.5 block text-[11px] leading-snug text-ink/50">{step.descricao}</span>
-        )}
+        {!done && <span className="mt-0.5 block text-[11px] leading-snug text-ink/50">{step.descricao}</span>}
       </span>
-      {!done && <ChevronRight className="h-4 w-4 flex-shrink-0 text-ink/30" />}
+      {!done && <ChevronRight className="h-4 w-4 shrink-0 text-ink/30" />}
     </button>
   );
 }

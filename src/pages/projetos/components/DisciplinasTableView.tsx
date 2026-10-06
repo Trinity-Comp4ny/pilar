@@ -74,7 +74,7 @@ function earlierOf(...ds: (string | null | undefined)[]): string | undefined {
 }
 
 const STATUS_DOT: Record<string, string> = {
-  Concluído: "bg-positive/100",
+  Concluído: "bg-positive",
   "Em Andamento": "bg-status-progress",
   Pendente: "bg-status-planning",
   "Não Iniciado": "bg-status-unknown",
@@ -95,7 +95,6 @@ export function DisciplinasTableView({
   handleAddResponsavel,
   handleRemoveResponsavel,
   projetoDataInicio,
-  projetoDataPrevisao,
 }: DisciplinasTableViewProps) {
   const [isAddingDisc, setIsAddingDisc] = useState(false);
   const [newDisc, setNewDisc] = useState({ disciplina: "", responsavel_id: "" });
@@ -320,7 +319,7 @@ export function DisciplinasTableView({
                             value={disc.data_inicio || undefined}
                             onChange={(v) => quickUpdate(idx, { data_inicio: v || null })}
                             minDate={isoSlice(projetoDataInicio)}
-                            maxDate={earlierOf(disc.data_previsao, disc.data_final, projetoDataPrevisao)}
+                            maxDate={earlierOf(disc.data_previsao, disc.data_final)}
                             placeholder="—"
                             className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
                           />
@@ -336,7 +335,7 @@ export function DisciplinasTableView({
                             value={disc.data_previsao || undefined}
                             onChange={(v) => quickUpdate(idx, { data_fim: v || null })}
                             minDate={laterOf(disc.data_inicio, projetoDataInicio)}
-                            maxDate={earlierOf(disc.data_final, projetoDataPrevisao)}
+                            maxDate={isoSlice(disc.data_final)}
                             placeholder="—"
                             className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
                           />
@@ -697,7 +696,7 @@ function ResponsaveisCell({ discIdx, disc, dbDisc, pessoas, canEdit, onAdd, onRe
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="sm" className="h-7 px-2 text-xs justify-start max-w-full">
-          <User className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+          <User className="h-3.5 w-3.5 mr-1.5 shrink-0" />
           <span className="truncate">{display}</span>
         </Button>
       </PopoverTrigger>

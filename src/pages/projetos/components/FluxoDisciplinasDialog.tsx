@@ -284,7 +284,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                               ))}
                             </div>
                           </div>
-                          <div className="flex gap-1 flex-shrink-0">
+                          <div className="flex gap-1 shrink-0">
                             <Button
                               variant="ghost"
                               size="sm"
@@ -311,7 +311,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
             </div>
           ) : (
             <div className="flex h-full min-h-0 flex-col">
-              <div className="flex-shrink-0 border-b px-6 py-4 space-y-3">
+              <div className="shrink-0 border-b px-6 py-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="sm" className="text-sm -ml-2" onClick={resetToList}>
                     <ArrowLeft className="mr-1 h-4 w-4" /> Voltar
@@ -374,7 +374,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                             className="rounded-lg border bg-white overflow-hidden"
                           >
                             <div className="flex items-center gap-2 px-3 py-2 bg-muted/30">
-                              <AccordionTrigger className="p-0 hover:no-underline flex-shrink-0">
+                              <AccordionTrigger className="p-0 hover:no-underline shrink-0">
                                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-info-soft text-info-strong text-sm font-bold">
                                   {ordem}
                                 </span>
@@ -382,7 +382,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                               <span className="flex-1 text-xs text-muted-foreground">
                                 {discsDaColuna.length > 1 ? "Disciplinas em paralelo" : "Disciplina"}
                               </span>
-                              <div className="flex gap-0.5 flex-shrink-0">
+                              <div className="flex gap-0.5 shrink-0">
                                 <Button
                                   type="button"
                                   variant="ghost"
@@ -421,10 +421,10 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                   return (
                                     <div key={disc._key} className="rounded-md border bg-muted/30 p-2.5 space-y-2">
                                       <div className="flex items-center gap-2">
-                                        <Badge variant="secondary" className="text-sm flex-shrink-0">
+                                        <Badge variant="secondary" className="text-sm shrink-0">
                                           {disc.nome}
                                         </Badge>
-                                        <div className="flex items-center gap-1.5 rounded-full border bg-white px-2.5 h-8 flex-shrink-0">
+                                        <div className="flex items-center gap-1.5 rounded-full border bg-white px-2.5 h-8 shrink-0">
                                           <Input
                                             type="number"
                                             min={0}
@@ -444,7 +444,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                         </div>
                                         <button
                                           type="button"
-                                          className="ml-auto text-muted-foreground hover:text-danger-mid flex-shrink-0"
+                                          className="ml-auto text-muted-foreground hover:text-danger-mid shrink-0"
                                           onClick={() => removeDisciplina(disc._key)}
                                         >
                                           <X size={14} />
@@ -458,7 +458,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                         >
                                           <AvatarStack pessoas={resp.nomes} size="xs" />
                                           <span className="truncate">{resp.nomes.join(", ")}</span>
-                                          <Lock className="h-3 w-3 flex-shrink-0" />
+                                          <Lock className="h-3 w-3 shrink-0" />
                                         </div>
                                       ) : (
                                         <div className="space-y-1">
@@ -527,7 +527,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                 }
                 secondary={
                   <div className="flex h-full flex-col bg-muted/20">
-                    <div className="flex-shrink-0 border-b px-4 py-3">
+                    <div className="shrink-0 border-b px-4 py-3">
                       <Label className="text-xs font-semibold text-muted-foreground">Prévia ao vivo</Label>
                     </div>
                     <div className="flex-1 min-h-0 overflow-auto p-4">
@@ -544,7 +544,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                 }
               />
 
-              <div className="flex-shrink-0 border-t px-6 py-4 flex items-center justify-end gap-2">
+              <div className="shrink-0 border-t px-6 py-4 flex items-center justify-end gap-2">
                 <Button variant="outline" onClick={resetToList}>
                   Cancelar
                 </Button>

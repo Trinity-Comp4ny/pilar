@@ -305,7 +305,7 @@ export function GerarPropostaDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
-        <DialogHeader className="flex-shrink-0">
+        <DialogHeader className="shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-foreground" />
             {stepTitle[step]}
@@ -524,7 +524,7 @@ export function GerarPropostaDialog({
               />
             </div>
             <div className="flex items-start gap-2 bg-info-soft border border-info-mid-border rounded-lg p-3">
-              <Mail className="h-4 w-4 text-info-mid flex-shrink-0 mt-0.5" />
+              <Mail className="h-4 w-4 text-info-mid shrink-0 mt-0.5" />
               <p className="text-xs text-info-strong">
                 O documento DOCX será enviado como anexo. Após o envio, a proposta mudará automaticamente para{" "}
                 <strong>Enviada</strong>.
@@ -534,7 +534,7 @@ export function GerarPropostaDialog({
         )}
 
         {/* Footer */}
-        <DialogFooter className="flex-shrink-0 mt-4 flex-wrap gap-2">
+        <DialogFooter className="shrink-0 mt-4 flex-wrap gap-2">
           {step === "config" && (
             <>
               <Button variant="outline" onClick={() => onOpenChange(false)}>

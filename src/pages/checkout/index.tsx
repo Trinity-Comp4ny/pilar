@@ -145,7 +145,7 @@ export default function Checkout() {
               <ul className="mt-4 space-y-2.5">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-2.5 text-xs text-ink-muted">
-                    <Check className="w-3.5 h-3.5 text-positive-strong flex-shrink-0 mt-0.5" />
+                    <Check className="w-3.5 h-3.5 text-positive-strong shrink-0 mt-0.5" />
                     {feature}
                   </li>
                 ))}
@@ -170,7 +170,7 @@ export default function Checkout() {
               "Suporte por email incluso",
             ].map((item) => (
               <div key={item} className="flex items-center gap-2 text-xs text-ink-muted">
-                <ShieldCheck className="w-3.5 h-3.5 text-foreground flex-shrink-0" />
+                <ShieldCheck className="w-3.5 h-3.5 text-foreground shrink-0" />
                 {item}
               </div>
             ))}

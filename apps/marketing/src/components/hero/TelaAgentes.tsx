@@ -86,7 +86,7 @@ export function TelaAgentes({ ato }: { ato: number }) {
               {pedido}
               {digitando && (
                 <m.span
-                  className="inline-block w-[1.5px] h-[13px] align-middle ml-[1px] bg-ink"
+                  className="inline-block w-[1.5px] h-[13px] align-middle ml-px bg-ink"
                   animate={{ opacity: [1, 0, 1] }}
                   transition={{ duration: 0.9, repeat: Infinity }}
                 />

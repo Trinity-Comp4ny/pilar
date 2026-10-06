@@ -1,7 +1,13 @@
 import { useMemo, useState } from "react";
 import { Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { FEATURES, isFeatureEnabledForCompany, type CompanyFeatures, type FeatureDefinition, type FeatureKey } from "@/lib/features";
+import {
+  FEATURES,
+  isFeatureEnabledForCompany,
+  type CompanyFeatures,
+  type FeatureDefinition,
+  type FeatureKey,
+} from "@/lib/features";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -165,7 +171,7 @@ function BulkFeatureRow({ feature, onCount, total, disabled, onEnableAll, onDisa
         <Icon
           size={16}
           strokeWidth={1.5}
-          className={cn("mt-0.5 flex-shrink-0", onCount > 0 ? "text-ink" : "text-black/40")}
+          className={cn("mt-0.5 shrink-0", onCount > 0 ? "text-ink" : "text-black/40")}
         />
         <div className="min-w-0">
           <div className="text-sm font-medium text-black/80">{feature.label}</div>

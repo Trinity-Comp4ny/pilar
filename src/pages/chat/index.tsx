@@ -469,7 +469,7 @@ function InputPanel({
         aria-label="Mensagem para os agentes"
         rows={1}
         autoFocus={autoFocus}
-        className="max-h-40 min-h-[24px] w-full resize-none overflow-y-auto bg-transparent px-4 pb-1 pt-3.5 text-[15px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
+        className="max-h-40 min-h-[24px] w-full resize-none overflow-y-auto bg-transparent px-4 pb-1 pt-3.5 text-[15px] leading-relaxed text-foreground outline-hidden placeholder:text-muted-foreground"
       />
       <div className="flex items-center justify-between gap-2 px-3 pb-2.5 pt-1">
         <div className="flex items-center gap-2 min-w-0">

@@ -74,7 +74,7 @@ function AddTarefaForm({
           onChange={(e) => setTitulo(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
           placeholder="Nova tarefa…"
-          className="h-8 min-w-[10rem] flex-1"
+          className="h-8 min-w-40 flex-1"
         />
         <Select value={resp} onValueChange={setResp}>
           <SelectTrigger className="h-8 w-40">
@@ -154,9 +154,7 @@ function TarefaRow({
       <Checkbox checked={concluida} disabled={!canEdit} onCheckedChange={(v) => onToggle(v === true)} />
       <span
         className={
-          concluida
-            ? "min-w-[7rem] flex-1 text-sm text-muted-foreground line-through"
-            : "min-w-[7rem] flex-1 text-sm text-ink"
+          concluida ? "min-w-28 flex-1 text-sm text-muted-foreground line-through" : "min-w-28 flex-1 text-sm text-ink"
         }
       >
         {tarefa.titulo}

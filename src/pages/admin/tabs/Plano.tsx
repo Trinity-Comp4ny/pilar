@@ -91,7 +91,7 @@ export function PlanoTab({ empresaId, currentPlan }: { empresaId: string | null;
               "Relatórios",
             ].map((item) => (
               <li key={item} className="flex items-center gap-2 text-black/70">
-                <CheckCircle2 size={14} className="text-success-mid flex-shrink-0" />
+                <CheckCircle2 size={14} className="text-success-mid shrink-0" />
                 {item}
               </li>
             ))}

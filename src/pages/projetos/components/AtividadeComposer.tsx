@@ -112,7 +112,7 @@ export function AtividadeComposer({ pessoas, onSubmit, placeholder }: AtividadeC
             <div
               ref={backdropRef}
               aria-hidden
-              className="pointer-events-none absolute inset-0 z-0 overflow-hidden whitespace-pre-wrap break-words px-3 py-2 text-sm text-transparent"
+              className="pointer-events-none absolute inset-0 z-0 overflow-hidden whitespace-pre-wrap wrap-break-word px-3 py-2 text-sm text-transparent"
             >
               {segmentos.map((seg, i) =>
                 seg.mencao ? (

@@ -92,7 +92,7 @@ export function VariaveisGuideDialog({ open, onOpenChange }: VariaveisGuideDialo
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 flex-shrink-0"
+                  className="h-7 w-7 shrink-0"
                   onClick={() => handleCopy(varName)}
                   aria-label="Copiar variável"
                 >

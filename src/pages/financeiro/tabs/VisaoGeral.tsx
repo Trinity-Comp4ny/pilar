@@ -461,7 +461,7 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
               <ul className="divide-y divide-black/5">
                 {topReceitas.map((r, i) => (
                   <li key={r.id} className="flex items-center gap-3 py-2.5">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive/10 text-positive-strong text-xs font-bold flex-shrink-0">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive/10 text-positive-strong text-xs font-bold shrink-0">
                       {i + 1}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -495,7 +495,7 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
               <ul className="divide-y divide-black/5">
                 {topDespesas.map((d, i) => (
                   <li key={d.id} className="flex items-center gap-3 py-2.5">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-danger-soft text-negative-strong text-xs font-bold flex-shrink-0">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-danger-soft text-negative-strong text-xs font-bold shrink-0">
                       {i + 1}
                     </span>
                     <div className="min-w-0 flex-1">

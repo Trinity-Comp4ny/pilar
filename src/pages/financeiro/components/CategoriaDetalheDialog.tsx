@@ -57,7 +57,7 @@ export function CategoriaDetalheDialog({
                   <tr key={c.name}>
                     <td className="py-2.5">
                       <span className="flex items-center gap-2 min-w-0">
-                        <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: c.color }} />
+                        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: c.color }} />
                         <span className="truncate">{c.name}</span>
                       </span>
                     </td>

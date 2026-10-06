@@ -149,7 +149,7 @@ export function FaturaPagamentoDialog({ fatura, contas, open, onOpenChange, onPa
 
           {!contaPagamentoId && (
             <div className="flex items-center gap-2 text-sm text-warning-mid bg-warning-soft p-3 rounded-lg">
-              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <AlertCircle className="h-4 w-4 shrink-0" />
               <span>Selecione a conta bancária de onde o pagamento será debitado.</span>
             </div>
           )}

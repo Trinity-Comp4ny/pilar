@@ -86,7 +86,7 @@ function KanbanSkeleton() {
     <div className="flex-1 min-h-0" aria-hidden="true">
       <div className="hidden md:flex gap-3 w-full h-full min-h-0 overflow-x-auto pb-2">
         {columns.map((config, colIndex) => (
-          <div key={config.label} className="flex flex-col min-w-[280px] w-[280px] flex-shrink-0 min-h-0">
+          <div key={config.label} className="flex flex-col min-w-[280px] w-[280px] shrink-0 min-h-0">
             <div className="flex items-center gap-2 px-2 py-2.5">
               <Skeleton className="h-2 w-2 rounded-full" />
               <Skeleton className="h-3 w-24" />
@@ -676,7 +676,7 @@ export default function Leads() {
                     return (
                       <div
                         key={status}
-                        className="flex flex-col w-10 flex-shrink-0 min-h-0 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                        className="flex flex-col w-10 shrink-0 min-h-0 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
                         onClick={() => toggleColumn(status)}
                       >
                         <div className="flex flex-col items-center gap-2 py-3">
@@ -696,9 +696,9 @@ export default function Leads() {
                   }
 
                   return (
-                    <div key={status} className="flex flex-col min-w-[280px] w-[280px] flex-shrink-0 min-h-0">
+                    <div key={status} className="flex flex-col min-w-[280px] w-[280px] shrink-0 min-h-0">
                       <div className="flex items-center gap-2 px-2 py-2.5">
-                        <span className={cn("h-2 w-2 rounded-full flex-shrink-0", dotColor)} />
+                        <span className={cn("h-2 w-2 rounded-full shrink-0", dotColor)} />
                         <h3 className="text-xs font-medium text-foreground/80 uppercase tracking-wide">
                           {config.label}
                         </h3>
@@ -773,7 +773,7 @@ export default function Leads() {
                 return (
                   <details key={status} open className="border rounded-lg bg-white">
                     <summary className="flex items-center gap-2 px-3 py-2.5 cursor-pointer list-none">
-                      <span className={cn("h-2 w-2 rounded-full flex-shrink-0", dotColor)} />
+                      <span className={cn("h-2 w-2 rounded-full shrink-0", dotColor)} />
                       <span className="text-xs font-medium uppercase tracking-wide flex-1">{config.label}</span>
                       <span className="text-[11px] text-muted-foreground tabular-nums">{items.length}</span>
                       <ChevronDown className="h-4 w-4 text-muted-foreground" />

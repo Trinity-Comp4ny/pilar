@@ -159,16 +159,14 @@ export function FluxoPipelineGraph({ stages, onNodeClick, className }: FluxoPipe
               stageRefs.current[i] = el;
             }}
             className={cn(
-              "relative z-[1] w-60 flex-shrink-0 rounded-lg border bg-white shadow-sm overflow-hidden",
+              "relative z-1 w-60 shrink-0 rounded-lg border bg-white shadow-sm overflow-hidden",
               !reducedMotion && "animate-fade-up"
             )}
             style={!reducedMotion ? { animationDelay: `${i * 90}ms` } : undefined}
           >
             <div className="px-3 py-2 border-b bg-muted/40 flex items-baseline justify-between gap-2">
               <span className="text-xs font-semibold text-info-strong truncate">{stage.titulo}</span>
-              {stage.subtitulo && (
-                <span className="text-[10px] text-muted-foreground flex-shrink-0">{stage.subtitulo}</span>
-              )}
+              {stage.subtitulo && <span className="text-[10px] text-muted-foreground shrink-0">{stage.subtitulo}</span>}
             </div>
             <div>
               {stage.nodes.length === 0 ? (
@@ -186,7 +184,7 @@ export function FluxoPipelineGraph({ stages, onNodeClick, className }: FluxoPipe
                     >
                       <span
                         className={cn(
-                          "relative flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full",
+                          "relative flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
                           config.dotClass
                         )}
                       >
@@ -204,7 +202,7 @@ export function FluxoPipelineGraph({ stages, onNodeClick, className }: FluxoPipe
                             </span>
                           )}
                           {node.metaLabel && <span>{node.metaLabel}</span>}
-                          {node.checklistLabel && <span className="flex-shrink-0">{node.checklistLabel}</span>}
+                          {node.checklistLabel && <span className="shrink-0">{node.checklistLabel}</span>}
                         </span>
                       </span>
                     </button>

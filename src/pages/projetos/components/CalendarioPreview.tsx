@@ -182,20 +182,20 @@ export function CalendarioPreview() {
                       className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/50 text-left transition-colors group"
                     >
                       {e.tipo === "projeto" ? (
-                        <Building2 size={13} className="text-muted-foreground flex-shrink-0" />
+                        <Building2 size={13} className="text-muted-foreground shrink-0" />
                       ) : e.tipo === "disciplina" ? (
-                        <Layers size={13} className="text-muted-foreground flex-shrink-0" />
+                        <Layers size={13} className="text-muted-foreground shrink-0" />
                       ) : (
-                        <HardHat size={13} className="text-muted-foreground flex-shrink-0" />
+                        <HardHat size={13} className="text-muted-foreground shrink-0" />
                       )}
                       <span className="text-sm flex-1 truncate">{e.nome}</span>
                       {e.atrasado && (
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-danger-soft text-danger-strong flex-shrink-0">
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-danger-soft text-danger-strong shrink-0">
                           atraso
                         </span>
                       )}
                       {!e.atrasado && e.proximo && (
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-warning-soft text-warning-strong flex-shrink-0">
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-warning-soft text-warning-strong shrink-0">
                           próximo
                         </span>
                       )}

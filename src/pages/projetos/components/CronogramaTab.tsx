@@ -203,31 +203,24 @@ export function CronogramaTab({
     enabled: !!onDatesChange,
     timelineRef,
     scrollRef,
-    // Guarda-chuva: a disciplina não sai das datas do projeto (nem antes do
-    // início, nem depois da previsão). Clampou ⇒ snapping ⇒ não salva.
+    // Guarda-chuva mínimo: início da disciplina não volta antes do início do projeto.
+    // A previsão pode passar da previsão do projeto; a UI sinaliza atraso sem bloquear.
     constrain: ({ start, end, type }) => {
       let newStart = start;
       let newEnd = end;
       let snapping = false;
       const projStart = parseDate(projetoDataInicio);
-      const projEnd = parseDate(projetoDataPrevisao);
       const dur = diffDays(newStart, newEnd);
 
-      if (projEnd && newEnd > projEnd) {
-        newEnd = projEnd;
-        if (type === "move") newStart = addDays(projEnd, -dur);
-        snapping = true;
-      }
       if (projStart && newStart < projStart) {
         newStart = projStart;
         if (type === "move") newEnd = addDays(projStart, dur);
         snapping = true;
       }
       if (projStart && newStart < projStart) newStart = projStart;
-      if (projEnd && newEnd > projEnd) newEnd = projEnd;
-      if (newStart >= newEnd && projStart && projEnd) {
+      if (newStart >= newEnd && projStart) {
         newStart = projStart;
-        newEnd = projEnd;
+        newEnd = addDays(projStart, Math.max(1, dur));
       }
       return { start: newStart, end: newEnd, snapping };
     },
@@ -239,9 +232,9 @@ export function CronogramaTab({
     onBlockedCommit: (rowIdx) => {
       const disc = rows[rowIdx]?.disc.disciplina;
       toast.info(
-        disc ? `"${disc}" não pode sair do período do projeto` : "Disciplina não pode sair do período do projeto",
+        disc ? `"${disc}" não pode começar antes do projeto` : "Disciplina não pode começar antes do projeto",
         {
-          description: "Ajuste o início ou a previsão do projeto para liberar essa data.",
+          description: "Ajuste o início do projeto para liberar essa data.",
         }
       );
     },
@@ -383,7 +376,7 @@ export function CronogramaTab({
             className="flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-amber-100/60 transition-colors"
             onClick={() => setDiscsSemDatasExpanded((v) => !v)}
           >
-            <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
             <span className="flex-1">
               {discsSemDatas.length} disciplina{discsSemDatas.length > 1 ? "s" : ""} sem datas definidas — não exibidas
               no gráfico
@@ -410,7 +403,7 @@ export function CronogramaTab({
                 fixa de 220px sozinha consumia mais da metade de uma tela de 390px,
                 sobrando só uma faixa estreita pra timeline). Some o responsável,
                 mantém só o nome truncado. */}
-            <div className={cn("flex-shrink-0 border-r bg-muted/30", isMobile ? "w-[104px]" : "w-[220px]")}>
+            <div className={cn("shrink-0 border-r bg-muted/30", isMobile ? "w-[104px]" : "w-[220px]")}>
               <div className="h-10 border-b px-3 flex items-center">
                 <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Disciplina
@@ -423,7 +416,7 @@ export function CronogramaTab({
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-medium truncate">{row.disc.disciplina}</span>
-                    {row.atrasada && <AlertTriangle className="h-3 w-3 text-danger-mid flex-shrink-0" />}
+                    {row.atrasada && <AlertTriangle className="h-3 w-3 text-danger-mid shrink-0" />}
                   </div>
                   {!isMobile && (
                     <div className="flex items-center gap-1 mt-0.5">

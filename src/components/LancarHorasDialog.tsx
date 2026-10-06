@@ -56,10 +56,7 @@ export function LancarHorasDialog({ open, onOpenChange, projetoIdInicial }: Lanc
   const { data: projetos = [] } = useQuery<ProjetoOption[]>({
     queryKey: ["projetos-select"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("projetos")
-        .select("id, nome, codigo_projeto")
-        .order("nome");
+      const { data, error } = await supabase.from("projetos").select("id, nome, codigo_projeto").order("nome");
       if (error) throw error;
       return (data ?? []) as ProjetoOption[];
     },
@@ -112,7 +109,13 @@ export function LancarHorasDialog({ open, onOpenChange, projetoIdInicial }: Lanc
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); onOpenChange(v); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) resetForm();
+        onOpenChange(v);
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Lançar horas</DialogTitle>
@@ -140,7 +143,7 @@ export function LancarHorasDialog({ open, onOpenChange, projetoIdInicial }: Lanc
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+              <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
                 <Command>
                   <CommandInput placeholder="Buscar por código ou nome..." />
                   <CommandList>
@@ -170,17 +173,16 @@ export function LancarHorasDialog({ open, onOpenChange, projetoIdInicial }: Lanc
           {projetoId && (
             <div className="space-y-1.5">
               <Label htmlFor="fase">Fase / Disciplina</Label>
-              <Select
-                value={faseId || NENHUMA_FASE}
-                onValueChange={(v) => setFaseId(v === NENHUMA_FASE ? "" : v)}
-              >
+              <Select value={faseId || NENHUMA_FASE} onValueChange={(v) => setFaseId(v === NENHUMA_FASE ? "" : v)}>
                 <SelectTrigger id="fase">
                   <SelectValue placeholder="Selecione a fase (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={NENHUMA_FASE}>Nenhuma fase</SelectItem>
                   {fases.map((f) => (
-                    <SelectItem key={f.id} value={f.id}>{f.disciplina}</SelectItem>
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.disciplina}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -222,13 +224,17 @@ export function LancarHorasDialog({ open, onOpenChange, projetoIdInicial }: Lanc
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => { resetForm(); onOpenChange(false); }}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                resetForm();
+                onOpenChange(false);
+              }}
+            >
               Cancelar
             </Button>
-            <Button
-              type="submit"
-              disabled={isPending || !projetoId || !horas || !descricao.trim()}
-            >
+            <Button type="submit" disabled={isPending || !projetoId || !horas || !descricao.trim()}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Lançar horas
             </Button>

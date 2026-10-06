@@ -64,7 +64,7 @@ function AprovarPropostaCard({ projeto, refresh }: { projeto: ClienteProjetoData
     <Card className="border-brand/40 bg-brand/5">
       <CardContent className="p-5 space-y-4">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-brand/20 flex items-center justify-center flex-shrink-0">
+          <div className="h-10 w-10 rounded-full bg-brand/20 flex items-center justify-center shrink-0">
             <FileSignature className="h-5 w-5 text-ink" />
           </div>
           <div>

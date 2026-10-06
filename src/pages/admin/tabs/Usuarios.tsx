@@ -63,7 +63,7 @@ export function UsuariosTab({ users, setUsers, currentUserId }: Props) {
     setIsInviting(true);
     const nomeCompleto = [payload.firstName, payload.lastName].filter(Boolean).join(" ");
     try {
-      const { error } = await supabase.functions.invoke("invite-user", {
+      const { data, error } = await supabase.functions.invoke("invite-user", {
         body: {
           email: payload.email,
           nome: nomeCompleto,
@@ -72,7 +72,11 @@ export function UsuariosTab({ users, setUsers, currentUserId }: Props) {
       });
       if (error) throw error;
 
-      toast.success("Convite enviado", { description: `Email enviado para ${payload.email}` });
+      toast.success("Convite enviado", {
+        description: data?.conta_existente
+          ? "Entre com sua conta atual para acessar o escritório."
+          : `Email enviado para ${payload.email}`,
+      });
       setUsers((prev) => [
         ...prev,
         {
@@ -99,11 +103,15 @@ export function UsuariosTab({ users, setUsers, currentUserId }: Props) {
       return;
     }
     try {
-      const { error } = await supabase.functions.invoke("invite-user", {
+      const { data, error } = await supabase.functions.invoke("invite-user", {
         body: { action: "resend", convite_id: u.inviteId },
       });
       if (error) throw error;
-      toast.success("Convite reenviado", { description: `Novo e-mail enviado para ${u.email}` });
+      toast.success("Convite reenviado", {
+        description: data?.conta_existente
+          ? "Entre com sua conta atual para acessar o escritório."
+          : `Novo e-mail enviado para ${u.email}`,
+      });
     } catch (err) {
       reportInvokeError(err, "invite-user:resend");
       toast.error("Não foi possível reenviar o convite", {

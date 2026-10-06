@@ -29,7 +29,7 @@ export function PeriodoPopover({ activeTab }: { activeTab?: string }) {
         showVisualizacao ? (
           <div className="flex items-center justify-between gap-2 px-3 py-2">
             <span className="text-xs text-black/50">Agrupar por</span>
-            <div className="inline-flex rounded-full bg-black/[0.04] p-0.5">
+            <div className="inline-flex rounded-full bg-black/4 p-0.5">
               {(["dia", "mes"] as const).map((v) => (
                 <button
                   key={v}

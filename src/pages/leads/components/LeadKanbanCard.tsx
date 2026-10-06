@@ -85,7 +85,7 @@ export function LeadKanbanCard({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 -my-1 -mr-1 text-muted-foreground hover:text-foreground flex-shrink-0"
+                className="h-7 w-7 -my-1 -mr-1 text-muted-foreground hover:text-foreground shrink-0"
                 aria-label="Mais opções"
               >
                 <MoreVertical className="h-4 w-4" />

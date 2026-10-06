@@ -67,7 +67,7 @@ export function RotatingPill({ words, intervalMs = 2500 }: RotatingPillProps) {
       {/* Espelho fora de fluxo: mede a palavra na tipografia real. */}
       <span
         ref={espelhoRef}
-        className="absolute invisible whitespace-nowrap pointer-events-none -left-[9999px]"
+        className="absolute invisible whitespace-nowrap pointer-events-none left-[-9999px]"
         aria-hidden="true"
       >
         {atual.palavra}

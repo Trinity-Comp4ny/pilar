@@ -133,7 +133,7 @@ export function PrivacidadePanel() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-start gap-3">
-            <Download className="w-5 h-5 text-foreground mt-0.5 flex-shrink-0" />
+            <Download className="w-5 h-5 text-foreground mt-0.5 shrink-0" />
             <div className="flex-1 space-y-2">
               <p className="text-sm font-medium">Exportar meus dados</p>
               <p className="text-sm text-muted-foreground">
@@ -153,7 +153,7 @@ export function PrivacidadePanel() {
           </div>
 
           <div className="flex items-start gap-3 pt-4 border-t">
-            <Trash2 className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
+            <Trash2 className="w-5 h-5 text-destructive mt-0.5 shrink-0" />
             <div className="flex-1 space-y-2">
               <p className="text-sm font-medium">Excluir meus dados</p>
               <p className="text-sm text-muted-foreground">

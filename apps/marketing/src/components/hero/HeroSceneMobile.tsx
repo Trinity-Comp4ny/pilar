@@ -72,7 +72,7 @@ export function HeroSceneMobile({ ato, estatico }: { ato: number; estatico: bool
             {pedido}
             {digitando && (
               <m.span
-                className="inline-block w-[1.5px] h-[13px] align-middle ml-[1px] bg-white"
+                className="inline-block w-[1.5px] h-[13px] align-middle ml-px bg-white"
                 animate={{ opacity: [1, 0, 1] }}
                 transition={{ duration: 0.9, repeat: Infinity }}
               />
@@ -113,9 +113,7 @@ export function HeroSceneMobile({ ato, estatico }: { ato: number; estatico: bool
           animate={{ opacity: mostraRascunho ? 1 : 0, y: mostraRascunho ? 0 : 14 }}
           transition={{ duration: 0.45, ease: EASE.out }}
         >
-          <p className="text-[8.5px] uppercase tracking-[0.11em] text-ink mb-2.5">
-            Rascunho, aguardando aprovação
-          </p>
+          <p className="text-[8.5px] uppercase tracking-[0.11em] text-ink mb-2.5">Rascunho, aguardando aprovação</p>
           {RASCUNHO.map(([chave, valor]) => (
             <div
               key={chave}
@@ -145,11 +143,11 @@ export function HeroSceneMobile({ ato, estatico }: { ato: number; estatico: bool
           transition={{ duration: 0.5, ease: EASE.out }}
         >
           <div className="rounded-xl border border-paper-border/70 bg-paper-alt/50 px-3 py-2.5">
-            <p className="text-[8.5px] uppercase tracking-[0.1em] text-ink-muted mb-1">Recebido no mês</p>
+            <p className="text-[8.5px] uppercase tracking-widest text-ink-muted mb-1">Recebido no mês</p>
             <p className="text-[15px] font-medium text-ink tabular-nums">R$ 412.900</p>
           </div>
           <div className="rounded-xl border border-paper-border/70 bg-paper-alt/50 px-3 py-2.5">
-            <p className="text-[8.5px] uppercase tracking-[0.1em] text-ink-muted mb-1">Margem do projeto</p>
+            <p className="text-[8.5px] uppercase tracking-widest text-ink-muted mb-1">Margem do projeto</p>
             <p className="text-[15px] font-medium text-ink tabular-nums">31,4%</p>
           </div>
         </m.div>

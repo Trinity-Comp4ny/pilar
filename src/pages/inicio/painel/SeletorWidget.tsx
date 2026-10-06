@@ -2,13 +2,7 @@ import { useMemo, useState } from "react";
 import { ArrowLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Feature } from "@/lib/permissions";
 import { CATALOGO, SECOES, type Widget } from "./catalogo";
 import { DADOS_EXEMPLO } from "./exemplo";
@@ -40,15 +34,7 @@ type Props = {
   onAdicionar: (id: string) => void;
 };
 
-export function SeletorWidget({
-  aberto,
-  onFechar,
-  secaoInicial,
-  jaNoPainel,
-  podeAdicionar,
-  can,
-  onAdicionar,
-}: Props) {
+export function SeletorWidget({ aberto, onFechar, secaoInicial, jaNoPainel, podeAdicionar, can, onAdicionar }: Props) {
   const [preview, setPreview] = useState<Widget | null>(null);
 
   const disponiveis = useMemo(() => CATALOGO.filter((w) => w.feature === null || can(w.feature)), [can]);
@@ -83,7 +69,7 @@ export function SeletorWidget({
               <DialogDescription className="text-[12.5px]">{preview.descricao}</DialogDescription>
             </DialogHeader>
 
-            <div className="min-h-0 flex-1 overflow-y-auto bg-black/[0.02] p-5">
+            <div className="min-h-0 flex-1 overflow-y-auto bg-black/2 p-5">
               <div className="rounded-2xl border border-black/10 bg-white p-4 shadow-sm">
                 <div className="mb-3 flex flex-wrap items-baseline gap-2">
                   <h3 className="text-sm font-medium tracking-tight">{preview.titulo}</h3>
@@ -99,8 +85,7 @@ export function SeletorWidget({
                 )}
               </div>
               <p className="mt-3 text-[11.5px] text-muted-foreground">
-                Números de exemplo, para você ver o formato. No painel, o indicador usa os dados da sua
-                empresa.
+                Números de exemplo, para você ver o formato. No painel, o indicador usa os dados da sua empresa.
               </p>
             </div>
 
@@ -144,7 +129,7 @@ export function SeletorWidget({
                             type="button"
                             onClick={() => setPreview(w)}
                             className={cn(
-                              "flex items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-black/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset",
+                              "flex items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-black/2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset",
                               usado && "opacity-60"
                             )}
                           >

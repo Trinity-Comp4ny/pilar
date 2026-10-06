@@ -83,7 +83,7 @@ function OtpInput({ value, onChange, disabled }: OtpInputProps) {
           onKeyDown={(e) => handleKeyDown(i, e)}
           onPaste={handlePaste}
           onFocus={(e) => e.target.select()}
-          className="w-11 h-14 text-center text-xl font-semibold border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 transition-colors"
+          className="w-11 h-14 text-center text-xl font-semibold border rounded-lg bg-background focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 transition-colors"
         />
       ))}
     </div>

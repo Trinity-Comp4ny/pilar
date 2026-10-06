@@ -51,7 +51,7 @@ export function SeletorResponsaveis({
         aria-label={selecionadas.length ? `Responsáveis: ${selecionadas.map((p) => p.nome).join(", ")}` : emptyLabel}
         title={selecionadas.length ? selecionadas.map((p) => p.nome).join(", ") : emptyLabel}
         className={cn(
-          "flex flex-shrink-0 items-center rounded-full",
+          "flex shrink-0 items-center rounded-full",
           compact ? "h-7 gap-1" : "h-9 w-full gap-2 rounded-md border bg-background px-3 text-sm",
           disabled ? "cursor-not-allowed opacity-60" : "hover:bg-muted/40",
           className

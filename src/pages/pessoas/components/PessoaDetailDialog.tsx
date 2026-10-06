@@ -276,7 +276,7 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
                       <Progress
                         value={percent}
                         className="h-1.5 bg-muted"
-                        indicatorClassName={isCompleted ? "bg-positive/100" : "bg-blue-500"}
+                        indicatorClassName={isCompleted ? "bg-positive" : "bg-blue-500"}
                       />
                       <div className="flex justify-between text-xs text-muted-foreground">
                         <span>

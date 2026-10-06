@@ -133,7 +133,7 @@ export function DiarioScreen() {
             {[0, 1, 2].map((i) => (
               <m.span
                 key={i}
-                className="aspect-square rounded bg-gradient-to-br from-paper-border to-paper-alt block"
+                className="aspect-square rounded bg-linear-to-br from-paper-border to-paper-alt block"
                 initial={reduced ? false : { opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.6, delay: reduced ? 0 : i * 0.14 }}
@@ -276,7 +276,7 @@ export function CampoScreen() {
               {[0, 1, 2].map((i) => (
                 <m.span
                   key={i}
-                  className="aspect-square rounded-md bg-gradient-to-br from-paper-border to-paper-alt block"
+                  className="aspect-square rounded-md bg-linear-to-br from-paper-border to-paper-alt block"
                   initial={reduced ? false : { opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5, delay: reduced ? 0 : 0.3 + i * 0.12 }}
@@ -615,7 +615,7 @@ function ScreenHead({ crumb, title, chip }: { crumb: string; title: string; chip
   return (
     <div className="flex justify-between items-start gap-3 mb-4">
       <div>
-        <p className="text-[8.5px] uppercase tracking-[0.1em] text-ink-muted mb-1">{crumb}</p>
+        <p className="text-[8.5px] uppercase tracking-widest text-ink-muted mb-1">{crumb}</p>
         <p className="text-[14.5px] font-medium text-ink tracking-tight">{title}</p>
       </div>
       <span className="text-[9.5px] px-2.5 py-1 rounded-full bg-brand text-ink-on-brand font-semibold shrink-0">

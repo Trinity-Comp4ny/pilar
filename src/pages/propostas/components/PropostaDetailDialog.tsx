@@ -80,7 +80,7 @@ function InfoRow({
 }) {
   return (
     <div className="flex items-start gap-2.5">
-      <Icon className="h-3.5 w-3.5 text-muted-foreground mt-0.5 flex-shrink-0" />
+      <Icon className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
       <div className="min-w-0">
         <p className="text-[10px] text-muted-foreground">{label}</p>
         <p className={`text-sm font-medium ${valueClass || ""}`}>{value}</p>
@@ -187,7 +187,7 @@ export function PropostaDetailDialog({
               {proposta.codigo && <p className="text-xs text-muted-foreground font-mono mt-0.5">{proposta.codigo}</p>}
               <DialogDescription className="sr-only">Detalhes e ações da proposta {proposta.titulo}</DialogDescription>
             </div>
-            <Badge className={`text-[11px] flex-shrink-0 mt-0.5 ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
+            <Badge className={`text-[11px] shrink-0 mt-0.5 ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
               {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
             </Badge>
           </div>
@@ -196,7 +196,7 @@ export function PropostaDetailDialog({
         <div className="space-y-4 mt-1">
           {/* Banner de contexto do estágio */}
           <div className={`flex items-start gap-2.5 rounded-lg border p-3 ${stage.bg} ${stage.border}`}>
-            <StageIcon className={`h-4 w-4 flex-shrink-0 mt-0.5 ${stage.iconColor}`} />
+            <StageIcon className={`h-4 w-4 shrink-0 mt-0.5 ${stage.iconColor}`} />
             <p className="text-xs text-foreground/80">{stageMessage}</p>
           </div>
 
@@ -368,7 +368,7 @@ export function PropostaDetailDialog({
               {/* Status do contrato */}
               {proposta.contrato_assinado ? (
                 <div className="flex items-center gap-2 rounded-lg border border-positive/20 bg-positive/10 px-3 py-2.5">
-                  <CheckCircle2 className="h-4 w-4 text-positive-strong flex-shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 text-positive-strong shrink-0" />
                   <div>
                     <p className="text-xs font-medium text-positive-strong">Contrato assinado</p>
                     <p className="text-[11px] text-positive-strong">O cliente assinou o contrato.</p>
@@ -377,7 +377,7 @@ export function PropostaDetailDialog({
               ) : proposta.contrato_recusado ? (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 rounded-lg border border-danger-mid-border bg-danger-soft px-3 py-2.5">
-                    <XCircle className="h-4 w-4 text-danger-mid flex-shrink-0" />
+                    <XCircle className="h-4 w-4 text-danger-mid shrink-0" />
                     <div>
                       <p className="text-xs font-medium text-danger-strong">Contrato recusado</p>
                       <p className="text-[11px] text-danger-strong">
@@ -412,7 +412,7 @@ export function PropostaDetailDialog({
                 </div>
               ) : (
                 <div className="flex items-center gap-2 rounded-lg border border-dashed border-warning-mid-border bg-warning-soft/50 px-3 py-2.5">
-                  <AlertCircle className="h-4 w-4 text-warning-mid flex-shrink-0" />
+                  <AlertCircle className="h-4 w-4 text-warning-mid shrink-0" />
                   <p className="text-xs text-warning-mid">
                     Nenhum contrato enviado. Gere e envie o contrato ao cliente.
                   </p>

@@ -110,7 +110,7 @@ export function AppSidebar() {
           title={tooltip}
           aria-disabled
         >
-          <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] flex-shrink-0" />
+          <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] shrink-0" />
           {!collapsed && <span className="tracking-tight">{item.title}</span>}
           {collapsed && (
             <span className="absolute left-full ml-3 bg-black text-white text-xs py-1.5 px-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
@@ -133,7 +133,7 @@ export function AppSidebar() {
         )}
         title={collapsed ? item.title : ""}
       >
-        <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] flex-shrink-0" />
+        <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] shrink-0" />
         {!collapsed && (
           <>
             <span className="tracking-tight flex-1">{item.title}</span>
@@ -181,7 +181,7 @@ export function AppSidebar() {
               type="button"
               onClick={toggleSidebar}
               aria-label="Recolher menu"
-              className="flex items-center justify-center h-8 w-8 rounded-lg text-ink-soft hover:text-ink hover:bg-black/[0.04] active:scale-95 transition-all duration-200"
+              className="flex items-center justify-center h-8 w-8 rounded-lg text-ink-soft hover:text-ink hover:bg-black/4 active:scale-95 transition-all duration-200"
             >
               <PanelLeftClose size={18} strokeWidth={1.5} />
             </button>
@@ -195,7 +195,7 @@ export function AppSidebar() {
               type="button"
               onClick={toggleSidebar}
               aria-label="Expandir menu"
-              className="absolute flex items-center justify-center h-8 w-8 rounded-lg text-ink-soft hover:text-ink hover:bg-black/[0.04] active:scale-95 opacity-0 group-hover:opacity-100 transition-all duration-200"
+              className="absolute flex items-center justify-center h-8 w-8 rounded-lg text-ink-soft hover:text-ink hover:bg-black/4 active:scale-95 opacity-0 group-hover:opacity-100 transition-all duration-200"
             >
               <PanelLeftOpen size={18} strokeWidth={1.5} />
             </button>
@@ -204,7 +204,7 @@ export function AppSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+      <nav className="flex-1 p-3 overflow-y-auto scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {/* Switcher de módulo (apresentação; autorização é dos gates) */}
         <div>
           <DropdownMenu>
@@ -213,14 +213,14 @@ export function AppSidebar() {
                 type="button"
                 aria-label="Trocar de módulo"
                 className={cn(
-                  "w-full flex items-center gap-2.5 rounded-full border border-black/10 bg-black/[0.03] px-3 py-2 text-sm font-medium text-ink hover:bg-black/[0.06] transition-colors",
+                  "w-full flex items-center gap-2.5 rounded-full border border-black/10 bg-black/3 px-3 py-2 text-sm font-medium text-ink hover:bg-black/6 transition-colors",
                   collapsed && "justify-center px-0"
                 )}
                 title={collapsed ? MODULES[activeModule].label : ""}
               >
                 {(() => {
                   const ActiveIcon = MODULES[activeModule].icon;
-                  return <ActiveIcon size={16} strokeWidth={1.6} className="flex-shrink-0" />;
+                  return <ActiveIcon size={16} strokeWidth={1.6} className="shrink-0" />;
                 })()}
                 {!collapsed && (
                   <>
@@ -262,7 +262,7 @@ export function AppSidebar() {
             )}
             title={collapsed ? "Início" : ""}
           >
-            <Home size={18} strokeWidth={1.5} className="w-[18px] h-[18px] flex-shrink-0" />
+            <Home size={18} strokeWidth={1.5} className="w-[18px] h-[18px] shrink-0" />
             {!collapsed && <span className="tracking-tight">Início</span>}
           </NavLink>
           {empresaItems.map(({ item, nav }) => renderItem(item, nav))}
@@ -291,7 +291,7 @@ export function AppSidebar() {
               <DropdownMenuTrigger asChild>
                 <button
                   className={cn(
-                    "group w-full flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10",
+                    "group w-full flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black/10",
                     collapsed && "justify-center",
                     isUserRouteActive ? "bg-brand text-black/80 font-medium" : "hover:bg-brand/30"
                   )}
@@ -302,7 +302,7 @@ export function AppSidebar() {
                   <AvatarStack
                     pessoas={[{ nome: userName, avatarUrl: profile?.avatar_url }]}
                     size="xs"
-                    className="flex-shrink-0"
+                    className="shrink-0"
                   />
                   {!collapsed && (
                     <>
@@ -315,7 +315,7 @@ export function AppSidebar() {
                       <ChevronDown
                         size={14}
                         className={cn(
-                          "text-black/50 transition-transform duration-200 flex-shrink-0",
+                          "text-black/50 transition-transform duration-200 shrink-0",
                           isUserMenuOpen && "rotate-180"
                         )}
                       />
@@ -330,7 +330,7 @@ export function AppSidebar() {
                     <p className="truncate text-sm font-semibold leading-tight text-ink">{userName}</p>
                     {userEmail && <p className="truncate text-xs leading-tight text-muted-foreground">{userEmail}</p>}
                   </div>
-                  <Settings size={16} className="flex-shrink-0 text-muted-foreground" />
+                  <Settings size={16} className="shrink-0 text-muted-foreground" />
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setFeedbackOpen(true)} className="justify-between">
