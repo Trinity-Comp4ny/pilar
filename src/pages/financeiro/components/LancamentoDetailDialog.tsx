@@ -65,7 +65,7 @@ export function LancamentoDetailDialog({
             {l.data_efetivacao ? formatDateDisplay(l.data_efetivacao) : "—"}
           </Field>
           <Field label="Categoria">{l.categoria_nome || "—"}</Field>
-          <Field label="Projeto">{l.projeto_codigo || "—"}</Field>
+          <Field label="Projeto">{l.projeto_nome || "—"}</Field>
           <Field label={isReceita ? "Cliente" : "Fornecedor"}>{l.contraparte_nome || "—"}</Field>
           <Field label="Forma pagto.">{l.forma_pagamento || "—"}</Field>
           <Field label="Parcela">

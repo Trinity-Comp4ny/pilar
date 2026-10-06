@@ -219,7 +219,7 @@ export function MapaTab() {
                   {filtrados.map((p) => (
                     <CommandItem
                       key={p.id}
-                      value={`${p.codigo_projeto} ${p.nome}`}
+                      value={p.nome}
                       onSelect={() => handleSearchSelect(p.id)}
                       className="gap-2"
                     >
@@ -228,7 +228,7 @@ export function MapaTab() {
                         style={{ background: STATUS_MARKER_COLORS[p.status] || "hsl(var(--status-unknown))" }}
                       />
                       <span className="truncate">
-                        {p.codigo_projeto} - {p.nome}
+                        {p.nome}
                       </span>
                     </CommandItem>
                   ))}
@@ -312,7 +312,6 @@ export function MapaTab() {
                       className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted transition-colors text-left"
                     >
                       <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/50" />
-                      <span className="font-mono text-muted-foreground/70">{p.codigo_projeto}</span>
                       <span className="truncate text-foreground">{p.nome}</span>
                       {p.cliente_nome && (
                         <span className="ml-auto shrink-0 text-muted-foreground/60">{p.cliente_nome}</span>
@@ -473,8 +472,7 @@ export function MapaTab() {
                     }}
                   />
                   <div>
-                    <p className="text-xs text-muted-foreground font-mono">{sheetProjeto.codigo_projeto}</p>
-                    <SheetTitle className="text-base leading-snug mt-0.5">{sheetProjeto.nome}</SheetTitle>
+                    <SheetTitle className="text-base leading-snug">{sheetProjeto.nome}</SheetTitle>
                   </div>
                 </div>
               </SheetHeader>

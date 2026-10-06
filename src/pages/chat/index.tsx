@@ -95,12 +95,12 @@ export default function ChatPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("projetos")
-        .select("id, codigo_projeto, nome")
+        .select("id, nome")
         .order("created_at", { ascending: false })
         .limit(100);
       return (data ?? []).map((p) => ({
         id: p.id as string,
-        label: (p.codigo_projeto as string) || (p.nome as string),
+        label: p.nome as string,
       }));
     },
   });

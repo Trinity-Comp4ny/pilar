@@ -95,7 +95,7 @@ export function buildProjetos(data: unknown[], now: Date): DashboardProjeto[] {
 
     return {
       id: p.id,
-      nome: p.codigo_projeto || p.nome || "Sem nome",
+      nome: p.nome || "Sem nome",
       cliente: p.clientes?.nome || "—",
       status: p.status,
       prioridade: p.prioridade || "Media",
@@ -144,7 +144,7 @@ export function buildVencimentos(receitasData: unknown[], despesasData: unknown[
     vencimento: r.data_vencimento,
     diasRestantes: differenceInDays(new Date(r.data_vencimento), now),
     status: r.status,
-    projeto: r.projetos?.codigo_projeto || null,
+    projeto: r.projetos?.nome || null,
     entidade: r.clientes?.nome || null,
   }));
 
@@ -156,7 +156,7 @@ export function buildVencimentos(receitasData: unknown[], despesasData: unknown[
     vencimento: d.data_vencimento,
     diasRestantes: differenceInDays(new Date(d.data_vencimento), now),
     status: d.status,
-    projeto: d.projetos?.codigo_projeto || null,
+    projeto: d.projetos?.nome || null,
     entidade: d.fornecedores?.nome || null,
   }));
 

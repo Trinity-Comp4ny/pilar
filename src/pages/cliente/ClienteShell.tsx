@@ -30,7 +30,6 @@ interface ClienteShellProps {
   children: React.ReactNode;
   projetoId?: string;
   projetoNome?: string;
-  projetoCodigo?: string | null;
   /** Sub-header de obra (sem abas): mostra "voltar" + nome da obra. */
   obraNome?: string;
 }
@@ -46,7 +45,6 @@ export function ClienteShell({
   children,
   projetoId,
   projetoNome,
-  projetoCodigo,
   obraNome,
 }: ClienteShellProps) {
   const navigate = useNavigate();
@@ -138,7 +136,6 @@ export function ClienteShell({
               </Button>
               <div className="h-4 w-px bg-border shrink-0" />
               <div className="min-w-0 flex items-baseline gap-2">
-                {projetoCodigo && <span className="text-xs text-muted-foreground shrink-0">{projetoCodigo}</span>}
                 <span className="text-sm font-medium truncate">{projetoNome}</span>
               </div>
             </div>

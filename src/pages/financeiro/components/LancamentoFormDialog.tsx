@@ -582,7 +582,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                 <SelectContent>
                   {aux.projetos.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.codigo || "—"}
+                      {p.nome}
                     </SelectItem>
                   ))}
                 </SelectContent>

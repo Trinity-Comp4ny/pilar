@@ -31,7 +31,6 @@ interface LancarHorasDialogProps {
 interface ProjetoOption {
   id: string;
   nome: string;
-  codigo_projeto: string | null;
 }
 
 const NENHUMA_FASE = "__nenhuma__";
@@ -56,14 +55,14 @@ export function LancarHorasDialog({ open, onOpenChange, projetoIdInicial }: Lanc
   const { data: projetos = [] } = useQuery<ProjetoOption[]>({
     queryKey: ["projetos-select"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("projetos").select("id, nome, codigo_projeto").order("nome");
+      const { data, error } = await supabase.from("projetos").select("id, nome").order("nome");
       if (error) throw error;
       return (data ?? []) as ProjetoOption[];
     },
     staleTime: 1000 * 60 * 5,
   });
 
-  const projetoLabel = (p: ProjetoOption) => (p.codigo_projeto ? `${p.codigo_projeto} — ${p.nome}` : p.nome);
+  const projetoLabel = (p: ProjetoOption) => p.nome;
   const projetoSelecionado = projetos.find((p) => p.id === projetoId);
 
   const { data: fases = [] } = useQuery<FaseOption[]>({

@@ -110,9 +110,6 @@ function ProjetoCard({ projeto }: { projeto: ProjetoResumo }) {
         <CardContent className="p-4 space-y-3">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              {projeto.codigo_projeto && (
-                <p className="text-[10px] font-mono text-muted-foreground">{projeto.codigo_projeto}</p>
-              )}
               <p className="text-sm font-medium truncate group-hover:text-brand transition-colors">{projeto.nome}</p>
             </div>
             {config && <Badge className={cn("text-[10px] shrink-0", config.color)}>{config.label}</Badge>}
@@ -195,9 +192,6 @@ function ProjetoAccordion({ projeto, children }: { projeto: ProjetoResumo; child
             <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
           )}
           <div className="min-w-0">
-            {projeto.codigo_projeto && (
-              <span className="text-[10px] font-mono text-muted-foreground mr-2">{projeto.codigo_projeto}</span>
-            )}
             <span className="text-sm font-medium">{projeto.nome}</span>
           </div>
         </div>

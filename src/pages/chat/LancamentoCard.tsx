@@ -76,7 +76,7 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
       if (!next.categoria_id) next.categoria_id = matchNome(aux.categorias, campos.categoria_nome);
       if (!next.projeto_id) {
         const proj = aux.projetos.find((p) =>
-          p.codigo?.toLowerCase().includes((campos.projeto_nome ?? "").toLowerCase())
+          p.nome.toLowerCase().includes((campos.projeto_nome ?? "").toLowerCase())
         );
         if (campos.projeto_nome && proj) next.projeto_id = proj.id;
       }
@@ -349,7 +349,7 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
                 <SelectContent>
                   {aux.projetos.map((pr) => (
                     <SelectItem key={pr.id} value={pr.id}>
-                      {pr.codigo}
+                      {pr.nome}
                     </SelectItem>
                   ))}
                 </SelectContent>

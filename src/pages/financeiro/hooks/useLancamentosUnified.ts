@@ -24,7 +24,7 @@ export interface Lancamento {
   categoria_id: string | null;
   categoria_nome: string | null;
   projeto_id: string | null;
-  projeto_codigo: string | null;
+  projeto_nome: string | null;
   centro_custo_id: string | null;
   conta_id: string | null;
   conta_nome: string | null;

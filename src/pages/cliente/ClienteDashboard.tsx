@@ -87,9 +87,6 @@ export default function ClienteDashboard() {
                       {/* Header do card */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          {projeto.projeto_codigo && (
-                            <p className="text-xs text-muted-foreground font-mono">{projeto.projeto_codigo}</p>
-                          )}
                           <h3 className="text-sm font-semibold text-ink truncate mt-0.5">
                             {projeto.projeto_nome}
                           </h3>

@@ -96,7 +96,7 @@ export async function buildDashboardQueries(
     supabase
       .from("projetos_safe")
       .select(
-        "id, codigo_projeto, nome, status, prioridade, status_data, valor_contrato, data_inicio, data_previsao, data_final, cliente_id"
+        "id, nome, status, prioridade, status_data, valor_contrato, data_inicio, data_previsao, data_final, cliente_id"
       )
       .in("status", [PROJECT_STATUS.EM_ANDAMENTO, PROJECT_STATUS.PLANEJAMENTO])
       .order("created_at", { ascending: false })
@@ -120,7 +120,7 @@ export async function buildDashboardQueries(
     supabase
       .from("receitas")
       .select(
-        "id, descricao, valor, data_vencimento, status, projeto_id, projetos(codigo_projeto), cliente_id, clientes(nome)"
+        "id, descricao, valor, data_vencimento, status, projeto_id, projetos(nome), cliente_id, clientes(nome)"
       )
       .eq("status", "Pendente")
       .gte("data_vencimento", format(now, "yyyy-MM-dd"))
@@ -133,7 +133,7 @@ export async function buildDashboardQueries(
     supabase
       .from("despesas")
       .select(
-        "id, descricao, valor, data_vencimento, status, projeto_id, projetos(codigo_projeto), fornecedor_id, fornecedores(nome)"
+        "id, descricao, valor, data_vencimento, status, projeto_id, projetos(nome), fornecedor_id, fornecedores(nome)"
       )
       .eq("status", "Pendente")
       .gte("data_vencimento", format(now, "yyyy-MM-dd"))

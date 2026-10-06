@@ -32,7 +32,7 @@ export interface DespesaItem {
   valor: number;
   status: string;
   projeto_id: string | null;
-  projeto_codigo?: string | null;
+  projeto_nome?: string | null;
   nota_fiscal: string | null;
   conta_id: string | null;
   cartao_id: string | null;
@@ -64,7 +64,7 @@ export interface ReceitaItem {
   cliente_id: string | null;
   observacao: string | null;
   cliente_nome?: string;
-  projeto_codigo?: string;
+  projeto_nome?: string;
   grupo_parcela?: string | null;
   parcela_numero?: number | null;
   parcela_total?: number | null;
@@ -78,7 +78,7 @@ export interface AuxData {
   categorias: { id: string; name: string }[];
   contas: { id: string; nome: string }[];
   cartoes: { id: string; nome: string; tipo: string; dia_fechamento: number | null }[];
-  projetos: { id: string; projetoID: string | null }[];
+  projetos: { id: string; nome: string }[];
   fornecedores: { id: string; name: string }[];
   clientes: {
     id: string;
@@ -126,7 +126,7 @@ function toDespesaItem(l: LancamentoRow): DespesaItem {
     valor: Number(l.valor),
     status: l.status ?? "",
     projeto_id: l.projeto_id,
-    projeto_codigo: l.projeto_codigo,
+    projeto_nome: l.projeto_nome,
     nota_fiscal: l.nota_fiscal,
     conta_id: l.conta_id,
     cartao_id: l.cartao_id,
@@ -160,7 +160,7 @@ function toReceitaItem(l: LancamentoRow): ReceitaItem {
     cliente_id: l.contraparte_id,
     observacao: l.observacao,
     cliente_nome: l.contraparte_nome ?? undefined,
-    projeto_codigo: l.projeto_codigo ?? undefined,
+    projeto_nome: l.projeto_nome ?? undefined,
     grupo_parcela: l.grupo_parcela,
     parcela_numero: l.parcela_numero,
     parcela_total: l.parcela_total,
@@ -179,7 +179,7 @@ async function fetchAuxData(tipo: FinanceItemTipo): Promise<AuxData> {
     tipo === "despesa"
       ? supabase.from("cartoes").select("id, nome, tipo, dia_fechamento").is("deleted_at", null)
       : Promise.resolve({ data: [] as never[], error: null }),
-    supabase.from("projetos").select("id, nome, codigo_projeto").is("deleted_at", null).order("nome"),
+    supabase.from("projetos").select("id, nome").is("deleted_at", null).order("nome"),
     tipo === "despesa"
       ? supabase.from("fornecedores").select("id, nome").order("nome")
       : Promise.resolve({ data: [] as never[], error: null }),
@@ -204,7 +204,7 @@ async function fetchAuxData(tipo: FinanceItemTipo): Promise<AuxData> {
     categorias: (categoriasData ?? []).map((c) => ({ id: c.id, name: c.nome })),
     contas: contasData ?? [],
     cartoes: (cartoesData ?? []) as AuxData["cartoes"],
-    projetos: (projetosData ?? []).map((p) => ({ id: p.id, projetoID: p.codigo_projeto })),
+    projetos: (projetosData ?? []).map((p) => ({ id: p.id, nome: p.nome })),
     fornecedores: (fornecedoresData ?? []).map((s) => ({ id: s.id, name: s.nome })),
     clientes: (clientesData ?? []).map((c) => ({
       id: c.id,

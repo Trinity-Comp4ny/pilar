@@ -137,7 +137,6 @@ export function buildEventosProjetos(
         camada: "projeto",
         estado: calcEstado(p.data_previsao, p.status === "Concluído" || p.status === "Cancelado", hoje, in7),
         titulo: p.nome,
-        subtitulo: p.codigo_projeto,
         status: p.status,
         projetoId: p.id,
       });
@@ -154,7 +153,7 @@ export function buildEventosProjetos(
         camada: "disciplina",
         estado: calcEstado(d.data_previsao, status === "Concluído", hoje, in7),
         titulo: d.disciplina,
-        subtitulo: `${p.codigo_projeto} — ${p.nome}`,
+        subtitulo: p.nome,
         responsavel: respNome,
         status,
         projetoId: p.id,
