@@ -67,16 +67,13 @@ export function ProjectCard({
       onClick={() => onClick(projeto)}
       className={cn("cursor-pointer w-full p-3 space-y-1.5 bg-white", isDragging && "shadow-md rotate-1")}
     >
-      {/* Linha 1: dot prioridade + código + badge alerta + kebab */}
+      {/* Linha 1: dot prioridade + badge alerta + kebab */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 min-w-0">
           <span
             className={cn("h-1.5 w-1.5 rounded-full shrink-0", priorityDot)}
             title={`Prioridade ${priorityConfig?.label || "—"}`}
           />
-          <span className="text-[10px] font-mono text-muted-foreground tracking-tight truncate">
-            {projeto.codigo_projeto}
-          </span>
           {showMargemAlert && (
             <span className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-warning-soft text-warning-strong shrink-0">
               <AlertTriangle className="h-2.5 w-2.5" />

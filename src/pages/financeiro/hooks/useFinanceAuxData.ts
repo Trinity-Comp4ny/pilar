@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface AuxData {
   categorias: { id: string; nome: string }[];
-  projetos: { id: string; codigo: string }[];
+  projetos: { id: string; nome: string }[];
   contas: { id: string; nome: string }[];
   cartoes: { id: string; nome: string; tipo: string }[];
   clientes: { id: string; nome: string; chaves_pix?: Array<{ chave: string; tipo: string }> }[];
@@ -17,7 +17,7 @@ async function fetchFinanceAuxData(tipo: "receita" | "despesa"): Promise<Omit<Au
 
   const baseQueries = Promise.all([
     supabase.from("categorias_financeiras").select("id, nome").eq("tipo", tipoCat).order("nome"),
-    supabase.from("projetos").select("id, codigo_projeto").is("deleted_at", null).order("nome"),
+    supabase.from("projetos").select("id, nome").is("deleted_at", null).order("nome"),
     supabase.from("contas").select("id, nome").is("deleted_at", null).order("nome"),
     supabase.from("centros_custo").select("id, nome, codigo").eq("ativo", true).is("deleted_at", null).order("nome"),
   ]);
@@ -29,7 +29,7 @@ async function fetchFinanceAuxData(tipo: "receita" | "despesa"): Promise<Omit<Au
     ]);
     return {
       categorias: (catsRes.data ?? []).map((c) => ({ id: c.id, nome: c.nome })),
-      projetos: (projsRes.data ?? []).map((p) => ({ id: p.id, codigo: p.codigo_projeto ?? "" })),
+      projetos: (projsRes.data ?? []).map((p) => ({ id: p.id, nome: p.nome })),
       contas: (cntsRes.data ?? []).map((c) => ({ id: c.id, nome: c.nome })),
       centrosCusto: (ccsRes.data ?? []).map((c) => ({ id: c.id, nome: c.nome, codigo: c.codigo })),
       clientes: (clisRes.data ?? []).map((c) => ({
@@ -50,7 +50,7 @@ async function fetchFinanceAuxData(tipo: "receita" | "despesa"): Promise<Omit<Au
 
   return {
     categorias: (catsRes.data ?? []).map((c) => ({ id: c.id, nome: c.nome })),
-    projetos: (projsRes.data ?? []).map((p) => ({ id: p.id, codigo: p.codigo_projeto ?? "" })),
+    projetos: (projsRes.data ?? []).map((p) => ({ id: p.id, nome: p.nome })),
     contas: (cntsRes.data ?? []).map((c) => ({ id: c.id, nome: c.nome })),
     centrosCusto: (ccsRes.data ?? []).map((c) => ({ id: c.id, nome: c.nome, codigo: c.codigo })),
     clientes: [],

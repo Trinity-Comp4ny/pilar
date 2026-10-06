@@ -312,7 +312,6 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
             <SelectItem value="todos">Todos os projetos</SelectItem>
             {projetosUnicos.map((p) => (
               <SelectItem key={p.id} value={p.id}>
-                {p.codigo_projeto ? `${p.codigo_projeto} — ` : ""}
                 {p.nome}
               </SelectItem>
             ))}
@@ -486,11 +485,6 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                             <div className="flex-1 min-w-0 pl-7">
                               <div className="flex items-center gap-2">
                                 <span className="font-medium text-sm truncate">{projeto.nome}</span>
-                                {projeto.codigo_projeto && (
-                                  <span className="text-[11px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                                    {projeto.codigo_projeto}
-                                  </span>
-                                )}
                               </div>
                               <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground flex-wrap">
                                 <span className="flex items-center gap-1">
@@ -601,9 +595,6 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                         </td>
                         <td className="py-2.5 px-4">
                           <div className="font-medium text-sm">{projeto.nome}</div>
-                          {projeto.codigo_projeto && (
-                            <div className="text-[11px] text-muted-foreground">{projeto.codigo_projeto}</div>
-                          )}
                         </td>
                         <td className="py-2.5 px-4 text-sm">
                           {(() => {

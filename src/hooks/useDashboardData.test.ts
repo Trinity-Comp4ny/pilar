@@ -98,7 +98,6 @@ describe("useDashboardData (contract)", () => {
   it("returns projetos array and aggregates chart data", () => {
     const projeto: ProjetoWithCliente = {
       id: "p1",
-      codigo_projeto: "PRJ-100",
       nome: "Proj 1",
       status: "Em andamento",
       prioridade: "Alta",
@@ -128,7 +127,7 @@ describe("useDashboardData (contract)", () => {
     expect(data.projetos).toHaveLength(1);
     expect(data.projetos[0]).toMatchObject({
       id: "p1",
-      nome: "PRJ-100",
+      nome: "Proj 1",
       cliente: "Cliente Alpha",
       valorContrato: 25000,
     });

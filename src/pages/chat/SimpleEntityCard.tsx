@@ -240,12 +240,12 @@ export function SimpleEntityCard({ index, draft, entidade, onConfirmar, onCancel
       if (sources.has("projetos")) {
         const { data } = await supabase
           .from("projetos")
-          .select("id, nome, codigo_projeto")
+          .select("id, nome")
           .is("deleted_at", null)
           .order("nome");
-        out.projetos = ((data ?? []) as { id: string; nome: string; codigo_projeto: string | null }[]).map((p) => ({
+        out.projetos = ((data ?? []) as { id: string; nome: string }[]).map((p) => ({
           id: p.id,
-          nome: p.codigo_projeto ? `${p.codigo_projeto} — ${p.nome}` : p.nome,
+          nome: p.nome,
         }));
       }
       return out;

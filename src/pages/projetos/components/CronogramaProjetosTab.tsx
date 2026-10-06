@@ -491,10 +491,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
             {projetosSemDatas.length} projeto{projetosSemDatas.length > 1 ? "s" : ""} sem data de início ou previsão:{" "}
             {projetosSemDatas
               .slice(0, 3)
-              // codigo_projeto é opcional e a maioria dos projetos não o preenche; sem
-              // fallback, o aviso listava vírgulas vazias ("19 projetos ..., , e mais
-              // 16", achado da auditoria) em vez dos nomes.
-              .map((p) => p.codigo_projeto || p.nome)
+              .map((p) => p.nome)
               .join(", ")}
             {projetosSemDatas.length > 3 ? ` e mais ${projetosSemDatas.length - 3}` : ""}
           </span>
@@ -548,16 +545,8 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                           onClick={() => navigate(`/projetos/${row.projeto.id}#cronograma`)}
                           className="flex-1 min-w-0 h-full pr-3 flex flex-col justify-center text-left hover:bg-muted/50 transition-colors"
                         >
-                          {!isMobile && (
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[10px] font-mono text-muted-foreground">
-                                {row.projeto.codigo_projeto}
-                              </span>
-                              {row.atrasado && <AlertTriangle className="h-3 w-3 text-danger-mid shrink-0" />}
-                            </div>
-                          )}
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            {isMobile && row.atrasado && <AlertTriangle className="h-3 w-3 text-danger-mid shrink-0" />}
+                          <div className="flex items-center gap-1.5">
+                            {row.atrasado && <AlertTriangle className="h-3 w-3 text-danger-mid shrink-0" />}
                             <span className="text-xs font-medium truncate">{row.projeto.nome}</span>
                           </div>
                           {!isMobile && (
@@ -767,7 +756,6 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                                       )}
                                     </div>
                                     <div className="text-xs text-muted-foreground space-y-0.5">
-                                      <p>Código: {row.projeto.codigo_projeto}</p>
                                       {row.projeto.cliente_nome && <p>Cliente: {row.projeto.cliente_nome}</p>}
                                       <p>Início: {formatDateBR(geo.start)}</p>
                                       <p>Previsão: {formatDateBR(geo.end)}</p>

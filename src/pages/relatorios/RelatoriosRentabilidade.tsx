@@ -37,7 +37,6 @@ const toPct = (value: number) => `${(Number.isFinite(value) ? value : 0).toFixed
 
 // Colunas por modo, na ordem canônica. O que se vê é o que se exporta.
 const COLS_PROJETO = [
-  "Código",
   "Projeto",
   "Cliente",
   "Status",
@@ -143,7 +142,6 @@ export default function RelatoriosRentabilidade({ modo }: Props) {
       return { headers: COLS_CLIENTE, rows };
     }
     const rows = projetosFiltrados.map((p) => [
-      p.codigo_projeto,
       p.projeto_nome,
       p.cliente_nome,
       p.status,
@@ -422,7 +420,7 @@ function ProjetoTable({
               key={c}
               className={cn(
                 "whitespace-nowrap text-xs sticky top-0 z-10 bg-white",
-                c !== "Código" && c !== "Projeto" && c !== "Cliente" && c !== "Status" && "text-right"
+                c !== "Projeto" && c !== "Cliente" && c !== "Status" && "text-right"
               )}
             >
               {c}
@@ -445,7 +443,6 @@ function ProjetoTable({
               className={cn(onRowClick && "cursor-pointer hover:bg-muted/40")}
               title={onRowClick ? "Ver as linhas que compõem a margem" : undefined}
             >
-              <TableCell className="whitespace-nowrap text-xs">{p.codigo_projeto}</TableCell>
               <TableCell className="whitespace-nowrap text-xs font-medium">{p.projeto_nome}</TableCell>
               <TableCell className="whitespace-nowrap text-xs">{p.cliente_nome}</TableCell>
               <TableCell className="whitespace-nowrap text-xs">{p.status}</TableCell>

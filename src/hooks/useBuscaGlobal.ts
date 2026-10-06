@@ -55,7 +55,7 @@ async function buscar(termo: string): Promise<BuscaGrupo[]> {
     buscarEntidade(async () => {
       const { data, error } = await supabase
         .from("projetos")
-        .select("id,nome,codigo_projeto")
+        .select("id,nome")
         .is("deleted_at", null)
         .ilike("nome", like)
         .limit(LIMITE_POR_TIPO);
@@ -63,7 +63,7 @@ async function buscar(termo: string): Promise<BuscaGrupo[]> {
       return (data ?? []).map((r) => ({
         tipo: "projeto" as const,
         id: r.id,
-        label: r.codigo_projeto ? `${r.codigo_projeto} ${r.nome}` : r.nome,
+        label: r.nome,
         rota: `/projetos/${r.id}`,
         icon: Calendar,
       }));

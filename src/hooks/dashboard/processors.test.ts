@@ -129,7 +129,6 @@ describe("buildKPIs", () => {
 describe("buildProjetos", () => {
   const projeto: ProjetoWithCliente = {
     id: "p1",
-    codigo_projeto: "PRJ-001",
     nome: "Projeto X",
     status: "Em andamento",
     prioridade: "Alta",
@@ -146,7 +145,7 @@ describe("buildProjetos", () => {
     const now = new Date("2026-07-01");
     const [r] = buildProjetos([projeto], now);
     expect(r.id).toBe("p1");
-    expect(r.nome).toBe("PRJ-001");
+    expect(r.nome).toBe("Projeto X");
     expect(r.cliente).toBe("Cliente A");
     expect(r.valorContrato).toBe(50000);
     expect(r.progressoPrazo).toBeGreaterThan(40);
@@ -162,7 +161,7 @@ describe("buildProjetos", () => {
   });
 
   it("usa fallback quando faltam dados", () => {
-    const sem = { ...projeto, codigo_projeto: null, nome: "", clientes: null, valor_contrato: null };
+    const sem = { ...projeto, nome: "", clientes: null, valor_contrato: null };
     const [r] = buildProjetos([sem], new Date("2026-07-01"));
     expect(r.nome).toBe("Sem nome");
     expect(r.cliente).toBe("—");
@@ -208,7 +207,7 @@ describe("buildVencimentos", () => {
     data_vencimento: "2026-05-10",
     status: "Pendente",
     projeto_id: null,
-    projetos: { codigo_projeto: "PRJ-001" },
+    projetos: { nome: "Projeto X" },
     cliente_id: null,
     clientes: { nome: "Cliente A" },
   };
@@ -232,7 +231,7 @@ describe("buildVencimentos", () => {
     expect(v[1].id).toBe("r1"); // 9 dias
     expect(v[0].diasRestantes).toBe(4);
     expect(v[0].entidade).toBe("Fornecedor B");
-    expect(v[1].projeto).toBe("PRJ-001");
+    expect(v[1].projeto).toBe("Projeto X");
   });
 
   it("limita a 8 itens", () => {

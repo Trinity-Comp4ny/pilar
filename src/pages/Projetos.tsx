@@ -172,7 +172,7 @@ export default function ProjetosKanban() {
   const matchesFilters = (projeto: Projeto): boolean => {
     if (filters.search) {
       const q = filters.search.trim().toLowerCase();
-      const haystack = `${projeto.codigo_projeto} ${projeto.nome} ${projeto.cliente_nome || ""}`.toLowerCase();
+      const haystack = `${projeto.nome} ${projeto.cliente_nome || ""}`.toLowerCase();
       if (!haystack.includes(q)) return false;
     }
     if (filters.prioridades.length > 0 && !filters.prioridades.includes(projeto.prioridade as ProjectPriority)) {
