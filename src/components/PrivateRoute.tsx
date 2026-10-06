@@ -1,5 +1,5 @@
 import { Navigate, useLocation, Outlet, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,10 +7,13 @@ import { isUltraAdmin } from "@/lib/roles";
 import { mfaDevBypass } from "@/lib/mfaDevBypass";
 import { monitoring } from "@/lib/monitoring";
 import Layout from "./Layout";
-import { AccountRecoveryScreen } from "./AccountRecoveryScreen";
 import { ReadOnlyBanner } from "./ReadOnlyBanner";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+const AccountRecoveryScreen = lazy(() =>
+  import("./AccountRecoveryScreen").then(({ AccountRecoveryScreen }) => ({ default: AccountRecoveryScreen }))
+);
 
 export const ULTRA_PLATFORM_MODE_KEY = "ultra_admin_platform_mode";
 
@@ -112,7 +115,13 @@ export function PrivateRoute() {
 
   if (location.pathname === "/mfa") return <Outlet />;
 
-  if (!profile) return <AccountRecoveryScreen />;
+  if (!profile) {
+    return (
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando...</div>}>
+        <AccountRecoveryScreen />
+      </Suspense>
+    );
+  }
 
   if (profile) {
     const isCompanySetup = location.pathname === "/company-setup";

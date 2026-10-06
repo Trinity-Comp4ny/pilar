@@ -255,7 +255,7 @@ describe("PrivateRoute", () => {
     async (route) => {
       mockUseAuth.mockReturnValue({ ...baseAuth, isAuthenticated: true, profile: null, loading: false });
       await renderPrivateRoute(route);
-      expect(screen.getByTestId("recovery")).toBeInTheDocument();
+      expect(await screen.findByTestId("recovery")).toBeInTheDocument();
       expect(screen.queryByTestId("layout")).not.toBeInTheDocument();
     }
   );
@@ -275,6 +275,7 @@ describe("PrivateRoute", () => {
   it("não consulta assinatura enquanto a conta não tem profile", async () => {
     mockUseAuth.mockReturnValue({ ...baseAuth, isAuthenticated: true, profile: null, loading: false });
     await renderPrivateRoute();
+    await screen.findByTestId("recovery");
     const { supabase } = await import("@/integrations/supabase/client");
     expect(supabase.from).not.toHaveBeenCalled();
   });
