@@ -65,7 +65,7 @@ export function AgentDemo() {
   const surge = (n: number) => (p >= n ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 });
 
   return (
-    <div ref={ref} className="rounded-2xl border border-white/12 bg-white/[0.04] overflow-hidden">
+    <div ref={ref} className="rounded-2xl border border-white/12 bg-white/4 overflow-hidden">
       <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
         <Sparkles className="w-3.5 h-3.5 text-brand" strokeWidth={1.9} />
         <span className="text-[11px] font-medium text-white">Agentes</span>
@@ -89,7 +89,7 @@ export function AgentDemo() {
           {pedido || PEDIDO}
           {digitando && (
             <m.span
-              className="ml-[1px] inline-block h-[13px] w-[1.5px] align-middle bg-white"
+              className="ml-px inline-block h-[13px] w-[1.5px] align-middle bg-white"
               animate={{ opacity: [1, 0, 1] }}
               transition={{ duration: 0.9, repeat: Infinity }}
             />
@@ -116,7 +116,7 @@ export function AgentDemo() {
             Achei o projeto e montei o lançamento. Confere antes de eu gravar:
           </p>
 
-          <div className="rounded-xl border border-white/12 bg-white/[0.05] p-3.5">
+          <div className="rounded-xl border border-white/12 bg-white/5 p-3.5">
             <p className="mb-2.5 text-[8.5px] uppercase tracking-[0.11em] text-brand">Receita · aguardando aprovação</p>
 
             {CAMPOS.map(([k, v], i) => (
@@ -162,7 +162,7 @@ export function AgentDemo() {
             { r: "Recebido no mês", v: "R$ 412.900" },
             { r: "Margem do projeto", v: "31,4%" },
           ].map((k) => (
-            <div key={k.r} className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5">
+            <div key={k.r} className="rounded-xl border border-white/10 bg-white/4 px-3 py-2.5">
               <p className="mb-1 text-[8.5px] uppercase tracking-wider text-white/65">{k.r}</p>
               <p className="text-[14px] font-semibold tabular-nums text-brand">{k.v}</p>
             </div>

@@ -30,7 +30,7 @@ export function CollapsibleKpiSection({
   const [open, setOpen] = usePersistedOpen(`kpis-${storageKey}`);
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen} className="flex-shrink-0 mb-2">
+    <Collapsible open={open} onOpenChange={setOpen} className="shrink-0 mb-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <CollapsibleTrigger className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">
           <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", !open && "-rotate-90")} />

@@ -52,7 +52,7 @@ export function SecondSidebar({ tabs, value, onValueChange, className }: Props) 
       {/* Mobile: horizontal pill bar */}
       <nav
         aria-label="Seções"
-        className="md:hidden flex w-full overflow-x-auto gap-1.5 px-3 py-2 border-b border-black/5 bg-white flex-shrink-0"
+        className="md:hidden flex w-full overflow-x-auto gap-1.5 px-3 py-2 border-b border-black/5 bg-white shrink-0"
       >
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -61,7 +61,7 @@ export function SecondSidebar({ tabs, value, onValueChange, className }: Props) 
             return (
               <span
                 key={tab.id}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap opacity-40 flex-shrink-0"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap opacity-40 shrink-0"
               >
                 {Icon && <Icon size={14} strokeWidth={1.5} />}
                 <span>{tab.label}</span>
@@ -76,7 +76,7 @@ export function SecondSidebar({ tabs, value, onValueChange, className }: Props) 
               aria-current={isActive ? "page" : undefined}
               data-tour={tab.dataTour}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-colors flex-shrink-0",
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-colors shrink-0",
                 isActive ? "bg-brand text-black/80 font-medium" : "text-black/60 hover:bg-brand/20"
               )}
             >
@@ -93,14 +93,14 @@ export function SecondSidebar({ tabs, value, onValueChange, className }: Props) 
       {/* Desktop: vertical sidebar */}
       <div
         className={cn(
-          "hidden md:flex h-full border-r border-black/5 bg-white flex-col flex-shrink-0 transition-[width] duration-300 ease-in-out",
+          "hidden md:flex h-full border-r border-black/5 bg-white flex-col shrink-0 transition-[width] duration-300 ease-in-out",
           collapsed ? "w-16" : "w-60",
           className
         )}
       >
         <div
           className={cn(
-            "flex h-16 border-b border-black/5 flex-shrink-0 items-center",
+            "flex h-16 border-b border-black/5 shrink-0 items-center",
             collapsed ? "justify-center" : "justify-between px-4"
           )}
         >
@@ -129,7 +129,7 @@ export function SecondSidebar({ tabs, value, onValueChange, className }: Props) 
                     collapsed && "justify-center"
                   )}
                 >
-                  {Icon && <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] flex-shrink-0" />}
+                  {Icon && <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] shrink-0" />}
                   {!collapsed && (
                     <>
                       <span className="tracking-tight truncate flex-1">{tab.label}</span>
@@ -156,7 +156,7 @@ export function SecondSidebar({ tabs, value, onValueChange, className }: Props) 
                   isActive ? "bg-brand text-black/80 font-medium" : "text-black/70 hover:bg-brand/30"
                 )}
               >
-                {Icon && <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] flex-shrink-0" />}
+                {Icon && <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] shrink-0" />}
                 {!collapsed && (
                   <>
                     <span className="tracking-tight flex-1">{tab.label}</span>

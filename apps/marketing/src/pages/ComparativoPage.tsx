@@ -71,7 +71,7 @@ export function ComparativoPage({ slug }: { slug: ComparativoSlug }) {
 
           <Reveal variant="up" delay={0.08}>
             <div className="overflow-hidden rounded-[22px] border border-paper-border/80">
-              <div className="grid grid-cols-[1.3fr_1fr_1fr] bg-paper-alt text-[11px] font-medium uppercase tracking-[0.1em] text-ink-muted">
+              <div className="grid grid-cols-[1.3fr_1fr_1fr] bg-paper-alt text-[11px] font-medium uppercase tracking-widest text-ink-muted">
                 <div className="px-4 py-3 md:px-6">Critério</div>
                 <div className="px-4 py-3 md:px-6">{c.adversario}</div>
                 <div className="bg-card-brand-soft px-4 py-3 text-ink md:px-6">Pilar</div>

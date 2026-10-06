@@ -213,7 +213,7 @@ export function ContaPanel() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-4 min-w-0">
-          <div className="group relative flex-shrink-0">
+          <div className="group relative shrink-0">
             <AvatarStack
               pessoas={[
                 {
@@ -272,11 +272,11 @@ export function ContaPanel() {
           </div>
         </div>
         {!editing ? (
-          <Button onClick={() => setEditing(true)} variant="brand" className="rounded-full flex-shrink-0">
+          <Button onClick={() => setEditing(true)} variant="brand" className="rounded-full shrink-0">
             Editar
           </Button>
         ) : (
-          <div className="flex gap-2 flex-shrink-0">
+          <div className="flex gap-2 shrink-0">
             <Button variant="outline" onClick={() => setEditing(false)} className="rounded-full">
               Cancelar
             </Button>

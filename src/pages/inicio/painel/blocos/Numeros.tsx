@@ -30,13 +30,19 @@ function Numero({ valor, rotulo, chip, destaque, onClick }: NumeroProps) {
       className={cn(
         "flex flex-col gap-0.5 rounded-xl border border-black/5 p-3 text-left",
         destaque === "atencao" ? "border-l-[3px] border-l-negative" : null,
-        onClick && "transition-colors hover:bg-black/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        onClick &&
+          "transition-colors hover:bg-black/2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
       )}
     >
       <span className="flex items-baseline gap-2">
         <span className="text-2xl font-bold leading-none tabular-nums text-ink">{valor}</span>
         {chip && (
-          <span className={cn("rounded-md px-1.5 py-0.5 text-[10px] font-medium", statusBadgeClasses(chip.dominio, chip.status))}>
+          <span
+            className={cn(
+              "rounded-md px-1.5 py-0.5 text-[10px] font-medium",
+              statusBadgeClasses(chip.dominio, chip.status)
+            )}
+          >
             {chip.texto}
           </span>
         )}
@@ -126,7 +132,9 @@ export function ListaStatusProjetos({ data }: { data: PainelGestao }) {
     <div className="flex flex-col">
       {itens.map((s) => (
         <div key={s.status} className="flex items-center gap-2.5 border-b border-border py-2 last:border-b-0">
-          <span className={cn("rounded-md px-2 py-0.5 text-[11px] font-medium", statusBadgeClasses("projeto", s.status))}>
+          <span
+            className={cn("rounded-md px-2 py-0.5 text-[11px] font-medium", statusBadgeClasses("projeto", s.status))}
+          >
             {statusLabel("projeto", s.status)}
           </span>
           <span className="ml-auto text-sm font-semibold tabular-nums">{s.n}</span>
@@ -138,8 +146,6 @@ export function ListaStatusProjetos({ data }: { data: PainelGestao }) {
 
 export function Vazio({ children }: { children: React.ReactNode }) {
   return (
-    <p className="flex flex-1 items-center rounded-xl bg-black/[0.02] px-3 py-5 text-xs text-muted-foreground">
-      {children}
-    </p>
+    <p className="flex flex-1 items-center rounded-xl bg-black/2 px-3 py-5 text-xs text-muted-foreground">{children}</p>
   );
 }

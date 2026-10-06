@@ -42,7 +42,7 @@ export function ModuleChipNav() {
   return (
     <div
       ref={containerRef}
-      className="flex gap-1.5 overflow-x-auto px-4 pb-2 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:hidden"
+      className="flex gap-1.5 overflow-x-auto px-4 pb-2 pt-1 scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:hidden"
     >
       {moduleGroups.map((group, i) => (
         <ModuleChipGroup

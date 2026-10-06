@@ -383,7 +383,7 @@ export function CronogramaTab({
             className="flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-amber-100/60 transition-colors"
             onClick={() => setDiscsSemDatasExpanded((v) => !v)}
           >
-            <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
             <span className="flex-1">
               {discsSemDatas.length} disciplina{discsSemDatas.length > 1 ? "s" : ""} sem datas definidas — não exibidas
               no gráfico
@@ -410,7 +410,7 @@ export function CronogramaTab({
                 fixa de 220px sozinha consumia mais da metade de uma tela de 390px,
                 sobrando só uma faixa estreita pra timeline). Some o responsável,
                 mantém só o nome truncado. */}
-            <div className={cn("flex-shrink-0 border-r bg-muted/30", isMobile ? "w-[104px]" : "w-[220px]")}>
+            <div className={cn("shrink-0 border-r bg-muted/30", isMobile ? "w-[104px]" : "w-[220px]")}>
               <div className="h-10 border-b px-3 flex items-center">
                 <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Disciplina
@@ -423,7 +423,7 @@ export function CronogramaTab({
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-medium truncate">{row.disc.disciplina}</span>
-                    {row.atrasada && <AlertTriangle className="h-3 w-3 text-danger-mid flex-shrink-0" />}
+                    {row.atrasada && <AlertTriangle className="h-3 w-3 text-danger-mid shrink-0" />}
                   </div>
                   {!isMobile && (
                     <div className="flex items-center gap-1 mt-0.5">

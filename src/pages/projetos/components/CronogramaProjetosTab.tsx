@@ -64,7 +64,7 @@ function MultiSelect({ options, selected, onChange, placeholder, searchPlacehold
           )}
         >
           <span className="truncate">{label}</span>
-          <ChevronDown className="h-3 w-3 ml-1 flex-shrink-0 opacity-50" />
+          <ChevronDown className="h-3 w-3 ml-1 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0" align="start">
@@ -103,7 +103,7 @@ const STATUS_BAR_COLORS: Record<string, string> = {
   [PROJECT_STATUS.EM_ANDAMENTO]: "bg-status-progress",
   [PROJECT_STATUS.REVISAO]: "bg-status-review",
   [PROJECT_STATUS.PARALISADO]: "bg-brand",
-  [PROJECT_STATUS.CONCLUIDO]: "bg-positive/100",
+  [PROJECT_STATUS.CONCLUIDO]: "bg-positive",
   [PROJECT_STATUS.CANCELADO]: "bg-status-cancelled",
 };
 
@@ -141,7 +141,7 @@ function DisciplinaLeftRows({ projetoId }: { projetoId: string }) {
     <>
       {disciplinas.map((d) => (
         <div key={d.id} className="h-10 border-b pl-8 pr-3 flex items-center gap-1.5">
-          <span className={cn("inline-block h-1.5 w-1.5 rounded-full flex-shrink-0", discBarClass(d))} aria-hidden />
+          <span className={cn("inline-block h-1.5 w-1.5 rounded-full shrink-0", discBarClass(d))} aria-hidden />
           <span className="text-[11px] truncate">
             {d.codigo && <span className="font-mono text-muted-foreground mr-1">{d.codigo}</span>}
             {d.nome}
@@ -486,7 +486,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
 
       {projetosSemDatas.length > 0 && (
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-warning-soft border border-warning-mid-border text-warning-strong text-xs">
-          <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
           <span>
             {projetosSemDatas.length} projeto{projetosSemDatas.length > 1 ? "s" : ""} sem data de início ou previsão:{" "}
             {projetosSemDatas
@@ -519,7 +519,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                   fixa de 260px sozinha consumia 66% de uma tela de 390px, sobrando
                   só uma faixa estreita pra timeline). Some código e status/cliente,
                   mantém só o nome truncado. */}
-              <div className={cn("flex-shrink-0 border-r bg-muted/30", isMobile ? "w-[104px]" : "w-[260px]")}>
+              <div className={cn("shrink-0 border-r bg-muted/30", isMobile ? "w-[104px]" : "w-[260px]")}>
                 <div className="h-10 border-b px-3 flex items-center">
                   <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                     Projeto
@@ -534,7 +534,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                         <button
                           type="button"
                           onClick={() => toggleExpandDisciplinas(row.projeto.id)}
-                          className="flex-shrink-0 w-6 flex items-center justify-center hover:bg-muted/50 transition-colors"
+                          className="shrink-0 w-6 flex items-center justify-center hover:bg-muted/50 transition-colors"
                           aria-label={isExpanded ? "Recolher disciplinas" : "Expandir disciplinas"}
                         >
                           <ChevronRight
@@ -553,19 +553,17 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                               <span className="text-[10px] font-mono text-muted-foreground">
                                 {row.projeto.codigo_projeto}
                               </span>
-                              {row.atrasado && <AlertTriangle className="h-3 w-3 text-danger-mid flex-shrink-0" />}
+                              {row.atrasado && <AlertTriangle className="h-3 w-3 text-danger-mid shrink-0" />}
                             </div>
                           )}
                           <div className="flex items-center gap-1.5 mt-0.5">
-                            {isMobile && row.atrasado && (
-                              <AlertTriangle className="h-3 w-3 text-danger-mid flex-shrink-0" />
-                            )}
+                            {isMobile && row.atrasado && <AlertTriangle className="h-3 w-3 text-danger-mid shrink-0" />}
                             <span className="text-xs font-medium truncate">{row.projeto.nome}</span>
                           </div>
                           {!isMobile && (
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <span
-                                className={cn("inline-block h-1.5 w-1.5 rounded-full flex-shrink-0", row.barClass)}
+                                className={cn("inline-block h-1.5 w-1.5 rounded-full shrink-0", row.barClass)}
                                 aria-hidden
                               />
                               <span className="text-[10px] text-muted-foreground truncate">

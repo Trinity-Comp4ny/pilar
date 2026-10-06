@@ -37,7 +37,7 @@ interface FormDialogProps {
   isPending?: boolean;
   /** Desabilita só o submit (validação client) sem estado de loading. */
   submitDisabled?: boolean;
-  /** Dialog aberto de dentro de outro dialog (ex.: SettingsDialog, z-60): "z-[70]" nos dois. */
+  /** Dialog aberto de dentro de outro dialog (ex.: SettingsDialog, z-60): "z-70" nos dois. */
   zClassName?: string;
   children: React.ReactNode;
 }

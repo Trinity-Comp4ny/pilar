@@ -31,7 +31,7 @@ function Palavras({ texto, atraso = 0, className }: { texto: string; atraso?: nu
   return (
     <>
       {palavras.map((palavra, i) => (
-        <span key={`${palavra}-${i}`} className="inline-block overflow-hidden align-bottom pb-[0.1em] -mb-[0.1em]">
+        <span key={`${palavra}-${i}`} className="inline-block overflow-hidden align-bottom pb-[0.1em] mb-[-0.1em]">
           <m.span
             className={`inline-block ${className ?? ""}`}
             initial={reducedMotion ? false : { y: "110%" }}
@@ -94,10 +94,7 @@ export function HeroSection() {
             transition={{ duration: 0.7, ease: EASE.out, delay: 0.65 }}
             className="flex flex-col items-center gap-3"
           >
-            <SplitButton
-              href={`${APP_URL}/cadastro`}
-              onClick={() => trackCta("testar_gratis", "hero")}
-            >
+            <SplitButton href={`${APP_URL}/cadastro`} onClick={() => trackCta("testar_gratis", "hero")}>
               Testar grátis por 14 dias
             </SplitButton>
             <p className="text-[12.5px] text-ink-muted">Sem cartão · Cancele quando quiser</p>

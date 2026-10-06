@@ -488,7 +488,7 @@ export default function CampoRegistrarDia() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-background">
+    <div className="min-h-dvh bg-background">
       <header className="flex items-center gap-2 border-b border-black/5 px-4 py-3">
         <Button variant="ghost" size="icon" onClick={() => navigate("/campo")} aria-label="Voltar">
           <ArrowLeft className="h-5 w-5" />
@@ -774,7 +774,7 @@ export default function CampoRegistrarDia() {
                 value={m.item}
                 onChange={(e) => setMedicaoCampo(i, "item", e.target.value)}
                 placeholder="Item"
-                className="h-10 flex-[2] text-sm"
+                className="h-10 flex-2 text-sm"
               />
               <Input
                 type="text"

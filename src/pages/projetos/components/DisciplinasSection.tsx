@@ -158,7 +158,7 @@ export function DisciplinasSection({
       {/* Applied fluxo indicator — when disciplines were applied from a fluxo */}
       {hasEtapas && (
         <div className="mb-3 flex items-center gap-2 p-2 bg-info-soft rounded-lg border border-info-mid-border">
-          <GitBranch className="h-3.5 w-3.5 text-info-mid flex-shrink-0" />
+          <GitBranch className="h-3.5 w-3.5 text-info-mid shrink-0" />
           <span className="text-xs text-info-strong flex-1">
             {selectedFluxoId
               ? `Fluxo aplicado: ${fluxosData.find((f) => f.id === selectedFluxoId)?.nome}`
@@ -193,7 +193,7 @@ export function DisciplinasSection({
               {hasEtapas && (
                 <div className="flex items-center gap-2 pt-2">
                   {group.etapa != null && (
-                    <span className="flex items-center justify-center h-5 w-5 rounded-full bg-info-soft text-info-strong text-[10px] font-bold flex-shrink-0">
+                    <span className="flex items-center justify-center h-5 w-5 rounded-full bg-info-soft text-info-strong text-[10px] font-bold shrink-0">
                       {group.etapa}
                     </span>
                   )}
@@ -266,7 +266,7 @@ export function DisciplinasSection({
 
                     {/* Responsável + status row */}
                     <div className="flex items-center gap-2 px-3 pb-2 text-xs text-muted-foreground">
-                      <User className="h-3 w-3 flex-shrink-0" />
+                      <User className="h-3 w-3 shrink-0" />
                       <span>{resps.map((r) => r.responsavel_nome).join(", ")}</span>
                       <span
                         className={`ml-auto text-[10px] font-medium ${
@@ -333,7 +333,7 @@ export function DisciplinasSection({
                                   </Label>
                                   {semPrazo ? (
                                     <div className="h-9 flex items-center gap-1.5 px-2 rounded-md border border-dashed bg-muted text-[11px] text-muted-foreground">
-                                      <Info className="h-3 w-3 flex-shrink-0" />
+                                      <Info className="h-3 w-3 shrink-0" />
                                       sem prazo definido
                                     </div>
                                   ) : (

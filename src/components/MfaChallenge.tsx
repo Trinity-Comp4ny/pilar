@@ -241,7 +241,7 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
                   <InputOTPSlot
                     key={i}
                     index={i}
-                    className="!h-14 !w-11 !text-xl !font-semibold !rounded-xl !border !border-paper-border bg-paper-alt text-ink transition-all"
+                    className="h-14! w-11! text-xl! font-semibold! rounded-xl! border! border-paper-border! bg-paper-alt text-ink transition-all"
                   />
                 ))}
               </InputOTPGroup>

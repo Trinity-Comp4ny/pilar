@@ -19,7 +19,7 @@ const MESES = [
 ];
 
 const arrowClass =
-  "inline-flex h-7 w-7 items-center justify-center rounded-lg text-black/60 hover:bg-black/[0.04] hover:text-ink disabled:opacity-30 disabled:pointer-events-none transition-colors";
+  "inline-flex h-7 w-7 items-center justify-center rounded-lg text-black/60 hover:bg-black/4 hover:text-ink disabled:opacity-30 disabled:pointer-events-none transition-colors";
 
 /**
  * Cabeçalho custom do calendário (spec 024): mês e ano como Select do design

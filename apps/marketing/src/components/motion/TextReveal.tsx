@@ -52,7 +52,7 @@ export function TextReveal({
         const noDestaque = destacadas?.has(palavra) && i >= primeiraDestacada;
         return (
           <Fragment key={`${palavra}-${i}`}>
-            <span className="inline-block overflow-hidden align-bottom pb-[0.12em] -mb-[0.12em]">
+            <span className="inline-block overflow-hidden align-bottom pb-[0.12em] mb-[-0.12em]">
               <m.span
                 className={`inline-block ${noDestaque ? highlightClassName : ""}`}
                 variants={{
@@ -73,7 +73,15 @@ export function TextReveal({
 }
 
 /** Versão que aceita JSX arbitrário e revela o bloco inteiro atrás de uma máscara. */
-export function MaskReveal({ children, className, delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
+export function MaskReveal({
+  children,
+  className,
+  delay = 0,
+}: {
+  children: ReactNode;
+  className?: string;
+  delay?: number;
+}) {
   const reducedMotion = useReducedMotion();
 
   return (

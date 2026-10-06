@@ -9,7 +9,7 @@ export type ZoomLevel = "months" | "weeks";
 
 /** Cor por status de disciplina, usada pelo cronograma do projeto e pelo cronograma agregado. */
 export const DISCIPLINA_STATUS_COLORS: Record<string, { bar: string; text: string; bg: string }> = {
-  Concluído: { bar: "bg-positive/100", text: "text-positive-strong", bg: "bg-positive/10" },
+  Concluído: { bar: "bg-positive", text: "text-positive-strong", bg: "bg-positive/10" },
   "Em Andamento": { bar: "bg-status-progress", text: "text-info-strong", bg: "bg-info-soft" },
   Pendente: { bar: "bg-status-planning", text: "text-warning-mid", bg: "bg-warning-soft" },
   "Não Iniciado": { bar: "bg-status-unknown", text: "text-ink-muted", bg: "bg-muted" },

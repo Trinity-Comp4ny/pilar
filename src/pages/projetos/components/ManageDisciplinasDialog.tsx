@@ -87,12 +87,7 @@ export function ManageDisciplinasDialog({
                   className="pl-9 h-9"
                 />
               </div>
-              <Button
-                size="sm"
-                variant="brand"
-                className="h-9 px-3 gap-1.5 flex-shrink-0"
-                onClick={() => setAddOpen(true)}
-              >
+              <Button size="sm" variant="brand" className="h-9 px-3 gap-1.5 shrink-0" onClick={() => setAddOpen(true)}>
                 <Plus className="h-4 w-4" />
                 Adicionar
               </Button>

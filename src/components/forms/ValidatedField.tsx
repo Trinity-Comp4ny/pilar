@@ -76,9 +76,7 @@ export function ValidatedField({
     }
   };
 
-  const describedBy = [displayError ? `${id}-error` : null, hint ? `${id}-hint` : null]
-    .filter(Boolean)
-    .join(" ");
+  const describedBy = [displayError ? `${id}-error` : null, hint ? `${id}-hint` : null].filter(Boolean).join(" ");
 
   return (
     <div className="space-y-1.5">
@@ -102,7 +100,7 @@ export function ValidatedField({
           className={cn(
             isValid && "pr-9",
             displayError && "border-destructive focus-visible:ring-destructive/40",
-            isValid && "border-positive focus-visible:ring-positive/40",
+            isValid && "border-positive focus-visible:ring-positive/40"
           )}
         />
         {isValid && (
@@ -119,7 +117,7 @@ export function ValidatedField({
       )}
       {hint && !displayError && (
         <p id={`${id}-hint`} className="flex items-center gap-1 text-xs text-warning-mid">
-          <AlertCircle className="h-3 w-3 flex-shrink-0" aria-hidden />
+          <AlertCircle className="h-3 w-3 shrink-0" aria-hidden />
           {hint}
         </p>
       )}

@@ -24,7 +24,7 @@ export function ListaPrazos({ data }: { data: PainelGestao }) {
             key={p.disciplinaId}
             type="button"
             onClick={() => navigate(`/projetos/${p.projetoId}`)}
-            className="grid grid-cols-[1fr_auto] items-center gap-2.5 border-b border-border py-2 text-left last:border-b-0 hover:bg-black/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset"
+            className="grid grid-cols-[1fr_auto] items-center gap-2.5 border-b border-border py-2 text-left last:border-b-0 hover:bg-black/2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset"
           >
             <span className="min-w-0 text-[12.5px] text-ink-soft">
               <span className="block truncate">
@@ -58,7 +58,7 @@ export function ListaAprovacoes({ data }: { data: PainelGestao }) {
           key={a.escopoId}
           type="button"
           onClick={() => navigate(`/projetos/${a.projetoId}`)}
-          className="grid grid-cols-[1fr_auto] items-center gap-2.5 border-b border-border py-2 text-left last:border-b-0 hover:bg-black/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset"
+          className="grid grid-cols-[1fr_auto] items-center gap-2.5 border-b border-border py-2 text-left last:border-b-0 hover:bg-black/2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset"
         >
           <span className="min-w-0 truncate text-[12.5px] text-ink-soft">
             {a.tipo === "aditivo" ? "Aditivo" : "Escopo"} · {a.projeto}
@@ -88,7 +88,7 @@ export function ListaRdo({ data }: { data: PainelGestao }) {
           key={o.obraId}
           type="button"
           onClick={() => navigate(`/obras/${o.obraId}`)}
-          className="grid grid-cols-[1fr_auto] items-center gap-2.5 border-b border-border py-2 text-left last:border-b-0 hover:bg-black/[0.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset"
+          className="grid grid-cols-[1fr_auto] items-center gap-2.5 border-b border-border py-2 text-left last:border-b-0 hover:bg-black/2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset"
         >
           <span className="min-w-0 text-[12.5px] text-ink-soft">
             <span className="block truncate">{o.obra}</span>

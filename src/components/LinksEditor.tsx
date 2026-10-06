@@ -39,7 +39,7 @@ export function LinksEditor({ value, onChange, readOnly }: LinksEditorProps) {
         <ul className="space-y-1">
           {value.map((link, i) => (
             <li key={`${link.url}-${i}`} className="flex items-center gap-2 text-sm">
-              <Link2 className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+              <Link2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
               <a
                 href={link.url}
                 target="_blank"
@@ -47,7 +47,7 @@ export function LinksEditor({ value, onChange, readOnly }: LinksEditorProps) {
                 className="truncate text-foreground hover:underline inline-flex items-center gap-1"
               >
                 {link.rotulo || link.url}
-                <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
+                <ExternalLink className="h-3 w-3 shrink-0 opacity-60" />
               </a>
               {!readOnly && (
                 <button

@@ -293,7 +293,7 @@ export default function PasswordReset() {
                       <InputOTPSlot
                         key={i}
                         index={i}
-                        className="!h-14 !w-11 !text-xl !font-semibold !rounded-xl !border !border-paper-border bg-paper-alt text-ink transition-all"
+                        className="h-14! w-11! text-xl! font-semibold! rounded-xl! border! border-paper-border! bg-paper-alt text-ink transition-all"
                       />
                     ))}
                   </InputOTPGroup>
@@ -371,7 +371,7 @@ export default function PasswordReset() {
                         {requirements.map(({ label, ok }) => (
                           <li key={label} className="flex items-center gap-2">
                             <Check
-                              className={`w-3.5 h-3.5 flex-shrink-0 transition-all duration-200 ${ok ? "text-positive-strong" : "text-ink/20"}`}
+                              className={`w-3.5 h-3.5 shrink-0 transition-all duration-200 ${ok ? "text-positive-strong" : "text-ink/20"}`}
                               strokeWidth={2.5}
                             />
                             <span
@@ -447,7 +447,7 @@ export default function PasswordReset() {
             style={{ animationDuration: "20s" }}
           />
           <div className="absolute inset-0 bg-black/20" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-black/10" />
         </div>
 
         <div className="relative z-10 flex flex-col justify-between h-full w-full p-16 text-white">

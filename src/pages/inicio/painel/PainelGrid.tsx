@@ -8,15 +8,7 @@ import { LIMITE_FIXOS, LIMITE_WIDGETS, type ItemLayout, type Tamanho } from "@/h
 import type { PainelGestao } from "@/hooks/usePainelGestao";
 import { sobraDaLinha } from "./grade";
 import { SeletorWidget } from "./SeletorWidget";
-import {
-  COLUNAS,
-  LARGURA,
-  PODE_FIXAR,
-  POR_ID,
-  ROTULO_TAMANHO,
-  SECOES,
-  type Secao,
-} from "./catalogo";
+import { COLUNAS, LARGURA, PODE_FIXAR, POR_ID, ROTULO_TAMANHO, SECOES, type Secao } from "./catalogo";
 
 /**
  * Grade do painel e o modo de personalizar (ADR 0038).
@@ -222,7 +214,11 @@ export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalva
     setSeletorAberto(true);
   };
 
-  const controles = (item: ItemLayout, w: NonNullable<ReturnType<typeof POR_ID.get>>, drag: { dragHandleProps: unknown }) => (
+  const controles = (
+    item: ItemLayout,
+    w: NonNullable<ReturnType<typeof POR_ID.get>>,
+    drag: { dragHandleProps: unknown }
+  ) => (
     <>
       {PODE_FIXAR.has(w.id) && (
         <button
@@ -429,7 +425,7 @@ export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalva
                             <button
                               type="button"
                               onClick={() => abrirSeletor(grupo.key)}
-                              className="flex h-full min-h-[132px] w-full flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-info-mid/40 bg-info-soft/60 text-sm text-info-strong transition-colors hover:bg-info-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                              className="flex h-full min-h-[132px] w-full flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-info-mid/40 bg-info-soft/60 text-sm text-info-strong transition-colors hover:bg-info-soft focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
                             >
                               <Plus size={18} />
                               Adicionar widget
@@ -442,7 +438,6 @@ export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalva
                 </section>
               );
             })}
-
           </div>
         </DragDropContext>
       )}

@@ -40,7 +40,7 @@ function BottomNavLabel({ active, children }: { active: boolean; children: React
 }
 
 const ITEM_CLASS =
-  "flex flex-1 flex-col items-center justify-center gap-1 py-1.5 outline-none transition-transform duration-150 active:scale-90 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2";
+  "flex flex-1 flex-col items-center justify-center gap-1 py-1.5 outline-hidden transition-transform duration-150 active:scale-90 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2";
 
 /**
  * Navegação mobile (< 768px, spec 097 / ADR 0040): substitui o drawer da
