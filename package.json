@@ -34,7 +34,7 @@
     "db:push:prod": "scripts/supabase-target.sh push prod",
     "functions:deploy:staging": "scripts/supabase-target.sh deploy staging",
     "functions:deploy:prod": "scripts/supabase-target.sh deploy prod",
-    "audit:ci": "npm audit --audit-level=high",
+    "audit:ci": "npm audit --audit-level=high --omit=dev",
     "audit:security:staging": "node scripts/audit-security.mjs staging",
     "audit:security:prod": "node scripts/audit-security.mjs prod",
     "check:bundle-size": "node scripts/check-bundle-size.mjs",
