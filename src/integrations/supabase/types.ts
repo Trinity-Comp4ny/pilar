@@ -7918,6 +7918,7 @@ export type Database = {
       _soft_delete_feature: { Args: { p_tabela: string }; Returns: string }
       _soft_delete_guard: { Args: { p_tabela: string }; Returns: string }
       _universal_features: { Args: never; Returns: string[] }
+      aceitar_convite_pendente: { Args: never; Returns: string }
       admin_create_company_owner: {
         Args: { p_company_name?: string; p_email: string; p_nome: string }
         Returns: Json

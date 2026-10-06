@@ -7,6 +7,7 @@ import { isUltraAdmin } from "@/lib/roles";
 import { mfaDevBypass } from "@/lib/mfaDevBypass";
 import { monitoring } from "@/lib/monitoring";
 import Layout from "./Layout";
+import { AccountRecoveryScreen } from "./AccountRecoveryScreen";
 import { ReadOnlyBanner } from "./ReadOnlyBanner";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,8 +17,7 @@ export const ULTRA_PLATFORM_MODE_KEY = "ultra_admin_platform_mode";
 type SubStatus = "active" | "trialing" | "overdue" | "canceled" | "expired" | null;
 
 // Cache somente em memória — sessionStorage era manipulável via DevTools.
-// Objeto mutável: property .v é escrita pelo check(), const no binding.
-const subStatusCache: { v: SubStatus | undefined } = { v: undefined };
+const subStatusCache = new Map<string, SubStatus>();
 
 // SPEC 098: quem não pode regularizar a assinatura (não é admin) não vê o
 // atalho pra tela de pagamento, que ele não tem acesso mesmo. Só orienta a
@@ -62,33 +62,41 @@ export function PrivateRoute() {
   const location = useLocation();
 
   const mfaBypass = mfaDevBypass();
-  const [subStatus, setSubStatus] = useState<SubStatus | undefined>(subStatusCache.v);
+  const empresaId = profile?.empresa_id;
+  const [subscription, setSubscription] = useState<{ empresaId: string; status: SubStatus } | null>(null);
+  const subStatus = empresaId
+    ? subscription?.empresaId === empresaId
+      ? subscription.status
+      : subStatusCache.get(empresaId)
+    : undefined;
 
   useEffect(() => {
-    if (!isAuthenticated || subStatus !== undefined) return;
-
+    if (!isAuthenticated || !empresaId || loading || (mfaChallengeRequired && !mfaBypass) || subStatus !== undefined)
+      return;
+    let active = true;
     const check = async () => {
       try {
-        const { data } = await (supabase
+        const { data, error } = await (supabase
           .from("pilar_subscriptions" as never)
           .select("status")
-          .maybeSingle() as unknown as Promise<{
-          data: { status: SubStatus } | null;
-          error: unknown;
-        }>);
-        const s = data?.status ?? null;
-        subStatusCache.v = s;
-        setSubStatus(s);
-      } catch (err) {
-        // Erro de infra não deve virar "sem assinatura" (que liberaria uma
-        // empresa suspensa). Reporta e NÃO cacheia, para re-checar na próxima
-        // navegação em vez de gravar um estado errado. ACH-AUTH-07.
-        monitoring.captureException(err, { context: "subscription-gate" });
-        setSubStatus(null);
+          .eq("empresa_id", empresaId)
+          .maybeSingle() as unknown as Promise<{ data: { status: SubStatus } | null; error: unknown }>);
+        if (error) throw error;
+        if (!active) return;
+        const status = data?.status ?? null;
+        subStatusCache.set(empresaId, status);
+        setSubscription({ empresaId, status });
+      } catch (error) {
+        monitoring.captureException(error, { context: "subscription-gate" });
+        // Mantém o comportamento de falha transitória sem cachear o resultado.
+        if (active) setSubscription({ empresaId, status: null });
       }
     };
-    check();
-  }, [isAuthenticated, subStatus]);
+    void check();
+    return () => {
+      active = false;
+    };
+  }, [isAuthenticated, empresaId, loading, mfaChallengeRequired, mfaBypass, subStatus]);
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
@@ -101,6 +109,10 @@ export function PrivateRoute() {
   if (mfaChallengeRequired && !mfaBypass && location.pathname !== "/mfa") {
     return <Navigate to="/mfa" replace />;
   }
+
+  if (location.pathname === "/mfa") return <Outlet />;
+
+  if (!profile) return <AccountRecoveryScreen />;
 
   if (profile) {
     const isCompanySetup = location.pathname === "/company-setup";
@@ -138,6 +150,10 @@ export function PrivateRoute() {
     location.pathname === "/mfa/setup"
   ) {
     return <Outlet />;
+  }
+
+  if (empresaId && subStatus === undefined) {
+    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
   }
 
   // SPEC 098 Fase 3 (ADR 0042): trial vencido sem cartão tokenizado entra em
