@@ -1,9 +1,18 @@
 import { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Layers, DollarSign, ScrollText, Table as TableIcon, GanttChart, GitBranch, History } from "lucide-react";
+import {
+  Layers,
+  DollarSign,
+  ScrollText,
+  Table as TableIcon,
+  GanttChart,
+  GitBranch,
+  History,
+  MessageSquare,
+} from "lucide-react";
 import { SecondSidebar, type SecondSidebarTab } from "@/components/SecondSidebar";
 import { cn } from "@/lib/utils";
 import {
@@ -26,6 +35,7 @@ import { useProjetoDisciplinaRevisoesCounts } from "@/hooks/useDisciplinaRevisoe
 import { useFluxosDisciplinas } from "@/hooks/useFluxosDisciplinas";
 import { EmptyState } from "@/components/EmptyState";
 import { AplicarFluxoDialog } from "./AplicarFluxoDialog";
+import { ProjetoAtividadesPanel } from "./ProjetoAtividadesPanel";
 
 interface ProjetoDetailTabsProps {
   projeto: Projeto;
@@ -51,6 +61,7 @@ interface ProjetoDetailTabsProps {
 // Hash "cronograma" mantido como alias retrocompat → abre Disciplinas com view Gantt
 const PROJETO_TABS: SecondSidebarTab[] = [
   { id: "disciplinas", label: "Disciplinas", icon: Layers },
+  { id: "atividades", label: "Atividades", icon: MessageSquare },
   { id: "pagamentos", label: "Pagamentos", icon: DollarSign },
   { id: "escopo", label: "Escopo", icon: ScrollText },
   { id: "historico", label: "Histórico", icon: History },
@@ -104,6 +115,7 @@ export function ProjetoDetailTabs({
     if (h === "pagamentos") return { tab: "pagamentos", view: null };
     if (h === "escopo") return { tab: "escopo", view: null };
     if (h === "historico") return { tab: "historico", view: null };
+    if (h === "atividades") return { tab: "atividades", view: null };
     return { tab: "disciplinas", view: null };
   };
 
@@ -125,6 +137,34 @@ export function ProjetoDetailTabs({
   const handleDiscClick = (disc: DisciplinaResponsavel) => {
     setSelectedDisc(disc);
     setDiscDialogOpen(true);
+  };
+
+  // Link de notificação (spec 103): ?disciplina=<id> abre a disciplina e
+  // ?comentario=<id> destaca o comentário (na disciplina ou nas Atividades).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const disciplinaDoLink = searchParams.get("disciplina");
+  const comentarioDoLink = searchParams.get("comentario");
+
+  useEffect(() => {
+    if (!disciplinaDoLink) return;
+    const disc = disciplinasLegacy.find((d) => d.id === disciplinaDoLink);
+    if (!disc) return;
+    setSelectedDisc(disc);
+    setDiscDialogOpen(true);
+  }, [disciplinaDoLink, disciplinasLegacy]);
+
+  const handleDiscDialogOpenChange = (open: boolean) => {
+    setDiscDialogOpen(open);
+    if (open || !disciplinaDoLink) return;
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("disciplina");
+        next.delete("comentario");
+        return next;
+      },
+      { replace: true }
+    );
   };
 
   const handleDiscUpdateField = async (field: keyof DisciplinaResponsavel, value: string) => {
@@ -319,6 +359,17 @@ export function ProjetoDetailTabs({
             </div>
           </TabsContent>
 
+          <TabsContent value="atividades">
+            <Card className="flex h-[70vh] min-h-[420px] flex-col p-4">
+              <ProjetoAtividadesPanel
+                projetoId={projeto.id}
+                pessoas={pessoas}
+                autorNome={autorNome}
+                comentarioDestacado={disciplinaDoLink ? null : comentarioDoLink}
+              />
+            </Card>
+          </TabsContent>
+
           <TabsContent value="pagamentos">
             <PagamentosTab projetoId={projeto.id} canEdit={canEdit} />
           </TabsContent>
@@ -342,7 +393,7 @@ export function ProjetoDetailTabs({
 
       <DisciplinaDetailDialog
         open={discDialogOpen}
-        onOpenChange={setDiscDialogOpen}
+        onOpenChange={handleDiscDialogOpenChange}
         disciplina={selectedDisc}
         disciplinas={disciplinasCatalog}
         pessoas={pessoas}
@@ -355,6 +406,7 @@ export function ProjetoDetailTabs({
         onUpdateHorasEstimadas={handleDiscUpdateHorasEstimadas}
         onUpdateHorasRealizadas={handleDiscUpdateHorasRealizadas}
         autorNome={autorNome}
+        comentarioDestacado={disciplinaDoLink ? comentarioDoLink : null}
         newObservation={newObservation}
         onNewObservationChange={setNewObservation}
         onAddObservation={handleAddObservation}
@@ -364,7 +416,7 @@ export function ProjetoDetailTabs({
           canEdit && selectedDisc
             ? async () => {
                 const idx = disciplinasLegacy.findIndex((d) => d.disciplina === selectedDisc.disciplina);
-                setDiscDialogOpen(false);
+                handleDiscDialogOpenChange(false);
                 if (idx >= 0) await handleRemoveDisc(idx);
               }
             : undefined

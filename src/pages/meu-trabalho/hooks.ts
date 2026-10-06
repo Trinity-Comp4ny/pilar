@@ -200,6 +200,35 @@ export function useSetDisciplinaStatus() {
   });
 }
 
+const TAREFA_SELECT =
+  "id, numero, titulo, descricao, status, prioridade, responsavel_id, projeto_id, etapa_id, prazo, horas_estimadas, horas_reais, labels, links, comentarios, projeto:projetos(id, nome), responsaveis:tarefa_responsaveis(pessoa:pessoas(id, nome))" as const;
+
+type TarefaRowSelect = {
+  status: string;
+  prioridade: string | null;
+  labels: string[] | null;
+  links: Json | null;
+  comentarios: Json | null;
+  projeto: { id: string; nome: string } | { id: string; nome: string }[] | null;
+  responsaveis: { pessoa: PessoaOpcao | PessoaOpcao[] | null }[] | null;
+};
+
+function paraTarefaItem<T extends TarefaRowSelect>(t: T): TarefaItem {
+  const { responsaveis, ...rest } = t;
+  return {
+    ...rest,
+    status: t.status as StatusBucket,
+    prioridade: toPrioridade(t.prioridade),
+    responsaveis: (responsaveis ?? [])
+      .map((r) => (Array.isArray(r.pessoa) ? r.pessoa[0] : r.pessoa))
+      .filter((p): p is PessoaOpcao => !!p),
+    labels: t.labels ?? [],
+    links: (t.links as unknown as LinkItem[]) ?? [],
+    comentarios: (t.comentarios as unknown as Comentario[]) ?? [],
+    projeto: Array.isArray(t.projeto) ? (t.projeto[0] ?? null) : t.projeto,
+  } as unknown as TarefaItem;
+}
+
 /**
  * Tarefas avulsas (aba Tarefas). "Minhas tarefas" = tarefas em que a pessoa é
  * responsável (via ponte), nunca as que ela só criou pra outro executar — não
@@ -217,12 +246,7 @@ export function useTarefas(pessoaIds: string[] | null) {
     queryKey: tarefasQueryKey(pessoaIds),
     staleTime: 60 * 1000,
     queryFn: async (): Promise<TarefaItem[]> => {
-      let q = supabase
-        .from("tarefas")
-        .select(
-          "id, numero, titulo, descricao, status, prioridade, responsavel_id, projeto_id, etapa_id, prazo, horas_estimadas, horas_reais, labels, links, comentarios, projeto:projetos(id, nome), responsaveis:tarefa_responsaveis(pessoa:pessoas(id, nome))"
-        )
-        .order("prazo", { ascending: true, nullsFirst: false });
+      let q = supabase.from("tarefas").select(TAREFA_SELECT).order("prazo", { ascending: true, nullsFirst: false });
 
       if (pessoaIds !== null) {
         if (pessoaIds.length === 0) return [];
@@ -238,21 +262,28 @@ export function useTarefas(pessoaIds: string[] | null) {
 
       const { data, error } = await q;
       if (error) throw error;
-      return (data ?? []).map((t) => {
-        const { responsaveis, ...rest } = t;
-        return {
-          ...rest,
-          status: t.status as StatusBucket,
-          prioridade: toPrioridade(t.prioridade),
-          responsaveis: (responsaveis ?? [])
-            .map((r) => (Array.isArray(r.pessoa) ? r.pessoa[0] : r.pessoa))
-            .filter((p): p is PessoaOpcao => !!p),
-          labels: t.labels ?? [],
-          links: (t.links as unknown as LinkItem[]) ?? [],
-          comentarios: (t.comentarios as unknown as Comentario[]) ?? [],
-          projeto: Array.isArray(t.projeto) ? (t.projeto[0] ?? null) : t.projeto,
-        };
-      }) as TarefaItem[];
+      return (data ?? []).map(paraTarefaItem);
+    },
+  });
+}
+
+/**
+ * Uma tarefa pelo id, para abrir pelo link de uma notificação (`?tarefa=`) mesmo
+ * quando ela não está no filtro atual da lista. `null` = não existe ou a RLS não
+ * libera para quem está logado (spec 103).
+ */
+export function useTarefaPorId(id: string | null) {
+  return useQuery({
+    queryKey: ["meu-trabalho", "tarefa", id],
+    enabled: !!id,
+    queryFn: async (): Promise<TarefaItem | null> => {
+      const { data, error } = await supabase
+        .from("tarefas")
+        .select(TAREFA_SELECT)
+        .eq("id", id as string)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? paraTarefaItem(data) : null;
     },
   });
 }
@@ -302,6 +333,7 @@ export function useTarefaMutations() {
         .single();
       if (error) throw error;
       await syncResponsaveis(data.id, empresaId, responsaveis);
+      return data.id;
     },
     onSuccess: invalidate,
   });

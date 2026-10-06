@@ -108,17 +108,19 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos }: Pr
       if (t) setTarefaAberta(t);
       return;
     }
-    if (evento.projetoId) navigate(`/projetos/${evento.projetoId}`);
+    if (evento.projetoId) navigate(`/projetos/${evento.projetoId}?disciplina=${evento.id}`);
   };
 
-  const salvarTarefa = async (input: TarefaInput) => {
-    if (!tarefaAberta) return;
+  const salvarTarefa = async (input: TarefaInput): Promise<string | null> => {
+    if (!tarefaAberta) return null;
     try {
       await atualizar.mutateAsync({ id: tarefaAberta.id, input });
       toast.success("Tarefa atualizada.");
       setTarefaAberta(null);
+      return tarefaAberta.id;
     } catch {
       toast.error("Não deu para salvar a tarefa. Tente de novo.");
+      return null;
     }
   };
 
