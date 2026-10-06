@@ -85,7 +85,9 @@ export function useProjetoDetail(id: string | undefined) {
   const disciplinasLegacy: DisciplinaResponsavel[] = dbDisciplinas.map(dbDisciplinaToLegacy);
 
   // ---- Auxiliary data (catalogs) ----
-  const [disciplinasCatalog, setDisciplinasCatalog] = useState<{ id: string; nome: string }[]>([]);
+  const [disciplinasCatalog, setDisciplinasCatalog] = useState<
+    { id: string; nome: string; empresa_id: string | null }[]
+  >([]);
   const [pessoas, setPessoas] = useState<{ id: string; nome: string }[]>([]);
   const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([]);
   const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(null);
@@ -94,7 +96,7 @@ export function useProjetoDetail(id: string | undefined) {
   useEffect(() => {
     if (!canEdit) return;
     Promise.all([
-      supabase.from("disciplinas").select("id, nome").order("nome"),
+      supabase.from("disciplinas").select("id, nome, empresa_id").order("nome"),
       supabase.from("pessoas").select("id, nome").is("deleted_at", null).order("nome"),
       supabase.from("clientes").select("id, nome").order("nome"),
       supabase.auth.getUser(),

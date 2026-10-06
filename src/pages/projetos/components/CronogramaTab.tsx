@@ -203,31 +203,24 @@ export function CronogramaTab({
     enabled: !!onDatesChange,
     timelineRef,
     scrollRef,
-    // Guarda-chuva: a disciplina não sai das datas do projeto (nem antes do
-    // início, nem depois da previsão). Clampou ⇒ snapping ⇒ não salva.
+    // Guarda-chuva mínimo: início da disciplina não volta antes do início do projeto.
+    // A previsão pode passar da previsão do projeto; a UI sinaliza atraso sem bloquear.
     constrain: ({ start, end, type }) => {
       let newStart = start;
       let newEnd = end;
       let snapping = false;
       const projStart = parseDate(projetoDataInicio);
-      const projEnd = parseDate(projetoDataPrevisao);
       const dur = diffDays(newStart, newEnd);
 
-      if (projEnd && newEnd > projEnd) {
-        newEnd = projEnd;
-        if (type === "move") newStart = addDays(projEnd, -dur);
-        snapping = true;
-      }
       if (projStart && newStart < projStart) {
         newStart = projStart;
         if (type === "move") newEnd = addDays(projStart, dur);
         snapping = true;
       }
       if (projStart && newStart < projStart) newStart = projStart;
-      if (projEnd && newEnd > projEnd) newEnd = projEnd;
-      if (newStart >= newEnd && projStart && projEnd) {
+      if (newStart >= newEnd && projStart) {
         newStart = projStart;
-        newEnd = projEnd;
+        newEnd = addDays(projStart, Math.max(1, dur));
       }
       return { start: newStart, end: newEnd, snapping };
     },
@@ -239,9 +232,9 @@ export function CronogramaTab({
     onBlockedCommit: (rowIdx) => {
       const disc = rows[rowIdx]?.disc.disciplina;
       toast.info(
-        disc ? `"${disc}" não pode sair do período do projeto` : "Disciplina não pode sair do período do projeto",
+        disc ? `"${disc}" não pode começar antes do projeto` : "Disciplina não pode começar antes do projeto",
         {
-          description: "Ajuste o início ou a previsão do projeto para liberar essa data.",
+          description: "Ajuste o início do projeto para liberar essa data.",
         }
       );
     },

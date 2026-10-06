@@ -316,7 +316,7 @@ export function DisciplinasSection({
                                     value={resp.data_inicio}
                                     onChange={(v) => onUpdateRespDatas(idx, rIdx, "data_inicio", v)}
                                     minDate={minDate}
-                                    maxDate={maxDate}
+                                    maxDate={resp.data_previsao || resp.data_final || undefined}
                                     className={
                                       isOutOfRange(resp.data_inicio)
                                         ? "border-attention-mid-border bg-attention-soft"
@@ -341,7 +341,7 @@ export function DisciplinasSection({
                                       value={resp.data_previsao}
                                       onChange={(v) => onUpdateRespDatas(idx, rIdx, "data_previsao", v)}
                                       minDate={minDate}
-                                      maxDate={maxDate}
+                                      maxDate={resp.data_final || undefined}
                                       className={
                                         isOutOfRange(resp.data_previsao)
                                           ? "border-attention-mid-border bg-attention-soft"
@@ -411,7 +411,7 @@ export function DisciplinasSection({
                                 value={newFormResp.data_inicio}
                                 onChange={(v) => onNewFormRespChange({ ...newFormResp, data_inicio: v })}
                                 minDate={minDate}
-                                maxDate={maxDate}
+                                maxDate={newFormResp.data_previsao || newFormResp.data_final || undefined}
                               />
                             </div>
                             <div className="space-y-0.5">
@@ -420,7 +420,7 @@ export function DisciplinasSection({
                                 value={newFormResp.data_previsao}
                                 onChange={(v) => onNewFormRespChange({ ...newFormResp, data_previsao: v })}
                                 minDate={minDate}
-                                maxDate={maxDate}
+                                maxDate={newFormResp.data_final || undefined}
                               />
                             </div>
                             <div className="space-y-0.5">
@@ -574,7 +574,7 @@ export function DisciplinasSection({
                   value={tempDisciplina.data_inicio?.slice(0, 10)}
                   onChange={(v) => onTempDisciplinaChange({ ...tempDisciplina, data_inicio: v })}
                   minDate={minDate}
-                  maxDate={maxDate}
+                  maxDate={tempDisciplina.data_previsao || tempDisciplina.data_final || undefined}
                   className={
                     isOutOfRange(tempDisciplina.data_inicio) ? "border-attention-mid-border bg-attention-soft" : ""
                   }
@@ -589,7 +589,7 @@ export function DisciplinasSection({
                   value={tempDisciplina.data_previsao?.slice(0, 10)}
                   onChange={(v) => onTempDisciplinaChange({ ...tempDisciplina, data_previsao: v })}
                   minDate={minDate}
-                  maxDate={maxDate}
+                  maxDate={tempDisciplina.data_final || undefined}
                   className={
                     isOutOfRange(tempDisciplina.data_previsao) ? "border-attention-mid-border bg-attention-soft" : ""
                   }
