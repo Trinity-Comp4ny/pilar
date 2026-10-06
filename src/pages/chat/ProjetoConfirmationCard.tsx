@@ -205,20 +205,6 @@ export function ProjetoConfirmationCard({ index, draft, onConfirmar, onCancelar,
       <div className="px-4 py-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor={`${p}-codigo`} className="text-xs text-muted-foreground">
-              Código
-            </Label>
-            <Input
-              id={`${p}-codigo`}
-              value={form.codigo_projeto ?? ""}
-              placeholder="gerado automaticamente"
-              onChange={(e) => set("codigo_projeto", e.target.value)}
-              disabled={salvando}
-              className="h-9"
-            />
-          </div>
-
-          <div className="space-y-1.5">
             <Label htmlFor={`${p}-cliente`} className="text-xs text-muted-foreground">
               Cliente
             </Label>

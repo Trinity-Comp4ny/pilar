@@ -26,7 +26,6 @@ export function ListaProjetos({ projetos, etapas, rentabilidadeMap, onCardClick 
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-28">Código</TableHead>
             <TableHead>Projeto</TableHead>
             <TableHead>Cliente</TableHead>
             <TableHead>Coluna</TableHead>
@@ -44,7 +43,6 @@ export function ListaProjetos({ projetos, etapas, rentabilidadeMap, onCardClick 
             const margem = rentabilidadeMap[p.id];
             return (
               <TableRow key={p.id} className="cursor-pointer" onClick={() => onCardClick(p)}>
-                <TableCell className="font-mono text-xs text-muted-foreground">{p.codigo_projeto}</TableCell>
                 <TableCell className="font-medium">{p.nome}</TableCell>
                 <TableCell className="text-muted-foreground">{p.cliente_nome ?? "—"}</TableCell>
                 <TableCell>

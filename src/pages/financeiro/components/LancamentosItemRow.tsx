@@ -186,7 +186,7 @@ export function LancamentosItemRow({
         {isTransf ? (l.contraparte_nome ?? "-") : l.contraparte_nome || "-"}
       </td>
       <td className={cn(cellPad, "whitespace-nowrap", cellTextSize)}>{isTransf ? "-" : l.categoria_nome || "-"}</td>
-      <td className={cn(cellPad, "whitespace-nowrap", cellTextSize)}>{isTransf ? "-" : l.projeto_codigo || "-"}</td>
+      <td className={cn(cellPad, "whitespace-nowrap", cellTextSize)}>{isTransf ? "-" : l.projeto_nome || "-"}</td>
       <td className={cn(cellPad, "whitespace-nowrap text-xs text-muted-foreground")}>
         {!isTransf && l.parcela_numero && l.parcela_total && l.parcela_total > 1
           ? `${l.parcela_numero}/${l.parcela_total}`

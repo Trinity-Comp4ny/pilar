@@ -870,7 +870,6 @@ async function coletarFinanceiro(db: SupabaseClient, empresaId: string): Promise
 const STATUS_ATIVOS = ["Planejamento", "Execução", "Em andamento", "Revisão"];
 
 type ProjetoRow = {
-  codigo_projeto: string | null;
   nome: string;
   status: string;
   prioridade: string | null;
@@ -886,7 +885,7 @@ async function coletarProjetos(db: SupabaseClient, empresaId: string): Promise<R
   const { data } = await db
     .from("projetos")
     .select(
-      "codigo_projeto, nome, status, prioridade, valor_contrato, data_inicio, data_previsao, data_final, clientes(nome)"
+      "nome, status, prioridade, valor_contrato, data_inicio, data_previsao, data_final, clientes(nome)"
     )
     .eq("empresa_id", empresaId)
     .is("deleted_at", null);
@@ -895,7 +894,6 @@ async function coletarProjetos(db: SupabaseClient, empresaId: string): Promise<R
   for (const p of projetos) porStatus[p.status] = (porStatus[p.status] ?? 0) + 1;
   const ativos = projetos.filter((p) => STATUS_ATIVOS.includes(p.status));
   const detalhe = (p: ProjetoRow) => ({
-    codigo: p.codigo_projeto,
     nome: p.nome,
     status: p.status,
     prioridade: p.prioridade,
@@ -1245,7 +1243,7 @@ serve(
       if (projetoId) {
         const { data: proj } = await authClient
           .from("projetos")
-          .select("id, codigo_projeto, nome, status, valor_contrato, data_inicio, data_previsao, clientes(nome)")
+          .select("id, nome, status, valor_contrato, data_inicio, data_previsao, clientes(nome)")
           .eq("id", projetoId)
           .single();
         if (proj) {

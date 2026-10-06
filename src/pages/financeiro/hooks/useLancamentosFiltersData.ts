@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface FiltersData {
   categorias: { id: string; nome: string; tipo: string }[];
-  projetos: { id: string; codigo: string }[];
+  projetos: { id: string; nome: string }[];
   clientes: { id: string; nome: string }[];
   fornecedores: { id: string; nome: string }[];
   loading: boolean;
@@ -32,7 +32,7 @@ export function useLancamentosFiltersData(): FiltersData {
       try {
         const [cats, projs, clis, forns] = await Promise.all([
           supabase.from("categorias_financeiras").select("id, nome, tipo").order("nome"),
-          supabase.from("projetos").select("id, codigo_projeto").is("deleted_at", null).order("nome"),
+          supabase.from("projetos").select("id, nome").is("deleted_at", null).order("nome"),
           supabase.from("clientes").select("id, nome").order("nome"),
           // gen:types não inclui "fornecedores" ainda; cast defensivo até regeneração.
           supabase.from("fornecedores").select("id, nome").order("nome") as unknown as Promise<{
@@ -41,9 +41,7 @@ export function useLancamentosFiltersData(): FiltersData {
         ]);
         if (cancelled) return;
         setCategorias((cats.data ?? []).map((c) => ({ id: c.id, nome: c.nome, tipo: c.tipo })));
-        setProjetos(
-          (projs.data ?? []).map((p) => ({ id: p.id, codigo: p.codigo_projeto ?? "" })).filter((p) => p.codigo)
-        );
+        setProjetos((projs.data ?? []).map((p) => ({ id: p.id, nome: p.nome })));
         setClientes((clis.data ?? []).map((c) => ({ id: c.id, nome: c.nome })));
         setFornecedores((forns.data ?? []).map((f) => ({ id: f.id, nome: f.nome })));
       } finally {

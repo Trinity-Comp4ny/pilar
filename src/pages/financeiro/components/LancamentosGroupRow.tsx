@@ -119,7 +119,7 @@ export function LancamentosGroupRow({
       </td>
       <td className={cn(cellPad, "max-w-[160px] truncate", cellTextSize)}>{first.contraparte_nome || "-"}</td>
       <td className={cn(cellPad, "whitespace-nowrap", cellTextSize)}>{first.categoria_nome || "-"}</td>
-      <td className={cn(cellPad, "whitespace-nowrap", cellTextSize)}>{first.projeto_codigo || "-"}</td>
+      <td className={cn(cellPad, "whitespace-nowrap", cellTextSize)}>{first.projeto_nome || "-"}</td>
       <td className={cn(cellPad, "text-xs text-muted-foreground whitespace-nowrap")}>{parcelaLabel}</td>
       <td className={cn(cellPad, "whitespace-nowrap text-right tabular-nums", cellTextSize)}>
         <div className={cn("font-semibold", isReceita ? "text-positive-strong" : "text-negative-strong")}>

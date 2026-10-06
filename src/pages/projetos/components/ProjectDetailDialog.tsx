@@ -265,11 +265,6 @@ export function ProjectDetailDialog({
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    {projeto.codigo_projeto && (
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                        {projeto.codigo_projeto}
-                      </span>
-                    )}
                     <Badge className={statusConfig?.color}>{statusConfig?.label}</Badge>
                     {priorityConfig && (
                       <span
