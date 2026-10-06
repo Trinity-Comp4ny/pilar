@@ -57,14 +57,10 @@ export default function Inicio() {
       }
     >
       <div className="flex flex-col gap-4">
-
         {painel.isLoading ? (
           <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-12">
             {["inteira", "meia", "meia"].map((tamanho, i) => (
-              <div
-                key={i}
-                className={tamanho === "inteira" ? "lg:col-span-12" : "lg:col-span-6"}
-              >
+              <div key={i} className={tamanho === "inteira" ? "lg:col-span-12" : "lg:col-span-6"}>
                 <Skeleton className="h-[132px] w-full rounded-2xl" />
               </div>
             ))}
@@ -105,12 +101,12 @@ export default function Inicio() {
                 value={pergunta}
                 onChange={(event) => setPergunta(event.target.value)}
                 placeholder="Pergunte aos agentes"
-                className="flex-1 bg-transparent py-1.5 text-base text-ink outline-none placeholder:text-ink-muted"
+                className="flex-1 bg-transparent py-1.5 text-base text-ink outline-hidden placeholder:text-ink-muted"
                 aria-label="Perguntar aos agentes"
               />
               <button
                 type="submit"
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand text-ink transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/60"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand text-ink transition-opacity hover:opacity-90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand/60"
                 aria-label="Abrir conversa com os agentes"
               >
                 <ArrowRight size={18} />

@@ -80,7 +80,7 @@ function Celular() {
           {[0, 1, 2].map((i) => (
             <m.span
               key={i}
-              className="aspect-square rounded bg-gradient-to-br from-paper-border to-paper-alt"
+              className="aspect-square rounded bg-linear-to-br from-paper-border to-paper-alt"
               initial={reducedMotion ? false : { opacity: 0, scale: 0.85 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true, amount: 0.6 }}

@@ -591,7 +591,7 @@ export function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: Clie
                                 prev.map((item, idx) => (idx === i ? { ...item, tipo: e.target.value } : item))
                               )
                             }
-                            className="text-[10px] text-muted-foreground bg-transparent border-none outline-none cursor-pointer hover:text-foreground transition-colors appearance-none"
+                            className="text-[10px] text-muted-foreground bg-transparent border-none outline-hidden cursor-pointer hover:text-foreground transition-colors appearance-none"
                           >
                             {Object.entries(TIPO_CHAVE_PIX_LABEL).map(([value, label]) => (
                               <option key={value} value={value}>

@@ -446,14 +446,14 @@ export default function ObraClimaPage() {
                       return (
                         <Fragment key={h.hora}>
                           {novoDia && (
-                            <div className="flex min-w-[3rem] flex-col items-center justify-center gap-0.5 border-l border-black/10 pl-2 text-center">
+                            <div className="flex min-w-12 flex-col items-center justify-center gap-0.5 border-l border-black/10 pl-2 text-center">
                               <span className="text-[11px] font-medium capitalize text-ink">
                                 {diaSemana(h.hora.slice(0, 10))}
                               </span>
                               <span className="text-[11px] text-muted-foreground">{diaMes(h.hora.slice(0, 10))}</span>
                             </div>
                           )}
-                          <div className="flex min-w-[3.25rem] flex-col items-center gap-1">
+                          <div className="flex min-w-13 flex-col items-center gap-1">
                             <span className="text-xs text-muted-foreground">
                               {i === 0 ? "Agora" : horaLabel(h.hora)}
                             </span>

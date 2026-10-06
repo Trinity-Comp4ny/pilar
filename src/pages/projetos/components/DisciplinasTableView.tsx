@@ -74,7 +74,7 @@ function earlierOf(...ds: (string | null | undefined)[]): string | undefined {
 }
 
 const STATUS_DOT: Record<string, string> = {
-  Concluído: "bg-positive/100",
+  Concluído: "bg-positive",
   "Em Andamento": "bg-status-progress",
   Pendente: "bg-status-planning",
   "Não Iniciado": "bg-status-unknown",
@@ -697,7 +697,7 @@ function ResponsaveisCell({ discIdx, disc, dbDisc, pessoas, canEdit, onAdd, onRe
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="sm" className="h-7 px-2 text-xs justify-start max-w-full">
-          <User className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+          <User className="h-3.5 w-3.5 mr-1.5 shrink-0" />
           <span className="truncate">{display}</span>
         </Button>
       </PopoverTrigger>

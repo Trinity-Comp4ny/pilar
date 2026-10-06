@@ -277,7 +277,7 @@ function EntregaCard({
               )}
             </div>
           </div>
-          <Badge className={cn("text-[10px] border flex-shrink-0", config.color)}>
+          <Badge className={cn("text-[10px] border shrink-0", config.color)}>
             <StatusIcon className="h-3 w-3 mr-1" />
             {config.label}
           </Badge>

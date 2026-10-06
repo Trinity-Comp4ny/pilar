@@ -44,7 +44,7 @@ export function FolhaHistory({ history, selectedMonth, selectedYear, onOpenDetai
                   <Badge
                     variant="secondary"
                     className={`mt-1 capitalize text-[10px] h-5 px-2
-                      ${h.status === "pago" ? "bg-positive/100 text-white" : ""}
+                      ${h.status === "pago" ? "bg-positive text-white" : ""}
                       ${h.status === "pendente" ? "bg-fill-warning text-fill-warning-foreground" : ""}
                       ${h.status === "cancelado" ? "bg-fill-danger text-fill-danger-foreground" : ""}
                       ${h.status === "misto" ? "bg-fill-attention text-fill-attention-foreground" : ""}

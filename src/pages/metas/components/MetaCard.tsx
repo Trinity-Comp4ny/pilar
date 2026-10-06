@@ -78,7 +78,7 @@ export function MetaCard({ meta, subtitle, onEdit, onDelete }: MetaCardProps) {
           </span>
         </div>
 
-        <Progress value={percent} className="h-1.5 bg-muted" indicatorClassName="bg-positive/100" />
+        <Progress value={percent} className="h-1.5 bg-muted" indicatorClassName="bg-positive" />
 
         <div className="flex items-end justify-between">
           <div>
@@ -90,9 +90,7 @@ export function MetaCard({ meta, subtitle, onEdit, onDelete }: MetaCardProps) {
             <p className="text-sm font-semibold whitespace-nowrap">{formatValor(meta.alvo, meta.unidade)}</p>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Prazo: {meta.prazo ? formatDate(meta.prazo) : "—"}
-        </p>
+        <p className="text-xs text-muted-foreground">Prazo: {meta.prazo ? formatDate(meta.prazo) : "—"}</p>
       </CardContent>
     </Card>
   );

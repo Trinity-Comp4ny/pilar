@@ -48,7 +48,7 @@ export function FiltroPill({
               }}
               className={cn(
                 "rounded-lg px-3 py-1.5 text-left text-[13px] transition-colors",
-                value === o.value ? "bg-brand/15 font-medium text-ink" : "text-black/70 hover:bg-black/[0.04]"
+                value === o.value ? "bg-brand/15 font-medium text-ink" : "text-black/70 hover:bg-black/4"
               )}
             >
               {o.label}

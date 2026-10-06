@@ -55,7 +55,7 @@ export default function CampoConvite() {
 
   if (!token) {
     return (
-      <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-background px-6 text-center">
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-background px-6 text-center">
         <h1 className="text-xl font-semibold text-ink">Link inválido</h1>
         <p className="text-sm text-muted-foreground">
           Este link de convite está incompleto. Peça ao responsável pela obra para reenviar.
@@ -68,7 +68,7 @@ export default function CampoConvite() {
   }
 
   return (
-    <div className="flex min-h-[100dvh] flex-col justify-center bg-background px-6 py-10">
+    <div className="flex min-h-dvh flex-col justify-center bg-background px-6 py-10">
       <div className="mx-auto w-full max-w-sm space-y-8">
         <div className="space-y-2 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand text-ink">

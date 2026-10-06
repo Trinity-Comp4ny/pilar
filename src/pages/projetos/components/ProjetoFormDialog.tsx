@@ -219,7 +219,7 @@ export function ProjetoFormDialog({
                   >
                     <span
                       className={cn(
-                        "h-7 w-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-semibold",
+                        "h-7 w-7 rounded-full flex items-center justify-center shrink-0 text-xs font-semibold",
                         isActive && "bg-brand text-ink",
                         isCompleted && "bg-brand text-ink",
                         !isActive && !isCompleted && "bg-muted text-muted-foreground"

@@ -99,9 +99,9 @@ export function KanbanBoard({
       {/* Rede de segurança: projetos com status sem coluna equivalente (valor
           legado). Sem drop/ações — só para não sumirem da vista. */}
       {orfaos.length > 0 && (
-        <div className="flex flex-col min-w-[280px] w-[280px] flex-shrink-0 min-h-0">
+        <div className="flex flex-col min-w-[280px] w-[280px] shrink-0 min-h-0">
           <div className="flex items-center gap-2 px-2 py-2.5">
-            <span className="h-2 w-2 rounded-full flex-shrink-0 bg-status-unknown" />
+            <span className="h-2 w-2 rounded-full shrink-0 bg-status-unknown" />
             <h3 className="text-xs font-medium text-foreground/80 uppercase tracking-wide">Sem coluna</h3>
             <span className="text-[11px] text-muted-foreground tabular-nums">{orfaos.length}</span>
           </div>

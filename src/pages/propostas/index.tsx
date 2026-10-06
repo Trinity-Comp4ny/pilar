@@ -686,7 +686,7 @@ export default function Propostas() {
                         role="button"
                         tabIndex={0}
                         aria-label={`Ver detalhes da proposta ${p.titulo}`}
-                        className="cursor-pointer hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                        className="cursor-pointer hover:bg-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                         onClick={() => openDetail(p.id)}
                         onKeyDown={(e) => handleRowKeyDown(e, p.id)}
                       >
@@ -749,7 +749,7 @@ export default function Propostas() {
                     role="button"
                     tabIndex={0}
                     aria-label={`Ver detalhes da proposta ${p.titulo}`}
-                    className="hover:shadow-md transition-shadow cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="hover:shadow-md transition-shadow cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={() => openDetail(p.id)}
                     onKeyDown={(e) => handleRowKeyDown(e, p.id)}
                   >
@@ -759,7 +759,7 @@ export default function Propostas() {
                           <p className="text-sm font-medium truncate">{p.titulo}</p>
                           {p.codigo && <p className="text-[11px] text-muted-foreground font-mono">{p.codigo}</p>}
                         </div>
-                        <div className="flex items-center gap-1 flex-shrink-0">
+                        <div className="flex items-center gap-1 shrink-0">
                           <Badge className={`text-[10px] ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
                             {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
                           </Badge>
@@ -791,13 +791,13 @@ export default function Propostas() {
                       <div className="space-y-1.5">
                         {(p.cliente_nome || p.lead_nome) && (
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                            <Building2 className="h-3 w-3 flex-shrink-0" />
+                            <Building2 className="h-3 w-3 shrink-0" />
                             <span className="truncate">{p.cliente_nome || p.lead_nome}</span>
                           </div>
                         )}
                         {p.valor_proposto && (
                           <div className="flex items-center gap-1.5 text-xs">
-                            <DollarSign className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+                            <DollarSign className="h-3 w-3 shrink-0 text-muted-foreground" />
                             <span className="font-medium">{formatCurrency(p.valor_proposto)}</span>
                           </div>
                         )}
@@ -805,7 +805,7 @@ export default function Propostas() {
                           <div
                             className={`flex items-center gap-1.5 text-xs ${isExpired ? "text-danger-mid" : "text-muted-foreground"}`}
                           >
-                            <Calendar className="h-3 w-3 flex-shrink-0" />
+                            <Calendar className="h-3 w-3 shrink-0" />
                             <span>{formatDate(p.validade)}</span>
                           </div>
                         )}

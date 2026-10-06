@@ -144,7 +144,7 @@ export default function CompanySetup() {
               <div className="space-y-2">
                 <span className="text-ink-soft font-medium text-sm">Empresa</span>
                 <div className="flex items-center gap-2 rounded-md border border-paper-border bg-paper-alt px-3 h-11">
-                  <Building2 className="h-4 w-4 text-ink/40 flex-shrink-0" />
+                  <Building2 className="h-4 w-4 text-ink/40 shrink-0" />
                   <span className="text-sm text-ink truncate">{form.watch("name") || "Sua empresa"}</span>
                 </div>
               </div>
@@ -220,7 +220,7 @@ export default function CompanySetup() {
             style={{ animationDuration: "20s" }}
           />
           <div className="absolute inset-0 bg-black/20" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-black/10" />
         </div>
 
         <div className="relative z-10 flex flex-col justify-between h-full w-full p-16 text-white">

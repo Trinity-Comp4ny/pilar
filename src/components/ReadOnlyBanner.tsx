@@ -12,7 +12,7 @@ export function ReadOnlyBanner({ isAdmin }: { isAdmin: boolean }) {
     <div
       role="status"
       aria-live="polite"
-      className="fixed top-0 left-0 right-0 z-[60] bg-fill-warning text-fill-warning-foreground shadow-md"
+      className="fixed top-0 left-0 right-0 z-60 bg-fill-warning text-fill-warning-foreground shadow-md"
     >
       <div className="px-4 py-2 flex items-center justify-center gap-3 text-sm">
         <Lock className="w-4 h-4" strokeWidth={2} />
