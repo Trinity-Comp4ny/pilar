@@ -37,7 +37,7 @@ export function ProjetosMobileList({
         return (
           <details key={status} open className="border rounded-lg bg-white">
             <summary className="flex items-center gap-2 px-3 py-2.5 cursor-pointer list-none">
-              <span className={cn("h-2 w-2 rounded-full flex-shrink-0", dotColor)} />
+              <span className={cn("h-2 w-2 rounded-full shrink-0", dotColor)} />
               <span className="text-xs font-medium uppercase tracking-wide flex-1">{config.label}</span>
               <span className="text-[11px] text-muted-foreground tabular-nums">{items.length}</span>
               <ChevronDown className="h-4 w-4 text-muted-foreground" />

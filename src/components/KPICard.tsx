@@ -72,7 +72,7 @@ export function KPICard({
         "rounded-2xl border border-black/5 bg-white w-full",
         density === "compact" ? "p-3" : "p-4",
         interactive &&
-          "cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
         className
       )}
       onClick={onClick}
@@ -122,7 +122,7 @@ export function KPICard({
           )}
         </div>
         {Icon && (
-          <span className={cn("rounded-full p-2 flex-shrink-0", TONE_BADGE[tone])}>
+          <span className={cn("rounded-full p-2 shrink-0", TONE_BADGE[tone])}>
             <Icon className="h-4 w-4" />
           </span>
         )}

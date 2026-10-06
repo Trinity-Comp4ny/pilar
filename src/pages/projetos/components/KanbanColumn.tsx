@@ -63,7 +63,7 @@ export function KanbanColumn({
   if (isCollapsed) {
     return (
       <div
-        className="flex flex-col w-10 flex-shrink-0 min-h-0 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+        className="flex flex-col w-10 shrink-0 min-h-0 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
         onClick={() => onToggleColumn(etapa.id)}
       >
         <div className="flex flex-col items-center gap-2 py-3">
@@ -83,9 +83,9 @@ export function KanbanColumn({
   }
 
   return (
-    <div className="flex flex-col min-w-[280px] w-[280px] flex-shrink-0 min-h-0">
+    <div className="flex flex-col min-w-[280px] w-[280px] shrink-0 min-h-0">
       <div className="flex items-center gap-2 px-2 py-2.5">
-        <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: cor }} />
+        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: cor }} />
         <h3 className="text-xs font-medium text-foreground/80 uppercase tracking-wide truncate">{etapa.nome}</h3>
         <span className="text-[11px] text-muted-foreground tabular-nums">{items.length}</span>
         <div className="ml-auto flex items-center">

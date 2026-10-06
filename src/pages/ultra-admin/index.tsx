@@ -163,7 +163,7 @@ function parseOverride(raw: string): number | null {
 
 function CapacidadeStat({ label, value, overridden }: { label: string; value: string; overridden?: boolean }) {
   return (
-    <div className="rounded-lg border border-black/10 bg-black/[0.015] p-3">
+    <div className="rounded-lg border border-black/10 bg-black/1.5 p-3">
       <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-black/40">{label}</div>
       <div className="mt-1 flex items-center gap-2">
         <span className="text-lg font-medium text-black/80">{value}</span>
@@ -1108,7 +1108,7 @@ export default function UltraAdmin() {
                       <span className="text-black/50"> · {a.action}</span>
                       {a.target_table && <span className="text-black/50"> em {a.target_table}</span>}
                     </div>
-                    <time className="flex-shrink-0 text-xs text-black/40">
+                    <time className="shrink-0 text-xs text-black/40">
                       {new Date(a.created_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
                     </time>
                   </li>
@@ -1247,7 +1247,7 @@ export default function UltraAdmin() {
                         <span className="text-black/50"> · {a.action}</span>
                         {a.target_name && <span className="text-black/50"> → {a.target_name}</span>}
                       </div>
-                      <time className="flex-shrink-0 text-xs text-black/40">
+                      <time className="shrink-0 text-xs text-black/40">
                         {new Date(a.created_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
                       </time>
                     </li>
@@ -1307,7 +1307,7 @@ export default function UltraAdmin() {
                         <TableRow
                           key={e.id}
                           onClick={() => fetchDetail(e.id)}
-                          className="cursor-pointer hover:bg-black/[0.02]"
+                          className="cursor-pointer hover:bg-black/2"
                         >
                           <TableCell className="font-medium">{e.nome}</TableCell>
                           <TableCell className="text-black/60">{e.cnpj ?? "—"}</TableCell>

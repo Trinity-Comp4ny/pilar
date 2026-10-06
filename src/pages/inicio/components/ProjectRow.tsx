@@ -13,7 +13,7 @@ export function ProjectRow({ project, onClick }: { project: DashboardProjeto; on
 
   return (
     <div
-      className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors cursor-pointer group focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
       onClick={onClick}
       role="button"
       tabIndex={0}

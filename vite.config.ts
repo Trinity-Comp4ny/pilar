@@ -84,6 +84,7 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: {
+          "vendor-styles": ["tailwind-merge"],
           "vendor-react": ["react", "react-dom", "react-router-dom"],
           "vendor-charts": ["recharts"],
           "vendor-maps": ["leaflet", "react-leaflet"],

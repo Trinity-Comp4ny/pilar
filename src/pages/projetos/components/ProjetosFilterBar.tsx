@@ -62,7 +62,7 @@ interface ProjetosFilterBarProps {
 const DEADLINE_OPTIONS: { id: DeadlineFilter; label: string; dot: string }[] = [
   { id: "em_atraso", label: "Atrasado", dot: "bg-chart-danger" },
   { id: "atencao", label: "Atenção", dot: "bg-chart-warning" },
-  { id: "no_prazo", label: "No prazo", dot: "bg-positive/100" },
+  { id: "no_prazo", label: "No prazo", dot: "bg-positive" },
 ];
 
 export function ProjetosFilterBar({ pessoas, clientes, disciplinas, filters, onChange }: ProjetosFilterBarProps) {

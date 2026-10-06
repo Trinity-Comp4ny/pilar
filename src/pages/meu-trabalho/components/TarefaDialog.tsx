@@ -42,7 +42,7 @@ function Prop({
 }) {
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <span className="flex w-32 flex-shrink-0 items-center gap-2 text-sm text-muted-foreground">
+      <span className="flex w-32 shrink-0 items-center gap-2 text-sm text-muted-foreground">
         <Icon className="h-4 w-4" />
         {label}
       </span>
@@ -165,7 +165,7 @@ function TarefaFormBody({
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* Cabeçalho: chip + título editável */}
-      <div className="flex-shrink-0 border-b px-10 pt-8 pb-5">
+      <div className="shrink-0 border-b px-10 pt-8 pb-5">
         <DialogTitle className="sr-only">
           {readOnly ? "Detalhes da tarefa" : tarefa ? "Editar tarefa" : "Nova tarefa"}
         </DialogTitle>
@@ -307,7 +307,7 @@ function TarefaFormBody({
         }
         secondary={
           <div className="flex h-full min-h-0 flex-col bg-muted/10">
-            <div className="flex-shrink-0 border-b px-5 py-4">
+            <div className="shrink-0 border-b px-5 py-4">
               <Label className="flex items-center gap-2 text-sm font-semibold">
                 <MessageSquare size={16} /> Atividades
               </Label>
@@ -328,7 +328,7 @@ function TarefaFormBody({
               )}
             </div>
             {!readOnly && (
-              <div className="flex-shrink-0 border-t bg-background/60 p-4">
+              <div className="shrink-0 border-t bg-background/60 p-4">
                 <AtividadeComposer pessoas={pessoas} onSubmit={adicionarComentario} />
               </div>
             )}
@@ -337,7 +337,7 @@ function TarefaFormBody({
       />
 
       {/* Rodapé */}
-      <DialogFooter className="flex-shrink-0 border-t px-8 py-3">
+      <DialogFooter className="shrink-0 border-t px-8 py-3">
         <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
           {readOnly ? "Fechar" : "Cancelar"}
         </Button>

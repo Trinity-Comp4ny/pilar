@@ -41,7 +41,7 @@ const NotFound = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-slate-50 px-6 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-white to-slate-50 px-6 py-12">
       <div className="w-full max-w-2xl">
         <div className="mb-6 flex justify-center">
           <Logo size="sm" className="text-ink" />

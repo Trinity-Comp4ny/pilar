@@ -712,7 +712,7 @@ function RoleSelector({ value, onChange }: RoleSelectorProps) {
             >
               <div
                 className={cn(
-                  "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full",
+                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
                   active ? "bg-brand/10" : "bg-black/5"
                 )}
               >

@@ -276,7 +276,6 @@ export default function Relatorios() {
     void gerarRelatorio(tipo);
   };
 
-
   const handleExport = async (formatType: "csv" | "xlsx" | "pdf") => {
     if (!filteredData.length) {
       toast.error("Sem dados", { description: "Gere um relatório antes de exportar." });
@@ -400,7 +399,7 @@ export default function Relatorios() {
               key={t.value}
               type="button"
               onClick={() => escolherTipo(t.value)}
-              className="group flex flex-col items-start gap-2 rounded-2xl border border-black/5 bg-white p-4 text-left transition-all hover:border-brand hover:bg-brand/5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+              className="group flex flex-col items-start gap-2 rounded-2xl border border-black/5 bg-white p-4 text-left transition-all hover:border-brand hover:bg-brand/5 hover:shadow-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand/15 text-ink transition-colors group-hover:bg-brand">
                 <Icon size={17} strokeWidth={1.7} />

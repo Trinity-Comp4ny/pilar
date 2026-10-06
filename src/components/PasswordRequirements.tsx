@@ -10,9 +10,9 @@ export function PasswordRequirements({ password }: { password: string }) {
       {checks.map((c) => (
         <li key={c.label} className={cn("flex items-center gap-1.5", c.ok ? "text-positive-strong" : "text-ink-muted")}>
           {c.ok ? (
-            <Check className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
+            <Check className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           ) : (
-            <Circle className="h-3.5 w-3.5 flex-shrink-0 text-ink/25" aria-hidden="true" />
+            <Circle className="h-3.5 w-3.5 shrink-0 text-ink/25" aria-hidden="true" />
           )}
           {c.label}
         </li>

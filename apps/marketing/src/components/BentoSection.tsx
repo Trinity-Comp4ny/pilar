@@ -45,7 +45,7 @@ function CabecalhoCartao({
           {rotulo}
         </p>
         <h3
-          className={`mb-1.5 text-[20px] md:text-[22px] font-medium tracking-[-0.025em] leading-[1.15] ${
+          className={`mb-1.5 text-[20px] md:text-[22px] font-medium tracking-tight leading-[1.15] ${
             escuro ? "text-white" : "text-ink"
           }`}
         >
@@ -339,7 +339,7 @@ function CartaoCampo() {
           href="/campo"
         />
 
-        <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+        <div className="mt-6 rounded-2xl border border-white/10 bg-white/6 p-4">
           <div className="mb-3 flex items-center justify-between gap-2">
             <span className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.09em] text-white/50">
               <WifiOff className="h-3 w-3" strokeWidth={2.2} />
@@ -361,7 +361,7 @@ function CartaoCampo() {
             {[0, 1, 2].map((i) => (
               <m.span
                 key={i}
-                className="h-11 w-11 shrink-0 rounded-lg border border-white/10 bg-gradient-to-br from-white/20 to-white/5"
+                className="h-11 w-11 shrink-0 rounded-lg border border-white/10 bg-linear-to-br from-white/20 to-white/5"
                 initial={{ opacity: 0, scale: 0.85 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={VISTA}

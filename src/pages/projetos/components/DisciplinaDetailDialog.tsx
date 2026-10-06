@@ -107,7 +107,7 @@ function Prop({
 }) {
   return (
     <div className={`flex items-center gap-3 ${className ?? ""}`}>
-      <span className="flex w-32 flex-shrink-0 items-center gap-2 text-sm text-muted-foreground">
+      <span className="flex w-32 shrink-0 items-center gap-2 text-sm text-muted-foreground">
         <Icon className="h-4 w-4" />
         {label}
       </span>
@@ -145,7 +145,6 @@ function DisciplinaDetailBody({
   onNewObservationChange,
   onAddObservation,
   projetoDataInicio,
-  projetoDataPrevisao,
   onDelete,
 }: DisciplinaDetailDialogProps & { disciplina: DisciplinaResponsavel }) {
   const [descricao, setDescricao] = useState(disciplina.descricao ?? "");
@@ -239,7 +238,7 @@ function DisciplinaDetailBody({
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* Cabeçalho */}
-      <div className="flex-shrink-0 border-b px-8 pt-6 pb-4">
+      <div className="shrink-0 border-b px-8 pt-6 pb-4">
         <div className="mb-1.5 flex items-center gap-2">
           <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             <Layers className="h-3 w-3" /> {disciplina.codigo || "Disciplina"}
@@ -253,7 +252,7 @@ function DisciplinaDetailBody({
             <Button
               variant="ghost"
               size="sm"
-              className="flex-shrink-0 gap-1.5 text-muted-foreground hover:text-danger-mid"
+              className="shrink-0 gap-1.5 text-muted-foreground hover:text-danger-mid"
               onClick={() => setConfirmDelete(true)}
             >
               <Trash2 className="h-4 w-4" /> Excluir
@@ -282,7 +281,7 @@ function DisciplinaDetailBody({
                     onValueChange={(val) => onUpdateField("status", val)}
                     disabled={estaPausada}
                   >
-                    <SelectTrigger className="h-9 w-full min-w-0 flex-shrink-0 sm:w-56">
+                    <SelectTrigger className="h-9 w-full min-w-0 shrink-0 sm:w-56">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -310,7 +309,7 @@ function DisciplinaDetailBody({
                         type="button"
                         variant="brand"
                         size="sm"
-                        className="h-9 flex-shrink-0 gap-1.5"
+                        className="h-9 shrink-0 gap-1.5"
                         onClick={confirmarRetomar}
                         disabled={pausas.retomar.isPending}
                       >
@@ -322,7 +321,7 @@ function DisciplinaDetailBody({
                           type="button"
                           variant="brand"
                           size="sm"
-                          className="h-9 flex-shrink-0 gap-1.5"
+                          className="h-9 shrink-0 gap-1.5"
                           onClick={abrirPausar}
                         >
                           <Pause className="h-3.5 w-3.5" /> Pausar
@@ -336,7 +335,7 @@ function DisciplinaDetailBody({
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-9 flex-shrink-0 gap-1.5"
+                        className="h-9 shrink-0 gap-1.5"
                         onClick={confirmarConcluirRevisao}
                         disabled={revisoes.concluir.isPending}
                       >
@@ -347,7 +346,7 @@ function DisciplinaDetailBody({
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-9 flex-shrink-0 gap-1.5"
+                        className="h-9 shrink-0 gap-1.5"
                         onClick={abrirRevisar}
                       >
                         <RotateCcw className="h-3.5 w-3.5" /> Registrar revisão
@@ -432,14 +431,13 @@ function DisciplinaDetailBody({
                     onChange={(v) => onUpdateField("data_inicio", v)}
                     placeholder="Início"
                     minDate={isoSlice(projetoDataInicio)}
-                    maxDate={earlierOf(disciplina.data_previsao, disciplina.data_final, projetoDataPrevisao)}
+                    maxDate={earlierOf(disciplina.data_previsao, disciplina.data_final)}
                   />
                   <DatePicker
                     value={(disciplina.data_previsao || "").slice(0, 10) || undefined}
                     onChange={(v) => onUpdateField("data_previsao", v)}
                     placeholder="Previsão"
                     minDate={laterOf(disciplina.data_inicio, projetoDataInicio)}
-                    maxDate={isoSlice(projetoDataPrevisao)}
                   />
                   <DatePicker
                     value={(disciplina.data_final || "").slice(0, 10) || undefined}
@@ -611,7 +609,7 @@ function DisciplinaDetailBody({
         }
         secondary={
           <div className="flex h-full min-h-0 flex-col bg-muted/10">
-            <div className="flex-shrink-0 border-b px-5 py-4">
+            <div className="shrink-0 border-b px-5 py-4">
               <Label className="flex items-center gap-2 text-sm font-semibold">
                 <MessageSquare size={16} /> Atividades
               </Label>
@@ -634,7 +632,7 @@ function DisciplinaDetailBody({
                     ))
                   )}
                 </div>
-                <div className="flex-shrink-0 border-t bg-background/60 p-4">
+                <div className="shrink-0 border-t bg-background/60 p-4">
                   <AtividadeComposer pessoas={pessoas} onSubmit={adicionarComentario} />
                 </div>
               </>

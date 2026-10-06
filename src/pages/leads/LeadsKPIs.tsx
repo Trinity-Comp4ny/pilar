@@ -54,7 +54,7 @@ export function LeadsKPIs({ leads, propostasByLead, onFilterProximos, proximosAt
   }, [leads, propostasByLead]);
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-2 flex-shrink-0">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-2 shrink-0">
       <KPICard density="compact" icon={Layers} label="Pipeline ativo" value={stats.total.toString()} tone="neutral" />
       <KPICard density="compact" icon={TrendingUp} label="Valor no funil" value={stats.valorPipeline} tone="positive" />
       <KPICard

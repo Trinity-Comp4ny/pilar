@@ -38,17 +38,17 @@ export const CAMADA_REGISTRY: Record<CamadaId, CamadaMeta> = {
   projeto: {
     label: "Projetos",
     icon: FolderKanban,
-    toggleClass: "data-[state=checked]:!bg-brand data-[state=checked]:!border-brand data-[state=checked]:!text-ink",
+    toggleClass: "data-[state=checked]:bg-brand! data-[state=checked]:border-brand! data-[state=checked]:text-ink!",
   },
   disciplina: {
     label: "Disciplinas",
     icon: Layers,
-    toggleClass: "data-[state=checked]:!bg-brand data-[state=checked]:!border-brand data-[state=checked]:!text-ink",
+    toggleClass: "data-[state=checked]:bg-brand! data-[state=checked]:border-brand! data-[state=checked]:text-ink!",
   },
   tarefa: {
     label: "Tarefas",
     icon: CheckSquare,
-    toggleClass: "data-[state=checked]:!bg-brand data-[state=checked]:!border-brand data-[state=checked]:!text-ink",
+    toggleClass: "data-[state=checked]:bg-brand! data-[state=checked]:border-brand! data-[state=checked]:text-ink!",
   },
 };
 

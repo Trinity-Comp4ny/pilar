@@ -43,7 +43,7 @@ import { useObraTarefas, useCreateObraTarefa, useUpdateObraTarefa, type ObraTare
 import { FrenteDetailDialog } from "./FrenteDetailDialog";
 
 const ESTADO_BAR: Record<EstadoFrente, string> = {
-  concluida: "bg-positive/100",
+  concluida: "bg-positive",
   atrasada: "bg-red-500",
   em_andamento: "bg-status-progress",
   futura: "bg-gray-400",
@@ -59,7 +59,7 @@ const ESTADO_LABEL: Record<EstadoFrente, string> = {
 };
 
 const ESTADO_TAREFA_BAR: Record<EstadoTarefa, string> = {
-  concluida: "bg-positive/100",
+  concluida: "bg-positive",
   atrasada: "bg-red-500",
   em_andamento: "bg-status-progress",
   futura: "bg-gray-400",
@@ -365,7 +365,7 @@ export function ObraCronogramaTab({
                   {/* Coluna fixa: etapas + tarefas. Colapsa em mobile (achado da
                       auditoria: 260px sozinha consumia 66% de uma tela de 390px,
                       sobrando só uma faixa estreita pra timeline). */}
-                  <div className={cn("flex-shrink-0 border-r bg-muted/30", isMobile ? "w-[104px]" : "w-[260px]")}>
+                  <div className={cn("shrink-0 border-r bg-muted/30", isMobile ? "w-[104px]" : "w-[260px]")}>
                     <div className="flex h-10 items-center border-b px-3">
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                         Etapa / tarefa
@@ -379,7 +379,7 @@ export function ObraCronogramaTab({
                             <button
                               onClick={() => toggleFrente(row.frente.id)}
                               disabled={row.tarefas.length === 0}
-                              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted disabled:opacity-25"
+                              className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted disabled:opacity-25"
                               aria-label={expandida ? "Recolher" : "Expandir"}
                             >
                               {expandida ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -393,7 +393,7 @@ export function ObraCronogramaTab({
                                 <div className="mt-0.5 flex items-center gap-1.5">
                                   <span
                                     className={cn(
-                                      "inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full",
+                                      "inline-block h-1.5 w-1.5 shrink-0 rounded-full",
                                       ESTADO_BAR[row.estado]
                                     )}
                                     aria-hidden
@@ -418,7 +418,7 @@ export function ObraCronogramaTab({
                                   });
                                 }}
                                 title="Adicionar tarefa"
-                                className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-ink"
+                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-ink"
                               >
                                 <Plus className="h-4 w-4" />
                               </button>
@@ -435,7 +435,7 @@ export function ObraCronogramaTab({
                               >
                                 <span
                                   className={cn(
-                                    "inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full",
+                                    "inline-block h-1.5 w-1.5 shrink-0 rounded-full",
                                     ESTADO_TAREFA_BAR[t.estado]
                                   )}
                                   aria-hidden
@@ -449,7 +449,7 @@ export function ObraCronogramaTab({
                                   {t.tarefa.titulo}
                                 </span>
                                 {!t.bar && (
-                                  <span className="ml-auto flex-shrink-0 text-[9px] uppercase tracking-wide text-muted-foreground">
+                                  <span className="ml-auto shrink-0 text-[9px] uppercase tracking-wide text-muted-foreground">
                                     sem período
                                   </span>
                                 )}
@@ -473,7 +473,7 @@ export function ObraCronogramaTab({
                                   />
                                   <button
                                     onClick={() => setAddTarefaFrenteId(null)}
-                                    className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted"
+                                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted"
                                     aria-label="Cancelar"
                                   >
                                     <X className="h-3.5 w-3.5" />
@@ -706,7 +706,7 @@ export function ObraCronogramaTab({
             <Card>
               <CardContent className="space-y-2 p-4">
                 <div className="flex items-center gap-2 text-xs text-warning-strong">
-                  <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                   <span>
                     {semPrazo.length} etapa{semPrazo.length > 1 ? "s" : ""} sem período (fora da linha do tempo)
                   </span>
@@ -753,7 +753,7 @@ export function ObraCronogramaTab({
               onChange={(e) => setNovaEtapa(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addEtapa()}
               placeholder="Nova etapa (fundação, alvenaria…)"
-              className="h-9 min-w-[12rem]"
+              className="h-9 min-w-48"
             />
           </div>
           <DatePicker

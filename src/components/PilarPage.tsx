@@ -14,8 +14,9 @@ type HeaderProps = React.ComponentProps<typeof PageHeader>;
 type LayoutProps = React.ComponentProps<typeof PageLayout>;
 
 interface PilarPageProps
-  extends Pick<HeaderProps, "title" | "breadcrumbs" | "search" | "primaryAction">,
-    Pick<LayoutProps, "sidebar" | "className" | "containerClassName"> {
+  extends
+    Pick<HeaderProps, "title" | "breadcrumbs" | "search" | "primaryAction">,
+    Pick<LayoutProps, "sidebar" | "className" | "containerClassName" | "standalone"> {
   /** Ações secundárias no header, alinhadas antes da ação primária. */
   actions?: React.ReactNode;
   children: React.ReactNode;
@@ -28,6 +29,7 @@ export function PilarPage({
   primaryAction,
   actions,
   sidebar,
+  standalone,
   className,
   containerClassName,
   children,
@@ -35,6 +37,7 @@ export function PilarPage({
   return (
     <PageLayout
       sidebar={sidebar}
+      standalone={standalone}
       className={className}
       containerClassName={containerClassName}
       header={

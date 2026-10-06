@@ -211,8 +211,7 @@ export default function MetasDashboard() {
             ) : (
               topMetas.map((meta) => {
                 const percent = Math.min(Math.round((meta.atual / meta.alvo) * 100), 100);
-                const tipoLabel =
-                  meta.tipo === "pessoal" ? "Pessoal" : meta.tipo === "livre" ? "Livre" : "Financeira";
+                const tipoLabel = meta.tipo === "pessoal" ? "Pessoal" : meta.tipo === "livre" ? "Livre" : "Financeira";
                 return (
                   <div key={meta.id} className="space-y-1.5">
                     <div className="flex justify-between items-center">
@@ -227,7 +226,7 @@ export default function MetasDashboard() {
                     <Progress
                       value={percent}
                       className="h-2 bg-muted"
-                      indicatorClassName={percent >= 100 ? "bg-positive/100" : "bg-brand"}
+                      indicatorClassName={percent >= 100 ? "bg-positive" : "bg-brand"}
                     />
                   </div>
                 );
@@ -286,7 +285,7 @@ export default function MetasDashboard() {
                   <Progress
                     value={item.stats.avgProgress}
                     className="h-2 bg-muted"
-                    indicatorClassName={item.stats.avgProgress >= 100 ? "bg-positive/100" : "bg-brand"}
+                    indicatorClassName={item.stats.avgProgress >= 100 ? "bg-positive" : "bg-brand"}
                   />
                   <div className="flex justify-between mt-2 text-xs text-muted-foreground">
                     <span>{item.stats.completed} concluídas</span>

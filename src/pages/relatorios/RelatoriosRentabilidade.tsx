@@ -472,7 +472,7 @@ function ProjetoTable({
       </TableBody>
       {rows.length > 0 && (
         <TableFooter>
-          <TableRow className="bg-black/[0.02] font-semibold">
+          <TableRow className="bg-black/2 font-semibold">
             <TableCell className="text-xs">TOTAL</TableCell>
             <TableCell className="text-xs" />
             <TableCell className="text-xs" />
@@ -552,7 +552,7 @@ function ClienteTable({
       </TableBody>
       {rows.length > 0 && (
         <TableFooter>
-          <TableRow className="bg-black/[0.02] font-semibold">
+          <TableRow className="bg-black/2 font-semibold">
             <TableCell className="text-xs">TOTAL</TableCell>
             <TableCell className="text-xs" />
             <TableCell className="text-xs" />

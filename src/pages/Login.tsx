@@ -277,7 +277,7 @@ export default function Login() {
             className="w-full h-full object-cover opacity-60 scale-105 animate-pulse-slow grayscale contrast-125"
             style={{ animationDuration: "20s" }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-black/10" />
         </div>
 
         <div className="relative z-10 flex flex-col justify-between h-full w-full p-16 text-white">

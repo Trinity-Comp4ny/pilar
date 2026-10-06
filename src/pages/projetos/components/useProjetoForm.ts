@@ -560,8 +560,7 @@ export function useProjetoForm({
       });
     }
 
-    // Validação de datas das disciplinas vs prazo do projeto
-    const projetoPrevisao = formData.data_previsao;
+    // Validação mínima: início não volta antes do projeto e conclusão real não passa da final real.
     const projetoFinal = formData.data_final;
     const projetoInicio = formData.data_inicio;
     for (const disc of finalDisciplinas) {
@@ -574,12 +573,6 @@ export function useProjetoForm({
         if (projetoInicio && d.data_inicio && d.data_inicio < projetoInicio) {
           toast.error("Datas inválidas", {
             description: `Disciplina "${disc.disciplina}" tem início anterior ao do projeto`,
-          });
-          return;
-        }
-        if (projetoPrevisao && d.data_previsao && d.data_previsao > projetoPrevisao) {
-          toast.error("Datas inválidas", {
-            description: `Previsão da disciplina "${disc.disciplina}" ultrapassa a previsão do projeto`,
           });
           return;
         }

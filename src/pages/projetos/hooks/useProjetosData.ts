@@ -181,7 +181,7 @@ export function useProjetosData() {
   const { data: disciplinas = [] } = useQuery({
     queryKey: ["disciplinas"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("disciplinas").select("id, nome").order("nome");
+      const { data, error } = await supabase.from("disciplinas").select("id, nome, empresa_id").order("nome");
       if (error) throw error;
       return data || [];
     },

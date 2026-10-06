@@ -1,6 +1,19 @@
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Camera, CheckSquare, ChevronRight, ClipboardList, CloudOff, HardHat, Loader2, LogOut, Plus, RefreshCw, Ruler, Users } from "lucide-react";
+import {
+  Camera,
+  CheckSquare,
+  ChevronRight,
+  ClipboardList,
+  CloudOff,
+  HardHat,
+  Loader2,
+  LogOut,
+  Plus,
+  RefreshCw,
+  Ruler,
+  Users,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -46,7 +59,7 @@ export default function CampoHome() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-background">
+    <div className="min-h-dvh bg-background">
       <header className="flex items-center justify-between border-b border-black/5 px-5 py-4">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-ink">

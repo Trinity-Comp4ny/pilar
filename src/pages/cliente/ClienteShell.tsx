@@ -99,7 +99,7 @@ export function ClienteShell({
                   size="sm"
                   className="text-muted-foreground hover:text-foreground gap-1.5 h-11 sm:h-9"
                 >
-                  <span className="truncate max-w-[8rem] sm:max-w-[14rem]">
+                  <span className="truncate max-w-32 sm:max-w-56">
                     <span className="sm:hidden">{account.nome.split(" ")[0]}</span>
                     <span className="hidden sm:inline">{account.nome}</span>
                   </span>

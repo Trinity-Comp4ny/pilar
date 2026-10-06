@@ -142,7 +142,7 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
       title="Ativar plano"
       description="Nada é cobrado agora. Escolha o plano e informe o cartão para garantir a continuidade sem interrupção."
       size="md"
-      zClassName="z-[70]"
+      zClassName="z-70"
       onSubmit={handleSubmit}
       submitLabel="Ativar plano"
       isPending={isPending}

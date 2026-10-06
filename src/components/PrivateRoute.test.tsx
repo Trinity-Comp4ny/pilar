@@ -9,6 +9,8 @@ const mockUseAuth = vi.fn<
     isAuthenticated: boolean;
     profile: ProfileWithEmpresa | null;
     loading: boolean;
+    profileError: boolean;
+    mfaChallengeRequired: boolean;
     user: null;
     signOut: () => Promise<void>;
     refreshProfile: () => Promise<void>;
@@ -17,6 +19,10 @@ const mockUseAuth = vi.fn<
 
 vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => mockUseAuth(),
+}));
+
+vi.mock("./AccountRecoveryScreen", () => ({
+  AccountRecoveryScreen: () => <div data-testid="recovery">Recuperação</div>,
 }));
 
 vi.mock("./Layout", () => ({
@@ -34,13 +40,16 @@ vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     auth: { signOut: vi.fn() },
     from: vi.fn(() => ({
-      select: vi.fn(() => ({ maybeSingle: vi.fn(() => Promise.resolve({ data: mockSubStatus })) })),
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({ maybeSingle: vi.fn(() => Promise.resolve({ data: mockSubStatus })) })),
+      })),
     })),
   },
 }));
 
 const baseAuth = {
   user: null,
+  profileError: false,
   signOut: vi.fn(),
   refreshProfile: vi.fn(),
   mfaChallengeRequired: false,
@@ -63,6 +72,7 @@ async function renderPrivateRoute(initialRoute = "/inicio") {
           <Route path="/inicio" element={<div data-testid="inicio">Início</div>} />
           <Route path="/profile-setup" element={<div data-testid="profile-setup">Profile Setup</div>} />
           <Route path="/company-setup" element={<div data-testid="company-setup">Company Setup</div>} />
+          <Route path="/mfa" element={<div data-testid="mfa">MFA</div>} />
         </Route>
       </Routes>
     </MemoryRouter>
@@ -97,6 +107,7 @@ describe("PrivateRoute", () => {
       loading: false,
       profile: {
         id: "user-123",
+        empresa_id: "empresa-123",
         nome: "João Silva",
         email: "joao@test.com",
         contato: "(11) 99999-9999",
@@ -120,6 +131,7 @@ describe("PrivateRoute", () => {
       loading: false,
       profile: {
         id: "user-123",
+        empresa_id: "empresa-123",
         nome: "test@email.com",
         email: "test@email.com",
         contato: null,
@@ -143,6 +155,7 @@ describe("PrivateRoute", () => {
       loading: false,
       profile: {
         id: "user-123",
+        empresa_id: "empresa-123",
         nome: "Admin User",
         email: "admin@test.com",
         contato: "(11) 99999-9999",
@@ -166,6 +179,7 @@ describe("PrivateRoute", () => {
       loading: false,
       profile: {
         id: "user-123",
+        empresa_id: "empresa-123",
         nome: "Rafael",
         email: "rafael@empresa.com",
         contato: "(11) 99999-9999",
@@ -190,6 +204,7 @@ describe("PrivateRoute", () => {
       loading: false,
       profile: {
         id: "user-123",
+        empresa_id: "empresa-123",
         nome: "Admin User",
         email: "admin@test.com",
         contato: "(11) 99999-9999",
@@ -215,6 +230,7 @@ describe("PrivateRoute", () => {
       loading: false,
       profile: {
         id: "user-123",
+        empresa_id: "empresa-123",
         nome: "Admin User",
         email: "admin@test.com",
         contato: "(11) 99999-9999",
@@ -233,5 +249,65 @@ describe("PrivateRoute", () => {
       expect(screen.getByTestId("layout")).toBeInTheDocument();
     });
     expect(screen.getByText("Somente leitura: o período de teste acabou")).toBeInTheDocument();
+  });
+  it.each(["/inicio", "/profile-setup", "/company-setup"])(
+    "conta sem profile recebe recuperação em %s",
+    async (route) => {
+      mockUseAuth.mockReturnValue({ ...baseAuth, isAuthenticated: true, profile: null, loading: false });
+      await renderPrivateRoute(route);
+      expect(await screen.findByTestId("recovery")).toBeInTheDocument();
+      expect(screen.queryByTestId("layout")).not.toBeInTheDocument();
+    }
+  );
+
+  it("MFA tem prioridade sobre recuperação de profile", async () => {
+    mockUseAuth.mockReturnValue({
+      ...baseAuth,
+      mfaChallengeRequired: true,
+      isAuthenticated: true,
+      profile: null,
+      loading: false,
+    });
+    await renderPrivateRoute();
+    expect(await screen.findByTestId("mfa")).toBeInTheDocument();
+    expect(screen.queryByTestId("recovery")).not.toBeInTheDocument();
+  });
+  it("não consulta assinatura enquanto a conta não tem profile", async () => {
+    mockUseAuth.mockReturnValue({ ...baseAuth, isAuthenticated: true, profile: null, loading: false });
+    await renderPrivateRoute();
+    await screen.findByTestId("recovery");
+    const { supabase } = await import("@/integrations/supabase/client");
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it("troca de empresa não reutiliza assinatura da empresa anterior", async () => {
+    vi.resetModules();
+    const { PrivateRoute } = await import("./PrivateRoute");
+    const completeProfile = (empresaId: string) =>
+      ({
+        id: "user-123",
+        empresa_id: empresaId,
+        role: "user",
+        onboarding_completed: true,
+        empresas: { onboarding_completed: true },
+      }) as ProfileWithEmpresa;
+    const tree = () => (
+      <MemoryRouter initialEntries={["/inicio"]}>
+        <Routes>
+          <Route element={<PrivateRoute />}>
+            <Route path="/inicio" element={<div>Início</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    );
+    mockSubStatus = { status: "active" };
+    mockUseAuth.mockReturnValue({ ...baseAuth, isAuthenticated: true, loading: false, profile: completeProfile("a") });
+    const view = render(tree());
+    expect(await screen.findByTestId("layout")).toBeInTheDocument();
+    mockSubStatus = { status: "canceled" };
+    mockUseAuth.mockReturnValue({ ...baseAuth, isAuthenticated: true, loading: false, profile: completeProfile("b") });
+    view.rerender(tree());
+    expect(await screen.findByText("Acesso suspenso")).toBeInTheDocument();
+    expect(screen.queryByTestId("layout")).not.toBeInTheDocument();
   });
 });

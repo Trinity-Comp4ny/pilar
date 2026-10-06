@@ -100,10 +100,7 @@ export function FiltroPeriodo({
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className={cn("rounded-full h-9 px-3.5 text-[13px] font-normal gap-1.5", className)}
-        >
+        <Button variant="outline" className={cn("rounded-full h-9 px-3.5 text-[13px] font-normal gap-1.5", className)}>
           <CalendarDays size={14} className="text-black/50" />
           {triggerLabel}
         </Button>
@@ -114,7 +111,7 @@ export function FiltroPeriodo({
             <button
               type="button"
               onClick={() => setShowCalendar(false)}
-              className="flex items-center gap-1 text-[13px] text-black/60 hover:text-ink px-1.5 py-1 rounded-lg hover:bg-black/[0.04] transition-colors"
+              className="flex items-center gap-1 text-[13px] text-black/60 hover:text-ink px-1.5 py-1 rounded-lg hover:bg-black/4 transition-colors"
             >
               <ChevronLeft size={15} />
               Voltar aos períodos
@@ -144,9 +141,7 @@ export function FiltroPeriodo({
                 onClick={() => applyPreset(key)}
                 className={cn(
                   "text-left text-[13px] px-3 py-1.5 rounded-lg transition-colors",
-                  preset === key
-                    ? "bg-brand/15 text-ink font-medium"
-                    : "text-black/70 hover:bg-black/[0.04]"
+                  preset === key ? "bg-brand/15 text-ink font-medium" : "text-black/70 hover:bg-black/4"
                 )}
               >
                 {labelForPreset(key)}

@@ -158,7 +158,7 @@ export function DisciplinasSection({
       {/* Applied fluxo indicator — when disciplines were applied from a fluxo */}
       {hasEtapas && (
         <div className="mb-3 flex items-center gap-2 p-2 bg-info-soft rounded-lg border border-info-mid-border">
-          <GitBranch className="h-3.5 w-3.5 text-info-mid flex-shrink-0" />
+          <GitBranch className="h-3.5 w-3.5 text-info-mid shrink-0" />
           <span className="text-xs text-info-strong flex-1">
             {selectedFluxoId
               ? `Fluxo aplicado: ${fluxosData.find((f) => f.id === selectedFluxoId)?.nome}`
@@ -193,7 +193,7 @@ export function DisciplinasSection({
               {hasEtapas && (
                 <div className="flex items-center gap-2 pt-2">
                   {group.etapa != null && (
-                    <span className="flex items-center justify-center h-5 w-5 rounded-full bg-info-soft text-info-strong text-[10px] font-bold flex-shrink-0">
+                    <span className="flex items-center justify-center h-5 w-5 rounded-full bg-info-soft text-info-strong text-[10px] font-bold shrink-0">
                       {group.etapa}
                     </span>
                   )}
@@ -266,7 +266,7 @@ export function DisciplinasSection({
 
                     {/* Responsável + status row */}
                     <div className="flex items-center gap-2 px-3 pb-2 text-xs text-muted-foreground">
-                      <User className="h-3 w-3 flex-shrink-0" />
+                      <User className="h-3 w-3 shrink-0" />
                       <span>{resps.map((r) => r.responsavel_nome).join(", ")}</span>
                       <span
                         className={`ml-auto text-[10px] font-medium ${
@@ -316,7 +316,7 @@ export function DisciplinasSection({
                                     value={resp.data_inicio}
                                     onChange={(v) => onUpdateRespDatas(idx, rIdx, "data_inicio", v)}
                                     minDate={minDate}
-                                    maxDate={maxDate}
+                                    maxDate={resp.data_previsao || resp.data_final || undefined}
                                     className={
                                       isOutOfRange(resp.data_inicio)
                                         ? "border-attention-mid-border bg-attention-soft"
@@ -333,7 +333,7 @@ export function DisciplinasSection({
                                   </Label>
                                   {semPrazo ? (
                                     <div className="h-9 flex items-center gap-1.5 px-2 rounded-md border border-dashed bg-muted text-[11px] text-muted-foreground">
-                                      <Info className="h-3 w-3 flex-shrink-0" />
+                                      <Info className="h-3 w-3 shrink-0" />
                                       sem prazo definido
                                     </div>
                                   ) : (
@@ -341,7 +341,7 @@ export function DisciplinasSection({
                                       value={resp.data_previsao}
                                       onChange={(v) => onUpdateRespDatas(idx, rIdx, "data_previsao", v)}
                                       minDate={minDate}
-                                      maxDate={maxDate}
+                                      maxDate={resp.data_final || undefined}
                                       className={
                                         isOutOfRange(resp.data_previsao)
                                           ? "border-attention-mid-border bg-attention-soft"
@@ -411,7 +411,7 @@ export function DisciplinasSection({
                                 value={newFormResp.data_inicio}
                                 onChange={(v) => onNewFormRespChange({ ...newFormResp, data_inicio: v })}
                                 minDate={minDate}
-                                maxDate={maxDate}
+                                maxDate={newFormResp.data_previsao || newFormResp.data_final || undefined}
                               />
                             </div>
                             <div className="space-y-0.5">
@@ -420,7 +420,7 @@ export function DisciplinasSection({
                                 value={newFormResp.data_previsao}
                                 onChange={(v) => onNewFormRespChange({ ...newFormResp, data_previsao: v })}
                                 minDate={minDate}
-                                maxDate={maxDate}
+                                maxDate={newFormResp.data_final || undefined}
                               />
                             </div>
                             <div className="space-y-0.5">
@@ -574,7 +574,7 @@ export function DisciplinasSection({
                   value={tempDisciplina.data_inicio?.slice(0, 10)}
                   onChange={(v) => onTempDisciplinaChange({ ...tempDisciplina, data_inicio: v })}
                   minDate={minDate}
-                  maxDate={maxDate}
+                  maxDate={tempDisciplina.data_previsao || tempDisciplina.data_final || undefined}
                   className={
                     isOutOfRange(tempDisciplina.data_inicio) ? "border-attention-mid-border bg-attention-soft" : ""
                   }
@@ -589,7 +589,7 @@ export function DisciplinasSection({
                   value={tempDisciplina.data_previsao?.slice(0, 10)}
                   onChange={(v) => onTempDisciplinaChange({ ...tempDisciplina, data_previsao: v })}
                   minDate={minDate}
-                  maxDate={maxDate}
+                  maxDate={tempDisciplina.data_final || undefined}
                   className={
                     isOutOfRange(tempDisciplina.data_previsao) ? "border-attention-mid-border bg-attention-soft" : ""
                   }

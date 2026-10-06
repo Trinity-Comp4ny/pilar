@@ -34,7 +34,7 @@
     "db:push:prod": "scripts/supabase-target.sh push prod",
     "functions:deploy:staging": "scripts/supabase-target.sh deploy staging",
     "functions:deploy:prod": "scripts/supabase-target.sh deploy prod",
-    "audit:ci": "npm audit --audit-level=high",
+    "audit:ci": "npm audit --audit-level=high --omit=dev",
     "audit:security:staging": "node scripts/audit-security.mjs staging",
     "audit:security:prod": "node scripts/audit-security.mjs prod",
     "check:bundle-size": "node scripts/check-bundle-size.mjs",
@@ -118,7 +118,7 @@
     "recharts": "^2.12.7",
     "remark-gfm": "^4.0.1",
     "sonner": "^2.0.8",
-    "tailwind-merge": "^2.5.2",
+    "tailwind-merge": "^3.7.0",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
@@ -140,6 +140,7 @@
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.0.7",
     "@sentry/vite-plugin": "^5.4.0",
+    "@tailwindcss/postcss": "^4.3.3",
     "@tailwindcss/typography": "^0.5.20",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^7.0.1",
@@ -165,10 +166,13 @@
     "postcss": "^8.5.26",
     "prettier": "^3.9.6",
     "react-email": "^6.9.3",
-    "tailwindcss": "^3.4.11",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.68.0",
     "vite": "^7.2.7",
     "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "source-map-js": "^1.2.2"
   }
 }

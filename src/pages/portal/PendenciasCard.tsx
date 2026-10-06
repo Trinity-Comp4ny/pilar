@@ -56,7 +56,7 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
     <Card className="border-warning-mid-border bg-warning-soft/40">
       <CardContent className="p-4 space-y-3">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-warning-soft flex items-center justify-center flex-shrink-0">
+          <div className="h-9 w-9 rounded-full bg-warning-soft flex items-center justify-center shrink-0">
             <AlertCircle className="h-4 w-4 text-warning-mid" />
           </div>
           <div className="flex-1 min-w-0">

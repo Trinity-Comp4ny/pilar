@@ -47,7 +47,7 @@ export function ProjetoAtividadesPanel({ projetoId, pessoas, autorNome }: Projet
           ))
         )}
       </div>
-      <div className="flex-shrink-0 pt-3">
+      <div className="shrink-0 pt-3">
         <AtividadeComposer pessoas={pessoas} onSubmit={adicionar} />
       </div>
     </div>

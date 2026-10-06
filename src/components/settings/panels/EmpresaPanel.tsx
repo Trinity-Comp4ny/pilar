@@ -216,12 +216,16 @@ export function EmpresaPanel() {
     setIsInviting(true);
     try {
       const fullName = [inviteFirstName.trim(), inviteLastName.trim()].filter(Boolean).join(" ");
-      const { error } = await supabase.functions.invoke("invite-user", {
+      const { data, error } = await supabase.functions.invoke("invite-user", {
         body: { email: inviteEmail.trim(), nome: fullName, role: inviteRole },
       });
       if (error) throw error;
 
-      toast.success("Convite enviado", { description: `Um email foi enviado para ${inviteEmail}` });
+      toast.success("Convite enviado", {
+        description: data?.conta_existente
+          ? "Entre com sua conta atual para acessar o escritório."
+          : `Um email foi enviado para ${inviteEmail}`,
+      });
       // invite-user rebaixa qualquer papel fora de admin/user para "user"; refletir
       // o que o servidor concede, não o escolhido, para o otimismo não mentir. ACH-AUTH-14.
       const grantedRole = inviteRole === "admin" ? "admin" : "user";

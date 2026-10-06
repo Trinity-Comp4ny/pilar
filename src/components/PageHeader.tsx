@@ -120,7 +120,7 @@ export function PageHeader({ title, breadcrumbs, children, search, center, prima
             }}
             placeholder={search?.placeholder ?? "Buscar"}
             aria-label={search?.placeholder ?? "Buscar"}
-            className="w-full h-10 rounded-full border border-black/10 bg-black/[0.02] pl-8 pr-8 text-[15px] text-ink placeholder:text-black/35 outline-none focus:border-brand focus:bg-white transition-colors"
+            className="w-full h-10 rounded-full border border-black/10 bg-black/2 pl-8 pr-8 text-[15px] text-ink placeholder:text-black/35 outline-hidden focus:border-brand focus:bg-white transition-colors"
           />
           {!!search?.value && (
             <button
@@ -211,7 +211,7 @@ export function PageHeader({ title, breadcrumbs, children, search, center, prima
               placeholder={search.placeholder ?? "Buscar"}
               aria-label={search.placeholder ?? "Buscar"}
               aria-keyshortcuts="/"
-              className="w-full h-9 rounded-full border border-black/10 bg-black/[0.02] pl-8 pr-8 text-[13px] text-ink placeholder:text-black/35 outline-none focus:border-black/25 focus:bg-white transition-colors"
+              className="w-full h-9 rounded-full border border-black/10 bg-black/2 pl-8 pr-8 text-[13px] text-ink placeholder:text-black/35 outline-hidden focus:border-black/25 focus:bg-white transition-colors"
             />
             {search.value && (
               <button

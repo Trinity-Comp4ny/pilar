@@ -367,7 +367,7 @@ export function MapaTab() {
             style={{ height: isFullscreen ? "100dvh" : "calc(100vh - 320px)", minHeight: "420px" }}
           >
             {/* Seletor de camada */}
-            <div className="absolute bottom-8 left-3 z-[1000]">
+            <div className="absolute bottom-8 left-3 z-1000">
               {tileMenuOpen && (
                 <div className="mb-1 flex flex-col gap-1 bg-background/95 backdrop-blur-sm rounded-lg border shadow-md p-1">
                   {(Object.entries(TILE_LAYERS) as [TileLayerKey, (typeof TILE_LAYERS)[TileLayerKey]][]).map(
@@ -411,7 +411,7 @@ export function MapaTab() {
             </div>
 
             {/* Botões de controle */}
-            <div className="absolute bottom-8 right-3 z-[1000] flex flex-col gap-1">
+            <div className="absolute bottom-8 right-3 z-1000 flex flex-col gap-1">
               <button
                 type="button"
                 title={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
@@ -431,7 +431,7 @@ export function MapaTab() {
             </div>
 
             {filtrados.length === 0 && (
-              <div className="absolute inset-0 z-[999] flex items-center justify-center pointer-events-none">
+              <div className="absolute inset-0 z-999 flex items-center justify-center pointer-events-none">
                 <div className="bg-background/90 backdrop-blur-sm border rounded-lg px-5 py-4 text-center shadow-md">
                   <MapPin className="h-8 w-8 mx-auto mb-2 opacity-40 text-muted-foreground" />
                   <p className="text-sm font-medium">Nenhum projeto com este status</p>
@@ -442,7 +442,7 @@ export function MapaTab() {
 
             <Suspense
               fallback={
-                <div className="absolute inset-0 z-[500] flex items-center justify-center">
+                <div className="absolute inset-0 z-500 flex items-center justify-center">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               }

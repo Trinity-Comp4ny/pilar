@@ -93,7 +93,7 @@ function StatusDistributionBar({ grupo }: { grupo: DisciplinaAgrupada }) {
   if (total === 0) return null;
 
   const segments = [
-    { count: grupo.totalConcluido, color: "bg-positive/100", label: "Concluído" },
+    { count: grupo.totalConcluido, color: "bg-positive", label: "Concluído" },
     { count: grupo.totalEmAndamento, color: "bg-status-progress", label: "Em Andamento" },
     { count: grupo.totalPendente, color: "bg-status-planning", label: "Pendente" },
     { count: grupo.totalNaoIniciado, color: "bg-gray-300", label: "Não Iniciado" },
@@ -395,7 +395,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                   <div className="flex items-center gap-3">
                     <ChevronDown
                       className={cn(
-                        "h-4 w-4 text-muted-foreground flex-shrink-0 transition-transform",
+                        "h-4 w-4 text-muted-foreground shrink-0 transition-transform",
                         !isExpanded && "-rotate-90"
                       )}
                     />
@@ -423,7 +423,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                     </div>
 
                     {/* Status distribution bar + counts */}
-                    <div className="hidden sm:flex items-center gap-3 flex-shrink-0">
+                    <div className="hidden sm:flex items-center gap-3 shrink-0">
                       <StatusDistributionBar grupo={grupo} />
                       <div className="flex items-center gap-1.5">
                         {grupo.totalConcluido > 0 && (
@@ -501,7 +501,10 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                                   <>
                                     <span className="text-muted-foreground/30">·</span>
                                     <span
-                                      className={cn("flex items-center gap-1", atrasada && "text-danger-mid font-medium")}
+                                      className={cn(
+                                        "flex items-center gap-1",
+                                        atrasada && "text-danger-mid font-medium"
+                                      )}
                                     >
                                       <Calendar className="h-3 w-3" />
                                       Prev: {formatDateShort(disciplina.data_previsao)}
@@ -517,7 +520,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-2 pl-7 sm:pl-0 flex-shrink-0">
+                            <div className="flex items-center gap-2 pl-7 sm:pl-0 shrink-0">
                               {getStatusBadge(disciplina.status)}
                               {atrasada && dlStatus && (
                                 <Badge variant="destructive" className="text-[10px] gap-0.5">

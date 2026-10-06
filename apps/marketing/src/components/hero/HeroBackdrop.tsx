@@ -13,7 +13,9 @@ export function HeroBackdrop({ variante = "hero" }: { variante?: "hero" | "carta
 
   return (
     <div
-      className={cartao ? "absolute inset-0 overflow-hidden" : "absolute inset-x-0 top-0 h-[720px] md:h-[860px] overflow-hidden"}
+      className={
+        cartao ? "absolute inset-0 overflow-hidden" : "absolute inset-x-0 top-0 h-[720px] md:h-[860px] overflow-hidden"
+      }
       aria-hidden="true"
     >
       <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1440 860" preserveAspectRatio="xMidYMax slice">
@@ -80,12 +82,18 @@ export function HeroBackdrop({ variante = "hero" }: { variante?: "hero" | "carta
             fill="url(#morroPerto)"
             opacity={cartao ? 0.26 : 0.72}
           />
-          <rect width="1440" height="860" fill="url(#trama)" mask="url(#mascaraTrama)" style={{ mixBlendMode: "screen" }} />
+          <rect
+            width="1440"
+            height="860"
+            fill="url(#trama)"
+            mask="url(#mascaraTrama)"
+            style={{ mixBlendMode: "screen" }}
+          />
         </g>
       </svg>
 
       {/* Fecho em degradê para a cor da página, para não haver linha de corte. */}
-      {!cartao && <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent to-paper" />}
+      {!cartao && <div className="absolute inset-x-0 bottom-0 h-56 bg-linear-to-b from-transparent to-paper" />}
     </div>
   );
 }

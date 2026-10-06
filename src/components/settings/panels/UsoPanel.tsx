@@ -59,7 +59,7 @@ function Medidor({
           </span>
         </div>
         {hasLimit && (
-          <div className="h-2 w-full overflow-hidden rounded-full bg-black/[0.06]">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-black/6">
             <div
               className={
                 "h-full rounded-full transition-all " +
@@ -279,7 +279,7 @@ export function UsoPanel() {
       {can("pessoas") && <EquipeTokensSection />}
 
       {(nearProjetos || !uso.planoNome) && (
-        <Card className="border border-black/5 bg-black/[0.02]">
+        <Card className="border border-black/5 bg-black/2">
           <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-4">
             <div>
               <p className="text-sm font-medium text-ink">
@@ -291,7 +291,7 @@ export function UsoPanel() {
                   : "Assine para liberar o uso completo do Pilar."}
               </p>
             </div>
-            <Button variant="brand" className="rounded-full flex-shrink-0" onClick={() => openSettings("pagamento")}>
+            <Button variant="brand" className="rounded-full shrink-0" onClick={() => openSettings("pagamento")}>
               Ver assinatura <ArrowUpRight size={16} className="ml-1" />
             </Button>
           </CardContent>

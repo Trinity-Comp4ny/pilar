@@ -45,9 +45,7 @@ export function PlanCard({ plan, cycle }: PlanCardProps) {
           <span className="text-4xl font-semibold text-ink">{formatBRL(price)}</span>
           <span className="text-sm text-ink-muted">/mês</span>
         </div>
-        {cycle === "yearly" && (
-          <p className="text-xs text-ink-disabled mt-1">Cobrado {formatBRL(fullPrice)} por ano</p>
-        )}
+        {cycle === "yearly" && <p className="text-xs text-ink-disabled mt-1">Cobrado {formatBRL(fullPrice)} por ano</p>}
         <p className="text-sm text-ink-soft font-medium mt-4">
           {plan.max_usuarios == null ? "Usuários ilimitados" : `Até ${plan.max_usuarios} usuários`}
           {" · "}
@@ -58,7 +56,7 @@ export function PlanCard({ plan, cycle }: PlanCardProps) {
       <ul className="space-y-3 mb-8 flex-1">
         {plan.features.map((feature) => (
           <li key={feature} className="flex items-start gap-3 text-sm text-ink-soft">
-            <Check aria-hidden="true" className="w-4 h-4 text-positive-strong flex-shrink-0 mt-0.5" />
+            <Check aria-hidden="true" className="w-4 h-4 text-positive-strong shrink-0 mt-0.5" />
             <span>{FEATURE_LABEL[feature] ?? feature}</span>
           </li>
         ))}

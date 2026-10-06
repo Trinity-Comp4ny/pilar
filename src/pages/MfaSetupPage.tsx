@@ -80,7 +80,7 @@ function OtpInput({ value, onChange, disabled }: { value: string; onChange: (v: 
           onKeyDown={(e) => handleKeyDown(i, e)}
           onPaste={handlePaste}
           onFocus={(e) => e.target.select()}
-          className="w-11 h-14 text-center text-xl font-semibold border border-paper-border rounded-lg bg-paper-alt focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand disabled:opacity-50 transition-colors text-ink"
+          className="w-11 h-14 text-center text-xl font-semibold border border-paper-border rounded-lg bg-paper-alt focus:outline-hidden focus:ring-2 focus:ring-brand/40 focus:border-brand disabled:opacity-50 transition-colors text-ink"
         />
       ))}
     </div>
@@ -305,19 +305,19 @@ export default function MfaSetupPage() {
                   <p className="text-sm font-semibold text-ink">No app autenticador:</p>
                   <ol className="space-y-2 text-sm text-ink-soft">
                     <li className="flex items-start gap-2">
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand text-ink text-xs font-bold flex items-center justify-center mt-0.5">
+                      <span className="shrink-0 w-5 h-5 rounded-full bg-brand text-ink text-xs font-bold flex items-center justify-center mt-0.5">
                         1
                       </span>
                       Abra o app no celular
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand text-ink text-xs font-bold flex items-center justify-center mt-0.5">
+                      <span className="shrink-0 w-5 h-5 rounded-full bg-brand text-ink text-xs font-bold flex items-center justify-center mt-0.5">
                         2
                       </span>
                       Toque no botão <strong className="text-ink">+</strong> ou "Adicionar conta"
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand text-ink text-xs font-bold flex items-center justify-center mt-0.5">
+                      <span className="shrink-0 w-5 h-5 rounded-full bg-brand text-ink text-xs font-bold flex items-center justify-center mt-0.5">
                         3
                       </span>
                       Selecione <strong className="text-ink">"Escanear QR Code"</strong>
@@ -326,7 +326,7 @@ export default function MfaSetupPage() {
                 </div>
 
                 <div className="rounded-xl border border-danger-mid-border bg-danger-soft px-4 py-3 flex items-start gap-3">
-                  <AlertCircle className="h-4 w-4 text-danger-mid flex-shrink-0 mt-0.5" />
+                  <AlertCircle className="h-4 w-4 text-danger-mid shrink-0 mt-0.5" />
                   <p className="text-xs text-danger-strong">
                     <strong>Não abra a câmera padrão do celular.</strong> O QR Code só funciona dentro do app
                     autenticador.
@@ -502,7 +502,7 @@ export default function MfaSetupPage() {
             style={{ animationDuration: "20s" }}
           />
           <div className="absolute inset-0 bg-black/20" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-black/10" />
         </div>
 
         <div className="relative z-10 flex flex-col justify-between h-full w-full p-16 text-white">

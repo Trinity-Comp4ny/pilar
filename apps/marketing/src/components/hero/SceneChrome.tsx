@@ -85,7 +85,7 @@ export function AppSidebar({ ato }: { ato: number }) {
 
       <div className="px-3 pb-3 flex-1 overflow-hidden">
         {/* Seletor de módulo: troca junto com a tela. */}
-        <div className="flex items-center gap-2 rounded-full border border-black/10 bg-black/[0.03] px-3 py-2 mb-3">
+        <div className="flex items-center gap-2 rounded-full border border-black/10 bg-black/3 px-3 py-2 mb-3">
           <IconeModulo className="w-[15px] h-[15px] text-ink shrink-0" strokeWidth={1.5} />
           <m.span
             key={modulo}
@@ -205,7 +205,7 @@ export function PageHeader({
       </h3>
 
       {busca && (
-        <div className="ml-auto flex items-center gap-2 h-9 w-[290px] rounded-full border border-black/10 bg-black/[0.02] px-3">
+        <div className="ml-auto flex items-center gap-2 h-9 w-[290px] rounded-full border border-black/10 bg-black/2 px-3">
           <Search className="w-3.5 h-3.5 text-black/30 shrink-0" strokeWidth={1.6} />
           <span className="text-[12px] text-black/60 truncate">{busca}</span>
         </div>

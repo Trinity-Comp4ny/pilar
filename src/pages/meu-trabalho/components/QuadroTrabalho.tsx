@@ -104,7 +104,7 @@ export function QuadroTrabalho({ itens, onAbrir, onPrioridade, onExcluir, onMove
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                     className={cn(
-                      "flex min-h-[3rem] flex-1 flex-col gap-2 rounded-xl bg-muted/40 p-2 transition-colors",
+                      "flex min-h-12 flex-1 flex-col gap-2 rounded-xl bg-muted/40 p-2 transition-colors",
                       snapshot.isDraggingOver && "bg-brand/5 ring-2 ring-brand/40"
                     )}
                   >

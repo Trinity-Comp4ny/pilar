@@ -515,7 +515,7 @@ export default function ComprarTokens() {
                 { icon: Mail, text: "Recibo enviado por email" },
               ].map(({ icon: Icon, text }) => (
                 <div key={text} className="flex items-center gap-2 text-xs text-ink-muted">
-                  <Icon className="w-3.5 h-3.5 text-foreground flex-shrink-0" />
+                  <Icon className="w-3.5 h-3.5 text-foreground shrink-0" />
                   {text}
                 </div>
               ))}

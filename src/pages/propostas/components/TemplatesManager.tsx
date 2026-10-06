@@ -129,9 +129,7 @@ export function TemplatesManager() {
       <CardContent className="p-4 space-y-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2 min-w-0">
-            <FileText
-              className={`h-8 w-8 flex-shrink-0 ${t.tipo === "contrato" ? "text-purple-500" : "text-blue-500"}`}
-            />
+            <FileText className={`h-8 w-8 shrink-0 ${t.tipo === "contrato" ? "text-purple-500" : "text-blue-500"}`} />
             <div className="min-w-0">
               <p className="text-sm font-medium truncate">{t.nome}</p>
               {t.descricao && <p className="text-xs text-muted-foreground truncate">{t.descricao}</p>}
@@ -143,7 +141,7 @@ export function TemplatesManager() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-danger-mid flex-shrink-0"
+            className="h-8 w-8 text-danger-mid shrink-0"
             onClick={() => setDeleteId(t.id)}
             aria-label="Excluir template"
           >
@@ -255,7 +253,7 @@ export function TemplatesManager() {
         }}
       >
         <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
-          <DialogHeader className="flex-shrink-0">
+          <DialogHeader className="shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <FileText
                 className={`h-4 w-4 ${previewTemplate?.tipo === "contrato" ? "text-purple-500" : "text-blue-500"}`}
@@ -298,7 +296,7 @@ export function TemplatesManager() {
           </div>
 
           {previewTemplate && previewHtml && (
-            <div className="flex-shrink-0 pt-2 border-t">
+            <div className="shrink-0 pt-2 border-t">
               <div className="flex flex-wrap gap-1">
                 {previewTemplate.variaveis.map((v) => (
                   <Badge

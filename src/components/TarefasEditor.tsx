@@ -59,7 +59,7 @@ export function TarefasEditor({ value, onChange, pessoas }: TarefasEditorProps) 
     <div className="space-y-1">
       {value.map((item, index) => (
         <div key={index} className="flex items-center gap-2 rounded px-1 py-1 hover:bg-muted/60">
-          <span className="h-[15px] w-[15px] flex-shrink-0 rounded border-[1.5px] border-dashed border-status-unknown" />
+          <span className="h-[15px] w-[15px] shrink-0 rounded border-[1.5px] border-dashed border-status-unknown" />
           <Input
             value={item.texto}
             onChange={(e) => updateItem(index, { texto: e.target.value })}
@@ -72,7 +72,7 @@ export function TarefasEditor({ value, onChange, pessoas }: TarefasEditorProps) 
             onChange={(ids) => updateResponsaveis(index, ids)}
             emptyLabel="Responsável da tarefa"
           />
-          <div className="flex flex-shrink-0 items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             <Input
               type="number"
               min={0}
@@ -87,7 +87,7 @@ export function TarefasEditor({ value, onChange, pessoas }: TarefasEditorProps) 
           <button
             type="button"
             onClick={() => removeItem(index)}
-            className="flex-shrink-0 text-muted-foreground hover:text-danger-mid"
+            className="shrink-0 text-muted-foreground hover:text-danger-mid"
             aria-label={`Remover tarefa ${item.texto}`}
           >
             <X className="h-3.5 w-3.5" />
@@ -95,7 +95,7 @@ export function TarefasEditor({ value, onChange, pessoas }: TarefasEditorProps) 
         </div>
       ))}
       <div className="flex items-center gap-2 px-1 py-1">
-        <span className="h-[15px] w-[15px] flex-shrink-0 rounded border-[1.5px] border-dashed border-border opacity-50" />
+        <span className="h-[15px] w-[15px] shrink-0 rounded border-[1.5px] border-dashed border-border opacity-50" />
         <Input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}

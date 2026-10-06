@@ -1,12 +1,7 @@
 import { useMemo, useState } from "react";
 import { Sparkles, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  applyFeatureToggle,
-  FEATURES,
-  type CompanyFeatures,
-  type FeatureDefinition,
-} from "@/lib/features";
+import { applyFeatureToggle, FEATURES, type CompanyFeatures, type FeatureDefinition } from "@/lib/features";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -34,12 +29,7 @@ export type CompanyFeatureTogglesProps = {
  * Timesheet). Módulo maduro (Financeiro, Projetos, Obras...) não aparece mais
  * aqui: é universal, toda empresa já tem, sem toggle. Ver ADR 0026.
  */
-export function CompanyFeatureToggles({
-  value,
-  onChange,
-  className,
-  disabled = false,
-}: CompanyFeatureTogglesProps) {
+export function CompanyFeatureToggles({ value, onChange, className, disabled = false }: CompanyFeatureTogglesProps) {
   const [pendingDisable, setPendingDisable] = useState<FeatureDefinition | null>(null);
 
   const earlyAccessFeatures = useMemo(() => FEATURES.filter((f) => !f.universal), []);
@@ -102,8 +92,7 @@ export function CompanyFeatureToggles({
               Desativar {pendingDisable?.label}?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Todo mundo nesta empresa perde o acesso ao módulo na hora. Você pode reativar depois, sem perda de
-              dados.
+              Todo mundo nesta empresa perde o acesso ao módulo na hora. Você pode reativar depois, sem perda de dados.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -141,7 +130,7 @@ function EarlyAccessRow({ feature, enabled, onToggle, isLast, disabled = false }
       <div className="flex min-w-0 items-start gap-3">
         <div
           className={cn(
-            "flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full",
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
             enabled ? "bg-brand/10" : "bg-black/5"
           )}
         >

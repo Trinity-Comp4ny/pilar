@@ -74,7 +74,7 @@ export function RotatingWord({ palavras, intervalMs = 2600, atraso = 0 }: Rotati
       <span
         ref={espelho}
         aria-hidden="true"
-        className="absolute -left-[9999px] italic whitespace-nowrap pointer-events-none"
+        className="absolute left-[-9999px] italic whitespace-nowrap pointer-events-none"
       >
         {atual}
       </span>
