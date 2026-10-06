@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CalendarClock, CalendarDays, LayoutGrid, List, ListFilter, Plus } from "lucide-react";
@@ -27,6 +27,7 @@ import {
   useProjetosLite,
   useSetDisciplinaStatus,
   useTarefaMutations,
+  useTarefaPorId,
   type TarefaInput,
   type TarefaItem,
 } from "./hooks";
@@ -290,6 +291,39 @@ export default function MeuTrabalho() {
   const [etapaInicial, setEtapaInicial] = useState<string | null>(null);
   const [aExcluir, setAExcluir] = useState<ItemTrabalho | null>(null);
 
+  // Link de notificação (spec 103): ?tarefa=<id>[&comentario=<id>] abre a tarefa,
+  // mesmo fora do filtro atual da lista, e destaca o comentário.
+  const tarefaDoLink = searchParams.get("tarefa");
+  const comentarioDoLink = searchParams.get("comentario");
+  const tarefaLink = useTarefaPorId(tarefaDoLink);
+
+  const limparLink = () =>
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("tarefa");
+        next.delete("comentario");
+        return next;
+      },
+      { replace: true }
+    );
+
+  // Aberta pelo link enquanto o parâmetro estiver na URL; fechar limpa o parâmetro.
+  const tarefaDoLinkAberta = tarefaDoLink ? (tarefaLink.data ?? null) : null;
+  const tarefaNoDialog = tarefaDoLinkAberta ?? editando;
+
+  useEffect(() => {
+    if (!tarefaDoLink || !tarefaLink.isFetched || tarefaLink.data) return;
+    toast.error("Você não tem acesso a esta tarefa.", { description: "Peça ao responsável para te incluir." });
+    limparLink();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tarefaDoLink, tarefaLink.isFetched, tarefaLink.data]);
+
+  const onDialogOpenChange = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open && tarefaDoLink) limparLink();
+  };
+
   // Nova tarefa: sem etapa (cai na âncora "A fazer") pelo botão do topo, ou já
   // na coluna clicada quando vem do "+" de um grupo da lista.
   const abrirNova = (etapaId?: string) => {
@@ -304,7 +338,7 @@ export default function MeuTrabalho() {
       setEtapaInicial(null);
       setDialogOpen(true);
     } else if (item.tipo === "disciplina" && item.projetoId) {
-      navigate(`/projetos/${item.projetoId}`);
+      navigate(`/projetos/${item.projetoId}?disciplina=${item.id}`);
     }
   };
 
@@ -320,25 +354,29 @@ export default function MeuTrabalho() {
     }
   };
 
-  const salvarTarefa = async (input: TarefaInput) => {
+  const salvarTarefa = async (input: TarefaInput): Promise<string | null> => {
     try {
-      if (editando) {
-        await atualizar.mutateAsync({ id: editando.id, input });
+      let id: string;
+      if (tarefaNoDialog) {
+        await atualizar.mutateAsync({ id: tarefaNoDialog.id, input });
+        id = tarefaNoDialog.id;
         toast.success("Tarefa atualizada.");
       } else {
         // Nova tarefa nasce na primeira coluna (âncora "A fazer") e, se o campo
         // de responsável vier vazio, atribuída a quem está criando.
         const etapaPadrao = (etapas ?? []).find((e) => e.bucket === "a_fazer") ?? (etapas ?? [])[0];
-        await criar.mutateAsync({
+        id = await criar.mutateAsync({
           ...input,
           etapa_id: input.etapa_id ?? etapaPadrao?.id ?? null,
           responsaveis: input.responsaveis ?? (minhaPessoaId ? [minhaPessoaId] : []),
         });
         toast.success("Tarefa criada.");
       }
-      setDialogOpen(false);
+      onDialogOpenChange(false);
+      return id;
     } catch {
       toast.error("Não deu para salvar a tarefa. Tente de novo.");
+      return null;
     }
   };
 
@@ -532,9 +570,9 @@ export default function MeuTrabalho() {
       )}
 
       <TarefaDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        tarefa={editando}
+        open={dialogOpen || !!tarefaDoLinkAberta}
+        onOpenChange={onDialogOpenChange}
+        tarefa={tarefaNoDialog}
         pessoas={pessoas ?? []}
         projetos={projetos ?? []}
         etapas={etapas ?? []}
@@ -544,6 +582,7 @@ export default function MeuTrabalho() {
         autorNome={autorNome}
         onSave={salvarTarefa}
         saving={criar.isPending || atualizar.isPending}
+        comentarioDestacado={comentarioDoLink}
       />
 
       <ConfirmDialog
