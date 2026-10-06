@@ -11,6 +11,19 @@ Regras de manutenção:
 
 ---
 
+## 2026-10-06 · Notificação de pessoa volta; ordem das disciplinas fica com o fluxo
+
+**Decisão:** toda ação que coloca trabalho no colo de alguém notifica essa pessoa: virar
+responsável de disciplina ou tarefa, ter a etapa liberada porque a anterior concluiu, ser
+mencionado num comentário (com link direto para a conversa). O aviso "você é responsável"
+volta, apesar da remoção de 01/09 por 0% de leitura: aquela medição foi feita com o sino de
+todo membro comum afogado em alerta financeiro indevido (corrigido no PR #511). Ordenar ou
+arrastar disciplinas e cards **não** entra: a ordem é a do fluxo definido nas disciplinas e
+não deve ser mexida à mão. Origem: VRZ (Larissa marcada em dez disciplinas sem aviso).
+Virou [SPEC 102](../specs/102-notificacoes-de-pessoas.md) e
+[SPEC 103](../specs/103-conversa-no-lugar-certo.md). Supera a remoção de `disciplina_atribuida`
+em `20260894000000`.
+
 ## 2026-09-08 · Cadastro fica aberto; o trial sobe por nível de confiança (Bronze, Prata, Ouro)
 
 **Decisão:** o cadastro self-serve continua aberto no lançamento (outubro/2026). Não haverá
