@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 interface PageLayoutProps {
   children: React.ReactNode;
+  standalone?: boolean;
   header?: React.ReactNode;
   sidebar?: React.ReactNode;
   className?: string;
@@ -15,7 +16,7 @@ interface PageLayoutProps {
 // O flag vive no módulo para não roubar o foco no primeiro carregamento do app.
 let jaHouveNavegacao = false;
 
-export function PageLayout({ children, header, sidebar, className, containerClassName }: PageLayoutProps) {
+export function PageLayout({ children, header, sidebar, className, containerClassName, standalone }: PageLayoutProps) {
   const { state, isMobile } = useSidebar();
   const mainRef = useRef<HTMLElement>(null);
   const anuncioRef = useRef<HTMLParagraphElement>(null);
@@ -36,14 +37,14 @@ export function PageLayout({ children, header, sidebar, className, containerClas
   return (
     <div
       className="fixed top-0 right-0 bottom-0 bg-background z-40 overflow-hidden flex flex-col transition-[left] duration-300 ease-in-out"
-      style={{ left: isMobile ? "0px" : state === "collapsed" ? "64px" : "240px" }}
+      style={{ left: standalone || isMobile ? "0px" : state === "collapsed" ? "64px" : "240px" }}
     >
       {header && (
         <div className="sticky top-0 z-20 w-full bg-background border-b">
           {header}
           {/* Chip-nav do módulo ativo (spec 097 / ADR 0040): só existe em mobile e
               dentro de um dos 3 pilares; ModuleChipNav se auto-oculta no resto. */}
-          <ModuleChipNav />
+          {!standalone && <ModuleChipNav />}
         </div>
       )}
 

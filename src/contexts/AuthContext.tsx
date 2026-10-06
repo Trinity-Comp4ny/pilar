@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,9 +62,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [mfaCurrentLevel, setMfaCurrentLevel] = useState<MfaLevel>("aal1");
   const [mfaNextLevel, setMfaNextLevel] = useState<MfaLevel>("aal1");
   const [hasVerifiedMfaFactor, setHasVerifiedMfaFactor] = useState(false);
+  const activeUserId = useRef<string | null>(null);
+  const profileRequest = useRef(0);
 
   const fetchProfile = useCallback(async (userId: string) => {
-    const { data, error } = await supabase.from("profiles").select("*, empresas(*)").eq("id", userId).single();
+    const request = ++profileRequest.current;
+    let data;
+    let error;
+    try {
+      ({ data, error } = await supabase.from("profiles").select("*, empresas(*)").eq("id", userId).single());
+    } catch (err) {
+      if (activeUserId.current === userId && request === profileRequest.current) {
+        setProfileError(true);
+        monitoring.captureException(err, { context: "fetchProfile", userId });
+      }
+      return;
+    }
+    if (activeUserId.current !== userId || request !== profileRequest.current) return;
     if (error) {
       // "No rows" (PGRST116) é esperado (usuário sem profile ainda, ex.: durante
       // o onboarding). Qualquer outro erro é de infra: não engolir e não apagar
@@ -97,11 +111,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshMfaLevel = useCallback(async () => {
+    const userId = activeUserId.current;
     const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    const { data: factorsData } = await supabase.auth.mfa.listFactors();
+    if (activeUserId.current !== userId) return;
     setMfaCurrentLevel((data?.currentLevel as MfaLevel) ?? "aal1");
     setMfaNextLevel((data?.nextLevel as MfaLevel) ?? "aal1");
-
-    const { data: factorsData } = await supabase.auth.mfa.listFactors();
     setHasVerifiedMfaFactor(!!factorsData?.totp?.some((f) => f.status === "verified"));
   }, []);
 
@@ -120,6 +135,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(STORAGE_KEYS.REMEMBER_ME);
     // Sem isto, o próximo login (mesmo de outro usuário) reabre a conversa de agentes de quem saiu.
     localStorage.removeItem(STORAGE_KEYS.CHAT_SNAPSHOT);
+    activeUserId.current = null;
+    profileRequest.current++;
     setUser(null);
     setProfile(null);
     setProfileError(false);
@@ -132,80 +149,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let authEventReceived = false;
+    let generation = 0;
+
+    const prepareSession = (nextUser: User | null) => {
+      const currentGeneration = ++generation;
+      if (activeUserId.current !== (nextUser?.id ?? null)) {
+        activeUserId.current = nextUser?.id ?? null;
+        profileRequest.current++;
+        setProfile(null);
+        setProfileError(false);
+        setMfaCurrentLevel("aal1");
+        setMfaNextLevel("aal1");
+        setHasVerifiedMfaFactor(false);
+        setLoading(!!nextUser);
+      }
+      setUser(nextUser);
+      setLoginHintCookie(!!nextUser);
+      if (!nextUser) setLoading(false);
+      return currentGeneration;
+    };
+
+    const hydrate = async (nextUser: User, currentGeneration: number) => {
+      if (!mounted || generation !== currentGeneration) return;
+      try {
+        await fetchProfile(nextUser.id);
+        if (!mounted || generation !== currentGeneration) return;
+        await refreshMfaLevel();
+        void syncConsentForUser(nextUser.id);
+      } catch (error) {
+        monitoring.captureException(error, { context: "auth-session-load", userId: nextUser.id });
+      } finally {
+        if (mounted && generation === currentGeneration) setLoading(false);
+      }
+    };
 
     const init = async () => {
       try {
         const {
           data: { session },
+          error,
         } = await supabase.auth.getSession();
-
-        if (!mounted) return;
-
-        if (!session) {
-          setUser(null);
-          setProfile(null);
-          setLoginHintCookie(false);
-          return;
+        if (!mounted || authEventReceived) return;
+        if (error) throw error;
+        const currentGeneration = prepareSession(session?.user ?? null);
+        if (session) await hydrate(session.user, currentGeneration);
+      } catch (error) {
+        if (mounted && !authEventReceived) {
+          monitoring.captureException(error, { context: "auth-session-init" });
+          prepareSession(null);
         }
-
-        setUser(session.user);
-        setLoginHintCookie(true);
-        await fetchProfile(session.user.id);
-        // refreshMfaLevel é seguro aqui: initializePromise já resolveu
-        await refreshMfaLevel();
-        // Preferência de cookie da conta vence o cookie do navegador (ADR 0032).
-        // Não bloqueia o boot: falhar aqui só mantém o fail-closed do analytics.
-        void syncConsentForUser(session.user.id);
-      } catch {
-        if (mounted) {
-          setUser(null);
-          setProfile(null);
-        }
-      } finally {
-        if (mounted) setLoading(false);
       }
     };
 
-    init();
-
+    void init();
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return;
-
-      if (!session) {
-        setUser(null);
-        setProfile(null);
-        setMfaCurrentLevel("aal1");
-        setMfaNextLevel("aal1");
-        setHasVerifiedMfaFactor(false);
-        setLoading(false);
-        setLoginHintCookie(false);
-        return;
-      }
-
-      setUser(session.user);
-      setLoginHintCookie(true);
-      // _notifyAllSubscribers awaita este callback de dentro do lock de
-      // initializePromise. Qualquer supabase.from() ou supabase.auth.* aqui
-      // chama getSession() → tenta o mesmo lock → deadlock infinito.
-      // setTimeout(0) escapa para a macrotask queue, após o lock ser liberado.
-      setTimeout(() => {
-        if (!mounted) return;
-        void syncConsentForUser(session.user.id);
-        fetchProfile(session.user.id)
-          .then(() => refreshMfaLevel())
-          .catch(() => {
-            /* silencia erros de rede */
-          })
-          .finally(() => {
-            if (mounted) setLoading(false);
-          });
-      }, 0);
+      authEventReceived = true;
+      const currentGeneration = prepareSession(session?.user ?? null);
+      if (!session) return;
+      // A callback roda dentro do lock do Auth. Adiar evita deadlock ao buscar
+      // profile/MFA e mantém loading até a primeira leitura da sessão terminar.
+      setTimeout(() => void hydrate(session.user, currentGeneration), 0);
     });
 
     return () => {
       mounted = false;
+      activeUserId.current = null;
       subscription.unsubscribe();
     };
   }, [fetchProfile, refreshMfaLevel]);

@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import {
   authenticateUser,
@@ -13,9 +12,14 @@ import { adminClient } from "../_shared/admin-auth.ts";
 import { logAction } from "../_shared/audit.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { withSentry } from "../_shared/sentry.ts";
-import { isEmailExistsError } from "../_shared/auth-errors.ts";
+import { checkUserLimit, deliverInvite } from "./delivery.ts";
 
 const log = createLogger("invite-user");
+
+async function sha256(token: string) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
 
 // admin/coordenador/user via UI (ADR 0034). ultra_admin é exclusivo via SQL direto.
 // Roles legados (owner/colaborador/financeiro/marketing/operacional) caem no fallback 'user'.
@@ -95,16 +99,10 @@ serve(
           p_convite_id: convite_id,
         });
         if (regenErr || !newToken) return safeErrorResponse(400, "Falha ao reenviar o convite", req);
-        const { error: resendErr } = await svc.auth.admin.inviteUserByEmail(conv.email, {
-          redirectTo: `${redirectOrigin}/profile-setup`,
-          data: { invite_token: newToken, nome: conv.nome ?? "" },
-        });
-        if (resendErr) {
-          return safeErrorResponse(
-            400,
-            isEmailExistsError(resendErr) ? "Esse e-mail já tem conta no Pilar" : "Falha ao reenviar o convite",
-            req
-          );
+        const delivery = await deliverInvite(svc, conv.email, newToken, conv.nome ?? "", redirectOrigin);
+        if (!delivery.ok) {
+          log.error("resend delivery failed", delivery.error, { actor: user.id });
+          return safeErrorResponse(delivery.status, delivery.message, req);
         }
         await logAction(svc, {
           actorId: user.id,
@@ -118,7 +116,7 @@ serve(
           empresaId: profile.empresa_id,
           req,
         });
-        return jsonResponse({ success: true }, 200, req);
+        return jsonResponse({ success: true, conta_existente: delivery.conta_existente }, 200, req);
       }
 
       const { email, nome, role } = body ?? {};
@@ -146,18 +144,14 @@ serve(
       const maxUsuarios = (limites as { max_usuarios?: number | null } | null)?.max_usuarios ?? null;
 
       if (maxUsuarios !== null) {
-        const { count: activeCount, error: countErr } = await supabaseClient
-          .from("profiles")
-          .select("id", { count: "exact", head: true })
-          .eq("empresa_id", profile.empresa_id)
-          .is("deleted_at", null);
+        const { reached, error: countErr } = await checkUserLimit(supabaseClient, profile.empresa_id, maxUsuarios);
 
         if (countErr) {
           log.error("failed to count active users", countErr, { empresa_id: profile.empresa_id });
           return safeErrorResponse(500, "Erro ao verificar limite de usuários", req);
         }
 
-        if ((activeCount ?? 0) >= maxUsuarios) {
+        if (reached) {
           return safeErrorResponse(
             422,
             `Limite de usuários atingido para o plano atual (${maxUsuarios} usuário${maxUsuarios === 1 ? "" : "s"})`,
@@ -185,35 +179,21 @@ serve(
         return safeErrorResponse(400, conviteError?.message ?? "Falha ao criar convite", req);
       }
 
-      const supabaseAdmin = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-      );
-
-      const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-        redirectTo: `${redirectOrigin}/profile-setup`,
-        data: {
-          invite_token: token,
-          nome: nome || "",
-        },
-      });
-
-      if (inviteError) {
-        log.error("inviteUserByEmail failed", inviteError, { actor: user.id });
-        // create_convite já grava a linha "pendente" antes do e-mail sair. Sem isto, uma
-        // falha de envio deixava a linha órfã pra sempre: nenhum e-mail chegou, mas a UI
-        // seguia mostrando convite pendente e ninguém sabia que precisava reenviar.
-        await svc
-          .from("convites")
-          .update({ usado_em: new Date().toISOString() })
-          .eq("empresa_id", profile.empresa_id)
-          .eq("email", String(email).toLowerCase().trim())
-          .is("usado_em", null);
-        return safeErrorResponse(
-          400,
-          isEmailExistsError(inviteError) ? "Esse e-mail já tem conta no Pilar" : "Falha ao enviar convite",
-          req
-        );
+      const delivery = await deliverInvite(svc, email, token, nome || "", redirectOrigin);
+      if (!delivery.ok) {
+        log.error("invite delivery failed", delivery.error, { actor: user.id });
+        // Falhas no acesso de contas órfãs permanecem reenviáveis. O cleanup
+        // existente continua valendo para contas com profile e outros erros.
+        if (!delivery.preservePending) {
+          const { error: cleanupError } = await svc
+            .from("convites")
+            .update({ usado_em: new Date().toISOString() })
+            .eq("empresa_id", profile.empresa_id)
+            .eq("token_hash", await sha256(token))
+            .is("usado_em", null);
+          if (cleanupError) log.error("invite cleanup failed", cleanupError, { actor: user.id });
+        }
+        return safeErrorResponse(delivery.status, delivery.message, req);
       }
 
       await logAction(svc, {
@@ -229,7 +209,7 @@ serve(
         req,
       });
 
-      return jsonResponse({ success: true, email }, 200, req);
+      return jsonResponse({ success: true, email, conta_existente: delivery.conta_existente }, 200, req);
     } catch (error: unknown) {
       log.error("unexpected error", error);
       return safeErrorResponse(400, "Invalid request", req);
