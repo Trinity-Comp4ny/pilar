@@ -7869,11 +7869,13 @@ export type Database = {
         Returns: Json
       }
       _cron_secret: { Args: { p_name: string }; Returns: string }
+      _disciplina_liberada: { Args: { p_disciplina: string }; Returns: boolean }
       _feature_catalog: { Args: never; Returns: string[] }
       _finance_display_date: {
         Args: { p_efetivacao: string; p_status: string; p_vencimento: string }
         Returns: string
       }
+      _nome_do_ator: { Args: { p_profile: string }; Returns: string }
       _notif_gestao: { Args: { p_empresa: string }; Returns: string[] }
       _notif_gestao_operacional: {
         Args: { p_empresa: string }
@@ -7886,6 +7888,14 @@ export type Database = {
       _notif_resp_projeto: { Args: { p_projeto: string }; Returns: string[] }
       _notif_resp_tarefa: { Args: { p_tarefa: string }; Returns: string[] }
       _notif_ve_financeiro: { Args: { p_empresa: string }; Returns: string[] }
+      _notificar_proxima_etapa: {
+        Args: { p_ator: string; p_disciplina: string }
+        Returns: number
+      }
+      _notificar_tarefa_atribuida: {
+        Args: { p_pessoa: string; p_tarefa: string }
+        Returns: undefined
+      }
       _portal_create_account: {
         Args: {
           p_cliente_id: string
@@ -8819,6 +8829,7 @@ export type Database = {
       }
       rpc_notificar_mencao: {
         Args: {
+          p_comentario_id?: string
           p_entidade_id: string
           p_entidade_tipo: string
           p_mencionados: string[]
@@ -8873,6 +8884,18 @@ export type Database = {
       rpc_pausar_disciplina: {
         Args: { p_disciplina_id: string; p_motivo: string }
         Returns: string
+      }
+      rpc_perfil_publico: {
+        Args: { p_pessoa_id: string }
+        Returns: {
+          avatar_url: string
+          cargo: string
+          disciplinas: Json
+          email: string
+          id: string
+          nome: string
+          tem_conta: boolean
+        }[]
       }
       rpc_projeto_rentabilidade: {
         Args: { p_projeto_id: string }
