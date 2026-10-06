@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -110,7 +111,12 @@ export function LeadFormDialog({
       setCnpjError("");
     }
 
-    if (hasError) return;
+    // O erro inline fica no topo do formulário; com o scroll nas notas ele
+    // some da tela e o Salvar parece não fazer nada.
+    if (hasError) {
+      toast.error("Revise os campos destacados", { description: "Nome, e-mail ou CNPJ precisam de ajuste." });
+      return;
+    }
     onSubmit();
   };
 

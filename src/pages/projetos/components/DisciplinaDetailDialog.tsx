@@ -49,6 +49,7 @@ import { useDisciplinaRevisoes, revisaoAberta } from "@/hooks/useDisciplinaRevis
 import { FormDialog } from "@/components/FormDialog";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { notificarMencao } from "@/lib/notificarMencao";
+import { ComentarioCard } from "@/components/atividades/ComentarioCard";
 
 interface DisciplinaDetailDialogProps {
   open: boolean;
@@ -66,6 +67,8 @@ interface DisciplinaDetailDialogProps {
   onUpdateHorasEstimadas?: (n: number) => void;
   onUpdateHorasRealizadas?: (n: number) => void;
   autorNome?: string;
+  /** Comentário de destino de um link de notificação: rola até ele e destaca (spec 103). */
+  comentarioDestacado?: string | null;
   /** Fallback pré-save (chat/criação): observação em texto simples. */
   newObservation?: string;
   onNewObservationChange?: (val: string) => void;
@@ -141,6 +144,7 @@ function DisciplinaDetailBody({
   onUpdateHorasEstimadas,
   onUpdateHorasRealizadas,
   autorNome = "Usuário",
+  comentarioDestacado,
   newObservation,
   onNewObservationChange,
   onAddObservation,
@@ -222,17 +226,18 @@ function DisciplinaDetailBody({
 
   const adicionarComentario = async (texto: string, mencionados: string[]) => {
     if (!onUpdateComentarios) return;
+    const id = crypto.randomUUID();
     await onUpdateComentarios([
       ...comentarios,
       {
-        id: crypto.randomUUID(),
+        id,
         texto,
         autor: autorNome,
         data: new Date().toISOString(),
         mencionados: mencionados.length ? mencionados : undefined,
       },
     ]);
-    if (disciplina.id) await notificarMencao("disciplina", disciplina.id, mencionados, texto);
+    if (disciplina.id) await notificarMencao("disciplina", disciplina.id, mencionados, texto, id);
   };
 
   return (
@@ -622,13 +627,12 @@ function DisciplinaDetailBody({
                     <p className="py-8 text-center text-xs text-muted-foreground">Nenhum comentário ainda</p>
                   ) : (
                     comentarios.map((c) => (
-                      <div key={c.id} className="rounded-lg border bg-background p-3 text-sm shadow-sm">
-                        <p className="whitespace-pre-wrap text-foreground">{c.texto}</p>
-                        <div className="mt-1.5 flex justify-between text-[10px] text-muted-foreground">
-                          <span>{c.autor}</span>
-                          <span>{new Date(c.data).toLocaleString("pt-BR")}</span>
-                        </div>
-                      </div>
+                      <ComentarioCard
+                        key={c.id}
+                        comentario={c}
+                        pessoas={pessoas}
+                        destacado={c.id === comentarioDestacado}
+                      />
                     ))
                   )}
                 </div>

@@ -147,6 +147,9 @@ export default function Leads() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  // Lead em edição, separado do selectedLead (detalhe): o "Editar" do menu do
+  // card abre o formulário sem passar pelo detalhe.
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [formData, setFormData] = useState<LeadFormData>(EMPTY_LEAD_FORM);
   const [editFormData, setEditFormData] = useState<LeadFormData>(EMPTY_LEAD_FORM);
   const [pendingDrop, setPendingDrop] = useState<{ leadId: string; newStatus: Lead["status"] } | null>(null);
@@ -286,10 +289,13 @@ export default function Leads() {
   };
 
   const handleEditSubmit = () => {
-    if (!selectedLead) return;
+    if (!editingLead) {
+      toast.error("Não foi possível salvar", { description: "Feche o formulário e abra o lead de novo." });
+      return;
+    }
     if (editFormData.email) {
       const emailLower = editFormData.email.toLowerCase();
-      const duplicate = leads.find((l) => (l.email ?? "").toLowerCase() === emailLower && l.id !== selectedLead.id);
+      const duplicate = leads.find((l) => (l.email ?? "").toLowerCase() === emailLower && l.id !== editingLead.id);
       if (duplicate) {
         toast.error("Email duplicado", { description: "Já existe um lead com este email." });
         return;
@@ -297,22 +303,26 @@ export default function Leads() {
     }
     const payload = {
       nome: editFormData.nome,
-      sobrenome: editFormData.sobrenome || undefined,
+      sobrenome: editFormData.sobrenome || null,
       email: editFormData.email,
       contato: editFormData.contato,
       origem: editFormData.origem,
+      // Vazio fica de fora (não null): quem não vê valores recebe o campo em
+      // branco (leads_safe) e não pode apagar o valor real ao salvar.
       valor_estimado: editFormData.valor_estimado ? parseCurrencyString(editFormData.valor_estimado) : undefined,
-      empresa_lead: editFormData.empresa_lead || undefined,
-      cnpj: editFormData.cnpj || undefined,
-      previsao_fechamento: editFormData.previsao_fechamento || undefined,
-      responsavel_id: editFormData.responsavel_id || undefined,
-      notas: editFormData.notas || undefined,
+      empresa_lead: editFormData.empresa_lead || null,
+      cnpj: editFormData.cnpj || null,
+      previsao_fechamento: editFormData.previsao_fechamento || null,
+      responsavel_id: editFormData.responsavel_id || null,
+      notas: editFormData.notas || null,
     };
+    const leadId = editingLead.id;
     updateLead.mutate(
-      { id: selectedLead.id, data: payload },
+      { id: leadId, data: payload },
       {
         onSuccess: () => {
-          setSelectedLead({ ...selectedLead, ...payload });
+          setSelectedLead((prev) => (prev?.id === leadId ? ({ ...prev, ...payload } as Lead) : prev));
+          setEditingLead(null);
           setIsEditOpen(false);
         },
       }
@@ -320,6 +330,7 @@ export default function Leads() {
   };
 
   const handleOpenEdit = (lead: Lead) => {
+    setEditingLead(lead);
     setEditFormData({
       nome: lead.nome,
       sobrenome: lead.sobrenome ?? "",

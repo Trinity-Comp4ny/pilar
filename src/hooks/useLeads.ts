@@ -41,6 +41,9 @@ export interface Lead {
   notas?: string;
 }
 
+// Na edição, null limpa o campo; ausente mantém o valor atual.
+export type LeadUpdate = { [K in keyof LeadInsert]?: LeadInsert[K] | null };
+
 export interface LeadInsert {
   nome: string;
   sobrenome?: string;
@@ -289,27 +292,39 @@ export const useConvertLeadToClient = () => {
   });
 };
 
+const LEAD_NAO_GRAVADO =
+  "O lead não foi salvo. Recarregue a página e tente de novo; se continuar, peça acesso ao administrador.";
+
 export const useUpdateLead = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<LeadInsert> }) => {
+    mutationFn: async ({ id, data }: { id: string; data: LeadUpdate }) => {
       const payload: Record<string, unknown> = { ...data };
       // Email vazio vira null para não colidir no índice único por empresa.
-      if ("email" in payload) payload.email = (payload.email as string | undefined)?.trim() || null;
-      const { error } = await supabase
+      if ("email" in payload) payload.email = (payload.email as string | null | undefined)?.trim() || null;
+      const { data: rows, error } = await supabase
         .from("leads")
         .update(payload as never)
-        .eq("id", id);
+        .eq("id", id)
+        .select("id");
       if (error) throw error;
+      // RLS que filtra a linha não devolve erro, só 0 linhas: sem isso o
+      // usuário veria "Lead atualizado" sem nada ter sido gravado.
+      if (!rows?.length) throw new Error(LEAD_NAO_GRAVADO);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       toast.success("Lead atualizado");
     },
     onError: (err: unknown) => {
+      const naoGravado = err instanceof Error && err.message === LEAD_NAO_GRAVADO;
       toast.error("Erro ao atualizar", {
-        description: isDuplicateEmailError(err) ? "Já existe um lead ativo com este email." : getSafeErrorMessage(err),
+        description: naoGravado
+          ? LEAD_NAO_GRAVADO
+          : isDuplicateEmailError(err)
+            ? "Já existe um lead ativo com este email."
+            : getSafeErrorMessage(err),
       });
     },
   });

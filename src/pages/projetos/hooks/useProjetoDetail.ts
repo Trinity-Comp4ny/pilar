@@ -124,8 +124,6 @@ export function useProjetoDetail(id: string | undefined) {
       const dbDisc = dbDisciplinas[idx];
       if (!dbDisc) return;
 
-      const isFinished = newStatus === "Concluído" && dbDisc.status !== "Concluído";
-
       // Prioridade: override explícito do dialog > data_fim_real já gravada > hoje.
       // Permite o usuário registrar entrega passada sem o sistema forçar "hoje".
       const resolvedDataFim =
@@ -142,12 +140,8 @@ export function useProjetoDetail(id: string | undefined) {
           data_fim_real: resolvedDataFim,
         });
         toast.success(`${dbDisc.nome}: ${newStatus}`);
-
-        // Ao concluir, notifica in-app (sino) os responsáveis da próxima etapa do
-        // fluxo — nunca o cliente, que segue avisado só manualmente fora daqui.
-        if (isFinished) {
-          void notifyNextStage(dbDisc.id);
-        }
+        // Aviso de etapa liberada sai do trigger trg_notificar_etapa_liberada
+        // (spec 102), para valer em qualquer tela que conclua a disciplina.
       } catch (err: unknown) {
         monitoring.captureException(err, { context: "handleStatusChange" });
         toast.error("Erro ao atualizar");
@@ -155,19 +149,6 @@ export function useProjetoDetail(id: string | undefined) {
     },
     [projeto, dbDisciplinas, updateStatusMut, toast]
   );
-
-  const notifyNextStage = async (disciplinaId: string) => {
-    try {
-      const { error } = await supabase.rpc("rpc_notificar_proxima_etapa", {
-        p_disciplina_id: disciplinaId,
-      });
-      if (error) {
-        monitoring.captureException(error, { context: "notify-next-stage" });
-      }
-    } catch (err) {
-      monitoring.captureException(err, { context: "notify-next-stage unexpected" });
-    }
-  };
 
   const handleRemoveDisc = useCallback(
     async (idx: number) => {
