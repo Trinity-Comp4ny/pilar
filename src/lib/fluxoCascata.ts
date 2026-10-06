@@ -105,3 +105,74 @@ export function calcularDatasFluxo(
 
   return disciplinas.map((d, i) => porIndice.get(i) ?? { ordem: d.ordem, nome: d.nome });
 }
+
+/** Nome comparável entre fluxo e projeto: sem acento, sem caixa, sem espaço nas pontas. */
+export function normalizarNomeDisciplina(nome: string): string {
+  return nome.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
+}
+
+/** Data padrão da cascata num projeto existente: o maior entre o início do projeto e hoje. */
+export function dataInicioPadraoFluxo(dataInicioProjeto: string | undefined, hoje: string): string {
+  if (!dataInicioProjeto) return hoje;
+  const inicio = dataInicioProjeto.slice(0, 10);
+  return inicio > hoje ? inicio : hoje;
+}
+
+export interface DisciplinaNovaDoFluxo {
+  nome: string;
+  ordem_etapa: number;
+  data_inicio: string | null;
+  data_fim: string | null;
+  checklist_padrao?: FluxoDisciplinaTemplate["checklist_padrao"];
+  responsavel_ids: string[];
+}
+
+export interface DisciplinaEncaixadaNoFluxo {
+  id: string;
+  nome: string;
+  ordem_etapa: number;
+}
+
+export interface PlanoAplicacaoFluxo {
+  novas: DisciplinaNovaDoFluxo[];
+  encaixadas: DisciplinaEncaixadaNoFluxo[];
+}
+
+/**
+ * Aplicar um fluxo num projeto que já tem disciplinas (spec 101). Disciplina do
+ * fluxo que ainda não existe no projeto vira nova, com cascata de datas,
+ * responsáveis e checklist (mesmo resultado do wizard). A que já existe (mesmo
+ * nome normalizado) só ganha a coluna: o andamento dela não é reescrito.
+ * Disciplina do projeto fora do fluxo não aparece no plano (segue avulsa).
+ */
+export function planejarAplicacaoFluxo(
+  fluxo: FluxoDisciplinaTemplate[],
+  existentes: { id: string; nome: string }[],
+  dataInicio: string | undefined
+): PlanoAplicacaoFluxo {
+  const datas = calcularDatasFluxo(fluxo, dataInicio);
+  const existentesPorNome = new Map(existentes.map((d) => [normalizarNomeDisciplina(d.nome), d]));
+  const jaUsadas = new Set<string>();
+  const novas: DisciplinaNovaDoFluxo[] = [];
+  const encaixadas: DisciplinaEncaixadaNoFluxo[] = [];
+
+  fluxo.forEach((d, i) => {
+    const chave = normalizarNomeDisciplina(d.nome);
+    const existente = existentesPorNome.get(chave);
+    if (existente && !jaUsadas.has(existente.id)) {
+      jaUsadas.add(existente.id);
+      encaixadas.push({ id: existente.id, nome: existente.nome, ordem_etapa: d.ordem });
+      return;
+    }
+    novas.push({
+      nome: d.nome,
+      ordem_etapa: d.ordem,
+      data_inicio: datas[i]?.data_inicio ?? null,
+      data_fim: datas[i]?.data_previsao ?? null,
+      checklist_padrao: d.checklist_padrao,
+      responsavel_ids: responsaveisEfetivos(d).ids,
+    });
+  });
+
+  return { novas, encaixadas };
+}
