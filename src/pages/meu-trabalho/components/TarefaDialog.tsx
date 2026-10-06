@@ -25,6 +25,7 @@ import {
 import type { Etapa } from "../useEtapas";
 import type { Comentario, PessoaOpcao, TarefaInput, TarefaItem } from "../hooks";
 import { notificarMencao } from "@/lib/notificarMencao";
+import { ComentarioCard } from "@/components/atividades/ComentarioCard";
 
 const SEM = "__none__";
 
@@ -68,10 +69,13 @@ type Props = {
   podeEscolherResponsavel?: boolean;
   /** Nome de quem assina os comentários novos (a pessoa do usuário). */
   autorNome: string;
-  onSave: (input: TarefaInput) => Promise<void>;
+  /** Devolve o id da tarefa salva (na criação, o id novo) para notificar menções. */
+  onSave: (input: TarefaInput) => Promise<string | null>;
   saving: boolean;
   /** Sem permissão de edição: mostra os detalhes, sem salvar. */
   readOnly?: boolean;
+  /** Comentário de destino de um link de notificação: rola até ele e destaca (spec 103). */
+  comentarioDestacado?: string | null;
 };
 
 /**
@@ -93,6 +97,7 @@ function TarefaFormBody({
   onSave,
   saving,
   readOnly = false,
+  comentarioDestacado,
 }: Omit<Props, "open">) {
   const [titulo, setTitulo] = useState(tarefa?.titulo ?? "");
   const [descricao, setDescricao] = useState(tarefa?.descricao ?? "");
@@ -118,29 +123,30 @@ function TarefaFormBody({
   // Menções de comentários adicionados nesta sessão do dialog, ainda não notificadas: só
   // notifica quando o Salvar do rodapé persistir de fato (comentário de tarefa não salva sozinho
   // como em Projeto/Disciplina), e só as novas — reabrir uma tarefa antiga não deve renotificar.
-  const [pendentesMencao, setPendentesMencao] = useState<{ texto: string; mencionados: string[] }[]>([]);
+  const [pendentesMencao, setPendentesMencao] = useState<{ id: string; texto: string; mencionados: string[] }[]>([]);
 
   const podeSalvar = !readOnly && titulo.trim().length > 0 && !saving;
 
   const adicionarComentario = (texto: string, mencionados: string[]) => {
     const t = texto.trim();
     if (!t) return;
+    const id = crypto.randomUUID();
     setComentarios((prev) => [
       ...prev,
       {
-        id: crypto.randomUUID(),
+        id,
         texto: t,
         autor: autorNome,
         data: new Date().toISOString(),
         mencionados: mencionados.length ? mencionados : undefined,
       },
     ]);
-    if (mencionados.length) setPendentesMencao((prev) => [...prev, { texto: t, mencionados }]);
+    if (mencionados.length) setPendentesMencao((prev) => [...prev, { id, texto: t, mencionados }]);
   };
 
   const salvar = async () => {
     if (!podeSalvar) return;
-    await onSave({
+    const tarefaId = await onSave({
       titulo: titulo.trim(),
       descricao: descricao.trim() || null,
       status: statusDaEtapa(etapaId),
@@ -155,9 +161,9 @@ function TarefaFormBody({
       links,
       comentarios,
     });
-    // Só notifica se a tarefa já existia: numa criação, o id definitivo não volta pro dialog.
-    if (tarefa?.id && pendentesMencao.length) {
-      await Promise.all(pendentesMencao.map((p) => notificarMencao("tarefa", tarefa.id, p.mencionados, p.texto)));
+    // Na criação, o id vem do onSave: a menção escrita antes do primeiro Salvar também avisa.
+    if (tarefaId && pendentesMencao.length) {
+      await Promise.all(pendentesMencao.map((p) => notificarMencao("tarefa", tarefaId, p.mencionados, p.texto, p.id)));
       setPendentesMencao([]);
     }
   };
@@ -317,13 +323,12 @@ function TarefaFormBody({
                 <p className="py-8 text-center text-xs text-muted-foreground">Nenhum comentário ainda</p>
               ) : (
                 comentarios.map((c) => (
-                  <div key={c.id} className="rounded-lg border bg-background p-3 text-sm shadow-sm">
-                    <p className="whitespace-pre-wrap text-foreground">{c.texto}</p>
-                    <div className="mt-1.5 flex justify-between text-[10px] text-muted-foreground">
-                      <span>{c.autor}</span>
-                      <span>{new Date(c.data).toLocaleString("pt-BR")}</span>
-                    </div>
-                  </div>
+                  <ComentarioCard
+                    key={c.id}
+                    comentario={c}
+                    pessoas={pessoas}
+                    destacado={c.id === comentarioDestacado}
+                  />
                 ))
               )}
             </div>

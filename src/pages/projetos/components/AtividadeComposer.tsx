@@ -3,23 +3,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { ArrowUp, AtSign } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-/** Segmenta o texto em trechos comuns e trechos "@Nome" que batem com pessoas conhecidas. */
-function segmentarMencoes(texto: string, mentionRegex: RegExp | null) {
-  if (!mentionRegex) return [{ texto, mencao: false }];
-  const segmentos: { texto: string; mencao: boolean }[] = [];
-  let ultimoIndex = 0;
-  for (const match of texto.matchAll(mentionRegex)) {
-    const inicio = match.index ?? 0;
-    if (inicio > ultimoIndex) segmentos.push({ texto: texto.slice(ultimoIndex, inicio), mencao: false });
-    segmentos.push({ texto: match[0], mencao: true });
-    ultimoIndex = inicio + match[0].length;
-  }
-  if (ultimoIndex < texto.length) segmentos.push({ texto: texto.slice(ultimoIndex), mencao: false });
-  return segmentos;
-}
+import { segmentarMencoes } from "@/lib/mencoes";
 
 interface AtividadeComposerProps {
   pessoas: { id: string; nome: string }[];
@@ -45,16 +29,7 @@ export function AtividadeComposer({ pessoas, onSubmit, placeholder }: AtividadeC
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
 
-  const mentionRegex = useMemo(() => {
-    if (pessoas.length === 0) return null;
-    const nomes = pessoas
-      .map((p) => p.nome)
-      .sort((a, b) => b.length - a.length)
-      .map(escapeRegExp);
-    return new RegExp(`@(?:${nomes.join("|")})`, "g");
-  }, [pessoas]);
-
-  const segmentos = useMemo(() => segmentarMencoes(texto, mentionRegex), [texto, mentionRegex]);
+  const segmentos = useMemo(() => segmentarMencoes(texto, pessoas), [texto, pessoas]);
 
   const mentionOpen = mentionStart !== null;
   const sugestoes = mentionOpen ? pessoas.filter((p) => p.nome.toLowerCase().includes(mentionQuery.toLowerCase())) : [];
@@ -115,7 +90,7 @@ export function AtividadeComposer({ pessoas, onSubmit, placeholder }: AtividadeC
               className="pointer-events-none absolute inset-0 z-0 overflow-hidden whitespace-pre-wrap wrap-break-word px-3 py-2 text-sm text-transparent"
             >
               {segmentos.map((seg, i) =>
-                seg.mencao ? (
+                seg.pessoaId ? (
                   <span key={i} className="rounded bg-brand/25 box-decoration-clone">
                     {seg.texto}
                   </span>
