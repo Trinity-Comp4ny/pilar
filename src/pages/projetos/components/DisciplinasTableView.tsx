@@ -95,7 +95,6 @@ export function DisciplinasTableView({
   handleAddResponsavel,
   handleRemoveResponsavel,
   projetoDataInicio,
-  projetoDataPrevisao,
 }: DisciplinasTableViewProps) {
   const [isAddingDisc, setIsAddingDisc] = useState(false);
   const [newDisc, setNewDisc] = useState({ disciplina: "", responsavel_id: "" });
@@ -320,7 +319,7 @@ export function DisciplinasTableView({
                             value={disc.data_inicio || undefined}
                             onChange={(v) => quickUpdate(idx, { data_inicio: v || null })}
                             minDate={isoSlice(projetoDataInicio)}
-                            maxDate={earlierOf(disc.data_previsao, disc.data_final, projetoDataPrevisao)}
+                            maxDate={earlierOf(disc.data_previsao, disc.data_final)}
                             placeholder="—"
                             className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
                           />
@@ -336,7 +335,7 @@ export function DisciplinasTableView({
                             value={disc.data_previsao || undefined}
                             onChange={(v) => quickUpdate(idx, { data_fim: v || null })}
                             minDate={laterOf(disc.data_inicio, projetoDataInicio)}
-                            maxDate={earlierOf(disc.data_final, projetoDataPrevisao)}
+                            maxDate={isoSlice(disc.data_final)}
                             placeholder="—"
                             className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
                           />

@@ -145,7 +145,6 @@ function DisciplinaDetailBody({
   onNewObservationChange,
   onAddObservation,
   projetoDataInicio,
-  projetoDataPrevisao,
   onDelete,
 }: DisciplinaDetailDialogProps & { disciplina: DisciplinaResponsavel }) {
   const [descricao, setDescricao] = useState(disciplina.descricao ?? "");
@@ -432,14 +431,13 @@ function DisciplinaDetailBody({
                     onChange={(v) => onUpdateField("data_inicio", v)}
                     placeholder="Início"
                     minDate={isoSlice(projetoDataInicio)}
-                    maxDate={earlierOf(disciplina.data_previsao, disciplina.data_final, projetoDataPrevisao)}
+                    maxDate={earlierOf(disciplina.data_previsao, disciplina.data_final)}
                   />
                   <DatePicker
                     value={(disciplina.data_previsao || "").slice(0, 10) || undefined}
                     onChange={(v) => onUpdateField("data_previsao", v)}
                     placeholder="Previsão"
                     minDate={laterOf(disciplina.data_inicio, projetoDataInicio)}
-                    maxDate={isoSlice(projetoDataPrevisao)}
                   />
                   <DatePicker
                     value={(disciplina.data_final || "").slice(0, 10) || undefined}

@@ -33,8 +33,7 @@ export function CTASection() {
 
           <div className="relative">
             <h2 className="text-[58px] max-[1100px]:text-[44px] max-[850px]:text-[30px] max-[420px]:text-[26px] font-medium tracking-[-0.035em] leading-[1.06] text-ink mb-5 max-w-[20ch] mx-auto">
-              Saiba se cada projeto está dando lucro{" "}
-              <span className="italic">antes de terminar.</span>
+              Saiba se cada projeto está dando lucro <span className="italic">antes de terminar.</span>
             </h2>
 
             <m.p
@@ -48,9 +47,14 @@ export function CTASection() {
             </m.p>
 
             <div className="flex flex-col items-center gap-4">
-              <SplitButton href={primario.href} onClick={() => trackCta(primario.evento, "cta_final")}>
-                {primario.label}
-              </SplitButton>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <SplitButton href={primario.href} onClick={() => trackCta(primario.evento, "cta_final")}>
+                  {primario.label}
+                </SplitButton>
+                <SplitButton href={`${APP_URL}/login`} onClick={() => trackCta("entrar", "cta_final")} fantasma>
+                  Entrar
+                </SplitButton>
+              </div>
               <a
                 href="https://wa.me/5514998721100"
                 target="_blank"
