@@ -23,6 +23,9 @@ import { FluxoPipeline } from "./FluxoPipeline";
 import { ProjetoHistoricoTab } from "./ProjetoHistoricoTab";
 import { useProjetoDisciplinaChecklistCounts } from "@/hooks/useProjetoDisciplinaChecklist";
 import { useProjetoDisciplinaRevisoesCounts } from "@/hooks/useDisciplinaRevisoes";
+import { useFluxosDisciplinas } from "@/hooks/useFluxosDisciplinas";
+import { EmptyState } from "@/components/EmptyState";
+import { AplicarFluxoDialog } from "./AplicarFluxoDialog";
 
 interface ProjetoDetailTabsProps {
   projeto: Projeto;
@@ -73,6 +76,11 @@ export function ProjetoDetailTabs({
   const { profile } = useAuth();
   const { data: checklistCounts } = useProjetoDisciplinaChecklistCounts(projeto.id);
   const { data: revisoesCounts } = useProjetoDisciplinaRevisoesCounts(projeto.id);
+  const { data: fluxos = [] } = useFluxosDisciplinas();
+  const [aplicarFluxoOpen, setAplicarFluxoOpen] = useState(false);
+  // Spec 101: aplicar fluxo só enquanto o projeto não segue nenhum (trocar fluxo está fora de escopo).
+  const segueFluxo = dbDisciplinas.some((d) => d.ordem_etapa != null);
+  const podeAplicarFluxo = canEdit && fluxos.length > 0 && !segueFluxo;
 
   const handleCronogramaDatesChange = async (
     discIdx: number,
@@ -268,6 +276,7 @@ export function ProjetoDetailTabs({
                       handleSaveDiscChanges={handleSaveDiscChanges}
                       handleAddResponsavel={handleAddResponsavel}
                       handleRemoveResponsavel={handleRemoveResponsavel}
+                      onAplicarFluxo={podeAplicarFluxo ? () => setAplicarFluxoOpen(true) : undefined}
                       projetoDataInicio={projeto.data_inicio}
                       projetoDataPrevisao={projeto.data_previsao}
                     />
@@ -281,12 +290,31 @@ export function ProjetoDetailTabs({
                   onDatesChange={canEdit ? handleCronogramaDatesChange : undefined}
                   onDisciplinaClick={handleDiscClick}
                 />
-              ) : (
+              ) : segueFluxo ? (
                 <FluxoPipeline
                   disciplinas={disciplinasLegacy}
                   onOpenDisciplina={handleDiscClick}
                   checklistCounts={checklistCounts}
                 />
+              ) : (
+                <Card>
+                  <EmptyState
+                    icon={GitBranch}
+                    title="Este projeto ainda não segue um fluxo"
+                    description={
+                      podeAplicarFluxo
+                        ? "Aplique um fluxo para organizar as disciplinas em colunas, com prazos em cascata e checklist. As que já existem mantêm o andamento."
+                        : canEdit
+                          ? "Monte um fluxo em Projetos, no botão Fluxos, para aplicar aqui."
+                          : "Quem edita o projeto pode aplicar um fluxo de disciplinas."
+                    }
+                    action={
+                      podeAplicarFluxo
+                        ? { label: "Aplicar fluxo", onClick: () => setAplicarFluxoOpen(true), variant: "brand" }
+                        : undefined
+                    }
+                  />
+                </Card>
               )}
             </div>
           </TabsContent>
@@ -342,6 +370,17 @@ export function ProjetoDetailTabs({
             : undefined
         }
       />
+
+      {podeAplicarFluxo && aplicarFluxoOpen && (
+        <AplicarFluxoDialog
+          open={aplicarFluxoOpen}
+          onOpenChange={setAplicarFluxoOpen}
+          projetoId={projeto.id}
+          projetoDataInicio={projeto.data_inicio}
+          dbDisciplinas={dbDisciplinas}
+          fluxos={fluxos}
+        />
+      )}
     </Tabs>
   );
 }

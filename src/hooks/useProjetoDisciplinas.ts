@@ -4,6 +4,7 @@ import { callUntypedRpc } from "@/lib/supabaseRpc";
 import type { DisciplinaComentario, ProjetoDisciplinaDB } from "@/types/projetos";
 import type { LinkItem } from "@/components/LinksEditor";
 import type { FluxoChecklistItemTemplate } from "@/types/fluxoDisciplinas";
+import type { PlanoAplicacaoFluxo } from "@/lib/fluxoCascata";
 
 /**
  * Sincroniza responsáveis de uma disciplina de forma transacional (insere só os novos,
@@ -322,6 +323,82 @@ export function useUpdateDisciplinaStatus() {
   });
 }
 
+interface NovaDisciplinaInput {
+  nome: string;
+  status?: string;
+  data_inicio?: string | null;
+  data_fim?: string | null;
+  data_fim_real?: string | null;
+  prioridade?: string | null;
+  justificativa_atraso?: string | null;
+  horas_estimadas?: number;
+  custo_hora?: number;
+  ordem_etapa?: number | null;
+  checklist_padrao?: FluxoChecklistItemTemplate[];
+}
+
+/**
+ * Cria a disciplina e copia o checklist padrão do fluxo (com os responsáveis
+ * por tarefa, spec 071). Checklist só é copiado na criação: disciplina já
+ * existente não é tocada. Não sincroniza os responsáveis da disciplina; o
+ * chamador faz isso. Usado pelo wizard (save em lote) e por aplicar fluxo
+ * em projeto existente (spec 101).
+ */
+async function inserirDisciplina(projetoId: string, disc: NovaDisciplinaInput): Promise<string> {
+  const ordemEtapaPatch =
+    disc.ordem_etapa !== null && disc.ordem_etapa !== undefined ? { ordem_etapa: disc.ordem_etapa } : {};
+
+  const { data, error } = await supabase
+    .from("projeto_disciplinas")
+    .insert({
+      projeto_id: projetoId,
+      nome: disc.nome,
+      status: disc.status || "Não Iniciado",
+      data_inicio: disc.data_inicio || null,
+      data_fim: disc.data_fim || null,
+      data_fim_real: disc.data_fim_real || null,
+      prioridade: disc.prioridade || null,
+      justificativa_atraso: disc.justificativa_atraso || null,
+      horas_estimadas: disc.horas_estimadas || 0,
+      custo_hora: disc.custo_hora || 0,
+      ...ordemEtapaPatch,
+    } as never)
+    .select("id")
+    .single();
+  if (error) throw error;
+  const discId = data.id;
+
+  if (!disc.checklist_padrao?.length) return discId;
+
+  const { data: checklistRows, error: checklistError } = await supabase
+    .from("projeto_disciplina_checklist")
+    .insert(
+      disc.checklist_padrao.map((item, i) => ({
+        projeto_disciplina_id: discId,
+        texto: item.texto,
+        duracao_dias_uteis: item.duracao_dias_uteis ?? null,
+        ordem: i,
+      }))
+    )
+    .select("id");
+  if (checklistError) throw checklistError;
+
+  const responsaveisRows = (checklistRows ?? []).flatMap((row, i) =>
+    (disc.checklist_padrao![i].responsaveis_ids ?? []).map((pessoaId) => ({
+      checklist_item_id: row.id,
+      pessoa_id: pessoaId,
+    }))
+  );
+  if (responsaveisRows.length > 0) {
+    const { error: respError } = await supabase
+      .from("projeto_disciplina_checklist_responsaveis")
+      .insert(responsaveisRows);
+    if (respError) throw respError;
+  }
+
+  return discId;
+}
+
 /**
  * Bulk-save disciplinas for a project (used by the form dialog).
  * Accepts the full list of disciplinas that SHOULD exist — deletes removed ones,
@@ -391,58 +468,7 @@ export function useBulkSaveDisciplinas() {
             .eq("id", discId);
           if (error) throw error;
         } else {
-          const { data, error } = await supabase
-            .from("projeto_disciplinas")
-            .insert({
-              projeto_id: projetoId,
-              nome: disc.nome,
-              status: disc.status || "Não Iniciado",
-              data_inicio: disc.data_inicio || null,
-              data_fim: disc.data_fim || null,
-              data_fim_real: disc.data_fim_real || null,
-              prioridade: disc.prioridade || null,
-              justificativa_atraso: disc.justificativa_atraso || null,
-              horas_estimadas: disc.horas_estimadas || 0,
-              custo_hora: disc.custo_hora || 0,
-              ...ordemEtapaPatch,
-            } as never)
-            .select("id")
-            .single();
-          if (error) throw error;
-          discId = data.id;
-
-          // Checklist padrão só é copiado na criação da disciplina (a partir
-          // do template do fluxo aplicado); disciplina já existente não é tocada.
-          if (disc.checklist_padrao?.length) {
-            const { data: checklistRows, error: checklistError } = await supabase
-              .from("projeto_disciplina_checklist")
-              .insert(
-                disc.checklist_padrao.map((item, i) => ({
-                  projeto_disciplina_id: discId!,
-                  texto: item.texto,
-                  duracao_dias_uteis: item.duracao_dias_uteis ?? null,
-                  ordem: i,
-                }))
-              )
-              .select("id");
-            if (checklistError) throw checklistError;
-
-            // Responsáveis por tarefa (spec 071): cada item do checklist pode ter
-            // os seus próprios, independente da disciplina. Só na criação, junto
-            // com o checklist — não tem fluxo de edição posterior aqui ainda.
-            const responsaveisRows = (checklistRows ?? []).flatMap((row, i) =>
-              (disc.checklist_padrao![i].responsaveis_ids ?? []).map((pessoaId) => ({
-                checklist_item_id: row.id,
-                pessoa_id: pessoaId,
-              }))
-            );
-            if (responsaveisRows.length > 0) {
-              const { error: respError } = await supabase
-                .from("projeto_disciplina_checklist_responsaveis")
-                .insert(responsaveisRows);
-              if (respError) throw respError;
-            }
-          }
+          discId = await inserirDisciplina(projetoId, disc);
         }
 
         // Sync responsaveis transacional (insere novos, remove os que saíram)
@@ -455,6 +481,40 @@ export function useBulkSaveDisciplinas() {
       queryClient.invalidateQueries({
         queryKey: ["projeto-disciplinas", projetoId],
       });
+      queryClient.invalidateQueries({ queryKey: ["projetos"] });
+    },
+  });
+}
+
+/**
+ * Aplica um fluxo num projeto que já existe (spec 101), a partir do plano de
+ * `planejarAplicacaoFluxo`: cria as disciplinas que faltam e só põe na coluna
+ * as que já existem, sem tocar no andamento delas. Não apaga nada.
+ */
+export function useAplicarFluxoNoProjeto() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ projetoId, plano }: { projetoId: string; plano: PlanoAplicacaoFluxo }) => {
+      for (const disc of plano.novas) {
+        const discId = await inserirDisciplina(projetoId, disc);
+        await syncResponsaveis(discId, disc.responsavel_ids);
+      }
+
+      for (const disc of plano.encaixadas) {
+        const { error } = await supabase
+          .from("projeto_disciplinas")
+          .update({ ordem_etapa: disc.ordem_etapa, updated_at: new Date().toISOString() } as never)
+          .eq("id", disc.id);
+        if (error) throw error;
+      }
+
+      return projetoId;
+    },
+    onSettled: (_data, _error, { projetoId }) => {
+      // Também em erro: o que já foi gravado antes da falha precisa aparecer.
+      queryClient.invalidateQueries({ queryKey: ["projeto-disciplinas", projetoId] });
+      queryClient.invalidateQueries({ queryKey: ["projeto-disciplina-checklist-counts", projetoId] });
       queryClient.invalidateQueries({ queryKey: ["projetos"] });
     },
   });
