@@ -18,7 +18,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
-import { AlertTriangle, MessageSquare, Plus, RotateCcw, Trash2, User, X, Layers } from "lucide-react";
+import { AlertTriangle, GitBranch, MessageSquare, Plus, RotateCcw, Trash2, User, X, Layers } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
 import { PROJECT_PRIORITY, PROJECT_PRIORITY_CONFIG, PRIORITY_OPTIONS, type ProjectPriority } from "@/constants";
@@ -52,6 +52,8 @@ interface DisciplinasTableViewProps {
   handleSaveDiscChanges: (editingDiscLocal: ProjetoDisciplinaDB) => Promise<void>;
   handleAddResponsavel: (discIdx: number, responsavelId: string) => Promise<void>;
   handleRemoveResponsavel: (discIdx: number, respIdx: number) => Promise<void>;
+  /** Abre "Aplicar fluxo" (spec 101). Ausente = projeto já segue um fluxo ou empresa sem fluxo. */
+  onAplicarFluxo?: () => void;
   /** Datas do projeto: limitam as datas da disciplina ao "guarda-chuva". */
   projetoDataInicio?: string;
   projetoDataPrevisao?: string;
@@ -94,6 +96,7 @@ export function DisciplinasTableView({
   handleSaveDiscChanges,
   handleAddResponsavel,
   handleRemoveResponsavel,
+  onAplicarFluxo,
   projetoDataInicio,
 }: DisciplinasTableViewProps) {
   const [isAddingDisc, setIsAddingDisc] = useState(false);
@@ -141,9 +144,16 @@ export function DisciplinasTableView({
             {disciplinasLegacy.length} disciplina{disciplinasLegacy.length !== 1 ? "s" : ""}
           </p>
           {canEdit && !isAddingDisc && (
-            <Button size="sm" variant="brand" onClick={() => setIsAddingDisc(true)}>
-              <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar disciplina
-            </Button>
+            <div className="flex items-center gap-2">
+              {onAplicarFluxo && (
+                <Button size="sm" variant="outline" onClick={onAplicarFluxo}>
+                  <GitBranch className="h-3.5 w-3.5 mr-1.5" /> Aplicar fluxo
+                </Button>
+              )}
+              <Button size="sm" variant="brand" onClick={() => setIsAddingDisc(true)}>
+                <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar disciplina
+              </Button>
+            </div>
           )}
         </div>
 
@@ -152,7 +162,11 @@ export function DisciplinasTableView({
             <EmptyState
               icon={Layers}
               title="Nenhuma disciplina definida"
-              description="Adicione as disciplinas deste projeto para acompanhar prazos e responsáveis."
+              description={
+                canEdit && onAplicarFluxo
+                  ? "Aplique um fluxo da empresa ou adicione as disciplinas uma a uma para acompanhar prazos e responsáveis."
+                  : "Adicione as disciplinas deste projeto para acompanhar prazos e responsáveis."
+              }
               action={
                 canEdit
                   ? { label: "Adicionar disciplina", onClick: () => setIsAddingDisc(true), variant: "brand" }

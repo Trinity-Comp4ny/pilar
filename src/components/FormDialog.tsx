@@ -70,7 +70,8 @@ export function FormDialog({
             e.preventDefault();
             onSubmit();
           }}
-          className="space-y-4"
+          // min-w-0: o DialogContent é grid; sem isso um filho largo (tabela, grafo) estoura o modal.
+          className="space-y-4 min-w-0"
         >
           {children}
           <DialogFooter>

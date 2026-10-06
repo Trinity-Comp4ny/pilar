@@ -438,7 +438,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
         onChange={(patch) => onFiltersChange({ ...filters, ...patch })}
         onReset={() => onFiltersChange(defaultFilters)}
         categorias={aux.categorias.map((c) => ({ value: c.id, label: c.nome }))}
-        projetos={aux.projetos.map((p) => ({ value: p.id, label: p.codigo }))}
+        projetos={aux.projetos.map((p) => ({ value: p.id, label: p.nome }))}
         clientes={aux.clientes.map((c) => ({ value: c.id, label: c.nome }))}
         fornecedores={aux.fornecedores.map((f) => ({ value: f.id, label: f.nome }))}
         total={resumo.totalCount}

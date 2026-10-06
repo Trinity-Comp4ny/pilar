@@ -253,7 +253,6 @@ export default function ClienteProjetoDetail() {
       account={account}
       projetoId={data.projeto_id}
       projetoNome={data.projeto_nome}
-      projetoCodigo={data.projeto_codigo}
     >
       {content}
     </ClienteShell>

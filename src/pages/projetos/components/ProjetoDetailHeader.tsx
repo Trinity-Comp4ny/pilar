@@ -38,7 +38,7 @@ export function ProjetoDetailHeader({
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 flex-wrap">
-        <h2 className="text-xl font-bold">{projeto.codigo_projeto}</h2>
+        <h2 className="text-xl font-bold">{projeto.nome}</h2>
 
         {canEdit && onUpdateStatus ? (
           <Select value={projeto.status} onValueChange={onUpdateStatus}>
@@ -102,7 +102,6 @@ export function ProjetoDetailHeader({
           </Badge>
         )}
       </div>
-      <p className="text-sm text-muted-foreground">{projeto.nome}</p>
     </div>
   );
 }

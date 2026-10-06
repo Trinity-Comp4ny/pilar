@@ -7117,6 +7117,7 @@ export type Database = {
           periodicidade: string | null
           projeto_codigo: string | null
           projeto_id: string | null
+          projeto_nome: string | null
           recorrente: boolean | null
           status: string | null
           tags: string[] | null
@@ -8365,6 +8366,7 @@ export type Database = {
           periodicidade: string | null
           projeto_codigo: string | null
           projeto_id: string | null
+          projeto_nome: string | null
           recorrente: boolean | null
           status: string | null
           tags: string[] | null

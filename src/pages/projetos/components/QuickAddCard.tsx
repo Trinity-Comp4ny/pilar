@@ -16,34 +16,32 @@ interface QuickAddCardProps {
 export function QuickAddCard({ etapaId, clientes, onCreated }: QuickAddCardProps) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [codigo, setCodigo] = useState("");
   const [nome, setNome] = useState("");
   const [clienteId, setClienteId] = useState("");
-  const codigoRef = useRef<HTMLInputElement>(null);
+  const nomeRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
-      const t = setTimeout(() => codigoRef.current?.focus(), 50);
+      const t = setTimeout(() => nomeRef.current?.focus(), 50);
       return () => clearTimeout(t);
     }
   }, [open]);
 
   const reset = () => {
-    setCodigo("");
     setNome("");
     setClienteId("");
     setOpen(false);
   };
 
   const submit = async () => {
-    if (!codigo.trim() || !nome.trim() || !clienteId) {
-      toast.error("Preencha código, nome e cliente");
+    if (!nome.trim() || !clienteId) {
+      toast.error("Preencha nome e cliente");
       return;
     }
     setSaving(true);
     try {
-      const { error } = await supabase.rpc("create_projeto_completo", {
-        p_codigo: codigo.trim(),
+      const { data: novoId, error } = await supabase.rpc("create_projeto_completo", {
+        p_codigo: "",
         p_nome: nome.trim(),
         p_cliente_id: clienteId,
         p_valor_contrato: 0,
@@ -54,13 +52,8 @@ export function QuickAddCard({ etapaId, clientes, onCreated }: QuickAddCardProps
       if (error) throw error;
       // O RPC cria em "Planejamento"; movemos para a coluna clicada (o trigger
       // deriva o status pelo bucket da etapa).
-      const { data } = await supabase
-        .from("projetos")
-        .select("id, etapa_id")
-        .eq("codigo_projeto", codigo.trim())
-        .single();
-      if (data?.id && data.etapa_id !== etapaId) {
-        await supabase.from("projetos").update({ etapa_id: etapaId }).eq("id", data.id);
+      if (novoId) {
+        await supabase.from("projetos").update({ etapa_id: etapaId }).eq("id", novoId);
       }
       toast.success("Projeto criado");
       reset();
@@ -88,22 +81,15 @@ export function QuickAddCard({ etapaId, clientes, onCreated }: QuickAddCardProps
   return (
     <div className="rounded-lg border bg-white p-2.5 space-y-2 shadow-sm">
       <Input
-        ref={codigoRef}
-        value={codigo}
-        onChange={(e) => setCodigo(e.target.value)}
-        placeholder="Código (PRJ-...)"
-        className="h-8 text-xs"
-        disabled={saving}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") reset();
-        }}
-      />
-      <Input
+        ref={nomeRef}
         value={nome}
         onChange={(e) => setNome(e.target.value)}
         placeholder="Nome do projeto"
         className="h-8 text-xs"
         disabled={saving}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") reset();
+        }}
       />
       <Select value={clienteId} onValueChange={setClienteId} disabled={saving}>
         <SelectTrigger className="h-8 text-xs">
@@ -123,7 +109,7 @@ export function QuickAddCard({ etapaId, clientes, onCreated }: QuickAddCardProps
           variant="brand"
           className="h-7 text-xs flex-1"
           onClick={submit}
-          disabled={saving || !codigo.trim() || !nome.trim() || !clienteId}
+          disabled={saving || !nome.trim() || !clienteId}
         >
           {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Criar"}
         </Button>

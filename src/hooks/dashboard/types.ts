@@ -1,6 +1,5 @@
 export interface ProjetoWithCliente {
   id: string;
-  codigo_projeto: string | null;
   nome: string;
   status: string;
   prioridade: string;
@@ -49,7 +48,7 @@ export interface ProximaReceitaRow {
   data_vencimento: string;
   status: string;
   projeto_id: string | null;
-  projetos: { codigo_projeto: string | null } | null;
+  projetos: { nome: string | null } | null;
   cliente_id: string | null;
   clientes: { nome: string } | null;
 }
@@ -61,7 +60,7 @@ export interface ProximaDespesaRow {
   data_vencimento: string;
   status: string;
   projeto_id: string | null;
-  projetos: { codigo_projeto: string | null } | null;
+  projetos: { nome: string | null } | null;
   fornecedor_id: string | null;
   fornecedores: { nome: string } | null;
 }
