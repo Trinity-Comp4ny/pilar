@@ -1,0 +1,52 @@
+# Edge Functions que ainda NÃO têm nenhum teste (`*.test.ts` dentro da pasta).
+#
+# Medido em 2026-10-07: 7 de 45 funções têm teste. A lista é uma catraca, só
+# encolhe: `scripts/edge-function-test-debt.test.ts` reprova a suíte se uma função
+# nova nascer sem teste (e sem estar aqui) ou se esta lista crescer.
+#
+# Tirar uma função daqui = escrever o primeiro teste dela. O padrão do repo é
+# extrair a regra pura do index.ts para um módulo vizinho e testar esse módulo
+# com `deno test` (ex.: invite-user/delivery.ts, lookup-cep/providers.ts,
+# resend-webhook/svix.ts). Prioridade: dinheiro e auth primeiro
+# (pilar-checkout-webhook, asaas-webhook, pilar-token-pack-create, ativar-plano,
+# delete-user, create-company-owner), depois ai-chat.
+#
+# Um nome de pasta por linha. Linha vazia e # são ignorados.
+ai-chat
+ai-cotacao-import
+ai-import-financeiro
+ai-rdo-voz
+asaas-config
+asaas-criar-cobranca
+asaas-webhook
+ativar-plano
+campo-upload-foto
+create-company-owner
+delete-user
+geocode-address
+guardiao-margem-cron
+health
+invite-campo
+invite-cliente-portal
+log-impersonation
+pilar-checkout-create
+pilar-checkout-status
+pilar-checkout-webhook
+pilar-subscription-manage
+pilar-token-pack-create
+portal-aprovar-proposta
+portal-entrega-download
+portal-get-projeto
+portal-obra-fotos
+reset-cliente-portal-password
+retencao-pos-trial
+reverificar-documentos-pendentes
+send-data-deletion-notification
+send-invoice-reminder
+send-manual-client-email
+send-proposta-email
+trial-expiry-cron
+turnstile-verify
+ultra-admin-empresas
+ultra-admin-usuarios
+upload-portal-entrega

@@ -12,7 +12,7 @@ import { test, expect } from "./fixtures";
  */
 
 test.describe("Financeiro — criar receita", () => {
-  test("criar receita aparece nos KPIs do dashboard", async ({ page, cleanupAfter: _cleanup }) => {
+  test("criar receita aparece na lista de lançamentos", async ({ page, cleanupAfter: _cleanup }) => {
     // Descrição única por execução — achado real, 17/08: com texto fixo, toda
     // reexecução (inclusive no CI a cada push) encontra o lançamento da rodada
     // anterior e a detecção de duplicata abre um alertdialog de confirmação em
@@ -32,9 +32,9 @@ test.describe("Financeiro — criar receita", () => {
 
     // 2. Navegar para aba de Lançamentos para criar receita
     // O SecondSidebar renderiza links com texto dos labels
-    const lancamentosLink = page.getByRole("button", { name: /Lançamentos/i }).or(
-      page.getByText(/Lançamentos/i).first()
-    );
+    const lancamentosLink = page
+      .getByRole("button", { name: /Lançamentos/i })
+      .or(page.getByText(/Lançamentos/i).first());
 
     // Se o link de Lançamentos existir, clica; senão vai via URL
     const lancamentosVisible = await lancamentosLink.isVisible().catch(() => false);
@@ -46,10 +46,17 @@ test.describe("Financeiro — criar receita", () => {
 
     await page.waitForLoadState("networkidle");
 
-    // 3. Clicar em "Nova Receita"
-    const novaReceitaBtn = page.getByRole("button", { name: /Nova Receita/i });
-    await expect(novaReceitaBtn).toBeVisible({ timeout: 10_000 });
-    await novaReceitaBtn.click();
+    // 3. "Novo lançamento" do header abre o seletor de tipo, e "Receita" abre o
+    // formulário. Achado real, 07/10: o botão "Nova Receita" deixou de existir
+    // quando o header ganhou o seletor (NovoLancamentoDialog), e ninguém viu
+    // porque este spec ficou um mês sem rodar no CI (o passo autenticado era
+    // pulado sempre que o spec de a11y da landing falhava antes dele).
+    const novoLancamentoBtn = page.getByRole("button", { name: /Novo lançamento/i }).first();
+    await expect(novoLancamentoBtn).toBeVisible({ timeout: 10_000 });
+    await novoLancamentoBtn.click();
+    const seletorTipo = page.getByRole("dialog", { name: /Novo lançamento/i });
+    await expect(seletorTipo).toBeVisible({ timeout: 5_000 });
+    await seletorTipo.getByRole("button", { name: /Receita/i }).click();
 
     // 4. Dialog "Nova Receita" deve abrir
     await expect(page.getByRole("dialog")).toBeVisible({ timeout: 5_000 });
@@ -62,15 +69,11 @@ test.describe("Financeiro — criar receita", () => {
     // (sempre "Ex: Honorários projeto A"). Os dois lados do `.or()` antigo davam
     // zero match, e `.fill()` num locator vazio só estoura no timeout de 30s, sem
     // erro claro. Corrigido na origem (id="descricao" adicionado ao componente).
-    const descricaoInput = page.locator('input[id="descricao"]').or(
-      page.getByPlaceholder(/Honorários projeto/i)
-    );
+    const descricaoInput = page.locator('input[id="descricao"]').or(page.getByPlaceholder(/Honorários projeto/i));
     await descricaoInput.fill(descricaoUnica);
 
     // 6. Preencher valor
-    const valorInput = page.locator('input[id="valorTotal"]').or(
-      page.getByPlaceholder(/R\$ 0,00/i)
-    );
+    const valorInput = page.locator('input[id="valorTotal"]').or(page.getByPlaceholder(/R\$ 0,00/i));
     await valorInput.fill("1000");
 
     // 6b. Selecionar categoria (obrigatória — achado real, 17/08: o Select não
@@ -103,19 +106,14 @@ test.describe("Financeiro — criar receita", () => {
     }
 
     // 9. Verificar toast de sucesso
-    await expect(
-      page.getByText(/salvo|criado|sucesso|Receita criada/i).first()
-    ).toBeVisible({ timeout: 8_000 });
+    await expect(page.getByText(/salvo|criado|sucesso|Receita criada/i).first()).toBeVisible({ timeout: 8_000 });
 
-    // 10. Navegar para /dashboard (redireciona para /inicio — achado real, 17/08,
-    // mesma reorganização de rotas do sidebar-navigation-authenticated.spec.ts)
-    // e verificar KPI "A Receber"
-    await page.goto("/dashboard");
-    await page.waitForLoadState("networkidle");
-    await expect(page).toHaveURL(/\/inicio/);
-
-    // KPI "A Receber" deve estar visível (independente do valor exato)
-    await expect(page.getByText("A Receber")).toBeVisible({ timeout: 10_000 });
+    // 10. A receita entra na lista de lançamentos e o KPI "A receber" segue na
+    // tela. Antes isto ia para /inicio procurar o KPI, mas desde a spec 092 o
+    // painel de /inicio é montado pelo usuário e financeiro não entra no padrão
+    // (ADR 0038): a asserção passou a medir a configuração do painel, não o lançamento.
+    await expect(page.getByText(descricaoUnica).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/A receber/i).first()).toBeVisible();
   });
 });
 
