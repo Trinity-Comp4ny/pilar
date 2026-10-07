@@ -1,0 +1,55 @@
+name: CodeQL
+
+# Análise estática de segurança (SAST) do código TypeScript/JavaScript (app, LP e
+# Edge Functions) e dos próprios workflows do GitHub Actions. Cobre o que os outros
+# gates não cobrem: npm audit olha dependência, gitleaks olha segredo, pgTAP olha
+# RLS; nenhum lê o NOSSO código atrás de XSS, injeção, redirect aberto ou workflow
+# que vaza token. Grátis em repositório público.
+#
+# Achados vão para a aba Security > Code scanning (visível só para quem tem acesso
+# de escrita) e viram anotação no PR. Não entra no `CI OK` de propósito: primeiro
+# triar o que aparece na primeira varredura, depois decidir se vira gate.
+#
+# Mesma pegadinha dos outros crons: `schedule` só dispara a partir da branch
+# default (main), então a varredura semanal liga quando este arquivo chegar lá.
+
+on:
+  push:
+    branches: [staging]
+  pull_request:
+    branches: [main, staging]
+  schedule:
+    - cron: "0 9 * * 1" # segunda 06:00 BRT, pega CVE novo de padrão já existente
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        with:
+          languages: ${{ matrix.language }}
+          # JS/TS e Actions não compilam: a análise lê o fonte direto.
+          build-mode: none
+          queries: security-extended
+      - uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        with:
+          category: /language:${{ matrix.language }}
