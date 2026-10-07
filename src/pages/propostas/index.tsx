@@ -155,6 +155,11 @@ export default function Propostas() {
   const { data: convertDisciplinas = [] } = usePropostaDisciplinas(convertPropostaId);
 
   const [form, setForm] = useState<PropostaInsert>(emptyForm);
+  // Proposta nova nasce com o código sugerido, que acompanha a lista até o usuário
+  // digitar. Antes a sugestão era calculada no clique: quem abria "Nova proposta"
+  // antes da lista carregar recebia PROP-001, que já existia, e o salvar travava em
+  // "Já existe uma proposta com este código" (achado pelo E2E em 07/10).
+  const [codigoAutomatico, setCodigoAutomatico] = useState(false);
   const [valorDisplay, setValorDisplay] = useState("");
   const [disciplinasRows, setDisciplinasRows] = useState<DisciplinaLinha[]>([]);
 
@@ -184,7 +189,8 @@ export default function Propostas() {
   const valorPropostoNum = parseCurrencyString(valorDisplay);
   const valorDiverge = valorDivergeDaSoma(valorPropostoNum, disciplinasTotais.totalValor);
 
-  const codigoTrim = (form.codigo || "").trim();
+  const codigoEfetivo = codigoAutomatico ? suggestNextCodigo(propostas) : form.codigo || "";
+  const codigoTrim = codigoEfetivo.trim();
   const codigoDuplicado =
     codigoTrim.length > 0 &&
     propostas.some((p) => p.id !== editingId && (p.codigo || "").trim().toLowerCase() === codigoTrim.toLowerCase());
@@ -201,6 +207,7 @@ export default function Propostas() {
 
   const resetForm = () => {
     setForm(emptyForm);
+    setCodigoAutomatico(false);
     setValorDisplay("");
     setVinculoTipo("cliente");
     setEditingId(null);
@@ -213,6 +220,7 @@ export default function Propostas() {
     if (!p) return;
     setDetailPropostaId(null);
     setEditingId(id);
+    setCodigoAutomatico(false);
     setForm({
       titulo: p.titulo,
       codigo: p.codigo || "",
@@ -254,7 +262,7 @@ export default function Propostas() {
     // Se não há valor digitado, usa a soma das disciplinas como valor proposto.
     const valorManual = parseCurrencyString(valorDisplay);
     const valorProposto = valorManual || (disciplinasTotais.totalValor > 0 ? disciplinasTotais.totalValor : undefined);
-    const payload = { ...form, valor_proposto: valorProposto };
+    const payload = { ...form, codigo: codigoEfetivo, valor_proposto: valorProposto };
 
     const disciplinasPayload = disciplinasValidas.map((d) => ({
       disciplina: d.disciplina.trim(),
@@ -474,7 +482,7 @@ export default function Propostas() {
         feature: "propostas",
         onClick: () => {
           resetForm();
-          setForm({ ...emptyForm, codigo: suggestNextCodigo(propostas) });
+          setCodigoAutomatico(true);
           setIsFormOpen(true);
         },
       }}
@@ -895,10 +903,14 @@ export default function Propostas() {
           <div className="space-y-4 mt-2">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Código</Label>
+                <Label htmlFor="proposta-codigo">Código</Label>
                 <Input
-                  value={form.codigo || ""}
-                  onChange={(e) => setForm({ ...form, codigo: e.target.value })}
+                  id="proposta-codigo"
+                  value={codigoEfetivo}
+                  onChange={(e) => {
+                    setCodigoAutomatico(false);
+                    setForm({ ...form, codigo: e.target.value });
+                  }}
                   placeholder="PROP-001"
                 />
                 {codigoDuplicado && (
@@ -906,8 +918,9 @@ export default function Propostas() {
                 )}
               </div>
               <div className="space-y-2">
-                <Label>Título *</Label>
+                <Label htmlFor="proposta-titulo">Título *</Label>
                 <Input
+                  id="proposta-titulo"
                   value={form.titulo}
                   onChange={(e) => setForm({ ...form, titulo: e.target.value })}
                   placeholder="Título da proposta"
@@ -953,7 +966,7 @@ export default function Propostas() {
                     value={form.lead_id || ""}
                     onValueChange={(v) => setForm({ ...form, lead_id: v, cliente_id: undefined })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger aria-label="Lead">
                       <SelectValue placeholder="Selecione o lead" />
                     </SelectTrigger>
                     <SelectContent>
@@ -974,7 +987,7 @@ export default function Propostas() {
                     value={form.cliente_id || ""}
                     onValueChange={(v) => setForm({ ...form, cliente_id: v, lead_id: undefined })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger aria-label="Cliente">
                       <SelectValue placeholder="Selecione o cliente" />
                     </SelectTrigger>
                     <SelectContent>
@@ -993,24 +1006,27 @@ export default function Propostas() {
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Valor Proposto</Label>
+                <Label htmlFor="proposta-valor">Valor Proposto</Label>
                 <Input
+                  id="proposta-valor"
                   value={valorDisplay}
                   onChange={(e) => setValorDisplay(formatCurrencyInput(e.target.value))}
                   placeholder="R$ 0,00"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Área (m²)</Label>
+                <Label htmlFor="proposta-area">Área (m²)</Label>
                 <Input
+                  id="proposta-area"
                   type="number"
                   value={form.area_m2 || ""}
                   onChange={(e) => setForm({ ...form, area_m2: parseFloat(e.target.value) || undefined })}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Prazo (dias)</Label>
+                <Label htmlFor="proposta-prazo">Prazo (dias)</Label>
                 <Input
+                  id="proposta-prazo"
                   type="number"
                   min={0}
                   value={form.prazo_estimado_dias || ""}
@@ -1059,15 +1075,17 @@ export default function Propostas() {
               </p>
             </div>
             <div className="space-y-2">
-              <Label>Localização</Label>
+              <Label htmlFor="proposta-localizacao">Localização</Label>
               <Input
+                id="proposta-localizacao"
                 value={form.localizacao || ""}
                 onChange={(e) => setForm({ ...form, localizacao: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label>Observações</Label>
+              <Label htmlFor="proposta-observacao">Observações</Label>
               <Textarea
+                id="proposta-observacao"
                 value={form.observacao || ""}
                 onChange={(e) => setForm({ ...form, observacao: e.target.value })}
                 rows={2}
