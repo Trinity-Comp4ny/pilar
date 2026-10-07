@@ -22,6 +22,13 @@ fi
 bash scripts/seed-local.sh
 bash scripts/seed-demo.sh
 
+# Rodar a suíte algumas vezes seguidas estoura o rate limit de login (5 a 10
+# tentativas por e-mail/IP em 15 min) e os specs de login passam a falhar sem
+# mensagem. Banco local de dev, então zera os contadores de login antes de rodar.
+REF="$(sed -n 's/^project_id = "\(.*\)"/\1/p' supabase/config.toml)"
+docker exec -i -e PGPASSWORD=postgres "supabase_db_${REF}" psql -U postgres -d postgres -q -c \
+  "delete from public.rate_limit_attempts where key like 'login_attempt%' or key like 'portal_login%';"
+
 # `supabase status -o env` imprime API_URL=... e ANON_KEY=... (entre aspas).
 eval "$(supabase status -o env 2>/dev/null | grep -E '^(API_URL|ANON_KEY)=')"
 
@@ -31,6 +38,9 @@ export VITE_SUPABASE_PUBLISHABLE_KEY="$ANON_KEY"
 export VITE_SENTRY_DSN=""
 export E2E_TEST_EMAIL="dev@local.test"
 export E2E_TEST_PASSWORD="123456"
+# Conta do Portal do Cliente criada pelo seed-demo.
+export E2E_PORTAL_EMAIL="portal@local.test"
+export E2E_PORTAL_PASSWORD="123456"
 # Porta própria: não briga com um `npm run preview` aberto em 4173.
 export PORT="${PORT:-4174}"
 
