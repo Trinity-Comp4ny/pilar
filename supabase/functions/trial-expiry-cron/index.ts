@@ -16,7 +16,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from "../_shared/logger.ts";
-import { withSentry } from "../_shared/sentry.ts";
+import { withSentryCron } from "../_shared/sentry.ts";
 import { sendEmail, templateTrialAviso, templateAtivarPlanoRecibo } from "../_shared/email/index.ts";
 import { createSubscription } from "../_shared/asaas-platform.ts";
 
@@ -50,7 +50,7 @@ interface ProfileRow {
 }
 
 serve(
-  withSentry("trial-expiry-cron", async (req) => {
+  withSentryCron("trial-expiry-cron", "trial-expiry-daily", async (req) => {
     if (req.method !== "POST") {
       return new Response("Method not allowed", { status: 405 });
     }
