@@ -414,6 +414,51 @@ export async function cronCheckin(
   return id;
 }
 
+/**
+ * Envolve o handler de um cron disparado por net.http_post e faz UM check-in no
+ * Sentry Crons ao fim de cada execução: `ok` em resposta 2xx/3xx, `error` em
+ * resposta 4xx/5xx ou exceção. Execução que nem termina (timeout, crash do
+ * isolate) não faz check-in, e o Sentry acusa `missed` pelo agendamento.
+ *
+ * Existe porque o padrão manual (in_progress/ok/error espalhados no corpo, como no
+ * guardiao-margem-cron) ficou só numa função: trial-expiry-cron passou semanas sem
+ * enviar aviso nenhum e ninguém soube. Resposta 401/403/405 não faz check-in: é
+ * chamada sem o segredo do cron (scanner, curl manual), não uma execução do job.
+ */
+export function withCronMonitor(
+  monitorSlug: string,
+  handler: (req: Request) => Promise<Response>
+): (req: Request) => Promise<Response> {
+  return async (req: Request) => {
+    let res: Response;
+    try {
+      res = await handler(req);
+    } catch (err) {
+      await cronCheckin(monitorSlug, "error");
+      throw err;
+    }
+    if (![401, 403, 405].includes(res.status)) {
+      await cronCheckin(monitorSlug, res.status < 400 ? "ok" : "error");
+    }
+    return res;
+  };
+}
+
+/**
+ * `withSentry` + `withCronMonitor` numa chamada só, para cron disparado por
+ * net.http_post. O slug do monitor é o nome do job no pg_cron.
+ *
+ * Uso:
+ *   serve(withSentryCron("trial-expiry-cron", "trial-expiry-daily", async (req) => { ... }))
+ */
+export function withSentryCron(
+  fnName: string,
+  monitorSlug: string,
+  handler: (req: Request) => Promise<Response>
+): (req: Request) => Promise<Response> {
+  return withSentry(fnName, withCronMonitor(monitorSlug, handler));
+}
+
 export type MetricType = "counter" | "gauge" | "distribution";
 
 /**
