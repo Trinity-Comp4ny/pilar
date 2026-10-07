@@ -13,8 +13,9 @@ import { resolve } from "node:path";
 const FUNCTIONS_DIR = resolve(process.cwd(), "supabase/functions");
 const DEBT_PATH = resolve(FUNCTIONS_DIR, "TEST_DEBT.txt");
 
-// Medido em 2026-10-07: 38 das 45 funções sem nenhum teste.
-const MAX_DEBT = 38;
+// Medido em 2026-10-07: 38 das 45 funções sem nenhum teste. Onda 2 (mesmo dia):
+// as 6 de dinheiro e auth ganharam teste.
+const MAX_DEBT = 32;
 
 const debt = readFileSync(DEBT_PATH, "utf8")
   .split("\n")

@@ -1,15 +1,16 @@
 # Edge Functions que ainda NÃO têm nenhum teste (`*.test.ts` dentro da pasta).
 #
-# Medido em 2026-10-07: 7 de 45 funções têm teste. A lista é uma catraca, só
+# Medido em 2026-10-07: 7 de 45 funções têm teste. Em 2026-10-07 (onda 2) as 6
+# de dinheiro e auth ganharam teste: 13 de 45. A lista é uma catraca, só
 # encolhe: `scripts/edge-function-test-debt.test.ts` reprova a suíte se uma função
 # nova nascer sem teste (e sem estar aqui) ou se esta lista crescer.
 #
 # Tirar uma função daqui = escrever o primeiro teste dela. O padrão do repo é
 # extrair a regra pura do index.ts para um módulo vizinho e testar esse módulo
 # com `deno test` (ex.: invite-user/delivery.ts, lookup-cep/providers.ts,
-# resend-webhook/svix.ts). Prioridade: dinheiro e auth primeiro
-# (pilar-checkout-webhook, asaas-webhook, pilar-token-pack-create, ativar-plano,
-# delete-user, create-company-owner), depois ai-chat.
+# resend-webhook/svix.ts). Próxima prioridade: o resto do billing
+# (pilar-checkout-create, pilar-subscription-manage, pilar-checkout-status), o
+# portal do cliente (portal-*), depois ai-chat.
 #
 # Um nome de pasta por linha. Linha vazia e # são ignorados.
 ai-chat
@@ -18,11 +19,7 @@ ai-import-financeiro
 ai-rdo-voz
 asaas-config
 asaas-criar-cobranca
-asaas-webhook
-ativar-plano
 campo-upload-foto
-create-company-owner
-delete-user
 geocode-address
 guardiao-margem-cron
 health
@@ -31,9 +28,7 @@ invite-cliente-portal
 log-impersonation
 pilar-checkout-create
 pilar-checkout-status
-pilar-checkout-webhook
 pilar-subscription-manage
-pilar-token-pack-create
 portal-aprovar-proposta
 portal-entrega-download
 portal-get-projeto
