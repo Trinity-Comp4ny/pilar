@@ -26,13 +26,7 @@ export function adminClient(): SupabaseClient {
 // Types
 // ---------------------------------------------------------------------------
 
-export type UserRole =
-  | "user"
-  | "admin"
-  | "ultra_admin"
-  | "owner"
-  | "coordenador"
-  | "colaborador";
+export type UserRole = "user" | "admin" | "ultra_admin" | "owner" | "coordenador" | "colaborador";
 
 export type RoleSuccess = {
   svc: SupabaseClient;
@@ -53,6 +47,17 @@ type AdminSuccess = {
 };
 
 type AdminFailure = { error: Response; svc?: never; userId?: never };
+
+/**
+ * Admin da própria empresa (admin ou ultra_admin com empresa_id), para as funções
+ * que já leram o profile e só precisam decidir. `owner` fica de fora de propósito:
+ * foi migrado para `admin` (20260870000000) e não é mais atribuído.
+ */
+export function ehAdminDaEmpresa<P extends { empresa_id: string | null; role: string | null }>(
+  profile: P | null | undefined
+): profile is P & { empresa_id: string } {
+  return !!profile?.empresa_id && (profile.role === "admin" || profile.role === "ultra_admin");
+}
 
 // ---------------------------------------------------------------------------
 // Primitivo reutilizável: exige que o papel do caller (lido no banco) esteja
