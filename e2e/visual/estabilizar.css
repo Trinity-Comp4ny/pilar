@@ -1,0 +1,6 @@
+/* Injetado só no screenshot da regressão visual (toHaveScreenshot stylePath).
+   Toast aparece e some com tempo próprio: fora da foto. */
+[data-sonner-toaster],
+section[aria-label^="Notifications"] {
+  display: none !important;
+}

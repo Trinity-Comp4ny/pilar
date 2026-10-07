@@ -46,6 +46,17 @@ export PORT="${PORT:-4174}"
 
 npm run build
 
+# Regressão visual primeiro, com o banco recém-semeado e antes de qualquer spec
+# criar dado. Só em Linux (referência gerada no CI; ver e2e/visual/README.md).
+# E2E_VISUAL_ATUALIZAR=1 regrava as referências em vez de comparar.
+if [ "$(uname)" = "Linux" ] && [ $# -eq 0 ]; then
+  if [ "${E2E_VISUAL_ATUALIZAR:-}" = "1" ]; then
+    npx playwright test --project=visual --update-snapshots
+  else
+    npx playwright test --project=visual
+  fi
+fi
+
 # chromium = specs sem login; authenticated = specs logados (dependem do setup).
 # O projeto "marketing" fica de fora: testa o site em produção, não este commit.
 npx playwright test --project=chromium --project=authenticated "$@"
