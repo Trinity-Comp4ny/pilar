@@ -1,0 +1,80 @@
+import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
+import {
+  bodySchema,
+  CONSENTIMENTO_TEXTO_VERSAO,
+  primeiraCobrancaEm,
+  valorDoCiclo,
+  verificarAssinatura,
+} from "./ativacao.ts";
+
+const emTrial = {
+  id: "sub1",
+  status: "trialing",
+  trial_ends_at: "2026-10-21T15:30:00.000Z",
+  asaas_customer_id: null,
+};
+
+const corpoValido = {
+  plan_id: "6f1c1b5e-2c47-4a8e-9b1d-3f2a7c9e0d11",
+  billing_cycle: "monthly",
+  credit_card: {
+    holderName: "Fulana Souza",
+    number: "5555555555554444",
+    expiryMonth: "01",
+    expiryYear: "2031",
+    ccv: "321",
+  },
+  credit_card_holder_info: {
+    name: "Fulana Souza",
+    email: "fulana@exemplo.com",
+    cpfCnpj: "12.345.678/0001-90",
+    postalCode: "30140-071",
+    addressNumber: "10",
+  },
+};
+
+Deno.test("só assinatura em trial com data de fim ativa o plano", () => {
+  assertEquals(verificarAssinatura(emTrial), { ok: true, sub: emTrial });
+});
+
+Deno.test("sem assinatura, assinatura ativa ou cancelada: recusa com status próprio", () => {
+  assertEquals(verificarAssinatura(null), { ok: false, status: 404, error: "Assinatura não encontrada" });
+  for (const status of ["active", "canceled", "overdue", "expired"]) {
+    const r = verificarAssinatura({ ...emTrial, status });
+    assertEquals(r.ok ? 0 : r.status, 400, status);
+  }
+});
+
+Deno.test("trial sem data de fim é erro de dado (500), não do usuário", () => {
+  const r = verificarAssinatura({ ...emTrial, trial_ends_at: null });
+  assertEquals(r.ok ? 0 : r.status, 500);
+});
+
+Deno.test("valor vem do plano pelo ciclo; ciclo sem preço devolve null", () => {
+  const plano = { preco_mensal: 690, preco_anual: 6900 };
+  assertEquals(valorDoCiclo(plano, "monthly"), 690);
+  assertEquals(valorDoCiclo(plano, "yearly"), 6900);
+  assertEquals(valorDoCiclo({ preco_mensal: 690, preco_anual: null }, "yearly"), null);
+});
+
+Deno.test("primeira cobrança é a data (sem hora) do fim do trial", () => {
+  assertEquals(primeiraCobrancaEm(emTrial.trial_ends_at), "2026-10-21");
+});
+
+Deno.test("entrada: cartão e titular obrigatórios, plano é uuid, ciclo só mensal ou anual", () => {
+  assertEquals(bodySchema.safeParse(corpoValido).success, true);
+  assertEquals(bodySchema.safeParse({ ...corpoValido, credit_card: undefined }).success, false);
+  assertEquals(bodySchema.safeParse({ ...corpoValido, credit_card_holder_info: undefined }).success, false);
+  assertEquals(bodySchema.safeParse({ ...corpoValido, plan_id: "plano-pro" }).success, false);
+  assertEquals(bodySchema.safeParse({ ...corpoValido, billing_cycle: "weekly" }).success, false);
+});
+
+Deno.test("entrada: valor mandado pelo cliente é descartado (preço vem só do plano)", () => {
+  const r = bodySchema.safeParse({ ...corpoValido, valor: 1, preco_mensal: 1 });
+  assertEquals(r.success && "valor" in r.data, false);
+});
+
+Deno.test("versão do texto de consentimento é fixa no servidor", () => {
+  // Trocar a versão é decisão consciente (mudou a copy do passo "Ativar plano").
+  assertEquals(CONSENTIMENTO_TEXTO_VERSAO, "ativar-plano-v1");
+});

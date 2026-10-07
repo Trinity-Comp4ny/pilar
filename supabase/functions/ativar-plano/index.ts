@@ -14,6 +14,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { jsonResponse, optionsResponse } from "../_shared/cors.ts";
+import { ehAdminDaEmpresa } from "../_shared/admin-auth.ts";
 import {
   createCustomer,
   findCustomerByCpfCnpj,
@@ -21,26 +22,19 @@ import {
   type TokenizeCreditCardResult,
 } from "../_shared/asaas-platform.ts";
 import { resolverDadosCliente } from "../_shared/asaas-customer.ts";
-import { creditCardSchema, creditCardHolderInfoSchema } from "../_shared/asaas-card-schemas.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
-import { parseOr400, uuidSchema, z } from "../_shared/schemas.ts";
+import { parseOr400 } from "../_shared/schemas.ts";
+import {
+  bodySchema,
+  CONSENTIMENTO_TEXTO_VERSAO,
+  primeiraCobrancaEm as dataPrimeiraCobranca,
+  verificarAssinatura,
+  valorDoCiclo,
+  type Body,
+} from "./ativacao.ts";
 
 const log = createLogger("ativar-plano");
-
-// Versão do texto de consentimento (SPEC 098 requisito 14). Bump manual
-// quando a copy do passo "Ativar plano" mudar de forma relevante — é a
-// evidência de qual texto o admin realmente leu, não pode vir do client.
-const CONSENTIMENTO_TEXTO_VERSAO = "ativar-plano-v1";
-
-const bodySchema = z.object({
-  plan_id: uuidSchema,
-  billing_cycle: z.enum(["monthly", "yearly"]),
-  credit_card: creditCardSchema,
-  credit_card_holder_info: creditCardHolderInfoSchema,
-});
-
-type Body = z.infer<typeof bodySchema>;
 
 serve(
   withSentry("ativar-plano", async (req) => {
@@ -68,8 +62,7 @@ serve(
     }
 
     const { data: profile } = await admin.from("profiles").select("empresa_id, role").eq("id", user.id).maybeSingle();
-    const isAdmin = profile?.role === "admin" || profile?.role === "ultra_admin";
-    if (!profile?.empresa_id || !isAdmin) {
+    if (!ehAdminDaEmpresa(profile)) {
       return jsonResponse({ error: "Apenas admin da empresa pode ativar o plano" }, 403, req);
     }
     const empresaId = profile.empresa_id;
@@ -115,21 +108,17 @@ serve(
 
     // --- Empresa precisa estar em trial: Ouro por pagamento não se aplica a
     //     quem já converteu (active) nem a quem já cancelou. ---
-    const { data: sub } = await admin
+    const { data: subLida } = await admin
       .from("pilar_subscriptions")
       .select("id, status, trial_ends_at, asaas_customer_id")
       .eq("empresa_id", empresaId)
       .maybeSingle();
 
-    if (!sub) {
-      return jsonResponse({ error: "Assinatura não encontrada" }, 404, req);
+    const verificacao = verificarAssinatura(subLida);
+    if (!verificacao.ok) {
+      return jsonResponse({ error: verificacao.error }, verificacao.status, req);
     }
-    if (sub.status !== "trialing") {
-      return jsonResponse({ error: "Sua empresa já não está mais em período de teste" }, 400, req);
-    }
-    if (!sub.trial_ends_at) {
-      return jsonResponse({ error: "Trial sem data de expiração definida" }, 500, req);
-    }
+    const { sub } = verificacao;
 
     const { data: plan } = await admin
       .from("pilar_subscription_plans")
@@ -141,7 +130,7 @@ serve(
       return jsonResponse({ error: "Plano não encontrado" }, 404, req);
     }
 
-    const valor = body.billing_cycle === "yearly" ? plan.preco_anual : plan.preco_mensal;
+    const valor = valorDoCiclo(plan, body.billing_cycle);
     if (valor == null) {
       return jsonResponse({ error: "Este plano não tem preço anual configurado" }, 400, req);
     }
@@ -213,7 +202,7 @@ serve(
     }
 
     // --- Consentimento (append-only, evidência do opt-out) ---
-    const primeiraCobrancaEm = sub.trial_ends_at.slice(0, 10);
+    const primeiraCobrancaEm = dataPrimeiraCobranca(sub.trial_ends_at);
     const { error: consentErr } = await admin.from("consentimentos_cobranca").insert({
       empresa_id: empresaId,
       user_id: user.id,
