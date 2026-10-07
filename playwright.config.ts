@@ -30,7 +30,15 @@ export default defineConfig({
     },
     {
       name: "chromium",
-      testIgnore: [/auth\.setup\.ts/, /.*-authenticated\.spec\.ts/],
+      testIgnore: [/auth\.setup\.ts/, /.*-authenticated\.spec\.ts/, /marketing-.*\.spec\.ts/],
+      use: { ...devices["Desktop Chrome"] },
+    },
+    // Site de marketing em produção (www.pilarsoft.com.br), não o app buildado aqui.
+    // Projeto separado porque não depende do commit testado: falha dele não pode
+    // pular nem mascarar os specs do app (foi o que aconteceu de set. a out./2026).
+    {
+      name: "marketing",
+      testMatch: /marketing-.*\.spec\.ts/,
       use: { ...devices["Desktop Chrome"] },
     },
     {

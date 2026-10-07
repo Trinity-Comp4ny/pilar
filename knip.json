@@ -1,0 +1,16 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["e2e/**/*.ts", "tests/synthetic/**/*.ts", "scripts/**/*.{mjs,ts}", "checkly.config.ts"],
+      "project": ["src/**/*.{ts,tsx}", "e2e/**/*.ts", "scripts/**/*.{mjs,ts}"],
+      "ignore": ["src/integrations/supabase/types.ts"],
+      "ignoreBinaries": ["supabase"],
+      "ignoreDependencies": ["@react-email/ui", "checkly"]
+    },
+    "apps/marketing": {
+      "entry": ["scripts/**/*.mjs"],
+      "project": ["src/**/*.{ts,tsx}"]
+    }
+  }
+}
