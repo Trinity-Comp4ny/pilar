@@ -448,11 +448,23 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run build
 
+      # A empresa do usuário de E2E fica sempre ativa, sem depender do relógio do
+      # trial (venceu em 31/08 e bloqueou o app por um mês). Mesmo secret do deploy.
+      - name: Garantir fixture do usuário de E2E
+        if: env.E2E_TEST_EMAIL != ''
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/e2e-staging-fixture.sql
+
       # Specs que não dependem de login (landing, login-validation, portal-cliente,
       # security...). O de acessibilidade do site de marketing saiu deste passo (ver
       # o último passo abaixo).
       - name: Specs sem autenticação
         run: npx playwright test --project=chromium
+        env:
+          # Um relatório por passo: com a pasta padrão, cada `playwright test`
+          # apagava o relatório do anterior e o artifact só tinha o último passo.
+          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/sem-login
 
       # `!cancelled()`: os specs logados rodam mesmo se um spec sem login falhar.
       # Sem isso, de set. a out./2026 um único spec vermelho (a11y da landing) fez
@@ -461,6 +473,8 @@ jobs:
       - name: Specs autenticados
         if: ${{ !cancelled() && env.E2E_TEST_EMAIL != '' }}
         run: npx playwright test --project=authenticated
+        env:
+          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/autenticados
       - name: Aviso quando o usuário de teste não está provisionado
         if: env.E2E_TEST_EMAIL == ''
         run: echo "::warning::E2E_TEST_EMAIL/E2E_TEST_PASSWORD ausentes no Environment Staging, então os specs autenticados foram pulados. Crie o usuário de teste em staging e adicione os secrets."
@@ -473,6 +487,8 @@ jobs:
         if: ${{ !cancelled() }}
         continue-on-error: true
         run: npx playwright test --project=marketing
+        env:
+          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/marketing
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()
