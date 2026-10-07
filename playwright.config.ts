@@ -30,8 +30,18 @@ export default defineConfig({
     },
     {
       name: "chromium",
-      testIgnore: [/auth\.setup\.ts/, /.*-authenticated\.spec\.ts/, /marketing-.*\.spec\.ts/],
+      testIgnore: [/auth\.setup\.ts/, /.*-authenticated\.spec\.ts/, /marketing-.*\.spec\.ts/, /\.visual\.spec\.ts/],
       use: { ...devices["Desktop Chrome"] },
+    },
+    // Regressão visual (toHaveScreenshot). Só roda em Linux: a referência é gerada
+    // no runner do CI, e fonte/antialiasing do macOS dariam diferença em todo pixel.
+    // O sufixo de plataforma no nome do arquivo (padrão do Playwright) garante que
+    // rodar no Mac falhe por "referência ausente", nunca compare errado.
+    {
+      name: "visual",
+      testMatch: /\.visual\.spec\.ts/,
+      dependencies: ["setup"],
+      use: { ...devices["Desktop Chrome"], storageState: STORAGE_STATE },
     },
     // Site de marketing em produção (www.pilarsoft.com.br), não o app buildado aqui.
     // Projeto separado porque não depende do commit testado: falha dele não pode
