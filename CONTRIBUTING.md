@@ -33,18 +33,22 @@ npm run gen:types
 
 ## Scripts
 
-| Comando                     | Para quê                                           |
-| --------------------------- | -------------------------------------------------- |
-| `npm run dev`               | Ambiente completo: Supabase + functions + app + LP |
-| `npm run dev:app`           | Vite dev server (só o app, sem Supabase)           |
-| `npm run typecheck`         | `tsc --noEmit`                                     |
-| `npm run test:run`          | Vitest unit tests                                  |
-| `npm run test:e2e`          | Playwright (precisa `npm run preview` rodando)     |
-| `npm run build`             | Produção                                           |
-| `npm run build:strict`      | typecheck + build                                  |
-| `npm run check:bundle-size` | Falha se chunk passa do budget                     |
-| `npm run lint` / `lint:fix` | ESLint                                             |
-| `npm run format`            | Prettier                                           |
+| Comando                     | Para quê                                                   |
+| --------------------------- | ---------------------------------------------------------- |
+| `npm run dev`               | Ambiente completo: Supabase + functions + app + LP         |
+| `npm run dev:app`           | Vite dev server (só o app, sem Supabase)                   |
+| `npm run typecheck`         | `tsc --noEmit`                                             |
+| `npm run test:run`          | Vitest unit tests                                          |
+| `npm run test:coverage`     | Vitest com piso de cobertura (o que o CI roda)             |
+| `npm run test:e2e:local`    | Playwright contra o Supabase local (o que o CI roda em PR) |
+| `npm run test:e2e`          | Playwright (precisa `npm run preview` rodando)             |
+| `npm run check:dead-code`   | Knip: reprova se código morto crescer                      |
+| `npm run lint:prune`        | Tira supressão de lint que já foi corrigida                |
+| `npm run build`             | Produção                                                   |
+| `npm run build:strict`      | typecheck + build                                          |
+| `npm run check:bundle-size` | Falha se chunk passa do budget                             |
+| `npm run lint` / `lint:fix` | ESLint                                                     |
+| `npm run format`            | Prettier                                                   |
 
 ## Convenções
 
@@ -101,7 +105,11 @@ Para pular em emergência: `git commit --no-verify` (use com discrição, CI ain
 
 O que roda hoje (`.github/workflows/ci.yml`), em push e PR para `main` e `staging`:
 
-- **lint-test-build** — eslint, typecheck, vitest, build e budget de bundle.
+- **lint-test-build**: eslint, typecheck, vitest com piso de cobertura, Knip (código morto
+  não cresce), build e budget de bundle. Regras de design system e `no-console` são erro;
+  ocorrências antigas ficam congeladas em `eslint-suppressions.json` (ADR 0045).
+- **e2e-local**: Playwright contra Supabase local no runner, em todo PR. Mesmo comando
+  local: `npm run test:e2e:local` (precisa `supabase start`).
 - **audit** — `npm audit --audit-level=high`.
 - **secrets-scan** — gitleaks sobre o histórico inteiro.
 - **deploy-staging** — só em push no `staging`, depois dos três acima. Aplica migrations
@@ -130,10 +138,8 @@ passam limpo: são o padrão do repo.
 Depois do deploy em staging (não em PR):
 
 - **e2e** — job `E2E → staging (Playwright)`, roda contra o staging recém-deployado.
-  Os 4 specs sem login (`landing`, `login-validation`, `portal-cliente`, `security`)
-  bloqueiam o job. Os 6 specs `*-authenticated.spec.ts` só rodam quando os secrets
-  `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` existirem no Environment `Staging`; sem eles o
-  job avisa e segue. Não entra no `ci-ok`: falha aqui é sinal para investigar staging,
+  Specs sem login e `*-authenticated.spec.ts` (estes rodam mesmo se um sem login falhar).
+  O spec de a11y do site de marketing em produção é informativo (projeto `marketing`). Não entra no `ci-ok`: falha aqui é sinal para investigar staging,
   não para bloquear merge.
 
   O antigo `e2e-staging.yml` foi removido. Ele nunca executou uma única vez: o
