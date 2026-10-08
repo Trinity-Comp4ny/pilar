@@ -56,9 +56,14 @@ Deno.test("expired sem trial_ends_at não é erro: a referência vira agora", ()
   assertEquals(r.ok && r.sub.trial_ends_at, depoisDoFim.toISOString());
 });
 
-Deno.test("sem assinatura, assinatura ativa, cancelada ou em atraso: recusa com status próprio", () => {
+Deno.test("assinatura cancelada assina de novo com cobrança imediata", () => {
+  const r = verificarAssinatura({ ...emTrial, status: "canceled", trial_ends_at: null }, depoisDoFim);
+  assertEquals(r.ok && r.modo, "imediata");
+});
+
+Deno.test("sem assinatura, assinatura ativa ou em atraso: recusa com status próprio", () => {
   assertEquals(verificarAssinatura(null), { ok: false, status: 404, error: "Assinatura não encontrada" });
-  for (const status of ["active", "canceled", "overdue"]) {
+  for (const status of ["active", "overdue"]) {
     const r = verificarAssinatura({ ...emTrial, status });
     assertEquals(r.ok ? 0 : r.status, 400, status);
   }

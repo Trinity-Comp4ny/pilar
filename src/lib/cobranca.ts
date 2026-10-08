@@ -14,14 +14,14 @@ export function ehConvidada(sub: AssinaturaCobranca | null | undefined): boolean
   return sub.status === "active" && !sub.asaas_subscription_id;
 }
 
-/** Assinar agora cobra na hora: o teste já venceu (expired, ou trialing com a data passada). */
+/** Assinar agora cobra na hora: teste vencido (ou trialing com a data passada) ou assinatura cancelada. */
 export function cobraNaHora(sub: AssinaturaCobranca, agora: Date = new Date()): boolean {
-  if (sub.status === "expired") return true;
+  if (sub.status === "expired" || sub.status === "canceled") return true;
   if (sub.status !== "trialing" || !sub.trial_ends_at) return false;
   return new Date(sub.trial_ends_at).getTime() <= agora.getTime();
 }
 
-/** Pode assinar pelo fluxo "Ativar plano": em teste ou com o teste vencido. */
+/** Pode assinar pelo fluxo "Ativar plano": em teste, com o teste vencido ou depois de cancelar. */
 export function podeAtivarPlano(sub: AssinaturaCobranca): boolean {
-  return sub.status === "trialing" || sub.status === "expired";
+  return sub.status === "trialing" || sub.status === "expired" || sub.status === "canceled";
 }

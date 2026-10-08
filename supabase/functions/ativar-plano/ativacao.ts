@@ -40,15 +40,16 @@ export type VerificacaoAssinatura =
   | { ok: false; status: number; error: string };
 
 /**
- * Ativa por aqui quem está em teste ou com o teste vencido (modo leitura).
- * Quem já paga (active), cancelou ou está em atraso não passa por este fluxo.
+ * Ativa por aqui quem está em teste, com o teste vencido (modo leitura) ou com
+ * a assinatura cancelada (assina de novo, cobrança na hora). Quem já paga
+ * (active) ou está em atraso (regulariza a fatura) não passa por este fluxo.
  */
 export function verificarAssinatura(sub: AssinaturaLida | null, agora: Date = new Date()): VerificacaoAssinatura {
   if (!sub) return { ok: false, status: 404, error: "Assinatura não encontrada" };
-  if (sub.status !== "trialing" && sub.status !== "expired") {
-    return { ok: false, status: 400, error: "Sua empresa já não está mais em período de teste" };
+  if (sub.status !== "trialing" && sub.status !== "expired" && sub.status !== "canceled") {
+    return { ok: false, status: 400, error: "Sua empresa já tem uma assinatura ativa ou com fatura em aberto" };
   }
-  if (sub.status === "expired") {
+  if (sub.status === "expired" || sub.status === "canceled") {
     // Convidada cujo prazo venceu pode não ter trial_ends_at antigo: a data
     // de referência passa a ser agora.
     return { ok: true, sub: { ...sub, trial_ends_at: sub.trial_ends_at ?? agora.toISOString() }, modo: "imediata" };

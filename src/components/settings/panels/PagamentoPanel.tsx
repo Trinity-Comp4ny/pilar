@@ -111,8 +111,18 @@ export function PagamentoPanel() {
           )}
 
           {isCanceled && (
-            <div className="p-4 bg-muted border border-border rounded-xl text-sm text-ink-soft">
-              <strong>Assinatura cancelada.</strong> Acesso mantido até {formatDate(subscription.current_period_end)}.
+            <div className="p-4 bg-muted border border-border rounded-xl text-sm text-ink-soft flex items-start gap-3">
+              <div className="flex-1">
+                <strong>Assinatura cancelada.</strong> Os dados continuam guardados.{" "}
+                {isAdmin
+                  ? "Assine de novo para voltar a usar."
+                  : "Peça ao administrador da empresa para assinar de novo."}
+              </div>
+              {isAdmin && (
+                <Button variant="brand" size="sm" onClick={() => setAtivarOpen(true)}>
+                  Assinar de novo
+                </Button>
+              )}
             </div>
           )}
 
@@ -261,7 +271,7 @@ export function PagamentoPanel() {
                     // Saiu do modo leitura: o gate e o banner leem status/leitura_desde.
                     void qc.invalidateQueries({ queryKey: ["pilar-my-subscription"] });
                     void qc.invalidateQueries({ queryKey: ["trial-subscription"] });
-                    if (isExpired) window.location.reload();
+                    if (isExpired || isCanceled) window.location.reload();
                   }}
                 />
               )}
