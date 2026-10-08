@@ -8,7 +8,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, Lock, ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff, User, Building2, Phone } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  ArrowLeft,
+  Loader2,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  User,
+  UserCheck,
+  Building2,
+  Phone,
+} from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { PasswordRequirements } from "@/components/PasswordRequirements";
@@ -21,6 +33,7 @@ import { analytics } from "@/lib/analytics";
 import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legalVersions";
 import { Logo } from "@/components/Logo";
 import { guardarOrigemCadastro, lerOrigemCadastro } from "@/lib/origemCadastro";
+import { emailJaTemConta } from "@/lib/signupResultado";
 
 export default function Signup() {
   usePageTitle("Criar conta");
@@ -28,7 +41,8 @@ export default function Signup() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [emailEnviado, setEmailEnviado] = useState(false);
+  const [resultado, setResultado] = useState<"enviado" | "ja_existe" | null>(null);
+  const [reenviando, setReenviando] = useState(false);
   // Anti-abuso do cadastro aberto (spam de tenants): captcha só é exigido quando há
   // site key configurada. Sem ela (ex.: ambiente sem Turnstile), o cadastro segue.
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
@@ -60,7 +74,7 @@ export default function Signup() {
   const handleSignup = async (values: SignupFormData) => {
     setIsLoading(true);
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
       options: {
@@ -84,9 +98,31 @@ export default function Signup() {
       return;
     }
 
+    if (emailJaTemConta(data.user)) {
+      analytics.track("signup_email_ja_cadastrado", {});
+      setResultado("ja_existe");
+      setIsLoading(false);
+      return;
+    }
+
     analytics.track("signup_completed", { method: "email" });
-    setEmailEnviado(true);
+    setResultado("enviado");
     setIsLoading(false);
+  };
+
+  const handleReenviar = async () => {
+    setReenviando(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: form.getValues("email"),
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    });
+    setReenviando(false);
+    if (error) {
+      toast.error("Não foi possível reenviar", { description: translateAuthError(error) });
+      return;
+    }
+    toast.success("E-mail reenviado", { description: "Confira também a caixa de spam." });
   };
 
   const handleGoogle = async () => {
@@ -123,29 +159,62 @@ export default function Signup() {
             <p className="text-sm text-ink-soft">3 dias grátis, sem cartão</p>
           </div>
 
-          {emailEnviado ? (
+          {resultado === "ja_existe" ? (
             <div className="space-y-6 text-center animate-in fade-in duration-500">
               <div className="flex justify-center">
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand/15">
-                  <Mail className="h-7 w-7 text-brand" />
+                  <UserCheck className="h-7 w-7 text-ink" />
                 </div>
               </div>
               <div className="space-y-2">
-                <h2 className="text-lg font-semibold text-ink">Confira seu email</h2>
+                <h2 className="text-lg font-semibold text-ink">Esse e-mail já tem conta</h2>
+                <p className="text-sm text-ink-soft">
+                  <span className="font-medium text-ink">{form.getValues("email")}</span> já está cadastrado no Pilar.
+                  Entre com sua senha ou crie uma nova se não lembrar.
+                </p>
+              </div>
+              <div className="space-y-3">
+                <Button variant="brand" className="w-full h-10" asChild>
+                  <Link to="/login">Entrar</Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full h-10 border-paper-border text-ink-soft hover:text-ink hover:bg-muted text-sm font-medium"
+                  asChild
+                >
+                  <Link to="/forgot-password">Recuperar senha</Link>
+                </Button>
+              </div>
+            </div>
+          ) : resultado === "enviado" ? (
+            <div className="space-y-6 text-center animate-in fade-in duration-500">
+              <div className="flex justify-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand/15">
+                  <Mail className="h-7 w-7 text-ink" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-lg font-semibold text-ink">Confira seu e-mail</h2>
                 <p className="text-sm text-ink-soft">
                   Enviamos um link de confirmação para{" "}
                   <span className="font-medium text-ink">{form.getValues("email")}</span>. Clique nele para ativar sua
                   conta e continuar.
                 </p>
               </div>
-              <p className="text-xs text-ink/40">Não recebeu? Verifique o spam ou tente criar a conta novamente.</p>
-              <Button
-                variant="outline"
-                className="w-full h-10 border-paper-border text-ink-soft hover:text-brand hover:border-brand/50 hover:bg-brand/10 transition-all text-sm font-medium"
-                asChild
-              >
-                <Link to="/login">Ir para o login</Link>
-              </Button>
+              <p className="text-xs text-ink/40">Não chegou em alguns minutos? Confira o spam ou peça um novo link.</p>
+              <div className="space-y-3">
+                <Button
+                  variant="outline"
+                  className="w-full h-10 border-paper-border text-ink-soft hover:text-ink hover:bg-muted text-sm font-medium"
+                  onClick={handleReenviar}
+                  disabled={reenviando}
+                >
+                  {reenviando ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reenviar e-mail"}
+                </Button>
+                <Button variant="ghost" className="w-full h-10 text-ink-soft text-sm" asChild>
+                  <Link to="/login">Ir para o login</Link>
+                </Button>
+              </div>
             </div>
           ) : (
             <>
