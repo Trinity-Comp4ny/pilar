@@ -32,4 +32,12 @@ describe("KPICard", () => {
     await userEvent.click(card);
     expect(onClick).toHaveBeenCalledOnce();
   });
+
+  it("valor que não cabe corta com reticências e mantém o valor completo no title", () => {
+    render(<KPICard label="A receber" value={1234567.89} icon={DollarSign} />);
+    const valor = screen.getByText(/R\$/);
+    // O texto visível pode ser cortado pelo CSS (truncate); o title guarda o valor inteiro.
+    expect(valor).toHaveClass("truncate");
+    expect(valor).toHaveAttribute("title", valor.textContent ?? "");
+  });
 });
