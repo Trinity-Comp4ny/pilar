@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type AuthError } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { env } from "./env";
 import { createInstrumentedFetch } from "./supabaseFetch";
@@ -71,3 +71,25 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     lock: (_name, _acquireTimeout, fn) => fn(),
   },
 });
+
+/**
+ * Confere a senha atual sem mexer na sessão do app. Reautenticar no client
+ * principal troca a sessão aal2 por uma aal1, e o Supabase recusa trocar a senha
+ * de quem tem 2FA ativo ("AAL2 session is required to update email or password
+ * when MFA is enabled"). Um client descartável, sem storage, faz o login à parte
+ * e encerra só aquela sessão.
+ */
+export async function verifyCurrentPassword(email: string, password: string): Promise<AuthError | null> {
+  const probe = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      storageKey: "pilar-password-probe",
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
+  const { error } = await probe.auth.signInWithPassword({ email, password });
+  if (error) return error;
+  await probe.auth.signOut({ scope: "local" });
+  return null;
+}
