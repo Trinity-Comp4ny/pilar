@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { edgeFunctionErrorMessage } from "@/lib/edgeFunctionError";
 import { reportInvokeError } from "@/lib/monitoring";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { Building2, Users as UsersIcon, Palette } from "lucide-react";
@@ -240,7 +241,10 @@ export function EmpresaPanel() {
     } catch (err) {
       reportInvokeError(err, "invite-user:empresa-panel");
       toast.error("Erro ao convidar", {
-        description: "Verifique se a função 'invite-user' está implantada ou tente novamente.",
+        description: await edgeFunctionErrorMessage(
+          err,
+          "Não foi possível enviar o convite. Tente de novo em instantes."
+        ),
       });
     } finally {
       setIsInviting(false);
