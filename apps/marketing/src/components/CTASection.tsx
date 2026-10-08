@@ -19,7 +19,7 @@ export function CTASection() {
 
   const primario = loggedIn
     ? { href: `${APP_URL}/inicio`, label: "Abrir Pilar", evento: "abrir_pilar" }
-    : { href: `${APP_URL}/cadastro`, label: "Testar grátis por 14 dias", evento: "testar_gratis" };
+    : { href: `${APP_URL}/cadastro`, label: "Testar grátis por 3 dias", evento: "testar_gratis" };
 
   return (
     <section className="w-full bg-paper px-4 md:px-10 pb-10 md:pb-20">
@@ -43,7 +43,7 @@ export function CTASection() {
               transition={{ duration: 0.6, ease: EASE.out, delay: 0.15 }}
               className="text-[15px] text-ink/70 max-w-lg mx-auto mb-9 leading-relaxed"
             >
-              14 dias grátis, sem cartão e sem contrato. O fluxo inteiro num lugar só, do lead ao resultado.
+              3 dias grátis, sem cartão e sem contrato. O fluxo inteiro num lugar só, do lead ao resultado.
             </m.p>
 
             <div className="flex flex-col items-center gap-4">

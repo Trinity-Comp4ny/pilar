@@ -114,7 +114,7 @@ export default function Signup() {
               <Logo size="lg" />
             </div>
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Criar conta</h1>
-            <p className="text-sm text-ink-soft">14 dias grátis, sem cartão</p>
+            <p className="text-sm text-ink-soft">3 dias grátis, sem cartão</p>
           </div>
 
           {emailEnviado ? (
@@ -415,7 +415,7 @@ export default function Signup() {
           <div className="space-y-8 max-w-lg ml-auto text-right animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
             <div className="flex justify-end">
               <span className="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
-                14 dias grátis
+                3 dias grátis
               </span>
             </div>
 

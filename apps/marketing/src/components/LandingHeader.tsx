@@ -194,7 +194,7 @@ export function LandingHeader() {
             href={loggedIn ? `${APP_URL}/inicio` : `${APP_URL}/cadastro`}
             onClick={() => trackCta(loggedIn ? "abrir_pilar" : "testar_gratis", "header_mobile")}
           >
-            {loggedIn ? "Abrir Pilar" : "Testar grátis por 14 dias"}
+            {loggedIn ? "Abrir Pilar" : "Testar grátis por 3 dias"}
           </SplitButton>
         </div>
       </div>
