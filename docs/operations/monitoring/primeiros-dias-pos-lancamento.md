@@ -56,12 +56,12 @@ alguma query subindo 5x+ o baseline.
 
 ### 4. Synthetic / uptime
 
-- Depende de você ativar Checkly/BetterStack (ver `checkly-setup.md`,
-  `status-page-setup.md`) — enquanto não tiver conta criada, `/health` só é
-  monitorado manualmente: `curl $PILAR_HEALTH_URL | jq`.
+- Automático desde 2026-10-08: workflow `monitor-producao.yml` roda os checks
+  sintéticos a cada 30 min e abre issue quando falham (ver `synthetic-tests.md`).
+  Checagem manual: `curl https://vepnsonbnsimqcsfcagm.supabase.co/functions/v1/health | jq`.
 
 ## Depois da primeira semana
 
-Reduzir a cadência conforme a confiança sobe (ex.: 1x/dia → 2x/semana). Se
-Checkly/BetterStack estiverem ativos, os alertas substituem boa parte da
-checagem manual — este checklist vira backup, não rotina.
+Reduzir a cadência conforme a confiança sobe (ex.: 1x/dia → 2x/semana). Com o
+monitor de produção ativo, os alertas substituem boa parte da checagem manual:
+este checklist vira backup, não rotina.
