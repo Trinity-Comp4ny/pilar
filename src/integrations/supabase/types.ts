@@ -4831,6 +4831,7 @@ export type Database = {
           billing_cycle: string | null
           billing_type: string | null
           canceled_at: string | null
+          cartao_cadastrado: boolean | null
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
@@ -4857,6 +4858,7 @@ export type Database = {
           billing_cycle?: string | null
           billing_type?: string | null
           canceled_at?: string | null
+          cartao_cadastrado?: boolean | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
@@ -4883,6 +4885,7 @@ export type Database = {
           billing_cycle?: string | null
           billing_type?: string | null
           canceled_at?: string | null
+          cartao_cadastrado?: boolean | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
@@ -8589,6 +8592,7 @@ export type Database = {
         }
         Returns: number
       }
+      ops_saude_crons: { Args: never; Returns: Json }
       pagar_fatura: {
         Args: {
           p_conta_id: string
@@ -8706,6 +8710,7 @@ export type Database = {
         Returns: undefined
       }
       retencao_pos_trial_disparar: { Args: never; Returns: undefined }
+      reverificar_documentos_disparar: { Args: never; Returns: undefined }
       rpc_atualizar_status_atrasados: { Args: never; Returns: Json }
       rpc_calcular_wip: {
         Args: { p_ano: number; p_mes: number }

@@ -32,13 +32,11 @@ function timed(): { start: number; elapsed: () => number } {
 }
 
 /**
- * Postgres SELECT 1 via service_role. Usa REST (PostgREST RPC) pra evitar
- * carregar SDK pesado. Cria função `select_1` não é necessário — usamos
- * `?select=1` numa tabela leve (information_schema).
- *
- * Mais simples ainda: `pg-meta`-like ping via REST raiz (200 = up).
+ * Banco via PostgREST com service_role. Consulta uma linha de
+ * platform_settings: a raiz /rest/v1/ monta o OpenAPI de 180+ tabelas e
+ * passava de 2s a frio, o que dava "down" falso na primeira chamada.
  */
-export async function checkDatabase(timeoutMs = 2000): Promise<CheckResult> {
+export async function checkDatabase(timeoutMs = 3000): Promise<CheckResult> {
   const t = timed();
   const url = Deno.env.get("SUPABASE_URL");
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -51,9 +49,8 @@ export async function checkDatabase(timeoutMs = 2000): Promise<CheckResult> {
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
 
   try {
-    // PostgREST endpoint root retorna OpenAPI spec — cheap e não toca dados.
     const res = await withTimeout(
-      fetch(`${url}/rest/v1/`, {
+      fetch(`${url}/rest/v1/platform_settings?select=id&limit=1`, {
         method: "GET",
         headers: { apikey: key, Authorization: `Bearer ${key}` },
         signal: ctrl.signal,
@@ -141,12 +138,56 @@ export async function checkResend(timeoutMs = 3000): Promise<CheckResult> {
  *  - qualquer "degraded" -> degraded
  *  - resto -> ok
  */
-export function aggregate(results: { db: CheckResult; asaas?: CheckResult; resend?: CheckResult }): {
+/**
+ * Secrets do Vault que os crons precisam (ops_saude_crons). Faltando, os
+ * jobs pulam o disparo em silêncio: aqui isso vira "degraded", visível.
+ */
+export async function checkCrons(timeoutMs = 3000): Promise<CheckResult> {
+  const t = timed();
+  const url = Deno.env.get("SUPABASE_URL");
+  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !key) {
+    return { status: "skipped", latency_ms: 0, error: "missing SUPABASE_URL or SERVICE_ROLE_KEY" };
+  }
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await withTimeout(
+      fetch(`${url}/rest/v1/rpc/ops_saude_crons`, {
+        method: "POST",
+        headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body: "{}",
+        signal: ctrl.signal,
+      }),
+      timeoutMs,
+      ctrl.signal
+    );
+    clearTimeout(timer);
+    if (!res.ok) return { status: "degraded", latency_ms: t.elapsed(), error: `crons http ${res.status}` };
+    const body = (await res.json()) as { secrets_faltando?: string[] };
+    const faltando = body.secrets_faltando ?? [];
+    if (faltando.length > 0) {
+      return { status: "degraded", latency_ms: t.elapsed(), error: `vault sem ${faltando.join(", ")}` };
+    }
+    return { status: "ok", latency_ms: t.elapsed() };
+  } catch (err) {
+    clearTimeout(timer);
+    return { status: "degraded", latency_ms: t.elapsed(), error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export function aggregate(results: {
+  db: CheckResult;
+  asaas?: CheckResult;
+  resend?: CheckResult;
+  crons?: CheckResult;
+}): {
   status: "ok" | "degraded" | "down";
   http: 200 | 503;
 } {
   if (results.db.status === "down") return { status: "down", http: 503 };
-  const all = [results.db, results.asaas, results.resend].filter(Boolean) as CheckResult[];
+  const all = [results.db, results.asaas, results.resend, results.crons].filter(Boolean) as CheckResult[];
   if (all.some((r) => r.status === "down" || r.status === "degraded")) {
     return { status: "degraded", http: 200 };
   }
