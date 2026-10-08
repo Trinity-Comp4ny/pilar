@@ -7,7 +7,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(9);
+SELECT plan(10);
 
 -- `supabase db reset --no-seed` (igual o CI) não carrega o seed: sem plano
 -- ativo, handle_new_user não cria assinatura.
@@ -42,7 +42,9 @@ SELECT is(
 
 INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role, email_confirmed_at)
 VALUES ('104b0000-0000-0000-0000-000000000001', 'spec104_a@empresareal.com.br',
-        jsonb_build_object('company_name', 'Spec104 A', 'nome', 'Ana Teste'), 'authenticated', 'authenticated', now());
+        jsonb_build_object('company_name', 'Spec104 A', 'nome', 'Ana Teste', 'telefone', '41999990000',
+                           'origem', jsonb_build_object('utm_source', 'instagram', 'ref', 'l.instagram.com')),
+        'authenticated', 'authenticated', now());
 
 SELECT ok(
   (SELECT s.trial_ends_at BETWEEN now() + interval '3 days' - interval '1 minute'
@@ -81,6 +83,14 @@ SELECT ok(
     WHERE n.destinatario_id = '104a0000-0000-0000-0000-0000000000ad' AND n.tipo = 'novo_cadastro'
     ORDER BY n.created_at DESC LIMIT 1),
   'notificação traz empresa e e-mail de quem se cadastrou'
+);
+
+SELECT ok(
+  (SELECT n.mensagem LIKE '%41999990000%' AND n.mensagem LIKE '%Origem: instagram / l.instagram.com.%'
+     FROM public.notificacoes n
+    WHERE n.destinatario_id = '104a0000-0000-0000-0000-0000000000ad' AND n.tipo = 'novo_cadastro'
+    ORDER BY n.created_at DESC LIMIT 1),
+  'notificação traz telefone e origem do cadastro'
 );
 
 -- =============================================
