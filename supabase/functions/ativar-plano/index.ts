@@ -33,6 +33,8 @@ import {
   bodySchema,
   CONSENTIMENTO_TEXTO_VERSAO,
   CONSENTIMENTO_TEXTO_VERSAO_IMEDIATA,
+  ehTokenizacaoSemPermissao,
+  modoEfetivo,
   primeiraCobrancaEm as dataPrimeiraCobranca,
   verificarAssinatura,
   valorDoCiclo,
@@ -128,7 +130,8 @@ serve(
     if (!verificacao.ok) {
       return jsonResponse({ error: verificacao.error }, verificacao.status, req);
     }
-    const { sub, modo } = verificacao;
+    const { sub } = verificacao;
+    const modo = modoEfetivo(verificacao.modo, body.cobrar_agora);
 
     const { data: plan } = await admin
       .from("pilar_subscription_plans")
@@ -176,9 +179,62 @@ serve(
       }
     }
 
-    // --- Tokeniza sem cobrar (requisito 15) ---
     const remoteIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "0.0.0.0";
+    const primeiraCobrancaEm =
+      modo === "imediata" ? new Date().toISOString().slice(0, 10) : dataPrimeiraCobranca(sub.trial_ends_at);
 
+    // Consentimento (append-only): evidência jurídica do que o admin aceitou.
+    // Falha ao gravar não desfaz a ativação, mas loga alto.
+    const gravarConsentimento = async () => {
+      const { error: consentErr } = await admin.from("consentimentos_cobranca").insert({
+        empresa_id: empresaId,
+        user_id: user.id,
+        plan_id: body.plan_id,
+        valor,
+        primeira_cobranca_em: primeiraCobrancaEm,
+        texto_versao: modo === "imediata" ? CONSENTIMENTO_TEXTO_VERSAO_IMEDIATA : CONSENTIMENTO_TEXTO_VERSAO,
+      });
+      if (consentErr) log.error("falha ao gravar consentimento de cobrança", { empresaId, error: consentErr.message });
+    };
+
+    // --- Cobrança hoje: assinatura com o cartão digitado, sem tokenização
+    //     (mesmo caminho do checkout da landing; não depende de liberação
+    //     no Asaas). A rotina é a mesma da conversão do cron. ---
+    if (modo === "imediata") {
+      try {
+        await converterEmAssinaturaAtiva(
+          admin,
+          {
+            id: sub.id,
+            empresa_id: empresaId,
+            plan_id: body.plan_id,
+            billing_cycle: body.billing_cycle,
+            asaas_customer_id: asaasCustomerId,
+          },
+          { creditCard: body.credit_card, creditCardHolderInfo: body.credit_card_holder_info },
+          { appUrl: APP_URL, remoteIp, origem: "assinatura_apos_trial" }
+        );
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Erro Asaas";
+        log.error("cobrança imediata recusada", { empresaId, error: msg });
+        return jsonResponse(
+          {
+            error: `A cobrança não foi aprovada: ${msg.replace(/^Asaas: /, "")}. Confira os dados ou use outro cartão.`,
+          },
+          502,
+          req
+        );
+      }
+      await gravarConsentimento();
+      return jsonResponse(
+        { success: true, cobrado_agora: true, plano: plan.nome, valor, primeira_cobranca_em: primeiraCobrancaEm },
+        200,
+        req
+      );
+    }
+
+    // --- Em teste: tokeniza sem cobrar (requisito 15); a cobrança fica para
+    //     o fim do teste, pelo cron. ---
     let tokenResult: TokenizeCreditCardResult;
     try {
       tokenResult = await tokenizeCreditCard({
@@ -189,8 +245,21 @@ serve(
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro Asaas";
+      if (ehTokenizacaoSemPermissao(msg)) {
+        // Conta Asaas sem a tokenização liberada: o front oferece pagar já.
+        log.warn("tokenização não liberada na conta Asaas", { empresaId });
+        return jsonResponse(
+          {
+            error:
+              "Ainda não dá para guardar o cartão sem cobrar. Você pode assinar agora, com a primeira cobrança hoje.",
+            codigo: "tokenizacao_indisponivel",
+          },
+          409,
+          req
+        );
+      }
       log.error("tokenização de cartão recusada", { empresaId, error: msg });
-      return jsonResponse({ error: `Não foi possível validar o cartão: ${msg}` }, 502, req);
+      return jsonResponse({ error: `Não foi possível validar o cartão: ${msg.replace(/^Asaas: /, "")}` }, 502, req);
     }
 
     // --- Grava token + troca de plano (livre durante o trial) ---
@@ -211,53 +280,12 @@ serve(
       return jsonResponse({ error: "Cartão validado, mas houve um erro ao salvar. Tente novamente." }, 500, req);
     }
 
-    // --- Consentimento (append-only, evidência do opt-out) ---
-    const primeiraCobrancaEm =
-      modo === "imediata" ? new Date().toISOString().slice(0, 10) : dataPrimeiraCobranca(sub.trial_ends_at);
-    const { error: consentErr } = await admin.from("consentimentos_cobranca").insert({
-      empresa_id: empresaId,
-      user_id: user.id,
-      plan_id: body.plan_id,
-      valor,
-      primeira_cobranca_em: primeiraCobrancaEm,
-      texto_versao: modo === "imediata" ? CONSENTIMENTO_TEXTO_VERSAO_IMEDIATA : CONSENTIMENTO_TEXTO_VERSAO,
-    });
-    if (consentErr) {
-      // Não desfaz a ativação por isso (o cartão já está salvo e funcional);
-      // loga alto porque é a evidência jurídica do opt-out.
-      log.error("falha ao gravar consentimento de cobrança", { empresaId, error: consentErr.message });
-    }
-
-    // --- Teste já vencido: cobra agora (mesma rotina da conversão do cron) ---
-    if (modo === "imediata") {
-      try {
-        await converterEmAssinaturaAtiva(
-          admin,
-          {
-            id: sub.id,
-            empresa_id: empresaId,
-            plan_id: body.plan_id,
-            billing_cycle: body.billing_cycle,
-            asaas_customer_id: asaasCustomerId,
-            asaas_credit_card_token: tokenResult.creditCardToken,
-          },
-          { appUrl: APP_URL, remoteIp, origem: "assinatura_apos_trial" }
-        );
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Erro Asaas";
-        log.error("cobrança imediata recusada", { empresaId, error: msg });
-        return jsonResponse(
-          { error: `O cartão foi validado, mas a cobrança não foi aprovada: ${msg}. Tente outro cartão.` },
-          502,
-          req
-        );
-      }
-    }
+    await gravarConsentimento();
 
     return jsonResponse(
       {
         success: true,
-        cobrado_agora: modo === "imediata",
+        cobrado_agora: false,
         nivel: "ouro",
         plano: plan.nome,
         valor,

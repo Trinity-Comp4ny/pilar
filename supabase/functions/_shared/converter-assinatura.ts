@@ -10,7 +10,7 @@
  */
 
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { createSubscription } from "./asaas-platform.ts";
+import { createSubscription, type CreateSubscriptionParams } from "./asaas-platform.ts";
 import { sendEmail, templateAtivarPlanoRecibo } from "./email/index.ts";
 
 export interface AssinaturaParaConverter {
@@ -19,8 +19,19 @@ export interface AssinaturaParaConverter {
   plan_id: string;
   billing_cycle: string | null;
   asaas_customer_id: string;
-  asaas_credit_card_token: string;
 }
+
+/**
+ * Como o cartão chega: token salvo no "Ativar plano" (cron, fim do trial) ou
+ * o cartão digitado agora (assinar com cobrança hoje). O segundo não depende
+ * da tokenização, que no Asaas de produção exige liberação do gerente.
+ */
+export type CartaoDaCobranca =
+  | { creditCardToken: string }
+  | {
+      creditCard: NonNullable<CreateSubscriptionParams["creditCard"]>;
+      creditCardHolderInfo: NonNullable<CreateSubscriptionParams["creditCardHolderInfo"]>;
+    };
 
 export interface ConversaoResultado {
   asaasSubscriptionId: string;
@@ -31,6 +42,7 @@ export interface ConversaoResultado {
 export async function converterEmAssinaturaAtiva(
   admin: SupabaseClient,
   row: AssinaturaParaConverter,
+  cartao: CartaoDaCobranca,
   opts: { appUrl: string; remoteIp?: string; origem: "trial_expirado" | "assinatura_apos_trial" }
 ): Promise<ConversaoResultado> {
   const { data: plan } = await admin
@@ -54,7 +66,7 @@ export async function converterEmAssinaturaAtiva(
     nextDueDate: new Date().toISOString().slice(0, 10),
     description: `Pilar — assinatura ${plan.nome}`,
     externalReference: row.empresa_id,
-    creditCardToken: row.asaas_credit_card_token,
+    ...cartao,
     // Cobrança do servidor (cron) não tem IP de dispositivo pra reportar.
     remoteIp: opts.remoteIp ?? "0.0.0.0",
   });
@@ -68,6 +80,9 @@ export async function converterEmAssinaturaAtiva(
     .update({
       status: "active",
       asaas_subscription_id: subscription.id,
+      asaas_customer_id: row.asaas_customer_id,
+      plan_id: row.plan_id,
+      billing_cycle: row.billing_cycle,
       current_period_start: now.toISOString(),
       current_period_end: periodEnd.toISOString(),
     })

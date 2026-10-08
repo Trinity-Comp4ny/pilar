@@ -8,15 +8,25 @@ import { FunctionsHttpError } from "@supabase/supabase-js";
  * (validação, regra de negócio) vira essa mensagem genérica e inútil pro usuário.
  */
 export async function edgeFunctionErrorMessage(error: unknown, fallback: string): Promise<string> {
+  return (await edgeFunctionErrorDetail(error, fallback)).message;
+}
+
+/** Mensagem e código de erro (`{ error, codigo }`) do corpo, para fluxos que reagem ao tipo de erro. */
+export async function edgeFunctionErrorDetail(
+  error: unknown,
+  fallback: string
+): Promise<{ message: string; codigo: string | null }> {
   if (error instanceof FunctionsHttpError) {
     try {
       const body: unknown = await error.context.json();
-      if (body && typeof body === "object" && "error" in body && typeof body.error === "string" && body.error) {
-        return body.error;
+      if (body && typeof body === "object") {
+        const message = "error" in body && typeof body.error === "string" && body.error ? body.error : fallback;
+        const codigo = "codigo" in body && typeof body.codigo === "string" ? body.codigo : null;
+        return { message, codigo };
       }
     } catch {
       // corpo não é JSON (ou já foi consumido) — cai no fallback abaixo.
     }
   }
-  return fallback;
+  return { message: fallback, codigo: null };
 }
