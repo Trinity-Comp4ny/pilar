@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { onlyDigits, formatDocument, formatCEP, validateCPF, validateCNPJ } from "@/lib/maskUtils";
 import { detectCardBrand, formatCardNumber, formatExpiry, validateCreditCard } from "@/lib/creditCard";
-import { edgeFunctionErrorMessage } from "@/lib/edgeFunctionError";
+import { edgeFunctionErrorDetail } from "@/lib/edgeFunctionError";
 import { analytics } from "@/lib/analytics";
 import { usePlans, calculateYearlySavingPct } from "@/pages/planos/hooks/usePlans";
 import { CycleToggle, type BillingCycle } from "@/pages/planos/components/CycleToggle";
@@ -44,6 +44,10 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
   const [holderPostalCode, setHolderPostalCode] = useState("");
   const [holderAddressNumber, setHolderAddressNumber] = useState("");
   const [consentimento, setConsentimento] = useState(false);
+  // Conta Asaas sem tokenização liberada: em vez de travar, o diálogo passa a
+  // assinar com cobrança hoje (o admin confirma de novo, texto diferente).
+  const [cobrarAgora, setCobrarAgora] = useState(false);
+  const [avisoTokenizacao, setAvisoTokenizacao] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
   const sucedeu = useRef(false);
@@ -58,7 +62,7 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
       ? (planoSelecionado.preco_anual ?? planoSelecionado.preco_mensal * 12)
       : planoSelecionado.preco_mensal
     : 0;
-  const imediata = cobraNaHora(subscription);
+  const imediata = cobraNaHora(subscription) || cobrarAgora;
   // formatDate espera data pura (YYYY-MM-DD); trial_ends_at é timestamptz completo.
   const dataPrimeiraCobranca = imediata
     ? "hoje"
@@ -104,6 +108,7 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
         body: {
           plan_id: planoSelecionado.id,
           billing_cycle: cycle,
+          ...(cobrarAgora ? { cobrar_agora: true } : {}),
           credit_card: {
             holderName: ccHolder.trim(),
             number: onlyDigits(ccNumber),
@@ -122,7 +127,15 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
       });
 
       if (error) {
-        throw new Error(await edgeFunctionErrorMessage(error, "Falha ao ativar o plano"));
+        const { message, codigo } = await edgeFunctionErrorDetail(error, "Falha ao ativar o plano");
+        if (codigo === "tokenizacao_indisponivel") {
+          analytics.track("trial_ativar_plano_tokenizacao_indisponivel", {});
+          setCobrarAgora(true);
+          setConsentimento(false);
+          setAvisoTokenizacao(message);
+          return;
+        }
+        throw new Error(message);
       }
       if (data?.error) {
         throw new Error(data.error);
@@ -157,7 +170,9 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
       title={imediata ? "Assinar o Pilar" : "Ativar plano"}
       description={
         imediata
-          ? `${subscription.status === "canceled" ? "Sua assinatura foi cancelada" : "Seu teste terminou"}. Escolha o plano e informe o cartão: a cobrança é feita agora e o acesso volta na hora.`
+          ? subscription.status === "trialing"
+            ? "A assinatura começa hoje: a primeira cobrança é feita agora e o teste grátis termina."
+            : `${subscription.status === "canceled" ? "Sua assinatura foi cancelada" : "Seu teste terminou"}. Escolha o plano e informe o cartão: a cobrança é feita agora e o acesso volta na hora.`
           : "Nada é cobrado agora. Escolha o plano e informe o cartão para garantir a continuidade sem interrupção."
       }
       size="md"
@@ -300,6 +315,15 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
             Nada é cobrado agora. A primeira cobrança de <strong className="text-ink">{formatCurrency(valor)}</strong>{" "}
             acontece em <strong className="text-ink">{dataPrimeiraCobranca}</strong>, só se você continuar. Cancele
             antes disso em Configurações, sem cobrança.
+          </div>
+        )}
+
+        {avisoTokenizacao && (
+          <div
+            role="status"
+            className="rounded-lg border border-warning-mid-border bg-warning-soft p-3 text-sm text-warning-strong"
+          >
+            {avisoTokenizacao} Confira o valor abaixo e confirme de novo.
           </div>
         )}
 

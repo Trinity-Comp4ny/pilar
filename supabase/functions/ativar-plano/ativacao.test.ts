@@ -3,6 +3,8 @@ import {
   bodySchema,
   CONSENTIMENTO_TEXTO_VERSAO,
   CONSENTIMENTO_TEXTO_VERSAO_IMEDIATA,
+  ehTokenizacaoSemPermissao,
+  modoEfetivo,
   primeiraCobrancaEm,
   valorDoCiclo,
   verificarAssinatura,
@@ -102,4 +104,25 @@ Deno.test("versão do texto de consentimento é fixa no servidor", () => {
   // Trocar a versão é decisão consciente (mudou a copy do passo "Ativar plano").
   assertEquals(CONSENTIMENTO_TEXTO_VERSAO, "ativar-plano-v1");
   assertEquals(CONSENTIMENTO_TEXTO_VERSAO_IMEDIATA, "assinar-apos-teste-v1");
+});
+
+Deno.test("cobrar_agora força cobrança hoje mesmo em teste; sem ele, vale o modo da assinatura", () => {
+  assertEquals(modoEfetivo("agendada", true), "imediata");
+  assertEquals(modoEfetivo("agendada", undefined), "agendada");
+  assertEquals(modoEfetivo("imediata", false), "imediata");
+});
+
+Deno.test("reconhece a recusa do Asaas por tokenização não liberada", () => {
+  assertEquals(
+    ehTokenizacaoSemPermissao(
+      "Asaas: Você não possui permissão para utilizar este recurso. Entre em contato com seu gerente de contas."
+    ),
+    true
+  );
+  assertEquals(ehTokenizacaoSemPermissao("Asaas: Cartão recusado pela operadora"), false);
+});
+
+Deno.test("entrada: cobrar_agora é opcional e só aceita boolean", () => {
+  assertEquals(bodySchema.safeParse({ ...corpoValido, cobrar_agora: true }).success, true);
+  assertEquals(bodySchema.safeParse({ ...corpoValido, cobrar_agora: "sim" }).success, false);
 });

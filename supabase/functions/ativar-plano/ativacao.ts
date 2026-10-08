@@ -18,6 +18,9 @@ export const bodySchema = z.object({
   billing_cycle: z.enum(["monthly", "yearly"]),
   credit_card: creditCardSchema,
   credit_card_holder_info: creditCardHolderInfoSchema,
+  // Em teste, o admin pode preferir pagar já (ou precisar, se a tokenização
+  // não estiver liberada na conta Asaas): encerra o teste com cobrança hoje.
+  cobrar_agora: z.boolean().optional(),
 });
 
 export type Body = z.infer<typeof bodySchema>;
@@ -57,6 +60,19 @@ export function verificarAssinatura(sub: AssinaturaLida | null, agora: Date = ne
   if (!sub.trial_ends_at) return { ok: false, status: 500, error: "Trial sem data de expiração definida" };
   const vencido = new Date(sub.trial_ends_at).getTime() <= agora.getTime();
   return { ok: true, sub: { ...sub, trial_ends_at: sub.trial_ends_at }, modo: vencido ? "imediata" : "agendada" };
+}
+
+/** Cobrança hoje quando o teste já venceu ou quando o admin pede para pagar já. */
+export function modoEfetivo(modo: ModoCobranca, cobrarAgora: boolean | undefined): ModoCobranca {
+  return cobrarAgora ? "imediata" : modo;
+}
+
+/**
+ * A tokenização (cartão salvo sem cobrar) depende de liberação do gerente da
+ * conta no Asaas de produção. Sem ela, o Asaas responde com este texto.
+ */
+export function ehTokenizacaoSemPermissao(mensagemAsaas: string): boolean {
+  return /permiss[aã]o para utilizar este recurso|gerente de contas/i.test(mensagemAsaas);
 }
 
 /** Valor do ciclo escolhido, sempre do plano no banco. null = plano sem preço nesse ciclo. */

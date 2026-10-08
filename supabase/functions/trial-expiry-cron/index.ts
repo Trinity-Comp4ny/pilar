@@ -103,8 +103,8 @@ serve(
               plan_id: row.plan_id!,
               billing_cycle: row.billing_cycle,
               asaas_customer_id: row.asaas_customer_id!,
-              asaas_credit_card_token: row.asaas_credit_card_token!,
             },
+            { creditCardToken: row.asaas_credit_card_token! },
             { appUrl: APP_URL, origem: "trial_expirado" }
           );
           converted++;
