@@ -151,6 +151,12 @@ Depois do deploy em staging (não em PR):
 
 ## Edge Functions
 
+O mapa de todas as funções (domínio, o que faz, quem chama, login, secrets, teste) está
+em [`docs/architecture/EDGE_FUNCTIONS.md`](docs/architecture/EDGE_FUNCTIONS.md), gerado.
+Função nova só passa no CI com: um `*.test.ts` na pasta dela (`TEST_DEBT.txt`), uma
+entrada em `supabase/functions/CATALOGO.json` e o catálogo regenerado
+(`node scripts/edge-functions-catalog.mjs`).
+
 Toda função em `supabase/functions/` deve:
 
 ```typescript
