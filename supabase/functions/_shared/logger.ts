@@ -58,6 +58,12 @@ export interface Logger {
   child(extra: Context): Logger;
 }
 
+export function ehContextoSimples(value: unknown): value is Context {
+  if (value === null || typeof value !== "object" || value instanceof Error || Array.isArray(value)) return false;
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+}
+
 export function createLogger(fnName: string, baseCtx: Context = {}): Logger {
   function emit(level: LogLevel, msg: string, extra?: Context, err?: unknown) {
     const entry: Record<string, unknown> = {
@@ -88,7 +94,14 @@ export function createLogger(fnName: string, baseCtx: Context = {}): Logger {
     debug: (msg, extra) => emit("debug", msg, extra),
     info: (msg, extra) => emit("info", msg, extra),
     warn: (msg, extra) => emit("warn", msg, extra),
-    error: (msg, err, extra) => emit("error", msg, extra, err),
+    error: (msg, err, extra) => {
+      // Muitas chamadas passam o contexto no lugar do erro
+      // (`log.error("falhou", { empresaId, error: msg })`). Objeto simples
+      // vira contexto; antes virava `new Error(String(obj))` = "[object Object]"
+      // e o motivo real se perdia no log e no Sentry.
+      if (ehContextoSimples(err)) return emit("error", msg, { ...err, ...(extra ?? {}) });
+      return emit("error", msg, extra, err);
+    },
     child(extra) {
       return createLogger(fnName, { ...baseCtx, ...extra });
     },
