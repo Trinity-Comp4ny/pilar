@@ -46,6 +46,8 @@ export VITE_SUPABASE_PUBLISHABLE_KEY="$ANON_KEY"
 export VITE_SENTRY_DSN=""
 export E2E_TEST_EMAIL="dev@local.test"
 export E2E_TEST_PASSWORD="123456"
+# Banco com o seed de demo: specs que dependem dele (aditivo) só rodam com isto.
+export E2E_SEED_DEMO="1"
 # Conta do Portal do Cliente criada pelo seed-demo.
 export E2E_PORTAL_EMAIL="portal@local.test"
 export E2E_PORTAL_PASSWORD="123456"
