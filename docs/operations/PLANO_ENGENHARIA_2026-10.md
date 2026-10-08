@@ -97,6 +97,11 @@ Cada item com critério de pronto. Ordem = ordem de ataque.
    projeto a 1280px.
 4. **Acessibilidade da landing**: corrigir contraste (decisão de marca, 84 nós) e
    tirar o `continue-on-error` do passo `marketing`.
+   **Feito (2026-10-08), sem mudar a marca:** o contraste nunca foi o problema. O spec
+   usava `reducedMotion` no `test.use`, opção ignorada pelo Playwright; a emulação não
+   ligava e o Axe media as palavras da StatementSection ainda apagadas (opacidade
+   0,16). Com `contextOptions`, a landing passa sem violação critical/serious, e o
+   passo voltou a ser bloqueante.
 5. **Triagem da primeira varredura do CodeQL**; decidir se entra no `CI OK`.
 6. **Checkly**: ligar de verdade (canal de alerta + deploy) ou apagar a config. Config
    que não roda dá a impressão de monitoramento que não existe.

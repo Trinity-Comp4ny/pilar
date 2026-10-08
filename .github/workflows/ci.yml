@@ -492,12 +492,12 @@ jobs:
         run: echo "::warning::E2E_TEST_EMAIL/E2E_TEST_PASSWORD ausentes no Environment Staging, então os specs autenticados foram pulados. Crie o usuário de teste em staging e adicione os secrets."
 
       # Acessibilidade do site de marketing EM PRODUÇÃO (www.pilarsoft.com.br). Não
-      # depende deste commit, então não reprova o job: falha aqui vira aviso no run.
-      # Hoje falha por contraste (84 nós, decisão de marca pendente). Quando a landing
-      # passar no Axe, tirar o continue-on-error para virar gate de novo.
-      - name: Acessibilidade do site de marketing (informativo)
+      # depende deste commit, mas é o único lugar que mede a landing no ar. Ficou
+      # informativo de set. a out./2026 por uma falha que era do próprio teste (a
+      # emulação de movimento reduzido nunca ligava; ver e2e/marketing-a11y.spec.ts).
+      # Corrigido, volta a reprovar o job.
+      - name: Acessibilidade do site de marketing
         if: ${{ !cancelled() }}
-        continue-on-error: true
         run: npx playwright test --project=marketing
         env:
           PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/marketing
