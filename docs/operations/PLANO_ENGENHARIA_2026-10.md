@@ -101,6 +101,10 @@ Cada item com critério de pronto. Ordem = ordem de ataque.
 6. **Checkly**: ligar de verdade (canal de alerta + deploy) ou apagar a config. Config
    que não roda dá a impressão de monitoramento que não existe.
 7. **Backup do Storage** (buckets de entregas, fotos de obra) no `backup-nightly.yml`.
+   **Feito (PR #519):** `scripts/storage-backup.mjs` + passo no `backup-nightly.yml`,
+   restore documentado em DISASTER_RECOVERY.md. Depende de copiar
+   `SUPABASE_ACCESS_TOKEN` e `SUPABASE_PROJECT_REF` para o environment
+   `production-automation`.
 
 ## 6. Onda 3: próximo mês
 
