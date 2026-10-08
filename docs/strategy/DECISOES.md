@@ -11,6 +11,19 @@ Regras de manutenção:
 
 ---
 
+## 2026-10-08 · Trial cai para 3 dias; empresa convidada não paga e pode perder o convite
+
+**Decisão:** o teste grátis do self-serve passa de 14 para 3 dias. Depois disso a empresa
+consegue pagar a qualquer momento, inclusive já em somente leitura. Empresa convidada pelo
+Pilar não paga e mostra o selo "Empresa convidada"; o ultra-admin pode tornar convidada
+qualquer empresa que não paga e pode cancelar o convite, o que abre um prazo para assinar
+(padrão 7 dias) com a mesma regra do trial vencido. Contexto: o primeiro cadastro orgânico de
+produção (23/09) usou o produto 5 minutos e sumiu; o trial dele venceu sem expirar porque o
+cron de produção nunca teve os secrets do Vault. Virou
+[SPEC 104](../specs/104-trial-3-dias-e-empresa-convidada.md). Supera os "14 dias" da decisão
+de 2026-09-08 (o resto dela, níveis Bronze/Prata/Ouro e retenção de 90 dias, continua) e o
+prazo padrão de 14 dias da conversão de isenta (SPEC 078).
+
 ## 2026-10-06 · Notificação de pessoa volta; ordem das disciplinas fica com o fluxo
 
 **Decisão:** toda ação que coloca trabalho no colo de alguém notifica essa pessoa: virar
