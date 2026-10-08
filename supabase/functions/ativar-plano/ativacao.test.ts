@@ -33,6 +33,7 @@ const corpoValido = {
     cpfCnpj: "12.345.678/0001-90",
     postalCode: "30140-071",
     addressNumber: "10",
+    phone: "(31) 98765-4321",
   },
 };
 
@@ -125,4 +126,19 @@ Deno.test("reconhece a recusa do Asaas por tokenização não liberada", () => {
 Deno.test("entrada: cobrar_agora é opcional e só aceita boolean", () => {
   assertEquals(bodySchema.safeParse({ ...corpoValido, cobrar_agora: true }).success, true);
   assertEquals(bodySchema.safeParse({ ...corpoValido, cobrar_agora: "sim" }).success, false);
+});
+
+Deno.test("entrada: telefone do titular é obrigatório (o Asaas recusa sem ele) e vira só dígitos", () => {
+  const semTelefone = {
+    ...corpoValido,
+    credit_card_holder_info: { ...corpoValido.credit_card_holder_info, phone: undefined },
+  };
+  assertEquals(bodySchema.safeParse(semTelefone).success, false);
+  const curto = {
+    ...corpoValido,
+    credit_card_holder_info: { ...corpoValido.credit_card_holder_info, phone: "9876-5432" },
+  };
+  assertEquals(bodySchema.safeParse(curto).success, false);
+  const r = bodySchema.safeParse(corpoValido);
+  assertEquals(r.success && r.data.credit_card_holder_info.phone, "31987654321");
 });

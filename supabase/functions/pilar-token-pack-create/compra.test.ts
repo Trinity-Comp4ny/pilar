@@ -14,6 +14,7 @@ const titular = {
   cpfCnpj: "123.456.789-09",
   postalCode: "01310-100",
   addressNumber: "100",
+  phone: "11 98765-4321",
 };
 
 Deno.test("catálogo: preço e tokens de cada tier são os decididos em DECISOES.md (2026-09-01)", () => {

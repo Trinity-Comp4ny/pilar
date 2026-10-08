@@ -23,6 +23,7 @@ import {
 } from "@/components/settings/useTokenPackCreate";
 import { useTokenPackStatus } from "@/components/settings/useTokenPackStatus";
 import { analytics } from "@/lib/analytics";
+import { formatPhone } from "@/lib/maskUtils";
 
 // Espelha o catálogo do backend (pilar-token-pack-create) só pra exibição — o preço
 // que vale de verdade é sempre resolvido no servidor a partir do tier_id (SPEC 080).
@@ -98,6 +99,8 @@ export default function ComprarTokens() {
   const [cpfCnpj, setCpfCnpj] = useState(profile?.empresas?.cnpj ?? "");
   const [holderPostalCode, setHolderPostalCode] = useState("");
   const [holderAddressNumber, setHolderAddressNumber] = useState("");
+  // O Asaas exige o telefone do titular; começa com o do cadastro.
+  const [holderPhone, setHolderPhone] = useState(() => formatPhone(profile?.contato ?? ""));
   const [cepAddress, setCepAddress] = useState<{
     logradouro: string;
     bairro: string;
@@ -167,6 +170,11 @@ export default function ComprarTokens() {
         return;
       }
 
+      if (![10, 11].includes(onlyDigits(holderPhone).length)) {
+        toast.error("Celular do titular inválido", { description: "Informe o celular com DDD." });
+        return;
+      }
+
       const expiryDigits = onlyDigits(ccExpiry);
       const cardDigits = onlyDigits(ccNumber);
 
@@ -193,6 +201,7 @@ export default function ComprarTokens() {
             cpfCnpj: digits,
             postalCode: onlyDigits(holderPostalCode),
             addressNumber: holderAddressNumber.trim(),
+            phone: onlyDigits(holderPhone),
           },
         },
         { onSuccess: (data) => setResult(data) }
@@ -401,6 +410,18 @@ export default function ComprarTokens() {
                             onChange={(e) => setHolderAddressNumber(e.target.value)}
                             required
                             placeholder="123"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="holderPhone">Celular do titular</Label>
+                          <Input
+                            id="holderPhone"
+                            value={holderPhone}
+                            onChange={(e) => setHolderPhone(formatPhone(e.target.value))}
+                            required
+                            inputMode="tel"
+                            autoComplete="tel"
+                            placeholder="(00) 00000-0000"
                           />
                         </div>
                       </div>

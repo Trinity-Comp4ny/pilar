@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { onlyDigits, formatDocument, formatCEP, validateCPF, validateCNPJ } from "@/lib/maskUtils";
+import { onlyDigits, formatDocument, formatCEP, formatPhone, validateCPF, validateCNPJ } from "@/lib/maskUtils";
 import { detectCardBrand, formatCardNumber, formatExpiry, validateCreditCard } from "@/lib/creditCard";
 import { edgeFunctionErrorDetail } from "@/lib/edgeFunctionError";
 import { analytics } from "@/lib/analytics";
@@ -31,7 +31,7 @@ interface AtivarPlanoProps {
 // consentimentos_cobranca pela própria edge — não há segunda aprovação.
 // SPEC 104: com o teste já vencido, o mesmo formulário assina e cobra na hora.
 export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: AtivarPlanoProps) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { data: plans } = usePlans();
 
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
@@ -43,6 +43,8 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
   const [holderCpfCnpj, setHolderCpfCnpj] = useState("");
   const [holderPostalCode, setHolderPostalCode] = useState("");
   const [holderAddressNumber, setHolderAddressNumber] = useState("");
+  // O Asaas exige o telefone do titular; começa com o do cadastro.
+  const [holderPhone, setHolderPhone] = useState(() => formatPhone(profile?.contato ?? ""));
   const [consentimento, setConsentimento] = useState(false);
   // Conta Asaas sem tokenização liberada: em vez de travar, o diálogo passa a
   // assinar com cobrança hoje (o admin confirma de novo, texto diferente).
@@ -97,7 +99,8 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
     ccCcv.trim().length >= 3 &&
     cpfCnpjValido &&
     onlyDigits(holderPostalCode).length === 8 &&
-    holderAddressNumber.trim().length > 0;
+    holderAddressNumber.trim().length > 0 &&
+    [10, 11].includes(onlyDigits(holderPhone).length);
 
   const handleSubmit = async () => {
     if (!formValido || !planoSelecionado) return;
@@ -122,6 +125,7 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
             cpfCnpj: cpfCnpjDigits,
             postalCode: onlyDigits(holderPostalCode),
             addressNumber: holderAddressNumber.trim(),
+            phone: onlyDigits(holderPhone),
           },
         },
       });
@@ -300,13 +304,26 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
               />
             </div>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="ativar-numero">Número do endereço</Label>
-            <Input
-              id="ativar-numero"
-              value={holderAddressNumber}
-              onChange={(e) => setHolderAddressNumber(e.target.value)}
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="ativar-numero">Número do endereço</Label>
+              <Input
+                id="ativar-numero"
+                value={holderAddressNumber}
+                onChange={(e) => setHolderAddressNumber(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ativar-telefone">Celular do titular</Label>
+              <Input
+                id="ativar-telefone"
+                value={holderPhone}
+                onChange={(e) => setHolderPhone(formatPhone(e.target.value))}
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="(00) 00000-0000"
+              />
+            </div>
           </div>
         </div>
 
