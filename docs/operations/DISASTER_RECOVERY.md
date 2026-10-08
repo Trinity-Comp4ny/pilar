@@ -13,11 +13,11 @@ melhor que o intervalo do backup manual.
 
 ## Objetivos
 
-| Métrica                            | Target                                                     |
-| ----------------------------------- | ----------------------------------------------------------- |
-| **RTO** (Recovery Time Objective)  | 4 horas (drill real: dump 2min + restore 1-2s — o gargalo é humano, não técnico) |
+| Métrica                            | Target                                                                               |
+| ---------------------------------- | ------------------------------------------------------------------------------------ |
+| **RTO** (Recovery Time Objective)  | 4 horas (drill real: dump 2min + restore 1-2s — o gargalo é humano, não técnico)     |
 | **RPO** (Recovery Point Objective) | 24 horas (backup noturno via GitHub Actions, ver abaixo — **não é PITR de verdade**) |
-| **Disponibilidade alvo**           | 99.9% (43min downtime/mês)                                   |
+| **Disponibilidade alvo**           | 99.9% (43min downtime/mês)                                                           |
 
 ## Backups
 
@@ -40,10 +40,24 @@ melhor que o intervalo do backup manual.
 
 - GitHub é source of truth.
 
-### Storage (Supabase Storage — portal-entregas)
+### Storage (arquivos dos buckets)
 
-- Replicação Supabase automática.
-- Sem backup manual adicional configurado ainda.
+O dump do banco guarda a tabela `storage.objects`, não os bytes dos arquivos
+(logos, fotos de obra, templates de proposta, entregas do portal).
+
+- **Backup:** desde 2026-10-07, o mesmo `backup-nightly.yml` baixa todos os buckets
+  com `scripts/storage-backup.mjs` (API REST do Storage, sem dependência), gera
+  `manifest.json` (bucket, público, limites, arquivos), empacota, criptografa com a
+  mesma `BACKUP_ENCRYPTION_KEY` e guarda como artifact `storage-<Ambiente>-<run>`
+  (30 dias). Roda depois do upload do dump: falha no Storage não custa o backup do
+  banco. Tamanho em 07/10: ~6 MB em produção, cópia completa por noite.
+- **Credencial:** `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_REF` no environment do
+  cron; o script busca a service key na Management API e mascara no log. Sem o par,
+  o passo falha e o `notify-cron-failure` abre issue.
+- **Restore:** ver "Restore do Storage" no runbook abaixo. Repõe só o que sumiu;
+  recria bucket apagado com a mesma configuração.
+- **Limitação:** mesmo RPO do banco (até 24h). Arquivo enviado e apagado no mesmo dia
+  não volta.
 
 ### Secrets
 
@@ -94,17 +108,36 @@ melhor que o intervalo do backup manual.
 # avisa (não bloqueia) esse padrão antes do PR.
 ```
 
+### Restore do Storage
+
+```bash
+# 1. Baixar o artifact storage-Production-<run_id> do run do backup-nightly
+gh run download <run_id> -n storage-Production-<run_id>
+
+# 2. Decifrar e extrair
+openssl enc -d -aes-256-cbc -pbkdf2 -in storage-Production.tar.gz.enc \
+  -k "$BACKUP_ENCRYPTION_KEY" | tar -xzf -
+
+# 3. Repor (só o que sumiu; --sobrescrever volta tudo para o estado do backup)
+SUPABASE_URL=https://<ref>.supabase.co SUPABASE_SERVICE_ROLE_KEY=<service key> \
+  node scripts/storage-backup.mjs restore storage-backup
+```
+
+Testado em 2026-10-07 contra o Supabase local: arquivo apagado voltou, bucket
+apagado foi recriado com o arquivo, segunda execução não duplicou nada.
+
 ## Drill de restore — resultados reais (17/08)
 
 Primeiro drill de verdade, contra dump de staging (674KB, schema completo):
 
-| Etapa                          | Tempo   |
-| ------------------------------- | ------- |
-| `supabase db dump` (staging)    | ~117s   |
-| Restore em `supabase/postgres:17.6.1.054` | 1-2s |
-| Criptografar/decriptar (openssl)| < 1s    |
+| Etapa                                     | Tempo |
+| ----------------------------------------- | ----- |
+| `supabase db dump` (staging)              | ~117s |
+| Restore em `supabase/postgres:17.6.1.054` | 1-2s  |
+| Criptografar/decriptar (openssl)          | < 1s  |
 
 Achados do drill:
+
 - O dump só restaura limpo (0 erros) contra a imagem `supabase/postgres`
   (que já vem com `auth`/`storage`/`pgsodium`/`pg_cron`/roles `anon`/
   `authenticated`/`service_role`) — um Postgres vanilla gera ~1200 erros em
