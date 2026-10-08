@@ -8939,6 +8939,7 @@ export type Database = {
         Returns: number
       }
       rpc_sync_metas: { Args: never; Returns: number }
+      senha_atende_politica: { Args: { p_senha: string }; Returns: boolean }
       sentry_cron_checkin: {
         Args: {
           p_check_in_id?: string
