@@ -29,6 +29,14 @@ REF="$(sed -n 's/^project_id = "\(.*\)"/\1/p' supabase/config.toml)"
 docker exec -i -e PGPASSWORD=postgres "supabase_db_${REF}" psql -U postgres -d postgres -q -c \
   "delete from public.rate_limit_attempts where key like 'login_attempt%' or key like 'portal_login%';"
 
+# Aprovar aditivo é definitivo, e o spec aditivo-authenticated aprova o do seed de
+# demo. Para rodar de novo, o aditivo volta a pendente e o contrato ao valor do seed.
+docker exec -i -e PGPASSWORD=postgres "supabase_db_${REF}" psql -U postgres -d postgres -q -c \
+  "update public.escopos set status = 'pendente_aprovacao', aprovado_por = null, aprovado_em = null
+     where id = '00000000-0000-0000-0000-000000000422';
+   update public.projetos set valor_contrato = 320000
+     where id = '00000000-0000-0000-0000-000000000401';"
+
 # `supabase status -o env` imprime API_URL=... e ANON_KEY=... (entre aspas).
 eval "$(supabase status -o env 2>/dev/null | grep -E '^(API_URL|ANON_KEY)=')"
 
