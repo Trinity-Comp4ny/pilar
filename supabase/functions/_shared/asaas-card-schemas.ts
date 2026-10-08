@@ -26,5 +26,11 @@ export const creditCardHolderInfoSchema = z.object({
     .transform((v) => v.replace(/\D/g, ""))
     .refine((v) => v.length === 8, "CEP inválido"),
   addressNumber: z.string().trim().min(1).max(20),
-  phone: z.string().trim().max(20).optional(),
+  // O Asaas recusa cartão sem o telefone do titular ("Informe o número de
+  // contato com DDD do titular do cartão"), achado no teste real do sandbox
+  // em 08/10. Validado aqui pra o erro sair claro antes de chamar o Asaas.
+  phone: z
+    .string({ required_error: "Informe o celular do titular com DDD" })
+    .transform((v) => v.replace(/\D/g, ""))
+    .refine((v) => v.length === 10 || v.length === 11, "Informe o celular do titular com DDD"),
 });
