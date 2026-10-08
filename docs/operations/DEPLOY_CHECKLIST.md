@@ -213,6 +213,18 @@ uma vez por ambiente e gravar **o mesmo valor** nos dois lados:
       (sem eles, `notificacoes_email_disparar()`, `trial_expiry_disparar()` e
       `guardiao_margem_disparar()` pulam com `NOTICE`, sem lançar erro; se os
       dois lados não baterem, a edge function responde 401)
+- [ ] Monitor de cron do banco no Sentry (migration `20261012000000`): mesmo DSN do Sentry das edge
+      functions, ambiente `staging` ou `production`:
+      `sql
+    SELECT vault.create_secret('<SENTRY_DSN>', 'app_sentry_dsn', 'DSN para check-in de cron');
+    SELECT vault.create_secret('production', 'app_sentry_env', 'Ambiente do check-in de cron');
+    `
+- [ ] **Verificar de verdade** (o job fica `succeeded` no `cron.job_run_details` mesmo pulando o
+      disparo, foi assim que produção ficou um mês sem expirar trial):
+      `SELECT public.ops_saude_crons();` → `secrets_faltando: []`, e
+      `curl https://<project-ref>.supabase.co/functions/v1/health` → `"crons":"ok"`.
+      Depois do primeiro horário de cada job, `SELECT status_code, count(*) FROM net._http_response GROUP BY 1;`
+      só com `200` (401 = `CRON_SECRET` diferente dos dois lados).
 - [ ] Conferir `SELECT jobname, schedule FROM cron.job WHERE jobname LIKE 'notificacoes-email-%';`
       → `*/5 * * * *` (imediato) e `0 11 * * 1` (semanal, segunda 08:00 BRT)
 - [ ] Sentry → Crons: monitores `notificacoes-email-imediato` e `notificacoes-email-semanal` aparecem no
@@ -233,7 +245,8 @@ uma vez por ambiente e gravar **o mesmo valor** nos dois lados:
 
 ### trial-expiry-cron
 
-A edge function `trial-expiry-cron` expira trials vencidos e envia emails de aviso (7d, 3d, 1d).
+A edge function `trial-expiry-cron` roda de hora em hora (SPEC 104): expira trials vencidos, converte
+quem ativou o plano e envia os avisos D-7 e D-1 e o e-mail de teste encerrado.
 A migration `20260514300002_setup_trial_expiry_cron.sql` tenta criar o job via `pg_cron` automaticamente.
 Se `pg_cron` não estiver disponível, configure manualmente:
 
