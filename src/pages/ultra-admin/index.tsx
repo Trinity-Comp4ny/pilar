@@ -69,6 +69,32 @@ import { parseCompanyFeatures, type CompanyFeatures, type SubscriptionPlanSlug }
 import type { PilarRole } from "@/lib/roles";
 import { env } from "@/lib/env";
 
+type CobrancaStatus = "active" | "trialing" | "overdue" | "canceled" | "expired" | null;
+
+/** Estado de cobrança (spec 078/104). "Convidada" é computado no backend: não paga e não está em prazo. */
+type Cobranca = {
+  status: CobrancaStatus;
+  trialEndsAt: string | null;
+  isPaying: boolean;
+  convidada: boolean;
+};
+
+type CobrancaRaw = {
+  status: CobrancaStatus;
+  trial_ends_at: string | null;
+  is_paying: boolean;
+  convidada?: boolean;
+};
+
+function parseCobranca(raw: CobrancaRaw | undefined): Cobranca {
+  return {
+    status: raw?.status ?? null,
+    trialEndsAt: raw?.trial_ends_at ?? null,
+    isPaying: raw?.is_paying ?? false,
+    convidada: raw?.convidada ?? false,
+  };
+}
+
 type EmpresaRow = {
   id: string;
   nome: string;
@@ -77,6 +103,7 @@ type EmpresaRow = {
   features: CompanyFeatures;
   plano: SubscriptionPlanSlug;
   usersCount: number;
+  cobranca: Cobranca;
 };
 
 type EmpresaDetail = EmpresaRow & {
@@ -87,12 +114,6 @@ type EmpresaDetail = EmpresaRow & {
   /** Padrão do plano atual, só leitura (mostrado pra dar contexto do override). */
   planoMaxProjetos: number | null;
   planoMaxUsuarios: number | null;
-  /** Estado de cobrança (spec 078). "Isenta" é computado: status active sem asaas_subscription_id. */
-  cobranca: {
-    status: "active" | "trialing" | "overdue" | "canceled" | "expired" | null;
-    trialEndsAt: string | null;
-    isPaying: boolean;
-  };
 };
 
 type AuditRow = {
@@ -258,10 +279,13 @@ export default function UltraAdmin() {
     setLoading(true);
     try {
       const data = await edgeFetch("ultra-admin-empresas");
-      const rows: EmpresaRow[] = (data as EmpresaRow[]).map((e) => ({
-        ...e,
-        features: parseCompanyFeatures(e.features),
-      }));
+      const rows: EmpresaRow[] = (data as Array<Omit<EmpresaRow, "cobranca"> & { cobranca?: CobrancaRaw }>).map(
+        (e) => ({
+          ...e,
+          features: parseCompanyFeatures(e.features),
+          cobranca: parseCobranca(e.cobranca),
+        })
+      );
       setEmpresas(rows);
     } catch (err) {
       reportInvokeError(err, "ultra-admin-empresas:list");
@@ -516,11 +540,7 @@ export default function UltraAdmin() {
         plano: SubscriptionPlanSlug | null;
         planoMaxProjetos: number | null;
         planoMaxUsuarios: number | null;
-        cobranca: {
-          status: "active" | "trialing" | "overdue" | "canceled" | "expired" | null;
-          trial_ends_at: string | null;
-          is_paying: boolean;
-        };
+        cobranca: CobrancaRaw;
         usuarios: Array<{
           id: string;
           nome: string | null;
@@ -551,11 +571,7 @@ export default function UltraAdmin() {
         maxUsuariosOverride: raw.empresa.max_usuarios_override,
         planoMaxProjetos: raw.planoMaxProjetos,
         planoMaxUsuarios: raw.planoMaxUsuarios,
-        cobranca: {
-          status: raw.cobranca?.status ?? null,
-          trialEndsAt: raw.cobranca?.trial_ends_at ?? null,
-          isPaying: raw.cobranca?.is_paying ?? false,
-        },
+        cobranca: parseCobranca(raw.cobranca),
         usersCount: raw.usuarios.length,
         usuarios: raw.usuarios.map((u) => ({
           id: u.id,
@@ -851,9 +867,9 @@ export default function UltraAdmin() {
     [detail]
   );
 
-  // Converte empresa isenta em pagante (spec 078): inicia o mesmo prazo de
-  // graça do trial (aviso 7/3/1 dias, corta acesso se não pagar). Refetch do
-  // detalhe porque o retorno da RPC não traz o objeto completo de novo.
+  // Cancela o convite (spec 078/104): inicia o mesmo prazo do trial (aviso
+  // D-7/D-1, modo leitura se não assinar). Refetch do detalhe e da lista
+  // porque o retorno não traz o objeto completo de novo.
   const handleConverterPagante = useCallback(
     async (diasPrazo: number, confirmName: string) => {
       if (!detail) return;
@@ -862,19 +878,42 @@ export default function UltraAdmin() {
           method: "PUT",
           body: { empresa_id: detail.id, converter_pagante: { dias_prazo: diasPrazo, confirm_name: confirmName } },
         });
-        toast.success("Empresa em conversão", {
-          description: `Prazo de ${diasPrazo} dia(s) iniciado. O acesso continua normal até vencer.`,
+        toast.success("Convite cancelado", {
+          description: `A empresa tem ${diasPrazo} dia(s) para assinar. O acesso continua normal até lá.`,
         });
-        await fetchDetail(detail.id);
+        await Promise.all([fetchDetail(detail.id), fetchEmpresas()]);
       } catch (err) {
         reportInvokeError(err, "ultra-admin-empresas:converter-pagante");
-        toast.error("Erro ao converter empresa", {
+        toast.error("Não foi possível cancelar o convite", {
           description: getSafeErrorMessage(err, "Tente de novo em instantes."),
         });
         throw err;
       }
     },
-    [detail, fetchDetail]
+    [detail, fetchDetail, fetchEmpresas]
+  );
+
+  // Marca como convidada (SPEC 104): empresa em teste ou vencida passa a usar
+  // sem cobrança e sai do modo leitura.
+  const handleMarcarConvidada = useCallback(
+    async (confirmName: string) => {
+      if (!detail) return;
+      try {
+        await edgeFetch("ultra-admin-empresas", {
+          method: "PUT",
+          body: { empresa_id: detail.id, marcar_convidada: { confirm_name: confirmName } },
+        });
+        toast.success("Empresa convidada", { description: "Acesso liberado sem cobrança." });
+        await Promise.all([fetchDetail(detail.id), fetchEmpresas()]);
+      } catch (err) {
+        reportInvokeError(err, "ultra-admin-empresas:marcar-convidada");
+        toast.error("Não foi possível marcar como convidada", {
+          description: getSafeErrorMessage(err, "Tente de novo em instantes."),
+        });
+        throw err;
+      }
+    },
+    [detail, fetchDetail, fetchEmpresas]
   );
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -884,6 +923,7 @@ export default function UltraAdmin() {
   const [editCompanyOpen, setEditCompanyOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [converterPaganteOpen, setConverterPaganteOpen] = useState(false);
+  const [marcarConvidadaOpen, setMarcarConvidadaOpen] = useState(false);
   const [companyForm, setCompanyForm] = useState<{
     nome: string;
     cnpj: string;
@@ -1038,21 +1078,25 @@ export default function UltraAdmin() {
           <CardHeader>
             <CardTitle className="text-base">Cobrança</CardTitle>
             <CardDescription>
-              Empresa convidada pelo ultra-admin nasce isenta (sem Asaas vinculado). Converter para pagante inicia um
-              prazo de graça — acesso normal até vencer, aviso de contagem regressiva pro usuário, corta se não assinar
-              (spec 078).
+              Empresa criada aqui nasce convidada: usa sem pagar e mostra o selo "Empresa convidada". Cancelar o convite
+              abre um prazo para assinar; se não assinar, entra em modo leitura como um teste vencido (spec 104).
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap items-center justify-between gap-3">
             <CobrancaBadge cobranca={detail.cobranca} />
-            {!detail.cobranca.isPaying && detail.cobranca.status === "active" && (
+            {detail.cobranca.convidada && (
               <Button
                 variant="outline"
                 size="sm"
                 className="rounded-full"
                 onClick={() => setConverterPaganteOpen(true)}
               >
-                Converter para pagante
+                Cancelar convite
+              </Button>
+            )}
+            {!detail.cobranca.convidada && !detail.cobranca.isPaying && (
+              <Button variant="outline" size="sm" className="rounded-full" onClick={() => setMarcarConvidadaOpen(true)}>
+                Marcar como convidada
               </Button>
             )}
           </CardContent>
@@ -1155,6 +1199,15 @@ export default function UltraAdmin() {
           onConfirm={async (diasPrazo, confirmName) => {
             await handleConverterPagante(diasPrazo, confirmName);
             setConverterPaganteOpen(false);
+          }}
+        />
+        <MarcarConvidadaDialog
+          open={marcarConvidadaOpen}
+          onOpenChange={setMarcarConvidadaOpen}
+          companyName={detail.nome}
+          onConfirm={async (confirmName) => {
+            await handleMarcarConvidada(confirmName);
+            setMarcarConvidadaOpen(false);
           }}
         />
       </PageLayout>
@@ -1290,6 +1343,7 @@ export default function UltraAdmin() {
                       <TableHead>Empresa</TableHead>
                       <TableHead>CNPJ</TableHead>
                       <TableHead>Plano</TableHead>
+                      <TableHead>Cobrança</TableHead>
                       <TableHead>Usuários</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="w-20 text-right">Ações</TableHead>
@@ -1298,7 +1352,7 @@ export default function UltraAdmin() {
                   <TableBody>
                     {filtered.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-black/50">
+                        <TableCell colSpan={7} className="text-black/50">
                           Nenhuma empresa encontrada.
                         </TableCell>
                       </TableRow>
@@ -1315,6 +1369,9 @@ export default function UltraAdmin() {
                             <Badge variant="outline" className="h-6 rounded-full text-[11px]">
                               {PLAN_LABEL[e.plano]}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <CobrancaBadge cobranca={e.cobranca} />
                           </TableCell>
                           <TableCell className="text-black/70">{e.usersCount}</TableCell>
                           <TableCell>
@@ -1907,25 +1964,106 @@ function ArchiveCompanyDialog({
   );
 }
 
-// Badge de estado de cobrança (spec 078). "Isenta"/"Pagante" são computados
-// no backend (ver GET detalhe); os demais espelham o status de assinatura.
-function CobrancaBadge({ cobranca }: { cobranca: EmpresaDetail["cobranca"] }) {
-  if (cobranca.isPaying) {
+// Selo de cobrança (spec 078/104). "Convidada"/"Pagante" vêm computados do
+// backend; os demais espelham o status da assinatura.
+function CobrancaBadge({ cobranca }: { cobranca: Cobranca }) {
+  if (cobranca.isPaying && cobranca.status === "active") {
     return <Badge className="bg-fill-success text-fill-success-foreground">Pagante</Badge>;
   }
+  if (cobranca.convidada) {
+    return <Badge variant="outline">Convidada</Badge>;
+  }
   if (cobranca.status === "trialing" && cobranca.trialEndsAt) {
-    const diasRestantes = Math.ceil((new Date(cobranca.trialEndsAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000));
-    return (
-      <Badge className="bg-fill-warning text-fill-warning-foreground">
-        Em conversão · {diasRestantes > 0 ? `expira em ${diasRestantes}d` : "expira hoje"}
-      </Badge>
-    );
+    const horasRestantes = (new Date(cobranca.trialEndsAt).getTime() - Date.now()) / (60 * 60 * 1000);
+    const prazo =
+      horasRestantes <= 0
+        ? "vence hoje"
+        : horasRestantes < 24
+          ? `vence em ${Math.ceil(horasRestantes)}h`
+          : `vence em ${Math.ceil(horasRestantes / 24)}d`;
+    return <Badge className="bg-fill-warning text-fill-warning-foreground">Em teste · {prazo}</Badge>;
   }
-  if (cobranca.status === "expired" || cobranca.status === "canceled" || cobranca.status === "overdue") {
-    return <Badge className="bg-fill-danger text-fill-danger-foreground">Vencido</Badge>;
+  if (cobranca.status === "expired") {
+    return <Badge className="bg-fill-danger text-fill-danger-foreground">Teste vencido</Badge>;
   }
-  return <Badge variant="outline">Isenta</Badge>;
+  if (cobranca.status === "overdue") {
+    return <Badge className="bg-fill-danger text-fill-danger-foreground">Em atraso</Badge>;
+  }
+  if (cobranca.status === "canceled") {
+    return <Badge className="bg-fill-danger text-fill-danger-foreground">Cancelada</Badge>;
+  }
+  return <Badge variant="outline">Sem assinatura</Badge>;
 }
+
+function MarcarConvidadaDialog({
+  open,
+  onOpenChange,
+  companyName,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  companyName: string;
+  onConfirm: (confirmName: string) => Promise<void>;
+}) {
+  const [confirmText, setConfirmText] = useState("");
+  const [saving, setSaving] = useState(false);
+  const nomeConfere = confirmText.trim() === (companyName ?? "").trim();
+
+  useEffect(() => {
+    if (!open) setConfirmText("");
+  }, [open]);
+
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => !saving && onOpenChange(o)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Tornar {companyName} convidada?</AlertDialogTitle>
+          <AlertDialogDescription>
+            A empresa passa a usar o Pilar sem cobrança, com o selo "Empresa convidada". O prazo do teste é encerrado,
+            os avisos param e, se estiver em modo leitura, a edição volta na hora.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="space-y-1.5">
+          <Label htmlFor="convidada-confirm" className="text-xs">
+            Digite <span className="font-semibold">{companyName}</span> para confirmar
+          </Label>
+          <Input
+            id="convidada-confirm"
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            placeholder={companyName}
+            autoComplete="off"
+          />
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={saving}>Voltar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={async (e) => {
+              e.preventDefault();
+              if (!nomeConfere) return;
+              setSaving(true);
+              try {
+                await onConfirm(confirmText.trim());
+              } catch {
+                // handleMarcarConvidada já mostrou o toast de erro; dialog fica aberto pra retry.
+              } finally {
+                setSaving(false);
+              }
+            }}
+            disabled={saving || !nomeConfere}
+          >
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Tornar convidada"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+// SPEC 104: prazo padrão ao cancelar um convite (o trial self-serve é de 3 dias;
+// parceira ganha mais folga para decidir).
+const PRAZO_PADRAO_CANCELAR_CONVITE = "7";
 
 function ConverterParaPaganteDialog({
   open,
@@ -1938,7 +2076,7 @@ function ConverterParaPaganteDialog({
   companyName: string;
   onConfirm: (diasPrazo: number, confirmName: string) => Promise<void>;
 }) {
-  const [diasPrazo, setDiasPrazo] = useState("14");
+  const [diasPrazo, setDiasPrazo] = useState(PRAZO_PADRAO_CANCELAR_CONVITE);
   const [confirmText, setConfirmText] = useState("");
   const [saving, setSaving] = useState(false);
   const diasValido = Number.isInteger(Number(diasPrazo)) && Number(diasPrazo) >= 1 && Number(diasPrazo) <= 365;
@@ -1947,7 +2085,7 @@ function ConverterParaPaganteDialog({
   // Reseta os campos sempre que o dialog fecha.
   useEffect(() => {
     if (!open) {
-      setDiasPrazo("14");
+      setDiasPrazo(PRAZO_PADRAO_CANCELAR_CONVITE);
       setConfirmText("");
     }
   }, [open]);
@@ -1956,16 +2094,17 @@ function ConverterParaPaganteDialog({
     <AlertDialog open={open} onOpenChange={(o) => !saving && onOpenChange(o)}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Converter {companyName} para pagante?</AlertDialogTitle>
+          <AlertDialogTitle>Cancelar o convite de {companyName}?</AlertDialogTitle>
           <AlertDialogDescription>
-            A empresa continua com acesso normal durante o prazo, com um aviso de contagem regressiva pro usuário. Se
-            ninguém completar a assinatura até o fim do prazo, o acesso é cortado (mesmo mecanismo do trial).
+            A empresa perde o selo de convidada e ganha um prazo para assinar, com acesso normal e aviso de contagem
+            regressiva. Se ninguém assinar até o fim do prazo, a conta entra em modo leitura (mesma regra do teste
+            vencido).
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label htmlFor="converter-dias" className="text-xs">
-              Prazo de graça (dias)
+              Prazo para assinar (dias)
             </Label>
             <Input
               id="converter-dias"
@@ -1990,7 +2129,7 @@ function ConverterParaPaganteDialog({
           </div>
         </div>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={saving}>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={saving}>Voltar</AlertDialogCancel>
           <AlertDialogAction
             onClick={async (e) => {
               e.preventDefault();
@@ -2006,7 +2145,7 @@ function ConverterParaPaganteDialog({
             }}
             disabled={saving || !nomeConfere || !diasValido}
           >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Converter para pagante"}
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Cancelar convite"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

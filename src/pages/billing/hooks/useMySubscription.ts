@@ -14,6 +14,7 @@ export interface MySubscription {
   current_period_end: string | null;
   canceled_at: string | null;
   created_at: string;
+  asaas_subscription_id: string | null;
   plan: Plan | null;
 }
 
@@ -29,6 +30,7 @@ interface SubscriptionRow {
   current_period_end: string | null;
   canceled_at: string | null;
   created_at: string;
+  asaas_subscription_id: string | null;
   plan: Plan | null;
 }
 
@@ -40,7 +42,7 @@ export function useMySubscription() {
       const { data, error } = await untypedFrom<SubscriptionRow>("pilar_subscriptions")
         .select(
           `id, empresa_id, plan_id, status, billing_cycle, billing_type, trial_ends_at,
-           current_period_start, current_period_end, canceled_at, created_at,
+           current_period_start, current_period_end, canceled_at, created_at, asaas_subscription_id,
            plan:pilar_subscription_plans(id, slug, nome, descricao, preco_mensal, preco_anual, max_usuarios, max_projetos, features, destaque, ordem)`
         )
         .maybeSingle();

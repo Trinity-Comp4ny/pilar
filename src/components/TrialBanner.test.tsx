@@ -48,7 +48,7 @@ describe("TrialBanner", () => {
     });
 
     await waitFor(() => expect(mockFrom).toHaveBeenCalled());
-    await waitFor(() => expect(screen.queryByText("Seu trial expirou")).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText("Seu teste grátis terminou")).not.toBeInTheDocument());
   });
 
   it("bloqueia a tela por completo quando expired sem leitura_desde", async () => {
@@ -58,6 +58,6 @@ describe("TrialBanner", () => {
       empresas: { leitura_desde: null } as ProfileWithEmpresa["empresas"],
     });
 
-    expect(await screen.findByText("Seu trial expirou")).toBeInTheDocument();
+    expect(await screen.findByText("Seu teste grátis terminou")).toBeInTheDocument();
   });
 });
