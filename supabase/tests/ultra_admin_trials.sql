@@ -103,8 +103,8 @@ SELECT is(
 SELECT is(
   (SELECT dias_restantes FROM public.ultra_admin_listar_trials()
      WHERE empresa_id = (SELECT id FROM public.empresas WHERE owner_id = 'fad01111-0000-0000-0000-00000000000a')),
-  14,
-  'dias_restantes calculado a partir de trial_ends_at (recém-criada: 14)'
+  3,
+  'dias_restantes calculado a partir de trial_ends_at (recém-criada: 3, SPEC 104)'
 );
 SELECT is(
   (SELECT razao_social_divergente FROM public.ultra_admin_listar_trials()

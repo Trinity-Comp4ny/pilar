@@ -102,6 +102,7 @@ const casos: Array<[string, () => { subject: string; html: string }]> = [
     () => T.templatePropostaEnvio({ nomeCliente: XSS, tituloProposta: XSS, empresaNome: empresaX, mensagem: XSS }),
   ],
   ["trial", () => T.templateTrialAviso({ empresaNome: XSS, daysLeft: 3, billingUrl: "https://l" })],
+  ["trial expirado", () => T.templateTrialExpirado({ empresaNome: XSS, billingUrl: "https://l" })],
   [
     "lgpd",
     () =>
@@ -344,6 +345,7 @@ Deno.test("copy não usa 'no Pilar' nem 'Entrar no Pilar'", () => {
     T.templateMagicLink("https://l").html,
     T.templateConviteUsuario("https://l", "Ana").html,
     T.templateTrialAviso({ empresaNome: "X", daysLeft: 3, billingUrl: "https://l" }).html,
+    T.templateTrialExpirado({ empresaNome: "X", billingUrl: "https://l" }).html,
     T.templateNotificacoes({
       nome: "Ana",
       modo: "semanal",

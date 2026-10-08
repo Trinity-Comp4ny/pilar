@@ -31,14 +31,14 @@ export function templateTrialAviso(params: {
   const prazo = ultimoDia ? emphasis("amanhã", "negative") : strong(`em ${daysLeft} dias`);
 
   return {
-    subject: ultimoDia ? "Seu trial expira amanhã" : `Seu trial expira em ${daysLeft} dias`,
+    subject: ultimoDia ? "Seu teste grátis termina amanhã" : `Seu teste grátis termina em ${daysLeft} dias`,
     html: shell({
-      preview: ultimoDia ? "Último dia de trial" : `Faltam ${daysLeft} dias de trial`,
+      preview: ultimoDia ? "Último dia de teste grátis" : `Faltam ${daysLeft} dias de teste grátis`,
       footerNote: `Você recebeu este e-mail por administrar a empresa ${empresaNome} na ${BRAND.nome}.`,
       hero: {
-        titulo: ultimoDia ? html`Seu trial termina ${em("amanhã")}` : html`Seu trial está ${em("acabando")}`,
-        lead: html`O período de teste da ${strong(empresaNome)} expira ${prazo}. Assine um plano para seguir sem
-        interrupção.`,
+        titulo: ultimoDia ? html`Seu teste termina ${em("amanhã")}` : html`Seu teste está ${em("acabando")}`,
+        lead: html`O teste grátis da ${strong(empresaNome)} termina ${prazo}. Ative o plano agora para seguir sem
+        interrupção: a primeira cobrança só acontece no fim do teste.`,
       },
       content: [
         callout(
@@ -48,8 +48,34 @@ export function templateTrialAviso(params: {
           ultimoDia ? "negative" : "warning",
           { mt: 0 }
         ),
-        button("Ver planos", billingUrl),
+        button("Ativar plano", billingUrl),
         small("Dúvidas sobre planos ou nota fiscal? Responda este e-mail."),
+      ],
+    }),
+  };
+}
+
+// SPEC 104: avisa no momento em que o teste vence sem cartão. É o e-mail que
+// traz de volta quem testou e sumiu, então o botão leva direto pra assinar.
+export function templateTrialExpirado(params: { empresaNome: string; billingUrl: string }): EmailTemplate {
+  const { empresaNome, billingUrl } = params;
+
+  return {
+    subject: "Seu teste grátis do Pilar terminou",
+    html: shell({
+      preview: "Seus dados continuam guardados. Assine para voltar a editar.",
+      footerNote: `Você recebeu este e-mail por administrar a empresa ${empresaNome} na ${BRAND.nome}.`,
+      hero: {
+        titulo: html`Seu teste ${em("terminou")}`,
+        lead: html`O teste grátis da ${strong(empresaNome)} chegou ao fim e a conta entrou em modo leitura. Nada foi
+        apagado: assine um plano e volte a editar na hora.`,
+      },
+      content: [
+        callout("Sem um plano ativo, os dados ficam 90 dias em modo leitura e depois são excluídos.", "warning", {
+          mt: 0,
+        }),
+        button("Assinar e voltar a editar", billingUrl),
+        small("Quer conversar antes de assinar? Responda este e-mail."),
       ],
     }),
   };
@@ -110,7 +136,7 @@ export function templateAtivarPlanoRecibo(params: {
       footerNote: `Você recebeu este e-mail por administrar a empresa ${empresaNome} na ${BRAND.nome}.`,
       hero: {
         titulo: html`Sua assinatura está ${em("ativa")}`,
-        lead: html`O trial da ${strong(empresaNome)} virou assinatura ${strong(planoNome)}. A primeira cobrança já foi
+        lead: html`A ${strong(empresaNome)} agora tem a assinatura ${strong(planoNome)}. A primeira cobrança já foi
         processada com o cartão que você cadastrou.`,
       },
       content: [
