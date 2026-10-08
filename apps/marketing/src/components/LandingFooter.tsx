@@ -4,6 +4,7 @@ import { requestCookieConsentReview } from "../cookieConsent";
 import { COMPARATIVOS } from "../lib/comparativos";
 import { MODULOS } from "../lib/modules";
 import { Logo } from "./Logo";
+import { linkCadastro } from "../lib/origem";
 
 /**
  * Rodapé no verde da marca, como na referência: o fim da página é um bloco de
@@ -93,7 +94,7 @@ export function LandingFooter() {
                 </a>
               </li>
               <li>
-                <a href={`${APP_URL}/cadastro`} className="text-[13.5px] text-ink/75 hover:text-ink transition-colors">
+                <a href={linkCadastro()} className="text-[13.5px] text-ink/75 hover:text-ink transition-colors">
                   Criar conta
                 </a>
               </li>

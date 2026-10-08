@@ -1,5 +1,4 @@
 import { Check, X } from "lucide-react";
-import { APP_URL } from "../config";
 import { trackCta } from "../analytics";
 import { COMPARATIVOS_POR_SLUG, type ComparativoSlug } from "../lib/comparativos";
 import { useJsonLd, usePageMeta } from "../lib/seo";
@@ -7,6 +6,7 @@ import { CTASection } from "../components/CTASection";
 import { HeroBackdrop } from "../components/hero/HeroBackdrop";
 import { Reveal } from "../components/Reveal";
 import { SplitButton } from "../components/ui/SplitButton";
+import { linkCadastro } from "../lib/origem";
 
 const WHATSAPP = "https://wa.me/5514998721100";
 
@@ -50,7 +50,7 @@ export function ComparativoPage({ slug }: { slug: ComparativoSlug }) {
             <p className="mb-8 max-w-xl text-[15px] leading-relaxed text-ink-soft md:text-[16px]">{c.lede}</p>
 
             <div className="flex flex-wrap gap-3">
-              <SplitButton href={`${APP_URL}/cadastro`} onClick={() => trackCta("testar_gratis", `vs_${slug}`)}>
+              <SplitButton href={linkCadastro()} onClick={() => trackCta("testar_gratis", `vs_${slug}`)}>
                 Testar grátis
               </SplitButton>
               <SplitButton fantasma href={WHATSAPP} onClick={() => trackCta("agende_demo", `vs_${slug}`)}>

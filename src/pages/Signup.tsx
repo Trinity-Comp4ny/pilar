@@ -20,6 +20,7 @@ import { translateAuthError } from "@/lib/authErrors";
 import { analytics } from "@/lib/analytics";
 import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legalVersions";
 import { Logo } from "@/components/Logo";
+import { guardarOrigemCadastro, lerOrigemCadastro } from "@/lib/origemCadastro";
 
 export default function Signup() {
   usePageTitle("Criar conta");
@@ -52,6 +53,10 @@ export default function Signup() {
     checkUser();
   }, [navigate]);
 
+  useEffect(() => {
+    guardarOrigemCadastro();
+  }, []);
+
   const handleSignup = async (values: SignupFormData) => {
     setIsLoading(true);
 
@@ -66,6 +71,7 @@ export default function Signup() {
           terms_accepted: values.termsAccepted,
           terms_version: TERMS_VERSION,
           privacy_version: PRIVACY_VERSION,
+          origem: lerOrigemCadastro(),
         },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
         ...(captchaToken ? { captchaToken } : {}),

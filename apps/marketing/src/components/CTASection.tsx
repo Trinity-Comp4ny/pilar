@@ -6,6 +6,7 @@ import { Reveal } from "./Reveal";
 import { SplitButton } from "./ui/SplitButton";
 import { HeroBackdrop } from "./hero/HeroBackdrop";
 import { EASE } from "../lib/motion";
+import { linkCadastro } from "../lib/origem";
 
 /**
  * Fecho da página: um cartão largo com a paisagem desfocada por dentro, no
@@ -19,7 +20,7 @@ export function CTASection() {
 
   const primario = loggedIn
     ? { href: `${APP_URL}/inicio`, label: "Abrir Pilar", evento: "abrir_pilar" }
-    : { href: `${APP_URL}/cadastro`, label: "Testar grátis por 3 dias", evento: "testar_gratis" };
+    : { href: linkCadastro(), label: "Testar grátis por 3 dias", evento: "testar_gratis" };
 
   return (
     <section className="w-full bg-paper px-4 md:px-10 pb-10 md:pb-20">
