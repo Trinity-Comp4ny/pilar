@@ -122,6 +122,9 @@ Cada item com critério de pronto. Ordem = ordem de ataque.
 - **Front por domínio, sem big bang**: ao tocar num módulo, levar hooks/lib exclusivos
   dele para dentro de `src/pages/<modulo>/`. Rotas do `App.tsx` por módulo (ADR 0016).
 - **Limpeza do Knip** (39 arquivos, 21 dependências) e baixar o baseline.
+  **Feito (2026-10-08):** 39 arquivos e 22 dependências removidos; baseline de arquivos e
+  dependências em zero (qualquer um novo reprova). Exports e tipos sem uso (169 e 103)
+  ficam para limpar quando tocar no módulo.
 - **Subir os pisos de cobertura** a cada módulo que ganhar teste.
 
 ## 7. Onda 4: quando houver cliente pagante
