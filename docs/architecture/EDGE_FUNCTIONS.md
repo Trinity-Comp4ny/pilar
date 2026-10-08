@@ -14,7 +14,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
-| `ai-chat` | Copiloto do chat: classifica a intenção e responde com dados do usuário (só leitura, RLS do próprio usuário). | app | JWT |  | não |
+| `ai-chat` | Copiloto do chat: classifica a intenção e responde com dados do usuário (só leitura, RLS do próprio usuário). | app | JWT |  | sim |
 | `ai-cotacao-import` | Lê PDF ou imagem de orçamento de fornecedor e extrai os itens (Gemini, spec 023). | app | JWT |  | não |
 | `ai-import-financeiro` | Extrai lançamentos do texto de um extrato ou fatura (spec 017). | app | JWT |  | não |
 | `ai-rdo-voz` | Transcreve áudio curto do RDO e preenche os campos de texto (spec 080). | app | JWT |  | não |
@@ -36,7 +36,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
 | `asaas-config` | Configuração do Asaas da própria empresa (chave cifrada no Vault). A tela que chamava foi removida em 7602833d. | **sem chamador conhecido** | JWT |  | não |
-| `asaas-criar-cobranca` | Cria cobrança no Asaas da empresa para uma receita do cliente dela. | app | JWT |  | não |
+| `asaas-criar-cobranca` | Cria cobrança no Asaas da empresa para uma receita do cliente dela. | **sem chamador conhecido** | JWT |  | não |
 | `asaas-webhook` | Recebe eventos do Asaas da empresa e atualiza a receita (recebida, atrasada, estornada). | Asaas da empresa (webhook) | própria | `ASAAS_WEBHOOK_TOKEN` | sim |
 
 ## Portal do cliente
@@ -112,6 +112,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 ## Sem chamador conhecido
 
 - `asaas-config`
+- `asaas-criar-cobranca`
 - `portal-entrega-download`
 - `portal-get-projeto`
 - `upload-portal-entrega`
