@@ -117,6 +117,10 @@ Cada item com critério de pronto. Ordem = ordem de ataque.
 
 - **Quebrar o `ai-chat`** (já no BACKLOG, Fase 1): antes, testes do roteamento de
   intenção e dos schemas, para o split ser verificável.
+  **Feito (2026-10-08), só a divisão:** `index.ts` de 1.767 linhas virou handler (353) +
+  8 módulos, sem mudar código (remontagem idêntica linha a linha). Testes Deno da defesa
+  contra prompt injection, dos schemas e da tabela de entidades criáveis. O resto da Fase 1
+  do BACKLOG (stream no topo, eventos run/step, timeline) segue pendente.
 - **Catálogo das Edge Functions**: tabela gerada (nome, gatilho, auth, segredos, teste)
   no lugar de reorganizar pastas. Consolidar billing num roteador quando mexer nele.
   **Feito (2026-10-08):** `docs/architecture/EDGE_FUNCTIONS.md`, gerado de

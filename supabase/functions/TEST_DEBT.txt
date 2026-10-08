@@ -10,10 +10,9 @@
 # com `deno test` (ex.: invite-user/delivery.ts, lookup-cep/providers.ts,
 # resend-webhook/svix.ts). Próxima prioridade: o resto do billing
 # (pilar-checkout-create, pilar-subscription-manage, pilar-checkout-status), o
-# portal do cliente (portal-*), depois ai-chat.
+# portal do cliente (portal-*). ai-chat ganhou teste ao ser dividido em módulos (2026-10-08).
 #
 # Um nome de pasta por linha. Linha vazia e # são ignorados.
-ai-chat
 ai-cotacao-import
 ai-import-financeiro
 ai-rdo-voz

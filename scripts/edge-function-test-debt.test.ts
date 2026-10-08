@@ -15,7 +15,7 @@ const DEBT_PATH = resolve(FUNCTIONS_DIR, "TEST_DEBT.txt");
 
 // Medido em 2026-10-07: 38 das 45 funções sem nenhum teste. Onda 2 (mesmo dia):
 // as 6 de dinheiro e auth ganharam teste.
-const MAX_DEBT = 32;
+const MAX_DEBT = 31;
 
 const debt = readFileSync(DEBT_PATH, "utf8")
   .split("\n")
