@@ -177,7 +177,7 @@ export const MODULOS: Modulo[] = [
       {
         pergunta: "Quanto custa?",
         resposta:
-          "O preço é por escritório, sem cobrança por usuário, e todo plano tem a plataforma inteira. O trial é de 14 dias, sem cartão.",
+          "O preço é por escritório, sem cobrança por usuário, e todo plano tem a plataforma inteira. O teste grátis é de 3 dias, sem cartão.",
       },
     ],
     ctaPrimario: { label: "Testar grátis", tipo: "cadastro" },

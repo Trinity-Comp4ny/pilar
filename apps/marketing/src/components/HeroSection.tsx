@@ -96,7 +96,7 @@ export function HeroSection() {
           >
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <SplitButton href={`${APP_URL}/cadastro`} onClick={() => trackCta("testar_gratis", "hero")}>
-                Testar grátis por 14 dias
+                Testar grátis por 3 dias
               </SplitButton>
               <SplitButton href={`${APP_URL}/login`} onClick={() => trackCta("entrar", "hero")} fantasma>
                 Entrar
