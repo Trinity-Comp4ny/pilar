@@ -79,12 +79,22 @@ Cada item com critério de pronto. Ordem = ordem de ataque.
    `asaas-webhook`, `pilar-token-pack-create`, `ativar-plano`, `delete-user`,
    `create-company-owner`. Padrão: extrair a regra do `index.ts` para módulo vizinho e
    testar com `deno test`. Pronto: `TEST_DEBT.txt` cai de 38 para 32.
+   **Feito (PR #515).** De bônus: `delete-user` passou a checar o papel do alvo.
 2. **Um spec E2E de criação por módulo ativo** no job local: cliente, lead → proposta,
    projeto → escopo/aditivo, convite de membro, portal do cliente logado (seed de
    usuário de portal). Pronto: cada módulo ativo do CLAUDE.md tem 1 fluxo de escrita.
+   **Parcial (PR #517):** cliente, lead, proposta e portal logado; projeto e receita
+   já existiam. Faltam aditivo e convite de membro (convite manda e-mail de verdade
+   em staging, precisa de destino descartável antes). Achou bug de código de
+   proposta duplicado.
 3. **Regressão visual** com `toHaveScreenshot` em 5 telas (início, quadro de projetos,
    lançamentos, detalhe do projeto, portal), baseline gerada no runner Linux com dado
    fixo do seed. Pronto: mudança de CSS que desloca layout reprova o PR.
+   **Feito (PR #518):** 6 telas (inclui Início no celular). Provado com sonda: sidebar
+   24px mais larga reprova 4 telas. Limite absoluto de 100 pixels, não 1% da tela.
+   Bugs visuais vistos ao montar e ainda abertos: valor do `KPICard` passa por baixo
+   do ícone (Lançamentos), nome do cliente e prazo estouram os cards do detalhe do
+   projeto a 1280px.
 4. **Acessibilidade da landing**: corrigir contraste (decisão de marca, 84 nós) e
    tirar o `continue-on-error` do passo `marketing`.
 5. **Triagem da primeira varredura do CodeQL**; decidir se entra no `CI OK`.
