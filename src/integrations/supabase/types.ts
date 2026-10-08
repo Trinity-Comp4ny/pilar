@@ -4984,18 +4984,21 @@ export type Database = {
         Row: {
           id: string
           trial_ai_daily_cap_tokens: number
+          trial_dias: number
           trial_tokens_bronze: number
           updated_at: string
         }
         Insert: {
           id?: string
           trial_ai_daily_cap_tokens?: number
+          trial_dias?: number
           trial_tokens_bronze?: number
           updated_at?: string
         }
         Update: {
           id?: string
           trial_ai_daily_cap_tokens?: number
+          trial_dias?: number
           trial_tokens_bronze?: number
           updated_at?: string
         }

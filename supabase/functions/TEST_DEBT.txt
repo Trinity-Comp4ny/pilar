@@ -40,7 +40,6 @@ send-data-deletion-notification
 send-invoice-reminder
 send-manual-client-email
 send-proposta-email
-trial-expiry-cron
 turnstile-verify
 ultra-admin-empresas
 ultra-admin-usuarios
