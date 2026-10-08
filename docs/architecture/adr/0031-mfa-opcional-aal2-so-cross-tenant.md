@@ -69,6 +69,16 @@ antes de 2026-08-25 (data em que a decisão chegou a produção), exceto do
 `ultra_admin`. Padrão vale para todos: sem MFA, ativação em Configurações >
 Segurança.
 
+Na mesma leva, a saída de emergência passou a funcionar de ponta a ponta:
+
+- `mfa_consume_backup_code` remove o fator no servidor (migration
+  `20261014000000_mfa_codigo_de_recuperacao_desliga_2fa`). Antes o front tentava
+  remover numa sessão aal1, o Supabase recusava e o código era queimado sem
+  liberar a conta.
+- Ativar o 2FA já gera e mostra os códigos de recuperação. Produção tinha zero.
+- Não existe ação de suporte para desligar o 2FA de outra pessoa (decisão de
+  2026-10-08 no `DECISOES.md`); o código de recuperação é a saída.
+
 ## Decisões relacionadas
 
 - Revisa a política da migration `020_mfa_enforcement`.

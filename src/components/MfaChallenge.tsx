@@ -8,14 +8,13 @@ import { useMfa } from "@/hooks/useMfa";
 import { translateAuthError } from "@/lib/authErrors";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { MfaHelpModal } from "@/components/MfaHelpModal";
-import { callUntypedRpc } from "@/lib/supabaseRpc";
 
 interface MfaChallengeProps {
   onVerified?: () => void;
 }
 
 export function MfaChallenge({ onVerified }: MfaChallengeProps) {
-  const { factors, verifyTotp, unenrollPending, resetAllFactors, loading } = useMfa();
+  const { factors, verifyTotp, unenrollPending, recoverWithBackupCode, loading } = useMfa();
   const navigate = useNavigate();
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -37,7 +36,7 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
     setSubmitting(true);
     try {
       await verifyTotp(verifiedFactor.id, finalCode);
-      toast.success("MFA verificado");
+      toast.success("Código confirmado");
       onVerified?.();
     } catch (err) {
       toast.error("Código inválido", { description: translateAuthError(err) });
@@ -62,21 +61,15 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
     }
     setBackupSubmitting(true);
     try {
-      const { data: valid, error } = await callUntypedRpc<boolean>("mfa_consume_backup_code", {
-        p_code: normalized,
-      });
-      if (error) throw error;
+      const valid = await recoverWithBackupCode(normalized);
       if (!valid) {
         toast.error("Código inválido ou já utilizado");
         return;
       }
-      // Desregistra todos os fatores — sessão volta a AAL1/AAL1
-      // PrivateRoute redirecionará para /mfa/setup
-      await resetAllFactors();
-      toast.success("Código de recuperação aceito", {
-        description: "Configure um novo autenticador para continuar.",
+      toast.success("Autenticação em dois fatores desativada", {
+        description: "Para ativar de novo com outro celular, vá em Configurações > Segurança.",
       });
-      navigate("/mfa/setup", { replace: true });
+      onVerified?.();
     } catch (err) {
       toast.error("Erro ao validar código", { description: translateAuthError(err) });
     } finally {
@@ -140,7 +133,7 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
             className="w-full h-11 font-medium"
           >
             {resetting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
-            Reiniciar configuração do MFA
+            Reiniciar configuração
           </Button>
         </div>
       );
@@ -149,8 +142,8 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
     return (
       <div className="space-y-4 text-center">
         <ShieldCheck className="h-12 w-12 mx-auto text-foreground" />
-        <h2 className="text-xl font-semibold text-ink">MFA não configurado</h2>
-        <p className="text-sm text-ink-soft">Esta conta exige autenticação de dois fatores para continuar.</p>
+        <h2 className="text-xl font-semibold text-ink">Autenticação em dois fatores desativada</h2>
+        <p className="text-sm text-ink-soft">Esta área exige o código do app autenticador. Ative para continuar.</p>
         <Button onClick={handleResetAndSetup} disabled={resetting} variant="brand" className="w-full h-11 font-medium">
           {resetting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
           Configurar agora

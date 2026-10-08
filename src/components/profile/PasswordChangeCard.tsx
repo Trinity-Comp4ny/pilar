@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { verifyCurrentPassword } from "@/lib/supabase";
+import { passwordSchema } from "@/lib/passwordPolicy";
+import { translateAuthError } from "@/lib/authErrors";
+import { PasswordRequirements } from "@/components/PasswordRequirements";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,8 +28,9 @@ export function PasswordChangeCard({ currentEmail }: Props) {
   };
 
   const handleSave = async () => {
-    if (newPwd.length < 8) {
-      toast.error("Senha muito curta", { description: "Use ao menos 8 caracteres." });
+    const policy = passwordSchema.safeParse(newPwd);
+    if (!policy.success) {
+      toast.error("Senha nova não atende aos requisitos", { description: policy.error.issues[0]?.message });
       return;
     }
     if (newPwd !== confirmPwd) {
@@ -39,13 +44,14 @@ export function PasswordChangeCard({ currentEmail }: Props) {
 
     setSaving(true);
     try {
-      const { error: reauthErr } = await supabase.auth.signInWithPassword({
-        email: currentEmail,
-        password: currentPwd,
-      });
+      const reauthErr = await verifyCurrentPassword(currentEmail, currentPwd);
       if (reauthErr) {
-        toast.error("Senha atual incorreta");
-        setSaving(false);
+        toast.error(
+          reauthErr.code === "invalid_credentials" ? "Senha atual incorreta" : "Erro ao confirmar a senha atual",
+          {
+            description: reauthErr.code === "invalid_credentials" ? undefined : translateAuthError(reauthErr),
+          }
+        );
         return;
       }
 
@@ -54,8 +60,7 @@ export function PasswordChangeCard({ currentEmail }: Props) {
       toast.success("Senha atualizada");
       reset();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Falha ao atualizar senha";
-      toast.error("Erro ao trocar senha", { description: msg });
+      toast.error("Erro ao trocar senha", { description: translateAuthError(err) });
     } finally {
       setSaving(false);
     }
@@ -90,9 +95,9 @@ export function PasswordChangeCard({ currentEmail }: Props) {
                 value={newPwd}
                 onChange={(e) => setNewPwd(e.target.value)}
                 autoComplete="new-password"
-                placeholder="Mínimo 8 caracteres"
                 disabled={saving}
               />
+              <PasswordRequirements password={newPwd} />
             </div>
             <div className="space-y-2">
               <Label>Confirmar nova senha</Label>

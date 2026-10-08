@@ -226,6 +226,7 @@ export function MfaSetup() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [removeConfirmId, setRemoveConfirmId] = useState<string | null>(null);
   const [reenrollConfirm, setReenrollConfirm] = useState(false);
+  const [justEnrolled, setJustEnrolled] = useState(false);
 
   const verifiedFactor = factors.find((f) => f.status === "verified");
 
@@ -284,6 +285,8 @@ export function MfaSetup() {
       } catch {
         // best-effort: fator antigo pode já ter sido removido
       }
+    } else {
+      setJustEnrolled(true);
     }
     setEnrollment(null);
     refresh();
@@ -331,7 +334,7 @@ export function MfaSetup() {
       </div>
 
       {/* Códigos de recuperação — indispensáveis se o autenticador for perdido */}
-      {verifiedFactor && <MfaBackupCodes />}
+      {verifiedFactor && <MfaBackupCodes autoGenerate={justEnrolled} />}
 
       {enrollment && <MfaEnrollModal open enrollment={enrollment} onClose={handleClose} onVerified={handleVerified} />}
 
