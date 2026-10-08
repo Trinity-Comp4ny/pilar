@@ -100,6 +100,8 @@ Cada item com critério de pronto. Ordem = ordem de ataque.
 5. **Triagem da primeira varredura do CodeQL**; decidir se entra no `CI OK`.
 6. **Checkly**: ligar de verdade (canal de alerta + deploy) ou apagar a config. Config
    que não roda dá a impressão de monitoramento que não existe.
+   **Feito (2026-10-08):** Checkly removido; os mesmos checks rodam a cada 30 min no
+   workflow `monitor-producao.yml`, com alerta por issue (ver monitoring/synthetic-tests.md).
 7. **Backup do Storage** (buckets de entregas, fotos de obra) no `backup-nightly.yml`.
    **Feito (PR #519):** `scripts/storage-backup.mjs` + passo no `backup-nightly.yml`,
    restore documentado em DISASTER_RECOVERY.md. Depende de copiar

@@ -18,4 +18,4 @@ Deploy, resposta a incidentes, runbooks e monitoramento. ← [voltar ao índice]
 ## Subpastas
 
 - [`runbooks/`](./runbooks/) — procedimentos passo-a-passo de incidente (DB down, edge function falhando, Asaas down, etc.). Índice em [`runbooks/README.md`](./runbooks/README.md).
-- [`monitoring/`](./monitoring/) — setup de Checkly, status page e testes sintéticos.
+- [`monitoring/`](./monitoring/) — checks sintéticos de produção (workflow monitor-producao.yml) e status page.

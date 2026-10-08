@@ -121,7 +121,10 @@ O que roda hoje (`.github/workflows/ci.yml`), em push e PR para `main` e `stagin
   RLS, impersonation e features) e confere que `types.ts` está em sync com as migrations.
   Inclui o **guard de migration destrutiva**, que roda antes de qualquer `db push`.
 - **edge-functions** — `deno check` nas 44 funções de `supabase/functions/`.
-- **ci-ok** — job agregado, é o único required check do branch protection.
+- **ci-ok**: job agregado, required check do branch protection de `staging`.
+- **CodeQL** (workflow `codeql.yml`): o check "Code scanning results / CodeQL" também é
+  required em `staging` desde 2026-10-08. Reprova só alerta NOVO de severidade alta
+  introduzido pelo PR; os alertas antigos não travam merge.
 
 Antes de abrir PR com migration nova, dá para rodar o guard local:
 

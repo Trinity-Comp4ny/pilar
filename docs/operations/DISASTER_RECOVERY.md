@@ -157,8 +157,9 @@ Achados do drill:
 
 ## Comunicação durante outage
 
-- **Status page:** ainda não existe (ver item "Checkly/BetterStack" do plano
-  de lançamento — depende de você criar a conta).
+- **Status page:** `/status` no app (SPEC 055). Queda de produção é detectada pelo
+  workflow `monitor-producao.yml` (a cada 30 min, alerta por issue); ver
+  `monitoring/synthetic-tests.md`.
 - **Template:** "Estamos investigando instabilidade em [serviço]. Updates em
   [link]. ETA: [X min]." Atualizar a cada 30 min mesmo sem novidade.
 
