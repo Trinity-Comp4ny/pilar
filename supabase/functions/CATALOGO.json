@@ -1,0 +1,184 @@
+{
+  "ai-chat": {
+    "dominio": "ia",
+    "descricao": "Copiloto do chat: classifica a intenção e responde com dados do usuário (só leitura, RLS do próprio usuário)."
+  },
+  "ai-cotacao-import": {
+    "dominio": "ia",
+    "descricao": "Lê PDF ou imagem de orçamento de fornecedor e extrai os itens (Gemini, spec 023)."
+  },
+  "ai-import-financeiro": {
+    "dominio": "ia",
+    "descricao": "Extrai lançamentos do texto de um extrato ou fatura (spec 017)."
+  },
+  "ai-rdo-voz": {
+    "dominio": "ia",
+    "descricao": "Transcreve áudio curto do RDO e preenche os campos de texto (spec 080)."
+  },
+  "asaas-config": {
+    "dominio": "cobranca-cliente",
+    "descricao": "Configuração do Asaas da própria empresa (chave cifrada no Vault). A tela que chamava foi removida em 7602833d."
+  },
+  "asaas-criar-cobranca": {
+    "dominio": "cobranca-cliente",
+    "descricao": "Cria cobrança no Asaas da empresa para uma receita do cliente dela."
+  },
+  "asaas-webhook": {
+    "dominio": "cobranca-cliente",
+    "descricao": "Recebe eventos do Asaas da empresa e atualiza a receita (recebida, atrasada, estornada).",
+    "chamada_externa": "Asaas da empresa (webhook)"
+  },
+  "ativar-plano": {
+    "dominio": "billing",
+    "descricao": "Tokeniza o cartão no trial sem cobrar e grava o consentimento datado (SPEC 098)."
+  },
+  "auth-email-hook": {
+    "dominio": "auth",
+    "descricao": "Hook de e-mail do Supabase Auth: monta convite e recuperação de senha e envia pelo Resend.",
+    "chamada_externa": "Supabase Auth (hook de e-mail)"
+  },
+  "campo-upload-foto": {
+    "dominio": "campo",
+    "descricao": "Upload de foto do Pilar Campo, autorizado pelo token de campo (conta sem usuário Supabase)."
+  },
+  "create-company-owner": {
+    "dominio": "plataforma",
+    "descricao": "Convite de dono de empresa nova (bootstrap manual com chave de super admin).",
+    "chamada_externa": "manual (curl com chave de super admin)"
+  },
+  "delete-user": {
+    "dominio": "acesso",
+    "descricao": "Remove membro: admin só da própria empresa e nunca ultra admin; ultra admin de qualquer empresa."
+  },
+  "geocode-address": {
+    "dominio": "utilitario",
+    "descricao": "Geocodifica endereço pelo Nominatim (mapa)."
+  },
+  "guardiao-margem-cron": {
+    "dominio": "jobs",
+    "descricao": "Cron diário: prepara rascunho de aditivo quando o projeto estoura o orçamento (spec 081)."
+  },
+  "health": {
+    "dominio": "utilitario",
+    "descricao": "Saúde do backend (banco, Asaas, Resend); usado pelo smoke de deploy e pelo monitor de produção.",
+    "chamada_externa": "monitor de produção e smoke de deploy"
+  },
+  "invite-campo": {
+    "dominio": "campo",
+    "descricao": "Emite credencial de acesso do Pilar Campo para a equipe de obra."
+  },
+  "invite-cliente-portal": {
+    "dominio": "portal",
+    "descricao": "Convida o cliente para o portal (manda o e-mail antes de gravar)."
+  },
+  "invite-user": {
+    "dominio": "acesso",
+    "descricao": "Convida, reenvia e cancela convite de membro da empresa."
+  },
+  "log-impersonation": {
+    "dominio": "plataforma",
+    "descricao": "Abre e encerra sessão de impersonation do ultra admin, com registro no servidor."
+  },
+  "lookup-cep": {
+    "dominio": "utilitario",
+    "descricao": "Busca CEP sem login (checkout), BrasilAPI com fallback de provedor."
+  },
+  "notificacoes-email-cron": {
+    "dominio": "jobs",
+    "descricao": "Cron: manda por e-mail o que está na central de notificações e ninguém leu."
+  },
+  "pilar-checkout-create": {
+    "dominio": "billing",
+    "descricao": "Checkout público do Pilar: cria cliente e cobrança na Asaas da plataforma."
+  },
+  "pilar-checkout-status": {
+    "dominio": "billing",
+    "descricao": "Consulta pública do status de pagamento do checkout."
+  },
+  "pilar-checkout-webhook": {
+    "dominio": "billing",
+    "descricao": "Eventos da Asaas da plataforma: libera signup, renova assinatura, credita tokens, inadimplência.",
+    "chamada_externa": "Asaas da plataforma (webhook)"
+  },
+  "pilar-subscription-manage": {
+    "dominio": "billing",
+    "descricao": "Troca de plano e cancelamento da assinatura do Pilar pelo admin da empresa."
+  },
+  "pilar-token-pack-create": {
+    "dominio": "billing",
+    "descricao": "Compra avulsa de pacote de tokens de IA (SPEC 077/080)."
+  },
+  "portal-aprovar-proposta": {
+    "dominio": "portal",
+    "descricao": "Cliente aprova proposta pelo portal (auth pelo token do portal)."
+  },
+  "portal-entrega-download": {
+    "dominio": "portal",
+    "descricao": "URL assinada de 5 minutos para arquivo de entrega do portal."
+  },
+  "portal-get-projeto": {
+    "dominio": "portal",
+    "descricao": "Dados do projeto para o portal (auth pelo token do portal)."
+  },
+  "portal-obra-fotos": {
+    "dominio": "portal",
+    "descricao": "URLs assinadas das fotos curadas do diário de obra para o portal (spec 087)."
+  },
+  "resend-webhook": {
+    "dominio": "comunicacao",
+    "descricao": "Recebe o status de entrega do Resend e fecha o ciclo do e-mail enviado.",
+    "chamada_externa": "Resend (webhook)"
+  },
+  "reset-cliente-portal-password": {
+    "dominio": "portal",
+    "descricao": "Redefine a senha do cliente do portal (e-mail antes de mexer na conta)."
+  },
+  "retencao-pos-trial": {
+    "dominio": "jobs",
+    "descricao": "Cron: avisos e exclusão de empresa depois do trial vencido (SPEC 098 Fase 3)."
+  },
+  "reverificar-documentos-pendentes": {
+    "dominio": "jobs",
+    "descricao": "Cron: reverifica CNPJ ou CPF pendentes do trial (SPEC 098)."
+  },
+  "send-data-deletion-notification": {
+    "dominio": "comunicacao",
+    "descricao": "E-mail de confirmação de exclusão de dados (LGPD), disparado por trigger."
+  },
+  "send-invoice-reminder": {
+    "dominio": "comunicacao",
+    "descricao": "Lembrete de cobrança por e-mail para cliente da empresa."
+  },
+  "send-manual-client-email": {
+    "dominio": "comunicacao",
+    "descricao": "E-mail manual da empresa para um cliente dela (nunca endereço livre)."
+  },
+  "send-proposta-email": {
+    "dominio": "comunicacao",
+    "descricao": "Envia a proposta por e-mail ao cliente."
+  },
+  "trial-expiry-cron": {
+    "dominio": "jobs",
+    "descricao": "Cron: expira trials, converte quem tem cartão e manda os avisos."
+  },
+  "turnstile-verify": {
+    "dominio": "utilitario",
+    "descricao": "Verifica no servidor o token do Cloudflare Turnstile."
+  },
+  "ultra-admin-empresas": {
+    "dominio": "plataforma",
+    "descricao": "Gestão de empresas pelo ultra admin."
+  },
+  "ultra-admin-usuarios": {
+    "dominio": "plataforma",
+    "descricao": "Gestão de usuários pelo ultra admin."
+  },
+  "upload-portal-entrega": {
+    "dominio": "portal",
+    "descricao": "Upload autenticado de arquivo de entrega para o portal."
+  },
+  "verificar-documento": {
+    "dominio": "billing",
+    "descricao": "Sobe a empresa para o nível Prata ao informar CNPJ ou CPF (SPEC 098)."
+  }
+}

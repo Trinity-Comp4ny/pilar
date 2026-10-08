@@ -119,6 +119,9 @@ Cada item com critério de pronto. Ordem = ordem de ataque.
   intenção e dos schemas, para o split ser verificável.
 - **Catálogo das Edge Functions**: tabela gerada (nome, gatilho, auth, segredos, teste)
   no lugar de reorganizar pastas. Consolidar billing num roteador quando mexer nele.
+  **Feito (2026-10-08):** `docs/architecture/EDGE_FUNCTIONS.md`, gerado de
+  `CATALOGO.json` + leitura do repo, com teste que reprova se ficar velho. Achou 6
+  funções sem chamador conhecido (ver a seção no fim do catálogo).
 - **Front por domínio, sem big bang**: ao tocar num módulo, levar hooks/lib exclusivos
   dele para dentro de `src/pages/<modulo>/`. Rotas do `App.tsx` por módulo (ADR 0016).
 - **Limpeza do Knip** (39 arquivos, 21 dependências) e baixar o baseline.

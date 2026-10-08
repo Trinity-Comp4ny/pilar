@@ -51,6 +51,11 @@ Um ADR documenta uma decisão técnica relevante, seu contexto e consequências.
 | [0043](./adr/0043-exclusao-de-empresa-anonimiza-financeiro-apaga-o-resto.md)     | Exclusão de empresa no dia 90 de retenção (SPEC 098 Fase 3): tabelas com obrigação fiscal de 5 anos (financeiro) são anonimizadas, o resto é apagado de verdade; `empresas` fica soft-deleted (preserva unicidade de CNPJ); disparado só pelo cron `retencao-pos-trial`, `preservar_dados` suspende o relógio                                      |
 | [0045](./adr/0045-gate-de-qualidade-e-catraca-e2e-em-pr-contra-banco-local.md)   | Gate de qualidade novo nasce como catraca sobre a dívida medida (cobertura, lint, Knip, teste de Edge Function) e o E2E roda em todo PR contra Supabase local no runner                                                                                                                                                                            |
 
+## Catálogo das Edge Functions
+
+[`EDGE_FUNCTIONS.md`](./EDGE_FUNCTIONS.md): as funções por domínio, com quem chama, login,
+secrets e teste. Gerado por `scripts/edge-functions-catalog.mjs`; não editar à mão.
+
 ## Guias de reúso
 
 - [`REUSO_LABRYNTH.md`](./REUSO_LABRYNTH.md) — o que adaptar dos repos internos da Labrynth (segurança/tenancy, frontend, RBAC, design system, IA), com caminhos-fonte e esforço de porte.
