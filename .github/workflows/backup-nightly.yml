@@ -101,6 +101,31 @@ jobs:
           path: dump-${{ matrix.target }}.sql.enc
           retention-days: 30
 
+      # O dump acima guarda a tabela storage.objects, não os ARQUIVOS (logos, fotos de
+      # obra, templates de proposta, entregas do portal). Sem este passo, um bucket
+      # apagado era irrecuperável (DISASTER_RECOVERY.md, seção Storage). Vem depois do
+      # upload do dump de propósito: falha aqui não pode custar o backup do banco.
+      # Credencial: o par do deploy (access token + ref); o script busca a service key
+      # na Management API. Sem o par no environment, falha alto e abre issue.
+      - name: Backup do Storage (arquivos dos buckets)
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+          node scripts/storage-backup.mjs backup storage-backup
+          tar -czf - storage-backup \
+            | openssl enc -aes-256-cbc -pbkdf2 -salt -out "storage-${{ matrix.target }}.tar.gz.enc" -k "$BACKUP_ENCRYPTION_KEY"
+          rm -rf storage-backup
+
+      - name: Upload do backup do Storage
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: storage-${{ matrix.target }}-${{ github.run_id }}
+          path: storage-${{ matrix.target }}.tar.gz.enc
+          retention-days: 30
+
       # Sem isto, o cron pode quebrar em silêncio por semanas (mesma lição do
       # itau-sync/bradesco-sync) e o "backup" vira uma falsa sensação de segurança.
       - name: Notificar falha
