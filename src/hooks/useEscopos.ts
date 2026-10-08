@@ -137,7 +137,12 @@ export function useAprovarEscopo() {
     onSuccess: (_data, params) => {
       qc.invalidateQueries({ queryKey: escoposKey(params.projetoId) });
       qc.invalidateQueries({ queryKey: orcamentoVivoKey(params.projetoId) });
-      qc.invalidateQueries({ queryKey: ["projeto", params.projetoId] });
+      // Aprovar soma o valor no contrato (trigger handle_escopo_aprovado): o cabeçalho
+      // do detalhe (["projeto-detail", id]) e o quadro (["projetos"]) precisam recarregar.
+      // Antes invalidava ["projeto", id], chave que nenhuma query usa, e o contrato
+      // antigo ficava na tela até o reload (achado pelo E2E em 07/10).
+      qc.invalidateQueries({ queryKey: ["projeto-detail", params.projetoId] });
+      qc.invalidateQueries({ queryKey: ["projetos"] });
       qc.invalidateQueries({ queryKey: pendenciasKey });
     },
   });
