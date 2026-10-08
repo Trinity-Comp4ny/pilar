@@ -101,41 +101,45 @@ export default function Lancamentos() {
       </div>
 
       {/* KPIs clicáveis: cada um aplica o filtro correspondente. */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KPICard
-          label="Recebido"
-          value={resumo.recebido}
-          icon={TrendingUp}
-          tone="positive"
-          loading={loadingResumo}
-          onClick={() => patchFilters({ tipo: "receita", status: "pagos" })}
-        />
-        <KPICard
-          label="Pago"
-          value={resumo.pago}
-          icon={TrendingDown}
-          tone="danger"
-          loading={loadingResumo}
-          onClick={() => patchFilters({ tipo: "despesa", status: "pagos" })}
-        />
-        <KPICard
-          label="A receber"
-          value={resumo.aReceber}
-          icon={Clock}
-          tone="info"
-          loading={loadingResumo}
-          onClick={() => patchFilters({ tipo: "receita", status: "pendentes" })}
-        />
-        <KPICard
-          label="A pagar"
-          value={resumo.aPagar}
-          icon={Clock}
-          tone="warning"
-          loading={loadingResumo}
-          subtitle={resumo.atrasadosCount > 0 ? `${resumo.atrasadosCount} atrasado(s)` : undefined}
-          subtitleTone="danger"
-          onClick={() => patchFilters({ tipo: "despesa", status: "pendentes" })}
-        />
+      {/* Colunas pela largura real (container), não pela tela: com as duas sidebars,
+          1024px de tela deixam ~480px aqui, e 4 cards cortavam o valor. */}
+      <div className="@container">
+        <div className="grid grid-cols-2 gap-3 @2xl:grid-cols-4">
+          <KPICard
+            label="Recebido"
+            value={resumo.recebido}
+            icon={TrendingUp}
+            tone="positive"
+            loading={loadingResumo}
+            onClick={() => patchFilters({ tipo: "receita", status: "pagos" })}
+          />
+          <KPICard
+            label="Pago"
+            value={resumo.pago}
+            icon={TrendingDown}
+            tone="danger"
+            loading={loadingResumo}
+            onClick={() => patchFilters({ tipo: "despesa", status: "pagos" })}
+          />
+          <KPICard
+            label="A receber"
+            value={resumo.aReceber}
+            icon={Clock}
+            tone="info"
+            loading={loadingResumo}
+            onClick={() => patchFilters({ tipo: "receita", status: "pendentes" })}
+          />
+          <KPICard
+            label="A pagar"
+            value={resumo.aPagar}
+            icon={Clock}
+            tone="warning"
+            loading={loadingResumo}
+            subtitle={resumo.atrasadosCount > 0 ? `${resumo.atrasadosCount} atrasado(s)` : undefined}
+            subtitleTone="danger"
+            onClick={() => patchFilters({ tipo: "despesa", status: "pendentes" })}
+          />
+        </div>
       </div>
 
       <Card className="rounded-2xl border border-black/5 bg-white p-4">
