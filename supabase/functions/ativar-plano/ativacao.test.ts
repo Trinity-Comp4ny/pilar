@@ -2,6 +2,7 @@ import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
 import {
   bodySchema,
   CONSENTIMENTO_TEXTO_VERSAO,
+  CONSENTIMENTO_TEXTO_VERSAO_IMEDIATA,
   primeiraCobrancaEm,
   valorDoCiclo,
   verificarAssinatura,
@@ -33,13 +34,31 @@ const corpoValido = {
   },
 };
 
-Deno.test("só assinatura em trial com data de fim ativa o plano", () => {
-  assertEquals(verificarAssinatura(emTrial), { ok: true, sub: emTrial });
+const antesDoFim = new Date("2026-10-20T12:00:00.000Z");
+const depoisDoFim = new Date("2026-10-22T12:00:00.000Z");
+
+Deno.test("em teste: ativa com a cobrança agendada para o fim do trial", () => {
+  assertEquals(verificarAssinatura(emTrial, antesDoFim), { ok: true, sub: emTrial, modo: "agendada" });
 });
 
-Deno.test("sem assinatura, assinatura ativa ou cancelada: recusa com status próprio", () => {
+Deno.test("teste vencido (expired) assina com cobrança imediata", () => {
+  const r = verificarAssinatura({ ...emTrial, status: "expired" }, depoisDoFim);
+  assertEquals(r.ok && r.modo, "imediata");
+});
+
+Deno.test("trialing com a data já vencida (cron ainda não rodou) também cobra na hora", () => {
+  const r = verificarAssinatura(emTrial, depoisDoFim);
+  assertEquals(r.ok && r.modo, "imediata");
+});
+
+Deno.test("expired sem trial_ends_at não é erro: a referência vira agora", () => {
+  const r = verificarAssinatura({ ...emTrial, status: "expired", trial_ends_at: null }, depoisDoFim);
+  assertEquals(r.ok && r.sub.trial_ends_at, depoisDoFim.toISOString());
+});
+
+Deno.test("sem assinatura, assinatura ativa, cancelada ou em atraso: recusa com status próprio", () => {
   assertEquals(verificarAssinatura(null), { ok: false, status: 404, error: "Assinatura não encontrada" });
-  for (const status of ["active", "canceled", "overdue", "expired"]) {
+  for (const status of ["active", "canceled", "overdue"]) {
     const r = verificarAssinatura({ ...emTrial, status });
     assertEquals(r.ok ? 0 : r.status, 400, status);
   }
@@ -77,4 +96,5 @@ Deno.test("entrada: valor mandado pelo cliente é descartado (preço vem só do 
 Deno.test("versão do texto de consentimento é fixa no servidor", () => {
   // Trocar a versão é decisão consciente (mudou a copy do passo "Ativar plano").
   assertEquals(CONSENTIMENTO_TEXTO_VERSAO, "ativar-plano-v1");
+  assertEquals(CONSENTIMENTO_TEXTO_VERSAO_IMEDIATA, "assinar-apos-teste-v1");
 });

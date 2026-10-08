@@ -6,6 +6,9 @@
  * cobrança de verdade só acontece no dia 14, pelo trial-expiry-cron, usando
  * este mesmo token — o admin não digita o cartão de novo.
  *
+ * SPEC 104: com o teste já vencido (empresa em modo leitura), o mesmo fluxo
+ * cobra na hora, ativa a assinatura e tira a empresa do modo leitura.
+ *
  * Deploy: supabase functions deploy ativar-plano (JWT obrigatório — só admin
  * da própria empresa, mesma checagem de pilar-token-pack-create).
  */
@@ -25,9 +28,11 @@ import { resolverDadosCliente } from "../_shared/asaas-customer.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
 import { parseOr400 } from "../_shared/schemas.ts";
+import { converterEmAssinaturaAtiva } from "../_shared/converter-assinatura.ts";
 import {
   bodySchema,
   CONSENTIMENTO_TEXTO_VERSAO,
+  CONSENTIMENTO_TEXTO_VERSAO_IMEDIATA,
   primeiraCobrancaEm as dataPrimeiraCobranca,
   verificarAssinatura,
   valorDoCiclo,
@@ -35,6 +40,11 @@ import {
 } from "./ativacao.ts";
 
 const log = createLogger("ativar-plano");
+
+const APP_URL = (Deno.env.get("ALLOWED_ORIGINS") ?? "https://app.pilarsoft.com.br")
+  .split(",")[0]
+  .trim()
+  .replace(/\/$/, "");
 
 serve(
   withSentry("ativar-plano", async (req) => {
@@ -106,8 +116,8 @@ serve(
     if (!parsed.ok) return jsonResponse({ error: parsed.error }, 400, req);
     const body: Body = parsed.data;
 
-    // --- Empresa precisa estar em trial: Ouro por pagamento não se aplica a
-    //     quem já converteu (active) nem a quem já cancelou. ---
+    // --- Empresa precisa estar em teste ou com o teste vencido: quem já
+    //     converteu (active) ou cancelou não ativa de novo por aqui. ---
     const { data: subLida } = await admin
       .from("pilar_subscriptions")
       .select("id, status, trial_ends_at, asaas_customer_id")
@@ -118,7 +128,7 @@ serve(
     if (!verificacao.ok) {
       return jsonResponse({ error: verificacao.error }, verificacao.status, req);
     }
-    const { sub } = verificacao;
+    const { sub, modo } = verificacao;
 
     const { data: plan } = await admin
       .from("pilar_subscription_plans")
@@ -202,14 +212,15 @@ serve(
     }
 
     // --- Consentimento (append-only, evidência do opt-out) ---
-    const primeiraCobrancaEm = dataPrimeiraCobranca(sub.trial_ends_at);
+    const primeiraCobrancaEm =
+      modo === "imediata" ? new Date().toISOString().slice(0, 10) : dataPrimeiraCobranca(sub.trial_ends_at);
     const { error: consentErr } = await admin.from("consentimentos_cobranca").insert({
       empresa_id: empresaId,
       user_id: user.id,
       plan_id: body.plan_id,
       valor,
       primeira_cobranca_em: primeiraCobrancaEm,
-      texto_versao: CONSENTIMENTO_TEXTO_VERSAO,
+      texto_versao: modo === "imediata" ? CONSENTIMENTO_TEXTO_VERSAO_IMEDIATA : CONSENTIMENTO_TEXTO_VERSAO,
     });
     if (consentErr) {
       // Não desfaz a ativação por isso (o cartão já está salvo e funcional);
@@ -217,9 +228,36 @@ serve(
       log.error("falha ao gravar consentimento de cobrança", { empresaId, error: consentErr.message });
     }
 
+    // --- Teste já vencido: cobra agora (mesma rotina da conversão do cron) ---
+    if (modo === "imediata") {
+      try {
+        await converterEmAssinaturaAtiva(
+          admin,
+          {
+            id: sub.id,
+            empresa_id: empresaId,
+            plan_id: body.plan_id,
+            billing_cycle: body.billing_cycle,
+            asaas_customer_id: asaasCustomerId,
+            asaas_credit_card_token: tokenResult.creditCardToken,
+          },
+          { appUrl: APP_URL, remoteIp, origem: "assinatura_apos_trial" }
+        );
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Erro Asaas";
+        log.error("cobrança imediata recusada", { empresaId, error: msg });
+        return jsonResponse(
+          { error: `O cartão foi validado, mas a cobrança não foi aprovada: ${msg}. Tente outro cartão.` },
+          502,
+          req
+        );
+      }
+    }
+
     return jsonResponse(
       {
         success: true,
+        cobrado_agora: modo === "imediata",
         nivel: "ouro",
         plano: plan.nome,
         valor,
