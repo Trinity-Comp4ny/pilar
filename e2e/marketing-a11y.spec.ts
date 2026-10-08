@@ -5,15 +5,23 @@ import AxeBuilder from "@axe-core/playwright";
 // via webServer local: é um app Vite separado do resto do e2e (porta e comando
 // de build diferentes), e testar a URL real garante que o teste reflete o que
 // o visitante vê de fato, não um build local que pode divergir do deploy.
-// reducedMotion: a landing entra com fade palavra por palavra (motion system da
-// spec 060). Sem isto o Axe fotografa a página no meio da animação e mede o
-// contraste de um estado transitório: numa medição real deu 89 violações contra
-// 9 de verdade, 29 delas só palavras paradas em `opacity: 0.16`. O estado que
-// interessa ao visitante é o final, e é ele que precisa passar em AA.
-test.use({ baseURL: "https://www.pilarsoft.com.br", reducedMotion: "reduce" });
+// Movimento reduzido: a frase da StatementSection acende palavra por palavra no
+// scroll (opacidade 0,16 até a palavra passar), e com a preferência de movimento
+// reduzido ela vem inteira. O Axe precisa medir esse estado final.
+//
+// Achado em 2026-10-08: este spec usava `reducedMotion: "reduce"` direto no
+// test.use, opção que o Playwright ignora em silêncio. A emulação nunca ligou, o
+// Axe media as palavras apagadas e o teste ficou vermelho por um mês com 29
+// "violações" de contraste que não existem para o visitante. O jeito que funciona
+// é contextOptions, e o primeiro expect do teste garante que a emulação está ativa.
+test.use({ baseURL: "https://www.pilarsoft.com.br", contextOptions: { reducedMotion: "reduce" } });
 
 test("landing de marketing não tem violação de acessibilidade critical ou serious", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });
+  expect(
+    await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches),
+    "emulação de movimento reduzido não ligou: o Axe mediria a animação, não a página"
+  ).toBe(true);
   await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
 
   const results = await new AxeBuilder({ page }).analyze();
