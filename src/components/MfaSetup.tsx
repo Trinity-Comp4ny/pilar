@@ -121,7 +121,7 @@ function MfaEnrollModal({ open, enrollment, onClose, onVerified }: MfaEnrollModa
       setSubmitting(true);
       try {
         await verifyTotp(enrollment.factorId, otp);
-        toast.success("MFA ativado");
+        toast.success("Autenticação em dois fatores ativada");
         onVerified();
       } catch (err) {
         toast.error("Código inválido", { description: translateAuthError(err) });
@@ -236,7 +236,7 @@ export function MfaSetup() {
       const result = await enrollTotp("Authenticator");
       setEnrollment(result);
     } catch (err) {
-      toast.error("Falha ao iniciar MFA", { description: translateAuthError(err) });
+      toast.error("Não foi possível ativar", { description: translateAuthError(err) });
     } finally {
       setSubmitting(false);
     }
@@ -248,9 +248,9 @@ export function MfaSetup() {
     setRemoveConfirmId(null);
     try {
       await unenroll(factorId);
-      toast.success("MFA removido");
+      toast.success("Autenticação em dois fatores desativada");
     } catch (err) {
-      toast.error("Falha ao remover", { description: translateAuthError(err) });
+      toast.error("Não foi possível desativar", { description: translateAuthError(err) });
     }
   };
 
@@ -298,12 +298,12 @@ export function MfaSetup() {
       <div className="rounded-lg border p-4 space-y-3">
         <div className="flex items-center gap-2">
           <ShieldCheck className={`h-5 w-5 ${verifiedFactor ? "text-positive-strong" : "text-muted-foreground"}`} />
-          <span className="font-medium">{verifiedFactor ? "MFA ativo" : "MFA não configurado"}</span>
+          <span className="font-medium">{verifiedFactor ? "Ativa" : "Desativada"}</span>
         </div>
         <p className="text-sm text-muted-foreground">
           {verifiedFactor
-            ? "Autenticação de dois fatores está protegendo esta conta."
-            : "Adicione autenticação de dois fatores para proteger ações administrativas."}
+            ? "Cada login pede a senha e o código do app autenticador."
+            : "O login pede só a senha. Ative para exigir também um código do app autenticador."}
         </p>
         <div className="flex flex-wrap gap-2">
           {verifiedFactor ? (
@@ -314,13 +314,13 @@ export function MfaSetup() {
               </Button>
               <Button variant="outline" size="sm" onClick={() => setRemoveConfirmId(verifiedFactor.id)}>
                 <Trash2 className="h-4 w-4 mr-2" />
-                Remover MFA
+                Desativar
               </Button>
             </>
           ) : (
-            <Button onClick={handleStart} disabled={submitting}>
+            <Button variant="brand" onClick={handleStart} disabled={submitting}>
               {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Configurar MFA
+              Ativar dois fatores
             </Button>
           )}
           <Button variant="ghost" size="sm" onClick={() => setHelpOpen(true)}>
@@ -343,9 +343,9 @@ export function MfaSetup() {
           if (!v) setRemoveConfirmId(null);
         }}
         onConfirm={handleRemoveConfirmed}
-        title="Remover MFA?"
-        description="Admins sem MFA terão acesso limitado. Você pode reconfigurar a qualquer momento."
-        confirmText="Remover"
+        title="Desativar a autenticação em dois fatores?"
+        description="O login volta a pedir só a senha. Você pode ativar de novo quando quiser."
+        confirmText="Desativar"
         variant="destructive"
       />
 

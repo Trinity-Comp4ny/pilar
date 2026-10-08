@@ -17,7 +17,7 @@ export function SegurancaPanel() {
             <ShieldCheck className="h-5 w-5" />
             Autenticação em dois fatores
           </CardTitle>
-          <CardDescription>Proteja o acesso com um app autenticador (TOTP)</CardDescription>
+          <CardDescription>Opcional. Pede um código do app autenticador a cada login, além da senha.</CardDescription>
         </CardHeader>
         <CardContent>
           <MfaSetup />

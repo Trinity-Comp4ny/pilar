@@ -31,7 +31,7 @@ export function MfaHelpModal({ open, onOpenChange }: MfaHelpModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Como configurar o MFA</DialogTitle>
+          <DialogTitle>Como ativar a autenticação em dois fatores</DialogTitle>
           <DialogDescription>Proteja sua conta em 4 passos rápidos.</DialogDescription>
         </DialogHeader>
 
