@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { toast } from "sonner";
 import { reportInvokeError } from "@/lib/monitoring";
-import { getSafeErrorMessage } from "@/lib/safeError";
+import { edgeFunctionErrorMessage } from "@/lib/edgeFunctionError";
 import { UsersAccessManager, type ManagedUser } from "@/components/admin/UsersAccessManager";
 import { useRequireAal2 } from "@/hooks/useRequireAal2";
 import type { PilarRole } from "@/lib/roles";
@@ -88,7 +88,9 @@ export function UsuariosTab({ users, setUsers, currentUserId }: Props) {
         },
       ]);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro inesperado";
+      // O motivo vem no corpo da resposta (ex.: limite de usuários do plano); sem ler o
+      // corpo, o toast mostrava "Edge Function returned a non-2xx status code".
+      const msg = await edgeFunctionErrorMessage(err, "Não foi possível enviar o convite. Tente de novo em instantes.");
       reportInvokeError(err, "invite-user:convidar");
       toast.error("Erro ao convidar", { description: msg });
       throw err; // mantém o modal aberto com o formulário preenchido
@@ -115,7 +117,7 @@ export function UsuariosTab({ users, setUsers, currentUserId }: Props) {
     } catch (err) {
       reportInvokeError(err, "invite-user:resend");
       toast.error("Não foi possível reenviar o convite", {
-        description: getSafeErrorMessage(err, "Tente de novo em instantes."),
+        description: await edgeFunctionErrorMessage(err, "Tente de novo em instantes."),
       });
     }
   };
@@ -136,7 +138,7 @@ export function UsuariosTab({ users, setUsers, currentUserId }: Props) {
     } catch (err) {
       reportInvokeError(err, "invite-user:cancel");
       toast.error("Não foi possível cancelar o convite", {
-        description: getSafeErrorMessage(err, "Tente de novo em instantes."),
+        description: await edgeFunctionErrorMessage(err, "Tente de novo em instantes."),
       });
     }
   };
