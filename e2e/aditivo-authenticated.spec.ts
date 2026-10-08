@@ -22,10 +22,9 @@ const emReais = (texto: string) => {
   return Number(m[1].replace(/\./g, "").replace(",", "."));
 };
 
-/** Valor do card "Contrato" do cabeçalho do projeto (campo de edição inline). */
+/** Valor do card "Contrato" do cabeçalho do projeto (campo de edição inline, pelo nome acessível). */
 async function valorDoContrato(page: Page): Promise<number> {
-  const campo = page.getByText("Contrato", { exact: true }).locator("xpath=..").getByRole("textbox");
-  return emReais(await campo.inputValue());
+  return emReais(await page.getByRole("textbox", { name: "Contrato" }).inputValue());
 }
 
 test("aprovar aditivo soma o valor dele no contrato do projeto", async ({ page }) => {

@@ -81,6 +81,7 @@ export function ProjetoDetailInfo({
             valueSlot={
               canEdit && onUpdateContrato ? (
                 <MoneyInput
+                  aria-label="Contrato"
                   value={valorInput}
                   onChange={setValorInput}
                   onBlur={commitValor}
@@ -98,6 +99,7 @@ export function ProjetoDetailInfo({
             valueSlot={
               canEdit && onUpdateArea ? (
                 <NumberInput
+                  aria-label="Área"
                   allowDecimal
                   suffix="m²"
                   value={areaInput}
