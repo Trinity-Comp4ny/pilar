@@ -20,8 +20,9 @@ describe("ehConvidada", () => {
 });
 
 describe("cobraNaHora", () => {
-  it("teste vencido cobra na hora", () => {
+  it("teste vencido ou assinatura cancelada cobra na hora", () => {
     expect(cobraNaHora({ status: "expired", trial_ends_at: null }, agora)).toBe(true);
+    expect(cobraNaHora({ status: "canceled", trial_ends_at: null }, agora)).toBe(true);
   });
 
   it("trialing com a data passada cobra na hora; no prazo, não", () => {
@@ -31,10 +32,11 @@ describe("cobraNaHora", () => {
 });
 
 describe("podeAtivarPlano", () => {
-  it("só em teste ou com o teste vencido", () => {
+  it("em teste, vencido ou cancelada; nunca ativa ou em atraso", () => {
     expect(podeAtivarPlano({ status: "trialing", trial_ends_at: null })).toBe(true);
     expect(podeAtivarPlano({ status: "expired", trial_ends_at: null })).toBe(true);
+    expect(podeAtivarPlano({ status: "canceled", trial_ends_at: null })).toBe(true);
     expect(podeAtivarPlano({ status: "active", trial_ends_at: null })).toBe(false);
-    expect(podeAtivarPlano({ status: "canceled", trial_ends_at: null })).toBe(false);
+    expect(podeAtivarPlano({ status: "overdue", trial_ends_at: null })).toBe(false);
   });
 });

@@ -157,7 +157,7 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
       title={imediata ? "Assinar o Pilar" : "Ativar plano"}
       description={
         imediata
-          ? "Seu teste terminou. Escolha o plano e informe o cartão: a cobrança é feita agora e a edição volta na hora."
+          ? `${subscription.status === "canceled" ? "Sua assinatura foi cancelada" : "Seu teste terminou"}. Escolha o plano e informe o cartão: a cobrança é feita agora e o acesso volta na hora.`
           : "Nada é cobrado agora. Escolha o plano e informe o cartão para garantir a continuidade sem interrupção."
       }
       size="md"
