@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { useSubscriptionManage } from "../hooks/useSubscriptionManage";
 import type { MySubscription } from "../hooks/useMySubscription";
+import { estaNoPrazoDeArrependimento } from "@/lib/cobranca";
 
 interface CancelDialogProps {
   open: boolean;
@@ -26,15 +27,26 @@ export function CancelDialog({ open, onOpenChange, current }: CancelDialogProps)
   const periodEnd = current.current_period_end
     ? new Date(current.current_period_end).toLocaleDateString("pt-BR")
     : null;
+  // Arrependimento (SPEC 098): até 7 dias da primeira cobrança o valor volta
+  // inteiro e o acesso termina na hora. Quem decide de fato é o servidor.
+  const dentroDoArrependimento = estaNoPrazoDeArrependimento(current.current_period_start);
 
   const handleConfirm = () => {
     manage.mutate(
       { action: "cancel" },
       {
-        onSuccess: () => {
-          toast.success("Assinatura cancelada", {
-            description: periodEnd ? `Acesso mantido até ${periodEnd}.` : "Acesso mantido até o fim do período atual.",
-          });
+        onSuccess: (data) => {
+          if (data.refunded) {
+            toast.success("Assinatura cancelada e valor estornado", {
+              description: "O estorno aparece na fatura do cartão no prazo da operadora.",
+            });
+          } else {
+            toast.success("Assinatura cancelada", {
+              description: periodEnd
+                ? `Acesso mantido até ${periodEnd}.`
+                : "Acesso mantido até o fim do período atual.",
+            });
+          }
           onOpenChange(false);
         },
         onError: (err) => {
@@ -58,11 +70,19 @@ export function CancelDialog({ open, onOpenChange, current }: CancelDialogProps)
           </div>
           <AlertDialogDescription>
             A assinatura do Pilar {current.plan?.nome} será encerrada. Nenhuma nova cobrança será gerada.
-            {periodEnd && (
+            {dentroDoArrependimento ? (
               <>
                 {" "}
-                O acesso continua até <strong>{periodEnd}</strong>, quando o período atual termina.
+                Como a primeira cobrança foi há menos de 7 dias, o valor é <strong>estornado integralmente</strong> e o
+                acesso termina agora.
               </>
+            ) : (
+              periodEnd && (
+                <>
+                  {" "}
+                  O acesso continua até <strong>{periodEnd}</strong>, quando o período atual termina.
+                </>
+              )
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
