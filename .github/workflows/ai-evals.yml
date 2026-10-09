@@ -1,0 +1,80 @@
+name: Evals da IA
+
+# Mede o ai-chat contra o modelo de verdade (supabase/functions/ai-chat/evals): intenção
+# (agente, modo, entidade, operação) e campos extraídos nas ações, incluindo casos de
+# injeção de instrução. Reprova abaixo dos limites de evals/avaliar.ts.
+#
+# Roda quando um PR mexe em prompt, schema, extração ou no cliente do modelo, toda
+# segunda e sob demanda. A pontuação em si tem teste Deno no CI normal (sem custo); aqui
+# é a chamada real, alguns centavos por rodada.
+#
+# Precisa do secret de repositório GEMINI_API_KEY. Sem ele o job avisa e não reprova.
+
+on:
+  pull_request:
+    paths:
+      - "supabase/functions/ai-chat/prompts.ts"
+      - "supabase/functions/ai-chat/schemas.ts"
+      - "supabase/functions/ai-chat/entidades.ts"
+      - "supabase/functions/ai-chat/criacao.ts"
+      - "supabase/functions/ai-chat/contexto.ts"
+      - "supabase/functions/ai-chat/evals/**"
+      - "supabase/functions/_shared/ai-client.ts"
+  schedule:
+    - cron: "0 10 * * 1" # segunda, 07:00 BRT
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write # notify-cron-failure (só no agendado)
+
+concurrency:
+  group: ai-evals-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evals:
+    name: Evals do ai-chat
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v1.45.x
+
+      - name: Rodar os evals
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          set -uo pipefail
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "::warning::Sem o secret GEMINI_API_KEY: evals da IA pulados."
+            exit 0
+          fi
+          deno run --allow-env --allow-net --allow-write supabase/functions/ai-chat/evals/rodar.ts \
+            --saida evals-resultado.json | tee evals.log
+          status=${PIPESTATUS[0]}
+          {
+            echo "### Evals da IA"
+            echo '```'
+            sed -n '/^Modelo:/,$p' evals.log
+            grep -E '^FAIL' -A3 evals.log || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: ${{ !cancelled() }}
+        with:
+          name: ai-evals-${{ github.run_id }}
+          path: evals-resultado.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Notificar falha
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: Evals da IA
+          token: ${{ github.token }}

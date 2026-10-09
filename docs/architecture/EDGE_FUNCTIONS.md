@@ -14,7 +14,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
-| `ai-chat` | Copiloto do chat: classifica a intenção e responde com dados do usuário (só leitura, RLS do próprio usuário). | app | JWT |  | sim |
+| `ai-chat` | Copiloto do chat: classifica a intenção e responde com dados do usuário (só leitura, RLS do próprio usuário). | app | JWT | `GEMINI_API_KEY` | sim |
 | `ai-cotacao-import` | Lê PDF ou imagem de orçamento de fornecedor e extrai os itens (Gemini, spec 023). | app | JWT |  | não |
 | `ai-import-financeiro` | Extrai lançamentos do texto de um extrato ou fatura (spec 017). | app | JWT |  | não |
 | `ai-rdo-voz` | Transcreve áudio curto do RDO e preenche os campos de texto (spec 080). | app | JWT |  | não |
@@ -105,7 +105,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
 | `geocode-address` | Geocodifica endereço pelo Nominatim (mapa). | app | JWT |  | não |
-| `health` | Saúde do backend (banco, Asaas, Resend); usado pelo smoke de deploy e pelo monitor de produção. | monitor de produção e smoke de deploy | própria | `HEALTH_CHECK_ASAAS` `HEALTH_CHECK_RESEND` `RELEASE_SHA` `SENTRY_RELEASE` `VERCEL_GIT_COMMIT_SHA` | não |
+| `health` | Saúde do backend (banco, Asaas, Resend); usado pelo smoke de deploy e pelo monitor de produção. | monitor de produção e smoke de deploy | própria | `HEALTH_CHECK_ASAAS` `HEALTH_CHECK_RESEND` `RELEASE_SHA` `SENTRY_RELEASE` `VERCEL_GIT_COMMIT_SHA` | sim |
 | `lookup-cep` | Busca CEP sem login (checkout), BrasilAPI com fallback de provedor. | app | JWT |  | sim |
 | `turnstile-verify` | Verifica no servidor o token do Cloudflare Turnstile. | **sem chamador conhecido** | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` `TURNSTILE_SECRET_KEY` | não |
 

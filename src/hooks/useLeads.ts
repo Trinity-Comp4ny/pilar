@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { onlyDigits } from "@/lib/maskUtils";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
+import { analytics } from "@/lib/analytics";
 
 // Detecta violação do índice único de email por empresa (leads_empresa_email_uidx).
 // Backstop do DB para a corrida que a checagem em JS não cobre.
@@ -160,6 +161,7 @@ export const useCreateLead = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
+      analytics.track("lead_criado");
       toast.success("Lead cadastrado", {
         description: "Novo lead foi adicionado com sucesso",
       });

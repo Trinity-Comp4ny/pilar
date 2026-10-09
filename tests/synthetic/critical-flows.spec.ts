@@ -1,13 +1,12 @@
 /**
- * Checks sintéticos de PRODUÇÃO, rodados a cada 30 min pelo workflow
+ * Checks sintéticos de PRODUÇÃO, rodados a cada 10 min pelo workflow
  * monitor-producao.yml (config em tests/synthetic/playwright.config.ts). Não são E2E.
  *
  * Regras:
- *  - Sem credenciais reais no spec. Login flow só verifica que a tela carrega
- *    e o form responde — não tenta autenticar com user real (use API check
- *    separado pra isso, com user dedicado de monitoring).
+ *  - Credencial só por variável de ambiente (secret do GitHub), nunca no spec. O login
+ *    real usa o usuário de monitor (empresa própria, isenta, sem dado de cliente).
  *  - Curtos (<30s cada).
- *  - Idempotentes — não criam dado.
+ *  - Idempotentes: entram e leem, não criam dado.
  */
 
 import { expect, test } from "@playwright/test";
@@ -24,6 +23,9 @@ test.describe("pilar critical flows", () => {
     const body = await res.json();
     expect(body.status, "health status").toMatch(/^(ok|degraded)$/);
     expect(body.checks?.db, "db check").toBe("ok");
+    // SPEC 105: sem banco ou autenticação ninguém usa o app.
+    expect(body.componentes?.banco, "componente banco").toBe("ok");
+    expect(body.componentes?.autenticacao, "componente autenticação").toBe("ok");
     expect(typeof body.latency_ms?.db, "db latency").toBe("number");
     expect(body.latency_ms.db, "db latency under 1s").toBeLessThan(1000);
   });
@@ -51,5 +53,18 @@ test.describe("pilar critical flows", () => {
     });
     // SPA: server retorna 200 e o router redireciona — só falha se 5xx.
     expect(res?.status() ?? 200, "dashboard http").toBeLessThan(500);
+  });
+
+  test("login real chega no app", async ({ page }) => {
+    const email = process.env.PILAR_MONITOR_EMAIL;
+    const senha = process.env.PILAR_MONITOR_PASSWORD;
+    test.skip(!email || !senha, "Sem usuário de monitor (PILAR_MONITOR_EMAIL / PILAR_MONITOR_PASSWORD)");
+
+    await page.goto(`${BASE_URL.replace(/\/$/, "")}/login`, { waitUntil: "domcontentloaded", timeout: 15_000 });
+    await page.locator('input[type="email"]').fill(email!);
+    await page.locator('input[type="password"]').fill(senha!);
+    await page.locator('button[type="submit"]').click();
+    // #main-content só existe dentro do app: tela de bloqueio, setup ou erro não têm.
+    await expect(page.locator("#main-content"), "login não chegou no app").toBeVisible({ timeout: 20_000 });
   });
 });

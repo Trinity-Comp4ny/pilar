@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { msgErro } from "./erros";
 import type { Acao } from "./useChat";
+import { analytics } from "@/lib/analytics";
 
 type Props = {
   index: number;
@@ -197,6 +198,7 @@ export function AcaoCard({ index, acao, onExecutar, onCancelar }: Props) {
     setSalvando(true);
     try {
       await onExecutar(acao.runId, acao.operacao, payload);
+      analytics.track("ia_acao_confirmada", { operacao: acao.operacao });
       toast.success("Ação concluída");
     } catch (e) {
       toast.error("Não foi possível concluir", { description: msgErro(e) });
@@ -209,6 +211,7 @@ export function AcaoCard({ index, acao, onExecutar, onCancelar }: Props) {
     setSalvando(true);
     try {
       await onCancelar(acao.runId);
+      analytics.track("ia_acao_cancelada", { operacao: acao.operacao });
     } finally {
       setSalvando(false);
     }

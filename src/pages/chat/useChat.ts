@@ -5,6 +5,7 @@ import { env } from "@/lib/env";
 import { reportInvokeError } from "@/lib/monitoring";
 import { softDelete, softDeleteGrupo } from "@/lib/softDelete";
 import { STORAGE_KEYS } from "@/constants";
+import { analytics } from "@/lib/analytics";
 
 export type AgenteMeta = {
   agente: string;
@@ -471,6 +472,8 @@ export function useChat() {
       if (!message || loading) return;
 
       setMessages((prev) => [...prev, { id: novoId(), role: "user", content: message }]);
+      // Sem o texto: só o fato e o contexto (o conteúdo pode ter dado de cliente).
+      analytics.track("ia_mensagem_enviada", { com_projeto: Boolean(projetoId) });
       setLoading(true);
 
       const controller = new AbortController();

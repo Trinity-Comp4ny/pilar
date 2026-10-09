@@ -24,17 +24,26 @@ melhor que o intervalo do backup manual.
 ### Banco de dados (Supabase)
 
 - **Automático:** nenhum (plano free). PITR desligado.
-- **Mitigação atual:** `.github/workflows/backup-nightly.yml` — cron diário
-  (03:00 BRT) via `supabase db dump`, criptografado com `openssl` (AES-256-CBC,
-  `BACKUP_ENCRYPTION_KEY` nos secrets do repo) e guardado como GitHub Actions
-  artifact (retenção 30 dias), um por ambiente (Staging e Production).
-  **Limitação honesta:** dá RPO de até 24h, não recovery point-in-time.
-  Perda de dado entre backups (até 24h) não é recuperável até fazer upgrade.
-- **Verificação:** `scripts/backup-restore-test.sh <dump> <test-db-url>` —
-  restaura o dump num banco de teste e valida contagens + RLS + funções
-  críticas. Rodar contra um Postgres **compatível com Supabase** (a imagem
-  `supabase/postgres:<versão>`, não um Postgres vanilla — o dump inclui
-  `auth`/`storage`/`pgsodium`/`pg_cron`/etc, que só existem nessa imagem).
+- **Mitigação atual:** `.github/workflows/backup-nightly.yml`, cron diário (03:00 BRT),
+  um por ambiente (Staging e Production). Gera a pasta `backup/` com:
+  - `roles.sql` (`supabase db dump --role-only`)
+  - `schema.sql` (`supabase db dump`)
+  - `data.sql` (`supabase db dump --data-only --use-copy`, inclui `auth` e `storage`,
+    sem as tabelas internas da plataforma listadas no workflow)
+  - `manifesto.json` (linhas por tabela, `scripts/backup/manifesto.mjs`; o job falha se
+    `auth.users`, `empresas` ou `profiles` vierem vazias)
+
+  Empacotado e criptografado com `openssl` (AES-256-CBC, `BACKUP_ENCRYPTION_KEY`),
+  artifact `backup-<Ambiente>-<run>` com retenção de 30 dias.
+  **Limitação honesta:** RPO de até 24h, não recovery point-in-time.
+
+- **Até 2026-10-09 o backup não tinha dados.** O workflow rodava só `supabase db dump`,
+  que exporta apenas o schema. Os artifacts anteriores a essa data não servem para
+  recuperar dado de cliente.
+- **Verificação mensal automática:** `.github/workflows/drill-restore-mensal.yml` (dia 1)
+  baixa o último backup de produção, restaura num Supabase vazio no runner (Postgres 17)
+  e compara cada tabela com o manifesto, além de RLS e funções de segurança
+  (`scripts/backup-restore-test.sh`). Falha abre issue.
 
 ### Código
 
@@ -71,11 +80,15 @@ O dump do banco guarda a tabela `storage.objects`, não os bytes dos arquivos
 
 ```bash
 # 1. Identificar timestamp antes da corrupção via audit_logs
-# 2. Baixar o backup noturno mais recente (aba Actions → backup-nightly → artifact)
-# 3. Decriptar: openssl enc -d -aes-256-cbc -pbkdf2 -in dump-Production.sql.enc \
-#      -out dump.sql -k "$BACKUP_ENCRYPTION_KEY"
-# 4. Restaurar em banco de TESTE primeiro (NUNCA em prod direto):
-#      ./scripts/backup-restore-test.sh dump.sql "<test-db-url>"
+# 2. Baixar o backup noturno mais recente:
+#      gh run download <run_id> -n backup-Production-<run_id>
+# 3. Decriptar e extrair (gera a pasta backup/):
+#      openssl enc -d -aes-256-cbc -pbkdf2 -in backup-Production.tar.gz.enc \
+#        -k "$BACKUP_ENCRYPTION_KEY" | tar -xzf -
+# 4. Restaurar num Supabase VAZIO primeiro (NUNCA em prod direto). Local:
+#      mkdir /tmp/drill && cd /tmp/drill && supabase init --force
+#      (major_version = 17 e portas livres no config.toml) && supabase start
+#      ./scripts/backup-restore-test.sh backup "postgresql://postgres:postgres@127.0.0.1:54322/postgres"
 # 5. Validar manualmente o que o script não cobre (dado específico do incidente)
 # 6. Se OK: copiar só a tabela/linhas afetadas pra prod via INSERT ... SELECT,
 #    NUNCA um restore completo por cima de prod (perde tudo criado desde o backup)
@@ -88,8 +101,11 @@ O dump do banco guarda a tabela `storage.objects`, não os bytes dos arquivos
 # 2. Monitorar status.supabase.com
 # 3. Se SLA estourado (> 4h):
 #    a. Criar novo projeto em região alternativa
-#    b. Aplicar migrations em ordem (supabase db push, histórico completo em supabase/migrations/)
-#    c. Restaurar último backup noturno (ver Cenário 1, passos 2-3)
+#    b. Restaurar o último backup noturno no projeto novo, vazio (roles + schema + dados):
+#         psql --single-transaction -v ON_ERROR_STOP=1 -f backup/roles.sql -f backup/schema.sql \
+#           -c 'SET session_replication_role = replica' -f backup/data.sql "<db-url do projeto novo>"
+#       O schema do backup já traz o estado de todas as migrations; não rodar db push antes.
+#    c. Conferir com o manifesto: ./scripts/backup-restore-test.sh faz isso num banco vazio
 #    d. Atualizar VITE_SUPABASE_URL no Vercel
 #    e. Redirecionar DNS
 ```
@@ -151,15 +167,23 @@ Achados do drill:
   17/08) — `relrowsecurity` de view é sempre falso, gerando falso-negativo
   permanente. Corrigido pra checar as tabelas de origem (`receitas`/`despesas`).
 - As contagens de linha (`profiles`/`empresas`/`projetos`/`lancamentos`)
-  deram 0 no drill porque staging tem pouquíssimo dado real hoje — não é
-  falha do restore. Repetir este drill quando houver dado de produção real
-  vai validar as contagens de verdade.
+  deram 0 no drill. Na época isso foi lido como "staging tem pouco dado".
+  **Correção (2026-10-09):** era o backup sem dados (só schema). O drill mensal
+  agora compara com o manifesto e falha nesse caso.
+
+## Drill de restore completo (2026-10-09)
+
+Backup completo do banco local (roles + schema + dados) restaurado num Supabase vazio
+com Postgres 17: 138 tabelas e 667 linhas conferidas contra o manifesto, RLS e funções
+de segurança presentes, restore em 1 s. O mesmo script acusou um backup só com schema
+("Backup sem dados nas tabelas essenciais") e uma linha faltando ("public.projetos: 22
+linhas, manifesto diz 23").
 
 ## Comunicação durante outage
 
-- **Status page:** `/status` no app (SPEC 055). Queda de produção é detectada pelo
-  workflow `monitor-producao.yml` (a cada 30 min, alerta por issue); ver
-  `monitoring/synthetic-tests.md`.
+- **Status page:** https://status.pilarsoft.com.br (Better Stack, fora da nossa infra,
+  ADR 0047). Queda é detectada pelos monitores por componente (3 min) e pelo
+  `monitor-producao.yml` (10 min, login real); ver `monitoring/`.
 - **Template:** "Estamos investigando instabilidade em [serviço]. Updates em
   [link]. ETA: [X min]." Atualizar a cada 30 min mesmo sem novidade.
 

@@ -11,6 +11,9 @@ import { gzipSync } from "node:zlib";
 
 const DIST = join(process.cwd(), "dist", "assets");
 
+// Chunks que só fazem sentido em telas específicas: nunca no carregamento inicial.
+const PROIBIDOS_NO_INICIAL = [/^vendor-pdf-/, /^vendor-charts-/, /^vendor-maps-/, /^vendor-docx-/];
+
 // Limites em bytes (gzipped). Tune conforme app cresce.
 const BUDGETS = {
   // Entry chunk (index-*.js), bootstrap inicial. Manter enxuto.
@@ -20,7 +23,15 @@ const BUDGETS = {
   // deriva de hash de nome de chunk já documentada nas rodadas anteriores.
   // Total JS segue folgado (~1.9/3 MB); o first-load extra é imperceptível.
   // Reavaliar se voltar a encostar.
-  entry: 270 * 1024,
+  //
+  // 2026-10-09: 230 kB. O Replay do Sentry passou a vir da CDN depois do boot e a
+  // entrada caiu de ~270 para ~221 kB; a catraca acompanha.
+  entry: 230 * 1024,
+  // Tudo que o navegador baixa antes da primeira tela: a entrada mais os chunks que o
+  // index.html pré-carrega (modulepreload) e o CSS. O limite só da entrada não via o
+  // vendor-pdf e o vendor-charts sendo pré-carregados em toda página (~860 kB brutos),
+  // porque eram outros arquivos. Medido em 2026-10-09: ~416 kB depois da correção.
+  initialLoad: 430 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app
@@ -83,7 +94,22 @@ async function main() {
     violations.push(`Total CSS = ${fmt(totalCss)} > limite ${fmt(BUDGETS.totalCss)}`);
   }
 
-  console.log(`\n  Total JS  : ${fmt(totalJs)} / ${fmt(BUDGETS.totalJs)}`);
+  // Carregamento inicial: o que o index.html manda baixar antes da primeira tela.
+  const html = await readFile(join(DIST, "..", "index.html"), "utf8");
+  const iniciais = [...html.matchAll(/(?:src|href)="\/assets\/([^"]+\.(?:js|css))"/g)].map((m) => m[1]);
+  const porNome = new Map(chunks.map((c) => [c.name, c]));
+  const initialLoad = iniciais.reduce((a, n) => a + (porNome.get(n)?.gz ?? 0), 0);
+  if (initialLoad > BUDGETS.initialLoad) {
+    violations.push(`Carregamento inicial = ${fmt(initialLoad)} > limite ${fmt(BUDGETS.initialLoad)}`);
+  }
+  for (const n of iniciais) {
+    if (PROIBIDOS_NO_INICIAL.some((re) => re.test(n))) {
+      violations.push(`${n} entrou no carregamento inicial (só deveria carregar na tela que usa)`);
+    }
+  }
+
+  console.log(`\n  Inicial   : ${fmt(initialLoad)} / ${fmt(BUDGETS.initialLoad)} (${iniciais.length} arquivos)`);
+  console.log(`  Total JS  : ${fmt(totalJs)} / ${fmt(BUDGETS.totalJs)}`);
   console.log(`  Total CSS : ${fmt(totalCss)} / ${fmt(BUDGETS.totalCss)}\n`);
 
   if (violations.length === 0) {

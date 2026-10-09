@@ -6,6 +6,7 @@ import { onlyDigits } from "@/lib/maskUtils";
 import { errorMessage } from "@/lib/errors";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { softDelete, restaurar } from "@/lib/softDelete";
+import { analytics } from "@/lib/analytics";
 
 export interface ContaBancaria {
   banco: string;
@@ -226,6 +227,7 @@ export const useClientes = (options: UseClientesOptions = {}) => {
       queryClient.invalidateQueries({ queryKey: ["clientes"] });
       // Página de detalhe usa ["cliente", id]: invalida para refletir a edição.
       queryClient.invalidateQueries({ queryKey: ["cliente"] });
+      if (!variables.id) analytics.track("cliente_criado", { tipo_pessoa: variables.data.tipo_pessoa ?? null });
       toast.success(variables.id ? "Cliente atualizado" : "Cliente cadastrado", {
         description: variables.id
           ? "Dados do cliente atualizados com sucesso"

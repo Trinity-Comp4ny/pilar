@@ -66,10 +66,10 @@ E2E antes do merge.
    `retencao-pos-trial` (com teste Deno).
 9. **CodeQL** (`codeql.yml`): SAST de JS/TS e dos workflows, informativo até a triagem.
 
-Pendência operacional da onda 1: confirmar no Sentry (Insights > Crons) que os
-monitores `trial-expiry-daily` e `retencao-pos-trial-daily` aparecem depois da
-primeira execução em staging; se o Sentry não criar sozinho, criar com o schedule do
-pg_cron (`0 7 * * *` e `30 7 * * *`, UTC).
+Pendência operacional da onda 1, resolvida de outro jeito (2026-10-09): o Sentry não cria
+monitor de cron a partir do check-in, e o plano atual não tem pay-as-you-go para criar.
+Os check-ins chegavam e eram descartados. Crons passaram a ser vigiados pelo componente
+`crons` do `/health` (ADR 0047, SPEC 105).
 
 ## 5. Onda 2: próximas duas semanas
 

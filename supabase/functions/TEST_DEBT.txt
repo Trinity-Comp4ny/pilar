@@ -21,7 +21,6 @@ asaas-criar-cobranca
 campo-upload-foto
 geocode-address
 guardiao-margem-cron
-health
 invite-campo
 invite-cliente-portal
 log-impersonation

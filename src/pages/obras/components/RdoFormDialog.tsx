@@ -67,6 +67,7 @@ import {
 import { useTranscreverRdoVoz } from "@/hooks/useTranscreverRdoVoz";
 import { useObra } from "@/hooks/useObras";
 import { buscarClimaDoDia } from "@/lib/clima";
+import { analytics } from "@/lib/analytics";
 
 const GRAVACAO_MAX_MS = 3 * 60 * 1000;
 
@@ -657,6 +658,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
 
       fotosNovas.forEach((f) => URL.revokeObjectURL(f.preview));
       setFotosNovas([]);
+      if (!editandoId) analytics.track("rdo_registrado", { fotos: fotosNovas.length });
       toast.success(editandoId ? "Registro atualizado" : "Dia registrado");
       onOpenChange(false);
     } catch (e) {

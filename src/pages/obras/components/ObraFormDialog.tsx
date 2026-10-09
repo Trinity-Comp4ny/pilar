@@ -188,6 +188,7 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
         toast.success("Obra atualizada");
       } else {
         await criar.mutateAsync(payload);
+        analytics.track("obra_criada", { com_projeto: Boolean(payload.projeto_id) });
         toast.success("Obra criada");
       }
       onOpenChange(false);

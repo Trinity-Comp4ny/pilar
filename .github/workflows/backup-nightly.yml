@@ -77,20 +77,37 @@ jobs:
       - name: Ajustar major_version do config.toml só nesta run
         run: sed -i 's/^major_version = 15$/major_version = 17/' supabase/config.toml
 
-      - name: Dump do banco (schema + dados)
-        run: supabase db dump --db-url "$SUPABASE_DB_URL" -f dump.sql
+      # Backup completo, receita da documentação do Supabase: roles, schema e dados em
+      # arquivos separados. Até 2026-10-09 este passo rodava só `supabase db dump`, que
+      # exporta APENAS o schema: o backup noturno nunca guardou uma linha de dado.
+      # O manifesto (linhas por tabela) sai do próprio dump e falha o job se as tabelas
+      # essenciais vierem vazias; o drill mensal (drill-restore-mensal.yml) restaura e
+      # compara com ele.
+      #
+      # Fora do dump de dados: tabelas internas da plataforma que o usuário postgres não
+      # grava num projeto novo (buckets analíticos e vetoriais, iceberg, uploads
+      # multipart em andamento, log de hooks). Nenhuma guarda dado de cliente.
+      - name: Dump do banco (roles, schema e dados)
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          EXCLUIR: storage.buckets_analytics,storage.buckets_vectors,storage.vector_indexes,storage.iceberg_namespaces,storage.iceberg_tables,storage.s3_multipart_uploads,storage.s3_multipart_uploads_parts,supabase_functions.hooks
+        run: |
+          set -euo pipefail
+          mkdir backup
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f backup/roles.sql --role-only
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f backup/schema.sql
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f backup/data.sql --data-only --use-copy -x "$EXCLUIR"
+          node scripts/backup/manifesto.mjs backup/data.sql > backup/manifesto.json
+          node -e "const m = require('./backup/manifesto.json'); console.log(Object.keys(m.tabelas).length + ' tabelas, ' + m.total + ' linhas')"
 
       - name: Criptografar
         # AES-256-CBC simétrico com PBKDF2 (openssl já vem no runner). O dump em
-        # texto puro nunca é escrito em disco além deste passo, nem sobe como
-        # artifact — só o .enc.
+        # texto puro nunca sobe como artifact, só o .enc.
         run: |
-          openssl enc -aes-256-cbc -pbkdf2 -salt \
-            -in dump.sql -out "dump-${{ matrix.target }}.sql.enc" \
-            -k "$BACKUP_ENCRYPTION_KEY"
-          rm -f dump.sql
+          set -euo pipefail
+          tar -czf - backup | openssl enc -aes-256-cbc -pbkdf2 -salt \
+            -out "backup-${{ matrix.target }}.tar.gz.enc" -k "$BACKUP_ENCRYPTION_KEY"
+          rm -rf backup
         env:
           BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
 
@@ -98,7 +115,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: backup-${{ matrix.target }}-${{ github.run_id }}
-          path: dump-${{ matrix.target }}.sql.enc
+          path: backup-${{ matrix.target }}.tar.gz.enc
           retention-days: 30
 
       # O dump acima guarda a tabela storage.objects, não os ARQUIVOS (logos, fotos de

@@ -18,4 +18,5 @@ Deploy, resposta a incidentes, runbooks e monitoramento. ← [voltar ao índice]
 ## Subpastas
 
 - [`runbooks/`](./runbooks/) — procedimentos passo-a-passo de incidente (DB down, edge function falhando, Asaas down, etc.). Índice em [`runbooks/README.md`](./runbooks/README.md).
-- [`monitoring/`](./monitoring/) — checks sintéticos de produção (workflow monitor-producao.yml) e status page.
+- [`monitoring/`](./monitoring/): SLOs, checks sintéticos de produção (workflow monitor-producao.yml) e status page.
+- [`ai-evals.md`](./ai-evals.md): evals do ai-chat contra o modelo real (como rodar, limites, como adicionar caso).
