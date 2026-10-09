@@ -737,7 +737,7 @@ export default function Leads() {
                             )}
                           >
                             {items.length === 0 && !snapshot.isDraggingOver && (
-                              <div className="flex items-center justify-center py-8 px-2 text-center text-[11px] text-muted-foreground/70 border border-dashed border-muted-foreground/20 rounded-md">
+                              <div className="flex items-center justify-center py-8 px-2 text-center text-[11px] text-muted-foreground border border-dashed border-muted-foreground/20 rounded-md">
                                 Arraste leads para cá
                               </div>
                             )}
@@ -748,6 +748,10 @@ export default function Leads() {
                                     ref={provided.innerRef}
                                     {...provided.draggableProps}
                                     {...provided.dragHandleProps}
+                                    // O card tem botões dentro; "button" aninharia controles.
+                                    // O arraste por teclado (espaço) segue no mesmo elemento.
+                                    role="group"
+                                    aria-roledescription="cartão arrastável"
                                   >
                                     <LeadKanbanCard
                                       lead={lead}

@@ -161,12 +161,12 @@ export function PageHeader({ title, breadcrumbs, children, search, center, prima
                   <button
                     type="button"
                     onClick={bc.onClick}
-                    className="text-sm text-black/45 hover:text-brand transition-colors"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {bc.label}
                   </button>
                 ) : (
-                  <Link to={bc.to ?? "#"} className="text-sm text-black/45 hover:text-brand transition-colors">
+                  <Link to={bc.to ?? "#"} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                     {bc.label}
                   </Link>
                 )}

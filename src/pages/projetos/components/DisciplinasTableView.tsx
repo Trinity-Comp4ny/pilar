@@ -207,7 +207,10 @@ export function DisciplinasTableView({
                         <div className="flex items-center gap-2">
                           {canEdit ? (
                             <Select value={disc.disciplina} onValueChange={(v) => quickUpdate(idx, { nome: v })}>
-                              <SelectTrigger className="h-7 text-xs border-0 bg-transparent hover:bg-muted px-2 -ml-2 font-medium">
+                              <SelectTrigger
+                                className="h-7 text-xs border-0 bg-transparent hover:bg-muted px-2 -ml-2 font-medium"
+                                aria-label="Disciplina"
+                              >
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -258,7 +261,10 @@ export function DisciplinasTableView({
                             value={disc.prioridade || PROJECT_PRIORITY.MEDIA}
                             onValueChange={(v) => quickUpdate(idx, { prioridade: v })}
                           >
-                            <SelectTrigger className="h-7 text-xs border-0 bg-transparent hover:bg-muted px-2 -ml-2">
+                            <SelectTrigger
+                              className="h-7 text-xs border-0 bg-transparent hover:bg-muted px-2 -ml-2"
+                              aria-label="Prioridade"
+                            >
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -290,7 +296,10 @@ export function DisciplinasTableView({
                             value={disc.status || "Não Iniciado"}
                             onValueChange={(v) => handleStatusChange(idx, v)}
                           >
-                            <SelectTrigger className="h-7 text-xs border-0 bg-transparent hover:bg-muted px-2 -ml-2">
+                            <SelectTrigger
+                              className="h-7 text-xs border-0 bg-transparent hover:bg-muted px-2 -ml-2"
+                              aria-label="Status"
+                            >
                               <span className="flex items-center gap-1.5">
                                 <span
                                   className={cn("h-2 w-2 rounded-full", STATUS_DOT[disc.status || "Não Iniciado"])}
@@ -398,6 +407,7 @@ export function DisciplinasTableView({
                               variant="ghost"
                               size="sm"
                               className="h-7 px-2 text-xs"
+                              aria-label={obsCount > 0 ? `Observações (${obsCount})` : "Observações"}
                               onClick={() => setObsDrafts((prev) => ({ ...prev, [dbDisc?.id ?? idx]: "" }))}
                             >
                               <MessageSquare className="h-3.5 w-3.5 mr-1" />

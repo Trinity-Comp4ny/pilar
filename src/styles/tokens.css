@@ -113,6 +113,9 @@
   --c-gray-300: 216 12% 84%;
   --c-gray-400: 220 9% 65%;
   --c-gray-500: 220 9% 46%;
+  /* Texto secundário: 5:1 sobre --c-paper-200 (badge, tab inativa, chip). O gray-500
+     dava 4,1:1 nesses fundos e reprovava o Axe (WCAG AA pede 4,5). */
+  --c-gray-600: 220 9% 41%;
 
   /* ============================================================
    * SEMANTIC — aliases apontando para primitives
@@ -140,7 +143,7 @@
   /* ── Texto ────────────────────────────────────────────────── */
   --text-ink: var(--c-ink-900); /* títulos / primário */
   --text-ink-soft: var(--c-ink-800); /* corpo / secundário */
-  --text-muted: var(--c-gray-500); /* placeholders / labels */
+  --text-muted: var(--c-gray-600); /* placeholders / labels */
   --text-disabled: var(--c-gray-400); /* estado desabilitado */
   --text-on-brand: var(--c-ink-900); /* texto sobre brand verde */
 

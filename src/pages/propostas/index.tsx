@@ -526,7 +526,7 @@ export default function Propostas() {
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               {/* Busca de texto migrou para o PageHeader (spec 002). */}
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm">
+                <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm" aria-label="Status da proposta">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -689,9 +689,10 @@ export default function Propostas() {
                   {filteredPropostas.map((p) => {
                     const displayStatus = getDisplayStatus(p);
                     return (
+                      // Sem role="button": a linha tem botões de ação dentro, e botão dentro de
+                      // botão some para o leitor de tela. Segue focável e abre com Enter.
                       <TableRow
                         key={p.id}
-                        role="button"
                         tabIndex={0}
                         aria-label={`Ver detalhes da proposta ${p.titulo}`}
                         className="cursor-pointer hover:bg-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
@@ -754,7 +755,7 @@ export default function Propostas() {
                 return (
                   <Card
                     key={p.id}
-                    role="button"
+                    role="group"
                     tabIndex={0}
                     aria-label={`Ver detalhes da proposta ${p.titulo}`}
                     className="hover:shadow-md transition-shadow cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
