@@ -1,0 +1,14 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["e2e/**/*.ts", "tests/synthetic/**/*.ts", "scripts/**/*.{mjs,ts}"],
+      "project": ["src/**/*.{ts,tsx}", "e2e/**/*.ts", "scripts/**/*.{mjs,ts}"],
+      "ignore": ["src/integrations/supabase/types.ts"]
+    },
+    "apps/marketing": {
+      "entry": ["scripts/**/*.mjs"],
+      "project": ["src/**/*.{ts,tsx}"]
+    }
+  }
+}

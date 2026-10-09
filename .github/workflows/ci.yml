@@ -44,7 +44,13 @@ jobs:
       - run: npm run lint
       - name: Typecheck
         run: npx tsc --noEmit -p tsconfig.app.json
-      - run: npm run test:run
+      - name: Testes unitários + piso de cobertura
+        # Com cobertura, não só `test:run`: os `thresholds` do vite.config.ts reprovam
+        # o job se a cobertura de src/lib ou do financeiro cair abaixo do piso.
+        run: npm run test:coverage
+      - name: Código morto não cresce (Knip)
+        # Catraca: knip-baseline.json guarda a contagem de 07/10 e só pode cair.
+        run: npm run check:dead-code
       - run: npm run build
       - name: Bundle size budget
         run: npm run check:bundle-size
@@ -262,6 +268,59 @@ jobs:
         run: deno test --no-check --allow-env --allow-read supabase/functions
         shell: bash
 
+  # E2E do app contra um Supabase LOCAL, em todo PR. Antes daqui o Playwright só
+  # rodava depois do merge (job e2e, contra staging): um botão quebrado entrava em
+  # staging e só então alguém descobria. Aqui o banco nasce das migrations do próprio
+  # PR e o seed cria o usuário de teste, então não há secret, não há dado compartilhado
+  # e não há como sujar staging. Mesmo comando do dev: `npm run test:e2e:local`.
+  e2e-local:
+    name: E2E (Playwright, Supabase local)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: "true"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          # 22 pelo mesmo motivo do job e2e: o auth.setup.ts cria um client Supabase,
+          # que exige WebSocket nativo (Node 22+).
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+      # Mesmo motivo do job database: sem a var, o parse do config.toml aborta.
+      - name: Gerar secret descartável para o parse do config
+        run: echo "AUTH_HOOK_SEND_EMAIL_SECRET=v1,whsec_$(openssl rand -base64 32)" >> "$GITHUB_ENV"
+      - name: Subir o stack local (aplica as migrations do PR)
+        run: supabase start
+      - name: Specs do app (visual + sem login + logado)
+        run: npm run test:e2e:local
+        env:
+          # "1" regrava as referências da regressão visual em vez de comparar. Só
+          # ligar num PR para atualizar a referência (e2e/visual/README.md).
+          E2E_VISUAL_ATUALIZAR: ""
+      - name: Referências da regressão visual
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: ${{ !cancelled() }}
+        with:
+          name: screenshots-visual-${{ github.run_id }}
+          path: e2e/visual/telas.visual.spec.ts-snapshots/
+          retention-days: 7
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: failure()
+        with:
+          name: playwright-report-local-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
   # Único required status check do branch protection. Adicionar ou renomear job
   # deixa de exigir mexer na configuração do repositório.
   #
@@ -270,7 +329,7 @@ jobs:
   # sincronia de tipos; "é seguro aplicar no banco?" não.
   ci-ok:
     name: CI OK (aggregate gate)
-    needs: [lint-test-build, audit, secrets-scan, database, types-sync, edge-functions]
+    needs: [lint-test-build, audit, secrets-scan, database, types-sync, edge-functions, e2e-local]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -401,21 +460,47 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run build
 
-      # Os 4 specs que não dependem de login (landing, login-validation,
-      # portal-cliente, security). Bloqueiam o job: são o mínimo que sempre pode rodar.
+      # A empresa do usuário de E2E fica sempre ativa, sem depender do relógio do
+      # trial (venceu em 31/08 e bloqueou o app por um mês). Mesmo secret do deploy.
+      - name: Garantir fixture do usuário de E2E
+        if: env.E2E_TEST_EMAIL != ''
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/e2e-staging-fixture.sql
+
+      # Specs que não dependem de login (landing, login-validation, portal-cliente,
+      # security...). O de acessibilidade do site de marketing saiu deste passo (ver
+      # o último passo abaixo).
       - name: Specs sem autenticação
         run: npx playwright test --project=chromium
+        env:
+          # Um relatório por passo: com a pasta padrão, cada `playwright test`
+          # apagava o relatório do anterior e o artifact só tinha o último passo.
+          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/sem-login
 
-      # Os 6 specs autenticados exigem um usuário de teste em staging, e os secrets
-      # E2E_TEST_EMAIL / E2E_TEST_PASSWORD ainda não existem no Environment. Avisa e
-      # pula, em vez de deixar o job vermelho por falta de provisionamento. Quando os
-      # secrets existirem, passa a rodar sozinho, sem mexer neste arquivo.
+      # `!cancelled()`: os specs logados rodam mesmo se um spec sem login falhar.
+      # Sem isso, de set. a out./2026 um único spec vermelho (a11y da landing) fez
+      # este passo ser PULADO em todo push, e dois specs logados apodreceram sem
+      # ninguém ver (botão "Nova Receita" que deixou de existir; limite de trial).
       - name: Specs autenticados
-        if: env.E2E_TEST_EMAIL != ''
+        if: ${{ !cancelled() && env.E2E_TEST_EMAIL != '' }}
         run: npx playwright test --project=authenticated
+        env:
+          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/autenticados
       - name: Aviso quando o usuário de teste não está provisionado
         if: env.E2E_TEST_EMAIL == ''
-        run: echo "::warning::E2E_TEST_EMAIL/E2E_TEST_PASSWORD ausentes no Environment Staging — os 6 specs autenticados foram pulados. Crie o usuário de teste em staging e adicione os secrets."
+        run: echo "::warning::E2E_TEST_EMAIL/E2E_TEST_PASSWORD ausentes no Environment Staging, então os specs autenticados foram pulados. Crie o usuário de teste em staging e adicione os secrets."
+
+      # Acessibilidade do site de marketing EM PRODUÇÃO (www.pilarsoft.com.br). Não
+      # depende deste commit, mas é o único lugar que mede a landing no ar. Ficou
+      # informativo de set. a out./2026 por uma falha que era do próprio teste (a
+      # emulação de movimento reduzido nunca ligava; ver e2e/marketing-a11y.spec.ts).
+      # Corrigido, volta a reprovar o job.
+      - name: Acessibilidade do site de marketing
+        if: ${{ !cancelled() }}
+        run: npx playwright test --project=marketing
+        env:
+          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/marketing
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: always()

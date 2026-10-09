@@ -41,6 +41,7 @@ import {
   type PropostaComparativa,
 } from "@/hooks/useObraCotacoes";
 import { useCriarFornecedor } from "@/hooks/useFornecedorDetalhe";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const OUTRO = "__outro__";
 // Opção que cria o cadastro na hora (evita a dívida de reconciliação na origem).
@@ -1126,6 +1127,8 @@ function DecisaoDialog({
 }) {
   const formatCurrency = useMoneyMask();
   const decidir = useDecidirCotacao(obraId);
+  // Lançar na conta da obra é escrita financeira (ADR 0046): o banco recusa sem acesso.
+  const podeLancarDespesa = usePermissions().can("financeiro");
 
   const decidirCom = async (lancarDespesa: boolean) => {
     try {
@@ -1157,7 +1160,9 @@ function DecisaoDialog({
           {cotacao.descricao}.
         </p>
         <p className="text-sm text-muted-foreground">
-          Você pode só marcar a vencedora, ou já lançar o valor como despesa na conta da obra.
+          {podeLancarDespesa
+            ? "Você pode só marcar a vencedora, ou já lançar o valor como despesa na conta da obra."
+            : "A vencedora fica marcada. O lançamento na conta da obra é feito por quem tem acesso ao financeiro."}
         </p>
 
         <DialogFooter className="flex-col gap-2 sm:flex-row">
@@ -1165,10 +1170,12 @@ function DecisaoDialog({
             {decidir.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
             Só marcar vencedora
           </Button>
-          <Button type="button" variant="brand" onClick={() => decidirCom(true)} disabled={decidir.isPending}>
-            {decidir.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-            Marcar e lançar despesa
-          </Button>
+          {podeLancarDespesa && (
+            <Button type="button" variant="brand" onClick={() => decidirCom(true)} disabled={decidir.isPending}>
+              {decidir.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+              Marcar e lançar despesa
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

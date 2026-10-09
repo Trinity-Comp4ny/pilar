@@ -11,7 +11,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(13);
+SELECT plan(14);
 
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
 VALUES ('00000000-0000-0000-0000-00000000c0aa', 'Empresa Convite A', NULL, TRUE, '{"projetos": true}'::jsonb)
@@ -147,13 +147,19 @@ END $$;
 SELECT is(
   (public.campo_convite_definir_senha(current_setting('pgtap.campo_token_valido'), 'curta')->>'ok')::boolean,
   false,
-  'campo: senha curta (menos de 8) é recusada'
+  'campo: senha curta é recusada'
 );
 
 SELECT is(
   (public.campo_convite_definir_senha(current_setting('pgtap.campo_token_valido'), 'senha12345')->>'ok')::boolean,
+  false,
+  'campo: senha longa sem maiúscula e caractere especial é recusada (mesma política do app)'
+);
+
+SELECT is(
+  (public.campo_convite_definir_senha(current_setting('pgtap.campo_token_valido'), 'Senha-Forte-123')->>'ok')::boolean,
   true,
-  'campo: convite válido com senha de 8+ é aceito'
+  'campo: convite válido com senha dentro da política é aceito'
 );
 
 -- Reemitir para o MESMO e-mail não duplica linha (requisito 12: upsert por email)

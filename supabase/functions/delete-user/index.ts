@@ -7,6 +7,7 @@ import { withSentry } from "../_shared/sentry.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit } from "../_shared/db-rate-limit.ts";
 import { parseOr400, uuidSchema, z } from "../_shared/schemas.ts";
+import { recusaDoAlvo, recusaDoAutor } from "./permissao.ts";
 
 const deleteUserSchema = z.object({ user_id: uuidSchema });
 
@@ -29,10 +30,8 @@ serve(
         .single();
 
       if (callerError || !callerProfile) return safeErrorResponse(403, "Profile not found", req);
-      if (callerProfile.role !== "admin" && callerProfile.role !== "ultra_admin") {
-        return safeErrorResponse(403, "Apenas admins podem remover usuários", req);
-      }
-      if (!callerProfile.empresa_id) return safeErrorResponse(403, "Empresa não encontrada", req);
+      const recusaAutor = recusaDoAutor(callerProfile);
+      if (recusaAutor) return safeErrorResponse(recusaAutor.status, recusaAutor.error, req);
 
       let raw: unknown;
       try {
@@ -65,16 +64,15 @@ serve(
       // Verificar que o usuário alvo pertence à mesma empresa
       const { data: targetProfile, error: targetError } = await svc
         .from("profiles")
-        .select("empresa_id, email, nome")
+        .select("empresa_id, email, nome, role")
         .eq("id", user_id)
         .single();
 
       if (targetError || !targetProfile) return safeErrorResponse(404, "Usuário não encontrado", req);
 
-      // ultra_admin pode remover cross-empresa; admin só da própria
-      if (callerProfile.role === "admin" && targetProfile.empresa_id !== callerProfile.empresa_id) {
-        return safeErrorResponse(403, "Usuário não pertence à sua empresa", req);
-      }
+      // ultra_admin remove cross-empresa; admin só da própria e nunca um ultra_admin
+      const recusaAlvo = recusaDoAlvo(callerProfile, targetProfile);
+      if (recusaAlvo) return safeErrorResponse(recusaAlvo.status, recusaAlvo.error, req);
 
       // Remover do Auth — invalida convites pendentes e sessões ativas
       const { error: authDeleteError } = await svc.auth.admin.deleteUser(user_id);

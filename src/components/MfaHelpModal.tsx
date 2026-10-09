@@ -22,7 +22,7 @@ const STEPS = [
   },
   {
     title: "Pronto",
-    description: "Daqui para frente, a cada novo login vamos pedir o código do app.",
+    description: "A cada login vamos pedir o código do app. Guarde os códigos de recuperação que aparecem em seguida.",
   },
 ];
 
@@ -31,7 +31,7 @@ export function MfaHelpModal({ open, onOpenChange }: MfaHelpModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Como configurar o MFA</DialogTitle>
+          <DialogTitle>Como ativar a autenticação em dois fatores</DialogTitle>
           <DialogDescription>Proteja sua conta em 4 passos rápidos.</DialogDescription>
         </DialogHeader>
 
@@ -64,10 +64,10 @@ export function MfaHelpModal({ open, onOpenChange }: MfaHelpModalProps) {
           <div className="flex gap-3 p-3 bg-warning-soft rounded-lg border border-warning-mid-border">
             <Lightbulb className="w-5 h-5 text-warning-mid shrink-0 mt-0.5" />
             <div>
-              <h5 className="font-medium text-sm mb-1 text-warning-strong">Troque de celular?</h5>
+              <h5 className="font-medium text-sm mb-1 text-warning-strong">Vai trocar de celular?</h5>
               <p className="text-xs text-warning-strong">
-                Antes de formatar ou trocar de aparelho, use a opção "Trocar autenticador" para re-configurar. Sem isso,
-                só o suporte consegue liberar a conta.
+                Antes de formatar ou trocar de aparelho, use "Trocar autenticador". Se perder o celular, entre com um
+                dos códigos de recuperação: o 2FA é desativado e você pode ativar de novo no aparelho novo.
               </p>
             </div>
           </div>

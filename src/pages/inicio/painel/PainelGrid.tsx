@@ -375,7 +375,7 @@ export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalva
                     <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-ink-muted">
                       {grupo.label}
                     </h2>
-                    <span className="text-[11.5px] text-ink-disabled">
+                    <span className="text-[11.5px] text-muted-foreground">
                       {grupo.itens.length} indicador{grupo.itens.length === 1 ? "" : "es"}
                     </span>
                   </div>

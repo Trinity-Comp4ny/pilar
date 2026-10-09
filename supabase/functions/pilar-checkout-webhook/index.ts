@@ -20,21 +20,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from "../_shared/logger.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { safeEqual } from "../_shared/crypto.ts";
+import { gerarConviteToken } from "../_shared/convite-token.ts";
+import { dataPagamento, planejarWebhook } from "./plano.ts";
 
 const log = createLogger("pilar-checkout-webhook");
-
-// Token de convite: 32 bytes aleatórios em hex. Só o hash é persistido
-// (mesmo padrão de create-company-owner e create_convite).
-function generateInviteToken(): string {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-async function sha256Hex(input: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
-  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
-}
 
 interface WebhookPayload {
   event: string;
@@ -193,221 +182,193 @@ serve(
         tokenPack = data ?? null;
       }
 
-      // --- Eventos de pagamento recebido ---
-      if (event === "PAYMENT_CONFIRMED" || event === "PAYMENT_RECEIVED") {
-        const paidAt = payment?.paymentDate ? new Date(payment.paymentDate).toISOString() : new Date().toISOString();
+      const agora = new Date();
+      const plano = planejarWebhook(event, { signup, assinatura: activeSub, compra: tokenPack }, agora);
+      const paidAt = dataPagamento(payment?.paymentDate, agora);
 
-        // 1. Signup pendente → primeira liberação
-        if (signup && signup.payment_status !== "paid") {
-          await admin
-            .from("pilar_pending_signups")
-            .update({
-              payment_status: "paid",
-              paid_at: paidAt,
-              ...(paymentId && { asaas_payment_id: paymentId }),
-            })
-            .eq("id", signup.id);
-        }
+      // --- Pagamento recebido ---
 
-        // 2. Disparar invite se ainda não foi
-        if (signup && !signup.invite_dispatched_at) {
-          // Cria empresa_owners_pending (reusa fluxo de convite existente).
-          // Upsert atômico por email: cobre tanto a corrida de dois webhooks
-          // concorrentes pro mesmo email quanto o re-convite de um email que já
-          // teve um pending anterior (usado ou expirado) — email é UNIQUE na
-          // tabela, então um INSERT simples falharia nesse segundo caso.
-          // Token: só o hash é persistido (o plaintext trafega apenas no invite).
-          const rawToken = generateInviteToken();
-          const tokenHash = await sha256Hex(rawToken);
+      // 1. Signup pendente → primeira liberação
+      if (signup && plano.marcarSignupPago) {
+        await admin
+          .from("pilar_pending_signups")
+          .update({
+            payment_status: "paid",
+            paid_at: paidAt,
+            ...(paymentId && { asaas_payment_id: paymentId }),
+          })
+          .eq("id", signup.id);
+      }
 
-          const { data: ownerPending, error: ownerErr } = await admin
-            .from("empresa_owners_pending")
-            .upsert(
-              {
-                email: signup.email,
-                company_name: signup.company_name,
-                nome: signup.nome,
-                token_hash: tokenHash,
-                usado_em: null,
-                expira_em: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-              },
-              { onConflict: "email" }
-            )
-            .select("id")
-            .single();
+      // 2. Disparar invite se ainda não foi
+      if (signup && plano.dispararConvite) {
+        // Cria empresa_owners_pending (reusa fluxo de convite existente).
+        // Upsert atômico por email: cobre tanto a corrida de dois webhooks
+        // concorrentes pro mesmo email quanto o re-convite de um email que já
+        // teve um pending anterior (usado ou expirado) — email é UNIQUE na
+        // tabela, então um INSERT simples falharia nesse segundo caso.
+        // Token: só o hash é persistido (o plaintext trafega apenas no invite).
+        const { token: rawToken, hash: tokenHash } = await gerarConviteToken();
 
-          if (ownerErr || !ownerPending) {
-            throw new Error(`falha ao criar empresa_owners_pending: ${ownerErr?.message}`);
-          }
-
-          // Grava empresa_owner_pending_id ANTES de disparar o invite: o
-          // inviteUserByEmail cria a linha em auth.users de forma síncrona, e o
-          // trigger handle_new_user (CENÁRIO 2) lê pilar_pending_signups por esse
-          // campo para confirmar o pagamento. Gravar depois é tarde demais — o
-          // trigger sempre acha o campo vazio e recusa o cadastro com "sem
-          // pagamento confirmado", mesmo com payment_status já 'paid' (achado
-          // testando o fluxo ponta a ponta em sandbox, 2026-09-01).
-          await admin
-            .from("pilar_pending_signups")
-            .update({ empresa_owner_pending_id: ownerPending.id })
-            .eq("id", signup.id);
-
-          // Dispara email com magic link — falha não bloqueia o 200 (cron vai retentar)
-          try {
-            const { error: inviteErr } = await admin.auth.admin.inviteUserByEmail(signup.email, {
-              redirectTo: `${appOrigin()}/profile-setup`,
-              data: {
-                invite_token: rawToken,
-                nome: signup.nome,
-                is_pilar_subscriber: true,
-              },
-            });
-
-            if (inviteErr) {
-              throw new Error(`inviteUserByEmail: ${inviteErr.message}`);
-            }
-
-            await admin
-              .from("pilar_pending_signups")
-              .update({ invite_dispatched_at: new Date().toISOString() })
-              .eq("id", signup.id);
-          } catch (inviteEx) {
-            const errMsg = inviteEx instanceof Error ? inviteEx.message : "invite dispatch failed";
-            log.error("invite dispatch failed — will retry via cron", inviteEx, {
+        const { data: ownerPending, error: ownerErr } = await admin
+          .from("empresa_owners_pending")
+          .upsert(
+            {
               email: signup.email,
-              signup_id: signup.id,
-            });
-            // Registra falha no audit log para visibilidade operacional. actor_id
-            // é nullable (migration 20260884000000): ação do sistema, sem ator humano.
-            await admin.from("admin_audit_logs").insert({
-              actor_id: null,
-              actor_email: "system@pilar",
-              actor_role: "ultra_admin",
-              action: "invite_dispatch_failed",
-              category: "billing",
-              target_type: "pending_signup",
-              target_id: signup.id,
-              target_name: signup.email,
-              empresa_id: null,
-              metadata: { error: errMsg, owner_pending_id: ownerPending.id },
-            });
-          }
+              company_name: signup.company_name,
+              nome: signup.nome,
+              token_hash: tokenHash,
+              usado_em: null,
+              expira_em: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            },
+            { onConflict: "email" }
+          )
+          .select("id")
+          .single();
+
+        if (ownerErr || !ownerPending) {
+          throw new Error(`falha ao criar empresa_owners_pending: ${ownerErr?.message}`);
         }
 
-        // 3. trial_ends_at para novos signups
-        // Para signups novos, a subscription é criada pelo trigger
-        // tg_pilar_link_subscription_on_owner_used (migration 027) durante o profile-setup,
-        // não no momento do pagamento. Por isso, buscamos a subscription pelo pending_signup_id
-        // e definimos trial_ends_at se ainda não estiver preenchido.
-        if (signup) {
-          const { data: newSub } = await admin
-            .from("pilar_subscriptions")
-            .select("id, trial_ends_at")
-            .eq("pending_signup_id", signup.id)
-            .maybeSingle();
+        // Grava empresa_owner_pending_id ANTES de disparar o invite: o
+        // inviteUserByEmail cria a linha em auth.users de forma síncrona, e o
+        // trigger handle_new_user (CENÁRIO 2) lê pilar_pending_signups por esse
+        // campo para confirmar o pagamento. Gravar depois é tarde demais — o
+        // trigger sempre acha o campo vazio e recusa o cadastro com "sem
+        // pagamento confirmado", mesmo com payment_status já 'paid' (achado
+        // testando o fluxo ponta a ponta em sandbox, 2026-09-01).
+        await admin
+          .from("pilar_pending_signups")
+          .update({ empresa_owner_pending_id: ownerPending.id })
+          .eq("id", signup.id);
 
-          if (newSub && !newSub.trial_ends_at) {
-            const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
-            await admin.from("pilar_subscriptions").update({ trial_ends_at: trialEnd }).eq("id", newSub.id);
-          }
-        }
-
-        // 4. Compra de pacote de tokens → crédito no ledger
-        if (tokenPack) {
-          if (tokenPack.status !== "paid") {
-            await admin
-              .from("pilar_token_pack_purchases")
-              .update({
-                status: "paid",
-                paid_at: paidAt,
-                ...(paymentId && { asaas_payment_id: paymentId }),
-              })
-              .eq("id", tokenPack.id);
-          }
-
-          // Idempotência real: NÃO depende do status acima (uma cobrança já
-          // confirmada na criação, ex. cartão instantâneo, chegaria aqui com
-          // status já 'paid'). O UNIQUE em reference_id garante que o replay
-          // do webhook nunca credita duas vezes, mesmo reprocessando sempre.
-          const { error: creditErr } = await admin.from("ai_token_ledger").insert({
-            empresa_id: tokenPack.empresa_id,
-            user_id: tokenPack.user_id,
-            agent_key: "compra",
-            source: "purchase",
-            tokens_delta: tokenPack.quantidade_pacotes * tokenPack.tokens_pacote,
-            reference_id: `token_pack_purchase:${tokenPack.id}`,
+        // Dispara email com magic link — falha não bloqueia o 200 (cron vai retentar)
+        try {
+          const { error: inviteErr } = await admin.auth.admin.inviteUserByEmail(signup.email, {
+            redirectTo: `${appOrigin()}/profile-setup`,
+            data: {
+              invite_token: rawToken,
+              nome: signup.nome,
+              is_pilar_subscriber: true,
+            },
           });
 
-          if (creditErr && creditErr.code !== "23505") {
-            throw new Error(`falha ao creditar ledger da compra ${tokenPack.id}: ${creditErr.message}`);
+          if (inviteErr) {
+            throw new Error(`inviteUserByEmail: ${inviteErr.message}`);
           }
-        }
-
-        // 5. Renovação de subscription ativa → estender período
-        if (activeSub && !signup) {
-          const periodEnd =
-            activeSub.billing_cycle === "yearly"
-              ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-              : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
           await admin
-            .from("pilar_subscriptions")
-            .update({
-              status: "active",
-              current_period_start: paidAt,
-              current_period_end: periodEnd,
-            })
-            .eq("id", activeSub.id);
-
-          // SPEC 098 Fase 3 (ADR 0042): pagar dentro da janela de 90 dias
-          // tira a empresa do modo somente leitura.
-          await admin
-            .from("empresas")
-            .update({ leitura_desde: null })
-            .eq("id", activeSub.empresa_id)
-            .not("leitura_desde", "is", null);
+            .from("pilar_pending_signups")
+            .update({ invite_dispatched_at: new Date().toISOString() })
+            .eq("id", signup.id);
+        } catch (inviteEx) {
+          const errMsg = inviteEx instanceof Error ? inviteEx.message : "invite dispatch failed";
+          log.error("invite dispatch failed — will retry via cron", inviteEx, {
+            email: signup.email,
+            signup_id: signup.id,
+          });
+          // Registra falha no audit log para visibilidade operacional. actor_id
+          // é nullable (migration 20260884000000): ação do sistema, sem ator humano.
+          await admin.from("admin_audit_logs").insert({
+            actor_id: null,
+            actor_email: "system@pilar",
+            actor_role: "ultra_admin",
+            action: "invite_dispatch_failed",
+            category: "billing",
+            target_type: "pending_signup",
+            target_id: signup.id,
+            target_name: signup.email,
+            empresa_id: null,
+            metadata: { error: errMsg, owner_pending_id: ownerPending.id },
+          });
         }
       }
 
-      // --- Inadimplência ---
-      if (event === "PAYMENT_OVERDUE") {
-        if (activeSub) {
-          await admin.from("pilar_subscriptions").update({ status: "overdue" }).eq("id", activeSub.id);
-        }
-        if (signup && signup.payment_status === "pending") {
-          await admin.from("pilar_pending_signups").update({ payment_status: "failed" }).eq("id", signup.id);
-        }
-        if (tokenPack && tokenPack.status === "pending") {
-          await admin.from("pilar_token_pack_purchases").update({ status: "failed" }).eq("id", tokenPack.id);
+      // 3. trial_ends_at para novos signups
+      // Para signups novos, a subscription é criada pelo trigger
+      // tg_pilar_link_subscription_on_owner_used (migration 027) durante o profile-setup,
+      // não no momento do pagamento. Por isso, buscamos a subscription pelo pending_signup_id
+      // e definimos trial_ends_at se ainda não estiver preenchido.
+      if (signup && plano.definirTrial) {
+        const { data: newSub } = await admin
+          .from("pilar_subscriptions")
+          .select("id, trial_ends_at")
+          .eq("pending_signup_id", signup.id)
+          .maybeSingle();
+
+        if (newSub && !newSub.trial_ends_at) {
+          const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+          await admin.from("pilar_subscriptions").update({ trial_ends_at: trialEnd }).eq("id", newSub.id);
         }
       }
 
-      // --- Reembolso / deletado ---
-      if (event === "PAYMENT_REFUNDED" || event === "PAYMENT_DELETED") {
-        if (signup) {
-          await admin.from("pilar_pending_signups").update({ payment_status: "canceled" }).eq("id", signup.id);
-        }
-        if (activeSub) {
-          await admin
-            .from("pilar_subscriptions")
-            .update({ status: "canceled", canceled_at: new Date().toISOString() })
-            .eq("id", activeSub.id);
-        }
-        // Estorno de compra já creditada não é revertido automaticamente no ledger
-        // (mesmo risco aceito do fluxo de signup — SPEC 077, seção Decisões e riscos).
-        if (tokenPack && tokenPack.status !== "paid") {
-          await admin.from("pilar_token_pack_purchases").update({ status: "canceled" }).eq("id", tokenPack.id);
+      // 4. Compra de pacote de tokens → crédito no ledger
+      if (tokenPack && plano.marcarCompraPaga) {
+        await admin
+          .from("pilar_token_pack_purchases")
+          .update({
+            status: "paid",
+            paid_at: paidAt,
+            ...(paymentId && { asaas_payment_id: paymentId }),
+          })
+          .eq("id", tokenPack.id);
+      }
+
+      if (tokenPack && plano.creditoTokens) {
+        // Idempotência real: NÃO depende do status acima (uma cobrança já
+        // confirmada na criação, ex. cartão instantâneo, chegaria aqui com
+        // status já 'paid'). O UNIQUE em reference_id garante que o replay
+        // do webhook nunca credita duas vezes, mesmo reprocessando sempre.
+        const { error: creditErr } = await admin.from("ai_token_ledger").insert({
+          empresa_id: tokenPack.empresa_id,
+          user_id: tokenPack.user_id,
+          agent_key: "compra",
+          source: "purchase",
+          tokens_delta: plano.creditoTokens.tokens,
+          reference_id: plano.creditoTokens.referenceId,
+        });
+
+        if (creditErr && creditErr.code !== "23505") {
+          throw new Error(`falha ao creditar ledger da compra ${tokenPack.id}: ${creditErr.message}`);
         }
       }
 
-      // --- Subscription encerrada ---
-      if (event === "SUBSCRIPTION_ENDED" || event === "SUBSCRIPTION_DELETED") {
-        if (activeSub) {
-          await admin
-            .from("pilar_subscriptions")
-            .update({ status: "canceled", canceled_at: new Date().toISOString() })
-            .eq("id", activeSub.id);
-        }
+      // 5. Renovação de subscription ativa → estender período
+      if (activeSub && plano.renovarAssinaturaAte) {
+        await admin
+          .from("pilar_subscriptions")
+          .update({
+            status: "active",
+            current_period_start: paidAt,
+            current_period_end: plano.renovarAssinaturaAte,
+          })
+          .eq("id", activeSub.id);
+
+        // SPEC 098 Fase 3 (ADR 0042): pagar dentro da janela de 90 dias
+        // tira a empresa do modo somente leitura.
+        await admin
+          .from("empresas")
+          .update({ leitura_desde: null })
+          .eq("id", activeSub.empresa_id)
+          .not("leitura_desde", "is", null);
+      }
+
+      // --- Inadimplência, estorno, assinatura encerrada ---
+
+      if (activeSub && plano.statusAssinatura === "overdue") {
+        await admin.from("pilar_subscriptions").update({ status: "overdue" }).eq("id", activeSub.id);
+      }
+      if (activeSub && plano.statusAssinatura === "canceled") {
+        await admin
+          .from("pilar_subscriptions")
+          .update({ status: "canceled", canceled_at: new Date().toISOString() })
+          .eq("id", activeSub.id);
+      }
+      if (signup && plano.statusSignup) {
+        await admin.from("pilar_pending_signups").update({ payment_status: plano.statusSignup }).eq("id", signup.id);
+      }
+      if (tokenPack && plano.statusCompra) {
+        await admin.from("pilar_token_pack_purchases").update({ status: plano.statusCompra }).eq("id", tokenPack.id);
       }
 
       if (logId) {

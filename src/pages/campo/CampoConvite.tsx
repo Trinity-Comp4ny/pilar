@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
+import { passwordSchema } from "@/lib/passwordPolicy";
+import { PasswordRequirements } from "@/components/PasswordRequirements";
 import { Eye, EyeOff, KeyRound, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -24,8 +26,9 @@ export default function CampoConvite() {
   const salvar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) return;
-    if (senha.length < 8) {
-      toast.error("Senha curta", { description: "Use ao menos 8 caracteres." });
+    const policy = passwordSchema.safeParse(senha);
+    if (!policy.success) {
+      toast.error("Senha não atende aos requisitos", { description: policy.error.issues[0]?.message });
       return;
     }
     if (senha !== confirma) {
@@ -88,7 +91,6 @@ export default function CampoConvite() {
                 autoComplete="new-password"
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
-                placeholder="ao menos 8 caracteres"
                 className="h-12 pr-11 text-base"
               />
               <button
@@ -100,6 +102,7 @@ export default function CampoConvite() {
                 {showSenha ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
+            <PasswordRequirements password={senha} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="confirma">Repita a senha</Label>

@@ -14,7 +14,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
-import { aggregate, checkAsaas, checkDatabase, checkResend } from "../_shared/healthcheck.ts";
+import { aggregate, checkAsaas, checkCrons, checkDatabase, checkResend } from "../_shared/healthcheck.ts";
 
 const VERSION =
   Deno.env.get("RELEASE_SHA") ?? Deno.env.get("SENTRY_RELEASE") ?? Deno.env.get("VERCEL_GIT_COMMIT_SHA") ?? "unknown";
@@ -42,16 +42,17 @@ serve(
       });
     }
 
-    const [db, asaas, resend] = await Promise.all([
-      checkDatabase(2000),
+    const [db, asaas, resend, crons] = await Promise.all([
+      checkDatabase(3000),
       ENABLE_ASAAS_CHECK ? checkAsaas(3000) : Promise.resolve(undefined),
       ENABLE_RESEND_CHECK ? checkResend(3000) : Promise.resolve(undefined),
+      checkCrons(3000),
     ]);
 
-    const { status, http } = aggregate({ db, asaas, resend });
+    const { status, http } = aggregate({ db, asaas, resend, crons });
 
-    const checks: Record<string, string> = { db: db.status };
-    const latency: Record<string, number> = { db: db.latency_ms };
+    const checks: Record<string, string> = { db: db.status, crons: crons.status };
+    const latency: Record<string, number> = { db: db.latency_ms, crons: crons.latency_ms };
     if (asaas) {
       checks.asaas = asaas.status;
       latency.asaas = asaas.latency_ms;

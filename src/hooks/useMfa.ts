@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { callUntypedRpc } from "@/lib/supabaseRpc";
 
 export type MfaLevel = "aal1" | "aal2";
 
@@ -98,6 +99,23 @@ export function useMfa() {
     await refresh();
   }, [refresh]);
 
+  // Código de recuperação: a RPC valida, remove o 2FA no servidor e invalida os
+  // códigos restantes. Não dá pra fazer pelo client: quem perdeu o autenticador
+  // está em aal1, e o Supabase só remove fator verificado com aal2. Renovar a
+  // sessão traz o usuário já sem o fator, e o AuthContext recalcula o nível.
+  const recoverWithBackupCode = useCallback(
+    async (code: string): Promise<boolean> => {
+      const { data: valid, error } = await callUntypedRpc<boolean>("mfa_consume_backup_code", { p_code: code });
+      if (error) throw error;
+      if (!valid) return false;
+      const { error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError) throw refreshError;
+      await refresh();
+      return true;
+    },
+    [refresh]
+  );
+
   // Remove apenas fatores não verificados (preserva o fator verificado ativo)
   const unenrollPending = useCallback(async () => {
     const { data, error: listError } = await supabase.auth.mfa.listFactors();
@@ -123,5 +141,6 @@ export function useMfa() {
     unenroll,
     resetAllFactors,
     unenrollPending,
+    recoverWithBackupCode,
   };
 }

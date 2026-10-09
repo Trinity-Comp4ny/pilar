@@ -55,10 +55,12 @@ test.describe("Navegação sidebar — rotas principais", () => {
 
       await expect(errorLocator).not.toBeVisible();
 
+      // O app abriu (Layout), não uma tela de bloqueio na mesma URL: "Acesso
+      // suspenso" não muda a URL e deixava este spec verde sem testar nada.
+      await expect(page.locator("#main-content")).toBeVisible();
+
       // Sem erros de JS críticos (filtra warnings benignos do React Router)
-      const critical = pageErrors.filter(
-        (e) => !/React Router Future Flag/i.test(e)
-      );
+      const critical = pageErrors.filter((e) => !/React Router Future Flag/i.test(e));
       expect(critical).toHaveLength(0);
     });
   }

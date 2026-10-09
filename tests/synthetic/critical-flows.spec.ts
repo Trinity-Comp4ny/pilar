@@ -1,5 +1,6 @@
 /**
- * Synthetic checks rodados pelo Checkly — NÃO são testes unitários nem E2E reais.
+ * Checks sintéticos de PRODUÇÃO, rodados a cada 30 min pelo workflow
+ * monitor-producao.yml (config em tests/synthetic/playwright.config.ts). Não são E2E.
  *
  * Regras:
  *  - Sem credenciais reais no spec. Login flow só verifica que a tela carrega
@@ -12,7 +13,9 @@
 import { expect, test } from "@playwright/test";
 
 const BASE_URL = process.env.PILAR_BASE_URL ?? "https://app.pilarsoft.com.br";
-const HEALTH_URL = process.env.PILAR_HEALTH_URL ?? `${BASE_URL.replace(/\/$/, "")}/functions/v1/health`;
+// A Edge Function vive no domínio do Supabase, não no do app. O default antigo
+// (`${BASE_URL}/functions/v1/health`) caía no SPA e o check nunca teria passado.
+const HEALTH_URL = process.env.PILAR_HEALTH_URL ?? "https://vepnsonbnsimqcsfcagm.supabase.co/functions/v1/health";
 
 test.describe("pilar critical flows", () => {
   test("health endpoint returns ok or degraded", async ({ request }) => {

@@ -35,19 +35,24 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
-      "no-console": ["warn", { allow: ["warn", "error"] }],
+      // "error" com as ocorrências antigas congeladas em eslint-suppressions.json
+      // (ver o bloco do design system abaixo): console.log novo reprova o CI.
+      "no-console": ["error", { allow: ["warn", "error"] }],
     },
   },
   {
     // ADR 0008 (design system): páginas não definem cor de componente na mão.
-    // Warning na onda 1; vira "error" quando a onda correspondente da spec 003
-    // zerar as ocorrências legadas.
+    // "error" desde 07/10, com as 68 ocorrências legadas congeladas em
+    // eslint-suppressions.json (bulk suppressions nativo do ESLint). Como warning
+    // a regra só pedia por favor; agora ocorrência NOVA reprova o CI e a dívida
+    // antiga só encolhe. Corrigiu uma legada? Rode `npm run lint:prune` para tirar
+    // a supressão (o ESLint reprova supressão que sobrou, então a catraca aperta).
     files: ["src/pages/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}"],
     // landing/ é superfície de marketing, fora do design system do app (ADR 0008 item 6).
     ignores: ["src/components/ui/**", "src/pages/landing/**", "src/pages/Landing.tsx"],
     rules: {
       "no-restricted-syntax": [
-        "warn",
+        "error",
         {
           // padrão da deriva: fundo sólido bg-brand + hover na MESMA string
           // (hover isolado em chip/nav é tint legítimo e passa)

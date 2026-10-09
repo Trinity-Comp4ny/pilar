@@ -6,6 +6,7 @@ import { HeroBackdrop } from "./hero/HeroBackdrop";
 import { SplitButton } from "./ui/SplitButton";
 import { RotatingWord } from "./RotatingWord";
 import { EASE } from "../lib/motion";
+import { linkCadastro } from "../lib/origem";
 
 /**
  * Hero.
@@ -95,8 +96,8 @@ export function HeroSection() {
             className="flex flex-col items-center gap-3"
           >
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <SplitButton href={`${APP_URL}/cadastro`} onClick={() => trackCta("testar_gratis", "hero")}>
-                Testar grátis por 14 dias
+              <SplitButton href={linkCadastro()} onClick={() => trackCta("testar_gratis", "hero")}>
+                Testar grátis por 3 dias
               </SplitButton>
               <SplitButton href={`${APP_URL}/login`} onClick={() => trackCta("entrar", "hero")} fantasma>
                 Entrar

@@ -19,7 +19,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from "../_shared/logger.ts";
-import { withSentry } from "../_shared/sentry.ts";
+import { withSentryCron } from "../_shared/sentry.ts";
 import { sendEmail, templateRetencaoAviso } from "../_shared/email/index.ts";
 
 const log = createLogger("retencao-pos-trial");
@@ -43,7 +43,7 @@ interface EmpresaEmLeitura {
 }
 
 serve(
-  withSentry("retencao-pos-trial", async (req) => {
+  withSentryCron("retencao-pos-trial", "retencao-pos-trial-daily", async (req) => {
     if (req.method !== "POST") {
       return new Response("Method not allowed", { status: 405 });
     }

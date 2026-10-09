@@ -24,7 +24,7 @@ import { translateAuthError } from "@/lib/authErrors";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { MfaHelpModal } from "@/components/MfaHelpModal";
 import { useMfa } from "@/hooks/useMfa";
-import { callUntypedRpc } from "@/lib/supabaseRpc";
+import { passwordChecks } from "@/lib/passwordPolicy";
 import { passwordResetSchema, passwordResetDefaultValues, type PasswordResetFormData } from "@/schemas";
 import { Logo } from "@/components/Logo";
 
@@ -33,7 +33,7 @@ type Step = "loading" | "mfa" | "password" | "expired";
 export default function PasswordReset() {
   usePageTitle("Redefinir senha");
   const navigate = useNavigate();
-  const { resetAllFactors } = useMfa();
+  const { recoverWithBackupCode } = useMfa();
 
   const [step, setStep] = useState<Step>("loading");
   const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
@@ -132,20 +132,17 @@ export default function PasswordReset() {
     }
     setBackupSubmitting(true);
     try {
-      const { data: valid, error } = await callUntypedRpc<boolean>("mfa_consume_backup_code", {
-        p_code: normalized,
-      });
-      if (error) throw error;
+      const valid = await recoverWithBackupCode(normalized);
       if (!valid) {
         toast.error("Código inválido ou já utilizado");
         return;
       }
-      // Consome o backup, desregistra todos os fatores e envia para reconfigurar o MFA.
-      await resetAllFactors();
-      toast.success("Código de recuperação aceito", {
-        description: "Configure um novo autenticador para continuar.",
+      // O 2FA foi desligado no servidor: segue direto para a nova senha.
+      toast.success("Autenticação em dois fatores desativada", {
+        description: "Defina a nova senha. Depois, ative o 2FA de novo em Configurações > Segurança.",
       });
-      navigate("/mfa/setup", { replace: true });
+      setBackupMode(false);
+      setStep("password");
     } catch (err) {
       toast.error("Erro ao validar código", { description: translateAuthError(err) });
     } finally {
@@ -153,12 +150,7 @@ export default function PasswordReset() {
     }
   };
 
-  const requirements = [
-    { label: "12+ caracteres", ok: (password?.length ?? 0) >= 12 },
-    { label: "Letra maiúscula", ok: /[A-Z]/.test(password ?? "") },
-    { label: "Número", ok: /\d/.test(password ?? "") },
-    { label: "Caractere especial", ok: /[!@#$%^&*(),.?":{}|<>_\-+=/\\[\]`~';]/.test(password ?? "") },
-  ];
+  const requirements = passwordChecks(password ?? "");
 
   const handleUpdatePassword = async (values: PasswordResetFormData) => {
     setSubmitting(true);

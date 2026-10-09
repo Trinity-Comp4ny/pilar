@@ -1,0 +1,45 @@
+# Edge Functions que ainda NÃO têm nenhum teste (`*.test.ts` dentro da pasta).
+#
+# Medido em 2026-10-07: 7 de 45 funções têm teste. Em 2026-10-07 (onda 2) as 6
+# de dinheiro e auth ganharam teste: 13 de 45. A lista é uma catraca, só
+# encolhe: `scripts/edge-function-test-debt.test.ts` reprova a suíte se uma função
+# nova nascer sem teste (e sem estar aqui) ou se esta lista crescer.
+#
+# Tirar uma função daqui = escrever o primeiro teste dela. O padrão do repo é
+# extrair a regra pura do index.ts para um módulo vizinho e testar esse módulo
+# com `deno test` (ex.: invite-user/delivery.ts, lookup-cep/providers.ts,
+# resend-webhook/svix.ts). Próxima prioridade: o resto do billing
+# (pilar-checkout-create, pilar-subscription-manage, pilar-checkout-status), o
+# portal do cliente (portal-*). ai-chat ganhou teste ao ser dividido em módulos (2026-10-08).
+#
+# Um nome de pasta por linha. Linha vazia e # são ignorados.
+ai-cotacao-import
+ai-import-financeiro
+ai-rdo-voz
+asaas-config
+asaas-criar-cobranca
+campo-upload-foto
+geocode-address
+guardiao-margem-cron
+health
+invite-campo
+invite-cliente-portal
+log-impersonation
+pilar-checkout-create
+pilar-checkout-status
+pilar-subscription-manage
+portal-aprovar-proposta
+portal-entrega-download
+portal-get-projeto
+portal-obra-fotos
+reset-cliente-portal-password
+retencao-pos-trial
+reverificar-documentos-pendentes
+send-data-deletion-notification
+send-invoice-reminder
+send-manual-client-email
+send-proposta-email
+turnstile-verify
+ultra-admin-empresas
+ultra-admin-usuarios
+upload-portal-entrega

@@ -1,0 +1,157 @@
+{
+  "src/components/AvatarStack.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "src/components/DuplicateWarningDialog.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/components/TrialBanner.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "src/components/calendario/eventos.ts": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "src/components/filters/MultiSelectFilter.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/lib/analytics.ts": {
+    "no-console": {
+      "count": 4
+    }
+  },
+  "src/lib/monitoring.ts": {
+    "no-console": {
+      "count": 5
+    }
+  },
+  "src/pages/chat/index.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "src/pages/cliente/ClienteDashboard.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "src/pages/clientes/[id]/index.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/pages/company/types.ts": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "src/pages/financeiro/components/LancamentosFilterBar.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/pages/metas/components/MetaCard.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "src/pages/obras/clima/index.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "src/pages/obras/components/ObraCronogramaTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 8
+    }
+  },
+  "src/pages/pessoas/components/PessoaDetailDialog.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/pages/planos/components/PlanCard.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "src/pages/portal/PendenciasCard.tsx": {
+    "no-restricted-syntax": {
+      "count": 2
+    }
+  },
+  "src/pages/projetos/components/CronogramaProjetosTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 7
+    }
+  },
+  "src/pages/projetos/components/CronogramaTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 7
+    }
+  },
+  "src/pages/projetos/components/DisciplinasSection.tsx": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "src/pages/projetos/components/DisciplinasTab.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/pages/projetos/components/DisciplinasTableView.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/pages/projetos/components/ProjectDetailDialog.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/pages/projetos/components/ProjetoStatusDialogs.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/pages/projetos/lib/priorityColors.ts": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "src/pages/propostas/components/GerarPropostaDialog.tsx": {
+    "no-restricted-syntax": {
+      "count": 1
+    }
+  },
+  "src/pages/propostas/components/TemplatesManager.tsx": {
+    "no-restricted-syntax": {
+      "count": 6
+    }
+  },
+  "supabase/functions/_shared/logger.ts": {
+    "no-console": {
+      "count": 1
+    }
+  },
+  "supabase/functions/ai-cotacao-import/index.ts": {
+    "no-console": {
+      "count": 3
+    }
+  },
+  "supabase/functions/ai-rdo-voz/index.ts": {
+    "no-console": {
+      "count": 1
+    }
+  }
+}

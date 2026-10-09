@@ -106,6 +106,21 @@ verify_jwt = false
 [functions.trial-expiry-cron]
 verify_jwt = false
 
+# Os três abaixo também são chamados por cron com CRON_SECRET (não é JWT).
+# Sem isto o gateway devolvia "Invalid JWT" antes da função rodar.
+[functions.guardiao-margem-cron]
+verify_jwt = false
+
+[functions.retencao-pos-trial]
+verify_jwt = false
+
+[functions.reverificar-documentos-pendentes]
+verify_jwt = false
+
+# Status page pública (produção já respondia sem token; staging não).
+[functions.health]
+verify_jwt = false
+
 # Captcha pré-login (roda antes de existir sessão)
 [functions.turnstile-verify]
 verify_jwt = false

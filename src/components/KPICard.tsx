@@ -52,6 +52,7 @@ export function KPICard({
   density = "default",
 }: KPICardProps) {
   const formatCurrency = useMoneyMask();
+  const valorFormatado = typeof value === "number" ? formatCurrency(value) : value;
   const subiu = (delta?.value ?? 0) > 0;
   const bom = delta?.invert ? !subiu : subiu;
 
@@ -69,7 +70,7 @@ export function KPICard({
   return (
     <Card
       className={cn(
-        "rounded-2xl border border-black/5 bg-white w-full",
+        "@container rounded-2xl border border-black/5 bg-white w-full",
         density === "compact" ? "p-3" : "p-4",
         interactive &&
           "cursor-pointer transition-all hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
@@ -89,44 +90,48 @@ export function KPICard({
           : undefined
       }
     >
+      {/* Ícone na linha do rótulo e valor com a largura inteira do card. Antes o
+          valor dividia a linha com o ícone e, com `whitespace-nowrap`, vazava por
+          baixo dele ("R$ 63.130,00" em Lançamentos, contrato e prazo no detalhe do
+          projeto, tudo ilegível a 1024px). Card estreito baixa um degrau de fonte
+          (container query); se ainda não couber, corta com reticências e o valor
+          completo fica no title. */}
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider">{label}</p>
-          {!loading && valueSlot ? (
-            <div className="mt-1 -ml-1">{valueSlot}</div>
-          ) : (
-            <p className={cn("text-lg font-bold mt-1 whitespace-nowrap tabular-nums", TONE_VALUE[valueTone ?? tone])}>
-              {loading ? (
-                <Skeleton className="inline-block h-6 w-24 align-middle" />
-              ) : typeof value === "number" ? (
-                formatCurrency(value)
-              ) : (
-                value
-              )}
-            </p>
-          )}
-          {!loading && deltaNode && <p className="text-xs mt-1 flex items-center gap-1">{deltaNode}</p>}
-          {!loading && subtitle && (
-            <p
-              className={cn(
-                "text-xs mt-1 tabular-nums",
-                subtitleTone === "positive"
-                  ? "text-positive-strong"
-                  : subtitleTone === "danger"
-                    ? "text-negative-strong"
-                    : "text-muted-foreground"
-              )}
-            >
-              {subtitle}
-            </p>
-          )}
-        </div>
+        <p className="min-w-0 pt-0.5 text-xs text-muted-foreground uppercase tracking-wider">{label}</p>
         {Icon && (
-          <span className={cn("rounded-full p-2 shrink-0", TONE_BADGE[tone])}>
-            <Icon className="h-4 w-4" />
+          <span className={cn("-mr-1 -mt-1 shrink-0 rounded-full p-1.5", TONE_BADGE[tone])}>
+            <Icon className="h-3.5 w-3.5" />
           </span>
         )}
       </div>
+      {!loading && valueSlot ? (
+        <div className="mt-1 -ml-1 min-w-0">{valueSlot}</div>
+      ) : (
+        <p
+          title={loading ? undefined : valorFormatado}
+          className={cn(
+            "mt-1 truncate text-base font-bold tabular-nums @[9rem]:text-lg",
+            TONE_VALUE[valueTone ?? tone]
+          )}
+        >
+          {loading ? <Skeleton className="inline-block h-6 w-24 align-middle" /> : valorFormatado}
+        </p>
+      )}
+      {!loading && deltaNode && <p className="text-xs mt-1 flex items-center gap-1">{deltaNode}</p>}
+      {!loading && subtitle && (
+        <p
+          className={cn(
+            "text-xs mt-1 tabular-nums",
+            subtitleTone === "positive"
+              ? "text-positive-strong"
+              : subtitleTone === "danger"
+                ? "text-negative-strong"
+                : "text-muted-foreground"
+          )}
+        >
+          {subtitle}
+        </p>
+      )}
     </Card>
   );
 }
