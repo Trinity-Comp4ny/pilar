@@ -2089,6 +2089,13 @@ export type Database = {
             referencedRelation: "escopos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "escopo_historico_escopo_id_fkey"
+            columns: ["escopo_id"]
+            isOneToOne: false
+            referencedRelation: "escopos_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       escopo_itens: {
@@ -2125,6 +2132,13 @@ export type Database = {
             columns: ["escopo_id"]
             isOneToOne: false
             referencedRelation: "escopos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escopo_itens_escopo_id_fkey"
+            columns: ["escopo_id"]
+            isOneToOne: false
+            referencedRelation: "escopos_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -7085,6 +7099,55 @@ export type Database = {
       }
     }
     Views: {
+      escopos_safe: {
+        Row: {
+          adiado_ate: string | null
+          aprovado_em: string | null
+          aprovado_por: string | null
+          created_at: string | null
+          created_by: string | null
+          custo_estimado: number | null
+          deleted_at: string | null
+          descricao: string | null
+          empresa_id: string | null
+          escopo_itens: Json | null
+          horas_estimadas: number | null
+          id: string | null
+          impacto_prazo_dias: number | null
+          justificativa: string | null
+          pode_ver_valor: boolean | null
+          projeto_id: string | null
+          projeto_nome: string | null
+          status: string | null
+          tipo: string | null
+          updated_at: string | null
+          updated_by: string | null
+          valor_aditivo: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escopos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escopos_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escopos_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lancamentos: {
         Row: {
           asaas_billing_type: string | null
@@ -8214,6 +8277,13 @@ export type Database = {
         Returns: undefined
       }
       executar_acao_agente: { Args: { p_run_id: string }; Returns: Json }
+      fases_do_projeto: {
+        Args: { p_projeto_id: string }
+        Returns: {
+          disciplina: string
+          id: string
+        }[]
+      }
       fechar_folha_agente: { Args: { p_run_id: string }; Returns: Json }
       find_or_create_fatura: {
         Args: { p_cartao_id: string; p_data_compra: string }

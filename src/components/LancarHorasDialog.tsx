@@ -68,12 +68,9 @@ export function LancarHorasDialog({ open, onOpenChange, projetoIdInicial }: Lanc
   const { data: fases = [] } = useQuery<FaseOption[]>({
     queryKey: ["orcamento-fases-select", projetoId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("projeto_orcamento_fases")
-        .select("id, disciplina")
-        .eq("projeto_id", projetoId)
-        .is("deleted_at", null)
-        .order("disciplina");
+      // Função própria (ADR 0046): o orçamento por fase só é legível com acesso ao
+      // financeiro, mas quem lança horas precisa escolher a fase sem ver custo e margem.
+      const { data, error } = await supabase.rpc("fases_do_projeto", { p_projeto_id: projetoId });
       if (error) throw error;
       return (data ?? []) as FaseOption[];
     },
