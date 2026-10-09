@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { domAnimation, LazyMotion } from "framer-motion";
 import { LandingHeader } from "./components/LandingHeader";
@@ -8,6 +8,10 @@ import { ScrollProgress } from "./components/motion";
 import { SiteFrame } from "./components/chrome/SiteFrame";
 import { SmoothScroll } from "./components/chrome/SmoothScroll";
 import { Home } from "./pages/Home";
+import { EntryVeil } from "../../../src/components/motion/EntryVeil";
+import { isEntryVeilMounted } from "../../../src/components/motion/veilState";
+import { dismissBoot } from "../../../src/components/motion/boot";
+import { useRouteEnter } from "../../../src/components/motion/useRouteEnter";
 
 // Só a home entra no bundle inicial. Páginas de módulo e FAQ viram chunks
 // próprios: ninguém que cai na landing paga por elas no primeiro carregamento.
@@ -43,18 +47,36 @@ function ScrollToTop() {
   return null;
 }
 
+/**
+ * O anel do boot (index.html) cobre a landing até a primeira tela pintar. Numa rota
+ * preguiçosa, o fallback do Suspense herda o anel e só o tira quando a página chega.
+ */
+function SoltaBoot() {
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      if (!isEntryVeilMounted()) dismissBoot();
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, []);
+  return null;
+}
+
 export default function App() {
+  const mainRef = useRef<HTMLElement>(null);
+  useRouteEnter(mainRef);
+
   return (
     <LazyMotion features={domAnimation} strict>
       <div className="landing-grain min-h-screen bg-paper text-ink-soft font-sans selection:bg-brand/30 selection:text-ink">
         <ScrollToTop />
+        <SoltaBoot />
         <SmoothScroll />
         <SiteFrame />
         <ScrollProgress />
         <LandingHeader />
 
-        <main>
-          <Suspense fallback={<div className="min-h-screen" />}>
+        <main ref={mainRef}>
+          <Suspense fallback={<EntryVeil label="" />}>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/gestao" element={<ModulePage slug="gestao" />} />

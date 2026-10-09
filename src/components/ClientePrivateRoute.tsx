@@ -1,17 +1,15 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useClienteAuth } from "@/hooks/useClienteAuth";
-import { Loader2 } from "lucide-react";
+
 import ForcarTrocaSenha from "@/pages/cliente/ForcarTrocaSenha";
+
+import { EntryVeil } from "@/components/motion/EntryVeil";
 
 export function ClientePrivateRoute() {
   const { account, loading, error, refresh } = useClienteAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-muted">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <EntryVeil label="Abrindo o portal" />;
   }
 
   if (error || !account) {

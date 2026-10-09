@@ -2,6 +2,7 @@
 @import "./styles/tokens.css";
 @import "./styles/landing.css";
 @import "./styles/tailwind-compat.css";
+@import "./styles/motion.css";
 @config "../tailwind.config.ts";
 
 @layer base {

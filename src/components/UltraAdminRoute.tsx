@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { isUltraAdmin } from "@/lib/roles";
 import { mfaDevBypass } from "@/lib/mfaDevBypass";
 
+import { PageLoader } from "@/components/motion/PageLoader";
 /**
  * MFA é opcional no produto (ADR 0031), com uma exceção: o ultra-admin lê e
  * escreve em todas as empresas, então aqui o segundo fator continua obrigatório.
@@ -13,7 +14,7 @@ export function UltraAdminRoute() {
   const location = useLocation();
 
   if (loading) {
-    return <div className="flex min-h-screen items-center justify-center">Carregando...</div>;
+    return <PageLoader size="page" />;
   }
 
   if (!isUltraAdmin(profile?.role)) {

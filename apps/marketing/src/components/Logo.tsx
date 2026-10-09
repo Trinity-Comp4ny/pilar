@@ -1,3 +1,5 @@
+import { PilarMark } from "../../../../src/components/motion/PilarMark";
+
 type LogoVariant = "mark" | "full";
 type LogoTone = "default" | "inverted";
 type LogoSize = "xs" | "sm" | "md" | "lg" | "xl";
@@ -24,18 +26,22 @@ interface LogoProps {
   /** "inverted" para fundo escuro (deixa o símbolo branco). Default "default". */
   tone?: LogoTone;
   size?: LogoSize;
+  /** "draw": a marca se desenha uma vez ao montar (traço técnico, ADR 0049). */
+  animate?: "draw";
   className?: string;
 }
 
-export function Logo({ variant = "full", tone = "default", size = "sm", className = "" }: LogoProps) {
+// No hover as caneluras ficam verdes uma a uma (só cor, nunca gira): .pilar-logo
+// em src/styles/motion.css.
+export function Logo({ variant = "full", tone = "default", size = "sm", animate, className = "" }: LogoProps) {
   return (
-    <span className={`inline-flex items-center gap-3 ${className}`}>
-      <img
-        src="/pilar-logo.svg"
-        alt={variant === "mark" ? "Pilar" : ""}
-        className={`${MARK_SIZE[size]} shrink-0 hover:rotate-12 transition-transform duration-300 ${
-          tone === "inverted" ? "brightness-0 invert" : ""
-        }`}
+    <span
+      className={`pilar-logo inline-flex items-center gap-3 ${tone === "inverted" ? "text-white" : ""} ${className}`}
+    >
+      <PilarMark
+        variant={animate ?? "static"}
+        title={variant === "mark" ? "Pilar" : undefined}
+        className={`${MARK_SIZE[size]} shrink-0`}
       />
       {variant === "full" && <span className={`${TEXT_SIZE[size]} font-medium tracking-tight`}>Pilar</span>}
     </span>
