@@ -17,6 +17,7 @@ import { CompanyVisualTab } from "@/pages/company/components/CompanyVisualTab";
 import { LogoPreviewDialog, EditUserDialog, DeleteUserDialog } from "@/pages/company/components/CompanyDialogs";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useRequireAal2 } from "@/hooks/useRequireAal2";
+import { analytics } from "@/lib/analytics";
 
 // Conteúdo da aba Empresa do modal de configurações. É o antigo /company sem a casca
 // de página (PageLayout/PageHeader): todo o estado e handlers seguem centralizados
@@ -222,6 +223,7 @@ export function EmpresaPanel() {
       });
       if (error) throw error;
 
+      analytics.track("convite_enviado", { papel: inviteRole, origem: "configuracoes" });
       toast.success("Convite enviado", {
         description: data?.conta_existente
           ? "Entre com sua conta atual para acessar o escritório."

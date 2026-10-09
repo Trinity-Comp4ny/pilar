@@ -22,7 +22,7 @@ describe("analytics scrubber — no-op mode", () => {
   }
 
   it("mascara keys sensíveis no track", () => {
-    analytics.track("user_signed_up", {
+    analytics.track("signup_completed", {
       email: "user@example.com",
       password: "hunter2",
       cpf: "12345678900",
