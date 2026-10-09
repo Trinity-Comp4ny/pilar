@@ -20,7 +20,6 @@ asaas-config
 asaas-criar-cobranca
 campo-upload-foto
 geocode-address
-guardiao-margem-cron
 invite-campo
 invite-cliente-portal
 log-impersonation
