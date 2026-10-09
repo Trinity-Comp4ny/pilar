@@ -150,7 +150,9 @@ export const useCreateLead = () => {
           status: "Novo",
           empresa_id: empresaId,
         } as never)
-        .select()
+        // Lista explícita: leads.valor_estimado não é legível pela API (só via leads_safe,
+        // ADR 0046), e .select() sem colunas pediria todas e falharia.
+        .select("id, nome, status, empresa_id, created_at")
         .single();
 
       if (error) throw error;

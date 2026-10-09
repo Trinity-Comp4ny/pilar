@@ -77,7 +77,10 @@ SELECT is(
 -- explicitamente. Adicionar nome nesta lista exige ler a definição e confirmar
 -- o filtro, igual à allowlist de anon_function_grants.sql.
 WITH revisada(nome) AS (
-  VALUES ('pessoas_safe'), ('projetos_safe'), ('leads_safe')
+  VALUES ('pessoas_safe'), ('projetos_safe'), ('leads_safe'),
+    -- ADR 0046: valor do aditivo e custo do escopo via can_view_financeiro(); filtra
+    -- empresa_id = get_user_empresa_id() e o módulo Projetos no WHERE.
+    ('escopos_safe')
 ),
 sem_invoker AS (
   SELECT c.relname::text AS relname

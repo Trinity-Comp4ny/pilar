@@ -1,4 +1,5 @@
 import { test, expect, type Locator, type Page } from "./fixtures";
+import { loginComo } from "./helpers/loginComo";
 
 /**
  * Aditivo: o usuário não cria, aprova. O aditivo nasce do guardião de margem ou do
@@ -26,6 +27,25 @@ const emReais = (texto: string) => {
 async function valorDoContrato(page: Page): Promise<number> {
   return emReais(await page.getByRole("textbox", { name: "Contrato" }).inputValue());
 }
+
+// O teste do usuário comum precisa do aditivo ainda pendente: roda antes da aprovação.
+test.describe.configure({ mode: "serial" });
+
+test("usuário sem acesso ao financeiro vê o aditivo sem valor e sem os botões de decisão", async ({ browser }) => {
+  test.skip(process.env.E2E_SEED_DEMO !== "1", "Depende do seed de demo (só no banco local)");
+  const page = await loginComo(browser, "user@local.test");
+  await page.goto(PROJETO_DEMO);
+  await page.getByRole("button", { name: "Escopo", exact: true }).click();
+
+  await expect(page.getByText("A aprovação fica com quem tem acesso ao financeiro do escritório.").first()).toBeVisible(
+    {
+      timeout: 8_000,
+    }
+  );
+  await expect(page.getByRole("button", { name: "Aprovar", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Rejeitar", exact: true })).toHaveCount(0);
+  await page.context().close();
+});
 
 test("aprovar aditivo soma o valor dele no contrato do projeto", async ({ page }) => {
   test.skip(process.env.E2E_SEED_DEMO !== "1", "Depende do seed de demo (só no banco local)");
