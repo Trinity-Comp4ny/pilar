@@ -21,6 +21,7 @@ export function useSubscriptionManage() {
       const { data, error } = await supabase.functions.invoke<{
         success?: boolean;
         error?: string;
+        refunded?: boolean;
       }>("pilar-subscription-manage", { body: args });
 
       if (error) throw new Error(error.message ?? "Erro ao gerenciar assinatura");

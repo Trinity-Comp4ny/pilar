@@ -25,3 +25,26 @@ export function cobraNaHora(sub: AssinaturaCobranca, agora: Date = new Date()): 
 export function podeAtivarPlano(sub: AssinaturaCobranca): boolean {
   return sub.status === "trialing" || sub.status === "expired" || sub.status === "canceled";
 }
+
+/**
+ * Status usado pelo gate de acesso. Cancelada sem estorno mantém o acesso até
+ * o fim do período pago (o que o diálogo de cancelamento e os Termos
+ * prometem). Com estorno, o servidor encerra o período na hora e cai no
+ * bloqueio normal.
+ */
+export function statusDeAcesso(
+  sub: { status: string | null; current_period_end: string | null } | null,
+  agora: Date = new Date()
+): string | null {
+  if (!sub) return null;
+  if (sub.status === "canceled" && sub.current_period_end && new Date(sub.current_period_end) > agora) {
+    return "active";
+  }
+  return sub.status;
+}
+
+/** Até 7 dias da primeira cobrança o cancelamento estorna o valor inteiro (SPEC 098). */
+export function estaNoPrazoDeArrependimento(primeiraCobrancaEm: string | null, agora: Date = new Date()): boolean {
+  if (!primeiraCobrancaEm) return false;
+  return agora.getTime() - new Date(primeiraCobrancaEm).getTime() <= 7 * 24 * 60 * 60 * 1000;
+}

@@ -5,6 +5,7 @@ import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { supabase } from "@/integrations/supabase/client";
 import { isUltraAdmin } from "@/lib/roles";
 import { mfaDevBypass } from "@/lib/mfaDevBypass";
+import { statusDeAcesso } from "@/lib/cobranca";
 import { monitoring } from "@/lib/monitoring";
 import Layout from "./Layout";
 import { ReadOnlyBanner } from "./ReadOnlyBanner";
@@ -81,12 +82,15 @@ export function PrivateRoute() {
       try {
         const { data, error } = await (supabase
           .from("pilar_subscriptions" as never)
-          .select("status")
+          .select("status, current_period_end")
           .eq("empresa_id", empresaId)
-          .maybeSingle() as unknown as Promise<{ data: { status: SubStatus } | null; error: unknown }>);
+          .maybeSingle() as unknown as Promise<{
+          data: { status: SubStatus; current_period_end: string | null } | null;
+          error: unknown;
+        }>);
         if (error) throw error;
         if (!active) return;
-        const status = data?.status ?? null;
+        const status = statusDeAcesso(data) as SubStatus;
         subStatusCache.set(empresaId, status);
         setSubscription({ empresaId, status });
       } catch (error) {

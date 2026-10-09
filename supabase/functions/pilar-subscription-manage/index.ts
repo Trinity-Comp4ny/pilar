@@ -126,6 +126,9 @@ serve(
         .update({
           status: "canceled",
           canceled_at: new Date().toISOString(),
+          // Com estorno o dinheiro voltou: o acesso termina agora. Sem estorno,
+          // segue até o fim do período pago (o que a tela e os Termos prometem).
+          ...(refunded ? { current_period_end: new Date().toISOString() } : {}),
         })
         .eq("id", sub.id);
 
