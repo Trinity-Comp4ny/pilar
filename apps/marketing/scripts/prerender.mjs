@@ -22,7 +22,7 @@
 import { chromium } from "playwright";
 import { createServer } from "node:http";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { extname, join } from "node:path";
+import { extname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const DIST = fileURLToPath(new URL("../dist", import.meta.url));
@@ -58,7 +58,15 @@ const TIPOS_MIME = {
 function servirDist() {
   return createServer((req, res) => {
     const caminhoLimpo = req.url.split("?")[0];
-    let caminho = join(DIST, caminhoLimpo);
+    let caminho = resolve(DIST, `.${caminhoLimpo}`);
+    if (caminho === DIST) caminho = join(DIST, "index.html");
+    // Nada fora de dist/: "/../package.json" não pode virar leitura do disco.
+    // Guarda única de prefixo, que é a forma que o CodeQL reconhece como sanitizada.
+    if (!caminho.startsWith(DIST + sep)) {
+      res.writeHead(403);
+      res.end();
+      return;
+    }
     if (caminhoLimpo.endsWith("/") || !extname(caminhoLimpo)) {
       caminho =
         existsSync(caminho) && existsSync(join(caminho, "index.html"))
