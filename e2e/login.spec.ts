@@ -59,7 +59,7 @@ test.describe("Login — credenciais inválidas", () => {
 });
 
 test.describe("Login — credenciais válidas", () => {
-  test("login válido redireciona para /dashboard", async ({ page }) => {
+  test("login válido redireciona para /inicio", async ({ page }) => {
     const email = process.env.E2E_TEST_EMAIL;
     const password = process.env.E2E_TEST_PASSWORD;
 
@@ -70,8 +70,10 @@ test.describe("Login — credenciais válidas", () => {
     await page.fill('input[type="password"]', password!);
     await page.click('button[type="submit"]');
 
-    // Aguarda redirect — pode passar por /mfa se MFA estiver ativo
-    await page.waitForURL(/\/(dashboard|mfa)/, { timeout: 15_000 });
-    await expect(page).toHaveURL(/\/(dashboard|mfa)/);
+    // O Login navega para /inicio (/dashboard só redireciona pra lá). Quem tem
+    // 2FA ativo passa antes por /mfa. O teste só passava por /mfa porque o
+    // usuário de teste tinha um fator antigo, removido em 0ad941b0.
+    await page.waitForURL(/\/(inicio|mfa)/, { timeout: 15_000 });
+    await expect(page).toHaveURL(/\/(inicio|mfa)/);
   });
 });
