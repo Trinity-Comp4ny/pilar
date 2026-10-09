@@ -97,6 +97,7 @@ Deno.test("estorno cancela signup e assinatura, mas não desfaz compra já credi
     );
     assertEquals(plano.statusSignup, "canceled", evento);
     assertEquals(plano.statusAssinatura, "canceled", evento);
+    assertEquals(plano.encerrarAcessoAgora, true, evento);
     assertEquals(plano.statusCompra, null, evento);
   }
 });
@@ -131,6 +132,7 @@ Deno.test("evento desconhecido não grava nada", () => {
     marcarCompraPaga: false,
     creditoTokens: null,
     renovarAssinaturaAte: null,
+    encerrarAcessoAgora: false,
     statusAssinatura: null,
     statusSignup: null,
     statusCompra: null,
@@ -141,4 +143,11 @@ Deno.test("data do pagamento: usa a do Asaas e cai no agora quando ausente", () 
   assertEquals(dataPagamento("2026-10-05", AGORA), "2026-10-05T00:00:00.000Z");
   assertEquals(dataPagamento(undefined, AGORA), AGORA.toISOString());
   assertEquals(referenciaCompraTokens("x"), "token_pack_purchase:x");
+});
+
+Deno.test("fim de assinatura sem estorno mantém o acesso até o fim do período", () => {
+  for (const evento of ["SUBSCRIPTION_ENDED", "SUBSCRIPTION_DELETED"]) {
+    const plano = planejarWebhook(evento, { signup: null, assinatura: assinaturaMensal, compra: null }, AGORA);
+    assertEquals(plano.encerrarAcessoAgora, false, evento);
+  }
 });

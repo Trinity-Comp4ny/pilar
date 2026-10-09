@@ -361,7 +361,13 @@ serve(
       if (activeSub && plano.statusAssinatura === "canceled") {
         await admin
           .from("pilar_subscriptions")
-          .update({ status: "canceled", canceled_at: new Date().toISOString() })
+          .update({
+            status: "canceled",
+            canceled_at: new Date().toISOString(),
+            // Cancelamento comum mantém o acesso até o fim do período pago;
+            // estorno devolveu o dinheiro, então o acesso termina agora.
+            ...(plano.encerrarAcessoAgora ? { current_period_end: new Date().toISOString() } : {}),
+          })
           .eq("id", activeSub.id);
       }
       if (signup && plano.statusSignup) {
