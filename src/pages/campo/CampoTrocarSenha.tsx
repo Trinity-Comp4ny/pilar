@@ -3,13 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { passwordSchema } from "@/lib/passwordPolicy";
 import { PasswordRequirements } from "@/components/PasswordRequirements";
-import { KeyRound, Loader2 } from "lucide-react";
+import { KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { getCampoToken, setCampoToken } from "./useCampoAuth";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 type Resp = { ok: boolean; token?: string; erro?: string };
 
@@ -94,7 +96,7 @@ export default function CampoTrocarSenha() {
           </div>
 
           <Button type="submit" variant="brand" className="h-12 w-full text-base" disabled={loading}>
-            {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+            {loading && <BusyMark className="mr-2 h-5 w-5" />}
             Salvar e entrar
           </Button>
         </form>

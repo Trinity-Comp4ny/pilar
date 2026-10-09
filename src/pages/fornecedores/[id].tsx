@@ -16,7 +16,6 @@ import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -27,6 +26,7 @@ import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { formatCNPJ, formatPhone } from "@/lib/maskUtils";
 import type { StatusProposta } from "@/lib/fornecedorInsights";
 
+import { PageLoader } from "@/components/motion/PageLoader";
 const BREADCRUMB = [{ label: "Fornecedores", to: "/fornecedores" }];
 const TODAS = "__todas__";
 
@@ -71,14 +71,8 @@ export default function FornecedorDetalhePage() {
 
   if (isLoading) {
     return (
-      <PageLayout header={<PageHeader title="Carregando…" breadcrumbs={BREADCRUMB} />}>
-        <Skeleton className="h-8 w-56" />
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 mt-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 rounded-xl" />
-          ))}
-        </div>
-        <Skeleton className="h-64 w-full rounded-2xl mt-4" />
+      <PageLayout>
+        <PageLoader size="page" />
       </PageLayout>
     );
   }

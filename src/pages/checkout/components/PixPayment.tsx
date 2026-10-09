@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
-import { Copy, Check, QrCode, Loader2, AlertTriangle } from "lucide-react";
+import { Copy, Check, QrCode, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 interface PixPaymentProps {
   encodedImage: string;
@@ -111,7 +113,7 @@ export function PixPayment({ encodedImage, payload, expirationDate, value, isPol
       <div className="flex items-center justify-center gap-2 text-sm text-ink-muted pt-2">
         {isPolling ? (
           <>
-            <Loader2 className="w-4 h-4 animate-spin" /> Aguardando pagamento...
+            <BusyMark className="w-4 h-4" /> Aguardando pagamento...
           </>
         ) : (
           <span>Verificando pagamento...</span>

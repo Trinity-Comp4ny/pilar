@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Plus, X, Loader2, User, Building2, Landmark, Check, ChevronDown } from "lucide-react";
+import { Plus, X, User, Building2, Landmark, Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -26,6 +26,8 @@ import { OrigemField } from "@/components/forms/OrigemField";
 import { useClientes, type Cliente, type ContaBancaria, type ChavePix } from "@/hooks/useClientes";
 import { detectTipoChavePix, normalizarChavePix, TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import { lookupCEP } from "@/lib/brasilApi";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 type TipoPessoa = "PF" | "PJ";
 
@@ -414,7 +416,7 @@ export function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: Clie
                     placeholder="00000-000"
                   />
                   {isFetchingCep && (
-                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                    <BusyMark className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   )}
                 </div>
               </div>
@@ -626,7 +628,7 @@ export function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: Clie
             <Button type="button" onClick={handleSave} variant="brand" disabled={isSaving}>
               {isSaving ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                  <BusyMark className="mr-2 h-4 w-4" /> Salvando...
                 </>
               ) : isEditMode ? (
                 "Atualizar"

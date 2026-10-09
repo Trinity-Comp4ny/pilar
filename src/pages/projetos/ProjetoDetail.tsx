@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Loader2, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -13,6 +13,8 @@ import { ProjetoDetailHeader } from "./components/ProjetoDetailHeader";
 import { ProjetoDetailInfo } from "./components/ProjetoDetailInfo";
 import { ProjetoDetailTabs } from "./components/ProjetoDetailTabs";
 import { ProjetoFormDialog } from "./components/ProjetoFormDialog";
+
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 export default function ProjetoDetail() {
   const { id } = useParams<{ id: string }>();
@@ -75,7 +77,7 @@ export default function ProjetoDetail() {
     return (
       <PageLayout>
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <ReadingRing size={64} />
         </div>
       </PageLayout>
     );

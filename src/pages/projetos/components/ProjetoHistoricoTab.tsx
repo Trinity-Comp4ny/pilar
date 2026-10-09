@@ -1,11 +1,13 @@
 import { useMemo, useState } from "react";
-import { History, Loader2 } from "lucide-react";
+import { History } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState } from "@/components/EmptyState";
 import { formatDateTime } from "@/lib/format";
 import { useProjetoTimeline, type ProjetoTimelineTipo } from "@/hooks/useProjetoTimeline";
+
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 const TIPO_LABEL: Record<ProjetoTimelineTipo, string> = {
   projeto_iniciado: "Projeto iniciado",
@@ -47,7 +49,7 @@ export function ProjetoHistoricoTab({ projetoId, disciplinas }: Props) {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <ReadingRing size={64} />
       </div>
     );
   }

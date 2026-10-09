@@ -8,7 +8,6 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
-  Loader2,
   Search,
   Layers,
   CheckCircle2,
@@ -32,6 +31,8 @@ import {
 } from "@/types/projetos";
 import { PROJECT_STATUS_CONFIG } from "@/constants";
 import { cn } from "@/lib/utils";
+
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 const DISCIPLINA_STATUS_CONFIG: Record<
   string,
@@ -254,7 +255,7 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <ReadingRing size={64} />
       </div>
     );
   }

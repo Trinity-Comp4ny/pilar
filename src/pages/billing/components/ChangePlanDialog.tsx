@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +15,8 @@ import { usePlans } from "@/pages/planos/hooks/usePlans";
 import { CycleToggle, type BillingCycle } from "@/pages/planos/components/CycleToggle";
 import { useSubscriptionManage } from "../hooks/useSubscriptionManage";
 import type { MySubscription } from "../hooks/useMySubscription";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 interface ChangePlanDialogProps {
   open: boolean;
@@ -116,7 +118,7 @@ export function ChangePlanDialog({ open, onOpenChange, current }: ChangePlanDial
           <Button onClick={handleConfirm} disabled={manage.isPending || !selectedSlug} variant="brand">
             {manage.isPending ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Atualizando...
+                <BusyMark className="w-4 h-4 mr-2" /> Atualizando...
               </>
             ) : (
               "Confirmar mudança"

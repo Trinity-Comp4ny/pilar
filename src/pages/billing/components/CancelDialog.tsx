@@ -1,4 +1,4 @@
-import { Loader2, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,6 +14,8 @@ import { getSafeErrorMessage } from "@/lib/safeError";
 import { useSubscriptionManage } from "../hooks/useSubscriptionManage";
 import type { MySubscription } from "../hooks/useMySubscription";
 import { estaNoPrazoDeArrependimento } from "@/lib/cobranca";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 interface CancelDialogProps {
   open: boolean;
@@ -98,7 +100,7 @@ export function CancelDialog({ open, onOpenChange, current }: CancelDialogProps)
           >
             {manage.isPending ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Cancelando...
+                <BusyMark className="w-4 h-4 mr-2" /> Cancelando...
               </>
             ) : (
               "Cancelar assinatura"

@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
-import { Lock, Loader2, Eye, EyeOff } from "lucide-react";
+import { Lock, Eye, EyeOff } from "lucide-react";
 import { getPortalToken } from "@/hooks/useClienteAuth";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { trocarSenhaPortalSchema, trocarSenhaPortalDefaultValues, type TrocarSenhaPortalFormData } from "@/schemas";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 interface TrocarSenhaFormProps {
   // No fluxo forçado o botão de cancelar some e o texto de sucesso muda.
@@ -174,7 +176,7 @@ export function TrocarSenhaForm({ forced = false, onSuccess, onCancel }: TrocarS
           <Button type="submit" variant="brand" className="flex-1 h-11 font-medium" disabled={isLoading}>
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                <BusyMark className="mr-2 h-4 w-4" /> Salvando...
               </>
             ) : (
               "Salvar nova senha"

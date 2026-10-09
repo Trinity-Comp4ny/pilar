@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, Loader2, Truck, Link2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Truck, Link2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,8 @@ import { formatCNPJ, formatPhone, onlyDigits, validateEmail } from "@/lib/maskUt
 import { isValidCNPJ } from "@/lib/brasilApi";
 import { ReconciliarDialog } from "./ReconciliarDialog";
 import { softDelete, restaurar } from "@/lib/softDelete";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 interface Fornecedor {
   id: string;
@@ -480,7 +482,7 @@ export default function Fornecedores() {
                       <Button type="submit" variant="brand" disabled={isSaving}>
                         {isSaving ? (
                           <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <BusyMark className="mr-2 h-4 w-4" />
                             Salvando...
                           </>
                         ) : isEditMode ? (

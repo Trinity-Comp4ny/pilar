@@ -2,12 +2,14 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, LogOut, ShieldCheck } from "lucide-react";
+import { LogOut, ShieldCheck } from "lucide-react";
 import { MfaSetup } from "@/components/MfaSetup";
 import { PasswordChangeCard } from "@/components/profile/PasswordChangeCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { translateAuthError } from "@/lib/authErrors";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 // Encerra as outras sessões e mantém esta. O Supabase revoga os refresh tokens
 // na hora; o access token que já está em outro aparelho vale até expirar (1h).
@@ -40,7 +42,7 @@ function OutrosDispositivosCard() {
       </CardHeader>
       <CardContent>
         <Button variant="outline" onClick={handleSignOutOthers} disabled={signingOut}>
-          {signingOut ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <LogOut className="h-4 w-4 mr-2" />}
+          {signingOut ? <BusyMark className="h-4 w-4 mr-2" /> : <LogOut className="h-4 w-4 mr-2" />}
           Sair dos outros dispositivos
         </Button>
       </CardContent>

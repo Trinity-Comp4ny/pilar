@@ -5,7 +5,7 @@ import { KPICard } from "@/components/KPICard";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { StatusTone } from "@/lib/status";
-import { Target, TrendingUp, Users, Layers, Loader2, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { Target, TrendingUp, Users, Layers, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import {
   AlertDialog,
@@ -24,6 +24,8 @@ import { fetchPessoasLookup } from "@/lib/supabaseQueries";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { MetaCard } from "../components/MetaCard";
 import { MetaFormDialog, setorLabel, type MetaRow, type MetaTipo } from "../components/MetaFormDialog";
+
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 export default function MetasDashboard() {
   const queryClient = useQueryClient();
@@ -94,7 +96,7 @@ export default function MetasDashboard() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <ReadingRing size={64} />
       </div>
     );
   }

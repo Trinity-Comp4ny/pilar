@@ -20,7 +20,6 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -40,6 +39,7 @@ import { ObraContaTab } from "../components/ObraContaTab";
 import { ObraCotacoesTab } from "../components/ObraCotacoesTab";
 import { ObraEstoqueTab } from "../components/ObraEstoqueTab";
 
+import { PageLoader } from "@/components/motion/PageLoader";
 const BREADCRUMB = [{ label: "Obras", to: "/obras" }];
 
 export default function ObraDetalhePage() {
@@ -76,9 +76,8 @@ export default function ObraDetalhePage() {
 
   if (isLoading) {
     return (
-      <PageLayout header={<PageHeader title="Carregando…" breadcrumbs={BREADCRUMB} />}>
-        <Skeleton className="h-8 w-56" />
-        <Skeleton className="h-40 w-full rounded-2xl" />
+      <PageLayout>
+        <PageLoader size="page" />
       </PageLayout>
     );
   }

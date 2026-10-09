@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, FileCheck, CheckCircle2, RotateCcw, FileText, ExternalLink, Clock } from "lucide-react";
+import { FileCheck, CheckCircle2, RotateCcw, FileText, ExternalLink, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { reportInvokeError } from "@/lib/monitoring";
@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 import { getPortalToken } from "@/hooks/useClienteAuth";
 import { EmptyState } from "@/components/EmptyState";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
+
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 interface Entrega {
   id: string;
@@ -138,7 +140,7 @@ export function EntregasContent({
   if (loading)
     return (
       <div className="flex justify-center py-8">
-        <Loader2 className="h-5 w-5 animate-spin" />
+        <ReadingRing size={64} />
       </div>
     );
 

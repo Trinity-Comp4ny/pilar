@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { ArrowUpRight, Check, Coins, CreditCard, Loader2, RotateCcw } from "lucide-react";
+import { ArrowUpRight, Check, Coins, CreditCard, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency, formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 import type { CartaoCampos, Draft } from "./useChat";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 type Props = {
   index: number;
@@ -90,7 +92,7 @@ export function CartaoCard({ index, draft, onConfirmar, onCancelar, onDesfazer }
             disabled={desfazendo}
             className="h-auto gap-1 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
           >
-            {desfazendo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+            {desfazendo ? <BusyMark className="h-3.5 w-3.5" /> : <RotateCcw className="h-3.5 w-3.5" />}
             Desfazer
           </Button>
         </div>
@@ -213,7 +215,7 @@ export function CartaoCard({ index, draft, onConfirmar, onCancelar, onDesfazer }
             Cancelar
           </Button>
           <Button size="sm" onClick={criar} disabled={salvando} variant="brand" className="gap-1.5">
-            {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+            {salvando ? <BusyMark className="h-4 w-4" /> : <Check className="h-4 w-4" />}
             Cadastrar
           </Button>
         </div>

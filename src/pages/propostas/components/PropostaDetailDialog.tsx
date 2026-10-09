@@ -11,7 +11,6 @@ import {
   FileOutput,
   FileSignature,
   FolderPlus,
-  Loader2,
   MapPin,
   Pencil,
   Send,
@@ -30,6 +29,8 @@ import {
   PenLine,
 } from "lucide-react";
 import { PROPOSTA_STATUS_CONFIG } from "@/hooks/usePropostas";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 interface Proposta {
   id: string;
@@ -259,7 +260,7 @@ export function PropostaDetailDialog({
                   disabled={isUpdating}
                   onClick={() => onStatusChange(proposta.id, "enviada")}
                 >
-                  {isUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                  {isUpdating ? <BusyMark className="h-3.5 w-3.5" /> : <Send className="h-3.5 w-3.5" />}
                   Enviei manualmente
                 </Button>
               </div>
@@ -288,7 +289,7 @@ export function PropostaDetailDialog({
                     disabled={isUpdating}
                     onClick={() => onStatusChange(proposta.id, "aceita")}
                   >
-                    {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                    {isUpdating ? <BusyMark className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
                     Aceita
                   </Button>
                   <Button
@@ -297,7 +298,7 @@ export function PropostaDetailDialog({
                     disabled={isUpdating}
                     onClick={() => setConfirmRecusar(true)}
                   >
-                    {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+                    {isUpdating ? <BusyMark className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
                     Recusada
                   </Button>
                 </div>
@@ -396,7 +397,7 @@ export function PropostaDetailDialog({
                       disabled={isUpdating}
                       onClick={onMarcarContratoAssinado}
                     >
-                      {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <PenLine className="h-4 w-4" />}
+                      {isUpdating ? <BusyMark className="h-4 w-4" /> : <PenLine className="h-4 w-4" />}
                       Assinado
                     </Button>
                     <Button
@@ -405,7 +406,7 @@ export function PropostaDetailDialog({
                       disabled={isUpdating}
                       onClick={onRecusarContrato}
                     >
-                      {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+                      {isUpdating ? <BusyMark className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
                       Recusado
                     </Button>
                   </div>

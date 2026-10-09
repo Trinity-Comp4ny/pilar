@@ -14,7 +14,6 @@ import {
   Phone,
   User,
   CheckCircle2,
-  Loader2,
   FileText,
   Pencil,
   Trash2,
@@ -29,6 +28,8 @@ import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { type Lead } from "@/hooks/useLeads";
 import { PROPOSTA_STATUS_CONFIG, type Proposta } from "@/hooks/usePropostas";
 import { statusExibido } from "@/lib/comercial";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   Novo: { label: "Novo", color: "bg-info-soft text-info-strong" },
@@ -237,7 +238,7 @@ export function LeadDetailDialog({
               disabled={convertProjetoPending}
             >
               {convertProjetoPending ? (
-                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                <BusyMark className="mr-1.5 h-3.5 w-3.5" />
               ) : (
                 <FolderPlus className="mr-1.5 h-3.5 w-3.5" />
               )}
@@ -253,7 +254,7 @@ export function LeadDetailDialog({
               disabled={createPropostaPending || lead.status === "Perdido" || lead.status === "Ganho"}
             >
               {createPropostaPending ? (
-                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                <BusyMark className="mr-1.5 h-3.5 w-3.5" />
               ) : (
                 <FileText className="mr-1.5 h-3.5 w-3.5" />
               )}

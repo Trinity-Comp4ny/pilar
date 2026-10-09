@@ -1,9 +1,11 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Users, AlertTriangle } from "lucide-react";
+import { Users, AlertTriangle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 interface CapacidadeSimulacaoProps {
   disciplinas: Array<{ disciplina: string; horas_estimadas: number }>;
@@ -122,7 +124,7 @@ export function CapacidadeSimulacao({ disciplinas, prazoEstimadoDias }: Capacida
       <CardContent>
         {isLoading ? (
           <div className="flex justify-center py-4">
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <BusyMark className="h-4 w-4" />
           </div>
         ) : simulacao.length === 0 ? (
           <p className="text-xs text-muted-foreground">Adicione disciplinas para ver a simulação.</p>

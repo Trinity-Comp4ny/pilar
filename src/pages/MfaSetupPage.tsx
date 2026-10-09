@@ -2,17 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import {
-  ShieldCheck,
-  Loader2,
-  LogOut,
-  Copy,
-  Check,
-  HelpCircle,
-  AlertCircle,
-  RefreshCw,
-  CheckCircle2,
-} from "lucide-react";
+import { ShieldCheck, LogOut, Copy, Check, HelpCircle, AlertCircle, RefreshCw, CheckCircle2 } from "lucide-react";
 import { useMfa, type MfaEnrollResult } from "@/hooks/useMfa";
 import { useAuth } from "@/contexts/AuthContext";
 import { translateAuthError } from "@/lib/authErrors";
@@ -21,6 +11,8 @@ import { MfaBackupCodes } from "@/components/MfaBackupCodes";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 // ─── OTP Input ────────────────────────────────────────────────────────────────
 
@@ -357,7 +349,7 @@ export default function MfaSetupPage() {
 
               {starting && (
                 <div className="flex flex-col items-center gap-3 py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-ink-soft" />
+                  <BusyMark className="h-6 w-6 text-ink-soft" />
                   <p className="text-sm text-ink-soft">Gerando QR Code...</p>
                 </div>
               )}
@@ -429,7 +421,7 @@ export default function MfaSetupPage() {
                 <OtpInput value={code} onChange={handleCodeChange} disabled={submitting} />
                 {submitting && (
                   <div className="flex justify-center">
-                    <Loader2 className="h-4 w-4 animate-spin text-ink-soft" />
+                    <BusyMark className="h-4 w-4 text-ink-soft" />
                   </div>
                 )}
               </div>
@@ -440,7 +432,7 @@ export default function MfaSetupPage() {
                 onClick={() => handleVerify(code)}
                 disabled={code.length < 6 || submitting}
               >
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                {submitting ? <BusyMark className="h-4 w-4 mr-2" /> : null}
                 Confirmar e acessar
               </Button>
 

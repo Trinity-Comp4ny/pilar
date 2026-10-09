@@ -28,7 +28,6 @@ import {
 import {
   Globe,
   KeyRound,
-  Loader2,
   Mail,
   MapPin,
   Pencil,
@@ -66,6 +65,9 @@ import { reportInvokeError } from "@/lib/monitoring";
 import type { Cliente } from "@/hooks/useClientes";
 import type { ProjetoResumo, PropostaResumo } from "@/hooks/useClienteDetalhe";
 
+import { BusyMark } from "@/components/motion/BusyMark";
+
+import { PageLoader } from "@/components/motion/PageLoader";
 const TIPO_NF_LABELS: Record<string, string> = {
   servico: "Serviço",
   produto: "Produto",
@@ -358,7 +360,7 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
 
             {isLoadingPortal && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Verificando...
+                <BusyMark className="h-4 w-4" /> Verificando...
               </div>
             )}
 
@@ -377,7 +379,7 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
                     className="flex-1"
                   >
                     {isResettingPortal ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                      <BusyMark className="h-3.5 w-3.5 mr-1.5" />
                     ) : (
                       <KeyRound className="h-3.5 w-3.5 mr-1.5" />
                     )}
@@ -391,7 +393,7 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
                     className="border-danger-mid-border text-danger-strong hover:bg-danger-soft"
                   >
                     {isRevokingPortal ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                      <BusyMark className="h-3.5 w-3.5 mr-1.5" />
                     ) : (
                       <ShieldOff className="h-3.5 w-3.5 mr-1.5" />
                     )}
@@ -426,7 +428,7 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
                       variant="brand"
                     >
                       {isInvitingPortal ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                        <BusyMark className="h-3.5 w-3.5 mr-1.5" />
                       ) : (
                         <Globe className="h-3.5 w-3.5 mr-1.5" />
                       )}
@@ -555,12 +557,8 @@ export default function ClienteDetalhePage() {
 
   if (isLoadingCliente) {
     return (
-      <PageLayout header={<PageHeader title="Carregando..." />}>
-        <div className="space-y-4 p-6">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-32 w-full" />
-        </div>
+      <PageLayout>
+        <PageLoader size="page" />
       </PageLayout>
     );
   }

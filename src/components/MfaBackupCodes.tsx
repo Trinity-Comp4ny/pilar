@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Copy, Check, RefreshCw, ShieldCheck, Loader2 } from "lucide-react";
+import { Copy, Check, RefreshCw, ShieldCheck } from "lucide-react";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { monitoring } from "@/lib/monitoring";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 // gen:types não inclui estas RPCs ainda
 async function fetchRemainingCount(): Promise<number | null> {
@@ -89,7 +91,7 @@ export function MfaBackupCodes({ autoGenerate = false }: { autoGenerate?: boolea
   };
 
   if (loading) {
-    return <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />;
+    return <BusyMark className="h-4 w-4 text-muted-foreground" />;
   }
 
   if (generatedCodes) {
@@ -141,7 +143,7 @@ export function MfaBackupCodes({ autoGenerate = false }: { autoGenerate?: boolea
           onClick={() => (remaining ? setConfirmOpen(true) : handleGenerate())}
           disabled={generating}
         >
-          {generating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+          {generating ? <BusyMark className="h-4 w-4 mr-1" /> : <RefreshCw className="h-4 w-4 mr-1" />}
           {remaining ? "Gerar novos" : "Gerar códigos"}
         </Button>
       </div>

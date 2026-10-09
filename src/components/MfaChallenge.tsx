@@ -3,11 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { ShieldCheck, Loader2, HelpCircle, RefreshCw, KeyRound } from "lucide-react";
+import { ShieldCheck, HelpCircle, RefreshCw, KeyRound } from "lucide-react";
 import { useMfa } from "@/hooks/useMfa";
 import { translateAuthError } from "@/lib/authErrors";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { MfaHelpModal } from "@/components/MfaHelpModal";
+
+import { BusyMark } from "@/components/motion/BusyMark";
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 interface MfaChallengeProps {
   onVerified?: () => void;
@@ -80,7 +83,7 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <ReadingRing size={64} />
       </div>
     );
   }
@@ -132,7 +135,7 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
             variant="brand"
             className="w-full h-11 font-medium"
           >
-            {resetting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+            {resetting ? <BusyMark className="h-4 w-4 mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
             Reiniciar configuração
           </Button>
         </div>
@@ -145,7 +148,7 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
         <h2 className="text-xl font-semibold text-ink">Autenticação em dois fatores desativada</h2>
         <p className="text-sm text-ink-soft">Esta área exige o código do app autenticador. Ative para continuar.</p>
         <Button onClick={handleResetAndSetup} disabled={resetting} variant="brand" className="w-full h-11 font-medium">
-          {resetting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
+          {resetting ? <BusyMark className="h-4 w-4 mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
           Configurar agora
         </Button>
       </div>
@@ -186,7 +189,7 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
             className="w-full h-11 bg-fill-warning hover:bg-fill-warning/90 text-fill-warning-foreground font-medium"
             disabled={backupSubmitting || !backupCode.trim()}
           >
-            {backupSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            {backupSubmitting ? <BusyMark className="h-4 w-4 mr-2" /> : null}
             Usar código de recuperação
           </Button>
 
@@ -247,7 +250,7 @@ export function MfaChallenge({ onVerified }: MfaChallengeProps) {
             className="w-full h-11 font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
             disabled={submitting || code.length !== 6}
           >
-            {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            {submitting ? <BusyMark className="h-4 w-4 mr-2" /> : null}
             Verificar
           </Button>
 

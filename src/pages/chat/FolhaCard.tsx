@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { ArrowUpRight, Check, Coins, Loader2, RotateCcw, Users } from "lucide-react";
+import { ArrowUpRight, Check, Coins, RotateCcw, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { msgErro } from "./erros";
 import type { Draft, DraftCampos, FolhaLinhaPayload } from "./useChat";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 type Props = {
   draft: Draft;
@@ -140,7 +142,7 @@ export function FolhaCard({ draft, onConfirmar, onCancelar, onDesfazerFolha }: P
             disabled={desfazendo}
             className="h-auto gap-1 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
           >
-            {desfazendo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+            {desfazendo ? <BusyMark className="h-3.5 w-3.5" /> : <RotateCcw className="h-3.5 w-3.5" />}
             Desfazer
           </Button>
         </div>
@@ -171,7 +173,7 @@ export function FolhaCard({ draft, onConfirmar, onCancelar, onDesfazerFolha }: P
       <div className="px-4 py-4">
         {preview.isLoading ? (
           <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> Calculando preview…
+            <BusyMark className="h-4 w-4 text-muted-foreground" /> Calculando preview…
           </div>
         ) : preview.data?.jaFechada ? (
           <p className="py-4 text-sm text-muted-foreground">A folha de {competencia} já foi fechada.</p>
@@ -251,7 +253,7 @@ export function FolhaCard({ draft, onConfirmar, onCancelar, onDesfazerFolha }: P
             variant="brand"
             className="gap-1.5"
           >
-            {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+            {salvando ? <BusyMark className="h-4 w-4" /> : <Check className="h-4 w-4" />}
             Fechar folha
           </Button>
         </div>

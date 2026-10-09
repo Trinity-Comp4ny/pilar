@@ -11,6 +11,7 @@ import { getSafeErrorMessage } from "@/lib/safeError";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
+import { Spinner } from "@/components/Spinner";
 interface CentroCusto {
   id: string;
   codigo: string | null;
@@ -177,7 +178,7 @@ export function CentroCustoManager({ open, onOpenChange, onChanged }: Props) {
                 </Button>
               </div>
               <div className="border rounded max-h-80 overflow-y-auto divide-y">
-                {loading && <div className="p-3 text-xs text-muted-foreground">Carregando...</div>}
+                {loading && <Spinner size="sm" label="Carregando centros de custo" className="p-3" />}
                 {!loading && list.length === 0 && (
                   <EmptyState
                     icon={Building2}

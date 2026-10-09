@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Loader2, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   FEATURES,
@@ -19,6 +19,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 /** Empresa reduzida ao que o painel precisa: id + features já parseadas. */
 export type BulkCompany = { id: string; features: CompanyFeatures };
@@ -132,7 +134,7 @@ export function BulkFeatureManager({ empresas, onApply, disabled = false }: Bulk
             >
               {applying ? (
                 <>
-                  <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                  <BusyMark className="mr-1.5 h-4 w-4" />
                   Aplicando…
                 </>
               ) : (
