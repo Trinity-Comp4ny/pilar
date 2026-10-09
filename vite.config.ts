@@ -32,6 +32,47 @@ function emitVersionJson(): Plugin {
 }
 
 // https://vitejs.dev/config/
+
+/** Pacote do node_modules a que um módulo pertence ("@radix-ui/react-dialog", "recharts"). */
+function pacoteDoModulo(id: string): string | undefined {
+  const depois = id.split("node_modules/").pop();
+  if (!depois || depois === id) return undefined;
+  const partes = depois.split("/");
+  return partes[0].startsWith("@") ? `${partes[0]}/${partes[1]}` : partes[0];
+}
+
+const CHUNK_DO_PACOTE: Record<string, string> = {
+  // Helpers usados pelo app inteiro E por bibliotecas pesadas. Sem dono explícito, o
+  // Rollup os coloca no chunk da primeira biblioteca que os puxa (o de PDF, o de
+  // gráficos), e a entrada passa a depender daquele chunk.
+  "@babel/runtime": "vendor-styles",
+  clsx: "vendor-styles",
+  "tailwind-merge": "vendor-styles",
+  react: "vendor-react",
+  "react-dom": "vendor-react",
+  "react-router-dom": "vendor-react",
+  "react-router": "vendor-react",
+  scheduler: "vendor-react",
+  recharts: "vendor-charts",
+  "victory-vendor": "vendor-charts",
+  leaflet: "vendor-maps",
+  "react-leaflet": "vendor-maps",
+  jspdf: "vendor-pdf",
+  "jspdf-autotable": "vendor-pdf",
+  docxtemplater: "vendor-docx",
+  pizzip: "vendor-docx",
+  "file-saver": "vendor-docx",
+  "@supabase/supabase-js": "vendor-supabase",
+  "@tanstack/react-query": "vendor-query",
+  "@tanstack/query-core": "vendor-query",
+  "@radix-ui/react-dialog": "vendor-ui",
+  "@radix-ui/react-popover": "vendor-ui",
+  "@radix-ui/react-select": "vendor-ui",
+  "@radix-ui/react-dropdown-menu": "vendor-ui",
+  "@radix-ui/react-tabs": "vendor-ui",
+  "@radix-ui/react-tooltip": "vendor-ui",
+};
+
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
@@ -83,23 +124,19 @@ export default defineConfig(({ mode }) => ({
     sourcemap: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          "vendor-styles": ["tailwind-merge"],
-          "vendor-react": ["react", "react-dom", "react-router-dom"],
-          "vendor-charts": ["recharts"],
-          "vendor-maps": ["leaflet", "react-leaflet"],
-          "vendor-pdf": ["jspdf", "jspdf-autotable"],
-          "vendor-docx": ["docxtemplater", "pizzip", "file-saver"],
-          "vendor-supabase": ["@supabase/supabase-js"],
-          "vendor-query": ["@tanstack/react-query"],
-          "vendor-ui": [
-            "@radix-ui/react-dialog",
-            "@radix-ui/react-popover",
-            "@radix-ui/react-select",
-            "@radix-ui/react-dropdown-menu",
-            "@radix-ui/react-tabs",
-            "@radix-ui/react-tooltip",
-          ],
+        // O Rollup leva para um chunk manual também as dependências sem chunk próprio,
+        // inclusive as que o resto do app usa (helper de transpilação, clsx). A entrada
+        // passava a importar esses helpers de dentro do vendor-pdf e do vendor-charts, e
+        // toda página baixava ~860 KB de PDF e gráficos antes de abrir (medido no Sentry
+        // em 2026-10-09). O mapa abaixo dá dono aos helpers compartilhados; o teste
+        // build-chunks garante que PDF, gráficos, mapas e docx não voltem à entrada.
+        manualChunks(id) {
+          // Helper de import() do Vite: o jspdf faz import dinâmico (html2canvas), e sem
+          // dono o helper caía no vendor-pdf; como toda tela lazy usa o helper, a entrada
+          // passava a carregar o PDF.
+          if (id.includes("vite/preload-helper")) return "vendor-styles";
+          const pacote = pacoteDoModulo(id);
+          return pacote ? CHUNK_DO_PACOTE[pacote] : undefined;
         },
       },
     },
