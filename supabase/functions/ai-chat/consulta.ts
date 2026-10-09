@@ -41,6 +41,7 @@ export function streamConsulta(o: {
           const gen = streamGeminiText(respostaPromptStream(o.agente), o.userMessage, {
             conversationId: o.sessionId,
             empresaId: o.empresaId,
+            tipo: FEATURE_KEY, // mesmo modelo configurado para o chat (AI_MODELO_AI_CHAT)
           });
           let r = await gen.next();
           while (!r.done) {

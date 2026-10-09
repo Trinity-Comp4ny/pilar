@@ -26,7 +26,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { withSentry, captureException, cronCheckin } from "../_shared/sentry.ts";
 import { createLogger } from "../_shared/logger.ts";
-import { callGeminiStructured, verificarTokens, debitarTokens, GEMINI_MODEL } from "../_shared/ai-client.ts";
+import { callGeminiStructured, verificarTokens, debitarTokens, modeloEmUso } from "../_shared/ai-client.ts";
 import { AditivoSugeridoSchema } from "../_shared/agent-schemas.ts";
 
 const log = createLogger("guardiao-margem-cron");
@@ -180,7 +180,7 @@ serve(
           input: { projeto_id: p.projeto_id, custo_orcado: p.custo_orcado, despesas_diretas: p.despesas_diretas },
           result: result.data,
           confidence: result.data.confianca,
-          model: GEMINI_MODEL,
+          model: modeloEmUso("guardiao_margem"),
           tokens_input: result.tokensEntrada,
           tokens_output: result.tokensSaida,
           created_by: null,
@@ -194,7 +194,7 @@ serve(
           userId: null,
           agentKey: "guardiao_margem",
           agentRunId: null,
-          model: GEMINI_MODEL,
+          model: modeloEmUso("guardiao_margem"),
           tokensInput: result.tokensEntrada,
           tokensOutput: result.tokensSaida,
           idempotencyKey: `guardiao_margem:${escopo.id}`,

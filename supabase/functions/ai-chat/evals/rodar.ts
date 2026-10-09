@@ -11,7 +11,7 @@
  * Sai com erro se a acurácia de intenção ou de campos ficar abaixo de LIMITES. Custo: duas
  * chamadas por caso de ação, uma nos demais (gemini-2.5-flash, centavos por rodada).
  */
-import { callGeminiStructured, GEMINI_MODEL } from "../../_shared/ai-client.ts";
+import { callGeminiStructured, modeloEmUso } from "../../_shared/ai-client.ts";
 import { comContexto, SEM_HISTORICO } from "../contexto.ts";
 import { ENTIDADE_CFG } from "../entidades.ts";
 import { ORQUESTRADOR_PROMPT } from "../prompts.ts";
@@ -35,18 +35,20 @@ function arg(nome: string): string | undefined {
 async function rodarCaso(caso: Caso): Promise<ResultadoCaso> {
   const inicio = Date.now();
   const historico = caso.historico ?? SEM_HISTORICO;
-  let tokens = 0;
+  let tokensEntrada = 0;
+  let tokensSaida = 0;
   try {
     const rota = await callGeminiStructured(
       {
         systemPrompt: ORQUESTRADOR_PROMPT,
         userMessage: comContexto(historico, caso.mensagem, "Classifique a intenção real do usuário (agente + modo)."),
         empresaId: EMPRESA_EVAL,
-        tipo: `${FEATURE_KEY}_eval`,
+        tipo: FEATURE_KEY,
       },
       IntentSchema
     );
-    tokens += rota.tokensEntrada + rota.tokensSaida;
+    tokensEntrada += rota.tokensEntrada;
+    tokensSaida += rota.tokensSaida;
     const erros = errosDeIntencao(caso.esperado, rota.data);
     const intencaoOk = erros.length === 0;
 
@@ -58,11 +60,12 @@ async function rodarCaso(caso: Caso): Promise<ResultadoCaso> {
           systemPrompt: cfg.prompt,
           userMessage: comContexto(historico, caso.mensagem, cfg.instrucao),
           empresaId: EMPRESA_EVAL,
-          tipo: `${FEATURE_KEY}_eval`,
+          tipo: FEATURE_KEY,
         },
         cfg.schema
       );
-      tokens += extr.tokensEntrada + extr.tokensSaida;
+      tokensEntrada += extr.tokensEntrada;
+      tokensSaida += extr.tokensSaida;
       const campos = (extr.data[cfg.entityKey] ?? {}) as Record<string, unknown>;
       const errosCampos = errosDeCampos(caso.campos, campos);
       camposOk = errosCampos.length === 0;
@@ -72,7 +75,16 @@ async function rodarCaso(caso: Caso): Promise<ResultadoCaso> {
       camposOk = false;
     }
 
-    return { id: caso.id, intencaoOk, camposOk, erros, latenciaMs: Date.now() - inicio, tokens };
+    return {
+      id: caso.id,
+      intencaoOk,
+      camposOk,
+      erros,
+      latenciaMs: Date.now() - inicio,
+      tokens: tokensEntrada + tokensSaida,
+      tokensEntrada,
+      tokensSaida,
+    };
   } catch (e) {
     return {
       id: caso.id,
@@ -80,14 +92,45 @@ async function rodarCaso(caso: Caso): Promise<ResultadoCaso> {
       camposOk: caso.campos ? false : null,
       erros: [`falha na chamada: ${e instanceof Error ? e.message.slice(0, 200) : String(e)}`],
       latenciaMs: Date.now() - inicio,
-      tokens,
+      tokens: tokensEntrada + tokensSaida,
+      tokensEntrada,
+      tokensSaida,
     };
   }
 }
 
+/**
+ * Preço por token do modelo, pelo catálogo do AI Gateway (precisa de AI_GATEWAY_API_KEY).
+ * Modelo do Gemini direto é procurado como "google/<modelo>". Sem chave ou sem o modelo
+ * no catálogo, o custo não é estimado.
+ */
+async function precoPorToken(modelo: string): Promise<{ entrada: number; saida: number } | null> {
+  const chave = Deno.env.get("AI_GATEWAY_API_KEY");
+  if (!chave) return null;
+  try {
+    const res = await fetch("https://ai-gateway.vercel.sh/v1/models", {
+      headers: { Authorization: `Bearer ${chave}` },
+    });
+    if (!res.ok) return null;
+    const { data } = (await res.json()) as {
+      data: Array<{ id: string; pricing?: { input?: string; output?: string } }>;
+    };
+    const id = modelo.includes("/") ? modelo : `google/${modelo}`;
+    const m = data.find((x) => x.id === id);
+    if (!m?.pricing?.input || !m.pricing.output) return null;
+    return { entrada: Number(m.pricing.input), saida: Number(m.pricing.output) };
+  } catch {
+    return null;
+  }
+}
+
 if (import.meta.main) {
-  if (!Deno.env.get("GEMINI_API_KEY")) {
-    console.error("Defina GEMINI_API_KEY para rodar os evals.");
+  const modelo = modeloEmUso(FEATURE_KEY);
+  const precisaGemini = !modelo.includes("/");
+  if (precisaGemini ? !Deno.env.get("GEMINI_API_KEY") : !Deno.env.get("AI_GATEWAY_API_KEY")) {
+    console.error(
+      `Defina ${precisaGemini ? "GEMINI_API_KEY" : "AI_GATEWAY_API_KEY"} para rodar os evals com ${modelo}.`
+    );
     Deno.exit(2);
   }
   const filtro = arg("--filtro");
@@ -108,19 +151,30 @@ if (import.meta.main) {
   const s = resumir(resultados);
   const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
   linha();
-  linha(`Modelo:     ${GEMINI_MODEL}`);
+  linha(`Modelo:     ${modelo}`);
   linha(`Casos:      ${s.casos}`);
   linha(`Intenção:   ${pct(s.intencao)} (limite ${pct(LIMITES.intencao)})`);
   linha(`Campos:     ${pct(s.campos)} (limite ${pct(LIMITES.campos)})`);
   linha(`Latência:   p95 ${s.latenciaP95Ms} ms`);
-  linha(`Tokens:     ${s.tokens}`);
+  linha(`Tokens:     ${s.tokens} (entrada ${s.tokensEntrada}, saída ${s.tokensSaida})`);
+  const preco = await precoPorToken(modelo);
+  const custoRodada = preco ? s.tokensEntrada * preco.entrada + s.tokensSaida * preco.saida : null;
+  if (custoRodada !== null) {
+    linha(
+      `Custo:      US$ ${custoRodada.toFixed(4)} na rodada, US$ ${((custoRodada / s.casos) * 1000).toFixed(2)} por mil mensagens`
+    );
+  }
   linha(s.aprovado ? "APROVADO" : "REPROVADO");
 
   const saida = arg("--saida");
   if (saida) {
     await Deno.writeTextFile(
       saida,
-      JSON.stringify({ modelo: GEMINI_MODEL, gerado_em: new Date().toISOString(), resumo: s, resultados }, null, 2)
+      JSON.stringify(
+        { modelo, custo_rodada_usd: custoRodada, gerado_em: new Date().toISOString(), resumo: s, resultados },
+        null,
+        2
+      )
     );
   }
   Deno.exit(s.aprovado ? 0 : 1);

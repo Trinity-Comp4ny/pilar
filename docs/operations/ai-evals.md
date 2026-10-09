@@ -9,6 +9,16 @@ GEMINI_API_KEY=... deno run --allow-env --allow-net --allow-write \
   supabase/functions/ai-chat/evals/rodar.ts [--filtro injecao] [--saida resultado.json]
 ```
 
+Com outro modelo (SPEC 106), sem mudar código:
+
+```bash
+AI_MODELO=gateway:anthropic/claude-haiku-5.5 AI_GATEWAY_API_KEY=... deno run --allow-env --allow-net \
+  --allow-write supabase/functions/ai-chat/evals/rodar.ts
+```
+
+Com `AI_GATEWAY_API_KEY` presente, o relatório também estima o custo (preços do catálogo
+do gateway) por rodada e por mil mensagens.
+
 No GitHub: Actions → **Evals da IA** → Run workflow. Também roda sozinho em PR que mexe em
 prompt, schema, extração ou no cliente do modelo, e toda segunda.
 
