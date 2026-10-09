@@ -24,5 +24,5 @@ em fonte e antialiasing. Por isso não se atualiza na máquina local:
 ## O que é mascarado
 
 Texto que muda sozinho com o calendário (datas, "há N dias", dinheiro, mês por
-extenso), corpo de tabela e toasts. A máscara mantém a posição do elemento, então
+extenso), tabelas inteiras (a largura das colunas segue o conteúdo) e toasts. A máscara mantém a posição do elemento, então
 layout que desloca continua reprovando.
