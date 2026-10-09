@@ -11,6 +11,9 @@ export async function sha256Hex(str: string): Promise<string> {
 }
 
 // Transcript recente da sessão (contexto conversacional para o orquestrador e os agentes).
+/** O que o modelo recebe como histórico no primeiro turno (também usado pelos evals). */
+export const SEM_HISTORICO = "(sem histórico — início da conversa)";
+
 export async function carregarHistorico(db: SupabaseClient, sessionId: string): Promise<string> {
   const { data } = await db
     .from("chat_messages")
@@ -19,7 +22,7 @@ export async function carregarHistorico(db: SupabaseClient, sessionId: string): 
     .order("created_at", { ascending: false })
     .limit(12);
   const msgs = ((data ?? []) as { role: string; content: string }[]).reverse();
-  if (!msgs.length) return "(sem histórico — início da conversa)";
+  if (!msgs.length) return SEM_HISTORICO;
   return msgs.map((m) => `${m.role === "user" ? "Usuário" : "Assistente"}: ${m.content}`).join("\n");
 }
 
