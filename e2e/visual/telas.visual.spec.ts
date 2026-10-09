@@ -31,7 +31,10 @@ const TEXTO_VARIAVEL = new RegExp(
 function mascaras(page: Page) {
   return [
     page.getByText(TEXTO_VARIAVEL),
-    page.locator("table tbody"),
+    // Tabela inteira, não só o corpo: a largura das colunas acompanha o conteúdo, que
+    // muda com a data do seed, e o cabeçalho descia 1px de um dia para o outro. A
+    // borda do card em volta continua na foto, então tabela que desloca ainda aparece.
+    page.locator("table"),
     // Card de KPI inteiro: o valor estoura a caixa e passa por baixo do ícone (bug
     // conhecido do KPICard), então mascarar só o texto deixaria pedaço variável.
     page.getByRole("button", { name: /^(Recebido|Pago|A receber|A pagar)\b/i }),
