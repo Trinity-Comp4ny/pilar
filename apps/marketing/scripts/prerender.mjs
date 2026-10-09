@@ -60,7 +60,10 @@ function servirDist() {
     const caminhoLimpo = req.url.split("?")[0];
     let caminho = join(DIST, caminhoLimpo);
     if (caminhoLimpo.endsWith("/") || !extname(caminhoLimpo)) {
-      caminho = existsSync(caminho) && existsSync(join(caminho, "index.html")) ? join(caminho, "index.html") : join(DIST, "index.html");
+      caminho =
+        existsSync(caminho) && existsSync(join(caminho, "index.html"))
+          ? join(caminho, "index.html")
+          : join(DIST, "index.html");
     }
     if (!existsSync(caminho)) caminho = join(DIST, "index.html");
     const tipo = TIPOS_MIME[extname(caminho)] ?? "application/octet-stream";
@@ -80,6 +83,18 @@ async function main() {
   const porta = servidor.address().port;
   const base = `http://127.0.0.1:${porta}`;
 
+  // O boot (ADR 0049) sai da tela quando o React monta, então o snapshot viria sem
+  // ele. Guarda o bloco do HTML original e devolve ao HTML de cada rota, para o
+  // anel cobrir a página até o JavaScript assumir também nas rotas pré-renderizadas.
+  const original = readFileSync(join(DIST, "index.html"), "utf8");
+  const boot = original.match(/ *<!-- boot:start -->[\s\S]*?<!-- boot:end -->\n?/)?.[0] ?? "";
+  const comBoot = (html) =>
+    !boot || html.includes('id="boot"')
+      ? html
+      : html
+          .replace(/<!-- boot:start -->[\s\S]*?<!-- boot:end -->\n?/, "")
+          .replace('<div id="root">', `${boot}<div id="root">`);
+
   const browser = await chromium.launch();
   const contexto = await browser.newContext();
 
@@ -91,7 +106,7 @@ async function main() {
       // Dá tempo pro useEffect de usePageMeta gravar title/meta antes do
       // snapshot; a UI em si já está montada no primeiro paint.
       await pagina.waitForTimeout(200);
-      const html = await pagina.content();
+      const html = comBoot(await pagina.content());
 
       const destino = rota === "/" ? join(DIST, "index.html") : join(DIST, rota.replace(/^\//, ""), "index.html");
       mkdirSync(join(destino, ".."), { recursive: true });

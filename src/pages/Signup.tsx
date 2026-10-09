@@ -8,19 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Mail,
-  Lock,
-  ArrowLeft,
-  Loader2,
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  User,
-  UserCheck,
-  Building2,
-  Phone,
-} from "lucide-react";
+import { Mail, Lock, ArrowLeft, CheckCircle2, Eye, EyeOff, User, UserCheck, Building2, Phone } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { PasswordRequirements } from "@/components/PasswordRequirements";
@@ -34,6 +22,8 @@ import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legalVersions";
 import { Logo } from "@/components/Logo";
 import { guardarOrigemCadastro, lerOrigemCadastro } from "@/lib/origemCadastro";
 import { emailJaTemConta } from "@/lib/signupResultado";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 export default function Signup() {
   usePageTitle("Criar conta");
@@ -153,7 +143,7 @@ export default function Signup() {
         <div className="w-full max-w-[400px] space-y-8 animate-in fade-in slide-in-from-left-8 duration-700">
           <div className="text-center space-y-2">
             <div className="flex justify-center mb-6">
-              <Logo size="lg" />
+              <Logo size="lg" animate="draw" />
             </div>
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Criar conta</h1>
             <p className="text-sm text-ink-soft">3 dias grátis, sem cartão</p>
@@ -209,7 +199,7 @@ export default function Signup() {
                   onClick={handleReenviar}
                   disabled={reenviando}
                 >
-                  {reenviando ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reenviar e-mail"}
+                  {reenviando ? <BusyMark className="h-4 w-4" /> : "Reenviar e-mail"}
                 </Button>
                 <Button variant="ghost" className="w-full h-10 text-ink-soft text-sm" asChild>
                   <Link to="/login">Ir para o login</Link>
@@ -434,7 +424,7 @@ export default function Signup() {
                   >
                     {isLoading ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando conta...
+                        <BusyMark className="mr-2 h-4 w-4" /> Criando conta...
                       </>
                     ) : (
                       "Criar conta"

@@ -4,6 +4,7 @@
 @import "../../../src/styles/tokens.css";
 @import "../../../src/styles/landing.css";
 @import "../../../src/styles/tailwind-compat.css";
+@import "../../../src/styles/motion.css";
 @config "../tailwind.config.ts";
 
 /* Geist autohospedada, sem fonts.googleapis.com nem fonts.gstatic.com (mesma

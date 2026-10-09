@@ -1,6 +1,8 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+
 import { useCampoAuth, type CampoAccount } from "@/pages/campo/useCampoAuth";
+
+import { EntryVeil } from "@/components/motion/EntryVeil";
 
 /**
  * Protege as rotas do Pilar Campo: verifica o token de campo. Sem sessão → login;
@@ -11,11 +13,7 @@ export function CampoPrivateRoute() {
   const { account, loading, error } = useCampoAuth();
 
   if (loading) {
-    return (
-      <div className="flex min-h-dvh items-center justify-center bg-background">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <EntryVeil label="Abrindo o Pilar Campo" />;
   }
 
   if (error || !account) {
