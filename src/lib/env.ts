@@ -62,6 +62,9 @@ const schema = z.object({
 
   VITE_POSTHOG_KEY: optionalText,
   VITE_POSTHOG_HOST: optionalUrl,
+
+  /** Status page externa (SPEC 105). Definida, a rota /status do app redireciona para ela. */
+  VITE_STATUS_URL: optionalUrl,
 });
 
 export type Env = z.infer<typeof schema>;

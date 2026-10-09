@@ -11,28 +11,41 @@ Diferem de:
 Health pode estar verde com o app quebrado (bundle fora do CDN, tela de login sem
 formulário, roteador do SPA devolvendo 5xx). O sintético pega isso.
 
-## Como roda (desde 2026-10-08)
+## Como roda
 
-Workflow `.github/workflows/monitor-producao.yml`, a cada 30 min, com
+Workflow `.github/workflows/monitor-producao.yml`, a cada 10 min, com
 `tests/synthetic/critical-flows.spec.ts` (config em `tests/synthetic/playwright.config.ts`):
 
-| Check          | O que prova                                                                 |
-| -------------- | --------------------------------------------------------------------------- |
-| Health         | Edge Function responde `ok`/`degraded`, banco `ok`, latência do banco < 1 s |
-| Landing        | `app.pilarsoft.com.br` carrega com título                                   |
-| Tela de login  | formulário (e-mail, senha, botão) aparece                                   |
-| Guarda de rota | `/dashboard` sem sessão não dá 5xx                                          |
+| Check          | O que prova                                                                  |
+| -------------- | ---------------------------------------------------------------------------- |
+| Health         | Edge Function responde; componentes `banco` e `autenticacao` ok; banco < 1 s |
+| Landing        | `app.pilarsoft.com.br` carrega com título                                    |
+| Tela de login  | formulário (e-mail, senha, botão) aparece                                    |
+| Guarda de rota | `/dashboard` sem sessão não dá 5xx                                           |
+| Login real     | o usuário de monitor entra e chega no app (`#main-content`)                  |
 
 Uma nova tentativa por check (Edge Function fria pode responder 503 na primeira
 chamada). Falha abre ou comenta a issue **"Cron falhando: Monitor de produção"**, e o
 GitHub avisa por e-mail. Rodar na mão: `npx playwright test --config tests/synthetic/playwright.config.ts`.
 
-Substituiu o Checkly, que estava configurado e nunca rodou (sem conta, sem canal de
-alerta e com o health apontando para o domínio do app em vez do Supabase).
+A disponibilidade por componente (pagamentos, e-mails, IA, crons) fica no Better Stack,
+que olha `/health?componente=<nome>` a cada 3 min: ver [status-page-setup.md](./status-page-setup.md).
+
+### Usuário de monitor (login real)
+
+Sem os secrets, o check de login real é pulado e o resto roda. Para ligar:
+
+1. Criar em produção uma conta só para isso, pelo cadastro normal, com e-mail próprio
+   (ex.: `monitor@pilarsoft.com.br`) e empresa "Pilar Monitor". Sem 2FA.
+2. No ultra-admin, marcar a empresa como isenta (senão o teste de 3 dias vence e o login
+   para na tela de assinatura, e o check acusa queda que não existe).
+3. GitHub → Settings → Secrets and variables → Actions → secrets de repositório
+   `PILAR_MONITOR_EMAIL` e `PILAR_MONITOR_PASSWORD`.
+
+O check só entra e lê. Não cria dado.
 
 Limites honestos: o cron do GitHub pode atrasar alguns minutos e só liga a partir de
-`main`. Serve para "o produto caiu e ninguém viu", não para SLA de minuto. Quando
-houver cliente pagante com SLA, avaliar Sentry Uptime (1 min, multi-região).
+`main`. Para queda de minuto, quem avisa é o Better Stack.
 
 ## O que NÃO testar aqui
 

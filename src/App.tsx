@@ -22,6 +22,7 @@ import { TrialBanner } from "./components/TrialBanner";
 import { SettingsModalProvider, useSettingsModal, type SettingsSection } from "./contexts/SettingsModalContext";
 import { ValoresOcultosProvider } from "./contexts/ValoresOcultosContext";
 import { MARKETING_URL, isProductionAppHost } from "./lib/marketingSite";
+import { env } from "./lib/env";
 import { useNovaVersao } from "./hooks/useNovaVersao";
 
 // Modal de configuracoes: so monta quando o usuario abre. Estatico, arrastava os
@@ -137,6 +138,15 @@ function ExternalRedirect({ path = "" }: { path?: string }) {
   return null;
 }
 
+// Status page fora da nossa infra (ADR 0047): se o app ou o Supabase caem, ela continua
+// no ar. A /status interna fica só como fallback enquanto VITE_STATUS_URL não existe.
+function StatusExterna() {
+  useEffect(() => {
+    if (env.VITE_STATUS_URL) window.location.replace(env.VITE_STATUS_URL);
+  }, []);
+  return null;
+}
+
 // /profile, /company e /billing viraram abas do SettingsDialog (modal, sem rota
 // própria). Link antigo abre a aba certa em vez de cair no NotFound.
 function SettingsRedirect({ section }: { section: SettingsSection }) {
@@ -186,7 +196,7 @@ const App = () => {
                         <Route path="/auth/callback" element={<AuthCallback />} />
                         <Route path="/forgot-password" element={<ForgotPassword />} />
                         <Route path="/reset-password" element={<PasswordReset />} />
-                        <Route path="/status" element={<StatusPage />} />
+                        <Route path="/status" element={env.VITE_STATUS_URL ? <StatusExterna /> : <StatusPage />} />
 
                         {/* Fora do grupo PrivateRoute de propósito: checkout de compra de
                           tokens é full-bleed (mesmo tratamento visual do /checkout público,

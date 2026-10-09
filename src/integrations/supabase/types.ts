@@ -7965,6 +7965,10 @@ export type Database = {
         Args: { p_pessoa: string; p_tarefa: string }
         Returns: undefined
       }
+      _ops_sinais_saude: {
+        Args: { p_janela?: string; p_janela_crons?: string }
+        Returns: Json
+      }
       _portal_create_account: {
         Args: {
           p_cliente_id: string
