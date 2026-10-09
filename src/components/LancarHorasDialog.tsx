@@ -19,8 +19,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Loader2, Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 interface LancarHorasDialogProps {
   open: boolean;
@@ -231,7 +233,7 @@ export function LancarHorasDialog({ open, onOpenChange, projetoIdInicial }: Lanc
               Cancelar
             </Button>
             <Button type="submit" disabled={isPending || !projetoId || !horas || !descricao.trim()}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isPending && <BusyMark className="mr-2 h-4 w-4" />}
               Lançar horas
             </Button>
           </DialogFooter>

@@ -4,7 +4,7 @@ import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useParams, useOutletContext, useLocation } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Building2, FileSignature, CheckCircle2 } from "lucide-react";
+import { Building2, FileSignature, CheckCircle2 } from "lucide-react";
 import { ClienteShell } from "./ClienteShell";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useClienteProjetoData } from "./useClienteProjetoData";
@@ -19,6 +19,9 @@ import { reportInvokeError } from "@/lib/monitoring";
 import { supabase } from "@/integrations/supabase/client";
 import { getPortalToken } from "@/hooks/useClienteAuth";
 import type { ClienteProjetoData } from "./useClienteProjetoData";
+
+import { BusyMark } from "@/components/motion/BusyMark";
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 // Datas do projeto ainda podem não ter sido definidas: mostra "A definir".
 const formatDataProjeto = (d: string | null | undefined) => (d ? formatDate(d) : "A definir");
@@ -137,7 +140,7 @@ function AprovarPropostaCard({ projeto, refresh }: { projeto: ClienteProjetoData
 
         <div className="space-y-2">
           <Button variant="brand" className="w-full gap-2" onClick={() => setConfirmOpen(true)} disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+            {loading ? <BusyMark className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
             {loading ? "Aprovando…" : "Aprovar proposta"}
           </Button>
           <p className="text-center text-xs text-ink/60">Precisa de ajustes? Fale com o escritório antes de aprovar.</p>
@@ -211,7 +214,7 @@ export default function ClienteProjetoDetail() {
     return (
       <ClienteShell account={account} projetoId={id}>
         <div className="flex justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <ReadingRing size={64} />
         </div>
       </ClienteShell>
     );
@@ -249,11 +252,7 @@ export default function ClienteProjetoDetail() {
   }
 
   return (
-    <ClienteShell
-      account={account}
-      projetoId={data.projeto_id}
-      projetoNome={data.projeto_nome}
-    >
+    <ClienteShell account={account} projetoId={data.projeto_id} projetoNome={data.projeto_nome}>
       {content}
     </ClienteShell>
   );

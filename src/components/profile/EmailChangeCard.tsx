@@ -5,7 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AtSign, Loader2 } from "lucide-react";
+import { AtSign } from "lucide-react";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -85,7 +87,7 @@ export function EmailChangeCard({ currentEmail, onChanged }: Props) {
                 Cancelar
               </Button>
               <Button onClick={handleSave} disabled={saving} variant="brand">
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enviar confirmação"}
+                {saving ? <BusyMark className="h-4 w-4" /> : "Enviar confirmação"}
               </Button>
             </div>
           </>

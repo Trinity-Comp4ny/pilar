@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
-import { ArrowRight, Check, Loader2, ShieldCheck } from "lucide-react";
+import { ArrowRight, Check, ShieldCheck } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { monitoring } from "@/lib/monitoring";
 import { analytics } from "@/lib/analytics";
@@ -13,6 +13,8 @@ import { BoletoPayment } from "./components/BoletoPayment";
 import { PaymentSuccess } from "./components/PaymentSuccess";
 import { useCheckoutCreate, type CheckoutResponse } from "./hooks/useCheckoutCreate";
 import { useCheckoutStatus } from "./hooks/useCheckoutStatus";
+
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 function formatBRL(value: number): string {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -60,7 +62,7 @@ export default function Checkout() {
   if (loadingPlans) {
     return (
       <div className="min-h-screen bg-paper flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-ink-disabled" />
+        <ReadingRing size={112} />
       </div>
     );
   }

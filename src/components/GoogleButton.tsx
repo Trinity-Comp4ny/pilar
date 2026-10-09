@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 // Logo oficial do Google (SVG inline, 4 cores). Não usar ícone lucide genérico:
 // o botão de OAuth do Google pede a marca reconhecível.
@@ -14,10 +15,7 @@ function GoogleLogo() {
         fill="#34A853"
         d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z"
       />
-      <path
-        fill="#FBBC05"
-        d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84Z"
-      />
+      <path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84Z" />
       <path
         fill="#EA4335"
         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.3 9.14 5.38 12 5.38Z"
@@ -46,7 +44,7 @@ export function GoogleButton({
       disabled={disabled || loading}
       className="relative w-full h-11 gap-2 border-paper-border text-ink-soft hover:text-ink hover:border-brand/50 hover:bg-brand/5 transition-all text-sm font-medium"
     >
-      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleLogo />}
+      {loading ? <BusyMark className="h-4 w-4" /> : <GoogleLogo />}
       Continuar com Google
       {destaque && (
         <span className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-brand px-2 py-0.5 text-[10px] font-medium text-ink">

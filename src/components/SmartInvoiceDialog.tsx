@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { addMonths, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Loader2, Receipt, Calendar, Milestone, PenLine } from "lucide-react";
+import { Receipt, Calendar, Milestone, PenLine } from "lucide-react";
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
 
@@ -25,6 +25,8 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDate } from "@/lib/format";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 // ---------- tipos ----------
 
@@ -349,7 +351,7 @@ export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, pr
             >
               {criar.isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <BusyMark className="mr-2 h-4 w-4" />
                   Criando...
                 </>
               ) : (

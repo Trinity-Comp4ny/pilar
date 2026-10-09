@@ -10,11 +10,13 @@ import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { analytics } from "@/lib/analytics";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Building2, Hash, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, Hash } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useAuth } from "@/contexts/AuthContext";
 import { companySetupSchema, companySetupDefaultValues, type CompanySetupFormData } from "@/schemas";
 import { Logo } from "@/components/Logo";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 export default function CompanySetup() {
   usePageTitle("Configuração da Empresa");
@@ -192,7 +194,7 @@ export default function CompanySetup() {
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                    <BusyMark className="mr-2 h-4 w-4" /> Salvando...
                   </>
                 ) : (
                   <>

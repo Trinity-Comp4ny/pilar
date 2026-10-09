@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Upload, FileText, Trash2, Loader2, Eye } from "lucide-react";
+import { Upload, FileText, Trash2, Eye } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
@@ -24,6 +24,10 @@ import { sanitizeHtml } from "@/lib/sanitize";
 import { VariaveisGuideButton } from "./VariaveisGuideDialog";
 import mammoth from "mammoth";
 
+import { BusyMark } from "@/components/motion/BusyMark";
+import { ReadingRing } from "@/components/motion/ReadingRing";
+
+import { PageLoader } from "@/components/motion/PageLoader";
 export function TemplatesManager() {
   const { data: templates = [], isLoading } = usePropostaTemplates();
   const uploadTemplate = useUploadTemplate();
@@ -116,7 +120,7 @@ export function TemplatesManager() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <ReadingRing size={64} />
       </div>
     );
   }
@@ -270,10 +274,7 @@ export function TemplatesManager() {
 
           <div className="flex-1 overflow-y-auto min-h-0">
             {previewLoading ? (
-              <div className="flex items-center justify-center py-16">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-sm text-muted-foreground">Carregando preview...</span>
-              </div>
+              <PageLoader label="Montando a pré-visualização" className="py-16" />
             ) : previewHtml ? (
               <div className="bg-white border rounded-lg shadow-sm mx-1 my-2">
                 {/* Folha de papel simulada */}
@@ -383,7 +384,7 @@ export function TemplatesManager() {
             <Button onClick={handleUpload} disabled={uploadTemplate.isPending} variant="brand">
               {uploadTemplate.isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processando...
+                  <BusyMark className="mr-2 h-4 w-4" /> Processando...
                 </>
               ) : (
                 "Upload"

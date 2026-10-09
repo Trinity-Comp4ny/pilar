@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight, Calendar, Check, ChevronDown, Coins, Loader2, RotateCcw } from "lucide-react";
+import { ArrowUpRight, Calendar, Check, ChevronDown, Coins, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,8 @@ import { DisciplinasSection } from "@/pages/projetos/components/DisciplinasSecti
 import { DisciplinaDetailDialog } from "@/pages/projetos/components/DisciplinaDetailDialog";
 import { useDisciplinasEditor } from "./useDisciplinasEditor";
 import type { Draft, ProjetoCampos } from "./useChat";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 type Props = {
   index: number;
@@ -171,7 +173,7 @@ export function ProjetoConfirmationCard({ index, draft, onConfirmar, onCancelar,
             disabled={desfazendo}
             className="h-auto gap-1 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
           >
-            {desfazendo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+            {desfazendo ? <BusyMark className="h-3.5 w-3.5" /> : <RotateCcw className="h-3.5 w-3.5" />}
             Desfazer
           </Button>
         </div>
@@ -443,7 +445,7 @@ export function ProjetoConfirmationCard({ index, draft, onConfirmar, onCancelar,
             Cancelar
           </Button>
           <Button size="sm" onClick={criar} disabled={salvando} variant="brand" className="gap-1.5">
-            {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+            {salvando ? <BusyMark className="h-4 w-4" /> : <Check className="h-4 w-4" />}
             Criar projeto
           </Button>
         </div>

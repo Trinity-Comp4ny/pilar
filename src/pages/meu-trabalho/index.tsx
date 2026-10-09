@@ -36,6 +36,7 @@ import { useEtapas, useEtapaMutations, type Etapa } from "./useEtapas";
 import { useColunasLista } from "./colunas";
 import type { Prioridade } from "./status";
 
+import { PageLoader } from "@/components/motion/PageLoader";
 const LS_VISAO = "pilar.meu-trabalho.visao";
 const EU = "eu";
 
@@ -534,7 +535,7 @@ export default function MeuTrabalho() {
       {visao === "agenda" ? (
         <AbaAgenda pessoaIds={pessoaIdsEfetivos} minhaPessoaId={minhaPessoaId} canEdit temProjetos={temProjetos} />
       ) : isLoading ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">Carregando seu trabalho...</p>
+        <PageLoader label="Carregando seu trabalho" />
       ) : isError ? (
         <p className="py-12 text-center text-sm text-destructive">Não deu para carregar. Recarregue a página.</p>
       ) : visao === "lista" ? (

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Coins, Loader2, Zap } from "lucide-react";
+import { Check, Coins, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,8 @@ import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { msgErro } from "./erros";
 import type { Acao } from "./useChat";
 import { analytics } from "@/lib/analytics";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 type Props = {
   index: number;
@@ -346,7 +348,7 @@ export function AcaoCard({ index, acao, onExecutar, onCancelar }: Props) {
             variant="brand"
             className="gap-1.5"
           >
-            {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} {meta.verbo}
+            {salvando ? <BusyMark className="h-4 w-4" /> : <Check className="h-4 w-4" />} {meta.verbo}
           </Button>
         </div>
       </div>

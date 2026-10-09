@@ -7,7 +7,6 @@ import {
   ChevronDown,
   ChevronRight,
   ExternalLink,
-  Loader2,
   Pencil,
   Plus,
   Sparkles,
@@ -42,6 +41,8 @@ import {
 } from "@/hooks/useObraCotacoes";
 import { useCriarFornecedor } from "@/hooks/useFornecedorDetalhe";
 import { usePermissions } from "@/hooks/usePermissions";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 const OUTRO = "__outro__";
 // Opção que cria o cadastro na hora (evita a dívida de reconciliação na origem).
@@ -418,7 +419,7 @@ function ImportStepper({ step }: { step: number }) {
             {feito ? (
               <Check className="h-4 w-4 text-positive-strong" />
             ) : atual ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <BusyMark className="h-4 w-4" />
             ) : (
               <span className="h-4 w-4 rounded-full border border-current/30" />
             )}
@@ -717,11 +718,7 @@ function AnalisarOrcamentoButton({
     <>
       <input ref={fileRef} type="file" accept={ACCEPT_ORCAMENTO} className="hidden" onChange={onArquivo} />
       <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={importar.isPending}>
-        {importar.isPending ? (
-          <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-        ) : (
-          <Sparkles className="mr-1.5 h-4 w-4" />
-        )}
+        {importar.isPending ? <BusyMark className="mr-1.5 h-4 w-4" /> : <Sparkles className="mr-1.5 h-4 w-4" />}
         Analisar orçamento (PDF)
       </Button>
 
@@ -868,7 +865,7 @@ function AnalisarOrcamentoButton({
               Cancelar
             </Button>
             <Button type="button" variant="brand" onClick={confirmar} disabled={!tipoPreview || salvando}>
-              {salvando && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+              {salvando && <BusyMark className="mr-1.5 h-4 w-4" />}
               {tipoPreview === "cesta" ? "Adicionar proposta" : "Adicionar propostas"}
             </Button>
           </DialogFooter>
@@ -1100,7 +1097,7 @@ function PropostaFormDialog({
             Cancelar
           </Button>
           <Button type="button" variant="brand" onClick={submit} disabled={save.isPending}>
-            {save.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+            {save.isPending && <BusyMark className="mr-1.5 h-4 w-4" />}
             {isEdit ? "Salvar" : "Adicionar"}
           </Button>
         </DialogFooter>
@@ -1167,12 +1164,12 @@ function DecisaoDialog({
 
         <DialogFooter className="flex-col gap-2 sm:flex-row">
           <Button type="button" variant="outline" onClick={() => decidirCom(false)} disabled={decidir.isPending}>
-            {decidir.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+            {decidir.isPending && <BusyMark className="mr-1.5 h-4 w-4" />}
             Só marcar vencedora
           </Button>
           {podeLancarDespesa && (
             <Button type="button" variant="brand" onClick={() => decidirCom(true)} disabled={decidir.isPending}>
-              {decidir.isPending && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
+              {decidir.isPending && <BusyMark className="mr-1.5 h-4 w-4" />}
               Marcar e lançar despesa
             </Button>
           )}

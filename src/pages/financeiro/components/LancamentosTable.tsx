@@ -29,6 +29,7 @@ import { LancamentosBulkBar } from "./LancamentosBulkBar";
 import { LancamentosGroupRow } from "./LancamentosGroupRow";
 import { LancamentosItemRow } from "./LancamentosItemRow";
 
+import { PageLoader } from "@/components/motion/PageLoader";
 interface Props {
   resumo: LancamentosResumo;
   filters: LancamentosFilters;
@@ -539,8 +540,8 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
             <tbody>
               {loading && items.length === 0 ? (
                 <tr>
-                  <td colSpan={colCount} className="text-center text-muted-foreground py-10">
-                    Carregando…
+                  <td colSpan={colCount}>
+                    <PageLoader label="Carregando lançamentos" />
                   </td>
                 </tr>
               ) : items.length === 0 ? (
@@ -650,10 +651,10 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
               variant="outline"
               size="sm"
               onClick={() => paginated.fetchNextPage()}
-              disabled={paginated.isFetchingNextPage}
+              loading={paginated.isFetchingNextPage}
               className="text-xs"
             >
-              {paginated.isFetchingNextPage ? "Carregando…" : "Carregar mais"}
+              Carregar mais
             </Button>
           </div>
         )}

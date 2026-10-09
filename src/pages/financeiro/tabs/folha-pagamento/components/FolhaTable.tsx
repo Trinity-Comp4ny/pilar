@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, FileDown, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
+import { FileDown, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import type { FolhaItem } from "../types";
+
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 interface FolhaTableProps {
   data: FolhaItem[];
@@ -42,7 +44,7 @@ export function FolhaTable({
       <CardContent className="p-0">
         {loading ? (
           <div className="flex justify-center items-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <ReadingRing size={64} />
           </div>
         ) : (
           <div className="overflow-x-auto">

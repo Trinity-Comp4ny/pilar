@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, ArrowRight, Eye, EyeOff, Loader2, Lock, Phone, User } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, EyeOff, Lock, Phone, User } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { getSafeErrorMessage } from "@/lib/safeError";
@@ -22,6 +22,8 @@ import {
   profileSetupDefaultValues,
   type ProfileSetupFormData,
 } from "@/schemas";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 export default function ProfileSetup() {
   usePageTitle("Configuração do Perfil");
@@ -452,7 +454,7 @@ export default function ProfileSetup() {
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                    <BusyMark className="mr-2 h-4 w-4" /> Salvando...
                   </>
                 ) : (
                   <>

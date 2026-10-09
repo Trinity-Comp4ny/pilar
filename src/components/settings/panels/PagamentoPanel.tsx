@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { CreditCard, Calendar, Package, ExternalLink, Loader2, Sparkles, Lock, Handshake } from "lucide-react";
+import { CreditCard, Calendar, Package, ExternalLink, Sparkles, Lock, Handshake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -12,6 +12,8 @@ import { AtivarPlano } from "@/components/trial/AtivarPlano";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { MARKETING_URL } from "@/lib/marketingSite";
 import { ehConvidada, podeAtivarPlano } from "@/lib/cobranca";
+
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 function formatBRL(value: number): string {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -68,7 +70,7 @@ export function PagamentoPanel() {
     <>
       {isLoading && (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin text-ink-disabled" />
+          <ReadingRing size={64} />
         </div>
       )}
 

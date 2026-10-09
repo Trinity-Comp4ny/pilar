@@ -6,7 +6,6 @@ import {
   Building2,
   CircleOff,
   ExternalLink,
-  Loader2,
   Pencil,
   Plus,
   Search,
@@ -68,6 +67,9 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { parseCompanyFeatures, type CompanyFeatures, type SubscriptionPlanSlug } from "@/lib/features";
 import type { PilarRole } from "@/lib/roles";
 import { env } from "@/lib/env";
+
+import { BusyMark } from "@/components/motion/BusyMark";
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 type CobrancaStatus = "active" | "trialing" | "overdue" | "canceled" | "expired" | null;
 
@@ -990,7 +992,7 @@ export default function UltraAdmin() {
     return (
       <PageLayout header={<PageHeader title="Gestão Pilar" />}>
         <div className="flex min-h-[60vh] items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-black/40" />
+          <ReadingRing size={112} />
         </div>
       </PageLayout>
     );
@@ -1334,7 +1336,7 @@ export default function UltraAdmin() {
 
               {loading ? (
                 <div className="flex justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-black/40" />
+                  <ReadingRing size={64} />
                 </div>
               ) : (
                 <Table>
@@ -1412,7 +1414,7 @@ export default function UltraAdmin() {
             <CardContent>
               {loading ? (
                 <div className="flex items-center gap-2 py-8 text-sm text-black/50">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <BusyMark className="h-4 w-4" />
                   Carregando empresas…
                 </div>
               ) : (
@@ -1709,7 +1711,7 @@ export default function UltraAdmin() {
             <Button variant="brand" onClick={handleCreateEmpresa} disabled={creating}>
               {creating ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <BusyMark className="h-4 w-4 mr-2" />
                   Criando…
                 </>
               ) : (
@@ -1890,7 +1892,7 @@ function EditCompanyDialog({
             }}
             disabled={saving || !form.nome.trim() || (dangerous && !confirmMatches)}
           >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+            {saving ? <BusyMark className="h-4 w-4" /> : "Salvar"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -1956,7 +1958,7 @@ function ArchiveCompanyDialog({
             disabled={saving || !matches}
             className="bg-destructive hover:bg-destructive/90 focus:ring-destructive"
           >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Arquivar empresa"}
+            {saving ? <BusyMark className="h-4 w-4" /> : "Arquivar empresa"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -2053,7 +2055,7 @@ function MarcarConvidadaDialog({
             }}
             disabled={saving || !nomeConfere}
           >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Tornar convidada"}
+            {saving ? <BusyMark className="h-4 w-4" /> : "Tornar convidada"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -2145,7 +2147,7 @@ function ConverterParaPaganteDialog({
             }}
             disabled={saving || !nomeConfere || !diasValido}
           >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Cancelar convite"}
+            {saving ? <BusyMark className="h-4 w-4" /> : "Cancelar convite"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

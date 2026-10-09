@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AlertTriangle, ArrowLeft, Camera, Loader2, Plus, Ruler, UserCheck, Users, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Camera, Plus, Ruler, UserCheck, Users, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,8 @@ import type {
   FilaTarefaVinculo,
   FilaVisita,
 } from "./campoOfflineQueue";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 interface TarefaCronograma {
   id: string;
@@ -646,7 +648,7 @@ export default function CampoRegistrarDia() {
               disabled={!novaTarefaTitulo.trim() || criandoTarefa}
               aria-label="Criar tarefa"
             >
-              {criandoTarefa ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              {criandoTarefa ? <BusyMark className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
             </Button>
           </div>
         </div>
@@ -953,7 +955,7 @@ export default function CampoRegistrarDia() {
         </div>
 
         <Button type="submit" variant="brand" className="h-12 w-full text-base" disabled={saving}>
-          {saving && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+          {saving && <BusyMark className="mr-2 h-5 w-5" />}
           Salvar o dia
         </Button>
       </form>

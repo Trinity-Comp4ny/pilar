@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Plus, Trash2, Landmark, Loader2, X, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Landmark, X, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
@@ -27,6 +27,8 @@ import { pessoaSchema, pessoaDefaultValues, type PessoaFormData } from "@/schema
 import { Badge } from "@/components/ui/badge";
 import { detectTipoChavePix, normalizarChavePix, TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import type { Pessoa, ContaBancaria, ChavePix } from "../types";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 interface PessoaFormDialogProps {
   open: boolean;
@@ -733,7 +735,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
             <Button type="button" onClick={() => handleSubmit()} variant="brand" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                  <BusyMark className="mr-2 h-4 w-4" /> Salvando...
                 </>
               ) : isEditMode ? (
                 "Atualizar"
