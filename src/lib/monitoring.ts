@@ -150,10 +150,9 @@ const sentryMonitoring: Monitoring = {
       replaysSessionSampleRate: 0,
       replaysOnErrorSampleRate: 1.0,
       sendDefaultPii: false,
-      integrations: [
-        Sentry.browserTracingIntegration(),
-        Sentry.replayIntegration({ maskAllText: false, blockAllMedia: false }),
-      ],
+      // Replay entra depois, pela CDN (abaixo): no bundle ele pesava ~260 KB de fonte
+      // na entrada de toda página, para gravar só sessões com erro.
+      integrations: [Sentry.browserTracingIntegration()],
       beforeSendTransaction(event) {
         const txName = event.transaction ?? "";
         if (IGNORED_TX_ROUTES.some((re) => re.test(txName))) return null;
@@ -179,6 +178,12 @@ const sentryMonitoring: Monitoring = {
     // aqui é não-fatal: resto do Sentry (erro, tracing, replay) já está ativo.
     Sentry.lazyLoadIntegration("browserProfilingIntegration")
       .then((integrationFn) => Sentry.addIntegration(integrationFn()))
+      .catch(() => undefined);
+    // Replay de sessão com erro (replaysOnErrorSampleRate acima), também pela CDN. Os
+    // primeiros instantes antes do script chegar não entram na gravação; o erro em si e
+    // o tracing já estão ativos desde o init.
+    Sentry.lazyLoadIntegration("replayIntegration")
+      .then((integrationFn) => Sentry.addIntegration(integrationFn({ maskAllText: false, blockAllMedia: false })))
       .catch(() => undefined);
     // beforeSend só roda pra eventos de erro: sendFeedback() emite um evento
     // tipo "feedback" à parte, que precisa do próprio scrub aqui.
