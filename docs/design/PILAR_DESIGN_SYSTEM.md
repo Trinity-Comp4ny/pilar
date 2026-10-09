@@ -103,8 +103,9 @@ Página de detalhe nova com mais de uma seção segue este padrão em vez de inv
 ### Estado da tela
 
 - **`EmptyState`** (`src/components/EmptyState.tsx`): vazio orientado à ação. Props: `icon?`, `title`, `description?`, `action?`, `children?`.
-- **`TableSkeleton`** / **`PageSkeleton`** / **`ui/skeleton`**: loading. Prefira skeleton a spinner central. Não use `animate-spin` solto por tela.
-- **`Spinner`** (`src/components/Spinner.tsx`): quando precisar de spinner (botão, inline).
+- **Movimento da marca** (`src/components/motion/`, ADR 0049): toda espera usa a marca. `Button loading` ou `BusyMark` para espera inline (botão, campo, linha); `PageLoader` (anel de leitura) para página, seção e card, que só aparece depois de 300ms; `EntryVeil` para a entrada no app. `Loader2` e `animate-spin` são proibidos: um teste de varredura reprova o PR.
+- **`TableSkeleton`** / **`ui/skeleton`**: esqueleto de tabela quando o formato da lista já é conhecido.
+- **`Spinner`** (`src/components/Spinner.tsx`): ritmo da marca com texto ao lado, para espera inline com legenda.
 
 ### Status
 
