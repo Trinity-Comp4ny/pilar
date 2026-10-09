@@ -105,7 +105,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
 | `geocode-address` | Geocodifica endereço pelo Nominatim (mapa). | app | JWT |  | não |
-| `health` | Saúde do backend (banco, Asaas, Resend); usado pelo smoke de deploy e pelo monitor de produção. | monitor de produção e smoke de deploy | própria | `HEALTH_CHECK_ASAAS` `HEALTH_CHECK_RESEND` `RELEASE_SHA` `SENTRY_RELEASE` `VERCEL_GIT_COMMIT_SHA` | não |
+| `health` | Saúde do backend (banco, Asaas, Resend); usado pelo smoke de deploy e pelo monitor de produção. | monitor de produção e smoke de deploy | própria | `HEALTH_CHECK_ASAAS` `HEALTH_CHECK_RESEND` `RELEASE_SHA` `SENTRY_RELEASE` `VERCEL_GIT_COMMIT_SHA` | sim |
 | `lookup-cep` | Busca CEP sem login (checkout), BrasilAPI com fallback de provedor. | app | JWT |  | sim |
 | `turnstile-verify` | Verifica no servidor o token do Cloudflare Turnstile. | **sem chamador conhecido** | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` `TURNSTILE_SECRET_KEY` | não |
 
