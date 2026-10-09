@@ -10,7 +10,7 @@ import {
   mensagemBloqueioTokens,
   callGeminiStructured,
   debitarTokens,
-  GEMINI_MODEL,
+  modeloEmUso,
   recordAgentRun,
   type AiRequest,
 } from "../_shared/ai-client.ts";
@@ -366,7 +366,7 @@ serve(
         userId: user.id,
         agentKey: "cotacao-import",
         agentRunId: runId,
-        model: GEMINI_MODEL,
+        model: modeloEmUso("cotacao-import"),
         tokensInput: tokensEntrada,
         tokensOutput: tokensSaida,
         idempotencyKey: crypto.randomUUID(),

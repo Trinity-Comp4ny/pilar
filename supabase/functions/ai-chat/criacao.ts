@@ -1,5 +1,5 @@
 import { jsonResponse } from "../_shared/cors.ts";
-import { callGeminiStructured, GEMINI_MODEL } from "../_shared/ai-client.ts";
+import { callGeminiStructured, modeloEmUso } from "../_shared/ai-client.ts";
 import { z } from "../_shared/schemas.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { comContexto, sha256Hex } from "./contexto.ts";
@@ -61,7 +61,7 @@ export async function processarCriacao(o: {
       session_id: o.sessionId,
       role: "assistant",
       content: pergunta,
-      meta: { agente: o.agente, agente_label: o.label, model: GEMINI_MODEL },
+      meta: { agente: o.agente, agente_label: o.label, model: modeloEmUso(FEATURE_KEY) },
       tokens_input: tokIn,
       tokens_output: tokOut,
     });
@@ -107,7 +107,7 @@ export async function processarCriacao(o: {
         input: { message: o.message },
         result: campos,
         idempotency_key: idempotencyKey,
-        model: GEMINI_MODEL,
+        model: modeloEmUso(FEATURE_KEY),
         tokens_input: tokIn,
         tokens_output: tokOut,
         created_by: o.userId,
@@ -129,7 +129,7 @@ export async function processarCriacao(o: {
     meta: {
       agente: o.agente,
       agente_label: o.label,
-      model: GEMINI_MODEL,
+      model: modeloEmUso(FEATURE_KEY),
       draft_run_id: runId,
       entity_type: o.entidade,
     },

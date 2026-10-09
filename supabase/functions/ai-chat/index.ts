@@ -20,7 +20,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry, setSentryUser } from "../_shared/sentry.ts";
 import { getCorsHeaders, jsonResponse, optionsResponse } from "../_shared/cors.ts";
-import { createAuthClient, createAdminClient, checkRateLimit, callGeminiStructured, verificarTokens, mensagemBloqueioTokens, GEMINI_MODEL } from "../_shared/ai-client.ts";
+import {
+  createAuthClient,
+  createAdminClient,
+  checkRateLimit,
+  callGeminiStructured,
+  verificarTokens,
+  mensagemBloqueioTokens,
+  modeloEmUso,
+} from "../_shared/ai-client.ts";
 import { coletarDados } from "./coleta.ts";
 import { streamConsulta } from "./consulta.ts";
 import { carregarHistorico, comContexto } from "./contexto.ts";
@@ -156,7 +164,12 @@ serve(
           session_id: sessionId,
           role: "assistant",
           content: aviso,
-          meta: { agente, agente_label: AGENTE_LABEL[agente], motivo: rota.data.motivo, model: GEMINI_MODEL },
+          meta: {
+            agente,
+            agente_label: AGENTE_LABEL[agente],
+            motivo: rota.data.motivo,
+            model: modeloEmUso(FEATURE_KEY),
+          },
         });
         const saldo = await recordAndSaldo(
           adminClient,
@@ -192,7 +205,7 @@ serve(
             entity_type: rota.data.operacao,
             input: { message },
             result: { acao: rota.data.operacao },
-            model: GEMINI_MODEL,
+            model: modeloEmUso(FEATURE_KEY),
             tokens_input: rota.tokensEntrada,
             tokens_output: rota.tokensSaida,
             created_by: user.id,
@@ -204,7 +217,13 @@ serve(
           session_id: sessionId,
           role: "assistant",
           content: "Escolha o alvo e confirme a ação.",
-          meta: { agente, agente_label: label, model: GEMINI_MODEL, acao_run_id: run.id, operacao: rota.data.operacao },
+          meta: {
+            agente,
+            agente_label: label,
+            model: modeloEmUso(FEATURE_KEY),
+            acao_run_id: run.id,
+            operacao: rota.data.operacao,
+          },
         });
         const saldo = await recordAndSaldo(
           adminClient,
@@ -240,7 +259,7 @@ serve(
           status: "running",
           entity_type: agente,
           input: { message },
-          model: GEMINI_MODEL,
+          model: modeloEmUso(FEATURE_KEY),
           tokens_input: rota.tokensEntrada,
           tokens_output: rota.tokensSaida,
           created_by: user.id,
@@ -275,7 +294,7 @@ serve(
         agente,
         agente_label: AGENTE_LABEL[agente],
         motivo: rota.data.motivo,
-        model: GEMINI_MODEL,
+        model: modeloEmUso(FEATURE_KEY),
       };
 
       // 3a) Streaming (SSE): resposta em linguagem natural token-a-token.

@@ -1,5 +1,5 @@
 import { getCorsHeaders, SECURITY_HEADERS, jsonResponse } from "../_shared/cors.ts";
-import { debitarTokens, getAiSaldo, GEMINI_MODEL } from "../_shared/ai-client.ts";
+import { debitarTokens, getAiSaldo, modeloEmUso } from "../_shared/ai-client.ts";
 import type { AiSaldo } from "../_shared/ai-client.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { AGENTE_LABEL, Agente, FEATURE_KEY } from "./schemas.ts";
@@ -81,7 +81,7 @@ export async function recordAndSaldo(
     userId,
     agentKey: FEATURE_KEY,
     agentRunId: runId ?? null,
-    model: GEMINI_MODEL,
+    model: modeloEmUso(FEATURE_KEY),
     tokensInput: tokIn,
     tokensOutput: tokOut,
     idempotencyKey: crypto.randomUUID(),
