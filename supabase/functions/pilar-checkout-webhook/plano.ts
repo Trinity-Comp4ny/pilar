@@ -44,6 +44,8 @@ export interface PlanoWebhook {
   renovarAssinaturaAte: string | null;
   // Inadimplência, estorno, fim de assinatura
   statusAssinatura: "overdue" | "canceled" | null;
+  /** Estorno devolveu o dinheiro: o acesso pago termina agora, não no fim do período. */
+  encerrarAcessoAgora: boolean;
   statusSignup: "failed" | "canceled" | null;
   statusCompra: "failed" | "canceled" | null;
 }
@@ -81,6 +83,7 @@ export function planejarWebhook(
     marcarCompraPaga: false,
     creditoTokens: null,
     renovarAssinaturaAte: null,
+    encerrarAcessoAgora: false,
     statusAssinatura: null,
     statusSignup: null,
     statusCompra: null,
@@ -113,7 +116,10 @@ export function planejarWebhook(
 
   if (EVENTOS_ESTORNO.includes(evento)) {
     if (signup) plano.statusSignup = "canceled";
-    if (assinatura) plano.statusAssinatura = "canceled";
+    if (assinatura) {
+      plano.statusAssinatura = "canceled";
+      plano.encerrarAcessoAgora = true;
+    }
     // Compra já creditada não é estornada no ledger (risco aceito, SPEC 077).
     if (compra && compra.status !== "paid") plano.statusCompra = "canceled";
   }
