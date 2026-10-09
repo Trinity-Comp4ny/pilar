@@ -2,157 +2,177 @@
 #
 # backup-restore-test.sh
 #
-# DR drill: restaura um dump SQL em um banco de teste e valida invariantes
-# básicas (contagens > 0, RLS habilitado em tabelas críticas).
+# DR drill: restaura um backup completo num banco Supabase descartável e prova que ele
+# volta inteiro: cada tabela com o mesmo número de linhas do manifesto, RLS ligado nas
+# tabelas críticas e funções de segurança presentes.
 #
 # Uso:
-#   ./scripts/backup-restore-test.sh <BACKUP_DUMP> <TEST_DB_URL>
+#   ./scripts/backup-restore-test.sh <PASTA_DO_BACKUP> <TEST_DB_URL>
 #
-# Exemplo:
-#   ./scripts/backup-restore-test.sh \
-#       backups/prod-2026-04-01.sql \
-#       "postgresql://postgres.xxx:senha@aws-0-sa-east-1.pooler.supabase.com:5432/postgres"
+# A pasta é o backup descriptografado do backup-nightly.yml:
+#   roles.sql      supabase db dump --role-only
+#   schema.sql     supabase db dump
+#   data.sql       supabase db dump --data-only --use-copy
+#   manifesto.json node scripts/backup/manifesto.mjs data.sql
+#
+# TEST_DB_URL tem que ser um Supabase VAZIO (projeto descartável ou `supabase start`
+# num diretório sem migrations): o restore cria as tabelas do zero.
 #
 # Convenções:
-#   - Sai com 0 se TUDO passou (saída final "OK").
-#   - Sai com 1 se algo falhou (saída final "FAIL: <razão>").
-#   - Não modifica produção; o TEST_DB_URL deve apontar para projeto descartável.
+#   - Sai com 0 se TUDO passou (última linha "OK").
+#   - Sai com 1 se algo falhou (lista de "FAIL").
+#   - Imprime só contagens e nomes de tabela, nunca dado: roda no CI com dado de produção.
+#   - bash 3.2 (o do macOS): sem `declare -A`.
 
 set -euo pipefail
 
-# ---- args -------------------------------------------------------------------
-
-BACKUP_DUMP="${1:-}"
+BACKUP_DIR="${1:-}"
 TEST_DB_URL="${2:-}"
 
-if [[ -z "$BACKUP_DUMP" || -z "$TEST_DB_URL" ]]; then
-    echo "Uso: $0 <BACKUP_DUMP> <TEST_DB_URL>" >&2
+if [[ -z "$BACKUP_DIR" || -z "$TEST_DB_URL" ]]; then
+    echo "Uso: $0 <PASTA_DO_BACKUP> <TEST_DB_URL>" >&2
     exit 1
 fi
 
-if [[ ! -f "$BACKUP_DUMP" ]]; then
-    echo "FAIL: dump não encontrado em $BACKUP_DUMP" >&2
-    exit 1
-fi
-
-DUMP_BYTES=$(wc -c <"$BACKUP_DUMP" | tr -d ' ')
-if [[ "$DUMP_BYTES" -lt 1024 ]]; then
-    echo "FAIL: dump muito pequeno ($DUMP_BYTES bytes), provavelmente corrompido" >&2
-    exit 1
-fi
+for f in roles.sql schema.sql data.sql manifesto.json; do
+    if [[ ! -f "$BACKUP_DIR/$f" ]]; then
+        echo "FAIL: $BACKUP_DIR/$f não encontrado" >&2
+        exit 1
+    fi
+done
 
 if ! command -v psql >/dev/null 2>&1; then
     echo "FAIL: psql não está instalado (brew install libpq)" >&2
     exit 1
 fi
 
-# Safety: bloquear URL apontando para hosts conhecidamente prod.
-if [[ "$TEST_DB_URL" == *"pilar-prod"* || "$TEST_DB_URL" == *"production"* ]]; then
-    echo "FAIL: TEST_DB_URL parece apontar para PROD. Abortando." >&2
+# Safety: nunca restaurar em cima de produção ou staging (refs dos dois projetos).
+# Projeto hospedado novo e vazio é permitido: é o caminho de um desastre real.
+if [[ "$TEST_DB_URL" == *"vepnsonbnsimqcsfcagm"* || "$TEST_DB_URL" == *"rizaklgstyfrwgmdsldf"* ]]; then
+    echo "FAIL: TEST_DB_URL aponta para produção ou staging. Use um banco vazio." >&2
     exit 1
 fi
 
 START_TS=$(date +%s)
-LOG_FILE=$(mktemp -t pilar-restore-XXXXXX.log)
+LOG_FILE=$(mktemp -t pilar-restore-XXXXXX)
 echo "Log de restore: $LOG_FILE"
 
 # ---- restore ----------------------------------------------------------------
+# Receita da documentação do Supabase: tudo numa transação, e os dados com
+# session_replication_role = replica (sem trigger nem checagem de FK na carga, a ordem
+# das tabelas no dump não importa).
+#
+# Constraint NOT VALID (ex.: receitas_valor_positivo) não valida as linhas antigas, mas
+# CHECK vale em todo INSERT/COPY, então uma linha antiga fora da regra barrava o restore
+# inteiro (achado no primeiro drill de produção, 2026-10-09). Elas saem antes da carga e
+# voltam depois, ainda NOT VALID: o mesmo estado de produção.
+GUARDAR_NOT_VALID="CREATE TEMP TABLE _not_valid AS
+  SELECT k.conrelid::regclass::text AS tabela, k.conname, pg_get_constraintdef(k.oid) AS def
+  FROM pg_constraint k JOIN pg_class t ON t.oid = k.conrelid
+  WHERE NOT k.convalidated AND k.contype IN ('c', 'f')
+    AND pg_get_userbyid(t.relowner) = current_user;
+DO \$\$ DECLARE r record; BEGIN
+  FOR r IN SELECT * FROM _not_valid LOOP
+    EXECUTE format('ALTER TABLE %s DROP CONSTRAINT %I', r.tabela, r.conname);
+  END LOOP;
+END \$\$;"
+RECRIAR_NOT_VALID="DO \$\$ DECLARE r record; BEGIN
+  FOR r IN SELECT * FROM _not_valid LOOP
+    EXECUTE format('ALTER TABLE %s ADD CONSTRAINT %I %s', r.tabela, r.conname, r.def);
+  END LOOP;
+END \$\$;"
 
-echo ">> Restaurando $BACKUP_DUMP em banco de teste..."
+echo ">> Restaurando roles, schema e dados..."
 if ! psql "$TEST_DB_URL" \
-        --set ON_ERROR_STOP=1 \
+        --single-transaction \
+        --variable ON_ERROR_STOP=1 \
         --quiet \
-        -f "$BACKUP_DUMP" \
+        --file "$BACKUP_DIR/roles.sql" \
+        --file "$BACKUP_DIR/schema.sql" \
+        --command "$GUARDAR_NOT_VALID" \
+        --command 'SET session_replication_role = replica' \
+        --file "$BACKUP_DIR/data.sql" \
+        --command 'SET session_replication_role = origin' \
+        --command "$RECRIAR_NOT_VALID" \
         >>"$LOG_FILE" 2>&1; then
-    echo "FAIL: psql restore retornou erro. Veja $LOG_FILE" >&2
-    tail -n 50 "$LOG_FILE" >&2
+    echo "FAIL: psql restore retornou erro. Últimas linhas do log:" >&2
+    tail -n 30 "$LOG_FILE" >&2
     exit 1
 fi
-
-RESTORE_END_TS=$(date +%s)
-RESTORE_DURATION=$((RESTORE_END_TS - START_TS))
+RESTORE_DURATION=$(( $(date +%s) - START_TS ))
 echo "   restore concluído em ${RESTORE_DURATION}s"
-
-# ---- validações -------------------------------------------------------------
 
 run_query() {
     psql "$TEST_DB_URL" -At -c "$1"
 }
 
-# Arrays associativos (declare -A) só existem a partir do bash 4. O bash padrão
-# do macOS é o 3.2 (licença GPLv2 travada) — um script de DR que só roda com um
-# bash "de brew" instalado à parte é um risco na hora do incidente de verdade.
-# Duas listas paralelas por índice fazem o mesmo, compatível com bash 3.2+.
-COUNT_NAMES=()
-COUNT_VALUES=()
 FAILS=()
 
-CRITICAL_TABLES=(profiles empresas projetos lancamentos)
-
-echo ">> Validando contagens..."
-for tbl in "${CRITICAL_TABLES[@]}"; do
-    if ! count=$(run_query "SELECT COUNT(*) FROM public.$tbl;" 2>>"$LOG_FILE"); then
-        FAILS+=("tabela $tbl não existe ou inacessível")
+# ---- contagens contra o manifesto ------------------------------------------
+echo ">> Comparando contagens com o manifesto..."
+TABELAS_OK=0
+LINHAS_RESTAURADAS=0
+while IFS=$'\t' read -r tabela esperado; do
+    [[ -z "$tabela" ]] && continue
+    schema="${tabela%%.*}"
+    nome="${tabela#*.}"
+    if ! obtido=$(run_query "SELECT count(*) FROM \"$schema\".\"$nome\";" 2>>"$LOG_FILE"); then
+        FAILS+=("$tabela não existe depois do restore")
         continue
     fi
-    COUNT_NAMES+=("$tbl")
-    COUNT_VALUES+=("$count")
-    if [[ "$count" -le 0 ]]; then
-        FAILS+=("$tbl tem $count linhas (esperado > 0)")
+    if [[ "$obtido" != "$esperado" ]]; then
+        FAILS+=("$tabela: $obtido linhas, manifesto diz $esperado")
+        continue
     fi
-    printf "   %-12s %s linhas\n" "$tbl" "$count"
+    TABELAS_OK=$((TABELAS_OK + 1))
+    LINHAS_RESTAURADAS=$((LINHAS_RESTAURADAS + obtido))
+done < <(node -e '
+  const m = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
+  for (const [t, n] of Object.entries(m.tabelas)) console.log(`${t}\t${n}`);
+' "$BACKUP_DIR/manifesto.json")
+echo "   $TABELAS_OK tabelas conferidas, $LINHAS_RESTAURADAS linhas"
+
+for tbl in auth.users public.empresas public.profiles; do
+    n=$(run_query "SELECT count(*) FROM $tbl;" 2>>"$LOG_FILE" || echo 0)
+    printf "   %-18s %s linhas\n" "$tbl" "$n"
+    if [[ "$n" -le 0 ]]; then
+        FAILS+=("$tbl vazia: backup sem dados")
+    fi
 done
 
+# ---- RLS --------------------------------------------------------------------
 echo ">> Validando RLS habilitado..."
-# lancamentos é view (spec 033/ADR 0017, security_invoker) desde 17/08 — não tem
-# relrowsecurity próprio. RLS de verdade mora nas tabelas de origem.
 RLS_TABLES=(profiles empresas projetos receitas despesas data_deletion_requests audit_logs)
 for tbl in "${RLS_TABLES[@]}"; do
     rls=$(run_query "SELECT relrowsecurity FROM pg_class WHERE oid = 'public.$tbl'::regclass;" 2>>"$LOG_FILE" || echo "")
     if [[ "$rls" != "t" ]]; then
-        FAILS+=("RLS desabilitado (ou tabela ausente) em $tbl: '$rls'")
-    else
-        printf "   %-25s RLS ON\n" "$tbl"
+        FAILS+=("RLS desabilitado (ou tabela ausente) em $tbl")
     fi
 done
 
-echo ">> Validando funções críticas existem..."
-CRITICAL_FUNCS=(has_role get_user_empresa_id request_data_deletion)
-for fn in "${CRITICAL_FUNCS[@]}"; do
+# ---- funções ----------------------------------------------------------------
+echo ">> Validando funções críticas..."
+for fn in has_role get_user_empresa_id can_view_financeiro request_data_deletion; do
     exists=$(run_query "SELECT 1 FROM pg_proc WHERE proname = '$fn' LIMIT 1;" 2>>"$LOG_FILE" || echo "")
     if [[ "$exists" != "1" ]]; then
         FAILS+=("função $fn não encontrada")
-    else
-        printf "   %-25s OK\n" "$fn"
     fi
 done
 
 # ---- relatório --------------------------------------------------------------
-
 TOTAL_DURATION=$(( $(date +%s) - START_TS ))
-
 echo ""
-echo "================ DR drill report ================"
-echo "Dump:               $BACKUP_DUMP ($DUMP_BYTES bytes)"
-echo "Restore duration:   ${RESTORE_DURATION}s"
-echo "Total duration:     ${TOTAL_DURATION}s"
-for i in "${!COUNT_NAMES[@]}"; do
-    echo "  count(${COUNT_NAMES[$i]}) = ${COUNT_VALUES[$i]}"
-done
-echo "================================================="
+echo "================ DR drill ================"
+echo "Restore:  ${RESTORE_DURATION}s   Total: ${TOTAL_DURATION}s"
+echo "Tabelas:  $TABELAS_OK conferidas, $LINHAS_RESTAURADAS linhas"
+echo "=========================================="
 
 if [[ "${#FAILS[@]}" -gt 0 ]]; then
     echo ""
-    echo "FAIL: ${#FAILS[@]} verificação(ões) falhou(aram):"
     for f in "${FAILS[@]}"; do
-        echo "  - $f"
+        echo "FAIL: $f"
     done
-    echo ""
-    echo "Log completo: $LOG_FILE"
     exit 1
 fi
 
-echo ""
-echo "OK — todas as verificações passaram."
-echo "Log: $LOG_FILE"
-exit 0
+echo "OK"

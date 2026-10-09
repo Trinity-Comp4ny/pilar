@@ -1,0 +1,146 @@
+name: Drill de restore (mensal)
+
+# Prova todo mês que o backup de produção volta inteiro: baixa o último backup do
+# backup-nightly.yml, restaura num Supabase vazio no próprio runner (Postgres 17, igual a
+# produção) e compara linha por linha com o manifesto gravado no backup, além de RLS e
+# funções de segurança (scripts/backup-restore-test.sh).
+#
+# Backup que nunca foi restaurado é suposição: foi assim que o noturno passou meses
+# salvando só o schema (corrigido em 2026-10-09, ver DISASTER_RECOVERY.md).
+#
+# O dado de produção fica só no runner, que é descartado no fim. O relatório traz
+# contagens e nomes de tabela, nunca conteúdo.
+#
+# Mesma pegadinha de todo `schedule`: só dispara a partir da branch default (main).
+
+on:
+  schedule:
+    - cron: "0 9 1 * *" # dia 1, 06:00 BRT
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read # baixar o artifact do backup-nightly.yml
+  issues: write # notify-cron-failure
+
+env:
+  SUPABASE_CLI_VERSION: "2.109.1"
+
+jobs:
+  drill:
+    name: Restaurar o backup de produção
+    runs-on: ubuntu-latest
+    # Mesmo environment do backup noturno: tem a chave de criptografia e nenhum
+    # reviewer (cron não espera clique). Ver comentário no backup-nightly.yml.
+    environment: production-automation
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      # O dump vem do pg_dump 17, que usa \restrict; psql antigo não entende.
+      - name: Instalar psql 17
+        run: |
+          set -euo pipefail
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] \
+            https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends postgresql-client-17
+          psql --version
+
+      # O artifact vem de outro run, então é dado não confiável até prova em contrário
+      # (CodeQL actions/artifact-poisoning): só vale backup de run agendado na main (código
+      # revisado), ele é baixado e extraído FORA do workspace, e só os quatro arquivos
+      # esperados, regulares e sem caminho, chegam ao restore. Um artifact forjado não
+      # consegue sobrescrever scripts do repositório nem rodar com os segredos deste job.
+      - name: Baixar o backup de produção mais recente
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          run_id=$(gh run list --workflow backup-nightly.yml --branch main --event schedule \
+            --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          if [ -z "$run_id" ]; then
+            echo "::error::Nenhum backup noturno agendado na main com sucesso nos últimos 30 dias."
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/artifact"
+          gh run download "$run_id" -n "backup-Production-$run_id" -D "$RUNNER_TEMP/artifact"
+          echo "BACKUP_RUN=$run_id" >> "$GITHUB_ENV"
+
+      - name: Descriptografar e validar o conteúdo
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/artifact"
+          openssl enc -d -aes-256-cbc -pbkdf2 -in backup-Production.tar.gz.enc -k "$BACKUP_ENCRYPTION_KEY" \
+            -out backup.tar.gz
+          esperado=$'backup/\nbackup/data.sql\nbackup/manifesto.json\nbackup/roles.sql\nbackup/schema.sql'
+          obtido=$(tar -tzf backup.tar.gz | sed 's#^\./##' | LC_ALL=C sort)
+          if [ "$obtido" != "$esperado" ]; then
+            echo "::error::Conteúdo inesperado no backup:"
+            echo "$obtido"
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/restore"
+          tar -xzf backup.tar.gz -C "$RUNNER_TEMP/restore" --no-same-owner --no-same-permissions
+          find "$RUNNER_TEMP/restore/backup" -mindepth 1 ! -type f -print -quit | grep -q . \
+            && { echo "::error::Backup com entrada que não é arquivo regular."; exit 1; }
+          echo "BACKUP_DIR=$RUNNER_TEMP/restore/backup" >> "$GITHUB_ENV"
+          ls -l "$RUNNER_TEMP/restore/backup"
+
+      # Projeto Supabase vazio, fora do repositório: sem as migrations do app, o restore
+      # cria tudo a partir do schema do backup, como seria num desastre de verdade.
+      - name: Subir um Supabase vazio (Postgres 17)
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/drill" && cd "$RUNNER_TEMP/drill"
+          supabase init --force
+          sed -i 's/^major_version = .*/major_version = 17/' supabase/config.toml
+          # Mesmas versões de Auth e Storage de produção: o dump traz tabelas e colunas que
+          # esses serviços criam lá, e o Supabase gerenciado atualiza antes do CLI. Sem isto
+          # o restore falha em "auth.<tabela> does not exist" ou "storage.buckets.<coluna>
+          # does not exist". O CLI lê os arquivos de supabase/.temp (os mesmos do `supabase
+          # link`) e usa o valor como tag da imagem, por isso o "v".
+          mkdir -p supabase/.temp
+          auth=$(curl -fsS -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            "https://api.supabase.com/v1/projects/$SUPABASE_PROJECT_REF/health?services=auth" \
+            | jq -r '.[0].info.version // empty')
+          storage=$(curl -fsS "https://$SUPABASE_PROJECT_REF.supabase.co/storage/v1/version")
+          if [ -z "$auth" ] || [ -z "$storage" ]; then
+            echo "::error::Sem a versão de Auth ou Storage de produção (auth='$auth' storage='$storage')."
+            exit 1
+          fi
+          echo "Produção: Auth $auth, Storage $storage"
+          printf 'v%s' "${auth#v}" > supabase/.temp/gotrue-version
+          printf 'v%s' "${storage#v}" > supabase/.temp/storage-version
+          supabase start -x studio,imgproxy,inbucket,mailpit,realtime,edge-runtime,logflare,vector,supavisor,postgres-meta
+
+      - name: Restaurar e conferir
+        run: |
+          set -euo pipefail
+          ./scripts/backup-restore-test.sh "$BACKUP_DIR" "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
+            | tee drill.log
+          {
+            echo "### Drill de restore: backup do run $BACKUP_RUN"
+            echo '```'
+            sed -n '/DR drill/,$p' drill.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Notificar falha
+        if: failure()
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: Drill de restore (mensal)
+          token: ${{ github.token }}
