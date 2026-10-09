@@ -64,6 +64,8 @@ export type ResultadoCaso = {
   erros: string[];
   latenciaMs: number;
   tokens: number;
+  tokensEntrada?: number;
+  tokensSaida?: number;
 };
 
 export type Limites = { intencao: number; campos: number };
@@ -83,6 +85,8 @@ export function resumir(resultados: ResultadoCaso[], limites: Limites = LIMITES)
     campos,
     latenciaP95Ms: p95,
     tokens: resultados.reduce((a, r) => a + r.tokens, 0),
+    tokensEntrada: resultados.reduce((a, r) => a + (r.tokensEntrada ?? 0), 0),
+    tokensSaida: resultados.reduce((a, r) => a + (r.tokensSaida ?? 0), 0),
     aprovado: intencao >= limites.intencao && campos >= limites.campos,
   };
 }

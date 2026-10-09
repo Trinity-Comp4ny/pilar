@@ -1,12 +1,18 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "./schemas.ts";
 import { captureException, recordGenAiSpan, recordMetric, scrub } from "./sentry.ts";
+import { chamarGateway, MODELO_PADRAO, type ModeloAlvo, resolverModelo, streamGateway } from "./llm.ts";
+
+export { modeloEmUso, resolverModelo } from "./llm.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || "";
-export const GEMINI_MODEL = "gemini-2.5-flash";
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+/** Modelo padrão (sem AI_MODELO configurado). O modelo de cada função vem de modeloEmUso(tipo). */
+export const GEMINI_MODEL = MODELO_PADRAO.modelo;
+const geminiUrl = (modelo: string) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`;
 // streamGenerateContent + alt=sse: cada chunk chega como um evento SSE ("data: {json}\n\n").
-const GEMINI_STREAM_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse`;
+const geminiStreamUrl = (modelo: string) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:streamGenerateContent?alt=sse`;
 
 // Timeouts do Gemini. Cada chamada tem um teto próprio (AbortController); o orçamento
 // total limita a soma das tentativas (retry) para não estourar o wall-clock da edge.
@@ -222,6 +228,7 @@ export async function debitarTokens(supabaseAdmin: SupabaseClient, params: Debit
  * scrub(): trade-off aceito conscientemente de mandar conteúdo pro Sentry.
  */
 function recordGeminiChatSpan(params: {
+  alvo: ModeloAlvo;
   startMs: number;
   status: "ok" | "error";
   tokensEntrada?: number;
@@ -233,19 +240,19 @@ function recordGeminiChatSpan(params: {
 }): void {
   recordGenAiSpan({
     op: "gen_ai.chat",
-    name: `chat ${GEMINI_MODEL}`,
+    name: `chat ${params.alvo.modelo}`,
     startMs: params.startMs,
     endMs: Date.now(),
     status: params.status,
     attributes: {
       "gen_ai.operation.name": "chat",
-      "gen_ai.provider.name": "gemini",
-      "gen_ai.request.model": GEMINI_MODEL,
+      "gen_ai.provider.name": params.alvo.provedor === "gemini" ? "gemini" : params.alvo.modelo.split("/")[0],
+      "gen_ai.request.model": params.alvo.modelo,
       ...(params.conversationId && { "gen_ai.conversation.id": params.conversationId }),
       ...(params.empresaId && { "pilar.empresa_id": params.empresaId }),
       ...(params.inputMessages && { "gen_ai.input.messages": scrub(params.inputMessages) }),
       ...(params.status === "ok" && {
-        "gen_ai.response.model": GEMINI_MODEL,
+        "gen_ai.response.model": params.alvo.modelo,
         "gen_ai.usage.input_tokens": params.tokensEntrada ?? 0,
         "gen_ai.usage.output_tokens": params.tokensSaida ?? 0,
         ...(params.outputText !== undefined && {
@@ -261,6 +268,7 @@ function recordGeminiChatSpan(params: {
  * Base compartilhada por callGemini (legado) e callGeminiStructured.
  */
 async function fetchGeminiRaw(
+  alvo: ModeloAlvo,
   systemPrompt: string,
   userMessage: string,
   opts: {
@@ -313,7 +321,7 @@ async function fetchGeminiRaw(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response: Response;
   try {
-    response = await fetch(GEMINI_API_URL, {
+    response = await fetch(geminiUrl(alvo.modelo), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -324,6 +332,7 @@ async function fetchGeminiRaw(
     });
   } catch (e) {
     recordGeminiChatSpan({
+      alvo,
       startMs: spanStartMs,
       status: "error",
       inputMessages,
@@ -340,6 +349,7 @@ async function fetchGeminiRaw(
 
   if (!response.ok) {
     recordGeminiChatSpan({
+      alvo,
       startMs: spanStartMs,
       status: "error",
       inputMessages,
@@ -356,6 +366,7 @@ async function fetchGeminiRaw(
   const tokensEntrada = usage.promptTokenCount || 0;
   const tokensSaida = usage.candidatesTokenCount || 0;
   recordGeminiChatSpan({
+    alvo,
     startMs: spanStartMs,
     status: "ok",
     tokensEntrada,
@@ -366,6 +377,66 @@ async function fetchGeminiRaw(
     empresaId: opts.empresaId,
   });
   return { text, tokensEntrada, tokensSaida };
+}
+
+/**
+ * Chamada bruta ao modelo configurado para a função (SPEC 106): Gemini direto ou gateway.
+ * Sempre pede JSON (o mesmo que o responseMimeType do Gemini faz).
+ */
+async function fetchModeloRaw(
+  alvo: ModeloAlvo,
+  systemPrompt: string,
+  userMessage: string,
+  opts: {
+    deadline?: number;
+    files?: Array<{ mimeType: string; dataBase64: string }>;
+    maxOutputTokens?: number;
+    conversationId?: string;
+    empresaId?: string;
+  } = {}
+): Promise<{ text: string; tokensEntrada: number; tokensSaida: number }> {
+  if (alvo.provedor === "gemini") return fetchGeminiRaw(alvo, systemPrompt, userMessage, opts);
+
+  const restante = opts.deadline ? opts.deadline - Date.now() : GEMINI_CALL_TIMEOUT_MS;
+  const timeoutMs = Math.min(GEMINI_CALL_TIMEOUT_MS, restante);
+  if (timeoutMs <= 0) throw new Error("Orçamento de tempo do modelo esgotado antes da chamada");
+  const spanStartMs = Date.now();
+  const inputMessages = [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userMessage },
+  ];
+  try {
+    const r = await chamarGateway(alvo, {
+      systemPrompt,
+      userMessage,
+      files: opts.files,
+      json: true,
+      maxTokens: opts.maxOutputTokens ?? 4096,
+      timeoutMs,
+    });
+    recordGeminiChatSpan({
+      alvo,
+      startMs: spanStartMs,
+      status: "ok",
+      tokensEntrada: r.tokensEntrada,
+      tokensSaida: r.tokensSaida,
+      inputMessages,
+      outputText: r.text,
+      conversationId: opts.conversationId,
+      empresaId: opts.empresaId,
+    });
+    return r;
+  } catch (e) {
+    recordGeminiChatSpan({
+      alvo,
+      startMs: spanStartMs,
+      status: "error",
+      inputMessages,
+      conversationId: opts.conversationId,
+      empresaId: opts.empresaId,
+    });
+    throw e;
+  }
 }
 
 export interface GeminiStreamUsage {
@@ -385,8 +456,50 @@ export interface GeminiStreamUsage {
 export async function* streamGeminiText(
   systemPrompt: string,
   userMessage: string,
-  opts: { deadline?: number; conversationId?: string; empresaId?: string } = {}
+  opts: { deadline?: number; conversationId?: string; empresaId?: string; tipo?: string } = {}
 ): AsyncGenerator<string, GeminiStreamUsage, unknown> {
+  const alvo = resolverModelo(opts.tipo);
+  if (alvo.provedor === "gateway") {
+    const restanteGw = opts.deadline ? opts.deadline - Date.now() : GEMINI_CALL_TIMEOUT_MS;
+    const timeoutGw = Math.min(GEMINI_CALL_TIMEOUT_MS, restanteGw);
+    if (timeoutGw <= 0) throw new Error("Orçamento de tempo do modelo esgotado antes da chamada");
+    const inicio = Date.now();
+    let saida = "";
+    let usoGw: GeminiStreamUsage = { tokensEntrada: 0, tokensSaida: 0 };
+    let statusGw: "ok" | "error" = "ok";
+    try {
+      const gen = streamGateway(alvo, { systemPrompt, userMessage, maxTokens: 4096, timeoutMs: timeoutGw });
+      for (;;) {
+        const n = await gen.next();
+        if (n.done) {
+          usoGw = n.value;
+          break;
+        }
+        saida += n.value;
+        yield n.value;
+      }
+    } catch (e) {
+      statusGw = "error";
+      throw e;
+    } finally {
+      recordGeminiChatSpan({
+        alvo,
+        startMs: inicio,
+        status: statusGw,
+        tokensEntrada: usoGw.tokensEntrada,
+        tokensSaida: usoGw.tokensSaida,
+        inputMessages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userMessage },
+        ],
+        outputText: saida,
+        conversationId: opts.conversationId,
+        empresaId: opts.empresaId,
+      });
+    }
+    return usoGw;
+  }
+
   const body = {
     system_instruction: {
       parts: [{ text: systemPrompt }],
@@ -424,7 +537,7 @@ export async function* streamGeminiText(
   try {
     let response: Response;
     try {
-      response = await fetch(GEMINI_STREAM_URL, {
+      response = await fetch(geminiStreamUrl(alvo.modelo), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -491,20 +604,20 @@ export async function* streamGeminiText(
     clearTimeout(timer);
     recordGenAiSpan({
       op: "gen_ai.chat",
-      name: `chat ${GEMINI_MODEL} (stream)`,
+      name: `chat ${alvo.modelo} (stream)`,
       startMs: spanStartMs,
       endMs: Date.now(),
       status: spanStatus,
       attributes: {
         "gen_ai.operation.name": "chat",
         "gen_ai.provider.name": "gemini",
-        "gen_ai.request.model": GEMINI_MODEL,
+        "gen_ai.request.model": alvo.modelo,
         "gen_ai.response.streaming": true,
         "gen_ai.input.messages": scrub(inputMessages),
         ...(opts.conversationId && { "gen_ai.conversation.id": opts.conversationId }),
         ...(opts.empresaId && { "pilar.empresa_id": opts.empresaId }),
         ...(spanStatus === "ok" && {
-          "gen_ai.response.model": GEMINI_MODEL,
+          "gen_ai.response.model": alvo.modelo,
           "gen_ai.usage.input_tokens": tokensEntrada,
           "gen_ai.usage.output_tokens": tokensSaida,
           "gen_ai.output.messages": scrub([{ role: "assistant", content: outputText }]),
@@ -525,11 +638,16 @@ export async function* streamGeminiText(
 export async function callGemini(request: AiRequest): Promise<AiResponse> {
   const spanStartMs = Date.now();
   try {
-    const { text, tokensEntrada, tokensSaida } = await fetchGeminiRaw(request.systemPrompt, request.userMessage, {
-      deadline: Date.now() + GEMINI_CALL_TIMEOUT_MS,
-      conversationId: request.conversationId,
-      empresaId: request.empresaId,
-    });
+    const { text, tokensEntrada, tokensSaida } = await fetchModeloRaw(
+      resolverModelo(request.tipo),
+      request.systemPrompt,
+      request.userMessage,
+      {
+        deadline: Date.now() + GEMINI_CALL_TIMEOUT_MS,
+        conversationId: request.conversationId,
+        empresaId: request.empresaId,
+      }
+    );
 
     let parsed: Record<string, unknown>;
     try {
@@ -601,6 +719,7 @@ export async function callGeminiStructured<T>(
   opts: { maxRetries?: number; maxOutputTokens?: number } = {}
 ): Promise<StructuredResult<T>> {
   const maxRetries = opts.maxRetries ?? 2;
+  const alvo = resolverModelo(request.tipo);
   let lastError = "";
   let tokensEntrada = 0;
   let tokensSaida = 0;
@@ -625,7 +744,7 @@ export async function callGeminiStructured<T>(
           ? request.userMessage
           : `${request.userMessage}\n\n[Tentativa ${attempt}] A resposta anterior foi rejeitada: ${lastError}. Responda APENAS com JSON válido que satisfaça exatamente o schema exigido.`;
 
-      const raw = await fetchGeminiRaw(request.systemPrompt, userMessage, {
+      const raw = await fetchModeloRaw(alvo, request.systemPrompt, userMessage, {
         deadline,
         files: request.files,
         maxOutputTokens: opts.maxOutputTokens,
@@ -720,7 +839,7 @@ export async function recordAgentRun(
         entity_id: request.referenciaId ?? null,
         input: { userMessage: request.userMessage },
         result: aiResponse.conteudo,
-        model: GEMINI_MODEL,
+        model: resolverModelo(request.tipo).modelo,
         tokens_input: aiResponse.tokensEntrada,
         tokens_output: aiResponse.tokensSaida,
         created_by: userId,

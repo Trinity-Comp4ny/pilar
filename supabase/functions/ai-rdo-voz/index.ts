@@ -10,7 +10,7 @@ import {
   mensagemBloqueioTokens,
   callGeminiStructured,
   debitarTokens,
-  GEMINI_MODEL,
+  modeloEmUso,
   recordAgentRun,
 } from "../_shared/ai-client.ts";
 
@@ -253,7 +253,7 @@ serve(
         userId: user.id,
         agentKey: "rdo-voz",
         agentRunId: runId,
-        model: GEMINI_MODEL,
+        model: modeloEmUso("rdo-voz"),
         tokensInput: result.tokensEntrada,
         tokensOutput: result.tokensSaida,
         idempotencyKey: crypto.randomUUID(),
