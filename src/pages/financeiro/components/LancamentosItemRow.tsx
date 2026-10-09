@@ -76,7 +76,7 @@ function StatusBadge({
       variant="secondary"
       className={cn(
         "text-xs cursor-pointer transition-colors",
-        paid && isReceita && "bg-positive text-white hover:bg-positive/90",
+        paid && isReceita && "bg-positive text-ink hover:bg-positive/90",
         paid && !isReceita && !isTransf && "bg-negative text-white hover:bg-negative/90",
         paid && isTransf && "bg-info-mid text-white hover:bg-info-mid/90",
         !paid && overdue && "bg-warning-soft text-warning-strong hover:bg-warning-mid"
@@ -90,7 +90,17 @@ function StatusBadge({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>{badge}</DropdownMenuTrigger>
+      {/* O Badge é um div: o gatilho precisa ser um botão de verdade para o aria-expanded
+          do menu ser válido e o status ser alcançável pelo teclado. */}
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label={`Status: ${overdue && !paid ? "Atrasado" : l.status}. Alterar`}
+          className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {badge}
+        </button>
+      </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="text-xs">
         {options.map((o) => (
           <DropdownMenuItem key={o.value} onSelect={() => onChange(o.value)} className="text-xs">

@@ -352,7 +352,7 @@ export default function Clientes() {
             <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
               {/* Busca de texto migrou para o PageHeader (spec 002). */}
               <Select value={filterTipo} onValueChange={setFilterTipo}>
-                <SelectTrigger className="h-9 w-full sm:w-32 rounded-full text-sm">
+                <SelectTrigger className="h-9 w-full sm:w-32 rounded-full text-sm" aria-label="Tipo de cliente">
                   <SelectValue placeholder="Tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -363,7 +363,7 @@ export default function Clientes() {
               </Select>
               {origens.length > 0 && (
                 <Select value={filterOrigem} onValueChange={setFilterOrigem}>
-                  <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm">
+                  <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm" aria-label="Origem">
                     <SelectValue placeholder="Origem" />
                   </SelectTrigger>
                   <SelectContent>
@@ -377,7 +377,7 @@ export default function Clientes() {
                 </Select>
               )}
               <Select value={filterProjeto} onValueChange={(v) => setFilterProjeto(v as FiltroTriplo)}>
-                <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm">
+                <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm" aria-label="Projeto">
                   <SelectValue placeholder="Projeto" />
                 </SelectTrigger>
                 <SelectContent>
@@ -387,7 +387,7 @@ export default function Clientes() {
                 </SelectContent>
               </Select>
               <Select value={filterPortal} onValueChange={(v) => setFilterPortal(v as FiltroTriplo)}>
-                <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm">
+                <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm" aria-label="Portal do cliente">
                   <SelectValue placeholder="Portal" />
                 </SelectTrigger>
                 <SelectContent>

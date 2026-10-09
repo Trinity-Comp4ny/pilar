@@ -25,7 +25,7 @@
     --secondary-foreground: var(--c-ink-900);
 
     --muted: var(--c-paper-200);
-    --muted-foreground: var(--c-gray-500);
+    --muted-foreground: var(--c-gray-600);
 
     --accent: var(--c-paper-200);
     --accent-foreground: var(--c-ink-900);

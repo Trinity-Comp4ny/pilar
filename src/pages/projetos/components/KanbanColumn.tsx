@@ -143,14 +143,22 @@ export function KanbanColumn({
           >
             {loadingProjetos && <ProjetoColumnSkeleton count={2} />}
             {!loadingProjetos && items.length === 0 && !snapshot.isDraggingOver && (
-              <div className="flex items-center justify-center py-6 text-[11px] text-muted-foreground/60 text-center px-2">
+              <div className="flex items-center justify-center py-6 text-[11px] text-muted-foreground text-center px-2">
                 Solte um projeto aqui
               </div>
             )}
             {items.map((projeto, idx) => (
               <Draggable key={projeto.id} draggableId={projeto.id} index={idx}>
                 {(provided, snapshot) => (
-                  <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.draggableProps}
+                    {...provided.dragHandleProps}
+                    // O card tem botões dentro; "button" aninharia controles. O arraste por
+                    // teclado (espaço) segue no mesmo elemento.
+                    role="group"
+                    aria-roledescription="cartão arrastável"
+                  >
                     <ProjectCard
                       projeto={projeto}
                       onClick={onCardClick}

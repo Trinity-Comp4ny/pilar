@@ -104,7 +104,7 @@ export function SecondSidebar({ tabs, value, onValueChange, className }: Props) 
             collapsed ? "justify-center" : "justify-between px-4"
           )}
         >
-          {!collapsed && <span className="text-xs font-medium tracking-[0.08em] uppercase text-black/40">Menu</span>}
+          {!collapsed && <span className="text-xs font-medium tracking-[0.08em] uppercase text-muted-foreground">Menu</span>}
           <button
             onClick={toggle}
             title={collapsed ? "Expandir menu" : "Recolher menu"}
