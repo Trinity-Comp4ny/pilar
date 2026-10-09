@@ -21,6 +21,7 @@
 import posthog from "posthog-js";
 import { env } from "./env";
 import { getCookieConsent, saveCookieConsent } from "./cookieConsent";
+import type { EventoProduto } from "./eventosProduto";
 
 type Props = Record<string, unknown>;
 
@@ -34,7 +35,7 @@ export interface AnalyticsTraits {
 interface Analytics {
   init(): void;
   identify(userId: string, traits?: AnalyticsTraits): void;
-  track(event: string, properties?: Props): void;
+  track(event: EventoProduto, properties?: Props): void;
   reset(): void;
   isFeatureEnabled(key: string): boolean | undefined;
   getAnonId(): string;
@@ -153,6 +154,9 @@ const posthogAnalytics: Analytics = {
     if (!hasAnalyticsConsent()) return;
     ensurePosthogInit();
     posthog.identify(userId, scrub(traits) as Record<string, unknown> | undefined);
+    // Todo evento seguinte leva o escritório: retenção e adoção por empresa sem o
+    // add-on pago de group analytics do PostHog.
+    if (traits?.empresa_id) posthog.register({ empresa_id: traits.empresa_id });
   },
   track(event, properties) {
     if (!hasAnalyticsConsent()) return;

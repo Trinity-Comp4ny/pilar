@@ -89,3 +89,33 @@ consistente com `inicio_agentes_abrir` (evento já existente).
   se volume de renovação recorrente começar a importar.
 - Dashboards/funis no PostHog (não código) ficam como próximo passo depois que os eventos
   começarem a chegar; não é parte desta spec.
+
+## Ampliação (2026-10-09)
+
+O primeiro corte mediu cadastro, onboarding, projeto, proposta e cobrança. Faltava o uso do
+dia a dia, sem o qual o funil de ativação para no projeto e a adoção por módulo não aparece.
+
+- **Catálogo tipado:** `src/lib/eventosProduto.ts`. `analytics.track()` só aceita nomes de lá;
+  nome errado não compila.
+- **Escritório em todo evento:** `empresa_id` registrado como super propriedade no login
+  (`posthog.register`). Retenção e adoção por empresa com breakdown por propriedade, sem o
+  add-on pago de group analytics.
+- **Eventos novos** (nenhum leva texto digitado, nome ou valor em dinheiro):
+
+| Evento                | Onde                            | Propriedades                 |
+| --------------------- | ------------------------------- | ---------------------------- |
+| `cliente_criado`      | cadastro de cliente             | `tipo_pessoa`                |
+| `lead_criado`         | cadastro de lead                |                              |
+| `lancamento_criado`   | nova receita ou despesa         | `tipo`, `parcelas`, `rateio` |
+| `obra_criada`         | nova obra                       | `com_projeto`                |
+| `rdo_registrado`      | diário da obra (registro novo)  | `fotos`                      |
+| `convite_enviado`     | Administração e Configurações   | `papel`, `origem`            |
+| `ia_mensagem_enviada` | mensagem no chat dos agentes    | `com_projeto`                |
+| `ia_acao_confirmada`  | ação proposta pela IA executada | `operacao`                   |
+| `ia_acao_cancelada`   | ação proposta pela IA cancelada | `operacao`                   |
+| `relatorio_exportado` | exportação em Relatórios        | `formato`, `tipo`            |
+
+**Funil de ativação no PostHog:** `signup_completed` → `empresa_onboarding_concluido` →
+`cliente_criado` → `projeto_criado` → `lancamento_criado`, com breakdown por `empresa_id`.
+**Taxa de aceite da IA:** `ia_acao_confirmada` ÷ (`ia_acao_confirmada` + `ia_acao_cancelada`),
+o primeiro sinal de qualidade do agente vindo do uso real.
