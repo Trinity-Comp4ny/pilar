@@ -56,7 +56,7 @@
   },
   "guardiao-margem-cron": {
     "dominio": "jobs",
-    "descricao": "Cron diário: prepara rascunho de aditivo quando o projeto estoura o orçamento (spec 081)."
+    "descricao": "Cron diário: prepara rascunho de aditivo, sustentado pelas despesas do projeto, quando ele estoura o orçamento (specs 081 e 107)."
   },
   "health": {
     "dominio": "utilitario",

@@ -10,9 +10,11 @@
  * Responsabilidades:
  *  - Consulta projetos_com_escopo_estourado() (mesma condição do alerta
  *    'orcamento_excedido' em gerar_notificacoes_ambient(), fonte única).
- *  - Para cada projeto, gera via Gemini um rascunho de aditivo (itens + justificativa)
- *    e grava direto em escopos (tipo='aditivo', status='rascunho', created_by=NULL)
- *    + escopo_itens + agent_runs (com confidence preenchido).
+ *  - Para cada projeto, carrega a evidência (orçamento por disciplina + despesas), pede ao
+ *    Gemini um rascunho de aditivo em que cada item cita as despesas que o sustentam, e
+ *    aterra a resposta em código (aditivo.ts, spec 107): citação inválida é descartada e
+ *    custo/horas/valor saem da diferença e das despesas, nunca do modelo. Grava em escopos
+ *    (tipo='aditivo', status='rascunho', created_by=NULL) + escopo_itens + agent_runs.
  *  - Idempotente: projetos_com_escopo_estourado() já exclui quem tem aditivo em
  *    aberto, então rodar duas vezes no mesmo dia não duplica.
  *  - Aprovação é humana, na aba Escopo do projeto — este cron nunca aprova nada.
@@ -23,11 +25,20 @@
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { withSentry, captureException, cronCheckin } from "../_shared/sentry.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { callGeminiStructured, verificarTokens, debitarTokens, GEMINI_MODEL } from "../_shared/ai-client.ts";
-import { AditivoSugeridoSchema } from "../_shared/agent-schemas.ts";
+import { montarAditivoSugeridoSchema } from "../_shared/agent-schemas.ts";
+import {
+  aterrarAditivo,
+  type DespesaEvidencia,
+  type Evidencia,
+  MAX_DESPESAS_NO_PROMPT,
+  type ProjetoEstourado,
+  systemPrompt,
+  userMessage,
+} from "./aditivo.ts";
 
 const log = createLogger("guardiao-margem-cron");
 
@@ -36,41 +47,62 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 // Segredo próprio do cron: ver notificacoes-email-cron/index.ts.
 const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 
-interface ProjetoEstourado {
-  projeto_id: string;
-  empresa_id: string;
-  nome: string;
-  custo_orcado: number;
-  despesas_diretas: number;
+type Admin = SupabaseClient;
+
+/** Nome de uma relação embutida do PostgREST, que pode vir como objeto ou lista. */
+function nomeEmbutido(rel: unknown): string | null {
+  const alvo = Array.isArray(rel) ? rel[0] : rel;
+  if (alvo && typeof alvo === "object" && "nome" in alvo && typeof alvo.nome === "string") return alvo.nome;
+  return null;
 }
 
-function systemPrompt(): string {
-  return [
-    "Você é o Guardião de Margem do Pilar, um sistema de gestão para escritórios de",
-    "engenharia e arquitetura. Um projeto gastou mais do que o orçamento aprovado previa.",
-    "Prepare um RASCUNHO de aditivo contratual que cubra essa diferença, para um humano",
-    "revisar e aprovar depois — você NUNCA aprova nada, só sugere.",
-    "",
-    "Responda em português do Brasil. Seja concreto e conservador: não infle valores,",
-    "não invente disciplinas que não fazem sentido para o contexto dado. Se a diferença",
-    "for pequena, o aditivo também deve ser pequeno.",
-    "",
-    "`confianca` (0 a 1) reflete o quanto você confia nesta sugestão dado o contexto",
-    "disponível: baixa se o motivo do estouro não está claro, alta se as despesas",
-    "descrevem claramente o que gerou o excesso.",
-  ].join("\n");
-}
+/**
+ * Evidência do estouro (spec 107): fases do orçamento e as despesas que entram na conta,
+ * com o mesmo filtro de projetos_com_escopo_estourado() (não deletadas, Pago/Pendente).
+ */
+async function carregarEvidencia(admin: Admin, p: ProjetoEstourado): Promise<Evidencia> {
+  const [fasesRes, despesasRes] = await Promise.all([
+    admin
+      .from("projeto_orcamento_fases")
+      .select("disciplina, custo_estimado, custo_hora")
+      .eq("projeto_id", p.projeto_id)
+      .is("deleted_at", null),
+    admin
+      .from("despesas")
+      .select("id, descricao, valor, data_competencia, categorias_financeiras(nome), fornecedores(nome)", {
+        count: "exact",
+      })
+      .eq("projeto_id", p.projeto_id)
+      .is("deleted_at", null)
+      .in("status", ["Pago", "Pendente"])
+      .order("valor", { ascending: false })
+      .limit(MAX_DESPESAS_NO_PROMPT),
+  ]);
+  if (fasesRes.error) throw new Error(`falha ao ler orçamento: ${fasesRes.error.message}`);
+  if (despesasRes.error) throw new Error(`falha ao ler despesas: ${despesasRes.error.message}`);
 
-function userMessage(p: ProjetoEstourado): string {
-  const diferenca = p.despesas_diretas - p.custo_orcado;
-  return [
-    `Projeto: ${p.nome}`,
-    `Orçamento aprovado: R$ ${p.custo_orcado.toFixed(2)}`,
-    `Despesas diretas já lançadas: R$ ${p.despesas_diretas.toFixed(2)}`,
-    `Diferença a cobrir: R$ ${diferenca.toFixed(2)}`,
-    "",
-    "Prepare o rascunho de aditivo que cobre essa diferença.",
-  ].join("\n");
+  const despesas: DespesaEvidencia[] = (despesasRes.data ?? []).map((d) => ({
+    id: d.id as string,
+    descricao: (d.descricao as string) ?? "",
+    valor: Number(d.valor) || 0,
+    data: (d.data_competencia as string | null) ?? null,
+    categoria: nomeEmbutido(d.categorias_financeiras),
+    fornecedor: nomeEmbutido(d.fornecedores),
+  }));
+  const somaEnviadas = despesas.reduce((s, d) => s + d.valor, 0);
+
+  return {
+    fases: (fasesRes.data ?? []).map((f) => ({
+      disciplina: f.disciplina as string,
+      custo_estimado: Number(f.custo_estimado) || 0,
+      custo_hora: Number(f.custo_hora) || 0,
+    })),
+    despesas,
+    foraDoPrompt: {
+      quantidade: Math.max((despesasRes.count ?? despesas.length) - despesas.length, 0),
+      total: Math.max(Math.round((p.despesas_diretas - somaEnviadas) * 100) / 100, 0),
+    },
+  };
 }
 
 serve(
@@ -123,31 +155,41 @@ serve(
           continue;
         }
 
+        const evidencia = await carregarEvidencia(admin, p);
+        if (evidencia.fases.length === 0 || evidencia.despesas.length === 0) {
+          throw new Error("projeto estourado sem fase de orçamento ou sem despesa para citar");
+        }
+
         const result = await callGeminiStructured(
           {
             systemPrompt: systemPrompt(),
-            userMessage: userMessage(p),
+            userMessage: userMessage(p, evidencia),
             empresaId: p.empresa_id,
             tipo: "guardiao_margem",
             referenciaId: p.projeto_id,
             referenciaTipo: "projeto",
           },
-          AditivoSugeridoSchema,
-          { maxRetries: 1, maxOutputTokens: 2048 }
+          montarAditivoSugeridoSchema(evidencia.fases.map((f) => f.disciplina)),
+          { maxRetries: 2 }
         );
+
+        const aditivo = aterrarAditivo(result.data, evidencia, p.despesas_diretas - p.custo_orcado);
+        if (!aditivo) {
+          throw new Error("sugestão sem nenhum item sustentado por despesa da lista");
+        }
 
         const { data: escopo, error: escopoErr } = await admin
           .from("escopos")
           .insert({
             empresa_id: p.empresa_id,
             projeto_id: p.projeto_id,
-            descricao: result.data.descricao,
+            descricao: aditivo.descricao,
             tipo: "aditivo",
             status: "rascunho",
-            horas_estimadas: result.data.itens.reduce((s, i) => s + (i.horas ?? 0), 0),
-            custo_estimado: result.data.itens.reduce((s, i) => s + i.custo, 0),
-            valor_aditivo: Math.round(result.data.itens.reduce((s, i) => s + i.custo, 0) * 1.3 * 100) / 100,
-            justificativa: result.data.justificativa,
+            horas_estimadas: aditivo.horasTotal,
+            custo_estimado: aditivo.custoTotal,
+            valor_aditivo: aditivo.valorAditivo,
+            justificativa: aditivo.justificativa,
             created_by: null,
             updated_by: null,
           })
@@ -159,11 +201,11 @@ serve(
         }
 
         const { error: itensErr } = await admin.from("escopo_itens").insert(
-          result.data.itens.map((i) => ({
+          aditivo.itens.map((i) => ({
             escopo_id: escopo.id,
             descricao: i.descricao,
-            disciplina: i.disciplina ?? null,
-            horas: i.horas ?? 0,
+            disciplina: i.disciplina,
+            horas: i.horas,
             custo: i.custo,
           }))
         );
@@ -177,9 +219,16 @@ serve(
           status: "executed",
           entity_type: "escopo",
           entity_id: escopo.id,
-          input: { projeto_id: p.projeto_id, custo_orcado: p.custo_orcado, despesas_diretas: p.despesas_diretas },
-          result: result.data,
-          confidence: result.data.confianca,
+          input: {
+            projeto_id: p.projeto_id,
+            custo_orcado: p.custo_orcado,
+            despesas_diretas: p.despesas_diretas,
+            despesas_no_prompt: evidencia.despesas.length,
+            despesas_fora_do_prompt: evidencia.foraDoPrompt.quantidade,
+          },
+          // Sugestão crua + o que foi gravado + o que o código descartou (spec 107).
+          result: { sugestao: result.data, itens: aditivo.itens, reparos: aditivo.reparos },
+          confidence: aditivo.confianca,
           model: GEMINI_MODEL,
           tokens_input: result.tokensEntrada,
           tokens_output: result.tokensSaida,
@@ -208,7 +257,7 @@ serve(
           p_empresa_id: p.empresa_id,
           p_projeto_id: p.projeto_id,
           p_projeto_nome: p.nome,
-          p_valor: result.data.itens.reduce((s, i) => s + i.custo, 0),
+          p_valor: aditivo.custoTotal,
         });
         if (notifErr) {
           log.error("falha ao notificar aditivo pronto (escopo já criado)", notifErr, { escopo_id: escopo.id });
