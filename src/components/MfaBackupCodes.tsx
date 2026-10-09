@@ -6,7 +6,29 @@ import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { monitoring } from "@/lib/monitoring";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
-export function MfaBackupCodes() {
+// gen:types não inclui estas RPCs ainda
+async function fetchRemainingCount(): Promise<number | null> {
+  const { data, error } = await callUntypedRpc<number>("mfa_backup_codes_remaining");
+  return error ? null : (data ?? 0);
+}
+
+async function generateCodes(): Promise<string[]> {
+  const { data, error } = await callUntypedRpc<string[]>("mfa_generate_backup_codes");
+  if (error) throw error;
+  return data ?? [];
+}
+
+function reportGenerateError(err: unknown) {
+  monitoring.captureException(err, { context: "generateBackupCodes" });
+  toast.error("Erro ao gerar", {
+    description: err instanceof Error ? err.message : "Confirme o código do app autenticador e tente de novo.",
+  });
+}
+
+// autoGenerate: logo depois de ativar o 2FA, gera e mostra os códigos sem
+// esperar clique. Sem isso ninguém gerava (produção tinha zero), e quem perdia o
+// celular ficava sem saída.
+export function MfaBackupCodes({ autoGenerate = false }: { autoGenerate?: boolean }) {
   const [remaining, setRemaining] = useState<number | null>(null);
   const [generatedCodes, setGeneratedCodes] = useState<string[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -14,32 +36,42 @@ export function MfaBackupCodes() {
   const [copied, setCopied] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const fetchRemaining = async () => {
-    // gen:types não inclui esta RPC ainda
-    const { data, error } = await callUntypedRpc<number>("mfa_backup_codes_remaining");
-    if (!error) setRemaining(data ?? 0);
-    setLoading(false);
-  };
-
   useEffect(() => {
-    fetchRemaining();
-  }, []);
+    let active = true;
+    const load = async () => {
+      const count = await fetchRemainingCount();
+      if (!active) return;
+      if (count !== null) setRemaining(count);
+      setLoading(false);
+      if (!autoGenerate || count !== 0) return;
+      setGenerating(true);
+      try {
+        const codes = await generateCodes();
+        if (!active) return;
+        setGeneratedCodes(codes);
+        setRemaining(codes.length);
+      } catch (err) {
+        reportGenerateError(err);
+      } finally {
+        if (active) setGenerating(false);
+      }
+    };
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [autoGenerate]);
 
   const handleGenerate = async () => {
     setConfirmOpen(false);
     setGenerating(true);
     try {
-      // gen:types não inclui esta RPC ainda
-      const { data, error } = await callUntypedRpc<string[]>("mfa_generate_backup_codes");
-      if (error) throw error;
-      setGeneratedCodes(data ?? []);
-      await fetchRemaining();
+      const codes = await generateCodes();
+      setGeneratedCodes(codes);
+      setRemaining(codes.length);
       toast.success("Códigos gerados");
     } catch (err) {
-      monitoring.captureException(err, { context: "generateBackupCodes" });
-      toast.error("Erro ao gerar", {
-        description: err instanceof Error ? err.message : "Verifique se MFA está ativo",
-      });
+      reportGenerateError(err);
     } finally {
       setGenerating(false);
     }
@@ -68,7 +100,8 @@ export function MfaBackupCodes() {
           <span className="font-medium text-warning-strong">Salve estes códigos agora</span>
         </div>
         <p className="text-xs text-warning-strong">
-          Cada código vale uma vez. Use apenas se perder acesso ao autenticador. Não serão exibidos de novo.
+          Se perder o celular, um destes códigos é a única forma de entrar. Cada um vale uma vez e eles não aparecem de
+          novo.
         </p>
         <div className="grid grid-cols-2 gap-1.5 p-3 bg-white rounded border font-mono text-sm">
           {generatedCodes.map((code) => (

@@ -53,7 +53,7 @@ export function TrialBanner() {
             <AlertTriangle className="h-7 w-7 text-danger-mid" strokeWidth={1.5} />
           </div>
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold tracking-tight text-ink">Seu trial expirou</h2>
+            <h2 className="text-xl font-semibold tracking-tight text-ink">Seu teste grátis terminou</h2>
             <p className="text-sm text-ink-muted leading-relaxed">
               O período gratuito da sua empresa chegou ao fim. Assine um plano para continuar acessando o Pilar.
             </p>
@@ -76,10 +76,10 @@ export function TrialBanner() {
   const urgent = daysLeft <= 1;
   const label =
     daysLeft <= 0
-      ? "Seu trial expira hoje."
+      ? "Seu teste grátis termina hoje."
       : daysLeft === 1
-        ? "Seu trial expira amanhã."
-        : `Seu trial expira em ${daysLeft} dias.`;
+        ? "Seu teste grátis termina amanhã."
+        : `Seu teste grátis termina em ${daysLeft} dias.`;
 
   return (
     <div
@@ -98,7 +98,7 @@ export function TrialBanner() {
           urgent ? "bg-white text-red-600 hover:bg-red-50" : "bg-amber-950/10 text-amber-950 hover:bg-amber-950/20"
         }`}
       >
-        Assinar agora →
+        Ativar plano →
       </button>
     </div>
   );

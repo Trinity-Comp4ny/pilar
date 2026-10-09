@@ -3,7 +3,7 @@ import type { MySubscription } from "../hooks/useMySubscription";
 
 const LABELS: Record<MySubscription["status"], string> = {
   active: "Ativa",
-  trialing: "Trial",
+  trialing: "Em teste",
   overdue: "Em atraso",
   canceled: "Cancelada",
   expired: "Expirada",

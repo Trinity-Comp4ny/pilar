@@ -1,75 +1,52 @@
-# Synthetic Tests — Estratégia
+# Checks sintéticos de produção
 
-Synthetic = testes que rodam **fora** da nossa infra, simulando usuário real. Diferem de:
+Checks que rodam **fora** da nossa infra contra o produto no ar, como um visitante.
+Diferem de:
 
-- **Unit/integration tests** (Vitest): rodam em CI, validam lógica.
-- **E2E tests**: rodam contra ambiente, validam fluxos.
-- **Health checks** (`/health`): validam que serviços estão de pé.
-- **Synthetic** (Checkly): validam que o produto **funciona pra usuário real**, continuamente, em produção.
+- **Vitest / deno test / pgTAP**: lógica, no CI.
+- **E2E (Playwright)**: fluxos completos, no CI (banco local) e em staging.
+- **Health** (`/functions/v1/health`): serviços de pé (banco, Asaas, Resend).
+- **Sintético**: o produto responde para quem chega de fora, continuamente.
 
-## Por que sintético
+Health pode estar verde com o app quebrado (bundle fora do CDN, tela de login sem
+formulário, roteador do SPA devolvendo 5xx). O sintético pega isso.
 
-Health pode estar verde e o app quebrado:
+## Como roda (desde 2026-10-08)
 
-- JS bundle 500ed no CDN
-- Auth endpoint OK mas formulário de login quebrou
-- Postgres OK mas RLS rejeita 100% das queries
-- Latência absurda em sa-east-1 mas não em us-east-1
+Workflow `.github/workflows/monitor-producao.yml`, a cada 30 min, com
+`tests/synthetic/critical-flows.spec.ts` (config em `tests/synthetic/playwright.config.ts`):
 
-Synthetic pega isso porque executa o app igual usuário.
+| Check          | O que prova                                                                 |
+| -------------- | --------------------------------------------------------------------------- |
+| Health         | Edge Function responde `ok`/`degraded`, banco `ok`, latência do banco < 1 s |
+| Landing        | `app.pilarsoft.com.br` carrega com título                                   |
+| Tela de login  | formulário (e-mail, senha, botão) aparece                                   |
+| Guarda de rota | `/dashboard` sem sessão não dá 5xx                                          |
 
-## Quando rodam
+Uma nova tentativa por check (Edge Function fria pode responder 503 na primeira
+chamada). Falha abre ou comenta a issue **"Cron falhando: Monitor de produção"**, e o
+GitHub avisa por e-mail. Rodar na mão: `npx playwright test --config tests/synthetic/playwright.config.ts`.
 
-Configurado em `checkly.config.ts`:
+Substituiu o Checkly, que estava configurado e nunca rodou (sem conta, sem canal de
+alerta e com o health apontando para o domínio do app em vez do Supabase).
 
-| Check                    | Frequência | Justificativa                                           |
-| ------------------------ | ---------- | ------------------------------------------------------- |
-| `/health` API            | 1min       | Sinal mais rápido de outage                             |
-| `turnstile-verify` smoke | 5min       | Auth crítico, mas chama externo (Cloudflare)            |
-| Login screen renders     | 5min       | Quebra de bundle/CSS aparece aqui                       |
-| Landing loads            | 5min       | Marketing/SEO, menos crítico                            |
-| Dashboard route guard    | 10min      | Smoke do SPA router                                     |
-| Login flow real          | 12h (cron) | Caro (consome browser minutes), só pra confiança diária |
+Limites honestos: o cron do GitHub pode atrasar alguns minutos e só liga a partir de
+`main`. Serve para "o produto caiu e ninguém viu", não para SLA de minuto. Quando
+houver cliente pagante com SLA, avaliar Sentry Uptime (1 min, multi-região).
 
-## O que NÃO testar
+## O que NÃO testar aqui
 
-- **Mutações**: criar projeto, lançar despesa. Suja DB de prod.
-- **Fluxos com side effect externo**: enviar email, criar cobrança Asaas.
-- **Dados específicos**: "deve ter 5 clientes". Quebra quando cliente real muda dado.
+- **Mutação** (criar projeto, lançar despesa): suja o banco de produção.
+- **Efeito externo** (e-mail, cobrança Asaas).
+- **Dado específico** ("tem 5 clientes"): quebra quando o cliente mexe no dado.
 
-## User dedicado de monitoring
+Fluxo logado em produção pede um usuário dedicado de monitoramento, numa empresa
+própria, com dado só de leitura. Ainda não existe.
 
-Pra checks que precisam autenticar (ex: "dashboard carrega com dados"):
+## Quando o alerta disparar
 
-- Criar empresa "Synthetic Monitoring" com 1 user `monitor@labrynth.ai`.
-- Marcar `is_monitoring=true` no perfil (RLS deve excluir de relatórios reais).
-- Senha em Checkly secret, NUNCA no repo.
-- Dados do usuário são read-only (seed fixo).
-
-## Interpretação de alertas
-
-Quando Checkly dispara:
-
-1. **Confirmar com `/health`**: `curl https://<project>.supabase.co/functions/v1/health`.
-2. **Olhar Sentry**: erros novos correlacionados no horário?
-3. **Checkly run details**: screenshot + console logs do browser check.
-4. **Deploy recente?** Rollback é o caminho mais rápido em outage.
-5. **Postar no status page** se confirmado.
-
-Falha em 1 região + outras OK = problema regional (CDN, AWS), normalmente recupera sozinho. **Não acordar on-call por 1 região** — política de alerta exige 2 falhas consecutivas em ≥2 regiões.
-
-## Custos vs cobertura
-
-Free tier Checkly = ~43k API runs/mês, 1.5k browser/mês. `/health` 1x/min × 2 regiões = 86k runs/mês — **excede free tier**. Opções:
-
-- Reduzir `/health` pra 2min: 21k runs, cabe.
-- Manter 1min só em sa-east-1: 43k, no limite.
-- Upgrade Team Plan ($80/mês): ilimitado.
-
-Recomendado: começar 2min × 2 regiões, subir pra 1min quando tiver paying customers.
-
-## Integração com IR (Incident Response)
-
-`../INCIDENT_RESPONSE.md` é a fonte de verdade pra severidade e comunicação. Synthetic é o **trigger**, não o playbook.
-
-Checkly alert → Slack `#incidents` → on-call abre incident em BetterStack → segue runbook.
+1. `curl https://vepnsonbnsimqcsfcagm.supabase.co/functions/v1/health`
+2. Sentry (org `trinity-company`): erro novo no mesmo horário?
+3. Artifact `monitor-producao-<run>` do run: screenshot e trace do check que falhou.
+4. Deploy recente? Rollback é o caminho mais rápido.
+5. Confirmado: comunicar pela status page (`/status`) e seguir `../INCIDENT_RESPONSE.md`.

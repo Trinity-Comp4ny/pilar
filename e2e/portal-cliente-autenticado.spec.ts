@@ -38,9 +38,7 @@ test.describe("Portal Cliente — público (sem auth)", () => {
     await page.click('button[type="submit"]');
 
     // Toast de erro ou mensagem inline
-    await expect(
-      page.getByText(/Erro|inválido|credenciais|não encontrado/i).first()
-    ).toBeVisible({ timeout: 8_000 });
+    await expect(page.getByText(/Erro|inválido|credenciais|não encontrado/i).first()).toBeVisible({ timeout: 8_000 });
 
     await expect(page).not.toHaveURL(/\/cliente\/dashboard/);
   });
@@ -65,14 +63,22 @@ test.describe("Portal Cliente — autenticado", () => {
     await page.waitForURL(/\/cliente\/dashboard/, { timeout: 15_000 });
     await expect(page).toHaveURL(/\/cliente\/dashboard/);
 
-    // Página deve renderizar algo (projetos ou empty state — não deve crashar)
+    // O portal abriu de verdade (saudação do ClienteDashboard), não só um body vazio.
     await page.waitForLoadState("networkidle");
-    await expect(page.locator("body")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: /Olá/i })).toBeVisible();
+
+    // Cliente com projeto: o detalhe abre. No seed local o cliente demo sempre tem um
+    // (scripts/seed-demo.sql); em staging depende do usuário provisionado.
+    const projetos = page.locator('a[href^="/cliente/projeto/"]');
+    if ((await projetos.count()) > 0) {
+      const nomeProjeto = (await projetos.first().getByRole("heading").textContent())?.trim() ?? "";
+      await projetos.first().click();
+      await expect(page).toHaveURL(/\/cliente\/projeto\//);
+      await expect(page.getByText(nomeProjeto).first()).toBeVisible({ timeout: 10_000 });
+    }
 
     // Sem erros de JS críticos
-    const critical = consoleErrors.filter(
-      (e) => !/React Router Future Flag/i.test(e)
-    );
+    const critical = consoleErrors.filter((e) => !/React Router Future Flag/i.test(e));
     expect(critical).toHaveLength(0);
   });
 });

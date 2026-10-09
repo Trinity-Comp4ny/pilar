@@ -13,6 +13,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { jsonResponse, optionsResponse } from "../_shared/cors.ts";
+import { ehAdminDaEmpresa } from "../_shared/admin-auth.ts";
 import {
   createCustomer,
   createPayment,
@@ -21,37 +22,12 @@ import {
   type AsaasPayment,
 } from "../_shared/asaas-platform.ts";
 import { resolverDadosCliente } from "../_shared/asaas-customer.ts";
-import { creditCardSchema, creditCardHolderInfoSchema as holderInfoSchema } from "../_shared/asaas-card-schemas.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
-import { parseOr400, z } from "../_shared/schemas.ts";
+import { parseOr400 } from "../_shared/schemas.ts";
+import { purchaseSchema, statusInicialDaCompra, TIER_CATALOG, type PurchasePayload, type TierId } from "./compra.ts";
 
 const log = createLogger("pilar-token-pack-create");
-
-// Catálogo de tiers (SPEC 080, DECISOES.md 2026-09-01). Fonte única de preço/tokens —
-// o cliente manda só o tier_id, nunca um valor. Mudar exige decisão própria (pricing),
-// não só editar esta constante.
-const TIER_CATALOG = {
-  starter: { tokens: 500_000, valorCentavos: 4900 },
-  cresce: { tokens: 1_500_000, valorCentavos: 12900 },
-  escala: { tokens: 3_000_000, valorCentavos: 22800 },
-  maximo: { tokens: 6_000_000, valorCentavos: 39900 },
-} as const;
-
-type TierId = keyof typeof TIER_CATALOG;
-
-const purchaseSchema = z
-  .object({
-    tier_id: z.enum(["starter", "cresce", "escala", "maximo"]),
-    billing_type: z.enum(["CREDIT_CARD", "PIX", "BOLETO"]),
-    credit_card: creditCardSchema.optional(),
-    credit_card_holder_info: holderInfoSchema.optional(),
-  })
-  .refine((v) => v.billing_type !== "CREDIT_CARD" || (v.credit_card && v.credit_card_holder_info), {
-    message: "Dados do cartão e do titular são obrigatórios para CREDIT_CARD",
-  });
-
-type PurchasePayload = z.infer<typeof purchaseSchema>;
 
 function todayISO(): string {
   return new Date().toISOString().split("T")[0];
@@ -86,8 +62,7 @@ serve(
 
     const { data: profile } = await admin.from("profiles").select("empresa_id, role").eq("id", user.id).maybeSingle();
 
-    const isAdmin = profile?.role === "admin" || profile?.role === "ultra_admin";
-    if (!profile?.empresa_id || !isAdmin) {
+    if (!ehAdminDaEmpresa(profile)) {
       return jsonResponse({ error: "Apenas admin da empresa pode comprar tokens" }, 403, req);
     }
 
@@ -274,7 +249,7 @@ serve(
       };
     }
 
-    const initialStatus = payment.status === "CONFIRMED" || payment.status === "RECEIVED" ? "paid" : "pending";
+    const initialStatus = statusInicialDaCompra(payment.status);
 
     await admin
       .from("pilar_token_pack_purchases")

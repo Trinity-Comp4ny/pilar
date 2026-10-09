@@ -7,14 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { onlyDigits, formatDocument, formatCEP, validateCPF, validateCNPJ } from "@/lib/maskUtils";
+import { onlyDigits, formatDocument, formatCEP, formatPhone, validateCPF, validateCNPJ } from "@/lib/maskUtils";
 import { detectCardBrand, formatCardNumber, formatExpiry, validateCreditCard } from "@/lib/creditCard";
-import { edgeFunctionErrorMessage } from "@/lib/edgeFunctionError";
+import { edgeFunctionErrorDetail } from "@/lib/edgeFunctionError";
 import { analytics } from "@/lib/analytics";
 import { usePlans, calculateYearlySavingPct } from "@/pages/planos/hooks/usePlans";
 import { CycleToggle, type BillingCycle } from "@/pages/planos/components/CycleToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { cobraNaHora } from "@/lib/cobranca";
 import type { MySubscription } from "@/pages/billing/hooks/useMySubscription";
 
 interface AtivarPlanoProps {
@@ -25,15 +26,16 @@ interface AtivarPlanoProps {
 }
 
 // SPEC 098, requisito 14: "Ativar plano" tokeniza o cartão sem cobrar nada
-// agora. A cobrança real só acontece no dia 14 (trial-expiry-cron), e a
+// agora. A cobrança real só acontece no fim do teste (trial-expiry-cron), e a
 // evidência de que o admin concordou é o checkbox datado abaixo, gravado em
 // consentimentos_cobranca pela própria edge — não há segunda aprovação.
+// SPEC 104: com o teste já vencido, o mesmo formulário assina e cobra na hora.
 export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: AtivarPlanoProps) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { data: plans } = usePlans();
 
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
-  const [planId, setPlanId] = useState<string>("");
+  const [planoEscolhido, setPlanId] = useState<string>("");
   const [ccHolder, setCcHolder] = useState("");
   const [ccNumber, setCcNumber] = useState("");
   const [ccExpiry, setCcExpiry] = useState("");
@@ -41,20 +43,34 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
   const [holderCpfCnpj, setHolderCpfCnpj] = useState("");
   const [holderPostalCode, setHolderPostalCode] = useState("");
   const [holderAddressNumber, setHolderAddressNumber] = useState("");
+  // O Asaas exige o telefone do titular; começa com o do cadastro.
+  const [holderPhone, setHolderPhone] = useState(() => formatPhone(profile?.contato ?? ""));
   const [consentimento, setConsentimento] = useState(false);
+  // Conta Asaas sem tokenização liberada: em vez de travar, o diálogo passa a
+  // assinar com cobrança hoje (o admin confirma de novo, texto diferente).
+  const [cobrarAgora, setCobrarAgora] = useState(false);
+  const [avisoTokenizacao, setAvisoTokenizacao] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
   const sucedeu = useRef(false);
   const cardBrand = detectCardBrand(ccNumber);
 
+  // Sem escolha explícita, vale o plano sugerido. Não depende do onOpenChange:
+  // quem abre o diálogo por estado (botão do painel) não passa por ele.
+  const planId = planoEscolhido || plans?.find((p) => p.destaque)?.id || plans?.[0]?.id || "";
   const planoSelecionado = useMemo(() => plans?.find((p) => p.id === planId) ?? null, [plans, planId]);
   const valor = planoSelecionado
     ? cycle === "yearly"
       ? (planoSelecionado.preco_anual ?? planoSelecionado.preco_mensal * 12)
       : planoSelecionado.preco_mensal
     : 0;
+  const imediata = cobraNaHora(subscription) || cobrarAgora;
   // formatDate espera data pura (YYYY-MM-DD); trial_ends_at é timestamptz completo.
-  const dataPrimeiraCobranca = subscription.trial_ends_at ? formatDate(subscription.trial_ends_at.slice(0, 10)) : "-";
+  const dataPrimeiraCobranca = imediata
+    ? "hoje"
+    : subscription.trial_ends_at
+      ? formatDate(subscription.trial_ends_at.slice(0, 10))
+      : "-";
 
   const handleOpenChange = (v: boolean) => {
     if (!v && !sucedeu.current) {
@@ -62,7 +78,6 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
     }
     if (v) {
       analytics.track("trial_ativar_plano_iniciado", {});
-      setPlanId((prev) => prev || plans?.find((p) => p.destaque)?.id || plans?.[0]?.id || "");
     }
     onOpenChange(v);
   };
@@ -84,7 +99,8 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
     ccCcv.trim().length >= 3 &&
     cpfCnpjValido &&
     onlyDigits(holderPostalCode).length === 8 &&
-    holderAddressNumber.trim().length > 0;
+    holderAddressNumber.trim().length > 0 &&
+    [10, 11].includes(onlyDigits(holderPhone).length);
 
   const handleSubmit = async () => {
     if (!formValido || !planoSelecionado) return;
@@ -95,6 +111,7 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
         body: {
           plan_id: planoSelecionado.id,
           billing_cycle: cycle,
+          ...(cobrarAgora ? { cobrar_agora: true } : {}),
           credit_card: {
             holderName: ccHolder.trim(),
             number: onlyDigits(ccNumber),
@@ -108,26 +125,41 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
             cpfCnpj: cpfCnpjDigits,
             postalCode: onlyDigits(holderPostalCode),
             addressNumber: holderAddressNumber.trim(),
+            phone: onlyDigits(holderPhone),
           },
         },
       });
 
       if (error) {
-        throw new Error(await edgeFunctionErrorMessage(error, "Falha ao ativar o plano"));
+        const { message, codigo } = await edgeFunctionErrorDetail(error, "Falha ao ativar o plano");
+        if (codigo === "tokenizacao_indisponivel") {
+          analytics.track("trial_ativar_plano_tokenizacao_indisponivel", {});
+          setCobrarAgora(true);
+          setConsentimento(false);
+          setAvisoTokenizacao(message);
+          return;
+        }
+        throw new Error(message);
       }
       if (data?.error) {
         throw new Error(data.error);
       }
 
       sucedeu.current = true;
-      analytics.track("trial_ativar_plano_concluido", { plan_id: planoSelecionado.id, billing_cycle: cycle });
-      toast.success("Plano ativado", {
-        description: `Sua empresa já está no nível Ouro. A primeira cobrança de ${formatCurrency(valor)} acontece em ${dataPrimeiraCobranca}.`,
+      analytics.track("trial_ativar_plano_concluido", {
+        plan_id: planoSelecionado.id,
+        billing_cycle: cycle,
+        cobrado_agora: imediata,
+      });
+      toast.success(imediata ? "Assinatura ativa" : "Plano ativado", {
+        description: imediata
+          ? `Cobrança de ${formatCurrency(valor)} aprovada. Sua empresa já pode editar de novo.`
+          : `Sua empresa já está no nível Ouro. A primeira cobrança de ${formatCurrency(valor)} acontece em ${dataPrimeiraCobranca}.`,
       });
       onAtivado();
       onOpenChange(false);
     } catch (e) {
-      toast.error("Não foi possível ativar o plano", {
+      toast.error(imediata ? "Não foi possível assinar" : "Não foi possível ativar o plano", {
         description: e instanceof Error ? e.message : "Tente novamente",
       });
     } finally {
@@ -139,12 +171,20 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
     <FormDialog
       open={open}
       onOpenChange={handleOpenChange}
-      title="Ativar plano"
-      description="Nada é cobrado agora. Escolha o plano e informe o cartão para garantir a continuidade sem interrupção."
+      title={imediata ? "Assinar o Pilar" : "Ativar plano"}
+      description={
+        imediata
+          ? subscription.status === "trialing"
+            ? "A assinatura começa hoje: a primeira cobrança é feita agora e o teste grátis termina."
+            : `${subscription.status === "canceled" ? "Sua assinatura foi cancelada" : "Seu teste terminou"}. Escolha o plano e informe o cartão: a cobrança é feita agora e o acesso volta na hora.`
+          : "Nada é cobrado agora. Escolha o plano e informe o cartão para garantir a continuidade sem interrupção."
+      }
       size="md"
       zClassName="z-70"
       onSubmit={handleSubmit}
-      submitLabel="Ativar plano"
+      submitLabel={
+        imediata ? `Assinar e pagar ${planoSelecionado ? formatCurrency(valor) : ""}`.trim() : "Ativar plano"
+      }
       isPending={isPending}
       submitDisabled={!formValido}
     >
@@ -169,7 +209,7 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
                 )}
               >
                 {plan.destaque && (
-                  <span className="absolute top-2 right-2 text-[9px] uppercase tracking-wider bg-brand/10 text-brand px-2 py-0.5 rounded-full">
+                  <span className="absolute -top-2.5 right-2 text-[9px] uppercase tracking-wider bg-brand text-ink px-2 py-0.5 rounded-full">
                     Sugerido
                   </span>
                 )}
@@ -264,17 +304,30 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
               />
             </div>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="ativar-numero">Número do endereço</Label>
-            <Input
-              id="ativar-numero"
-              value={holderAddressNumber}
-              onChange={(e) => setHolderAddressNumber(e.target.value)}
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="ativar-numero">Número do endereço</Label>
+              <Input
+                id="ativar-numero"
+                value={holderAddressNumber}
+                onChange={(e) => setHolderAddressNumber(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ativar-telefone">Celular do titular</Label>
+              <Input
+                id="ativar-telefone"
+                value={holderPhone}
+                onChange={(e) => setHolderPhone(formatPhone(e.target.value))}
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="(00) 00000-0000"
+              />
+            </div>
           </div>
         </div>
 
-        {planoSelecionado && (
+        {planoSelecionado && !imediata && (
           <div className="rounded-lg border border-border bg-muted p-3 text-sm text-ink-muted">
             Nada é cobrado agora. A primeira cobrança de <strong className="text-ink">{formatCurrency(valor)}</strong>{" "}
             acontece em <strong className="text-ink">{dataPrimeiraCobranca}</strong>, só se você continuar. Cancele
@@ -282,9 +335,29 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
           </div>
         )}
 
+        {avisoTokenizacao && (
+          <div
+            role="status"
+            className="rounded-lg border border-warning-mid-border bg-warning-soft p-3 text-sm text-warning-strong"
+          >
+            {avisoTokenizacao} Confira o valor abaixo e confirme de novo.
+          </div>
+        )}
+
+        {planoSelecionado && imediata && (
+          <div className="rounded-lg border border-border bg-muted p-3 text-sm text-ink-muted">
+            A primeira cobrança de <strong className="text-ink">{formatCurrency(valor)}</strong> é feita agora. Cancele
+            em até 7 dias em Configurações e o valor é estornado integralmente.
+          </div>
+        )}
+
         <label className="flex items-start gap-2 text-sm text-ink-muted cursor-pointer">
           <Checkbox checked={consentimento} onCheckedChange={(v) => setConsentimento(v === true)} className="mt-0.5" />
-          <span>Entendo que a cobrança começa em {dataPrimeiraCobranca} e que posso cancelar antes.</span>
+          <span>
+            {imediata
+              ? "Autorizo a cobrança de hoje e a renovação automática a cada ciclo, até eu cancelar."
+              : `Entendo que a cobrança começa em ${dataPrimeiraCobranca} e que posso cancelar antes.`}
+          </span>
         </label>
       </div>
     </FormDialog>

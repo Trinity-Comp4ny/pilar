@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { CreditCard, Calendar, Package, ExternalLink, Loader2, Sparkles } from "lucide-react";
+import { CreditCard, Calendar, Package, ExternalLink, Loader2, Sparkles, Lock, Handshake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -11,6 +11,7 @@ import { CancelDialog } from "@/pages/billing/components/CancelDialog";
 import { AtivarPlano } from "@/components/trial/AtivarPlano";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { MARKETING_URL } from "@/lib/marketingSite";
+import { ehConvidada, podeAtivarPlano } from "@/lib/cobranca";
 
 function formatBRL(value: number): string {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -49,6 +50,9 @@ export function PagamentoPanel() {
   const isCanceled = subscription?.status === "canceled";
   const isOverdue = subscription?.status === "overdue";
   const isTrialing = subscription?.status === "trialing";
+  const isExpired = subscription?.status === "expired";
+  // SPEC 104: convidada não paga; sem assinatura também conta (empresas antigas).
+  const convidada = !isLoading && !error && ehConvidada(subscription);
 
   const goToPlanos = () => {
     closeSettings();
@@ -74,22 +78,31 @@ export function PagamentoPanel() {
         </div>
       )}
 
-      {!isLoading && !subscription && (
+      {convidada && (
         <Card>
-          <CardContent className="py-12 text-center space-y-4">
-            <Package className="w-10 h-10 text-ink-disabled mx-auto" />
-            <div>
-              <h3 className="text-lg font-medium text-ink">Sem assinatura ativa</h3>
-              <p className="text-sm text-ink-muted mt-1">Escolha um plano pra começar a usar o Pilar.</p>
+          <CardContent className="py-10 space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-full bg-brand/10 shrink-0">
+                <Handshake className="w-6 h-6 text-ink" />
+              </div>
+              <div className="space-y-2">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium uppercase tracking-wider bg-brand text-ink">
+                  Empresa convidada
+                </span>
+                <h3 className="text-lg font-medium text-ink">
+                  {subscription?.plan ? `Pilar ${subscription.plan.nome}, sem cobrança` : "Acesso sem cobrança"}
+                </h3>
+                <p className="text-sm text-ink-muted">
+                  Sua empresa usa o Pilar a convite, sem mensalidade. Se o convite acabar, você recebe um prazo e um
+                  aviso antes de qualquer cobrança.
+                </p>
+              </div>
             </div>
-            <Button onClick={goToPlanos} variant="brand">
-              Ver planos
-            </Button>
           </CardContent>
         </Card>
       )}
 
-      {subscription && subscription.plan && (
+      {!convidada && subscription && subscription.plan && (
         <div className="space-y-6">
           {isOverdue && (
             <div className="p-4 bg-warning-soft border border-warning-mid-border rounded-xl text-sm text-warning-strong">
@@ -98,8 +111,35 @@ export function PagamentoPanel() {
           )}
 
           {isCanceled && (
-            <div className="p-4 bg-muted border border-border rounded-xl text-sm text-ink-soft">
-              <strong>Assinatura cancelada.</strong> Acesso mantido até {formatDate(subscription.current_period_end)}.
+            <div className="p-4 bg-muted border border-border rounded-xl text-sm text-ink-soft flex items-start gap-3">
+              <div className="flex-1">
+                <strong>Assinatura cancelada.</strong> Os dados continuam guardados.{" "}
+                {isAdmin
+                  ? "Assine de novo para voltar a usar."
+                  : "Peça ao administrador da empresa para assinar de novo."}
+              </div>
+              {isAdmin && (
+                <Button variant="brand" size="sm" onClick={() => setAtivarOpen(true)}>
+                  Assinar de novo
+                </Button>
+              )}
+            </div>
+          )}
+
+          {isExpired && (
+            <div className="p-4 bg-warning-soft border border-warning-mid-border rounded-xl text-sm text-warning-strong flex items-start gap-3">
+              <Lock className="w-4 h-4 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <strong>Seu teste terminou.</strong>{" "}
+                {isAdmin
+                  ? "Os dados continuam guardados. Assine para voltar a editar na hora."
+                  : "Os dados continuam guardados. Peça ao administrador da empresa para assinar."}
+              </div>
+              {isAdmin && (
+                <Button variant="brand" size="sm" onClick={() => setAtivarOpen(true)}>
+                  Assinar agora
+                </Button>
+              )}
             </div>
           )}
 
@@ -107,8 +147,8 @@ export function PagamentoPanel() {
             <div className="p-4 bg-brand/5 border border-brand/20 rounded-xl text-sm text-ink-soft flex items-start gap-3">
               <Sparkles className="w-4 h-4 text-brand shrink-0 mt-0.5" />
               <div className="flex-1">
-                <strong className="text-ink">Você está no período de teste.</strong> Ative o plano agora e não perca
-                acesso quando o trial terminar em {formatDate(subscription.trial_ends_at)} — nada é cobrado até lá.
+                <strong className="text-ink">Você está no teste grátis.</strong> Ative o plano agora e não perca acesso
+                quando o teste terminar em {formatDate(subscription.trial_ends_at)}: nada é cobrado até lá.
               </div>
               <Button variant="brand" size="sm" onClick={() => setAtivarOpen(true)}>
                 Ativar plano
@@ -178,7 +218,7 @@ export function PagamentoPanel() {
                     <Button
                       className="w-full justify-start"
                       variant="outline"
-                      disabled={isCanceled || isTrialing}
+                      disabled={isCanceled || isTrialing || isExpired}
                       onClick={() => setChangeOpen(true)}
                     >
                       <Package className="w-4 h-4 mr-2" /> Mudar plano
@@ -189,7 +229,7 @@ export function PagamentoPanel() {
                     <Button
                       className="w-full justify-start text-danger-mid hover:text-danger-strong hover:bg-danger-soft"
                       variant="outline"
-                      disabled={isCanceled || isTrialing}
+                      disabled={isCanceled || isTrialing || isExpired}
                       onClick={() => setCancelOpen(true)}
                     >
                       Cancelar assinatura
@@ -222,12 +262,19 @@ export function PagamentoPanel() {
             <>
               <ChangePlanDialog open={changeOpen} onOpenChange={setChangeOpen} current={subscription} />
               <CancelDialog open={cancelOpen} onOpenChange={setCancelOpen} current={subscription} />
-              <AtivarPlano
-                open={ativarOpen}
-                onOpenChange={setAtivarOpen}
-                subscription={subscription}
-                onAtivado={() => qc.invalidateQueries({ queryKey: ["pilar-my-subscription"] })}
-              />
+              {podeAtivarPlano(subscription) && (
+                <AtivarPlano
+                  open={ativarOpen}
+                  onOpenChange={setAtivarOpen}
+                  subscription={subscription}
+                  onAtivado={() => {
+                    // Saiu do modo leitura: o gate e o banner leem status/leitura_desde.
+                    void qc.invalidateQueries({ queryKey: ["pilar-my-subscription"] });
+                    void qc.invalidateQueries({ queryKey: ["trial-subscription"] });
+                    if (isExpired || isCanceled) window.location.reload();
+                  }}
+                />
+              )}
             </>
           )}
         </div>

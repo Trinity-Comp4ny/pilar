@@ -47,6 +47,7 @@ export function ProjetoDetailHeader({
                 "h-6 w-auto text-xs font-medium rounded-full border-0 px-2.5 gap-1",
                 PROJECT_STATUS_CONFIG[projeto.status]?.color
               )}
+              aria-label="Status do projeto"
             >
               <SelectValue />
             </SelectTrigger>
@@ -72,6 +73,7 @@ export function ProjetoDetailHeader({
                 priorityConfig?.bgColor,
                 priorityConfig?.color
               )}
+              aria-label="Prioridade do projeto"
             >
               <SelectValue />
             </SelectTrigger>

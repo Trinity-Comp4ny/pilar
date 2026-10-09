@@ -3,6 +3,7 @@ import { APP_URL } from "../config";
 import { trackCta } from "../analytics";
 import { RevealGroup } from "./motion";
 import { INCLUSO_EM_TODOS, PLANOS } from "../lib/planos";
+import { linkCadastro } from "../lib/origem";
 
 /**
  * Os três planos, no mesmo desenho na home e na /planos.
@@ -50,16 +51,14 @@ export function PlanCards({ contexto, modo = "testar" }: { contexto: string; mod
             <p className="mb-7 text-[12px] text-ink-muted">A empresa inteira, sem cobrança por usuário</p>
 
             <a
-              href={modo === "assinar" ? `${APP_URL}/checkout?plano=${p.slug}` : `${APP_URL}/cadastro`}
-              onClick={() =>
-                trackCta(modo === "assinar" ? "assinar_plano" : "testar_gratis", `${contexto}_${p.slug}`)
-              }
+              href={modo === "assinar" ? `${APP_URL}/checkout?plano=${p.slug}` : linkCadastro()}
+              onClick={() => trackCta(modo === "assinar" ? "assinar_plano" : "testar_gratis", `${contexto}_${p.slug}`)}
               aria-label={modo === "assinar" ? `Assinar plano ${p.nome}` : undefined}
               className={`flex h-11 items-center justify-center rounded-full text-[14px] font-medium transition-colors ${
                 p.destaque ? "bg-brand text-ink hover:bg-brand/85" : "bg-paper-alt text-ink hover:bg-paper-border/60"
               }`}
             >
-              {modo === "assinar" ? `Assinar ${p.nome}` : "Testar grátis por 14 dias"}
+              {modo === "assinar" ? `Assinar ${p.nome}` : "Testar grátis por 3 dias"}
             </a>
 
             {/* Só as três réguas que separam um plano do outro. */}

@@ -129,11 +129,15 @@ export default defineConfig(({ mode }) => ({
       // módulo financeiro. Não medimos o app inteiro ainda; a meta é ter número
       // de linha de base antes de exigir piso no CI.
       include: ["src/lib/**", "src/pages/financeiro/**"],
-      // Ainda sem `thresholds` que reprovem o CI: primeiro medir, depois travar.
-      // Quando a base estiver mapeada, subir um piso para o financeiro, ex.:
-      // thresholds: {
-      //   "src/pages/financeiro/**": { statements: 20, branches: 20, functions: 20, lines: 20 },
-      // },
+      // Piso que reprova o CI (catraca, não meta). Medido em 07/10: lib em 70/66/71/72
+      // (statements/branches/functions/lines) e financeiro em 5/6/4/4. O piso fica um
+      // pouco abaixo do medido para refactor pequeno não reprovar; a regra é só subir.
+      // Quando um módulo ganhar teste, subir o número dele no mesmo PR. Tela do
+      // financeiro é coberta por E2E (e2e/financeiro-*), por isso o piso baixo.
+      thresholds: {
+        "src/lib/**": { statements: 68, branches: 63, functions: 68, lines: 70 },
+        "src/pages/financeiro/**": { statements: 4, branches: 5, functions: 3, lines: 4 },
+      },
     },
   },
 }));

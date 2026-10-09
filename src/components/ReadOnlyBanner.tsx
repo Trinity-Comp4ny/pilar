@@ -27,7 +27,7 @@ export function ReadOnlyBanner({ isAdmin }: { isAdmin: boolean }) {
             className="h-7 px-2 text-black hover:bg-black/10"
             onClick={() => openSettings("pagamento")}
           >
-            Ver assinatura
+            Assinar agora
           </Button>
         )}
       </div>

@@ -747,7 +747,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
               <div>
                 <h3 className="text-base font-medium text-ink">Como foi o dia na obra?</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Grave um áudio contando o que aconteceu — a gente preenche o resto pra você revisar.
+                  Grave um áudio contando o que aconteceu, e a gente preenche o resto pra você revisar.
                 </p>
               </div>
 

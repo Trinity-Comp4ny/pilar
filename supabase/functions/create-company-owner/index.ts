@@ -5,25 +5,9 @@ import { getCorsHeaders } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
-import { emailSchema, nameSchema, parseOr400, z } from "../_shared/schemas.ts";
-
-const createOwnerSchema = z.object({
-  email: emailSchema,
-  company_name: nameSchema,
-  nome: z.string().trim().min(1).max(200).optional(),
-});
-
-// Token de convite: 32 bytes aleatórios em hex. Só o hash é persistido.
-function generateInviteToken(): string {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-async function sha256Hex(input: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
-  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
-}
+import { parseOr400 } from "../_shared/schemas.ts";
+import { gerarConviteToken } from "../_shared/convite-token.ts";
+import { createOwnerSchema, verificarRequisicao } from "./portao.ts";
 
 // Cria convite para novo tenant (dono de empresa).
 // Requer header X-Super-Admin-Key matching SUPER_ADMIN_KEY (env).
@@ -47,64 +31,32 @@ serve(
       return new Response("ok", { headers: corsHeaders });
     }
 
-    if (req.method !== "POST") {
-      log.warn("rejected: method not allowed", { method: req.method });
-      return new Response(JSON.stringify({ error: "Method not allowed" }), {
+    // Método, Content-Type, Origin e chave: regra e ordem em portao.ts (com teste).
+    const veredito = verificarRequisicao(
+      {
+        method: req.method,
+        contentType: req.headers.get("content-type"),
+        origin: req.headers.get("origin"),
+        superAdminKey: req.headers.get("x-super-admin-key"),
+      },
+      { allowedOrigins: Deno.env.get("ALLOWED_ORIGINS") ?? "", superAdminKey: Deno.env.get("SUPER_ADMIN_KEY") }
+    );
+    if (!veredito.ok) {
+      if (veredito.status >= 500) log.error(veredito.motivo, null);
+      else
+        log.warn(`rejected: ${veredito.motivo}`, {
+          origin: req.headers.get("origin"),
+          contentType: req.headers.get("content-type"),
+          hasKey: Boolean(req.headers.get("x-super-admin-key")),
+        });
+      return new Response(JSON.stringify({ error: veredito.error }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 405,
+        status: veredito.status,
       });
     }
-
-    // Content-Type estrito: rejeita form-encoded / multipart (vetor CSRF clássico).
-    const contentType = (req.headers.get("content-type") ?? "").toLowerCase();
-    if (!contentType.includes("application/json")) {
-      log.warn("rejected: invalid content-type", { contentType });
-      return new Response(JSON.stringify({ error: "Content-Type must be application/json" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 415,
-      });
-    }
-
-    // Origin obrigatória e em allowlist (defesa em profundidade pra CSRF).
-    const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
-      .split(",")
-      .map((o) => o.trim().replace(/\/$/, ""))
-      .filter(Boolean);
-
-    if (ALLOWED_ORIGINS.length === 0) {
-      log.error("ALLOWED_ORIGINS not configured", null);
-      return new Response(JSON.stringify({ error: "Server misconfigured" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      });
-    }
-
-    const rawOrigin = (req.headers.get("origin") || "").replace(/\/$/, "");
-    if (!rawOrigin || !ALLOWED_ORIGINS.includes(rawOrigin)) {
-      log.warn("rejected: origin not allowed", { origin: rawOrigin || null });
-      return new Response(JSON.stringify({ error: "Origin not allowed" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 403,
-      });
-    }
+    const rawOrigin = veredito.origin;
 
     try {
-      const providedKey = req.headers.get("x-super-admin-key");
-      const expectedKey = Deno.env.get("SUPER_ADMIN_KEY");
-
-      if (!expectedKey) {
-        log.error("SUPER_ADMIN_KEY not configured", null);
-        throw new Error("SUPER_ADMIN_KEY não configurada no ambiente");
-      }
-
-      if (!providedKey || providedKey !== expectedKey) {
-        log.warn("rejected: invalid super admin key", { hasKey: Boolean(providedKey) });
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 401,
-        });
-      }
-
       let raw: unknown;
       try {
         raw = await req.json();
@@ -153,8 +105,7 @@ serve(
       // com 23505 ao reconvidar um email que já teve QUALQUER pending anterior
       // (usado ou expirado) e também deixava uma janela de corrida entre os dois
       // requests em cliques duplicados.
-      const rawToken = generateInviteToken();
-      const tokenHash = await sha256Hex(rawToken);
+      const { token: rawToken, hash: tokenHash } = await gerarConviteToken();
       const { data: pending, error: upsertError } = await supabaseAdmin
         .from("empresa_owners_pending")
         .upsert(

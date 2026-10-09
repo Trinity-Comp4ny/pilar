@@ -55,7 +55,9 @@ export default function ObraDetalhePage() {
   const showCronograma = can("obras_cronograma", "view");
   const showCotacoes = can("obras_cotacoes", "view");
   const showEstoque = can("obras_estoque", "view");
-  const showConta = can("obras_conta", "view");
+  // Conta da obra é dinheiro: além do módulo, exige acesso ao financeiro (ADR 0046),
+  // mesma regra da RLS de obra_conta_lancamento.
+  const showConta = can("obras_conta", "view") && can("financeiro");
 
   const { data: obra, isLoading } = useObra(id);
   usePageTitle(obra?.nome ?? "Obra");

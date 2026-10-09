@@ -141,3 +141,25 @@ begin
     );
   end loop;
 end $$;
+
+-- Empresa Dev sem trava de trial (SPEC 098): a empresa nasce em 'bronze', com
+-- limite de 2 projetos, e o E2E que cria projeto travava no modal "Você atingiu
+-- um limite do período de teste" já na segunda rodada. Ambiente de dev e de CI
+-- testa o produto, não o funil de trial; quem quiser exercitar os limites zera o
+-- override na mão. Bloco separado (e não no insert acima) para valer também em
+-- banco local que já tinha o seed aplicado.
+update public.empresas
+set nivel_override = 'ouro',
+    nivel_override_motivo = 'seed local: dev e E2E sem limite de trial'
+where id = '00000000-0000-0000-0000-000000000001'
+  and nivel_override is null;
+
+-- Onboarding dispensado para os usuários de seed. Usuário novo ganha o tour guiado
+-- (driver.js, overlay em tela cheia) e o checklist flutuante no canto da tela, e os
+-- dois interceptam o clique: no banco zerado do CI os specs E2E de escrita travavam
+-- em "Novo lançamento" e "Próximo". Quem quiser ver o onboarding usa outro usuário
+-- ou zera `onboarding_state` na mão.
+update public.profiles
+set onboarding_state = onboarding_state || '{"dismissed": true}'::jsonb
+where empresa_id = '00000000-0000-0000-0000-000000000001'
+  and coalesce((onboarding_state->>'dismissed')::boolean, false) = false;

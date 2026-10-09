@@ -2,7 +2,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 
-export type EscopoRow = Tables<"escopos"> & { escopo_itens: Tables<"escopo_itens">[] };
+/**
+ * Escopo lido da view escopos_safe (ADR 0046): valor do aditivo, custo do escopo e custo
+ * dos itens vêm nulos para quem não tem acesso ao financeiro, e `pode_ver_valor` diz qual
+ * é o caso. A tabela escopos não entrega essas colunas a ninguém pela API.
+ */
+export type EscopoRow = Omit<Tables<"escopos">, "valor_aditivo" | "custo_estimado"> & {
+  valor_aditivo: number | null;
+  custo_estimado: number | null;
+  pode_ver_valor: boolean;
+  escopo_itens: (Omit<Tables<"escopo_itens">, "custo"> & { custo: number | null })[];
+};
 export type OrcamentoFaseRow = Pick<
   Tables<"projeto_orcamento_fases">,
   "disciplina" | "horas_estimadas" | "custo_hora" | "custo_estimado"
@@ -21,13 +31,14 @@ export function useEscopos(projetoId: string | undefined) {
     enabled: !!projetoId,
     queryFn: async (): Promise<EscopoRow[]> => {
       const { data, error } = await supabase
-        .from("escopos")
-        .select("*, escopo_itens(*)")
+        .from("escopos_safe")
+        .select("*")
         .eq("projeto_id", projetoId!)
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as EscopoRow[];
+      // View: o gerador de tipos marca toda coluna como opcional e escopo_itens como Json.
+      return (data ?? []) as unknown as EscopoRow[];
     },
     staleTime: 1000 * 60,
   });
@@ -44,8 +55,8 @@ export function usePendenciasAgentes() {
     queryKey: pendenciasKey,
     queryFn: async (): Promise<PendenciaAditivo[]> => {
       const { data, error } = await supabase
-        .from("escopos")
-        .select("*, escopo_itens(*), projetos(nome)")
+        .from("escopos_safe")
+        .select("*")
         .eq("tipo", "aditivo")
         .in("status", ["rascunho", "pendente_aprovacao"])
         .is("deleted_at", null)
@@ -53,8 +64,8 @@ export function usePendenciasAgentes() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []).map((row) => {
-        const { projetos, ...escopo } = row as EscopoRow & { projetos: { nome: string } | null };
-        return { ...escopo, projeto_nome: projetos?.nome ?? "Projeto" };
+        const { projeto_nome, ...escopo } = row as unknown as EscopoRow & { projeto_nome: string | null };
+        return { ...escopo, projeto_nome: projeto_nome ?? "Projeto" };
       });
     },
     staleTime: 1000 * 30,
@@ -137,7 +148,12 @@ export function useAprovarEscopo() {
     onSuccess: (_data, params) => {
       qc.invalidateQueries({ queryKey: escoposKey(params.projetoId) });
       qc.invalidateQueries({ queryKey: orcamentoVivoKey(params.projetoId) });
-      qc.invalidateQueries({ queryKey: ["projeto", params.projetoId] });
+      // Aprovar soma o valor no contrato (trigger handle_escopo_aprovado): o cabeçalho
+      // do detalhe (["projeto-detail", id]) e o quadro (["projetos"]) precisam recarregar.
+      // Antes invalidava ["projeto", id], chave que nenhuma query usa, e o contrato
+      // antigo ficava na tela até o reload (achado pelo E2E em 07/10).
+      qc.invalidateQueries({ queryKey: ["projeto-detail", params.projetoId] });
+      qc.invalidateQueries({ queryKey: ["projetos"] });
       qc.invalidateQueries({ queryKey: pendenciasKey });
     },
   });

@@ -50,9 +50,12 @@ export function AditivoReviewCard({ escopo, canEdit, onAprovar, onRejeitar, proj
               {formatDateTime(escopo.created_at ?? undefined)}
             </p>
           </div>
-          <p className="whitespace-nowrap text-sm font-medium text-foreground">
-            {formatCurrency(escopo.valor_aditivo ?? 0)}
-          </p>
+          {/* Valor nulo = sem acesso ao financeiro (escopos_safe, ADR 0046), não aditivo de R$ 0. */}
+          {escopo.pode_ver_valor && (
+            <p className="whitespace-nowrap text-sm font-medium text-foreground">
+              {formatCurrency(escopo.valor_aditivo ?? 0)}
+            </p>
+          )}
         </div>
 
         {escopo.justificativa && <p className="text-sm text-muted-foreground">{escopo.justificativa}</p>}
@@ -65,13 +68,19 @@ export function AditivoReviewCard({ escopo, canEdit, onAprovar, onRejeitar, proj
                   {item.descricao}
                   {item.disciplina ? ` (${item.disciplina})` : ""}
                 </span>
-                <span className="whitespace-nowrap">{formatCurrency(item.custo ?? 0)}</span>
+                {escopo.pode_ver_valor && <span className="whitespace-nowrap">{formatCurrency(item.custo ?? 0)}</span>}
               </li>
             ))}
           </ul>
         )}
 
-        {isPendente && canEdit && (
+        {isPendente && canEdit && !escopo.pode_ver_valor && (
+          <p className="border-t border-border pt-3 text-xs text-muted-foreground">
+            A aprovação fica com quem tem acesso ao financeiro do escritório.
+          </p>
+        )}
+
+        {isPendente && canEdit && escopo.pode_ver_valor && (
           <div className="flex items-center justify-end gap-2 border-t border-border pt-3">
             <Button variant="ghost" size="sm" onClick={onRejeitar}>
               Rejeitar

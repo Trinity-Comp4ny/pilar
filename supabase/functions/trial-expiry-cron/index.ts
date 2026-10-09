@@ -7,18 +7,21 @@
  *   Authorization: Bearer <CRON_SECRET>
  *
  * Responsabilidades:
- *  - Marca status = 'expired' em empresas cujo trial_ends_at já passou
- *  - Envia emails de aviso 7 dias, 3 dias e 1 dia antes do vencimento
+ *  - Converte em assinatura ativa quem ativou o plano (cartão tokenizado)
+ *  - Marca status = 'expired' (modo leitura) nos demais e avisa por e-mail
+ *  - Envia avisos 7 dias e 1 dia antes do vencimento (janelas em avisos.ts)
+ *  - Roda de hora em hora (SPEC 104): o trial é de 3 dias
  *  - Idempotente: usa colunas trial_warning_*d_sent_at para evitar duplicatas
  *  - Registra cada ação em admin_audit_logs
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from "../_shared/logger.ts";
-import { withSentry } from "../_shared/sentry.ts";
-import { sendEmail, templateTrialAviso, templateAtivarPlanoRecibo } from "../_shared/email/index.ts";
-import { createSubscription } from "../_shared/asaas-platform.ts";
+import { withSentryCron } from "../_shared/sentry.ts";
+import { sendEmail, templateTrialAviso, templateTrialExpirado } from "../_shared/email/index.ts";
+import { converterEmAssinaturaAtiva } from "../_shared/converter-assinatura.ts";
+import { JANELAS_DE_AVISO, limitesDaJanela } from "./avisos.ts";
 
 const log = createLogger("trial-expiry-cron");
 
@@ -35,22 +38,26 @@ interface SubscriptionRow {
   id: string;
   empresa_id: string;
   trial_ends_at: string;
-  trial_warning_7d_sent_at: string | null;
-  trial_warning_3d_sent_at: string | null;
-  trial_warning_1d_sent_at: string | null;
 }
 
 interface EmpresaInfo {
   nome: string;
 }
 
-interface ProfileRow {
-  email: string | null;
-  nome: string | null;
+// Admins da empresa que recebem e-mail de cobrança. profiles não tem
+// deleted_at: filtrar por essa coluna fazia o PostgREST devolver erro e a
+// lista vir vazia, então nenhum aviso de trial saía.
+async function emailsDosAdmins(admin: SupabaseClient, empresaId: string): Promise<string[]> {
+  const { data } = (await admin
+    .from("profiles")
+    .select("email")
+    .eq("empresa_id", empresaId)
+    .in("role", ["owner", "admin", "ultra_admin"])) as { data: { email: string | null }[] | null };
+  return (data ?? []).map((p) => p.email).filter((e): e is string => !!e);
 }
 
 serve(
-  withSentry("trial-expiry-cron", async (req) => {
+  withSentryCron("trial-expiry-cron", "trial-expiry-daily", async (req) => {
     if (req.method !== "POST") {
       return new Response("Method not allowed", { status: 405 });
     }
@@ -88,79 +95,18 @@ serve(
       // --- Conversão automática (cobra com o token salvo, sem pedir o cartão de novo) ---
       for (const row of toConvert) {
         try {
-          const { data: plan } = await admin
-            .from("pilar_subscription_plans")
-            .select("nome, preco_mensal, preco_anual")
-            .eq("id", row.plan_id)
-            .maybeSingle();
-          const { data: empresa } = await admin.from("empresas").select("nome").eq("id", row.empresa_id).maybeSingle();
-
-          const cycle = row.billing_cycle === "yearly" ? "YEARLY" : "MONTHLY";
-          const valor = row.billing_cycle === "yearly" ? plan?.preco_anual : plan?.preco_mensal;
-          if (!plan || valor == null) {
-            throw new Error("plano ou preço ausente na conversão");
-          }
-
-          const subscription = await createSubscription({
-            customer: row.asaas_customer_id!,
-            billingType: "CREDIT_CARD",
-            value: valor,
-            cycle,
-            nextDueDate: new Date().toISOString().slice(0, 10),
-            description: `Pilar — assinatura ${plan.nome}`,
-            externalReference: row.empresa_id,
-            creditCardToken: row.asaas_credit_card_token!,
-            remoteIp: "0.0.0.0", // cobrança automática do servidor, sem IP de dispositivo pra reportar
-          });
-
-          const now = new Date();
-          const periodEnd = new Date(now);
-          periodEnd.setMonth(periodEnd.getMonth() + (row.billing_cycle === "yearly" ? 12 : 1));
-
-          await admin
-            .from("pilar_subscriptions")
-            .update({
-              status: "active",
-              asaas_subscription_id: subscription.id,
-              current_period_start: now.toISOString(),
-              current_period_end: periodEnd.toISOString(),
-            })
-            .eq("id", row.id);
-
-          await admin.from("admin_audit_logs").insert({
-            actor_id: null,
-            actor_email: "system@pilar",
-            actor_role: "ultra_admin",
-            action: "trial_converted_active",
-            category: "billing",
-            target_type: "subscription",
-            target_id: row.id,
-            target_name: row.empresa_id,
-            empresa_id: row.empresa_id,
-            metadata: { asaas_subscription_id: subscription.id, valor, converted_at: now.toISOString() },
-          });
-
-          const { data: admins } = (await admin
-            .from("profiles")
-            .select("email")
-            .eq("empresa_id", row.empresa_id)
-            .in("role", ["owner", "admin", "ultra_admin"])) as { data: { email: string | null }[] | null };
-          const recipients = (admins ?? []).map((p) => p.email).filter((e): e is string => !!e);
-          if (recipients.length > 0) {
-            await sendEmail({
-              classe: "plataforma",
-              tipo: "ativar_plano_recibo",
-              to: recipients,
-              idempotencyKey: `trial-convert-${row.id}`,
-              ...templateAtivarPlanoRecibo({
-                empresaNome: empresa?.nome ?? "sua empresa",
-                planoNome: plan.nome,
-                valor,
-                billingUrl: `${APP_URL}/billing`,
-              }),
-            });
-          }
-
+          await converterEmAssinaturaAtiva(
+            admin,
+            {
+              id: row.id,
+              empresa_id: row.empresa_id,
+              plan_id: row.plan_id!,
+              billing_cycle: row.billing_cycle,
+              asaas_customer_id: row.asaas_customer_id!,
+            },
+            { creditCardToken: row.asaas_credit_card_token! },
+            { appUrl: APP_URL, origem: "trial_expirado" }
+          );
           converted++;
         } catch (err) {
           // Cobrança falhou (cartão recusado, Asaas fora do ar etc.) — cai no
@@ -202,7 +148,36 @@ serve(
             log.error("falha ao marcar leitura_desde", leituraErr, { count: empresaIds.length });
           }
 
+          const { data: empresasExpiradas } = (await admin
+            .from("empresas")
+            .select("id, nome")
+            .in("id", empresaIds)) as { data: { id: string; nome: string }[] | null };
+          const nomePorEmpresa = new Map((empresasExpiradas ?? []).map((e) => [e.id, e.nome]));
+
           for (const row of toExpire) {
+            // SPEC 104: e-mail "seu teste acabou", com link pra assinar.
+            // Falha de e-mail não desfaz a expiração.
+            try {
+              const recipients = await emailsDosAdmins(admin, row.empresa_id);
+              if (recipients.length > 0) {
+                await sendEmail({
+                  classe: "plataforma",
+                  tipo: "trial_expirado",
+                  to: recipients,
+                  idempotencyKey: `trial-expirado-${row.id}`,
+                  ...templateTrialExpirado({
+                    empresaNome: nomePorEmpresa.get(row.empresa_id) ?? "sua empresa",
+                    billingUrl: `${APP_URL}/billing`,
+                  }),
+                });
+              }
+            } catch (mailErr) {
+              log.warn("falha ao enviar e-mail de trial expirado", {
+                empresa_id: row.empresa_id,
+                err: String(mailErr),
+              });
+            }
+
             try {
               await admin.from("admin_audit_logs").insert({
                 actor_id: null,
@@ -230,32 +205,17 @@ serve(
     }
 
     // ------------------------------------------------------------------
-    // 2. Enviar emails de aviso: 7d, 3d, 1d
+    // 2. Avisos de fim de trial (janelas em avisos.ts: 7d e 1d)
     // ------------------------------------------------------------------
-    const warningWindows: Array<{
-      days: number;
-      column: "trial_warning_7d_sent_at" | "trial_warning_3d_sent_at" | "trial_warning_1d_sent_at";
-      action: "trial_warning_sent_d7" | "trial_warning_sent_d3" | "trial_warning_sent_d1";
-    }> = [
-      { days: 7, column: "trial_warning_7d_sent_at", action: "trial_warning_sent_d7" },
-      { days: 3, column: "trial_warning_3d_sent_at", action: "trial_warning_sent_d3" },
-      { days: 1, column: "trial_warning_1d_sent_at", action: "trial_warning_sent_d1" },
-    ];
-
-    for (const window of warningWindows) {
-      const now = new Date();
-      // Janela: trial_ends_at entre agora+N-1d e agora+N+1d (slack de 24h para cron diária)
-      const windowStart = new Date(now.getTime() + (window.days - 1) * 24 * 60 * 60 * 1000).toISOString();
-      const windowEnd = new Date(now.getTime() + (window.days + 1) * 24 * 60 * 60 * 1000).toISOString();
+    for (const window of JANELAS_DE_AVISO) {
+      const { depoisDe, ateInclusive } = limitesDaJanela(window.days, new Date());
 
       const { data: toWarn, error: warnQueryErr } = (await admin
         .from("pilar_subscriptions")
-        .select(
-          "id, empresa_id, trial_ends_at, trial_warning_7d_sent_at, trial_warning_3d_sent_at, trial_warning_1d_sent_at"
-        )
+        .select("id, empresa_id, trial_ends_at")
         .eq("status", "trialing")
-        .gte("trial_ends_at", windowStart)
-        .lte("trial_ends_at", windowEnd)
+        .gt("trial_ends_at", depoisDe)
+        .lte("trial_ends_at", ateInclusive)
         .is(window.column, null)) as { data: SubscriptionRow[] | null; error: unknown };
 
       if (warnQueryErr) {
@@ -276,16 +236,7 @@ serve(
 
           const empresaNome = empresa?.nome ?? "sua empresa";
 
-          // Buscar emails dos admins da empresa
-          const { data: admins } = (await admin
-            .from("profiles")
-            .select("email, nome")
-            .eq("empresa_id", sub.empresa_id)
-            // profiles não tem deleted_at: o filtro antigo por essa coluna fazia o
-            // PostgREST devolver erro e a lista vir vazia, então nenhum aviso de trial saía.
-            .in("role", ["owner", "admin", "ultra_admin"])) as { data: ProfileRow[] | null; error: unknown };
-
-          const recipients = (admins ?? []).map((p) => p.email).filter((e): e is string => !!e);
+          const recipients = await emailsDosAdmins(admin, sub.empresa_id);
 
           if (recipients.length > 0) {
             const billingUrl = `${APP_URL}/billing`;

@@ -196,3 +196,11 @@ begin
 
   raise notice 'Dados demo inseridos com sucesso.';
 end $$;
+
+-- Conta do Portal do Cliente para o E2E (spec portal-cliente-autenticado), ligada
+-- ao cliente demo "Construtora Horizonte". Bloco separado e idempotente para valer
+-- também em banco que já tinha os dados demo. Login: portal@local.test / 123456.
+insert into public.cliente_portal_accounts (empresa_id, cliente_id, nome, email, senha_hash, ativo, must_change_password)
+select '00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000101',
+       'Portal Demo', 'portal@local.test', crypt('123456', gen_salt('bf')), true, false
+where not exists (select 1 from public.cliente_portal_accounts where email = 'portal@local.test');

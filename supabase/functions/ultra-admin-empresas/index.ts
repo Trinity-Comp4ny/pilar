@@ -4,7 +4,9 @@
  * GET    /ultra-admin-empresas           → lista empresas (com contagem de usuários)
  * GET    /ultra-admin-empresas?id=<uuid> → detalhe: empresa + usuários
  * POST   /ultra-admin-empresas           → criar empresa + assinatura Starter + convidar dono
- * PUT    /ultra-admin-empresas           → atualizar early access de uma empresa
+ * PUT    /ultra-admin-empresas           → atualizar empresa (dados, features, plano,
+ *                                          converter_pagante = cancelar convite,
+ *                                          marcar_convidada)
  *
  * Requer role = ultra_admin.
  */
@@ -40,6 +42,14 @@ const UNIVERSAL_FEATURES = new Set([
   "obras_estoque",
   "obras_conta",
 ]);
+
+// Empresa convidada (SPEC 078/104): não paga e não está em prazo. É computado,
+// sem coluna: assinatura active sem Asaas, ou nenhuma assinatura (empresas
+// antigas criadas antes de existir pilar_subscriptions).
+function ehConvidada(sub: { status?: string | null; asaas_subscription_id?: string | null } | null): boolean {
+  if (!sub) return true;
+  return sub.status === "active" && !sub.asaas_subscription_id;
+}
 
 serve(
   withSentry("ultra-admin-empresas", async (req) => {
@@ -107,6 +117,7 @@ serve(
               status: sub?.status ?? null,
               trial_ends_at: sub?.trial_ends_at ?? null,
               is_paying: !!sub?.asaas_subscription_id,
+              convidada: ehConvidada(sub),
             },
             usuarios: usuarios ?? [],
             convites: convites ?? [],
@@ -136,19 +147,25 @@ serve(
       // Buscar planos
       const { data: subs } = await svc
         .from("pilar_subscriptions")
-        .select("empresa_id, pilar_subscription_plans(slug)")
+        .select("empresa_id, status, trial_ends_at, asaas_subscription_id, pilar_subscription_plans(slug)")
         .in("empresa_id", ids);
 
-      const planMap: Record<string, string> = {};
-      for (const sub of subs ?? []) {
-        planMap[sub.empresa_id] = (sub.pilar_subscription_plans as { slug?: string } | null)?.slug ?? "starter";
-      }
+      const subMap = new Map((subs ?? []).map((sub) => [sub.empresa_id, sub]));
 
-      const result = (empresas ?? []).map((e) => ({
-        ...e,
-        usersCount: countMap[e.id] ?? 0,
-        plano: planMap[e.id] ?? "starter",
-      }));
+      const result = (empresas ?? []).map((e) => {
+        const sub = subMap.get(e.id) ?? null;
+        return {
+          ...e,
+          usersCount: countMap[e.id] ?? 0,
+          plano: (sub?.pilar_subscription_plans as { slug?: string } | null)?.slug ?? "starter",
+          cobranca: {
+            status: sub?.status ?? null,
+            trial_ends_at: sub?.trial_ends_at ?? null,
+            is_paying: !!sub?.asaas_subscription_id,
+            convidada: ehConvidada(sub),
+          },
+        };
+      });
 
       return jsonResponse(result, 200, req);
     }
@@ -325,6 +342,7 @@ serve(
         max_projetos_override,
         max_usuarios_override,
         converter_pagante,
+        marcar_convidada,
       } = body ?? {};
 
       if (!isUUID(empresa_id)) return safeErrorResponse(400, "empresa_id inválido", req);
@@ -398,12 +416,72 @@ serve(
         }
       }
 
-      // Converter empresa isenta em pagante (spec 078): reusa a máquina de
-      // estados do trial (mesmo cron de aviso/expiração, mesmo TrialBanner,
-      // mesmo gate de acesso) — a empresa continua com acesso normal até
-      // trial_ends_at, com aviso 7/3/1 dias, e perde acesso se não completar
-      // a assinatura no prazo. Não mexe em nada além do que um trial normal
-      // já mexe.
+      // Marcar como convidada (SPEC 104): empresa que não paga (em teste,
+      // vencida ou em prazo de cancelamento de convite) passa a usar sem
+      // cobrança. Sai do modo leitura e para de receber aviso de trial.
+      if (marcar_convidada && typeof marcar_convidada === "object") {
+        const confirmName = String((marcar_convidada as { confirm_name?: unknown }).confirm_name ?? "").trim();
+        if (confirmName !== (emp.nome ?? "").trim()) {
+          return safeErrorResponse(422, "Digite o nome exato da empresa para confirmar o convite.", req);
+        }
+
+        const { data: sub } = await svc
+          .from("pilar_subscriptions")
+          .select("id, status, asaas_subscription_id")
+          .eq("empresa_id", empresa_id)
+          .maybeSingle();
+
+        if (sub?.asaas_subscription_id) {
+          return safeErrorResponse(
+            409,
+            "Empresa pagante: cancele a assinatura no Asaas antes de marcar como convidada.",
+            req
+          );
+        }
+        if (ehConvidada(sub)) {
+          return safeErrorResponse(409, "Empresa já é convidada.", req);
+        }
+
+        const { error: subErr } = await svc
+          .from("pilar_subscriptions")
+          .update({
+            status: "active",
+            trial_ends_at: null,
+            trial_warning_7d_sent_at: null,
+            trial_warning_3d_sent_at: null,
+            trial_warning_1d_sent_at: null,
+          })
+          .eq("id", sub!.id);
+        if (subErr) return safeErrorResponse(400, subErr.message, req);
+
+        const { error: leituraErr } = await svc
+          .from("empresas")
+          .update({ leitura_desde: null, retencao_aviso_60d_sent_at: null, retencao_aviso_85d_sent_at: null })
+          .eq("id", empresa_id);
+        if (leituraErr) return safeErrorResponse(400, leituraErr.message, req);
+
+        await logAction(svc, {
+          actorId: userId,
+          actorEmail,
+          actorRole: "ultra_admin",
+          action: "mark_company_invited",
+          category: "empresa",
+          targetType: "empresa",
+          targetId: empresa_id,
+          targetName: emp.nome || empresa_id,
+          empresaId: empresa_id,
+          metadata: { old_status: sub?.status ?? null },
+          req,
+        });
+
+        return jsonResponse({ success: true }, 200, req);
+      }
+
+      // Cancelar convite (spec 078 "converter para pagante", SPEC 104): reusa
+      // a máquina de estados do trial (mesmo cron de aviso/expiração, mesmo
+      // TrialBanner, mesmo gate de acesso). A empresa segue com acesso normal
+      // até trial_ends_at e, se não assinar no prazo, entra em modo leitura
+      // como um trial vencido.
       if (converter_pagante && typeof converter_pagante === "object") {
         const diasPrazo = Number((converter_pagante as { dias_prazo?: unknown }).dias_prazo);
         const confirmName = String((converter_pagante as { confirm_name?: unknown }).confirm_name ?? "").trim();
@@ -421,26 +499,45 @@ serve(
           .eq("empresa_id", empresa_id)
           .maybeSingle();
 
-        if (!sub) return safeErrorResponse(404, "Empresa não tem assinatura para converter.", req);
-        if (sub.asaas_subscription_id) {
+        if (sub?.asaas_subscription_id) {
           return safeErrorResponse(409, "Empresa já é pagante (tem assinatura Asaas vinculada).", req);
         }
-        if (sub.status !== "active") {
-          return safeErrorResponse(409, `Só é possível converter empresa isenta (status atual: ${sub.status}).`, req);
+        if (!ehConvidada(sub)) {
+          return safeErrorResponse(
+            409,
+            `Só é possível cancelar o convite de empresa convidada (status atual: ${sub?.status}).`,
+            req
+          );
         }
 
         const trialEndsAt = new Date(Date.now() + diasPrazo * 24 * 60 * 60 * 1000).toISOString();
-        const { error: convErr } = await svc
-          .from("pilar_subscriptions")
-          .update({
-            status: "trialing",
-            trial_ends_at: trialEndsAt,
-            trial_warning_7d_sent_at: null,
-            trial_warning_3d_sent_at: null,
-            trial_warning_1d_sent_at: null,
-          })
-          .eq("id", sub.id);
-        if (convErr) return safeErrorResponse(400, convErr.message, req);
+        const prazo = {
+          status: "trialing",
+          trial_ends_at: trialEndsAt,
+          trial_warning_7d_sent_at: null,
+          trial_warning_3d_sent_at: null,
+          trial_warning_1d_sent_at: null,
+        };
+
+        if (sub) {
+          const { error: convErr } = await svc.from("pilar_subscriptions").update(prazo).eq("id", sub.id);
+          if (convErr) return safeErrorResponse(400, convErr.message, req);
+        } else {
+          // Convidada antiga, sem linha de assinatura (SPEC 104): nasce no
+          // plano de entrada, o mesmo do cadastro self-serve.
+          const { data: planoEntrada } = await svc
+            .from("pilar_subscription_plans")
+            .select("id")
+            .eq("ativo", true)
+            .order("preco_mensal", { ascending: true })
+            .limit(1)
+            .maybeSingle();
+          if (!planoEntrada?.id) return safeErrorResponse(500, "Nenhum plano ativo para criar a assinatura.", req);
+          const { error: insErr } = await svc
+            .from("pilar_subscriptions")
+            .insert({ empresa_id, plan_id: planoEntrada.id, ...prazo });
+          if (insErr) return safeErrorResponse(400, insErr.message, req);
+        }
 
         await logAction(svc, {
           actorId: userId,

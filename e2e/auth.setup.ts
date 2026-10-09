@@ -125,6 +125,14 @@ setup("authenticate as admin", async ({ page, baseURL }) => {
   await page.goto("/dashboard");
   // Não dependemos de h1 específico — só garantimos que não fomos jogados pra landing.
   await expect(page).not.toHaveURL(/^\/$/);
+  // E que o app abriu de verdade: "Acesso suspenso" (assinatura vencida) e as telas
+  // de setup não têm o <main id="main-content"> do Layout. Sem isto, de 31/08 a
+  // 07/10 o usuário de staging ficou bloqueado e os specs que só olham URL seguiram
+  // verdes. Falha aqui, uma vez, com o motivo, em vez de N specs falhando sem pista.
+  await expect(
+    page.locator("#main-content"),
+    "O usuário de teste não chegou no app (assinatura suspensa, MFA ou setup pendente). Em staging, ver scripts/e2e-staging-fixture.sql."
+  ).toBeVisible({ timeout: 15_000 });
 
   fs.mkdirSync(path.dirname(STORAGE_PATH), { recursive: true });
   await page.context().storageState({ path: STORAGE_PATH });

@@ -13,6 +13,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { jsonResponse, optionsResponse } from "../_shared/cors.ts";
+import { ehAdminDaEmpresa } from "../_shared/admin-auth.ts";
 import {
   cancelSubscription,
   updateSubscription,
@@ -58,8 +59,7 @@ serve(
 
     const { data: profile } = await admin.from("profiles").select("empresa_id, role").eq("id", user.id).maybeSingle();
 
-    const isAdmin = profile?.role === "admin" || profile?.role === "ultra_admin";
-    if (!profile?.empresa_id || !isAdmin) {
+    if (!ehAdminDaEmpresa(profile)) {
       return jsonResponse({ error: "Apenas admin da empresa pode gerenciar a assinatura" }, 403, req);
     }
 

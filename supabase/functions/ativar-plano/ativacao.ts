@@ -1,0 +1,89 @@
+/**
+ * Regras do ativar-plano (SPEC 098 Fase 2B), sem banco nem rede: entrada aceita,
+ * quem pode ativar, quanto vai ser cobrado e quando. O index.ts faz auth, Asaas e
+ * banco; separado para teste porque o consentimento é evidência jurídica do opt-out.
+ */
+import { creditCardHolderInfoSchema, creditCardSchema } from "../_shared/asaas-card-schemas.ts";
+import { uuidSchema, z } from "../_shared/schemas.ts";
+
+// Versão do texto de consentimento (SPEC 098 requisito 14). Bump manual
+// quando a copy do passo "Ativar plano" mudar de forma relevante — é a
+// evidência de qual texto o admin realmente leu, não pode vir do client.
+export const CONSENTIMENTO_TEXTO_VERSAO = "ativar-plano-v1";
+// SPEC 104: assinar depois do teste vencido cobra na hora (texto diferente).
+export const CONSENTIMENTO_TEXTO_VERSAO_IMEDIATA = "assinar-apos-teste-v1";
+
+export const bodySchema = z.object({
+  plan_id: uuidSchema,
+  billing_cycle: z.enum(["monthly", "yearly"]),
+  credit_card: creditCardSchema,
+  credit_card_holder_info: creditCardHolderInfoSchema,
+  // Em teste, o admin pode preferir pagar já (ou precisar, se a tokenização
+  // não estiver liberada na conta Asaas): encerra o teste com cobrança hoje.
+  cobrar_agora: z.boolean().optional(),
+});
+
+export type Body = z.infer<typeof bodySchema>;
+
+interface AssinaturaLida {
+  id: string;
+  status: string;
+  trial_ends_at: string | null;
+  asaas_customer_id: string | null;
+}
+
+/**
+ * agendada: em teste, a primeira cobrança fica para o fim do trial (cron).
+ * imediata: teste já vencido (SPEC 104), a primeira cobrança é feita agora.
+ */
+export type ModoCobranca = "agendada" | "imediata";
+
+export type VerificacaoAssinatura =
+  | { ok: true; sub: AssinaturaLida & { trial_ends_at: string }; modo: ModoCobranca }
+  | { ok: false; status: number; error: string };
+
+/**
+ * Ativa por aqui quem está em teste, com o teste vencido (modo leitura) ou com
+ * a assinatura cancelada (assina de novo, cobrança na hora). Quem já paga
+ * (active) ou está em atraso (regulariza a fatura) não passa por este fluxo.
+ */
+export function verificarAssinatura(sub: AssinaturaLida | null, agora: Date = new Date()): VerificacaoAssinatura {
+  if (!sub) return { ok: false, status: 404, error: "Assinatura não encontrada" };
+  if (sub.status !== "trialing" && sub.status !== "expired" && sub.status !== "canceled") {
+    return { ok: false, status: 400, error: "Sua empresa já tem uma assinatura ativa ou com fatura em aberto" };
+  }
+  if (sub.status === "expired" || sub.status === "canceled") {
+    // Convidada cujo prazo venceu pode não ter trial_ends_at antigo: a data
+    // de referência passa a ser agora.
+    return { ok: true, sub: { ...sub, trial_ends_at: sub.trial_ends_at ?? agora.toISOString() }, modo: "imediata" };
+  }
+  if (!sub.trial_ends_at) return { ok: false, status: 500, error: "Trial sem data de expiração definida" };
+  const vencido = new Date(sub.trial_ends_at).getTime() <= agora.getTime();
+  return { ok: true, sub: { ...sub, trial_ends_at: sub.trial_ends_at }, modo: vencido ? "imediata" : "agendada" };
+}
+
+/** Cobrança hoje quando o teste já venceu ou quando o admin pede para pagar já. */
+export function modoEfetivo(modo: ModoCobranca, cobrarAgora: boolean | undefined): ModoCobranca {
+  return cobrarAgora ? "imediata" : modo;
+}
+
+/**
+ * A tokenização (cartão salvo sem cobrar) depende de liberação do gerente da
+ * conta no Asaas de produção. Sem ela, o Asaas responde com este texto.
+ */
+export function ehTokenizacaoSemPermissao(mensagemAsaas: string): boolean {
+  return /permiss[aã]o para utilizar este recurso|gerente de contas/i.test(mensagemAsaas);
+}
+
+/** Valor do ciclo escolhido, sempre do plano no banco. null = plano sem preço nesse ciclo. */
+export function valorDoCiclo(
+  plan: { preco_mensal: number | null; preco_anual: number | null },
+  ciclo: Body["billing_cycle"]
+): number | null {
+  return (ciclo === "yearly" ? plan.preco_anual : plan.preco_mensal) ?? null;
+}
+
+/** A primeira cobrança acontece no fim do trial (data, sem hora). */
+export function primeiraCobrancaEm(trialEndsAt: string): string {
+  return trialEndsAt.slice(0, 10);
+}

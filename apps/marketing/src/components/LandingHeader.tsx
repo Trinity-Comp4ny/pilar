@@ -7,6 +7,7 @@ import { useLoginHint } from "../loginHint";
 import { MODULOS } from "../lib/modules";
 import { Logo } from "./Logo";
 import { SplitButton } from "./ui/SplitButton";
+import { linkCadastro } from "../lib/origem";
 
 type MenuNome = "produto";
 
@@ -142,7 +143,7 @@ export function LandingHeader() {
             )}
             <SplitButton
               tamanho="sm"
-              href={loggedIn ? `${APP_URL}/inicio` : `${APP_URL}/cadastro`}
+              href={loggedIn ? `${APP_URL}/inicio` : linkCadastro()}
               onClick={() => trackCta(loggedIn ? "abrir_pilar" : "testar_gratis", "header")}
             >
               {loggedIn ? "Abrir Pilar" : "Testar grátis"}
@@ -191,10 +192,10 @@ export function LandingHeader() {
           </Link>
           <SplitButton
             className="mt-3"
-            href={loggedIn ? `${APP_URL}/inicio` : `${APP_URL}/cadastro`}
+            href={loggedIn ? `${APP_URL}/inicio` : linkCadastro()}
             onClick={() => trackCta(loggedIn ? "abrir_pilar" : "testar_gratis", "header_mobile")}
           >
-            {loggedIn ? "Abrir Pilar" : "Testar grátis por 14 dias"}
+            {loggedIn ? "Abrir Pilar" : "Testar grátis por 3 dias"}
           </SplitButton>
         </div>
       </div>

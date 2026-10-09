@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Check } from "lucide-react";
-import { APP_URL } from "../config";
 import { trackCta } from "../analytics";
 import { BrowserFrame } from "../components/BrowserFrame";
 import { CTASection } from "../components/CTASection";
@@ -11,6 +10,7 @@ import { Reveal } from "../components/Reveal";
 import { SplitButton } from "../components/ui/SplitButton";
 import { MODULOS, MODULOS_POR_SLUG, type MockNome, type Modulo, type ModuloSlug } from "../lib/modules";
 import { useJsonLd, usePageMeta } from "../lib/seo";
+import { linkCadastro } from "../lib/origem";
 
 const WHATSAPP = "https://wa.me/5514998721100";
 
@@ -84,7 +84,7 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
 
   const primario =
     modulo.ctaPrimario.tipo === "cadastro"
-      ? { href: `${APP_URL}/cadastro`, evento: "testar_gratis" }
+      ? { href: linkCadastro(), evento: "testar_gratis" }
       : { href: WHATSAPP, evento: "falar_conosco" };
 
   const outras = MODULOS.filter((m) => m.slug !== slug);

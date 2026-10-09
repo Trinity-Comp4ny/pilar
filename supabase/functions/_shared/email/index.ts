@@ -1,6 +1,6 @@
 /**
  * Módulo de e-mail do Pilar (ADR 0039). Importar daqui, nunca dos arquivos internos:
- *   import { sendEmail, templateConviteUsuario } from "../_shared/email/index.ts";
+ *   import { sendEmail, templateConviteUsuario } de ../_shared/email/index.ts (a partir da pasta da função).
  */
 
 export { sendEmail, type EmailClasse, type EmailEmpresa, type SendEmailInput, type SendEmailResult } from "./client.ts";
@@ -24,6 +24,7 @@ export {
 export {
   templateLgpdExclusaoDados,
   templateTrialAviso,
+  templateTrialExpirado,
   templateAtivarPlanoRecibo,
   templateRetencaoAviso,
 } from "./templates/plataforma.ts";

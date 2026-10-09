@@ -20,7 +20,7 @@ export const TONE_BADGE: Record<StatusTone, string> = {
   positive: "bg-positive/10 text-positive-strong",
   danger: "bg-danger-soft text-danger-strong",
   brand: "bg-brand text-ink",
-  done: "bg-status-done/10 text-status-done",
+  done: "bg-status-done/10 text-positive-strong",
   highlight: "bg-highlight-soft text-highlight-strong",
 };
 

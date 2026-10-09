@@ -231,7 +231,8 @@ Importante ser honesto sobre onde o dado mora:
   puxar via MCP/Sentry API os issues por release/empresa, já que
   `monitoring.setUser` anexa `empresa_id` e `role` a cada evento). Reinventar
   isso no banco seria retrabalho.
-- **Saúde**: `/functions/v1/health` (público) + Checkly já configurado. O
+- **Saúde**: `/functions/v1/health` (público) + checks sintéticos a cada 30 min (`monitor-producao.yml`; o Checkly
+  citado antes nunca rodou e foi removido em 2026-10-08). O
   dashboard mostra o último status e histórico.
 - **Falhas de IA e webhooks** (`agent_runs.error`, `asaas_webhook_logs`,
   `pilar_checkout_webhook_logs`) esses sim são consultáveis por SQL e cabem num
