@@ -11,6 +11,7 @@ import Layout from "./Layout";
 import { ReadOnlyBanner } from "./ReadOnlyBanner";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EntryVeil } from "@/components/motion/EntryVeil";
 
 const AccountRecoveryScreen = lazy(() =>
   import("./AccountRecoveryScreen").then(({ AccountRecoveryScreen }) => ({ default: AccountRecoveryScreen }))
@@ -105,8 +106,11 @@ export function PrivateRoute() {
     };
   }, [isAuthenticated, empresaId, loading, mfaChallengeRequired, mfaBypass, subStatus]);
 
+  // Véu de entrada (SPEC 106): o nome da empresa entra assim que o perfil chega.
+  const veilLabel = profile?.empresas?.nome ? `Abrindo ${profile.empresas.nome}` : undefined;
+
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+    return <EntryVeil label={veilLabel} />;
   }
 
   if (!isAuthenticated) {
@@ -121,7 +125,7 @@ export function PrivateRoute() {
 
   if (!profile) {
     return (
-      <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando...</div>}>
+      <Suspense fallback={<EntryVeil />}>
         <AccountRecoveryScreen />
       </Suspense>
     );
@@ -166,7 +170,7 @@ export function PrivateRoute() {
   }
 
   if (empresaId && subStatus === undefined) {
-    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+    return <EntryVeil label={veilLabel} />;
   }
 
   // SPEC 098 Fase 3 (ADR 0042): trial vencido sem cartão tokenizado entra em

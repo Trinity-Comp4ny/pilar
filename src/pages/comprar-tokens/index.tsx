@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { Navigate, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CheckCircle2, CreditCard, QrCode, FileText, Loader2, Lock, Eye, EyeOff, MapPin, Mail } from "lucide-react";
+import { CheckCircle2, CreditCard, QrCode, FileText, Lock, Eye, EyeOff, MapPin, Mail } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,9 @@ import {
 import { useTokenPackStatus } from "@/components/settings/useTokenPackStatus";
 import { analytics } from "@/lib/analytics";
 import { formatPhone } from "@/lib/maskUtils";
+
+import { BusyMark } from "@/components/motion/BusyMark";
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 // Espelha o catálogo do backend (pilar-token-pack-create) só pra exibição — o preço
 // que vale de verdade é sempre resolvido no servidor a partir do tier_id (SPEC 080).
@@ -151,7 +154,7 @@ export default function ComprarTokens() {
   if (loading) {
     return (
       <div className="min-h-screen bg-paper flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-ink-disabled" />
+        <ReadingRing size={112} />
       </div>
     );
   }
@@ -256,7 +259,7 @@ export default function ComprarTokens() {
               />
             ) : (
               <div className="flex items-center justify-center py-16">
-                <Loader2 className="h-6 w-6 animate-spin text-ink-disabled" />
+                <ReadingRing size={64} />
               </div>
             )
           ) : (
@@ -398,7 +401,7 @@ export default function ComprarTokens() {
                               className={isFetchingCep ? "pr-8" : ""}
                             />
                             {isFetchingCep && (
-                              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin text-ink-disabled" />
+                              <BusyMark className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-disabled" />
                             )}
                           </div>
                         </div>
@@ -472,7 +475,7 @@ export default function ComprarTokens() {
                 >
                   {createPack.isPending ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processando...
+                      <BusyMark className="w-4 h-4 mr-2" /> Processando...
                     </>
                   ) : (
                     <>

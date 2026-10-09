@@ -64,6 +64,9 @@ usar, o que é proibido). Regras que valem sempre:
 - Botão primário é `variant="brand"`, nunca `className="bg-brand..."`. Status via
   `StatusBadge` do registry (`src/lib/status.ts`). Dinheiro/data via `@/lib/format`.
   Exclusão via `ConfirmDialog`. Campo de dinheiro via `MoneyInput`.
+- Espera e transição usam a marca (ADR 0049): `Button loading`/`BusyMark` inline,
+  `PageLoader` para página e card, `EntryVeil` na entrada. Nunca `Loader2` nem
+  `animate-spin` (teste de varredura reprova).
 - Componente genérico faltando e repetido 3+ vezes: promover (regra dos 3 usos,
   ADR 0008), não copiar. Regra de domínio: escrever à mão.
 - Tabela plana (listagem com ordenação/seleção) usa `DataTable`

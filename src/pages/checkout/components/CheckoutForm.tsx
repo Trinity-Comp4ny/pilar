@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, type FormEvent } from "react";
 import { toast } from "sonner";
-import { CreditCard, QrCode, FileText, Loader2, Lock, ShieldCheck, Eye, EyeOff, MapPin } from "lucide-react";
+import { CreditCard, QrCode, FileText, Lock, ShieldCheck, Eye, EyeOff, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { lookupCEP } from "@/lib/brasilApi";
 import { detectCardBrand, formatCardNumber, formatExpiry, validateCreditCard } from "@/lib/creditCard";
 import type { BillingType, CheckoutPayload, CreditCardData, CreditCardHolderInfo } from "../hooks/useCheckoutCreate";
 import type { BillingCycle } from "@/pages/planos/components/CycleToggle";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 interface CheckoutFormProps {
   planSlug: string;
@@ -368,7 +370,7 @@ export function CheckoutForm({
                       className={isFetchingCep ? "pr-8" : ""}
                     />
                     {isFetchingCep && (
-                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin text-ink-disabled" />
+                      <BusyMark className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-disabled" />
                     )}
                   </div>
                 </div>
@@ -423,7 +425,7 @@ export function CheckoutForm({
         <Button type="submit" variant="brand" disabled={isSubmitting} className="w-full h-12 text-sm font-semibold">
           {isSubmitting ? (
             <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processando...
+              <BusyMark className="w-4 h-4 mr-2" /> Processando...
             </>
           ) : (
             <>

@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { FormDialog } from "@/components/FormDialog";
@@ -23,6 +23,8 @@ import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
 import { DesbloqueioNivel } from "@/components/trial/DesbloqueioNivel";
 import { useNivelConfianca } from "@/hooks/useNivelConfianca";
 import { analytics } from "@/lib/analytics";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 const SEM_RESPONSAVEL = "__none__";
 const SEM_PROJETO = "__none__";
@@ -316,7 +318,7 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
                 })}
               />
               {buscandoCep && (
-                <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+                <BusyMark className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               )}
             </div>
           </div>

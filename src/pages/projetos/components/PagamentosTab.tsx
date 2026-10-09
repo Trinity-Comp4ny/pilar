@@ -21,7 +21,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Loader2,
   CheckCircle2,
   Clock,
   AlertTriangle,
@@ -41,6 +40,8 @@ import {
 import { formatDate } from "@/lib/format";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { statusBadgeClasses } from "@/lib/status";
+
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 interface PagamentosTabProps {
   projetoId: string;
@@ -133,7 +134,7 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <ReadingRing size={64} />
       </div>
     );
   }

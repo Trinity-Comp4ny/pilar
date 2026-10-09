@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, Lock, ArrowLeft, Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, ArrowLeft, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { GoogleButton } from "@/components/GoogleButton";
 import { loginSchema, loginDefaultValues, type LoginFormData } from "@/schemas";
@@ -16,6 +16,8 @@ import { STORAGE_KEYS } from "@/constants";
 import { translateAuthError } from "@/lib/authErrors";
 import { marcarLogin, ultimoMetodo } from "@/lib/ultimoLogin";
 import { Logo } from "@/components/Logo";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 export default function Login() {
   usePageTitle("Login");
@@ -128,7 +130,7 @@ export default function Login() {
         <div className="w-full max-w-[400px] space-y-8 animate-in fade-in slide-in-from-left-8 duration-700">
           <div className="text-center space-y-2">
             <div className="flex justify-center mb-6">
-              <Logo size="lg" />
+              <Logo size="lg" animate="draw" />
             </div>
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Bem-vindo</h1>
             <p className="text-sm text-ink-soft">Acesse sua conta</p>
@@ -231,7 +233,7 @@ export default function Login() {
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Entrando...
+                    <BusyMark className="mr-2 h-4 w-4" /> Entrando...
                   </>
                 ) : (
                   "Entrar"

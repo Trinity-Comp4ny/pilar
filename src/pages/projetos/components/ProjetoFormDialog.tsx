@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Check, DollarSign, FileText, Layers, Loader2, MapPin } from "lucide-react";
+import { Calendar, Check, DollarSign, FileText, Layers, MapPin } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 import { MoneyInput } from "@/components/forms/MoneyInput";
@@ -33,6 +33,8 @@ import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
 import { useProjetoDisciplinas } from "@/hooks/useProjetoDisciplinas";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 interface ProjetoFormDialogProps {
   open: boolean;
@@ -389,7 +391,7 @@ export function ProjetoFormDialog({
                           maxLength={9}
                         />
                         {form.isFetchingCep && (
-                          <Loader2 className="absolute right-2 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />
+                          <BusyMark className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         )}
                       </div>
                     </div>
@@ -647,7 +649,7 @@ export function ProjetoFormDialog({
                 <Button type="button" onClick={handleFinalSubmit} variant="brand" disabled={form.isSaving}>
                   {form.isSaving ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                      <BusyMark className="mr-2 h-4 w-4" /> Salvando...
                     </>
                   ) : form.isEditMode ? (
                     "Atualizar"

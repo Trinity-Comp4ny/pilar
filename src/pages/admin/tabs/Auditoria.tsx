@@ -7,11 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ShieldCheck, Loader2, RefreshCw, Download, FileSearch } from "lucide-react";
+import { ShieldCheck, RefreshCw, Download, FileSearch } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { untypedFrom } from "@/lib/supabaseRpc";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+import { BusyMark } from "@/components/motion/BusyMark";
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 // ─── audit_logs (triggers DB) ────────────────────────────────────────────────
 
@@ -205,7 +208,7 @@ function DataAuditTab() {
             CSV
           </Button>
           <Button variant="outline" size="sm" onClick={fetchLogs} disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            {loading ? <BusyMark className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
           </Button>
         </div>
       </div>
@@ -251,7 +254,7 @@ function DataAuditTab() {
 
       {loading ? (
         <div className="flex justify-center p-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <ReadingRing size={64} />
         </div>
       ) : logs.length === 0 ? (
         <EmptyState
@@ -358,7 +361,7 @@ function AdminActionsTab() {
             CSV
           </Button>
           <Button variant="outline" size="sm" onClick={fetchLogs} disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            {loading ? <BusyMark className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
           </Button>
         </div>
       </div>
@@ -390,7 +393,7 @@ function AdminActionsTab() {
 
       {loading ? (
         <div className="flex justify-center p-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <ReadingRing size={64} />
         </div>
       ) : logs.length === 0 ? (
         <EmptyState

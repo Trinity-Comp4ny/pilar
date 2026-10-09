@@ -7,18 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  ArrowLeft,
-  Check,
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  HelpCircle,
-  KeyRound,
-  Loader2,
-  Lock,
-  ShieldCheck,
-} from "lucide-react";
+import { ArrowLeft, Check, CheckCircle2, Eye, EyeOff, HelpCircle, KeyRound, Lock, ShieldCheck } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { translateAuthError } from "@/lib/authErrors";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
@@ -27,6 +16,8 @@ import { useMfa } from "@/hooks/useMfa";
 import { passwordChecks } from "@/lib/passwordPolicy";
 import { passwordResetSchema, passwordResetDefaultValues, type PasswordResetFormData } from "@/schemas";
 import { Logo } from "@/components/Logo";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 type Step = "loading" | "mfa" | "password" | "expired";
 
@@ -190,7 +181,7 @@ export default function PasswordReset() {
 
           {step === "loading" && (
             <div className="flex flex-col items-center gap-3 py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <BusyMark className="h-8 w-8 text-muted-foreground" />
               <p className="text-sm text-ink-soft">Validando link de recuperação...</p>
             </div>
           )}
@@ -240,7 +231,7 @@ export default function PasswordReset() {
                   className="w-full h-11 bg-fill-warning hover:bg-fill-warning/90 text-fill-warning-foreground font-medium"
                   disabled={backupSubmitting || !backupCode.trim()}
                 >
-                  {backupSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {backupSubmitting ? <BusyMark className="h-4 w-4 mr-2" /> : null}
                   Usar código de recuperação
                 </Button>
 
@@ -298,7 +289,7 @@ export default function PasswordReset() {
                 className="w-full h-11 font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98]"
                 disabled={submitting || mfaCode.length !== 6}
               >
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                {submitting ? <BusyMark className="h-4 w-4 mr-2" /> : null}
                 Verificar
               </Button>
 
@@ -417,7 +408,7 @@ export default function PasswordReset() {
                   className="w-full h-11 font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98]"
                   disabled={submitting || !form.formState.isValid}
                 >
-                  {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {submitting ? <BusyMark className="h-4 w-4 mr-2" /> : null}
                   Salvar nova senha
                 </Button>
               </form>

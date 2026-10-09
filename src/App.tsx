@@ -10,7 +10,9 @@ import { getSafeErrorMessage, getRawErrorMessage } from "@/lib/safeError";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
-import { PageSkeleton } from "@/components/PageSkeleton";
+import { EntryVeil } from "@/components/motion/EntryVeil";
+import { isEntryVeilMounted } from "@/components/motion/veilState";
+import { dismissBoot } from "@/components/motion/boot";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { ClientePrivateRoute } from "./components/ClientePrivateRoute";
 import { CampoPrivateRoute } from "./components/CampoPrivateRoute";
@@ -169,6 +171,18 @@ function AvisoDeVersao() {
   return null;
 }
 
+// O anel do boot (index.html) sai quando a primeira tela pinta. Se a primeira
+// tela é um véu de entrada, ele herda o anel e o tira quando o app abrir.
+function SoltaBoot() {
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      if (!isEntryVeilMounted()) dismissBoot();
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, []);
+  return null;
+}
+
 const App = () => {
   return (
     <ErrorBoundary>
@@ -176,6 +190,7 @@ const App = () => {
         <TooltipProvider>
           <Toaster />
           <AvisoDeVersao />
+          <SoltaBoot />
           <BrowserRouter>
             <PageTracker />
             <AuthProvider>
@@ -184,7 +199,7 @@ const App = () => {
                   <ValoresOcultosProvider>
                     <ImpersonationBanner />
                     <TrialBanner />
-                    <Suspense fallback={<PageSkeleton />}>
+                    <Suspense fallback={<EntryVeil />}>
                       <Routes>
                         <Route path="/" element={<ExternalRedirect />} />
                         <Route path="/planos" element={<ExternalRedirect path="/planos" />} />

@@ -88,7 +88,7 @@ describe("PrivateRoute", () => {
   it("shows loading state initially", async () => {
     mockUseAuth.mockReturnValue({ ...baseAuth, isAuthenticated: false, profile: null, loading: true });
     await renderPrivateRoute();
-    expect(screen.getByText("Carregando...")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Abrindo o Pilar");
   });
 
   it("redirects to landing when not authenticated", async () => {

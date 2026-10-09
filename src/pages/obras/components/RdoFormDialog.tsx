@@ -8,7 +8,6 @@ import {
   Camera,
   Check,
   ClipboardList,
-  Loader2,
   Mic,
   Pencil,
   Plus,
@@ -68,6 +67,8 @@ import { useTranscreverRdoVoz } from "@/hooks/useTranscreverRdoVoz";
 import { useObra } from "@/hooks/useObras";
 import { buscarClimaDoDia } from "@/lib/clima";
 import { analytics } from "@/lib/analytics";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 const GRAVACAO_MAX_MS = 3 * 60 * 1000;
 
@@ -795,7 +796,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
 
               {transcreverVoz.isPending && (
                 <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <BusyMark className="h-4 w-4" />
                   Transcrevendo...
                 </span>
               )}
@@ -880,7 +881,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
                     </Button>
                     {transcreverVoz.isPending && (
                       <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <BusyMark className="h-3.5 w-3.5" />
                         Transcrevendo...
                       </span>
                     )}
@@ -1210,11 +1211,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
                     onClick={adicionarTarefa}
                     disabled={!novaTarefa.titulo.trim() || criarTarefa.isPending}
                   >
-                    {criarTarefa.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Plus className="h-4 w-4" />
-                    )}
+                    {criarTarefa.isPending ? <BusyMark className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>

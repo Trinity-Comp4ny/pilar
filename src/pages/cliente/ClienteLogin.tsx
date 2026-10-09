@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { getPortalToken, setPortalToken } from "@/hooks/useClienteAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { clienteLoginSchema, clienteLoginDefaultValues, type ClienteLoginFormData } from "@/schemas";
 import { Logo } from "@/components/Logo";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 // Sem contexto de empresa antes do login, a recuperação de acesso cai no suporte
 // do Pilar, que encaminha ao escritório responsável pela conta.
@@ -177,7 +179,7 @@ export default function ClienteLogin() {
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Entrando...
+                    <BusyMark className="mr-2 h-4 w-4" /> Entrando...
                   </>
                 ) : (
                   "Entrar"

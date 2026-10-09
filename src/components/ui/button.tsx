@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import { Loader2 } from "lucide-react";
+import { BusyMark } from "@/components/motion/BusyMark";
 
 import { cn } from "@/lib/utils";
 
@@ -44,8 +44,8 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   /**
-   * Mostra um spinner antes do conteúdo e desabilita o botão. Substitui o par
-   * manual `disabled={isPending}` + `<Loader2 className="animate-spin" />`.
+   * Mostra o ritmo da marca antes do conteúdo e desabilita o botão (ADR 0049).
+   * A cor do botão não muda. Substitui o par manual `disabled` + ícone girando.
    * Ignorado com `asChild` (o Slot exige um único filho).
    */
   loading?: boolean;
@@ -64,8 +64,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     }
 
     return (
-      <button className={classes} ref={ref} disabled={disabled || loading} {...props}>
-        {loading && <Loader2 className="animate-spin" aria-hidden="true" />}
+      <button className={classes} ref={ref} disabled={disabled || loading} aria-busy={loading || undefined} {...props}>
+        {loading && <BusyMark />}
         {children}
       </button>
     );

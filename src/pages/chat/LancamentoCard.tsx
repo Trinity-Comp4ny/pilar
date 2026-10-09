@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
-import { ArrowUpRight, Check, ChevronDown, Coins, Loader2, RotateCcw, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowUpRight, Check, ChevronDown, Coins, RotateCcw, TrendingDown, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,8 @@ import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useFinanceAuxData } from "@/pages/financeiro/hooks/useFinanceAuxData";
 import { msgErro } from "./erros";
 import type { Draft, DespesaCampos, ReceitaCampos } from "./useChat";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 type Tipo = "receita" | "despesa";
 type Campos = ReceitaCampos & DespesaCampos;
@@ -75,9 +77,7 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
       const next = { ...prev };
       if (!next.categoria_id) next.categoria_id = matchNome(aux.categorias, campos.categoria_nome);
       if (!next.projeto_id) {
-        const proj = aux.projetos.find((p) =>
-          p.nome.toLowerCase().includes((campos.projeto_nome ?? "").toLowerCase())
-        );
+        const proj = aux.projetos.find((p) => p.nome.toLowerCase().includes((campos.projeto_nome ?? "").toLowerCase()));
         if (campos.projeto_nome && proj) next.projeto_id = proj.id;
       }
       if (!next[contraparteIdKey]) {
@@ -183,7 +183,7 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
             disabled={desfazendo}
             className="h-auto gap-1 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
           >
-            {desfazendo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+            {desfazendo ? <BusyMark className="h-3.5 w-3.5" /> : <RotateCcw className="h-3.5 w-3.5" />}
             Desfazer
           </Button>
         </div>
@@ -475,7 +475,7 @@ export function LancamentoCard({ index, draft, tipo, onConfirmar, onCancelar, on
             Cancelar
           </Button>
           <Button size="sm" onClick={criar} disabled={salvando} variant="brand" className="gap-1.5">
-            {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+            {salvando ? <BusyMark className="h-4 w-4" /> : <Check className="h-4 w-4" />}
             {isReceita ? "Lançar receita" : "Lançar despesa"}
           </Button>
         </div>

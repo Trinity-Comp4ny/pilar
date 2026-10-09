@@ -1,6 +1,6 @@
 import { useParams, useOutletContext } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Building2 } from "lucide-react";
+import { Building2 } from "lucide-react";
 import { ClienteShell } from "./ClienteShell";
 import { useClienteObraData, type ClienteObraFrente } from "./useClienteObraData";
 import { usePortalObraFotos } from "./usePortalObraFotos";
@@ -11,6 +11,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { estadoFrenteCronograma, type EstadoFrente } from "@/lib/obras";
 import type { ClienteAccount } from "@/hooks/useClienteAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
+
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 function formatDate(d: string | null | undefined): string {
   if (!d) return "A definir";
@@ -48,7 +50,7 @@ export default function ClienteObraDetail() {
     return (
       <ClienteShell account={account} obraNome="Obra">
         <div className="flex justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <ReadingRing size={64} />
         </div>
       </ClienteShell>
     );

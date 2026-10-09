@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight, Check, Coins, Layers, Loader2, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { ArrowUpRight, Check, Coins, Layers, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { msgErro } from "./erros";
 import type { AditivoItem, Draft, DraftCampos, Entidade } from "./useChat";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 type Props = {
   index: number;
@@ -41,11 +43,7 @@ export function AditivoCard({ index, draft, onConfirmar, onCancelar, onDesfazer 
     queryKey: ["aditivo-projetos"],
     enabled: draft.status === "pendente",
     queryFn: async () => {
-      const { data } = await supabase
-        .from("projetos")
-        .select("id, nome")
-        .is("deleted_at", null)
-        .order("nome");
+      const { data } = await supabase.from("projetos").select("id, nome").is("deleted_at", null).order("nome");
       return ((data ?? []) as { id: string; nome: string }[]).map((p) => ({
         id: p.id,
         nome: p.nome,
@@ -142,7 +140,7 @@ export function AditivoCard({ index, draft, onConfirmar, onCancelar, onDesfazer 
             disabled={desfazendo}
             className="h-auto gap-1 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
           >
-            {desfazendo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+            {desfazendo ? <BusyMark className="h-3.5 w-3.5" /> : <RotateCcw className="h-3.5 w-3.5" />}
             Desfazer
           </Button>
         </div>
@@ -280,7 +278,7 @@ export function AditivoCard({ index, draft, onConfirmar, onCancelar, onDesfazer 
             Cancelar
           </Button>
           <Button size="sm" onClick={criar} disabled={salvando} variant="brand" className="gap-1.5">
-            {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />} Criar aditivo
+            {salvando ? <BusyMark className="h-4 w-4" /> : <Check className="h-4 w-4" />} Criar aditivo
           </Button>
         </div>
       </div>

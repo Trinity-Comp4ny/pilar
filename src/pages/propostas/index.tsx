@@ -16,7 +16,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import {
   Plus,
   FileText,
-  Loader2,
   FolderPlus,
   LayoutTemplate,
   LayoutList,
@@ -72,6 +71,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useRegistrarPagina } from "@/hooks/useRecentes";
 import { SmartInvoiceDialog } from "@/components/SmartInvoiceDialog";
+
+import { BusyMark } from "@/components/motion/BusyMark";
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 interface PropostaDisciplina {
   id: string;
@@ -506,7 +508,7 @@ export default function Propostas() {
     return (
       <PageLayout header={header}>
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <ReadingRing size={64} />
         </div>
       </PageLayout>
     );
@@ -1220,7 +1222,7 @@ export default function Propostas() {
             <Button onClick={handleConverterEmProjeto} disabled={converterProposta.isPending} variant="brand">
               {converterProposta.isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando...
+                  <BusyMark className="mr-2 h-4 w-4" /> Criando...
                 </>
               ) : (
                 "Criar projeto"
