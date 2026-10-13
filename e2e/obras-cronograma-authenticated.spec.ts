@@ -63,8 +63,9 @@ test("monta fase, etapa, serviço e tarefa", async ({ page }) => {
 test("concluir a tarefa sobe o progresso até a fase", async ({ page }) => {
   await abrirCronograma(page);
 
-  await page.getByRole("button", { name: "Concluir Escavar sapatas" }).click();
-  await expect(page.getByRole("button", { name: "Reabrir Escavar sapatas" })).toBeVisible({ timeout: 10_000 });
+  // Checkbox do Radix: o rótulo troca de "Concluir" para "Reabrir" ao marcar.
+  await page.getByRole("checkbox", { name: "Concluir Escavar sapatas" }).click();
+  await expect(page.getByRole("checkbox", { name: "Reabrir Escavar sapatas" })).toBeChecked({ timeout: 10_000 });
   // Fase, etapa e serviço leem a mesma tarefa: nenhum nível fica para trás.
   await expect(page.getByText("100% · 1/1").first()).toBeVisible();
   await expect(page.getByText("0% · 0/1")).toHaveCount(0);
