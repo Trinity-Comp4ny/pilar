@@ -4,6 +4,7 @@ import { getCorsHeaders } from "../_shared/cors.ts";
 import { createAdminClient, createAuthClient } from "../_shared/ai-client.ts";
 import { ehAdminDaEmpresa } from "../_shared/admin-auth.ts";
 import { lerEntrada } from "./entrada.ts";
+import { fetchComTempo } from "../_shared/http.ts";
 
 const ASAAS_BASE_URL = {
   sandbox: "https://sandbox.asaas.com/api/v3",
@@ -106,7 +107,9 @@ serve(
       if (!customerId) {
         // Buscar por CPF/CNPJ primeiro
         if (cpfCnpjNumeros) {
-          const searchResp = await fetch(`${baseUrl}/customers?cpfCnpj=${cpfCnpjNumeros}`, { headers: asaasHeaders });
+          const searchResp = await fetchComTempo(`${baseUrl}/customers?cpfCnpj=${cpfCnpjNumeros}`, {
+            headers: asaasHeaders,
+          });
           if (searchResp.ok) {
             const searchData = (await searchResp.json()) as { data?: Array<{ id: string }> };
             if (searchData.data && searchData.data.length > 0) {
@@ -117,7 +120,7 @@ serve(
 
         // Criar se não encontrado
         if (!customerId) {
-          const createResp = await fetch(`${baseUrl}/customers`, {
+          const createResp = await fetchComTempo(`${baseUrl}/customers`, {
             method: "POST",
             headers: asaasHeaders,
             body: JSON.stringify({
@@ -145,7 +148,7 @@ serve(
       }
 
       // Criar cobrança no Asaas
-      const paymentResp = await fetch(`${baseUrl}/payments`, {
+      const paymentResp = await fetchComTempo(`${baseUrl}/payments`, {
         method: "POST",
         headers: asaasHeaders,
         body: JSON.stringify({

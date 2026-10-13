@@ -4,6 +4,7 @@ import { getCorsHeaders } from "../_shared/cors.ts";
 import { createAdminClient, createAuthClient } from "../_shared/ai-client.ts";
 import { ehAdminDaEmpresa } from "../_shared/admin-auth.ts";
 import { lerEntrada } from "./entrada.ts";
+import { fetchComTempo } from "../_shared/http.ts";
 
 serve(
   withSentry("asaas-config", async (req) => {
@@ -139,7 +140,7 @@ serve(
 
         let res: Response;
         try {
-          res = await fetch(`${base}/myAccount`, {
+          res = await fetchComTempo(`${base}/myAccount`, {
             headers: { access_token: apiKeyDecifrada as string, "Content-Type": "application/json" },
           });
         } catch {

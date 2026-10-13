@@ -6,6 +6,7 @@
 
 import { z } from "https://esm.sh/zod@3.23.8";
 import { captureException } from "../_shared/sentry.ts";
+import { fetchComTempo } from "../_shared/http.ts";
 
 export type TipoDocumento = "cnpj" | "cpf";
 
@@ -62,9 +63,7 @@ export interface CnpjInfo {
   cnaePrincipal: string | null;
 }
 
-export type CnpjConsultaResultado =
-  | { status: "ok"; info: CnpjInfo }
-  | { status: "indisponivel" }; // BrasilAPI fora do ar / mudou de formato: fica "pendente"
+export type CnpjConsultaResultado = { status: "ok"; info: CnpjInfo } | { status: "indisponivel" }; // BrasilAPI fora do ar / mudou de formato: fica "pendente"
 
 const brasilApiCnpjSchema = z.object({
   razao_social: z.string().min(1),
@@ -75,9 +74,12 @@ const brasilApiCnpjSchema = z.object({
 export async function consultarCnpjBrasilApi(cnpjDigits: string): Promise<CnpjConsultaResultado> {
   let res: Response;
   try {
-    res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjDigits}`);
+    res = await fetchComTempo(`https://brasilapi.com.br/api/cnpj/v1/${cnpjDigits}`, {}, 8_000);
   } catch (err) {
-    await captureException(err, { fn: "verificar-documento", tags: { provider: "brasilapi", reason: "request-failed" } });
+    await captureException(err, {
+      fn: "verificar-documento",
+      tags: { provider: "brasilapi", reason: "request-failed" },
+    });
     return { status: "indisponivel" };
   }
 
