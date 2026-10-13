@@ -57,12 +57,12 @@ export function ResponsavelCell({ responsaveis, pessoas, editavel, onChange }: R
         </span>
       </span>
     ) : editavel ? (
-      <span className="inline-flex items-center gap-1 text-muted-foreground/60 group-hover:text-muted-foreground">
+      <span className="inline-flex items-center gap-1 text-muted-foreground group-hover:text-foreground">
         <UserPlus className="h-3.5 w-3.5" />
         <span className="text-xs">Atribuir</span>
       </span>
     ) : (
-      <span className="text-xs text-muted-foreground/40">—</span>
+      <span className="text-xs text-muted-foreground">—</span>
     );
 
   if (!editavel) return <div className="min-w-0 truncate">{conteudo}</div>;
@@ -149,12 +149,12 @@ export function PrazoCell({ prazo, atrasado, editavel, onChange }: PrazoCellProp
       {texto}
     </span>
   ) : editavel ? (
-    <span className="inline-flex items-center gap-1 text-muted-foreground/60 group-hover:text-muted-foreground">
+    <span className="inline-flex items-center gap-1 text-muted-foreground group-hover:text-foreground">
       <CalendarPlus className="h-3.5 w-3.5" />
       <span className="text-xs">Prazo</span>
     </span>
   ) : (
-    <span className="text-xs text-muted-foreground/40">—</span>
+    <span className="text-xs text-muted-foreground">—</span>
   );
 
   if (!editavel) return <div className="truncate">{conteudo}</div>;
@@ -207,11 +207,7 @@ export function PrioridadeCell({ prioridade, editavel, onChange }: PrioridadeCel
       <Flag
         className={cn(
           "h-3 w-3",
-          prioridade === "alta"
-            ? "text-destructive"
-            : prioridade === "media"
-              ? "text-warning"
-              : "text-muted-foreground/40"
+          prioridade === "alta" ? "text-destructive" : prioridade === "media" ? "text-warning" : "text-muted-foreground"
         )}
       />
       {PRIORIDADE_LABEL[prioridade]}
@@ -258,12 +254,12 @@ export function ProjetoCell({ projetoId, projetoNome, projetos, editavel, onChan
       <span className="truncate">{projetoNome}</span>
     </span>
   ) : editavel ? (
-    <span className="inline-flex items-center gap-1 text-muted-foreground/60 group-hover:text-muted-foreground">
+    <span className="inline-flex items-center gap-1 text-muted-foreground group-hover:text-foreground">
       <Plus className="h-3.5 w-3.5" />
       <span className="text-xs">Projeto</span>
     </span>
   ) : (
-    <span className="text-xs text-muted-foreground/40">—</span>
+    <span className="text-xs text-muted-foreground">—</span>
   );
 
   if (!editavel) return <div className="min-w-0 truncate">{conteudo}</div>;
@@ -333,12 +329,12 @@ export function EtiquetasCell({ labels, editavel, onChange }: EtiquetasCellProps
         {labels.length > 2 && <span className="shrink-0 text-[10px] text-muted-foreground">+{labels.length - 2}</span>}
       </span>
     ) : editavel ? (
-      <span className="inline-flex items-center gap-1 text-muted-foreground/60 group-hover:text-muted-foreground">
+      <span className="inline-flex items-center gap-1 text-muted-foreground group-hover:text-foreground">
         <Tag className="h-3.5 w-3.5" />
         <span className="text-xs">Etiqueta</span>
       </span>
     ) : (
-      <span className="text-xs text-muted-foreground/40">—</span>
+      <span className="text-xs text-muted-foreground">—</span>
     );
 
   if (!editavel) return <div className="min-w-0 truncate">{conteudo}</div>;
@@ -401,11 +397,11 @@ export function HorasCell({ valor, editavel, onChange }: HorasCellProps) {
   const conteudo = conteudoTexto ? (
     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">{conteudoTexto}</span>
   ) : editavel ? (
-    <span className="inline-flex items-center gap-1 text-muted-foreground/60 group-hover:text-muted-foreground">
+    <span className="inline-flex items-center gap-1 text-muted-foreground group-hover:text-foreground">
       <Clock className="h-3.5 w-3.5" />
     </span>
   ) : (
-    <span className="text-xs text-muted-foreground/40">—</span>
+    <span className="text-xs text-muted-foreground">—</span>
   );
 
   if (!editavel) return <div className="truncate">{conteudo}</div>;
