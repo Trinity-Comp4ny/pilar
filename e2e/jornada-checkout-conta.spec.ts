@@ -20,7 +20,13 @@ test("pagamento confirmado vira conta com empresa e o dono entra pelo convite", 
   const email = `jornada-${sufixo}@e2e.pilar.test`;
   const empresa = `E2E Escritório ${sufixo}`;
 
-  const { data: plano } = await admin.from("pilar_subscription_plans").select("id").eq("slug", "starter").single();
+  const { data: plano } = await admin
+    .from("pilar_subscription_plans")
+    .select("id")
+    .eq("ativo", true)
+    .order("preco_mensal")
+    .limit(1)
+    .single();
   expect(plano?.id).toBeTruthy();
 
   const { data: signup, error } = await admin
