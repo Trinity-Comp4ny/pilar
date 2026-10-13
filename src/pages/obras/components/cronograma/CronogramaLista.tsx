@@ -287,7 +287,7 @@ function NoLinha({
       className={cn(GRID, "group flex min-h-11 items-center gap-2 border-b px-3 py-1.5", LINHA_CLASSE[nivel])}
       data-testid={`no-${no.id}`}
     >
-      <div className="flex min-w-0 flex-1 items-center gap-1" style={{ paddingLeft: recuo(profundidade) }}>
+      <div className="relative flex min-w-0 flex-1 items-center gap-1" style={{ paddingLeft: recuo(profundidade) }}>
         <button
           type="button"
           onClick={() => onToggle(no.id)}
@@ -320,14 +320,17 @@ function NoLinha({
           </button>
         )}
         {canEdit && (
+          // Só ícone e sobreposto à direita: ocupando espaço mesmo invisível, o botão
+          // com rótulo espremia o nome até zero em 1280px.
           <Button
-            variant="ghost"
-            size="sm"
-            className="ml-1 hidden h-6 shrink-0 px-1.5 text-[11px] text-muted-foreground opacity-0 md:inline-flex transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
+            variant="outline"
+            size="icon"
+            aria-label={`Adicionar ${(NIVEL_LABEL[filho as NivelCronograma] ?? "Tarefa").toLowerCase()} em ${no.nome}`}
+            title={`Adicionar ${(NIVEL_LABEL[filho as NivelCronograma] ?? "Tarefa").toLowerCase()}`}
+            className="pointer-events-none absolute right-0 top-1/2 hidden h-6 w-6 -translate-y-1/2 rounded-md bg-white text-muted-foreground opacity-0 shadow-sm transition-opacity md:inline-flex group-hover:pointer-events-auto group-hover:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100"
             onClick={onNovoFilho}
           >
-            <Plus className="mr-0.5 h-3.5 w-3.5" />
-            {NIVEL_LABEL[filho as NivelCronograma] ?? "Tarefa"}
+            <Plus className="h-3.5 w-3.5" />
           </Button>
         )}
       </div>
