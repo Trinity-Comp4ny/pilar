@@ -75,3 +75,19 @@ export function exigirParadaUtil(motivo: string | undefined, modelo: string): vo
     throw new ErroIa("bloqueada", `Resposta de ${modelo} bloqueada pelo provedor (${motivo})`);
   }
 }
+
+/**
+ * Teto de uma chamada ao modelo. Texto curto: o limite por chamada, sobrando orçamento
+ * para uma nova tentativa. Com anexo (PDF/imagem de extrato, orçamento), a extração com
+ * saída longa passa dos 30 s e a chamada era abortada no meio (PILAR-1M, 30006 ms): aí o
+ * teto é o orçamento inteiro, porque refazer uma extração de 50 s não caberia de todo jeito.
+ */
+export function tetoDaChamadaMs(o: {
+  restanteMs?: number;
+  comArquivo: boolean;
+  porChamadaMs: number;
+  orcamentoMs: number;
+}): number {
+  const teto = o.comArquivo ? o.orcamentoMs : o.porChamadaMs;
+  return o.restanteMs === undefined ? teto : Math.min(teto, o.restanteMs);
+}

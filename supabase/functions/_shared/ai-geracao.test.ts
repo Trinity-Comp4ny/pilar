@@ -1,6 +1,6 @@
 import { assertEquals, assertThrows } from "https://deno.land/std@0.168.0/testing/asserts.ts";
 import { ErroIa } from "./ai-erros.ts";
-import { configDeGeracao, exigirParadaUtil, motivoDeParada } from "./ai-geracao.ts";
+import { configDeGeracao, exigirParadaUtil, motivoDeParada, tetoDaChamadaMs } from "./ai-geracao.ts";
 
 Deno.test("configDeGeracao: JSON sai com temperatura 0 e teto de raciocínio em 1/4 do limite", () => {
   assertEquals(configDeGeracao("gemini-2.5-flash", { modo: "json", maxOutputTokens: 4096 }), {
@@ -40,4 +40,14 @@ Deno.test("exigirParadaUtil: MAX_TOKENS vira saida_truncada, filtro vira bloquea
   assertEquals(bloqueada.tipo, "bloqueada");
   exigirParadaUtil("STOP", "gemini-2.5-flash");
   exigirParadaUtil(undefined, "gemini-2.5-flash");
+});
+
+Deno.test("tetoDaChamadaMs: texto fica em 30 s; com anexo usa o orçamento inteiro (PILAR-1M)", () => {
+  const base = { porChamadaMs: 30_000, orcamentoMs: 55_000 };
+  assertEquals(tetoDaChamadaMs({ ...base, comArquivo: false }), 30_000);
+  assertEquals(tetoDaChamadaMs({ ...base, comArquivo: false, restanteMs: 55_000 }), 30_000);
+  assertEquals(tetoDaChamadaMs({ ...base, comArquivo: true, restanteMs: 55_000 }), 55_000);
+  assertEquals(tetoDaChamadaMs({ ...base, comArquivo: true }), 55_000);
+  // Nunca passa do que resta do orçamento.
+  assertEquals(tetoDaChamadaMs({ ...base, comArquivo: true, restanteMs: 12_000 }), 12_000);
 });
