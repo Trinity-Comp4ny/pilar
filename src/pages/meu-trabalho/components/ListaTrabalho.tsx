@@ -475,8 +475,8 @@ export function ListaTrabalho({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => etapaControls.onRenomear(etapa)}>
-                          <Pencil className="mr-2 h-4 w-4" /> Renomear
+                        <DropdownMenuItem onClick={() => etapaControls.onEditar(etapa)}>
+                          <Pencil className="mr-2 h-4 w-4" /> Editar
                         </DropdownMenuItem>
                         <DropdownMenuItem disabled={idx === 0} onClick={() => etapaControls.onReordenar(etapa.id, -1)}>
                           <ChevronUp className="mr-2 h-4 w-4" /> Mover para cima

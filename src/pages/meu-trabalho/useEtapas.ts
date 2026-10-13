@@ -51,9 +51,10 @@ export function useEtapaMutations() {
     onSuccess: invalidate,
   });
 
-  const renomear = useMutation({
-    mutationFn: async ({ id, nome }: { id: string; nome: string }) => {
-      const { error } = await supabase.from("tarefa_etapas").update({ nome }).eq("id", id);
+  // Editar coluna: nome + cor.
+  const editar = useMutation({
+    mutationFn: async ({ id, nome, cor }: { id: string; nome: string; cor: string }) => {
+      const { error } = await supabase.from("tarefa_etapas").update({ nome, cor }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: invalidate,
@@ -82,5 +83,5 @@ export function useEtapaMutations() {
     },
   });
 
-  return { criar, renomear, reordenar, excluir };
+  return { criar, editar, reordenar, excluir };
 }
