@@ -66,8 +66,8 @@ const forecastResponseSchema = z
     hourly: z
       .object({
         time: strArr,
-        temperature_2m: z.array(z.number()),
-        weather_code: z.array(z.number()),
+        temperature_2m: numArr,
+        weather_code: numArr,
         precipitation_probability: numArr,
         precipitation: numArr,
         is_day: numArr,
@@ -77,9 +77,9 @@ const forecastResponseSchema = z
     daily: z
       .object({
         time: strArr,
-        weather_code: z.array(z.number()),
-        temperature_2m_max: z.array(z.number()),
-        temperature_2m_min: z.array(z.number()),
+        weather_code: numArr,
+        temperature_2m_max: numArr,
+        temperature_2m_min: numArr,
         precipitation_probability_max: numArr,
         precipitation_sum: numArr,
         wind_speed_10m_max: numArr,
@@ -100,10 +100,7 @@ const historicoResponseSchema = z
 
 const climaDoDiaResponseSchema = z
   .object({
-    daily: z
-      .object({ time: strArr, weather_code: z.array(z.number()) })
-      .passthrough()
-      .optional(),
+    daily: z.object({ time: strArr, weather_code: numArr }).passthrough().optional(),
   })
   .passthrough();
 
@@ -319,20 +316,27 @@ export async function buscarPrevisao(latitude: number, longitude: number): Promi
 
   const cur = j.current ?? {};
   const d = j.daily;
-  const dias: DiaPrevisao[] = d
-    ? d.time.map((data, i) => ({
-        data,
-        code: d.weather_code[i],
-        tempMax: Math.round(d.temperature_2m_max[i]),
-        tempMin: Math.round(d.temperature_2m_min[i]),
-        chuvaProb: d.precipitation_probability_max[i] ?? 0,
-        chuvaMm: Math.round((d.precipitation_sum[i] ?? 0) * 10) / 10,
-        ventoMax: Math.round(d.wind_speed_10m_max[i] ?? 0),
-        uvMax: Math.round(d.uv_index_max[i] ?? 0),
-        nascer: d.sunrise[i] ?? null,
-        ocaso: d.sunset[i] ?? null,
-      }))
-    : [];
+  // A cauda dos 16 dias (fora do horizonte do modelo) vem com null em código e
+  // temperatura. Dia sem esses dados some da lista em vez de derrubar a previsão.
+  const dias: DiaPrevisao[] = [];
+  d?.time.forEach((data, i) => {
+    const code = d.weather_code[i];
+    const max = d.temperature_2m_max[i];
+    const min = d.temperature_2m_min[i];
+    if (code == null || max == null || min == null) return;
+    dias.push({
+      data,
+      code,
+      tempMax: Math.round(max),
+      tempMin: Math.round(min),
+      chuvaProb: d.precipitation_probability_max[i] ?? 0,
+      chuvaMm: Math.round((d.precipitation_sum[i] ?? 0) * 10) / 10,
+      ventoMax: Math.round(d.wind_speed_10m_max[i] ?? 0),
+      uvMax: Math.round(d.uv_index_max[i] ?? 0),
+      nascer: d.sunrise[i] ?? null,
+      ocaso: d.sunset[i] ?? null,
+    });
+  });
 
   const horas = proximasHoras(j.hourly);
 
@@ -356,8 +360,8 @@ export async function buscarPrevisao(latitude: number, longitude: number): Promi
 /** Próximas 48 horas a partir de agora (hora local do local consultado). */
 function proximasHoras(hourly?: {
   time: string[];
-  temperature_2m: number[];
-  weather_code: number[];
+  temperature_2m: (number | null)[];
+  weather_code: (number | null)[];
   precipitation_probability: (number | null)[];
   precipitation: (number | null)[];
   is_day: (number | null)[];
@@ -366,17 +370,22 @@ function proximasHoras(hourly?: {
   const agora = Date.now();
   const idx = hourly.time.findIndex((t) => new Date(t).getTime() >= agora);
   const inicio = idx < 0 ? 0 : idx;
-  return hourly.time.slice(inicio, inicio + 48).map((hora, k) => {
+  const horas: HoraPrevisao[] = [];
+  hourly.time.slice(inicio, inicio + 48).forEach((hora, k) => {
     const i = inicio + k;
-    return {
+    const code = hourly.weather_code[i];
+    const temp = hourly.temperature_2m[i];
+    if (code == null || temp == null) return;
+    horas.push({
       hora,
-      code: hourly.weather_code[i],
-      temp: Math.round(hourly.temperature_2m[i]),
+      code,
+      temp: Math.round(temp),
       chuvaProb: hourly.precipitation_probability[i] ?? 0,
       chuvaMm: Math.round((hourly.precipitation[i] ?? 0) * 10) / 10,
       ehDia: (hourly.is_day?.[i] ?? 1) === 1,
-    };
+    });
   });
+  return horas;
 }
 
 /** Dias com chuva relevante (prob >= 60% ou código de chuva/tempestade). */
@@ -422,7 +431,7 @@ export async function buscarHistorico(latitude: number, longitude: number, dias 
 
 /** Acha o clima do RDO numa série diária já buscada, pela data exata. Puro/testável. */
 export function climaDoDiaEmSerie(
-  serieDiaria: { time: string[]; weather_code: number[] } | undefined,
+  serieDiaria: { time: string[]; weather_code: (number | null)[] } | undefined,
   dataISO: string
 ): ClimaRdo | null {
   if (!serieDiaria) return null;
@@ -552,6 +561,12 @@ export async function nomeDaCoordenada(latitude: number, longitude: number): Pro
     const cidade = j.city || j.locality;
     return cidade ? [cidade, j.principalSubdivision].filter(Boolean).join(", ") : "Minha localização";
   } catch (err) {
+    // Rede caiu (TypeError "Load failed"/"Failed to fetch", PILAR-31): o rótulo é
+    // best-effort e já tem fallback, não é falha nossa nem do provedor.
+    if (err instanceof TypeError) {
+      monitoring.addBreadcrumb("reverse_geocode_offline", { provider: "bigdatacloud" });
+      return "Minha localização";
+    }
     monitoring.captureException(
       err,
       { fn: "nomeDaCoordenada" },

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   alertasClimaTarefas,
   buscarClimaDoDia,
+  buscarPrevisao,
   climaDoDiaEmSerie,
   climaPorCodigo,
   corTemperatura,
@@ -78,6 +79,46 @@ describe("buscarClimaDoDia (spec 080)", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) }));
     const resultado = await buscarClimaDoDia(-22.21389, -49.94583, "2026-09-01");
     expect(resultado).toBeNull();
+  });
+});
+
+describe("buscarPrevisao", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("aceita null na cauda dos 16 dias e descarta o dia/hora sem dados", async () => {
+    // Regressão PILAR-38/39: o Open-Meteo devolve null em código e temperatura
+    // fora do horizonte do modelo; o schema exigia número e a tela inteira caía.
+    const resposta = {
+      current: { temperature_2m: 25.8, weather_code: 3, is_day: 1 },
+      hourly: {
+        time: ["2099-01-01T00:00", "2099-01-01T01:00"],
+        temperature_2m: [20, null],
+        weather_code: [1, null],
+        precipitation_probability: [10, null],
+        precipitation: [0, null],
+        is_day: [0, null],
+      },
+      daily: {
+        time: ["2099-01-01", "2099-01-02"],
+        weather_code: [3, null],
+        temperature_2m_max: [30, null],
+        temperature_2m_min: [18, null],
+        precipitation_probability_max: [20, null],
+        precipitation_sum: [0, null],
+        wind_speed_10m_max: [12, null],
+        uv_index_max: [8, null],
+        sunrise: ["2099-01-01T05:30", "2099-01-02T05:30"],
+        sunset: ["2099-01-01T18:30", "2099-01-02T18:30"],
+      },
+    };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => resposta }));
+    const previsao = await buscarPrevisao(-22.2, -49.9);
+    expect(previsao.dias).toHaveLength(1);
+    expect(previsao.dias[0]).toMatchObject({ data: "2099-01-01", code: 3, tempMax: 30 });
+    expect(previsao.horas).toHaveLength(1);
+    expect(previsao.atual.temp).toBe(26);
   });
 });
 
