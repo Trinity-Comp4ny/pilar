@@ -21,22 +21,67 @@
  *
  * `DEV`, `PROD` e `MODE` continuam vindo direto do Vite: são do bundler, não config.
  */
-import { z } from "zod";
+// Sem zod de propósito: este módulo roda no boot de todo usuário, e o zod inteiro
+// (~13 kB gzip) entrava na entrada só para validar nove variáveis. As regras abaixo
+// são as mesmas que o schema zod fazia; env.test.ts cobre cada uma.
+
+type Campo<T> = (bruto: unknown) => { valor: T } | { erro: string };
 
 /** Vite entrega "" para variável declarada e vazia. Para efeito de config, é ausente. */
-const optionalText = z.preprocess(
-  (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-  z.string().trim().min(1).optional()
-);
+function texto(bruto: unknown): string | undefined {
+  return typeof bruto === "string" && bruto.trim() !== "" ? bruto.trim() : undefined;
+}
 
-const optionalUrl = z.preprocess(
-  (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-  z.string().url().optional()
-);
+function ehUrl(valor: string): boolean {
+  try {
+    new URL(valor);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
-const schema = z.object({
-  VITE_SUPABASE_URL: z.string().url("VITE_SUPABASE_URL precisa ser uma URL completa (https://<ref>.supabase.co)"),
-  VITE_SUPABASE_PUBLISHABLE_KEY: z.string().trim().min(1, "VITE_SUPABASE_PUBLISHABLE_KEY não pode ser vazia"),
+const textoObrigatorio =
+  (erro: string): Campo<string> =>
+  (bruto) => {
+    const v = texto(bruto);
+    return v ? { valor: v } : { erro };
+  };
+
+const urlObrigatoria =
+  (erro: string): Campo<string> =>
+  (bruto) => {
+    const v = texto(bruto);
+    return v && ehUrl(v) ? { valor: v } : { erro };
+  };
+
+const optionalText: Campo<string | undefined> = (bruto) => ({ valor: texto(bruto) });
+
+const optionalUrl: Campo<string | undefined> = (bruto) => {
+  const v = texto(bruto);
+  if (v === undefined || ehUrl(v)) return { valor: v };
+  return { erro: "precisa ser uma URL completa (https://...)" };
+};
+
+// Vazio cai no default em vez de virar 0: `Number("")` é 0, e uma variável declarada
+// e vazia desligaria o tracing (0%) sem ninguém pedir.
+const taxa: Campo<number | undefined> = (bruto) => {
+  const v = texto(bruto);
+  if (v === undefined) return { valor: undefined };
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 && n <= 1 ? { valor: n } : { erro: "precisa ser um número entre 0 e 1" };
+};
+
+const taxaComDefault =
+  (padrao: number): Campo<number> =>
+  (bruto) => {
+    const r = taxa(bruto);
+    return "erro" in r ? r : { valor: r.valor ?? padrao };
+  };
+
+const schema = {
+  VITE_SUPABASE_URL: urlObrigatoria("VITE_SUPABASE_URL precisa ser uma URL completa (https://<ref>.supabase.co)"),
+  VITE_SUPABASE_PUBLISHABLE_KEY: textoObrigatorio("VITE_SUPABASE_PUBLISHABLE_KEY não pode ser vazia"),
 
   /** Ausente = login sobe sem captcha. Ver envWarnings(). */
   VITE_TURNSTILE_SITE_KEY: optionalText,
@@ -49,40 +94,39 @@ const schema = z.object({
    * documentado. O canônico é _SAMPLE_RATE; o outro segue aceito para não quebrar
    * ambiente já configurado.
    */
-  // O preprocess não é zelo: `z.coerce.number()` converte "" para 0, então uma
-  // variável declarada e vazia desligaria o tracing (0%) em vez de cair no default.
-  VITE_SENTRY_TRACES_SAMPLE_RATE: z.preprocess(
-    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    z.coerce.number().min(0).max(1).default(0.1)
-  ),
-  VITE_SENTRY_TRACES_RATE: z.preprocess(
-    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-    z.coerce.number().min(0).max(1).optional()
-  ),
+  VITE_SENTRY_TRACES_SAMPLE_RATE: taxaComDefault(0.1),
+  VITE_SENTRY_TRACES_RATE: taxa,
 
   VITE_POSTHOG_KEY: optionalText,
   VITE_POSTHOG_HOST: optionalUrl,
 
   /** Status page externa (SPEC 105). Definida, a rota /status do app redireciona para ela. */
   VITE_STATUS_URL: optionalUrl,
-});
+};
 
-export type Env = z.infer<typeof schema>;
+export type Env = { [K in keyof typeof schema]: (typeof schema)[K] extends Campo<infer T> ? T : never };
 
 function parseEnv(): Env {
-  const parsed = schema.safeParse(import.meta.env);
+  const fonte = import.meta.env as Record<string, unknown>;
+  const valores: Record<string, unknown> = {};
+  // Uma mensagem com TODAS as chaves problemáticas, não só a primeira: quem está
+  // configurando um ambiente novo precisa da lista inteira de uma vez.
+  const problemas: string[] = [];
 
-  if (!parsed.success) {
-    // Uma mensagem com TODAS as chaves problemáticas, não só a primeira: quem está
-    // configurando um ambiente novo precisa da lista inteira de uma vez.
-    const problemas = parsed.error.issues.map((i) => `  - ${i.path.join(".") || "(raiz)"}: ${i.message}`).join("\n");
+  for (const [chave, campo] of Object.entries(schema) as Array<[string, Campo<unknown>]>) {
+    const r = campo(fonte[chave]);
+    if ("erro" in r) problemas.push(`  - ${chave}: ${r.erro}`);
+    else valores[chave] = r.valor;
+  }
+
+  if (problemas.length > 0) {
     throw new Error(
-      `Configuração de ambiente inválida. Corrija no .env (ou nas variáveis do deploy):\n${problemas}\n\n` +
+      `Configuração de ambiente inválida. Corrija no .env (ou nas variáveis do deploy):\n${problemas.join("\n")}\n\n` +
         `O .env.example lista todas as chaves esperadas.`
     );
   }
 
-  return parsed.data;
+  return valores as Env;
 }
 
 export const env: Env = parseEnv();

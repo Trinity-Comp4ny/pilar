@@ -29,13 +29,18 @@ const BUDGETS = {
   //
   // 2026-10-13: 155 kB. O PostHog passou a vir por import dinâmico só com
   // consentimento (src/lib/analytics.ts) e a entrada caiu de ~230 para ~142 kB.
-  entry: 155 * 1024,
+  //
+  // 2026-10-13 (2): 125 kB. A troca de senha do portal passou a ser lazy (levava
+  // react-hook-form e todos os schemas para o boot) e o env.ts deixou o zod; a
+  // entrada caiu de ~143 para ~113 kB.
+  entry: 125 * 1024,
   // Tudo que o navegador baixa antes da primeira tela: a entrada mais os chunks que o
   // index.html pré-carrega (modulepreload) e o CSS. O limite só da entrada não via o
   // vendor-pdf e o vendor-charts sendo pré-carregados em toda página (~860 kB brutos),
   // porque eram outros arquivos. Medido em 2026-10-09: ~416 kB depois da correção.
   // 2026-10-13: ~338 kB com o PostHog fora do boot; limite desce para 350 kB.
-  initialLoad: 350 * 1024,
+  // 2026-10-13 (2): ~309 kB sem zod e react-hook-form na entrada; limite desce para 325 kB.
+  initialLoad: 325 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app
@@ -82,9 +87,19 @@ async function main() {
   const totalJs = chunks.filter((c) => c.ext === "js").reduce((a, c) => a + c.gz, 0);
   const totalCss = chunks.filter((c) => c.ext === "css").reduce((a, c) => a + c.gz, 0);
 
+  // A entrada é o <script src> do index.html. Pelo nome não dá: toda página lazy que
+  // vem de um `index.tsx` também vira `index-*.js`, e a de Propostas (132 kB, com o
+  // mammoth dentro) passava calada medida contra o limite da entrada.
+  const html = await readFile(join(DIST, "..", "index.html"), "utf8");
+  const entrada = html.match(/<script[^>]*\ssrc="\/assets\/([^"]+\.js)"/)?.[1];
+  if (!entrada) {
+    console.error("[budget] não achei o <script src> da entrada no dist/index.html.");
+    process.exit(1);
+  }
+
   for (const c of chunks) {
     if (c.ext !== "js") continue;
-    const isEntry = /^index-[A-Za-z0-9_-]+\.js$/.test(c.name);
+    const isEntry = c.name === entrada;
     const limit = isEntry ? BUDGETS.entry : BUDGETS.perChunk;
     if (c.gz > limit) {
       violations.push(`${c.name} = ${fmt(c.gz)} > limite ${fmt(limit)} (${isEntry ? "entry" : "chunk"})`);
@@ -99,7 +114,6 @@ async function main() {
   }
 
   // Carregamento inicial: o que o index.html manda baixar antes da primeira tela.
-  const html = await readFile(join(DIST, "..", "index.html"), "utf8");
   const iniciais = [...html.matchAll(/(?:src|href)="\/assets\/([^"]+\.(?:js|css))"/g)].map((m) => m[1]);
   const porNome = new Map(chunks.map((c) => [c.name, c]));
   const initialLoad = iniciais.reduce((a, n) => a + (porNome.get(n)?.gz ?? 0), 0);

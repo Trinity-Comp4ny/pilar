@@ -1,9 +1,12 @@
+import { Suspense, lazy } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useClienteAuth } from "@/hooks/useClienteAuth";
 
-import ForcarTrocaSenha from "@/pages/cliente/ForcarTrocaSenha";
-
 import { EntryVeil } from "@/components/motion/EntryVeil";
+
+// Sob demanda: a tela só aparece para cliente com senha temporária, e importada
+// direto ela levava react-hook-form e todos os schemas para o boot de todo usuário.
+const ForcarTrocaSenha = lazy(() => import("@/pages/cliente/ForcarTrocaSenha"));
 
 export function ClientePrivateRoute() {
   const { account, loading, error, refresh } = useClienteAuth();
@@ -22,7 +25,11 @@ export function ClientePrivateRoute() {
   // Senha temporária (convite/reset): bloqueia todo o portal até o cliente trocar.
   // Após a troca, refresh revalida a sessão (must_change_password = false) e libera.
   if (account.must_change_password) {
-    return <ForcarTrocaSenha onSuccess={refresh} />;
+    return (
+      <Suspense fallback={<EntryVeil label="Abrindo o portal" />}>
+        <ForcarTrocaSenha onSuccess={refresh} />
+      </Suspense>
+    );
   }
 
   return <Outlet context={account} />;
