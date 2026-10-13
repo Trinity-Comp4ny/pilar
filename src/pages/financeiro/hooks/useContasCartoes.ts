@@ -106,6 +106,10 @@ class MutationToastError extends Error {
   }
 }
 
+const SEM_PERMISSAO = "Nada foi salvo. Confira se você tem permissão para editar o financeiro.";
+const ERRO_CONFERIR = "Não foi possível conferir os vínculos";
+const TENTE_DE_NOVO = "Nada foi excluído. Tente de novo em instantes.";
+
 async function getEmpresaIdOrThrow(): Promise<string> {
   const {
     data: { user },
@@ -142,7 +146,7 @@ async function saveContaImpl({ selected, nome, banco, saldoInicial, chavePix }: 
   const pixTipo = chavePix ? (detectTipoChavePix(chavePix) ?? null) : null;
 
   if (selected) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("contas")
       .update({
         nome,
@@ -151,9 +155,11 @@ async function saveContaImpl({ selected, nome, banco, saldoInicial, chavePix }: 
         chave_pix: chavePix || null,
         tipo_chave_pix: pixTipo,
       })
-      .eq("id", selected.id);
+      .eq("id", selected.id)
+      .select("id");
 
     if (error) throw new MutationToastError("Erro ao atualizar conta", error.message);
+    if (!data?.length) throw new MutationToastError("Erro ao atualizar conta", SEM_PERMISSAO);
     return { isEdit: true };
   }
 
@@ -186,7 +192,7 @@ async function saveCartaoImpl({
   const contaPagId = contaPagamentoId === "__none__" ? null : contaPagamentoId || null;
 
   if (selected) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("cartoes")
       .update({
         nome,
@@ -196,9 +202,11 @@ async function saveCartaoImpl({
         limite: parseCurrencyString(limite),
         conta_pagamento_id: contaPagId,
       })
-      .eq("id", selected.id);
+      .eq("id", selected.id)
+      .select("id");
 
     if (error) throw new MutationToastError("Erro ao atualizar");
+    if (!data?.length) throw new MutationToastError("Erro ao atualizar", SEM_PERMISSAO);
     return { isEdit: true };
   }
 
@@ -218,16 +226,19 @@ async function saveCartaoImpl({
 }
 
 async function deleteContaImpl(id: string) {
-  const { count: receitasCount } = await supabase
+  const { count: receitasCount, error: receitasError } = await supabase
     .from("receitas")
     .select("id", { count: "exact", head: true })
     .eq("conta_id", id)
     .is("deleted_at", null);
-  const { count: despesasCount } = await supabase
+  const { count: despesasCount, error: despesasError } = await supabase
     .from("despesas")
     .select("id", { count: "exact", head: true })
     .eq("conta_id", id)
     .is("deleted_at", null);
+  // A contagem é a trava que impede apagar conta com lançamento. Se ela falhar,
+  // não dá para saber: não exclui (antes, contagem nula virava zero e passava).
+  if (receitasError || despesasError) throw new MutationToastError(ERRO_CONFERIR, TENTE_DE_NOVO);
   const total = (receitasCount ?? 0) + (despesasCount ?? 0);
   if (total > 0) {
     throw new MutationToastError(
@@ -243,11 +254,12 @@ async function deleteContaImpl(id: string) {
 
 async function deleteCartaoImpl(id: string) {
   // Ignora faturas vazias pré-criadas (valor_total 0 e ainda Aberta).
-  const { count: faturasCount } = await supabase
+  const { count: faturasCount, error: faturasError } = await supabase
     .from("faturas")
     .select("id", { count: "exact", head: true })
     .eq("cartao_id", id)
     .or("valor_total.gt.0,status.neq.Aberta");
+  if (faturasError) throw new MutationToastError(ERRO_CONFERIR, TENTE_DE_NOVO);
   if ((faturasCount ?? 0) > 0) {
     throw new MutationToastError(
       "Cartão com faturas",
