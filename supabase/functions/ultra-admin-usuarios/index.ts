@@ -1,6 +1,7 @@
 /**
  * Edge function: ultra-admin-usuarios
  *
+ * GET  → todos os usuários da plataforma, com último login (SPEC 117)
  * PUT  → atualizar role de um usuário (cross-empresa)
  * POST → convidar usuário em nome de outra empresa
  *
@@ -13,6 +14,7 @@ import { isUUID, jsonResponse, optionsResponse, safeErrorResponse, getTrustedOri
 import { requireUltraAdmin } from "../_shared/admin-auth.ts";
 import { logAction } from "../_shared/audit.ts";
 import { withSentry } from "../_shared/sentry.ts";
+import { listarAcessos } from "../_shared/ultimo-acesso.ts";
 import { isEmailExistsError } from "../_shared/auth-errors.ts";
 import { emailDoConvite, papelSeguro } from "./entrada.ts";
 
@@ -23,6 +25,35 @@ serve(
     const auth = await requireUltraAdmin(req);
     if (auth.error) return auth.error;
     const { svc, userId, actorEmail } = auth;
+
+    // ─── GET: lista cross-empresa com último login ────────────────────────
+    // O último login mora em auth.users, que o front não lê; o resto (nome,
+    // papel, empresa) é o mesmo que o ultra admin já lê em profiles via RLS.
+    if (req.method === "GET") {
+      const [{ data: profiles, error }, acessos] = await Promise.all([
+        svc
+          .from("profiles")
+          .select("id, nome, email, role, empresa_id, created_at, empresas(nome, deleted_at)")
+          .order("nome", { ascending: true }),
+        listarAcessos(svc),
+      ]);
+      if (error) return safeErrorResponse(500, "Falha ao listar usuários", req);
+
+      const usuarios = (profiles ?? [])
+        .filter((p) => !(p.empresas as { deleted_at?: string | null } | null)?.deleted_at)
+        .map((p) => ({
+          id: p.id,
+          nome: p.nome,
+          email: p.email,
+          role: p.role,
+          empresa_id: p.empresa_id,
+          empresa_nome: (p.empresas as { nome?: string } | null)?.nome ?? null,
+          created_at: acessos.get(p.id)?.createdAt ?? p.created_at ?? null,
+          last_sign_in_at: acessos.get(p.id)?.lastSignInAt ?? null,
+        }));
+
+      return jsonResponse(usuarios, 200, req);
+    }
 
     // ─── PUT: atualizar usuário existente ─────────────────────────────────
     if (req.method === "PUT") {

@@ -7,6 +7,7 @@
  * PUT    /ultra-admin-empresas           → atualizar empresa (dados, features, plano,
  *                                          converter_pagante = cancelar convite,
  *                                          marcar_convidada)
+ * DELETE /ultra-admin-empresas           → excluir empresa arquivada ou em retenção (SPEC 117)
  *
  * Requer role = ultra_admin.
  */
@@ -17,7 +18,8 @@ import { isUUID, jsonResponse, optionsResponse, safeErrorResponse, getTrustedOri
 import { requireUltraAdmin } from "../_shared/admin-auth.ts";
 import { logAction } from "../_shared/audit.ts";
 import { withSentry } from "../_shared/sentry.ts";
-import { lerAcaoEmMassa, lerNovaEmpresa } from "./entrada.ts";
+import { listarAcessos, ultimoAcesso } from "../_shared/ultimo-acesso.ts";
+import { lerAcaoEmMassa, lerExclusaoEmpresa, lerNovaEmpresa } from "./entrada.ts";
 
 // Espelha universal:true de src/lib/features.ts / _universal_features() no
 // banco (migration 20260845000000). Coberto por teste de sincronia em
@@ -105,6 +107,21 @@ serve(
           max_usuarios?: number | null;
         } | null;
 
+        // Uso (SPEC 117): projetos em aberto e último login de cada pessoa.
+        const [{ count: projetosAtivos }, acessos] = await Promise.all([
+          svc
+            .from("projetos")
+            .select("id", { count: "exact", head: true })
+            .eq("empresa_id", id)
+            .is("deleted_at", null)
+            .not("status", "in", '("Concluído","Cancelado")'),
+          listarAcessos(svc),
+        ]);
+        const usuariosComAcesso = (usuarios ?? []).map((u) => ({
+          ...u,
+          last_sign_in_at: acessos.get(u.id)?.lastSignInAt ?? null,
+        }));
+
         return jsonResponse(
           {
             empresa,
@@ -120,7 +137,14 @@ serve(
               is_paying: !!sub?.asaas_subscription_id,
               convidada: ehConvidada(sub),
             },
-            usuarios: usuarios ?? [],
+            uso: {
+              projetos_ativos: projetosAtivos ?? 0,
+              ultimo_acesso: ultimoAcesso(
+                usuariosComAcesso.map((u) => u.id),
+                acessos
+              ),
+            },
+            usuarios: usuariosComAcesso,
             convites: convites ?? [],
           },
           200,
@@ -132,17 +156,24 @@ serve(
       const { data: empresas, error } = await svc
         .from("empresas")
         .select("id, nome, cnpj, status, features, created_at")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
 
       if (error) return safeErrorResponse(500, error.message, req);
 
       // Contar usuários por empresa
       const ids = (empresas ?? []).map((e) => e.id);
-      const { data: counts } = await svc.from("profiles").select("empresa_id").in("empresa_id", ids);
+      const [{ data: counts }, acessos] = await Promise.all([
+        svc.from("profiles").select("id, empresa_id").in("empresa_id", ids),
+        listarAcessos(svc),
+      ]);
 
       const countMap: Record<string, number> = {};
+      const usuariosPorEmpresa = new Map<string, string[]>();
       for (const row of counts ?? []) {
-        if (row.empresa_id) countMap[row.empresa_id] = (countMap[row.empresa_id] ?? 0) + 1;
+        if (!row.empresa_id) continue;
+        countMap[row.empresa_id] = (countMap[row.empresa_id] ?? 0) + 1;
+        usuariosPorEmpresa.set(row.empresa_id, [...(usuariosPorEmpresa.get(row.empresa_id) ?? []), row.id]);
       }
 
       // Buscar planos
@@ -158,6 +189,7 @@ serve(
         return {
           ...e,
           usersCount: countMap[e.id] ?? 0,
+          ultimo_acesso: ultimoAcesso(usuariosPorEmpresa.get(e.id) ?? [], acessos),
           plano: (sub?.pilar_subscription_plans as { slug?: string } | null)?.slug ?? "starter",
           cobranca: {
             status: sub?.status ?? null,
@@ -555,11 +587,77 @@ serve(
           fields: Object.keys(empresaUpdate),
           plano: typeof plano === "string" ? plano : undefined,
           old_status: emp.status,
+          new_status: typeof status === "string" ? status : undefined,
         },
         req,
       });
 
       return jsonResponse({ success: true }, 200, req);
+    }
+
+    // ─── DELETE: excluir empresa arquivada ou em retenção (SPEC 117) ───────
+    // Mesmo caminho da retenção pós-trial (ADR 0043): a RPC anonimiza o fiscal,
+    // apaga o resto e deixa a empresa soft-deleted; aqui apagamos os logins
+    // depois, porque a RPC não alcança o schema auth. Duas travas: só empresa
+    // sem uso ativo (arquivada ou em retenção), e nunca uma empresa que tenha
+    // ultra admin dentro (apagaria o acesso de quem administra a plataforma).
+    if (req.method === "DELETE") {
+      const entrada = lerExclusaoEmpresa(await req.json().catch(() => null));
+      if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
+      const { empresaId, confirmName, motivo } = entrada.data;
+
+      const { data: emp } = await svc
+        .from("empresas")
+        .select("nome, status, deleted_at, leitura_desde, preservar_dados")
+        .eq("id", empresaId)
+        .maybeSingle();
+      if (!emp || emp.deleted_at) return safeErrorResponse(404, "Empresa não encontrada", req);
+      // Arquivada, ou em retenção pós-trial (só leitura) sem "preservar dados":
+      // nos dois casos já não há uso ativo. Empresa em uso precisa ser arquivada antes.
+      const emRetencao = !!emp.leitura_desde && !emp.preservar_dados;
+      if (emp.status !== "cancelled" && !emRetencao) {
+        return safeErrorResponse(409, "Arquive a empresa antes de excluir.", req);
+      }
+      if (confirmName !== (emp.nome ?? "").trim()) {
+        return safeErrorResponse(422, "Digite o nome exato da empresa para confirmar a exclusão.", req);
+      }
+
+      const { data: profiles, error: profErr } = await svc
+        .from("profiles")
+        .select("id, role")
+        .eq("empresa_id", empresaId);
+      if (profErr) return safeErrorResponse(500, "Falha ao ler os usuários da empresa", req);
+      if ((profiles ?? []).some((p) => p.role === "ultra_admin" || p.id === userId)) {
+        return safeErrorResponse(409, "A empresa tem um ultra admin entre os usuários. Mova esse acesso antes.", req);
+      }
+
+      const { error: rpcErr } = await svc.rpc("excluir_empresa_retencao", {
+        p_empresa_id: empresaId,
+        p_motivo: `Exclusão manual no portal ultra admin: ${motivo}`,
+      });
+      if (rpcErr) return safeErrorResponse(500, "Não foi possível excluir os dados da empresa", req);
+
+      let loginsComFalha = 0;
+      for (const p of profiles ?? []) {
+        const { error } = await svc.auth.admin.deleteUser(p.id);
+        if (error) loginsComFalha += 1;
+      }
+
+      await logAction(svc, {
+        actorId: userId,
+        actorEmail,
+        actorRole: "ultra_admin",
+        action: "delete_company",
+        category: "empresa",
+        targetType: "empresa",
+        targetId: empresaId,
+        targetName: emp.nome || empresaId,
+        empresaId,
+        metadata: { motivo, usuarios: (profiles ?? []).length, logins_com_falha: loginsComFalha },
+        req,
+      });
+
+      return jsonResponse({ success: true, logins_com_falha: loginsComFalha }, 200, req);
     }
 
     return safeErrorResponse(405, "Method not allowed", req);
