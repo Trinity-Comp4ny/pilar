@@ -3,7 +3,7 @@
  */
 
 import { BRAND } from "../brand.ts";
-import { html } from "../html.ts";
+import { html, multiline } from "../html.ts";
 import {
   button,
   callout,
@@ -247,6 +247,89 @@ export function templateLgpdExclusaoDados(params: {
           html`Referência:
           ${link("art. 18 da LGPD", "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm")}.`
         ),
+      ],
+    }),
+  };
+}
+
+/** SPEC 112: aviso pro ultra admin de que chegou feedback pelo modal do app. */
+export function templateFeedbackRecebido(params: {
+  tipo: "bug" | "sugestao";
+  titulo: string | null;
+  descricao: string;
+  autor: string;
+  empresaNome: string | null;
+  rota: string | null;
+  temPrint: boolean;
+  enviadoEm: string;
+  painelUrl: string;
+}): EmailTemplate {
+  const { tipo, titulo, descricao, autor, empresaNome, rota, temPrint, enviadoEm, painelUrl } = params;
+  const ehBug = tipo === "bug";
+  const origem = empresaNome ? ` (${empresaNome})` : "";
+  // Assunto é header, não HTML: só tira quebra de linha e limita o tamanho.
+  const assunto = (ehBug ? `Problema relatado por ${autor}${origem}` : `Sugestão de ${autor}${origem}: ${titulo ?? ""}`)
+    .replace(/\s+/g, " ")
+    .slice(0, 150);
+
+  return {
+    subject: assunto,
+    html: shell({
+      preview: descricao.slice(0, 120),
+      footerNote: `Aviso automático da ${BRAND.nome} para quem faz a triagem de feedback.`,
+      hero: {
+        titulo: ehBug ? html`Novo ${em("problema")} relatado` : html`Nova ${em("sugestão")} recebida`,
+        lead: html`${strong(autor)}${origem} enviou pelo botão Feedback do app.`,
+      },
+      content: [
+        card([...(titulo ? [kv("Título", titulo), kvDivider()] : []), paragraph(multiline(descricao), { mt: 0 })], {
+          accent: ehBug ? "warning" : "info",
+          mt: 0,
+        }),
+        card(
+          [
+            kv("Enviado em", enviadoEm),
+            ...(rota ? [kvDivider(), kv("Tela", rota, { mono: true })] : []),
+            kvDivider(),
+            kv("Print", temPrint ? "Anexado, abra pelo painel" : "Sem print"),
+          ],
+          { mt: 16 }
+        ),
+        button("Abrir feedback", painelUrl),
+        small("Responda este e-mail para falar direto com quem enviou."),
+      ],
+    }),
+  };
+}
+
+/**
+ * SPEC 113: aviso de plataforma pro ultra admin (novo cadastro, ativar plano
+ * bloqueado, qualquer notificar_ultra_admins). Mesmo título e texto do sino.
+ */
+export function templateAvisoPlataforma(params: {
+  titulo: string;
+  mensagem: string | null;
+  empresaNome: string | null;
+  enviadoEm: string;
+  url: string;
+  dicaResposta: string | null;
+}): EmailTemplate {
+  const { titulo, mensagem, empresaNome, enviadoEm, url, dicaResposta } = params;
+
+  return {
+    subject: titulo.replace(/\s+/g, " ").slice(0, 150),
+    html: shell({
+      preview: (mensagem ?? titulo).slice(0, 120),
+      footerNote: `Aviso automático da ${BRAND.nome} para administradores da plataforma.`,
+      hero: {
+        titulo: html`${titulo}`,
+        lead: empresaNome ? html`Empresa: ${strong(empresaNome)}` : html`Aviso da plataforma.`,
+      },
+      content: [
+        ...(mensagem ? [card([paragraph(multiline(mensagem), { mt: 0 })], { accent: "info", mt: 0 })] : []),
+        card([kv("Quando", enviadoEm)], { mt: mensagem ? 16 : 0 }),
+        button("Abrir no painel", url),
+        ...(dicaResposta ? [small(dicaResposta)] : []),
       ],
     }),
   };

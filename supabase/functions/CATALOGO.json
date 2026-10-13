@@ -37,6 +37,10 @@
     "descricao": "Hook de e-mail do Supabase Auth: monta convite e recuperação de senha e envia pelo Resend.",
     "chamada_externa": "Supabase Auth (hook de e-mail)"
   },
+  "aviso-ultra-admin-email": {
+    "dominio": "jobs",
+    "descricao": "Disparada pelo trigger de notificacoes (pg_net): manda por e-mail, na hora, cada aviso de plataforma do ultra admin (feedback, novo cadastro, ativar plano bloqueado). SPEC 113."
+  },
   "campo-upload-foto": {
     "dominio": "campo",
     "descricao": "Upload de foto do Pilar Campo, autorizado pelo token de campo (conta sem usuário Supabase)."

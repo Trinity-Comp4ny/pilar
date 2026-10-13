@@ -94,12 +94,14 @@ serve(
       return jsonResponse({ error: "Serviço temporariamente indisponível. Tente novamente em instantes." }, 503, req);
     }
     if (!rl.allowed) {
+      const { data: empresaBloqueada } = await admin.from("empresas").select("nome").eq("id", empresaId).maybeSingle();
       await admin.rpc("notificar_ultra_admins", {
         p_empresa_id: empresaId,
         p_tipo: "ativar_plano_bloqueado_carding",
-        p_titulo: "Ativar plano bloqueado por excesso de tentativas",
-        p_mensagem: `Empresa ${empresaId} atingiu o limite de tentativas de tokenização de cartão em 24h.`,
-        p_link: "/ultra-admin",
+        p_titulo: `Ativar plano bloqueado: ${empresaBloqueada?.nome ?? "empresa sem nome"}`,
+        p_mensagem:
+          "Foram 3 tentativas de cadastrar cartão em 24h e as próximas ficam bloqueadas até o limite zerar. Pode ser teste de cartão roubado ou cliente com dificuldade: vale olhar antes de liberar.",
+        p_link: "/ultra-admin?tab=empresas",
       });
       return jsonResponse(
         { error: "Muitas tentativas de ativar o plano. Tente novamente em 24h ou fale com o suporte." },

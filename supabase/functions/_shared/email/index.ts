@@ -28,6 +28,8 @@ export {
   templateTrialExpirado,
   templateAtivarPlanoRecibo,
   templateRetencaoAviso,
+  templateAvisoPlataforma,
+  templateFeedbackRecebido,
 } from "./templates/plataforma.ts";
 export {
   MAX_ITENS_EMAIL,

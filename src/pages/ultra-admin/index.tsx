@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Activity,
   Archive,
@@ -148,12 +149,36 @@ type DataAuditRow = {
 
 type FeatureSuggestionRawRow = {
   id: string;
-  titulo: string;
+  tipo: string;
+  titulo: string | null;
   descricao: string;
   created_at: string;
   status_interno: string;
   created_by: string;
+  empresa_id: string | null;
+  print_path: string | null;
+  contexto: { rota?: string; navegador?: string; janela?: string } | null;
+  sentry_event_id: string | null;
 };
+
+const ABAS_ULTRA_ADMIN = [
+  "dashboard",
+  "empresas",
+  "funcionalidades",
+  "usuarios",
+  "atividade",
+  "feedback",
+  "status",
+  "tokens",
+  "trials",
+] as const;
+type AbaUltraAdmin = (typeof ABAS_ULTRA_ADMIN)[number];
+
+/** `?tab=` abre direto na aba (link do sino e dos e-mails de aviso, SPEC 112/113). */
+function abaInicial(search: string): AbaUltraAdmin {
+  const pedida = new URLSearchParams(search).get("tab");
+  return ABAS_ULTRA_ADMIN.find((a) => a === pedida) ?? "dashboard";
+}
 
 const AUDIT_CATEGORIAS = [
   { value: "all", label: "Todas as categorias" },
@@ -259,9 +284,10 @@ export default function UltraAdmin() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [savingFeatures, setSavingFeatures] = useState(false);
   const [query, setQuery] = useState("");
-  const [tab, setTab] = useState<
-    "dashboard" | "empresas" | "funcionalidades" | "usuarios" | "atividade" | "feedback" | "status" | "tokens"
-  >("dashboard");
+  // Aba vive na URL: o link do sino/e-mail troca de aba mesmo com a página já aberta.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = abaInicial(searchParams.toString());
+  const setTab = (aba: AbaUltraAdmin) => setSearchParams(aba === "dashboard" ? {} : { tab: aba }, { replace: true });
   const [audit, setAudit] = useState<AuditRow[]>([]);
   const [auditFull, setAuditFull] = useState<AuditRow[]>([]);
   const [auditEmpresa, setAuditEmpresa] = useState<string>("all");
@@ -353,12 +379,14 @@ export default function UltraAdmin() {
     );
   }, []);
 
-  // Spec 056: feedback enviado pelo modal (bug vai pro Sentry, sugestão cai
-  // aqui). Autor resolvido via `users` (já carregado por fetchUsers).
+  // SPEC 056/112: feedback enviado pelo modal (bug e sugestão, com print
+  // opcional). Autor resolvido via `users` (já carregado por fetchUsers).
   const fetchSuggestions = useCallback(async () => {
     const { data, error } = await supabase
       .from("feature_suggestions")
-      .select("id, titulo, descricao, created_at, status_interno, created_by")
+      .select(
+        "id, tipo, titulo, descricao, created_at, status_interno, created_by, empresa_id, print_path, contexto, sentry_event_id"
+      )
       .order("created_at", { ascending: false });
     if (error) return;
     setSuggestionsRaw((data ?? []) as FeatureSuggestionRawRow[]);
@@ -501,14 +529,21 @@ export default function UltraAdmin() {
     () =>
       suggestionsRaw.map((s) => ({
         id: s.id,
+        tipo: s.tipo === "bug" ? "bug" : "sugestao",
         titulo: s.titulo,
         descricao: s.descricao,
         createdAt: s.created_at,
         authorEmail: users.find((u) => u.id === s.created_by)?.email ?? null,
+        empresaNome: empresas.find((e) => e.id === s.empresa_id)?.nome ?? null,
+        rota: s.contexto?.rota ?? null,
+        navegador: s.contexto?.navegador ?? null,
+        printPath: s.print_path,
+        sentryEventId: s.sentry_event_id,
         statusInterno: s.status_interno as FeatureSuggestionStatus,
       })),
-    [suggestionsRaw, users]
+    [suggestionsRaw, users, empresas]
   );
+  const feedbackNovos = suggestions.filter((s) => s.statusInterno === "novo").length;
 
   const handleCrossDelete = useCallback(async (user: CrossUserRow) => {
     try {
@@ -1225,22 +1260,21 @@ export default function UltraAdmin() {
         />
       }
     >
-      <Tabs
-        value={tab}
-        onValueChange={(v) =>
-          setTab(
-            v as
-              "dashboard" | "empresas" | "funcionalidades" | "usuarios" | "atividade" | "feedback" | "status" | "tokens"
-          )
-        }
-      >
+      <Tabs value={tab} onValueChange={(v) => setTab(v as AbaUltraAdmin)}>
         <TabsList>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="empresas">Empresas</TabsTrigger>
           <TabsTrigger value="funcionalidades">Funcionalidades</TabsTrigger>
           <TabsTrigger value="usuarios">Usuários</TabsTrigger>
           <TabsTrigger value="atividade">Atividade</TabsTrigger>
-          <TabsTrigger value="feedback">Feedback</TabsTrigger>
+          <TabsTrigger value="feedback">
+            Feedback
+            {feedbackNovos > 0 && (
+              <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-xs">
+                {feedbackNovos}
+              </Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="status">Status</TabsTrigger>
           <TabsTrigger value="tokens">Tokens</TabsTrigger>
           <TabsTrigger value="trials">Trials</TabsTrigger>
