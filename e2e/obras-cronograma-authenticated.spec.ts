@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { test, expect } from "./fixtures";
 
 /**
@@ -6,8 +6,9 @@ import { test, expect } from "./fixtures";
  *
  * O pgTAP cobre o banco (cronograma_obra_quatro_niveis.sql); aqui é o caminho do
  * engenheiro na tela: monta a árvore do zero, marca a tarefa como feita, confere
- * que o progresso sobe pela árvore e que a escolha Lista/Gantt persiste. Obra nova
- * por execução, para não depender do estado de rodadas anteriores.
+ * que o progresso sobe pela árvore, que a escolha Lista/Gantt persiste e que as datas
+ * da lista viram barra no Gantt. Obra nova por execução, para não depender do estado
+ * de rodadas anteriores.
  */
 
 test.describe.configure({ mode: "serial" });
@@ -85,4 +86,26 @@ test("Gantt sem datas orienta a voltar pra lista e a visão escolhida persiste",
   await page.getByRole("button", { name: "Ir para a lista" }).click();
   await expect(page.getByRole("tab", { name: "Lista" })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByText("Escavar sapatas", { exact: true })).toBeVisible();
+});
+
+async function escolherDia(page: Page, linha: Locator, campo: "Início" | "Prazo", dia: number) {
+  await linha.getByRole("button", { name: campo }).click();
+  const calendario = page.locator("[data-radix-popper-content-wrapper]");
+  // Só dias do mês exibido: o calendário mostra os de fora (day-outside) também.
+  await calendario.locator("td:not(.day-outside) button", { hasText: new RegExp(`^${dia}$`) }).click();
+  await expect(calendario).not.toBeVisible();
+}
+
+test("datas na lista desenham a barra da tarefa e o período da fase no Gantt", async ({ page }) => {
+  await abrirCronograma(page);
+
+  const tarefa = page.locator('[data-testid^="tarefa-"]').filter({ hasText: "Escavar sapatas" });
+  await escolherDia(page, tarefa, "Início", 10);
+  await escolherDia(page, tarefa, "Prazo", 20);
+
+  await page.getByRole("tab", { name: "Gantt" }).click();
+  await expect(page.getByText("Sem datas para a linha do tempo")).toHaveCount(0);
+  // A tarefa vira barra própria; a fase herda o período dos itens abaixo dela.
+  await expect(page.locator('[title^="Escavar sapatas ·"]')).toBeVisible();
+  await expect(page.locator('[title="Estrutura · período pelos itens abaixo"]')).toBeVisible();
 });
