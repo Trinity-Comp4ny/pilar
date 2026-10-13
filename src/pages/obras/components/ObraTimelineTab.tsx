@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarClock, ClipboardList, Flag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +9,7 @@ import { formatDate } from "@/lib/format";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { climaLabel } from "@/lib/obras";
 import { useObraFrentes } from "@/hooks/useObraFrentes";
+import { montarArvoreCronograma } from "@/lib/obraArvore";
 import { useObraTarefas } from "@/hooks/useObraTarefas";
 import { useObraRdos } from "@/hooks/useObraRdo";
 import type { ObraResumo } from "@/hooks/useObras";
@@ -44,8 +46,9 @@ function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode
 
 export function ObraTimelineTab({ obra, onIrParaDiario }: { obra: ObraResumo; onIrParaDiario: () => void }) {
   const formatCurrency = useMoneyMask();
-  const { data: frentes = [] } = useObraFrentes(obra.id);
+  const { data: nos = [] } = useObraFrentes(obra.id);
   const { data: tarefas = [] } = useObraTarefas(obra.id);
+  const { fases } = useMemo(() => montarArvoreCronograma(nos, tarefas), [nos, tarefas]);
   const { data: rdos = [] } = useObraRdos(obra.id);
   const { data: marcos = [] } = useMarcosProjeto(obra.projeto_id);
 
@@ -71,20 +74,20 @@ export function ObraTimelineTab({ obra, onIrParaDiario }: { obra: ObraResumo; on
         </Bloco>
       </div>
 
-      <Bloco titulo="Etapas">
-        {frentes.length === 0 ? (
+      <Bloco titulo="Fases">
+        {fases.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Nenhuma etapa ainda. Abra a aba Cronograma para organizar as etapas.
+            Nenhuma fase ainda. Abra a aba Cronograma para montar fases, etapas e serviços.
           </p>
         ) : (
           <ul className="space-y-1.5">
-            {frentes.map((f) => {
-              const daFrente = tarefas.filter((t) => t.obra_frente_id === f.id);
-              const abertas = daFrente.filter((t) => t.status !== "concluida").length;
+            {fases.map((f) => {
+              const abertas = f.total - f.concluidas;
               return (
-                <li key={f.id} className="flex items-center justify-between text-sm">
-                  <span className="text-ink">{f.nome}</span>
-                  <span className="text-xs text-muted-foreground">
+                <li key={f.no.id} className="flex items-center justify-between gap-2 text-sm">
+                  <span className="truncate text-ink">{f.no.nome}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {f.total > 0 && `${f.progresso}% · `}
                     {abertas === 0 ? "sem pendências" : `${abertas} pendente${abertas > 1 ? "s" : ""}`}
                   </span>
                 </li>

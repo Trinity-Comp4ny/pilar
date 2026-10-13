@@ -346,7 +346,18 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, dataSel, obra?.latitude, obra?.longitude]);
 
-  const frenteNome = useMemo(() => new Map(frentes.map((f) => [f.id, f.nome])), [frentes]);
+  // Tarefa pendura no serviço (spec 111): rótulo "Etapa › Serviço", que é o
+  // que o mestre reconhece no canteiro.
+  const frenteNome = useMemo(() => {
+    const porId = new Map(frentes.map((f) => [f.id, f]));
+    return new Map(
+      frentes.map((f) => {
+        const pai = f.parent_id ? porId.get(f.parent_id) : undefined;
+        return [f.id, f.nivel === "servico" && pai ? `${pai.nome} › ${f.nome}` : f.nome];
+      })
+    );
+  }, [frentes]);
+  const servicos = useMemo(() => frentes.filter((f) => f.nivel === "servico"), [frentes]);
   const fornecedorNomePorId = useMemo(() => new Map(fornecedores.map((f) => [f.id, f.nome])), [fornecedores]);
   const tarefaTituloPorId = useMemo(() => new Map(tarefas.map((t) => [t.id, t.titulo])), [tarefas]);
   // Cadastro real enviado pro backend casar sugestão de efetivo/visita/tarefa
@@ -1185,19 +1196,19 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
                       }
                     }}
                   />
-                  {frentes.length > 0 && (
+                  {servicos.length > 0 && (
                     <Select
                       value={novaTarefa.frenteId || NAO_INFORMADO}
                       onValueChange={(v) => setNovaTarefa((p) => ({ ...p, frenteId: v === NAO_INFORMADO ? "" : v }))}
                     >
-                      <SelectTrigger className="h-8 w-full sm:w-40">
-                        <SelectValue placeholder="Sem frente" />
+                      <SelectTrigger className="h-8 w-full sm:w-48">
+                        <SelectValue placeholder="Sem serviço" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={NAO_INFORMADO}>Sem frente</SelectItem>
-                        {frentes.map((f) => (
+                        <SelectItem value={NAO_INFORMADO}>Sem serviço</SelectItem>
+                        {servicos.map((f) => (
                           <SelectItem key={f.id} value={f.id}>
-                            {f.nome}
+                            {frenteNome.get(f.id)}
                           </SelectItem>
                         ))}
                       </SelectContent>

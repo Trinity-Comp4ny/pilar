@@ -9,7 +9,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { formatDate } from "@/lib/format";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import type { ObraResumo } from "@/hooks/useObras";
-import { useObraFrentes } from "@/hooks/useObraFrentes";
+import { useObraEtapas } from "@/hooks/useObraFrentes";
 import { useObraConta, useDeleteLancamento, type ObraLancamentoRow } from "@/hooks/useObraConta";
 import { useObraOrcamento, useSaveOrcamentoEtapa } from "@/hooks/useObraOrcamento";
 import {
@@ -86,7 +86,7 @@ export function ObraContaTab({ obra, canEdit }: { obra: ObraResumo; canEdit: boo
   const formatCurrency = useMoneyMask();
   const obraId = obra.id;
   const { data: lancamentos = [], isLoading } = useObraConta(obraId);
-  const { data: frentes = [] } = useObraFrentes(obraId);
+  const { data: frentes = [] } = useObraEtapas(obraId);
   const { data: orcamentos = [] } = useObraOrcamento(obraId);
   const del = useDeleteLancamento(obraId);
   const saveOrcamento = useSaveOrcamentoEtapa(obraId);
