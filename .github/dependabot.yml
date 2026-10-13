@@ -30,6 +30,12 @@ updates:
       semver-major-days: 7
     labels:
       - dependencies
+    # `@types/node` acompanha o Node que roda o CI (22), não o último Node lançado.
+    # Major dele só sobe junto com o `node-version` dos workflows, à mão.
+    ignore:
+      - dependency-name: "@types/node"
+        update-types:
+          - version-update:semver-major
     commit-message:
       prefix: chore(deps)
       prefix-development: chore(deps-dev)
