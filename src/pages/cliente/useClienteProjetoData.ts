@@ -19,6 +19,8 @@ export interface ClienteProjetoData {
   empresa_id: string;
   projeto_nome: string;
   projeto_status: string;
+  /** Há proposta "enviada" ligada ao projeto: o cliente pode aprovar pelo portal. */
+  proposta_aguardando_aprovacao?: boolean;
   projeto_codigo: string | null;
   data_inicio: string | null;
   data_previsao: string | null;

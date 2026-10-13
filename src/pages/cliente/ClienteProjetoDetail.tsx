@@ -169,7 +169,9 @@ function AprovarPropostaCard({ projeto, refresh }: { projeto: ClienteProjetoData
 }
 
 function ProjetoOverview({ projeto, refresh }: { projeto: ClienteProjetoData; refresh: () => void }) {
-  const mostrarAprovar = projeto.projeto_status === "Proposta";
+  // A proposta enviada é o sinal, não o status do projeto: status_projeto não tem
+  // "Proposta", e a checagem antiga nunca mostrava o cartão (corrigido em 13/10).
+  const mostrarAprovar = projeto.proposta_aguardando_aprovacao === true;
 
   return (
     <div className="space-y-6">

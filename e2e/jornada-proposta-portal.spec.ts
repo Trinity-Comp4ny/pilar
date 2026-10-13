@@ -4,8 +4,9 @@ import { adminLocal, esperar, temFuncoesLocais } from "./helpers/supabaseAdmin";
 /**
  * Jornada ponta a ponta: proposta enviada → cliente aprova no portal → contrato fechado.
  *
- * O escritório já mandou a proposta (fixture: projeto em "Proposta" ligado a uma proposta
- * "enviada" do cliente demo). O cliente entra no portal, abre o projeto, aprova, e o
+ * O escritório já mandou a proposta (fixture: projeto do cliente demo ligado a uma
+ * proposta "enviada"). Esta jornada achou que o cartão de aprovação nunca aparecia:
+ * dependia de um status de projeto que não existe (migration 20261025000002). O cliente entra no portal, abre o projeto, aprova, e o
  * banco fica como o escritório espera: proposta "aceita" e projeto em "Planejamento".
  * Passa pelo portal_login, pela Edge Function portal-aprovar-proposta e pela RPC
  * atômica, que nenhum outro spec exercitava. Só no stack local (scripts/e2e-local.sh).
@@ -23,7 +24,13 @@ test("cliente aprova no portal a proposta enviada e o projeto avança", async ({
 
   const { data: projeto, error: pErr } = await admin
     .from("projetos")
-    .insert({ empresa_id: EMPRESA, cliente_id: CLIENTE, nome: nomeProjeto, status: "Proposta", valor_contrato: 48000 })
+    .insert({
+      empresa_id: EMPRESA,
+      cliente_id: CLIENTE,
+      nome: nomeProjeto,
+      status: "Planejamento",
+      valor_contrato: 48000,
+    })
     .select("id")
     .single();
   expect(pErr).toBeNull();
