@@ -1,5 +1,5 @@
 import { jsonResponse } from "../_shared/cors.ts";
-import { callGeminiStructured, modeloEmUso } from "../_shared/ai-client.ts";
+import { callGeminiStructured, modeloEmUso, proveniencia } from "../_shared/ai-client.ts";
 import { z } from "../_shared/schemas.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { comContexto, sha256Hex } from "./contexto.ts";
@@ -108,6 +108,7 @@ export async function processarCriacao(o: {
         result: campos,
         idempotency_key: idempotencyKey,
         model: modeloEmUso(FEATURE_KEY),
+        ...(await proveniencia(o.prompt)),
         tokens_input: tokIn,
         tokens_output: tokOut,
         created_by: o.userId,

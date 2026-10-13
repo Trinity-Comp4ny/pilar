@@ -1,4 +1,6 @@
 import { callGeminiStructured, streamGeminiText } from "../_shared/ai-client.ts";
+import { corpoErroIa, ehFalhaNossa } from "../_shared/ai-erros.ts";
+import { captureException } from "../_shared/sentry.ts";
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logAction, recordAndSaldo, respostaPrompt, respostaPromptStream, sseEvent, sseHeaders } from "./resposta.ts";
 import { Agente, FEATURE_KEY, RespostaSchema } from "./schemas.ts";
@@ -102,8 +104,13 @@ export function streamConsulta(o: {
           saldo,
         });
       } catch (e) {
-        console.error("[ai-chat stream]", e);
-        emit("error", { error: "Erro ao gerar a resposta" });
+        const corpo = corpoErroIa(e);
+        console.error(`[ai-chat stream] ${corpo.tipo}`, e);
+        if (ehFalhaNossa(corpo.tipo)) {
+          await captureException(e, { fn: "ai-chat", tags: { tipo_erro_ia: corpo.tipo } });
+        }
+        // Mensagem do tipo (SPEC 110), nunca o texto bruto do erro.
+        emit("error", corpo);
       } finally {
         controller.close();
       }

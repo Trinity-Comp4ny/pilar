@@ -13,6 +13,7 @@ import {
   modeloEmUso,
   recordAgentRun,
   type AiRequest,
+  respostaDeErroIa,
 } from "../_shared/ai-client.ts";
 
 // Spec 023: lê um PDF/imagem de orçamento de fornecedor via Gemini multimodal.
@@ -375,12 +376,15 @@ serve(
 
       return jsonResponse({ modo: ex.modo, classificacao, ...ex.data }, 200, req);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Erro ao ler o orçamento";
-      const status = message === "Não autenticado" ? 401 : 400;
-      return new Response(JSON.stringify({ error: message }), {
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
-        status,
-      });
+      const message = err instanceof Error ? err.message : "";
+      if (message === "Não autenticado" || message === "Perfil não encontrado") {
+        return new Response(JSON.stringify({ error: message }), {
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          status: message === "Não autenticado" ? 401 : 400,
+        });
+      }
+      // Falha da IA ou inesperada: tipo fechado, sem o texto bruto do provedor (SPEC 110).
+      return await respostaDeErroIa(err, getCorsHeaders(req), "ai-cotacao-import");
     }
   })
 );
