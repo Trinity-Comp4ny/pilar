@@ -128,6 +128,10 @@
     "dominio": "portal",
     "descricao": "URLs assinadas das fotos curadas do diário de obra para o portal (spec 087)."
   },
+  "reconciliar-assinaturas": {
+    "dominio": "jobs",
+    "descricao": "Cron diário: compara cada assinatura do Pilar com o Asaas e avisa o ultra admin das divergências (SPEC 114)."
+  },
   "resend-webhook": {
     "dominio": "comunicacao",
     "descricao": "Recebe o status de entrega do Resend e fecha o ciclo do e-mail enviado.",

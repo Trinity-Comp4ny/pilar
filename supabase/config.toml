@@ -118,6 +118,9 @@ verify_jwt = false
 [functions.retencao-pos-trial]
 verify_jwt = false
 
+[functions.reconciliar-assinaturas]
+verify_jwt = false
+
 [functions.reverificar-documentos-pendentes]
 verify_jwt = false
 
