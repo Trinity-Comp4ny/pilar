@@ -2,12 +2,13 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
-import { EMAIL_RE } from "../_shared/validators.ts";
+import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { sendEmail, templateAcessoPortalCliente } from "../_shared/email/index.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { gerarConviteToken } from "../_shared/convite-token.ts";
 import { checkDbRateLimit } from "../_shared/db-rate-limit.ts";
+import { lerJson } from "../_shared/schemas.ts";
+import { lerEntrada } from "./entrada.ts";
 
 const log = createLogger("invite-cliente-portal");
 
@@ -33,9 +34,9 @@ serve(
       }
       if (!profile.empresa_id) return safeErrorResponse(403, "Você precisa pertencer a uma empresa", req);
 
-      const { cliente_id, email } = await req.json();
-      if (!isUUID(cliente_id)) return safeErrorResponse(400, "cliente_id inválido", req);
-      if (!email || !EMAIL_RE.test(String(email))) return safeErrorResponse(400, "email inválido", req);
+      const entrada = lerEntrada(await lerJson(req));
+      if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
+      const { cliente_id, email } = entrada.data;
 
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
