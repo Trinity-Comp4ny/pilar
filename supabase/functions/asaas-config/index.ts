@@ -2,6 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { getCorsHeaders } from "../_shared/cors.ts";
 import { createAdminClient, createAuthClient } from "../_shared/ai-client.ts";
+import { ehAdminDaEmpresa } from "../_shared/admin-auth.ts";
+import { lerEntrada } from "./entrada.ts";
 
 serve(
   withSentry("asaas-config", async (req) => {
@@ -20,16 +22,27 @@ serve(
       } = await authClient.auth.getUser();
       if (userError || !user) throw new Error("Não autenticado");
 
-      const { data: profile } = await adminClient.from("profiles").select("empresa_id").eq("id", user.id).single();
+      const { data: profile } = await adminClient
+        .from("profiles")
+        .select("empresa_id, role")
+        .eq("id", user.id)
+        .single();
 
       if (!profile?.empresa_id) throw new Error("Empresa não encontrada");
-      const empresaId = profile.empresa_id as string;
+      // Configuração de cobrança da empresa: mesma regra das demais telas de administração.
+      if (!ehAdminDaEmpresa(profile)) {
+        return new Response(JSON.stringify({ error: "Apenas admin da empresa pode configurar o Asaas" }), {
+          headers: { ...corsH, "Content-Type": "application/json" },
+          status: 403,
+        });
+      }
+      const empresaId = profile.empresa_id;
 
-      const { action, api_key, ambiente } = (await req.json()) as {
-        action: "get" | "save" | "remover" | "testar";
-        api_key?: string;
-        ambiente?: string;
-      };
+      const entrada = lerEntrada(await req.json().catch(() => null));
+      if (!entrada.ok) throw new Error(entrada.error);
+      const { action } = entrada.data;
+      const ambiente = entrada.data.action === "save" ? entrada.data.ambiente : undefined;
+      const api_key = entrada.data.action === "save" ? entrada.data.api_key : undefined;
 
       // Carrega config — nunca retorna api_key ao frontend
       if (action === "get") {
@@ -53,8 +66,6 @@ serve(
       // (set_asaas_api_key, migration 20260850000000). Nunca no mesmo upsert:
       // a RPC precisa que a linha já exista pra fazer o UPDATE.
       if (action === "save") {
-        if (!["sandbox", "producao"].includes(ambiente ?? "")) throw new Error("Ambiente inválido");
-
         // Verifica se já existe config para decidir se api_key é obrigatória
         const { data: existing } = await adminClient
           .from("asaas_config")
