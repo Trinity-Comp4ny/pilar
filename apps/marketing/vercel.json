@@ -1,4 +1,5 @@
 {
+  "git": { "deploymentEnabled": { "dependabot/**": false } },
   "ignoreCommand": "[ \"$VERCEL_ENV\" = production ] && exit 1; s=${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}; git cat-file -e $s 2>/dev/null || git fetch -q --depth=1 origin $s; git diff --quiet $s HEAD -- :/apps/marketing :/package-lock.json && exit 0 || exit 1",
   "redirects": [
     { "source": "/dashboard", "destination": "https://app.pilarsoft.com.br/inicio", "permanent": false },
