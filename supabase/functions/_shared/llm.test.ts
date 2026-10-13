@@ -10,9 +10,10 @@ import {
   montarCorpoGateway,
   parteDoArquivo,
   resolverModelo,
+  tokensDoGemini,
 } from "./llm.ts";
 
-// Escolha de modelo por configuração e adaptador do AI Gateway (SPEC 106).
+// Escolha de modelo por configuração e adaptador do AI Gateway (SPEC 108).
 
 const env = (vars: Record<string, string>) => (k: string) => vars[k];
 
@@ -97,4 +98,17 @@ Deno.test("lerEventoStream: pedaço de texto, uso final e linha quebrada", () =>
   const fim = lerEventoStream('{"choices":[],"usage":{"prompt_tokens":40,"completion_tokens":9}}');
   assertEquals([fim.tokensEntrada, fim.tokensSaida], [40, 9]);
   assertEquals(lerEventoStream('{"choices":[{"del'), {});
+});
+
+Deno.test("tokensDoGemini: raciocínio conta como saída", () => {
+  // Resposta real do gemini-2.5-flash: 30 tokens de texto e 92 de raciocínio.
+  assertEquals(tokensDoGemini({ promptTokenCount: 410, candidatesTokenCount: 30, thoughtsTokenCount: 92 }), {
+    tokensEntrada: 410,
+    tokensSaida: 122,
+  });
+});
+
+Deno.test("tokensDoGemini: sem raciocínio ou sem usage não quebra", () => {
+  assertEquals(tokensDoGemini({ promptTokenCount: 10, candidatesTokenCount: 5 }), { tokensEntrada: 10, tokensSaida: 5 });
+  assertEquals(tokensDoGemini(undefined), { tokensEntrada: 0, tokensSaida: 0 });
 });

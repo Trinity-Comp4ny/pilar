@@ -1,5 +1,5 @@
 /**
- * Escolha do modelo de IA por configuração (SPEC 106).
+ * Escolha do modelo de IA por configuração (SPEC 108).
  *
  *   AI_MODELO            padrão de todas as funções
  *   AI_MODELO_<TIPO>     por função (TIPO = o `tipo` da chamada, ex.: AI_MODELO_AI_CHAT)
@@ -60,6 +60,29 @@ export function resolverModelo(tipo?: string, lerEnv: LerEnv = lerEnvDeno): Mode
 /** Nome do modelo como fica no débito de tokens, no agent_runs e no Sentry. */
 export function modeloEmUso(tipo?: string, lerEnv: LerEnv = lerEnvDeno): string {
   return resolverModelo(tipo, lerEnv).modelo;
+}
+
+// ---------------------------------------------------------------------------
+// Contagem de tokens do Gemini direto
+// ---------------------------------------------------------------------------
+
+export interface UsoGemini {
+  promptTokenCount?: number;
+  candidatesTokenCount?: number;
+  thoughtsTokenCount?: number;
+}
+
+/**
+ * Tokens de uma resposta do Gemini direto. O raciocínio (thinking) chega em
+ * thoughtsTokenCount, fora do candidatesTokenCount, mas o Google cobra como saída: somar
+ * só o candidates subcontava a saída em ~3x no débito e no custo. O gateway já devolve o
+ * raciocínio dentro de completion_tokens.
+ */
+export function tokensDoGemini(uso: UsoGemini | undefined): { tokensEntrada: number; tokensSaida: number } {
+  return {
+    tokensEntrada: uso?.promptTokenCount ?? 0,
+    tokensSaida: (uso?.candidatesTokenCount ?? 0) + (uso?.thoughtsTokenCount ?? 0),
+  };
 }
 
 // ---------------------------------------------------------------------------

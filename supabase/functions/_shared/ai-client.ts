@@ -1,7 +1,15 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "./schemas.ts";
 import { captureException, recordGenAiSpan, recordMetric, scrub } from "./sentry.ts";
-import { chamarGateway, MODELO_PADRAO, type ModeloAlvo, resolverModelo, streamGateway } from "./llm.ts";
+import {
+  chamarGateway,
+  MODELO_PADRAO,
+  type ModeloAlvo,
+  resolverModelo,
+  streamGateway,
+  tokensDoGemini,
+  type UsoGemini,
+} from "./llm.ts";
 
 export { modeloEmUso, resolverModelo } from "./llm.ts";
 
@@ -53,14 +61,9 @@ interface GeminiCandidate {
   };
 }
 
-interface GeminiUsageMetadata {
-  promptTokenCount?: number;
-  candidatesTokenCount?: number;
-}
-
 interface GeminiApiResponse {
   candidates?: GeminiCandidate[];
-  usageMetadata?: GeminiUsageMetadata;
+  usageMetadata?: UsoGemini;
 }
 
 /**
@@ -362,9 +365,7 @@ async function fetchGeminiRaw(
 
   const result: GeminiApiResponse = await response.json();
   const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-  const usage = result.usageMetadata || {};
-  const tokensEntrada = usage.promptTokenCount || 0;
-  const tokensSaida = usage.candidatesTokenCount || 0;
+  const { tokensEntrada, tokensSaida } = tokensDoGemini(result.usageMetadata);
   recordGeminiChatSpan({
     alvo,
     startMs: spanStartMs,
@@ -380,7 +381,7 @@ async function fetchGeminiRaw(
 }
 
 /**
- * Chamada bruta ao modelo configurado para a função (SPEC 106): Gemini direto ou gateway.
+ * Chamada bruta ao modelo configurado para a função (SPEC 108): Gemini direto ou gateway.
  * Sempre pede JSON (o mesmo que o responseMimeType do Gemini faz).
  */
 async function fetchModeloRaw(
@@ -589,11 +590,9 @@ export async function* streamGeminiText(
           outputText += txt;
           yield txt;
         }
-        const usage = parsed.usageMetadata;
-        if (usage) {
+        if (parsed.usageMetadata) {
           // usageMetadata é cumulativa: fica com o último valor visto.
-          tokensEntrada = usage.promptTokenCount ?? tokensEntrada;
-          tokensSaida = usage.candidatesTokenCount ?? tokensSaida;
+          ({ tokensEntrada, tokensSaida } = tokensDoGemini(parsed.usageMetadata));
         }
       }
     }
