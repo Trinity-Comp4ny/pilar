@@ -2,12 +2,13 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
+import { jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
+import { lerJson } from "../_shared/schemas.ts";
+import { lerEntrada } from "./entrada.ts";
 
 const log = createLogger("portal-obra-fotos");
-const MAX_FOTOS = 30;
 
 /**
  * Spec 087: URLs assinadas (5min) das fotos do diário curado da obra, pro
@@ -46,19 +47,9 @@ serve(
     }
 
     try {
-      const payload = await req.json();
-      const session_token: unknown = payload.session_token;
-      const foto_ids: unknown = payload.foto_ids;
-
-      if (typeof session_token !== "string" || !session_token) {
-        return safeErrorResponse(400, "session_token obrigatório", req);
-      }
-      if (!Array.isArray(foto_ids) || foto_ids.length === 0) {
-        return safeErrorResponse(400, "foto_ids obrigatório", req);
-      }
-      if (foto_ids.length > MAX_FOTOS || !foto_ids.every(isUUID)) {
-        return safeErrorResponse(400, "foto_ids inválido", req);
-      }
+      const entrada = lerEntrada(await lerJson(req));
+      if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
+      const { session_token, foto_ids } = entrada.data;
 
       const anonClient = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_ANON_KEY") ?? "");
       const { data: session, error: sessionError } = await anonClient.rpc("portal_verify_session_readonly", {
@@ -74,7 +65,7 @@ serve(
       const { data: fotos, error: fotosError } = await adminClient
         .from("obra_rdo_foto")
         .select("id, path, obras:obra_id!inner(cliente_id, empresa_id, modelo_cobranca, visivel_portal, deleted_at)")
-        .in("id", foto_ids as string[]);
+        .in("id", foto_ids);
 
       if (fotosError) {
         log.error("query de fotos falhou", fotosError, { empresa_id });

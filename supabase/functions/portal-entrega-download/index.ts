@@ -2,9 +2,11 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
+import { jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
+import { lerJson } from "../_shared/schemas.ts";
+import { lerEntrada } from "./entrada.ts";
 
 const log = createLogger("portal-entrega-download");
 
@@ -46,13 +48,9 @@ serve(
     }
 
     try {
-      const payload = await req.json();
-      const entrega_id: unknown = payload.entrega_id;
-      const token: unknown = payload.token;
-      const session_token: unknown = payload.session_token;
-
-      if (!isUUID(entrega_id)) return safeErrorResponse(400, "entrega_id inválido", req);
-      if (!token && !session_token) return safeErrorResponse(400, "token ou session_token obrigatório", req);
+      const entrada = lerEntrada(await lerJson(req));
+      if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
+      const { entrega_id, token, session_token } = entrada.data;
 
       const anonClient = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_ANON_KEY") ?? "");
 

@@ -2,14 +2,12 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
+import { jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { lerJson } from "../_shared/schemas.ts";
+import { decodificarImagem, EXT, lerEntrada } from "./entrada.ts";
 
 const log = createLogger("campo-upload-foto");
-
-const MAX_BYTES = 8 * 1024 * 1024; // 8MB por foto
-const TIPOS_OK = new Set(["image/jpeg", "image/png", "image/webp"]);
-const EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
 // A conta de campo NÃO é usuário do Supabase: a autorização é o token de campo no
 // corpo (validado via campo_verify_session). O upload em si é service_role.
@@ -19,15 +17,13 @@ serve(
     if (req.method !== "POST") return safeErrorResponse(405, "Method not allowed", req);
 
     try {
-      const { token, rdo_id, image_base64, content_type } = await req.json();
-      if (!token || typeof token !== "string") return safeErrorResponse(400, "token ausente", req);
-      if (!isUUID(rdo_id)) return safeErrorResponse(400, "rdo_id inválido", req);
-      if (!content_type || !TIPOS_OK.has(content_type)) return safeErrorResponse(400, "Tipo de imagem não suportado", req);
-      if (!image_base64 || typeof image_base64 !== "string") return safeErrorResponse(400, "imagem ausente", req);
+      const entrada = lerEntrada(await lerJson(req));
+      if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
+      const { token, rdo_id, image_base64, content_type } = entrada.data;
 
-      const bytes = Uint8Array.from(atob(image_base64), (c) => c.charCodeAt(0));
-      if (bytes.byteLength === 0) return safeErrorResponse(400, "imagem vazia", req);
-      if (bytes.byteLength > MAX_BYTES) return safeErrorResponse(413, "Imagem maior que 8MB", req);
+      const imagem = decodificarImagem(image_base64);
+      if (!imagem.ok) return safeErrorResponse(imagem.status, imagem.erro, req);
+      const { bytes } = imagem;
 
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",

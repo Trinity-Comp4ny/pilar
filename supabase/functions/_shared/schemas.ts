@@ -40,3 +40,53 @@ export function parseOr400<T>(
   const path = first.path.length ? `${first.path.join(".")}: ` : "";
   return { ok: false, error: `${path}${first.message}` };
 }
+
+/** Texto obrigatório com a mesma mensagem para ausente, tipo errado ou vazio. */
+export const textoObrigatorio = (mensagem: string, max = 512) =>
+  z.string({ required_error: mensagem, invalid_type_error: mensagem }).trim().min(1, mensagem).max(max, mensagem);
+
+/** uuid obrigatório com a mesma mensagem para ausente, tipo errado ou formato. */
+export const uuidObrigatorio = (mensagem: string) =>
+  z.string({ required_error: mensagem, invalid_type_error: mensagem }).uuid(mensagem);
+
+/**
+ * Como parseOr400, mas devolve só a mensagem do primeiro problema: para schemas
+ * cujas mensagens já nomeiam o campo ("projeto_id inválido") e que mantêm o texto
+ * que a função devolvia antes.
+ */
+export function validar<S extends z.ZodTypeAny>(
+  schema: S,
+  data: unknown
+): { ok: true; data: z.output<S> } | { ok: false; error: string } {
+  // JSON inválido ou corpo que não é objeto: a mensagem do zod ("Expected object,
+  // received null") não diz nada a quem chamou.
+  if (data === null || typeof data !== "object" || Array.isArray(data)) {
+    return { ok: false, error: "Corpo da requisição inválido" };
+  }
+  const r = schema.safeParse(data);
+  if (r.success) return { ok: true, data: r.data };
+  return { ok: false, error: r.error.issues[0].message };
+}
+
+/** Lê o corpo JSON sem lançar: JSON inválido vira null e o schema responde 400. */
+export function lerJson(req: Request): Promise<unknown> {
+  return req.json().catch(() => null);
+}
+
+/**
+ * E-mail no formato que o app já aceitava (EMAIL_RE), aparado e limitado. Mesma
+ * mensagem para ausente, tipo errado ou formato.
+ */
+export const emailObrigatorio = (mensagem: string) =>
+  z
+    .string({ required_error: mensagem, invalid_type_error: mensagem })
+    .trim()
+    .max(320, mensagem)
+    .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, mensagem);
+
+/** Texto opcional: ausente, vazio ou só espaço vira undefined. */
+export const textoOpcional = (max: number) =>
+  z.preprocess(
+    (v) => ((typeof v === "string" && v.trim() === "") || v === null ? undefined : v),
+    z.string().trim().max(max).optional()
+  );
