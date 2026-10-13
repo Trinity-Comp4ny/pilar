@@ -16,9 +16,13 @@
  *
  * PII scrubbing: todos os traits/properties passam por scrub() antes de sair,
  * mesma blocklist e regex do monitoring.ts.
+ *
+ * Carregamento: o SDK do PostHog (~80 kB gzip) vem por import dinâmico no
+ * primeiro uso com consentimento, fora do carregamento inicial. Chamadas feitas
+ * antes do download terminar esperam na ordem em que chegaram.
  */
 
-import posthog from "posthog-js";
+import type { PostHog } from "posthog-js";
 import { env } from "./env";
 import { getCookieConsent, saveCookieConsent } from "./cookieConsent";
 import type { EventoProduto } from "./eventosProduto";
@@ -124,15 +128,32 @@ const noopAnalytics: Analytics = {
   },
 };
 
+let posthog: PostHog | null = null;
+let posthogLoading: Promise<PostHog | null> | null = null;
 let posthogInitialized = false;
 
 function hasAnalyticsConsent(): boolean {
   return getCookieConsent()?.analytics === true;
 }
 
-function ensurePosthogInit() {
+function loadPosthog(): Promise<PostHog | null> {
+  if (posthog) return Promise.resolve(posthog);
+  posthogLoading ??= import("posthog-js")
+    .then(({ default: ph }) => {
+      posthog = ph;
+      return ph;
+    })
+    .catch(() => {
+      // Falha de rede no chunk não pode quebrar o app: tenta de novo no próximo uso.
+      posthogLoading = null;
+      return null;
+    });
+  return posthogLoading;
+}
+
+function ensurePosthogInit(ph: PostHog) {
   if (posthogInitialized || !KEY) return;
-  posthog.init(KEY, {
+  ph.init(KEY, {
     api_host: HOST,
     capture_pageview: true,
     capture_pageleave: true,
@@ -145,29 +166,41 @@ function ensurePosthogInit() {
   posthogInitialized = true;
 }
 
+/** Roda `fn` no PostHog iniciado, só com consentimento (checado de novo após o download). */
+function withPosthog(fn: (ph: PostHog) => void) {
+  if (!hasAnalyticsConsent()) return;
+  const run = (ph: PostHog | null) => {
+    if (!ph || !hasAnalyticsConsent()) return;
+    ensurePosthogInit(ph);
+    fn(ph);
+  };
+  if (posthog) {
+    run(posthog);
+    return;
+  }
+  void loadPosthog().then(run);
+}
+
 const posthogAnalytics: Analytics = {
   init() {
-    if (!hasAnalyticsConsent()) return;
-    ensurePosthogInit();
+    withPosthog(() => undefined);
   },
   identify(userId, traits) {
-    if (!hasAnalyticsConsent()) return;
-    ensurePosthogInit();
-    posthog.identify(userId, scrub(traits) as Record<string, unknown> | undefined);
-    // Todo evento seguinte leva o escritório: retenção e adoção por empresa sem o
-    // add-on pago de group analytics do PostHog.
-    if (traits?.empresa_id) posthog.register({ empresa_id: traits.empresa_id });
+    withPosthog((ph) => {
+      ph.identify(userId, scrub(traits) as Record<string, unknown> | undefined);
+      // Todo evento seguinte leva o escritório: retenção e adoção por empresa sem o
+      // add-on pago de group analytics do PostHog.
+      if (traits?.empresa_id) ph.register({ empresa_id: traits.empresa_id });
+    });
   },
   track(event, properties) {
-    if (!hasAnalyticsConsent()) return;
-    ensurePosthogInit();
-    posthog.capture(event, scrub(properties) as Record<string, unknown> | undefined);
+    withPosthog((ph) => ph.capture(event, scrub(properties) as Record<string, unknown> | undefined));
   },
   reset() {
-    if (posthogInitialized) posthog.reset();
+    if (posthogInitialized) posthog?.reset();
   },
   isFeatureEnabled(key) {
-    if (!hasAnalyticsConsent() || !posthogInitialized) return undefined;
+    if (!hasAnalyticsConsent() || !posthogInitialized || !posthog) return undefined;
     return posthog.isFeatureEnabled(key);
   },
   getAnonId() {
@@ -188,7 +221,7 @@ export function applyCookieConsent(analyticsAccepted: boolean) {
     analytics.init();
     return;
   }
-  if (posthogInitialized) {
+  if (posthogInitialized && posthog) {
     posthog.opt_out_capturing();
     posthog.reset();
     posthogInitialized = false;
