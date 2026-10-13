@@ -304,7 +304,14 @@ function Linha({
         {item.numero != null && (
           <span className="shrink-0 font-mono text-xs text-muted-foreground/70">#{item.numero}</span>
         )}
-        <span className="truncate text-foreground">{item.titulo}</span>
+        <span className="flex min-w-0 flex-col">
+          <span className="truncate text-foreground">{item.titulo}</span>
+          {item.obraCaminho && (
+            <span className="truncate text-[11px] text-muted-foreground" title={item.obraCaminho}>
+              {item.obraCaminho}
+            </span>
+          )}
+        </span>
         <Badge variant="outline" className="shrink-0 text-[10px] font-normal text-muted-foreground">
           {ehTarefa ? "Tarefa" : "Disciplina"}
         </Badge>

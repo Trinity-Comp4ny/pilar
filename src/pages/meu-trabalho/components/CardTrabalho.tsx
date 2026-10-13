@@ -1,4 +1,4 @@
-import { CalendarDays, FolderOpen, Link2, MessageSquare, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { CalendarDays, FolderOpen, HardHat, Link2, MessageSquare, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AvatarStack } from "@/components/AvatarStack";
@@ -118,6 +118,12 @@ export function CardTrabalho({ item, onAbrir, onPrioridade, onExcluir }: Props) 
           <span className="inline-flex items-center gap-1 truncate">
             <FolderOpen className="h-3 w-3 shrink-0" />
             <span className="truncate">{item.projetoNome}</span>
+          </span>
+        )}
+        {item.obraCaminho && (
+          <span className="inline-flex min-w-0 items-center gap-1" title={item.obraCaminho}>
+            <HardHat className="h-3 w-3 shrink-0" />
+            <span className="truncate">{item.obraCaminho}</span>
           </span>
         )}
       </div>

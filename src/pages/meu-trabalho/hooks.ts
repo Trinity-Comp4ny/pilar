@@ -46,6 +46,9 @@ export type TarefaItem = {
   links: LinkItem[];
   comentarios: Comentario[];
   projeto: { id: string; nome: string } | null;
+  /** Tarefa do cronograma da obra (spec 111): obra e "Fase › Etapa › Serviço". */
+  obra: { id: string; nome: string } | null;
+  obra_caminho: string | null;
 };
 
 export type TarefaInput = {
@@ -201,7 +204,7 @@ export function useSetDisciplinaStatus() {
 }
 
 const TAREFA_SELECT =
-  "id, numero, titulo, descricao, status, prioridade, responsavel_id, projeto_id, etapa_id, prazo, horas_estimadas, horas_reais, labels, links, comentarios, projeto:projetos(id, nome), responsaveis:tarefa_responsaveis(pessoa:pessoas(id, nome))" as const;
+  "id, numero, titulo, descricao, status, prioridade, responsavel_id, projeto_id, etapa_id, prazo, horas_estimadas, horas_reais, labels, links, comentarios, projeto:projetos(id, nome), responsaveis:tarefa_responsaveis(pessoa:pessoas(id, nome)), obra:obras(id, nome), servico:obra_frente!tarefas_obra_frente_id_fkey(nome, etapa:parent_id(nome, fase:parent_id(nome)))" as const;
 
 type TarefaRowSelect = {
   status: string;
@@ -211,10 +214,24 @@ type TarefaRowSelect = {
   comentarios: Json | null;
   projeto: { id: string; nome: string } | { id: string; nome: string }[] | null;
   responsaveis: { pessoa: PessoaOpcao | PessoaOpcao[] | null }[] | null;
+  obra?: { id: string; nome: string } | { id: string; nome: string }[] | null;
+  servico?: NoCaminho | NoCaminho[] | null;
 };
 
+type NoCaminho = { nome: string; etapa?: NoCaminho | NoCaminho[] | null; fase?: NoCaminho | NoCaminho[] | null };
+
+const umSo = <X>(v: X | X[] | null | undefined): X | null => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null));
+
+/** "Fase › Etapa › Serviço" a partir do embed serviço → etapa → fase. */
+function caminhoDoServico(servico: NoCaminho | null): string | null {
+  if (!servico) return null;
+  const etapa = umSo(servico.etapa);
+  const fase = umSo(etapa?.fase);
+  return [fase?.nome, etapa?.nome, servico.nome].filter(Boolean).join(" › ");
+}
+
 function paraTarefaItem<T extends TarefaRowSelect>(t: T): TarefaItem {
-  const { responsaveis, ...rest } = t;
+  const { responsaveis, servico, ...rest } = t;
   return {
     ...rest,
     status: t.status as StatusBucket,
@@ -226,6 +243,8 @@ function paraTarefaItem<T extends TarefaRowSelect>(t: T): TarefaItem {
     links: (t.links as unknown as LinkItem[]) ?? [],
     comentarios: (t.comentarios as unknown as Comentario[]) ?? [],
     projeto: Array.isArray(t.projeto) ? (t.projeto[0] ?? null) : t.projeto,
+    obra: umSo(t.obra),
+    obra_caminho: caminhoDoServico(umSo(servico)),
   } as unknown as TarefaItem;
 }
 
@@ -304,7 +323,11 @@ async function syncResponsaveis(tarefaId: string, empresaId: string, pessoaIds: 
 export function useTarefaMutations() {
   const qc = useQueryClient();
   const { profile } = useAuth();
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["meu-trabalho", "tarefas"] });
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["meu-trabalho", "tarefas"] });
+    // Tarefa da obra também aparece no cronograma da obra (spec 111).
+    qc.invalidateQueries({ queryKey: ["obra_tarefas"] });
+  };
 
   const criar = useMutation({
     mutationFn: async (input: TarefaInput) => {

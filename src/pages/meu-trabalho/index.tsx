@@ -170,6 +170,7 @@ export default function MeuTrabalho() {
         i.titulo.toLowerCase().includes(termo) ||
         (i.numero != null && String(i.numero) === numeroTermo) ||
         (i.projetoNome?.toLowerCase().includes(termo) ?? false) ||
+        (i.obraCaminho?.toLowerCase().includes(termo) ?? false) ||
         i.responsaveis.some((r) => r.nome.toLowerCase().includes(termo)) ||
         i.labels.some((l) => l.toLowerCase().includes(termo))
       );
