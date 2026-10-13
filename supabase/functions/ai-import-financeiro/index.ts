@@ -13,6 +13,7 @@ import {
   modeloEmUso,
   recordAgentRun,
   type AiRequest,
+  respostaDeErroIa,
 } from "../_shared/ai-client.ts";
 
 // Spec 017: extrai lançamentos financeiros do TEXTO de um extrato/fatura.
@@ -179,12 +180,15 @@ serve(
         status: 200,
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Erro ao processar documento";
-      const status = message === "Não autenticado" ? 401 : 400;
-      return new Response(JSON.stringify({ error: message }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status,
-      });
+      const message = err instanceof Error ? err.message : "";
+      if (message === "Não autenticado" || message === "Perfil não encontrado") {
+        return new Response(JSON.stringify({ error: message }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: message === "Não autenticado" ? 401 : 400,
+        });
+      }
+      // Falha da IA ou inesperada: tipo fechado, sem o texto bruto do provedor (SPEC 110).
+      return await respostaDeErroIa(err, corsHeaders, "ai-import-financeiro");
     }
   })
 );

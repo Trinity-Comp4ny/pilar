@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import {
@@ -219,7 +220,16 @@ export function useImportFinanceiro() {
     const { data, error } = await supabase.functions.invoke("ai-import-financeiro", {
       body: { tipo: tipoDoc, texto },
     });
-    if (error) throw new Error(error.message ?? "Falha ao extrair do documento");
+    if (error) {
+      // O invoke devolve uma mensagem genérica em non-2xx; o motivo (ex.: IA fora do ar,
+      // documento grande demais) vem no corpo da resposta.
+      let motivo = error.message ?? "Falha ao extrair do documento";
+      if (error instanceof FunctionsHttpError) {
+        const corpo = await error.context.json().catch(() => null);
+        if (typeof corpo?.error === "string") motivo = corpo.error;
+      }
+      throw new Error(motivo);
+    }
 
     const parsed = respostaIASchema.safeParse(data);
     if (!parsed.success) throw new Error("Resposta do documento em formato inesperado");

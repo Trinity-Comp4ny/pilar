@@ -28,6 +28,8 @@ import {
   verificarTokens,
   mensagemBloqueioTokens,
   modeloEmUso,
+  releaseAtual,
+  respostaDeErroIa,
 } from "../_shared/ai-client.ts";
 import { coletarDados } from "./coleta.ts";
 import { streamConsulta } from "./consulta.ts";
@@ -200,6 +202,7 @@ serve(
             input: { message },
             result: { acao: rota.data.operacao },
             model: modeloEmUso(FEATURE_KEY),
+            release: releaseAtual(),
             tokens_input: rota.tokensEntrada,
             tokens_output: rota.tokensSaida,
             created_by: user.id,
@@ -254,6 +257,7 @@ serve(
           entity_type: agente,
           input: { message },
           model: modeloEmUso(FEATURE_KEY),
+          release: releaseAtual(),
           tokens_input: rota.tokensEntrada,
           tokens_output: rota.tokensSaida,
           created_by: user.id,
@@ -357,9 +361,9 @@ serve(
         req
       );
     } catch (e) {
-      console.error("[ai-chat]", e);
-      const headers = { ...getCorsHeaders(req), "Content-Type": "application/json" };
-      return new Response(JSON.stringify({ error: "Erro ao processar a conversa" }), { status: 500, headers });
+      // Tipo fechado (SPEC 110): limite do provedor, fora do ar, tempo, saída inválida...
+      // cada um com status e mensagem próprios; o texto bruto do erro não sai daqui.
+      return await respostaDeErroIa(e, getCorsHeaders(req), "ai-chat");
     }
   })
 );
