@@ -180,6 +180,55 @@ export function templateLgpdExportacaoPronta(params: { nome: string; link: strin
   };
 }
 
+/** Pedido de exclusão atendido (LGPD art. 18, VI, SPEC 116). Vai para o e-mail original, antes de anonimizar. */
+export function templateLgpdExclusaoConcluida(params: { nome: string }): EmailTemplate {
+  const { nome } = params;
+  return {
+    subject: "Seus dados foram excluídos",
+    html: shell({
+      preview: `Atendemos seu pedido de exclusão no ${BRAND.nome}`,
+      footerNote: `Você recebeu este e-mail porque pediu a exclusão dos seus dados no ${BRAND.nome} (LGPD, art. 18).`,
+      hero: {
+        titulo: html`Seus ${em("dados foram excluídos")}`,
+        lead: html`Olá, ${strong(nome)}. Atendemos seu pedido: nome, e-mail, telefone e foto saíram da sua conta, junto
+        com as conversas com a IA, as notificações e as preferências. O acesso foi encerrado.`,
+      },
+      content: [
+        paragraph(
+          html`Pelo prazo da lei, guardamos só o registro dos aceites (termos, cobrança e cookies) e a trilha de
+          auditoria, sem nome nem e-mail.`
+        ),
+        small(
+          html`Projetos, clientes e financeiro são dados da sua empresa e ficam com o administrador dela. Este é o
+          último e-mail sobre esta conta.`
+        ),
+      ],
+    }),
+  };
+}
+
+/** Pedido de exclusão recusado, com o motivo (SPEC 116). */
+export function templateLgpdExclusaoRecusada(params: { nome: string; motivo: string }): EmailTemplate {
+  const { nome, motivo } = params;
+  return {
+    subject: "Seu pedido de exclusão precisa de um passo antes",
+    html: shell({
+      preview: "Não conseguimos excluir sua conta ainda",
+      footerNote: `Você recebeu este e-mail porque pediu a exclusão dos seus dados no ${BRAND.nome} (LGPD, art. 18).`,
+      hero: {
+        titulo: html`Seu pedido de exclusão ${em("ainda não foi atendido")}`,
+        lead: html`Olá, ${strong(nome)}. Analisamos seu pedido e ele não pôde ser atendido agora.`,
+      },
+      content: [
+        callout(html`${strong("Motivo:")} ${motivo}`),
+        paragraph(
+          html`Resolva o ponto acima e peça de novo em Configurações → Privacidade. Dúvidas? Responda este e-mail.`
+        ),
+      ],
+    }),
+  };
+}
+
 /** Pedido de exportação dos próprios dados (LGPD art. 18, V): vai para o encarregado atender. */
 export function templateLgpdExportacaoDados(params: {
   empresaNome: string;

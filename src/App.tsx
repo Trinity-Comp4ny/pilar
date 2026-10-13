@@ -84,6 +84,7 @@ const UltraFeedback = lazy(() => ultraAdmin().then((m) => ({ default: m.Feedback
 const UltraAtividade = lazy(() => ultraAdmin().then((m) => ({ default: m.Atividade })));
 const UltraIncidentes = lazy(() => ultraAdmin().then((m) => ({ default: m.Incidentes })));
 const UltraCustosIa = lazy(() => ultraAdmin().then((m) => ({ default: m.CustosIa })));
+const UltraPedidosLgpd = lazy(() => ultraAdmin().then((m) => ({ default: m.PedidosLgpd })));
 const MfaChallengePage = lazy(() => import("./pages/MfaChallengePage"));
 const MfaSetupPage = lazy(() => import("./pages/MfaSetupPage"));
 const PasswordReset = lazy(() => import("./pages/PasswordReset"));
@@ -383,6 +384,7 @@ const App = () => {
                               <Route path="atividade" element={<UltraAtividade />} />
                               <Route path="incidentes" element={<UltraIncidentes />} />
                               <Route path="custos-ia" element={<UltraCustosIa />} />
+                              <Route path="lgpd" element={<UltraPedidosLgpd />} />
                               <Route path="*" element={<Navigate to="/ultra-admin" replace />} />
                             </Route>
                           </Route>

@@ -74,6 +74,7 @@ export async function checkUserLimit(supabase: SupabaseClient, empresaId: string
   const { count, error } = await supabase
     .from("profiles")
     .select("id", { count: "exact", head: true })
-    .eq("empresa_id", empresaId);
+    .eq("empresa_id", empresaId)
+    .is("desativado_em", null);
   return { reached: !error && (count ?? 0) >= maxUsuarios, error };
 }

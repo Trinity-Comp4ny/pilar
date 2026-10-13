@@ -53,7 +53,8 @@ async function emailsDosAdmins(admin: SupabaseClient, empresaId: string): Promis
     .from("profiles")
     .select("email")
     .eq("empresa_id", empresaId)
-    .in("role", ["owner", "admin", "ultra_admin"])) as { data: { email: string | null }[] | null };
+    .in("role", ["owner", "admin", "ultra_admin"])
+    .is("desativado_em", null)) as { data: { email: string | null }[] | null };
   return (data ?? []).map((p) => p.email).filter((e): e is string => !!e);
 }
 

@@ -199,7 +199,8 @@ serve(
         .from("profiles")
         .select("id, email, first_name, last_name, full_name")
         .eq("empresa_id", ddr.empresa_id)
-        .eq("role", "admin");
+        .eq("role", "admin")
+        .is("desativado_em", null);
 
       const adminRows = (admins ?? []) as EmpresaAdmin[];
       for (const a of adminRows) {

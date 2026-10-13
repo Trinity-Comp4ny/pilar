@@ -77,7 +77,8 @@ serve(
             svc
               .from("profiles")
               .select("id, nome, email, role, financeiro_delegado, equipe_delegado, metas_delegado")
-              .eq("empresa_id", id),
+              .eq("empresa_id", id)
+              .is("desativado_em", null),
             svc
               .from("convites")
               .select("id, email, nome, cargo, expira_em")
@@ -164,7 +165,7 @@ serve(
       // Contar usuários por empresa
       const ids = (empresas ?? []).map((e) => e.id);
       const [{ data: counts }, acessos] = await Promise.all([
-        svc.from("profiles").select("id, empresa_id").in("empresa_id", ids),
+        svc.from("profiles").select("id, empresa_id").in("empresa_id", ids).is("desativado_em", null),
         listarAcessos(svc),
       ]);
 

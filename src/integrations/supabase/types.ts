@@ -5203,6 +5203,7 @@ export type Database = {
           contato: string | null
           created_at: string | null
           created_by: string | null
+          desativado_em: string | null
           email: string
           empresa_id: string
           equipe_delegado: boolean
@@ -5224,6 +5225,7 @@ export type Database = {
           contato?: string | null
           created_at?: string | null
           created_by?: string | null
+          desativado_em?: string | null
           email: string
           empresa_id: string
           equipe_delegado?: boolean
@@ -5245,6 +5247,7 @@ export type Database = {
           contato?: string | null
           created_at?: string | null
           created_by?: string | null
+          desativado_em?: string | null
           email?: string
           empresa_id?: string
           equipe_delegado?: boolean
@@ -9118,6 +9121,24 @@ export type Database = {
           p_novo_trial_ends_at: string
         }
         Returns: undefined
+      }
+      ultra_admin_listar_pedidos_exclusao: {
+        Args: never
+        Returns: {
+          empresa_id: string
+          empresa_nome: string
+          id: string
+          motivo: string
+          notes: string
+          prazo_em: string
+          processed_at: string
+          requested_at: string
+          status: string
+          titular_email: string
+          titular_nome: string
+          unico_admin: boolean
+          user_id: string
+        }[]
       }
       ultra_admin_listar_retencao: {
         Args: never

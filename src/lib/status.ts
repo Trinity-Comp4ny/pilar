@@ -66,7 +66,8 @@ export type StatusDomain =
   | "status_componente"
   | "status_incidente"
   | "empresa_situacao"
-  | "feedback";
+  | "feedback"
+  | "pedido_lgpd";
 
 type StatusDef = { label: string; tone: StatusTone };
 
@@ -156,6 +157,13 @@ export const STATUS_REGISTRY: Record<StatusDomain, Record<string, StatusDef>> = 
     planejado: { label: "Planejado", tone: "highlight" },
     resolvido: { label: "Resolvido", tone: "positive" },
     descartado: { label: "Descartado", tone: "neutral" },
+  },
+  pedido_lgpd: {
+    pending: { label: "Aguardando", tone: "warning" },
+    in_progress: { label: "Executando", tone: "info" },
+    failed: { label: "Falhou", tone: "danger" },
+    completed: { label: "Atendido", tone: "positive" },
+    rejected: { label: "Recusado", tone: "neutral" },
   },
 };
 

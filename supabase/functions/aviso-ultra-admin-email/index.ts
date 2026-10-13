@@ -135,10 +135,10 @@ serve(
     // Defesa em profundidade: o trigger já filtra, mas a função só fala com ultra admin.
     const { data: destinatario } = await admin
       .from("profiles")
-      .select("email, role")
+      .select("email, role, desativado_em")
       .eq("id", n.destinatario_id)
       .maybeSingle();
-    if (destinatario?.role !== "ultra_admin" || !destinatario.email) {
+    if (destinatario?.role !== "ultra_admin" || !destinatario.email || destinatario.desativado_em) {
       return json({ enviado: false, motivo: "destinatário não é ultra admin com e-mail" }, 200);
     }
 

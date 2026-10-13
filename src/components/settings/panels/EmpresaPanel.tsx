@@ -118,7 +118,8 @@ export function EmpresaPanel() {
         const { data: companyUsers } = await supabase
           .from("profiles")
           .select("id, first_name, last_name, email, role, contato")
-          .eq("empresa_id", profile.empresa_id);
+          .eq("empresa_id", profile.empresa_id)
+          .is("desativado_em", null);
         if (companyUsers) {
           setUsers(
             companyUsers.map((u) => ({

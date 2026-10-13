@@ -145,6 +145,8 @@ const casos: Array<[string, () => { subject: string; html: string }]> = [
       }),
   ],
   ["lgpd exportação pronta", () => T.templateLgpdExportacaoPronta({ nome: XSS, link: "https://l", validoAte: XSS })],
+  ["lgpd exclusão concluída", () => T.templateLgpdExclusaoConcluida({ nome: XSS })],
+  ["lgpd exclusão recusada", () => T.templateLgpdExclusaoRecusada({ nome: XSS, motivo: XSS })],
   [
     "lgpd exportação",
     () =>
