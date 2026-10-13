@@ -21,14 +21,9 @@ import {
   refundPayment,
 } from "../_shared/asaas-platform.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { type Entrada, lerEntrada } from "./entrada.ts";
 
 const log = createLogger("pilar-subscription-manage");
-
-interface Payload {
-  action: "update_plan" | "cancel";
-  new_plan_slug?: string;
-  new_cycle?: "monthly" | "yearly";
-}
 
 serve(
   withSentry("pilar-subscription-manage", async (req) => {
@@ -63,12 +58,9 @@ serve(
       return jsonResponse({ error: "Apenas admin da empresa pode gerenciar a assinatura" }, 403, req);
     }
 
-    let body: Payload;
-    try {
-      body = (await req.json()) as Payload;
-    } catch {
-      return jsonResponse({ error: "JSON inválido" }, 400, req);
-    }
+    const entrada = lerEntrada(await req.json().catch(() => null));
+    if (!entrada.ok) return jsonResponse({ error: entrada.error }, 400, req);
+    const body: Entrada = entrada.data;
 
     // --- Fetch subscription ---
     const { data: sub, error: subErr } = await admin
@@ -137,10 +129,6 @@ serve(
 
     // --- UPDATE PLAN ---
     if (body.action === "update_plan") {
-      if (!body.new_plan_slug) {
-        return jsonResponse({ error: "new_plan_slug obrigatório" }, 400, req);
-      }
-
       const { data: newPlan, error: planErr } = await admin
         .from("pilar_subscription_plans")
         .select("id, slug, nome, preco_mensal, preco_anual")

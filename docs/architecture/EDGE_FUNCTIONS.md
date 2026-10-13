@@ -25,9 +25,9 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | --- | --- | --- | --- | --- | --- |
 | `ativar-plano` | Tokeniza o cartão no trial sem cobrar e grava o consentimento datado (SPEC 098). | app | JWT | `ALLOWED_ORIGINS` `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `pilar-checkout-create` | Checkout público do Pilar: cria cliente e cobrança na Asaas da plataforma. | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | não |
-| `pilar-checkout-status` | Consulta pública do status de pagamento do checkout. | app | própria | `ALLOWED_ORIGINS` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | não |
+| `pilar-checkout-status` | Consulta pública do status de pagamento do checkout. | app | própria | `ALLOWED_ORIGINS` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `pilar-checkout-webhook` | Eventos da Asaas da plataforma: libera signup, renova assinatura, credita tokens, inadimplência. | Asaas da plataforma (webhook) | própria | `ALLOWED_ORIGINS` `ASAAS_PLATFORM_WEBHOOK_TOKEN` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
-| `pilar-subscription-manage` | Troca de plano e cancelamento da assinatura do Pilar pelo admin da empresa. | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | não |
+| `pilar-subscription-manage` | Troca de plano e cancelamento da assinatura do Pilar pelo admin da empresa. | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `pilar-token-pack-create` | Compra avulsa de pacote de tokens de IA (SPEC 077/080). | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `verificar-documento` | Sobe a empresa para o nível Prata ao informar CNPJ ou CPF (SPEC 098). | app | JWT |  | sim |
 
@@ -35,8 +35,8 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
-| `asaas-config` | Configuração do Asaas da própria empresa (chave cifrada no Vault). A tela que chamava foi removida em 7602833d. | **sem chamador conhecido** | JWT |  | não |
-| `asaas-criar-cobranca` | Cria cobrança no Asaas da empresa para uma receita do cliente dela. | **sem chamador conhecido** | JWT |  | não |
+| `asaas-config` | Configuração do Asaas da própria empresa (chave cifrada no Vault). A tela que chamava foi removida em 7602833d. | **sem chamador conhecido** | JWT |  | sim |
+| `asaas-criar-cobranca` | Cria cobrança no Asaas da empresa para uma receita do cliente dela. | **sem chamador conhecido** | JWT |  | sim |
 | `asaas-webhook` | Recebe eventos do Asaas da empresa e atualiza a receita (recebida, atrasada, estornada). | Asaas da empresa (webhook) | própria | `ASAAS_WEBHOOK_TOKEN` | sim |
 
 ## Portal do cliente

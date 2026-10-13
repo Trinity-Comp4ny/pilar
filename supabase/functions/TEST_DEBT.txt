@@ -16,16 +16,12 @@
 ai-cotacao-import
 ai-import-financeiro
 ai-rdo-voz
-asaas-config
-asaas-criar-cobranca
 campo-upload-foto
 geocode-address
 invite-campo
 invite-cliente-portal
 log-impersonation
 pilar-checkout-create
-pilar-checkout-status
-pilar-subscription-manage
 portal-aprovar-proposta
 portal-entrega-download
 portal-get-projeto

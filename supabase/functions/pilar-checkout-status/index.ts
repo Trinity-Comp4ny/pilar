@@ -17,6 +17,7 @@ import { jsonResponse, optionsResponse } from "../_shared/cors.ts";
 import { getPayment } from "../_shared/asaas-platform.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
+import { tokenDaSessao } from "./entrada.ts";
 
 const log = createLogger("pilar-checkout-status");
 
@@ -51,37 +52,40 @@ serve(
 
     if (req.method === "GET") {
       const url = new URL(req.url);
-      sessionToken = url.searchParams.get("token");
+      sessionToken = tokenDaSessao(url.searchParams.get("token"));
     } else {
       try {
-        const body = (await req.json()) as { session_token?: string };
-        sessionToken = body.session_token ?? null;
+        const body = (await req.json()) as { session_token?: unknown } | null;
+        sessionToken = tokenDaSessao(body?.session_token);
       } catch {
         return jsonResponse({ error: "JSON inválido" }, 400, req);
       }
     }
 
-    if (!sessionToken || sessionToken.length < 20) {
+    if (!sessionToken) {
       return jsonResponse({ error: "session_token inválido" }, 400, req);
     }
 
     const { data: signup, error } = await admin
       .from("pilar_pending_signups")
-      .select<string, {
-        id: string;
-        email: string;
-        nome: string | null;
-        company_name: string | null;
-        payment_status: string;
-        billing_type: string | null;
-        billing_cycle: string | null;
-        paid_at: string | null;
-        invite_dispatched_at: string | null;
-        activated_at: string | null;
-        asaas_payment_id: string | null;
-        payment_metadata: unknown;
-        plan: { slug: string; nome: string } | null;
-      }>(
+      .select<
+        string,
+        {
+          id: string;
+          email: string;
+          nome: string | null;
+          company_name: string | null;
+          payment_status: string;
+          billing_type: string | null;
+          billing_cycle: string | null;
+          paid_at: string | null;
+          invite_dispatched_at: string | null;
+          activated_at: string | null;
+          asaas_payment_id: string | null;
+          payment_metadata: unknown;
+          plan: { slug: string; nome: string } | null;
+        }
+      >(
         `id, email, nome, company_name, payment_status, billing_type, billing_cycle,
        paid_at, invite_dispatched_at, activated_at,
        asaas_payment_id, payment_metadata,
@@ -125,10 +129,9 @@ serve(
     // Garante entrega mesmo se o webhook falhar ou demorar.
     if (signup.payment_status === "paid" && !signup.invite_dispatched_at) {
       try {
-        const appOrigin = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
-          .split(",")[0]
-          .trim()
-          .replace(/\/$/, "") || "https://app.pilarsoft.com.br";
+        const appOrigin =
+          (Deno.env.get("ALLOWED_ORIGINS") ?? "").split(",")[0].trim().replace(/\/$/, "") ||
+          "https://app.pilarsoft.com.br";
 
         await admin
           .from("empresa_owners_pending")
