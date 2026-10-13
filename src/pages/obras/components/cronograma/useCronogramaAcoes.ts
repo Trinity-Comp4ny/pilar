@@ -14,7 +14,7 @@ import {
   type PatchObraTarefa,
 } from "@/pages/obras/hooks/useObraTarefas";
 import { useTarefaMutations } from "@/pages/meu-trabalho/hooks";
-import type { NivelCronograma } from "@/lib/obraArvore";
+import type { NivelCronograma } from "@/pages/obras/lib/obraArvore";
 import { analytics } from "@/lib/analytics";
 
 function mensagem(e: unknown): string {

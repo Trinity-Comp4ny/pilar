@@ -37,7 +37,7 @@ import {
   type Lead,
 } from "@/hooks/useLeads";
 import { usePropostas, useConverterProposta } from "@/hooks/usePropostas";
-import { propostaPrimaria, propostasPorLead } from "@/lib/comercial";
+import { propostaPrimaria, propostasPorLead } from "@/pages/leads/lib/comercial";
 
 // Cores derivam do registry único (ADR 0008): mudar tom = src/lib/status.ts.
 const leadStatus = (s: string) => ({ label: statusLabel("lead", s), color: statusBadgeClasses("lead", s) });

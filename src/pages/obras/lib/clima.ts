@@ -12,7 +12,7 @@
  */
 
 import { z } from "zod";
-import { monitoring } from "./monitoring";
+import { monitoring } from "@/lib/monitoring";
 
 const GEO_BASE = "https://geocoding-api.open-meteo.com/v1/search";
 const FORECAST_BASE = "https://api.open-meteo.com/v1/forecast";

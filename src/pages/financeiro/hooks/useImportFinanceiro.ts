@@ -14,7 +14,7 @@ import {
   type Candidato,
   type ContaPendente,
   type ImportTipoDoc,
-} from "@/lib/importFinanceiro";
+} from "@/pages/financeiro/lib/importFinanceiro";
 
 type DespesaInsert = Database["public"]["Tables"]["despesas"]["Insert"];
 type ReceitaInsert = Database["public"]["Tables"]["receitas"]["Insert"];

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { untypedFrom } from "@/lib/supabaseRpc";
-import type { Plan } from "@/pages/planos/hooks/usePlans";
+import type { Plan } from "@/hooks/usePlans";
 
 export interface MySubscription {
   id: string;

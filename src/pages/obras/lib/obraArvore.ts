@@ -3,7 +3,7 @@
 // é a linha de `tarefas` pendurada no serviço. Lista e Gantt leem a mesma árvore,
 // montada aqui, com período, avanço e estado de cada nível já somados de baixo
 // para cima.
-import { calcularAvanco, estadoFrenteCronograma, type EstadoFrente } from "./obras";
+import { calcularAvanco, estadoFrenteCronograma, type EstadoFrente } from "@/lib/obras";
 
 export type NivelCronograma = "fase" | "etapa" | "servico";
 

@@ -6,14 +6,7 @@ import type { Proposta } from "@/hooks/usePropostas";
 
 // Ordem dos estágios do lead, para decidir avanço/retrocesso sem retroceder
 // um lead que já passou de "Proposta" (ex.: em "Negociação").
-export const LEAD_STAGE_ORDER: Lead["status"][] = [
-  "Novo",
-  "Em contato",
-  "Proposta",
-  "Negociação",
-  "Ganho",
-  "Perdido",
-];
+export const LEAD_STAGE_ORDER: Lead["status"][] = ["Novo", "Em contato", "Proposta", "Negociação", "Ganho", "Perdido"];
 
 /**
  * A proposta que representa o lead no funil quando há mais de uma: a mais

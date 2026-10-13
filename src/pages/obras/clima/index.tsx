@@ -46,7 +46,7 @@ import {
   type CategoriaClima,
   type DiaPrevisao,
   type LocalGeo,
-} from "@/lib/clima";
+} from "@/pages/obras/lib/clima";
 import { toast } from "sonner";
 
 const ICONE: Record<CategoriaClima, LucideIcon> = {

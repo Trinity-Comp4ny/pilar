@@ -17,7 +17,7 @@ import { useProjetosLite, usePessoasEmpresa } from "@/pages/meu-trabalho/hooks";
 import { useCreateObra, useObras, useUpdateObra, type ObraResumo } from "@/pages/obras/hooks/useObras";
 import { STATUS_OBRA_OPCOES } from "@/lib/obras";
 import { lookupCEP } from "@/lib/brasilApi";
-import { geocodarCidade } from "@/lib/clima";
+import { geocodarCidade } from "@/pages/obras/lib/clima";
 import { formatCEP, onlyDigits } from "@/lib/maskUtils";
 import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
 import { DesbloqueioNivel } from "@/components/trial/DesbloqueioNivel";

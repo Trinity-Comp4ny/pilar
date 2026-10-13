@@ -11,8 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { usePlans } from "@/pages/planos/hooks/usePlans";
-import { CycleToggle, type BillingCycle } from "@/pages/planos/components/CycleToggle";
+import { usePlans } from "@/hooks/usePlans";
+import { CycleToggle, type BillingCycle } from "@/components/CycleToggle";
 import { useSubscriptionManage } from "../hooks/useSubscriptionManage";
 import type { MySubscription } from "../hooks/useMySubscription";
 

@@ -20,8 +20,8 @@ import {
   type TokenPackBillingType,
   type TokenPackCreateResponse,
   type TokenPackTierId,
-} from "@/components/settings/useTokenPackCreate";
-import { useTokenPackStatus } from "@/components/settings/useTokenPackStatus";
+} from "@/pages/comprar-tokens/hooks/useTokenPackCreate";
+import { useTokenPackStatus } from "@/pages/comprar-tokens/hooks/useTokenPackStatus";
 import { analytics } from "@/lib/analytics";
 import { formatPhone } from "@/lib/maskUtils";
 

@@ -72,6 +72,28 @@ const CHUNK_DO_PACOTE: Record<string, string> = {
   "@radix-ui/react-tooltip": "vendor-ui",
 };
 
+// Cobertura por criticidade (ver thresholds abaixo): acesso, autenticação e dinheiro.
+const PISO_CRITICO = { statements: 85, branches: 65, functions: 80, lines: 85 };
+const CRITICOS = Object.fromEntries(
+  [
+    // acesso
+    "src/lib/permissions.ts",
+    "src/lib/roles.ts",
+    "src/lib/features.ts",
+    "src/hooks/usePermissions.ts",
+    "src/hooks/useFeatureAccess.ts",
+    // autenticação
+    "src/lib/authErrors.ts",
+    "src/lib/totp.ts",
+    // dinheiro e prazo
+    "src/lib/format.ts",
+    "src/lib/cobranca.ts",
+    "src/lib/currencyUtils.ts",
+    "src/lib/cronograma.ts",
+    "src/pages/financeiro/lib/importFinanceiro.ts",
+  ].map((arquivo) => [arquivo, PISO_CRITICO])
+);
+
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
@@ -189,14 +211,23 @@ export default defineConfig(({ mode }) => ({
       // Os testados (painel do início, formulário persistido, dashboard) foram junto, então
       // src/hooks desceu para 13/9/11/13 e o grupo novo src/pages/*/hooks ficou em
       // 16/12/12/18; financeiro subiu para 16/13/11/16 e projetos para 7/4/5/7.
+      // Ainda em 13/10 (ADR 0055, guarda em scripts/arquitetura-front.test.ts): 11 arquivos de
+      // um módulo só desceram de src/lib e src/components para o módulo, e os testes de
+      // acesso e autenticação entraram. Medido: lib 72/70/72/74, hooks 15/12/13/16,
+      // components 22/20/17/22, financeiro 21/17/13/21, obras 13/12/9/13, projetos 8/5/7/8.
       thresholds: {
-        "src/lib/**": { statements: 68, branches: 63, functions: 68, lines: 70 },
-        "src/hooks/**": { statements: 12, branches: 9, functions: 10, lines: 13 },
+        "src/lib/**": { statements: 70, branches: 68, functions: 70, lines: 72 },
+        "src/hooks/**": { statements: 14, branches: 10, functions: 12, lines: 15 },
         "src/pages/*/hooks/**": { statements: 15, branches: 11, functions: 11, lines: 17 },
-        "src/components/**": { statements: 21, branches: 18, functions: 16, lines: 21 },
-        "src/pages/financeiro/**": { statements: 15, branches: 12, functions: 10, lines: 15 },
-        "src/pages/obras/**": { statements: 6, branches: 5, functions: 5, lines: 6 },
-        "src/pages/projetos/**": { statements: 6, branches: 4, functions: 4, lines: 6 },
+        "src/components/**": { statements: 21, branches: 19, functions: 16, lines: 22 },
+        "src/pages/financeiro/**": { statements: 20, branches: 16, functions: 12, lines: 20 },
+        "src/pages/obras/**": { statements: 12, branches: 11, functions: 8, lines: 12 },
+        "src/pages/projetos/**": { statements: 7, branches: 4, functions: 6, lines: 7 },
+        // Por criticidade, não por pasta: arquivo que decide acesso, autentica ou mexe
+        // com dinheiro tem piso próprio, alto, para não se esconder na média da pasta.
+        // Uma entrada por arquivo de propósito: `perFile` dentro de glob agrega (medido
+        // em 13/10). Medido em 13/10 e piso logo abaixo; arquivo crítico novo entra aqui.
+        ...CRITICOS,
       },
     },
   },
