@@ -5,15 +5,21 @@ name: Promote staging → main
 # pelo gate humano do GitHub Environment "Production". Ou seja: este workflow só PREPARA
 # a promoção; quem promove é o merge revisado, não a automação.
 #
-# Armadilha da branch default (ver feedback_github_actions_default_branch_trap na memória):
-#   - workflow_dispatch só aparece depois que ESTE arquivo estiver na branch default (main).
-#   - o gatilho push só dispara a partir do arquivo presente na branch empurrada (staging).
-# Então, para os dois gatilhos funcionarem, o arquivo precisa existir tanto em main quanto
-# em staging. O primeiro merge que leva staging→main já resolve isso.
+# Gate "staging pronto": o PR de release só é montado/atualizado quando o commit atual
+# de staging passou no CI E foi aplicado e testado no ambiente de staging (jobs
+# "Deploy → staging" e "E2E → staging" verdes). O "CI OK" sozinho diz que o código é
+# mergeável, não que o banco e as funções de staging aceitaram a mudança: em 13/10 o
+# deploy falhou por drift de migration e o release foi preparado mesmo assim.
+#
+# Por isso o gatilho é o fim do CI em staging (workflow_run), não o push: no push o CI
+# ainda nem começou. Armadilha da branch default (feedback_github_actions_default_branch_trap):
+# workflow_run e workflow_dispatch só valem a partir do arquivo que está em main; até o
+# próximo release levar este arquivo para main, o gatilho que vale é o de lá.
 on:
   workflow_dispatch:
-  # Mantém o PR de release sempre fresco conforme staging avança.
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [staging]
 
 permissions:
@@ -22,6 +28,8 @@ permissions:
   # mesmo sem chegar perto do create-PR (achado ao vivo rodando isto de verdade).
   contents: write
   pull-requests: write
+  # Ler o run e os jobs do CI de staging para o gate.
+  actions: read
 
 concurrency:
   group: promote-staging-to-main
@@ -37,7 +45,49 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Staging pronto? (CI, deploy e E2E de staging no commit atual)
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENTO: ${{ github.event_name }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_ID_EVENTO: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          git fetch origin staging --quiet
+          SHA=$(git rev-parse origin/staging)
+
+          if [ "$EVENTO" = "workflow_run" ]; then
+            # CI de um commit que já não é o topo de staging: o run do commit novo
+            # chama este workflow de novo quando terminar.
+            if [ "$RUN_SHA" != "$SHA" ]; then
+              echo "::notice::CI terminou para ${RUN_SHA:0:8}, mas staging já está em ${SHA:0:8}. Espera o próximo."
+              echo "pronto=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            RUN_ID="$RUN_ID_EVENTO"
+          else
+            RUN_ID=$(gh run list --workflow ci.yml --branch staging --event push --commit "$SHA" \
+              --json databaseId,status --jq '[.[] | select(.status == "completed")][0].databaseId // empty')
+            if [ -z "$RUN_ID" ]; then
+              echo "::error::O CI de staging em ${SHA:0:8} ainda não terminou (ou não rodou). Rode de novo quando acabar."
+              exit 1
+            fi
+          fi
+
+          FALTA=$(gh run view "$RUN_ID" --json jobs --jq '
+            [.jobs[] | select(.name == "Deploy → staging (Supabase)" or .name == "E2E → staging (Playwright)")]
+            | if length < 2 then "jobs de staging não encontrados no run"
+              else map(select(.conclusion != "success") | "\(.name) = \(.conclusion)") | join("; ") end')
+          if [ -n "$FALTA" ]; then
+            echo "::error::Staging não está pronto em ${SHA:0:8}: $FALTA. Release não preparado (run $RUN_ID)."
+            exit 1
+          fi
+          echo "::notice::Staging pronto em ${SHA:0:8} (run $RUN_ID): deploy e E2E de staging verdes."
+          echo "pronto=true" >> "$GITHUB_OUTPUT"
+
       - name: Abrir ou atualizar o PR de release (branch + read-tree)
+        if: steps.gate.outputs.pronto == 'true'
         # NUNCA abre PR direto staging→main: o histórico diverge (releases antigos
         # foram squash), então qualquer método por replay (merge/rebase) dá conflito
         # falso. Usa o mesmo método do runbook manual (CLAUDE.md /
