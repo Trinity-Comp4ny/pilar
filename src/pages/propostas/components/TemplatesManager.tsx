@@ -19,10 +19,9 @@ import {
   type TemplateTipo,
   type PropostaTemplate,
 } from "@/hooks/usePropostaTemplates";
-import { AUTO_VARIABLES } from "@/lib/docxUtils";
+import { AUTO_VARIABLES } from "@/lib/propostaVariaveis";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { VariaveisGuideButton } from "./VariaveisGuideDialog";
-import mammoth from "mammoth";
 
 import { BusyMark } from "@/components/motion/BusyMark";
 import { ReadingRing } from "@/components/motion/ReadingRing";
@@ -89,6 +88,7 @@ export function TemplatesManager() {
     setPreviewLoading(true);
     try {
       const arrayBuffer = await downloadTemplateFile(t.arquivo_path);
+      const { default: mammoth } = await import("mammoth");
       const result = await mammoth.convertToHtml(
         { arrayBuffer },
         {

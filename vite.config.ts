@@ -61,7 +61,6 @@ const CHUNK_DO_PACOTE: Record<string, string> = {
   "jspdf-autotable": "vendor-pdf",
   docxtemplater: "vendor-docx",
   pizzip: "vendor-docx",
-  "file-saver": "vendor-docx",
   "@supabase/supabase-js": "vendor-supabase",
   "@tanstack/react-query": "vendor-query",
   "@tanstack/query-core": "vendor-query",

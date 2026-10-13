@@ -18,13 +18,12 @@ import { toast } from "sonner";
 import { reportInvokeError } from "@/lib/monitoring";
 import { saveAs } from "file-saver";
 import { usePropostaTemplates, downloadTemplateFile } from "@/hooks/usePropostaTemplates";
-import { AUTO_VARIABLES, buildVariableData, generateDocx } from "@/lib/docxUtils";
+import { AUTO_VARIABLES, buildVariableData } from "@/lib/propostaVariaveis";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { supabase } from "@/integrations/supabase/client";
 import { mensagemDaFunction } from "@/lib/edgeError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import mammoth from "mammoth";
 
 import { BusyMark } from "@/components/motion/BusyMark";
 import { ReadingRing } from "@/components/motion/ReadingRing";
@@ -204,6 +203,7 @@ export function GerarPropostaDialog({
   const buildDocx = async (): Promise<{ blob: Blob; fileName: string }> => {
     const templateBuffer = await downloadTemplateFile(selectedTemplate!.arquivo_path);
     const allData = { ...autoData, ...manualFields };
+    const { generateDocx } = await import("@/lib/docxUtils");
     const blob = generateDocx(templateBuffer, allData);
     const fileName = `${label}_${proposta.codigo || proposta.titulo.replace(/\s+/g, "_")}.docx`;
 
@@ -227,6 +227,7 @@ export function GerarPropostaDialog({
       // Convert to HTML for preview
       setPreviewLoading(true);
       const arrayBuffer = await blob.arrayBuffer();
+      const { default: mammoth } = await import("mammoth");
       const result = await mammoth.convertToHtml({ arrayBuffer });
       setPreviewHtml(result.value);
       setStep("preview");
