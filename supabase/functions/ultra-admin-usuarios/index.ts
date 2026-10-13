@@ -14,6 +14,7 @@ import { requireUltraAdmin } from "../_shared/admin-auth.ts";
 import { logAction } from "../_shared/audit.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { isEmailExistsError } from "../_shared/auth-errors.ts";
+import { emailDoConvite, papelSeguro } from "./entrada.ts";
 
 serve(
   withSentry("ultra-admin-usuarios", async (req) => {
@@ -40,7 +41,7 @@ serve(
 
       // ADR 0029/0034: role decide hierarquia; financeiro é eixo à parte
       // (profiles.financeiro_delegado, não muda por aqui).
-      const safeRole = ["admin", "coordenador", "user"].includes(role) ? role : target.role;
+      const safeRole = papelSeguro(role, target.role);
 
       const { error } = await svc.from("profiles").update({ role: safeRole }).eq("id", user_id);
 
@@ -173,9 +174,10 @@ serve(
       }
 
       if (!isUUID(empresa_id)) return safeErrorResponse(400, "empresa_id inválido", req);
-      if (!email || typeof email !== "string") return safeErrorResponse(400, "email obrigatório", req);
+      const emailConvite = emailDoConvite(email);
+      if (!emailConvite.ok) return safeErrorResponse(400, emailConvite.error, req);
 
-      const safeRole = ["admin", "coordenador", "user"].includes(role) ? role : "user";
+      const safeRole = papelSeguro(role, "user");
 
       const redirectOrigin = getTrustedOrigin(req);
       if (!redirectOrigin) return safeErrorResponse(500, "Server CORS misconfigured", req);
@@ -183,14 +185,14 @@ serve(
       // Cria o convite guardando SÓ o hash; retorna o plaintext para o e-mail.
       const { data: inviteToken, error: convErr } = await svc.rpc("admin_create_convite", {
         p_empresa_id: empresa_id,
-        p_email: email,
+        p_email: emailConvite.email,
         p_cargo: safeRole,
         p_nome: nome || null,
       });
 
       if (convErr || !inviteToken) return safeErrorResponse(400, convErr?.message ?? "Falha ao criar convite", req);
 
-      const { error: inviteError } = await svc.auth.admin.inviteUserByEmail(email, {
+      const { error: inviteError } = await svc.auth.admin.inviteUserByEmail(emailConvite.email, {
         redirectTo: `${redirectOrigin}/profile-setup`,
         data: { invite_token: inviteToken, nome: nome || "" },
       });
@@ -203,7 +205,7 @@ serve(
           .from("convites")
           .update({ usado_em: new Date().toISOString() })
           .eq("empresa_id", empresa_id)
-          .eq("email", String(email).toLowerCase().trim())
+          .eq("email", emailConvite.email)
           .is("usado_em", null);
         return safeErrorResponse(
           400,

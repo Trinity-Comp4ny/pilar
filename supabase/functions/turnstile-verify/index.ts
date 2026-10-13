@@ -4,6 +4,7 @@ import { getCorsHeaders } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
+import { aprovado, formularioVerificacao, tokenTurnstile } from "./entrada.ts";
 
 const log = createLogger("turnstile-verify");
 
@@ -63,8 +64,8 @@ serve(
         });
       }
 
-      const { token } = await req.json();
-      if (!token || typeof token !== "string") {
+      const token = tokenTurnstile(await req.json().catch(() => null));
+      if (!token) {
         return new Response(JSON.stringify({ success: false, error: "missing-token" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -73,19 +74,16 @@ serve(
 
       const ip = req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip") || "";
 
-      const form = new URLSearchParams();
-      form.append("secret", secret);
-      form.append("response", token);
-      if (ip) form.append("remoteip", ip);
+      const form = formularioVerificacao(secret, token, ip);
 
       const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
         method: "POST",
         body: form,
       });
-      const result = (await res.json()) as { success: boolean; "error-codes"?: string[] };
+      const ok = aprovado(await res.json().catch(() => null));
 
-      return new Response(JSON.stringify({ success: result.success }), {
-        status: result.success ? 200 : 403,
+      return new Response(JSON.stringify({ success: ok }), {
+        status: ok ? 200 : 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     } catch (error: unknown) {
