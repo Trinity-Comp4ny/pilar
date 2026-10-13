@@ -25,7 +25,7 @@ const log = createLogger("exportar-dados-titular");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const SHARED_SECRET = Deno.env.get("DATA_DELETION_NOTIFY_SECRET") ?? "";
-const DPO = Deno.env.get("LGPD_DPO_EMAIL") ?? "privacidade@trnty.com.br";
+const DPO = Deno.env.get("LGPD_DPO_EMAIL") ?? "privacidade@pilarsoft.com.br";
 
 const BUCKET = "lgpd-exportacoes";
 const VALIDADE_S = 7 * 24 * 60 * 60;
