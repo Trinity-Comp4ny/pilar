@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/format";
-import type { PainelGestao } from "@/hooks/usePainelGestao";
+import type { PainelGestao } from "@/pages/inicio/hooks/usePainelGestao";
 import { Vazio } from "./Numeros";
 
 /**

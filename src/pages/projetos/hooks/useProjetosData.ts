@@ -5,7 +5,7 @@ import { PROJECT_PRIORITY, type ProjectPriority } from "@/constants";
 import { type Projeto, type ProjetoDisciplinaDB, dbDisciplinaToLegacy } from "@/types/projetos";
 import { useTemplates } from "@/hooks/useTemplates";
 import { useFluxosDisciplinas } from "@/hooks/useFluxosDisciplinas";
-import { useDashboardRentabilidade } from "@/hooks/useRentabilidade";
+import { useDashboardRentabilidade } from "./useRentabilidade";
 import { usePermissions } from "@/hooks/usePermissions";
 
 // Todas as queries de dados da página Projetos: usuário atual, projetos (com

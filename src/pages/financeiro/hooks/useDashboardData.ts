@@ -1,13 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { startOfMonth, endOfMonth, differenceInCalendarDays, addDays, format } from "date-fns";
 import { buildDashboardQueries } from "./dashboard/queries";
-import {
-  buildKPIs,
-  buildProjetos,
-  buildLeadsPipeline,
-  buildVencimentos,
-  buildAlertas,
-} from "./dashboard/processors";
+import { buildKPIs, buildProjetos, buildLeadsPipeline, buildVencimentos, buildAlertas } from "./dashboard/processors";
 import type { DashboardData } from "./dashboard/types";
 
 // Re-export types para manter API pública compatível

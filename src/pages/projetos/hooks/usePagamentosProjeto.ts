@@ -94,11 +94,7 @@ export const usePagamentosProjeto = (projetoId: string | undefined) => {
       }));
 
       // Buscar valor_contrato do projeto (projetos_safe: NULL sem acesso financeiro)
-      const { data: proj } = await supabase
-        .from("projetos_safe")
-        .select("valor_contrato")
-        .eq("id", projetoId)
-        .single();
+      const { data: proj } = await supabase.from("projetos_safe").select("valor_contrato").eq("id", projetoId).single();
 
       const totalContrato = proj?.valor_contrato ?? 0;
 

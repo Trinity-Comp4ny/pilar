@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { errorMessage } from "@/lib/errors";
 import { formatDateTime } from "@/lib/format";
-import { useCampoAcessos, type CampoAcesso } from "@/hooks/useCampoAcessos";
+import { useCampoAcessos, type CampoAcesso } from "@/pages/obras/hooks/useCampoAcessos";
 import { CriarAcessoCampoDialog } from "./CriarAcessoCampoDialog";
 
 function statusLabel(acesso: CampoAcesso): string {

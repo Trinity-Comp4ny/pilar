@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import type { Feature } from "@/lib/permissions";
-import type { ItemLayout, Tamanho } from "@/hooks/usePainelLayout";
-import type { PainelGestao } from "@/hooks/usePainelGestao";
+import type { ItemLayout, Tamanho } from "@/pages/inicio/hooks/usePainelLayout";
+import type { PainelGestao } from "@/pages/inicio/hooks/usePainelGestao";
 import { BarrasDivergentes, BarrasHorizontais, CargaPorPessoa, LegendaPainel } from "./blocos/Primitivas";
 import { ConversaoMensalChart, FaturamentoChart, PontualidadeChart, ThroughputChart } from "./blocos/Graficos";
 import { NumerosObras, NumerosProjetos, NumerosPropostas, Vazio } from "./blocos/Numeros";
@@ -285,8 +285,7 @@ export const CATALOGO: Widget[] = [
             detalhe: String(x.entregas),
             // Só a pior disciplina fica vermelha, e só se ela se destaca das
             // outras: em empate, a lista toda vermelha não aponta nada.
-            alerta:
-              i === 0 && x.diasMedio > 0 && x.diasMedio > (d.projetos.atrasoPorDisciplina[1]?.diasMedio ?? 0),
+            alerta: i === 0 && x.diasMedio > 0 && x.diasMedio > (d.projetos.atrasoPorDisciplina[1]?.diasMedio ?? 0),
             titulo: `${x.entregas} entrega${x.entregas === 1 ? "" : "s"} concluída${x.entregas === 1 ? "" : "s"} com atraso`,
           }))}
         />
@@ -550,12 +549,7 @@ export const LAYOUT_PADRAO: ItemLayout[] = [
 ];
 
 /** Widgets que podem ir na faixa fixa: só os de contagem curta. */
-export const PODE_FIXAR = new Set([
-  "projetos_numeros",
-  "gestao_propostas_numeros",
-  "obras_numeros",
-  "fin_mes",
-]);
+export const PODE_FIXAR = new Set(["projetos_numeros", "gestao_propostas_numeros", "obras_numeros", "fin_mes"]);
 
 /** Quantas colunas de 12 cada tamanho ocupa, para calcular o buraco da linha. */
 export const COLUNAS: Record<Tamanho, number> = { kpi: 3, terco: 4, meia: 6, inteira: 12 };

@@ -29,10 +29,9 @@ describe("useFormPersist", () => {
 
   it("persiste valores no localStorage a cada mudança", () => {
     const onRestore = vi.fn();
-    const { rerender } = renderHook(
-      ({ values }) => useFormPersist({ storageKey: KEY, values, onRestore }),
-      { initialProps: { values: { nome: "" } } },
-    );
+    const { rerender } = renderHook(({ values }) => useFormPersist({ storageKey: KEY, values, onRestore }), {
+      initialProps: { values: { nome: "" } },
+    });
 
     rerender({ values: { nome: "Ana" } });
 
@@ -42,10 +41,7 @@ describe("useFormPersist", () => {
   });
 
   it("restaura um rascunho válido no mount", () => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ values: { nome: "Bruno" }, step: 2, savedAt: Date.now() }),
-    );
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ values: { nome: "Bruno" }, step: 2, savedAt: Date.now() }));
     const onRestore = vi.fn();
 
     renderHook(() => useFormPersist({ storageKey: KEY, values: { nome: "" }, onRestore }));
@@ -55,10 +51,7 @@ describe("useFormPersist", () => {
 
   it("descarta rascunho expirado (fora do TTL) e não restaura", () => {
     const twentyFiveHoursAgo = Date.now() - 25 * 60 * 60 * 1000;
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ values: { nome: "Velho" }, savedAt: twentyFiveHoursAgo }),
-    );
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ values: { nome: "Velho" }, savedAt: twentyFiveHoursAgo }));
     const onRestore = vi.fn();
 
     renderHook(() => useFormPersist({ storageKey: KEY, values: { nome: "" }, onRestore, ttlHours: 24 }));
@@ -72,9 +65,7 @@ describe("useFormPersist", () => {
     localStorage.setItem(STORAGE_KEY, "{ isto não é json válido");
     const onRestore = vi.fn();
 
-    expect(() =>
-      renderHook(() => useFormPersist({ storageKey: KEY, values: { nome: "" }, onRestore })),
-    ).not.toThrow();
+    expect(() => renderHook(() => useFormPersist({ storageKey: KEY, values: { nome: "" }, onRestore }))).not.toThrow();
 
     expect(onRestore).not.toHaveBeenCalled();
     // Após descartar o lixo, o hook volta a persistir JSON válido do form atual.
@@ -84,15 +75,12 @@ describe("useFormPersist", () => {
   });
 
   it("não persiste nem restaura quando enabled=false", () => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ values: { nome: "Ignorado" }, savedAt: Date.now() }),
-    );
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ values: { nome: "Ignorado" }, savedAt: Date.now() }));
     const onRestore = vi.fn();
 
     const { rerender } = renderHook(
       ({ values }) => useFormPersist({ storageKey: KEY, values, onRestore, enabled: false }),
-      { initialProps: { values: { nome: "" } } },
+      { initialProps: { values: { nome: "" } } }
     );
     rerender({ values: { nome: "Novo" } });
 

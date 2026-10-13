@@ -36,7 +36,7 @@ import {
   useMarcarRecebido,
   getDiasStatus,
   type PagamentoProjeto,
-} from "@/hooks/usePagamentosProjeto";
+} from "@/pages/projetos/hooks/usePagamentosProjeto";
 import { formatDate } from "@/lib/format";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { statusBadgeClasses } from "@/lib/status";

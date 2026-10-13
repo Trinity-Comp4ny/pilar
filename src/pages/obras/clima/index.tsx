@@ -33,7 +33,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { cn } from "@/lib/utils";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useObras } from "@/pages/obras/hooks/useObras";
-import { useCidadesSalvas } from "@/hooks/useCidadesSalvas";
+import { useCidadesSalvas } from "@/pages/obras/hooks/useCidadesSalvas";
 import {
   buscarHistorico,
   buscarLocais,

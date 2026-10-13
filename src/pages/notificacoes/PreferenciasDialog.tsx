@@ -13,7 +13,7 @@ import {
   useNotificacaoPreferencias,
   useSetPreferenciaInApp,
   useSetPreferenciaEmail,
-} from "@/hooks/useNotificacaoPreferencias";
+} from "@/pages/notificacoes/hooks/useNotificacaoPreferencias";
 
 interface PreferenciasDialogProps {
   open: boolean;
