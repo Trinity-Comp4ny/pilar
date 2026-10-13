@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { msgErroChat, extrairMotivoBloqueioTokens } from "./erros";
+import { msgErroChat, extrairMensagemErroIa, extrairMotivoBloqueioTokens } from "./erros";
 import { env } from "@/lib/env";
 import { reportInvokeError } from "@/lib/monitoring";
 import { softDelete, softDeleteGrupo } from "@/lib/softDelete";
@@ -240,8 +240,8 @@ const AI_CHAT_URL = `${SUPABASE_URL}/functions/v1/ai-chat`;
 class StreamIndisponivel extends Error {}
 
 /** Erro com status HTTP, para reaproveitar o mapeamento de msgErroChat (429/402/401...). */
-function erroComStatus(status: number, motivo?: string): Error {
-  return Object.assign(new Error(`HTTP ${status}`), { context: { status, motivo } });
+function erroComStatus(status: number, motivo?: string, erroIa?: { error: string; tipo: string }): Error {
+  return Object.assign(new Error(`HTTP ${status}`), { context: { status, motivo, ...erroIa } });
 }
 
 type SseEvento = { event: string; data: unknown };
@@ -310,9 +310,13 @@ async function enviarStream(
 
   if (!res.ok) {
     // Auth/limite: definitivo — mostra o erro (buffered daria o mesmo).
+    const body = await res.json().catch(() => null);
     if ([401, 402, 403, 429].includes(res.status)) {
-      const body = await res.json().catch(() => null);
       throw erroComStatus(res.status, typeof body?.motivo === "string" ? body.motivo : undefined);
+    }
+    // Falha de IA com tipo (SPEC 110): o buffered chamaria o modelo de novo e cairia no mesmo.
+    if (typeof body?.tipo === "string" && typeof body?.error === "string") {
+      throw erroComStatus(res.status, undefined, { error: body.error, tipo: body.tipo });
     }
     throw new StreamIndisponivel(`status ${res.status}`);
   }
@@ -533,9 +537,15 @@ export function useChat() {
         }
         reportInvokeError(err, "ai-chat", { porTimeout });
         const motivoBloqueio = await extrairMotivoBloqueioTokens(err);
+        const mensagemIa = await extrairMensagemErroIa(err);
         setMessages((prev) => [
           ...prev,
-          { id: novoId(), role: "assistant", content: msgErroChat(err, porTimeout, motivoBloqueio), erro: true },
+          {
+            id: novoId(),
+            role: "assistant",
+            content: msgErroChat(err, porTimeout, motivoBloqueio, mensagemIa),
+            erro: true,
+          },
         ]);
       };
 

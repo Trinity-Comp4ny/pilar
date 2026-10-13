@@ -155,6 +155,8 @@ export type Database = {
           idempotency_key: string | null
           input: Json | null
           model: string | null
+          prompt_hash: string | null
+          release: string | null
           result: Json | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -177,6 +179,8 @@ export type Database = {
           idempotency_key?: string | null
           input?: Json | null
           model?: string | null
+          prompt_hash?: string | null
+          release?: string | null
           result?: Json | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -199,6 +203,8 @@ export type Database = {
           idempotency_key?: string | null
           input?: Json | null
           model?: string | null
+          prompt_hash?: string | null
+          release?: string | null
           result?: Json | null
           reviewed_at?: string | null
           reviewed_by?: string | null
