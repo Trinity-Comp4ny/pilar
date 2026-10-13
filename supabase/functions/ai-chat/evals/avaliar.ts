@@ -66,6 +66,8 @@ export type ResultadoCaso = {
   tokens: number;
   tokensEntrada?: number;
   tokensSaida?: number;
+  /** Quem decidiu a intenção: o modelo de decisão ou o modelo de texto (SPEC 109). */
+  via?: "decisao" | "modelo";
 };
 
 export type Limites = { intencao: number; campos: number };
@@ -87,6 +89,7 @@ export function resumir(resultados: ResultadoCaso[], limites: Limites = LIMITES)
     tokens: resultados.reduce((a, r) => a + r.tokens, 0),
     tokensEntrada: resultados.reduce((a, r) => a + (r.tokensEntrada ?? 0), 0),
     tokensSaida: resultados.reduce((a, r) => a + (r.tokensSaida ?? 0), 0),
+    viaDecisao: resultados.filter((r) => r.via === "decisao").length,
     aprovado: intencao >= limites.intencao && campos >= limites.campos,
   };
 }

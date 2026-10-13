@@ -34,9 +34,9 @@ import { streamConsulta } from "./consulta.ts";
 import { carregarHistorico, comContexto } from "./contexto.ts";
 import { processarCriacao } from "./criacao.ts";
 import { ENTIDADE_CFG } from "./entidades.ts";
-import { ORQUESTRADOR_PROMPT } from "./prompts.ts";
 import { logAction, recordAndSaldo, respondFinal, respostaPrompt } from "./resposta.ts";
-import { AGENTE_LABEL, Agente, FEATURE_KEY, IntentSchema, RequestSchema, RespostaSchema } from "./schemas.ts";
+import { classificarIntencao } from "./roteamento.ts";
+import { AGENTE_LABEL, FEATURE_KEY, RequestSchema, RespostaSchema } from "./schemas.ts";
 
 // ---------------------------------------------------------------------------
 // Handler
@@ -119,21 +119,15 @@ serve(
       // Grava a mensagem do usuário.
       await authClient.from("chat_messages").insert({ session_id: sessionId, role: "user", content: message });
 
-      // 1) Orquestrador classifica a intenção (considerando o contexto da conversa).
-      const rota = await callGeminiStructured(
-        {
-          systemPrompt: ORQUESTRADOR_PROMPT,
-          userMessage: comContexto(
-            historico,
-            message,
-            "Classifique a intenção real do usuário (agente + modo)." + focoProjeto
-          ),
-          empresaId,
-          tipo: FEATURE_KEY,
-          conversationId: sessionId,
-        },
-        IntentSchema
-      );
+      // 1) Orquestrador classifica a intenção (considerando o contexto da conversa):
+      //    modelo de decisão quando configurado, modelo de texto quando ele hesita (SPEC 109).
+      const rota = await classificarIntencao({
+        historico,
+        message,
+        focoProjeto,
+        empresaId,
+        conversationId: sessionId,
+      });
       const agente = rota.data.agente;
       const modo = rota.data.modo;
 
@@ -272,7 +266,7 @@ serve(
         consultaRunId,
         "classificar_intencao",
         { message },
-        { agente, modo, motivo: rota.data.motivo }
+        { agente, modo, motivo: rota.data.motivo, via: rota.via }
       );
 
       // 2) Agente de domínio coleta os dados (read-only, RLS).
