@@ -3,6 +3,7 @@ import {
   formatCurrency,
   formatDateTime,
   formatDecimal,
+  formatHoras,
   formatNumber,
   formatNumberCompact,
   formatPercent,
@@ -86,6 +87,25 @@ describe("formatPercent — bordas", () => {
 
   it("valor não finito vira 0%", () => {
     expect(formatPercent(NaN)).toBe("0,0%");
+  });
+});
+
+describe("formatHoras", () => {
+  it("decimal de horas vira horas e minutos", () => {
+    expect(formatHoras(1.5)).toBe("1h 30min");
+    expect(formatHoras(2)).toBe("2h");
+    expect(formatHoras(0.25)).toBe("15min");
+  });
+
+  it("arredonda para o minuto mais próximo", () => {
+    expect(formatHoras(1.999)).toBe("2h");
+  });
+
+  it("nulo, zero, negativo e não finito viram null", () => {
+    expect(formatHoras(null)).toBeNull();
+    expect(formatHoras(0)).toBeNull();
+    expect(formatHoras(-1)).toBeNull();
+    expect(formatHoras(Number.NaN)).toBeNull();
   });
 });
 
