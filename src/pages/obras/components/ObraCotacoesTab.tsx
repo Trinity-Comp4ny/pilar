@@ -9,8 +9,13 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { formatDate } from "@/lib/format";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { menorValorProposta } from "@/lib/obras";
-import { useObraEtapas } from "@/hooks/useObraFrentes";
-import { useObraCotacoes, useDeleteCotacao, type CotacaoComPropostas, type CotacaoRow } from "@/hooks/useObraCotacoes";
+import { useObraEtapas } from "@/pages/obras/hooks/useObraFrentes";
+import {
+  useObraCotacoes,
+  useDeleteCotacao,
+  type CotacaoComPropostas,
+  type CotacaoRow,
+} from "@/pages/obras/hooks/useObraCotacoes";
 import { CotacaoFormDialog } from "./CotacaoFormDialog";
 import { CotacaoDetailDialog } from "./CotacaoDetailDialog";
 

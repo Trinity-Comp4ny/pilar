@@ -8,14 +8,14 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { formatDate, formatDecimal } from "@/lib/format";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { saldoMaterial } from "@/lib/obras";
-import { useObraEtapas } from "@/hooks/useObraFrentes";
+import { useObraEtapas } from "@/pages/obras/hooks/useObraFrentes";
 import {
   useObraEstoque,
   useDeleteMaterial,
   useDeleteMovimento,
   type MaterialComMovimentos,
   type MovimentoRow,
-} from "@/hooks/useObraEstoque";
+} from "@/pages/obras/hooks/useObraEstoque";
 import { MaterialMovDialog } from "./MaterialMovDialog";
 
 type MovDialogState = { movInicial?: MovimentoRow | null; materialIdInicial?: string | null };

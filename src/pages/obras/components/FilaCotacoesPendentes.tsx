@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { AlertTriangle, ArrowRight, ClipboardList } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ordenarCotacoesPendentes, urgenciaLabel } from "@/lib/obras";
-import { useCotacoesPendentesEmpresa } from "@/hooks/useObraCotacoes";
+import { useCotacoesPendentesEmpresa } from "@/pages/obras/hooks/useObraCotacoes";
 
 const LIMITE = 5;
 

@@ -6,13 +6,13 @@ import {
   useUpdateFrente,
   type AtualizaFrente,
   type ObraFrenteRow,
-} from "@/hooks/useObraFrentes";
+} from "@/pages/obras/hooks/useObraFrentes";
 import {
   useCreateObraTarefa,
   useDeleteObraTarefa,
   useUpdateObraTarefa,
   type PatchObraTarefa,
-} from "@/hooks/useObraTarefas";
+} from "@/pages/obras/hooks/useObraTarefas";
 import { useTarefaMutations } from "@/pages/meu-trabalho/hooks";
 import type { NivelCronograma } from "@/lib/obraArvore";
 

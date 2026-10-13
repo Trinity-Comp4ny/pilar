@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useObras, type ObraResumo } from "@/hooks/useObras";
+import { useObras, type ObraResumo } from "@/pages/obras/hooks/useObras";
 import { ObraFormDialog } from "./components/ObraFormDialog";
 import { FilaCotacoesPendentes } from "./components/FilaCotacoesPendentes";
 

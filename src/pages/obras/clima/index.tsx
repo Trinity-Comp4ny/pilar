@@ -32,7 +32,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useObras } from "@/hooks/useObras";
+import { useObras } from "@/pages/obras/hooks/useObras";
 import { useCidadesSalvas } from "@/hooks/useCidadesSalvas";
 import {
   buscarHistorico,

@@ -38,7 +38,7 @@ import {
   type PropostaComFornecedor,
   type PropostaItemInput,
   type PropostaComparativa,
-} from "@/hooks/useObraCotacoes";
+} from "@/pages/obras/hooks/useObraCotacoes";
 import { useCriarFornecedor } from "@/hooks/useFornecedorDetalhe";
 import { usePermissions } from "@/hooks/usePermissions";
 

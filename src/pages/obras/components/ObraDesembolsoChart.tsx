@@ -3,8 +3,8 @@ import { Area, AreaChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Too
 import { TrendingDown } from "lucide-react";
 import { desembolsoAcumuladoPorMes } from "@/lib/obras";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
-import type { ObraLancamentoRow } from "@/hooks/useObraConta";
-import type { ObraOrcamentoRow } from "@/hooks/useObraOrcamento";
+import type { ObraLancamentoRow } from "@/pages/obras/hooks/useObraConta";
+import type { ObraOrcamentoRow } from "@/pages/obras/hooks/useObraOrcamento";
 
 function mesLabel(mes: string): string {
   const [ano, m] = mes.split("-");

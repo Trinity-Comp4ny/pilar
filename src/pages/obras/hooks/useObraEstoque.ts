@@ -99,7 +99,7 @@ export function useSaveMovimento(obraId: string) {
   return useMutation({
     mutationFn: async ({ id, ...input }: MovimentoInput): Promise<void> => {
       // Baixa não valoriza estoque: o custo vem das entradas (custo médio).
-      const payload = { ...input, valor_unitario: input.tipo === "entrada" ? input.valor_unitario ?? null : null };
+      const payload = { ...input, valor_unitario: input.tipo === "entrada" ? (input.valor_unitario ?? null) : null };
       if (id) {
         const { error } = await supabase.from("obra_material_mov").update(payload).eq("id", id);
         if (error) throw error;
