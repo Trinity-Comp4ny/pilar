@@ -51,7 +51,7 @@ export default function () {
     ? `evt_dup_${__VU % 20}`
     : `evt_${__VU}_${__ITER}_${Date.now()}`;
 
-  const url = `${config.SUPABASE_URL}/functions/v1/webhook-asaas`;
+  const url = `${config.SUPABASE_URL}/functions/v1/asaas-webhook`;
   const headers = {
     'Content-Type': 'application/json',
     apikey: config.SUPABASE_KEY,

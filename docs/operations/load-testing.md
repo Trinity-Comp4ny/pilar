@@ -11,7 +11,15 @@ Documento define quando rodar a suite k6, como interpretar resultados e onde reg
 | Apos mudanca em RLS policy                | `dashboard-read`, `listar-lancamentos`                  | Sim          |
 | Apos mudanca em edge function `webhook-*` | `webhook-asaas`                                         | Sim          |
 | Apos mudanca em Auth flow                 | `login`                                                 | Sim          |
-| Semanal (sandbox)                         | Todos                                                   | Recomendado  |
+| Semanal, automático (staging)             | `dashboard-read`, `listar-lancamentos` (perfil leve)    | Sim          |
+
+## Rodada semanal automática
+
+`.github/workflows/carga-semanal.yml` roda toda segunda às 6h (UTC) contra o staging, com
+`K6_PERFIL=semanal` (até 10 VUs por 5 minutos), os dois cenários de leitura. Falha quando
+passa dos limites de `tests/load/utils/setup.js` (p95 < 500 ms, falha < 1%). O resumo
+(p95 e taxa de falha) fica no job e o JSON como artifact por 90 dias: é a série histórica
+que preenche a tabela de baseline abaixo. Recusa a URL de produção.
 
 ## Como rodar (resumo)
 
