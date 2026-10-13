@@ -97,14 +97,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const p = data as ProfileWithEmpresa;
     setProfile(p);
     setProfileError(false);
+    // Só id, empresa e papel: telemetria não recebe contato da pessoa (docs/ROPA.md,
+    // itens 11 e 14). Para achar o usuário de um erro, o id leva ao perfil no admin.
     monitoring.setUser({
       id: p.id,
-      email: p.email ?? undefined,
       empresa_id: p.empresa_id ?? undefined,
       role: p.role ?? undefined,
     });
     analytics.identify(p.id, {
-      email: p.email ?? undefined,
       empresa_id: p.empresa_id ?? undefined,
       role: p.role ?? undefined,
     });
