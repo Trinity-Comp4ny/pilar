@@ -128,9 +128,9 @@ export function recordGenAiSpan(span: GenAiSpanInput): void {
   genAiSpanStore.getStore()?.push(span);
 }
 
+/** Só id e empresa: o Sentry não recebe contato da pessoa (docs/ROPA.md, item 14). */
 export interface SentryUserInfo {
   id?: string;
-  email?: string;
   empresa_id?: string;
 }
 
@@ -339,7 +339,7 @@ async function sendTransaction(params: {
     server_name: params.fnName,
     timestamp: endTs,
     start_timestamp: startTs,
-    user: params.user ? { id: params.user.id, email: params.user.email, segment: params.user.empresa_id } : undefined,
+    user: params.user ? { id: params.user.id, segment: params.user.empresa_id } : undefined,
     tags: {
       runtime: "deno-edge",
       fn: params.fnName,

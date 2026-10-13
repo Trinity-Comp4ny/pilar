@@ -28,9 +28,9 @@ export type CaptureOptions = {
 type MetricTags = Record<string, string | number | boolean>;
 export type MetricType = "count" | "gauge" | "distribution";
 
+/** Sem e-mail nem nome de propósito: o Sentry identifica o usuário só pelo id. */
 export interface MonitoringUser {
   id?: string;
-  email?: string;
   empresa_id?: string;
   role?: string;
 }
@@ -135,6 +135,14 @@ const noopMonitoring: Monitoring = {
   },
 };
 
+/**
+ * Replay de sessão com erro: a tela vai sem o conteúdo. Texto, campos e mídia
+ * mascarados (padrão do SDK), então o replay mostra layout, cliques e navegação, mas
+ * não nome de cliente, valor, salário ou documento. É o que o registro de tratamento
+ * declara para o Sentry (docs/ROPA.md, item 14).
+ */
+export const OPCOES_REPLAY = { maskAllText: true, maskAllInputs: true, blockAllMedia: true } as const;
+
 const sentryMonitoring: Monitoring = {
   init() {
     if (!DSN) return;
@@ -185,7 +193,7 @@ const sentryMonitoring: Monitoring = {
     // primeiros instantes antes do script chegar não entram na gravação; o erro em si e
     // o tracing já estão ativos desde o init.
     Sentry.lazyLoadIntegration("replayIntegration")
-      .then((integrationFn) => Sentry.addIntegration(integrationFn({ maskAllText: false, blockAllMedia: false })))
+      .then((integrationFn) => Sentry.addIntegration(integrationFn(OPCOES_REPLAY)))
       .catch(() => undefined);
     // beforeSend só roda pra eventos de erro: sendFeedback() emite um evento
     // tipo "feedback" à parte, que precisa do próprio scrub aqui.
@@ -215,7 +223,7 @@ const sentryMonitoring: Monitoring = {
       Sentry.setUser(null);
       return;
     }
-    Sentry.setUser({ id: user.id, email: user.email });
+    Sentry.setUser({ id: user.id });
     if (user.empresa_id) Sentry.setTag("empresa_id", user.empresa_id);
     if (user.role) Sentry.setTag("role", user.role);
   },

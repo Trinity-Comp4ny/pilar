@@ -64,7 +64,7 @@ serve(
       const { data: profile } = await authClient.from("profiles").select("empresa_id").eq("id", user.id).single();
       if (!profile?.empresa_id) return jsonResponse({ error: "Perfil não encontrado" }, 403, req);
       const empresaId = profile.empresa_id as string;
-      setSentryUser({ id: user.id, email: user.email, empresa_id: empresaId });
+      setSentryUser({ id: user.id, empresa_id: empresaId });
 
       if (!(await checkRateLimit(adminClient, empresaId))) {
         return jsonResponse(

@@ -30,7 +30,6 @@ import type { EventoProduto } from "./eventosProduto";
 type Props = Record<string, unknown>;
 
 export interface AnalyticsTraits {
-  email?: string;
   empresa_id?: string;
   role?: string;
   [k: string]: unknown;
@@ -49,14 +48,17 @@ const DEV = import.meta.env.DEV;
 const KEY = env.VITE_POSTHOG_KEY;
 const HOST = env.VITE_POSTHOG_HOST ?? "https://us.i.posthog.com";
 
+// E-mail e telefone também: o registro de tratamento (docs/ROPA.md, item 11) declara
+// que o PostHog recebe evento, rota, empresa_id e role, nunca contato da pessoa.
 const SENSITIVE_KEYS =
-  /password|senha|token|api_key|secret|authorization|cookie|cpf|cnpj|rg|pix|conta_bancaria|agencia|salario/i;
+  /password|senha|token|api_key|secret|authorization|cookie|cpf|cnpj|rg|pix|conta_bancaria|agencia|salario|e_?mail|telefone|phone|celular/i;
 
 const PII_PATTERNS: Array<{ re: RegExp; replace: string }> = [
   { re: /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g, replace: "[CPF]" },
   { re: /\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/g, replace: "[CNPJ]" },
   { re: /\b\d{5}-?\d{3}\b/g, replace: "[CEP]" },
   { re: /\b(?:\d[ -]?){13,16}\d\b/g, replace: "[CARD]" },
+  { re: /[^\s@<>()"']+@[^\s@<>()"']+\.[a-z]{2,}/gi, replace: "[EMAIL]" },
 ];
 
 function scrubString(s: string): string {
