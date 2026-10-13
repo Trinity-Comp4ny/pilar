@@ -17,6 +17,9 @@ funcionar. Nenhum deles recebe acesso além do estritamente necessário pra fun�
 | **Asaas**                  | Gateway de pagamento (assinatura do Pilar e compra de pacote de token)                                         | Dado de pagamento (cartão tokenizado, não armazenado cru), CPF/CNPJ do pagador               | Brasil                                       | 🟡 a confirmar |
 | **Cloudflare (Turnstile)** | Anti-abuso no cadastro (captcha)                                                                               | IP, cookie anti-bot                                                                          | Global                                       | 🟡 a confirmar |
 | **Google (Gemini API)**    | Modelo de IA por trás do chat/copiloto (`ai-chat`) e das automações `ai-cotacao-import`/`ai-import-financeiro` | Texto digitado pelo usuário no chat, conteúdo de cotação/documento financeiro enviado pra IA | EUA/global conforme região da API            | 🟡 a confirmar |
+| **Vercel (AI Gateway)**    | Ponte para modelos de IA de outros fornecedores, quando uma função é configurada com `gateway:<fornecedor>/<modelo>` (SPEC 108) | O mesmo texto e documento enviado ao modelo, repassado ao fornecedor do modelo | EUA/global | 🟡 a confirmar |
+| **Anthropic (Claude)**     | Modelo de IA do chat (`ai-chat`) quando `AI_MODELO_AI_CHAT` aponta para `anthropic/*`, via Vercel AI Gateway | Texto digitado no chat e os dados do escritório usados na resposta | EUA/global (Anthropic, ou AWS Bedrock/Google Vertex escolhido pelo gateway) | 🟡 a confirmar |
+| **TypeSafe AI (Jev)**      | Classifica a intenção da mensagem do chat quando `AI_DECISAO_AI_CHAT` está ligada (SPEC 109), via Vercel AI Gateway | Texto da mensagem do chat e os últimos turnos da conversa | EUA/global | 🟡 a confirmar |
 
 **Nunca vendemos dado a terceiro**, e nenhum subprocessador acima usa o dado do cliente pra
 treinar modelo próprio ou qualquer finalidade fora da função listada. Para o Google
@@ -24,6 +27,12 @@ especificamente, confirmado em 2026-09-08: o projeto que gera a `GEMINI_API_KEY`
 (billing) ativo, o que coloca o uso no tier pago da Gemini API — sob os termos desse tier, o
 Google **não** usa o conteúdo enviado (prompt/resposta) pra treinar modelo, tratando só como log
 de abuso com retenção curta.
+
+**Fornecedores via Vercel AI Gateway** (Anthropic, TypeSafe AI): só recebem dado quando a
+variável correspondente está configurada nas Edge Functions; sem ela, nada passa pelo gateway.
+O catálogo do gateway informa que esses provedores não treinam com o conteúdo. A exigência de
+retenção zero por requisição (`zeroDataRetention`) existe no gateway, mas só no plano Pro da
+Vercel (em 2026-10-13 a conta está no Hobby).
 
 ## Mudança de subprocessador
 
