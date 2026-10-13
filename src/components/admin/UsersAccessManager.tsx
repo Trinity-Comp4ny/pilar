@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
   Pencil,
   Trash2,
@@ -42,7 +44,15 @@ export type ManagedUser = {
   isPending?: boolean;
   /** id do convite (quando isPending) — necessário para reenviar/cancelar */
   inviteId?: string | null;
+  /** Último login (só o portal ultra admin tem esse dado, SPEC 117). */
+  lastSignInAt?: string | null;
 };
+
+function ultimoAcessoLabel(u: ManagedUser): string {
+  if (u.isPending) return "Convite enviado";
+  if (!u.lastSignInAt) return "Nunca entrou";
+  return formatDistanceToNow(new Date(u.lastSignInAt), { addSuffix: true, locale: ptBR });
+}
 
 /**
  * Acesso tem dois eixos independentes (ADR 0034): o tipo de conta (role, esta
@@ -91,6 +101,10 @@ export type UsersAccessManagerProps = {
   onResendInvite?: (user: ManagedUser) => void | Promise<void>;
   /** Cancelar convite pendente (opcional) */
   onCancelInvite?: (user: ManagedUser) => void | Promise<void>;
+  /** Mostra a coluna "Último acesso" (usa `lastSignInAt`). */
+  showLastAccess?: boolean;
+  title?: string;
+  description?: string;
 };
 
 export function UsersAccessManager({
@@ -107,6 +121,9 @@ export function UsersAccessManager({
   onDelete,
   onResendInvite,
   onCancelInvite,
+  showLastAccess = false,
+  title = "Usuários da Empresa",
+  description = "Convide quem trabalha com você e defina quem administra a conta.",
 }: UsersAccessManagerProps) {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ManagedUser | null>(null);
@@ -128,9 +145,9 @@ export function UsersAccessManager({
         <div>
           <CardTitle className="flex items-center gap-2">
             <UsersIcon size={20} strokeWidth={1.5} />
-            Usuários da Empresa
+            {title}
           </CardTitle>
-          <CardDescription>Convide quem trabalha com você e defina quem administra a conta.</CardDescription>
+          <CardDescription>{description}</CardDescription>
         </div>
         {canManage && (
           <Button type="button" onClick={openInvite} variant="brand" className="rounded-full">
@@ -148,13 +165,14 @@ export function UsersAccessManager({
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Tipo de conta</TableHead>
+                {showLastAccess && <TableHead>Último acesso</TableHead>}
                 <TableHead className="w-32 text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-black/50">
+                  <TableCell colSpan={showLastAccess ? 5 : 4} className="text-black/50">
                     Nenhum usuário adicionado.
                   </TableCell>
                 </TableRow>
@@ -212,6 +230,7 @@ export function UsersAccessManager({
                           )}
                         </div>
                       </TableCell>
+                      {showLastAccess && <TableCell className="text-black/60">{ultimoAcessoLabel(u)}</TableCell>}
                       <TableCell className="text-right">
                         {canManage && u.isPending ? (
                           <div className="flex justify-end gap-2">
@@ -293,6 +312,7 @@ export function UsersAccessManager({
                           {u.isPending && <Badge variant="secondary">Pendente</Badge>}
                         </div>
                         <p className="mt-1 break-all text-xs text-black/60">{u.email}</p>
+                        {showLastAccess && <p className="mt-0.5 text-xs text-black/50">{ultimoAcessoLabel(u)}</p>}
                       </div>
                       {canManage && u.isPending ? (
                         <div className="flex flex-col gap-2">

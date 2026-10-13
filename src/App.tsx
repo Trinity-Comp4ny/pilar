@@ -71,7 +71,19 @@ const ClienteProjetoDetail = lazy(() => import("./pages/cliente/ClienteProjetoDe
 const NotFound = lazy(() => import("./pages/NotFound"));
 const StatusPage = lazy(() => import("./pages/status"));
 const Admin = lazy(() => import("./pages/admin"));
-const UltraAdmin = lazy(() => import("./pages/ultra-admin"));
+// Portal ultra admin (SPEC 117): um chunk só, carregado na 1ª rota /ultra-admin.
+const ultraAdmin = () => import("./pages/ultra-admin");
+const UltraShell = lazy(() => ultraAdmin().then((m) => ({ default: m.UltraShell })));
+const UltraVisaoGeral = lazy(() => ultraAdmin().then((m) => ({ default: m.VisaoGeral })));
+const UltraEmpresas = lazy(() => ultraAdmin().then((m) => ({ default: m.Empresas })));
+const UltraEmpresaDetalhe = lazy(() => ultraAdmin().then((m) => ({ default: m.EmpresaDetalhe })));
+const UltraUsuarios = lazy(() => ultraAdmin().then((m) => ({ default: m.Usuarios })));
+const UltraTestes = lazy(() => ultraAdmin().then((m) => ({ default: m.Testes })));
+const UltraFuncionalidades = lazy(() => ultraAdmin().then((m) => ({ default: m.Funcionalidades })));
+const UltraFeedback = lazy(() => ultraAdmin().then((m) => ({ default: m.Feedback })));
+const UltraAtividade = lazy(() => ultraAdmin().then((m) => ({ default: m.Atividade })));
+const UltraIncidentes = lazy(() => ultraAdmin().then((m) => ({ default: m.Incidentes })));
+const UltraCustosIa = lazy(() => ultraAdmin().then((m) => ({ default: m.CustosIa })));
 const MfaChallengePage = lazy(() => import("./pages/MfaChallengePage"));
 const MfaSetupPage = lazy(() => import("./pages/MfaSetupPage"));
 const PasswordReset = lazy(() => import("./pages/PasswordReset"));
@@ -360,7 +372,19 @@ const App = () => {
                           </Route>
 
                           <Route element={<UltraAdminRoute />}>
-                            <Route path="/ultra-admin" element={<UltraAdmin />} />
+                            <Route path="/ultra-admin" element={<UltraShell />}>
+                              <Route index element={<UltraVisaoGeral />} />
+                              <Route path="empresas" element={<UltraEmpresas />} />
+                              <Route path="empresas/:id" element={<UltraEmpresaDetalhe />} />
+                              <Route path="usuarios" element={<UltraUsuarios />} />
+                              <Route path="testes" element={<UltraTestes />} />
+                              <Route path="funcionalidades" element={<UltraFuncionalidades />} />
+                              <Route path="feedback" element={<UltraFeedback />} />
+                              <Route path="atividade" element={<UltraAtividade />} />
+                              <Route path="incidentes" element={<UltraIncidentes />} />
+                              <Route path="custos-ia" element={<UltraCustosIa />} />
+                              <Route path="*" element={<Navigate to="/ultra-admin" replace />} />
+                            </Route>
                           </Route>
                         </Route>
 
