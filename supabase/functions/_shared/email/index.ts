@@ -23,6 +23,7 @@ export {
 } from "./templates/escritorio.ts";
 export {
   templateLgpdExclusaoDados,
+  templateLgpdExportacaoDados,
   templateTrialAviso,
   templateTrialExpirado,
   templateAtivarPlanoRecibo,

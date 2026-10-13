@@ -118,6 +118,17 @@ const casos: Array<[string, () => { subject: string; html: string }]> = [
       }),
   ],
   [
+    "lgpd exportação",
+    () =>
+      T.templateLgpdExportacaoDados({
+        empresaNome: XSS,
+        solicitanteEmail: XSS,
+        solicitanteNome: XSS,
+        requestedAt: XSS,
+        requestId: XSS,
+      }),
+  ],
+  [
     "notificacoes",
     () =>
       T.templateNotificacoes({

@@ -24,3 +24,12 @@ Deno.test("request_id precisa ser uuid", () => {
   assertEquals(lerEntrada({ request_id: "6f1c2a9e-1b2c-4d3e-8f4a-5b6c7d8e9f00" }).ok, true);
   assertEquals(lerEntrada({ request_id: "1" }), { ok: false, error: "request_id inválido" });
 });
+
+Deno.test("tipo: exclusão por padrão (trigger antigo), exportação quando pedido", () => {
+  const id = "6f1c2a9e-1b2c-4d3e-8f4a-5b6c7d8e9f00";
+  const padrao = lerEntrada({ request_id: id });
+  assertEquals(padrao.ok && padrao.data.tipo, "exclusao");
+  const exportacao = lerEntrada({ request_id: id, tipo: "exportacao" });
+  assertEquals(exportacao.ok && exportacao.data.tipo, "exportacao");
+  assertEquals(lerEntrada({ request_id: id, tipo: "outro" }).ok, false);
+});
