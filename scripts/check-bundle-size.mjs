@@ -26,12 +26,16 @@ const BUDGETS = {
   //
   // 2026-10-09: 230 kB. O Replay do Sentry passou a vir da CDN depois do boot e a
   // entrada caiu de ~270 para ~221 kB; a catraca acompanha.
-  entry: 230 * 1024,
+  //
+  // 2026-10-13: 155 kB. O PostHog passou a vir por import dinâmico só com
+  // consentimento (src/lib/analytics.ts) e a entrada caiu de ~230 para ~142 kB.
+  entry: 155 * 1024,
   // Tudo que o navegador baixa antes da primeira tela: a entrada mais os chunks que o
   // index.html pré-carrega (modulepreload) e o CSS. O limite só da entrada não via o
   // vendor-pdf e o vendor-charts sendo pré-carregados em toda página (~860 kB brutos),
   // porque eram outros arquivos. Medido em 2026-10-09: ~416 kB depois da correção.
-  initialLoad: 430 * 1024,
+  // 2026-10-13: ~338 kB com o PostHog fora do boot; limite desce para 350 kB.
+  initialLoad: 350 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app
