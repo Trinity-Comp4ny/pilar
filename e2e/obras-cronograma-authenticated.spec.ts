@@ -6,7 +6,7 @@ import { test, expect } from "./fixtures";
  *
  * O pgTAP cobre o banco (cronograma_obra_quatro_niveis.sql); aqui é o caminho do
  * engenheiro na tela: monta a árvore do zero, marca a tarefa como feita, confere
- * que o progresso sobe pela árvore e que o Gantt lê a mesma estrutura. Obra nova
+ * que o progresso sobe pela árvore e que a escolha Lista/Gantt persiste. Obra nova
  * por execução, para não depender do estado de rodadas anteriores.
  */
 
@@ -71,14 +71,18 @@ test("concluir a tarefa sobe o progresso até a fase", async ({ page }) => {
   await expect(page.getByText("0% · 0/1")).toHaveCount(0);
 });
 
-test("Gantt lê a mesma árvore e a escolha da visão persiste", async ({ page }) => {
+test("Gantt sem datas orienta a voltar pra lista e a visão escolhida persiste", async ({ page }) => {
   await abrirCronograma(page);
 
+  // Nenhum item tem data ainda: o Gantt explica o que falta em vez de abrir vazio.
   await page.getByRole("tab", { name: "Gantt" }).click();
-  await expect(page.getByRole("tab", { name: "Gantt" })).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByText("Estrutura").first()).toBeVisible();
+  await expect(page.getByText("Sem datas para a linha do tempo")).toBeVisible();
 
   await page.reload();
   await page.getByRole("tab", { name: "Cronograma" }).click();
   await expect(page.getByRole("tab", { name: "Gantt" })).toHaveAttribute("aria-selected", "true");
+
+  await page.getByRole("button", { name: "Ir para a lista" }).click();
+  await expect(page.getByRole("tab", { name: "Lista" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByText("Escavar sapatas", { exact: true })).toBeVisible();
 });
