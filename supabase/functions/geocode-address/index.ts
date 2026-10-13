@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { recordMetric, withSentry } from "../_shared/sentry.ts";
-import { jsonResponse, optionsResponse } from "../_shared/cors.ts";
+import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
+import { getRateLimitKey, RateLimiter } from "../_shared/rate-limiter.ts";
 
 // User-Agent exigido pelo fair-use do Nominatim. Sem ele o IP é bloqueado.
 const NOMINATIM_UA = "PilarSoft/1.0 (contato@pilarsoft.com.br)";
@@ -39,6 +40,12 @@ const ESTADO_POR_UF: Record<string, string> = {
   SE: "Sergipe",
   TO: "Tocantins",
 };
+
+// Só o formulário de projeto chama, uma vez por endereço salvo. O teto protege a
+// cota do Nominatim (fair-use de 1 req/s por IP): sem ele, qualquer um com a
+// chave pública usava a função como proxy e o IP da edge acabava bloqueado.
+const limiter = new RateLimiter(30, 60_000);
+const MAX_CAMPO = 300;
 
 interface GeocodeBody {
   // Query livre (compatível com o contrato antigo)
@@ -105,10 +112,22 @@ async function queryOpenMeteoCidade(city: string, state?: string): Promise<GeoRe
 serve(
   withSentry("geocode-address", async (req) => {
     if (req.method === "OPTIONS") return optionsResponse(req);
+    if (req.method !== "POST") return safeErrorResponse(405, "Method not allowed", req);
+
+    const auth = await authenticateUser(req);
+    if (auth.error) return auth.error;
+    if (!limiter.allow(getRateLimitKey(req, auth.user.id))) {
+      return safeErrorResponse(429, "Muitas buscas de endereço. Aguarde um minuto e tente de novo.", req);
+    }
 
     try {
       const body = (await req.json()) as GeocodeBody;
       const { address, street, city, state, postalcode } = body;
+
+      const longo = [address, street, city, state, postalcode].some(
+        (v) => typeof v === "string" && v.length > MAX_CAMPO
+      );
+      if (longo) return jsonResponse({ error: "Endereço longo demais" }, 400, req);
 
       const hasStructured = Boolean(street || city || state || postalcode);
       const hasAddress = typeof address === "string" && address.trim().length > 0;
