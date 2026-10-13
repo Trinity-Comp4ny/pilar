@@ -18,6 +18,21 @@ export type ProjetoEtapa = {
 
 const KEY = ["projetos", "etapas"] as const;
 
+// Paleta das colunas (dot). Mesma família das âncoras semeadas no banco.
+export const CORES_ETAPA_PROJETO = [
+  "#f59e0b",
+  "#3b82f6",
+  "#8b5cf6",
+  "#64748b",
+  "#10b981",
+  "#ef4444",
+  "#ec4899",
+  "#14b8a6",
+] as const;
+
+/** Cor que a coluna mostra no quadro (sem cor salva cai no cinza neutro). */
+export const corDaEtapaProjeto = (cor: string | null) => cor ?? "#94a3b8";
+
 export function useProjetoEtapas() {
   return useQuery({
     queryKey: KEY,
@@ -63,9 +78,10 @@ export function useProjetoEtapaMutations() {
     onSuccess: invalidate,
   });
 
-  const renomear = useMutation({
-    mutationFn: async ({ id, nome }: { id: string; nome: string }) => {
-      const { error } = await supabase.from("projeto_etapas").update({ nome }).eq("id", id);
+  // Editar coluna: nome + cor.
+  const editar = useMutation({
+    mutationFn: async ({ id, nome, cor }: { id: string; nome: string; cor: string }) => {
+      const { error } = await supabase.from("projeto_etapas").update({ nome, cor }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: invalidate,
@@ -95,5 +111,5 @@ export function useProjetoEtapaMutations() {
     },
   });
 
-  return { criar, renomear, reordenar, excluir };
+  return { criar, editar, reordenar, excluir };
 }

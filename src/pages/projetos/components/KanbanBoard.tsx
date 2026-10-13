@@ -1,22 +1,10 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PROJECT_STATUS, type ProjectStatus } from "@/constants";
 import { type Projeto } from "@/types/projetos";
-import { type ProjetoEtapa } from "@/pages/projetos/hooks/useProjetoEtapas";
+import { CORES_ETAPA_PROJETO, type ProjetoEtapa } from "@/pages/projetos/hooks/useProjetoEtapas";
 import { AddColumnInline } from "@/components/kanban/AddColumnInline";
 import { KanbanColumn } from "@/pages/projetos/components/KanbanColumn";
 import { ProjectCard } from "@/pages/projetos/components/ProjectCard";
-
-// Paleta das colunas (dot). Mesma família das âncoras semeadas no banco.
-const CORES_ETAPA_PROJETO = [
-  "#f59e0b",
-  "#3b82f6",
-  "#8b5cf6",
-  "#64748b",
-  "#10b981",
-  "#ef4444",
-  "#ec4899",
-  "#14b8a6",
-] as const;
 
 const BUCKETS: ProjectStatus[] = [
   PROJECT_STATUS.PLANEJAMENTO,
@@ -39,7 +27,7 @@ interface KanbanBoardProps {
   onToggleColumn: (etapaId: string) => void;
   onCriarEtapa: (nome: string, cor: string, bucket: ProjectStatus) => Promise<boolean>;
   criandoEtapa: boolean;
-  onRenomearEtapa: (etapa: ProjetoEtapa) => void;
+  onEditarEtapa: (etapa: ProjetoEtapa) => void;
   onReordenarEtapa: (etapaId: string, dir: -1 | 1) => void;
   onExcluirEtapa: (etapa: ProjetoEtapa) => void;
   onCardClick: (projeto: Projeto) => void;
@@ -63,7 +51,7 @@ export function KanbanBoard({
   onToggleColumn,
   onCriarEtapa,
   criandoEtapa,
-  onRenomearEtapa,
+  onEditarEtapa,
   onReordenarEtapa,
   onExcluirEtapa,
   onCardClick,
@@ -86,7 +74,7 @@ export function KanbanBoard({
           clientes={clientes}
           rentabilidadeMap={rentabilidadeMap}
           onToggleColumn={onToggleColumn}
-          onRenomear={onRenomearEtapa}
+          onEditar={onEditarEtapa}
           onReordenar={onReordenarEtapa}
           onExcluir={onExcluirEtapa}
           onCardClick={onCardClick}

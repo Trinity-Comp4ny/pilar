@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { type Projeto } from "@/types/projetos";
-import { type ProjetoEtapa } from "@/pages/projetos/hooks/useProjetoEtapas";
+import { corDaEtapaProjeto, type ProjetoEtapa } from "@/pages/projetos/hooks/useProjetoEtapas";
 import { ProjectCard } from "@/pages/projetos/components/ProjectCard";
 import { ProjetoColumnSkeleton } from "@/pages/projetos/components/ProjetoCardSkeleton";
 import { QuickAddCard } from "@/pages/projetos/components/QuickAddCard";
@@ -27,7 +27,7 @@ interface KanbanColumnProps {
   clientes: { id: string; nome: string }[];
   rentabilidadeMap: Record<string, number>;
   onToggleColumn: (etapaId: string) => void;
-  onRenomear: (etapa: ProjetoEtapa) => void;
+  onEditar: (etapa: ProjetoEtapa) => void;
   onReordenar: (etapaId: string, dir: -1 | 1) => void;
   onExcluir: (etapa: ProjetoEtapa) => void;
   onCardClick: (projeto: Projeto) => void;
@@ -50,7 +50,7 @@ export function KanbanColumn({
   clientes,
   rentabilidadeMap,
   onToggleColumn,
-  onRenomear,
+  onEditar,
   onReordenar,
   onExcluir,
   onCardClick,
@@ -58,7 +58,7 @@ export function KanbanColumn({
   onDelete,
   onQuickAddCreated,
 }: KanbanColumnProps) {
-  const cor = etapa.cor ?? "#94a3b8";
+  const cor = corDaEtapaProjeto(etapa.cor);
 
   if (isCollapsed) {
     return (
@@ -102,8 +102,8 @@ export function KanbanColumn({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onRenomear(etapa)}>
-                  <Pencil className="mr-2 h-4 w-4" /> Renomear
+                <DropdownMenuItem onClick={() => onEditar(etapa)}>
+                  <Pencil className="mr-2 h-4 w-4" /> Editar
                 </DropdownMenuItem>
                 <DropdownMenuItem disabled={index === 0} onClick={() => onReordenar(etapa.id, -1)}>
                   <ChevronLeft className="mr-2 h-4 w-4" /> Mover para esquerda
