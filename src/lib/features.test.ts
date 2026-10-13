@@ -6,8 +6,11 @@ import {
   applyFeatureToggle,
   FEATURES,
   FEATURE_MODULE,
+  groupFeatures,
   isFeatureEnabledForCompany,
   moduleOfFeature,
+  parseCompanyFeatures,
+  rootFeaturesOfModule,
   subFeaturesOf,
   type FeatureKey,
 } from "./features";
@@ -220,5 +223,34 @@ describe("sincronia UNIVERSAL_FEATURES do ultra-admin-empresas (edge function) c
       const feature = FEATURES.find((f) => f.key === key);
       expect(feature?.universal, `UNIVERSAL_FEATURES cita '${key}', que não é universal no front`).toBe(true);
     }
+  });
+});
+
+describe("parseCompanyFeatures", () => {
+  it("JSONB inválido vira objeto vazio", () => {
+    expect(parseCompanyFeatures(null)).toEqual({});
+    expect(parseCompanyFeatures("projetos")).toEqual({});
+    expect(parseCompanyFeatures(["projetos"])).toEqual({});
+  });
+
+  it("descarta chave desconhecida e valor que não é booleano", () => {
+    expect(parseCompanyFeatures({ projetos: true, inventada: true, leads: "sim", financeiro: false })).toEqual({
+      projetos: true,
+      financeiro: false,
+    });
+  });
+});
+
+describe("groupFeatures e rootFeaturesOfModule", () => {
+  it("toda feature cai em exatamente um grupo", () => {
+    const grupos = groupFeatures();
+    const total = Object.values(grupos).reduce((n, g) => n + g.length, 0);
+    expect(total).toBe(FEATURES.length);
+  });
+
+  it("raízes de um módulo não incluem sub-feature", () => {
+    const modulo = moduleOfFeature(FEATURES.find((f) => f.parent)!.parent!);
+    expect(modulo).not.toBeNull();
+    for (const f of rootFeaturesOfModule(modulo!)) expect(f.parent).toBeFalsy();
   });
 });
