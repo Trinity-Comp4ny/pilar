@@ -33,8 +33,11 @@ cápsula (P04), a expansão de botão em marcos (T04) e a coluna de progresso do
    pulso de leitura a cada 3,4s e a marca no ritmo no centro. Substitui todo carregamento
    de página, seção e card.
 4. **Espera curta não anima:** o anel só aparece depois de 300ms. Abaixo disso, nada.
-5. **Boot:** ao abrir a landing ou o app, o anel aparece sobre a cor da página enquanto
-   o JavaScript baixa e some com fade quando a primeira tela pinta.
+5. **Boot:** ao abrir o app, ou uma rota da landing sem HTML pré-renderizado, o anel
+   aparece sobre a cor da página enquanto o JavaScript baixa e some com fade quando a
+   primeira tela pinta. Rota pré-renderizada da landing chega pronta e não tem boot: o
+   anel atrasaria a primeira pintura (LCP). Enquanto o chunk dessa rota baixa, o
+   fallback do `Suspense` segura a página pronta em vez de cobri-la com o véu.
 6. **Véu de entrada (T02):** entre o login e a primeira tela do app (sessão, perfil e
    assinatura), a tela mostra o véu com o anel e "Abrindo {empresa}". Ao terminar, o véu
    sai com fade de 360ms sobre o app já montado.
@@ -65,8 +68,9 @@ Não-funcionais:
 - [ ] Com `prefers-reduced-motion: reduce`, o anel pinta um quadro só e não agenda frame.
 - [ ] Rotas privadas em carregamento mostram o véu com o nome da empresa quando o perfil
       já chegou, e "Abrindo o Pilar" antes disso; nenhum "Carregando..." solto.
-- [ ] Abrir `/` da landing e `/login` do app com rede lenta mostra o anel do boot, que
-      some quando a página pinta.
+- [ ] Abrir `/login` do app e uma rota da landing fora do prerender com rede lenta mostra
+      o anel do boot, que some quando a página pinta. Rotas pré-renderizadas da landing
+      (`/`, `/planos` etc.) abrem com o conteúdo na hora, sem boot nem véu.
 - [ ] Trocar de Projetos para Financeiro anima o conteúdo; trocar de aba em Financeiro não.
 
 ## Dados e contratos
@@ -86,7 +90,8 @@ Nenhuma tabela, RPC ou edge function. Componentes novos em `src/components/motio
 2. Codemod: `Loader2` com `animate-spin` vira `BusyMark` (inline) ou `PageLoader` (bloco
    centralizado de página/seção), revisado arquivo a arquivo.
 3. `Button` e `Spinner` passam a usar o ritmo.
-4. Boot da landing e do app (`index.html` + `/boot-ring.js`).
+4. Boot do app e da landing (`index.html` + `/boot-ring.js`); na landing, só no
+   `spa.html`, o fallback das rotas sem HTML pronto.
 5. `PrivateRoute` com o véu; `Layout` com Suspense local, T05 e saída do véu.
 6. Logo: A01 no login e cadastro, hover A07; landing com o mesmo hover.
 7. Teste de varredura, testes dos componentes, typecheck, lint, build.

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { domAnimation, LazyMotion } from "framer-motion";
 import { LandingHeader } from "./components/LandingHeader";
@@ -12,6 +12,7 @@ import { EntryVeil } from "../../../src/components/motion/EntryVeil";
 import { isEntryVeilMounted } from "../../../src/components/motion/veilState";
 import { dismissBoot } from "../../../src/components/motion/boot";
 import { useRouteEnter } from "../../../src/components/motion/useRouteEnter";
+import { conteudoProntoDe } from "./lib/htmlPronto";
 
 // Só a home entra no bundle inicial. Páginas de módulo e FAQ viram chunks
 // próprios: ninguém que cai na landing paga por elas no primeiro carregamento.
@@ -48,8 +49,9 @@ function ScrollToTop() {
 }
 
 /**
- * O anel do boot (index.html) cobre a landing até a primeira tela pintar. Numa rota
- * preguiçosa, o fallback do Suspense herda o anel e só o tira quando a página chega.
+ * O anel do boot (spa.html, rota sem HTML pronto) cobre a landing até a primeira tela
+ * pintar. Numa rota preguiçosa, o fallback do Suspense herda o anel e só o tira quando
+ * a página chega.
  */
 function SoltaBoot() {
   useEffect(() => {
@@ -59,6 +61,24 @@ function SoltaBoot() {
     return () => window.clearTimeout(id);
   }, []);
   return null;
+}
+
+/**
+ * Fallback das rotas preguiçosas. Na primeira carga de uma rota pré-renderizada,
+ * segura a própria página pronta enquanto o chunk baixa; sem HTML pronto (rota fora
+ * do prerender, navegação no cliente), o véu com o anel.
+ */
+function EsperaDaRota() {
+  const { pathname } = useLocation();
+  const nos = conteudoProntoDe(pathname);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (nos) ref.current?.replaceChildren(...nos);
+  }, [nos]);
+
+  if (!nos) return <EntryVeil label="" />;
+  return <div ref={ref} className="contents" />;
 }
 
 export default function App() {
@@ -76,7 +96,7 @@ export default function App() {
         <LandingHeader />
 
         <main ref={mainRef}>
-          <Suspense fallback={<EntryVeil label="" />}>
+          <Suspense fallback={<EsperaDaRota />}>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/gestao" element={<ModulePage slug="gestao" />} />

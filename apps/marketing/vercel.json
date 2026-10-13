@@ -1,6 +1,6 @@
 {
   "ignoreCommand": "[ \"$VERCEL_ENV\" = production ] && exit 1; s=${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}; git cat-file -e $s 2>/dev/null || git fetch -q --depth=1 origin $s; git diff --quiet $s HEAD -- :/apps/marketing :/package-lock.json && exit 0 || exit 1",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "rewrites": [{ "source": "/(.*)", "destination": "/spa.html" }],
   "headers": [
     {
       "source": "/assets/(.*)",
@@ -15,7 +15,7 @@
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {
-      "source": "/index.html",
+      "source": "/(index|spa).html",
       "headers": [{ "key": "Cache-Control", "value": "no-store" }]
     },
     {
