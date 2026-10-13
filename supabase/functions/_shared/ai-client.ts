@@ -18,6 +18,7 @@ import {
   type ModeloAlvo,
   resolverModelo,
   streamGateway,
+  raciocinioDoGemini,
   tokensDoGemini,
   type UsoGemini,
 } from "./llm.ts";
@@ -250,6 +251,8 @@ function recordGeminiChatSpan(params: {
   status: "ok" | "error";
   tokensEntrada?: number;
   tokensSaida?: number;
+  // Raciocínio (thinking), já contido em tokensSaida.
+  tokensRaciocinio?: number;
   inputMessages?: Array<{ role: string; content: string }>;
   outputText?: string;
   conversationId?: string;
@@ -277,6 +280,9 @@ function recordGeminiChatSpan(params: {
         "gen_ai.response.model": params.alvo.modelo,
         "gen_ai.usage.input_tokens": params.tokensEntrada ?? 0,
         "gen_ai.usage.output_tokens": params.tokensSaida ?? 0,
+        ...(params.tokensRaciocinio !== undefined && {
+          "gen_ai.usage.output_tokens.reasoning": params.tokensRaciocinio,
+        }),
         ...(params.outputText !== undefined && {
           "gen_ai.output.messages": scrub([{ role: "assistant", content: params.outputText }]),
         }),
@@ -394,6 +400,7 @@ async function fetchGeminiRaw(
     status: "ok",
     tokensEntrada,
     tokensSaida,
+    tokensRaciocinio: raciocinioDoGemini(result.usageMetadata),
     inputMessages,
     outputText: text,
     conversationId: opts.conversationId,
@@ -463,6 +470,7 @@ async function fetchModeloUmaVez(
       status: "ok",
       tokensEntrada: r.tokensEntrada,
       tokensSaida: r.tokensSaida,
+      tokensRaciocinio: r.tokensRaciocinio,
       inputMessages,
       outputText: r.text,
       conversationId: opts.conversationId,
@@ -567,6 +575,7 @@ export async function* streamGeminiText(
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let tokensEntrada = 0;
   let tokensSaida = 0;
+  let tokensRaciocinio: number | undefined;
   let outputText = "";
   const spanStartMs = Date.now();
   let spanStatus: "ok" | "error" = "ok";
@@ -647,6 +656,7 @@ export async function* streamGeminiText(
         if (parsed.usageMetadata) {
           // usageMetadata é cumulativa: fica com o último valor visto.
           ({ tokensEntrada, tokensSaida } = tokensDoGemini(parsed.usageMetadata));
+          tokensRaciocinio = raciocinioDoGemini(parsed.usageMetadata);
         }
       }
     }
@@ -681,6 +691,7 @@ export async function* streamGeminiText(
           "gen_ai.response.model": alvo.modelo,
           "gen_ai.usage.input_tokens": tokensEntrada,
           "gen_ai.usage.output_tokens": tokensSaida,
+          ...(tokensRaciocinio !== undefined && { "gen_ai.usage.output_tokens.reasoning": tokensRaciocinio }),
           "gen_ai.output.messages": scrub([{ role: "assistant", content: outputText }]),
         }),
       },

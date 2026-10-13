@@ -85,6 +85,11 @@ export function tokensDoGemini(uso: UsoGemini | undefined): { tokensEntrada: num
   };
 }
 
+/** Parte da saída que foi raciocínio (thinking). Vai pro span, à parte da resposta. */
+export function raciocinioDoGemini(uso: UsoGemini | undefined): number | undefined {
+  return uso?.thoughtsTokenCount;
+}
+
 // ---------------------------------------------------------------------------
 // Adaptador do gateway (formato chat/completions da OpenAI)
 // ---------------------------------------------------------------------------
@@ -146,19 +151,27 @@ export interface RespostaModelo {
   text: string;
   tokensEntrada: number;
   tokensSaida: number;
+  /** Já incluído em tokensSaida; separado só para o span (Sentry mostra o thinking à parte). */
+  tokensRaciocinio?: number;
 }
 
 /** Texto e tokens de uma resposta chat/completions. */
 export function lerRespostaGateway(corpo: unknown, json: boolean): RespostaModelo {
   const c = corpo as {
     choices?: Array<{ message?: { content?: string | null } }>;
-    usage?: { prompt_tokens?: number; completion_tokens?: number };
+    usage?: {
+      prompt_tokens?: number;
+      completion_tokens?: number;
+      completion_tokens_details?: { reasoning_tokens?: number };
+    };
   };
   const bruto = c.choices?.[0]?.message?.content ?? "";
+  const raciocinio = c.usage?.completion_tokens_details?.reasoning_tokens;
   return {
     text: json ? extrairJson(bruto) || "{}" : bruto,
     tokensEntrada: c.usage?.prompt_tokens ?? 0,
     tokensSaida: c.usage?.completion_tokens ?? 0,
+    ...(raciocinio !== undefined && { tokensRaciocinio: raciocinio }),
   };
 }
 
@@ -350,7 +363,9 @@ export async function chamarDecisao(
       signal: controller.signal,
     });
     if (!res.ok)
-      throw new Error(`AI Gateway decision error (${res.status}) em ${alvo.modelo}: ${(await res.text()).slice(0, 500)}`);
+      throw new Error(
+        `AI Gateway decision error (${res.status}) em ${alvo.modelo}: ${(await res.text()).slice(0, 500)}`
+      );
     return lerRespostaDecisao(await res.json());
   } catch (e) {
     if (e instanceof DOMException && e.name === "AbortError") {

@@ -20,6 +20,11 @@ const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") ?? "")
 
 let _corsWarningLogged = false;
 
+// sentry-trace/baggage: o SDK do browser manda pra ligar o trace do front ao da edge
+// (lerSentryTrace em sentry.ts). Liberar ANTES de o front começar a mandar: header
+// fora da lista reprova o preflight e derruba a chamada inteira.
+const ALLOW_HEADERS = "authorization, x-client-info, apikey, content-type, sentry-trace, baggage";
+
 export function getCorsHeaders(req: Request): Record<string, string> {
   if (!_corsWarningLogged && ALLOWED_ORIGINS.length === 0) {
     console.warn("[cors] ALLOWED_ORIGINS not configured — all cross-origin requests will be rejected");
@@ -30,7 +35,7 @@ export function getCorsHeaders(req: Request): Record<string, string> {
   const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : "null";
   return {
     "Access-Control-Allow-Origin": allowed,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Headers": ALLOW_HEADERS,
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     Vary: "Origin",
     ...(allowed !== "null" && { "Access-Control-Allow-Credentials": "true" }),
@@ -127,6 +132,6 @@ export async function authenticateUser(req: Request): Promise<AuthSuccess | Auth
 /** @deprecated use getCorsHeaders(req) — this does not vary by origin and omits security headers */
 export const corsHeaders = {
   "Access-Control-Allow-Origin": ALLOWED_ORIGINS[0] ?? "null",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": ALLOW_HEADERS,
   Vary: "Origin",
 };
