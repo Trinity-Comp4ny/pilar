@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useSidebar } from "@/components/ui/sidebar";
+import { sidebarOffset } from "@/lib/shellLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -66,7 +67,7 @@ function saudacao(nome?: string | null): string {
 
 export default function ChatPage() {
   const { state, isMobile } = useSidebar();
-  const left = isMobile ? "0px" : state === "collapsed" ? "64px" : "240px";
+  const left = sidebarOffset(state, isMobile);
   const { profile } = useAuth();
 
   const {

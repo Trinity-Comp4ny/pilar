@@ -4,8 +4,6 @@ import {
   ShieldCheck,
   Zap,
   LogOut,
-  ChevronDown,
-  Check,
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
@@ -24,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -34,10 +32,13 @@ import { NotificationInbox } from "@/components/NotificationInbox";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { usePendenciasAgentes } from "@/hooks/useEscopos";
 import { useModuleNav } from "@/hooks/useModuleNav";
-import { MODULES, type ModuleMenuItem } from "@/lib/modules";
+import { MODULES, type ModuleId, type ModuleMenuItem } from "@/lib/modules";
+import { PANEL_WIDTH, RAIL_WIDTH } from "@/lib/shellLayout";
 
 // Shell dos 3 pilares (spec 001-shell-3-pilares): o menu vem do mapa central de
-// módulos. O switcher é apresentação; autorização continua em usePermissions.
+// módulos. Desktop em duas colunas: trilho fixo à esquerda (Início, módulos,
+// Agentes, sino e conta), sempre visível, e painel com os itens do módulo ativo,
+// recolhível (⌘B). O trilho é apresentação; autorização continua em usePermissions.
 // Em mobile (< 768px), esta sidebar não renderiza mais nada: a navegação vira
 // `<BottomNav />` + `<ModuleChipNav />` (spec 097 / ADR 0040), montados direto no
 // shell (`Layout.tsx`/`PageLayout.tsx`). `useModuleNav` é o hook compartilhado
@@ -45,7 +46,7 @@ import { MODULES, type ModuleMenuItem } from "@/lib/modules";
 type MenuItem = ModuleMenuItem;
 
 export function AppSidebar() {
-  const { state, isMobile, toggleSidebar } = useSidebar();
+  const { state, isMobile, toggleSidebar, setOpen } = useSidebar();
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
   const { openSettings, isOpen: isSettingsOpen } = useSettingsModal();
@@ -54,9 +55,16 @@ export function AppSidebar() {
   const { data: pendenciasAgentes } = usePendenciasAgentes();
   const numPendenciasAgentes = pendenciasAgentes?.length ?? 0;
   const { ocultos: valoresOcultos, toggle: toggleValoresOcultos } = useValoresOcultos();
-  const { currentPath, currentView, activeModule, moduleGroups, empresaItems, visibleModules, selectModule } =
-    useModuleNav();
-  const [sidebarWidth, setSidebarWidth] = useState(state === "collapsed" ? "64px" : "240px");
+  const {
+    currentPath,
+    currentView,
+    routeModule,
+    activeModule,
+    moduleGroups,
+    empresaItems,
+    visibleModules,
+    selectModule,
+  } = useModuleNav();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
@@ -71,9 +79,11 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const { isAdmin, isUltraAdmin } = usePermissions();
 
-  useEffect(() => {
-    setSidebarWidth(collapsed ? "64px" : "240px");
-  }, [collapsed]);
+  // Trocar de módulo pelo trilho abre o painel: quem clica quer ver os itens dele.
+  const handleSelectModule = (id: ModuleId) => {
+    if (collapsed) setOpen(true);
+    selectModule(id);
+  };
 
   const handleLogout = async () => {
     await signOut();
@@ -99,24 +109,15 @@ export function AppSidebar() {
     const Icon = item.icon;
 
     if (navProps.disabled) {
-      const tooltip = navProps.title || item.title;
       return (
         <span
           key={item.title}
-          className={cn(
-            "flex items-center gap-3 px-3 py-2 rounded-full text-sm group relative cursor-not-allowed opacity-40",
-            collapsed && "justify-center"
-          )}
-          title={tooltip}
+          className="flex items-center gap-3 px-3 py-2 rounded-full text-sm cursor-not-allowed opacity-40"
+          title={navProps.title || item.title}
           aria-disabled
         >
           <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] shrink-0" />
-          {!collapsed && <span className="tracking-tight">{item.title}</span>}
-          {collapsed && (
-            <span className="absolute left-full ml-3 bg-black text-white text-xs py-1.5 px-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
-              {tooltip}
-            </span>
-          )}
+          <span className="tracking-tight">{item.title}</span>
         </span>
       );
     }
@@ -127,256 +128,221 @@ export function AppSidebar() {
         to={item.url}
         end={false}
         className={cn(
-          "flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200 group relative",
-          collapsed && "justify-center",
+          "flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200",
           isActive ? "bg-brand text-black/80 font-medium" : "text-black/70 hover:bg-brand/30"
         )}
-        title={collapsed ? item.title : ""}
       >
         <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] shrink-0" />
-        {!collapsed && (
-          <>
-            <span className="tracking-tight flex-1">{item.title}</span>
-            {item.badge === "novo" && (
-              <span className="text-[10px] leading-none font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-brand text-ink">
-                Novo
-              </span>
-            )}
-            {item.badge === "em breve" && (
-              <span className="text-[10px] leading-none font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">
-                Em breve
-              </span>
-            )}
-            {item.url === "/agentes" && numPendenciasAgentes > 0 && (
-              <span className="rounded-full bg-brand px-1.5 py-0.5 text-[11px] font-semibold leading-none text-ink">
-                {numPendenciasAgentes}
-              </span>
-            )}
-          </>
+        <span className="tracking-tight flex-1">{item.title}</span>
+        {item.badge === "novo" && (
+          <span className="text-[10px] leading-none font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-brand text-ink">
+            Novo
+          </span>
         )}
-
-        {collapsed && (
-          <>
-            {item.badge === "novo" && <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-brand" />}
-            {item.url === "/agentes" && numPendenciasAgentes > 0 && (
-              <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-brand" />
-            )}
-            <span className="absolute left-full ml-3 bg-black text-white text-xs py-1.5 px-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
-              {item.title}
-            </span>
-          </>
+        {item.badge === "em breve" && (
+          <span className="text-[10px] leading-none font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">
+            Em breve
+          </span>
         )}
       </NavLink>
     );
   };
 
-  const sidebarInner = (
-    <div className="flex flex-col h-full">
-      {/* Logo Header com Toggle Button */}
-      <div className="flex items-center justify-between h-16 px-4 group">
-        {!collapsed ? (
-          <>
-            <Logo size="xs" />
+  const railItemClass = (active: boolean) =>
+    cn(
+      "group flex w-14 flex-col items-center gap-1 rounded-xl py-1 text-[10.5px] leading-none tracking-tight transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black/10",
+      active ? "font-medium text-ink" : "text-black/60 hover:text-ink"
+    );
+  const railIconClass = (active: boolean) =>
+    cn(
+      "relative flex h-8 w-10 items-center justify-center rounded-full transition-colors",
+      active ? "bg-brand text-black/80" : "group-hover:bg-brand/30"
+    );
+
+  const rail = (
+    <div
+      className="flex h-full flex-col items-center border-r border-black/5 bg-muted/50 pt-3 pb-3"
+      style={{ width: RAIL_WIDTH }}
+    >
+      {/* Com o painel recolhido, o botão de expandir mora no topo do trilho */}
+      {collapsed && (
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          aria-label="Expandir menu"
+          title="Expandir menu"
+          className="mb-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-ink-soft transition-all duration-200 hover:bg-black/4 hover:text-ink active:scale-95"
+        >
+          <PanelLeftOpen size={18} strokeWidth={1.5} />
+        </button>
+      )}
+
+      <nav
+        aria-label="Módulos"
+        className="flex w-full flex-1 flex-col items-center gap-2 overflow-y-auto scrollbar-none"
+      >
+        <NavLink
+          to="/inicio"
+          className={railItemClass(currentPath === "/inicio")}
+          aria-current={currentPath === "/inicio" ? "page" : undefined}
+        >
+          <span className={railIconClass(currentPath === "/inicio")}>
+            <Home size={18} strokeWidth={1.5} />
+          </span>
+          Início
+        </NavLink>
+
+        <div className="my-1 h-px w-8 bg-black/8" aria-hidden />
+
+        {visibleModules.map((id) => {
+          const m = MODULES[id];
+          const MIcon = m.icon;
+          const isActive = routeModule === id;
+          return (
             <button
+              key={id}
               type="button"
-              onClick={toggleSidebar}
-              aria-label="Recolher menu"
-              className="flex items-center justify-center h-8 w-8 rounded-lg text-ink-soft hover:text-ink hover:bg-black/4 active:scale-95 transition-all duration-200"
+              onClick={() => handleSelectModule(id)}
+              className={railItemClass(isActive)}
+              aria-current={isActive ? "page" : undefined}
+              title={m.emBreve ? `${m.label} (em breve)` : undefined}
             >
-              <PanelLeftClose size={18} strokeWidth={1.5} />
+              <span className={railIconClass(isActive)}>
+                <MIcon size={18} strokeWidth={1.5} />
+              </span>
+              {m.label}
             </button>
-          </>
-        ) : (
-          <div className="flex items-center justify-center w-full relative group">
-            <div className="group-hover:opacity-0 transition-opacity">
-              <Logo variant="mark" size="sm" />
-            </div>
-            <button
-              type="button"
-              onClick={toggleSidebar}
-              aria-label="Expandir menu"
-              className="absolute flex items-center justify-center h-8 w-8 rounded-lg text-ink-soft hover:text-ink hover:bg-black/4 active:scale-95 opacity-0 group-hover:opacity-100 transition-all duration-200"
+          );
+        })}
+
+        {empresaItems.length > 0 && <div className="my-1 h-px w-8 bg-black/8" aria-hidden />}
+
+        {/* Transversais (Agentes): contador de pendências como ponto no ícone (spec 084) */}
+        {empresaItems.map(({ item }) => {
+          const Icon = item.icon;
+          const isActive = currentPath.startsWith(item.url);
+          const pendencias = item.url === "/agentes" ? numPendenciasAgentes : 0;
+          return (
+            <NavLink
+              key={item.title}
+              to={item.url}
+              className={railItemClass(isActive)}
+              aria-current={isActive ? "page" : undefined}
+              aria-label={pendencias > 0 ? `${item.title}, ${pendencias} pendências` : undefined}
             >
-              <PanelLeftOpen size={18} strokeWidth={1.5} />
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 p-3 overflow-y-auto scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-        {/* Switcher de módulo (apresentação; autorização é dos gates) */}
-        <div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                aria-label="Trocar de módulo"
-                className={cn(
-                  "w-full flex items-center gap-2.5 rounded-full border border-black/10 bg-black/3 px-3 py-2 text-sm font-medium text-ink hover:bg-black/6 transition-colors",
-                  collapsed && "justify-center px-0"
+              <span className={railIconClass(isActive)}>
+                <Icon size={18} strokeWidth={1.5} />
+                {pendencias > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-brand px-1 text-center text-[10px] font-semibold leading-4 text-ink ring-2 ring-white">
+                    {pendencias}
+                  </span>
                 )}
-                title={collapsed ? MODULES[activeModule].label : ""}
-              >
-                {(() => {
-                  const ActiveIcon = MODULES[activeModule].icon;
-                  return <ActiveIcon size={16} strokeWidth={1.6} className="shrink-0" />;
-                })()}
-                {!collapsed && (
-                  <>
-                    <span className="flex-1 text-left tracking-tight">{MODULES[activeModule].label}</span>
-                    <ChevronDown size={14} className="text-black/40" />
-                  </>
-                )}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="min-w-[200px]">
-              {visibleModules.map((id) => {
-                const m = MODULES[id];
-                const MIcon = m.icon;
-                return (
-                  <DropdownMenuItem key={id} onClick={() => selectModule(id)}>
-                    <MIcon size={14} className="mr-2" />
-                    <span className="flex-1">{m.label}</span>
-                    {id === activeModule && <Check size={14} className="text-ink" />}
-                    {m.emBreve && id !== activeModule && (
-                      <span className="text-[9px] font-medium uppercase tracking-wide rounded-full bg-black/5 text-black/50 px-1.5 py-0.5">
-                        em breve
-                      </span>
-                    )}
-                  </DropdownMenuItem>
-                );
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {/* Transversais: Início + Agentes, abaixo do switcher */}
-        <div className="mt-3 space-y-1">
-          <NavLink
-            to="/inicio"
-            className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200",
-              collapsed && "justify-center",
-              currentPath === "/inicio" ? "bg-brand text-black/80 font-medium" : "text-black/70 hover:bg-brand/30"
-            )}
-            title={collapsed ? "Início" : ""}
-          >
-            <Home size={18} strokeWidth={1.5} className="w-[18px] h-[18px] shrink-0" />
-            {!collapsed && <span className="tracking-tight">Início</span>}
-          </NavLink>
-          {empresaItems.map(({ item, nav }) => renderItem(item, nav))}
-        </div>
-
-        {/* Itens do módulo ativo, agrupados por seção (Comercial/Financeiro/Empresa) */}
-        <div className="mt-3 space-y-3">
-          {moduleGroups.map((group, i) => (
-            <div key={group.label ?? `grupo-${i}`} className="space-y-1">
-              {group.label && !collapsed && (
-                <p className="px-3 pt-1 text-[10px] font-medium uppercase tracking-wider text-black/35">
-                  {group.label}
-                </p>
-              )}
-              {group.entries.map(({ item, nav }) => renderItem(item, nav))}
-            </div>
-          ))}
-        </div>
+              </span>
+              {item.title}
+            </NavLink>
+          );
+        })}
       </nav>
 
-      {/* User Menu + sino de notificações */}
-      <div className="border-t border-black/5 p-3">
-        <div className={cn("flex items-center gap-1", collapsed && "flex-col gap-2")}>
-          <div className="min-w-0 flex-1">
-            <DropdownMenu open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className={cn(
-                    "group w-full flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black/10",
-                    collapsed && "justify-center",
-                    isUserRouteActive ? "bg-brand text-black/80 font-medium" : "hover:bg-brand/30"
-                  )}
-                  type="button"
-                  aria-label="Menu do usuário"
-                  title={collapsed ? userName : ""}
-                >
-                  <AvatarStack
-                    pessoas={[{ nome: userName, avatarUrl: profile?.avatar_url }]}
-                    size="xs"
-                    className="shrink-0"
-                  />
-                  {!collapsed && (
-                    <>
-                      <div className="flex-1 text-left min-w-0">
-                        <p className="text-sm font-medium text-black/70 tracking-tight truncate leading-tight">
-                          {userName}
-                        </p>
-                        {userEmail && <p className="text-xs text-black/40 truncate leading-tight">{userEmail}</p>}
-                      </div>
-                      <ChevronDown
-                        size={14}
-                        className={cn(
-                          "text-black/50 transition-transform duration-200 shrink-0",
-                          isUserMenuOpen && "rotate-180"
-                        )}
-                      />
-                    </>
-                  )}
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" side="top" sideOffset={8} alignOffset={8} className="min-w-[240px]">
-                {/* Cabeçalho clicável: nome + email abrem as configurações; engrenagem à direita reforça a ação. */}
-                <DropdownMenuItem onClick={handleProfile} className="cursor-pointer gap-3 py-2.5">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold leading-tight text-ink">{userName}</p>
-                    {userEmail && <p className="truncate text-xs leading-tight text-muted-foreground">{userEmail}</p>}
-                  </div>
-                  <Settings size={16} className="shrink-0 text-muted-foreground" />
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setFeedbackOpen(true)} className="justify-between">
-                  Feedback
-                  <MessageSquare size={16} className="text-muted-foreground" />
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={toggleValoresOcultos}
-                  onSelect={(e) => e.preventDefault()}
-                  className="justify-between"
-                >
-                  {valoresOcultos ? "Mostrar valores financeiros" : "Ocultar valores financeiros"}
-                  {valoresOcultos ? (
-                    <EyeOff size={16} className="text-muted-foreground" />
-                  ) : (
-                    <Eye size={16} className="text-muted-foreground" />
-                  )}
-                </DropdownMenuItem>
-                {isAdmin && !isUltraAdmin && (
-                  <DropdownMenuItem onClick={handleAdmin} className="justify-between">
-                    Portal Admin
-                    <ShieldCheck size={16} className="text-muted-foreground" />
-                  </DropdownMenuItem>
-                )}
-                {isUltraAdmin && (
-                  <DropdownMenuItem onClick={handleUltraAdmin} className="justify-between">
-                    Portal Ultra
-                    <Zap size={16} className="text-muted-foreground" />
-                  </DropdownMenuItem>
-                )}
-                <ImpersonationPicker />
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="justify-between text-destructive focus:text-destructive"
-                >
-                  Log out
-                  <LogOut size={16} />
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
-          </div>
-          <NotificationInbox />
-        </div>
+      {/* Sino + conta */}
+      <div className="flex shrink-0 flex-col items-center gap-2 pt-2">
+        <NotificationInbox />
+        <DropdownMenu open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label="Menu do usuário"
+              title={userName}
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-full transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black/10",
+                isUserRouteActive || isUserMenuOpen ? "bg-brand" : "hover:bg-brand/30"
+              )}
+            >
+              <AvatarStack pessoas={[{ nome: userName, avatarUrl: profile?.avatar_url }]} size="xs" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" side="right" sideOffset={12} className="min-w-[240px]">
+            {/* Cabeçalho clicável: nome + email abrem as configurações; engrenagem à direita reforça a ação. */}
+            <DropdownMenuItem onClick={handleProfile} className="cursor-pointer gap-3 py-2.5">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold leading-tight text-ink">{userName}</p>
+                {userEmail && <p className="truncate text-xs leading-tight text-muted-foreground">{userEmail}</p>}
+              </div>
+              <Settings size={16} className="shrink-0 text-muted-foreground" />
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setFeedbackOpen(true)} className="justify-between">
+              Feedback
+              <MessageSquare size={16} className="text-muted-foreground" />
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={toggleValoresOcultos}
+              onSelect={(e) => e.preventDefault()}
+              className="justify-between"
+            >
+              {valoresOcultos ? "Mostrar valores financeiros" : "Ocultar valores financeiros"}
+              {valoresOcultos ? (
+                <EyeOff size={16} className="text-muted-foreground" />
+              ) : (
+                <Eye size={16} className="text-muted-foreground" />
+              )}
+            </DropdownMenuItem>
+            {isAdmin && !isUltraAdmin && (
+              <DropdownMenuItem onClick={handleAdmin} className="justify-between">
+                Portal Admin
+                <ShieldCheck size={16} className="text-muted-foreground" />
+              </DropdownMenuItem>
+            )}
+            {isUltraAdmin && (
+              <DropdownMenuItem onClick={handleUltraAdmin} className="justify-between">
+                Portal Ultra
+                <Zap size={16} className="text-muted-foreground" />
+              </DropdownMenuItem>
+            )}
+            <ImpersonationPicker />
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="justify-between text-destructive focus:text-destructive"
+            >
+              Log out
+              <LogOut size={16} />
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
       </div>
+    </div>
+  );
+
+  const panel = (
+    <div className="flex h-full flex-col bg-white" style={{ width: PANEL_WIDTH }}>
+      <div className="flex h-16 shrink-0 items-center justify-between pl-5 pr-3">
+        <Logo size="xs" />
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          aria-label="Recolher menu"
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-soft transition-all duration-200 hover:bg-black/4 hover:text-ink active:scale-95"
+        >
+          <PanelLeftClose size={18} strokeWidth={1.5} />
+        </button>
+      </div>
+
+      {/* Itens do módulo ativo, agrupados por seção (Comercial/Financeiro/Empresa) */}
+      <nav
+        aria-label={`Menu de ${MODULES[activeModule].label}`}
+        className="flex-1 space-y-3 overflow-y-auto px-3 pb-3 scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {moduleGroups.map((group, i) => (
+          <div key={group.label ?? `grupo-${i}`} className="space-y-1">
+            {group.label && (
+              <p className="px-3 pt-1 text-[10px] font-medium uppercase tracking-wider text-black/35">{group.label}</p>
+            )}
+            {group.entries.map(({ item, nav }) => renderItem(item, nav))}
+          </div>
+        ))}
+      </nav>
     </div>
   );
 
@@ -385,14 +351,9 @@ export function AppSidebar() {
   if (isMobile) return null;
 
   return (
-    <div
-      className="h-screen border-r border-black/5 bg-white fixed left-0 top-0 z-50"
-      style={{
-        minWidth: sidebarWidth,
-        width: sidebarWidth,
-      }}
-    >
-      {sidebarInner}
+    <div className="fixed left-0 top-0 z-50 flex h-screen border-r border-black/5 bg-white">
+      {rail}
+      {!collapsed && panel}
     </div>
   );
 }
