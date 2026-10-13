@@ -1,10 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
+import { jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { sendEmail, templateLgpdExclusaoDados } from "../_shared/email/index.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { withSentry } from "../_shared/sentry.ts";
+import { lerJson } from "../_shared/schemas.ts";
+import { chamadorAutorizado, lerEntrada } from "./entrada.ts";
 
 /**
  * send-data-deletion-notification
@@ -46,15 +48,6 @@ interface EmpresaAdmin {
   full_name?: string | null;
 }
 
-function verifyCaller(req: Request): boolean {
-  // Aceita: (a) Authorization Bearer com service role key OR (b) header x-pilar-secret
-  const auth = req.headers.get("Authorization") ?? "";
-  if (SERVICE_ROLE_KEY && auth === `Bearer ${SERVICE_ROLE_KEY}`) return true;
-  const secret = req.headers.get("x-pilar-secret") ?? "";
-  if (SHARED_SECRET && secret === SHARED_SECRET) return true;
-  return false;
-}
-
 function formatDate(iso: string): string {
   try {
     const d = new Date(iso);
@@ -69,7 +62,7 @@ serve(
     if (req.method === "OPTIONS") return optionsResponse(req);
     if (req.method !== "POST") return safeErrorResponse(405, "Method not allowed", req);
 
-    if (!verifyCaller(req)) {
+    if (!chamadorAutorizado(req.headers, { serviceRoleKey: SERVICE_ROLE_KEY, sharedSecret: SHARED_SECRET })) {
       log.warn("unauthorized caller");
       return safeErrorResponse(401, "Unauthorized", req);
     }
@@ -79,15 +72,9 @@ serve(
       return safeErrorResponse(500, "Server misconfigured", req);
     }
 
-    let payload: { request_id?: string };
-    try {
-      payload = await req.json();
-    } catch {
-      return safeErrorResponse(400, "Invalid JSON body", req);
-    }
-
-    const requestId = payload.request_id;
-    if (!isUUID(requestId)) return safeErrorResponse(400, "request_id inválido", req);
+    const entrada = lerEntrada(await lerJson(req));
+    if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
+    const requestId = entrada.data.request_id;
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
     const reqLog = log.child({ request_id: requestId });

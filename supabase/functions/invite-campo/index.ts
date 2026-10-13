@@ -2,12 +2,13 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
-import { EMAIL_RE } from "../_shared/validators.ts";
+import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { sendEmail, templateConviteAcessoCampo } from "../_shared/email/index.ts";
 import { gerarConviteToken } from "../_shared/convite-token.ts";
 import { checkDbRateLimit } from "../_shared/db-rate-limit.ts";
+import { lerJson } from "../_shared/schemas.ts";
+import { lerEntrada } from "./entrada.ts";
 
 const log = createLogger("invite-campo");
 
@@ -59,13 +60,9 @@ serve(
       }
       if (!profile.empresa_id) return safeErrorResponse(403, "Você precisa pertencer a uma empresa", req);
 
-      const { obra_id, nome, email } = await req.json();
-      if (!isUUID(obra_id)) return safeErrorResponse(400, "obra_id inválido", req);
-      if (!nome || String(nome).trim().length === 0) return safeErrorResponse(400, "Informe o nome", req);
-      // E-mail é opcional (spec 099): quando informado, tem que ser válido —
-      // quando ausente, o pessoal de campo não tem e-mail real e o fluxo cai
-      // no fallback de senha manual.
-      if (email && !EMAIL_RE.test(String(email))) return safeErrorResponse(400, "email inválido", req);
+      const entrada = lerEntrada(await lerJson(req));
+      if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
+      const { obra_id, nome, email } = entrada.data;
 
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
