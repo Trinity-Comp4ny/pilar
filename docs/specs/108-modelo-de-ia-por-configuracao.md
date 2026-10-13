@@ -34,7 +34,7 @@ automático entre provedores, Bedrock.
 
 ## Critérios de aceite
 
-- [ ] Deno: leitura da configuração, montagem da requisição e leitura da resposta do
+- [x] Deno: leitura da configuração, montagem da requisição e leitura da resposta do
       gateway (texto, JSON com cerca de código, tokens), recusa de áudio fora do Gemini.
-- [ ] Sem nenhuma variável nova, a chamada ao Gemini é a mesma de hoje.
-- [ ] Evals rodados em pelo menos 5 modelos, com tabela de acerto, latência e custo.
+- [x] Sem nenhuma variável nova, a chamada ao Gemini é a mesma de hoje.
+- [x] Evals rodados em pelo menos 5 modelos, com tabela de acerto, latência e custo.

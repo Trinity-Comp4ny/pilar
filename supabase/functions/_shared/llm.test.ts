@@ -1,14 +1,17 @@
 import { assertEquals, assertThrows } from "https://deno.land/std@0.168.0/testing/asserts.ts";
 import {
+  chaveDecisao,
   chaveDeTipo,
   extrairJson,
   lerAlvo,
+  lerRespostaDecisao,
   lerEventoStream,
   lerRespostaGateway,
   MODELO_PADRAO,
   modeloEmUso,
   montarCorpoGateway,
   parteDoArquivo,
+  resolverDecisao,
   resolverModelo,
   tokensDoGemini,
 } from "./llm.ts";
@@ -111,4 +114,29 @@ Deno.test("tokensDoGemini: raciocínio conta como saída", () => {
 Deno.test("tokensDoGemini: sem raciocínio ou sem usage não quebra", () => {
   assertEquals(tokensDoGemini({ promptTokenCount: 10, candidatesTokenCount: 5 }), { tokensEntrada: 10, tokensSaida: 5 });
   assertEquals(tokensDoGemini(undefined), { tokensEntrada: 0, tokensSaida: 0 });
+});
+
+Deno.test("resolverDecisao: desligado sem variável; só aceita modelo do gateway", () => {
+  assertEquals(chaveDecisao("ai_chat"), "AI_DECISAO_AI_CHAT");
+  assertEquals(resolverDecisao("ai_chat", env({})), null);
+  assertEquals(resolverDecisao("ai_chat", env({ AI_DECISAO_AI_CHAT: "gateway:typesafe-ai/jev" })), {
+    provedor: "gateway",
+    modelo: "typesafe-ai/jev",
+  });
+  assertThrows(() => resolverDecisao("ai_chat", env({ AI_DECISAO_AI_CHAT: "gemini:gemini-2.5-flash" })));
+});
+
+Deno.test("lerRespostaDecisao: escolha com a probabilidade dela e tokens", () => {
+  const r = lerRespostaDecisao({
+    model: "typesafe-ai/jev",
+    answers: {
+      modo: { type: "choice", choice: "acao", probabilities: { consulta: 0.1, acao: 0.85, operacao: 0.05 } },
+      quebrada: { type: "choice" },
+      nota: { type: "score", score: 2 },
+    },
+    usage: { inputTokens: 1399, outputTokens: 356 },
+  });
+  assertEquals(r.respostas, { modo: { choice: "acao", confianca: 0.85 } });
+  assertEquals(r.tokensEntrada, 1399);
+  assertEquals(r.tokensSaida, 356);
 });

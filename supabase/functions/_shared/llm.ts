@@ -268,3 +268,96 @@ export async function* streamGateway(
   }
   return { tokensEntrada, tokensSaida };
 }
+
+// ---------------------------------------------------------------------------
+// Modelo de decisão do gateway (POST /v1/evaluate, SPEC 109)
+// ---------------------------------------------------------------------------
+//
+// Modelo de decisão (ex.: typesafe-ai/jev) não escreve texto: recebe um estado e perguntas
+// fechadas e devolve a opção escolhida com a probabilidade de cada uma. Serve para
+// classificar (rotear) em ~0,35 s, contra 1 a 2 s de um modelo de texto.
+//
+//   AI_DECISAO_<TIPO>   ex.: AI_DECISAO_AI_CHAT=gateway:typesafe-ai/jev
+//
+// Sem variável, a função classifica com o modelo de texto, como sempre.
+
+export const DECISAO_URL = "https://ai-gateway.vercel.sh/v1/evaluate";
+
+/** "ai_chat" → "AI_DECISAO_AI_CHAT". */
+export function chaveDecisao(tipo: string): string {
+  return `AI_DECISAO_${tipo.toUpperCase().replace(/[^A-Z0-9]+/g, "_")}`;
+}
+
+/** Modelo de decisão da função `tipo`, ou null quando não configurado. Só existe no gateway. */
+export function resolverDecisao(tipo: string, lerEnv: LerEnv = lerEnvDeno): ModeloAlvo | null {
+  const valor = lerEnv(chaveDecisao(tipo))?.trim();
+  if (!valor) return null;
+  const alvo = lerAlvo(valor);
+  if (alvo.provedor !== "gateway") {
+    throw new Error(`${chaveDecisao(tipo)} precisa de um modelo do gateway (ex.: gateway:typesafe-ai/jev).`);
+  }
+  return alvo;
+}
+
+export interface PerguntaEscolha {
+  type: "choice";
+  instructions: string;
+  /** Opção → descrição do que ela significa. */
+  criteria: Record<string, string>;
+}
+
+export interface RespostaEscolha {
+  choice: string;
+  /** Probabilidade da opção escolhida (0 a 1). */
+  confianca: number;
+}
+
+export interface RespostaDecisao {
+  respostas: Record<string, RespostaEscolha>;
+  tokensEntrada: number;
+  tokensSaida: number;
+}
+
+/** Lê o corpo de /v1/evaluate. Pergunta sem resposta válida fica de fora (quem chama decide). */
+export function lerRespostaDecisao(corpo: unknown): RespostaDecisao {
+  const c = corpo as {
+    answers?: Record<string, { type?: string; choice?: string; probabilities?: Record<string, number> }>;
+    usage?: { inputTokens?: number; outputTokens?: number };
+  };
+  const respostas: Record<string, RespostaEscolha> = {};
+  for (const [chave, r] of Object.entries(c.answers ?? {})) {
+    if (r?.type !== "choice" || typeof r.choice !== "string") continue;
+    respostas[chave] = { choice: r.choice, confianca: Number(r.probabilities?.[r.choice] ?? 0) };
+  }
+  return {
+    respostas,
+    tokensEntrada: c.usage?.inputTokens ?? 0,
+    tokensSaida: c.usage?.outputTokens ?? 0,
+  };
+}
+
+export async function chamarDecisao(
+  alvo: ModeloAlvo,
+  o: { estado: string | Record<string, unknown>; perguntas: Record<string, PerguntaEscolha>; timeoutMs: number }
+): Promise<RespostaDecisao> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), o.timeoutMs);
+  try {
+    const res = await fetch(DECISAO_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${chaveGateway()}` },
+      body: JSON.stringify({ model: alvo.modelo, state: o.estado, questions: o.perguntas }),
+      signal: controller.signal,
+    });
+    if (!res.ok)
+      throw new Error(`AI Gateway decision error (${res.status}) em ${alvo.modelo}: ${(await res.text()).slice(0, 500)}`);
+    return lerRespostaDecisao(await res.json());
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") {
+      throw new Error(`AI Gateway decision timeout após ${o.timeoutMs}ms em ${alvo.modelo}`);
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}

@@ -51,6 +51,7 @@ export const IntentSchema = z.object({
   operacao: z.enum(OPERACOES).nullish(),
   motivo: z.string().max(300),
 });
+export type Intent = z.infer<typeof IntentSchema>;
 
 export const RespostaSchema = z.object({
   resposta: z.string().min(1),
