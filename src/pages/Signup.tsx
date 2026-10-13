@@ -390,7 +390,7 @@ export default function Signup() {
                               className="mt-0.5 data-[state=checked]:bg-brand data-[state=checked]:border-brand data-[state=checked]:text-ink"
                             />
                           </FormControl>
-                          <label className="text-sm text-ink-soft leading-snug cursor-pointer select-none">
+                          <FormLabel className="text-sm font-normal text-ink-soft leading-snug cursor-pointer select-none">
                             Li e concordo com os{" "}
                             <Link
                               to="/termos"
@@ -409,7 +409,7 @@ export default function Signup() {
                             >
                               Política de Privacidade
                             </Link>
-                          </label>
+                          </FormLabel>
                         </div>
                         <FormMessage />
                       </FormItem>
@@ -438,7 +438,7 @@ export default function Signup() {
                   <span className="w-full border-t border-paper-border" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-paper px-2 text-ink/40">ou</span>
+                  <span className="bg-paper px-2 text-ink-muted">ou</span>
                 </div>
               </div>
 

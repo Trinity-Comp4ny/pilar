@@ -247,7 +247,7 @@ export default function Login() {
               <span className="w-full border-t border-paper-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-paper px-2 text-ink/40">ou</span>
+              <span className="bg-paper px-2 text-ink-muted">ou</span>
             </div>
           </div>
 
