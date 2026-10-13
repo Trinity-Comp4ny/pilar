@@ -8807,6 +8807,7 @@ export type Database = {
         Args: { p_grupo_id: string }
         Returns: undefined
       }
+      reconciliar_assinaturas_disparar: { Args: never; Returns: undefined }
       regenerate_convite_token: {
         Args: { p_convite_id: string }
         Returns: string
