@@ -70,6 +70,13 @@ test.describe("Telas do app (desktop 1280×720)", () => {
     ["projeto-detalhe", "/projetos/00000000-0000-0000-0000-000000000401"],
     // Período "tudo": com o padrão "Este mês", o número de linhas mudaria com o dia.
     ["lancamentos", "/financeiro?tab=lancamentos&fp=tudo"],
+    // Ampliação de 13/10: os módulos que tinham só teste de fluxo, sem foto da tela.
+    ["obras", "/obras"],
+    ["obra-detalhe", "/obras/00000000-0000-0000-0000-000000000a01"],
+    ["tarefas", "/gestao/tarefas"],
+    ["leads", "/gestao/leads"],
+    ["cliente-detalhe", "/gestao/clientes/00000000-0000-0000-0000-000000000101"],
+    ["propostas", "/gestao/propostas"],
   ] as const;
 
   for (const [nome, rota] of telas) {
@@ -88,6 +95,20 @@ test.describe("Celular (390×844)", () => {
     await abrir(page, "/inicio");
     await expect(page.locator("#main-content")).toBeVisible();
     await expect(page).toHaveScreenshot("inicio-celular.png", opcoes(page));
+  });
+});
+
+test.describe("Login (sem sessão)", () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test("login", async ({ page }) => {
+    await abrir(page, "/login");
+    await expect(page.locator('input[type="email"]')).toBeVisible();
+    // O widget do captcha (iframe de terceiro) muda sozinho: fora da comparação.
+    await expect(page).toHaveScreenshot("login.png", {
+      ...opcoes(page),
+      mask: [...mascaras(page), page.locator("iframe")],
+    });
   });
 });
 
