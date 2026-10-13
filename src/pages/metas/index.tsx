@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
+import { sidebarOffset } from "@/lib/shellLayout";
 import { Plus, DollarSign, User, Layers } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ export default function MetasPage() {
   return (
     <div
       className="fixed top-0 right-0 bottom-0 bg-background z-40 overflow-hidden flex flex-col transition-[left] duration-300 ease-in-out"
-      style={{ left: isMobile ? "0px" : state === "collapsed" ? "64px" : "240px" }}
+      style={{ left: sidebarOffset(state, isMobile) }}
     >
       <div className="sticky top-0 z-20 w-full bg-background border-b">
         <PageHeader title="Metas">

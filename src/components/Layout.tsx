@@ -2,6 +2,7 @@ import { Suspense, lazy, useRef } from "react";
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { sidebarOffset } from "@/lib/shellLayout";
 import { BottomNav } from "@/components/BottomNav";
 import { CommandPaletteHint } from "@/components/CommandPaletteHint";
 import { useCommandPalette } from "@/hooks/useCommandPalette";
@@ -47,7 +48,6 @@ function DevErrorTrigger() {
 
 function LayoutContent() {
   const { state, isMobile } = useSidebar();
-  const marginLeft = isMobile ? "ml-0" : state === "collapsed" ? "ml-[64px]" : "ml-[240px]";
   const mainRef = useRef<HTMLElement>(null);
   useRouteEnter(mainRef);
 
@@ -60,7 +60,7 @@ function LayoutContent() {
         Pular para conteúdo principal
       </a>
       <AppSidebar />
-      <div className={`${marginLeft}`}>
+      <div style={{ marginLeft: sidebarOffset(state, isMobile) }}>
         <UltraAdminPlatformBanner />
         <main
           ref={mainRef}
