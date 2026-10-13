@@ -381,6 +381,7 @@ export const useLeadMembers = () => {
         .from("profiles")
         .select("id, first_name, last_name")
         .eq("empresa_id", empresaId ?? "")
+        .is("desativado_em", null)
         .order("first_name");
       if (error) throw error;
       return (data || []) as LeadMember[];

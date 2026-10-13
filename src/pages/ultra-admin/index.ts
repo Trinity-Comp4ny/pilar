@@ -10,3 +10,4 @@ export { default as Feedback } from "./Feedback";
 export { default as Atividade } from "./Atividade";
 export { default as Incidentes } from "./Incidentes";
 export { default as CustosIa } from "./CustosIa";
+export { default as PedidosLgpd } from "./PedidosLgpd";

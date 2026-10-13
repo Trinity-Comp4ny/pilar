@@ -248,6 +248,7 @@ export async function listarUsuarios(): Promise<UsuarioPlataforma[]> {
     const { data, error } = await supabase
       .from("profiles")
       .select("id, nome, email, role, empresa_id, created_at, empresas(nome)")
+      .is("desativado_em", null)
       .order("nome", { ascending: true });
     if (error) throw error;
     raw = (data ?? []).map((u) => ({

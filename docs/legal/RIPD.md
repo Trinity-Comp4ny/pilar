@@ -32,16 +32,16 @@ texto livre (observação, conversa com a IA).
 
 ## 3. Riscos e controles
 
-| Risco                                                 | Controles no produto                                                                                                                                         |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Acesso de uma empresa ao dado de outra (multi-tenant) | RLS em toda tabela, testes pgTAP de isolamento no CI, matriz de acesso por papel (MATRIZ_DE_ACESSO.md)                                                       |
-| Acesso indevido dentro da empresa                     | Papéis e módulos por usuário (SPEC 058), financeiro delegado explícito, auditoria de ações                                                                   |
-| Conta comprometida                                    | MFA para admin, rate limit no login, Turnstile no cadastro, sessão do portal com token só em hash                                                            |
-| Vazamento por terceiros                               | Lista de operadores pública, minimização (seção 2), segredos no Vault, nunca no bundle                                                                       |
-| Dado retido além do necessário                        | Retenção pós-trial com aviso nos dias 60 e 85 e exclusão só 5 dias depois do aviso final; anonimização do que tem retenção fiscal (ADR 0043)                 |
-| Titular sem resposta no prazo                         | Exportação automática dos dados da conta com link de 7 dias (SPEC 115); exclusão com aviso ao encarregado; prazo do art. 19 monitorado pelo status do pedido |
-| Indisponibilidade ou perda                            | Backup noturno cifrado com teste de restauração, status page externa                                                                                         |
-| Erro de cobrança afetando acesso                      | Reconciliação diária com o Asaas, avisando divergência (SPEC 114)                                                                                            |
+| Risco                                                 | Controles no produto                                                                                                                                                                                                       |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Acesso de uma empresa ao dado de outra (multi-tenant) | RLS em toda tabela, testes pgTAP de isolamento no CI, matriz de acesso por papel (MATRIZ_DE_ACESSO.md)                                                                                                                     |
+| Acesso indevido dentro da empresa                     | Papéis e módulos por usuário (SPEC 058), financeiro delegado explícito, auditoria de ações                                                                                                                                 |
+| Conta comprometida                                    | MFA para admin, rate limit no login, Turnstile no cadastro, sessão do portal com token só em hash                                                                                                                          |
+| Vazamento por terceiros                               | Lista de operadores pública, minimização (seção 2), segredos no Vault, nunca no bundle                                                                                                                                     |
+| Dado retido além do necessário                        | Retenção pós-trial com aviso nos dias 60 e 85 e exclusão só 5 dias depois do aviso final; anonimização do que tem retenção fiscal (ADR 0043)                                                                               |
+| Titular sem resposta no prazo                         | Exportação automática dos dados da conta com link de 7 dias (SPEC 115); exclusão em fila do ultra admin com prazo de 15 dias visível e execução em um clique (SPEC 116); prazo do art. 19 monitorado pelo status do pedido |
+| Indisponibilidade ou perda                            | Backup noturno cifrado com teste de restauração, status page externa                                                                                                                                                       |
+| Erro de cobrança afetando acesso                      | Reconciliação diária com o Asaas, avisando divergência (SPEC 114)                                                                                                                                                          |
 
 ## 4. Riscos residuais e plano
 

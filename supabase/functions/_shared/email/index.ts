@@ -22,7 +22,9 @@ export {
   templatePropostaEnvio,
 } from "./templates/escritorio.ts";
 export {
+  templateLgpdExclusaoConcluida,
   templateLgpdExclusaoDados,
+  templateLgpdExclusaoRecusada,
   templateLgpdExportacaoDados,
   templateLgpdExportacaoPronta,
   templateTrialAviso,

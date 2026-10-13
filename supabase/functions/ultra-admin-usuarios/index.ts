@@ -16,6 +16,7 @@ import { logAction } from "../_shared/audit.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { listarAcessos } from "../_shared/ultimo-acesso.ts";
 import { isEmailExistsError } from "../_shared/auth-errors.ts";
+import { desativarConta } from "../_shared/encerrar-conta.ts";
 import { emailDoConvite, papelSeguro } from "./entrada.ts";
 
 serve(
@@ -34,6 +35,7 @@ serve(
         svc
           .from("profiles")
           .select("id, nome, email, role, empresa_id, created_at, empresas(nome, deleted_at)")
+          .is("desativado_em", null)
           .order("nome", { ascending: true }),
         listarAcessos(svc),
       ]);
@@ -131,8 +133,9 @@ serve(
 
       const { data: target } = await svc.from("profiles").select("email, nome, empresa_id").eq("id", user_id).single();
 
-      const { error } = await svc.auth.admin.deleteUser(user_id);
-      if (error) return safeErrorResponse(400, error.message, req);
+      // Desativa em vez de apagar (SPEC 116): ver _shared/encerrar-conta.ts.
+      const desativada = await desativarConta(svc, user_id);
+      if (!desativada.ok) return safeErrorResponse(500, "Não foi possível remover o usuário. Tente de novo.", req);
 
       await logAction(svc, {
         actorId: userId,

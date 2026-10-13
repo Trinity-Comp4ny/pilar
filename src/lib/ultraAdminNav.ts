@@ -11,6 +11,7 @@ import {
   FlaskConical,
   LayoutDashboard,
   MessageSquare,
+  ShieldCheck,
   Siren,
   ToggleRight,
   Users,
@@ -28,7 +29,8 @@ export type UltraSecaoId =
   | "feedback"
   | "atividade"
   | "incidentes"
-  | "custos-ia";
+  | "custos-ia"
+  | "lgpd";
 
 export interface UltraSecao {
   id: UltraSecaoId;
@@ -54,6 +56,7 @@ export const ULTRA_SECOES: readonly UltraSecao[] = [
   { id: "atividade", title: "Atividade", url: `${ULTRA_ADMIN_BASE}/atividade`, icon: Activity, group: "Operação" },
   { id: "incidentes", title: "Incidentes", url: `${ULTRA_ADMIN_BASE}/incidentes`, icon: Siren, group: "Operação" },
   { id: "custos-ia", title: "Custos de IA", url: `${ULTRA_ADMIN_BASE}/custos-ia`, icon: Coins, group: "Operação" },
+  { id: "lgpd", title: "Pedidos LGPD", url: `${ULTRA_ADMIN_BASE}/lgpd`, icon: ShieldCheck, group: "Operação" },
 ];
 
 export function isUltraAdminPath(pathname: string): boolean {

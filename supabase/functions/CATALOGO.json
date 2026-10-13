@@ -52,7 +52,12 @@
   },
   "delete-user": {
     "dominio": "acesso",
-    "descricao": "Remove membro: admin só da própria empresa e nunca ultra admin; ultra admin de qualquer empresa."
+    "descricao": "Remove membro (bloqueia o login e desativa, sem apagar: SPEC 116): admin só da própria empresa e nunca ultra admin; ultra admin de qualquer empresa."
+  },
+  "excluir-dados-titular": {
+    "dominio": "plataforma",
+    "descricao": "Ultra admin aprova ou recusa pedido de exclusão (LGPD art. 18 VI): aprovar apaga o dado pessoal, anonimiza e bloqueia a conta (SPEC 116).",
+    "chamada_externa": "aba Pedidos LGPD do ultra admin"
   },
   "exportar-dados-titular": {
     "dominio": "comunicacao",
