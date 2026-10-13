@@ -14,7 +14,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(1);
+SELECT plan(4);
 
 WITH allowed(sig) AS (
   VALUES
@@ -61,6 +61,71 @@ SELECT is(
   (SELECT COALESCE(array_agg(sig ORDER BY sig), '{}'::text[]) FROM exposto),
   '{}'::text[],
   'nenhuma função SECURITY DEFINER fora da allowlist é executável por anon'
+);
+
+-- Função de trigger SECURITY DEFINER não precisa de EXECUTE pra ninguém (o
+-- Postgres só checa no CREATE TRIGGER). Trigger novo nasce com EXECUTE pra PUBLIC
+-- pelo default; este teste obriga o REVOKE no mesmo PR (20261022000001).
+SELECT is(
+  (SELECT COALESCE(array_agg(p.proname::text ORDER BY p.proname), '{}'::text[])
+   FROM pg_proc p
+   JOIN pg_namespace n ON n.oid = p.pronamespace
+   WHERE n.nspname = 'public'
+     AND p.prosecdef
+     AND p.prorettype = 'trigger'::regtype
+     AND (has_function_privilege('anon', p.oid, 'EXECUTE')
+          OR has_function_privilege('authenticated', p.oid, 'EXECUTE'))),
+  '{}'::text[],
+  'nenhuma função de trigger SECURITY DEFINER é executável por anon ou authenticated'
+);
+
+-- Prova de que o REVOKE acima é seguro: trigger dispara para quem não tem
+-- EXECUTE na função.
+CREATE TABLE public._pgtap_trigger_sem_execute (x int);
+CREATE FUNCTION public._pgtap_trigger_sem_execute_fn()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $fn$
+BEGIN
+  NEW.x := 42;
+  RETURN NEW;
+END;
+$fn$;
+REVOKE ALL ON FUNCTION public._pgtap_trigger_sem_execute_fn() FROM PUBLIC, anon, authenticated;
+CREATE TRIGGER _pgtap_trigger_sem_execute_trg
+  BEFORE INSERT ON public._pgtap_trigger_sem_execute
+  FOR EACH ROW EXECUTE FUNCTION public._pgtap_trigger_sem_execute_fn();
+GRANT INSERT, SELECT ON public._pgtap_trigger_sem_execute TO authenticated;
+
+SET LOCAL ROLE authenticated;
+INSERT INTO public._pgtap_trigger_sem_execute VALUES (1);
+RESET ROLE;
+
+SELECT is(
+  (SELECT x FROM public._pgtap_trigger_sem_execute),
+  42,
+  'trigger dispara mesmo sem EXECUTE na função'
+);
+
+-- View que roda como dona (sem security_invoker) executa a escrita com o
+-- privilégio da dona, que ignora RLS. Então nenhuma pode aceitar escrita de
+-- anon/authenticated, nem leitura de anon (20261022000000).
+SELECT is(
+  (SELECT COALESCE(array_agg(c.relname::text ORDER BY c.relname), '{}'::text[])
+   FROM pg_class c
+   JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'public'
+     AND c.relkind = 'v'
+     AND NOT COALESCE(
+       (SELECT option_value::boolean FROM pg_options_to_table(c.reloptions)
+        WHERE option_name = 'security_invoker'),
+       false)
+     AND (has_table_privilege('anon', c.oid, 'SELECT, INSERT, UPDATE, DELETE')
+          OR has_table_privilege('authenticated', c.oid, 'INSERT, UPDATE, DELETE'))),
+  '{}'::text[],
+  'view sem security_invoker não aceita escrita nem leitura anônima'
 );
 
 -- NÃO testamos "função nova nasce sem anon por padrão" aqui: verificado ao vivo
