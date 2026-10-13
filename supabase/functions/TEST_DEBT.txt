@@ -13,27 +13,6 @@
 # portal do cliente (portal-*). ai-chat ganhou teste ao ser dividido em módulos (2026-10-08).
 #
 # Um nome de pasta por linha. Linha vazia e # são ignorados.
-ai-cotacao-import
-ai-import-financeiro
-ai-rdo-voz
-campo-upload-foto
-geocode-address
-invite-campo
-invite-cliente-portal
-log-impersonation
-pilar-checkout-create
-portal-aprovar-proposta
-portal-entrega-download
-portal-get-projeto
-portal-obra-fotos
-reset-cliente-portal-password
-retencao-pos-trial
-reverificar-documentos-pendentes
-send-data-deletion-notification
-send-invoice-reminder
-send-manual-client-email
-send-proposta-email
-turnstile-verify
-ultra-admin-empresas
-ultra-admin-usuarios
-upload-portal-entrega
+#
+# 2026-10-13: as 24 restantes ganharam teste (entrada.ts/esquema.ts/regras puras por
+# função). Lista vazia: toda Edge Function nova nasce com *.test.ts.
