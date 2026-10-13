@@ -1,0 +1,83 @@
+import type { Page } from "@playwright/test";
+import { test, expect } from "./fixtures";
+
+/**
+ * Cronograma da obra em quatro níveis (spec 111): fase > etapa > serviço > tarefa.
+ *
+ * O pgTAP cobre o banco (cronograma_obra_quatro_niveis.sql); aqui é o caminho do
+ * engenheiro na tela: monta a árvore do zero, marca a tarefa como feita, confere
+ * que o progresso sobe pela árvore e que o Gantt lê a mesma estrutura. Obra nova
+ * por execução, para não depender do estado de rodadas anteriores.
+ */
+
+test.describe.configure({ mode: "serial" });
+
+const obra = `E2E Cronograma ${Date.now().toString(36)}`;
+
+async function abrirCronograma(page: Page) {
+  await page.goto("/obras");
+  await page.getByText(obra).first().click();
+  await expect(page.getByRole("heading", { name: obra }).first()).toBeVisible({ timeout: 10_000 });
+  await page.getByRole("tab", { name: "Cronograma" }).click();
+}
+
+async function criar(page: Page, botao: string, nome: string) {
+  await page.getByRole("button", { name: botao, exact: true }).click();
+  const campo = page.getByRole("textbox", { name: botao });
+  await campo.fill(nome);
+  await campo.press("Enter");
+  await expect(page.getByText(nome, { exact: true }).first()).toBeVisible({ timeout: 10_000 });
+  await campo.press("Escape");
+}
+
+test("cria a obra", async ({ page }) => {
+  await page.goto("/obras");
+  await page
+    .getByRole("button", { name: /Nova obra/i })
+    .first()
+    .click();
+  const dialog = page.getByRole("dialog", { name: /Nova obra/i });
+  await dialog.getByLabel("Nome da obra *").fill(obra);
+  await dialog.getByRole("button", { name: "Criar obra" }).click();
+  await expect(page.getByText("Obra criada").first()).toBeVisible({ timeout: 10_000 });
+});
+
+test("monta fase, etapa, serviço e tarefa", async ({ page }) => {
+  await abrirCronograma(page);
+
+  await page.getByRole("button", { name: "Criar primeira fase" }).click();
+  const fase = page.getByRole("textbox", { name: "Nova fase" });
+  await fase.fill("Estrutura");
+  await fase.press("Enter");
+  await expect(page.getByText("Estrutura", { exact: true }).first()).toBeVisible({ timeout: 10_000 });
+  await fase.press("Escape");
+
+  await criar(page, "Nova etapa", "Fundação");
+  await criar(page, "Novo serviço", "Sapatas");
+  await criar(page, "Nova tarefa", "Escavar sapatas");
+
+  // Tarefa nova começa aberta: a fase mostra 0 de 1.
+  await expect(page.getByText("0% · 0/1").first()).toBeVisible();
+});
+
+test("concluir a tarefa sobe o progresso até a fase", async ({ page }) => {
+  await abrirCronograma(page);
+
+  await page.getByRole("button", { name: "Concluir Escavar sapatas" }).click();
+  await expect(page.getByRole("button", { name: "Reabrir Escavar sapatas" })).toBeVisible({ timeout: 10_000 });
+  // Fase, etapa e serviço leem a mesma tarefa: nenhum nível fica para trás.
+  await expect(page.getByText("100% · 1/1").first()).toBeVisible();
+  await expect(page.getByText("0% · 0/1")).toHaveCount(0);
+});
+
+test("Gantt lê a mesma árvore e a escolha da visão persiste", async ({ page }) => {
+  await abrirCronograma(page);
+
+  await page.getByRole("tab", { name: "Gantt" }).click();
+  await expect(page.getByRole("tab", { name: "Gantt" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByText("Estrutura").first()).toBeVisible();
+
+  await page.reload();
+  await page.getByRole("tab", { name: "Cronograma" }).click();
+  await expect(page.getByRole("tab", { name: "Gantt" })).toHaveAttribute("aria-selected", "true");
+});
