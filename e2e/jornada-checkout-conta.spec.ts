@@ -20,14 +20,13 @@ test("pagamento confirmado vira conta com empresa e o dono entra pelo convite", 
   const email = `jornada-${sufixo}@e2e.pilar.test`;
   const empresa = `E2E Escritório ${sufixo}`;
 
-  const { data: plano } = await admin
+  // O banco local não semeia planos: a jornada cria o seu (idempotente por slug).
+  const { data: plano, error: planoErr } = await admin
     .from("pilar_subscription_plans")
+    .upsert({ slug: "e2e-jornada", nome: "E2E Jornada", preco_mensal: 297, ativo: true }, { onConflict: "slug" })
     .select("id")
-    .eq("ativo", true)
-    .order("preco_mensal")
-    .limit(1)
     .single();
-  expect(plano?.id).toBeTruthy();
+  expect(planoErr).toBeNull();
 
   const { data: signup, error } = await admin
     .from("pilar_pending_signups")
