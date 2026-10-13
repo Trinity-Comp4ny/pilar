@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
-import { corsHeaders } from "../_shared/cors.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 import { z } from "../_shared/schemas.ts";
 import {
   createAuthClient,
@@ -78,6 +78,9 @@ function montarPrompt(tipoDoc: string, categorias: CategoriaRow[]) {
 
 serve(
   withSentry("ai-import-financeiro", async (req) => {
+    // Por request: devolve a origem que chamou (app, staging, preview) e os headers de
+    // segurança; o objeto estático antigo liberava só a primeira origem da lista.
+    const corsHeaders = getCorsHeaders(req);
     if (req.method === "OPTIONS") {
       return new Response("ok", { headers: corsHeaders });
     }

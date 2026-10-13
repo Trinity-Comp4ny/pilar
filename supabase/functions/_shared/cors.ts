@@ -123,15 +123,3 @@ export async function authenticateUser(req: Request): Promise<AuthSuccess | Auth
 
   return { supabase, user };
 }
-
-// ---------------------------------------------------------------------------
-// Legacy compatibility — functions still importing `corsHeaders` directly.
-// Deprecated: prefer `getCorsHeaders(req)` / `jsonResponse(body, status, req)`.
-// ---------------------------------------------------------------------------
-
-/** @deprecated use getCorsHeaders(req) — this does not vary by origin and omits security headers */
-export const corsHeaders = {
-  "Access-Control-Allow-Origin": ALLOWED_ORIGINS[0] ?? "null",
-  "Access-Control-Allow-Headers": ALLOW_HEADERS,
-  Vary: "Origin",
-};
