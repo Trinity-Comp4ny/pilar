@@ -9,7 +9,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { formatDate } from "@/lib/format";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { menorValorProposta } from "@/lib/obras";
-import { useObraFrentes } from "@/hooks/useObraFrentes";
+import { useObraEtapas } from "@/hooks/useObraFrentes";
 import { useObraCotacoes, useDeleteCotacao, type CotacaoComPropostas, type CotacaoRow } from "@/hooks/useObraCotacoes";
 import { CotacaoFormDialog } from "./CotacaoFormDialog";
 import { CotacaoDetailDialog } from "./CotacaoDetailDialog";
@@ -17,7 +17,7 @@ import { CotacaoDetailDialog } from "./CotacaoDetailDialog";
 export function ObraCotacoesTab({ obraId, canEdit }: { obraId: string; canEdit: boolean }) {
   const formatCurrency = useMoneyMask();
   const { data: cotacoes = [], isLoading } = useObraCotacoes(obraId);
-  const { data: frentes = [] } = useObraFrentes(obraId);
+  const { data: frentes = [] } = useObraEtapas(obraId);
   const del = useDeleteCotacao(obraId);
 
   const [form, setForm] = useState<{ cotacao?: CotacaoRow | null } | null>(null);

@@ -1,47 +1,59 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ObraFrenteRow } from "@/hooks/useObraFrentes";
+import type { ObraTarefa } from "@/hooks/useObraTarefas";
 import { ObraCronogramaTab } from "./ObraCronogramaTab";
 
 /**
- * Regressão: o modal da etapa guardava o objeto da etapa no clique. Depois de
- * salvar a data, o Gantt recebia a lista nova mas o campo "Início da etapa"
- * seguia mostrando o snapshot antigo (vazio).
+ * Cronograma da obra em quatro níveis (spec 111): a lista monta a cascata
+ * fase > etapa > serviço > tarefa sem modal, o checklist grava a tarefa e a data
+ * salva aparece no campo (regressão do modal que mostrava o snapshot antigo).
  */
 
-let frentes: ObraFrenteRow[] = [];
-// vi.mock sobe pro topo do arquivo; o helper precisa subir junto.
-const { mutacao } = vi.hoisted(() => ({
-  mutacao: () => ({ mutate: () => {}, mutateAsync: async () => {}, isPending: false }),
+let nos: ObraFrenteRow[] = [];
+let tarefas: ObraTarefa[] = [];
+
+// vi.mock sobe pro topo do arquivo; espiões e helper precisam subir junto.
+const { criarNo, atualizarNo, atualizarTarefa, criarTarefa, mutacao } = vi.hoisted(() => ({
+  criarNo: vi.fn(async (..._a: unknown[]) => ({})),
+  atualizarNo: vi.fn(async (..._a: unknown[]) => {}),
+  atualizarTarefa: vi.fn(async (..._a: unknown[]) => {}),
+  criarTarefa: vi.fn(async (..._a: unknown[]) => ({})),
+  mutacao: (fn: (...a: unknown[]) => Promise<unknown>) => () => ({ mutate: fn, mutateAsync: fn, isPending: false }),
 }));
 
 vi.mock("@/hooks/useObraFrentes", () => ({
-  useObraFrentes: () => ({ data: frentes, isLoading: false }),
-  useCreateFrente: mutacao,
-  useUpdateFrente: mutacao,
-  useDeleteFrente: mutacao,
+  useObraFrentes: () => ({ data: nos, isLoading: false }),
+  useCreateFrente: mutacao(criarNo),
+  useUpdateFrente: mutacao(atualizarNo),
+  useDeleteFrente: mutacao(async () => {}),
 }));
 
 vi.mock("@/hooks/useObraTarefas", () => ({
-  useObraTarefas: () => ({ data: [] }),
-  useCreateObraTarefa: mutacao,
-  useUpdateObraTarefa: mutacao,
-  useDeleteObraTarefa: mutacao,
+  useObraTarefas: () => ({ data: tarefas }),
+  useCreateObraTarefa: mutacao(criarTarefa),
+  useUpdateObraTarefa: mutacao(atualizarTarefa),
+  useDeleteObraTarefa: mutacao(async () => {}),
 }));
 
 vi.mock("@/pages/meu-trabalho/hooks", () => ({
   usePessoasEmpresa: () => ({ data: [] }),
+  useTarefaMutations: () => ({ atualizar: { mutateAsync: async () => {} } }),
 }));
 
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => false }));
 
-function frente(campos: Partial<ObraFrenteRow> = {}): ObraFrenteRow {
+function no(id: string, nivel: string, parent_id: string | null, campos: Partial<ObraFrenteRow> = {}): ObraFrenteRow {
   return {
-    id: "f1",
+    id,
     empresa_id: "e1",
     obra_id: "o1",
-    nome: "Fundação",
+    nome: id,
+    nivel,
+    parent_id,
     ordem: 0,
     data_inicio: null,
     data_fim: null,
@@ -51,33 +63,125 @@ function frente(campos: Partial<ObraFrenteRow> = {}): ObraFrenteRow {
   } as ObraFrenteRow;
 }
 
-describe("ObraCronogramaTab · modal da etapa", () => {
-  it("mostra a data salva no campo, não o snapshot de quando abriu", async () => {
-    frentes = [frente()];
-    const { rerender } = render(<ObraCronogramaTab obraId="o1" projetoId={null} canEdit />);
+function tarefa(id: string, servico: string, campos: Partial<ObraTarefa> = {}): ObraTarefa {
+  return {
+    id,
+    titulo: id,
+    obra_frente_id: servico,
+    obra_id: "o1",
+    status: "a_fazer",
+    data_inicio: null,
+    prazo: null,
+    labels: [],
+    sensivel_clima: null,
+    created_at: "2026-10-02T00:00:00Z",
+    responsavel: null,
+    responsaveis: [],
+    ...campos,
+  } as ObraTarefa;
+}
 
-    await userEvent.click(screen.getByRole("button", { name: /Fundação/ }));
-    const dialog = screen.getByRole("dialog");
-    expect(within(dialog).queryByText("20/10/2026")).toBeNull();
+const tela = () => (
+  <QueryClientProvider client={new QueryClient()}>
+    <MemoryRouter>
+      <ObraCronogramaTab obraId="o1" projetoId={null} canEdit />
+    </MemoryRouter>
+  </QueryClientProvider>
+);
+const renderTab = () => render(tela());
 
-    // Simula o refetch depois do updateFrente.
-    frentes = [frente({ data_inicio: "2026-10-20", updated_at: "2026-10-13T00:00:00Z" })];
-    rerender(<ObraCronogramaTab obraId="o1" projetoId={null} canEdit />);
+// jsdom deste setup não traz localStorage; um Map basta para a preferência de visão.
+function storageEmMemoria(): Storage {
+  const m = new Map<string, string>();
+  return {
+    getItem: (k) => m.get(k) ?? null,
+    setItem: (k, v) => void m.set(k, String(v)),
+    removeItem: (k) => void m.delete(k),
+    clear: () => m.clear(),
+    key: (i) => [...m.keys()][i] ?? null,
+    get length() {
+      return m.size;
+    },
+  };
+}
 
-    expect(within(screen.getByRole("dialog")).getByText("20/10/2026")).toBeInTheDocument();
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.stubGlobal("localStorage", storageEmMemoria());
+  nos = [];
+  tarefas = [];
+});
+
+describe("ObraCronogramaTab · lista", () => {
+  it("obra vazia: cria a primeira fase pela lista", async () => {
+    renderTab();
+    await userEvent.click(screen.getByRole("button", { name: "Criar primeira fase" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Nova fase" }), "Estrutura{Enter}");
+    expect(criarNo).toHaveBeenCalledWith(
+      expect.objectContaining({ nome: "Estrutura", nivel: "fase", parent_id: null })
+    );
   });
 
-  it("fecha o modal quando a etapa aberta some da lista (excluída)", async () => {
-    frentes = [frente()];
-    const { rerender } = render(<ObraCronogramaTab obraId="o1" projetoId={null} canEdit />);
+  it("mostra a cascata e cria o filho certo em cada nível", async () => {
+    nos = [no("Estrutura", "fase", null), no("Fundação", "etapa", "Estrutura"), no("Sapatas", "servico", "Fundação")];
+    tarefas = [tarefa("Concretar S1", "Sapatas")];
+    renderTab();
 
-    await userEvent.click(screen.getByRole("button", { name: /Fundação/ }));
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    for (const nome of ["Estrutura", "Fundação", "Sapatas", "Concretar S1"]) {
+      expect(screen.getByRole("button", { name: nome })).toBeInTheDocument();
+    }
 
-    frentes = [];
-    rerender(<ObraCronogramaTab obraId="o1" projetoId={null} canEdit />);
+    await userEvent.click(screen.getByRole("button", { name: "Novo serviço" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Novo serviço" }), "Vigas baldrame{Enter}");
+    expect(criarNo).toHaveBeenCalledWith(
+      expect.objectContaining({ nome: "Vigas baldrame", nivel: "servico", parent_id: "Fundação" })
+    );
 
-    expect(screen.queryByRole("dialog")).toBeNull();
-    expect(screen.queryByText("Tarefas sem etapa")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Nova tarefa" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Nova tarefa" }), "Concretar S2{Enter}");
+    expect(criarTarefa).toHaveBeenCalledWith(
+      expect.objectContaining({ titulo: "Concretar S2", obra_frente_id: "Sapatas" })
+    );
+  });
+
+  it("checklist: marcar a tarefa grava concluída", async () => {
+    nos = [no("Estrutura", "fase", null), no("Fundação", "etapa", "Estrutura"), no("Sapatas", "servico", "Fundação")];
+    tarefas = [tarefa("Concretar S1", "Sapatas")];
+    renderTab();
+
+    await userEvent.click(screen.getByRole("checkbox", { name: "Concluir Concretar S1" }));
+    expect(atualizarTarefa).toHaveBeenCalledWith({ id: "Concretar S1", status: "concluida" });
+  });
+
+  it("avanço sobe para a fase: 1 de 2 tarefas concluídas = 50%", () => {
+    nos = [no("Estrutura", "fase", null), no("Fundação", "etapa", "Estrutura"), no("Sapatas", "servico", "Fundação")];
+    tarefas = [tarefa("t1", "Sapatas", { status: "concluida" }), tarefa("t2", "Sapatas")];
+    renderTab();
+    expect(within(screen.getByTestId("no-Estrutura")).getByText("50% · 1/2")).toBeInTheDocument();
+  });
+
+  it("data salva aparece no campo depois do refetch", () => {
+    nos = [no("Estrutura", "fase", null), no("Fundação", "etapa", "Estrutura")];
+    const { rerender } = renderTab();
+    expect(within(screen.getByTestId("no-Fundação")).queryByText("20/10/2026")).toBeNull();
+
+    nos = [no("Estrutura", "fase", null), no("Fundação", "etapa", "Estrutura", { data_inicio: "2026-10-20" })];
+    rerender(tela());
+    expect(within(screen.getByTestId("no-Fundação")).getByText("20/10/2026")).toBeInTheDocument();
+  });
+
+  it("recolher a etapa esconde serviços e tarefas", async () => {
+    nos = [no("Estrutura", "fase", null), no("Fundação", "etapa", "Estrutura"), no("Sapatas", "servico", "Fundação")];
+    renderTab();
+    await userEvent.click(screen.getByRole("button", { name: "Recolher Fundação" }));
+    expect(screen.queryByRole("button", { name: "Sapatas" })).toBeNull();
+  });
+
+  it("a escolha Lista/Gantt fica salva", async () => {
+    nos = [no("Estrutura", "fase", null)];
+    renderTab();
+    await userEvent.click(screen.getByRole("tab", { name: /Gantt/ }));
+    expect(localStorage.getItem("pilar:obra-cronograma-visao")).toBe("gantt");
+    expect(screen.getByText("Sem datas para a linha do tempo")).toBeInTheDocument();
   });
 });

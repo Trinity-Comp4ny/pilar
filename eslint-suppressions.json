@@ -69,11 +69,6 @@
       "count": 3
     }
   },
-  "src/pages/obras/components/ObraCronogramaTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 8
-    }
-  },
   "src/pages/pessoas/components/PessoaDetailDialog.tsx": {
     "no-restricted-syntax": {
       "count": 1
