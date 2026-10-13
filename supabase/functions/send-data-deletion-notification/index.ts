@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
-import { sendEmail, templateLgpdExclusaoDados } from "../_shared/email/index.ts";
+import { sendEmail, templateLgpdExclusaoDados, templateLgpdExportacaoDados } from "../_shared/email/index.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { lerJson } from "../_shared/schemas.ts";
@@ -57,6 +57,62 @@ function formatDate(iso: string): string {
   }
 }
 
+/**
+ * Pedido de exportação (LGPD art. 18, V): avisa o encarregado, que atende em até 15
+ * dias (art. 19). Quem atende é a equipe da plataforma, por isso só o DPO recebe.
+ * O idempotencyKey evita e-mail repetido se o trigger for reenviado.
+ */
+async function notificarExportacao(requestId: string, req: Request): Promise<Response> {
+  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+  const reqLog = log.child({ request_id: requestId, tipo: "exportacao" });
+
+  const { data: pedido, error } = await admin
+    .from("data_export_requests")
+    .select("id, user_id, empresa_id, requested_at")
+    .eq("id", requestId)
+    .single<{ id: string; user_id: string; empresa_id: string | null; requested_at: string }>();
+  if (error || !pedido) {
+    reqLog.warn("export request not found", { err: error?.message });
+    return safeErrorResponse(404, "Solicitação não encontrada", req);
+  }
+
+  const { data: perfil } = await admin
+    .from("profiles")
+    .select("email, full_name")
+    .eq("id", pedido.user_id)
+    .maybeSingle<{ email: string | null; full_name: string | null }>();
+  const { data: empresa } = pedido.empresa_id
+    ? await admin.from("empresas").select("nome").eq("id", pedido.empresa_id).maybeSingle<{ nome: string | null }>()
+    : { data: null };
+
+  if (!FALLBACK_DPO) {
+    reqLog.error("LGPD_DPO_EMAIL ausente");
+    return safeErrorResponse(500, "Nenhum destinatário disponível", req);
+  }
+
+  try {
+    await sendEmail({
+      classe: "plataforma",
+      tipo: "lgpd_exportacao_dados",
+      to: [FALLBACK_DPO],
+      idempotencyKey: `lgpd-exportacao-${pedido.id}`,
+      ...templateLgpdExportacaoDados({
+        empresaNome: empresa?.nome ?? "empresa não identificada",
+        solicitanteEmail: perfil?.email ?? "(email não disponível)",
+        solicitanteNome: perfil?.full_name ?? undefined,
+        requestedAt: formatDate(pedido.requested_at),
+        requestId: pedido.id,
+      }),
+    });
+  } catch (err) {
+    reqLog.error("resend send failed", err);
+    return safeErrorResponse(502, "Falha ao enviar email", req);
+  }
+
+  reqLog.info("export notification sent");
+  return jsonResponse({ success: true, recipients_count: 1 }, 200, req);
+}
+
 serve(
   withSentry("send-data-deletion-notification", async (req) => {
     if (req.method === "OPTIONS") return optionsResponse(req);
@@ -75,6 +131,7 @@ serve(
     const entrada = lerEntrada(await lerJson(req));
     if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
     const requestId = entrada.data.request_id;
+    if (entrada.data.tipo === "exportacao") return await notificarExportacao(requestId, req);
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
     const reqLog = log.child({ request_id: requestId });

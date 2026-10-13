@@ -1,7 +1,11 @@
 import { safeEqual } from "../_shared/crypto.ts";
 import { uuidObrigatorio, validar, z } from "../_shared/schemas.ts";
 
-export const entradaSchema = z.object({ request_id: uuidObrigatorio("request_id inválido") });
+export const entradaSchema = z.object({
+  request_id: uuidObrigatorio("request_id inválido"),
+  // Pedido de exclusão (padrão: o trigger antigo não manda o campo) ou de exportação.
+  tipo: z.enum(["exclusao", "exportacao"]).default("exclusao"),
+});
 
 export const lerEntrada = (corpo: unknown) => validar(entradaSchema, corpo);
 

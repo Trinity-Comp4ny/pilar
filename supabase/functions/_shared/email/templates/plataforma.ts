@@ -153,6 +153,53 @@ export function templateAtivarPlanoRecibo(params: {
   };
 }
 
+/** Pedido de exportação dos próprios dados (LGPD art. 18, V): vai para o encarregado atender. */
+export function templateLgpdExportacaoDados(params: {
+  empresaNome: string;
+  solicitanteEmail: string;
+  solicitanteNome?: string;
+  requestedAt: string;
+  requestId: string;
+}): EmailTemplate {
+  const { empresaNome, solicitanteEmail, solicitanteNome, requestedAt, requestId } = params;
+  const solicitante = solicitanteNome ? `${solicitanteNome} (${solicitanteEmail})` : solicitanteEmail;
+
+  return {
+    subject: `[LGPD] Solicitação de exportação de dados, ${empresaNome}`,
+    html: shell({
+      preview: `Um usuário da ${empresaNome} pediu uma cópia dos próprios dados`,
+      footerNote: `Notificação automática da ${BRAND.nome} para o encarregado de dados (LGPD, art. 18, V).`,
+      hero: {
+        titulo: html`Pedido de ${em("exportação de dados")}`,
+        lead: html`Um usuário da ${strong(empresaNome)} pediu uma cópia dos próprios dados pessoais, direito previsto no
+        art. 18, V da LGPD.`,
+      },
+      content: [
+        card(
+          [
+            kv("Solicitante", solicitante),
+            kvDivider(),
+            kv("Solicitado em", requestedAt),
+            kvDivider(),
+            kv("ID da solicitação", requestId, { mono: true }),
+          ],
+          { accent: "warning", mt: 0 }
+        ),
+        divider(),
+        paragraph(
+          html`O prazo é de ${strong("até 15 dias")} (art. 19). Envie a cópia para o e-mail do solicitante e marque o
+          pedido como concluído em ${strong("data_export_requests")}.`,
+          { mt: 0 }
+        ),
+        small(
+          html`Referência:
+          ${link("art. 18 da LGPD", "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm")}.`
+        ),
+      ],
+    }),
+  };
+}
+
 export function templateLgpdExclusaoDados(params: {
   adminNome: string;
   empresaNome: string;
