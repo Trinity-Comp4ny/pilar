@@ -510,6 +510,28 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
+  # O sinal único de "staging validado": CI completo + deploy com smoke de health + E2E
+  # contra o ambiente, todos no mesmo commit. É o que o promote staging → main confere
+  # (promote-staging-to-main.yml). `always()` para ficar VERMELHO quando algo antes falhou,
+  # em vez de "skipped", que some na lista de checks.
+  staging-ready:
+    name: Staging Ready
+    needs: [ci-ok, deploy-staging, e2e]
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: CI, deploy (com smoke) e E2E de staging verdes neste commit
+        env:
+          RESULTADOS: ${{ toJSON(needs) }}
+        run: |
+          FALTA=$(echo "$RESULTADOS" | jq -r 'to_entries | map(select(.value.result != "success") | "\(.key) = \(.value.result)") | join("; ")')
+          if [ -n "$FALTA" ]; then
+            echo "::error::Staging não está pronto em ${GITHUB_SHA:0:8}: $FALTA"
+            exit 1
+          fi
+          echo "::notice::Staging pronto em ${GITHUB_SHA:0:8}."
+
   # Deploy do backend em PRODUÇÃO. DORMENTE até este ci.yml chegar no branch main:
   # só dispara em push no main (github.ref) E o job precisa existir no arquivo do
   # branch onde o push ocorre. Em staging nunca roda (o if barra). Espelha o

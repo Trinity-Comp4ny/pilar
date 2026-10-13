@@ -6,8 +6,8 @@ name: Promote staging → main
 # a promoção; quem promove é o merge revisado, não a automação.
 #
 # Gate "staging pronto": o PR de release só é montado/atualizado quando o commit atual
-# de staging passou no CI E foi aplicado e testado no ambiente de staging (jobs
-# "Deploy → staging" e "E2E → staging" verdes). O "CI OK" sozinho diz que o código é
+# de staging passou no CI E foi aplicado e testado no ambiente de staging (job "Staging
+# Ready" do ci.yml, que agrega CI OK, deploy com smoke de health e E2E de staging). O "CI OK" sozinho diz que o código é
 # mergeável, não que o banco e as funções de staging aceitaram a mudança: em 13/10 o
 # deploy falhou por drift de migration e o release foi preparado mesmo assim.
 #
@@ -75,15 +75,19 @@ jobs:
             fi
           fi
 
+          # "Staging Ready" (ci.yml) já agrega CI, deploy com smoke e E2E de staging. Run
+          # antigo, de antes desse job, cai no par deploy + E2E.
           FALTA=$(gh run view "$RUN_ID" --json jobs --jq '
-            [.jobs[] | select(.name == "Deploy → staging (Supabase)" or .name == "E2E → staging (Playwright)")]
-            | if length < 2 then "jobs de staging não encontrados no run"
+            (if any(.jobs[]; .name == "Staging Ready") then ["Staging Ready"]
+             else ["Deploy → staging (Supabase)", "E2E → staging (Playwright)"] end) as $alvo
+            | [.jobs[] | select(.name as $n | $alvo | index($n))]
+            | if length < ($alvo | length) then "jobs de staging não encontrados no run"
               else map(select(.conclusion != "success") | "\(.name) = \(.conclusion)") | join("; ") end')
           if [ -n "$FALTA" ]; then
             echo "::error::Staging não está pronto em ${SHA:0:8}: $FALTA. Release não preparado (run $RUN_ID)."
             exit 1
           fi
-          echo "::notice::Staging pronto em ${SHA:0:8} (run $RUN_ID): deploy e E2E de staging verdes."
+          echo "::notice::Staging pronto em ${SHA:0:8} (run $RUN_ID): CI, deploy e E2E de staging verdes."
           echo "pronto=true" >> "$GITHUB_OUTPUT"
 
       - name: Abrir ou atualizar o PR de release (branch + read-tree)
