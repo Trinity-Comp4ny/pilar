@@ -11,7 +11,8 @@
  *  - Dia 60 e 85: envia aviso por email (templateRetencaoAviso)
  *  - Dia 90: chama excluir_empresa_retencao() (anonimiza fiscal, apaga o
  *    resto, soft-deleta empresas) e depois apaga os auth.users da empresa
- *    (a RPC não alcança o schema auth, só o public)
+ *    (a RPC não alcança o schema auth, só o public). Só exclui com o aviso
+ *    do dia 85 enviado há 5 dias ou mais (regras.ts)
  *  - Idempotente: usa retencao_aviso_60d_sent_at/_85d_sent_at pra não
  *    reenviar; deleted_at marcado pela RPC tira a empresa da consulta
  */
@@ -21,6 +22,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from "../_shared/logger.ts";
 import { withSentryCron } from "../_shared/sentry.ts";
 import { sendEmail, templateRetencaoAviso } from "../_shared/email/index.ts";
+import { cronAutorizado } from "../_shared/cron-auth.ts";
+import { type EmpresaEmLeitura, proximaAcao } from "./regras.ts";
 
 const log = createLogger("retencao-pos-trial");
 
@@ -32,25 +35,13 @@ const APP_URL = (Deno.env.get("ALLOWED_ORIGINS") ?? "https://app.pilarsoft.com.b
   .trim()
   .replace(/\/$/, "");
 
-const DIA_MS = 24 * 60 * 60 * 1000;
-
-interface EmpresaEmLeitura {
-  id: string;
-  nome: string;
-  leitura_desde: string;
-  retencao_aviso_60d_sent_at: string | null;
-  retencao_aviso_85d_sent_at: string | null;
-}
-
 serve(
   withSentryCron("retencao-pos-trial", "retencao-pos-trial-daily", async (req) => {
     if (req.method !== "POST") {
       return new Response("Method not allowed", { status: 405 });
     }
 
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (!token || !CRON_SECRET || token !== CRON_SECRET) {
+    if (!cronAutorizado(req.headers, CRON_SECRET)) {
       return new Response("Unauthorized", { status: 401 });
     }
 
@@ -72,14 +63,14 @@ serve(
     }
 
     for (const empresa of empresas ?? []) {
-      const diasEmLeitura = Math.floor((Date.now() - new Date(empresa.leitura_desde).getTime()) / DIA_MS);
+      const acao = proximaAcao(empresa, Date.now());
+      if (!acao) continue;
+      const { diasEmLeitura } = acao;
 
       try {
-        // ------------------------------------------------------------
-        // Dia 90: exclusão. Checa antes dos avisos — se já passou dos 90
-        // dias (cron não rodou por algum motivo), exclui direto.
-        // ------------------------------------------------------------
-        if (diasEmLeitura >= 90) {
+        // Exclusão: só com o aviso final enviado e o prazo depois dele cumprido
+        // (regras.ts). Cron atrasado avisa primeiro e exclui depois.
+        if (acao.tipo === "excluir") {
           const { data: profiles } = await admin.from("profiles").select("id").eq("empresa_id", empresa.id);
           const userIds = (profiles ?? []).map((p) => p.id);
 
@@ -103,17 +94,8 @@ serve(
           continue;
         }
 
-        // ------------------------------------------------------------
-        // Dia 60 e 85: aviso por email, idempotente.
-        // ------------------------------------------------------------
-        const janela =
-          diasEmLeitura >= 85 && !empresa.retencao_aviso_85d_sent_at
-            ? { dias: 85, coluna: "retencao_aviso_85d_sent_at" as const }
-            : diasEmLeitura >= 60 && !empresa.retencao_aviso_60d_sent_at
-              ? { dias: 60, coluna: "retencao_aviso_60d_sent_at" as const }
-              : null;
-
-        if (!janela) continue;
+        // Aviso do dia 60 ou 85, idempotente.
+        const janela = acao;
 
         const { data: admins } = (await admin
           .from("profiles")
@@ -130,7 +112,7 @@ serve(
             idempotencyKey: `retencao-${empresa.id}-${janela.dias}d`,
             ...templateRetencaoAviso({
               empresaNome: empresa.nome,
-              diasRestantes: 90 - diasEmLeitura,
+              diasRestantes: janela.diasRestantes,
               billingUrl: `${APP_URL}/billing`,
             }),
           });

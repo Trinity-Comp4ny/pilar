@@ -22,6 +22,7 @@ import { withSentryCron } from "../_shared/sentry.ts";
 import { sendEmail, templateTrialAviso, templateTrialExpirado } from "../_shared/email/index.ts";
 import { converterEmAssinaturaAtiva } from "../_shared/converter-assinatura.ts";
 import { JANELAS_DE_AVISO, limitesDaJanela } from "./avisos.ts";
+import { cronAutorizado } from "../_shared/cron-auth.ts";
 
 const log = createLogger("trial-expiry-cron");
 
@@ -62,9 +63,7 @@ serve(
       return new Response("Method not allowed", { status: 405 });
     }
 
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (!token || !CRON_SECRET || token !== CRON_SECRET) {
+    if (!cronAutorizado(req.headers, CRON_SECRET)) {
       return new Response("Unauthorized", { status: 401 });
     }
 
