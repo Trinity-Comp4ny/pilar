@@ -7,6 +7,7 @@ import { EMAIL_RE } from "../_shared/validators.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { sendEmail, templateConviteAcessoCampo } from "../_shared/email/index.ts";
 import { gerarConviteToken } from "../_shared/convite-token.ts";
+import { checkDbRateLimit } from "../_shared/db-rate-limit.ts";
 
 const log = createLogger("invite-campo");
 
@@ -70,6 +71,25 @@ serve(
         Deno.env.get("SUPABASE_URL") ?? "",
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
       );
+
+      // Cada chamada cria conta e manda e-mail: o teto é por quem convida, no banco
+      // (vale entre instâncias da edge) e fecha se o RPC falhar.
+      const rl = await checkDbRateLimit(supabaseAdmin, {
+        bucket: "invite_campo",
+        key: `uid:${user.id}`,
+        max: 30,
+        windowSeconds: 3600,
+      });
+      if (rl.rpcError) {
+        log.error("rate limit check failed, fail-closed", null, { rpcError: rl.rpcError });
+        return safeErrorResponse(503, "Serviço indisponível", req);
+      }
+      if (!rl.allowed)
+        return safeErrorResponse(
+          429,
+          "Muitos acessos de campo criados em sequência. Aguarde alguns minutos e tente de novo.",
+          req
+        );
 
       // A obra tem que ser da empresa do gestor.
       const { data: obra, error: obraError } = await supabaseAdmin
