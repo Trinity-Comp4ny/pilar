@@ -18,9 +18,10 @@
  *   - Cada invocação de withSentry abre um AsyncLocalStorage novo pra coletar os spans
  *     chamados durante aquele request (ex.: em ai-client.ts), sem precisar passar
  *     contexto manualmente pelos 14 handlers `ai-*`.
- *   - Inclui `gen_ai.input.messages`/`gen_ai.output.messages` (replay de conversa em
- *     Insights > Agents), passado por scrub() antes de sair (ver ADR 0027). Trade-off
- *     aceito conscientemente: conteúdo de conversa passa a trafegar pro Sentry.
+ *   - `gen_ai.input.messages`/`gen_ai.output.messages` (replay de conversa em
+ *     Insights > Agents) só saem quando SENTRY_ENV é de dev (ADR 0053, revisa o 0027).
+ *     Staging, produção, valor vazio ou digitado errado mandam só metadado: modelo,
+ *     tokens, latência, empresa. Ver conteudoGenAiPorAmbiente().
  *   - `gen_ai.conversation.id` (setado pelo caller) agrupa spans da mesma conversa na
  *     tela Conversations. `setSentryUser()` identifica quem está por trás da conversa.
  *
@@ -101,6 +102,22 @@ export interface GenAiSpanInput {
 }
 
 const genAiSpanStore = new AsyncLocalStorage<GenAiSpanInput[]>();
+
+// Allowlist, não blocklist: qualquer ambiente fora daqui (inclusive "", "prod " ou
+// "stagign") cai no lado seguro e não manda conteúdo de cliente pro Sentry (ADR 0053).
+const AMBIENTES_COM_CONTEUDO_GEN_AI = new Set(["development", "dev", "local"]);
+const ATRIBUTOS_DE_CONTEUDO_GEN_AI = ["gen_ai.input.messages", "gen_ai.output.messages"];
+
+/** Tira prompt e resposta dos atributos do span fora de dev. Metadado passa sempre. */
+export function conteudoGenAiPorAmbiente(
+  attributes: Record<string, unknown>,
+  environment: string
+): Record<string, unknown> {
+  if (AMBIENTES_COM_CONTEUDO_GEN_AI.has(environment)) return attributes;
+  const out = { ...attributes };
+  for (const key of ATRIBUTOS_DE_CONTEUDO_GEN_AI) delete out[key];
+  return out;
+}
 
 /**
  * Registra um span gen_ai.* pra aparecer no dashboard Insights > Agents do Sentry.
@@ -266,7 +283,7 @@ async function sendTransaction(params: {
     start_timestamp: s.startMs / 1000,
     timestamp: s.endMs / 1000,
     status: s.status ?? "ok",
-    data: s.attributes,
+    data: conteudoGenAiPorAmbiente(s.attributes, ENVIRONMENT),
   }));
 
   const event = {

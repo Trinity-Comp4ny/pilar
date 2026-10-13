@@ -242,7 +242,7 @@ export async function debitarTokens(supabaseAdmin: SupabaseClient, params: Debit
 /**
  * Span gen_ai.chat de uma chamada ao Gemini (dashboard Insights > Agents do Sentry).
  * Inclui input.messages/output.messages (replay de conversa, ADR 0027) passados por
- * scrub(): trade-off aceito conscientemente de mandar conteúdo pro Sentry.
+ * scrub(); o envio em sentry.ts descarta os dois fora de dev (ADR 0053).
  */
 function recordGeminiChatSpan(params: {
   alvo: ModeloAlvo;
