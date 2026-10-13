@@ -10,7 +10,7 @@ import {
   RESPOSTA_ERRO_IA,
   tipoDoStatus,
 } from "./ai-erros.ts";
-import { configDeGeracao, exigirParadaUtil, motivoDeParada } from "./ai-geracao.ts";
+import { configDeGeracao, exigirParadaUtil, motivoDeParada, tetoDaChamadaMs } from "./ai-geracao.ts";
 import { proveniencia } from "./ai-proveniencia.ts";
 import {
   chamarGateway,
@@ -335,8 +335,12 @@ async function fetchGeminiRaw(
   };
 
   // Teto desta chamada: o menor entre o limite por chamada e o que resta do orçamento total.
-  const restante = opts.deadline ? opts.deadline - Date.now() : GEMINI_CALL_TIMEOUT_MS;
-  const timeoutMs = Math.min(GEMINI_CALL_TIMEOUT_MS, restante);
+  const timeoutMs = tetoDaChamadaMs({
+    restanteMs: opts.deadline ? opts.deadline - Date.now() : undefined,
+    comArquivo: Boolean(opts.files?.length),
+    porChamadaMs: GEMINI_CALL_TIMEOUT_MS,
+    orcamentoMs: GEMINI_TOTAL_BUDGET_MS,
+  });
   if (timeoutMs <= 0) {
     throw new ErroIa("tempo_esgotado", "Orçamento de tempo do Gemini esgotado antes da chamada");
   }
@@ -447,8 +451,12 @@ async function fetchModeloUmaVez(
 ): Promise<{ text: string; tokensEntrada: number; tokensSaida: number }> {
   if (alvo.provedor === "gemini") return fetchGeminiRaw(alvo, systemPrompt, userMessage, opts);
 
-  const restante = opts.deadline ? opts.deadline - Date.now() : GEMINI_CALL_TIMEOUT_MS;
-  const timeoutMs = Math.min(GEMINI_CALL_TIMEOUT_MS, restante);
+  const timeoutMs = tetoDaChamadaMs({
+    restanteMs: opts.deadline ? opts.deadline - Date.now() : undefined,
+    comArquivo: Boolean(opts.files?.length),
+    porChamadaMs: GEMINI_CALL_TIMEOUT_MS,
+    orcamentoMs: GEMINI_TOTAL_BUDGET_MS,
+  });
   if (timeoutMs <= 0) throw new ErroIa("tempo_esgotado", "Orçamento de tempo do modelo esgotado antes da chamada");
   const spanStartMs = Date.now();
   const inputMessages = [
