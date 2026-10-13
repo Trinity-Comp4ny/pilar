@@ -162,18 +162,31 @@ export default defineConfig(({ mode }) => ({
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "json-summary"],
-      // Foco onde a corretude importa e dá pra medir: regras de negócio (lib) e o
-      // módulo financeiro. Não medimos o app inteiro ainda; a meta é ter número
-      // de linha de base antes de exigir piso no CI.
-      include: ["src/lib/**", "src/pages/financeiro/**"],
+      // Foco onde a corretude importa e dá pra medir: regras de negócio (lib), os
+      // módulos de maior risco (financeiro, obras, projetos) e a camada compartilhada
+      // (hooks, components). Ainda fora: as demais telas, cobertas por E2E.
+      include: [
+        "src/lib/**",
+        "src/hooks/**",
+        "src/components/**",
+        "src/pages/financeiro/**",
+        "src/pages/obras/**",
+        "src/pages/projetos/**",
+      ],
       // Piso que reprova o CI (catraca, não meta). Medido em 07/10: lib em 70/66/71/72
       // (statements/branches/functions/lines) e financeiro em 5/6/4/4. O piso fica um
       // pouco abaixo do medido para refactor pequeno não reprovar; a regra é só subir.
       // Quando um módulo ganhar teste, subir o número dele no mesmo PR. Tela do
       // financeiro é coberta por E2E (e2e/financeiro-*), por isso o piso baixo.
+      // Hooks, components, obras e projetos entraram na medição em 13/10 com o piso
+      // logo abaixo do medido (12/9/10/13, 22/19/17/22, 9/7/8/9 e 6/4/5/6).
       thresholds: {
         "src/lib/**": { statements: 68, branches: 63, functions: 68, lines: 70 },
+        "src/hooks/**": { statements: 11, branches: 8, functions: 9, lines: 12 },
+        "src/components/**": { statements: 21, branches: 18, functions: 16, lines: 21 },
         "src/pages/financeiro/**": { statements: 4, branches: 5, functions: 3, lines: 4 },
+        "src/pages/obras/**": { statements: 8, branches: 6, functions: 7, lines: 8 },
+        "src/pages/projetos/**": { statements: 5, branches: 3, functions: 4, lines: 5 },
       },
     },
   },
