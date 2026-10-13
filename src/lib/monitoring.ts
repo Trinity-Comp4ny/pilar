@@ -143,10 +143,12 @@ const sentryMonitoring: Monitoring = {
       environment: ENV,
       release: __SENTRY_RELEASE__,
       tracesSampleRate: TRACES_RATE,
-      // Mesma taxa do tracing: profiling só faz sentido dentro de uma transaction
-      // amostrada (é isso que o Sentry usa pra decidir quando perfilar), então não
-      // introduz uma env var de sample rate própria pra configurar.
-      profilesSampleRate: TRACES_RATE,
+      // Relativa às transactions JÁ amostradas, não ao total: repetir TRACES_RATE aqui
+      // perfilava 10% de 10% (1% das navegações) e a aba Profiles ficava vazia. 1.0 =
+      // toda transaction amostrada leva profile; o custo continua controlado por
+      // TRACES_RATE. Só Chromium perfila, e só com o header Document-Policy: js-profiling
+      // no HTML (vercel.json).
+      profilesSampleRate: 1.0,
       replaysSessionSampleRate: 0,
       replaysOnErrorSampleRate: 1.0,
       sendDefaultPii: false,

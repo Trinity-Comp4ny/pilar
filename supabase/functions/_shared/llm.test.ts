@@ -7,6 +7,7 @@ import {
   lerRespostaDecisao,
   lerEventoStream,
   lerRespostaGateway,
+  raciocinioDoGemini,
   MODELO_PADRAO,
   modeloEmUso,
   montarCorpoGateway,
@@ -96,6 +97,19 @@ Deno.test("extrairJson e lerRespostaGateway: cerca de código, texto e tokens", 
   assertEquals(lerRespostaGateway({ choices: [] }, true).text, "{}");
 });
 
+Deno.test("raciocínio (thinking) separado para o span, sem mudar a saída cobrada", () => {
+  const r = lerRespostaGateway(
+    {
+      choices: [{ message: { content: "ok" } }],
+      usage: { prompt_tokens: 12, completion_tokens: 50, completion_tokens_details: { reasoning_tokens: 41 } },
+    },
+    false
+  );
+  assertEquals(r, { text: "ok", tokensEntrada: 12, tokensSaida: 50, tokensRaciocinio: 41 });
+  assertEquals(raciocinioDoGemini({ promptTokenCount: 10, candidatesTokenCount: 5, thoughtsTokenCount: 92 }), 92);
+  assertEquals(raciocinioDoGemini({ promptTokenCount: 10, candidatesTokenCount: 5 }), undefined);
+});
+
 Deno.test("lerEventoStream: pedaço de texto, uso final e linha quebrada", () => {
   assertEquals(lerEventoStream('{"choices":[{"delta":{"content":"Olá"}}]}').texto, "Olá");
   const fim = lerEventoStream('{"choices":[],"usage":{"prompt_tokens":40,"completion_tokens":9}}');
@@ -112,7 +126,10 @@ Deno.test("tokensDoGemini: raciocínio conta como saída", () => {
 });
 
 Deno.test("tokensDoGemini: sem raciocínio ou sem usage não quebra", () => {
-  assertEquals(tokensDoGemini({ promptTokenCount: 10, candidatesTokenCount: 5 }), { tokensEntrada: 10, tokensSaida: 5 });
+  assertEquals(tokensDoGemini({ promptTokenCount: 10, candidatesTokenCount: 5 }), {
+    tokensEntrada: 10,
+    tokensSaida: 5,
+  });
   assertEquals(tokensDoGemini(undefined), { tokensEntrada: 0, tokensSaida: 0 });
 });
 
