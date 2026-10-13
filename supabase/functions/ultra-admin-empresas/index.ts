@@ -17,6 +17,7 @@ import { isUUID, jsonResponse, optionsResponse, safeErrorResponse, getTrustedOri
 import { requireUltraAdmin } from "../_shared/admin-auth.ts";
 import { logAction } from "../_shared/audit.ts";
 import { withSentry } from "../_shared/sentry.ts";
+import { lerAcaoEmMassa, lerNovaEmpresa } from "./entrada.ts";
 
 // Espelha universal:true de src/lib/features.ts / _universal_features() no
 // banco (migration 20260845000000). Coberto por teste de sincronia em
@@ -172,16 +173,9 @@ serve(
 
     // ─── POST: criar empresa + assinatura Starter + convidar dono ─────────
     if (req.method === "POST") {
-      const body = await req.json();
-      const nome = typeof body?.nome === "string" ? body.nome.trim() : "";
-      const cnpj = typeof body?.cnpj === "string" && body.cnpj.trim() ? body.cnpj.trim() : null;
-      const ownerEmail = typeof body?.owner_email === "string" ? body.owner_email.trim().toLowerCase() : "";
-      const ownerNome = typeof body?.owner_nome === "string" && body.owner_nome.trim() ? body.owner_nome.trim() : null;
-
-      if (!nome) return safeErrorResponse(400, "Nome da empresa é obrigatório", req);
-      if (!ownerEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(ownerEmail)) {
-        return safeErrorResponse(400, "E-mail do dono inválido", req);
-      }
+      const nova = lerNovaEmpresa(await req.json().catch(() => null));
+      if (!nova.ok) return safeErrorResponse(400, nova.error, req);
+      const { nome, cnpj, ownerEmail, ownerNome } = nova.data;
 
       // 1. Cria a empresa (service_role bypassa RLS)
       const { data: empresa, error: empErr } = await svc
@@ -250,18 +244,9 @@ serve(
     // Ação em massa (spec 035). O preview de contagem é feito no front a partir
     // da lista de empresas (que já traz features); aqui só se escreve.
     if (req.method === "PUT" && url.searchParams.get("action") === "bulk-feature") {
-      const body = await req.json();
-      const feature = typeof body?.feature === "string" ? body.feature.trim() : "";
-      const value = body?.value;
-      const scope = body?.scope; // "all" | "has_parent"
-      const parent = typeof body?.parent === "string" && body.parent.trim() ? body.parent.trim() : null;
-
-      if (!/^[a-z][a-z_]*$/.test(feature)) return safeErrorResponse(400, "feature inválida", req);
-      if (typeof value !== "boolean") return safeErrorResponse(400, "value deve ser boolean", req);
-      if (scope !== "all" && scope !== "has_parent") return safeErrorResponse(400, "scope inválido", req);
-      if (scope === "has_parent" && !parent) {
-        return safeErrorResponse(400, "parent é obrigatório para scope has_parent", req);
-      }
+      const acao = lerAcaoEmMassa(await req.json().catch(() => null));
+      if (!acao.ok) return safeErrorResponse(400, acao.error, req);
+      const { feature, value, scope, parent } = acao.data;
       // ADR 0026: feature universal não passa por empresas.features (toda empresa
       // já tem). A UI (BulkFeatureManager) já restringe a lista, mas o endpoint
       // recusa direto, senão a ação em massa escreve um toggle que ninguém lê.
