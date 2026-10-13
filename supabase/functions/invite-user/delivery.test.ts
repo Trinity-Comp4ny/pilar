@@ -69,6 +69,8 @@ Deno.test("conta com profile é recusada sem enviar OTP", async () => {
   const result = await deliverInvite(svc, "bia@test.com", "token", "Bia", "https://app.test");
   assertEquals(result.ok, false);
   if (!result.ok) assertEquals(result.preservePending, false);
+  // Resposta de negócio: o handler loga como aviso, não como erro no Sentry (PILAR-2E).
+  if (!result.ok) assertEquals(result.esperado, true);
   assertEquals(
     calls.some((c) => c.method === "otp"),
     false
@@ -102,6 +104,7 @@ Deno.test("falha comum de envio mantém cleanup original", async () => {
   const result = await deliverInvite(svc, "bia@test.com", "token", "Bia", "https://app.test");
   assertEquals(result.ok, false);
   if (!result.ok) assertEquals(result.preservePending, false);
+  if (!result.ok) assertEquals(result.esperado, undefined);
 });
 Deno.test("limite conta profiles por empresa sem deleted_at", async () => {
   for (const [count, expected] of [

@@ -3,7 +3,8 @@ import { isEmailExistsError } from "../_shared/auth-errors.ts";
 
 type DeliveryResult =
   | { ok: true; conta_existente: boolean }
-  | { ok: false; status: number; message: string; preservePending: boolean; error: unknown };
+  // `esperado`: resposta de negócio (e-mail já tem conta), não falha de entrega.
+  | { ok: false; status: number; message: string; preservePending: boolean; error: unknown; esperado?: boolean };
 
 // Compartilhado por criação e reenvio. Enviar acesso nunca cria o profile:
 // o vínculo só é feito pela RPC depois de a pessoa autenticar sua conta.
@@ -42,7 +43,14 @@ export async function deliverInvite(
     };
   }
   if (profile) {
-    return { ok: false, status: 400, message: "Esse e-mail já tem conta no Pilar", preservePending: false, error };
+    return {
+      ok: false,
+      status: 400,
+      message: "Esse e-mail já tem conta no Pilar",
+      preservePending: false,
+      error,
+      esperado: true,
+    };
   }
 
   const { error: otpError } = await svc.auth.signInWithOtp({

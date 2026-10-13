@@ -1,10 +1,44 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { withSentry } from "../_shared/sentry.ts";
+import { recordMetric, withSentry } from "../_shared/sentry.ts";
 import { jsonResponse, optionsResponse } from "../_shared/cors.ts";
 
 // User-Agent exigido pelo fair-use do Nominatim. Sem ele o IP é bloqueado.
 const NOMINATIM_UA = "PilarSoft/1.0 (contato@pilarsoft.com.br)";
 const NOMINATIM_BASE = "https://nominatim.openstreetmap.org/search";
+// Fallback em nível de cidade. O Nominatim bloqueia faixas de IP de nuvem (403
+// vindo da própria edge, PILAR-2W) e aí o projeto não entrava no mapa.
+const OPEN_METEO_GEO = "https://geocoding-api.open-meteo.com/v1/search";
+
+// O formulário salva a UF; o Open-Meteo devolve o nome do estado em `admin1`.
+const ESTADO_POR_UF: Record<string, string> = {
+  AC: "Acre",
+  AL: "Alagoas",
+  AP: "Amapá",
+  AM: "Amazonas",
+  BA: "Bahia",
+  CE: "Ceará",
+  DF: "Distrito Federal",
+  ES: "Espírito Santo",
+  GO: "Goiás",
+  MA: "Maranhão",
+  MT: "Mato Grosso",
+  MS: "Mato Grosso do Sul",
+  MG: "Minas Gerais",
+  PA: "Pará",
+  PB: "Paraíba",
+  PR: "Paraná",
+  PE: "Pernambuco",
+  PI: "Piauí",
+  RJ: "Rio de Janeiro",
+  RN: "Rio Grande do Norte",
+  RS: "Rio Grande do Sul",
+  RO: "Rondônia",
+  RR: "Roraima",
+  SC: "Santa Catarina",
+  SP: "São Paulo",
+  SE: "Sergipe",
+  TO: "Tocantins",
+};
 
 interface GeocodeBody {
   // Query livre (compatível com o contrato antigo)
@@ -44,6 +78,30 @@ async function queryNominatim(params: URLSearchParams): Promise<GeoResult | null
   return first;
 }
 
+interface OpenMeteoGeo {
+  results?: Array<{ name?: string; latitude?: number; longitude?: number; admin1?: string; country_code?: string }>;
+}
+
+/** Centro da cidade pelo Open-Meteo. Só cidade + UF: posiciona o pino no município. */
+async function queryOpenMeteoCidade(city: string, state?: string): Promise<GeoResult | null> {
+  const params = new URLSearchParams({ name: city, count: "10", language: "pt", countryCode: "BR" });
+  const response = await fetch(`${OPEN_METEO_GEO}?${params}`, { headers: { Accept: "application/json" } });
+  if (!response.ok) throw new Error(`Open-Meteo retornou ${response.status}`);
+
+  const { results = [] } = (await response.json()) as OpenMeteoGeo;
+  const estado = state ? (ESTADO_POR_UF[state.trim().toUpperCase()] ?? state.trim()) : undefined;
+  const candidatos = results.filter((r) => typeof r.latitude === "number" && typeof r.longitude === "number");
+  const escolhido =
+    (estado && candidatos.find((r) => r.admin1?.localeCompare(estado, "pt", { sensitivity: "base" }) === 0)) ||
+    candidatos[0];
+  if (!escolhido) return null;
+  return {
+    lat: String(escolhido.latitude),
+    lon: String(escolhido.longitude),
+    display_name: [escolhido.name, escolhido.admin1].filter(Boolean).join(", "),
+  };
+}
+
 serve(
   withSentry("geocode-address", async (req) => {
     if (req.method === "OPTIONS") return optionsResponse(req);
@@ -71,15 +129,31 @@ serve(
         primary.set("countrycodes", "br");
       }
 
-      let result = await queryNominatim(primary);
+      let result: GeoResult | null = null;
+      let falhaNominatim: unknown = null;
+      try {
+        result = await queryNominatim(primary);
 
-      // Fallback: cidade + estado (ao menos posiciona no mapa em nível de cidade).
-      if (!result && city) {
-        const fallback = new URLSearchParams({ format: "json", limit: "1", country: "Brazil" });
-        fallback.set("city", city);
-        if (state) fallback.set("state", state);
-        result = await queryNominatim(fallback);
+        // Fallback: cidade + estado (ao menos posiciona no mapa em nível de cidade).
+        if (!result && city) {
+          const fallback = new URLSearchParams({ format: "json", limit: "1", country: "Brazil" });
+          fallback.set("city", city);
+          if (state) fallback.set("state", state);
+          result = await queryNominatim(fallback);
+        }
+      } catch (err) {
+        falhaNominatim = err;
       }
+
+      // Nominatim fora do ar ou bloqueando o IP da edge: cai pro centro da cidade.
+      if (!result && city) {
+        result = await queryOpenMeteoCidade(city, state);
+        if (falhaNominatim) {
+          recordMetric("geocode.fallback", 1, { tags: { provider: "open-meteo", found: Boolean(result) } });
+        }
+      }
+
+      if (!result && falhaNominatim) throw falhaNominatim;
 
       if (!result) {
         return jsonResponse({ lat: null, lng: null, found: false }, 200, req);

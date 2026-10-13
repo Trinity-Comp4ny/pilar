@@ -181,7 +181,13 @@ serve(
 
       const delivery = await deliverInvite(svc, email, token, nome || "", redirectOrigin);
       if (!delivery.ok) {
-        log.error("invite delivery failed", delivery.error, { actor: user.id });
+        // E-mail que já tem conta é resposta de negócio (o admin vê o aviso), não
+        // falha: como erro, virava issue no Sentry a cada tentativa (PILAR-2E).
+        if (delivery.esperado) {
+          log.warn("invite to email that already has an account", { actor: user.id });
+        } else {
+          log.error("invite delivery failed", delivery.error, { actor: user.id });
+        }
         // Falhas no acesso de contas órfãs permanecem reenviáveis. O cleanup
         // existente continua valendo para contas com profile e outros erros.
         if (!delivery.preservePending) {
