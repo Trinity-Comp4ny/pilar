@@ -2371,30 +2371,53 @@ export type Database = {
       }
       feature_suggestions: {
         Row: {
+          contexto: Json | null
           created_at: string
           created_by: string
           descricao: string
+          empresa_id: string | null
           id: string
+          print_path: string | null
+          sentry_event_id: string | null
           status_interno: string
-          titulo: string
+          tipo: string
+          titulo: string | null
         }
         Insert: {
+          contexto?: Json | null
           created_at?: string
           created_by: string
           descricao: string
+          empresa_id?: string | null
           id?: string
+          print_path?: string | null
+          sentry_event_id?: string | null
           status_interno?: string
-          titulo: string
+          tipo?: string
+          titulo?: string | null
         }
         Update: {
+          contexto?: Json | null
           created_at?: string
           created_by?: string
           descricao?: string
+          empresa_id?: string | null
           id?: string
+          print_path?: string | null
+          sentry_event_id?: string | null
           status_interno?: string
-          titulo?: string
+          tipo?: string
+          titulo?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "feature_suggestions_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fluxos_disciplinas: {
         Row: {

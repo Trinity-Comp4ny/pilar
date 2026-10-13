@@ -1,7 +1,7 @@
 # SPEC: Feedback do usuário: bug report e sugestão de feature
 
 **Data:** 2026-08-19
-**Status:** Entregue
+**Status:** Entregue (evoluída pela [SPEC 112](112-feedback-no-banco-com-print-anotado.md): bug também vai pro banco, com print)
 **Autor:** Matheus Rezende
 **Módulo:** transversal (app inteiro) + ultra-admin
 

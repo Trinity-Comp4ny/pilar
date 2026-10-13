@@ -169,6 +169,36 @@ const previews: Preview[] = [
       requestId: "7f3c2a10-9b1e-4d55-a1c2-0e8d9f6b4c21",
     }),
   },
+  {
+    slug: "aviso-novo-cadastro",
+    grupo: "Plataforma",
+    nota: "Aviso ao ultra admin de novo cadastro self-serve (SPEC 113)",
+    email: T.templateAvisoPlataforma({
+      titulo: "Novo cadastro: Meridiana Engenharia",
+      mensagem:
+        "João Silva (joao.silva@meridiana.eng.br, (11) 98888-7777) começou o teste grátis. Origem: google / cpc / lancamento.",
+      empresaNome: "Meridiana Engenharia",
+      enviadoEm: "13/10/2026 14:05",
+      url: `${APP}/ultra-admin?tab=trials`,
+      dicaResposta: "Responda este e-mail para falar direto com quem se cadastrou.",
+    }),
+  },
+  {
+    slug: "feedback-recebido",
+    grupo: "Plataforma",
+    nota: "Aviso ao ultra admin de feedback enviado pelo app (SPEC 112)",
+    email: T.templateFeedbackRecebido({
+      tipo: "bug",
+      titulo: null,
+      descricao: "Total faturado aparece zerado no projeto Edifício Aurora, mas a fatura de agosto já está paga.",
+      autor: "João Silva",
+      empresaNome: "Meridiana Engenharia",
+      rota: "/projetos/aurora/financeiro",
+      temPrint: true,
+      enviadoEm: "13/10/2026 14:05",
+      painelUrl: `${APP}/ultra-admin?tab=feedback`,
+    }),
+  },
 
   // Notificações (SPEC 096)
   {

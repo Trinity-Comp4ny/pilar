@@ -18,14 +18,17 @@ Grupos de destinatário usados no roteamento:
 
 ## 1. Conta e plataforma (Pilar para o usuário)
 
-| E-mail                             | Dispara quando                        | Quem recebe                                     | Conteúdo sensível                  |
-| ---------------------------------- | ------------------------------------- | ----------------------------------------------- | ---------------------------------- |
-| Confirmar e-mail                   | cadastro novo ou troca de endereço    | quem se cadastrou                               | link de confirmação                |
-| Seu convite chegou                 | admin convida alguém para a equipe    | o convidado                                     | link que cria a senha              |
-| Redefinir senha                    | usuário pede "esqueci a senha"        | quem pediu                                      | link de 1 hora                     |
-| Seu link de acesso                 | login por link, sem senha             | quem pediu                                      | link de 10 minutos, uso único      |
-| Trial expirando (7, 3 e 1 dia)     | cron diária de trial                  | owner e admin da empresa                        | nome da empresa e prazo, sem valor |
-| Pedido de exclusão de dados (LGPD) | usuário pede exclusão em /privacidade | admins da empresa e o encarregado da plataforma | e-mail e motivo de quem pediu      |
+| E-mail                             | Dispara quando                        | Quem recebe                                     | Conteúdo sensível                          |
+| ---------------------------------- | ------------------------------------- | ----------------------------------------------- | ------------------------------------------ |
+| Confirmar e-mail                   | cadastro novo ou troca de endereço    | quem se cadastrou                               | link de confirmação                        |
+| Seu convite chegou                 | admin convida alguém para a equipe    | o convidado                                     | link que cria a senha                      |
+| Redefinir senha                    | usuário pede "esqueci a senha"        | quem pediu                                      | link de 1 hora                             |
+| Seu link de acesso                 | login por link, sem senha             | quem pediu                                      | link de 10 minutos, uso único              |
+| Trial expirando (7, 3 e 1 dia)     | cron diária de trial                  | owner e admin da empresa                        | nome da empresa e prazo, sem valor         |
+| Pedido de exclusão de dados (LGPD) | usuário pede exclusão em /privacidade | admins da empresa e o encarregado da plataforma | e-mail e motivo de quem pediu              |
+| Feedback recebido                  | usuário envia pelo botão Feedback     | todo ultra admin (reply-to: quem enviou)        | texto livre do usuário; print só no painel |
+| Novo cadastro                      | cadastro self-serve (SPEC 104)        | todo ultra admin (reply-to: dono da empresa)    | nome, e-mail, telefone e origem do lead    |
+| Ativar plano bloqueado             | 3 tentativas de cartão em 24h         | todo ultra admin                                | nome da empresa, sem dado de cartão        |
 
 ## 2. Escritório para o cliente final (via Pilar)
 
