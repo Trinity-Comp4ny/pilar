@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ResponsiveDetailPanels } from "@/components/ui/responsive-detail-panels";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { TarefasEditor } from "@/components/TarefasEditor";
+import { TarefasEditor } from "@/pages/projetos/components/TarefasEditor";
 import { SeletorResponsaveis } from "@/components/SeletorResponsaveis";
 import { AvatarStack } from "@/components/AvatarStack";
 import { toast } from "sonner";

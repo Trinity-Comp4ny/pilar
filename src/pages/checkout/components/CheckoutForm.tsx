@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { lookupCEP } from "@/lib/brasilApi";
 import { detectCardBrand, formatCardNumber, formatExpiry, validateCreditCard } from "@/lib/creditCard";
 import type { BillingType, CheckoutPayload, CreditCardData, CreditCardHolderInfo } from "../hooks/useCheckoutCreate";
-import type { BillingCycle } from "@/pages/planos/components/CycleToggle";
+import type { BillingCycle } from "@/components/CycleToggle";
 
 import { BusyMark } from "@/components/motion/BusyMark";
 

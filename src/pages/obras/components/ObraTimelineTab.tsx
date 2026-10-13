@@ -9,7 +9,7 @@ import { formatDate } from "@/lib/format";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { climaLabel } from "@/lib/obras";
 import { useObraFrentes } from "@/pages/obras/hooks/useObraFrentes";
-import { montarArvoreCronograma } from "@/lib/obraArvore";
+import { montarArvoreCronograma } from "@/pages/obras/lib/obraArvore";
 import { useObraTarefas } from "@/pages/obras/hooks/useObraTarefas";
 import { useObraRdos } from "@/pages/obras/hooks/useObraRdo";
 import type { ObraResumo } from "@/pages/obras/hooks/useObras";

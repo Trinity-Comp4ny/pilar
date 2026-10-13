@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { PlanCard } from "./PlanCard";
-import type { Plan } from "../hooks/usePlans";
+import type { Plan } from "@/hooks/usePlans";
 
 // Smoke test: a coluna `features` no banco guarda FeatureKeys (chave estável de
 // src/lib/features.ts), não texto de exibição. Sem este teste, um plano com

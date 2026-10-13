@@ -65,7 +65,7 @@ import {
 } from "@/pages/obras/hooks/useObraFotos";
 import { useTranscreverRdoVoz } from "@/pages/obras/hooks/useTranscreverRdoVoz";
 import { useObra } from "@/pages/obras/hooks/useObras";
-import { buscarClimaDoDia } from "@/lib/clima";
+import { buscarClimaDoDia } from "@/pages/obras/lib/clima";
 import { analytics } from "@/lib/analytics";
 
 import { BusyMark } from "@/components/motion/BusyMark";

@@ -3,7 +3,7 @@ import { GanttChart, List, ListTree } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
-import { caminhoDoNo, montarArvoreCronograma } from "@/lib/obraArvore";
+import { caminhoDoNo, montarArvoreCronograma } from "@/pages/obras/lib/obraArvore";
 import { useObraFrentes } from "@/pages/obras/hooks/useObraFrentes";
 import { useObraTarefas } from "@/pages/obras/hooks/useObraTarefas";
 import { usePessoasEmpresa } from "@/pages/meu-trabalho/hooks";

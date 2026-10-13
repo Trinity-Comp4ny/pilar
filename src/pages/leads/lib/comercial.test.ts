@@ -1,11 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  propostaPrimaria,
-  statusExibido,
-  valorNoFunil,
-  taxaFechamentoPropostas,
-  propostasPorLead,
-} from "./comercial";
+import { propostaPrimaria, statusExibido, valorNoFunil, taxaFechamentoPropostas, propostasPorLead } from "./comercial";
 import type { Proposta } from "@/hooks/usePropostas";
 import type { Lead } from "@/hooks/useLeads";
 

@@ -70,7 +70,7 @@ import { fetchClientesLookup, fetchLeadsLookup } from "@/lib/supabaseQueries";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useRegistrarPagina } from "@/hooks/useRecentes";
-import { SmartInvoiceDialog } from "@/components/SmartInvoiceDialog";
+import { SmartInvoiceDialog } from "@/pages/propostas/components/SmartInvoiceDialog";
 
 import { BusyMark } from "@/components/motion/BusyMark";
 import { ReadingRing } from "@/components/motion/ReadingRing";

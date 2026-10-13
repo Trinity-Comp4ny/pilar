@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { edgeFunctionErrorMessage } from "@/lib/edgeFunctionError";
-import type { BillingCycle } from "@/pages/planos/components/CycleToggle";
+import type { BillingCycle } from "@/components/CycleToggle";
 
 export type BillingType = "CREDIT_CARD" | "PIX" | "BOLETO";
 

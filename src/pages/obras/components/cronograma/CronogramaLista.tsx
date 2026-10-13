@@ -34,7 +34,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/format";
 import { estadoTarefaCronograma, SENSIVEL_CLIMA_OPCOES } from "@/lib/obras";
-import { NIVEL_FILHO, NIVEL_LABEL, type NivelCronograma, type NoArvore } from "@/lib/obraArvore";
+import { NIVEL_FILHO, NIVEL_LABEL, type NivelCronograma, type NoArvore } from "@/pages/obras/lib/obraArvore";
 import type { ObraFrenteRow } from "@/pages/obras/hooks/useObraFrentes";
 import type { ObraTarefa } from "@/pages/obras/hooks/useObraTarefas";
 import type { PessoaOpcao } from "@/pages/meu-trabalho/hooks";

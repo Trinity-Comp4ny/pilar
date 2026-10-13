@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Users, Briefcase, Database } from "lucide-react";
-import { FalarComercialDialog } from "@/components/admin/FalarComercialDialog";
+import { FalarComercialDialog } from "@/pages/admin/components/FalarComercialDialog";
 import type { SubscriptionPlanSlug } from "@/lib/features";
 
 const PLAN_LABELS: Record<SubscriptionPlanSlug, string> = {

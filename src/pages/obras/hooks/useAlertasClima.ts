@@ -8,7 +8,7 @@ import {
   VENTO_FORTE_KMH,
   type AlertaClima as AlertaClimaTarefa,
   type TarefaSensivel,
-} from "@/lib/clima";
+} from "@/pages/obras/lib/clima";
 
 export interface AlertaClima {
   obraId: string;

@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/currency";
 import { FEATURES } from "@/lib/features";
-import type { Plan } from "../hooks/usePlans";
-import type { BillingCycle } from "./CycleToggle";
+import type { Plan } from "@/hooks/usePlans";
+import type { BillingCycle } from "@/components/CycleToggle";
 
 // A coluna `features` guarda FeatureKeys (chave estável usada em src/lib/features.ts
 // pro gate real), não texto de exibição. Aqui só traduz pra rótulo amigável na vitrine.

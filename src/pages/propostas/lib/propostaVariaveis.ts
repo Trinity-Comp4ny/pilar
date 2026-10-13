@@ -1,3 +1,4 @@
+import { formatCurrency } from "@/lib/format";
 /**
  * Variáveis de proposta: a lista das que o sistema preenche sozinho e a montagem dos
  * valores a partir da proposta, do lead e da empresa. Texto puro, sem dependência de
@@ -50,8 +51,7 @@ export function buildVariableData(params: {
   const { proposta, lead, cliente, empresaNome, disciplinas } = params;
   const contact = cliente || lead;
 
-  const formatCurrency = (v: number | null | undefined) =>
-    v ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v) : "";
+  const moeda = (v: number | null | undefined) => (v ? formatCurrency(v) : "");
 
   const formatDate = (d: string | null | undefined) => (d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR") : "");
 
@@ -64,13 +64,10 @@ export function buildVariableData(params: {
 
   const disciplinasFases = disciplinas?.map((d) => d.disciplina).join("\n") || "";
   const disciplinasComValor =
-    disciplinas?.map((d) => `${d.disciplina} — ${formatCurrency(valorDisciplina(d))}`).join("\n") || "";
+    disciplinas?.map((d) => `${d.disciplina} — ${moeda(valorDisciplina(d))}`).join("\n") || "";
   const disciplinasDetalhado =
     disciplinas
-      ?.map(
-        (d) =>
-          `${d.disciplina} — ${d.horas_estimadas}h × ${formatCurrency(d.custo_hora)}/h — ${formatCurrency(valorDisciplina(d))}`
-      )
+      ?.map((d) => `${d.disciplina} — ${d.horas_estimadas}h × ${moeda(d.custo_hora)}/h — ${moeda(valorDisciplina(d))}`)
       .join("\n") || "";
 
   return {
@@ -79,7 +76,7 @@ export function buildVariableData(params: {
     CLIENTE_CONTATO: contact?.contato || "",
     EMPRESA_NOME: empresaNome || "",
     AREA_M2: proposta.area_m2 ? String(proposta.area_m2) : "",
-    VALOR_PROPOSTO: formatCurrency(proposta.valor_proposto),
+    VALOR_PROPOSTO: moeda(proposta.valor_proposto),
     PRAZO_DIAS: proposta.prazo_estimado_dias ? String(proposta.prazo_estimado_dias) : "",
     LOCALIZACAO: proposta.localizacao || "",
     CODIGO: proposta.codigo || "",

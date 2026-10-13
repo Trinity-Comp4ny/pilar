@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { reportInvokeError } from "@/lib/monitoring";
 import { saveAs } from "file-saver";
 import { usePropostaTemplates, downloadTemplateFile } from "@/pages/propostas/hooks/usePropostaTemplates";
-import { AUTO_VARIABLES, buildVariableData } from "@/lib/propostaVariaveis";
+import { AUTO_VARIABLES, buildVariableData } from "@/pages/propostas/lib/propostaVariaveis";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { supabase } from "@/integrations/supabase/client";
 import { mensagemDaFunction } from "@/lib/edgeError";

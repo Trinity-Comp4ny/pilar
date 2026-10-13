@@ -28,7 +28,9 @@ export function usePlans() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pilar_subscription_plans")
-        .select("id, slug, nome, descricao, preco_mensal, preco_anual, max_usuarios, max_projetos, features, destaque, ordem")
+        .select(
+          "id, slug, nome, descricao, preco_mensal, preco_anual, max_usuarios, max_projetos, features, destaque, ordem"
+        )
         .eq("ativo", true)
         .order("ordem", { ascending: true });
 

@@ -16,7 +16,13 @@ import {
   todayPosition,
   type ZoomLevel,
 } from "@/lib/cronograma";
-import { achatarArvore, NIVEL_LABEL, unirPeriodos, type LinhaCronograma, type NoArvore } from "@/lib/obraArvore";
+import {
+  achatarArvore,
+  NIVEL_LABEL,
+  unirPeriodos,
+  type LinhaCronograma,
+  type NoArvore,
+} from "@/pages/obras/lib/obraArvore";
 import { useGanttDrag } from "@/components/gantt/useGanttDrag";
 import type { ObraFrenteRow } from "@/pages/obras/hooks/useObraFrentes";
 import type { ObraTarefa } from "@/pages/obras/hooks/useObraTarefas";
