@@ -30,9 +30,9 @@ export default function (data) {
 
   const url =
     `${config.SUPABASE_URL}/rest/v1/lancamentos` +
-    `?select=id,descricao,valor,tipo,data,status` +
+    `?select=id,descricao,valor,tipo,data_vencimento,status` +
     `&tipo=eq.${tipo}` +
-    `&order=data.desc` +
+    `&order=data_vencimento.desc` +
     `&limit=${pageSize}` +
     `&offset=${offset}`;
 

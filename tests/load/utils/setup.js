@@ -26,13 +26,23 @@ export const defaultThresholds = {
   errors: ['count<10'],
 };
 
-export const defaultStages = [
+// K6_PERFIL=semanal: carga leve e curta do workflow agendado (carga-semanal.yml),
+// contra o staging compartilhado. Mede regressão de latência, não capacidade.
+// Sem o perfil: a rampa completa até 100 VUs, para rodar à mão antes de release.
+const STAGES_COMPLETO = [
   { duration: '1m', target: 10 },
   { duration: '2m', target: 50 },
   { duration: '2m', target: 100 },
   { duration: '5m', target: 100 },
   { duration: '2m', target: 0 },
 ];
+const STAGES_SEMANAL = [
+  { duration: '1m', target: 5 },
+  { duration: '3m', target: 10 },
+  { duration: '1m', target: 0 },
+];
+
+export const defaultStages = __ENV.K6_PERFIL === 'semanal' ? STAGES_SEMANAL : STAGES_COMPLETO;
 
 export function supabaseHeaders(token) {
   return {

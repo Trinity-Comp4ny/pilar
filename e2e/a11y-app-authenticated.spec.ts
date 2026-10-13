@@ -17,6 +17,11 @@ const TELAS = [
   ["propostas", "/propostas"],
   ["obras", "/obras"],
   ["detalhe da obra", "/obras/00000000-0000-0000-0000-000000000a01"],
+  // Ampliação de 13/10: telas de gestão que ficaram de fora da primeira leva.
+  ["tarefas", "/gestao/tarefas"],
+  ["equipe", "/gestao/equipe"],
+  ["metas", "/gestao/metas"],
+  ["detalhe do cliente", "/gestao/clientes/00000000-0000-0000-0000-000000000101"],
 ] as const;
 
 test.use({ contextOptions: { reducedMotion: "reduce" } });
