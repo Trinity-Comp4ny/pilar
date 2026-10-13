@@ -1,9 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
+import { jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
+import { lerJson } from "../_shared/schemas.ts";
+import { lerEntrada } from "./entrada.ts";
 
 const log = createLogger("portal-aprovar-proposta");
 
@@ -12,10 +14,7 @@ serve(
     if (req.method === "OPTIONS") return optionsResponse(req);
     if (req.method !== "POST") return safeErrorResponse(405, "Método não permitido", req);
 
-    const admin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    );
+    const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 
     // Público (verify_jwt = false), ação que muda estado (aprova proposta). Sem
     // limite generoso o bastante pra um cliente real (aprova 1x), mas baixo o
@@ -35,10 +34,9 @@ serve(
     }
 
     try {
-      const { token, projeto_id } = await req.json();
-
-      if (!token || typeof token !== "string") return safeErrorResponse(400, "token obrigatório", req);
-      if (!isUUID(projeto_id)) return safeErrorResponse(400, "projeto_id inválido", req);
+      const entrada = lerEntrada(await lerJson(req));
+      if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
+      const { token, projeto_id } = entrada.data;
 
       // Valida sessão via RPC read-only: hash do token (sha256) + expiração
       // deslizante, sem rotacionar. O token_sessao é guardado hasheado; comparar
@@ -112,5 +110,5 @@ serve(
       log.error("Erro inesperado", err, {});
       return safeErrorResponse(500, "Erro interno", req);
     }
-  }),
+  })
 );

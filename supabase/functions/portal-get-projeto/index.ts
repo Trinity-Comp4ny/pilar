@@ -1,9 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
+import { jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
+import { lerJson } from "../_shared/schemas.ts";
+import { lerEntrada } from "./entrada.ts";
 
 const log = createLogger("portal-get-projeto");
 
@@ -32,9 +34,9 @@ serve(
     }
 
     try {
-      const { token, projeto_id } = await req.json();
-      if (!token || typeof token !== "string") return safeErrorResponse(400, "token obrigatório", req);
-      if (!isUUID(projeto_id)) return safeErrorResponse(400, "projeto_id inválido", req);
+      const entrada = lerEntrada(await lerJson(req));
+      if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
+      const { token, projeto_id } = entrada.data;
 
       // Valida sessão via RPC read-only (hash do token + expiração deslizante, sem
       // rotacionar). Comparar o token puro na coluna hasheada nunca bate.
