@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { analytics } from "@/lib/analytics";
 import type { Database } from "@/integrations/supabase/types";
 import {
   csvParaLinhas,
@@ -400,12 +401,19 @@ export function useImportFinanceiro() {
         setTemDesfazer(true);
         await auxQuery.refetch();
 
-        return {
+        const resumo = {
           criados: lote.despesasCriadas.length + lote.receitasCriadas.length,
           conciliados: lote.conciliadasDespesas.length + lote.conciliadasReceitas.length,
           totalDespesa,
           totalReceita,
         };
+        // Só contagens: valor e descrição dos lançamentos não saem para o analytics.
+        analytics.track("importacao_financeira_concluida", {
+          criados: resumo.criados,
+          conciliados: resumo.conciliados,
+          com_conta: Boolean(contaId),
+        });
+        return resumo;
       } finally {
         setGravando(false);
       }
