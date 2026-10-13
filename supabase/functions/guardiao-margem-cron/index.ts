@@ -39,6 +39,7 @@ import {
   systemPrompt,
   userMessage,
 } from "./aditivo.ts";
+import { cronAutorizado } from "../_shared/cron-auth.ts";
 
 const log = createLogger("guardiao-margem-cron");
 
@@ -111,9 +112,7 @@ serve(
       return new Response("Method not allowed", { status: 405 });
     }
 
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (!token || !CRON_SECRET || token !== CRON_SECRET) {
+    if (!cronAutorizado(req.headers, CRON_SECRET)) {
       return new Response("Unauthorized", { status: 401 });
     }
 
