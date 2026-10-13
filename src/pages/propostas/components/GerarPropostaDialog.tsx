@@ -27,6 +27,7 @@ import { useNavigate } from "react-router-dom";
 
 import { BusyMark } from "@/components/motion/BusyMark";
 import { ReadingRing } from "@/components/motion/ReadingRing";
+import { analytics } from "@/lib/analytics";
 
 type Step = "config" | "preview" | "send";
 
@@ -288,6 +289,7 @@ export function GerarPropostaDialog({
       if (error) throw new Error(await mensagemDaFunction(error, error.message));
 
       toast.success(`${label} enviada!`, { description: `Email enviado para ${sendEmail}` });
+      analytics.track("proposta_enviada", { documento: mode ?? "proposta" });
       onSent?.();
       onOpenChange(false);
     } catch (err: unknown) {

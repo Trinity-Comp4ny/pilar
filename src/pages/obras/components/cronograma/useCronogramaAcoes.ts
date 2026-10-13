@@ -15,6 +15,7 @@ import {
 } from "@/pages/obras/hooks/useObraTarefas";
 import { useTarefaMutations } from "@/pages/meu-trabalho/hooks";
 import type { NivelCronograma } from "@/lib/obraArvore";
+import { analytics } from "@/lib/analytics";
 
 function mensagem(e: unknown): string {
   return e instanceof Error ? e.message : "Tente novamente";
@@ -48,6 +49,7 @@ export function useCronogramaAcoes(obraId: string, projetoId: string | null, nos
         data_inicio: pai?.data_inicio ?? null,
         data_fim: pai?.data_fim ?? null,
       });
+      analytics.track("cronograma_item_criado", { nivel });
       return true;
     } catch (e) {
       toast.error("Não foi possível criar", { description: mensagem(e) });
@@ -101,6 +103,7 @@ export function useCronogramaAcoes(obraId: string, projetoId: string | null, nos
         data_inicio: servico.data_inicio ?? null,
         prazo: servico.data_fim ?? null,
       });
+      analytics.track("cronograma_item_criado", { nivel: "tarefa" });
       return true;
     } catch (e) {
       toast.error("Não foi possível criar a tarefa", { description: mensagem(e) });
@@ -111,6 +114,7 @@ export function useCronogramaAcoes(obraId: string, projetoId: string | null, nos
   const atualizarTarefa = async (patch: PatchObraTarefa) => {
     try {
       await updateTarefa.mutateAsync(patch);
+      if (patch.status === "concluida") analytics.track("cronograma_tarefa_concluida");
     } catch (e) {
       toast.error("Não foi possível salvar a tarefa", { description: mensagem(e) });
     }
