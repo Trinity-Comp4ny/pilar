@@ -17,8 +17,6 @@ const AccountRecoveryScreen = lazy(() =>
   import("./AccountRecoveryScreen").then(({ AccountRecoveryScreen }) => ({ default: AccountRecoveryScreen }))
 );
 
-export const ULTRA_PLATFORM_MODE_KEY = "ultra_admin_platform_mode";
-
 type SubStatus = "active" | "trialing" | "overdue" | "canceled" | "expired" | null;
 
 // Cache somente em memória — sessionStorage era manipulável via DevTools.
@@ -192,7 +190,6 @@ export function PrivateRoute() {
   const justLoggedIn = sessionStorage.getItem("pilar_post_login") === "1";
   if (isUltraAdmin(profile?.role) && justLoggedIn && location.pathname === "/inicio") {
     sessionStorage.removeItem("pilar_post_login");
-    sessionStorage.setItem(ULTRA_PLATFORM_MODE_KEY, "true");
     return <Navigate to="/ultra-admin" replace />;
   }
 
