@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
-import { useObraEtapas } from "@/hooks/useObraFrentes";
-import { useSaveAporte, useSaveDespesa, type ObraLancamentoRow } from "@/hooks/useObraConta";
+import { useObraEtapas } from "@/pages/obras/hooks/useObraFrentes";
+import { useSaveAporte, useSaveDespesa, type ObraLancamentoRow } from "@/pages/obras/hooks/useObraConta";
 import { PAGO_POR_OPCOES, type PagoPor } from "@/lib/obras";
 
 const SEM_FRENTE = "__none__";

@@ -3,8 +3,8 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { ObraFrenteRow } from "@/hooks/useObraFrentes";
-import type { ObraTarefa } from "@/hooks/useObraTarefas";
+import type { ObraFrenteRow } from "@/pages/obras/hooks/useObraFrentes";
+import type { ObraTarefa } from "@/pages/obras/hooks/useObraTarefas";
 import { ObraCronogramaTab } from "./ObraCronogramaTab";
 
 /**
@@ -25,14 +25,14 @@ const { criarNo, atualizarNo, atualizarTarefa, criarTarefa, mutacao } = vi.hoist
   mutacao: (fn: (...a: unknown[]) => Promise<unknown>) => () => ({ mutate: fn, mutateAsync: fn, isPending: false }),
 }));
 
-vi.mock("@/hooks/useObraFrentes", () => ({
+vi.mock("@/pages/obras/hooks/useObraFrentes", () => ({
   useObraFrentes: () => ({ data: nos, isLoading: false }),
   useCreateFrente: mutacao(criarNo),
   useUpdateFrente: mutacao(atualizarNo),
   useDeleteFrente: mutacao(async () => {}),
 }));
 
-vi.mock("@/hooks/useObraTarefas", () => ({
+vi.mock("@/pages/obras/hooks/useObraTarefas", () => ({
   useObraTarefas: () => ({ data: tarefas }),
   useCreateObraTarefa: mutacao(criarTarefa),
   useUpdateObraTarefa: mutacao(atualizarTarefa),

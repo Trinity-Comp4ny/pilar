@@ -180,12 +180,15 @@ export default defineConfig(({ mode }) => ({
       // financeiro é coberta por E2E (e2e/financeiro-*), por isso o piso baixo.
       // Hooks, components, obras e projetos entraram na medição em 13/10 com o piso
       // logo abaixo do medido (12/9/10/13, 22/19/17/22, 9/7/8/9 e 6/4/5/6).
+      // Ainda em 13/10, os hooks do Obras saíram de src/hooks para src/pages/obras/hooks
+      // (só mudou o denominador, nenhum teste saiu): hooks subiu para 16/12/14/17 e obras
+      // desceu para 6/6/6/7. Os dois pisos acompanharam a mudança.
       thresholds: {
         "src/lib/**": { statements: 68, branches: 63, functions: 68, lines: 70 },
-        "src/hooks/**": { statements: 11, branches: 8, functions: 9, lines: 12 },
+        "src/hooks/**": { statements: 15, branches: 11, functions: 13, lines: 16 },
         "src/components/**": { statements: 21, branches: 18, functions: 16, lines: 21 },
         "src/pages/financeiro/**": { statements: 4, branches: 5, functions: 3, lines: 4 },
-        "src/pages/obras/**": { statements: 8, branches: 6, functions: 7, lines: 8 },
+        "src/pages/obras/**": { statements: 6, branches: 5, functions: 5, lines: 6 },
         "src/pages/projetos/**": { statements: 5, branches: 3, functions: 4, lines: 5 },
       },
     },

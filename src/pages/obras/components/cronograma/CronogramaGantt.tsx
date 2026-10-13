@@ -18,8 +18,8 @@ import {
 } from "@/lib/cronograma";
 import { achatarArvore, NIVEL_LABEL, unirPeriodos, type LinhaCronograma, type NoArvore } from "@/lib/obraArvore";
 import { useGanttDrag } from "@/components/gantt/useGanttDrag";
-import type { ObraFrenteRow } from "@/hooks/useObraFrentes";
-import type { ObraTarefa } from "@/hooks/useObraTarefas";
+import type { ObraFrenteRow } from "@/pages/obras/hooks/useObraFrentes";
+import type { ObraTarefa } from "@/pages/obras/hooks/useObraTarefas";
 import { ESTADO_FILL, ESTADO_LABEL, LEGENDA } from "./estado";
 import type { CronogramaAcoes } from "./useCronogramaAcoes";
 

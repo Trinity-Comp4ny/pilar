@@ -44,27 +44,27 @@ import {
   type TipoImpedimento,
 } from "@/lib/obras";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCreateRdo, useUpdateRdo, type RdoRow } from "@/hooks/useObraRdo";
-import { useObraTarefas, useCreateObraTarefa } from "@/hooks/useObraTarefas";
-import { useObraFrentes } from "@/hooks/useObraFrentes";
-import { useObraRdoTarefas, useSaveRdoTarefas, type ResultadoRdoTarefa } from "@/hooks/useObraRdoTarefas";
+import { useCreateRdo, useUpdateRdo, type RdoRow } from "@/pages/obras/hooks/useObraRdo";
+import { useObraTarefas, useCreateObraTarefa } from "@/pages/obras/hooks/useObraTarefas";
+import { useObraFrentes } from "@/pages/obras/hooks/useObraFrentes";
+import { useObraRdoTarefas, useSaveRdoTarefas, type ResultadoRdoTarefa } from "@/pages/obras/hooks/useObraRdoTarefas";
 import { useFornecedoresLite } from "@/hooks/useFornecedorDetalhe";
-import { useObraRdoEfetivo, useSaveRdoEfetivo, type EntradaEfetivo } from "@/hooks/useObraRdoEfetivo";
+import { useObraRdoEfetivo, useSaveRdoEfetivo, type EntradaEfetivo } from "@/pages/obras/hooks/useObraRdoEfetivo";
 import {
   useObraRdoImpedimentos,
   useSaveRdoImpedimentos,
   type EntradaImpedimento,
-} from "@/hooks/useObraRdoImpedimentos";
-import { useObraRdoVisitas, useSaveRdoVisitas, type EntradaVisita } from "@/hooks/useObraRdoVisitas";
+} from "@/pages/obras/hooks/useObraRdoImpedimentos";
+import { useObraRdoVisitas, useSaveRdoVisitas, type EntradaVisita } from "@/pages/obras/hooks/useObraRdoVisitas";
 import {
   MAX_FOTO_RDO_BYTES,
   MIME_FOTO_RDO,
   useDeleteRdoFoto,
   useObraFotos,
   useUploadRdoFoto,
-} from "@/hooks/useObraFotos";
-import { useTranscreverRdoVoz } from "@/hooks/useTranscreverRdoVoz";
-import { useObra } from "@/hooks/useObras";
+} from "@/pages/obras/hooks/useObraFotos";
+import { useTranscreverRdoVoz } from "@/pages/obras/hooks/useTranscreverRdoVoz";
+import { useObra } from "@/pages/obras/hooks/useObras";
 import { buscarClimaDoDia } from "@/lib/clima";
 import { analytics } from "@/lib/analytics";
 

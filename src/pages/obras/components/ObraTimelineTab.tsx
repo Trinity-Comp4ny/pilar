@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/format";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { climaLabel } from "@/lib/obras";
-import { useObraFrentes } from "@/hooks/useObraFrentes";
+import { useObraFrentes } from "@/pages/obras/hooks/useObraFrentes";
 import { montarArvoreCronograma } from "@/lib/obraArvore";
-import { useObraTarefas } from "@/hooks/useObraTarefas";
-import { useObraRdos } from "@/hooks/useObraRdo";
-import type { ObraResumo } from "@/hooks/useObras";
+import { useObraTarefas } from "@/pages/obras/hooks/useObraTarefas";
+import { useObraRdos } from "@/pages/obras/hooks/useObraRdo";
+import type { ObraResumo } from "@/pages/obras/hooks/useObras";
 import { ObraCurvaS } from "./ObraCurvaS";
 
 /** Marcos de faturamento do projeto (somente leitura no MVP — spec 015). */

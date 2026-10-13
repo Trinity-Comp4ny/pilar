@@ -6,8 +6,8 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useObraEtapas } from "@/hooks/useObraFrentes";
-import { useSaveCotacao, type CotacaoRow } from "@/hooks/useObraCotacoes";
+import { useObraEtapas } from "@/pages/obras/hooks/useObraFrentes";
+import { useSaveCotacao, type CotacaoRow } from "@/pages/obras/hooks/useObraCotacoes";
 
 const SEM_FRENTE = "__none__";
 

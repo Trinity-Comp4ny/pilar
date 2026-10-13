@@ -29,7 +29,9 @@ export function useObraRdoTarefas(obraId: string | undefined) {
     queryFn: async (): Promise<RdoTarefaJoin[]> => {
       const { data, error } = await supabase
         .from("obra_rdo_tarefa")
-        .select("id, rdo_id, tarefa_id, resultado, observacao, tarefa:tarefas(id, titulo, status), obra_rdo!inner(obra_id)")
+        .select(
+          "id, rdo_id, tarefa_id, resultado, observacao, tarefa:tarefas(id, titulo, status), obra_rdo!inner(obra_id)"
+        )
         .eq("obra_rdo.obra_id", obraId!)
         .returns<RdoTarefaJoin[]>();
       if (error) throw error;
