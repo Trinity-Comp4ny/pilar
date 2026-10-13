@@ -98,6 +98,10 @@ const ANON_ESPERADO = new Set([
   "campo_registrar_efetivo",
   "campo_registrar_impedimento",
   "campo_registrar_visita",
+  // Spec 099: convite por link. Quem clica ainda não tem sessão nenhuma; o token
+  // do convite (hash sha256, expira, uso único) é a credencial.
+  "portal_convite_definir_senha",
+  "campo_convite_definir_senha",
   // Roda ANTES do signInWithPassword, por definição sem sessão.
   "guard_login_attempt",
 ]);
@@ -118,6 +122,21 @@ const VIEW_SEM_INVOKER_REVISADA = new Map([
       "via can_view_financeiro(); compensa com WHERE empresa_id = get_user_empresa_id() " +
       "AND deleted_at IS NULL AND user_has_feature('projetos','viewer'), mesmo predicado " +
       "da policy projetos_select (20260507300000). Revisado em 2026-09-01.",
+  ],
+  [
+    "leads_safe",
+    "roda como dona de propósito, pra mascarar valor_estimado via can_view_financeiro(); " +
+      "compensa com WHERE empresa_id = get_user_empresa_id() AND deleted_at IS NULL " +
+      "AND user_has_feature('leads','viewer'), mais restrito que a policy leads_select. " +
+      "Só leitura para authenticated (20261022000000). Revisado em 2026-10-13.",
+  ],
+  [
+    "escopos_safe",
+    "roda como dona de propósito, pra mascarar custo_estimado, valor_aditivo e custo " +
+      "dos itens via can_view_financeiro(); compensa com WHERE empresa_id = " +
+      "get_user_empresa_id() AND user_has_feature('projetos','viewer'), mesmo " +
+      "predicado da policy escopos_select. Só leitura para authenticated " +
+      "(20261022000000). Revisado em 2026-10-13.",
   ],
 ]);
 
