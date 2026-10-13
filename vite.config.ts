@@ -183,11 +183,12 @@ export default defineConfig(({ mode }) => ({
       // Ainda em 13/10, os hooks do Obras saíram de src/hooks para src/pages/obras/hooks
       // (só mudou o denominador, nenhum teste saiu): hooks subiu para 16/12/14/17 e obras
       // desceu para 6/6/6/7. Os dois pisos acompanharam a mudança.
+      // Financeiro subiu de 5/6/4/4 para 14/12/8/14 em 13/10 (hooks de contas, fatura e importação).
       thresholds: {
         "src/lib/**": { statements: 68, branches: 63, functions: 68, lines: 70 },
         "src/hooks/**": { statements: 15, branches: 11, functions: 13, lines: 16 },
         "src/components/**": { statements: 21, branches: 18, functions: 16, lines: 21 },
-        "src/pages/financeiro/**": { statements: 4, branches: 5, functions: 3, lines: 4 },
+        "src/pages/financeiro/**": { statements: 13, branches: 11, functions: 8, lines: 13 },
         "src/pages/obras/**": { statements: 6, branches: 5, functions: 5, lines: 6 },
         "src/pages/projetos/**": { statements: 5, branches: 3, functions: 4, lines: 5 },
       },
