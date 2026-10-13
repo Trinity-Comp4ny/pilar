@@ -31,6 +31,10 @@ const TEXTO_VARIAVEL = new RegExp(
 function mascaras(page: Page) {
   return [
     page.getByText(TEXTO_VARIAVEL),
+    // Botão de data inteiro (DatePicker do prazo): mascarar só o texto deixava sobrar a
+    // borda, porque a largura do texto muda com os dígitos do dia ("11/10" é mais
+    // estreito que "28/10") e o seed gera datas relativas a hoje. O botão tem largura fixa.
+    page.getByRole("button", { name: /\d{2}\/\d{2}\/\d{2,4}/ }),
     // Tabela inteira, não só o corpo: a largura das colunas acompanha o conteúdo, que
     // muda com a data do seed, e o cabeçalho descia 1px de um dia para o outro. A
     // borda do card em volta continua na foto, então tabela que desloca ainda aparece.
