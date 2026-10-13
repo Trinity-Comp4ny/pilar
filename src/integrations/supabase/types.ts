@@ -3606,9 +3606,11 @@ export type Database = {
           data_inicio: string | null
           empresa_id: string
           id: string
+          nivel: string
           nome: string
           obra_id: string
           ordem: number
+          parent_id: string | null
           updated_at: string
         }
         Insert: {
@@ -3617,9 +3619,11 @@ export type Database = {
           data_inicio?: string | null
           empresa_id: string
           id?: string
+          nivel?: string
           nome: string
           obra_id: string
           ordem?: number
+          parent_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -3628,9 +3632,11 @@ export type Database = {
           data_inicio?: string | null
           empresa_id?: string
           id?: string
+          nivel?: string
           nome?: string
           obra_id?: string
           ordem?: number
+          parent_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -3646,6 +3652,13 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_frente_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "obra_frente"
             referencedColumns: ["id"]
           },
         ]
