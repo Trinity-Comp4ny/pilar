@@ -55,9 +55,7 @@ function retorno(overrides: Record<string, unknown> = {}) {
           responsavel: "Fernando",
         },
       ],
-      horasPorProjeto: [
-        { projetoId: "p1", projeto: "Vila Rica", estimadas: "420", realizadas: "580", desvioPct: 38 },
-      ],
+      horasPorProjeto: [{ projetoId: "p1", projeto: "Vila Rica", estimadas: "420", realizadas: "580", desvioPct: 38 }],
     },
     obras: {
       totais: { emAndamento: 2, planejadas: 1, paralisadas: 0, atrasadas: 1 },
@@ -102,14 +100,16 @@ describe("usePainelGestao", () => {
   });
 
   it("aceita o bloco financeiro preenchido quando ele vem", async () => {
-    responder(retorno({
+    responder(
+      retorno({
         financeiro: {
           mes: { recebido: 1000, aReceber: 2000, receberVencido: 300 },
           despesaMes: { pago: 500, aPagar: 700, pagarVencido: 0 },
           faturamento: [{ mes: "2026-09-01", previsto: 5000, faturado: 4000 }],
           margemPorProjeto: [{ projetoId: "p1", projeto: "Vila Rica", pct: -7 }],
         },
-      }));
+      })
+    );
 
     const { result } = renderHook(() => usePainelGestao(), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));

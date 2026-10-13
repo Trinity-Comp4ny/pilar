@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState } from "@/components/EmptyState";
 import { formatDateTime } from "@/lib/format";
-import { useProjetoTimeline, type ProjetoTimelineTipo } from "@/hooks/useProjetoTimeline";
+import { useProjetoTimeline, type ProjetoTimelineTipo } from "@/pages/projetos/hooks/useProjetoTimeline";
 
 import { ReadingRing } from "@/components/motion/ReadingRing";
 

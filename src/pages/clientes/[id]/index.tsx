@@ -45,7 +45,7 @@ import {
   FileSignature,
 } from "lucide-react";
 import { formatDocument, formatPhone } from "@/lib/maskUtils";
-import { useClienteDetalhe } from "@/hooks/useClienteDetalhe";
+import { useClienteDetalhe } from "@/pages/clientes/hooks/useClienteDetalhe";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRequireAal2 } from "@/hooks/useRequireAal2";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -63,7 +63,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { reportInvokeError } from "@/lib/monitoring";
 import type { Cliente } from "@/hooks/useClientes";
-import type { ProjetoResumo, PropostaResumo } from "@/hooks/useClienteDetalhe";
+import type { ProjetoResumo, PropostaResumo } from "@/pages/clientes/hooks/useClienteDetalhe";
 
 import { BusyMark } from "@/components/motion/BusyMark";
 

@@ -21,7 +21,7 @@ import {
   type PendenciaAditivo,
 } from "@/hooks/useEscopos";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
-import { useAgentHeartbeat } from "@/hooks/useAgentHeartbeat";
+import { useAgentHeartbeat } from "@/pages/chat/hooks/useAgentHeartbeat";
 import { formatDateTime } from "@/lib/format";
 
 const HEARTBEAT_STALE_HORAS = 30; // roda diariamente às 06:15 UTC; folga sobre 24h pra não alarmar à toa

@@ -119,9 +119,7 @@ export async function buildDashboardQueries(
     // proximasReceitas
     supabase
       .from("receitas")
-      .select(
-        "id, descricao, valor, data_vencimento, status, projeto_id, projetos(nome), cliente_id, clientes(nome)"
-      )
+      .select("id, descricao, valor, data_vencimento, status, projeto_id, projetos(nome), cliente_id, clientes(nome)")
       .eq("status", "Pendente")
       .gte("data_vencimento", format(now, "yyyy-MM-dd"))
       .lte("data_vencimento", format(addDays(now, 30), "yyyy-MM-dd"))

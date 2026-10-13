@@ -43,9 +43,7 @@ const painelSchema = z.object({
     esperaProposta: z.array(z.object({ faixa: z.string(), n: z.number() })),
     origemGanho: z.array(z.object({ origem: z.string(), leads: z.number(), ganhoPct: num })),
     throughputSemanal: z.array(z.object({ semana: z.string(), n: z.number() })),
-    cargaEquipe: z.array(
-      z.object({ pessoaId: z.string(), nome: z.string(), emDia: z.number(), atrasada: z.number() })
-    ),
+    cargaEquipe: z.array(z.object({ pessoaId: z.string(), nome: z.string(), emDia: z.number(), atrasada: z.number() })),
     filaAprovacao: z.array(
       z.object({
         escopoId: z.string(),
@@ -60,9 +58,7 @@ const painelSchema = z.object({
     totais: totaisProjetos,
     statusAtivos: z.array(z.object({ status: z.string(), n: z.number() })),
     pontualidadeMensal: z.array(z.object({ mes: z.string(), pct: num, total: z.number() })),
-    atrasoPorDisciplina: z.array(
-      z.object({ disciplina: z.string(), diasMedio: z.number(), entregas: z.number() })
-    ),
+    atrasoPorDisciplina: z.array(z.object({ disciplina: z.string(), diasMedio: z.number(), entregas: z.number() })),
     prazos15Dias: z.array(
       z.object({
         disciplinaId: z.string(),
@@ -125,9 +121,7 @@ const painelSchema = z.object({
 });
 
 const extraSchema = z.object({
-  efetivoObra: z.array(
-    z.object({ obraId: z.string(), obra: z.string(), media: z.number(), dias: z.number() })
-  ),
+  efetivoObra: z.array(z.object({ obraId: z.string(), obra: z.string(), media: z.number(), dias: z.number() })),
   projetosPorCliente: z.array(
     z.object({ clienteId: z.string(), cliente: z.string(), ativos: z.number(), atrasados: z.number() })
   ),

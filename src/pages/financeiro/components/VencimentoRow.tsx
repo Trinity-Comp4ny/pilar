@@ -1,5 +1,5 @@
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
-import type { DashboardVencimento } from "@/hooks/useDashboardData";
+import type { DashboardVencimento } from "@/pages/financeiro/hooks/useDashboardData";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 
 export function VencimentoRow({ item }: { item: DashboardVencimento }) {

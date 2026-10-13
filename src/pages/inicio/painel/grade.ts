@@ -1,5 +1,5 @@
 import { COLUNAS } from "./catalogo";
-import type { Tamanho } from "@/hooks/usePainelLayout";
+import type { Tamanho } from "@/pages/inicio/hooks/usePainelLayout";
 
 /**
  * Geometria da grade do painel. Fica separado do componente porque é lógica

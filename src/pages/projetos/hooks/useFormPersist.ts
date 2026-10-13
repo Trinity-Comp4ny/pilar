@@ -34,14 +34,7 @@ const PREFIX = "pilar-form:";
  * - Só persiste depois de restaurar, para não sobrescrever o rascunho salvo
  *   com o estado inicial vazio do form.
  */
-export function useFormPersist<T>({
-  storageKey,
-  values,
-  step,
-  onRestore,
-  ttlHours = 24,
-  enabled = true,
-}: Options<T>) {
+export function useFormPersist<T>({ storageKey, values, step, onRestore, ttlHours = 24, enabled = true }: Options<T>) {
   const key = PREFIX + storageKey;
   const restoredRef = useRef(false);
   // Mantém a referência mais recente do callback sem re-disparar o efeito de restauração.

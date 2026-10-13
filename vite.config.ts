@@ -171,6 +171,8 @@ export default defineConfig(({ mode }) => ({
         "src/pages/financeiro/**",
         "src/pages/obras/**",
         "src/pages/projetos/**",
+        // Hooks de módulo (ADR 0055): medidos juntos, onde quer que o módulo esteja.
+        "src/pages/*/hooks/**",
       ],
       // Piso que reprova o CI (catraca, não meta). Medido em 07/10: lib em 70/66/71/72
       // (statements/branches/functions/lines) e financeiro em 5/6/4/4. O piso fica um
@@ -183,13 +185,18 @@ export default defineConfig(({ mode }) => ({
       // (só mudou o denominador, nenhum teste saiu): hooks subiu para 16/12/14/17 e obras
       // desceu para 6/6/6/7. Os dois pisos acompanharam a mudança.
       // Financeiro subiu de 5/6/4/4 para 14/12/8/14 em 13/10 (hooks de contas, fatura e importação).
+      // Ainda em 13/10, o resto dos hooks de um módulo só saiu de src/hooks (ADR 0055).
+      // Os testados (painel do início, formulário persistido, dashboard) foram junto, então
+      // src/hooks desceu para 13/9/11/13 e o grupo novo src/pages/*/hooks ficou em
+      // 16/12/12/18; financeiro subiu para 16/13/11/16 e projetos para 7/4/5/7.
       thresholds: {
         "src/lib/**": { statements: 68, branches: 63, functions: 68, lines: 70 },
-        "src/hooks/**": { statements: 15, branches: 11, functions: 13, lines: 16 },
+        "src/hooks/**": { statements: 12, branches: 9, functions: 10, lines: 13 },
+        "src/pages/*/hooks/**": { statements: 15, branches: 11, functions: 11, lines: 17 },
         "src/components/**": { statements: 21, branches: 18, functions: 16, lines: 21 },
-        "src/pages/financeiro/**": { statements: 13, branches: 11, functions: 8, lines: 13 },
+        "src/pages/financeiro/**": { statements: 15, branches: 12, functions: 10, lines: 15 },
         "src/pages/obras/**": { statements: 6, branches: 5, functions: 5, lines: 6 },
-        "src/pages/projetos/**": { statements: 5, branches: 3, functions: 4, lines: 5 },
+        "src/pages/projetos/**": { statements: 6, branches: 4, functions: 4, lines: 6 },
       },
     },
   },
