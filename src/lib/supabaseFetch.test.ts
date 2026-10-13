@@ -113,7 +113,18 @@ describe("createInstrumentedFetch", () => {
       { level: string; fingerprint: string[] },
     ];
     expect(extra.network).toBe(true);
+    expect(opts.level).toBe("warning");
     expect(opts.fingerprint).toEqual(["supabase", "network", "GET", "rest/v1/disciplinas"]);
+  });
+
+  it("cancelamento (AbortError) relança sem reportar", async () => {
+    const abort = new DOMException("The operation was aborted.", "AbortError");
+    const f = createInstrumentedFetch(async () => {
+      throw abort;
+    });
+
+    await expect(f(URL_BASE)).rejects.toBe(abort);
+    expect(captureException).not.toHaveBeenCalled();
   });
 
   it("não consome o corpo da resposta que a aplicação vai ler", async () => {
