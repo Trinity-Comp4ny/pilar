@@ -7,7 +7,6 @@ import { BottomNav } from "@/components/BottomNav";
 import { CommandPaletteHint } from "@/components/CommandPaletteHint";
 import { useCommandPalette } from "@/hooks/useCommandPalette";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { UltraAdminPlatformBanner } from "@/components/UltraAdminPlatformBanner";
 import { PageLoader } from "@/components/motion/PageLoader";
 import { VeilExit } from "@/components/motion/EntryVeil";
 import { useRouteEnter } from "@/components/motion/useRouteEnter";
@@ -61,7 +60,6 @@ function LayoutContent() {
       </a>
       <AppSidebar />
       <div style={{ marginLeft: sidebarOffset(state, isMobile) }}>
-        <UltraAdminPlatformBanner />
         <main
           ref={mainRef}
           id="main-content"

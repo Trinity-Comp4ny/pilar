@@ -34,6 +34,8 @@ import { usePendenciasAgentes } from "@/hooks/useEscopos";
 import { useModuleNav } from "@/hooks/useModuleNav";
 import { MODULES, type ModuleId, type ModuleMenuItem } from "@/lib/modules";
 import { PANEL_WIDTH, RAIL_WIDTH } from "@/lib/shellLayout";
+import { ULTRA_ADMIN_BASE, ULTRA_SECOES, isUltraAdminPath, ultraSecaoAtiva } from "@/lib/ultraAdminNav";
+import { useFeedbackNovosCount } from "@/hooks/useFeedbackNovosCount";
 
 // Shell dos 3 pilares (spec 001-shell-3-pilares): o menu vem do mapa central de
 // módulos. Desktop em duas colunas: trilho fixo à esquerda (Início, módulos,
@@ -68,8 +70,7 @@ export function AppSidebar() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
-  const USER_ROUTES = ["/admin", "/ultra-admin"];
-  const isUserRouteActive = USER_ROUTES.some((r) => currentPath.startsWith(r)) || isSettingsOpen;
+  const isUserRouteActive = currentPath.startsWith("/admin") || isSettingsOpen;
 
   const userName = profile
     ? [profile.first_name, profile.last_name].filter(Boolean).join(" ").trim() || user?.email || "Usuário"
@@ -78,6 +79,11 @@ export function AppSidebar() {
   const userEmail = user?.email ?? null;
   const collapsed = state === "collapsed";
   const { isAdmin, isUltraAdmin } = usePermissions();
+  // Portal ultra admin (SPEC 117): item próprio no trilho e, dentro dele, o
+  // painel troca os itens do módulo pelas seções do portal.
+  const onUltra = isUltraAdmin && isUltraAdminPath(currentPath);
+  const ultraAtiva = onUltra ? ultraSecaoAtiva(currentPath) : null;
+  const { data: feedbackNovos = 0 } = useFeedbackNovosCount(isUltraAdmin);
 
   // Trocar de módulo pelo trilho abre o painel: quem clica quer ver os itens dele.
   const handleSelectModule = (id: ModuleId) => {
@@ -96,10 +102,6 @@ export function AppSidebar() {
 
   const handleAdmin = () => {
     navigate("/admin");
-  };
-
-  const handleUltraAdmin = () => {
-    navigate("/ultra-admin");
   };
 
   const renderItem = (item: MenuItem, navProps: { disabled: boolean; title: string }) => {
@@ -242,6 +244,31 @@ export function AppSidebar() {
             </NavLink>
           );
         })}
+
+        {isUltraAdmin && (
+          <>
+            <div className="my-1 h-px w-8 bg-black/8" aria-hidden />
+            <NavLink
+              to={ULTRA_ADMIN_BASE}
+              end={false}
+              onClick={() => collapsed && setOpen(true)}
+              className={railItemClass(onUltra)}
+              aria-current={onUltra ? "page" : undefined}
+              aria-label={
+                feedbackNovos > 0 ? `Portal ultra admin, ${feedbackNovos} feedbacks novos` : "Portal ultra admin"
+              }
+              title="Portal ultra admin"
+            >
+              <span className={railIconClass(onUltra)}>
+                <Zap size={18} strokeWidth={1.5} />
+                {feedbackNovos > 0 && !onUltra && (
+                  <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-brand ring-2 ring-white" />
+                )}
+              </span>
+              Ultra
+            </NavLink>
+          </>
+        )}
       </nav>
 
       {/* Sino + conta */}
@@ -293,12 +320,6 @@ export function AppSidebar() {
                 <ShieldCheck size={16} className="text-muted-foreground" />
               </DropdownMenuItem>
             )}
-            {isUltraAdmin && (
-              <DropdownMenuItem onClick={handleUltraAdmin} className="justify-between">
-                Portal Ultra
-                <Zap size={16} className="text-muted-foreground" />
-              </DropdownMenuItem>
-            )}
             <ImpersonationPicker />
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -329,20 +350,60 @@ export function AppSidebar() {
         </button>
       </div>
 
-      {/* Itens do módulo ativo, agrupados por seção (Comercial/Financeiro/Empresa) */}
-      <nav
-        aria-label={`Menu de ${MODULES[activeModule].label}`}
-        className="flex-1 space-y-3 overflow-y-auto px-3 pb-3 scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-      >
-        {moduleGroups.map((group, i) => (
-          <div key={group.label ?? `grupo-${i}`} className="space-y-1">
-            {group.label && (
-              <p className="px-3 pt-1 text-[10px] font-medium uppercase tracking-wider text-black/35">{group.label}</p>
-            )}
-            {group.entries.map(({ item, nav }) => renderItem(item, nav))}
-          </div>
-        ))}
-      </nav>
+      {onUltra ? (
+        <nav
+          aria-label="Menu do portal ultra admin"
+          className="flex-1 space-y-3 overflow-y-auto px-3 pb-3 scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {(["Plataforma", "Produto", "Operação"] as const).map((group) => (
+            <div key={group} className="space-y-1">
+              <p className="px-3 pt-1 text-[10px] font-medium uppercase tracking-wider text-black/35">{group}</p>
+              {ULTRA_SECOES.filter((s) => s.group === group).map((secao) => {
+                const Icon = secao.icon;
+                const isActive = ultraAtiva === secao.id;
+                const contador = secao.id === "feedback" ? feedbackNovos : 0;
+                return (
+                  <NavLink
+                    key={secao.id}
+                    to={secao.url}
+                    end={secao.id === "visao-geral"}
+                    aria-current={isActive ? "page" : undefined}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200",
+                      isActive ? "bg-brand text-black/80 font-medium" : "text-black/70 hover:bg-brand/30"
+                    )}
+                  >
+                    <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] shrink-0" />
+                    <span className="tracking-tight flex-1">{secao.title}</span>
+                    {contador > 0 && (
+                      <span className="min-w-5 rounded-full bg-brand px-1.5 text-center text-[10px] font-semibold leading-5 text-ink tabular-nums">
+                        {contador}
+                      </span>
+                    )}
+                  </NavLink>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
+      ) : (
+        /* Itens do módulo ativo, agrupados por seção (Comercial/Financeiro/Empresa) */
+        <nav
+          aria-label={`Menu de ${MODULES[activeModule].label}`}
+          className="flex-1 space-y-3 overflow-y-auto px-3 pb-3 scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {moduleGroups.map((group, i) => (
+            <div key={group.label ?? `grupo-${i}`} className="space-y-1">
+              {group.label && (
+                <p className="px-3 pt-1 text-[10px] font-medium uppercase tracking-wider text-black/35">
+                  {group.label}
+                </p>
+              )}
+              {group.entries.map(({ item, nav }) => renderItem(item, nav))}
+            </div>
+          ))}
+        </nav>
+      )}
     </div>
   );
 
