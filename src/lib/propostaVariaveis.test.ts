@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildVariableData } from "./docxUtils";
+import { buildVariableData } from "./propostaVariaveis";
 
 const propostaBase = {
   titulo: "Proposta teste",

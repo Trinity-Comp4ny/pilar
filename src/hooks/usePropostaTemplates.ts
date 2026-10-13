@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { extractVariablesFromDocx } from "@/lib/docxUtils";
 
 export type TemplateTipo = "proposta" | "contrato";
 
@@ -76,6 +75,7 @@ export const useUploadTemplate = () => {
 
       // 2. Parse variables from DOCX
       const arrayBuffer = await file.arrayBuffer();
+      const { extractVariablesFromDocx } = await import("@/lib/docxUtils");
       const variaveis = extractVariablesFromDocx(arrayBuffer);
 
       // 3. Insert template record
