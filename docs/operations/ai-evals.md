@@ -9,7 +9,7 @@ GEMINI_API_KEY=... deno run --allow-env --allow-net --allow-write \
   supabase/functions/ai-chat/evals/rodar.ts [--filtro injecao] [--saida resultado.json]
 ```
 
-Com outro modelo (SPEC 106), sem mudar código:
+Com outro modelo (SPEC 108), sem mudar código:
 
 ```bash
 AI_MODELO=gateway:anthropic/claude-haiku-5.5 AI_GATEWAY_API_KEY=... deno run --allow-env --allow-net \

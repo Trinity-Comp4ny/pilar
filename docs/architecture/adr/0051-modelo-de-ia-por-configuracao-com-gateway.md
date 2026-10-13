@@ -1,4 +1,4 @@
-# ADR 0049: Modelo de IA escolhido por configuração, com o Vercel AI Gateway como porta para outros fornecedores
+# ADR 0051: Modelo de IA escolhido por configuração, com o Vercel AI Gateway como porta para outros fornecedores
 
 **Data:** 2026-10-09  
 **Status:** Accepted
