@@ -51,7 +51,14 @@ export default function MetasPage() {
         </PageHeader>
       </div>
 
-      <div className="flex-1 overflow-y-auto w-full bg-background p-6 md:p-8">
+      {/* Área com rolagem própria: precisa receber foco para rolar pelo teclado (axe
+          scrollable-region-focusable) quando o conteúdo não tem nada focável. */}
+      <div
+        className="flex-1 overflow-y-auto w-full bg-background p-6 md:p-8"
+        tabIndex={0}
+        role="region"
+        aria-label="Painel de metas"
+      >
         <div className="w-full mx-auto space-y-6">
           <MetasDashboard />
         </div>

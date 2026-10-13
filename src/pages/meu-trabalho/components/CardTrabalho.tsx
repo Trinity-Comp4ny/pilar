@@ -60,9 +60,7 @@ export function CardTrabalho({ item, onAbrir, onPrioridade, onExcluir }: Props) 
           )}
         </DropdownMenu>
         <div className="flex shrink-0 items-center gap-1">
-          {item.numero != null && (
-            <span className="font-mono text-[10px] text-muted-foreground/70">#{item.numero}</span>
-          )}
+          {item.numero != null && <span className="font-mono text-[10px] text-muted-foreground">#{item.numero}</span>}
           <Badge variant="outline" className="text-[10px] font-normal text-muted-foreground">
             {ehTarefa ? "Tarefa" : "Disciplina"}
           </Badge>

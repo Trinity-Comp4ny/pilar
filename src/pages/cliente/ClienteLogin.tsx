@@ -200,7 +200,7 @@ export default function ClienteLogin() {
                 Recuperar acesso
               </a>
             </p>
-            <p className="text-xs text-ink/60">Acesso exclusivo para clientes convidados pelo escritório.</p>
+            <p className="text-xs text-ink-muted">Acesso exclusivo para clientes convidados pelo escritório.</p>
           </div>
         </div>
       </div>

@@ -406,7 +406,7 @@ export default function ProfileSetup() {
                             className="mt-0.5 data-[state=checked]:bg-brand data-[state=checked]:border-brand data-[state=checked]:text-ink"
                           />
                         </FormControl>
-                        <label className="text-sm text-ink-soft leading-snug cursor-pointer select-none">
+                        <FormLabel className="text-sm font-normal text-ink-soft leading-snug cursor-pointer select-none">
                           Li e concordo com os{" "}
                           <Link
                             to="/termos"
@@ -425,7 +425,7 @@ export default function ProfileSetup() {
                           >
                             Política de Privacidade
                           </Link>
-                        </label>
+                        </FormLabel>
                       </div>
                     </FormItem>
                   )}

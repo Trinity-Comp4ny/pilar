@@ -289,20 +289,18 @@ function Linha({
   const ehTarefa = item.tipo === "tarefa";
 
   return (
+    // Não é role="button": a linha tem controles dentro (responsável, menu), e botão
+    // não pode conter controle (axe nested-interactive). O foco de teclado e o Enter
+    // ficam no invólucro arrastável, em volta (ListaTrabalho).
     <div
-      role="button"
-      tabIndex={0}
       onClick={() => onAbrir(item)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") onAbrir(item);
-      }}
       style={{ gridTemplateColumns: template }}
       className="group grid cursor-pointer items-center gap-4 border-b px-4 py-2 text-sm last:border-b-0 hover:bg-muted/50"
     >
       {/* Nome + tipo + contadores */}
       <div className="flex min-w-0 items-center gap-2">
         {item.numero != null && (
-          <span className="shrink-0 font-mono text-xs text-muted-foreground/70">#{item.numero}</span>
+          <span className="shrink-0 font-mono text-xs text-muted-foreground">#{item.numero}</span>
         )}
         <span className="flex min-w-0 flex-col">
           <span className="truncate text-foreground">{item.titulo}</span>
@@ -533,7 +531,7 @@ export function ListaTrabalho({
                             <button
                               type="button"
                               onClick={() => onCriarNoGrupo(grupo.chave)}
-                              className="flex w-full items-center gap-1.5 px-4 py-2.5 text-left text-xs text-muted-foreground/70 hover:bg-muted/40 hover:text-foreground"
+                              className="flex w-full items-center gap-1.5 px-4 py-2.5 text-left text-xs text-muted-foreground hover:bg-muted/40 hover:text-foreground"
                             >
                               <Plus className="h-3.5 w-3.5" /> Nova tarefa
                             </button>
@@ -545,6 +543,15 @@ export function ListaTrabalho({
                                     ref={dragProvided.innerRef}
                                     {...dragProvided.draggableProps}
                                     {...dragProvided.dragHandleProps}
+                                    // A biblioteca marca o invólucro como botão; com controles
+                                    // dentro, isso é aninhamento proibido. "group" mantém o foco e
+                                    // o arrastar por teclado (que não depende do role).
+                                    role="group"
+                                    aria-roledescription="tarefa arrastável"
+                                    aria-label={item.titulo}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter" && e.target === e.currentTarget) onAbrir(item);
+                                    }}
                                     className={cn(dragSnapshot.isDragging && "rounded-md bg-card opacity-90 shadow-md")}
                                   >
                                     <Linha
