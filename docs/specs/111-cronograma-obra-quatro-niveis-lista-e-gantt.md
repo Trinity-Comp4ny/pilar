@@ -1,7 +1,7 @@
 # SPEC: Cronograma da obra em quatro níveis (fase, etapa, serviço, tarefa) com lista e Gantt
 
 **Data:** 2026-10-13
-**Status:** Draft
+**Status:** Implementada (local); pendente staging
 **Autor:** Matheus Rezende
 **Módulo:** obras
 **Estende:** [027: cronograma da obra em dois níveis](027-cronograma-obra-dois-niveis.md), [020: cronograma da obra](020-cronograma-da-obra.md)
@@ -49,7 +49,10 @@ com o caminho da obra visível.
    etapa → "+ serviço", serviço → "+ tarefa"), inline, com Enter para criar e
    seguir criando. O filho nasce herdando o período do pai.
 5. Edição de nome e datas é inline na própria linha (DatePicker), sem modal.
-   O modal de detalhe fica só para a tarefa (descrição, responsáveis, clima).
+   Responsável e etiquetas usam as mesmas células da gestão de tarefas; o
+   detalhe completo da tarefa (descrição, comentários) abre na gestão de tarefas
+   pelo menu da linha ("Abrir na gestão de tarefas"). Clima e "mover para
+   serviço" ficam no menu da linha.
 6. Período de fase, etapa e serviço: data própria opcional; sem data própria, a
    barra-resumo é a união do período dos filhos (regra do `spanFrente` atual,
    generalizada para qualquer nível).
@@ -68,9 +71,9 @@ com o caminho da obra visível.
 
 Não-funcionais:
 
-- **Segurança / RLS:** sem tabela nova se D1 = A; as policies de `obra_frente` e
-  `tarefas` (por `empresa_id`) já cobrem. Trigger de validação da hierarquia
-  `SECURITY INVOKER`. Se D1 = B, tabelas novas nascem com RLS por empresa.
+- **Segurança / RLS:** sem tabela nova (D1 = A); as policies de `obra_frente` e
+  `tarefas` (por `empresa_id`) já cobrem. Triggers `SECURITY INVOKER`, sem
+  EXECUTE para anon/authenticated.
 - **Performance:** a árvore inteira vem em 2 queries (nós + tarefas da obra),
   montada no cliente. Obra grande de referência: 6 fases, 40 etapas, 150
   serviços, 600 tarefas; lista e Gantt renderizam sem travar (virtualizar se
@@ -79,46 +82,62 @@ Não-funcionais:
 
 ## Critérios de aceite
 
-- [ ] Dado uma obra vazia, quando crio a fase "Estrutura", a etapa "Fundação",
+- [x] Dado uma obra vazia, quando crio a fase "Estrutura", a etapa "Fundação",
       o serviço "Sapatas" e a tarefa "Concretar S1" pela lista, então os quatro
       aparecem indentados na lista e no Gantt, sem abrir modal.
-- [ ] Dado um serviço com 4 tarefas, quando marco 1 como concluída na lista,
+- [x] Dado um serviço com 4 tarefas, quando marco 1 como concluída na lista,
       então serviço, etapa e fase passam a mostrar 25% (ou a fração equivalente
       no nível de cima) sem recarregar a página.
-- [ ] Dado uma etapa sem data própria e dois serviços datados (01/11 a 10/11 e
+- [x] Dado uma etapa sem data própria e dois serviços datados (01/11 a 10/11 e
       05/11 a 20/11), então a barra da etapa vai de 01/11 a 20/11.
-- [ ] Dado que edito o início de uma etapa na lista, quando troco para o Gantt,
+- [x] Dado que edito o início de uma etapa na lista, quando troco para o Gantt,
       então a barra começa na data nova; e vice-versa (drag no Gantt, data nova
       na lista).
-- [ ] Dado uma tarefa da obra com responsável Ana, quando Ana abre a gestão de
+- [x] Dado uma tarefa da obra com responsável Ana, quando Ana abre a gestão de
       tarefas com o filtro "Minhas", então a tarefa está lá com o caminho da obra.
-- [ ] Dado que Ana conclui a tarefa na gestão de tarefas, quando abro o
+- [x] Dado que Ana conclui a tarefa na gestão de tarefas, quando abro o
       cronograma da obra, então ela aparece concluída e o progresso subiu.
-- [ ] Tentar criar serviço direto sob fase (via API) falha com erro claro do
+- [x] Tentar criar serviço direto sob fase (via API) falha com erro claro do
       trigger.
-- [ ] Seletores de etapa em cotação, estoque, conta e RDO não listam fases nem
+- [x] Seletores de etapa em cotação, estoque, conta e RDO não listam fases nem
       serviços.
-- [ ] Obra existente antes da migration abre sem perder etapa nem tarefa (ver D2).
-- [ ] Mobile (390px): lista usável (nome + checkbox + prazo); Gantt com coluna
+- [x] Obra existente antes da migration abre sem perder etapa nem tarefa (ver D2).
+- [x] Mobile (390px): lista usável (nome + checkbox + prazo); Gantt com coluna
       fixa estreita como hoje.
+
+Verificação (13/10/2026): pgTAP `supabase/tests/cronograma_obra_quatro_niveis.sql`
+(14 casos: hierarquia, normalização do código antigo, ponte de responsáveis,
+exclusão em cascata), testes de `src/lib/obraArvore.test.ts` (12) e
+`ObraCronogramaTab.test.tsx` (7), e fluxo real no navegador contra o banco local
+com a obra de exemplo migrada: criar serviços e tarefas pela lista, marcar o
+checklist (serviço 50%, etapa 50%, fase 33%), datas pelo DatePicker aparecendo na
+hora, Gantt com barra-resumo, atribuir responsável e ver a tarefa em "Eu" na
+gestão de tarefas com o caminho da obra, e lista em 390px.
 
 ## Dados e contratos
 
-Recomendação para D1 (opção A, uma árvore só):
+Implementado (D1 = A, uma árvore só), migration `20261021000000_cronograma_obra_quatro_niveis.sql`:
 
 - `obra_frente` ganha `nivel text NOT NULL DEFAULT 'etapa' CHECK (nivel IN
 ('fase','etapa','servico'))` e `parent_id uuid REFERENCES obra_frente(id)`.
-- Trigger `obra_frente_valida_hierarquia`: fase sem pai; etapa com pai fase;
-  serviço com pai etapa; pai da mesma `obra_id` e `empresa_id`.
+- Trigger `trg_obra_frente_hierarquia`: fase sem pai; etapa com pai fase;
+  serviço com pai etapa; pai da mesma `obra_id` e `empresa_id`; nível não muda.
+  Etapa criada sem fase (código antigo) vai para a fase "Geral" da obra.
 - Índice `(obra_id, parent_id, ordem)`.
-- `tarefas.obra_frente_id` passa a apontar para serviço nas tarefas novas
-  (trigger valida nível conforme D3).
-- Trigger em `tarefas`: ao inserir/atualizar `responsavel_id` de tarefa de obra,
-  garante a linha em `tarefa_responsaveis` (fecha o furo do filtro "Minhas").
-- Hooks: `useObraFrentes` vira `useObraArvore` (nós + montagem da árvore em
-  `src/lib/obras.ts`, testada). Seletores de cotação/estoque/conta/RDO filtram
-  `nivel = 'etapa'`.
-- `npm run gen:types` após a migration.
+- `tarefas.obra_frente_id` aponta para serviço. BEFORE recusa tarefa na fase ou
+  em outra obra; AFTER move tarefa gravada na etapa (RDO/código antigo) para o
+  serviço "Geral" dela. O redirecionamento é AFTER porque a RLS de `tarefas`
+  (WITH CHECK em `obra_frente`) usa o snapshot do comando e não enxergaria o
+  serviço criado dentro do próprio INSERT.
+- Trigger `trg_tarefa_responsavel_na_ponte`: `responsavel_id` sempre espelhado
+  em `tarefa_responsaveis` (troca remove o antigo). Backfill das tarefas que já
+  tinham responsável sem linha na ponte.
+- `get_cliente_obra_detail` (portal) lista só etapas, com as tarefas dos
+  serviços abaixo; `campo_listar_tarefas` mostra "Etapa › Serviço".
+- Front: `useObraFrentes` devolve todos os nós; `useObraEtapas` (mesmo cache,
+  `select`) alimenta conta, cotação, estoque e orçamento. Árvore e somas em
+  `src/lib/obraArvore.ts`. Lista e Gantt em `src/pages/obras/components/cronograma/`.
+  Gestão de tarefas embute `servico → etapa → fase` e mostra o caminho.
 
 ## Plano de implementação
 
@@ -134,7 +153,7 @@ Recomendação para D1 (opção A, uma árvore só):
 7. Verificação: testes de lib e componente, pgTAP, e fluxo real no browser
    (staging) com a obra de referência.
 
-## Decisões em aberto
+## Decisões (13/10/2026: D1 = A, D2 = A, D3 = A, D4 = A)
 
 - **D1. Modelo de dados.** A (recomendado): `obra_frente` vira árvore com
   `nivel` + `parent_id`. Mantém todas as FKs atuais (cotação, estoque, conta,
