@@ -5,6 +5,7 @@ import { createLogger } from "../_shared/logger.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
 import { aprovado, formularioVerificacao, tokenTurnstile } from "./entrada.ts";
+import { fetchComTempo } from "../_shared/http.ts";
 
 const log = createLogger("turnstile-verify");
 
@@ -76,10 +77,14 @@ serve(
 
       const form = formularioVerificacao(secret, token, ip);
 
-      const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-        method: "POST",
-        body: form,
-      });
+      const res = await fetchComTempo(
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        {
+          method: "POST",
+          body: form,
+        },
+        8_000
+      );
       const ok = aprovado(await res.json().catch(() => null));
 
       return new Response(JSON.stringify({ success: ok }), {

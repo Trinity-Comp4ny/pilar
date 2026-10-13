@@ -10,6 +10,8 @@
  *   ASAAS_PLATFORM_WEBHOOK_TOKEN  token compartilhado entre Asaas e a edge function
  */
 
+import { fetchComTempo } from "./http.ts";
+
 const BASE_URLS = {
   sandbox: "https://sandbox.asaas.com/api/v3",
   producao: "https://api.asaas.com/v3",
@@ -40,7 +42,7 @@ async function asaasFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     ...((init.headers as HeadersInitLocal | undefined) ?? {}),
   };
 
-  const resp = await fetch(`${baseUrl}${path}`, { ...init, headers });
+  const resp = await fetchComTempo(`${baseUrl}${path}`, { ...init, headers });
   const text = await resp.text();
   let json: unknown = null;
 

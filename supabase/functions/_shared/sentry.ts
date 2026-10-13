@@ -34,6 +34,7 @@
  */
 
 import { AsyncLocalStorage } from "node:async_hooks";
+import { fetchComTempo } from "./http.ts";
 
 // `EdgeRuntime` só existe no runtime do Supabase (e no `supabase functions serve`
 // local); em `deno check`/testes fora dele, cai no fallback (a promise ainda roda,
@@ -277,7 +278,7 @@ export async function captureException(err: unknown, ctx: SentryContext = {}): P
   const body = `${envelopeHeader}\n${itemHeader}\n${JSON.stringify(event)}`;
 
   try {
-    const res = await fetch(PARSED.envelopeUrl, {
+    const res = await fetchComTempo(PARSED.envelopeUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-sentry-envelope",
@@ -364,7 +365,7 @@ async function sendTransaction(params: {
   const body = `${envelopeHeader}\n${itemHeader}\n${JSON.stringify(event)}`;
 
   try {
-    const res = await fetch(PARSED.envelopeUrl, {
+    const res = await fetchComTempo(PARSED.envelopeUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-sentry-envelope",
@@ -480,7 +481,7 @@ export async function cronCheckin(
     `https://${PARSED.host}/api/${PARSED.projectId}/cron/${monitorSlug}/${PARSED.publicKey}/` +
     `?status=${status}&check_in_id=${id}&environment=${ENVIRONMENT}`;
   try {
-    const res = await fetch(url);
+    const res = await fetchComTempo(url, {}, 5_000);
     if (!res.ok) console.warn(`[sentry] cron check-in rejeitado ${res.status}`);
   } catch (e) {
     console.warn(`[sentry] cron check-in falhou: ${e instanceof Error ? e.message : String(e)}`);
@@ -581,7 +582,7 @@ export function recordMetric(
   });
   const body = `${envelopeHeader}\n${itemHeader}\n${JSON.stringify({ items: [item] })}`;
 
-  const task = fetch(PARSED.envelopeUrl, {
+  const task = fetchComTempo(PARSED.envelopeUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-sentry-envelope",

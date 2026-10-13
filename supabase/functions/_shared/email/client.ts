@@ -19,6 +19,7 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 
 import { BRAND } from "./brand.ts";
 import { htmlToText } from "./html.ts";
+import { fetchComTempo } from "../http.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const DRY_RUN = (Deno.env.get("EMAIL_DRY_RUN") ?? "false") === "true";
@@ -229,7 +230,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
-      const res = await fetch(RESEND_ENDPOINT, {
+      const res = await fetchComTempo(RESEND_ENDPOINT, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${RESEND_API_KEY}`,

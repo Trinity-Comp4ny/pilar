@@ -3,6 +3,7 @@ import { recordMetric, withSentry } from "../_shared/sentry.ts";
 import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { getRateLimitKey, RateLimiter } from "../_shared/rate-limiter.ts";
 import { escolherCidade, type GeoResult, lerEndereco, type OpenMeteoGeo } from "./endereco.ts";
+import { fetchComTempo } from "../_shared/http.ts";
 
 // User-Agent exigido pelo fair-use do Nominatim. Sem ele o IP é bloqueado.
 const NOMINATIM_UA = "PilarSoft/1.0 (contato@pilarsoft.com.br)";
@@ -17,12 +18,11 @@ const OPEN_METEO_GEO = "https://geocoding-api.open-meteo.com/v1/search";
 const limiter = new RateLimiter(30, 60_000);
 
 async function queryNominatim(params: URLSearchParams): Promise<GeoResult | null> {
-  const response = await fetch(`${NOMINATIM_BASE}?${params}`, {
-    headers: {
-      "User-Agent": NOMINATIM_UA,
-      Accept: "application/json",
-    },
-  });
+  const response = await fetchComTempo(
+    `${NOMINATIM_BASE}?${params}`,
+    { headers: { "User-Agent": NOMINATIM_UA, Accept: "application/json" } },
+    8_000
+  );
 
   if (!response.ok) {
     throw new Error(`Nominatim retornou ${response.status}`);
@@ -41,7 +41,11 @@ async function queryNominatim(params: URLSearchParams): Promise<GeoResult | null
 /** Centro da cidade pelo Open-Meteo. Só cidade + UF: posiciona o pino no município. */
 async function queryOpenMeteoCidade(city: string, state?: string): Promise<GeoResult | null> {
   const params = new URLSearchParams({ name: city, count: "10", language: "pt", countryCode: "BR" });
-  const response = await fetch(`${OPEN_METEO_GEO}?${params}`, { headers: { Accept: "application/json" } });
+  const response = await fetchComTempo(
+    `${OPEN_METEO_GEO}?${params}`,
+    { headers: { Accept: "application/json" } },
+    8_000
+  );
   if (!response.ok) throw new Error(`Open-Meteo retornou ${response.status}`);
 
   const { results = [] } = (await response.json()) as OpenMeteoGeo;
