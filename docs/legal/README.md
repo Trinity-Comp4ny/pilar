@@ -8,6 +8,7 @@ Documentos legais e de privacidade. ← [voltar ao índice](../README.md)
 | [TERMS_OF_SERVICE.md](./TERMS_OF_SERVICE.md) | ✅ Publicado em `/termos` (2026-08-18)       | `src/pages/Termos.tsx`; ainda sem revisão de advogado, ver risco abaixo                                      |
 | [COOKIE_POLICY.md](./COOKIE_POLICY.md)       | 🚧 Texto rascunho, mecanismo já ativo        | Política de Cookies; o banner de consentimento que ela descreve já roda em produção                          |
 | [SUBPROCESSADORES.md](./SUBPROCESSADORES.md) | ✅ v1, 2026-09-08                            | Lista pública dos fornecedores que processam dado pessoal em nome do Pilar                                   |
+| [RIPD.md](./RIPD.md)                         | ✅ v1, 2026-10-13                            | Relatório de Impacto à Proteção de Dados: tratamento, riscos, controles e plano dos riscos residuais         |
 
 ## Situação da identidade legal (CNPJ próprio pendente)
 

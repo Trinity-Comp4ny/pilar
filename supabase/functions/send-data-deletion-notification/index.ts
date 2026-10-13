@@ -29,7 +29,8 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const APP_URL = Deno.env.get("APP_URL") ?? "https://app.pilarsoft.com.br";
 const SHARED_SECRET = Deno.env.get("DATA_DELETION_NOTIFY_SECRET") ?? "";
-const FALLBACK_DPO = Deno.env.get("LGPD_DPO_EMAIL") ?? "privacidade@trnty.com.br";
+// Contato público de privacidade (/privacidade, /termos): o padrão segue ele, não um domínio antigo.
+const FALLBACK_DPO = Deno.env.get("LGPD_DPO_EMAIL") ?? "privacidade@pilarsoft.com.br";
 
 interface DeletionRequest {
   id: string;
