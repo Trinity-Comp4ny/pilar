@@ -119,6 +119,9 @@ jobs:
           # abrir o PR (na mão, ou configurando um dos dois acima para o job se curar sozinho).
           if gh pr create --base main --head "$BRANCH" --title "$TITLE" --body-file "$BODY_FILE"; then
             echo "::notice::PR de release criado."
+            # Com o RELEASE_PAT, "@me" é o dono do token, e todo PR do repo tem
+            # assignee. Com o GITHUB_TOKEN o "@me" seria o bot: falha sem derrubar o job.
+            gh pr edit "$BRANCH" --add-assignee "@me" || echo "::warning::Não consegui definir o assignee do PR de release."
           else
             echo "::error::Não consegui criar o PR de release. A branch '$BRANCH' já está pronta e pushada — abra manualmente com: gh pr create --base main --head $BRANCH --title \"$TITLE\" --body-file <arquivo>. Para o job se curar sozinho, adicione o secret RELEASE_PAT ou habilite 'Allow GitHub Actions to create and approve pull requests' em Settings → Actions → General."
             exit 1
