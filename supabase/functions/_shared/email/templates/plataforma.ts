@@ -153,6 +153,33 @@ export function templateAtivarPlanoRecibo(params: {
   };
 }
 
+/** Cópia dos próprios dados pronta (SPEC 115): link assinado, válido por alguns dias. */
+export function templateLgpdExportacaoPronta(params: { nome: string; link: string; validoAte: string }): EmailTemplate {
+  const { nome, link, validoAte } = params;
+  return {
+    subject: "Sua cópia de dados está pronta",
+    html: shell({
+      preview: `O link para baixar seus dados vale até ${validoAte}`,
+      footerNote: `Você recebeu este e-mail porque pediu uma cópia dos seus dados no ${BRAND.nome} (LGPD, art. 18).`,
+      hero: {
+        titulo: html`Sua ${em("cópia de dados")} está pronta`,
+        lead: html`Olá, ${strong(nome)}. Montamos o arquivo com os dados da sua conta: perfil, preferências,
+        consentimentos, notificações, conversas com a IA e o histórico das suas ações.`,
+      },
+      content: [
+        button("Baixar meus dados", link),
+        paragraph(
+          html`O link vale até ${strong(validoAte)}. Depois disso, peça uma nova cópia em Configurações → Privacidade.`
+        ),
+        small(
+          html`Projetos, clientes e financeiro são dados da sua empresa e ficam com o administrador dela. Não pediu esta
+          cópia? Responda este e-mail.`
+        ),
+      ],
+    }),
+  };
+}
+
 /** Pedido de exportação dos próprios dados (LGPD art. 18, V): vai para o encarregado atender. */
 export function templateLgpdExportacaoDados(params: {
   empresaNome: string;

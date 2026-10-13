@@ -144,6 +144,7 @@ const casos: Array<[string, () => { subject: string; html: string }]> = [
         requestId: XSS,
       }),
   ],
+  ["lgpd exportação pronta", () => T.templateLgpdExportacaoPronta({ nome: XSS, link: "https://l", validoAte: XSS })],
   [
     "lgpd exportação",
     () =>
