@@ -117,7 +117,10 @@ export function ObraCronogramaTab({
   const updateTarefa = useUpdateObraTarefa(obraId);
 
   const [zoom, setZoom] = useState<ZoomLevel>("months");
-  const [selecionada, setSelecionada] = useState<ObraFrenteRow | null | undefined>(undefined);
+  // Guarda só o id: o objeto vem sempre da lista viva, senão o modal mostra o
+  // snapshot de antes de salvar (a data ia pro Gantt mas não pro campo).
+  // undefined = fechado; null = balde "tarefas sem etapa".
+  const [selecionadaId, setSelecionadaId] = useState<string | null | undefined>(undefined);
   // Etapas recolhidas (por id). Vazio = todas expandidas por padrão.
   const [recolhidas, setRecolhidas] = useState<Set<string>>(new Set());
   // Etapa com o campo "nova tarefa" aberto inline.
@@ -129,6 +132,9 @@ export function ObraCronogramaTab({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
+
+  // Id que sumiu da lista (etapa excluída) conta como modal fechado.
+  const frenteSelecionada = selecionadaId ? frentes.find((f) => f.id === selecionadaId) : undefined;
 
   const tarefasDe = (frenteId: string | null) => tarefas.filter((t) => (t.obra_frente_id ?? null) === frenteId);
   const semFrente = tarefasDe(null);
@@ -385,7 +391,7 @@ export function ObraCronogramaTab({
                               {expandida ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                             </button>
                             <button
-                              onClick={() => setSelecionada(row.frente)}
+                              onClick={() => setSelecionadaId(row.frente.id)}
                               className="flex min-w-0 flex-1 flex-col justify-center py-1 text-left"
                             >
                               <span className="truncate text-xs font-semibold text-ink">{row.frente.nome}</span>
@@ -429,7 +435,7 @@ export function ObraCronogramaTab({
                             row.tarefas.map((t) => (
                               <button
                                 key={t.tarefa.id}
-                                onClick={() => setSelecionada(row.frente)}
+                                onClick={() => setSelecionadaId(row.frente.id)}
                                 className="flex w-full items-center gap-1.5 border-b bg-white/40 pl-9 pr-3 text-left transition-colors hover:bg-muted/40"
                                 style={{ height: SUB_H }}
                               >
@@ -563,7 +569,7 @@ export function ObraCronogramaTab({
                                     <button
                                       onClick={() => {
                                         if (shouldSuppressClick()) return;
-                                        setSelecionada(row.frente);
+                                        setSelecionadaId(row.frente.id);
                                       }}
                                       onMouseDown={(e) => {
                                         if (!canEdit) return;
@@ -635,7 +641,7 @@ export function ObraCronogramaTab({
                                           <button
                                             onClick={() => {
                                               if (shouldSuppressClick()) return;
-                                              setSelecionada(row.frente);
+                                              setSelecionadaId(row.frente.id);
                                             }}
                                             onMouseDown={(e) => {
                                               if (!canEdit) return;
@@ -718,7 +724,7 @@ export function ObraCronogramaTab({
                       variant="outline"
                       size="sm"
                       className="h-7 text-xs"
-                      onClick={() => setSelecionada(f)}
+                      onClick={() => setSelecionadaId(f.id)}
                     >
                       <Layers className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />
                       {f.nome}
@@ -731,7 +737,7 @@ export function ObraCronogramaTab({
 
           {semFrente.length > 0 && (
             <button
-              onClick={() => setSelecionada(null)}
+              onClick={() => setSelecionadaId(null)}
               className="flex w-full items-center justify-between rounded-2xl border border-black/5 bg-white p-4 text-left transition-colors hover:bg-muted/30"
             >
               <span className="text-sm font-medium text-ink">Tarefas sem etapa</span>
@@ -778,11 +784,11 @@ export function ObraCronogramaTab({
       )}
 
       <FrenteDetailDialog
-        open={selecionada !== undefined}
-        onOpenChange={(v) => !v && setSelecionada(undefined)}
+        open={selecionadaId === null || !!frenteSelecionada}
+        onOpenChange={(v) => !v && setSelecionadaId(undefined)}
         obraId={obraId}
         projetoId={projetoId}
-        frente={selecionada ?? null}
+        frente={frenteSelecionada ?? null}
         canEdit={canEdit}
       />
     </div>
