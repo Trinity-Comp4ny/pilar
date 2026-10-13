@@ -1,5 +1,18 @@
 {
   "ignoreCommand": "[ \"$VERCEL_ENV\" = production ] && exit 1; s=${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}; git cat-file -e $s 2>/dev/null || git fetch -q --depth=1 origin $s; git diff --quiet $s HEAD -- :/apps/marketing :/package-lock.json && exit 0 || exit 1",
+  "redirects": [
+    { "source": "/dashboard", "destination": "https://app.pilarsoft.com.br/inicio", "permanent": false },
+    {
+      "source": "/:rota((?:inicio|login|cadastro|forgot-password|reset-password|mfa|auth|checkout|comprar-tokens|billing|meu-trabalho|agentes|obras|leads|propostas|clientes|financeiro|pessoas|equipe|relatorios|cronograma|calendario|mapa|disciplinas|documentos|fornecedores|metas|timesheet|rentabilidade|revisao-ia|chat|profile|profile-setup|company|company-setup|admin|ultra-admin|cliente|sem-acesso)(?:/.*)?)",
+      "destination": "https://app.pilarsoft.com.br/:rota",
+      "permanent": false
+    },
+    {
+      "source": "/:rota((?:gestao|projetos|campo|portal)/.+)",
+      "destination": "https://app.pilarsoft.com.br/:rota",
+      "permanent": false
+    }
+  ],
   "rewrites": [{ "source": "/(.*)", "destination": "/spa.html" }],
   "headers": [
     {
