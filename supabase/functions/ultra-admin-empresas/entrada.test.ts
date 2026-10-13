@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
-import { lerAcaoEmMassa, lerNovaEmpresa } from "./entrada.ts";
+import { lerAcaoEmMassa, lerExclusaoEmpresa, lerNovaEmpresa } from "./entrada.ts";
 
 Deno.test("empresa nova: nome obrigatório e e-mail do dono normalizado", () => {
   const r = lerNovaEmpresa({ nome: " VRZ Engenharia ", owner_email: " Dono@VRZ.com.br ", cnpj: "" });
@@ -23,5 +23,23 @@ Deno.test("ação em massa: feature em snake_case, valor booleano e escopo conhe
   assertEquals(lerAcaoEmMassa({ feature: "obras", value: false, scope: "has_parent" }), {
     ok: false,
     error: "parent é obrigatório para scope has_parent",
+  });
+});
+
+Deno.test("exclusão: empresa_id uuid, nome de confirmação e motivo obrigatórios", () => {
+  const id = "4f2c9a1e-8b7d-4c3a-9e2f-1a2b3c4d5e6f";
+  const r = lerExclusaoEmpresa({ empresa_id: id, confirm_name: " VRZ ", motivo: " pedido do cliente " });
+  assertEquals(r.ok && r.data, { empresaId: id, confirmName: "VRZ", motivo: "pedido do cliente" });
+  assertEquals(lerExclusaoEmpresa({ empresa_id: "x", confirm_name: "VRZ", motivo: "m" }), {
+    ok: false,
+    error: "empresa_id inválido",
+  });
+  assertEquals(lerExclusaoEmpresa({ empresa_id: id, confirm_name: "", motivo: "m" }), {
+    ok: false,
+    error: "Digite o nome da empresa para confirmar",
+  });
+  assertEquals(lerExclusaoEmpresa({ empresa_id: id, confirm_name: "VRZ", motivo: "  " }), {
+    ok: false,
+    error: "Motivo é obrigatório",
   });
 });

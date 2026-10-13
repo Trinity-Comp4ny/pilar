@@ -42,3 +42,26 @@ export function lerAcaoEmMassa(corpo: unknown): Resultado<{
   }
   return { ok: true, data: { feature, value: b.value, scope: b.scope, parent } };
 }
+
+/**
+ * Exclusão definitiva de empresa (SPEC 117): nome digitado igual ao cadastrado
+ * e motivo obrigatório (vai pro log). A conferência do nome é feita no index,
+ * que é quem conhece o nome atual.
+ */
+export function lerExclusaoEmpresa(corpo: unknown): Resultado<{
+  empresaId: string;
+  confirmName: string;
+  motivo: string;
+}> {
+  const b = obj(corpo);
+  const empresaId = texto(b.empresa_id);
+  const confirmName = texto(b.confirm_name);
+  const motivo = texto(b.motivo).slice(0, 500);
+
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(empresaId)) {
+    return { ok: false, error: "empresa_id inválido" };
+  }
+  if (!confirmName) return { ok: false, error: "Digite o nome da empresa para confirmar" };
+  if (!motivo) return { ok: false, error: "Motivo é obrigatório" };
+  return { ok: true, data: { empresaId, confirmName, motivo } };
+}
