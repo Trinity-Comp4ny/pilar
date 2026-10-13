@@ -18,7 +18,7 @@ import {
   downloadTemplateFile,
   type TemplateTipo,
   type PropostaTemplate,
-} from "@/hooks/usePropostaTemplates";
+} from "@/pages/propostas/hooks/usePropostaTemplates";
 import { AUTO_VARIABLES } from "@/lib/propostaVariaveis";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { VariaveisGuideButton } from "./VariaveisGuideDialog";
