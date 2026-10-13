@@ -4,7 +4,8 @@
  *   GEMINI_API_KEY=... deno run --allow-env --allow-net --allow-write \
  *     supabase/functions/ai-chat/evals/rodar.ts [--saida resultado.json] [--filtro texto]
  *
- * Mesmo caminho da produção: ORQUESTRADOR_PROMPT + IntentSchema para a intenção e, nas
+ * Mesmo caminho da produção: classificarIntencao para a intenção (modelo de decisão quando
+ * AI_DECISAO_AI_CHAT está definida, com o modelo de texto quando ele hesita; SPEC 109) e, nas
  * ações, o prompt e o schema de ENTIDADE_CFG para a extração, via callGeminiStructured
  * (com os retries de lá). Nada é gravado no banco.
  *
@@ -12,10 +13,11 @@
  * chamadas por caso de ação, uma nos demais (gemini-2.5-flash, centavos por rodada).
  */
 import { callGeminiStructured, modeloEmUso } from "../../_shared/ai-client.ts";
+import { resolverDecisao } from "../../_shared/llm.ts";
 import { comContexto, SEM_HISTORICO } from "../contexto.ts";
 import { ENTIDADE_CFG } from "../entidades.ts";
-import { ORQUESTRADOR_PROMPT } from "../prompts.ts";
-import { FEATURE_KEY, IntentSchema } from "../schemas.ts";
+import { classificarIntencao } from "../roteamento.ts";
+import { FEATURE_KEY } from "../schemas.ts";
 import { errosDeCampos, errosDeIntencao, LIMITES, resumir, type ResultadoCaso } from "./avaliar.ts";
 import { type Caso, CASOS } from "./casos.ts";
 
@@ -38,15 +40,12 @@ async function rodarCaso(caso: Caso): Promise<ResultadoCaso> {
   let tokensEntrada = 0;
   let tokensSaida = 0;
   try {
-    const rota = await callGeminiStructured(
-      {
-        systemPrompt: ORQUESTRADOR_PROMPT,
-        userMessage: comContexto(historico, caso.mensagem, "Classifique a intenção real do usuário (agente + modo)."),
-        empresaId: EMPRESA_EVAL,
-        tipo: FEATURE_KEY,
-      },
-      IntentSchema
-    );
+    const rota = await classificarIntencao({
+      historico,
+      message: caso.mensagem,
+      focoProjeto: "",
+      empresaId: EMPRESA_EVAL,
+    });
     tokensEntrada += rota.tokensEntrada;
     tokensSaida += rota.tokensSaida;
     const erros = errosDeIntencao(caso.esperado, rota.data);
@@ -84,6 +83,7 @@ async function rodarCaso(caso: Caso): Promise<ResultadoCaso> {
       tokens: tokensEntrada + tokensSaida,
       tokensEntrada,
       tokensSaida,
+      via: rota.via,
     };
   } catch (e) {
     return {
@@ -133,6 +133,11 @@ if (import.meta.main) {
     );
     Deno.exit(2);
   }
+  if (resolverDecisao(FEATURE_KEY) && !Deno.env.get("AI_GATEWAY_API_KEY")) {
+    // Sem a chave, toda decisão cairia no modelo de texto e o eval mediria outra coisa.
+    console.error("AI_DECISAO_AI_CHAT definida: defina também AI_GATEWAY_API_KEY.");
+    Deno.exit(2);
+  }
   const filtro = arg("--filtro");
   const casos = filtro ? CASOS.filter((c) => c.id.includes(filtro)) : CASOS;
 
@@ -144,7 +149,7 @@ if (import.meta.main) {
 
   for (const r of resultados) {
     const ok = r.intencaoOk && r.camposOk !== false;
-    linha(`${ok ? "ok  " : "FAIL"} ${r.id.padEnd(34)} ${String(r.latenciaMs).padStart(6)} ms`);
+    linha(`${ok ? "ok  " : "FAIL"} ${r.id.padEnd(34)} ${String(r.latenciaMs).padStart(6)} ms  ${r.via ?? ""}`);
     for (const e of r.erros) linha(`       ${e}`);
   }
 
@@ -152,6 +157,10 @@ if (import.meta.main) {
   const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
   linha();
   linha(`Modelo:     ${modelo}`);
+  const decisao = resolverDecisao(FEATURE_KEY);
+  if (decisao) {
+    linha(`Decisão:    ${decisao.modelo} decidiu ${s.viaDecisao} de ${s.casos}; o resto foi para ${modelo}`);
+  }
   linha(`Casos:      ${s.casos}`);
   linha(`Intenção:   ${pct(s.intencao)} (limite ${pct(LIMITES.intencao)})`);
   linha(`Campos:     ${pct(s.campos)} (limite ${pct(LIMITES.campos)})`);
