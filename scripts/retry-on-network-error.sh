@@ -14,10 +14,14 @@
 set -uo pipefail
 
 MAX_ATTEMPTS="${RETRY_MAX_ATTEMPTS:-3}"
+# Espera base entre tentativas (cresce a cada tentativa). Teste usa 0.
+BASE_WAIT="${RETRY_BASE_WAIT:-15}"
 
 # Assinaturas de falha de transporte. Mantidas juntas para haver um único lugar a
 # ajustar quando um registry novo aparecer com uma mensagem diferente.
-NETWORK_PATTERN='failed: (5[0-9][0-9]|<unknown)|error sending request|connection closed|connection reset|dns error|Connection refused|TLS handshake|timed out|EAI_AGAIN|503 Service|502 Bad Gateway'
+# `toomanyrequests: Rate exceeded`: o deploy das functions puxa a imagem do edge-runtime
+# do registry e o runner compartilhado bate no limite de pulls (run 38396778235).
+NETWORK_PATTERN='failed: (5[0-9][0-9]|<unknown)|error sending request|connection closed|connection reset|dns error|Connection refused|TLS handshake|timed out|EAI_AGAIN|503 Service|502 Bad Gateway|toomanyrequests|Rate exceeded|429 Too Many Requests'
 
 attempt=1
 log="$(mktemp)"
@@ -42,7 +46,7 @@ while :; do
     exit "$rc"
   fi
 
-  wait=$((attempt * 15))
+  wait=$((attempt * BASE_WAIT))
   echo "::warning::tentativa $attempt falhou por erro de rede; repetindo em ${wait}s"
   sleep "$wait"
   attempt=$((attempt + 1))
