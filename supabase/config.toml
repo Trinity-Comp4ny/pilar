@@ -121,6 +121,9 @@ verify_jwt = false
 [functions.reconciliar-assinaturas]
 verify_jwt = false
 
+[functions.exportar-dados-titular]
+verify_jwt = false
+
 [functions.reverificar-documentos-pendentes]
 verify_jwt = false
 

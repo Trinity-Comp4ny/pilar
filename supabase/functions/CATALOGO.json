@@ -54,6 +54,11 @@
     "dominio": "acesso",
     "descricao": "Remove membro: admin só da própria empresa e nunca ultra admin; ultra admin de qualquer empresa."
   },
+  "exportar-dados-titular": {
+    "dominio": "comunicacao",
+    "descricao": "Atende o pedido de exportação de dados (LGPD art. 18): monta a cópia, guarda em bucket privado e manda link de 7 dias (SPEC 115).",
+    "chamada_externa": "trigger notify_data_export_request (pg_net)"
+  },
   "geocode-address": {
     "dominio": "utilitario",
     "descricao": "Geocodifica endereço pelo Nominatim (mapa)."
