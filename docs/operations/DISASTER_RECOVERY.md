@@ -33,7 +33,7 @@ melhor que o intervalo do backup manual.
   - `manifesto.json` (linhas por tabela, `scripts/backup/manifesto.mjs`; o job falha se
     `auth.users`, `empresas` ou `profiles` vierem vazias)
 
-  Empacotado e criptografado com `openssl` (AES-256-CBC, `BACKUP_ENCRYPTION_KEY`),
+  Empacotado e criptografado com `openssl` (AES-256-CBC, PBKDF2 com 600000 iterações, `BACKUP_ENCRYPTION_KEY` de pelo menos 32 caracteres, gerada com `openssl rand -hex 32`),
   artifact `backup-<Ambiente>-<run>` com retenção de 30 dias.
   **Limitação honesta:** RPO de até 24h, não recovery point-in-time.
 
@@ -83,8 +83,9 @@ O dump do banco guarda a tabela `storage.objects`, não os bytes dos arquivos
 # 2. Baixar o backup noturno mais recente:
 #      gh run download <run_id> -n backup-Production-<run_id>
 # 3. Decriptar e extrair (gera a pasta backup/):
-#      openssl enc -d -aes-256-cbc -pbkdf2 -in backup-Production.tar.gz.enc \
+#      openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -in backup-Production.tar.gz.enc \
 #        -k "$BACKUP_ENCRYPTION_KEY" | tar -xzf -
+#      (artifact gerado até 14/10/2026: o mesmo comando SEM o -iter 600000)
 # 4. Restaurar num Supabase VAZIO primeiro (NUNCA em prod direto). Local:
 #      mkdir /tmp/drill && cd /tmp/drill && supabase init --force
 #      (major_version = 17 e portas livres no config.toml) && supabase start
@@ -131,8 +132,8 @@ O dump do banco guarda a tabela `storage.objects`, não os bytes dos arquivos
 gh run download <run_id> -n storage-Production-<run_id>
 
 # 2. Decifrar e extrair
-openssl enc -d -aes-256-cbc -pbkdf2 -in storage-Production.tar.gz.enc \
-  -k "$BACKUP_ENCRYPTION_KEY" | tar -xzf -
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -in storage-Production.tar.gz.enc \
+  -k "$BACKUP_ENCRYPTION_KEY" | tar -xzf -   # até 14/10/2026: sem o -iter 600000
 
 # 3. Repor (só o que sumiu; --sobrescrever volta tudo para o estado do backup)
 SUPABASE_URL=https://<ref>.supabase.co SUPABASE_SERVICE_ROLE_KEY=<service key> \

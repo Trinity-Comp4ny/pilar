@@ -33,8 +33,8 @@ restore (mensal)".
 ```bash
 # 1. Backup
 gh run download <run_id> -n backup-Production-<run_id>
-openssl enc -d -aes-256-cbc -pbkdf2 -in backup-Production.tar.gz.enc \
-  -k "$BACKUP_ENCRYPTION_KEY" | tar -xzf -          # cria a pasta backup/
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -in backup-Production.tar.gz.enc \
+  -k "$BACKUP_ENCRYPTION_KEY" | tar -xzf -          # cria a pasta backup/ (até 14/10/2026: sem o -iter)
 
 # 2. Supabase vazio, fora do repositório, em portas livres
 mkdir /tmp/drill && cd /tmp/drill && supabase init --force

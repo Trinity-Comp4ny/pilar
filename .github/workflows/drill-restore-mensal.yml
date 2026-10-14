@@ -80,8 +80,21 @@ jobs:
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/artifact"
-          openssl enc -d -aes-256-cbc -pbkdf2 -in backup-Production.tar.gz.enc -k "$BACKUP_ENCRYPTION_KEY" \
-            -out backup.tar.gz
+          # Backups novos usam 600000 iterações de PBKDF2; os gerados até 14/10/2026 usam o
+          # default do openssl (10000). Tenta os dois e só aceita o que vira um tar válido
+          # (CBC com iteração errada às vezes decifra "sem erro" para lixo), para o drill
+          # continuar valendo durante os 30 dias de retenção.
+          decifrado=0
+          for iter in "-iter 600000" ""; do
+            # shellcheck disable=SC2086
+            if openssl enc -d -aes-256-cbc -pbkdf2 $iter -in backup-Production.tar.gz.enc \
+                 -k "$BACKUP_ENCRYPTION_KEY" -out backup.tar.gz 2>/dev/null \
+               && tar -tzf backup.tar.gz >/dev/null 2>&1; then
+              decifrado=1
+              break
+            fi
+          done
+          [ "$decifrado" = "1" ] || { echo "::error::Não foi possível decifrar o backup com nenhum formato conhecido."; exit 1; }
           esperado=$'backup/\nbackup/data.sql\nbackup/manifesto.json\nbackup/roles.sql\nbackup/schema.sql'
           obtido=$(tar -tzf backup.tar.gz | sed 's#^\./##' | LC_ALL=C sort)
           if [ "$obtido" != "$esperado" ]; then
