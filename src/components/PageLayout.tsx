@@ -26,7 +26,7 @@ export function PageLayout({ children, header, sidebar, className, containerClas
   const Conteudo = useDentroDoMain() ? "div" : "main";
   const anuncioRef = useRef<HTMLParagraphElement>(null);
 
-  // Padrão do labrynth-platform (spec 002, req. 8): em troca de rota o shell não
+  // Spec 002, req. 8: em troca de rota o shell não
   // remonta, então move o foco para o conteúdo novo e anuncia a página para
   // leitores de tela (senão a navegação passa em silêncio). Atualiza o DOM
   // diretamente (aria-live é sistema externo; evita setState em effect).

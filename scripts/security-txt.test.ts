@@ -12,7 +12,7 @@ describe.each(ARQUIVOS)("%s", (arquivo) => {
   const texto = readFileSync(arquivo, "utf8");
 
   it("tem Contact e Expires", () => {
-    expect(texto).toMatch(/^Contact: mailto:\S+@\S+$/m);
+    expect(texto).toMatch(/^Contact: (mailto:\S+@\S+|https:\/\/\S+)$/m);
     expect(texto).toMatch(/^Expires: \d{4}-\d{2}-\d{2}T/m);
   });
 
