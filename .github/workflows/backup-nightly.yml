@@ -53,6 +53,20 @@ jobs:
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
 
+      # A cifragem é a barreira de confidencialidade do artifact: derivação forte não
+      # compensa segredo fraco. Chave com menos de 32 caracteres derruba o backup da noite
+      # (o notify-cron-failure abre a issue), em vez de guardar 30 dias de dump protegido
+      # por senha fraca. Gere com `openssl rand -hex 32` e siga a rotação em
+      # DISASTER_RECOVERY.md (sem perder o acesso aos artifacts antigos).
+      - name: Exigir chave de cifragem forte
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          if [ "${#BACKUP_ENCRYPTION_KEY}" -lt 32 ]; then
+            echo "::error::BACKUP_ENCRYPTION_KEY precisa ter pelo menos 32 caracteres. Rotacione a chave (DISASTER_RECOVERY.md, seção Rotação da chave)."
+            exit 1
+          fi
+
       # A CLI valida o config.toml inteiro antes de QUALQUER comando (mesmo
       # `db dump --db-url`, que não deveria precisar disso), e
       # [auth.hook.send_email] referencia env(AUTH_HOOK_SEND_EMAIL_SECRET) —
@@ -60,16 +74,6 @@ jobs:
       # v1,whsec_...". Achado real, 17/08 (mesmo padrão dos jobs de deploy do
       # ci.yml — db dump não aplica config no servidor, então um valor
       # descartável só pro parse passar é seguro).
-      # A cifragem só vale tanto quanto a chave. Menos de 32 caracteres anota um aviso
-      # no run (gere com `openssl rand -hex 32` e troque o secret nos dois environments).
-      - name: Conferir o tamanho da chave de cifragem
-        env:
-          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
-        run: |
-          if [ "${#BACKUP_ENCRYPTION_KEY}" -lt 32 ]; then
-            echo "::warning::BACKUP_ENCRYPTION_KEY tem menos de 32 caracteres. Gere uma nova com 'openssl rand -hex 32' e atualize o secret (ver DISASTER_RECOVERY.md)."
-          fi
-
       - name: Gerar secret descartável para o parse do config
         run: echo "AUTH_HOOK_SEND_EMAIL_SECRET=v1,whsec_$(openssl rand -base64 32)" >> "$GITHUB_ENV"
 

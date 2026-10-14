@@ -77,24 +77,30 @@ jobs:
       - name: Descriptografar e validar o conteúdo
         env:
           BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+          # Opcional: a chave anterior, mantida durante a retenção (30 dias) depois de uma
+          # rotação, para o drill ainda abrir artifacts cifrados com ela.
+          BACKUP_ENCRYPTION_KEY_PREVIOUS: ${{ secrets.BACKUP_ENCRYPTION_KEY_PREVIOUS }}
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/artifact"
           # Backups novos usam 600000 iterações de PBKDF2; os gerados até 14/10/2026 usam o
-          # default do openssl (10000). Tenta os dois e só aceita o que vira um tar válido
+          # default do openssl (10000). Tenta chave atual e anterior, os dois formatos, e só aceita o que vira um tar válido
           # (CBC com iteração errada às vezes decifra "sem erro" para lixo), para o drill
           # continuar valendo durante os 30 dias de retenção.
           decifrado=0
-          for iter in "-iter 600000" ""; do
-            # shellcheck disable=SC2086
-            if openssl enc -d -aes-256-cbc -pbkdf2 $iter -in backup-Production.tar.gz.enc \
-                 -k "$BACKUP_ENCRYPTION_KEY" -out backup.tar.gz 2>/dev/null \
-               && tar -tzf backup.tar.gz >/dev/null 2>&1; then
-              decifrado=1
-              break
-            fi
+          for chave in "$BACKUP_ENCRYPTION_KEY" "${BACKUP_ENCRYPTION_KEY_PREVIOUS:-}"; do
+            [ -n "$chave" ] || continue
+            for iter in "-iter 600000" ""; do
+              # shellcheck disable=SC2086
+              if openssl enc -d -aes-256-cbc -pbkdf2 $iter -in backup-Production.tar.gz.enc \
+                   -k "$chave" -out backup.tar.gz 2>/dev/null \
+                 && tar -tzf backup.tar.gz >/dev/null 2>&1; then
+                decifrado=1
+                break 2
+              fi
+            done
           done
-          [ "$decifrado" = "1" ] || { echo "::error::Não foi possível decifrar o backup com nenhum formato conhecido."; exit 1; }
+          [ "$decifrado" = "1" ] || { echo "::error::Não foi possível decifrar o backup com nenhuma chave e formato conhecidos."; exit 1; }
           esperado=$'backup/\nbackup/data.sql\nbackup/manifesto.json\nbackup/roles.sql\nbackup/schema.sql'
           obtido=$(tar -tzf backup.tar.gz | sed 's#^\./##' | LC_ALL=C sort)
           if [ "$obtido" != "$esperado" ]; then

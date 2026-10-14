@@ -68,6 +68,24 @@ O dump do banco guarda a tabela `storage.objects`, não os bytes dos arquivos
 - **Limitação:** mesmo RPO do banco (até 24h). Arquivo enviado e apagado no mesmo dia
   não volta.
 
+### Rotação da chave de backup (`BACKUP_ENCRYPTION_KEY`)
+
+Os artifacts dos últimos 30 dias ficam cifrados com a chave que valia na noite deles. Trocar
+o secret "no seco" deixa todos eles irrecuperáveis. Ordem segura:
+
+1. Gerar a nova: `openssl rand -hex 32` (64 caracteres). O backup noturno exige pelo menos 32.
+2. Guardar a chave atual (a que vai sair) em local seguro e cadastrá-la como
+   `BACKUP_ENCRYPTION_KEY_PREVIOUS` no environment `production-automation`. O drill mensal tenta
+   a atual e depois a anterior.
+3. Trocar `BACKUP_ENCRYPTION_KEY` nos environments `Staging` e `production-automation`.
+4. Disparar o backup à mão (`workflow_dispatch` do `backup-nightly.yml`) e rodar o drill
+   (`drill-restore-mensal.yml`) contra ele: só depois o backup novo conta como válido.
+5. Esperar 30 dias (retenção do último artifact cifrado com a chave antiga).
+6. Remover `BACKUP_ENCRYPTION_KEY_PREVIOUS` e destruir a chave antiga.
+
+Para decifrar na mão um artifact antigo, use a chave antiga no `-k` dos comandos abaixo. Se
+aceitar perder o acesso aos backups antigos, basta o passo 3 e o 4.
+
 ### Secrets
 
 - GitHub Environments (Staging/Production) + `gh secret set`. Sem cópia externa
