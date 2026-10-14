@@ -33,6 +33,8 @@ export type TarefaItem = {
   descricao: string | null;
   status: StatusBucket;
   prioridade: Prioridade;
+  /** Quem criou (auth.uid). Null em tarefa criada pelo Campo. Decide quem pode editar. */
+  created_by: string | null;
   /** Primário (o primeiro responsável), mantido para compat/otimista. */
   responsavel_id: string | null;
   /** Conjunto de responsáveis (tabela ponte tarefa_responsaveis). */
@@ -204,7 +206,7 @@ export function useSetDisciplinaStatus() {
 }
 
 const TAREFA_SELECT =
-  "id, numero, titulo, descricao, status, prioridade, responsavel_id, projeto_id, etapa_id, prazo, horas_estimadas, horas_reais, labels, links, comentarios, projeto:projetos(id, nome), responsaveis:tarefa_responsaveis(pessoa:pessoas(id, nome)), obra:obras(id, nome), servico:obra_frente!tarefas_obra_frente_id_fkey(nome, etapa:parent_id(nome, fase:parent_id(nome)))" as const;
+  "id, numero, titulo, descricao, status, prioridade, created_by, responsavel_id, projeto_id, etapa_id, prazo, horas_estimadas, horas_reais, labels, links, comentarios, projeto:projetos(id, nome), responsaveis:tarefa_responsaveis(pessoa:pessoas(id, nome)), obra:obras(id, nome), servico:obra_frente!tarefas_obra_frente_id_fkey(nome, etapa:parent_id(nome, fase:parent_id(nome)))" as const;
 
 type TarefaRowSelect = {
   status: string;

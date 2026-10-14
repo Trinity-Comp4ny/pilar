@@ -2,7 +2,7 @@
 // resto da plataforma (pill arredondada + popover, como o FiltroPeriodo do
 // Financeiro). O filtro de pessoa usa avatar de iniciais, estilo ClickUp.
 import { useState } from "react";
-import { Check, type LucideIcon } from "lucide-react";
+import { Check, Users, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -91,7 +91,7 @@ export function FiltroPessoa({
 
   const rotulo =
     selecionadas.length === 0
-      ? "Filtrar"
+      ? "Todos"
       : selecionadas.length === 1
         ? ehEuSelecionado
           ? "Eu"
@@ -103,10 +103,17 @@ export function FiltroPessoa({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="h-9 gap-1.5 rounded-full py-0 pl-1 pr-3.5 text-[13px] font-normal"
+          className={cn(
+            "h-9 gap-1.5 rounded-full py-0 text-[13px] font-normal",
+            selecionadas.length > 0 ? "pl-1 pr-3.5" : "px-3.5"
+          )}
           aria-label="Filtrar por pessoa"
         >
-          <AvatarStack pessoas={selecionadas.length > 0 ? selecionadas : [rotulo]} size="xs" />
+          {selecionadas.length > 0 ? (
+            <AvatarStack pessoas={selecionadas} size="xs" />
+          ) : (
+            <Users size={14} className="text-black/50" />
+          )}
           {rotulo}
         </Button>
       </PopoverTrigger>
