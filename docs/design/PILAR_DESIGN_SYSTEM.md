@@ -102,7 +102,7 @@ Página de detalhe nova com mais de uma seção segue este padrão em vez de inv
 
 ### Estado da tela
 
-- **`EmptyState`** (`src/components/EmptyState.tsx`): vazio orientado à ação. Props: `icon?`, `title`, `description?`, `action?`, `children?`.
+- **`EmptyState`** (`src/components/EmptyState.tsx`): vazio orientado à ação. Props: `icon?`, `title`, `description?`, `action?`, `children?`, `compact?`. `compact` é uma linha de texto centralizada, para card ou lista pequena vazia (nunca um `<p>` solto alinhado à esquerda).
 - **Movimento da marca** (`src/components/motion/`, ADR 0049): toda espera usa a marca. `Button loading` ou `BusyMark` para espera inline (botão, campo, linha); `PageLoader` (anel de leitura) para página, seção e card, que só aparece depois de 300ms; `EntryVeil` para a entrada no app. `Loader2` e `animate-spin` são proibidos: um teste de varredura reprova o PR.
 - **`TableSkeleton`** / **`ui/skeleton`**: esqueleto de tabela quando o formato da lista já é conhecido.
 - **`Spinner`** (`src/components/Spinner.tsx`): ritmo da marca com texto ao lado, para espera inline com legenda.
@@ -126,6 +126,7 @@ Página de detalhe nova com mais de uma seção segue este padrão em vez de inv
 ### Tabela
 
 - **`DataTable`** (`src/components/data/DataTable.tsx`): tabela declarativa com `ColumnDef<T>`, sort, sticky column e os três estados (loading/erro/vazio). É a peça oficial de tabela read-only. Hoje subutilizada (1 uso); adotar nas listas.
+- **Tabela vazia: tudo centralizado** (texto, ícone e ação, na horizontal e com respiro vertical). `DataTable` já faz isso com `emptyMessage` e com o slot `emptyState` (`EmptyState`). Em tabela escrita à mão, a linha de vazio é `<TableCell colSpan={n} className="py-10 text-center text-sm text-muted-foreground">` ou um `EmptyState` dentro da célula. Um teste de varredura (`src/components/data/tabelaVazia.test.ts`) reprova linha de vazio sem `text-center` e parágrafo `Nenhum…` solto no portal Ultra.
 
 ### Pessoas
 
