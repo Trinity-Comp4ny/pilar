@@ -36,16 +36,7 @@ const toCurrency = (value: number) => formatCurrency(Number.isFinite(value) ? va
 const toPct = (value: number) => `${(Number.isFinite(value) ? value : 0).toFixed(1)}%`;
 
 // Colunas por modo, na ordem canônica. O que se vê é o que se exporta.
-const COLS_PROJETO = [
-  "Projeto",
-  "Cliente",
-  "Status",
-  "Contrato",
-  "Receita",
-  "Custo",
-  "Margem",
-  "Margem %",
-] as const;
+const COLS_PROJETO = ["Projeto", "Cliente", "Status", "Contrato", "Receita", "Custo", "Margem", "Margem %"] as const;
 const COLS_CLIENTE = ["Cliente", "Projetos", "Contrato", "Receita", "Custo", "Margem", "Margem %"] as const;
 
 function useRentabilidadeData() {
@@ -314,7 +305,7 @@ export default function RelatoriosRentabilidade({ modo }: Props) {
             </div>
             <div className="flex-1 grid grid-cols-2 gap-2 max-w-md">
               <Select value={filterCliente} onValueChange={setFilterCliente}>
-                <SelectTrigger className="h-9 text-xs bg-white">
+                <SelectTrigger className="h-9 text-xs bg-white" aria-label="Filtrar por cliente">
                   <SelectValue placeholder="Cliente" />
                 </SelectTrigger>
                 <SelectContent>
@@ -326,7 +317,7 @@ export default function RelatoriosRentabilidade({ modo }: Props) {
                 </SelectContent>
               </Select>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="h-9 text-xs bg-white">
+                <SelectTrigger className="h-9 text-xs bg-white" aria-label="Filtrar por status">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>

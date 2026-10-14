@@ -247,7 +247,7 @@ export function MapaTab() {
         </Popover>
 
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px] h-9 rounded-full text-sm">
+          <SelectTrigger className="w-[180px] h-9 rounded-full text-sm" aria-label="Filtrar por status">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
