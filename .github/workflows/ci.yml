@@ -171,11 +171,19 @@ jobs:
       - name: Gerar secret descartável para o parse do config
         run: echo "AUTH_HOOK_SEND_EMAIL_SECRET=v1,whsec_$(openssl rand -base64 32)" >> "$GITHUB_ENV"
 
+      # Produção e staging rodam Postgres 17; o config.toml do repo fixa 15 porque é o
+      # stack LOCAL de dev (volume de dados em PG15, compartilhado entre sessões e
+      # worktrees). Trocar o config quebraria o dev de todo mundo, então só a cópia do
+      # checkout deste runner sobe em 17: migrations e pgTAP passam a ser provados na
+      # mesma versão major de produção (mesmo padrão do backup-nightly.yml).
+      - name: Alinhar o Postgres do stack com produção (17)
+        run: sed -i 's/^major_version = 15$/major_version = 17/' supabase/config.toml
+
       - name: Subir o stack local
         run: supabase start
 
       - name: Aplicar todas as migrations do zero
-        # Prova que a fila de 183 migrations funciona num banco vazio, não só por
+        # Prova que a fila inteira de migrations funciona num banco vazio, não só por
         # acidente do estado atual de produção.
         run: supabase db reset --no-seed
 
@@ -295,6 +303,14 @@ jobs:
       # Mesmo motivo do job database: sem a var, o parse do config.toml aborta.
       - name: Gerar secret descartável para o parse do config
         run: echo "AUTH_HOOK_SEND_EMAIL_SECRET=v1,whsec_$(openssl rand -base64 32)" >> "$GITHUB_ENV"
+      # Produção e staging rodam Postgres 17; o config.toml do repo fixa 15 porque é o
+      # stack LOCAL de dev (volume de dados em PG15, compartilhado entre sessões e
+      # worktrees). Trocar o config quebraria o dev de todo mundo, então só a cópia do
+      # checkout deste runner sobe em 17: migrations e pgTAP passam a ser provados na
+      # mesma versão major de produção (mesmo padrão do backup-nightly.yml).
+      - name: Alinhar o Postgres do stack com produção (17)
+        run: sed -i 's/^major_version = 15$/major_version = 17/' supabase/config.toml
+
       - name: Subir o stack local (aplica as migrations do PR)
         run: supabase start
       - name: Specs do app (visual + sem login + logado)
