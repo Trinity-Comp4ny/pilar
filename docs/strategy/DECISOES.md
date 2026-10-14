@@ -11,6 +11,26 @@ Regras de manutenção:
 
 ---
 
+## 2026-10-14 · Release: o que fica manual de propósito
+
+**Decisão:** três pontos do pipeline de release ficam como estão, por escolha:
+
+1. `enforce_admins` continua desligado na `main`. O release usa `gh pr merge --admin --squash`
+   para passar o review obrigatório de um time de uma pessoa. Ligar bloquearia o próprio release.
+   O que protege no lugar: os dois checks obrigatórios (`CI OK` e `CodeQL`, este desde hoje) e o
+   gate humano do Environment `Production` no deploy.
+2. O CLI do Supabase fica pinado em 2.109.1 (`ci.yml`, `backup-nightly.yml`, `drill-restore-mensal.yml`).
+   Subir é mudança que só um release prova: depois de trocar o pin, rodar `workflow_dispatch` do
+   backup e do drill antes de confiar. Reproduzir build vale mais que aviso de versão nova.
+3. O smoke de `/health` pós-deploy passa a falhar quando falta o secret (`SMOKE_OBRIGATORIO`), em
+   staging e produção. Antes, secret ausente pulava o teste e o job saía verde.
+
+Contexto: auditoria de produção de 14/10 (docs/operations/AUDITORIA_PRODUCAO_2026-10-14.md). O CI
+passou a subir o Postgres em 17, a mesma versão major de produção; o `config.toml` do repo segue em 15
+porque é o stack local de dev, compartilhado entre sessões.
+
+---
+
 ## 2026-10-14 · Sem disciplinas "padrão do sistema"
 
 **Decisão:** o Pilar não entrega mais disciplinas prontas. A lista de disciplinas nasce vazia, cada
