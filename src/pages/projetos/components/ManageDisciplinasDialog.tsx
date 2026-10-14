@@ -140,8 +140,18 @@ export function ManageDisciplinasDialog({
             <div className="border rounded-lg overflow-hidden">
               <div className="divide-y h-[340px] overflow-y-auto">
                 {filtered.length === 0 ? (
-                  <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-                    {search ? `Nenhuma disciplina encontrada para "${search}"` : "Nenhuma disciplina cadastrada"}
+                  <div className="h-full flex flex-col items-center justify-center gap-3 px-6 text-center text-muted-foreground text-sm">
+                    {search ? (
+                      `Nenhuma disciplina encontrada para "${search}"`
+                    ) : (
+                      <>
+                        <p>Crie sua primeira disciplina. Por exemplo: Arquitetônico.</p>
+                        <Button size="sm" variant="brand" className="gap-1.5" onClick={() => setAddOpen(true)}>
+                          <Plus className="h-4 w-4" />
+                          Criar disciplina
+                        </Button>
+                      </>
+                    )}
                   </div>
                 ) : (
                   filtered.map((d) => (
@@ -149,32 +159,27 @@ export function ManageDisciplinasDialog({
                       key={d.id}
                       className="flex items-center justify-between px-4 py-2.5 hover:bg-muted transition-colors group"
                     >
-                      <div className="min-w-0">
-                        <span className="block truncate text-sm font-medium">{d.nome}</span>
-                        {!d.empresa_id && <span className="text-[11px] text-muted-foreground">Padrão do sistema</span>}
+                      <span className="min-w-0 truncate text-sm font-medium">{d.nome}</span>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-ink"
+                          onClick={() => openEdit(d)}
+                          aria-label={`Editar disciplina ${d.nome}`}
+                        >
+                          <Pencil size={16} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-danger-mid"
+                          onClick={() => setDeleteId(d.id)}
+                          aria-label={`Excluir disciplina ${d.nome}`}
+                        >
+                          <Trash2 size={16} />
+                        </Button>
                       </div>
-                      {d.empresa_id && (
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-muted-foreground hover:text-ink"
-                            onClick={() => openEdit(d)}
-                            aria-label={`Editar disciplina ${d.nome}`}
-                          >
-                            <Pencil size={16} />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-muted-foreground hover:text-danger-mid"
-                            onClick={() => setDeleteId(d.id)}
-                            aria-label={`Excluir disciplina ${d.nome}`}
-                          >
-                            <Trash2 size={16} />
-                          </Button>
-                        </div>
-                      )}
                     </div>
                   ))
                 )}
@@ -205,7 +210,7 @@ export function ManageDisciplinasDialog({
             <div className="space-y-1.5">
               <Label className="text-sm">Nome *</Label>
               <Input
-                placeholder="Ex: Estrutural"
+                placeholder="Ex.: Arquitetônico"
                 value={newDisciplina}
                 onChange={(e) => setNewDisciplina(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAdd()}
