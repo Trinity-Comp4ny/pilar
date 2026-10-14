@@ -284,7 +284,7 @@ export function UsersAccessManager({
                             </Button>
                           </div>
                         ) : isUltra ? (
-                          <span className="text-[11px] text-black/40" title="Ultra admin: gerenciado via SQL">
+                          <span className="text-[11px] text-muted-foreground" title="Ultra admin: gerenciado via SQL">
                             Protegido
                           </span>
                         ) : (

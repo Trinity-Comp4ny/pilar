@@ -12,23 +12,22 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Calendar, ChevronDown, ChevronRight, Layers, ZoomIn, ZoomOut, AlertTriangle } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
-import { type Projeto, type ProjetoDisciplinaDB, getDeadlineStatus, isDiscAtrasada } from "@/types/projetos";
+import { type Projeto, getDeadlineStatus, isDiscAtrasada } from "@/types/projetos";
 import { PROJECT_STATUS, PROJECT_STATUS_CONFIG, type ProjectStatus } from "@/constants";
 import {
   addDays,
-  barPosition,
   diffDays,
-  DISCIPLINA_STATUS_COLORS,
   endOfMonth,
   generateColumns,
   parseDate,
   startOfMonth,
+  textoSobreBarra,
   toIso,
   type GanttDragType,
   type ZoomLevel,
 } from "@/lib/cronograma";
 import { useGanttDrag } from "@/components/gantt/useGanttDrag";
-import { useProjetoDisciplinas } from "@/hooks/useProjetoDisciplinas";
+import { DisciplinaLeftRows, DisciplinaTimelineRows } from "./CronogramaDisciplinaRows";
 
 interface MultiSelectProps {
   options: string[];
@@ -111,101 +110,6 @@ function formatDateBR(d: string | undefined | Date): string {
   if (!d) return "—";
   const date = typeof d === "string" ? new Date(d + "T00:00:00") : d;
   return date.toLocaleDateString("pt-BR");
-}
-
-function discBarClass(d: ProjetoDisciplinaDB): string {
-  return (DISCIPLINA_STATUS_COLORS[d.status] || DISCIPLINA_STATUS_COLORS["Não Iniciado"]).bar;
-}
-
-/** Sub-linhas da coluna fixa esquerda (nomes) para as disciplinas de um projeto expandido. */
-function DisciplinaLeftRows({ projetoId }: { projetoId: string }) {
-  const { data: disciplinas, isLoading } = useProjetoDisciplinas(projetoId);
-
-  if (isLoading) {
-    return (
-      <div className="h-10 border-b pl-8 pr-3 flex items-center">
-        <div className="h-2 w-24 rounded bg-muted animate-pulse" />
-      </div>
-    );
-  }
-
-  if (!disciplinas || disciplinas.length === 0) {
-    return (
-      <div className="h-10 border-b pl-8 pr-3 flex items-center">
-        <span className="text-[10px] text-muted-foreground">Nenhuma disciplina cadastrada</span>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      {disciplinas.map((d) => (
-        <div key={d.id} className="h-10 border-b pl-8 pr-3 flex items-center gap-1.5">
-          <span className={cn("inline-block h-1.5 w-1.5 rounded-full shrink-0", discBarClass(d))} aria-hidden />
-          <span className="text-[11px] truncate">
-            {d.codigo && <span className="font-mono text-muted-foreground mr-1">{d.codigo}</span>}
-            {d.nome}
-          </span>
-        </div>
-      ))}
-    </>
-  );
-}
-
-/** Sub-linhas da timeline (barras) para as disciplinas de um projeto expandido. Mesma
- *  query do useProjetoDisciplinas de DisciplinaLeftRows: o react-query dedupe evita
- *  refetch duplicado das duas colunas. */
-function DisciplinaTimelineRows({
-  projetoId,
-  timelineStart,
-  timelineEnd,
-  onNavigate,
-}: {
-  projetoId: string;
-  timelineStart: Date;
-  timelineEnd: Date;
-  onNavigate: () => void;
-}) {
-  const { data: disciplinas, isLoading } = useProjetoDisciplinas(projetoId);
-
-  if (isLoading || !disciplinas || disciplinas.length === 0) {
-    return <div className="h-10 border-b relative" />;
-  }
-
-  return (
-    <>
-      {disciplinas.map((d) => {
-        const start = parseDate(d.data_inicio);
-        const end = parseDate(d.data_fim);
-
-        if (!start || !end) {
-          return (
-            <div key={d.id} className="h-10 border-b relative flex items-center justify-center">
-              <span className="text-[10px] text-muted-foreground/60">sem datas</span>
-            </div>
-          );
-        }
-
-        const { leftPct, widthPct } = barPosition(start, end, timelineStart, timelineEnd);
-
-        return (
-          <div key={d.id} className="h-10 border-b relative">
-            <button
-              type="button"
-              onClick={onNavigate}
-              className={cn(
-                "absolute top-2 h-6 rounded flex items-center overflow-hidden shadow-sm border border-black/5 cursor-pointer",
-                discBarClass(d)
-              )}
-              style={{ left: `${leftPct}%`, width: `${widthPct}%`, minWidth: "24px" }}
-            >
-              <span className="text-[9px] text-white font-medium truncate mx-2">{d.nome}</span>
-            </button>
-          </div>
-        );
-      })}
-    </>
-  );
 }
 
 export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaProjetosTabProps) {
@@ -449,7 +353,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
             {/* Filters row */}
             <div className="flex items-center gap-2 flex-wrap">
               <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as ProjectStatus | "all")}>
-                <SelectTrigger className="h-7 text-xs w-[160px]">
+                <SelectTrigger className="h-7 text-xs w-[160px]" aria-label="Filtrar por status">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -570,7 +474,13 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
               </div>
 
               {/* Scrollable timeline */}
-              <div ref={scrollRef} className="flex-1 overflow-x-auto">
+              <div
+                ref={scrollRef}
+                className="flex-1 overflow-x-auto"
+                tabIndex={0}
+                role="region"
+                aria-label="Linha do tempo dos projetos (role com as setas do teclado)"
+              >
                 <div
                   ref={timelineRef}
                   className="relative"
@@ -592,7 +502,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                         className="absolute top-0 bottom-0 w-0.5 bg-red-500 pointer-events-none"
                         style={{ left: `${todayPct}%` }}
                       >
-                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-red-500 text-white text-[8px] px-1.5 py-0.5 font-bold whitespace-nowrap rounded-t-sm z-10">
+                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-fill-danger text-fill-danger-foreground text-[9px] px-1.5 py-0.5 font-bold whitespace-nowrap rounded-t-sm z-10">
                           HOJE
                         </div>
                       </div>
@@ -716,7 +626,12 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                                         navigate(`/projetos/${row.projeto.id}#cronograma`);
                                       }}
                                     >
-                                      <span className="text-[10px] text-white font-medium truncate">
+                                      <span
+                                        className={cn(
+                                          "text-[10px] font-medium truncate",
+                                          textoSobreBarra(row.barClass)
+                                        )}
+                                      >
                                         {row.projeto.nome}
                                       </span>
                                     </div>
@@ -830,7 +745,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
           <span>Hoje</span>
         </div>
         {onDatesChange && (
-          <div className="flex items-center gap-1.5 text-muted-foreground/50">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
             <span>↔</span>
             <span>Arraste as bordas para ajustar datas</span>
           </div>
