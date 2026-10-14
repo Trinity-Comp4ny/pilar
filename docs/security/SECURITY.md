@@ -4,7 +4,7 @@ Documento resumo das medidas de segurança implementadas e dos processos operaci
 
 ## Reporte de vulnerabilidades
 
-Para reportar vulnerabilidades, envie email para **security@labrynth.ai** com:
+Para reportar vulnerabilidades, use o reporte privado do GitHub (https://github.com/Trinity-Comp4ny/pilar/security/advisories/new), que só os mantenedores veem. O Pilar ainda não tem e-mail próprio de segurança; quando existir, entra aqui e no `security.txt`. Informe:
 
 - Descrição da vulnerabilidade
 - Passos para reproduzir

@@ -1,5 +1,5 @@
 # Política de reporte de vulnerabilidade do Pilar (RFC 9116).
-Contact: mailto:security@labrynth.ai
+Contact: https://github.com/Trinity-Comp4ny/pilar/security/advisories/new
 Expires: 2027-10-14T00:00:00.000Z
 Preferred-Languages: pt, en
 Policy: https://github.com/Trinity-Comp4ny/pilar/blob/main/docs/security/SECURITY.md

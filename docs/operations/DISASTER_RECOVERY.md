@@ -76,7 +76,8 @@ o secret "no seco" deixa todos eles irrecuperáveis. Ordem segura:
 1. Gerar a nova: `openssl rand -hex 32` (64 caracteres). O backup noturno exige pelo menos 32.
 2. Guardar a chave atual (a que vai sair) em local seguro e cadastrá-la como
    `BACKUP_ENCRYPTION_KEY_PREVIOUS` no environment `production-automation`. O drill mensal tenta
-   a atual e depois a anterior.
+   a atual e depois a anterior. Se quiser preservar também os artifacts antigos de `Staging`,
+   cadastre `BACKUP_ENCRYPTION_KEY_PREVIOUS` nesse environment (o restore de staging é manual).
 3. Trocar `BACKUP_ENCRYPTION_KEY` nos environments `Staging` e `production-automation`.
 4. Disparar o backup à mão (`workflow_dispatch` do `backup-nightly.yml`) e rodar o drill
    (`drill-restore-mensal.yml`) contra ele: só depois o backup novo conta como válido.

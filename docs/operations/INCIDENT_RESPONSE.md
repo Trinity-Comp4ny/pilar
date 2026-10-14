@@ -22,7 +22,7 @@ Processo de resposta a incidentes de segurança.
 - **Tech Lead:** o plantão (mesma pessoa por ora).
 - **Comms:** o plantão avisa clientes/Legal quando P0/P1.
 
-Contatos: security@labrynth.ai · Slack #security
+Contatos: reporte privado de vulnerabilidade do GitHub (ver `docs/security/SECURITY.md`) · Slack #security
 
 ## Fluxo
 
