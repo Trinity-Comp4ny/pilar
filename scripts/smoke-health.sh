@@ -11,12 +11,20 @@
 # Um X vermelho recorrente por motivo transitório treina o time a ignorar o CD,
 # que é o oposto do que um smoke test serve.
 #
-# Uso: PROJECT_REF=... ANON_KEY=... [EXPECTED_SHA=...] scripts/smoke-health.sh
+# Uso: PROJECT_REF=... ANON_KEY=... [EXPECTED_SHA=...] [SMOKE_OBRIGATORIO=true] scripts/smoke-health.sh
+#
+# SMOKE_OBRIGATORIO=true: sem ANON_KEY o script falha em vez de pular. Produção usa isto:
+# o release de 14/10 passou verde com o smoke pulado em silêncio (secret ausente no
+# Environment), ou seja, "deploy verde" não provava que o /health respondia.
 set -uo pipefail
 
 : "${PROJECT_REF:?PROJECT_REF é obrigatório}"
 
 if [ -z "${ANON_KEY:-}" ]; then
+  if [ "${SMOKE_OBRIGATORIO:-}" = "true" ]; then
+    echo "::error::ANON_KEY ausente e o smoke é obrigatório neste ambiente. Cadastre o secret no GitHub Environment (o deploy em si já rodou)."
+    exit 1
+  fi
   echo "::notice::ANON_KEY não configurado, smoke test pulado (o deploy em si já rodou)."
   exit 0
 fi
