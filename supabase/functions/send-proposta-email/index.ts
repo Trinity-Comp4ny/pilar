@@ -3,14 +3,12 @@ import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { sendEmail, templatePropostaEnvio } from "../_shared/email/index.ts";
-import { EMAIL_RE } from "../_shared/validators.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { getRateLimitKey, RateLimiter } from "../_shared/rate-limiter.ts";
+import { lerJson } from "../_shared/schemas.ts";
+import { lerEntrada } from "./entrada.ts";
 
 const log = createLogger("send-proposta-email");
-
-const MAX_MESSAGE_LEN = 5_000;
-const MAX_ATTACHMENT_B64 = 15 * 1024 * 1024; // ~11 MB decoded
 
 // 10 emails por usuário por minuto
 const limiter = new RateLimiter(10, 60_000);
@@ -35,24 +33,10 @@ serve(
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     try {
+      const entrada = lerEntrada(await lerJson(req));
+      if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
       const { email, subject, mensagem, attachment_base64, filename, proposta_id, nome_cliente, doc_mode } =
-        await req.json();
-
-      if (!email || !EMAIL_RE.test(String(email))) {
-        return safeErrorResponse(400, "Email inválido", req);
-      }
-      if (!subject?.trim()) {
-        return safeErrorResponse(400, "Assunto obrigatório", req);
-      }
-      if (!attachment_base64 || typeof attachment_base64 !== "string") {
-        return safeErrorResponse(400, "Documento obrigatório", req);
-      }
-      if (attachment_base64.length > MAX_ATTACHMENT_B64) {
-        return safeErrorResponse(400, "Documento excede o tamanho máximo (10 MB)", req);
-      }
-      if (mensagem && mensagem.length > MAX_MESSAGE_LEN) {
-        return safeErrorResponse(400, `Mensagem excede ${MAX_MESSAGE_LEN} caracteres`, req);
-      }
+        entrada.data;
 
       // Buscar a empresa do usuário autenticado (via JWT, não do corpo da request).
       // `supabase.rpc()` não aceita `headers` por chamada (isso nunca funcionou:

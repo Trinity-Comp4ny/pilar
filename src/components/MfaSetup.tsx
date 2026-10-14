@@ -2,12 +2,14 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ShieldCheck, Loader2, Trash2, HelpCircle, Copy, Check, RefreshCw } from "lucide-react";
+import { ShieldCheck, Trash2, HelpCircle, Copy, Check, RefreshCw } from "lucide-react";
 import { useMfa, type MfaEnrollResult } from "@/hooks/useMfa";
 import { translateAuthError } from "@/lib/authErrors";
 import { MfaHelpModal } from "@/components/MfaHelpModal";
 import { MfaBackupCodes } from "@/components/MfaBackupCodes";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 // ─── OTP Input ────────────────────────────────────────────────────────────────
 
@@ -195,7 +197,7 @@ function MfaEnrollModal({ open, enrollment, onClose, onVerified }: MfaEnrollModa
               <OtpInput value={code} onChange={handleCodeChange} disabled={submitting} />
               {submitting && (
                 <div className="flex justify-center">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  <BusyMark className="h-4 w-4 text-muted-foreground" />
                 </div>
               )}
             </div>
@@ -293,7 +295,7 @@ export function MfaSetup() {
   };
 
   if (loading) {
-    return <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />;
+    return <BusyMark className="h-5 w-5 text-muted-foreground" />;
   }
 
   return (
@@ -322,7 +324,7 @@ export function MfaSetup() {
             </>
           ) : (
             <Button variant="brand" onClick={handleStart} disabled={submitting}>
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {submitting ? <BusyMark className="h-4 w-4 mr-2" /> : null}
               Ativar dois fatores
             </Button>
           )}

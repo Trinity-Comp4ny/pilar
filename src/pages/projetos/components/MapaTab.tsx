@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
-  Loader2,
   MapPin,
   ExternalLink,
   Search,
@@ -35,6 +34,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import { PROJECT_STATUS, PROJECT_STATUS_CONFIG, type ProjectStatus } from "@/constants";
 import { cn } from "@/lib/utils";
+
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 // Leaflet + react-leaflet + cluster + CSS vivem em MapCanvas, carregado sob
 // demanda: só entram no bundle quando a aba do Mapa monta, não no inicial.
@@ -217,19 +218,12 @@ export function MapaTab() {
                 <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
                 <CommandGroup heading="Projetos">
                   {filtrados.map((p) => (
-                    <CommandItem
-                      key={p.id}
-                      value={p.nome}
-                      onSelect={() => handleSearchSelect(p.id)}
-                      className="gap-2"
-                    >
+                    <CommandItem key={p.id} value={p.nome} onSelect={() => handleSearchSelect(p.id)} className="gap-2">
                       <div
                         className="w-2.5 h-2.5 rounded-full shrink-0"
                         style={{ background: STATUS_MARKER_COLORS[p.status] || "hsl(var(--status-unknown))" }}
                       />
-                      <span className="truncate">
-                        {p.nome}
-                      </span>
+                      <span className="truncate">{p.nome}</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>
@@ -269,7 +263,7 @@ export function MapaTab() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <ReadingRing size={64} />
         </div>
       ) : isError ? (
         <EmptyState
@@ -442,7 +436,7 @@ export function MapaTab() {
             <Suspense
               fallback={
                 <div className="absolute inset-0 z-500 flex items-center justify-center">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <ReadingRing size={64} />
                 </div>
               }
             >

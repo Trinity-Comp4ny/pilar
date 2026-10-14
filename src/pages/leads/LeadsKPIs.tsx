@@ -3,7 +3,7 @@ import { CalendarClock, Layers, TrendingUp, PercentCircle, Handshake } from "luc
 import { KPICard } from "@/components/KPICard";
 import { type Lead } from "@/hooks/useLeads";
 import { type Proposta } from "@/hooks/usePropostas";
-import { propostaPrimaria, valorNoFunil, taxaFechamentoPropostas } from "@/lib/comercial";
+import { propostaPrimaria, valorNoFunil, taxaFechamentoPropostas } from "@/pages/leads/lib/comercial";
 
 const ATIVOS = new Set(["Novo", "Em contato", "Proposta", "Negociação"]);
 

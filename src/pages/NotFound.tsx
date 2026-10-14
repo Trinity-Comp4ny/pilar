@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { Logo } from "@/components/Logo";
 
+import { PageLoader } from "@/components/motion/PageLoader";
 const NotFound = () => {
   usePageTitle("Página não encontrada");
   const location = useLocation();
@@ -37,7 +38,7 @@ const NotFound = () => {
   }, [isAuthenticated]);
 
   if (isAuthenticated === null) {
-    return <div className="min-h-screen flex items-center justify-center bg-muted">Carregando...</div>;
+    return <PageLoader size="page" className="min-h-screen" />;
   }
 
   return (

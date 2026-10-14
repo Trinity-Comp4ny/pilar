@@ -38,7 +38,7 @@ docker exec -i -e PGPASSWORD=postgres "supabase_db_${REF}" psql -U postgres -d p
      where id = '00000000-0000-0000-0000-000000000401';"
 
 # `supabase status -o env` imprime API_URL=... e ANON_KEY=... (entre aspas).
-eval "$(supabase status -o env 2>/dev/null | grep -E '^(API_URL|ANON_KEY)=')"
+eval "$(supabase status -o env 2>/dev/null | grep -E '^(API_URL|ANON_KEY|SERVICE_ROLE_KEY)=')"
 
 export VITE_SUPABASE_URL="$API_URL"
 export VITE_SUPABASE_PUBLISHABLE_KEY="$ANON_KEY"
@@ -53,6 +53,32 @@ export E2E_PORTAL_EMAIL="portal@local.test"
 export E2E_PORTAL_PASSWORD="123456"
 # Porta própria: não briga com um `npm run preview` aberto em 4173.
 export PORT="${PORT:-4174}"
+
+# Edge Functions de verdade para as jornadas ponta a ponta (e2e/jornada-*.spec.ts):
+# sem elas, aprovar proposta no portal e confirmar pagamento nunca rodavam no CI. Env
+# de teste: e-mail em modo simulado (só registra em email_envios), origem do app
+# liberada no CORS e token de webhook conhecido pelo spec. Nada aqui é segredo real.
+FUNCS_ENV="$(mktemp)"
+cat >"$FUNCS_ENV" <<ENV
+EMAIL_DRY_RUN=true
+ALLOWED_ORIGINS=http://localhost:${PORT}
+PUBLIC_SITE_URL=http://localhost:${PORT}
+ASAAS_PLATFORM_WEBHOOK_TOKEN=e2e-webhook-token
+AUTH_HOOK_SEND_EMAIL_SECRET=${AUTH_HOOK_SEND_EMAIL_SECRET:-}
+ENV
+supabase functions serve --env-file "$FUNCS_ENV" >"${TMPDIR:-/tmp}/e2e-functions.log" 2>&1 &
+FUNCS_PID=$!
+trap 'kill "$FUNCS_PID" 2>/dev/null || true; rm -f "$FUNCS_ENV"' EXIT
+# Espera o runtime responder (qualquer status HTTP serve: só não pode recusar conexão).
+for _ in $(seq 1 60); do
+  code="$(curl -s -o /dev/null -w '%{http_code}' -X OPTIONS "$API_URL/functions/v1/health" || true)"
+  [ "$code" != "000" ] && [ "$code" != "502" ] && break
+  sleep 2
+done
+export E2E_FUNCTIONS="1"
+export E2E_SUPABASE_URL="$API_URL"
+export E2E_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY"
+export E2E_WEBHOOK_TOKEN="e2e-webhook-token"
 
 npm run build
 

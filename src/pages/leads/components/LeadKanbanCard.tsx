@@ -17,7 +17,7 @@ import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { Lead } from "@/hooks/useLeads";
 import { PROPOSTA_STATUS_CONFIG, type Proposta } from "@/hooks/usePropostas";
-import { statusExibido } from "@/lib/comercial";
+import { statusExibido } from "@/pages/leads/lib/comercial";
 import { AvatarStack } from "@/components/AvatarStack";
 
 const statusLabels: Record<string, string> = {

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import type { PainelGestao } from "@/hooks/usePainelGestao";
+import type { PainelGestao } from "@/pages/inicio/hooks/usePainelGestao";
 import type { Feature } from "@/lib/permissions";
 import { CATALOGO, LAYOUT_PADRAO, POR_ID } from "./catalogo";
 import { PainelGrid } from "./PainelGrid";
@@ -142,13 +142,23 @@ describe("painel em leitura", () => {
   });
 
   it("ignora widget desconhecido no layout em vez de quebrar a tela", () => {
-    montar({ layout: [{ w: "widget_que_saiu_num_release", s: "meia" }, { w: "projetos_numeros", s: "inteira" }] });
+    montar({
+      layout: [
+        { w: "widget_que_saiu_num_release", s: "meia" },
+        { w: "projetos_numeros", s: "inteira" },
+      ],
+    });
     expect(screen.getByText("projetos ativos")).toBeInTheDocument();
   });
 
   it("não renderiza widget cuja permissão o usuário perdeu", () => {
     permitidas = new Set<Feature>(["projetos"]);
-    montar({ layout: [{ w: "fin_mes", s: "meia" }, { w: "projetos_numeros", s: "inteira" }] });
+    montar({
+      layout: [
+        { w: "fin_mes", s: "meia" },
+        { w: "projetos_numeros", s: "inteira" },
+      ],
+    });
     expect(screen.queryByText("Caixa do mês")).not.toBeInTheDocument();
     expect(screen.getByText("projetos ativos")).toBeInTheDocument();
   });

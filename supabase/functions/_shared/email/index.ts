@@ -22,11 +22,17 @@ export {
   templatePropostaEnvio,
 } from "./templates/escritorio.ts";
 export {
+  templateLgpdExclusaoConcluida,
   templateLgpdExclusaoDados,
+  templateLgpdExclusaoRecusada,
+  templateLgpdExportacaoDados,
+  templateLgpdExportacaoPronta,
   templateTrialAviso,
   templateTrialExpirado,
   templateAtivarPlanoRecibo,
   templateRetencaoAviso,
+  templateAvisoPlataforma,
+  templateFeedbackRecebido,
 } from "./templates/plataforma.ts";
 export {
   MAX_ITENS_EMAIL,

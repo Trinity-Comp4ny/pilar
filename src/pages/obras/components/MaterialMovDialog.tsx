@@ -9,13 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TIPO_MOVIMENTO_OPCOES } from "@/lib/obras";
-import type { ObraFrenteRow } from "@/hooks/useObraFrentes";
+import type { ObraFrenteRow } from "@/pages/obras/hooks/useObraFrentes";
 import {
   useSaveMaterial,
   useSaveMovimento,
   type MaterialComMovimentos,
   type MovimentoRow,
-} from "@/hooks/useObraEstoque";
+} from "@/pages/obras/hooks/useObraEstoque";
 
 const NOVO = "__novo__";
 const SEM_FRENTE = "__none__";

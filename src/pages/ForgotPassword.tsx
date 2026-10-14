@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, Loader2, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Mail, CheckCircle2, ArrowLeft } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { translateAuthError } from "@/lib/authErrors";
 import { forgotPasswordSchema, forgotPasswordDefaultValues, type ForgotPasswordFormData } from "@/schemas";
 import { Logo } from "@/components/Logo";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 export default function ForgotPassword() {
   usePageTitle("Recuperar senha");
@@ -124,7 +126,7 @@ export default function ForgotPassword() {
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
+                      <BusyMark className="mr-2 h-4 w-4" /> Enviando...
                     </>
                   ) : (
                     "Enviar link de recuperação"

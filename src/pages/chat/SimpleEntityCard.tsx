@@ -11,7 +11,6 @@ import {
   Landmark,
   Layers,
   LayoutGrid,
-  Loader2,
   RotateCcw,
   Tag,
   Truck,
@@ -30,6 +29,8 @@ import { formatCNPJ, formatCPF, formatDocument, formatPhone } from "@/lib/maskUt
 import { formatCurrency, formatCurrencyInput, parseCurrencyString } from "@/lib/currencyUtils";
 import { msgErro } from "./erros";
 import type { Draft, DraftCampos, Entidade } from "./useChat";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 type FieldType =
   | "text"
@@ -238,11 +239,7 @@ export function SimpleEntityCard({ index, draft, entidade, onConfirmar, onCancel
         out.leads = (data ?? []) as { id: string; nome: string }[];
       }
       if (sources.has("projetos")) {
-        const { data } = await supabase
-          .from("projetos")
-          .select("id, nome")
-          .is("deleted_at", null)
-          .order("nome");
+        const { data } = await supabase.from("projetos").select("id, nome").is("deleted_at", null).order("nome");
         out.projetos = ((data ?? []) as { id: string; nome: string }[]).map((p) => ({
           id: p.id,
           nome: p.nome,
@@ -349,7 +346,7 @@ export function SimpleEntityCard({ index, draft, entidade, onConfirmar, onCancel
             disabled={desfazendo}
             className="h-auto gap-1 px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
           >
-            {desfazendo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+            {desfazendo ? <BusyMark className="h-3.5 w-3.5" /> : <RotateCcw className="h-3.5 w-3.5" />}
             Desfazer
           </Button>
         </div>
@@ -490,7 +487,7 @@ export function SimpleEntityCard({ index, draft, entidade, onConfirmar, onCancel
             Cancelar
           </Button>
           <Button size="sm" onClick={criar} disabled={salvando} variant="brand" className="gap-1.5">
-            {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+            {salvando ? <BusyMark className="h-4 w-4" /> : <Check className="h-4 w-4" />}
             {cfg.verbo}
           </Button>
         </div>

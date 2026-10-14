@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { msgErroChat, extrairMotivoBloqueioTokens } from "./erros";
+import { msgErroChat, extrairMensagemErroIa, extrairMotivoBloqueioTokens } from "./erros";
 
 describe("msgErroChat", () => {
   it("402 sem motivo: mensagem de saldo da empresa (comportamento original)", () => {
@@ -65,5 +65,35 @@ describe("extrairMotivoBloqueioTokens", () => {
     const response = new Response("não é json", { status: 402 });
     const err = { context: response };
     await expect(extrairMotivoBloqueioTokens(err)).resolves.toBeUndefined();
+  });
+});
+
+describe("extrairMensagemErroIa", () => {
+  const corpo = { error: "O serviço de IA não respondeu. Tente de novo em instantes.", tipo: "provedor_indisponivel" };
+
+  it("lê do objeto plano montado pelo enviarStream", async () => {
+    expect(await extrairMensagemErroIa({ context: { status: 502, ...corpo } })).toBe(corpo.error);
+  });
+
+  it("lê da Response do functions.invoke sem consumir o corpo", async () => {
+    const res = new Response(JSON.stringify(corpo), { status: 502 });
+    expect(await extrairMensagemErroIa({ context: res })).toBe(corpo.error);
+    expect(res.bodyUsed).toBe(false);
+  });
+
+  it("ignora corpo sem tipo (erro antigo ou de outra origem)", async () => {
+    expect(await extrairMensagemErroIa({ context: { status: 500, error: "Gemini API error (500): {...}" } })).toBe(
+      undefined
+    );
+    expect(await extrairMensagemErroIa(new Error("x"))).toBe(undefined);
+  });
+
+  it("msgErroChat usa a mensagem do tipo no lugar do genérico", () => {
+    expect(msgErroChat({ context: { status: 502 } }, false, undefined, corpo.error)).toBe(corpo.error);
+  });
+
+  it("msgErroChat mantém timeout e 402 acima da mensagem do tipo", () => {
+    expect(msgErroChat({ context: { status: 502 } }, true, undefined, corpo.error)).toContain("demorou demais");
+    expect(msgErroChat({ context: { status: 402 } }, false, undefined, corpo.error)).toContain("tokens de IA");
   });
 });

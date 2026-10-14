@@ -39,6 +39,15 @@ begin
   where id = v_empresa_id
     and nivel_override is distinct from 'ouro';
 
+  -- Projetos criados pelos specs saem antes de cada rodada (soft delete). Sem isso eles
+  -- acumulavam um por push até bater o teto de projetos ativos do plano, e o spec de
+  -- criação passou a falhar sem mensagem (13/10, 40 de 40).
+  update public.projetos
+  set deleted_at = now()
+  where empresa_id = v_empresa_id
+    and nome like 'E2E %'
+    and deleted_at is null;
+
   -- Tour e checklist de onboarding interceptam clique (ver scripts/seed-local.sql).
   update public.profiles
   set onboarding_state = onboarding_state || '{"dismissed": true}'::jsonb

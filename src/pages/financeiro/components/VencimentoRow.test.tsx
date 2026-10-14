@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
-import type { DashboardVencimento } from "@/hooks/dashboard/types";
+import type { DashboardVencimento } from "@/pages/financeiro/hooks/dashboard/types";
 import { VencimentoRow } from "./VencimentoRow";
 
 // Smoke test de render (spec #45): a linha de vencimento é 100% props (sem query).

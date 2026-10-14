@@ -14,9 +14,9 @@ import { TrendingUp } from "lucide-react";
 import { curvaSObra } from "@/lib/obras";
 import { startOfWeek, toIso } from "@/lib/cronograma";
 import { formatDate } from "@/lib/format";
-import { useObraTarefas } from "@/hooks/useObraTarefas";
-import { useObraRdos } from "@/hooks/useObraRdo";
-import { useObraRdoTarefas } from "@/hooks/useObraRdoTarefas";
+import { useObraTarefas } from "@/pages/obras/hooks/useObraTarefas";
+import { useObraRdos } from "@/pages/obras/hooks/useObraRdo";
+import { useObraRdoTarefas } from "@/pages/obras/hooks/useObraRdoTarefas";
 
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: unknown[]; label?: string }) {
   if (!active || !payload || payload.length === 0) return null;

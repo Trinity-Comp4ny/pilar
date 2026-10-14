@@ -44,6 +44,7 @@ import { RelatoriosSummary } from "./relatorios/RelatoriosSummary";
 import { useRelatorioData, parseDDMMYYYY, type ReportRow } from "./relatorios/useRelatorioData";
 import { toCurrency, computeReportTotal, generateCSV, generatePDF, generateXLSX } from "./relatorios/relatorioExport";
 import { applyFilters, computeFilterOptions, type ColumnFilters } from "./relatorios/relatorioFilters";
+import { analytics } from "@/lib/analytics";
 
 // recharts é pesado e esta é uma página secundária: só carrega o chunk do
 // gráfico quando há dados suficientes para renderizá-lo (ver renderChart).
@@ -297,6 +298,7 @@ export default function Relatorios() {
         await generatePDF(filteredData, columns, { title: titleForPdf, filename, dateFrom, dateTo });
       }
 
+      analytics.track("relatorio_exportado", { formato: formatType, tipo: tipoRelatorio || "geral" });
       toast.success("Exportação iniciada", { description: "O download deve iniciar automaticamente." });
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);

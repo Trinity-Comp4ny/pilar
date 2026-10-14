@@ -1,10 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
-import { sendEmail, templateLgpdExclusaoDados } from "../_shared/email/index.ts";
+import { jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
+import { sendEmail, templateLgpdExclusaoDados, templateLgpdExportacaoDados } from "../_shared/email/index.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { withSentry } from "../_shared/sentry.ts";
+import { lerJson } from "../_shared/schemas.ts";
+import { chamadorAutorizado, lerEntrada } from "./entrada.ts";
 
 /**
  * send-data-deletion-notification
@@ -27,7 +29,8 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const APP_URL = Deno.env.get("APP_URL") ?? "https://app.pilarsoft.com.br";
 const SHARED_SECRET = Deno.env.get("DATA_DELETION_NOTIFY_SECRET") ?? "";
-const FALLBACK_DPO = Deno.env.get("LGPD_DPO_EMAIL") ?? "privacidade@trnty.com.br";
+// Contato público de privacidade (/privacidade, /termos): o padrão segue ele, não um domínio antigo.
+const FALLBACK_DPO = Deno.env.get("LGPD_DPO_EMAIL") ?? "privacidade@pilarsoft.com.br";
 
 interface DeletionRequest {
   id: string;
@@ -46,15 +49,6 @@ interface EmpresaAdmin {
   full_name?: string | null;
 }
 
-function verifyCaller(req: Request): boolean {
-  // Aceita: (a) Authorization Bearer com service role key OR (b) header x-pilar-secret
-  const auth = req.headers.get("Authorization") ?? "";
-  if (SERVICE_ROLE_KEY && auth === `Bearer ${SERVICE_ROLE_KEY}`) return true;
-  const secret = req.headers.get("x-pilar-secret") ?? "";
-  if (SHARED_SECRET && secret === SHARED_SECRET) return true;
-  return false;
-}
-
 function formatDate(iso: string): string {
   try {
     const d = new Date(iso);
@@ -64,12 +58,68 @@ function formatDate(iso: string): string {
   }
 }
 
+/**
+ * Pedido de exportação (LGPD art. 18, V): avisa o encarregado, que atende em até 15
+ * dias (art. 19). Quem atende é a equipe da plataforma, por isso só o DPO recebe.
+ * O idempotencyKey evita e-mail repetido se o trigger for reenviado.
+ */
+async function notificarExportacao(requestId: string, req: Request): Promise<Response> {
+  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+  const reqLog = log.child({ request_id: requestId, tipo: "exportacao" });
+
+  const { data: pedido, error } = await admin
+    .from("data_export_requests")
+    .select("id, user_id, empresa_id, requested_at")
+    .eq("id", requestId)
+    .single<{ id: string; user_id: string; empresa_id: string | null; requested_at: string }>();
+  if (error || !pedido) {
+    reqLog.warn("export request not found", { err: error?.message });
+    return safeErrorResponse(404, "Solicitação não encontrada", req);
+  }
+
+  const { data: perfil } = await admin
+    .from("profiles")
+    .select("email, full_name")
+    .eq("id", pedido.user_id)
+    .maybeSingle<{ email: string | null; full_name: string | null }>();
+  const { data: empresa } = pedido.empresa_id
+    ? await admin.from("empresas").select("nome").eq("id", pedido.empresa_id).maybeSingle<{ nome: string | null }>()
+    : { data: null };
+
+  if (!FALLBACK_DPO) {
+    reqLog.error("LGPD_DPO_EMAIL ausente");
+    return safeErrorResponse(500, "Nenhum destinatário disponível", req);
+  }
+
+  try {
+    await sendEmail({
+      classe: "plataforma",
+      tipo: "lgpd_exportacao_dados",
+      to: [FALLBACK_DPO],
+      idempotencyKey: `lgpd-exportacao-${pedido.id}`,
+      ...templateLgpdExportacaoDados({
+        empresaNome: empresa?.nome ?? "empresa não identificada",
+        solicitanteEmail: perfil?.email ?? "(email não disponível)",
+        solicitanteNome: perfil?.full_name ?? undefined,
+        requestedAt: formatDate(pedido.requested_at),
+        requestId: pedido.id,
+      }),
+    });
+  } catch (err) {
+    reqLog.error("resend send failed", err);
+    return safeErrorResponse(502, "Falha ao enviar email", req);
+  }
+
+  reqLog.info("export notification sent");
+  return jsonResponse({ success: true, recipients_count: 1 }, 200, req);
+}
+
 serve(
   withSentry("send-data-deletion-notification", async (req) => {
     if (req.method === "OPTIONS") return optionsResponse(req);
     if (req.method !== "POST") return safeErrorResponse(405, "Method not allowed", req);
 
-    if (!verifyCaller(req)) {
+    if (!chamadorAutorizado(req.headers, { serviceRoleKey: SERVICE_ROLE_KEY, sharedSecret: SHARED_SECRET })) {
       log.warn("unauthorized caller");
       return safeErrorResponse(401, "Unauthorized", req);
     }
@@ -79,15 +129,10 @@ serve(
       return safeErrorResponse(500, "Server misconfigured", req);
     }
 
-    let payload: { request_id?: string };
-    try {
-      payload = await req.json();
-    } catch {
-      return safeErrorResponse(400, "Invalid JSON body", req);
-    }
-
-    const requestId = payload.request_id;
-    if (!isUUID(requestId)) return safeErrorResponse(400, "request_id inválido", req);
+    const entrada = lerEntrada(await lerJson(req));
+    if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
+    const requestId = entrada.data.request_id;
+    if (entrada.data.tipo === "exportacao") return await notificarExportacao(requestId, req);
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
     const reqLog = log.child({ request_id: requestId });
@@ -154,7 +199,8 @@ serve(
         .from("profiles")
         .select("id, email, first_name, last_name, full_name")
         .eq("empresa_id", ddr.empresa_id)
-        .eq("role", "admin");
+        .eq("role", "admin")
+        .is("desativado_em", null);
 
       const adminRows = (admins ?? []) as EmpresaAdmin[];
       for (const a of adminRows) {

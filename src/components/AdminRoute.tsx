@@ -2,6 +2,7 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 
+import { PageLoader } from "@/components/motion/PageLoader";
 /**
  * Admin da empresa não precisa de MFA para administrar a própria empresa
  * (ADR 0031): segundo fator obrigatório ficou só no acesso cross-tenant do
@@ -13,7 +14,7 @@ export function AdminRoute() {
   const { can } = usePermissions();
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+    return <PageLoader size="page" />;
   }
 
   if (!can("admin_portal", "view")) {

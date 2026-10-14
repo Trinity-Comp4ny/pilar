@@ -124,7 +124,8 @@ export default function Admin() {
               .select(
                 "id, first_name, last_name, email, role, contato, onboarding_completed, financeiro_delegado, equipe_delegado, metas_delegado"
               )
-              .eq("empresa_id", profile.empresa_id),
+              .eq("empresa_id", profile.empresa_id)
+              .is("desativado_em", null),
             supabase
               .from("convites")
               .select("id, nome, email, cargo")

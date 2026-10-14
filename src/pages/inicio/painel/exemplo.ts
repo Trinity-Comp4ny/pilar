@@ -1,4 +1,4 @@
-import type { PainelGestao } from "@/hooks/usePainelGestao";
+import type { PainelGestao } from "@/pages/inicio/hooks/usePainelGestao";
 
 /**
  * Dados de exemplo para o preview do seletor de widget (SPEC 092).

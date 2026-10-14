@@ -11,11 +11,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Loader2, CheckCircle2, FileDown } from "lucide-react";
+import { CheckCircle2, FileDown } from "lucide-react";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import type { FolhaItem, HistoryItem } from "../types";
 import { getMonthLabel } from "../types";
 import { calcularVariavel, calcularTotal, subtotalProjeto } from "../folhaCalc";
+
+import { BusyMark } from "@/components/motion/BusyMark";
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 interface CloseMonthDialogProps {
   open: boolean;
@@ -71,7 +74,7 @@ export function CloseMonthDialog({
             Cancelar
           </Button>
           <Button onClick={onConfirm} disabled={saving} variant="brand">
-            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {saving && <BusyMark className="mr-2 h-4 w-4" />}
             Confirmar fechamento
           </Button>
         </DialogFooter>
@@ -301,7 +304,7 @@ export function HistoryDetailDialog({
         )}
         {loading ? (
           <div className="flex justify-center items-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <ReadingRing size={64} />
           </div>
         ) : items.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhum registro encontrado para esta folha.</p>

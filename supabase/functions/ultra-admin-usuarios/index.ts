@@ -1,6 +1,7 @@
 /**
  * Edge function: ultra-admin-usuarios
  *
+ * GET  → todos os usuários da plataforma, com último login (SPEC 117)
  * PUT  → atualizar role de um usuário (cross-empresa)
  * POST → convidar usuário em nome de outra empresa
  *
@@ -13,7 +14,10 @@ import { isUUID, jsonResponse, optionsResponse, safeErrorResponse, getTrustedOri
 import { requireUltraAdmin } from "../_shared/admin-auth.ts";
 import { logAction } from "../_shared/audit.ts";
 import { withSentry } from "../_shared/sentry.ts";
+import { listarAcessos } from "../_shared/ultimo-acesso.ts";
 import { isEmailExistsError } from "../_shared/auth-errors.ts";
+import { desativarConta } from "../_shared/encerrar-conta.ts";
+import { emailDoConvite, papelSeguro } from "./entrada.ts";
 
 serve(
   withSentry("ultra-admin-usuarios", async (req) => {
@@ -22,6 +26,36 @@ serve(
     const auth = await requireUltraAdmin(req);
     if (auth.error) return auth.error;
     const { svc, userId, actorEmail } = auth;
+
+    // ─── GET: lista cross-empresa com último login ────────────────────────
+    // O último login mora em auth.users, que o front não lê; o resto (nome,
+    // papel, empresa) é o mesmo que o ultra admin já lê em profiles via RLS.
+    if (req.method === "GET") {
+      const [{ data: profiles, error }, acessos] = await Promise.all([
+        svc
+          .from("profiles")
+          .select("id, nome, email, role, empresa_id, created_at, empresas(nome, deleted_at)")
+          .is("desativado_em", null)
+          .order("nome", { ascending: true }),
+        listarAcessos(svc),
+      ]);
+      if (error) return safeErrorResponse(500, "Falha ao listar usuários", req);
+
+      const usuarios = (profiles ?? [])
+        .filter((p) => !(p.empresas as { deleted_at?: string | null } | null)?.deleted_at)
+        .map((p) => ({
+          id: p.id,
+          nome: p.nome,
+          email: p.email,
+          role: p.role,
+          empresa_id: p.empresa_id,
+          empresa_nome: (p.empresas as { nome?: string } | null)?.nome ?? null,
+          created_at: acessos.get(p.id)?.createdAt ?? p.created_at ?? null,
+          last_sign_in_at: acessos.get(p.id)?.lastSignInAt ?? null,
+        }));
+
+      return jsonResponse(usuarios, 200, req);
+    }
 
     // ─── PUT: atualizar usuário existente ─────────────────────────────────
     if (req.method === "PUT") {
@@ -40,7 +74,7 @@ serve(
 
       // ADR 0029/0034: role decide hierarquia; financeiro é eixo à parte
       // (profiles.financeiro_delegado, não muda por aqui).
-      const safeRole = ["admin", "coordenador", "user"].includes(role) ? role : target.role;
+      const safeRole = papelSeguro(role, target.role);
 
       const { error } = await svc.from("profiles").update({ role: safeRole }).eq("id", user_id);
 
@@ -99,8 +133,9 @@ serve(
 
       const { data: target } = await svc.from("profiles").select("email, nome, empresa_id").eq("id", user_id).single();
 
-      const { error } = await svc.auth.admin.deleteUser(user_id);
-      if (error) return safeErrorResponse(400, error.message, req);
+      // Desativa em vez de apagar (SPEC 116): ver _shared/encerrar-conta.ts.
+      const desativada = await desativarConta(svc, user_id);
+      if (!desativada.ok) return safeErrorResponse(500, "Não foi possível remover o usuário. Tente de novo.", req);
 
       await logAction(svc, {
         actorId: userId,
@@ -173,9 +208,10 @@ serve(
       }
 
       if (!isUUID(empresa_id)) return safeErrorResponse(400, "empresa_id inválido", req);
-      if (!email || typeof email !== "string") return safeErrorResponse(400, "email obrigatório", req);
+      const emailConvite = emailDoConvite(email);
+      if (!emailConvite.ok) return safeErrorResponse(400, emailConvite.error, req);
 
-      const safeRole = ["admin", "coordenador", "user"].includes(role) ? role : "user";
+      const safeRole = papelSeguro(role, "user");
 
       const redirectOrigin = getTrustedOrigin(req);
       if (!redirectOrigin) return safeErrorResponse(500, "Server CORS misconfigured", req);
@@ -183,14 +219,14 @@ serve(
       // Cria o convite guardando SÓ o hash; retorna o plaintext para o e-mail.
       const { data: inviteToken, error: convErr } = await svc.rpc("admin_create_convite", {
         p_empresa_id: empresa_id,
-        p_email: email,
+        p_email: emailConvite.email,
         p_cargo: safeRole,
         p_nome: nome || null,
       });
 
       if (convErr || !inviteToken) return safeErrorResponse(400, convErr?.message ?? "Falha ao criar convite", req);
 
-      const { error: inviteError } = await svc.auth.admin.inviteUserByEmail(email, {
+      const { error: inviteError } = await svc.auth.admin.inviteUserByEmail(emailConvite.email, {
         redirectTo: `${redirectOrigin}/profile-setup`,
         data: { invite_token: inviteToken, nome: nome || "" },
       });
@@ -203,7 +239,7 @@ serve(
           .from("convites")
           .update({ usado_em: new Date().toISOString() })
           .eq("empresa_id", empresa_id)
-          .eq("email", String(email).toLowerCase().trim())
+          .eq("email", emailConvite.email)
           .is("usado_em", null);
         return safeErrorResponse(
           400,

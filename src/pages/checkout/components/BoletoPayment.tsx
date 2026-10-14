@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Copy, Check, FileText, Download, Loader2 } from "lucide-react";
+import { Copy, Check, FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 interface BoletoPaymentProps {
   bankSlipUrl: string | null;
@@ -72,7 +74,7 @@ export function BoletoPayment({ bankSlipUrl, identificationField, value, isPolli
       <div className="flex items-center justify-center gap-2 text-sm text-ink-muted pt-2">
         {isPolling && (
           <>
-            <Loader2 className="w-4 h-4 animate-spin" /> Aguardando pagamento...
+            <BusyMark className="w-4 h-4" /> Aguardando pagamento...
           </>
         )}
       </div>

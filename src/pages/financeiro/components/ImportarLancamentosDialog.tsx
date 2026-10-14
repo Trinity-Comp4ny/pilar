@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { reportInvokeError } from "@/lib/monitoring";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { formatCurrencyInput, formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
-import { lineHash, type ImportTipoDoc } from "@/lib/importFinanceiro";
+import { lineHash, type ImportTipoDoc } from "@/pages/financeiro/lib/importFinanceiro";
 import { extrairTextoPdf } from "@/lib/pdfText";
 import { useImportFinanceiro, type ItemImport, type ResumoImport } from "../hooks/useImportFinanceiro";
 

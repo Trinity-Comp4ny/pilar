@@ -1,7 +1,7 @@
 name: Monitor de produção
 
-# Checks sintéticos contra produção a cada 30 min: health da Edge Function (banco,
-# Asaas, Resend), landing, tela de login e guarda de rota. Substitui o Checkly, que
+# Checks sintéticos contra produção a cada 10 min: health da Edge Function (componentes,
+# SPEC 105), landing, tela de login, guarda de rota e login real com o usuário de monitor. Substitui o Checkly, que
 # estava configurado (checkly.config.ts) mas nunca rodou: sem conta, sem canal de
 # alerta e com o health apontando para o domínio errado.
 #
@@ -14,7 +14,7 @@ name: Monitor de produção
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "*/10 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -40,6 +40,11 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Checks contra app.pilarsoft.com.br
         run: npx playwright test --config tests/synthetic/playwright.config.ts
+        env:
+          # Usuário de monitor (docs/operations/monitoring/synthetic-tests.md). Sem os
+          # secrets, o check de login real é pulado e o resto roda.
+          PILAR_MONITOR_EMAIL: ${{ secrets.PILAR_MONITOR_EMAIL }}
+          PILAR_MONITOR_PASSWORD: ${{ secrets.PILAR_MONITOR_PASSWORD }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: failure()
         with:

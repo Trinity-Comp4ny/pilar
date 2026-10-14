@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
 
-const { initMock, captureMock, optOutMock, resetMock } = vi.hoisted(() => ({
+const { initMock, captureMock, optOutMock, resetMock, registerMock } = vi.hoisted(() => ({
+  registerMock: vi.fn(),
   initMock: vi.fn(),
   captureMock: vi.fn(),
   optOutMock: vi.fn(),
@@ -12,6 +13,7 @@ vi.mock("posthog-js", () => ({
     init: initMock,
     capture: captureMock,
     identify: vi.fn(),
+    register: registerMock,
     opt_out_capturing: optOutMock,
     reset: resetMock,
     isFeatureEnabled: vi.fn(() => true),
@@ -75,29 +77,57 @@ describe("analytics: gate de consentimento (ADR 0022)", () => {
   });
 
   it("não toca o PostHog sem consentimento salvo", () => {
-    analytics.track("evento_qualquer");
+    analytics.track("cliente_criado");
     analytics.init();
     expect(initMock).not.toHaveBeenCalled();
     expect(captureMock).not.toHaveBeenCalled();
   });
 
-  it("inicializa e envia eventos depois de aceitar", () => {
+  it("inicializa e envia eventos depois de aceitar", async () => {
     applyCookieConsent(true);
+    await vi.dynamicImportSettled();
     expect(initMock).toHaveBeenCalledTimes(1);
 
-    analytics.track("evento_qualquer");
-    expect(captureMock).toHaveBeenCalledWith("evento_qualquer", undefined);
+    analytics.track("cliente_criado");
+    expect(captureMock).toHaveBeenCalledWith("cliente_criado", undefined);
   });
 
-  it("revoga consentimento: opt_out + reset, sem reinicializar sozinho", () => {
+  it("identify registra o escritório em todos os eventos seguintes", async () => {
     applyCookieConsent(true);
+    analytics.identify("user-1", { empresa_id: "empresa-1", role: "admin" });
+    await vi.dynamicImportSettled();
+    expect(registerMock).toHaveBeenCalledWith({ empresa_id: "empresa-1" });
+  });
+
+  it("revoga consentimento: opt_out + reset, sem reinicializar sozinho", async () => {
+    applyCookieConsent(true);
+    await vi.dynamicImportSettled();
     applyCookieConsent(false);
 
     expect(optOutMock).toHaveBeenCalledTimes(1);
     expect(resetMock).toHaveBeenCalledTimes(1);
     expect(getCookieConsent()?.analytics).toBe(false);
 
-    analytics.track("evento_depois_de_recusar");
+    analytics.track("lead_criado");
+    await vi.dynamicImportSettled();
+    expect(captureMock).not.toHaveBeenCalled();
+  });
+
+  it("revogar durante o download do SDK não envia o que estava na fila", async () => {
+    applyCookieConsent(false);
+    localStorage.clear();
+    clearConsentCookie();
+    initMock.mockClear();
+    captureMock.mockClear();
+    vi.resetModules();
+    const fresh = await import("./analytics");
+
+    fresh.applyCookieConsent(true);
+    fresh.analytics.track("cliente_criado");
+    fresh.applyCookieConsent(false);
+    await vi.dynamicImportSettled();
+
+    expect(initMock).not.toHaveBeenCalled();
     expect(captureMock).not.toHaveBeenCalled();
   });
 });
@@ -127,13 +157,14 @@ describe("cookieConsent: armazenamento em cookie (ADR 0032)", () => {
     expect(readConsentCookieRaw()).toContain('"analytics":true');
   });
 
-  it("trata cookie corrompido como ausência de decisão", () => {
+  it("trata cookie corrompido como ausência de decisão", async () => {
     document.cookie = `${COOKIE_NAME}=${encodeURIComponent("{isso-nao-e-json")}; path=/`;
 
     expect(getCookieConsent()).toBeNull();
     expect(hasCookieDecision()).toBe(false);
 
     analytics.init();
+    await vi.dynamicImportSettled();
     expect(initMock).not.toHaveBeenCalled();
   });
 

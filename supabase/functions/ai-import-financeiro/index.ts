@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
-import { corsHeaders } from "../_shared/cors.ts";
-import { z } from "../_shared/schemas.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 import {
   createAuthClient,
   createAdminClient,
@@ -10,33 +9,17 @@ import {
   mensagemBloqueioTokens,
   callGeminiStructured,
   debitarTokens,
-  GEMINI_MODEL,
+  modeloEmUso,
   recordAgentRun,
   type AiRequest,
+  respostaDeErroIa,
 } from "../_shared/ai-client.ts";
+import { lerEntrada, ResultSchema } from "./esquema.ts";
 
 // Spec 017: extrai lançamentos financeiros do TEXTO de um extrato/fatura.
 // O client extrai o texto do PDF localmente e manda só texto (decisão de
 // privacidade) — a imagem do documento nunca chega aqui. CSV/planilha nem
 // passam por esta função: são parseados de forma determinística no client.
-
-const MAX_TEXTO_CHARS = 60_000;
-
-const LancamentoSchema = z.object({
-  data: z.string(), // ISO yyyy-mm-dd
-  descricao: z.string().min(1),
-  valor: z.number().nonnegative(), // sempre positivo; o tipo diz o sentido
-  tipo: z.enum(["despesa", "receita"]),
-  categoria_sugerida: z.string().nullable().optional(),
-  parcela_numero: z.number().int().positive().nullable().optional(),
-  parcela_total: z.number().int().positive().nullable().optional(),
-  confianca: z.number().min(0).max(1),
-});
-
-const ResultSchema = z.object({
-  lancamentos: z.array(LancamentoSchema),
-  avisos: z.array(z.string()).default([]),
-});
 
 interface CategoriaRow {
   nome: string;
@@ -77,6 +60,9 @@ function montarPrompt(tipoDoc: string, categorias: CategoriaRow[]) {
 
 serve(
   withSentry("ai-import-financeiro", async (req) => {
+    // Por request: devolve a origem que chamou (app, staging, preview) e os headers de
+    // segurança; o objeto estático antigo liberava só a primeira origem da lista.
+    const corsHeaders = getCorsHeaders(req);
     if (req.method === "OPTIONS") {
       return new Response("ok", { headers: corsHeaders });
     }
@@ -113,22 +99,14 @@ serve(
         );
       }
 
-      const body = await req.json().catch(() => ({}));
-      const tipoDoc = typeof body.tipo === "string" ? body.tipo : "extrato";
-      const texto = typeof body.texto === "string" ? body.texto.trim() : "";
-
-      if (!texto) {
-        return new Response(JSON.stringify({ error: "Nenhum texto para importar" }), {
+      const entrada = lerEntrada(await req.json().catch(() => null));
+      if (!entrada.ok) {
+        return new Response(JSON.stringify({ error: entrada.error }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 400,
         });
       }
-      if (texto.length > MAX_TEXTO_CHARS) {
-        return new Response(
-          JSON.stringify({ error: `Documento grande demais (${texto.length} caracteres). Divida em partes menores.` }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
-        );
-      }
+      const { tipoDoc, texto } = entrada;
 
       // Categorias da empresa para o modelo sugerir (nunca inventa).
       const { data: categorias } = await adminClient
@@ -167,7 +145,7 @@ serve(
         userId: user.id,
         agentKey: "import-financeiro",
         agentRunId: runId,
-        model: GEMINI_MODEL,
+        model: modeloEmUso("import-financeiro"),
         tokensInput: result.tokensEntrada,
         tokensOutput: result.tokensSaida,
         idempotencyKey: crypto.randomUUID(),
@@ -179,12 +157,15 @@ serve(
         status: 200,
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Erro ao processar documento";
-      const status = message === "Não autenticado" ? 401 : 400;
-      return new Response(JSON.stringify({ error: message }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status,
-      });
+      const message = err instanceof Error ? err.message : "";
+      if (message === "Não autenticado" || message === "Perfil não encontrado") {
+        return new Response(JSON.stringify({ error: message }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: message === "Não autenticado" ? 401 : 400,
+        });
+      }
+      // Falha da IA ou inesperada: tipo fechado, sem o texto bruto do provedor (SPEC 110).
+      return await respostaDeErroIa(err, corsHeaders, "ai-import-financeiro");
     }
   })
 );

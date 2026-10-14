@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
-import { useObraFrentes } from "@/hooks/useObraFrentes";
-import { useSaveAporte, useSaveDespesa, type ObraLancamentoRow } from "@/hooks/useObraConta";
+import { useObraEtapas } from "@/pages/obras/hooks/useObraFrentes";
+import { useSaveAporte, useSaveDespesa, type ObraLancamentoRow } from "@/pages/obras/hooks/useObraConta";
 import { PAGO_POR_OPCOES, type PagoPor } from "@/lib/obras";
 
 const SEM_FRENTE = "__none__";
@@ -27,7 +27,7 @@ interface Props {
 /** Registra um aporte do cliente ou uma despesa. Despesa passa pelo RPC (gera a taxa). */
 export function LancamentoContaDialog({ open, onOpenChange, obraId, tipo, lancamento }: Props) {
   const isEdit = !!lancamento;
-  const { data: frentes = [] } = useObraFrentes(obraId);
+  const { data: frentes = [] } = useObraEtapas(obraId);
   const { data: fornecedores = [] } = useFornecedoresLite();
   const saveAporte = useSaveAporte(obraId);
   const saveDespesa = useSaveDespesa(obraId);

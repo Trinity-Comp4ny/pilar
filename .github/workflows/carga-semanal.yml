@@ -1,0 +1,85 @@
+name: Carga semanal (k6 → staging)
+
+# Roda os cenários de leitura do k6 (tests/load) contra o staging toda segunda, com o
+# perfil leve (K6_PERFIL=semanal: até 10 VUs por 5 minutos). Mede regressão de latência
+# e erro sob carga nas leituras que todo usuário faz (painel e lançamentos), com os
+# limites de tests/load/utils/setup.js: p95 < 500 ms e menos de 1% de falha.
+#
+# Nunca contra produção: o passo de guarda recusa a URL do projeto de produção.
+# Armadilha da branch default: o agendamento só vale com este arquivo em main.
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: carga-semanal
+  cancel-in-progress: true
+
+jobs:
+  k6:
+    name: k6 leitura (staging)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: Staging
+    env:
+      K6_PERFIL: semanal
+      K6_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+      K6_SUPABASE_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+      K6_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+      K6_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+      K6_VERSAO: v0.54.0
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Guarda (staging configurado, nunca produção)
+        run: |
+          if [ -z "$K6_SUPABASE_URL" ] || [ -z "$K6_TEST_EMAIL" ]; then
+            echo "::error::Secrets do Environment Staging ausentes (STAGING_SUPABASE_URL, E2E_TEST_EMAIL)."
+            exit 1
+          fi
+          case "$K6_SUPABASE_URL" in
+            *vepnsonbnsimqcsfcagm*) echo "::error::URL de PRODUÇÃO. Carga só roda em staging."; exit 1 ;;
+          esac
+
+      - name: Instalar k6 (release oficial, checksum conferido)
+        run: |
+          set -euo pipefail
+          base="https://github.com/grafana/k6/releases/download/${K6_VERSAO}"
+          arq="k6-${K6_VERSAO}-linux-amd64.tar.gz"
+          curl -fsSLO "$base/$arq"
+          curl -fsSLO "$base/k6-${K6_VERSAO}-checksums.txt"
+          grep " $arq\$" "k6-${K6_VERSAO}-checksums.txt" | sha256sum -c -
+          tar -xzf "$arq"
+          sudo install "k6-${K6_VERSAO}-linux-amd64/k6" /usr/local/bin/k6
+          k6 version
+
+      - name: Painel (leituras do dashboard)
+        run: k6 run --summary-export resumo-dashboard.json tests/load/scenarios/dashboard-read.js
+
+      - name: Lançamentos (listagem paginada)
+        if: ${{ !cancelled() }}
+        run: k6 run --summary-export resumo-lancamentos.json tests/load/scenarios/listar-lancamentos.js
+
+      - name: Resumo no job
+        if: ${{ !cancelled() }}
+        run: |
+          {
+            echo "## k6 semanal (staging)"
+            for f in resumo-*.json; do
+              [ -f "$f" ] || continue
+              p95=$(jq -r '.metrics.http_req_duration["p(95)"] // "?"' "$f")
+              falha=$(jq -r '.metrics.http_req_failed.value // "?"' "$f")
+              echo "- **${f#resumo-}**: p95 ${p95} ms, falha ${falha}"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: ${{ !cancelled() }}
+        with:
+          name: k6-semanal-${{ github.run_id }}
+          path: resumo-*.json
+          retention-days: 90

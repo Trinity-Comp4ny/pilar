@@ -129,6 +129,9 @@ SELECT pg_temp.como('a1000000-0000-0000-0000-00000000000a');
 INSERT INTO public.tarefas (id, empresa_id, titulo, status, responsavel_id)
 VALUES ('a1000000-0000-0000-0000-0000000002a1', '00000000-0000-0000-0000-0000000a1001', 'Cadastro de cliente', 'a_fazer', 'a1000000-0000-0000-0000-0000000000b1');
 
+-- A coluna já espelha na ponte (trigger da spec 111); a gestão de tarefas apaga e
+-- regrava a ponte depois (syncResponsaveis), e é isso que se reproduz aqui.
+DELETE FROM public.tarefa_responsaveis WHERE tarefa_id = 'a1000000-0000-0000-0000-0000000002a1';
 INSERT INTO public.tarefa_responsaveis (tarefa_id, pessoa_id, empresa_id)
 VALUES ('a1000000-0000-0000-0000-0000000002a1', 'a1000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-0000000a1001');
 

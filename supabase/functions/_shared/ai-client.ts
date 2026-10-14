@@ -1,12 +1,39 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "./schemas.ts";
 import { captureException, recordGenAiSpan, recordMetric, scrub } from "./sentry.ts";
+import {
+  classificarErroIa,
+  comNovaTentativa,
+  corpoErroIa,
+  ehFalhaNossa,
+  ErroIa,
+  RESPOSTA_ERRO_IA,
+  tipoDoStatus,
+} from "./ai-erros.ts";
+import { configDeGeracao, exigirParadaUtil, motivoDeParada, tetoDaChamadaMs } from "./ai-geracao.ts";
+import { proveniencia } from "./ai-proveniencia.ts";
+import {
+  chamarGateway,
+  MODELO_PADRAO,
+  type ModeloAlvo,
+  resolverModelo,
+  streamGateway,
+  raciocinioDoGemini,
+  tokensDoGemini,
+  type UsoGemini,
+} from "./llm.ts";
+
+export { modeloEmUso, resolverModelo } from "./llm.ts";
+export { proveniencia, releaseAtual } from "./ai-proveniencia.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || "";
-export const GEMINI_MODEL = "gemini-2.5-flash";
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+/** Modelo padrão (sem AI_MODELO configurado). O modelo de cada função vem de modeloEmUso(tipo). */
+export const GEMINI_MODEL = MODELO_PADRAO.modelo;
+const geminiUrl = (modelo: string) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`;
 // streamGenerateContent + alt=sse: cada chunk chega como um evento SSE ("data: {json}\n\n").
-const GEMINI_STREAM_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse`;
+const geminiStreamUrl = (modelo: string) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:streamGenerateContent?alt=sse`;
 
 // Timeouts do Gemini. Cada chamada tem um teto próprio (AbortController); o orçamento
 // total limita a soma das tentativas (retry) para não estourar o wall-clock da edge.
@@ -45,16 +72,13 @@ interface GeminiCandidate {
   content?: {
     parts?: Array<{ text?: string }>;
   };
-}
-
-interface GeminiUsageMetadata {
-  promptTokenCount?: number;
-  candidatesTokenCount?: number;
+  finishReason?: string;
 }
 
 interface GeminiApiResponse {
   candidates?: GeminiCandidate[];
-  usageMetadata?: GeminiUsageMetadata;
+  usageMetadata?: UsoGemini;
+  promptFeedback?: { blockReason?: string };
 }
 
 /**
@@ -219,35 +243,46 @@ export async function debitarTokens(supabaseAdmin: SupabaseClient, params: Debit
 /**
  * Span gen_ai.chat de uma chamada ao Gemini (dashboard Insights > Agents do Sentry).
  * Inclui input.messages/output.messages (replay de conversa, ADR 0027) passados por
- * scrub(): trade-off aceito conscientemente de mandar conteúdo pro Sentry.
+ * scrub(); o envio em sentry.ts descarta os dois fora de dev (ADR 0053).
  */
 function recordGeminiChatSpan(params: {
+  alvo: ModeloAlvo;
   startMs: number;
   status: "ok" | "error";
   tokensEntrada?: number;
   tokensSaida?: number;
+  // Raciocínio (thinking), já contido em tokensSaida.
+  tokensRaciocinio?: number;
   inputMessages?: Array<{ role: string; content: string }>;
   outputText?: string;
   conversationId?: string;
   empresaId?: string;
+  // Motivo de parada do provedor (STOP, MAX_TOKENS, SAFETY...) e tipo do erro (SPEC 110).
+  motivoParada?: string;
+  erro?: unknown;
 }): void {
   recordGenAiSpan({
     op: "gen_ai.chat",
-    name: `chat ${GEMINI_MODEL}`,
+    name: `chat ${params.alvo.modelo}`,
     startMs: params.startMs,
     endMs: Date.now(),
     status: params.status,
     attributes: {
       "gen_ai.operation.name": "chat",
-      "gen_ai.provider.name": "gemini",
-      "gen_ai.request.model": GEMINI_MODEL,
+      "gen_ai.provider.name": params.alvo.provedor === "gemini" ? "gemini" : params.alvo.modelo.split("/")[0],
+      "gen_ai.request.model": params.alvo.modelo,
       ...(params.conversationId && { "gen_ai.conversation.id": params.conversationId }),
       ...(params.empresaId && { "pilar.empresa_id": params.empresaId }),
+      ...(params.motivoParada && { "gen_ai.response.finish_reasons": [params.motivoParada] }),
+      ...(params.erro !== undefined && { "error.type": classificarErroIa(params.erro) }),
       ...(params.inputMessages && { "gen_ai.input.messages": scrub(params.inputMessages) }),
       ...(params.status === "ok" && {
-        "gen_ai.response.model": GEMINI_MODEL,
+        "gen_ai.response.model": params.alvo.modelo,
         "gen_ai.usage.input_tokens": params.tokensEntrada ?? 0,
         "gen_ai.usage.output_tokens": params.tokensSaida ?? 0,
+        ...(params.tokensRaciocinio !== undefined && {
+          "gen_ai.usage.output_tokens.reasoning": params.tokensRaciocinio,
+        }),
         ...(params.outputText !== undefined && {
           "gen_ai.output.messages": scrub([{ role: "assistant", content: params.outputText }]),
         }),
@@ -261,6 +296,7 @@ function recordGeminiChatSpan(params: {
  * Base compartilhada por callGemini (legado) e callGeminiStructured.
  */
 async function fetchGeminiRaw(
+  alvo: ModeloAlvo,
   systemPrompt: string,
   userMessage: string,
   opts: {
@@ -295,25 +331,25 @@ async function fetchGeminiRaw(
         parts: userParts,
       },
     ],
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: opts.maxOutputTokens ?? 4096,
-      responseMimeType: "application/json",
-    },
+    generationConfig: configDeGeracao(alvo.modelo, { modo: "json", maxOutputTokens: opts.maxOutputTokens ?? 4096 }),
   };
 
   // Teto desta chamada: o menor entre o limite por chamada e o que resta do orçamento total.
-  const restante = opts.deadline ? opts.deadline - Date.now() : GEMINI_CALL_TIMEOUT_MS;
-  const timeoutMs = Math.min(GEMINI_CALL_TIMEOUT_MS, restante);
+  const timeoutMs = tetoDaChamadaMs({
+    restanteMs: opts.deadline ? opts.deadline - Date.now() : undefined,
+    comArquivo: Boolean(opts.files?.length),
+    porChamadaMs: GEMINI_CALL_TIMEOUT_MS,
+    orcamentoMs: GEMINI_TOTAL_BUDGET_MS,
+  });
   if (timeoutMs <= 0) {
-    throw new Error("Orçamento de tempo do Gemini esgotado antes da chamada");
+    throw new ErroIa("tempo_esgotado", "Orçamento de tempo do Gemini esgotado antes da chamada");
   }
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response: Response;
   try {
-    response = await fetch(GEMINI_API_URL, {
+    response = await fetch(geminiUrl(alvo.modelo), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -323,49 +359,144 @@ async function fetchGeminiRaw(
       signal: controller.signal,
     });
   } catch (e) {
+    const erro =
+      e instanceof DOMException && e.name === "AbortError"
+        ? new ErroIa("tempo_esgotado", `Gemini API timeout após ${timeoutMs}ms`)
+        : new ErroIa("provedor_indisponivel", `Gemini API sem resposta: ${e instanceof Error ? e.message : e}`, {
+            cause: e,
+          });
     recordGeminiChatSpan({
+      alvo,
       startMs: spanStartMs,
       status: "error",
       inputMessages,
       conversationId: opts.conversationId,
       empresaId: opts.empresaId,
+      erro,
     });
-    if (e instanceof DOMException && e.name === "AbortError") {
-      throw new Error(`Gemini API timeout após ${timeoutMs}ms`);
-    }
-    throw e;
+    throw erro;
   } finally {
     clearTimeout(timer);
   }
 
   if (!response.ok) {
+    const errorText = await response.text();
+    const erro = new ErroIa(tipoDoStatus(response.status), `Gemini API error (${response.status}): ${errorText}`);
     recordGeminiChatSpan({
+      alvo,
       startMs: spanStartMs,
       status: "error",
       inputMessages,
       conversationId: opts.conversationId,
       empresaId: opts.empresaId,
+      erro,
     });
-    const errorText = await response.text();
-    throw new Error(`Gemini API error (${response.status}): ${errorText}`);
+    throw erro;
   }
 
   const result: GeminiApiResponse = await response.json();
   const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-  const usage = result.usageMetadata || {};
-  const tokensEntrada = usage.promptTokenCount || 0;
-  const tokensSaida = usage.candidatesTokenCount || 0;
+  const { tokensEntrada, tokensSaida } = tokensDoGemini(result.usageMetadata);
+  const motivoParada = motivoDeParada(result);
   recordGeminiChatSpan({
+    alvo,
     startMs: spanStartMs,
     status: "ok",
     tokensEntrada,
     tokensSaida,
+    tokensRaciocinio: raciocinioDoGemini(result.usageMetadata),
     inputMessages,
     outputText: text,
     conversationId: opts.conversationId,
     empresaId: opts.empresaId,
+    motivoParada,
   });
+  // JSON cortado no limite ou bloqueado pelo filtro: outra tentativa igual não conserta,
+  // então sai com o tipo certo em vez de gastar o retry de schema.
+  exigirParadaUtil(motivoParada, alvo.modelo);
   return { text, tokensEntrada, tokensSaida };
+}
+
+interface OpcoesChamada {
+  deadline?: number;
+  files?: Array<{ mimeType: string; dataBase64: string }>;
+  maxOutputTokens?: number;
+  conversationId?: string;
+  empresaId?: string;
+}
+
+/**
+ * Chamada bruta ao modelo configurado para a função (SPEC 108): Gemini direto ou gateway.
+ * Sempre pede JSON (o mesmo que o responseMimeType do Gemini faz). Falha passageira do
+ * provedor (429, 5xx, rede) ganha nova tentativa com espera crescente, dentro do prazo
+ * (SPEC 110).
+ */
+function fetchModeloRaw(
+  alvo: ModeloAlvo,
+  systemPrompt: string,
+  userMessage: string,
+  opts: OpcoesChamada = {}
+): Promise<{ text: string; tokensEntrada: number; tokensSaida: number }> {
+  return comNovaTentativa(() => fetchModeloUmaVez(alvo, systemPrompt, userMessage, opts), {
+    deadline: opts.deadline ?? Date.now() + GEMINI_CALL_TIMEOUT_MS,
+    aoRepetir: (tipo) => recordMetric("ai.nova_tentativa", 1, { tags: { motivo: tipo, modelo: alvo.modelo } }),
+  });
+}
+
+async function fetchModeloUmaVez(
+  alvo: ModeloAlvo,
+  systemPrompt: string,
+  userMessage: string,
+  opts: OpcoesChamada
+): Promise<{ text: string; tokensEntrada: number; tokensSaida: number }> {
+  if (alvo.provedor === "gemini") return fetchGeminiRaw(alvo, systemPrompt, userMessage, opts);
+
+  const timeoutMs = tetoDaChamadaMs({
+    restanteMs: opts.deadline ? opts.deadline - Date.now() : undefined,
+    comArquivo: Boolean(opts.files?.length),
+    porChamadaMs: GEMINI_CALL_TIMEOUT_MS,
+    orcamentoMs: GEMINI_TOTAL_BUDGET_MS,
+  });
+  if (timeoutMs <= 0) throw new ErroIa("tempo_esgotado", "Orçamento de tempo do modelo esgotado antes da chamada");
+  const spanStartMs = Date.now();
+  const inputMessages = [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userMessage },
+  ];
+  try {
+    const r = await chamarGateway(alvo, {
+      systemPrompt,
+      userMessage,
+      files: opts.files,
+      json: true,
+      maxTokens: opts.maxOutputTokens ?? 4096,
+      timeoutMs,
+    });
+    recordGeminiChatSpan({
+      alvo,
+      startMs: spanStartMs,
+      status: "ok",
+      tokensEntrada: r.tokensEntrada,
+      tokensSaida: r.tokensSaida,
+      tokensRaciocinio: r.tokensRaciocinio,
+      inputMessages,
+      outputText: r.text,
+      conversationId: opts.conversationId,
+      empresaId: opts.empresaId,
+    });
+    return r;
+  } catch (e) {
+    recordGeminiChatSpan({
+      alvo,
+      startMs: spanStartMs,
+      status: "error",
+      inputMessages,
+      conversationId: opts.conversationId,
+      empresaId: opts.empresaId,
+      erro: e,
+    });
+    throw e;
+  }
 }
 
 export interface GeminiStreamUsage {
@@ -385,8 +516,50 @@ export interface GeminiStreamUsage {
 export async function* streamGeminiText(
   systemPrompt: string,
   userMessage: string,
-  opts: { deadline?: number; conversationId?: string; empresaId?: string } = {}
+  opts: { deadline?: number; conversationId?: string; empresaId?: string; tipo?: string } = {}
 ): AsyncGenerator<string, GeminiStreamUsage, unknown> {
+  const alvo = resolverModelo(opts.tipo);
+  if (alvo.provedor === "gateway") {
+    const restanteGw = opts.deadline ? opts.deadline - Date.now() : GEMINI_CALL_TIMEOUT_MS;
+    const timeoutGw = Math.min(GEMINI_CALL_TIMEOUT_MS, restanteGw);
+    if (timeoutGw <= 0) throw new ErroIa("tempo_esgotado", "Orçamento de tempo do modelo esgotado antes da chamada");
+    const inicio = Date.now();
+    let saida = "";
+    let usoGw: GeminiStreamUsage = { tokensEntrada: 0, tokensSaida: 0 };
+    let statusGw: "ok" | "error" = "ok";
+    try {
+      const gen = streamGateway(alvo, { systemPrompt, userMessage, maxTokens: 4096, timeoutMs: timeoutGw });
+      for (;;) {
+        const n = await gen.next();
+        if (n.done) {
+          usoGw = n.value;
+          break;
+        }
+        saida += n.value;
+        yield n.value;
+      }
+    } catch (e) {
+      statusGw = "error";
+      throw e;
+    } finally {
+      recordGeminiChatSpan({
+        alvo,
+        startMs: inicio,
+        status: statusGw,
+        tokensEntrada: usoGw.tokensEntrada,
+        tokensSaida: usoGw.tokensSaida,
+        inputMessages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userMessage },
+        ],
+        outputText: saida,
+        conversationId: opts.conversationId,
+        empresaId: opts.empresaId,
+      });
+    }
+    return usoGw;
+  }
+
   const body = {
     system_instruction: {
       parts: [{ text: systemPrompt }],
@@ -397,55 +570,66 @@ export async function* streamGeminiText(
         parts: [{ text: userMessage }],
       },
     ],
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 4096,
-    },
+    generationConfig: configDeGeracao(alvo.modelo, { modo: "texto", maxOutputTokens: 4096 }),
   };
 
   const restante = opts.deadline ? opts.deadline - Date.now() : GEMINI_CALL_TIMEOUT_MS;
   const timeoutMs = Math.min(GEMINI_CALL_TIMEOUT_MS, restante);
   if (timeoutMs <= 0) {
-    throw new Error("Orçamento de tempo do Gemini esgotado antes da chamada");
+    throw new ErroIa("tempo_esgotado", "Orçamento de tempo do Gemini esgotado antes da chamada");
   }
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let tokensEntrada = 0;
   let tokensSaida = 0;
+  let tokensRaciocinio: number | undefined;
   let outputText = "";
   const spanStartMs = Date.now();
   let spanStatus: "ok" | "error" = "ok";
+  let erroStream: unknown;
+  let motivoParada: string | undefined;
   const inputMessages = [
     { role: "system", content: systemPrompt },
     { role: "user", content: userMessage },
   ];
 
   try {
-    let response: Response;
-    try {
-      response = await fetch(GEMINI_STREAM_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": GEMINI_API_KEY,
-        },
-        body: JSON.stringify(body),
-        signal: controller.signal,
-      });
-    } catch (e) {
-      spanStatus = "error";
-      if (e instanceof DOMException && e.name === "AbortError") {
-        throw new Error(`Gemini API timeout após ${timeoutMs}ms`);
+    // Nova tentativa só na abertura: depois do primeiro pedaço emitido não dá pra refazer.
+    const response = await comNovaTentativa(
+      async () => {
+        let r: Response;
+        try {
+          r = await fetch(geminiStreamUrl(alvo.modelo), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": GEMINI_API_KEY,
+            },
+            body: JSON.stringify(body),
+            signal: controller.signal,
+          });
+        } catch (e) {
+          if (e instanceof DOMException && e.name === "AbortError") {
+            throw new ErroIa("tempo_esgotado", `Gemini API timeout após ${timeoutMs}ms`);
+          }
+          throw new ErroIa("provedor_indisponivel", `Gemini API sem resposta: ${e instanceof Error ? e.message : e}`, {
+            cause: e,
+          });
+        }
+        if (!r.ok || !r.body) {
+          const errorText = r.body ? await r.text() : "sem corpo";
+          const tipo = r.ok ? "provedor_indisponivel" : tipoDoStatus(r.status);
+          throw new ErroIa(tipo, `Gemini API error (${r.status}): ${errorText}`);
+        }
+        return r;
+      },
+      {
+        deadline: Date.now() + timeoutMs,
+        aoRepetir: (tipo) => recordMetric("ai.nova_tentativa", 1, { tags: { motivo: tipo, modelo: alvo.modelo } }),
       }
-      throw e;
-    }
-
-    if (!response.ok || !response.body) {
-      spanStatus = "error";
-      const errorText = response.body ? await response.text() : "sem corpo";
-      throw new Error(`Gemini API error (${response.status}): ${errorText}`);
-    }
+    );
+    if (!response.body) throw new ErroIa("provedor_indisponivel", "Gemini API sem corpo no stream");
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
@@ -476,37 +660,46 @@ export async function* streamGeminiText(
           outputText += txt;
           yield txt;
         }
-        const usage = parsed.usageMetadata;
-        if (usage) {
+        motivoParada = motivoDeParada(parsed) ?? motivoParada;
+        if (parsed.usageMetadata) {
           // usageMetadata é cumulativa: fica com o último valor visto.
-          tokensEntrada = usage.promptTokenCount ?? tokensEntrada;
-          tokensSaida = usage.candidatesTokenCount ?? tokensSaida;
+          ({ tokensEntrada, tokensSaida } = tokensDoGemini(parsed.usageMetadata));
+          tokensRaciocinio = raciocinioDoGemini(parsed.usageMetadata);
         }
       }
     }
   } catch (e) {
     spanStatus = "error";
+    erroStream = e;
     throw e;
   } finally {
     clearTimeout(timer);
+    // Texto livre cortado no limite: o usuário já viu o pedaço, então não vira erro, mas
+    // fica contado para saber se o limite precisa subir.
+    if (motivoParada === "MAX_TOKENS") {
+      recordMetric("ai.saida_truncada", 1, { tags: { modelo: alvo.modelo, modo: "texto" } });
+    }
     recordGenAiSpan({
       op: "gen_ai.chat",
-      name: `chat ${GEMINI_MODEL} (stream)`,
+      name: `chat ${alvo.modelo} (stream)`,
       startMs: spanStartMs,
       endMs: Date.now(),
       status: spanStatus,
       attributes: {
         "gen_ai.operation.name": "chat",
         "gen_ai.provider.name": "gemini",
-        "gen_ai.request.model": GEMINI_MODEL,
+        "gen_ai.request.model": alvo.modelo,
         "gen_ai.response.streaming": true,
         "gen_ai.input.messages": scrub(inputMessages),
         ...(opts.conversationId && { "gen_ai.conversation.id": opts.conversationId }),
         ...(opts.empresaId && { "pilar.empresa_id": opts.empresaId }),
+        ...(motivoParada && { "gen_ai.response.finish_reasons": [motivoParada] }),
+        ...(erroStream !== undefined && { "error.type": classificarErroIa(erroStream) }),
         ...(spanStatus === "ok" && {
-          "gen_ai.response.model": GEMINI_MODEL,
+          "gen_ai.response.model": alvo.modelo,
           "gen_ai.usage.input_tokens": tokensEntrada,
           "gen_ai.usage.output_tokens": tokensSaida,
+          ...(tokensRaciocinio !== undefined && { "gen_ai.usage.output_tokens.reasoning": tokensRaciocinio }),
           "gen_ai.output.messages": scrub([{ role: "assistant", content: outputText }]),
         }),
       },
@@ -525,11 +718,16 @@ export async function* streamGeminiText(
 export async function callGemini(request: AiRequest): Promise<AiResponse> {
   const spanStartMs = Date.now();
   try {
-    const { text, tokensEntrada, tokensSaida } = await fetchGeminiRaw(request.systemPrompt, request.userMessage, {
-      deadline: Date.now() + GEMINI_CALL_TIMEOUT_MS,
-      conversationId: request.conversationId,
-      empresaId: request.empresaId,
-    });
+    const { text, tokensEntrada, tokensSaida } = await fetchModeloRaw(
+      resolverModelo(request.tipo),
+      request.systemPrompt,
+      request.userMessage,
+      {
+        deadline: Date.now() + GEMINI_CALL_TIMEOUT_MS,
+        conversationId: request.conversationId,
+        empresaId: request.empresaId,
+      }
+    );
 
     let parsed: Record<string, unknown>;
     try {
@@ -601,6 +799,7 @@ export async function callGeminiStructured<T>(
   opts: { maxRetries?: number; maxOutputTokens?: number } = {}
 ): Promise<StructuredResult<T>> {
   const maxRetries = opts.maxRetries ?? 2;
+  const alvo = resolverModelo(request.tipo);
   let lastError = "";
   let tokensEntrada = 0;
   let tokensSaida = 0;
@@ -613,7 +812,8 @@ export async function callGeminiStructured<T>(
   try {
     for (attempt = 1; attempt <= maxRetries + 1; attempt++) {
       if (Date.now() >= deadline) {
-        throw new Error(
+        throw new ErroIa(
+          "tempo_esgotado",
           `Gemini structured output esgotou o orçamento de tempo (${GEMINI_TOTAL_BUDGET_MS}ms) após ${
             attempt - 1
           } tentativa(s). Último erro: ${lastError || "nenhum"}`
@@ -625,7 +825,7 @@ export async function callGeminiStructured<T>(
           ? request.userMessage
           : `${request.userMessage}\n\n[Tentativa ${attempt}] A resposta anterior foi rejeitada: ${lastError}. Responda APENAS com JSON válido que satisfaça exatamente o schema exigido.`;
 
-      const raw = await fetchGeminiRaw(request.systemPrompt, userMessage, {
+      const raw = await fetchModeloRaw(alvo, request.systemPrompt, userMessage, {
         deadline,
         files: request.files,
         maxOutputTokens: opts.maxOutputTokens,
@@ -666,7 +866,8 @@ export async function callGeminiStructured<T>(
       lastError = result.error.issues.map((i) => `${i.path.join(".") || "(raiz)"}: ${i.message}`).join("; ");
     }
 
-    throw new Error(
+    throw new ErroIa(
+      "saida_invalida",
       `Gemini structured output falhou após ${maxRetries + 1} tentativas. Último erro de validação: ${lastError}`
     );
   } catch (e) {
@@ -683,6 +884,7 @@ export async function callGeminiStructured<T>(
         "gen_ai.usage.output_tokens": tokensSaida,
         "pilar.attempts": attempt,
         "pilar.empresa_id": request.empresaId,
+        "error.type": classificarErroIa(e),
         ...(request.conversationId && { "gen_ai.conversation.id": request.conversationId }),
       },
     });
@@ -720,10 +922,11 @@ export async function recordAgentRun(
         entity_id: request.referenciaId ?? null,
         input: { userMessage: request.userMessage },
         result: aiResponse.conteudo,
-        model: GEMINI_MODEL,
+        model: resolverModelo(request.tipo).modelo,
         tokens_input: aiResponse.tokensEntrada,
         tokens_output: aiResponse.tokensSaida,
         created_by: userId,
+        ...(await proveniencia(request.systemPrompt)),
       })
       .select("id")
       .single();
@@ -732,6 +935,24 @@ export async function recordAgentRun(
     // Rastro é best-effort — nunca quebra o fluxo principal.
     return null;
   }
+}
+
+/**
+ * Resposta HTTP para uma falha no fluxo de IA (SPEC 110): status e mensagem do tipo, nunca
+ * o texto bruto do erro. Falha nossa (configuração, erro inesperado) vai pro Sentry; as do
+ * provedor já ficam no span gen_ai com `error.type`.
+ */
+export async function respostaDeErroIa(e: unknown, headers: Record<string, string>, fn: string): Promise<Response> {
+  const corpo = corpoErroIa(e);
+  // O texto completo fica no log da função (Supabase), não na resposta.
+  console.error(`[${fn}] ${corpo.tipo}`, e);
+  if (ehFalhaNossa(corpo.tipo)) {
+    await captureException(e, { fn, tags: { tipo_erro_ia: corpo.tipo } });
+  }
+  return new Response(JSON.stringify(corpo), {
+    status: RESPOSTA_ERRO_IA[corpo.tipo].status,
+    headers: { ...headers, "Content-Type": "application/json" },
+  });
 }
 
 /**

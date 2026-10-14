@@ -11,8 +11,8 @@ import { onlyDigits, formatDocument, formatCEP, formatPhone, validateCPF, valida
 import { detectCardBrand, formatCardNumber, formatExpiry, validateCreditCard } from "@/lib/creditCard";
 import { edgeFunctionErrorDetail } from "@/lib/edgeFunctionError";
 import { analytics } from "@/lib/analytics";
-import { usePlans, calculateYearlySavingPct } from "@/pages/planos/hooks/usePlans";
-import { CycleToggle, type BillingCycle } from "@/pages/planos/components/CycleToggle";
+import { usePlans, calculateYearlySavingPct } from "@/hooks/usePlans";
+import { CycleToggle, type BillingCycle } from "@/components/CycleToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { cobraNaHora } from "@/lib/cobranca";

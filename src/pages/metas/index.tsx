@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
+import { sidebarOffset } from "@/lib/shellLayout";
 import { Plus, DollarSign, User, Layers } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ export default function MetasPage() {
   return (
     <div
       className="fixed top-0 right-0 bottom-0 bg-background z-40 overflow-hidden flex flex-col transition-[left] duration-300 ease-in-out"
-      style={{ left: isMobile ? "0px" : state === "collapsed" ? "64px" : "240px" }}
+      style={{ left: sidebarOffset(state, isMobile) }}
     >
       <div className="sticky top-0 z-20 w-full bg-background border-b">
         <PageHeader title="Metas">
@@ -50,7 +51,14 @@ export default function MetasPage() {
         </PageHeader>
       </div>
 
-      <div className="flex-1 overflow-y-auto w-full bg-background p-6 md:p-8">
+      {/* Área com rolagem própria: precisa receber foco para rolar pelo teclado (axe
+          scrollable-region-focusable) quando o conteúdo não tem nada focável. */}
+      <div
+        className="flex-1 overflow-y-auto w-full bg-background p-6 md:p-8"
+        tabIndex={0}
+        role="region"
+        aria-label="Painel de metas"
+      >
         <div className="w-full mx-auto space-y-6">
           <MetasDashboard />
         </div>

@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, ArrowRight, Eye, EyeOff, Loader2, Lock, Phone, User } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, EyeOff, Lock, Phone, User } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { getSafeErrorMessage } from "@/lib/safeError";
@@ -22,6 +22,8 @@ import {
   profileSetupDefaultValues,
   type ProfileSetupFormData,
 } from "@/schemas";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 export default function ProfileSetup() {
   usePageTitle("Configuração do Perfil");
@@ -404,7 +406,7 @@ export default function ProfileSetup() {
                             className="mt-0.5 data-[state=checked]:bg-brand data-[state=checked]:border-brand data-[state=checked]:text-ink"
                           />
                         </FormControl>
-                        <label className="text-sm text-ink-soft leading-snug cursor-pointer select-none">
+                        <FormLabel className="text-sm font-normal text-ink-soft leading-snug cursor-pointer select-none">
                           Li e concordo com os{" "}
                           <Link
                             to="/termos"
@@ -423,7 +425,7 @@ export default function ProfileSetup() {
                           >
                             Política de Privacidade
                           </Link>
-                        </label>
+                        </FormLabel>
                       </div>
                     </FormItem>
                   )}
@@ -452,7 +454,7 @@ export default function ProfileSetup() {
               >
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                    <BusyMark className="mr-2 h-4 w-4" /> Salvando...
                   </>
                 ) : (
                   <>

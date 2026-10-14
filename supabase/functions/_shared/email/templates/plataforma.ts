@@ -3,7 +3,7 @@
  */
 
 import { BRAND } from "../brand.ts";
-import { html } from "../html.ts";
+import { html, multiline } from "../html.ts";
 import {
   button,
   callout,
@@ -153,6 +153,129 @@ export function templateAtivarPlanoRecibo(params: {
   };
 }
 
+/** Cópia dos próprios dados pronta (SPEC 115): link assinado, válido por alguns dias. */
+export function templateLgpdExportacaoPronta(params: { nome: string; link: string; validoAte: string }): EmailTemplate {
+  const { nome, link, validoAte } = params;
+  return {
+    subject: "Sua cópia de dados está pronta",
+    html: shell({
+      preview: `O link para baixar seus dados vale até ${validoAte}`,
+      footerNote: `Você recebeu este e-mail porque pediu uma cópia dos seus dados no ${BRAND.nome} (LGPD, art. 18).`,
+      hero: {
+        titulo: html`Sua ${em("cópia de dados")} está pronta`,
+        lead: html`Olá, ${strong(nome)}. Montamos o arquivo com os dados da sua conta: perfil, preferências,
+        consentimentos, notificações, conversas com a IA e o histórico das suas ações.`,
+      },
+      content: [
+        button("Baixar meus dados", link),
+        paragraph(
+          html`O link vale até ${strong(validoAte)}. Depois disso, peça uma nova cópia em Configurações → Privacidade.`
+        ),
+        small(
+          html`Projetos, clientes e financeiro são dados da sua empresa e ficam com o administrador dela. Não pediu esta
+          cópia? Responda este e-mail.`
+        ),
+      ],
+    }),
+  };
+}
+
+/** Pedido de exclusão atendido (LGPD art. 18, VI, SPEC 116). Vai para o e-mail original, antes de anonimizar. */
+export function templateLgpdExclusaoConcluida(params: { nome: string }): EmailTemplate {
+  const { nome } = params;
+  return {
+    subject: "Seus dados foram excluídos",
+    html: shell({
+      preview: `Atendemos seu pedido de exclusão no ${BRAND.nome}`,
+      footerNote: `Você recebeu este e-mail porque pediu a exclusão dos seus dados no ${BRAND.nome} (LGPD, art. 18).`,
+      hero: {
+        titulo: html`Seus ${em("dados foram excluídos")}`,
+        lead: html`Olá, ${strong(nome)}. Atendemos seu pedido: nome, e-mail, telefone e foto saíram da sua conta, junto
+        com as conversas com a IA, as notificações e as preferências. O acesso foi encerrado.`,
+      },
+      content: [
+        paragraph(
+          html`Pelo prazo da lei, guardamos só o registro dos aceites (termos, cobrança e cookies) e a trilha de
+          auditoria, sem nome nem e-mail.`
+        ),
+        small(
+          html`Projetos, clientes e financeiro são dados da sua empresa e ficam com o administrador dela. Este é o
+          último e-mail sobre esta conta.`
+        ),
+      ],
+    }),
+  };
+}
+
+/** Pedido de exclusão recusado, com o motivo (SPEC 116). */
+export function templateLgpdExclusaoRecusada(params: { nome: string; motivo: string }): EmailTemplate {
+  const { nome, motivo } = params;
+  return {
+    subject: "Seu pedido de exclusão precisa de um passo antes",
+    html: shell({
+      preview: "Não conseguimos excluir sua conta ainda",
+      footerNote: `Você recebeu este e-mail porque pediu a exclusão dos seus dados no ${BRAND.nome} (LGPD, art. 18).`,
+      hero: {
+        titulo: html`Seu pedido de exclusão ${em("ainda não foi atendido")}`,
+        lead: html`Olá, ${strong(nome)}. Analisamos seu pedido e ele não pôde ser atendido agora.`,
+      },
+      content: [
+        callout(html`${strong("Motivo:")} ${motivo}`),
+        paragraph(
+          html`Resolva o ponto acima e peça de novo em Configurações → Privacidade. Dúvidas? Responda este e-mail.`
+        ),
+      ],
+    }),
+  };
+}
+
+/** Pedido de exportação dos próprios dados (LGPD art. 18, V): vai para o encarregado atender. */
+export function templateLgpdExportacaoDados(params: {
+  empresaNome: string;
+  solicitanteEmail: string;
+  solicitanteNome?: string;
+  requestedAt: string;
+  requestId: string;
+}): EmailTemplate {
+  const { empresaNome, solicitanteEmail, solicitanteNome, requestedAt, requestId } = params;
+  const solicitante = solicitanteNome ? `${solicitanteNome} (${solicitanteEmail})` : solicitanteEmail;
+
+  return {
+    subject: `[LGPD] Solicitação de exportação de dados, ${empresaNome}`,
+    html: shell({
+      preview: `Um usuário da ${empresaNome} pediu uma cópia dos próprios dados`,
+      footerNote: `Notificação automática da ${BRAND.nome} para o encarregado de dados (LGPD, art. 18, V).`,
+      hero: {
+        titulo: html`Pedido de ${em("exportação de dados")}`,
+        lead: html`Um usuário da ${strong(empresaNome)} pediu uma cópia dos próprios dados pessoais, direito previsto no
+        art. 18, V da LGPD.`,
+      },
+      content: [
+        card(
+          [
+            kv("Solicitante", solicitante),
+            kvDivider(),
+            kv("Solicitado em", requestedAt),
+            kvDivider(),
+            kv("ID da solicitação", requestId, { mono: true }),
+          ],
+          { accent: "warning", mt: 0 }
+        ),
+        divider(),
+        paragraph(
+          html`O prazo é de ${strong("até 15 dias")} (art. 19). Envie a cópia para o e-mail do solicitante e marque o
+          pedido como concluído em ${strong("data_export_requests")}.`,
+          { mt: 0 }
+        ),
+        small(
+          html`Referência:
+          ${link("art. 18 da LGPD", "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm")}.`
+        ),
+      ],
+    }),
+  };
+}
+
 export function templateLgpdExclusaoDados(params: {
   adminNome: string;
   empresaNome: string;
@@ -200,6 +323,89 @@ export function templateLgpdExclusaoDados(params: {
           html`Referência:
           ${link("art. 18 da LGPD", "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm")}.`
         ),
+      ],
+    }),
+  };
+}
+
+/** SPEC 112: aviso pro ultra admin de que chegou feedback pelo modal do app. */
+export function templateFeedbackRecebido(params: {
+  tipo: "bug" | "sugestao";
+  titulo: string | null;
+  descricao: string;
+  autor: string;
+  empresaNome: string | null;
+  rota: string | null;
+  temPrint: boolean;
+  enviadoEm: string;
+  painelUrl: string;
+}): EmailTemplate {
+  const { tipo, titulo, descricao, autor, empresaNome, rota, temPrint, enviadoEm, painelUrl } = params;
+  const ehBug = tipo === "bug";
+  const origem = empresaNome ? ` (${empresaNome})` : "";
+  // Assunto é header, não HTML: só tira quebra de linha e limita o tamanho.
+  const assunto = (ehBug ? `Problema relatado por ${autor}${origem}` : `Sugestão de ${autor}${origem}: ${titulo ?? ""}`)
+    .replace(/\s+/g, " ")
+    .slice(0, 150);
+
+  return {
+    subject: assunto,
+    html: shell({
+      preview: descricao.slice(0, 120),
+      footerNote: `Aviso automático da ${BRAND.nome} para quem faz a triagem de feedback.`,
+      hero: {
+        titulo: ehBug ? html`Novo ${em("problema")} relatado` : html`Nova ${em("sugestão")} recebida`,
+        lead: html`${strong(autor)}${origem} enviou pelo botão Feedback do app.`,
+      },
+      content: [
+        card([...(titulo ? [kv("Título", titulo), kvDivider()] : []), paragraph(multiline(descricao), { mt: 0 })], {
+          accent: ehBug ? "warning" : "info",
+          mt: 0,
+        }),
+        card(
+          [
+            kv("Enviado em", enviadoEm),
+            ...(rota ? [kvDivider(), kv("Tela", rota, { mono: true })] : []),
+            kvDivider(),
+            kv("Print", temPrint ? "Anexado, abra pelo painel" : "Sem print"),
+          ],
+          { mt: 16 }
+        ),
+        button("Abrir feedback", painelUrl),
+        small("Responda este e-mail para falar direto com quem enviou."),
+      ],
+    }),
+  };
+}
+
+/**
+ * SPEC 113: aviso de plataforma pro ultra admin (novo cadastro, ativar plano
+ * bloqueado, qualquer notificar_ultra_admins). Mesmo título e texto do sino.
+ */
+export function templateAvisoPlataforma(params: {
+  titulo: string;
+  mensagem: string | null;
+  empresaNome: string | null;
+  enviadoEm: string;
+  url: string;
+  dicaResposta: string | null;
+}): EmailTemplate {
+  const { titulo, mensagem, empresaNome, enviadoEm, url, dicaResposta } = params;
+
+  return {
+    subject: titulo.replace(/\s+/g, " ").slice(0, 150),
+    html: shell({
+      preview: (mensagem ?? titulo).slice(0, 120),
+      footerNote: `Aviso automático da ${BRAND.nome} para administradores da plataforma.`,
+      hero: {
+        titulo: html`${titulo}`,
+        lead: empresaNome ? html`Empresa: ${strong(empresaNome)}` : html`Aviso da plataforma.`,
+      },
+      content: [
+        ...(mensagem ? [card([paragraph(multiline(mensagem), { mt: 0 })], { accent: "info", mt: 0 })] : []),
+        card([kv("Quando", enviadoEm)], { mt: mensagem ? 16 : 0 }),
+        button("Abrir no painel", url),
+        ...(dicaResposta ? [small(dicaResposta)] : []),
       ],
     }),
   };

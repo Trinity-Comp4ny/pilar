@@ -22,7 +22,7 @@ Status de conformidade LGPD + roadmap SOC2/ISO.
 
 - [x] **Acesso/Portabilidade:** self-service em Configurações → Privacidade, `request_data_export`
 - [x] **Correção:** edição direta no Perfil
-- [x] **Exclusão:** self-service em Configurações → Privacidade, `request_data_deletion`
+- [x] **Exclusão:** self-service em Configurações → Privacidade, `request_data_deletion`; o ultra admin aprova na aba Pedidos LGPD e a edge `excluir-dados-titular` apaga o dado pessoal e anonimiza a conta (SPEC 116, ADR 0057)
 - [x] **Informação:** Política de Privacidade pública
 - [x] **Revogação de consentimento:** desativa conta → dados retidos só por obrigação legal
 

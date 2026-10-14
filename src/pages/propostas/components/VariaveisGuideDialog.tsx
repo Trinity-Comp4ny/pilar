@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { BookOpen, Copy, Check } from "lucide-react";
-import { AUTO_VARIABLES } from "@/lib/docxUtils";
+import { AUTO_VARIABLES } from "@/pages/propostas/lib/propostaVariaveis";
 import { toast } from "sonner";
 
 const VARIABLE_EXAMPLES: Record<string, string> = {

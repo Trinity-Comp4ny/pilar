@@ -13,18 +13,21 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Download, Loader2, FileText, Check, Send, ArrowLeft, Eye, Mail } from "lucide-react";
+import { Download, FileText, Check, Send, ArrowLeft, Eye, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { reportInvokeError } from "@/lib/monitoring";
 import { saveAs } from "file-saver";
-import { usePropostaTemplates, downloadTemplateFile } from "@/hooks/usePropostaTemplates";
-import { AUTO_VARIABLES, buildVariableData, generateDocx } from "@/lib/docxUtils";
+import { usePropostaTemplates, downloadTemplateFile } from "@/pages/propostas/hooks/usePropostaTemplates";
+import { AUTO_VARIABLES, buildVariableData } from "@/pages/propostas/lib/propostaVariaveis";
 import { sanitizeHtml } from "@/lib/sanitize";
 import { supabase } from "@/integrations/supabase/client";
 import { mensagemDaFunction } from "@/lib/edgeError";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import mammoth from "mammoth";
+
+import { BusyMark } from "@/components/motion/BusyMark";
+import { ReadingRing } from "@/components/motion/ReadingRing";
+import { analytics } from "@/lib/analytics";
 
 type Step = "config" | "preview" | "send";
 
@@ -201,6 +204,7 @@ export function GerarPropostaDialog({
   const buildDocx = async (): Promise<{ blob: Blob; fileName: string }> => {
     const templateBuffer = await downloadTemplateFile(selectedTemplate!.arquivo_path);
     const allData = { ...autoData, ...manualFields };
+    const { generateDocx } = await import("@/lib/docxUtils");
     const blob = generateDocx(templateBuffer, allData);
     const fileName = `${label}_${proposta.codigo || proposta.titulo.replace(/\s+/g, "_")}.docx`;
 
@@ -224,6 +228,7 @@ export function GerarPropostaDialog({
       // Convert to HTML for preview
       setPreviewLoading(true);
       const arrayBuffer = await blob.arrayBuffer();
+      const { default: mammoth } = await import("mammoth");
       const result = await mammoth.convertToHtml({ arrayBuffer });
       setPreviewHtml(result.value);
       setStep("preview");
@@ -284,6 +289,7 @@ export function GerarPropostaDialog({
       if (error) throw new Error(await mensagemDaFunction(error, error.message));
 
       toast.success(`${label} enviada!`, { description: `Email enviado para ${sendEmail}` });
+      analytics.track("proposta_enviada", { documento: mode ?? "proposta" });
       onSent?.();
       onOpenChange(false);
     } catch (err: unknown) {
@@ -462,7 +468,7 @@ export function GerarPropostaDialog({
           <div className="flex-1 overflow-y-auto min-h-0">
             {previewLoading ? (
               <div className="flex items-center justify-center py-16">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <ReadingRing size={64} />
                 <span className="ml-2 text-sm text-muted-foreground">Gerando preview...</span>
               </div>
             ) : (
@@ -543,7 +549,7 @@ export function GerarPropostaDialog({
               <Button onClick={handleVisualize} disabled={!selectedTemplateId || isGenerating} variant="brand">
                 {isGenerating ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Gerando...
+                    <BusyMark className="mr-2 h-4 w-4" /> Gerando...
                   </>
                 ) : (
                   <>
@@ -581,7 +587,7 @@ export function GerarPropostaDialog({
               >
                 {isSending ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Enviando...
+                    <BusyMark className="h-4 w-4" /> Enviando...
                   </>
                 ) : (
                   <>

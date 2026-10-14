@@ -20,7 +20,7 @@ export type EtapaControls = {
   /** Cria a coluna inline. Retorna true no sucesso, para limpar o campo. */
   onCriar: (nome: string, cor: string | null) => Promise<boolean>;
   criando: boolean;
-  onRenomear: (etapa: Etapa) => void;
+  onEditar: (etapa: Etapa) => void;
   onExcluir: (etapa: Etapa) => void;
   onReordenar: (id: string, dir: -1 | 1) => void;
 };
@@ -71,8 +71,8 @@ export function QuadroTrabalho({ itens, onAbrir, onPrioridade, onExcluir, onMove
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => etapaControls.onRenomear(etapa)}>
-                        <Pencil className="mr-2 h-4 w-4" /> Renomear
+                      <DropdownMenuItem onClick={() => etapaControls.onEditar(etapa)}>
+                        <Pencil className="mr-2 h-4 w-4" /> Editar
                       </DropdownMenuItem>
                       <DropdownMenuItem disabled={idx === 0} onClick={() => etapaControls.onReordenar(etapa.id, -1)}>
                         <ChevronLeft className="mr-2 h-4 w-4" /> Mover para esquerda

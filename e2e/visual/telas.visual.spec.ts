@@ -31,6 +31,10 @@ const TEXTO_VARIAVEL = new RegExp(
 function mascaras(page: Page) {
   return [
     page.getByText(TEXTO_VARIAVEL),
+    // Botão de data inteiro (DatePicker do prazo): mascarar só o texto deixava sobrar a
+    // borda, porque a largura do texto muda com os dígitos do dia ("11/10" é mais
+    // estreito que "28/10") e o seed gera datas relativas a hoje. O botão tem largura fixa.
+    page.getByRole("button", { name: /\d{2}\/\d{2}\/\d{2,4}/ }),
     // Tabela inteira, não só o corpo: a largura das colunas acompanha o conteúdo, que
     // muda com a data do seed, e o cabeçalho descia 1px de um dia para o outro. A
     // borda do card em volta continua na foto, então tabela que desloca ainda aparece.
@@ -66,6 +70,13 @@ test.describe("Telas do app (desktop 1280×720)", () => {
     ["projeto-detalhe", "/projetos/00000000-0000-0000-0000-000000000401"],
     // Período "tudo": com o padrão "Este mês", o número de linhas mudaria com o dia.
     ["lancamentos", "/financeiro?tab=lancamentos&fp=tudo"],
+    // Ampliação de 13/10: os módulos que tinham só teste de fluxo, sem foto da tela.
+    ["obras", "/obras"],
+    ["obra-detalhe", "/obras/00000000-0000-0000-0000-000000000a01"],
+    ["tarefas", "/gestao/tarefas"],
+    ["leads", "/gestao/leads"],
+    ["cliente-detalhe", "/gestao/clientes/00000000-0000-0000-0000-000000000101"],
+    ["propostas", "/gestao/propostas"],
   ] as const;
 
   for (const [nome, rota] of telas) {
@@ -84,6 +95,20 @@ test.describe("Celular (390×844)", () => {
     await abrir(page, "/inicio");
     await expect(page.locator("#main-content")).toBeVisible();
     await expect(page).toHaveScreenshot("inicio-celular.png", opcoes(page));
+  });
+});
+
+test.describe("Login (sem sessão)", () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test("login", async ({ page }) => {
+    await abrir(page, "/login");
+    await expect(page.locator('input[type="email"]')).toBeVisible();
+    // O widget do captcha (iframe de terceiro) muda sozinho: fora da comparação.
+    await expect(page).toHaveScreenshot("login.png", {
+      ...opcoes(page),
+      mask: [...mascaras(page), page.locator("iframe")],
+    });
   });
 });
 

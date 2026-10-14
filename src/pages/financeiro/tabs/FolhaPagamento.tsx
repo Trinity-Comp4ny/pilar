@@ -5,7 +5,7 @@ import { Calendar as CalendarIcon, CheckCircle2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { monitoring } from "@/lib/monitoring";
-import { FiltroCompetencia } from "@/components/filters/FiltroCompetencia";
+import { FiltroCompetencia } from "@/pages/financeiro/components/FiltroCompetencia";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import type { FolhaItem, HistoryItem } from "./folha-pagamento/types";

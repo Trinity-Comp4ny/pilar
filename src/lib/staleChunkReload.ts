@@ -25,8 +25,14 @@
  * promise rejeitada sem catch, e o ErrorBoundary. A guarda de sessionStorage vale
  * para todos: se o reload não resolver (deploy genuinamente quebrado), a segunda
  * falha na mesma aba segue o fluxo normal e aparece a tela de erro.
+ *
+ * A guarda guarda o HORÁRIO do último reload, não um "já recarreguei". Com a flag
+ * fixa, a aba que atravessava um segundo deploy (aberta o dia inteiro, caso comum)
+ * nunca mais recarregava, e PILAR-D/PILAR-2Q voltaram em 09/10. Reload que não
+ * resolve repete o erro em segundos; outro deploy horas depois merece outro reload.
  */
 const RELOAD_FLAG_KEY = "pilar:stale-chunk-reload";
+const JANELA_ANTI_LOOP_MS = 60_000;
 
 /**
  * Assinaturas de chunk velho. Genéricas de propósito: cada navegador escreve a
@@ -42,18 +48,15 @@ const ASSINATURAS = [
   // with a MIME type of 'text/html'".
   /failed to load module script/i,
   /mime type of 'text\/html'/i,
+  // Safari no mesmo caso (PILAR-37): "'text/html' is not a valid JavaScript MIME type."
+  /'text\/html' is not a valid javascript mime type/i,
   // React.lazy recebeu um módulo sem `default` (o caso do fallback de SPA).
   /cannot read propert(y|ies) of undefined \(reading 'default'\)/i,
   /undefined is not an object \(evaluating '[^']*\.default'\)/i,
 ];
 
 export function isStaleChunkError(erro: unknown): boolean {
-  const msg =
-    erro instanceof Error
-      ? `${erro.name}: ${erro.message}`
-      : typeof erro === "string"
-        ? erro
-        : "";
+  const msg = erro instanceof Error ? `${erro.name}: ${erro.message}` : typeof erro === "string" ? erro : "";
   if (!msg) return false;
   return ASSINATURAS.some((re) => re.test(msg));
 }
@@ -62,10 +65,15 @@ export function isStaleChunkError(erro: unknown): boolean {
  * Recarrega uma vez por aba. Retorna true quando assumiu o caso, para quem chamou
  * saber que não precisa mostrar erro ao usuário.
  */
-export function tentarReloadPorChunkVelho(): boolean {
+function reloadRecente(agora: number): boolean {
+  const ultimo = Number(sessionStorage.getItem(RELOAD_FLAG_KEY));
+  return Number.isFinite(ultimo) && ultimo > 0 && agora - ultimo < JANELA_ANTI_LOOP_MS;
+}
+
+export function tentarReloadPorChunkVelho(agora: number = Date.now()): boolean {
   try {
-    if (sessionStorage.getItem(RELOAD_FLAG_KEY)) return false;
-    sessionStorage.setItem(RELOAD_FLAG_KEY, "1");
+    if (reloadRecente(agora)) return false;
+    sessionStorage.setItem(RELOAD_FLAG_KEY, String(agora));
   } catch {
     // Aba privada ou storage bloqueado: sem guarda de loop, não arrisca reload.
     return false;
@@ -76,9 +84,7 @@ export function tentarReloadPorChunkVelho(): boolean {
 
 export function initStaleChunkReload(): void {
   window.addEventListener("vite:preloadError", (event) => {
-    if (sessionStorage.getItem(RELOAD_FLAG_KEY)) return;
-    event.preventDefault();
-    tentarReloadPorChunkVelho();
+    if (tentarReloadPorChunkVelho()) event.preventDefault();
   });
 
   // Import dinâmico que rejeita fora de um boundary do React cai aqui.

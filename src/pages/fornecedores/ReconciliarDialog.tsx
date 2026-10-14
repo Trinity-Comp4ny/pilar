@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Loader2, Link2 } from "lucide-react";
+import { Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { EmptyState } from "@/components/EmptyState";
 import { useFornecedoresLite, usePropostasNaoVinculadas, useVincularFornecedor } from "@/hooks/useFornecedorDetalhe";
 import { sugerirFornecedor } from "@/lib/fornecedorInsights";
+
+import { BusyMark } from "@/components/motion/BusyMark";
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 interface ReconciliarDialogProps {
   open: boolean;
@@ -70,7 +73,7 @@ export function ReconciliarDialog({ open, onOpenChange }: ReconciliarDialogProps
 
         {isLoading ? (
           <div className="flex items-center justify-center py-10 text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin" />
+            <ReadingRing size={64} />
           </div>
         ) : nomes.length === 0 ? (
           <EmptyState
@@ -112,7 +115,7 @@ export function ReconciliarDialog({ open, onOpenChange }: ReconciliarDialogProps
                     </SelectContent>
                   </Select>
                   <Button size="sm" onClick={() => handleVincular(n.nome)} disabled={salvando === n.nome}>
-                    {salvando === n.nome ? <Loader2 className="h-4 w-4 animate-spin" /> : "Vincular"}
+                    {salvando === n.nome ? <BusyMark className="h-4 w-4" /> : "Vincular"}
                   </Button>
                 </div>
               </div>

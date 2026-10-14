@@ -14,15 +14,21 @@ npm run test         # Vitest watch
 npm run test:run     # Vitest CI
 npm run gen:types    # tipos do banco de STAGING (default seguro, ADR 0007)
 npm run gen:types:local          # tipos do banco LOCAL (após criar migration no dev local)
-npm run db:push:staging          # aplica migrations em staging
+npm run db:push:staging          # aplica migrations em staging (só as que já estão em origin/staging)
 npm run functions:deploy:staging # deploya edge functions em staging
 ```
 
 `npm run dev` (e `dev:local`) aplicam as migrations pendentes no banco local
 automaticamente (`supabase migration up`, incremental, não apaga dados): criou
 migration, é só rodar/reiniciar o `dev` e ela entra. Para os tipos refletirem o
-schema local, rode `gen:types:local`. Antes de PR/deploy, a migration vai pro
-staging e o `types.ts` canônico fecha com `gen:types` (staging).
+schema local, rode `gen:types:local` e commite o `types.ts`: é o mesmo resultado
+que o CI confere (job `types-sync`, banco local montado das migrations).
+
+**Migration só chega ao banco de staging depois do merge**, pelo deploy do CI. Não
+rode `db:push:staging` (nem `apply_migration` via MCP) a partir de branch de
+feature: o histórico do banco fica à frente do Git e o próximo deploy de staging
+falha com "Remote migration versions not found" até o PR entrar (13/10, PR #590).
+O `db:push:staging` recusa migration que não está em `origin/staging`.
 
 `npm run dev` exige Docker rodando (sobe o Supabase local). Pra trabalhar só no
 front sem Docker, use `dev:app` (só o app) ou `dev:all` (app+LP).
@@ -64,6 +70,9 @@ usar, o que é proibido). Regras que valem sempre:
 - Botão primário é `variant="brand"`, nunca `className="bg-brand..."`. Status via
   `StatusBadge` do registry (`src/lib/status.ts`). Dinheiro/data via `@/lib/format`.
   Exclusão via `ConfirmDialog`. Campo de dinheiro via `MoneyInput`.
+- Espera e transição usam a marca (ADR 0049): `Button loading`/`BusyMark` inline,
+  `PageLoader` para página e card, `EntryVeil` na entrada. Nunca `Loader2` nem
+  `animate-spin` (teste de varredura reprova).
 - Componente genérico faltando e repetido 3+ vezes: promover (regra dos 3 usos,
   ADR 0008), não copiar. Regra de domínio: escrever à mão.
 - Tabela plana (listagem com ordenação/seleção) usa `DataTable`
@@ -105,7 +114,7 @@ público → `brand/personas.md`. Cor/token: a verdade é `src/styles/tokens.css
 
 183 migrations em `supabase/migrations/`, dois esquemas convivendo: 000..029 (antigo) e
 timestamp 2026*. Tipos gerados em `src/integrations/supabase/types.ts`.
-Rodar `npm run gen:types` após qualquer migration, e commitar o `types.ts`. O CI **valida
+Rodar `npm run gen:types:local` após qualquer migration, e commitar o `types.ts`. O CI **valida
 isso**: o job `types-sync` (Fase 1 do `docs/operations/PLANO_ENGENHARIA_2026-07.md`, já
 implementada) bloqueia o merge quando o `types.ts` commitado diverge do schema das
 migrations. Esquecer de rodar o `gen:types` reprova o PR, não vaza para runtime.

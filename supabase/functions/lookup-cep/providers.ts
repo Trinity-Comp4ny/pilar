@@ -5,6 +5,7 @@
 
 import { z } from "https://esm.sh/zod@3.23.8";
 import { captureException } from "../_shared/sentry.ts";
+import { fetchComTempo } from "../_shared/http.ts";
 
 export interface CepResult {
   cep: string;
@@ -34,7 +35,7 @@ const viaCepSchema = z.union([
 ]);
 
 export async function fromBrasilApi(cepDigits: string): Promise<CepResult | null> {
-  const res = await fetch(`https://brasilapi.com.br/api/cep/v2/${cepDigits}`);
+  const res = await fetchComTempo(`https://brasilapi.com.br/api/cep/v2/${cepDigits}`, {}, 5_000);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`BrasilAPI retornou ${res.status}`);
   const raw = await res.json();
@@ -58,7 +59,7 @@ export async function fromBrasilApi(cepDigits: string): Promise<CepResult | null
 }
 
 export async function fromViaCep(cepDigits: string): Promise<CepResult | null> {
-  const res = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`);
+  const res = await fetchComTempo(`https://viacep.com.br/ws/${cepDigits}/json/`, {}, 5_000);
   if (!res.ok) throw new Error(`ViaCEP retornou ${res.status}`);
   const raw = await res.json();
   const parsed = viaCepSchema.safeParse(raw);

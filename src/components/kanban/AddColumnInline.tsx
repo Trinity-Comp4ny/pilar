@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ColumnColorPicker } from "@/components/kanban/ColumnColorPicker";
 import { cn } from "@/lib/utils";
 
 interface AddColumnInlineProps<E> {
@@ -94,21 +95,7 @@ export function AddColumnInline<E = undefined>({
         placeholder={placeholder}
         className="h-8"
       />
-      <div className="flex flex-wrap gap-1.5 px-0.5">
-        {colors.map((c) => (
-          <button
-            key={c}
-            type="button"
-            onClick={() => setCor(c)}
-            aria-label={`Cor ${c}`}
-            className={cn(
-              "h-5 w-5 rounded-full ring-offset-2 ring-offset-card transition-shadow",
-              cor === c && "ring-2 ring-foreground/60"
-            )}
-            style={{ backgroundColor: c }}
-          />
-        ))}
-      </div>
+      <ColumnColorPicker colors={colors} value={cor} onChange={setCor} />
       {renderExtra?.(extra, setExtra)}
       <div className="flex items-center gap-2">
         <Button variant="brand" size="sm" className="h-7" onClick={criar} disabled={!nome.trim() || busy}>

@@ -5,13 +5,10 @@ import { adminClient } from "../_shared/admin-auth.ts";
 import { logAction } from "../_shared/audit.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { lerJson } from "../_shared/schemas.ts";
+import { lerEntrada } from "./entrada.ts";
 
 const log = createLogger("log-impersonation");
-
-type Body = {
-  action: "start" | "stop";
-  viewAsRole: string;
-};
 
 serve(
   withSentry("log-impersonation", async (req) => {
@@ -34,15 +31,9 @@ serve(
         return safeErrorResponse(403, "Apenas admins podem usar impersonation", req);
       }
 
-      const body: Body = await req.json();
-      const { action, viewAsRole } = body ?? {};
-
-      if (!action || !["start", "stop"].includes(action)) {
-        return safeErrorResponse(400, "action deve ser 'start' ou 'stop'", req);
-      }
-      if (!viewAsRole || typeof viewAsRole !== "string") {
-        return safeErrorResponse(400, "viewAsRole obrigatório", req);
-      }
+      const entrada = lerEntrada(await lerJson(req));
+      if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
+      const { action, viewAsRole } = entrada.data;
 
       // Cria/encerra sessão server-side autoritativa.
       // Sessão expira em 30min automaticamente; helpers current_effective_role() / is_impersonating()

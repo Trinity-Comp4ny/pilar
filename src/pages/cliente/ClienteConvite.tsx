@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Lock, Loader2, Eye, EyeOff, KeyRound } from "lucide-react";
+import { Lock, Eye, EyeOff, KeyRound } from "lucide-react";
 import { setPortalToken } from "@/hooks/useClienteAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { passwordResetSchema, passwordResetDefaultValues, type PasswordResetFormData } from "@/schemas";
 import { Logo } from "@/components/Logo";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 type ConviteResp = { ok: boolean; token?: string; nome?: string; erro?: string };
 
@@ -149,7 +151,7 @@ export default function ClienteConvite() {
             <Button variant="brand" className="w-full h-11 font-medium" type="submit" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
+                  <BusyMark className="mr-2 h-4 w-4" /> Salvando...
                 </>
               ) : (
                 "Definir senha e entrar"

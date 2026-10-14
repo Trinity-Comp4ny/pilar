@@ -10,6 +10,8 @@
  *   ASAAS_PLATFORM_WEBHOOK_TOKEN  token compartilhado entre Asaas e a edge function
  */
 
+import { fetchComTempo } from "./http.ts";
+
 const BASE_URLS = {
   sandbox: "https://sandbox.asaas.com/api/v3",
   producao: "https://api.asaas.com/v3",
@@ -40,7 +42,7 @@ async function asaasFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     ...((init.headers as HeadersInitLocal | undefined) ?? {}),
   };
 
-  const resp = await fetch(`${baseUrl}${path}`, { ...init, headers });
+  const resp = await fetchComTempo(`${baseUrl}${path}`, { ...init, headers });
   const text = await resp.text();
   let json: unknown = null;
 
@@ -110,6 +112,8 @@ export interface AsaasSubscription {
   value: number;
   cycle: string;
   billingType: string;
+  /** true quando a assinatura foi removida no Asaas (GET devolve o registro com deleted). */
+  deleted?: boolean;
 }
 
 export interface CreateSubscriptionParams {
@@ -204,6 +208,19 @@ export interface AsaasPixQrCode {
 
 export async function getPixQrCode(paymentId: string): Promise<AsaasPixQrCode> {
   return asaasFetch<AsaasPixQrCode>(`/payments/${paymentId}/pixQrCode`);
+}
+
+/** Assinatura como está no Asaas (status, valor, ciclo), para a reconciliação diária (SPEC 114). */
+export async function getSubscription(subscriptionId: string): Promise<AsaasSubscription> {
+  return asaasFetch<AsaasSubscription>(`/subscriptions/${subscriptionId}`);
+}
+
+/** Últimas cobranças da assinatura, da mais recente para a mais antiga. */
+export async function getRecentSubscriptionPayments(subscriptionId: string, limit = 5): Promise<AsaasPayment[]> {
+  const resp = await asaasFetch<{ data: AsaasPayment[] }>(
+    `/subscriptions/${subscriptionId}/payments?limit=${limit}&sort=dueDate&order=desc`
+  );
+  return resp.data ?? [];
 }
 
 export async function getPayment(paymentId: string): Promise<AsaasPayment> {

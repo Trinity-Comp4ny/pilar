@@ -61,7 +61,7 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
-          node-version: 20
+          node-version: 22
 
       # psql do cliente do Postgres 17: os bancos de staging e produção estão em
       # 17 desde 13/07, e o runner do Ubuntu traz 16 por padrão. Só o cliente,

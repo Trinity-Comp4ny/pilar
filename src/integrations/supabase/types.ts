@@ -155,6 +155,8 @@ export type Database = {
           idempotency_key: string | null
           input: Json | null
           model: string | null
+          prompt_hash: string | null
+          release: string | null
           result: Json | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -177,6 +179,8 @@ export type Database = {
           idempotency_key?: string | null
           input?: Json | null
           model?: string | null
+          prompt_hash?: string | null
+          release?: string | null
           result?: Json | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -199,6 +203,8 @@ export type Database = {
           idempotency_key?: string | null
           input?: Json | null
           model?: string | null
+          prompt_hash?: string | null
+          release?: string | null
           result?: Json | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -2365,30 +2371,53 @@ export type Database = {
       }
       feature_suggestions: {
         Row: {
+          contexto: Json | null
           created_at: string
           created_by: string
           descricao: string
+          empresa_id: string | null
           id: string
+          print_path: string | null
+          sentry_event_id: string | null
           status_interno: string
-          titulo: string
+          tipo: string
+          titulo: string | null
         }
         Insert: {
+          contexto?: Json | null
           created_at?: string
           created_by: string
           descricao: string
+          empresa_id?: string | null
           id?: string
+          print_path?: string | null
+          sentry_event_id?: string | null
           status_interno?: string
-          titulo: string
+          tipo?: string
+          titulo?: string | null
         }
         Update: {
+          contexto?: Json | null
           created_at?: string
           created_by?: string
           descricao?: string
+          empresa_id?: string | null
           id?: string
+          print_path?: string | null
+          sentry_event_id?: string | null
           status_interno?: string
-          titulo?: string
+          tipo?: string
+          titulo?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "feature_suggestions_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fluxos_disciplinas: {
         Row: {
@@ -3600,9 +3629,11 @@ export type Database = {
           data_inicio: string | null
           empresa_id: string
           id: string
+          nivel: string
           nome: string
           obra_id: string
           ordem: number
+          parent_id: string | null
           updated_at: string
         }
         Insert: {
@@ -3611,9 +3642,11 @@ export type Database = {
           data_inicio?: string | null
           empresa_id: string
           id?: string
+          nivel?: string
           nome: string
           obra_id: string
           ordem?: number
+          parent_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -3622,9 +3655,11 @@ export type Database = {
           data_inicio?: string | null
           empresa_id?: string
           id?: string
+          nivel?: string
           nome?: string
           obra_id?: string
           ordem?: number
+          parent_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -3640,6 +3675,13 @@ export type Database = {
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_frente_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "obra_frente"
             referencedColumns: ["id"]
           },
         ]
@@ -5161,6 +5203,7 @@ export type Database = {
           contato: string | null
           created_at: string | null
           created_by: string | null
+          desativado_em: string | null
           email: string
           empresa_id: string
           equipe_delegado: boolean
@@ -5182,6 +5225,7 @@ export type Database = {
           contato?: string | null
           created_at?: string | null
           created_by?: string | null
+          desativado_em?: string | null
           email: string
           empresa_id: string
           equipe_delegado?: boolean
@@ -5203,6 +5247,7 @@ export type Database = {
           contato?: string | null
           created_at?: string | null
           created_by?: string | null
+          desativado_em?: string | null
           email?: string
           empresa_id?: string
           equipe_delegado?: boolean
@@ -7965,6 +8010,10 @@ export type Database = {
         Args: { p_pessoa: string; p_tarefa: string }
         Returns: undefined
       }
+      _ops_sinais_saude: {
+        Args: { p_janela?: string; p_janela_crons?: string }
+        Returns: Json
+      }
       _portal_create_account: {
         Args: {
           p_cliente_id: string
@@ -8761,6 +8810,7 @@ export type Database = {
         Args: { p_grupo_id: string }
         Returns: undefined
       }
+      reconciliar_assinaturas_disparar: { Args: never; Returns: undefined }
       regenerate_convite_token: {
         Args: { p_convite_id: string }
         Returns: string
@@ -9071,6 +9121,24 @@ export type Database = {
           p_novo_trial_ends_at: string
         }
         Returns: undefined
+      }
+      ultra_admin_listar_pedidos_exclusao: {
+        Args: never
+        Returns: {
+          empresa_id: string
+          empresa_nome: string
+          id: string
+          motivo: string
+          notes: string
+          prazo_em: string
+          processed_at: string
+          requested_at: string
+          status: string
+          titular_email: string
+          titular_nome: string
+          unico_admin: boolean
+          user_id: string
+        }[]
       }
       ultra_admin_listar_retencao: {
         Args: never

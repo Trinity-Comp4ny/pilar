@@ -37,6 +37,10 @@
     "descricao": "Hook de e-mail do Supabase Auth: monta convite e recuperação de senha e envia pelo Resend.",
     "chamada_externa": "Supabase Auth (hook de e-mail)"
   },
+  "aviso-ultra-admin-email": {
+    "dominio": "jobs",
+    "descricao": "Disparada pelo trigger de notificacoes (pg_net): manda por e-mail, na hora, cada aviso de plataforma do ultra admin (feedback, novo cadastro, ativar plano bloqueado). SPEC 113."
+  },
   "campo-upload-foto": {
     "dominio": "campo",
     "descricao": "Upload de foto do Pilar Campo, autorizado pelo token de campo (conta sem usuário Supabase)."
@@ -48,7 +52,17 @@
   },
   "delete-user": {
     "dominio": "acesso",
-    "descricao": "Remove membro: admin só da própria empresa e nunca ultra admin; ultra admin de qualquer empresa."
+    "descricao": "Remove membro (bloqueia o login e desativa, sem apagar: SPEC 116): admin só da própria empresa e nunca ultra admin; ultra admin de qualquer empresa."
+  },
+  "excluir-dados-titular": {
+    "dominio": "plataforma",
+    "descricao": "Ultra admin aprova ou recusa pedido de exclusão (LGPD art. 18 VI): aprovar apaga o dado pessoal, anonimiza e bloqueia a conta (SPEC 116).",
+    "chamada_externa": "aba Pedidos LGPD do ultra admin"
+  },
+  "exportar-dados-titular": {
+    "dominio": "comunicacao",
+    "descricao": "Atende o pedido de exportação de dados (LGPD art. 18): monta a cópia, guarda em bucket privado e manda link de 7 dias (SPEC 115).",
+    "chamada_externa": "trigger notify_data_export_request (pg_net)"
   },
   "geocode-address": {
     "dominio": "utilitario",
@@ -56,7 +70,7 @@
   },
   "guardiao-margem-cron": {
     "dominio": "jobs",
-    "descricao": "Cron diário: prepara rascunho de aditivo quando o projeto estoura o orçamento (spec 081)."
+    "descricao": "Cron diário: prepara rascunho de aditivo, sustentado pelas despesas do projeto, quando ele estoura o orçamento (specs 081 e 107)."
   },
   "health": {
     "dominio": "utilitario",
@@ -123,6 +137,10 @@
   "portal-obra-fotos": {
     "dominio": "portal",
     "descricao": "URLs assinadas das fotos curadas do diário de obra para o portal (spec 087)."
+  },
+  "reconciliar-assinaturas": {
+    "dominio": "jobs",
+    "descricao": "Cron diário: compara cada assinatura do Pilar com o Asaas e avisa o ultra admin das divergências (SPEC 114)."
   },
   "resend-webhook": {
     "dominio": "comunicacao",

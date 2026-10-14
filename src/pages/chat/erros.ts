@@ -37,13 +37,35 @@ export async function extrairMotivoBloqueioTokens(e: unknown): Promise<string | 
 }
 
 /**
+ * Mensagem de uma falha de IA com tipo (SPEC 110): o servidor manda `{ error, tipo }` com
+ * texto já pensado para o usuário (limite do provedor, fora do ar, tempo...). Mesmo
+ * formato duplo de extrairMotivoBloqueioTokens: objeto plano (enviarStream) ou a Response
+ * ainda não lida (functions.invoke).
+ */
+export async function extrairMensagemErroIa(e: unknown): Promise<string | undefined> {
+  const context = (e as { context?: unknown } | null)?.context;
+  let corpo: unknown = context;
+  if (context instanceof Response) {
+    try {
+      corpo = await context.clone().json();
+    } catch {
+      return undefined;
+    }
+  }
+  if (!corpo || typeof corpo !== "object") return undefined;
+  const { error, tipo } = corpo as { error?: unknown; tipo?: unknown };
+  return typeof tipo === "string" && typeof error === "string" ? error : undefined;
+}
+
+/**
  * Mensagem de erro para o envio ao ai-chat. Diz o que houve e o próximo passo.
  * `functions.invoke` devolve FunctionsHttpError (com `context` = Response e o status
  * real da edge function) ou FunctionsFetchError (rede/abort). Em timeout ou cancelamento
  * o fetch é abortado; quem chama sinaliza via `porTimeout`. `motivoBloqueio` só é
- * usado quando `status === 402` (extraído antes via extrairMotivoBloqueioTokens).
+ * usado quando `status === 402` (extraído antes via extrairMotivoBloqueioTokens);
+ * `mensagemErroIa` vem de extrairMensagemErroIa.
  */
-export function msgErroChat(e: unknown, porTimeout = false, motivoBloqueio?: string): string {
+export function msgErroChat(e: unknown, porTimeout = false, motivoBloqueio?: string, mensagemErroIa?: string): string {
   if (porTimeout) {
     return "A resposta demorou demais e foi interrompida. Tente de novo ou simplifique o pedido.";
   }
@@ -64,6 +86,7 @@ export function msgErroChat(e: unknown, porTimeout = false, motivoBloqueio?: str
   if (status === 401 || status === 403) {
     return "Você não tem permissão para essa ação. Fale com um administrador da empresa.";
   }
+  if (mensagemErroIa) return mensagemErroIa;
   if (err?.name === "FunctionsFetchError") {
     return "Sem conexão com o servidor. Verifique sua internet e tente de novo.";
   }

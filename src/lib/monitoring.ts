@@ -28,9 +28,9 @@ export type CaptureOptions = {
 type MetricTags = Record<string, string | number | boolean>;
 export type MetricType = "count" | "gauge" | "distribution";
 
+/** Sem e-mail nem nome de propósito: o Sentry identifica o usuário só pelo id. */
 export interface MonitoringUser {
   id?: string;
-  email?: string;
   empresa_id?: string;
   role?: string;
 }
@@ -42,8 +42,11 @@ interface Monitoring {
   captureMessage(message: string, level?: "info" | "warning" | "error", extra?: Extra): void;
   setUser(user: MonitoringUser | null): void;
   addBreadcrumb(message: string, data?: Extra): void;
-  /** Envia um bug report pro Sentry (User Feedback), sem abrir UI própria do SDK. */
-  submitBugFeedback(message: string, opts?: { email?: string; name?: string }): Promise<void>;
+  /**
+   * Envia um bug report pro Sentry (User Feedback), sem abrir UI própria do SDK.
+   * Best-effort: devolve o event id, ou undefined se o Sentry falhar ou demorar.
+   */
+  submitBugFeedback(message: string, opts?: { email?: string; name?: string }): Promise<string | undefined>;
   /** Métrica de aplicação (dashboard Explore > Metrics). Ver ADR 0027. */
   recordMetric(name: string, value: number, opts?: { type?: MetricType; unit?: string; tags?: MetricTags }): void;
 }
@@ -129,11 +132,20 @@ const noopMonitoring: Monitoring = {
   },
   async submitBugFeedback(message) {
     if (DEV) console.info("[monitoring] bug feedback (no-op)", message);
+    return undefined;
   },
   recordMetric(name, value, opts) {
     if (DEV) console.debug("[monitoring] metric", name, value, opts);
   },
 };
+
+/**
+ * Replay de sessão com erro: a tela vai sem o conteúdo. Texto, campos e mídia
+ * mascarados (padrão do SDK), então o replay mostra layout, cliques e navegação, mas
+ * não nome de cliente, valor, salário ou documento. É o que o registro de tratamento
+ * declara para o Sentry (docs/ROPA.md, item 14).
+ */
+export const OPCOES_REPLAY = { maskAllText: true, maskAllInputs: true, blockAllMedia: true } as const;
 
 const sentryMonitoring: Monitoring = {
   init() {
@@ -143,17 +155,18 @@ const sentryMonitoring: Monitoring = {
       environment: ENV,
       release: __SENTRY_RELEASE__,
       tracesSampleRate: TRACES_RATE,
-      // Mesma taxa do tracing: profiling só faz sentido dentro de uma transaction
-      // amostrada (é isso que o Sentry usa pra decidir quando perfilar), então não
-      // introduz uma env var de sample rate própria pra configurar.
-      profilesSampleRate: TRACES_RATE,
+      // Relativa às transactions JÁ amostradas, não ao total: repetir TRACES_RATE aqui
+      // perfilava 10% de 10% (1% das navegações) e a aba Profiles ficava vazia. 1.0 =
+      // toda transaction amostrada leva profile; o custo continua controlado por
+      // TRACES_RATE. Só Chromium perfila, e só com o header Document-Policy: js-profiling
+      // no HTML (vercel.json).
+      profilesSampleRate: 1.0,
       replaysSessionSampleRate: 0,
       replaysOnErrorSampleRate: 1.0,
       sendDefaultPii: false,
-      integrations: [
-        Sentry.browserTracingIntegration(),
-        Sentry.replayIntegration({ maskAllText: false, blockAllMedia: false }),
-      ],
+      // Replay entra depois, pela CDN (abaixo): no bundle ele pesava ~260 KB de fonte
+      // na entrada de toda página, para gravar só sessões com erro.
+      integrations: [Sentry.browserTracingIntegration()],
       beforeSendTransaction(event) {
         const txName = event.transaction ?? "";
         if (IGNORED_TX_ROUTES.some((re) => re.test(txName))) return null;
@@ -179,6 +192,12 @@ const sentryMonitoring: Monitoring = {
     // aqui é não-fatal: resto do Sentry (erro, tracing, replay) já está ativo.
     Sentry.lazyLoadIntegration("browserProfilingIntegration")
       .then((integrationFn) => Sentry.addIntegration(integrationFn()))
+      .catch(() => undefined);
+    // Replay de sessão com erro (replaysOnErrorSampleRate acima), também pela CDN. Os
+    // primeiros instantes antes do script chegar não entram na gravação; o erro em si e
+    // o tracing já estão ativos desde o init.
+    Sentry.lazyLoadIntegration("replayIntegration")
+      .then((integrationFn) => Sentry.addIntegration(integrationFn(OPCOES_REPLAY)))
       .catch(() => undefined);
     // beforeSend só roda pra eventos de erro: sendFeedback() emite um evento
     // tipo "feedback" à parte, que precisa do próprio scrub aqui.
@@ -208,7 +227,7 @@ const sentryMonitoring: Monitoring = {
       Sentry.setUser(null);
       return;
     }
-    Sentry.setUser({ id: user.id, email: user.email });
+    Sentry.setUser({ id: user.id });
     if (user.empresa_id) Sentry.setTag("empresa_id", user.empresa_id);
     if (user.role) Sentry.setTag("role", user.role);
   },
@@ -220,7 +239,11 @@ const sentryMonitoring: Monitoring = {
     });
   },
   async submitBugFeedback(message, opts = {}) {
-    await Sentry.sendFeedback({ message, email: opts.email, name: opts.name });
+    // O relato já vai pro banco (SPEC 112): adblock ou rede lenta no Sentry não
+    // pode segurar o envio, então corta em 3 s e segue sem o id.
+    const timeout = new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), 3000));
+    const envio = Sentry.sendFeedback({ message, email: opts.email, name: opts.name }).catch(() => undefined);
+    return Promise.race([envio, timeout]);
   },
   recordMetric(name, value, opts = {}) {
     const { type = "count", unit, tags } = opts;

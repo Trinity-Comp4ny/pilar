@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { formatDateTime } from "@/lib/format";
 
+import { PageLoader } from "@/components/motion/PageLoader";
 type ComponentStatusRow = {
   id: string;
   slug: string;
@@ -73,7 +74,7 @@ export default function StatusPage() {
             Não conseguimos carregar o status agora. Tente novamente em instantes.
           </p>
         ) : isLoading ? (
-          <p className="text-sm text-black/50">Carregando...</p>
+          <PageLoader label="Consultando os serviços" />
         ) : (
           <>
             <Card className="border border-black/5">

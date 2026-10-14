@@ -10,7 +10,9 @@ import { getSafeErrorMessage, getRawErrorMessage } from "@/lib/safeError";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
-import { PageSkeleton } from "@/components/PageSkeleton";
+import { EntryVeil } from "@/components/motion/EntryVeil";
+import { isEntryVeilMounted } from "@/components/motion/veilState";
+import { dismissBoot } from "@/components/motion/boot";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { ClientePrivateRoute } from "./components/ClientePrivateRoute";
 import { CampoPrivateRoute } from "./components/CampoPrivateRoute";
@@ -22,6 +24,7 @@ import { TrialBanner } from "./components/TrialBanner";
 import { SettingsModalProvider, useSettingsModal, type SettingsSection } from "./contexts/SettingsModalContext";
 import { ValoresOcultosProvider } from "./contexts/ValoresOcultosContext";
 import { MARKETING_URL, isProductionAppHost } from "./lib/marketingSite";
+import { env } from "./lib/env";
 import { useNovaVersao } from "./hooks/useNovaVersao";
 
 // Modal de configuracoes: so monta quando o usuario abre. Estatico, arrastava os
@@ -68,7 +71,20 @@ const ClienteProjetoDetail = lazy(() => import("./pages/cliente/ClienteProjetoDe
 const NotFound = lazy(() => import("./pages/NotFound"));
 const StatusPage = lazy(() => import("./pages/status"));
 const Admin = lazy(() => import("./pages/admin"));
-const UltraAdmin = lazy(() => import("./pages/ultra-admin"));
+// Portal ultra admin (SPEC 117): um chunk só, carregado na 1ª rota /ultra-admin.
+const ultraAdmin = () => import("./pages/ultra-admin");
+const UltraShell = lazy(() => ultraAdmin().then((m) => ({ default: m.UltraShell })));
+const UltraVisaoGeral = lazy(() => ultraAdmin().then((m) => ({ default: m.VisaoGeral })));
+const UltraEmpresas = lazy(() => ultraAdmin().then((m) => ({ default: m.Empresas })));
+const UltraEmpresaDetalhe = lazy(() => ultraAdmin().then((m) => ({ default: m.EmpresaDetalhe })));
+const UltraUsuarios = lazy(() => ultraAdmin().then((m) => ({ default: m.Usuarios })));
+const UltraTestes = lazy(() => ultraAdmin().then((m) => ({ default: m.Testes })));
+const UltraFuncionalidades = lazy(() => ultraAdmin().then((m) => ({ default: m.Funcionalidades })));
+const UltraFeedback = lazy(() => ultraAdmin().then((m) => ({ default: m.Feedback })));
+const UltraAtividade = lazy(() => ultraAdmin().then((m) => ({ default: m.Atividade })));
+const UltraIncidentes = lazy(() => ultraAdmin().then((m) => ({ default: m.Incidentes })));
+const UltraCustosIa = lazy(() => ultraAdmin().then((m) => ({ default: m.CustosIa })));
+const UltraPedidosLgpd = lazy(() => ultraAdmin().then((m) => ({ default: m.PedidosLgpd })));
 const MfaChallengePage = lazy(() => import("./pages/MfaChallengePage"));
 const MfaSetupPage = lazy(() => import("./pages/MfaSetupPage"));
 const PasswordReset = lazy(() => import("./pages/PasswordReset"));
@@ -137,6 +153,15 @@ function ExternalRedirect({ path = "" }: { path?: string }) {
   return null;
 }
 
+// Status page fora da nossa infra (ADR 0047): se o app ou o Supabase caem, ela continua
+// no ar. A /status interna fica só como fallback enquanto VITE_STATUS_URL não existe.
+function StatusExterna() {
+  useEffect(() => {
+    if (env.VITE_STATUS_URL) window.location.replace(env.VITE_STATUS_URL);
+  }, []);
+  return null;
+}
+
 // /profile, /company e /billing viraram abas do SettingsDialog (modal, sem rota
 // própria). Link antigo abre a aba certa em vez de cair no NotFound.
 function SettingsRedirect({ section }: { section: SettingsSection }) {
@@ -159,6 +184,18 @@ function AvisoDeVersao() {
   return null;
 }
 
+// O anel do boot (index.html) sai quando a primeira tela pinta. Se a primeira
+// tela é um véu de entrada, ele herda o anel e o tira quando o app abrir.
+function SoltaBoot() {
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      if (!isEntryVeilMounted()) dismissBoot();
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, []);
+  return null;
+}
+
 const App = () => {
   return (
     <ErrorBoundary>
@@ -166,6 +203,7 @@ const App = () => {
         <TooltipProvider>
           <Toaster />
           <AvisoDeVersao />
+          <SoltaBoot />
           <BrowserRouter>
             <PageTracker />
             <AuthProvider>
@@ -174,7 +212,7 @@ const App = () => {
                   <ValoresOcultosProvider>
                     <ImpersonationBanner />
                     <TrialBanner />
-                    <Suspense fallback={<PageSkeleton />}>
+                    <Suspense fallback={<EntryVeil />}>
                       <Routes>
                         <Route path="/" element={<ExternalRedirect />} />
                         <Route path="/planos" element={<ExternalRedirect path="/planos" />} />
@@ -186,7 +224,7 @@ const App = () => {
                         <Route path="/auth/callback" element={<AuthCallback />} />
                         <Route path="/forgot-password" element={<ForgotPassword />} />
                         <Route path="/reset-password" element={<PasswordReset />} />
-                        <Route path="/status" element={<StatusPage />} />
+                        <Route path="/status" element={env.VITE_STATUS_URL ? <StatusExterna /> : <StatusPage />} />
 
                         {/* Fora do grupo PrivateRoute de propósito: checkout de compra de
                           tokens é full-bleed (mesmo tratamento visual do /checkout público,
@@ -335,7 +373,20 @@ const App = () => {
                           </Route>
 
                           <Route element={<UltraAdminRoute />}>
-                            <Route path="/ultra-admin" element={<UltraAdmin />} />
+                            <Route path="/ultra-admin" element={<UltraShell />}>
+                              <Route index element={<UltraVisaoGeral />} />
+                              <Route path="empresas" element={<UltraEmpresas />} />
+                              <Route path="empresas/:id" element={<UltraEmpresaDetalhe />} />
+                              <Route path="usuarios" element={<UltraUsuarios />} />
+                              <Route path="testes" element={<UltraTestes />} />
+                              <Route path="funcionalidades" element={<UltraFuncionalidades />} />
+                              <Route path="feedback" element={<UltraFeedback />} />
+                              <Route path="atividade" element={<UltraAtividade />} />
+                              <Route path="incidentes" element={<UltraIncidentes />} />
+                              <Route path="custos-ia" element={<UltraCustosIa />} />
+                              <Route path="lgpd" element={<UltraPedidosLgpd />} />
+                              <Route path="*" element={<Navigate to="/ultra-admin" replace />} />
+                            </Route>
                           </Route>
                         </Route>
 

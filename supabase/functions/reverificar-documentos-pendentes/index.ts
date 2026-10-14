@@ -17,7 +17,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from "../_shared/logger.ts";
 import { withSentry } from "../_shared/sentry.ts";
-import { consultarCnpjBrasilApi, situacaoPermiteSubirNivel } from "../verificar-documento/documento.ts";
+import { consultarCnpjBrasilApi } from "../verificar-documento/documento.ts";
+import { decidirReverificacao } from "./decisao.ts";
+import { cronAutorizado } from "../_shared/cron-auth.ts";
 
 const log = createLogger("reverificar-documentos-pendentes");
 
@@ -37,9 +39,7 @@ serve(
       return new Response("Method not allowed", { status: 405 });
     }
 
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (!token || !CRON_SECRET || token !== CRON_SECRET) {
+    if (!cronAutorizado(req.headers, CRON_SECRET)) {
       return new Response("Unauthorized", { status: 401 });
     }
 
@@ -64,12 +64,13 @@ serve(
     for (const empresa of (pendentes ?? []) as EmpresaPendente[]) {
       const consulta = await consultarCnpjBrasilApi(empresa.cnpj);
 
-      if (consulta.status === "indisponivel") {
+      const decisao = decidirReverificacao(consulta);
+      if (consulta.status === "indisponivel" || decisao === "aguardar") {
         aindaPendentes++;
         continue;
       }
 
-      if (!situacaoPermiteSubirNivel(consulta.info.situacaoCadastral)) {
+      if (decisao === "recusar") {
         await svc
           .from("empresas")
           .update({

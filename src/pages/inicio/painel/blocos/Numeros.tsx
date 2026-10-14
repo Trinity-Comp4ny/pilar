@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { statusBadgeClasses, statusLabel } from "@/lib/status";
-import type { PainelGestao } from "@/hooks/usePainelGestao";
+import type { PainelGestao } from "@/pages/inicio/hooks/usePainelGestao";
 
 /**
  * Blocos de número do painel (SPEC 092).

@@ -70,6 +70,8 @@ Compartilhamos dados apenas com:
 - **PostHog** (análise de uso, só com consentimento do usuário): DPA a confirmar
 - **Resend** (envio de e-mail transacional): DPA a confirmar
 - **Google (Gemini API)** (modelo de IA por trás do chat/copiloto): DPA a confirmar
+- **Vercel AI Gateway, Anthropic e TypeSafe AI** (modelos de IA alternativos do chat, só quando
+  configurados): DPA a confirmar
 - **Asaas** (gateway de pagamento, quando a integração está ativa): DPA a confirmar
 - **Autoridades:** apenas sob ordem judicial
 
@@ -138,8 +140,9 @@ Detalhes de cada cookie/tecnologia usada: ver Política de Cookies
 ## 9. Transferência internacional
 
 Dados permanecem no Brasil (Supabase, região São Paulo). Algumas funcionalidades
-(edge functions na Vercel, Sentry, PostHog, e a API do Google Gemini quando você
-usa o chat/copiloto de IA) podem processar dados temporariamente fora do Brasil,
+(edge functions na Vercel, Sentry, PostHog, e os provedores de IA, Google Gemini ou,
+quando configurados, Anthropic e TypeSafe AI via Vercel AI Gateway, quando você usa o
+chat/copiloto de IA) podem processar dados temporariamente fora do Brasil,
 sempre cifrado em trânsito e sob contrato que impõe proteção equivalente à LGPD.
 
 ## 10. Menores de idade

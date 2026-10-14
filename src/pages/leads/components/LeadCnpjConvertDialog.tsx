@@ -1,12 +1,21 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Search, UserPlus, Building2, Check } from "lucide-react";
+import { Search, UserPlus, Building2, Check } from "lucide-react";
 import { formatCNPJ } from "@/lib/maskUtils";
 import { isValidCNPJ, lookupCNPJ, type CnpjLookup } from "@/lib/brasilApi";
 import { toast } from "sonner";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 export type ConvertEnrichment = {
   cnpj: string | null;
@@ -103,7 +112,7 @@ export function LeadCnpjConvertDialog({ open, onOpenChange, isPending, onConvert
                 onClick={handleSearch}
                 disabled={!isValidCNPJ(cnpj) || searching || isPending}
               >
-                {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                {searching ? <BusyMark className="h-4 w-4" /> : <Search className="h-4 w-4" />}
               </Button>
             </div>
           </div>
@@ -142,7 +151,7 @@ export function LeadCnpjConvertDialog({ open, onOpenChange, isPending, onConvert
           >
             {isPending ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Convertendo...
+                <BusyMark className="mr-2 h-4 w-4" /> Convertendo...
               </>
             ) : (
               "Criar cliente"

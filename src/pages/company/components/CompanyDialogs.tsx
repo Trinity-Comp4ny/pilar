@@ -149,12 +149,16 @@ export function DeleteUserDialog({ open, onOpenChange, onConfirm }: DeleteUserDi
         <AlertDialogHeader>
           <AlertDialogTitle>Remover usuário?</AlertDialogTitle>
           <AlertDialogDescription>
-            Isso removerá o perfil do usuário da sua empresa. Essa ação não pode ser desfeita.
+            A pessoa perde o acesso na hora e sai da equipe. O que ela criou continua com o nome dela no histórico. Para
+            devolver o acesso depois, fale com o suporte.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={onConfirm}>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={onConfirm}
+          >
             Remover
           </AlertDialogAction>
         </AlertDialogFooter>

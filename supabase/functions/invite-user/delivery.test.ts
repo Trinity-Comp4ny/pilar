@@ -26,6 +26,10 @@ function client(
     maybeSingle: () => Promise.resolve({ data: options.profile ?? null, error: options.lookupError ?? null }),
     eq: (...args: unknown[]) => {
       calls.push({ method: "eq", args });
+      return chain;
+    },
+    is: (...args: unknown[]) => {
+      calls.push({ method: "is", args });
       return Promise.resolve({ count: options.count ?? 0, error: options.countError ?? null });
     },
   };
@@ -69,6 +73,8 @@ Deno.test("conta com profile é recusada sem enviar OTP", async () => {
   const result = await deliverInvite(svc, "bia@test.com", "token", "Bia", "https://app.test");
   assertEquals(result.ok, false);
   if (!result.ok) assertEquals(result.preservePending, false);
+  // Resposta de negócio: o handler loga como aviso, não como erro no Sentry (PILAR-2E).
+  if (!result.ok) assertEquals(result.esperado, true);
   assertEquals(
     calls.some((c) => c.method === "otp"),
     false
@@ -102,8 +108,9 @@ Deno.test("falha comum de envio mantém cleanup original", async () => {
   const result = await deliverInvite(svc, "bia@test.com", "token", "Bia", "https://app.test");
   assertEquals(result.ok, false);
   if (!result.ok) assertEquals(result.preservePending, false);
+  if (!result.ok) assertEquals(result.esperado, undefined);
 });
-Deno.test("limite conta profiles por empresa sem deleted_at", async () => {
+Deno.test("limite conta só profiles ativos da empresa (SPEC 116)", async () => {
   for (const [count, expected] of [
     [1, false],
     [2, true],
@@ -113,9 +120,10 @@ Deno.test("limite conta profiles por empresa sem deleted_at", async () => {
     assertEquals(await checkUserLimit(svc, "vrz", 2), { reached: expected, error: null });
     assertEquals(
       calls.map((c) => c.method),
-      ["from", "select", "eq"]
+      ["from", "select", "eq", "is"]
     );
     assertEquals(calls.find((c) => c.method === "eq")?.args, ["empresa_id", "vrz"]);
+    assertEquals(calls.find((c) => c.method === "is")?.args, ["desativado_em", null]);
   }
 });
 Deno.test("empresa sem teto não consulta contagem", async () => {

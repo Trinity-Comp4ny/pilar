@@ -8,7 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AlertTriangle, FileText, Loader2, UserPlus } from "lucide-react";
+import { AlertTriangle, FileText, UserPlus } from "lucide-react";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 // --- Motivo de Perda ---
 
@@ -92,7 +94,7 @@ export function LeadAutoConvertDialog({ open, onOpenChange, isPending, onConvert
           <Button onClick={onConvert} className="bg-positive hover:bg-positive/90 text-white" disabled={isPending}>
             {isPending ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Convertendo...
+                <BusyMark className="mr-2 h-4 w-4" /> Convertendo...
               </>
             ) : (
               "Criar cliente"
@@ -135,7 +137,7 @@ export function LeadCreatePropostaDialog({ open, onOpenChange, leadNome, isPendi
           <Button variant="brand" onClick={onConfirm} disabled={isPending}>
             {isPending ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando...
+                <BusyMark className="mr-2 h-4 w-4" /> Criando...
               </>
             ) : (
               "Confirmar"

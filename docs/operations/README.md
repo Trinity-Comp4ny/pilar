@@ -8,6 +8,7 @@ Deploy, resposta a incidentes, runbooks e monitoramento. ← [voltar ao índice]
 | [DEPLOY_CHECKLIST.md](./DEPLOY_CHECKLIST.md)                                       | Checklist de hardening de deploy (Supabase/Vercel/Cloudflare/Sentry)                                                           |
 | [INCIDENT_RESPONSE.md](./INCIDENT_RESPONSE.md)                                     | **Fonte de verdade** para severidade, comunicação e resposta a incidentes                                                      |
 | [DISASTER_RECOVERY.md](./DISASTER_RECOVERY.md)                                     | Plano de recuperação de desastres (PITR, restore, RTO/RPO)                                                                     |
+| [FINOPS.md](./FINOPS.md)                                                           | **Custo de infraestrutura**: plano e consumo por fornecedor, risco da Vercel, custo por empresa, revisão mensal                |
 | [load-testing.md](./load-testing.md)                                               | Estratégia de teste de carga, quando rodar, baseline                                                                           |
 | [api-versioning.md](./api-versioning.md)                                           | Estratégia de versionamento de API das edge functions                                                                          |
 | [STAGING_SETUP.md](./STAGING_SETUP.md)                                             | Setup do ambiente de staging (2º projeto Supabase)                                                                             |
@@ -18,4 +19,5 @@ Deploy, resposta a incidentes, runbooks e monitoramento. ← [voltar ao índice]
 ## Subpastas
 
 - [`runbooks/`](./runbooks/) — procedimentos passo-a-passo de incidente (DB down, edge function falhando, Asaas down, etc.). Índice em [`runbooks/README.md`](./runbooks/README.md).
-- [`monitoring/`](./monitoring/) — checks sintéticos de produção (workflow monitor-producao.yml) e status page.
+- [`monitoring/`](./monitoring/): SLOs, checks sintéticos de produção (workflow monitor-producao.yml) e status page.
+- [`ai-evals.md`](./ai-evals.md): evals do ai-chat contra o modelo real (como rodar, limites, como adicionar caso).
