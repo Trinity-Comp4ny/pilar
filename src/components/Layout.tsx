@@ -10,6 +10,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageLoader } from "@/components/motion/PageLoader";
 import { VeilExit } from "@/components/motion/EntryVeil";
 import { useRouteEnter } from "@/components/motion/useRouteEnter";
+import { AvatarDiretorioProvider } from "@/contexts/AvatarDiretorioContext";
 
 // Lazy: o CommandPalette carrega o cmdk. Fora do bundle de entrada; só baixa no 1º ⌘K.
 const CommandPalette = lazy(() => import("@/components/CommandPalette").then((m) => ({ default: m.CommandPalette })));
@@ -90,7 +91,9 @@ function LayoutContent() {
 export default function Layout() {
   return (
     <SidebarProvider>
-      <LayoutContent />
+      <AvatarDiretorioProvider>
+        <LayoutContent />
+      </AvatarDiretorioProvider>
     </SidebarProvider>
   );
 }
