@@ -60,6 +60,16 @@ jobs:
       # v1,whsec_...". Achado real, 17/08 (mesmo padrão dos jobs de deploy do
       # ci.yml — db dump não aplica config no servidor, então um valor
       # descartável só pro parse passar é seguro).
+      # A cifragem só vale tanto quanto a chave. Menos de 32 caracteres anota um aviso
+      # no run (gere com `openssl rand -hex 32` e troque o secret nos dois environments).
+      - name: Conferir o tamanho da chave de cifragem
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          if [ "${#BACKUP_ENCRYPTION_KEY}" -lt 32 ]; then
+            echo "::warning::BACKUP_ENCRYPTION_KEY tem menos de 32 caracteres. Gere uma nova com 'openssl rand -hex 32' e atualize o secret (ver DISASTER_RECOVERY.md)."
+          fi
+
       - name: Gerar secret descartável para o parse do config
         run: echo "AUTH_HOOK_SEND_EMAIL_SECRET=v1,whsec_$(openssl rand -base64 32)" >> "$GITHUB_ENV"
 
@@ -102,10 +112,13 @@ jobs:
 
       - name: Criptografar
         # AES-256-CBC simétrico com PBKDF2 (openssl já vem no runner). O dump em
-        # texto puro nunca sobe como artifact, só o .enc.
+        # texto puro nunca sobe como artifact, só o .enc. 600000 iterações de PBKDF2
+        # (o default do openssl é 10000): encarece tentativa de adivinhar a chave por
+        # força bruta. Artifacts gerados até 14/10/2026 usam o default (ver
+        # DISASTER_RECOVERY.md para decifrar os dois formatos).
         run: |
           set -euo pipefail
-          tar -czf - backup | openssl enc -aes-256-cbc -pbkdf2 -salt \
+          tar -czf - backup | openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -salt \
             -out "backup-${{ matrix.target }}.tar.gz.enc" -k "$BACKUP_ENCRYPTION_KEY"
           rm -rf backup
         env:
@@ -133,7 +146,7 @@ jobs:
           set -euo pipefail
           node scripts/storage-backup.mjs backup storage-backup
           tar -czf - storage-backup \
-            | openssl enc -aes-256-cbc -pbkdf2 -salt -out "storage-${{ matrix.target }}.tar.gz.enc" -k "$BACKUP_ENCRYPTION_KEY"
+            | openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -salt -out "storage-${{ matrix.target }}.tar.gz.enc" -k "$BACKUP_ENCRYPTION_KEY"
           rm -rf storage-backup
 
       - name: Upload do backup do Storage
