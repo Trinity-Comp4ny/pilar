@@ -8,6 +8,13 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { reportError } from "@/lib/reportError";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import type { Projeto } from "@/types/projetos";
+import {
+  excluirDisciplina,
+  nomeJaExiste,
+  renomearDisciplina,
+  usosDaDisciplina,
+} from "@/pages/projetos/lib/disciplinaEmLote";
 
 export interface DisciplinaCatalogo {
   id: string;
@@ -19,6 +26,8 @@ interface ManageDisciplinasDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   disciplinas: DisciplinaCatalogo[];
+  /** Projetos da empresa: renomear e excluir valem também para as disciplinas deles. */
+  projetos?: Projeto[];
   onDisciplinasChanged: () => void;
 }
 
@@ -26,6 +35,7 @@ export function ManageDisciplinasDialog({
   open,
   onOpenChange,
   disciplinas,
+  projetos = [],
   onDisciplinasChanged,
 }: ManageDisciplinasDialogProps) {
   const [search, setSearch] = useState("");
@@ -63,14 +73,15 @@ export function ManageDisciplinasDialog({
   };
 
   const handleDelete = async () => {
-    if (!deleteId) return;
-    const { error } = await supabase.from("disciplinas").delete().eq("id", deleteId);
-    if (error) {
-      const { message } = reportError(error, { context: "disciplina:excluir", extra: { id: deleteId } });
-      toast.error("Não foi possível excluir a disciplina", { description: message });
-    } else {
+    const alvo = disciplinas.find((d) => d.id === deleteId);
+    if (!alvo) return;
+    try {
+      await excluirDisciplina({ nome: alvo.nome, projetos, catalogo: disciplinas });
       toast.success("Disciplina excluída");
       onDisciplinasChanged();
+    } catch (error) {
+      const { message } = reportError(error, { context: "disciplina:excluir", extra: { id: alvo.id } });
+      toast.error("Não foi possível excluir a disciplina", { description: message });
     }
     setDeleteId(null);
   };
@@ -85,27 +96,35 @@ export function ManageDisciplinasDialog({
     if (!editTarget) return;
     const nome = editName.trim();
     if (!nome) return;
-    if (hasDuplicate(nome, editTarget.id)) {
+    if (nomeJaExiste(nome, { projetos, catalogo: disciplinas, ignorar: editTarget.nome })) {
       toast.error("Já existe uma disciplina com este nome");
       return;
     }
 
     setEditing(true);
-    const { error } = await supabase.from("disciplinas").update({ nome }).eq("id", editTarget.id);
-    setEditing(false);
-    if (error) {
+    try {
+      await renomearDisciplina({ nome: editTarget.nome, novoNome: nome, projetos, catalogo: disciplinas });
+      toast.success("Disciplina atualizada");
+      setEditTarget(null);
+      setEditName("");
+      onDisciplinasChanged();
+    } catch (error) {
       const { message } = reportError(error, {
         context: "disciplina:editar",
         extra: { id: editTarget.id, nome },
       });
       toast.error("Não foi possível editar a disciplina", { description: message });
-    } else {
-      toast.success("Disciplina atualizada");
-      setEditTarget(null);
-      setEditName("");
-      onDisciplinasChanged();
+    } finally {
+      setEditing(false);
     }
   };
+
+  const alvoExclusao = disciplinas.find((d) => d.id === deleteId);
+  const usosExclusao = alvoExclusao ? usosDaDisciplina(projetos, alvoExclusao.nome).projetos : 0;
+  const descricaoExclusao =
+    usosExclusao > 0
+      ? `Ela está em ${usosExclusao} projeto${usosExclusao !== 1 ? "s" : ""} e será removida de todos, com responsáveis, checklist e histórico. Não dá para desfazer.`
+      : "Não dá para desfazer.";
 
   return (
     <>
@@ -275,7 +294,7 @@ export function ManageDisciplinasDialog({
         }}
         onConfirm={handleDelete}
         title="Excluir disciplina?"
-        description="Esta ação não pode ser desfeita. Projetos que já usam esta disciplina não serão afetados."
+        description={descricaoExclusao}
         confirmText="Excluir"
       />
     </>

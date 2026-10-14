@@ -57,6 +57,11 @@ export default function ProjetosKanban() {
   const queryClient = useQueryClient();
   const canEdit = can("projetos", "create");
   const canViewMapa = can("mapa", "view");
+  // Disciplina é um nome: mudar o catálogo muda os projetos, então recarrega os dois.
+  const refreshDisciplinas = () => {
+    queryClient.invalidateQueries({ queryKey: ["disciplinas"] });
+    queryClient.invalidateQueries({ queryKey: ["projetos"] });
+  };
 
   const {
     templatesData,
@@ -543,7 +548,13 @@ export default function ProjetosKanban() {
         )
       ) : activeTab === "disciplinas" ? (
         <div>
-          <DisciplinasTab projetos={filteredProjetos} />
+          <DisciplinasTab
+            projetos={filteredProjetos}
+            projetosTodos={projetos}
+            catalogo={disciplinas}
+            canEdit={canEdit}
+            onChanged={refreshDisciplinas}
+          />
         </div>
       ) : activeTab === "cronograma" ? (
         <div>
@@ -583,7 +594,8 @@ export default function ProjetosKanban() {
         open={isDisciplinasOpen}
         onOpenChange={setIsDisciplinasOpen}
         disciplinas={disciplinas}
-        onDisciplinasChanged={() => queryClient.invalidateQueries({ queryKey: ["disciplinas"] })}
+        projetos={projetos}
+        onDisciplinasChanged={refreshDisciplinas}
       />
 
       <FluxoDisciplinasDialog
