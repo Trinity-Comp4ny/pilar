@@ -15,7 +15,16 @@ import {
   type Notificacao,
   type AbaNotificacao,
 } from "@/hooks/useNotificacoes";
-import { iconeCategoria, toneSeveridade, resolveLink, formatTimeAgo } from "@/lib/notificacoes";
+import {
+  CATEGORIAS,
+  CATEGORIA_LABEL,
+  iconeCategoria,
+  rotuloCategoria,
+  toneSeveridade,
+  resolveLink,
+  formatTimeAgo,
+  type CategoriaNotificacao,
+} from "@/lib/notificacoes";
 import { setFaviconBadge } from "@/lib/favicon";
 import { PreferenciasDialog } from "@/pages/notificacoes/PreferenciasDialog";
 
@@ -39,6 +48,7 @@ interface NotificationInboxProps {
 export function NotificationInbox({ side = "right", align = "end" }: NotificationInboxProps = {}) {
   const [open, setOpen] = useState(false);
   const [aba, setAba] = useState<AbaNotificacao>("inbox");
+  const [categoria, setCategoria] = useState<CategoriaNotificacao | null>(null);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   // "Gerenciar notificações por e-mail" no rodapé do e-mail (SPEC 096) chega com
@@ -53,8 +63,12 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams]);
 
-  const { data: itens = [] } = useNotificacoes(aba, 50);
-  const { data: naoLidas = 0 } = useNotificacoesNaoLidas();
+  const { data: itens = [] } = useNotificacoes(aba, 50, categoria);
+  const { data: contagem } = useNotificacoesNaoLidas();
+  const naoLidas = contagem?.total ?? 0;
+  const porCategoria = contagem?.porCategoria ?? {};
+  // "Marcar todas" e "Arquivar todas" valem para o que o filtro mostra.
+  const naoLidasNoFiltro = categoria ? (porCategoria[categoria] ?? 0) : naoLidas;
   const marcarLida = useMarcarLida();
   const marcarTodas = useMarcarTodasLidas();
   const arquivar = useArquivar();
@@ -123,11 +137,39 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
             </Button>
           </div>
 
+          {/* Filtro por categoria: o limite de 50 vale por categoria, e a contagem de não lidas
+              mostra onde há coisa nova mesmo com outra categoria enchendo a lista. */}
+          <div className="flex flex-wrap gap-1.5 border-b px-2 py-2" role="group" aria-label="Filtrar por categoria">
+            <ChipCategoria ativo={categoria === null} onClick={() => setCategoria(null)}>
+              Todas
+            </ChipCategoria>
+            {CATEGORIAS.map((c) => {
+              const n = aba === "inbox" ? (porCategoria[c] ?? 0) : 0;
+              return (
+                <ChipCategoria
+                  key={c}
+                  ativo={categoria === c}
+                  onClick={() => setCategoria(categoria === c ? null : c)}
+                  label={n > 0 ? `${CATEGORIA_LABEL[c]}, ${n} não lidas` : undefined}
+                >
+                  {CATEGORIA_LABEL[c]}
+                  {n > 0 && <span className="ml-1 tabular-nums font-semibold">{n}</span>}
+                </ChipCategoria>
+              );
+            })}
+          </div>
+
           {/* Lista */}
           <div className="max-h-[420px] overflow-y-auto">
             {itens.length === 0 ? (
               <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-                {aba === "inbox" ? "Tudo em dia. Nada por aqui." : "Nada arquivado."}
+                {categoria
+                  ? aba === "inbox"
+                    ? `Tudo em dia em ${rotuloCategoria(categoria).toLowerCase()}.`
+                    : `Nada arquivado em ${rotuloCategoria(categoria).toLowerCase()}.`
+                  : aba === "inbox"
+                    ? "Tudo em dia. Nada por aqui."
+                    : "Nada arquivado."}
               </div>
             ) : (
               itens.map((n) => {
@@ -184,8 +226,8 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
                 variant="ghost"
                 size="sm"
                 className="h-7 text-xs text-muted-foreground"
-                disabled={naoLidas === 0}
-                onClick={() => marcarTodas.mutate()}
+                disabled={naoLidasNoFiltro === 0}
+                onClick={() => marcarTodas.mutate(categoria)}
               >
                 <CheckCheck className="mr-1.5 h-3.5 w-3.5" />
                 Marcar todas como lidas
@@ -194,7 +236,7 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
                 variant="ghost"
                 size="sm"
                 className="h-7 text-xs text-muted-foreground"
-                onClick={() => arquivarTodas.mutate()}
+                onClick={() => arquivarTodas.mutate(categoria)}
               >
                 <Archive className="mr-1.5 h-3.5 w-3.5" />
                 Arquivar todas
@@ -217,6 +259,33 @@ function AbaBtn({ ativo, onClick, children }: { ativo: boolean; onClick: () => v
       className={cn(
         "rounded-md px-3 py-1 text-xs font-medium transition-colors",
         ativo ? "bg-white text-ink shadow-sm" : "text-muted-foreground hover:text-ink"
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ChipCategoria({
+  ativo,
+  onClick,
+  label,
+  children,
+}: {
+  ativo: boolean;
+  onClick: () => void;
+  label?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={ativo}
+      aria-label={label}
+      className={cn(
+        "whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+        ativo ? "border-ink bg-ink text-white" : "border-border text-muted-foreground hover:bg-muted/60 hover:text-ink"
       )}
     >
       {children}

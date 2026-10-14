@@ -34,6 +34,7 @@ import {
   testeVenceEmBreve,
   type Situacao,
 } from "./lib";
+import { EmptyState } from "@/components/EmptyState";
 
 const DIA = 24 * 60 * 60 * 1000;
 
@@ -205,7 +206,7 @@ export default function VisaoGeral() {
                 <Skeleton className="h-10 w-full" />
               </div>
             ) : atencao.length === 0 ? (
-              <div className="flex items-center gap-2 py-4 text-sm text-ink-soft">
+              <div className="flex items-center justify-center gap-2 py-6 text-sm text-ink-soft">
                 <CheckCircle2 size={16} className="text-positive-strong" />
                 Nada pedindo atenção agora.
               </div>
@@ -285,7 +286,7 @@ export default function VisaoGeral() {
             {carregando ? (
               <Skeleton className="h-40 w-full" />
             ) : recentes.length === 0 ? (
-              <p className="py-4 text-sm text-ink-muted">Nenhuma empresa cadastrada ainda.</p>
+              <EmptyState compact title="Nenhuma empresa cadastrada ainda." />
             ) : (
               <ul className="divide-y divide-black/5">
                 {recentes.map((e) => (
@@ -320,7 +321,7 @@ export default function VisaoGeral() {
             {atividadeQ.isLoading ? (
               <Skeleton className="h-40 w-full" />
             ) : (atividadeQ.data ?? []).length === 0 ? (
-              <p className="py-4 text-sm text-ink-muted">Nenhuma atividade registrada ainda.</p>
+              <EmptyState compact title="Nenhuma atividade registrada ainda." />
             ) : (
               <ul className="divide-y divide-black/5">
                 {(atividadeQ.data ?? []).map((ev) => (

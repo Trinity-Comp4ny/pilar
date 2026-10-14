@@ -13,9 +13,26 @@ interface EmptyStateProps {
   };
   children?: ReactNode;
   className?: string;
+  /** Uma linha de texto centralizada, para lista ou card vazio (sem ícone, título em destaque nem ação). */
+  compact?: boolean;
 }
 
-export function EmptyState({ icon: Icon, title, description, action, children, className = "" }: EmptyStateProps) {
+export function EmptyState({
+  icon: Icon,
+  title,
+  description,
+  action,
+  children,
+  className = "",
+  compact = false,
+}: EmptyStateProps) {
+  if (compact) {
+    return (
+      <p className={`py-6 text-center text-sm text-muted-foreground ${className}`} role="status">
+        {title}
+      </p>
+    );
+  }
   return (
     <div className={`flex flex-col items-center justify-center text-center py-12 px-6 ${className}`} role="status">
       {Icon && (
