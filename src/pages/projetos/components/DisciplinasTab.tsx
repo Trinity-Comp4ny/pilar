@@ -33,6 +33,8 @@ import { PROJECT_STATUS_CONFIG } from "@/constants";
 import { cn } from "@/lib/utils";
 
 import { ReadingRing } from "@/components/motion/ReadingRing";
+import { DisciplinaGrupoAcoes } from "@/pages/projetos/components/DisciplinaGrupoAcoes";
+import type { CatalogoLinha } from "@/pages/projetos/lib/disciplinaEmLote";
 
 const DISCIPLINA_STATUS_CONFIG: Record<
   string,
@@ -127,10 +129,22 @@ function StatusDistributionBar({ grupo }: { grupo: DisciplinaAgrupada }) {
 
 interface DisciplinasTabProps {
   projetos: Projeto[];
+  /** Todos os projetos, sem filtro da tela (renomear e excluir valem para todos). */
+  projetosTodos?: Projeto[];
+  catalogo?: CatalogoLinha[];
+  canEdit?: boolean;
+  onChanged?: () => void;
   isLoading?: boolean;
 }
 
-export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
+export function DisciplinasTab({
+  projetos,
+  projetosTodos = projetos,
+  catalogo = [],
+  canEdit = false,
+  onChanged,
+  isLoading,
+}: DisciplinasTabProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [projetoFilter, setProjetoFilter] = useState<string>("todos");
@@ -387,82 +401,94 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
             return (
               <Card key={grupo.nome} className={cn("overflow-hidden transition-all", isExpanded && "shadow-sm")}>
                 {/* Group header */}
-                <button
-                  type="button"
-                  className="w-full text-left p-4 hover:bg-muted/30 transition-colors"
-                  onClick={() => toggleExpanded(grupo.nome)}
-                >
-                  <div className="flex items-center gap-3">
-                    <ChevronDown
-                      className={cn(
-                        "h-4 w-4 text-muted-foreground shrink-0 transition-transform",
-                        !isExpanded && "-rotate-90"
-                      )}
-                    />
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold text-sm">{grupo.nome}</h3>
-                        <Badge variant="secondary" className="text-[11px] font-normal">
-                          {grupo.projetos.length} projeto
-                          {grupo.projetos.length !== 1 ? "s" : ""}
-                        </Badge>
-                        {hasAtrasadas && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
-                            <AlertTriangle size={10} /> Atraso
-                          </span>
+                <div className="flex items-center">
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 text-left p-4 hover:bg-muted/30 transition-colors"
+                    onClick={() => toggleExpanded(grupo.nome)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 text-muted-foreground shrink-0 transition-transform",
+                          !isExpanded && "-rotate-90"
                         )}
-                      </div>
+                      />
 
-                      <div className="flex items-center gap-3 mt-2">
-                        <div className="flex-1 max-w-[200px]">
-                          <Progress value={grupo.progresso} className="h-1.5" indicatorClassName="bg-brand" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-semibold text-sm">{grupo.nome}</h3>
+                          <Badge variant="secondary" className="text-[11px] font-normal">
+                            {grupo.projetos.length} projeto
+                            {grupo.projetos.length !== 1 ? "s" : ""}
+                          </Badge>
+                          {hasAtrasadas && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
+                              <AlertTriangle size={10} /> Atraso
+                            </span>
+                          )}
                         </div>
-                        <span className="text-xs font-medium text-muted-foreground">{grupo.progresso}%</span>
-                      </div>
-                    </div>
 
-                    {/* Status distribution bar + counts */}
-                    <div className="hidden sm:flex items-center gap-3 shrink-0">
-                      <StatusDistributionBar grupo={grupo} />
-                      <div className="flex items-center gap-1.5">
-                        {grupo.totalConcluido > 0 && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="flex items-center gap-0.5 text-xs text-positive-strong bg-positive/10 rounded-full px-2 py-0.5">
-                                <CheckCircle2 className="h-3 w-3" />
-                                {grupo.totalConcluido}
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent>Concluídas</TooltipContent>
-                          </Tooltip>
-                        )}
-                        {grupo.totalEmAndamento > 0 && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="flex items-center gap-0.5 text-xs text-info-strong bg-info-soft rounded-full px-2 py-0.5">
-                                <Clock className="h-3 w-3" />
-                                {grupo.totalEmAndamento}
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent>Em Andamento</TooltipContent>
-                          </Tooltip>
-                        )}
-                        {grupo.totalPendente > 0 && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <span className="flex items-center gap-0.5 text-xs text-warning-strong bg-warning-soft rounded-full px-2 py-0.5">
-                                <AlertTriangle className="h-3 w-3" />
-                                {grupo.totalPendente}
-                              </span>
-                            </TooltipTrigger>
-                            <TooltipContent>Pendentes</TooltipContent>
-                          </Tooltip>
-                        )}
+                        <div className="flex items-center gap-3 mt-2">
+                          <div className="flex-1 max-w-[200px]">
+                            <Progress value={grupo.progresso} className="h-1.5" indicatorClassName="bg-brand" />
+                          </div>
+                          <span className="text-xs font-medium text-muted-foreground">{grupo.progresso}%</span>
+                        </div>
+                      </div>
+
+                      {/* Status distribution bar + counts */}
+                      <div className="hidden sm:flex items-center gap-3 shrink-0">
+                        <StatusDistributionBar grupo={grupo} />
+                        <div className="flex items-center gap-1.5">
+                          {grupo.totalConcluido > 0 && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="flex items-center gap-0.5 text-xs text-positive-strong bg-positive/10 rounded-full px-2 py-0.5">
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  {grupo.totalConcluido}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>Concluídas</TooltipContent>
+                            </Tooltip>
+                          )}
+                          {grupo.totalEmAndamento > 0 && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="flex items-center gap-0.5 text-xs text-info-strong bg-info-soft rounded-full px-2 py-0.5">
+                                  <Clock className="h-3 w-3" />
+                                  {grupo.totalEmAndamento}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>Em Andamento</TooltipContent>
+                            </Tooltip>
+                          )}
+                          {grupo.totalPendente > 0 && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="flex items-center gap-0.5 text-xs text-warning-strong bg-warning-soft rounded-full px-2 py-0.5">
+                                  <AlertTriangle className="h-3 w-3" />
+                                  {grupo.totalPendente}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>Pendentes</TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </button>
+                  </button>
+                  {canEdit && onChanged && (
+                    <div className="pr-3">
+                      <DisciplinaGrupoAcoes
+                        nome={grupo.nome}
+                        projetos={projetosTodos}
+                        catalogo={catalogo}
+                        onChanged={onChanged}
+                      />
+                    </div>
+                  )}
+                </div>
 
                 {/* Expanded: project rows */}
                 {isExpanded && (
@@ -589,6 +615,14 @@ export function DisciplinasTab({ projetos, isLoading }: DisciplinasTabProps) {
                               <Badge variant="secondary" className="text-[10px] font-normal">
                                 {grupo.projetos.length}
                               </Badge>
+                              {canEdit && onChanged && (
+                                <DisciplinaGrupoAcoes
+                                  nome={grupo.nome}
+                                  projetos={projetosTodos}
+                                  catalogo={catalogo}
+                                  onChanged={onChanged}
+                                />
+                              )}
                             </div>
                           ) : (
                             <span className="text-muted-foreground/30 pl-2">↳</span>

@@ -131,7 +131,7 @@ export function CompanyUsersTab({
             <TableBody>
               {users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-black/50">
+                  <TableCell colSpan={4} className="py-10 text-center text-sm text-muted-foreground">
                     Nenhum usuário adicionado
                   </TableCell>
                 </TableRow>

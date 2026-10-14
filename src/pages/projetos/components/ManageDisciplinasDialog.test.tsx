@@ -60,12 +60,15 @@ describe("ManageDisciplinasDialog", () => {
     expect(onDisciplinasChanged).toHaveBeenCalledOnce();
   });
 
-  it("deixa disciplina padrão do sistema somente leitura", () => {
-    renderDialog([{ id: "disc-global", nome: "Arquitetura", empresa_id: null }]);
+  it("sem disciplina, orienta a criar a primeira com um exemplo", async () => {
+    const user = userEvent.setup();
+    renderDialog([]);
 
-    expect(screen.getByText("Padrão do sistema")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Editar disciplina Arquitetura" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Excluir disciplina Arquitetura" })).not.toBeInTheDocument();
+    expect(screen.getByText("Crie sua primeira disciplina. Por exemplo: Arquitetônico.")).toBeInTheDocument();
+    expect(screen.queryByText("Padrão do sistema")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Criar disciplina" }));
+    expect(screen.getByPlaceholderText("Ex.: Arquitetônico")).toBeInTheDocument();
   });
 
   it("bloqueia renomear para nome duplicado", async () => {

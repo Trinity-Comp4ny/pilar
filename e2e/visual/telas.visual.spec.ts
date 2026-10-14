@@ -39,6 +39,10 @@ function mascaras(page: Page) {
     // muda com a data do seed, e o cabeçalho descia 1px de um dia para o outro. A
     // borda do card em volta continua na foto, então tabela que desloca ainda aparece.
     page.locator("table"),
+    // Gráfico inteiro (Curva S): a linha e o marcador "Hoje" andam com a data do
+    // calendário contra o seed, então a foto de um dia reprova no seguinte. O card em
+    // volta continua na foto.
+    page.locator(".recharts-responsive-container"),
     // Card de KPI inteiro: o valor estoura a caixa e passa por baixo do ícone (bug
     // conhecido do KPICard), então mascarar só o texto deixaria pedaço variável.
     page.getByRole("button", { name: /^(Recebido|Pago|A receber|A pagar)\b/i }),

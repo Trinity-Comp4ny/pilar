@@ -1,3 +1,4 @@
+import { AvatarStack } from "@/components/AvatarStack";
 import { CalendarClock, Cloud, CloudLightning, CloudRain, Sun } from "lucide-react";
 import { climaLabel, resumoFeedRdo } from "@/lib/obras";
 import { formatDate } from "@/lib/format";
@@ -99,9 +100,7 @@ export function RdoFeedCard({
             <div className="flex items-center justify-between gap-2 border-t border-black/5 pt-2">
               {autor ? (
                 <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand/20 text-[10px] font-semibold text-ink">
-                    {autor.charAt(0).toUpperCase()}
-                  </span>
+                  <AvatarStack pessoas={[autor]} max={1} size="xs" />
                   Por {autor}
                 </span>
               ) : (

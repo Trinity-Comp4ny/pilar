@@ -43,6 +43,13 @@ const CATEGORIA_ICON: Record<CategoriaNotificacao, LucideIcon> = {
   obra: HardHat,
 };
 
+/** Soma de itens por categoria (ex.: não lidas de cada uma). Categoria vem do banco, então a chave é string. */
+export function contarPorCategoria(itens: readonly { categoria: string }[]): Record<string, number> {
+  const contagem: Record<string, number> = {};
+  for (const { categoria } of itens) contagem[categoria] = (contagem[categoria] ?? 0) + 1;
+  return contagem;
+}
+
 /** Ícone da categoria, com fallback para categorias desconhecidas (dado do banco). */
 export function iconeCategoria(categoria: string): LucideIcon {
   return CATEGORIA_ICON[categoria as CategoriaNotificacao] ?? Bell;

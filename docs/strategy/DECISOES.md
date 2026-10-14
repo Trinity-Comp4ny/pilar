@@ -11,6 +11,27 @@ Regras de manutenção:
 
 ---
 
+## 2026-10-14 · Sem disciplinas "padrão do sistema"
+
+**Decisão:** o Pilar não entrega mais disciplinas prontas. A lista de disciplinas nasce vazia, cada
+empresa cria as suas e pode editar ou excluir qualquer uma. O estado vazio orienta a primeira ação
+com um exemplo ("Arquitetônico"), sem card criado.
+Contexto: feedback de 14/10, o usuário não conseguia excluir as "padrão do sistema" (RLS só deixa
+apagar a da própria empresa). Quem já usava uma delas em projeto recebeu uma cópia própria na
+migration, então ninguém perdeu opção. Supera o modelo de semente global da SPEC 058 (follow-up).
+
+---
+
+## 2026-10-14 · Tarefas visíveis para toda a empresa
+
+**Decisão:** todo usuário da empresa vê as tarefas de todos (estilo Trello/ClickUp) e filtra por
+pessoa quando quiser; sem filtro, vê o quadro inteiro. Editar e excluir seguem com admin,
+coordenador, criador e responsáveis.
+Contexto: tarefa sem responsável sumia de todas as telas e o usuário comum só enxergava as próprias.
+Supera a regra "usuário comum só vê onde é responsável" (SPEC 118).
+
+---
+
 ## 2026-10-08 · 2FA desligado por padrão; senha de 12 com tipos em todas as telas
 
 **Decisão:** autenticação em dois fatores fica desligada para todo mundo e cada usuário ativa,

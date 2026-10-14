@@ -28,6 +28,7 @@ import {
   type TarefaInput,
   type TarefaItem,
 } from "./hooks";
+import { resolverPessoaIds } from "./filtroPessoas";
 import { useItensTrabalho, type FiltroTipo, type ItemTrabalho } from "./useItensTrabalho";
 import { useEtapas, useEtapaMutations, type Etapa } from "./useEtapas";
 import { useColunasLista } from "./colunas";
@@ -35,7 +36,6 @@ import { CORES_ETAPA, corDaEtapa, type Prioridade } from "./status";
 
 import { PageLoader } from "@/components/motion/PageLoader";
 const LS_VISAO = "pilar.meu-trabalho.visao";
-const EU = "eu";
 
 type Visao = "lista" | "quadro" | "agenda";
 type FiltroData = "todas" | "atrasadas" | "hoje" | "semana" | "sem_prazo";
@@ -74,9 +74,9 @@ export default function MeuTrabalho() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { isAdmin, role } = usePermissions();
-  // Coordenador vê as tarefas de toda a empresa, igual admin (a RLS já libera;
-  // aqui é só a UI de filtro acompanhar).
-  const podeVerTudo = isAdmin || role === "coordenador";
+  // Todos veem as tarefas de todos (RLS libera a empresa inteira). Editar fica com
+  // admin/coordenador, o criador e os responsáveis (ver `bloqueado`).
+  const podeGerenciarTudo = isAdmin || role === "coordenador";
   const { canView: temProjetos } = useFeatureAccess("projetos");
   const { profile } = useAuth();
   const { data: minhaPessoa } = useMinhaPessoa();
@@ -110,17 +110,17 @@ export default function MeuTrabalho() {
     }
   };
 
-  // Filtro de pessoa: só admin escolhe, e pode marcar mais de uma. Não-admin
-  // fica preso a si mesmo.
+  // Filtro de pessoa ("meu modo"): qualquer um escolhe, e pode marcar mais de
+  // uma. Sem nenhuma marcada = tarefas de todos, inclusive as sem responsável.
   const filtroPessoas = useMemo(() => {
     const raw = searchParams.get("pessoas");
-    return raw ? raw.split(",").filter(Boolean) : [EU];
+    return raw ? raw.split(",").filter(Boolean) : [];
   }, [searchParams]);
   const setFiltroPessoas = (v: string[]) =>
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
-        if (v.length === 0 || (v.length === 1 && v[0] === EU)) next.delete("pessoas");
+        if (v.length === 0) next.delete("pessoas");
         else next.set("pessoas", v.join(","));
         return next;
       },
@@ -128,29 +128,10 @@ export default function MeuTrabalho() {
     );
 
   const minhaPessoaId = minhaPessoa?.id ?? null;
-  // Conjunto efetivo de ids de pessoa a filtrar: "eu" vira a pessoa do usuário
-  // logado. null = nenhum filtro de pessoa ativo (mostra tudo que a RLS já
-  // libera); array (mesmo vazio) = filtro ativo, só quem estiver nele. Quem
-  // não pode ver tudo (não é admin nem coordenador) fica sempre preso à
-  // própria pessoa — [] se não tiver uma vinculada, nunca "sem filtro" (senão
-  // a RLS, que libera tudo pra admin/coordenador, vazaria a empresa inteira
-  // pra quem só devia ver o próprio; e mesmo pra quem não é admin, "eu" sem
-  // pessoa não é responsável de nada).
-  const pessoaIdsEfetivos = useMemo(() => {
-    if (!podeVerTudo) return minhaPessoaId ? [minhaPessoaId] : [];
-    if (filtroPessoas.length === 0) return null; // nenhuma pessoa marcada = sem filtro
-    const ids = new Set<string>();
-    for (const v of filtroPessoas) {
-      if (v === EU) {
-        if (minhaPessoaId) ids.add(minhaPessoaId);
-        // "eu" sem pessoa vinculada: não adiciona ninguém, mas o filtro
-        // continua ativo — sem outra pessoa junto, o resultado fica vazio.
-      } else {
-        ids.add(v);
-      }
-    }
-    return [...ids];
-  }, [podeVerTudo, filtroPessoas, minhaPessoaId]);
+  const pessoaIdsEfetivos = useMemo(
+    () => resolverPessoaIds({ filtroPessoas, minhaPessoaId }),
+    [filtroPessoas, minhaPessoaId]
+  );
 
   const { itens, isLoading, isError } = useItensTrabalho(pessoaIdsEfetivos, {
     comDisciplinas: temProjetos,
@@ -187,11 +168,23 @@ export default function MeuTrabalho() {
   const { criar, atualizar, excluir } = useTarefaMutations();
   const setDisciplinaStatus = useSetDisciplinaStatus();
 
+  // Tarefa de outra pessoa dá para ver, não para mexer: a RLS só deixa
+  // admin/coordenador, o criador e os responsáveis editarem.
+  const podeEditarTarefa = (t: TarefaItem) =>
+    podeGerenciarTudo ||
+    (!!profile?.id && t.created_by === profile.id) ||
+    (!!minhaPessoaId && t.responsaveis.some((r) => r.id === minhaPessoaId));
+  const bloqueado = (item: ItemTrabalho) => {
+    if (item.tipo !== "tarefa" || !item.tarefa || podeEditarTarefa(item.tarefa)) return false;
+    toast("Só quem é responsável pode alterar esta tarefa.");
+    return true;
+  };
+
   // Arrastou o card para outra coluna (etapa). Tarefa vai para a etapa; disciplina
   // só entra em coluna-âncora (que tem bucket), nunca numa coluna extra.
   const moverItem = async (item: ItemTrabalho, destinoEtapaId: string) => {
     const destino = (etapas ?? []).find((e) => e.id === destinoEtapaId);
-    if (!destino) return;
+    if (!destino || bloqueado(item)) return;
     try {
       if (item.tipo === "tarefa") {
         const patch = destino.bucket ? { etapa_id: destino.id, status: destino.bucket } : { etapa_id: destino.id };
@@ -212,7 +205,7 @@ export default function MeuTrabalho() {
   };
 
   const mudarPrioridade = async (item: ItemTrabalho, prioridade: Prioridade) => {
-    if (item.tipo !== "tarefa") return;
+    if (item.tipo !== "tarefa" || bloqueado(item)) return;
     try {
       patchTarefa(item.id, { prioridade });
       await atualizar.mutateAsync({ id: item.id, input: { prioridade } });
@@ -222,7 +215,7 @@ export default function MeuTrabalho() {
   };
 
   const mudarResponsaveis = async (item: ItemTrabalho, pessoaIds: string[]) => {
-    if (item.tipo !== "tarefa") return;
+    if (item.tipo !== "tarefa" || bloqueado(item)) return;
     const novos = (pessoas ?? []).filter((p) => pessoaIds.includes(p.id)).map((p) => ({ id: p.id, nome: p.nome }));
     try {
       patchTarefa(item.id, { responsaveis: novos, responsavel_id: pessoaIds[0] ?? null });
@@ -233,7 +226,7 @@ export default function MeuTrabalho() {
   };
 
   const mudarPrazo = async (item: ItemTrabalho, iso: string | null) => {
-    if (item.tipo !== "tarefa") return;
+    if (item.tipo !== "tarefa" || bloqueado(item)) return;
     try {
       patchTarefa(item.id, { prazo: iso });
       await atualizar.mutateAsync({ id: item.id, input: { prazo: iso } });
@@ -243,7 +236,7 @@ export default function MeuTrabalho() {
   };
 
   const mudarProjeto = async (item: ItemTrabalho, projetoId: string | null) => {
-    if (item.tipo !== "tarefa") return;
+    if (item.tipo !== "tarefa" || bloqueado(item)) return;
     // Otimista: além do id, atualiza o objeto aninhado para o nome trocar na hora.
     const proj = (projetos ?? []).find((p) => p.id === projetoId) ?? null;
     try {
@@ -255,7 +248,7 @@ export default function MeuTrabalho() {
   };
 
   const mudarEtiquetas = async (item: ItemTrabalho, labels: string[]) => {
-    if (item.tipo !== "tarefa") return;
+    if (item.tipo !== "tarefa" || bloqueado(item)) return;
     try {
       patchTarefa(item.id, { labels });
       await atualizar.mutateAsync({ id: item.id, input: { labels } });
@@ -265,7 +258,7 @@ export default function MeuTrabalho() {
   };
 
   const mudarHoras = async (item: ItemTrabalho, dec: number | null) => {
-    if (item.tipo !== "tarefa") return;
+    if (item.tipo !== "tarefa" || bloqueado(item)) return;
     try {
       patchTarefa(item.id, { horas_estimadas: dec });
       await atualizar.mutateAsync({ id: item.id, input: { horas_estimadas: dec } });
@@ -275,7 +268,7 @@ export default function MeuTrabalho() {
   };
 
   const mudarHorasReais = async (item: ItemTrabalho, dec: number | null) => {
-    if (item.tipo !== "tarefa") return;
+    if (item.tipo !== "tarefa" || bloqueado(item)) return;
     try {
       patchTarefa(item.id, { horas_reais: dec });
       await atualizar.mutateAsync({ id: item.id, input: { horas_reais: dec } });
@@ -491,16 +484,14 @@ export default function MeuTrabalho() {
 
         {visao !== "agenda" && (
           <>
-            {podeVerTudo && (
-              <FiltroPessoa
-                value={filtroPessoas}
-                pessoas={pessoas ?? []}
-                minhaPessoaId={minhaPessoaId}
-                meuNome={autorNome}
-                meuAvatarUrl={profile?.avatar_url}
-                onChange={setFiltroPessoas}
-              />
-            )}
+            <FiltroPessoa
+              value={filtroPessoas}
+              pessoas={pessoas ?? []}
+              minhaPessoaId={minhaPessoaId}
+              meuNome={autorNome}
+              meuAvatarUrl={profile?.avatar_url}
+              onChange={setFiltroPessoas}
+            />
 
             {temProjetos && (
               <FiltroPill
@@ -550,7 +541,7 @@ export default function MeuTrabalho() {
           onEtiquetas={mudarEtiquetas}
           onHoras={mudarHoras}
           onHorasReais={mudarHorasReais}
-          onExcluir={setAExcluir}
+          onExcluir={(item) => !bloqueado(item) && setAExcluir(item)}
           onMover={moverItem}
           onCriarNoGrupo={abrirNova}
           etapaControls={etapaControls}
@@ -560,7 +551,7 @@ export default function MeuTrabalho() {
           itens={itensFiltrados}
           onAbrir={abrirItem}
           onPrioridade={mudarPrioridade}
-          onExcluir={setAExcluir}
+          onExcluir={(item) => !bloqueado(item) && setAExcluir(item)}
           onMover={moverItem}
           etapaControls={etapaControls}
         />
@@ -580,6 +571,7 @@ export default function MeuTrabalho() {
         onSave={salvarTarefa}
         saving={criar.isPending || atualizar.isPending}
         comentarioDestacado={comentarioDoLink}
+        readOnly={!!tarefaNoDialog && !podeEditarTarefa(tarefaNoDialog)}
       />
 
       <ConfirmDialog
