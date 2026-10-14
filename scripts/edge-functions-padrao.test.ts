@@ -10,6 +10,7 @@ import { join, relative } from "node:path";
  * 2. Chamada a serviço de terceiro passa por fetchComTempo (_shared/http.ts): fetch
  *    cru só nos módulos que já põem o próprio signal com tempo limite.
  * 3. Ninguém volta ao corsHeaders estático (removido em 13/10).
+ * 4. Função que um usuário pode disparar tem rate limit (ver TEM_RATE_LIMIT). Quem não precisa declara o motivo em SEM_RATE_LIMIT.
  */
 const RAIZ = join(process.cwd(), "supabase/functions");
 
@@ -22,6 +23,38 @@ const FETCH_CRU_PERMITIDO = new Set([
   "_shared/healthcheck.ts",
   "ai-chat/evals/rodar.ts",
 ]);
+
+// Função sem rate limit próprio, com o motivo. Webhook, cron e trigger não são disparados
+// por usuário; função de ultra admin é fechada por papel e usada por poucas pessoas. Função
+// nova de usuário final NÃO entra aqui: usa limitarOuResponder (_shared/db-rate-limit.ts).
+const SEM_RATE_LIMIT: Record<string, string> = {
+  "asaas-config": "dormente, só admin da empresa, sem chamador",
+  "asaas-criar-cobranca": "dormente, só admin da empresa, sem chamador",
+  "asaas-webhook": "webhook da Asaas, autenticado por token",
+  "auth-email-hook": "chamada pelo Supabase Auth, autenticada por segredo do hook",
+  "aviso-ultra-admin-email": "trigger via pg_net, autenticado por segredo",
+  "excluir-dados-titular": "só ultra admin (fila LGPD)",
+  "exportar-dados-titular": "trigger via pg_net, autenticado por segredo",
+  "guardiao-margem-cron": "cron (cronAutorizado)",
+  health: "leitura pública sem efeito colateral; Better Stack e smoke de deploy",
+  "log-impersonation": "só ultra admin",
+  "notificacoes-email-cron": "cron (cronAutorizado)",
+  "pilar-checkout-webhook": "webhook da Asaas, autenticado por token",
+  "reconciliar-assinaturas": "cron (cronAutorizado)",
+  "resend-webhook": "webhook do Resend, assinatura Svix",
+  "retencao-pos-trial": "cron (cronAutorizado)",
+  "reverificar-documentos-pendentes": "cron (cronAutorizado)",
+  "send-data-deletion-notification": "trigger via pg_net, autenticado por segredo",
+  "trial-expiry-cron": "cron (cronAutorizado)",
+  "ultra-admin-empresas": "só ultra admin",
+  "ultra-admin-usuarios": "só ultra admin",
+};
+
+// Mecanismos de rate limit do repo: DB atômico (checkDbRateLimit/limitarOuResponder), em
+// memória (RateLimiter), por empresa nas funções de IA (checkRateLimit de ai-client) e a RPC
+// do convite (check_convite_rate_limit).
+const TEM_RATE_LIMIT =
+  /checkDbRateLimit|limitarOuResponder|new RateLimiter\(|checkRateLimit\(|check_convite_rate_limit/;
 
 function arquivos(dir: string): string[] {
   return readdirSync(dir).flatMap((nome) => {
@@ -51,6 +84,20 @@ describe("padrão das Edge Functions (ADR 0056)", () => {
       .filter((f) => !FETCH_CRU_PERMITIDO.has(f))
       .filter((f) => /(^|[^\w.])fetch\(/.test(readFileSync(join(RAIZ, f), "utf8")));
     expect(cru, "Use fetchComTempo de _shared/http.ts").toEqual([]);
+  });
+
+  it("função disparável por usuário tem rate limit (ou motivo em SEM_RATE_LIMIT)", () => {
+    const sem = funcoes.filter(
+      (f) => !(f in SEM_RATE_LIMIT) && !TEM_RATE_LIMIT.test(readFileSync(join(RAIZ, f, "index.ts"), "utf8"))
+    );
+    expect(sem, "Use limitarOuResponder (_shared/db-rate-limit.ts) ou justifique em SEM_RATE_LIMIT").toEqual([]);
+  });
+
+  it("SEM_RATE_LIMIT só lista função que existe e ainda não tem rate limit", () => {
+    const obsoletas = Object.keys(SEM_RATE_LIMIT).filter(
+      (f) => !funcoes.includes(f) || TEM_RATE_LIMIT.test(readFileSync(join(RAIZ, f, "index.ts"), "utf8"))
+    );
+    expect(obsoletas, "Tire da lista quem foi removida ou ganhou rate limit").toEqual([]);
   });
 
   it("ninguém usa o corsHeaders estático", () => {

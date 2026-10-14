@@ -3,6 +3,7 @@ import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authenticateUser, isUUID, jsonResponse, safeErrorResponse, optionsResponse } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { limitarOuResponder } from "../_shared/db-rate-limit.ts";
 import { sanitizeFilename, validateMagicBytes } from "./arquivo.ts";
 
 const log = createLogger("upload-portal-entrega");
@@ -76,6 +77,15 @@ serve(
       const path = `${profile.empresa_id}/${projeto_id}/${entrega_id}/${Date.now()}_${safeName}`;
 
       const admin = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
+
+      // Upload grava no Storage: limite por empresa contra loop e abuso de espaço.
+      const limite = await limitarOuResponder(admin, req, {
+        bucket: "portal_entrega_upload",
+        key: `empresa:${profile.empresa_id}`,
+        max: 60,
+        windowSeconds: 3600,
+      });
+      if (limite) return limite;
 
       const { error: upErr } = await admin.storage.from("portal-entregas").upload(path, buf, {
         contentType: declaredMime,
