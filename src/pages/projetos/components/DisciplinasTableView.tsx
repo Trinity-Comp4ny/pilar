@@ -29,7 +29,7 @@ import {
   formatDateShort,
   isDiscAtrasada,
 } from "@/types/projetos";
-import type { ChecklistCounts } from "@/hooks/useProjetoDisciplinaChecklist";
+import type { ChecklistCounts } from "@/pages/projetos/hooks/useProjetoDisciplinaChecklist";
 
 interface DisciplinasTableViewProps {
   canEdit: boolean;

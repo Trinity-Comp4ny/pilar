@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { getCorsHeaders, jsonResponse, optionsResponse } from "../_shared/cors.ts";
-import { z } from "../_shared/schemas.ts";
 import {
   createAuthClient,
   createAdminClient,
@@ -10,10 +9,12 @@ import {
   mensagemBloqueioTokens,
   callGeminiStructured,
   debitarTokens,
-  GEMINI_MODEL,
+  modeloEmUso,
   recordAgentRun,
   type AiRequest,
+  respostaDeErroIa,
 } from "../_shared/ai-client.ts";
+import { CestaSchema, ClassificacaoSchema, ComparativoSchema, ItemUnicoSchema, lerEntrada } from "./esquema.ts";
 
 // Spec 023: lê um PDF/imagem de orçamento de fornecedor via Gemini multimodal.
 // O modo padrão é 'auto': a IA CLASSIFICA o documento e roteia sozinha, sem o
@@ -24,60 +25,6 @@ import {
 //   'item'        = acha o preço de UM item específico (uso pontual).
 // Diferente do import financeiro (017, texto-only), o arquivo vai ao Gemini em
 // multimodal (inline_data): orçamento costuma ser PDF escaneado/foto.
-
-const MIME_PERMITIDOS = ["application/pdf", "image/png", "image/jpeg", "image/webp"];
-// Teto de tamanho do arquivo (base64). ~8MB de binário ≈ 11.2M chars base64.
-const MAX_BASE64_CHARS = 11_200_000;
-
-const ItemSchema = z.object({
-  descricao: z.string().min(1),
-  quantidade: z.number().nonnegative().nullable().optional(),
-  unidade: z.string().nullable().optional(),
-  preco_unitario: z.number().nonnegative().nullable().optional(),
-  valor_total: z.number().nonnegative(),
-});
-
-// O modelo às vezes devolve o array na raiz em vez do objeto. Este preprocess
-// embrulha o array na chave certa antes de validar.
-const embrulhaSeArray = (chave: string) => (v: unknown) => (Array.isArray(v) ? { [chave]: v } : v);
-
-const CestaObjSchema = z.object({
-  fornecedor_nome: z.string().nullable().optional(),
-  itens: z.array(ItemSchema).default([]),
-  avisos: z.array(z.string()).default([]),
-});
-const CestaSchema = z.preprocess(embrulhaSeArray("itens"), CestaObjSchema);
-
-const ItemUnicoSchema = z.object({
-  fornecedor_nome: z.string().nullable().optional(),
-  valor_total: z.number().nonnegative(),
-  prazo_entrega_dias: z.number().int().nonnegative().nullable().optional(),
-  condicao_pagamento: z.string().nullable().optional(),
-  avisos: z.array(z.string()).default([]),
-});
-
-// Comparativo: uma proposta por LOJA (coluna), com preço à vista e parcelado.
-const PropostaComparativaSchema = z.object({
-  fornecedor_nome: z.string().min(1),
-  quantidade: z.number().positive().nullable().optional(),
-  unidade: z.string().nullable().optional(),
-  valor_a_vista: z.number().nonnegative(),
-  valor_parcelado: z.number().nonnegative().nullable().optional(),
-  condicao_pagamento: z.string().nullable().optional(),
-  confianca: z.number().min(0).max(1).default(0.7),
-});
-const ComparativoObjSchema = z.object({
-  item_nome: z.string().nullable().optional(),
-  propostas: z.array(PropostaComparativaSchema).default([]),
-  avisos: z.array(z.string()).default([]),
-});
-const ComparativoSchema = z.preprocess(embrulhaSeArray("propostas"), ComparativoObjSchema);
-
-const ClassificacaoSchema = z.object({
-  tipo: z.enum(["comparativo", "cesta"]),
-  confianca: z.number().min(0).max(1).default(0.7),
-  motivo: z.string().nullable().optional(),
-});
 
 function promptClassificar(contexto: string): string {
   return [
@@ -285,28 +232,9 @@ serve(
         return jsonResponse({ error: mensagemBloqueioTokens(gateTokens.motivo), motivo: gateTokens.motivo }, 402, req);
       }
 
-      const body = await req.json().catch(() => ({}));
-      const mimeType = typeof body.mimeType === "string" ? body.mimeType : "";
-      const arquivoBase64 = typeof body.arquivoBase64 === "string" ? body.arquivoBase64 : "";
-      const modoPedido: "item" | "cesta" | "comparativo" | "auto" =
-        body.modo === "item"
-          ? "item"
-          : body.modo === "cesta"
-            ? "cesta"
-            : body.modo === "comparativo"
-              ? "comparativo"
-              : "auto";
-      const contexto = typeof body.contexto === "string" ? body.contexto : "";
-
-      if (!arquivoBase64) {
-        return jsonResponse({ error: "Nenhum arquivo enviado" }, 400, req);
-      }
-      if (!MIME_PERMITIDOS.includes(mimeType)) {
-        return jsonResponse({ error: "Formato não suportado. Envie PDF, PNG, JPG ou WebP." }, 400, req);
-      }
-      if (arquivoBase64.length > MAX_BASE64_CHARS) {
-        return jsonResponse({ error: "Arquivo grande demais (máx. 8 MB). Reduza ou divida o orçamento." }, 400, req);
-      }
+      const entrada = lerEntrada(await req.json().catch(() => null));
+      if (!entrada.ok) return jsonResponse({ error: entrada.error }, 400, req);
+      const { mimeType, arquivoBase64, modoPedido, contexto } = entrada;
 
       const files = [{ mimeType, dataBase64: arquivoBase64 }];
       const tamanhoKb = Math.round((arquivoBase64.length * 3) / 4 / 1024);
@@ -366,7 +294,7 @@ serve(
         userId: user.id,
         agentKey: "cotacao-import",
         agentRunId: runId,
-        model: GEMINI_MODEL,
+        model: modeloEmUso("cotacao-import"),
         tokensInput: tokensEntrada,
         tokensOutput: tokensSaida,
         idempotencyKey: crypto.randomUUID(),
@@ -375,12 +303,15 @@ serve(
 
       return jsonResponse({ modo: ex.modo, classificacao, ...ex.data }, 200, req);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Erro ao ler o orçamento";
-      const status = message === "Não autenticado" ? 401 : 400;
-      return new Response(JSON.stringify({ error: message }), {
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
-        status,
-      });
+      const message = err instanceof Error ? err.message : "";
+      if (message === "Não autenticado" || message === "Perfil não encontrado") {
+        return new Response(JSON.stringify({ error: message }), {
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          status: message === "Não autenticado" ? 401 : 400,
+        });
+      }
+      // Falha da IA ou inesperada: tipo fechado, sem o texto bruto do provedor (SPEC 110).
+      return await respostaDeErroIa(err, getCorsHeaders(req), "ai-cotacao-import");
     }
   })
 );

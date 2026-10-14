@@ -21,7 +21,7 @@
 
 import { chromium } from "playwright";
 import { createServer } from "node:http";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -51,18 +51,34 @@ const TIPOS_MIME = {
   ".json": "application/json; charset=utf-8",
 };
 
-/** Serve `dist/` puro (sem fallback de SPA): cada rota real já vai existir
- * como arquivo próprio depois que este script terminar de escrever. Antes
- * disso, uma rota sem arquivo cai no index.html raiz, que é o suficiente pra
- * primeira carga do Chromium (o React Router assume o resto no cliente). */
+/** Arquivos de `dist/` por URL ("/assets/x.js" → caminho no disco). */
+function listarArquivos(dir, prefixo = "") {
+  const mapa = new Map();
+  for (const item of readdirSync(dir, { withFileTypes: true })) {
+    const url = `${prefixo}/${item.name}`;
+    const caminho = join(dir, item.name);
+    if (!item.isDirectory()) mapa.set(url, caminho);
+    else for (const [u, c] of listarArquivos(caminho, url)) mapa.set(u, c);
+  }
+  return mapa;
+}
+
+/** Serve `dist/` com o mesmo fallback da Vercel: rota (URL sem extensão) recebe o
+ * spa.html, o shell original; o index.html raiz vira a home pré-renderizada logo
+ * na primeira rota. É o suficiente pra primeira carga do Chromium; o React Router
+ * assume o resto no cliente. Asset sai de um mapa montado na partida, então nada
+ * da URL vira caminho de disco ("/../package.json" simplesmente não existe). */
 function servirDist() {
+  const arquivos = listarArquivos(DIST);
+  const shell = join(DIST, "spa.html");
   return createServer((req, res) => {
-    const caminhoLimpo = req.url.split("?")[0];
-    let caminho = join(DIST, caminhoLimpo);
-    if (caminhoLimpo.endsWith("/") || !extname(caminhoLimpo)) {
-      caminho = existsSync(caminho) && existsSync(join(caminho, "index.html")) ? join(caminho, "index.html") : join(DIST, "index.html");
+    const url = req.url.split("?")[0];
+    const caminho = extname(url) ? arquivos.get(url) : shell;
+    if (!caminho) {
+      res.writeHead(404);
+      res.end();
+      return;
     }
-    if (!existsSync(caminho)) caminho = join(DIST, "index.html");
     const tipo = TIPOS_MIME[extname(caminho)] ?? "application/octet-stream";
     res.writeHead(200, { "Content-Type": tipo });
     res.end(readFileSync(caminho));
@@ -80,6 +96,20 @@ async function main() {
   const porta = servidor.address().port;
   const base = `http://127.0.0.1:${porta}`;
 
+  // O boot (ADR 0049) é o anel que cobre a página enquanto o JavaScript baixa. Rota
+  // pré-renderizada já chega pronta e não precisa dele: o bloco sai do HTML, junto
+  // com o <script> síncrono que seguraria a leitura do conteúdo (LCP). O shell
+  // original, com o boot, vira spa.html, que o vercel.json usa de fallback para
+  // rota sem HTML pronto. Gravado antes do loop: o "/" sobrescreve o index.html.
+  const original = readFileSync(join(DIST, "index.html"), "utf8");
+  const BLOCO_BOOT = /[ \t]*<!-- boot:start -->[\s\S]*?<!-- boot:end -->\n?/;
+  if (!BLOCO_BOOT.test(original)) {
+    console.error("[prerender] index.html sem o bloco <!-- boot:start/end -->.");
+    process.exit(1);
+  }
+  writeFileSync(join(DIST, "spa.html"), original);
+  const semBoot = (html) => html.replace(BLOCO_BOOT, "");
+
   const browser = await chromium.launch();
   const contexto = await browser.newContext();
 
@@ -91,7 +121,7 @@ async function main() {
       // Dá tempo pro useEffect de usePageMeta gravar title/meta antes do
       // snapshot; a UI em si já está montada no primeiro paint.
       await pagina.waitForTimeout(200);
-      const html = await pagina.content();
+      const html = semBoot(await pagina.content());
 
       const destino = rota === "/" ? join(DIST, "index.html") : join(DIST, rota.replace(/^\//, ""), "index.html");
       mkdirSync(join(destino, ".."), { recursive: true });
@@ -107,7 +137,7 @@ async function main() {
   await browser.close();
   servidor.close();
 
-  console.log(`[prerender] ${ok}/${ROTAS.length} rotas gravadas em dist/.`);
+  console.log(`[prerender] ${ok}/${ROTAS.length} rotas gravadas em dist/, shell com boot em dist/spa.html.`);
   if (ok !== ROTAS.length) process.exit(1);
 }
 

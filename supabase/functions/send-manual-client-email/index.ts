@@ -1,15 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 
-import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
+import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { sendEmail, templateMensagemManual } from "../_shared/email/index.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { getRateLimitKey, RateLimiter } from "../_shared/rate-limiter.ts";
+import { lerJson } from "../_shared/schemas.ts";
+import { lerEntrada } from "./entrada.ts";
 
 const log = createLogger("send-manual-client-email");
-
-const MAX_SUBJECT_LEN = 200;
-const MAX_MESSAGE_LEN = 10_000;
 
 // 20 emails manuais por usuário por hora
 const limiter = new RateLimiter(20, 60 * 60_000);
@@ -32,24 +31,9 @@ serve(
     }
 
     try {
-      const { cliente_id, subject, message } = await req.json();
-
-      // Destinatário é sempre um cliente DA EMPRESA do caller, nunca endereço livre:
-      // sem isso qualquer usuário logado mandaria texto arbitrário para qualquer
-      // caixa com o remetente do Pilar.
-      if (!isUUID(cliente_id)) return safeErrorResponse(400, "cliente_id inválido", req);
-      if (!subject || typeof subject !== "string" || subject.trim().length === 0) {
-        return safeErrorResponse(400, "Assunto obrigatório", req);
-      }
-      if (!message || typeof message !== "string" || message.trim().length === 0) {
-        return safeErrorResponse(400, "Mensagem obrigatória", req);
-      }
-      if (subject.length > MAX_SUBJECT_LEN) {
-        return safeErrorResponse(400, `Assunto excede ${MAX_SUBJECT_LEN} caracteres`, req);
-      }
-      if (message.length > MAX_MESSAGE_LEN) {
-        return safeErrorResponse(400, `Mensagem excede ${MAX_MESSAGE_LEN} caracteres`, req);
-      }
+      const entrada = lerEntrada(await lerJson(req));
+      if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
+      const { cliente_id, subject, message } = entrada.data;
 
       // Empresa do caller (via JWT) assina o e-mail: remetente e reply-to.
       const { data: empresaId } = await auth.supabase.rpc("get_user_empresa_id");

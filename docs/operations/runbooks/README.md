@@ -11,15 +11,15 @@ comunicação e pós-mortem.
 
 ## Índice
 
-| Runbook                                               | Severidade | Quando usar                                                           |
-| ----------------------------------------------------- | ---------- | --------------------------------------------------------------------- |
-| [database-down](./database-down.md)                   | P0         | Supabase indisponível, healthcheck falhando, queries timeout em massa |
-| [edge-function-failing](./edge-function-failing.md)   | P1         | Erro 5xx recorrente em uma edge function (Sentry, Supabase logs)      |
-| [asaas-integration-down](./asaas-integration-down.md) | P1         | Webhook Asaas não chegando, cobranças falhando, status travado        |
-| [sentry-spike](./sentry-spike.md)                     | P2         | Aumento súbito de erros no Sentry após release ou sem causa óbvia     |
-| [data-deletion-request](./data-deletion-request.md)   | LGPD       | Pedido de eliminação de dados (Art. 18 IV) na fila                    |
-| [user-locked-out](./user-locked-out.md)               | P2         | Admin perdeu acesso por MFA / esqueceu senha / e‑mail trocado         |
-| [backup-restore-test](./backup-restore-test.md)       | trimestral | Teste de restore de backup (DR drill)                                 |
+| Runbook                                               | Severidade          | Quando usar                                                           |
+| ----------------------------------------------------- | ------------------- | --------------------------------------------------------------------- |
+| [database-down](./database-down.md)                   | P0                  | Supabase indisponível, healthcheck falhando, queries timeout em massa |
+| [edge-function-failing](./edge-function-failing.md)   | P1                  | Erro 5xx recorrente em uma edge function (Sentry, Supabase logs)      |
+| [asaas-integration-down](./asaas-integration-down.md) | P1                  | Webhook Asaas não chegando, cobranças falhando, status travado        |
+| [sentry-spike](./sentry-spike.md)                     | P2                  | Aumento súbito de erros no Sentry após release ou sem causa óbvia     |
+| [data-deletion-request](./data-deletion-request.md)   | LGPD                | Pedido de eliminação de dados (Art. 18 IV) na fila                    |
+| [user-locked-out](./user-locked-out.md)               | P2                  | Admin perdeu acesso por MFA / esqueceu senha / e‑mail trocado         |
+| [backup-restore-test](./backup-restore-test.md)       | mensal (automático) | Drill de restore do backup completo contra o manifesto                |
 
 ## Quando abrir um runbook
 

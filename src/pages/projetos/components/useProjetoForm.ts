@@ -22,7 +22,7 @@ import { analytics } from "@/lib/analytics";
 import { lookupCEP } from "@/lib/brasilApi";
 import { useBulkSaveDisciplinas } from "@/hooks/useProjetoDisciplinas";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useFormPersist, clearFormPersist } from "@/hooks/useFormPersist";
+import { useFormPersist, clearFormPersist } from "@/pages/projetos/hooks/useFormPersist";
 import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
 
 const PROJETO_DRAFT_KEY = "projeto-novo";

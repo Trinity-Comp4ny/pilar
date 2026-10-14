@@ -2,10 +2,14 @@
 // Estratégia:
 //   - Precache do shell básico (index + logo + manifest).
 //   - Network-first com fallback para cache em navegação (HTML).
-//   - Cache-first em assets estáticos (/assets/*, JS, CSS, SVG).
+//   - Cache-first só em /assets/* (nome com hash, conteúdo imutável).
+//   - Network-first nos demais arquivos estáticos (favicon, ícones, logo): o
+//     nome não muda quando a arte muda, então cache-first prendia a versão
+//     antiga pra sempre (o favicon branco de julho seguia aparecendo).
 //   - Sem cache de chamadas Supabase/API (sempre rede).
 
-const CACHE_NAME = "pilar-v1";
+// Trocar a versão descarta o cache anterior no activate.
+const CACHE_NAME = "pilar-v2";
 const SHELL = ["/", "/index.html", "/pilar-logo.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
@@ -13,7 +17,7 @@ self.addEventListener("install", (event) => {
     caches
       .open(CACHE_NAME)
       .then((cache) => cache.addAll(SHELL).catch(() => undefined))
-      .then(() => self.skipWaiting()),
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -22,7 +26,7 @@ self.addEventListener("activate", (event) => {
     caches
       .keys()
       .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
-      .then(() => self.clients.claim()),
+      .then(() => self.clients.claim())
   );
 });
 
@@ -52,13 +56,15 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(req, copy).catch(() => undefined));
           return res;
         })
-        .catch(() => caches.match(req).then((hit) => hit || caches.match("/index.html"))),
+        .catch(() => caches.match(req).then((hit) => hit || caches.match("/index.html")))
     );
     return;
   }
 
-  // Assets estáticos: cache-first
-  if (url.origin === self.location.origin && /\.(js|css|svg|png|ico|woff2?|ttf)$/i.test(url.pathname)) {
+  if (url.origin !== self.location.origin) return;
+
+  // Assets com hash: cache-first
+  if (url.pathname.startsWith("/assets/")) {
     event.respondWith(
       caches.match(req).then((hit) => {
         if (hit) return hit;
@@ -69,7 +75,23 @@ self.addEventListener("fetch", (event) => {
           }
           return res;
         });
-      }),
+      })
+    );
+    return;
+  }
+
+  // Demais estáticos (favicon, ícones, logo): network-first com fallback pro cache
+  if (/\.(js|css|svg|png|ico|woff2?|ttf)$/i.test(url.pathname)) {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, copy).catch(() => undefined));
+          }
+          return res;
+        })
+        .catch(() => caches.match(req).then((hit) => hit || Response.error()))
     );
   }
 });

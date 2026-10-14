@@ -145,6 +145,8 @@ async function reportFailure(res: Response, method: string, url: string): Promis
 }
 
 function reportNetworkFailure(err: unknown, method: string, url: string): void {
+  // Cancelamento é intencional (React Query aborta a query ao desmontar a tela).
+  if (err instanceof DOMException && err.name === "AbortError") return;
   const route = routeOf(url);
   monitoring.captureException(
     err,
@@ -156,7 +158,9 @@ function reportNetworkFailure(err: unknown, method: string, url: string): void {
       network: true,
     },
     {
-      level: "error",
+      // Queda de conexão do usuário não é acionável um a um; o agrupamento por
+      // rota ainda mostra se uma rota específica começa a falhar em volume.
+      level: "warning",
       fingerprint: ["supabase", "network", method, route],
       tags: { supabase_route: route, supabase_status: "network" },
     }

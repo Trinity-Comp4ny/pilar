@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FolderKanban, Users, Loader2, ArrowUpRight, Coins, Plus, Lock } from "lucide-react";
+import { FolderKanban, Users, ArrowUpRight, Coins, Plus, Lock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +17,8 @@ import { DataTable } from "@/components/data/DataTable";
 import { toDataSourceResult } from "@/types/dataSource";
 import type { ColumnDef } from "@/components/data/DataTable";
 import type { ExtratoTokenEvento } from "@/components/settings/useExtratoTokens";
+
+import { ReadingRing } from "@/components/motion/ReadingRing";
 
 // Barra de consumo de um recurso contra o teto da faixa do plano. Sem teto (plano
 // não define limite ou não há assinatura), vira um contador simples.
@@ -123,7 +125,7 @@ export function UsoPanel() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-5 w-5 animate-spin text-black/30" />
+        <ReadingRing size={64} />
       </div>
     );
   }

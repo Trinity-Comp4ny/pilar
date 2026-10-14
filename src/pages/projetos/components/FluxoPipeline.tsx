@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { type DisciplinaResponsavel, getDiscDeadlineStatus } from "@/types/projetos";
 import { formatDateShort } from "@/lib/dateUtils";
-import type { ChecklistCounts } from "@/hooks/useProjetoDisciplinaChecklist";
+import type { ChecklistCounts } from "@/pages/projetos/hooks/useProjetoDisciplinaChecklist";
 import { FluxoPipelineGraph, type FluxoNodeStatus, type FluxoPipelineStage } from "./FluxoPipelineGraph";
 
 function getDiscStatusVisual(disc: DisciplinaResponsavel): FluxoNodeStatus {

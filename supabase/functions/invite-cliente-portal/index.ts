@@ -2,11 +2,13 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { authenticateUser, isUUID, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
-import { EMAIL_RE } from "../_shared/validators.ts";
+import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { sendEmail, templateAcessoPortalCliente } from "../_shared/email/index.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { gerarConviteToken } from "../_shared/convite-token.ts";
+import { checkDbRateLimit } from "../_shared/db-rate-limit.ts";
+import { lerJson } from "../_shared/schemas.ts";
+import { lerEntrada } from "./entrada.ts";
 
 const log = createLogger("invite-cliente-portal");
 
@@ -32,14 +34,33 @@ serve(
       }
       if (!profile.empresa_id) return safeErrorResponse(403, "Você precisa pertencer a uma empresa", req);
 
-      const { cliente_id, email } = await req.json();
-      if (!isUUID(cliente_id)) return safeErrorResponse(400, "cliente_id inválido", req);
-      if (!email || !EMAIL_RE.test(String(email))) return safeErrorResponse(400, "email inválido", req);
+      const entrada = lerEntrada(await lerJson(req));
+      if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
+      const { cliente_id, email } = entrada.data;
 
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
       );
+
+      // Cada chamada cria conta e manda e-mail: o teto é por quem convida, no banco
+      // (vale entre instâncias da edge) e fecha se o RPC falhar.
+      const rl = await checkDbRateLimit(supabaseAdmin, {
+        bucket: "invite_cliente_portal",
+        key: `uid:${user.id}`,
+        max: 30,
+        windowSeconds: 3600,
+      });
+      if (rl.rpcError) {
+        log.error("rate limit check failed, fail-closed", null, { rpcError: rl.rpcError });
+        return safeErrorResponse(503, "Serviço indisponível", req);
+      }
+      if (!rl.allowed)
+        return safeErrorResponse(
+          429,
+          "Muitos convites ao portal em sequência. Aguarde alguns minutos e tente de novo.",
+          req
+        );
 
       const { data: cliente, error: clienteError } = await supabaseAdmin
         .from("clientes")

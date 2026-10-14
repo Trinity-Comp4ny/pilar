@@ -28,6 +28,8 @@ export type ItemTrabalho = {
   prazo: string | null;
   projetoId: string | null;
   projetoNome: string | null;
+  /** Tarefa da obra: "Obra · Fase › Etapa › Serviço" (spec 111). */
+  obraCaminho: string | null;
   /** Primário (o primeiro responsável), para compat. */
   responsavelId: string | null;
   responsavelNome: string | null;
@@ -61,6 +63,7 @@ function tarefaParaItem(t: TarefaItem, nomePorPessoa: Map<string, string>): Item
     prazo: t.prazo,
     projetoId: t.projeto?.id ?? t.projeto_id ?? null,
     projetoNome: t.projeto?.nome ?? null,
+    obraCaminho: t.obra ? [t.obra.nome, t.obra_caminho].filter(Boolean).join(" · ") : null,
     responsavelId: t.responsaveis[0]?.id ?? t.responsavel_id,
     responsavelNome:
       t.responsaveis[0]?.nome ?? (t.responsavel_id ? (nomePorPessoa.get(t.responsavel_id) ?? null) : null),
@@ -87,6 +90,7 @@ function disciplinaParaItem(d: DisciplinaItem): ItemTrabalho {
     prazo: d.prazo,
     projetoId: d.projeto_id,
     projetoNome: d.projeto_nome,
+    obraCaminho: null,
     responsavelId: d.responsavel_id,
     responsavelNome: d.responsavel_nome,
     responsaveis: d.responsavel_id && d.responsavel_nome ? [{ id: d.responsavel_id, nome: d.responsavel_nome }] : [],

@@ -64,7 +64,10 @@ export type StatusDomain =
   | "cotacao"
   | "escopo"
   | "status_componente"
-  | "status_incidente";
+  | "status_incidente"
+  | "empresa_situacao"
+  | "feedback"
+  | "pedido_lgpd";
 
 type StatusDef = { label: string; tone: StatusTone };
 
@@ -133,6 +136,34 @@ export const STATUS_REGISTRY: Record<StatusDomain, Record<string, StatusDef>> = 
     identificado: { label: "Identificado", tone: "attention" },
     monitorando: { label: "Monitorando", tone: "info" },
     resolvido: { label: "Resolvido", tone: "positive" },
+  },
+  // SPEC 117: situação única da empresa no portal ultra admin (status de
+  // acesso + cobrança num selo só, ver situacaoEmpresa em pages/ultra-admin/lib).
+  empresa_situacao: {
+    pagante: { label: "Pagante", tone: "positive" },
+    em_teste: { label: "Em teste", tone: "info" },
+    convidada: { label: "Convidada", tone: "highlight" },
+    teste_vencido: { label: "Teste vencido", tone: "warning" },
+    em_atraso: { label: "Em atraso", tone: "danger" },
+    assinatura_cancelada: { label: "Assinatura cancelada", tone: "danger" },
+    sem_assinatura: { label: "Sem assinatura", tone: "neutral" },
+    suspensa: { label: "Suspensa", tone: "attention" },
+    arquivada: { label: "Arquivada", tone: "neutral" },
+  },
+  // Triagem de feedback do app (SPEC 112/116).
+  feedback: {
+    novo: { label: "Novo", tone: "brand" },
+    em_analise: { label: "Em análise", tone: "info" },
+    planejado: { label: "Planejado", tone: "highlight" },
+    resolvido: { label: "Resolvido", tone: "positive" },
+    descartado: { label: "Descartado", tone: "neutral" },
+  },
+  pedido_lgpd: {
+    pending: { label: "Aguardando", tone: "warning" },
+    in_progress: { label: "Executando", tone: "info" },
+    failed: { label: "Falhou", tone: "danger" },
+    completed: { label: "Atendido", tone: "positive" },
+    rejected: { label: "Recusado", tone: "neutral" },
   },
 };
 

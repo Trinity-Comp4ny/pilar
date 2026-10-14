@@ -20,15 +20,25 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry, setSentryUser } from "../_shared/sentry.ts";
 import { getCorsHeaders, jsonResponse, optionsResponse } from "../_shared/cors.ts";
-import { createAuthClient, createAdminClient, checkRateLimit, callGeminiStructured, verificarTokens, mensagemBloqueioTokens, GEMINI_MODEL } from "../_shared/ai-client.ts";
+import {
+  createAuthClient,
+  createAdminClient,
+  checkRateLimit,
+  callGeminiStructured,
+  verificarTokens,
+  mensagemBloqueioTokens,
+  modeloEmUso,
+  releaseAtual,
+  respostaDeErroIa,
+} from "../_shared/ai-client.ts";
 import { coletarDados } from "./coleta.ts";
 import { streamConsulta } from "./consulta.ts";
 import { carregarHistorico, comContexto } from "./contexto.ts";
 import { processarCriacao } from "./criacao.ts";
 import { ENTIDADE_CFG } from "./entidades.ts";
-import { ORQUESTRADOR_PROMPT } from "./prompts.ts";
 import { logAction, recordAndSaldo, respondFinal, respostaPrompt } from "./resposta.ts";
-import { AGENTE_LABEL, Agente, FEATURE_KEY, IntentSchema, RequestSchema, RespostaSchema } from "./schemas.ts";
+import { classificarIntencao } from "./roteamento.ts";
+import { AGENTE_LABEL, FEATURE_KEY, RequestSchema, RespostaSchema } from "./schemas.ts";
 
 // ---------------------------------------------------------------------------
 // Handler
@@ -54,7 +64,7 @@ serve(
       const { data: profile } = await authClient.from("profiles").select("empresa_id").eq("id", user.id).single();
       if (!profile?.empresa_id) return jsonResponse({ error: "Perfil não encontrado" }, 403, req);
       const empresaId = profile.empresa_id as string;
-      setSentryUser({ id: user.id, email: user.email, empresa_id: empresaId });
+      setSentryUser({ id: user.id, empresa_id: empresaId });
 
       if (!(await checkRateLimit(adminClient, empresaId))) {
         return jsonResponse(
@@ -111,21 +121,15 @@ serve(
       // Grava a mensagem do usuário.
       await authClient.from("chat_messages").insert({ session_id: sessionId, role: "user", content: message });
 
-      // 1) Orquestrador classifica a intenção (considerando o contexto da conversa).
-      const rota = await callGeminiStructured(
-        {
-          systemPrompt: ORQUESTRADOR_PROMPT,
-          userMessage: comContexto(
-            historico,
-            message,
-            "Classifique a intenção real do usuário (agente + modo)." + focoProjeto
-          ),
-          empresaId,
-          tipo: FEATURE_KEY,
-          conversationId: sessionId,
-        },
-        IntentSchema
-      );
+      // 1) Orquestrador classifica a intenção (considerando o contexto da conversa):
+      //    modelo de decisão quando configurado, modelo de texto quando ele hesita (SPEC 109).
+      const rota = await classificarIntencao({
+        historico,
+        message,
+        focoProjeto,
+        empresaId,
+        conversationId: sessionId,
+      });
       const agente = rota.data.agente;
       const modo = rota.data.modo;
 
@@ -156,7 +160,12 @@ serve(
           session_id: sessionId,
           role: "assistant",
           content: aviso,
-          meta: { agente, agente_label: AGENTE_LABEL[agente], motivo: rota.data.motivo, model: GEMINI_MODEL },
+          meta: {
+            agente,
+            agente_label: AGENTE_LABEL[agente],
+            motivo: rota.data.motivo,
+            model: modeloEmUso(FEATURE_KEY),
+          },
         });
         const saldo = await recordAndSaldo(
           adminClient,
@@ -192,7 +201,8 @@ serve(
             entity_type: rota.data.operacao,
             input: { message },
             result: { acao: rota.data.operacao },
-            model: GEMINI_MODEL,
+            model: modeloEmUso(FEATURE_KEY),
+            release: releaseAtual(),
             tokens_input: rota.tokensEntrada,
             tokens_output: rota.tokensSaida,
             created_by: user.id,
@@ -204,7 +214,13 @@ serve(
           session_id: sessionId,
           role: "assistant",
           content: "Escolha o alvo e confirme a ação.",
-          meta: { agente, agente_label: label, model: GEMINI_MODEL, acao_run_id: run.id, operacao: rota.data.operacao },
+          meta: {
+            agente,
+            agente_label: label,
+            model: modeloEmUso(FEATURE_KEY),
+            acao_run_id: run.id,
+            operacao: rota.data.operacao,
+          },
         });
         const saldo = await recordAndSaldo(
           adminClient,
@@ -240,7 +256,8 @@ serve(
           status: "running",
           entity_type: agente,
           input: { message },
-          model: GEMINI_MODEL,
+          model: modeloEmUso(FEATURE_KEY),
+          release: releaseAtual(),
           tokens_input: rota.tokensEntrada,
           tokens_output: rota.tokensSaida,
           created_by: user.id,
@@ -253,7 +270,7 @@ serve(
         consultaRunId,
         "classificar_intencao",
         { message },
-        { agente, modo, motivo: rota.data.motivo }
+        { agente, modo, motivo: rota.data.motivo, via: rota.via }
       );
 
       // 2) Agente de domínio coleta os dados (read-only, RLS).
@@ -275,7 +292,7 @@ serve(
         agente,
         agente_label: AGENTE_LABEL[agente],
         motivo: rota.data.motivo,
-        model: GEMINI_MODEL,
+        model: modeloEmUso(FEATURE_KEY),
       };
 
       // 3a) Streaming (SSE): resposta em linguagem natural token-a-token.
@@ -344,9 +361,9 @@ serve(
         req
       );
     } catch (e) {
-      console.error("[ai-chat]", e);
-      const headers = { ...getCorsHeaders(req), "Content-Type": "application/json" };
-      return new Response(JSON.stringify({ error: "Erro ao processar a conversa" }), { status: 500, headers });
+      // Tipo fechado (SPEC 110): limite do provedor, fora do ar, tempo, saída inválida...
+      // cada um com status e mensagem próprios; o texto bruto do erro não sai daqui.
+      return await respostaDeErroIa(e, getCorsHeaders(req), "ai-chat");
     }
   })
 );

@@ -1,7 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
-import { getCorsHeaders, corsHeaders } from "../_shared/cors.ts";
+import { getCorsHeaders } from "../_shared/cors.ts";
 import { createAdminClient, createAuthClient } from "../_shared/ai-client.ts";
+import { ehAdminDaEmpresa } from "../_shared/admin-auth.ts";
+import { lerEntrada } from "./entrada.ts";
+import { fetchComTempo } from "../_shared/http.ts";
 
 const ASAAS_BASE_URL = {
   sandbox: "https://sandbox.asaas.com/api/v3",
@@ -25,10 +28,20 @@ serve(
       } = await authClient.auth.getUser();
       if (userError || !user) throw new Error("Não autenticado");
 
-      const { data: profile } = await authClient.from("profiles").select("empresa_id").eq("id", user.id).single();
+      const { data: profile } = await adminClient
+        .from("profiles")
+        .select("empresa_id, role")
+        .eq("id", user.id)
+        .single();
 
       if (!profile?.empresa_id) throw new Error("Usuário não vinculado a empresa");
-      const empresaId = profile.empresa_id as string;
+      if (!ehAdminDaEmpresa(profile)) {
+        return new Response(JSON.stringify({ error: "Apenas admin da empresa pode emitir cobrança" }), {
+          headers: { ...corsH, "Content-Type": "application/json" },
+          status: 403,
+        });
+      }
+      const empresaId = profile.empresa_id;
 
       // Buscar config Asaas da empresa. api_key nunca vem direto da coluna: a
       // coluna só guarda texto puro em cenário legado, a chave real é lida
@@ -54,15 +67,9 @@ serve(
         );
       }
 
-      const { receita_id, billing_type } = (await req.json()) as {
-        receita_id: string;
-        billing_type: "PIX" | "BOLETO";
-      };
-
-      if (!receita_id) throw new Error("receita_id é obrigatório");
-      if (!["PIX", "BOLETO"].includes(billing_type)) {
-        throw new Error("billing_type deve ser PIX ou BOLETO");
-      }
+      const entrada = lerEntrada(await req.json().catch(() => null));
+      if (!entrada.ok) throw new Error(entrada.error);
+      const { receita_id, billing_type } = entrada.data;
 
       // Buscar receita + cliente
       const { data: receita, error: receitaError } = await adminClient
@@ -100,7 +107,9 @@ serve(
       if (!customerId) {
         // Buscar por CPF/CNPJ primeiro
         if (cpfCnpjNumeros) {
-          const searchResp = await fetch(`${baseUrl}/customers?cpfCnpj=${cpfCnpjNumeros}`, { headers: asaasHeaders });
+          const searchResp = await fetchComTempo(`${baseUrl}/customers?cpfCnpj=${cpfCnpjNumeros}`, {
+            headers: asaasHeaders,
+          });
           if (searchResp.ok) {
             const searchData = (await searchResp.json()) as { data?: Array<{ id: string }> };
             if (searchData.data && searchData.data.length > 0) {
@@ -111,7 +120,7 @@ serve(
 
         // Criar se não encontrado
         if (!customerId) {
-          const createResp = await fetch(`${baseUrl}/customers`, {
+          const createResp = await fetchComTempo(`${baseUrl}/customers`, {
             method: "POST",
             headers: asaasHeaders,
             body: JSON.stringify({
@@ -139,7 +148,7 @@ serve(
       }
 
       // Criar cobrança no Asaas
-      const paymentResp = await fetch(`${baseUrl}/payments`, {
+      const paymentResp = await fetchComTempo(`${baseUrl}/payments`, {
         method: "POST",
         headers: asaasHeaders,
         body: JSON.stringify({

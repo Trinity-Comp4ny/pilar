@@ -55,6 +55,22 @@ echo "→ ambiente: $ENVIRONMENT (ref: $PROJECT_REF)"
 case "$ACTION" in
 push)
   [ -n "$DB_URL" ] || die "falta a variável de ambiente com a URI do banco de $ENVIRONMENT"
+  # O banco de um ambiente só recebe migration que já está na branch dele. Subir de
+  # uma branch de feature deixa o histórico do banco à frente do Git: o próximo deploy
+  # do CI (db push --include-all) falha com "Remote migration versions not found" até
+  # o PR entrar (13/10: duas migrations do PR #590). Tipos não precisam disso: o
+  # gen:types:local gera o mesmo que o CI confere.
+  BASE_BRANCH=$([ "$ENVIRONMENT" = "prod" ] && echo main || echo staging)
+  git fetch origin "$BASE_BRANCH" --quiet || die "não consegui buscar origin/$BASE_BRANCH para conferir as migrations"
+  FORA=$(comm -23 \
+    <(find supabase/migrations -maxdepth 1 -name '*.sql' -exec basename {} \; | sort) \
+    <(git ls-tree --name-only "origin/$BASE_BRANCH" supabase/migrations/ | xargs -n1 basename | sort))
+  if [ -n "$FORA" ] && [ "${ALLOW_UNMERGED_MIGRATIONS:-}" != "true" ]; then
+    die "estas migrations ainda não estão em origin/$BASE_BRANCH:
+$FORA
+Elas entram em $ENVIRONMENT pelo deploy do CI depois do merge. Para os tipos, use npm run gen:types:local.
+Se é mesmo intencional (ex.: depurar staging), rode com ALLOW_UNMERGED_MIGRATIONS=true e repare o histórico depois."
+  fi
   # --db-url aponta pro Session Pooler (IPv4). A conexão direta do Supabase é
   # IPv6-only e falha em runner IPv4-only.
   exec supabase db push --db-url "$DB_URL"

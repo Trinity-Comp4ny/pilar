@@ -7,6 +7,7 @@ import { withSentry } from "../_shared/sentry.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit } from "../_shared/db-rate-limit.ts";
 import { parseOr400, uuidSchema, z } from "../_shared/schemas.ts";
+import { desativarConta } from "../_shared/encerrar-conta.ts";
 import { recusaDoAlvo, recusaDoAutor } from "./permissao.ts";
 
 const deleteUserSchema = z.object({ user_id: uuidSchema });
@@ -74,11 +75,12 @@ serve(
       const recusaAlvo = recusaDoAlvo(callerProfile, targetProfile);
       if (recusaAlvo) return safeErrorResponse(recusaAlvo.status, recusaAlvo.error, req);
 
-      // Remover do Auth — invalida convites pendentes e sessões ativas
-      const { error: authDeleteError } = await svc.auth.admin.deleteUser(user_id);
-      if (authDeleteError) {
-        log.error("auth.admin.deleteUser failed", authDeleteError, { user_id, actor: user.id });
-        return safeErrorResponse(400, `Falha ao remover usuário: ${authDeleteError.message}`, req);
+      // Desativa em vez de apagar (SPEC 116): apagar falha para quem criou qualquer
+      // registro (FK de autoria) e levaria junto o aceite dos termos.
+      const desativada = await desativarConta(svc, user_id);
+      if (!desativada.ok) {
+        log.error("desativar conta falhou", desativada.erro, { user_id, actor: user.id });
+        return safeErrorResponse(500, "Não foi possível remover o membro. Tente de novo.", req);
       }
 
       await logAction(svc, {
@@ -94,7 +96,6 @@ serve(
         req,
       });
 
-      // profiles deletado em cascata pela FK auth.users → profiles
       return jsonResponse({ success: true }, 200, req);
     } catch (error: unknown) {
       log.error("unexpected error", error);

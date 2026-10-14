@@ -1,73 +1,74 @@
-# Status Page — Setup
+# Status page (Better Stack)
 
-Página pública mostrando saúde dos serviços do Pilar pra clientes. Reduz volume de tickets ("tá fora?") e dá transparência em incidentes.
+Página pública com a saúde de cada componente do Pilar, em `status.pilarsoft.com.br`, fora
+da nossa infraestrutura: se o app ou o Supabase caem, ela continua no ar e mostra a queda.
+Decisão: [ADR 0047](../../architecture/adr/0047-saude-por-componente-e-status-page-fora-da-infra.md).
+SLOs: [SLOS.md](./SLOS.md).
 
-## Opções avaliadas
+## Como funciona
 
-| Provedor                  | Free tier                  | Status page        | Veredito                                                                   |
-| ------------------------- | -------------------------- | ------------------ | -------------------------------------------------------------------------- |
-| **BetterStack**           | 10 monitors, 3min interval | Sim, custom domain | **Recomendado** — UI moderna, status page incluso, integra Slack/PagerDuty |
-| UptimeRobot               | 50 monitors, 5min interval | Sim, mas básica    | Bom pra muitos endpoints, status page feia                                 |
-| Statuspage.io (Atlassian) | Sem free                   | Sim, premium       | Caro ($29+/mês)                                                            |
-| Instatus                  | 10 monitors free           | Sim, bonita        | Alternativa válida ao BetterStack                                          |
+O `/health` responde por componente. Com `?componente=<nome>`, devolve **503 quando aquele
+componente não está ok**. Cada monitor do Better Stack olha um componente; a status page
+mostra um recurso por monitor e muda sozinha.
 
-## BetterStack (recomendado)
+Base do health: `https://vepnsonbnsimqcsfcagm.supabase.co/functions/v1/health`
 
-### 1. Criar conta
+## Estado (2026-10-09)
 
-https://betterstack.com/uptime — free forever, sem cartão.
+Configurado via API do Better Stack: 9 monitores (todos `up`) e status page `266645`
+(`pilarsoft.betteruptime.com`, domínio próprio `status.pilarsoft.com.br`). Pendente: registro
+DNS `CNAME status → statuspage.betteruptime.com` na Vercel (conta dona do domínio) e
+`VITE_STATUS_URL` no projeto do app. Token da API fica em `~/.betterstack-token`, fora do repo.
 
-### 2. Criar monitors
+## 1. Conta
 
-Mínimo 3 monitors apontando pra `/health`:
+https://betterstack.com/uptime, plano grátis (10 monitores, checagem a cada 3 min, status
+page com domínio próprio). Entrar com o e-mail que deve receber os alertas.
 
-| Nome             | URL                                                 | Interval | Region  |
-| ---------------- | --------------------------------------------------- | -------- | ------- |
-| Pilar API Health | `https://<project>.supabase.co/functions/v1/health` | 3min     | US East |
-| Pilar App        | `https://app.pilarsoft.com.br`                      | 3min     | US East |
-| Pilar Landing    | `https://pilarsoft.com.br`                          | 5min     | EU      |
+## 2. Monitores
 
-Configurações por monitor:
+Tipo **"Status code"** (alerta quando a URL não responde 2xx), intervalo 3 min,
+confirmação de 1 min (evita alarme por uma checagem fria), recuperação de 1 min.
 
-- **Expected status code**: 200, 206 (degraded ainda retorna 200)
-- **Keyword check**: `"status":"ok"` (alerta se status virar `degraded`/`down`)
-- **Confirmation period**: 1min (evita flap)
-- **Recovery period**: 1min
+| Nome no Better Stack | URL                                        |
+| -------------------- | ------------------------------------------ |
+| App                  | `https://app.pilarsoft.com.br/login`       |
+| API                  | `<base do health>?componente=api`          |
+| Banco de dados       | `<base do health>?componente=banco`        |
+| Autenticação         | `<base do health>?componente=autenticacao` |
+| Pagamentos           | `<base do health>?componente=pagamentos`   |
+| E-mails              | `<base do health>?componente=emails`       |
+| Agentes de IA        | `<base do health>?componente=ia`           |
+| Rotinas automáticas  | `<base do health>?componente=crons`        |
+| Site                 | `https://pilarsoft.com.br`                 |
 
-### 3. Status page
+São 9 de 10 monitores do plano grátis.
 
-1. Criar status page: Status pages → New status page.
-2. Subdomain: `pilar.betteruptime.com` (free) ou custom: `status.pilarsoft.com.br`.
-   - Custom domain: adicionar `CNAME status` → `cname.betteruptime.com`.
-3. Adicionar resources:
-   - **API** (monitor: Pilar API Health)
-   - **Aplicação Web** (monitor: Pilar App)
-   - **Site Institucional** (monitor: Pilar Landing)
-4. Configurar branding: logo Labrynth/Pilar, cor primária (`#000` ou tema brand).
-5. Toggle "Public": ON.
+Em **Escalation policy**, deixar e-mail e notificação push do app do Better Stack.
 
-### 4. Linkar do app
+## 3. Status page
 
-No footer da landing e do app, link `Status` → `https://status.pilarsoft.com.br`.
+1. Status pages → New status page. Nome "Pilar", idioma português.
+2. Recursos, nesta ordem: App, Autenticação, API, Banco de dados, Pagamentos, E-mails,
+   Agentes de IA, Rotinas automáticas, Site.
+3. Domínio próprio: `status.pilarsoft.com.br`. Destino do CNAME: `statuspage.betteruptime.com`.
+   O DNS de `pilarsoft.com.br` está na Vercel: criar registro `CNAME status → <destino>`
+   (hoje `status` cai no curinga da Vercel e devolve 404).
+4. Public: ligado. Assinatura por e-mail para clientes exige plano pago (desligada no grátis).
 
-### 5. Incidents manuais
+## 4. Ligar o app à página
 
-Quando houver incidente conhecido (ex: deploy planejado), criar incident manualmente:
+Na Vercel, projeto do app, ambiente Production: `VITE_STATUS_URL=https://status.pilarsoft.com.br`
+e redeploy. A rota `/status` passa a redirecionar para a página externa.
 
-- Status pages → seu page → Incidents → New incident
-- Severity: `Maintenance` / `Degraded` / `Major outage`
-- Affected resources: marcar quais
-- Update a cada 30min até resolver
+## Incidentes manuais
 
-Subscribers (clientes) recebem email automaticamente.
-
-## UptimeRobot (alternativa)
-
-Free 50 monitors, 5min interval. Setup análogo. Status page em `stats.uptimerobot.com/<id>`. Visual mais cru — escolha se já usar UptimeRobot pra outros projetos.
+Manutenção planejada ou problema que os monitores não pegam: Status page → Incidents → New
+incident, marcando os recursos afetados. Assinantes recebem e-mail.
 
 ## Política de comunicação
 
-- **Down (P0)**: post no status page em <5min, update a cada 15min.
-- **Degraded (P1)**: post em <15min, update a cada 30min.
-- **Maintenance**: agendar com 48h de antecedência, post 24h antes.
-- Postmortem público em incidentes >30min, em até 5 dias úteis (ver `../INCIDENT_RESPONSE.md`).
+- **Fora do ar**: incidente na página em até 5 min, atualização a cada 15 min.
+- **Degradado**: em até 15 min, atualização a cada 30 min.
+- **Manutenção**: agendar com 48 h, aviso 24 h antes.
+- Postmortem público em incidente acima de 30 min, em até 5 dias úteis (ver `../INCIDENT_RESPONSE.md`).

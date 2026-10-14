@@ -18,6 +18,7 @@ import { BRAND, sendEmail, templateNotificacoes } from "../_shared/email/index.t
 import { createLogger } from "../_shared/logger.ts";
 import { recordMetric, withSentry } from "../_shared/sentry.ts";
 import { agruparPorPessoa, chaveIdempotencia, type LinhaPendente } from "./agrupar.ts";
+import { cronAutorizado } from "../_shared/cron-auth.ts";
 
 const log = createLogger("notificacoes-email-cron");
 
@@ -43,8 +44,7 @@ serve(
     // Só o cron chama, com CRON_SECRET próprio (não o service_role_key da
     // Supabase: formato pode mudar por conta deles, isto não). Sem CORS: não é
     // chamada de browser.
-    const auth = req.headers.get("Authorization") ?? "";
-    if (!CRON_SECRET || auth !== `Bearer ${CRON_SECRET}`) {
+    if (!cronAutorizado(req.headers, CRON_SECRET)) {
       log.warn("chamada não autorizada");
       return json({ error: "Unauthorized" }, 401);
     }

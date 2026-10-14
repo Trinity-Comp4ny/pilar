@@ -1,4 +1,4 @@
-import { CalendarDays, FolderOpen, Link2, MessageSquare, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { CalendarDays, FolderOpen, HardHat, Link2, MessageSquare, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AvatarStack } from "@/components/AvatarStack";
@@ -60,9 +60,7 @@ export function CardTrabalho({ item, onAbrir, onPrioridade, onExcluir }: Props) 
           )}
         </DropdownMenu>
         <div className="flex shrink-0 items-center gap-1">
-          {item.numero != null && (
-            <span className="font-mono text-[10px] text-muted-foreground/70">#{item.numero}</span>
-          )}
+          {item.numero != null && <span className="font-mono text-[10px] text-muted-foreground">#{item.numero}</span>}
           <Badge variant="outline" className="text-[10px] font-normal text-muted-foreground">
             {ehTarefa ? "Tarefa" : "Disciplina"}
           </Badge>
@@ -118,6 +116,12 @@ export function CardTrabalho({ item, onAbrir, onPrioridade, onExcluir }: Props) 
           <span className="inline-flex items-center gap-1 truncate">
             <FolderOpen className="h-3 w-3 shrink-0" />
             <span className="truncate">{item.projetoNome}</span>
+          </span>
+        )}
+        {item.obraCaminho && (
+          <span className="inline-flex min-w-0 items-center gap-1" title={item.obraCaminho}>
+            <HardHat className="h-3 w-3 shrink-0" />
+            <span className="truncate">{item.obraCaminho}</span>
           </span>
         )}
       </div>

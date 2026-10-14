@@ -106,12 +106,22 @@ verify_jwt = false
 [functions.trial-expiry-cron]
 verify_jwt = false
 
+# Chamada pelo trigger de notificacoes via pg_net, com CRON_SECRET (SPEC 113).
+[functions.aviso-ultra-admin-email]
+verify_jwt = false
+
 # Os três abaixo também são chamados por cron com CRON_SECRET (não é JWT).
 # Sem isto o gateway devolvia "Invalid JWT" antes da função rodar.
 [functions.guardiao-margem-cron]
 verify_jwt = false
 
 [functions.retencao-pos-trial]
+verify_jwt = false
+
+[functions.reconciliar-assinaturas]
+verify_jwt = false
+
+[functions.exportar-dados-titular]
 verify_jwt = false
 
 [functions.reverificar-documentos-pendentes]

@@ -3,12 +3,16 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App.tsx";
 import { initAnalytics } from "./analytics";
 import { registrarOrigem } from "./lib/origem";
+import { guardarConteudoPronto } from "./lib/htmlPronto";
 import "./index.css";
 
 initAnalytics();
 registrarOrigem();
 
-createRoot(document.getElementById("root")!).render(
+const root = document.getElementById("root")!;
+guardarConteudoPronto(root, window.location.pathname);
+
+createRoot(root).render(
   <BrowserRouter>
     <App />
   </BrowserRouter>

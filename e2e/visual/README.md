@@ -1,6 +1,6 @@
 # Regressão visual
 
-`telas.visual.spec.ts` compara 6 telas com uma imagem de referência
+`telas.visual.spec.ts` compara 13 telas com uma imagem de referência
 (`telas.visual.spec.ts-snapshots/*-visual-linux.png`). Roda só no CI, no job
 "E2E (Playwright, Supabase local)", antes dos specs que criam dados.
 

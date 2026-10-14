@@ -7,7 +7,6 @@ import {
   ClipboardList,
   CloudOff,
   HardHat,
-  Loader2,
   LogOut,
   Plus,
   RefreshCw,
@@ -22,6 +21,8 @@ import { climaLabel } from "@/lib/obras";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { campoLogout, getCampoToken, type CampoAccount } from "./useCampoAuth";
 import { useCampoSync } from "./useCampoSync";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 interface RdoDia {
   id: string;
@@ -96,7 +97,7 @@ export default function CampoHome() {
               disabled={sincronizando}
               aria-label="Tentar enviar agora"
             >
-              {sincronizando ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              {sincronizando ? <BusyMark className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
             </Button>
           </div>
         )}

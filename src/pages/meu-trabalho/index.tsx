@@ -2,12 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CalendarClock, CalendarDays, LayoutGrid, List, ListFilter, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PilarPage } from "@/components/PilarPage";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { EditColumnDialog, type ColunaEditavel } from "@/components/kanban/EditColumnDialog";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -34,8 +31,9 @@ import {
 import { useItensTrabalho, type FiltroTipo, type ItemTrabalho } from "./useItensTrabalho";
 import { useEtapas, useEtapaMutations, type Etapa } from "./useEtapas";
 import { useColunasLista } from "./colunas";
-import type { Prioridade } from "./status";
+import { CORES_ETAPA, corDaEtapa, type Prioridade } from "./status";
 
+import { PageLoader } from "@/components/motion/PageLoader";
 const LS_VISAO = "pilar.meu-trabalho.visao";
 const EU = "eu";
 
@@ -169,6 +167,7 @@ export default function MeuTrabalho() {
         i.titulo.toLowerCase().includes(termo) ||
         (i.numero != null && String(i.numero) === numeroTermo) ||
         (i.projetoNome?.toLowerCase().includes(termo) ?? false) ||
+        (i.obraCaminho?.toLowerCase().includes(termo) ?? false) ||
         i.responsaveis.some((r) => r.nome.toLowerCase().includes(termo)) ||
         i.labels.some((l) => l.toLowerCase().includes(termo))
       );
@@ -381,7 +380,7 @@ export default function MeuTrabalho() {
   };
 
   // --- Colunas (etapas) personalizáveis ---
-  const [renomeando, setRenomeando] = useState<{ id: string; nome: string } | null>(null);
+  const [editandoEtapa, setEditandoEtapa] = useState<ColunaEditavel | null>(null);
   const [aEtapaExcluir, setAEtapaExcluir] = useState<Etapa | null>(null);
 
   // Criação inline (estilo ClickUp): recebe nome + cor do campo no fim das colunas.
@@ -398,15 +397,13 @@ export default function MeuTrabalho() {
     }
   };
 
-  const salvarRenomear = async () => {
-    if (!renomeando) return;
-    const nome = renomeando.nome.trim();
-    if (!nome) return;
+  const salvarEtapa = async ({ id, nome, cor }: ColunaEditavel): Promise<boolean> => {
     try {
-      await etapaMut.renomear.mutateAsync({ id: renomeando.id, nome });
-      setRenomeando(null);
+      await etapaMut.editar.mutateAsync({ id, nome, cor });
+      return true;
     } catch {
-      toast.error("Não deu para renomear a coluna.");
+      toast.error("Não deu para salvar a coluna.");
+      return false;
     }
   };
 
@@ -444,7 +441,7 @@ export default function MeuTrabalho() {
     etapas: etapas ?? [],
     onCriar: criarEtapa,
     criando: etapaMut.criar.isPending,
-    onRenomear: (e: Etapa) => setRenomeando({ id: e.id, nome: e.nome }),
+    onEditar: (e: Etapa) => setEditandoEtapa({ id: e.id, nome: e.nome, cor: corDaEtapa(e.cor, e.bucket) }),
     onExcluir: (e: Etapa) => setAEtapaExcluir(e),
     onReordenar: reordenarEtapa,
   };
@@ -534,7 +531,7 @@ export default function MeuTrabalho() {
       {visao === "agenda" ? (
         <AbaAgenda pessoaIds={pessoaIdsEfetivos} minhaPessoaId={minhaPessoaId} canEdit temProjetos={temProjetos} />
       ) : isLoading ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">Carregando seu trabalho...</p>
+        <PageLoader label="Carregando seu trabalho" />
       ) : isError ? (
         <p className="py-12 text-center text-sm text-destructive">Não deu para carregar. Recarregue a página.</p>
       ) : visao === "lista" ? (
@@ -596,41 +593,14 @@ export default function MeuTrabalho() {
         loading={excluir.isPending}
       />
 
-      <Dialog open={!!renomeando} onOpenChange={(open) => !open && setRenomeando(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Renomear coluna</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-1.5">
-            <Label htmlFor="etapa-nome">Nome da coluna</Label>
-            <Input
-              id="etapa-nome"
-              autoFocus
-              value={renomeando?.nome ?? ""}
-              onChange={(e) => setRenomeando((prev) => (prev ? { ...prev, nome: e.target.value } : prev))}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  salvarRenomear();
-                }
-              }}
-              placeholder="Bloqueado, Em revisão, Aprovado..."
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRenomeando(null)}>
-              Cancelar
-            </Button>
-            <Button
-              variant="brand"
-              onClick={salvarRenomear}
-              disabled={!renomeando?.nome.trim() || etapaMut.renomear.isPending}
-            >
-              Salvar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditColumnDialog
+        coluna={editandoEtapa}
+        onClose={() => setEditandoEtapa(null)}
+        colors={CORES_ETAPA}
+        onSave={salvarEtapa}
+        isPending={etapaMut.editar.isPending}
+        placeholder="Bloqueado, Em revisão, Aprovado..."
+      />
 
       <ConfirmDialog
         open={!!aEtapaExcluir}

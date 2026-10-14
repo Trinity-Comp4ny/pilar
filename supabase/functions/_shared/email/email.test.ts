@@ -104,6 +104,33 @@ const casos: Array<[string, () => { subject: string; html: string }]> = [
   ["trial", () => T.templateTrialAviso({ empresaNome: XSS, daysLeft: 3, billingUrl: "https://l" })],
   ["trial expirado", () => T.templateTrialExpirado({ empresaNome: XSS, billingUrl: "https://l" })],
   [
+    "aviso plataforma",
+    () =>
+      T.templateAvisoPlataforma({
+        titulo: XSS,
+        mensagem: XSS,
+        empresaNome: XSS,
+        enviadoEm: XSS,
+        url: "https://l",
+        dicaResposta: XSS,
+      }),
+  ],
+  [
+    "feedback recebido",
+    () =>
+      T.templateFeedbackRecebido({
+        tipo: "sugestao",
+        titulo: XSS,
+        descricao: XSS,
+        autor: XSS,
+        empresaNome: XSS,
+        rota: XSS,
+        temPrint: true,
+        enviadoEm: XSS,
+        painelUrl: "https://l",
+      }),
+  ],
+  [
     "lgpd",
     () =>
       T.templateLgpdExclusaoDados({
@@ -114,6 +141,20 @@ const casos: Array<[string, () => { subject: string; html: string }]> = [
         motivo: XSS,
         requestedAt: XSS,
         adminPanelUrl: "https://l",
+        requestId: XSS,
+      }),
+  ],
+  ["lgpd exportação pronta", () => T.templateLgpdExportacaoPronta({ nome: XSS, link: "https://l", validoAte: XSS })],
+  ["lgpd exclusão concluída", () => T.templateLgpdExclusaoConcluida({ nome: XSS })],
+  ["lgpd exclusão recusada", () => T.templateLgpdExclusaoRecusada({ nome: XSS, motivo: XSS })],
+  [
+    "lgpd exportação",
+    () =>
+      T.templateLgpdExportacaoDados({
+        empresaNome: XSS,
+        solicitanteEmail: XSS,
+        solicitanteNome: XSS,
+        requestedAt: XSS,
         requestId: XSS,
       }),
   ],

@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 interface QuickAddCardProps {
   /** Coluna onde o projeto será criado; o status deriva do bucket da etapa. */
@@ -111,7 +113,7 @@ export function QuickAddCard({ etapaId, clientes, onCreated }: QuickAddCardProps
           onClick={submit}
           disabled={saving || !nome.trim() || !clienteId}
         >
-          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Criar"}
+          {saving ? <BusyMark className="h-3.5 w-3.5" /> : "Criar"}
         </Button>
         <Button size="icon" variant="ghost" className="h-7 w-7" onClick={reset} disabled={saving} aria-label="Cancelar">
           <X className="h-3.5 w-3.5" />

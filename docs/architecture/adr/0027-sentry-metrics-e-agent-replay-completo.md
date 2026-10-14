@@ -1,7 +1,7 @@
 # ADR 0027: Ativar Sentry Application Metrics e replay completo de agentes IA
 
 **Data:** 2026-08-19
-**Status:** Accepted
+**Status:** Accepted (replay de conteúdo revisado pelo [ADR 0053](./0053-conteudo-de-prompt-no-sentry-so-em-dev.md))
 
 ## Contexto
 

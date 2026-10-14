@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { getCorsHeaders, jsonResponse, optionsResponse } from "../_shared/cors.ts";
-import { z } from "../_shared/schemas.ts";
+import { lerEntrada, montarSchema, TIPOS_IMPEDIMENTO } from "./esquema.ts";
 import {
   createAuthClient,
   createAdminClient,
@@ -10,8 +10,9 @@ import {
   mensagemBloqueioTokens,
   callGeminiStructured,
   debitarTokens,
-  GEMINI_MODEL,
+  modeloEmUso,
   recordAgentRun,
+  respostaDeErroIa,
 } from "../_shared/ai-client.ts";
 
 // Spec 080: transcreve um áudio curto do RDO e extrai os campos de texto
@@ -23,65 +24,6 @@ import {
 // tarefa — cada um CASADO contra o cadastro real (fornecedores/tarefas
 // abertas) enviado no request. Sugestão nunca vira dado sozinha: o front só
 // insere no formulário quando o usuário clica "Adicionar" em cada item.
-
-// Confirmado ao vivo contra a API (01/09): audio/webm (formato padrão do
-// MediaRecorder no Chrome) é aceito e transcrito normalmente.
-const MIME_PERMITIDOS = ["audio/webm", "audio/ogg", "audio/mp4", "audio/mpeg", "audio/mp3", "audio/wav", "audio/aac"];
-// ~3min de fala em opus/aac a até ~400kbps ainda cabe folgado aqui.
-const MAX_BASE64_CHARS = 12_000_000;
-// Cadastro de fornecedor/tarefa não é caso real hoje com centenas de linhas;
-// teto defensivo pra não deixar o prompt crescer sem limite.
-const MAX_LISTA_ITENS = 200;
-
-const TIPOS_IMPEDIMENTO = ["falta_material", "clima", "pendencia_projeto", "mao_de_obra", "outro"] as const;
-const RESULTADOS_TAREFA = ["avancou", "concluiu", "parou"] as const;
-
-const RefLista = z.object({ id: z.string(), nome: z.string() }).array();
-
-function montarSugestoesSchema(idsFornecedores: ReadonlySet<string>, idsTarefas: ReadonlySet<string>) {
-  const fornecedorId = z
-    .string()
-    .nullable()
-    .default(null)
-    .refine((v) => v == null || idsFornecedores.has(v), "fornecedor_id fora da lista enviada");
-  const tarefaId = z.string().refine((v) => idsTarefas.has(v), "tarefa_id fora da lista enviada");
-
-  return z.object({
-    efetivo_por_fornecedor: z
-      .array(
-        z.object({
-          fornecedor_id: fornecedorId,
-          fornecedor_nome: z.string(),
-          quantidade: z.number().int().positive(),
-        })
-      )
-      .default([]),
-    impedimentos: z.array(z.object({ descricao: z.string(), tipo: z.enum(TIPOS_IMPEDIMENTO) })).default([]),
-    visitas: z
-      .array(
-        z.object({
-          fornecedor_id: fornecedorId,
-          fornecedor_nome: z.string(),
-          observacao: z.string().nullable().default(null),
-        })
-      )
-      .default([]),
-    tarefas: z.array(z.object({ tarefa_id: tarefaId, resultado: z.enum(RESULTADOS_TAREFA) })).default([]),
-  });
-}
-
-function montarSchema(idsFornecedores: ReadonlySet<string>, idsTarefas: ReadonlySet<string>) {
-  return z.object({
-    transcricao: z.string(),
-    clima: z.enum(["ensolarado", "nublado", "chuvoso", "chuva_forte"]).nullable().default(null),
-    condicao_trabalho: z.enum(["normal", "parcial", "paralisada"]).nullable().default(null),
-    efetivo: z.number().int().nonnegative().nullable().default(null),
-    atividades: z.string().nullable().default(null),
-    ocorrencias: z.string().nullable().default(null),
-    pendencias: z.string().nullable().default(null),
-    sugestoes: montarSugestoesSchema(idsFornecedores, idsTarefas),
-  });
-}
 
 function promptExtracao(
   fornecedores: Array<{ id: string; nome: string }>,
@@ -196,30 +138,11 @@ serve(
         return jsonResponse({ error: mensagemBloqueioTokens(gateTokens.motivo), motivo: gateTokens.motivo }, 402, req);
       }
 
-      const body = await req.json().catch(() => ({}));
-      const mimeType = typeof body.mimeType === "string" ? body.mimeType : "";
-      const audioBase64 = typeof body.audioBase64 === "string" ? body.audioBase64 : "";
-
-      if (!audioBase64) {
-        return jsonResponse({ error: "Nenhum áudio enviado" }, 400, req);
-      }
-      if (!MIME_PERMITIDOS.includes(mimeType)) {
-        return jsonResponse({ error: "Formato de áudio não suportado neste navegador." }, 400, req);
-      }
-      if (audioBase64.length > MAX_BASE64_CHARS) {
-        return jsonResponse({ error: "Áudio grande demais. Grave um trecho mais curto." }, 400, req);
-      }
-
-      const fornecedores = (RefLista.safeParse(body.fornecedores).success ? body.fornecedores : []).slice(
-        0,
-        MAX_LISTA_ITENS
-      );
-      const tarefasAbertas = (RefLista.safeParse(body.tarefasAbertas).success ? body.tarefasAbertas : []).slice(
-        0,
-        MAX_LISTA_ITENS
-      );
-      const idsFornecedores = new Set<string>(fornecedores.map((f: { id: string }) => f.id));
-      const idsTarefas = new Set<string>(tarefasAbertas.map((t: { id: string }) => t.id));
+      const entrada = lerEntrada(await req.json().catch(() => null));
+      if (!entrada.ok) return jsonResponse({ error: entrada.error }, 400, req);
+      const { mimeType, audioBase64, fornecedores, tarefasAbertas } = entrada.data;
+      const idsFornecedores = new Set(fornecedores.map((f) => f.id));
+      const idsTarefas = new Set(tarefasAbertas.map((t) => t.id));
 
       const files = [{ mimeType, dataBase64: audioBase64 }];
       const tamanhoKb = Math.round((audioBase64.length * 3) / 4 / 1024);
@@ -253,7 +176,7 @@ serve(
         userId: user.id,
         agentKey: "rdo-voz",
         agentRunId: runId,
-        model: GEMINI_MODEL,
+        model: modeloEmUso("rdo-voz"),
         tokensInput: result.tokensEntrada,
         tokensOutput: result.tokensSaida,
         idempotencyKey: crypto.randomUUID(),
@@ -262,12 +185,15 @@ serve(
 
       return jsonResponse(result.data, 200, req);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Erro ao transcrever o áudio";
-      const status = message === "Não autenticado" ? 401 : 400;
-      return new Response(JSON.stringify({ error: message }), {
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
-        status,
-      });
+      const message = err instanceof Error ? err.message : "";
+      if (message === "Não autenticado" || message === "Perfil não encontrado") {
+        return new Response(JSON.stringify({ error: message }), {
+          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          status: message === "Não autenticado" ? 401 : 400,
+        });
+      }
+      // Falha da IA ou inesperada: tipo fechado, sem o texto bruto do provedor (SPEC 110).
+      return await respostaDeErroIa(err, getCorsHeaders(req), "ai-rdo-voz");
     }
   })
 );

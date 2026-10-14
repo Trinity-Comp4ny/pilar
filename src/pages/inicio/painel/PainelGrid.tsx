@@ -4,8 +4,8 @@ import { GripVertical, Pin, PinOff, Plus, RotateCcw, Trash2 } from "lucide-react
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { usePermissions } from "@/hooks/usePermissions";
-import { LIMITE_FIXOS, LIMITE_WIDGETS, type ItemLayout, type Tamanho } from "@/hooks/usePainelLayout";
-import type { PainelGestao } from "@/hooks/usePainelGestao";
+import { LIMITE_FIXOS, LIMITE_WIDGETS, type ItemLayout, type Tamanho } from "@/pages/inicio/hooks/usePainelLayout";
+import type { PainelGestao } from "@/pages/inicio/hooks/usePainelGestao";
 import { sobraDaLinha } from "./grade";
 import { SeletorWidget } from "./SeletorWidget";
 import { COLUNAS, LARGURA, PODE_FIXAR, POR_ID, ROTULO_TAMANHO, SECOES, type Secao } from "./catalogo";

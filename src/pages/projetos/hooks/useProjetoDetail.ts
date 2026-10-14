@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "sonner";
-import { useProjetoRentabilidade } from "@/hooks/useRentabilidade";
+import { useProjetoRentabilidade } from "./useRentabilidade";
 import { useTemplates } from "@/hooks/useTemplates";
 import { errorMessage } from "@/lib/errors";
 import {

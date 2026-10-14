@@ -224,7 +224,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
             </div>
             <div className="w-full sm:w-48">
               <Select value={filterCargo} onValueChange={setFilterCargo}>
-                <SelectTrigger className="h-9 rounded-full text-sm">
+                <SelectTrigger className="h-9 rounded-full text-sm" aria-label="Filtrar por cargo">
                   <SelectValue placeholder="Cargo" />
                 </SelectTrigger>
                 <SelectContent>

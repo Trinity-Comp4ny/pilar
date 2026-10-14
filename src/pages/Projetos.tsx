@@ -38,10 +38,14 @@ import { ReopenProjetoDialog } from "@/pages/projetos/components/ProjetoStatusDi
 import { useProjetosData } from "@/pages/projetos/hooks/useProjetosData";
 import { useProjetosUrlState } from "@/pages/projetos/hooks/useProjetosUrlState";
 import { useProjetoStatusMove } from "@/pages/projetos/hooks/useProjetoStatusMove";
-import { useProjetoEtapas, useProjetoEtapaMutations, type ProjetoEtapa } from "@/pages/projetos/hooks/useProjetoEtapas";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  CORES_ETAPA_PROJETO,
+  corDaEtapaProjeto,
+  useProjetoEtapas,
+  useProjetoEtapaMutations,
+  type ProjetoEtapa,
+} from "@/pages/projetos/hooks/useProjetoEtapas";
+import { EditColumnDialog, type ColunaEditavel } from "@/components/kanban/EditColumnDialog";
 import { type ProjectStatus } from "@/constants";
 import { cn } from "@/lib/utils";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -83,7 +87,7 @@ export default function ProjetosKanban() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isFluxosOpen, setIsFluxosOpen] = useState(false);
   const [projetoToDelete, setProjetoToDelete] = useState<{ id: string; nome: string } | null>(null);
-  const [renomeando, setRenomeando] = useState<{ id: string; nome: string } | null>(null);
+  const [editandoEtapa, setEditandoEtapa] = useState<ColunaEditavel | null>(null);
   const [aEtapaExcluir, setAEtapaExcluir] = useState<ProjetoEtapa | null>(null);
 
   const { pendingReopen, setPendingReopen, applyStatusMove, handleMoveStatus, onDragEnd } = useProjetoStatusMove(
@@ -287,15 +291,13 @@ export default function ProjetosKanban() {
     }
   };
 
-  const salvarRenomear = async () => {
-    if (!renomeando) return;
-    const nome = renomeando.nome.trim();
-    if (!nome) return;
+  const salvarEtapa = async ({ id, nome, cor }: ColunaEditavel): Promise<boolean> => {
     try {
-      await etapaMut.renomear.mutateAsync({ id: renomeando.id, nome });
-      setRenomeando(null);
+      await etapaMut.editar.mutateAsync({ id, nome, cor });
+      return true;
     } catch {
-      toast.error("Não deu para renomear a coluna");
+      toast.error("Não deu para salvar a coluna");
+      return false;
     }
   };
 
@@ -518,7 +520,7 @@ export default function ProjetosKanban() {
                 onToggleColumn={toggleColumn}
                 onCriarEtapa={criarEtapa}
                 criandoEtapa={etapaMut.criar.isPending}
-                onRenomearEtapa={(e) => setRenomeando({ id: e.id, nome: e.nome })}
+                onEditarEtapa={(e) => setEditandoEtapa({ id: e.id, nome: e.nome, cor: corDaEtapaProjeto(e.cor) })}
                 onReordenarEtapa={reordenarEtapa}
                 onExcluirEtapa={pedirExcluirEtapa}
                 onCardClick={handleCardClick}
@@ -614,41 +616,14 @@ export default function ProjetosKanban() {
         cancelText="Cancelar"
       />
 
-      <Dialog open={!!renomeando} onOpenChange={(open) => !open && setRenomeando(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Renomear coluna</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-1.5">
-            <Label htmlFor="etapa-nome">Nome da coluna</Label>
-            <Input
-              id="etapa-nome"
-              autoFocus
-              value={renomeando?.nome ?? ""}
-              onChange={(e) => setRenomeando((prev) => (prev ? { ...prev, nome: e.target.value } : prev))}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  salvarRenomear();
-                }
-              }}
-              placeholder="Em revisão, Aguardando cliente, Aprovado..."
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRenomeando(null)}>
-              Cancelar
-            </Button>
-            <Button
-              variant="brand"
-              onClick={salvarRenomear}
-              disabled={!renomeando?.nome.trim() || etapaMut.renomear.isPending}
-            >
-              Salvar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditColumnDialog
+        coluna={editandoEtapa}
+        onClose={() => setEditandoEtapa(null)}
+        colors={CORES_ETAPA_PROJETO}
+        onSave={salvarEtapa}
+        isPending={etapaMut.editar.isPending}
+        placeholder="Em revisão, Aguardando cliente, Aprovado..."
+      />
 
       <ConfirmDialog
         open={!!aEtapaExcluir}

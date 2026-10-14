@@ -4,7 +4,7 @@ Base de conhecimento única da interface da Pilar. É o contrato visual do produ
 
 Regra de ouro: **a página decide o conteúdo e a regra de negócio. Nunca decide cor, raio, sombra, tipografia ou largura de modal.** Isso já é decidido aqui.
 
-Relacionados: `docs/architecture/adr/0008-design-system-fonte-unica.md` (a lei), `docs/specs/003-design-system.md` (o plano de execução), `docs/design/CATALOGO_UI.md` (o diagnóstico de deriva), `src/styles/tokens.css` (a verdade sobre cor).
+Relacionados: `docs/architecture/adr/0008-design-system-fonte-unica.md` (a lei), `docs/specs/003-design-system.md` (o plano de execução), `docs/design/CATALOGO_UI.md` (o diagnóstico de deriva), `docs/design/ACESSIBILIDADE.md` (o que o Axe cobre e o roteiro manual de teclado e leitor de tela), `src/styles/tokens.css` (a verdade sobre cor).
 
 ---
 
@@ -103,8 +103,9 @@ Página de detalhe nova com mais de uma seção segue este padrão em vez de inv
 ### Estado da tela
 
 - **`EmptyState`** (`src/components/EmptyState.tsx`): vazio orientado à ação. Props: `icon?`, `title`, `description?`, `action?`, `children?`.
-- **`TableSkeleton`** / **`PageSkeleton`** / **`ui/skeleton`**: loading. Prefira skeleton a spinner central. Não use `animate-spin` solto por tela.
-- **`Spinner`** (`src/components/Spinner.tsx`): quando precisar de spinner (botão, inline).
+- **Movimento da marca** (`src/components/motion/`, ADR 0049): toda espera usa a marca. `Button loading` ou `BusyMark` para espera inline (botão, campo, linha); `PageLoader` (anel de leitura) para página, seção e card, que só aparece depois de 300ms; `EntryVeil` para a entrada no app. `Loader2` e `animate-spin` são proibidos: um teste de varredura reprova o PR.
+- **`TableSkeleton`** / **`ui/skeleton`**: esqueleto de tabela quando o formato da lista já é conhecido.
+- **`Spinner`** (`src/components/Spinner.tsx`): ritmo da marca com texto ao lado, para espera inline com legenda.
 
 ### Status
 

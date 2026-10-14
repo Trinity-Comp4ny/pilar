@@ -25,6 +25,7 @@ import { TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import { useFinanceAuxData } from "../hooks/useFinanceAuxData";
 import type { Lancamento, TipoLancamento } from "../hooks/useLancamentosUnified";
 import { CentroCustoManager } from "./CentroCustoManager";
+import { analytics } from "@/lib/analytics";
 
 const schema = z
   .object({
@@ -341,6 +342,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
           }
         }
 
+        analytics.track("lancamento_criado", { tipo, parcelas: numParcelas, rateio: rateioOn });
         toast.success(isReceita ? "Receita cadastrada" : "Despesa cadastrada", {
           description: `${numParcelas} registro(s) criado(s)`,
         });

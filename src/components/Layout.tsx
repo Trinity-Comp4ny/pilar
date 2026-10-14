@@ -1,12 +1,15 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useRef } from "react";
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { sidebarOffset } from "@/lib/shellLayout";
 import { BottomNav } from "@/components/BottomNav";
 import { CommandPaletteHint } from "@/components/CommandPaletteHint";
 import { useCommandPalette } from "@/hooks/useCommandPalette";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { UltraAdminPlatformBanner } from "@/components/UltraAdminPlatformBanner";
+import { PageLoader } from "@/components/motion/PageLoader";
+import { VeilExit } from "@/components/motion/EntryVeil";
+import { useRouteEnter } from "@/components/motion/useRouteEnter";
 
 // Lazy: o CommandPalette carrega o cmdk. Fora do bundle de entrada; só baixa no 1º ⌘K.
 const CommandPalette = lazy(() => import("@/components/CommandPalette").then((m) => ({ default: m.CommandPalette })));
@@ -44,7 +47,8 @@ function DevErrorTrigger() {
 
 function LayoutContent() {
   const { state, isMobile } = useSidebar();
-  const marginLeft = isMobile ? "ml-0" : state === "collapsed" ? "ml-[64px]" : "ml-[240px]";
+  const mainRef = useRef<HTMLElement>(null);
+  useRouteEnter(mainRef);
 
   return (
     <div className="min-h-screen w-full flex-1 min-w-0 bg-background">
@@ -55,18 +59,25 @@ function LayoutContent() {
         Pular para conteúdo principal
       </a>
       <AppSidebar />
-      <div className={`${marginLeft}`}>
-        <UltraAdminPlatformBanner />
-        <main id="main-content" className="pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:px-10 md:pb-10 md:pt-4">
+      <div style={{ marginLeft: sidebarOffset(state, isMobile) }}>
+        <main
+          ref={mainRef}
+          id="main-content"
+          className="pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:px-10 md:pb-10 md:pt-4"
+        >
           <ErrorBoundary>
             <DevErrorTrigger />
-            <Outlet />
+            {/* Página preguiçosa baixando: a sidebar fica e o anel ocupa só o conteúdo. */}
+            <Suspense fallback={<PageLoader size="page" />}>
+              <Outlet />
+            </Suspense>
           </ErrorBoundary>
         </main>
       </div>
       {/* Navegação mobile (spec 097 / ADR 0040): substitui o drawer da sidebar
           abaixo de md. Fixa; PageLayout e este <main> reservam o espaço embaixo. */}
       <BottomNav />
+      <VeilExit />
       <CommandPaletteMount />
       <Suspense fallback={null}>
         <OnboardingChecklist />

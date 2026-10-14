@@ -75,7 +75,7 @@ export function PrivacidadePanel() {
         return;
       }
       setExportRequested(true);
-      toast.success("Solicitação registrada. Enviaremos seus dados por email em até 15 dias.");
+      toast.success("Pedido registrado. O link da cópia chega no seu e-mail em alguns minutos.");
     } catch (err) {
       toast.error("Não foi possível registrar a solicitação", {
         description: getSafeErrorMessage(err, "Tente de novo em instantes."),
@@ -137,11 +137,12 @@ export function PrivacidadePanel() {
             <div className="flex-1 space-y-2">
               <p className="text-sm font-medium">Exportar meus dados</p>
               <p className="text-sm text-muted-foreground">
-                Enviaremos uma cópia de todos os seus dados pessoais por email em até 15 dias (LGPD Art. 18, V).
+                Mandamos por e-mail um link com a cópia dos dados da sua conta (LGPD, art. 18). Projetos, clientes e
+                financeiro são da sua empresa: peça ao administrador dela.
               </p>
               {exportRequested ? (
                 <p className="text-sm text-positive-strong font-medium">
-                  Solicitação registrada, aguarde contato em até 15 dias úteis.
+                  Pedido registrado. Confira seu e-mail em alguns minutos; se não chegar, respondemos em até 15 dias.
                 </p>
               ) : (
                 <Button variant="outline" size="sm" onClick={handleRequestExport} disabled={exportSubmitting}>

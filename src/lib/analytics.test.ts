@@ -22,7 +22,7 @@ describe("analytics scrubber — no-op mode", () => {
   }
 
   it("mascara keys sensíveis no track", () => {
-    analytics.track("user_signed_up", {
+    analytics.track("signup_completed", {
       email: "user@example.com",
       password: "hunter2",
       cpf: "12345678900",
@@ -32,7 +32,8 @@ describe("analytics scrubber — no-op mode", () => {
     const props = args[2] as Record<string, unknown>;
     expect(props.password).toBe("***");
     expect(props.cpf).toBe("***");
-    expect(props.email).toBe("user@example.com");
+    // Contato da pessoa não vai para o PostHog (docs/ROPA.md, item 11).
+    expect(props.email).toBe("***");
     expect(props.ok).toBe("ok");
   });
 
@@ -43,6 +44,16 @@ describe("analytics scrubber — no-op mode", () => {
     const args = lastArgs();
     const traits = args[2] as Record<string, unknown>;
     expect(traits.bio).toBe("Cliente [CPF] e empresa [CNPJ]");
+  });
+
+  it("mascara e-mail e telefone mesmo fora de chave sensível", () => {
+    analytics.track("convite_enviado", {
+      destino: "Convite para ana.souza@escritorio.com.br aceito",
+      telefone: "(11) 98888-7777",
+    });
+    const props = lastArgs()[2] as Record<string, unknown>;
+    expect(props.destino).toBe("Convite para [EMAIL] aceito");
+    expect(props.telefone).toBe("***");
   });
 
   it("garante anonId persistente entre chamadas", () => {

@@ -116,7 +116,8 @@ export async function converterEmAssinaturaAtiva(
     .from("profiles")
     .select("email")
     .eq("empresa_id", row.empresa_id)
-    .in("role", ["owner", "admin", "ultra_admin"])) as { data: { email: string | null }[] | null };
+    .in("role", ["owner", "admin", "ultra_admin"])
+    .is("desativado_em", null)) as { data: { email: string | null }[] | null };
   const recipients = (admins ?? []).map((p) => p.email).filter((e): e is string => !!e);
   if (recipients.length > 0) {
     await sendEmail({

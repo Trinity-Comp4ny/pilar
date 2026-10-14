@@ -1,13 +1,15 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { marcarLogin } from "@/lib/ultimoLogin";
 import { translateAuthError } from "@/lib/authErrors";
 import { Logo } from "@/components/Logo";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 // Foto do Google (raw_user_meta_data.avatar_url ou .picture) já é gravada no
 // profile no signup (trigger handle_new_user). Login subsequente não passa
@@ -95,7 +97,7 @@ export default function AuthCallback() {
       <div className="flex flex-col items-center gap-4 text-center animate-in fade-in duration-500">
         <Logo variant="mark" size="md" />
         <div className="flex items-center gap-2 text-ink-soft">
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <BusyMark className="h-4 w-4" />
           <span className="text-sm font-medium">Entrando...</span>
         </div>
       </div>

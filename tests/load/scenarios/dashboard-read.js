@@ -25,7 +25,7 @@ export default function (data) {
   group('dashboard reads', function () {
     // Lançamentos do mês
     const lanc = http.get(
-      `${config.SUPABASE_URL}/rest/v1/lancamentos?select=id,valor,data,tipo&limit=50&order=data.desc`,
+      `${config.SUPABASE_URL}/rest/v1/lancamentos?select=id,valor,data_vencimento,tipo&limit=50&order=data_vencimento.desc`,
       { headers, tags: { name: 'dashboard_lancamentos' } },
     );
     if (!check(lanc, { 'lancamentos 200': (r) => r.status === 200 })) errors.add(1);
@@ -38,7 +38,7 @@ export default function (data) {
     if (!check(proj, { 'projetos 200': (r) => r.status === 200 })) errors.add(1);
 
     // Contas
-    const contas = http.get(`${config.SUPABASE_URL}/rest/v1/contas?select=id,nome,saldo`, {
+    const contas = http.get(`${config.SUPABASE_URL}/rest/v1/contas?select=id,nome,saldo_atual`, {
       headers,
       tags: { name: 'dashboard_contas' },
     });

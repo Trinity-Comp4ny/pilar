@@ -9,7 +9,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { KeyRound, Loader2 } from "lucide-react";
+import { KeyRound } from "lucide-react";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 type Props = { currentEmail: string };
 
@@ -114,7 +116,7 @@ export function PasswordChangeCard({ currentEmail }: Props) {
                 Cancelar
               </Button>
               <Button onClick={handleSave} disabled={saving} variant="brand">
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+                {saving ? <BusyMark className="h-4 w-4" /> : "Salvar"}
               </Button>
             </div>
           </>

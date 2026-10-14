@@ -11,7 +11,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(14);
+SELECT plan(16);
 
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
 VALUES ('00000000-0000-0000-0000-00000000c0aa', 'Empresa Convite A', NULL, TRUE, '{"projetos": true}'::jsonb)
@@ -69,6 +69,18 @@ SELECT is(
   (public.portal_convite_definir_senha(current_setting('pgtap.portal_token_valido'), 'fraca')->>'ok')::boolean,
   false,
   'senha fraca é recusada'
+);
+
+-- Senha NULL é recusada e não consome o convite (a checagem inline antiga deixava passar)
+SELECT is(
+  (public.portal_convite_definir_senha(current_setting('pgtap.portal_token_valido'), NULL)->>'ok')::boolean,
+  false,
+  'senha NULL é recusada'
+);
+
+SELECT ok(
+  (SELECT convite_token_hash FROM public.cliente_portal_accounts WHERE email = 'cliente.convite@test.com') IS NOT NULL,
+  'convite segue pendente depois da senha NULL'
 );
 
 -- Senha forte com token válido é aceita e devolve sessão

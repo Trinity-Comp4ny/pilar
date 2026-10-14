@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { ModuleChipNav } from "@/components/ModuleChipNav";
 import { cn } from "@/lib/utils";
+import { sidebarOffset } from "@/lib/shellLayout";
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -37,7 +38,7 @@ export function PageLayout({ children, header, sidebar, className, containerClas
   return (
     <div
       className="fixed top-0 right-0 bottom-0 bg-background z-40 overflow-hidden flex flex-col transition-[left] duration-300 ease-in-out"
-      style={{ left: standalone || isMobile ? "0px" : state === "collapsed" ? "64px" : "240px" }}
+      style={{ left: standalone ? 0 : sidebarOffset(state, isMobile) }}
     >
       {header && (
         <div className="sticky top-0 z-20 w-full bg-background border-b">

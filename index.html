@@ -43,6 +43,34 @@
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MFX2M978"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
+    <!-- boot:start -->
+    <!-- Boot (ADR 0049): o anel de leitura cobre a tela enquanto o JavaScript baixa.
+         Aparece só depois de 300ms; o React tira com fade quando a primeira tela pinta. -->
+    <style>
+      #boot{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;background:#fcfcfc;transition:opacity .36s ease-in}
+      #boot .boot-body{display:grid;justify-items:center;gap:6px;opacity:0;animation:boot-in .3s ease-out .3s forwards}
+      #boot .boot-ring{position:relative;width:112px;height:112px}
+      #boot canvas{position:absolute;inset:0;width:100%;height:100%}
+      #boot svg{position:absolute;left:50%;top:50%;width:30px;transform:translate(-50%,-50%);color:#1a1a1a;overflow:visible}
+      #boot .f{transform-box:fill-box;transform-origin:50% 100%;animation:boot-breathe .9s cubic-bezier(.65,0,.35,1) infinite alternate}
+      #boot .f:nth-of-type(4){animation-delay:-.22s}#boot .f:nth-of-type(5){animation-delay:-.45s}#boot .f:nth-of-type(6){animation-delay:-.67s}
+      #boot p{margin:0;min-height:20px;font:14px/1.4 Inter,system-ui,-apple-system,sans-serif;color:hsl(220 9% 41%)}
+      @keyframes boot-in{to{opacity:1}}
+      @keyframes boot-breathe{from{transform:scaleY(.38)}to{transform:none}}
+      @media (prefers-reduced-motion:reduce){#boot .boot-body,#boot .f{animation:none;opacity:1}}
+    </style>
+    <div id="boot" aria-hidden="true">
+      <div class="boot-body">
+        <div class="boot-ring">
+          <canvas id="boot-canvas"></canvas>
+          <svg viewBox="-1 -0.5 30 25.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M1 2H27"/><path d="M3 6H25" stroke-opacity=".85"/><path class="f" pathLength="1" d="M7 23V9"/><path class="f" pathLength="1" d="M12 23V9"/><path class="f" pathLength="1" d="M17 23V9"/><path class="f" pathLength="1" d="M22 23V9"/></svg>
+        </div>
+        <p id="boot-caption"></p>
+      </div>
+    </div>
+    <script src="/boot-ring.js"></script>
+    <noscript><style>#boot{display:none}</style></noscript>
+    <!-- boot:end -->
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

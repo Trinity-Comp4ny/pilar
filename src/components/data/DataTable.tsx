@@ -352,7 +352,8 @@ export function DataTable<T>({
 
   return (
     <div className={cn("w-full", maxHeight && "overflow-y-auto")} style={maxHeight ? { maxHeight } : undefined}>
-      <Table style={minWidth ? { minWidth } : undefined}>
+      {/* max(): o minWidth inline substituía o min-w-full da tabela e ela encolhia no conteúdo. */}
+      <Table style={minWidth ? { minWidth: `max(100%, ${minWidth})` } : undefined}>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             {selectionHead}

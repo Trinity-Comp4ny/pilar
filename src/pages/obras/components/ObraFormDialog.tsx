@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { FormDialog } from "@/components/FormDialog";
@@ -14,15 +14,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useProjetosLite, usePessoasEmpresa } from "@/pages/meu-trabalho/hooks";
-import { useCreateObra, useObras, useUpdateObra, type ObraResumo } from "@/hooks/useObras";
+import { useCreateObra, useObras, useUpdateObra, type ObraResumo } from "@/pages/obras/hooks/useObras";
 import { STATUS_OBRA_OPCOES } from "@/lib/obras";
 import { lookupCEP } from "@/lib/brasilApi";
-import { geocodarCidade } from "@/lib/clima";
+import { geocodarCidade } from "@/pages/obras/lib/clima";
 import { formatCEP, onlyDigits } from "@/lib/maskUtils";
 import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
 import { DesbloqueioNivel } from "@/components/trial/DesbloqueioNivel";
 import { useNivelConfianca } from "@/hooks/useNivelConfianca";
 import { analytics } from "@/lib/analytics";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 const SEM_RESPONSAVEL = "__none__";
 const SEM_PROJETO = "__none__";
@@ -188,6 +190,7 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
         toast.success("Obra atualizada");
       } else {
         await criar.mutateAsync(payload);
+        analytics.track("obra_criada", { com_projeto: Boolean(payload.projeto_id) });
         toast.success("Obra criada");
       }
       onOpenChange(false);
@@ -315,7 +318,7 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
                 })}
               />
               {buscandoCep && (
-                <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+                <BusyMark className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               )}
             </div>
           </div>

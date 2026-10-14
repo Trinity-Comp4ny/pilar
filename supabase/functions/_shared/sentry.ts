@@ -18,9 +18,10 @@
  *   - Cada invocação de withSentry abre um AsyncLocalStorage novo pra coletar os spans
  *     chamados durante aquele request (ex.: em ai-client.ts), sem precisar passar
  *     contexto manualmente pelos 14 handlers `ai-*`.
- *   - Inclui `gen_ai.input.messages`/`gen_ai.output.messages` (replay de conversa em
- *     Insights > Agents), passado por scrub() antes de sair (ver ADR 0027). Trade-off
- *     aceito conscientemente: conteúdo de conversa passa a trafegar pro Sentry.
+ *   - `gen_ai.input.messages`/`gen_ai.output.messages` (replay de conversa em
+ *     Insights > Agents) só saem quando SENTRY_ENV é de dev (ADR 0053, revisa o 0027).
+ *     Staging, produção, valor vazio ou digitado errado mandam só metadado: modelo,
+ *     tokens, latência, empresa. Ver conteudoGenAiPorAmbiente().
  *   - `gen_ai.conversation.id` (setado pelo caller) agrupa spans da mesma conversa na
  *     tela Conversations. `setSentryUser()` identifica quem está por trás da conversa.
  *
@@ -33,6 +34,7 @@
  */
 
 import { AsyncLocalStorage } from "node:async_hooks";
+import { fetchComTempo } from "./http.ts";
 
 // `EdgeRuntime` só existe no runtime do Supabase (e no `supabase functions serve`
 // local); em `deno check`/testes fora dele, cai no fallback (a promise ainda roda,
@@ -102,6 +104,22 @@ export interface GenAiSpanInput {
 
 const genAiSpanStore = new AsyncLocalStorage<GenAiSpanInput[]>();
 
+// Allowlist, não blocklist: qualquer ambiente fora daqui (inclusive "", "prod " ou
+// "stagign") cai no lado seguro e não manda conteúdo de cliente pro Sentry (ADR 0053).
+const AMBIENTES_COM_CONTEUDO_GEN_AI = new Set(["development", "dev", "local"]);
+const ATRIBUTOS_DE_CONTEUDO_GEN_AI = ["gen_ai.input.messages", "gen_ai.output.messages"];
+
+/** Tira prompt e resposta dos atributos do span fora de dev. Metadado passa sempre. */
+export function conteudoGenAiPorAmbiente(
+  attributes: Record<string, unknown>,
+  environment: string
+): Record<string, unknown> {
+  if (AMBIENTES_COM_CONTEUDO_GEN_AI.has(environment)) return attributes;
+  const out = { ...attributes };
+  for (const key of ATRIBUTOS_DE_CONTEUDO_GEN_AI) delete out[key];
+  return out;
+}
+
 /**
  * Registra um span gen_ai.* pra aparecer no dashboard Insights > Agents do Sentry.
  * Só tem efeito dentro do ciclo de vida de um handler envolvido por withSentry
@@ -111,13 +129,36 @@ export function recordGenAiSpan(span: GenAiSpanInput): void {
   genAiSpanStore.getStore()?.push(span);
 }
 
+/** Só id e empresa: o Sentry não recebe contato da pessoa (docs/ROPA.md, item 14). */
 export interface SentryUserInfo {
   id?: string;
-  email?: string;
   empresa_id?: string;
 }
 
 const sentryUserStore = new AsyncLocalStorage<{ value?: SentryUserInfo }>();
+
+/** Trace da invocação atual: erro capturado dentro do handler cai no mesmo trace da transaction. */
+interface TraceAtual {
+  traceId: string;
+  spanId: string;
+  parentSpanId?: string;
+}
+
+const traceStore = new AsyncLocalStorage<TraceAtual>();
+
+/**
+ * Lê o header `sentry-trace` (`<trace_id>-<span_id>[-<sampled>]`) que o SDK do browser
+ * manda quando a URL está em tracePropagationTargets. Com ele, a transaction da edge
+ * entra no trace do clique que a disparou (front → edge → modelo num trace só), em vez
+ * de abrir um trace órfão.
+ */
+export function lerSentryTrace(
+  header: string | null
+): { traceId: string; parentSpanId: string; sampled?: boolean } | null {
+  const m = /^([0-9a-f]{32})-([0-9a-f]{16})(?:-([01]))?$/i.exec(header?.trim() ?? "");
+  if (!m) return null;
+  return { traceId: m[1].toLowerCase(), parentSpanId: m[2].toLowerCase(), sampled: m[3] ? m[3] === "1" : undefined };
+}
 
 /**
  * Identifica o usuário/empresa da invocação atual, pra popular a coluna "User" do
@@ -185,7 +226,25 @@ function buildException(err: unknown) {
       ],
     };
   }
-  return { values: [{ type: "NonError", value: String(err) }] };
+  return { values: [{ type: tipoDeNaoErro(err), value: mensagemDeNaoErro(err) }] };
+}
+
+// Erro do supabase-js/PostgREST chega como objeto simples ({ message, code, details }).
+// String(obj) virava "[object Object]" e juntava falhas sem relação num issue só (PILAR-30).
+function tipoDeNaoErro(err: unknown): string {
+  const nome = (err as { name?: unknown } | null)?.name;
+  return typeof nome === "string" && nome ? nome : "NonError";
+}
+
+function mensagemDeNaoErro(err: unknown): string {
+  if (err === null || typeof err !== "object") return String(err);
+  const { message, code } = err as { message?: unknown; code?: unknown };
+  if (typeof message === "string" && message) return typeof code === "string" ? `${message} (${code})` : message;
+  try {
+    return JSON.stringify(scrub(err)).slice(0, 500);
+  } catch {
+    return String(err);
+  }
 }
 
 export async function captureException(err: unknown, ctx: SentryContext = {}): Promise<void> {
@@ -193,6 +252,7 @@ export async function captureException(err: unknown, ctx: SentryContext = {}): P
 
   const eventId = genEventId();
   const timestamp = new Date().toISOString();
+  const trace = traceStore.getStore();
 
   const event = {
     event_id: eventId,
@@ -206,6 +266,7 @@ export async function captureException(err: unknown, ctx: SentryContext = {}): P
     user: ctx.user ? { id: ctx.user.id, segment: ctx.user.empresa_id } : undefined,
     extra: ctx.extra ? (scrub(ctx.extra) as Record<string, unknown>) : undefined,
     exception: buildException(err),
+    ...(trace && { contexts: { trace: { trace_id: trace.traceId, span_id: trace.spanId } } }),
   };
 
   const envelopeHeader = JSON.stringify({
@@ -217,7 +278,7 @@ export async function captureException(err: unknown, ctx: SentryContext = {}): P
   const body = `${envelopeHeader}\n${itemHeader}\n${JSON.stringify(event)}`;
 
   try {
-    const res = await fetch(PARSED.envelopeUrl, {
+    const res = await fetchComTempo(PARSED.envelopeUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-sentry-envelope",
@@ -247,12 +308,12 @@ async function sendTransaction(params: {
   url?: string;
   genAiSpans?: GenAiSpanInput[];
   user?: SentryUserInfo;
+  trace: TraceAtual;
 }): Promise<void> {
   if (!PARSED) return;
 
   const eventId = genEventId();
-  const traceId = crypto.randomUUID().replace(/-/g, "");
-  const spanId = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+  const { traceId, spanId, parentSpanId } = params.trace;
   const sentAt = new Date().toISOString();
   const startTs = params.startMs / 1000;
   const endTs = params.endMs / 1000;
@@ -266,7 +327,7 @@ async function sendTransaction(params: {
     start_timestamp: s.startMs / 1000,
     timestamp: s.endMs / 1000,
     status: s.status ?? "ok",
-    data: s.attributes,
+    data: conteudoGenAiPorAmbiente(s.attributes, ENVIRONMENT),
   }));
 
   const event = {
@@ -279,7 +340,7 @@ async function sendTransaction(params: {
     server_name: params.fnName,
     timestamp: endTs,
     start_timestamp: startTs,
-    user: params.user ? { id: params.user.id, email: params.user.email, segment: params.user.empresa_id } : undefined,
+    user: params.user ? { id: params.user.id, segment: params.user.empresa_id } : undefined,
     tags: {
       runtime: "deno-edge",
       fn: params.fnName,
@@ -291,6 +352,7 @@ async function sendTransaction(params: {
         trace_id: traceId,
         span_id: spanId,
         op: "edge.function",
+        ...(parentSpanId && { parent_span_id: parentSpanId }),
         status: params.status,
         ...(params.url && { data: { "http.url": params.url } }),
       },
@@ -303,7 +365,7 @@ async function sendTransaction(params: {
   const body = `${envelopeHeader}\n${itemHeader}\n${JSON.stringify(event)}`;
 
   try {
-    const res = await fetch(PARSED.envelopeUrl, {
+    const res = await fetchComTempo(PARSED.envelopeUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-sentry-envelope",
@@ -334,7 +396,15 @@ export function withSentry(
     // "normal". Mas se a invocação gerou spans gen_ai.* (Insights > Agents), a transaction
     // sempre sai (genAiSpans.length > 0 abaixo), senão o dashboard de agentes perderia ~90%
     // das execuções por causa de uma amostragem que não tem relação com agent monitoring.
-    const performanceSampled = PARSED ? Math.random() < TRACES_RATE : false;
+    // Se o browser mandou o trace, vale a decisão de amostragem dele: trace pela metade
+    // (front sem a edge, ou o contrário) não serve pra investigar latência.
+    const pai = lerSentryTrace(req.headers.get("sentry-trace"));
+    const performanceSampled = PARSED ? (pai?.sampled ?? Math.random() < TRACES_RATE) : false;
+    const trace: TraceAtual = {
+      traceId: pai?.traceId ?? crypto.randomUUID().replace(/-/g, ""),
+      spanId: crypto.randomUUID().replace(/-/g, "").slice(0, 16),
+      ...(pai && { parentSpanId: pai.parentSpanId }),
+    };
     const startMs = Date.now();
     let response: Response;
     let status: "ok" | "internal_error" = "ok";
@@ -343,17 +413,21 @@ export function withSentry(
     const userBox: { value?: SentryUserInfo } = {};
 
     try {
-      response = await sentryUserStore.run(userBox, () => genAiSpanStore.run(genAiSpans, () => handler(req)));
+      response = await traceStore.run(trace, () =>
+        sentryUserStore.run(userBox, () => genAiSpanStore.run(genAiSpans, () => handler(req)))
+      );
       httpStatus = response.status;
       if (response.status >= 500) status = "internal_error";
     } catch (err) {
       status = "internal_error";
-      await captureException(err, {
-        fn: fnName,
-        tags: { method: req.method },
-        extra: { url: req.url },
-        user: userBox.value,
-      });
+      await traceStore.run(trace, () =>
+        captureException(err, {
+          fn: fnName,
+          tags: { method: req.method },
+          extra: { url: req.url },
+          user: userBox.value,
+        })
+      );
       response = new Response(JSON.stringify({ error: "Internal Server Error" }), {
         status: 500,
         headers: { "Content-Type": "application/json" },
@@ -377,6 +451,7 @@ export function withSentry(
         method: req.method,
         url: req.url,
         genAiSpans,
+        trace,
       }).catch(() => undefined);
       waitUntil(task);
     }
@@ -406,7 +481,7 @@ export async function cronCheckin(
     `https://${PARSED.host}/api/${PARSED.projectId}/cron/${monitorSlug}/${PARSED.publicKey}/` +
     `?status=${status}&check_in_id=${id}&environment=${ENVIRONMENT}`;
   try {
-    const res = await fetch(url);
+    const res = await fetchComTempo(url, {}, 5_000);
     if (!res.ok) console.warn(`[sentry] cron check-in rejeitado ${res.status}`);
   } catch (e) {
     console.warn(`[sentry] cron check-in falhou: ${e instanceof Error ? e.message : String(e)}`);
@@ -507,7 +582,7 @@ export function recordMetric(
   });
   const body = `${envelopeHeader}\n${itemHeader}\n${JSON.stringify({ items: [item] })}`;
 
-  const task = fetch(PARSED.envelopeUrl, {
+  const task = fetchComTempo(PARSED.envelopeUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-sentry-envelope",

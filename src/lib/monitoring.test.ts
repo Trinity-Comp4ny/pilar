@@ -84,3 +84,10 @@ describe("monitoring scrubber — keys sensíveis", () => {
     expect(extra.msg).toBe("Operação concluída com sucesso");
   });
 });
+
+describe("monitoring: replay de sessão", () => {
+  it("grava a tela sem conteúdo (texto, campos e mídia mascarados)", async () => {
+    const { OPCOES_REPLAY } = await import("./monitoring");
+    expect(OPCOES_REPLAY).toEqual({ maskAllText: true, maskAllInputs: true, blockAllMedia: true });
+  });
+});

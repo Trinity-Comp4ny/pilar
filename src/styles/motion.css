@@ -1,0 +1,194 @@
+/**
+ * Movimento da marca (ADR 0049, SPEC 106).
+ *
+ * Ritmo, desenho e hover da marca em CSS puro; o anel de leitura pinta em canvas
+ * (src/components/motion/readingRingEngine.ts) e lê as cores daqui.
+ * Importado pelo app e pela landing.
+ */
+
+:root {
+  --ring-dust: #8f948d;
+  --ring-glow-strong: hsl(102 55% 27%);
+  --ring-glow-mid: hsl(96 42% 38%);
+  --ring-glow-soft: hsl(88 55% 50%);
+  --ring-halo: rgba(164, 236, 134, 0.32);
+  --mark-hover: hsl(102 55% 27%);
+}
+
+.dark {
+  --ring-dust: #7e857d;
+  --ring-glow-strong: hsl(160 45% 72%);
+  --ring-glow-mid: #a4ec86;
+  --ring-glow-soft: hsl(78 62% 58%);
+  --ring-halo: rgba(164, 236, 134, 0.16);
+  --mark-hover: #a4ec86;
+}
+
+@keyframes pm-breathe {
+  from {
+    transform: scaleY(0.38);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes pm-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes veil-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes veil-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@layer components {
+  .pilar-mark {
+    display: block;
+    overflow: visible;
+    flex: none;
+  }
+
+  /* Espera inline: o tamanho padrão acompanha a fonte; utilitário do Tailwind ganha. */
+  .busy-mark {
+    width: 1em;
+    height: 1em;
+  }
+
+  /* Ritmo (L02): as quatro caneluras sobem e descem fora de fase. */
+  .pilar-mark--rhythm .pm-fl {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    animation: pm-breathe 0.9s cubic-bezier(0.65, 0, 0.35, 1) infinite alternate;
+  }
+  .pilar-mark--rhythm .pm-f2 {
+    animation-delay: -0.22s;
+  }
+  .pilar-mark--rhythm .pm-f3 {
+    animation-delay: -0.45s;
+  }
+  .pilar-mark--rhythm .pm-f4 {
+    animation-delay: -0.67s;
+  }
+
+  /* Traço técnico (A01): capitel, ábaco e as caneluras descendo em sequência. */
+  .pilar-mark--draw path {
+    stroke-dasharray: 1 2;
+    stroke-dashoffset: 1.001;
+    animation: pm-draw 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .pilar-mark--draw .pm-aba {
+    animation-delay: 0.16s;
+  }
+  .pilar-mark--draw .pm-f1 {
+    animation-delay: 0.34s;
+  }
+  .pilar-mark--draw .pm-f2 {
+    animation-delay: 0.42s;
+  }
+  .pilar-mark--draw .pm-f3 {
+    animation-delay: 0.5s;
+  }
+  .pilar-mark--draw .pm-f4 {
+    animation-delay: 0.58s;
+  }
+
+  /* Hover (A07): só cor, uma canelura de cada vez. Nunca gira nem desloca. */
+  .pilar-mark .pm-fl {
+    transition: stroke 0.2s ease-out;
+  }
+  .pilar-logo:hover .pilar-mark .pm-fl {
+    stroke: var(--mark-hover);
+  }
+  .pilar-logo:hover .pilar-mark .pm-f2 {
+    transition-delay: 0.06s;
+  }
+  .pilar-logo:hover .pilar-mark .pm-f3 {
+    transition-delay: 0.12s;
+  }
+  .pilar-logo:hover .pilar-mark .pm-f4 {
+    transition-delay: 0.18s;
+  }
+
+  /* Anel de leitura (R1): canvas por baixo, a marca no ritmo no centro. */
+  .reading-ring {
+    position: relative;
+    display: inline-block;
+    flex: none;
+  }
+  .reading-ring canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .reading-ring__mark {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    height: auto;
+    transform: translate(-50%, -50%);
+    color: hsl(var(--text-ink));
+  }
+  .reading-ring.is-visible {
+    animation: veil-in 0.3s ease-out both;
+  }
+
+  /* Véu de entrada (T02). */
+  .entry-veil,
+  .veil-exit {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: grid;
+    place-items: center;
+    /* A landing não define --background; cai no papel dela. */
+    background: hsl(var(--background, 0 0% 97%));
+  }
+  .entry-veil {
+    animation: veil-in 0.28s ease-out both;
+  }
+  .entry-veil__body {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+  }
+  .entry-veil__caption {
+    margin: 0;
+    min-height: 1.25rem;
+    font-size: 0.875rem;
+    color: hsl(var(--text-muted));
+  }
+  .veil-exit {
+    pointer-events: none;
+    animation: veil-out 0.36s ease-in forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pilar-mark--rhythm .pm-fl,
+    .pilar-mark--draw path,
+    .reading-ring.is-visible,
+    .entry-veil {
+      animation: none;
+    }
+    .pilar-mark--draw path {
+      stroke-dashoffset: 0;
+    }
+    .pilar-mark .pm-fl {
+      transition: none;
+    }
+  }
+}

@@ -11,6 +11,9 @@ import { gzipSync } from "node:zlib";
 
 const DIST = join(process.cwd(), "dist", "assets");
 
+// Chunks que só fazem sentido em telas específicas: nunca no carregamento inicial.
+const PROIBIDOS_NO_INICIAL = [/^vendor-pdf-/, /^vendor-charts-/, /^vendor-maps-/, /^vendor-docx-/];
+
 // Limites em bytes (gzipped). Tune conforme app cresce.
 const BUDGETS = {
   // Entry chunk (index-*.js), bootstrap inicial. Manter enxuto.
@@ -20,7 +23,24 @@ const BUDGETS = {
   // deriva de hash de nome de chunk já documentada nas rodadas anteriores.
   // Total JS segue folgado (~1.9/3 MB); o first-load extra é imperceptível.
   // Reavaliar se voltar a encostar.
-  entry: 270 * 1024,
+  //
+  // 2026-10-09: 230 kB. O Replay do Sentry passou a vir da CDN depois do boot e a
+  // entrada caiu de ~270 para ~221 kB; a catraca acompanha.
+  //
+  // 2026-10-13: 155 kB. O PostHog passou a vir por import dinâmico só com
+  // consentimento (src/lib/analytics.ts) e a entrada caiu de ~230 para ~142 kB.
+  //
+  // 2026-10-13 (2): 125 kB. A troca de senha do portal passou a ser lazy (levava
+  // react-hook-form e todos os schemas para o boot) e o env.ts deixou o zod; a
+  // entrada caiu de ~143 para ~113 kB.
+  entry: 125 * 1024,
+  // Tudo que o navegador baixa antes da primeira tela: a entrada mais os chunks que o
+  // index.html pré-carrega (modulepreload) e o CSS. O limite só da entrada não via o
+  // vendor-pdf e o vendor-charts sendo pré-carregados em toda página (~860 kB brutos),
+  // porque eram outros arquivos. Medido em 2026-10-09: ~416 kB depois da correção.
+  // 2026-10-13: ~338 kB com o PostHog fora do boot; limite desce para 350 kB.
+  // 2026-10-13 (2): ~309 kB sem zod e react-hook-form na entrada; limite desce para 325 kB.
+  initialLoad: 325 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app
@@ -67,9 +87,19 @@ async function main() {
   const totalJs = chunks.filter((c) => c.ext === "js").reduce((a, c) => a + c.gz, 0);
   const totalCss = chunks.filter((c) => c.ext === "css").reduce((a, c) => a + c.gz, 0);
 
+  // A entrada é o <script src> do index.html. Pelo nome não dá: toda página lazy que
+  // vem de um `index.tsx` também vira `index-*.js`, e a de Propostas (132 kB, com o
+  // mammoth dentro) passava calada medida contra o limite da entrada.
+  const html = await readFile(join(DIST, "..", "index.html"), "utf8");
+  const entrada = html.match(/<script[^>]*\ssrc="\/assets\/([^"]+\.js)"/)?.[1];
+  if (!entrada) {
+    console.error("[budget] não achei o <script src> da entrada no dist/index.html.");
+    process.exit(1);
+  }
+
   for (const c of chunks) {
     if (c.ext !== "js") continue;
-    const isEntry = /^index-[A-Za-z0-9_-]+\.js$/.test(c.name);
+    const isEntry = c.name === entrada;
     const limit = isEntry ? BUDGETS.entry : BUDGETS.perChunk;
     if (c.gz > limit) {
       violations.push(`${c.name} = ${fmt(c.gz)} > limite ${fmt(limit)} (${isEntry ? "entry" : "chunk"})`);
@@ -83,7 +113,21 @@ async function main() {
     violations.push(`Total CSS = ${fmt(totalCss)} > limite ${fmt(BUDGETS.totalCss)}`);
   }
 
-  console.log(`\n  Total JS  : ${fmt(totalJs)} / ${fmt(BUDGETS.totalJs)}`);
+  // Carregamento inicial: o que o index.html manda baixar antes da primeira tela.
+  const iniciais = [...html.matchAll(/(?:src|href)="\/assets\/([^"]+\.(?:js|css))"/g)].map((m) => m[1]);
+  const porNome = new Map(chunks.map((c) => [c.name, c]));
+  const initialLoad = iniciais.reduce((a, n) => a + (porNome.get(n)?.gz ?? 0), 0);
+  if (initialLoad > BUDGETS.initialLoad) {
+    violations.push(`Carregamento inicial = ${fmt(initialLoad)} > limite ${fmt(BUDGETS.initialLoad)}`);
+  }
+  for (const n of iniciais) {
+    if (PROIBIDOS_NO_INICIAL.some((re) => re.test(n))) {
+      violations.push(`${n} entrou no carregamento inicial (só deveria carregar na tela que usa)`);
+    }
+  }
+
+  console.log(`\n  Inicial   : ${fmt(initialLoad)} / ${fmt(BUDGETS.initialLoad)} (${iniciais.length} arquivos)`);
+  console.log(`  Total JS  : ${fmt(totalJs)} / ${fmt(BUDGETS.totalJs)}`);
   console.log(`  Total CSS : ${fmt(totalCss)} / ${fmt(BUDGETS.totalCss)}\n`);
 
   if (violations.length === 0) {

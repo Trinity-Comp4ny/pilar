@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { RefreshCw } from "lucide-react";
+import { BusyMark } from "@/components/motion/BusyMark";
 import { cn } from "@/lib/utils";
 
 interface DataFrescorProps {
@@ -41,7 +42,7 @@ export function DataFrescor({ updatedAt, isFetching, onRefresh, className }: Dat
       role="status"
       aria-live="polite"
     >
-      <RefreshCw className={cn("h-3 w-3", isFetching && "animate-spin")} aria-hidden="true" />
+      {isFetching ? <BusyMark className="h-3 w-3" /> : <RefreshCw className="h-3 w-3" aria-hidden="true" />}
       {label}
     </span>
   );

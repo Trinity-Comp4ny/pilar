@@ -8,7 +8,6 @@ import {
   Camera,
   Check,
   ClipboardList,
-  Loader2,
   Mic,
   Pencil,
   Plus,
@@ -45,28 +44,31 @@ import {
   type TipoImpedimento,
 } from "@/lib/obras";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCreateRdo, useUpdateRdo, type RdoRow } from "@/hooks/useObraRdo";
-import { useObraTarefas, useCreateObraTarefa } from "@/hooks/useObraTarefas";
-import { useObraFrentes } from "@/hooks/useObraFrentes";
-import { useObraRdoTarefas, useSaveRdoTarefas, type ResultadoRdoTarefa } from "@/hooks/useObraRdoTarefas";
+import { useCreateRdo, useUpdateRdo, type RdoRow } from "@/pages/obras/hooks/useObraRdo";
+import { useObraTarefas, useCreateObraTarefa } from "@/pages/obras/hooks/useObraTarefas";
+import { useObraFrentes } from "@/pages/obras/hooks/useObraFrentes";
+import { useObraRdoTarefas, useSaveRdoTarefas, type ResultadoRdoTarefa } from "@/pages/obras/hooks/useObraRdoTarefas";
 import { useFornecedoresLite } from "@/hooks/useFornecedorDetalhe";
-import { useObraRdoEfetivo, useSaveRdoEfetivo, type EntradaEfetivo } from "@/hooks/useObraRdoEfetivo";
+import { useObraRdoEfetivo, useSaveRdoEfetivo, type EntradaEfetivo } from "@/pages/obras/hooks/useObraRdoEfetivo";
 import {
   useObraRdoImpedimentos,
   useSaveRdoImpedimentos,
   type EntradaImpedimento,
-} from "@/hooks/useObraRdoImpedimentos";
-import { useObraRdoVisitas, useSaveRdoVisitas, type EntradaVisita } from "@/hooks/useObraRdoVisitas";
+} from "@/pages/obras/hooks/useObraRdoImpedimentos";
+import { useObraRdoVisitas, useSaveRdoVisitas, type EntradaVisita } from "@/pages/obras/hooks/useObraRdoVisitas";
 import {
   MAX_FOTO_RDO_BYTES,
   MIME_FOTO_RDO,
   useDeleteRdoFoto,
   useObraFotos,
   useUploadRdoFoto,
-} from "@/hooks/useObraFotos";
-import { useTranscreverRdoVoz } from "@/hooks/useTranscreverRdoVoz";
-import { useObra } from "@/hooks/useObras";
-import { buscarClimaDoDia } from "@/lib/clima";
+} from "@/pages/obras/hooks/useObraFotos";
+import { useTranscreverRdoVoz } from "@/pages/obras/hooks/useTranscreverRdoVoz";
+import { useObra } from "@/pages/obras/hooks/useObras";
+import { buscarClimaDoDia } from "@/pages/obras/lib/clima";
+import { analytics } from "@/lib/analytics";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 const GRAVACAO_MAX_MS = 3 * 60 * 1000;
 
@@ -344,7 +346,18 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, dataSel, obra?.latitude, obra?.longitude]);
 
-  const frenteNome = useMemo(() => new Map(frentes.map((f) => [f.id, f.nome])), [frentes]);
+  // Tarefa pendura no serviço (spec 111): rótulo "Etapa › Serviço", que é o
+  // que o mestre reconhece no canteiro.
+  const frenteNome = useMemo(() => {
+    const porId = new Map(frentes.map((f) => [f.id, f]));
+    return new Map(
+      frentes.map((f) => {
+        const pai = f.parent_id ? porId.get(f.parent_id) : undefined;
+        return [f.id, f.nivel === "servico" && pai ? `${pai.nome} › ${f.nome}` : f.nome];
+      })
+    );
+  }, [frentes]);
+  const servicos = useMemo(() => frentes.filter((f) => f.nivel === "servico"), [frentes]);
   const fornecedorNomePorId = useMemo(() => new Map(fornecedores.map((f) => [f.id, f.nome])), [fornecedores]);
   const tarefaTituloPorId = useMemo(() => new Map(tarefas.map((t) => [t.id, t.titulo])), [tarefas]);
   // Cadastro real enviado pro backend casar sugestão de efetivo/visita/tarefa
@@ -657,6 +670,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
 
       fotosNovas.forEach((f) => URL.revokeObjectURL(f.preview));
       setFotosNovas([]);
+      if (!editandoId) analytics.track("rdo_registrado", { fotos: fotosNovas.length });
       toast.success(editandoId ? "Registro atualizado" : "Dia registrado");
       onOpenChange(false);
     } catch (e) {
@@ -793,7 +807,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
 
               {transcreverVoz.isPending && (
                 <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <BusyMark className="h-4 w-4" />
                   Transcrevendo...
                 </span>
               )}
@@ -878,7 +892,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
                     </Button>
                     {transcreverVoz.isPending && (
                       <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <BusyMark className="h-3.5 w-3.5" />
                         Transcrevendo...
                       </span>
                     )}
@@ -1182,19 +1196,19 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
                       }
                     }}
                   />
-                  {frentes.length > 0 && (
+                  {servicos.length > 0 && (
                     <Select
                       value={novaTarefa.frenteId || NAO_INFORMADO}
                       onValueChange={(v) => setNovaTarefa((p) => ({ ...p, frenteId: v === NAO_INFORMADO ? "" : v }))}
                     >
-                      <SelectTrigger className="h-8 w-full sm:w-40">
-                        <SelectValue placeholder="Sem frente" />
+                      <SelectTrigger className="h-8 w-full sm:w-48">
+                        <SelectValue placeholder="Sem serviço" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={NAO_INFORMADO}>Sem frente</SelectItem>
-                        {frentes.map((f) => (
+                        <SelectItem value={NAO_INFORMADO}>Sem serviço</SelectItem>
+                        {servicos.map((f) => (
                           <SelectItem key={f.id} value={f.id}>
-                            {f.nome}
+                            {frenteNome.get(f.id)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1208,11 +1222,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
                     onClick={adicionarTarefa}
                     disabled={!novaTarefa.titulo.trim() || criarTarefa.isPending}
                   >
-                    {criarTarefa.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Plus className="h-4 w-4" />
-                    )}
+                    {criarTarefa.isPending ? <BusyMark className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>

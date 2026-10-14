@@ -7,6 +7,7 @@ import { edgeFunctionErrorMessage } from "@/lib/edgeFunctionError";
 import { UsersAccessManager, type ManagedUser } from "@/components/admin/UsersAccessManager";
 import { useRequireAal2 } from "@/hooks/useRequireAal2";
 import type { PilarRole } from "@/lib/roles";
+import { analytics } from "@/lib/analytics";
 
 type RawUser = {
   id: string;
@@ -72,6 +73,7 @@ export function UsuariosTab({ users, setUsers, currentUserId }: Props) {
       });
       if (error) throw error;
 
+      analytics.track("convite_enviado", { papel: payload.role, origem: "administracao" });
       toast.success("Convite enviado", {
         description: data?.conta_existente
           ? "Entre com sua conta atual para acessar o escritório."

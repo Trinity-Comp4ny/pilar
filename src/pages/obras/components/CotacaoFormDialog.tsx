@@ -6,8 +6,8 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useObraFrentes } from "@/hooks/useObraFrentes";
-import { useSaveCotacao, type CotacaoRow } from "@/hooks/useObraCotacoes";
+import { useObraEtapas } from "@/pages/obras/hooks/useObraFrentes";
+import { useSaveCotacao, type CotacaoRow } from "@/pages/obras/hooks/useObraCotacoes";
 
 const SEM_FRENTE = "__none__";
 
@@ -21,7 +21,7 @@ interface Props {
 /** Cria ou edita a necessidade a cotar (item único). Só a descrição é obrigatória. */
 export function CotacaoFormDialog({ open, onOpenChange, obraId, cotacao }: Props) {
   const isEdit = !!cotacao;
-  const { data: frentes = [] } = useObraFrentes(obraId);
+  const { data: frentes = [] } = useObraEtapas(obraId);
   const save = useSaveCotacao(obraId);
 
   const [descricao, setDescricao] = useState(cotacao?.descricao ?? "");

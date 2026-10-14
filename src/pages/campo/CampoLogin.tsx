@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Eye, EyeOff, HardHat, Loader2 } from "lucide-react";
+import { Eye, EyeOff, HardHat } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { getCampoToken, setCampoToken } from "./useCampoAuth";
+
+import { BusyMark } from "@/components/motion/BusyMark";
 
 type LoginResp = { ok: boolean; token?: string; nome?: string; must_change_senha?: boolean; erro?: string };
 
@@ -95,7 +97,7 @@ export default function CampoLogin() {
           </div>
 
           <Button type="submit" variant="brand" className="h-12 w-full text-base" disabled={loading}>
-            {loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+            {loading && <BusyMark className="mr-2 h-5 w-5" />}
             Entrar
           </Button>
         </form>
