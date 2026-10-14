@@ -7,11 +7,12 @@ teclado ele não mede. Este documento separa o que já é automático do que pre
 
 ## Automático (reprova o CI)
 
-| Spec                                 | Cobre                                                                                                                         |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `e2e/a11y-app-authenticated.spec.ts` | início, projetos (quadro e detalhe), lançamentos, clientes, leads, propostas, obras (lista e detalhe), tarefas, equipe, metas |
-| `e2e/a11y-publico.spec.ts`           | login, cadastro, recuperar senha, login do portal do cliente, login do Pilar Campo                                            |
-| `e2e/marketing-a11y.spec.ts`         | site de marketing em produção, com movimento reduzido                                                                         |
+| Spec                                     | Cobre                                                                                                                                                                                                                              |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `e2e/a11y-app-authenticated.spec.ts`     | 21 telas: início, projetos (quadro, detalhe, disciplinas, cronograma, mapa), lançamentos, financeiro, clientes, leads, propostas, obras (lista, detalhe, fornecedores), tarefas, equipe, metas, agentes, relatórios, administração |
+| `e2e/a11y-teclado-authenticated.spec.ts` | skip link leva o foco ao conteúdo; modal prende o foco, Esc fecha e o foco volta ao botão que abriu                                                                                                                                |
+| `e2e/a11y-publico.spec.ts`               | login, cadastro, recuperar senha, login do portal do cliente, login do Pilar Campo                                                                                                                                                 |
+| `e2e/marketing-a11y.spec.ts`             | site de marketing em produção, com movimento reduzido                                                                                                                                                                              |
 
 Tela nova com rota própria entra na lista do spec correspondente no mesmo PR.
 
@@ -56,6 +57,8 @@ pelo portal do cliente.
 
 Cada rodada vira uma linha aqui, com o que falhou e o PR que corrigiu.
 
-| Data | Quem | Jornadas | Falhas | PRs |
-| ---- | ---- | -------- | ------ | --- |
-|      |      |          |        |     |
+| Data       | Quem                    | Jornadas                                 | Falhas                                                                                                                                                 | PRs     |
+| ---------- | ----------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| 2026-10-14 | Automática (Playwright) | 21 telas no Axe + ciclo de foco do modal | Selects sem nome (5 telas), contraste nas barras do cronograma, rosca sem alternativa, `main` duplicado, foco perdido ao fechar modal, texto em inglês | esta PR |
+
+Rodada manual (VoiceOver, zoom 200%, kanban e Gantt por teclado): ainda não feita.
