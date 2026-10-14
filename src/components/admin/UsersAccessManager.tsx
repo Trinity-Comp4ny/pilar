@@ -172,7 +172,10 @@ export function UsersAccessManager({
             <TableBody>
               {users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={showLastAccess ? 5 : 4} className="text-black/50">
+                  <TableCell
+                    colSpan={showLastAccess ? 5 : 4}
+                    className="py-10 text-center text-sm text-muted-foreground"
+                  >
                     Nenhum usuário adicionado.
                   </TableCell>
                 </TableRow>

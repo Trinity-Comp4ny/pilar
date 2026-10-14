@@ -7,6 +7,7 @@ import { useAtividade } from "../hooks";
 import { useCustosIa, useFormatCusto } from "../custos";
 import { quandoRelativo } from "../lib";
 import { Fato } from "./Fato";
+import { EmptyState } from "@/components/EmptyState";
 
 export function EmpresaVisaoTab({ empresa, onVerAtividade }: { empresa: Empresa; onVerAtividade: () => void }) {
   const formatCusto = useFormatCusto();
@@ -25,7 +26,7 @@ export function EmpresaVisaoTab({ empresa, onVerAtividade }: { empresa: Empresa;
           {custosQ.isLoading ? (
             <Skeleton className="h-20 w-full" />
           ) : !ia ? (
-            <p className="text-sm text-ink-muted">Nenhuma chamada de IA neste mês.</p>
+            <EmptyState compact title="Nenhuma chamada de IA neste mês." />
           ) : (
             <dl className="grid grid-cols-2 gap-4">
               <Fato label="Chamadas">{formatNumberCompact(ia.chamadas)}</Fato>
@@ -43,7 +44,7 @@ export function EmpresaVisaoTab({ empresa, onVerAtividade }: { empresa: Empresa;
         </CardHeader>
         <CardContent>
           {admins.length === 0 ? (
-            <p className="text-sm text-ink-muted">Nenhum admin ativo. Convide alguém na aba Usuários.</p>
+            <EmptyState compact title="Nenhum admin ativo. Convide alguém na aba Usuários." />
           ) : (
             <ul className="space-y-2.5">
               {admins.map((u) => (
@@ -70,7 +71,7 @@ export function EmpresaVisaoTab({ empresa, onVerAtividade }: { empresa: Empresa;
           {atividadeQ.isLoading ? (
             <Skeleton className="h-20 w-full" />
           ) : (atividadeQ.data ?? []).length === 0 ? (
-            <p className="text-sm text-ink-muted">Nada registrado ainda.</p>
+            <EmptyState compact title="Nada registrado ainda." />
           ) : (
             <ul className="space-y-2">
               {(atividadeQ.data ?? []).map((ev) => (
