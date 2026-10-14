@@ -9,6 +9,7 @@ import {
   toneSeveridade,
   SEVERIDADE_TONE,
   emailPadraoCategoria,
+  contarPorCategoria,
 } from "./notificacoes";
 
 describe("emailPadraoCategoria", () => {
@@ -73,5 +74,15 @@ describe("formatTimeAgo", () => {
   });
   it("mostra dias", () => {
     expect(formatTimeAgo("2026-08-10T12:00:00Z", base)).toBe("2d");
+  });
+});
+
+describe("contarPorCategoria", () => {
+  it("soma por categoria, incluindo desconhecidas", () => {
+    const itens = [{ categoria: "financeiro" }, { categoria: "financeiro" }, { categoria: "obra" }, { categoria: "x" }];
+    expect(contarPorCategoria(itens)).toEqual({ financeiro: 2, obra: 1, x: 1 });
+  });
+  it("devolve objeto vazio sem itens", () => {
+    expect(contarPorCategoria([])).toEqual({});
   });
 });
