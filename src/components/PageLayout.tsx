@@ -3,6 +3,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { ModuleChipNav } from "@/components/ModuleChipNav";
 import { cn } from "@/lib/utils";
 import { sidebarOffset } from "@/lib/shellLayout";
+import { useDentroDoMain } from "@/components/mainLandmark";
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -20,6 +21,9 @@ let jaHouveNavegacao = false;
 export function PageLayout({ children, header, sidebar, className, containerClassName, standalone }: PageLayoutProps) {
   const { state, isMobile } = useSidebar();
   const mainRef = useRef<HTMLElement>(null);
+  // Dentro do Layout já existe um <main id="main-content">; aqui vira div (mesmo foco e
+  // estilo). Fora dele (tela standalone), continua sendo o <main> da página.
+  const Conteudo = useDentroDoMain() ? "div" : "main";
   const anuncioRef = useRef<HTMLParagraphElement>(null);
 
   // Padrão do labrynth-platform (spec 002, req. 8): em troca de rota o shell não
@@ -51,8 +55,8 @@ export function PageLayout({ children, header, sidebar, className, containerClas
 
       <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
         {sidebar}
-        <main
-          ref={mainRef}
+        <Conteudo
+          ref={mainRef as React.Ref<HTMLDivElement>}
           tabIndex={-1}
           className={cn(
             "flex-1 overflow-y-auto w-full bg-background p-6 md:p-8 xl:p-10 2xl:p-12 outline-hidden",
@@ -63,7 +67,7 @@ export function PageLayout({ children, header, sidebar, className, containerClas
           )}
         >
           <div className={cn("w-full mx-auto space-y-6", containerClassName)}>{children}</div>
-        </main>
+        </Conteudo>
       </div>
 
       <p ref={anuncioRef} aria-live="polite" className="sr-only" />
