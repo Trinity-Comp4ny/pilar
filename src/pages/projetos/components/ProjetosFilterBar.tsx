@@ -69,7 +69,7 @@ export function ProjetosFilterBar({ pessoas, clientes, disciplinas, filters, onC
 
   const totalActive = filtroCount + (filters.search ? 1 : 0);
 
-  // Peças da toolbar padrão (SPEC 121): vão dentro de <FilterBar> na página.
+  // Peças da toolbar padrão (SPEC 124): vão dentro de <FilterBar> na página.
   return (
     <>
       <FilterPopover count={filtroCount} onClear={() => onChange({ ...EMPTY_FILTERS, search: filters.search })}>

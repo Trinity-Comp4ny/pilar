@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { filterTriggerClass } from "./filterStyles";
 
 /**
- * Peças da toolbar de filtros (SPEC 121 / ADR 0058). Toda tela com filtro monta
+ * Peças da toolbar de filtros (SPEC 124 / ADR 0059). Toda tela com filtro monta
  * `<FilterBar>` no slot `toolbar` de `PilarPage`/`PageLayout`, com `ViewSwitcher` no
  * começo e as peças abaixo na sequência. Tudo `h-9 rounded-full`; filtro ativo é
  * fundo verde com texto `ink` (verde nunca em primeiro plano, regra de contraste).

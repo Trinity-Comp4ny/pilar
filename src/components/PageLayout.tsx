@@ -69,7 +69,7 @@ export function PageLayout({
             {/* Chip-nav do módulo ativo (spec 097 / ADR 0040): só existe em mobile e
               dentro de um dos 3 pilares; ModuleChipNav se auto-oculta no resto. */}
             {!standalone && <ModuleChipNav />}
-            {/* Ordem fixa (SPEC 121 / ADR 0058): header, chips mobile, abas de seção, toolbar. */}
+            {/* Ordem fixa (SPEC 124 / ADR 0059): header, chips mobile, abas de seção, toolbar. */}
             <div ref={setTabsEl}>{tabs}</div>
             <div ref={setToolbarEl}>{toolbar}</div>
           </div>

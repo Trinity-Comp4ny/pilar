@@ -19,7 +19,7 @@ type Props<T extends string> = {
 };
 
 /**
- * Seletor de visão da mesma coleção (SPEC 121 / ADR 0058): Lista/Quadro/Agenda,
+ * Seletor de visão da mesma coleção (SPEC 124 / ADR 0059): Lista/Quadro/Agenda,
  * Tabela/Gantt/Fluxo, Diário/Mensal. Vai no começo da toolbar. Para trocar de seção
  * da página, use `SectionTabs`. Ativo é fundo verde com texto `ink` (regra de contraste
  * da marca: verde nunca em primeiro plano).

@@ -462,7 +462,7 @@ export default function MeuTrabalho() {
     setFiltroData("todas");
   };
 
-  // Toolbar (SPEC 121): visão primeiro, depois os filtros; ordenação (quadro) ou colunas (lista) à direita.
+  // Toolbar (SPEC 124): visão primeiro, depois os filtros; ordenação (quadro) ou colunas (lista) à direita.
   const toolbar = (
     <FilterBar
       end={

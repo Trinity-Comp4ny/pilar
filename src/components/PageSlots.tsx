@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { PageSlotsContext } from "./pageSlotsContext";
 
 /**
- * Preenche o slot `toolbar` do `PageLayout` a partir de um componente filho (SPEC 121).
+ * Preenche o slot `toolbar` do `PageLayout` a partir de um componente filho (SPEC 124).
  * Serve para toolbar que depende de dado ou estado da aba (ex.: filtros de Lançamentos,
  * Folha), enquanto a página dona só declara o layout. Sem `PageLayout` ao redor, não
  * renderiza nada. Para toolbar que a própria página sabe montar, use a prop `toolbar`.

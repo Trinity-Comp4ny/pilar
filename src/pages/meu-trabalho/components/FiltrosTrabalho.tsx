@@ -1,5 +1,5 @@
 // Filtro de pessoa da toolbar de Tarefas. Usa o gatilho padrão dos filtros
-// (`filterTriggerClass`, SPEC 121) e avatar de iniciais, estilo ClickUp.
+// (`filterTriggerClass`, SPEC 124) e avatar de iniciais, estilo ClickUp.
 import { useState } from "react";
 import { Check, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,10 @@ export function FiltroPessoa({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className={filterTriggerClass(selecionadas.length > 0, selecionadas.length > 0 ? "py-0 pl-1 pr-3.5" : undefined)}
+          className={filterTriggerClass(
+            selecionadas.length > 0,
+            selecionadas.length > 0 ? "py-0 pl-1 pr-3.5" : undefined
+          )}
           aria-label="Filtrar por pessoa"
         >
           {selecionadas.length > 0 ? (

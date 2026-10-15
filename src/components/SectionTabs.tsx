@@ -22,7 +22,7 @@ type Props = {
 };
 
 /**
- * Barra horizontal de seções da página (SPEC 121 / ADR 0058). Vai no slot `tabs`
+ * Barra horizontal de seções da página (SPEC 124 / ADR 0059). Vai no slot `tabs`
  * de `PilarPage`/`PageLayout`, logo abaixo do header, e substitui a sidebar de
  * página (`SecondSidebar`) e as pílulas cinza de `TabsList` para seção.
  *

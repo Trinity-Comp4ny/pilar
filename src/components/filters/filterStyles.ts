@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 /**
- * Classe do gatilho de qualquer filtro (SPEC 121 / ADR 0058): mesma altura, raio e
+ * Classe do gatilho de qualquer filtro (SPEC 124 / ADR 0059): mesma altura, raio e
  * estado ativo em toda tela. Ativo é fundo verde com texto `ink` (verde nunca em
  * primeiro plano, regra de contraste da marca).
  */

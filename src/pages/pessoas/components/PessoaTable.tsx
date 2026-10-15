@@ -205,7 +205,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
 
   return (
     <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden">
-      {/* Toolbar padrão (SPEC 121). Busca local: a página Equipe não controla o estado. */}
+      {/* Toolbar padrão (SPEC 124). Busca local: a página Equipe não controla o estado. */}
       <PageToolbar>
         <FilterBar
           end={

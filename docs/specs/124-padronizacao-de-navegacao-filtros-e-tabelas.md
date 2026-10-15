@@ -1,10 +1,10 @@
-# SPEC 121: Padronização de navegação de seção, filtros e tabelas
+# SPEC 124: Padronização de navegação de seção, filtros e tabelas
 
 **Data:** 2026-10-15
 **Status:** Entregue em 6 fases no PR #636 (com as pendências abaixo)
 **Autor:** Matheus
 **Módulo:** transversal (shell, Tarefas, Projetos, Leads, Clientes, Propostas, Financeiro, Obras)
-**ADR:** [0058](../architecture/adr/0058-navegacao-de-secao-e-toolbar-padrao.md)
+**ADR:** [0058](../architecture/adr/0059-navegacao-de-secao-e-toolbar-padrao.md)
 
 ## Problema
 
@@ -103,7 +103,7 @@ Um PR por fase, todos de `origin/staging`.
 
 ## Decisões e riscos
 
-- ADR [0058](../architecture/adr/0058-navegacao-de-secao-e-toolbar-padrao.md): navegação
+- ADR [0058](../architecture/adr/0059-navegacao-de-secao-e-toolbar-padrao.md): navegação
   de seção horizontal, toolbar sticky abaixo do header, filtro ativo em verde sólido.
 - Risco: o bloco sticky cresce (header 56px + abas ~44px + toolbar ~52px = ~150px) e rouba
   altura em telas baixas. Mitigação: toolbar de uma linha, sem quebra, rolando na horizontal.
@@ -114,7 +114,7 @@ Um PR por fase, todos de `origin/staging`.
 
 ## Entrega (PR #636) e o que ficou de fora
 
-Antes e depois de cada tela em [`docs/design/antes-depois/spec-121/`](../design/antes-depois/spec-121/).
+Antes e depois de cada tela em [`docs/design/antes-depois/spec-124/`](../design/antes-depois/spec-124/).
 
 - **Fase 1**: `SectionTabs`, `ViewSwitcher`, `FilterBar` e peças, slots `tabs`/`toolbar`. Financeiro, Admin e Tarefas.
 - **Fase 2**: Projetos e Leads (visão, filtros e ordenação na toolbar; KPI sem controles).
