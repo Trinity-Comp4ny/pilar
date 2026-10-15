@@ -2868,6 +2868,44 @@ export type Database = {
           },
         ]
       }
+      lead_etapas: {
+        Row: {
+          bucket: string
+          cor: string | null
+          created_at: string
+          empresa_id: string
+          id: string
+          nome: string
+          ordem: number
+        }
+        Insert: {
+          bucket?: string
+          cor?: string | null
+          created_at?: string
+          empresa_id: string
+          id?: string
+          nome: string
+          ordem?: number
+        }
+        Update: {
+          bucket?: string
+          cor?: string | null
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          nome?: string
+          ordem?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_etapas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           cliente_id: string | null
@@ -2880,6 +2918,7 @@ export type Database = {
           email: string | null
           empresa_id: string
           empresa_lead: string | null
+          etapa_id: string | null
           id: string
           motivo_perda: string | null
           nome: string
@@ -2903,6 +2942,7 @@ export type Database = {
           email?: string | null
           empresa_id: string
           empresa_lead?: string | null
+          etapa_id?: string | null
           id?: string
           motivo_perda?: string | null
           nome: string
@@ -2926,6 +2966,7 @@ export type Database = {
           email?: string | null
           empresa_id?: string
           empresa_lead?: string | null
+          etapa_id?: string | null
           id?: string
           motivo_perda?: string | null
           nome?: string
@@ -2951,6 +2992,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "lead_etapas"
             referencedColumns: ["id"]
           },
         ]
@@ -7258,6 +7306,7 @@ export type Database = {
           email: string | null
           empresa_id: string | null
           empresa_lead: string | null
+          etapa_id: string | null
           id: string | null
           motivo_perda: string | null
           nome: string | null
@@ -7282,6 +7331,7 @@ export type Database = {
           email?: string | null
           empresa_id?: string | null
           empresa_lead?: string | null
+          etapa_id?: string | null
           id?: string | null
           motivo_perda?: string | null
           nome?: string | null
@@ -7306,6 +7356,7 @@ export type Database = {
           email?: string | null
           empresa_id?: string | null
           empresa_lead?: string | null
+          etapa_id?: string | null
           id?: string | null
           motivo_perda?: string | null
           nome?: string | null
@@ -7332,6 +7383,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "lead_etapas"
             referencedColumns: ["id"]
           },
         ]

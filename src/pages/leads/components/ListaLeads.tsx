@@ -1,5 +1,4 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/dateUtils";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -11,22 +10,14 @@ interface ListaLeadsProps {
   leadNome: (lead: Lead) => string;
   responsavelNome: (id?: string | null) => string | null;
   primariaDoLead: (leadId: string) => Proposta | null;
-  statusDot: Record<string, string>;
-  statusLabelOf: (status: string) => string;
+  /** Nome e cor da coluna do lead (SPEC 120: o funil é editável). */
+  etapaDe: (lead: Lead) => { nome: string; cor: string } | null;
   onRowClick: (lead: Lead) => void;
 }
 
 // Visão Lista (desktop): tabela dos leads filtrados/ordenados. Espelha o padrão
 // de tabela de Projetos (ListaProjetos) — mesmo par Quadro/Lista, mesma estrutura.
-export function ListaLeads({
-  leads,
-  leadNome,
-  responsavelNome,
-  primariaDoLead,
-  statusDot,
-  statusLabelOf,
-  onRowClick,
-}: ListaLeadsProps) {
+export function ListaLeads({ leads, leadNome, responsavelNome, primariaDoLead, etapaDe, onRowClick }: ListaLeadsProps) {
   const formatCurrency = useMoneyMask();
   const { can } = usePermissions();
   const podeVerValor = can("financeiro");
@@ -49,14 +40,18 @@ export function ListaLeads({
             const proposta = primariaDoLead(lead.id);
             const valor = proposta?.valor_proposto ?? lead.valor_estimado ?? 0;
             const responsavel = responsavelNome(lead.responsavel_id);
+            const etapa = etapaDe(lead);
             return (
               <TableRow key={lead.id} className="cursor-pointer" onClick={() => onRowClick(lead)}>
                 <TableCell className="font-medium">{leadNome(lead)}</TableCell>
                 <TableCell className="text-muted-foreground">{lead.empresa_lead ?? "—"}</TableCell>
                 <TableCell>
                   <span className="inline-flex items-center gap-1.5">
-                    <span className={cn("h-2 w-2 rounded-full", statusDot[lead.status] ?? "bg-pipeline-perdido")} />
-                    <span className="text-sm">{statusLabelOf(lead.status)}</span>
+                    <span
+                      className="h-2 w-2 rounded-full bg-muted-foreground/40"
+                      style={etapa ? { backgroundColor: etapa.cor } : undefined}
+                    />
+                    <span className="text-sm">{etapa?.nome ?? lead.status}</span>
                   </span>
                 </TableCell>
                 {podeVerValor && (
