@@ -1,18 +1,14 @@
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AlertTriangle, Clock, MoreVertical, ExternalLink, Edit, Trash2, ArrowRight } from "lucide-react";
+import { KanbanCard, KanbanPriority } from "@/components/kanban/KanbanCard";
+import { AlertTriangle, Clock, ExternalLink, Edit, Trash2, ArrowRight } from "lucide-react";
 import { PROJECT_STATUS_CONFIG } from "@/constants";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -62,150 +58,132 @@ export function ProjectCard({
     disciplinas.length > 0 &&
     disciplinas.every((d) => !d.data_inicio && !d.data_previsao && getResponsaveisList(d).length === 0);
 
+  const nomesResponsaveis = disciplinas
+    .flatMap((d) => getResponsaveisList(d).map((r) => r.responsavel_nome))
+    .filter(Boolean);
+
   return (
-    <Card
+    <KanbanCard
       onClick={() => onClick(projeto)}
-      className={cn("cursor-pointer w-full p-3 space-y-1.5 bg-white", isDragging && "shadow-md rotate-1")}
-    >
-      {/* Linha 1: dot prioridade + badge alerta + kebab */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span
-            className={cn("h-1.5 w-1.5 rounded-full shrink-0", priorityDot)}
+      isDragging={isDragging}
+      eyebrow={
+        <>
+          <KanbanPriority
+            label={priorityConfig?.label ?? "Sem prioridade"}
+            dotClass={priorityDot}
             title={`Prioridade ${priorityConfig?.label || "—"}`}
           />
           {showMargemAlert && (
-            <span className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-warning-soft text-warning-strong shrink-0">
+            <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-warning-soft px-1.5 py-0.5 text-[10px] font-medium text-warning-strong">
               <AlertTriangle className="h-2.5 w-2.5" />
               Margem baixa
             </span>
           )}
           {planningPending && (
             <span
-              className="inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-warning-soft text-warning-strong shrink-0"
+              className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-warning-soft px-1.5 py-0.5 text-[10px] font-medium text-warning-strong"
               title="Disciplinas sem datas nem responsáveis. Edite o projeto para planejar."
             >
               <Clock className="h-2.5 w-2.5" />
               Planejamento pendente
             </span>
           )}
-        </div>
-        {canEdit && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-11 w-11 -my-2 -mr-2 text-muted-foreground hover:text-foreground"
-                aria-label="Mais opções"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-              <DropdownMenuItem onClick={() => navigate(`/projetos/${projeto.id}`)}>
-                <ExternalLink className="h-3.5 w-3.5 mr-2" /> Abrir página completa
+        </>
+      }
+      menu={
+        canEdit ? (
+          <>
+            <DropdownMenuItem onClick={() => navigate(`/projetos/${projeto.id}`)}>
+              <ExternalLink className="mr-2 h-3.5 w-3.5" /> Abrir página completa
+            </DropdownMenuItem>
+            {onEdit && (
+              <DropdownMenuItem onClick={() => onEdit(projeto)}>
+                <Edit className="mr-2 h-3.5 w-3.5" /> Editar dados
               </DropdownMenuItem>
-              {onEdit && (
-                <DropdownMenuItem onClick={() => onEdit(projeto)}>
-                  <Edit className="h-3.5 w-3.5 mr-2" /> Editar dados
+            )}
+            {onMoveStatus && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>
+                    <ArrowRight className="mr-2 h-3.5 w-3.5" /> Mover para
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {Object.entries(PROJECT_STATUS_CONFIG)
+                      .filter(([s]) => s !== projeto.status)
+                      .map(([s, cfg]) => (
+                        <DropdownMenuItem key={s} onClick={() => onMoveStatus(projeto.id, s)}>
+                          {cfg.label}
+                        </DropdownMenuItem>
+                      ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              </>
+            )}
+            {onDelete && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={() => onDelete(projeto.id)}
+                >
+                  <Trash2 className="mr-2 h-3.5 w-3.5" /> Excluir
                 </DropdownMenuItem>
-              )}
-              {onMoveStatus && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <ArrowRight className="h-3.5 w-3.5 mr-2" /> Mover para
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                      {Object.entries(PROJECT_STATUS_CONFIG)
-                        .filter(([s]) => s !== projeto.status)
-                        .map(([s, cfg]) => (
-                          <DropdownMenuItem key={s} onClick={() => onMoveStatus(projeto.id, s)}>
-                            {cfg.label}
-                          </DropdownMenuItem>
-                        ))}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                </>
-              )}
-              {onDelete && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onClick={() => onDelete(projeto.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
-
-      {/* Linha 2: nome + cliente */}
-      <div>
-        <p className="text-sm font-medium leading-snug line-clamp-2">{projeto.nome}</p>
-        {projeto.cliente_nome && (
-          <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">{projeto.cliente_nome}</p>
-        )}
-      </div>
-
-      {/* Linha 3: progresso */}
-      <div className="flex items-center gap-2">
-        <Progress value={progress} className="h-1 flex-1" />
-        <span className="text-[10px] text-muted-foreground tabular-nums w-7 text-right">{progress}%</span>
-      </div>
-
-      {/* Linha 4: valor + avatares + deadline */}
-      <div className="flex items-center justify-between gap-2 pt-0.5">
-        {/* Sem acesso a financeiro, valor_contrato já vem mascarado (null) de
-            projetos_safe — esconder em vez de mostrar "R$ 0,00" enganoso. */}
-        {podeVerValor ? (
-          <span className="text-xs font-medium text-foreground/80 tabular-nums">
-            {formatCurrency(projeto.valor_contrato)}
-          </span>
-        ) : (
-          <span />
-        )}
-        <div className="flex items-center gap-2">
-          {(() => {
-            const allNames = (projeto.disciplinas || [])
-              .flatMap((d) => getResponsaveisList(d).map((r) => r.responsavel_nome))
-              .filter(Boolean);
-            return allNames.length > 0 ? <AvatarStack pessoas={allNames} max={3} size="xs" /> : null;
-          })()}
-          {deadline && (
-            <Badge
-              className={cn("inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0 font-normal", deadline.color)}
-              title={
-                deadline.status_data === "em_atraso"
-                  ? `Em atraso há ${deadline.days} dia(s)`
-                  : deadline.status_data === "atencao"
-                    ? `Vence em ${deadline.days} dia(s)`
-                    : `No prazo — faltam ${deadline.days} dia(s)`
-              }
-            >
-              {deadline.status_data === "em_atraso" ? (
-                <>
-                  <AlertTriangle className="h-2.5 w-2.5" aria-hidden="true" />
-                  {`-${deadline.days}d`}
-                </>
-              ) : deadline.status_data === "atencao" ? (
-                <>
-                  <AlertTriangle className="h-2.5 w-2.5" aria-hidden="true" />
-                  {`${deadline.days}d`}
-                </>
-              ) : (
-                `${deadline.days}d`
-              )}
-            </Badge>
-          )}
+              </>
+            )}
+          </>
+        ) : undefined
+      }
+      title={projeto.nome}
+      subtitle={projeto.cliente_nome}
+      meta={
+        <div className="flex w-full items-center gap-2">
+          <Progress value={progress} className="h-1 flex-1" />
+          <span className="w-7 text-right text-[11px] tabular-nums">{progress}%</span>
         </div>
-      </div>
-    </Card>
+      }
+      footer={
+        <>
+          {/* Sem acesso a financeiro, valor_contrato já vem mascarado (null) de
+              projetos_safe — esconder em vez de mostrar "R$ 0,00" enganoso. */}
+          {podeVerValor ? (
+            <span className="font-medium tabular-nums text-foreground/80">
+              {formatCurrency(projeto.valor_contrato)}
+            </span>
+          ) : (
+            <span />
+          )}
+          <div className="flex items-center gap-2">
+            {nomesResponsaveis.length > 0 && <AvatarStack pessoas={nomesResponsaveis} max={3} size="xs" />}
+            {deadline && (
+              <Badge
+                className={cn("inline-flex items-center gap-0.5 px-1.5 py-0 text-[11px] font-normal", deadline.color)}
+                title={
+                  deadline.status_data === "em_atraso"
+                    ? `Em atraso há ${deadline.days} dia(s)`
+                    : deadline.status_data === "atencao"
+                      ? `Vence em ${deadline.days} dia(s)`
+                      : `No prazo, faltam ${deadline.days} dia(s)`
+                }
+              >
+                {deadline.status_data === "em_atraso" ? (
+                  <>
+                    <AlertTriangle className="h-2.5 w-2.5" aria-hidden="true" />
+                    {`-${deadline.days}d`}
+                  </>
+                ) : deadline.status_data === "atencao" ? (
+                  <>
+                    <AlertTriangle className="h-2.5 w-2.5" aria-hidden="true" />
+                    {`${deadline.days}d`}
+                  </>
+                ) : (
+                  `${deadline.days}d`
+                )}
+              </Badge>
+            )}
+          </div>
+        </>
+      }
+    />
   );
 }

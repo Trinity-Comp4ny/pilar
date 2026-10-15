@@ -119,11 +119,6 @@
       "count": 1
     }
   },
-  "src/pages/projetos/lib/priorityColors.ts": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "src/pages/propostas/components/GerarPropostaDialog.tsx": {
     "no-restricted-syntax": {
       "count": 1

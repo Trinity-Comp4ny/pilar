@@ -3,13 +3,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, Plus, TrendingUp, Search, AlertCircle, X } from "lucide-react";
+import { Plus, TrendingUp, Search, AlertCircle, X } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { parseCurrencyString, formatCurrency } from "@/lib/currencyUtils";
-import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
@@ -24,13 +24,17 @@ import { ListaLeads } from "./components/ListaLeads";
 import { LeadMotivoPerdasDialog, LeadCreatePropostaDialog } from "./components/LeadActionDialogs";
 import { LeadCnpjConvertDialog, type ConvertEnrichment } from "./components/LeadCnpjConvertDialog";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useLeadEtapas, type LeadEtapa } from "@/pages/leads/hooks/useLeadEtapas";
 import { useEtapasDoFunil } from "@/pages/leads/hooks/useEtapasDoFunil";
 import { KanbanSkeleton } from "./components/KanbanSkeleton";
-import { EtapaColapsada } from "./components/EtapaColapsada";
-import { EtapaMenu } from "./components/EtapaMenu";
 import { EtapaDialogs } from "./components/EtapaDialogs";
 import { NovaEtapaInline } from "./components/NovaEtapaInline";
+import { KanbanSortControl } from "@/components/kanban/KanbanSortControl";
+import { KanbanColumn, KanbanDraggable } from "@/components/kanban/KanbanColumn";
+import { KANBAN_BOARD_CLASS } from "@/components/kanban/kanbanLayout";
+import { useKanbanSort } from "@/hooks/useKanbanSort";
+import { ordenarKanban, type KanbanSort, type KanbanSortAccessors, type KanbanSortKey } from "@/lib/kanbanSort";
 import {
   useLeads,
   useCreateLead,
@@ -53,8 +57,6 @@ import {
 } from "@/pages/leads/lib/etapas";
 
 type PeriodoFilter = "todos" | "prox7" | "atrasados" | "mes";
-type SortBy = "padrao" | "valor_desc" | "valor_asc" | "previsao_asc" | "previsao_desc";
-
 const PERIODO_OPTIONS: { value: PeriodoFilter; label: string }[] = [
   { value: "todos", label: "Qualquer previsão" },
   { value: "prox7", label: "Fecham em 7 dias" },
@@ -62,13 +64,7 @@ const PERIODO_OPTIONS: { value: PeriodoFilter; label: string }[] = [
   { value: "mes", label: "Fecham este mês" },
 ];
 
-const SORT_OPTIONS: { value: SortBy; label: string }[] = [
-  { value: "padrao", label: "Mais recentes" },
-  { value: "valor_desc", label: "Maior valor" },
-  { value: "valor_asc", label: "Menor valor" },
-  { value: "previsao_asc", label: "Previsão mais próxima" },
-  { value: "previsao_desc", label: "Previsão mais distante" },
-];
+const LEADS_SORT_PADRAO: KanbanSort = { key: "created", dir: "desc" };
 
 const SEM_RESPONSAVEL = "__sem__";
 
@@ -87,6 +83,7 @@ export default function Leads() {
   const updateLead = useUpdateLead();
   const { data: members = [] } = useLeadMembers();
   const { canEdit } = useFeatureAccess("leads");
+  const podeVerValor = usePermissions().can("financeiro");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -129,9 +126,17 @@ export default function Leads() {
   const [origemFilter, setOrigemFilter] = useState("");
   const [responsavelFilter, setResponsavelFilter] = useState("");
   const [periodo, setPeriodo] = useState<PeriodoFilter>("todos");
-  const [sortBy, setSortBy] = useState<SortBy>("padrao");
+  const sortKeys: KanbanSortKey[] = podeVerValor
+    ? ["dueDate", "value", "name", "created"]
+    : ["dueDate", "name", "created"];
+  const [sort, setSort] = useKanbanSort("leads", LEADS_SORT_PADRAO, ["dueDate", "value", "name", "created"]);
 
   const leadNome = (lead: Lead) => (lead.sobrenome ? `${lead.nome} ${lead.sobrenome}` : lead.nome);
+  const leadSortAccessors: KanbanSortAccessors<Lead> = {
+    dueDate: (l) => l.previsao_fechamento,
+    value: (l) => l.valor_estimado,
+    name: leadNome,
+  };
 
   const responsavelNome = (id?: string | null) => {
     if (!id) return null;
@@ -168,23 +173,7 @@ export default function Leads() {
     return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth();
   };
 
-  const sortLeads = (items: Lead[]) => {
-    if (sortBy === "padrao") return items;
-    const arr = [...items];
-    const prev = (l: Lead) => (l.previsao_fechamento ? new Date(l.previsao_fechamento + "T00:00:00").getTime() : null);
-    if (sortBy === "valor_desc") return arr.sort((a, b) => (b.valor_estimado ?? 0) - (a.valor_estimado ?? 0));
-    if (sortBy === "valor_asc") return arr.sort((a, b) => (a.valor_estimado ?? 0) - (b.valor_estimado ?? 0));
-    // Ordenação por previsão: leads sem data vão para o fim em ambas as direções.
-    const dir = sortBy === "previsao_asc" ? 1 : -1;
-    return arr.sort((a, b) => {
-      const da = prev(a);
-      const db = prev(b);
-      if (da === null && db === null) return 0;
-      if (da === null) return 1;
-      if (db === null) return -1;
-      return (da - db) * dir;
-    });
-  };
+  const sortLeads = (items: Lead[]) => ordenarKanban(items, sort, leadSortAccessors);
 
   const matchesFilters = (lead: Lead) => {
     const q = searchQuery.trim().toLowerCase();
@@ -216,8 +205,9 @@ export default function Leads() {
     return e ? { nome: e.nome, cor: corDaEtapaLead(e.cor, e.bucket) } : null;
   };
 
+  const sortAtivo = sort.key !== LEADS_SORT_PADRAO.key || sort.dir !== LEADS_SORT_PADRAO.dir;
   const filtersActive =
-    !!searchQuery.trim() || !!origemFilter || !!responsavelFilter || periodo !== "todos" || sortBy !== "padrao";
+    !!searchQuery.trim() || !!origemFilter || !!responsavelFilter || periodo !== "todos" || sortAtivo;
 
   const handleCardClick = (lead: Lead) => {
     setSelectedLead(lead);
@@ -470,7 +460,7 @@ export default function Leads() {
     setOrigemFilter("");
     setResponsavelFilter("");
     setPeriodo("todos");
-    setSortBy("padrao");
+    setSort(LEADS_SORT_PADRAO);
   };
 
   return (
@@ -564,18 +554,7 @@ export default function Leads() {
               </SelectContent>
             </Select>
 
-            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
-              <SelectTrigger className="h-9 w-auto min-w-[150px] rounded-full text-sm" aria-label="Ordenar leads">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {SORT_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <KanbanSortControl sort={sort} onChange={setSort} keys={sortKeys} />
 
             {filtersActive && (
               <Button
@@ -649,108 +628,53 @@ export default function Leads() {
                 onRowClick={handleCardClick}
               />
             ) : (
-              <div className="hidden md:flex gap-3 w-full h-full min-h-0 overflow-x-auto pb-2">
+              <div className={`hidden md:flex ${KANBAN_BOARD_CLASS}`}>
                 {etapas.map((etapa, idx) => {
                   const items = getLeadsByEtapa(etapa.id);
-                  const isCollapsed = collapsedColumns.has(etapa.id);
-                  const dotColor = corDaEtapaLead(etapa.cor, etapa.bucket);
-
-                  if (isCollapsed) {
-                    return (
-                      <EtapaColapsada
-                        key={etapa.id}
-                        nome={etapa.nome}
-                        cor={dotColor}
-                        total={items.length}
-                        onExpandir={() => toggleColumn(etapa.id)}
-                      />
-                    );
-                  }
-
                   return (
-                    <div key={etapa.id} className="flex flex-col min-w-[280px] w-[280px] shrink-0 min-h-0">
-                      <div className="flex items-center gap-2 px-2 py-2.5">
-                        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: dotColor }} />
-                        <h3 className="text-xs font-medium text-foreground/80 uppercase tracking-wide truncate">
-                          {etapa.nome}
-                        </h3>
-                        <span className="text-[11px] text-muted-foreground tabular-nums">{items.length}</span>
-                        <div className="ml-auto flex items-center">
-                          {canEdit && (
-                            <EtapaMenu
-                              primeira={idx === 0}
-                              ultima={idx >= etapas.length - 1}
-                              onEditar={() =>
+                    <KanbanColumn
+                      key={etapa.id}
+                      id={etapa.id}
+                      title={etapa.nome}
+                      color={corDaEtapaLead(etapa.cor, etapa.bucket)}
+                      count={items.length}
+                      collapsed={collapsedColumns.has(etapa.id)}
+                      onCollapse={() => toggleColumn(etapa.id)}
+                      actions={
+                        canEdit
+                          ? {
+                              primeira: idx === 0,
+                              ultima: idx >= etapas.length - 1,
+                              onEditar: () =>
                                 gestao.setEditandoEtapa({
                                   id: etapa.id,
                                   nome: etapa.nome,
                                   cor: corDaEtapaLead(etapa.cor, etapa.bucket),
-                                })
-                              }
-                              onMover={(dir) => gestao.reordenarEtapa(etapa.id, dir)}
-                              onExcluir={() => gestao.pedirExcluirEtapa(etapa)}
+                                }),
+                              onMover: (dir) => gestao.reordenarEtapa(etapa.id, dir),
+                              onExcluir: () => gestao.pedirExcluirEtapa(etapa),
+                            }
+                          : undefined
+                      }
+                    >
+                      {items.map((lead, index) => (
+                        <KanbanDraggable key={lead.id} id={lead.id} index={index}>
+                          {(isDragging) => (
+                            <LeadKanbanCard
+                              lead={lead}
+                              leadNome={leadNome}
+                              onClick={() => handleCardClick(lead)}
+                              canEdit={canEdit}
+                              onEdit={handleOpenEdit}
+                              onDelete={handleDelete}
+                              dragging={isDragging}
+                              proposta={primariaDoLead(lead.id)}
+                              responsavelNome={responsavelNome(lead.responsavel_id)}
                             />
                           )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="min-h-[44px] min-w-[44px] text-muted-foreground"
-                            onClick={() => toggleColumn(etapa.id)}
-                            title="Minimizar coluna"
-                            aria-label="Minimizar coluna"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      <Droppable droppableId={etapa.id}>
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.droppableProps}
-                            className={cn(
-                              "flex-1 min-h-0 overflow-y-auto p-2 space-y-2 rounded-lg bg-muted transition-all",
-                              snapshot.isDraggingOver && "ring-2 ring-brand/40 bg-brand/5"
-                            )}
-                          >
-                            {items.length === 0 && !snapshot.isDraggingOver && (
-                              <div className="flex items-center justify-center py-8 px-2 text-center text-[11px] text-muted-foreground border border-dashed border-muted-foreground/20 rounded-md">
-                                Arraste leads para cá
-                              </div>
-                            )}
-                            {items.map((lead, index) => (
-                              <Draggable key={lead.id} draggableId={lead.id} index={index}>
-                                {(provided, snapshot) => (
-                                  <div
-                                    ref={provided.innerRef}
-                                    {...provided.draggableProps}
-                                    {...provided.dragHandleProps}
-                                    // O card tem botões dentro; "button" aninharia controles.
-                                    // O arraste por teclado (espaço) segue no mesmo elemento.
-                                    role="group"
-                                    aria-roledescription="cartão arrastável"
-                                  >
-                                    <LeadKanbanCard
-                                      lead={lead}
-                                      leadNome={leadNome}
-                                      onClick={() => handleCardClick(lead)}
-                                      canEdit={canEdit}
-                                      onEdit={handleOpenEdit}
-                                      onDelete={handleDelete}
-                                      dragging={snapshot.isDragging}
-                                      proposta={primariaDoLead(lead.id)}
-                                      responsavelNome={responsavelNome(lead.responsavel_id)}
-                                    />
-                                  </div>
-                                )}
-                              </Draggable>
-                            ))}
-                            {provided.placeholder}
-                          </div>
-                        )}
-                      </Droppable>
-                    </div>
+                        </KanbanDraggable>
+                      ))}
+                    </KanbanColumn>
                   );
                 })}
 

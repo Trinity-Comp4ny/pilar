@@ -6,7 +6,10 @@ import {
   type DeadlineFilter,
   type DateField,
 } from "@/pages/projetos/components/ProjetosFilterBar";
-import { type SortKey, type SortDir } from "@/pages/projetos/lib/sort";
+import { formatKanbanSort, parseKanbanSort, type KanbanSort } from "@/lib/kanbanSort";
+
+/** Ordenação padrão do quadro de Projetos: prioridade alta primeiro. */
+export const PROJETOS_SORT_PADRAO: KanbanSort = { key: "priority", dir: "asc" };
 
 // Lente ativa da tela de projetos. As lentes de recorte (disciplinas/cronograma/
 // mapa) são rotas próprias (/disciplinas, /cronograma, /mapa); dentro de /projetos
@@ -23,7 +26,7 @@ function parseView(pathname: string, params: URLSearchParams, canViewMapa: boole
 // ---------- URL persistence helpers ----------
 export function filtersToParams(
   filters: ProjetosFilters,
-  sort: { key: SortKey; dir: SortDir },
+  sort: KanbanSort,
   collapsed: Set<string>,
   viewMode: "quadro" | "lista" = "quadro"
 ) {
@@ -38,18 +41,18 @@ export function filtersToParams(
   if (filters.dataCampo !== "previsao") params.set("dc", filters.dataCampo);
   if (filters.dataInicio) params.set("di", filters.dataInicio);
   if (filters.dataFim) params.set("df", filters.dataFim);
-  if (sort.key !== "priority" || sort.dir !== "asc") params.set("sort", `${sort.key}.${sort.dir}`);
+  if (sort.key !== PROJETOS_SORT_PADRAO.key || sort.dir !== PROJETOS_SORT_PADRAO.dir) {
+    params.set("sort", formatKanbanSort(sort));
+  }
   if (collapsed.size > 0) params.set("col", [...collapsed].join(","));
   return params;
 }
 
 export function parseFiltersFromParams(params: URLSearchParams): {
   filters: ProjetosFilters;
-  sort: { key: SortKey; dir: SortDir };
+  sort: KanbanSort;
   collapsed: Set<string>;
 } {
-  const sortRaw = params.get("sort");
-  const [sk, sd] = (sortRaw || "priority.asc").split(".");
   return {
     filters: {
       search: params.get("q") || "",
@@ -64,12 +67,7 @@ export function parseFiltersFromParams(params: URLSearchParams): {
       dataInicio: params.get("di") || "",
       dataFim: params.get("df") || "",
     },
-    sort: {
-      key: (["priority", "dueDate", "value", "name", "created"] as SortKey[]).includes(sk as SortKey)
-        ? (sk as SortKey)
-        : "priority",
-      dir: sd === "desc" ? "desc" : "asc",
-    },
+    sort: parseKanbanSort(params.get("sort"), PROJETOS_SORT_PADRAO),
     collapsed: new Set(params.get("col")?.split(",").filter(Boolean) || []),
   };
 }
@@ -84,7 +82,7 @@ export function useProjetosUrlState(canViewMapa: boolean) {
   const initial = useMemo(() => parseFiltersFromParams(searchParams), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [filters, setFilters] = useState<ProjetosFilters>(initial.filters);
-  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>(initial.sort);
+  const [sort, setSort] = useState<KanbanSort>(initial.sort);
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(initial.collapsed);
 
   // Lente ativa: derivada do pathname (rota). Dentro de /projetos, ?v= escolhe quadro/lista.

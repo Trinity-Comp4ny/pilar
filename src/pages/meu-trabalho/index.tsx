@@ -12,6 +12,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { QuadroTrabalho } from "./components/QuadroTrabalho";
+import { TAREFAS_SORT_KEYS, TAREFAS_SORT_PADRAO } from "./ordenacao";
+import { KanbanSortControl } from "@/components/kanban/KanbanSortControl";
+import { useKanbanSort } from "@/hooks/useKanbanSort";
 import { ListaTrabalho, SeletorColunas } from "./components/ListaTrabalho";
 import { TarefaDialog } from "./components/TarefaDialog";
 import { AbaAgenda } from "./components/AbaAgenda";
@@ -100,6 +103,7 @@ export default function MeuTrabalho() {
   const [tipo, setTipo] = useState<FiltroTipo>(temProjetos ? "tudo" : "tarefa");
   const [filtroData, setFiltroData] = useState<FiltroData>("todas");
   const [busca, setBusca] = useState("");
+  const [ordem, setOrdem] = useKanbanSort("tarefas", TAREFAS_SORT_PADRAO, TAREFAS_SORT_KEYS);
 
   const trocarVisao = (v: Visao) => {
     setVisao(v);
@@ -127,7 +131,10 @@ export default function MeuTrabalho() {
       { replace: true }
     );
 
-  const minhaPessoaId = minhaPessoa?.id ?? null;
+  // Cai no vínculo pelo profile quando a consulta de "minha pessoa" não resolve:
+  // sem isso a mesma conta aparecia duas vezes no filtro.
+  const minhaPessoaId =
+    minhaPessoa?.id ?? (profile?.id ? (pessoas ?? []).find((p) => p.profileId === profile.id)?.id : undefined) ?? null;
   const pessoaIdsEfetivos = useMemo(
     () => resolverPessoaIds({ filtroPessoas, minhaPessoaId }),
     [filtroPessoas, minhaPessoaId]
@@ -488,8 +495,6 @@ export default function MeuTrabalho() {
               value={filtroPessoas}
               pessoas={pessoas ?? []}
               minhaPessoaId={minhaPessoaId}
-              meuNome={autorNome}
-              meuAvatarUrl={profile?.avatar_url}
               onChange={setFiltroPessoas}
             />
 
@@ -508,6 +513,8 @@ export default function MeuTrabalho() {
               onChange={(v) => setFiltroData(v as FiltroData)}
               options={(Object.keys(DATA_LABEL) as FiltroData[]).map((d) => ({ value: d, label: DATA_LABEL[d] }))}
             />
+
+            {visao === "quadro" && <KanbanSortControl sort={ordem} onChange={setOrdem} keys={TAREFAS_SORT_KEYS} />}
 
             {visao === "lista" && (
               <>
@@ -549,6 +556,7 @@ export default function MeuTrabalho() {
       ) : (
         <QuadroTrabalho
           itens={itensFiltrados}
+          sort={ordem}
           onAbrir={abrirItem}
           onPrioridade={mudarPrioridade}
           onExcluir={(item) => !bloqueado(item) && setAExcluir(item)}
