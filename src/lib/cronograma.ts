@@ -15,6 +15,15 @@ export const DISCIPLINA_STATUS_COLORS: Record<string, { bar: string; text: strin
   "Não Iniciado": { bar: "bg-status-unknown", text: "text-ink-muted", bg: "bg-muted" },
 };
 
+/**
+ * Cor do texto sobre uma barra de status. Branco sobre as cores de status saturadas
+ * (amarelo, azul, vermelho...) dava de 1,8:1 a 3,8:1; tinta escura passa de 4,5:1 em todas.
+ * Só o cinza ("Não iniciado") fica com branco (4,8:1).
+ */
+export function textoSobreBarra(barClass: string): string {
+  return barClass === "bg-status-unknown" ? "text-white" : "text-ink";
+}
+
 export interface TimelineColumn {
   label: string;
   start: Date;

@@ -21,6 +21,7 @@ import {
   refundPayment,
 } from "../_shared/asaas-platform.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { limitarOuResponder } from "../_shared/db-rate-limit.ts";
 import { type Entrada, lerEntrada } from "./entrada.ts";
 
 const log = createLogger("pilar-subscription-manage");
@@ -57,6 +58,15 @@ serve(
     if (!ehAdminDaEmpresa(profile)) {
       return jsonResponse({ error: "Apenas admin da empresa pode gerenciar a assinatura" }, 403, req);
     }
+
+    // Troca de plano e cancelamento mexem na Asaas e podem estornar: limite por empresa.
+    const limite = await limitarOuResponder(admin, req, {
+      bucket: "subscription_manage",
+      key: `empresa:${profile.empresa_id}`,
+      max: 10,
+      windowSeconds: 3600,
+    });
+    if (limite) return limite;
 
     const entrada = lerEntrada(await req.json().catch(() => null));
     if (!entrada.ok) return jsonResponse({ error: entrada.error }, 400, req);

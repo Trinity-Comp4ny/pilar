@@ -59,6 +59,32 @@ export function ehAdminDaEmpresa<P extends { empresa_id: string | null; role: st
   return !!profile?.empresa_id && (profile.role === "admin" || profile.role === "ultra_admin");
 }
 
+/**
+ * Nível de autenticação (`aal`) do JWT: "aal1" só senha, "aal2" com segundo fator.
+ * Só é lido DEPOIS de authenticateUser, que já validou assinatura e validade do token no
+ * Auth; aqui não se verifica nada, só se decodifica o payload.
+ */
+export function aalDoToken(authHeader: string | null): string | null {
+  const token = (authHeader ?? "").replace(/^Bearer\s+/i, "");
+  const payload = token.split(".")[1];
+  if (!payload) return null;
+  try {
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const json = JSON.parse(atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, "=")));
+    return typeof json?.aal === "string" ? json.aal : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * ADR 0031: o acesso entre empresas do ultra_admin exige segundo fator. Configuração
+ * ausente conta como ligada: só `false` explícito (dev local e E2E) dispensa.
+ */
+export function mfaDispensado(exigirMfaUltraAdmin: boolean | null | undefined): boolean {
+  return exigirMfaUltraAdmin === false;
+}
+
 // ---------------------------------------------------------------------------
 // Primitivo reutilizável: exige que o papel do caller (lido no banco) esteja
 // na allowlist. Base de todos os gates abaixo.
@@ -102,6 +128,16 @@ export async function requireRole(
 export async function requireUltraAdmin(req: Request): Promise<AdminSuccess | AdminFailure> {
   const result = await requireRole(req, ["ultra_admin"]);
   if (result.error) return { error: result.error };
+
+  const { data: config } = await result.svc
+    .from("platform_settings")
+    .select("exigir_mfa_ultra_admin")
+    .eq("id", "default")
+    .maybeSingle();
+  if (!mfaDispensado(config?.exigir_mfa_ultra_admin) && aalDoToken(req.headers.get("Authorization")) !== "aal2") {
+    return { error: safeErrorResponse(403, "MFA required", req) };
+  }
+
   return { ...result, actorRole: "ultra_admin" };
 }
 

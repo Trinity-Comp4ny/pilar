@@ -307,7 +307,7 @@ export function DisciplinasTab({
         </div>
 
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px] h-9">
+          <SelectTrigger className="w-[180px] h-9" aria-label="Filtrar por status">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -320,7 +320,7 @@ export function DisciplinasTab({
         </Select>
 
         <Select value={projetoFilter} onValueChange={setProjetoFilter}>
-          <SelectTrigger className="w-[220px] h-9">
+          <SelectTrigger className="w-[220px] h-9" aria-label="Filtrar por projeto">
             <SelectValue placeholder="Projeto" />
           </SelectTrigger>
           <SelectContent>

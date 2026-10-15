@@ -492,7 +492,10 @@ function InputPanel({
           ) : (
             <>
               <Select value="" onValueChange={(v) => onProjeto(v || null)}>
-                <SelectTrigger className="h-8 w-auto gap-1.5 rounded-full border-black/10 px-3 text-xs text-ink-soft">
+                <SelectTrigger
+                  aria-label="Escolher projeto em foco"
+                  className="h-8 w-auto gap-1.5 rounded-full border-black/10 px-3 text-xs text-ink-soft"
+                >
                   <FolderKanban className="h-3.5 w-3.5" />
                   <SelectValue placeholder="Escolher projeto" />
                 </SelectTrigger>

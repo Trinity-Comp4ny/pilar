@@ -5,6 +5,8 @@
  *
  * Recebe checkout_session_token (assumimos que só quem iniciou o checkout o
  * tem) e retorna status atual + metadata. Usado pra PIX/boleto aguardando.
+ * Só POST, com o token no corpo: token em query string vai parar em log de acesso,
+ * histórico e ferramenta de monitoramento.
  *
  * Também consulta Asaas diretamente se status ainda = pending, pra evitar
  * depender só do webhook.
@@ -24,7 +26,7 @@ const log = createLogger("pilar-checkout-status");
 serve(
   withSentry("pilar-checkout-status", async (req) => {
     if (req.method === "OPTIONS") return optionsResponse(req);
-    if (req.method !== "POST" && req.method !== "GET") {
+    if (req.method !== "POST") {
       return jsonResponse({ error: "Method not allowed" }, 405, req);
     }
 
@@ -49,17 +51,11 @@ serve(
     }
 
     let sessionToken: string | null = null;
-
-    if (req.method === "GET") {
-      const url = new URL(req.url);
-      sessionToken = tokenDaSessao(url.searchParams.get("token"));
-    } else {
-      try {
-        const body = (await req.json()) as { session_token?: unknown } | null;
-        sessionToken = tokenDaSessao(body?.session_token);
-      } catch {
-        return jsonResponse({ error: "JSON inválido" }, 400, req);
-      }
+    try {
+      const body = (await req.json()) as { session_token?: unknown } | null;
+      sessionToken = tokenDaSessao(body?.session_token);
+    } catch {
+      return jsonResponse({ error: "JSON inválido" }, 400, req);
     }
 
     if (!sessionToken) {

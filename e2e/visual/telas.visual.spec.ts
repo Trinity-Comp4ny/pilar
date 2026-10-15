@@ -19,6 +19,9 @@ const MESES = "janeiro|fevereiro|março|abril|maio|junho|julho|agosto|setembro|o
 const TEXTO_VARIAVEL = new RegExp(
   [
     String.raw`\d{2}/\d{2}(/\d{2,4})?`, // datas
+    // "12 out" (prazo na lista de tarefas): o seed gera prazos relativos a hoje, então o
+    // dia muda a cada 24 h e a foto do dia anterior reprova.
+    String.raw`\b\d{1,2}\s(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\b`,
     String.raw`\bhá\s+(menos de\s+)?(um|\d+)`, // "venceu há 68 d", "Atualizado há menos de um minuto"
     String.raw`\b\d+\s?d\b`, // "em 12 d", "92d"
     String.raw`R\$\s?-?[\d.]+,\d{2}`, // dinheiro (soma do mês muda com o calendário)

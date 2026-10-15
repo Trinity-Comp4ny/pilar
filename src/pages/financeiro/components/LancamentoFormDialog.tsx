@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { format, addMonths } from "date-fns";
 import { toast } from "sonner";
 import { FormDialog } from "@/components/FormDialog";
@@ -23,51 +22,11 @@ import { checkDuplicates } from "@/lib/duplicateCheck";
 import { DuplicateWarningDialog } from "@/components/DuplicateWarningDialog";
 import { TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import { useFinanceAuxData } from "../hooks/useFinanceAuxData";
+import { defaultValues, schema, type FormData } from "../lib/lancamentoFormSchema";
+import { clienteDoProjeto, projetoContinuaValido, projetosDoCliente } from "../lib/vinculoClienteProjeto";
 import type { Lancamento, TipoLancamento } from "../hooks/useLancamentosUnified";
 import { CentroCustoManager } from "./CentroCustoManager";
 import { analytics } from "@/lib/analytics";
-
-const schema = z
-  .object({
-    descricao: z.string().min(1, "Descrição obrigatória"),
-    valorTotal: z
-      .string()
-      .min(1, "Valor obrigatório")
-      .refine((v) => parseCurrencyString(v) > 0, "Valor deve ser maior que zero"),
-    dataVencimento: z.date({ required_error: "Data obrigatória" }),
-    status: z.string(),
-    formaPagamento: z.string().optional().default(""),
-    parcelas: z
-      .string()
-      .optional()
-      .default("1")
-      .refine((v) => {
-        const n = parseInt(v || "1", 10);
-        return Number.isInteger(n) && n >= 1 && n <= 60;
-      }, "Parcelas deve ser entre 1 e 60"),
-    categoriaId: z.string().optional().default(""),
-    projetoId: z.string().optional().default(""),
-    contaId: z.string().optional().default(""),
-    cartaoId: z.string().optional().default(""),
-    clienteId: z.string().optional().default(""),
-    fornecedorId: z.string().optional().default(""),
-    centroCustoId: z.string().optional().default(""),
-    dataCompetencia: z.date().optional(),
-    notaFiscal: z.string().optional().default(""),
-    observacao: z.string().optional().default(""),
-    recorrente: z.boolean().optional().default(false),
-    periodicidade: z.string().optional().default("mensal"),
-  })
-  .refine(
-    (d) => {
-      if (d.status === "Recebida" || d.status === "Pago") return !!(d.contaId || d.cartaoId);
-      return true;
-    },
-    { message: "Conta obrigatória para lançamentos efetivados", path: ["contaId"] }
-  )
-  .refine((d) => !(d.contaId && d.cartaoId), { message: "Selecione apenas Conta OU Cartão", path: ["cartaoId"] });
-
-type FormData = z.infer<typeof schema>;
 
 export interface LancamentoFormDialogProps {
   open: boolean;
@@ -76,27 +35,6 @@ export interface LancamentoFormDialogProps {
   lancamento?: Lancamento | null;
   onSaved: () => void;
 }
-
-const defaultValues = (tipo: TipoLancamento): FormData => ({
-  descricao: "",
-  valorTotal: "",
-  dataVencimento: new Date(),
-  status: tipo === "receita" ? "Pendente" : "Pendente",
-  formaPagamento: "",
-  parcelas: "1",
-  categoriaId: "",
-  projetoId: "",
-  contaId: "",
-  cartaoId: "",
-  clienteId: "",
-  fornecedorId: "",
-  centroCustoId: "",
-  dataCompetencia: undefined,
-  notaFiscal: "",
-  observacao: "",
-  recorrente: false,
-  periodicidade: "mensal",
-});
 
 export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onSaved }: LancamentoFormDialogProps) {
   const isEdit = !!lancamento;
@@ -531,8 +469,15 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
             {isReceita ? (
               <div className="space-y-1.5">
                 <Label className="text-xs">Cliente (pagante)</Label>
-                <Select value={form.watch("clienteId")} onValueChange={(v) => form.setValue("clienteId", v)}>
-                  <SelectTrigger className="h-9">
+                <Select
+                  value={form.watch("clienteId")}
+                  onValueChange={(v) => {
+                    form.setValue("clienteId", v);
+                    if (!projetoContinuaValido(aux.projetos, form.getValues("projetoId"), v))
+                      form.setValue("projetoId", "");
+                  }}
+                >
+                  <SelectTrigger aria-label="Cliente (pagante)" className="h-9">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
@@ -577,16 +522,25 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
 
             <div className="space-y-1.5">
               <Label className="text-xs">Projeto</Label>
-              <Select value={form.watch("projetoId")} onValueChange={(v) => form.setValue("projetoId", v)}>
-                <SelectTrigger className="h-9">
+              <Select
+                value={form.watch("projetoId")}
+                onValueChange={(v) => {
+                  form.setValue("projetoId", v);
+                  const dono = isReceita ? clienteDoProjeto(aux.projetos, v) : null;
+                  if (dono) form.setValue("clienteId", dono);
+                }}
+              >
+                <SelectTrigger aria-label="Projeto" className="h-9">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  {aux.projetos.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.nome}
-                    </SelectItem>
-                  ))}
+                  {(isReceita ? projetosDoCliente(aux.projetos, clienteId, form.watch("projetoId")) : aux.projetos).map(
+                    (p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.nome}
+                      </SelectItem>
+                    )
+                  )}
                 </SelectContent>
               </Select>
             </div>
