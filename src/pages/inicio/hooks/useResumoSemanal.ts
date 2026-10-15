@@ -23,7 +23,7 @@ import { edgeFunctionErrorMessage } from "@/lib/edgeFunctionError";
  * Os dois formatos são validados com Zod na fronteira (ADR 0033).
  */
 
-export const TONS = ["positivo", "atencao", "neutro"] as const;
+const TONS = ["positivo", "atencao", "neutro"] as const;
 export type Tom = (typeof TONS)[number];
 
 const conteudoSchema = z.object({
@@ -31,10 +31,10 @@ const conteudoSchema = z.object({
   destaques: z.array(z.object({ tom: z.enum(TONS), texto: z.string() })),
 });
 
-export type ConteudoResumo = z.infer<typeof conteudoSchema>;
+type ConteudoResumo = z.infer<typeof conteudoSchema>;
 
 const escopoSchema = z.enum(["empresa", "pessoa"]);
-export type EscopoResumo = z.infer<typeof escopoSchema>;
+type EscopoResumo = z.infer<typeof escopoSchema>;
 
 const leituraSchema = z.object({
   escopo: escopoSchema,
