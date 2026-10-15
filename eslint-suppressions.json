@@ -59,19 +59,9 @@
       "count": 1
     }
   },
-  "src/pages/metas/components/MetaCard.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "src/pages/obras/clima/index.tsx": {
     "no-restricted-syntax": {
       "count": 3
-    }
-  },
-  "src/pages/pessoas/components/PessoaDetailDialog.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "src/pages/planos/components/PlanCard.tsx": {
