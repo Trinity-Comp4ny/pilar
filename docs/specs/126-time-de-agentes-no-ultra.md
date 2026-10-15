@@ -1,7 +1,7 @@
 # SPEC 126: Time de agentes no Ultra
 
 **Data:** 2026-10-15
-**Status:** Draft
+**Status:** Em implementação (fase 0 no PR da fase 0; fases 1 a 3 pendentes)
 **Autor:** Matheus Rezende
 **Módulo:** ultra-admin + edge functions (operação da Pilar)
 **Relacionada:** [SPEC 117](117-portal-ultra-admin-na-sidebar.md) (portal Ultra), [SPEC 125](125-telemetria-de-produto-e-erros.md) (telemetria que alimenta os agentes), [SPEC 113](113-avisos-do-ultra-admin-por-email.md) (aviso por e-mail), [ADR 0060](../architecture/adr/0060-agentes-de-operacao-medem-no-pilar-publicam-fora.md), [ADR 0050](../architecture/adr/0050-agente-que-grava-rascunho-cita-evidencia.md), [ADR 0051](../architecture/adr/0051-modelo-de-ia-por-configuracao-com-gateway.md), [AGENTS_TEAM.md](../AGENTS_TEAM.md)
@@ -138,11 +138,11 @@ agente de Claude Code da mesma área lê o mesmo arquivo.
 
 ## Critérios de aceite
 
-- [ ] Dado um ultra admin, quando abre `/ultra-admin/time`, então vê um cartão por agente
+- [x] Dado um ultra admin, quando abre `/ultra-admin/time`, então vê um cartão por agente
       ativo com status, última execução e ações pendentes.
-- [ ] Dado um usuário sem `ultra_admin`, quando consulta `ops_acoes` pela API, então
+- [x] Dado um usuário sem `ultra_admin`, quando consulta `ops_acoes` pela API, então
       recebe zero linhas (pgTAP com `SET ROLE authenticated`, não superuser).
-- [ ] Dado um cadastro novo com `utm_campaign=lancamento-2027-01`, quando o agente
+- [x] Dado um cadastro novo com `utm_campaign=lancamento-2027-01`, quando o agente
       Receita roda, então a conversão daquela campanha conta 1 cadastro.
 - [ ] Dada uma empresa em teste com 3+ projetos e vencimento em menos de 48 h, quando o
       agente Receita roda, então existe uma ação `whatsapp` pendente para ela com a
@@ -198,7 +198,10 @@ ops_metricas_diarias (
   service role): nota 0 a 100 por empresa a partir de último acesso, semanas ativas nas
   últimas 4, módulos usados, projetos ativos, erros recentes, feedback sem resposta e
   atraso de pagamento. Pesos no playbook do agente Clientes, com teste.
-- RPC `ops_funil(p_desde date)`: visitas (do PostHog via snapshot), cadastros,
+- RPC `ops_receita(p_dias integer)` (entregue na fase 0, no lugar do `ops_funil`): cadastros,
+  ativados, novos pagantes e o período anterior, MRR, testes vencendo, atrasos e conversão
+  por UTM. As visitas da landing entram na fase 2, pelo snapshot do PostHog. Plano original:
+  `ops_funil(p_desde date)`: visitas (do PostHog via snapshot), cadastros,
   ativados, pagantes, por origem UTM.
 - Edge `ops-agente-run` `POST { agente_id, gatilho, contexto? }`.
 - Edge `ops-acao` `POST { acao_id, decisao, rascunho_editado?, motivo? }`.
@@ -209,10 +212,14 @@ ops_metricas_diarias (
 
 Fase 0, antes de qualquer LLM (semanas de 20/10 e 27/10):
 
-1. Tabelas `ops_*` + RLS + pgTAP; `ops_saude_empresas` e `ops_funil` com teste.
-2. Grupo "Time" no `ultraAdminNav.ts`; Central e fichas Receita e Clientes só com
-   indicadores do SQL.
-3. Resumo diário por regra (sem modelo) no e-mail do ultra admin.
+1. [x] Tabelas `ops_*` + RLS + pgTAP; `ops_saude_empresas` e `ops_receita` com teste
+       (`supabase/tests/time_de_agentes.sql`).
+2. [x] Grupo "Time" no `ultraAdminNav.ts`; Central e fichas Receita e Clientes só com
+       indicadores do SQL; fila de decisões por regra (teste vencendo, atraso, sem acesso há
+       7+ dias, feedback parado) com link `wa.me` e texto pronto; fichas dos outros agentes
+       mostram o que vão medir. Playbooks em `docs/operacao/agentes/`.
+3. [ ] Resumo diário por regra (sem modelo) no e-mail do ultra admin. Passa para a fase 1,
+       junto com o executor, porque precisa de cron e da mesma regra da fila.
 
 Fase 1 (novembro):
 

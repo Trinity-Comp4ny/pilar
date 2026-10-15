@@ -11,3 +11,5 @@ export { default as Atividade } from "./Atividade";
 export { default as Incidentes } from "./Incidentes";
 export { default as CustosIa } from "./CustosIa";
 export { default as PedidosLgpd } from "./PedidosLgpd";
+export { default as TimeCentral } from "./time/Central";
+export { default as TimeAgenteFicha } from "./time/AgenteFicha";

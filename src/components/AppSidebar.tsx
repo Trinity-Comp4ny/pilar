@@ -34,7 +34,7 @@ import { usePendenciasAgentes } from "@/hooks/useEscopos";
 import { useModuleNav } from "@/hooks/useModuleNav";
 import { MODULES, type ModuleId, type ModuleMenuItem } from "@/lib/modules";
 import { PANEL_WIDTH, RAIL_WIDTH } from "@/lib/shellLayout";
-import { ULTRA_ADMIN_BASE, ULTRA_SECOES, isUltraAdminPath, ultraSecaoAtiva } from "@/lib/ultraAdminNav";
+import { ULTRA_ADMIN_BASE, ULTRA_GRUPOS, ULTRA_SECOES, isUltraAdminPath, ultraSecaoAtiva } from "@/lib/ultraAdminNav";
 import { useFeedbackNovosCount } from "@/hooks/useFeedbackNovosCount";
 
 // Shell dos 3 pilares (spec 001-shell-3-pilares): o menu vem do mapa central de
@@ -355,7 +355,7 @@ export function AppSidebar() {
           aria-label="Menu do portal ultra admin"
           className="flex-1 space-y-3 overflow-y-auto px-3 pb-3 scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         >
-          {(["Plataforma", "Produto", "Operação"] as const).map((group) => (
+          {ULTRA_GRUPOS.map((group) => (
             <div key={group} className="space-y-1">
               <p className="px-3 pt-1 text-[10px] font-medium uppercase tracking-wider text-black/35">{group}</p>
               {ULTRA_SECOES.filter((s) => s.group === group).map((secao) => {
@@ -366,7 +366,7 @@ export function AppSidebar() {
                   <NavLink
                     key={secao.id}
                     to={secao.url}
-                    end={secao.id === "visao-geral"}
+                    end={secao.id === "visao-geral" || secao.id === "time"}
                     aria-current={isActive ? "page" : undefined}
                     className={cn(
                       "flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200",
