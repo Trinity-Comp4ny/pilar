@@ -4569,6 +4569,216 @@ export type Database = {
           },
         ]
       }
+      ops_acoes: {
+        Row: {
+          agente_id: string
+          created_at: string
+          decidida_em: string | null
+          editada: boolean
+          empresa_id: string | null
+          evidencia: Json
+          execucao_id: string | null
+          executada_em: string | null
+          id: string
+          motivo_descarte: string | null
+          prazo: string | null
+          prioridade: number
+          rascunho: Json | null
+          resultado: Json | null
+          status: string
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          agente_id: string
+          created_at?: string
+          decidida_em?: string | null
+          editada?: boolean
+          empresa_id?: string | null
+          evidencia: Json
+          execucao_id?: string | null
+          executada_em?: string | null
+          id?: string
+          motivo_descarte?: string | null
+          prazo?: string | null
+          prioridade?: number
+          rascunho?: Json | null
+          resultado?: Json | null
+          status?: string
+          tipo: string
+          titulo: string
+        }
+        Update: {
+          agente_id?: string
+          created_at?: string
+          decidida_em?: string | null
+          editada?: boolean
+          empresa_id?: string | null
+          evidencia?: Json
+          execucao_id?: string | null
+          executada_em?: string | null
+          id?: string
+          motivo_descarte?: string | null
+          prazo?: string | null
+          prioridade?: number
+          rascunho?: Json | null
+          resultado?: Json | null
+          status?: string
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ops_acoes_agente_id_fkey"
+            columns: ["agente_id"]
+            isOneToOne: false
+            referencedRelation: "ops_agentes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ops_acoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ops_acoes_execucao_id_fkey"
+            columns: ["execucao_id"]
+            isOneToOne: false
+            referencedRelation: "ops_execucoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ops_agentes: {
+        Row: {
+          ativo: boolean
+          autonomia: Json
+          created_at: string
+          cron: string | null
+          fase: number
+          id: string
+          missao: string
+          modelo: string | null
+          nome: string
+          ordem: number
+          teto_mensal_brl: number | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          autonomia?: Json
+          created_at?: string
+          cron?: string | null
+          fase: number
+          id: string
+          missao: string
+          modelo?: string | null
+          nome: string
+          ordem: number
+          teto_mensal_brl?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          autonomia?: Json
+          created_at?: string
+          cron?: string | null
+          fase?: number
+          id?: string
+          missao?: string
+          modelo?: string | null
+          nome?: string
+          ordem?: number
+          teto_mensal_brl?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ops_execucoes: {
+        Row: {
+          agente_id: string
+          briefing: Json | null
+          custo_brl: number | null
+          descartes: Json | null
+          erro: string | null
+          fim: string | null
+          gatilho: string
+          id: string
+          inicio: string
+          sinais: Json | null
+          status: string
+          tokens_in: number | null
+          tokens_out: number | null
+        }
+        Insert: {
+          agente_id: string
+          briefing?: Json | null
+          custo_brl?: number | null
+          descartes?: Json | null
+          erro?: string | null
+          fim?: string | null
+          gatilho: string
+          id?: string
+          inicio?: string
+          sinais?: Json | null
+          status?: string
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Update: {
+          agente_id?: string
+          briefing?: Json | null
+          custo_brl?: number | null
+          descartes?: Json | null
+          erro?: string | null
+          fim?: string | null
+          gatilho?: string
+          id?: string
+          inicio?: string
+          sinais?: Json | null
+          status?: string
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ops_execucoes_agente_id_fkey"
+            columns: ["agente_id"]
+            isOneToOne: false
+            referencedRelation: "ops_agentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ops_metricas_diarias: {
+        Row: {
+          chave: string
+          data: string
+          dimensao: string
+          fonte: string
+          recebido_em: string
+          valor: number
+        }
+        Insert: {
+          chave: string
+          data: string
+          dimensao?: string
+          fonte: string
+          recebido_em?: string
+          valor: number
+        }
+        Update: {
+          chave?: string
+          data?: string
+          dimensao?: string
+          fonte?: string
+          recebido_em?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       orcamento_versoes: {
         Row: {
           created_at: string | null
@@ -8169,6 +8379,17 @@ export type Database = {
         Args: { p_pessoa: string; p_tarefa: string }
         Returns: undefined
       }
+      _ops_nota_saude: {
+        Args: {
+          p_dias_sem_acesso: number
+          p_em_atraso: boolean
+          p_feedback_aberto: number
+          p_projetos_ativos: number
+          p_semanas_ativas: number
+          p_usuarios_ativos_14d: number
+        }
+        Returns: number
+      }
       _ops_sinais_saude: {
         Args: { p_janela?: string; p_janela_crons?: string }
         Returns: Json
@@ -8873,7 +9094,29 @@ export type Database = {
         }
         Returns: number
       }
+      ops_receita: { Args: { p_dias?: number }; Returns: Json }
       ops_saude_crons: { Args: never; Returns: Json }
+      ops_saude_empresas: {
+        Args: never
+        Returns: {
+          contato_nome: string
+          contato_telefone: string
+          criada_em: string
+          dias_sem_acesso: number
+          em_atraso: boolean
+          empresa_id: string
+          empresa_nome: string
+          faixa: string
+          feedback_aberto: number
+          nota: number
+          projetos_ativos: number
+          semanas_ativas: number
+          situacao_cobranca: string
+          ultimo_acesso: string
+          usuarios: number
+          usuarios_ativos_14d: number
+        }[]
+      }
       pagar_fatura: {
         Args: {
           p_conta_id: string
