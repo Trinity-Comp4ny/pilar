@@ -19,11 +19,6 @@
       "count": 3
     }
   },
-  "src/components/filters/MultiSelectFilter.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "src/lib/analytics.ts": {
     "no-console": {
       "count": 4
@@ -52,11 +47,6 @@
   "src/pages/company/types.ts": {
     "no-restricted-syntax": {
       "count": 3
-    }
-  },
-  "src/pages/financeiro/components/LancamentosFilterBar.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "src/pages/obras/clima/index.tsx": {

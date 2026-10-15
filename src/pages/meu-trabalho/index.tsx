@@ -10,7 +10,6 @@ import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import { QuadroTrabalho } from "./components/QuadroTrabalho";
 import { TAREFAS_SORT_KEYS, TAREFAS_SORT_PADRAO } from "./ordenacao";
 import { KanbanSortControl } from "@/components/kanban/KanbanSortControl";
@@ -18,7 +17,9 @@ import { useKanbanSort } from "@/hooks/useKanbanSort";
 import { ListaTrabalho, SeletorColunas } from "./components/ListaTrabalho";
 import { TarefaDialog } from "./components/TarefaDialog";
 import { AbaAgenda } from "./components/AbaAgenda";
-import { FiltroPessoa, FiltroPill } from "./components/FiltrosTrabalho";
+import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
+import { FilterBar, FilterClear, FilterSelect } from "@/components/filters/FilterBar";
+import { FiltroPessoa } from "./components/FiltrosTrabalho";
 import {
   disciplinasQueryKey,
   tarefasQueryKey,
@@ -42,6 +43,12 @@ const LS_VISAO = "pilar.meu-trabalho.visao";
 
 type Visao = "lista" | "quadro" | "agenda";
 type FiltroData = "todas" | "atrasadas" | "hoje" | "semana" | "sem_prazo";
+
+const VISAO_OPCOES: ViewOption<Visao>[] = [
+  { value: "lista", label: "Lista", icon: List },
+  { value: "quadro", label: "Quadro", icon: LayoutGrid },
+  { value: "agenda", label: "Agenda", icon: CalendarDays },
+];
 
 const TIPO_LABEL: Record<FiltroTipo, string> = {
   tudo: "Tudo",
@@ -446,86 +453,68 @@ export default function MeuTrabalho() {
     onReordenar: reordenarEtapa,
   };
 
+  const tipoPadrao: FiltroTipo = temProjetos ? "tudo" : "tarefa";
+  const filtrosAtivos =
+    (filtroPessoas.length > 0 ? 1 : 0) + (temProjetos && tipo !== "tudo" ? 1 : 0) + (filtroData !== "todas" ? 1 : 0);
+  const limparFiltros = () => {
+    setFiltroPessoas([]);
+    setTipo(tipoPadrao);
+    setFiltroData("todas");
+  };
+
+  // Toolbar (SPEC 121): visão primeiro, depois os filtros; ordenação (quadro) ou colunas (lista) à direita.
+  const toolbar = (
+    <FilterBar
+      end={
+        visao === "quadro" ? (
+          <KanbanSortControl sort={ordem} onChange={setOrdem} keys={TAREFAS_SORT_KEYS} />
+        ) : visao === "lista" ? (
+          <SeletorColunas colunas={colunas} />
+        ) : undefined
+      }
+    >
+      <ViewSwitcher options={VISAO_OPCOES} value={visao} onChange={trocarVisao} iconOnlyOnMobile />
+      {visao !== "agenda" && (
+        <>
+          <FiltroPessoa
+            value={filtroPessoas}
+            pessoas={pessoas ?? []}
+            minhaPessoaId={minhaPessoaId}
+            onChange={setFiltroPessoas}
+          />
+          {temProjetos && (
+            <FilterSelect
+              label="Tipo"
+              icon={ListFilter}
+              value={tipo}
+              emptyValue="tudo"
+              onChange={(v) => setTipo(v as FiltroTipo)}
+              options={(Object.keys(TIPO_LABEL) as FiltroTipo[]).map((t) => ({ value: t, label: TIPO_LABEL[t] }))}
+            />
+          )}
+          <FilterSelect
+            label="Prazo"
+            icon={CalendarClock}
+            value={filtroData}
+            emptyValue="todas"
+            onChange={(v) => setFiltroData(v as FiltroData)}
+            options={(Object.keys(DATA_LABEL) as FiltroData[]).map((d) => ({ value: d, label: DATA_LABEL[d] }))}
+          />
+          <FilterClear count={filtrosAtivos} onClick={limparFiltros} />
+        </>
+      )}
+    </FilterBar>
+  );
+
   return (
     <PilarPage
       title="Tarefas"
+      toolbar={toolbar}
       search={
         visao !== "agenda" ? { value: busca, onChange: setBusca, placeholder: "Buscar no meu trabalho" } : undefined
       }
       primaryAction={visao !== "agenda" ? { label: "Nova tarefa", icon: Plus, onClick: () => abrirNova() } : undefined}
     >
-      {/* Toolbar: visão + (no quadro) filtros de tipo e data */}
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <div className="inline-flex rounded-lg border bg-muted/40 p-0.5">
-          <button
-            type="button"
-            onClick={() => trocarVisao("lista")}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-sm transition-colors",
-              visao === "lista" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
-            )}
-          >
-            <List className="h-4 w-4" /> Lista
-          </button>
-          <button
-            type="button"
-            onClick={() => trocarVisao("quadro")}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-sm transition-colors",
-              visao === "quadro" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
-            )}
-          >
-            <LayoutGrid className="h-4 w-4" /> Quadro
-          </button>
-          <button
-            type="button"
-            onClick={() => trocarVisao("agenda")}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-sm transition-colors",
-              visao === "agenda" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground"
-            )}
-          >
-            <CalendarDays className="h-4 w-4" /> Agenda
-          </button>
-        </div>
-
-        {visao !== "agenda" && (
-          <>
-            <FiltroPessoa
-              value={filtroPessoas}
-              pessoas={pessoas ?? []}
-              minhaPessoaId={minhaPessoaId}
-              onChange={setFiltroPessoas}
-            />
-
-            {temProjetos && (
-              <FiltroPill
-                icon={ListFilter}
-                value={tipo}
-                onChange={(v) => setTipo(v as FiltroTipo)}
-                options={(Object.keys(TIPO_LABEL) as FiltroTipo[]).map((t) => ({ value: t, label: TIPO_LABEL[t] }))}
-              />
-            )}
-
-            <FiltroPill
-              icon={CalendarClock}
-              value={filtroData}
-              onChange={(v) => setFiltroData(v as FiltroData)}
-              options={(Object.keys(DATA_LABEL) as FiltroData[]).map((d) => ({ value: d, label: DATA_LABEL[d] }))}
-            />
-
-            {visao === "quadro" && <KanbanSortControl sort={ordem} onChange={setOrdem} keys={TAREFAS_SORT_KEYS} />}
-
-            {visao === "lista" && (
-              <>
-                <div className="mx-1 h-5 w-px bg-border" />
-                <SeletorColunas colunas={colunas} />
-              </>
-            )}
-          </>
-        )}
-      </div>
-
       {visao === "agenda" ? (
         <AbaAgenda pessoaIds={pessoaIdsEfetivos} minhaPessoaId={minhaPessoaId} canEdit temProjetos={temProjetos} />
       ) : isLoading ? (

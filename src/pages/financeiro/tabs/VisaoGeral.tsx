@@ -26,7 +26,7 @@ import {
   Cell,
   Label,
 } from "recharts";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
 import { CustomTooltip } from "../components/CustomTooltip";
 import { FinanceErrorState } from "../components/FinanceErrorState";
 import { CategoriaDetalheDialog } from "../components/CategoriaDetalheDialog";
@@ -174,6 +174,11 @@ interface VisaoGeralProps {
   onNovoLancamento?: () => void;
 }
 
+const GRAFICO_OPCOES: ViewOption<"comparativo" | "performance">[] = [
+  { value: "comparativo", label: "Comparativo" },
+  { value: "performance", label: "Performance" },
+];
+
 export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGeralProps) {
   const { visualizacao, dateFrom, dateTo } = useFinanceFilter();
   const {
@@ -274,21 +279,13 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
                 : "Receitas e despesas acumuladas ao longo do período"}
             </CardDescription>
           </div>
-          <ToggleGroup
-            type="single"
+          <ViewSwitcher
+            options={GRAFICO_OPCOES}
             value={chartView}
-            onValueChange={(v) => v && setChartView(v as "comparativo" | "performance")}
-            variant="outline"
-            size="sm"
-            className="shrink-0 self-start"
-          >
-            <ToggleGroupItem value="comparativo" aria-label="Gráfico comparativo">
-              Comparativo
-            </ToggleGroupItem>
-            <ToggleGroupItem value="performance" aria-label="Gráfico de performance">
-              Performance
-            </ToggleGroupItem>
-          </ToggleGroup>
+            onChange={setChartView}
+            ariaLabel="Tipo de gráfico"
+            className="self-start"
+          />
         </CardHeader>
         <CardContent>
           <div className="h-[350px] w-full relative">

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pencil, Trash2, Users as UsersIcon } from "lucide-react";
 import type { CompanyUser } from "../types";
@@ -44,6 +44,46 @@ export function CompanyUsersTab({
   onEditUser,
   onDeleteUser,
 }: CompanyUsersTabProps) {
+  const usersColumns: ColumnDef<CompanyUser>[] = [
+    {
+      key: "nome",
+      header: "Nome",
+      className: "font-medium",
+      cell: (u) => (
+        <div className="flex items-center gap-2">
+          <span className="line-clamp-1">{u.name}</span>
+          {u.id.startsWith("pending-") && <Badge variant="secondary">Pendente</Badge>}
+        </div>
+      ),
+    },
+    { key: "email", header: "Email", className: "text-black/70", cell: (u) => u.email },
+    { key: "funcao", header: "Função", className: "text-black/70", cell: (u) => u.role || "-" },
+    {
+      key: "acoes",
+      header: "Ações",
+      align: "end",
+      cell: (u) =>
+        isAdmin && !u.id.startsWith("pending-") ? (
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" size="sm" className="rounded-full" onClick={() => onEditUser(u)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full text-danger-mid"
+              onClick={() => onDeleteUser(u.id)}
+              disabled={u.id === currentUserId}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <span className="text-black/40">-</span>
+        ),
+    },
+  ];
+
   return (
     <Card className="border border-black/5">
       <CardHeader>
@@ -119,58 +159,12 @@ export function CompanyUsersTab({
 
         {/* Desktop table */}
         <div className="hidden md:block mt-6">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Função</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="py-10 text-center text-sm text-muted-foreground">
-                    Nenhum usuário adicionado
-                  </TableCell>
-                </TableRow>
-              ) : (
-                users.map((u) => (
-                  <TableRow key={u.id} className={u.id.startsWith("pending-") ? "opacity-80" : ""}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <span className="line-clamp-1">{u.name}</span>
-                        {u.id.startsWith("pending-") && <Badge variant="secondary">Pendente</Badge>}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-black/70">{u.email}</TableCell>
-                    <TableCell className="text-black/70">{u.role || "-"}</TableCell>
-                    <TableCell className="text-right">
-                      {isAdmin && !u.id.startsWith("pending-") ? (
-                        <div className="flex justify-end gap-2">
-                          <Button variant="outline" size="sm" className="rounded-full" onClick={() => onEditUser(u)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="rounded-full text-danger-mid"
-                            onClick={() => onDeleteUser(u.id)}
-                            disabled={u.id === currentUserId}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <span className="text-black/40">-</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={usersColumns}
+            data={{ rows: users, isPending: false, error: null }}
+            rowKey={(u) => u.id}
+            emptyMessage="Nenhum usuário adicionado"
+          />
         </div>
 
         {/* Mobile cards */}

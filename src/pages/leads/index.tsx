@@ -1,11 +1,10 @@
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, TrendingUp, Search, AlertCircle, X } from "lucide-react";
+import { CalendarClock, LayoutGrid, List, Plus, TrendingUp, Search, AlertCircle } from "lucide-react";
+import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
+import { FilterBar, FilterClear, FilterSelect } from "@/components/filters/FilterBar";
 import { EmptyState } from "@/components/EmptyState";
-import { cn } from "@/lib/utils";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { parseCurrencyString, formatCurrency } from "@/lib/currencyUtils";
@@ -65,6 +64,11 @@ const PERIODO_OPTIONS: { value: PeriodoFilter; label: string }[] = [
 ];
 
 const LEADS_SORT_PADRAO: KanbanSort = { key: "created", dir: "desc" };
+
+const VISAO_OPCOES: ViewOption<"quadro" | "lista">[] = [
+  { value: "quadro", label: "Quadro", icon: LayoutGrid },
+  { value: "lista", label: "Lista", icon: List },
+];
 
 const SEM_RESPONSAVEL = "__sem__";
 
@@ -206,8 +210,12 @@ export default function Leads() {
   };
 
   const sortAtivo = sort.key !== LEADS_SORT_PADRAO.key || sort.dir !== LEADS_SORT_PADRAO.dir;
-  const filtersActive =
-    !!searchQuery.trim() || !!origemFilter || !!responsavelFilter || periodo !== "todos" || sortAtivo;
+  const filtrosAtivos =
+    (searchQuery.trim() ? 1 : 0) +
+    (origemFilter ? 1 : 0) +
+    (responsavelFilter ? 1 : 0) +
+    (periodo !== "todos" ? 1 : 0) +
+    (sortAtivo ? 1 : 0);
 
   const handleCardClick = (lead: Lead) => {
     setSelectedLead(lead);
@@ -463,8 +471,49 @@ export default function Leads() {
     setSort(LEADS_SORT_PADRAO);
   };
 
+  // Toolbar (SPEC 121): visão, filtros e ordenação. Busca de texto fica no header.
+  const toolbar = (
+    <FilterBar end={<KanbanSortControl sort={sort} onChange={setSort} keys={sortKeys} />}>
+      <ViewSwitcher
+        options={VISAO_OPCOES}
+        value={viewMode}
+        onChange={setViewMode}
+        iconOnlyOnMobile
+        className="hidden md:inline-flex"
+      />
+      <FilterSelect
+        label="Origem"
+        value={origemFilter || "todas"}
+        emptyValue="todas"
+        onChange={(v) => setOrigemFilter(v === "todas" ? "" : v)}
+        options={[{ value: "todas", label: "Todas as origens" }, ...origemOptions.map((o) => ({ value: o, label: o }))]}
+      />
+      <FilterSelect
+        label="Responsável"
+        value={responsavelFilter || "todos"}
+        emptyValue="todos"
+        onChange={(v) => setResponsavelFilter(v === "todos" ? "" : v)}
+        options={[
+          { value: "todos", label: "Todos os responsáveis" },
+          { value: SEM_RESPONSAVEL, label: "Sem responsável" },
+          ...members.map((m) => ({ value: m.id, label: `${m.first_name} ${m.last_name}` })),
+        ]}
+      />
+      <FilterSelect
+        label="Previsão"
+        icon={CalendarClock}
+        value={periodo}
+        emptyValue="todos"
+        onChange={(v) => setPeriodo(v as PeriodoFilter)}
+        options={PERIODO_OPTIONS}
+      />
+      <FilterClear count={filtrosAtivos} onClick={handleClearFilters} />
+    </FilterBar>
+  );
+
   return (
     <PageLayout
+      toolbar={toolbar}
       className="overflow-y-hidden"
       containerClassName="h-full flex flex-col min-h-0"
       header={
@@ -475,101 +524,7 @@ export default function Leads() {
         />
       }
     >
-      <CollapsibleKpiSection
-        storageKey="leads"
-        controls={
-          <>
-            <div className="hidden md:inline-flex rounded-full border p-0.5">
-              <button
-                type="button"
-                onClick={() => setViewMode("quadro")}
-                className={cn(
-                  "rounded-full px-3 py-1 text-sm transition-colors",
-                  viewMode === "quadro" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                Quadro
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("lista")}
-                className={cn(
-                  "rounded-full px-3 py-1 text-sm transition-colors",
-                  viewMode === "lista" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                Lista
-              </button>
-            </div>
-
-            {/* Busca de texto migrou para o PageHeader (spec 002). */}
-            <Select value={origemFilter || "todas"} onValueChange={(v) => setOrigemFilter(v === "todas" ? "" : v)}>
-              <SelectTrigger className="h-9 w-auto min-w-[140px] rounded-full text-sm" aria-label="Filtrar por origem">
-                <SelectValue placeholder="Origem" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todas as origens</SelectItem>
-                {origemOptions.map((o) => (
-                  <SelectItem key={o} value={o}>
-                    {o}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={responsavelFilter || "todos"}
-              onValueChange={(v) => setResponsavelFilter(v === "todos" ? "" : v)}
-            >
-              <SelectTrigger
-                className="h-9 w-auto min-w-[150px] rounded-full text-sm"
-                aria-label="Filtrar por responsável"
-              >
-                <SelectValue placeholder="Responsável" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os responsáveis</SelectItem>
-                <SelectItem value={SEM_RESPONSAVEL}>Sem responsável</SelectItem>
-                {members.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.first_name} {m.last_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={periodo} onValueChange={(v) => setPeriodo(v as PeriodoFilter)}>
-              <SelectTrigger
-                className="h-9 w-auto min-w-[150px] rounded-full text-sm"
-                aria-label="Filtrar por previsão de fechamento"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PERIODO_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <KanbanSortControl sort={sort} onChange={setSort} keys={sortKeys} />
-
-            {filtersActive && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleClearFilters}
-                className="h-9 text-sm text-muted-foreground"
-              >
-                <X className="mr-1 h-3.5 w-3.5" />
-                Limpar
-              </Button>
-            )}
-          </>
-        }
-      >
+      <CollapsibleKpiSection storageKey="leads">
         <LeadsKPIs
           leads={leads}
           propostasByLead={propostasByLead}

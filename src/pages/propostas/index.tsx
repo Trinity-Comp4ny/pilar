@@ -3,7 +3,7 @@ import { formatDate, formatDecimal } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,7 +27,6 @@ import {
   Trash2,
   ArrowUpDown,
   MoreVertical,
-  SlidersHorizontal,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -35,10 +34,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DialogDescription as DD, DialogFooter } from "@/components/ui/dialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageLayout } from "@/components/PageLayout";
+import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
+import { FilterBar, FilterClear, FilterPopover, FilterSelect } from "@/components/filters/FilterBar";
 import { PageHeader } from "@/components/PageHeader";
 import { useUserRole } from "@/hooks/useUserRole";
 import { toast } from "sonner";
@@ -81,6 +81,11 @@ interface PropostaDisciplina {
   horas_estimadas: number | null;
   custo_hora: number | null;
 }
+
+const VISAO_OPCOES: ViewOption<ViewMode>[] = [
+  { value: "table", label: "Tabela", icon: LayoutList },
+  { value: "cards", label: "Cards", icon: LayoutGrid },
+];
 
 type ViewMode = "table" | "cards";
 
@@ -474,6 +479,87 @@ export default function Propostas() {
     hoje,
   ]);
 
+  const filtrosAvancadosAtivos = activeAdvancedFilters + (filterStatus !== "all" ? 1 : 0);
+
+  // Toolbar padrão (SPEC 121). Busca de texto fica no header.
+  const toolbar = (
+    <FilterBar
+      end={
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {filteredPropostas.length} de {propostas.length}
+        </span>
+      }
+    >
+      <ViewSwitcher options={VISAO_OPCOES} value={viewMode} onChange={setViewMode} iconOnlyOnMobile />
+      <FilterSelect
+        label="Status"
+        value={filterStatus}
+        emptyValue="all"
+        onChange={setFilterStatus}
+        options={[
+          { value: "all", label: "Todos os status" },
+          { value: "rascunho", label: "Rascunho" },
+          { value: "enviada", label: "Enviada" },
+          { value: "aceita", label: "Aceita" },
+          { value: "recusada", label: "Recusada" },
+          { value: "expirada", label: "Expirada" },
+        ]}
+      />
+      <FilterPopover count={activeAdvancedFilters} onClear={clearFilters}>
+        <div className="space-y-4 p-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Cliente</Label>
+            <Select value={filterCliente} onValueChange={setFilterCliente}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="Todos os clientes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os clientes</SelectItem>
+                {clientes.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Tipo</Label>
+            <Select value={filterTipo} onValueChange={(v) => setFilterTipo(v as typeof filterTipo)}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os tipos</SelectItem>
+                <SelectItem value="proposta">Só propostas</SelectItem>
+                <SelectItem value="contrato">Com contrato</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-xs">Período</Label>
+              <Select value={filterDateField} onValueChange={(v) => setFilterDateField(v as typeof filterDateField)}>
+                <SelectTrigger className="h-7 w-32 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="created_at">Criação</SelectItem>
+                  <SelectItem value="validade">Validade</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <DatePicker value={filterDateFrom} onChange={setFilterDateFrom} placeholder="De" />
+              <DatePicker value={filterDateTo} onChange={setFilterDateTo} placeholder="Até" />
+            </div>
+          </div>
+        </div>
+      </FilterPopover>
+      <FilterClear count={filtrosAvancadosAtivos} onClick={clearFilters} />
+    </FilterBar>
+  );
+
   const header = (
     <PageHeader
       title="Propostas"
@@ -506,7 +592,7 @@ export default function Propostas() {
 
   if (isLoading) {
     return (
-      <PageLayout header={header}>
+      <PageLayout header={header} toolbar={toolbar}>
         <div className="flex items-center justify-center py-12">
           <ReadingRing size={64} />
         </div>
@@ -515,123 +601,8 @@ export default function Propostas() {
   }
 
   return (
-    <PageLayout header={header}>
+    <PageLayout header={header} toolbar={toolbar}>
       <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col min-h-0">
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <CardTitle className="text-lg font-medium tracking-tight">Lista de Propostas</CardTitle>
-              <CardDescription className="text-sm text-muted-foreground mt-1">
-                Total de {filteredPropostas.length} de {propostas.length} proposta(s)
-              </CardDescription>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              {/* Busca de texto migrou para o PageHeader (spec 002). */}
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm" aria-label="Status da proposta">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos status</SelectItem>
-                  <SelectItem value="rascunho">Rascunho</SelectItem>
-                  <SelectItem value="enviada">Enviada</SelectItem>
-                  <SelectItem value="aceita">Aceita</SelectItem>
-                  <SelectItem value="recusada">Recusada</SelectItem>
-                  <SelectItem value="expirada">Expirada</SelectItem>
-                </SelectContent>
-              </Select>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="h-9 rounded-full text-sm relative gap-1.5">
-                    <SlidersHorizontal className="h-4 w-4" />
-                    Filtros
-                    {activeAdvancedFilters > 0 && (
-                      <Badge className="ml-0.5 h-5 min-w-5 justify-center rounded-full bg-brand px-1.5 text-[11px] text-ink">
-                        {activeAdvancedFilters}
-                      </Badge>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-80 space-y-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Cliente</Label>
-                    <Select value={filterCliente} onValueChange={setFilterCliente}>
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="Todos os clientes" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos os clientes</SelectItem>
-                        {clientes.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Tipo</Label>
-                    <Select value={filterTipo} onValueChange={(v) => setFilterTipo(v as typeof filterTipo)}>
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos os tipos</SelectItem>
-                        <SelectItem value="proposta">Só propostas</SelectItem>
-                        <SelectItem value="contrato">Com contrato</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <Label className="text-xs">Período</Label>
-                      <Select
-                        value={filterDateField}
-                        onValueChange={(v) => setFilterDateField(v as typeof filterDateField)}
-                      >
-                        <SelectTrigger className="h-7 w-32 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="created_at">Criação</SelectItem>
-                          <SelectItem value="validade">Validade</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <DatePicker value={filterDateFrom} onChange={setFilterDateFrom} placeholder="De" />
-                      <DatePicker value={filterDateTo} onChange={setFilterDateTo} placeholder="Até" />
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={clearFilters}>
-                    Limpar filtros
-                  </Button>
-                </PopoverContent>
-              </Popover>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant={viewMode === "table" ? "secondary" : "ghost"}
-                  size="icon"
-                  className="h-11 w-11"
-                  onClick={() => setViewMode("table")}
-                  aria-label="Visualizar em tabela"
-                >
-                  <LayoutList className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "cards" ? "secondary" : "ghost"}
-                  size="icon"
-                  className="h-11 w-11"
-                  onClick={() => setViewMode("cards")}
-                  aria-label="Visualizar em cards"
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-
         <CardContent className="flex-1 min-h-0 p-0 pb-4">
           {propostas.length === 0 ? (
             <EmptyState

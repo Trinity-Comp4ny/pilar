@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PageToolbar } from "@/components/PageSlots";
+import { FilterBar, FilterSelect } from "@/components/filters/FilterBar";
 import { Badge } from "@/components/ui/badge";
 import { Search, User, Briefcase, GraduationCap, Crown, Trash2, Pencil, Users } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
@@ -204,43 +205,35 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
 
   return (
     <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden">
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <CardTitle className="text-lg font-medium tracking-tight">Equipe</CardTitle>
-            <CardDescription className="text-sm text-muted-foreground mt-1">
-              {filteredPessoas.length} de {pessoas.length} membro(s)
-            </CardDescription>
+      {/* Toolbar padrão (SPEC 121). Busca local: a página Equipe não controla o estado. */}
+      <PageToolbar>
+        <FilterBar
+          end={
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {filteredPessoas.length} de {pessoas.length}
+            </span>
+          }
+        >
+          <div className="relative w-[260px] shrink-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Buscar membro"
+              aria-label="Buscar por nome, cargo, email ou telefone"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-9 pl-9 rounded-full text-[13px]"
+            />
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Input
-                placeholder="Buscar por nome, cargo, email ou telefone..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-9 pl-9 rounded-full text-sm"
-              />
-            </div>
-            <div className="w-full sm:w-48">
-              <Select value={filterCargo} onValueChange={setFilterCargo}>
-                <SelectTrigger className="h-9 rounded-full text-sm" aria-label="Filtrar por cargo">
-                  <SelectValue placeholder="Cargo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos os Cargos</SelectItem>
-                  {cargos.map((cargo) => (
-                    <SelectItem key={cargo} value={cargo}>
-                      {cargo}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="flex-1 min-h-0 flex flex-col">
+          <FilterSelect
+            label="Cargo"
+            value={filterCargo}
+            emptyValue="todos"
+            onChange={setFilterCargo}
+            options={[{ value: "todos", label: "Todos os cargos" }, ...cargos.map((c) => ({ value: c, label: c }))]}
+          />
+        </FilterBar>
+      </PageToolbar>
+      <CardContent className="flex-1 min-h-0 flex flex-col p-4">
         {/* A página é de altura fixa (main com overflow-y-hidden): o scroll vive
             aqui e a altura vem do flex, não de um calc() com número mágico que
             estourava no mobile (header + chip-nav + BottomNav) e cortava as

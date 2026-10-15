@@ -17,7 +17,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useFornecedorDetalhe, type CotacaoView } from "@/hooks/useFornecedorDetalhe";
@@ -55,6 +56,7 @@ export default function FornecedorDetalhePage() {
   usePageTitle(data?.fornecedor.nome ?? "Fornecedor");
   const formatCurrency = useMoneyMask();
 
+  const [tab, setTab] = useState("cotacoes");
   const [obraFiltro, setObraFiltro] = useState<string>(TODAS);
   const [expandida, setExpandida] = useState<Set<string>>(new Set());
 
@@ -101,8 +103,18 @@ export default function FornecedorDetalhePage() {
     });
   };
 
+  // Abas de seção (SPEC 121), no slot do header.
+  const secoes: SectionTab[] = [
+    { id: "cotacoes", label: "Cotações", badge: cotacoes.length },
+    { id: "obras", label: "Obras", badge: obras.length },
+    { id: "compras", label: "Compras", badge: compras.length },
+  ];
+
   return (
-    <PageLayout header={<PageHeader title={fornecedor.nome} breadcrumbs={BREADCRUMB} />}>
+    <PageLayout
+      header={<PageHeader title={fornecedor.nome} breadcrumbs={BREADCRUMB} />}
+      tabs={<SectionTabs tabs={secoes} value={tab} onValueChange={setTab} ariaLabel="Seções do fornecedor" />}
+    >
       {/* Dados do cadastro */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
         {fornecedor.cnpj && <span className="tabular-nums">{formatCNPJ(fornecedor.cnpj)}</span>}
@@ -139,13 +151,7 @@ export default function FornecedorDetalhePage() {
         <KpiCard label="Última compra" value={resumo.ultimaCompra ? formatDate(resumo.ultimaCompra) : "—"} />
       </div>
 
-      <Tabs defaultValue="cotacoes" className="mt-6">
-        <TabsList>
-          <TabsTrigger value="cotacoes">Cotações ({cotacoes.length})</TabsTrigger>
-          <TabsTrigger value="obras">Obras ({obras.length})</TabsTrigger>
-          <TabsTrigger value="compras">Compras ({compras.length})</TabsTrigger>
-        </TabsList>
-
+      <Tabs value={tab} onValueChange={setTab} className="mt-6">
         {/* Cotações */}
         <TabsContent value="cotacoes" className="mt-4">
           {cotacoes.length === 0 ? (

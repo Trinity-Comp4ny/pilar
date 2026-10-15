@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -50,6 +51,11 @@ function Campo({ titulo, texto }: { titulo: string; texto: string | null }) {
     </div>
   );
 }
+
+const DIARIO_VISOES: ViewOption<"lista" | "feed">[] = [
+  { value: "lista", label: "Lista", icon: List },
+  { value: "feed", label: "Feed", icon: LayoutGrid },
+];
 
 export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: boolean }) {
   const isMobile = useIsMobile();
@@ -103,28 +109,12 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <div className="inline-flex rounded-full bg-muted p-0.5">
-          <button
-            type="button"
-            onClick={() => setVisualizacao("lista")}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-              visualizacao === "lista" ? "bg-white text-ink shadow-sm" : "text-muted-foreground"
-            }`}
-          >
-            <List className="h-3.5 w-3.5" />
-            Lista
-          </button>
-          <button
-            type="button"
-            onClick={() => setVisualizacao("feed")}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-              visualizacao === "feed" ? "bg-white text-ink shadow-sm" : "text-muted-foreground"
-            }`}
-          >
-            <LayoutGrid className="h-3.5 w-3.5" />
-            Feed
-          </button>
-        </div>
+        <ViewSwitcher
+          options={DIARIO_VISOES}
+          value={visualizacao}
+          onChange={setVisualizacao}
+          ariaLabel="Visualização do diário"
+        />
         {/* Ícone-only em mobile: toggle Lista/Feed + "Registrar dia" não
             cabiam numa linha em 390px, e o botão cortava na borda (achado da
             auditoria, mesmo padrão já corrigido no cabeçalho do Gantt). */}

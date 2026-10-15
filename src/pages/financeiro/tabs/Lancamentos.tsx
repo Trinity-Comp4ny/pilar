@@ -81,7 +81,6 @@ export default function Lancamentos() {
     <div className="space-y-6 w-full">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold">Lançamentos</h2>
           <p className="text-sm text-muted-foreground">
             Vendo <span className="font-medium text-foreground">{recorteLabel(filters)}</span> · por vencimento
           </p>
