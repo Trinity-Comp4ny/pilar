@@ -1,17 +1,16 @@
 import { uuidObrigatorio, validar, z } from "../_shared/schemas.ts";
 
-const credencial = z.string().trim().min(1).max(512).optional().catch(undefined);
-
 /**
- * Entrega baixada por quem tem o link público (token) ou pelo cliente logado no
- * portal (session_token). Um dos dois é obrigatório; o token tem precedência.
+ * Entrega baixada pelo cliente logado no portal (session_token). O link público por
+ * token foi removido do banco (20260429600000) e não existe mais aqui.
  */
-export const entradaSchema = z
-  .object({
-    entrega_id: uuidObrigatorio("entrega_id inválido"),
-    token: credencial,
-    session_token: credencial,
-  })
-  .refine((e) => e.token || e.session_token, { message: "token ou session_token obrigatório" });
+export const entradaSchema = z.object({
+  entrega_id: uuidObrigatorio("entrega_id inválido"),
+  session_token: z
+    .string({ required_error: "session_token obrigatório", invalid_type_error: "session_token obrigatório" })
+    .trim()
+    .min(1, "session_token obrigatório")
+    .max(512, "session_token obrigatório"),
+});
 
 export const lerEntrada = (corpo: unknown) => validar(entradaSchema, corpo);
