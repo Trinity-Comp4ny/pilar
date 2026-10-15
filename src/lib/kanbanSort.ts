@@ -6,7 +6,7 @@ export type KanbanSortKey = "priority" | "dueDate" | "value" | "name" | "created
 export type KanbanSortDir = "asc" | "desc";
 export type KanbanSort = { key: KanbanSortKey; dir: KanbanSortDir };
 
-export const KANBAN_SORT_KEYS: readonly KanbanSortKey[] = ["priority", "dueDate", "value", "name", "created"];
+const KANBAN_SORT_KEYS: readonly KanbanSortKey[] = ["priority", "dueDate", "value", "name", "created"];
 
 export const KANBAN_SORT_LABELS: Record<KanbanSortKey, string> = {
   priority: "Prioridade",
@@ -25,11 +25,11 @@ export const KANBAN_SORT_DIR_LABELS: Record<KanbanSortKey, Record<KanbanSortDir,
   created: { asc: "Mais antigos primeiro", desc: "Mais recentes primeiro" },
 };
 
-export function isKanbanSortKey(v: unknown): v is KanbanSortKey {
+function isKanbanSortKey(v: unknown): v is KanbanSortKey {
   return typeof v === "string" && (KANBAN_SORT_KEYS as readonly string[]).includes(v);
 }
 
-export function isKanbanSortDir(v: unknown): v is KanbanSortDir {
+function isKanbanSortDir(v: unknown): v is KanbanSortDir {
   return v === "asc" || v === "desc";
 }
 

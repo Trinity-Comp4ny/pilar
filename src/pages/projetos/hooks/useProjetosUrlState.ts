@@ -9,7 +9,7 @@ import {
 import { formatKanbanSort, parseKanbanSort, type KanbanSort } from "@/lib/kanbanSort";
 
 /** Ordenação padrão do quadro de Projetos: prioridade alta primeiro. */
-export const PROJETOS_SORT_PADRAO: KanbanSort = { key: "priority", dir: "asc" };
+const PROJETOS_SORT_PADRAO: KanbanSort = { key: "priority", dir: "asc" };
 
 // Lente ativa da tela de projetos. As lentes de recorte (disciplinas/cronograma/
 // mapa) são rotas próprias (/disciplinas, /cronograma, /mapa); dentro de /projetos

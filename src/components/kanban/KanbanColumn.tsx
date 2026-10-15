@@ -12,7 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { KANBAN_COLUMN_WIDTH } from "./kanbanLayout";
 
-export type KanbanColumnActions = {
+type KanbanColumnActions = {
   primeira: boolean;
   ultima: boolean;
   onEditar: () => void;
