@@ -3,6 +3,8 @@ import { PROJECT_STATUS, type ProjectStatus } from "@/constants";
 import { type Projeto } from "@/types/projetos";
 import { CORES_ETAPA_PROJETO, type ProjetoEtapa } from "@/pages/projetos/hooks/useProjetoEtapas";
 import { AddColumnInline } from "@/components/kanban/AddColumnInline";
+import { KANBAN_ADD_COLUMN_CLASSES, KANBAN_BOARD_CLASS } from "@/components/kanban/kanbanLayout";
+import { KanbanColumn as ColunaPadrao } from "@/components/kanban/KanbanColumn";
 import { KanbanColumn } from "@/pages/projetos/components/KanbanColumn";
 import { ProjectCard } from "@/pages/projetos/components/ProjectCard";
 
@@ -60,7 +62,7 @@ export function KanbanBoard({
   onQuickAddCreated,
 }: KanbanBoardProps) {
   return (
-    <div className="hidden md:flex gap-3 w-full h-full min-h-0 overflow-x-auto pb-2">
+    <div className={`hidden md:flex ${KANBAN_BOARD_CLASS}`}>
       {etapas.map((etapa, index) => (
         <KanbanColumn
           key={etapa.id}
@@ -87,26 +89,19 @@ export function KanbanBoard({
       {/* Rede de segurança: projetos com status sem coluna equivalente (valor
           legado). Sem drop/ações — só para não sumirem da vista. */}
       {orfaos.length > 0 && (
-        <div className="flex flex-col min-w-[280px] w-[280px] shrink-0 min-h-0">
-          <div className="flex items-center gap-2 px-2 py-2.5">
-            <span className="h-2 w-2 rounded-full shrink-0 bg-status-unknown" />
-            <h3 className="text-xs font-medium text-foreground/80 uppercase tracking-wide">Sem coluna</h3>
-            <span className="text-[11px] text-muted-foreground tabular-nums">{orfaos.length}</span>
-          </div>
-          <div className="flex-1 min-h-0 overflow-y-auto p-2 space-y-2 rounded-lg bg-muted">
-            {orfaos.map((projeto) => (
-              <ProjectCard
-                key={projeto.id}
-                projeto={projeto}
-                onClick={onCardClick}
-                onEdit={onEditClick}
-                onDelete={onDelete}
-                canEdit={canEdit}
-                margemBrutaPct={rentabilidadeMap[projeto.id] ?? null}
-              />
-            ))}
-          </div>
-        </div>
+        <ColunaPadrao id="sem-coluna" title="Sem coluna" color="#94a3b8" count={orfaos.length} dropDisabled>
+          {orfaos.map((projeto) => (
+            <ProjectCard
+              key={projeto.id}
+              projeto={projeto}
+              onClick={onCardClick}
+              onEdit={onEditClick}
+              onDelete={onDelete}
+              canEdit={canEdit}
+              margemBrutaPct={rentabilidadeMap[projeto.id] ?? null}
+            />
+          ))}
+        </ColunaPadrao>
       )}
 
       {canEdit && (
@@ -133,8 +128,8 @@ export function KanbanBoard({
               </Select>
             </div>
           )}
-          triggerClassName="mt-9 w-[280px] rounded-lg"
-          panelClassName="mt-9 w-[280px] self-start rounded-lg p-2.5"
+          triggerClassName={KANBAN_ADD_COLUMN_CLASSES.trigger}
+          panelClassName={KANBAN_ADD_COLUMN_CLASSES.panel}
         />
       )}
     </div>

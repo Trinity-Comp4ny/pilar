@@ -112,6 +112,12 @@ Página de detalhe nova com mais de uma seção segue este padrão em vez de inv
 - **`StatusBadge`** (`src/components/StatusBadge.tsx`): badge de status de domínio. Props: `domain`, `status`, `className?`. A cor vem do registry, nunca por fora.
 - **Registry** (`src/lib/status.ts`): fonte única. Domínios: `projeto | proposta | lead | financeiro | tipo | obra | cotacao`. Tons: `neutral | info | warning | attention | positive | danger | brand | done | highlight`. Helpers: `TONE_BADGE`, `TONE_VALUE` (cor de KPI), `TONE_COLUMN` (coluna kanban). "Pago" tem a mesma cor em Financeiro, Relatórios, Portal e detalhe de projeto.
 
+### Quadros Kanban (SPEC 122)
+
+- **`KanbanCard`** (`src/components/kanban/KanbanCard.tsx`): único card dos quadros de Tarefas, Projetos e Leads. Slots `eyebrow`, `tag`, `menu`, `title`, `subtitle`, `meta`, `footer`; raio, padding e posição das peças são fixos. Sem "#N" na face. Prioridade via `KanbanPriority`, etiqueta do usuário via `KanbanChip`.
+- **`KanbanColumn` + `KanbanDraggable`** (`src/components/kanban/KanbanColumn.tsx`): cabeçalho, menu da coluna, minimizar, superfície de soltar e vazio ("Nada aqui"). Medidas em `kanbanLayout.ts`.
+- **Ordenação** (`src/lib/kanbanSort.ts` + `KanbanSortControl`): cada quadro declara as chaves que suporta e como ler o valor; o controle e os rótulos são um só.
+
 ### Números e KPIs
 
 - **`KPICard`** (`src/components/KPICard.tsx`): card de número grande do dashboard. Prop `density?: "default" | "compact"` (padrão `"default"`) reduz o padding para uso em faixas colapsáveis; não muda tamanho de fonte nem remove conteúdo.

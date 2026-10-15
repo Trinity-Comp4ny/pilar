@@ -60,42 +60,41 @@ export function FiltroPill({
   );
 }
 
-/** Filtro de pessoa com avatar de iniciais (estilo ClickUp). Múltipla escolha;
- * "eu" é uma opção como outra qualquer, marcando a pessoa do usuário logado. */
+/** Filtro de pessoa com avatar de iniciais (estilo ClickUp). Múltipla escolha.
+ * A pessoa do usuário logado aparece uma vez só, no topo da lista, com "(você)";
+ * não existe opção "Eu" separada (virava duplicata do próprio nome). */
 export function FiltroPessoa({
   value,
   pessoas,
   minhaPessoaId,
-  meuNome,
-  meuAvatarUrl,
   onChange,
 }: {
   value: string[];
   pessoas: PessoaOpcao[];
   minhaPessoaId: string | null;
-  meuNome: string;
-  /** Foto do usuário logado, direto do profile (não depende de existir uma
-   * `pessoa` vinculada — ultra_admin e outros perfis sem pessoa não têm uma). */
-  meuAvatarUrl?: string | null;
   onChange: (value: string[]) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const eu = { nome: meuNome, avatarUrl: meuAvatarUrl };
-  const ehEuSelecionado = value.includes("eu");
-  const selecionadas = [
-    ...(ehEuSelecionado ? [eu] : []),
-    ...pessoas.filter((p) => p.id !== minhaPessoaId && value.includes(p.id)),
+  // "eu" é o valor antigo guardado em links e filtros salvos; vale como a própria pessoa.
+  const marcados = new Set(value.map((v) => (v === "eu" ? minhaPessoaId : v)));
+  const ordenadas = [
+    ...pessoas.filter((p) => p.id === minhaPessoaId),
+    ...pessoas.filter((p) => p.id !== minhaPessoaId),
   ];
+  const selecionadas = ordenadas.filter((p) => marcados.has(p.id));
 
-  const toggle = (v: string) => onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]);
+  const toggle = (id: string) => {
+    const proximos = new Set(marcados);
+    if (proximos.has(id)) proximos.delete(id);
+    else proximos.add(id);
+    onChange([...proximos].filter((v): v is string => !!v));
+  };
 
   const rotulo =
     selecionadas.length === 0
       ? "Todos"
       : selecionadas.length === 1
-        ? ehEuSelecionado
-          ? "Eu"
-          : selecionadas[0].nome
+        ? selecionadas[0].nome
         : `${selecionadas.length} pessoas`;
 
   return (
@@ -123,32 +122,22 @@ export function FiltroPessoa({
           <CommandList>
             <CommandEmpty>Ninguém encontrado.</CommandEmpty>
             <CommandGroup>
-              <CommandItem
-                value="eu"
-                onSelect={() => toggle("eu")}
-                className={cn("gap-2", ehEuSelecionado && "font-medium")}
-              >
-                <AvatarStack pessoas={[eu]} size="xs" />
-                <span className="flex-1 truncate">Eu</span>
-                {ehEuSelecionado && <Check className="h-4 w-4 text-brand" />}
-              </CommandItem>
-              {pessoas
-                .filter((p) => p.id !== minhaPessoaId)
-                .map((p) => {
-                  const marcada = value.includes(p.id);
-                  return (
-                    <CommandItem
-                      key={p.id}
-                      value={p.nome}
-                      onSelect={() => toggle(p.id)}
-                      className={cn("gap-2", marcada && "font-medium")}
-                    >
-                      <AvatarStack pessoas={[p]} size="xs" />
-                      <span className="flex-1 truncate">{p.nome}</span>
-                      {marcada && <Check className="h-4 w-4 text-brand" />}
-                    </CommandItem>
-                  );
-                })}
+              {ordenadas.map((p) => {
+                const marcada = marcados.has(p.id);
+                return (
+                  <CommandItem
+                    key={p.id}
+                    value={p.nome}
+                    onSelect={() => toggle(p.id)}
+                    className={cn("gap-2", marcada && "font-medium")}
+                  >
+                    <AvatarStack pessoas={[p]} size="xs" />
+                    <span className="flex-1 truncate">{p.nome}</span>
+                    {p.id === minhaPessoaId && <span className="text-xs text-muted-foreground">(você)</span>}
+                    {marcada && <Check className="h-4 w-4 text-brand" />}
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           </CommandList>
         </Command>

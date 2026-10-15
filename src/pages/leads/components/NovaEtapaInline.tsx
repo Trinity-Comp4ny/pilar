@@ -1,4 +1,5 @@
 import { AddColumnInline } from "@/components/kanban/AddColumnInline";
+import { KANBAN_ADD_COLUMN_CLASSES } from "@/components/kanban/kanbanLayout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { statusLabel } from "@/lib/status";
 import type { LeadBucket } from "@/pages/leads/hooks/useLeadEtapas";
@@ -18,8 +19,8 @@ export function NovaEtapaInline({ busy, onCreate }: Props) {
       extraInitial="Em contato"
       busy={busy}
       onCreate={onCreate}
-      triggerClassName="mt-2 w-[220px] rounded-lg"
-      panelClassName="mt-2 w-[240px] rounded-lg p-2"
+      triggerClassName={KANBAN_ADD_COLUMN_CLASSES.trigger}
+      panelClassName={KANBAN_ADD_COLUMN_CLASSES.panel}
       placeholder="Visita técnica, Reunião..."
       renderExtra={(bucket, setBucket) => (
         <div className="space-y-1">
