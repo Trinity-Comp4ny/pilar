@@ -103,7 +103,7 @@ export default function FornecedorDetalhePage() {
     });
   };
 
-  // Abas de seção (SPEC 121), no slot do header.
+  // Abas de seção (SPEC 124), no slot do header.
   const secoes: SectionTab[] = [
     { id: "cotacoes", label: "Cotações", badge: cotacoes.length },
     { id: "obras", label: "Obras", badge: obras.length },

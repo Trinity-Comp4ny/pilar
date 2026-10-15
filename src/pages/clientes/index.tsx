@@ -336,7 +336,7 @@ export default function Clientes() {
     setFilterPortal("all");
   };
 
-  // Toolbar padrão (SPEC 121). Busca de texto fica no header.
+  // Toolbar padrão (SPEC 124). Busca de texto fica no header.
   const toolbar = (
     <FilterBar
       end={

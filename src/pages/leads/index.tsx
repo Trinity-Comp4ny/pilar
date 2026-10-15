@@ -471,7 +471,7 @@ export default function Leads() {
     setSort(LEADS_SORT_PADRAO);
   };
 
-  // Toolbar (SPEC 121): visão, filtros e ordenação. Busca de texto fica no header.
+  // Toolbar (SPEC 124): visão, filtros e ordenação. Busca de texto fica no header.
   const toolbar = (
     <FilterBar end={<KanbanSortControl sort={sort} onChange={setSort} keys={sortKeys} />}>
       <ViewSwitcher

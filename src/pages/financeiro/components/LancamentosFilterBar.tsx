@@ -116,7 +116,7 @@ export function LancamentosFilterBar({
 
   return (
     <div className="space-y-2.5">
-      {/* Toolbar padrão (SPEC 121), montada no slot sticky do header pela aba. */}
+      {/* Toolbar padrão (SPEC 124), montada no slot sticky do header pela aba. */}
       <PageToolbar>
         <FilterBar
           end={

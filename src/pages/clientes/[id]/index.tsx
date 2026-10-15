@@ -577,7 +577,7 @@ export default function ClienteDetalhePage() {
     );
   }
 
-  // Abas de seção (SPEC 121), no slot do header.
+  // Abas de seção (SPEC 124), no slot do header.
   const secoes: SectionTab[] = [
     { id: "visao-geral", label: "Visão geral", icon: User },
     {

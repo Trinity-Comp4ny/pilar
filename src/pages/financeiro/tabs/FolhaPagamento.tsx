@@ -515,7 +515,7 @@ export default function FolhaPagamento() {
   return (
     <div className="space-y-8 pb-10">
       <div className="space-y-6">
-        {/* Toolbar padrão (SPEC 121): competência, busca local da aba e status; fechar folha à direita. */}
+        {/* Toolbar padrão (SPEC 124): competência, busca local da aba e status; fechar folha à direita. */}
         <PageToolbar>
           <FilterBar
             end={

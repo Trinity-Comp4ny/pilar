@@ -94,7 +94,7 @@ Padrão em uso em `src/pages/obras/[id]/index.tsx` e `src/pages/clientes/[id]/in
 
 Página de detalhe nova com mais de uma seção segue este padrão em vez de inventar um layout de abas próprio.
 
-### Navegação de seção, visão e filtros (SPEC 121 / ADR 0058)
+### Navegação de seção, visão e filtros (SPEC 124 / ADR 0059)
 
 Ordem vertical fixa de toda página: **header** (título, busca, ação primária) → **abas de seção** (`tabs`) → **toolbar** (`toolbar`) → conteúdo. Os três ficam no mesmo bloco sticky.
 

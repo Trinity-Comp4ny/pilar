@@ -481,7 +481,7 @@ export default function Propostas() {
 
   const filtrosAvancadosAtivos = activeAdvancedFilters + (filterStatus !== "all" ? 1 : 0);
 
-  // Toolbar padrão (SPEC 121). Busca de texto fica no header.
+  // Toolbar padrão (SPEC 124). Busca de texto fica no header.
   const toolbar = (
     <FilterBar
       end={

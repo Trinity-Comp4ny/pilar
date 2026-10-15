@@ -15,8 +15,8 @@ const rel = (file: string) => file.replace(`${ROOT}/`, "");
 const todos = sourceFiles(join(ROOT, "src"));
 const ler = (file: string) => readFileSync(file, "utf8");
 
-// SPEC 121 / ADR 0058 (navegação de seção, visão, filtros e tabelas padrão).
-describe("varredura: navegação e filtros padrão (SPEC 121)", () => {
+// SPEC 124 / ADR 0059 (navegação de seção, visão, filtros e tabelas padrão).
+describe("varredura: navegação e filtros padrão (SPEC 124)", () => {
   it("não existe mais sidebar de página: SecondSidebar foi removido", () => {
     const offenders = todos.filter((f) => /from "[^"]*SecondSidebar"/.test(ler(f))).map(rel);
     expect(offenders).toEqual([]);
@@ -68,7 +68,7 @@ const TABELA_A_MAO: Record<string, string> = {
 
 const TABELA = /<Table[\s>]|<table[\s>]/;
 
-describe("varredura: tabela padrão é DataTable (SPEC 121)", () => {
+describe("varredura: tabela padrão é DataTable (SPEC 124)", () => {
   it("nenhum arquivo novo monta tabela à mão fora da lista", () => {
     const offenders = todos
       .filter((f) => !/components\/(ui\/table|data\/DataTable)\.tsx$/.test(f))

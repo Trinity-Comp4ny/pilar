@@ -108,7 +108,7 @@ export default function ObraDetalhePage() {
     }
   };
 
-  // Abas de seção (SPEC 121): mesmas regras de visibilidade de antes, agora no slot do header.
+  // Abas de seção (SPEC 124): mesmas regras de visibilidade de antes, agora no slot do header.
   const secoes: SectionTab[] = [
     { id: "timeline", label: "Visão", icon: LayoutList },
     ...(showDiario ? [{ id: "diario", label: "Diário", icon: ClipboardList }] : []),

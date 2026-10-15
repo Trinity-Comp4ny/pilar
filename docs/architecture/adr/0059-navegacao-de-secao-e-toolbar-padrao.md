@@ -1,4 +1,4 @@
-# ADR 0058: Navegação de seção horizontal e toolbar padrão sob o header
+# ADR 0059: Navegação de seção horizontal e toolbar padrão sob o header
 
 **Data:** 2026-10-15
 **Status:** Accepted
@@ -7,7 +7,7 @@
 
 O app tem rail de módulos e painel do módulo (`AppSidebar`). Dentro da página, cada tela
 resolveu "seções" e "filtros" por conta própria (levantamento na
-[SPEC 121](../../specs/121-padronizacao-de-navegacao-filtros-e-tabelas.md)). Financeiro,
+[SPEC 124](../../specs/124-padronizacao-de-navegacao-filtros-e-tabelas.md)). Financeiro,
 Admin e detalhe de Projeto usam uma sidebar vertical (`SecondSidebar`); Obra, Cliente e
 Fornecedor usam abas horizontais. Filtros ficam em 6 lugares e 5 formatos.
 
@@ -58,4 +58,4 @@ recebeu filtros ali (auditoria mobile de 08/09).
 
 - ADR 0008: regra dos 3 usos e primitivas do DS.
 - ADR 0020 e SPEC 041: `DataTable` como tabela padrão.
-- SPEC 121: levantamento e plano por fases.
+- SPEC 124: levantamento e plano por fases.

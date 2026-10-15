@@ -430,7 +430,7 @@ export default function ProjetosKanban() {
       }
     >
       {/* KPIs (a navegação entre recortes vive na sidebar; só entram quando há dado
-          pra mostrar). Visão, filtros e ordenação ficam na toolbar (SPEC 121). */}
+          pra mostrar). Visão, filtros e ordenação ficam na toolbar (SPEC 124). */}
       {isColecao && (
         <CollapsibleKpiSection storageKey="projetos">
           {!loadingProjetos && projetos.length > 0 && (

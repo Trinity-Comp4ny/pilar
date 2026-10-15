@@ -26,7 +26,7 @@ Um card, uma coluna e um controle de ordenação, usados pelos três quadros. A 
 os espaços; raio, padding, posição das peças e rótulos vêm do componente.
 
 **Fora de escopo:** conteúdo de cada card (continua variando por tela), filtros e toolbar
-(SPEC 121), listas e tabelas, visão mobile de Projetos e Leads.
+(SPEC 124), listas e tabelas, visão mobile de Projetos e Leads.
 
 ## Requisitos
 
@@ -67,4 +67,4 @@ do usuário quando a consulta de "minha pessoa" não resolve.
 
 - Cartão inteiro clicável; o título é um `<button>` para o foco de teclado.
 - Risco: baselines do teste visual E2E dos quadros mudam. Atualizar a referência após o merge.
-- Conflito esperado com a SPEC 121 (PR #636) em `FiltrosTrabalho.tsx` e `meu-trabalho/index.tsx`.
+- Conflito esperado com a SPEC 124 (PR #636) em `FiltrosTrabalho.tsx` e `meu-trabalho/index.tsx`.
