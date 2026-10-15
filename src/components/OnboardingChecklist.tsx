@@ -50,7 +50,7 @@ export function OnboardingChecklist() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full bg-brand px-4 py-2.5 text-ink shadow-elegant transition-transform hover:scale-[1.02]"
+        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-40 md:bottom-4 flex items-center gap-2 rounded-full bg-brand px-4 py-2.5 text-ink shadow-elegant transition-transform hover:scale-[1.02]"
       >
         <Rocket className="h-4 w-4" />
         <span className="text-sm font-medium">Primeiros passos</span>
@@ -63,7 +63,7 @@ export function OnboardingChecklist() {
 
   if (allDone) {
     return (
-      <div className="fixed bottom-4 right-4 z-40 w-[340px] max-w-[calc(100vw-2rem)]">
+      <div className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-40 md:bottom-4 w-[340px] max-w-[calc(100vw-2rem)]">
         <Card className="border-success-soft-border bg-success-soft">
           <CardContent className="flex items-center justify-between gap-3 p-4">
             <div className="flex items-center gap-3">
@@ -85,7 +85,7 @@ export function OnboardingChecklist() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 w-[360px] max-w-[calc(100vw-2rem)]">
+    <div className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-40 md:bottom-4 w-[360px] max-w-[calc(100vw-2rem)]">
       <Card className="border-brand/30 shadow-elegant">
         <CardContent className="space-y-3 p-4">
           <div className="flex items-start justify-between gap-3">

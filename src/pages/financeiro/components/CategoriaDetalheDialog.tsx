@@ -42,7 +42,7 @@ export function CategoriaDetalheDialog({
         {ordered.length === 0 ? (
           <p className="py-8 text-center text-sm text-muted-foreground">Sem registros no período</p>
         ) : (
-          <div className="max-h-[60vh] overflow-y-auto">
+          <div className="max-h-[60dvh] overflow-y-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-black/5 text-xs uppercase tracking-wider text-muted-foreground">

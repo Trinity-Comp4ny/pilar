@@ -463,7 +463,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
       />
 
       <div className="rounded-xl border border-black/10 bg-white overflow-hidden">
-        <div ref={scrollRef} className="overflow-auto" style={{ maxHeight: "min(70vh, 720px)" }}>
+        <div ref={scrollRef} className="overflow-auto" style={{ maxHeight: "min(70dvh, 720px)" }}>
           <table className="min-w-full text-left border-collapse">
             <thead className="sticky top-0 bg-white z-10 shadow-[0_1px_0_rgba(0,0,0,0.06)]">
               <tr className="text-xs text-muted-foreground">

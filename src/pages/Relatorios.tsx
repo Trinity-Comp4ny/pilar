@@ -672,7 +672,7 @@ export default function Relatorios() {
                 columnVisibility={reportColumnVisibility}
                 data={{ rows: rowsWithIndex }}
                 rowKey={(row) => String(row.__idx)}
-                maxHeight="60vh"
+                maxHeight="60dvh"
                 emptyMessage="Nenhum registro encontrado com os filtros aplicados."
                 footer={
                   visibleColumns.has("Valor")

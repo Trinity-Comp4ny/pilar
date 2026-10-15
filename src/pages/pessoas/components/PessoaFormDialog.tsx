@@ -256,7 +256,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="sm:max-w-2xl max-h-[90dvh] overflow-y-auto p-0">
         <div className="px-6 pt-6 pb-4 border-b">
           <DialogHeader>
             <DialogTitle>{isEditMode ? "Editar pessoa" : "Nova pessoa"}</DialogTitle>

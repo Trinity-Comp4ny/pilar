@@ -97,8 +97,7 @@ export function LancamentosFilterBar({
     filters.formasPagamento.length +
     (filters.valorMin || filters.valorMax ? 1 : 0);
 
-  const hasActive =
-    !!filters.search || filters.tipo !== "todos" || filters.periodo !== "mes-atual" || filtrosCount > 0;
+  const hasActive = !!filters.search || filters.tipo !== "todos" || filters.periodo !== "mes-atual" || filtrosCount > 0;
 
   const removeFromList = (key: keyof LancamentosFilters, value: string) => {
     const arr = filters[key] as string[];
@@ -209,19 +208,39 @@ export function LancamentosFilterBar({
         <div className="flex flex-wrap items-center gap-1.5">
           {activeQuick && <Chip label={QUICK_LABEL[activeQuick]} onRemove={() => onQuick(activeQuick)} />}
           {filters.projetos.map((id) => (
-            <Chip key={`proj-${id}`} label={`Proj: ${labelMap.get(id) ?? id}`} onRemove={() => removeFromList("projetos", id)} />
+            <Chip
+              key={`proj-${id}`}
+              label={`Proj: ${labelMap.get(id) ?? id}`}
+              onRemove={() => removeFromList("projetos", id)}
+            />
           ))}
           {filters.categorias.map((id) => (
-            <Chip key={`cat-${id}`} label={`Cat: ${labelMap.get(id) ?? id}`} onRemove={() => removeFromList("categorias", id)} />
+            <Chip
+              key={`cat-${id}`}
+              label={`Cat: ${labelMap.get(id) ?? id}`}
+              onRemove={() => removeFromList("categorias", id)}
+            />
           ))}
           {filters.clientes.map((id) => (
-            <Chip key={`cli-${id}`} label={`Cli: ${labelMap.get(id) ?? id}`} onRemove={() => removeFromList("clientes", id)} />
+            <Chip
+              key={`cli-${id}`}
+              label={`Cli: ${labelMap.get(id) ?? id}`}
+              onRemove={() => removeFromList("clientes", id)}
+            />
           ))}
           {filters.fornecedores.map((id) => (
-            <Chip key={`forn-${id}`} label={`Forn: ${labelMap.get(id) ?? id}`} onRemove={() => removeFromList("fornecedores", id)} />
+            <Chip
+              key={`forn-${id}`}
+              label={`Forn: ${labelMap.get(id) ?? id}`}
+              onRemove={() => removeFromList("fornecedores", id)}
+            />
           ))}
           {filters.formasPagamento.map((id) => (
-            <Chip key={`forma-${id}`} label={`Pgto: ${labelMap.get(id) ?? id}`} onRemove={() => removeFromList("formasPagamento", id)} />
+            <Chip
+              key={`forma-${id}`}
+              label={`Pgto: ${labelMap.get(id) ?? id}`}
+              onRemove={() => removeFromList("formasPagamento", id)}
+            />
           ))}
           {(filters.valorMin || filters.valorMax) && (
             <Chip
@@ -277,7 +296,10 @@ function FiltrosPopover({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className={cn("h-9 rounded-full gap-1.5 text-sm font-normal", count > 0 && "border-brand bg-brand text-ink hover:bg-brand/90 hover:text-ink")}
+          className={cn(
+            "h-9 rounded-full gap-1.5 text-sm font-normal",
+            count > 0 && "border-brand bg-brand text-ink hover:bg-brand/90 hover:text-ink"
+          )}
         >
           <SlidersHorizontal className="h-4 w-4" />
           Filtros
@@ -316,7 +338,7 @@ function FiltrosPopover({
             </Button>
           )}
         </div>
-        <div className="max-h-[64vh] overflow-y-auto">
+        <div className="max-h-[64dvh] overflow-y-auto">
           {/* Status / intenção */}
           <div className="px-4 py-3 space-y-2">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</h4>
@@ -331,7 +353,9 @@ function FiltrosPopover({
                     onClick={() => onQuick(q)}
                     className={cn(
                       "inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-medium border transition-colors",
-                      active ? "bg-brand text-ink border-brand" : "bg-white border-black/10 text-muted-foreground hover:text-foreground"
+                      active
+                        ? "bg-brand text-ink border-brand"
+                        : "bg-white border-black/10 text-muted-foreground hover:text-foreground"
                     )}
                   >
                     <Icon className="h-3.5 w-3.5" />
@@ -362,7 +386,11 @@ function FiltrosPopover({
             title="Cliente"
             items={clientes}
             selected={filters.clientes}
-            onChange={(next) => onChange(next.length > 0 && filters.tipo !== "receita" ? { clientes: next, tipo: "receita" } : { clientes: next })}
+            onChange={(next) =>
+              onChange(
+                next.length > 0 && filters.tipo !== "receita" ? { clientes: next, tipo: "receita" } : { clientes: next }
+              )
+            }
             placeholder="Buscar cliente…"
           />
           <Separator />
@@ -370,7 +398,13 @@ function FiltrosPopover({
             title="Fornecedor"
             items={fornecedores}
             selected={filters.fornecedores}
-            onChange={(next) => onChange(next.length > 0 && filters.tipo !== "despesa" ? { fornecedores: next, tipo: "despesa" } : { fornecedores: next })}
+            onChange={(next) =>
+              onChange(
+                next.length > 0 && filters.tipo !== "despesa"
+                  ? { fornecedores: next, tipo: "despesa" }
+                  : { fornecedores: next }
+              )
+            }
             placeholder="Buscar fornecedor…"
           />
           <Separator />
@@ -386,7 +420,9 @@ function FiltrosPopover({
                     onClick={() => toggleForma(f.value)}
                     className={cn(
                       "h-7 px-3 rounded-full text-xs border transition-colors",
-                      active ? "bg-brand text-ink border-brand" : "bg-white border-black/10 text-muted-foreground hover:text-foreground"
+                      active
+                        ? "bg-brand text-ink border-brand"
+                        : "bg-white border-black/10 text-muted-foreground hover:text-foreground"
                     )}
                   >
                     {f.label}
@@ -465,13 +501,21 @@ function CheckboxSearchSection({
       </button>
       {open && (
         <div className="px-4 pb-3 space-y-2">
-          <Input placeholder={placeholder} value={search} onChange={(e) => setSearch(e.target.value)} className="h-8 text-xs" />
+          <Input
+            placeholder={placeholder}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-8 text-xs"
+          />
           <div className="max-h-48 overflow-y-auto -mx-1">
             {filtered.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-3">Nenhum resultado</p>
             ) : (
               filtered.map((i) => (
-                <label key={i.value} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-xs">
+                <label
+                  key={i.value}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-xs"
+                >
                   <Checkbox checked={selected.includes(i.value)} onCheckedChange={() => toggle(i.value)} />
                   <span className="truncate">{i.label}</span>
                 </label>
@@ -488,7 +532,12 @@ function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
     <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1 rounded-full bg-brand text-ink border border-brand/30 text-[11px] font-medium">
       <span className="truncate max-w-[200px]">{label}</span>
-      <button type="button" onClick={onRemove} className="rounded-full p-0.5 hover:bg-brand/20" aria-label={`Remover ${label}`}>
+      <button
+        type="button"
+        onClick={onRemove}
+        className="rounded-full p-0.5 hover:bg-brand/20"
+        aria-label={`Remover ${label}`}
+      >
         <X className="h-3 w-3" />
       </button>
     </span>

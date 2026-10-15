@@ -180,7 +180,7 @@ export function PropostaDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-start justify-between gap-3 pr-6">
             <div className="min-w-0">

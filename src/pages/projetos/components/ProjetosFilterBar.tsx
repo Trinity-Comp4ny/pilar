@@ -203,7 +203,7 @@ function FiltersPanel({
     (filters.dataFim ? 1 : 0);
 
   return (
-    <div className="flex flex-col max-h-[70vh]">
+    <div className="flex flex-col max-h-[70dvh]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b">
         <div className="flex items-center gap-2">

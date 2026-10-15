@@ -412,7 +412,7 @@ export function AppSidebar() {
   if (isMobile) return null;
 
   return (
-    <div className="fixed left-0 top-0 z-50 flex h-screen border-r border-black/5 bg-white">
+    <div className="fixed left-0 top-0 z-50 flex h-dvh border-r border-black/5 bg-white">
       {rail}
       {!collapsed && panel}
     </div>

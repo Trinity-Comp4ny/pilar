@@ -351,8 +351,8 @@ export default function ProjetosKanban() {
 
   return (
     <PageLayout
-      className={activeTab === "quadro" ? "overflow-y-hidden" : undefined}
-      containerClassName={cn("flex flex-col", activeTab === "quadro" && "h-full min-h-0")}
+      className={activeTab === "quadro" ? "md:overflow-y-hidden" : undefined}
+      containerClassName={cn("flex flex-col", activeTab === "quadro" && "md:h-full md:min-h-0")}
       header={
         <PageHeader
           title="Projetos"
