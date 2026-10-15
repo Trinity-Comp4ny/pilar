@@ -112,7 +112,7 @@ público → `brand/personas.md`. Cor/token: a verdade é `src/styles/tokens.css
 
 ## DB
 
-367 migrations em `supabase/migrations/`, dois esquemas convivendo: 000..029 (antigo) e
+368 migrations em `supabase/migrations/`, dois esquemas convivendo: 000..029 (antigo) e
 timestamp 2026*. Tipos gerados em `src/integrations/supabase/types.ts`.
 Rodar `npm run gen:types:local` após qualquer migration, e commitar o `types.ts`. O CI **valida
 isso**: o job `types-sync` (Fase 1 do `docs/operations/PLANO_ENGENHARIA_2026-07.md`, já
