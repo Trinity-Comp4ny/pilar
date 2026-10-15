@@ -187,7 +187,7 @@ export function HeroInicio({
       <Formas visual={visual} />
 
       <div className="relative flex flex-col gap-3">
-        <h2 className={cn("flex items-center gap-2 text-sm font-medium", visual.suave)}>
+        <h2 data-testid="hero-saudacao" className={cn("flex items-center gap-2 text-sm font-medium", visual.suave)}>
           {saudacao(hoje)}
           {nome ? `, ${nome}` : ""}
           {mostrarResumo && origem && (
