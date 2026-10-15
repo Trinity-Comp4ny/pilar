@@ -7,8 +7,9 @@
  * design partner levou 11 respostas 403 sem gerar um único evento no Sentry.
  *
  * Regras de calibragem (ver ADR 0030):
- *  - 401/403 são `warning` com fingerprint por rota + status, então viram um
- *    issue por endpoint em vez de um por clique.
+ *  - 401/403 são `warning`. 403 agrupa por rota + status (um issue por
+ *    endpoint, não um por clique); 401 agrupa por código, porque sessão
+ *    inválida derruba a tela inteira de uma vez.
  *  - 5xx e falha de rede são `error`.
  *  - 406 com PGRST116 é `.single()` sem linha, resposta esperada da API: ignora.
  *  - A instrumentação nunca lança nem muda o retorno: se ela falhar, a chamada
@@ -84,34 +85,64 @@ function isExpected(status: number, body: ErrorBody): boolean {
 }
 
 /**
- * 401 + PGRST303 é o PostgREST rejeitando o JWT por `iat` no futuro (clock skew
- * do dispositivo do usuário, ou uma corrida de refresh de sessão entre abas).
- * `supabase.auth.refreshSession()` troca o token; um retry único recupera a
- * chamada sem o usuário perceber, em vez de a tela ficar com dado vazio até
- * um reload manual.
+ * 401 + PGRST303 é o PostgREST rejeitando o JWT: vencido (aba ou notebook
+ * dormindo pausa o refresh automático) ou com `iat` no futuro (clock skew, corrida
+ * de refresh entre abas). `supabase.auth.refreshSession()` troca o token; um retry
+ * único com o token novo recupera a chamada sem o usuário perceber, em vez de a
+ * tela ficar com dado vazio até um reload manual. HEAD (contagem) volta sem
+ * corpo, então o 401 dele chega sem o código e conta como o mesmo caso.
  */
-function isFutureJwt(status: number, body: ErrorBody): boolean {
-  return status === 401 && body.code === "PGRST303";
+function isRejectedJwt(status: number, method: string, body: ErrorBody): boolean {
+  if (status !== 401) return false;
+  return body.code === "PGRST303" || (method === "HEAD" && !body.code);
 }
 
-let refreshInFlight: Promise<boolean> | null = null;
+let refreshInFlight: Promise<string | null> | null = null;
 
-/** Import dinâmico: `./supabase` importa este módulo, um import estático criaria ciclo. */
-async function refreshSessionOnce(): Promise<boolean> {
+/**
+ * Renova a sessão uma vez para todas as chamadas que falharem juntas (uma tela
+ * dispara 15+ requisições ao mesmo tempo) e devolve o token novo.
+ * Import dinâmico: `./supabase` importa este módulo, um import estático criaria ciclo.
+ */
+async function refreshSessionOnce(): Promise<string | null> {
   if (!refreshInFlight) {
     refreshInFlight = (async () => {
       try {
         const { supabase } = await import("./supabase");
-        const { error } = await supabase.auth.refreshSession();
-        return !error;
+        const { data, error } = await supabase.auth.refreshSession();
+        if (error) return null;
+        return data.session?.access_token ?? null;
       } catch {
-        return false;
+        return null;
       } finally {
         refreshInFlight = null;
       }
     })();
   }
   return refreshInFlight;
+}
+
+/**
+ * O supabase-js põe o `Authorization: Bearer <token>` no `init` antes de chamar
+ * este fetch. Repetir com o mesmo `init` reenvia o token vencido e falha de novo,
+ * então o retry troca o Bearer pelo token renovado. Chamada sem Authorization
+ * segue como veio.
+ */
+export function withAccessToken(input: FetchInput, init: FetchInit, token: string): FetchInit {
+  const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
+  if (!headers.has("Authorization")) return init;
+  headers.set("Authorization", `Bearer ${token}`);
+  return { ...init, headers };
+}
+
+/**
+ * Agrupa por rota + status: um issue por endpoint, não um por clique. A exceção é
+ * o 401: sessão inválida derruba todas as rotas da tela de uma vez (19 issues de
+ * um usuário só em 15/10/2026), então vira um issue por código, com a rota na tag.
+ */
+export function fingerprintFor(method: string, route: string, status: number, code?: string): string[] {
+  if (status === 401) return ["supabase", "auth", "401", code ?? "sem-codigo"];
+  return ["supabase", method, route, String(status)];
 }
 
 async function reportFailure(res: Response, method: string, url: string): Promise<void> {
@@ -137,8 +168,7 @@ async function reportFailure(res: Response, method: string, url: string): Promis
     },
     {
       level: levelFor(res.status),
-      // Agrupa por rota + status: um issue por endpoint, não um por clique.
-      fingerprint: ["supabase", method, route, String(res.status)],
+      fingerprint: fingerprintFor(method, route, res.status, code),
       tags: { supabase_route: route, supabase_status: String(res.status) },
     }
   );
@@ -190,9 +220,10 @@ export function createInstrumentedFetch(baseFetch: typeof fetch = fetch): typeof
 
     if (res.status === 401) {
       const body = await readErrorBody(res);
-      if (isFutureJwt(res.status, body) && (await refreshSessionOnce())) {
+      const token = isRejectedJwt(res.status, method, body) ? await refreshSessionOnce() : null;
+      if (token) {
         try {
-          res = await baseFetch(input, init);
+          res = await baseFetch(input, withAccessToken(input, init, token));
         } catch (err) {
           try {
             reportNetworkFailure(err, method, url);
