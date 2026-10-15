@@ -151,6 +151,10 @@
     "dominio": "portal",
     "descricao": "Redefine a senha do cliente do portal (e-mail antes de mexer na conta)."
   },
+  "resumo-semanal": {
+    "dominio": "ia",
+    "descricao": "Resumo semanal do Início: lê os fatos da semana pelo RLS de quem pediu (empresa para quem vê dinheiro, pessoa para os demais), o modelo redige e o código confere os números (SPEC 121)."
+  },
   "retencao-pos-trial": {
     "dominio": "jobs",
     "descricao": "Cron: avisos e exclusão de empresa depois do trial vencido (SPEC 098 Fase 3)."

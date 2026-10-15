@@ -1,6 +1,18 @@
 import { useMemo, useState } from "react";
 import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-pangea/dnd";
-import { GripVertical, Pin, PinOff, Plus, RotateCcw, Trash2 } from "lucide-react";
+import {
+  Briefcase,
+  FolderKanban,
+  GripVertical,
+  HardHat,
+  Pin,
+  PinOff,
+  Plus,
+  RotateCcw,
+  Trash2,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -34,6 +46,23 @@ type Props = {
   onEditar: (v: boolean) => void;
   onSalvar: (layout: ItemLayout[]) => Promise<unknown>;
   onRestaurar: () => Promise<unknown>;
+  /**
+   * Cabeçalho do Início (SPEC 121). Recebe os botões do modo Personalizar (Restaurar,
+   * Cancelar, Salvar) para encaixá-los na própria faixa. Fora da edição não recebe nada: o
+   * botão "Personalizar" vive no header da página. Sem ele, os botões saem numa linha.
+   *
+   * O Início remonta este componente (`key`) ao entrar e sair da edição, então o rascunho
+   * sempre nasce do layout salvo.
+   */
+  hero?: (acoes: React.ReactNode) => React.ReactNode;
+};
+
+/** Ícone e cor de cada módulo no título da seção. A cor vive no chip, não no número. */
+const ICONE_SECAO: Record<Secao, { Icone: LucideIcon; chip: string }> = {
+  gestao: { Icone: Briefcase, chip: "bg-modulo-gestao text-modulo-gestao-strong" },
+  projetos: { Icone: FolderKanban, chip: "bg-modulo-projetos text-modulo-projetos-strong" },
+  obras: { Icone: HardHat, chip: "bg-modulo-obra text-modulo-obra-strong" },
+  financeiro: { Icone: Wallet, chip: "bg-highlight-soft text-highlight-strong" },
 };
 
 function Card({
@@ -56,7 +85,7 @@ function Card({
   return (
     <article
       className={cn(
-        "flex min-w-0 flex-col gap-3 rounded-2xl border border-black/10 bg-white p-4 shadow-sm",
+        "flex min-w-0 flex-col gap-3 rounded-3xl border border-border/60 bg-white p-5 shadow-card",
         // Widget sem dado não merece meia tela de altura só para dizer que não
         // tem dado: ele encolhe e para de furar a grade.
         compacto ? "h-auto" : "h-full",
@@ -64,7 +93,7 @@ function Card({
       )}
     >
       <div className="flex flex-wrap items-baseline gap-2">
-        <h3 className="text-sm font-medium tracking-tight">{titulo}</h3>
+        <h3 className="text-sm font-semibold tracking-tight">{titulo}</h3>
         {fase2 && (
           <span
             title={fase2}
@@ -126,7 +155,7 @@ const LARGURA_SOBRA: Record<number, string> = {
 };
 
 /** Colunas ocupadas na última linha da seção, para o cartão de adicionar caber nela. */
-export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalvar, onRestaurar }: Props) {
+export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalvar, onRestaurar, hero }: Props) {
   const { can } = usePermissions();
   const [rascunho, setRascunho] = useState<ItemLayout[]>(layout);
   const [seletorAberto, setSeletorAberto] = useState(false);
@@ -154,10 +183,6 @@ export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalva
 
   const indiceReal = (item: ItemLayout) => atual.findIndex((x) => x === item);
 
-  const entrarEdicao = () => {
-    setRascunho(layout);
-    onEditar(true);
-  };
   const cancelar = () => {
     setRascunho(layout);
     setSeletorAberto(false);
@@ -263,33 +288,29 @@ export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalva
     </>
   );
 
+  const acoes = editando ? (
+    <>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => void onRestaurar().then(() => onEditar(false))}
+        disabled={salvando}
+      >
+        <RotateCcw size={14} /> Restaurar padrão
+      </Button>
+      <Button variant="outline" size="sm" onClick={cancelar} disabled={salvando}>
+        Cancelar
+      </Button>
+      <Button variant="brand" size="sm" onClick={() => void salvar()} disabled={salvando}>
+        {salvando ? "Salvando..." : "Salvar painel"}
+      </Button>
+    </>
+  ) : null;
+
   return (
     <div className="flex flex-col gap-4">
-      {/* ── Ações do painel: acima dos KPIs, para não empurrar a leitura ── */}
-      <div className="flex flex-wrap items-center justify-end gap-2">
-        {editando ? (
-          <>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => void onRestaurar().then(() => onEditar(false))}
-              disabled={salvando}
-            >
-              <RotateCcw size={14} /> Restaurar padrão
-            </Button>
-            <Button variant="ghost" size="sm" onClick={cancelar} disabled={salvando}>
-              Cancelar
-            </Button>
-            <Button variant="brand" size="sm" onClick={() => void salvar()} disabled={salvando}>
-              {salvando ? "Salvando..." : "Salvar painel"}
-            </Button>
-          </>
-        ) : (
-          <Button variant="outline" size="sm" onClick={entrarEdicao}>
-            Personalizar
-          </Button>
-        )}
-      </div>
+      {/* ── Cabeçalho com as ações do painel dentro dele ──────────────────── */}
+      {hero ? hero(acoes) : acoes && <div className="flex flex-wrap items-center justify-end gap-2">{acoes}</div>}
 
       {/* ── Faixa de KPIs: primeira coisa da página, e não grudada ────────
        * O sticky saiu: ao rolar, ela flutuava sobre o seletor de widget e
@@ -297,7 +318,7 @@ export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalva
       {fixos.length > 0 && (
         <section
           aria-label="Indicadores fixos"
-          className={cn(editando && "rounded-2xl border border-dashed border-brand/60 p-2")}
+          className={cn(editando && "rounded-3xl border border-dashed border-brand/60 p-2")}
         >
           <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-12">
             {fixos.map((item) => {
@@ -350,14 +371,14 @@ export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalva
 
       {/* ── Grade, agrupada por módulo ───────────────────────────────────── */}
       {grupos.length === 0 && fixos.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-black/15 bg-white px-4 py-10 text-center">
+        <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-black/15 bg-white px-4 py-10 text-center">
           <p className="text-sm text-muted-foreground">Nenhum indicador no painel.</p>
           {editando ? (
             <Button variant="outline" size="sm" onClick={() => abrirSeletor(null)}>
               <Plus size={14} /> Adicionar widget
             </Button>
           ) : (
-            <Button variant="outline" size="sm" onClick={entrarEdicao}>
+            <Button variant="outline" size="sm" onClick={() => onEditar(true)}>
               Escolher indicadores
             </Button>
           )}
@@ -368,14 +389,16 @@ export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalva
             {grupos.map((grupo) => {
               const larguras = fecharLinha(grupo.itens);
               const sobra = sobraDaLinha(grupo.itens);
+              const { Icone, chip } = ICONE_SECAO[grupo.key];
 
               return (
                 <section key={grupo.key} aria-label={grupo.label}>
-                  <div className="mb-2.5 flex items-baseline gap-2.5">
-                    <h2 className="text-[11px] font-medium uppercase tracking-[0.08em] text-ink-muted">
-                      {grupo.label}
-                    </h2>
-                    <span className="text-[11.5px] text-muted-foreground">
+                  <div className="mb-3 flex items-center gap-2.5">
+                    <span className={cn("grid h-8 w-8 place-items-center rounded-full", chip)} aria-hidden="true">
+                      <Icone size={16} />
+                    </span>
+                    <h2 className="text-base font-semibold tracking-tight text-ink">{grupo.label}</h2>
+                    <span className="text-xs text-muted-foreground">
                       {grupo.itens.length} indicador{grupo.itens.length === 1 ? "" : "es"}
                     </span>
                   </div>
@@ -425,7 +448,7 @@ export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalva
                             <button
                               type="button"
                               onClick={() => abrirSeletor(grupo.key)}
-                              className="flex h-full min-h-[132px] w-full flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-info-mid/40 bg-info-soft/60 text-sm text-info-strong transition-colors hover:bg-info-soft focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
+                              className="flex h-full min-h-[132px] w-full flex-col items-center justify-center gap-1.5 rounded-3xl border border-dashed border-info-mid/40 bg-info-soft/60 text-sm text-info-strong transition-colors hover:bg-info-soft focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
                             >
                               <Plus size={18} />
                               Adicionar widget
