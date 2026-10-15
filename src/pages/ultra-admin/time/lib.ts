@@ -1,0 +1,286 @@
+/**
+ * Regras puras do Time de agentes (SPEC 126). Sem React, sem Supabase.
+ *
+ * Fase 0: o número vem do banco (ops_receita, ops_saude_empresas) e a fila de
+ * decisões sai de regra fixa, sem modelo. Toda mensagem é rascunho: o link do
+ * WhatsApp abre a conversa com o texto pronto e quem envia é o ultra admin (ADR 0060).
+ */
+import type { Receita, SaudeEmpresa, OpsAgente, OpsExecucao } from "./api";
+
+export type AgenteId = "chefe" | "receita" | "clientes" | "marketing" | "produto" | "qualidade" | "financas";
+
+export type StatusAgente = "ok" | "atencao" | "falhou" | "pausado" | "so_numeros" | "planejado";
+
+/** Agentes que já têm painel de números na fase 0. Os outros mostram o plano. */
+const AGENTES_COM_NUMEROS: readonly AgenteId[] = ["receita", "clientes"];
+
+/** Rota da ficha: a Central é a página do chefe de gabinete. */
+export function rotaDoAgente(id: string): string {
+  return id === "chefe" ? "/ultra-admin/time" : `/ultra-admin/time/${id}`;
+}
+
+export function statusDoAgente(
+  agente: Pick<OpsAgente, "id" | "ativo">,
+  ultima: Pick<OpsExecucao, "status"> | null,
+  pendentes: number
+): StatusAgente {
+  if (!agente.ativo) {
+    return AGENTES_COM_NUMEROS.includes(agente.id as AgenteId) ? "so_numeros" : "planejado";
+  }
+  if (ultima?.status === "falhou") return "falhou";
+  if (ultima?.status === "pausada_teto") return "pausado";
+  return pendentes > 0 ? "atencao" : "ok";
+}
+
+/** O que cada agente vai medir e de onde, para a ficha mostrar o plano (SPEC 126, req. 4). */
+export const PLANO_DOS_AGENTES: Record<AgenteId, { quando: string; indicadores: string[]; fontes: string[] }> = {
+  chefe: {
+    quando: "Fase 2, dezembro de 2026",
+    indicadores: ["Três prioridades do dia", "Números que mudaram desde ontem", "Semana contra as metas"],
+    fontes: ["Saída dos outros agentes"],
+  },
+  receita: {
+    quando: "Fase 1, novembro de 2026: briefing e rascunhos automáticos",
+    indicadores: ["Funil cadastro, ativação e pagante", "MRR", "Testes vencendo", "Atrasos", "Conversão por campanha"],
+    fontes: ["Cadastros e projetos", "Assinaturas", "UTM do cadastro"],
+  },
+  clientes: {
+    quando: "Fase 1, novembro de 2026: briefing e rascunhos automáticos",
+    indicadores: [
+      "Nota de saúde por escritório",
+      "Sem acesso há 7+ dias",
+      "Feedback sem resposta",
+      "Erros que atingiram cliente",
+    ],
+    fontes: ["Acessos", "Uso por semana", "Feedback", "Sentry por empresa"],
+  },
+  marketing: {
+    quando: "Fase 2, dezembro de 2026",
+    indicadores: [
+      "Alcance e engajamento por rede",
+      "Gasto, CPC e custo por cadastro ativado nos anúncios",
+      "Visitas e conversão da landing",
+      "Consultas do Google: impressões, CTR e posição",
+      "Core Web Vitals da landing",
+    ],
+    fontes: ["post-automation (redes, anúncios, Search Console)", "PostHog da landing", "UTM do cadastro"],
+  },
+  produto: {
+    quando: "Fase 2, dezembro de 2026",
+    indicadores: [
+      "Adoção por módulo e por feature nova",
+      "Funis de ativação",
+      "Telas com mais erro exibido",
+      "Cliques de raiva e formulários abandonados",
+    ],
+    fontes: ["PostHog (SPEC 125)", "Feedback"],
+  },
+  qualidade: {
+    quando: "Fase 2, dezembro de 2026",
+    indicadores: [
+      "Issues abertas por empresas afetadas",
+      "Novas e regressões em 24 h",
+      "Sessões sem erro",
+      "Incidentes",
+    ],
+    fontes: ["Sentry", "Status page"],
+  },
+  financas: {
+    quando: "Fase 3, depois do lançamento",
+    indicadores: ["MRR e churn", "Custo de IA e infraestrutura", "Margem", "Fôlego de caixa"],
+    fontes: ["Assinaturas", "Ledger de tokens", "Custos informados"],
+  },
+};
+
+// ─── Números ──────────────────────────────────────────────────────────────────
+
+/** Delta do KPICard: % contra o período anterior, "novo" quando antes era zero. */
+export function variacao(atual: number, anterior: number): { value?: number; isNew?: boolean } | undefined {
+  if (anterior === 0) return atual > 0 ? { isNew: true } : undefined;
+  return { value: ((atual - anterior) / anterior) * 100 };
+}
+
+/** "48%" ou "-" quando não há base. */
+export function taxa(parte: number, total: number): string {
+  if (total <= 0) return "-";
+  return `${Math.round((parte / total) * 100)}%`;
+}
+
+// ─── WhatsApp ─────────────────────────────────────────────────────────────────
+
+/** Telefone do cadastro em formato do wa.me (só dígitos, com 55). Null se não der para usar. */
+export function telefoneWhatsApp(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const digitos = raw.replace(/\D/g, "");
+  if (digitos.length === 10 || digitos.length === 11) return `55${digitos}`;
+  if (digitos.startsWith("55") && (digitos.length === 12 || digitos.length === 13)) return digitos;
+  return null;
+}
+
+export function linkWhatsApp(telefone: string | null | undefined, texto: string): string | null {
+  const numero = telefoneWhatsApp(telefone);
+  if (!numero) return null;
+  return `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`;
+}
+
+function primeiroNome(nome: string | null | undefined): string | null {
+  const p = nome?.trim().split(/\s+/)[0];
+  return p ? p : null;
+}
+
+const DIA = 24 * 60 * 60 * 1000;
+
+function inicioDoDia(d: Date): number {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
+/** "hoje", "amanhã", "em 3 dias" ou "já terminou", contando dia do calendário. */
+export function quandoVence(iso: string, agora: Date = new Date()): string {
+  const dias = Math.round((inicioDoDia(new Date(iso)) - inicioDoDia(agora)) / DIA);
+  if (dias < 0) return "já terminou";
+  if (dias === 0) return "hoje";
+  if (dias === 1) return "amanhã";
+  return `em ${dias} dias`;
+}
+
+function saudacao(contato: string | null | undefined, remetente: string): string {
+  const nome = primeiroNome(contato);
+  return `Oi${nome ? ` ${nome}` : ""}, aqui é ${remetente}, da Pilar.`;
+}
+
+export function mensagemTesteVencendo(p: {
+  contato: string | null;
+  remetente: string;
+  projetos: number;
+  venceEm: string;
+  agora?: Date;
+}): string {
+  const quando = quandoVence(p.venceEm, p.agora);
+  if (p.projetos === 0) {
+    return `${saudacao(p.contato, p.remetente)} Seu teste termina ${quando} e vi que ainda não deu tempo de cadastrar um projeto. Quer ajuda para montar o primeiro agora? Leva uns 10 minutos.`;
+  }
+  const projetos = `${p.projetos} ${p.projetos === 1 ? "projeto" : "projetos"}`;
+  return `${saudacao(p.contato, p.remetente)} Vi que vocês já cadastraram ${projetos} no teste, que termina ${quando}. Quer que eu ajude a deixar tudo pronto para seguir? Em 15 minutos te mostro como ver a margem de cada projeto.`;
+}
+
+function mensagemAtraso(p: { contato: string | null; remetente: string; empresa: string }): string {
+  return `${saudacao(p.contato, p.remetente)} O pagamento da assinatura da ${p.empresa} ficou em aberto. Se ajudar, te mando o link de novo ou vemos outra forma de pagamento.`;
+}
+
+function mensagemSemAcesso(p: { contato: string | null; remetente: string; dias: number }): string {
+  return `${saudacao(p.contato, p.remetente)} Faz ${p.dias} dias que vocês não entram no sistema. Travou em alguma coisa? Se quiser, marco 15 minutos para ajustar o Pilar ao jeito do escritório.`;
+}
+
+// ─── Fila de decisões (fase 0: por regra) ─────────────────────────────────────
+
+export type Decisao = {
+  id: string;
+  agente: AgenteId;
+  /** 1 = hoje, 2 = esta semana. */
+  prioridade: 1 | 2;
+  titulo: string;
+  detalhe: string;
+  empresaId: string;
+  /** Link do wa.me com o texto pronto; null quando o cadastro não tem telefone. */
+  whatsapp: string | null;
+  /** Para onde o "Abrir" leva quando a ação não é mensagem. */
+  link: string;
+  prazo: string | null;
+};
+
+const SITUACOES_QUE_IMPORTAM = new Set(["pagante", "em_teste", "convidada", "em_atraso"]);
+
+/** Dias sem acesso a partir dos quais o agente Clientes sugere contato. */
+const DIAS_SEM_ACESSO_ALERTA = 7;
+
+export function decisoesDoDia(
+  receita: Receita | undefined,
+  saude: SaudeEmpresa[] | undefined,
+  remetente: string,
+  agora: Date = new Date()
+): Decisao[] {
+  const itens: Decisao[] = [];
+
+  for (const t of receita?.testes_vencendo ?? []) {
+    const projetos =
+      t.projetos === 0
+        ? "Nenhum projeto cadastrado ainda"
+        : `${t.projetos} ${t.projetos === 1 ? "projeto cadastrado" : "projetos cadastrados"}`;
+    itens.push({
+      id: `teste-${t.empresa_id}`,
+      agente: "receita",
+      prioridade: 1,
+      titulo: `${t.empresa_nome}: teste termina ${quandoVence(t.vence_em, agora)}`,
+      detalhe: t.contato_telefone ? projetos : `${projetos}. Sem telefone no cadastro.`,
+      empresaId: t.empresa_id,
+      whatsapp: linkWhatsApp(
+        t.contato_telefone,
+        mensagemTesteVencendo({
+          contato: t.contato_nome,
+          remetente,
+          projetos: t.projetos,
+          venceEm: t.vence_em,
+          agora,
+        })
+      ),
+      link: `/ultra-admin/empresas/${t.empresa_id}`,
+      prazo: t.vence_em,
+    });
+  }
+
+  for (const a of receita?.em_atraso ?? []) {
+    itens.push({
+      id: `atraso-${a.empresa_id}`,
+      agente: "receita",
+      prioridade: 1,
+      titulo: `${a.empresa_nome}: pagamento em atraso`,
+      detalhe: a.contato_telefone ? "Assinatura com cobrança em aberto." : "Sem telefone no cadastro.",
+      empresaId: a.empresa_id,
+      whatsapp: linkWhatsApp(
+        a.contato_telefone,
+        mensagemAtraso({ contato: a.contato_nome, remetente, empresa: a.empresa_nome })
+      ),
+      link: `/ultra-admin/empresas/${a.empresa_id}`,
+      prazo: null,
+    });
+  }
+
+  for (const s of saude ?? []) {
+    if (!SITUACOES_QUE_IMPORTAM.has(s.situacao_cobranca)) continue;
+    const dias = s.dias_sem_acesso;
+    if (dias !== null && dias >= DIAS_SEM_ACESSO_ALERTA) {
+      itens.push({
+        id: `acesso-${s.empresa_id}`,
+        agente: "clientes",
+        prioridade: 2,
+        titulo: `${s.empresa_nome}: sem acesso há ${dias} dias`,
+        detalhe: s.contato_telefone ? `Nota de saúde ${s.nota}.` : `Nota de saúde ${s.nota}. Sem telefone no cadastro.`,
+        empresaId: s.empresa_id,
+        whatsapp: linkWhatsApp(s.contato_telefone, mensagemSemAcesso({ contato: s.contato_nome, remetente, dias })),
+        link: `/ultra-admin/empresas/${s.empresa_id}`,
+        prazo: null,
+      });
+    }
+    if (s.feedback_aberto > 0) {
+      itens.push({
+        id: `feedback-${s.empresa_id}`,
+        agente: "clientes",
+        prioridade: 2,
+        titulo: `${s.empresa_nome}: ${s.feedback_aberto} ${s.feedback_aberto === 1 ? "feedback" : "feedbacks"} sem resposta há mais de 24 h`,
+        detalhe: "Responder fecha o ciclo e mostra que alguém leu.",
+        empresaId: s.empresa_id,
+        whatsapp: null,
+        link: "/ultra-admin/feedback",
+        prazo: null,
+      });
+    }
+  }
+
+  return itens.sort((a, b) => {
+    if (a.prioridade !== b.prioridade) return a.prioridade - b.prioridade;
+    if (a.prazo && b.prazo) return a.prazo < b.prazo ? -1 : 1;
+    if (a.prazo) return -1;
+    if (b.prazo) return 1;
+    return a.titulo.localeCompare(b.titulo, "pt-BR");
+  });
+}
