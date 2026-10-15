@@ -8,8 +8,9 @@
 --      service role ou ultra_admin; as colunas que a tela de Configurações grava seguem
 --      graváveis pelo admin da empresa.
 --   2. login do portal e do campo: tentativa errada conta no limite.
---   3. agent_runs / agent_actions: rascunho de agente é de quem criou (e de quem pode
---      ver dinheiro), não da empresa inteira.
+--   3. agent_runs / agent_actions: o chat com os agentes é individual. Rascunho é de quem
+--      criou, nem o admin lê o de outra pessoa; só o rascunho do sistema (sem autor) fica
+--      com quem vê dinheiro.
 --   4. profiles.email não é gravável pelo usuário e o vínculo pessoa/perfil respeita a
 --      empresa.
 --   5. ai_usage_logs e agent_actions não aceitam escrita anônima ou sem dono.
@@ -20,7 +21,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(26);
+SELECT plan(30);
 
 -- =============================================================================
 -- Setup: duas empresas, usuário comum, coordenador e admin em A, admin em B.
@@ -63,6 +64,12 @@ VALUES ('eeced000-0000-0000-0000-0000000000c1', 'ee000000-0000-0000-0000-0000000
         'fechar_folha', 'pending_review', 'folha',
         '{"mes":9,"ano":2026,"linhas":[{"salario_fixo":12345.67}]}'::jsonb,
         'ee000000-0000-0000-0000-00000000a003')
+ON CONFLICT (id) DO NOTHING;
+
+-- Rascunho do sistema (sem autor), como o do guardião de margem.
+INSERT INTO public.agent_runs (id, empresa_id, agent_type, status, entity_type, result, created_by)
+VALUES ('eeced000-0000-0000-0000-0000000000c3', 'ee000000-0000-0000-0000-0000000000a0',
+        'criar_aditivo', 'pending_review', 'aditivo', '{"valor":1000}'::jsonb, NULL)
 ON CONFLICT (id) DO NOTHING;
 
 -- Rascunho do próprio usuário comum de A (ele sempre enxerga o que criou).
@@ -143,22 +150,31 @@ SELECT is(
 RESET ROLE;
 
 -- =============================================================================
--- 3. agent_runs: rascunho é de quem criou e de quem vê dinheiro
+-- 3. agent_runs: o chat com os agentes é individual
 -- =============================================================================
 SELECT test_set_auth('ee000000-0000-0000-0000-00000000a001'); -- usuário comum de A
 SELECT is((SELECT count(*)::int FROM public.agent_runs WHERE id = 'eeced000-0000-0000-0000-0000000000c1'), 0,
-  'usuário comum não lê rascunho de folha criado por outra pessoa');
+  'usuário comum não lê rascunho criado por outra pessoa');
 SELECT is((SELECT count(*)::int FROM public.agent_runs WHERE id = 'eeced000-0000-0000-0000-0000000000c2'), 1,
   'usuário comum lê o próprio rascunho');
 UPDATE public.agent_runs SET status = 'rejected' WHERE id = 'eeced000-0000-0000-0000-0000000000c1';
+SELECT is((SELECT count(*)::int FROM public.agent_runs WHERE id = 'eeced000-0000-0000-0000-0000000000c3'), 0,
+  'usuário comum não lê rascunho do sistema');
 RESET ROLE;
 SELECT is((SELECT status FROM public.agent_runs WHERE id = 'eeced000-0000-0000-0000-0000000000c1'), 'pending_review',
   'usuário comum não altera rascunho de outra pessoa');
 
 SELECT test_set_auth('ee000000-0000-0000-0000-00000000a003'); -- admin A
 SELECT is((SELECT count(*)::int FROM public.agent_runs WHERE id = 'eeced000-0000-0000-0000-0000000000c1'), 1,
-  'admin lê o rascunho de folha da empresa');
+  'admin lê o próprio rascunho');
+SELECT is((SELECT count(*)::int FROM public.agent_runs WHERE id = 'eeced000-0000-0000-0000-0000000000c2'), 0,
+  'admin não lê o rascunho de outra pessoa');
+UPDATE public.agent_runs SET status = 'rejected' WHERE id = 'eeced000-0000-0000-0000-0000000000c2';
+SELECT is((SELECT count(*)::int FROM public.agent_runs WHERE id = 'eeced000-0000-0000-0000-0000000000c3'), 1,
+  'admin lê o rascunho do sistema (sem autor)');
 RESET ROLE;
+SELECT is((SELECT status FROM public.agent_runs WHERE id = 'eeced000-0000-0000-0000-0000000000c2'), 'pending_review',
+  'admin não altera o rascunho de outra pessoa');
 
 -- =============================================================================
 -- 4. profiles.email e vínculo pessoa/perfil

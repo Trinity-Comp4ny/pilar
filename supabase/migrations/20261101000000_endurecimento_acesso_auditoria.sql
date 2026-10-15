@@ -8,8 +8,9 @@
 --      de ultra_admin. Colunas novas nascem sem UPDATE para usuário: a tela que precisar
 --      gravar uma coluna nova ganha o GRANT na migration que a cria.
 --   2. portal_login e campo_login: a tentativa errada passa a contar no limite.
---   3. agent_runs / agent_actions: rascunho de agente é de quem criou e de quem pode ver
---      dinheiro; escrita exige dono.
+--   3. agent_runs / agent_actions: o chat com os agentes é individual. O rascunho (que
+--      guarda a mensagem do usuário e o que o agente extraiu) é de quem criou, nem o admin
+--      lê o dos outros. Rascunho do sistema (sem autor) fica com quem vê dinheiro.
 --   4. profiles.email deixa de ser gravável pelo usuário e o vínculo pessoa/perfil
 --      respeita a empresa.
 --   5. ai_usage_logs: sem INSERT por usuário.
@@ -198,10 +199,11 @@ $function$;
 -- =============================================================================
 -- 3. agent_runs e agent_actions
 -- =============================================================================
--- O resultado de um rascunho pode trazer valor e dado pessoal (folha, receita, pessoa).
--- Quem lê é quem criou ou quem já pode ver dinheiro (admin e delegado financeiro, via
--- can_view_financeiro). Alterar e inserir seguem a mesma regra, e o INSERT exige que o
--- criador seja o próprio usuário.
+-- O chat com os agentes é individual: `agent_runs.input` guarda a mensagem do usuário e
+-- `result` o que o agente extraiu (valor, CPF, salário). Quem lê e altera é quem criou, e
+-- nem o admin vê o rascunho de outra pessoa. A exceção é o rascunho gerado pelo sistema
+-- (guardião de margem, sem autor): não é conversa de ninguém e quem confirma é quem vê
+-- dinheiro (can_view_financeiro). O INSERT exige que o criador seja o próprio usuário.
 DROP POLICY IF EXISTS agent_runs_select ON public.agent_runs;
 DROP POLICY IF EXISTS agent_runs_update ON public.agent_runs;
 DROP POLICY IF EXISTS agent_runs_service_insert ON public.agent_runs;
@@ -210,18 +212,27 @@ CREATE POLICY agent_runs_select ON public.agent_runs
   FOR SELECT
   USING (
     empresa_id = public.get_user_empresa_id()
-    AND (created_by = (SELECT auth.uid()) OR public.can_view_financeiro())
+    AND (
+      created_by = (SELECT auth.uid())
+      OR (created_by IS NULL AND public.can_view_financeiro())
+    )
   );
 
 CREATE POLICY agent_runs_update ON public.agent_runs
   FOR UPDATE
   USING (
     empresa_id = public.get_user_empresa_id()
-    AND (created_by = (SELECT auth.uid()) OR public.can_view_financeiro())
+    AND (
+      created_by = (SELECT auth.uid())
+      OR (created_by IS NULL AND public.can_view_financeiro())
+    )
   )
   WITH CHECK (
     empresa_id = public.get_user_empresa_id()
-    AND (created_by = (SELECT auth.uid()) OR public.can_view_financeiro())
+    AND (
+      created_by = (SELECT auth.uid())
+      OR (created_by IS NULL AND public.can_view_financeiro())
+    )
   );
 
 CREATE POLICY agent_runs_insert ON public.agent_runs
