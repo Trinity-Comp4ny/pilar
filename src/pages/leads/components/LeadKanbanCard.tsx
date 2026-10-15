@@ -16,18 +16,11 @@ import { cn } from "@/lib/utils";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { Lead } from "@/hooks/useLeads";
+import type { LeadEtapa } from "@/pages/leads/hooks/useLeadEtapas";
 import { PROPOSTA_STATUS_CONFIG, type Proposta } from "@/hooks/usePropostas";
 import { statusExibido } from "@/pages/leads/lib/comercial";
+import { etapaDoLead } from "@/pages/leads/lib/etapas";
 import { AvatarStack } from "@/components/AvatarStack";
-
-const statusLabels: Record<string, string> = {
-  Novo: "Novo",
-  "Em contato": "Em Contato",
-  Proposta: "Proposta Enviada",
-  Negociação: "Em Negociação",
-  Ganho: "Ganho",
-  Perdido: "Perdido",
-};
 
 type Props = {
   lead: Lead;
@@ -36,7 +29,9 @@ type Props = {
   canEdit: boolean;
   onEdit: (lead: Lead) => void;
   onDelete: (id: string) => void;
-  onMoveStatus?: (leadId: string, status: Lead["status"]) => void;
+  /** Colunas do funil, para o menu "Mover para" (mobile). */
+  etapas?: LeadEtapa[];
+  onMoveEtapa?: (leadId: string, etapa: LeadEtapa) => void;
   dragging?: boolean;
   proposta?: Proposta | null;
   responsavelNome?: string | null;
@@ -54,7 +49,8 @@ export function LeadKanbanCard({
   canEdit,
   onEdit,
   onDelete,
-  onMoveStatus,
+  etapas = [],
+  onMoveEtapa,
   dragging,
   proposta,
   responsavelNome,
@@ -62,6 +58,7 @@ export function LeadKanbanCard({
   const formatCurrency = useMoneyMask();
   const { can } = usePermissions();
   const podeVerValor = can("financeiro");
+  const etapaAtualId = etapaDoLead(lead, etapas)?.id;
   const propStatus = proposta ? statusExibido(proposta) : null;
   const propStatusConfig = propStatus ? PROPOSTA_STATUS_CONFIG[propStatus] : null;
   const valor = !podeVerValor
@@ -95,17 +92,17 @@ export function LeadKanbanCard({
               <DropdownMenuItem onClick={() => onEdit(lead)}>
                 <Pencil className="h-3.5 w-3.5 mr-2" /> Editar
               </DropdownMenuItem>
-              {onMoveStatus && (
+              {onMoveEtapa && (
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <ArrowRight className="h-3.5 w-3.5 mr-2" /> Mover para
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent>
-                    {Object.keys(statusLabels)
-                      .filter((s) => s !== lead.status)
-                      .map((s) => (
-                        <DropdownMenuItem key={s} onClick={() => onMoveStatus(lead.id, s as Lead["status"])}>
-                          {statusLabels[s]}
+                    {etapas
+                      .filter((e) => e.id !== etapaAtualId)
+                      .map((e) => (
+                        <DropdownMenuItem key={e.id} onClick={() => onMoveEtapa(lead.id, e)}>
+                          {e.nome}
                         </DropdownMenuItem>
                       ))}
                   </DropdownMenuSubContent>

@@ -1,12 +1,10 @@
 import { useState, useMemo } from "react";
-import { statusBadgeClasses, statusLabel } from "@/lib/status";
 import { useQueryClient } from "@tanstack/react-query";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronDown, ChevronLeft, ChevronRight, Plus, TrendingUp, Search, AlertCircle, X } from "lucide-react";
+import { ChevronLeft, Plus, TrendingUp, Search, AlertCircle, X } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
-import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -21,10 +19,18 @@ import { LeadsKPIs } from "./LeadsKPIs";
 import { LeadDetailDialog } from "./components/LeadDetailDialog";
 import { LeadFormDialog, EMPTY_LEAD_FORM, type LeadFormData } from "./components/LeadFormDialog";
 import { LeadKanbanCard } from "./components/LeadKanbanCard";
+import { LeadsMobile } from "./components/LeadsMobile";
 import { ListaLeads } from "./components/ListaLeads";
 import { LeadMotivoPerdasDialog, LeadCreatePropostaDialog } from "./components/LeadActionDialogs";
 import { LeadCnpjConvertDialog, type ConvertEnrichment } from "./components/LeadCnpjConvertDialog";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { useLeadEtapas, type LeadEtapa } from "@/pages/leads/hooks/useLeadEtapas";
+import { useEtapasDoFunil } from "@/pages/leads/hooks/useEtapasDoFunil";
+import { KanbanSkeleton } from "./components/KanbanSkeleton";
+import { EtapaColapsada } from "./components/EtapaColapsada";
+import { EtapaMenu } from "./components/EtapaMenu";
+import { EtapaDialogs } from "./components/EtapaDialogs";
+import { NovaEtapaInline } from "./components/NovaEtapaInline";
 import {
   useLeads,
   useCreateLead,
@@ -38,27 +44,13 @@ import {
 } from "@/hooks/useLeads";
 import { usePropostas, useConverterProposta } from "@/hooks/usePropostas";
 import { propostaPrimaria, propostasPorLead } from "@/pages/leads/lib/comercial";
-
-// Cores derivam do registry único (ADR 0008): mudar tom = src/lib/status.ts.
-const leadStatus = (s: string) => ({ label: statusLabel("lead", s), color: statusBadgeClasses("lead", s) });
-
-const statusConfig: Record<string, { label: string; color: string }> = {
-  Novo: leadStatus("Novo"),
-  "Em contato": leadStatus("Em contato"),
-  Proposta: leadStatus("Proposta"),
-  Negociação: leadStatus("Negociação"),
-  Ganho: leadStatus("Ganho"),
-  Perdido: leadStatus("Perdido"),
-};
-
-const STATUS_DOT: Record<string, string> = {
-  Novo: "bg-pipeline-novo",
-  "Em contato": "bg-pipeline-contato",
-  Proposta: "bg-pipeline-negociacao",
-  Negociação: "bg-brand",
-  Ganho: "bg-status-done",
-  Perdido: "bg-status-cancelled",
-};
+import {
+  acaoDoDrop,
+  agruparPorEtapa,
+  corDaEtapaLead,
+  etapaDoLead,
+  primeiraEtapaDoBucket,
+} from "@/pages/leads/lib/etapas";
 
 type PeriodoFilter = "todos" | "prox7" | "atrasados" | "mes";
 type SortBy = "padrao" | "valor_desc" | "valor_asc" | "previsao_asc" | "previsao_desc";
@@ -80,38 +72,11 @@ const SORT_OPTIONS: { value: SortBy; label: string }[] = [
 
 const SEM_RESPONSAVEL = "__sem__";
 
-function KanbanSkeleton() {
-  const columns = Object.values(statusConfig);
-  return (
-    <div className="flex-1 min-h-0" aria-hidden="true">
-      <div className="hidden md:flex gap-3 w-full h-full min-h-0 overflow-x-auto pb-2">
-        {columns.map((config, colIndex) => (
-          <div key={config.label} className="flex flex-col min-w-[280px] w-[280px] shrink-0 min-h-0">
-            <div className="flex items-center gap-2 px-2 py-2.5">
-              <Skeleton className="h-2 w-2 rounded-full" />
-              <Skeleton className="h-3 w-24" />
-            </div>
-            <div className="flex-1 min-h-0 p-2 space-y-2 rounded-lg bg-muted">
-              {Array.from({ length: colIndex % 2 === 0 ? 3 : 2 }).map((_, i) => (
-                <Skeleton key={i} className="h-24 w-full rounded-md" />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="md:hidden space-y-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full rounded-lg" />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export default function Leads() {
   usePageTitle("Leads");
   useRegistrarPagina("pagina", "/leads", "Leads");
   const { data: leads = [], isLoading, isError, refetch } = useLeads();
+  const { data: etapas = [], isLoading: etapasLoading, isError: etapasError, refetch: refetchEtapas } = useLeadEtapas();
   const { data: propostas = [] } = usePropostas();
   const createLead = useCreateLead();
   const updateStatus = useUpdateLeadStatus();
@@ -152,7 +117,7 @@ export default function Leads() {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [formData, setFormData] = useState<LeadFormData>(EMPTY_LEAD_FORM);
   const [editFormData, setEditFormData] = useState<LeadFormData>(EMPTY_LEAD_FORM);
-  const [pendingDrop, setPendingDrop] = useState<{ leadId: string; newStatus: Lead["status"] } | null>(null);
+  const [pendingDrop, setPendingDrop] = useState<{ leadId: string; etapa: LeadEtapa } | null>(null);
   const [isMotivoPerdasOpen, setIsMotivoPerdasOpen] = useState(false);
   const [motivoPerda, setMotivoPerda] = useState("");
   const [isAutoConvertOpen, setIsAutoConvertOpen] = useState(false);
@@ -174,11 +139,11 @@ export default function Leads() {
     return m ? `${m.first_name} ${m.last_name}`.trim() : null;
   };
 
-  const toggleColumn = (status: string) => {
+  const toggleColumn = (etapaId: string) => {
     setCollapsedColumns((prev) => {
       const next = new Set(prev);
-      if (next.has(status)) next.delete(status);
-      else next.add(status);
+      if (next.has(etapaId)) next.delete(etapaId);
+      else next.add(etapaId);
       return next;
     });
   };
@@ -241,12 +206,15 @@ export default function Leads() {
     );
   };
 
-  const getLeadsByStatus = (status: string) =>
-    sortLeads(leads.filter((lead) => lead.status === status && matchesFilters(lead)));
+  const leadsPorEtapa = agruparPorEtapa(leads.filter(matchesFilters), etapas);
+  const getLeadsByEtapa = (etapaId: string) => sortLeads(leadsPorEtapa.get(etapaId) ?? []);
 
   const getAllFilteredLeads = () => sortLeads(leads.filter(matchesFilters));
 
-  const visibleStatuses = Object.keys(statusConfig);
+  const etapaDe = (lead: Lead) => {
+    const e = etapaDoLead(lead, etapas);
+    return e ? { nome: e.nome, cor: corDaEtapaLead(e.cor, e.bucket) } : null;
+  };
 
   const filtersActive =
     !!searchQuery.trim() || !!origemFilter || !!responsavelFilter || periodo !== "todos" || sortBy !== "padrao";
@@ -347,46 +315,33 @@ export default function Leads() {
     setIsEditOpen(true);
   };
 
-  const onDragEnd = (result: DropResult) => {
-    const { source, destination, draggableId } = result;
-    if (!destination) return;
-    if (source.droppableId === destination.droppableId) return;
-    const newStatus = destination.droppableId as Lead["status"];
-
-    if (newStatus === "Perdido") {
-      setPendingDrop({ leadId: draggableId, newStatus });
+  // Mover pelo quadro ou pelo menu do card: o bucket da coluna decide o fluxo
+  // (Perdido pede o motivo, Ganho abre a conversão em cliente).
+  const moverLead = (leadId: string, destino: LeadEtapa) => {
+    const lead = leads.find((l) => l.id === leadId);
+    if (!lead) return;
+    const acao = acaoDoDrop(destino, lead);
+    if (acao === "motivo-perda") {
+      setPendingDrop({ leadId, etapa: destino });
       setMotivoPerda("");
       setIsMotivoPerdasOpen(true);
       return;
     }
-    if (newStatus === "Ganho") {
-      const lead = leads.find((l) => l.id === draggableId);
-      if (lead && !lead.cliente_id) {
-        setPendingDrop({ leadId: draggableId, newStatus });
-        setIsAutoConvertOpen(true);
-        return;
-      }
+    if (acao === "converter") {
+      setPendingDrop({ leadId, etapa: destino });
+      setIsAutoConvertOpen(true);
+      return;
     }
-    updateStatus.mutate({ leadId: draggableId, newStatus });
+    updateStatus.mutate({ leadId, etapa: destino });
   };
 
-  const handleMobileMove = (leadId: string, newStatus: Lead["status"]) => {
-    if (newStatus === "Perdido") {
-      setPendingDrop({ leadId, newStatus });
-      setMotivoPerda("");
-      setIsMotivoPerdasOpen(true);
-    } else if (newStatus === "Ganho") {
-      const lead = leads.find((l) => l.id === leadId);
-      setPendingDrop({ leadId, newStatus });
-      if (lead && !lead.cliente_id) {
-        setIsAutoConvertOpen(true);
-      } else {
-        updateStatus.mutate({ leadId, newStatus });
-        setPendingDrop(null);
-      }
-    } else {
-      updateStatus.mutate({ leadId, newStatus });
-    }
+  const onDragEnd = (result: DropResult) => {
+    const { source, destination, draggableId } = result;
+    if (!destination) return;
+    if (source.droppableId === destination.droppableId) return;
+    const destino = etapas.find((e) => e.id === destination.droppableId);
+    if (!destino) return;
+    moverLead(draggableId, destino);
   };
 
   const handleConfirmMotivoPerdas = () => {
@@ -395,7 +350,7 @@ export default function Leads() {
       return;
     }
     updateStatus.mutate(
-      { leadId: pendingDrop.leadId, newStatus: "Perdido", extraFields: { motivo_perda: motivoPerda.trim() } },
+      { leadId: pendingDrop.leadId, etapa: pendingDrop.etapa, extraFields: { motivo_perda: motivoPerda.trim() } },
       {
         onSuccess: () => {
           setIsMotivoPerdasOpen(false);
@@ -409,7 +364,7 @@ export default function Leads() {
   const handleAutoConvert = (enrichment: ConvertEnrichment | null) => {
     if (!pendingDrop) return;
     convertToClient.mutate(
-      { leadId: pendingDrop.leadId, enrichment },
+      { leadId: pendingDrop.leadId, enrichment, etapaId: pendingDrop.etapa.id },
       {
         onSuccess: () => {
           setIsAutoConvertOpen(false);
@@ -423,7 +378,7 @@ export default function Leads() {
   const handleSkipConvert = () => {
     if (!pendingDrop) return;
     updateStatus.mutate(
-      { leadId: pendingDrop.leadId, newStatus: "Ganho" },
+      { leadId: pendingDrop.leadId, etapa: pendingDrop.etapa },
       {
         onSuccess: () => {
           setIsAutoConvertOpen(false);
@@ -441,7 +396,16 @@ export default function Leads() {
       toast.error("Já convertido", { description: "Este lead já foi convertido em cliente." });
       return;
     }
-    setPendingDrop({ leadId: selectedLead.id, newStatus: "Ganho" });
+    // Mantém a coluna de Ganho em que o lead já está; senão a primeira de Ganho.
+    const atual = etapaDoLead(selectedLead, etapas);
+    const destino = atual?.bucket === "Ganho" ? atual : primeiraEtapaDoBucket(etapas, "Ganho");
+    if (!destino) {
+      toast.error("Funil sem coluna de Ganho", {
+        description: "Crie uma coluna que conta como Ganho e tente de novo.",
+      });
+      return;
+    }
+    setPendingDrop({ leadId: selectedLead.id, etapa: destino });
     setIsAutoConvertOpen(true);
   };
 
@@ -494,8 +458,11 @@ export default function Leads() {
     });
   };
 
+  // Colunas do funil editáveis como nos outros quadros (SPEC 120).
+  const gestao = useEtapasDoFunil(etapas, (etapaId) => leadsPorEtapa.get(etapaId)?.length ?? 0);
+
   const hasNoLeads = leads.length === 0;
-  const visibleCount = Object.keys(statusConfig).reduce((sum, s) => sum + getLeadsByStatus(s).length, 0);
+  const visibleCount = etapas.reduce((sum, e) => sum + getLeadsByEtapa(e.id).length, 0);
   const hasNoResults = !hasNoLeads && visibleCount === 0;
 
   const handleClearFilters = () => {
@@ -632,15 +599,22 @@ export default function Leads() {
         />
       </CollapsibleKpiSection>
 
-      {isLoading ? (
+      {isLoading || etapasLoading ? (
         <KanbanSkeleton />
-      ) : isError ? (
+      ) : isError || etapasError || etapas.length === 0 ? (
         <div className="flex-1 min-h-0 flex items-center justify-center">
           <EmptyState
             icon={AlertCircle}
             title="Não foi possível carregar os leads"
             description="Verifique sua conexão e tente novamente."
-            action={{ label: "Tentar de novo", onClick: () => refetch(), variant: "outline" }}
+            action={{
+              label: "Tentar de novo",
+              onClick: () => {
+                refetch();
+                refetchEtapas();
+              },
+              variant: "outline",
+            }}
           />
         </div>
       ) : hasNoLeads ? (
@@ -671,62 +645,66 @@ export default function Leads() {
                 leadNome={leadNome}
                 responsavelNome={responsavelNome}
                 primariaDoLead={primariaDoLead}
-                statusDot={STATUS_DOT}
-                statusLabelOf={(status) => statusConfig[status]?.label ?? status}
+                etapaDe={etapaDe}
                 onRowClick={handleCardClick}
               />
             ) : (
               <div className="hidden md:flex gap-3 w-full h-full min-h-0 overflow-x-auto pb-2">
-                {visibleStatuses.map((status) => {
-                  const config = statusConfig[status];
-                  const items = getLeadsByStatus(status);
-                  const isCollapsed = collapsedColumns.has(status);
-                  const dotColor = STATUS_DOT[status] || "bg-pipeline-perdido";
+                {etapas.map((etapa, idx) => {
+                  const items = getLeadsByEtapa(etapa.id);
+                  const isCollapsed = collapsedColumns.has(etapa.id);
+                  const dotColor = corDaEtapaLead(etapa.cor, etapa.bucket);
 
                   if (isCollapsed) {
                     return (
-                      <div
-                        key={status}
-                        className="flex flex-col w-10 shrink-0 min-h-0 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
-                        onClick={() => toggleColumn(status)}
-                      >
-                        <div className="flex flex-col items-center gap-2 py-3">
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                          <span className={cn("h-2 w-2 rounded-full", dotColor)} />
-                        </div>
-                        <div className="flex-1 flex items-center justify-center">
-                          <span
-                            className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide whitespace-nowrap"
-                            style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
-                          >
-                            {config.label} · {items.length}
-                          </span>
-                        </div>
-                      </div>
+                      <EtapaColapsada
+                        key={etapa.id}
+                        nome={etapa.nome}
+                        cor={dotColor}
+                        total={items.length}
+                        onExpandir={() => toggleColumn(etapa.id)}
+                      />
                     );
                   }
 
                   return (
-                    <div key={status} className="flex flex-col min-w-[280px] w-[280px] shrink-0 min-h-0">
+                    <div key={etapa.id} className="flex flex-col min-w-[280px] w-[280px] shrink-0 min-h-0">
                       <div className="flex items-center gap-2 px-2 py-2.5">
-                        <span className={cn("h-2 w-2 rounded-full shrink-0", dotColor)} />
-                        <h3 className="text-xs font-medium text-foreground/80 uppercase tracking-wide">
-                          {config.label}
+                        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: dotColor }} />
+                        <h3 className="text-xs font-medium text-foreground/80 uppercase tracking-wide truncate">
+                          {etapa.nome}
                         </h3>
                         <span className="text-[11px] text-muted-foreground tabular-nums">{items.length}</span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="ml-auto min-h-[44px] min-w-[44px] text-muted-foreground"
-                          onClick={() => toggleColumn(status)}
-                          title="Minimizar coluna"
-                          aria-label="Minimizar coluna"
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
+                        <div className="ml-auto flex items-center">
+                          {canEdit && (
+                            <EtapaMenu
+                              primeira={idx === 0}
+                              ultima={idx >= etapas.length - 1}
+                              onEditar={() =>
+                                gestao.setEditandoEtapa({
+                                  id: etapa.id,
+                                  nome: etapa.nome,
+                                  cor: corDaEtapaLead(etapa.cor, etapa.bucket),
+                                })
+                              }
+                              onMover={(dir) => gestao.reordenarEtapa(etapa.id, dir)}
+                              onExcluir={() => gestao.pedirExcluirEtapa(etapa)}
+                            />
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="min-h-[44px] min-w-[44px] text-muted-foreground"
+                            onClick={() => toggleColumn(etapa.id)}
+                            title="Minimizar coluna"
+                            aria-label="Minimizar coluna"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
 
-                      <Droppable droppableId={status}>
+                      <Droppable droppableId={etapa.id}>
                         {(provided, snapshot) => (
                           <div
                             ref={provided.innerRef}
@@ -775,44 +753,24 @@ export default function Leads() {
                     </div>
                   );
                 })}
+
+                {canEdit && <NovaEtapaInline busy={gestao.criando} onCreate={gestao.criarEtapa} />}
               </div>
             )}
 
             {/* Mobile list view (accordion por etapa, independe do toggle Quadro/Lista) */}
-            <div className="md:hidden space-y-3">
-              {visibleStatuses.map((status) => {
-                const config = statusConfig[status];
-                const items = getLeadsByStatus(status);
-                const dotColor = STATUS_DOT[status] || "bg-pipeline-perdido";
-                if (items.length === 0) return null;
-                return (
-                  <details key={status} open className="border rounded-lg bg-white">
-                    <summary className="flex items-center gap-2 px-3 py-2.5 cursor-pointer list-none">
-                      <span className={cn("h-2 w-2 rounded-full shrink-0", dotColor)} />
-                      <span className="text-xs font-medium uppercase tracking-wide flex-1">{config.label}</span>
-                      <span className="text-[11px] text-muted-foreground tabular-nums">{items.length}</span>
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                    </summary>
-                    <div className="p-2 space-y-2 border-t bg-muted/20">
-                      {items.map((lead) => (
-                        <LeadKanbanCard
-                          key={lead.id}
-                          lead={lead}
-                          leadNome={leadNome}
-                          onClick={() => handleCardClick(lead)}
-                          canEdit={canEdit}
-                          onEdit={handleOpenEdit}
-                          onDelete={handleDelete}
-                          onMoveStatus={handleMobileMove}
-                          proposta={primariaDoLead(lead.id)}
-                          responsavelNome={responsavelNome(lead.responsavel_id)}
-                        />
-                      ))}
-                    </div>
-                  </details>
-                );
-              })}
-            </div>
+            <LeadsMobile
+              etapas={etapas}
+              leadsDaEtapa={getLeadsByEtapa}
+              leadNome={leadNome}
+              canEdit={canEdit}
+              proposta={primariaDoLead}
+              responsavelNome={responsavelNome}
+              onAbrir={handleCardClick}
+              onEdit={handleOpenEdit}
+              onDelete={handleDelete}
+              onMover={moverLead}
+            />
           </div>
         </DragDropContext>
       )}
@@ -844,6 +802,7 @@ export default function Leads() {
         open={isDetailOpen}
         onOpenChange={setIsDetailOpen}
         lead={selectedLead}
+        etapaNome={selectedLead ? etapaDoLead(selectedLead, etapas)?.nome : undefined}
         canEdit={canEdit}
         members={members}
         onEdit={handleOpenEdit}
@@ -922,6 +881,17 @@ export default function Leads() {
         description="Cria o projeto a partir da proposta, promove o lead a cliente e copia as disciplinas. Não dá para desfazer."
         confirmText="Converter"
         cancelText="Cancelar"
+      />
+
+      <EtapaDialogs
+        editando={gestao.editandoEtapa}
+        onFecharEdicao={() => gestao.setEditandoEtapa(null)}
+        onSalvar={gestao.salvarEtapa}
+        salvando={gestao.salvando}
+        aExcluir={gestao.aEtapaExcluir}
+        onFecharExclusao={() => gestao.setAEtapaExcluir(null)}
+        onExcluir={gestao.confirmarExcluirEtapa}
+        excluindo={gestao.excluindo}
       />
     </PageLayout>
   );
