@@ -5,6 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { sendEmail, templateAcessoPortalCliente } from "../_shared/email/index.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { limitarOuResponder } from "../_shared/db-rate-limit.ts";
 import { gerarConviteToken } from "../_shared/convite-token.ts";
 import { lerJson } from "../_shared/schemas.ts";
 import { lerEntrada } from "./entrada.ts";
@@ -41,6 +42,15 @@ serve(
         Deno.env.get("SUPABASE_URL") ?? "",
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
       );
+
+      // Cada chamada manda e-mail para um cliente: limite por admin contra loop e abuso.
+      const limite = await limitarOuResponder(supabaseAdmin, req, {
+        bucket: "portal_reset_password",
+        key: `uid:${user.id}`,
+        max: 20,
+        windowSeconds: 3600,
+      });
+      if (limite) return limite;
 
       const { data: account, error: accountError } = await supabaseAdmin
         .from("cliente_portal_accounts")

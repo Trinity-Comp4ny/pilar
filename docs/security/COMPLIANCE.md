@@ -28,8 +28,9 @@ Status de conformidade LGPD + roadmap SOC2/ISO.
 
 ### DPIA (Avaliação de Impacto)
 
-- [ ] A fazer: DPIA formal pra módulo financeiro + portal cliente
-- Template sugerido: [ANPD Guia Orientativo](https://www.gov.br/anpd/pt-br)
+- [x] RIPD publicado em [`../legal/RIPD.md`](../legal/RIPD.md) (v1, 2026-10-13): descrição do
+      tratamento, necessidade, riscos e controles, riscos residuais. Revisar a cada operação nova
+      no ROPA ou fornecedor novo. Falta revisão de advogado/DPO.
 
 ### ROPA (Record of Processing Activities)
 
@@ -110,7 +111,7 @@ até alguém confirmar contrato/aceite de cada vendor.
 ### 2026-Q3
 
 - [ ] Pentest externo (~$10-15k)
-- [ ] DPIA financeiro + portal
+- [x] DPIA financeiro + portal (RIPD v1; falta revisão jurídica)
 - [ ] NDA com todos contractors
 - [ ] Policy docs (Access Control, Cryptography, IR, DR)
 

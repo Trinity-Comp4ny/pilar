@@ -101,7 +101,7 @@ describe("stripComments", () => {
 });
 
 describe("contrato do pipeline", () => {
-  // Mesmo padrão do test_deploy_safety_contract.py do labrynth-platform: quem
+  // Contrato de segurança de deploy: quem
   // remover o guard, ou movê-lo para depois do deploy, quebra o CI.
   // cwd, não import.meta.url: no ambiente jsdom do vitest a URL do módulo não é file://
   const ci = readFileSync(resolve(process.cwd(), ".github/workflows/ci.yml"), "utf8");

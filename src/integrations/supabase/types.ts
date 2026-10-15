@@ -5041,6 +5041,7 @@ export type Database = {
       }
       platform_settings: {
         Row: {
+          exigir_mfa_ultra_admin: boolean
           id: string
           trial_ai_daily_cap_tokens: number
           trial_dias: number
@@ -5048,6 +5049,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          exigir_mfa_ultra_admin?: boolean
           id?: string
           trial_ai_daily_cap_tokens?: number
           trial_dias?: number
@@ -5055,6 +5057,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          exigir_mfa_ultra_admin?: boolean
           id?: string
           trial_ai_daily_cap_tokens?: number
           trial_dias?: number
@@ -8046,6 +8049,7 @@ export type Database = {
       }
       _soft_delete_feature: { Args: { p_tabela: string }; Returns: string }
       _soft_delete_guard: { Args: { p_tabela: string }; Returns: string }
+      _ultra_admin_mfa_ok: { Args: never; Returns: boolean }
       _universal_features: { Args: never; Returns: string[] }
       aceitar_convite_pendente: { Args: never; Returns: string }
       admin_create_company_owner: {
