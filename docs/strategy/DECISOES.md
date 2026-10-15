@@ -11,6 +11,25 @@ Regras de manutenção:
 
 ---
 
+## 2026-10-15 · Lançamento público mira janeiro de 2027, com um time de agentes no Ultra
+
+**Decisão:** três decisões que valem juntas:
+
+1. O lançamento público tem data guia em janeiro de 2027 (T0 = terça, 19/01/2027). É data de
+   referência para o calendário, não promessa a ninguém: antecipar é permitido.
+2. Toda automação de conteúdo (gerar, renderizar, agendar e publicar post, carrossel e vídeo,
+   e coletar métricas de redes, anúncios e Search Console) fica no repo `post-automation` e no
+   banco dele. O Pilar recebe só os números e devolve o funil por UTM (ADR 0060).
+3. Contato com cliente pelo agente é por link `wa.me` com o texto pronto; quem envia é o
+   fundador. Sem API oficial do WhatsApp por enquanto.
+
+Contexto: founder solo perto do lançamento quer agentes de receita, clientes, marketing,
+produto e qualidade que rodem sozinhos e um painel único (grupo "Time" no Ultra). Virou
+[SPEC 126](../specs/126-time-de-agentes-no-ultra.md) e [SPEC 125](../specs/125-telemetria-de-produto-e-erros.md).
+Atualiza o roster de `docs/AGENTS_TEAM.md`, que só previa agentes chamados no Claude Code.
+
+---
+
 ## 2026-10-14 · Release: o que fica manual de propósito
 
 **Decisão:** três pontos do pipeline de release ficam como estão, por escolha:
