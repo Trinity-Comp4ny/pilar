@@ -3100,14 +3100,18 @@ export type Database = {
           descricao: string | null
           empresa_id: string | null
           id: string
+          indicador: string | null
           nome: string
+          periodo_inicio: string | null
           pessoa_id: string | null
           prazo: string | null
           projeto_id: string | null
+          recorrencia: string
           sync_filtro: Json | null
           sync_fonte: string | null
           tipo: string
           unidade: string
+          unidade_rotulo: string | null
         }
         Insert: {
           alvo: number
@@ -3119,14 +3123,18 @@ export type Database = {
           descricao?: string | null
           empresa_id?: string | null
           id?: string
+          indicador?: string | null
           nome: string
+          periodo_inicio?: string | null
           pessoa_id?: string | null
           prazo?: string | null
           projeto_id?: string | null
+          recorrencia?: string
           sync_filtro?: Json | null
           sync_fonte?: string | null
           tipo?: string
           unidade?: string
+          unidade_rotulo?: string | null
         }
         Update: {
           alvo?: number
@@ -3138,14 +3146,18 @@ export type Database = {
           descricao?: string | null
           empresa_id?: string | null
           id?: string
+          indicador?: string | null
           nome?: string
+          periodo_inicio?: string | null
           pessoa_id?: string | null
           prazo?: string | null
           projeto_id?: string | null
+          recorrencia?: string
           sync_filtro?: Json | null
           sync_fonte?: string | null
           tipo?: string
           unidade?: string
+          unidade_rotulo?: string | null
         }
         Relationships: [
           {
@@ -8050,6 +8062,25 @@ export type Database = {
         Args: { p_efetivacao: string; p_status: string; p_vencimento: string }
         Returns: string
       }
+      _meta_janela: {
+        Args: {
+          p_fim: string
+          p_inicio: string
+          p_recorrencia: string
+          p_ref: string
+        }
+        Returns: Record<string, unknown>
+      }
+      _meta_valor: {
+        Args: {
+          p_empresa: string
+          p_fim: string
+          p_indicador: string
+          p_inicio: string
+          p_pessoa: string
+        }
+        Returns: number
+      }
       _nome_do_ator: { Args: { p_profile: string }; Returns: string }
       _notif_gestao: { Args: { p_empresa: string }; Returns: string[] }
       _notif_gestao_operacional: {
@@ -9016,6 +9047,25 @@ export type Database = {
           p_tipo_lancamento: string
         }
         Returns: number
+      }
+      rpc_meta_historico: {
+        Args: { p_meta_id: string; p_periodos?: number }
+        Returns: {
+          atual: number
+          janela_fim: string
+          janela_inicio: string
+          restrito: boolean
+        }[]
+      }
+      rpc_metas_progresso: {
+        Args: { p_ref?: string }
+        Returns: {
+          atual: number
+          janela_fim: string
+          janela_inicio: string
+          meta_id: string
+          restrito: boolean
+        }[]
       }
       rpc_notificar_mencao: {
         Args: {
