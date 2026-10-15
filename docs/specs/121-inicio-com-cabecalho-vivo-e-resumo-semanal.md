@@ -68,20 +68,24 @@ mais arredondado.
    - quem passa (admin, owner, ultra admin, ou financeiro delegado) recebe o resumo
      `empresa`: projetos, comercial, financeiro e tarefas da empresa;
    - todos os outros recebem o resumo `pessoa`: só tarefas, disciplinas e projetos em que a
-     pessoa é responsável. Nenhum número da empresa e nenhum dinheiro entra no prompt nem no
-     texto.
+     pessoa é responsável. Nenhum número da empresa e nenhum dinheiro entra no texto.
+   - **Só o resumo da empresa usa IA.** O resumo `pessoa` é sempre o automático (requisito
+     10), montado na hora dos mesmos fatos: zero token, nada gravado, e os números valem o
+     dia sem gerar nada de novo. Decisão de 15/10 por custo: com 20 usuários ativos, o
+     resumo pessoal com IA custava ~21% do plano de 500 mil tokens por mês.
 8. **O número sai do código, não do modelo** (ADR 0050). Uma função SQL calcula os fatos da
    semana sob o RLS de quem pediu; o modelo só redige. Depois da resposta, o código confere
    que todo número do texto existe nos fatos. Número inventado: uma nova tentativa com o erro
    no prompt, e, se persistir, cai no texto determinístico (requisito 10).
-9. **Geração sob demanda, uma vez por semana e escopo.** Na primeira abertura da semana
-   (segunda a domingo, fuso de São Paulo) o front pede a geração. O resultado fica em
+9. **Geração sob demanda, uma vez por semana, só para a empresa.** Na primeira abertura da
+   semana (segunda a domingo, fuso de São Paulo) o front pede a geração. O resultado fica em
    `resumos_semanais` e as próximas aberturas só leem. O resumo da empresa é compartilhado
-   por todos que podem vê-lo. **Não há botão de atualizar**: o custo é um resumo por semana e
-   escopo, previsível, e não depende de clique.
-10. **O cabeçalho nunca fica vazio.** Sem tokens, com trial pausado, sem o módulo Agentes
-    (`ai_chat`) na empresa, com
-    falha do provedor ou com número que não bate: aparece um resumo determinístico montado em
+   por todos que podem vê-lo. **Não há botão de atualizar**: o custo é um resumo de IA por
+   semana e empresa (~1.200 tokens), previsível, e não depende de clique nem do número de
+   usuários.
+10. **O cabeçalho nunca fica vazio.** O resumo automático é o padrão do escopo `pessoa` e o
+    plano B do escopo `empresa`: sem tokens, com trial pausado, sem o módulo Agentes
+    (`ai_chat`) na empresa, com falha do provedor ou com número que não bate: aparece um resumo determinístico montado em
     código a partir dos mesmos fatos ("3 projetos com prazo vencido, 2 prazos nesta semana"),
     marcado como "resumo automático", com o motivo em uma linha e o próximo passo quando
     houver (ex.: pedir mais tokens ao admin).
@@ -115,9 +119,9 @@ mais arredondado.
 - [ ] Dado um admin sem resumo da semana, quando abre o Início, então a função de geração é
       chamada uma vez, o cabeçalho mostra o estado de preparo e depois o texto, e uma segunda
       abertura não chama a função.
-- [ ] Dado um usuário comum, quando o resumo é gerado, então `fatos.escopo = 'pessoa'`, o
-      prompt não contém `financeiro` nem totais da empresa, e `resumos_semanais` guarda
-      `escopo = 'pessoa'` com o `user_id` dele.
+- [ ] Dado um usuário comum, quando abre o Início, então a função devolve `origem =
+  "automatico"` sem chamar o modelo, sem linha nova no ledger e sem linha em
+      `resumos_semanais`, e o texto não cita financeiro nem total da empresa.
 - [ ] Dado um usuário comum, quando faz `select` em `resumos_semanais`, então não enxerga o
       resumo da empresa nem o de outra pessoa (pgTAP, com `SET ROLE authenticated`).
 - [ ] Dado coordenador sem `financeiro_delegado`, quando pede o resumo, então recebe `pessoa`.
