@@ -258,7 +258,7 @@ export function ProjectDetailDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-none w-[96vw] h-[92vh] overflow-hidden p-0 gap-0 flex flex-col">
+        <DialogContent className="max-w-none w-[96vw] h-[92dvh] overflow-hidden p-0 gap-0 flex flex-col">
           {/* Header compacto */}
           <div className="shrink-0 px-8 pt-6 pb-4 border-b bg-muted/50">
             <DialogHeader className="mb-0">

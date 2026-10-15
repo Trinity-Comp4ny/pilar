@@ -360,7 +360,7 @@ export function ProjetoDetailTabs({
           </TabsContent>
 
           <TabsContent value="atividades">
-            <Card className="flex h-[70vh] min-h-[420px] flex-col p-4">
+            <Card className="flex h-[70dvh] min-h-[420px] flex-col p-4">
               <ProjetoAtividadesPanel
                 projetoId={projeto.id}
                 pessoas={pessoas}

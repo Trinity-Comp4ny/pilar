@@ -93,7 +93,7 @@ export default function AuthCallback() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-paper">
+    <div className="min-h-dvh w-full flex items-center justify-center bg-paper">
       <div className="flex flex-col items-center gap-4 text-center animate-in fade-in duration-500">
         <Logo variant="mark" size="md" />
         <div className="flex items-center gap-2 text-ink-soft">

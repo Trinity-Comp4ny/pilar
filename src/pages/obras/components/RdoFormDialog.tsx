@@ -698,7 +698,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
 
   return (
     <Dialog open={open} onOpenChange={(next) => !saving && onOpenChange(next)}>
-      <DialogContent className="flex max-h-[90vh] max-w-lg flex-col overflow-hidden p-0">
+      <DialogContent className="flex max-h-[90dvh] max-w-lg flex-col overflow-hidden p-0">
         <div className="border-b border-black/5 px-6 pb-4 pt-6">
           <DialogHeader>
             <DialogTitle>{editandoId ? "Editar dia" : "Registrar dia"}</DialogTitle>

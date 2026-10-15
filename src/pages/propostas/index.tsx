@@ -899,7 +899,7 @@ export default function Propostas() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? "Editar proposta" : "Nova proposta"}</DialogTitle>
           </DialogHeader>

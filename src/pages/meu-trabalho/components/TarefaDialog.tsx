@@ -359,7 +359,7 @@ function TarefaFormBody({
 export function TarefaDialog({ open, onOpenChange, tarefa, ...rest }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[92vh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden p-0">
+      <DialogContent className="flex h-[92dvh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden p-0">
         {open && (
           <TarefaFormBody
             key={tarefa?.id ?? `nova-${rest.defaultEtapaId ?? "padrao"}`}

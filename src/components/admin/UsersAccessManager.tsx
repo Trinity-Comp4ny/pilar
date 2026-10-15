@@ -475,7 +475,7 @@ function InviteDialog({ open, onClose, isSubmitting, onSubmit }: InviteDialogPro
 
   return (
     <Dialog open={open} onOpenChange={(v) => (!v ? onClose() : undefined)}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Convidar usuário</DialogTitle>
           <DialogDescription>
@@ -588,7 +588,7 @@ function EditDialog({ user, onClose, onSubmit, onToggleFinanceiro, onToggleEquip
 
   return (
     <Dialog open onOpenChange={(v) => (!v ? onClose() : undefined)}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Tipo de conta: {user.name}</DialogTitle>
           <DialogDescription>Define quem administra usuários, plano e configuração da empresa.</DialogDescription>

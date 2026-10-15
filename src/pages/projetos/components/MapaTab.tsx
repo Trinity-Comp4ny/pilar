@@ -357,7 +357,7 @@ export function MapaTab() {
           <div
             ref={wrapperRef}
             className="rounded-lg overflow-hidden border relative bg-muted"
-            style={{ height: isFullscreen ? "100dvh" : "calc(100vh - 320px)", minHeight: "420px" }}
+            style={{ height: isFullscreen ? "100dvh" : "calc(100dvh - 320px)", minHeight: "420px" }}
           >
             {/* Seletor de camada */}
             <div className="absolute bottom-8 left-3 z-1000">
