@@ -12,7 +12,8 @@ import { useRecentes } from "@/hooks/useRecentes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -576,8 +577,28 @@ export default function ClienteDetalhePage() {
     );
   }
 
+  // Abas de seção (SPEC 121), no slot do header.
+  const secoes: SectionTab[] = [
+    { id: "visao-geral", label: "Visão geral", icon: User },
+    {
+      id: "projetos",
+      label: "Projetos",
+      icon: FolderOpen,
+      badge: !isLoadingProjetos && projetos.length > 0 ? projetos.length : undefined,
+    },
+    {
+      id: "propostas",
+      label: "Propostas",
+      icon: FileSignature,
+      badge: !isLoadingPropostas && propostas.length > 0 ? propostas.length : undefined,
+    },
+    { id: "financeiro", label: "Financeiro", icon: Banknote },
+    { id: "entregas", label: "Entregas", icon: Package },
+  ];
+
   return (
     <PageLayout
+      tabs={<SectionTabs tabs={secoes} value={tab} onValueChange={setTab} ariaLabel="Seções do cliente" />}
       header={
         <PageHeader title={clienteNomeCompleto} breadcrumbs={[{ label: "Clientes", to: "/clientes" }]}>
           {/* Ícone-only em mobile: os 3 botões com texto completo estouravam o
@@ -628,35 +649,6 @@ export default function ClienteDetalhePage() {
       }
     >
       <Tabs value={tab} onValueChange={setTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="visao-geral" className="flex items-center gap-1.5">
-            <User className="h-3.5 w-3.5" />
-            Visão Geral
-          </TabsTrigger>
-          <TabsTrigger value="projetos" className="flex items-center gap-1.5">
-            <FolderOpen className="h-3.5 w-3.5" />
-            Projetos
-            {!isLoadingProjetos && projetos.length > 0 && (
-              <span className="text-[10px] bg-muted rounded-full px-1.5">{projetos.length}</span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="propostas" className="flex items-center gap-1.5">
-            <FileSignature className="h-3.5 w-3.5" />
-            Propostas
-            {!isLoadingPropostas && propostas.length > 0 && (
-              <span className="text-[10px] bg-muted rounded-full px-1.5">{propostas.length}</span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="financeiro" className="flex items-center gap-1.5">
-            <Banknote className="h-3.5 w-3.5" />
-            Financeiro
-          </TabsTrigger>
-          <TabsTrigger value="entregas" className="flex items-center gap-1.5">
-            <Package className="h-3.5 w-3.5" />
-            Entregas
-          </TabsTrigger>
-        </TabsList>
-
         {/* Visão Geral */}
         <TabsContent value="visao-geral">
           <VisaoGeralTab cliente={cliente} isAdmin={isAdmin} />

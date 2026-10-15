@@ -1,64 +1,14 @@
-// Filtros da toolbar de "Meu trabalho", no mesmo padrão visual dos filtros do
-// resto da plataforma (pill arredondada + popover, como o FiltroPeriodo do
-// Financeiro). O filtro de pessoa usa avatar de iniciais, estilo ClickUp.
+// Filtro de pessoa da toolbar de Tarefas. Usa o gatilho padrão dos filtros
+// (`filterTriggerClass`, SPEC 121) e avatar de iniciais, estilo ClickUp.
 import { useState } from "react";
-import { Check, Users, type LucideIcon } from "lucide-react";
+import { Check, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { AvatarStack } from "@/components/AvatarStack";
 import { cn } from "@/lib/utils";
+import { filterTriggerClass } from "@/components/filters/filterStyles";
 import type { PessoaOpcao } from "../hooks";
-
-type Opcao = { value: string; label: string };
-
-/** Pill de seleção única no padrão dos filtros da plataforma. */
-export function FiltroPill({
-  icon: Icon,
-  value,
-  options,
-  onChange,
-  align = "start",
-}: {
-  icon: LucideIcon;
-  value: string;
-  options: Opcao[];
-  onChange: (value: string) => void;
-  align?: "start" | "center" | "end";
-}) {
-  const [open, setOpen] = useState(false);
-  const atual = options.find((o) => o.value === value);
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="outline" className="h-9 gap-1.5 rounded-full px-3.5 text-[13px] font-normal">
-          <Icon size={14} className="text-black/50" />
-          {atual?.label ?? "Filtrar"}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align={align} className="w-auto p-0">
-        <div className="flex min-w-[188px] flex-col gap-0.5 p-2">
-          {options.map((o) => (
-            <button
-              key={o.value}
-              type="button"
-              onClick={() => {
-                onChange(o.value);
-                setOpen(false);
-              }}
-              className={cn(
-                "rounded-lg px-3 py-1.5 text-left text-[13px] transition-colors",
-                value === o.value ? "bg-brand/15 font-medium text-ink" : "text-black/70 hover:bg-black/4"
-              )}
-            >
-              {o.label}
-            </button>
-          ))}
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
-}
 
 /** Filtro de pessoa com avatar de iniciais (estilo ClickUp). Múltipla escolha.
  * A pessoa do usuário logado aparece uma vez só, no topo da lista, com "(você)";
@@ -92,7 +42,7 @@ export function FiltroPessoa({
 
   const rotulo =
     selecionadas.length === 0
-      ? "Todos"
+      ? "Pessoa"
       : selecionadas.length === 1
         ? selecionadas[0].nome
         : `${selecionadas.length} pessoas`;
@@ -102,10 +52,7 @@ export function FiltroPessoa({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className={cn(
-            "h-9 gap-1.5 rounded-full py-0 text-[13px] font-normal",
-            selecionadas.length > 0 ? "pl-1 pr-3.5" : "px-3.5"
-          )}
+          className={filterTriggerClass(selecionadas.length > 0, selecionadas.length > 0 ? "py-0 pl-1 pr-3.5" : undefined)}
           aria-label="Filtrar por pessoa"
         >
           {selecionadas.length > 0 ? (

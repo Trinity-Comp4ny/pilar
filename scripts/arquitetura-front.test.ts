@@ -35,7 +35,11 @@ const CRUZADOS_ACEITOS: Record<string, number> = {
 // Genérico por natureza (não sabe de domínio), mesmo usado por um módulo hoje.
 const GENERICOS = new Set([
   "components/DuplicateWarningDialog.tsx",
+  "components/filters/FilterBar.tsx", // SPEC 121: toolbar padrão, vai a todas as listas (fase 2 em diante)
+  "components/filters/filterStyles.ts",
   "components/filters/MultiSelectFilter.tsx",
+  "components/PageSlots.tsx", // SPEC 121: portal para toolbar/abas de aba filha, primitivo de layout
+  "components/ViewSwitcher.tsx",
   "components/forms/ValidatedField.tsx",
   "components/calendario", // motor compartilhado por camadas (ADR 0010)
   "lib/currency.ts",

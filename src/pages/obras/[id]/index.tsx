@@ -20,7 +20,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -107,8 +108,20 @@ export default function ObraDetalhePage() {
     }
   };
 
+  // Abas de seção (SPEC 121): mesmas regras de visibilidade de antes, agora no slot do header.
+  const secoes: SectionTab[] = [
+    { id: "timeline", label: "Visão", icon: LayoutList },
+    ...(showDiario ? [{ id: "diario", label: "Diário", icon: ClipboardList }] : []),
+    ...(showCronograma ? [{ id: "cronograma", label: "Cronograma", icon: CalendarClock }] : []),
+    ...(showCotacoes ? [{ id: "cotacoes", label: "Cotações", icon: Scale }] : []),
+    ...(showEstoque ? [{ id: "estoque", label: "Estoque", icon: Boxes }] : []),
+    ...(showConta ? [{ id: "conta", label: "Conta da obra", icon: Wallet }] : []),
+    ...(canEdit ? [{ id: "acessos", label: "Acessos", icon: HardHat }] : []),
+  ];
+
   return (
     <PageLayout
+      tabs={<SectionTabs tabs={secoes} value={tab} onValueChange={setTab} ariaLabel="Seções da obra" />}
       header={
         <PageHeader title={obra.nome} breadcrumbs={BREADCRUMB}>
           {/* Ícone-only em mobile: os 3 botões com texto completo estouravam o
@@ -192,49 +205,6 @@ export default function ObraDetalhePage() {
       )}
 
       <Tabs value={tab} onValueChange={setTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="timeline" className="flex items-center gap-1.5">
-            <LayoutList className="h-3.5 w-3.5" />
-            Visão
-          </TabsTrigger>
-          {showDiario && (
-            <TabsTrigger value="diario" className="flex items-center gap-1.5">
-              <ClipboardList className="h-3.5 w-3.5" />
-              Diário
-            </TabsTrigger>
-          )}
-          {showCronograma && (
-            <TabsTrigger value="cronograma" className="flex items-center gap-1.5">
-              <CalendarClock className="h-3.5 w-3.5" />
-              Cronograma
-            </TabsTrigger>
-          )}
-          {showCotacoes && (
-            <TabsTrigger value="cotacoes" className="flex items-center gap-1.5">
-              <Scale className="h-3.5 w-3.5" />
-              Cotações
-            </TabsTrigger>
-          )}
-          {showEstoque && (
-            <TabsTrigger value="estoque" className="flex items-center gap-1.5">
-              <Boxes className="h-3.5 w-3.5" />
-              Estoque
-            </TabsTrigger>
-          )}
-          {showConta && (
-            <TabsTrigger value="conta" className="flex items-center gap-1.5">
-              <Wallet className="h-3.5 w-3.5" />
-              Conta da obra
-            </TabsTrigger>
-          )}
-          {canEdit && (
-            <TabsTrigger value="acessos" className="flex items-center gap-1.5">
-              <HardHat className="h-3.5 w-3.5" />
-              Acessos
-            </TabsTrigger>
-          )}
-        </TabsList>
-
         <TabsContent value="timeline">
           <ObraTimelineTab obra={obra} onIrParaDiario={() => setTab("diario")} />
         </TabsContent>

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { GitBranch, MoreHorizontal, Plus, Settings2 } from "lucide-react";
+import { GitBranch, LayoutGrid, List, MoreHorizontal, Plus, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { DragDropContext } from "@hello-pangea/dnd";
 import { PageLayout } from "@/components/PageLayout";
@@ -34,6 +34,8 @@ import { ListaProjetos } from "@/pages/projetos/components/ListaProjetos";
 import { MapaTab } from "@/pages/projetos/components/MapaTab";
 import { ProjetosMobileList } from "@/pages/projetos/components/ProjetosMobileList";
 import { KanbanSortControl } from "@/components/kanban/KanbanSortControl";
+import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
+import { FilterBar } from "@/components/filters/FilterBar";
 import { ordenarKanban, type KanbanSortAccessors, type KanbanSortKey } from "@/lib/kanbanSort";
 import { ReopenProjetoDialog } from "@/pages/projetos/components/ProjetoStatusDialogs";
 import { useProjetosData } from "@/pages/projetos/hooks/useProjetosData";
@@ -58,6 +60,11 @@ const PROJETOS_SORT_ACESSORES: KanbanSortAccessors<Projeto> = {
   value: (p) => p.valor_contrato,
   name: (p) => p.nome,
 };
+
+const VISAO_OPCOES: ViewOption<"quadro" | "lista">[] = [
+  { value: "quadro", label: "Quadro", icon: LayoutGrid },
+  { value: "lista", label: "Lista", icon: List },
+];
 
 export default function ProjetosKanban() {
   usePageTitle("Projetos");
@@ -340,8 +347,22 @@ export default function ProjetosKanban() {
   const noProjetos = !loadingProjetos && !projetosError && projetos.length === 0;
   const noResults = !loadingProjetos && !projetosError && projetos.length > 0 && filteredProjetos.length === 0;
 
+  const toolbar = (
+    <FilterBar end={isColecao ? <KanbanSortControl sort={sort} onChange={setSort} keys={sortKeys} /> : undefined}>
+      {isColecao && <ViewSwitcher options={VISAO_OPCOES} value={viewMode} onChange={setViewMode} iconOnlyOnMobile />}
+      <ProjetosFilterBar
+        pessoas={pessoas}
+        clientes={clientes}
+        disciplinas={disciplinas}
+        filters={filters}
+        onChange={setFilters}
+      />
+    </FilterBar>
+  );
+
   return (
     <PageLayout
+      toolbar={toolbar}
       className={activeTab === "quadro" ? "md:overflow-y-hidden" : undefined}
       containerClassName={cn("flex flex-col", activeTab === "quadro" && "md:h-full md:min-h-0")}
       header={
@@ -360,14 +381,6 @@ export default function ProjetosKanban() {
             dataTour: "onb-novo-projeto",
           }}
         >
-          <ProjetosFilterBar
-            pessoas={pessoas}
-            clientes={clientes}
-            disciplinas={disciplinas}
-            filters={filters}
-            onChange={setFilters}
-          />
-
           {/* Em telas estreitas, "Disciplinas" e "Fluxos" cabendo inline ao lado da busca
               empurravam "Novo projeto" pra fora do viewport, sem scroll pra alcançar
               (achado da auditoria mobile, 08/09). Colapsam num único menu "⋯" abaixo de md. */}
@@ -416,39 +429,10 @@ export default function ProjetosKanban() {
         </PageHeader>
       }
     >
-      {/* KPIs + toggle Quadro/Lista + ordenação numa linha só (a navegação entre
-          recortes vive na sidebar; os KPIs só entram quando há dado pra mostrar). */}
+      {/* KPIs (a navegação entre recortes vive na sidebar; só entram quando há dado
+          pra mostrar). Visão, filtros e ordenação ficam na toolbar (SPEC 121). */}
       {isColecao && (
-        <CollapsibleKpiSection
-          storageKey="projetos"
-          controls={
-            <>
-              <div className="inline-flex rounded-full border p-0.5">
-                <button
-                  type="button"
-                  onClick={() => setViewMode("quadro")}
-                  className={cn(
-                    "rounded-full px-3 py-1 text-sm transition-colors",
-                    viewMode === "quadro" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Quadro
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode("lista")}
-                  className={cn(
-                    "rounded-full px-3 py-1 text-sm transition-colors",
-                    viewMode === "lista" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Lista
-                </button>
-              </div>
-              <KanbanSortControl sort={sort} onChange={setSort} keys={sortKeys} />
-            </>
-          }
-        >
+        <CollapsibleKpiSection storageKey="projetos">
           {!loadingProjetos && projetos.length > 0 && (
             <ProjetosKPIs
               projetos={projetos}
