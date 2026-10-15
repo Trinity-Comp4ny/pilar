@@ -1,4 +1,4 @@
--- pgTAP: resumo semanal do Início (SPEC 121, ADR 0058, migration 20261103000000).
+-- pgTAP: resumo semanal do Início (SPEC 121, ADR 0058, migration 20261103000100).
 --
 -- Três coisas que NÃO podem falhar:
 --   1. escopo: admin recebe `empresa`, os demais `pessoa`, decidido no banco;
