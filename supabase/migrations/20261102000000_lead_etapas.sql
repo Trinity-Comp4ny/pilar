@@ -52,6 +52,7 @@ CREATE INDEX IF NOT EXISTS idx_leads_etapa ON public.leads (etapa_id);
 GRANT SELECT (etapa_id) ON public.leads TO authenticated;
 
 -- 3. Semente das 6 colunas-padrão (empresa nova + backfill) ---------------------------
+-- Os nomes são os rótulos que o quadro já mostrava (registry de status do lead).
 CREATE OR REPLACE FUNCTION public.seed_lead_etapas_padrao()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -63,9 +64,9 @@ BEGIN
     INSERT INTO public.lead_etapas (empresa_id, nome, ordem, cor, bucket)
     VALUES
       (NEW.id, 'Novo',       0, '#3b82f6', 'Novo'),
-      (NEW.id, 'Em contato', 1, '#6366f1', 'Em contato'),
-      (NEW.id, 'Proposta',   2, '#eab308', 'Proposta'),
-      (NEW.id, 'Negociação', 3, '#a4ec86', 'Negociação'),
+      (NEW.id, 'Em Contato', 1, '#6366f1', 'Em contato'),
+      (NEW.id, 'Proposta Enviada', 2, '#eab308', 'Proposta'),
+      (NEW.id, 'Em Negociação', 3, '#a4ec86', 'Negociação'),
       (NEW.id, 'Ganho',      4, '#22c55e', 'Ganho'),
       (NEW.id, 'Perdido',    5, '#ef4444', 'Perdido');
   END IF;
@@ -85,9 +86,9 @@ SELECT e.id, v.nome, v.ordem, v.cor, v.bucket
 FROM public.empresas e
 CROSS JOIN (VALUES
   ('Novo',       0, '#3b82f6', 'Novo'),
-  ('Em contato', 1, '#6366f1', 'Em contato'),
-  ('Proposta',   2, '#eab308', 'Proposta'),
-  ('Negociação', 3, '#a4ec86', 'Negociação'),
+  ('Em Contato', 1, '#6366f1', 'Em contato'),
+  ('Proposta Enviada', 2, '#eab308', 'Proposta'),
+  ('Em Negociação', 3, '#a4ec86', 'Negociação'),
   ('Ganho',      4, '#22c55e', 'Ganho'),
   ('Perdido',    5, '#ef4444', 'Perdido')
 ) AS v(nome, ordem, cor, bucket)

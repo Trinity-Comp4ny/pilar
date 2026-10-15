@@ -52,7 +52,7 @@ SELECT is(
 SELECT is(
   (SELECT string_agg(nome, ',' ORDER BY ordem) FROM public.lead_etapas
    WHERE empresa_id = '00000000-0000-0000-0000-0000000e1001'),
-  'Novo,Em contato,Proposta,Negociação,Ganho,Perdido',
+  'Novo,Em Contato,Proposta Enviada,Em Negociação,Ganho,Perdido',
   'colunas padrão na ordem de hoje'
 );
 
