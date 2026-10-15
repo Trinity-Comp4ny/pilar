@@ -40,7 +40,10 @@ Adotar a **B**:
 4. **O resumo é guardado** em `resumos_semanais` junto dos `fatos` que o geraram. A leitura é
    por RLS (pessoa vê o próprio, empresa só quem passa em `can_view_financeiro()`); a escrita
    é só da edge function.
-5. **Geração sob demanda**, uma vez por semana e escopo, sem botão de atualizar: o custo em
+5. **Só o escopo `empresa` usa IA.** O escopo `pessoa` é sempre o resumo automático, montado
+   dos mesmos fatos na hora: zero token e nada gravado. A tabela mantém o escopo `pessoa`
+   para o dia em que valer pagar por ele.
+6. **Geração sob demanda**, uma vez por semana e empresa, sem botão de atualizar: o custo em
    tokens é previsível (um resumo por escopo e semana, debitado no ledger do ADR 0035).
 
 ## Consequências

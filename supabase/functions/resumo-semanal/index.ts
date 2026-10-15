@@ -7,6 +7,10 @@
 // modelo. Se não, o modelo redige, o código confere os números contra os fatos e a função
 // grava em resumos_semanais (service role: authenticated não escreve nessa tabela).
 //
+// Só o escopo `empresa` usa IA. O escopo `pessoa` (quem não vê dinheiro) é SEMPRE o resumo
+// automático, montado na hora dos mesmos fatos: custo zero em tokens, nada gravado, e os
+// números do dia valem sem gerar nada de novo.
+//
 // O cabeçalho do Início nunca fica vazio: sem tokens, com falha do provedor ou com texto que
 // não bate com os fatos, a resposta é o resumo automático (`origem: "automatico"`), montado
 // dos mesmos fatos e não gravado.
@@ -150,7 +154,13 @@ serve(
         );
       }
       const fatos = fatosLidos.data;
-      const donoId = fatos.escopo === "pessoa" ? user.id : null;
+
+      // Escopo pessoa: sempre automático (SPEC 121). Sem IA, sem tokens, sem gravar.
+      if (fatos.escopo === "pessoa") {
+        return jsonResponse({ escopo: "pessoa", resumo: resumoAutomatico(fatos), origem: "automatico" }, 200, req);
+      }
+
+      const donoId = null;
       const semana = fatos.semana_inicio.slice(0, 10);
 
       // 2) Já existe resumo desta semana neste escopo?
