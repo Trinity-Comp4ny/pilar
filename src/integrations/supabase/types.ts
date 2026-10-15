@@ -6481,6 +6481,73 @@ export type Database = {
           },
         ]
       }
+      resumos_semanais: {
+        Row: {
+          conteudo: Json
+          created_at: string
+          empresa_id: string
+          escopo: string
+          fatos: Json
+          id: string
+          modelo: string | null
+          semana_inicio: string
+          tokens_entrada: number
+          tokens_saida: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          conteudo: Json
+          created_at?: string
+          empresa_id: string
+          escopo: string
+          fatos: Json
+          id?: string
+          modelo?: string | null
+          semana_inicio: string
+          tokens_entrada?: number
+          tokens_saida?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          conteudo?: Json
+          created_at?: string
+          empresa_id?: string
+          escopo?: string
+          fatos?: Json
+          id?: string
+          modelo?: string | null
+          semana_inicio?: string
+          tokens_entrada?: number
+          tokens_saida?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resumos_semanais_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resumos_semanais_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resumos_semanais_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       status_components: {
         Row: {
           id: string
@@ -8651,6 +8718,8 @@ export type Database = {
         Args: { p_projeto_id: string }
         Returns: Json
       }
+      get_resumo_semanal: { Args: never; Returns: Json }
+      get_resumo_semanal_fatos: { Args: never; Returns: Json }
       get_user_empresa_id: { Args: never; Returns: string }
       get_user_empresa_id_text: { Args: never; Returns: string }
       get_user_role: { Args: never; Returns: string }

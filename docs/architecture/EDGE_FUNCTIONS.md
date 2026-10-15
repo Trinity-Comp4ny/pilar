@@ -3,7 +3,7 @@
 <!-- Gerado por scripts/edge-functions-catalog.mjs a partir de supabase/functions/CATALOGO.json.
      Não editar à mão: edite o CATALOGO.json e rode `node scripts/edge-functions-catalog.mjs`. -->
 
-48 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
+49 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
 migrations) ou origem externa declarada no manifesto. **Login**: `verify_jwt` do `config.toml`
 (JWT aceita a chave anon; "própria" = a função faz a autorização). **Secrets**: lidos direto
 na pasta da função (o que vem de `_shared`, como a chave do Gemini, não aparece).
@@ -18,6 +18,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `ai-cotacao-import` | Lê PDF ou imagem de orçamento de fornecedor e extrai os itens (Gemini, spec 023). | app | JWT |  | sim |
 | `ai-import-financeiro` | Extrai lançamentos do texto de um extrato ou fatura (spec 017). | app | JWT |  | sim |
 | `ai-rdo-voz` | Transcreve áudio curto do RDO e preenche os campos de texto (spec 080). | app | JWT |  | sim |
+| `resumo-semanal` | Resumo semanal do Início: lê os fatos da semana pelo RLS de quem pediu (empresa para quem vê dinheiro, pessoa para os demais), o modelo redige e o código confere os números (SPEC 121). | app | JWT |  | sim |
 
 ## Assinatura do Pilar (Asaas da plataforma)
 
