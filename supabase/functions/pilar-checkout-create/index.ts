@@ -22,7 +22,7 @@ import {
 import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
 import { parseOr400 } from "../_shared/schemas.ts";
-import { type CheckoutPayload, checkoutSchema } from "./entrada.ts";
+import { cartaoRecusado, type CheckoutPayload, checkoutSchema } from "./entrada.ts";
 
 const log = createLogger("pilar-checkout-create");
 
@@ -207,10 +207,16 @@ serve(
       const payments = await getSubscriptionPayments(subscriptionId);
       firstPayment = payments[0] ?? null;
     } catch (err) {
-      log.error("asaas create subscription failed", err, { signup_id: signup.id });
       await admin.from("pilar_pending_signups").update({ payment_status: "failed" }).eq("id", signup.id);
 
       const msg = err instanceof Error ? err.message : "Erro Asaas";
+      // Cartão recusado pelo banco é desfecho normal, não falha nossa (PILAR-3N/3P/3Q):
+      // 422 e warn, sem alerta de erro. Qualquer outra falha do Asaas continua 502 + error.
+      if (cartaoRecusado(msg)) {
+        log.warn("cartão recusado na assinatura", { signup_id: signup.id, error: msg });
+        return jsonResponse({ error: `Falha ao criar assinatura: ${msg}` }, 422, req);
+      }
+      log.error("asaas create subscription failed", err, { signup_id: signup.id });
       return jsonResponse({ error: `Falha ao criar assinatura: ${msg}` }, 502, req);
     }
 
