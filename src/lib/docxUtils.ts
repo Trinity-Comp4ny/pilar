@@ -68,10 +68,11 @@ export function extractVariablesFromDocx(arrayBuffer: ArrayBuffer): string[] {
   const vars = new Set<string>();
   variaveisDoTexto(doc.getFullText(), vars);
 
-  // getFullText só lê o corpo. Cabeçalho e rodapé também são renderizados, então as
-  // variáveis deles entram na lista (tirar as tags de XML junta o texto quebrado em runs).
+  // getFullText() sem argumento só lê o corpo. Cabeçalho e rodapé também são renderizados,
+  // então as variáveis deles entram na lista.
+  // O próprio docxtemplater lê o texto de cada parte, juntando o que o Word quebra em runs.
   for (const parte of zip.file(/^word\/(header|footer)\d*\.xml$/)) {
-    variaveisDoTexto(parte.asText().replace(/<[^>]+>/g, ""), vars);
+    variaveisDoTexto(doc.getFullText(parte.name), vars);
   }
 
   return Array.from(vars);
