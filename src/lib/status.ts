@@ -161,6 +161,7 @@ export const STATUS_REGISTRY: Record<StatusDomain, Record<string, StatusDef>> = 
     pausado: { label: "Pausado", tone: "neutral" },
     so_numeros: { label: "Só números", tone: "info" },
     planejado: { label: "Planejado", tone: "neutral" },
+    externo: { label: "Na plataforma de marketing", tone: "highlight" },
   },
   // Faixa da nota de saúde do escritório cliente (ops_saude_empresas).
   saude_cliente: {

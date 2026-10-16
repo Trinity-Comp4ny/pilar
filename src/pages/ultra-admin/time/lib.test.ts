@@ -67,7 +67,8 @@ describe("statusDoAgente", () => {
   it("fase 0: Receita e Clientes mostram números, os outros o plano", () => {
     expect(statusDoAgente({ id: "receita", ativo: false }, null, 0)).toBe("so_numeros");
     expect(statusDoAgente({ id: "clientes", ativo: false }, null, 0)).toBe("so_numeros");
-    expect(statusDoAgente({ id: "marketing", ativo: false }, null, 0)).toBe("planejado");
+    expect(statusDoAgente({ id: "produto", ativo: false }, null, 0)).toBe("planejado");
+    expect(statusDoAgente({ id: "marketing", ativo: false }, null, 0)).toBe("externo");
   });
 
   it("agente ativo segue a última execução e a fila", () => {

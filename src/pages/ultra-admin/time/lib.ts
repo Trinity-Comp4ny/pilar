@@ -10,7 +10,7 @@ import type { Receita, SaudeEmpresa, OpsAcao, OpsAgente, OpsExecucao } from "./a
 
 export type AgenteId = "chefe" | "receita" | "clientes" | "marketing" | "produto" | "qualidade" | "financas";
 
-export type StatusAgente = "ok" | "atencao" | "falhou" | "pausado" | "so_numeros" | "planejado";
+export type StatusAgente = "ok" | "atencao" | "falhou" | "pausado" | "so_numeros" | "planejado" | "externo";
 
 /** Agentes que já têm painel de números na fase 0. Os outros mostram o plano. */
 const AGENTES_COM_NUMEROS: readonly AgenteId[] = ["receita", "clientes"];
@@ -32,6 +32,8 @@ export function statusDoAgente(
   ultima: Pick<OpsExecucao, "status"> | null,
   pendentes: number
 ): StatusAgente {
+  // Marketing vive na plataforma de marketing, produto próprio (ADR 0061).
+  if (agente.id === "marketing") return "externo";
   if (!agente.ativo) {
     // Já rodou alguma vez e está desligado: foi pausado pelo ultra admin.
     if (ultima) return "pausado";
@@ -65,15 +67,13 @@ export const PLANO_DOS_AGENTES: Record<AgenteId, { quando: string; indicadores: 
     fontes: ["Acessos", "Uso por semana", "Feedback", "Sentry por empresa"],
   },
   marketing: {
-    quando: "Fase 2, dezembro de 2026",
+    quando: "Na plataforma de marketing, produto próprio (ADR 0061)",
     indicadores: [
-      "Alcance e engajamento por rede",
-      "Gasto, CPC e custo por cadastro ativado nos anúncios",
-      "Visitas e conversão da landing",
-      "Consultas do Google: impressões, CTR e posição",
-      "Core Web Vitals da landing",
+      "Campanhas, posts, carrosséis e vídeos",
+      "Alcance e engajamento por rede, anúncios e Search Console",
+      "Cadastros, ativados e pagantes por post (UTM, vindo do Pilar)",
     ],
-    fontes: ["post-automation (redes, anúncios, Search Console)", "PostHog da landing", "UTM do cadastro"],
+    fontes: ["Plataforma de marketing (post-automation)", "Funil por UTM exportado pelo Pilar"],
   },
   produto: {
     quando: "Fase 2, dezembro de 2026",

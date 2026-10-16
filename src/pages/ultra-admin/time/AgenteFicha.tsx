@@ -8,6 +8,7 @@ import { AgentePlanejado } from "./components/AgentePlanejado";
 import { BriefingAgente } from "./components/BriefingAgente";
 import { ClientesPainel } from "./components/ClientesPainel";
 import { ExecucoesAgente } from "./components/ExecucoesAgente";
+import { MarketingExterno } from "./components/MarketingExterno";
 import { ReceitaPainel } from "./components/ReceitaPainel";
 import { useExecucoesDoAgente } from "./hooks";
 import { ehExecutavel, PLANO_DOS_AGENTES, type AgenteId } from "./lib";
@@ -43,6 +44,8 @@ export default function AgenteFicha() {
         <ReceitaPainel decisoes={daArea} />
       ) : agenteId === "clientes" ? (
         <ClientesPainel decisoes={daArea} />
+      ) : agenteId === "marketing" ? (
+        <MarketingExterno />
       ) : (
         <AgentePlanejado id={agenteId} />
       )}
