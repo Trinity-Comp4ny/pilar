@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Archive, Building2, MoreHorizontal, Pencil, PauseCircle, PlayCircle, Trash2 } from "lucide-react";
+import {
+  Archive,
+  Building2,
+  FlaskConical,
+  MoreHorizontal,
+  Pencil,
+  PauseCircle,
+  PlayCircle,
+  Trash2,
+} from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { PageLoader } from "@/components/motion/PageLoader";
@@ -24,7 +33,7 @@ import { Fato } from "./components/Fato";
 import { EmpresaVisaoTab } from "./components/EmpresaVisaoTab";
 import { EmpresaUsuariosTab } from "./components/EmpresaUsuariosTab";
 import { EmpresaAtividadeTab } from "./components/EmpresaAtividadeTab";
-import { atualizarEmpresa, useAcaoEmpresa, useEmpresa } from "./hooks";
+import { atualizarEmpresa, marcarEmpresaInterna, useAcaoEmpresa, useEmpresa } from "./hooks";
 import { prazoTeste, quandoRelativo, situacaoEmpresa, type Situacao } from "./lib";
 import {
   ArquivarDialog,
@@ -84,6 +93,13 @@ export default function EmpresaDetalhe() {
     sucesso: "Empresa atualizada",
     erro: "Não foi possível salvar",
     contexto: "ultra-admin-empresas:update",
+  });
+  const interna = useAcaoEmpresa({
+    run: (valor: boolean) => marcarEmpresaInterna(id, valor),
+    sucesso: (valor) =>
+      valor ? "Marcada como empresa de teste: fica fora dos números do Time" : "Voltou a contar nos números do Time",
+    erro: "Não foi possível mudar a marcação",
+    contexto: "ultra-admin-empresas:interna",
   });
   const mudarStatus = useAcaoEmpresa({
     run: (input: { status: "active" | "suspended" | "cancelled"; confirmName?: string }) =>
@@ -173,6 +189,11 @@ export default function EmpresaDetalhe() {
               )}
               {naoPaga && <DropdownMenuItem onClick={() => setDialog("convidada")}>Tornar convidada</DropdownMenuItem>}
               {(empresa.cobranca.convidada || naoPaga) && <DropdownMenuSeparator />}
+              <DropdownMenuItem onClick={() => interna.mutate(!empresa.interna)} className="gap-2">
+                <FlaskConical size={14} />
+                {empresa.interna ? "Contar nos números do Time" : "Marcar como empresa de teste"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               {empresa.status === "active" ? (
                 <DropdownMenuItem onClick={() => setDialog("suspender")} className="gap-2">
                   <PauseCircle size={14} /> Suspender acesso

@@ -357,3 +357,18 @@ export function filaDoTime(p: {
   const doAgente = p.pendentes.filter((a) => dono.has(a.agente_id)).map(acaoParaDecisao);
   return ordenarDecisoes([...doAgente, ...porRegra]);
 }
+
+/** "caiu 25 em 7 dias" / "subiu 12 em 7 dias"; null sem retrato antigo ou variação menor que 5. */
+export function tendenciaNota(nota: number, nota7d: number | null | undefined): { texto: string; caiu: boolean } | null {
+  if (nota7d === null || nota7d === undefined) return null;
+  const d = nota - nota7d;
+  if (Math.abs(d) < 5) return null;
+  return { texto: `${d < 0 ? "caiu" : "subiu"} ${Math.abs(d)} em 7 dias`, caiu: d < 0 };
+}
+
+/** "2 de 3 contatos funcionaram" a partir dos resultados medidos 7 dias depois do envio. */
+export function textoEfeito(efeitos: string[]): string | null {
+  if (efeitos.length === 0) return null;
+  const ok = efeitos.filter((e) => e === "funcionou").length;
+  return `${ok} de ${efeitos.length} ${efeitos.length === 1 ? "contato funcionou" : "contatos funcionaram"}`;
+}

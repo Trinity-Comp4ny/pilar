@@ -42,7 +42,10 @@ function lerJson<S extends z.ZodTypeAny>(schema: S, valor: unknown): z.output<S>
   const r = schema.safeParse(valor);
   return r.success ? r.data : null;
 }
-export type SaudeEmpresa = Database["public"]["Functions"]["ops_saude_empresas"]["Returns"][number];
+/** O gerador marca toda coluna de retorno como não nula; `nota_7d` é null sem retrato de 7 dias atrás. */
+export type SaudeEmpresa = Omit<Database["public"]["Functions"]["ops_saude_empresas"]["Returns"][number], "nota_7d"> & {
+  nota_7d: number | null;
+};
 
 const contato = {
   contato_nome: z.string().nullable(),
@@ -155,6 +158,21 @@ export async function listarExecucoesDoAgente(agenteId: string): Promise<OpsExec
     .limit(100);
   if (error) throw error;
   return (data ?? []).map(lerExecucao);
+}
+
+/** Resultado medido 7 dias depois do envio (SPEC 129), das ações enviadas nos últimos 60 dias. */
+export async function listarEfeitosDoAgente(agenteId: string): Promise<string[]> {
+  const desde = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from("ops_acoes")
+    .select("resultado")
+    .eq("agente_id", agenteId)
+    .eq("status", "executada")
+    .gte("executada_em", desde);
+  if (error) throw error;
+  return (data ?? [])
+    .map((a) => (a.resultado as { efeito?: unknown } | null)?.efeito)
+    .filter((e): e is string => typeof e === "string");
 }
 
 export async function decidirAcao(input: {

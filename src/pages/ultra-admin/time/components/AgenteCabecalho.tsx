@@ -41,6 +41,7 @@ export function AgenteCabecalho({
   status,
   ultima,
   custo30d,
+  efeito,
   carregando,
 }: {
   agente: OpsAgente | undefined;
@@ -48,6 +49,8 @@ export function AgenteCabecalho({
   ultima: OpsExecucao | null;
   /** Custo de IA em 30 dias, já formatado; null quando não há execução. */
   custo30d: string | null;
+  /** "2 de 3 contatos funcionaram" (60 dias); null sem resultado medido. */
+  efeito: string | null;
   carregando: boolean;
 }) {
   const rodar = useRodarAgente();
@@ -71,6 +74,7 @@ export function AgenteCabecalho({
           {linhaExecucao(agente, status, ultima)}
           {!executavel && plano && status !== "externo" ? ` · ${plano.quando}` : ""}
           {custo30d ? ` · IA em 30 dias: ${custo30d}` : ""}
+          {efeito ? ` · ${efeito} em 60 dias` : ""}
         </p>
         {ultima?.status === "falhou" && ultima.erro && (
           <p className="text-xs text-danger-strong" role="alert">
