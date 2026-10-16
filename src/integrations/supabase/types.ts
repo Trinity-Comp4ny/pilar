@@ -9453,6 +9453,7 @@ export type Database = {
           p_entidade_tipo: string
           p_mencionados: string[]
           p_preview: string
+          p_todos?: boolean
         }
         Returns: number
       }
