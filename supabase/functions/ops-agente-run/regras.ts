@@ -7,9 +7,15 @@
  * padrão. Sem modelo (falha, teto de custo), o agente roda só com as regras.
  */
 
-export type AgenteExecutavel = "receita" | "clientes" | "produto" | "chefe";
+export type AgenteExecutavel = "receita" | "clientes" | "produto" | "qualidade" | "chefe";
 
-export const AGENTES_EXECUTAVEIS: readonly AgenteExecutavel[] = ["receita", "clientes", "produto", "chefe"];
+export const AGENTES_EXECUTAVEIS: readonly AgenteExecutavel[] = [
+  "receita",
+  "clientes",
+  "produto",
+  "qualidade",
+  "chefe",
+];
 
 /** Áreas que levantam fatos e gravam ações (o Chefe só junta). */
 export type AgenteDeArea = Exclude<AgenteExecutavel, "chefe">;
@@ -97,8 +103,10 @@ export type Candidato = {
   /** Evidência gravada na ação e mostrada antes de aprovar (ADR 0050). */
   fatos: Record<string, string | number | null>;
   textoPadrao: string;
-  /** Para onde a tarefa leva no Ultra (só alerta). Sem link, a fila abre a empresa. */
+  /** Para onde a tarefa leva (só alerta): rota do Ultra ou link externo (Sentry). */
   link?: string;
+  /** Gravado na evidência da ação, mas nunca enviado ao modelo (ids, listas). */
+  extra?: Record<string, unknown>;
 };
 
 // ─── Texto ────────────────────────────────────────────────────────────────────
@@ -156,6 +164,7 @@ export const FORA_DA_AREA: Record<AgenteDeArea, RegExp | null> = {
   receita: null,
   clientes: /(pagamento|cobran|atras|fatura|boleto|assinatura)/i,
   produto: null,
+  qualidade: /(pagamento|cobran|atras|fatura|boleto|assinatura)/i,
 };
 
 // ─── Candidatos ───────────────────────────────────────────────────────────────
@@ -511,6 +520,159 @@ export function resumoNumerosProduto(p: Produto): string {
   } e ${fb.sugestoes} ${fb.sugestoes === 1 ? "sugestão" : "sugestões"}.`;
 }
 
+// ─── Qualidade ────────────────────────────────────────────────────────────────
+
+/** Erro do Sentry com atividade em 24 h, já com os escritórios atingidos (tag empresa_id). */
+export type ErroSentry = {
+  id: string;
+  shortId: string;
+  titulo: string;
+  culprit: string | null;
+  link: string;
+  pessoas: number;
+  ocorrencias: number;
+  primeiraVez: string;
+  regressao: boolean;
+  empresas: string[];
+};
+
+/** Erro que estava atingindo escritórios e foi resolvido no Sentry: hora de avisar. */
+export type ErroCorrigido = { id: string; shortId: string; culprit: string | null; empresas: string[] };
+
+const AREA_DA_ROTA: Record<string, string> = {
+  financeiro: "Financeiro",
+  projetos: "Projetos",
+  propostas: "Propostas",
+  leads: "Leads",
+  obras: "Obras",
+  clientes: "Clientes",
+  pessoas: "Pessoas",
+  inicio: "Início",
+  agentes: "Agentes",
+  relatorios: "Relatórios",
+};
+
+/** "/gestao/financeiro" vira "Financeiro"; culprit de código ("at asaasFetch") vira null. */
+export function areaDaRota(culprit: string | null): string | null {
+  if (!culprit?.startsWith("/")) return null;
+  const partes = culprit.split(/[/?#]/).filter(Boolean).reverse();
+  for (const p of partes) if (AREA_DA_ROTA[p]) return AREA_DA_ROTA[p];
+  return null;
+}
+
+function cortar(t: string, max: number): string {
+  return t.length <= max ? t : `${t.slice(0, max - 1).trimEnd()}…`;
+}
+
+/**
+ * Qualidade, todo dia: erro novo, regressão e erro que atingiu cliente viram tarefa com
+ * link para o Sentry; erro resolvido que tinha atingido cliente vira WhatsApp avisando
+ * que já foi corrigido. Erro antigo que não atinge cliente fica quieto (já é conhecido).
+ */
+export function candidatosQualidade(
+  erros: ErroSentry[],
+  corrigidos: ErroCorrigido[],
+  saude: SaudeEmpresa[],
+  remetente: string,
+  agora: Date
+): Candidato[] {
+  const clientes = new Map(
+    saude.filter((s) => SITUACOES_QUE_IMPORTAM.has(s.situacao_cobranca)).map((s) => [s.empresa_id, s])
+  );
+  const lista: Omit<Candidato, "ref">[] = [];
+
+  for (const e of erros) {
+    const afetados = [...new Set(e.empresas)].filter((id) => clientes.has(id));
+    const novo = agora.getTime() - new Date(e.primeiraVez).getTime() <= DIA;
+    if (!novo && !e.regressao && afetados.length === 0) continue;
+    const motivo = e.regressao ? "regressao" : novo ? "erro_novo" : "erro_em_cliente";
+    const pagante = afetados.some((id) => clientes.get(id)?.situacao_cobranca === "pagante");
+    const onde = areaDaRota(e.culprit);
+    const alcance =
+      afetados.length > 0
+        ? `${afetados.length} ${afetados.length === 1 ? "escritório" : "escritórios"}`
+        : `${e.pessoas} ${e.pessoas === 1 ? "pessoa" : "pessoas"}`;
+    lista.push({
+      chave: e.regressao ? `regressao:${e.id}:${semanaIso(agora)}` : `erro:${e.id}`,
+      tipo: "alerta",
+      empresaId: null,
+      empresaNome: "",
+      contatoNome: null,
+      telefone: null,
+      titulo: `${e.shortId}${e.regressao ? " voltou" : ""}: ${cortar(e.titulo, 90)} (${alcance})`,
+      prioridade: e.regressao || pagante ? 1 : 2,
+      prazo: null,
+      fatos: {
+        motivo,
+        erro: e.shortId,
+        onde,
+        pessoas: e.pessoas,
+        ocorrencias_24h: e.ocorrencias,
+        escritorios_atingidos: afetados.length,
+      },
+      textoPadrao: `${onde ? `Em ${onde}. ` : ""}${e.pessoas} ${e.pessoas === 1 ? "pessoa" : "pessoas"} e ${e.ocorrencias} ${
+        e.ocorrencias === 1 ? "ocorrência" : "ocorrências"
+      } em 24 h.${
+        afetados.length > 0
+          ? " Corrija e marque como resolvido no Sentry: o agente rascunha o aviso para os escritórios atingidos."
+          : ""
+      }`,
+      link: e.link,
+      extra: { sentry_issue_id: e.id, empresas_afetadas: afetados, culprit: e.culprit },
+    });
+  }
+
+  for (const c of corrigidos) {
+    const onde = areaDaRota(c.culprit);
+    for (const id of new Set(c.empresas)) {
+      const s = clientes.get(id);
+      if (!s) continue;
+      lista.push({
+        chave: `corrigido:${c.id}:${id}`,
+        tipo: "whatsapp",
+        empresaId: id,
+        empresaNome: s.empresa_nome,
+        contatoNome: s.contato_nome,
+        telefone: s.contato_telefone,
+        titulo: `${s.empresa_nome}: erro corrigido (${c.shortId}), avisar`,
+        prioridade: 2,
+        prazo: null,
+        fatos: { motivo: "erro_corrigido", erro: c.shortId, onde },
+        textoPadrao: `${saudacao(s.contato_nome, remetente)} Nos últimos dias apareceu um erro para vocês no Pilar${
+          onde ? `, em ${onde}` : ""
+        }. Já está corrigido. Se notarem mais alguma coisa estranha, me avisa por aqui.`,
+      });
+    }
+  }
+
+  return lista.map((c, i) => ({ ...c, ref: `c${i + 1}` }));
+}
+
+export function indicadoresQualidade(erros: ErroSentry[], saude: SaudeEmpresa[], incidentes: number, agora: Date) {
+  const clientes = new Set(
+    saude.filter((s) => SITUACOES_QUE_IMPORTAM.has(s.situacao_cobranca)).map((s) => s.empresa_id)
+  );
+  return {
+    erros_24h: erros.length,
+    novos_24h: erros.filter((e) => agora.getTime() - new Date(e.primeiraVez).getTime() <= DIA).length,
+    regressoes_24h: erros.filter((e) => e.regressao).length,
+    pessoas_atingidas_24h: erros.reduce((s, e) => s + e.pessoas, 0),
+    escritorios_atingidos_24h: new Set(erros.flatMap((e) => e.empresas).filter((id) => clientes.has(id))).size,
+    incidentes_abertos: incidentes,
+  };
+}
+
+export function resumoNumerosQualidade(i: ReturnType<typeof indicadoresQualidade>): string {
+  const base = `${i.erros_24h} ${i.erros_24h === 1 ? "erro" : "erros"} com atividade em 24 h (${i.novos_24h} ${
+    i.novos_24h === 1 ? "novo" : "novos"
+  }, ${i.regressoes_24h} ${i.regressoes_24h === 1 ? "regressão" : "regressões"}), ${i.escritorios_atingidos_24h} ${
+    i.escritorios_atingidos_24h === 1 ? "escritório atingido" : "escritórios atingidos"
+  }.`;
+  return i.incidentes_abertos > 0
+    ? `${base} ${i.incidentes_abertos} ${i.incidentes_abertos === 1 ? "incidente aberto" : "incidentes abertos"} na status page.`
+    : base;
+}
+
 // ─── Resposta do modelo ───────────────────────────────────────────────────────
 
 export type RespostaModelo = {
@@ -584,6 +746,7 @@ const NADA_A_PEDIR: Record<AgenteDeArea, string> = {
   receita: "Nenhum teste vencendo em 48 h e nenhum pagamento em atraso.",
   clientes: "Nenhum escritório sumido e nenhum feedback parado.",
   produto: "Nenhuma área perdendo escritório e nenhum bug parado na triagem.",
+  qualidade: "Nenhum erro novo, nenhuma regressão e nenhum cliente atingido em 24 h.",
 };
 
 export function briefingPorRegra(agente: AgenteDeArea, candidatos: Candidato[], resumoNumeros: string): Briefing {
@@ -594,7 +757,9 @@ export function briefingPorRegra(agente: AgenteDeArea, candidatos: Candidato[], 
       ? NADA_A_PEDIR[agente]
       : agente === "produto"
         ? `${n} ${n === 1 ? "tarefa" : "tarefas"} para a semana.`
-        : `${n} ${n === 1 ? "contato pedido" : "contatos pedidos"}.`;
+        : agente === "qualidade"
+          ? `${n} ${n === 1 ? "item" : "itens"} para hoje.`
+          : `${n} ${n === 1 ? "contato pedido" : "contatos pedidos"}.`;
   return {
     fonte: "regra",
     resumo: `${resumoNumeros} ${pedido}`.trim(),

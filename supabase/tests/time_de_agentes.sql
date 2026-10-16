@@ -1,4 +1,4 @@
--- pgTAP: time de agentes no Ultra, fases 0 e 1 (SPEC 126, ADR 0060), SPEC 129 e 130.
+-- pgTAP: time de agentes no Ultra, fases 0 e 1 (SPEC 126, ADR 0060), SPEC 129, 130 e 131.
 --
 -- 1. As tabelas ops_* só abrem para ultra admin com MFA; admin de empresa e anon não
 --    leem nada e ninguém grava pela API.
@@ -11,7 +11,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(50);
+SELECT plan(51);
 
 -- =============================================================================
 -- Fixture: empresa da Pilar (ultra admin) e escritório cliente em teste
@@ -308,6 +308,10 @@ SELECT is(
   (SELECT ativo::text || ':' || cron FROM public.ops_agentes WHERE id = 'produto'),
   'true:7 10 * * 1',
   'Produto ligado, toda segunda às 7h07 de Brasília');
+SELECT is(
+  (SELECT ativo::text || ':' || cron || ':' || (autonomia ->> 'whatsapp') FROM public.ops_agentes WHERE id = 'qualidade'),
+  'true:3 10 * * *:N1',
+  'Qualidade ligado todo dia às 7h03 de Brasília, aviso a cliente em N1 (SPEC 131)');
 
 -- =============================================================================
 -- 2. Nota de saúde (função pura)

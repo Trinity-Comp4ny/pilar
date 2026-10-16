@@ -1,5 +1,6 @@
 /**
- * Prompt dos agentes de área: Receita e Clientes (SPEC 126 fase 1) e Produto (SPEC 130).
+ * Prompt dos agentes de área: Receita e Clientes (SPEC 126 fase 1), Produto (SPEC 130) e
+ * Qualidade (SPEC 131).
  * Fonte das regras: docs/operacao/agentes/<agente>.md. Mudou o playbook, muda aqui.
  *
  * O modelo recebe só agregado e, por candidato, nome do escritório, primeiro nome do
@@ -18,6 +19,7 @@ const MISSAO: Record<AgenteDeArea, string> = {
   receita: "Receita: fazer cada teste promissor virar pagante e nenhum pagamento escapar.",
   clientes: "Clientes: manter cada escritório ativo, ouvido e com o problema resolvido.",
   produto: "Produto: dizer o que é usado, o que é ignorado e onde o escritório trava.",
+  qualidade: "Qualidade: ordenar erro por cliente atingido e não deixar regressão passar.",
 };
 
 const REGRA_DA_AREA: Record<AgenteDeArea, string> = {
@@ -27,6 +29,8 @@ const REGRA_DA_AREA: Record<AgenteDeArea, string> = {
     "Você é o agente de relacionamento: nunca fale de pagamento, cobrança, atraso ou assinatura. Isso é do agente Receita.",
   produto:
     'Você não escreve para cliente: os candidatos são tarefas internas do fundador. Devolva "mensagens" vazio. "escritorios_28d_<area>" conta escritórios que mexeram naquela área em 28 dias.',
+  qualidade:
+    'Candidato "alerta" é tarefa interna (erro no Sentry): não escreva mensagem para ele. Candidato "whatsapp" é aviso de que um erro que atingiu o escritório já foi corrigido: diga só isso, sem detalhe técnico, sem código de erro, sem prometer prazo e sem culpar ninguém. Nunca fale de pagamento ou assinatura.',
 };
 
 export function systemPrompt(agente: AgenteDeArea, remetente: string): string {

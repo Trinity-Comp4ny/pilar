@@ -1,10 +1,14 @@
 import { assert, assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
 import { lerEntrada } from "./entrada.ts";
 import {
+  areaDaRota,
   aterrar,
   briefingPorRegra,
   candidatosClientes,
   candidatosProduto,
+  candidatosQualidade,
+  type ErroSentry,
+  indicadoresQualidade,
   candidatosReceita,
   custoUsd,
   estourouTeto,
@@ -21,6 +25,7 @@ import {
   type Receita,
   resumoDoDia,
   resumoNumerosProduto,
+  resumoNumerosQualidade,
   type SaudeEmpresa,
 } from "./regras.ts";
 
@@ -62,6 +67,7 @@ function saude(parcial: Partial<SaudeEmpresa>): SaudeEmpresa {
 Deno.test("entrada: só aceita os agentes executáveis", () => {
   assertEquals(lerEntrada({ agente_id: "receita" }).ok, true);
   assertEquals(lerEntrada({ agente_id: "produto" }).ok, true);
+  assertEquals(lerEntrada({ agente_id: "qualidade" }).ok, true);
   assertEquals(lerEntrada({ agente_id: "marketing" }).ok, false);
   assertEquals(lerEntrada(null).ok, false);
 });
@@ -416,4 +422,104 @@ Deno.test("produto: ignorada só em área de produto, no máximo duas, e o zero 
     ["area_ignorada:leads:2026-10", "area_ignorada:obras:2026-10"]
   );
   assertEquals(cs[0].titulo, "Leads: nenhum dos 10 escritórios usou em 28 dias");
+});
+
+// ─── SPEC 131 ─────────────────────────────────────────────────────────────────
+
+function erro(parcial: Partial<ErroSentry> = {}): ErroSentry {
+  return {
+    id: "101",
+    shortId: "PILAR-D",
+    titulo: "TypeError: Cannot read properties of undefined (reading 'default')",
+    culprit: "/gestao/financeiro",
+    link: "https://trinity-company.sentry.io/issues/101/",
+    pessoas: 3,
+    ocorrencias: 8,
+    // Antigo: visto pela primeira vez há 9 dias.
+    primeiraVez: "2026-10-06T10:00:00Z",
+    regressao: false,
+    empresas: [],
+    ...parcial,
+  };
+}
+
+Deno.test("qualidade: área a partir da rota do erro", () => {
+  assertEquals(areaDaRota("/gestao/financeiro"), "Financeiro");
+  assertEquals(areaDaRota("/projetos/123?aba=x"), "Projetos");
+  assertEquals(areaDaRota("?(at asaasFetch (file:///x.ts:51:11))"), null);
+  assertEquals(areaDaRota(null), null);
+});
+
+Deno.test("qualidade: erro antigo sem cliente fica quieto; novo, regressão e cliente atingido viram tarefa", () => {
+  const saudeLista = [saude({ empresa_id: "e1", empresa_nome: "Escritório Um" })];
+  const cs = candidatosQualidade(
+    [
+      erro(),
+      erro({ id: "102", shortId: "PILAR-N", primeiraVez: "2026-10-15T06:00:00Z" }),
+      erro({ id: "103", shortId: "PILAR-R", regressao: true }),
+      erro({ id: "104", shortId: "PILAR-C", empresas: ["e1", "e1", "interna"] }),
+    ],
+    [],
+    saudeLista,
+    "Matheus",
+    AGORA
+  );
+  assertEquals(
+    cs.map((c) => [c.chave, c.fatos.motivo, c.prioridade]),
+    [
+      ["erro:102", "erro_novo", 2],
+      ["regressao:103:2026-W42", "regressao", 1],
+      ["erro:104", "erro_em_cliente", 1],
+    ]
+  );
+  const c = cs[2];
+  assertEquals(c.tipo, "alerta");
+  assertEquals(c.link, "https://trinity-company.sentry.io/issues/101/");
+  assertEquals(c.titulo, "PILAR-C: TypeError: Cannot read properties of undefined (reading 'default') (1 escritório)");
+  assertEquals(c.extra, { sentry_issue_id: "104", empresas_afetadas: ["e1"], culprit: "/gestao/financeiro" });
+  assert(c.textoPadrao.startsWith("Em Financeiro. 3 pessoas e 8 ocorrências em 24 h."));
+  // O modelo não recebe a lista de empresas.
+  assert(!("empresas_afetadas" in c.fatos));
+});
+
+Deno.test("qualidade: erro resolvido vira aviso por escritório que ainda é cliente", () => {
+  const cs = candidatosQualidade(
+    [],
+    [{ id: "104", shortId: "PILAR-C", culprit: "/gestao/financeiro", empresas: ["e1", "e2"] }],
+    [
+      saude({ empresa_id: "e1", empresa_nome: "Escritório Um" }),
+      saude({ empresa_id: "e2", empresa_nome: "Cancelada", situacao_cobranca: "assinatura_cancelada" }),
+    ],
+    "Matheus",
+    AGORA
+  );
+  assertEquals(cs.length, 1);
+  assertEquals(cs[0].chave, "corrigido:104:e1");
+  assertEquals(cs[0].tipo, "whatsapp");
+  assertEquals(
+    cs[0].textoPadrao,
+    "Oi Ana, aqui é Matheus, da Pilar. Nos últimos dias apareceu um erro para vocês no Pilar, em Financeiro. Já está corrigido. Se notarem mais alguma coisa estranha, me avisa por aqui."
+  );
+  assert(!FORA_DA_AREA.qualidade!.test(cs[0].textoPadrao));
+});
+
+Deno.test("qualidade: indicadores e resumo", () => {
+  const i = indicadoresQualidade(
+    [erro({ empresas: ["e1"] }), erro({ id: "2", primeiraVez: "2026-10-15T06:00:00Z", regressao: true, pessoas: 1 })],
+    [saude({ empresa_id: "e1" })],
+    1,
+    AGORA
+  );
+  assertEquals(i, {
+    erros_24h: 2,
+    novos_24h: 1,
+    regressoes_24h: 1,
+    pessoas_atingidas_24h: 4,
+    escritorios_atingidos_24h: 1,
+    incidentes_abertos: 1,
+  });
+  assertEquals(
+    resumoNumerosQualidade(i),
+    "2 erros com atividade em 24 h (1 novo, 1 regressão), 1 escritório atingido. 1 incidente aberto na status page."
+  );
 });

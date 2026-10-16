@@ -16,6 +16,9 @@
  * Produto (SPEC 130, segunda-feira): uso por área (ops_produto) e feedback viram tarefas
  * internas; o modelo só escreve o briefing.
  *
+ * Qualidade (SPEC 131, todo dia): erros do Sentry (SENTRY_READ_TOKEN) viram tarefa com link
+ * e, quando resolvidos, aviso de "já corrigimos" aos escritórios atingidos.
+ *
  * Chefe de gabinete: sem modelo. Junta as ações pendentes e os números e manda o resumo
  * do dia por e-mail para os ultra admins.
  */
@@ -30,6 +33,7 @@ import { jsonResponse, optionsResponse } from "../_shared/cors.ts";
 import { callGeminiStructured, modeloEmUso } from "../_shared/ai-client.ts";
 import { sendEmail, templateAvisoPlataforma } from "../_shared/email/index.ts";
 import { lerEntrada } from "./entrada.ts";
+import { configSentry, errosDas24h, resolvidos, SEM_TOKEN } from "./sentry.ts";
 import { respostaSchema, systemPrompt, userMessage } from "./prompt.ts";
 import {
   type AgenteDeArea,
@@ -39,11 +43,14 @@ import {
   type Candidato,
   candidatosClientes,
   candidatosProduto,
+  candidatosQualidade,
   candidatosReceita,
   custoUsd,
   estourouTeto,
   FORA_DA_AREA,
   indicadoresProduto,
+  indicadoresQualidade,
+  type ErroCorrigido,
   mudancasDesde,
   novosCandidatos,
   type Produto,
@@ -55,6 +62,7 @@ import {
   resumoDoDia,
   resumoNumerosClientes,
   resumoNumerosProduto,
+  resumoNumerosQualidade,
   resumoNumerosReceita,
   type SaudeEmpresa,
   textosPadrao,
@@ -191,7 +199,73 @@ async function empresasOcupadas(admin: Admin, agente: string, empresaIds: string
   return ocupadas;
 }
 
-/** Receita, Clientes e Produto: fatos → candidatos → texto (modelo ou regra) → ações pendentes. */
+/** Máximo de erros conferidos por rodada (uma chamada ao Sentry por erro). */
+const ERROS_A_CONFERIR = 20;
+
+/**
+ * Erros que a Qualidade apontou em 30 dias e não foram descartados: os que resolveram no
+ * Sentry dão baixa sozinhos na tarefa pendente (N2) e, se tinham atingido escritório,
+ * viram aviso de "já corrigimos".
+ */
+async function conferirResolvidos(
+  admin: Admin,
+  cfg: NonNullable<ReturnType<typeof configSentry>>
+): Promise<ErroCorrigido[]> {
+  const desde = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const { data } = await admin
+    .from("ops_acoes")
+    .select("id, status, evidencia")
+    .eq("agente_id", "qualidade")
+    .eq("tipo", "alerta")
+    .neq("status", "descartada")
+    .gte("created_at", desde)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  const porErro = new Map<string, ErroCorrigido & { pendentes: string[] }>();
+  for (const a of data ?? []) {
+    const ev = (a.evidencia ?? {}) as Record<string, unknown>;
+    const id = typeof ev.sentry_issue_id === "string" ? ev.sentry_issue_id : null;
+    if (!id) continue;
+    const empresas = Array.isArray(ev.empresas_afetadas)
+      ? ev.empresas_afetadas.filter((x): x is string => typeof x === "string")
+      : [];
+    const atual = porErro.get(id) ?? {
+      id,
+      shortId: typeof ev.erro === "string" ? ev.erro : id,
+      culprit: typeof ev.culprit === "string" ? ev.culprit : null,
+      empresas: [],
+      pendentes: [],
+    };
+    atual.empresas = [...new Set([...atual.empresas, ...empresas])];
+    if (a.status === "pendente") atual.pendentes.push(a.id as string);
+    porErro.set(id, atual);
+  }
+  // Só vale conferir o que ainda tem tarefa aberta ou escritório a avisar.
+  const ids = [...porErro.values()]
+    .filter((e) => e.pendentes.length > 0 || e.empresas.length > 0)
+    .map((e) => e.id)
+    .slice(0, ERROS_A_CONFERIR);
+  if (ids.length === 0) return [];
+  const prontos = await resolvidos(cfg, ids);
+
+  const baixa = ids.filter((id) => prontos.has(id)).flatMap((id) => porErro.get(id)!.pendentes);
+  if (baixa.length > 0) {
+    const agora = new Date().toISOString();
+    const { error } = await admin
+      .from("ops_acoes")
+      .update({ status: "executada", decidida_em: agora, executada_em: agora, resultado: { fechada_por: "sentry" } })
+      .in("id", baixa);
+    if (error) log.error("falha ao dar baixa em tarefa de erro resolvido", error);
+  }
+
+  return ids
+    .filter((id) => prontos.has(id))
+    .map((id) => porErro.get(id)!)
+    .filter((e) => e.empresas.length > 0)
+    .map(({ pendentes: _p, ...e }) => e);
+}
+
+/** Receita, Clientes, Produto e Qualidade: fatos → candidatos → texto (modelo ou regra) → ações pendentes. */
 async function rodarArea(
   admin: Admin,
   agente: AgenteDeArea,
@@ -229,6 +303,21 @@ async function rodarArea(
     candidatos = candidatosProduto(p, agora);
     indicadores = indicadoresProduto(p);
     resumoNumeros = resumoNumerosProduto(p);
+  } else if (agente === "qualidade") {
+    const cfg = configSentry((k) => Deno.env.get(k));
+    if (!cfg) throw new Error(SEM_TOKEN);
+    const [saudeRes, incidentesRes, erros] = await Promise.all([
+      admin.rpc("ops_saude_empresas"),
+      admin.from("status_incidents").select("id", { count: "exact", head: true }).neq("status", "resolvido"),
+      errosDas24h(cfg),
+    ]);
+    if (saudeRes.error) throw new Error(`ops_saude_empresas: ${saudeRes.error.message}`);
+    const saude = (saudeRes.data ?? []) as SaudeEmpresa[];
+    const corrigidos = await conferirResolvidos(admin, cfg);
+    candidatos = candidatosQualidade(erros, corrigidos, saude, nome, agora);
+    const iq = indicadoresQualidade(erros, saude, incidentesRes.count ?? 0, agora);
+    indicadores = iq;
+    resumoNumeros = resumoNumerosQualidade(iq);
   } else {
     const { data, error } = await admin.rpc("ops_saude_empresas");
     if (error) throw new Error(`ops_saude_empresas: ${error.message}`);
@@ -323,7 +412,7 @@ async function rodarArea(
     chave: c.chave,
     prioridade: c.prioridade,
     prazo: c.prazo,
-    evidencia: c.empresaNome ? { ...c.fatos, escritorio: c.empresaNome } : c.fatos,
+    evidencia: { ...c.fatos, ...(c.empresaNome ? { escritorio: c.empresaNome } : {}), ...(c.extra ?? {}) },
     rascunho:
       c.tipo === "whatsapp"
         ? { canal: "whatsapp", texto: textos.get(c.ref) ?? c.textoPadrao, telefone: c.telefone, contato: c.contatoNome }
