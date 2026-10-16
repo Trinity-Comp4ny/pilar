@@ -1,4 +1,4 @@
--- pgTAP: time de agentes no Ultra, fases 0 e 1 (SPEC 126, ADR 0060).
+-- pgTAP: time de agentes no Ultra, fases 0 e 1 (SPEC 126, ADR 0060), SPEC 129 e 130.
 --
 -- 1. As tabelas ops_* só abrem para ultra admin com MFA; admin de empresa e anon não
 --    leem nada e ninguém grava pela API.
@@ -11,7 +11,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(43);
+SELECT plan(50);
 
 -- =============================================================================
 -- Fixture: empresa da Pilar (ultra admin) e escritório cliente em teste
@@ -265,6 +265,49 @@ SELECT is(
   (SELECT resultado ->> 'efeito' FROM public.ops_acoes WHERE id = 'a9000000-0000-0000-0000-0000000000e1'),
   'funcionou',
   'teste que virou pagante conta como contato que funcionou');
+
+-- =============================================================================
+-- 7. SPEC 130: agente Produto e marcos de ativação
+-- =============================================================================
+SET LOCAL session_replication_role = 'replica';
+INSERT INTO public.feature_suggestions (empresa_id, tipo, titulo, descricao, status_interno, created_by)
+VALUES ('a9000000-0000-0000-0000-0000000000c0', 'bug', 'Relatório trava', 'Ao exportar', 'novo',
+        'a9000000-0000-0000-0000-00000000c001');
+-- Contatos de ativação enviados há 8 e 9 dias. Lançamento no Financeiro há 2 dias (seção 6)
+-- conta para "segundo módulo"; a empresa segue com uma pessoa só, então "equipe" falhou.
+INSERT INTO public.ops_acoes (id, agente_id, tipo, empresa_id, titulo, evidencia, chave, status, executada_em)
+VALUES ('a9000000-0000-0000-0000-0000000000e3', 'clientes', 'whatsapp', 'a9000000-0000-0000-0000-0000000000c0',
+        'Equipe', '{"motivo": "ativacao", "marco": "equipe"}'::jsonb, 'ativacao:c0:equipe', 'executada',
+        now() - interval '9 days'),
+       ('a9000000-0000-0000-0000-0000000000e4', 'clientes', 'whatsapp', 'a9000000-0000-0000-0000-0000000000c0',
+        'Segundo módulo', '{"motivo": "ativacao", "marco": "segundo_modulo"}'::jsonb, 'ativacao:c0:segundo_modulo',
+        'executada', now() - interval '8 days');
+SET LOCAL session_replication_role = 'origin';
+
+SELECT test_time_auth('a9000000-0000-0000-0000-00000000a001'); -- ultra admin
+SELECT is(jsonb_array_length(public.ops_produto() -> 'modulos'), 7, 'produto lista as 7 áreas, mesmo sem uso');
+SELECT is(
+  (SELECT (m ->> 'empresas_28d')::int FROM jsonb_array_elements(public.ops_produto() -> 'modulos') m
+   WHERE m ->> 'modulo' = 'financeiro'),
+  1,
+  'lançamento recente conta o escritório no Financeiro');
+SELECT ok((public.ops_produto() #>> '{feedback_30d,bugs_sem_triagem}')::int >= 1, 'bug novo entra como sem triagem');
+RESET ROLE;
+
+SELECT test_time_auth('a9000000-0000-0000-0000-00000000c001'); -- admin do escritório
+SELECT throws_ok($$SELECT public.ops_produto()$$, '42501', NULL, 'admin de empresa não vê o uso do produto');
+RESET ROLE;
+
+SELECT is(public._ops_avaliar_contatos(), 2, 'avalia os dois contatos de ativação');
+SELECT is(
+  (SELECT string_agg(resultado ->> 'efeito', ',' ORDER BY id) FROM public.ops_acoes
+   WHERE id IN ('a9000000-0000-0000-0000-0000000000e3', 'a9000000-0000-0000-0000-0000000000e4')),
+  'nao_funcionou,funcionou',
+  'ativação mede o marco: equipe segue com uma pessoa, Financeiro foi usado');
+SELECT is(
+  (SELECT ativo::text || ':' || cron FROM public.ops_agentes WHERE id = 'produto'),
+  'true:7 10 * * 1',
+  'Produto ligado, toda segunda às 7h07 de Brasília');
 
 -- =============================================================================
 -- 2. Nota de saúde (função pura)

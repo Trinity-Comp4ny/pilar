@@ -6,12 +6,15 @@
  * Duas portas de entrada:
  *   - cron (pg_cron → ops_agente_disparar): Authorization: Bearer <CRON_SECRET>
  *   - "Rodar agora" no Ultra: JWT do ultra admin com MFA (requireUltraAdmin)
- *   POST { "agente_id": "receita" | "clientes" | "chefe" }
+ *   POST { "agente_id": "receita" | "clientes" | "produto" | "chefe" }
  *
  * Receita e Clientes: números pelas mesmas RPCs da tela (ops_receita, ops_saude_empresas),
  * candidatos a contato por regra (regras.ts), texto pelo modelo, aterrado em código.
  * Grava ops_execucoes (briefing, custo) e ops_acoes pendentes (N1: quem envia é o ultra
  * admin). Idempotente pela chave da ação. Sem modelo, roda só com as regras.
+ *
+ * Produto (SPEC 130, segunda-feira): uso por área (ops_produto) e feedback viram tarefas
+ * internas; o modelo só escreve o briefing.
  *
  * Chefe de gabinete: sem modelo. Junta as ações pendentes e os números e manda o resumo
  * do dia por e-mail para os ultra admins.
@@ -29,17 +32,21 @@ import { sendEmail, templateAvisoPlataforma } from "../_shared/email/index.ts";
 import { lerEntrada } from "./entrada.ts";
 import { respostaSchema, systemPrompt, userMessage } from "./prompt.ts";
 import {
+  type AgenteDeArea,
   aterrar,
   briefingPorRegra,
   type Briefing,
   type Candidato,
   candidatosClientes,
+  candidatosProduto,
   candidatosReceita,
   custoUsd,
   estourouTeto,
   FORA_DA_AREA,
+  indicadoresProduto,
   mudancasDesde,
   novosCandidatos,
+  type Produto,
   RESPIRO_DIAS,
   resumoEfeito,
   type Retrato,
@@ -47,6 +54,7 @@ import {
   type Receita,
   resumoDoDia,
   resumoNumerosClientes,
+  resumoNumerosProduto,
   resumoNumerosReceita,
   type SaudeEmpresa,
   textosPadrao,
@@ -142,7 +150,7 @@ function diaBrasilia(d: Date): string {
  */
 async function gravarRetrato(
   admin: Admin,
-  agente: "receita" | "clientes",
+  agente: AgenteDeArea,
   indicadores: Record<string, number>,
   notas: Array<{ empresa_id: string; nota: number }>
 ): Promise<void> {
@@ -183,10 +191,10 @@ async function empresasOcupadas(admin: Admin, agente: string, empresaIds: string
   return ocupadas;
 }
 
-/** Receita e Clientes: fatos → candidatos → texto (modelo ou regra) → ações pendentes. */
+/** Receita, Clientes e Produto: fatos → candidatos → texto (modelo ou regra) → ações pendentes. */
 async function rodarArea(
   admin: Admin,
-  agente: "receita" | "clientes",
+  agente: AgenteDeArea,
   execucaoId: string,
   tetoBrl: number | null
 ): Promise<Execucao & { acoes: number }> {
@@ -214,6 +222,13 @@ async function rodarArea(
       checkout_sem_pagar_30d: r.checkout_pendente,
     };
     resumoNumeros = resumoNumerosReceita(r);
+  } else if (agente === "produto") {
+    const { data, error } = await admin.rpc("ops_produto");
+    if (error) throw new Error(`ops_produto: ${error.message}`);
+    const p = data as Produto;
+    candidatos = candidatosProduto(p, agora);
+    indicadores = indicadoresProduto(p);
+    resumoNumeros = resumoNumerosProduto(p);
   } else {
     const { data, error } = await admin.rpc("ops_saude_empresas");
     if (error) throw new Error(`ops_saude_empresas: ${error.message}`);
@@ -249,7 +264,7 @@ async function rodarArea(
   const ocupadas = await empresasOcupadas(
     admin,
     agente,
-    ineditos.map((c) => c.empresaId)
+    ineditos.flatMap((c) => (c.empresaId ? [c.empresaId] : []))
   );
   const coordenado = semContatoDuplo(ineditos, ocupadas);
   const novos = coordenado.manter;
@@ -308,11 +323,11 @@ async function rodarArea(
     chave: c.chave,
     prioridade: c.prioridade,
     prazo: c.prazo,
-    evidencia: { ...c.fatos, escritorio: c.empresaNome },
+    evidencia: c.empresaNome ? { ...c.fatos, escritorio: c.empresaNome } : c.fatos,
     rascunho:
       c.tipo === "whatsapp"
         ? { canal: "whatsapp", texto: textos.get(c.ref) ?? c.textoPadrao, telefone: c.telefone, contato: c.contatoNome }
-        : { canal: "alerta", texto: c.textoPadrao, link: "/ultra-admin/feedback" },
+        : { canal: "alerta", texto: c.textoPadrao, link: c.link ?? "/ultra-admin/feedback" },
   }));
   // Uma a uma: o índice único da chave é parcial (só pendente), e o PostgREST não faz
   // ON CONFLICT com predicado. Duplicata (23505) vem de outra execução ao mesmo tempo.

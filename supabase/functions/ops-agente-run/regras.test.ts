@@ -4,12 +4,15 @@ import {
   aterrar,
   briefingPorRegra,
   candidatosClientes,
+  candidatosProduto,
   candidatosReceita,
   custoUsd,
   estourouTeto,
   FORA_DA_AREA,
   limparTexto,
+  marcoQueFalta,
   mudancasDesde,
+  type Produto,
   resumoEfeito,
   semanaIso,
   semContatoDuplo,
@@ -17,6 +20,7 @@ import {
   quandoVence,
   type Receita,
   resumoDoDia,
+  resumoNumerosProduto,
   type SaudeEmpresa,
 } from "./regras.ts";
 
@@ -57,6 +61,7 @@ function saude(parcial: Partial<SaudeEmpresa>): SaudeEmpresa {
 
 Deno.test("entrada: só aceita os agentes executáveis", () => {
   assertEquals(lerEntrada({ agente_id: "receita" }).ok, true);
+  assertEquals(lerEntrada({ agente_id: "produto" }).ok, true);
   assertEquals(lerEntrada({ agente_id: "marketing" }).ok, false);
   assertEquals(lerEntrada(null).ok, false);
 });
@@ -245,7 +250,10 @@ Deno.test("clientes: queda de 20+ pontos em 7 dias vira check-in, um por semana"
     "Matheus",
     AGORA
   );
-  assertEquals(c.map((x) => x.chave), ["queda:q1:2026-W42", "sem_acesso:q3:2026-10-15"]);
+  assertEquals(
+    c.map((x) => x.chave),
+    ["queda:q1:2026-W42", "sem_acesso:q3:2026-10-15"]
+  );
   assertEquals(c[0].fatos.nota_7_dias_atras, 75);
   assert(c[0].titulo.includes("nota 75 para 50"));
 });
@@ -264,7 +272,10 @@ Deno.test("um contato por escritório: outra área já fala com ele, este WhatsA
     "Matheus"
   );
   const r = semContatoDuplo(c, new Map([["a1", "receita"]]));
-  assertEquals(r.manter.map((x) => x.chave), ["feedback:a1:1", "sem_acesso:b1:2026-10-15"]);
+  assertEquals(
+    r.manter.map((x) => x.chave),
+    ["feedback:a1:1", "sem_acesso:b1:2026-10-15"]
+  );
   assertEquals(r.descartes, [{ ref: "c1", motivo: "escritório já tem contato de receita" }]);
 });
 
@@ -285,4 +296,124 @@ Deno.test("resultado dos contatos", () => {
     resumoEfeito(["funcionou", "nao_funcionou", "funcionou"]),
     "Contatos dos últimos 30 dias com resultado medido: 2 de 3 funcionaram."
   );
+});
+
+// ─── SPEC 130 ─────────────────────────────────────────────────────────────────
+
+function novo(parcial: Partial<SaudeEmpresa>): SaudeEmpresa {
+  return saude({
+    estagio: "onboarding",
+    criada_em: "2026-10-10T12:00:00Z",
+    projetos_ativos: 2,
+    usuarios: 3,
+    modulos_usados: 2,
+    ...parcial,
+  });
+}
+
+Deno.test("ativação: um marco por vez, na ordem, só depois do dia da régua", () => {
+  // Cadastro em 10/10, hoje 15/10: 5 dias.
+  assertEquals(marcoQueFalta(novo({ projetos_ativos: 0 }), AGORA), { marco: "primeiro_projeto", dias: 5 });
+  assertEquals(marcoQueFalta(novo({ projetos_ativos: 0, usuarios: 1 }), AGORA)?.marco, "primeiro_projeto");
+  assertEquals(marcoQueFalta(novo({ usuarios: 1 }), AGORA)?.marco, "equipe");
+  // Segundo módulo só a partir do dia 9.
+  assertEquals(marcoQueFalta(novo({ modulos_usados: 1 }), AGORA), null);
+  assertEquals(
+    marcoQueFalta(novo({ modulos_usados: 1, criada_em: "2026-10-05T12:00:00Z" }), AGORA)?.marco,
+    "segundo_modulo"
+  );
+  // Equipe só a partir do dia 5: cadastro de anteontem ainda não pede.
+  assertEquals(marcoQueFalta(novo({ usuarios: 1, criada_em: "2026-10-13T12:00:00Z" }), AGORA), null);
+  // Fora do onboarding, em teste (é da Receita) ou tudo feito: nada.
+  assertEquals(marcoQueFalta(novo({ projetos_ativos: 0, estagio: "adocao" }), AGORA), null);
+  assertEquals(marcoQueFalta(novo({ projetos_ativos: 0, situacao_cobranca: "em_teste" }), AGORA), null);
+  assertEquals(marcoQueFalta(novo({}), AGORA), null);
+});
+
+Deno.test("ativação: vira WhatsApp com chave por marco; sumido fica só com o sem acesso", () => {
+  const [c] = candidatosClientes([novo({ usuarios: 1 })], "Matheus", AGORA);
+  assertEquals(c.chave, "ativacao:e1:equipe");
+  assertEquals(c.tipo, "whatsapp");
+  assertEquals(c.fatos.marco, "equipe");
+  assert(c.textoPadrao.startsWith("Oi Ana, aqui é Matheus, da Pilar."));
+  assert(!FORA_DA_AREA.clientes!.test(c.textoPadrao));
+  assert(!/[—–]/.test(c.textoPadrao));
+
+  const sumido = candidatosClientes([novo({ projetos_ativos: 0, dias_sem_acesso: 8 })], "Matheus", AGORA);
+  assertEquals(
+    sumido.map((x) => x.fatos.motivo),
+    ["sem_acesso"]
+  );
+});
+
+function produto(parcial: Partial<Produto> = {}): Produto {
+  return {
+    escritorios: 10,
+    modulos: [
+      { modulo: "projetos", empresas_28d: 9, empresas_28d_anteriores: 9 },
+      { modulo: "financeiro", empresas_28d: 3, empresas_28d_anteriores: 6 },
+      { modulo: "propostas", empresas_28d: 1, empresas_28d_anteriores: 1 },
+      { modulo: "obras", empresas_28d: 4, empresas_28d_anteriores: 5 },
+    ],
+    feedback_30d: { total: 6, bugs: 4, sugestoes: 2, bugs_sem_triagem: 3 },
+    ...parcial,
+  };
+}
+
+Deno.test("produto: área em queda, área ignorada e bug parado viram tarefas internas", () => {
+  const cs = candidatosProduto(produto(), AGORA);
+  assertEquals(
+    cs.map((c) => c.chave),
+    ["area_em_queda:financeiro:2026-10", "area_ignorada:propostas:2026-10", "bugs_parados:2026-W42"]
+  );
+  for (const c of cs) {
+    assertEquals(c.tipo, "alerta");
+    assertEquals(c.empresaId, null);
+    assert(c.link?.startsWith("/ultra-admin/"));
+  }
+  assertEquals(cs[0].titulo, "Financeiro: de 6 para 3 escritórios usando em 28 dias");
+  // Obras perdeu 1 de 5: abaixo do mínimo de 2, não é queda.
+  assert(!cs.some((c) => c.chave.includes("obras")));
+});
+
+Deno.test("produto: base pequena não chama área de ignorada; poucos bugs não viram tarefa", () => {
+  const cs = candidatosProduto(
+    produto({ escritorios: 4, feedback_30d: { total: 2, bugs: 2, sugestoes: 0, bugs_sem_triagem: 2 } }),
+    AGORA
+  );
+  assertEquals(
+    cs.map((c) => c.chave),
+    ["area_em_queda:financeiro:2026-10"]
+  );
+});
+
+Deno.test("produto: resumo por regra com as áreas mais usadas", () => {
+  assertEquals(
+    resumoNumerosProduto(produto()),
+    "10 escritórios, áreas mais usadas em 28 dias: Projetos (9), Obras (4), Financeiro (3). Feedback em 30 dias: 4 bugs e 2 sugestões."
+  );
+  const b = briefingPorRegra("produto", [], "10 escritórios.");
+  assertEquals(b.resumo, "10 escritórios. Nenhuma área perdendo escritório e nenhum bug parado na triagem.");
+});
+
+Deno.test("produto: ignorada só em área de produto, no máximo duas, e o zero escrito por extenso", () => {
+  const cs = candidatosProduto(
+    produto({
+      modulos: [
+        { modulo: "clientes", empresas_28d: 0, empresas_28d_anteriores: 0 },
+        { modulo: "financeiro", empresas_28d: 1, empresas_28d_anteriores: 1 },
+        { modulo: "leads", empresas_28d: 0, empresas_28d_anteriores: 0 },
+        { modulo: "obras", empresas_28d: 0, empresas_28d_anteriores: 0 },
+        { modulo: "pessoas", empresas_28d: 0, empresas_28d_anteriores: 0 },
+        { modulo: "projetos", empresas_28d: 9, empresas_28d_anteriores: 9 },
+      ],
+      feedback_30d: { total: 0, bugs: 0, sugestoes: 0, bugs_sem_triagem: 0 },
+    }),
+    AGORA
+  );
+  assertEquals(
+    cs.map((c) => c.chave),
+    ["area_ignorada:leads:2026-10", "area_ignorada:obras:2026-10"]
+  );
+  assertEquals(cs[0].titulo, "Leads: nenhum dos 10 escritórios usou em 28 dias");
 });
