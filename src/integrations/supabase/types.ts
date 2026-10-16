@@ -8382,6 +8382,19 @@ export type Database = {
         Args: { p_pessoa: string; p_tarefa: string }
         Returns: undefined
       }
+      _ops_funil_por_utm: {
+        Args: { p_ate: string; p_desde: string }
+        Returns: {
+          ativados: number
+          cadastros: number
+          dia: string
+          pagantes: number
+          utm_campaign: string
+          utm_content: string
+          utm_medium: string
+          utm_source: string
+        }[]
+      }
       _ops_nota_saude: {
         Args: {
           p_dias_sem_acesso: number

@@ -11,7 +11,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(31);
+SELECT plan(35);
 
 -- =============================================================================
 -- Fixture: empresa da Pilar (ultra admin) e escritório cliente em teste
@@ -29,7 +29,7 @@ INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role, last_sign_in_a
 VALUES
   ('a9000000-0000-0000-0000-00000000a001', 'ultra@time.test', '{}'::jsonb, 'authenticated', 'authenticated', now()),
   ('a9000000-0000-0000-0000-00000000c001', 'dono@cliente.test',
-   '{"origem": {"utm_source": "linkedin", "utm_campaign": "lancamento-2027-01"}}'::jsonb,
+   '{"origem": {"utm_source": "linkedin", "utm_campaign": "lancamento-2027-01", "utm_content": "dabc12345"}}'::jsonb,
    'authenticated', 'authenticated', now() - interval '2 days')
 ON CONFLICT (id) DO NOTHING;
 
@@ -188,6 +188,33 @@ SELECT set_config('request.jwt.claims', '{"role": "service_role"}', true);
 SELECT set_config('role', 'service_role', true);
 SELECT lives_ok($$SELECT public.ops_receita(30)$$, 'service role (executor) lê ops_receita');
 RESET ROLE;
+
+-- =============================================================================
+-- 5. Funil por UTM para a plataforma de marketing (SPEC 128)
+-- =============================================================================
+SELECT ok(
+  NOT has_function_privilege('authenticated', 'public._ops_funil_por_utm(date, date)', 'EXECUTE')
+  AND NOT has_function_privilege('anon', 'public._ops_funil_por_utm(date, date)', 'EXECUTE'),
+  'funil por UTM não é executável por anon nem por usuário logado');
+
+SELECT is(
+  (SELECT array_agg(a.attname::text ORDER BY a.attnum)
+   FROM pg_proc p, unnest(p.proargnames) WITH ORDINALITY AS a(attname, attnum)
+   WHERE p.proname = '_ops_funil_por_utm' AND a.attnum > 2),
+  ARRAY['dia', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'cadastros', 'ativados', 'pagantes'],
+  'funil por UTM só devolve dia, UTM e contagens (nenhum dado pessoal)');
+
+SELECT set_config('request.jwt.claims', '{"role": "service_role"}', true);
+SELECT set_config('role', 'service_role', true);
+SELECT is(
+  (SELECT cadastros || ':' || ativados || ':' || pagantes FROM public._ops_funil_por_utm(current_date - 1, current_date + 1)
+   WHERE utm_content = 'dabc12345'),
+  '1:1:0',
+  'o cadastro do link conta pelo utm_content, ativado por ter projeto real');
+RESET ROLE;
+
+SELECT is((SELECT ativo FROM public.ops_agentes WHERE id = 'marketing'), false,
+  'Marketing não roda no Pilar: vive na plataforma de marketing');
 
 -- =============================================================================
 -- 2. Nota de saúde (função pura)
