@@ -1948,6 +1948,7 @@ export type Database = {
           estado: string | null
           features: Json
           id: string
+          interna: boolean
           leitura_desde: string | null
           logo_url: string | null
           max_projetos_override: number | null
@@ -1990,6 +1991,7 @@ export type Database = {
           estado?: string | null
           features?: Json
           id?: string
+          interna?: boolean
           leitura_desde?: string | null
           logo_url?: string | null
           max_projetos_override?: number | null
@@ -2032,6 +2034,7 @@ export type Database = {
           estado?: string | null
           features?: Json
           id?: string
+          interna?: boolean
           leitura_desde?: string | null
           logo_url?: string | null
           max_projetos_override?: number | null
@@ -8382,6 +8385,7 @@ export type Database = {
         Args: { p_pessoa: string; p_tarefa: string }
         Returns: undefined
       }
+      _ops_avaliar_contatos: { Args: never; Returns: number }
       _ops_funil_por_utm: {
         Args: { p_ate: string; p_desde: string }
         Returns: {
@@ -9149,6 +9153,10 @@ export type Database = {
         Args: { p_agente_id: string; p_ativo: boolean }
         Returns: undefined
       }
+      ops_marcar_empresa_interna: {
+        Args: { p_empresa_id: string; p_interna: boolean }
+        Returns: undefined
+      }
       ops_receita: { Args: { p_dias?: number }; Returns: Json }
       ops_saude_crons: { Args: never; Returns: Json }
       ops_saude_empresas: {
@@ -9161,9 +9169,12 @@ export type Database = {
           em_atraso: boolean
           empresa_id: string
           empresa_nome: string
+          estagio: string
           faixa: string
           feedback_aberto: number
+          modulos_usados: number
           nota: number
+          nota_7d: number
           projetos_ativos: number
           semanas_ativas: number
           situacao_cobranca: string

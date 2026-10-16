@@ -54,7 +54,25 @@ export type SaudeEmpresa = {
   feedback_aberto: number;
   contato_nome: string | null;
   contato_telefone: string | null;
+  /** Áreas do produto mexidas em 28 dias (SPEC 129). */
+  modulos_usados?: number;
+  /** Nota de 7 dias atrás, do retrato diário; null se ainda não há retrato. */
+  nota_7d?: number | null;
+  estagio?: string;
 };
+
+/** Queda de nota em 7 dias que vale um check-in, mesmo com o escritório entrando. */
+export const QUEDA_NOTA_ALERTA = 20;
+
+/** Semana ISO ("2026-W42"): a queda vira no máximo um contato por semana. */
+export function semanaIso(d: Date): string {
+  const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const dia = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - dia);
+  const inicioAno = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  const semana = Math.ceil(((t.getTime() - inicioAno.getTime()) / 86400000 + 1) / 7);
+  return `${t.getUTCFullYear()}-W${String(semana).padStart(2, "0")}`;
+}
 
 export type Candidato = {
   /** Referência curta e estável dentro da execução ("c1", "c2"...), a única que o modelo vê. */
@@ -178,13 +196,36 @@ export function candidatosReceita(r: Receita, remetente: string, agora: Date): C
 
 const SITUACOES_QUE_IMPORTAM = new Set(["pagante", "em_teste", "convidada", "em_atraso"]);
 
-export function candidatosClientes(saude: SaudeEmpresa[], remetente: string): Candidato[] {
+export function candidatosClientes(saude: SaudeEmpresa[], remetente: string, agora: Date = new Date()): Candidato[] {
   const lista: Omit<Candidato, "ref">[] = [];
 
   for (const s of saude) {
     if (!SITUACOES_QUE_IMPORTAM.has(s.situacao_cobranca)) continue;
     const dias = s.dias_sem_acesso;
-    if (dias !== null && dias >= DIAS_SEM_ACESSO_ALERTA) {
+    const sumido = dias !== null && dias >= DIAS_SEM_ACESSO_ALERTA;
+    const queda = s.nota_7d != null ? s.nota_7d - s.nota : 0;
+    if (!sumido && queda >= QUEDA_NOTA_ALERTA) {
+      lista.push({
+        chave: `queda:${s.empresa_id}:${semanaIso(agora)}`,
+        tipo: "whatsapp",
+        empresaId: s.empresa_id,
+        empresaNome: s.empresa_nome,
+        contatoNome: s.contato_nome,
+        telefone: s.contato_telefone,
+        titulo: `${s.empresa_nome}: uso caiu (nota ${s.nota_7d} para ${s.nota} em 7 dias)`,
+        prioridade: 2,
+        prazo: null,
+        fatos: {
+          motivo: "queda_de_uso",
+          nota_7_dias_atras: s.nota_7d ?? null,
+          nota_agora: s.nota,
+          modulos_usados: s.modulos_usados ?? null,
+          estagio: s.estagio ?? null,
+        },
+        textoPadrao: `${saudacao(s.contato_nome, remetente)} Vi que o Pilar foi menos usado aí nesta semana. Mudou algo no escritório ou travou em alguma parte? Se quiser, marco 15 minutos para ajustar.`,
+      });
+    }
+    if (sumido) {
       lista.push({
         chave: `sem_acesso:${s.empresa_id}:${dataCurta(s.ultimo_acesso)}`,
         tipo: "whatsapp",
@@ -195,7 +236,13 @@ export function candidatosClientes(saude: SaudeEmpresa[], remetente: string): Ca
         titulo: `${s.empresa_nome}: sem acesso há ${dias} dias`,
         prioridade: 2,
         prazo: null,
-        fatos: { motivo: "sem_acesso", dias_sem_acesso: dias, nota_saude: s.nota, situacao: s.situacao_cobranca },
+        fatos: {
+          motivo: "sem_acesso",
+          dias_sem_acesso: dias,
+          nota_saude: s.nota,
+          situacao: s.situacao_cobranca,
+          estagio: s.estagio ?? null,
+        },
         textoPadrao: `${saudacao(s.contato_nome, remetente)} Faz ${dias} dias que vocês não entram no sistema. Travou em alguma coisa? Se quiser, marco 15 minutos para ajustar o Pilar ao jeito do escritório.`,
       });
     }
@@ -377,4 +424,64 @@ export function resumoDoDia(
     ...numeros.filter(Boolean),
   ];
   return { titulo, mensagem: limparTexto(linhas.join("\n")), prioridades: top };
+}
+
+// ─── Um contato por escritório ────────────────────────────────────────────────
+
+/** Dias depois de um contato enviado em que outra área não manda nova mensagem. */
+export const RESPIRO_DIAS = 3;
+
+/**
+ * Tira os WhatsApps de escritório que já tem contato de outra área pendente ou enviado há
+ * menos de RESPIRO_DIAS dias. Em staging, a Receita (atraso) e a Clientes (sem acesso)
+ * escreviam para o mesmo dono no mesmo dia.
+ */
+export function semContatoDuplo(
+  candidatos: Candidato[],
+  empresasOcupadas: Map<string, string>
+): { manter: Candidato[]; descartes: Array<{ ref: string; motivo: string }> } {
+  const manter: Candidato[] = [];
+  const descartes: Array<{ ref: string; motivo: string }> = [];
+  for (const c of candidatos) {
+    const outra = c.tipo === "whatsapp" ? empresasOcupadas.get(c.empresaId) : undefined;
+    if (outra) {
+      descartes.push({ ref: c.ref, motivo: `escritório já tem contato de ${outra}` });
+      continue;
+    }
+    manter.push(c);
+  }
+  return { manter, descartes };
+}
+
+// ─── Retrato diário e o que mudou ─────────────────────────────────────────────
+
+export type Retrato = Record<string, number>;
+
+const ROTULO: Record<string, { nome: string; dinheiro?: boolean; ruimSubir?: boolean }> = {
+  "receita.mrr": { nome: "MRR", dinheiro: true },
+  "receita.pagantes": { nome: "pagantes" },
+  "receita.cadastros_30d": { nome: "cadastros em 30 dias" },
+  "receita.em_teste": { nome: "em teste" },
+  "clientes.risco": { nome: "escritórios em risco", ruimSubir: true },
+};
+
+/** "Desde ontem: MRR +R$ 490,00, pagantes +1." Vazio quando nada mudou ou não há ontem. */
+export function mudancasDesde(hoje: Retrato, ontem: Retrato): string {
+  const partes: string[] = [];
+  for (const [chave, r] of Object.entries(ROTULO)) {
+    if (!(chave in hoje) || !(chave in ontem)) continue;
+    const d = hoje[chave] - ontem[chave];
+    if (d === 0) continue;
+    const sinal = d > 0 ? "+" : "-";
+    const valor = r.dinheiro ? brl.format(Math.abs(d)) : String(Math.abs(d));
+    partes.push(`${r.nome} ${sinal}${valor}`);
+  }
+  return partes.length ? `Desde ontem: ${partes.join(", ")}.` : "";
+}
+
+/** "Contatos de 30 dias com resultado medido: 3 de 5 funcionaram." */
+export function resumoEfeito(efeitos: string[]): string {
+  if (efeitos.length === 0) return "";
+  const ok = efeitos.filter((e) => e === "funcionou").length;
+  return `Contatos dos últimos 30 dias com resultado medido: ${ok} de ${efeitos.length} funcionaram.`;
 }
