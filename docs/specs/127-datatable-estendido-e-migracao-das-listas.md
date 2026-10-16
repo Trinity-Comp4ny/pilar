@@ -134,3 +134,22 @@ Antes e depois em [`docs/design/antes-depois/spec-127/`](../design/antes-depois/
 - Guarda: o teste de varredura confere que `LancamentosTable` usa as constantes compartilhadas.
 - Fica de fora (por decisão): Timesheet (dormente) e tabelas dentro de diálogos. A lista de exceções só tem esses
   e `LancamentosTable`, agora com o motivo atualizado.
+
+## Limpeza final (restos achados na auditoria pós-fase 3)
+
+Uma varredura depois da fase 3 achou o que as fases anteriores deixaram para trás. Antes e depois em
+`docs/design/antes-depois/spec-127/` (arquivos `limpeza-*`).
+
+- **Fornecedores (lista):** o card ainda tinha o título "Lista de Fornecedores" com contagem; saiu, e a
+  contagem foi para a toolbar, como em Clientes e Propostas. Faltou na fase 4 da SPEC 124.
+- **Auditoria (admin):** filtros em grade dentro do card passaram para a toolbar (`FilterSelect`, busca por
+  autor, CSV e atualizar à direita); a pílula cinza "Ações Admin / Mutações de Dados" virou `ViewSwitcher`;
+  o card com título "Auditoria" (repetia o título da página) saiu. As duas subabas montam a própria toolbar
+  por `PageToolbar` e recebem o alternador como primeiro item.
+- **Empresa (admin):** "Dados / Personalização" virou `ViewSwitcher`.
+- **Ultra admin:** "Por empresa / Por agente / Últimas chamadas" (Custos de IA) virou `ViewSwitcher`; as
+  seções do detalhe de empresa viraram `SectionTabs` (sem captura: o seed local não tem empresas).
+- **Guarda:** o teste de varredura barra `<TabsList>` fora de uma lista com motivo (painel de detalhe
+  responsivo, modal de configurações e Timesheet, dormente).
+- **Fora de escopo, por decisão:** filtros dentro de card em telas internas do Ultra admin (Incidentes,
+  Testes), em Metas (refeita na SPEC 123 por outra sessão) e formulários de empresa.

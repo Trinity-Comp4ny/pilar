@@ -85,3 +85,27 @@ describe("varredura: tabelas com <table> própria seguem o visual do DataTable (
     expect(src).toContain("TABLE_CELL_DENSE_CLASS");
   });
 });
+
+// Seção de página é SectionTabs e troca de visão é ViewSwitcher; a pílula cinza `TabsList` só fica onde
+// há motivo registrado (SPEC 124, limpeza). A lista só encolhe.
+const TABSLIST_PERMITIDO: Record<string, string> = {
+  "src/components/ui/responsive-detail-panels.tsx": "painel de detalhe responsivo (primitivo de UI)",
+  "src/components/settings/panels/EmpresaPanel.tsx": "dentro do modal de configurações, outro contexto de navegação",
+  "src/pages/Timesheet.tsx": "módulo dormente",
+};
+
+describe("varredura: abas em pílula cinza (SPEC 124)", () => {
+  it("TabsList só aparece onde há motivo registrado", () => {
+    const offenders = todos
+      .filter((f) => !f.endsWith("components/ui/tabs.tsx"))
+      .filter((f) => /<TabsList[\s>]/.test(ler(f)))
+      .map(rel)
+      .filter((f) => !(f in TABSLIST_PERMITIDO));
+    expect(offenders).toEqual([]);
+  });
+
+  it("a lista de TabsList permitido não guarda arquivo que já migrou", () => {
+    const migrados = Object.keys(TABSLIST_PERMITIDO).filter((f) => !/<TabsList[\s>]/.test(ler(join(ROOT, f))));
+    expect(migrados).toEqual([]);
+  });
+});

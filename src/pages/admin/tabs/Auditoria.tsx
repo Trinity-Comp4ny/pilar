@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PageToolbar } from "@/components/PageSlots";
+import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
+import { FilterBar, FilterSelect } from "@/components/filters/FilterBar";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
-import { ShieldCheck, RefreshCw, Download, FileSearch } from "lucide-react";
+import { RefreshCw, Download, FileSearch } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { untypedFrom } from "@/lib/supabaseRpc";
 import { format, parseISO } from "date-fns";
@@ -206,7 +205,7 @@ const ACOES_ADMIN_COLUMNS: ColumnDef<AdminAuditLog>[] = [
   },
 ];
 
-function DataAuditTab() {
+function DataAuditTab({ visao }: { visao: React.ReactNode }) {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -246,57 +245,66 @@ function DataAuditTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Mutações em tabelas sensíveis registradas por triggers (últimos 200).
-        </p>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => exportAuditLogsCSV(logs)} disabled={!logs.length}>
-            <Download className="h-4 w-4 mr-1.5" />
-            CSV
-          </Button>
-          <Button variant="outline" size="sm" onClick={fetchLogs} disabled={loading}>
-            {loading ? <BusyMark className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
-          </Button>
-        </div>
-      </div>
+      {/* Toolbar padrão (SPEC 124): visão, filtros e ações da aba. */}
+      <PageToolbar>
+        <FilterBar
+          end={
+            <>
+              <Button
+                variant="outline"
+                className="h-9 rounded-full px-3.5 text-[13px] font-normal"
+                onClick={() => exportAuditLogsCSV(logs)}
+                disabled={!logs.length}
+              >
+                <Download className="h-4 w-4" />
+                CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 rounded-full"
+                onClick={fetchLogs}
+                disabled={loading}
+                aria-label="Atualizar"
+              >
+                {loading ? <BusyMark className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
+              </Button>
+            </>
+          }
+        >
+          {visao}
+          <FilterSelect
+            label="Tabela"
+            value={filterTable}
+            emptyValue="all"
+            onChange={setFilterTable}
+            options={[{ value: "all", label: "Todas" }, ...SENSITIVE_TABLES.map((t) => ({ value: t, label: t }))]}
+          />
+          <FilterSelect
+            label="Ação"
+            value={filterAction}
+            emptyValue="all"
+            onChange={setFilterAction}
+            options={[
+              { value: "all", label: "Todas" },
+              { value: "INSERT", label: "INSERT" },
+              { value: "UPDATE", label: "UPDATE" },
+              { value: "DELETE", label: "DELETE" },
+            ]}
+          />
+          <Input
+            placeholder="Autor (email)"
+            aria-label="Autor (email)"
+            value={filterActor}
+            onChange={(e) => setFilterActor(e.target.value)}
+            className="h-9 w-[220px] shrink-0 rounded-full text-[13px]"
+          />
+        </FilterBar>
+      </PageToolbar>
 
-      <div className="grid gap-3 md:grid-cols-3">
-        <div className="space-y-1.5">
-          <Label className="text-xs">Tabela</Label>
-          <Select value={filterTable} onValueChange={setFilterTable}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas</SelectItem>
-              {SENSITIVE_TABLES.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {t}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Ação</Label>
-          <Select value={filterAction} onValueChange={setFilterAction}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas</SelectItem>
-              <SelectItem value="INSERT">INSERT</SelectItem>
-              <SelectItem value="UPDATE">UPDATE</SelectItem>
-              <SelectItem value="DELETE">DELETE</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Autor (email)</Label>
-          <Input placeholder="admin@empresa.com" value={filterActor} onChange={(e) => setFilterActor(e.target.value)} />
-        </div>
-      </div>
+      <p className="text-sm text-muted-foreground">
+        Mutações em tabelas sensíveis registradas por triggers (últimos 200).
+      </p>
 
       {error && <div className="text-sm text-danger-mid">{error}</div>}
 
@@ -331,7 +339,7 @@ function DataAuditTab() {
 
 // ─── admin_audit_logs tab ─────────────────────────────────────────────────────
 
-function AdminActionsTab() {
+function AdminActionsTab({ visao }: { visao: React.ReactNode }) {
   const [logs, setLogs] = useState<AdminAuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -369,41 +377,59 @@ function AdminActionsTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">Convites, remoções, features, impersonation (últimos 200).</p>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => exportAdminLogsCSV(logs)} disabled={!logs.length}>
-            <Download className="h-4 w-4 mr-1.5" />
-            CSV
-          </Button>
-          <Button variant="outline" size="sm" onClick={fetchLogs} disabled={loading}>
-            {loading ? <BusyMark className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
-          </Button>
-        </div>
-      </div>
+      {/* Toolbar padrão (SPEC 124): visão, filtros e ações da aba. */}
+      <PageToolbar>
+        <FilterBar
+          end={
+            <>
+              <Button
+                variant="outline"
+                className="h-9 rounded-full px-3.5 text-[13px] font-normal"
+                onClick={() => exportAdminLogsCSV(logs)}
+                disabled={!logs.length}
+              >
+                <Download className="h-4 w-4" />
+                CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 rounded-full"
+                onClick={fetchLogs}
+                disabled={loading}
+                aria-label="Atualizar"
+              >
+                {loading ? <BusyMark className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
+              </Button>
+            </>
+          }
+        >
+          {visao}
+          <FilterSelect
+            label="Categoria"
+            value={filterCategory}
+            emptyValue="all"
+            onChange={setFilterCategory}
+            options={[
+              { value: "all", label: "Todas" },
+              { value: "user", label: "Usuário" },
+              { value: "empresa", label: "Empresa" },
+              { value: "member", label: "Membro" },
+              { value: "billing", label: "Billing" },
+              { value: "impersonation", label: "Impersonation" },
+            ]}
+          />
+          <Input
+            placeholder="Autor (email)"
+            aria-label="Autor (email)"
+            value={filterActor}
+            onChange={(e) => setFilterActor(e.target.value)}
+            className="h-9 w-[220px] shrink-0 rounded-full text-[13px]"
+          />
+        </FilterBar>
+      </PageToolbar>
 
-      <div className="grid gap-3 md:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label className="text-xs">Categoria</Label>
-          <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas</SelectItem>
-              <SelectItem value="user">Usuário</SelectItem>
-              <SelectItem value="empresa">Empresa</SelectItem>
-              <SelectItem value="member">Membro</SelectItem>
-              <SelectItem value="billing">Billing</SelectItem>
-              <SelectItem value="impersonation">Impersonation</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Autor (email)</Label>
-          <Input placeholder="admin@empresa.com" value={filterActor} onChange={(e) => setFilterActor(e.target.value)} />
-        </div>
-      </div>
+      <p className="text-sm text-muted-foreground">Convites, remoções, features, impersonation (últimos 200).</p>
 
       {error && <div className="text-sm text-danger-mid">{error}</div>}
 
@@ -440,36 +466,16 @@ function AdminActionsTab() {
 
 // ─── Shell ───────────────────────────────────────────────────────────────────
 
+const VISOES_AUDITORIA: ViewOption<"admin" | "dados">[] = [
+  { value: "admin", label: "Ações admin" },
+  { value: "dados", label: "Mutações de dados" },
+];
+
 export function AuditoriaTab() {
-  return (
-    <div className="space-y-4">
-      <Card className="rounded-2xl border border-black/5 bg-white">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-brand/10 flex items-center justify-center">
-              <ShieldCheck size={18} className="text-ink" />
-            </div>
-            <div>
-              <CardTitle className="text-lg font-medium tracking-tight">Auditoria</CardTitle>
-              <CardDescription>Log completo de dados e ações administrativas</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="admin">
-            <TabsList className="mb-4">
-              <TabsTrigger value="admin">Ações Admin</TabsTrigger>
-              <TabsTrigger value="dados">Mutações de Dados</TabsTrigger>
-            </TabsList>
-            <TabsContent value="admin">
-              <AdminActionsTab />
-            </TabsContent>
-            <TabsContent value="dados">
-              <DataAuditTab />
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-    </div>
+  const [visao, setVisao] = useState<"admin" | "dados">("admin");
+  // O alternador abre a toolbar de cada aba (cada uma tem os próprios filtros).
+  const alternador = (
+    <ViewSwitcher options={VISOES_AUDITORIA} value={visao} onChange={setVisao} ariaLabel="Tipo de registro" />
   );
+  return visao === "admin" ? <AdminActionsTab visao={alternador} /> : <DataAuditTab visao={alternador} />;
 }
