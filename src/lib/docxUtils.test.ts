@@ -1,7 +1,7 @@
 import PizZip from "pizzip";
 import { describe, expect, it } from "vitest";
 import { ErroDeDocx } from "./erroDeDocx";
-import { extractVariablesFromDocx, generateDocx } from "./docxUtils";
+import { chavesSimplesNoDocx, extractVariablesFromDocx, generateDocx } from "./docxUtils";
 
 // Monta um .docx mínimo: o que o docxtemplater precisa para abrir e renderizar.
 function docx(corpo: string, extras: Record<string, string> = {}): ArrayBuffer {
@@ -70,5 +70,39 @@ describe("generateDocx", () => {
 
   it("template com marcação quebrada falha com mensagem de usuário", () => {
     expect(() => generateDocx(docx("Oi NOME}}"), {})).toThrow(ErroDeDocx);
+  });
+
+  it("variável com espaço dentro das chaves, {{ CODIGO }}, é substituída em vez de virar undefined", async () => {
+    const blob = generateDocx(docx("Código {{ CODIGO }}"), { CODIGO: "0655" });
+    const zip = new PizZip(await blob.arrayBuffer());
+    expect(zip.file("word/document.xml")?.asText()).toContain("Código 0655");
+  });
+
+  it("variável sem valor sai em branco, nunca como o texto undefined", async () => {
+    const blob = generateDocx(docx("Valor {{NAO_EXISTE}} fim"), {});
+    const xml = new PizZip(await blob.arrayBuffer()).file("word/document.xml")?.asText() ?? "";
+    expect(xml).toContain("Valor  fim");
+    expect(xml).not.toContain("undefined");
+  });
+
+  it("variável repetida num laço continua funcionando com o parser próprio", async () => {
+    const corpo = "{{#ITENS}}- {{nome}} {{/ITENS}}";
+    const blob = generateDocx(docx(corpo), { ITENS: [{ nome: "A" }, { nome: "B" }] } as unknown as Record<
+      string,
+      string
+    >);
+    const xml = new PizZip(await blob.arrayBuffer()).file("word/document.xml")?.asText() ?? "";
+    expect(xml).toContain("- A");
+    expect(xml).toContain("- B");
+  });
+});
+
+describe("chavesSimplesNoDocx", () => {
+  it("acha {CODIGO} escrito com uma chave só e ignora {{CODIGO}}", () => {
+    expect(chavesSimplesNoDocx(docx("Código {CODIGO} e {{CLIENTE_NOME}}"))).toEqual(["CODIGO"]);
+  });
+
+  it("sem chave simples devolve lista vazia", () => {
+    expect(chavesSimplesNoDocx(docx("Texto comum"))).toEqual([]);
   });
 });

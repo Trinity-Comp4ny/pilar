@@ -69,11 +69,14 @@ export const useUploadTemplate = () => {
 
       // 1. Lê as variáveis antes de subir: arquivo ruim não deixa lixo no storage.
       const arrayBuffer = await file.arrayBuffer();
-      const { extractVariablesFromDocx } = await import("@/lib/docxUtils");
+      const { extractVariablesFromDocx, chavesSimplesNoDocx } = await import("@/lib/docxUtils");
       const variaveis = extractVariablesFromDocx(arrayBuffer);
       if (variaveis.length === 0) {
+        const umaChave = chavesSimplesNoDocx(arrayBuffer);
         throw new ErroDeDocx(
-          "Este Word não tem nenhuma variável. Escreva marcações como {{CLIENTE_NOME}} onde o dado deve entrar (veja o guia de variáveis) e envie de novo."
+          umaChave.length > 0
+            ? `Este Word usa chave simples, como {${umaChave[0]}}. A variável precisa de duas chaves: {{${umaChave[0]}}}. Corrija no Word e envie de novo.`
+            : "Este Word não tem nenhuma variável. Escreva marcações como {{CLIENTE_NOME}} onde o dado deve entrar (veja o guia de variáveis) e envie de novo."
         );
       }
 
