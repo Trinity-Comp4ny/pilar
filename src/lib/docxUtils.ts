@@ -6,6 +6,16 @@ const OPCOES = {
   delimiters: { start: "{{", end: "}}" },
   paragraphLoop: true,
   linebreaks: true,
+  // "{{ CODIGO }}" (com espaço) é como muita gente digita no Word. Sem o trim, o upload listava
+  // CODIGO como variável válida mas a geração não achava a chave e escrevia "undefined".
+  parser: (tag: string) => ({
+    get: (scope: unknown) => {
+      if (tag === ".") return scope;
+      return scope && typeof scope === "object" ? (scope as Record<string, unknown>)[tag.trim()] : undefined;
+    },
+  }),
+  // Variável sem valor sai em branco, não como o texto "undefined" no documento do cliente.
+  nullGetter: () => "",
 };
 
 type ErroDocxtemplater = {
@@ -84,4 +94,15 @@ export function generateDocx(templateArrayBuffer: ArrayBuffer, data: Record<stri
     type: "blob",
     mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   });
+}
+
+/**
+ * Nomes escritos com uma chave só, {CODIGO}, que o gerador não substitui. Serve para dar uma dica
+ * específica quando o Word não tem nenhuma variável {{ }}.
+ */
+export function chavesSimplesNoDocx(arrayBuffer: ArrayBuffer): string[] {
+  const { doc } = abrirDocx(arrayBuffer);
+  const nomes = new Set<string>();
+  for (const match of doc.getFullText().matchAll(/(?<![{])\{([A-Za-z][A-Za-z0-9_]{2,})\}(?![}])/g)) nomes.add(match[1]);
+  return Array.from(nomes);
 }

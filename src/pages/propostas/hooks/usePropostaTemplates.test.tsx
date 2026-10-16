@@ -64,6 +64,15 @@ describe("useUploadTemplate", () => {
     expect(upload).not.toHaveBeenCalled();
   });
 
+  it("Word com chave simples, {CODIGO}, recebe a dica das duas chaves", async () => {
+    const { result } = renderHook(() => useUploadTemplate(), { wrapper });
+    result.current.mutate({ file: arquivoWord("Código {CODIGO}"), nome: "Teste" });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error?.message).toContain("{{CODIGO}}");
+    expect(upload).not.toHaveBeenCalled();
+  });
+
   it("marcação mal fechada é recusada antes do upload", async () => {
     const { result } = renderHook(() => useUploadTemplate(), { wrapper });
     result.current.mutate({ file: arquivoWord("Oi {{NOME e {{CODIGO}}"), nome: "Teste" });
