@@ -21,15 +21,15 @@ suspensa, excluída e a da Pilar.
 
 ## Gatilhos e ações
 
-| Situação                                                            | Prioridade  | Ação                                                   | Autonomia |
-| ------------------------------------------------------------------- | ----------- | ------------------------------------------------------ | --------- |
-| Pagante, em teste, convidada ou em atraso sem acesso há 7+ dias     | esta semana | WhatsApp perguntando se travou e oferecendo 15 minutos | N1        |
-| Feedback sem resposta há 24 h                                       | esta semana | abrir a triagem e responder                            | N1        |
-| Erro do Sentry que atingiu o escritório (fase 2)                    | hoje        | aviso proativo quando corrigir                         | N1        |
-| Pagante ou convidada em onboarding sem projeto, do dia 2 (SPEC 130) | esta semana | WhatsApp oferecendo montar o primeiro projeto junto    | N1        |
-| Onboarding com uma pessoa só, do dia 5 (SPEC 130)                   | esta semana | WhatsApp oferecendo ajuda para chamar a equipe         | N1        |
-| Onboarding usando uma área só, do dia 9 (SPEC 130)                  | esta semana | WhatsApp mostrando projetos e Financeiro juntos        | N1        |
-| Nota caiu 20+ pontos em 7 dias, sem ter sumido (SPEC 129)           | esta semana | WhatsApp perguntando o que mudou                       | N1        |
+| Situação                                                            | Prioridade  | Ação                                                                                            | Autonomia |
+| ------------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------- | --------- |
+| Pagante, em teste, convidada ou em atraso sem acesso há 7+ dias     | esta semana | WhatsApp perguntando se travou e oferecendo 15 minutos                                          | N1        |
+| Feedback sem resposta há 24 h                                       | esta semana | abrir a triagem e responder                                                                     | N1        |
+| Erro do Sentry que atingiu o escritório                             | hoje        | aviso de "já corrigimos" quando resolver: feito pela Qualidade ([qualidade.md](./qualidade.md)) | N1        |
+| Pagante ou convidada em onboarding sem projeto, do dia 2 (SPEC 130) | esta semana | WhatsApp oferecendo montar o primeiro projeto junto                                             | N1        |
+| Onboarding com uma pessoa só, do dia 5 (SPEC 130)                   | esta semana | WhatsApp oferecendo ajuda para chamar a equipe                                                  | N1        |
+| Onboarding usando uma área só, do dia 9 (SPEC 130)                  | esta semana | WhatsApp mostrando projetos e Financeiro juntos                                                 | N1        |
+| Nota caiu 20+ pontos em 7 dias, sem ter sumido (SPEC 129)           | esta semana | WhatsApp perguntando o que mudou                                                                | N1        |
 
 Ativação: um marco por vez, na ordem (projeto, equipe, segunda área), e cada marco vira no máximo um
 contato. Em teste fica com a Receita (o teste é curto). O contato conta como "funcionou" quando o marco
