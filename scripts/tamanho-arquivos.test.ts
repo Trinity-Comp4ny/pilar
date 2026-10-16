@@ -25,7 +25,6 @@ const TETO: Record<string, number> = {
   "pages/clientes/[id]/index.tsx": 805,
   "pages/financeiro/components/LancamentosTable.tsx": 790,
   "pages/projetos/components/DisciplinasTableView.tsx": 788,
-  "components/admin/UsersAccessManager.tsx": 754,
   "pages/projetos/components/DisciplinaDetailDialog.tsx": 753,
   "pages/pessoas/components/PessoaFormDialog.tsx": 751,
   "pages/chat/useChat.ts": 740,
