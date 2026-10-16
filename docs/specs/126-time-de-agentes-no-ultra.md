@@ -238,13 +238,13 @@ Fase 1 (novembro):
        custo em 30 dias; fila com Editar mensagem, Abrir no WhatsApp, Marcar como enviada e
        Descartar. Agente ligado traz as próprias ações; agente desligado segue com a regra
        da fase 0.
-7. [ ] `ops-ingest` e `ops-export-funil` e o lado do `post-automation` (ver o plano de
+7. [x] Substituído pela [SPEC 128](128-plataforma-de-marketing-externa-e-funil-por-utm.md): o Pilar não recebe métrica de rede (`ops-ingest` saiu); entrega `ops-export-funil` e o botão para a plataforma de marketing (antes: `ops-ingest` e `ops-export-funil` e o lado do `post-automation`, ver o plano de
        presença social naquele repo).
 8. [ ] Custo dos agentes também no `ai_token_ledger`, para entrar em Custos de IA (hoje fica
        em `ops_execucoes.custo_usd` e na ficha do agente).
 9. [ ] Eval do prompt dos agentes (ADR 0048) antes de trocar modelo ou prompt.
 
-Fase 2 (dezembro): Marketing, Produto e Qualidade; briefing do Chefe com modelo; executor
+Fase 2 (dezembro): Produto e Qualidade (Marketing vive na plataforma de marketing, ADR 0061); briefing do Chefe com modelo; executor
 `issue`.
 
 Fase 3 (depois do lançamento): Finanças da Pilar; revisão de autonomia por tipo de ação.

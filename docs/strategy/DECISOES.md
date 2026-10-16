@@ -11,6 +11,22 @@ Regras de manutenção:
 
 ---
 
+## 2026-10-16 · Marketing é produto próprio; o Pilar só abre a plataforma e devolve o funil
+
+**Decisão:** tudo de marketing (campanhas, posts, carrosséis, vídeos, agendamento, analytics de
+redes, anúncios e Search Console, e o agente de marketing) vive na plataforma web do repo
+`post-automation`, como produto que pode ser vendido a outros escritórios. A Pilar é o primeiro
+cliente dela. Dentro do Pilar fica só o botão "Abrir plataforma de marketing" no Ultra › Time, e o
+Pilar devolve à plataforma cadastros, ativados e pagantes por link publicado (UTM), sem dado pessoal.
+
+Contexto: decidido nos chats do `post-automation` (ADR 0002 de lá) e confirmado aqui. Supera parte
+da decisão de 2026-10-15 e da ADR 0060: a ficha de Marketing no Ultra com números das redes e o
+`ops-ingest` (o Pilar recebendo métrica social) saem do plano. Receita, Clientes, Produto, Qualidade
+e Finanças continuam no Ultra, porque leem o banco do Pilar. Virou [ADR 0061](../architecture/adr/0061-marketing-e-produto-proprio-o-pilar-devolve-o-funil.md)
+e [SPEC 128](../specs/128-plataforma-de-marketing-externa-e-funil-por-utm.md).
+
+---
+
 ## 2026-10-15 · Lançamento público mira janeiro de 2027, com um time de agentes no Ultra
 
 **Decisão:** três decisões que valem juntas:
