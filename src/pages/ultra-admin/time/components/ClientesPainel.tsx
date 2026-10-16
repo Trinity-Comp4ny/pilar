@@ -11,7 +11,7 @@ import { toDataSourceResult } from "@/types/dataSource";
 import { FiltroChips, type OpcaoChip } from "../../components/FiltroChips";
 import { quandoRelativo } from "../../lib";
 import { useSaudeEmpresas } from "../hooks";
-import type { Decisao } from "../lib";
+import { tendenciaNota, type Decisao } from "../lib";
 import type { SaudeEmpresa } from "../api";
 import { ListaDecisoes } from "./ListaDecisoes";
 
@@ -52,9 +52,12 @@ export function ClientesPainel({ decisoes }: { decisoes: Decisao[] }) {
       header: "Saúde",
       getSortValue: (l) => l.nota,
       cell: (l) => (
-        <div className="flex items-center gap-2">
-          <span className="w-7 text-right text-sm font-medium tabular-nums text-ink">{l.nota}</span>
-          <StatusBadge domain="saude_cliente" status={l.faixa} />
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <span className="w-7 text-right text-sm font-medium tabular-nums text-ink">{l.nota}</span>
+            <StatusBadge domain="saude_cliente" status={l.faixa} />
+          </div>
+          <Tendencia nota={l.nota} nota7d={l.nota_7d} />
         </div>
       ),
     },
@@ -186,5 +189,13 @@ export function ClientesPainel({ decisoes }: { decisoes: Decisao[] }) {
         em 14 dias (15). Feedback sem resposta tira 10; pagamento em atraso, 20.
       </p>
     </>
+  );
+}
+
+function Tendencia({ nota, nota7d }: { nota: number; nota7d: number | null }) {
+  const t = tendenciaNota(nota, nota7d);
+  if (!t) return null;
+  return (
+    <p className={`pl-9 text-xs tabular-nums ${t.caiu ? "text-danger-mid" : "text-positive-strong"}`}>{t.texto}</p>
   );
 }

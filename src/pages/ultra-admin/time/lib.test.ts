@@ -7,6 +7,8 @@ import {
   decisoesDoDia,
   ehExecutavel,
   filaDoTime,
+  tendenciaNota,
+  textoEfeito,
   ordenarDecisoes,
   linkWhatsApp,
   mensagemTesteVencendo,
@@ -55,6 +57,9 @@ function saude(parcial: Partial<SaudeEmpresa>): SaudeEmpresa {
     usuarios: 2,
     usuarios_ativos_14d: 2,
     feedback_aberto: 0,
+    modulos_usados: 2,
+    nota_7d: null,
+    estagio: "maduro",
     em_atraso: false,
     contato_nome: "Ana Souza",
     contato_telefone: "(14) 99999-0000",
@@ -300,5 +305,20 @@ describe("filaDoTime", () => {
       remetente: "Matheus",
     });
     expect(fila.map((d) => d.id)).toEqual(["acao-a9"]);
+  });
+});
+
+describe("SPEC 129: tendência e resultado", () => {
+  it("tendência da nota só aparece com retrato antigo e variação de 5 ou mais", () => {
+    expect(tendenciaNota(50, 75)).toEqual({ texto: "caiu 25 em 7 dias", caiu: true });
+    expect(tendenciaNota(80, 68)).toEqual({ texto: "subiu 12 em 7 dias", caiu: false });
+    expect(tendenciaNota(70, 72)).toBeNull();
+    expect(tendenciaNota(70, null)).toBeNull();
+  });
+
+  it("resultado dos contatos", () => {
+    expect(textoEfeito([])).toBeNull();
+    expect(textoEfeito(["funcionou"])).toBe("1 de 1 contato funcionou");
+    expect(textoEfeito(["funcionou", "nao_funcionou", "funcionou"])).toBe("2 de 3 contatos funcionaram");
   });
 });

@@ -10,8 +10,8 @@ import { ClientesPainel } from "./components/ClientesPainel";
 import { ExecucoesAgente } from "./components/ExecucoesAgente";
 import { MarketingExterno } from "./components/MarketingExterno";
 import { ReceitaPainel } from "./components/ReceitaPainel";
-import { useExecucoesDoAgente } from "./hooks";
-import { ehExecutavel, PLANO_DOS_AGENTES, type AgenteId } from "./lib";
+import { useEfeitosDoAgente, useExecucoesDoAgente } from "./hooks";
+import { ehExecutavel, PLANO_DOS_AGENTES, textoEfeito, type AgenteId } from "./lib";
 import { useTimeResumo } from "./useTimeResumo";
 
 /** Ficha do agente em /ultra-admin/time/:agente, no mesmo layout para todos (SPEC 126, req. 3). */
@@ -19,6 +19,7 @@ export default function AgenteFicha() {
   const { agente: id = "" } = useParams();
   const { agentes, agentesQ, decisoes } = useTimeResumo();
   const execucoesQ = useExecucoesDoAgente(id);
+  const efeitosQ = useEfeitosDoAgente(id);
   const formatCusto = useFormatCusto();
   const formatarUsd = useCallback((usd: number) => formatCusto(emBrl(usd)), [formatCusto]);
   const resumo = agentes.find((a) => a.agente.id === id);
@@ -37,6 +38,7 @@ export default function AgenteFicha() {
         status={resumo?.status ?? "planejado"}
         ultima={resumo?.ultima ?? null}
         custo30d={custoUsd > 0 ? formatarUsd(custoUsd) : null}
+        efeito={textoEfeito(efeitosQ.data ?? [])}
         carregando={agentesQ.isLoading}
       />
       {ehExecutavel(agenteId) && <BriefingAgente execucao={resumo?.ultima ?? null} />}

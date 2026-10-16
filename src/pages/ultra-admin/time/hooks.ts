@@ -8,6 +8,7 @@ import {
   definirAgenteAtivo,
   listarAcoesPendentes,
   listarAgentes,
+  listarEfeitosDoAgente,
   listarExecucoesDoAgente,
   listarUltimasExecucoes,
   rodarAgente,
@@ -19,6 +20,7 @@ const TIME_KEYS = {
   agentes: ["ultra-admin", "time", "agentes"] as const,
   execucoes: ["ultra-admin", "time", "execucoes"] as const,
   execucoesDoAgente: (id: string) => ["ultra-admin", "time", "execucoes", id] as const,
+  efeitos: (id: string) => ["ultra-admin", "time", "efeitos", id] as const,
   pendentes: ["ultra-admin", "time", "pendentes"] as const,
   receita: (dias: number) => ["ultra-admin", "time", "receita", dias] as const,
   saude: ["ultra-admin", "time", "saude"] as const,
@@ -37,6 +39,14 @@ export function useExecucoesDoAgente(agenteId: string) {
     queryKey: TIME_KEYS.execucoesDoAgente(agenteId),
     queryFn: () => listarExecucoesDoAgente(agenteId),
     staleTime: 60_000,
+  });
+}
+
+export function useEfeitosDoAgente(agenteId: string) {
+  return useQuery({
+    queryKey: TIME_KEYS.efeitos(agenteId),
+    queryFn: () => listarEfeitosDoAgente(agenteId),
+    staleTime: 5 * 60_000,
   });
 }
 
