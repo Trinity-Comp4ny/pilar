@@ -14,6 +14,7 @@ import {
   mensagemTesteVencendo,
   quandoVence,
   rotaDoAgente,
+  rotuloDoLink,
   statusDoAgente,
   taxa,
   telefoneWhatsApp,
@@ -265,6 +266,7 @@ describe("fase 1: ações gravadas pelos agentes", () => {
 
   it("horário do cron em Brasília e quem a Edge Function executa", () => {
     expect(cadenciaLegivel("0 10,22 * * *")).toBe("todo dia às 7h e às 19h");
+    expect(cadenciaLegivel("7 10 * * 1")).toBe("toda segunda às 7h07");
     expect(cadenciaLegivel(null)).toBeNull();
     expect(ehExecutavel("chefe")).toBe(true);
     expect(ehExecutavel("marketing")).toBe(false);
@@ -320,5 +322,32 @@ describe("SPEC 129: tendência e resultado", () => {
     expect(textoEfeito([])).toBeNull();
     expect(textoEfeito(["funcionou"])).toBe("1 de 1 contato funcionou");
     expect(textoEfeito(["funcionou", "nao_funcionou", "funcionou"])).toBe("2 de 3 contatos funcionaram");
+  });
+});
+
+describe("Produto (SPEC 130)", () => {
+  it("roda pelo executor e a tarefa abre o destino certo", () => {
+    expect(ehExecutavel("produto")).toBe(true);
+    expect(rotuloDoLink("/ultra-admin/atividade")).toBe("Ver atividade");
+    expect(rotuloDoLink("/ultra-admin/feedback")).toBe("Ver feedback");
+    expect(rotuloDoLink("/ultra-admin/empresas/e1")).toBe("Ver empresa");
+    expect(rotuloDoLink("/ultra-admin/time")).toBe("Abrir");
+  });
+
+  it("tarefa sem empresa leva ao link gravado pelo agente", () => {
+    const acao = {
+      id: "a1",
+      agente_id: "produto",
+      tipo: "alerta",
+      empresa_id: null,
+      titulo: "Financeiro: de 6 para 3 escritórios usando em 28 dias",
+      prioridade: 1,
+      prazo: null,
+      rascunho: { canal: "alerta", texto: "Veja na Atividade quem parou.", link: "/ultra-admin/atividade" },
+    } as unknown as OpsAcao;
+    const d = acaoParaDecisao(acao);
+    expect(d.link).toBe("/ultra-admin/atividade");
+    expect(d.whatsapp).toBeNull();
+    expect(d.detalhe).toBe("Veja na Atividade quem parou.");
   });
 });

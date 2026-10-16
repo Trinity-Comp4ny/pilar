@@ -15,8 +15,8 @@ export type StatusAgente = "ok" | "atencao" | "falhou" | "pausado" | "so_numeros
 /** Agentes que já têm painel de números na fase 0. Os outros mostram o plano. */
 const AGENTES_COM_NUMEROS: readonly AgenteId[] = ["receita", "clientes"];
 
-/** Agentes que a Edge Function ops-agente-run já executa (fase 1). */
-const AGENTES_EXECUTAVEIS: readonly AgenteId[] = ["receita", "clientes", "chefe"];
+/** Agentes que a Edge Function ops-agente-run já executa (fase 1; Produto na SPEC 130). */
+const AGENTES_EXECUTAVEIS: readonly AgenteId[] = ["receita", "clientes", "produto", "chefe"];
 
 export function ehExecutavel(id: string): boolean {
   return AGENTES_EXECUTAVEIS.includes(id as AgenteId);
@@ -76,14 +76,14 @@ export const PLANO_DOS_AGENTES: Record<AgenteId, { quando: string; indicadores: 
     fontes: ["Plataforma de marketing (post-automation)", "Funil por UTM exportado pelo Pilar"],
   },
   produto: {
-    quando: "Fase 2, dezembro de 2026",
+    quando: "Toda segunda às 7h07: áreas usadas e bugs parados. Funis e cliques de raiva com o PostHog (SPEC 125)",
     indicadores: [
-      "Adoção por módulo e por feature nova",
-      "Funis de ativação",
-      "Telas com mais erro exibido",
-      "Cliques de raiva e formulários abandonados",
+      "Escritórios por área do produto em 28 dias",
+      "Área perdendo escritório ou quase sem uso",
+      "Bugs esperando triagem",
+      "Depois: funis de ativação, telas com mais erro e cliques de raiva",
     ],
-    fontes: ["PostHog (SPEC 125)", "Feedback"],
+    fontes: ["Histórico de alterações por área", "Feedback", "PostHog (SPEC 125)"],
   },
   qualidade: {
     quando: "Fase 2, dezembro de 2026",
@@ -200,6 +200,14 @@ export type Decisao = {
   acao?: { id: string; texto: string; telefone: string | null; canal: "whatsapp" | "alerta" };
 };
 
+/** Rótulo do botão que abre o destino de uma tarefa da fila. */
+export function rotuloDoLink(link: string): string {
+  if (link.startsWith("/ultra-admin/feedback")) return "Ver feedback";
+  if (link.startsWith("/ultra-admin/atividade")) return "Ver atividade";
+  if (link.startsWith("/ultra-admin/empresas/")) return "Ver empresa";
+  return "Abrir";
+}
+
 /** Ação gravada pelo agente vira item da mesma fila, com o rascunho editável. */
 export function acaoParaDecisao(a: OpsAcao): Decisao {
   const r = a.rascunho;
@@ -237,6 +245,7 @@ const CADENCIA: Record<string, string> = {
   "0 10,22 * * *": "todo dia às 7h e às 19h",
   "5 10 * * *": "todo dia às 7h05",
   "10 10 * * *": "todo dia às 7h10",
+  "7 10 * * 1": "toda segunda às 7h07",
 };
 
 /** Horário do cron (UTC) em frase de Brasília. Cron desconhecido aparece cru. */
@@ -359,7 +368,10 @@ export function filaDoTime(p: {
 }
 
 /** "caiu 25 em 7 dias" / "subiu 12 em 7 dias"; null sem retrato antigo ou variação menor que 5. */
-export function tendenciaNota(nota: number, nota7d: number | null | undefined): { texto: string; caiu: boolean } | null {
+export function tendenciaNota(
+  nota: number,
+  nota7d: number | null | undefined
+): { texto: string; caiu: boolean } | null {
   if (nota7d === null || nota7d === undefined) return null;
   const d = nota - nota7d;
   if (Math.abs(d) < 5) return null;
