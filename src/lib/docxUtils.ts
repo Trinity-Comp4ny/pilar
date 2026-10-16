@@ -1,27 +1,67 @@
 import Docxtemplater from "docxtemplater";
 import PizZip from "pizzip";
+import { ErroDeDocx } from "@/lib/erroDeDocx";
+
+const OPCOES = {
+  delimiters: { start: "{{", end: "}}" },
+  paragraphLoop: true,
+  linebreaks: true,
+};
+
+type ErroDocxtemplater = {
+  properties?: { errors?: { properties?: { id?: string; context?: string; xtag?: string } }[] };
+};
 
 /**
- * Extrai variáveis {{VAR}} de um arquivo DOCX (ArrayBuffer).
+ * O docxtemplater joga "Multi error" quando uma marcação {{ }} está mal formada, e esse texto
+ * não diz nada a quem escreveu o Word. Traduz para onde olhar e o que fazer.
+ */
+function traduzirErro(err: unknown): ErroDeDocx {
+  const erros = (err as ErroDocxtemplater)?.properties?.errors;
+  if (Array.isArray(erros) && erros.length > 0) {
+    const trechos = erros
+      .slice(0, 3)
+      .map((e) => `"${(e.properties?.context ?? e.properties?.xtag ?? "").trim()}"`)
+      .join(", ");
+    return new ErroDeDocx(
+      `O Word tem ${erros.length} marcação(ões) {{ }} com problema, perto de ${trechos}. Confira se cada {{ tem o }} correspondente e se a variável foi digitada de uma vez, sem formatar só uma parte.`,
+      err
+    );
+  }
+  return new ErroDeDocx(
+    "Não foi possível ler este arquivo como Word (.docx). Abra no Word, salve de novo e envie.",
+    err
+  );
+}
+
+function abrirDocx(arrayBuffer: ArrayBuffer): { zip: PizZip; doc: Docxtemplater } {
+  try {
+    const zip = new PizZip(arrayBuffer);
+    return { zip, doc: new Docxtemplater(zip, OPCOES) };
+  } catch (err) {
+    throw traduzirErro(err);
+  }
+}
+
+const REGEX_VARIAVEL = /\{\{([^}]+)\}\}/g;
+
+function variaveisDoTexto(texto: string, destino: Set<string>) {
+  for (const match of texto.matchAll(REGEX_VARIAVEL)) destino.add(match[1].trim());
+}
+
+/**
+ * Extrai variáveis {{VAR}} de um arquivo DOCX (ArrayBuffer): corpo, cabeçalhos e rodapés.
  * Retorna array de nomes únicos, ex: ["CLIENTE_NOME", "VALOR_PROPOSTO"]
  */
 export function extractVariablesFromDocx(arrayBuffer: ArrayBuffer): string[] {
-  const zip = new PizZip(arrayBuffer);
-  const doc = new Docxtemplater(zip, {
-    delimiters: { start: "{{", end: "}}" },
-    paragraphLoop: true,
-    linebreaks: true,
-  });
-
-  // Extrai texto completo do doc
-  const fullText = doc.getFullText();
-
-  // Regex pra encontrar {{VARIAVEL}}
-  const regex = /\{\{([^}]+)\}\}/g;
+  const { zip, doc } = abrirDocx(arrayBuffer);
   const vars = new Set<string>();
-  let match: RegExpExecArray | null;
-  while ((match = regex.exec(fullText)) !== null) {
-    vars.add(match[1].trim());
+  variaveisDoTexto(doc.getFullText(), vars);
+
+  // getFullText só lê o corpo. Cabeçalho e rodapé também são renderizados, então as
+  // variáveis deles entram na lista (tirar as tags de XML junta o texto quebrado em runs).
+  for (const parte of zip.file(/^word\/(header|footer)\d*\.xml$/)) {
+    variaveisDoTexto(parte.asText().replace(/<[^>]+>/g, ""), vars);
   }
 
   return Array.from(vars);
@@ -32,19 +72,16 @@ export function extractVariablesFromDocx(arrayBuffer: ArrayBuffer): string[] {
  * Retorna Blob do arquivo DOCX.
  */
 export function generateDocx(templateArrayBuffer: ArrayBuffer, data: Record<string, string>): Blob {
-  const zip = new PizZip(templateArrayBuffer);
-  const doc = new Docxtemplater(zip, {
-    delimiters: { start: "{{", end: "}}" },
-    paragraphLoop: true,
-    linebreaks: true,
-  });
+  const { doc } = abrirDocx(templateArrayBuffer);
 
-  doc.render(data);
+  try {
+    doc.render(data);
+  } catch (err) {
+    throw traduzirErro(err);
+  }
 
-  const output = doc.getZip().generate({
+  return doc.getZip().generate({
     type: "blob",
     mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   });
-
-  return output;
 }
