@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Ids das pessoas que existem em Pessoas mas não têm login. Marcá-las com @ não gera
- * aviso (não há inbox para cair), então o composer avisa quem comenta (SPEC 131).
+ * aviso (não há inbox para cair), então o composer avisa quem comenta (SPEC 132).
  */
 export function usePessoasSemConta() {
   const { data } = useQuery({

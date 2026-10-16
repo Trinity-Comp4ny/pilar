@@ -1,4 +1,4 @@
--- SPEC 131: @all nos comentários. rpc_notificar_mencao ganha p_todos: avisa todo perfil
+-- SPEC 132: @all nos comentários. rpc_notificar_mencao ganha p_todos: avisa todo perfil
 -- ativo da empresa do autor (menos o próprio autor), somado a quem foi marcado pelo nome.
 -- A assinatura de 5 argumentos sai (mesmo padrão da SPEC 103); o bundle antigo chama por
 -- nome sem p_todos e cai no default false.

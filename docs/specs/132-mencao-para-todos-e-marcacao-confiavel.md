@@ -1,4 +1,4 @@
-# SPEC 131: @all e marcação confiável nos comentários
+# SPEC 132: @all e marcação confiável nos comentários
 
 **Data:** 2026-10-16  
 **Status:** Em implementação  

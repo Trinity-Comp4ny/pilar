@@ -1,4 +1,4 @@
--- pgTAP: SPEC 131 (@all nos comentários), migration 20261110000000.
+-- pgTAP: SPEC 132 (@all nos comentários), migration 20261112000000.
 --
 -- @all avisa todo perfil ativo da empresa do autor, menos o autor; quem também foi
 -- marcado pelo nome recebe uma só notificação; membro desativado e outra empresa ficam de fora.

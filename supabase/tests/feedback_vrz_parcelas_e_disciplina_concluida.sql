@@ -1,4 +1,4 @@
--- pgTAP: feedback da VRZ (16/10), migration 20261109000000.
+-- pgTAP: feedback da VRZ (16/10), migration 20261111000000.
 --
 --   1. o painel do /inicio não conta disciplina 'Concluído' como vencida (o filtro
 --      comparava com 'concluida', valor que a coluna nunca guarda)
