@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { ShieldCheck, RefreshCw, Download, FileSearch } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { untypedFrom } from "@/lib/supabaseRpc";
@@ -147,6 +147,64 @@ const SENSITIVE_TABLES = [
 ];
 
 // ─── audit_logs tab ──────────────────────────────────────────────────────────
+function diffPreview(diff: AuditLog["diff"]) {
+  if (!diff) return "—";
+  const keys = Object.keys(diff);
+  if (keys.length === 0) return "—";
+  return keys.slice(0, 3).join(", ") + (keys.length > 3 ? ` +${keys.length - 3}` : "");
+}
+
+// Colunas das duas tabelas (SPEC 127). Clicar na linha expande o JSON de detalhe.
+const QUANDO = (iso: string) => format(parseISO(iso), "dd/MM HH:mm:ss", { locale: ptBR });
+
+const MUTACOES_COLUMNS: ColumnDef<AuditLog>[] = [
+  { key: "quando", header: "Quando", className: "w-[140px] text-xs font-mono", cell: (log) => QUANDO(log.created_at) },
+  { key: "autor", header: "Autor", className: "text-xs", cell: (log) => log.actor_email ?? "—" },
+  {
+    key: "acao",
+    header: "Ação",
+    className: "w-[90px]",
+    cell: (log) => (
+      <Badge className={ACTION_COLOR[log.action]} variant="secondary">
+        {log.action}
+      </Badge>
+    ),
+  },
+  { key: "tabela", header: "Tabela", className: "text-xs font-mono", cell: (log) => log.target_table },
+  {
+    key: "campos",
+    header: "Campos",
+    className: "text-xs text-muted-foreground",
+    cell: (log) => diffPreview(log.diff),
+  },
+];
+
+const ACOES_ADMIN_COLUMNS: ColumnDef<AdminAuditLog>[] = [
+  { key: "quando", header: "Quando", className: "w-[140px] text-xs font-mono", cell: (log) => QUANDO(log.created_at) },
+  { key: "autor", header: "Autor", className: "text-xs", cell: (log) => log.actor_email },
+  {
+    key: "role",
+    header: "Role",
+    className: "text-xs font-medium",
+    cell: (log) => ROLE_LABEL_PT[log.actor_role] ?? log.actor_role,
+  },
+  { key: "acao", header: "Ação", className: "text-xs", cell: (log) => ACTION_LABEL_PT[log.action] ?? log.action },
+  {
+    key: "categoria",
+    header: "Categoria",
+    cell: (log) => (
+      <Badge className={CATEGORY_COLOR[log.category] ?? "bg-muted text-muted-foreground"} variant="secondary">
+        {CATEGORY_LABEL_PT[log.category] ?? log.category}
+      </Badge>
+    ),
+  },
+  {
+    key: "alvo",
+    header: "Alvo",
+    className: "text-xs text-muted-foreground",
+    cell: (log) => log.target_name ?? log.target_type ?? "—",
+  },
+];
 
 function DataAuditTab() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -185,16 +243,6 @@ function DataAuditTab() {
     fetchLogs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterTable, filterAction, filterActor]);
-
-  const diffPreview = useMemo(
-    () => (diff: AuditLog["diff"]) => {
-      if (!diff) return "—";
-      const keys = Object.keys(diff);
-      if (keys.length === 0) return "—";
-      return keys.slice(0, 3).join(", ") + (keys.length > 3 ? ` +${keys.length - 3}` : "");
-    },
-    []
-  );
 
   return (
     <div className="space-y-4">
@@ -264,49 +312,17 @@ function DataAuditTab() {
         />
       ) : (
         <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[140px]">Quando</TableHead>
-                <TableHead>Autor</TableHead>
-                <TableHead className="w-[90px]">Ação</TableHead>
-                <TableHead>Tabela</TableHead>
-                <TableHead>Campos</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {logs.map((log) => {
-                const isExpanded = expanded === log.id;
-                return (
-                  <Fragment key={log.id}>
-                    <TableRow
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => setExpanded(isExpanded ? null : log.id)}
-                    >
-                      <TableCell className="text-xs font-mono">
-                        {format(parseISO(log.created_at), "dd/MM HH:mm:ss", { locale: ptBR })}
-                      </TableCell>
-                      <TableCell className="text-xs">{log.actor_email ?? "—"}</TableCell>
-                      <TableCell>
-                        <Badge className={ACTION_COLOR[log.action]} variant="secondary">
-                          {log.action}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs font-mono">{log.target_table}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{diffPreview(log.diff)}</TableCell>
-                    </TableRow>
-                    {isExpanded && log.diff && (
-                      <TableRow>
-                        <TableCell colSpan={5} className="bg-muted/30">
-                          <pre className="text-xs overflow-x-auto p-2">{JSON.stringify(log.diff, null, 2)}</pre>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </Fragment>
-                );
-              })}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={MUTACOES_COLUMNS}
+            data={{ rows: logs, isPending: false, error: null }}
+            rowKey={(log) => log.id}
+            onRowClick={(log) => setExpanded(expanded === log.id ? null : log.id)}
+            rowLabel={(log) => `Ver campos alterados em ${log.target_table}`}
+            expandedIds={new Set(expanded ? [expanded] : [])}
+            renderExpanded={(log) =>
+              log.diff ? <pre className="text-xs overflow-x-auto p-2">{JSON.stringify(log.diff, null, 2)}</pre> : null
+            }
+          />
         </div>
       )}
     </div>
@@ -403,58 +419,19 @@ function AdminActionsTab() {
         />
       ) : (
         <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[140px]">Quando</TableHead>
-                <TableHead>Autor</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Ação</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Alvo</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {logs.map((log) => {
-                const isExpanded = expanded === log.id;
-                return (
-                  <Fragment key={log.id}>
-                    <TableRow
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => setExpanded(isExpanded ? null : log.id)}
-                    >
-                      <TableCell className="text-xs font-mono">
-                        {format(parseISO(log.created_at), "dd/MM HH:mm:ss", { locale: ptBR })}
-                      </TableCell>
-                      <TableCell className="text-xs">{log.actor_email}</TableCell>
-                      <TableCell className="text-xs font-medium">
-                        {ROLE_LABEL_PT[log.actor_role] ?? log.actor_role}
-                      </TableCell>
-                      <TableCell className="text-xs">{ACTION_LABEL_PT[log.action] ?? log.action}</TableCell>
-                      <TableCell>
-                        <Badge
-                          className={CATEGORY_COLOR[log.category] ?? "bg-muted text-muted-foreground"}
-                          variant="secondary"
-                        >
-                          {CATEGORY_LABEL_PT[log.category] ?? log.category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {log.target_name ?? log.target_type ?? "—"}
-                      </TableCell>
-                    </TableRow>
-                    {isExpanded && log.metadata && (
-                      <TableRow>
-                        <TableCell colSpan={6} className="bg-muted/30">
-                          <pre className="text-xs overflow-x-auto p-2">{JSON.stringify(log.metadata, null, 2)}</pre>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </Fragment>
-                );
-              })}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={ACOES_ADMIN_COLUMNS}
+            data={{ rows: logs, isPending: false, error: null }}
+            rowKey={(log) => log.id}
+            onRowClick={(log) => setExpanded(expanded === log.id ? null : log.id)}
+            rowLabel={(log) => `Ver detalhes da ação ${ACTION_LABEL_PT[log.action] ?? log.action}`}
+            expandedIds={new Set(expanded ? [expanded] : [])}
+            renderExpanded={(log) =>
+              log.metadata ? (
+                <pre className="text-xs overflow-x-auto p-2">{JSON.stringify(log.metadata, null, 2)}</pre>
+              ) : null
+            }
+          />
         </div>
       )}
     </div>

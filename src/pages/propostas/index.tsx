@@ -12,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Plus,
   FileText,
@@ -25,7 +24,6 @@ import {
   DollarSign,
   Search,
   Trash2,
-  ArrowUpDown,
   MoreVertical,
 } from "lucide-react";
 import {
@@ -37,6 +35,7 @@ import {
 import { DialogDescription as DD, DialogFooter } from "@/components/ui/dialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { PageLayout } from "@/components/PageLayout";
+import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
 import { FilterBar, FilterClear, FilterPopover, FilterSelect } from "@/components/filters/FilterBar";
 import { PageHeader } from "@/components/PageHeader";
@@ -46,6 +45,7 @@ import { analytics } from "@/lib/analytics";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import {
+  type Proposta,
   usePropostas,
   useCreateProposta,
   useUpdateProposta,
@@ -402,14 +402,6 @@ export default function Propostas() {
 
   const normalize = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-  const handleSort = (field: typeof sortField) => {
-    if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortField(field);
-      setSortDir("asc");
-    }
-  };
-
   const clearFilters = () => {
     setSearchTerm("");
     setFilterStatus("all");
@@ -560,6 +552,85 @@ export default function Propostas() {
     </FilterBar>
   );
 
+  // Colunas da tabela (SPEC 127). `getSortValue` só habilita o clique no cabeçalho: a ordenação
+  // em si é feita acima, em `filteredPropostas`.
+  const propostasColumns: ColumnDef<Proposta>[] = [
+    {
+      key: "titulo",
+      header: "Título",
+      getSortValue: (p) => p.titulo,
+      cell: (p) => (
+        <>
+          <p className="text-sm font-medium">{p.titulo}</p>
+          {p.codigo && <p className="text-[11px] text-muted-foreground font-mono">{p.codigo}</p>}
+        </>
+      ),
+    },
+    { key: "cliente", header: "Cliente/Lead", className: "text-sm", cell: (p) => p.cliente_nome || p.lead_nome || "—" },
+    {
+      key: "valor_proposto",
+      header: "Valor",
+      className: "text-sm font-medium",
+      getSortValue: (p) => p.valor_proposto ?? 0,
+      cell: (p) => (p.valor_proposto ? formatCurrency(p.valor_proposto) : "—"),
+    },
+    {
+      key: "status",
+      header: "Status",
+      align: "center",
+      cell: (p) => {
+        const displayStatus = getDisplayStatus(p);
+        return (
+          <Badge className={`text-xs ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
+            {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
+          </Badge>
+        );
+      },
+    },
+    {
+      key: "validade",
+      header: "Validade",
+      className: "text-sm",
+      getSortValue: (p) => p.validade ?? "",
+      cell: (p) => (
+        <span className={p.validade && p.validade < hoje ? "text-danger-mid font-medium" : undefined}>
+          {formatDate(p.validade)}
+        </span>
+      ),
+    },
+    ...(canEdit
+      ? [
+          {
+            key: "acoes",
+            header: "Ações",
+            align: "end" as const,
+            cell: (p: Proposta) => (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-11 w-11 text-muted-foreground hover:text-foreground"
+                    aria-label="Mais opções"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={() => setConfirmDelete({ id: p.id, titulo: p.titulo })}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ),
+          },
+        ]
+      : []),
+  ];
+
   const header = (
     <PageHeader
       title="Propostas"
@@ -622,103 +693,25 @@ export default function Propostas() {
               }}
             />
           ) : viewMode === "table" ? (
-            <div className="overflow-x-auto overflow-y-auto w-full max-h-[calc(100svh-360px)]">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>
-                      <Button
-                        variant="ghost"
-                        className="-ml-3 h-11 font-medium text-xs"
-                        onClick={() => handleSort("titulo")}
-                      >
-                        Título <ArrowUpDown className="ml-2 h-3 w-3" />
-                      </Button>
-                    </TableHead>
-                    <TableHead>Cliente/Lead</TableHead>
-                    <TableHead>
-                      <Button
-                        variant="ghost"
-                        className="-ml-3 h-11 font-medium text-xs"
-                        onClick={() => handleSort("valor_proposto")}
-                      >
-                        Valor <ArrowUpDown className="ml-2 h-3 w-3" />
-                      </Button>
-                    </TableHead>
-                    <TableHead className="text-center">Status</TableHead>
-                    <TableHead>
-                      <Button
-                        variant="ghost"
-                        className="-ml-3 h-11 font-medium text-xs"
-                        onClick={() => handleSort("validade")}
-                      >
-                        Validade <ArrowUpDown className="ml-2 h-3 w-3" />
-                      </Button>
-                    </TableHead>
-                    {canEdit && <TableHead className="text-right">Ações</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredPropostas.map((p) => {
-                    const displayStatus = getDisplayStatus(p);
-                    return (
-                      // Sem role="button": a linha tem botões de ação dentro, e botão dentro de
-                      // botão some para o leitor de tela. Segue focável e abre com Enter.
-                      <TableRow
-                        key={p.id}
-                        tabIndex={0}
-                        aria-label={`Ver detalhes da proposta ${p.titulo}`}
-                        className="cursor-pointer hover:bg-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-                        onClick={() => openDetail(p.id)}
-                        onKeyDown={(e) => handleRowKeyDown(e, p.id)}
-                      >
-                        <TableCell className="py-4">
-                          <p className="text-sm font-medium">{p.titulo}</p>
-                          {p.codigo && <p className="text-[11px] text-muted-foreground font-mono">{p.codigo}</p>}
-                        </TableCell>
-                        <TableCell className="text-sm py-4">{p.cliente_nome || p.lead_nome || "—"}</TableCell>
-                        <TableCell className="text-sm py-4 font-medium">
-                          {p.valor_proposto ? formatCurrency(p.valor_proposto) : "—"}
-                        </TableCell>
-                        <TableCell className="text-sm py-4 text-center">
-                          <Badge className={`text-xs ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
-                            {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
-                          </Badge>
-                        </TableCell>
-                        <TableCell
-                          className={`text-sm py-4 ${p.validade && p.validade < hoje ? "text-danger-mid font-medium" : ""}`}
-                        >
-                          {formatDate(p.validade)}
-                        </TableCell>
-                        {canEdit && (
-                          <TableCell className="text-right py-4">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-11 w-11 text-muted-foreground hover:text-foreground"
-                                  aria-label="Mais opções"
-                                >
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onClick={() => setConfirmDelete({ id: p.id, titulo: p.titulo })}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+            <div className="overflow-x-auto">
+              <DataTable
+                columns={propostasColumns}
+                data={{ rows: filteredPropostas, isPending: false, error: null }}
+                rowKey={(p) => p.id}
+                onRowClick={(p) => openDetail(p.id)}
+                rowLabel={(p) => `Ver detalhes da proposta ${p.titulo}`}
+                maxHeight="calc(100svh - 360px)"
+                // A ordem vem do pai: a mesma lista ordenada alimenta a visão em cards.
+                sortingState={
+                  sortField && sortField !== "created_at" ? [{ id: sortField, desc: sortDir === "desc" }] : []
+                }
+                onSortingChange={(next) => {
+                  const col = next[0];
+                  if (!col) return;
+                  setSortField(col.id as typeof sortField);
+                  setSortDir(col.desc ? "desc" : "asc");
+                }}
+              />
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">

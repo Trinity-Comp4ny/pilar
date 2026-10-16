@@ -44,11 +44,7 @@ describe("varredura: navegação e filtros padrão (SPEC 124)", () => {
 // Tabela à mão (`<Table>` ou `<table>`) fica só onde há razão registrada. Lista que só encolhe:
 // migrou para DataTable, sai daqui. Arquivo novo com tabela à mão reprova.
 const TABELA_A_MAO: Record<string, string> = {
-  // Listas com comportamento que o DataTable não cobre hoje (fase de migração futura):
-  "src/components/admin/UsersAccessManager.tsx": "permissões por linha, edição inline",
-  "src/pages/admin/tabs/Auditoria.tsx": "duas tabelas com filtro e paginação próprios",
-  "src/pages/fornecedores/[id].tsx": "linhas expansíveis (cotações)",
-  "src/pages/propostas/index.tsx": "ordenação em botão e ações por linha",
+  // Listas com comportamento que o DataTable ainda não cobre (SPEC 127, fases 2 e 3):
   "src/pages/relatorios/RelatoriosRentabilidade.tsx": "tabela agrupada com totais",
   "src/pages/projetos/components/DisciplinasTableView.tsx": "edição inline por célula",
   "src/pages/projetos/components/DisciplinasTab.tsx": "edição inline por célula",
