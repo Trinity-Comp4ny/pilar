@@ -7,7 +7,8 @@ import { PageLoader } from "@/components/motion/PageLoader";
 import { EmptyState } from "@/components/EmptyState";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -137,8 +138,23 @@ export default function EmpresaDetalhe() {
   const convitesPendentes = empresa.usuarios.filter((u) => u.isPending).length;
   const naoPaga = !empresa.cobranca.isPaying && !empresa.cobranca.convidada;
 
+  // Seções da empresa (SPEC 124): abas sob o header, como nos demais detalhes.
+  const secoes: SectionTab[] = [
+    { id: "visao", label: "Visão geral" },
+    { id: "usuarios", label: "Usuários", badge: empresa.usersCount },
+    { id: "atividade", label: "Atividade" },
+  ];
+
   return (
     <PageLayout
+      tabs={
+        <SectionTabs
+          tabs={secoes}
+          value={aba}
+          onValueChange={(v) => setParams(v === "visao" ? {} : { tab: v }, { replace: true })}
+          ariaLabel="Seções da empresa"
+        />
+      }
       header={
         <PageHeader title={empresa.nome} breadcrumbs={[{ label: "Empresas", to: "/ultra-admin/empresas" }]}>
           <Button variant="outline" size="sm" className="gap-1.5 rounded-full" onClick={() => setDialog("editar")}>
@@ -236,11 +252,6 @@ export default function EmpresaDetalhe() {
       </Card>
 
       <Tabs value={aba} onValueChange={(v) => setParams(v === "visao" ? {} : { tab: v }, { replace: true })}>
-        <TabsList>
-          <TabsTrigger value="visao">Visão geral</TabsTrigger>
-          <TabsTrigger value="usuarios">Usuários ({empresa.usersCount})</TabsTrigger>
-          <TabsTrigger value="atividade">Atividade</TabsTrigger>
-        </TabsList>
         <TabsContent value="visao" className="mt-4">
           <EmpresaVisaoTab
             empresa={empresa}
