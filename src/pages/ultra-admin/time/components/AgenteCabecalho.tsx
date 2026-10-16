@@ -25,6 +25,7 @@ const TIPO: Record<string, string> = {
 function linhaExecucao(agente: OpsAgente, status: StatusAgente, ultima: OpsExecucao | null): string {
   if (status === "so_numeros") return "Números do banco, atualizados ao abrir a página";
   if (status === "planejado") return "Ainda não roda";
+  if (status === "externo") return "Produto à parte: abre em outra aba";
   const rodou = ultima ? `Rodou ${quandoRelativo(ultima.inicio) ?? "agora há pouco"}` : "Ainda não rodou";
   if (!agente.ativo) return `${rodou} · pausado, o horário automático está parado`;
   const cadencia = cadenciaLegivel(agente.cron);
@@ -68,7 +69,7 @@ export function AgenteCabecalho({
         <p className="text-sm text-ink-soft">{agente.missao}</p>
         <p className="text-xs text-ink-muted">
           {linhaExecucao(agente, status, ultima)}
-          {!executavel && plano ? ` · ${plano.quando}` : ""}
+          {!executavel && plano && status !== "externo" ? ` · ${plano.quando}` : ""}
           {custo30d ? ` · IA em 30 dias: ${custo30d}` : ""}
         </p>
         {ultima?.status === "falhou" && ultima.erro && (
@@ -95,7 +96,7 @@ export function AgenteCabecalho({
             </Button>
           </div>
         )}
-        {autonomia.length > 0 && (
+        {autonomia.length > 0 && status !== "externo" && (
           <dl className="grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5 text-xs">
             {autonomia.map(([tipo, nivel]) => (
               <div key={tipo} className="contents">

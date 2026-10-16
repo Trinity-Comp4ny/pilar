@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { PilarPage } from "@/components/PilarPage";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,7 @@ import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { ListaDecisoes } from "./components/ListaDecisoes";
 import { quandoRelativo } from "../lib";
 import { rotaDoAgente, type Decisao } from "./lib";
+import { MARKETING_APP_URL } from "./marketing";
 import { useTimeResumo, type AgenteResumo } from "./useTimeResumo";
 
 function abertura(decisoes: Decisao[]): string {
@@ -37,6 +39,7 @@ export default function Central() {
       if (!receita) return null;
       return `MRR ${formatMoney(receita.mrr)} · ${receita.pagantes} ${receita.pagantes === 1 ? "pagante" : "pagantes"}`;
     }
+    if (id === "marketing") return "Campanhas, posts e vídeos na plataforma";
     if (id === "clientes") {
       if (!saudeQ.data) return null;
       return `${saude.length} ${saude.length === 1 ? "escritório" : "escritórios"} · ${emRisco} em risco`;
@@ -53,7 +56,17 @@ export default function Central() {
       : null;
 
   return (
-    <PilarPage title="Time">
+    <PilarPage
+      title="Time"
+      actions={
+        <Button asChild variant="outline" size="sm">
+          <a href={MARKETING_APP_URL} target="_blank" rel="noreferrer">
+            <ExternalLink size={14} />
+            Plataforma de marketing
+          </a>
+        </Button>
+      }
+    >
       <p className="text-sm text-ink-soft" aria-live="polite">
         {receitaQ.isLoading || saudeQ.isLoading ? "Juntando os números das áreas." : abertura(decisoes)}
         {resumoDoDia && <span className="text-ink-muted"> {resumoDoDia}</span>}
