@@ -1,7 +1,7 @@
 # ADR 0060: Agentes de operação medem no Pilar, publicam fora dele e só rascunham
 
 **Data:** 2026-10-15
-**Status:** Proposed
+**Status:** Proposed. Parte de marketing (ficha com métricas de rede no Ultra e `ops-ingest`) substituída pela [ADR 0061](./0061-marketing-e-produto-proprio-o-pilar-devolve-o-funil.md).
 
 ## Contexto
 
