@@ -10,10 +10,11 @@ muda aqui primeiro.
 Cada playbook tem: missão, indicadores (e de onde saem), gatilhos, ações que o agente pode propor,
 nível de autonomia de cada ação e o que ele nunca faz.
 
-| Agente                       | Playbook                     | Fase                                   |
-| ---------------------------- | ---------------------------- | -------------------------------------- |
-| Receita                      | [receita.md](./receita.md)   | 0 (números) e 1 (briefing e rascunhos) |
-| Clientes                     | [clientes.md](./clientes.md) | 0 (números) e 1 (briefing e rascunhos) |
-| Produto                      | [produto.md](./produto.md)   | 2 (tarefas da semana, SPEC 130)        |
-| Qualidade, Chefe de gabinete | a escrever na fase 2         | 2                                      |
-| Finanças da Pilar            | a escrever na fase 3         | 3                                      |
+| Agente            | Playbook                       | Fase                                   |
+| ----------------- | ------------------------------ | -------------------------------------- |
+| Receita           | [receita.md](./receita.md)     | 0 (números) e 1 (briefing e rascunhos) |
+| Clientes          | [clientes.md](./clientes.md)   | 0 (números) e 1 (briefing e rascunhos) |
+| Produto           | [produto.md](./produto.md)     | 2 (tarefas da semana, SPEC 130)        |
+| Qualidade         | [qualidade.md](./qualidade.md) | 2 (erros do Sentry, SPEC 131)          |
+| Chefe de gabinete | a escrever na fase 2           | 2                                      |
+| Finanças da Pilar | a escrever na fase 3           | 3                                      |
