@@ -12,7 +12,7 @@ import { FormDialog } from "@/components/FormDialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useDecidirAcao } from "../hooks";
-import { linkWhatsApp, type Decisao } from "../lib";
+import { linkWhatsApp, rotuloDoLink, type Decisao } from "../lib";
 
 const AGENTE_LABEL: Record<Decisao["agente"], string> = {
   chefe: "Chefe",
@@ -130,9 +130,7 @@ export function ListaDecisoes({
                             Editar mensagem
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => navigate(d.link)}>
-                          {d.link === "/ultra-admin/feedback" ? "Ver feedback" : "Ver empresa"}
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate(d.link)}>{rotuloDoLink(d.link)}</DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
                           onClick={() => decidir.mutate({ acaoId: acao.id, decisao: "descartada" })}
@@ -144,7 +142,7 @@ export function ListaDecisoes({
                   </>
                 ) : (
                   <Button asChild size="sm" variant="outline">
-                    <Link to={d.link}>{d.link === "/ultra-admin/feedback" ? "Ver feedback" : "Ver empresa"}</Link>
+                    <Link to={d.link}>{rotuloDoLink(d.link)}</Link>
                   </Button>
                 )}
               </div>
