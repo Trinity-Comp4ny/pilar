@@ -7,7 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, type ColumnDef } from "@/components/data/DataTable";
+import { DisciplinaNovaLinha } from "./DisciplinaNovaLinha";
+import { earlierOf, isoSlice, laterOf } from "@/pages/projetos/lib/limitesDeData";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -59,21 +61,7 @@ interface DisciplinasTableViewProps {
   projetoDataPrevisao?: string;
 }
 
-function isoSlice(d?: string | null): string | undefined {
-  return d ? d.slice(0, 10) : undefined;
-}
-
-/** Maior data (limite inferior mais restritivo). */
-function laterOf(...ds: (string | null | undefined)[]): string | undefined {
-  const v = ds.map(isoSlice).filter(Boolean) as string[];
-  return v.length ? [...v].sort()[v.length - 1] : undefined;
-}
-
-/** Menor data (limite superior mais restritivo). */
-function earlierOf(...ds: (string | null | undefined)[]): string | undefined {
-  const v = ds.map(isoSlice).filter(Boolean) as string[];
-  return v.length ? [...v].sort()[0] : undefined;
-}
+type LinhaDisciplina = { disc: DisciplinaResponsavel; dbDisc: ProjetoDisciplinaDB | undefined; idx: number };
 
 const STATUS_DOT: Record<string, string> = {
   Concluído: "bg-positive",
@@ -136,6 +124,362 @@ export function DisciplinasTableView({
     setIsAddingDisc(false);
   };
 
+  const linhas: LinhaDisciplina[] = disciplinasLegacy.map((disc, idx) => ({ disc, dbDisc: dbDisciplinas[idx], idx }));
+  // Valores derivados por linha, usados pelas células (antes eram variáveis do map).
+  const derivar = ({ disc, dbDisc, idx }: LinhaDisciplina) => {
+    const atrasada = isDiscAtrasada(disc);
+    const dpc = disc.prioridade ? PROJECT_PRIORITY_CONFIG[disc.prioridade as ProjectPriority] : null;
+    const obsCount = dbDisc?.observacoes ? dbDisc.observacoes.split("\n").filter(Boolean).length : 0;
+    const counts = dbDisc?.id ? checklistCounts?.[dbDisc.id] : undefined;
+    const checklistIncompleto = !!counts && counts.total > 0 && counts.concluidos < counts.total;
+    const revisoes = dbDisc?.id ? revisoesCounts?.[dbDisc.id] : undefined;
+    return { disc, dbDisc, idx, atrasada, dpc, obsCount, counts, checklistIncompleto, revisoes };
+  };
+
+  const colunas: ColumnDef<LinhaDisciplina>[] = [
+    {
+      key: "disciplina",
+      header: "Disciplina",
+      cell: (r) => {
+        const { disc, idx, atrasada, revisoes } = derivar(r);
+        return (
+          <>
+            <div className="flex items-center gap-2">
+              {canEdit ? (
+                <Select value={disc.disciplina} onValueChange={(v) => quickUpdate(idx, { nome: v })}>
+                  <SelectTrigger
+                    className="h-7 text-xs border-0 bg-transparent hover:bg-muted px-2 -ml-2 font-medium"
+                    aria-label="Disciplina"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {disc.disciplina && !disciplinasCatalog.some((d) => d.nome === disc.disciplina) && (
+                      <SelectItem value={disc.disciplina} className="text-xs">
+                        {disc.disciplina}
+                      </SelectItem>
+                    )}
+                    {disciplinasCatalog.map((d) => (
+                      <SelectItem key={d.id} value={d.nome} className="text-xs">
+                        {d.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <span className="text-sm font-medium">{disc.disciplina}</span>
+              )}
+              {atrasada && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
+                  <AlertTriangle size={10} /> Atrasada
+                </span>
+              )}
+              {!!revisoes?.total && (
+                <span
+                  title={
+                    revisoes.abertas > 0
+                      ? "Revisão em aberto nesta disciplina"
+                      : "Revisões já concluídas nesta disciplina"
+                  }
+                  className={cn(
+                    "text-[9px] px-1.5 py-0.5 rounded-full font-semibold flex items-center gap-1",
+                    revisoes.abertas > 0 ? "bg-warning-soft text-warning-strong" : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  <RotateCcw size={10} /> {revisoes.total}
+                </span>
+              )}
+            </div>
+          </>
+        );
+      },
+    },
+    {
+      key: "prioridade",
+      header: "Prioridade",
+      className: "w-[110px]",
+      cell: (r) => {
+        const { disc, idx, dpc } = derivar(r);
+        return (
+          <>
+            {canEdit ? (
+              <Select
+                value={disc.prioridade || PROJECT_PRIORITY.MEDIA}
+                onValueChange={(v) => quickUpdate(idx, { prioridade: v })}
+              >
+                <SelectTrigger
+                  className="h-7 text-xs border-0 bg-transparent hover:bg-muted px-2 -ml-2"
+                  aria-label="Prioridade"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRIORITY_OPTIONS.map((p) => (
+                    <SelectItem key={p} value={p} className="text-xs">
+                      <span className="flex items-center gap-1.5">
+                        <span className={cn("h-2 w-2 rounded-full", PROJECT_PRIORITY_CONFIG[p].dotColor)} />
+                        {PROJECT_PRIORITY_CONFIG[p].label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : dpc ? (
+              <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-medium", dpc.bgColor, dpc.color)}>
+                {dpc.label}
+              </span>
+            ) : (
+              <span className="text-xs text-muted-foreground">—</span>
+            )}
+          </>
+        );
+      },
+    },
+    {
+      key: "status",
+      header: "Status",
+      className: "w-[140px]",
+      cell: (r) => {
+        const { disc, idx, checklistIncompleto } = derivar(r);
+        return (
+          <>
+            {canEdit ? (
+              <Select value={disc.status || "Não Iniciado"} onValueChange={(v) => handleStatusChange(idx, v)}>
+                <SelectTrigger
+                  className="h-7 text-xs border-0 bg-transparent hover:bg-muted px-2 -ml-2"
+                  aria-label="Status"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <span className={cn("h-2 w-2 rounded-full", STATUS_DOT[disc.status || "Não Iniciado"])} />
+                    <SelectValue />
+                  </span>
+                </SelectTrigger>
+                <SelectContent>
+                  {disciplinaStatusOptions.map((s) => (
+                    <SelectItem
+                      key={s}
+                      value={s}
+                      className="text-xs"
+                      disabled={s === "Concluído" && checklistIncompleto}
+                      title={
+                        s === "Concluído" && checklistIncompleto
+                          ? "Conclua todos os itens do checklist antes"
+                          : undefined
+                      }
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <span className={cn("h-2 w-2 rounded-full", STATUS_DOT[s])} />
+                        {s}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Badge variant="outline" className="text-[11px]">
+                {disc.status || "Não Iniciado"}
+              </Badge>
+            )}
+          </>
+        );
+      },
+    },
+    {
+      key: "inicio",
+      header: "Início",
+      className: "w-[130px]",
+      cell: (r) => {
+        const { disc, idx } = derivar(r);
+        return (
+          <>
+            {canEdit ? (
+              <DatePicker
+                value={disc.data_inicio || undefined}
+                onChange={(v) => quickUpdate(idx, { data_inicio: v || null })}
+                minDate={isoSlice(projetoDataInicio)}
+                maxDate={earlierOf(disc.data_previsao, disc.data_final)}
+                placeholder="—"
+                className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
+              />
+            ) : (
+              <span className="text-xs">{disc.data_inicio ? formatDateShort(disc.data_inicio) : "—"}</span>
+            )}
+          </>
+        );
+      },
+    },
+    {
+      key: "previsao",
+      header: "Previsão",
+      className: "w-[130px]",
+      cell: (r) => {
+        const { disc, idx } = derivar(r);
+        return (
+          <>
+            {canEdit ? (
+              <DatePicker
+                value={disc.data_previsao || undefined}
+                onChange={(v) => quickUpdate(idx, { data_fim: v || null })}
+                minDate={laterOf(disc.data_inicio, projetoDataInicio)}
+                maxDate={isoSlice(disc.data_final)}
+                placeholder="—"
+                className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
+              />
+            ) : (
+              <span className="text-xs">{disc.data_previsao ? formatDateShort(disc.data_previsao) : "—"}</span>
+            )}
+          </>
+        );
+      },
+    },
+    {
+      key: "final",
+      header: "Final",
+      className: "w-[130px]",
+      cell: (r) => {
+        const { disc, idx } = derivar(r);
+        return (
+          <>
+            {canEdit ? (
+              <DatePicker
+                value={disc.data_final || undefined}
+                onChange={(v) => quickUpdate(idx, { data_fim_real: v || null })}
+                minDate={laterOf(disc.data_inicio, projetoDataInicio)}
+                placeholder="—"
+                className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
+              />
+            ) : (
+              <span className={cn("text-xs", disc.data_final && "text-positive-strong font-medium")}>
+                {disc.data_final ? formatDateShort(disc.data_final) : "—"}
+              </span>
+            )}
+          </>
+        );
+      },
+    },
+    {
+      key: "responsaveis",
+      header: "Responsáveis",
+      className: "w-[160px]",
+      cell: (r) => {
+        const { disc, dbDisc, idx } = derivar(r);
+        return (
+          <>
+            <ResponsaveisCell
+              discIdx={idx}
+              disc={disc}
+              dbDisc={dbDisc}
+              pessoas={pessoas}
+              canEdit={canEdit}
+              onAdd={handleAddResponsavel}
+              onRemove={handleRemoveResponsavel}
+            />
+          </>
+        );
+      },
+    },
+    {
+      key: "obs",
+      header: "Obs",
+      className: "w-[60px]",
+      cell: (r) => {
+        const { dbDisc, idx, obsCount } = derivar(r);
+        return (
+          <>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  aria-label={obsCount > 0 ? `Observações (${obsCount})` : "Observações"}
+                  onClick={() => setObsDrafts((prev) => ({ ...prev, [dbDisc?.id ?? idx]: "" }))}
+                >
+                  <MessageSquare className="h-3.5 w-3.5 mr-1" />
+                  {obsCount > 0 ? obsCount : ""}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="end">
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold">Observações</Label>
+                  <div className="rounded border max-h-60 overflow-y-auto p-2 bg-muted/30">
+                    {!dbDisc?.observacoes ? (
+                      <p className="text-xs text-muted-foreground text-center py-3">Nenhuma observação</p>
+                    ) : (
+                      <p className="text-xs whitespace-pre-line">{dbDisc.observacoes}</p>
+                    )}
+                  </div>
+                  {canEdit && (
+                    <div className="flex gap-1.5">
+                      <Input
+                        placeholder="Nova observação..."
+                        value={obsDrafts[dbDisc?.id ?? idx] ?? ""}
+                        onChange={(e) => setObsDrafts((prev) => ({ ...prev, [dbDisc?.id ?? idx]: e.target.value }))}
+                        onKeyDown={(e) => {
+                          const draft = obsDrafts[dbDisc?.id ?? idx] ?? "";
+                          if (e.key === "Enter" && draft.trim()) {
+                            e.preventDefault();
+                            const stamp = new Date().toLocaleString("pt-BR");
+                            const entry = `[${stamp}] ${draft.trim()}`;
+                            const next = dbDisc?.observacoes ? `${dbDisc.observacoes}\n${entry}` : entry;
+                            quickUpdate(idx, { observacoes: next });
+                            setObsDrafts((prev) => ({ ...prev, [dbDisc?.id ?? idx]: "" }));
+                          }
+                        }}
+                        className="h-8 text-xs"
+                      />
+                      <Button
+                        size="sm"
+                        variant="brand"
+                        className="h-8"
+                        disabled={!(obsDrafts[dbDisc?.id ?? idx] ?? "").trim()}
+                        onClick={() => {
+                          const draft = obsDrafts[dbDisc?.id ?? idx] ?? "";
+                          const stamp = new Date().toLocaleString("pt-BR");
+                          const entry = `[${stamp}] ${draft.trim()}`;
+                          const next = dbDisc?.observacoes ? `${dbDisc.observacoes}\n${entry}` : entry;
+                          quickUpdate(idx, { observacoes: next });
+                          setObsDrafts((prev) => ({ ...prev, [dbDisc?.id ?? idx]: "" }));
+                        }}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </>
+        );
+      },
+    },
+    ...(canEdit
+      ? [
+          {
+            key: "acoes",
+            header: <span className="sr-only">Ações</span>,
+            className: "w-[40px]",
+            cell: (r: LinhaDisciplina) => {
+              const { idx } = derivar(r);
+              return (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-danger-mid"
+                    onClick={() => setDeleteDiscIdx(idx)}
+                    aria-label="Excluir disciplina"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              );
+            },
+          },
+        ]
+      : []),
+  ];
+
   return (
     <>
       <div className="space-y-3">
@@ -176,386 +520,30 @@ export function DisciplinasTableView({
           </div>
         ) : (
           <div className="border rounded-lg overflow-hidden bg-white">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/40 hover:bg-muted/40">
-                  <TableHead className="h-9 text-[11px] uppercase tracking-wide">Disciplina</TableHead>
-                  <TableHead className="h-9 text-[11px] uppercase tracking-wide w-[110px]">Prioridade</TableHead>
-                  <TableHead className="h-9 text-[11px] uppercase tracking-wide w-[140px]">Status</TableHead>
-                  <TableHead className="h-9 text-[11px] uppercase tracking-wide w-[130px]">Início</TableHead>
-                  <TableHead className="h-9 text-[11px] uppercase tracking-wide w-[130px]">Previsão</TableHead>
-                  <TableHead className="h-9 text-[11px] uppercase tracking-wide w-[130px]">Final</TableHead>
-                  <TableHead className="h-9 text-[11px] uppercase tracking-wide w-[160px]">Responsáveis</TableHead>
-                  <TableHead className="h-9 text-[11px] uppercase tracking-wide w-[60px]">Obs</TableHead>
-                  {canEdit && <TableHead className="h-9 w-[40px]" />}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {disciplinasLegacy.map((disc, idx) => {
-                  const dbDisc = dbDisciplinas[idx];
-                  const atrasada = isDiscAtrasada(disc);
-                  const dpc = disc.prioridade ? PROJECT_PRIORITY_CONFIG[disc.prioridade as ProjectPriority] : null;
-                  const obsCount = dbDisc?.observacoes ? dbDisc.observacoes.split("\n").filter(Boolean).length : 0;
-                  const counts = dbDisc?.id ? checklistCounts?.[dbDisc.id] : undefined;
-                  const checklistIncompleto = !!counts && counts.total > 0 && counts.concluidos < counts.total;
-                  const revisoes = dbDisc?.id ? revisoesCounts?.[dbDisc.id] : undefined;
-
-                  return (
-                    <TableRow key={dbDisc?.id || idx} className={cn(atrasada && "bg-danger-soft/40")}>
-                      {/* Disciplina */}
-                      <TableCell className="py-2">
-                        <div className="flex items-center gap-2">
-                          {canEdit ? (
-                            <Select value={disc.disciplina} onValueChange={(v) => quickUpdate(idx, { nome: v })}>
-                              <SelectTrigger
-                                className="h-7 text-xs border-0 bg-transparent hover:bg-muted px-2 -ml-2 font-medium"
-                                aria-label="Disciplina"
-                              >
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {disc.disciplina && !disciplinasCatalog.some((d) => d.nome === disc.disciplina) && (
-                                  <SelectItem value={disc.disciplina} className="text-xs">
-                                    {disc.disciplina}
-                                  </SelectItem>
-                                )}
-                                {disciplinasCatalog.map((d) => (
-                                  <SelectItem key={d.id} value={d.nome} className="text-xs">
-                                    {d.nome}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <span className="text-sm font-medium">{disc.disciplina}</span>
-                          )}
-                          {atrasada && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
-                              <AlertTriangle size={10} /> Atrasada
-                            </span>
-                          )}
-                          {!!revisoes?.total && (
-                            <span
-                              title={
-                                revisoes.abertas > 0
-                                  ? "Revisão em aberto nesta disciplina"
-                                  : "Revisões já concluídas nesta disciplina"
-                              }
-                              className={cn(
-                                "text-[9px] px-1.5 py-0.5 rounded-full font-semibold flex items-center gap-1",
-                                revisoes.abertas > 0
-                                  ? "bg-warning-soft text-warning-strong"
-                                  : "bg-muted text-muted-foreground"
-                              )}
-                            >
-                              <RotateCcw size={10} /> {revisoes.total}
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-
-                      {/* Prioridade */}
-                      <TableCell className="py-2">
-                        {canEdit ? (
-                          <Select
-                            value={disc.prioridade || PROJECT_PRIORITY.MEDIA}
-                            onValueChange={(v) => quickUpdate(idx, { prioridade: v })}
-                          >
-                            <SelectTrigger
-                              className="h-7 text-xs border-0 bg-transparent hover:bg-muted px-2 -ml-2"
-                              aria-label="Prioridade"
-                            >
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {PRIORITY_OPTIONS.map((p) => (
-                                <SelectItem key={p} value={p} className="text-xs">
-                                  <span className="flex items-center gap-1.5">
-                                    <span className={cn("h-2 w-2 rounded-full", PROJECT_PRIORITY_CONFIG[p].dotColor)} />
-                                    {PROJECT_PRIORITY_CONFIG[p].label}
-                                  </span>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        ) : dpc ? (
-                          <span
-                            className={cn("text-[10px] px-2 py-0.5 rounded-full font-medium", dpc.bgColor, dpc.color)}
-                          >
-                            {dpc.label}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-
-                      {/* Status */}
-                      <TableCell className="py-2">
-                        {canEdit ? (
-                          <Select
-                            value={disc.status || "Não Iniciado"}
-                            onValueChange={(v) => handleStatusChange(idx, v)}
-                          >
-                            <SelectTrigger
-                              className="h-7 text-xs border-0 bg-transparent hover:bg-muted px-2 -ml-2"
-                              aria-label="Status"
-                            >
-                              <span className="flex items-center gap-1.5">
-                                <span
-                                  className={cn("h-2 w-2 rounded-full", STATUS_DOT[disc.status || "Não Iniciado"])}
-                                />
-                                <SelectValue />
-                              </span>
-                            </SelectTrigger>
-                            <SelectContent>
-                              {disciplinaStatusOptions.map((s) => (
-                                <SelectItem
-                                  key={s}
-                                  value={s}
-                                  className="text-xs"
-                                  disabled={s === "Concluído" && checklistIncompleto}
-                                  title={
-                                    s === "Concluído" && checklistIncompleto
-                                      ? "Conclua todos os itens do checklist antes"
-                                      : undefined
-                                  }
-                                >
-                                  <span className="flex items-center gap-1.5">
-                                    <span className={cn("h-2 w-2 rounded-full", STATUS_DOT[s])} />
-                                    {s}
-                                  </span>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <Badge variant="outline" className="text-[11px]">
-                            {disc.status || "Não Iniciado"}
-                          </Badge>
-                        )}
-                      </TableCell>
-
-                      {/* Início */}
-                      <TableCell className="py-2">
-                        {canEdit ? (
-                          <DatePicker
-                            value={disc.data_inicio || undefined}
-                            onChange={(v) => quickUpdate(idx, { data_inicio: v || null })}
-                            minDate={isoSlice(projetoDataInicio)}
-                            maxDate={earlierOf(disc.data_previsao, disc.data_final)}
-                            placeholder="—"
-                            className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
-                          />
-                        ) : (
-                          <span className="text-xs">{disc.data_inicio ? formatDateShort(disc.data_inicio) : "—"}</span>
-                        )}
-                      </TableCell>
-
-                      {/* Previsão */}
-                      <TableCell className="py-2">
-                        {canEdit ? (
-                          <DatePicker
-                            value={disc.data_previsao || undefined}
-                            onChange={(v) => quickUpdate(idx, { data_fim: v || null })}
-                            minDate={laterOf(disc.data_inicio, projetoDataInicio)}
-                            maxDate={isoSlice(disc.data_final)}
-                            placeholder="—"
-                            className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
-                          />
-                        ) : (
-                          <span className="text-xs">
-                            {disc.data_previsao ? formatDateShort(disc.data_previsao) : "—"}
-                          </span>
-                        )}
-                      </TableCell>
-
-                      {/* Final */}
-                      <TableCell className="py-2">
-                        {canEdit ? (
-                          <DatePicker
-                            value={disc.data_final || undefined}
-                            onChange={(v) => quickUpdate(idx, { data_fim_real: v || null })}
-                            minDate={laterOf(disc.data_inicio, projetoDataInicio)}
-                            placeholder="—"
-                            className="h-7 text-xs border-0 bg-transparent hover:bg-muted"
-                          />
-                        ) : (
-                          <span className={cn("text-xs", disc.data_final && "text-positive-strong font-medium")}>
-                            {disc.data_final ? formatDateShort(disc.data_final) : "—"}
-                          </span>
-                        )}
-                      </TableCell>
-
-                      {/* Responsáveis */}
-                      <TableCell className="py-2">
-                        <ResponsaveisCell
-                          discIdx={idx}
-                          disc={disc}
-                          dbDisc={dbDisc}
-                          pessoas={pessoas}
-                          canEdit={canEdit}
-                          onAdd={handleAddResponsavel}
-                          onRemove={handleRemoveResponsavel}
-                        />
-                      </TableCell>
-
-                      {/* Observações */}
-                      <TableCell className="py-2">
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 px-2 text-xs"
-                              aria-label={obsCount > 0 ? `Observações (${obsCount})` : "Observações"}
-                              onClick={() => setObsDrafts((prev) => ({ ...prev, [dbDisc?.id ?? idx]: "" }))}
-                            >
-                              <MessageSquare className="h-3.5 w-3.5 mr-1" />
-                              {obsCount > 0 ? obsCount : ""}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-80" align="end">
-                            <div className="space-y-2">
-                              <Label className="text-xs font-semibold">Observações</Label>
-                              <div className="rounded border max-h-60 overflow-y-auto p-2 bg-muted/30">
-                                {!dbDisc?.observacoes ? (
-                                  <p className="text-xs text-muted-foreground text-center py-3">Nenhuma observação</p>
-                                ) : (
-                                  <p className="text-xs whitespace-pre-line">{dbDisc.observacoes}</p>
-                                )}
-                              </div>
-                              {canEdit && (
-                                <div className="flex gap-1.5">
-                                  <Input
-                                    placeholder="Nova observação..."
-                                    value={obsDrafts[dbDisc?.id ?? idx] ?? ""}
-                                    onChange={(e) =>
-                                      setObsDrafts((prev) => ({ ...prev, [dbDisc?.id ?? idx]: e.target.value }))
-                                    }
-                                    onKeyDown={(e) => {
-                                      const draft = obsDrafts[dbDisc?.id ?? idx] ?? "";
-                                      if (e.key === "Enter" && draft.trim()) {
-                                        e.preventDefault();
-                                        const stamp = new Date().toLocaleString("pt-BR");
-                                        const entry = `[${stamp}] ${draft.trim()}`;
-                                        const next = dbDisc?.observacoes ? `${dbDisc.observacoes}\n${entry}` : entry;
-                                        quickUpdate(idx, { observacoes: next });
-                                        setObsDrafts((prev) => ({ ...prev, [dbDisc?.id ?? idx]: "" }));
-                                      }
-                                    }}
-                                    className="h-8 text-xs"
-                                  />
-                                  <Button
-                                    size="sm"
-                                    variant="brand"
-                                    className="h-8"
-                                    disabled={!(obsDrafts[dbDisc?.id ?? idx] ?? "").trim()}
-                                    onClick={() => {
-                                      const draft = obsDrafts[dbDisc?.id ?? idx] ?? "";
-                                      const stamp = new Date().toLocaleString("pt-BR");
-                                      const entry = `[${stamp}] ${draft.trim()}`;
-                                      const next = dbDisc?.observacoes ? `${dbDisc.observacoes}\n${entry}` : entry;
-                                      quickUpdate(idx, { observacoes: next });
-                                      setObsDrafts((prev) => ({ ...prev, [dbDisc?.id ?? idx]: "" }));
-                                    }}
-                                  >
-                                    <Plus className="h-3.5 w-3.5" />
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      </TableCell>
-
-                      {/* Ações */}
-                      {canEdit && (
-                        <TableCell className="py-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-danger-mid"
-                            onClick={() => setDeleteDiscIdx(idx)}
-                            aria-label="Excluir disciplina"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  );
-                })}
-
-                {/* Linha de adicionar */}
-                {isAddingDisc && canEdit && (
-                  <TableRow className="bg-primary/5">
-                    <TableCell className="py-2">
-                      <Select
-                        value={newDisc.disciplina}
-                        onValueChange={(v) => setNewDisc((p) => ({ ...p, disciplina: v }))}
-                      >
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {disciplinasCatalog.map((d) => (
-                            <SelectItem key={d.id} value={d.nome} className="text-xs">
-                              {d.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell className="py-2 text-xs text-muted-foreground" colSpan={5}>
-                      Defina os outros campos após adicionar
-                    </TableCell>
-                    <TableCell className="py-2" colSpan={2}>
-                      <Select
-                        value={newDisc.responsavel_id}
-                        onValueChange={(v) => setNewDisc((p) => ({ ...p, responsavel_id: v }))}
-                      >
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue placeholder="Responsável" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {pessoas.map((p) => (
-                            <SelectItem key={p.id} value={p.id} className="text-xs">
-                              {p.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell className="py-2">
-                      <div className="flex gap-1">
-                        <Button
-                          size="icon"
-                          variant="brand"
-                          className="h-8 w-8"
-                          onClick={onAddDisc}
-                          disabled={!newDisc.disciplina || !newDisc.responsavel_id}
-                          aria-label="Adicionar disciplina"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8"
-                          onClick={() => {
-                            setIsAddingDisc(false);
-                            setNewDisc({ disciplina: "", responsavel_id: "" });
-                          }}
-                          aria-label="Cancelar"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+            <DataTable
+              columns={colunas}
+              data={{ rows: linhas, isPending: false, error: null }}
+              rowKey={(r) => r.dbDisc?.id || String(r.idx)}
+              rowClassName={(r) => (isDiscAtrasada(r.disc) ? "bg-danger-soft/40" : undefined)}
+              density="compact"
+              extraRows={
+                isAddingDisc && canEdit ? (
+                  <>
+                    <DisciplinaNovaLinha
+                      value={newDisc}
+                      onChange={(fn) => setNewDisc(fn)}
+                      disciplinasCatalog={disciplinasCatalog}
+                      pessoas={pessoas}
+                      onAdd={onAddDisc}
+                      onCancel={() => {
+                        setIsAddingDisc(false);
+                        setNewDisc({ disciplina: "", responsavel_id: "" });
+                      }}
+                    />
+                  </>
+                ) : undefined
+              }
+            />
           </div>
         )}
       </div>

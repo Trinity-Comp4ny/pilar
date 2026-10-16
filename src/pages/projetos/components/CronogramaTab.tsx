@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ZoomSwitcher } from "@/components/gantt/ZoomSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calendar, User, AlertTriangle, Layers, ZoomIn, ZoomOut } from "lucide-react";
+import { Calendar, User, AlertTriangle, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   type GanttDragType,
@@ -345,26 +346,7 @@ export function CronogramaTab({
               >
                 Hoje
               </Button>
-              <div className="flex items-center border rounded-md overflow-hidden">
-                <Button
-                  variant={zoom === "months" ? "secondary" : "ghost"}
-                  size="sm"
-                  className="h-7 text-xs rounded-none px-2"
-                  onClick={() => setZoom("months")}
-                  aria-label="Meses"
-                >
-                  <ZoomOut className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Meses</span>
-                </Button>
-                <Button
-                  variant={zoom === "weeks" ? "secondary" : "ghost"}
-                  size="sm"
-                  className="h-7 text-xs rounded-none px-2"
-                  onClick={() => setZoom("weeks")}
-                  aria-label="Semanas"
-                >
-                  <ZoomIn className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Semanas</span>
-                </Button>
-              </div>
+              <ZoomSwitcher value={zoom} onChange={setZoom} />
             </div>
           </div>
         </CardContent>

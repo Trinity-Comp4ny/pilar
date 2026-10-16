@@ -57,6 +57,13 @@ interface DataTableProps<T> {
    * total, para as linhas cujo id está em `expandedIds`. Devolver `null` não expande.
    */
   renderExpanded?: (row: T) => ReactNode;
+  /** `compact`: cabeçalho de 36px em caixa alta pequena e células com menos respiro (tabela densa de edição). */
+  density?: "default" | "compact";
+  /**
+   * Linhas extras depois do corpo (SPEC 127), ex.: linha de "adicionar" inline. O chamador devolve
+   * `<TableRow>`s completos. Com `extraRows`, a lista vazia não mostra a mensagem de vazio.
+   */
+  extraRows?: ReactNode;
   /** Ids (de `rowKey`) das linhas expandidas. Quem controla é o pai, em geral pelo `onRowClick`. */
   expandedIds?: ReadonlySet<string>;
   /** Coluna de ordenação inicial. */
@@ -138,6 +145,8 @@ export function DataTable<T>({
   rowClassName,
   renderExpanded,
   expandedIds,
+  density = "default",
+  extraRows,
   defaultSortKey,
   defaultSortDir = "asc",
   sortingState,
@@ -215,6 +224,7 @@ export function DataTable<T>({
   // `maxHeight` implica scroll vertical interno (ver wrapper abaixo); o header
   // gruda no topo desse scroll, senão ele "sobe" e some ao rolar a tabela.
   const stickyHeader = !!maxHeight;
+  const compact = density === "compact";
 
   const selectionHead = enableRowSelection ? (
     <TableHead className={cn("w-10 sticky left-0 z-20 bg-muted/50", stickyHeader && "top-0 z-30")}>
@@ -236,6 +246,7 @@ export function DataTable<T>({
         key={col.key}
         aria-sort={isActive ? (sortState!.desc ? "descending" : "ascending") : undefined}
         className={cn(
+          compact && "h-9 text-[11px] uppercase tracking-wide",
           col.align && alignClass[col.align],
           col.stickyLeft && "sticky left-0 z-20 bg-muted/50",
           stickyHeader && "sticky top-0 z-10 bg-card",
@@ -308,6 +319,7 @@ export function DataTable<T>({
     }
 
     const bodyRows = table.getRowModel().rows;
+    if (bodyRows.length === 0 && extraRows) return extraRows;
     if (bodyRows.length === 0) {
       return (
         <TableRow className="hover:bg-transparent">
@@ -331,7 +343,7 @@ export function DataTable<T>({
       );
     }
 
-    return bodyRows.map((row) => {
+    const linhas = bodyRows.map((row) => {
       const expandida = expandedIds?.has(row.id) ? (renderExpanded?.(row.original) ?? null) : null;
       return (
         <Fragment key={row.id}>
@@ -372,6 +384,7 @@ export function DataTable<T>({
               <TableCell
                 key={col.key}
                 className={cn(
+                  compact && "py-2",
                   col.align && alignClass[col.align],
                   col.stickyLeft && "sticky left-0 z-10 bg-card",
                   col.className
@@ -391,6 +404,12 @@ export function DataTable<T>({
         </Fragment>
       );
     });
+    return (
+      <>
+        {linhas}
+        {extraRows}
+      </>
+    );
   };
 
   const hasRows = !isPending && !error && table.getRowModel().rows.length > 0;

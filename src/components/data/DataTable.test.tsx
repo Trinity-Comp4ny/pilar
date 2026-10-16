@@ -186,4 +186,47 @@ describe("DataTable", () => {
       expect(within(screen.getByRole("table")).getAllByRole("row")).toHaveLength(4);
     });
   });
+
+  describe("densidade e linhas extras (SPEC 127, fase 2)", () => {
+    it("density compact enxuga cabeçalho e células", () => {
+      render(<DataTable columns={columns} data={{ rows }} rowKey={(r) => r.id} density="compact" />);
+      expect(screen.getByRole("columnheader", { name: /Nome/ })).toHaveClass("h-9", "uppercase");
+      expect(screen.getAllByRole("cell")[0]).toHaveClass("py-2");
+    });
+
+    it("extraRows aparece depois das linhas", () => {
+      render(
+        <DataTable
+          columns={columns}
+          data={{ rows }}
+          rowKey={(r) => r.id}
+          extraRows={
+            <tr>
+              <td colSpan={2}>nova linha</td>
+            </tr>
+          }
+        />
+      );
+      const linhas = within(screen.getByRole("table")).getAllByRole("row");
+      expect(linhas[linhas.length - 1]).toHaveTextContent("nova linha");
+    });
+
+    it("sem linhas, extraRows substitui a mensagem de vazio", () => {
+      render(
+        <DataTable
+          columns={columns}
+          data={{ rows: [] }}
+          rowKey={(r) => r.id}
+          emptyMessage="Nada aqui"
+          extraRows={
+            <tr>
+              <td colSpan={2}>adicionar</td>
+            </tr>
+          }
+        />
+      );
+      expect(screen.queryByText("Nada aqui")).not.toBeInTheDocument();
+      expect(screen.getByText("adicionar")).toBeInTheDocument();
+    });
+  });
 });
