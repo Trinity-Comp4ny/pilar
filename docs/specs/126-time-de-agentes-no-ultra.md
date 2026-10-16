@@ -1,7 +1,7 @@
 # SPEC 126: Time de agentes no Ultra
 
 **Data:** 2026-10-15
-**Status:** Em implementação (fase 0 no PR da fase 0; fases 1 a 3 pendentes)
+**Status:** Em implementação (fase 0 na #641; fase 1 em PR próprio; ingestão do post-automation e fases 2 e 3 pendentes)
 **Autor:** Matheus Rezende
 **Módulo:** ultra-admin + edge functions (operação da Pilar)
 **Relacionada:** [SPEC 117](117-portal-ultra-admin-na-sidebar.md) (portal Ultra), [SPEC 125](125-telemetria-de-produto-e-erros.md) (telemetria que alimenta os agentes), [SPEC 113](113-avisos-do-ultra-admin-por-email.md) (aviso por e-mail), [ADR 0060](../architecture/adr/0060-agentes-de-operacao-medem-no-pilar-publicam-fora.md), [ADR 0050](../architecture/adr/0050-agente-que-grava-rascunho-cita-evidencia.md), [ADR 0051](../architecture/adr/0051-modelo-de-ia-por-configuracao-com-gateway.md), [AGENTS_TEAM.md](../AGENTS_TEAM.md)
@@ -175,7 +175,7 @@ ops_execucoes (
   inicio timestamptz, fim timestamptz,
   status text,                                     -- 'ok' | 'falhou' | 'pausada_teto'
   sinais jsonb, briefing jsonb, descartes jsonb,
-  tokens_in int, tokens_out int, custo_brl numeric, erro text
+  tokens_in int, tokens_out int, custo_usd numeric, erro text   -- custo_brl na fase 0; USD como o ledger desde a fase 1
 )
 ops_acoes (
   id uuid, agente_id text, execucao_id uuid,
@@ -204,7 +204,10 @@ ops_metricas_diarias (
   `ops_funil(p_desde date)`: visitas (do PostHog via snapshot), cadastros,
   ativados, pagantes, por origem UTM.
 - Edge `ops-agente-run` `POST { agente_id, gatilho, contexto? }`.
-- Edge `ops-acao` `POST { acao_id, decisao, rascunho_editado?, motivo? }`.
+- RPC `ops_decidir_acao(p_acao_id, p_decisao, p_texto?, p_motivo?)` (fase 1, no lugar da edge
+  `ops-acao`): `enviada` grava o texto final e se foi editado; `descartada` guarda o motivo.
+  Envio de WhatsApp é o próprio `wa.me`, então não precisa de edge.
+- RPC `ops_definir_agente_ativo(p_agente_id, p_ativo)`: Pausar e Retomar da ficha.
 - Edge `ops-ingest` `POST { fonte, data, metricas: [{ chave, dimensao, valor }] }`.
 - Edge `ops-export-funil` `GET ?desde=YYYY-MM-DD`.
 
@@ -223,12 +226,26 @@ Fase 0, antes de qualquer LLM (semanas de 20/10 e 27/10):
 
 Fase 1 (novembro):
 
-4. `ops-agente-run` + playbooks de Receita e Clientes + fila de ações + executores
-   `email` e `whatsapp`.
-5. `ops-ingest` e `ops-export-funil` e o lado do `post-automation` (ver o plano de
-   presença social naquele repo).
+4. [x] Edge `ops-agente-run` (cron por segredo ou "Rodar agora" do ultra admin): Receita
+       (7h e 19h) e Clientes (7h05) calculam os fatos pelas mesmas RPCs da tela, escolhem os
+       candidatos por regra (`regras.ts`), pedem ao modelo só briefing e rascunho, aterram a
+       resposta em código (referência inexistente e texto com preço, desconto, porcentagem ou
+       link são descartados) e gravam ações pendentes com chave natural (sem duplicar entre
+       execuções). Sem modelo, ou acima do teto mensal (R$ 30 por agente), roda só com regra.
+5. [x] Chefe de gabinete (7h10, sem modelo): resumo do dia por e-mail aos ultra admins, com
+       as três prioridades da fila e os números de Receita e Clientes.
+6. [x] Tela: briefing da última execução, "Rodar agora", "Pausar"/"Retomar", histórico e
+       custo em 30 dias; fila com Editar mensagem, Abrir no WhatsApp, Marcar como enviada e
+       Descartar. Agente ligado traz as próprias ações; agente desligado segue com a regra
+       da fase 0.
+7. [ ] `ops-ingest` e `ops-export-funil` e o lado do `post-automation` (ver o plano de
+       presença social naquele repo).
+8. [ ] Custo dos agentes também no `ai_token_ledger`, para entrar em Custos de IA (hoje fica
+       em `ops_execucoes.custo_usd` e na ficha do agente).
+9. [ ] Eval do prompt dos agentes (ADR 0048) antes de trocar modelo ou prompt.
 
-Fase 2 (dezembro): Marketing, Produto, Qualidade e Chefe de gabinete; executor `issue`.
+Fase 2 (dezembro): Marketing, Produto e Qualidade; briefing do Chefe com modelo; executor
+`issue`.
 
 Fase 3 (depois do lançamento): Finanças da Pilar; revisão de autonomia por tipo de ação.
 
