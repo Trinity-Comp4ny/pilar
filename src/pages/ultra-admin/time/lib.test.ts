@@ -15,6 +15,7 @@ import {
   quandoVence,
   rotaDoAgente,
   rotuloDoLink,
+  ehLinkExterno,
   statusDoAgente,
   taxa,
   telefoneWhatsApp,
@@ -267,6 +268,7 @@ describe("fase 1: ações gravadas pelos agentes", () => {
   it("horário do cron em Brasília e quem a Edge Function executa", () => {
     expect(cadenciaLegivel("0 10,22 * * *")).toBe("todo dia às 7h e às 19h");
     expect(cadenciaLegivel("7 10 * * 1")).toBe("toda segunda às 7h07");
+    expect(cadenciaLegivel("3 10 * * *")).toBe("todo dia às 7h03");
     expect(cadenciaLegivel(null)).toBeNull();
     expect(ehExecutavel("chefe")).toBe(true);
     expect(ehExecutavel("marketing")).toBe(false);
@@ -349,5 +351,16 @@ describe("Produto (SPEC 130)", () => {
     expect(d.link).toBe("/ultra-admin/atividade");
     expect(d.whatsapp).toBeNull();
     expect(d.detalhe).toBe("Veja na Atividade quem parou.");
+  });
+});
+
+describe("Qualidade (SPEC 131)", () => {
+  it("roda pelo executor e a tarefa abre o erro no Sentry em outra aba", () => {
+    expect(ehExecutavel("qualidade")).toBe(true);
+    const sentry = "https://trinity-company.sentry.io/issues/101/";
+    expect(ehLinkExterno(sentry)).toBe(true);
+    expect(ehLinkExterno("/ultra-admin/feedback")).toBe(false);
+    expect(rotuloDoLink(sentry)).toBe("Ver no Sentry");
+    expect(rotuloDoLink("https://example.com/x")).toBe("Abrir");
   });
 });
