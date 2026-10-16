@@ -1,7 +1,7 @@
 # SPEC 127: DataTable estendido e migração das listas restantes
 
 **Data:** 2026-10-15
-**Status:** Fases 1 e 2 entregues; fase 3 (Lançamentos) pendente
+**Status:** Entregue (fases 1, 2 e 3)
 **Autor:** Matheus
 **Módulo:** transversal (tabelas de Propostas, Fornecedor, Auditoria, Usuários, Disciplinas, Folha, Rentabilidade, Lançamentos)
 **Depende de:** [SPEC 124](./124-padronizacao-de-navegacao-filtros-e-tabelas.md), [ADR 0020](../architecture/adr/0020-headless-sim-widget-estilizado-nao.md)
@@ -43,7 +43,7 @@ agrupada, scroll infinito), que só alinha o visual.
 
 - **Fase 2 (entregue):** Disciplinas, Folha e Rentabilidade, mais os alternadores de visão e de escala que
   ainda eram feitos à mão. Ver "Entrega da fase 2".
-- **Fase 3:** Lançamentos (decidir entre migrar ou só alinhar o visual).
+- **Fase 3 (entregue):** Lançamentos. Decisão: alinhar o visual, não migrar a mecânica. Ver "Entrega da fase 3".
 
 Requisitos não-funcionais:
 
@@ -117,3 +117,20 @@ Antes e depois em [`docs/design/antes-depois/spec-127/`](../design/antes-depois/
   de exceções os 4 arquivos migrados; resta só `LancamentosTable` (fase 3), Timesheet (dormente) e tabelas de diálogo.
 - Teto de tamanho: `DisciplinasTableView` ficou em 776 linhas (era 788); helpers de data foram para
   `pages/projetos/lib/limitesDeData.ts`.
+
+## Entrega da fase 3
+
+Antes e depois em [`docs/design/antes-depois/spec-127/`](../design/antes-depois/spec-127/) (arquivos `fase3-*`).
+
+- **Decisão:** `LancamentosTable` não migra para o `DataTable`. Ele é server-side, agrupado por parcela,
+  virtualizado (`useVirtualizer`, linhas medidas) e com seleção em massa; mover isso para o `DataTable` seria
+  reescrever a parte mais sensível do Financeiro para ganhar só consistência visual, que se obtém mais barato.
+- `src/components/ui/table.tsx` exporta `TABLE_HEAD_CLASS` e `TABLE_CELL_DENSE_CLASS`. `TableHead` (e, por ele,
+  o `DataTable`) usa a mesma `TABLE_HEAD_CLASS`; `LancamentosTable` e o novo `LancamentosSortableTH` importam as
+  mesmas constantes. Cabeçalho agora tem o tamanho, o peso e os ícones de ordenação do `DataTable`.
+- Densidade mantida de propósito: `px-3 py-3` nas células e no cabeçalho (o `DataTable` usa `px-4`), porque a
+  tabela tem 11 colunas e mais respiro lateral esconderia conteúdo.
+- `SortableTH` foi para arquivo próprio e o teto de tamanho de `LancamentosTable` caiu de 790 para 762 linhas.
+- Guarda: o teste de varredura confere que `LancamentosTable` usa as constantes compartilhadas.
+- Fica de fora (por decisão): Timesheet (dormente) e tabelas dentro de diálogos. A lista de exceções só tem esses
+  e `LancamentosTable`, agora com o motivo atualizado.

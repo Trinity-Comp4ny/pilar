@@ -45,8 +45,9 @@ describe("varredura: navegação e filtros padrão (SPEC 124)", () => {
 // Tabela à mão (`<Table>` ou `<table>`) fica só onde há razão registrada. Lista que só encolhe:
 // migrou para DataTable, sai daqui. Arquivo novo com tabela à mão reprova.
 const TABELA_A_MAO: Record<string, string> = {
-  // Listas com comportamento que o DataTable ainda não cobre (SPEC 127, fase 3):
-  "src/pages/financeiro/components/LancamentosTable.tsx": "exceção documentada: server-side, agrupada, scroll infinito",
+  // Listas com comportamento que o DataTable ainda não cobre (SPEC 127):
+  "src/pages/financeiro/components/LancamentosTable.tsx":
+    "server-side, agrupada, virtualizada: <table> própria, mas com o visual do DataTable (constantes compartilhadas)",
   // Dormente (CLAUDE.md): não investir.
   "src/pages/Timesheet.tsx": "módulo dormente",
   // Tabela dentro de diálogo/editor/card de chat, não é lista de página:
@@ -74,5 +75,13 @@ describe("varredura: tabela padrão é DataTable (SPEC 124)", () => {
   it("a lista não guarda arquivo que já migrou", () => {
     const migrados = Object.keys(TABELA_A_MAO).filter((f) => !TABELA.test(ler(join(ROOT, f))));
     expect(migrados).toEqual([]);
+  });
+});
+
+describe("varredura: tabelas com <table> própria seguem o visual do DataTable (SPEC 127, fase 3)", () => {
+  it("LancamentosTable usa as classes compartilhadas de cabeçalho e célula", () => {
+    const src = ler(join(ROOT, "src/pages/financeiro/components/LancamentosTable.tsx"));
+    expect(src).toContain("TABLE_HEAD_CLASS");
+    expect(src).toContain("TABLE_CELL_DENSE_CLASS");
   });
 });
