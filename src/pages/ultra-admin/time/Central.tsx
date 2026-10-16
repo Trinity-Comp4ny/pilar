@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { ListaDecisoes } from "./components/ListaDecisoes";
+import { quandoRelativo } from "../lib";
 import { rotaDoAgente, type Decisao } from "./lib";
 import { useTimeResumo, type AgenteResumo } from "./useTimeResumo";
 
@@ -19,7 +20,8 @@ function abertura(decisoes: Decisao[]): string {
 
 /**
  * Central do Time (SPEC 126): a página do chefe de gabinete. Um cartão por agente e a
- * fila única de decisões. Na fase 0 a fila sai de regra fixa sobre os números do banco.
+ * fila única de decisões: ações gravadas pelos agentes ligados e, para os desligados, a
+ * regra fixa sobre os números do banco.
  */
 export default function Central() {
   usePageTitle("Time");
@@ -43,11 +45,18 @@ export default function Central() {
   };
 
   const pedidos = (id: string) => decisoes.filter((d) => d.agente === id).length;
+  const chefe = agentes.find((a) => a.agente.id === "chefe");
+  const resumoDoDia = chefe?.ultima
+    ? `Resumo do dia enviado por e-mail ${quandoRelativo(chefe.ultima.inicio) ?? "agora há pouco"}.`
+    : chefe?.agente.ativo
+      ? "O resumo do dia chega por e-mail às 7h10."
+      : null;
 
   return (
     <PilarPage title="Time">
       <p className="text-sm text-ink-soft" aria-live="polite">
         {receitaQ.isLoading || saudeQ.isLoading ? "Juntando os números das áreas." : abertura(decisoes)}
+        {resumoDoDia && <span className="text-ink-muted"> {resumoDoDia}</span>}
       </p>
 
       <Card className="border border-black/5">

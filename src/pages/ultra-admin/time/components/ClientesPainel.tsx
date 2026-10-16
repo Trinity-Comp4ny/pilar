@@ -11,14 +11,14 @@ import { toDataSourceResult } from "@/types/dataSource";
 import { FiltroChips, type OpcaoChip } from "../../components/FiltroChips";
 import { quandoRelativo } from "../../lib";
 import { useSaudeEmpresas } from "../hooks";
-import { decisoesDoDia } from "../lib";
+import type { Decisao } from "../lib";
 import type { SaudeEmpresa } from "../api";
 import { ListaDecisoes } from "./ListaDecisoes";
 
 type Filtro = "todas" | "risco" | "atencao" | "saudavel";
 
 /** Ficha Clientes (SPEC 126): nota de saúde de cada escritório e quem pede contato. */
-export function ClientesPainel({ remetente }: { remetente: string }) {
+export function ClientesPainel({ decisoes }: { decisoes: Decisao[] }) {
   const navigate = useNavigate();
   const q = useSaudeEmpresas();
   const [filtro, setFiltro] = useState<Filtro>("todas");
@@ -26,7 +26,6 @@ export function ClientesPainel({ remetente }: { remetente: string }) {
 
   const conta = (f: Exclude<Filtro, "todas">) => linhas.filter((l) => l.faixa === f).length;
   const feedbackAberto = linhas.reduce((s, l) => s + l.feedback_aberto, 0);
-  const decisoes = decisoesDoDia(undefined, linhas, remetente);
   const visiveis = filtro === "todas" ? linhas : linhas.filter((l) => l.faixa === filtro);
 
   const opcoes: OpcaoChip<Filtro>[] = [

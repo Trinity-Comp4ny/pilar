@@ -10,11 +10,38 @@ import type { Database } from "@/integrations/supabase/types";
 
 type Tabelas = Database["public"]["Tables"];
 export type OpsAgente = Tabelas["ops_agentes"]["Row"];
-export type OpsExecucao = Pick<Tabelas["ops_execucoes"]["Row"], "id" | "agente_id" | "inicio" | "fim" | "status">;
+type ExecucaoRow = Tabelas["ops_execucoes"]["Row"];
+export type OpsExecucao = Pick<
+  ExecucaoRow,
+  "id" | "agente_id" | "gatilho" | "inicio" | "fim" | "status" | "custo_usd" | "erro"
+> & { briefing: Briefing | null };
 export type OpsAcao = Pick<
   Tabelas["ops_acoes"]["Row"],
   "id" | "agente_id" | "tipo" | "titulo" | "prioridade" | "prazo" | "empresa_id" | "created_at"
->;
+> & { rascunho: Rascunho | null };
+
+/** Briefing gravado pelo executor (ops-agente-run). jsonb: validado na entrada. */
+const BriefingSchema = z.object({
+  fonte: z.enum(["modelo", "regra"]),
+  resumo: z.string(),
+  destaques: z.array(z.object({ texto: z.string(), refs: z.array(z.string()) })).default([]),
+});
+type Briefing = z.infer<typeof BriefingSchema>;
+
+const RascunhoSchema = z.object({
+  canal: z.enum(["whatsapp", "alerta"]),
+  texto: z.string(),
+  telefone: z.string().nullable().optional(),
+  contato: z.string().nullable().optional(),
+  link: z.string().optional(),
+});
+type Rascunho = z.infer<typeof RascunhoSchema>;
+
+/** jsonb que não bate com o schema vira null: a tela mostra "sem briefing", não quebra. */
+function lerJson<S extends z.ZodTypeAny>(schema: S, valor: unknown): z.output<S> | null {
+  const r = schema.safeParse(valor);
+  return r.success ? r.data : null;
+}
 export type SaudeEmpresa = Database["public"]["Functions"]["ops_saude_empresas"]["Returns"][number];
 
 const contato = {
@@ -88,24 +115,70 @@ export async function listarAgentes(): Promise<OpsAgente[]> {
 export async function listarAcoesPendentes(): Promise<OpsAcao[]> {
   const { data, error } = await supabase
     .from("ops_acoes")
-    .select("id, agente_id, tipo, titulo, prioridade, prazo, empresa_id, created_at")
+    .select("id, agente_id, tipo, titulo, prioridade, prazo, empresa_id, created_at, rascunho")
     .eq("status", "pendente")
     .order("prioridade")
     .order("prazo", { nullsFirst: false })
     .limit(200);
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []).map((a) => ({ ...a, rascunho: lerJson(RascunhoSchema, a.rascunho) }));
+}
+
+const COLUNAS_EXECUCAO = "id, agente_id, gatilho, inicio, fim, status, custo_usd, erro, briefing";
+
+function lerExecucao(e: Omit<OpsExecucao, "briefing"> & { briefing: unknown }): OpsExecucao {
+  return { ...e, briefing: lerJson(BriefingSchema, e.briefing) };
 }
 
 /** Última execução de cada agente (a lista vem do mais recente para o mais antigo). */
 export async function listarUltimasExecucoes(): Promise<Map<string, OpsExecucao>> {
   const { data, error } = await supabase
     .from("ops_execucoes")
-    .select("id, agente_id, inicio, fim, status")
+    .select(COLUNAS_EXECUCAO)
     .order("inicio", { ascending: false })
     .limit(100);
   if (error) throw error;
   const ultimas = new Map<string, OpsExecucao>();
-  for (const e of data ?? []) if (!ultimas.has(e.agente_id)) ultimas.set(e.agente_id, e);
+  for (const e of data ?? []) if (!ultimas.has(e.agente_id)) ultimas.set(e.agente_id, lerExecucao(e));
   return ultimas;
+}
+
+/** Execuções de um agente nos últimos 30 dias: histórico e custo do período. */
+export async function listarExecucoesDoAgente(agenteId: string): Promise<OpsExecucao[]> {
+  const desde = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await supabase
+    .from("ops_execucoes")
+    .select(COLUNAS_EXECUCAO)
+    .eq("agente_id", agenteId)
+    .gte("inicio", desde)
+    .order("inicio", { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  return (data ?? []).map(lerExecucao);
+}
+
+export async function decidirAcao(input: {
+  acaoId: string;
+  decisao: "enviada" | "descartada";
+  texto?: string | null;
+  motivo?: string | null;
+}): Promise<void> {
+  const { error } = await supabase.rpc("ops_decidir_acao", {
+    p_acao_id: input.acaoId,
+    p_decisao: input.decisao,
+    p_texto: input.texto ?? undefined,
+    p_motivo: input.motivo ?? undefined,
+  });
+  if (error) throw error;
+}
+
+export async function definirAgenteAtivo(agenteId: string, ativo: boolean): Promise<void> {
+  const { error } = await supabase.rpc("ops_definir_agente_ativo", { p_agente_id: agenteId, p_ativo: ativo });
+  if (error) throw error;
+}
+
+/** "Rodar agora": a mesma Edge Function do cron, com o JWT do ultra admin. */
+export async function rodarAgente(agenteId: string): Promise<void> {
+  const { error } = await supabase.functions.invoke("ops-agente-run", { body: { agente_id: agenteId } });
+  if (error) throw error;
 }
