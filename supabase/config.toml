@@ -119,6 +119,10 @@ verify_jwt = false
 [functions.ops-agente-run]
 verify_jwt = false
 
+# Funil por UTM para a plataforma de marketing (SPEC 128): token próprio, sem JWT.
+[functions.ops-export-funil]
+verify_jwt = false
+
 [functions.retencao-pos-trial]
 verify_jwt = false
 
