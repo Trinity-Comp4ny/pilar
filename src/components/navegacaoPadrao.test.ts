@@ -32,7 +32,8 @@ describe("varredura: navegação e filtros padrão (SPEC 124)", () => {
   });
 
   it("segmented de visão não é montado à mão; usa ViewSwitcher", () => {
-    const segmented = /inline-flex rounded-(?:full|lg|md)[^"'`]*\b(?:p-0\.5|p-1)\b/;
+    // Pílula/segmented montado à mão, ou grupo de botões "rounded-none" dentro de uma borda (zoom, visão).
+    const segmented = /inline-flex rounded-(?:full|lg|md)[^"'`]*\b(?:p-0\.5|p-1)\b|<Button[^>]*\brounded-none\b/;
     const offenders = todos
       .filter((f) => !f.endsWith("components/ViewSwitcher.tsx"))
       .filter((f) => segmented.test(ler(f)))
@@ -44,11 +45,7 @@ describe("varredura: navegação e filtros padrão (SPEC 124)", () => {
 // Tabela à mão (`<Table>` ou `<table>`) fica só onde há razão registrada. Lista que só encolhe:
 // migrou para DataTable, sai daqui. Arquivo novo com tabela à mão reprova.
 const TABELA_A_MAO: Record<string, string> = {
-  // Listas com comportamento que o DataTable ainda não cobre (SPEC 127, fases 2 e 3):
-  "src/pages/relatorios/RelatoriosRentabilidade.tsx": "tabela agrupada com totais",
-  "src/pages/projetos/components/DisciplinasTableView.tsx": "edição inline por célula",
-  "src/pages/projetos/components/DisciplinasTab.tsx": "edição inline por célula",
-  "src/pages/financeiro/tabs/folha-pagamento/components/FolhaTable.tsx": "linha expansível e ações",
+  // Listas com comportamento que o DataTable ainda não cobre (SPEC 127, fase 3):
   "src/pages/financeiro/components/LancamentosTable.tsx": "exceção documentada: server-side, agrupada, scroll infinito",
   // Dormente (CLAUDE.md): não investir.
   "src/pages/Timesheet.tsx": "módulo dormente",

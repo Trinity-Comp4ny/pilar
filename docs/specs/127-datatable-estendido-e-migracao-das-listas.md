@@ -1,7 +1,7 @@
 # SPEC 127: DataTable estendido e migração das listas restantes
 
 **Data:** 2026-10-15
-**Status:** Fase 1 entregue (PR da fase 1); fases 2 e 3 pendentes
+**Status:** Fases 1 e 2 entregues; fase 3 (Lançamentos) pendente
 **Autor:** Matheus
 **Módulo:** transversal (tabelas de Propostas, Fornecedor, Auditoria, Usuários, Disciplinas, Folha, Rentabilidade, Lançamentos)
 **Depende de:** [SPEC 124](./124-padronizacao-de-navegacao-filtros-e-tabelas.md), [ADR 0020](../architecture/adr/0020-headless-sim-widget-estilizado-nao.md)
@@ -41,7 +41,8 @@ agrupada, scroll infinito), que só alinha o visual.
 
 ### Fases seguintes (cada uma com sua entrada aqui antes de codar)
 
-- **Fase 2:** edição na célula e agrupamento com totais (Disciplinas, Folha, Rentabilidade).
+- **Fase 2 (entregue):** Disciplinas, Folha e Rentabilidade, mais os alternadores de visão e de escala que
+  ainda eram feitos à mão. Ver "Entrega da fase 2".
 - **Fase 3:** Lançamentos (decidir entre migrar ou só alinhar o visual).
 
 Requisitos não-funcionais:
@@ -75,8 +76,10 @@ Sem banco. Mudança de API só em `src/components/data/DataTable.tsx` (props nov
 
 ## Decisões e riscos
 
-- Edição na célula e agrupamento ficam para a fase 2 porque pedem decisão de API (célula editável é
-  controlada por quem? total do grupo vem de onde?). Não vale chutar agora.
+- A decisão de API da fase 2 saiu mais simples que o previsto: a célula já aceita qualquer componente, então o
+  editor inline é controlado pela tela (o `DataTable` não sabe de edição); o "agrupamento" de Disciplinas é só
+  visual (setinha na linha repetida) e o total de Rentabilidade já cabia no `footer`. Só faltaram `density` e
+  `extraRows`.
 - Risco: tornar a linha focável muda a ordem de Tab nas 16 tabelas existentes que têm `onRowClick`.
   Mitigação: só linha com `onRowClick` fica focável, e o anel de foco é o mesmo do resto do app.
 - Auditoria no seed local não tem registros: o comportamento de expandir fica coberto por teste do
@@ -94,3 +97,23 @@ Antes e depois em [`docs/design/antes-depois/spec-127/`](../design/antes-depois/
   `usersAccessColumns.tsx` e o arquivo saiu da lista de tamanho (636 linhas).
 - Auditoria não tem registros no seed local: o expandir está coberto por teste do `DataTable`, não por captura.
 - Pendente na fase 1: nenhum item. Faltam as fases 2 (edição na célula e agrupamento) e 3 (Lançamentos).
+
+## Entrega da fase 2
+
+Antes e depois em [`docs/design/antes-depois/spec-127/`](../design/antes-depois/spec-127/) (arquivos `fase2-*`).
+
+- `DataTable` ganhou `density="compact"` (cabeçalho de 36px em caixa alta pequena, células com menos respiro)
+  e `extraRows` (linhas depois do corpo; com ele a lista vazia não mostra a mensagem de vazio). 3 testes novos.
+- Migradas: tabela de disciplinas do projeto (`DisciplinasTableView`, com a linha de adicionar extraída para
+  `DisciplinaNovaLinha`), tabela da aba Disciplinas (`DisciplinasTab`, antes `<table>` crua), `FolhaTable` e as
+  duas tabelas de Rentabilidade (projeto e cliente).
+- Corrige um desalinhamento existente: o rodapé TOTAL de Rentabilidade por projeto tinha 9 células para 8
+  colunas, então Receita, Custo e Margem apareciam sob a coluna errada. O `footer` do `DataTable` é montado
+  por coluna e não tem esse problema.
+- Folha: o rótulo "Ver detalhes de" agora só existe no preview (folha fechada não abre detalhe).
+- `ZoomSwitcher` (Meses/Semanas) substitui o grupo de botões `rounded-none` repetido em `CronogramaTab`,
+  `CronogramaProjetosTab` e `CronogramaGantt`; o alternador Cards/Tabela de Disciplinas virou `ViewSwitcher`.
+- Guarda nova: o teste de varredura barra `<Button ... rounded-none>` (grupo de botões à mão). Saíram da lista
+  de exceções os 4 arquivos migrados; resta só `LancamentosTable` (fase 3), Timesheet (dormente) e tabelas de diálogo.
+- Teto de tamanho: `DisciplinasTableView` ficou em 776 linhas (era 788); helpers de data foram para
+  `pages/projetos/lib/limitesDeData.ts`.
