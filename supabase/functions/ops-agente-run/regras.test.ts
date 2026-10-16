@@ -9,6 +9,10 @@ import {
   estourouTeto,
   FORA_DA_AREA,
   limparTexto,
+  mudancasDesde,
+  resumoEfeito,
+  semanaIso,
+  semContatoDuplo,
   novosCandidatos,
   quandoVence,
   type Receita,
@@ -229,4 +233,56 @@ Deno.test("aterrar: mensagem de Clientes que fala de pagamento volta para o text
   );
   assertEquals(r.textos.get("c1"), candidatos[0].textoPadrao);
   assertEquals(r.descartes, [{ ref: "c1", motivo: "texto fora da regra, usado o padrão" }]);
+});
+
+Deno.test("clientes: queda de 20+ pontos em 7 dias vira check-in, um por semana", () => {
+  const c = candidatosClientes(
+    [
+      saude({ empresa_id: "q1", empresa_nome: "Caiu", nota: 50, nota_7d: 75, dias_sem_acesso: 1, estagio: "adocao" }),
+      saude({ empresa_id: "q2", empresa_nome: "Oscilou", nota: 70, nota_7d: 80, dias_sem_acesso: 1 }),
+      saude({ empresa_id: "q3", empresa_nome: "Sumiu", nota: 20, nota_7d: 60, dias_sem_acesso: 10 }),
+    ],
+    "Matheus",
+    AGORA
+  );
+  assertEquals(c.map((x) => x.chave), ["queda:q1:2026-W42", "sem_acesso:q3:2026-10-15"]);
+  assertEquals(c[0].fatos.nota_7_dias_atras, 75);
+  assert(c[0].titulo.includes("nota 75 para 50"));
+});
+
+Deno.test("semana ISO", () => {
+  assertEquals(semanaIso(new Date("2026-10-15T13:00:00Z")), "2026-W42");
+  assertEquals(semanaIso(new Date("2027-01-01T12:00:00Z")), "2026-W53");
+});
+
+Deno.test("um contato por escritório: outra área já fala com ele, este WhatsApp sai", () => {
+  const c = candidatosClientes(
+    [
+      saude({ empresa_id: "a1", empresa_nome: "Lopes", dias_sem_acesso: 9, feedback_aberto: 1 }),
+      saude({ empresa_id: "b1", empresa_nome: "Livre", dias_sem_acesso: 9 }),
+    ],
+    "Matheus"
+  );
+  const r = semContatoDuplo(c, new Map([["a1", "receita"]]));
+  assertEquals(r.manter.map((x) => x.chave), ["feedback:a1:1", "sem_acesso:b1:2026-10-15"]);
+  assertEquals(r.descartes, [{ ref: "c1", motivo: "escritório já tem contato de receita" }]);
+});
+
+Deno.test("o que mudou desde ontem", () => {
+  assertEquals(
+    mudancasDesde(
+      { "receita.mrr": 980, "receita.pagantes": 2, "clientes.risco": 3, "receita.em_teste": 1 },
+      { "receita.mrr": 490, "receita.pagantes": 1, "clientes.risco": 1, "receita.em_teste": 1 }
+    ),
+    "Desde ontem: MRR +R$\u00a0490,00, pagantes +1, escritórios em risco +2."
+  );
+  assertEquals(mudancasDesde({ "receita.mrr": 980 }, {}), "");
+});
+
+Deno.test("resultado dos contatos", () => {
+  assertEquals(resumoEfeito([]), "");
+  assertEquals(
+    resumoEfeito(["funcionou", "nao_funcionou", "funcionou"]),
+    "Contatos dos últimos 30 dias com resultado medido: 2 de 3 funcionaram."
+  );
 });

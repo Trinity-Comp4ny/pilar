@@ -38,7 +38,12 @@ import {
   custoUsd,
   estourouTeto,
   FORA_DA_AREA,
+  mudancasDesde,
   novosCandidatos,
+  RESPIRO_DIAS,
+  resumoEfeito,
+  type Retrato,
+  semContatoDuplo,
   type Receita,
   resumoDoDia,
   resumoNumerosClientes,
@@ -126,6 +131,58 @@ async function fecharExecucao(admin: Admin, id: string, r: Execucao): Promise<vo
   if (error) log.error("falha ao fechar execução", error, { execucao_id: id });
 }
 
+function diaBrasilia(d: Date): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(d);
+}
+
+/**
+ * Retrato diário (SPEC 129): os indicadores da área e, para Clientes, a nota de cada
+ * escritório. Upsert pela chave (data, fonte, chave, dimensão): rodar de novo no mesmo dia
+ * só atualiza. É de onde saem "o que mudou desde ontem" e a tendência da nota.
+ */
+async function gravarRetrato(
+  admin: Admin,
+  agente: "receita" | "clientes",
+  indicadores: Record<string, number>,
+  notas: Array<{ empresa_id: string; nota: number }>
+): Promise<void> {
+  const data = diaBrasilia(new Date());
+  const linhas = [
+    ...Object.entries(indicadores).map(([k, valor]) => ({
+      data,
+      fonte: "pilar",
+      chave: `${agente}.${k}`,
+      dimensao: "",
+      valor,
+    })),
+    ...notas.map((n) => ({ data, fonte: "pilar", chave: "nota_saude", dimensao: n.empresa_id, valor: n.nota })),
+  ];
+  if (linhas.length === 0) return;
+  const { error } = await admin
+    .from("ops_metricas_diarias")
+    .upsert(linhas, { onConflict: "data,fonte,chave,dimensao" });
+  if (error) log.error("falha ao gravar retrato diário", error, { agente });
+}
+
+/** Escritórios com contato de OUTRA área pendente ou enviado há menos de RESPIRO_DIAS dias. */
+async function empresasOcupadas(admin: Admin, agente: string, empresaIds: string[]): Promise<Map<string, string>> {
+  const ocupadas = new Map<string, string>();
+  if (empresaIds.length === 0) return ocupadas;
+  const desde = new Date(Date.now() - RESPIRO_DIAS * 24 * 60 * 60 * 1000).toISOString();
+  const { data } = await admin
+    .from("ops_acoes")
+    .select("empresa_id, agente_id, status, executada_em")
+    .eq("tipo", "whatsapp")
+    .neq("agente_id", agente)
+    .in("empresa_id", empresaIds)
+    .in("status", ["pendente", "executada"]);
+  for (const a of data ?? []) {
+    const recente = a.status === "pendente" || (a.executada_em && (a.executada_em as string) >= desde);
+    if (recente && a.empresa_id) ocupadas.set(a.empresa_id as string, a.agente_id as string);
+  }
+  return ocupadas;
+}
+
 /** Receita e Clientes: fatos → candidatos → texto (modelo ou regra) → ações pendentes. */
 async function rodarArea(
   admin: Admin,
@@ -139,6 +196,7 @@ async function rodarArea(
   let candidatos: Candidato[];
   let indicadores: Record<string, number>;
   let resumoNumeros: string;
+  let notas: Array<{ empresa_id: string; nota: number }> = [];
   if (agente === "receita") {
     const { data, error } = await admin.rpc("ops_receita", { p_dias: 30 });
     if (error) throw new Error(`ops_receita: ${error.message}`);
@@ -160,7 +218,7 @@ async function rodarArea(
     const { data, error } = await admin.rpc("ops_saude_empresas");
     if (error) throw new Error(`ops_saude_empresas: ${error.message}`);
     const saude = (data ?? []) as SaudeEmpresa[];
-    candidatos = candidatosClientes(saude, nome);
+    candidatos = candidatosClientes(saude, nome, agora);
     indicadores = {
       escritorios: saude.length,
       risco: saude.filter((s) => s.faixa === "risco").length,
@@ -169,7 +227,10 @@ async function rodarArea(
       feedback_aberto: saude.reduce((s, e) => s + e.feedback_aberto, 0),
     };
     resumoNumeros = resumoNumerosClientes(saude);
+    notas = saude.map((e) => ({ empresa_id: e.empresa_id, nota: e.nota }));
   }
+
+  await gravarRetrato(admin, agente, indicadores, notas);
 
   // Qualquer status: a chave carrega a data do fato (vencimento, atraso, último acesso),
   // então ação já enviada ou descartada para o mesmo fato não volta na próxima rodada.
@@ -183,11 +244,25 @@ async function rodarArea(
           candidatos.map((c) => c.chave)
         )
     : { data: [] };
-  const novos = novosCandidatos(candidatos, new Set((jaVistas ?? []).map((p) => p.chave as string)));
+  const ineditos = novosCandidatos(candidatos, new Set((jaVistas ?? []).map((p) => p.chave as string)));
+  // Um contato por escritório: se outra área já fala com ele, esta não manda outro WhatsApp.
+  const ocupadas = await empresasOcupadas(
+    admin,
+    agente,
+    ineditos.map((c) => c.empresaId)
+  );
+  const coordenado = semContatoDuplo(ineditos, ocupadas);
+  const novos = coordenado.manter;
 
-  let briefing: Briefing = briefingPorRegra(agente, candidatos, resumoNumeros);
+  // O briefing não pede o contato que ficou com outra área.
+  const comOutraArea = new Set(coordenado.descartes.map((d) => d.ref));
+  let briefing: Briefing = briefingPorRegra(
+    agente,
+    candidatos.filter((c) => !comOutraArea.has(c.ref)),
+    resumoNumeros
+  );
   let textos = textosPadrao(novos);
-  let descartes: unknown[] = [];
+  let descartes: unknown[] = [...coordenado.descartes];
   let tokensIn: number | null = null;
   let tokensOut: number | null = null;
   let custo: number | null = null;
@@ -213,7 +288,7 @@ async function rodarArea(
       const aterrado = aterrar(r.data, novos, Object.keys(indicadores), FORA_DA_AREA[agente]);
       briefing = aterrado.briefing.resumo ? aterrado.briefing : briefing;
       textos = aterrado.textos;
-      descartes = aterrado.descartes;
+      descartes = [...coordenado.descartes, ...aterrado.descartes];
       tokensIn = r.tokensEntrada;
       tokensOut = r.tokensSaida;
       custo = custoUsd(r.tokensEntrada, r.tokensSaida, await precoDoModelo(admin, modeloEmUso(tipo)));
@@ -261,8 +336,35 @@ async function rodarArea(
   };
 }
 
-/** Chefe de gabinete: resumo do dia por e-mail, sem modelo. */
+async function lerRetrato(admin: Admin, data: string): Promise<Retrato> {
+  const { data: linhas } = await admin
+    .from("ops_metricas_diarias")
+    .select("chave, valor")
+    .eq("fonte", "pilar")
+    .eq("data", data)
+    .eq("dimensao", "");
+  return Object.fromEntries((linhas ?? []).map((l) => [l.chave as string, Number(l.valor)]));
+}
+
+/** Chefe de gabinete: avalia contatos antigos e manda o resumo do dia por e-mail, sem modelo. */
 async function rodarChefe(admin: Admin): Promise<Execucao & { enviados: number }> {
+  // Antes do resumo: contatos enviados há 7+ dias ganham o resultado (o fato mudou?).
+  const { data: avaliados, error: errAval } = await admin.rpc("_ops_avaliar_contatos");
+  if (errAval) log.error("falha ao avaliar contatos", errAval);
+
+  const agora = new Date();
+  const hojeIso = diaBrasilia(agora);
+  const ontemIso = diaBrasilia(new Date(agora.getTime() - 24 * 60 * 60 * 1000));
+  const desde30 = new Date(agora.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const [retratoHoje, retratoOntem, efeitosRes] = await Promise.all([
+    lerRetrato(admin, hojeIso),
+    lerRetrato(admin, ontemIso),
+    admin.from("ops_acoes").select("resultado").eq("status", "executada").gte("executada_em", desde30),
+  ]);
+  const efeitos = (efeitosRes.data ?? [])
+    .map((a) => (a.resultado as { efeito?: string } | null)?.efeito)
+    .filter((e): e is string => typeof e === "string");
+
   const [{ data: pendentes }, receitaRes, saudeRes, destRes] = await Promise.all([
     admin.from("ops_acoes").select("agente_id, titulo, prioridade, prazo").eq("status", "pendente").limit(200),
     admin.rpc("ops_receita", { p_dias: 30 }),
@@ -272,12 +374,14 @@ async function rodarChefe(admin: Admin): Promise<Execucao & { enviados: number }
   const numeros = [
     receitaRes.data ? resumoNumerosReceita(receitaRes.data as Receita) : "",
     saudeRes.data ? resumoNumerosClientes(saudeRes.data as SaudeEmpresa[]) : "",
+    mudancasDesde(retratoHoje, retratoOntem),
+    resumoEfeito(efeitos),
   ];
   const resumo = resumoDoDia((pendentes ?? []) as Parameters<typeof resumoDoDia>[0], numeros);
   const hoje = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "long" }).format(
     new Date()
   );
-  const dia = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
+  const dia = hojeIso;
 
   let enviados = 0;
   for (const d of destRes.data ?? []) {
@@ -304,7 +408,11 @@ async function rodarChefe(admin: Admin): Promise<Execucao & { enviados: number }
 
   return {
     status: "ok",
-    sinais: { pendentes: (pendentes ?? []).length, destinatarios: (destRes.data ?? []).length },
+    sinais: {
+      pendentes: (pendentes ?? []).length,
+      destinatarios: (destRes.data ?? []).length,
+      contatos_avaliados: typeof avaliados === "number" ? avaliados : 0,
+    },
     briefing: {
       fonte: "regra",
       resumo: resumo.titulo,

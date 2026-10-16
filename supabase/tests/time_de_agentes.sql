@@ -11,7 +11,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(35);
+SELECT plan(43);
 
 -- =============================================================================
 -- Fixture: empresa da Pilar (ultra admin) e escritório cliente em teste
@@ -215,6 +215,56 @@ RESET ROLE;
 
 SELECT is((SELECT ativo FROM public.ops_agentes WHERE id = 'marketing'), false,
   'Marketing não roda no Pilar: vive na plataforma de marketing');
+
+-- =============================================================================
+-- 6. SPEC 129: empresa interna, tendência, profundidade de uso e resultado do contato
+-- =============================================================================
+SET LOCAL session_replication_role = 'replica';
+-- Retrato de 7 dias atrás com nota 90 para o escritório cliente.
+INSERT INTO public.ops_metricas_diarias (data, fonte, chave, dimensao, valor)
+VALUES (current_date - 7, 'pilar', 'nota_saude', 'a9000000-0000-0000-0000-0000000000c0', 90);
+-- Uso de projetos e financeiro nos últimos dias.
+INSERT INTO public.audit_logs (empresa_id, action, target_table, created_at)
+VALUES ('a9000000-0000-0000-0000-0000000000c0', 'insert', 'lancamentos', now() - interval '2 days');
+-- Contato de teste vencendo enviado há 8 dias; a empresa já paga.
+INSERT INTO public.ops_acoes (id, agente_id, tipo, empresa_id, titulo, evidencia, chave, status, executada_em)
+VALUES ('a9000000-0000-0000-0000-0000000000e1', 'receita', 'whatsapp', 'a9000000-0000-0000-0000-0000000000c0',
+        'Teste vence', '{"motivo": "teste_vencendo"}'::jsonb, 'teste:c0:antigo', 'executada', now() - interval '8 days'),
+       ('a9000000-0000-0000-0000-0000000000e2', 'receita', 'whatsapp', 'a9000000-0000-0000-0000-0000000000c0',
+        'Atraso', '{"motivo": "pagamento_em_atraso"}'::jsonb, 'atraso:c0:antigo', 'executada', now() - interval '2 days');
+SET LOCAL session_replication_role = 'origin';
+
+SELECT test_time_auth('a9000000-0000-0000-0000-00000000a001'); -- ultra admin
+SELECT is(
+  (SELECT s.nota_7d || ':' || s.modulos_usados || ':' || s.estagio FROM public.ops_saude_empresas() s
+   WHERE s.empresa_id = 'a9000000-0000-0000-0000-0000000000c0'),
+  '90:2:onboarding',
+  'saúde traz a nota de 7 dias atrás, os módulos usados e o estágio');
+SELECT lives_ok($$SELECT public.ops_marcar_empresa_interna('a9000000-0000-0000-0000-0000000000c0', true)$$,
+  'ultra admin marca empresa de teste');
+SELECT ok(
+  NOT EXISTS (SELECT 1 FROM public.ops_saude_empresas() s WHERE s.empresa_id = 'a9000000-0000-0000-0000-0000000000c0'),
+  'empresa de teste sai da saúde');
+SELECT ok(
+  NOT ((public.ops_receita(30) -> 'por_origem') @> '[{"campanha": "lancamento-2027-01"}]'),
+  'empresa de teste sai da receita');
+SELECT lives_ok($$SELECT public.ops_marcar_empresa_interna('a9000000-0000-0000-0000-0000000000c0', false)$$,
+  'ultra admin desmarca');
+RESET ROLE;
+
+SELECT test_time_auth('a9000000-0000-0000-0000-00000000c001'); -- admin do escritório
+SELECT throws_ok($$SELECT public.ops_marcar_empresa_interna('a9000000-0000-0000-0000-0000000000c0', true)$$,
+  '42501', NULL, 'admin de empresa não marca a própria como teste');
+RESET ROLE;
+
+-- O fixture deixou a assinatura em teste: vira pagante para o contato antigo funcionar.
+UPDATE public.pilar_subscriptions SET status = 'active', asaas_subscription_id = 'sub_teste'
+ WHERE empresa_id = 'a9000000-0000-0000-0000-0000000000c0';
+SELECT is(public._ops_avaliar_contatos(), 1, 'avalia só o contato enviado há 7 dias ou mais');
+SELECT is(
+  (SELECT resultado ->> 'efeito' FROM public.ops_acoes WHERE id = 'a9000000-0000-0000-0000-0000000000e1'),
+  'funcionou',
+  'teste que virou pagante conta como contato que funcionou');
 
 -- =============================================================================
 -- 2. Nota de saúde (função pura)
