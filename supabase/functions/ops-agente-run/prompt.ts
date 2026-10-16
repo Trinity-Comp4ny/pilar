@@ -1,12 +1,12 @@
 /**
- * Prompt dos agentes Receita e Clientes (SPEC 126 fase 1). Fonte das regras:
- * docs/operacao/agentes/receita.md e clientes.md. Mudou o playbook, muda aqui.
+ * Prompt dos agentes de área: Receita e Clientes (SPEC 126 fase 1) e Produto (SPEC 130).
+ * Fonte das regras: docs/operacao/agentes/<agente>.md. Mudou o playbook, muda aqui.
  *
  * O modelo recebe só agregado e, por candidato, nome do escritório, primeiro nome do
  * contato e os fatos que justificam o contato (LGPD, SPEC 126). Nada de valor do tenant.
  */
 import { z } from "../_shared/schemas.ts";
-import { primeiroNome, type Candidato } from "./regras.ts";
+import { primeiroNome, type AgenteDeArea, type Candidato } from "./regras.ts";
 
 export const respostaSchema = z.object({
   resumo: z.string().min(1).max(400),
@@ -14,12 +14,22 @@ export const respostaSchema = z.object({
   mensagens: z.array(z.object({ ref: z.string(), texto: z.string().min(1).max(700) })).max(40),
 });
 
-const MISSAO: Record<"receita" | "clientes", string> = {
+const MISSAO: Record<AgenteDeArea, string> = {
   receita: "Receita: fazer cada teste promissor virar pagante e nenhum pagamento escapar.",
   clientes: "Clientes: manter cada escritório ativo, ouvido e com o problema resolvido.",
+  produto: "Produto: dizer o que é usado, o que é ignorado e onde o escritório trava.",
 };
 
-export function systemPrompt(agente: "receita" | "clientes", remetente: string): string {
+const REGRA_DA_AREA: Record<AgenteDeArea, string> = {
+  receita:
+    "Ao falar de pagamento em aberto, ofereça ajuda (reenviar o link, outra forma de pagar), sem cobrar nem ameaçar.",
+  clientes:
+    "Você é o agente de relacionamento: nunca fale de pagamento, cobrança, atraso ou assinatura. Isso é do agente Receita.",
+  produto:
+    'Você não escreve para cliente: os candidatos são tarefas internas do fundador. Devolva "mensagens" vazio. "escritorios_28d_<area>" conta escritórios que mexeram naquela área em 28 dias.',
+};
+
+export function systemPrompt(agente: AgenteDeArea, remetente: string): string {
   return [
     `Você é o agente de ${MISSAO[agente]} Trabalha para ${remetente}, fundador da Pilar, um software de gestão para escritórios de engenharia e arquitetura.`,
     "Você recebe indicadores e uma lista de candidatos a contato, já escolhidos por regra. Não invente candidato, número nem fato.",
@@ -30,9 +40,7 @@ export function systemPrompt(agente: "receita" | "clientes", remetente: string):
     '- "mensagens": para cada candidato com canal whatsapp, um rascunho em "texto" com o "ref" do candidato.',
     `Regras da mensagem: português do Brasil, tom direto e humano, de engenheiro para engenheiro. Comece com "Oi <primeiro nome>, aqui é ${remetente}, da Pilar." (sem nome do contato, só "Oi,"). No máximo 3 frases e uma pergunta. Use só os fatos do candidato.`,
     "Nunca: travessão, emoji, link, preço, desconto, porcentagem, promessa de condição comercial, pressão ou culpa. Sem jargão (sinergia, alavancar, otimizar).",
-    agente === "clientes"
-      ? "Você é o agente de relacionamento: nunca fale de pagamento, cobrança, atraso ou assinatura. Isso é do agente Receita."
-      : "Ao falar de pagamento em aberto, ofereça ajuda (reenviar o link, outra forma de pagar), sem cobrar nem ameaçar.",
+    REGRA_DA_AREA[agente],
   ].join("\n");
 }
 
@@ -42,7 +50,7 @@ export function userMessage(indicadores: Record<string, number>, candidatos: Can
     candidatos: candidatos.map((c) => ({
       ref: c.ref,
       canal: c.tipo,
-      escritorio: c.empresaNome,
+      escritorio: c.empresaNome || undefined,
       contato: primeiroNome(c.contatoNome),
       assunto: c.titulo,
       fatos: c.fatos,

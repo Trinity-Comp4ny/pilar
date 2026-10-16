@@ -9157,6 +9157,7 @@ export type Database = {
         Args: { p_empresa_id: string; p_interna: boolean }
         Returns: undefined
       }
+      ops_produto: { Args: never; Returns: Json }
       ops_receita: { Args: { p_dias?: number }; Returns: Json }
       ops_saude_crons: { Args: never; Returns: Json }
       ops_saude_empresas: {

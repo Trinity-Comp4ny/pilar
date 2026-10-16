@@ -7,9 +7,12 @@
  * padrão. Sem modelo (falha, teto de custo), o agente roda só com as regras.
  */
 
-export type AgenteExecutavel = "receita" | "clientes" | "chefe";
+export type AgenteExecutavel = "receita" | "clientes" | "produto" | "chefe";
 
-export const AGENTES_EXECUTAVEIS: readonly AgenteExecutavel[] = ["receita", "clientes", "chefe"];
+export const AGENTES_EXECUTAVEIS: readonly AgenteExecutavel[] = ["receita", "clientes", "produto", "chefe"];
+
+/** Áreas que levantam fatos e gravam ações (o Chefe só junta). */
+export type AgenteDeArea = Exclude<AgenteExecutavel, "chefe">;
 
 /** Câmbio de referência do painel (src/pages/ultra-admin/custos.ts). O ledger segue em USD. */
 export const USD_BRL_REFERENCIA = 5.5;
@@ -59,6 +62,9 @@ export type SaudeEmpresa = {
   /** Nota de 7 dias atrás, do retrato diário; null se ainda não há retrato. */
   nota_7d?: number | null;
   estagio?: string;
+  criada_em?: string;
+  projetos_ativos?: number;
+  usuarios?: number;
 };
 
 /** Queda de nota em 7 dias que vale um check-in, mesmo com o escritório entrando. */
@@ -80,7 +86,8 @@ export type Candidato = {
   /** Chave natural: o mesmo fato não vira duas ações pendentes. */
   chave: string;
   tipo: "whatsapp" | "alerta";
-  empresaId: string;
+  /** Null em fato da plataforma toda (Produto: módulo, feedback). */
+  empresaId: string | null;
   empresaNome: string;
   contatoNome: string | null;
   telefone: string | null;
@@ -90,6 +97,8 @@ export type Candidato = {
   /** Evidência gravada na ação e mostrada antes de aprovar (ADR 0050). */
   fatos: Record<string, string | number | null>;
   textoPadrao: string;
+  /** Para onde a tarefa leva no Ultra (só alerta). Sem link, a fila abre a empresa. */
+  link?: string;
 };
 
 // ─── Texto ────────────────────────────────────────────────────────────────────
@@ -143,9 +152,10 @@ const PROIBIDO = /(R\$|\d+\s*%|desconto|gr[aá]tis por mais|https?:\/\/|www\.)/i
  * Assunto que não é da área: Clientes não fala de pagamento (é da Receita). Sem esta
  * trava o modelo misturava cobrança no check-in de quem estava sem acesso.
  */
-export const FORA_DA_AREA: Record<"receita" | "clientes", RegExp | null> = {
+export const FORA_DA_AREA: Record<AgenteDeArea, RegExp | null> = {
   receita: null,
   clientes: /(pagamento|cobran|atras|fatura|boleto|assinatura)/i,
+  produto: null,
 };
 
 // ─── Candidatos ───────────────────────────────────────────────────────────────
@@ -195,6 +205,77 @@ export function candidatosReceita(r: Receita, remetente: string, agora: Date): C
 }
 
 const SITUACOES_QUE_IMPORTAM = new Set(["pagante", "em_teste", "convidada", "em_atraso"]);
+
+/** Quem entra na régua de ativação: em teste a Receita já conversa (o teste é curto). */
+const SITUACOES_DA_ATIVACAO = new Set(["pagante", "convidada"]);
+
+export type MarcoAtivacao = "primeiro_projeto" | "equipe" | "segundo_modulo";
+
+/** Dia a partir do qual cada marco faltando vira contato (régua D2, D5, D9). */
+export const DIA_DO_MARCO: Record<MarcoAtivacao, number> = { primeiro_projeto: 2, equipe: 5, segundo_modulo: 9 };
+
+/** Dias de calendário (Brasília) desde o cadastro. */
+export function diasDesde(iso: string, agora: Date): number {
+  return Math.max(0, Math.round((diaBrasilia(agora) - diaBrasilia(new Date(iso))) / DIA));
+}
+
+/**
+ * Primeiro marco de ativação que falta, na ordem em que o valor aparece: projeto
+ * cadastrado, equipe dentro, segunda área do produto (em geral o Financeiro, que mostra a
+ * margem). Um marco por vez: o escritório recebe um pedido, não uma lista.
+ */
+export function marcoQueFalta(s: SaudeEmpresa, agora: Date): { marco: MarcoAtivacao; dias: number } | null {
+  if (s.estagio !== "onboarding" || !s.criada_em) return null;
+  if (!SITUACOES_DA_ATIVACAO.has(s.situacao_cobranca)) return null;
+  const dias = diasDesde(s.criada_em, agora);
+  if ((s.projetos_ativos ?? 0) === 0)
+    return dias >= DIA_DO_MARCO.primeiro_projeto ? { marco: "primeiro_projeto", dias } : null;
+  if ((s.usuarios ?? 0) <= 1) return dias >= DIA_DO_MARCO.equipe ? { marco: "equipe", dias } : null;
+  if ((s.modulos_usados ?? 0) <= 1)
+    return dias >= DIA_DO_MARCO.segundo_modulo ? { marco: "segundo_modulo", dias } : null;
+  return null;
+}
+
+function candidatoAtivacao(s: SaudeEmpresa, remetente: string, agora: Date): Omit<Candidato, "ref"> | null {
+  const falta = marcoQueFalta(s, agora);
+  if (!falta) return null;
+  const { marco, dias } = falta;
+  const saud = saudacao(s.contato_nome, remetente);
+  const porMarco: Record<MarcoAtivacao, { titulo: string; texto: string }> = {
+    primeiro_projeto: {
+      titulo: `${s.empresa_nome}: ${dias} dias no Pilar e nenhum projeto cadastrado`,
+      texto: `${saud} Faz ${dias} dias que o escritório entrou no Pilar e ainda não tem projeto cadastrado. Quer montar o primeiro comigo? Em 15 minutos fica com disciplinas e orçamento, e a margem começa a aparecer.`,
+    },
+    equipe: {
+      titulo: `${s.empresa_nome}: só uma pessoa usando o Pilar`,
+      texto: `${saud} Vi que por enquanto só você usa o Pilar aí. Quer ajuda para chamar a equipe? Com cada um atualizando as próprias tarefas, o andamento dos projetos fica certo sem você precisar cobrar.`,
+    },
+    segundo_modulo: {
+      titulo: `${s.empresa_nome}: usa só uma área do Pilar`,
+      texto: `${saud} O escritório já usa o Pilar, mas só numa parte. O que mais ajuda a ver se cada projeto dá lucro é ter projetos e Financeiro juntos. Quer que eu mostre em 15 minutos como ligar os dois?`,
+    },
+  };
+  return {
+    chave: `ativacao:${s.empresa_id}:${marco}`,
+    tipo: "whatsapp",
+    empresaId: s.empresa_id,
+    empresaNome: s.empresa_nome,
+    contatoNome: s.contato_nome,
+    telefone: s.contato_telefone,
+    titulo: porMarco[marco].titulo,
+    prioridade: 2,
+    prazo: null,
+    fatos: {
+      motivo: "ativacao",
+      marco,
+      dias_desde_cadastro: dias,
+      projetos_ativos: s.projetos_ativos ?? null,
+      pessoas: s.usuarios ?? null,
+      areas_usadas_28d: s.modulos_usados ?? null,
+    },
+    textoPadrao: porMarco[marco].texto,
+  };
+}
 
 export function candidatosClientes(saude: SaudeEmpresa[], remetente: string, agora: Date = new Date()): Candidato[] {
   const lista: Omit<Candidato, "ref">[] = [];
@@ -246,6 +327,9 @@ export function candidatosClientes(saude: SaudeEmpresa[], remetente: string, ago
         textoPadrao: `${saudacao(s.contato_nome, remetente)} Faz ${dias} dias que vocês não entram no sistema. Travou em alguma coisa? Se quiser, marco 15 minutos para ajustar o Pilar ao jeito do escritório.`,
       });
     }
+    // Ativação só para quem não sumiu: sumido já tem o contato de "sem acesso".
+    const ativacao = sumido ? null : candidatoAtivacao(s, remetente, agora);
+    if (ativacao) lista.push(ativacao);
     if (s.feedback_aberto > 0) {
       const n = s.feedback_aberto;
       lista.push({
@@ -273,6 +357,158 @@ export function candidatosClientes(saude: SaudeEmpresa[], remetente: string, ago
  */
 export function novosCandidatos(candidatos: Candidato[], chavesJaVistas: Set<string>): Candidato[] {
   return candidatos.filter((c) => !chavesJaVistas.has(c.chave));
+}
+
+// ─── Produto ──────────────────────────────────────────────────────────────────
+
+export type Produto = {
+  escritorios: number;
+  modulos: Array<{ modulo: string; empresas_28d: number; empresas_28d_anteriores: number }>;
+  feedback_30d: { total: number; bugs: number; sugestoes: number; bugs_sem_triagem: number };
+};
+
+const NOME_DA_AREA: Record<string, string> = {
+  projetos: "Projetos",
+  financeiro: "Financeiro",
+  propostas: "Propostas",
+  leads: "Leads",
+  obras: "Obras",
+  clientes: "Clientes",
+  pessoas: "Pessoas",
+};
+
+/** Área em queda: perdeu ao menos 2 escritórios e 30% deles de um período de 28 dias ao outro. */
+export const QUEDA_AREA_MIN = 2;
+export const QUEDA_AREA_FRACAO = 0.3;
+/** Área ignorada: menos de 1 em 5 escritórios, só contando a partir de 5 escritórios. */
+export const IGNORADA_FRACAO = 0.2;
+export const IGNORADA_BASE_MIN = 5;
+/** Ignorada vira tarefa só para área de produto; Clientes e Pessoas são cadastro de apoio. */
+const AREAS_DE_PRODUTO = new Set(["projetos", "financeiro", "propostas", "leads", "obras"]);
+/** No máximo duas áreas ignoradas por mês (a chave é mensal), as menos usadas: o resto é ruído. */
+export const IGNORADAS_POR_RODADA = 2;
+/** Bugs sem triagem que viram tarefa da semana. */
+export const BUGS_PARADOS_ALERTA = 3;
+
+/** "2026-10": a mesma área vira no máximo uma tarefa por mês. */
+function mesIso(d: Date): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(d).slice(0, 7);
+}
+
+function tarefa(
+  c: Omit<Candidato, "ref" | "tipo" | "empresaId" | "empresaNome" | "contatoNome" | "telefone" | "prazo">
+) {
+  return {
+    ...c,
+    tipo: "alerta" as const,
+    empresaId: null,
+    empresaNome: "",
+    contatoNome: null,
+    telefone: null,
+    prazo: null,
+  };
+}
+
+/**
+ * Produto, toda segunda: área que perdeu escritórios, área que quase ninguém usa e bug
+ * parado na triagem. Vira tarefa para o fundador (perguntar a quem parou, triar), nunca
+ * mensagem a cliente.
+ */
+export function candidatosProduto(p: Produto, agora: Date): Candidato[] {
+  const lista: Omit<Candidato, "ref">[] = [];
+  const ignoradas: Omit<Candidato, "ref">[] = [];
+  const mes = mesIso(agora);
+
+  for (const m of p.modulos) {
+    const nome = NOME_DA_AREA[m.modulo] ?? m.modulo;
+    const antes = m.empresas_28d_anteriores;
+    const perdeu = antes - m.empresas_28d;
+    if (antes > 0 && perdeu >= QUEDA_AREA_MIN && perdeu / antes >= QUEDA_AREA_FRACAO) {
+      lista.push(
+        tarefa({
+          chave: `area_em_queda:${m.modulo}:${mes}`,
+          titulo: `${nome}: de ${antes} para ${m.empresas_28d} escritórios usando em 28 dias`,
+          prioridade: 1,
+          fatos: {
+            motivo: "area_em_queda",
+            area: m.modulo,
+            escritorios_28d: m.empresas_28d,
+            escritorios_28d_anteriores: antes,
+          },
+          textoPadrao: "Veja na Atividade quem parou de usar e pergunte o motivo a um desses escritórios.",
+          link: "/ultra-admin/atividade",
+        })
+      );
+      continue;
+    }
+    if (
+      AREAS_DE_PRODUTO.has(m.modulo) &&
+      p.escritorios >= IGNORADA_BASE_MIN &&
+      m.empresas_28d / p.escritorios < IGNORADA_FRACAO
+    ) {
+      ignoradas.push(
+        tarefa({
+          chave: `area_ignorada:${m.modulo}:${mes}`,
+          titulo:
+            m.empresas_28d === 0
+              ? `${nome}: nenhum dos ${p.escritorios} escritórios usou em 28 dias`
+              : `${nome}: só ${m.empresas_28d} de ${p.escritorios} escritórios usaram em 28 dias`,
+          prioridade: 2,
+          fatos: {
+            motivo: "area_ignorada",
+            area: m.modulo,
+            escritorios_28d: m.empresas_28d,
+            escritorios: p.escritorios,
+          },
+          textoPadrao: "Pergunte a dois escritórios se não precisam desta área ou se não acharam onde fica.",
+          link: "/ultra-admin/atividade",
+        })
+      );
+    }
+  }
+
+  ignoradas.sort((a, b) => Number(a.fatos.escritorios_28d) - Number(b.fatos.escritorios_28d));
+  lista.push(...ignoradas.slice(0, IGNORADAS_POR_RODADA));
+
+  const parados = p.feedback_30d.bugs_sem_triagem;
+  if (parados >= BUGS_PARADOS_ALERTA) {
+    lista.push(
+      tarefa({
+        chave: `bugs_parados:${semanaIso(agora)}`,
+        titulo: `${parados} bugs relatados esperando triagem`,
+        prioridade: 1,
+        fatos: { motivo: "bugs_parados", bugs_sem_triagem: parados, bugs_30d: p.feedback_30d.bugs },
+        textoPadrao: "Trie os bugs: responder fecha o ciclo com quem relatou e separa o que é urgente.",
+        link: "/ultra-admin/feedback",
+      })
+    );
+  }
+
+  return lista.map((c, i) => ({ ...c, ref: `c${i + 1}` }));
+}
+
+export function indicadoresProduto(p: Produto): Record<string, number> {
+  return {
+    escritorios: p.escritorios,
+    feedback_30d: p.feedback_30d.total,
+    bugs_30d: p.feedback_30d.bugs,
+    sugestoes_30d: p.feedback_30d.sugestoes,
+    bugs_sem_triagem: p.feedback_30d.bugs_sem_triagem,
+    ...Object.fromEntries(p.modulos.map((m) => [`escritorios_28d_${m.modulo}`, m.empresas_28d])),
+  };
+}
+
+export function resumoNumerosProduto(p: Produto): string {
+  const top = [...p.modulos]
+    .filter((m) => m.empresas_28d > 0)
+    .sort((a, b) => b.empresas_28d - a.empresas_28d)
+    .slice(0, 3)
+    .map((m) => `${NOME_DA_AREA[m.modulo] ?? m.modulo} (${m.empresas_28d})`);
+  const fb = p.feedback_30d;
+  const areas = top.length ? `áreas mais usadas em 28 dias: ${top.join(", ")}` : "nenhuma área usada em 28 dias";
+  return `${p.escritorios} ${p.escritorios === 1 ? "escritório" : "escritórios"}, ${areas}. Feedback em 30 dias: ${fb.bugs} ${
+    fb.bugs === 1 ? "bug" : "bugs"
+  } e ${fb.sugestoes} ${fb.sugestoes === 1 ? "sugestão" : "sugestões"}.`;
 }
 
 // ─── Resposta do modelo ───────────────────────────────────────────────────────
@@ -344,19 +580,21 @@ export function aterrar(
 }
 
 /** Briefing sem modelo: contagem dos fatos e os três candidatos mais urgentes. */
-export function briefingPorRegra(
-  agente: "receita" | "clientes",
-  candidatos: Candidato[],
-  resumoNumeros: string
-): Briefing {
+const NADA_A_PEDIR: Record<AgenteDeArea, string> = {
+  receita: "Nenhum teste vencendo em 48 h e nenhum pagamento em atraso.",
+  clientes: "Nenhum escritório sumido e nenhum feedback parado.",
+  produto: "Nenhuma área perdendo escritório e nenhum bug parado na triagem.",
+};
+
+export function briefingPorRegra(agente: AgenteDeArea, candidatos: Candidato[], resumoNumeros: string): Briefing {
   const urgentes = [...candidatos].sort((a, b) => a.prioridade - b.prioridade).slice(0, 3);
   const n = candidatos.length;
   const pedido =
     n === 0
-      ? agente === "receita"
-        ? "Nenhum teste vencendo em 48 h e nenhum pagamento em atraso."
-        : "Nenhum escritório sumido e nenhum feedback parado."
-      : `${n} ${n === 1 ? "contato pedido" : "contatos pedidos"}.`;
+      ? NADA_A_PEDIR[agente]
+      : agente === "produto"
+        ? `${n} ${n === 1 ? "tarefa" : "tarefas"} para a semana.`
+        : `${n} ${n === 1 ? "contato pedido" : "contatos pedidos"}.`;
   return {
     fonte: "regra",
     resumo: `${resumoNumeros} ${pedido}`.trim(),
@@ -443,7 +681,7 @@ export function semContatoDuplo(
   const manter: Candidato[] = [];
   const descartes: Array<{ ref: string; motivo: string }> = [];
   for (const c of candidatos) {
-    const outra = c.tipo === "whatsapp" ? empresasOcupadas.get(c.empresaId) : undefined;
+    const outra = c.tipo === "whatsapp" && c.empresaId ? empresasOcupadas.get(c.empresaId) : undefined;
     if (outra) {
       descartes.push({ ref: c.ref, motivo: `escritório já tem contato de ${outra}` });
       continue;
