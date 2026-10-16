@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { AtividadeComposer } from "./AtividadeComposer";
 
-// SPEC 131: marcação confiável e @all no composer das Atividades.
+// SPEC 132: marcação confiável e @all no composer das Atividades.
 
 vi.mock("../hooks/usePessoasSemConta", () => ({
   usePessoasSemConta: () => new Set(["p3"]),

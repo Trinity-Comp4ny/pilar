@@ -12,7 +12,7 @@ const PREVIEW_MAX = 200;
  * "notificação fantasma" de um comentário que não persistiu. Best-effort: falha aqui não deve
  * quebrar o fluxo de quem comentou, só reporta pro Sentry. Com `comentarioId`, o link da
  * notificação abre a conversa já no comentário e cada comentário notifica à parte (spec 103).
- * "@all" ou "@todos" no texto avisa todos da empresa (SPEC 131), mesmo sem ninguém em `mencionados`.
+ * "@all" ou "@todos" no texto avisa todos da empresa (SPEC 132), mesmo sem ninguém em `mencionados`.
  */
 export async function notificarMencao(
   entidadeTipo: EntidadeMencao,

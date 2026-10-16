@@ -1,6 +1,6 @@
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-/** `@all` e `@todos` avisam todos da empresa (SPEC 131). */
+/** `@all` e `@todos` avisam todos da empresa (SPEC 132). */
 const TODOS = "[Aa][Ll][Ll]|[Tt][Oo][Dd][Oo][Ss]";
 
 export interface SegmentoMencao {
