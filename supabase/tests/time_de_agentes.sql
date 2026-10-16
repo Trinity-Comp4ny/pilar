@@ -1,4 +1,4 @@
--- pgTAP: time de agentes no Ultra, fase 0 (SPEC 126, ADR 0060).
+-- pgTAP: time de agentes no Ultra, fases 0 e 1 (SPEC 126, ADR 0060).
 --
 -- 1. As tabelas ops_* só abrem para ultra admin com MFA; admin de empresa e anon não
 --    leem nada e ninguém grava pela API.
@@ -11,7 +11,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(21);
+SELECT plan(31);
 
 -- =============================================================================
 -- Fixture: empresa da Pilar (ultra admin) e escritório cliente em teste
@@ -139,6 +139,54 @@ SELECT is(
   (SELECT s.situacao_cobranca FROM public.ops_saude_empresas() s
    WHERE s.empresa_id = 'a9000000-0000-0000-0000-0000000000c0'),
   'em_teste', 'situação da cobrança segue a assinatura');
+RESET ROLE;
+
+-- =============================================================================
+-- 4. Fase 1: decisão da ação, pausa, chave da fila e executor (service role)
+-- =============================================================================
+SET LOCAL session_replication_role = 'replica';
+INSERT INTO public.ops_acoes (id, agente_id, tipo, empresa_id, titulo, evidencia, chave, rascunho)
+VALUES
+  ('a9000000-0000-0000-0000-0000000000d1', 'receita', 'whatsapp', 'a9000000-0000-0000-0000-0000000000c0',
+   'Teste vence', '{"projetos": 1}'::jsonb, 'teste:c0:2026-10-16', '{"texto": "Oi Dona"}'::jsonb),
+  ('a9000000-0000-0000-0000-0000000000d2', 'clientes', 'whatsapp', 'a9000000-0000-0000-0000-0000000000c0',
+   'Sem acesso', '{"dias": 9}'::jsonb, 'sem_acesso:c0:2026-10-06', '{"texto": "Oi"}'::jsonb);
+SET LOCAL session_replication_role = 'origin';
+
+SELECT throws_ok(
+  $$INSERT INTO public.ops_acoes (agente_id, tipo, titulo, evidencia, chave)
+    VALUES ('receita', 'whatsapp', 'Duplicada', '{}'::jsonb, 'teste:c0:2026-10-16')$$,
+  '23505', NULL, 'mesma chave pendente do mesmo agente não entra duas vezes');
+
+SELECT has_column('public', 'ops_execucoes', 'custo_usd', 'custo da execução em USD, como o ledger');
+
+SELECT test_time_auth('a9000000-0000-0000-0000-00000000c001'); -- admin do escritório cliente
+SELECT throws_ok($$SELECT public.ops_decidir_acao('a9000000-0000-0000-0000-0000000000d1', 'enviada')$$,
+  '42501', NULL, 'admin de empresa não decide ação de agente');
+SELECT throws_ok($$SELECT public.ops_definir_agente_ativo('receita', false)$$,
+  '42501', NULL, 'admin de empresa não pausa agente');
+RESET ROLE;
+
+SELECT test_time_auth('a9000000-0000-0000-0000-00000000a001'); -- ultra admin
+SELECT is(
+  (SELECT status || ':' || editada::text || ':' || (rascunho ->> 'texto')
+   FROM public.ops_decidir_acao('a9000000-0000-0000-0000-0000000000d1', 'enviada', 'Oi Dona, tudo certo?')),
+  'executada:true:Oi Dona, tudo certo?',
+  'enviada com texto editado grava o texto final e marca como editada');
+SELECT throws_ok($$SELECT public.ops_decidir_acao('a9000000-0000-0000-0000-0000000000d1', 'descartada')$$,
+  '22023', NULL, 'ação já decidida não volta a ser decidida');
+SELECT is(
+  (SELECT status || ':' || motivo_descarte FROM public.ops_decidir_acao('a9000000-0000-0000-0000-0000000000d2', 'descartada', NULL, 'já falei hoje')),
+  'descartada:já falei hoje',
+  'descartada guarda o motivo');
+SELECT lives_ok($$SELECT public.ops_definir_agente_ativo('receita', false)$$, 'ultra admin pausa agente');
+SELECT is((SELECT ativo FROM public.ops_agentes WHERE id = 'receita'), false, 'agente pausado fica inativo');
+RESET ROLE;
+
+-- Executor da Edge Function: service role lê os mesmos números da tela.
+SELECT set_config('request.jwt.claims', '{"role": "service_role"}', true);
+SELECT set_config('role', 'service_role', true);
+SELECT lives_ok($$SELECT public.ops_receita(30)$$, 'service role (executor) lê ops_receita');
 RESET ROLE;
 
 -- =============================================================================

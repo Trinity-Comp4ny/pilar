@@ -41,7 +41,7 @@ WITH permitido(coluna, motivo) AS (
     ('pilar_token_pack_purchases.valor_centavos', 'consumo de IA'),
     ('consentimentos_cobranca.valor', 'cobrança do plano Pilar'),
     -- Operação da própria Pilar (SPEC 126): policy só deixa o ultra admin ler.
-    ('ops_execucoes.custo_brl', 'operação da Pilar, só ultra admin'),
+    ('ops_execucoes.custo_usd', 'operação da Pilar, só ultra admin'),
     ('ops_metricas_diarias.valor', 'operação da Pilar, só ultra admin'),
     -- Operação de compra da obra (cotação, material, etapa). Fora da ADR 0034:
     -- quem toca a obra compara cotação. Ver MATRIZ_DE_ACESSO.md, decisões abertas.

@@ -101,6 +101,10 @@
     "dominio": "jobs",
     "descricao": "Cron: manda por e-mail o que está na central de notificações e ninguém leu."
   },
+  "ops-agente-run": {
+    "dominio": "plataforma",
+    "descricao": "Executa um agente de operação da Pilar (Receita, Clientes, Chefe de gabinete): fatos do banco, texto do modelo aterrado em código, ações pendentes no Ultra e resumo do dia por e-mail (SPEC 126)."
+  },
   "pilar-checkout-create": {
     "dominio": "billing",
     "descricao": "Checkout público do Pilar: cria cliente e cobrança na Asaas da plataforma."

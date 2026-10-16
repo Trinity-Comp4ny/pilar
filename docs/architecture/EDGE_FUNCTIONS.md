@@ -3,7 +3,7 @@
 <!-- Gerado por scripts/edge-functions-catalog.mjs a partir de supabase/functions/CATALOGO.json.
      Não editar à mão: edite o CATALOGO.json e rode `node scripts/edge-functions-catalog.mjs`. -->
 
-49 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
+50 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
 migrations) ou origem externa declarada no manifesto. **Login**: `verify_jwt` do `config.toml`
 (JWT aceita a chave anon; "própria" = a função faz a autorização). **Secrets**: lidos direto
 na pasta da função (o que vem de `_shared`, como a chave do Gemini, não aparece).
@@ -102,6 +102,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `create-company-owner` | Convite de dono de empresa nova (bootstrap manual com chave de super admin). | manual (curl com chave de super admin) | JWT | `ALLOWED_ORIGINS` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` `SUPER_ADMIN_KEY` | sim |
 | `excluir-dados-titular` | Ultra admin aprova ou recusa pedido de exclusão (LGPD art. 18 VI): aprovar apaga o dado pessoal, anonimiza e bloqueia a conta (SPEC 116). | app, aba Pedidos LGPD do ultra admin | JWT |  | sim |
 | `log-impersonation` | Abre e encerra sessão de impersonation do ultra admin, com registro no servidor. | app | JWT |  | sim |
+| `ops-agente-run` | Executa um agente de operação da Pilar (Receita, Clientes, Chefe de gabinete): fatos do banco, texto do modelo aterrado em código, ações pendentes no Ultra e resumo do dia por e-mail (SPEC 126). | app, cron | própria | `APP_URL` `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `ultra-admin-empresas` | Gestão de empresas pelo ultra admin. | app | JWT |  | sim |
 | `ultra-admin-usuarios` | Gestão de usuários pelo ultra admin. | app | JWT |  | sim |
 
