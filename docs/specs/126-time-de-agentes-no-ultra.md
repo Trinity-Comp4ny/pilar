@@ -244,7 +244,7 @@ Fase 1 (novembro):
        em `ops_execucoes.custo_usd` e na ficha do agente).
 9. [ ] Eval do prompt dos agentes (ADR 0048) antes de trocar modelo ou prompt.
 
-Melhorias depois do primeiro dia em staging e ordem dos próximos agentes: [SPEC 129](129-time-de-agentes-melhorias-pos-staging.md).
+Melhorias depois do primeiro dia em staging e ordem dos próximos agentes: [SPEC 129](129-time-de-agentes-melhorias-pos-staging.md). Produto e régua de ativação: [SPEC 130](130-agente-produto-e-regua-de-ativacao.md).
 
 Fase 2 (dezembro): Produto e Qualidade (Marketing vive na plataforma de marketing, ADR 0061); briefing do Chefe com modelo; executor
 `issue`.

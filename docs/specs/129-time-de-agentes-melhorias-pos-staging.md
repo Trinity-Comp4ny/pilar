@@ -101,6 +101,8 @@ Não-funcionais:
 
 ## Próximos agentes (fase 2 da SPEC 126, ordem proposta)
 
+Produto e Ativação entraram na [SPEC 130](./130-agente-produto-e-regua-de-ativacao.md).
+
 | Agente       | O que faz                                                                                                                                        | Depende de                                                                           |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
 | Qualidade    | Lista erros do Sentry por escritório afetado, avisa Clientes quando um cliente pagante bate em erro e propõe a mensagem "já corrigimos"          | token de leitura do Sentry como segredo da edge (o Matheus gera)                     |
