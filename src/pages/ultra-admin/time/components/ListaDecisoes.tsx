@@ -12,7 +12,7 @@ import { FormDialog } from "@/components/FormDialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useDecidirAcao } from "../hooks";
-import { linkWhatsApp, rotuloDoLink, type Decisao } from "../lib";
+import { ehLinkExterno, linkWhatsApp, rotuloDoLink, type Decisao } from "../lib";
 
 const AGENTE_LABEL: Record<Decisao["agente"], string> = {
   chefe: "Chefe",
@@ -130,7 +130,15 @@ export function ListaDecisoes({
                             Editar mensagem
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => navigate(d.link)}>{rotuloDoLink(d.link)}</DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            ehLinkExterno(d.link)
+                              ? window.open(d.link, "_blank", "noopener,noreferrer")
+                              : navigate(d.link)
+                          }
+                        >
+                          {rotuloDoLink(d.link)}
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
                           onClick={() => decidir.mutate({ acaoId: acao.id, decisao: "descartada" })}
@@ -142,7 +150,13 @@ export function ListaDecisoes({
                   </>
                 ) : (
                   <Button asChild size="sm" variant="outline">
-                    <Link to={d.link}>{rotuloDoLink(d.link)}</Link>
+                    {ehLinkExterno(d.link) ? (
+                      <a href={d.link} target="_blank" rel="noopener noreferrer">
+                        {rotuloDoLink(d.link)}
+                      </a>
+                    ) : (
+                      <Link to={d.link}>{rotuloDoLink(d.link)}</Link>
+                    )}
                   </Button>
                 )}
               </div>

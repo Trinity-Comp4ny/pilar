@@ -9,8 +9,8 @@ import { BriefingAgente } from "./components/BriefingAgente";
 import { ClientesPainel } from "./components/ClientesPainel";
 import { ExecucoesAgente } from "./components/ExecucoesAgente";
 import { MarketingExterno } from "./components/MarketingExterno";
-import { ProdutoPainel } from "./components/ProdutoPainel";
 import { ReceitaPainel } from "./components/ReceitaPainel";
+import { TarefasDaArea } from "./components/TarefasDaArea";
 import { useEfeitosDoAgente, useExecucoesDoAgente } from "./hooks";
 import { ehExecutavel, PLANO_DOS_AGENTES, textoEfeito, type AgenteId } from "./lib";
 import { useTimeResumo } from "./useTimeResumo";
@@ -48,7 +48,17 @@ export default function AgenteFicha() {
       ) : agenteId === "clientes" ? (
         <ClientesPainel decisoes={daArea} />
       ) : agenteId === "produto" ? (
-        <ProdutoPainel decisoes={daArea} />
+        <TarefasDaArea
+          titulo="Tarefas da semana"
+          vazio="Nenhuma área perdendo escritório e nenhum bug parado na triagem."
+          decisoes={daArea}
+        />
+      ) : agenteId === "qualidade" ? (
+        <TarefasDaArea
+          titulo="Erros para olhar"
+          vazio="Nenhum erro novo, nenhuma regressão e nenhum cliente atingido em 24 h."
+          decisoes={daArea}
+        />
       ) : agenteId === "marketing" ? (
         <MarketingExterno />
       ) : (

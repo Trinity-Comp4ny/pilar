@@ -15,8 +15,8 @@ export type StatusAgente = "ok" | "atencao" | "falhou" | "pausado" | "so_numeros
 /** Agentes que já têm painel de números na fase 0. Os outros mostram o plano. */
 const AGENTES_COM_NUMEROS: readonly AgenteId[] = ["receita", "clientes"];
 
-/** Agentes que a Edge Function ops-agente-run já executa (fase 1; Produto na SPEC 130). */
-const AGENTES_EXECUTAVEIS: readonly AgenteId[] = ["receita", "clientes", "produto", "chefe"];
+/** Agentes que a Edge Function ops-agente-run já executa (fase 1; Produto na SPEC 130, Qualidade na 131). */
+const AGENTES_EXECUTAVEIS: readonly AgenteId[] = ["receita", "clientes", "produto", "qualidade", "chefe"];
 
 export function ehExecutavel(id: string): boolean {
   return AGENTES_EXECUTAVEIS.includes(id as AgenteId);
@@ -86,14 +86,14 @@ export const PLANO_DOS_AGENTES: Record<AgenteId, { quando: string; indicadores: 
     fontes: ["Histórico de alterações por área", "Feedback", "PostHog (SPEC 125)"],
   },
   qualidade: {
-    quando: "Fase 2, dezembro de 2026",
+    quando: "Todo dia às 7h03: erros do Sentry por escritório atingido e aviso de erro corrigido",
     indicadores: [
-      "Issues abertas por empresas afetadas",
-      "Novas e regressões em 24 h",
-      "Sessões sem erro",
-      "Incidentes",
+      "Erros com atividade em 24 h, novos e regressões",
+      "Escritórios atingidos",
+      'Aviso de "já corrigimos" aos escritórios',
+      "Incidentes abertos",
     ],
-    fontes: ["Sentry", "Status page"],
+    fontes: ["Sentry (tag empresa_id)", "Status page"],
   },
   financas: {
     quando: "Fase 3, depois do lançamento",
@@ -200,8 +200,14 @@ export type Decisao = {
   acao?: { id: string; texto: string; telefone: string | null; canal: "whatsapp" | "alerta" };
 };
 
+/** Link para fora do app (Sentry): abre em outra aba, não pelo router. */
+export function ehLinkExterno(link: string): boolean {
+  return /^https?:\/\//.test(link);
+}
+
 /** Rótulo do botão que abre o destino de uma tarefa da fila. */
 export function rotuloDoLink(link: string): string {
+  if (ehLinkExterno(link)) return /^https:\/\/([\w-]+\.)*sentry\.io\//.test(link) ? "Ver no Sentry" : "Abrir";
   if (link.startsWith("/ultra-admin/feedback")) return "Ver feedback";
   if (link.startsWith("/ultra-admin/atividade")) return "Ver atividade";
   if (link.startsWith("/ultra-admin/empresas/")) return "Ver empresa";
@@ -246,6 +252,7 @@ const CADENCIA: Record<string, string> = {
   "5 10 * * *": "todo dia às 7h05",
   "10 10 * * *": "todo dia às 7h10",
   "7 10 * * 1": "toda segunda às 7h07",
+  "3 10 * * *": "todo dia às 7h03",
 };
 
 /** Horário do cron (UTC) em frase de Brasília. Cron desconhecido aparece cru. */
