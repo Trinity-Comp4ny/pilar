@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAcoesPendentes, useAgentes, useReceita, useSaudeEmpresas, useUltimasExecucoes } from "./hooks";
-import { decisoesDoDia, statusDoAgente, type StatusAgente } from "./lib";
+import { filaDoTime, statusDoAgente, type StatusAgente } from "./lib";
 import type { OpsAgente, OpsExecucao } from "./api";
 
 export type AgenteResumo = {
@@ -15,8 +15,9 @@ export type AgenteResumo = {
 const DIAS_PADRAO = 30;
 
 /**
- * Tudo que a Central precisa num lugar: agentes com status, decisões do dia (por regra
- * na fase 0) e os números de Receita e Clientes que alimentam os cartões.
+ * Tudo que a Central precisa num lugar: agentes com status, decisões do dia e os números
+ * de Receita e Clientes que alimentam os cartões. Agente que já rodou traz as próprias
+ * ações (ops_acoes); quem nunca rodou tem a fila montada por regra, para a área não ficar muda.
  */
 export function useTimeResumo(diasReceita: number = DIAS_PADRAO) {
   const { profile } = useAuth();
@@ -41,9 +42,16 @@ export function useTimeResumo(diasReceita: number = DIAS_PADRAO) {
   }, [agentesQ.data, execucoesQ.data, pendentesQ.data]);
 
   const decisoes = useMemo(
-    () => decisoesDoDia(receitaQ.data, saudeQ.data, remetente),
-    [receitaQ.data, saudeQ.data, remetente]
+    () =>
+      filaDoTime({
+        agentesQueJaRodaram: new Set(execucoesQ.data?.keys() ?? []),
+        pendentes: pendentesQ.data ?? [],
+        receita: receitaQ.data,
+        saude: saudeQ.data,
+        remetente,
+      }),
+    [execucoesQ.data, pendentesQ.data, receitaQ.data, saudeQ.data, remetente]
   );
 
-  return { agentes, decisoes, agentesQ, receitaQ, saudeQ, remetente };
+  return { agentes, decisoes, agentesQ, pendentesQ, receitaQ, saudeQ, remetente };
 }

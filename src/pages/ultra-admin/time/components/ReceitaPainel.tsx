@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toDataSourceResult } from "@/types/dataSource";
 import { FiltroChips } from "../../components/FiltroChips";
 import { useReceita } from "../hooks";
-import { decisoesDoDia, taxa, variacao } from "../lib";
+import { taxa, variacao, type Decisao } from "../lib";
 import type { Receita } from "../api";
 import { ListaDecisoes } from "./ListaDecisoes";
 
@@ -22,13 +22,12 @@ const JANELAS = [
 ];
 
 /** Ficha Receita (SPEC 126): funil, MRR, testes vencendo, atrasos e conversão por campanha. */
-export function ReceitaPainel({ remetente }: { remetente: string }) {
+export function ReceitaPainel({ decisoes }: { decisoes: Decisao[] }) {
   const [janela, setJanela] = useState<Janela>("30");
   const dias = Number(janela);
   const q = useReceita(dias);
   const r = q.data;
   const carregando = q.isLoading;
-  const decisoes = decisoesDoDia(r, undefined, remetente);
 
   const colunas: ColumnDef<Origem>[] = [
     {

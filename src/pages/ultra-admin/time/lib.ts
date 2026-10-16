@@ -1,11 +1,12 @@
 /**
  * Regras puras do Time de agentes (SPEC 126). Sem React, sem Supabase.
  *
- * Fase 0: o número vem do banco (ops_receita, ops_saude_empresas) e a fila de
- * decisões sai de regra fixa, sem modelo. Toda mensagem é rascunho: o link do
- * WhatsApp abre a conversa com o texto pronto e quem envia é o ultra admin (ADR 0060).
+ * O número vem do banco (ops_receita, ops_saude_empresas). Agente ligado (fase 1) grava
+ * as próprias ações em ops_acoes; agente desligado tem a fila montada aqui por regra fixa.
+ * Toda mensagem é rascunho: o link do WhatsApp abre a conversa com o texto pronto e quem
+ * envia é o ultra admin (ADR 0060).
  */
-import type { Receita, SaudeEmpresa, OpsAgente, OpsExecucao } from "./api";
+import type { Receita, SaudeEmpresa, OpsAcao, OpsAgente, OpsExecucao } from "./api";
 
 export type AgenteId = "chefe" | "receita" | "clientes" | "marketing" | "produto" | "qualidade" | "financas";
 
@@ -13,6 +14,13 @@ export type StatusAgente = "ok" | "atencao" | "falhou" | "pausado" | "so_numeros
 
 /** Agentes que já têm painel de números na fase 0. Os outros mostram o plano. */
 const AGENTES_COM_NUMEROS: readonly AgenteId[] = ["receita", "clientes"];
+
+/** Agentes que a Edge Function ops-agente-run já executa (fase 1). */
+const AGENTES_EXECUTAVEIS: readonly AgenteId[] = ["receita", "clientes", "chefe"];
+
+export function ehExecutavel(id: string): boolean {
+  return AGENTES_EXECUTAVEIS.includes(id as AgenteId);
+}
 
 /** Rota da ficha: a Central é a página do chefe de gabinete. */
 export function rotaDoAgente(id: string): string {
@@ -25,6 +33,8 @@ export function statusDoAgente(
   pendentes: number
 ): StatusAgente {
   if (!agente.ativo) {
+    // Já rodou alguma vez e está desligado: foi pausado pelo ultra admin.
+    if (ultima) return "pausado";
     return AGENTES_COM_NUMEROS.includes(agente.id as AgenteId) ? "so_numeros" : "planejado";
   }
   if (ultima?.status === "falhou") return "falhou";
@@ -186,7 +196,54 @@ export type Decisao = {
   /** Para onde o "Abrir" leva quando a ação não é mensagem. */
   link: string;
   prazo: string | null;
+  /** Ação gravada por um agente (ops_acoes): pode ser editada, marcada como enviada ou descartada. */
+  acao?: { id: string; texto: string; telefone: string | null; canal: "whatsapp" | "alerta" };
 };
+
+/** Ação gravada pelo agente vira item da mesma fila, com o rascunho editável. */
+export function acaoParaDecisao(a: OpsAcao): Decisao {
+  const r = a.rascunho;
+  const canal = r?.canal ?? (a.tipo === "whatsapp" ? "whatsapp" : "alerta");
+  const texto = r?.texto ?? "";
+  const telefone = r?.telefone ?? null;
+  const ehWhatsApp = canal === "whatsapp";
+  return {
+    id: `acao-${a.id}`,
+    agente: a.agente_id as AgenteId,
+    prioridade: a.prioridade <= 1 ? 1 : 2,
+    titulo: a.titulo,
+    detalhe: ehWhatsApp ? (telefone ? "Rascunho pronto para revisar." : "Sem telefone no cadastro.") : texto,
+    empresaId: a.empresa_id ?? "",
+    whatsapp: ehWhatsApp ? linkWhatsApp(telefone, texto) : null,
+    link:
+      !ehWhatsApp && r?.link ? r.link : a.empresa_id ? `/ultra-admin/empresas/${a.empresa_id}` : "/ultra-admin/time",
+    prazo: a.prazo,
+    acao: { id: a.id, texto, telefone, canal },
+  };
+}
+
+/** Ordem da fila: hoje antes de esta semana, prazo mais perto primeiro. */
+export function ordenarDecisoes(itens: Decisao[]): Decisao[] {
+  return [...itens].sort((a, b) => {
+    if (a.prioridade !== b.prioridade) return a.prioridade - b.prioridade;
+    if (a.prazo && b.prazo) return a.prazo < b.prazo ? -1 : 1;
+    if (a.prazo) return -1;
+    if (b.prazo) return 1;
+    return a.titulo.localeCompare(b.titulo, "pt-BR");
+  });
+}
+
+const CADENCIA: Record<string, string> = {
+  "0 10,22 * * *": "todo dia às 7h e às 19h",
+  "5 10 * * *": "todo dia às 7h05",
+  "10 10 * * *": "todo dia às 7h10",
+};
+
+/** Horário do cron (UTC) em frase de Brasília. Cron desconhecido aparece cru. */
+export function cadenciaLegivel(cron: string | null): string | null {
+  if (!cron) return null;
+  return CADENCIA[cron] ?? `cron ${cron} (UTC)`;
+}
 
 const SITUACOES_QUE_IMPORTAM = new Set(["pagante", "em_teste", "convidada", "em_atraso"]);
 
@@ -276,11 +333,27 @@ export function decisoesDoDia(
     }
   }
 
-  return itens.sort((a, b) => {
-    if (a.prioridade !== b.prioridade) return a.prioridade - b.prioridade;
-    if (a.prazo && b.prazo) return a.prazo < b.prazo ? -1 : 1;
-    if (a.prazo) return -1;
-    if (b.prazo) return 1;
-    return a.titulo.localeCompare(b.titulo, "pt-BR");
-  });
+  return ordenarDecisoes(itens);
+}
+
+/**
+ * Fila da Central: agente que já rodou alguma vez é dono da própria fila (ops_acoes), mesmo
+ * pausado, porque a regra recriaria o que o ultra admin já descartou. Quem nunca rodou
+ * tem a fila montada pela regra da fase 0, para a área não ficar muda.
+ */
+export function filaDoTime(p: {
+  agentesQueJaRodaram: Set<string>;
+  pendentes: OpsAcao[];
+  receita: Receita | undefined;
+  saude: SaudeEmpresa[] | undefined;
+  remetente: string;
+}): Decisao[] {
+  const dono = p.agentesQueJaRodaram;
+  const porRegra = decisoesDoDia(
+    dono.has("receita") ? undefined : p.receita,
+    dono.has("clientes") ? undefined : p.saude,
+    p.remetente
+  );
+  const doAgente = p.pendentes.filter((a) => dono.has(a.agente_id)).map(acaoParaDecisao);
+  return ordenarDecisoes([...doAgente, ...porRegra]);
 }

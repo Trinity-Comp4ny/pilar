@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { ReceitaSchema, type Receita, type SaudeEmpresa } from "./api";
+import type { OpsAcao } from "./api";
 import {
+  acaoParaDecisao,
+  cadenciaLegivel,
   decisoesDoDia,
+  ehExecutavel,
+  filaDoTime,
+  ordenarDecisoes,
   linkWhatsApp,
   mensagemTesteVencendo,
   quandoVence,
@@ -190,5 +196,108 @@ describe("ReceitaSchema", () => {
     const ok = ReceitaSchema.parse({ ...receita(), mrr: "1470.00" });
     expect(ok.mrr).toBe(1470);
     expect(() => ReceitaSchema.parse({ ...receita(), testes_vencendo: [{ empresa_id: 1 }] })).toThrow();
+  });
+});
+
+function acao(parcial: Partial<OpsAcao>): OpsAcao {
+  return {
+    id: "a1",
+    agente_id: "receita",
+    tipo: "whatsapp",
+    titulo: "Vieira: teste termina amanhã",
+    prioridade: 1,
+    prazo: "2026-10-16T15:00:00Z",
+    empresa_id: "e1",
+    created_at: "2026-10-15T10:00:00Z",
+    rascunho: { canal: "whatsapp", texto: "Oi Carla, aqui é Matheus, da Pilar.", telefone: "14998112233" },
+    ...parcial,
+  };
+}
+
+describe("fase 1: ações gravadas pelos agentes", () => {
+  it("ação de WhatsApp vira item com rascunho editável e link pronto", () => {
+    const d = acaoParaDecisao(acao({}));
+    expect(d.acao).toEqual({
+      id: "a1",
+      texto: "Oi Carla, aqui é Matheus, da Pilar.",
+      telefone: "14998112233",
+      canal: "whatsapp",
+    });
+    expect(d.whatsapp).toContain("https://wa.me/5514998112233?text=");
+    expect(d.link).toBe("/ultra-admin/empresas/e1");
+  });
+
+  it("alerta de feedback leva para a triagem e não tem WhatsApp", () => {
+    const d = acaoParaDecisao(
+      acao({
+        tipo: "alerta",
+        prioridade: 2,
+        rascunho: { canal: "alerta", texto: "Responder na triagem.", link: "/ultra-admin/feedback" },
+      })
+    );
+    expect(d.whatsapp).toBeNull();
+    expect(d.link).toBe("/ultra-admin/feedback");
+    expect(d.prioridade).toBe(2);
+  });
+
+  it("sem telefone, o item avisa em vez de abrir conversa vazia", () => {
+    const d = acaoParaDecisao(acao({ rascunho: { canal: "whatsapp", texto: "Oi", telefone: null } }));
+    expect(d.whatsapp).toBeNull();
+    expect(d.detalhe).toBe("Sem telefone no cadastro.");
+  });
+
+  it("ordena hoje antes de esta semana e prazo mais perto primeiro", () => {
+    const a = acaoParaDecisao(acao({ id: "x", prioridade: 2, prazo: null, titulo: "B" }));
+    const b = acaoParaDecisao(acao({ id: "y", prioridade: 1, prazo: "2026-10-18T00:00:00Z" }));
+    const c = acaoParaDecisao(acao({ id: "z", prioridade: 1, prazo: "2026-10-16T00:00:00Z" }));
+    expect(ordenarDecisoes([a, b, c]).map((d) => d.acao?.id)).toEqual(["z", "y", "x"]);
+  });
+
+  it("agente que já rodou e foi desligado aparece como pausado", () => {
+    expect(statusDoAgente({ id: "receita", ativo: false }, { status: "ok" }, 0)).toBe("pausado");
+  });
+
+  it("horário do cron em Brasília e quem a Edge Function executa", () => {
+    expect(cadenciaLegivel("0 10,22 * * *")).toBe("todo dia às 7h e às 19h");
+    expect(cadenciaLegivel(null)).toBeNull();
+    expect(ehExecutavel("chefe")).toBe(true);
+    expect(ehExecutavel("marketing")).toBe(false);
+  });
+});
+
+describe("filaDoTime", () => {
+  const vencendo = receita({
+    testes_vencendo: [
+      {
+        empresa_id: "m1",
+        empresa_nome: "Moraes",
+        vence_em: new Date(2026, 9, 17, 8, 0).toISOString(),
+        projetos: 0,
+        contato_nome: "Rui",
+        contato_telefone: "11987774455",
+      },
+    ],
+  });
+
+  it("agente que nunca rodou: fila pela regra", () => {
+    const fila = filaDoTime({
+      agentesQueJaRodaram: new Set(),
+      pendentes: [],
+      receita: vencendo,
+      saude: [],
+      remetente: "Matheus",
+    });
+    expect(fila.map((d) => d.id)).toEqual(["teste-m1"]);
+  });
+
+  it("agente que já rodou (mesmo pausado): só as ações dele, a regra não recria o descartado", () => {
+    const fila = filaDoTime({
+      agentesQueJaRodaram: new Set(["receita"]),
+      pendentes: [acao({ id: "a9", titulo: "Lopes: pagamento em atraso" })],
+      receita: vencendo,
+      saude: [],
+      remetente: "Matheus",
+    });
+    expect(fila.map((d) => d.id)).toEqual(["acao-a9"]);
   });
 });
