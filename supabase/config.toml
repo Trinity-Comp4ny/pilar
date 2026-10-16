@@ -115,6 +115,10 @@ verify_jwt = false
 [functions.guardiao-margem-cron]
 verify_jwt = false
 
+# Agentes de operação (SPEC 126): cron por segredo ou ultra admin pelo "Rodar agora".
+[functions.ops-agente-run]
+verify_jwt = false
+
 [functions.retencao-pos-trial]
 verify_jwt = false
 

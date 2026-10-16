@@ -4572,6 +4572,7 @@ export type Database = {
       ops_acoes: {
         Row: {
           agente_id: string
+          chave: string | null
           created_at: string
           decidida_em: string | null
           editada: boolean
@@ -4591,6 +4592,7 @@ export type Database = {
         }
         Insert: {
           agente_id: string
+          chave?: string | null
           created_at?: string
           decidida_em?: string | null
           editada?: boolean
@@ -4610,6 +4612,7 @@ export type Database = {
         }
         Update: {
           agente_id?: string
+          chave?: string | null
           created_at?: string
           decidida_em?: string | null
           editada?: boolean
@@ -4700,7 +4703,7 @@ export type Database = {
         Row: {
           agente_id: string
           briefing: Json | null
-          custo_brl: number | null
+          custo_usd: number | null
           descartes: Json | null
           erro: string | null
           fim: string | null
@@ -4715,7 +4718,7 @@ export type Database = {
         Insert: {
           agente_id: string
           briefing?: Json | null
-          custo_brl?: number | null
+          custo_usd?: number | null
           descartes?: Json | null
           erro?: string | null
           fim?: string | null
@@ -4730,7 +4733,7 @@ export type Database = {
         Update: {
           agente_id?: string
           briefing?: Json | null
-          custo_brl?: number | null
+          custo_usd?: number | null
           descartes?: Json | null
           erro?: string | null
           fim?: string | null
@@ -9093,6 +9096,45 @@ export type Database = {
           p_titulo: string
         }
         Returns: number
+      }
+      ops_agente_disparar: { Args: { p_agente_id: string }; Returns: undefined }
+      ops_decidir_acao: {
+        Args: {
+          p_acao_id: string
+          p_decisao: string
+          p_motivo?: string
+          p_texto?: string
+        }
+        Returns: {
+          agente_id: string
+          chave: string | null
+          created_at: string
+          decidida_em: string | null
+          editada: boolean
+          empresa_id: string | null
+          evidencia: Json
+          execucao_id: string | null
+          executada_em: string | null
+          id: string
+          motivo_descarte: string | null
+          prazo: string | null
+          prioridade: number
+          rascunho: Json | null
+          resultado: Json | null
+          status: string
+          tipo: string
+          titulo: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ops_acoes"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      ops_definir_agente_ativo: {
+        Args: { p_agente_id: string; p_ativo: boolean }
+        Returns: undefined
       }
       ops_receita: { Args: { p_dias?: number }; Returns: Json }
       ops_saude_crons: { Args: never; Returns: Json }
