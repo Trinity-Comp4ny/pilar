@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import {
   useReactTable,
@@ -46,8 +46,26 @@ interface DataTableProps<T> {
   data: DataSourceResult<T>;
   /** Extrai a chave estável de cada linha. */
   rowKey: (row: T) => string;
-  /** Clique na linha (torna a linha interativa). */
+  /** Clique na linha (torna a linha interativa: focável, abre com Enter ou Espaço). */
   onRowClick?: (row: T) => void;
+  /** Rótulo acessível da linha (leitor de tela), ex.: "Ver detalhes da proposta X". */
+  rowLabel?: (row: T) => string;
+  /** Classe extra da linha por estado (ex.: convite pendente esmaecido). */
+  rowClassName?: (row: T) => string | undefined;
+  /**
+   * Conteúdo da linha expandida (SPEC 127). Aparece numa linha extra, com `colSpan`
+   * total, para as linhas cujo id está em `expandedIds`. Devolver `null` não expande.
+   */
+  renderExpanded?: (row: T) => ReactNode;
+  /** `compact`: cabeçalho de 36px em caixa alta pequena e células com menos respiro (tabela densa de edição). */
+  density?: "default" | "compact";
+  /**
+   * Linhas extras depois do corpo (SPEC 127), ex.: linha de "adicionar" inline. O chamador devolve
+   * `<TableRow>`s completos. Com `extraRows`, a lista vazia não mostra a mensagem de vazio.
+   */
+  extraRows?: ReactNode;
+  /** Ids (de `rowKey`) das linhas expandidas. Quem controla é o pai, em geral pelo `onRowClick`. */
+  expandedIds?: ReadonlySet<string>;
   /** Coluna de ordenação inicial. */
   defaultSortKey?: string;
   defaultSortDir?: "asc" | "desc";
@@ -123,6 +141,12 @@ export function DataTable<T>({
   data,
   rowKey,
   onRowClick,
+  rowLabel,
+  rowClassName,
+  renderExpanded,
+  expandedIds,
+  density = "default",
+  extraRows,
   defaultSortKey,
   defaultSortDir = "asc",
   sortingState,
@@ -200,6 +224,7 @@ export function DataTable<T>({
   // `maxHeight` implica scroll vertical interno (ver wrapper abaixo); o header
   // gruda no topo desse scroll, senão ele "sobe" e some ao rolar a tabela.
   const stickyHeader = !!maxHeight;
+  const compact = density === "compact";
 
   const selectionHead = enableRowSelection ? (
     <TableHead className={cn("w-10 sticky left-0 z-20 bg-muted/50", stickyHeader && "top-0 z-30")}>
@@ -221,6 +246,7 @@ export function DataTable<T>({
         key={col.key}
         aria-sort={isActive ? (sortState!.desc ? "descending" : "ascending") : undefined}
         className={cn(
+          compact && "h-9 text-[11px] uppercase tracking-wide",
           col.align && alignClass[col.align],
           col.stickyLeft && "sticky left-0 z-20 bg-muted/50",
           stickyHeader && "sticky top-0 z-10 bg-card",
@@ -293,6 +319,7 @@ export function DataTable<T>({
     }
 
     const bodyRows = table.getRowModel().rows;
+    if (bodyRows.length === 0 && extraRows) return extraRows;
     if (bodyRows.length === 0) {
       return (
         <TableRow className="hover:bg-transparent">
@@ -316,36 +343,73 @@ export function DataTable<T>({
       );
     }
 
-    return bodyRows.map((row) => (
-      <TableRow
-        key={row.id}
-        data-state={row.getIsSelected() ? "selected" : undefined}
-        onClick={onRowClick ? () => onRowClick(row.original) : undefined}
-        className={cn(onRowClick && "cursor-pointer")}
-      >
-        {enableRowSelection && (
-          <TableCell className="sticky left-0 z-10 bg-card" onClick={(e) => e.stopPropagation()}>
-            <Checkbox
-              checked={row.getIsSelected()}
-              onCheckedChange={(v) => row.toggleSelected(!!v)}
-              aria-label="Selecionar linha"
-            />
-          </TableCell>
-        )}
-        {visibleColumns.map((col) => (
-          <TableCell
-            key={col.key}
+    const linhas = bodyRows.map((row) => {
+      const expandida = expandedIds?.has(row.id) ? (renderExpanded?.(row.original) ?? null) : null;
+      return (
+        <Fragment key={row.id}>
+          <TableRow
+            data-state={row.getIsSelected() ? "selected" : undefined}
+            onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+            // Linha clicável é alcançável por teclado. Só reage quando o foco está na própria
+            // linha: Enter num botão interno continua sendo do botão.
+            tabIndex={onRowClick ? 0 : undefined}
+            aria-label={rowLabel?.(row.original)}
+            aria-expanded={renderExpanded && expandedIds ? expandedIds.has(row.id) : undefined}
+            onKeyDown={
+              onRowClick
+                ? (e) => {
+                    if (e.target !== e.currentTarget) return;
+                    if (e.key !== "Enter" && e.key !== " ") return;
+                    e.preventDefault();
+                    onRowClick(row.original);
+                  }
+                : undefined
+            }
             className={cn(
-              col.align && alignClass[col.align],
-              col.stickyLeft && "sticky left-0 z-10 bg-card",
-              col.className
+              onRowClick &&
+                "cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+              rowClassName?.(row.original)
             )}
           >
-            {col.cell(row.original)}
-          </TableCell>
-        ))}
-      </TableRow>
-    ));
+            {enableRowSelection && (
+              <TableCell className="sticky left-0 z-10 bg-card" onClick={(e) => e.stopPropagation()}>
+                <Checkbox
+                  checked={row.getIsSelected()}
+                  onCheckedChange={(v) => row.toggleSelected(!!v)}
+                  aria-label="Selecionar linha"
+                />
+              </TableCell>
+            )}
+            {visibleColumns.map((col) => (
+              <TableCell
+                key={col.key}
+                className={cn(
+                  compact && "py-2",
+                  col.align && alignClass[col.align],
+                  col.stickyLeft && "sticky left-0 z-10 bg-card",
+                  col.className
+                )}
+              >
+                {col.cell(row.original)}
+              </TableCell>
+            ))}
+          </TableRow>
+          {expandida && (
+            <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={totalCols} className="bg-muted/30">
+                {expandida}
+              </TableCell>
+            </TableRow>
+          )}
+        </Fragment>
+      );
+    });
+    return (
+      <>
+        {linhas}
+        {extraRows}
+      </>
+    );
   };
 
   const hasRows = !isPending && !error && table.getRowModel().rows.length > 0;

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
 import { Building2, Palette } from "lucide-react";
 import { formatCNPJ, formatPhone, onlyDigits } from "@/lib/maskUtils";
 import { CompanyDataTab } from "@/pages/company/components/CompanyDataTab";
@@ -18,7 +19,13 @@ type Props = {
   isLoading: boolean;
 };
 
+const VISOES_EMPRESA: ViewOption<"dados" | "visual">[] = [
+  { value: "dados", label: "Dados", icon: Building2 },
+  { value: "visual", label: "Personalização", icon: Palette },
+];
+
 export function EmpresaTab({ companyId, companyData, setCompanyData, usersCount, isLoading }: Props) {
+  const [visao, setVisao] = useState<"dados" | "visual">("dados");
   const [editingData, setEditingData] = useState(false);
   const [editingVisual, setEditingVisual] = useState(false);
   const [pendingLogoFile, setPendingLogoFile] = useState<File | null>(null);
@@ -128,15 +135,8 @@ export function EmpresaTab({ companyId, companyData, setCompanyData, usersCount,
       />
 
       <div className="lg:col-span-2">
-        <Tabs defaultValue="dados" className="w-full">
-          <TabsList>
-            <TabsTrigger value="dados" className="gap-2">
-              <Building2 size={16} /> Dados
-            </TabsTrigger>
-            <TabsTrigger value="visual" className="gap-2">
-              <Palette size={16} /> Personalização
-            </TabsTrigger>
-          </TabsList>
+        <Tabs value={visao} onValueChange={(v) => setVisao(v as "dados" | "visual")} className="w-full">
+          <ViewSwitcher options={VISOES_EMPRESA} value={visao} onChange={setVisao} ariaLabel="Seção da empresa" />
 
           <TabsContent value="dados" className="mt-6">
             <CompanyDataTab

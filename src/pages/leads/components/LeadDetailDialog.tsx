@@ -50,6 +50,8 @@ interface LeadDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   lead: Lead | null;
+  /** Nome da coluna do lead no funil (editável); sem ele mostra o status. */
+  etapaNome?: string;
   canEdit: boolean;
   members: LeadMember[];
   onEdit: (lead: Lead) => void;
@@ -67,6 +69,7 @@ export function LeadDetailDialog({
   open,
   onOpenChange,
   lead,
+  etapaNome,
   canEdit,
   members,
   onEdit,
@@ -91,11 +94,11 @@ export function LeadDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex flex-wrap items-center gap-2 pr-6">
             {nomeCompleto}
-            <Badge className={statusConfig?.color}>{statusConfig?.label ?? lead.status}</Badge>
+            <Badge className={statusConfig?.color}>{etapaNome ?? statusConfig?.label ?? lead.status}</Badge>
             {lead.status === "Perdido" && (
               <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-danger-soft text-danger-strong flex items-center gap-1">
                 <AlertTriangle size={10} /> Perdido

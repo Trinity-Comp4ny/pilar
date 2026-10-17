@@ -731,7 +731,7 @@ function AnalisarOrcamentoButton({
           {importar.isPending ? (
             <ImportStepper step={step} />
           ) : tipoPreview ? (
-            <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
+            <div className="max-h-[70dvh] space-y-4 overflow-y-auto pr-1">
               {classificacao && (
                 <p className="rounded-md bg-brand/5 px-3 py-2 text-xs text-muted-foreground">
                   Detectei:{" "}
@@ -996,7 +996,7 @@ function PropostaFormDialog({
           <DialogTitle>{isEdit ? "Editar proposta" : "Nova proposta"}</DialogTitle>
         </DialogHeader>
 
-        <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
+        <div className="max-h-[70dvh] space-y-4 overflow-y-auto pr-1">
           <div className="space-y-1.5">
             <Label>Fornecedor</Label>
             <Select value={fornecedorId} onValueChange={setFornecedorId}>

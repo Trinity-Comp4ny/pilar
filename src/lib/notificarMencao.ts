@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { monitoring } from "@/lib/monitoring";
+import { mencionaTodos } from "@/lib/mencoes";
 
 export type EntidadeMencao = "projeto" | "disciplina" | "tarefa";
 
@@ -11,6 +12,7 @@ const PREVIEW_MAX = 200;
  * "notificação fantasma" de um comentário que não persistiu. Best-effort: falha aqui não deve
  * quebrar o fluxo de quem comentou, só reporta pro Sentry. Com `comentarioId`, o link da
  * notificação abre a conversa já no comentário e cada comentário notifica à parte (spec 103).
+ * "@all" ou "@todos" no texto avisa todos da empresa (SPEC 132), mesmo sem ninguém em `mencionados`.
  */
 export async function notificarMencao(
   entidadeTipo: EntidadeMencao,
@@ -19,7 +21,8 @@ export async function notificarMencao(
   textoComentario: string,
   comentarioId?: string
 ) {
-  if (mencionados.length === 0) return;
+  const todos = mencionaTodos(textoComentario);
+  if (mencionados.length === 0 && !todos) return;
 
   const { error } = await supabase.rpc("rpc_notificar_mencao", {
     p_entidade_tipo: entidadeTipo,
@@ -27,6 +30,7 @@ export async function notificarMencao(
     p_mencionados: mencionados,
     p_preview: textoComentario.slice(0, PREVIEW_MAX),
     p_comentario_id: comentarioId,
+    p_todos: todos,
   });
 
   if (error) monitoring.captureException(error, { entidadeTipo, entidadeId });

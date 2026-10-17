@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ArrowDownCircle, ArrowUp, ArrowUpDown, ArrowDown } from "lucide-react";
+import { ArrowDownCircle, ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
+import { TABLE_CELL_DENSE_CLASS, TABLE_HEAD_CLASS } from "@/components/ui/table";
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,7 @@ import { useLancamentosFiltersData } from "../hooks/useLancamentosFiltersData";
 import { defaultFilters, type LancamentosFilters } from "./lancamentosFilters";
 import { LancamentosBulkBar } from "./LancamentosBulkBar";
 import { LancamentosGroupRow } from "./LancamentosGroupRow";
+import { SortableTH } from "./LancamentosSortableTH";
 import { LancamentosItemRow } from "./LancamentosItemRow";
 
 import { PageLoader } from "@/components/motion/PageLoader";
@@ -222,8 +224,12 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
   };
 
   const SortIcon = ({ k }: { k: SortKey }) => {
-    if (sort.key !== k) return <ArrowUpDown className="h-3 w-3 opacity-40" />;
-    return sort.dir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />;
+    if (sort.key !== k) return <ChevronsUpDown className="h-3.5 w-3.5 opacity-60" aria-hidden />;
+    return sort.dir === "asc" ? (
+      <ChevronUp className="h-3.5 w-3.5 opacity-60" aria-hidden />
+    ) : (
+      <ChevronDown className="h-3.5 w-3.5 opacity-60" aria-hidden />
+    );
   };
 
   // Pendência de data de efetivação: marcar como recebido/pago não grava mais a data de
@@ -429,7 +435,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
   }, [filters, sort, grouped]);
 
   const cellTextSize = "text-sm";
-  const cellPad = "py-3 px-3";
+  const cellPad = TABLE_CELL_DENSE_CLASS;
   const colCount = canEdit ? 11 : 10;
 
   return (
@@ -463,12 +469,12 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
       />
 
       <div className="rounded-xl border border-black/10 bg-white overflow-hidden">
-        <div ref={scrollRef} className="overflow-auto" style={{ maxHeight: "min(70vh, 720px)" }}>
+        <div ref={scrollRef} className="overflow-auto" style={{ maxHeight: "min(70dvh, 720px)" }}>
           <table className="min-w-full text-left border-collapse">
             <thead className="sticky top-0 bg-white z-10 shadow-[0_1px_0_rgba(0,0,0,0.06)]">
-              <tr className="text-xs text-muted-foreground">
+              <tr className="text-sm">
                 {canEdit && (
-                  <th className="w-[40px] px-3 py-2">
+                  <th className={cn(TABLE_HEAD_CLASS, "h-11 w-[48px] px-3")}>
                     <Checkbox
                       checked={allSelected ? true : someSelected ? "indeterminate" : false}
                       onCheckedChange={toggleAll}
@@ -476,7 +482,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
                     />
                   </th>
                 )}
-                <th className="w-[60px] px-3 py-2 whitespace-nowrap">Tipo</th>
+                <th className={cn(TABLE_HEAD_CLASS, "h-11 w-[60px] px-3 whitespace-nowrap")}>Tipo</th>
                 <SortableTH
                   label="Data"
                   k="data"
@@ -517,7 +523,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
                   icon={<SortIcon k="projeto" />}
                   className="min-w-[120px]"
                 />
-                <th className="px-3 py-2 min-w-[80px] whitespace-nowrap">Parcela</th>
+                <th className={cn(TABLE_HEAD_CLASS, "h-11 min-w-[80px] px-3 whitespace-nowrap")}>Parcela</th>
                 <SortableTH
                   label="Valor"
                   k="valor"
@@ -534,7 +540,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
                   icon={<SortIcon k="status" />}
                   className="min-w-[90px]"
                 />
-                <th className="w-[60px] px-3 py-2" />
+                <th className={cn(TABLE_HEAD_CLASS, "h-11 w-[60px] px-3")} />
               </tr>
             </thead>
             <tbody>
@@ -752,39 +758,5 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
         variant="destructive"
       />
     </div>
-  );
-}
-
-function SortableTH({
-  label,
-  k,
-  sort,
-  onSort,
-  icon,
-  className,
-}: {
-  label: string;
-  k: SortKey;
-  sort: SortState;
-  onSort: (k: SortKey) => void;
-  icon: React.ReactNode;
-  className?: string;
-}) {
-  const active = sort.key === k;
-  return (
-    <th
-      className={cn("px-3 py-2 cursor-pointer select-none whitespace-nowrap font-medium text-xs", className)}
-      onClick={() => onSort(k)}
-    >
-      <span
-        className={cn(
-          "inline-flex items-center gap-1 hover:text-foreground transition-colors",
-          active ? "text-foreground" : "text-muted-foreground"
-        )}
-      >
-        {label}
-        {icon}
-      </span>
-    </th>
   );
 }

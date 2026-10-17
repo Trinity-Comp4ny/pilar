@@ -79,7 +79,7 @@ Peças oficiais em uso. Use estas, não remonte à mão.
 
 ### Layout de página
 
-- **`PilarPage`** (`src/components/PilarPage.tsx`): envelopa `PageLayout` + `PageHeader` numa peça só. Props: `title`, `breadcrumbs?`, `search?`, `primaryAction?` (gateia por `feature`), `actions?`, `sidebar?`, `className?`, `containerClassName?`, `children`. **Página de lista nova usa esta, não remonta o par à mão.**
+- **`PilarPage`** (`src/components/PilarPage.tsx`): envelopa `PageLayout` + `PageHeader` numa peça só. Props: `title`, `breadcrumbs?`, `search?`, `primaryAction?` (gateia por `feature`), `actions?`, `tabs?`, `toolbar?`, `sidebar?`, `className?`, `containerClassName?`, `children`. **Página de lista nova usa esta, não remonta o par à mão.**
 - **`PageLayout`** (`src/components/PageLayout.tsx`) / **`PageHeader`** (`src/components/PageHeader.tsx`): as peças por baixo do `PilarPage`. Use o par direto só quando a tela precisa de algo que o `PilarPage` não expõe (ex.: página de detalhe com bloco de metadados + abas — ver "Página de detalhe com abas" abaixo). Atalho `/` foca a busca do header.
 
 ### Página de detalhe com abas por entidade
@@ -93,6 +93,18 @@ Padrão em uso em `src/pages/obras/[id]/index.tsx` e `src/pages/clientes/[id]/in
 - Aba oculta quando a sub-feature está desligada para a empresa (`can("<modulo>_<subfeature>", "view")`, spec 035), não removida do código.
 
 Página de detalhe nova com mais de uma seção segue este padrão em vez de inventar um layout de abas próprio.
+
+### Navegação de seção, visão e filtros (SPEC 124 / ADR 0059)
+
+Ordem vertical fixa de toda página: **header** (título, busca, ação primária) → **abas de seção** (`tabs`) → **toolbar** (`toolbar`) → conteúdo. Os três ficam no mesmo bloco sticky.
+
+- **`SectionTabs`** (`src/components/SectionTabs.tsx`): seção da página (Financeiro: Visão geral, Lançamentos...; Admin). Barra horizontal com sublinhado `ink`, ícone e badge opcionais, setas/Home/End no teclado. Vai no slot `tabs`. **Não existe mais sidebar de página**: `SecondSidebar` foi removido. Aba filha que precisa montar a própria barra usa `PageTabs` (slot `tabs`) ou `PageToolbar` (slot `toolbar`) de `src/components/PageSlots.tsx`, que renderizam por portal no bloco sticky da página.
+- **`ViewSwitcher`** (`src/components/ViewSwitcher.tsx`): troca a visão da mesma coleção (Lista/Quadro/Agenda, Tabela/Gantt/Fluxo, Diário/Mensal). Primeiro item da toolbar. Não monte segmented à mão.
+- **`FilterBar`** (`src/components/filters/FilterBar.tsx`): linha única da toolbar, rola na horizontal. `end` leva ordenar/colunas à direita. Peças: `FilterSelect` (escolha única, ganha busca acima de 8 opções), `MultiSelectFilter`, `FiltroPeriodo`, `FilterPopover` ("Filtros (n)" para os menos usados) e `FilterClear`. Tudo `h-9 rounded-full`; filtro ativo é `bg-brand text-ink` (`filterTriggerClass`).
+- **Regra**: busca e ação primária ficam no `PageHeader`; filtros e seletor de visão na `toolbar`. Não coloque filtro em `CardHeader`, em `children` do header nem em card próprio.
+- Seção de **entidade** (detalhe de Obra, Cliente, Fornecedor, Projeto) também é `SectionTabs`: no slot `tabs`, com `Tabs`/`TabsContent` só para o conteúdo (ver "Página de detalhe com abas").
+- Busca local de aba (Lançamentos, Folha, Equipe) fica na toolbar; busca da página inteira fica no header.
+- **Antes e depois**: PR que muda aparência leva prints antes/depois no corpo (ver `CLAUDE.md`).
 
 ### Modais
 
@@ -112,6 +124,12 @@ Página de detalhe nova com mais de uma seção segue este padrão em vez de inv
 - **`StatusBadge`** (`src/components/StatusBadge.tsx`): badge de status de domínio. Props: `domain`, `status`, `className?`. A cor vem do registry, nunca por fora.
 - **Registry** (`src/lib/status.ts`): fonte única. Domínios: `projeto | proposta | lead | financeiro | tipo | obra | cotacao`. Tons: `neutral | info | warning | attention | positive | danger | brand | done | highlight`. Helpers: `TONE_BADGE`, `TONE_VALUE` (cor de KPI), `TONE_COLUMN` (coluna kanban). "Pago" tem a mesma cor em Financeiro, Relatórios, Portal e detalhe de projeto.
 
+### Quadros Kanban (SPEC 122)
+
+- **`KanbanCard`** (`src/components/kanban/KanbanCard.tsx`): único card dos quadros de Tarefas, Projetos e Leads. Slots `eyebrow`, `tag`, `menu`, `title`, `subtitle`, `meta`, `footer`; raio, padding e posição das peças são fixos. Sem "#N" na face. Prioridade via `KanbanPriority`, etiqueta do usuário via `KanbanChip`.
+- **`KanbanColumn` + `KanbanDraggable`** (`src/components/kanban/KanbanColumn.tsx`): cabeçalho, menu da coluna, minimizar, superfície de soltar e vazio ("Nada aqui"). Medidas em `kanbanLayout.ts`.
+- **Ordenação** (`src/lib/kanbanSort.ts` + `KanbanSortControl`): cada quadro declara as chaves que suporta e como ler o valor; o controle e os rótulos são um só.
+
 ### Números e KPIs
 
 - **`KPICard`** (`src/components/KPICard.tsx`): card de número grande do dashboard. Prop `density?: "default" | "compact"` (padrão `"default"`) reduz o padding para uso em faixas colapsáveis; não muda tamanho de fonte nem remove conteúdo.
@@ -125,7 +143,8 @@ Página de detalhe nova com mais de uma seção segue este padrão em vez de inv
 
 ### Tabela
 
-- **`DataTable`** (`src/components/data/DataTable.tsx`): tabela declarativa com `ColumnDef<T>`, sort, sticky column e os três estados (loading/erro/vazio). É a peça oficial de tabela read-only. Hoje subutilizada (1 uso); adotar nas listas.
+- **`DataTable`** (`src/components/data/DataTable.tsx`): tabela declarativa com `ColumnDef<T>`, sort, sticky column e os três estados (loading/erro/vazio). É a peça oficial de tabela read-only. Padrão para toda lista plana nova. Listas antigas com `<Table>` à mão estão numa lista de exceções com motivo em `src/components/navegacaoPadrao.test.ts`; arquivo novo com tabela à mão reprova.
+- **Recursos de linha do `DataTable`** (SPEC 127): `rowLabel` (rótulo para leitor de tela), `rowClassName` (estado visual, ex.: convite pendente esmaecido), `renderExpanded` + `expandedIds` (linha extra com o detalhe, o pai controla quem expande). Linha com `onRowClick` é focável e abre com Enter ou Espaço. Ordenação pode ser controlada pelo pai (`sortingState`/`onSortingChange`) quando a mesma lista alimenta outra visão. `density="compact"` dá a tabela densa de edição e `extraRows` acrescenta linhas depois do corpo (ex.: "adicionar" inline). Editor na célula é um componente dentro de `cell`, controlado pela tela; total em rodapé vem de `footer` (montado por coluna). `LancamentosTable` (server-side, agrupada, virtualizada) segue com `<table>` própria, mas importa `TABLE_HEAD_CLASS` e `TABLE_CELL_DENSE_CLASS` de `ui/table.tsx`, então tem o mesmo cabeçalho do `DataTable`; tabela nova com `<table>` própria faz o mesmo. Escala de tempo de cronograma usa `ZoomSwitcher`.
 - **Tabela vazia: tudo centralizado** (texto, ícone e ação, na horizontal e com respiro vertical). `DataTable` já faz isso com `emptyMessage` e com o slot `emptyState` (`EmptyState`). Em tabela escrita à mão, a linha de vazio é `<TableCell colSpan={n} className="py-10 text-center text-sm text-muted-foreground">` ou um `EmptyState` dentro da célula. Um teste de varredura (`src/components/data/tabelaVazia.test.ts`) reprova linha de vazio sem `text-center` e parágrafo `Nenhum…` solto no portal Ultra.
 
 ### Pessoas
@@ -134,7 +153,7 @@ Página de detalhe nova com mais de uma seção segue este padrão em vez de inv
 
 ### Filtros
 
-- **`FiltroPeriodo`** / **`FiltroCompetencia`** (spec 024, `src/lib/periodo.ts` para presets): filtro por range de data e por mês/ano. Não reimplemente seletor de período.
+- **`FiltroPeriodo`** / **`FiltroCompetencia`** (spec 024, `src/lib/periodo.ts` para presets): filtro por range de data e por mês/ano. Não reimplemente seletor de período. Montagem da barra: ver "Navegação de seção, visão e filtros".
 
 ### Formatação (sempre importar, nunca redefinir)
 

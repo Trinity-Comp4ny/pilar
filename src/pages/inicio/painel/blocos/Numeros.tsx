@@ -28,10 +28,10 @@ function Numero({ valor, rotulo, chip, destaque, onClick }: NumeroProps) {
       type={onClick ? "button" : undefined}
       onClick={onClick}
       className={cn(
-        "flex flex-col gap-0.5 rounded-xl border border-black/5 p-3 text-left",
-        destaque === "atencao" ? "border-l-[3px] border-l-negative" : null,
+        "flex flex-col gap-0.5 rounded-2xl border border-black/5 bg-muted/40 p-3.5 text-left",
+        destaque === "atencao" ? "border-negative/40 bg-negative/5" : null,
         onClick &&
-          "transition-colors hover:bg-black/2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
+          "transition-colors hover:bg-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
       )}
     >
       <span className="flex items-baseline gap-2">

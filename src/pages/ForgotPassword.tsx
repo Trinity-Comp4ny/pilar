@@ -45,7 +45,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="landing-grain min-h-screen w-full flex overflow-hidden bg-paper">
+    <div className="landing-grain min-h-dvh w-full flex overflow-hidden bg-paper">
       {/* Lado Esquerdo - Formulário */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-paper relative overflow-hidden">
         <div className="absolute inset-0 -z-10 pointer-events-none">

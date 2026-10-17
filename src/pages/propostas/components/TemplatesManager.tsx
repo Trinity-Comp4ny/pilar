@@ -9,7 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Upload, FileText, Trash2, Eye } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
-import { getSafeErrorMessage } from "@/lib/safeError";
+import { getSafeErrorMessage, getRawErrorMessage } from "@/lib/safeError";
+import { ErroDeDocx } from "@/lib/erroDeDocx";
+import { reportInvokeError } from "@/lib/monitoring";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   usePropostaTemplates,
@@ -62,7 +64,8 @@ export function TemplatesManager() {
         },
         onError: (err: Error) =>
           toast.error("Não foi possível salvar o template", {
-            description: getSafeErrorMessage(err, "Confira o arquivo e tente de novo."),
+            description:
+              err instanceof ErroDeDocx ? err.message : getSafeErrorMessage(err, "Confira o arquivo e tente de novo."),
           }),
       }
     );
@@ -100,8 +103,12 @@ export function TemplatesManager() {
         }
       );
       setPreviewHtml(result.value);
-    } catch {
-      toast.error("Não foi possível gerar o preview");
+    } catch (err) {
+      // Antes o erro sumia aqui: sem Sentry, o relato do cliente ficava sem pista.
+      reportInvokeError(err, "proposta:preview-template", { templateId: t.id, arquivo: t.arquivo_path });
+      toast.error("Não foi possível abrir o preview", {
+        description: `${getRawErrorMessage(err) || "Erro desconhecido"}. Se o arquivo abre no Word, envie de novo ao suporte.`,
+      });
       setPreviewTemplate(null);
     } finally {
       setPreviewLoading(false);
@@ -256,7 +263,7 @@ export function TemplatesManager() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
+        <DialogContent className="sm:max-w-2xl max-h-[85dvh] flex flex-col">
           <DialogHeader className="shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <FileText

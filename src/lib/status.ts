@@ -67,7 +67,9 @@ export type StatusDomain =
   | "status_incidente"
   | "empresa_situacao"
   | "feedback"
-  | "pedido_lgpd";
+  | "pedido_lgpd"
+  | "ops_agente"
+  | "saude_cliente";
 
 type StatusDef = { label: string; tone: StatusTone };
 
@@ -149,6 +151,23 @@ export const STATUS_REGISTRY: Record<StatusDomain, Record<string, StatusDef>> = 
     sem_assinatura: { label: "Sem assinatura", tone: "neutral" },
     suspensa: { label: "Suspensa", tone: "attention" },
     arquivada: { label: "Arquivada", tone: "neutral" },
+  },
+  // Agente de operação no Ultra › Time (SPEC 126). "so_numeros" é a fase 0: indicador
+  // do banco sem briefing do modelo; "planejado" ainda não roda.
+  ops_agente: {
+    ok: { label: "Em dia", tone: "positive" },
+    atencao: { label: "Pede atenção", tone: "warning" },
+    falhou: { label: "Falhou", tone: "danger" },
+    pausado: { label: "Pausado", tone: "neutral" },
+    so_numeros: { label: "Só números", tone: "info" },
+    planejado: { label: "Planejado", tone: "neutral" },
+    externo: { label: "Na plataforma de marketing", tone: "highlight" },
+  },
+  // Faixa da nota de saúde do escritório cliente (ops_saude_empresas).
+  saude_cliente: {
+    saudavel: { label: "Saudável", tone: "positive" },
+    atencao: { label: "Atenção", tone: "warning" },
+    risco: { label: "Em risco", tone: "danger" },
   },
   // Triagem de feedback do app (SPEC 112/116).
   feedback: {

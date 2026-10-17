@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
-import { escolherCidade, lerEndereco } from "./endereco.ts";
+import { escolherCidade, lerCepGeo, lerEndereco } from "./endereco.ts";
 
 const santaMaria = [
   { name: "Santa Maria", latitude: -29.68, longitude: -53.8, admin1: "Rio Grande do Sul" },
@@ -23,4 +23,28 @@ Deno.test("endereço: precisa de ao menos um campo, só texto e curto", () => {
   assertEquals(lerEndereco({ address: "x".repeat(301) }), { ok: false, error: "Endereço longo demais" });
   const r = lerEndereco({ city: " Marília ", state: "SP", postalcode: 17500000 });
   assertEquals(r.ok && r.data, { city: "Marília", state: "SP", hasStructured: true });
+});
+
+Deno.test("lerCepGeo usa a coordenada do BrasilAPI quando existe (vem como texto)", () => {
+  const r = lerCepGeo({
+    city: "Caetité",
+    state: "BA",
+    location: { coordinates: { latitude: "-14.06944", longitude: "-42.475" } },
+  });
+  assertEquals(r?.coordenadas, { lat: "-14.06944", lon: "-42.475", display_name: "Caetité, BA" });
+});
+
+Deno.test("lerCepGeo sem coordenada devolve só cidade e UF para o fallback do Open-Meteo", () => {
+  const r = lerCepGeo({ city: "Marília", state: "SP", location: { coordinates: {} } });
+  assertEquals(r, { coordenadas: null, city: "Marília", state: "SP" });
+});
+
+Deno.test("lerCepGeo recusa resposta fora do formato", () => {
+  assertEquals(lerCepGeo(null), null);
+  assertEquals(lerCepGeo("erro"), null);
+  assertEquals(lerCepGeo({ location: {} }), null);
+  assertEquals(
+    lerCepGeo({ city: "X", location: { coordinates: { latitude: "abc", longitude: "1" } } })?.coordenadas,
+    null
+  );
 });

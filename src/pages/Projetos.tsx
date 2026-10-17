@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { GitBranch, MoreHorizontal, Plus, Settings2 } from "lucide-react";
+import { GitBranch, LayoutGrid, List, MoreHorizontal, Plus, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { DragDropContext } from "@hello-pangea/dnd";
 import { PageLayout } from "@/components/PageLayout";
@@ -33,7 +33,10 @@ import { KanbanBoard } from "@/pages/projetos/components/KanbanBoard";
 import { ListaProjetos } from "@/pages/projetos/components/ListaProjetos";
 import { MapaTab } from "@/pages/projetos/components/MapaTab";
 import { ProjetosMobileList } from "@/pages/projetos/components/ProjetosMobileList";
-import { SortControl } from "@/pages/projetos/components/SortControl";
+import { KanbanSortControl } from "@/components/kanban/KanbanSortControl";
+import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
+import { FilterBar } from "@/components/filters/FilterBar";
+import { ordenarKanban, type KanbanSortAccessors, type KanbanSortKey } from "@/lib/kanbanSort";
 import { ReopenProjetoDialog } from "@/pages/projetos/components/ProjetoStatusDialogs";
 import { useProjetosData } from "@/pages/projetos/hooks/useProjetosData";
 import { useProjetosUrlState } from "@/pages/projetos/hooks/useProjetosUrlState";
@@ -51,12 +54,28 @@ import { cn } from "@/lib/utils";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useQueryClient } from "@tanstack/react-query";
 
+const PROJETOS_SORT_ACESSORES: KanbanSortAccessors<Projeto> = {
+  priority: (p) => PROJECT_PRIORITY_CONFIG[p.prioridade as ProjectPriority]?.sortWeight ?? 1,
+  dueDate: (p) => p.data_previsao,
+  value: (p) => p.valor_contrato,
+  name: (p) => p.nome,
+};
+
+const VISAO_OPCOES: ViewOption<"quadro" | "lista">[] = [
+  { value: "quadro", label: "Quadro", icon: LayoutGrid },
+  { value: "lista", label: "Lista", icon: List },
+];
+
 export default function ProjetosKanban() {
   usePageTitle("Projetos");
   const { can } = usePermissions();
   const queryClient = useQueryClient();
   const canEdit = can("projetos", "create");
   const canViewMapa = can("mapa", "view");
+  // Sem acesso a financeiro o valor do contrato vem mascarado: não oferece ordenar por ele.
+  const sortKeys: KanbanSortKey[] = can("financeiro")
+    ? ["priority", "dueDate", "value", "name", "created"]
+    : ["priority", "dueDate", "name", "created"];
   // Disciplina é um nome: mudar o catálogo muda os projetos, então recarrega os dois.
   const refreshDisciplinas = () => {
     queryClient.invalidateQueries({ queryKey: ["disciplinas"] });
@@ -224,28 +243,7 @@ export default function ProjetosKanban() {
     return true;
   };
 
-  const sortProjetos = (a: Projeto, b: Projeto): number => {
-    const dir = sort.dir === "asc" ? 1 : -1;
-    switch (sort.key) {
-      case "priority": {
-        const wa = PROJECT_PRIORITY_CONFIG[a.prioridade as ProjectPriority]?.sortWeight ?? 1;
-        const wb = PROJECT_PRIORITY_CONFIG[b.prioridade as ProjectPriority]?.sortWeight ?? 1;
-        return (wa - wb) * dir;
-      }
-      case "dueDate": {
-        const da = a.data_previsao || "9999-12-31";
-        const db = b.data_previsao || "9999-12-31";
-        return da.localeCompare(db) * dir;
-      }
-      case "value":
-        return ((a.valor_contrato || 0) - (b.valor_contrato || 0)) * dir;
-      case "name":
-        return a.nome.localeCompare(b.nome) * dir;
-      case "created":
-      default:
-        return 0; // já vem ordenado por created_at desc do server
-    }
-  };
+  const sortProjetos = (lista: Projeto[]): Projeto[] => ordenarKanban(lista, sort, PROJETOS_SORT_ACESSORES);
 
   const filteredProjetos = useMemo(
     () => projetos.filter(matchesFilters),
@@ -264,9 +262,9 @@ export default function ProjetosKanban() {
       if (p.etapa_id && etapaIds.has(p.etapa_id)) (groups[p.etapa_id] ||= []).push(p);
       else semColuna.push(p);
     }
-    for (const key of Object.keys(groups)) groups[key].sort(sortProjetos);
-    semColuna.sort(sortProjetos);
-    return { projetosByEtapa: groups, orfaos: semColuna };
+    const ordenados: Record<string, Projeto[]> = {};
+    for (const key of Object.keys(groups)) ordenados[key] = sortProjetos(groups[key]);
+    return { projetosByEtapa: ordenados, orfaos: sortProjetos(semColuna) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredProjetos, sort, etapaIds]);
 
@@ -276,7 +274,7 @@ export default function ProjetosKanban() {
   const projetosByStatus = useMemo(() => {
     const groups: Record<string, Projeto[]> = {};
     for (const p of filteredProjetos) (groups[p.status] ||= []).push(p);
-    for (const key of Object.keys(groups)) groups[key].sort(sortProjetos);
+    for (const key of Object.keys(groups)) groups[key] = sortProjetos(groups[key]);
     return groups;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredProjetos, sort]);
@@ -349,10 +347,24 @@ export default function ProjetosKanban() {
   const noProjetos = !loadingProjetos && !projetosError && projetos.length === 0;
   const noResults = !loadingProjetos && !projetosError && projetos.length > 0 && filteredProjetos.length === 0;
 
+  const toolbar = (
+    <FilterBar end={isColecao ? <KanbanSortControl sort={sort} onChange={setSort} keys={sortKeys} /> : undefined}>
+      {isColecao && <ViewSwitcher options={VISAO_OPCOES} value={viewMode} onChange={setViewMode} iconOnlyOnMobile />}
+      <ProjetosFilterBar
+        pessoas={pessoas}
+        clientes={clientes}
+        disciplinas={disciplinas}
+        filters={filters}
+        onChange={setFilters}
+      />
+    </FilterBar>
+  );
+
   return (
     <PageLayout
-      className={activeTab === "quadro" ? "overflow-y-hidden" : undefined}
-      containerClassName={cn("flex flex-col", activeTab === "quadro" && "h-full min-h-0")}
+      toolbar={toolbar}
+      className={activeTab === "quadro" ? "md:overflow-y-hidden" : undefined}
+      containerClassName={cn("flex flex-col", activeTab === "quadro" && "md:h-full md:min-h-0")}
       header={
         <PageHeader
           title="Projetos"
@@ -369,14 +381,6 @@ export default function ProjetosKanban() {
             dataTour: "onb-novo-projeto",
           }}
         >
-          <ProjetosFilterBar
-            pessoas={pessoas}
-            clientes={clientes}
-            disciplinas={disciplinas}
-            filters={filters}
-            onChange={setFilters}
-          />
-
           {/* Em telas estreitas, "Disciplinas" e "Fluxos" cabendo inline ao lado da busca
               empurravam "Novo projeto" pra fora do viewport, sem scroll pra alcançar
               (achado da auditoria mobile, 08/09). Colapsam num único menu "⋯" abaixo de md. */}
@@ -425,39 +429,10 @@ export default function ProjetosKanban() {
         </PageHeader>
       }
     >
-      {/* KPIs + toggle Quadro/Lista + ordenação numa linha só (a navegação entre
-          recortes vive na sidebar; os KPIs só entram quando há dado pra mostrar). */}
+      {/* KPIs (a navegação entre recortes vive na sidebar; só entram quando há dado
+          pra mostrar). Visão, filtros e ordenação ficam na toolbar (SPEC 124). */}
       {isColecao && (
-        <CollapsibleKpiSection
-          storageKey="projetos"
-          controls={
-            <>
-              <div className="inline-flex rounded-full border p-0.5">
-                <button
-                  type="button"
-                  onClick={() => setViewMode("quadro")}
-                  className={cn(
-                    "rounded-full px-3 py-1 text-sm transition-colors",
-                    viewMode === "quadro" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Quadro
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode("lista")}
-                  className={cn(
-                    "rounded-full px-3 py-1 text-sm transition-colors",
-                    viewMode === "lista" ? "bg-brand text-ink" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Lista
-                </button>
-              </div>
-              <SortControl sort={sort} onChange={setSort} />
-            </>
-          }
-        >
+        <CollapsibleKpiSection storageKey="projetos">
           {!loadingProjetos && projetos.length > 0 && (
             <ProjetosKPIs
               projetos={projetos}

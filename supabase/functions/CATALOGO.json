@@ -101,6 +101,14 @@
     "dominio": "jobs",
     "descricao": "Cron: manda por e-mail o que está na central de notificações e ninguém leu."
   },
+  "ops-agente-run": {
+    "dominio": "plataforma",
+    "descricao": "Executa um agente de operação da Pilar (Receita, Clientes, Chefe de gabinete): fatos do banco, texto do modelo aterrado em código, ações pendentes no Ultra e resumo do dia por e-mail (SPEC 126)."
+  },
+  "ops-export-funil": {
+    "dominio": "plataforma",
+    "descricao": "Devolve à plataforma de marketing (post-automation) cadastros, ativados e pagantes por dia e UTM, sem dado pessoal, autenticada por token próprio (SPEC 128)."
+  },
   "pilar-checkout-create": {
     "dominio": "billing",
     "descricao": "Checkout público do Pilar: cria cliente e cobrança na Asaas da plataforma."
@@ -150,6 +158,10 @@
   "reset-cliente-portal-password": {
     "dominio": "portal",
     "descricao": "Redefine a senha do cliente do portal (e-mail antes de mexer na conta)."
+  },
+  "resumo-semanal": {
+    "dominio": "ia",
+    "descricao": "Resumo semanal do Início: lê os fatos da semana pelo RLS de quem pediu (empresa para quem vê dinheiro, pessoa para os demais), o modelo redige e o código confere os números (SPEC 121)."
   },
   "retencao-pos-trial": {
     "dominio": "jobs",
