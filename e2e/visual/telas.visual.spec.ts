@@ -31,8 +31,36 @@ const TEXTO_VARIAVEL = new RegExp(
   "i"
 );
 
+/**
+ * O resumo semanal do Início (SPEC 121) é texto de IA, que muda a cada geração e muda a
+ * altura do cabeçalho. A foto usa um resumo fixo; a geração em si é coberta por teste Deno
+ * e pgTAP, não por pixel.
+ */
+async function fixarResumoSemanal(page: Page) {
+  await page.route("**/rest/v1/rpc/get_resumo_semanal", (route) =>
+    route.fulfill({
+      json: {
+        escopo: "empresa",
+        semana_inicio: "2026-01-05",
+        resumo: {
+          conteudo: {
+            manchete: "Dois projetos atrasados pedem atenção esta semana",
+            destaques: [
+              { tom: "atencao", texto: "Projetos com prazo vencido" },
+              { tom: "positivo", texto: "Disciplinas entregues na semana passada" },
+            ],
+          },
+          gerado_em: new Date().toISOString(),
+        },
+      },
+    })
+  );
+}
+
 function mascaras(page: Page) {
   return [
+    // Saudação e data do cabeçalho do Início: mudam com a hora e o dia.
+    page.getByTestId("hero-saudacao"),
     page.getByText(TEXTO_VARIAVEL),
     // Botão de data inteiro (DatePicker do prazo): mascarar só o texto deixava sobrar a
     // borda, porque a largura do texto muda com os dígitos do dia ("11/10" é mais
@@ -88,6 +116,7 @@ test.describe("Telas do app (desktop 1280×720)", () => {
 
   for (const [nome, rota] of telas) {
     test(nome, async ({ page }) => {
+      if (nome === "inicio") await fixarResumoSemanal(page);
       await abrir(page, rota);
       await expect(page.locator("#main-content")).toBeVisible();
       await expect(page).toHaveScreenshot(`${nome}.png`, opcoes(page));
@@ -99,6 +128,7 @@ test.describe("Celular (390×844)", () => {
   test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 
   test("inicio-celular", async ({ page }) => {
+    await fixarResumoSemanal(page);
     await abrir(page, "/inicio");
     await expect(page.locator("#main-content")).toBeVisible();
     await expect(page).toHaveScreenshot("inicio-celular.png", opcoes(page));

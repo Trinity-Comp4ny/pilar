@@ -1,33 +1,22 @@
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, ArrowRight, Pencil, Trash2 } from "lucide-react";
+import { KanbanCard } from "@/components/kanban/KanbanCard";
+import { ArrowRight, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { Lead } from "@/hooks/useLeads";
+import type { LeadEtapa } from "@/pages/leads/hooks/useLeadEtapas";
 import { PROPOSTA_STATUS_CONFIG, type Proposta } from "@/hooks/usePropostas";
 import { statusExibido } from "@/pages/leads/lib/comercial";
+import { etapaDoLead } from "@/pages/leads/lib/etapas";
 import { AvatarStack } from "@/components/AvatarStack";
-
-const statusLabels: Record<string, string> = {
-  Novo: "Novo",
-  "Em contato": "Em Contato",
-  Proposta: "Proposta Enviada",
-  Negociação: "Em Negociação",
-  Ganho: "Ganho",
-  Perdido: "Perdido",
-};
 
 type Props = {
   lead: Lead;
@@ -36,16 +25,18 @@ type Props = {
   canEdit: boolean;
   onEdit: (lead: Lead) => void;
   onDelete: (id: string) => void;
-  onMoveStatus?: (leadId: string, status: Lead["status"]) => void;
+  /** Colunas do funil, para o menu "Mover para" (mobile). */
+  etapas?: LeadEtapa[];
+  onMoveEtapa?: (leadId: string, etapa: LeadEtapa) => void;
   dragging?: boolean;
   proposta?: Proposta | null;
   responsavelNome?: string | null;
 };
 
 /**
- * Card enxuto no padrão do `ProjectCard` (Trello-like): nome, empresa,
- * badges, valor e responsável na face (spec 061, feedback do Matheus 25/08 —
- * cards densos demais escondiam quantos leads cabiam por coluna).
+ * Card enxuto sobre o `KanbanCard` padrão (SPEC 122): nome, empresa, badges,
+ * valor e responsável na face (spec 061, feedback do Matheus 25/08: cards
+ * densos demais escondiam quantos leads cabiam por coluna).
  */
 export function LeadKanbanCard({
   lead,
@@ -54,7 +45,8 @@ export function LeadKanbanCard({
   canEdit,
   onEdit,
   onDelete,
-  onMoveStatus,
+  etapas = [],
+  onMoveEtapa,
   dragging,
   proposta,
   responsavelNome,
@@ -62,6 +54,7 @@ export function LeadKanbanCard({
   const formatCurrency = useMoneyMask();
   const { can } = usePermissions();
   const podeVerValor = can("financeiro");
+  const etapaAtualId = etapaDoLead(lead, etapas)?.id;
   const propStatus = proposta ? statusExibido(proposta) : null;
   const propStatusConfig = propStatus ? PROPOSTA_STATUS_CONFIG[propStatus] : null;
   const valor = !podeVerValor
@@ -71,86 +64,73 @@ export function LeadKanbanCard({
       : lead.valor_estimado != null
         ? lead.valor_estimado
         : null;
+  const temBadges = !!lead.cliente_id || !!propStatusConfig;
   return (
-    <Card
+    <KanbanCard
       onClick={onClick}
-      className={cn("cursor-pointer w-full p-3 space-y-1.5 bg-white", dragging && "shadow-md rotate-1")}
-    >
-      {/* Linha 1: nome + kebab */}
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-medium truncate">{leadNome(lead)}</span>
-        {canEdit && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 -my-1 -mr-1 text-muted-foreground hover:text-foreground shrink-0"
-                aria-label="Mais opções"
+      isDragging={dragging}
+      eyebrow={
+        temBadges ? (
+          <>
+            {lead.cliente_id && (
+              <Badge variant="outline" className="h-5 border-brand/40 bg-brand px-1.5 text-[11px] font-normal text-ink">
+                Cliente
+              </Badge>
+            )}
+            {propStatusConfig && (
+              <Badge
+                variant="outline"
+                className={cn("h-5 border-transparent px-1.5 text-[11px] font-normal", propStatusConfig.color)}
               >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-              <DropdownMenuItem onClick={() => onEdit(lead)}>
-                <Pencil className="h-3.5 w-3.5 mr-2" /> Editar
-              </DropdownMenuItem>
-              {onMoveStatus && (
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>
-                    <ArrowRight className="h-3.5 w-3.5 mr-2" /> Mover para
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    {Object.keys(statusLabels)
-                      .filter((s) => s !== lead.status)
-                      .map((s) => (
-                        <DropdownMenuItem key={s} onClick={() => onMoveStatus(lead.id, s as Lead["status"])}>
-                          {statusLabels[s]}
-                        </DropdownMenuItem>
-                      ))}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(lead.id)}>
-                <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
-
-      {/* Linha 2: empresa + badges */}
-      {(lead.empresa_lead || lead.cliente_id || propStatusConfig) && (
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {lead.empresa_lead && <span className="text-[11px] text-muted-foreground truncate">{lead.empresa_lead}</span>}
-          {lead.cliente_id && (
-            <Badge variant="outline" className="text-[10px] h-5 px-1.5 bg-brand text-ink border-brand/40">
-              Cliente
-            </Badge>
-          )}
-          {propStatusConfig && (
-            <Badge
-              variant="outline"
-              className={cn("text-[10px] h-5 px-1.5 border-transparent", propStatusConfig.color)}
-            >
-              {propStatusConfig.label}
-            </Badge>
-          )}
-        </div>
-      )}
-
-      {/* Linha 3: valor + responsável */}
-      {(valor != null || responsavelNome) && (
-        <div className="flex items-center justify-between gap-2 pt-0.5">
-          {valor != null ? (
-            <span className="text-xs font-medium text-foreground/80 tabular-nums">{formatCurrency(valor)}</span>
-          ) : (
-            <span />
-          )}
-          {responsavelNome && <AvatarStack pessoas={[responsavelNome]} max={1} size="xs" />}
-        </div>
-      )}
-    </Card>
+                {propStatusConfig.label}
+              </Badge>
+            )}
+          </>
+        ) : undefined
+      }
+      menu={
+        canEdit ? (
+          <>
+            <DropdownMenuItem onClick={() => onEdit(lead)}>
+              <Pencil className="mr-2 h-3.5 w-3.5" /> Editar
+            </DropdownMenuItem>
+            {onMoveEtapa && (
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <ArrowRight className="mr-2 h-3.5 w-3.5" /> Mover para
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {etapas
+                    .filter((e) => e.id !== etapaAtualId)
+                    .map((e) => (
+                      <DropdownMenuItem key={e.id} onClick={() => onMoveEtapa(lead.id, e)}>
+                        {e.nome}
+                      </DropdownMenuItem>
+                    ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => onDelete(lead.id)}>
+              <Trash2 className="mr-2 h-3.5 w-3.5" /> Excluir
+            </DropdownMenuItem>
+          </>
+        ) : undefined
+      }
+      title={leadNome(lead)}
+      subtitle={lead.empresa_lead}
+      footer={
+        valor != null || responsavelNome ? (
+          <>
+            {valor != null ? (
+              <span className="font-medium tabular-nums text-foreground/80">{formatCurrency(valor)}</span>
+            ) : (
+              <span />
+            )}
+            {responsavelNome && <AvatarStack pessoas={[responsavelNome]} max={1} size="xs" />}
+          </>
+        ) : undefined
+      }
+    />
   );
 }

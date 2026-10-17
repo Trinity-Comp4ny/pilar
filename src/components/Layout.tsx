@@ -53,7 +53,7 @@ function LayoutContent() {
   useRouteEnter(mainRef);
 
   return (
-    <div className="min-h-screen w-full flex-1 min-w-0 bg-background">
+    <div className="min-h-dvh w-full flex-1 min-w-0 bg-background">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-9999 focus:rounded focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow-md focus:outline-hidden focus:ring-2 focus:ring-ring"

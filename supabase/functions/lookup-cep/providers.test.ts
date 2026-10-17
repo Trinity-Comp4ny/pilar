@@ -122,3 +122,37 @@ Deno.test(
     }
   }
 );
+
+Deno.test("fromBrasilApi aceita CEP de cidade pequena com street e neighborhood null (PILAR-3M)", async () => {
+  const restore = stubFetch(() =>
+    jsonResponse({ cep: "46400000", city: "Caetité", state: "BA", street: null, neighborhood: null })
+  );
+  try {
+    assertEquals(await fromBrasilApi("46400000"), {
+      cep: "46400000",
+      street: "",
+      neighborhood: "",
+      city: "Caetité",
+      state: "BA",
+    });
+  } finally {
+    restore();
+  }
+});
+
+Deno.test("fromViaCep aceita logradouro e bairro null (PILAR-3K)", async () => {
+  const restore = stubFetch(() =>
+    jsonResponse({ cep: "46400-000", logradouro: null, bairro: null, localidade: "Caetité", uf: "BA" })
+  );
+  try {
+    assertEquals(await fromViaCep("46400000"), {
+      cep: "46400-000",
+      street: "",
+      neighborhood: "",
+      city: "Caetité",
+      state: "BA",
+    });
+  } finally {
+    restore();
+  }
+});

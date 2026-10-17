@@ -1,23 +1,17 @@
 import { useState } from "react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { sidebarOffset } from "@/lib/shellLayout";
-import { Plus, DollarSign, User, Layers } from "lucide-react";
+import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import MetasDashboard from "./tabs/MetasDashboard";
-import { MetaFormDialog, type MetaTipo } from "./components/MetaFormDialog";
+import { MetaFormDialog } from "./components/MetaFormDialog";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function MetasPage() {
   usePageTitle("Metas");
   const { state, isMobile } = useSidebar();
-  const [novaMetaTipo, setNovaMetaTipo] = useState<MetaTipo | null>(null);
+  const [novaMetaOpen, setNovaMetaOpen] = useState(false);
 
   return (
     <div
@@ -26,47 +20,31 @@ export default function MetasPage() {
     >
       <div className="sticky top-0 z-20 w-full bg-background border-b">
         <PageHeader title="Metas">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="brand" className="rounded-full h-9 px-4 text-[13px] font-medium">
-                <Plus size={14} className="mr-1.5" />
-                Nova meta
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => setNovaMetaTipo("financeira")}>
-                <DollarSign className="mr-2 h-4 w-4" />
-                Meta financeira
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setNovaMetaTipo("pessoal")}>
-                <User className="mr-2 h-4 w-4" />
-                Meta pessoal
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setNovaMetaTipo("livre")}>
-                <Layers className="mr-2 h-4 w-4" />
-                Meta livre
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            variant="brand"
+            className="rounded-full h-9 px-4 text-[13px] font-medium"
+            onClick={() => setNovaMetaOpen(true)}
+          >
+            <Plus size={14} className="mr-1.5" />
+            Nova meta
+          </Button>
         </PageHeader>
       </div>
 
       {/* Área com rolagem própria: precisa receber foco para rolar pelo teclado (axe
           scrollable-region-focusable) quando o conteúdo não tem nada focável. */}
       <div
-        className="flex-1 overflow-y-auto w-full bg-background p-6 md:p-8"
+        className="flex-1 overflow-y-auto w-full bg-background p-6 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:p-8"
         tabIndex={0}
         role="region"
         aria-label="Painel de metas"
       >
         <div className="w-full mx-auto space-y-6">
-          <MetasDashboard />
+          <MetasDashboard onCreate={() => setNovaMetaOpen(true)} />
         </div>
       </div>
 
-      {novaMetaTipo && (
-        <MetaFormDialog open={!!novaMetaTipo} onOpenChange={(o) => !o && setNovaMetaTipo(null)} tipo={novaMetaTipo} />
-      )}
+      <MetaFormDialog open={novaMetaOpen} onOpenChange={setNovaMetaOpen} />
     </div>
   );
 }

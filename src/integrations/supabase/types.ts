@@ -1948,6 +1948,7 @@ export type Database = {
           estado: string | null
           features: Json
           id: string
+          interna: boolean
           leitura_desde: string | null
           logo_url: string | null
           max_projetos_override: number | null
@@ -1990,6 +1991,7 @@ export type Database = {
           estado?: string | null
           features?: Json
           id?: string
+          interna?: boolean
           leitura_desde?: string | null
           logo_url?: string | null
           max_projetos_override?: number | null
@@ -2032,6 +2034,7 @@ export type Database = {
           estado?: string | null
           features?: Json
           id?: string
+          interna?: boolean
           leitura_desde?: string | null
           logo_url?: string | null
           max_projetos_override?: number | null
@@ -2868,6 +2871,44 @@ export type Database = {
           },
         ]
       }
+      lead_etapas: {
+        Row: {
+          bucket: string
+          cor: string | null
+          created_at: string
+          empresa_id: string
+          id: string
+          nome: string
+          ordem: number
+        }
+        Insert: {
+          bucket?: string
+          cor?: string | null
+          created_at?: string
+          empresa_id: string
+          id?: string
+          nome: string
+          ordem?: number
+        }
+        Update: {
+          bucket?: string
+          cor?: string | null
+          created_at?: string
+          empresa_id?: string
+          id?: string
+          nome?: string
+          ordem?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_etapas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           cliente_id: string | null
@@ -2880,6 +2921,7 @@ export type Database = {
           email: string | null
           empresa_id: string
           empresa_lead: string | null
+          etapa_id: string | null
           id: string
           motivo_perda: string | null
           nome: string
@@ -2903,6 +2945,7 @@ export type Database = {
           email?: string | null
           empresa_id: string
           empresa_lead?: string | null
+          etapa_id?: string | null
           id?: string
           motivo_perda?: string | null
           nome: string
@@ -2926,6 +2969,7 @@ export type Database = {
           email?: string | null
           empresa_id?: string
           empresa_lead?: string | null
+          etapa_id?: string | null
           id?: string
           motivo_perda?: string | null
           nome?: string
@@ -2951,6 +2995,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "lead_etapas"
             referencedColumns: ["id"]
           },
         ]
@@ -3052,14 +3103,18 @@ export type Database = {
           descricao: string | null
           empresa_id: string | null
           id: string
+          indicador: string | null
           nome: string
+          periodo_inicio: string | null
           pessoa_id: string | null
           prazo: string | null
           projeto_id: string | null
+          recorrencia: string
           sync_filtro: Json | null
           sync_fonte: string | null
           tipo: string
           unidade: string
+          unidade_rotulo: string | null
         }
         Insert: {
           alvo: number
@@ -3071,14 +3126,18 @@ export type Database = {
           descricao?: string | null
           empresa_id?: string | null
           id?: string
+          indicador?: string | null
           nome: string
+          periodo_inicio?: string | null
           pessoa_id?: string | null
           prazo?: string | null
           projeto_id?: string | null
+          recorrencia?: string
           sync_filtro?: Json | null
           sync_fonte?: string | null
           tipo?: string
           unidade?: string
+          unidade_rotulo?: string | null
         }
         Update: {
           alvo?: number
@@ -3090,14 +3149,18 @@ export type Database = {
           descricao?: string | null
           empresa_id?: string | null
           id?: string
+          indicador?: string | null
           nome?: string
+          periodo_inicio?: string | null
           pessoa_id?: string | null
           prazo?: string | null
           projeto_id?: string | null
+          recorrencia?: string
           sync_filtro?: Json | null
           sync_fonte?: string | null
           tipo?: string
           unidade?: string
+          unidade_rotulo?: string | null
         }
         Relationships: [
           {
@@ -4508,6 +4571,219 @@ export type Database = {
             referencedColumns: ["pessoa_id"]
           },
         ]
+      }
+      ops_acoes: {
+        Row: {
+          agente_id: string
+          chave: string | null
+          created_at: string
+          decidida_em: string | null
+          editada: boolean
+          empresa_id: string | null
+          evidencia: Json
+          execucao_id: string | null
+          executada_em: string | null
+          id: string
+          motivo_descarte: string | null
+          prazo: string | null
+          prioridade: number
+          rascunho: Json | null
+          resultado: Json | null
+          status: string
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          agente_id: string
+          chave?: string | null
+          created_at?: string
+          decidida_em?: string | null
+          editada?: boolean
+          empresa_id?: string | null
+          evidencia: Json
+          execucao_id?: string | null
+          executada_em?: string | null
+          id?: string
+          motivo_descarte?: string | null
+          prazo?: string | null
+          prioridade?: number
+          rascunho?: Json | null
+          resultado?: Json | null
+          status?: string
+          tipo: string
+          titulo: string
+        }
+        Update: {
+          agente_id?: string
+          chave?: string | null
+          created_at?: string
+          decidida_em?: string | null
+          editada?: boolean
+          empresa_id?: string | null
+          evidencia?: Json
+          execucao_id?: string | null
+          executada_em?: string | null
+          id?: string
+          motivo_descarte?: string | null
+          prazo?: string | null
+          prioridade?: number
+          rascunho?: Json | null
+          resultado?: Json | null
+          status?: string
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ops_acoes_agente_id_fkey"
+            columns: ["agente_id"]
+            isOneToOne: false
+            referencedRelation: "ops_agentes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ops_acoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ops_acoes_execucao_id_fkey"
+            columns: ["execucao_id"]
+            isOneToOne: false
+            referencedRelation: "ops_execucoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ops_agentes: {
+        Row: {
+          ativo: boolean
+          autonomia: Json
+          created_at: string
+          cron: string | null
+          fase: number
+          id: string
+          missao: string
+          modelo: string | null
+          nome: string
+          ordem: number
+          teto_mensal_brl: number | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          autonomia?: Json
+          created_at?: string
+          cron?: string | null
+          fase: number
+          id: string
+          missao: string
+          modelo?: string | null
+          nome: string
+          ordem: number
+          teto_mensal_brl?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          autonomia?: Json
+          created_at?: string
+          cron?: string | null
+          fase?: number
+          id?: string
+          missao?: string
+          modelo?: string | null
+          nome?: string
+          ordem?: number
+          teto_mensal_brl?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ops_execucoes: {
+        Row: {
+          agente_id: string
+          briefing: Json | null
+          custo_usd: number | null
+          descartes: Json | null
+          erro: string | null
+          fim: string | null
+          gatilho: string
+          id: string
+          inicio: string
+          sinais: Json | null
+          status: string
+          tokens_in: number | null
+          tokens_out: number | null
+        }
+        Insert: {
+          agente_id: string
+          briefing?: Json | null
+          custo_usd?: number | null
+          descartes?: Json | null
+          erro?: string | null
+          fim?: string | null
+          gatilho: string
+          id?: string
+          inicio?: string
+          sinais?: Json | null
+          status?: string
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Update: {
+          agente_id?: string
+          briefing?: Json | null
+          custo_usd?: number | null
+          descartes?: Json | null
+          erro?: string | null
+          fim?: string | null
+          gatilho?: string
+          id?: string
+          inicio?: string
+          sinais?: Json | null
+          status?: string
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ops_execucoes_agente_id_fkey"
+            columns: ["agente_id"]
+            isOneToOne: false
+            referencedRelation: "ops_agentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ops_metricas_diarias: {
+        Row: {
+          chave: string
+          data: string
+          dimensao: string
+          fonte: string
+          recebido_em: string
+          valor: number
+        }
+        Insert: {
+          chave: string
+          data: string
+          dimensao?: string
+          fonte: string
+          recebido_em?: string
+          valor: number
+        }
+        Update: {
+          chave?: string
+          data?: string
+          dimensao?: string
+          fonte?: string
+          recebido_em?: string
+          valor?: number
+        }
+        Relationships: []
       }
       orcamento_versoes: {
         Row: {
@@ -6421,6 +6697,73 @@ export type Database = {
           },
         ]
       }
+      resumos_semanais: {
+        Row: {
+          conteudo: Json
+          created_at: string
+          empresa_id: string
+          escopo: string
+          fatos: Json
+          id: string
+          modelo: string | null
+          semana_inicio: string
+          tokens_entrada: number
+          tokens_saida: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          conteudo: Json
+          created_at?: string
+          empresa_id: string
+          escopo: string
+          fatos: Json
+          id?: string
+          modelo?: string | null
+          semana_inicio: string
+          tokens_entrada?: number
+          tokens_saida?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          conteudo?: Json
+          created_at?: string
+          empresa_id?: string
+          escopo?: string
+          fatos?: Json
+          id?: string
+          modelo?: string | null
+          semana_inicio?: string
+          tokens_entrada?: number
+          tokens_saida?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resumos_semanais_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resumos_semanais_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resumos_semanais_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       status_components: {
         Row: {
           id: string
@@ -7258,6 +7601,7 @@ export type Database = {
           email: string | null
           empresa_id: string | null
           empresa_lead: string | null
+          etapa_id: string | null
           id: string | null
           motivo_perda: string | null
           nome: string | null
@@ -7282,6 +7626,7 @@ export type Database = {
           email?: string | null
           empresa_id?: string | null
           empresa_lead?: string | null
+          etapa_id?: string | null
           id?: string | null
           motivo_perda?: string | null
           nome?: string | null
@@ -7306,6 +7651,7 @@ export type Database = {
           email?: string | null
           empresa_id?: string | null
           empresa_lead?: string | null
+          etapa_id?: string | null
           id?: string | null
           motivo_perda?: string | null
           nome?: string | null
@@ -7332,6 +7678,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_etapa_id_fkey"
+            columns: ["etapa_id"]
+            isOneToOne: false
+            referencedRelation: "lead_etapas"
             referencedColumns: ["id"]
           },
         ]
@@ -7992,6 +8345,25 @@ export type Database = {
         Args: { p_efetivacao: string; p_status: string; p_vencimento: string }
         Returns: string
       }
+      _meta_janela: {
+        Args: {
+          p_fim: string
+          p_inicio: string
+          p_recorrencia: string
+          p_ref: string
+        }
+        Returns: Record<string, unknown>
+      }
+      _meta_valor: {
+        Args: {
+          p_empresa: string
+          p_fim: string
+          p_indicador: string
+          p_inicio: string
+          p_pessoa: string
+        }
+        Returns: number
+      }
       _nome_do_ator: { Args: { p_profile: string }; Returns: string }
       _notif_gestao: { Args: { p_empresa: string }; Returns: string[] }
       _notif_gestao_operacional: {
@@ -8012,6 +8384,31 @@ export type Database = {
       _notificar_tarefa_atribuida: {
         Args: { p_pessoa: string; p_tarefa: string }
         Returns: undefined
+      }
+      _ops_avaliar_contatos: { Args: never; Returns: number }
+      _ops_funil_por_utm: {
+        Args: { p_ate: string; p_desde: string }
+        Returns: {
+          ativados: number
+          cadastros: number
+          dia: string
+          pagantes: number
+          utm_campaign: string
+          utm_content: string
+          utm_medium: string
+          utm_source: string
+        }[]
+      }
+      _ops_nota_saude: {
+        Args: {
+          p_dias_sem_acesso: number
+          p_em_atraso: boolean
+          p_feedback_aberto: number
+          p_projetos_ativos: number
+          p_semanas_ativas: number
+          p_usuarios_ativos_14d: number
+        }
+        Returns: number
       }
       _ops_sinais_saude: {
         Args: { p_janela?: string; p_janela_crons?: string }
@@ -8562,6 +8959,8 @@ export type Database = {
         Args: { p_projeto_id: string }
         Returns: Json
       }
+      get_resumo_semanal: { Args: never; Returns: Json }
+      get_resumo_semanal_fatos: { Args: never; Returns: Json }
       get_user_empresa_id: { Args: never; Returns: string }
       get_user_empresa_id_text: { Args: never; Returns: string }
       get_user_role: { Args: never; Returns: string }
@@ -8715,7 +9114,76 @@ export type Database = {
         }
         Returns: number
       }
+      ops_agente_disparar: { Args: { p_agente_id: string }; Returns: undefined }
+      ops_decidir_acao: {
+        Args: {
+          p_acao_id: string
+          p_decisao: string
+          p_motivo?: string
+          p_texto?: string
+        }
+        Returns: {
+          agente_id: string
+          chave: string | null
+          created_at: string
+          decidida_em: string | null
+          editada: boolean
+          empresa_id: string | null
+          evidencia: Json
+          execucao_id: string | null
+          executada_em: string | null
+          id: string
+          motivo_descarte: string | null
+          prazo: string | null
+          prioridade: number
+          rascunho: Json | null
+          resultado: Json | null
+          status: string
+          tipo: string
+          titulo: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ops_acoes"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      ops_definir_agente_ativo: {
+        Args: { p_agente_id: string; p_ativo: boolean }
+        Returns: undefined
+      }
+      ops_marcar_empresa_interna: {
+        Args: { p_empresa_id: string; p_interna: boolean }
+        Returns: undefined
+      }
+      ops_produto: { Args: never; Returns: Json }
+      ops_receita: { Args: { p_dias?: number }; Returns: Json }
       ops_saude_crons: { Args: never; Returns: Json }
+      ops_saude_empresas: {
+        Args: never
+        Returns: {
+          contato_nome: string
+          contato_telefone: string
+          criada_em: string
+          dias_sem_acesso: number
+          em_atraso: boolean
+          empresa_id: string
+          empresa_nome: string
+          estagio: string
+          faixa: string
+          feedback_aberto: number
+          modulos_usados: number
+          nota: number
+          nota_7d: number
+          projetos_ativos: number
+          semanas_ativas: number
+          situacao_cobranca: string
+          ultimo_acesso: string
+          usuarios: number
+          usuarios_ativos_14d: number
+        }[]
+      }
       pagar_fatura: {
         Args: {
           p_conta_id: string
@@ -8959,6 +9427,25 @@ export type Database = {
         }
         Returns: number
       }
+      rpc_meta_historico: {
+        Args: { p_meta_id: string; p_periodos?: number }
+        Returns: {
+          atual: number
+          janela_fim: string
+          janela_inicio: string
+          restrito: boolean
+        }[]
+      }
+      rpc_metas_progresso: {
+        Args: { p_ref?: string }
+        Returns: {
+          atual: number
+          janela_fim: string
+          janela_inicio: string
+          meta_id: string
+          restrito: boolean
+        }[]
+      }
       rpc_notificar_mencao: {
         Args: {
           p_comentario_id?: string
@@ -8966,6 +9453,7 @@ export type Database = {
           p_entidade_tipo: string
           p_mencionados: string[]
           p_preview: string
+          p_todos?: boolean
         }
         Returns: number
       }

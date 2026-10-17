@@ -5,7 +5,8 @@ import { PilarPage } from "@/components/PilarPage";
 import { KPICard } from "@/components/KPICard";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { agentKeyLabel } from "@/components/settings/useExtratoTokens";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -23,6 +24,12 @@ import {
 import { quandoRelativo } from "./lib";
 
 type Aba = "empresas" | "agentes" | "chamadas";
+
+const ABAS_CUSTOS: ViewOption<Aba>[] = [
+  { value: "empresas", label: "Por empresa" },
+  { value: "agentes", label: "Por agente" },
+  { value: "chamadas", label: "Últimas chamadas" },
+];
 
 /**
  * Custos de IA (motor de tokens, spec 076; redesenho SPEC 117): quanto a IA
@@ -237,11 +244,7 @@ export default function CustosIa() {
       </div>
 
       <Tabs value={aba} onValueChange={(v) => setAba(v as Aba)}>
-        <TabsList>
-          <TabsTrigger value="empresas">Por empresa</TabsTrigger>
-          <TabsTrigger value="agentes">Por agente</TabsTrigger>
-          <TabsTrigger value="chamadas">Últimas chamadas</TabsTrigger>
-        </TabsList>
+        <ViewSwitcher options={ABAS_CUSTOS} value={aba} onChange={setAba} ariaLabel="Agrupar custos por" />
         <TabsContent value="empresas" className="mt-4">
           <DataTable
             columns={colunasEmpresa}

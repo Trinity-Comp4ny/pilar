@@ -11,6 +11,41 @@ Regras de manutenção:
 
 ---
 
+## 2026-10-16 · Marketing é produto próprio; o Pilar só abre a plataforma e devolve o funil
+
+**Decisão:** tudo de marketing (campanhas, posts, carrosséis, vídeos, agendamento, analytics de
+redes, anúncios e Search Console, e o agente de marketing) vive na plataforma web do repo
+`post-automation`, como produto que pode ser vendido a outros escritórios. A Pilar é o primeiro
+cliente dela. Dentro do Pilar fica só o botão "Abrir plataforma de marketing" no Ultra › Time, e o
+Pilar devolve à plataforma cadastros, ativados e pagantes por link publicado (UTM), sem dado pessoal.
+
+Contexto: decidido nos chats do `post-automation` (ADR 0002 de lá) e confirmado aqui. Supera parte
+da decisão de 2026-10-15 e da ADR 0060: a ficha de Marketing no Ultra com números das redes e o
+`ops-ingest` (o Pilar recebendo métrica social) saem do plano. Receita, Clientes, Produto, Qualidade
+e Finanças continuam no Ultra, porque leem o banco do Pilar. Virou [ADR 0061](../architecture/adr/0061-marketing-e-produto-proprio-o-pilar-devolve-o-funil.md)
+e [SPEC 128](../specs/128-plataforma-de-marketing-externa-e-funil-por-utm.md).
+
+---
+
+## 2026-10-15 · Lançamento público mira janeiro de 2027, com um time de agentes no Ultra
+
+**Decisão:** três decisões que valem juntas:
+
+1. O lançamento público tem data guia em janeiro de 2027 (T0 = terça, 19/01/2027). É data de
+   referência para o calendário, não promessa a ninguém: antecipar é permitido.
+2. Toda automação de conteúdo (gerar, renderizar, agendar e publicar post, carrossel e vídeo,
+   e coletar métricas de redes, anúncios e Search Console) fica no repo `post-automation` e no
+   banco dele. O Pilar recebe só os números e devolve o funil por UTM (ADR 0060).
+3. Contato com cliente pelo agente é por link `wa.me` com o texto pronto; quem envia é o
+   fundador. Sem API oficial do WhatsApp por enquanto.
+
+Contexto: founder solo perto do lançamento quer agentes de receita, clientes, marketing,
+produto e qualidade que rodem sozinhos e um painel único (grupo "Time" no Ultra). Virou
+[SPEC 126](../specs/126-time-de-agentes-no-ultra.md) e [SPEC 125](../specs/125-telemetria-de-produto-e-erros.md).
+Atualiza o roster de `docs/AGENTS_TEAM.md`, que só previa agentes chamados no Claude Code.
+
+---
+
 ## 2026-10-14 · Release: o que fica manual de propósito
 
 **Decisão:** três pontos do pipeline de release ficam como estão, por escolha:

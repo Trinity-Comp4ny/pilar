@@ -37,6 +37,7 @@ export type EventoProduto =
   | "relatorio_exportado"
   // IA
   | "inicio_agentes_abrir"
+  | "inicio_resumo_exibido"
   | "ia_mensagem_enviada"
   | "ia_acao_confirmada"
   | "ia_acao_cancelada"

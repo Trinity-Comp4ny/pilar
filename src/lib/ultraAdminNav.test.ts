@@ -18,6 +18,12 @@ describe("ultraAdminNav", () => {
     expect(ultraSecaoAtiva("/projetos")).toBeNull();
   });
 
+  it("ficha do agente marca o agente, não a Central do time", () => {
+    expect(ultraSecaoAtiva("/ultra-admin/time")).toBe("time");
+    expect(ultraSecaoAtiva("/ultra-admin/time/receita")).toBe("time-receita");
+    expect(ultraSecaoAtiva("/ultra-admin/time/clientes/")).toBe("time-clientes");
+  });
+
   it("leva os links antigos ?tab= pra rota nova", () => {
     expect(rotaDaAbaLegada("trials")).toBe("/ultra-admin/testes");
     expect(rotaDaAbaLegada("feedback")).toBe("/ultra-admin/feedback");

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ZoomSwitcher } from "@/components/gantt/ZoomSwitcher";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +10,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calendar, ChevronDown, ChevronRight, Layers, ZoomIn, ZoomOut, AlertTriangle } from "lucide-react";
+import { Calendar, ChevronDown, ChevronRight, Layers, AlertTriangle } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
 import { type Projeto, getDeadlineStatus, isDiscAtrasada } from "@/types/projetos";
@@ -327,26 +328,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                 >
                   Hoje
                 </Button>
-                <div className="flex items-center border rounded-md overflow-hidden">
-                  <Button
-                    variant={zoom === "months" ? "secondary" : "ghost"}
-                    size="sm"
-                    className="h-7 text-xs rounded-none px-2"
-                    onClick={() => setZoom("months")}
-                    aria-label="Meses"
-                  >
-                    <ZoomOut className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Meses</span>
-                  </Button>
-                  <Button
-                    variant={zoom === "weeks" ? "secondary" : "ghost"}
-                    size="sm"
-                    className="h-7 text-xs rounded-none px-2"
-                    onClick={() => setZoom("weeks")}
-                    aria-label="Semanas"
-                  >
-                    <ZoomIn className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Semanas</span>
-                  </Button>
-                </div>
+                <ZoomSwitcher value={zoom} onChange={setZoom} />
               </div>
             </div>
 

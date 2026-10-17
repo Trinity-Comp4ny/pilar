@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ViewSwitcher } from "@/components/ViewSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
@@ -143,18 +143,12 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos }: Pr
         {/* Mês/Semana ficam ilegíveis em 390px (grid de 7 colunas fixas); em
             mobile só Agenda é oferecida, então o seletor vira redundante. */}
         {!isMobile && (
-          <Select value={view} onValueChange={(v) => setView(v as CalendarioView)}>
-            <SelectTrigger className="w-[120px] h-9 text-sm rounded-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {(Object.keys(VIEW_LABEL) as CalendarioView[]).map((v) => (
-                <SelectItem key={v} value={v}>
-                  {VIEW_LABEL[v]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <ViewSwitcher
+            options={(Object.keys(VIEW_LABEL) as CalendarioView[]).map((v) => ({ value: v, label: VIEW_LABEL[v] }))}
+            value={view}
+            onChange={setView}
+            ariaLabel="Modo do calendário"
+          />
         )}
       </div>
 

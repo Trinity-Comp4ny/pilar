@@ -84,6 +84,23 @@ usar, o que é proibido). Regras que valem sempre:
   e [SPEC 041](docs/specs/041-adocao-tanstack-table-e-consolidacao-gantt-kanban.md):
   headless (TanStack/dnd-kit) sim, widget estilizado (DHTMLX/ag-Grid) não.
 
+## Mudança visual: antes e depois no PR (REGRA DO DONO)
+
+Todo PR (ou fase de uma sprint) que muda a aparência de uma tela mostra **o antes e o depois**
+no corpo, para o Matheus acompanhar a evolução. Sem exceção para mudança visual.
+
+- **Antes** = como a tela era na base do PR (`origin/staging` no momento de abrir). Suba a base
+  numa worktree separada (`git worktree add --detach /tmp/pilar-antes <base>`, `node_modules`
+  por symlink, `vite --port 8081`) e capture ali. Nunca "reconstrua de memória".
+- **Depois** = a branch do PR, mesma rota, mesmo viewport (1440px; mobile 390px quando o
+  layout mobile muda), mesmo dado seed (`dev@local.test`).
+- Guarde as imagens em `docs/design/antes-depois/<spec-ou-pr>/` (`antes-<tela>.jpg`,
+  `depois-<tela>.jpg`) e embuta no corpo do PR por link permanente com o SHA do commit
+  (`https://raw.githubusercontent.com/Trinity-Comp4ny/pilar/<sha>/docs/design/antes-depois/...`),
+  em tabela `Antes | Depois` por tela. Cada nova fase do mesmo PR acrescenta as suas telas.
+- Dado seed apenas (repo público): nada de dado real de cliente nos prints.
+- Fase sem mudança visual (só código/teste) diz isso em uma linha em vez de tabela.
+
 ## Documentação
 
 Toda a documentação vive em `docs/`, organizada por tema com índices navegáveis.
