@@ -8,7 +8,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, Lock, ArrowLeft, CheckCircle2, Eye, EyeOff, User, UserCheck, Building2, Phone } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  ArrowLeft,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  User,
+  UserCheck,
+  Building2,
+  Phone,
+  MessageCircle,
+} from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { PasswordRequirements } from "@/components/PasswordRequirements";
@@ -22,8 +34,14 @@ import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legalVersions";
 import { Logo } from "@/components/Logo";
 import { guardarOrigemCadastro, lerOrigemCadastro } from "@/lib/origemCadastro";
 import { emailJaTemConta } from "@/lib/signupResultado";
+import { WHATSAPP_DEMO_URL } from "@/lib/contato";
 
 import { BusyMark } from "@/components/motion/BusyMark";
+
+// SPEC 133: cadastro por convite. Fechado, a tela orienta a falar com o time; o
+// banco recusa cadastro sem convite enquanto platform_settings.cadastro_aberto
+// for false. Reabrir é ligar os dois.
+const CADASTRO_ABERTO = false;
 
 export default function Signup() {
   usePageTitle("Criar conta");
@@ -146,10 +164,46 @@ export default function Signup() {
               <Logo size="lg" animate="draw" />
             </div>
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Criar conta</h1>
-            <p className="text-sm text-ink-soft">3 dias grátis, sem cartão</p>
+            <p className="text-sm text-ink-soft">
+              {CADASTRO_ABERTO ? "3 dias grátis, sem cartão" : "A conta da sua empresa é criada pelo nosso time"}
+            </p>
           </div>
 
-          {resultado === "ja_existe" ? (
+          {!CADASTRO_ABERTO ? (
+            <div className="space-y-6 text-center animate-in fade-in duration-500">
+              <div className="flex justify-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand/15">
+                  <MessageCircle className="h-7 w-7 text-ink" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-lg font-semibold text-ink">Fale com o time para começar</h2>
+                <p className="text-sm text-ink-soft">
+                  Mostramos o Pilar com o fluxo do seu escritório e criamos a conta da sua empresa já configurada.
+                </p>
+              </div>
+              <div className="space-y-3">
+                <Button variant="brand" className="w-full h-10" asChild>
+                  <a
+                    href={WHATSAPP_DEMO_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => analytics.track("cadastro_fechado_contato", {})}
+                  >
+                    Agendar demonstração
+                  </a>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full h-10 border-paper-border text-ink-soft hover:text-ink hover:bg-muted text-sm font-medium"
+                  asChild
+                >
+                  <Link to="/login">Já tenho conta</Link>
+                </Button>
+              </div>
+              <p className="text-xs text-ink-soft">Recebeu um convite? Abra o link que chegou no seu e-mail.</p>
+            </div>
+          ) : resultado === "ja_existe" ? (
             <div className="space-y-6 text-center animate-in fade-in duration-500">
               <div className="flex justify-center">
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand/15">
@@ -480,7 +534,7 @@ export default function Signup() {
           <div className="space-y-8 max-w-lg ml-auto text-right animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
             <div className="flex justify-end">
               <span className="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
-                3 dias grátis
+                {CADASTRO_ABERTO ? "3 dias grátis" : "Demonstração com o time"}
               </span>
             </div>
 
@@ -498,7 +552,7 @@ export default function Signup() {
                 <CheckCircle2 className="w-5 h-5 text-brand" />
               </div>
               <div className="flex items-center gap-2 text-sm font-medium text-white/80">
-                <span>Sem cartão para começar</span>
+                <span>{CADASTRO_ABERTO ? "Sem cartão para começar" : "Conta pronta, configurada com você"}</span>
                 <CheckCircle2 className="w-5 h-5 text-brand" />
               </div>
             </div>
