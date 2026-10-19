@@ -25,6 +25,7 @@ import { SettingsModalProvider, useSettingsModal, type SettingsSection } from ".
 import { ValoresOcultosProvider } from "./contexts/ValoresOcultosContext";
 import { MARKETING_URL, isProductionAppHost } from "./lib/marketingSite";
 import { env } from "./lib/env";
+import { CADASTRO_ABERTO } from "./lib/contato";
 import { useNovaVersao } from "./hooks/useNovaVersao";
 
 // Modal de configuracoes: so monta quando o usuario abre. Estatico, arrastava os
@@ -222,7 +223,10 @@ const App = () => {
                         <Route path="/privacidade" element={<ExternalRedirect path="/privacidade" />} />
                         <Route path="/checkout" element={<Checkout />} />
                         <Route path="/login" element={<Login />} />
-                        <Route path="/cadastro" element={<Signup />} />
+                        <Route
+                          path="/cadastro"
+                          element={CADASTRO_ABERTO ? <Signup /> : <Navigate to="/login" replace />}
+                        />
                         <Route path="/auth/callback" element={<AuthCallback />} />
                         <Route path="/forgot-password" element={<ForgotPassword />} />
                         <Route path="/reset-password" element={<PasswordReset />} />

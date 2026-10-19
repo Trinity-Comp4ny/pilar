@@ -31,17 +31,19 @@ recebe convite e quem paga pelo link que o time envia continua entrando.
 1. Todo CTA de entrada da landing (header, hero, fecho, planos, módulos,
    comparativos, rodapé) vira "Agendar demonstração" e abre o WhatsApp do time
    com o texto pronto. Some a promessa "3 dias grátis, sem cartão".
-2. `/cadastro` no app mostra "Fale com o time para começar", com
-   "Agendar demonstração" (WhatsApp), "Já tenho conta" (login) e a dica de abrir
-   o link do e-mail para quem recebeu convite. O formulário não aparece.
+2. `/cadastro` deixa de existir para quem não tem convite: redireciona para o
+   login, e o "Criar conta" do login vira "Agendar demonstração". O convidado
+   nunca passa pelo `/cadastro`: o e-mail do convite (Ultra admin › Criar empresa)
+   leva direto ao `/profile-setup`, onde ele define nome, senha e termos.
 3. O banco recusa conta nova sem `invite_token` vinda do GoTrue (e-mail e Google)
    enquanto `platform_settings.cadastro_aberto = false` (padrão).
 4. Convite de membro, empresa criada pelo ultra-admin e checkout pago continuam
    funcionando (todos chegam com `invite_token`).
 5. Quem tenta entrar com um Google sem conta vê "Este e-mail ainda não tem conta
    no Pilar. Fale com o time para criar a da sua empresa.", não um erro técnico.
-6. Reabrir o cadastro é `cadastro_aberto = true` mais `CADASTRO_ABERTO` no
-   `Signup.tsx`, sem migration nova.
+6. Reabrir o cadastro é `cadastro_aberto = true` mais `CADASTRO_ABERTO` em
+   `src/lib/contato.ts`, sem migration nova. O link da demonstração também mora
+   ali (`DEMO_URL`, e o equivalente em `apps/marketing/src/lib/contato.ts`).
 
 Não-funcionais:
 

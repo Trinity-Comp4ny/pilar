@@ -16,6 +16,8 @@ import { STORAGE_KEYS } from "@/constants";
 import { translateAuthError } from "@/lib/authErrors";
 import { marcarLogin, ultimoMetodo } from "@/lib/ultimoLogin";
 import { Logo } from "@/components/Logo";
+import { analytics } from "@/lib/analytics";
+import { DEMO_URL } from "@/lib/contato";
 
 import { BusyMark } from "@/components/motion/BusyMark";
 
@@ -260,9 +262,15 @@ export default function Login() {
 
           <p className="text-center text-sm text-ink-soft">
             Ainda não tem conta?{" "}
-            <Link to="/cadastro" className="font-medium text-ink decoration-brand underline-offset-2 hover:underline">
-              Criar conta
-            </Link>
+            <a
+              href={DEMO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => analytics.track("demo_agendar_clicado", { origem: "login" })}
+              className="font-medium text-ink decoration-brand underline-offset-2 hover:underline"
+            >
+              Agendar demonstração
+            </a>
           </p>
         </div>
       </div>

@@ -7,7 +7,7 @@ import { useLoginHint } from "../loginHint";
 import { MODULOS } from "../lib/modules";
 import { Logo } from "./Logo";
 import { SplitButton } from "./ui/SplitButton";
-import { WHATSAPP_DEMO } from "../lib/contato";
+import { DEMO_URL } from "../lib/contato";
 
 type MenuNome = "produto";
 
@@ -143,7 +143,7 @@ export function LandingHeader() {
             )}
             <SplitButton
               tamanho="sm"
-              href={loggedIn ? `${APP_URL}/inicio` : WHATSAPP_DEMO}
+              href={loggedIn ? `${APP_URL}/inicio` : DEMO_URL}
               onClick={() => trackCta(loggedIn ? "abrir_pilar" : "agende_demo", "header")}
             >
               {loggedIn ? "Abrir Pilar" : "Agendar demo"}
@@ -192,7 +192,7 @@ export function LandingHeader() {
           </Link>
           <SplitButton
             className="mt-3"
-            href={loggedIn ? `${APP_URL}/inicio` : WHATSAPP_DEMO}
+            href={loggedIn ? `${APP_URL}/inicio` : DEMO_URL}
             onClick={() => trackCta(loggedIn ? "abrir_pilar" : "agende_demo", "header_mobile")}
           >
             {loggedIn ? "Abrir Pilar" : "Agendar demonstração"}

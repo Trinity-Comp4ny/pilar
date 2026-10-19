@@ -4,7 +4,7 @@ import { requestCookieConsentReview } from "../cookieConsent";
 import { COMPARATIVOS } from "../lib/comparativos";
 import { MODULOS } from "../lib/modules";
 import { Logo } from "./Logo";
-import { WHATSAPP_DEMO } from "../lib/contato";
+import { DEMO_URL } from "../lib/contato";
 
 /**
  * Rodapé no verde da marca, como na referência: o fim da página é um bloco de
@@ -95,7 +95,7 @@ export function LandingFooter() {
               </li>
               <li>
                 <a
-                  href={WHATSAPP_DEMO}
+                  href={DEMO_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[13.5px] text-ink/75 hover:text-ink transition-colors"
