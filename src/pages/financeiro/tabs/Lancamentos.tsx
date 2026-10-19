@@ -141,7 +141,7 @@ export default function Lancamentos() {
         </div>
       </div>
 
-      <Card className="rounded-2xl border border-black/5 bg-white p-4">
+      <Card className="rounded-2xl border border-black/5 bg-white p-4 max-md:border-0 max-md:bg-transparent max-md:p-0 max-md:shadow-none">
         <CardContent className="p-0">
           <LancamentosTable resumo={resumo} filters={filters} onFiltersChange={setFilters} onMutated={invalidate} />
 

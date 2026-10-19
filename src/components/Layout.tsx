@@ -68,7 +68,7 @@ function LayoutContent() {
           // Alvo do skip link: sem tabIndex o foco não vai para o conteúdo (Safari e leitores
           // de tela ficam no link). -1 = focável por script e por âncora, fora da ordem do Tab.
           tabIndex={-1}
-          className="pb-[calc(4.5rem+env(safe-area-inset-bottom))] outline-hidden md:px-10 md:pb-10 md:pt-4"
+          className="pb-[calc(6.5rem+env(safe-area-inset-bottom))] outline-hidden md:px-10 md:pb-10 md:pt-4"
         >
           <DentroDoMainProvider value>
             <ErrorBoundary>

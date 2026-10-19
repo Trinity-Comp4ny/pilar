@@ -44,8 +44,9 @@ não muda.
    altura, cantos totalmente arredondados e a mesma borda. O que não cabe rola para o lado, sem quebrar em
    duas linhas.
 7. **Ação principal flutuante.** `MobileFab`: botão verde, texto e ícone pretos, 44 px, acima da barra, à
-   direita. Substitui o botão do cabeçalho no celular em Financeiro (Novo lançamento), Projetos (Novo projeto)
-   e Obras. O botão do cabeçalho continua no desktop.
+   direita. É montado pelo `PageHeader` no lugar do botão do cabeçalho, então vale para toda página com ação
+   principal (Financeiro: Novo lançamento, Projetos: Novo projeto, Obras...). Desce junto com a barra quando
+   ela some. O botão do cabeçalho continua no desktop.
 8. **Lista em cards.** `DataTable` ganha modo card abaixo de `md`: a coluna marcada `mobile: "title"` é o
    título, `"subtitle"` a linha de apoio, `"badge"` o status e `"trailing"` o valor à direita. Colunas sem
    marca somem do card. Tabela que não declara nenhuma coluna `mobile` mantém o comportamento de hoje.
@@ -56,8 +57,9 @@ não muda.
 10. **Transição entre telas.** Abaixo de `md`, qualquer troca de rota anima o conteúdo (fade e subida de 8 px,
     240 ms), sem mexer na barra e no cabeçalho. Com movimento reduzido, não anima. É uma exceção mobile à
     regra da ADR 0049 ("trocar de aba no mesmo módulo não anima").
-11. **Telas ajustadas:** Início (cartões de atenção com rótulo de módulo, sem ícone colorido), Financeiro
-    Lançamentos, Projetos e Ultra admin Feedbacks (lista e detalhe em tela cheia com ações no rodapé).
+11. **Telas ajustadas:** Financeiro Lançamentos (lista por dia, deslizar a linha revela "Marcar pago"),
+    Ultra admin Feedback (cards, chips de filtro numa linha, detalhe em tela cheia) e o Menu (com Agentes).
+    Início com cartões de atenção e Projetos com lista em cards ficam para o próximo PR desta spec.
 12. **Desktop intocado.** Nenhuma das mudanças acima altera layout, tamanho ou comportamento de `md` para cima.
 
 Requisitos não-funcionais:
@@ -70,8 +72,8 @@ Requisitos não-funcionais:
 
 - [ ] Dado o app em 390 px, quando toco em qualquer campo de texto ou seleção, então o navegador não dá zoom
       (fonte computada de 16 px).
-- [ ] Dado 390 px, quando abro "Novo lançamento", então o formulário sobe de baixo, o Salvar fica visível com o
-      teclado aberto e fechar por arrastar ou pela alça volta à lista.
+- [ ] Dado 390 px, quando abro "Novo lançamento", então o formulário sobe de baixo, o Salvar fica colado ao
+      fim do painel e fechar pelo X, pela alça ou arrastando para baixo volta à lista.
 - [ ] Dado 1280 px, quando abro o mesmo formulário, então é o modal central de sempre.
 - [ ] Dado 390 px, quando rolo a lista para baixo, então a barra some; quando rolo para cima, volta.
 - [ ] Dado 390 px em Financeiro, então abas e filtros ocupam uma linha e o último rola para o lado.
