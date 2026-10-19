@@ -6,7 +6,7 @@ import { HeroBackdrop } from "./hero/HeroBackdrop";
 import { SplitButton } from "./ui/SplitButton";
 import { RotatingWord } from "./RotatingWord";
 import { EASE } from "../lib/motion";
-import { WHATSAPP_DEMO } from "../lib/contato";
+import { DEMO_URL } from "../lib/contato";
 
 /**
  * Hero.
@@ -96,7 +96,7 @@ export function HeroSection() {
             className="flex flex-col items-center gap-3"
           >
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <SplitButton href={WHATSAPP_DEMO} onClick={() => trackCta("agende_demo", "hero")}>
+              <SplitButton href={DEMO_URL} onClick={() => trackCta("agende_demo", "hero")}>
                 Agendar demonstração
               </SplitButton>
               <SplitButton href={`${APP_URL}/login`} onClick={() => trackCta("entrar", "hero")} fantasma>

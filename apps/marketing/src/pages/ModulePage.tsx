@@ -11,7 +11,7 @@ import { SplitButton } from "../components/ui/SplitButton";
 import { MODULOS, MODULOS_POR_SLUG, type MockNome, type Modulo, type ModuloSlug } from "../lib/modules";
 import { useJsonLd, usePageMeta } from "../lib/seo";
 
-import { WHATSAPP_DEMO } from "../lib/contato";
+import { DEMO_URL } from "../lib/contato";
 
 /**
  * Print real da tela, com rede de segurança: enquanto o PNG não existe em
@@ -100,7 +100,7 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
             <p className="mb-8 max-w-xl text-[15px] leading-relaxed text-ink-soft md:text-[16px]">{modulo.lede}</p>
 
             <div className="flex flex-wrap gap-3">
-              <SplitButton href={WHATSAPP_DEMO} onClick={() => trackCta("agende_demo", `modulo_${slug}`)}>
+              <SplitButton href={DEMO_URL} onClick={() => trackCta("agende_demo", `modulo_${slug}`)}>
                 Agendar demonstração
               </SplitButton>
             </div>

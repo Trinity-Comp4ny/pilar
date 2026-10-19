@@ -20,7 +20,7 @@ export type EventoProduto =
   // Cadastro e onboarding
   | "signup_completed"
   | "signup_email_ja_cadastrado"
-  | "cadastro_fechado_contato"
+  | "demo_agendar_clicado"
   | "empresa_onboarding_concluido"
   // Uso dos módulos (ativação e adoção)
   | "cliente_criado"

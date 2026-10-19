@@ -2,7 +2,7 @@ import { Check, Infinity as InfinityIcon, Sparkles, Users } from "lucide-react";
 import { trackCta } from "../analytics";
 import { RevealGroup } from "./motion";
 import { INCLUSO_EM_TODOS, PLANOS } from "../lib/planos";
-import { WHATSAPP_DEMO } from "../lib/contato";
+import { DEMO_URL } from "../lib/contato";
 
 /**
  * Os três planos, no mesmo desenho na home e na /planos.
@@ -45,7 +45,7 @@ export function PlanCards({ contexto }: { contexto: string }) {
             <p className="mb-7 text-[12px] text-ink-muted">A empresa inteira, sem cobrança por usuário</p>
 
             <a
-              href={WHATSAPP_DEMO}
+              href={DEMO_URL}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackCta("agende_demo", `${contexto}_${p.slug}`)}
