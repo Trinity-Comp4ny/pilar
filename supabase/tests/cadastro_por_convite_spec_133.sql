@@ -38,8 +38,8 @@ SELECT matches(
 );
 
 SELECT ok(
-  NOT has_function_privilege('anon', 'public.cadastro_sem_convite_permitido(name)', 'EXECUTE')
-  AND NOT has_function_privilege('authenticated', 'public.cadastro_sem_convite_permitido(name)', 'EXECUTE'),
+  NOT has_function_privilege('anon', 'public.cadastro_sem_convite_permitido(text)', 'EXECUTE')
+  AND NOT has_function_privilege('authenticated', 'public.cadastro_sem_convite_permitido(text)', 'EXECUTE'),
   'anon e authenticated não executam a regra'
 );
 
