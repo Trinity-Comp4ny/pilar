@@ -53,6 +53,22 @@ Design, depois spec.
 
 ---
 
+## 2026-10-19 · Diário de obra vira timeline de registros e o áudio passa a ser guardado
+
+**Decisão:** o diário deixa de ser um formulário por dia e vira uma timeline de registros curtos
+(áudio, foto, texto), quantos a equipe quiser por dia, inclusive do Pilar Campo. A IA organiza cada
+registro em segundo plano e monta o "Resumo do dia", que o gestor revisa e fecha como RDO. O áudio
+original fica guardado junto do registro.
+
+Contexto: reunião de 18/10. O RDO por voz demorava (a pessoa esperava a transcrição terminar), só
+existia no escritório e pedia campos fixos. Guardar o áudio permite processar depois sem prender a
+pessoa na tela e deixa o registro original ouvível. Supera a decisão da [SPEC 080](../specs/080-rdo-por-voz.md)
+("áudio bruto não persiste"); retenção, acesso e exclusão do áudio estão na [ADR 0062](../architecture/adr/0062-guardar-o-audio-do-registro-de-obra.md). Junto
+disso, o mobile do app ganha casca própria (barra flutuante, lista em cards, formulário em sheet)
+em vez de encolher o desktop ([SPEC 134](../specs/134-casca-mobile-barra-flutuante-lista-em-cards-e-sheet.md); o diário é a [SPEC 135](../specs/135-diario-de-obra-em-registros.md)). Protótipo aprovado no Claude Design em 19/10.
+
+---
+
 ## 2026-10-16 · Marketing é produto próprio; o Pilar só abre a plataforma e devolve o funil
 
 **Decisão:** tudo de marketing (campanhas, posts, carrosséis, vídeos, agendamento, analytics de
