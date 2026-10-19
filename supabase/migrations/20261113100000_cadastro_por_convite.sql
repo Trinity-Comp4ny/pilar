@@ -20,18 +20,18 @@ COMMENT ON COLUMN public.platform_settings.cadastro_aberto IS
 -- dois lados. Vale só para o login do GoTrue (supabase_auth_admin), que é por
 -- onde chega todo cadastro real (e-mail e Google). Os testes do banco inserem
 -- em auth.users como postgres e seguem criando empresa pelo caminho de sempre.
-CREATE OR REPLACE FUNCTION public.cadastro_sem_convite_permitido(p_login name)
+CREATE OR REPLACE FUNCTION public.cadastro_sem_convite_permitido(p_login text)
  RETURNS boolean
  LANGUAGE sql
  STABLE
  SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$
-  select p_login is distinct from 'supabase_auth_admin'::name
+  select p_login is distinct from 'supabase_auth_admin'
       or coalesce((select ps.cadastro_aberto from public.platform_settings ps where ps.id = 'default'), false);
 $function$;
 
-REVOKE ALL ON FUNCTION public.cadastro_sem_convite_permitido(name) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.cadastro_sem_convite_permitido(text) FROM PUBLIC, anon, authenticated;
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
  RETURNS trigger
