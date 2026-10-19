@@ -84,7 +84,7 @@ export function PageLayout({
               "flex-1 overflow-y-auto w-full bg-background p-6 md:p-8 xl:p-10 2xl:p-12 outline-hidden",
               // BottomNav (spec 097) é fixa por cima do conteúdo em mobile; sem este
               // espaço reservado, o fim do scroll ficava escondido atrás dela.
-              "pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-8 xl:pb-10 2xl:pb-12",
+              "pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-8 xl:pb-10 2xl:pb-12",
               className
             )}
           >

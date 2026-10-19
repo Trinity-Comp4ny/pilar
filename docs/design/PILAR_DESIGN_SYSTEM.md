@@ -106,15 +106,26 @@ Ordem vertical fixa de toda página: **header** (título, busca, ação primári
 - Busca local de aba (Lançamentos, Folha, Equipe) fica na toolbar; busca da página inteira fica no header.
 - **Antes e depois**: PR que muda aparência leva prints antes/depois no corpo (ver `CLAUDE.md`).
 
+### Celular (abaixo de `md`, SPEC 134)
+
+O celular tem casca própria, não é o desktop encolhido. O desktop não muda.
+
+- **`BottomNav`**: pílula flutuante (16 px das bordas, blur), cinco itens: Início, Projetos, Obra, Gestão, Menu. Item ativo com fundo `brand` e ícone e texto `ink`. Some ao rolar para baixo e com o teclado aberto (`useBarraVisivel`). Agentes mora no Menu, com o contador de pendências.
+- **Ação principal**: o `primaryAction` do `PageHeader` vira o **`MobileFab`** (verde, 44 px, texto e ícone `ink`, acima da barra). Não monte botão flutuante à mão nem repita a ação no corpo da página.
+- **Abas, chips e filtros numa linha só**, com altura de 34 a 36 px e cantos totalmente arredondados. O que não cabe rola para o lado; nunca quebra em duas linhas (`FiltroChips` e `FilterBar` já fazem).
+- **Campos com 16 px**: `Input`, `Textarea`, `SelectTrigger` e `CommandInput` usam `text-base md:text-sm`. Campo de texto com menos de 16 px faz o iOS dar zoom ao tocar. Campo próprio novo segue a mesma regra.
+- **Transição**: abaixo de `md` toda troca de rota anima o conteúdo (fade e subida de 8 px, 240 ms); a barra e o cabeçalho ficam parados. Movimento reduzido não anima.
+
 ### Modais
 
 - **`ConfirmDialog`** (`src/components/ConfirmDialog.tsx`): confirmação destrutiva. Props: `open`, `onOpenChange`, `onConfirm`, `title`, `description`, `itemName?`, `confirmText?`, `variant?: "default" | "destructive"`, `loading?`. **Toda exclusão passa por aqui.** Não monte `AlertDialogContent` cru.
 - **`FormDialog`** (`src/components/FormDialog.tsx`): modal de formulário padrão (largura, footer Cancelar/Salvar, `max-h-[90vh] overflow-y-auto`, estado de envio). Props em seção 5. **Modal de formulário novo usa este, só `sm`/`md`/`lg`.**
+- **No celular todo `DialogContent` é um painel de baixo** (SPEC 134): ancorado embaixo, cantos superiores arredondados, alça (toque ou arraste para fechar), `max-h` de 92 dvh e safe area. De `md` para cima continua modal central. No `FormDialog` os botões ficam fixos no fim do painel. `ConfirmDialog` (`AlertDialog`) continua central. Não use `max-w-*` para "consertar" o celular: o painel já ocupa a largura toda.
 - Primitivos shadcn: `Dialog`/`DialogContent`/`DialogHeader`/`DialogFooter` em `src/components/ui/dialog.tsx`. Só monta à mão fora do `FormDialog` quando o conteúdo genuinamente não é um formulário (ex.: preview, wizard multi-step).
 
 ### Estado da tela
 
-- **`EmptyState`** (`src/components/EmptyState.tsx`): vazio orientado à ação. Props: `icon?`, `title`, `description?`, `action?`, `children?`, `compact?`. `compact` é uma linha de texto centralizada, para card ou lista pequena vazia (nunca um `<p>` solto alinhado à esquerda).
+- **`EmptyState`** (`src/components/EmptyState.tsx`): vazio orientado à ação. Props: `icon?`, `title`, `description?`, `action?`, `children?`, `compact?`. `iconTone="brand"` troca o círculo cinza por um círculo verde com ícone `ink` (primeira ação, ex.: "+"). `compact` é uma linha de texto centralizada, para card ou lista pequena vazia (nunca um `<p>` solto alinhado à esquerda).
 - **Movimento da marca** (`src/components/motion/`, ADR 0049): toda espera usa a marca. `Button loading` ou `BusyMark` para espera inline (botão, campo, linha); `PageLoader` (anel de leitura) para página, seção e card, que só aparece depois de 300ms; `EntryVeil` para a entrada no app. `Loader2` e `animate-spin` são proibidos: um teste de varredura reprova o PR.
 - **`TableSkeleton`** / **`ui/skeleton`**: esqueleto de tabela quando o formato da lista já é conhecido.
 - **`Spinner`** (`src/components/Spinner.tsx`): ritmo da marca com texto ao lado, para espera inline com legenda.
@@ -145,6 +156,7 @@ Ordem vertical fixa de toda página: **header** (título, busca, ação primári
 
 - **`DataTable`** (`src/components/data/DataTable.tsx`): tabela declarativa com `ColumnDef<T>`, sort, sticky column e os três estados (loading/erro/vazio). É a peça oficial de tabela read-only. Padrão para toda lista plana nova. Listas antigas com `<Table>` à mão estão numa lista de exceções com motivo em `src/components/navegacaoPadrao.test.ts`; arquivo novo com tabela à mão reprova.
 - **Recursos de linha do `DataTable`** (SPEC 127): `rowLabel` (rótulo para leitor de tela), `rowClassName` (estado visual, ex.: convite pendente esmaecido), `renderExpanded` + `expandedIds` (linha extra com o detalhe, o pai controla quem expande). Linha com `onRowClick` é focável e abre com Enter ou Espaço. Ordenação pode ser controlada pelo pai (`sortingState`/`onSortingChange`) quando a mesma lista alimenta outra visão. `density="compact"` dá a tabela densa de edição e `extraRows` acrescenta linhas depois do corpo (ex.: "adicionar" inline). Editor na célula é um componente dentro de `cell`, controlado pela tela; total em rodapé vem de `footer` (montado por coluna). `LancamentosTable` (server-side, agrupada, virtualizada) segue com `<table>` própria, mas importa `TABLE_HEAD_CLASS` e `TABLE_CELL_DENSE_CLASS` de `ui/table.tsx`, então tem o mesmo cabeçalho do `DataTable`; tabela nova com `<table>` própria faz o mesmo. Escala de tempo de cronograma usa `ZoomSwitcher`.
+- **`DataTable` no celular** (SPEC 134): marque as colunas com `mobile: "title" | "subtitle" | "badge" | "trailing"` e a tabela vira lista de cards abaixo de `md` (toque abre `onRowClick`). Coluna sem papel não aparece no card; sem nenhuma coluna marcada, nada muda. `loadingLabel` mostra o anel de leitura com o texto do que está vindo ("Buscando lançamentos"). Seleção por checkbox mantém a tabela. Lista com agrupamento e ações próprias (ex.: `LancamentosListaMobile`) é componente à parte.
 - **Tabela vazia: tudo centralizado** (texto, ícone e ação, na horizontal e com respiro vertical). `DataTable` já faz isso com `emptyMessage` e com o slot `emptyState` (`EmptyState`). Em tabela escrita à mão, a linha de vazio é `<TableCell colSpan={n} className="py-10 text-center text-sm text-muted-foreground">` ou um `EmptyState` dentro da célula. Um teste de varredura (`src/components/data/tabelaVazia.test.ts`) reprova linha de vazio sem `text-center` e parágrafo `Nenhum…` solto no portal Ultra.
 
 ### Pessoas

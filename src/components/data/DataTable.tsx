@@ -13,6 +13,8 @@ import { AlertCircle, ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-reac
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PageLoader } from "@/components/motion/PageLoader";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { DataSourceResult } from "@/types/dataSource";
 
@@ -34,6 +36,12 @@ export interface ColumnDef<T> {
   getSortValue?: (row: T) => number | string;
   /** Renderiza a célula da linha. */
   cell: (row: T) => ReactNode;
+  /**
+   * Papel da coluna no card do celular (SPEC 134): `title` é o título, `subtitle` a linha de
+   * apoio, `badge` o status e `trailing` o valor à direita. Coluna sem papel não aparece no
+   * card. Se nenhuma coluna declara papel, a tabela segue como está em qualquer largura.
+   */
+  mobile?: "title" | "subtitle" | "badge" | "trailing";
 }
 
 interface DataTableProps<T> {
@@ -93,6 +101,8 @@ interface DataTableProps<T> {
   errorState?: ReactNode;
   /** Nº de linhas do skeleton de carregamento. */
   loadingRows?: number;
+  /** Texto do anel de carregamento no celular (ex.: "Buscando lançamentos de outubro"). */
+  loadingLabel?: string;
   /** Largura mínima da tabela (rolagem horizontal abaixo disso). */
   minWidth?: string;
   /** Altura máxima com rolagem vertical. */
@@ -156,6 +166,7 @@ export function DataTable<T>({
   errorTitle = "Não foi possível carregar os dados",
   errorState,
   loadingRows = 6,
+  loadingLabel,
   minWidth,
   maxHeight,
   enableRowSelection = false,
@@ -164,6 +175,7 @@ export function DataTable<T>({
   footer,
 }: DataTableProps<T>) {
   const { rows, isPending = false, error = null } = data;
+  const isMobile = useIsMobile();
 
   const isManualSorting = sortingState !== undefined && !!onSortingChange;
   const [internalSorting, setInternalSorting] = useState<SortingState>(
@@ -413,6 +425,98 @@ export function DataTable<T>({
   };
 
   const hasRows = !isPending && !error && table.getRowModel().rows.length > 0;
+
+  // Celular com colunas marcadas (SPEC 134): lista em cards no lugar da tabela. Seleção por
+  // checkbox continua sendo coisa de tabela, então nesse caso nada muda.
+  const porPapel = (papel: NonNullable<ColumnDef<T>["mobile"]>) => visibleColumns.find((c) => c.mobile === papel);
+  const emCartoes = isMobile && !enableRowSelection && visibleColumns.some((c) => c.mobile);
+  if (emCartoes) {
+    const colTitulo = porPapel("title");
+    const colApoio = porPapel("subtitle");
+    const colStatus = porPapel("badge");
+    const colValor = porPapel("trailing");
+
+    if (error) {
+      return (
+        <div className="w-full" role="alert">
+          {errorState ?? (
+            <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
+              <AlertCircle className="mb-3 h-8 w-8 text-destructive" aria-hidden />
+              <p className="mb-1 text-sm font-semibold text-foreground">{errorTitle}</p>
+              <p className="max-w-md text-sm text-muted-foreground">{error.message}</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+    if (isPending) {
+      return (
+        <div className="w-full space-y-2">
+          {Array.from({ length: Math.min(loadingRows, 3) }).map((_, i) => (
+            <div key={`sk-${i}`} className="space-y-2 rounded-2xl border bg-card px-4 py-3.5">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-3 w-1/3" />
+            </div>
+          ))}
+          {loadingLabel && <PageLoader size="section" label={loadingLabel} />}
+        </div>
+      );
+    }
+    const cartoes = table.getRowModel().rows;
+    if (cartoes.length === 0 && !extraRows) {
+      return (
+        <div className={cn("w-full", !emptyState && "py-14 text-center text-sm text-muted-foreground")}>
+          {emptyState ?? emptyMessage}
+        </div>
+      );
+    }
+    return (
+      <div className="w-full space-y-2">
+        {cartoes.map((row) => {
+          const r = row.original;
+          const expandida = expandedIds?.has(row.id) ? (renderExpanded?.(r) ?? null) : null;
+          return (
+            <div key={row.id} className="overflow-hidden rounded-2xl border bg-card">
+              <div
+                onClick={onRowClick ? () => onRowClick(r) : undefined}
+                tabIndex={onRowClick ? 0 : undefined}
+                role={onRowClick ? "button" : undefined}
+                aria-label={rowLabel?.(r)}
+                onKeyDown={
+                  onRowClick
+                    ? (e) => {
+                        if (e.target !== e.currentTarget) return;
+                        if (e.key !== "Enter" && e.key !== " ") return;
+                        e.preventDefault();
+                        onRowClick(r);
+                      }
+                    : undefined
+                }
+                className={cn(
+                  "flex items-start gap-3 px-4 py-3.5",
+                  onRowClick &&
+                    "cursor-pointer transition-colors active:bg-muted/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+                  rowClassName?.(r)
+                )}
+              >
+                <div className="min-w-0 flex-1 space-y-1">
+                  {colTitulo && <div className="text-[15px] font-semibold leading-snug">{colTitulo.cell(r)}</div>}
+                  {colApoio && <div className="text-[13px] leading-snug text-muted-foreground">{colApoio.cell(r)}</div>}
+                  {colStatus && <div className="pt-0.5">{colStatus.cell(r)}</div>}
+                </div>
+                {colValor && (
+                  <div className="shrink-0 text-right text-[13px] tabular-nums text-muted-foreground">
+                    {colValor.cell(r)}
+                  </div>
+                )}
+              </div>
+              {expandida && <div className="border-t bg-muted/30 px-4 py-3">{expandida}</div>}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div className={cn("w-full", maxHeight && "overflow-y-auto")} style={maxHeight ? { maxHeight } : undefined}>
