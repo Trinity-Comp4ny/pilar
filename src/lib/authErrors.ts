@@ -5,8 +5,9 @@
 
 const SENHA_FRACA = "Senha muito fraca. Use ao menos 12 caracteres com maiúscula, minúscula, número e símbolo.";
 const EMAIL_EXISTE = "Este email já tem conta. Entre com sua senha ou continue com o Google.";
-// SPEC 133: cadastro por convite. O banco recusa conta nova sem convite e o GoTrue
-// devolve só o genérico "Database error saving new user" (inclusive no Google).
+// SPEC 133: cadastro por convite. O banco recusa conta nova sem convite; o GoTrue
+// devolve a mensagem do trigger ("Cadastro fechado: ...") ou, conforme a versão e o
+// fluxo (Google), o genérico "Database error saving new user".
 const SEM_CONVITE = "Este e-mail ainda não tem conta no Pilar. Fale com o time para criar a da sua empresa.";
 
 const CODE_MAP: Record<string, string> = {
@@ -36,6 +37,7 @@ const MESSAGE_MAP: Record<string, string> = {
   "Signup requires a valid password": "Informe uma senha válida.",
   signup_disabled: SEM_CONVITE,
   "Database error saving new user": SEM_CONVITE,
+  "Cadastro fechado": SEM_CONVITE,
   "Email rate limit exceeded": "Muitas tentativas. Aguarde alguns minutos.",
   "For security purposes, you can only request this after": "Aguarde alguns segundos e tente de novo.",
   "Invalid TOTP code": "Código incorreto. Tente novamente.",
