@@ -11,6 +11,48 @@ Regras de manutenção:
 
 ---
 
+## 2026-10-19 · Cadastro por convite: o teste grátis self-serve acaba agora
+
+**Decisão:** o Pilar deixa de ser aberto ao público. Toda empresa nova entra conversando com o
+time: a landing troca "Testar grátis" por "Agendar demonstração" (WhatsApp do time) e o banco
+recusa conta nova sem convite. Quem já tem conta, convite de membro, empresa criada pelo
+ultra-admin e checkout pago pelo link que o time envia continuam. Reabrir é uma flag
+(`platform_settings.cadastro_aberto`), sem migration.
+
+Contexto: o único cadastro orgânico de produção usou o produto 5 minutos e sumiu; com poucos
+clientes e venda de alto contato, a conversa converte melhor que o trial sozinho. Virou
+[SPEC 133](../specs/133-cadastro-por-convite.md). Supera a decisão de 2026-09-08 ("cadastro fica
+aberto, sem demo obrigatória") e a parte self-serve de 2026-10-08 (trial de 3 dias continua valendo
+para as empresas que o time cria). Um bot de WhatsApp que qualifica e agenda fica para depois, como
+produto dentro do Pilar; até lá vale a decisão de 2026-10-15 (sem API oficial do WhatsApp).
+
+---
+
+## 2026-10-19 · Gate D2 reaberto: estimativa de obra na proposta (CUB/SINAPI + cronograma)
+
+**Decisão:** o Pilar passa a gerar uma **estimativa paramétrica de obra** para o escritório de
+projeto levar ao cliente na fase de proposta: o usuário descreve a obra (tipo, padrão, área, o
+que ela tem; na fase 2, enviando o PDF do projeto) e recebe custo em faixa, com fonte de preço
+(CUB no MVP, SINAPI depois), e um cronograma pré-montado em fase, etapa e serviço, editável. O
+resultado vira a obra (árvore de cronograma e previsto por etapa que já existem) ou um PDF para o
+cliente.
+
+Contexto: reunião do CEO de 18/10 ("melhorar drasticamente o módulo Obra"). Enquadramento que
+mantém o ICP: quem usa é o escritório de projeto respondendo "quanto custa e quanto tempo leva",
+não a construtora fazendo orçamento executivo. Regras: a IA só interpreta a descrição e monta a
+ficha técnica; preço e prazo saem de um motor determinístico com a fonte citada; sempre faixa,
+nunca número único, com o aviso "não substitui orçamento executivo"; previsto x realizado só por
+grande etapa, sem curva ABC de insumo.
+
+Supera o gate D2 de 2026-08-26 nos itens "template por tipo de obra", "IA de leitura de planta" e
+"catálogo de composição" (este só como base de preço de referência, não como orçamento editável
+item a item), os guardrails "sem SINAPI" da ADR 0011 e das specs 015, 016 e 019, e o item SINAPI e
+leitura de planta da lista "não vender" do PRICING.md (só entra em material de venda quando estiver
+na branch principal). Orçamento por ambiente continua fora. Próximo passo: protótipo no Claude
+Design, depois spec.
+
+---
+
 ## 2026-10-16 · Marketing é produto próprio; o Pilar só abre a plataforma e devolve o funil
 
 **Decisão:** tudo de marketing (campanhas, posts, carrosséis, vídeos, agendamento, analytics de
