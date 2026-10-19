@@ -22,15 +22,15 @@ recebe convite e quem paga pelo link que o time envia continua entrando.
 **Fora de escopo:**
 
 - Bot de WhatsApp que qualifica e agenda (ideia registrada para depois).
-- Agendamento por calendário (Cal.com e afins): o contato é o WhatsApp do time.
 - Mudar o trial das empresas que já existem ou o fluxo de empresa convidada.
 - Remover o checkout: ele segue para o link que o time manda.
 
 ## Requisitos
 
 1. Todo CTA de entrada da landing (header, hero, fecho, planos, módulos,
-   comparativos, rodapé) vira "Agendar demonstração" e abre o WhatsApp do time
-   com o texto pronto. Some a promessa "3 dias grátis, sem cartão".
+   comparativos, rodapé) vira "Agendar demonstração" e abre a página de
+   agendamento do Google Agenda da BEZ (até 19/10 era o WhatsApp do time). Some a
+   promessa "3 dias grátis, sem cartão".
 2. `/cadastro` deixa de existir para quem não tem convite: redireciona para o
    login, e o "Criar conta" do login vira "Agendar demonstração". O convidado
    nunca passa pelo `/cadastro`: o e-mail do convite (Ultra admin › Criar empresa)
@@ -43,7 +43,8 @@ recebe convite e quem paga pelo link que o time envia continua entrando.
    no Pilar. Fale com o time para criar a da sua empresa.", não um erro técnico.
 6. Reabrir o cadastro é `cadastro_aberto = true` mais `CADASTRO_ABERTO` em
    `src/lib/contato.ts`, sem migration nova. O link da demonstração também mora
-   ali (`DEMO_URL`, e o equivalente em `apps/marketing/src/lib/contato.ts`).
+   ali (`DEMO_URL`, e o equivalente em `apps/marketing/src/lib/contato.ts`): hoje é a
+   página de agendamento do Google Agenda.
 
 Não-funcionais:
 
@@ -70,8 +71,8 @@ Não-funcionais:
 - **Decisão:** bloquear no banco, não no painel do Supabase ("Allow new users to
   sign up"). O painel não é versionado nem passa pelo release; a flag no banco é.
 - **Risco:** a origem (UTM) da landing não chega mais à conta, porque não há
-  cadastro. Follow-up: levar a origem no texto do WhatsApp ou num formulário de
-  demonstração.
+  cadastro, e a página do Google Agenda não recebe UTM. Follow-up: perguntar "Como
+  conheceu o Pilar?" no formulário de agendamento.
 - **Risco:** o termo de uso e a política ainda citam o teste grátis; o trial
   segue existindo para as empresas criadas pelo time, então o texto não ficou
   falso. Revisar na próxima versão dos termos.
