@@ -5317,6 +5317,7 @@ export type Database = {
       }
       platform_settings: {
         Row: {
+          cadastro_aberto: boolean
           exigir_mfa_ultra_admin: boolean
           id: string
           trial_ai_daily_cap_tokens: number
@@ -5325,6 +5326,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cadastro_aberto?: boolean
           exigir_mfa_ultra_admin?: boolean
           id?: string
           trial_ai_daily_cap_tokens?: number
@@ -5333,6 +5335,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cadastro_aberto?: boolean
           exigir_mfa_ultra_admin?: boolean
           id?: string
           trial_ai_daily_cap_tokens?: number
@@ -8467,6 +8470,10 @@ export type Database = {
       audit_log_cleanup_monitored: { Args: never; Returns: undefined }
       audit_logs_archive_old: { Args: never; Returns: number }
       avisar_admin_capacidade: { Args: { p_recurso: string }; Returns: number }
+      cadastro_sem_convite_permitido: {
+        Args: { p_login: string }
+        Returns: boolean
+      }
       campo_convite_definir_senha: {
         Args: { p_senha: string; p_token: string }
         Returns: Json

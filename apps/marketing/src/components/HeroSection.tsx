@@ -6,7 +6,7 @@ import { HeroBackdrop } from "./hero/HeroBackdrop";
 import { SplitButton } from "./ui/SplitButton";
 import { RotatingWord } from "./RotatingWord";
 import { EASE } from "../lib/motion";
-import { linkCadastro } from "../lib/origem";
+import { WHATSAPP_DEMO } from "../lib/contato";
 
 /**
  * Hero.
@@ -96,14 +96,14 @@ export function HeroSection() {
             className="flex flex-col items-center gap-3"
           >
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <SplitButton href={linkCadastro()} onClick={() => trackCta("testar_gratis", "hero")}>
-                Testar grátis por 3 dias
+              <SplitButton href={WHATSAPP_DEMO} onClick={() => trackCta("agende_demo", "hero")}>
+                Agendar demonstração
               </SplitButton>
               <SplitButton href={`${APP_URL}/login`} onClick={() => trackCta("entrar", "hero")} fantasma>
                 Entrar
               </SplitButton>
             </div>
-            <p className="text-[12.5px] text-ink-muted">Sem cartão · Cancele quando quiser</p>
+            <p className="text-[12.5px] text-ink-muted">Mostramos o Pilar com o fluxo do seu escritório</p>
           </m.div>
         </div>
       </div>

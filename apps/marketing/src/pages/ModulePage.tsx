@@ -10,9 +10,8 @@ import { Reveal } from "../components/Reveal";
 import { SplitButton } from "../components/ui/SplitButton";
 import { MODULOS, MODULOS_POR_SLUG, type MockNome, type Modulo, type ModuloSlug } from "../lib/modules";
 import { useJsonLd, usePageMeta } from "../lib/seo";
-import { linkCadastro } from "../lib/origem";
 
-const WHATSAPP = "https://wa.me/5514998721100";
+import { WHATSAPP_DEMO } from "../lib/contato";
 
 /**
  * Print real da tela, com rede de segurança: enquanto o PNG não existe em
@@ -82,11 +81,6 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
     })),
   });
 
-  const primario =
-    modulo.ctaPrimario.tipo === "cadastro"
-      ? { href: linkCadastro(), evento: "testar_gratis" }
-      : { href: WHATSAPP, evento: "falar_conosco" };
-
   const outras = MODULOS.filter((m) => m.slug !== slug);
 
   return (
@@ -106,11 +100,8 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
             <p className="mb-8 max-w-xl text-[15px] leading-relaxed text-ink-soft md:text-[16px]">{modulo.lede}</p>
 
             <div className="flex flex-wrap gap-3">
-              <SplitButton href={primario.href} onClick={() => trackCta(primario.evento, `modulo_${slug}`)}>
-                {modulo.ctaPrimario.label}
-              </SplitButton>
-              <SplitButton fantasma href={WHATSAPP} onClick={() => trackCta("agende_demo", `modulo_${slug}`)}>
-                Agende uma demo
+              <SplitButton href={WHATSAPP_DEMO} onClick={() => trackCta("agende_demo", `modulo_${slug}`)}>
+                Agendar demonstração
               </SplitButton>
             </div>
           </Reveal>

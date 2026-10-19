@@ -68,11 +68,6 @@ export interface Modulo {
   conecta: { slug: ModuloSlug; texto: string }[];
   /** Objeções reais de quem chega na página, respondidas antes do CTA final. */
   faq: { pergunta: string; resposta: string }[];
-  /**
-   * Obra ainda não entra em nenhum plano (`includedInPlans: []`) e nasce
-   * desligada, então o CTA não pode prometer autoatendimento.
-   */
-  ctaPrimario: { label: string; tipo: "cadastro" | "contato" };
 }
 
 export const MODULOS: Modulo[] = [
@@ -177,10 +172,9 @@ export const MODULOS: Modulo[] = [
       {
         pergunta: "Quanto custa?",
         resposta:
-          "O preço é por escritório, sem cobrança por usuário, e todo plano tem a plataforma inteira. O teste grátis é de 3 dias, sem cartão.",
+          "O preço é por escritório, sem cobrança por usuário, e todo plano tem a plataforma inteira. Para começar, agende uma demonstração: a gente mostra o Pilar e cria a conta do escritório com você.",
       },
     ],
-    ctaPrimario: { label: "Testar grátis", tipo: "cadastro" },
   },
   {
     slug: "projetos",
@@ -287,7 +281,6 @@ export const MODULOS: Modulo[] = [
         resposta: "Lá também: mais de um responsável por disciplina, com etiqueta, link e comentário no mesmo lugar.",
       },
     ],
-    ctaPrimario: { label: "Testar grátis", tipo: "cadastro" },
   },
   {
     slug: "obra",
@@ -391,7 +384,6 @@ export const MODULOS: Modulo[] = [
           "Sai da conta da obra: aporte do cliente, despesa com comprovante e a sua taxa calculada a cada lançamento.",
       },
     ],
-    ctaPrimario: { label: "Falar com a gente", tipo: "contato" },
   },
   {
     slug: "portal",
@@ -464,7 +456,6 @@ export const MODULOS: Modulo[] = [
           "Aporte, despesa com comprovante e saldo em conta. Quem contratou projeto vê disciplina, entrega e parcela.",
       },
     ],
-    ctaPrimario: { label: "Testar grátis", tipo: "cadastro" },
   },
   {
     slug: "campo",
@@ -537,7 +528,6 @@ export const MODULOS: Modulo[] = [
         resposta: "Vira diário e avanço de cronograma na tela do escritório, sem ninguém redigitar.",
       },
     ],
-    ctaPrimario: { label: "Falar com a gente", tipo: "contato" },
   },
 ];
 
