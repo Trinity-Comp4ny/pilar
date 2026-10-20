@@ -45,7 +45,7 @@ export function ResumoDoDia({
 
   return (
     <div className="space-y-2 rounded-2xl border border-border/60 bg-white p-4 shadow-card" aria-label="Resumo do dia">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
         <div>
           <h4 className="text-sm font-semibold text-ink">Resumo do dia</h4>
           <p className="text-xs text-muted-foreground">
@@ -56,7 +56,12 @@ export function ResumoDoDia({
           </p>
         </div>
         {canEdit && (
-          <Button size="sm" variant={todosFechados ? "outline" : "brand"} onClick={onFechar} className="shrink-0">
+          <Button
+            size="sm"
+            variant={todosFechados ? "outline" : "brand"}
+            onClick={onFechar}
+            className="shrink-0 self-start"
+          >
             <ClipboardCheck className="mr-1.5 h-4 w-4" aria-hidden="true" />
             {todosFechados ? "Abrir o RDO" : "Revisar e fechar o RDO"}
           </Button>

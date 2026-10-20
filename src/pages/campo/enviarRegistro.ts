@@ -1,36 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import { blobParaBase64, lerErro, mimeBase } from "@/lib/registroUpload";
 import type { FilaRegistroItem, ResultadoEnvio } from "./campoRegistroFila";
-
-/** "audio/webm;codecs=opus" → "audio/webm": a edge valida só o tipo base. */
-function mimeBase(mimeType: string): string {
-  return mimeType.split(";")[0].trim().toLowerCase();
-}
-
-/** Base64 puro (sem o prefixo data:), que é o que a edge espera. */
-function blobParaBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(((r.result as string) ?? "").split(",")[1] ?? "");
-    r.onerror = () => reject(new Error("Não deu para ler o arquivo"));
-    r.readAsDataURL(blob);
-  });
-}
-
-/** Status HTTP e mensagem de um erro de `functions.invoke` (o corpo da resposta vem em `context`). */
-async function lerErro(error: unknown): Promise<{ status: number | null; mensagem: string }> {
-  const ctx = (error as { context?: Response } | null)?.context;
-  const status = typeof ctx?.status === "number" ? ctx.status : null;
-  let mensagem = "Sem conexão com o servidor";
-  if (ctx && typeof ctx.json === "function") {
-    try {
-      const corpo = (await ctx.clone().json()) as { error?: string } | null;
-      if (corpo?.error) mensagem = corpo.error;
-    } catch {
-      mensagem = `Erro ${status ?? ""}`.trim();
-    }
-  }
-  return { status, mensagem };
-}
 
 /**
  * Envia um item da fila para a edge `campo-registro-criar`. 413 (arquivo grande demais) e 403

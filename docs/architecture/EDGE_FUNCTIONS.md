@@ -60,6 +60,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `campo-registro-criar` | Registro de obra do Pilar Campo (áudio, foto, texto), autorizado pelo token de campo: guarda e responde na hora, a IA organiza em segundo plano. SPEC 135. | app | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `campo-upload-foto` | Upload de foto do Pilar Campo, autorizado pelo token de campo (conta sem usuário Supabase). | app | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `invite-campo` | Emite credencial de acesso do Pilar Campo para a equipe de obra. | app | JWT | `PUBLIC_SITE_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `registro-criar` | Registro de obra gravado pelo escritório (áudio, foto, texto), autorizado pelo JWT do usuário: guarda e responde na hora, a IA organiza em segundo plano. SPEC 135. | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `registro-reprocessar` | Tentar de novo a organização de um registro de obra que falhou; vale para o escritório (JWT) e para o campo (token). SPEC 135. | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 
 ## Membros e acesso

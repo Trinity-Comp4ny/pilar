@@ -26,7 +26,7 @@ import { climaLabel } from "@/lib/obras";
 import { dataLocalIso, rotuloDoDia } from "@/lib/registrosObra";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { novoItemDeRegistro } from "./campoRegistroFila";
-import { comprimirFoto } from "./fotoCampo";
+import { comprimirFoto } from "@/lib/comprimirFoto";
 import { RegistroCardCampo } from "./RegistroCardCampo";
 import { agruparPorDia, montarRegistrosView } from "./registrosView";
 import { campoLogout, getCampoToken, type CampoAccount } from "./useCampoAuth";
