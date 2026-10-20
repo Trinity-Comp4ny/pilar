@@ -2467,6 +2467,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "estimativas_obra_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "estimativas_obra_obra_id_fkey"
             columns: ["obra_id"]
             isOneToOne: false
