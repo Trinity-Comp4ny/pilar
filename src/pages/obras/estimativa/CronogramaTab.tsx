@@ -5,6 +5,7 @@ import { addDays, barPosition, generateColumns, parseDate } from "@/lib/cronogra
 import { formatCurrency, formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { ResultadoEstimativa } from "@/schemas/estimativaObra";
+import { rotuloPadrao } from "@/lib/estimativaObra";
 
 type Fase = ResultadoEstimativa["fases"][number];
 type Modo = "lista" | "gantt";
@@ -213,8 +214,8 @@ export function CronogramaTab({ resultado: r }: { resultado: ResultadoEstimativa
         <ViewSwitcher options={MODOS} value={modo} onChange={setModo} ariaLabel="Visão do cronograma" />
       </div>
       <p className="rounded-xl bg-info-soft px-3 py-2 text-sm text-info-strong">
-        O prazo vem da produtividade de mão de obra do padrão {r.padrao} com <strong>{r.equipe} pessoas</strong> na
-        obra. Mude a equipe nas premissas da aba Custo.
+        O prazo vem da produtividade de mão de obra do padrão {rotuloPadrao(r.padrao)} com{" "}
+        <strong>{r.equipe} pessoas</strong> na obra. Mude a equipe nas premissas da aba Custo.
       </p>
       {modo === "lista" ? <Lista fases={r.fases} /> : <Gantt fases={r.fases} />}
     </div>

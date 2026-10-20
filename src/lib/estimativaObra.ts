@@ -117,6 +117,11 @@ export function lerPremissas(bruto: unknown): Leitura<Premissas> {
   return ler(premissasSchema, bruto, "Premissas");
 }
 
+/** Nome do padrão em frase: o "normal" do CUB é o padrão médio. */
+export function rotuloPadrao(padrao: Padrao): string {
+  return padrao === "normal" ? "médio" : padrao;
+}
+
 const ROTULO_REGIME: Record<Regime, string> = { onerado: "sem desoneração", desonerado: "com desoneração" };
 
 /** "sem desoneração" ou "com desoneração", para telas e para a fonte do preço. */
@@ -150,6 +155,8 @@ export function descreverAdicional(a: Adicional): string {
       return `${brl0(a.valor)} por m² de área livre`;
     case "valor_fixo":
       return brl0(a.valor);
+    case "por_m2_arrimo":
+      return `${brl0(a.valor)} por m² de muro de arrimo`;
     case "a_definir":
       return "a definir";
   }
@@ -165,6 +172,8 @@ export function fichaInicial(inicio: string, uf: Uf = "SP"): Ficha {
     area: 150,
     pavimentos: 1,
     terreno: 300,
+    topografia: "plano",
+    arrimo: 0,
     inicio,
     quartos: 3,
     suites: 1,
@@ -300,10 +309,12 @@ function mesclarAjustes(
   parametros: Parametros,
   ajustes: AjustesEmpresa | null | undefined,
   avisos: AvisoSaida[]
-): Record<AdicionalId, Adicional> {
-  const saida = {} as Record<AdicionalId, Adicional>;
+): Partial<Record<AdicionalId, Adicional>> {
+  const saida: Partial<Record<AdicionalId, Adicional>> = {};
   for (const id of ADICIONAIS_IDS) {
     const base = parametros.adicionais[id];
+    // Parâmetro que o banco ainda não tem (ex.: terreno inclinado antes da migration): o adicional não existe.
+    if (!base) continue;
     const ajuste = ajustes?.adicionais?.[id];
     if (!ajuste || Object.keys(ajuste).length === 0) {
       saida[id] = base;
@@ -351,6 +362,8 @@ function linhaDoAdicional(
     paisagismo: ficha.paisagismo,
     elevador: ficha.elevador,
     subsolo: ficha.subsolo,
+    arrimo: ficha.topografia === "inclinado",
+    terraplenagem: ficha.topografia === "inclinado",
   };
   if (!aplica[id]) return null;
 
@@ -382,6 +395,11 @@ function linhaDoAdicional(
     }
     case "valor_fixo":
       cents = centavos(a.valor);
+      break;
+    case "por_m2_arrimo":
+      // Sem a medida do muro não há como calcular: fica "a definir", e o aviso diz o que falta.
+      cents = ficha.arrimo > 0 ? centavos(ficha.arrimo * a.valor) : null;
+      if (ficha.arrimo > 0) rotulo = `${a.rotulo} (${formatarNumero(ficha.arrimo)} m²)`;
       break;
     case "a_definir":
       cents = null;
@@ -421,7 +439,7 @@ export function calcularEstimativa(entrada: EntradaCalculo): SaidaCalculo {
       : {
           ok: false,
           motivo: "padrao_indisponivel",
-          mensagem: `Não há tabela do CUB para ${subtipo.nome.toLowerCase()} no padrão ${padrao}. Escolha outro padrão.`,
+          mensagem: `Não há tabela do CUB para ${subtipo.nome.toLowerCase()} no padrão ${rotuloPadrao(padrao)}. Escolha outro padrão.`,
         };
   }
 
@@ -460,7 +478,8 @@ export function calcularEstimativa(entrada: EntradaCalculo): SaidaCalculo {
   // Adicionais
   const adicionais = mesclarAjustes(parametros, entrada.ajustes, avisos);
   const linhasAdicionais = ADICIONAIS_IDS.flatMap((id) => {
-    const l = linhaDoAdicional(id, adicionais[id], ficha, padrao, baseCents);
+    const adicional = adicionais[id];
+    const l = adicional ? linhaDoAdicional(id, adicional, ficha, padrao, baseCents) : null;
     return l ? [l] : [];
   });
   for (const l of linhasAdicionais) {

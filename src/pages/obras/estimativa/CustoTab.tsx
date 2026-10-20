@@ -3,7 +3,7 @@ import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxi
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatPercent } from "@/lib/format";
-import { rotuloMesBase } from "@/lib/estimativaObra";
+import { rotuloMesBase, rotuloPadrao } from "@/lib/estimativaObra";
 import type { ResultadoEstimativa } from "@/schemas/estimativaObra";
 import { toDataSourceResult } from "@/types/dataSource";
 
@@ -52,7 +52,7 @@ function ResumoDoCusto({ r }: { r: ResultadoEstimativa }) {
           <strong className="font-semibold tabular-nums text-ink">{r.meses} meses</strong> de obra
         </span>
         <span>
-          {r.area.toLocaleString("pt-BR")} m² · {r.subtipoNome.toLowerCase()} · padrão {r.padrao}
+          {r.area.toLocaleString("pt-BR")} m² · {r.subtipoNome.toLowerCase()} · padrão {rotuloPadrao(r.padrao)}
         </span>
       </p>
       <div>

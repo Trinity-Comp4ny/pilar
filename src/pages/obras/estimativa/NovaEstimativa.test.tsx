@@ -56,12 +56,12 @@ beforeEach(() => {
 });
 
 describe("NovaEstimativa", () => {
-  it("começa pelo tipo de obra, com residencial, casa e padrão normal", () => {
+  it("começa pelo tipo de obra, com residencial, casa e padrão médio", () => {
     abrir();
     expect(screen.getByText("Que obra é essa?")).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: /Residencial/ })).toHaveAttribute("aria-checked", "true");
     expect(screen.getByRole("button", { name: "Casa térrea" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("radio", { name: /^Normal/ })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: /^Médio/ })).toHaveAttribute("aria-checked", "true");
   });
 
   it("padrão sem tabela de preço para o subtipo fica desligado", async () => {
@@ -71,8 +71,37 @@ describe("NovaEstimativa", () => {
     await user.click(screen.getByRole("radio", { name: /Comercial/ }));
     // CSL-8 só tem normal e alto: o baixo escolhido antes passa para o normal, e o baixo não dá mais para escolher.
     expect(screen.getByRole("radio", { name: /^Baixo/ })).toBeDisabled();
-    expect(screen.getByRole("radio", { name: /^Normal/ })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: /^Médio/ })).toHaveAttribute("aria-checked", "true");
     expect(screen.getByText("Sem tabela de preço para este subtipo")).toBeInTheDocument();
+  });
+
+  it("terreno inclinado pede a medida do muro de arrimo e grava na ficha", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.type(screen.getByLabelText("Nome da estimativa"), "Casa na encosta");
+    expect(screen.queryByLabelText("Muro de arrimo")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Inclinado, precisa de contenção" }));
+    await user.type(screen.getByLabelText("Muro de arrimo"), "80");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByText("inclinado, com 80 m² de muro de arrimo")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Gerar estimativa" }));
+    await waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
+    const [nova] = criar.mock.calls[0] as [{ ficha: { topografia: string; arrimo: number } }];
+    expect(nova.ficha.topografia).toBe("inclinado");
+    expect(nova.ficha.arrimo).toBe(80);
+  });
+
+  it("inclinado sem medir o muro avisa na revisão que o item fica a medir", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.type(screen.getByLabelText("Nome da estimativa"), "Casa na encosta");
+    await user.click(screen.getByRole("button", { name: "Inclinado, precisa de contenção" }));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByText("inclinado, muro de arrimo a medir")).toBeInTheDocument();
   });
 
   it("sem nome, o passo de local não avança e diz o motivo", async () => {

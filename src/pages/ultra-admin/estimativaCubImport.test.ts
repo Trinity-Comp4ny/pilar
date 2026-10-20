@@ -6,6 +6,7 @@ import {
   lerCsv,
   lerValor,
   opcoesMesBase,
+  regimeSugeridoPeloNome,
   resumirMeses,
 } from "./estimativaCubImport";
 
@@ -349,5 +350,20 @@ describe("lerCsv", () => {
     const r = interpretarPlanilhaCub(lerCsv("UF;Código;R$/m²\nSP;R1-A;3.350,00\nSP;R1-N;2.700,00"), MES);
     expect(r.erros).toEqual([]);
     expect(r.linhas.map((l) => l.valor_m2)).toEqual([3350, 2700]);
+  });
+});
+
+describe("regimeSugeridoPeloNome", () => {
+  it("lê o regime que o nome do arquivo diz", () => {
+    expect(regimeSugeridoPeloNome("cub-2026-09-sem-desoneracao.csv")).toBe("onerado");
+    expect(regimeSugeridoPeloNome("CUB set 2026 SEM DESONERAÇÃO.xlsx")).toBe("onerado");
+    expect(regimeSugeridoPeloNome("cub-2026-09-onerado.csv")).toBe("onerado");
+    expect(regimeSugeridoPeloNome("cub-2026-09-com-desoneracao.csv")).toBe("desonerado");
+    expect(regimeSugeridoPeloNome("cub-2026-09-desonerado.csv")).toBe("desonerado");
+  });
+
+  it("nome que não diz nada devolve null", () => {
+    expect(regimeSugeridoPeloNome("cub.csv")).toBeNull();
+    expect(regimeSugeridoPeloNome("planilha-setembro.xlsx")).toBeNull();
   });
 });
