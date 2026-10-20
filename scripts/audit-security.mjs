@@ -95,6 +95,11 @@ const ANON_ESPERADO = new Set([
   "campo_registrar_medicao",
   "campo_registrar_tarefa_rdo",
   "campo_listar_fornecedores",
+  // SPEC 135: o campo (sem usuário Supabase) lê os registros da obra, aceita o aviso do áudio e
+  // responde "quantas pessoas"; as três validam o token de sessão no corpo.
+  "campo_listar_registros",
+  "campo_aceitar_audio",
+  "campo_responder_efetivo",
   "campo_registrar_efetivo",
   "campo_registrar_impedimento",
   "campo_registrar_visita",

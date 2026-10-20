@@ -8,6 +8,7 @@ import {
   ClipboardList,
   LayoutGrid,
   List,
+  Mic,
   Pencil,
   Plus,
   Trash2,
@@ -30,6 +31,7 @@ import { useObraRdoImpedimentos } from "@/pages/obras/hooks/useObraRdoImpediment
 import { useObraRdoVisitas } from "@/pages/obras/hooks/useObraRdoVisitas";
 import { RdoFormDialog } from "./RdoFormDialog";
 import { RdoFeedCard } from "./RdoFeedCard";
+import { ObraRegistrosTimeline } from "./ObraRegistrosTimeline";
 
 const RESULTADO_LABEL: Record<ResultadoRdoTarefa, string> = {
   avancou: "Avançou",
@@ -52,7 +54,10 @@ function Campo({ titulo, texto }: { titulo: string; texto: string | null }) {
   );
 }
 
-const DIARIO_VISOES: ViewOption<"lista" | "feed">[] = [
+type VisaoDiario = "registros" | "lista" | "feed";
+
+const DIARIO_VISOES: ViewOption<VisaoDiario>[] = [
+  { value: "registros", label: "Registros", icon: Mic },
   { value: "lista", label: "Lista", icon: List },
   { value: "feed", label: "Feed", icon: LayoutGrid },
 ];
@@ -73,7 +78,7 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
   const [confirm, setConfirm] = useState<RdoRow | null>(null);
   // Feed visual (spec 087) além da lista densa já existente — não persiste
   // entre sessões, reseta pro padrão a cada entrada na aba.
-  const [visualizacao, setVisualizacao] = useState<"lista" | "feed">("lista");
+  const [visualizacao, setVisualizacao] = useState<VisaoDiario>("registros");
 
   const abrirNovo = () => {
     setEditing(null);
@@ -132,7 +137,9 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
         )}
       </div>
 
-      {rdos.length === 0 ? (
+      {visualizacao === "registros" ? (
+        <ObraRegistrosTimeline obraId={obraId} canEdit={canEdit} />
+      ) : rdos.length === 0 ? (
         <EmptyState
           icon={ClipboardList}
           title="Diário vazio"
