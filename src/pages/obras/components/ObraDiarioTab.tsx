@@ -32,6 +32,7 @@ import { useObraRdoVisitas } from "@/pages/obras/hooks/useObraRdoVisitas";
 import { RdoFormDialog } from "./RdoFormDialog";
 import { RdoFeedCard } from "./RdoFeedCard";
 import { ObraRegistrosTimeline } from "./ObraRegistrosTimeline";
+import { useObraRegistros } from "@/pages/obras/hooks/useObraRegistros";
 
 const RESULTADO_LABEL: Record<ResultadoRdoTarefa, string> = {
   avancou: "Avançou",
@@ -76,9 +77,13 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<RdoRow | null>(null);
   const [confirm, setConfirm] = useState<RdoRow | null>(null);
-  // Feed visual (spec 087) além da lista densa já existente — não persiste
-  // entre sessões, reseta pro padrão a cada entrada na aba.
-  const [visualizacao, setVisualizacao] = useState<VisaoDiario>("registros");
+  // Visões: Registros (SPEC 135, o que a equipe gravou), Lista (RDO denso) e Feed (spec 087).
+  // Não persiste entre sessões. Sem escolha, abre em Registros quando a obra já tem registros e
+  // na Lista (o fluxo do RDO de sempre) quando ainda não tem, para quem não usa a gravação
+  // não ver uma tela vazia no lugar do diário.
+  const { data: registros, isLoading: carregandoRegistros } = useObraRegistros(obraId);
+  const [escolhida, setVisualizacao] = useState<VisaoDiario | null>(null);
+  const visualizacao: VisaoDiario = escolhida ?? ((registros?.length ?? 0) > 0 ? "registros" : "lista");
 
   const abrirNovo = () => {
     setEditing(null);
@@ -102,7 +107,7 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
     }
   };
 
-  if (isLoading) {
+  if (isLoading || (escolhida === null && carregandoRegistros)) {
     return (
       <div className="space-y-3">
         <Skeleton className="h-24 w-full rounded-2xl" />

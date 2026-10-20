@@ -20,7 +20,7 @@ export interface RegistroDoServidor {
 }
 
 /** `local`: ainda está no aparelho, esperando envio. `bloqueado`: o envio não vai se resolver sozinho. */
-export type EstadoDoRegistro = StatusRegistro | "local" | "bloqueado";
+type EstadoDoRegistro = StatusRegistro | "local" | "bloqueado";
 
 export interface RegistroView {
   /** Chave estável na lista: o client_id é igual no aparelho e no servidor. */

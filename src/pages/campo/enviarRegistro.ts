@@ -2,12 +2,12 @@ import { supabase } from "@/integrations/supabase/client";
 import type { FilaRegistroItem, ResultadoEnvio } from "./campoRegistroFila";
 
 /** "audio/webm;codecs=opus" → "audio/webm": a edge valida só o tipo base. */
-export function mimeBase(mimeType: string): string {
+function mimeBase(mimeType: string): string {
   return mimeType.split(";")[0].trim().toLowerCase();
 }
 
 /** Base64 puro (sem o prefixo data:), que é o que a edge espera. */
-export function blobParaBase64(blob: Blob): Promise<string> {
+function blobParaBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => resolve(((r.result as string) ?? "").split(",")[1] ?? "");
