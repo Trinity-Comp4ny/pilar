@@ -146,6 +146,10 @@
     "dominio": "portal",
     "descricao": "Dados do projeto para o portal (auth pelo token do portal)."
   },
+  "portal-resumo-semana": {
+    "dominio": "portal",
+    "descricao": "Resumo da semana da obra para o portal do cliente, escrito pela IA só com os registros liberados e guardado até o conjunto mudar (SPEC 135)."
+  },
   "portal-obra-fotos": {
     "dominio": "portal",
     "descricao": "URLs assinadas das fotos curadas do diário e dos registros liberados ao cliente, para o portal (spec 087, SPEC 135)."

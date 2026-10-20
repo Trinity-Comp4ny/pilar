@@ -4797,6 +4797,45 @@ export type Database = {
           },
         ]
       }
+      obra_resumo_semana: {
+        Row: {
+          empresa_id: string
+          fonte_hash: string
+          gerado_em: string
+          obra_id: string
+          texto: string
+        }
+        Insert: {
+          empresa_id: string
+          fonte_hash: string
+          gerado_em?: string
+          obra_id: string
+          texto: string
+        }
+        Update: {
+          empresa_id?: string
+          fonte_hash?: string
+          gerado_em?: string
+          obra_id?: string
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_resumo_semana_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_resumo_semana_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: true
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obras: {
         Row: {
           cep: string | null
