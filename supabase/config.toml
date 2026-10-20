@@ -123,6 +123,9 @@ verify_jwt = false
 [functions.ops-export-funil]
 verify_jwt = false
 
+[functions.registro-audio-limpar]
+verify_jwt = false
+
 [functions.retencao-pos-trial]
 verify_jwt = false
 

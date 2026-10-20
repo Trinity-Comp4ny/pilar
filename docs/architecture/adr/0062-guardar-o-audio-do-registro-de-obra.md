@@ -39,6 +39,12 @@ Opção B.
   áudios da pessoa.
 - **Provedor de IA:** nada muda. O áudio já ia ao Gemini na SPEC 080.
 
+**Como a exclusão roda (BEZ-33):** a edge `registro-audio-limpar` roda todo dia às 5h15 (UTC) e apaga pela API do
+Storage o que a função `registro_audio_para_apagar` lista, em três casos: registro com mais de 12 meses, registro de
+conta de campo excluída (autor sumiu) e arquivo órfão (registro, obra ou empresa excluídos, com 1 dia de folga porque o
+upload vem antes do registro). O registro ganha `audio_apagado_em` e o texto fica. Obra apenas arquivada (soft delete)
+mantém o áudio até o prazo de 12 meses, porque pode ser restaurada.
+
 O prazo de 12 meses é uma suposição minha: se o Matheus quiser outro, muda a constante do job e este ADR.
 
 ## Consequências

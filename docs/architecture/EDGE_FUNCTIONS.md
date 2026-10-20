@@ -3,7 +3,7 @@
 <!-- Gerado por scripts/edge-functions-catalog.mjs a partir de supabase/functions/CATALOGO.json.
      Não editar à mão: edite o CATALOGO.json e rode `node scripts/edge-functions-catalog.mjs`. -->
 
-53 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
+54 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
 migrations) ou origem externa declarada no manifesto. **Login**: `verify_jwt` do `config.toml`
 (JWT aceita a chave anon; "própria" = a função faz a autorização). **Secrets**: lidos direto
 na pasta da função (o que vem de `_shared`, como a chave do Gemini, não aparece).
@@ -93,6 +93,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `guardiao-margem-cron` | Cron diário: prepara rascunho de aditivo, sustentado pelas despesas do projeto, quando ele estoura o orçamento (specs 081 e 107). | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `notificacoes-email-cron` | Cron: manda por e-mail o que está na central de notificações e ninguém leu. | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `reconciliar-assinaturas` | Cron diário: compara cada assinatura do Pilar com o Asaas e avisa o ultra admin das divergências (SPEC 114). | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `registro-audio-limpar` | Cron: apaga o áudio do registro de obra após 12 meses, de conta de campo excluída e arquivos órfãos (ADR 0062). | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `retencao-pos-trial` | Cron: avisos e exclusão de empresa depois do trial vencido (SPEC 098 Fase 3). | cron | própria | `ALLOWED_ORIGINS` `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `reverificar-documentos-pendentes` | Cron: reverifica CNPJ ou CPF pendentes do trial (SPEC 098). | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `trial-expiry-cron` | Cron: expira trials, converte quem tem cartão e manda os avisos. | cron | própria | `ALLOWED_ORIGINS` `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |

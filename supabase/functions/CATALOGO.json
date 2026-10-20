@@ -154,6 +154,10 @@
     "dominio": "jobs",
     "descricao": "Cron diário: compara cada assinatura do Pilar com o Asaas e avisa o ultra admin das divergências (SPEC 114)."
   },
+  "registro-audio-limpar": {
+    "dominio": "jobs",
+    "descricao": "Cron: apaga o áudio do registro de obra após 12 meses, de conta de campo excluída e arquivos órfãos (ADR 0062)."
+  },
   "registro-reprocessar": {
     "dominio": "campo",
     "descricao": "Tentar de novo a organização de um registro de obra que falhou; vale para o escritório (JWT) e para o campo (token). SPEC 135."
