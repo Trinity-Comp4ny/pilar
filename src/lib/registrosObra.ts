@@ -2,7 +2,7 @@
 // helpers puros que o Pilar Campo e a aba Diário do escritório compartilham.
 
 export type StatusRegistro = "enviado" | "organizando" | "pronto" | "falhou";
-export type ResultadoServico = "comecou" | "avancou" | "concluiu" | "parou";
+type ResultadoServico = "comecou" | "avancou" | "concluiu" | "parou";
 
 /** O que fica em `obra_registro.extraido` (a edge grava, o app só lê). */
 export interface ExtraidoRegistro {

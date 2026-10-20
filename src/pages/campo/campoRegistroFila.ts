@@ -7,13 +7,13 @@
  * então reenviar o mesmo item (falha no meio, resposta que se perdeu) nunca duplica.
  */
 
-export interface FilaRegistroAudio {
+interface FilaRegistroAudio {
   blob: Blob;
   mimeType: string;
   duracaoS: number;
 }
 
-export interface FilaRegistroFoto {
+interface FilaRegistroFoto {
   blob: Blob;
   contentType: string;
 }

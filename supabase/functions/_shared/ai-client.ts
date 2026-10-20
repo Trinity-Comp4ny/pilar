@@ -802,8 +802,7 @@ export interface StructuredResult<T> {
  */
 export async function callGeminiStructured<T>(
   request: AiRequest,
-  // Input `unknown`: o schema pode ter `.default()`/`.transform()` (entrada opcional, saída completa).
-  schema: z.ZodType<T, z.ZodTypeDef, unknown>,
+  schema: z.ZodType<T>,
   opts: { maxRetries?: number; maxOutputTokens?: number; semRaciocinio?: boolean } = {}
 ): Promise<StructuredResult<T>> {
   const maxRetries = opts.maxRetries ?? 2;

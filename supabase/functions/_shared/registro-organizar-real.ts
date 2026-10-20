@@ -6,7 +6,9 @@ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callGeminiStructured, debitarTokens, verificarTokens } from "./ai-client.ts";
 import { modeloEmUso } from "./llm.ts";
 import { type Deps, organizarRegistro, type Resultado } from "./registro-organizar.ts";
+import { z } from "./schemas.ts";
 import {
+  type Extracao,
   extracaoSchema,
   MIME_AUDIO,
   mensagemExtracao,
@@ -75,7 +77,9 @@ export function depsReais(admin: SupabaseClient): Deps {
     async extrair({ empresaId, texto }) {
       const r = await callGeminiStructured(
         { systemPrompt: PROMPT_EXTRACAO, userMessage: mensagemExtracao(texto), empresaId, tipo: TIPO_EXTRACAO },
-        extracaoSchema,
+        // O schema tem `.default()`: entrada opcional, saída completa. A assinatura do cliente de IA
+        // pede entrada igual à saída, então o tipo de saída é afirmado aqui (o parse é o do schema).
+        extracaoSchema as unknown as z.ZodType<Extracao>,
         { maxRetries: 1, maxOutputTokens: 2048, semRaciocinio: true }
       );
       return { data: r.data, tokensEntrada: r.tokensEntrada, tokensSaida: r.tokensSaida };
