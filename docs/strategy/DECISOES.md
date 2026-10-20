@@ -53,8 +53,8 @@ Design, depois spec.
 
 **Decisões de escopo do MVP 1 (mesmo dia, depois do protótipo v0):**
 
-1. A estimativa é um item próprio (Obras › Estimativas), ligado a lead ou proposta. Só vira obra
-   quando existir projeto (ADR 0011).
+1. A estimativa é um item próprio (Obras › Estimativas), ligado a lead ou proposta. Vira obra com um
+   clique; a obra não exige projeto (ADR 0012), e o vínculo com projeto é opcional.
 2. O preço de referência é o CUB por UF e padrão, e o ultra admin importa a planilha todo mês.
    Automação de coleta fica para depois. A fonte exata é confirmada com o Claudio.
 3. Os adicionais (fundação, piscina, marcenaria, paisagismo, elevador) têm valor de referência do
