@@ -28,7 +28,7 @@ Opções consideradas:
 
 ## Decisão
 
-1. **A IA só interpreta.** Ela transforma texto (e, na Fase 2, PDF) em uma ficha técnica validada por schema. Nunca
+1. **A IA só interpreta.** Ela transforma o PDF da planta (fase seguinte) em uma ficha técnica validada por schema. Nunca
    define preço, prazo ou percentual. Consome tokens do usuário (motor de tokens).
 2. **Motor determinístico (opção C).** `src/lib/estimativaObra.ts` é uma função pura
    `calcularEstimativa({ ficha, premissas, cub, parametros, ajustes })`. Sem I/O e sem relógio, para o mesmo input dar

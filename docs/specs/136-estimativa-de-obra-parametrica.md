@@ -58,9 +58,8 @@ para o cliente. Medida de sucesso: tempo até a primeira estimativa e % de estim
     vínculo.
 12. **PDF e proposta.** PDF de uma página A4 para o cliente e anexo à proposta (visível no portal). Ambos ficam
     bloqueados enquanto os parâmetros não estiverem validados (requisito 15).
-13. **Leitura do texto livre por IA.** O campo "Algo mais que a obra precisa ter?" preenche os contadores da ficha, com
-    o selo "lido do texto". Consome os tokens do usuário (decisão 4 de 2026-10-19). Falhou ou sem saldo: segue no
-    manual, sem perder nada.
+13. **Sem leitura de texto livre por IA.** A ficha vem só do assistente. A IA entra depois, lendo o PDF da planta
+    (decisão de 2026-10-20), e consome os tokens do usuário.
 14. **CUB mensal.** O ultra admin importa a planilha do mês (UF × subtipo × padrão). A importação valida o formato
     antes de gravar e guarda a data-base. Só o ultra admin escreve; todas as empresas leem.
 15. **Parâmetros validados.** Percentual por etapa, adicionais, natureza e produtividade moram em
@@ -122,7 +121,7 @@ Cada fatia é um PR com o seu card no Linear (título `[BEZ-NN]`).
    ([BEZ-14](https://linear.app/bez-company/issue/BEZ-14)): telas do ultra admin e da empresa.
 3. **Fluxo** ([BEZ-18](https://linear.app/bez-company/issue/BEZ-18)): lista, assistente, resultado, versões, cenários.
 4. **Saídas** ([BEZ-19](https://linear.app/bez-company/issue/BEZ-19)): criar obra, PDF, anexar à proposta.
-5. **IA** ([BEZ-15](https://linear.app/bez-company/issue/BEZ-15)): leitura do texto com tokens do usuário.
+5. **IA:** fora desta SPEC. A leitura do PDF da planta vira uma SPEC própria.
 6. **Liberar** ([BEZ-20](https://linear.app/bez-company/issue/BEZ-20)): validar com obras reais
    ([BEZ-16](https://linear.app/bez-company/issue/BEZ-16)), marcar os parâmetros como validados, ligar numa empresa
    piloto.

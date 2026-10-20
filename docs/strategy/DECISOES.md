@@ -11,6 +11,17 @@ Regras de manutenção:
 
 ---
 
+## 2026-10-20 · Estimativa de obra: sem leitura de texto livre por IA
+
+**Decisão:** a estimativa não terá o campo de texto livre lido por IA. A ficha é preenchida só pelo assistente
+(contadores e opções). A IA entra uma vez, na fase seguinte, lendo o PDF da planta.
+
+Contexto: o assistente já cobre a ficha com poucos cliques, e o texto livre só duplicaria o passo 3. Supera o
+item 4 da entrada de 2026-10-19 na parte do texto livre; a regra de que tudo que usa token consome os tokens do
+usuário continua valendo para a leitura do PDF. Cancela o BEZ-15.
+
+---
+
 ## 2026-10-19 · Cadastro por convite: o teste grátis self-serve acaba agora
 
 **Decisão:** o Pilar deixa de ser aberto ao público. Toda empresa nova entra conversando com o
