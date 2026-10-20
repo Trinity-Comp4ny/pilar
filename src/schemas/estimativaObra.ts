@@ -3,7 +3,7 @@
 // antes do cálculo, e o resultado é validado ao ser relido de uma versão gravada.
 import { z } from "zod";
 
-const UFS = [
+export const UFS = [
   "AC",
   "AL",
   "AP",

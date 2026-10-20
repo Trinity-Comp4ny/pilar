@@ -44,6 +44,9 @@ const GENERICOS = new Set([
   "components/calendario", // motor compartilhado por camadas (ADR 0010)
   "lib/currency.ts",
   "lib/emailValidator.ts",
+  // SPEC 136: motor puro (sem React nem I/O) da estimativa. Hoje só o ultra admin o consome (CUB e
+  // parâmetros); o assistente de Obras (BEZ-18) vira o segundo consumidor e esta linha sai.
+  "lib/estimativaObra.ts",
   "lib/pdfText.ts",
   "lib/reportError.ts",
   "lib/sanitize.ts",

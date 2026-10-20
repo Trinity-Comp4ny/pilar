@@ -8,6 +8,7 @@ import {
   Activity,
   Bug,
   Building2,
+  Calculator,
   Coins,
   HeartHandshake,
   LineChart,
@@ -44,6 +45,7 @@ export type UltraSecaoId =
   | "atividade"
   | "incidentes"
   | "custos-ia"
+  | "estimativa"
   | "lgpd";
 
 export interface UltraSecao {
@@ -80,6 +82,13 @@ export const ULTRA_SECOES: readonly UltraSecao[] = [
     group: "Produto",
   },
   { id: "feedback", title: "Feedback", url: `${ULTRA_ADMIN_BASE}/feedback`, icon: MessageSquare, group: "Produto" },
+  {
+    id: "estimativa",
+    title: "Estimativa de obra",
+    url: `${ULTRA_ADMIN_BASE}/estimativa`,
+    icon: Calculator,
+    group: "Produto",
+  },
   { id: "atividade", title: "Atividade", url: `${ULTRA_ADMIN_BASE}/atividade`, icon: Activity, group: "Operação" },
   { id: "incidentes", title: "Incidentes", url: `${ULTRA_ADMIN_BASE}/incidentes`, icon: Siren, group: "Operação" },
   { id: "custos-ia", title: "Custos de IA", url: `${ULTRA_ADMIN_BASE}/custos-ia`, icon: Coins, group: "Operação" },

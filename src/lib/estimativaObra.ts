@@ -123,6 +123,30 @@ export function padroesDisponiveis(cub: CubLinha[], cubCodigo: string): Padrao[]
   return PADROES.filter((p) => linhas.some((l) => l.padrao === p));
 }
 
+const brl0 = (n: number) => `R$ ${n.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`;
+
+/** Como o adicional é cobrado, em uma frase: "6% da base", "R$ 2.500 por m²". Para telas de parâmetro. */
+export function descreverAdicional(a: Adicional): string {
+  switch (a.tipo) {
+    case "percentual_base":
+      return a.valor_industrial != null
+        ? `${formatarNumero(a.valor)}% da base (${formatarNumero(a.valor_industrial)}% em galpão)`
+        : `${formatarNumero(a.valor)}% da base`;
+    case "por_m2":
+      return `${brl0(a.valor)} por m²`;
+    case "por_padrao":
+      return `${brl0(a.valores.baixo)} no baixo, ${brl0(a.valores.normal)} no normal, ${brl0(a.valores.alto)} no alto`;
+    case "percentual_base_por_nivel":
+      return `${formatarNumero(a.valores.basica)}% da base na básica, ${formatarNumero(a.valores.completa)}% na completa`;
+    case "por_m2_area_livre":
+      return `${brl0(a.valor)} por m² de área livre`;
+    case "valor_fixo":
+      return brl0(a.valor);
+    case "a_definir":
+      return "a definir";
+  }
+}
+
 /** Ficha inicial do assistente, com o que o Pilar sabe sem perguntar. */
 export function fichaInicial(inicio: string, uf: Uf = "SP"): Ficha {
   return {

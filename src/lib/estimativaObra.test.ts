@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   avisosCoerencia,
   calcularEstimativa,
+  descreverAdicional,
   distribuir,
   fichaInicial,
   lerAjustes,
@@ -124,6 +125,24 @@ describe("seed dos parâmetros", () => {
     const torto = structuredClone(parametros);
     torto.adicionais.piscina.fase = "nao_existe";
     expect(parametrosSchema.safeParse(torto).success).toBe(false);
+  });
+});
+
+describe("descreverAdicional", () => {
+  it("diz como cada adicional do seed é cobrado", () => {
+    const a = parametros.adicionais;
+    expect(descreverAdicional(a.fundacao)).toBe("6% da base (8% em galpão)");
+    expect(descreverAdicional(a.piscina)).toBe("R$ 2.500 por m²");
+    expect(descreverAdicional(a.gourmet)).toBe("R$ 25.000 no baixo, R$ 45.000 no normal, R$ 80.000 no alto");
+    expect(descreverAdicional(a.marcenaria)).toBe("6% da base na básica, 11% na completa");
+    expect(descreverAdicional(a.paisagismo)).toBe("R$ 110 por m² de área livre");
+    expect(descreverAdicional(a.elevador)).toBe("R$ 180.000");
+    expect(descreverAdicional(a.subsolo)).toBe("a definir");
+  });
+
+  it("percentual de galpão some quando o adicional não tem valor industrial", () => {
+    const sem = { ...parametros.adicionais.fundacao, valor_industrial: undefined };
+    expect(descreverAdicional(sem as typeof parametros.adicionais.fundacao)).toBe("6% da base");
   });
 });
 
