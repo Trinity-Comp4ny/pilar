@@ -143,6 +143,13 @@ citado por equipe). Dia que já tem RDO abre esse RDO para editar e os registros
 **Fora da fase B, pendente:** aposentar o RDO por voz do formulário (`ai-rdo-voz`), que só sai depois de gravar
 registro pelo escritório; clima do resumo (o formulário já sugere pela previsão do tempo).
 
+**Fase C, o que entrou (BEZ-35):** a função do portal `get_cliente_obra_detail` devolve `registros`: só os que o
+gestor liberou ("Mostrar ao cliente"), já organizados pela IA, dos últimos 30 dias, com data, texto e quantidade de
+fotos. Nunca áudio, autor, extraído (efetivo, pendência, problema), texto bruto nem caminho de foto. A edge
+`portal-obra-fotos` ganhou `registro_ids` e assina as fotos depois de revalidar cada registro contra a sessão do
+cliente. O portal mostra a seção "Registros da equipe" acima do Diário. Registro continua nascendo interno.
+**Fora da fase C, pendente:** resumo curado da semana no portal e a decisão do dono sobre o padrão de visibilidade.
+
 Cada fase termina com teste automatizado do que muda (RLS, schema de entrada, fila offline) e o fluxo real
 exercitado no Chrome com prints.
 

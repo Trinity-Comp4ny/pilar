@@ -48,7 +48,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `portal-aprovar-proposta` | Cliente aprova proposta pelo portal (auth pelo token do portal). | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-entrega-download` | URL assinada de 5 minutos para arquivo de entrega do portal. | **sem chamador conhecido** | própria | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-get-projeto` | Dados do projeto para o portal (auth pelo token do portal). | **sem chamador conhecido** | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
-| `portal-obra-fotos` | URLs assinadas das fotos curadas do diário de obra para o portal (spec 087). | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `portal-obra-fotos` | URLs assinadas das fotos curadas do diário e dos registros liberados ao cliente, para o portal (spec 087, SPEC 135). | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `reset-cliente-portal-password` | Redefine a senha do cliente do portal (e-mail antes de mexer na conta). | app | JWT | `PUBLIC_SITE_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `upload-portal-entrega` | Upload autenticado de arquivo de entrega para o portal. | **sem chamador conhecido** | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 

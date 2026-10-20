@@ -61,6 +61,14 @@ export interface ClienteObraDiarioDia {
   fotos: Array<{ id: string; path: string }>;
 }
 
+/** Registro da equipe que o gestor liberou ao cliente (SPEC 135, fase C): texto e quantas fotos, nada mais. */
+export interface ClienteObraRegistro {
+  id: string;
+  data: string;
+  texto: string | null;
+  num_fotos: number;
+}
+
 export interface ClienteObraData {
   obra_id: string;
   nome: string;
@@ -71,6 +79,7 @@ export interface ClienteObraData {
   frentes: ClienteObraFrente[];
   conta: ClienteObraConta;
   diario: ClienteObraDiarioDia[];
+  registros: ClienteObraRegistro[];
 }
 
 /** Lista de obras que o cliente pode acompanhar no portal (só administração + visíveis). */

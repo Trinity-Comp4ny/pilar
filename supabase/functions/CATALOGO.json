@@ -148,7 +148,7 @@
   },
   "portal-obra-fotos": {
     "dominio": "portal",
-    "descricao": "URLs assinadas das fotos curadas do diário de obra para o portal (spec 087)."
+    "descricao": "URLs assinadas das fotos curadas do diário e dos registros liberados ao cliente, para o portal (spec 087, SPEC 135)."
   },
   "reconciliar-assinaturas": {
     "dominio": "jobs",
