@@ -51,6 +51,18 @@ leitura de planta da lista "não vender" do PRICING.md (só entra em material de
 na branch principal). Orçamento por ambiente continua fora. Próximo passo: protótipo no Claude
 Design, depois spec.
 
+**Decisões de escopo do MVP 1 (mesmo dia, depois do protótipo v0):**
+
+1. A estimativa é um item próprio (Obras › Estimativas), ligado a lead ou proposta. Só vira obra
+   quando existir projeto (ADR 0011).
+2. O preço de referência é o CUB por UF e padrão, e o ultra admin importa a planilha todo mês.
+   Automação de coleta fica para depois. A fonte exata é confirmada com o Claudio.
+3. Os adicionais (fundação, piscina, marcenaria, paisagismo, elevador) têm valor de referência do
+   Pilar, e cada empresa ajusta os seus.
+4. Tudo que usa token (leitura do texto livre e, na Fase 2, do PDF do projeto) consome os tokens
+   do usuário, pelo motor de tokens. O cálculo de preço e prazo não usa IA.
+5. A faixa padrão é de ±12%, editável em cada estimativa.
+
 ---
 
 ## 2026-10-16 · Marketing é produto próprio; o Pilar só abre a plataforma e devolve o funil
