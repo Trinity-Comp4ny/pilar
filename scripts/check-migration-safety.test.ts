@@ -147,6 +147,17 @@ describe("contrato do pipeline", () => {
     }
   });
 
+  // Docker Hub limita pulls por IP do runner compartilhado ("toomanyrequests: Data limit
+  // exceeded"), e o deploy em Docker puxa a imagem do edge-runtime a cada run. Duas
+  // falhas seguidas em staging (runs 39307383109 e 39315007872) mesmo com o retry.
+  it("o deploy das edge functions empacota no servidor, sem Docker", () => {
+    const deployLines = ci.split("\n").filter((l) => l.includes("supabase functions deploy"));
+    expect(deployLines.length).toBeGreaterThanOrEqual(2);
+    for (const line of deployLines) {
+      expect(line).toContain("--use-api");
+    }
+  });
+
   it("o gate agregado inclui a sincronia de tipos, que bloqueia merge", () => {
     const ciOk = ci.slice(ci.indexOf("\n  ci-ok:"));
     const needs = ciOk.match(/needs:\s*\[([^\]]*)\]/)?.[1] ?? "";
