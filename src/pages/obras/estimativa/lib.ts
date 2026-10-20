@@ -1,6 +1,6 @@
 // Estimativa de obra no módulo Obras (SPEC 136, BEZ-18): rótulos, validação por passo e leitura segura do
 // que volta do banco. Funções puras, sem React nem I/O.
-import { rotuloMesBase } from "@/lib/estimativaObra";
+import { rotuloMesBase, rotuloPadrao } from "@/lib/estimativaObra";
 import {
   UFS,
   fichaSchema,
@@ -22,7 +22,10 @@ export const TIPO_INFO: Record<TipoObra, { nome: string; descricao: string }> = 
 
 export const PADRAO_INFO: Record<Padrao, { nome: string; exemplo: string }> = {
   baixo: { nome: "Baixo", exemplo: "Cerâmica simples, esquadria de alumínio comum, louça básica" },
-  normal: { nome: "Normal", exemplo: "Porcelanato, esquadria de alumínio de linha média, metais cromados" },
+  normal: {
+    nome: "Médio",
+    exemplo: "Porcelanato, esquadria de alumínio de linha média, metais cromados. É o padrão normal do CUB",
+  },
   alto: { nome: "Alto", exemplo: "Porcelanato de grande formato, esquadria com vidro duplo, automação" },
 };
 
@@ -70,7 +73,7 @@ export const PASSO_ROTULO: Record<Passo, string> = {
 
 const CAMPOS_DO_PASSO: Record<Passo, readonly (keyof Ficha)[]> = {
   tipo: ["tipo", "subtipo", "padrao"],
-  local: ["uf", "area", "pavimentos", "terreno", "inicio"],
+  local: ["uf", "area", "pavimentos", "terreno", "topografia", "arrimo", "inicio"],
   programa: [
     "quartos",
     "suites",
@@ -131,7 +134,7 @@ export function rotuloMes(anoMes: string): string {
 }
 
 export function resumoDaFicha(ficha: Ficha, subtipoNome: string): string {
-  return `${subtipoNome} · padrão ${ficha.padrao} · ${ficha.area.toLocaleString("pt-BR")} m² · ${ficha.uf}`;
+  return `${subtipoNome} · padrão ${rotuloPadrao(ficha.padrao)} · ${ficha.area.toLocaleString("pt-BR")} m² · ${ficha.uf}`;
 }
 
 // Leitura do que vem do banco (jsonb): falha vira null, e a tela mostra um estado de erro em vez de quebrar.

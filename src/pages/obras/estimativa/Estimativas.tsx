@@ -11,11 +11,12 @@ import { formatCurrency, formatDateTime } from "@/lib/format";
 import { SUBTIPOS } from "@/schemas/estimativaObra";
 import { toDataSourceResult } from "@/types/dataSource";
 import { useEstimativas, type EstimativaResumo } from "./hooks";
+import { rotuloPadrao } from "@/lib/estimativaObra";
 
 function descricaoDaObra(e: EstimativaResumo): string {
   if (!e.ficha) return "Ficha fora do formato";
   const subtipo = SUBTIPOS[e.ficha.tipo][e.ficha.subtipo]?.nome ?? e.ficha.subtipo;
-  return `${subtipo} · padrão ${e.ficha.padrao}`;
+  return `${subtipo} · padrão ${rotuloPadrao(e.ficha.padrao)}`;
 }
 
 const COLUNAS: ColumnDef<EstimativaResumo>[] = [

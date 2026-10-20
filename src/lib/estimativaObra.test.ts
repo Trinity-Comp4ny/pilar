@@ -1,5 +1,4 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { parametrosDaMigration } from "@/test/estimativaFixtures";
 import { describe, expect, it } from "vitest";
 import {
   avisosCoerencia,
@@ -13,6 +12,7 @@ import {
   lerPremissas,
   padroesDisponiveis,
   rotuloMesBase,
+  rotuloPadrao,
   type EntradaCalculo,
 } from "./estimativaObra";
 import {
@@ -22,17 +22,8 @@ import {
   resultadoSchema,
   type CubLinha,
   type Ficha,
-  type Parametros,
   type ResultadoEstimativa,
 } from "@/schemas/estimativaObra";
-
-// O seed vem da própria migration: se o JSON semeado deixar de passar no schema, o teste cai.
-function parametrosDaMigration(): Parametros {
-  const sql = readFileSync(join(process.cwd(), "supabase/migrations/20261114000100_estimativa_obra.sql"), "utf8");
-  const json = sql.match(/\$json\$([\s\S]*?)\$json\$/)?.[1];
-  if (!json) throw new Error("Seed de estimativa_parametros não encontrado na migration");
-  return parametrosSchema.parse(JSON.parse(json));
-}
 
 const parametros = parametrosDaMigration();
 
@@ -656,5 +647,66 @@ describe("calcularEstimativa: regime do CUB (BEZ-51)", () => {
     delete fonteAntiga.regime;
     const lido = resultadoSchema.safeParse({ ...r, fonte: fonteAntiga });
     expect(lido.success && lido.data.fonte.regime).toBe("onerado");
+  });
+});
+
+describe("calcularEstimativa: terreno inclinado (BEZ-68)", () => {
+  const plano = () => calcular({ ficha: sobrado });
+  const ids = (r: ResultadoEstimativa) => r.adicionais.map((a) => a.id);
+
+  it("terreno plano não traz muro de arrimo nem terraplenagem", () => {
+    expect(ids(plano())).toEqual(["fundacao"]);
+  });
+
+  it("inclinado com a medida do muro soma o arrimo e deixa a terraplenagem a definir", () => {
+    const r = calcular({ ficha: { ...sobrado, topografia: "inclinado", arrimo: 80 } });
+    const arrimo = r.adicionais.find((a) => a.id === "arrimo");
+    const terra = r.adicionais.find((a) => a.id === "terraplenagem");
+    expect(arrimo?.valor).toBe(80 * 1200);
+    expect(arrimo?.rotulo).toBe("Muro de arrimo (80 m²)");
+    expect(arrimo?.aDefinir).toBe(false);
+    expect(terra?.valor).toBeNull();
+    expect(terra?.aDefinir).toBe(true);
+    expect(r.provavel).toBeGreaterThan(plano().provavel);
+    expect(r.avisos.map((a) => a.mensagem).join(" ")).toMatch(/Terraplenagem e fundação especial ainda não tem valor/);
+  });
+
+  it("inclinado sem medir o muro deixa os dois itens a definir e o total não muda", () => {
+    const r = calcular({ ficha: { ...sobrado, topografia: "inclinado", arrimo: 0 } });
+    expect(ids(r)).toEqual(["fundacao", "arrimo", "terraplenagem"]);
+    expect(r.adicionais.filter((a) => a.aDefinir).map((a) => a.id)).toEqual(["arrimo", "terraplenagem"]);
+    expect(r.provavel).toBe(plano().provavel);
+  });
+
+  it("a empresa ajusta o valor do muro de arrimo", () => {
+    const r = calcular({
+      ficha: { ...sobrado, topografia: "inclinado", arrimo: 50 },
+      ajustes: { adicionais: { arrimo: { valor: 2000 } } },
+    });
+    expect(r.adicionais.find((a) => a.id === "arrimo")?.valor).toBe(100_000);
+  });
+
+  it("parâmetros gravados antes do terreno inclinado seguem calculando, sem esses itens", () => {
+    const antigo = structuredClone(parametros);
+    delete antigo.adicionais.arrimo;
+    delete antigo.adicionais.terraplenagem;
+    const r = calcular({ parametros: antigo, ficha: { ...sobrado, topografia: "inclinado", arrimo: 80 } });
+    expect(ids(r)).toEqual(["fundacao"]);
+  });
+
+  it("ficha salva antes do terreno inclinado lê como terreno plano", () => {
+    const { topografia: _t, arrimo: _a, ...antiga } = sobrado;
+    const lida = fichaSchema.safeParse(antiga);
+    expect(lida.success && [lida.data.topografia, lida.data.arrimo]).toEqual(["plano", 0]);
+  });
+
+  it("recusa área de muro negativa", () => {
+    expect(fichaSchema.safeParse({ ...sobrado, topografia: "inclinado", arrimo: -5 }).success).toBe(false);
+  });
+});
+
+describe("rotuloPadrao", () => {
+  it("o padrão normal do CUB é o médio", () => {
+    expect(["baixo", "normal", "alto"].map((p) => rotuloPadrao(p as "baixo"))).toEqual(["baixo", "médio", "alto"]);
   });
 });

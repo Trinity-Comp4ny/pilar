@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Scale } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { Badge } from "@/components/ui/badge";
-import { calcularEstimativa, padroesDisponiveis } from "@/lib/estimativaObra";
+import { calcularEstimativa, padroesDisponiveis, rotuloPadrao } from "@/lib/estimativaObra";
 import { formatCurrency } from "@/lib/format";
 import { SUBTIPOS, type Ficha, type Padrao, type Premissas, type ResultadoEstimativa } from "@/schemas/estimativaObra";
 import type { Insumos } from "./hooks";
@@ -110,7 +110,7 @@ export function CenariosTab({
         cenario && (
           <>
             <div className="grid gap-4 md:grid-cols-2">
-              <ColunaDoCenario titulo={`Padrão ${atual.padrao}`} r={atual} atual />
+              <ColunaDoCenario titulo={`Padrão ${rotuloPadrao(atual.padrao)}`} r={atual} atual />
               <ColunaDoCenario titulo={`Padrão ${comparar}`} r={cenario.resultado} />
             </div>
             <p className="rounded-xl bg-info-soft px-3 py-2 text-sm text-info-strong" role="status">

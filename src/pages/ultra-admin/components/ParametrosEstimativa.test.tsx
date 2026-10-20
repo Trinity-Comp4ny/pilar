@@ -1,20 +1,13 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { parametrosSchema, type Parametros } from "@/schemas/estimativaObra";
+import { parametrosDaMigration } from "@/test/estimativaFixtures";
 import { ParametrosEstimativa } from "./ParametrosEstimativa";
 
 /**
  * Parâmetros do motor (SPEC 136, ADR 0063): enquanto não validados, a tela avisa; validar e desfazer
  * passam por confirmação, e o banco só aceita do ultra admin com o segundo fator.
  */
-
-function parametrosDaMigration(): Parametros {
-  const sql = readFileSync(join(process.cwd(), "supabase/migrations/20261114000100_estimativa_obra.sql"), "utf8");
-  return parametrosSchema.parse(JSON.parse(sql.match(/\$json\$([\s\S]*?)\$json\$/)![1]));
-}
 
 let validadoEm: string | null = null;
 let falha = false;

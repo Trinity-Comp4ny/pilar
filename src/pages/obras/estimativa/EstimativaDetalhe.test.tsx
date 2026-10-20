@@ -156,7 +156,7 @@ describe("EstimativaDetalhe", () => {
   it("trocar o padrão grava a ficha com o padrão novo", async () => {
     const user = userEvent.setup();
     abrir();
-    await user.click(screen.getByRole("button", { name: "Normal" }));
+    await user.click(screen.getByRole("button", { name: "Médio" }));
     await waitFor(() => expect(atualizar).toHaveBeenCalledTimes(1), { timeout: 3000 });
     const [salvo] = atualizar.mock.calls[0] as [{ ficha: { padrao: string } }];
     expect(salvo.ficha.padrao).toBe("normal");

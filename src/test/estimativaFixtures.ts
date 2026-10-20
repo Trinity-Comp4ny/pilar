@@ -12,9 +12,20 @@ import {
   type ResultadoEstimativa,
 } from "@/schemas/estimativaObra";
 
-function parametrosDaMigration(): Parametros {
-  const sql = readFileSync(join(process.cwd(), "supabase/migrations/20261114000100_estimativa_obra.sql"), "utf8");
-  return parametrosSchema.parse(JSON.parse(sql.match(/\$json\$([\s\S]*?)\$json\$/)![1]));
+/** Seed dos parâmetros: a migration base mais as chaves que migrations seguintes acrescentaram. */
+export function parametrosDaMigration(): Parametros {
+  const ler = (arquivo: string) => {
+    const sql = readFileSync(join(process.cwd(), "supabase/migrations", arquivo), "utf8");
+    const json = sql.match(/\$json\$([\s\S]*?)\$json\$/)?.[1];
+    if (!json) throw new Error(`JSON de parâmetros não encontrado em ${arquivo}`);
+    return JSON.parse(json) as Record<string, unknown>;
+  };
+  const base = ler("20261114000100_estimativa_obra.sql");
+  const terreno = ler("20261116000100_estimativa_terreno_inclinado.sql");
+  return parametrosSchema.parse({
+    ...base,
+    adicionais: { ...(base.adicionais as Record<string, unknown>), ...terreno },
+  });
 }
 
 const linha = (uf: CubLinha["uf"], subtipo: string, padrao: CubLinha["padrao"], valor: number): CubLinha => ({

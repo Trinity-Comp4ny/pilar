@@ -368,3 +368,17 @@ export function coberturaDoMes(
     sem: UFS.filter((u) => !com.has(u)),
   };
 }
+
+/**
+ * O regime que o nome do arquivo sugere ("cub-sem-desoneracao.csv", "cub-desonerado.csv"), ou null se o
+ * nome não diz. Serve só para avisar quando o regime escolhido na tela é o outro.
+ */
+export function regimeSugeridoPeloNome(nome: string): Regime | null {
+  const k = nome
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  if (/sem[^a-z]?desoner|(^|[^a-z])onerad/.test(k)) return "onerado";
+  if (/com[^a-z]?desoner|desonerad/.test(k)) return "desonerado";
+  return null;
+}

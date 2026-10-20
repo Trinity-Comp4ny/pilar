@@ -60,6 +60,10 @@ para o cliente. Medida de sucesso: tempo até a primeira estimativa e % de estim
     bloqueados enquanto os parâmetros não estiverem validados (requisito 15).
 13. **Sem leitura de texto livre por IA.** A ficha vem só do assistente. A IA entra depois, lendo o PDF da planta
     (decisão de 2026-10-20), e consome os tokens do usuário.
+    13a. **Terreno inclinado.** A ficha informa o relevo do terreno (plano ou inclinado). Inclinado soma o muro de arrimo
+    (m² de parede, valor provisório por m²) e lista terraplenagem e fundação especial como "a definir", porque dependem
+    de levantamento topográfico e sondagem. Sem a medida do muro, o arrimo também fica "a definir".
+    13b. **Padrão médio.** O padrão "normal" do CUB aparece como "Médio" nas telas. Os dados continuam com a chave `normal`.
 14. **CUB mensal, com e sem desoneração.** O ultra admin importa a planilha do mês (UF × subtipo × padrão), uma por
     regime (sem desoneração, a série clássica, ou com desoneração). A estimativa usa o regime das premissas; sem
     escolha, sem desoneração. Regime sem tabela para o tipo de obra dá erro claro, sem cair no outro. A importação valida o formato

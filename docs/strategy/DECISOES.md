@@ -24,6 +24,18 @@ cliente por descuido. Fecha as suposições da [SPEC 135](../specs/135-diario-de
 
 ---
 
+## 2026-10-20 · Estimativa de obra: terreno inclinado, padrão médio e SINAPI como próximo passo
+
+**Decisão:** a ficha da estimativa passa a informar o relevo do terreno (inclinado soma muro de arrimo e deixa
+terraplenagem e fundação especial a definir), o padrão "normal" do CUB aparece como "Médio", e a Caixa (SINAPI) é o
+próximo passo para tirar os valores provisórios dos adicionais.
+
+Contexto: o primeiro teste real (casa de 461 m² em SP, terreno inclinado) mostrou que o modelo ignorava o relevo. O
+valor do muro de arrimo é provisório (não achei percentual confiável em fonte pública, só faixa de mercado de R$ 300 a
+R$ 2.500 por m²). Registrado em [BEZ-68](https://linear.app/bez-company/issue/BEZ-68).
+
+---
+
 ## 2026-10-20 · Estimativa de obra: CUB com e sem desoneração
 
 **Decisão:** o Pilar guarda o CUB nas duas versões que os Sinduscons publicam, sem desoneração (série clássica) e

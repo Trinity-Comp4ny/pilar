@@ -81,7 +81,7 @@ describe("CubImportacao", () => {
     render(<CubImportacao />);
     const user = await enviar(CSV_OK);
 
-    const botao = await screen.findByRole("button", { name: "Importar 2 linhas" });
+    const botao = await screen.findByRole("button", { name: "Importar 2 linhas sem desoneração" });
     expect(botao).toBeEnabled();
     await user.click(botao);
 
@@ -97,10 +97,29 @@ describe("CubImportacao", () => {
     expect(fonte).toBe("Planilha importada: cub.csv");
   });
 
+  it("a prévia diz o regime e o mês que serão gravados", async () => {
+    render(<CubImportacao />);
+    await enviar(CSV_OK);
+    expect(await screen.findByText("Sem desoneração, set/2026")).toBeInTheDocument();
+    expect(screen.queryByText(/O nome do arquivo sugere/)).not.toBeInTheDocument();
+  });
+
+  it("avisa quando o nome do arquivo sugere o outro regime", async () => {
+    render(<CubImportacao />);
+    const user = userEvent.setup();
+    await user.upload(
+      screen.getByLabelText("Planilha do CUB"),
+      new File([CSV_OK], "cub-2026-09-com-desoneracao.csv", { type: "text/csv" })
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "O nome do arquivo sugere CUB com desoneração, mas o regime escolhido é sem desoneração"
+    );
+  });
+
   it("depois de importar, a prévia some e volta a tela de importação", async () => {
     render(<CubImportacao />);
     const user = await enviar(CSV_OK);
-    await user.click(await screen.findByRole("button", { name: "Importar 2 linhas" }));
+    await user.click(await screen.findByRole("button", { name: "Importar 2 linhas sem desoneração" }));
     await waitFor(() => expect(screen.queryByText("cub.csv")).not.toBeInTheDocument());
   });
 

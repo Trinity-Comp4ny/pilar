@@ -12,6 +12,7 @@ import {
   coberturaDoMes,
   interpretarPlanilhaCub,
   opcoesMesBase,
+  regimeSugeridoPeloNome,
   resumirMeses,
   type LinhaCubLida,
   type ResumoMes,
@@ -25,7 +26,7 @@ import { useAcaoEmpresa } from "../hooks";
 const LINHAS_NA_PREVIA = 50;
 const ERROS_VISIVEIS = 30;
 
-const PADRAO_ROTULO: Record<string, string> = { baixo: "Baixo", normal: "Normal", alto: "Alto", unico: "Único" };
+const PADRAO_ROTULO: Record<string, string> = { baixo: "Baixo", normal: "Médio", alto: "Alto", unico: "Único" };
 const REGIME_ROTULO: Record<Regime, string> = { onerado: "Sem desoneração", desonerado: "Com desoneração" };
 
 const colunasPrevia: ColumnDef<LinhaCubLida>[] = [
@@ -101,6 +102,7 @@ export function CubImportacao() {
     () => (arquivo ? interpretarPlanilhaCub(arquivo.celulas, mes, regime) : null),
     [arquivo, mes, regime]
   );
+  const regimeDoNome = arquivo ? regimeSugeridoPeloNome(arquivo.nome) : null;
   const mesJaImportado = resumos.find((r) => r.mesBase === mes && r.regime === regime);
 
   const importar = useAcaoEmpresa({
@@ -251,6 +253,9 @@ export function CubImportacao() {
               <div className="flex flex-wrap items-center gap-2">
                 <FileSpreadsheet className="h-4 w-4 text-ink-soft" aria-hidden="true" />
                 <span className="text-sm font-medium text-ink">{arquivo.nome}</span>
+                <Badge variant="info">
+                  {REGIME_ROTULO[regime]}, {rotuloMesBase(mes)}
+                </Badge>
                 {!resultado.erroGeral && (
                   <>
                     <Badge variant="success">
@@ -264,6 +269,16 @@ export function CubImportacao() {
                   </>
                 )}
               </div>
+
+              {regimeDoNome && regimeDoNome !== regime && (
+                <p
+                  className="rounded-lg border border-warning-mid bg-warning-soft px-3 py-2 text-sm text-warning-strong"
+                  role="alert"
+                >
+                  O nome do arquivo sugere CUB {rotuloRegime(regimeDoNome)}, mas o regime escolhido é{" "}
+                  {rotuloRegime(regime)}. Confira antes de importar.
+                </p>
+              )}
 
               {resultado.erroGeral && (
                 <p
@@ -323,7 +338,7 @@ export function CubImportacao() {
                   }
                 >
                   {podeImportar
-                    ? `Importar ${formatNumber(resultado.linhas.length)} ${resultado.linhas.length === 1 ? "linha" : "linhas"}`
+                    ? `Importar ${formatNumber(resultado.linhas.length)} ${resultado.linhas.length === 1 ? "linha" : "linhas"} ${rotuloRegime(regime)}`
                     : "Importar"}
                 </Button>
               </div>

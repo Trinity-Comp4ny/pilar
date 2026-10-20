@@ -38,6 +38,7 @@ const TIPOS_OBRA = ["residencial", "comercial", "industrial"] as const;
 export type TipoObra = (typeof TIPOS_OBRA)[number];
 
 export const PADROES = ["baixo", "normal", "alto"] as const;
+const TOPOGRAFIAS = ["plano", "inclinado"] as const;
 export type Padrao = (typeof PADROES)[number];
 
 /** Versão do CUB: sem desoneração da folha (série clássica) ou com desoneração. */
@@ -82,6 +83,10 @@ export const fichaSchema = z
       .min(1, "Informe ao menos 1 pavimento")
       .max(120, "Confira os pavimentos"),
     terreno: z.number(NUMERO).min(0, "Não pode ser negativo").max(10_000_000, "Confira a área do terreno"),
+    /** Terreno em declive pede contenção e terraplenagem. Ausente (estimativa antiga) = plano. */
+    topografia: z.enum(TOPOGRAFIAS).default("plano"),
+    /** m² de parede de muro de arrimo (comprimento × altura média). 0 = ainda não medido. */
+    arrimo: z.number(NUMERO).min(0, "Não pode ser negativo").max(100_000, "Confira a área do muro").default(0),
     /** Mês previsto de início, `AAAA-MM`. */
     inicio: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Escolha o mês de início"),
     quartos: inteiro(99),
@@ -161,6 +166,7 @@ export const adicionalSchema = z.discriminatedUnion("tipo", [
   }),
   z.object({ ...adicionalBase, tipo: z.literal("por_m2_area_livre"), valor: z.number().min(0) }),
   z.object({ ...adicionalBase, tipo: z.literal("valor_fixo"), valor: z.number().min(0) }),
+  z.object({ ...adicionalBase, tipo: z.literal("por_m2_arrimo"), valor: z.number().min(0) }),
   z.object({ ...adicionalBase, tipo: z.literal("a_definir") }),
 ]);
 export type Adicional = z.infer<typeof adicionalSchema>;
@@ -173,6 +179,8 @@ export const ADICIONAIS_IDS = [
   "paisagismo",
   "elevador",
   "subsolo",
+  "arrimo",
+  "terraplenagem",
 ] as const;
 export type AdicionalId = (typeof ADICIONAIS_IDS)[number];
 
@@ -229,6 +237,9 @@ export const parametrosSchema = z
       paisagismo: adicionalSchema,
       elevador: adicionalSchema,
       subsolo: adicionalSchema,
+      // Terreno inclinado (BEZ-68). Opcionais: parâmetros gravados antes disso continuam válidos.
+      arrimo: adicionalSchema.optional(),
+      terraplenagem: adicionalSchema.optional(),
     }),
   })
   .superRefine((p, ctx) => {

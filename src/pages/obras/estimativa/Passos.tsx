@@ -3,7 +3,7 @@ import { useMemo, type ReactNode } from "react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { avisosCoerencia, type SaidaCalculo } from "@/lib/estimativaObra";
+import { avisosCoerencia, rotuloPadrao, type SaidaCalculo } from "@/lib/estimativaObra";
 import { PADROES, SUBTIPOS, type Ficha, type Padrao, type TipoObra } from "@/schemas/estimativaObra";
 import { Campo, CampoNumero, Contador, Pilula } from "./componentes";
 import {
@@ -241,9 +241,42 @@ export function PassoLocal({
           erro={erros.terreno}
         />
       </Campo>
+      <fieldset className="sm:col-span-2">
+        <legend className="mb-1.5 text-sm font-medium text-ink-soft">Relevo do terreno</legend>
+        <div className="flex flex-wrap gap-2">
+          {TOPOGRAFIAS_OPCOES.map((t) => (
+            <Pilula key={t.valor} ativa={ficha.topografia === t.valor} onClick={() => atualizar("topografia", t.valor)}>
+              {t.rotulo}
+            </Pilula>
+          ))}
+        </div>
+        {ficha.topografia === "inclinado" && (
+          <div className="mt-3 sm:max-w-[calc(50%-0.5rem)]">
+            <Campo
+              id="est-arrimo"
+              rotulo="Muro de arrimo"
+              dica="Comprimento vezes altura média, em m². Sem a medida, o item fica a definir. Terraplenagem e fundação especial dependem de levantamento topográfico e sondagem."
+              erro={erros.arrimo}
+            >
+              <CampoNumero
+                id="est-arrimo"
+                valor={ficha.arrimo}
+                onChange={(n) => atualizar("arrimo", n)}
+                sufixo="m²"
+                erro={erros.arrimo}
+              />
+            </Campo>
+          </div>
+        )}
+      </fieldset>
     </div>
   );
 }
+
+const TOPOGRAFIAS_OPCOES: { valor: Ficha["topografia"]; rotulo: string }[] = [
+  { valor: "plano", rotulo: "Plano" },
+  { valor: "inclinado", rotulo: "Inclinado, precisa de contenção" },
+];
 
 const NIVEIS_MARCENARIA: { valor: Ficha["marcenaria"]; rotulo: string }[] = [
   { valor: "nenhuma", rotulo: "Nenhuma" },
@@ -425,7 +458,7 @@ export function PassoRevisao({
         />
         <LinhaRevisao
           rotulo="Obra"
-          valor={`${TIPO_INFO[ficha.tipo].nome} · ${subtipo.nome} · padrão ${ficha.padrao}`}
+          valor={`${TIPO_INFO[ficha.tipo].nome} · ${subtipo.nome} · padrão ${rotuloPadrao(ficha.padrao)}`}
           passo="tipo"
           onEditar={onEditar}
         />
@@ -438,6 +471,18 @@ export function PassoRevisao({
         <LinhaRevisao
           rotulo="Tamanho"
           valor={`${ficha.area.toLocaleString("pt-BR")} m² em ${ficha.pavimentos} pavimento${ficha.pavimentos > 1 ? "s" : ""} · terreno de ${ficha.terreno.toLocaleString("pt-BR")} m²`}
+          passo="local"
+          onEditar={onEditar}
+        />
+        <LinhaRevisao
+          rotulo="Terreno"
+          valor={
+            ficha.topografia === "inclinado"
+              ? ficha.arrimo > 0
+                ? `inclinado, com ${ficha.arrimo.toLocaleString("pt-BR")} m² de muro de arrimo`
+                : "inclinado, muro de arrimo a medir"
+              : "plano"
+          }
           passo="local"
           onEditar={onEditar}
         />
