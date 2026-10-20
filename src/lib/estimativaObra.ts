@@ -180,6 +180,9 @@ export function avisosCoerencia(ficha: Ficha): string[] {
       `${ficha.suites} ${ficha.suites === 1 ? "suíte" : "suítes"} em ${formatarNumero(ficha.area)} m² fica abaixo do usual. Confira a área construída ou o número de suítes.`
     );
   }
+  if (ficha.suites > ficha.quartos) {
+    avisos.push("Há mais suítes do que quartos. Toda suíte é um quarto: confira os dois números.");
+  }
   if (ficha.suites > ficha.banheiros) {
     avisos.push("Há mais suítes do que banheiros. Confira o número de banheiros.");
   }

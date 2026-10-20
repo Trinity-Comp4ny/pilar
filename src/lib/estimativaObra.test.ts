@@ -538,6 +538,12 @@ describe("avisos", () => {
     expect(avisos.join(" ")).toMatch(/5 suítes em 90 m²/);
   });
 
+  it("coerência: mais suítes do que quartos", () => {
+    const avisos = avisosCoerencia({ ...sobrado, quartos: 3, suites: 4, banheiros: 5 });
+    expect(avisos.join(" ")).toMatch(/mais suítes do que quartos/);
+    expect(avisosCoerencia({ ...sobrado, quartos: 4, suites: 4 })).toEqual([]);
+  });
+
   it("coerência: mais suítes do que banheiros, área por pavimento e piscina grande", () => {
     expect(avisosCoerencia({ ...sobrado, suites: 4, banheiros: 2 }).join(" ")).toMatch(/mais suítes do que banheiros/);
     expect(avisosCoerencia({ ...sobrado, area: 50, pavimentos: 3, suites: 0 }).join(" ")).toMatch(
