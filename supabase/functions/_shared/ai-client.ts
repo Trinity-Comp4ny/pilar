@@ -303,6 +303,7 @@ async function fetchGeminiRaw(
     deadline?: number;
     files?: Array<{ mimeType: string; dataBase64: string }>;
     maxOutputTokens?: number;
+    semRaciocinio?: boolean;
     conversationId?: string;
     empresaId?: string;
   } = {}
@@ -331,7 +332,11 @@ async function fetchGeminiRaw(
         parts: userParts,
       },
     ],
-    generationConfig: configDeGeracao(alvo.modelo, { modo: "json", maxOutputTokens: opts.maxOutputTokens ?? 4096 }),
+    generationConfig: configDeGeracao(alvo.modelo, {
+      modo: "json",
+      maxOutputTokens: opts.maxOutputTokens ?? 4096,
+      semRaciocinio: opts.semRaciocinio,
+    }),
   };
 
   // Teto desta chamada: o menor entre o limite por chamada e o que resta do orçamento total.
@@ -421,6 +426,8 @@ interface OpcoesChamada {
   deadline?: number;
   files?: Array<{ mimeType: string; dataBase64: string }>;
   maxOutputTokens?: number;
+  /** Gemini 2.5: sem orçamento de raciocínio (transcrição). O gateway segue o padrão dele. */
+  semRaciocinio?: boolean;
   conversationId?: string;
   empresaId?: string;
 }
@@ -795,8 +802,9 @@ export interface StructuredResult<T> {
  */
 export async function callGeminiStructured<T>(
   request: AiRequest,
-  schema: z.ZodType<T>,
-  opts: { maxRetries?: number; maxOutputTokens?: number } = {}
+  // Input `unknown`: o schema pode ter `.default()`/`.transform()` (entrada opcional, saída completa).
+  schema: z.ZodType<T, z.ZodTypeDef, unknown>,
+  opts: { maxRetries?: number; maxOutputTokens?: number; semRaciocinio?: boolean } = {}
 ): Promise<StructuredResult<T>> {
   const maxRetries = opts.maxRetries ?? 2;
   const alvo = resolverModelo(request.tipo);
@@ -829,6 +837,7 @@ export async function callGeminiStructured<T>(
         deadline,
         files: request.files,
         maxOutputTokens: opts.maxOutputTokens,
+        semRaciocinio: opts.semRaciocinio,
         conversationId: request.conversationId,
         empresaId: request.empresaId,
       });

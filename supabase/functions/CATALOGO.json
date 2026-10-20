@@ -41,6 +41,10 @@
     "dominio": "jobs",
     "descricao": "Disparada pelo trigger de notificacoes (pg_net): manda por e-mail, na hora, cada aviso de plataforma do ultra admin (feedback, novo cadastro, ativar plano bloqueado). SPEC 113."
   },
+  "campo-registro-criar": {
+    "dominio": "campo",
+    "descricao": "Registro de obra do Pilar Campo (áudio, foto, texto), autorizado pelo token de campo: guarda e responde na hora, a IA organiza em segundo plano. SPEC 135."
+  },
   "campo-upload-foto": {
     "dominio": "campo",
     "descricao": "Upload de foto do Pilar Campo, autorizado pelo token de campo (conta sem usuário Supabase)."
@@ -149,6 +153,10 @@
   "reconciliar-assinaturas": {
     "dominio": "jobs",
     "descricao": "Cron diário: compara cada assinatura do Pilar com o Asaas e avisa o ultra admin das divergências (SPEC 114)."
+  },
+  "registro-reprocessar": {
+    "dominio": "campo",
+    "descricao": "Tentar de novo a organização de um registro de obra que falhou; vale para o escritório (JWT) e para o campo (token). SPEC 135."
   },
   "resend-webhook": {
     "dominio": "comunicacao",

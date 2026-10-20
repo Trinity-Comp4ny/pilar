@@ -13,6 +13,13 @@ Deno.test("configDeGeracao: JSON sai com temperatura 0 e teto de raciocínio em 
   assertEquals(guardiao.thinkingConfig, { thinkingBudget: 512 });
 });
 
+Deno.test("configDeGeracao: semRaciocinio zera o orçamento só na família 2.5", () => {
+  const c = configDeGeracao("gemini-2.5-flash", { modo: "json", maxOutputTokens: 4096, semRaciocinio: true });
+  assertEquals(c.thinkingConfig, { thinkingBudget: 0 });
+  const outro = configDeGeracao("gemini-3.8-flash", { modo: "json", maxOutputTokens: 4096, semRaciocinio: true });
+  assertEquals("thinkingConfig" in outro, false);
+});
+
 Deno.test("configDeGeracao: texto livre mantém 0.7 e não pede JSON", () => {
   const c = configDeGeracao("gemini-2.5-flash", { modo: "texto", maxOutputTokens: 4096 });
   assertEquals(c.temperature, 0.7);
