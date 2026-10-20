@@ -5,24 +5,25 @@
 // inteiros e distribuído por maior resto, para as somas fecharem exatamente: etapas + adicionais +
 // taxa = provável, natureza = provável, fases = provável e desembolso = provável.
 import type { ZodType, ZodTypeDef } from "zod";
+import { centavos, reais, somar, formatarNumero } from "./estimativaAritmetica";
+import { FAIXA_PROVISORIA_PADRAO, linhaDoAdicional, mesclarAjustes, type ContextoLinha } from "./estimativaItens";
 import {
   ADICIONAIS_IDS,
   PADROES,
   SUBTIPOS,
-  adicionalSchema,
   ajustesEmpresaSchema,
   cubLinhaSchema,
   fichaSchema,
   parametrosSchema,
   premissasSchema,
   type Adicional,
-  type AdicionalId,
   type AjustesEmpresa,
   type CubLinha,
   type Ficha,
   type Padrao,
   type Parametros,
   type Premissas,
+  type PrecoSinapi,
   type Regime,
   type ResultadoEstimativa,
   type Uf,
@@ -40,6 +41,8 @@ export interface EntradaCalculo {
   cub: CubLinha[];
   parametros: Parametros;
   ajustes?: AjustesEmpresa | null;
+  /** Preços de insumo do SINAPI dos itens do catálogo (qualquer UF, regime e mês); o motor escolhe o que vale. */
+  precosSinapi?: PrecoSinapi[];
   /** Calcula como se a ficha tivesse outro padrão (comparar cenários). */
   padraoCenario?: Padrao;
   /** `estimativa_parametros.validado_em` não nulo. */
@@ -158,7 +161,7 @@ export function descreverAdicional(a: Adicional): string {
     case "por_m2_arrimo":
       return `${brl0(a.valor)} por m² de muro de arrimo`;
     case "a_definir":
-      return "a definir";
+      return a.sinapi ? `a definir, ou preço do SINAPI (insumo ${a.sinapi.codigo})` : "a definir";
   }
 }
 
@@ -174,6 +177,7 @@ export function fichaInicial(inicio: string, uf: Uf = "SP"): Ficha {
     terreno: 300,
     topografia: "plano",
     arrimo: 0,
+    itens: {},
     inicio,
     quartos: 3,
     suites: 1,
@@ -216,10 +220,6 @@ export function avisosCoerencia(ficha: Ficha): string[] {
 
 // ── Aritmética em centavos ───────────────────────────────────────────────────
 
-const centavos = (reais: number) => Math.round(reais * 100);
-const reais = (cents: number) => cents / 100;
-const somar = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
-
 /** Divide `total` (centavos) proporcionalmente aos pesos, sem perder nem criar centavo (maior resto). */
 export function distribuir(total: number, pesos: number[]): number[] {
   const n = pesos.length;
@@ -233,10 +233,6 @@ export function distribuir(total: number, pesos: number[]): number[] {
   const ordem = brutos.map((b, i) => ({ i, frac: b - partes[i] })).sort((a, b) => b.frac - a.frac || a.i - b.i);
   for (let k = 0; k < sobra; k++) partes[ordem[k % n].i] += 1;
   return partes;
-}
-
-function formatarNumero(n: number): string {
-  return String(Math.round(n * 100) / 100).replace(".", ",");
 }
 
 // ── Datas (UTC, sem relógio) ─────────────────────────────────────────────────
@@ -301,113 +297,6 @@ function escolherCub(
   return { erro: "sem_cub" };
 }
 
-// ── Adicionais ───────────────────────────────────────────────────────────────
-
-type AvisoSaida = ResultadoEstimativa["avisos"][number];
-
-function mesclarAjustes(
-  parametros: Parametros,
-  ajustes: AjustesEmpresa | null | undefined,
-  avisos: AvisoSaida[]
-): Partial<Record<AdicionalId, Adicional>> {
-  const saida: Partial<Record<AdicionalId, Adicional>> = {};
-  for (const id of ADICIONAIS_IDS) {
-    const base = parametros.adicionais[id];
-    // Parâmetro que o banco ainda não tem (ex.: terreno inclinado antes da migration): o adicional não existe.
-    if (!base) continue;
-    const ajuste = ajustes?.adicionais?.[id];
-    if (!ajuste || Object.keys(ajuste).length === 0) {
-      saida[id] = base;
-      continue;
-    }
-    // O ajuste só muda valores: tipo e fase seguem os parâmetros do Pilar.
-    const mesclado = adicionalSchema.safeParse({ ...base, ...ajuste, tipo: base.tipo, fase: base.fase });
-    if (mesclado.success) {
-      saida[id] = mesclado.data;
-    } else {
-      saida[id] = base;
-      avisos.push({
-        codigo: "ajuste_ignorado",
-        mensagem: `O ajuste da empresa para ${base.rotulo.toLowerCase()} é inválido e foi ignorado. Vale o valor de referência.`,
-      });
-    }
-  }
-  return saida;
-}
-
-interface LinhaAdicional {
-  id: AdicionalId;
-  rotulo: string;
-  nota: string | null;
-  fase: string;
-  servicos: string[];
-  /** null = "a definir". */
-  cents: number | null;
-}
-
-/** Qual adicional entra na ficha, e quanto vale. null = não se aplica a esta obra. */
-function linhaDoAdicional(
-  id: AdicionalId,
-  a: Adicional,
-  ficha: Ficha,
-  padrao: Padrao,
-  baseCents: number
-): LinhaAdicional | null {
-  const residencial = ficha.tipo === "residencial";
-  const aplica: Record<AdicionalId, boolean> = {
-    fundacao: true,
-    piscina: residencial && ficha.piscina > 0,
-    gourmet: residencial && ficha.gourmet,
-    marcenaria: ficha.marcenaria !== "nenhuma",
-    paisagismo: ficha.paisagismo,
-    elevador: ficha.elevador,
-    subsolo: ficha.subsolo,
-    arrimo: ficha.topografia === "inclinado",
-    terraplenagem: ficha.topografia === "inclinado",
-  };
-  if (!aplica[id]) return null;
-
-  let cents: number | null;
-  let rotulo = a.rotulo;
-  switch (a.tipo) {
-    case "percentual_base": {
-      const pct = ficha.tipo === "industrial" && a.valor_industrial != null ? a.valor_industrial : a.valor;
-      cents = Math.round((baseCents * pct) / 100);
-      break;
-    }
-    case "por_m2":
-      cents = centavos(ficha.piscina * a.valor);
-      rotulo = `${a.rotulo} (${formatarNumero(ficha.piscina)} m²)`;
-      break;
-    case "por_padrao":
-      cents = centavos(a.valores[padrao]);
-      break;
-    case "percentual_base_por_nivel": {
-      const nivel = ficha.marcenaria === "basica" ? "basica" : "completa";
-      cents = Math.round((baseCents * a.valores[nivel]) / 100);
-      rotulo = `${a.rotulo} ${nivel === "basica" ? "básica" : "completa"}`;
-      break;
-    }
-    case "por_m2_area_livre": {
-      const livre = Math.max(0, ficha.terreno - ficha.area / ficha.pavimentos);
-      cents = centavos(livre * a.valor);
-      break;
-    }
-    case "valor_fixo":
-      cents = centavos(a.valor);
-      break;
-    case "por_m2_arrimo":
-      // Sem a medida do muro não há como calcular: fica "a definir", e o aviso diz o que falta.
-      cents = ficha.arrimo > 0 ? centavos(ficha.arrimo * a.valor) : null;
-      if (ficha.arrimo > 0) rotulo = `${a.rotulo} (${formatarNumero(ficha.arrimo)} m²)`;
-      break;
-    case "a_definir":
-      cents = null;
-      break;
-  }
-  return { id, rotulo, nota: a.nota ?? null, fase: a.fase, servicos: a.servicos, cents };
-}
-
 // ── Cálculo ──────────────────────────────────────────────────────────────────
 
 export function calcularEstimativa(entrada: EntradaCalculo): SaidaCalculo {
@@ -443,7 +332,7 @@ export function calcularEstimativa(entrada: EntradaCalculo): SaidaCalculo {
         };
   }
 
-  const avisos: AvisoSaida[] = [];
+  const avisos: ResultadoEstimativa["avisos"] = [];
   const { linha, origem, mesAntigo } = escolha;
 
   // Premissas
@@ -475,11 +364,19 @@ export function calcularEstimativa(entrada: EntradaCalculo): SaidaCalculo {
     parametros.etapas.map((e) => e.percentual)
   );
 
-  // Adicionais
-  const adicionais = mesclarAjustes(parametros, entrada.ajustes, avisos);
+  // Adicionais e itens do catálogo, cada um com a origem do preço
+  const ajustesMesclados = mesclarAjustes(parametros, entrada.ajustes, avisos);
+  const contexto: ContextoLinha = {
+    ficha,
+    padrao,
+    baseCents,
+    premissas: entrada.premissas,
+    regime,
+    precosSinapi: entrada.precosSinapi ?? [],
+  };
   const linhasAdicionais = ADICIONAIS_IDS.flatMap((id) => {
-    const adicional = adicionais[id];
-    const l = adicional ? linhaDoAdicional(id, adicional, ficha, padrao, baseCents) : null;
+    const emp = ajustesMesclados[id];
+    const l = emp ? linhaDoAdicional(id, emp.adicional, emp, contexto) : null;
     return l ? [l] : [];
   });
   for (const l of linhasAdicionais) {
@@ -492,12 +389,34 @@ export function calcularEstimativa(entrada: EntradaCalculo): SaidaCalculo {
   }
   const adicionaisCents = somar(linhasAdicionais.map((l) => l.cents ?? 0));
 
+  // Origem do preço: quanto do total tem fonte verificável e quanto é referência provisória
+  const porOrigem = { sinapi: 0, empresa: 0, usuario: 0, referencia_pilar: 0 };
+  for (const l of linhasAdicionais) {
+    if (l.cents !== null && l.origem.tipo !== "a_definir") porOrigem[l.origem.tipo] += l.cents;
+  }
+  const subtotalParaOrigem = baseCents + adicionaisCents;
+  const provisoriaPct = (porOrigem.referencia_pilar / subtotalParaOrigem) * 100;
+  const verificavelPct =
+    ((baseCents + porOrigem.sinapi + porOrigem.empresa + porOrigem.usuario) / subtotalParaOrigem) * 100;
+  const regra = parametros.faixa_extra_provisoria ?? FAIXA_PROVISORIA_PADRAO;
+  const faixaExtra = Math.min(
+    regra.max_pontos,
+    Math.max(0, Math.round((provisoriaPct - regra.acima_de_pct) / regra.a_cada_pct) * regra.pontos)
+  );
+  if (faixaExtra > 0) {
+    avisos.push({
+      codigo: "faixa_provisoria",
+      mensagem: `${formatarNumero(Math.round(provisoriaPct * 10) / 10)}% do total usa referência provisória do Pilar, sem fonte pública, então a faixa ficou ${formatarNumero(faixaExtra)} ${faixaExtra === 1 ? "ponto percentual" : "pontos percentuais"} mais larga. Informe o valor dos itens ou use a tabela de preços da empresa para estreitar.`,
+    });
+  }
+
   // Totais
   const subtotalCents = baseCents + adicionaisCents;
   const taxaCents = Math.round((subtotalCents * admPct) / 100);
   const provavelCents = subtotalCents + taxaCents;
-  const minimoCents = Math.round((provavelCents * (100 - faixaPct)) / 100);
-  const maximoCents = Math.round((provavelCents * (100 + faixaPct)) / 100);
+  const faixaFinal = faixaPct + faixaExtra;
+  const minimoCents = Math.round((provavelCents * (100 - faixaFinal)) / 100);
+  const maximoCents = Math.round((provavelCents * (100 + faixaFinal)) / 100);
 
   // Natureza do custo
   const nb = parametros.natureza_base;
@@ -602,7 +521,7 @@ export function calcularEstimativa(entrada: EntradaCalculo): SaidaCalculo {
       provavel: reais(provavelCents),
       minimo: reais(minimoCents),
       maximo: reais(maximoCents),
-      faixaPct,
+      faixaPct: faixaFinal,
       porM2: Math.round(provavelCents / ficha.area) / 100,
       base: reais(baseCents),
       subtotal: reais(subtotalCents),
@@ -630,7 +549,22 @@ export function calcularEstimativa(entrada: EntradaCalculo): SaidaCalculo {
         fase: l.fase,
         valor: l.cents === null ? null : reais(l.cents),
         aDefinir: l.cents === null,
+        quantidade: l.quantidade,
+        unidade: l.unidade,
+        valorUnitario: l.valorUnitarioCents === null ? null : reais(l.valorUnitarioCents),
+        origem: l.origem,
       })),
+      origens: {
+        cub: reais(baseCents),
+        sinapi: reais(porOrigem.sinapi),
+        empresa: reais(porOrigem.empresa),
+        usuario: reais(porOrigem.usuario),
+        referenciaPilar: reais(porOrigem.referencia_pilar),
+        aDefinir: linhasAdicionais.filter((l) => l.cents === null).length,
+        verificavelPct: Math.round(verificavelPct * 100) / 100,
+        provisoriaPct: Math.round(provisoriaPct * 100) / 100,
+        faixaExtraPontos: faixaExtra,
+      },
       natureza,
       fases,
       desembolso: desembolsoCents.map((v, i) => ({ mes: mesIso(anoIni, mesIdx0 + i), valor: reais(v) })),

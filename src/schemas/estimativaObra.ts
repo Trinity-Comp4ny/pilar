@@ -101,6 +101,10 @@ export const fichaSchema = z
     subsolo: z.boolean(),
     paisagismo: z.boolean(),
     marcenaria: z.enum(NIVEIS_MARCENARIA),
+    /** Quantidade por item do catálogo (ex.: `ac12: 6` aparelhos de 12.000 BTU). Ausente = nenhum. */
+    itens: z
+      .record(z.string(), z.number(NUMERO).min(0, "Não pode ser negativo").max(100_000, "Confira a quantidade"))
+      .default({}),
   })
   .superRefine((f, ctx) => {
     if (!SUBTIPOS[f.tipo][f.subtipo]) {
@@ -120,6 +124,13 @@ export const premissasSchema = z.object({
   equipe: z.number().int().min(1).max(200).optional(),
   /** Versão do CUB. Ausente = onerado (sem desoneração), a mais conservadora. */
   regime: z.enum(REGIMES).optional(),
+  /** Valor unitário informado pelo usuário por item do catálogo (vale só nesta estimativa). */
+  valores: z
+    .record(
+      z.string(),
+      z.object({ valor_unitario: z.number().positive().max(1_000_000_000), nota: z.string().max(200).optional() })
+    )
+    .optional(),
 });
 export type Premissas = z.infer<typeof premissasSchema>;
 
@@ -144,6 +155,12 @@ const adicionalBase = {
   /** Fase do cronograma em que o custo entra (id de `fases`). */
   fase: z.string().min(1),
   servicos: z.array(z.string().min(1)),
+  /** Catálogo (SPEC 137): grupo na tela, unidade da quantidade e insumo do SINAPI que dá o preço. */
+  categoria: z.string().optional(),
+  unidade: z.string().optional(),
+  sinapi: z.object({ codigo: z.number().int().positive() }).optional(),
+  /** `dentro_do_cub` não soma: o CUB já cobre. Ausente = fora do CUB. */
+  escopo: z.enum(["fora_do_cub", "dentro_do_cub"]).optional(),
 };
 
 export const adicionalSchema = z.discriminatedUnion("tipo", [
@@ -181,6 +198,15 @@ export const ADICIONAIS_IDS = [
   "subsolo",
   "arrimo",
   "terraplenagem",
+  // Itens do catálogo com quantidade (SPEC 137): preço do SINAPI, do usuário ou da empresa.
+  "ac9",
+  "ac12",
+  "ac18",
+  "ac24",
+  "acinst",
+  "aqsolar",
+  "fv",
+  "automacao",
 ] as const;
 export type AdicionalId = (typeof ADICIONAIS_IDS)[number];
 
@@ -240,7 +266,25 @@ export const parametrosSchema = z
       // Terreno inclinado (BEZ-68). Opcionais: parâmetros gravados antes disso continuam válidos.
       arrimo: adicionalSchema.optional(),
       terraplenagem: adicionalSchema.optional(),
+      // Catálogo de itens fora do CUB (SPEC 137): opcionais pelo mesmo motivo.
+      ac9: adicionalSchema.optional(),
+      ac12: adicionalSchema.optional(),
+      ac18: adicionalSchema.optional(),
+      ac24: adicionalSchema.optional(),
+      acinst: adicionalSchema.optional(),
+      aqsolar: adicionalSchema.optional(),
+      fv: adicionalSchema.optional(),
+      automacao: adicionalSchema.optional(),
     }),
+    /** Faixa mais larga quando muito do total é referência provisória (SPEC 137). Ausente = padrão do motor. */
+    faixa_extra_provisoria: z
+      .object({
+        acima_de_pct: z.number().min(0).max(100),
+        a_cada_pct: z.number().positive().max(100),
+        pontos: z.number().min(0).max(20),
+        max_pontos: z.number().min(0).max(30),
+      })
+      .optional(),
   })
   .superRefine((p, ctx) => {
     const fora = (caminho: (string | number)[], message: string) =>
@@ -288,7 +332,41 @@ const CODIGOS_AVISO = [
   "ajuste_ignorado",
   "parametros_nao_validados",
   "coerencia",
+  "faixa_provisoria",
 ] as const;
+
+/** Origem do preço de uma linha de custo (ADR 0064). Toda linha tem uma. */
+const origemLinhaSchema = z.discriminatedUnion("tipo", [
+  z.object({
+    tipo: z.literal("sinapi"),
+    codigo: z.number().int(),
+    uf: z.enum(UFS),
+    mesBase: z.string(),
+    regime: z.enum(REGIMES),
+    nivel: z.enum(["coletado", "derivado"]),
+    descricao: z.string(),
+    unidade: z.string(),
+    valorUnitario: z.number(),
+  }),
+  z.object({ tipo: z.literal("empresa") }),
+  z.object({ tipo: z.literal("usuario"), nota: z.string().optional() }),
+  z.object({ tipo: z.literal("referencia_pilar") }),
+  z.object({ tipo: z.literal("a_definir") }),
+]);
+export type OrigemLinha = z.infer<typeof origemLinhaSchema>;
+
+/** Uma linha de `sinapi_precos_insumo`: preço de um insumo do SINAPI na UF, regime e mês-base. */
+export interface PrecoSinapi {
+  codigo: number;
+  uf: Uf;
+  regime: Regime;
+  mes_base: string;
+  valor: number;
+  /** C = coletado em pesquisa de preço; CR = derivado de um coletado. */
+  origem: "C" | "CR";
+  descricao: string;
+  unidade: string;
+}
 
 export const resultadoSchema = z.object({
   versaoMotor: z.literal(1),
@@ -325,8 +403,26 @@ export const resultadoSchema = z.object({
       fase: z.string(),
       valor: z.number().nullable(),
       aDefinir: z.boolean(),
+      // Resultados salvos antes da origem existir leem como referência provisória do Pilar.
+      quantidade: z.number().default(1),
+      unidade: z.string().nullable().default(null),
+      valorUnitario: z.number().nullable().default(null),
+      origem: origemLinhaSchema.default({ tipo: "referencia_pilar" }),
     })
   ),
+  origens: z
+    .object({
+      cub: z.number(),
+      sinapi: z.number(),
+      empresa: z.number(),
+      usuario: z.number(),
+      referenciaPilar: z.number(),
+      aDefinir: z.number().int(),
+      verificavelPct: z.number(),
+      provisoriaPct: z.number(),
+      faixaExtraPontos: z.number(),
+    })
+    .optional(),
   natureza: z.array(z.object({ id: z.string(), rotulo: z.string(), valor: z.number() })),
   fases: z.array(
     z.object({

@@ -22,6 +22,7 @@ import {
   resultadoSchema,
   type CubLinha,
   type Ficha,
+  type PrecoSinapi,
   type ResultadoEstimativa,
 } from "@/schemas/estimativaObra";
 
@@ -737,5 +738,205 @@ describe("natureza do custo contra a composição oficial do CUB (BEZ-68)", () =
     expect(Math.abs(nb.material - medias.material)).toBeLessThan(2);
     expect(Math.abs(nb.mao_de_obra - medias.mao_de_obra)).toBeLessThan(2);
     expect(Math.abs(nb.despesas - medias.despesas)).toBeLessThan(2);
+  });
+});
+
+describe("calcularEstimativa: itens do catálogo e origem do preço (SPEC 137)", () => {
+  const sinapi = (codigo: number, valor: number, extra: Partial<PrecoSinapi> = {}): PrecoSinapi => ({
+    codigo,
+    uf: "SP",
+    regime: "onerado",
+    mes_base: "2026-09-01",
+    valor,
+    origem: "CR",
+    descricao: "Insumo de teste",
+    unidade: "UN",
+    ...extra,
+  });
+  const comItens = (itens: Record<string, number>): Ficha => ({ ...sobrado, itens });
+  const linha = (r: ResultadoEstimativa, id: string) => r.adicionais.find((a) => a.id === id);
+
+  it("toda linha de custo traz a origem do preço", () => {
+    const r = calcular({
+      ficha: { ...completo, itens: { ac9: 2, fv: 8 }, topografia: "inclinado", arrimo: 40 },
+      precosSinapi: [sinapi(42424, 1942.58)],
+    });
+    expect(r.adicionais.length).toBeGreaterThan(5);
+    for (const l of r.adicionais)
+      expect(l.origem.tipo).toMatch(/^(sinapi|empresa|usuario|referencia_pilar|a_definir)$/);
+    expect(r.adicionais.filter((l) => l.aDefinir).every((l) => l.origem.tipo === "a_definir")).toBe(true);
+  });
+
+  it("item com preço do SINAPI na UF e no regime da obra multiplica quantidade por preço e cita a fonte", () => {
+    const r = calcular({ ficha: comItens({ ac9: 3 }), precosSinapi: [sinapi(42424, 1942.58)] });
+    const ac = linha(r, "ac9");
+    expect(ac?.valor).toBe(5827.74);
+    expect(ac?.quantidade).toBe(3);
+    expect(ac?.valorUnitario).toBe(1942.58);
+    expect(ac?.rotulo).toBe("Ar-condicionado split 9.000 BTU (3 uns)");
+    expect(ac?.origem).toMatchObject({
+      tipo: "sinapi",
+      codigo: 42424,
+      uf: "SP",
+      mesBase: "2026-09-01",
+      regime: "onerado",
+      nivel: "derivado",
+      valorUnitario: 1942.58,
+    });
+  });
+
+  it("no regime desonerado vale o preço desonerado, e o mês mais recente vence", () => {
+    const r = calcular({
+      ficha: comItens({ ac9: 1 }),
+      premissas: { regime: "desonerado" },
+      precosSinapi: [
+        sinapi(42424, 1900, { regime: "desonerado", mes_base: "2026-08-01" }),
+        sinapi(42424, 1950, { regime: "desonerado", mes_base: "2026-09-01", origem: "C" }),
+        sinapi(42424, 2500),
+      ],
+    });
+    const origem = linha(r, "ac9")?.origem;
+    expect(linha(r, "ac9")?.valor).toBe(1950);
+    expect(origem).toMatchObject({ tipo: "sinapi", regime: "desonerado", mesBase: "2026-09-01", nivel: "coletado" });
+  });
+
+  it("sem preço do SINAPI na UF da obra o item fica a definir, sem emprestar de outra UF", () => {
+    const r = calcular({
+      ficha: { ...comItens({ ac9: 2 }), uf: "MG" },
+      precosSinapi: [sinapi(42424, 1942.58)],
+    });
+    const ac = linha(r, "ac9");
+    expect(ac?.valor).toBeNull();
+    expect(ac?.aDefinir).toBe(true);
+    expect(ac?.origem).toEqual({ tipo: "a_definir" });
+  });
+
+  it("valor do usuário vale mais que o da empresa, que vale mais que o SINAPI", () => {
+    const base = { ficha: comItens({ ac9: 2 }), precosSinapi: [sinapi(42424, 1942.58)] };
+    const empresa = calcular({ ...base, ajustes: { adicionais: { ac9: { valor_unitario: 2100 } } } });
+    expect(linha(empresa, "ac9")?.valor).toBe(4200);
+    expect(linha(empresa, "ac9")?.origem.tipo).toBe("empresa");
+
+    const usuario = calcular({
+      ...base,
+      ajustes: { adicionais: { ac9: { valor_unitario: 2100 } } },
+      premissas: { valores: { ac9: { valor_unitario: 2300, nota: "orçamento do fornecedor" } } },
+    });
+    expect(linha(usuario, "ac9")?.valor).toBe(4600);
+    expect(linha(usuario, "ac9")?.origem).toEqual({ tipo: "usuario", nota: "orçamento do fornecedor" });
+  });
+
+  it("valor unitário inválido da empresa é ignorado com aviso", () => {
+    const r = calcular({
+      ficha: comItens({ ac9: 1 }),
+      precosSinapi: [sinapi(42424, 1942.58)],
+      ajustes: { adicionais: { ac9: { valor_unitario: -5 } } },
+    });
+    expect(linha(r, "ac9")?.origem.tipo).toBe("sinapi");
+    expect(r.avisos.some((a) => a.codigo === "ajuste_ignorado")).toBe(true);
+  });
+
+  it("item sem preço em nenhuma fonte fica a definir e não entra no total", () => {
+    const sem = calcular({ ficha: sobrado });
+    const r = calcular({ ficha: comItens({ fv: 8 }) });
+    const fv = linha(r, "fv");
+    expect(fv?.aDefinir).toBe(true);
+    expect(fv?.rotulo).toBe("Energia solar fotovoltaica (8 kWp)");
+    expect(r.provavel).toBe(sem.provavel);
+    expect(r.avisos.some((a) => a.codigo === "adicional_a_definir")).toBe(true);
+  });
+
+  it("a instalação do ar-condicionado usa a soma dos aparelhos como quantidade", () => {
+    const r = calcular({
+      ficha: comItens({ ac9: 2, ac12: 3, ac24: 1 }),
+      ajustes: { adicionais: { acinst: { valor_unitario: 800 } } },
+    });
+    const inst = linha(r, "acinst");
+    expect(inst?.quantidade).toBe(6);
+    expect(inst?.valor).toBe(4800);
+    expect(inst?.origem.tipo).toBe("empresa");
+  });
+
+  it("quantidade zero tira o item da estimativa", () => {
+    const r = calcular({ ficha: comItens({ ac9: 0 }), precosSinapi: [sinapi(42424, 1942.58)] });
+    expect(linha(r, "ac9")).toBeUndefined();
+    expect(linha(r, "acinst")).toBeUndefined();
+  });
+
+  it("a soma por origem fecha com o subtotal e o resumo diz quanto é verificável", () => {
+    const r = calcular({
+      ficha: { ...comItens({ ac9: 2, aqsolar: 1 }), piscina: 30 },
+      precosSinapi: [sinapi(42424, 1942.58), sinapi(34469, 10530.81)],
+      premissas: { valores: { aqsolar: { valor_unitario: 12_000 } } },
+    });
+    const o = r.origens;
+    expect(o).toBeDefined();
+    if (!o) return;
+    expect(soma([o.cub, o.sinapi, o.empresa, o.usuario, o.referenciaPilar])).toBeCloseTo(r.subtotal, 2);
+    expect(o.sinapi).toBe(3885.16);
+    expect(o.usuario).toBe(12_000);
+    expect(o.verificavelPct + o.provisoriaPct).toBeCloseTo(100, 1);
+  });
+
+  it("muita referência provisória abre a faixa e avisa; pouca não mexe", () => {
+    const pouca = calcular({ ficha: sobrado });
+    expect(pouca.origens?.faixaExtraPontos).toBe(0);
+    expect(pouca.avisos.some((a) => a.codigo === "faixa_provisoria")).toBe(false);
+
+    const muita = calcular({ ficha: { ...completo, topografia: "inclinado", arrimo: 120 } });
+    const extra = muita.origens?.faixaExtraPontos ?? 0;
+    expect(extra).toBeGreaterThan(0);
+    expect(muita.faixaPct).toBe(pouca.faixaPct + extra);
+    expect(muita.avisos.some((a) => a.codigo === "faixa_provisoria")).toBe(true);
+  });
+
+  it("a faixa extra respeita o teto dos parâmetros", () => {
+    const apertado = structuredClone(parametros);
+    apertado.faixa_extra_provisoria = { acima_de_pct: 0, a_cada_pct: 1, pontos: 1, max_pontos: 2 };
+    const r = calcular({ parametros: apertado, ficha: { ...completo, topografia: "inclinado", arrimo: 120 } });
+    expect(r.origens?.faixaExtraPontos).toBe(2);
+  });
+
+  it("a empresa ajustando um adicional de referência muda a origem para empresa", () => {
+    const r = calcular({
+      ficha: { ...sobrado, piscina: 20 },
+      ajustes: { adicionais: { piscina: { valor: 2000 } } },
+    });
+    expect(linha(r, "piscina")?.origem.tipo).toBe("empresa");
+    expect(linha(r, "fundacao")?.origem.tipo).toBe("referencia_pilar");
+  });
+
+  it("item que o CUB já cobre não soma", () => {
+    const dentro = structuredClone(parametros);
+    dentro.adicionais.gourmet = { ...dentro.adicionais.gourmet!, escopo: "dentro_do_cub" };
+    const r = calcular({ parametros: dentro, ficha: { ...sobrado, gourmet: true } });
+    expect(linha(r, "gourmet")).toBeUndefined();
+    expect(r.provavel).toBe(calcular({ ficha: sobrado }).provavel);
+  });
+
+  it("resultado salvo antes da origem lê com origem de referência e sem resumo", () => {
+    const r = calcular({ ficha: completo });
+    const antigo = structuredClone(r) as unknown as { adicionais: Record<string, unknown>[]; origens?: unknown };
+    for (const l of antigo.adicionais) {
+      delete l.origem;
+      delete l.quantidade;
+      delete l.unidade;
+      delete l.valorUnitario;
+    }
+    delete antigo.origens;
+    const lido = resultadoSchema.parse(antigo);
+    expect(lido.origens).toBeUndefined();
+    expect(lido.adicionais.every((l) => l.origem.tipo === "referencia_pilar" && l.quantidade === 1)).toBe(true);
+  });
+
+  it("é determinístico com os mesmos insumos", () => {
+    const entrada = { ficha: comItens({ ac9: 2, fv: 5 }), precosSinapi: [sinapi(42424, 1942.58)] };
+    expect(calcular(entrada)).toEqual(calcular(entrada));
+  });
+
+  it("ficha salva antes do catálogo lê sem itens", () => {
+    const { itens: _i, ...antiga } = sobrado;
+    const lida = fichaSchema.safeParse(antiga);
+    expect(lida.success && lida.data.itens).toEqual({});
   });
 });
