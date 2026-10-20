@@ -59,7 +59,9 @@ não muda.
     regra da ADR 0049 ("trocar de aba no mesmo módulo não anima").
 11. **Telas ajustadas:** Financeiro Lançamentos (lista por dia, deslizar a linha revela "Marcar pago"),
     Ultra admin Feedback (cards, chips de filtro numa linha, detalhe em tela cheia) e o Menu (com Agentes).
-    Início com cartões de atenção e Projetos com lista em cards ficam para o próximo PR desta spec.
+    Fase 2 (BEZ-46): Início sem os chips coloridos nos títulos de seção, com o cartão "N pendências dos agentes"
+    (só abaixo de `md`) e o selo "Atualizado há..." reduzido ao ícone; Projetos, visão Lista, vira lista de cards
+    (nome, cliente, prazo e valor) pelo `DataTable`. O Quadro continua com as seções por status.
 12. **Desktop intocado.** Nenhuma das mudanças acima altera layout, tamanho ou comportamento de `md` para cima.
 
 Requisitos não-funcionais:

@@ -13,6 +13,8 @@ interface DataFrescorProps {
   /** Se passado, o selo vira botão que dispara `refetch`. */
   onRefresh?: () => void;
   className?: string;
+  /** Abaixo de `md` mostra só o ícone (o texto fica para leitor de tela). Para cabeçalhos apertados. */
+  compactOnMobile?: boolean;
 }
 
 /**
@@ -20,7 +22,7 @@ interface DataFrescorProps {
  * Reduz a ansiedade do "será que esse número está certo?" mostrando que o dado é vivo.
  * O número já é revalidado em segundo plano pelo React Query; aqui só se expõe isso.
  */
-export function DataFrescor({ updatedAt, isFetching, onRefresh, className }: DataFrescorProps) {
+export function DataFrescor({ updatedAt, isFetching, onRefresh, className, compactOnMobile }: DataFrescorProps) {
   // Re-renderiza a cada 30s para o "há X min" avançar sem depender de novo fetch.
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -43,7 +45,7 @@ export function DataFrescor({ updatedAt, isFetching, onRefresh, className }: Dat
       aria-live="polite"
     >
       {isFetching ? <BusyMark className="h-3 w-3" /> : <RefreshCw className="h-3 w-3" aria-hidden="true" />}
-      {label}
+      {compactOnMobile ? <span className="max-md:sr-only">{label}</span> : label}
     </span>
   );
 
