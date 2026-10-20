@@ -162,6 +162,10 @@
     "dominio": "jobs",
     "descricao": "Cron: apaga o áudio do registro de obra após 12 meses, de conta de campo excluída e arquivos órfãos (ADR 0062)."
   },
+  "registro-criar": {
+    "dominio": "campo",
+    "descricao": "Registro de obra gravado pelo escritório (áudio, foto, texto), autorizado pelo JWT do usuário: guarda e responde na hora, a IA organiza em segundo plano. SPEC 135."
+  },
   "registro-reprocessar": {
     "dominio": "campo",
     "descricao": "Tentar de novo a organização de um registro de obra que falhou; vale para o escritório (JWT) e para o campo (token). SPEC 135."

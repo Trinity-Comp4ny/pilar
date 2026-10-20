@@ -8,11 +8,11 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { dataLocalIso, formatarDuracao } from "@/lib/registrosObra";
 import { cn } from "@/lib/utils";
 import { novoItemDeRegistro } from "./campoRegistroFila";
-import { comprimirFoto } from "./fotoCampo";
+import { comprimirFoto } from "@/lib/comprimirFoto";
 import type { CampoAccount } from "./useCampoAuth";
 import { useCampoSync } from "./useCampoSync";
 import { useFalaAoVivo } from "./useFalaAoVivo";
-import { LIMITE_GRAVACAO_S, useGravadorAudio, type GravacaoPronta } from "./useGravadorAudio";
+import { LIMITE_GRAVACAO_S, useGravadorAudio, type GravacaoPronta } from "@/hooks/useGravadorAudio";
 
 /** Gravação menor que isto é toque sem querer: não vira registro. */
 const DURACAO_MINIMA_S = 2;

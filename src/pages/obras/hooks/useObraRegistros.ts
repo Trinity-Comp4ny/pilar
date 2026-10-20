@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { blobParaBase64, lerErro, mimeBase } from "@/lib/registroUpload";
 import { temOrganizacaoEmCurso, type ExtraidoRegistro, type StatusRegistro } from "@/lib/registrosObra";
 
 /** Mesmos nomes de bucket da edge `campo-registro-criar` (SPEC 135 e ADR 0062). */
@@ -68,6 +69,45 @@ export function useAtualizarRegistro(obraId: string) {
     }) => {
       const { error } = await supabase.from("obra_registro").update(campos).eq("id", id);
       if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["obra_registros", obraId] }),
+  });
+}
+
+export interface NovoRegistro {
+  /** Idempotência: reenviar o mesmo id não duplica. */
+  clientId: string;
+  /** AAAA-MM-DD. */
+  data: string;
+  texto?: string;
+  audio?: { blob: Blob; mimeType: string; duracaoS: number };
+  fotos: Blob[];
+}
+
+/** Gravar um registro pelo escritório (SPEC 135): a edge guarda e responde na hora; a IA organiza depois. */
+export function useCriarRegistro(obraId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (r: NovoRegistro) => {
+      const body: Record<string, unknown> = {
+        obra_id: obraId,
+        client_id: r.clientId,
+        data: r.data,
+        fotos: await Promise.all(
+          r.fotos.map(async (f) => ({ content_type: "image/jpeg", image_base64: await blobParaBase64(f) }))
+        ),
+      };
+      if (r.texto) body.texto = r.texto;
+      if (r.audio) {
+        body.audio = {
+          mime_type: mimeBase(r.audio.mimeType),
+          base64: await blobParaBase64(r.audio.blob),
+          duracao_s: r.audio.duracaoS,
+        };
+      }
+      const { data, error } = await supabase.functions.invoke("registro-criar", { body });
+      if (!error && (data as { success?: boolean } | null)?.success) return;
+      throw new Error((await lerErro(error)).mensagem);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["obra_registros", obraId] }),
   });

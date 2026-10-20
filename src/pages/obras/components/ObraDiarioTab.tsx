@@ -32,6 +32,8 @@ import { useObraRdoVisitas } from "@/pages/obras/hooks/useObraRdoVisitas";
 import { RdoFormDialog } from "./RdoFormDialog";
 import { RdoFeedCard } from "./RdoFeedCard";
 import { ObraRegistrosTimeline } from "./ObraRegistrosTimeline";
+import { RegistroGravarDialog } from "./RegistroGravarDialog";
+import { MobileFab } from "@/components/MobileFab";
 import { rascunhoDoRdo, type RascunhoRdo } from "@/pages/obras/lib/resumoDia";
 import { useObraRegistros, type ObraRegistro } from "@/pages/obras/hooks/useObraRegistros";
 
@@ -78,6 +80,7 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<RdoRow | null>(null);
   const [rascunho, setRascunho] = useState<RascunhoRdo | null>(null);
+  const [gravarAberto, setGravarAberto] = useState(false);
   const [confirm, setConfirm] = useState<RdoRow | null>(null);
   // Visões: Registros (SPEC 135, o que a equipe gravou), Lista (RDO denso) e Feed (spec 087).
   // Não persiste entre sessões. Sem escolha, abre em Registros quando a obra já tem registros e
@@ -140,16 +143,24 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
             cabiam numa linha em 390px, e o botão cortava na borda (achado da
             auditoria, mesmo padrão já corrigido no cabeçalho do Gantt). */}
         {canEdit && (
-          <Button
-            variant="brand"
-            size="sm"
-            className={isMobile ? "w-9 px-0" : undefined}
-            onClick={abrirNovo}
-            aria-label="Registrar dia"
-          >
-            <Plus className={isMobile ? "h-4 w-4" : "mr-1.5 h-4 w-4"} />
-            {!isMobile && "Registrar dia"}
-          </Button>
+          <div className="flex items-center gap-2">
+            {!isMobile && (
+              <Button variant="brand" size="sm" onClick={() => setGravarAberto(true)}>
+                <Mic className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                Gravar registro
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className={isMobile ? "w-9 px-0" : undefined}
+              onClick={abrirNovo}
+              aria-label="Registrar dia"
+            >
+              <Plus className={isMobile ? "h-4 w-4" : "mr-1.5 h-4 w-4"} />
+              {!isMobile && "Registrar dia"}
+            </Button>
+          </div>
         )}
       </div>
 
@@ -360,6 +371,14 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
           ))}
         </div>
       )}
+
+      {canEdit && <MobileFab label="Gravar registro" icon={Mic} onClick={() => setGravarAberto(true)} />}
+      <RegistroGravarDialog
+        open={gravarAberto}
+        onOpenChange={setGravarAberto}
+        obraId={obraId}
+        onEnviado={() => setVisualizacao("registros")}
+      />
 
       <RdoFormDialog
         open={dialogOpen}

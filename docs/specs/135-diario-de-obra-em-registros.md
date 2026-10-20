@@ -159,6 +159,14 @@ usados: se o gestor liberar, tirar ou corrigir um registro o hash muda e o resum
 não aparece e o resto do portal segue normal. Escolha por IA (e não texto montado): o protótipo aprovado é prosa
 corrida, que só a IA escreve bem.
 
+**Gravar pelo escritório (BEZ-55, protótipo aprovado em 20/10):** botão "Gravar registro" na aba Diário (em todas as
+visões, flutuante no celular). O painel tem voz, foto e texto, e tudo o que estiver preenchido vai junto. A edge
+`registro-criar` (JWT) guarda o áudio e as fotos e insere o registro pelo cliente do usuário, então a RLS decide se a
+obra é da empresa dele; a IA organiza em segundo plano, igual ao campo. Sem aviso de áudio guardado no escritório
+(decisão do Matheus). Desvio do protótipo: não há prévia de texto antes de enviar (a transcrição é da IA, depois do
+envio); o gestor ouve o áudio gravado e pode regravar. O gravador, a compressão de foto e os helpers de envio
+subiram para `src/hooks` e `src/lib` porque o campo e o escritório os usam.
+
 Cada fase termina com teste automatizado do que muda (RLS, schema de entrada, fila offline) e o fluxo real
 exercitado no Chrome com prints.
 
