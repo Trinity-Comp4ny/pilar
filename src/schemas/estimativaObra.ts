@@ -3,7 +3,7 @@
 // antes do cálculo, e o resultado é validado ao ser relido de uma versão gravada.
 import { z } from "zod";
 
-export const UFS = [
+const UFS = [
   "AC",
   "AL",
   "AP",
@@ -34,14 +34,13 @@ export const UFS = [
 ] as const;
 export type Uf = (typeof UFS)[number];
 
-export const TIPOS_OBRA = ["residencial", "comercial", "industrial"] as const;
+const TIPOS_OBRA = ["residencial", "comercial", "industrial"] as const;
 export type TipoObra = (typeof TIPOS_OBRA)[number];
 
 export const PADROES = ["baixo", "normal", "alto"] as const;
 export type Padrao = (typeof PADROES)[number];
 
-export const NIVEIS_MARCENARIA = ["nenhuma", "basica", "completa"] as const;
-export type NivelMarcenaria = (typeof NIVEIS_MARCENARIA)[number];
+const NIVEIS_MARCENARIA = ["nenhuma", "basica", "completa"] as const;
 
 /** Subtipo de obra e o código do CUB (NBR 12721) que o precifica. */
 export const SUBTIPOS: Record<
@@ -258,7 +257,7 @@ export type AjustesEmpresa = z.infer<typeof ajustesEmpresaSchema>;
 
 // ── Resultado ────────────────────────────────────────────────────────────────
 
-export const CODIGOS_AVISO = [
+const CODIGOS_AVISO = [
   "mes_antigo",
   "uf_vizinha",
   "adicional_a_definir",
@@ -266,7 +265,6 @@ export const CODIGOS_AVISO = [
   "parametros_nao_validados",
   "coerencia",
 ] as const;
-export type CodigoAviso = (typeof CODIGOS_AVISO)[number];
 
 export const resultadoSchema = z.object({
   versaoMotor: z.literal(1),

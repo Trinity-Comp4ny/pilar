@@ -4,13 +4,17 @@
 // por aqui para definir preço ou prazo; ela só preenche a ficha. Todo valor é calculado em centavos
 // inteiros e distribuído por maior resto, para as somas fecharem exatamente: etapas + adicionais +
 // taxa = provável, natureza = provável, fases = provável e desembolso = provável.
+import type { ZodType, ZodTypeDef } from "zod";
 import {
   ADICIONAIS_IDS,
   PADROES,
   SUBTIPOS,
   adicionalSchema,
+  ajustesEmpresaSchema,
+  cubLinhaSchema,
   fichaSchema,
   parametrosSchema,
+  premissasSchema,
   type Adicional,
   type AdicionalId,
   type AjustesEmpresa,
@@ -23,7 +27,7 @@ import {
   type Uf,
 } from "@/schemas/estimativaObra";
 
-export type MotivoErro = "sem_cub" | "padrao_indisponivel" | "ficha_invalida";
+type MotivoErro = "sem_cub" | "padrao_indisponivel" | "ficha_invalida";
 
 export type SaidaCalculo =
   { ok: true; resultado: ResultadoEstimativa } | { ok: false; motivo: MotivoErro; mensagem: string };
@@ -80,12 +84,36 @@ export function rotuloMesBase(mesBase: string): string {
   return `${MESES[Number(mes) - 1]}/${ano}`;
 }
 
-/** Lê os parâmetros vindos do banco (jsonb). Falha cedo e claro, em vez de quebrar lá na frente. */
+type Leitura<T> = { ok: true; valor: T } | { ok: false; mensagem: string };
+
+function ler<T>(schema: ZodType<T, ZodTypeDef, unknown>, bruto: unknown, rotulo: string): Leitura<T> {
+  const lido = schema.safeParse(bruto);
+  if (lido.success) return { ok: true, valor: lido.data };
+  return { ok: false, mensagem: `${rotulo} inválidos: ${lido.error.issues[0]?.message ?? "formato inesperado"}` };
+}
+
+// Leitores de fronteira: tudo que volta do banco (jsonb) entra no motor por aqui. Falha cedo e
+// claro, em vez de quebrar lá na frente.
+
+/** `estimativa_parametros.parametros`. */
 export function lerParametros(bruto: unknown): { ok: true; parametros: Parametros } | { ok: false; mensagem: string } {
-  const lido = parametrosSchema.safeParse(bruto);
-  if (lido.success) return { ok: true, parametros: lido.data };
-  const primeiro = lido.error.issues[0];
-  return { ok: false, mensagem: `Parâmetros da estimativa inválidos: ${primeiro?.message ?? "formato inesperado"}` };
+  const lido = ler(parametrosSchema, bruto, "Parâmetros da estimativa");
+  return lido.ok ? { ok: true, parametros: lido.valor } : lido;
+}
+
+/** Linhas de `cub_valores`. Uma linha inválida derruba a leitura inteira: preço errado é pior que nenhum. */
+export function lerCub(bruto: unknown): Leitura<CubLinha[]> {
+  return ler(cubLinhaSchema.array(), bruto, "Linhas do CUB");
+}
+
+/** `estimativa_ajustes_empresa.adicionais` embrulhado como `{ adicionais }`. */
+export function lerAjustes(bruto: unknown): Leitura<AjustesEmpresa> {
+  return ler(ajustesEmpresaSchema, bruto, "Ajustes da empresa");
+}
+
+/** `estimativas_obra.premissas`. */
+export function lerPremissas(bruto: unknown): Leitura<Premissas> {
+  return ler(premissasSchema, bruto, "Premissas");
 }
 
 /** Padrões que têm tabela de CUB para o subtipo (o assistente desliga os demais). */

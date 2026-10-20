@@ -6,7 +6,10 @@ import {
   calcularEstimativa,
   distribuir,
   fichaInicial,
+  lerAjustes,
+  lerCub,
   lerParametros,
+  lerPremissas,
   padroesDisponiveis,
   rotuloMesBase,
   type EntradaCalculo,
@@ -121,6 +124,31 @@ describe("seed dos parâmetros", () => {
     const torto = structuredClone(parametros);
     torto.adicionais.piscina.fase = "nao_existe";
     expect(parametrosSchema.safeParse(torto).success).toBe(false);
+  });
+});
+
+describe("leitores de fronteira", () => {
+  it("lerCub aceita linhas boas e recusa a leitura inteira se uma for ruim", () => {
+    const boa = { uf: "SP", subtipo: "R1", padrao: "alto", mes_base: "2026-09-01", valor_m2: 3350 };
+    expect(lerCub([boa, boa]).ok).toBe(true);
+    const ruim = lerCub([boa, { ...boa, valor_m2: 0 }]);
+    expect(ruim.ok).toBe(false);
+    if (!ruim.ok) expect(ruim.mensagem).toMatch(/Linhas do CUB inválidos/);
+    expect(lerCub([{ ...boa, uf: "XX" }]).ok).toBe(false);
+    expect(lerCub([{ ...boa, mes_base: "2026-09-15" }]).ok).toBe(false);
+  });
+
+  it("lerAjustes aceita ajuste vazio e recusa lixo", () => {
+    expect(lerAjustes({}).ok).toBe(true);
+    expect(lerAjustes({ adicionais: { piscina: { valor: 3000 } } }).ok).toBe(true);
+    expect(lerAjustes({ adicionais: "tudo" }).ok).toBe(false);
+  });
+
+  it("lerPremissas aceita premissa parcial e recusa fora dos limites", () => {
+    expect(lerPremissas({}).ok).toBe(true);
+    expect(lerPremissas({ adm: 12, faixa: 15, equipe: 8 }).ok).toBe(true);
+    expect(lerPremissas({ adm: 90 }).ok).toBe(false);
+    expect(lerPremissas({ equipe: 0 }).ok).toBe(false);
   });
 });
 

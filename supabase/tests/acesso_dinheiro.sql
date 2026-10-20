@@ -30,6 +30,8 @@ WITH permitido(coluna, motivo) AS (
     ('pilar_subscription_plans.preco_anual', 'catálogo'),
     ('pilar_subscription_plans.preco_mensal', 'catálogo'),
     ('trial_niveis.tokens_total', 'catálogo'),
+    -- CUB dos Sinduscons (SPEC 136): referência pública de mercado, importada pelo ultra admin.
+    ('cub_valores.valor_m2', 'catálogo'),
     -- Consumo e compra de IA do próprio Pilar (Configurações > Uso), visível à empresa.
     ('ai_token_ledger.custo_estimado', 'consumo de IA'),
     ('ai_token_saldo.saldo_comprado', 'consumo de IA'),
