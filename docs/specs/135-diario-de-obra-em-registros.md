@@ -134,6 +134,15 @@ Medido no banco e na IA locais: a edge responde 202 em 84 ms e um áudio de 12 s
 obra, a conta de campo ou a empresa são excluídas, gravar pelo escritório, fotos no cartão do campo e
 tocar o próprio áudio no campo.
 
+**Fase B, o que entrou (BEZ-34):** "Resumo do dia" no topo de cada dia da aba Diário e "Revisar e fechar o RDO",
+que abre o formulário de RDO já preenchido (atividades, ocorrências, pendências, efetivo por equipe e falta de
+material) e, ao salvar, liga os registros do dia ao `obra_rdo`. **Desvio da spec:** o resumo não usa a edge
+`ai-resumo-dia`. Ele soma o que a IA já extraiu de cada registro (`resumirDia`, puro e testado): não gasta token,
+não demora e o gestor revisa tudo no formulário. Efetivo não conta a mesma equipe duas vezes (vale o maior número
+citado por equipe). Dia que já tem RDO abre esse RDO para editar e os registros passam a apontar para ele.
+**Fora da fase B, pendente:** aposentar o RDO por voz do formulário (`ai-rdo-voz`), que só sai depois de gravar
+registro pelo escritório; clima do resumo (o formulário já sugere pela previsão do tempo).
+
 Cada fase termina com teste automatizado do que muda (RLS, schema de entrada, fila offline) e o fluxo real
 exercitado no Chrome com prints.
 

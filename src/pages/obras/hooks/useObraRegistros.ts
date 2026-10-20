@@ -73,6 +73,19 @@ export function useAtualizarRegistro(obraId: string) {
   });
 }
 
+/** Liga os registros do dia ao RDO que o gestor acabou de salvar (SPEC 135, fase B). */
+export function useVincularRegistrosRdo(obraId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ rdoId, registroIds }: { rdoId: string; registroIds: string[] }) => {
+      if (registroIds.length === 0) return;
+      const { error } = await supabase.from("obra_registro").update({ rdo_id: rdoId }).in("id", registroIds);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["obra_registros", obraId] }),
+  });
+}
+
 /** Apaga o registro e, junto, o áudio e as fotos do Storage (ADR 0062: excluir o registro apaga o áudio). */
 export function useExcluirRegistro(obraId: string) {
   const qc = useQueryClient();
