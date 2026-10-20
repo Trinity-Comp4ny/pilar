@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/skeleton";
 import { rotuloDoDia } from "@/lib/registrosObra";
 import type { ClienteObraRegistro } from "./useClienteObraData";
 
@@ -8,15 +9,35 @@ import type { ClienteObraRegistro } from "./useClienteObraData";
 export function RegistrosPortal({
   registros,
   fotosPorRegistro,
+  resumo,
 }: {
   registros: ClienteObraRegistro[];
   fotosPorRegistro: Record<string, string[]>;
+  /** Resumo da semana (BEZ-57): carregando mostra o esqueleto; sem texto, o cartão não aparece. */
+  resumo?: { carregando: boolean; texto: string | null };
 }) {
   if (registros.length === 0) return null;
 
   return (
     <section aria-label="Registros da equipe">
       <h2 className="mb-3 text-sm font-semibold">Registros da equipe</h2>
+      {resumo?.carregando && (
+        <div
+          className="mx-auto mb-4 max-w-xl space-y-2 rounded-2xl border border-success-soft-border bg-success-soft p-4"
+          aria-busy="true"
+        >
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-4/5" />
+        </div>
+      )}
+      {!resumo?.carregando && resumo?.texto && (
+        <div className="mx-auto mb-4 max-w-xl rounded-2xl border border-success-soft-border bg-success-soft p-4">
+          <h3 className="mb-1.5 text-sm font-semibold text-ink">Resumo da semana</h3>
+          <p className="text-[15px] leading-relaxed text-ink">{resumo.texto}</p>
+          <p className="mt-2.5 text-xs text-muted-foreground">Montado a partir dos registros da equipe desta semana.</p>
+        </div>
+      )}
       <ul className="mx-auto max-w-xl space-y-3">
         {registros.map((r) => {
           const fotos = fotosPorRegistro[r.id] ?? [];

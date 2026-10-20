@@ -29,4 +29,28 @@ describe("RegistrosPortal", () => {
     render(<RegistrosPortal registros={[registro]} fotosPorRegistro={{ r1: urls }} />);
     expect(screen.getAllByRole("img")).toHaveLength(6);
   });
+
+  it("mostra o resumo da semana acima dos registros", () => {
+    render(
+      <RegistrosPortal
+        registros={[registro]}
+        fotosPorRegistro={{}}
+        resumo={{ carregando: false, texto: "A laje foi concretada e a fiação ficou pronta." }}
+      />
+    );
+    expect(screen.getByRole("heading", { name: "Resumo da semana" })).toBeInTheDocument();
+    expect(screen.getByText("A laje foi concretada e a fiação ficou pronta.")).toBeInTheDocument();
+  });
+
+  it("sem texto de resumo o cartão não aparece, e carregando mostra o esqueleto", () => {
+    const { rerender } = render(
+      <RegistrosPortal registros={[registro]} fotosPorRegistro={{}} resumo={{ carregando: false, texto: null }} />
+    );
+    expect(screen.queryByRole("heading", { name: "Resumo da semana" })).not.toBeInTheDocument();
+    rerender(
+      <RegistrosPortal registros={[registro]} fotosPorRegistro={{}} resumo={{ carregando: true, texto: null }} />
+    );
+    expect(document.querySelector('[aria-busy="true"]')).not.toBeNull();
+    expect(screen.queryByRole("heading", { name: "Resumo da semana" })).not.toBeInTheDocument();
+  });
 });

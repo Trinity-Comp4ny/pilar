@@ -150,6 +150,15 @@ fotos. Nunca áudio, autor, extraído (efetivo, pendência, problema), texto bru
 cliente. O portal mostra a seção "Registros da equipe" acima do Diário. Registro continua nascendo interno.
 **Fora da fase C, pendente:** resumo curado da semana no portal e a decisão do dono sobre o padrão de visibilidade.
 
+**Resumo da semana no portal (BEZ-57, protótipo aprovado em 20/10):** cartão "Resumo da semana" no topo da seção
+"Registros da equipe". A edge `portal-resumo-semana` (token do portal, mesmo gate de obra do cliente) manda ao
+modelo SÓ o texto dos registros que o gestor liberou nos últimos 7 dias (nada de autor, efetivo, pendência ou
+problema) e pede 2 a 3 frases sem inventar nada. O texto fica em `obra_resumo_semana` junto de um hash dos registros
+usados: se o gestor liberar, tirar ou corrigir um registro o hash muda e o resumo é refeito; se nada mudou, a IA não
+é chamada. Debita tokens da empresa (`agentKey` `registro-resumo-semana`); sem saldo ou com falha da IA o cartão
+não aparece e o resto do portal segue normal. Escolha por IA (e não texto montado): o protótipo aprovado é prosa
+corrida, que só a IA escreve bem.
+
 Cada fase termina com teste automatizado do que muda (RLS, schema de entrada, fila offline) e o fluxo real
 exercitado no Chrome com prints.
 

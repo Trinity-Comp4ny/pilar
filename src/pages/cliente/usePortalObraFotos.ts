@@ -49,3 +49,26 @@ export function usePortalRegistroFotos(registroIds: string[]) {
     },
   });
 }
+
+/**
+ * Resumo da semana da obra para o cliente (SPEC 135, fase C): a edge `portal-resumo-semana` escreve
+ * a partir dos registros liberados e guarda o texto até o conjunto mudar. `habilitado` fica falso
+ * quando não há registro liberado, para não chamar a rede à toa. Devolve null se não há resumo.
+ */
+export function usePortalResumoSemana(obraId: string | undefined, habilitado: boolean) {
+  return useQuery({
+    queryKey: ["portal_resumo_semana", obraId],
+    enabled: Boolean(obraId) && habilitado,
+    staleTime: 1000 * 60 * 5,
+    retry: false,
+    queryFn: async (): Promise<string | null> => {
+      const token = getPortalToken();
+      if (!token) return null;
+      const { data, error } = await supabase.functions.invoke("portal-resumo-semana", {
+        body: { session_token: token, obra_id: obraId },
+      });
+      if (error) throw error;
+      return (data as { resumo?: string | null } | null)?.resumo ?? null;
+    },
+  });
+}
