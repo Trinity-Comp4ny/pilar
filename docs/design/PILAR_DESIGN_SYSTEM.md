@@ -113,7 +113,7 @@ O celular tem casca própria, não é o desktop encolhido. O desktop não muda.
 - **`BottomNav`**: pílula flutuante (16 px das bordas, blur), cinco itens: Início, Projetos, Obra, Gestão, Menu. Item ativo com fundo `brand` e ícone e texto `ink`. Some ao rolar para baixo e com o teclado aberto (`useBarraVisivel`). Agentes mora no Menu, com o contador de pendências.
 - **Ação principal**: o `primaryAction` do `PageHeader` vira o **`MobileFab`** (verde, 44 px, texto e ícone `ink`, acima da barra). Não monte botão flutuante à mão nem repita a ação no corpo da página.
 - **Abas, chips e filtros numa linha só**, com altura de 34 a 36 px e cantos totalmente arredondados. O que não cabe rola para o lado; nunca quebra em duas linhas (`FiltroChips` e `FilterBar` já fazem).
-- **Campos com 16 px**: `Input`, `Textarea`, `SelectTrigger` e `CommandInput` usam `text-base md:text-sm`. Campo de texto com menos de 16 px faz o iOS dar zoom ao tocar. Campo próprio novo segue a mesma regra.
+- **Campos com 16 px**: `Input`, `Textarea`, `SelectTrigger` e `CommandInput` usam `text-sm max-md:text-base`: 14 px no desktop (um `text-xs` passado por quem usa continua valendo lá) e 16 px no celular. Campo de texto com menos de 16 px faz o iOS dar zoom ao tocar. Campo próprio novo segue a mesma regra; não use `text-base md:text-sm`, porque o `md:text-sm` sobrevive ao merge e desfaz o tamanho que o uso pediu.
 - **Transição**: abaixo de `md` toda troca de rota anima o conteúdo (fade e subida de 8 px, 240 ms); a barra e o cabeçalho ficam parados. Movimento reduzido não anima.
 
 ### Modais

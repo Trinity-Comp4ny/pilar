@@ -27,7 +27,7 @@ não muda.
 ## Requisitos
 
 1. **Campos sem zoom.** Todo campo de texto (`Input`, `Textarea`, `SelectTrigger`, campos próprios como
-   `MoneyInput`) tem fonte de 16 px abaixo de `md` e 14 px de `md` para cima.
+   `MoneyInput`) tem fonte de 16 px abaixo de `md`; de `md` para cima nada muda (`text-sm max-md:text-base`).
 2. **Modal vira painel de baixo.** Abaixo de `md`, todo `DialogContent` (inclusive o do `FormDialog`) ancora
    embaixo da tela, com cantos superiores arredondados, alça, altura máxima de 92 dvh, rolagem interna,
    respeito à safe area e animação de subir. De `md` para cima continua modal central. `AlertDialog` de

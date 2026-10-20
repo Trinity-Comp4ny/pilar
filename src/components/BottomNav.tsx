@@ -1,12 +1,15 @@
 import { Home, Menu as MenuIcon } from "lucide-react";
 import { NavLink } from "react-router-dom";
-import { useState, type ReactNode } from "react";
+import { lazy, Suspense, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { MODULES, type ModuleId } from "@/lib/modules";
 import { useModuleNav } from "@/hooks/useModuleNav";
 import { useBarraVisivel } from "@/hooks/useBarraVisivel";
 import { usePendenciasAgentes } from "@/hooks/useEscopos";
-import { MoreSheet } from "@/components/MoreSheet";
+
+// O Menu só abre ao toque: o painel (com conta, notificações e feedback) fica fora do carregamento inicial.
+const carregarMoreSheet = () => import("@/components/MoreSheet");
+const MoreSheet = lazy(() => carregarMoreSheet().then((m) => ({ default: m.MoreSheet })));
 
 /** Ordem dos pilares na barra (SPEC 134): Início, Projetos, Obra, Gestão, Menu. */
 const PILAR_ORDER: ModuleId[] = ["projetos", "obras", "gestao"];
@@ -41,6 +44,7 @@ export function BottomNav() {
   const { data: pendenciasAgentes } = usePendenciasAgentes();
   const numPendenciasAgentes = pendenciasAgentes?.length ?? 0;
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuMontado, setMenuMontado] = useState(false);
   const visivel = useBarraVisivel();
 
   return (
@@ -84,7 +88,11 @@ export function BottomNav() {
 
           <button
             type="button"
-            onClick={() => setMenuOpen(true)}
+            onClick={() => {
+              setMenuMontado(true);
+              setMenuOpen(true);
+            }}
+            onPointerDown={() => void carregarMoreSheet()}
             className={cn(ITEM_CLASS, itemTone(menuOpen))}
             aria-label={numPendenciasAgentes > 0 ? `Menu, ${numPendenciasAgentes} pendências de agentes` : "Menu"}
             aria-haspopup="dialog"
@@ -101,7 +109,11 @@ export function BottomNav() {
         </nav>
       </div>
 
-      <MoreSheet open={menuOpen} onOpenChange={setMenuOpen} />
+      {menuMontado && (
+        <Suspense fallback={null}>
+          <MoreSheet open={menuOpen} onOpenChange={setMenuOpen} />
+        </Suspense>
+      )}
     </>
   );
 }
