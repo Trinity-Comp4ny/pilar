@@ -1,0 +1,113 @@
+// Estimativa de obra no Ultra admin (SPEC 136, BEZ-13): CUB mensal e parâmetros do motor.
+// Escrita direta nas tabelas globais: a RLS só deixa o ultra admin com o segundo fator gravar.
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { lerParametros } from "@/lib/estimativaObra";
+import { lerCsv, type LinhaCubLida, type LinhaGravada } from "./estimativaCubImport";
+import type { Parametros } from "@/schemas/estimativaObra";
+
+const TAMANHO_LOTE = 500;
+const TAMANHO_MAXIMO_ARQUIVO = 5_000_000;
+
+/** Tudo que já foi importado (uma linha por UF, subtipo, padrão e mês). Cabe folgado em 10 mil. */
+export function useCubGravado() {
+  return useQuery({
+    queryKey: ["ultra-admin", "estimativa", "cub"],
+    queryFn: async (): Promise<LinhaGravada[]> => {
+      const { data, error } = await supabase
+        .from("cub_valores")
+        .select("uf, subtipo, padrao, mes_base, created_at")
+        .order("mes_base", { ascending: false })
+        .limit(10_000);
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 60_000,
+  });
+}
+
+/**
+ * Grava as linhas do CUB em lotes, com upsert por UF, subtipo, padrão e mês: importar o mesmo mês de
+ * novo corrige os valores daquele mês. Se um lote falhar no meio, importar de novo conserta.
+ */
+export async function gravarCub(linhas: LinhaCubLida[], fonte: string): Promise<void> {
+  for (let i = 0; i < linhas.length; i += TAMANHO_LOTE) {
+    const lote = linhas.slice(i, i + TAMANHO_LOTE).map((l) => ({
+      uf: l.uf,
+      subtipo: l.subtipo,
+      padrao: l.padrao,
+      mes_base: l.mes_base,
+      valor_m2: l.valor_m2,
+      fonte,
+    }));
+    const { data, error } = await supabase
+      .from("cub_valores")
+      .upsert(lote, { onConflict: "uf,subtipo,padrao,mes_base" })
+      .select("id");
+    if (error) throw error;
+    // A RLS não devolve erro quando recusa: devolve menos linhas.
+    if ((data?.length ?? 0) < lote.length) {
+      throw new Error("O banco não aceitou todas as linhas. Confirme o segundo fator da sua sessão e importe de novo.");
+    }
+  }
+}
+
+/** Lê o arquivo escolhido (Excel ou CSV) em linhas de células de texto. O SheetJS só carrega quando precisa. */
+export async function lerCelulas(arquivo: File): Promise<string[][]> {
+  if (arquivo.size > TAMANHO_MAXIMO_ARQUIVO) throw new Error("O arquivo passa de 5 MB. Envie só a tabela do mês.");
+  const extensao = arquivo.name.split(".").pop()?.toLowerCase() ?? "";
+  if (extensao === "xlsx" || extensao === "xls") {
+    const XLSX = await import("xlsx");
+    const livro = XLSX.read(await arquivo.arrayBuffer(), { type: "array" });
+    const aba = livro.SheetNames[0];
+    if (!aba) throw new Error("A planilha não tem abas legíveis.");
+    const linhas = XLSX.utils.sheet_to_json<unknown[]>(livro.Sheets[aba], { header: 1, raw: true, defval: "" });
+    // Número vira texto com no máximo 2 casas: evita 3350.4999999 e deixa o leitor decidir o formato.
+    return linhas.map((linha) =>
+      linha.map((c) => (typeof c === "number" ? String(Math.round(c * 100) / 100) : String(c ?? "")))
+    );
+  }
+  if (extensao === "csv" || extensao === "txt") return lerCsv(await arquivo.text());
+  throw new Error("Formato não suportado. Envie um arquivo .xlsx ou .csv.");
+}
+
+export interface ParametrosGravados {
+  parametros: Parametros;
+  validadoEm: string | null;
+  atualizadoEm: string;
+}
+
+export function useParametrosEstimativa() {
+  return useQuery({
+    queryKey: ["ultra-admin", "estimativa", "parametros"],
+    queryFn: async (): Promise<ParametrosGravados> => {
+      const { data, error } = await supabase
+        .from("estimativa_parametros")
+        .select("parametros, validado_em, updated_at")
+        .eq("id", "default")
+        .single();
+      if (error) throw error;
+      const lido = lerParametros(data.parametros);
+      if (!lido.ok) throw new Error(lido.mensagem);
+      return { parametros: lido.parametros, validadoEm: data.validado_em, atualizadoEm: data.updated_at };
+    },
+    staleTime: 60_000,
+  });
+}
+
+/** Marca (ou desfaz) a validação dos parâmetros. Quem validou o banco grava sozinho. */
+export async function validarParametros(validar: boolean): Promise<void> {
+  const { data, error } = await supabase
+    .from("estimativa_parametros")
+    .update({
+      validado_em: validar ? new Date().toISOString() : null,
+      ...(validar ? {} : { validado_por: null }),
+    })
+    .eq("id", "default")
+    .select("id")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) {
+    throw new Error("O banco não aceitou a alteração. Confirme o segundo fator da sua sessão e tente de novo.");
+  }
+}
