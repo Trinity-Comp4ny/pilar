@@ -1,7 +1,7 @@
 # ADR 0062: Guardar o áudio do registro de obra
 
 **Data:** 2026-10-19  
-**Status:** Proposed
+**Status:** Accepted (2026-10-20)
 
 ## Contexto
 
@@ -45,7 +45,7 @@ conta de campo excluída (autor sumiu) e arquivo órfão (registro, obra ou empr
 upload vem antes do registro). O registro ganha `audio_apagado_em` e o texto fica. Obra apenas arquivada (soft delete)
 mantém o áudio até o prazo de 12 meses, porque pode ser restaurada.
 
-O prazo de 12 meses é uma suposição minha: se o Matheus quiser outro, muda a constante do job e este ADR.
+O prazo de 12 meses foi confirmado pelo Matheus em 2026-10-20 ([DECISOES.md](../../strategy/DECISOES.md)). Outro prazo muda a constante do job e este ADR.
 
 ## Consequências
 
