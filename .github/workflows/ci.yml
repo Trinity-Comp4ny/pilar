@@ -417,7 +417,11 @@ jobs:
         # derruba o deploy sem haver nada errado no código (run 30288891918 morreu com
         # "Import 'https://esm.sh/@supabase/supabase-js@2' failed: 522"). O wrapper só
         # repete em erro de transporte; erro de bundle real falha na primeira.
-        run: scripts/retry-on-network-error.sh supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
+        # --use-api empacota no servidor do Supabase, sem puxar a imagem do edge-runtime
+        # do Docker Hub: o runner compartilhado estourava "toomanyrequests: Data limit
+        # exceeded" por horas, e o retry de 45s não adianta contra esse limite (runs
+        # 39307383109 e 39315007872 em staging).
+        run: scripts/retry-on-network-error.sh supabase functions deploy --use-api --project-ref "$SUPABASE_PROJECT_REF"
         env:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
       - name: Marcar release nas edge functions (health + Sentry)
@@ -607,7 +611,11 @@ jobs:
         # derruba o deploy sem haver nada errado no código (run 30288891918 morreu com
         # "Import 'https://esm.sh/@supabase/supabase-js@2' failed: 522"). O wrapper só
         # repete em erro de transporte; erro de bundle real falha na primeira.
-        run: scripts/retry-on-network-error.sh supabase functions deploy --project-ref "$SUPABASE_PROJECT_REF"
+        # --use-api empacota no servidor do Supabase, sem puxar a imagem do edge-runtime
+        # do Docker Hub: o runner compartilhado estourava "toomanyrequests: Data limit
+        # exceeded" por horas, e o retry de 45s não adianta contra esse limite (runs
+        # 39307383109 e 39315007872 em staging).
+        run: scripts/retry-on-network-error.sh supabase functions deploy --use-api --project-ref "$SUPABASE_PROJECT_REF"
         env:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
       - name: Marcar release nas edge functions (health + Sentry)
