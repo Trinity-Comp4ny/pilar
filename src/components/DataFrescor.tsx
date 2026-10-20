@@ -13,7 +13,7 @@ interface DataFrescorProps {
   /** Se passado, o selo vira botão que dispara `refetch`. */
   onRefresh?: () => void;
   className?: string;
-  /** Abaixo de `md` mostra só o ícone (o texto fica para leitor de tela). Para cabeçalhos apertados. */
+  /** Abaixo de `md` corta o texto e deixa só o ícone (o texto segue no DOM para leitor de tela). */
   compactOnMobile?: boolean;
 }
 
@@ -40,12 +40,17 @@ export function DataFrescor({ updatedAt, isFetching, onRefresh, className, compa
 
   const content = (
     <span
-      className={cn("inline-flex items-center gap-1.5 text-xs text-muted-foreground", className)}
+      className={cn(
+        "inline-flex items-center gap-1.5 text-xs text-muted-foreground",
+        compactOnMobile &&
+          "max-md:w-6 max-md:justify-start max-md:overflow-hidden max-md:pl-1.5 max-md:whitespace-nowrap",
+        className
+      )}
       role="status"
       aria-live="polite"
     >
       {isFetching ? <BusyMark className="h-3 w-3" /> : <RefreshCw className="h-3 w-3" aria-hidden="true" />}
-      {compactOnMobile ? <span className="max-md:sr-only">{label}</span> : label}
+      {label}
     </span>
   );
 
