@@ -1,4 +1,4 @@
--- pgTAP: SPEC 136 / ADR 0063, estimativa de obra (migrations 20261114000000, 20261114000100, 20261115000100 e 20261116000100).
+-- pgTAP: SPEC 136 / ADR 0063, estimativa de obra (migrations 20261114000000, 20261114000100, 20261115000100, 20261116000100 e 20261116000200).
 -- Roda como usuário autenticado, para a RLS e os triggers valerem como no app.
 
 BEGIN;
@@ -6,7 +6,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(30);
+SELECT plan(31);
 
 -- ── Fixture ──────────────────────────────────────────────────────────────────
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features) VALUES
@@ -55,6 +55,12 @@ SELECT is(
 SELECT ok(
   (SELECT parametros -> 'adicionais' ?& ARRAY['arrimo', 'terraplenagem'] FROM public.estimativa_parametros WHERE id = 'default'),
   'os parâmetros trazem muro de arrimo e terraplenagem para terreno inclinado'
+);
+
+SELECT is(
+  (SELECT parametros -> 'natureza_base' ->> 'mao_de_obra' FROM public.estimativa_parametros WHERE id = 'default'),
+  '54',
+  'a natureza da base segue a composição oficial do CUB (mão de obra 54%)'
 );
 
 SET LOCAL ROLE authenticated;

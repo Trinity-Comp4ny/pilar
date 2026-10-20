@@ -710,3 +710,32 @@ describe("rotuloPadrao", () => {
     expect(["baixo", "normal", "alto"].map((p) => rotuloPadrao(p as "baixo"))).toEqual(["baixo", "médio", "alto"]);
   });
 });
+
+describe("natureza do custo contra a composição oficial do CUB (BEZ-68)", () => {
+  // Sinduscon-PR, Relatório 5, set/2026: composição do CUB/m² das residências unifamiliares (R$/m²).
+  // Fonte: sindusconpr.com.br/wp-content/uploads/2026/10/2026-9-Relatorio-5-composicao-cub-m2-valores-em-reais.pdf
+  const COMPOSICAO_R1 = [
+    { padrao: "baixo", material: 1093.23, maoDeObra: 1422.46, despesas: 161.5, equipamentos: 4.4 },
+    { padrao: "normal", material: 1243.66, maoDeObra: 1969.6, despesas: 151.64, equipamentos: 0.31 },
+    { padrao: "alto", material: 1828.58, maoDeObra: 2137.19, despesas: 143.36, equipamentos: 0.38 },
+  ];
+  const pct = (parte: number, total: number) => (parte / total) * 100;
+
+  it("cada padrão da composição oficial fica a menos de 8 pontos do seed, e a média a menos de 2", () => {
+    const nb = parametros.natureza_base;
+    const medias = { material: 0, mao_de_obra: 0, despesas: 0 };
+    for (const c of COMPOSICAO_R1) {
+      const total = c.material + c.maoDeObra + c.despesas + c.equipamentos;
+      const m = pct(c.material, total);
+      const mo = pct(c.maoDeObra, total);
+      expect(Math.abs(nb.material - m)).toBeLessThan(8);
+      expect(Math.abs(nb.mao_de_obra - mo)).toBeLessThan(8);
+      medias.material += m / COMPOSICAO_R1.length;
+      medias.mao_de_obra += mo / COMPOSICAO_R1.length;
+      medias.despesas += pct(c.despesas, total) / COMPOSICAO_R1.length;
+    }
+    expect(Math.abs(nb.material - medias.material)).toBeLessThan(2);
+    expect(Math.abs(nb.mao_de_obra - medias.mao_de_obra)).toBeLessThan(2);
+    expect(Math.abs(nb.despesas - medias.despesas)).toBeLessThan(2);
+  });
+});

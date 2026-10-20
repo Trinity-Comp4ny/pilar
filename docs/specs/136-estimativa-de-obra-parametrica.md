@@ -145,3 +145,7 @@ Cada fatia é um PR com o seu card no Linear (título `[BEZ-NN]`).
 - **Risco: posicionamento.** A estimativa fica para o escritório de projeto responder ao cliente; não vira orçamento
   executivo de construtora (ICP, DECISOES de 2026-09-01). Não entra em material de venda até estar na branch principal
   e validada (regra do PRICING.md).
+
+## Validação
+
+Teste do motor com dados públicos em [VALIDACAO_ESTIMATIVA_OBRA_2026-10-20](../operations/VALIDACAO_ESTIMATIVA_OBRA_2026-10-20.md): composição, produtividade, custo total, prazo e etapas.
