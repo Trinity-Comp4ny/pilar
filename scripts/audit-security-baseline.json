@@ -6,19 +6,20 @@
     "search_path_mutavel": "0. Função SECURITY DEFINER sem search_path fixo aceita shadowing de schema.",
     "anon_trigger_inerte": "0, mas prioridade baixa: Postgres recusa chamar função que retorna trigger fora de contexto de trigger, então não é caminho de exploração. Limpar só pra parar de mascarar achado real no advisor.",
     "policy_auth_por_linha": "0. Trocar auth.uid() por (select auth.uid()) na policy. É performance, não segurança, e só dói quando a tabela cresce.",
-    "fk_sem_indice": "descer. Cada FK sem índice deixa delete e join lentos."
+    "fk_sem_indice": "descer. Cada FK sem índice deixa delete e join lentos.",
+    "authenticated_chamavel": "Staging 156, prod 148 (2026-10-19). Os 8 a mais no staging são features ainda fora da produção: ops_decidir_acao, ops_definir_agente_ativo, ops_marcar_empresa_interna, ops_produto, ops_receita, ops_saude_empresas (time de agentes no Ultra, SPEC 126/128-131) e rpc_meta_historico, rpc_metas_progresso (metas, SPEC 123). A baseline de prod sobe quando o release as levar."
   },
   "prod": {
-    "verificado_em": "2026-10-13",
+    "verificado_em": "2026-10-19",
     "tabelas_sem_rls": 0,
     "anon_chamavel": 0,
-    "anon_trigger_inerte": 32,
+    "anon_trigger_inerte": 0,
     "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
     "authenticated_chamavel": 148,
     "search_path_mutavel": 0,
-    "policy_auth_por_linha": 7,
-    "fk_sem_indice": 126,
+    "policy_auth_por_linha": 0,
+    "fk_sem_indice": 51,
     "extensoes": [
       "pg_cron@1.6.4",
       "pg_net@0.19.5",
@@ -32,16 +33,16 @@
     ]
   },
   "staging": {
-    "verificado_em": "2026-10-13",
+    "verificado_em": "2026-10-19",
     "tabelas_sem_rls": 0,
     "anon_chamavel": 0,
-    "anon_trigger_inerte": 32,
+    "anon_trigger_inerte": 0,
     "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
-    "authenticated_chamavel": 148,
+    "authenticated_chamavel": 156,
     "search_path_mutavel": 0,
-    "policy_auth_por_linha": 7,
-    "fk_sem_indice": 126,
+    "policy_auth_por_linha": 0,
+    "fk_sem_indice": 51,
     "extensoes": [
       "pg_cron@1.6.4",
       "pg_net@0.20.3",
