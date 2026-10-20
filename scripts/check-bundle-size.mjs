@@ -40,7 +40,10 @@ const BUDGETS = {
   // porque eram outros arquivos. Medido em 2026-10-09: ~416 kB depois da correção.
   // 2026-10-13: ~338 kB com o PostHog fora do boot; limite desce para 350 kB.
   // 2026-10-13 (2): ~309 kB sem zod e react-hook-form na entrada; limite desce para 325 kB.
-  initialLoad: 325 * 1024,
+  // 2026-10-19: 327 kB (era 325). A casca mobile (SPEC 134: barra flutuante, painel de baixo
+  // com alça, botão flutuante) somou ~1,3 kB gzip ao boot (323,9 para 325,2 kB). O MoreSheet
+  // já saiu do boot (lazy). Reavaliar se voltar a encostar.
+  initialLoad: 327 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app
