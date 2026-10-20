@@ -44,6 +44,11 @@ const MeuTrabalho = lazy(() => import("./pages/meu-trabalho"));
 const Obras = lazy(() => import("./pages/obras"));
 const ObraClima = lazy(() => import("./pages/obras/clima"));
 const ObraDetalhe = lazy(() => import("./pages/obras/[id]"));
+// Estimativa de obra (SPEC 136): um chunk só para lista, assistente e resultado.
+const estimativaObra = () => import("./pages/obras/estimativa");
+const EstimativasObra = lazy(() => estimativaObra().then((m) => ({ default: m.Estimativas })));
+const NovaEstimativaObra = lazy(() => estimativaObra().then((m) => ({ default: m.NovaEstimativa })));
+const EstimativaObraDetalhe = lazy(() => estimativaObra().then((m) => ({ default: m.EstimativaDetalhe })));
 const Leads = lazy(() => import("./pages/leads"));
 const Financeiro = lazy(() => import("./pages/Financeiro"));
 const Projetos = lazy(() => import("./pages/Projetos"));
@@ -257,6 +262,13 @@ const App = () => {
                             <Route element={<FeatureRoute feature="obras_fornecedores" />}>
                               <Route path="/obras/fornecedores" element={<Fornecedores />} />
                               <Route path="/obras/fornecedores/:id" element={<FornecedorDetalhe />} />
+                            </Route>
+                            {/* Estimativa paramétrica (SPEC 136): feature opt-in por empresa. */}
+                            <Route element={<FeatureRoute feature="estimativa_obra" />}>
+                              <Route path="/obras/estimativas" element={<EstimativasObra />} />
+                              <Route path="/obras/estimativas/nova" element={<NovaEstimativaObra />} />
+                              <Route path="/obras/estimativas/:id" element={<EstimativaObraDetalhe />} />
+                              <Route path="/obras/estimativas/:id/editar" element={<NovaEstimativaObra />} />
                             </Route>
                             <Route path="/obras/:id" element={<ObraDetalhe />} />
                           </Route>

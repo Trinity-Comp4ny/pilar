@@ -61,26 +61,32 @@ export const SUBTIPOS: Record<
   },
 };
 
-const inteiro = (max: number) => z.number().int().min(0).max(max);
+const NUMERO = { invalid_type_error: "Informe um número" };
+const inteiro = (max: number) =>
+  z.number(NUMERO).int("Use um número inteiro").min(0, "Não pode ser negativo").max(max, "Confira esse valor");
 
 export const fichaSchema = z
   .object({
     tipo: z.enum(TIPOS_OBRA),
-    subtipo: z.string().min(1),
+    subtipo: z.string().min(1, "Escolha o subtipo da obra"),
     padrao: z.enum(PADROES),
     uf: z.enum(UFS),
-    area: z.number().positive("Informe a área construída").max(1_000_000),
-    pavimentos: z.number().int().min(1).max(120),
-    terreno: z.number().min(0).max(10_000_000),
+    area: z.number(NUMERO).positive("Informe a área construída").max(1_000_000, "Confira a área construída"),
+    pavimentos: z
+      .number(NUMERO)
+      .int("Use um número inteiro")
+      .min(1, "Informe ao menos 1 pavimento")
+      .max(120, "Confira os pavimentos"),
+    terreno: z.number(NUMERO).min(0, "Não pode ser negativo").max(10_000_000, "Confira a área do terreno"),
     /** Mês previsto de início, `AAAA-MM`. */
-    inicio: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Use o formato AAAA-MM"),
+    inicio: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Escolha o mês de início"),
     quartos: inteiro(99),
     suites: inteiro(99),
     banheiros: inteiro(99),
     lavabo: inteiro(99),
     vagas: inteiro(999),
     /** m² de piscina; 0 = sem piscina. */
-    piscina: z.number().min(0).max(100_000),
+    piscina: z.number(NUMERO).min(0, "Não pode ser negativo").max(100_000, "Confira a área da piscina"),
     gourmet: z.boolean(),
     elevador: z.boolean(),
     subsolo: z.boolean(),

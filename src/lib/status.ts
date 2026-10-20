@@ -61,6 +61,7 @@ export type StatusDomain =
   | "financeiro"
   | "tipo"
   | "obra"
+  | "estimativa_obra"
   | "cotacao"
   | "escopo"
   | "status_componente"
@@ -115,6 +116,11 @@ export const STATUS_REGISTRY: Record<StatusDomain, Record<string, StatusDef>> = 
     em_andamento: { label: "Em andamento", tone: "info" },
     paralisada: { label: "Paralisada", tone: "brand" },
     concluida: { label: "Concluída", tone: "done" },
+  },
+  estimativa_obra: {
+    rascunho: { label: "Rascunho", tone: "neutral" },
+    enviada: { label: "Enviada ao cliente", tone: "info" },
+    virou_obra: { label: "Virou obra", tone: "positive" },
   },
   cotacao: {
     aberta: { label: "Aberta", tone: "info" },
