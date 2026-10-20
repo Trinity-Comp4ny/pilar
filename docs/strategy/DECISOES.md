@@ -11,6 +11,19 @@ Regras de manutenção:
 
 ---
 
+## 2026-10-20 · Diário de obra: registro nasce interno e o áudio fica 12 meses
+
+**Decisão:** os registros do diário nascem internos (só vão ao portal do cliente quando o gestor liga "Mostrar ao
+cliente") e o áudio de cada registro é guardado por 12 meses, depois só o texto fica. O Matheus mandou assumir os
+dois padrões.
+
+Contexto: no protótipo os registros apareciam como "Cliente vê"; o padrão interno evita vazar texto de campo ao
+cliente por descuido. Fecha as suposições da [SPEC 135](../specs/135-diario-de-obra-em-registros.md) e da
+[ADR 0062](../architecture/adr/0062-guardar-o-audio-do-registro-de-obra.md) (agora Accepted). Registrado em
+[BEZ-67](https://linear.app/bez-company/issue/BEZ-67).
+
+---
+
 ## 2026-10-20 · Estimativa de obra: CUB com e sem desoneração
 
 **Decisão:** o Pilar guarda o CUB nas duas versões que os Sinduscons publicam, sem desoneração (série clássica) e

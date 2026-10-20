@@ -156,7 +156,7 @@ exercitado no Chrome com prints.
 ## Decisões e riscos
 
 - [ADR 0062](../architecture/adr/0062-guardar-o-audio-do-registro-de-obra.md): guardar o áudio, com retenção de
-  12 meses (suposição a confirmar).
+  12 meses (confirmado em 20/10).
 - Registro nasce interno: no protótipo os registros do Zé e do Marcos aparecem como "Cliente vê"; aqui o padrão
   é o contrário, para nunca vazar "cimento acaba amanhã" ao cliente por descuido.
 - Reconhecimento de fala no navegador varia (Safari, Chrome, WebView); por isso é só prévia.
