@@ -68,7 +68,10 @@ provisória" e de "a definir", e diferença entre o provável e o custo real nas
     Excel da Caixa o código da composição vem dentro de uma fórmula; o leitor extrai da fórmula ou da aba Analítico.
 13. **Reprodutível.** A versão da estimativa grava a versão do catálogo e a origem de cada linha. Um resultado antigo
     não muda quando o catálogo ou o SINAPI mudam.
-14. **Sem regressão.** Estimativa e versão da SPEC 136 continuam abrindo: linhas sem origem gravada leem como
+14. **Um passo só para o que a obra tem.** O passo "O que a obra tem" do assistente junta os ambientes (quartos,
+    suítes, banheiros, lavabos, vagas) e os itens do catálogo. Os ambientes não mudam o preço (o CUB já considera o
+    padrão): servem para conferir a ficha e para o PDF. O assistente continua com 4 passos.
+15. **Sem regressão.** Estimativa e versão da SPEC 136 continuam abrindo: linhas sem origem gravada leem como
     `referencia_pilar`.
 
 Requisitos não-funcionais:
@@ -128,7 +131,7 @@ Fases, cada uma entregável sozinha:
 2. **F1, catálogo e origem (BEZ-82).** Migrations, motor com `origem` em toda linha e resolução de preço, versão do
    catálogo na estimativa, testes de contrato. Catálogo v1 com os itens que o CUB não cobre. Depende do protótipo para a
    tela.
-3. **F1b, telas.** Passo "Itens da obra" no assistente, resultado com origem, a definir com ações, tabela de preços da
+3. **F1b, telas.** Itens do catálogo dentro do passo "O que a obra tem", resultado com origem, a definir com ações, tabela de preços da
    empresa. Só depois do protótipo aprovado.
 4. **F2, IA sobre o catálogo (BEZ-83).** SPEC própria: texto livre vira itens validados contra o catálogo, tela "O que
    entendi", conjunto de avaliação com descrições reais.
@@ -152,7 +155,8 @@ Fases, cada uma entregável sozinha:
 
 **Telas** (desktop 1440 e mobile 390, com os estados vazio, carregando, erro e cheio):
 
-1. **Passo "Itens da obra"** no assistente de estimativa, entre "O que a obra tem" e "Revisão". Lista agrupada por
+1. **Passo "O que a obra tem"** do assistente de estimativa, com duas partes: os ambientes (contadores de quartos,
+   suítes, banheiros, lavabos e vagas, só informativos) e, abaixo, os itens que o CUB não cobre. Lista agrupada por
    categoria (Climatização, Aquecimento, Energia solar, Automação, Piscina, Área gourmet, Paisagismo, Terraplenagem e
    contenção, Fundação especial, Elevador, Marcenaria). Cada item liga e desliga, com quantidade quando faz sentido
    (aparelhos de ar-condicionado por classe de BTU, kWp, m²). Cada item mostra, antes de calcular, de onde virá o preço
