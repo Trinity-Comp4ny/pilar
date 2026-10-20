@@ -11,6 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { chipsDoExtraido, formatarDuracao, mensagemDoErro, rotuloDoDia, type TomChip } from "@/lib/registrosObra";
 import { cn } from "@/lib/utils";
+import { resumirDia } from "@/pages/obras/lib/resumoDia";
+import { ResumoDoDia } from "./ResumoDoDia";
 import {
   BUCKET_AUDIO_REGISTRO,
   BUCKET_FOTO_REGISTRO,
@@ -34,9 +36,18 @@ const hora = (iso: string) => new Date(iso).toLocaleTimeString("pt-BR", { hour: 
  * Timeline de registros da obra (SPEC 135, fase A): o que a equipe gravou, fotografou ou
  * escreveu pelo Pilar Campo, por dia, já organizado pela IA. O gestor ouve o áudio original,
  * corrige o texto, libera para o cliente ou apaga. O resumo do dia e o fechamento do RDO
- * são a fase B.
+ * (fase B) aparecem no topo de cada dia.
  */
-export function ObraRegistrosTimeline({ obraId, canEdit }: { obraId: string; canEdit: boolean }) {
+export function ObraRegistrosTimeline({
+  obraId,
+  canEdit,
+  onFecharDia,
+}: {
+  obraId: string;
+  canEdit: boolean;
+  /** Abre o RDO do dia pelo resumo (SPEC 135, fase B). */
+  onFecharDia?: (data: string, registros: ObraRegistro[]) => void;
+}) {
   const { data: registros = [], isLoading, error } = useObraRegistros(obraId);
 
   const dias = useMemo(() => {
@@ -83,6 +94,13 @@ export function ObraRegistrosTimeline({ obraId, canEdit }: { obraId: string; can
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {rotuloDoDia(d.data)} · {d.registros.length} {d.registros.length === 1 ? "registro" : "registros"}
           </h3>
+          {onFecharDia && (
+            <ResumoDoDia
+              resumo={resumirDia(d.registros)}
+              canEdit={canEdit}
+              onFechar={() => onFecharDia(d.data, d.registros)}
+            />
+          )}
           {d.registros.map((r) => (
             <CartaoDoRegistro key={r.id} registro={r} obraId={obraId} canEdit={canEdit} />
           ))}

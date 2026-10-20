@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -66,6 +65,9 @@ import {
 import { useTranscreverRdoVoz } from "@/pages/obras/hooks/useTranscreverRdoVoz";
 import { useObra } from "@/pages/obras/hooks/useObras";
 import { buscarClimaDoDia } from "@/pages/obras/lib/clima";
+import type { RascunhoRdo } from "@/pages/obras/lib/resumoDia";
+import { useVincularRegistrosRdo } from "@/pages/obras/hooks/useObraRegistros";
+import { NAO_INFORMADO, doRdo, hoje, schema, vazio, type FormData } from "@/pages/obras/lib/rdoForm";
 import { analytics } from "@/lib/analytics";
 
 import { BusyMark } from "@/components/motion/BusyMark";
@@ -85,7 +87,6 @@ function escolherMimeTypeAudio(): string {
   return "";
 }
 
-const NAO_INFORMADO = "__none__";
 const OUTRO = "__outro__";
 
 const RESULTADO_OPCOES: ReadonlyArray<{ value: ResultadoRdoTarefa; label: string }> = [
@@ -93,39 +94,6 @@ const RESULTADO_OPCOES: ReadonlyArray<{ value: ResultadoRdoTarefa; label: string
   { value: "concluiu", label: "Concluiu" },
   { value: "parou", label: "Parou" },
 ];
-
-const schema = z.object({
-  data: z.string().min(1, "Escolha a data"),
-  clima: z.string(),
-  condicao_trabalho: z.string(),
-  efetivo: z.string(),
-  atividades: z.string(),
-  ocorrencias: z.string(),
-  pendencias: z.string(),
-});
-type FormData = z.infer<typeof schema>;
-
-const hoje = () => new Date().toISOString().slice(0, 10);
-
-const vazio = (): FormData => ({
-  data: hoje(),
-  clima: NAO_INFORMADO,
-  condicao_trabalho: NAO_INFORMADO,
-  efetivo: "",
-  atividades: "",
-  ocorrencias: "",
-  pendencias: "",
-});
-
-const doRdo = (r: RdoRow): FormData => ({
-  data: r.data,
-  clima: r.clima ?? NAO_INFORMADO,
-  condicao_trabalho: r.condicao_trabalho ?? NAO_INFORMADO,
-  efetivo: r.efetivo != null ? String(r.efetivo) : "",
-  atividades: r.atividades ?? "",
-  ocorrencias: r.ocorrencias ?? "",
-  pendencias: r.pendencias ?? "",
-});
 
 /** Estado de uma tarefa reportada no dia: marcada, com resultado e observação. */
 interface SelTarefa {
@@ -141,9 +109,11 @@ interface Props {
   rdos: RdoRow[];
   /** Quando presente, abre editando este registro. */
   rdoInicial?: RdoRow | null;
+  /** Fechar o dia pelos registros (SPEC 135): preenche o formulário e liga os registros ao RDO salvo. */
+  rascunho?: RascunhoRdo | null;
 }
 
-export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: Props) {
+export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial, rascunho }: Props) {
   const { profile } = useAuth();
   const empresaId = profile?.empresa_id ?? null;
   const criar = useCreateRdo();
@@ -156,6 +126,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
   const uploadFoto = useUploadRdoFoto();
   const deleteFoto = useDeleteRdoFoto(obraId);
   const transcreverVoz = useTranscreverRdoVoz();
+  const vincularRegistros = useVincularRegistrosRdo(obraId);
   const [editandoId, setEditandoId] = useState<string | null>(null);
 
   const { data: tarefas = [] } = useObraTarefas(obraId);
@@ -239,15 +210,15 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
     setErroVoz(null);
     setClimaAuto(false);
     setSugestoes(null);
-    setEtapa(rdoInicial ? "revisar" : "gravar");
+    setEtapa(rdoInicial || rascunho ? "revisar" : "gravar");
     if (rdoInicial) {
       setEditandoId(rdoInicial.id);
       reset(doRdo(rdoInicial));
     } else {
       setEditandoId(null);
-      reset(vazio());
+      reset({ ...vazio(), ...(rascunho ? { data: rascunho.data, ...rascunho.campos } : {}) });
     }
-  }, [open, rdoInicial, reset]);
+  }, [open, rdoInicial, rascunho, reset]);
 
   // Fecha o dialog com gravação em andamento: para o microfone, os timers e a
   // visualização de áudio, sem deixar stream ativo em segundo plano.
@@ -281,8 +252,8 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
   useEffect(() => {
     if (!open) return;
     if (!editandoId) {
-      setEfetivoLinhas([]);
-      setImpedimentoLinhas([]);
+      setEfetivoLinhas(rascunho?.efetivoLinhas ?? []);
+      setImpedimentoLinhas(rascunho?.impedimentoLinhas ?? []);
       setVisitaLinhas([]);
       return;
     }
@@ -301,7 +272,7 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
         .filter((v) => v.rdo_id === editandoId)
         .map((v) => ({ fornecedor_id: v.fornecedor_id, fornecedor_nome: v.fornecedor_nome, observacao: v.observacao }))
     );
-  }, [open, editandoId, efetivoExistente, impedimentosExistentes, visitasExistentes]);
+  }, [open, editandoId, rascunho, efetivoExistente, impedimentosExistentes, visitasExistentes]);
 
   // Regra de 1 por dia: se a data escolhida já tem RDO, passa a editar aquele.
   useEffect(() => {
@@ -667,6 +638,8 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial }: 
           uploadFoto.mutateAsync({ empresaId: empresaId!, obraId, rdoId: rdo.id, file: f.file })
         ),
       ]);
+
+      if (rascunho) await vincularRegistros.mutateAsync({ rdoId: rdo.id, registroIds: rascunho.registroIds });
 
       fotosNovas.forEach((f) => URL.revokeObjectURL(f.preview));
       setFotosNovas([]);

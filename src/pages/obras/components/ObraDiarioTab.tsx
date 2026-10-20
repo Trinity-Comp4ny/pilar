@@ -32,7 +32,8 @@ import { useObraRdoVisitas } from "@/pages/obras/hooks/useObraRdoVisitas";
 import { RdoFormDialog } from "./RdoFormDialog";
 import { RdoFeedCard } from "./RdoFeedCard";
 import { ObraRegistrosTimeline } from "./ObraRegistrosTimeline";
-import { useObraRegistros } from "@/pages/obras/hooks/useObraRegistros";
+import { rascunhoDoRdo, type RascunhoRdo } from "@/pages/obras/lib/resumoDia";
+import { useObraRegistros, type ObraRegistro } from "@/pages/obras/hooks/useObraRegistros";
 
 const RESULTADO_LABEL: Record<ResultadoRdoTarefa, string> = {
   avancou: "Avançou",
@@ -76,6 +77,7 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
   const del = useDeleteRdo(obraId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<RdoRow | null>(null);
+  const [rascunho, setRascunho] = useState<RascunhoRdo | null>(null);
   const [confirm, setConfirm] = useState<RdoRow | null>(null);
   // Visões: Registros (SPEC 135, o que a equipe gravou), Lista (RDO denso) e Feed (spec 087).
   // Não persiste entre sessões. Sem escolha, abre em Registros quando a obra já tem registros e
@@ -87,10 +89,19 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
 
   const abrirNovo = () => {
     setEditing(null);
+    setRascunho(null);
     setDialogOpen(true);
   };
   const abrirEdicao = (rdo: RdoRow) => {
     setEditing(rdo);
+    setRascunho(null);
+    setDialogOpen(true);
+  };
+  // Fechar o dia pelos registros: dia sem RDO abre preenchido; dia que já tem RDO abre esse RDO
+  // para editar, e os registros passam a apontar para ele ao salvar.
+  const fecharDia = (data: string, doDia: ObraRegistro[]) => {
+    setEditing(rdos.find((r) => r.data === data) ?? null);
+    setRascunho(rascunhoDoRdo(data, doDia));
     setDialogOpen(true);
   };
 
@@ -143,7 +154,7 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
       </div>
 
       {visualizacao === "registros" ? (
-        <ObraRegistrosTimeline obraId={obraId} canEdit={canEdit} />
+        <ObraRegistrosTimeline obraId={obraId} canEdit={canEdit} onFecharDia={fecharDia} />
       ) : rdos.length === 0 ? (
         <EmptyState
           icon={ClipboardList}
@@ -350,7 +361,14 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
         </div>
       )}
 
-      <RdoFormDialog open={dialogOpen} onOpenChange={setDialogOpen} obraId={obraId} rdos={rdos} rdoInicial={editing} />
+      <RdoFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        obraId={obraId}
+        rdos={rdos}
+        rdoInicial={editing}
+        rascunho={rascunho}
+      />
 
       <ConfirmDialog
         open={!!confirm}
