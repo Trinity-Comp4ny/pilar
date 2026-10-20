@@ -66,6 +66,7 @@ const CampoConvite = lazy(() => import("./pages/campo/CampoConvite"));
 const CampoTrocarSenha = lazy(() => import("./pages/campo/CampoTrocarSenha"));
 const CampoHome = lazy(() => import("./pages/campo/CampoHome"));
 const CampoRegistrarDia = lazy(() => import("./pages/campo/CampoRegistrarDia"));
+const CampoGravar = lazy(() => import("./pages/campo/CampoGravar"));
 const ClienteDashboard = lazy(() => import("./pages/cliente/ClienteDashboard"));
 const ClienteObraDetail = lazy(() => import("./pages/cliente/ClienteObraDetail"));
 const ClienteProjetoDetail = lazy(() => import("./pages/cliente/ClienteProjetoDetail"));
@@ -424,6 +425,7 @@ const App = () => {
                         <Route path="/campo" element={<CampoPrivateRoute />}>
                           <Route index element={<CampoHome />} />
                           <Route path="dia" element={<CampoRegistrarDia />} />
+                          <Route path="gravar" element={<CampoGravar />} />
                         </Route>
 
                         <Route path="*" element={<NotFound />} />

@@ -1,7 +1,7 @@
 # SPEC 135: Diário de obra em registros (falar, enviar, a IA organiza)
 
 **Data:** 2026-10-19
-**Status:** Aprovada
+**Status:** Em implementação (fase A entregue)
 **Autor:** Matheus
 **Módulo:** obras (Pilar Campo, aba Diário do escritório, portal do cliente)
 **Depende de:** [SPEC 042](./042-pilar-campo-app-de-campo.md), [SPEC 080](./080-rdo-por-voz.md), [SPEC 086](./086-rdo-voz-sugestoes-estruturadas.md), [SPEC 087](./087-diario-obra-feed-instagram.md), [ADR 0062](../architecture/adr/0062-guardar-o-audio-do-registro-de-obra.md)
@@ -124,6 +124,15 @@ Três PRs, cada um entregando valor sozinho:
 2. **Fase B, resumo e RDO:** `ai-resumo-dia`, "Resumo do dia" e fechamento do RDO pelo formulário existente;
    aposentar o RDO por voz do formulário.
 3. **Fase C, portal:** visibilidade por registro, resumo da semana e timeline no portal.
+
+**Fase A, o que entrou:** migration `20261114000000_obra_registro.sql` (tabela, bucket privado, aceite,
+RPCs), edges `campo-registro-criar` e `registro-reprocessar`, organizador em dois passos, Pilar Campo
+(gravar, foto, texto, fila offline, cartão com estados, pergunta do efetivo) e a visão "Registros" na aba
+Diário do escritório (ouvir áudio, fotos, corrigir texto, liberar ao cliente, apagar, tentar de novo).
+Medido no banco e na IA locais: a edge responde 202 em 84 ms e um áudio de 12 s fica pronto em ~5 s.
+**Fora da fase A, pendente:** job diário de retenção do áudio (12 meses, ADR 0062), apagar o áudio quando a
+obra, a conta de campo ou a empresa são excluídas, gravar pelo escritório, fotos no cartão do campo e
+tocar o próprio áudio no campo.
 
 Cada fase termina com teste automatizado do que muda (RLS, schema de entrada, fila offline) e o fluxo real
 exercitado no Chrome com prints.
