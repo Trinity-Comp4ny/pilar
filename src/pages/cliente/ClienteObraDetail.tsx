@@ -3,7 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Building2 } from "lucide-react";
 import { ClienteShell } from "./ClienteShell";
 import { useClienteObraData, type ClienteObraFrente } from "./useClienteObraData";
-import { usePortalObraFotos } from "./usePortalObraFotos";
+import { usePortalObraFotos, usePortalRegistroFotos } from "./usePortalObraFotos";
+import { RegistrosPortal } from "./RegistrosPortal";
 import { TimelineContent, type TimelineDisciplina } from "@/pages/portal/PortalTimeline";
 import { ContaObraContent } from "@/pages/portal/PortalContaObra";
 import { RdoFeedCard } from "@/pages/obras/components/RdoFeedCard";
@@ -45,6 +46,10 @@ export default function ClienteObraDetail() {
   const { data, loading, error } = useClienteObraData(id);
   const fotoIds = (data?.diario ?? []).flatMap((d) => d.fotos.map((f) => f.id));
   const { data: urlPorFoto = {} } = usePortalObraFotos(fotoIds);
+  const registros = data?.registros ?? [];
+  const { data: fotosPorRegistro = {} } = usePortalRegistroFotos(
+    registros.filter((r) => r.num_fotos > 0).map((r) => r.id)
+  );
 
   if (loading) {
     return (
@@ -99,6 +104,8 @@ export default function ClienteObraDetail() {
           <h2 className="text-sm font-semibold mb-3">Prestação de contas</h2>
           <ContaObraContent conta={data.conta} taxaPct={data.taxa_administracao_pct} />
         </div>
+
+        <RegistrosPortal registros={registros} fotosPorRegistro={fotosPorRegistro} />
 
         <div>
           <h2 className="text-sm font-semibold mb-3">Diário</h2>
