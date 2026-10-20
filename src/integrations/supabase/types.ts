@@ -1487,6 +1487,42 @@ export type Database = {
           },
         ]
       }
+      cub_valores: {
+        Row: {
+          created_at: string
+          fonte: string
+          id: string
+          importado_por: string | null
+          mes_base: string
+          padrao: string
+          subtipo: string
+          uf: string
+          valor_m2: number
+        }
+        Insert: {
+          created_at?: string
+          fonte: string
+          id?: string
+          importado_por?: string | null
+          mes_base: string
+          padrao: string
+          subtipo: string
+          uf: string
+          valor_m2: number
+        }
+        Update: {
+          created_at?: string
+          fonte?: string
+          id?: string
+          importado_por?: string | null
+          mes_base?: string
+          padrao?: string
+          subtipo?: string
+          uf?: string
+          valor_m2?: number
+        }
+        Relationships: []
+      }
       data_deletion_requests: {
         Row: {
           empresa_id: string | null
@@ -2236,6 +2272,212 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estimativa_ajustes_empresa: {
+        Row: {
+          adicionais: Json
+          empresa_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          adicionais?: Json
+          empresa_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          adicionais?: Json
+          empresa_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimativa_ajustes_empresa_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estimativa_obra_versoes: {
+        Row: {
+          created_at: string
+          created_by: string
+          empresa_id: string
+          estimativa_id: string
+          ficha: Json
+          id: string
+          nota: string | null
+          parametros_validados: boolean
+          premissas: Json
+          resultado: Json
+          versao: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          empresa_id: string
+          estimativa_id: string
+          ficha: Json
+          id?: string
+          nota?: string | null
+          parametros_validados?: boolean
+          premissas: Json
+          resultado: Json
+          versao?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          empresa_id?: string
+          estimativa_id?: string
+          ficha?: Json
+          id?: string
+          nota?: string | null
+          parametros_validados?: boolean
+          premissas?: Json
+          resultado?: Json
+          versao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimativa_obra_versoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estimativa_obra_versoes_estimativa_id_fkey"
+            columns: ["estimativa_id"]
+            isOneToOne: false
+            referencedRelation: "estimativas_obra"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estimativa_parametros: {
+        Row: {
+          id: string
+          parametros: Json
+          updated_at: string
+          updated_by: string | null
+          validado_em: string | null
+          validado_por: string | null
+        }
+        Insert: {
+          id?: string
+          parametros: Json
+          updated_at?: string
+          updated_by?: string | null
+          validado_em?: string | null
+          validado_por?: string | null
+        }
+        Update: {
+          id?: string
+          parametros?: Json
+          updated_at?: string
+          updated_by?: string | null
+          validado_em?: string | null
+          validado_por?: string | null
+        }
+        Relationships: []
+      }
+      estimativas_obra: {
+        Row: {
+          cliente_id: string | null
+          cliente_nome: string | null
+          created_at: string
+          created_by: string
+          empresa_id: string
+          ficha: Json
+          id: string
+          lead_id: string | null
+          nome: string
+          obra_id: string | null
+          premissas: Json
+          proposta_id: string | null
+          resultado: Json | null
+          status: string
+          updated_at: string
+          versao_atual: number
+        }
+        Insert: {
+          cliente_id?: string | null
+          cliente_nome?: string | null
+          created_at?: string
+          created_by?: string
+          empresa_id: string
+          ficha: Json
+          id?: string
+          lead_id?: string | null
+          nome: string
+          obra_id?: string | null
+          premissas?: Json
+          proposta_id?: string | null
+          resultado?: Json | null
+          status?: string
+          updated_at?: string
+          versao_atual?: number
+        }
+        Update: {
+          cliente_id?: string | null
+          cliente_nome?: string | null
+          created_at?: string
+          created_by?: string
+          empresa_id?: string
+          ficha?: Json
+          id?: string
+          lead_id?: string | null
+          nome?: string
+          obra_id?: string | null
+          premissas?: Json
+          proposta_id?: string | null
+          resultado?: Json | null
+          status?: string
+          updated_at?: string
+          versao_atual?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estimativas_obra_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estimativas_obra_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estimativas_obra_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estimativas_obra_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estimativas_obra_proposta_id_fkey"
+            columns: ["proposta_id"]
+            isOneToOne: false
+            referencedRelation: "propostas"
             referencedColumns: ["id"]
           },
         ]
