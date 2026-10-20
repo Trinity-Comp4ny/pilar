@@ -125,7 +125,7 @@ Três PRs, cada um entregando valor sozinho:
    aposentar o RDO por voz do formulário.
 3. **Fase C, portal:** visibilidade por registro, resumo da semana e timeline no portal.
 
-**Fase A, o que entrou:** migration `20261114000000_obra_registro.sql` (tabela, bucket privado, aceite,
+**Fase A, o que entrou:** migration `20261114000200_obra_registro.sql` (tabela, bucket privado, aceite,
 RPCs), edges `campo-registro-criar` e `registro-reprocessar`, organizador em dois passos, Pilar Campo
 (gravar, foto, texto, fila offline, cartão com estados, pergunta do efetivo) e a visão "Registros" na aba
 Diário do escritório (ouvir áudio, fotos, corrigir texto, liberar ao cliente, apagar, tentar de novo).

@@ -1,4 +1,4 @@
--- pgTAP: diário de obra em registros (SPEC 135, migration 20261114000000).
+-- pgTAP: diário de obra em registros (SPEC 135, migration 20261114000200).
 -- Cobre: criar registro por token (idempotência, aceite do áudio, validações), listagem só
 -- da própria obra, RLS por empresa, funções internas fechadas para anon e authenticated, e
 -- a organização atômica.
