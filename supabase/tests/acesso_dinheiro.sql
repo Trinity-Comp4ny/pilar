@@ -32,6 +32,8 @@ WITH permitido(coluna, motivo) AS (
     ('trial_niveis.tokens_total', 'catálogo'),
     -- CUB dos Sinduscons (SPEC 136): referência pública de mercado, importada pelo ultra admin.
     ('cub_valores.valor_m2', 'catálogo'),
+    -- SINAPI (SPEC 137): preço público de insumo do catálogo, importado pelo ultra admin.
+    ('sinapi_precos_insumo.valor', 'catálogo'),
     -- Consumo e compra de IA do próprio Pilar (Configurações > Uso), visível à empresa.
     ('ai_token_ledger.custo_estimado', 'consumo de IA'),
     ('ai_token_saldo.saldo_comprado', 'consumo de IA'),

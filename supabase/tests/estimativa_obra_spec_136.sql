@@ -1,4 +1,5 @@
--- pgTAP: SPEC 136 / ADR 0063, estimativa de obra (migrations 20261114000000, 20261114000100, 20261115000100, 20261116000100 e 20261116000200).
+-- pgTAP: SPEC 136 / ADR 0063 e SPEC 137 / ADR 0064, estimativa de obra (migrations 20261114000000, 20261114000100,
+-- 20261115000100, 20261116000100, 20261116000200 e 20261117000100).
 -- Roda como usuário autenticado, para a RLS e os triggers valerem como no app.
 
 BEGIN;
@@ -6,7 +7,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(31);
+SELECT plan(41);
 
 -- ── Fixture ──────────────────────────────────────────────────────────────────
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features) VALUES
@@ -61,6 +62,12 @@ SELECT is(
   (SELECT parametros -> 'natureza_base' ->> 'mao_de_obra' FROM public.estimativa_parametros WHERE id = 'default'),
   '54',
   'a natureza da base segue a composição oficial do CUB (mão de obra 54%)'
+);
+
+SELECT ok(
+  (SELECT parametros -> 'adicionais' ?& ARRAY['ac9', 'ac12', 'ac18', 'ac24', 'acinst', 'aqsolar', 'fv', 'automacao']
+   FROM public.estimativa_parametros WHERE id = 'default'),
+  'os parâmetros trazem os itens do catálogo (ar-condicionado, aquecedor solar, energia solar, automação)'
 );
 
 SET LOCAL ROLE authenticated;
@@ -136,6 +143,73 @@ SELECT is(
   (SELECT count(*)::int FROM public.cub_valores WHERE uf = 'SP' AND subtipo = 'R1'),
   2,
   'toda empresa lê o CUB'
+);
+
+-- ── SINAPI: global, só o ultra admin escreve ─────────────────────────────────
+SELECT pg_temp.como('e1360000-0000-0000-0000-00000000000a');
+
+SELECT throws_ok(
+  $$INSERT INTO public.sinapi_precos_insumo (codigo, uf, regime, mes_base, valor, origem, descricao, unidade, fonte)
+    VALUES (42424, 'SP', 'onerado', '2026-09-01', 1942.58, 'CR', 'Ar-condicionado split 9.000 BTU', 'UN', 'SINAPI set/2026')$$,
+  '42501',
+  NULL,
+  'usuário comum não escreve no SINAPI'
+);
+
+SELECT pg_temp.como('e1360000-0000-0000-0000-00000000000c', 'aal2');
+
+SELECT lives_ok(
+  $$INSERT INTO public.sinapi_precos_insumo (codigo, uf, regime, mes_base, valor, origem, descricao, unidade, fonte)
+    VALUES (42424, 'SP', 'onerado', '2026-09-01', 1942.58, 'CR', 'Ar-condicionado split 9.000 BTU', 'UN', 'SINAPI set/2026')$$,
+  'ultra admin com segundo fator escreve no SINAPI'
+);
+
+SELECT throws_ok(
+  $$INSERT INTO public.sinapi_precos_insumo (codigo, uf, regime, mes_base, valor, origem, descricao, unidade, fonte)
+    VALUES (42424, 'SP', 'onerado', '2026-09-01', 2000, 'C', 'outra importação', 'UN', 'SINAPI set/2026')$$,
+  '23505',
+  NULL,
+  'o mesmo código, UF, regime e mês não duplica'
+);
+
+SELECT lives_ok(
+  $$INSERT INTO public.sinapi_precos_insumo (codigo, uf, regime, mes_base, valor, origem, descricao, unidade, fonte)
+    VALUES (42424, 'SP', 'desonerado', '2026-09-01', 1900, 'CR', 'Ar-condicionado split 9.000 BTU', 'UN', 'SINAPI set/2026')$$,
+  'o mesmo código, UF e mês cabe de novo com outro regime'
+);
+
+SELECT throws_ok(
+  $$INSERT INTO public.sinapi_precos_insumo (codigo, uf, regime, mes_base, valor, origem, descricao, unidade, fonte)
+    VALUES (42425, 'SP', 'onerado', '2026-09-01', 0, 'C', 'Ar-condicionado split 12.000 BTU', 'UN', 'SINAPI set/2026')$$,
+  '23514',
+  NULL,
+  'preço zero é recusado'
+);
+
+SELECT throws_ok(
+  $$INSERT INTO public.sinapi_precos_insumo (codigo, uf, regime, mes_base, valor, origem, descricao, unidade, fonte)
+    VALUES (42425, 'SP', 'onerado', '2026-09-01', 2175.13, 'X', 'Ar-condicionado split 12.000 BTU', 'UN', 'SINAPI set/2026')$$,
+  '23514',
+  NULL,
+  'a origem do SINAPI só aceita C ou CR'
+);
+
+SELECT pg_temp.como('e1360000-0000-0000-0000-00000000000c', 'aal1');
+
+SELECT throws_ok(
+  $$INSERT INTO public.sinapi_precos_insumo (codigo, uf, regime, mes_base, valor, origem, descricao, unidade, fonte)
+    VALUES (42425, 'RJ', 'onerado', '2026-09-01', 2175.13, 'CR', 'Ar-condicionado split 12.000 BTU', 'UN', 'SINAPI set/2026')$$,
+  '42501',
+  NULL,
+  'ultra admin sem segundo fator não escreve no SINAPI'
+);
+
+SELECT pg_temp.como('e1360000-0000-0000-0000-00000000000b');
+
+SELECT is(
+  (SELECT count(*)::int FROM public.sinapi_precos_insumo WHERE codigo = 42424),
+  2,
+  'toda empresa lê o SINAPI'
 );
 
 -- ── Parâmetros: só o ultra admin altera, e mexer nos valores derruba a validação ──
@@ -285,6 +359,13 @@ SELECT throws_ok(
   '42501',
   NULL,
   'anônimo não lê o CUB'
+);
+
+SELECT throws_ok(
+  $$SELECT count(*) FROM public.sinapi_precos_insumo$$,
+  '42501',
+  NULL,
+  'anônimo não lê o SINAPI'
 );
 
 RESET ROLE;

@@ -7165,6 +7165,48 @@ export type Database = {
           },
         ]
       }
+      sinapi_precos_insumo: {
+        Row: {
+          codigo: number
+          created_at: string
+          descricao: string
+          fonte: string
+          importado_por: string | null
+          mes_base: string
+          origem: string
+          regime: string
+          uf: string
+          unidade: string
+          valor: number
+        }
+        Insert: {
+          codigo: number
+          created_at?: string
+          descricao: string
+          fonte: string
+          importado_por?: string | null
+          mes_base: string
+          origem: string
+          regime: string
+          uf: string
+          unidade: string
+          valor: number
+        }
+        Update: {
+          codigo?: number
+          created_at?: string
+          descricao?: string
+          fonte?: string
+          importado_por?: string | null
+          mes_base?: string
+          origem?: string
+          regime?: string
+          uf?: string
+          unidade?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       status_components: {
         Row: {
           id: string

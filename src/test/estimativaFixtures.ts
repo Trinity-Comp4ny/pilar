@@ -23,10 +23,17 @@ export function parametrosDaMigration(): Parametros {
   const base = ler("20261114000100_estimativa_obra.sql");
   const terreno = ler("20261116000100_estimativa_terreno_inclinado.sql");
   const natureza = ler("20261116000200_estimativa_natureza_cub.sql");
+  const catalogo = ler("20261117000100_estimativa_itens_catalogo.sql");
+  const { adicionais: itensDoCatalogo, ...outrosDoCatalogo } = catalogo;
   return parametrosSchema.parse({
     ...base,
+    ...outrosDoCatalogo,
     natureza_base: natureza,
-    adicionais: { ...(base.adicionais as Record<string, unknown>), ...terreno },
+    adicionais: {
+      ...(base.adicionais as Record<string, unknown>),
+      ...terreno,
+      ...(itensDoCatalogo as Record<string, unknown>),
+    },
   });
 }
 
