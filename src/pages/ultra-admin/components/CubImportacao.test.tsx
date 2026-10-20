@@ -87,12 +87,12 @@ describe("CubImportacao", () => {
 
     await waitFor(() => expect(gravarCub).toHaveBeenCalledTimes(1));
     const [linhas, fonte] = gravarCub.mock.calls[0] as [
-      { uf: string; subtipo: string; padrao: string; valor_m2: number; mes_base: string }[],
+      { uf: string; subtipo: string; padrao: string; valor_m2: number; mes_base: string; regime: string }[],
       string,
     ];
-    expect(linhas.map((l) => [l.uf, l.subtipo, l.padrao, l.valor_m2, l.mes_base])).toEqual([
-      ["SP", "R1", "alto", 3350, "2026-09-01"],
-      ["RJ", "R1", "normal", 2650, "2026-09-01"],
+    expect(linhas.map((l) => [l.uf, l.subtipo, l.padrao, l.valor_m2, l.mes_base, l.regime])).toEqual([
+      ["SP", "R1", "alto", 3350, "2026-09-01", "onerado"],
+      ["RJ", "R1", "normal", 2650, "2026-09-01", "onerado"],
     ]);
     expect(fonte).toBe("Planilha importada: cub.csv");
   });
@@ -113,17 +113,54 @@ describe("CubImportacao", () => {
 
   it("mês que já tem tabela avisa que importar de novo corrige os valores", async () => {
     gravadas = [
-      { uf: "SP", subtipo: "R1", padrao: "alto", mes_base: "2026-09-01", created_at: "2026-10-02T10:00:00Z" },
+      {
+        uf: "SP",
+        subtipo: "R1",
+        padrao: "alto",
+        mes_base: "2026-09-01",
+        regime: "onerado",
+        created_at: "2026-10-02T10:00:00Z",
+      },
     ];
     render(<CubImportacao />);
-    expect(screen.getByText(/set\/2026 já tem 1 linha\./)).toBeInTheDocument();
+    expect(screen.getByText(/set\/2026 \(sem desoneração\) já tem 1 linha\./)).toBeInTheDocument();
     expect(screen.getByTitle("1 de 27")).toBeInTheDocument();
+  });
+
+  it("mês importado só com desoneração não avisa no regime padrão (sem desoneração)", () => {
+    gravadas = [
+      {
+        uf: "SP",
+        subtipo: "R1",
+        padrao: "alto",
+        mes_base: "2026-09-01",
+        regime: "desonerado",
+        created_at: "2026-10-02T10:00:00Z",
+      },
+    ];
+    render(<CubImportacao />);
+    expect(screen.queryByText(/já tem/)).not.toBeInTheDocument();
+    expect(screen.getByText("Com desoneração")).toBeInTheDocument();
   });
 
   it("cobertura marca as UFs com e sem tabela", () => {
     gravadas = [
-      { uf: "SP", subtipo: "R1", padrao: "alto", mes_base: "2026-09-01", created_at: "2026-10-02T10:00:00Z" },
-      { uf: "RJ", subtipo: "R1", padrao: "alto", mes_base: "2026-09-01", created_at: "2026-10-02T10:00:00Z" },
+      {
+        uf: "SP",
+        subtipo: "R1",
+        padrao: "alto",
+        mes_base: "2026-09-01",
+        regime: "onerado",
+        created_at: "2026-10-02T10:00:00Z",
+      },
+      {
+        uf: "RJ",
+        subtipo: "R1",
+        padrao: "alto",
+        mes_base: "2026-09-01",
+        regime: "onerado",
+        created_at: "2026-10-02T10:00:00Z",
+      },
     ];
     render(<CubImportacao />);
     expect(screen.getByTitle("2 de 27")).toBeInTheDocument();

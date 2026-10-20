@@ -138,7 +138,7 @@ export default function EstimativaDetalhe() {
   }
 
   const subtipo = SUBTIPOS[ficha.tipo][ficha.subtipo];
-  const disponiveis = padroesDisponiveis(insumos.cub, subtipo.cub);
+  const disponiveis = padroesDisponiveis(insumos.cub, subtipo.cub, premissas.regime);
   const valores: Record<CampoPremissa, number> = {
     adm: premissas.adm ?? insumos.parametros.adm_padrao,
     faixa: premissas.faixa ?? insumos.parametros.faixa_padrao,

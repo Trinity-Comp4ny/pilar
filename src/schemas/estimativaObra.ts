@@ -40,6 +40,10 @@ export type TipoObra = (typeof TIPOS_OBRA)[number];
 export const PADROES = ["baixo", "normal", "alto"] as const;
 export type Padrao = (typeof PADROES)[number];
 
+/** Versão do CUB: sem desoneração da folha (série clássica) ou com desoneração. */
+export const REGIMES = ["onerado", "desonerado"] as const;
+export type Regime = (typeof REGIMES)[number];
+
 const NIVEIS_MARCENARIA = ["nenhuma", "basica", "completa"] as const;
 
 /** Subtipo de obra e o código do CUB (NBR 12721) que o precifica. */
@@ -109,6 +113,8 @@ export const premissasSchema = z.object({
   adm: z.number().min(0).max(40).optional(),
   faixa: z.number().min(1).max(50).optional(),
   equipe: z.number().int().min(1).max(200).optional(),
+  /** Versão do CUB. Ausente = onerado (sem desoneração), a mais conservadora. */
+  regime: z.enum(REGIMES).optional(),
 });
 export type Premissas = z.infer<typeof premissasSchema>;
 
@@ -119,6 +125,7 @@ export const cubLinhaSchema = z.object({
   padrao: z.enum([...PADROES, "unico"]),
   mes_base: z.string().regex(/^\d{4}-\d{2}-01$/),
   valor_m2: z.number().positive(),
+  regime: z.enum(REGIMES).default("onerado"),
 });
 export type CubLinha = z.infer<typeof cubLinhaSchema>;
 
@@ -295,6 +302,8 @@ export const resultadoSchema = z.object({
     valorM2: z.number(),
     origem: z.enum(["uf", "uf_vizinha"]),
     mesAntigo: z.boolean(),
+    // Estimativas salvas antes do regime existir usam a série clássica.
+    regime: z.enum(REGIMES).default("onerado"),
   }),
   etapas: z.array(z.object({ id: z.string(), nome: z.string(), fase: z.string(), valor: z.number() })),
   adicionais: z.array(

@@ -7,7 +7,7 @@ import { KPICard } from "@/components/KPICard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { rotuloMesBase } from "@/lib/estimativaObra";
+import { rotuloMesBase, rotuloRegime } from "@/lib/estimativaObra";
 import {
   coberturaDoMes,
   interpretarPlanilhaCub,
@@ -17,7 +17,7 @@ import {
   type ResumoMes,
 } from "../estimativaCubImport";
 import { formatCurrency, formatDateTime, formatNumber } from "@/lib/format";
-import { UFS } from "@/schemas/estimativaObra";
+import { REGIMES, UFS, type Regime } from "@/schemas/estimativaObra";
 import { toDataSourceResult } from "@/types/dataSource";
 import { gravarCub, lerCelulas, useCubGravado } from "../estimativaAdmin";
 import { useAcaoEmpresa } from "../hooks";
@@ -26,6 +26,7 @@ const LINHAS_NA_PREVIA = 50;
 const ERROS_VISIVEIS = 30;
 
 const PADRAO_ROTULO: Record<string, string> = { baixo: "Baixo", normal: "Normal", alto: "Alto", unico: "Único" };
+const REGIME_ROTULO: Record<Regime, string> = { onerado: "Sem desoneração", desonerado: "Com desoneração" };
 
 const colunasPrevia: ColumnDef<LinhaCubLida>[] = [
   { key: "linha", header: "Linha", getSortValue: (l) => l.linha, cell: (l) => l.linha, className: "tabular-nums" },
@@ -51,6 +52,7 @@ const colunasMeses: ColumnDef<ResumoMes>[] = [
     cell: (m) => <span className="font-medium text-ink">{rotuloMesBase(m.mesBase)}</span>,
     mobile: "title",
   },
+  { key: "regime", header: "Regime", cell: (m) => REGIME_ROTULO[m.regime] },
   {
     key: "linhas",
     header: "Linhas",
@@ -79,6 +81,8 @@ export function CubImportacao() {
   const opcoes = useMemo(() => opcoesMesBase(new Date()), []);
   // A tabela de um mês costuma sair no começo do mês seguinte: o padrão é o mês anterior.
   const [mes, setMes] = useState(opcoes[1].valor);
+  // Sem desoneração é a série clássica do CUB e a que a estimativa usa quando ninguém escolhe.
+  const [regime, setRegime] = useState<Regime>("onerado");
   const [arquivo, setArquivo] = useState<{ nome: string; celulas: string[][] } | null>(null);
   const [lendo, setLendo] = useState(false);
 
@@ -86,18 +90,24 @@ export function CubImportacao() {
   const gravadas = useMemo(() => gravado.data ?? [], [gravado.data]);
   const resumos = useMemo(() => resumirMeses(gravadas), [gravadas]);
   const maisRecente = resumos[0]?.mesBase ?? null;
+  // A cobertura é do regime escolhido, no mês mais novo que ele tem.
+  const maisRecenteDoRegime = resumos.find((r) => r.regime === regime)?.mesBase ?? null;
   const cobertura = useMemo(
-    () => (maisRecente ? coberturaDoMes(gravadas, maisRecente) : null),
-    [gravadas, maisRecente]
+    () => (maisRecenteDoRegime ? coberturaDoMes(gravadas, maisRecenteDoRegime, regime) : null),
+    [gravadas, maisRecenteDoRegime, regime]
   );
 
-  const resultado = useMemo(() => (arquivo ? interpretarPlanilhaCub(arquivo.celulas, mes) : null), [arquivo, mes]);
-  const mesJaImportado = resumos.find((r) => r.mesBase === mes);
+  const resultado = useMemo(
+    () => (arquivo ? interpretarPlanilhaCub(arquivo.celulas, mes, regime) : null),
+    [arquivo, mes, regime]
+  );
+  const mesJaImportado = resumos.find((r) => r.mesBase === mes && r.regime === regime);
 
   const importar = useAcaoEmpresa({
     run: (entradaImportar: { linhas: LinhaCubLida[]; fonte: string }) =>
       gravarCub(entradaImportar.linhas, entradaImportar.fonte),
-    sucesso: (e) => `CUB de ${rotuloMesBase(e.linhas[0].mes_base)} importado: ${formatNumber(e.linhas.length)} linhas.`,
+    sucesso: (e) =>
+      `CUB de ${rotuloMesBase(e.linhas[0].mes_base)} (${rotuloRegime(e.linhas[0].regime)}) importado: ${formatNumber(e.linhas.length)} linhas.`,
     erro: "Não foi possível importar o CUB",
     contexto: "ultra-admin:estimativa-cub",
   });
@@ -144,7 +154,9 @@ export function CubImportacao() {
         <KPICard
           label="UFs com tabela"
           value={cobertura ? `${cobertura.com.length} de ${UFS.length}` : "0"}
-          subtitle={maisRecente ? `em ${rotuloMesBase(maisRecente)}` : undefined}
+          subtitle={
+            maisRecenteDoRegime ? `${rotuloRegime(regime)}, em ${rotuloMesBase(maisRecenteDoRegime)}` : undefined
+          }
           loading={gravado.isLoading}
         />
         <KPICard label="Linhas gravadas" value={formatNumber(gravadas.length)} loading={gravado.isLoading} />
@@ -178,9 +190,28 @@ export function CubImportacao() {
               <h2 id="cub-importar" className="text-base font-semibold text-ink">
                 Importar o CUB de um mês
               </h2>
-              <p className="text-sm text-ink-soft">Planilha com UF, código do CUB (ex.: R1-A) e valor por m².</p>
+              <p className="text-sm text-ink-soft">
+                Planilha com UF, código do CUB (ex.: R1-A) e valor por m². Uma planilha por regime.
+              </p>
             </div>
-            <div className="flex items-end gap-2">
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="w-44">
+                <label htmlFor="cub-regime" className="mb-1 block text-xs font-medium text-ink-soft">
+                  Regime
+                </label>
+                <Select value={regime} onValueChange={(v) => setRegime(v as Regime)}>
+                  <SelectTrigger id="cub-regime">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REGIMES.map((r) => (
+                      <SelectItem key={r} value={r}>
+                        {REGIME_ROTULO[r]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="w-40">
                 <label htmlFor="cub-mes" className="mb-1 block text-xs font-medium text-ink-soft">
                   Mês-base
@@ -208,7 +239,7 @@ export function CubImportacao() {
             <p className="flex items-start gap-2 rounded-lg bg-info-soft px-3 py-2 text-sm text-info-strong">
               <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
               <span>
-                {rotuloMesBase(mes)} já tem {formatNumber(mesJaImportado.linhas)}{" "}
+                {rotuloMesBase(mes)} ({rotuloRegime(regime)}) já tem {formatNumber(mesJaImportado.linhas)}{" "}
                 {mesJaImportado.linhas === 1 ? "linha" : "linhas"}. Importar de novo corrige os valores desse mês; as
                 estimativas já salvas guardam o valor da versão e não mudam.
               </span>
@@ -301,10 +332,10 @@ export function CubImportacao() {
         </section>
       )}
 
-      {cobertura && maisRecente && (
+      {cobertura && maisRecenteDoRegime && maisRecente && (
         <section className="space-y-3 rounded-2xl border bg-card p-4 md:p-5" aria-labelledby="cub-cobertura">
           <h2 id="cub-cobertura" className="text-base font-semibold text-ink">
-            Cobertura por UF em {rotuloMesBase(maisRecente)}
+            Cobertura por UF em {rotuloMesBase(maisRecenteDoRegime ?? maisRecente)} ({rotuloRegime(regime)})
           </h2>
           <ul className="flex flex-wrap gap-1.5" aria-label="UFs com e sem tabela">
             {UFS.map((uf) => {

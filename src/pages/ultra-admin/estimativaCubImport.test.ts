@@ -72,6 +72,23 @@ describe("interpretarPlanilhaCub: código combinado", () => {
   });
 });
 
+describe("interpretarPlanilhaCub: regime", () => {
+  const planilha = [
+    ["UF", "Código", "Valor"],
+    ["SP", "R1-A", "3.230,00"],
+  ];
+
+  it("sem regime informado, a linha é sem desoneração", () => {
+    expect(interpretarPlanilhaCub(planilha, MES).linhas[0].regime).toBe("onerado");
+  });
+
+  it("marca todas as linhas com o regime escolhido", () => {
+    const r = interpretarPlanilhaCub(planilha, MES, "desonerado");
+    expect(r.erros).toEqual([]);
+    expect(r.linhas.map((l) => l.regime)).toEqual(["desonerado"]);
+  });
+});
+
 describe("interpretarPlanilhaCub: subtipo e padrão em colunas", () => {
   it("reconhece o cabeçalho com acento e variação, e pula o título acima dele", () => {
     const r = interpretarPlanilhaCub(
@@ -219,16 +236,53 @@ describe("opcoesMesBase", () => {
 
 describe("resumo e cobertura do que já foi importado", () => {
   const gravadas = [
-    { uf: "SP", subtipo: "R1", padrao: "alto", mes_base: "2026-09-01", created_at: "2026-10-02T10:00:00Z" },
-    { uf: "SP", subtipo: "R1", padrao: "normal", mes_base: "2026-09-01", created_at: "2026-10-02T10:00:00Z" },
-    { uf: "RJ", subtipo: "R1", padrao: "alto", mes_base: "2026-09-01", created_at: "2026-10-03T08:00:00Z" },
-    { uf: "SP", subtipo: "R1", padrao: "alto", mes_base: "2026-08-01", created_at: "2026-09-02T10:00:00Z" },
-  ];
+    {
+      uf: "SP",
+      subtipo: "R1",
+      padrao: "alto",
+      mes_base: "2026-09-01",
+      regime: "onerado",
+      created_at: "2026-10-02T10:00:00Z",
+    },
+    {
+      uf: "SP",
+      subtipo: "R1",
+      padrao: "normal",
+      mes_base: "2026-09-01",
+      regime: "onerado",
+      created_at: "2026-10-02T10:00:00Z",
+    },
+    {
+      uf: "RJ",
+      subtipo: "R1",
+      padrao: "alto",
+      mes_base: "2026-09-01",
+      regime: "onerado",
+      created_at: "2026-10-03T08:00:00Z",
+    },
+    {
+      uf: "SP",
+      subtipo: "R1",
+      padrao: "alto",
+      mes_base: "2026-08-01",
+      regime: "onerado",
+      created_at: "2026-09-02T10:00:00Z",
+    },
+    {
+      uf: "SP",
+      subtipo: "R1",
+      padrao: "alto",
+      mes_base: "2026-09-01",
+      regime: "desonerado",
+      created_at: "2026-10-04T09:00:00Z",
+    },
+  ] as const as unknown as Parameters<typeof resumirMeses>[0];
 
   it("resume por mês, do mais novo ao mais antigo", () => {
     expect(resumirMeses(gravadas)).toEqual([
-      { mesBase: "2026-09-01", linhas: 3, ufs: 2, ultimaImportacao: "2026-10-03T08:00:00Z" },
-      { mesBase: "2026-08-01", linhas: 1, ufs: 1, ultimaImportacao: "2026-09-02T10:00:00Z" },
+      { mesBase: "2026-09-01", regime: "onerado", linhas: 3, ufs: 2, ultimaImportacao: "2026-10-03T08:00:00Z" },
+      { mesBase: "2026-09-01", regime: "desonerado", linhas: 1, ufs: 1, ultimaImportacao: "2026-10-04T09:00:00Z" },
+      { mesBase: "2026-08-01", regime: "onerado", linhas: 1, ufs: 1, ultimaImportacao: "2026-09-02T10:00:00Z" },
     ]);
   });
 
@@ -238,6 +292,12 @@ describe("resumo e cobertura do que já foi importado", () => {
     expect(c.sem).toHaveLength(25);
     expect(c.sem).toContain("AC");
     expect(c.com.length + c.sem.length).toBe(27);
+  });
+
+  it("cobertura é por regime: com desoneração só tem SP", () => {
+    const c = coberturaDoMes(gravadas, "2026-09-01", "desonerado");
+    expect(c.com).toEqual(["SP"]);
+    expect(c.sem).toHaveLength(26);
   });
 
   it("mês sem importação: nenhuma UF coberta", () => {

@@ -114,7 +114,7 @@ describe("NovaEstimativa", () => {
     await user.click(screen.getByRole("button", { name: "Continuar" }));
 
     expect(screen.getByText("Confira o que entendemos")).toBeInTheDocument();
-    expect(screen.getByText("CUB R1-N · SP · set/2026")).toBeInTheDocument();
+    expect(screen.getByText("CUB R1-N · SP · set/2026 · sem desoneração")).toBeInTheDocument();
     expect(screen.getByText(/marcenaria completa/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Gerar estimativa" }));
 

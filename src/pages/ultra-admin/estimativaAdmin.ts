@@ -4,31 +4,36 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { lerParametros } from "@/lib/estimativaObra";
 import { lerCsv, type LinhaCubLida, type LinhaGravada } from "./estimativaCubImport";
-import type { Parametros } from "@/schemas/estimativaObra";
+import { REGIMES, type Parametros, type Regime } from "@/schemas/estimativaObra";
 
 const TAMANHO_LOTE = 500;
 const TAMANHO_MAXIMO_ARQUIVO = 5_000_000;
 
-/** Tudo que já foi importado (uma linha por UF, subtipo, padrão e mês). Cabe folgado em 10 mil. */
+/** Tudo que já foi importado (uma linha por UF, subtipo, padrão, mês e regime). Cada mês tem até uns 700 (dois regimes), então 10 mil cobrem cerca de 14 meses. */
 export function useCubGravado() {
   return useQuery({
     queryKey: ["ultra-admin", "estimativa", "cub"],
     queryFn: async (): Promise<LinhaGravada[]> => {
       const { data, error } = await supabase
         .from("cub_valores")
-        .select("uf, subtipo, padrao, mes_base, created_at")
+        .select("uf, subtipo, padrao, mes_base, regime, created_at")
         .order("mes_base", { ascending: false })
         .limit(10_000);
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).map((l) => {
+        // Regime desconhecido é dado fora do contrato: falha claro em vez de sumir do resumo.
+        if (!(REGIMES as readonly string[]).includes(l.regime))
+          throw new Error(`Regime de CUB desconhecido: ${l.regime}`);
+        return { ...l, regime: l.regime as Regime };
+      });
     },
     staleTime: 60_000,
   });
 }
 
 /**
- * Grava as linhas do CUB em lotes, com upsert por UF, subtipo, padrão e mês: importar o mesmo mês de
- * novo corrige os valores daquele mês. Se um lote falhar no meio, importar de novo conserta.
+ * Grava as linhas do CUB em lotes, com upsert por UF, subtipo, padrão, mês e regime: importar o mesmo mês
+ * e regime de novo corrige os valores deles. Se um lote falhar no meio, importar de novo conserta.
  */
 export async function gravarCub(linhas: LinhaCubLida[], fonte: string): Promise<void> {
   for (let i = 0; i < linhas.length; i += TAMANHO_LOTE) {
@@ -37,12 +42,13 @@ export async function gravarCub(linhas: LinhaCubLida[], fonte: string): Promise<
       subtipo: l.subtipo,
       padrao: l.padrao,
       mes_base: l.mes_base,
+      regime: l.regime,
       valor_m2: l.valor_m2,
       fonte,
     }));
     const { data, error } = await supabase
       .from("cub_valores")
-      .upsert(lote, { onConflict: "uf,subtipo,padrao,mes_base" })
+      .upsert(lote, { onConflict: "uf,subtipo,padrao,mes_base,regime" })
       .select("id");
     if (error) throw error;
     // A RLS não devolve erro quando recusa: devolve menos linhas.

@@ -23,6 +23,7 @@ const linha = (uf: CubLinha["uf"], subtipo: string, padrao: CubLinha["padrao"], 
   padrao,
   mes_base: "2026-09-01",
   valor_m2: valor,
+  regime: "onerado",
 });
 
 export const CUB_FIXTURE: CubLinha[] = [
