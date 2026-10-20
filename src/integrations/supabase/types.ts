@@ -806,6 +806,7 @@ export type Database = {
       }
       campo_accounts: {
         Row: {
+          aceite_audio_em: string | null
           ativo: boolean
           convite_expira_em: string | null
           convite_token_hash: string | null
@@ -825,6 +826,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          aceite_audio_em?: string | null
           ativo?: boolean
           convite_expira_em?: string | null
           convite_token_hash?: string | null
@@ -844,6 +846,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          aceite_audio_em?: string | null
           ativo?: boolean
           convite_expira_em?: string | null
           convite_token_hash?: string | null
@@ -4680,6 +4683,107 @@ export type Database = {
           },
           {
             foreignKeyName: "obra_rdo_visita_rdo_id_fkey"
+            columns: ["rdo_id"]
+            isOneToOne: false
+            referencedRelation: "obra_rdo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_registro: {
+        Row: {
+          atualizado_em: string
+          audio_duracao_s: number | null
+          audio_path: string | null
+          autor_campo_account_id: string | null
+          autor_nome: string
+          autor_user_id: string | null
+          client_id: string
+          criado_em: string
+          data_registro: string
+          empresa_id: string
+          erro: string | null
+          extraido: Json
+          fotos: string[]
+          id: string
+          obra_id: string
+          rdo_id: string | null
+          status: string
+          texto_bruto: string | null
+          texto_organizado: string | null
+          tipo: string
+          visivel_cliente: boolean
+        }
+        Insert: {
+          atualizado_em?: string
+          audio_duracao_s?: number | null
+          audio_path?: string | null
+          autor_campo_account_id?: string | null
+          autor_nome: string
+          autor_user_id?: string | null
+          client_id: string
+          criado_em?: string
+          data_registro: string
+          empresa_id: string
+          erro?: string | null
+          extraido?: Json
+          fotos?: string[]
+          id?: string
+          obra_id: string
+          rdo_id?: string | null
+          status?: string
+          texto_bruto?: string | null
+          texto_organizado?: string | null
+          tipo: string
+          visivel_cliente?: boolean
+        }
+        Update: {
+          atualizado_em?: string
+          audio_duracao_s?: number | null
+          audio_path?: string | null
+          autor_campo_account_id?: string | null
+          autor_nome?: string
+          autor_user_id?: string | null
+          client_id?: string
+          criado_em?: string
+          data_registro?: string
+          empresa_id?: string
+          erro?: string | null
+          extraido?: Json
+          fotos?: string[]
+          id?: string
+          obra_id?: string
+          rdo_id?: string | null
+          status?: string
+          texto_bruto?: string | null
+          texto_organizado?: string | null
+          tipo?: string
+          visivel_cliente?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_registro_autor_campo_account_id_fkey"
+            columns: ["autor_campo_account_id"]
+            isOneToOne: false
+            referencedRelation: "campo_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_registro_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_registro_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_registro_rdo_id_fkey"
             columns: ["rdo_id"]
             isOneToOne: false
             referencedRelation: "obra_rdo"
@@ -8586,9 +8690,50 @@ export type Database = {
         }
         Returns: undefined
       }
+      _campo_criar_registro: {
+        Args: {
+          p_audio_duracao_s: number
+          p_audio_path: string
+          p_client_id: string
+          p_data: string
+          p_fotos: string[]
+          p_texto: string
+          p_token: string
+        }
+        Returns: Json
+      }
       _campo_registrar_foto: {
         Args: { p_path: string; p_rdo_id: string; p_token: string }
         Returns: Json
+      }
+      _campo_verify_session_row: {
+        Args: { p_token: string }
+        Returns: {
+          aceite_audio_em: string | null
+          ativo: boolean
+          convite_expira_em: string | null
+          convite_token_hash: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          empresa_id: string
+          id: string
+          login_gerado: boolean
+          must_change_senha: boolean
+          nome: string
+          obra_id: string
+          senha_hash: string | null
+          token_expira_em: string | null
+          token_sessao: string | null
+          ultimo_acesso: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "campo_accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       _cron_secret: { Args: { p_name: string }; Returns: string }
       _disciplina_liberada: { Args: { p_disciplina: string }; Returns: boolean }
@@ -8696,6 +8841,49 @@ export type Database = {
         Args: { p_account_id: string; p_token_hash: string }
         Returns: undefined
       }
+      _registro_gravar_organizacao: {
+        Args: {
+          p_erro: string
+          p_extraido: Json
+          p_id: string
+          p_status: string
+          p_texto_bruto: string
+          p_texto_organizado: string
+        }
+        Returns: undefined
+      }
+      _registro_iniciar_organizacao: {
+        Args: { p_id: string }
+        Returns: {
+          atualizado_em: string
+          audio_duracao_s: number | null
+          audio_path: string | null
+          autor_campo_account_id: string | null
+          autor_nome: string
+          autor_user_id: string | null
+          client_id: string
+          criado_em: string
+          data_registro: string
+          empresa_id: string
+          erro: string | null
+          extraido: Json
+          fotos: string[]
+          id: string
+          obra_id: string
+          rdo_id: string | null
+          status: string
+          texto_bruto: string | null
+          texto_organizado: string | null
+          tipo: string
+          visivel_cliente: boolean
+        }
+        SetofOptions: {
+          from: "*"
+          to: "obra_registro"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       _soft_delete_feature: { Args: { p_tabela: string }; Returns: string }
       _soft_delete_guard: { Args: { p_tabela: string }; Returns: string }
       _ultra_admin_mfa_ok: { Args: never; Returns: boolean }
@@ -8723,6 +8911,7 @@ export type Database = {
         Args: { p_login: string }
         Returns: boolean
       }
+      campo_aceitar_audio: { Args: { p_token: string }; Returns: Json }
       campo_convite_definir_senha: {
         Args: { p_senha: string; p_token: string }
         Returns: Json
@@ -8734,6 +8923,10 @@ export type Database = {
       campo_listar_contas_obra: { Args: { p_obra_id: string }; Returns: Json[] }
       campo_listar_fornecedores: { Args: { p_token: string }; Returns: Json }
       campo_listar_rdos: {
+        Args: { p_limite?: number; p_token: string }
+        Returns: Json
+      }
+      campo_listar_registros: {
         Args: { p_limite?: number; p_token: string }
         Returns: Json
       }
@@ -8786,6 +8979,10 @@ export type Database = {
           p_rdo_id: string
           p_token: string
         }
+        Returns: Json
+      }
+      campo_responder_efetivo: {
+        Args: { p_quantidade: number; p_registro_id: string; p_token: string }
         Returns: Json
       }
       campo_revogar_acesso: {
