@@ -394,7 +394,10 @@ export function PainelGrid({ data, layout, editando, salvando, onEditar, onSalva
               return (
                 <section key={grupo.key} aria-label={grupo.label}>
                   <div className="mb-3 flex items-center gap-2.5">
-                    <span className={cn("grid h-8 w-8 place-items-center rounded-full", chip)} aria-hidden="true">
+                    <span
+                      className={cn("hidden h-8 w-8 place-items-center rounded-full md:grid", chip)}
+                      aria-hidden="true"
+                    >
                       <Icone size={16} />
                     </span>
                     <h2 className="text-base font-semibold tracking-tight text-ink">{grupo.label}</h2>

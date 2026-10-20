@@ -471,19 +471,6 @@ export default function ProjetosKanban() {
               rentabilidadeMap={rentabilidadeMap}
               onCardClick={handleCardClick}
             />
-            {/* ListaProjetos é "hidden md:block" (tabela, só faz sentido em desktop). Sem
-                este fallback, a visão Lista em mobile ficava em branco: nenhum card, sem
-                aviso (achado da auditoria, 08/09). Reusa o mesmo agrupamento por status
-                que a visão Quadro já usa em mobile. */}
-            <ProjetosMobileList
-              canEdit={canEdit}
-              rentabilidadeMap={rentabilidadeMap}
-              getProjetosByStatus={getProjetosByStatus}
-              onCardClick={handleCardClick}
-              onEditClick={handleEditClick}
-              onDelete={handleDelete}
-              onMoveStatus={handleMoveStatus}
-            />
           </div>
         ) : (
           <DragDropContext onDragEnd={onDragEnd}>

@@ -14,6 +14,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { DataFrescor } from "@/components/DataFrescor";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CartaoPendenciasAgentes } from "./CartaoPendenciasAgentes";
 import { PainelGrid } from "./painel/PainelGrid";
 import { HeroInicio } from "./hero/HeroInicio";
 import { LAYOUT_PADRAO } from "./painel/catalogo";
@@ -84,6 +85,7 @@ export default function Inicio() {
             updatedAt={painel.dataUpdatedAt}
             isFetching={painel.isFetching}
             onRefresh={() => void painel.refetch()}
+            compactOnMobile
           />
           {/* Gatilho discreto: texto e ícone, sem caixa. Em edição, os botões vão no cabeçalho da tela. */}
           {!editando && (
@@ -135,6 +137,8 @@ export default function Inicio() {
             hero={renderHero}
           />
         ) : null}
+
+        {podeAgentes && !editando && <CartaoPendenciasAgentes />}
 
         {/* Porta dos agentes: fica fora do painel porque não é indicador, é ação. */}
         {podeAgentes && !editando && (
