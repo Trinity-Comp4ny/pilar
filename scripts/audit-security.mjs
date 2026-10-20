@@ -266,16 +266,20 @@ const CHECKS = {
   // comum no Supabase e só aparece quando a tabela cresce.
   policy_auth_por_linha: {
     descricao: "policy chamando auth.uid()/auth.jwt() sem subselect (avalia por linha)",
+    // Tira as chamadas já embrulhadas em (SELECT auth.uid() [AS uid]) de USING e de
+    // WITH CHECK e vê se sobrou alguma solta. Policy de INSERT só tem WITH CHECK, então
+    // olhar só o USING marcava como erro toda policy de INSERT escrita do jeito certo.
     sql: `SELECT (c.relname || '.' || pol.polname)
           FROM pg_policy pol
           JOIN pg_class c ON c.oid = pol.polrelid
           JOIN pg_namespace n ON n.oid = c.relnamespace
           WHERE n.nspname = 'public'
             AND (
-              pg_get_expr(pol.polqual, pol.polrelid) ~ 'auth\\.(uid|jwt)\\(\\)'
-              OR pg_get_expr(pol.polwithcheck, pol.polrelid) ~ 'auth\\.(uid|jwt)\\(\\)'
+              regexp_replace(COALESCE(pg_get_expr(pol.polqual, pol.polrelid), ''),
+                '\\(\\s*SELECT\\s+auth\\.(uid|jwt)\\(\\)(\\s+AS\\s+\\w+)?\\s*\\)', '', 'gi') ~ 'auth\\.(uid|jwt)\\(\\)'
+              OR regexp_replace(COALESCE(pg_get_expr(pol.polwithcheck, pol.polrelid), ''),
+                '\\(\\s*SELECT\\s+auth\\.(uid|jwt)\\(\\)(\\s+AS\\s+\\w+)?\\s*\\)', '', 'gi') ~ 'auth\\.(uid|jwt)\\(\\)'
             )
-            AND COALESCE(pg_get_expr(pol.polqual, pol.polrelid), '') !~ '\\(\\s*SELECT\\s+auth\\.'
           ORDER BY 1;`,
   },
 
