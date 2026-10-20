@@ -4696,6 +4696,7 @@ export type Database = {
       obra_registro: {
         Row: {
           atualizado_em: string
+          audio_apagado_em: string | null
           audio_duracao_s: number | null
           audio_path: string | null
           autor_campo_account_id: string | null
@@ -4719,6 +4720,7 @@ export type Database = {
         }
         Insert: {
           atualizado_em?: string
+          audio_apagado_em?: string | null
           audio_duracao_s?: number | null
           audio_path?: string | null
           autor_campo_account_id?: string | null
@@ -4742,6 +4744,7 @@ export type Database = {
         }
         Update: {
           atualizado_em?: string
+          audio_apagado_em?: string | null
           audio_duracao_s?: number | null
           audio_path?: string | null
           autor_campo_account_id?: string | null
@@ -8859,6 +8862,7 @@ export type Database = {
         Args: { p_id: string }
         Returns: {
           atualizado_em: string
+          audio_apagado_em: string | null
           audio_duracao_s: number | null
           audio_path: string | null
           autor_campo_account_id: string | null
@@ -9747,6 +9751,8 @@ export type Database = {
         Args: { p_agent_type: string; p_detail?: Json; p_status: string }
         Returns: undefined
       }
+      registro_audio_limpar_disparar: { Args: never; Returns: undefined }
+      registro_audio_para_apagar: { Args: { p_limite?: number }; Returns: Json }
       request_data_deletion: { Args: { p_motivo?: string }; Returns: string }
       request_data_export: { Args: never; Returns: Json }
       resolver_solicitacao_tokens: {
