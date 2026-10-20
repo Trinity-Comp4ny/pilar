@@ -11,6 +11,24 @@ Regras de manutenção:
 
 ---
 
+## 2026-10-20 · Estimativa de obra: itens com origem do preço, catálogo fechado e IA depois
+
+**Decisão:** toda linha de custo da estimativa mostra de onde veio o preço (CUB, SINAPI, tabela da empresa, valor do
+usuário, referência provisória do Pilar ou "a definir"). O usuário descreve a obra escolhendo itens de um catálogo
+curado; a IA vem depois e só preenche esse catálogo a partir de texto. Item sem fonte fica "a definir" ou recebe o
+valor informado pela empresa ou pelo usuário. O valor de referência do Pilar só aparece marcado como provisório e
+sai à medida que as outras fontes entram.
+
+Contexto: no teste da obra Canaã (R$ 2,5 mi esperado) o provável saiu R$ 2,27 mi, com cerca de 35% do total em
+adicionais provisórios e faltando climatização, aquecimento, energia solar, automação e terraplenagem. O SINAPI de
+set/2026 cobre fundação, estrutura e instalações, mas não painel fotovoltaico, automação, churrasqueira, paisagismo nem
+móveis planejados. Estende a decisão de 2026-10-20 sobre leitura de texto por IA (que a retirou da ficha): agora a IA
+volta como intérprete sobre o catálogo, nunca como fonte de preço. Virou [SPEC 137](../specs/137-estimativa-de-obra-itens-com-origem-do-preco.md)
+e [ADR 0064](../architecture/adr/0064-toda-linha-da-estimativa-tem-origem-do-preco-e-a-ia-so-preenche-o-catalogo.md).
+Cards: BEZ-82, BEZ-83, BEZ-69.
+
+---
+
 ## 2026-10-20 · Diário de obra: registro nasce interno e o áudio fica 12 meses
 
 **Decisão:** os registros do diário nascem internos (só vão ao portal do cliente quando o gestor liga "Mostrar ao
