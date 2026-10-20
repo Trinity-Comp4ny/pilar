@@ -58,8 +58,8 @@ export function CenariosTab({
 }) {
   const cub = SUBTIPOS[ficha.tipo][ficha.subtipo].cub;
   const outros = useMemo(
-    () => padroesDisponiveis(insumos.cub, cub).filter((p) => p !== ficha.padrao),
-    [insumos.cub, cub, ficha.padrao]
+    () => padroesDisponiveis(insumos.cub, cub, premissas.regime).filter((p) => p !== ficha.padrao),
+    [insumos.cub, cub, ficha.padrao, premissas.regime]
   );
   const [escolhido, setEscolhido] = useState<Padrao | null>(null);
   const comparar =

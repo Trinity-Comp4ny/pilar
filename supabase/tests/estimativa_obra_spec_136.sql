@@ -1,4 +1,4 @@
--- pgTAP: SPEC 136 / ADR 0063, estimativa de obra (migrations 20261114000000 e 20261114000100).
+-- pgTAP: SPEC 136 / ADR 0063, estimativa de obra (migrations 20261114000000, 20261114000100 e 20261115000100).
 -- Roda como usuário autenticado, para a RLS e os triggers valerem como no app.
 
 BEGIN;
@@ -6,7 +6,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(26);
+SELECT plan(29);
 
 -- ── Fixture ──────────────────────────────────────────────────────────────────
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features) VALUES
@@ -89,6 +89,26 @@ SELECT throws_ok(
   'o mesmo UF, subtipo, padrão e mês não duplica'
 );
 
+SELECT is(
+  (SELECT regime FROM public.cub_valores WHERE uf = 'SP' AND subtipo = 'R1' AND padrao = 'alto' AND mes_base = '2026-09-01'),
+  'onerado',
+  'sem regime informado, a linha entra como onerado (sem desoneração)'
+);
+
+SELECT lives_ok(
+  $$INSERT INTO public.cub_valores (uf, subtipo, padrao, mes_base, valor_m2, fonte, regime)
+    VALUES ('SP', 'R1', 'alto', '2026-09-01', 3230, 'Sinduscon-SP com desoneração', 'desonerado')$$,
+  'o mesmo UF, subtipo, padrão e mês cabe de novo com outro regime'
+);
+
+SELECT throws_ok(
+  $$INSERT INTO public.cub_valores (uf, subtipo, padrao, mes_base, valor_m2, fonte, regime)
+    VALUES ('SP', 'R1', 'normal', '2026-09-01', 2690, 'Sinduscon-SP', 'misto')$$,
+  '23514',
+  NULL,
+  'o regime só aceita onerado ou desonerado'
+);
+
 SELECT pg_temp.como('e1360000-0000-0000-0000-00000000000c', 'aal1');
 
 SELECT throws_ok(
@@ -103,7 +123,7 @@ SELECT pg_temp.como('e1360000-0000-0000-0000-00000000000b');
 
 SELECT is(
   (SELECT count(*)::int FROM public.cub_valores WHERE uf = 'SP' AND subtipo = 'R1'),
-  1,
+  2,
   'toda empresa lê o CUB'
 );
 

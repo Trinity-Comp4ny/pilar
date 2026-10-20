@@ -41,13 +41,15 @@ const cub = (
   subtipo: string,
   padrao: CubLinha["padrao"],
   valor: number,
-  mes = "2026-09-01"
+  mes = "2026-09-01",
+  regime: CubLinha["regime"] = "onerado"
 ): CubLinha => ({
   uf,
   subtipo,
   padrao,
   mes_base: mes,
   valor_m2: valor,
+  regime,
 });
 
 const CUB: CubLinha[] = [
@@ -62,6 +64,9 @@ const CUB: CubLinha[] = [
   cub("RJ", "R1", "alto", 3300, "2026-08-01"),
   cub("RJ", "R1", "normal", 2650, "2026-08-01"),
   cub("MG", "R1", "alto", 3000),
+  // Com desoneração só há SP R1 alto e normal, um pouco abaixo da série sem desoneração.
+  cub("SP", "R1", "alto", 3230, "2026-09-01", "desonerado"),
+  cub("SP", "R1", "normal", 2600, "2026-09-01", "desonerado"),
 ];
 
 const SEM_ADICIONAIS: Partial<Ficha> = {
@@ -150,6 +155,9 @@ describe("leitores de fronteira", () => {
   it("lerCub aceita linhas boas e recusa a leitura inteira se uma for ruim", () => {
     const boa = { uf: "SP", subtipo: "R1", padrao: "alto", mes_base: "2026-09-01", valor_m2: 3350 };
     expect(lerCub([boa, boa]).ok).toBe(true);
+    const lidas = lerCub([boa, { ...boa, regime: "desonerado" }]);
+    expect(lidas.ok && lidas.valor.map((l) => l.regime)).toEqual(["onerado", "desonerado"]);
+    expect(lerCub([{ ...boa, regime: "misto" }]).ok).toBe(false);
     const ruim = lerCub([boa, { ...boa, valor_m2: 0 }]);
     expect(ruim.ok).toBe(false);
     if (!ruim.ok) expect(ruim.mensagem).toMatch(/Linhas do CUB inválidos/);
@@ -166,6 +174,8 @@ describe("leitores de fronteira", () => {
   it("lerPremissas aceita premissa parcial e recusa fora dos limites", () => {
     expect(lerPremissas({}).ok).toBe(true);
     expect(lerPremissas({ adm: 12, faixa: 15, equipe: 8 }).ok).toBe(true);
+    expect(lerPremissas({ regime: "desonerado" }).ok).toBe(true);
+    expect(lerPremissas({ regime: "misto" }).ok).toBe(false);
     expect(lerPremissas({ adm: 90 }).ok).toBe(false);
     expect(lerPremissas({ equipe: 0 }).ok).toBe(false);
   });
@@ -208,7 +218,7 @@ describe("calcularEstimativa: custo", () => {
 
   it("cita a fonte com UF, código do CUB, padrão e mês", () => {
     const r = calcular({ ficha: sobrado });
-    expect(r.fonte.texto).toBe("CUB R1-A · SP · set/2026");
+    expect(r.fonte.texto).toBe("CUB R1-A · SP · set/2026 · sem desoneração");
     expect(r.fonte.origem).toBe("uf");
     expect(r.fonte.mesAntigo).toBe(false);
   });
@@ -446,7 +456,7 @@ describe("calcularEstimativa: escolha do CUB", () => {
         },
       });
       expect(r.fonte.padrao).toBe("unico");
-      expect(r.fonte.texto).toBe("CUB GI · SP · set/2026");
+      expect(r.fonte.texto).toBe("CUB GI · SP · set/2026 · sem desoneração");
     }
   });
 
@@ -592,5 +602,59 @@ describe("ficha", () => {
 
   it("os adicionais do schema são exatamente os que o motor conhece", () => {
     expect(Object.keys(parametros.adicionais).sort()).toEqual([...ADICIONAIS_IDS].sort());
+  });
+});
+
+describe("calcularEstimativa: regime do CUB (BEZ-51)", () => {
+  it("sem regime nas premissas usa o CUB sem desoneração", () => {
+    const r = calcular({ ficha: sobrado });
+    expect(r.fonte.regime).toBe("onerado");
+    expect(r.fonte.valorM2).toBe(3350);
+  });
+
+  it("com desoneração usa o valor do regime e diz isso na fonte", () => {
+    const com = calcular({ ficha: sobrado, premissas: { regime: "desonerado" } });
+    const sem = calcular({ ficha: sobrado, premissas: { regime: "onerado" } });
+    expect(com.fonte.regime).toBe("desonerado");
+    expect(com.fonte.valorM2).toBe(3230);
+    expect(com.fonte.texto).toBe("CUB R1-A · SP · set/2026 · com desoneração");
+    expect(com.base).toBe(320 * 3230);
+    expect(com.provavel).toBeLessThan(sem.provavel);
+  });
+
+  it("regime sem nenhuma linha para o tipo de obra devolve erro claro, sem cair no outro regime", () => {
+    const saida = calcularEstimativa({
+      ficha: { ...sobrado, tipo: "comercial", subtipo: "salas", padrao: "normal" },
+      premissas: { regime: "desonerado" },
+      cub: CUB,
+      parametros,
+      parametrosValidados: true,
+    });
+    expect(saida.ok).toBe(false);
+    if (!saida.ok) {
+      expect(saida.motivo).toBe("regime_indisponivel");
+      expect(saida.mensagem).toMatch(/CUB com desoneração/);
+    }
+  });
+
+  it("padroesDisponiveis olha só o regime pedido", () => {
+    expect(padroesDisponiveis(CUB, "R1", "desonerado")).toEqual(["normal", "alto"]);
+    expect(padroesDisponiveis(CUB, "R1")).toEqual(["baixo", "normal", "alto"]);
+  });
+
+  it("o mês de referência de cada regime é independente", () => {
+    const so_onerado = CUB.filter((l) => l.regime === "onerado");
+    const novo = [...so_onerado, cub("SP", "R1", "alto", 3300, "2026-10-01", "desonerado")];
+    const r = calcular({ cub: novo, ficha: sobrado, premissas: { regime: "desonerado" } });
+    expect(r.fonte.mesBase).toBe("2026-10-01");
+    expect(r.fonte.mesAntigo).toBe(false);
+  });
+
+  it("resultado salvo antes do regime existir continua legível como sem desoneração", () => {
+    const r = calcular({ ficha: sobrado });
+    const fonteAntiga: Record<string, unknown> = { ...r.fonte };
+    delete fonteAntiga.regime;
+    const lido = resultadoSchema.safeParse({ ...r, fonte: fonteAntiga });
+    expect(lido.success && lido.data.fonte.regime).toBe("onerado");
   });
 });

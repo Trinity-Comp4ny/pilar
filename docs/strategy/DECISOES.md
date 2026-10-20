@@ -11,6 +11,18 @@ Regras de manutenção:
 
 ---
 
+## 2026-10-20 · Estimativa de obra: CUB com e sem desoneração
+
+**Decisão:** o Pilar guarda o CUB nas duas versões que os Sinduscons publicam, sem desoneração (série clássica) e
+com desoneração da folha, e cada estimativa escolhe qual usar. Sem escolha, vale sem desoneração, a mais cara.
+Mais adiante a tela mostra as duas cotações lado a lado.
+
+Contexto: os valores diferem uns 3% (R-8 normal de SP em set/2026: R$ 2.238,58 sem e R$ 2.162,78 com), e há
+cliente que trabalha em cada regime. Fica registrado em [BEZ-51](https://linear.app/bez-company/issue/BEZ-51).
+Acrescenta a coluna `regime` em `cub_valores`; a SPEC 136 foi atualizada.
+
+---
+
 ## 2026-10-20 · Estimativa de obra: sem leitura de texto livre por IA
 
 **Decisão:** a estimativa não terá o campo de texto livre lido por IA. A ficha é preenchida só pelo assistente

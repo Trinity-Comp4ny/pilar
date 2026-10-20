@@ -242,7 +242,7 @@ export function useInsumosDaEstimativa(): Insumos {
     queryFn: async (): Promise<CubLinha[]> => {
       const { data, error } = await supabase
         .from("cub_valores")
-        .select("uf, subtipo, padrao, mes_base, valor_m2")
+        .select("uf, subtipo, padrao, mes_base, valor_m2, regime")
         .order("mes_base", { ascending: false })
         .limit(10_000);
       if (error) throw error;

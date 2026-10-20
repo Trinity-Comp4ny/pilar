@@ -3,7 +3,7 @@
 // Funções puras: recebem as células já lidas (CSV ou Excel) e devolvem as linhas prontas e os erros
 // por linha, para a tela mostrar a prévia antes de gravar. Nada é gravado enquanto houver erro: preço
 // de referência errado é pior que nenhum (validar na fronteira, falhar cedo e claro).
-import { UFS, type Uf } from "@/schemas/estimativaObra";
+import { UFS, type Regime, type Uf } from "@/schemas/estimativaObra";
 import { rotuloMesBase } from "@/lib/estimativaObra";
 
 type PadraoCub = "baixo" | "normal" | "alto" | "unico";
@@ -16,6 +16,7 @@ export interface LinhaCubLida {
   padrao: PadraoCub;
   valor_m2: number;
   mes_base: string;
+  regime: Regime;
 }
 
 interface ErroLinha {
@@ -122,10 +123,15 @@ export function lerValor(bruto: string): number | null {
 }
 
 /**
- * Lê as células de uma planilha do CUB para um mês-base. Reconhece o cabeçalho nas primeiras 20
- * linhas: UF, valor e o código do CUB (`R1-A`) ou subtipo e padrão em colunas separadas.
+ * Lê as células de uma planilha do CUB para um mês-base e um regime (com ou sem desoneração; a planilha
+ * é de um regime só). Reconhece o cabeçalho nas primeiras 20 linhas: UF, valor e o código do CUB
+ * (`R1-A`) ou subtipo e padrão em colunas separadas.
  */
-export function interpretarPlanilhaCub(celulas: string[][], mesBase: string): ResultadoImportacao {
+export function interpretarPlanilhaCub(
+  celulas: string[][],
+  mesBase: string,
+  regime: Regime = "onerado"
+): ResultadoImportacao {
   const vazio = (erroGeral: string): ResultadoImportacao => ({ linhas: [], erros: [], totalLidas: 0, erroGeral });
 
   if (!/^\d{4}-(0[1-9]|1[0-2])-01$/.test(mesBase)) return vazio("Escolha o mês-base da tabela.");
@@ -243,6 +249,7 @@ export function interpretarPlanilhaCub(celulas: string[][], mesBase: string): Re
       padrao,
       valor_m2: Math.round(valor * 100) / 100,
       mes_base: mesBase,
+      regime,
     });
   }
 
@@ -304,34 +311,58 @@ export interface LinhaGravada {
   subtipo: string;
   padrao: string;
   mes_base: string;
+  regime: Regime;
   created_at: string;
 }
 
 export interface ResumoMes {
   mesBase: string;
+  regime: Regime;
   linhas: number;
   ufs: number;
   ultimaImportacao: string;
 }
 
-/** Um resumo por mês importado, do mais novo ao mais antigo. */
+/** Um resumo por mês e regime importados, do mês mais novo ao mais antigo (sem desoneração antes). */
 export function resumirMeses(gravadas: LinhaGravada[]): ResumoMes[] {
-  const porMes = new Map<string, { linhas: number; ufs: Set<string>; ultima: string }>();
+  const porMes = new Map<string, ResumoMes & { ufSet: Set<string> }>();
   for (const l of gravadas) {
-    const atual = porMes.get(l.mes_base) ?? { linhas: 0, ufs: new Set<string>(), ultima: l.created_at };
+    const chaveMes = `${l.mes_base}|${l.regime}`;
+    const atual = porMes.get(chaveMes) ?? {
+      mesBase: l.mes_base,
+      regime: l.regime,
+      linhas: 0,
+      ufs: 0,
+      ultimaImportacao: l.created_at,
+      ufSet: new Set<string>(),
+    };
     atual.linhas++;
-    atual.ufs.add(l.uf);
-    if (l.created_at > atual.ultima) atual.ultima = l.created_at;
-    porMes.set(l.mes_base, atual);
+    atual.ufSet.add(l.uf);
+    if (l.created_at > atual.ultimaImportacao) atual.ultimaImportacao = l.created_at;
+    porMes.set(chaveMes, atual);
   }
-  return [...porMes.entries()]
-    .map(([mesBase, v]) => ({ mesBase, linhas: v.linhas, ufs: v.ufs.size, ultimaImportacao: v.ultima }))
-    .sort((a, b) => (a.mesBase < b.mesBase ? 1 : -1));
+  return [...porMes.values()]
+    .map(({ ufSet, ...resumo }) => ({ ...resumo, ufs: ufSet.size }))
+    .sort((a, b) =>
+      a.mesBase !== b.mesBase
+        ? a.mesBase < b.mesBase
+          ? 1
+          : -1
+        : a.regime === b.regime
+          ? 0
+          : a.regime === "onerado"
+            ? -1
+            : 1
+    );
 }
 
-/** UFs com e sem tabela no mês indicado. */
-export function coberturaDoMes(gravadas: LinhaGravada[], mesBase: string): { com: Uf[]; sem: Uf[] } {
-  const com = new Set(gravadas.filter((l) => l.mes_base === mesBase).map((l) => l.uf));
+/** UFs com e sem tabela no mês e no regime indicados. */
+export function coberturaDoMes(
+  gravadas: LinhaGravada[],
+  mesBase: string,
+  regime: Regime = "onerado"
+): { com: Uf[]; sem: Uf[] } {
+  const com = new Set(gravadas.filter((l) => l.mes_base === mesBase && l.regime === regime).map((l) => l.uf));
   return {
     com: UFS.filter((u) => com.has(u)),
     sem: UFS.filter((u) => !com.has(u)),

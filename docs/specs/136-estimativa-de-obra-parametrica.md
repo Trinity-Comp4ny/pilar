@@ -60,7 +60,9 @@ para o cliente. Medida de sucesso: tempo até a primeira estimativa e % de estim
     bloqueados enquanto os parâmetros não estiverem validados (requisito 15).
 13. **Sem leitura de texto livre por IA.** A ficha vem só do assistente. A IA entra depois, lendo o PDF da planta
     (decisão de 2026-10-20), e consome os tokens do usuário.
-14. **CUB mensal.** O ultra admin importa a planilha do mês (UF × subtipo × padrão). A importação valida o formato
+14. **CUB mensal, com e sem desoneração.** O ultra admin importa a planilha do mês (UF × subtipo × padrão), uma por
+    regime (sem desoneração, a série clássica, ou com desoneração). A estimativa usa o regime das premissas; sem
+    escolha, sem desoneração. Regime sem tabela para o tipo de obra dá erro claro, sem cair no outro. A importação valida o formato
     antes de gravar e guarda a data-base. Só o ultra admin escreve; todas as empresas leem.
 15. **Parâmetros validados.** Percentual por etapa, adicionais, natureza e produtividade moram em
     `estimativa_parametros`. Enquanto `validado_em` for nulo, a tela mostra o aviso "Parâmetros em validação" e o
@@ -99,7 +101,8 @@ Requisitos não-funcionais:
 
 Tabelas novas (migrations `20261114000000_feature_catalog_add_estimativa_obra.sql` e `20261114000100_estimativa_obra.sql`):
 
-- `cub_valores(uf, subtipo, padrao, mes_base, valor_m2, fonte)`, única por (uf, subtipo, padrao, mes_base). Global.
+- `cub_valores(uf, subtipo, padrao, mes_base, regime, valor_m2, fonte)`, única por (uf, subtipo, padrao, mes_base,
+  regime). `regime` é `onerado` (padrão) ou `desonerado`. Global.
 - `estimativa_parametros(id='default', parametros jsonb, validado_em, validado_por)`. Singleton global, semeado com os
   valores do protótipo como **placeholder não validado**.
 - `estimativa_ajustes_empresa(empresa_id, adicionais jsonb)`. Uma linha por empresa.

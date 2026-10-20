@@ -23,11 +23,12 @@ import {
   type Padrao,
   type Parametros,
   type Premissas,
+  type Regime,
   type ResultadoEstimativa,
   type Uf,
 } from "@/schemas/estimativaObra";
 
-type MotivoErro = "sem_cub" | "padrao_indisponivel" | "ficha_invalida";
+type MotivoErro = "sem_cub" | "regime_indisponivel" | "padrao_indisponivel" | "ficha_invalida";
 
 export type SaidaCalculo =
   { ok: true; resultado: ResultadoEstimativa } | { ok: false; motivo: MotivoErro; mensagem: string };
@@ -116,9 +117,16 @@ export function lerPremissas(bruto: unknown): Leitura<Premissas> {
   return ler(premissasSchema, bruto, "Premissas");
 }
 
-/** Padrões que têm tabela de CUB para o subtipo (o assistente desliga os demais). */
-export function padroesDisponiveis(cub: CubLinha[], cubCodigo: string): Padrao[] {
-  const linhas = cub.filter((l) => l.subtipo === cubCodigo);
+const ROTULO_REGIME: Record<Regime, string> = { onerado: "sem desoneração", desonerado: "com desoneração" };
+
+/** "sem desoneração" ou "com desoneração", para telas e para a fonte do preço. */
+export function rotuloRegime(regime: Regime): string {
+  return ROTULO_REGIME[regime];
+}
+
+/** Padrões que têm tabela de CUB para o subtipo no regime (o assistente desliga os demais). */
+export function padroesDisponiveis(cub: CubLinha[], cubCodigo: string, regime: Regime = "onerado"): Padrao[] {
+  const linhas = cub.filter((l) => l.subtipo === cubCodigo && l.regime === regime);
   if (linhas.some((l) => l.padrao === "unico")) return [...PADROES];
   return PADROES.filter((p) => linhas.some((l) => l.padrao === p));
 }
@@ -256,11 +264,14 @@ function escolherCub(
   cub: CubLinha[],
   uf: Uf,
   cubCodigo: string,
-  padrao: Padrao
-): CubEscolhido | { erro: "sem_cub" | "padrao_indisponivel" } {
+  padrao: Padrao,
+  regime: Regime
+): CubEscolhido | { erro: "sem_cub" | "regime_indisponivel" | "padrao_indisponivel" } {
   const doSubtipo = cub.filter((l) => l.subtipo === cubCodigo);
   if (doSubtipo.length === 0) return { erro: "sem_cub" };
-  const aplicaveis = doSubtipo.filter((l) => l.padrao === padrao || l.padrao === "unico");
+  const doRegime = doSubtipo.filter((l) => l.regime === regime);
+  if (doRegime.length === 0) return { erro: "regime_indisponivel" };
+  const aplicaveis = doRegime.filter((l) => l.padrao === padrao || l.padrao === "unico");
   if (aplicaveis.length === 0) return { erro: "padrao_indisponivel" };
 
   const mesReferencia = aplicaveis.reduce((m, l) => (l.mes_base > m ? l.mes_base : m), "");
@@ -391,8 +402,16 @@ export function calcularEstimativa(entrada: EntradaCalculo): SaidaCalculo {
   const padrao: Padrao = entrada.padraoCenario ?? ficha.padrao;
   const subtipo = SUBTIPOS[ficha.tipo][ficha.subtipo];
 
-  const escolha = escolherCub(entrada.cub, ficha.uf, subtipo.cub, padrao);
+  const regime: Regime = entrada.premissas?.regime ?? "onerado";
+  const escolha = escolherCub(entrada.cub, ficha.uf, subtipo.cub, padrao, regime);
   if ("erro" in escolha) {
+    if (escolha.erro === "regime_indisponivel") {
+      return {
+        ok: false,
+        motivo: "regime_indisponivel",
+        mensagem: `O Pilar ainda não tem o CUB ${rotuloRegime(regime)} para esse tipo de obra. Escolha o outro regime ou fale com o time para importar.`,
+      };
+    }
     return escolha.erro === "sem_cub"
       ? {
           ok: false,
@@ -574,7 +593,7 @@ export function calcularEstimativa(entrada: EntradaCalculo): SaidaCalculo {
       padrao,
       subtipoNome: subtipo.nome,
       fonte: {
-        texto: `CUB ${subtipo.cub}${sufixoPadrao} · ${linha.uf} · ${rotuloMesBase(linha.mes_base)}`,
+        texto: `CUB ${subtipo.cub}${sufixoPadrao} · ${linha.uf} · ${rotuloMesBase(linha.mes_base)} · ${rotuloRegime(regime)}`,
         uf: linha.uf,
         cubCodigo: subtipo.cub,
         padrao: linha.padrao,
@@ -582,6 +601,7 @@ export function calcularEstimativa(entrada: EntradaCalculo): SaidaCalculo {
         valorM2: linha.valor_m2,
         origem,
         mesAntigo,
+        regime,
       },
       etapas: parametros.etapas.map((e, i) => ({ id: e.id, nome: e.nome, fase: e.fase, valor: reais(etapasCents[i]) })),
       adicionais: linhasAdicionais.map((l) => ({

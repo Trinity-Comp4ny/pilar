@@ -1498,6 +1498,7 @@ export type Database = {
           importado_por: string | null
           mes_base: string
           padrao: string
+          regime: string
           subtipo: string
           uf: string
           valor_m2: number
@@ -1509,6 +1510,7 @@ export type Database = {
           importado_por?: string | null
           mes_base: string
           padrao: string
+          regime?: string
           subtipo: string
           uf: string
           valor_m2: number
@@ -1520,6 +1522,7 @@ export type Database = {
           importado_por?: string | null
           mes_base?: string
           padrao?: string
+          regime?: string
           subtipo?: string
           uf?: string
           valor_m2?: number
