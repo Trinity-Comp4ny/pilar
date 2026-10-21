@@ -73,7 +73,7 @@ export const PASSO_ROTULO: Record<Passo, string> = {
 
 const CAMPOS_DO_PASSO: Record<Passo, readonly (keyof Ficha)[]> = {
   tipo: ["tipo", "subtipo", "padrao"],
-  local: ["uf", "area", "pavimentos", "terreno", "topografia", "arrimo", "inicio"],
+  local: ["uf", "area", "pavimentos", "terreno", "inicio"],
   programa: [
     "quartos",
     "suites",
@@ -86,6 +86,9 @@ const CAMPOS_DO_PASSO: Record<Passo, readonly (keyof Ficha)[]> = {
     "subsolo",
     "paisagismo",
     "marcenaria",
+    "topografia",
+    "arrimo",
+    "itens",
   ],
   revisao: [],
 };

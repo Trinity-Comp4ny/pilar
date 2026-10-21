@@ -2,10 +2,13 @@ import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { formatCurrency, formatPercent } from "@/lib/format";
 import { rotuloMesBase, rotuloPadrao } from "@/lib/estimativaObra";
 import type { ResultadoEstimativa } from "@/schemas/estimativaObra";
 import { toDataSourceResult } from "@/types/dataSource";
+import { ChipOrigem } from "./origem";
+import { OrigemDoPreco } from "./OrigemDoPreco";
 
 type Etapa = ResultadoEstimativa["etapas"][number];
 type Adicional = ResultadoEstimativa["adicionais"][number];
@@ -150,8 +153,16 @@ function NaturezaDoCusto({ r }: { r: ResultadoEstimativa }) {
   );
 }
 
-/** Aba Custo: valor e faixa em destaque, por etapa, adicionais, totais, natureza e desembolso. */
-export function CustoTab({ resultado: r }: { resultado: ResultadoEstimativa }) {
+interface CustoTabProps {
+  resultado: ResultadoEstimativa;
+  /** Abre o detalhe da origem: "base" é o CUB, uma linha é um item fora do CUB. */
+  onOrigem?: (aberto: "base" | Adicional) => void;
+  /** Informar o valor de um item a definir; ausente para quem só lê. */
+  onInformar?: (item: Adicional) => void;
+}
+
+/** Aba Custo: valor e faixa em destaque, origem do preço, por etapa, adicionais, totais, natureza e desembolso. */
+export function CustoTab({ resultado: r, onOrigem, onInformar }: CustoTabProps) {
   const maiorEtapa = Math.max(...r.etapas.map((e) => e.valor));
   const adicionaisTotal = r.adicionais.reduce((s, a) => s + (a.valor ?? 0), 0);
 
@@ -198,10 +209,29 @@ export function CustoTab({ resultado: r }: { resultado: ResultadoEstimativa }) {
       mobile: "title",
     },
     {
+      key: "origem",
+      header: "Origem",
+      cell: (a) => (
+        <ChipOrigem tipo={a.origem.tipo} rotuloDoItem={a.rotulo} onClick={onOrigem ? () => onOrigem(a) : undefined} />
+      ),
+      mobile: "badge",
+    },
+    {
       key: "valor",
       header: "Valor",
       align: "end",
-      cell: (a) => (a.valor === null ? <Badge variant="warning">A definir</Badge> : reais0(a.valor)),
+      cell: (a) =>
+        a.valor === null ? (
+          onInformar && a.quantidade > 0 ? (
+            <Button variant="outline" size="sm" onClick={() => onInformar(a)}>
+              Informar valor
+            </Button>
+          ) : (
+            <Badge variant="warning">A definir</Badge>
+          )
+        ) : (
+          reais0(a.valor)
+        ),
       className: "tabular-nums",
       mobile: "trailing",
     },
@@ -210,6 +240,8 @@ export function CustoTab({ resultado: r }: { resultado: ResultadoEstimativa }) {
   return (
     <div className="space-y-4">
       <ResumoDoCusto r={r} />
+
+      <OrigemDoPreco resultado={r} />
 
       <Bloco titulo="Por etapa" nota="Base do CUB distribuída pelos percentuais dos parâmetros.">
         <DataTable
@@ -220,7 +252,7 @@ export function CustoTab({ resultado: r }: { resultado: ResultadoEstimativa }) {
         />
       </Bloco>
 
-      <Bloco titulo="Adicionais" nota="Itens que o CUB não inclui.">
+      <Bloco titulo="Itens fora do CUB" nota="O que o CUB não inclui. Toque na origem para ver a fonte do preço.">
         <DataTable
           columns={colunasAdicional}
           data={toDataSourceResult<Adicional>({ data: r.adicionais })}
@@ -231,8 +263,18 @@ export function CustoTab({ resultado: r }: { resultado: ResultadoEstimativa }) {
 
       <section className="rounded-2xl border bg-card p-4 md:p-5" aria-label="Totais">
         <dl className="space-y-2 text-sm">
+          <div className="flex items-center justify-between gap-4">
+            <dt className="flex items-center gap-2 text-ink-soft">
+              Base do CUB
+              <ChipOrigem
+                tipo="cub"
+                rotuloDoItem="base do CUB"
+                onClick={onOrigem ? () => onOrigem("base") : undefined}
+              />
+            </dt>
+            <dd className="tabular-nums text-ink">{reais0(r.base)}</dd>
+          </div>
           {[
-            ["Base do CUB", r.base],
             ["Adicionais", adicionaisTotal],
             ["Subtotal da obra", r.subtotal],
             [`Taxa de administração (${formatPercent(r.admPct, 0)})`, r.taxaAdministracao],

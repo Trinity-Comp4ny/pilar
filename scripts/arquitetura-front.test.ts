@@ -43,6 +43,7 @@ const GENERICOS = new Set([
   "components/forms/ValidatedField.tsx",
   "components/calendario", // motor compartilhado por camadas (ADR 0010)
   "lib/currency.ts",
+  "lib/estimativaItens.ts", // parte do motor da estimativa (SPEC 137): estimativaObra.ts o usa, e Obras e Ultra admin usam o motor
   "lib/emailValidator.ts",
   "lib/pdfText.ts",
   "lib/reportError.ts",

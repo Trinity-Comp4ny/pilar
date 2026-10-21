@@ -97,7 +97,7 @@ export interface ContextoLinha {
   precosSinapi: PrecoSinapi[];
 }
 
-const UNIDADE_INVARIAVEL = new Set(["kWp", "m²"]);
+const UNIDADE_INVARIAVEL = new Set(["kWp", "m²", "un"]);
 const ITENS_DE_CLIMATIZACAO = ["ac9", "ac12", "ac18", "ac24"] as const;
 
 /** Quantidade do item na ficha. null = o item não se aplica a esta obra; 0 = aplica, mas falta a medida. */
@@ -248,3 +248,71 @@ export function linhaDoAdicional(
 }
 
 export const FAIXA_PROVISORIA_PADRAO = { acima_de_pct: 10, a_cada_pct: 5, pontos: 1, max_pontos: 8 };
+
+/** Ficha com o item ligado (quantidade 1 quando a ficha ainda não tem), para a prévia de origem. */
+function comItemLigado(id: AdicionalId, ficha: Ficha): Ficha {
+  switch (id) {
+    case "piscina":
+      return { ...ficha, tipo: "residencial", piscina: Math.max(ficha.piscina, 1) };
+    case "gourmet":
+      return { ...ficha, tipo: "residencial", gourmet: true };
+    case "marcenaria":
+      return { ...ficha, marcenaria: ficha.marcenaria === "nenhuma" ? "completa" : ficha.marcenaria };
+    case "paisagismo":
+      return { ...ficha, paisagismo: true, terreno: Math.max(ficha.terreno, ficha.area / ficha.pavimentos + 1) };
+    case "elevador":
+      return { ...ficha, elevador: true };
+    case "subsolo":
+      return { ...ficha, subsolo: true };
+    case "arrimo":
+      return { ...ficha, topografia: "inclinado", arrimo: Math.max(ficha.arrimo, 1) };
+    case "terraplenagem":
+      return { ...ficha, topografia: "inclinado" };
+    case "acinst":
+      return { ...ficha, itens: { ...ficha.itens, ac9: Math.max(ficha.itens.ac9 ?? 0, 1) } };
+    case "fundacao":
+      return ficha;
+    default:
+      return { ...ficha, itens: { ...ficha.itens, [id]: Math.max(ficha.itens[id] ?? 0, 1) } };
+  }
+}
+
+export interface PreviaDoItem {
+  origem: OrigemLinha;
+  /** Preço por unidade quando a fonte dá um (SINAPI, empresa, usuário, por m²); null nos demais. */
+  valorUnitario: number | null;
+  unidade: string | null;
+}
+
+export interface EntradaDaPrevia {
+  ficha: Ficha;
+  parametros: Parametros;
+  ajustes?: AjustesEmpresa | null;
+  premissas?: Premissas;
+  precosSinapi?: PrecoSinapi[];
+}
+
+/**
+ * De onde viria o preço do item se a pessoa o incluísse agora, na UF, no regime e com os valores da estimativa.
+ * Mesma resolução do cálculo (usuário, empresa, SINAPI, referência provisória, a definir), sem somar nada.
+ */
+export function previaDoItem(id: AdicionalId, entrada: EntradaDaPrevia): PreviaDoItem | null {
+  const { ficha, parametros } = entrada;
+  const mesclados = mesclarAjustes(parametros, entrada.ajustes, []);
+  const emp = mesclados[id];
+  if (!emp) return null;
+  const linha = linhaDoAdicional(id, emp.adicional, emp, {
+    ficha: comItemLigado(id, ficha),
+    padrao: ficha.padrao,
+    baseCents: 0,
+    premissas: entrada.premissas,
+    regime: entrada.premissas?.regime ?? "onerado",
+    precosSinapi: entrada.precosSinapi ?? [],
+  });
+  if (!linha) return null;
+  return {
+    origem: linha.origem,
+    valorUnitario: linha.valorUnitarioCents === null ? null : linha.valorUnitarioCents / 100,
+    unidade: linha.unidade,
+  };
+}

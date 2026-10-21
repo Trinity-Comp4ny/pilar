@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
 import { calcularEstimativa, padroesDisponiveis } from "@/lib/estimativaObra";
-import { SUBTIPOS, type Padrao, type Premissas } from "@/schemas/estimativaObra";
+import { SUBTIPOS, type Padrao, type Premissas, type ResultadoEstimativa } from "@/schemas/estimativaObra";
 import { AvisosEstimativa } from "./componentes";
 import { CenariosTab } from "./CenariosTab";
 import { CronogramaTab } from "./CronogramaTab";
@@ -27,9 +27,11 @@ import {
   useSalvarVersao,
   useVersoes,
 } from "./hooks";
+import { DialogoInformarValor, DialogoOrigem } from "./origem";
 import { PremissasPainel, type CampoPremissa } from "./PremissasPainel";
 
 type Aba = "custo" | "cronograma" | "cenarios";
+type LinhaDeItem = ResultadoEstimativa["adicionais"][number];
 
 const ABAS: SectionTab[] = [
   { id: "custo", label: "Custo", icon: Wallet },
@@ -62,6 +64,8 @@ export default function EstimativaDetalhe() {
   const [versaoAberta, setVersaoAberta] = useState(false);
   const [nota, setNota] = useState("");
   const [confirmaExcluir, setConfirmaExcluir] = useState(false);
+  const [origemAberta, setOrigemAberta] = useState<"base" | LinhaDeItem | null>(null);
+  const [informando, setInformando] = useState<LinhaDeItem | null>(null);
 
   const e = query.data;
   usePageTitle(e?.nome ?? "Estimativa");
@@ -79,6 +83,7 @@ export default function EstimativaDetalhe() {
             cub: insumos.cub,
             parametros: insumos.parametros,
             ajustes: insumos.ajustes,
+            precosSinapi: insumos.precosSinapi,
             parametrosValidados: insumos.validado,
           })
         : null,
@@ -148,6 +153,32 @@ export default function EstimativaDetalhe() {
   const comEdicao = (
     muda: (atual: { premissas: Premissas; padrao: Padrao }) => { premissas: Premissas; padrao: Padrao }
   ) => setEdicao(muda({ premissas: edicao?.premissas ?? e.premissas, padrao: edicao?.padrao ?? fichaSalva!.padrao }));
+
+  const valorInformado = (item: LinhaDeItem) => premissas.valores?.[item.id];
+
+  const informarValor = (item: LinhaDeItem, valorUnitario: number, nota: string) => {
+    comEdicao((a) => ({
+      ...a,
+      premissas: {
+        ...a.premissas,
+        valores: { ...a.premissas.valores, [item.id]: { valor_unitario: valorUnitario, ...(nota ? { nota } : {}) } },
+      },
+    }));
+    setInformando(null);
+  };
+
+  const removerValorInformado = (item: LinhaDeItem) => {
+    comEdicao((a) => {
+      const { [item.id]: _tirado, ...resto } = a.premissas.valores ?? {};
+      return { ...a, premissas: { ...a.premissas, valores: Object.keys(resto).length > 0 ? resto : undefined } };
+    });
+    setInformando(null);
+  };
+
+  const abrirInformar = (item: LinhaDeItem) => {
+    setOrigemAberta(null);
+    setInformando(item);
+  };
 
   const aoSalvarVersao = async () => {
     if (!calculo?.ok) return;
@@ -241,7 +272,11 @@ export default function EstimativaDetalhe() {
             <AvisosEstimativa avisos={calculo.resultado.avisos} />
             {aba === "custo" && (
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-                <CustoTab resultado={calculo.resultado} />
+                <CustoTab
+                  resultado={calculo.resultado}
+                  onOrigem={setOrigemAberta}
+                  onInformar={podeEditar ? abrirInformar : undefined}
+                />
                 <PremissasPainel
                   ficha={ficha}
                   valores={valores}
@@ -262,6 +297,24 @@ export default function EstimativaDetalhe() {
             )}
           </>
         )
+      )}
+
+      {calculo?.ok && (
+        <>
+          <DialogoOrigem
+            aberto={origemAberta}
+            resultado={calculo.resultado}
+            onFechar={() => setOrigemAberta(null)}
+            onInformar={podeEditar ? abrirInformar : undefined}
+          />
+          <DialogoInformarValor
+            item={informando}
+            atual={informando ? valorInformado(informando) : undefined}
+            onFechar={() => setInformando(null)}
+            onConfirmar={(valor, nota) => informando && informarValor(informando, valor, nota)}
+            onRemover={informando ? () => removerValorInformado(informando) : undefined}
+          />
+        </>
       )}
 
       <FormDialog

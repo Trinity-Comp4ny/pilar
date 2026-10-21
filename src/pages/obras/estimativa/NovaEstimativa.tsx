@@ -85,7 +85,7 @@ const TITULO_DO_PASSO: Record<Passo, { titulo: string; apoio: string }> = {
   },
   programa: {
     titulo: "O que a obra tem?",
-    apoio: "Marque os itens. O que não está no CUB entra como adicional, com valor próprio.",
+    apoio: "Conte os ambientes e marque o que o CUB não cobre. Cada item mostra de onde vem o preço.",
   },
   revisao: {
     titulo: "Confira o que entendemos",
@@ -152,6 +152,7 @@ function Assistente({
             cub: insumos.cub,
             parametros: insumos.parametros,
             ajustes: insumos.ajustes,
+            precosSinapi: insumos.precosSinapi,
             parametrosValidados: insumos.validado,
           })
         : null,
@@ -255,7 +256,14 @@ function Assistente({
           />
         )}
         {passo === "programa" && (
-          <PassoPrograma ficha={ficha} atualizar={atualizarCampo} erros={errosVisiveis("programa")} />
+          <PassoPrograma
+            ficha={ficha}
+            atualizar={atualizarCampo}
+            erros={errosVisiveis("programa")}
+            insumos={insumos}
+            premissas={inicial.premissas}
+            resultado={calculo?.ok ? calculo.resultado : null}
+          />
         )}
         {passo === "revisao" && (
           <PassoRevisao

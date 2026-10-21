@@ -80,12 +80,12 @@ describe("NovaEstimativa", () => {
     abrir();
     await user.click(screen.getByRole("button", { name: "Continuar" }));
     await user.type(screen.getByLabelText("Nome da estimativa"), "Casa na encosta");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
     expect(screen.queryByLabelText("Muro de arrimo")).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Inclinado, precisa de contenção" }));
+    await user.click(screen.getByRole("button", { name: "Inclinado" }));
     await user.type(screen.getByLabelText("Muro de arrimo"), "80");
     await user.click(screen.getByRole("button", { name: "Continuar" }));
-    await user.click(screen.getByRole("button", { name: "Continuar" }));
-    expect(screen.getByText("inclinado, com 80 m² de muro de arrimo")).toBeInTheDocument();
+    expect(screen.getByText(/terreno inclinado, 80 m² de muro de arrimo/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Gerar estimativa" }));
     await waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
     const [nova] = criar.mock.calls[0] as [{ ficha: { topografia: string; arrimo: number } }];
@@ -98,10 +98,75 @@ describe("NovaEstimativa", () => {
     abrir();
     await user.click(screen.getByRole("button", { name: "Continuar" }));
     await user.type(screen.getByLabelText("Nome da estimativa"), "Casa na encosta");
-    await user.click(screen.getByRole("button", { name: "Inclinado, precisa de contenção" }));
     await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Inclinado" }));
     await user.click(screen.getByRole("button", { name: "Continuar" }));
-    expect(screen.getByText("inclinado, muro de arrimo a medir")).toBeInTheDocument();
+    expect(screen.getByText(/terreno inclinado, muro de arrimo a medir/)).toBeInTheDocument();
+  });
+
+  it("os itens do catálogo mostram de onde vem o preço antes de calcular", async () => {
+    insumos = {
+      ...insumosProntos(),
+      precosSinapi: [
+        {
+          codigo: 42425,
+          uf: "SP",
+          regime: "onerado",
+          mes_base: "2026-09-01",
+          valor: 2175.13,
+          origem: "CR",
+          descricao: "Split 12.000 BTU",
+          unidade: "UN",
+        },
+      ],
+    };
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.type(screen.getByLabelText("Nome da estimativa"), "Casa Teste");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+
+    expect(screen.getByText(/R\$\s2\.175 por aparelho/)).toBeInTheDocument();
+    expect(screen.getAllByText("Sem preço do SINAPI em SP: você informa", { exact: false }).length).toBe(4);
+    expect(screen.getAllByText("Sem preço de referência: você informa").length).toBeGreaterThan(0);
+    expect(screen.getByText(/6% da base/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Descreva a obra")).toBeDisabled();
+  });
+
+  it("incluir aparelhos e energia solar entra na ficha e no resumo do passo", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.type(screen.getByLabelText("Nome da estimativa"), "Casa Teste");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+
+    await user.click(screen.getByRole("button", { name: "Mais split 12.000 btu" }));
+    await user.click(screen.getByRole("button", { name: "Mais split 12.000 btu" }));
+    await user.click(screen.getByRole("button", { name: "Mais energia solar fotovoltaica" }));
+    const resumo = screen.getAllByRole("status").find((e) => e.textContent?.includes("itens até aqui"));
+    expect(resumo).toHaveTextContent("3 itens até aqui, 3 sem preço");
+
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByText(/2 × split 12\.000 btu/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Gerar estimativa" }));
+    await waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
+    const [nova] = criar.mock.calls[0] as [{ ficha: { itens: Record<string, number> } }];
+    expect(nova.ficha.itens).toEqual({ ac12: 2, fv: 1 });
+  });
+
+  it("baixar a quantidade a zero tira o item da ficha", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.type(screen.getByLabelText("Nome da estimativa"), "Casa Teste");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Mais split 9.000 btu" }));
+    await user.click(screen.getByRole("button", { name: "Menos split 9.000 btu" }));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Gerar estimativa" }));
+    await waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
+    const [nova] = criar.mock.calls[0] as [{ ficha: { itens: Record<string, number> } }];
+    expect(nova.ficha.itens).toEqual({});
   });
 
   it("sem nome, o passo de local não avança e diz o motivo", async () => {

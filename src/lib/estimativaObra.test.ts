@@ -773,7 +773,7 @@ describe("calcularEstimativa: itens do catálogo e origem do preço (SPEC 137)",
     expect(ac?.valor).toBe(5827.74);
     expect(ac?.quantidade).toBe(3);
     expect(ac?.valorUnitario).toBe(1942.58);
-    expect(ac?.rotulo).toBe("Ar-condicionado split 9.000 BTU (3 uns)");
+    expect(ac?.rotulo).toBe("Ar-condicionado split 9.000 BTU (3 un)");
     expect(ac?.origem).toMatchObject({
       tipo: "sinapi",
       codigo: 42424,

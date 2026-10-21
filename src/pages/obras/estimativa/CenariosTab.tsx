@@ -73,6 +73,7 @@ export function CenariosTab({
       cub: insumos.cub,
       parametros: insumos.parametros,
       ajustes: insumos.ajustes,
+      precosSinapi: insumos.precosSinapi,
       parametrosValidados: insumos.validado,
       padraoCenario: comparar,
     });
