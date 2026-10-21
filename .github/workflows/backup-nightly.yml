@@ -129,7 +129,7 @@ jobs:
           BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
 
       - name: Upload do backup criptografado
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: backup-${{ matrix.target }}-${{ github.run_id }}
           path: backup-${{ matrix.target }}.tar.gz.enc
@@ -154,7 +154,7 @@ jobs:
           rm -rf storage-backup
 
       - name: Upload do backup do Storage
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: storage-${{ matrix.target }}-${{ github.run_id }}
           path: storage-${{ matrix.target }}.tar.gz.enc
