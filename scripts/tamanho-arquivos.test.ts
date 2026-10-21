@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest";
 const LIMITE = 700;
 
 const TETO: Record<string, number> = {
-  "pages/obras/components/RdoFormDialog.tsx": 1547,
+  "pages/obras/components/RdoFormDialog.tsx": 933,
   "pages/propostas/index.tsx": 1290,
   "pages/obras/components/CotacaoDetailDialog.tsx": 1196,
   "pages/campo/CampoRegistrarDia.tsx": 990,

@@ -40,8 +40,6 @@ test("registra o dia no diário da obra", async ({ page }) => {
 
   const dialog = page.getByRole("dialog", { name: "Registrar dia" });
   await expect(dialog).toBeVisible();
-  // O diário abre na gravação por áudio; o formulário é o caminho manual.
-  await dialog.getByRole("button", { name: "Prefiro preencher manualmente" }).click();
   await dialog.getByLabel("Total de pessoas na obra").fill("7");
   await dialog.getByLabel("Observações do dia").fill("Concretagem da laje do térreo");
   await dialog.getByRole("button", { name: "Salvar" }).click();
