@@ -39,10 +39,17 @@ describe("RegistroCardCampo", () => {
     montar({ extraido: { efetivo_total: 8, materiais_faltando: ["Cimento"] }, fotos: 2 });
     expect(screen.getByText("Você")).toBeTruthy();
     expect(screen.getByText("Parede da cozinha pronta.")).toBeTruthy();
-    expect(screen.getByText("0:20")).toBeTruthy();
-    expect(screen.getByText("2 fotos")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ouvir (0:20)" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ver as 2 fotos" })).toBeTruthy();
     expect(screen.getByText("8 pessoas")).toBeTruthy();
     expect(screen.getByText("Falta: Cimento")).toBeTruthy();
+  });
+
+  it("registro de outra pessoa só mostra o resumo do que tem, sem botão para abrir arquivo", () => {
+    montar({ meu: false, autorNome: "Marcos", fotos: 2 });
+    expect(screen.getByText("0:20")).toBeTruthy();
+    expect(screen.getByText("2 fotos")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Ouvir|Ver as/ })).toBeNull();
   });
 
   it("registro de outra pessoa mostra o nome dela e não pergunta nada", () => {

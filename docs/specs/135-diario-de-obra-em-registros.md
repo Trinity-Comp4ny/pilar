@@ -130,9 +130,8 @@ RPCs), edges `campo-registro-criar` e `registro-reprocessar`, organizador em doi
 (gravar, foto, texto, fila offline, cartão com estados, pergunta do efetivo) e a visão "Registros" na aba
 Diário do escritório (ouvir áudio, fotos, corrigir texto, liberar ao cliente, apagar, tentar de novo).
 Medido no banco e na IA locais: a edge responde 202 em 84 ms e um áudio de 12 s fica pronto em ~5 s.
-**Fora da fase A, pendente:** job diário de retenção do áudio (12 meses, ADR 0062), apagar o áudio quando a
-obra, a conta de campo ou a empresa são excluídas, gravar pelo escritório, fotos no cartão do campo e
-tocar o próprio áudio no campo.
+**Fora da fase A, entregue depois:** retenção do áudio (BEZ-33), gravar pelo escritório (BEZ-55) e fotos e áudio
+no cartão do campo (BEZ-130).
 
 **Fase B, o que entrou (BEZ-34):** "Resumo do dia" no topo de cada dia da aba Diário e "Revisar e fechar o RDO",
 que abre o formulário de RDO já preenchido (atividades, ocorrências, pendências, efetivo por equipe e falta de
@@ -169,6 +168,11 @@ obra é da empresa dele; a IA organiza em segundo plano, igual ao campo. Sem avi
 (decisão do Matheus). Desvio do protótipo: não há prévia de texto antes de enviar (a transcrição é da IA, depois do
 envio); o gestor ouve o áudio gravado e pode regravar. O gravador, a compressão de foto e os helpers de envio
 subiram para `src/hooks` e `src/lib` porque o campo e o escritório os usam.
+
+**Campo vê as próprias fotos e ouve o próprio áudio (BEZ-130):** o cartão do registro no Pilar Campo ganha "Ouvir"
+e "Ver as N fotos", só nos registros da própria conta. A edge `campo-registro-arquivos` valida o token e devolve URLs
+assinadas de 5 minutos; registro de outra pessoa responde "não encontrado" (ADR 0062). Nada é assinado até a pessoa
+tocar. Com isso a fase A fica completa.
 
 Cada fase termina com teste automatizado do que muda (RLS, schema de entrada, fila offline) e o fluxo real
 exercitado no Chrome com prints.
