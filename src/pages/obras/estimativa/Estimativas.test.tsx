@@ -59,6 +59,7 @@ const estimativa = (id: string, nome: string, cliente: string | null): Estimativ
   nome,
   clienteNome: cliente,
   leadNome: null,
+  propostaTitulo: null,
   status: "rascunho",
   versaoAtual: 0,
   ficha: FICHA_SOBRADO,
@@ -138,5 +139,11 @@ describe("Estimativas", () => {
     ];
     abrir();
     expect(screen.getByText("Família Almeida")).toBeInTheDocument();
+  });
+
+  it("mostra também a proposta de onde a estimativa nasceu", () => {
+    lista = [{ ...estimativa("a", "Sobrado Alphaville", "Maria"), propostaTitulo: "Residência Almeida" }];
+    abrir();
+    expect(screen.getByText("Proposta: Residência Almeida")).toBeInTheDocument();
   });
 });

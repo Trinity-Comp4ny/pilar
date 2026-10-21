@@ -36,8 +36,8 @@ para o cliente. Medida de sucesso: tempo até a primeira estimativa e % de estim
    existe antes de haver projeto ou obra.
    Dois pontos de entrada, só para quem tem a feature e pode criar: **Obras › Nova obra** pergunta se começa com
    estimativa (recomendado) ou em branco, e o **lead** tem o botão "Estimar obra", que abre o assistente já com o nome e o
-   cliente do lead e grava a estimativa com `lead_id`. A lista de estimativas mostra o lead. O botão na proposta
-   (`proposta_id`) fica para depois.
+   cliente do lead e grava a estimativa com `lead_id`. A **proposta** tem o mesmo botão: abre o assistente com o título, o cliente e a área da proposta e grava com
+   `proposta_id` (e o lead e o cliente dela). A lista de estimativas mostra o lead e a proposta de origem.
 2. **Ficha técnica.** Tipo (residencial, comercial, industrial), subtipo, padrão (baixo, normal, alto), UF, área,
    pavimentos, terreno, início previsto e programa (quartos, suítes, banheiros, vagas, piscina, área gourmet,
    elevador, subsolo, marcenaria, paisagismo). A ficha é validada na entrada com schema (zod).

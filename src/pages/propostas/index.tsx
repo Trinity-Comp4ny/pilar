@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DialogDescription as DD, DialogFooter } from "@/components/ui/dialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { usePermissions } from "@/hooks/usePermissions";
 import { PageLayout } from "@/components/PageLayout";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
@@ -128,6 +129,8 @@ export default function Propostas() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const canEdit = userRole === "admin" || userRole === "ultra_admin";
+  // Com a estimativa ligada na empresa, a proposta oferece "Estimar obra" (SPEC 136, BEZ-143).
+  const podeEstimar = usePermissions().can("estimativa_obra", "create");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [vinculoTipo, setVinculoTipo] = useState<"cliente" | "lead">("cliente");
@@ -835,6 +838,11 @@ export default function Propostas() {
           setConvertPropostaId(detailPropostaId);
           setDetailPropostaId(null);
         }}
+        onEstimar={
+          podeEstimar && detailPropostaId
+            ? () => navigate(`/obras/estimativas/nova?proposta=${detailPropostaId}`)
+            : undefined
+        }
         onMarcarContratoAssinado={() => {
           if (detailPropostaId) {
             updateProposta.mutate({ id: detailPropostaId, contrato_assinado: true } as never);
