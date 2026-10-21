@@ -108,7 +108,7 @@ export default defineConfig(({ mode }) => ({
     mode === "production" &&
       process.env.SENTRY_AUTH_TOKEN &&
       sentryVitePlugin({
-        org: process.env.SENTRY_ORG ?? "trinity-company",
+        org: process.env.SENTRY_ORG ?? "bez-company",
         project: process.env.SENTRY_PROJECT,
         authToken: process.env.SENTRY_AUTH_TOKEN,
         release: {

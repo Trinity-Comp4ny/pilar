@@ -432,7 +432,7 @@ function erro(parcial: Partial<ErroSentry> = {}): ErroSentry {
     shortId: "PILAR-D",
     titulo: "TypeError: Cannot read properties of undefined (reading 'default')",
     culprit: "/gestao/financeiro",
-    link: "https://trinity-company.sentry.io/issues/101/",
+    link: "https://bez-company.sentry.io/issues/101/",
     pessoas: 3,
     ocorrencias: 8,
     // Antigo: visto pela primeira vez há 9 dias.
@@ -474,7 +474,7 @@ Deno.test("qualidade: erro antigo sem cliente fica quieto; novo, regressão e cl
   );
   const c = cs[2];
   assertEquals(c.tipo, "alerta");
-  assertEquals(c.link, "https://trinity-company.sentry.io/issues/101/");
+  assertEquals(c.link, "https://bez-company.sentry.io/issues/101/");
   assertEquals(c.titulo, "PILAR-C: TypeError: Cannot read properties of undefined (reading 'default') (1 escritório)");
   assertEquals(c.extra, { sentry_issue_id: "104", empresas_afetadas: ["e1"], culprit: "/gestao/financeiro" });
   assert(c.textoPadrao.startsWith("Em Financeiro. 3 pessoas e 8 ocorrências em 24 h."));

@@ -26,7 +26,7 @@ corrigimos" para cada um.
 1. **Leitura do Sentry.** A Edge Function `ops-agente-run` lê, com o secret `SENTRY_READ_TOKEN`
    (só leitura), os erros abertos com atividade em 24 h no ambiente do deploy (`SENTRY_ENV`, que o
    CI já define como `staging` ou `production`), do projeto `pilar` da organização
-   `trinity-company`. Para os 10 erros que mais atingem pessoas, lê os escritórios da tag
+   `bez-company`. Para os 10 erros que mais atingem pessoas, lê os escritórios da tag
    `empresa_id`. Resposta fora do contrato vira erro claro na execução.
 2. **Sem token, falha clara.** Sem `SENTRY_READ_TOKEN` a execução falha com "Sentry não
    configurado" (a ficha mostra o motivo); token recusado mostra "Sentry recusou o token (401)".
@@ -72,13 +72,13 @@ Não-funcionais:
 
 - Migration `20261109000000_time_de_agentes_qualidade.sql`: cron `ops-qualidade` e agente ligado.
 - `ops-agente-run` aceita `agente_id: "qualidade"`. Secrets: `SENTRY_READ_TOKEN` (obrigatório),
-  `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_API_URL` (opcionais, padrão `trinity-company`, `pilar`,
+  `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_API_URL` (opcionais, padrão `bez-company`, `pilar`,
   `https://us.sentry.io`).
 - `ops_acoes.evidencia` da tarefa guarda `sentry_issue_id`, `empresas_afetadas` e `culprit`.
 
 ## Como gerar e cadastrar o token
 
-1. **Sentry:** Settings da organização `trinity-company` › Developer Settings › Custom
+1. **Sentry:** Settings da organização `bez-company` › Developer Settings › Custom
    Integrations › Create New Integration › **Internal Integration**. Nome "Pilar Time Qualidade",
    sem webhook. Permissões: **Project: Read**, **Issue & Event: Read**, **Organization: Read**
    (o resto em No Access). Salvar e copiar o token na seção Tokens. Integração interna não depende
