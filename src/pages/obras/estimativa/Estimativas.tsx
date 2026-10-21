@@ -36,10 +36,18 @@ const COLUNAS: ColumnDef<EstimativaResumo>[] = [
     mobile: "subtitle",
   },
   {
-    key: "lead",
-    header: "Lead",
-    getSortValue: (e) => (e.leadNome ?? "").toLowerCase(),
-    cell: (e) => e.leadNome ?? <span className="text-ink-soft">-</span>,
+    key: "origem",
+    header: "Origem",
+    getSortValue: (e) => (e.propostaTitulo ?? e.leadNome ?? "").toLowerCase(),
+    cell: (e) =>
+      e.leadNome || e.propostaTitulo ? (
+        <span>
+          {e.leadNome && <span className="block">{e.leadNome}</span>}
+          {e.propostaTitulo && <span className="block text-xs text-ink-soft">Proposta: {e.propostaTitulo}</span>}
+        </span>
+      ) : (
+        <span className="text-ink-soft">-</span>
+      ),
   },
   { key: "obra", header: "Obra", cell: descricaoDaObra },
   {

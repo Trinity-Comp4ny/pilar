@@ -16,6 +16,7 @@ import {
   useEstimativa,
   useInsumosDaEstimativa,
   useLeadParaEstimar,
+  usePropostaParaEstimar,
   type Insumos,
 } from "./hooks";
 import {
@@ -36,8 +37,8 @@ interface Inicial {
   nome: string;
   clienteNome: string;
   premissas: Premissas;
-  /** Lead de origem, quando a estimativa nasce do botão "Estimar obra" do lead. */
-  lead?: { id: string; clienteId: string | null };
+  /** De onde a estimativa nasce, quando vem do botão "Estimar obra" do lead ou da proposta. */
+  vinculo?: { leadId: string | null; clienteId: string | null; propostaId: string | null };
 }
 
 const BREADCRUMB = [{ label: "Estimativas", to: "/obras/estimativas" }];
@@ -207,8 +208,9 @@ function Assistente({
       const id = await criar.mutateAsync({
         nome: nome.trim(),
         clienteNome: clienteNome.trim() || null,
-        leadId: inicial.lead?.id ?? null,
-        clienteId: inicial.lead?.clienteId ?? null,
+        leadId: inicial.vinculo?.leadId ?? null,
+        clienteId: inicial.vinculo?.clienteId ?? null,
+        propostaId: inicial.vinculo?.propostaId ?? null,
         ficha,
         premissas: inicial.premissas,
         resultado: calculo.resultado,
@@ -319,12 +321,20 @@ export default function NovaEstimativa() {
   usePageTitle(id ? "Editar estimativa" : "Nova estimativa");
   const insumos = useInsumosDaEstimativa();
   const existente = useEstimativa(id);
-  // `?lead=<id>`: vem do botão "Estimar obra" do lead; traz o nome e o cliente dele (SPEC 136, BEZ-24).
+  // `?lead=<id>` ou `?proposta=<id>`: vêm do botão "Estimar obra" do lead e da proposta; trazem o nome e o cliente
+  // (SPEC 136, BEZ-24 e BEZ-143). Com os dois, a proposta manda.
   const [params] = useSearchParams();
-  const leadId = id ? null : params.get("lead");
+  const propostaId = id ? null : params.get("proposta");
+  const leadId = id || propostaId ? null : params.get("lead");
   const lead = useLeadParaEstimar(leadId);
+  const proposta = usePropostaParaEstimar(propostaId);
 
-  if (insumos.estado === "carregando" || (id && existente.isLoading) || (leadId && lead.isLoading)) {
+  if (
+    insumos.estado === "carregando" ||
+    (id && existente.isLoading) ||
+    (leadId && lead.isLoading) ||
+    (propostaId && proposta.isLoading)
+  ) {
     return <PageLoader size="page" />;
   }
 
@@ -377,15 +387,23 @@ export default function NovaEstimativa() {
   }
 
   const doLead = lead.data ?? null;
+  const daProposta = proposta.data ?? null;
+  const cliente = daProposta?.nomeCliente || doLead?.nomeCompleto || "";
+  const fichaBase = fichaInicial(mesPadraoDeInicio(new Date()));
   return (
     <Assistente
       insumos={insumos}
       inicial={{
-        ficha: fichaInicial(mesPadraoDeInicio(new Date())),
-        nome: doLead ? `Obra ${doLead.nomeCompleto}` : "",
-        clienteNome: doLead?.nomeCompleto ?? "",
+        // A área da proposta, quando ela tem, já entra na ficha: a pessoa confere no passo 2.
+        ficha: daProposta?.areaM2 && daProposta.areaM2 > 0 ? { ...fichaBase, area: daProposta.areaM2 } : fichaBase,
+        nome: daProposta ? daProposta.titulo : doLead ? `Obra ${doLead.nomeCompleto}` : "",
+        clienteNome: cliente,
         premissas: {},
-        lead: doLead ? { id: doLead.id, clienteId: doLead.clienteId } : undefined,
+        vinculo: daProposta
+          ? { leadId: daProposta.leadId, clienteId: daProposta.clienteId, propostaId: daProposta.id }
+          : doLead
+            ? { leadId: doLead.id, clienteId: doLead.clienteId, propostaId: null }
+            : undefined,
       }}
     />
   );

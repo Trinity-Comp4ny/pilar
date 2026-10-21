@@ -24,6 +24,8 @@ export interface EstimativaResumo {
   clienteNome: string | null;
   /** Lead de onde a estimativa nasceu, quando houve. */
   leadNome: string | null;
+  /** Proposta de onde a estimativa nasceu, quando houve. */
+  propostaTitulo: string | null;
   status: StatusEstimativa;
   versaoAtual: number;
   ficha: Ficha | null;
@@ -31,7 +33,7 @@ export interface EstimativaResumo {
   atualizadoEm: string;
 }
 
-export interface EstimativaCompleta extends Omit<EstimativaResumo, "leadNome"> {
+export interface EstimativaCompleta extends Omit<EstimativaResumo, "leadNome" | "propostaTitulo"> {
   premissas: Premissas;
   obraId: string | null;
   criadoEm: string;
@@ -62,7 +64,9 @@ export function useEstimativas() {
     queryFn: async (): Promise<EstimativaResumo[]> => {
       const { data, error } = await supabase
         .from("estimativas_obra")
-        .select("id, nome, cliente_nome, status, versao_atual, ficha, resultado, updated_at, leads(nome, sobrenome)")
+        .select(
+          "id, nome, cliente_nome, status, versao_atual, ficha, resultado, updated_at, leads(nome, sobrenome), propostas(titulo)"
+        )
         .order("updated_at", { ascending: false })
         .limit(500);
       if (error) throw error;
@@ -71,6 +75,7 @@ export function useEstimativas() {
         nome: l.nome,
         clienteNome: l.cliente_nome,
         leadNome: l.leads ? [l.leads.nome, l.leads.sobrenome].filter(Boolean).join(" ") : null,
+        propostaTitulo: l.propostas?.titulo ?? null,
         status: l.status as StatusEstimativa,
         versaoAtual: l.versao_atual,
         ficha: lerFichaDoBanco(l.ficha),
@@ -108,6 +113,44 @@ export function useLeadParaEstimar(leadId: string | null) {
   });
 }
 
+export interface PropostaParaEstimar {
+  id: string;
+  titulo: string;
+  /** Cliente da proposta; sem cliente cadastrado, o nome do lead. */
+  nomeCliente: string;
+  leadId: string | null;
+  clienteId: string | null;
+  areaM2: number | null;
+}
+
+/** A proposta que originou a estimativa (`?proposta=` na tela nova). De outra empresa ou inexistente, volta nulo. */
+export function usePropostaParaEstimar(propostaId: string | null) {
+  return useQuery({
+    queryKey: ["estimativa-proposta", propostaId],
+    enabled: !!propostaId,
+    queryFn: async (): Promise<PropostaParaEstimar | null> => {
+      const { data, error } = await supabase
+        .from("propostas")
+        .select("id, titulo, area_m2, lead_id, cliente_id, clientes(nome), leads(nome, sobrenome, empresa_lead)")
+        .eq("id", propostaId!)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return null;
+      const lead = data.leads;
+      const nomeDoLead = lead ? lead.empresa_lead || [lead.nome, lead.sobrenome].filter(Boolean).join(" ") : "";
+      return {
+        id: data.id,
+        titulo: data.titulo,
+        nomeCliente: data.clientes?.nome || nomeDoLead,
+        leadId: data.lead_id,
+        clienteId: data.cliente_id,
+        areaM2: data.area_m2,
+      };
+    },
+    staleTime: 60_000,
+  });
+}
+
 export function useEstimativa(id: string | undefined) {
   return useQuery({
     queryKey: [...CHAVE, id],
@@ -139,6 +182,8 @@ export interface NovaEstimativa {
   /** Lead de origem (botão "Estimar obra" do lead) e o cliente já cadastrado dele. */
   leadId?: string | null;
   clienteId?: string | null;
+  /** Proposta de origem (botão "Estimar obra" da proposta). */
+  propostaId?: string | null;
   ficha: Ficha;
   premissas: Premissas;
   resultado: ResultadoEstimativa | null;
@@ -155,6 +200,7 @@ export function useCriarEstimativa() {
           nome: nova.nome,
           cliente_nome: nova.clienteNome,
           lead_id: nova.leadId ?? null,
+          proposta_id: nova.propostaId ?? null,
           cliente_id: nova.clienteId ?? null,
           ficha: paraJson(nova.ficha),
           premissas: paraJson(nova.premissas),

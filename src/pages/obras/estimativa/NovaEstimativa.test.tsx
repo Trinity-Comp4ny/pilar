@@ -14,6 +14,14 @@ import NovaEstimativa from "./NovaEstimativa";
 
 let insumos: Insumos = insumosProntos();
 let lead: { id: string; nomeCompleto: string; clienteId: string | null } | null = null;
+let proposta: {
+  id: string;
+  titulo: string;
+  nomeCliente: string;
+  leadId: string | null;
+  clienteId: string | null;
+  areaM2: number | null;
+} | null = null;
 
 const { navegar, criar } = vi.hoisted(() => ({
   navegar: vi.fn(),
@@ -29,6 +37,7 @@ vi.mock("./hooks", () => ({
   useInsumosDaEstimativa: () => insumos,
   useEstimativa: () => ({ data: undefined, isLoading: false }),
   useLeadParaEstimar: () => ({ data: lead, isLoading: false }),
+  usePropostaParaEstimar: () => ({ data: proposta, isLoading: false }),
   useCriarEstimativa: () => ({ mutateAsync: criar, isPending: false }),
   useAtualizarEstimativa: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
@@ -54,6 +63,7 @@ const abrir = (url = "/obras/estimativas/nova") =>
 beforeEach(() => {
   insumos = insumosProntos();
   lead = null;
+  proposta = null;
   navegar.mockClear();
   criar.mockClear();
 });
@@ -305,5 +315,71 @@ describe("NovaEstimativa", () => {
     await waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
     const [nova] = criar.mock.calls[0] as [{ leadId: string | null }];
     expect(nova.leadId).toBeNull();
+  });
+
+  it("vindo da proposta, traz o título, o cliente e a área e grava ligada à proposta e ao lead dela", async () => {
+    proposta = {
+      id: "prop-1",
+      titulo: "Residência Almeida",
+      nomeCliente: "Família Almeida",
+      leadId: "lead-9",
+      clienteId: "cli-2",
+      areaM2: 320,
+    };
+    const user = userEvent.setup();
+    abrir("/obras/estimativas/nova?proposta=prop-1");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByLabelText("Nome da estimativa")).toHaveValue("Residência Almeida");
+    expect(screen.getByLabelText("Cliente")).toHaveValue("Família Almeida");
+    expect(screen.getByLabelText("Área construída")).toHaveValue("320");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Gerar estimativa" }));
+    await waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
+    const [nova] = criar.mock.calls[0] as [
+      { propostaId: string | null; leadId: string | null; clienteId: string | null; ficha: { area: number } },
+    ];
+    expect([nova.propostaId, nova.leadId, nova.clienteId]).toEqual(["prop-1", "lead-9", "cli-2"]);
+    expect(nova.ficha.area).toBe(320);
+  });
+
+  it("proposta sem área mantém a área padrão da ficha", async () => {
+    proposta = { id: "prop-2", titulo: "Galpão", nomeCliente: "", leadId: null, clienteId: null, areaM2: null };
+    const user = userEvent.setup();
+    abrir("/obras/estimativas/nova?proposta=prop-2");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByLabelText("Área construída")).not.toHaveValue("320");
+    expect(screen.getByLabelText("Cliente")).toHaveValue("");
+  });
+
+  it("com proposta e lead na URL, a proposta manda", async () => {
+    lead = { id: "lead-1", nomeCompleto: "Outro Lead", clienteId: null };
+    proposta = {
+      id: "prop-1",
+      titulo: "Residência Almeida",
+      nomeCliente: "Almeida",
+      leadId: null,
+      clienteId: null,
+      areaM2: null,
+    };
+    const user = userEvent.setup();
+    abrir("/obras/estimativas/nova?proposta=prop-1&lead=lead-1");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByLabelText("Nome da estimativa")).toHaveValue("Residência Almeida");
+  });
+
+  it("proposta que não existe (ou é de outra empresa) cai no assistente em branco, sem vínculo", async () => {
+    proposta = null;
+    const user = userEvent.setup();
+    abrir("/obras/estimativas/nova?proposta=inexistente");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByLabelText("Nome da estimativa")).toHaveValue("");
+    await user.type(screen.getByLabelText("Nome da estimativa"), "Casa");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Gerar estimativa" }));
+    await waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
+    const [nova] = criar.mock.calls[0] as [{ propostaId: string | null }];
+    expect(nova.propostaId).toBeNull();
   });
 });
