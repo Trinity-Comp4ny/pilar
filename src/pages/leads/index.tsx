@@ -87,7 +87,10 @@ export default function Leads() {
   const updateLead = useUpdateLead();
   const { data: members = [] } = useLeadMembers();
   const { canEdit } = useFeatureAccess("leads");
-  const podeVerValor = usePermissions().can("financeiro");
+  const { can } = usePermissions();
+  const podeVerValor = can("financeiro");
+  // Com a estimativa ligada na empresa, o lead oferece "Estimar obra" (SPEC 136, BEZ-24).
+  const podeEstimar = can("estimativa_obra", "create");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -696,6 +699,14 @@ export default function Leads() {
         }}
         onConvertProjeto={() => setIsConvertProjetoOpen(true)}
         convertProjetoPending={converterProposta.isPending}
+        onEstimar={
+          selectedLead && podeEstimar
+            ? () => {
+                setIsDetailOpen(false);
+                navigate(`/obras/estimativas/nova?lead=${selectedLead.id}`);
+              }
+            : undefined
+        }
       />
 
       <LeadMotivoPerdasDialog

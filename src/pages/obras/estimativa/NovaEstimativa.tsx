@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Calculator, Check, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
@@ -15,6 +15,7 @@ import {
   useAtualizarEstimativa,
   useEstimativa,
   useInsumosDaEstimativa,
+  useLeadParaEstimar,
   type Insumos,
 } from "./hooks";
 import {
@@ -35,6 +36,8 @@ interface Inicial {
   nome: string;
   clienteNome: string;
   premissas: Premissas;
+  /** Lead de origem, quando a estimativa nasce do botão "Estimar obra" do lead. */
+  lead?: { id: string; clienteId: string | null };
 }
 
 const BREADCRUMB = [{ label: "Estimativas", to: "/obras/estimativas" }];
@@ -204,6 +207,8 @@ function Assistente({
       const id = await criar.mutateAsync({
         nome: nome.trim(),
         clienteNome: clienteNome.trim() || null,
+        leadId: inicial.lead?.id ?? null,
+        clienteId: inicial.lead?.clienteId ?? null,
         ficha,
         premissas: inicial.premissas,
         resultado: calculo.resultado,
@@ -314,8 +319,14 @@ export default function NovaEstimativa() {
   usePageTitle(id ? "Editar estimativa" : "Nova estimativa");
   const insumos = useInsumosDaEstimativa();
   const existente = useEstimativa(id);
+  // `?lead=<id>`: vem do botão "Estimar obra" do lead; traz o nome e o cliente dele (SPEC 136, BEZ-24).
+  const [params] = useSearchParams();
+  const leadId = id ? null : params.get("lead");
+  const lead = useLeadParaEstimar(leadId);
 
-  if (insumos.estado === "carregando" || (id && existente.isLoading)) return <PageLoader size="page" />;
+  if (insumos.estado === "carregando" || (id && existente.isLoading) || (leadId && lead.isLoading)) {
+    return <PageLoader size="page" />;
+  }
 
   if (insumos.estado === "erro") {
     return (
@@ -365,10 +376,17 @@ export default function NovaEstimativa() {
     );
   }
 
+  const doLead = lead.data ?? null;
   return (
     <Assistente
       insumos={insumos}
-      inicial={{ ficha: fichaInicial(mesPadraoDeInicio(new Date())), nome: "", clienteNome: "", premissas: {} }}
+      inicial={{
+        ficha: fichaInicial(mesPadraoDeInicio(new Date())),
+        nome: doLead ? `Obra ${doLead.nomeCompleto}` : "",
+        clienteNome: doLead?.nomeCompleto ?? "",
+        premissas: {},
+        lead: doLead ? { id: doLead.id, clienteId: doLead.clienteId } : undefined,
+      }}
     />
   );
 }
