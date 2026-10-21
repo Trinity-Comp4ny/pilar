@@ -4,10 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { lerParametros } from "@/lib/estimativaObra";
 import { lerCsv, type LinhaCubLida, type LinhaGravada } from "./estimativaCubImport";
-import { REGIMES, type Parametros, type Regime } from "@/schemas/estimativaObra";
+import type { AbaSinapi, LinhaSinapiGravada, LinhaSinapiLida } from "./estimativaSinapiImport";
+import { REGIMES, UFS, type Parametros, type Regime, type Uf } from "@/schemas/estimativaObra";
 
 const TAMANHO_LOTE = 500;
 const TAMANHO_MAXIMO_ARQUIVO = 5_000_000;
+// O relatório de referência do SINAPI tem cerca de 13 MB: a maior parte são abas de composição que não lemos.
+const TAMANHO_MAXIMO_SINAPI = 30_000_000;
 
 /** Tudo que já foi importado (uma linha por UF, subtipo, padrão, mês e regime). Cada mês tem até uns 700 (dois regimes), então 10 mil cobrem cerca de 14 meses. */
 export function useCubGravado() {
@@ -116,4 +119,63 @@ export async function validarParametros(validar: boolean): Promise<void> {
   if (!data) {
     throw new Error("O banco não aceitou a alteração. Confirme o segundo fator da sua sessão e tente de novo.");
   }
+}
+
+/** Preços de insumo do SINAPI já importados, uma linha por código, UF, regime e mês. Só os códigos do catálogo entram, então são poucos milhares. */
+export function useSinapiGravado() {
+  return useQuery({
+    queryKey: ["ultra-admin", "estimativa", "sinapi"],
+    queryFn: async (): Promise<LinhaSinapiGravada[]> => {
+      const { data, error } = await supabase
+        .from("sinapi_precos_insumo")
+        .select("codigo, uf, regime, mes_base, created_at")
+        .order("mes_base", { ascending: false })
+        .limit(20_000);
+      if (error) throw error;
+      return (data ?? []).map((l) => {
+        if (!(REGIMES as readonly string[]).includes(l.regime))
+          throw new Error(`Regime do SINAPI desconhecido: ${l.regime}`);
+        if (!(UFS as readonly string[]).includes(l.uf)) throw new Error(`UF do SINAPI desconhecida: ${l.uf}`);
+        return { ...l, regime: l.regime as Regime, uf: l.uf as Uf };
+      });
+    },
+    staleTime: 60_000,
+  });
+}
+
+/**
+ * Grava os preços do SINAPI em lotes, com upsert por código, UF, regime e mês: importar o mesmo mês de novo
+ * corrige os valores. Se um lote falhar no meio, importar de novo conserta.
+ */
+export async function gravarSinapi(linhas: LinhaSinapiLida[], fonte: string): Promise<void> {
+  for (let i = 0; i < linhas.length; i += TAMANHO_LOTE) {
+    const lote = linhas.slice(i, i + TAMANHO_LOTE).map((l) => ({ ...l, fonte }));
+    const { data, error } = await supabase
+      .from("sinapi_precos_insumo")
+      .upsert(lote, { onConflict: "codigo,uf,regime,mes_base" })
+      .select("codigo");
+    if (error) throw error;
+    // A RLS não devolve erro quando recusa: devolve menos linhas.
+    if ((data?.length ?? 0) < lote.length) {
+      throw new Error("O banco não aceitou todas as linhas. Confirme o segundo fator da sua sessão e importe de novo.");
+    }
+  }
+}
+
+/** Lê só as abas de preço de insumo (ISD e ICD) do relatório do SINAPI. O SheetJS só carrega quando precisa. */
+export async function lerAbasSinapi(arquivo: File): Promise<AbaSinapi[]> {
+  if (arquivo.size > TAMANHO_MAXIMO_SINAPI)
+    throw new Error("O arquivo passa de 30 MB. Envie o SINAPI_Referência do mês.");
+  if (!arquivo.name.toLowerCase().endsWith(".xlsx")) {
+    throw new Error(
+      "Formato não suportado. Envie o arquivo .xlsx SINAPI_Referência, que sai de dentro do zip da Caixa."
+    );
+  }
+  const XLSX = await import("xlsx");
+  const livro = XLSX.read(await arquivo.arrayBuffer(), { type: "array", sheets: ["ISD", "ICD"] });
+  return ["ISD", "ICD"].flatMap((nome) => {
+    const aba = livro.Sheets[nome];
+    if (!aba) return [];
+    return [{ nome, celulas: XLSX.utils.sheet_to_json<unknown[]>(aba, { header: 1, raw: true, defval: "" }) }];
+  });
 }
