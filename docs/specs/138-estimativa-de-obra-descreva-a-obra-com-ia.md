@@ -1,7 +1,7 @@
 # SPEC: Estimativa de obra, "Descreva a obra" com IA sobre o catálogo
 
 **Data:** 2026-10-21
-**Status:** Draft (aguarda decisões D1 a D3 e revisão do protótipo)
+**Status:** Direção aprovada em 2026-10-21 (D1 a D3 decididas); F2a em implementação, F2b aguarda o protótipo
 **Autor:** Matheus Rezende
 **Módulo:** obras (estimativa)
 **Estende:** [137: itens com origem do preço](137-estimativa-de-obra-itens-com-origem-do-preco.md) (F2 daquela spec)
@@ -33,8 +33,8 @@ chegam ao resultado sem o usuário refazer os itens à mão.
 
 ## Requisitos
 
-1. **Campo ativo.** O campo "Descreva a obra" do passo 3 fica habilitado para empresas com a estimativa e o chat de IA
-   ligados (D3). Aceita até 2.000 caracteres. A marca "Em breve" sai.
+1. **Campo ativo.** O campo "Descreva a obra" do passo 3 fica habilitado para toda empresa com a estimativa ligada
+   (D3, sem flag de IA à parte). Aceita até 2.000 caracteres. A marca "Em breve" sai.
 2. **Custo antes de rodar.** O botão "Preencher a lista" mostra o custo aproximado em tokens e o saldo da empresa.
    Sem saldo, o botão explica o motivo (mensagens de `mensagemBloqueioTokens`) e o preenchimento manual segue
    disponível.
@@ -125,15 +125,15 @@ Fases, cada uma entregável sozinha:
 
 ## Decisões e riscos
 
-- **D1. Descrições reais para a avaliação.** O conjunto precisa de textos de obras de verdade (Canaã, VRZ, Mawe),
-  anonimizados. Sem eles, o limite de 95% é medido só em casos sintéticos, que costumam ser mais fáceis. Proposta:
-  Matheus passa 15 a 20 descrições reais, o resto é sintético, e a meta é revisada com a primeira rodada.
-- **D2. Item fora do catálogo.** Proposta: aparece em "não encontrei", fica na descrição guardada na ficha e **não entra
-  no total**; o usuário informa o valor depois só se o item existir no catálogo. "Item livre a definir" (linha sem
-  catálogo, com valor informado) exige mudar o resultado (hoje o `id` da linha é do catálogo fechado) e vira card
-  próprio, depois de ver quanto os textos reais citam itens fora.
-- **D3. Quem enxerga.** Proposta: empresas com `estimativa_obra` e `ai_chat` ligados (a IA gasta o saldo de tokens da
-  empresa e respeita o teto por usuário e o circuit breaker do trial, SPEC 074, 094 e 098). Alternativa: flag própria.
+- **D1 (decidida): começar com casos sintéticos.** A primeira avaliação usa descrições escritas por nós, no estilo de
+  obra de alto padrão, com ambiguidades e injeção. Descrições reais (anonimizadas, o repo é público) entram quando o
+  Matheus as passar, e a meta de acerto é revisada com a primeira rodada real: caso sintético costuma ser mais fácil.
+- **D2 (decidida): item fora do catálogo.** Aparece em "não encontrei", fica na descrição guardada na ficha e **não
+  entra no total**. "Item livre a definir" (linha sem catálogo, com valor informado) exige mudar o resultado (hoje o
+  `id` da linha é do catálogo fechado) e vira card próprio, depois de ver quanto os textos reais citam itens fora.
+- **D3 (decidida): todas as empresas.** Vale para toda empresa com `estimativa_obra` ligada. A IA gasta o saldo de
+  tokens da empresa e respeita o teto por usuário e o circuit breaker do trial (SPEC 074, 094 e 098), então o custo
+  fica contido sem uma flag de IA separada.
 - **Risco: quantidade errada com cara de certa.** Mitigação: a quantidade é editável na tela de confirmação, o
   `trecho` do texto aparece ao lado e a avaliação mede quantidade separada de item.
 - **Risco: o catálogo cresce e o prompt engorda.** Mitigação: o custo medido na avaliação sobe junto e o teste da
