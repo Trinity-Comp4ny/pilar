@@ -1,5 +1,6 @@
 import type { Locator, Page } from "@playwright/test";
 import { test, expect } from "./fixtures";
+import { abrirNovaObra } from "./helpers/novaObra";
 
 /**
  * Cronograma da obra em quatro níveis (spec 111): fase > etapa > serviço > tarefa.
@@ -33,11 +34,7 @@ async function criar(page: Page, botao: string, nome: string) {
 
 test("cria a obra", async ({ page }) => {
   await page.goto("/obras");
-  await page
-    .getByRole("button", { name: /Nova obra/i })
-    .first()
-    .click();
-  const dialog = page.getByRole("dialog", { name: /Nova obra/i });
+  const dialog = await abrirNovaObra(page);
   await dialog.getByLabel("Nome da obra *").fill(obra);
   await dialog.getByRole("button", { name: "Criar obra" }).click();
   await expect(page.getByText("Obra criada").first()).toBeVisible({ timeout: 10_000 });
