@@ -2,20 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Building2,
-  Calendar as CalendarIcon,
-  ChevronDown,
-  Clock,
-  Layers,
-  SlidersHorizontal,
-  Users,
-  X,
-} from "lucide-react";
+import { FilterClear, FilterPopover } from "@/components/filters/FilterBar";
+import { Building2, Calendar as CalendarIcon, ChevronDown, Clock, Layers, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { PROJECT_PRIORITY_CONFIG, PRIORITY_OPTIONS, type ProjectPriority } from "@/constants";
 
 export type DeadlineFilter = "em_atraso" | "atencao" | "no_prazo";
@@ -68,7 +58,6 @@ const DEADLINE_OPTIONS: { id: DeadlineFilter; label: string; dot: string }[] = [
 export function ProjetosFilterBar({ pessoas, clientes, disciplinas, filters, onChange }: ProjetosFilterBarProps) {
   // A busca de texto (filters.search) vive no PageHeader (spec 002); aqui ficam
   // só os filtros estruturados. "Limpar" continua zerando tudo, busca incluída.
-  const isMobile = useIsMobile();
   const filtroCount =
     filters.pessoaIds.length +
     filters.prioridades.length +
@@ -80,62 +69,20 @@ export function ProjetosFilterBar({ pessoas, clientes, disciplinas, filters, onC
 
   const totalActive = filtroCount + (filters.search ? 1 : 0);
 
+  // Peças da toolbar padrão (SPEC 124): vão dentro de <FilterBar> na página.
   return (
-    <div className="flex items-center gap-2">
-      {/* Limpar — reserva espaço fixo em telas médias+ pra não dar jank ao aparecer/sumir.
-          Em mobile o espaço reservado (120px) tira falta em telas já apertadas (achado da
-          auditoria: contribuía pra "Novo projeto" ficar inalcançável em 390px), então ali
-          colapsa a 0 quando inativo em vez de só ficar invisível. */}
-      <Button
-        variant="ghost"
-        className={cn(
-          "h-9 rounded-full text-sm text-muted-foreground transition-all justify-center overflow-hidden shrink-0 md:w-[120px]",
-          totalActive === 0 ? "w-0 px-0 opacity-0 pointer-events-none" : "w-[120px] px-4"
-        )}
-        onClick={() => onChange(EMPTY_FILTERS)}
-      >
-        <X className="h-4 w-4 mr-1.5 shrink-0" /> Limpar ({totalActive})
-      </Button>
-
-      {/* Filtros — botão único. Ícone-only em mobile: com o "Novo projeto" do
-          PageHeader e o "Mais ações" na mesma linha, o texto "Filtros" era peso que
-          essa linha não tinha como pagar em 390px (achado da auditoria). */}
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            aria-label={isMobile ? "Filtros" : undefined}
-            className={cn(
-              "h-9 rounded-full text-sm gap-2",
-              filtroCount > 0 && "border-foreground/40 bg-muted",
-              isMobile && "relative w-9 px-0 justify-center gap-0"
-            )}
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            <span className={cn(isMobile && "sr-only")}>Filtros</span>
-            {filtroCount > 0 && (
-              <span
-                className={cn(
-                  "text-[11px] bg-foreground text-background rounded-full px-1.5 py-0.5 min-w-[20px] tabular-nums",
-                  isMobile && "absolute -top-1 -right-1"
-                )}
-              >
-                {filtroCount}
-              </span>
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[340px] p-0" align="end">
-          <FiltersPanel
-            pessoas={pessoas}
-            clientes={clientes}
-            disciplinas={disciplinas}
-            filters={filters}
-            onChange={onChange}
-          />
-        </PopoverContent>
-      </Popover>
-    </div>
+    <>
+      <FilterPopover count={filtroCount} onClear={() => onChange({ ...EMPTY_FILTERS, search: filters.search })}>
+        <FiltersPanel
+          pessoas={pessoas}
+          clientes={clientes}
+          disciplinas={disciplinas}
+          filters={filters}
+          onChange={onChange}
+        />
+      </FilterPopover>
+      <FilterClear count={totalActive} onClick={() => onChange(EMPTY_FILTERS)} />
+    </>
   );
 }
 
@@ -193,129 +140,100 @@ function FiltersPanel({
         : [...filters.deadlineStatus, d],
     });
 
-  const filtroCount =
-    filters.pessoaIds.length +
-    filters.prioridades.length +
-    filters.clienteIds.length +
-    filters.disciplinaIds.length +
-    filters.deadlineStatus.length +
-    (filters.dataInicio ? 1 : 0) +
-    (filters.dataFim ? 1 : 0);
-
   return (
-    <div className="flex flex-col max-h-[70vh]">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b">
-        <div className="flex items-center gap-2">
-          <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-sm font-medium">Filtros</span>
+    <div>
+      {/* Prioridade */}
+      <FilterSection title="Prioridade" count={filters.prioridades.length}>
+        <div className="flex flex-wrap gap-1">
+          {PRIORITY_OPTIONS.map((p) => {
+            const active = filters.prioridades.includes(p);
+            const dot = PROJECT_PRIORITY_CONFIG[p].dotColor;
+            return (
+              <button
+                key={p}
+                type="button"
+                onClick={() => togglePrioridade(p)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 h-7 rounded-full text-xs border transition-colors",
+                  active
+                    ? "bg-foreground text-background border-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted border-transparent"
+                )}
+              >
+                <span className={cn("h-1.5 w-1.5 rounded-full", dot)} />
+                {PROJECT_PRIORITY_CONFIG[p].label}
+              </button>
+            );
+          })}
         </div>
-        {filtroCount > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 text-xs text-muted-foreground"
-            onClick={() => onChange({ ...EMPTY_FILTERS, search: filters.search })}
-          >
-            Limpar tudo
-          </Button>
-        )}
-      </div>
+      </FilterSection>
 
-      <div className="flex-1 overflow-y-auto">
-        {/* Prioridade */}
-        <FilterSection title="Prioridade" count={filters.prioridades.length}>
-          <div className="flex flex-wrap gap-1">
-            {PRIORITY_OPTIONS.map((p) => {
-              const active = filters.prioridades.includes(p);
-              const dot = PROJECT_PRIORITY_CONFIG[p].dotColor;
-              return (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => togglePrioridade(p)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 h-7 rounded-full text-xs border transition-colors",
-                    active
-                      ? "bg-foreground text-background border-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted border-transparent"
-                  )}
-                >
-                  <span className={cn("h-1.5 w-1.5 rounded-full", dot)} />
-                  {PROJECT_PRIORITY_CONFIG[p].label}
-                </button>
-              );
-            })}
-          </div>
-        </FilterSection>
+      {/* Atraso */}
+      <FilterSection title="Status de prazo" count={filters.deadlineStatus.length}>
+        <div className="flex flex-wrap gap-1">
+          {DEADLINE_OPTIONS.map((d) => {
+            const active = filters.deadlineStatus.includes(d.id);
+            return (
+              <button
+                key={d.id}
+                type="button"
+                onClick={() => toggleDeadline(d.id)}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 h-7 rounded-full text-xs border transition-colors",
+                  active
+                    ? "bg-foreground text-background border-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted border-transparent"
+                )}
+              >
+                <span className={cn("h-1.5 w-1.5 rounded-full", d.dot)} />
+                {d.label}
+              </button>
+            );
+          })}
+        </div>
+      </FilterSection>
 
-        {/* Atraso */}
-        <FilterSection title="Status de prazo" count={filters.deadlineStatus.length}>
-          <div className="flex flex-wrap gap-1">
-            {DEADLINE_OPTIONS.map((d) => {
-              const active = filters.deadlineStatus.includes(d.id);
-              return (
-                <button
-                  key={d.id}
-                  type="button"
-                  onClick={() => toggleDeadline(d.id)}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 h-7 rounded-full text-xs border transition-colors",
-                    active
-                      ? "bg-foreground text-background border-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted border-transparent"
-                  )}
-                >
-                  <span className={cn("h-1.5 w-1.5 rounded-full", d.dot)} />
-                  {d.label}
-                </button>
-              );
-            })}
-          </div>
-        </FilterSection>
+      {/* Equipe */}
+      <CheckboxSearchSection
+        title="Equipe"
+        icon={<Users className="h-3.5 w-3.5 text-muted-foreground" />}
+        items={pessoas}
+        selected={filters.pessoaIds}
+        onToggle={togglePessoa}
+        onClear={() => onChange({ ...filters, pessoaIds: [] })}
+        searchPlaceholder="Buscar membro..."
+        emptyText="Nenhum membro"
+        clearLabel="Limpar equipe"
+      />
 
-        {/* Equipe */}
-        <CheckboxSearchSection
-          title="Equipe"
-          icon={<Users className="h-3.5 w-3.5 text-muted-foreground" />}
-          items={pessoas}
-          selected={filters.pessoaIds}
-          onToggle={togglePessoa}
-          onClear={() => onChange({ ...filters, pessoaIds: [] })}
-          searchPlaceholder="Buscar membro..."
-          emptyText="Nenhum membro"
-          clearLabel="Limpar equipe"
-        />
+      {/* Cliente */}
+      <CheckboxSearchSection
+        title="Cliente"
+        icon={<Building2 className="h-3.5 w-3.5 text-muted-foreground" />}
+        items={clientes}
+        selected={filters.clienteIds}
+        onToggle={toggleCliente}
+        onClear={() => onChange({ ...filters, clienteIds: [] })}
+        searchPlaceholder="Buscar cliente..."
+        emptyText="Nenhum cliente"
+        clearLabel="Limpar clientes"
+      />
 
-        {/* Cliente */}
-        <CheckboxSearchSection
-          title="Cliente"
-          icon={<Building2 className="h-3.5 w-3.5 text-muted-foreground" />}
-          items={clientes}
-          selected={filters.clienteIds}
-          onToggle={toggleCliente}
-          onClear={() => onChange({ ...filters, clienteIds: [] })}
-          searchPlaceholder="Buscar cliente..."
-          emptyText="Nenhum cliente"
-          clearLabel="Limpar clientes"
-        />
+      {/* Disciplina */}
+      <CheckboxSearchSection
+        title="Disciplina"
+        icon={<Layers className="h-3.5 w-3.5 text-muted-foreground" />}
+        items={disciplinas}
+        selected={filters.disciplinaIds}
+        onToggle={toggleDisciplina}
+        onClear={() => onChange({ ...filters, disciplinaIds: [] })}
+        searchPlaceholder="Buscar disciplina..."
+        emptyText="Nenhuma disciplina"
+        clearLabel="Limpar disciplinas"
+      />
 
-        {/* Disciplina */}
-        <CheckboxSearchSection
-          title="Disciplina"
-          icon={<Layers className="h-3.5 w-3.5 text-muted-foreground" />}
-          items={disciplinas}
-          selected={filters.disciplinaIds}
-          onToggle={toggleDisciplina}
-          onClear={() => onChange({ ...filters, disciplinaIds: [] })}
-          searchPlaceholder="Buscar disciplina..."
-          emptyText="Nenhuma disciplina"
-          clearLabel="Limpar disciplinas"
-        />
-
-        {/* Período */}
-        <PeriodoSection filters={filters} onChange={onChange} />
-      </div>
+      {/* Período */}
+      <PeriodoSection filters={filters} onChange={onChange} />
     </div>
   );
 }

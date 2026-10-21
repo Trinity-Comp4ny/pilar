@@ -28,7 +28,7 @@ const subStatusCache = new Map<string, SubStatus>();
 function SubscriptionSuspendedScreen({ isAdmin }: { isAdmin: boolean }) {
   const { openSettings } = useSettingsModal();
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted p-8">
+    <div className="min-h-dvh flex items-center justify-center bg-muted p-8">
       <div className="max-w-md text-center space-y-6">
         <div className="flex justify-center">
           <div className="p-4 rounded-full bg-warning-soft">

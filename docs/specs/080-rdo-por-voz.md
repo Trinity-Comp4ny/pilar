@@ -1,7 +1,7 @@
 # SPEC: RDO por voz + foto no diário do escritório
 
 **Data:** 2026-09-01
-**Status:** Draft
+**Status:** Superada pela [SPEC 135](./135-diario-de-obra-em-registros.md): o RDO por voz saiu do formulário em 21/10/2026 (BEZ-85)
 **Autor:** Matheus (com apoio de agente de IA)
 **Módulo:** obras
 **Estende:** [015 — Obras MVP](015-obras-mvp.md), [040 — Obra inteligente](040-obra-inteligente-cronograma-diario-clima.md), [062 — Diário efetivo/impedimento/visita](062-diario-efetivo-por-fornecedor-impedimento-visita.md)

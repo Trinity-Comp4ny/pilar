@@ -1,9 +1,8 @@
 import { Check, Infinity as InfinityIcon, Sparkles, Users } from "lucide-react";
-import { APP_URL } from "../config";
 import { trackCta } from "../analytics";
 import { RevealGroup } from "./motion";
 import { INCLUSO_EM_TODOS, PLANOS } from "../lib/planos";
-import { linkCadastro } from "../lib/origem";
+import { DEMO_URL } from "../lib/contato";
 
 /**
  * Os três planos, no mesmo desenho na home e na /planos.
@@ -13,15 +12,10 @@ import { linkCadastro } from "../lib/origem";
  * ela não existe: todo plano tem a plataforma inteira (ADR 0026), e repetir a
  * mesma lista em três colunas sugeria o contrário.
  *
- * `modo` decide o que o botão faz, porque as duas telas onde este componente
- * aparece têm intenção diferente:
- * - "testar" (home): visitante ainda decidindo, CTA suave pro trial, sem cartão.
- * - "assinar" (/planos): visitante já escolheu o plano, o botão vai direto pro
- *   checkout daquele plano (`/checkout?plano=slug`), como a página fazia antes
- *   de ser reescrita. Trocar isso por um CTA de trial genérico tiraria o
- *   caminho mais curto até pagamento da própria página comercial.
+ * Cadastro por convite (SPEC 133): o botão de todo plano leva para agendar a
+ * demonstração. O checkout continua existindo para o link que o time envia.
  */
-export function PlanCards({ contexto, modo = "testar" }: { contexto: string; modo?: "testar" | "assinar" }) {
+export function PlanCards({ contexto }: { contexto: string }) {
   return (
     <RevealGroup className="grid md:grid-cols-3 gap-4 items-stretch" stagger={0.1}>
       {PLANOS.map((p) => (
@@ -51,14 +45,16 @@ export function PlanCards({ contexto, modo = "testar" }: { contexto: string; mod
             <p className="mb-7 text-[12px] text-ink-muted">A empresa inteira, sem cobrança por usuário</p>
 
             <a
-              href={modo === "assinar" ? `${APP_URL}/checkout?plano=${p.slug}` : linkCadastro()}
-              onClick={() => trackCta(modo === "assinar" ? "assinar_plano" : "testar_gratis", `${contexto}_${p.slug}`)}
-              aria-label={modo === "assinar" ? `Assinar plano ${p.nome}` : undefined}
+              href={DEMO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackCta("agende_demo", `${contexto}_${p.slug}`)}
+              aria-label={`Agendar demonstração do plano ${p.nome}`}
               className={`flex h-11 items-center justify-center rounded-full text-[14px] font-medium transition-colors ${
                 p.destaque ? "bg-brand text-ink hover:bg-brand/85" : "bg-paper-alt text-ink hover:bg-paper-border/60"
               }`}
             >
-              {modo === "assinar" ? `Assinar ${p.nome}` : "Testar grátis por 3 dias"}
+              Agendar demonstração
             </a>
 
             {/* Só as três réguas que separam um plano do outro. */}

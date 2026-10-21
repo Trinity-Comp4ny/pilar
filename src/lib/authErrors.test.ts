@@ -15,6 +15,14 @@ describe("translateAuthError", () => {
     expect(translateAuthError({ name: "AuthRetryableFetchError" })).toBe("Falha de conexão. Verifique sua internet.");
   });
 
+  it("conta nova sem convite orienta a falar com o time (SPEC 133)", () => {
+    expect(translateAuthError("Database error saving new user")).toMatch(/Fale com o time/);
+    expect(
+      translateAuthError({ code: "P0001", message: "Cadastro fechado: a conta da empresa é criada pelo time do Pilar" })
+    ).toMatch(/Fale com o time/);
+    expect(translateAuthError({ code: "signup_disabled" })).toMatch(/Fale com o time/);
+  });
+
   it("nunca devolve a mensagem técnica", () => {
     expect(translateAuthError(new Error("relation auth.users does not exist"))).toBe(
       "Erro inesperado. Tente novamente."

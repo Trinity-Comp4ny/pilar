@@ -5,7 +5,7 @@ import { toPrioridade, type Prioridade, type StatusBucket } from "./status";
 import type { LinkItem } from "@/components/LinksEditor";
 import type { Json, TablesUpdate } from "@/integrations/supabase/types";
 
-export type PessoaOpcao = { id: string; nome: string; avatarUrl?: string | null };
+export type PessoaOpcao = { id: string; nome: string; avatarUrl?: string | null; profileId?: string | null };
 
 /** Comentário estruturado da tarefa (spec 013). */
 export type Comentario = { id: string; texto: string; autor: string; data: string; mencionados?: string[] };
@@ -130,16 +130,17 @@ export function usePessoasEmpresa() {
     queryFn: async (): Promise<PessoaOpcao[]> => {
       const { data, error } = await supabase
         .from("pessoas")
-        .select("id, nome, profiles!pessoas_profile_id_fkey(avatar_url)")
+        .select("id, nome, profile_id, profiles!pessoas_profile_id_fkey(avatar_url)")
         .is("deleted_at", null)
         .order("nome");
       if (error) throw error;
       // profile_id é opcional (pessoa sem login não tem profile); sem foto, o
       // AvatarStack cai para iniciais.
-      return (data ?? []).map(({ id, nome, profiles }) => ({
+      return (data ?? []).map(({ id, nome, profile_id, profiles }) => ({
         id,
         nome,
         avatarUrl: profiles?.avatar_url ?? null,
+        profileId: profile_id,
       }));
     },
   });

@@ -1,8 +1,8 @@
-// Origem do visitante (SPEC 104): de onde veio quem chega à landing, repassada
-// ao link de cadastro do app para ficar gravada na conta. Primeiro toque da
+// Origem do visitante (SPEC 104): de onde veio quem chega à landing. Ia no link
+// de cadastro do app; com o cadastro por convite (SPEC 133) fica guardada aqui
+// até o funil da demonstração usá-la. Primeiro toque da
 // sessão, em sessionStorage: não é rastreamento entre sites, então não depende
 // do consentimento de cookies (o PostHog depende, e por isso não basta).
-import { APP_URL } from "../config";
 
 const CHAVE = "pilar_origem";
 const PARAMS_ORIGEM = [
@@ -40,16 +40,4 @@ export function registrarOrigem(): void {
   } catch {
     // sessionStorage indisponível (modo privado antigo): segue sem origem
   }
-}
-
-/** Link de cadastro do app com a origem da sessão nos parâmetros. */
-export function linkCadastro(): string {
-  const url = new URL(`${APP_URL}/cadastro`);
-  try {
-    const origem = JSON.parse(sessionStorage.getItem(CHAVE) ?? "{}") as Record<string, string>;
-    for (const [k, v] of Object.entries(origem)) url.searchParams.set(k, v);
-  } catch {
-    // sem origem guardada
-  }
-  return url.toString();
 }

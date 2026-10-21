@@ -3,7 +3,7 @@ import { formatDate, formatDecimal } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Plus,
   FileText,
@@ -25,9 +24,7 @@ import {
   DollarSign,
   Search,
   Trash2,
-  ArrowUpDown,
   MoreVertical,
-  SlidersHorizontal,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -35,10 +32,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DialogDescription as DD, DialogFooter } from "@/components/ui/dialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { usePermissions } from "@/hooks/usePermissions";
 import { PageLayout } from "@/components/PageLayout";
+import { DataTable, type ColumnDef } from "@/components/data/DataTable";
+import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
+import { FilterBar, FilterClear, FilterPopover, FilterSelect } from "@/components/filters/FilterBar";
 import { PageHeader } from "@/components/PageHeader";
 import { useUserRole } from "@/hooks/useUserRole";
 import { toast } from "sonner";
@@ -46,6 +46,7 @@ import { analytics } from "@/lib/analytics";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import {
+  type Proposta,
   usePropostas,
   useCreateProposta,
   useUpdateProposta,
@@ -81,6 +82,11 @@ interface PropostaDisciplina {
   horas_estimadas: number | null;
   custo_hora: number | null;
 }
+
+const VISAO_OPCOES: ViewOption<ViewMode>[] = [
+  { value: "table", label: "Tabela", icon: LayoutList },
+  { value: "cards", label: "Cards", icon: LayoutGrid },
+];
 
 type ViewMode = "table" | "cards";
 
@@ -123,6 +129,8 @@ export default function Propostas() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const canEdit = userRole === "admin" || userRole === "ultra_admin";
+  // Com a estimativa ligada na empresa, a proposta oferece "Estimar obra" (SPEC 136, BEZ-143).
+  const podeEstimar = usePermissions().can("estimativa_obra", "create");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [vinculoTipo, setVinculoTipo] = useState<"cliente" | "lead">("cliente");
@@ -397,14 +405,6 @@ export default function Propostas() {
 
   const normalize = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-  const handleSort = (field: typeof sortField) => {
-    if (sortField === field) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortField(field);
-      setSortDir("asc");
-    }
-  };
-
   const clearFilters = () => {
     setSearchTerm("");
     setFilterStatus("all");
@@ -474,6 +474,166 @@ export default function Propostas() {
     hoje,
   ]);
 
+  const filtrosAvancadosAtivos = activeAdvancedFilters + (filterStatus !== "all" ? 1 : 0);
+
+  // Toolbar padrão (SPEC 124). Busca de texto fica no header.
+  const toolbar = (
+    <FilterBar
+      end={
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {filteredPropostas.length} de {propostas.length}
+        </span>
+      }
+    >
+      <ViewSwitcher options={VISAO_OPCOES} value={viewMode} onChange={setViewMode} iconOnlyOnMobile />
+      <FilterSelect
+        label="Status"
+        value={filterStatus}
+        emptyValue="all"
+        onChange={setFilterStatus}
+        options={[
+          { value: "all", label: "Todos os status" },
+          { value: "rascunho", label: "Rascunho" },
+          { value: "enviada", label: "Enviada" },
+          { value: "aceita", label: "Aceita" },
+          { value: "recusada", label: "Recusada" },
+          { value: "expirada", label: "Expirada" },
+        ]}
+      />
+      <FilterPopover count={activeAdvancedFilters} onClear={clearFilters}>
+        <div className="space-y-4 p-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Cliente</Label>
+            <Select value={filterCliente} onValueChange={setFilterCliente}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="Todos os clientes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os clientes</SelectItem>
+                {clientes.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Tipo</Label>
+            <Select value={filterTipo} onValueChange={(v) => setFilterTipo(v as typeof filterTipo)}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os tipos</SelectItem>
+                <SelectItem value="proposta">Só propostas</SelectItem>
+                <SelectItem value="contrato">Com contrato</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-xs">Período</Label>
+              <Select value={filterDateField} onValueChange={(v) => setFilterDateField(v as typeof filterDateField)}>
+                <SelectTrigger className="h-7 w-32 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="created_at">Criação</SelectItem>
+                  <SelectItem value="validade">Validade</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <DatePicker value={filterDateFrom} onChange={setFilterDateFrom} placeholder="De" />
+              <DatePicker value={filterDateTo} onChange={setFilterDateTo} placeholder="Até" />
+            </div>
+          </div>
+        </div>
+      </FilterPopover>
+      <FilterClear count={filtrosAvancadosAtivos} onClick={clearFilters} />
+    </FilterBar>
+  );
+
+  // Colunas da tabela (SPEC 127). `getSortValue` só habilita o clique no cabeçalho: a ordenação
+  // em si é feita acima, em `filteredPropostas`.
+  const propostasColumns: ColumnDef<Proposta>[] = [
+    {
+      key: "titulo",
+      header: "Título",
+      getSortValue: (p) => p.titulo,
+      cell: (p) => (
+        <>
+          <p className="text-sm font-medium">{p.titulo}</p>
+          {p.codigo && <p className="text-[11px] text-muted-foreground font-mono">{p.codigo}</p>}
+        </>
+      ),
+    },
+    { key: "cliente", header: "Cliente/Lead", className: "text-sm", cell: (p) => p.cliente_nome || p.lead_nome || "—" },
+    {
+      key: "valor_proposto",
+      header: "Valor",
+      className: "text-sm font-medium",
+      getSortValue: (p) => p.valor_proposto ?? 0,
+      cell: (p) => (p.valor_proposto ? formatCurrency(p.valor_proposto) : "—"),
+    },
+    {
+      key: "status",
+      header: "Status",
+      align: "center",
+      cell: (p) => {
+        const displayStatus = getDisplayStatus(p);
+        return (
+          <Badge className={`text-xs ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
+            {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
+          </Badge>
+        );
+      },
+    },
+    {
+      key: "validade",
+      header: "Validade",
+      className: "text-sm",
+      getSortValue: (p) => p.validade ?? "",
+      cell: (p) => (
+        <span className={p.validade && p.validade < hoje ? "text-danger-mid font-medium" : undefined}>
+          {formatDate(p.validade)}
+        </span>
+      ),
+    },
+    ...(canEdit
+      ? [
+          {
+            key: "acoes",
+            header: "Ações",
+            align: "end" as const,
+            cell: (p: Proposta) => (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-11 w-11 text-muted-foreground hover:text-foreground"
+                    aria-label="Mais opções"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={() => setConfirmDelete({ id: p.id, titulo: p.titulo })}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ),
+          },
+        ]
+      : []),
+  ];
+
   const header = (
     <PageHeader
       title="Propostas"
@@ -506,7 +666,7 @@ export default function Propostas() {
 
   if (isLoading) {
     return (
-      <PageLayout header={header}>
+      <PageLayout header={header} toolbar={toolbar}>
         <div className="flex items-center justify-center py-12">
           <ReadingRing size={64} />
         </div>
@@ -515,123 +675,8 @@ export default function Propostas() {
   }
 
   return (
-    <PageLayout header={header}>
+    <PageLayout header={header} toolbar={toolbar}>
       <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col min-h-0">
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <CardTitle className="text-lg font-medium tracking-tight">Lista de Propostas</CardTitle>
-              <CardDescription className="text-sm text-muted-foreground mt-1">
-                Total de {filteredPropostas.length} de {propostas.length} proposta(s)
-              </CardDescription>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              {/* Busca de texto migrou para o PageHeader (spec 002). */}
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm" aria-label="Status da proposta">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos status</SelectItem>
-                  <SelectItem value="rascunho">Rascunho</SelectItem>
-                  <SelectItem value="enviada">Enviada</SelectItem>
-                  <SelectItem value="aceita">Aceita</SelectItem>
-                  <SelectItem value="recusada">Recusada</SelectItem>
-                  <SelectItem value="expirada">Expirada</SelectItem>
-                </SelectContent>
-              </Select>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="h-9 rounded-full text-sm relative gap-1.5">
-                    <SlidersHorizontal className="h-4 w-4" />
-                    Filtros
-                    {activeAdvancedFilters > 0 && (
-                      <Badge className="ml-0.5 h-5 min-w-5 justify-center rounded-full bg-brand px-1.5 text-[11px] text-ink">
-                        {activeAdvancedFilters}
-                      </Badge>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-80 space-y-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Cliente</Label>
-                    <Select value={filterCliente} onValueChange={setFilterCliente}>
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue placeholder="Todos os clientes" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos os clientes</SelectItem>
-                        {clientes.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Tipo</Label>
-                    <Select value={filterTipo} onValueChange={(v) => setFilterTipo(v as typeof filterTipo)}>
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos os tipos</SelectItem>
-                        <SelectItem value="proposta">Só propostas</SelectItem>
-                        <SelectItem value="contrato">Com contrato</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <Label className="text-xs">Período</Label>
-                      <Select
-                        value={filterDateField}
-                        onValueChange={(v) => setFilterDateField(v as typeof filterDateField)}
-                      >
-                        <SelectTrigger className="h-7 w-32 text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="created_at">Criação</SelectItem>
-                          <SelectItem value="validade">Validade</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <DatePicker value={filterDateFrom} onChange={setFilterDateFrom} placeholder="De" />
-                      <DatePicker value={filterDateTo} onChange={setFilterDateTo} placeholder="Até" />
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={clearFilters}>
-                    Limpar filtros
-                  </Button>
-                </PopoverContent>
-              </Popover>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant={viewMode === "table" ? "secondary" : "ghost"}
-                  size="icon"
-                  className="h-11 w-11"
-                  onClick={() => setViewMode("table")}
-                  aria-label="Visualizar em tabela"
-                >
-                  <LayoutList className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "cards" ? "secondary" : "ghost"}
-                  size="icon"
-                  className="h-11 w-11"
-                  onClick={() => setViewMode("cards")}
-                  aria-label="Visualizar em cards"
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-
         <CardContent className="flex-1 min-h-0 p-0 pb-4">
           {propostas.length === 0 ? (
             <EmptyState
@@ -651,103 +696,25 @@ export default function Propostas() {
               }}
             />
           ) : viewMode === "table" ? (
-            <div className="overflow-x-auto overflow-y-auto w-full max-h-[calc(100svh-360px)]">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>
-                      <Button
-                        variant="ghost"
-                        className="-ml-3 h-11 font-medium text-xs"
-                        onClick={() => handleSort("titulo")}
-                      >
-                        Título <ArrowUpDown className="ml-2 h-3 w-3" />
-                      </Button>
-                    </TableHead>
-                    <TableHead>Cliente/Lead</TableHead>
-                    <TableHead>
-                      <Button
-                        variant="ghost"
-                        className="-ml-3 h-11 font-medium text-xs"
-                        onClick={() => handleSort("valor_proposto")}
-                      >
-                        Valor <ArrowUpDown className="ml-2 h-3 w-3" />
-                      </Button>
-                    </TableHead>
-                    <TableHead className="text-center">Status</TableHead>
-                    <TableHead>
-                      <Button
-                        variant="ghost"
-                        className="-ml-3 h-11 font-medium text-xs"
-                        onClick={() => handleSort("validade")}
-                      >
-                        Validade <ArrowUpDown className="ml-2 h-3 w-3" />
-                      </Button>
-                    </TableHead>
-                    {canEdit && <TableHead className="text-right">Ações</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredPropostas.map((p) => {
-                    const displayStatus = getDisplayStatus(p);
-                    return (
-                      // Sem role="button": a linha tem botões de ação dentro, e botão dentro de
-                      // botão some para o leitor de tela. Segue focável e abre com Enter.
-                      <TableRow
-                        key={p.id}
-                        tabIndex={0}
-                        aria-label={`Ver detalhes da proposta ${p.titulo}`}
-                        className="cursor-pointer hover:bg-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-                        onClick={() => openDetail(p.id)}
-                        onKeyDown={(e) => handleRowKeyDown(e, p.id)}
-                      >
-                        <TableCell className="py-4">
-                          <p className="text-sm font-medium">{p.titulo}</p>
-                          {p.codigo && <p className="text-[11px] text-muted-foreground font-mono">{p.codigo}</p>}
-                        </TableCell>
-                        <TableCell className="text-sm py-4">{p.cliente_nome || p.lead_nome || "—"}</TableCell>
-                        <TableCell className="text-sm py-4 font-medium">
-                          {p.valor_proposto ? formatCurrency(p.valor_proposto) : "—"}
-                        </TableCell>
-                        <TableCell className="text-sm py-4 text-center">
-                          <Badge className={`text-xs ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
-                            {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
-                          </Badge>
-                        </TableCell>
-                        <TableCell
-                          className={`text-sm py-4 ${p.validade && p.validade < hoje ? "text-danger-mid font-medium" : ""}`}
-                        >
-                          {formatDate(p.validade)}
-                        </TableCell>
-                        {canEdit && (
-                          <TableCell className="text-right py-4">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-11 w-11 text-muted-foreground hover:text-foreground"
-                                  aria-label="Mais opções"
-                                >
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onClick={() => setConfirmDelete({ id: p.id, titulo: p.titulo })}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+            <div className="overflow-x-auto">
+              <DataTable
+                columns={propostasColumns}
+                data={{ rows: filteredPropostas, isPending: false, error: null }}
+                rowKey={(p) => p.id}
+                onRowClick={(p) => openDetail(p.id)}
+                rowLabel={(p) => `Ver detalhes da proposta ${p.titulo}`}
+                maxHeight="calc(100svh - 360px)"
+                // A ordem vem do pai: a mesma lista ordenada alimenta a visão em cards.
+                sortingState={
+                  sortField && sortField !== "created_at" ? [{ id: sortField, desc: sortDir === "desc" }] : []
+                }
+                onSortingChange={(next) => {
+                  const col = next[0];
+                  if (!col) return;
+                  setSortField(col.id as typeof sortField);
+                  setSortDir(col.desc ? "desc" : "asc");
+                }}
+              />
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
@@ -871,6 +838,11 @@ export default function Propostas() {
           setConvertPropostaId(detailPropostaId);
           setDetailPropostaId(null);
         }}
+        onEstimar={
+          podeEstimar && detailPropostaId
+            ? () => navigate(`/obras/estimativas/nova?proposta=${detailPropostaId}`)
+            : undefined
+        }
         onMarcarContratoAssinado={() => {
           if (detailPropostaId) {
             updateProposta.mutate({ id: detailPropostaId, contrato_assinado: true } as never);
@@ -899,7 +871,7 @@ export default function Propostas() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? "Editar proposta" : "Nova proposta"}</DialogTitle>
           </DialogHeader>

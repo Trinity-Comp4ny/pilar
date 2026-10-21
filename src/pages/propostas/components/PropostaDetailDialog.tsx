@@ -27,6 +27,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   PenLine,
+  Calculator,
 } from "lucide-react";
 import { PROPOSTA_STATUS_CONFIG } from "@/hooks/usePropostas";
 
@@ -65,6 +66,8 @@ interface PropostaDetailDialogProps {
   onConverter: () => void;
   onMarcarContratoAssinado?: () => void;
   onRecusarContrato?: () => void;
+  /** Abre a estimativa de obra já ligada a esta proposta; ausente quando a empresa não tem a estimativa. */
+  onEstimar?: () => void;
   isUpdating?: boolean;
 }
 
@@ -151,6 +154,7 @@ export function PropostaDetailDialog({
   onConverter,
   onMarcarContratoAssinado,
   onRecusarContrato,
+  onEstimar,
   isUpdating,
 }: PropostaDetailDialogProps) {
   const [confirmRecusar, setConfirmRecusar] = useState(false);
@@ -180,7 +184,7 @@ export function PropostaDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-start justify-between gap-3 pr-6">
             <div className="min-w-0">
@@ -232,6 +236,21 @@ export function PropostaDetailDialog({
             <div className="bg-muted/50 rounded-lg p-3">
               <p className="text-[10px] text-muted-foreground mb-1">Observações</p>
               <p className="text-sm">{proposta.observacao}</p>
+            </div>
+          )}
+
+          {onEstimar && (displayStatus === "rascunho" || displayStatus === "enviada") && (
+            <div className="space-y-2 rounded-lg border border-brand/40 bg-brand/10 p-3">
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                <Calculator className="h-4 w-4" aria-hidden="true" /> Estimar a obra
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Leve ao cliente uma faixa de custo e um prazo, com fonte de preço. A estimativa fica ligada a esta
+                proposta.
+              </p>
+              <Button size="sm" variant="outline" onClick={onEstimar}>
+                Estimar obra
+              </Button>
             </div>
           )}
 

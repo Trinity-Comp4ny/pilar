@@ -61,7 +61,7 @@ export default function Checkout() {
 
   if (loadingPlans) {
     return (
-      <div className="min-h-screen bg-paper flex items-center justify-center">
+      <div className="min-h-dvh bg-paper flex items-center justify-center">
         <ReadingRing size={112} />
       </div>
     );

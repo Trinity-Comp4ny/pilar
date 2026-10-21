@@ -6,8 +6,16 @@
  */
 import {
   Activity,
+  Bug,
   Building2,
+  Calculator,
   Coins,
+  HeartHandshake,
+  LineChart,
+  Megaphone,
+  TrendingUp,
+  UsersRound,
+  Wallet,
   FlaskConical,
   LayoutDashboard,
   MessageSquare,
@@ -21,6 +29,13 @@ import {
 export const ULTRA_ADMIN_BASE = "/ultra-admin";
 
 export type UltraSecaoId =
+  | "time"
+  | "time-receita"
+  | "time-clientes"
+  | "time-marketing"
+  | "time-produto"
+  | "time-qualidade"
+  | "time-financas"
   | "visao-geral"
   | "empresas"
   | "usuarios"
@@ -30,6 +45,7 @@ export type UltraSecaoId =
   | "atividade"
   | "incidentes"
   | "custos-ia"
+  | "estimativa"
   | "lgpd";
 
 export interface UltraSecao {
@@ -37,10 +53,23 @@ export interface UltraSecao {
   title: string;
   url: string;
   icon: LucideIcon;
-  group: "Plataforma" | "Produto" | "Operação";
+  group: UltraGrupo;
 }
 
+/** Ordem dos grupos no painel lateral. "Time" vem antes: é onde o dia começa (SPEC 126). */
+export const ULTRA_GRUPOS = ["Time", "Plataforma", "Produto", "Operação"] as const;
+type UltraGrupo = (typeof ULTRA_GRUPOS)[number];
+
+const ULTRA_TIME_BASE = `${ULTRA_ADMIN_BASE}/time`;
+
 export const ULTRA_SECOES: readonly UltraSecao[] = [
+  { id: "time", title: "Central", url: ULTRA_TIME_BASE, icon: UsersRound, group: "Time" },
+  { id: "time-receita", title: "Receita", url: `${ULTRA_TIME_BASE}/receita`, icon: TrendingUp, group: "Time" },
+  { id: "time-clientes", title: "Clientes", url: `${ULTRA_TIME_BASE}/clientes`, icon: HeartHandshake, group: "Time" },
+  { id: "time-marketing", title: "Marketing", url: `${ULTRA_TIME_BASE}/marketing`, icon: Megaphone, group: "Time" },
+  { id: "time-produto", title: "Produto", url: `${ULTRA_TIME_BASE}/produto`, icon: LineChart, group: "Time" },
+  { id: "time-qualidade", title: "Qualidade", url: `${ULTRA_TIME_BASE}/qualidade`, icon: Bug, group: "Time" },
+  { id: "time-financas", title: "Finanças", url: `${ULTRA_TIME_BASE}/financas`, icon: Wallet, group: "Time" },
   { id: "visao-geral", title: "Visão geral", url: ULTRA_ADMIN_BASE, icon: LayoutDashboard, group: "Plataforma" },
   { id: "empresas", title: "Empresas", url: `${ULTRA_ADMIN_BASE}/empresas`, icon: Building2, group: "Plataforma" },
   { id: "usuarios", title: "Usuários", url: `${ULTRA_ADMIN_BASE}/usuarios`, icon: Users, group: "Plataforma" },
@@ -53,6 +82,13 @@ export const ULTRA_SECOES: readonly UltraSecao[] = [
     group: "Produto",
   },
   { id: "feedback", title: "Feedback", url: `${ULTRA_ADMIN_BASE}/feedback`, icon: MessageSquare, group: "Produto" },
+  {
+    id: "estimativa",
+    title: "Estimativa de obra",
+    url: `${ULTRA_ADMIN_BASE}/estimativa`,
+    icon: Calculator,
+    group: "Produto",
+  },
   { id: "atividade", title: "Atividade", url: `${ULTRA_ADMIN_BASE}/atividade`, icon: Activity, group: "Operação" },
   { id: "incidentes", title: "Incidentes", url: `${ULTRA_ADMIN_BASE}/incidentes`, icon: Siren, group: "Operação" },
   { id: "custos-ia", title: "Custos de IA", url: `${ULTRA_ADMIN_BASE}/custos-ia`, icon: Coins, group: "Operação" },
@@ -64,14 +100,18 @@ export function isUltraAdminPath(pathname: string): boolean {
 }
 
 /**
- * Seção ativa da rota. Visão geral só na raiz; as demais por prefixo, pra
- * /ultra-admin/empresas/:id manter "Empresas" marcado.
+ * Seção ativa da rota. Visão geral só na raiz; as demais pelo prefixo mais longo,
+ * pra /ultra-admin/empresas/:id manter "Empresas" e /ultra-admin/time/receita marcar
+ * "Receita", não a Central.
  */
 export function ultraSecaoAtiva(pathname: string): UltraSecaoId | null {
   const path = pathname.replace(/\/+$/, "") || "/";
   if (path === ULTRA_ADMIN_BASE) return "visao-geral";
-  const secao = ULTRA_SECOES.find((s) => s.id !== "visao-geral" && (path === s.url || path.startsWith(`${s.url}/`)));
-  return secao?.id ?? null;
+  const candidatas = ULTRA_SECOES.filter(
+    (s) => s.id !== "visao-geral" && (path === s.url || path.startsWith(`${s.url}/`))
+  );
+  const maisLonga = candidatas.sort((a, b) => b.url.length - a.url.length)[0];
+  return maisLonga?.id ?? null;
 }
 
 /**

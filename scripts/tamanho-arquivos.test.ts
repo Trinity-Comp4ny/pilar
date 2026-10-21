@@ -14,23 +14,21 @@ import { describe, expect, it } from "vitest";
 const LIMITE = 700;
 
 const TETO: Record<string, number> = {
-  "pages/obras/components/RdoFormDialog.tsx": 1547,
+  "pages/obras/components/RdoFormDialog.tsx": 933,
   "pages/propostas/index.tsx": 1290,
   "pages/obras/components/CotacaoDetailDialog.tsx": 1196,
   "pages/campo/CampoRegistrarDia.tsx": 990,
-  "pages/leads/index.tsx": 928,
+  "pages/leads/index.tsx": 901,
   "pages/financeiro/components/LancamentoFormDialog.tsx": 852,
   "pages/projetos/components/useProjetoForm.ts": 865,
   "pages/projetos/components/CronogramaProjetosTab.tsx": 756,
   "pages/clientes/[id]/index.tsx": 805,
-  "pages/financeiro/components/LancamentosTable.tsx": 790,
-  "pages/projetos/components/DisciplinasTableView.tsx": 788,
-  "components/admin/UsersAccessManager.tsx": 754,
+  "pages/financeiro/components/LancamentosTable.tsx": 762,
+  "pages/projetos/components/DisciplinasTableView.tsx": 776,
   "pages/projetos/components/DisciplinaDetailDialog.tsx": 753,
   "pages/pessoas/components/PessoaFormDialog.tsx": 751,
   "pages/chat/useChat.ts": 740,
   "pages/projetos/components/CronogramaTab.tsx": 731,
-  "pages/projetos/components/ProjectDetailDialog.tsx": 710,
   "pages/obras/components/cronograma/CronogramaLista.tsx": 702,
 };
 

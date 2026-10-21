@@ -2,6 +2,16 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Classes de cabeçalho e célula (SPEC 127). Fonte única do visual de tabela: o `DataTable` as usa
+ * por meio de `TableHead`/`TableCell`, e as tabelas que precisam de `<table>` própria (ex.:
+ * `LancamentosTable`, virtualizada) importam daqui em vez de reescrever o estilo.
+ */
+export const TABLE_HEAD_CLASS = "px-4 text-left align-middle font-medium text-muted-foreground";
+const TABLE_CELL_CLASS = "p-4 align-middle";
+/** Densidade das listas longas e virtualizadas (muitas colunas): menos altura e menos respiro lateral. */
+export const TABLE_CELL_DENSE_CLASS = "px-3 py-3 align-middle";
+
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
     <div className="relative w-full overflow-auto">
@@ -43,21 +53,14 @@ TableRow.displayName = "TableRow";
 
 const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<HTMLTableCellElement>>(
   ({ className, ...props }, ref) => (
-    <th
-      ref={ref}
-      className={cn(
-        "h-12 px-4 text-left align-middle font-medium text-muted-foreground has-[[role=checkbox]]:pr-0",
-        className
-      )}
-      {...props}
-    />
+    <th ref={ref} className={cn(`h-12 ${TABLE_HEAD_CLASS} has-[[role=checkbox]]:pr-0`, className)} {...props} />
   )
 );
 TableHead.displayName = "TableHead";
 
 const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<HTMLTableCellElement>>(
   ({ className, ...props }, ref) => (
-    <td ref={ref} className={cn("p-4 align-middle has-[[role=checkbox]]:pr-0", className)} {...props} />
+    <td ref={ref} className={cn(TABLE_CELL_CLASS, "has-[[role=checkbox]]:pr-0", className)} {...props} />
   )
 );
 TableCell.displayName = "TableCell";

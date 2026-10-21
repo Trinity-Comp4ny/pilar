@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Search, X, ChevronRight, type LucideIcon } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { MobileFab } from "@/components/MobileFab";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { Feature } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
@@ -120,7 +121,7 @@ export function PageHeader({ title, breadcrumbs, children, search, center, prima
             }}
             placeholder={search?.placeholder ?? "Buscar"}
             aria-label={search?.placeholder ?? "Buscar"}
-            className="w-full h-10 rounded-full border border-black/10 bg-black/2 pl-8 pr-8 text-[15px] text-ink placeholder:text-black/35 outline-hidden focus:border-brand focus:bg-white transition-colors"
+            className="w-full h-10 rounded-full border border-black/10 bg-black/2 pl-8 pr-8 text-base text-ink placeholder:text-black/35 outline-hidden focus:border-brand focus:bg-white transition-colors"
           />
           {!!search?.value && (
             <button
@@ -166,7 +167,10 @@ export function PageHeader({ title, breadcrumbs, children, search, center, prima
                     {bc.label}
                   </button>
                 ) : (
-                  <Link to={bc.to ?? "#"} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  <Link
+                    to={bc.to ?? "#"}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
                     {bc.label}
                   </Link>
                 )}
@@ -229,25 +233,27 @@ export function PageHeader({ title, breadcrumbs, children, search, center, prima
       {/* Ações: secundárias (children) + primária gated */}
       <div className={cn("flex items-center gap-2 shrink-0", !search && "ml-auto")}>
         {children}
-        {primaryAction && (
+        {/* Celular (SPEC 134): a ação principal vira o botão flutuante (MobileFab). */}
+        {primaryAction && isMobile && (
+          <MobileFab
+            label={primaryAction.label}
+            icon={primaryAction.icon}
+            onClick={primaryAction.onClick}
+            dataTour={primaryAction.dataTour}
+            disabled={gate?.disabled}
+            title={gate?.title}
+          />
+        )}
+        {primaryAction && !isMobile && (
           <Button
             onClick={primaryAction.onClick}
             variant="brand"
-            className={cn(
-              "rounded-full h-9 text-[13px] font-medium",
-              // Com título + busca + ações secundárias na mesma linha, o label da ação
-              // primária era o que sobrava de fora do viewport em mobile (achado da
-              // auditoria: "Novo projeto" ficava inalcançável em 390px, sem scroll pra
-              // chegar nele). Ícone-only com o ícone sempre presente garante alvo de
-              // toque claro sem depender de o texto caber.
-              isMobile && PrimaryIcon ? "w-9 px-0 justify-center" : "px-4"
-            )}
+            className="h-9 rounded-full px-4 text-[13px] font-medium"
             data-tour={primaryAction.dataTour}
-            aria-label={isMobile && PrimaryIcon ? primaryAction.label : undefined}
             {...gate}
           >
-            {PrimaryIcon && <PrimaryIcon size={14} className={cn(isMobile ? undefined : "mr-1.5")} />}
-            <span className={cn(isMobile && PrimaryIcon && "sr-only")}>{primaryAction.label}</span>
+            {PrimaryIcon && <PrimaryIcon size={14} className="mr-1.5" />}
+            <span>{primaryAction.label}</span>
           </Button>
         )}
       </div>

@@ -14,6 +14,7 @@
 import {
   Briefcase,
   Building2,
+  Calculator,
   CloudSun,
   FileText,
   FolderKanban,
@@ -129,6 +130,7 @@ export const MODULES: Record<ModuleId, ModuleDef> = {
     homeRoute: "/obras",
     items: [
       { title: "Obras", url: "/obras", icon: HardHat, feature: "obras" },
+      { title: "Estimativas", url: "/obras/estimativas", icon: Calculator, feature: "estimativa_obra" },
       // Fornecedor é cadastro global da empresa (empresa_id, sem obra_id), reusado
       // por cotação/conta da obra e pela despesa do escritório. A porta de gerência
       // mora aqui na Obra; o escritório mantém o SupplierManager embutido na despesa.

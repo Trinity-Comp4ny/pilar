@@ -78,3 +78,42 @@ export function escolherCidade(results: NonNullable<OpenMeteoGeo["results"]>, st
     display_name: [escolhido.name, escolhido.admin1].filter(Boolean).join(", "),
   };
 }
+
+export interface CepGeo {
+  coordenadas: GeoResult | null;
+  city?: string;
+  state?: string;
+}
+
+/**
+ * Resposta do BrasilAPI CEP v2, lida com cuidado: `location.coordinates` vem vazio
+ * em boa parte dos CEPs e latitude/longitude chegam como texto. Sem coordenada,
+ * ainda serve city/state para cair no centro da cidade.
+ */
+export function lerCepGeo(raw: unknown): CepGeo | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as {
+    city?: unknown;
+    state?: unknown;
+    location?: { coordinates?: { latitude?: unknown; longitude?: unknown } };
+  };
+  const city = typeof r.city === "string" && r.city.trim() ? r.city.trim() : undefined;
+  const state = typeof r.state === "string" && r.state.trim() ? r.state.trim() : undefined;
+  if (!city && !state) return null;
+
+  const lat = Number(r.location?.coordinates?.latitude);
+  const lon = Number(r.location?.coordinates?.longitude);
+  const temCoordenada =
+    r.location?.coordinates?.latitude != null &&
+    r.location?.coordinates?.longitude != null &&
+    Number.isFinite(lat) &&
+    Number.isFinite(lon);
+
+  return {
+    coordenadas: temCoordenada
+      ? { lat: String(lat), lon: String(lon), display_name: [city, state].filter(Boolean).join(", ") }
+      : null,
+    city,
+    state,
+  };
+}

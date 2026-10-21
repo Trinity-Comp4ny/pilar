@@ -7,13 +7,13 @@
     "dominio": "ia",
     "descricao": "Lê PDF ou imagem de orçamento de fornecedor e extrai os itens (Gemini, spec 023)."
   },
+  "ai-estimativa-itens": {
+    "dominio": "ia",
+    "descricao": "Lê a descrição da obra e devolve só itens do catálogo da estimativa, com quantidade, o que ficou de fora e o que faltou saber; nunca preço nem prazo (Gemini, SPEC 138)."
+  },
   "ai-import-financeiro": {
     "dominio": "ia",
     "descricao": "Extrai lançamentos do texto de um extrato ou fatura (spec 017)."
-  },
-  "ai-rdo-voz": {
-    "dominio": "ia",
-    "descricao": "Transcreve áudio curto do RDO e preenche os campos de texto (spec 080)."
   },
   "asaas-config": {
     "dominio": "cobranca-cliente",
@@ -40,6 +40,14 @@
   "aviso-ultra-admin-email": {
     "dominio": "jobs",
     "descricao": "Disparada pelo trigger de notificacoes (pg_net): manda por e-mail, na hora, cada aviso de plataforma do ultra admin (feedback, novo cadastro, ativar plano bloqueado). SPEC 113."
+  },
+  "campo-registro-arquivos": {
+    "dominio": "campo",
+    "descricao": "URLs assinadas das fotos e do áudio dos PRÓPRIOS registros de obra, para a conta de campo (token). SPEC 135."
+  },
+  "campo-registro-criar": {
+    "dominio": "campo",
+    "descricao": "Registro de obra do Pilar Campo (áudio, foto, texto), autorizado pelo token de campo: guarda e responde na hora, a IA organiza em segundo plano. SPEC 135."
   },
   "campo-upload-foto": {
     "dominio": "campo",
@@ -101,6 +109,14 @@
     "dominio": "jobs",
     "descricao": "Cron: manda por e-mail o que está na central de notificações e ninguém leu."
   },
+  "ops-agente-run": {
+    "dominio": "plataforma",
+    "descricao": "Executa um agente de operação da Pilar (Receita, Clientes, Chefe de gabinete): fatos do banco, texto do modelo aterrado em código, ações pendentes no Ultra e resumo do dia por e-mail (SPEC 126)."
+  },
+  "ops-export-funil": {
+    "dominio": "plataforma",
+    "descricao": "Devolve à plataforma de marketing (post-automation) cadastros, ativados e pagantes por dia e UTM, sem dado pessoal, autenticada por token próprio (SPEC 128)."
+  },
   "pilar-checkout-create": {
     "dominio": "billing",
     "descricao": "Checkout público do Pilar: cria cliente e cobrança na Asaas da plataforma."
@@ -134,13 +150,29 @@
     "dominio": "portal",
     "descricao": "Dados do projeto para o portal (auth pelo token do portal)."
   },
+  "portal-resumo-semana": {
+    "dominio": "portal",
+    "descricao": "Resumo da semana da obra para o portal do cliente, escrito pela IA só com os registros liberados e guardado até o conjunto mudar (SPEC 135)."
+  },
   "portal-obra-fotos": {
     "dominio": "portal",
-    "descricao": "URLs assinadas das fotos curadas do diário de obra para o portal (spec 087)."
+    "descricao": "URLs assinadas das fotos curadas do diário e dos registros liberados ao cliente, para o portal (spec 087, SPEC 135)."
   },
   "reconciliar-assinaturas": {
     "dominio": "jobs",
     "descricao": "Cron diário: compara cada assinatura do Pilar com o Asaas e avisa o ultra admin das divergências (SPEC 114)."
+  },
+  "registro-audio-limpar": {
+    "dominio": "jobs",
+    "descricao": "Cron: apaga o áudio do registro de obra após 12 meses, de conta de campo excluída e arquivos órfãos (ADR 0062)."
+  },
+  "registro-criar": {
+    "dominio": "campo",
+    "descricao": "Registro de obra gravado pelo escritório (áudio, foto, texto), autorizado pelo JWT do usuário: guarda e responde na hora, a IA organiza em segundo plano. SPEC 135."
+  },
+  "registro-reprocessar": {
+    "dominio": "campo",
+    "descricao": "Tentar de novo a organização de um registro de obra que falhou; vale para o escritório (JWT) e para o campo (token). SPEC 135."
   },
   "resend-webhook": {
     "dominio": "comunicacao",
@@ -150,6 +182,10 @@
   "reset-cliente-portal-password": {
     "dominio": "portal",
     "descricao": "Redefine a senha do cliente do portal (e-mail antes de mexer na conta)."
+  },
+  "resumo-semanal": {
+    "dominio": "ia",
+    "descricao": "Resumo semanal do Início: lê os fatos da semana pelo RLS de quem pediu (empresa para quem vê dinheiro, pessoa para os demais), o modelo redige e o código confere os números (SPEC 121)."
   },
   "retencao-pos-trial": {
     "dominio": "jobs",
