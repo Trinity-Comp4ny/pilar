@@ -7,16 +7,16 @@
     "anon_trigger_inerte": "0, mas prioridade baixa: Postgres recusa chamar função que retorna trigger fora de contexto de trigger, então não é caminho de exploração. Limpar só pra parar de mascarar achado real no advisor.",
     "policy_auth_por_linha": "0. Trocar auth.uid() por (select auth.uid()) na policy. É performance, não segurança, e só dói quando a tabela cresce.",
     "fk_sem_indice": "descer. Cada FK sem índice deixa delete e join lentos.",
-    "authenticated_chamavel": "Staging 156, prod 148 (2026-10-19). Os 8 a mais no staging são features ainda fora da produção: ops_decidir_acao, ops_definir_agente_ativo, ops_marcar_empresa_interna, ops_produto, ops_receita, ops_saude_empresas (time de agentes no Ultra, SPEC 126/128-131) e rpc_meta_historico, rpc_metas_progresso (metas, SPEC 123). A baseline de prod sobe quando o release as levar."
+    "authenticated_chamavel": "159 em staging e prod (2026-10-21). Prod mede 148 hoje e chega a 159 no release que leva o que já está no staging: ops_decidir_acao, ops_definir_agente_ativo, ops_marcar_empresa_interna, ops_produto, ops_receita, ops_saude_empresas (time de agentes no Ultra, SPEC 126/128-131), rpc_meta_historico, rpc_metas_progresso (metas, SPEC 123) e campo_aceitar_audio, campo_listar_registros, campo_responder_efetivo (diário no Pilar Campo, SPEC 135: validam o token de campo no corpo e estão nas allowlists de anon). Já passam pelo teste de função exposta sem checagem."
   },
   "prod": {
-    "verificado_em": "2026-10-19",
+    "verificado_em": "2026-10-21",
     "tabelas_sem_rls": 0,
     "anon_chamavel": 0,
     "anon_trigger_inerte": 0,
     "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
-    "authenticated_chamavel": 148,
+    "authenticated_chamavel": 159,
     "search_path_mutavel": 0,
     "policy_auth_por_linha": 0,
     "fk_sem_indice": 51,
@@ -33,13 +33,13 @@
     ]
   },
   "staging": {
-    "verificado_em": "2026-10-19",
+    "verificado_em": "2026-10-21",
     "tabelas_sem_rls": 0,
     "anon_chamavel": 0,
     "anon_trigger_inerte": 0,
     "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
-    "authenticated_chamavel": 156,
+    "authenticated_chamavel": 159,
     "search_path_mutavel": 0,
     "policy_auth_por_linha": 0,
     "fk_sem_indice": 51,
@@ -58,9 +58,7 @@
   "_drift_2026_08_24": {
     "so_em_prod": [],
     "so_em_staging": [],
-    "diferenca_de_versao": [
-      "pg_net: 0.19.5 em prod, 0.20.3 em staging"
-    ],
+    "diferenca_de_versao": ["pg_net: 0.19.5 em prod, 0.20.3 em staging"],
     "impacto": "Drift de PRESENÇA acabou. O bloco anterior (19/08) registrava pg_graphql só em staging (~93 tabelas expostas por uma API que prod não tinha) e pgsodium só em staging, o que deixava a api_key do Asaas EM TEXTO PURO em produção. Os dois fecharam: pg_graphql não está em nenhum dos dois, pgsodium está nos dois, e a migration 20260850000000 chegou em prod no release de 24/08. Verificado em produção nesta data: asaas_config tem o segredo no Vault (api_key_secret_id preenchido) e a coluna api_key vazia. Sobra diferença de VERSÃO do pg_net, que o repo já trata como não bloqueante (commit e5c4060)."
   },
   "_mudou_em_2026_08_24": {
