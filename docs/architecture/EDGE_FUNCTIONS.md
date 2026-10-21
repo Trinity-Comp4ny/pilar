@@ -3,7 +3,7 @@
 <!-- Gerado por scripts/edge-functions-catalog.mjs a partir de supabase/functions/CATALOGO.json.
      Não editar à mão: edite o CATALOGO.json e rode `node scripts/edge-functions-catalog.mjs`. -->
 
-56 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
+57 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
 migrations) ou origem externa declarada no manifesto. **Login**: `verify_jwt` do `config.toml`
 (JWT aceita a chave anon; "própria" = a função faz a autorização). **Secrets**: lidos direto
 na pasta da função (o que vem de `_shared`, como a chave do Gemini, não aparece).
@@ -16,6 +16,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | --- | --- | --- | --- | --- | --- |
 | `ai-chat` | Copiloto do chat: classifica a intenção e responde com dados do usuário (só leitura, RLS do próprio usuário). | app | JWT | `AI_GATEWAY_API_KEY` `GEMINI_API_KEY` | sim |
 | `ai-cotacao-import` | Lê PDF ou imagem de orçamento de fornecedor e extrai os itens (Gemini, spec 023). | app | JWT |  | sim |
+| `ai-estimativa-itens` | Lê a descrição da obra e devolve só itens do catálogo da estimativa, com quantidade, o que ficou de fora e o que faltou saber; nunca preço nem prazo (Gemini, SPEC 138). Sem chamador até a tela da F2b. | **sem chamador conhecido** | JWT | `AI_GATEWAY_API_KEY` `GEMINI_API_KEY` | sim |
 | `ai-import-financeiro` | Extrai lançamentos do texto de um extrato ou fatura (spec 017). | app | JWT |  | sim |
 | `resumo-semanal` | Resumo semanal do Início: lê os fatos da semana pelo RLS de quem pediu (empresa para quem vê dinheiro, pessoa para os demais), o modelo redige e o código confere os números (SPEC 121). | app | JWT |  | sim |
 
@@ -123,6 +124,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 
 ## Sem chamador conhecido
 
+- `ai-estimativa-itens`
 - `asaas-config`
 - `asaas-criar-cobranca`
 - `portal-entrega-download`
