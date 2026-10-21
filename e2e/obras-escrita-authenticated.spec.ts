@@ -1,4 +1,5 @@
 import { test, expect } from "./fixtures";
+import { abrirNovaObra } from "./helpers/novaObra";
 
 /**
  * Obras: o caminho de escrita que o engenheiro usa no dia a dia (frente prioritária,
@@ -15,13 +16,7 @@ const nome = `E2E Obra ${Date.now().toString(36)}`;
 
 test("cria obra e ela aparece na lista", async ({ page }) => {
   await page.goto("/obras");
-  await page
-    .getByRole("button", { name: /Nova obra/i })
-    .first()
-    .click();
-
-  const dialog = page.getByRole("dialog", { name: /Nova obra/i });
-  await expect(dialog).toBeVisible();
+  const dialog = await abrirNovaObra(page);
   await dialog.getByLabel("Nome da obra *").fill(nome);
   await dialog.getByRole("button", { name: "Criar obra" }).click();
 
