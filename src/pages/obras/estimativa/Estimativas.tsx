@@ -35,6 +35,12 @@ const COLUNAS: ColumnDef<EstimativaResumo>[] = [
     cell: (e) => e.clienteNome ?? <span className="text-ink-soft">Sem cliente</span>,
     mobile: "subtitle",
   },
+  {
+    key: "lead",
+    header: "Lead",
+    getSortValue: (e) => (e.leadNome ?? "").toLowerCase(),
+    cell: (e) => e.leadNome ?? <span className="text-ink-soft">-</span>,
+  },
   { key: "obra", header: "Obra", cell: descricaoDaObra },
   {
     key: "area",

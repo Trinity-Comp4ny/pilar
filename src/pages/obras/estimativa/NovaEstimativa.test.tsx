@@ -13,6 +13,7 @@ import NovaEstimativa from "./NovaEstimativa";
  */
 
 let insumos: Insumos = insumosProntos();
+let lead: { id: string; nomeCompleto: string; clienteId: string | null } | null = null;
 
 const { navegar, criar } = vi.hoisted(() => ({
   navegar: vi.fn(),
@@ -27,6 +28,7 @@ vi.mock("react-router-dom", async (original) => ({
 vi.mock("./hooks", () => ({
   useInsumosDaEstimativa: () => insumos,
   useEstimativa: () => ({ data: undefined, isLoading: false }),
+  useLeadParaEstimar: () => ({ data: lead, isLoading: false }),
   useCriarEstimativa: () => ({ mutateAsync: criar, isPending: false }),
   useAtualizarEstimativa: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
@@ -42,15 +44,16 @@ vi.mock("@/components/PilarPage", () => ({
 vi.mock("@/hooks/usePermissions", () => ({ usePermissions: () => ({ can: () => true }) }));
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => false }));
 
-const abrir = () =>
+const abrir = (url = "/obras/estimativas/nova") =>
   render(
-    <MemoryRouter initialEntries={["/obras/estimativas/nova"]}>
+    <MemoryRouter initialEntries={[url]}>
       <NovaEstimativa />
     </MemoryRouter>
   );
 
 beforeEach(() => {
   insumos = insumosProntos();
+  lead = null;
   navegar.mockClear();
   criar.mockClear();
 });
@@ -270,5 +273,37 @@ describe("NovaEstimativa", () => {
 
   it("o CUB da fixture cobre os subtipos usados nos testes", () => {
     expect(CUB_FIXTURE.some((l) => l.subtipo === "GI")).toBe(true);
+  });
+
+  it("vindo do lead, traz o nome e o cliente dele e grava a estimativa ligada ao lead", async () => {
+    lead = { id: "lead-1", nomeCompleto: "Família Almeida", clienteId: "cli-1" };
+    const user = userEvent.setup();
+    abrir("/obras/estimativas/nova?lead=lead-1");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByLabelText("Nome da estimativa")).toHaveValue("Obra Família Almeida");
+    expect(screen.getByLabelText("Cliente")).toHaveValue("Família Almeida");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Gerar estimativa" }));
+    await waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
+    const [nova] = criar.mock.calls[0] as [{ leadId: string | null; clienteId: string | null; nome: string }];
+    expect(nova.leadId).toBe("lead-1");
+    expect(nova.clienteId).toBe("cli-1");
+    expect(nova.nome).toBe("Obra Família Almeida");
+  });
+
+  it("lead que não existe (ou é de outra empresa) cai no assistente em branco, sem vínculo", async () => {
+    lead = null;
+    const user = userEvent.setup();
+    abrir("/obras/estimativas/nova?lead=inexistente");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByLabelText("Nome da estimativa")).toHaveValue("");
+    await user.type(screen.getByLabelText("Nome da estimativa"), "Casa");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Gerar estimativa" }));
+    await waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
+    const [nova] = criar.mock.calls[0] as [{ leadId: string | null }];
+    expect(nova.leadId).toBeNull();
   });
 });

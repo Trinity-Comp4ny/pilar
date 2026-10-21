@@ -58,6 +58,7 @@ const estimativa = (id: string, nome: string, cliente: string | null): Estimativ
   id,
   nome,
   clienteNome: cliente,
+  leadNome: null,
   status: "rascunho",
   versaoAtual: 0,
   ficha: FICHA_SOBRADO,
@@ -128,5 +129,14 @@ describe("Estimativas", () => {
     abrir();
     await user.click(screen.getByRole("button", { name: "Tabela de preços" }));
     expect(navegar).toHaveBeenCalledWith("/obras/estimativas/precos");
+  });
+
+  it("mostra o lead de onde a estimativa nasceu", () => {
+    lista = [
+      { ...estimativa("a", "Sobrado Alphaville", "Maria"), leadNome: "Família Almeida" },
+      estimativa("b", "Galpão", null),
+    ];
+    abrir();
+    expect(screen.getByText("Família Almeida")).toBeInTheDocument();
   });
 });
