@@ -125,9 +125,6 @@ CREATE TABLE public.sinapi_precos_insumo (
   PRIMARY KEY (codigo, uf, regime, mes_base)
 );
 
-CREATE INDEX idx_sinapi_precos_insumo_busca
-  ON public.sinapi_precos_insumo (codigo, uf, regime, mes_base DESC);
-
 COMMENT ON TABLE public.sinapi_precos_insumo IS
   'SPEC 137: preço de insumo do SINAPI por código, UF, regime e mês-base, só dos itens do catálogo. Global: só o ultra admin escreve, toda empresa lê.';
 
