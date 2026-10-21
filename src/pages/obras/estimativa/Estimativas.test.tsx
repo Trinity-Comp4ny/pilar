@@ -27,14 +27,17 @@ vi.mock("@/components/PilarPage", () => ({
   PilarPage: ({
     title,
     search,
+    actions,
     children,
   }: {
     title: string;
     search?: { value: string; onChange: (v: string) => void; placeholder?: string };
+    actions?: ReactNode;
     children: ReactNode;
   }) => (
     <main>
       <h1>{title}</h1>
+      {actions}
       {search && (
         <input
           aria-label="Buscar"
@@ -118,5 +121,12 @@ describe("Estimativas", () => {
     abrir();
     await user.click(screen.getByText("Sobrado Alphaville"));
     expect(navegar).toHaveBeenCalledWith("/obras/estimativas/a");
+  });
+
+  it("o botão Tabela de preços leva à tabela da empresa", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: "Tabela de preços" }));
+    expect(navegar).toHaveBeenCalledWith("/obras/estimativas/precos");
   });
 });

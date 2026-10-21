@@ -1,5 +1,5 @@
 -- pgTAP: SPEC 136 / ADR 0063 e SPEC 137 / ADR 0064, estimativa de obra (migrations 20261114000000, 20261114000100,
--- 20261115000100, 20261116000100, 20261116000200 e 20261117000100).
+-- 20261115000100, 20261116000100, 20261116000200, 20261117000100 e 20261118000000).
 -- Roda como usuário autenticado, para a RLS e os triggers valerem como no app.
 
 BEGIN;
@@ -7,7 +7,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(41);
+SELECT plan(49);
 
 -- ── Fixture ──────────────────────────────────────────────────────────────────
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features) VALUES
@@ -19,12 +19,14 @@ SET LOCAL session_replication_role = 'replica';
 INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role) VALUES
   ('e1360000-0000-0000-0000-00000000000a', 'user-a-136@test.com', '{}'::jsonb, 'authenticated', 'authenticated'),
   ('e1360000-0000-0000-0000-00000000000b', 'user-b-136@test.com', '{}'::jsonb, 'authenticated', 'authenticated'),
-  ('e1360000-0000-0000-0000-00000000000c', 'ultra-136@test.com', '{}'::jsonb, 'authenticated', 'authenticated')
+  ('e1360000-0000-0000-0000-00000000000c', 'ultra-136@test.com', '{}'::jsonb, 'authenticated', 'authenticated'),
+  ('e1360000-0000-0000-0000-00000000000d', 'admin-136@test.com', '{}'::jsonb, 'authenticated', 'authenticated')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed) VALUES
   ('e1360000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-0000000e1361', 'A', '136', 'user-a-136@test.com', 'user', TRUE),
   ('e1360000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-0000000e1362', 'B', '136', 'user-b-136@test.com', 'user', TRUE),
-  ('e1360000-0000-0000-0000-00000000000c', '00000000-0000-0000-0000-0000000e1361', 'Ultra', '136', 'ultra-136@test.com', 'ultra_admin', TRUE)
+  ('e1360000-0000-0000-0000-00000000000c', '00000000-0000-0000-0000-0000000e1361', 'Ultra', '136', 'ultra-136@test.com', 'ultra_admin', TRUE),
+  ('e1360000-0000-0000-0000-00000000000d', '00000000-0000-0000-0000-0000000e1361', 'Admin', '136', 'admin-136@test.com', 'admin', TRUE)
 ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role, empresa_id = EXCLUDED.empresa_id;
 SET LOCAL session_replication_role = 'origin';
 
@@ -348,6 +350,75 @@ SELECT is(
   (SELECT count(*)::int FROM public.estimativa_obra_versoes),
   0,
   'excluir a estimativa leva as versões junto'
+);
+
+-- ── Tabela de preços da empresa: lê a empresa toda, escreve só o admin ───────
+SELECT pg_temp.como('e1360000-0000-0000-0000-00000000000a');
+
+SELECT throws_ok(
+  $$INSERT INTO public.estimativa_ajustes_empresa (empresa_id, adicionais)
+    VALUES ('00000000-0000-0000-0000-0000000e1361', '{"ac12": {"valor_unitario": 2600}}'::jsonb)$$,
+  '42501',
+  NULL,
+  'usuário comum não grava na tabela de preços da empresa'
+);
+
+SELECT pg_temp.como('e1360000-0000-0000-0000-00000000000d');
+
+SELECT lives_ok(
+  $$INSERT INTO public.estimativa_ajustes_empresa (empresa_id, adicionais)
+    VALUES ('00000000-0000-0000-0000-0000000e1361', '{"ac12": {"valor_unitario": 2600}}'::jsonb)$$,
+  'admin da empresa grava na tabela de preços da empresa'
+);
+
+SELECT throws_ok(
+  $$INSERT INTO public.estimativa_ajustes_empresa (empresa_id, adicionais)
+    VALUES ('00000000-0000-0000-0000-0000000e1362', '{}'::jsonb)$$,
+  '42501',
+  NULL,
+  'admin não grava na tabela de preços de outra empresa'
+);
+
+SELECT lives_ok(
+  $$UPDATE public.estimativa_ajustes_empresa SET adicionais = '{"ac12": {"valor_unitario": 2700}}'::jsonb
+    WHERE empresa_id = '00000000-0000-0000-0000-0000000e1361'$$,
+  'admin atualiza a tabela de preços da empresa'
+);
+
+SELECT pg_temp.como('e1360000-0000-0000-0000-00000000000a');
+
+SELECT is(
+  (SELECT adicionais -> 'ac12' ->> 'valor_unitario' FROM public.estimativa_ajustes_empresa),
+  '2700',
+  'usuário comum lê a tabela de preços da própria empresa'
+);
+
+UPDATE public.estimativa_ajustes_empresa SET adicionais = '{"ac12": {"valor_unitario": 1}}'::jsonb;
+
+SELECT pg_temp.como('e1360000-0000-0000-0000-00000000000d');
+
+SELECT is(
+  (SELECT adicionais -> 'ac12' ->> 'valor_unitario' FROM public.estimativa_ajustes_empresa),
+  '2700',
+  'update de usuário comum não muda nada (zero linhas)'
+);
+
+SELECT pg_temp.como('e1360000-0000-0000-0000-00000000000b');
+
+SELECT is(
+  (SELECT count(*)::int FROM public.estimativa_ajustes_empresa),
+  0,
+  'outra empresa não lê a tabela de preços'
+);
+
+SELECT pg_temp.como('e1360000-0000-0000-0000-00000000000d');
+
+DELETE FROM public.estimativa_ajustes_empresa;
+
+SELECT is(
+  (SELECT count(*)::int FROM public.estimativa_ajustes_empresa),
+  0,
+  'admin apaga a tabela de preços da empresa'
 );
 
 -- ── Anônimo não toca em nada ─────────────────────────────────────────────────

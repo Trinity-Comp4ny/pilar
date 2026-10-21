@@ -929,6 +929,29 @@ describe("calcularEstimativa: itens do catálogo e origem do preço (SPEC 137)",
     expect(lido.adicionais.every((l) => l.origem.tipo === "referencia_pilar" && l.quantidade === 1)).toBe(true);
   });
 
+  it("campos de registro do ajuste (quem mudou, quando, por quê) não contam como valor da empresa", () => {
+    const r = calcular({
+      ficha: { ...sobrado, piscina: 20 },
+      ajustes: {
+        adicionais: {
+          piscina: { observacao: "só uma nota", atualizado_em: "2026-10-21T10:00:00Z", atualizado_por: "u" },
+        },
+      },
+    });
+    expect(linha(r, "piscina")?.origem.tipo).toBe("referencia_pilar");
+  });
+
+  it("ajuste com valor e registro vale como valor da empresa", () => {
+    const r = calcular({
+      ficha: { ...sobrado, piscina: 20 },
+      ajustes: {
+        adicionais: { piscina: { valor: 3000, observacao: "tabela 2026", atualizado_em: "2026-10-21T10:00:00Z" } },
+      },
+    });
+    expect(linha(r, "piscina")?.origem.tipo).toBe("empresa");
+    expect(linha(r, "piscina")?.valor).toBe(60_000);
+  });
+
   it("é determinístico com os mesmos insumos", () => {
     const entrada = { ficha: comItens({ ac9: 2, fv: 5 }), precosSinapi: [sinapi(42424, 1942.58)] };
     expect(calcular(entrada)).toEqual(calcular(entrada));

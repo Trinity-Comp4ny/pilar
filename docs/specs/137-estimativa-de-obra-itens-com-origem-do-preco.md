@@ -59,8 +59,10 @@ provisória" e de "a definir", e diferença entre o provável e o custo real nas
    (parâmetro em `estimativa_parametros`, provisório e sujeito à validação).
 9. **Cronograma do catálogo.** Cada item aponta fase, etapa e serviços; o cronograma e o desembolso saem desses
    metadados, como hoje para os adicionais. Item novo só entra numa fase que já existe.
-10. **Tabela de preços da empresa.** A empresa mantém o valor próprio por item do catálogo, ao lado do valor de
-    referência, com unidade e observação. Só a própria empresa lê e escreve (RLS).
+10. **Tabela de preços da empresa.** A empresa mantém o valor próprio por item do catálogo e dos adicionais, ao lado
+    do valor de referência, com observação e com quando e por quem mudou. Toda a empresa lê; só o admin da empresa (ou o
+    ultra admin) escreve (RLS). Fica em `/obras/estimativas/precos`, com o botão "Tabela de preços" na lista de
+    estimativas, e vale antes do SINAPI e da referência do Pilar.
 11. **Valor informado pelo usuário.** Por estimativa, com nota e anexo opcionais. Fica na versão e não vira preço da
     empresa sem ação explícita.
 12. **SINAPI no servidor (BEZ-69).** Importação mensal do zip oficial (`SINAPI-AAAA-MM-formato-xlsx.zip`), validada na

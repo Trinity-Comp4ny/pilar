@@ -306,6 +306,7 @@ export default function EstimativaDetalhe() {
             resultado={calculo.resultado}
             onFechar={() => setOrigemAberta(null)}
             onInformar={podeEditar ? abrirInformar : undefined}
+            onAbrirTabela={() => navigate("/obras/estimativas/precos")}
           />
           <DialogoInformarValor
             item={informando}

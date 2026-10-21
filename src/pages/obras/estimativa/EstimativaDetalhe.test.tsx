@@ -360,4 +360,24 @@ describe("EstimativaDetalhe: origem do preço (SPEC 137)", () => {
       0
     );
   });
+
+  it("origem empresa ou provisória oferece abrir a tabela de preços da empresa", async () => {
+    comItens();
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getAllByRole("button", { name: /Origem do preço de piscina.*Provisória/i })[0]);
+    const dialogo = await screen.findByRole("dialog");
+    await user.click(within(dialogo).getByRole("button", { name: "Abrir a tabela de preços" }));
+    expect(navegar).toHaveBeenCalledWith("/obras/estimativas/precos");
+  });
+
+  it("origem SINAPI não oferece a tabela de preços, só trocar o valor", async () => {
+    comItens();
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: /Origem do preço de ar-condicionado split 12\.000 btu/i }));
+    const dialogo = await screen.findByRole("dialog");
+    expect(within(dialogo).queryByRole("button", { name: "Abrir a tabela de preços" })).not.toBeInTheDocument();
+    expect(within(dialogo).getByRole("button", { name: "Usar outro valor" })).toBeInTheDocument();
+  });
 });
