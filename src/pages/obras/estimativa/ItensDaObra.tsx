@@ -2,15 +2,13 @@
 // calcular, de onde virá o preço: a prévia usa a mesma resolução do cálculo (`previaDoItem`).
 import { Check, Minus, Plus } from "lucide-react";
 import { useId } from "react";
-import { previaDoItem } from "@/lib/estimativaItens";
-import { descreverAdicional } from "@/lib/estimativaObra";
-import { formatCurrency } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { AdicionalId, Ficha, Parametros, Premissas, ResultadoEstimativa } from "@/schemas/estimativaObra";
+import type { Ficha, Premissas, ResultadoEstimativa } from "@/schemas/estimativaObra";
 import type { Insumos } from "./hooks";
 import { Campo, CampoNumero, Pilula } from "./componentes";
 import { GRUPOS, itensSemZero, quantidadeNaFicha, type ItemDoCatalogo } from "./itensCatalogo";
 import { ChipOrigem } from "./origem";
+import { textoDaOrigem, type Contexto } from "./textoDaOrigem";
 import type { ErrosDaFicha } from "./lib";
 
 type InsumosProntos = Extract<Insumos, { estado: "ok" }>;
@@ -27,48 +25,7 @@ const RELEVO: { valor: Ficha["topografia"]; rotulo: string }[] = [
   { valor: "inclinado", rotulo: "Inclinado" },
 ];
 
-const reais0 = (v: number) => formatCurrency(v, { decimals: 0 });
-
-interface Contexto {
-  ficha: Ficha;
-  parametros: Parametros;
-  insumos: InsumosProntos;
-  premissas: Premissas;
-}
-
-/** Frase que diz de onde vem o preço do item, na linguagem da tela. */
-function textoDaOrigem(id: AdicionalId, item: ItemDoCatalogo, { ficha, parametros, insumos, premissas }: Contexto) {
-  const previa = previaDoItem(id, {
-    ficha,
-    parametros,
-    ajustes: insumos.ajustes,
-    premissas,
-    precosSinapi: insumos.precosSinapi,
-  });
-  if (!previa) return null;
-  const por = item.porUnidade ? ` por ${item.porUnidade}` : "";
-  const preco = previa.valorUnitario !== null ? `${reais0(previa.valorUnitario)}${por}` : null;
-  const adicional = parametros.adicionais[id];
-  switch (previa.origem.tipo) {
-    case "sinapi":
-      return { tipo: previa.origem.tipo, texto: preco ?? "preço do SINAPI" };
-    case "empresa":
-      return { tipo: previa.origem.tipo, texto: preco ?? "valor da tabela de preços da empresa" };
-    case "usuario":
-      return { tipo: previa.origem.tipo, texto: "valor informado por você" };
-    case "referencia_pilar":
-      return { tipo: previa.origem.tipo, texto: adicional ? descreverAdicional(adicional) : "sem fonte pública" };
-    case "a_definir":
-      return {
-        tipo: previa.origem.tipo,
-        texto: adicional?.sinapi
-          ? `Sem preço do SINAPI em ${ficha.uf}: você informa`
-          : "Sem preço de referência: você informa",
-      };
-  }
-}
-
-function Passinhos({
+export function Passinhos({
   rotulo,
   unidade,
   valor,

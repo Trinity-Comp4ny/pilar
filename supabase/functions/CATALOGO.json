@@ -9,7 +9,7 @@
   },
   "ai-estimativa-itens": {
     "dominio": "ia",
-    "descricao": "Lê a descrição da obra e devolve só itens do catálogo da estimativa, com quantidade, o que ficou de fora e o que faltou saber; nunca preço nem prazo (Gemini, SPEC 138). Sem chamador até a tela da F2b."
+    "descricao": "Lê a descrição da obra e devolve só itens do catálogo da estimativa, com quantidade, o que ficou de fora e o que faltou saber; nunca preço nem prazo (Gemini, SPEC 138)."
   },
   "ai-import-financeiro": {
     "dominio": "ia",

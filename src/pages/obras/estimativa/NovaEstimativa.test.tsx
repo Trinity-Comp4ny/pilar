@@ -42,6 +42,12 @@ vi.mock("./hooks", () => ({
   useAtualizarEstimativa: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
+vi.mock("./useDescreverObra", () => ({
+  useSaldoDeTokens: () => ({ data: null, refetch: vi.fn() }),
+  useInterpretarObra: () => ({ mutate: vi.fn() }),
+  FalhaDaIa: class extends Error {},
+}));
+
 vi.mock("@/components/PilarPage", () => ({
   PilarPage: ({ title, children }: { title: string; children: ReactNode }) => (
     <main>
@@ -143,7 +149,7 @@ describe("NovaEstimativa", () => {
     expect(screen.getAllByText("Sem preço do SINAPI em SP: você informa", { exact: false }).length).toBe(4);
     expect(screen.getAllByText("Sem preço de referência: você informa").length).toBeGreaterThan(0);
     expect(screen.getByText(/6% da base/)).toBeInTheDocument();
-    expect(screen.getByLabelText("Descreva a obra")).toBeDisabled();
+    expect(screen.getByLabelText("Descreva a obra")).toBeEnabled();
   });
 
   it("incluir aparelhos e energia solar entra na ficha e no resumo do passo", async () => {

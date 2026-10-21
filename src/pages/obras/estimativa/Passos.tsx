@@ -1,8 +1,6 @@
 import { Building2, Factory, Home, type LucideIcon } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { avisosCoerencia, rotuloPadrao, type SaidaCalculo } from "@/lib/estimativaObra";
@@ -17,6 +15,7 @@ import {
 } from "@/schemas/estimativaObra";
 import { Campo, CampoNumero, Contador, Pilula } from "./componentes";
 import type { Insumos } from "./hooks";
+import { DescrevaAObra } from "./DescrevaAObra";
 import { ItensDaObra } from "./ItensDaObra";
 import { resumoDosItens } from "./itensCatalogo";
 import {
@@ -267,7 +266,13 @@ export function PassoPrograma({
   insumos,
   premissas,
   resultado,
-}: PassoProps & { insumos: InsumosProntos; premissas: Premissas; resultado: ResultadoEstimativa | null }) {
+  aplicar,
+}: PassoProps & {
+  insumos: InsumosProntos;
+  premissas: Premissas;
+  resultado: ResultadoEstimativa | null;
+  aplicar: (fn: (f: Ficha) => Ficha) => void;
+}) {
   const residencial = ficha.tipo === "residencial";
   return (
     <div className="space-y-6">
@@ -319,24 +324,7 @@ export function PassoPrograma({
         </div>
       </section>
 
-      <section className="rounded-2xl border bg-card p-4 md:p-5">
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <label htmlFor="est-descricao" className="text-base font-semibold text-ink">
-            Descreva a obra
-          </label>
-          <Badge variant="highlight">Em breve</Badge>
-        </div>
-        <Textarea
-          id="est-descricao"
-          disabled
-          rows={3}
-          placeholder="Ex.: 6 splits de 12.000 BTU, aquecedor solar, painel fotovoltaico de 10 kWp, piscina de 20 m²"
-        />
-        <p className="mt-2 text-xs text-ink-soft">
-          Em breve a IA transforma o texto em itens da lista abaixo, com a sua confirmação. Ela não define preço nem
-          prazo.
-        </p>
-      </section>
+      <DescrevaAObra ficha={ficha} atualizar={atualizar} aplicar={aplicar} insumos={insumos} premissas={premissas} />
 
       <div>
         <h3 className="mb-1 text-base font-semibold text-ink">O que o CUB não cobre</h3>

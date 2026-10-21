@@ -270,6 +270,7 @@ function Assistente({
             insumos={insumos}
             premissas={inicial.premissas}
             resultado={calculo?.ok ? calculo.resultado : null}
+            aplicar={setFicha}
           />
         )}
         {passo === "revisao" && (
