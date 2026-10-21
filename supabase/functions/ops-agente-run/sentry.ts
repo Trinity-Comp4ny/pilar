@@ -20,7 +20,7 @@ export function configSentry(env: (k: string) => string | undefined): ConfigSent
   return {
     token,
     apiUrl: (env("SENTRY_API_URL") || "https://us.sentry.io").replace(/\/+$/, ""),
-    org: env("SENTRY_ORG") || "trinity-company",
+    org: env("SENTRY_ORG") || "bez-company",
     projeto: env("SENTRY_PROJECT") || "pilar",
     ambiente: env("SENTRY_ENV") || "production",
   };

@@ -357,7 +357,7 @@ describe("Produto (SPEC 130)", () => {
 describe("Qualidade (SPEC 131)", () => {
   it("roda pelo executor e a tarefa abre o erro no Sentry em outra aba", () => {
     expect(ehExecutavel("qualidade")).toBe(true);
-    const sentry = "https://trinity-company.sentry.io/issues/101/";
+    const sentry = "https://bez-company.sentry.io/issues/101/";
     expect(ehLinkExterno(sentry)).toBe(true);
     expect(ehLinkExterno("/ultra-admin/feedback")).toBe(false);
     expect(rotuloDoLink(sentry)).toBe("Ver no Sentry");
