@@ -73,6 +73,7 @@ export default function Feedback() {
     {
       key: "feedback",
       header: "Feedback",
+      mobile: "title",
       cell: (f) => (
         <div className="flex min-w-0 max-w-xl gap-2.5">
           {f.tipo === "bug" ? (
@@ -91,6 +92,7 @@ export default function Feedback() {
     {
       key: "autor",
       header: "De",
+      mobile: "subtitle",
       getSortValue: (f) => f.empresaNome ?? "",
       cell: (f) => (
         <div className="min-w-0">
@@ -102,12 +104,14 @@ export default function Feedback() {
     {
       key: "quando",
       header: "Enviado",
+      mobile: "trailing",
       getSortValue: (f) => f.createdAt,
       cell: (f) => <span className="text-ink-soft">{quandoRelativo(f.createdAt)}</span>,
     },
     {
       key: "status",
       header: "Status",
+      mobile: "badge",
       getSortValue: (f) => STATUS.indexOf(f.status),
       cell: (f) => <StatusBadge domain="feedback" status={f.status} />,
     },

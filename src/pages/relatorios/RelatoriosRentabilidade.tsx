@@ -7,7 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TableCell } from "@/components/ui/table";
+import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, Filter, TrendingUp, TrendingDown, DollarSign, X } from "lucide-react";
 import { format } from "date-fns";
@@ -390,6 +391,11 @@ interface Totais {
   margem_pct: number;
 }
 
+// Colunas e rodapé de totais no DataTable padrão (SPEC 127). O rodapé é montado por coluna, então
+// os totais ficam sempre sob a coluna certa.
+const CELULA = "whitespace-nowrap text-xs";
+const NUM = `${CELULA} text-right tabular-nums`;
+
 function ProjetoTable({
   rows,
   totais,
@@ -402,82 +408,57 @@ function ProjetoTable({
   onRowClick?: (id: string, nome: string) => void;
 }) {
   const toCurrency = useMoneyMask();
+  const columns: ColumnDef<RentabilidadeProjeto>[] = [
+    { key: "projeto", header: "Projeto", className: `${CELULA} font-medium`, cell: (p) => p.projeto_nome },
+    { key: "cliente", header: "Cliente", className: CELULA, cell: (p) => p.cliente_nome },
+    { key: "status", header: "Status", className: CELULA, cell: (p) => p.status },
+    {
+      key: "contrato",
+      header: "Contrato",
+      align: "end",
+      className: NUM,
+      cell: (p) => toCurrency(p.valor_contrato),
+    },
+    { key: "receita", header: "Receita", align: "end", className: NUM, cell: (p) => toCurrency(p.receita) },
+    { key: "custo", header: "Custo", align: "end", className: NUM, cell: (p) => toCurrency(p.custo) },
+    {
+      key: "margem",
+      header: "Margem",
+      align: "end",
+      className: NUM,
+      cell: (p) => <span className={cn("font-medium", margemColor(p.margem))}>{toCurrency(p.margem)}</span>,
+    },
+    {
+      key: "margem_pct",
+      header: "Margem %",
+      align: "end",
+      className: NUM,
+      cell: (p) => <span className={cn("font-medium", margemColor(p.margem))}>{toPct(p.margem_pct)}</span>,
+    },
+  ];
+  const totalPorColuna: Record<string, React.ReactNode> = {
+    projeto: "TOTAL",
+    receita: toCurrency(totais.receita),
+    custo: toCurrency(totais.custo),
+    margem: <span className={margemColor(totais.margem)}>{toCurrency(totais.margem)}</span>,
+    margem_pct: <span className={margemColor(totais.margem)}>{toPct(totais.margem_pct)}</span>,
+  };
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          {COLS_PROJETO.map((c) => (
-            <TableHead
-              key={c}
-              className={cn(
-                "whitespace-nowrap text-xs sticky top-0 z-10 bg-white",
-                c !== "Projeto" && c !== "Cliente" && c !== "Status" && "text-right"
-              )}
-            >
-              {c}
-            </TableHead>
-          ))}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={COLS_PROJETO.length} className="text-center py-10 text-muted-foreground text-sm">
-              Nenhum projeto com os filtros aplicados.
-            </TableCell>
-          </TableRow>
-        ) : (
-          rows.map((p) => (
-            <TableRow
-              key={p.projeto_id}
-              onClick={() => onRowClick?.(p.projeto_id, p.projeto_nome)}
-              className={cn(onRowClick && "cursor-pointer hover:bg-muted/40")}
-              title={onRowClick ? "Ver as linhas que compõem a margem" : undefined}
-            >
-              <TableCell className="whitespace-nowrap text-xs font-medium">{p.projeto_nome}</TableCell>
-              <TableCell className="whitespace-nowrap text-xs">{p.cliente_nome}</TableCell>
-              <TableCell className="whitespace-nowrap text-xs">{p.status}</TableCell>
-              <TableCell className="whitespace-nowrap text-xs text-right tabular-nums">
-                {toCurrency(p.valor_contrato)}
-              </TableCell>
-              <TableCell className="whitespace-nowrap text-xs text-right tabular-nums">
-                {toCurrency(p.receita)}
-              </TableCell>
-              <TableCell className="whitespace-nowrap text-xs text-right tabular-nums">{toCurrency(p.custo)}</TableCell>
-              <TableCell
-                className={cn("whitespace-nowrap text-xs text-right tabular-nums font-medium", margemColor(p.margem))}
-              >
-                {toCurrency(p.margem)}
-              </TableCell>
-              <TableCell
-                className={cn("whitespace-nowrap text-xs text-right tabular-nums font-medium", margemColor(p.margem))}
-              >
-                {toPct(p.margem_pct)}
-              </TableCell>
-            </TableRow>
-          ))
-        )}
-      </TableBody>
-      {rows.length > 0 && (
-        <TableFooter>
-          <TableRow className="bg-black/2 font-semibold">
-            <TableCell className="text-xs">TOTAL</TableCell>
-            <TableCell className="text-xs" />
-            <TableCell className="text-xs" />
-            <TableCell className="text-xs" />
-            <TableCell className="text-xs" />
-            <TableCell className="text-xs text-right tabular-nums">{toCurrency(totais.receita)}</TableCell>
-            <TableCell className="text-xs text-right tabular-nums">{toCurrency(totais.custo)}</TableCell>
-            <TableCell className={cn("text-xs text-right tabular-nums", margemColor(totais.margem))}>
-              {toCurrency(totais.margem)}
-            </TableCell>
-            <TableCell className={cn("text-xs text-right tabular-nums", margemColor(totais.margem))}>
-              {toPct(totais.margem_pct)}
-            </TableCell>
-          </TableRow>
-        </TableFooter>
-      )}
-    </Table>
+    <DataTable
+      columns={columns}
+      data={{ rows, isPending: false, error: null }}
+      rowKey={(p) => p.projeto_id}
+      onRowClick={onRowClick ? (p) => onRowClick(p.projeto_id, p.projeto_nome) : undefined}
+      rowLabel={(p) => `Ver as linhas que compõem a margem de ${p.projeto_nome}`}
+      emptyMessage="Nenhum projeto com os filtros aplicados."
+      footer={(cols) =>
+        cols.map((c) => (
+          <TableCell key={c.key} className={cn(CELULA, c.align === "end" && "text-right tabular-nums")}>
+            {totalPorColuna[c.key]}
+          </TableCell>
+        ))
+      }
+    />
   );
 }
 
@@ -491,70 +472,53 @@ function ClienteTable({
   margemColor: (v: number) => string;
 }) {
   const toCurrency = useMoneyMask();
+  const columns: ColumnDef<RentabilidadeCliente>[] = [
+    { key: "cliente", header: "Cliente", className: `${CELULA} font-medium`, cell: (c) => c.cliente_nome },
+    { key: "projetos", header: "Projetos", align: "end", className: NUM, cell: (c) => c.num_projetos },
+    {
+      key: "contrato",
+      header: "Contrato",
+      align: "end",
+      className: NUM,
+      cell: (c) => toCurrency(c.valor_contrato),
+    },
+    { key: "receita", header: "Receita", align: "end", className: NUM, cell: (c) => toCurrency(c.receita) },
+    { key: "custo", header: "Custo", align: "end", className: NUM, cell: (c) => toCurrency(c.custo) },
+    {
+      key: "margem",
+      header: "Margem",
+      align: "end",
+      className: NUM,
+      cell: (c) => <span className={cn("font-medium", margemColor(c.margem))}>{toCurrency(c.margem)}</span>,
+    },
+    {
+      key: "margem_pct",
+      header: "Margem %",
+      align: "end",
+      className: NUM,
+      cell: (c) => <span className={cn("font-medium", margemColor(c.margem))}>{toPct(c.margem_pct)}</span>,
+    },
+  ];
+  const totalPorColuna: Record<string, React.ReactNode> = {
+    cliente: "TOTAL",
+    receita: toCurrency(totais.receita),
+    custo: toCurrency(totais.custo),
+    margem: <span className={margemColor(totais.margem)}>{toCurrency(totais.margem)}</span>,
+    margem_pct: <span className={margemColor(totais.margem)}>{toPct(totais.margem_pct)}</span>,
+  };
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          {COLS_CLIENTE.map((c) => (
-            <TableHead
-              key={c}
-              className={cn("whitespace-nowrap text-xs sticky top-0 z-10 bg-white", c !== "Cliente" && "text-right")}
-            >
-              {c}
-            </TableHead>
-          ))}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rows.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={COLS_CLIENTE.length} className="text-center py-10 text-muted-foreground text-sm">
-              Nenhum cliente encontrado.
-            </TableCell>
-          </TableRow>
-        ) : (
-          rows.map((c) => (
-            <TableRow key={c.cliente_id}>
-              <TableCell className="whitespace-nowrap text-xs font-medium">{c.cliente_nome}</TableCell>
-              <TableCell className="whitespace-nowrap text-xs text-right tabular-nums">{c.num_projetos}</TableCell>
-              <TableCell className="whitespace-nowrap text-xs text-right tabular-nums">
-                {toCurrency(c.valor_contrato)}
-              </TableCell>
-              <TableCell className="whitespace-nowrap text-xs text-right tabular-nums">
-                {toCurrency(c.receita)}
-              </TableCell>
-              <TableCell className="whitespace-nowrap text-xs text-right tabular-nums">{toCurrency(c.custo)}</TableCell>
-              <TableCell
-                className={cn("whitespace-nowrap text-xs text-right tabular-nums font-medium", margemColor(c.margem))}
-              >
-                {toCurrency(c.margem)}
-              </TableCell>
-              <TableCell
-                className={cn("whitespace-nowrap text-xs text-right tabular-nums font-medium", margemColor(c.margem))}
-              >
-                {toPct(c.margem_pct)}
-              </TableCell>
-            </TableRow>
-          ))
-        )}
-      </TableBody>
-      {rows.length > 0 && (
-        <TableFooter>
-          <TableRow className="bg-black/2 font-semibold">
-            <TableCell className="text-xs">TOTAL</TableCell>
-            <TableCell className="text-xs" />
-            <TableCell className="text-xs" />
-            <TableCell className="text-xs text-right tabular-nums">{toCurrency(totais.receita)}</TableCell>
-            <TableCell className="text-xs text-right tabular-nums">{toCurrency(totais.custo)}</TableCell>
-            <TableCell className={cn("text-xs text-right tabular-nums", margemColor(totais.margem))}>
-              {toCurrency(totais.margem)}
-            </TableCell>
-            <TableCell className={cn("text-xs text-right tabular-nums", margemColor(totais.margem))}>
-              {toPct(totais.margem_pct)}
-            </TableCell>
-          </TableRow>
-        </TableFooter>
-      )}
-    </Table>
+    <DataTable
+      columns={columns}
+      data={{ rows, isPending: false, error: null }}
+      rowKey={(c) => c.cliente_id}
+      emptyMessage="Nenhum cliente encontrado."
+      footer={(cols) =>
+        cols.map((c) => (
+          <TableCell key={c.key} className={cn(CELULA, c.align === "end" && "text-right tabular-nums")}>
+            {totalPorColuna[c.key]}
+          </TableCell>
+        ))
+      }
+    />
   );
 }

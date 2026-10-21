@@ -219,7 +219,7 @@ SELECT is(
                           'documento_verificacao','documento_verificado_em','deleted_at',
                           'preservar_dados','preservar_dados_motivo','preservar_dados_por',
                           'preservar_dados_em','retencao_aviso_60d_sent_at','retencao_aviso_85d_sent_at',
-                          'owner_id','features')),
+                          'owner_id','features','interna')),
   0,
   'colunas de plataforma de empresas não têm UPDATE para authenticated/anon');
 

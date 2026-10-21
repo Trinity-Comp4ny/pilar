@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
-import { checkoutSchema } from "./entrada.ts";
+import { cartaoRecusado, checkoutSchema } from "./entrada.ts";
 
 const base = {
   email: "dono@escritorio.com",
@@ -44,4 +44,13 @@ Deno.test("ciclo, forma de pagamento e documento fora do formato são recusados"
   assertEquals(checkoutSchema.safeParse({ ...base, billing_cycle: "weekly" }).success, false);
   assertEquals(checkoutSchema.safeParse({ ...base, billing_type: "DINHEIRO" }).success, false);
   assertEquals(checkoutSchema.safeParse({ ...base, cpf_cnpj: "123" }).success, false);
+});
+
+Deno.test("cartaoRecusado reconhece a recusa do banco emissor e ignora outras falhas do Asaas", () => {
+  assertEquals(
+    cartaoRecusado("Asaas: Transação não autorizada. Verifique os dados do cartão de crédito e tente novamente."),
+    true
+  );
+  assertEquals(cartaoRecusado("Asaas: Você não possui permissão para utilizar este recurso."), false);
+  assertEquals(cartaoRecusado("Asaas 500"), false);
 });

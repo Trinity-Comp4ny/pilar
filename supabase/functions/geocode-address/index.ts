@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { recordMetric, withSentry } from "../_shared/sentry.ts";
 import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { getRateLimitKey, RateLimiter } from "../_shared/rate-limiter.ts";
-import { escolherCidade, type GeoResult, lerEndereco, type OpenMeteoGeo } from "./endereco.ts";
+import { escolherCidade, type GeoResult, lerCepGeo, lerEndereco, type OpenMeteoGeo, type CepGeo } from "./endereco.ts";
 import { fetchComTempo } from "../_shared/http.ts";
 
 // User-Agent exigido pelo fair-use do Nominatim. Sem ele o IP é bloqueado.
@@ -11,6 +11,7 @@ const NOMINATIM_BASE = "https://nominatim.openstreetmap.org/search";
 // Fallback em nível de cidade. O Nominatim bloqueia faixas de IP de nuvem (403
 // vindo da própria edge, PILAR-2W) e aí o projeto não entrava no mapa.
 const OPEN_METEO_GEO = "https://geocoding-api.open-meteo.com/v1/search";
+const BRASIL_API_CEP = "https://brasilapi.com.br/api/cep/v2";
 
 // Só o formulário de projeto chama, uma vez por endereço salvo. O teto por usuário
 // respeita a cota do Nominatim (fair-use de 1 req/s), que é por IP da edge e
@@ -50,6 +51,19 @@ async function queryOpenMeteoCidade(city: string, state?: string): Promise<GeoRe
 
   const { results = [] } = (await response.json()) as OpenMeteoGeo;
   return escolherCidade(results, state);
+}
+
+/** CEP → coordenada (quando o BrasilAPI tem) ou cidade/UF. Última rede quando o Nominatim bloqueia e o form veio sem cidade. */
+async function queryBrasilApiCep(postalcode: string): Promise<CepGeo | null> {
+  const digitos = postalcode.replace(/\D/g, "");
+  if (digitos.length !== 8) return null;
+  const response = await fetchComTempo(
+    `${BRASIL_API_CEP}/${digitos}`,
+    { headers: { Accept: "application/json" } },
+    5_000
+  );
+  if (!response.ok) return null;
+  return lerCepGeo(await response.json().catch(() => null));
 }
 
 serve(
@@ -97,8 +111,20 @@ serve(
       }
 
       // Nominatim fora do ar ou bloqueando o IP da edge: cai pro centro da cidade.
-      if (!result && city) {
-        result = await queryOpenMeteoCidade(city, state);
+      let cidadeFallback = city;
+      let estadoFallback = state;
+      if (!result && !cidadeFallback && postalcode) {
+        // Formulário sem cidade: o CEP diz a coordenada (ou ao menos a cidade).
+        const cep = await queryBrasilApiCep(postalcode).catch(() => null);
+        result = cep?.coordenadas ?? null;
+        cidadeFallback = cep?.city;
+        estadoFallback = estadoFallback ?? cep?.state;
+        if (falhaNominatim) {
+          recordMetric("geocode.fallback", 1, { tags: { provider: "brasilapi-cep", found: Boolean(result) } });
+        }
+      }
+      if (!result && cidadeFallback) {
+        result = await queryOpenMeteoCidade(cidadeFallback, estadoFallback);
         if (falhaNominatim) {
           recordMetric("geocode.fallback", 1, { tags: { provider: "open-meteo", found: Boolean(result) } });
         }

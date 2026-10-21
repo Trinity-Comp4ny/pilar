@@ -36,7 +36,7 @@ export function SettingsDialog() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(next) => !next && closeSettings()}>
-      <DialogContent className="z-60 flex max-w-[min(100vw-2rem,980px)] h-[min(88vh,700px)] gap-0 p-0 overflow-hidden">
+      <DialogContent className="z-60 flex max-w-[min(100vw-2rem,980px)] h-[min(88dvh,700px)] gap-0 p-0 overflow-hidden">
         <div className="flex min-h-0 w-full flex-col sm:flex-row">
           {/* Rail de seções */}
           <nav

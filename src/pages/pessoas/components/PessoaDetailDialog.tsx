@@ -18,6 +18,8 @@ import {
   type PessoaStatus,
 } from "@/constants";
 import { cn } from "@/lib/utils";
+import { useMetasProgresso } from "@/hooks/useMetas";
+import { formatarValor, percentual, rotuloDaMeta } from "@/lib/metas";
 import type { Pessoa } from "../types";
 
 const formatDateBR = (iso?: string) => {
@@ -32,14 +34,10 @@ interface MetaPessoa {
   alvo: number;
   atual: number;
   prazo: string | null;
-  unidade: string | null;
+  unidade: string;
+  unidade_rotulo: string | null;
+  indicador: string | null;
 }
-
-const formatMetaValor = (value: number, unidade: string | null) => {
-  if (unidade === "currency") return `R$ ${value.toLocaleString("pt-BR")}`;
-  if (unidade === "percentage") return `${value}%`;
-  return value.toLocaleString("pt-BR");
-};
 
 interface PessoaDetailDialogProps {
   open: boolean;
@@ -64,14 +62,17 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
     queryFn: async () => {
       const { data, error } = await supabase
         .from("metas")
-        .select("id, nome, alvo, atual, prazo, unidade")
-        .eq("tipo", "pessoal")
+        .select("id, nome, alvo, atual, prazo, unidade, unidade_rotulo, indicador")
         .eq("pessoa_id", pessoa!.id)
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as MetaPessoa[];
     },
   });
+
+  // Meta com indicador tem o valor calculado no banco para o período corrente.
+  const { data: progresso } = useMetasProgresso(open && !!pessoa?.id);
 
   if (!pessoa) return null;
 
@@ -87,7 +88,7 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex flex-wrap items-center gap-2">
             {pessoa.nome}
@@ -258,13 +259,15 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
           <div className="border-t pt-4 space-y-3">
             <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-1.5">
               <Target className="h-3.5 w-3.5" />
-              Metas pessoais
+              Metas
             </h4>
             {metas && metas.length > 0 ? (
               <div className="space-y-3">
                 {metas.map((meta) => {
-                  const percent = Math.min(Math.round((meta.atual / meta.alvo) * 100), 100);
+                  const atual = progresso?.get(meta.id)?.atual ?? meta.atual;
+                  const percent = percentual(atual, meta.alvo);
                   const isCompleted = percent >= 100;
+                  const rotulo = rotuloDaMeta(meta);
                   return (
                     <div key={meta.id} className="space-y-1.5">
                       <div className="flex items-center justify-between gap-2">
@@ -276,11 +279,12 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
                       <Progress
                         value={percent}
                         className="h-1.5 bg-muted"
-                        indicatorClassName={isCompleted ? "bg-positive" : "bg-blue-500"}
+                        indicatorClassName={isCompleted ? "bg-positive" : "bg-brand"}
                       />
                       <div className="flex justify-between text-xs text-muted-foreground">
                         <span>
-                          {formatMetaValor(meta.atual, meta.unidade)} de {formatMetaValor(meta.alvo, meta.unidade)}
+                          {formatarValor(atual, meta.unidade, rotulo)} de{" "}
+                          {formatarValor(meta.alvo, meta.unidade, rotulo)}
                         </span>
                         {meta.prazo && <span>Prazo: {formatDateBR(meta.prazo)}</span>}
                       </div>
@@ -291,8 +295,8 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
             ) : (
               <EmptyState
                 icon={Target}
-                title="Nenhuma meta pessoal cadastrada"
-                description="As metas pessoais desta pessoa aparecem aqui."
+                title="Nenhuma meta para esta pessoa"
+                description={`Crie uma meta em Metas e escolha esta pessoa em "Para quem".`}
                 className="py-6"
               />
             )}

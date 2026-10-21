@@ -9,7 +9,7 @@ interface PageLoaderProps {
 }
 
 const RING = { page: 112, section: 64, inline: 40 } as const;
-const PAD = { page: "min-h-[60vh]", section: "py-10", inline: "py-4" } as const;
+const PAD = { page: "min-h-[60dvh]", section: "py-10", inline: "py-4" } as const;
 
 /**
  * Carregamento de página, seção ou card (ADR 0049): o anel de leitura centralizado,

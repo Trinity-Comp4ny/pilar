@@ -7,7 +7,7 @@ import { Building2, CreditCard, ShieldCheck, Users } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { SecondSidebar, type SecondSidebarTab } from "@/components/SecondSidebar";
+import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import type { CompanyData } from "@/pages/company/types";
 import { type SubscriptionPlanSlug } from "@/lib/features";
@@ -33,7 +33,7 @@ type RawUser = {
 const VALID_TABS = ["usuarios", "empresa", "auditoria", "plano"] as const;
 type AdminTab = (typeof VALID_TABS)[number];
 
-const ADMIN_TABS: SecondSidebarTab[] = [
+const ADMIN_TABS: SectionTab[] = [
   { id: "usuarios", label: "Usuários", icon: Users },
   { id: "empresa", label: "Empresa", icon: Building2 },
   { id: "auditoria", label: "Auditoria", icon: ShieldCheck },
@@ -180,9 +180,7 @@ export default function Admin() {
     setSearchParams({ tab: next }, { replace: true });
   };
 
-  const adminSidebarTabs: SecondSidebarTab[] = ADMIN_TABS.map((t) =>
-    t.id === "usuarios" ? { ...t, badge: users.length } : t
-  );
+  const adminTabs: SectionTab[] = ADMIN_TABS.map((t) => (t.id === "usuarios" ? { ...t, badge: users.length } : t));
 
   const isRootTab = activeTab === "usuarios";
   const activeLabel = ADMIN_TABS.find((t) => t.id === activeTab)?.label ?? "Admin Portal";
@@ -195,7 +193,9 @@ export default function Admin() {
           breadcrumbs={isRootTab ? undefined : [{ label: "Admin Portal", onClick: () => handleTabChange("usuarios") }]}
         />
       }
-      sidebar={<SecondSidebar tabs={adminSidebarTabs} value={activeTab} onValueChange={handleTabChange} />}
+      tabs={
+        <SectionTabs tabs={adminTabs} value={activeTab} onValueChange={handleTabChange} ariaLabel="Seções do admin" />
+      }
       containerClassName="max-w-6xl"
     >
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">

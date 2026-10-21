@@ -102,6 +102,9 @@ const schema = {
 
   /** Status page externa (SPEC 105). Definida, a rota /status do app redireciona para ela. */
   VITE_STATUS_URL: optionalUrl,
+
+  /** Plataforma de marketing (produto próprio, repo post-automation; SPEC 128). Ausente = URL de produção. */
+  VITE_MARKETING_APP_URL: optionalUrl,
 };
 
 export type Env = { [K in keyof typeof schema]: (typeof schema)[K] extends Campo<infer T> ? T : never };

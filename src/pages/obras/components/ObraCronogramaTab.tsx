@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
+import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
 import { GanttChart, List, ListTree } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
-import { cn } from "@/lib/utils";
 import { caminhoDoNo, montarArvoreCronograma } from "@/pages/obras/lib/obraArvore";
 import { useObraFrentes } from "@/pages/obras/hooks/useObraFrentes";
 import { useObraTarefas } from "@/pages/obras/hooks/useObraTarefas";
@@ -27,6 +27,11 @@ function visaoSalva(): Visao {
  * A Lista é onde se monta e marca o checklist; o Gantt é onde se lê e ajusta prazo.
  * As duas leem a mesma árvore e o mesmo estado de recolhido.
  */
+const CRONOGRAMA_VISOES: ViewOption<"lista" | "gantt">[] = [
+  { value: "lista", label: "Lista", icon: List },
+  { value: "gantt", label: "Gantt", icon: GanttChart },
+];
+
 export function ObraCronogramaTab({
   obraId,
   projetoId,
@@ -100,28 +105,7 @@ export function ObraCronogramaTab({
 
   return (
     <div className="space-y-3">
-      <div className="inline-flex rounded-lg border bg-muted/40 p-0.5" role="tablist" aria-label="Visão do cronograma">
-        {(
-          [
-            { v: "lista", label: "Lista", Icon: List },
-            { v: "gantt", label: "Gantt", Icon: GanttChart },
-          ] as const
-        ).map(({ v, label, Icon }) => (
-          <button
-            key={v}
-            type="button"
-            role="tab"
-            aria-selected={visao === v}
-            onClick={() => trocarVisao(v)}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-md px-3 py-1 text-sm transition-colors",
-              visao === v ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
-            )}
-          >
-            <Icon className="h-4 w-4" /> {label}
-          </button>
-        ))}
-      </div>
+      <ViewSwitcher options={CRONOGRAMA_VISOES} value={visao} onChange={trocarVisao} ariaLabel="Visão do cronograma" />
 
       {visao === "lista" ? (
         <CronogramaLista

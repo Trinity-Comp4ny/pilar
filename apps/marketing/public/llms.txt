@@ -18,7 +18,7 @@
 
 ## Planos
 
-- [Planos e preços](https://www.pilarsoft.com.br/planos): preço por escritório, sem cobrança por usuário; o que muda entre planos é a quantidade de projetos ativos e a cota mensal de IA. Todo plano tem a plataforma inteira e trial de 14 dias sem cartão.
+- [Planos e preços](https://www.pilarsoft.com.br/planos): preço por escritório, sem cobrança por usuário; o que muda entre planos é a quantidade de projetos ativos e a cota mensal de IA. Todo plano tem a plataforma inteira; para começar, agende uma demonstração com o time.
 
 ## Perguntas frequentes
 

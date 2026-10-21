@@ -25,6 +25,7 @@ import { SettingsModalProvider, useSettingsModal, type SettingsSection } from ".
 import { ValoresOcultosProvider } from "./contexts/ValoresOcultosContext";
 import { MARKETING_URL, isProductionAppHost } from "./lib/marketingSite";
 import { env } from "./lib/env";
+import { CADASTRO_ABERTO } from "./lib/contato";
 import { useNovaVersao } from "./hooks/useNovaVersao";
 
 // Modal de configuracoes: so monta quando o usuario abre. Estatico, arrastava os
@@ -43,6 +44,12 @@ const MeuTrabalho = lazy(() => import("./pages/meu-trabalho"));
 const Obras = lazy(() => import("./pages/obras"));
 const ObraClima = lazy(() => import("./pages/obras/clima"));
 const ObraDetalhe = lazy(() => import("./pages/obras/[id]"));
+// Estimativa de obra (SPEC 136): um chunk só para lista, assistente e resultado.
+const estimativaObra = () => import("./pages/obras/estimativa");
+const EstimativasObra = lazy(() => estimativaObra().then((m) => ({ default: m.Estimativas })));
+const NovaEstimativaObra = lazy(() => estimativaObra().then((m) => ({ default: m.NovaEstimativa })));
+const EstimativaObraDetalhe = lazy(() => estimativaObra().then((m) => ({ default: m.EstimativaDetalhe })));
+const PrecosEstimativaObra = lazy(() => estimativaObra().then((m) => ({ default: m.PrecosEmpresa })));
 const Leads = lazy(() => import("./pages/leads"));
 const Financeiro = lazy(() => import("./pages/Financeiro"));
 const Projetos = lazy(() => import("./pages/Projetos"));
@@ -65,6 +72,7 @@ const CampoConvite = lazy(() => import("./pages/campo/CampoConvite"));
 const CampoTrocarSenha = lazy(() => import("./pages/campo/CampoTrocarSenha"));
 const CampoHome = lazy(() => import("./pages/campo/CampoHome"));
 const CampoRegistrarDia = lazy(() => import("./pages/campo/CampoRegistrarDia"));
+const CampoGravar = lazy(() => import("./pages/campo/CampoGravar"));
 const ClienteDashboard = lazy(() => import("./pages/cliente/ClienteDashboard"));
 const ClienteObraDetail = lazy(() => import("./pages/cliente/ClienteObraDetail"));
 const ClienteProjetoDetail = lazy(() => import("./pages/cliente/ClienteProjetoDetail"));
@@ -84,7 +92,10 @@ const UltraFeedback = lazy(() => ultraAdmin().then((m) => ({ default: m.Feedback
 const UltraAtividade = lazy(() => ultraAdmin().then((m) => ({ default: m.Atividade })));
 const UltraIncidentes = lazy(() => ultraAdmin().then((m) => ({ default: m.Incidentes })));
 const UltraCustosIa = lazy(() => ultraAdmin().then((m) => ({ default: m.CustosIa })));
+const UltraEstimativa = lazy(() => ultraAdmin().then((m) => ({ default: m.Estimativa })));
 const UltraPedidosLgpd = lazy(() => ultraAdmin().then((m) => ({ default: m.PedidosLgpd })));
+const UltraTimeCentral = lazy(() => ultraAdmin().then((m) => ({ default: m.TimeCentral })));
+const UltraTimeAgente = lazy(() => ultraAdmin().then((m) => ({ default: m.TimeAgenteFicha })));
 const MfaChallengePage = lazy(() => import("./pages/MfaChallengePage"));
 const MfaSetupPage = lazy(() => import("./pages/MfaSetupPage"));
 const PasswordReset = lazy(() => import("./pages/PasswordReset"));
@@ -220,7 +231,10 @@ const App = () => {
                         <Route path="/privacidade" element={<ExternalRedirect path="/privacidade" />} />
                         <Route path="/checkout" element={<Checkout />} />
                         <Route path="/login" element={<Login />} />
-                        <Route path="/cadastro" element={<Signup />} />
+                        <Route
+                          path="/cadastro"
+                          element={CADASTRO_ABERTO ? <Signup /> : <Navigate to="/login" replace />}
+                        />
                         <Route path="/auth/callback" element={<AuthCallback />} />
                         <Route path="/forgot-password" element={<ForgotPassword />} />
                         <Route path="/reset-password" element={<PasswordReset />} />
@@ -249,6 +263,14 @@ const App = () => {
                             <Route element={<FeatureRoute feature="obras_fornecedores" />}>
                               <Route path="/obras/fornecedores" element={<Fornecedores />} />
                               <Route path="/obras/fornecedores/:id" element={<FornecedorDetalhe />} />
+                            </Route>
+                            {/* Estimativa paramétrica (SPEC 136): feature opt-in por empresa. */}
+                            <Route element={<FeatureRoute feature="estimativa_obra" />}>
+                              <Route path="/obras/estimativas" element={<EstimativasObra />} />
+                              <Route path="/obras/estimativas/nova" element={<NovaEstimativaObra />} />
+                              <Route path="/obras/estimativas/precos" element={<PrecosEstimativaObra />} />
+                              <Route path="/obras/estimativas/:id" element={<EstimativaObraDetalhe />} />
+                              <Route path="/obras/estimativas/:id/editar" element={<NovaEstimativaObra />} />
                             </Route>
                             <Route path="/obras/:id" element={<ObraDetalhe />} />
                           </Route>
@@ -384,7 +406,10 @@ const App = () => {
                               <Route path="atividade" element={<UltraAtividade />} />
                               <Route path="incidentes" element={<UltraIncidentes />} />
                               <Route path="custos-ia" element={<UltraCustosIa />} />
+                              <Route path="estimativa" element={<UltraEstimativa />} />
                               <Route path="lgpd" element={<UltraPedidosLgpd />} />
+                              <Route path="time" element={<UltraTimeCentral />} />
+                              <Route path="time/:agente" element={<UltraTimeAgente />} />
                               <Route path="*" element={<Navigate to="/ultra-admin" replace />} />
                             </Route>
                           </Route>
@@ -416,6 +441,7 @@ const App = () => {
                         <Route path="/campo" element={<CampoPrivateRoute />}>
                           <Route index element={<CampoHome />} />
                           <Route path="dia" element={<CampoRegistrarDia />} />
+                          <Route path="gravar" element={<CampoGravar />} />
                         </Route>
 
                         <Route path="*" element={<NotFound />} />

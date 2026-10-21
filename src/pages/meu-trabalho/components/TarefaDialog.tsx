@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DatePicker } from "@/components/ui/date-picker";
 import { LabelsEditor } from "@/components/LabelsEditor";
 import { LinksEditor, type LinkItem } from "@/components/LinksEditor";
+import { mencionaTodos } from "@/lib/mencoes";
 import { AtividadeComposer } from "@/pages/projetos/components/AtividadeComposer";
 import { SeletorResponsaveis } from "@/components/SeletorResponsaveis";
 import { HorasMinutosField } from "@/components/HorasMinutosField";
@@ -141,7 +142,7 @@ function TarefaFormBody({
         mencionados: mencionados.length ? mencionados : undefined,
       },
     ]);
-    if (mencionados.length) setPendentesMencao((prev) => [...prev, { id, texto: t, mencionados }]);
+    if (mencionados.length || mencionaTodos(t)) setPendentesMencao((prev) => [...prev, { id, texto: t, mencionados }]);
   };
 
   const salvar = async () => {
@@ -359,7 +360,7 @@ function TarefaFormBody({
 export function TarefaDialog({ open, onOpenChange, tarefa, ...rest }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[92vh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden p-0">
+      <DialogContent className="flex h-[92dvh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden p-0">
         {open && (
           <TarefaFormBody
             key={tarefa?.id ?? `nova-${rest.defaultEtapaId ?? "padrao"}`}

@@ -11,8 +11,8 @@ import { lerEntrada } from "./entrada.ts";
 const log = createLogger("portal-obra-fotos");
 
 /**
- * Spec 087: URLs assinadas (5min) das fotos do diário curado da obra, pro
- * portal do cliente — o portal não tem sessão Supabase autenticada, não pode
+ * Spec 087: URLs assinadas (5min) das fotos do diário curado da obra (e, na SPEC 135,
+ * dos registros da equipe que o gestor liberou), pro portal do cliente — o portal não tem sessão Supabase autenticada, não pode
  * chamar storage.createSignedUrls direto como o front interno faz
  * (useObraFotos.ts). Em lote (não uma chamada por foto).
  *
@@ -49,7 +49,7 @@ serve(
     try {
       const entrada = lerEntrada(await lerJson(req));
       if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
-      const { session_token, foto_ids } = entrada.data;
+      const { session_token, foto_ids, registro_ids } = entrada.data;
 
       const anonClient = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_ANON_KEY") ?? "");
       const { data: session, error: sessionError } = await anonClient.rpc("portal_verify_session_readonly", {
@@ -60,20 +60,10 @@ serve(
       const empresa_id = (session as { empresa_id?: string }).empresa_id;
       if (!cliente_id || !empresa_id) return safeErrorResponse(401, "Contexto sem escopo", req);
 
-      // Só fotos de RDO de obra do cliente da sessão, em administração e
-      // visível no portal — mesmo gate de get_cliente_obra_detail.
-      const { data: fotos, error: fotosError } = await adminClient
-        .from("obra_rdo_foto")
-        .select("id, path, obras:obra_id!inner(cliente_id, empresa_id, modelo_cobranca, visivel_portal, deleted_at)")
-        .in("id", foto_ids);
-
-      if (fotosError) {
-        log.error("query de fotos falhou", fotosError, { empresa_id });
-        return safeErrorResponse(500, "Falha ao buscar fotos", req);
-      }
-
-      const permitidas = (fotos ?? []).filter((f) => {
-        const o = f.obras as unknown as {
+      // Mesmo gate de get_cliente_obra_detail: obra do cliente da sessão, em administração e
+      // visível no portal.
+      const obraDoCliente = (raw: unknown) => {
+        const o = raw as {
           cliente_id: string | null;
           empresa_id: string;
           modelo_cobranca: string;
@@ -87,16 +77,47 @@ serve(
           o.visivel_portal === true &&
           o.deleted_at === null
         );
-      });
+      };
+      const OBRAS_SELECT = "obras:obra_id!inner(cliente_id, empresa_id, modelo_cobranca, visivel_portal, deleted_at)";
 
-      if (permitidas.length === 0) {
-        return jsonResponse({ fotos: [] }, 200, req);
+      // Fotos de RDO da obra do cliente da sessão.
+      let permitidas: Array<{ id: string; path: string }> = [];
+      if (foto_ids.length > 0) {
+        const { data: fotos, error: fotosError } = await adminClient
+          .from("obra_rdo_foto")
+          .select(`id, path, ${OBRAS_SELECT}`)
+          .in("id", foto_ids);
+        if (fotosError) {
+          log.error("query de fotos falhou", fotosError, { empresa_id });
+          return safeErrorResponse(500, "Falha ao buscar fotos", req);
+        }
+        permitidas = (fotos ?? []).filter((f) => obraDoCliente(f.obras));
       }
 
-      const { data: signed, error: signError } = await adminClient.storage.from("obra-campo").createSignedUrls(
-        permitidas.map((f) => f.path),
-        300
-      );
+      // Fotos dos registros da equipe (SPEC 135): só registro que o gestor liberou e a IA já organizou.
+      let registros: Array<{ id: string; fotos: string[] }> = [];
+      if (registro_ids.length > 0) {
+        const { data: regs, error: regsError } = await adminClient
+          .from("obra_registro")
+          .select(`id, fotos, ${OBRAS_SELECT}`)
+          .in("id", registro_ids)
+          .eq("visivel_cliente", true)
+          .eq("status", "pronto");
+        if (regsError) {
+          log.error("query de registros falhou", regsError, { empresa_id });
+          return safeErrorResponse(500, "Falha ao buscar fotos", req);
+        }
+        registros = (regs ?? []).filter((r) => obraDoCliente(r.obras)).map((r) => ({ id: r.id, fotos: r.fotos ?? [] }));
+      }
+
+      const paths = [...permitidas.map((f) => f.path), ...registros.flatMap((r) => r.fotos)];
+      if (paths.length === 0) {
+        return jsonResponse({ fotos: [], registro_fotos: [] }, 200, req);
+      }
+
+      const { data: signed, error: signError } = await adminClient.storage
+        .from("obra-campo")
+        .createSignedUrls(paths, 300);
       if (signError) {
         log.error("signed urls falharam", signError, { empresa_id });
         return safeErrorResponse(500, "Falha ao gerar link das fotos", req);
@@ -106,8 +127,12 @@ serve(
       const resultado = permitidas
         .map((f) => ({ id: f.id, signed_url: urlByPath.get(f.path) }))
         .filter((f): f is { id: string; signed_url: string } => !!f.signed_url);
+      const registroFotos = registros.map((r) => ({
+        registro_id: r.id,
+        urls: r.fotos.map((p) => urlByPath.get(p)).filter((u): u is string => !!u),
+      }));
 
-      return jsonResponse({ fotos: resultado }, 200, req);
+      return jsonResponse({ fotos: resultado, registro_fotos: registroFotos }, 200, req);
     } catch (error: unknown) {
       log.error("unexpected error", error);
       return safeErrorResponse(400, "Invalid request", req);
