@@ -2,3 +2,4 @@
 export { default as Estimativas } from "./Estimativas";
 export { default as NovaEstimativa } from "./NovaEstimativa";
 export { default as EstimativaDetalhe } from "./EstimativaDetalhe";
+export { default as PrecosEmpresa } from "./PrecosEmpresa";

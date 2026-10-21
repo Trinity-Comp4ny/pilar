@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calculator, Plus } from "lucide-react";
+import { Calculator, Plus, Tags } from "lucide-react";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { EmptyState } from "@/components/EmptyState";
 import { PilarPage } from "@/components/PilarPage";
+import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -98,6 +99,12 @@ export default function Estimativas() {
       title="Estimativas"
       search={{ value: busca, onChange: setBusca, placeholder: "Buscar estimativa ou cliente" }}
       primaryAction={{ label: "Nova estimativa", onClick: nova, icon: Plus, feature: "estimativa_obra" }}
+      actions={
+        <Button variant="outline" size="sm" onClick={() => navigate("/obras/estimativas/precos")}>
+          <Tags className="h-4 w-4 sm:mr-1.5" aria-hidden="true" />
+          <span className="max-sm:sr-only">Tabela de preços</span>
+        </Button>
+      }
     >
       {vazio ? (
         <EmptyState

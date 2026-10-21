@@ -323,6 +323,12 @@ export const ajustesEmpresaSchema = z.object({
 });
 export type AjustesEmpresa = z.infer<typeof ajustesEmpresaSchema>;
 
+/**
+ * Campos do ajuste que só registram quem mudou, quando e por quê. Não entram no cálculo: um ajuste só com
+ * eles não conta como "valor da empresa".
+ */
+export const REGISTRO_DO_AJUSTE = ["observacao", "atualizado_em", "atualizado_por"] as const;
+
 // ── Resultado ────────────────────────────────────────────────────────────────
 
 const CODIGOS_AVISO = [

@@ -4,6 +4,7 @@
 // Nunca sai valor sem origem. Funções puras, em centavos, chamadas pelo motor (estimativaObra.ts).
 import {
   ADICIONAIS_IDS,
+  REGISTRO_DO_AJUSTE,
   adicionalSchema,
   type Adicional,
   type AdicionalId,
@@ -44,7 +45,10 @@ export function mesclarAjustes(
       saida[id] = { adicional: base, ajustado: false, valorUnitario: null };
       continue;
     }
-    const { valor_unitario: vuBruto, ...resto } = bruto;
+    const { valor_unitario: vuBruto, ...comRegistro } = bruto;
+    const resto = Object.fromEntries(
+      Object.entries(comRegistro).filter(([chave]) => !(REGISTRO_DO_AJUSTE as readonly string[]).includes(chave))
+    );
     let valorUnitario: number | null = null;
     let invalido = false;
     if (vuBruto !== undefined) {

@@ -49,6 +49,7 @@ const estimativaObra = () => import("./pages/obras/estimativa");
 const EstimativasObra = lazy(() => estimativaObra().then((m) => ({ default: m.Estimativas })));
 const NovaEstimativaObra = lazy(() => estimativaObra().then((m) => ({ default: m.NovaEstimativa })));
 const EstimativaObraDetalhe = lazy(() => estimativaObra().then((m) => ({ default: m.EstimativaDetalhe })));
+const PrecosEstimativaObra = lazy(() => estimativaObra().then((m) => ({ default: m.PrecosEmpresa })));
 const Leads = lazy(() => import("./pages/leads"));
 const Financeiro = lazy(() => import("./pages/Financeiro"));
 const Projetos = lazy(() => import("./pages/Projetos"));
@@ -267,6 +268,7 @@ const App = () => {
                             <Route element={<FeatureRoute feature="estimativa_obra" />}>
                               <Route path="/obras/estimativas" element={<EstimativasObra />} />
                               <Route path="/obras/estimativas/nova" element={<NovaEstimativaObra />} />
+                              <Route path="/obras/estimativas/precos" element={<PrecosEstimativaObra />} />
                               <Route path="/obras/estimativas/:id" element={<EstimativaObraDetalhe />} />
                               <Route path="/obras/estimativas/:id/editar" element={<NovaEstimativaObra />} />
                             </Route>

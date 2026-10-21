@@ -185,13 +185,17 @@ interface DialogoOrigemProps {
   onFechar: () => void;
   /** Ação "Informar valor" ou "Trocar o valor"; ausente para quem só lê. */
   onInformar?: (item: Adicional) => void;
+  /** Abre a tabela de preços da empresa, oferecida quando a origem é a empresa ou a referência do Pilar. */
+  onAbrirTabela?: () => void;
 }
 
 /** Detalhe da origem do preço: código, UF, mês e regime quando é SINAPI, e o que fazer quando não há fonte. */
-export function DialogoOrigem({ aberto, resultado, onFechar, onInformar }: DialogoOrigemProps) {
+export function DialogoOrigem({ aberto, resultado, onFechar, onInformar, onAbrirTabela }: DialogoOrigemProps) {
   const detalhe = aberto === null ? null : aberto === "base" ? detalheDaBase(resultado) : detalheDoItem(aberto);
   const item = aberto !== null && aberto !== "base" ? aberto : null;
   const podeInformar = !!item && !!onInformar && item.quantidade > 0;
+  const tipo = item?.origem.tipo;
+  const podeAbrirTabela = !!onAbrirTabela && (tipo === "empresa" || tipo === "referencia_pilar");
   const acao =
     item?.origem.tipo === "a_definir"
       ? "Informar valor"
@@ -227,6 +231,11 @@ export function DialogoOrigem({ aberto, resultado, onFechar, onInformar }: Dialo
               <Button variant="outline" onClick={onFechar}>
                 Fechar
               </Button>
+              {podeAbrirTabela && (
+                <Button variant="outline" onClick={onAbrirTabela}>
+                  Abrir a tabela de preços
+                </Button>
+              )}
               {podeInformar && (
                 <Button variant="brand" onClick={() => onInformar(item)}>
                   {acao}

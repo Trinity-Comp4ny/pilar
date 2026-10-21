@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Json, TablesUpdate } from "@/integrations/supabase/types";
 import { lerAjustes, lerCub, lerParametros, lerPrecosSinapi } from "@/lib/estimativaObra";
 import type {
+  AdicionalId,
   AjustesEmpresa,
   CubLinha,
   Ficha,
@@ -229,6 +230,92 @@ export function useSalvarVersao() {
   });
 }
 
+const CHAVE_PARAMETROS = ["estimativa-parametros"] as const;
+const CHAVE_AJUSTES = ["estimativa-ajustes"] as const;
+
+/** Parâmetros do motor (global) e se já foram validados. */
+export function useParametrosDoMotor() {
+  return useQuery({
+    queryKey: CHAVE_PARAMETROS,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("estimativa_parametros")
+        .select("parametros, validado_em")
+        .eq("id", "default")
+        .single();
+      if (error) throw error;
+      const lido = lerParametros(data.parametros);
+      if (!lido.ok) throw new Error(lido.mensagem);
+      return { parametros: lido.parametros, validado: data.validado_em !== null };
+    },
+    staleTime: 5 * 60_000,
+  });
+}
+
+/** Tabela de preços da empresa (ajustes sobre a referência). `null` = a empresa ainda não definiu nada. */
+export function useAjustesDaEmpresa() {
+  return useQuery({
+    queryKey: CHAVE_AJUSTES,
+    queryFn: async (): Promise<AjustesEmpresa | null> => {
+      const { data, error } = await supabase.from("estimativa_ajustes_empresa").select("adicionais").maybeSingle();
+      if (error) throw error;
+      if (!data) return null;
+      const lido = lerAjustes({ adicionais: data.adicionais });
+      if (!lido.ok) throw new Error(lido.mensagem);
+      return lido.valor;
+    },
+    staleTime: 5 * 60_000,
+  });
+}
+
+/**
+ * Grava (ou tira, com `ajuste` nulo) o valor da empresa para um item. Lê a tabela de novo antes de mesclar, para
+ * não apagar o que outro admin mudou depois de a tela abrir. A RLS só deixa o admin da empresa escrever.
+ */
+export function useSalvarAjusteEmpresa() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ajuste }: { id: AdicionalId; ajuste: Record<string, unknown> | null }): Promise<void> => {
+      const empresaId = await empresaDoUsuario();
+      const { data: atual, error: erroLeitura } = await supabase
+        .from("estimativa_ajustes_empresa")
+        .select("adicionais")
+        .maybeSingle();
+      if (erroLeitura) throw erroLeitura;
+      const lido = lerAjustes({ adicionais: atual?.adicionais ?? {} });
+      if (!lido.ok) throw new Error(lido.mensagem);
+      const adicionais = { ...lido.valor.adicionais };
+      if (ajuste) adicionais[id] = ajuste;
+      else delete adicionais[id];
+      const { data, error } = await supabase
+        .from("estimativa_ajustes_empresa")
+        .upsert({ empresa_id: empresaId, adicionais: paraJson(adicionais) }, { onConflict: "empresa_id" })
+        .select("empresa_id");
+      if (error) throw error;
+      // A RLS não dá erro quando recusa: devolve zero linhas.
+      if (!data || data.length === 0) throw new Error("Só quem administra a empresa pode mudar a tabela de preços");
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: CHAVE_AJUSTES }),
+  });
+}
+
+/** Nome de quem fez cada mudança, pelo id guardado no ajuste. Sem acesso ao perfil, a tela mostra só a data. */
+export function useNomesDosUsuarios(ids: string[]) {
+  const unicos = [...new Set(ids)].sort();
+  return useQuery({
+    queryKey: ["estimativa-ajustes-nomes", unicos],
+    enabled: unicos.length > 0,
+    queryFn: async (): Promise<Record<string, string>> => {
+      const { data, error } = await supabase.from("profiles").select("id, first_name, last_name").in("id", unicos);
+      if (error) throw error;
+      return Object.fromEntries(
+        (data ?? []).map((p) => [p.id, [p.first_name, p.last_name].filter(Boolean).join(" ") || "Usuário"])
+      );
+    },
+    staleTime: 5 * 60_000,
+  });
+}
+
 // ── Insumos do cálculo: CUB, parâmetros e ajustes da empresa ─────────────────
 
 export type Insumos =
@@ -261,34 +348,9 @@ export function useInsumosDaEstimativa(): Insumos {
     staleTime: 5 * 60_000,
   });
 
-  const parametros = useQuery({
-    queryKey: ["estimativa-parametros"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("estimativa_parametros")
-        .select("parametros, validado_em")
-        .eq("id", "default")
-        .single();
-      if (error) throw error;
-      const lido = lerParametros(data.parametros);
-      if (!lido.ok) throw new Error(lido.mensagem);
-      return { parametros: lido.parametros, validado: data.validado_em !== null };
-    },
-    staleTime: 5 * 60_000,
-  });
+  const parametros = useParametrosDoMotor();
 
-  const ajustes = useQuery({
-    queryKey: ["estimativa-ajustes"],
-    queryFn: async (): Promise<AjustesEmpresa | null> => {
-      const { data, error } = await supabase.from("estimativa_ajustes_empresa").select("adicionais").maybeSingle();
-      if (error) throw error;
-      if (!data) return null;
-      const lido = lerAjustes({ adicionais: data.adicionais });
-      if (!lido.ok) throw new Error(lido.mensagem);
-      return lido.valor;
-    },
-    staleTime: 5 * 60_000,
-  });
+  const ajustes = useAjustesDaEmpresa();
 
   const precosSinapi = useQuery({
     queryKey: ["estimativa-precos-sinapi"],
