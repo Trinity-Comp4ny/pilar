@@ -1,12 +1,12 @@
 # SPEC: Estimativa de obra, "Descreva a obra" com IA sobre o catálogo
 
 **Data:** 2026-10-21
-**Status:** Direção aprovada em 2026-10-21 (D1 a D3 decididas); F2a em implementação, F2b aguarda o protótipo
+**Status:** Direção aprovada em 2026-10-21 (D1 a D3 decididas). F2a entregue (PR #689), F2b entregue (PR #695, tela com os estados do protótipo v1.1 aprovado em 2026-10-21); falta a F2c (ligar)
 **Autor:** Matheus Rezende
 **Módulo:** obras (estimativa)
 **Estende:** [137: itens com origem do preço](137-estimativa-de-obra-itens-com-origem-do-preco.md) (F2 daquela spec)
 **ADRs:** [0063](../architecture/adr/0063-estimativa-de-obra-motor-deterministico-e-parametros-validados.md), [0064](../architecture/adr/0064-toda-linha-da-estimativa-tem-origem-do-preco-e-a-ia-so-preenche-o-catalogo.md), [0048](../architecture/adr/0048-mudanca-de-prompt-ou-modelo-passa-por-eval.md), [0054](../architecture/adr/0054-erro-de-ia-tem-tipo-fechado.md), [0035](../architecture/adr/0035-ledger-de-tokens-fonte-unica-de-uso-de-ia.md)
-**Protótipo:** v1.1 no Claude Design (https://claude.ai/artifact/PGsfphRTCM9gRQsrs3zCkb, versão 6, passo "O que a obra tem", estados de IA), aguardando aprovação
+**Protótipo:** v1.1 aprovado em 2026-10-21 no Claude Design (https://claude.ai/artifact/PGsfphRTCM9gRQsrs3zCkb, versão 6, passo "O que a obra tem", estados de IA)
 **Card:** BEZ-83
 
 ## Problema
@@ -48,7 +48,7 @@ chegam ao resultado sem o usuário refazer os itens à mão.
    ar, terraplenagem e fundação são derivadas e a IA não as devolve.
 5. **Saída validada por schema nas duas pontas.** O modelo devolve JSON com `itens` (`id` do catálogo, `quantidade`
    positiva, `trecho` do texto que justifica), `ambientes` (quartos, suítes, banheiros, lavabos, vagas, inteiros),
-   `relevo` (inclinado e m² de muro), `fora_do_catalogo` (trecho e motivo) e `perguntas` (item e pergunta). A função
+   `relevo` (inclinado e m² de muro; sem a medida o muro fica nulo e a tela pede, sem pergunta), `fora_do_catalogo` (trecho e motivo) e `perguntas` (item e pergunta). Itens de existência (automação, gourmet, paisagismo, elevador, subsolo) valem sempre 1. A função
    recusa `id` que não existe, quantidade fora de 0,1 a 100.000 e duplicata de item, e o cliente valida de novo. Saída
    inválida usa o retry de schema e, se falhar, vira `saida_invalida` (ADR 0054).
 6. **"O que entendi".** Resultado em lista editável: cada item com nome, chip da origem do preço (a mesma prévia do
@@ -107,7 +107,8 @@ Requisitos não-funcionais:
   `src`), com teste de paridade como nas outras `ai-*`.
 - **Ficha:** `descricao` opcional (string, até 2.000). Sem migration: a ficha é jsonb.
 - **Custo mostrado:** constante `TOKENS_ESTIMADOS` no front, definida pela avaliação (p95 de entrada mais saída) e
-  conferida por teste contra o relatório da avaliação.
+  conferida por teste contra o relatório da avaliação. Primeira medida (2026-10-21, gemini-2.5-flash): p95 de cerca
+  de 2.100 tokens por chamada, então o valor mostrado é de uns 4 mil.
 - **Docs a atualizar:** `docs/architecture/EDGE_FUNCTIONS.md`, `docs/ROPA.md` e `docs/legal/SUBPROCESSADORES.md` se o
   modelo mudar (hoje Gemini), `docs/operations/ai-evals.md`.
 
@@ -115,11 +116,14 @@ Requisitos não-funcionais:
 
 Fases, cada uma entregável sozinha:
 
-1. **F2a, função e avaliação (sem tela).** `_shared` de catálogo e prompt, schema, `ai-estimativa-itens`, testes Deno
-   (schema, ids, injeção, saldo, erros), conjunto de avaliação com 30 a 50 casos e runner, workflow `ai-evals`
-   estendido. Mede acerto, latência e tokens e fixa `TOKENS_ESTIMADOS`.
-2. **F2b, tela.** Campo ativo, custo e saldo, "O que entendi" com os estados do protótipo, `aplicarInterpretacao`,
-   `descricao` na ficha. Antes e depois no PR.
+1. **F2a, função e avaliação (sem tela). Entregue (PR #689).** `_shared` de catálogo e prompt, schema,
+   `ai-estimativa-itens`, testes Deno, 42 casos sintéticos com runner e job no `ai-evals`. Resultado em
+   [ai-evals.md](../operations/ai-evals.md): item, quantidade e campos em 100% nas duas últimas rodadas, p95 de
+   latência de 3,7 a 4,1 s.
+2. **F2b, tela. Entregue (PR #695).** Campo ativo, custo e saldo, "O que entendi" com os estados do protótipo,
+   `aplicarInterpretacao` e `descricao` na ficha. Antes e depois no PR. Diferenças do protótipo: sem os botões
+   "Falar com o administrador", "Pedir mais tokens" e "Falar com a gente" (sem destino definido), e pergunta sem
+   item definido aparece só como texto.
 3. **F2c, ligar.** Gate por feature, comunicação no release, acompanhamento de uso e acerto no ledger e no Sentry nas
    primeiras semanas.
 
