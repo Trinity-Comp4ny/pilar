@@ -118,10 +118,5 @@
     "no-console": {
       "count": 3
     }
-  },
-  "supabase/functions/ai-rdo-voz/index.ts": {
-    "no-console": {
-      "count": 1
-    }
   }
 }

@@ -11,10 +11,6 @@
     "dominio": "ia",
     "descricao": "Extrai lançamentos do texto de um extrato ou fatura (spec 017)."
   },
-  "ai-rdo-voz": {
-    "dominio": "ia",
-    "descricao": "Transcreve áudio curto do RDO e preenche os campos de texto (spec 080)."
-  },
   "asaas-config": {
     "dominio": "cobranca-cliente",
     "descricao": "Configuração do Asaas da própria empresa (chave cifrada no Vault). A tela que chamava foi removida em 7602833d."

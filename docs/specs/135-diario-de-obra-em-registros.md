@@ -113,7 +113,7 @@ RPCs e funções de borda:
   a organização roda em segundo plano (`EdgeRuntime.waitUntil`) e um job reprocessa `enviado` parado há mais
   de 5 minutos.
 - Edge `ai-registro-organizar` (transcrever e extrair) e `ai-resumo-dia` (rascunho do dia).
-- A edge `ai-rdo-voz` do formulário do escritório continua até a Fase B, depois é aposentada.
+- A edge `ai-rdo-voz` do formulário do escritório foi aposentada em 21/10/2026 (BEZ-85), depois da gravação pelo escritório.
 
 ## Plano de implementação
 
@@ -140,8 +140,11 @@ material) e, ao salvar, liga os registros do dia ao `obra_rdo`. **Desvio da spec
 `ai-resumo-dia`. Ele soma o que a IA já extraiu de cada registro (`resumirDia`, puro e testado): não gasta token,
 não demora e o gestor revisa tudo no formulário. Efetivo não conta a mesma equipe duas vezes (vale o maior número
 citado por equipe). Dia que já tem RDO abre esse RDO para editar e os registros passam a apontar para ele.
-**Fora da fase B, pendente:** aposentar o RDO por voz do formulário (`ai-rdo-voz`), que só sai depois de gravar
-registro pelo escritório; clima do resumo (o formulário já sugere pela previsão do tempo).
+**RDO por voz aposentado (BEZ-85):** o formulário do RDO não grava mais áudio. Sem a etapa "Gravar" e sem o bloco
+"RDO por voz" nem as sugestões da fala: o diálogo abre direto nos campos (novo e edição). Saíram a edge `ai-rdo-voz`,
+o hook `useTranscreverRdoVoz` e `mesclarExtracaoVoz`; o `RdoFormDialog` caiu de 1520 para 933 linhas. A função já
+publicada no Supabase não some sozinha com o deploy: apagar de staging e produção (`supabase functions delete`).
+Pendente: clima do resumo (o formulário já sugere pela previsão do tempo).
 
 **Fase C, o que entrou (BEZ-35):** a função do portal `get_cliente_obra_detail` devolve `registros`: só os que o
 gestor liberou ("Mostrar ao cliente"), já organizados pela IA, dos últimos 30 dias, com data, texto e quantidade de
