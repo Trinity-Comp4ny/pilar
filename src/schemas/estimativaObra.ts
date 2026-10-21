@@ -105,6 +105,8 @@ export const fichaSchema = z
     itens: z
       .record(z.string(), z.number(NUMERO).min(0, "Não pode ser negativo").max(100_000, "Confira a quantidade"))
       .default({}),
+    /** Texto que a pessoa escreveu para a IA ler (SPEC 138). Só registro: o cálculo nunca lê. */
+    descricao: z.string().max(2000, "A descrição passa de 2.000 caracteres").optional(),
   })
   .superRefine((f, ctx) => {
     if (!SUBTIPOS[f.tipo][f.subtipo]) {
