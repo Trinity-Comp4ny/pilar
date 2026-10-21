@@ -12,6 +12,7 @@ import {
   type TomChip,
 } from "@/lib/registrosObra";
 import { cn } from "@/lib/utils";
+import { ArquivosDoRegistro } from "./ArquivosDoRegistro";
 import type { RegistroView } from "./registrosView";
 
 const TOM_CHIP: Record<TomChip, string> = {
@@ -68,7 +69,11 @@ export function RegistroCardCampo({
         <EstadoDoRegistro registro={r} />
       </header>
 
-      {(r.temAudio || r.fotos > 0) && (
+      {r.meu && r.id && (r.temAudio || r.fotos > 0) && (
+        <ArquivosDoRegistro registroId={r.id} temAudio={r.temAudio} duracaoS={r.duracaoS} fotos={r.fotos} />
+      )}
+
+      {!(r.meu && r.id) && (r.temAudio || r.fotos > 0) && (
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
           {r.temAudio && (
             <span className="inline-flex items-center gap-1">
