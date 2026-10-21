@@ -4,16 +4,18 @@ import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { CubImportacao } from "./components/CubImportacao";
 import { ParametrosEstimativa } from "./components/ParametrosEstimativa";
+import { SinapiImportacao } from "./components/SinapiImportacao";
 
-type Aba = "cub" | "parametros";
+type Aba = "cub" | "sinapi" | "parametros";
 
 const ABAS: ViewOption<Aba>[] = [
   { value: "cub", label: "CUB" },
+  { value: "sinapi", label: "SINAPI" },
   { value: "parametros", label: "Parâmetros" },
 ];
 
 /**
- * Estimativa de obra no portal ultra admin (SPEC 136): o CUB que o ultra admin importa todo mês e os
+ * Estimativa de obra no portal ultra admin (SPEC 136): o CUB e o SINAPI que o ultra admin importa todo mês e os
  * parâmetros do motor, com o gate de validação. Valem para todas as empresas.
  */
 export default function Estimativa() {
@@ -26,7 +28,9 @@ export default function Estimativa() {
         Preço de referência e parâmetros de cálculo. Só o ultra admin escreve; toda empresa lê.
       </p>
       <ViewSwitcher options={ABAS} value={aba} onChange={setAba} ariaLabel="Seção da estimativa" />
-      {aba === "cub" ? <CubImportacao /> : <ParametrosEstimativa />}
+      {aba === "cub" && <CubImportacao />}
+      {aba === "sinapi" && <SinapiImportacao />}
+      {aba === "parametros" && <ParametrosEstimativa />}
     </PilarPage>
   );
 }

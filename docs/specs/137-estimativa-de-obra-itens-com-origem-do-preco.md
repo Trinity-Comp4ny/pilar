@@ -126,8 +126,10 @@ como na ADR 0064.
 
 Fases, cada uma entregável sozinha:
 
-1. **F0, SINAPI no servidor (BEZ-69).** Importador em edge function ou script, tabelas, tela de status no ultra admin.
-   Leitura da fórmula do código, teste com o zip real de set/2026.
+1. **F0, SINAPI (BEZ-69).** Importador na tela do ultra admin: o navegador lê as abas ISD e ICD do
+   `SINAPI_Referência_AAAA_MM.xlsx` e grava só os insumos do catálogo (tabela `sinapi_precos_insumo`). Composições ficam
+   para a F4 (BEZ-84), onde a fórmula do código da composição será lida. Testado com o arquivo real de set/2026.
+   Runbook: [ESTIMATIVA_IMPORTAR_PRECOS_MENSAL](../operations/ESTIMATIVA_IMPORTAR_PRECOS_MENSAL.md).
 2. **F1, catálogo e origem (BEZ-82).** Migrations, motor com `origem` em toda linha e resolução de preço, versão do
    catálogo na estimativa, testes de contrato. Catálogo v1 com os itens que o CUB não cobre. Depende do protótipo para a
    tela.
