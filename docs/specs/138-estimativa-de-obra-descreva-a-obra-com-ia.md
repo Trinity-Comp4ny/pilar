@@ -6,7 +6,7 @@
 **Módulo:** obras (estimativa)
 **Estende:** [137: itens com origem do preço](137-estimativa-de-obra-itens-com-origem-do-preco.md) (F2 daquela spec)
 **ADRs:** [0063](../architecture/adr/0063-estimativa-de-obra-motor-deterministico-e-parametros-validados.md), [0064](../architecture/adr/0064-toda-linha-da-estimativa-tem-origem-do-preco-e-a-ia-so-preenche-o-catalogo.md), [0048](../architecture/adr/0048-mudanca-de-prompt-ou-modelo-passa-por-eval.md), [0054](../architecture/adr/0054-erro-de-ia-tem-tipo-fechado.md), [0035](../architecture/adr/0035-ledger-de-tokens-fonte-unica-de-uso-de-ia.md)
-**Protótipo:** estado "IA" do passo "O que a obra tem" no protótipo v1 (https://claude.ai/artifact/PGsfphRTCM9gRQsrs3zCkb). Faltam os estados de carregando, erro, sem saldo e nada reconhecido (briefing no anexo).
+**Protótipo:** v1.1 no Claude Design (https://claude.ai/artifact/PGsfphRTCM9gRQsrs3zCkb, versão 6, passo "O que a obra tem", estados de IA), aguardando aprovação
 **Card:** BEZ-83
 
 ## Problema
@@ -141,25 +141,11 @@ Fases, cada uma entregável sozinha:
 - **Risco: dependência de modelo.** O cliente de IA já aceita trocar de modelo sem mudar código (SPEC 108); a troca
   passa pela avaliação (ADR 0048).
 
-## Anexo: briefing para completar o protótipo no Claude Design
+## Anexo: estados prototipados (v1.1)
 
-O estado "IA" do passo "O que a obra tem" (v1) já mostra o campo, o botão "Preencher a lista" e o painel "O que
-entendi". Faltam, em desktop (1440) e celular (390):
-
-1. **Campo ativo, antes de rodar:** descrição com contador de caracteres (até 2.000), botão "Preencher a lista" com a
-   linha "Usa cerca de 3 mil tokens. Saldo da empresa: 120 mil."
-2. **Carregando:** o campo travado e o painel com a marca de espera (ADR 0049), sem spinner.
-3. **O que entendi, com perguntas:** lista editável (item, chip da origem, quantidade com mais e menos, remover, e o
-   trecho do texto em cinza); bloco "Não encontrei no catálogo" (aviso, fora do total); bloco "Faltou saber" com campos
-   (kWp, BTU). Botões "Usar esta lista" e "Corrigir a descrição".
-4. **Nada reconhecido:** o texto não citou item do catálogo; mostra exemplos de como descrever e mantém o campo.
-5. **Sem saldo, limite do usuário e trial pausado:** o botão desabilitado com a mensagem de cada motivo e o link para
-   falar com o administrador.
-6. **Erro do provedor e saída inválida:** mensagem que diz o que houve e o próximo passo, com "Tentar de novo" e a
-   opção de seguir manual.
-
-Dados seed: o texto do exemplo da obra Canaã (SP, 461 m², alto padrão) e um segundo, mais curto e ambíguo ("ar em todos
-os quartos, painel solar e automação"), que gera as perguntas.
-
-Restrições do design system: `PilarPage`, `Badge`, tokens semânticos (nunca cor crua), sem dropdown nativo, espera com a
-marca (ADR 0049), dinheiro e data por `@/lib/format`. Microcopy em português, voz ativa, sentence case, sem emoji.
+No passo "O que a obra tem" do protótipo, o seletor de estado traz: antes de rodar (texto, contador de caracteres, custo em
+tokens e saldo), lendo (marca de espera, sem spinner), o que entendi (lista editável com origem do preço, quantidade,
+remover e o trecho do texto), com perguntas (BTU e kWp, com a regra de que pergunta sem resposta deixa o item de fora),
+nada reconhecido (com dois exemplos de como descrever), sem saldo, limite pessoal e trial pausado (as mensagens de
+`mensagemBloqueioTokens`), erro do provedor e resposta inválida (com "Tentar de novo" e "Preencher à mão"). Em desktop e
+celular. "Usar esta lista" aplica os itens à ficha e volta ao passo com o aviso.
