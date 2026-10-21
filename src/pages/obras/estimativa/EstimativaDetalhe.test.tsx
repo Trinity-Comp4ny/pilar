@@ -4,6 +4,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { FICHA_SOBRADO, insumosProntos, resultadoDoSobrado } from "@/test/estimativaFixtures";
+import type { PrecoSinapi } from "@/schemas/estimativaObra";
 import type { EstimativaCompleta, Insumos, VersaoEstimativa } from "./hooks";
 import EstimativaDetalhe from "./EstimativaDetalhe";
 
@@ -237,5 +238,126 @@ describe("EstimativaDetalhe", () => {
     abrir();
     expect(screen.getByText("Não foi possível carregar a tabela de preços")).toBeInTheDocument();
     expect(screen.getByText("sem permissão")).toBeInTheDocument();
+  });
+});
+
+describe("EstimativaDetalhe: origem do preço (SPEC 137)", () => {
+  const split12: PrecoSinapi = {
+    codigo: 42425,
+    uf: "SP",
+    regime: "onerado",
+    mes_base: "2026-09-01",
+    valor: 2175.13,
+    origem: "CR",
+    descricao: "AR-CONDICIONADO SPLIT INVERTER 12000 BTU/H",
+    unidade: "UN",
+  };
+
+  const botaoInformar = (linha: string) => {
+    const tr = screen.getByText(linha).closest("tr");
+    if (!tr) throw new Error(`Linha ${linha} não encontrada`);
+    return within(tr).getByRole("button", { name: "Informar valor" });
+  };
+
+  const comItens = () => {
+    estimativa = { ...criarEstimativa(), ficha: { ...FICHA_SOBRADO, itens: { ac12: 2, fv: 8 } } };
+    insumos = { ...insumosProntos(), precosSinapi: [split12] };
+  };
+
+  it("mostra a origem de cada linha e o resumo de quanto tem fonte verificável", () => {
+    comItens();
+    abrir();
+    expect(screen.getByRole("heading", { name: "De onde vem o preço" })).toBeInTheDocument();
+    expect(screen.getByText(/do total tem fonte verificável/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Origem do preço de ar-condicionado split 12\.000 btu.*SINAPI/i })
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /Origem do preço de piscina.*Provisória/i }).length).toBeGreaterThan(
+      0
+    );
+    expect(screen.getByRole("button", { name: /Origem do preço de energia solar.*A definir/i })).toBeInTheDocument();
+  });
+
+  it("clicar na origem SINAPI abre o código, a UF, o mês e o regime", async () => {
+    comItens();
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: /Origem do preço de ar-condicionado split 12\.000 btu/i }));
+    const dialogo = await screen.findByRole("dialog");
+    expect(within(dialogo).getByText("42425 (insumo)")).toBeInTheDocument();
+    expect(within(dialogo).getByText("SP · set/2026")).toBeInTheDocument();
+    expect(within(dialogo).getByText("sem desoneração")).toBeInTheDocument();
+    expect(within(dialogo).getByText(/Derivado de preços coletados/)).toBeInTheDocument();
+  });
+
+  it("clicar na origem do CUB mostra a tabela e o valor por m²", async () => {
+    comItens();
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: /Origem do preço de base do CUB/i }));
+    const dialogo = await screen.findByRole("dialog");
+    expect(within(dialogo).getByText(/^CUB R1-/)).toBeInTheDocument();
+  });
+
+  it("informar o valor de um item a definir recalcula, grava na premissa e vira 'Você informou'", async () => {
+    comItens();
+    const user = userEvent.setup();
+    abrir();
+    await user.click(botaoInformar("Energia solar fotovoltaica (8 kWp)"));
+    const dialogo = await screen.findByRole("dialog");
+    await user.type(within(dialogo).getByLabelText(/Valor \(por kWp\)/), "520000");
+    await user.type(within(dialogo).getByLabelText(/Nota/), "Orçamento do integrador");
+    await user.click(within(dialogo).getByRole("button", { name: "Usar este valor" }));
+
+    expect(
+      await screen.findByRole("button", { name: /Origem do preço de energia solar.*Você informou/i })
+    ).toBeInTheDocument();
+    await waitFor(() => expect(atualizar).toHaveBeenCalledTimes(1), { timeout: 3000 });
+    const [salvo] = atualizar.mock.calls[0] as [
+      { premissas: { valores: Record<string, { valor_unitario: number; nota?: string }> } },
+    ];
+    expect(salvo.premissas.valores.fv).toEqual({ valor_unitario: 5200, nota: "Orçamento do integrador" });
+  });
+
+  it("valor zerado não passa e diz o motivo", async () => {
+    comItens();
+    const user = userEvent.setup();
+    abrir();
+    await user.click(botaoInformar("Energia solar fotovoltaica (8 kWp)"));
+    const dialogo = await screen.findByRole("dialog");
+    await user.click(within(dialogo).getByRole("button", { name: "Usar este valor" }));
+    expect(within(dialogo).getByText("Informe um valor maior que zero")).toBeInTheDocument();
+    expect(atualizar).not.toHaveBeenCalled();
+  });
+
+  it("trocar o valor já informado e depois removê-lo volta à fonte seguinte", async () => {
+    comItens();
+    estimativa = { ...estimativa!, premissas: { valores: { ac12: { valor_unitario: 2600, nota: "fornecedor" } } } };
+    const user = userEvent.setup();
+    abrir();
+    await user.click(
+      screen.getByRole("button", { name: /Origem do preço de ar-condicionado split 12\.000 btu.*Você informou/i })
+    );
+    await user.click(await screen.findByRole("button", { name: "Trocar o valor" }));
+    await user.click(await screen.findByRole("button", { name: "Remover o valor informado" }));
+    expect(
+      await screen.findByRole("button", { name: /Origem do preço de ar-condicionado split 12\.000 btu.*SINAPI/i })
+    ).toBeInTheDocument();
+  });
+
+  it("sem permissão de edição, o item a definir não oferece informar valor", () => {
+    comItens();
+    podeEditar = false;
+    abrir();
+    expect(screen.queryByRole("button", { name: "Informar valor" })).not.toBeInTheDocument();
+    expect(screen.getAllByText("A definir").length).toBeGreaterThan(0);
+  });
+
+  it("resultado salvo antes da origem abre sem o resumo e com as linhas como provisórias", () => {
+    estimativa = { ...criarEstimativa(), resultado: { ...resultadoDoSobrado(), origens: undefined } };
+    abrir();
+    expect(screen.getAllByRole("button", { name: /Origem do preço de piscina.*Provisória/i }).length).toBeGreaterThan(
+      0
+    );
   });
 });

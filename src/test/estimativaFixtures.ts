@@ -75,7 +75,14 @@ export const FICHA_SOBRADO: Ficha = {
 };
 
 export function insumosProntos(validado = false): Extract<Insumos, { estado: "ok" }> {
-  return { estado: "ok", cub: CUB_FIXTURE, parametros: parametrosDaMigration(), ajustes: null, validado };
+  return {
+    estado: "ok",
+    cub: CUB_FIXTURE,
+    parametros: parametrosDaMigration(),
+    ajustes: null,
+    precosSinapi: [],
+    validado,
+  };
 }
 
 export function resultadoDoSobrado(validado = false): ResultadoEstimativa {

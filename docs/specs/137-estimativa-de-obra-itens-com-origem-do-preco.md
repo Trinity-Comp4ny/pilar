@@ -1,11 +1,11 @@
 # SPEC: Estimativa de obra, itens do catálogo com origem do preço
 
 **Data:** 2026-10-20
-**Status:** Aprovada a direção, protótipo pendente
+**Status:** Em implementação (motor em staging, telas na PR de F1b)
 **Autor:** Matheus Rezende
 **Módulo:** obras
 **Origem:** [DECISOES.md](../strategy/DECISOES.md) de 2026-10-20 (itens com origem do preço e IA sobre o catálogo)
-**Protótipo:** pendente (briefing no fim desta SPEC, para o Claude Design)
+**Protótipo:** aprovado em 20/10/2026 (Claude Design, v1: https://claude.ai/artifact/PGsfphRTCM9gRQsrs3zCkb)
 **ADRs:** [0064](../architecture/adr/0064-toda-linha-da-estimativa-tem-origem-do-preco-e-a-ia-so-preenche-o-catalogo.md), [0063](../architecture/adr/0063-estimativa-de-obra-motor-deterministico-e-parametros-validados.md)
 **Estende:** [136: estimativa paramétrica de obra](136-estimativa-de-obra-parametrica.md)
 **Cards:** BEZ-82 (catálogo e origem), BEZ-69 (SINAPI), BEZ-83 (IA sobre o catálogo), BEZ-84 (modo detalhado), BEZ-48 (PDF da planta), BEZ-80 (itens fora do CUB)

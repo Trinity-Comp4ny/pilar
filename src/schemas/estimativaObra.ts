@@ -356,17 +356,18 @@ const origemLinhaSchema = z.discriminatedUnion("tipo", [
 export type OrigemLinha = z.infer<typeof origemLinhaSchema>;
 
 /** Uma linha de `sinapi_precos_insumo`: preço de um insumo do SINAPI na UF, regime e mês-base. */
-export interface PrecoSinapi {
-  codigo: number;
-  uf: Uf;
-  regime: Regime;
-  mes_base: string;
-  valor: number;
+export const precoSinapiSchema = z.object({
+  codigo: z.number().int().positive(),
+  uf: z.enum(UFS),
+  regime: z.enum(REGIMES),
+  mes_base: z.string().regex(/^\d{4}-\d{2}-01$/),
+  valor: z.number().positive(),
   /** C = coletado em pesquisa de preço; CR = derivado de um coletado. */
-  origem: "C" | "CR";
-  descricao: string;
-  unidade: string;
-}
+  origem: z.enum(["C", "CR"]),
+  descricao: z.string(),
+  unidade: z.string(),
+});
+export type PrecoSinapi = z.infer<typeof precoSinapiSchema>;
 
 export const resultadoSchema = z.object({
   versaoMotor: z.literal(1),

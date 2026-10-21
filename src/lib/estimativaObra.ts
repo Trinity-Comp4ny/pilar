@@ -15,6 +15,7 @@ import {
   cubLinhaSchema,
   fichaSchema,
   parametrosSchema,
+  precoSinapiSchema,
   premissasSchema,
   type Adicional,
   type AjustesEmpresa,
@@ -108,6 +109,11 @@ export function lerParametros(bruto: unknown): { ok: true; parametros: Parametro
 /** Linhas de `cub_valores`. Uma linha inválida derruba a leitura inteira: preço errado é pior que nenhum. */
 export function lerCub(bruto: unknown): Leitura<CubLinha[]> {
   return ler(cubLinhaSchema.array(), bruto, "Linhas do CUB");
+}
+
+/** Linhas de `sinapi_precos_insumo`. Uma linha inválida derruba a leitura inteira. */
+export function lerPrecosSinapi(bruto: unknown): Leitura<PrecoSinapi[]> {
+  return ler(precoSinapiSchema.array(), bruto, "Preços do SINAPI");
 }
 
 /** `estimativa_ajustes_empresa.adicionais` embrulhado como `{ adicionais }`. */

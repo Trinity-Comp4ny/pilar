@@ -3,12 +3,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, TablesUpdate } from "@/integrations/supabase/types";
-import { lerAjustes, lerCub, lerParametros } from "@/lib/estimativaObra";
+import { lerAjustes, lerCub, lerParametros, lerPrecosSinapi } from "@/lib/estimativaObra";
 import type {
   AjustesEmpresa,
   CubLinha,
   Ficha,
   Parametros,
+  PrecoSinapi,
   Premissas,
   ResultadoEstimativa,
 } from "@/schemas/estimativaObra";
@@ -233,9 +234,16 @@ export function useSalvarVersao() {
 export type Insumos =
   | { estado: "carregando" }
   | { estado: "erro"; mensagem: string }
-  | { estado: "ok"; cub: CubLinha[]; parametros: Parametros; ajustes: AjustesEmpresa | null; validado: boolean };
+  | {
+      estado: "ok";
+      cub: CubLinha[];
+      parametros: Parametros;
+      ajustes: AjustesEmpresa | null;
+      precosSinapi: PrecoSinapi[];
+      validado: boolean;
+    };
 
-/** Tudo que o motor precisa além da ficha. Um erro em qualquer parte vira um erro só, com a causa. */
+/** Tudo que o motor precisa além da ficha: CUB, parâmetros, ajustes da empresa e preços do SINAPI. Um erro em qualquer parte vira um erro só, com a causa. */
 export function useInsumosDaEstimativa(): Insumos {
   const cub = useQuery({
     queryKey: ["estimativa-cub"],
@@ -282,14 +290,33 @@ export function useInsumosDaEstimativa(): Insumos {
     staleTime: 5 * 60_000,
   });
 
-  const erro = cub.error ?? parametros.error ?? ajustes.error;
+  const precosSinapi = useQuery({
+    queryKey: ["estimativa-precos-sinapi"],
+    queryFn: async (): Promise<PrecoSinapi[]> => {
+      const { data, error } = await supabase
+        .from("sinapi_precos_insumo")
+        .select("codigo, uf, regime, mes_base, valor, origem, descricao, unidade")
+        .order("mes_base", { ascending: false })
+        .limit(10_000);
+      if (error) throw error;
+      const lido = lerPrecosSinapi(data ?? []);
+      if (!lido.ok) throw new Error(lido.mensagem);
+      return lido.valor;
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  const erro = cub.error ?? parametros.error ?? ajustes.error ?? precosSinapi.error;
   if (erro) return { estado: "erro", mensagem: erro instanceof Error ? erro.message : "Falha ao carregar" };
-  if (!cub.data || !parametros.data || ajustes.data === undefined) return { estado: "carregando" };
+  if (!cub.data || !parametros.data || ajustes.data === undefined || !precosSinapi.data) {
+    return { estado: "carregando" };
+  }
   return {
     estado: "ok",
     cub: cub.data,
     parametros: parametros.data.parametros,
     ajustes: ajustes.data,
+    precosSinapi: precosSinapi.data,
     validado: parametros.data.validado,
   };
 }

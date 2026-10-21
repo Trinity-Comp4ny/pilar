@@ -1,11 +1,24 @@
 import { Building2, Factory, Home, type LucideIcon } from "lucide-react";
 import { useMemo, type ReactNode } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { avisosCoerencia, rotuloPadrao, type SaidaCalculo } from "@/lib/estimativaObra";
-import { PADROES, SUBTIPOS, type Ficha, type Padrao, type TipoObra } from "@/schemas/estimativaObra";
+import {
+  PADROES,
+  SUBTIPOS,
+  type Ficha,
+  type Padrao,
+  type Premissas,
+  type ResultadoEstimativa,
+  type TipoObra,
+} from "@/schemas/estimativaObra";
 import { Campo, CampoNumero, Contador, Pilula } from "./componentes";
+import type { Insumos } from "./hooks";
+import { ItensDaObra } from "./ItensDaObra";
+import { resumoDosItens } from "./itensCatalogo";
 import {
   PADRAO_INFO,
   PASSO_ROTULO,
@@ -17,6 +30,8 @@ import {
   type ErrosDaFicha,
   type Passo,
 } from "./lib";
+
+type InsumosProntos = Extract<Insumos, { estado: "ok" }>;
 
 export interface PassoProps {
   ficha: Ficha;
@@ -241,138 +256,103 @@ export function PassoLocal({
           erro={erros.terreno}
         />
       </Campo>
-      <fieldset className="sm:col-span-2">
-        <legend className="mb-1.5 text-sm font-medium text-ink-soft">Relevo do terreno</legend>
-        <div className="flex flex-wrap gap-2">
-          {TOPOGRAFIAS_OPCOES.map((t) => (
-            <Pilula key={t.valor} ativa={ficha.topografia === t.valor} onClick={() => atualizar("topografia", t.valor)}>
-              {t.rotulo}
-            </Pilula>
-          ))}
-        </div>
-        {ficha.topografia === "inclinado" && (
-          <div className="mt-3 sm:max-w-[calc(50%-0.5rem)]">
-            <Campo
-              id="est-arrimo"
-              rotulo="Muro de arrimo"
-              dica="Comprimento vezes altura média, em m². Sem a medida, o item fica a definir. Terraplenagem e fundação especial dependem de levantamento topográfico e sondagem."
-              erro={erros.arrimo}
-            >
-              <CampoNumero
-                id="est-arrimo"
-                valor={ficha.arrimo}
-                onChange={(n) => atualizar("arrimo", n)}
-                sufixo="m²"
-                erro={erros.arrimo}
-              />
-            </Campo>
-          </div>
-        )}
-      </fieldset>
     </div>
   );
 }
 
-const TOPOGRAFIAS_OPCOES: { valor: Ficha["topografia"]; rotulo: string }[] = [
-  { valor: "plano", rotulo: "Plano" },
-  { valor: "inclinado", rotulo: "Inclinado, precisa de contenção" },
-];
-
-const NIVEIS_MARCENARIA: { valor: Ficha["marcenaria"]; rotulo: string }[] = [
-  { valor: "nenhuma", rotulo: "Nenhuma" },
-  { valor: "basica", rotulo: "Básica" },
-  { valor: "completa", rotulo: "Completa" },
-];
-
-export function PassoPrograma({ ficha, atualizar, erros }: PassoProps) {
+export function PassoPrograma({
+  ficha,
+  atualizar,
+  erros,
+  insumos,
+  premissas,
+  resultado,
+}: PassoProps & { insumos: InsumosProntos; premissas: Premissas; resultado: ResultadoEstimativa | null }) {
   const residencial = ficha.tipo === "residencial";
-  const itens: { campo: "gourmet" | "elevador" | "subsolo" | "paisagismo"; rotulo: string; so?: "residencial" }[] = [
-    { campo: "gourmet", rotulo: "Área gourmet", so: "residencial" },
-    { campo: "elevador", rotulo: "Elevador" },
-    { campo: "subsolo", rotulo: "Subsolo" },
-    { campo: "paisagismo", rotulo: "Paisagismo" },
-  ];
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {residencial && (
-          <>
-            <Contador
-              rotulo="Quartos"
-              valor={ficha.quartos}
-              onChange={(n) => atualizar("quartos", n)}
-              erro={erros.quartos}
-            />
-            <Contador
-              rotulo="Suítes"
-              valor={ficha.suites}
-              onChange={(n) => atualizar("suites", n)}
-              erro={erros.suites}
-            />
-          </>
-        )}
-        <Contador
-          rotulo="Banheiros"
-          valor={ficha.banheiros}
-          onChange={(n) => atualizar("banheiros", n)}
-          erro={erros.banheiros}
-        />
-        {residencial && (
+      <section aria-label="Ambientes" className="rounded-2xl border bg-card p-4 md:p-5">
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <h3 className="text-base font-semibold text-ink">Ambientes</h3>
+          <p className="max-w-md text-xs text-ink-soft">
+            Não mudam o preço: o CUB já considera o padrão. Servem para conferir a ficha e para o PDF.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {residencial && (
+            <>
+              <Contador
+                rotulo="Quartos"
+                valor={ficha.quartos}
+                onChange={(n) => atualizar("quartos", n)}
+                erro={erros.quartos}
+              />
+              <Contador
+                rotulo="Suítes"
+                valor={ficha.suites}
+                onChange={(n) => atualizar("suites", n)}
+                erro={erros.suites}
+              />
+            </>
+          )}
           <Contador
-            rotulo="Lavabos"
-            valor={ficha.lavabo}
-            onChange={(n) => atualizar("lavabo", n)}
-            erro={erros.lavabo}
+            rotulo="Banheiros"
+            valor={ficha.banheiros}
+            onChange={(n) => atualizar("banheiros", n)}
+            erro={erros.banheiros}
           />
-        )}
-        <Contador
-          rotulo="Vagas"
-          valor={ficha.vagas}
-          onChange={(n) => atualizar("vagas", n)}
-          max={999}
-          erro={erros.vagas}
-        />
-        {residencial && (
-          <Campo id="est-piscina" rotulo="Piscina" erro={erros.piscina} dica="Deixe 0 se não tiver.">
-            <CampoNumero
-              id="est-piscina"
-              valor={ficha.piscina}
-              onChange={(n) => atualizar("piscina", n)}
-              sufixo="m²"
-              erro={erros.piscina}
+          {residencial && (
+            <Contador
+              rotulo="Lavabos"
+              valor={ficha.lavabo}
+              onChange={(n) => atualizar("lavabo", n)}
+              erro={erros.lavabo}
             />
-          </Campo>
-        )}
+          )}
+          <Contador
+            rotulo="Vagas"
+            valor={ficha.vagas}
+            onChange={(n) => atualizar("vagas", n)}
+            max={999}
+            erro={erros.vagas}
+          />
+        </div>
+      </section>
+
+      <section className="rounded-2xl border bg-card p-4 md:p-5">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <label htmlFor="est-descricao" className="text-base font-semibold text-ink">
+            Descreva a obra
+          </label>
+          <Badge variant="highlight">Em breve</Badge>
+        </div>
+        <Textarea
+          id="est-descricao"
+          disabled
+          rows={3}
+          placeholder="Ex.: 6 splits de 12.000 BTU, aquecedor solar, painel fotovoltaico de 10 kWp, piscina de 20 m²"
+        />
+        <p className="mt-2 text-xs text-ink-soft">
+          Em breve a IA transforma o texto em itens da lista abaixo, com a sua confirmação. Ela não define preço nem
+          prazo.
+        </p>
+      </section>
+
+      <div>
+        <h3 className="mb-1 text-base font-semibold text-ink">O que o CUB não cobre</h3>
+        <p className="mb-3 text-sm text-ink-soft">
+          Estrutura, alvenaria, instalações básicas e o acabamento do padrão já estão no CUB. Marque o que a obra terá
+          além disso: cada item mostra de onde vem o preço.
+        </p>
+        <ItensDaObra
+          ficha={ficha}
+          atualizar={atualizar}
+          erros={erros}
+          insumos={insumos}
+          premissas={premissas}
+          resultado={resultado}
+        />
       </div>
-
-      <fieldset>
-        <legend className="mb-2 text-sm font-medium text-ink-soft">Itens da obra</legend>
-        <div className="flex flex-wrap gap-2">
-          {itens
-            .filter((i) => !i.so || residencial)
-            .map((i) => (
-              <Pilula key={i.campo} ativa={ficha[i.campo]} onClick={() => atualizar(i.campo, !ficha[i.campo])}>
-                {i.rotulo}
-              </Pilula>
-            ))}
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend className="mb-2 text-sm font-medium text-ink-soft">Marcenaria e móveis planejados</legend>
-        <div className="flex flex-wrap gap-2">
-          {NIVEIS_MARCENARIA.map((n) => (
-            <Pilula key={n.valor} ativa={ficha.marcenaria === n.valor} onClick={() => atualizar("marcenaria", n.valor)}>
-              {n.rotulo}
-            </Pilula>
-          ))}
-        </div>
-      </fieldset>
-
-      <p className="text-xs text-ink-soft">
-        O que não está no CUB (fundação, piscina, marcenaria, paisagismo, elevador) entra como adicional, com valor
-        próprio.
-      </p>
     </div>
   );
 }
@@ -427,14 +407,7 @@ export function PassoRevisao({
     ficha.tipo === "residencial" && ficha.lavabo > 0 && `${ficha.lavabo} lavabo${ficha.lavabo > 1 ? "s" : ""}`,
     `${ficha.vagas} vagas`,
   ].filter(Boolean);
-  const adicionais = [
-    ficha.tipo === "residencial" && ficha.piscina > 0 && `piscina de ${ficha.piscina.toLocaleString("pt-BR")} m²`,
-    ficha.tipo === "residencial" && ficha.gourmet && "área gourmet",
-    ficha.elevador && "elevador",
-    ficha.subsolo && "subsolo",
-    ficha.paisagismo && "paisagismo",
-    ficha.marcenaria !== "nenhuma" && `marcenaria ${ficha.marcenaria === "basica" ? "básica" : "completa"}`,
-  ].filter(Boolean);
+  const adicionais = resumoDosItens(ficha);
 
   return (
     <div className="space-y-4">
@@ -474,21 +447,9 @@ export function PassoRevisao({
           passo="local"
           onEditar={onEditar}
         />
-        <LinhaRevisao
-          rotulo="Terreno"
-          valor={
-            ficha.topografia === "inclinado"
-              ? ficha.arrimo > 0
-                ? `inclinado, com ${ficha.arrimo.toLocaleString("pt-BR")} m² de muro de arrimo`
-                : "inclinado, muro de arrimo a medir"
-              : "plano"
-          }
-          passo="local"
-          onEditar={onEditar}
-        />
         <LinhaRevisao rotulo="Programa" valor={programa.join(" · ")} passo="programa" onEditar={onEditar} />
         <LinhaRevisao
-          rotulo="Adicionais"
+          rotulo="Itens fora do CUB"
           valor={adicionais.length > 0 ? adicionais.join(", ") : "nenhum"}
           passo="programa"
           onEditar={onEditar}
