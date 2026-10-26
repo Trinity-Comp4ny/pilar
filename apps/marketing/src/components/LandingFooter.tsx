@@ -4,7 +4,7 @@ import { requestCookieConsentReview } from "../cookieConsent";
 import { COMPARATIVOS } from "../lib/comparativos";
 import { MODULOS } from "../lib/modules";
 import { Logo } from "./Logo";
-import { linkCadastro } from "../lib/origem";
+import { DEMO_URL } from "../lib/contato";
 
 /**
  * Rodapé no verde da marca, como na referência: o fim da página é um bloco de
@@ -94,8 +94,13 @@ export function LandingFooter() {
                 </a>
               </li>
               <li>
-                <a href={linkCadastro()} className="text-[13.5px] text-ink/75 hover:text-ink transition-colors">
-                  Criar conta
+                <a
+                  href={DEMO_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[13.5px] text-ink/75 hover:text-ink transition-colors"
+                >
+                  Agendar demonstração
                 </a>
               </li>
               <li>

@@ -67,6 +67,10 @@ export function usePermissions() {
       isAdmin: effectiveRole === "admin" || effectiveRole === ("ultra_admin" as UserRole),
       isUltraAdmin: effectiveRole === ("ultra_admin" as UserRole),
       companyFeatures,
+      // Admin com impersonation ainda hidratando do servidor: o papel efetivo
+      // pode mudar. Query que chama RPC com gate de papel espera `ready`, senão
+      // o banco (que já vê o papel simulado) rejeita (PILAR-2C/2D).
+      ready: !impersonation?.loading,
       can,
       cannot,
       getButtonProps,
@@ -76,6 +80,7 @@ export function usePermissions() {
     effectiveRole,
     realRole,
     impersonation?.isImpersonating,
+    impersonation?.loading,
     companyFeatures,
     financeiroDelegado,
     equipeDelegado,

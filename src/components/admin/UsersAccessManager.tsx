@@ -1,17 +1,7 @@
 import { useEffect, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import {
-  Pencil,
-  Trash2,
-  UserPlus,
-  Users as UsersIcon,
-  ShieldCheck,
-  ShieldAlert,
-  Briefcase,
-  Wallet,
-  Target,
-} from "lucide-react";
+import { UserPlus, Users as UsersIcon, ShieldCheck, ShieldAlert, Briefcase, Wallet, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PilarRole } from "@/lib/roles";
 import { Button } from "@/components/ui/button";
@@ -20,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable } from "@/components/data/DataTable";
+import { buildUsersColumns } from "./usersAccessColumns";
 import {
   Dialog,
   DialogContent,
@@ -139,6 +130,18 @@ export function UsersAccessManager({
     setEditTarget(user);
   };
 
+  const usersColumns = buildUsersColumns({
+    canManage,
+    currentUserId,
+    showLastAccess,
+    roleBadge: ROLE_BADGE,
+    ultimoAcesso: ultimoAcessoLabel,
+    onResendInvite,
+    onCancelInvite,
+    onEdit: openEdit,
+    onDelete: setDeleteTarget,
+  });
+
   return (
     <Card className="border border-black/5">
       <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -159,144 +162,13 @@ export function UsersAccessManager({
 
       <CardContent>
         <div className="hidden md:block">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Tipo de conta</TableHead>
-                {showLastAccess && <TableHead>Último acesso</TableHead>}
-                <TableHead className="w-32 text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={showLastAccess ? 5 : 4}
-                    className="py-10 text-center text-sm text-muted-foreground"
-                  >
-                    Nenhum usuário adicionado.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                users.map((u) => {
-                  const isUltra = u.role === "ultra_admin";
-                  return (
-                    <TableRow key={u.id} className={u.isPending ? "opacity-70" : ""}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          <span className="line-clamp-1">{u.name}</span>
-                          {u.isPending && <Badge variant="secondary">Pendente</Badge>}
-                          {u.id === currentUserId && (
-                            <Badge
-                              variant="outline"
-                              className="h-5 rounded-full border-black/10 bg-black/5 px-2 text-[10px] text-black/60"
-                            >
-                              Você
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-black/70">{u.email}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <Badge variant="outline" className="rounded-full border-black/10 bg-black/5 text-black/70">
-                            {ROLE_BADGE[u.role]}
-                          </Badge>
-                          {u.role === "coordenador" && u.financeiroDelegado && (
-                            <Badge
-                              variant="outline"
-                              className="rounded-full border-brand/20 bg-brand/10 text-ink gap-1"
-                            >
-                              <Wallet size={11} strokeWidth={1.75} />
-                              Financeiro
-                            </Badge>
-                          )}
-                          {u.role === "coordenador" && u.equipeDelegado && (
-                            <Badge
-                              variant="outline"
-                              className="rounded-full border-brand/20 bg-brand/10 text-ink gap-1"
-                            >
-                              <UsersIcon size={11} strokeWidth={1.75} />
-                              Equipe
-                            </Badge>
-                          )}
-                          {u.role === "coordenador" && u.metasDelegado && (
-                            <Badge
-                              variant="outline"
-                              className="rounded-full border-brand/20 bg-brand/10 text-ink gap-1"
-                            >
-                              <Target size={11} strokeWidth={1.75} />
-                              Metas
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      {showLastAccess && <TableCell className="text-black/60">{ultimoAcessoLabel(u)}</TableCell>}
-                      <TableCell className="text-right">
-                        {canManage && u.isPending ? (
-                          <div className="flex justify-end gap-2">
-                            {onResendInvite && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="rounded-full"
-                                onClick={() => onResendInvite(u)}
-                                aria-label={`Reenviar convite para ${u.email}`}
-                              >
-                                Reenviar
-                              </Button>
-                            )}
-                            {onCancelInvite && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="rounded-full text-danger-mid"
-                                onClick={() => onCancelInvite(u)}
-                                aria-label={`Cancelar convite de ${u.email}`}
-                              >
-                                Cancelar
-                              </Button>
-                            )}
-                          </div>
-                        ) : canManage && !isUltra ? (
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="rounded-full"
-                              onClick={() => openEdit(u)}
-                              aria-label={`Editar acessos de ${u.name}`}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="rounded-full text-danger-mid"
-                              onClick={() => setDeleteTarget(u)}
-                              disabled={u.id === currentUserId}
-                              aria-label={`Remover ${u.name}`}
-                              title={u.id === currentUserId ? "Você não pode remover a si mesmo" : "Remover"}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ) : isUltra ? (
-                          <span className="text-[11px] text-muted-foreground" title="Ultra admin: gerenciado via SQL">
-                            Protegido
-                          </span>
-                        ) : (
-                          <span className="text-black/40">-</span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={usersColumns}
+            data={{ rows: users, isPending: false, error: null }}
+            rowKey={(u) => u.id}
+            rowClassName={(u) => (u.isPending ? "opacity-70" : undefined)}
+            emptyMessage="Nenhum usuário adicionado."
+          />
         </div>
 
         <div className="space-y-3 md:hidden">
@@ -475,7 +347,7 @@ function InviteDialog({ open, onClose, isSubmitting, onSubmit }: InviteDialogPro
 
   return (
     <Dialog open={open} onOpenChange={(v) => (!v ? onClose() : undefined)}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Convidar usuário</DialogTitle>
           <DialogDescription>
@@ -588,7 +460,7 @@ function EditDialog({ user, onClose, onSubmit, onToggleFinanceiro, onToggleEquip
 
   return (
     <Dialog open onOpenChange={(v) => (!v ? onClose() : undefined)}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Tipo de conta: {user.name}</DialogTitle>
           <DialogDescription>Define quem administra usuários, plano e configuração da empresa.</DialogDescription>

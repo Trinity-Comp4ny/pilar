@@ -5,7 +5,7 @@ import { toPrioridade, type Prioridade, type StatusBucket } from "./status";
 import type { LinkItem } from "@/components/LinksEditor";
 import type { Json, TablesUpdate } from "@/integrations/supabase/types";
 
-export type PessoaOpcao = { id: string; nome: string; avatarUrl?: string | null };
+export type PessoaOpcao = { id: string; nome: string; avatarUrl?: string | null; profileId?: string | null };
 
 /** Comentário estruturado da tarefa (spec 013). */
 export type Comentario = { id: string; texto: string; autor: string; data: string; mencionados?: string[] };
@@ -41,6 +41,9 @@ export type TarefaItem = {
   responsaveis: PessoaOpcao[];
   projeto_id: string | null;
   etapa_id: string | null;
+  /** Obra e serviço do cronograma (SPEC 111). Nulos em tarefa avulsa. */
+  obra_id: string | null;
+  obra_frente_id: string | null;
   prazo: string | null;
   horas_estimadas: number | null;
   horas_reais: number | null;
@@ -64,6 +67,10 @@ export type TarefaInput = {
   responsaveis?: string[];
   projeto_id?: string | null;
   etapa_id?: string | null;
+  /** Tarefa que nasce numa obra (aba Tarefas da obra, SPEC 140). */
+  obra_id?: string | null;
+  /** Serviço do cronograma da obra; precisa ser da mesma obra e não pode ser fase. */
+  obra_frente_id?: string | null;
   prazo?: string | null;
   horas_estimadas?: number | null;
   horas_reais?: number | null;
@@ -130,16 +137,17 @@ export function usePessoasEmpresa() {
     queryFn: async (): Promise<PessoaOpcao[]> => {
       const { data, error } = await supabase
         .from("pessoas")
-        .select("id, nome, profiles!pessoas_profile_id_fkey(avatar_url)")
+        .select("id, nome, profile_id, profiles!pessoas_profile_id_fkey(avatar_url)")
         .is("deleted_at", null)
         .order("nome");
       if (error) throw error;
       // profile_id é opcional (pessoa sem login não tem profile); sem foto, o
       // AvatarStack cai para iniciais.
-      return (data ?? []).map(({ id, nome, profiles }) => ({
+      return (data ?? []).map(({ id, nome, profile_id, profiles }) => ({
         id,
         nome,
         avatarUrl: profiles?.avatar_url ?? null,
+        profileId: profile_id,
       }));
     },
   });
@@ -206,7 +214,7 @@ export function useSetDisciplinaStatus() {
 }
 
 const TAREFA_SELECT =
-  "id, numero, titulo, descricao, status, prioridade, created_by, responsavel_id, projeto_id, etapa_id, prazo, horas_estimadas, horas_reais, labels, links, comentarios, projeto:projetos(id, nome), responsaveis:tarefa_responsaveis(pessoa:pessoas(id, nome)), obra:obras(id, nome), servico:obra_frente!tarefas_obra_frente_id_fkey(nome, etapa:parent_id(nome, fase:parent_id(nome)))" as const;
+  "id, numero, titulo, descricao, status, prioridade, created_by, responsavel_id, projeto_id, etapa_id, obra_id, obra_frente_id, prazo, horas_estimadas, horas_reais, labels, links, comentarios, projeto:projetos(id, nome), responsaveis:tarefa_responsaveis(pessoa:pessoas(id, nome)), obra:obras(id, nome), servico:obra_frente!tarefas_obra_frente_id_fkey(nome, etapa:parent_id(nome, fase:parent_id(nome)))" as const;
 
 type TarefaRowSelect = {
   status: string;
@@ -347,6 +355,8 @@ export function useTarefaMutations() {
           responsavel_id: responsaveis[0] ?? null,
           projeto_id: input.projeto_id ?? null,
           etapa_id: input.etapa_id ?? null,
+          obra_id: input.obra_id ?? null,
+          obra_frente_id: input.obra_frente_id ?? null,
           prazo: input.prazo ?? null,
           horas_estimadas: input.horas_estimadas ?? null,
           horas_reais: input.horas_reais ?? null,
@@ -373,6 +383,7 @@ export function useTarefaMutations() {
       if (input.prioridade !== undefined) patch.prioridade = input.prioridade;
       if (input.projeto_id !== undefined) patch.projeto_id = input.projeto_id;
       if (input.etapa_id !== undefined) patch.etapa_id = input.etapa_id;
+      if (input.obra_frente_id !== undefined) patch.obra_frente_id = input.obra_frente_id;
       if (input.prazo !== undefined) patch.prazo = input.prazo;
       if (input.horas_estimadas !== undefined) patch.horas_estimadas = input.horas_estimadas;
       if (input.horas_reais !== undefined) patch.horas_reais = input.horas_reais;

@@ -30,6 +30,10 @@ WITH permitido(coluna, motivo) AS (
     ('pilar_subscription_plans.preco_anual', 'catálogo'),
     ('pilar_subscription_plans.preco_mensal', 'catálogo'),
     ('trial_niveis.tokens_total', 'catálogo'),
+    -- CUB dos Sinduscons (SPEC 136): referência pública de mercado, importada pelo ultra admin.
+    ('cub_valores.valor_m2', 'catálogo'),
+    -- SINAPI (SPEC 137): preço público de insumo do catálogo, importado pelo ultra admin.
+    ('sinapi_precos_insumo.valor', 'catálogo'),
     -- Consumo e compra de IA do próprio Pilar (Configurações > Uso), visível à empresa.
     ('ai_token_ledger.custo_estimado', 'consumo de IA'),
     ('ai_token_saldo.saldo_comprado', 'consumo de IA'),
@@ -40,6 +44,9 @@ WITH permitido(coluna, motivo) AS (
     ('ai_usage.total_tokens_saida', 'consumo de IA'),
     ('pilar_token_pack_purchases.valor_centavos', 'consumo de IA'),
     ('consentimentos_cobranca.valor', 'cobrança do plano Pilar'),
+    -- Operação da própria Pilar (SPEC 126): policy só deixa o ultra admin ler.
+    ('ops_execucoes.custo_usd', 'operação da Pilar, só ultra admin'),
+    ('ops_metricas_diarias.valor', 'operação da Pilar, só ultra admin'),
     -- Operação de compra da obra (cotação, material, etapa). Fora da ADR 0034:
     -- quem toca a obra compara cotação. Ver MATRIZ_DE_ACESSO.md, decisões abertas.
     ('obra_cotacao_proposta.valor', 'operação da obra'),

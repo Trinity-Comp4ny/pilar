@@ -177,6 +177,12 @@ export function useAcaoEmpresa<TInput>(opts: {
   });
 }
 
+/** Empresa da equipe ou de teste sai dos números do Time (SPEC 129). */
+export async function marcarEmpresaInterna(empresaId: string, interna: boolean): Promise<void> {
+  const { error } = await supabase.rpc("ops_marcar_empresa_interna", { p_empresa_id: empresaId, p_interna: interna });
+  if (error) throw error;
+}
+
 export function atualizarEmpresa(empresaId: string, patch: Record<string, unknown>) {
   return edgeFetch("ultra-admin-empresas", { method: "PUT", body: { empresa_id: empresaId, ...patch } });
 }

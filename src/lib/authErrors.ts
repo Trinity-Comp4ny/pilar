@@ -3,9 +3,12 @@
 // (que muda de versão para versão — foi assim que "at least 12" deixou de casar
 // com o needle "at least 6" e caía no genérico).
 
-const SENHA_FRACA =
-  "Senha muito fraca. Use ao menos 12 caracteres com maiúscula, minúscula, número e símbolo.";
+const SENHA_FRACA = "Senha muito fraca. Use ao menos 12 caracteres com maiúscula, minúscula, número e símbolo.";
 const EMAIL_EXISTE = "Este email já tem conta. Entre com sua senha ou continue com o Google.";
+// SPEC 133: cadastro por convite. O banco recusa conta nova sem convite; o GoTrue
+// devolve a mensagem do trigger ("Cadastro fechado: ...") ou, conforme a versão e o
+// fluxo (Google), o genérico "Database error saving new user".
+const SEM_CONVITE = "Este e-mail ainda não tem conta no Pilar. Fale com o time para criar a da sua empresa.";
 
 const CODE_MAP: Record<string, string> = {
   weak_password: SENHA_FRACA,
@@ -17,7 +20,7 @@ const CODE_MAP: Record<string, string> = {
   over_request_rate_limit: "Muitas tentativas. Aguarde alguns minutos.",
   email_not_confirmed: "Confirme seu email antes de entrar.",
   invalid_credentials: "Email ou senha incorretos.",
-  signup_disabled: "Cadastro desativado no momento.",
+  signup_disabled: SEM_CONVITE,
   user_not_found: "Usuário não encontrado.",
   same_password: "A nova senha deve ser diferente da anterior.",
 };
@@ -32,7 +35,9 @@ const MESSAGE_MAP: Record<string, string> = {
   "Unable to validate email address": "Formato de email inválido.",
   "New password should be different from the old password": "A nova senha deve ser diferente da anterior.",
   "Signup requires a valid password": "Informe uma senha válida.",
-  signup_disabled: "Cadastro desativado. Fale com o administrador.",
+  signup_disabled: SEM_CONVITE,
+  "Database error saving new user": SEM_CONVITE,
+  "Cadastro fechado": SEM_CONVITE,
   "Email rate limit exceeded": "Muitas tentativas. Aguarde alguns minutos.",
   "For security purposes, you can only request this after": "Aguarde alguns segundos e tente de novo.",
   "Invalid TOTP code": "Código incorreto. Tente novamente.",
@@ -48,7 +53,8 @@ export function translateAuthError(input: unknown): string {
   const code = obj.code || obj.error_code || "";
   if (code && CODE_MAP[code]) return CODE_MAP[code];
 
-  const raw = input instanceof Error ? input.message : typeof input === "string" ? input : obj.message || obj.name || "";
+  const raw =
+    input instanceof Error ? input.message : typeof input === "string" ? input : obj.message || obj.name || "";
   if (!raw) return "Erro inesperado. Tente novamente.";
 
   for (const [needle, pt] of Object.entries(MESSAGE_MAP)) {

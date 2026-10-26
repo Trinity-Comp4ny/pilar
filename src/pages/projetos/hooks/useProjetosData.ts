@@ -13,10 +13,10 @@ import { usePermissions } from "@/hooks/usePermissions";
 // fluxos e o mapa de margem bruta por projeto. Mantém as mesmas query keys e a
 // mesma transformação de dados da página original.
 export function useProjetosData() {
-  const { can } = usePermissions();
+  const { can, ready } = usePermissions();
   const { data: templatesData = [] } = useTemplates();
   const { data: fluxosData = [] } = useFluxosDisciplinas();
-  const { data: rentabilidadeData } = useDashboardRentabilidade(can("financeiro"));
+  const { data: rentabilidadeData } = useDashboardRentabilidade(ready && can("financeiro"));
 
   const rentabilidadeMap = useMemo<Record<string, number>>(() => {
     if (!rentabilidadeData?.projetos) return {};

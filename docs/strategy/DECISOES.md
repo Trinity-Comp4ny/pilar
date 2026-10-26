@@ -11,6 +11,177 @@ Regras de manutenção:
 
 ---
 
+## 2026-10-20 · Estimativa de obra: itens com origem do preço, catálogo fechado e IA depois
+
+**Decisão:** toda linha de custo da estimativa mostra de onde veio o preço (CUB, SINAPI, tabela da empresa, valor do
+usuário, referência provisória do Pilar ou "a definir"). O usuário descreve a obra escolhendo itens de um catálogo
+curado; a IA vem depois e só preenche esse catálogo a partir de texto. Item sem fonte fica "a definir" ou recebe o
+valor informado pela empresa ou pelo usuário. O valor de referência do Pilar só aparece marcado como provisório e
+sai à medida que as outras fontes entram.
+
+Contexto: no teste da obra Canaã (R$ 2,5 mi esperado) o provável saiu R$ 2,27 mi, com cerca de 35% do total em
+adicionais provisórios e faltando climatização, aquecimento, energia solar, automação e terraplenagem. O SINAPI de
+set/2026 cobre fundação, estrutura e instalações, mas não painel fotovoltaico, automação, churrasqueira, paisagismo nem
+móveis planejados. Estende a decisão de 2026-10-20 sobre leitura de texto por IA (que a retirou da ficha): agora a IA
+volta como intérprete sobre o catálogo, nunca como fonte de preço. Virou [SPEC 137](../specs/137-estimativa-de-obra-itens-com-origem-do-preco.md)
+e [ADR 0064](../architecture/adr/0064-toda-linha-da-estimativa-tem-origem-do-preco-e-a-ia-so-preenche-o-catalogo.md).
+Cards: BEZ-82, BEZ-83, BEZ-69.
+
+---
+
+## 2026-10-20 · Diário de obra: registro nasce interno e o áudio fica 12 meses
+
+**Decisão:** os registros do diário nascem internos (só vão ao portal do cliente quando o gestor liga "Mostrar ao
+cliente") e o áudio de cada registro é guardado por 12 meses, depois só o texto fica. O Matheus mandou assumir os
+dois padrões.
+
+Contexto: no protótipo os registros apareciam como "Cliente vê"; o padrão interno evita vazar texto de campo ao
+cliente por descuido. Fecha as suposições da [SPEC 135](../specs/135-diario-de-obra-em-registros.md) e da
+[ADR 0062](../architecture/adr/0062-guardar-o-audio-do-registro-de-obra.md) (agora Accepted). Registrado em
+[BEZ-67](https://linear.app/bez-company/issue/BEZ-67).
+
+---
+
+## 2026-10-20 · Estimativa de obra: terreno inclinado, padrão médio e SINAPI como próximo passo
+
+**Decisão:** a ficha da estimativa passa a informar o relevo do terreno (inclinado soma muro de arrimo e deixa
+terraplenagem e fundação especial a definir), o padrão "normal" do CUB aparece como "Médio", e a Caixa (SINAPI) é o
+próximo passo para tirar os valores provisórios dos adicionais.
+
+Contexto: o primeiro teste real (casa de 461 m² em SP, terreno inclinado) mostrou que o modelo ignorava o relevo. O
+valor do muro de arrimo é provisório (não achei percentual confiável em fonte pública, só faixa de mercado de R$ 300 a
+R$ 2.500 por m²). Registrado em [BEZ-68](https://linear.app/bez-company/issue/BEZ-68).
+
+---
+
+## 2026-10-20 · Estimativa de obra: CUB com e sem desoneração
+
+**Decisão:** o Pilar guarda o CUB nas duas versões que os Sinduscons publicam, sem desoneração (série clássica) e
+com desoneração da folha, e cada estimativa escolhe qual usar. Sem escolha, vale sem desoneração, a mais cara.
+Mais adiante a tela mostra as duas cotações lado a lado.
+
+Contexto: os valores diferem uns 3% (R-8 normal de SP em set/2026: R$ 2.238,58 sem e R$ 2.162,78 com), e há
+cliente que trabalha em cada regime. Fica registrado em [BEZ-51](https://linear.app/bez-company/issue/BEZ-51).
+Acrescenta a coluna `regime` em `cub_valores`; a SPEC 136 foi atualizada.
+
+---
+
+## 2026-10-20 · Estimativa de obra: sem leitura de texto livre por IA
+
+**Decisão:** a estimativa não terá o campo de texto livre lido por IA. A ficha é preenchida só pelo assistente
+(contadores e opções). A IA entra uma vez, na fase seguinte, lendo o PDF da planta.
+
+Contexto: o assistente já cobre a ficha com poucos cliques, e o texto livre só duplicaria o passo 3. Supera o
+item 4 da entrada de 2026-10-19 na parte do texto livre; a regra de que tudo que usa token consome os tokens do
+usuário continua valendo para a leitura do PDF. Cancela o BEZ-15.
+
+---
+
+## 2026-10-19 · Cadastro por convite: o teste grátis self-serve acaba agora
+
+**Decisão:** o Pilar deixa de ser aberto ao público. Toda empresa nova entra conversando com o
+time: a landing troca "Testar grátis" por "Agendar demonstração" (WhatsApp do time) e o banco
+recusa conta nova sem convite. Quem já tem conta, convite de membro, empresa criada pelo
+ultra-admin e checkout pago pelo link que o time envia continuam. Reabrir é uma flag
+(`platform_settings.cadastro_aberto`), sem migration.
+
+Contexto: o único cadastro orgânico de produção usou o produto 5 minutos e sumiu; com poucos
+clientes e venda de alto contato, a conversa converte melhor que o trial sozinho. Virou
+[SPEC 133](../specs/133-cadastro-por-convite.md). Supera a decisão de 2026-09-08 ("cadastro fica
+aberto, sem demo obrigatória") e a parte self-serve de 2026-10-08 (trial de 3 dias continua valendo
+para as empresas que o time cria). Um bot de WhatsApp que qualifica e agenda fica para depois, como
+produto dentro do Pilar; até lá vale a decisão de 2026-10-15 (sem API oficial do WhatsApp).
+
+---
+
+## 2026-10-19 · Gate D2 reaberto: estimativa de obra na proposta (CUB/SINAPI + cronograma)
+
+**Decisão:** o Pilar passa a gerar uma **estimativa paramétrica de obra** para o escritório de
+projeto levar ao cliente na fase de proposta: o usuário descreve a obra (tipo, padrão, área, o
+que ela tem; na fase 2, enviando o PDF do projeto) e recebe custo em faixa, com fonte de preço
+(CUB no MVP, SINAPI depois), e um cronograma pré-montado em fase, etapa e serviço, editável. O
+resultado vira a obra (árvore de cronograma e previsto por etapa que já existem) ou um PDF para o
+cliente.
+
+Contexto: reunião do CEO de 18/10 ("melhorar drasticamente o módulo Obra"). Enquadramento que
+mantém o ICP: quem usa é o escritório de projeto respondendo "quanto custa e quanto tempo leva",
+não a construtora fazendo orçamento executivo. Regras: a IA só interpreta a descrição e monta a
+ficha técnica; preço e prazo saem de um motor determinístico com a fonte citada; sempre faixa,
+nunca número único, com o aviso "não substitui orçamento executivo"; previsto x realizado só por
+grande etapa, sem curva ABC de insumo.
+
+Supera o gate D2 de 2026-08-26 nos itens "template por tipo de obra", "IA de leitura de planta" e
+"catálogo de composição" (este só como base de preço de referência, não como orçamento editável
+item a item), os guardrails "sem SINAPI" da ADR 0011 e das specs 015, 016 e 019, e o item SINAPI e
+leitura de planta da lista "não vender" do PRICING.md (só entra em material de venda quando estiver
+na branch principal). Orçamento por ambiente continua fora. Próximo passo: protótipo no Claude
+Design, depois spec.
+
+**Decisões de escopo do MVP 1 (mesmo dia, depois do protótipo v0):**
+
+1. A estimativa é um item próprio (Obras › Estimativas), ligado a lead ou proposta. Vira obra com um
+   clique; a obra não exige projeto (ADR 0012), e o vínculo com projeto é opcional.
+2. O preço de referência é o CUB por UF e padrão, e o ultra admin importa a planilha todo mês.
+   Automação de coleta fica para depois. A fonte exata é confirmada com o Claudio.
+3. Os adicionais (fundação, piscina, marcenaria, paisagismo, elevador) têm valor de referência do
+   Pilar, e cada empresa ajusta os seus.
+4. Tudo que usa token (leitura do texto livre e, na Fase 2, do PDF do projeto) consome os tokens
+   do usuário, pelo motor de tokens. O cálculo de preço e prazo não usa IA.
+5. A faixa padrão é de ±12%, editável em cada estimativa.
+
+---
+
+## 2026-10-19 · Diário de obra vira timeline de registros e o áudio passa a ser guardado
+
+**Decisão:** o diário deixa de ser um formulário por dia e vira uma timeline de registros curtos
+(áudio, foto, texto), quantos a equipe quiser por dia, inclusive do Pilar Campo. A IA organiza cada
+registro em segundo plano e monta o "Resumo do dia", que o gestor revisa e fecha como RDO. O áudio
+original fica guardado junto do registro.
+
+Contexto: reunião de 18/10. O RDO por voz demorava (a pessoa esperava a transcrição terminar), só
+existia no escritório e pedia campos fixos. Guardar o áudio permite processar depois sem prender a
+pessoa na tela e deixa o registro original ouvível. Supera a decisão da [SPEC 080](../specs/080-rdo-por-voz.md)
+("áudio bruto não persiste"); retenção, acesso e exclusão do áudio estão na [ADR 0062](../architecture/adr/0062-guardar-o-audio-do-registro-de-obra.md). Junto
+disso, o mobile do app ganha casca própria (barra flutuante, lista em cards, formulário em sheet)
+em vez de encolher o desktop ([SPEC 134](../specs/134-casca-mobile-barra-flutuante-lista-em-cards-e-sheet.md); o diário é a [SPEC 135](../specs/135-diario-de-obra-em-registros.md)). Protótipo aprovado no Claude Design em 19/10.
+
+---
+
+## 2026-10-16 · Marketing é produto próprio; o Pilar só abre a plataforma e devolve o funil
+
+**Decisão:** tudo de marketing (campanhas, posts, carrosséis, vídeos, agendamento, analytics de
+redes, anúncios e Search Console, e o agente de marketing) vive na plataforma web do repo
+`post-automation`, como produto que pode ser vendido a outros escritórios. A Pilar é o primeiro
+cliente dela. Dentro do Pilar fica só o botão "Abrir plataforma de marketing" no Ultra › Time, e o
+Pilar devolve à plataforma cadastros, ativados e pagantes por link publicado (UTM), sem dado pessoal.
+
+Contexto: decidido nos chats do `post-automation` (ADR 0002 de lá) e confirmado aqui. Supera parte
+da decisão de 2026-10-15 e da ADR 0060: a ficha de Marketing no Ultra com números das redes e o
+`ops-ingest` (o Pilar recebendo métrica social) saem do plano. Receita, Clientes, Produto, Qualidade
+e Finanças continuam no Ultra, porque leem o banco do Pilar. Virou [ADR 0061](../architecture/adr/0061-marketing-e-produto-proprio-o-pilar-devolve-o-funil.md)
+e [SPEC 128](../specs/128-plataforma-de-marketing-externa-e-funil-por-utm.md).
+
+---
+
+## 2026-10-15 · Lançamento público mira janeiro de 2027, com um time de agentes no Ultra
+
+**Decisão:** três decisões que valem juntas:
+
+1. O lançamento público tem data guia em janeiro de 2027 (T0 = terça, 19/01/2027). É data de
+   referência para o calendário, não promessa a ninguém: antecipar é permitido.
+2. Toda automação de conteúdo (gerar, renderizar, agendar e publicar post, carrossel e vídeo,
+   e coletar métricas de redes, anúncios e Search Console) fica no repo `post-automation` e no
+   banco dele. O Pilar recebe só os números e devolve o funil por UTM (ADR 0060).
+3. Contato com cliente pelo agente é por link `wa.me` com o texto pronto; quem envia é o
+   fundador. Sem API oficial do WhatsApp por enquanto.
+
+Contexto: founder solo perto do lançamento quer agentes de receita, clientes, marketing,
+produto e qualidade que rodem sozinhos e um painel único (grupo "Time" no Ultra). Virou
+[SPEC 126](../specs/126-time-de-agentes-no-ultra.md) e [SPEC 125](../specs/125-telemetria-de-produto-e-erros.md).
+Atualiza o roster de `docs/AGENTS_TEAM.md`, que só previa agentes chamados no Claude Code.
+
+---
+
 ## 2026-10-14 · Release: o que fica manual de propósito
 
 **Decisão:** três pontos do pipeline de release ficam como estão, por escolha:

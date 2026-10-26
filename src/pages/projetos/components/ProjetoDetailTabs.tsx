@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import {
   Layers,
@@ -13,8 +12,9 @@ import {
   History,
   MessageSquare,
 } from "lucide-react";
-import { SecondSidebar, type SecondSidebarTab } from "@/components/SecondSidebar";
-import { cn } from "@/lib/utils";
+import { PageTabs } from "@/components/PageSlots";
+import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
+import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
 import {
   type Projeto,
   type DisciplinaResponsavel,
@@ -59,7 +59,7 @@ interface ProjetoDetailTabsProps {
 }
 
 // Hash "cronograma" mantido como alias retrocompat → abre Disciplinas com view Gantt
-const PROJETO_TABS: SecondSidebarTab[] = [
+const PROJETO_TABS: SectionTab[] = [
   { id: "disciplinas", label: "Disciplinas", icon: Layers },
   { id: "atividades", label: "Atividades", icon: MessageSquare },
   { id: "pagamentos", label: "Pagamentos", icon: DollarSign },
@@ -68,6 +68,12 @@ const PROJETO_TABS: SecondSidebarTab[] = [
 ];
 
 type DisciplinaView = "tabela" | "gantt" | "fluxo";
+
+const DISCIPLINA_VISOES: ViewOption<DisciplinaView>[] = [
+  { value: "tabela", label: "Tabela", icon: TableIcon },
+  { value: "gantt", label: "Gantt", icon: GanttChart },
+  { value: "fluxo", label: "Fluxo", icon: GitBranch },
+];
 
 export function ProjetoDetailTabs({
   projeto,
@@ -260,43 +266,25 @@ export function ProjetoDetailTabs({
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange}>
       <div className="flex flex-col md:flex-row gap-4 md:items-start">
-        <SecondSidebar
-          tabs={PROJETO_TABS}
-          value={activeTab}
-          onValueChange={handleTabChange}
-          className="sticky top-0 rounded-lg border border-black/5"
-        />
+        <PageTabs>
+          <SectionTabs
+            tabs={PROJETO_TABS}
+            value={activeTab}
+            onValueChange={handleTabChange}
+            ariaLabel="Seções do projeto"
+          />
+        </PageTabs>
         <div className="flex-1 min-w-0">
           <TabsContent value="disciplinas">
             <div className="space-y-3">
               {/* Toggle de visualização */}
               <div className="flex items-center justify-end">
-                <div className="flex items-center border rounded-md overflow-hidden">
-                  <Button
-                    variant={disciplinaView === "tabela" ? "secondary" : "ghost"}
-                    size="sm"
-                    className={cn("h-8 text-xs rounded-none px-3 gap-1.5")}
-                    onClick={() => handleViewChange("tabela")}
-                  >
-                    <TableIcon className="h-3.5 w-3.5" /> Tabela
-                  </Button>
-                  <Button
-                    variant={disciplinaView === "gantt" ? "secondary" : "ghost"}
-                    size="sm"
-                    className={cn("h-8 text-xs rounded-none px-3 gap-1.5")}
-                    onClick={() => handleViewChange("gantt")}
-                  >
-                    <GanttChart className="h-3.5 w-3.5" /> Gantt
-                  </Button>
-                  <Button
-                    variant={disciplinaView === "fluxo" ? "secondary" : "ghost"}
-                    size="sm"
-                    className={cn("h-8 text-xs rounded-none px-3 gap-1.5")}
-                    onClick={() => handleViewChange("fluxo")}
-                  >
-                    <GitBranch className="h-3.5 w-3.5" /> Fluxo
-                  </Button>
-                </div>
+                <ViewSwitcher
+                  options={DISCIPLINA_VISOES}
+                  value={disciplinaView}
+                  onChange={handleViewChange}
+                  ariaLabel="Visualização das disciplinas"
+                />
               </div>
 
               {disciplinaView === "tabela" ? (
@@ -360,7 +348,7 @@ export function ProjetoDetailTabs({
           </TabsContent>
 
           <TabsContent value="atividades">
-            <Card className="flex h-[70vh] min-h-[420px] flex-col p-4">
+            <Card className="flex h-[70dvh] min-h-[420px] flex-col p-4">
               <ProjetoAtividadesPanel
                 projetoId={projeto.id}
                 pessoas={pessoas}

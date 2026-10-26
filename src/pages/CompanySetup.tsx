@@ -13,7 +13,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Building2, Hash } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useAuth } from "@/contexts/AuthContext";
-import { companySetupSchema, companySetupDefaultValues, type CompanySetupFormData } from "@/schemas";
+import {
+  companySetupSchema,
+  companySetupDefaultValues,
+  type CompanySetupFormData,
+  type CompanySetupFormInput,
+} from "@/schemas";
 import { Logo } from "@/components/Logo";
 
 import { BusyMark } from "@/components/motion/BusyMark";
@@ -25,7 +30,7 @@ export default function CompanySetup() {
   const navigate = useNavigate();
   const { profile, refreshProfile } = useAuth();
 
-  const form = useForm<CompanySetupFormData>({
+  const form = useForm<CompanySetupFormInput, unknown, CompanySetupFormData>({
     resolver: zodResolver(companySetupSchema),
     mode: "onChange",
     defaultValues: companySetupDefaultValues,
@@ -96,7 +101,7 @@ export default function CompanySetup() {
   };
 
   return (
-    <div className="landing-grain min-h-screen w-full flex overflow-hidden bg-paper">
+    <div className="landing-grain min-h-dvh w-full flex overflow-hidden bg-paper">
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-paper relative overflow-hidden">
         {/* Aurora sutil */}
         <div className="absolute inset-0 -z-10 pointer-events-none">

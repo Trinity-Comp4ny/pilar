@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ErroDeDocx } from "@/lib/erroDeDocx";
 
 export type TemplateTipo = "proposta" | "contrato";
 
@@ -54,29 +55,37 @@ export const useUploadTemplate = () => {
 
       const fileExtension = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
       if (!ALLOWED_EXTENSIONS.includes(fileExtension)) {
-        throw new Error("Apenas arquivos .docx são permitidos");
+        throw new ErroDeDocx("Envie um arquivo Word (.docx).");
       }
       if (file.type && !ALLOWED_MIME_TYPES.includes(file.type)) {
-        throw new Error("Tipo de arquivo inválido. Envie um .docx");
+        throw new ErroDeDocx("Envie um arquivo Word (.docx).");
       }
       if (file.size > MAX_FILE_SIZE) {
-        throw new Error("Arquivo excede o limite de 10MB");
+        throw new ErroDeDocx("O arquivo passa de 10 MB. Reduza as imagens no Word e envie de novo.");
       }
 
       const { data: empresaId } = await supabase.rpc("get_user_empresa_id");
       if (!empresaId) throw new Error("Usuário não vinculado a uma empresa");
 
-      // 1. Upload file to storage
+      // 1. Lê as variáveis antes de subir: arquivo ruim não deixa lixo no storage.
+      const arrayBuffer = await file.arrayBuffer();
+      const { extractVariablesFromDocx, chavesSimplesNoDocx } = await import("@/lib/docxUtils");
+      const variaveis = extractVariablesFromDocx(arrayBuffer);
+      if (variaveis.length === 0) {
+        const umaChave = chavesSimplesNoDocx(arrayBuffer);
+        throw new ErroDeDocx(
+          umaChave.length > 0
+            ? `Este Word usa chave simples, como {${umaChave[0]}}. A variável precisa de duas chaves: {{${umaChave[0]}}}. Corrija no Word e envie de novo.`
+            : "Este Word não tem nenhuma variável. Escreva marcações como {{CLIENTE_NOME}} onde o dado deve entrar (veja o guia de variáveis) e envie de novo."
+        );
+      }
+
+      // 2. Upload file to storage
       const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
       const filePath = `${empresaId}/${Date.now()}_${sanitizedName}`;
       const { error: uploadError } = await supabase.storage.from("proposta-templates").upload(filePath, file);
 
       if (uploadError) throw new Error(`Erro no upload: ${uploadError.message}`);
-
-      // 2. Parse variables from DOCX
-      const arrayBuffer = await file.arrayBuffer();
-      const { extractVariablesFromDocx } = await import("@/lib/docxUtils");
-      const variaveis = extractVariablesFromDocx(arrayBuffer);
 
       // 3. Insert template record
       const { data, error } = await supabase
@@ -92,7 +101,11 @@ export const useUploadTemplate = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // O registro não entrou: não deixa o arquivo órfão no storage.
+        await supabase.storage.from("proposta-templates").remove([filePath]);
+        throw error;
+      }
       return data as unknown as PropostaTemplate;
     },
     onSuccess: () => {

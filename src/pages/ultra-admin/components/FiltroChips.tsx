@@ -15,7 +15,11 @@ export function FiltroChips<T extends string>({
   ariaLabel: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={ariaLabel} className="flex flex-wrap gap-1.5">
+    <div
+      role="radiogroup"
+      aria-label={ariaLabel}
+      className="flex flex-wrap gap-1.5 max-md:-mx-6 max-md:flex-nowrap max-md:overflow-x-auto max-md:px-6 max-md:pb-0.5 max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden"
+    >
       {opcoes.map((o) => {
         const ativo = o.value === value;
         return (
@@ -26,7 +30,7 @@ export function FiltroChips<T extends string>({
             aria-checked={ativo}
             onClick={() => onChange(o.value)}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black/10",
+              "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1 text-xs transition-colors max-md:h-9 max-md:text-[13px] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black/10",
               ativo
                 ? "border-transparent bg-ink font-medium text-background"
                 : "border-black/10 bg-background text-ink-soft hover:border-black/20 hover:text-ink"

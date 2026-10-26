@@ -1,7 +1,7 @@
 # SPEC: RDO por voz — sugestões estruturadas (fornecedor, impedimento, visita, tarefa)
 
 **Data:** 2026-09-01
-**Status:** Draft
+**Status:** Superada pela [SPEC 135](./135-diario-de-obra-em-registros.md): o RDO por voz saiu do formulário em 21/10/2026 (BEZ-85)
 **Autor:** Matheus (com apoio de agente de IA)
 **Módulo:** obras
 **Estende:** [080 — RDO por voz + foto](080-rdo-por-voz.md), [062 — Diário efetivo/impedimento/visita](062-diario-efetivo-por-fornecedor-impedimento-visita.md)

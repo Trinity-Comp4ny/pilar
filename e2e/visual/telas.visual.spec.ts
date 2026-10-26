@@ -27,12 +27,42 @@ const TEXTO_VARIAVEL = new RegExp(
     String.raw`R\$\s?-?[\d.]+,\d{2}`, // dinheiro (soma do mês muda com o calendário)
     String.raw`\b(${MESES})\s+de\s+\d{4}`, // "outubro de 2026"
     String.raw`^\d+ de \d+$`, // contador de linhas "14 de 14"
+    // Prazo relativo da lista de tarefas: o rótulo vira "Hoje", "Amanhã" ou "Ontem" conforme o dia.
+    String.raw`(?<![A-Za-zÀ-ÿ])(Hoje|Ontem|Amanhã)(?![A-Za-zÀ-ÿ])`,
   ].join("|"),
   "i"
 );
 
+/**
+ * O resumo semanal do Início (SPEC 121) é texto de IA, que muda a cada geração e muda a
+ * altura do cabeçalho. A foto usa um resumo fixo; a geração em si é coberta por teste Deno
+ * e pgTAP, não por pixel.
+ */
+async function fixarResumoSemanal(page: Page) {
+  await page.route("**/rest/v1/rpc/get_resumo_semanal", (route) =>
+    route.fulfill({
+      json: {
+        escopo: "empresa",
+        semana_inicio: "2026-01-05",
+        resumo: {
+          conteudo: {
+            manchete: "Dois projetos atrasados pedem atenção esta semana",
+            destaques: [
+              { tom: "atencao", texto: "Projetos com prazo vencido" },
+              { tom: "positivo", texto: "Disciplinas entregues na semana passada" },
+            ],
+          },
+          gerado_em: new Date().toISOString(),
+        },
+      },
+    })
+  );
+}
+
 function mascaras(page: Page) {
   return [
+    // Saudação e data do cabeçalho do Início: mudam com a hora e o dia.
+    page.getByTestId("hero-saudacao"),
     page.getByText(TEXTO_VARIAVEL),
     // Botão de data inteiro (DatePicker do prazo): mascarar só o texto deixava sobrar a
     // borda, porque a largura do texto muda com os dígitos do dia ("11/10" é mais
@@ -52,10 +82,30 @@ function mascaras(page: Page) {
   ];
 }
 
+/**
+ * Troca o texto que muda com o calendário por um valor fixo ANTES da foto. A máscara pinta a
+ * caixa do texto, e a largura dessa caixa muda com o dado ("2 nov" é mais estreito que
+ * "28 out"): a referência gerada num dia reprovava no seguinte, só nas bordas da máscara
+ * (CI de 26/10: tarefas e obra-detalhe, ~170 px). Texto fixo ocupa sempre o mesmo espaço.
+ */
+async function fixarTextoVariavel(page: Page) {
+  await page.evaluate(
+    ([fonte, flags]) => {
+      const regra = new RegExp(fonte, flags);
+      const nos: Text[] = [];
+      const andador = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      while (andador.nextNode()) nos.push(andador.currentNode as Text);
+      for (const no of nos) no.nodeValue = (no.nodeValue ?? "").replace(regra, "0000");
+    },
+    [TEXTO_VARIAVEL.source, "gi"]
+  );
+}
+
 async function abrir(page: Page, rota: string) {
   await page.goto(rota);
   await page.waitForLoadState("networkidle");
   await page.evaluate(() => document.fonts.ready);
+  await fixarTextoVariavel(page);
 }
 
 const opcoes = (page: Page) => ({
@@ -88,6 +138,7 @@ test.describe("Telas do app (desktop 1280×720)", () => {
 
   for (const [nome, rota] of telas) {
     test(nome, async ({ page }) => {
+      if (nome === "inicio") await fixarResumoSemanal(page);
       await abrir(page, rota);
       await expect(page.locator("#main-content")).toBeVisible();
       await expect(page).toHaveScreenshot(`${nome}.png`, opcoes(page));
@@ -99,6 +150,7 @@ test.describe("Celular (390×844)", () => {
   test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 
   test("inicio-celular", async ({ page }) => {
+    await fixarResumoSemanal(page);
     await abrir(page, "/inicio");
     await expect(page.locator("#main-content")).toBeVisible();
     await expect(page).toHaveScreenshot("inicio-celular.png", opcoes(page));

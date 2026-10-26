@@ -44,6 +44,7 @@ export type EmpresaDetalhe = EmpresaRow & {
   planoMaxProjetos: number | null;
   planoMaxUsuarios: number | null;
   projetosAtivos: number | null;
+  interna: boolean;
 };
 
 export type UsuarioPlataforma = {
@@ -159,6 +160,8 @@ type EmpresaDetalheRaw = {
     created_at?: string | null;
     max_projetos_override: number | null;
     max_usuarios_override: number | null;
+    /** SPEC 129: empresa da equipe ou de teste, fora dos números do Time. Opcional: edge antiga não manda. */
+    interna?: boolean | null;
   };
   plano: SubscriptionPlanSlug | null;
   planoMaxProjetos: number | null;
@@ -216,6 +219,7 @@ export async function buscarEmpresa(id: string): Promise<EmpresaDetalhe> {
     projetosAtivos: raw.uso?.projetos_ativos ?? null,
     maxProjetosOverride: raw.empresa.max_projetos_override,
     maxUsuariosOverride: raw.empresa.max_usuarios_override,
+    interna: raw.empresa.interna ?? false,
     planoMaxProjetos: raw.planoMaxProjetos,
     planoMaxUsuarios: raw.planoMaxUsuarios,
     usersCount: usuarios.filter((u) => !u.isPending).length,

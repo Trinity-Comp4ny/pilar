@@ -22,7 +22,7 @@ import { checkDuplicates } from "@/lib/duplicateCheck";
 import { DuplicateWarningDialog } from "@/components/DuplicateWarningDialog";
 import { TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import { useFinanceAuxData } from "../hooks/useFinanceAuxData";
-import { defaultValues, schema, type FormData } from "../lib/lancamentoFormSchema";
+import { defaultValues, schema, type FormData, type FormInput } from "../lib/lancamentoFormSchema";
 import { clienteDoProjeto, projetoContinuaValido, projetosDoCliente } from "../lib/vinculoClienteProjeto";
 import type { Lancamento, TipoLancamento } from "../hooks/useLancamentosUnified";
 import { CentroCustoManager } from "./CentroCustoManager";
@@ -46,7 +46,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
   // trazer) — senão o form mostraria "desligado" e apagaria um valor real ao salvar.
   const recorrenteApplicable = !isReceita && (!isEdit || lancamento?.recorrente !== undefined);
 
-  const form = useForm<FormData>({
+  const form = useForm<FormInput, unknown, FormData>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues(tipo),
   });
@@ -317,7 +317,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
     await save(data);
   });
 
-  const clienteId = form.watch("clienteId");
+  const clienteId = form.watch("clienteId") ?? "";
   const clienteSelecionado = aux.clientes.find((c) => c.id === clienteId);
   const chavesPixCliente = clienteSelecionado?.chaves_pix ?? [];
 

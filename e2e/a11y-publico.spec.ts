@@ -9,7 +9,6 @@ import { test, expect } from "@playwright/test";
 
 const TELAS = [
   ["login", "/login"],
-  ["cadastro", "/cadastro"],
   ["recuperar senha", "/forgot-password"],
   ["login do portal do cliente", "/cliente/login"],
   ["login do Pilar Campo", "/campo/login"],

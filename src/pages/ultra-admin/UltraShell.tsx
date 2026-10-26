@@ -26,7 +26,7 @@ export default function UltraShell() {
           <NavLink
             key={s.id}
             to={s.url}
-            end={s.id === "visao-geral"}
+            end={s.id === "visao-geral" || s.id === "time"}
             className={cn(
               "shrink-0 rounded-full px-3 py-1.5 text-xs transition-colors",
               ativa === s.id ? "bg-brand font-medium text-ink" : "bg-muted text-ink-soft"
