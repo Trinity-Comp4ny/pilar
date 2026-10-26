@@ -64,6 +64,10 @@ type Props = {
   etapas: Etapa[];
   /** Etapa inicial numa nova tarefa (coluna onde ela nasce). */
   defaultEtapaId?: string | null;
+  /** Prazo inicial numa nova tarefa (AAAA-MM-DD), ex.: o dia clicado na Agenda. */
+  defaultPrazo?: string | null;
+  /** Nome inicial numa nova tarefa, ex.: o que já foi digitado no quadro curto da Agenda. */
+  defaultTitulo?: string;
   /** Responsável default numa nova tarefa (a pessoa do usuário). */
   defaultResponsavelId: string | null;
   /** Só admin escolhe o responsável; os demais criam já atribuído a si. */
@@ -91,6 +95,8 @@ function TarefaFormBody({
   projetos,
   etapas,
   defaultEtapaId,
+  defaultPrazo,
+  defaultTitulo,
   defaultResponsavelId,
   podeEscolherResponsavel = true,
   autorNome,
@@ -100,7 +106,7 @@ function TarefaFormBody({
   readOnly = false,
   comentarioDestacado,
 }: Omit<Props, "open">) {
-  const [titulo, setTitulo] = useState(tarefa?.titulo ?? "");
+  const [titulo, setTitulo] = useState(tarefa?.titulo ?? defaultTitulo ?? "");
   const [descricao, setDescricao] = useState(tarefa?.descricao ?? "");
   // Status = coluna (etapa) do quadro. Editável aqui e por drag no board; ambos
   // gravam etapa_id + o bucket derivado da coluna. Cai na etapa passada, na do
@@ -115,7 +121,7 @@ function TarefaFormBody({
     tarefa ? tarefa.responsaveis.map((r) => r.id) : defaultResponsavelId ? [defaultResponsavelId] : []
   );
   const [projetoId, setProjetoId] = useState<string | null>(tarefa?.projeto_id ?? null);
-  const [prazo, setPrazo] = useState(tarefa?.prazo ?? "");
+  const [prazo, setPrazo] = useState(tarefa?.prazo ?? defaultPrazo ?? "");
   const [horas, setHoras] = useState<number | null>(tarefa?.horas_estimadas ?? null);
   const [horasReais, setHorasReais] = useState<number | null>(tarefa?.horas_reais ?? null);
   const [labels, setLabels] = useState<string[]>(tarefa?.labels ?? []);
@@ -387,7 +393,7 @@ export function TarefaDialog({ open, onOpenChange, tarefa, ...rest }: Props) {
       <DialogContent className="flex h-[92dvh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden p-0">
         {open && (
           <TarefaFormBody
-            key={tarefa?.id ?? `nova-${rest.defaultEtapaId ?? "padrao"}`}
+            key={tarefa?.id ?? `nova-${rest.defaultEtapaId ?? "padrao"}-${rest.defaultPrazo ?? ""}`}
             tarefa={tarefa}
             onOpenChange={onOpenChange}
             {...rest}

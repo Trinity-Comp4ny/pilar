@@ -526,7 +526,13 @@ export default function MeuTrabalho() {
       primaryAction={visao !== "agenda" ? { label: "Nova tarefa", icon: Plus, onClick: () => abrirNova() } : undefined}
     >
       {visao === "agenda" ? (
-        <AbaAgenda pessoaIds={pessoaIdsEfetivos} minhaPessoaId={minhaPessoaId} canEdit temProjetos={temProjetos} />
+        <AbaAgenda
+          pessoaIds={pessoaIdsEfetivos}
+          minhaPessoaId={minhaPessoaId}
+          canEdit
+          temProjetos={temProjetos}
+          podeEscolherResponsavel={isAdmin}
+        />
       ) : isLoading ? (
         <PageLoader label="Carregando seu trabalho" />
       ) : isError ? (
