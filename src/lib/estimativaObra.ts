@@ -4,7 +4,7 @@
 // por aqui para definir preço ou prazo; ela só preenche a ficha. Todo valor é calculado em centavos
 // inteiros e distribuído por maior resto, para as somas fecharem exatamente: etapas + adicionais +
 // taxa = provável, natureza = provável, fases = provável e desembolso = provável.
-import type { ZodType, ZodTypeDef } from "zod";
+import type { ZodType } from "zod";
 import { centavos, reais, somar, formatarNumero } from "./estimativaAritmetica";
 import { FAIXA_PROVISORIA_PADRAO, linhaDoAdicional, mesclarAjustes, type ContextoLinha } from "./estimativaItens";
 import {
@@ -91,7 +91,7 @@ export function rotuloMesBase(mesBase: string): string {
 
 type Leitura<T> = { ok: true; valor: T } | { ok: false; mensagem: string };
 
-function ler<T>(schema: ZodType<T, ZodTypeDef, unknown>, bruto: unknown, rotulo: string): Leitura<T> {
+function ler<T>(schema: ZodType<T, unknown>, bruto: unknown, rotulo: string): Leitura<T> {
   const lido = schema.safeParse(bruto);
   if (lido.success) return { ok: true, valor: lido.data };
   return { ok: false, mensagem: `${rotulo} inválidos: ${lido.error.issues[0]?.message ?? "formato inesperado"}` };

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { parseCurrencyString } from "@/lib/currencyUtils";
 
 /** Campo de data obrigatória */
-export const dataVencimentoField = z.date({ required_error: "Data é obrigatória" });
+export const dataVencimentoField = z.date({ error: "Data é obrigatória" });
 
 /** Campo de descrição obrigatória */
 export const descricaoField = z.string().min(1, "Descrição é obrigatória");

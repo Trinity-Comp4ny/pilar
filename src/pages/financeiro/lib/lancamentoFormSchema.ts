@@ -9,7 +9,7 @@ export const schema = z
       .string()
       .min(1, "Valor obrigatório")
       .refine((v) => parseCurrencyString(v) > 0, "Valor deve ser maior que zero"),
-    dataVencimento: z.date({ required_error: "Data obrigatória" }),
+    dataVencimento: z.date({ error: "Data obrigatória" }),
     status: z.string(),
     formaPagamento: z.string().optional().default(""),
     parcelas: z
@@ -43,6 +43,7 @@ export const schema = z
   .refine((d) => !(d.contaId && d.cartaoId), { message: "Selecione apenas Conta OU Cartão", path: ["cartaoId"] });
 
 export type FormData = z.infer<typeof schema>;
+export type FormInput = z.input<typeof schema>;
 
 export const defaultValues = (tipo: TipoLancamento): FormData => ({
   descricao: "",

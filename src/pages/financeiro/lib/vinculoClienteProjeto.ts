@@ -18,13 +18,17 @@ export function clienteDoProjeto(projetos: ProjetoOpcao[], projetoId: string): s
  * Projetos que o seletor oferece. Sem cliente escolhido, todos. Com cliente, só os dele,
  * mais o projeto já selecionado (editar um lançamento antigo não pode esvaziar o campo).
  */
-export function projetosDoCliente(projetos: ProjetoOpcao[], clienteId: string, projetoSelecionadoId: string) {
+export function projetosDoCliente(projetos: ProjetoOpcao[], clienteId: string, projetoSelecionadoId?: string) {
   if (!clienteId) return projetos;
   return projetos.filter((p) => p.cliente_id === clienteId || p.id === projetoSelecionadoId);
 }
 
 /** Ao trocar de cliente, o projeto escolhido continua só se for do novo cliente. */
-export function projetoContinuaValido(projetos: ProjetoOpcao[], projetoId: string, novoClienteId: string): boolean {
+export function projetoContinuaValido(
+  projetos: ProjetoOpcao[],
+  projetoId: string | undefined,
+  novoClienteId: string
+): boolean {
   if (!projetoId) return true;
   const dono = clienteDoProjeto(projetos, projetoId);
   return dono === null || dono === novoClienteId;

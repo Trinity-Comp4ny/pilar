@@ -114,6 +114,7 @@ export const companySetupSchema = z
     { message: "CNPJ inválido", path: ["cnpj"] }
   );
 export type CompanySetupFormData = z.infer<typeof companySetupSchema>;
+export type CompanySetupFormInput = z.input<typeof companySetupSchema>;
 export const companySetupDefaultValues: CompanySetupFormData = { name: "", cnpj: "" };
 
 export const profileEditSchema = z.object({
@@ -122,6 +123,7 @@ export const profileEditSchema = z.object({
   contact: z.string().trim().optional().default(""),
 });
 export type ProfileEditFormData = z.infer<typeof profileEditSchema>;
+export type ProfileEditFormInput = z.input<typeof profileEditSchema>;
 export const profileEditDefaultValues: ProfileEditFormData = {
   firstName: "",
   lastName: "",
