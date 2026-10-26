@@ -46,7 +46,8 @@ export default function ProfileSetup() {
   const resolver = useMemo<Resolver<ProfileSetupFormData>>(() => {
     return (values, context, options) => {
       const schema = pulaSenhaRef.current ? profileSetupOAuthSchema : profileSetupSchema;
-      return zodResolver(schema)(values, context, options);
+      const resolverDoSchema = zodResolver(schema) as unknown as Resolver<ProfileSetupFormData>;
+      return resolverDoSchema(values, context, options);
     };
   }, []);
 

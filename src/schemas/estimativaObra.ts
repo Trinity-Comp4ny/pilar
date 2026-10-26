@@ -66,7 +66,7 @@ export const SUBTIPOS: Record<
   },
 };
 
-const NUMERO = { invalid_type_error: "Informe um número" };
+const NUMERO = { error: "Informe um número" };
 const inteiro = (max: number) =>
   z.number(NUMERO).int("Use um número inteiro").min(0, "Não pode ser negativo").max(max, "Confira esse valor");
 

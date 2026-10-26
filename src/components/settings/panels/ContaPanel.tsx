@@ -13,7 +13,12 @@ import { getSafeErrorMessage } from "@/lib/safeError";
 import { Mail, Phone, Building2, Rocket, Camera, X } from "lucide-react";
 import { formatPhone } from "@/lib/maskUtils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { profileEditSchema, profileEditDefaultValues, type ProfileEditFormData } from "@/schemas";
+import {
+  profileEditSchema,
+  profileEditDefaultValues,
+  type ProfileEditFormData,
+  type ProfileEditFormInput,
+} from "@/schemas";
 import { useAuth } from "@/contexts/AuthContext";
 import { AvatarStack } from "@/components/AvatarStack";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -51,7 +56,7 @@ export function ContaPanel() {
   const email = user?.email ?? "";
   const isLoading = !profile;
 
-  const form = useForm<ProfileEditFormData>({
+  const form = useForm<ProfileEditFormInput, unknown, ProfileEditFormData>({
     resolver: zodResolver(profileEditSchema),
     mode: "onChange",
     defaultValues: profileEditDefaultValues,
