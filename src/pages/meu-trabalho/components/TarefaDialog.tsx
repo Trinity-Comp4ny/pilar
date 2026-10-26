@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { ResponsiveDetailPanels } from "@/components/ui/responsive-detail-panels";
 import { Button } from "@/components/ui/button";
@@ -126,7 +126,13 @@ function TarefaFormBody({
   // como em Projeto/Disciplina), e só as novas — reabrir uma tarefa antiga não deve renotificar.
   const [pendentesMencao, setPendentesMencao] = useState<{ id: string; texto: string; mencionados: string[] }[]>([]);
 
-  const podeSalvar = !readOnly && titulo.trim().length > 0 && !saving;
+  // O nome é o único campo obrigatório. O botão Salvar não some em silêncio quando ele falta
+  // (feedback da VRZ, 17/10: "o botão salvar não acende"): clicar mostra o erro e foca o campo.
+  const tituloRef = useRef<HTMLInputElement>(null);
+  const [tentouSalvar, setTentouSalvar] = useState(false);
+  const tituloVazio = titulo.trim().length === 0;
+  const mostrarErroTitulo = tentouSalvar && tituloVazio;
+  const podeSalvar = !readOnly && !saving;
 
   const adicionarComentario = (texto: string, mencionados: string[]) => {
     const t = texto.trim();
@@ -147,6 +153,11 @@ function TarefaFormBody({
 
   const salvar = async () => {
     if (!podeSalvar) return;
+    if (tituloVazio) {
+      setTentouSalvar(true);
+      tituloRef.current?.focus();
+      return;
+    }
     const tarefaId = await onSave({
       titulo: titulo.trim(),
       descricao: descricao.trim() || null,
@@ -188,13 +199,26 @@ function TarefaFormBody({
           )}
         </div>
         <Input
+          ref={tituloRef}
           value={titulo}
           onChange={(e) => setTitulo(e.target.value)}
           placeholder="Nome da tarefa"
           autoFocus={!readOnly}
           disabled={readOnly}
-          className="h-auto border-0 bg-transparent px-1 text-2xl font-medium shadow-none focus-visible:ring-0 md:text-2xl"
+          aria-label="Nome da tarefa"
+          aria-required="true"
+          aria-invalid={mostrarErroTitulo}
+          aria-describedby={mostrarErroTitulo ? "tarefa-titulo-erro" : undefined}
+          className={cn(
+            "h-auto rounded-none border-0 border-b bg-transparent px-1 text-2xl font-medium shadow-none focus-visible:ring-0 md:text-2xl",
+            mostrarErroTitulo ? "border-destructive" : "border-border"
+          )}
         />
+        {mostrarErroTitulo && (
+          <p id="tarefa-titulo-erro" role="alert" className="mt-1.5 px-1 text-xs text-destructive">
+            Dê um nome à tarefa para salvar.
+          </p>
+        )}
       </div>
 
       {/* Corpo: principal (redimensionável no desktop, abas no mobile) + atividades */}
