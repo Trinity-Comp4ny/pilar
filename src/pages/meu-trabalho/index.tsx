@@ -11,9 +11,10 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { QuadroTrabalho } from "./components/QuadroTrabalho";
-import { TAREFAS_SORT_KEYS, TAREFAS_SORT_PADRAO } from "./ordenacao";
+import { TAREFAS_SORT_ACESSORES, TAREFAS_SORT_KEYS, TAREFAS_SORT_PADRAO } from "./ordenacao";
 import { KanbanSortControl } from "@/components/kanban/KanbanSortControl";
 import { useKanbanSort } from "@/hooks/useKanbanSort";
+import { ordenarKanban } from "@/lib/kanbanSort";
 import { ListaTrabalho, SeletorColunas } from "./components/ListaTrabalho";
 import { TarefaDialog } from "./components/TarefaDialog";
 import { AbaAgenda } from "./components/AbaAgenda";
@@ -168,6 +169,12 @@ export default function MeuTrabalho() {
       );
     });
   }, [itens, busca, filtroData]);
+
+  // A lista usa a mesma ordenação do quadro (o controle "Ordenar" vale para as duas visões).
+  const itensOrdenados = useMemo(
+    () => ordenarKanban(itensFiltrados, ordem, TAREFAS_SORT_ACESSORES),
+    [itensFiltrados, ordem]
+  );
 
   // --- Cache otimista (o card salta de coluna na hora) ---
   const patchTarefa = (id: string, patch: Record<string, unknown>) =>
@@ -469,7 +476,10 @@ export default function MeuTrabalho() {
         visao === "quadro" ? (
           <KanbanSortControl sort={ordem} onChange={setOrdem} keys={TAREFAS_SORT_KEYS} />
         ) : visao === "lista" ? (
-          <SeletorColunas colunas={colunas} />
+          <>
+            <KanbanSortControl sort={ordem} onChange={setOrdem} keys={TAREFAS_SORT_KEYS} />
+            <SeletorColunas colunas={colunas} />
+          </>
         ) : undefined
       }
     >
@@ -523,7 +533,7 @@ export default function MeuTrabalho() {
         <p className="py-12 text-center text-sm text-destructive">Não deu para carregar. Recarregue a página.</p>
       ) : visao === "lista" ? (
         <ListaTrabalho
-          itens={itensFiltrados}
+          itens={itensOrdenados}
           etapas={etapas ?? []}
           pessoas={pessoas ?? []}
           projetos={projetos ?? []}
