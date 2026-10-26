@@ -100,7 +100,7 @@ export type MolduraTarefasProps = {
 };
 
 /** Contexto de obra (aba Tarefas da obra, SPEC 140): só as tarefas dela, e novas nascem nela. */
-export type ObraDoWorkspace = {
+type ObraDoWorkspace = {
   id: string;
   /** Serviços do cronograma, para o campo opcional do formulário. */
   servicos: ServicoObra[];
