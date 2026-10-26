@@ -163,7 +163,12 @@ function KanbanColumnMenu({ primeira, ultima, onEditar, onMover, onExcluir }: Ka
   );
 }
 
-/** Envolve um card arrastável. O arraste por teclado (espaço) fica neste elemento. */
+/**
+ * Envolve um card arrastável. O arraste por teclado (espaço) fica neste elemento.
+ * O dnd ignora arraste que começa em elemento interativo, e o título do card é um
+ * botão de largura total: sem `disableInteractiveElementBlocking`, segurar pelo
+ * título não move nada (feedback da VRZ, 17/10). O clique sem arrastar segue abrindo o card.
+ */
 export function KanbanDraggable({
   id,
   index,
@@ -174,7 +179,7 @@ export function KanbanDraggable({
   children: (isDragging: boolean) => ReactNode;
 }) {
   return (
-    <Draggable draggableId={id} index={index}>
+    <Draggable draggableId={id} index={index} disableInteractiveElementBlocking>
       {(provided, snapshot) => (
         <div
           ref={provided.innerRef}
