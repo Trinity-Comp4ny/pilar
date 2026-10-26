@@ -123,7 +123,7 @@ export function DisciplinaDetailDialog(props: DisciplinaDetailDialogProps) {
   const { open, onOpenChange, disciplina } = props;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-none w-[96vw] h-[92vh] p-0 gap-0 overflow-hidden flex flex-col">
+      <DialogContent className="max-w-none w-[96vw] h-[92dvh] p-0 gap-0 overflow-hidden flex flex-col">
         {disciplina && <DisciplinaDetailBody key={disciplina.id ?? "nova"} {...props} disciplina={disciplina} />}
       </DialogContent>
     </Dialog>

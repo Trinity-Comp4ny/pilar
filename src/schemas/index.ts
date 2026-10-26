@@ -3,6 +3,7 @@ export {
   contaBancariaSchema,
   pessoaDefaultValues,
   type PessoaFormData,
+  type PessoaFormInput,
   type ContaBancariaFormData,
 } from "./pessoaSchema";
 export { receitaSchema, receitaDefaultValues, type ReceitaFormData } from "./receitaSchema";
@@ -34,7 +35,9 @@ export {
   type PasswordResetFormData,
   type ProfileSetupFormData,
   type CompanySetupFormData,
+  type CompanySetupFormInput,
   type ProfileEditFormData,
+  type ProfileEditFormInput,
   type ClienteLoginFormData,
   type TrocarSenhaPortalFormData,
 } from "./authSchemas";

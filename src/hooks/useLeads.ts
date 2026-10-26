@@ -30,6 +30,8 @@ export interface Lead {
   email?: string;
   contato?: string;
   status: "Novo" | "Em contato" | "Proposta" | "Negociação" | "Ganho" | "Perdido";
+  /** Coluna do funil (lead_etapas). O status deriva do bucket dela por trigger. */
+  etapa_id?: string | null;
   origem?: string;
   cliente_id?: string;
   motivo_perda?: string;
@@ -174,50 +176,56 @@ export const useCreateLead = () => {
   });
 };
 
+// Destino de um movimento: a coluna (o status deriva do bucket dela no banco).
+export type EtapaDestino = { id: string; nome: string; bucket: Lead["status"] };
+
 export const useUpdateLeadStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
       leadId,
-      newStatus,
+      etapa,
       extraFields,
     }: {
       leadId: string;
-      newStatus: Lead["status"];
+      etapa: EtapaDestino;
       extraFields?: Record<string, unknown>;
     }) => {
+      // Só etapa_id: o trigger do banco deriva o status do bucket da coluna.
       const { error } = await supabase
         .from("leads")
-        .update({ status: newStatus, ...statusSideEffects(newStatus), ...extraFields })
+        .update({ etapa_id: etapa.id, ...statusSideEffects(etapa.bucket), ...extraFields })
         .eq("id", leadId);
 
       if (error) throw error;
-      return { leadId, newStatus };
+      return { leadId, etapa };
     },
-    onMutate: async ({ leadId, newStatus, extraFields }) => {
+    onMutate: async ({ leadId, etapa, extraFields }) => {
       await queryClient.cancelQueries({ queryKey: ["leads"] });
 
       const previous = queryClient.getQueryData<Lead[]>(["leads"]);
 
       queryClient.setQueryData(["leads"], (old: Lead[] | undefined) =>
         (old || []).map((lead) =>
-          lead.id === leadId ? { ...lead, status: newStatus, ...statusSideEffects(newStatus), ...extraFields } : lead
+          lead.id === leadId
+            ? { ...lead, etapa_id: etapa.id, status: etapa.bucket, ...statusSideEffects(etapa.bucket), ...extraFields }
+            : lead
         )
       );
 
       return { previous };
     },
-    onSuccess: (_data, { newStatus }) => {
-      toast.success("Status atualizado", {
-        description: `Lead movido para ${newStatus}`,
+    onSuccess: (_data, { etapa }) => {
+      toast.success("Lead movido", {
+        description: `Lead movido para ${etapa.nome}`,
       });
     },
     onError: (error: unknown, _variables, context) => {
       if (context?.previous) {
         queryClient.setQueryData(["leads"], context.previous);
       }
-      toast.error("Erro ao atualizar status", {
+      toast.error("Erro ao mover o lead", {
         description: getSafeErrorMessage(error),
       });
       queryClient.invalidateQueries({ queryKey: ["leads"] });
@@ -258,7 +266,16 @@ export const useConvertLeadToClient = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ leadId, enrichment }: { leadId: string; enrichment?: ConvertEnrichment | null }) => {
+    mutationFn: async ({
+      leadId,
+      enrichment,
+      etapaId,
+    }: {
+      leadId: string;
+      enrichment?: ConvertEnrichment | null;
+      /** Coluna de Ganho escolhida no quadro; sem ela o RPC usa a primeira coluna de Ganho. */
+      etapaId?: string | null;
+    }) => {
       // Nunca copia o CNPJ cru (formatado) do lead: ele colide com o unique
       // parcial e tornava o lead inconvertível. O CNPJ limpo vem do enrichment
       // (lookup da Receita), aplicado no update abaixo.
@@ -268,6 +285,11 @@ export const useConvertLeadToClient = () => {
       });
 
       if (error) throw error;
+
+      if (etapaId) {
+        const { error: moveError } = await supabase.from("leads").update({ etapa_id: etapaId }).eq("id", leadId);
+        if (moveError) throw moveError;
+      }
 
       if (enrichment && data) {
         const updates = buildClienteEnrichmentUpdate(enrichment);

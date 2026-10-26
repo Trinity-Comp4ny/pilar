@@ -16,6 +16,7 @@ Deploy, resposta a incidentes, runbooks e monitoramento. ← [voltar ao índice]
 | [PLANO_ENGENHARIA_2026-10.md](./PLANO_ENGENHARIA_2026-10.md)                       | Análises externas conferidas contra o código: o que procede, o que não, e as ondas de gates de qualidade (E2E em PR, catracas) |
 | [AUDITORIA_ATIVACAO_ASAAS_2026-09-01.md](./AUDITORIA_ATIVACAO_ASAAS_2026-09-01.md) | Duas integrações Asaas distintas (cliente vs plataforma); checklist pra ligar a cobrança de assinatura em sandbox              |
 | [AUDITORIA_PRODUCAO_2026-10-14.md](./AUDITORIA_PRODUCAO_2026-10-14.md)             | Segunda leitura da produção: o que a primeira auditoria não viu, o que foi corrigido e o que depende do dono                   |
+| [ESTIMATIVA_IMPORTAR_PRECOS_MENSAL.md](./ESTIMATIVA_IMPORTAR_PRECOS_MENSAL.md)     | Importar o CUB e o SINAPI todo mês (quem, onde, o que o leitor recusa)                                                         |
 
 ## Subpastas
 

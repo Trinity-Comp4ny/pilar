@@ -129,7 +129,7 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen w-full flex overflow-hidden bg-paper">
+    <div className="min-h-dvh w-full flex overflow-hidden bg-paper">
       {/* Lado Esquerdo - Formulário de Cadastro */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-paper relative">
         <Link

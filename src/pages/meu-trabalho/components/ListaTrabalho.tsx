@@ -61,6 +61,8 @@ type Props = {
   onCriarNoGrupo: (etapaId: string) => void;
   /** Gestão das listas/status (criar, renomear, reordenar, excluir) — igual ao quadro. */
   etapaControls: EtapaControls;
+  /** O grupo Concluído começa recolhido (aba Tarefas da obra, SPEC 140). */
+  recolherConcluidas?: boolean;
 };
 
 function estaAtrasado(prazo: string | null, concluida: boolean): boolean {
@@ -393,9 +395,12 @@ export function ListaTrabalho({
   onMover,
   onCriarNoGrupo,
   etapaControls,
+  recolherConcluidas = false,
 }: Props) {
   const grupos = agruparPorEtapa(itens, etapas);
-  const [colapsados, setColapsados] = useState<Set<string>>(new Set());
+  // Grupos que o usuário inverteu em relação ao padrão (aberto, ou recolhido no grupo Concluído
+  // quando `recolherConcluidas`). Guardar a inversão, e não o estado, evita esperar as etapas carregarem.
+  const [invertidos, setInvertidos] = useState<Set<string>>(new Set());
   const ativas = colunas.ativas;
   const template = gridTemplate(ativas);
   const handlers: CelulaHandlers = {
@@ -409,7 +414,7 @@ export function ListaTrabalho({
   };
 
   const toggle = (chave: string) =>
-    setColapsados((prev) => {
+    setInvertidos((prev) => {
       const next = new Set(prev);
       if (next.has(chave)) next.delete(chave);
       else next.add(chave);
@@ -431,7 +436,8 @@ export function ListaTrabalho({
         <DragDropContext onDragEnd={onDragEnd}>
           {grupos.map((grupo, idx) => {
             const etapa = etapas.find((e) => e.id === grupo.chave);
-            const aberto = !colapsados.has(grupo.chave);
+            const padraoAberto = !(recolherConcluidas && etapa?.bucket === "concluida");
+            const aberto = padraoAberto !== invertidos.has(grupo.chave);
             const podeExcluir = etapa != null && etapa.bucket == null; // âncora de status não sai
             // Uma tabela por status: cada grupo é um card próprio, com seu
             // cabeçalho de colunas e suas linhas.

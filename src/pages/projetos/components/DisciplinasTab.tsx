@@ -21,6 +21,8 @@ import {
   Calendar,
 } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
+import { DataTable, type ColumnDef } from "@/components/data/DataTable";
+import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
 import {
   type DisciplinaResponsavel,
   type Projeto,
@@ -136,6 +138,11 @@ interface DisciplinasTabProps {
   onChanged?: () => void;
   isLoading?: boolean;
 }
+
+const VISAO_OPCOES: ViewOption<"cards" | "table">[] = [
+  { value: "cards", label: "Cards", icon: LayoutGrid },
+  { value: "table", label: "Tabela", icon: List },
+];
 
 export function DisciplinasTab({
   projetos,
@@ -274,6 +281,113 @@ export function DisciplinasTab({
     );
   }
 
+  // Tabela no DataTable padrão (SPEC 127): linhas planas; só a 1ª linha de cada disciplina mostra o nome.
+  type LinhaTabela = {
+    grupo: (typeof filtered)[number];
+    projeto: Projeto;
+    disciplina: DisciplinaResponsavel;
+    primeira: boolean;
+  };
+  const linhasTabela: LinhaTabela[] = filtered.flatMap((grupo) =>
+    grupo.projetos.map(({ projeto, disciplina }, idx) => ({ grupo, projeto, disciplina, primeira: idx === 0 }))
+  );
+  const linhasColumns: ColumnDef<LinhaTabela>[] = [
+    {
+      key: "disciplina",
+      header: "Disciplina",
+      cell: ({ grupo, primeira }) =>
+        primeira ? (
+          <div className="flex items-center gap-2">
+            <span className="font-semibold">{grupo.nome}</span>
+            <Badge variant="secondary" className="text-[10px] font-normal">
+              {grupo.projetos.length}
+            </Badge>
+            {canEdit && onChanged && (
+              <DisciplinaGrupoAcoes
+                nome={grupo.nome}
+                projetos={projetosTodos}
+                catalogo={catalogo}
+                onChanged={onChanged}
+              />
+            )}
+          </div>
+        ) : (
+          <span className="text-muted-foreground/30 pl-2">↳</span>
+        ),
+    },
+    {
+      key: "projeto",
+      header: "Projeto",
+      cell: ({ projeto }) => <div className="font-medium text-sm">{projeto.nome}</div>,
+    },
+    {
+      key: "responsavel",
+      header: "Responsável",
+      className: "text-sm",
+      cell: ({ disciplina }) => {
+        const resps = getResponsaveisList(disciplina);
+        return resps.length > 0 ? resps.map((r) => r.responsavel_nome).join(", ") : "—";
+      },
+    },
+    {
+      key: "status",
+      header: "Status",
+      cell: ({ disciplina }) => {
+        const dlStatus = getDiscDeadlineStatus(disciplina);
+        const atrasada = dlStatus?.status_data === "em_atraso";
+        const atencao = dlStatus?.status_data === "atencao";
+        return (
+          <div className="flex items-center gap-1">
+            {getStatusBadge(disciplina.status)}
+            {atrasada && dlStatus && (
+              <Badge variant="destructive" className="text-[10px] gap-0.5">
+                <AlertTriangle className="h-3 w-3" />
+                {dlStatus.days}d
+              </Badge>
+            )}
+            {atencao && dlStatus && (
+              <Badge className="text-[10px] gap-0.5 bg-fill-warning hover:bg-fill-warning text-fill-warning-foreground">
+                <Clock className="h-3 w-3" />
+                {dlStatus.days}d
+              </Badge>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: "previsao",
+      header: "Previsão",
+      className: "text-sm",
+      cell: ({ disciplina }) => {
+        const st = getDiscDeadlineStatus(disciplina)?.status_data;
+        return (
+          <span
+            className={cn(
+              st === "em_atraso"
+                ? "text-danger-mid font-medium"
+                : st === "atencao"
+                  ? "text-warning-mid font-medium"
+                  : "text-muted-foreground"
+            )}
+          >
+            {formatDate(disciplina.data_previsao)}
+          </span>
+        );
+      },
+    },
+    {
+      key: "projeto-status",
+      header: "Projeto Status",
+      cell: ({ projeto }) =>
+        PROJECT_STATUS_CONFIG[projeto.status] ? (
+          <Badge variant="outline" className={cn("text-[11px]", PROJECT_STATUS_CONFIG[projeto.status].color)}>
+            {PROJECT_STATUS_CONFIG[projeto.status].label}
+          </Badge>
+        ) : null,
+    },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Métricas */}
@@ -342,26 +456,12 @@ export function DisciplinasTab({
           >
             {expandedDisciplinas.size > 0 ? "Recolher" : "Expandir"} tudo
           </Button>
-          <div className="flex border rounded-md overflow-hidden">
-            <Button
-              variant={viewMode === "cards" ? "secondary" : "ghost"}
-              size="icon"
-              className="h-8 w-8 rounded-none"
-              onClick={() => setViewMode("cards")}
-              aria-label="Visualizar em cards"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "table" ? "secondary" : "ghost"}
-              size="icon"
-              className="h-8 w-8 rounded-none"
-              onClick={() => setViewMode("table")}
-              aria-label="Visualizar em tabela"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
+          <ViewSwitcher
+            options={VISAO_OPCOES}
+            value={viewMode}
+            onChange={setViewMode}
+            ariaLabel="Visualização das disciplinas"
+          />
         </div>
       </div>
 
@@ -578,110 +678,20 @@ export function DisciplinasTab({
         /* Table view */
         <Card>
           <CardContent className="p-0 overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="border-b bg-muted/50 sticky top-0">
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground text-xs">Disciplina</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground text-xs">Projeto</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground text-xs">Responsável</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground text-xs">Status</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground text-xs">Previsão</th>
-                  <th className="text-left py-3 px-4 font-medium text-muted-foreground text-xs">Projeto Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.flatMap((grupo) =>
-                  grupo.projetos.map(({ projeto, disciplina }, idx) => {
-                    const dlStatus = getDiscDeadlineStatus(disciplina);
-                    const atrasada = dlStatus?.status_data === "em_atraso";
-                    const atencao = dlStatus?.status_data === "atencao";
-
-                    return (
-                      <tr
-                        key={`${grupo.nome}-${projeto.id}`}
-                        className={cn(
-                          "border-b transition-colors",
-                          atrasada
-                            ? "bg-danger-soft/30 hover:bg-danger-soft/50"
-                            : atencao
-                              ? "bg-warning-soft/30 hover:bg-warning-soft/50"
-                              : "hover:bg-muted/30"
-                        )}
-                      >
-                        <td className="py-2.5 px-4">
-                          {idx === 0 ? (
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold">{grupo.nome}</span>
-                              <Badge variant="secondary" className="text-[10px] font-normal">
-                                {grupo.projetos.length}
-                              </Badge>
-                              {canEdit && onChanged && (
-                                <DisciplinaGrupoAcoes
-                                  nome={grupo.nome}
-                                  projetos={projetosTodos}
-                                  catalogo={catalogo}
-                                  onChanged={onChanged}
-                                />
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground/30 pl-2">↳</span>
-                          )}
-                        </td>
-                        <td className="py-2.5 px-4">
-                          <div className="font-medium text-sm">{projeto.nome}</div>
-                        </td>
-                        <td className="py-2.5 px-4 text-sm">
-                          {(() => {
-                            const resps = getResponsaveisList(disciplina);
-                            return resps.length > 0 ? resps.map((r) => r.responsavel_nome).join(", ") : "—";
-                          })()}
-                        </td>
-                        <td className="py-2.5 px-4">
-                          <div className="flex items-center gap-1">
-                            {getStatusBadge(disciplina.status)}
-                            {atrasada && dlStatus && (
-                              <Badge variant="destructive" className="text-[10px] gap-0.5">
-                                <AlertTriangle className="h-3 w-3" />
-                                {dlStatus.days}d
-                              </Badge>
-                            )}
-                            {atencao && dlStatus && (
-                              <Badge className="text-[10px] gap-0.5 bg-fill-warning hover:bg-fill-warning text-fill-warning-foreground">
-                                <Clock className="h-3 w-3" />
-                                {dlStatus.days}d
-                              </Badge>
-                            )}
-                          </div>
-                        </td>
-                        <td
-                          className={cn(
-                            "py-2.5 px-4 text-sm",
-                            atrasada
-                              ? "text-danger-mid font-medium"
-                              : atencao
-                                ? "text-warning-mid font-medium"
-                                : "text-muted-foreground"
-                          )}
-                        >
-                          {formatDate(disciplina.data_previsao)}
-                        </td>
-                        <td className="py-2.5 px-4">
-                          {PROJECT_STATUS_CONFIG[projeto.status] && (
-                            <Badge
-                              variant="outline"
-                              className={cn("text-[11px]", PROJECT_STATUS_CONFIG[projeto.status].color)}
-                            >
-                              {PROJECT_STATUS_CONFIG[projeto.status].label}
-                            </Badge>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+            <DataTable
+              columns={linhasColumns}
+              data={{ rows: linhasTabela, isPending: false, error: null }}
+              rowKey={(l) => `${l.grupo.nome}-${l.projeto.id}`}
+              rowClassName={(l) => {
+                const st = getDiscDeadlineStatus(l.disciplina)?.status_data;
+                return st === "em_atraso"
+                  ? "bg-danger-soft/30 hover:bg-danger-soft/50"
+                  : st === "atencao"
+                    ? "bg-warning-soft/30 hover:bg-warning-soft/50"
+                    : undefined;
+              }}
+              emptyMessage="Nenhuma disciplina encontrada."
+            />
           </CardContent>
         </Card>
       )}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -7,6 +8,7 @@ import {
   ClipboardList,
   LayoutGrid,
   List,
+  Mic,
   Pencil,
   Plus,
   Trash2,
@@ -29,6 +31,11 @@ import { useObraRdoImpedimentos } from "@/pages/obras/hooks/useObraRdoImpediment
 import { useObraRdoVisitas } from "@/pages/obras/hooks/useObraRdoVisitas";
 import { RdoFormDialog } from "./RdoFormDialog";
 import { RdoFeedCard } from "./RdoFeedCard";
+import { ObraRegistrosTimeline } from "./ObraRegistrosTimeline";
+import { RegistroGravarDialog } from "./RegistroGravarDialog";
+import { MobileFab } from "@/components/MobileFab";
+import { rascunhoDoRdo, type RascunhoRdo } from "@/pages/obras/lib/resumoDia";
+import { useObraRegistros, type ObraRegistro } from "@/pages/obras/hooks/useObraRegistros";
 
 const RESULTADO_LABEL: Record<ResultadoRdoTarefa, string> = {
   avancou: "Avançou",
@@ -51,6 +58,14 @@ function Campo({ titulo, texto }: { titulo: string; texto: string | null }) {
   );
 }
 
+type VisaoDiario = "registros" | "lista" | "feed";
+
+const DIARIO_VISOES: ViewOption<VisaoDiario>[] = [
+  { value: "registros", label: "Registros", icon: Mic },
+  { value: "lista", label: "Lista", icon: List },
+  { value: "feed", label: "Feed", icon: LayoutGrid },
+];
+
 export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: boolean }) {
   const isMobile = useIsMobile();
   const { data: rdos = [], isLoading } = useObraRdos(obraId);
@@ -64,17 +79,32 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
   const del = useDeleteRdo(obraId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<RdoRow | null>(null);
+  const [rascunho, setRascunho] = useState<RascunhoRdo | null>(null);
+  const [gravarAberto, setGravarAberto] = useState(false);
   const [confirm, setConfirm] = useState<RdoRow | null>(null);
-  // Feed visual (spec 087) além da lista densa já existente — não persiste
-  // entre sessões, reseta pro padrão a cada entrada na aba.
-  const [visualizacao, setVisualizacao] = useState<"lista" | "feed">("lista");
+  // Visões: Registros (SPEC 135, o que a equipe gravou), Lista (RDO denso) e Feed (spec 087).
+  // Não persiste entre sessões. Sem escolha, abre em Registros quando a obra já tem registros e
+  // na Lista (o fluxo do RDO de sempre) quando ainda não tem, para quem não usa a gravação
+  // não ver uma tela vazia no lugar do diário.
+  const { data: registros, isLoading: carregandoRegistros } = useObraRegistros(obraId);
+  const [escolhida, setVisualizacao] = useState<VisaoDiario | null>(null);
+  const visualizacao: VisaoDiario = escolhida ?? ((registros?.length ?? 0) > 0 ? "registros" : "lista");
 
   const abrirNovo = () => {
     setEditing(null);
+    setRascunho(null);
     setDialogOpen(true);
   };
   const abrirEdicao = (rdo: RdoRow) => {
     setEditing(rdo);
+    setRascunho(null);
+    setDialogOpen(true);
+  };
+  // Fechar o dia pelos registros: dia sem RDO abre preenchido; dia que já tem RDO abre esse RDO
+  // para editar, e os registros passam a apontar para ele ao salvar.
+  const fecharDia = (data: string, doDia: ObraRegistro[]) => {
+    setEditing(rdos.find((r) => r.data === data) ?? null);
+    setRascunho(rascunhoDoRdo(data, doDia));
     setDialogOpen(true);
   };
 
@@ -91,7 +121,7 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
     }
   };
 
-  if (isLoading) {
+  if (isLoading || (escolhida === null && carregandoRegistros)) {
     return (
       <div className="space-y-3">
         <Skeleton className="h-24 w-full rounded-2xl" />
@@ -103,46 +133,40 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <div className="inline-flex rounded-full bg-muted p-0.5">
-          <button
-            type="button"
-            onClick={() => setVisualizacao("lista")}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-              visualizacao === "lista" ? "bg-white text-ink shadow-sm" : "text-muted-foreground"
-            }`}
-          >
-            <List className="h-3.5 w-3.5" />
-            Lista
-          </button>
-          <button
-            type="button"
-            onClick={() => setVisualizacao("feed")}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-              visualizacao === "feed" ? "bg-white text-ink shadow-sm" : "text-muted-foreground"
-            }`}
-          >
-            <LayoutGrid className="h-3.5 w-3.5" />
-            Feed
-          </button>
-        </div>
+        <ViewSwitcher
+          options={DIARIO_VISOES}
+          value={visualizacao}
+          onChange={setVisualizacao}
+          ariaLabel="Visualização do diário"
+        />
         {/* Ícone-only em mobile: toggle Lista/Feed + "Registrar dia" não
             cabiam numa linha em 390px, e o botão cortava na borda (achado da
             auditoria, mesmo padrão já corrigido no cabeçalho do Gantt). */}
         {canEdit && (
-          <Button
-            variant="brand"
-            size="sm"
-            className={isMobile ? "w-9 px-0" : undefined}
-            onClick={abrirNovo}
-            aria-label="Registrar dia"
-          >
-            <Plus className={isMobile ? "h-4 w-4" : "mr-1.5 h-4 w-4"} />
-            {!isMobile && "Registrar dia"}
-          </Button>
+          <div className="flex items-center gap-2">
+            {!isMobile && (
+              <Button variant="brand" size="sm" onClick={() => setGravarAberto(true)}>
+                <Mic className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                Gravar registro
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className={isMobile ? "w-9 px-0" : undefined}
+              onClick={abrirNovo}
+              aria-label="Registrar dia"
+            >
+              <Plus className={isMobile ? "h-4 w-4" : "mr-1.5 h-4 w-4"} />
+              {!isMobile && "Registrar dia"}
+            </Button>
+          </div>
         )}
       </div>
 
-      {rdos.length === 0 ? (
+      {visualizacao === "registros" ? (
+        <ObraRegistrosTimeline obraId={obraId} canEdit={canEdit} onFecharDia={fecharDia} />
+      ) : rdos.length === 0 ? (
         <EmptyState
           icon={ClipboardList}
           title="Diário vazio"
@@ -348,7 +372,22 @@ export function ObraDiarioTab({ obraId, canEdit }: { obraId: string; canEdit: bo
         </div>
       )}
 
-      <RdoFormDialog open={dialogOpen} onOpenChange={setDialogOpen} obraId={obraId} rdos={rdos} rdoInicial={editing} />
+      {canEdit && <MobileFab label="Gravar registro" icon={Mic} onClick={() => setGravarAberto(true)} />}
+      <RegistroGravarDialog
+        open={gravarAberto}
+        onOpenChange={setGravarAberto}
+        obraId={obraId}
+        onEnviado={() => setVisualizacao("registros")}
+      />
+
+      <RdoFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        obraId={obraId}
+        rdos={rdos}
+        rdoInicial={editing}
+        rascunho={rascunho}
+      />
 
       <ConfirmDialog
         open={!!confirm}

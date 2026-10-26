@@ -21,7 +21,8 @@ interface ComentarioCardProps {
 
 /**
  * Um comentário das Atividades (projeto, disciplina, tarefa). "@Nome" de quem foi
- * mencionado fica verde, como no composer, e abre o perfil da pessoa (spec 103).
+ * mencionado fica verde, como no composer, e abre o perfil da pessoa (spec 103). "@all" também
+ * fica verde (SPEC 132), sem perfil para abrir.
  */
 export function ComentarioCard({ comentario, pessoas, destacado }: ComentarioCardProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -63,6 +64,10 @@ export function ComentarioCard({ comentario, pessoas, destacado }: ComentarioCar
                 {seg.texto}
               </button>
             </PerfilPessoaPopover>
+          ) : seg.todos ? (
+            <span key={i} className="rounded bg-brand/25 px-0.5 font-medium text-foreground">
+              {seg.texto}
+            </span>
           ) : (
             <span key={i}>{seg.texto}</span>
           )

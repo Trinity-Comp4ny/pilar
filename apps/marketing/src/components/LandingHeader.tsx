@@ -7,7 +7,7 @@ import { useLoginHint } from "../loginHint";
 import { MODULOS } from "../lib/modules";
 import { Logo } from "./Logo";
 import { SplitButton } from "./ui/SplitButton";
-import { linkCadastro } from "../lib/origem";
+import { DEMO_URL } from "../lib/contato";
 
 type MenuNome = "produto";
 
@@ -143,10 +143,10 @@ export function LandingHeader() {
             )}
             <SplitButton
               tamanho="sm"
-              href={loggedIn ? `${APP_URL}/inicio` : linkCadastro()}
-              onClick={() => trackCta(loggedIn ? "abrir_pilar" : "testar_gratis", "header")}
+              href={loggedIn ? `${APP_URL}/inicio` : DEMO_URL}
+              onClick={() => trackCta(loggedIn ? "abrir_pilar" : "agende_demo", "header")}
             >
-              {loggedIn ? "Abrir Pilar" : "Testar grátis"}
+              {loggedIn ? "Abrir Pilar" : "Agendar demo"}
             </SplitButton>
           </div>
 
@@ -192,10 +192,10 @@ export function LandingHeader() {
           </Link>
           <SplitButton
             className="mt-3"
-            href={loggedIn ? `${APP_URL}/inicio` : linkCadastro()}
-            onClick={() => trackCta(loggedIn ? "abrir_pilar" : "testar_gratis", "header_mobile")}
+            href={loggedIn ? `${APP_URL}/inicio` : DEMO_URL}
+            onClick={() => trackCta(loggedIn ? "abrir_pilar" : "agende_demo", "header_mobile")}
           >
-            {loggedIn ? "Abrir Pilar" : "Testar grátis por 3 dias"}
+            {loggedIn ? "Abrir Pilar" : "Agendar demonstração"}
           </SplitButton>
         </div>
       </div>

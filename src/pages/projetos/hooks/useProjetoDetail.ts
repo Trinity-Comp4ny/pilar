@@ -28,7 +28,7 @@ import {
 export function useProjetoDetail(id: string | undefined) {
   const navigate = useNavigate();
   const { canEdit } = useFeatureAccess("projetos");
-  const { can } = usePermissions();
+  const { can, ready } = usePermissions();
   const queryClient = useQueryClient();
 
   // ---- Project data via React Query ----
@@ -74,7 +74,7 @@ export function useProjetoDetail(id: string | undefined) {
   });
 
   // ---- Rentabilidade ----
-  const { data: rentabilidade, isLoading: rentabilidadeLoading } = useProjetoRentabilidade(id, can("financeiro"));
+  const { data: rentabilidade, isLoading: rentabilidadeLoading } = useProjetoRentabilidade(id, ready && can("financeiro"));
 
   // ---- Relational disciplinas ----
   const { data: dbDisciplinas = [] } = useProjetoDisciplinas(id);

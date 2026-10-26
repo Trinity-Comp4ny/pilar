@@ -15,20 +15,22 @@ export interface CepResult {
   state: string;
 }
 
+// CEP de cidade pequena não tem logradouro nem bairro: os providers devolvem
+// null (não só ausente). Esses campos são nullish de propósito (PILAR-3M/3K).
 const brasilApiSchema = z.object({
-  cep: z.string().optional(),
+  cep: z.string().nullish(),
   city: z.string().min(1),
   state: z.string().min(1),
-  street: z.string().optional(),
-  neighborhood: z.string().optional(),
+  street: z.string().nullish(),
+  neighborhood: z.string().nullish(),
 });
 
 const viaCepSchema = z.union([
   z.object({ erro: z.literal(true) }),
   z.object({
-    cep: z.string().optional(),
-    logradouro: z.string().optional(),
-    bairro: z.string().optional(),
+    cep: z.string().nullish(),
+    logradouro: z.string().nullish(),
+    bairro: z.string().nullish(),
     localidade: z.string().min(1),
     uf: z.string().min(1),
   }),

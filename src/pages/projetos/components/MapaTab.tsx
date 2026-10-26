@@ -2,7 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FilterSelect } from "@/components/filters/FilterBar";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
@@ -246,19 +246,16 @@ export function MapaTab() {
           </PopoverContent>
         </Popover>
 
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px] h-9 rounded-full text-sm" aria-label="Filtrar por status">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos os status</SelectItem>
-            {Object.values(PROJECT_STATUS).map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <FilterSelect
+          label="Status"
+          value={statusFilter}
+          emptyValue="todos"
+          onChange={setStatusFilter}
+          options={[
+            { value: "todos", label: "Todos os status" },
+            ...Object.values(PROJECT_STATUS).map((st) => ({ value: st, label: st })),
+          ]}
+        />
       </div>
 
       {isLoading ? (
@@ -357,7 +354,7 @@ export function MapaTab() {
           <div
             ref={wrapperRef}
             className="rounded-lg overflow-hidden border relative bg-muted"
-            style={{ height: isFullscreen ? "100dvh" : "calc(100vh - 320px)", minHeight: "420px" }}
+            style={{ height: isFullscreen ? "100dvh" : "calc(100dvh - 320px)", minHeight: "420px" }}
           >
             {/* Seletor de camada */}
             <div className="absolute bottom-8 left-3 z-1000">

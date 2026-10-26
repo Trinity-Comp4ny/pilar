@@ -20,6 +20,7 @@ export type EventoProduto =
   // Cadastro e onboarding
   | "signup_completed"
   | "signup_email_ja_cadastrado"
+  | "demo_agendar_clicado"
   | "empresa_onboarding_concluido"
   // Uso dos módulos (ativação e adoção)
   | "cliente_criado"
@@ -37,6 +38,7 @@ export type EventoProduto =
   | "relatorio_exportado"
   // IA
   | "inicio_agentes_abrir"
+  | "inicio_resumo_exibido"
   | "ia_mensagem_enviada"
   | "ia_acao_confirmada"
   | "ia_acao_cancelada"

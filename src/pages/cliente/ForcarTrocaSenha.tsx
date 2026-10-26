@@ -14,7 +14,7 @@ export default function ForcarTrocaSenha({ onSuccess }: ForcarTrocaSenhaProps) {
   usePageTitle("Portal | Trocar senha");
 
   return (
-    <div className="min-h-screen bg-muted flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-muted flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardContent className="p-6 sm:p-8 space-y-6">
           <div className="text-center space-y-3">

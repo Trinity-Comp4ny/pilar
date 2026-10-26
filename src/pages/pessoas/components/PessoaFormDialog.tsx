@@ -23,7 +23,7 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { pessoaSchema, pessoaDefaultValues, type PessoaFormData } from "@/schemas";
+import { pessoaSchema, pessoaDefaultValues, type PessoaFormData, type PessoaFormInput } from "@/schemas";
 import { Badge } from "@/components/ui/badge";
 import { detectTipoChavePix, normalizarChavePix, TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import type { Pessoa, ContaBancaria, ChavePix } from "../types";
@@ -58,7 +58,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
   // evita sobrescrever os valores reais com o placeholder.
   const canEditSensitive = !isEditMode || (editPessoa?.pode_ver_sensivel ?? false);
 
-  const form = useForm<PessoaFormData>({
+  const form = useForm<PessoaFormInput, unknown, PessoaFormData>({
     resolver: zodResolver(pessoaSchema),
     defaultValues: pessoaDefaultValues,
     mode: "onChange",
@@ -256,7 +256,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="sm:max-w-2xl max-h-[90dvh] overflow-y-auto p-0">
         <div className="px-6 pt-6 pb-4 border-b">
           <DialogHeader>
             <DialogTitle>{isEditMode ? "Editar pessoa" : "Nova pessoa"}</DialogTitle>
@@ -498,7 +498,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                     </Label>
                     <MoneyInput
                       id="salario_fixo"
-                      value={form.watch("salario_fixo")}
+                      value={form.watch("salario_fixo") ?? ""}
                       onChange={(v) => form.setValue("salario_fixo", v)}
                     />
                   </div>
@@ -508,7 +508,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                     </Label>
                     <MoneyInput
                       id="valor_m2"
-                      value={form.watch("valor_m2")}
+                      value={form.watch("valor_m2") ?? ""}
                       onChange={(v) => form.setValue("valor_m2", v)}
                     />
                   </div>

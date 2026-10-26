@@ -68,6 +68,14 @@ Ficam legíveis a todo membro da empresa, com motivo na allowlist de
 - **Compra da obra** (cotações, itens, material, valor previsto por etapa, taxa de
   administração): quem toca a obra compara cotação.
 - **Comercial**: preço da proposta e valor de venda por disciplina.
+- **CUB** (`cub_valores`, SPEC 136): referência pública de mercado importada pelo ultra admin,
+  igual para todas as empresas. Só o ultra admin escreve.
+- **SINAPI** (`sinapi_precos_insumo`, SPEC 137): preço público de insumo dos itens do catálogo, importado
+  pelo ultra admin, igual para todas as empresas. Só o ultra admin escreve.
+- **Tabela de preços da empresa** (`estimativa_ajustes_empresa`, SPEC 137): o valor da empresa para cada item vale antes do
+  SINAPI e da referência do Pilar em toda estimativa. Toda a empresa lê; só o admin da empresa (ou o ultra admin) escreve.
+- **Estimativa de obra** (`estimativas_obra` e versões): a faixa de custo que o escritório leva ao
+  cliente, no espírito do preço da proposta. Isolada por empresa; não é o financeiro do escritório.
 
 Decisões abertas, ainda visíveis a quem tem o módulo:
 

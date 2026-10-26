@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ViewSwitcher } from "@/components/ViewSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { format } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -37,6 +38,7 @@ import {
 } from "../hooks";
 import { useEtapas } from "../useEtapas";
 import { TarefaDialog } from "./TarefaDialog";
+import { NovaTarefaNoDia, type NovaTarefaNoDiaDados } from "./NovaTarefaNoDia";
 
 type Props = {
   pessoaIds: string[] | null;
@@ -44,6 +46,8 @@ type Props = {
   canEdit: boolean;
   /** Empresa só-Gestão (sem módulo Projetos) não tem camada de disciplinas. */
   temProjetos: boolean;
+  /** Só admin escolhe o responsável de uma tarefa nova (igual ao formulário completo). */
+  podeEscolherResponsavel?: boolean;
 };
 
 /**
@@ -52,7 +56,7 @@ type Props = {
  * pra ligar/desligar. Clicar numa tarefa abre a edição; numa disciplina, o
  * projeto de origem.
  */
-export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos }: Props) {
+export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos, podeEscolherResponsavel = false }: Props) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { data: disciplinas } = useDisciplinas(temProjetos ? pessoaIds : null, { enabled: temProjetos });
@@ -60,13 +64,15 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos }: Pr
   const { data: pessoas } = usePessoasEmpresa();
   const { data: projetos } = useProjetosLite();
   const { data: etapas } = useEtapas();
-  const { atualizar } = useTarefaMutations();
+  const { atualizar, criar } = useTarefaMutations();
 
   const camadas: CamadaId[] = temProjetos ? ["disciplina", "tarefa"] : ["tarefa"];
   const { cursor, setCursor, view, setView, step, goHoje } = useCalendarioNav();
   const { visiveis, toggle } = useCamadasVisiveis({ disciplina: true, tarefa: true });
 
   const [tarefaAberta, setTarefaAberta] = useState<TarefaItem | null>(null);
+  // Formulário completo aberto pelo "Mais campos" do quadro curto: nasce com o prazo do dia.
+  const [novaNoDia, setNovaNoDia] = useState<{ prazo: string; titulo: string } | null>(null);
 
   // Mês/Semana usam grid de 7 colunas fixas: ilegível em 390px (achado da
   // auditoria mobile). Agenda já é responsiva, então em mobile ela é a única
@@ -112,8 +118,13 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos }: Pr
   };
 
   const salvarTarefa = async (input: TarefaInput): Promise<string | null> => {
-    if (!tarefaAberta) return null;
     try {
+      if (!tarefaAberta) {
+        const id = await criar.mutateAsync(input);
+        toast.success("Tarefa criada.");
+        setNovaNoDia(null);
+        return id;
+      }
       await atualizar.mutateAsync({ id: tarefaAberta.id, input });
       toast.success("Tarefa atualizada.");
       setTarefaAberta(null);
@@ -123,6 +134,45 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos }: Pr
       return null;
     }
   };
+
+  // Quadro curto do "+" de um dia: grava na primeira coluna (A fazer) com o prazo do dia.
+  const etapaInicial = (etapas ?? []).find((e) => e.bucket === "a_fazer") ?? (etapas ?? [])[0];
+  const criarNoDia = async (dia: Date, dados: NovaTarefaNoDiaDados): Promise<boolean> => {
+    try {
+      await criar.mutateAsync({
+        titulo: dados.titulo,
+        status: "a_fazer",
+        etapa_id: etapaInicial?.id ?? null,
+        prazo: format(dia, "yyyy-MM-dd"),
+        responsaveis: dados.responsavelId ? [dados.responsavelId] : [],
+        projeto_id: dados.projetoId,
+      });
+      toast.success(`Tarefa criada para ${format(dia, "d/MM")}.`);
+      return true;
+    } catch {
+      toast.error("Não deu para criar a tarefa. Tente de novo.");
+      return false;
+    }
+  };
+
+  const renderNovoNoDia = canEdit
+    ? (dia: Date, fechar: () => void) => (
+        <NovaTarefaNoDia
+          rotuloDia={dia.toLocaleDateString("pt-BR", { day: "numeric", month: "long" })}
+          rotuloPrazo={dia.toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric" })}
+          pessoas={pessoas ?? []}
+          projetos={projetos ?? []}
+          minhaPessoaId={minhaPessoaId}
+          podeEscolherResponsavel={podeEscolherResponsavel}
+          onCriar={(dados) => criarNoDia(dia, dados)}
+          onMaisCampos={(titulo) => {
+            setNovaNoDia({ prazo: format(dia, "yyyy-MM-dd"), titulo });
+            fechar();
+          }}
+          onFechar={fechar}
+        />
+      )
+    : undefined;
 
   return (
     <div className="space-y-3">
@@ -143,18 +193,12 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos }: Pr
         {/* Mês/Semana ficam ilegíveis em 390px (grid de 7 colunas fixas); em
             mobile só Agenda é oferecida, então o seletor vira redundante. */}
         {!isMobile && (
-          <Select value={view} onValueChange={(v) => setView(v as CalendarioView)}>
-            <SelectTrigger className="w-[120px] h-9 text-sm rounded-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {(Object.keys(VIEW_LABEL) as CalendarioView[]).map((v) => (
-                <SelectItem key={v} value={v}>
-                  {VIEW_LABEL[v]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <ViewSwitcher
+            options={(Object.keys(VIEW_LABEL) as CalendarioView[]).map((v) => ({ value: v, label: VIEW_LABEL[v] }))}
+            value={view}
+            onChange={setView}
+            ariaLabel="Modo do calendário"
+          />
         )}
       </div>
 
@@ -169,25 +213,47 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos }: Pr
         />
         <div className="flex-1 min-w-0 p-4 space-y-4 overflow-y-auto">
           <CalendarioLegenda camadas={camadas} />
-          {view === "mes" && <MesView cursor={cursor} eventosPorDia={eventosPorDia} onEventoClick={abrirEvento} />}
+          {view === "mes" && (
+            <MesView
+              cursor={cursor}
+              eventosPorDia={eventosPorDia}
+              onEventoClick={abrirEvento}
+              renderNovoNoDia={renderNovoNoDia}
+            />
+          )}
           {view === "semana" && (
             <SemanaView cursor={cursor} eventosPorDia={eventosPorDia} onEventoClick={abrirEvento} />
           )}
-          {view === "agenda" && <AgendaView cursor={cursor} eventos={eventos} onEventoClick={abrirEvento} />}
+          {view === "agenda" && (
+            <AgendaView
+              cursor={cursor}
+              eventos={eventos}
+              onEventoClick={abrirEvento}
+              renderNovoNoDia={renderNovoNoDia}
+            />
+          )}
         </div>
       </div>
 
       <TarefaDialog
-        open={!!tarefaAberta}
-        onOpenChange={(open) => !open && setTarefaAberta(null)}
+        open={!!tarefaAberta || !!novaNoDia}
+        onOpenChange={(open) => {
+          if (open) return;
+          setTarefaAberta(null);
+          setNovaNoDia(null);
+        }}
         tarefa={tarefaAberta}
+        defaultPrazo={novaNoDia?.prazo}
+        defaultTitulo={novaNoDia?.titulo}
+        defaultEtapaId={etapaInicial?.id}
+        podeEscolherResponsavel={podeEscolherResponsavel}
         pessoas={pessoas ?? []}
         projetos={projetos ?? []}
         etapas={etapas ?? []}
         defaultResponsavelId={minhaPessoaId}
         autorNome={(pessoas ?? []).find((p) => p.id === minhaPessoaId)?.nome ?? "Eu"}
         onSave={salvarTarefa}
-        saving={atualizar.isPending}
+        saving={atualizar.isPending || criar.isPending}
         readOnly={!canEdit}
       />
     </div>
