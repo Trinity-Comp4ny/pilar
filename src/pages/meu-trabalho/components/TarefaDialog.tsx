@@ -13,7 +13,18 @@ import { mencionaTodos } from "@/lib/mencoes";
 import { AtividadeComposer } from "@/pages/projetos/components/AtividadeComposer";
 import { SeletorResponsaveis } from "@/components/SeletorResponsaveis";
 import { HorasMinutosField } from "@/components/HorasMinutosField";
-import { Calendar, CheckSquare, Circle, Clock, Flag, FolderOpen, MessageSquare, Tag, User } from "lucide-react";
+import {
+  Calendar,
+  CheckSquare,
+  Circle,
+  Clock,
+  Flag,
+  FolderOpen,
+  HardHat,
+  MessageSquare,
+  Tag,
+  User,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   PRIORIDADE_DOT_CLASS,
@@ -25,6 +36,7 @@ import {
 } from "../status";
 import type { Etapa } from "../useEtapas";
 import type { Comentario, PessoaOpcao, TarefaInput, TarefaItem } from "../hooks";
+import type { ServicoObra } from "../servicoObra";
 import { notificarMencao } from "@/lib/notificarMencao";
 import { ComentarioCard } from "@/components/atividades/ComentarioCard";
 
@@ -79,6 +91,8 @@ type Props = {
   saving: boolean;
   /** Sem permissão de edição: mostra os detalhes, sem salvar. */
   readOnly?: boolean;
+  /** Serviços do cronograma da obra ("Fase › Etapa › Serviço"). Com a lista, o formulário mostra o campo. */
+  servicosObra?: ServicoObra[];
   /** Comentário de destino de um link de notificação: rola até ele e destaca (spec 103). */
   comentarioDestacado?: string | null;
 };
@@ -105,6 +119,7 @@ function TarefaFormBody({
   saving,
   readOnly = false,
   comentarioDestacado,
+  servicosObra,
 }: Omit<Props, "open">) {
   const [titulo, setTitulo] = useState(tarefa?.titulo ?? defaultTitulo ?? "");
   const [descricao, setDescricao] = useState(tarefa?.descricao ?? "");
@@ -121,6 +136,7 @@ function TarefaFormBody({
     tarefa ? tarefa.responsaveis.map((r) => r.id) : defaultResponsavelId ? [defaultResponsavelId] : []
   );
   const [projetoId, setProjetoId] = useState<string | null>(tarefa?.projeto_id ?? null);
+  const [servicoId, setServicoId] = useState<string | null>(tarefa?.obra_frente_id ?? null);
   const [prazo, setPrazo] = useState(tarefa?.prazo ?? defaultPrazo ?? "");
   const [horas, setHoras] = useState<number | null>(tarefa?.horas_estimadas ?? null);
   const [horasReais, setHorasReais] = useState<number | null>(tarefa?.horas_reais ?? null);
@@ -172,6 +188,8 @@ function TarefaFormBody({
       prioridade,
       responsaveis,
       projeto_id: projetoId,
+      // Só manda o serviço quando o formulário o oferece: fora da obra o campo nem existe.
+      ...(servicosObra ? { obra_frente_id: servicoId } : {}),
       prazo: prazo || null,
       horas_estimadas: horas,
       horas_reais: horasReais,
@@ -311,6 +329,28 @@ function TarefaFormBody({
                   </SelectContent>
                 </Select>
               </Prop>
+
+              {servicosObra && (
+                <Prop icon={HardHat} label="Serviço da obra" className="md:col-span-2">
+                  <Select
+                    value={servicoId ?? SEM}
+                    onValueChange={(v) => setServicoId(v === SEM ? null : v)}
+                    disabled={readOnly}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Sem serviço" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={SEM}>Sem serviço</SelectItem>
+                      {servicosObra.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.caminho}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Prop>
+              )}
 
               <Prop icon={Clock} label="Horas est.">
                 <HorasMinutosField value={horas} onChange={setHoras} disabled={readOnly} />

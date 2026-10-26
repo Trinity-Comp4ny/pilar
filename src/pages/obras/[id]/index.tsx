@@ -14,6 +14,7 @@ import {
   Trash2,
   User,
   Wallet,
+  ListChecks,
 } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -36,6 +37,7 @@ import { ObraAcessosTab } from "../components/ObraAcessosTab";
 import { ObraTimelineTab } from "../components/ObraTimelineTab";
 import { ObraDiarioTab } from "../components/ObraDiarioTab";
 import { ObraCronogramaTab } from "../components/ObraCronogramaTab";
+import { ObraTarefasTab } from "../components/ObraTarefasTab";
 import { ObraContaTab } from "../components/ObraContaTab";
 import { ObraCotacoesTab } from "../components/ObraCotacoesTab";
 import { ObraEstoqueTab } from "../components/ObraEstoqueTab";
@@ -113,6 +115,7 @@ export default function ObraDetalhePage() {
     { id: "timeline", label: "Visão", icon: LayoutList },
     ...(showDiario ? [{ id: "diario", label: "Diário", icon: ClipboardList }] : []),
     ...(showCronograma ? [{ id: "cronograma", label: "Cronograma", icon: CalendarClock }] : []),
+    { id: "tarefas", label: "Tarefas", icon: ListChecks },
     ...(showCotacoes ? [{ id: "cotacoes", label: "Cotações", icon: Scale }] : []),
     ...(showEstoque ? [{ id: "estoque", label: "Estoque", icon: Boxes }] : []),
     ...(showConta ? [{ id: "conta", label: "Conta da obra", icon: Wallet }] : []),
@@ -218,6 +221,9 @@ export default function ObraDetalhePage() {
             <ObraCronogramaTab obraId={obra.id} projetoId={obra.projeto_id} canEdit={canEdit} />
           </TabsContent>
         )}
+        <TabsContent value="tarefas">
+          <ObraTarefasTab obraId={obra.id} aoMontarCronograma={() => setTab("cronograma")} />
+        </TabsContent>
         {showCotacoes && (
           <TabsContent value="cotacoes">
             <ObraCotacoesTab obraId={obra.id} canEdit={canEdit} />

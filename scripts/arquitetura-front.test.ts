@@ -26,7 +26,8 @@ const CRUZADOS_ACEITOS: Record<string, number> = {
   "clientes -> portal": 3,
   "comprar-tokens -> checkout": 3,
   "meu-trabalho -> projetos": 1,
-  "obras -> meu-trabalho": 5,
+  // 6 em 26/10 (SPEC 140): a aba Tarefas da obra reaproveita o TarefasWorkspace de Gestão > Tarefas.
+  "obras -> meu-trabalho": 6,
   "pessoas -> meu-trabalho": 1,
   "portal -> cliente": 3,
   "projetos -> mapa": 1,
