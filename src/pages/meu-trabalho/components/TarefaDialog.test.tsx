@@ -81,3 +81,46 @@ describe("TarefaDialog: nome obrigatório", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });
+
+// SPEC 140: dentro da obra o formulário oferece o serviço do cronograma (opcional).
+describe("TarefaDialog: serviço da obra", () => {
+  const servicos = [{ id: "s1", caminho: "Estrutura › Fundação › Sapatas" }];
+
+  function abrirNaObra(servicosObra?: typeof servicos) {
+    const onSave = vi.fn().mockResolvedValue("t1");
+    render(
+      <TarefaDialog
+        open
+        onOpenChange={vi.fn()}
+        pessoas={[]}
+        projetos={[]}
+        etapas={etapas}
+        defaultResponsavelId={null}
+        autorNome="Eu"
+        onSave={onSave}
+        saving={false}
+        servicosObra={servicosObra}
+      />
+    );
+    return onSave;
+  }
+
+  it("fora da obra o campo não existe e o serviço não vai no input", async () => {
+    const onSave = abrirNaObra();
+    expect(screen.queryByText("Serviço da obra")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "Nome da tarefa" }), { target: { value: "Tarefa avulsa" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    expect(onSave.mock.calls[0][0]).not.toHaveProperty("obra_frente_id");
+  });
+
+  it("na obra o campo aparece, começa sem serviço e manda obra_frente_id nulo", async () => {
+    const onSave = abrirNaObra(servicos);
+    expect(screen.getByText("Serviço da obra")).toBeInTheDocument();
+    expect(screen.getByText("Sem serviço")).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "Nome da tarefa" }), { target: { value: "Tarefa da obra" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ obra_frente_id: null }));
+  });
+});
