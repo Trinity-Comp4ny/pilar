@@ -48,11 +48,12 @@ export function TimelineContent({ disciplinas }: { disciplinas: TimelineDiscipli
                 const statusNorm = (d.status ?? "").toLowerCase();
                 const isConcluido = statusNorm === "concluído";
                 const isAndamento = statusNorm === "em andamento";
+                const isPausada = statusNorm === "pausada";
                 return (
                   <div key={d.disciplina ?? i} className="flex gap-4 mb-4 last:mb-0">
                     <div className="flex flex-col items-center">
                       <div
-                        className={`w-3 h-3 rounded-full ${isConcluido ? "bg-positive" : isAndamento ? "bg-status-progress" : "bg-status-unknown"}`}
+                        className={`w-3 h-3 rounded-full ${isConcluido ? "bg-positive" : isAndamento ? "bg-status-progress" : isPausada ? "bg-status-paused" : "bg-status-unknown"}`}
                       />
                       {i < disciplinas.length - 1 && <div className="w-0.5 flex-1 bg-muted mt-1" />}
                     </div>

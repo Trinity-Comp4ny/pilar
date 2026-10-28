@@ -47,6 +47,9 @@ import { useDisciplinaChecklist } from "@/pages/projetos/hooks/useProjetoDiscipl
 import { useDisciplinaPausas, totalDiasParados } from "@/pages/projetos/hooks/useDisciplinaPausas";
 import { useDisciplinaRevisoes, revisaoAberta } from "@/pages/projetos/hooks/useDisciplinaRevisoes";
 import { FormDialog } from "@/components/FormDialog";
+import { toast } from "sonner";
+import { mensagemDaPausa } from "@/pages/projetos/lib/pausa";
+import { PausarDialog } from "./PausarDialog";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { notificarMencao } from "@/lib/notificarMencao";
 import { ComentarioCard } from "@/components/atividades/ComentarioCard";
@@ -170,27 +173,27 @@ function DisciplinaDetailBody({
   // vem fresco da própria query, então é a fonte confiável pra saber se está pausada agora.
   const estaPausada = historicoPausas.some((p) => !p.retomado_em);
   const [pausarOpen, setPausarOpen] = useState(false);
-  const [motivoPausa, setMotivoPausa] = useState("");
 
-  const abrirPausar = () => {
-    setMotivoPausa("");
-    setPausarOpen(true);
-  };
+  const abrirPausar = () => setPausarOpen(true);
 
-  const confirmarPausar = () => {
-    if (!motivoPausa.trim()) return;
-    pausas.pausar.mutate(motivoPausa.trim(), {
+  const confirmarPausar = (motivo: string) => {
+    pausas.pausar.mutate(motivo, {
       onSuccess: () => {
         setPausarOpen(false);
         // A mutation não passa por onUpdateField, então o pai (dono do `disciplina.status`
         // exibido) não se resincroniza sozinho: atualiza aqui pro Select/texto não ficar preso.
         onUpdateField("status", "Pausada");
       },
+      onError: (e) => toast.error(mensagemDaPausa(e, "Não foi possível pausar a disciplina. Tente de novo.")),
     });
   };
 
+  // O banco devolve a mensagem certa (ex.: "Disciplina pausada junto com o projeto. Retome o projeto.").
   const confirmarRetomar = () => {
-    pausas.retomar.mutate(undefined, { onSuccess: () => onUpdateField("status", "Em Andamento") });
+    pausas.retomar.mutate(undefined, {
+      onSuccess: () => onUpdateField("status", "Em Andamento"),
+      onError: (e) => toast.error(mensagemDaPausa(e, "Não foi possível retomar a disciplina. Tente de novo.")),
+    });
   };
 
   const revisoes = useDisciplinaRevisoes(persistida ? disciplina.id : undefined);
@@ -695,29 +698,15 @@ function DisciplinaDetailBody({
         </AlertDialogContent>
       </AlertDialog>
 
-      <FormDialog
+      <PausarDialog
         open={pausarOpen}
         onOpenChange={setPausarOpen}
         title="Pausar disciplina"
         description="Registra o motivo e a data de início da pausa. Fica no histórico até você retomar."
-        size="sm"
-        onSubmit={confirmarPausar}
-        submitLabel="Pausar"
+        dica="O motivo fica no histórico da disciplina."
         isPending={pausas.pausar.isPending}
-        submitDisabled={!motivoPausa.trim()}
-      >
-        <div className="space-y-2">
-          <Label htmlFor="motivo-pausa">Motivo</Label>
-          <Textarea
-            id="motivo-pausa"
-            value={motivoPausa}
-            onChange={(e) => setMotivoPausa(e.target.value)}
-            placeholder="Ex.: aguardando confirmação do cliente sobre o briefing"
-            rows={3}
-            autoFocus
-          />
-        </div>
-      </FormDialog>
+        onConfirmar={confirmarPausar}
+      />
 
       <FormDialog
         open={revisarOpen}

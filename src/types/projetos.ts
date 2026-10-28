@@ -89,6 +89,11 @@ export const getDiscDeadlineStatus = (disc: { data_previsao?: string; data_final
     };
   }
 
+  // Disciplina pausada tem o prazo congelado: não é atraso nem atenção (spec 141).
+  if (status === "Pausada") {
+    return { label: "Pausada", color: "bg-status-paused text-ink", days: 0, status_data: "pausado" as const };
+  }
+
   if (!data_previsao || isConcluida) return null;
 
   const hoje = new Date();
@@ -237,6 +242,10 @@ export interface ProjetoDisciplinaPausa {
   retomado_por_nome: string | null;
 }
 
+/** Registro de pausa do projeto (spec 141): mesmo molde da pausa de disciplina.
+ *  Só criado/fechado via rpc_pausar_projeto/rpc_retomar_projeto. */
+export type ProjetoPausa = ProjetoDisciplinaPausa;
+
 /** Registro de revisão da disciplina (spec 093): retrabalho documentado, motivo
  *  obrigatório em texto livre. Sem numeração formal e sem vínculo com contrato:
  *  o contador é derivado por count, nunca persistido. Só criado/fechado via
@@ -280,6 +289,10 @@ export const getDeadlineStatus = (projeto: { data_previsao?: string; data_final?
         status_data: "concluido_com_atraso",
       };
     }
+  }
+
+  if (status === "Paralisado") {
+    return { label: "Pausado", color: "bg-status-paused text-ink", days: 0, status_data: "pausado" };
   }
 
   if (!data_previsao || status === "Cancelado" || isConcluido) {
