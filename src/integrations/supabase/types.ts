@@ -6852,6 +6852,7 @@ export type Database = {
           longitude: number | null
           nome: string
           observacao: string | null
+          ordem_prioridade: number | null
           parcelas: string | null
           prioridade: string
           status: Database["public"]["Enums"]["status_projeto"] | null
@@ -6883,6 +6884,7 @@ export type Database = {
           longitude?: number | null
           nome: string
           observacao?: string | null
+          ordem_prioridade?: number | null
           parcelas?: string | null
           prioridade?: string
           status?: Database["public"]["Enums"]["status_projeto"] | null
@@ -6914,6 +6916,7 @@ export type Database = {
           longitude?: number | null
           nome?: string
           observacao?: string | null
+          ordem_prioridade?: number | null
           parcelas?: string | null
           prioridade?: string
           status?: Database["public"]["Enums"]["status_projeto"] | null
@@ -8552,6 +8555,7 @@ export type Database = {
           longitude: number | null
           nome: string | null
           observacao: string | null
+          ordem_prioridade: number | null
           parcelas: string | null
           pode_ver_valor: boolean | null
           prioridade: string | null
@@ -8583,6 +8587,7 @@ export type Database = {
           longitude?: number | null
           nome?: string | null
           observacao?: string | null
+          ordem_prioridade?: number | null
           parcelas?: string | null
           pode_ver_valor?: never
           prioridade?: string | null
@@ -8614,6 +8619,7 @@ export type Database = {
           longitude?: number | null
           nome?: string | null
           observacao?: string | null
+          ordem_prioridade?: number | null
           parcelas?: string | null
           pode_ver_valor?: never
           prioridade?: string | null
@@ -10408,6 +10414,7 @@ export type Database = {
         }
         Returns: string
       }
+      rpc_reordenar_projetos: { Args: { p_ids: string[] }; Returns: undefined }
       rpc_restaurar: {
         Args: { p_id: string; p_tabela: string }
         Returns: undefined
