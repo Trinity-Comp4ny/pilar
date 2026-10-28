@@ -1,58 +1,38 @@
-# Identidade Visual
+# Identidade visual
 
-> **A verdade técnica das cores/tokens vive em `src/styles/tokens.css`** — este arquivo
-> descreve a intenção e o uso, NÃO duplica valores. Mudou cor? Muda no tokens.css.
-> Ref: [BRAND.md](./BRAND.md) · Última atualização: `2026-06-10` · `v0`
+> Resumo e índice. A verdade técnica das cores vive em `src/styles/tokens.css`; cada tema tem o
+> seu arquivo. Ref: [BRAND.md](./BRAND.md) · Última atualização: `2026-10-27` · `v1`
 
-## Princípio
+## Em uma página
 
-Estética **Paper + Ink**: quase-branco de fundo, tinta escura no texto, verde da marca como acento pontual. Calma, técnica, premium — não "startup colorida". A cor conta história: financeiro usa verde/vermelho semânticos, status têm cor própria.
+**Paper + Ink, com verde de tempero.** Papel quase branco, tinta escura, linha fina, número em
+primeiro plano. O verde da marca (#A4EC86) marca a próxima ação, nunca cobre uma página.
+Técnico e calmo, nunca "startup colorida".
 
-## Cor
-
-Fonte: `src/styles/tokens.css` (arquitetura `PRIMITIVES → SEMANTIC`). Resumo de uso:
-
-| Papel | Token semântico | Notas |
+| Tema | Resumo | Arquivo |
 |---|---|---|
-| Marca / acento | `--brand-accent` (verde "Alto Grain", `#A4EC86`) | Pontual — CTA sutil, sinal "ao vivo", destaque. **Não** é cor de fundo de página. |
-| Fundo app | `--surface-app` / `--surface-card` / `--surface-sidebar` | Escala Paper |
-| Texto | `--text-ink` (títulos) / `--text-ink-soft` (corpo) / `--text-muted` | Escala Ink |
-| Positivo / negativo | `--positive` (verde) / `--negative` (vermelho) | Financeiro — receita vs despesa |
-| Charts | `--chart-*` | Paleta dedicada, não reusar status |
-| Status projeto | `--status-*` | planning/progress/review/done/paused/cancelled |
-| Pipeline leads | `--pipeline-*` | etapas do funil |
+| Logotipo | Coluna de seis linhas + "Pilar" em Geist Medium. Lockup horizontal é o padrão. Respiro de 2X, símbolo mínimo de 16 px | [logo.md](./logo.md) |
+| Tipografia | Geist na marca, Inter no produto. Corpo do app 14 px, piso 12 px, títulos em peso 500 com tracking -0,035 em | [typography.md](./typography.md) |
+| Cor | Paper, Ink e verde da marca; cor semântica só para estado e dinheiro; verde nunca é texto sobre claro | [color.md](./color.md) |
+| Linguagem de design | Pílula para ação, 12 px para contêiner, três sombras leves, ícone lucide, a marca é o movimento | [design-language.md](./design-language.md) |
+| Imagem e ilustração | Tela real, croqui no traço do símbolo, padrão colunata, foto documental, um verde por peça | [imagery.md](./imagery.md) |
+| Movimento | Calmo, ease-out, o símbolo se desenha e respira; vídeo com legenda queimada | [motion.md](./motion.md) |
+| Instagram | Perfil @pilar.software, 10 templates em 1080 px, grade do feed, checklist | [social-instagram.md](./social-instagram.md) |
+| Uso e cobranding | Escrita do nome, uso por terceiros, logo de cliente | [usage.md](./usage.md) |
+| Brand book visual | Tudo acima em uma página, com os diagramas | [guidelines.html](./guidelines.html) |
+| Componentes e telas | Contrato de UI do produto | `docs/design/PILAR_DESIGN_SYSTEM.md` |
 
-**Regras de cor:**
-- Componentes consomem **semantic**, nunca primitive (`--c-*`) direto.
-- Verde da marca é tempero, não base. Página inteira verde = errado.
-- Verde/vermelho financeiro ≠ verde da marca. Significados diferentes.
+## Arquivos de marca
 
-## Tipografia
+`brand/assets/logo/` (SVG e PNG do logotipo, ícone e favicon, mais os diagramas) e
+`brand/assets/*.svg` (escala tipográfica, forma e elevação). Tudo é gerado por
+`scripts/brand/build.py`; não edite os SVG à mão.
 
-`[A DEFINIR — confirmar no código/Figma]`. Documentar: família display (hero usa `font-light`, tracking negativo, clamp 48–96px), família corpo, escala, pesos. Hero atual: peso fino + itálico de destaque (`.hero-italic-highlight`).
+## Pendências visuais
 
-## Logo
-
-`[A DEFINIR]` — anexar SVGs e regras:
-- Versões: principal, monocromática, símbolo isolado, sobre fundo escuro.
-- Área de respiro, tamanho mínimo, usos proibidos (distorcer, recolorir, sombra).
-- Uso do `®`: "Pilar®" em contexto institucional/landing.
-
-## Espaçamento, raio, sombra
-
-Tokens em `tokens.css`: `--shadow-card`, `--shadow-elegant`, `--shadow-popover`. Raio via shadcn (`--radius`). Gradientes: `--gradient-primary`, `--gradient-subtle`, `--gradient-brand`.
-
-## Componentes
-
-Base **shadcn/ui + Tailwind**. Padrão de página: header via prop `header={}` do `PageLayout` (ver `CLAUDE.md`). Referências vivas: `src/pages/Projetos.tsx`, `src/pages/Relatorios.tsx`, `src/pages/landing/`.
-
-## Iconografia
-
-`lucide-react` (já em uso). Traço fino, consistente com a estética leve. Não misturar bibliotecas de ícone.
-
-## Pendências visuais ⚠️
-
-- [ ] Especificar tipografia (famílias + escala + pesos)
-- [ ] Anexar logo + regras de uso
-- [ ] Confirmar se `#A4EC86` ("Alto Grain") é a cor de marca definitiva ou herança de protótipo
-- [ ] Definir tratamento de imagem/foto (se houver) e ilustração
+- [x] Tipografia: famílias, escala, pesos e piso definidos.
+- [x] Logo e regras de uso anexados.
+- [x] Verde #A4EC86 confirmado como cor da marca (favicon, manifesto, e-mail e logotipo já o usam).
+- [x] Tratamento de imagem e ilustração: [design-language.md](./design-language.md), seção 7.
+- [ ] Converter o código às medidas oficiais: ver "Divergências" em [logo.md](./logo.md) e a dívida
+      de tamanho de fonte em [typography.md](./typography.md).

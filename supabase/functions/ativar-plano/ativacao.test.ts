@@ -4,6 +4,7 @@ import {
   CONSENTIMENTO_TEXTO_VERSAO,
   CONSENTIMENTO_TEXTO_VERSAO_IMEDIATA,
   ehTokenizacaoSemPermissao,
+  mensagemCobrancaRecusada,
   modoEfetivo,
   primeiraCobrancaEm,
   valorDoCiclo,
@@ -121,6 +122,19 @@ Deno.test("reconhece a recusa do Asaas por tokenização não liberada", () => {
     true
   );
   assertEquals(ehTokenizacaoSemPermissao("Asaas: Cartão recusado pela operadora"), false);
+});
+
+Deno.test("cobrança recusada: uma frase só, sem ponto duplicado", () => {
+  assertEquals(
+    mensagemCobrancaRecusada(
+      "Asaas: Transação não autorizada. Verifique os dados do cartão de crédito e tente novamente."
+    ),
+    "A cobrança não foi aprovada: Transação não autorizada. Verifique os dados do cartão de crédito e tente novamente. Confira os dados ou use outro cartão."
+  );
+  assertEquals(
+    mensagemCobrancaRecusada("Asaas: Cartão recusado"),
+    "A cobrança não foi aprovada: Cartão recusado. Confira os dados ou use outro cartão."
+  );
 });
 
 Deno.test("entrada: cobrar_agora é opcional e só aceita boolean", () => {

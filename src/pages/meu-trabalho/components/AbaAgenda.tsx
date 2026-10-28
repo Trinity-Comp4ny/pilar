@@ -89,6 +89,7 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos, pode
         titulo: d.titulo,
         prazo: d.prazo,
         concluida: d.status_bucket === "concluida",
+        pausada: /pausad/i.test(d.status_raw ?? ""),
         projetoId: d.projeto_id,
         projetoNome: d.projeto_nome,
       }))

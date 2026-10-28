@@ -11,6 +11,22 @@ Regras de manutenção:
 
 ---
 
+## 2026-10-28 · Marca: promessa "Do contrato à execução" e agentes como primeiro pilar
+
+**Decisão:** a promessa-mãe do Pilar passa a ser "Do contrato à execução, num fluxo só". Agentes de IA viram o primeiro
+pilar de mensagem, com a assinatura "A IA prepara. O sistema confere. Você aprova." Lucro e prazo continuam, como prova
+do fluxo e não como promessa única. O nome fica **Pilar** e o domínio `pilarsoft.com.br`: a troca para "Prumeo" (19/08)
+está cancelada. O Clima é feature de Obras, não um quarto módulo (os módulos seguem Gestão, Projetos e Obras, mais
+Portal do cliente, Pilar Campo e Agentes).
+
+Contexto: o discurso "saiba se o projeto dá lucro antes de terminar" cobria só uma parte do produto, que já tem comercial,
+projetos, obra (diário, cronograma, cotação, estoque, conta da obra, estimativa), portal, Campo offline e agentes. Só se
+promete o que roda em produção. Supera a tagline de 2026-06 e o "não posicionar como ERP de construção" do
+`messaging.md`: o Pilar é o sistema do escritório que projeta e acompanha a obra, não o ERP da construtora. Cards:
+BEZ-398 (pai), BEZ-399 (brand book), BEZ-400 (landing), BEZ-401 (microcopy do app e e-mails).
+
+---
+
 ## 2026-10-20 · Estimativa de obra: itens com origem do preço, catálogo fechado e IA depois
 
 **Decisão:** toda linha de custo da estimativa mostra de onde veio o preço (CUB, SINAPI, tabela da empresa, valor do

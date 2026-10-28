@@ -41,6 +41,8 @@ import { ReopenProjetoDialog } from "@/pages/projetos/components/ProjetoStatusDi
 import { useProjetosData } from "@/pages/projetos/hooks/useProjetosData";
 import { useProjetosUrlState } from "@/pages/projetos/hooks/useProjetosUrlState";
 import { useProjetoStatusMove } from "@/pages/projetos/hooks/useProjetoStatusMove";
+import { PausarProjetoDialog } from "@/pages/projetos/components/PausarProjetoDialog";
+import { RetomarProjetoDialog } from "@/pages/projetos/components/RetomarProjetoDialog";
 import {
   CORES_ETAPA_PROJETO,
   corDaEtapaProjeto,
@@ -114,11 +116,17 @@ export default function ProjetosKanban() {
   const [editandoEtapa, setEditandoEtapa] = useState<ColunaEditavel | null>(null);
   const [aEtapaExcluir, setAEtapaExcluir] = useState<ProjetoEtapa | null>(null);
 
-  const { pendingReopen, setPendingReopen, applyStatusMove, handleMoveStatus, onDragEnd } = useProjetoStatusMove(
-    projetos,
-    canEdit,
-    etapas
-  );
+  const {
+    pendingPausa,
+    setPendingPausa,
+    pendingRetomada,
+    setPendingRetomada,
+    pendingReopen,
+    setPendingReopen,
+    applyStatusMove,
+    handleMoveStatus,
+    onDragEnd,
+  } = useProjetoStatusMove(projetos, canEdit, etapas);
 
   const handleCardClick = (projeto: Projeto) => {
     setSelectedProjeto(projeto);
@@ -565,6 +573,21 @@ export default function ProjetosKanban() {
         onOpenChange={setIsFluxosOpen}
         disciplinas={disciplinas}
         pessoas={pessoas}
+      />
+
+      <PausarProjetoDialog
+        projetoId={pendingPausa?.projetoId}
+        projetoNome={pendingPausa?.projetoNome ?? ""}
+        open={pendingPausa !== null}
+        onOpenChange={(open) => !open && setPendingPausa(null)}
+      />
+
+      <RetomarProjetoDialog
+        projetoId={pendingRetomada?.projetoId}
+        dataPrevisao={pendingRetomada?.dataPrevisao}
+        etapaDestinoId={pendingRetomada?.etapaId}
+        open={pendingRetomada !== null}
+        onOpenChange={(open) => !open && setPendingRetomada(null)}
       />
 
       <ReopenProjetoDialog

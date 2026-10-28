@@ -4,7 +4,7 @@ Base de conhecimento única da interface da Pilar. É o contrato visual do produ
 
 Regra de ouro: **a página decide o conteúdo e a regra de negócio. Nunca decide cor, raio, sombra, tipografia ou largura de modal.** Isso já é decidido aqui.
 
-Relacionados: `docs/architecture/adr/0008-design-system-fonte-unica.md` (a lei), `docs/specs/003-design-system.md` (o plano de execução), `docs/design/CATALOGO_UI.md` (o diagnóstico de deriva), `docs/design/ACESSIBILIDADE.md` (o que o Axe cobre e o roteiro manual de teclado e leitor de tela), `src/styles/tokens.css` (a verdade sobre cor).
+Identidade da marca (logotipo, tipografia, cor, linguagem de design): `brand/BRAND.md`. Relacionados: `docs/architecture/adr/0008-design-system-fonte-unica.md` (a lei), `docs/specs/003-design-system.md` (o plano de execução), `docs/design/CATALOGO_UI.md` (o diagnóstico de deriva), `docs/design/ACESSIBILIDADE.md` (o que o Axe cobre e o roteiro manual de teclado e leitor de tela), `src/styles/tokens.css` (a verdade sobre cor).
 
 ---
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Pencil } from "lucide-react";
+import { Pause, Pencil, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -13,6 +13,10 @@ import { ProjetoDetailHeader } from "./components/ProjetoDetailHeader";
 import { ProjetoDetailInfo } from "./components/ProjetoDetailInfo";
 import { ProjetoDetailTabs } from "./components/ProjetoDetailTabs";
 import { ProjetoFormDialog } from "./components/ProjetoFormDialog";
+import { PausarProjetoDialog } from "./components/PausarProjetoDialog";
+import { RetomarProjetoDialog } from "./components/RetomarProjetoDialog";
+import { useProjetoPausas } from "./hooks/useProjetoPausas";
+import { diasDePausa } from "@/pages/projetos/lib/pausa";
 
 import { ReadingRing } from "@/components/motion/ReadingRing";
 
@@ -52,6 +56,9 @@ export default function ProjetoDetail() {
   } = useProjetoDetail(id);
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [pausarOpen, setPausarOpen] = useState(false);
+  const [retomarOpen, setRetomarOpen] = useState(false);
+  const { aberta: pausaAberta } = useProjetoPausas(id);
   usePageTitle(projeto?.nome ? `Projeto · ${projeto.nome}` : "Projeto");
 
   // Recentes da home Início (spec 001): registra a visita quando o projeto carrega.
@@ -83,10 +90,33 @@ export default function ProjetoDetail() {
     );
   }
 
+  const pausado = projeto.status === "Paralisado";
+  const podePausar = !pausado && projeto.status !== "Concluído" && projeto.status !== "Cancelado";
+
+  // Pausar e retomar passam pelos diálogos (motivo, antes e depois dos prazos),
+  // nunca pela troca direta de status.
+  const handleStatusDoCabecalho = (status: string) => {
+    if (status === "Paralisado" && !pausado) return setPausarOpen(true);
+    if (status !== "Paralisado" && pausado) return setRetomarOpen(true);
+    handleQuickUpdateStatus(status);
+  };
+
   return (
     <PageLayout
       header={
         <PageHeader title={projeto.nome} breadcrumbs={[{ label: "Projetos", to: "/projetos" }]}>
+          {canEdit && pausado && (
+            <Button variant="brand" onClick={() => setRetomarOpen(true)} className="rounded-full h-9 text-sm">
+              <Play className="h-3.5 w-3.5 mr-1.5" />
+              Retomar projeto
+            </Button>
+          )}
+          {canEdit && podePausar && (
+            <Button variant="outline" onClick={() => setPausarOpen(true)} className="rounded-full h-9 text-sm">
+              <Pause className="h-3.5 w-3.5 mr-1.5" />
+              Pausar projeto
+            </Button>
+          )}
           {canEdit && (
             <Button variant="outline" onClick={() => setIsEditDialogOpen(true)} className="rounded-full h-9 text-sm">
               <Pencil className="h-3.5 w-3.5 mr-1.5" />
@@ -96,11 +126,22 @@ export default function ProjetoDetail() {
         </PageHeader>
       }
     >
+      {pausado && pausaAberta && (
+        <div role="status" className="mb-4 rounded-lg border border-status-paused bg-muted px-4 py-3 text-sm">
+          <p className="font-semibold text-foreground">
+            Projeto pausado desde {new Date(pausaAberta.pausado_em).toLocaleDateString("pt-BR")} (
+            {diasDePausa(pausaAberta.pausado_em)} dias)
+          </p>
+          <p className="text-muted-foreground">Motivo: {pausaAberta.motivo}</p>
+          <p className="text-muted-foreground">Os prazos ficam congelados até você retomar.</p>
+        </div>
+      )}
+
       <ProjetoDetailHeader
         projeto={projeto}
         deadline={deadline}
         canEdit={canEdit}
-        onUpdateStatus={handleQuickUpdateStatus}
+        onUpdateStatus={handleStatusDoCabecalho}
         onUpdatePrioridade={(prioridade) => handleQuickUpdateProjeto({ prioridade })}
       />
 
@@ -145,6 +186,14 @@ export default function ProjetoDetail() {
         currentUser={currentUser}
         onSaved={refetchProjeto}
         existingDisciplinas={dbDisciplinas}
+      />
+
+      <PausarProjetoDialog projetoId={id} projetoNome={projeto.nome} open={pausarOpen} onOpenChange={setPausarOpen} />
+      <RetomarProjetoDialog
+        projetoId={id}
+        dataPrevisao={projeto.data_previsao}
+        open={retomarOpen}
+        onOpenChange={setRetomarOpen}
       />
 
       <ConfirmDialog

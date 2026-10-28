@@ -50,6 +50,11 @@ export function EventoDetalhe({ evento, onOpen }: { evento: PrazoEvento; onOpen:
                 próximo
               </Badge>
             )}
+            {evento.estado === "pausado" && (
+              <Badge variant="outline" className="text-[10px] px-1 py-0">
+                pausado
+              </Badge>
+            )}
             {evento.estado === "concluido" && (
               <Badge className="text-[10px] px-1 py-0 bg-positive hover:bg-positive text-ink">OK</Badge>
             )}

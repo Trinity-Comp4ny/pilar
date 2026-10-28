@@ -5,7 +5,7 @@ import { FolderKanban, Layers, CheckSquare, type LucideIcon } from "lucide-react
 // no modelo "Meus calendários" do Google (ADR 0010). O motor é agnóstico à
 // origem: cada tela monta os eventos das camadas que fizerem sentido ali.
 export type CamadaId = "projeto" | "disciplina" | "tarefa";
-export type EventoEstado = "atrasado" | "proximo" | "concluido" | "futuro";
+export type EventoEstado = "atrasado" | "proximo" | "concluido" | "futuro" | "pausado";
 
 export interface PrazoEvento {
   /** id do item de origem (projeto, disciplina ou tarefa); usado no clique. */
@@ -106,8 +106,10 @@ export function addDays(d: Date, n: number): Date {
   return r;
 }
 
-function calcEstado(dataStr: string, concluido: boolean, hoje: string, in7: string): EventoEstado {
+function calcEstado(dataStr: string, concluido: boolean, hoje: string, in7: string, pausado = false): EventoEstado {
   if (concluido) return "concluido";
+  // Prazo congelado (spec 141): pausado não é atraso nem "próximos 7 dias".
+  if (pausado) return "pausado";
   if (dataStr < hoje) return "atrasado";
   if (dataStr <= in7) return "proximo";
   return "futuro";
@@ -130,12 +132,19 @@ export function buildEventosProjetos(
   const list: PrazoEvento[] = [];
 
   for (const p of projetos) {
+    const projetoPausado = p.status === "Paralisado";
     if (p.data_previsao) {
       list.push({
         id: p.id,
         data: p.data_previsao,
         camada: "projeto",
-        estado: calcEstado(p.data_previsao, p.status === "Concluído" || p.status === "Cancelado", hoje, in7),
+        estado: calcEstado(
+          p.data_previsao,
+          p.status === "Concluído" || p.status === "Cancelado",
+          hoje,
+          in7,
+          projetoPausado
+        ),
         titulo: p.nome,
         status: p.status,
         projetoId: p.id,
@@ -151,7 +160,7 @@ export function buildEventosProjetos(
         id: d.id ?? `${p.id}-${d.disciplina}`,
         data: d.data_previsao,
         camada: "disciplina",
-        estado: calcEstado(d.data_previsao, status === "Concluído", hoje, in7),
+        estado: calcEstado(d.data_previsao, status === "Concluído", hoje, in7, projetoPausado || status === "Pausada"),
         titulo: d.disciplina,
         subtitulo: p.nome,
         responsavel: respNome,
@@ -214,6 +223,8 @@ export interface DisciplinaEventoInput {
   titulo: string;
   prazo: string | null;
   concluida: boolean;
+  /** Disciplina pausada: prazo congelado, não conta como atraso. */
+  pausada?: boolean;
   projetoId: string;
   projetoNome?: string | null;
   responsavel?: string | null;
@@ -231,7 +242,7 @@ export function buildEventosDisciplinas(disciplinas: DisciplinaEventoInput[]): P
       id: d.id,
       data: d.prazo,
       camada: "disciplina",
-      estado: calcEstado(d.prazo, d.concluida, hoje, in7),
+      estado: calcEstado(d.prazo, d.concluida, hoje, in7, d.pausada),
       titulo: d.titulo,
       subtitulo: d.projetoNome ?? undefined,
       responsavel: d.responsavel ?? undefined,
@@ -264,6 +275,7 @@ export const ESTADO_CHIP: Record<EventoEstado, string> = {
   proximo: "bg-amber-100 text-amber-700 border-amber-500",
   concluido: "bg-positive/10 text-positive-strong border-positive",
   futuro: "bg-blue-100 text-blue-700 border-blue-500",
+  pausado: "bg-muted text-muted-foreground border-border",
 };
 
 export const ESTADO_SIMBOLO: Record<EventoEstado, string> = {
@@ -271,6 +283,7 @@ export const ESTADO_SIMBOLO: Record<EventoEstado, string> = {
   proximo: "»",
   concluido: "✓",
   futuro: "•",
+  pausado: "‖",
 };
 
 export const ESTADO_LABEL: Record<EventoEstado, string> = {
@@ -278,4 +291,5 @@ export const ESTADO_LABEL: Record<EventoEstado, string> = {
   proximo: "Próximos 7 dias",
   concluido: "Concluído",
   futuro: "Futuro",
+  pausado: "Pausado",
 };

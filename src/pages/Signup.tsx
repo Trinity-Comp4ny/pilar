@@ -485,7 +485,7 @@ export default function Signup() {
             </div>
 
             <blockquote className="text-3xl font-light leading-snug">
-              "Saiba se cada projeto está dando lucro antes de terminar."
+              "Do contrato à execução, num fluxo só."
             </blockquote>
 
             <div className="flex flex-col items-end gap-3 pt-4 border-t border-white/20">

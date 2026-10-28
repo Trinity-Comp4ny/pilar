@@ -11,10 +11,28 @@ import { Vazio } from "./Numeros";
  * carrega estado (vencido, esperando demais), nunca na linha inteira.
  */
 
+/** Projeto pausado tem prazo congelado: fica fora da lista, e a nota avisa quantos (spec 141). */
+function NotaPausados({ quantidade }: { quantidade: number }) {
+  if (quantidade === 0) return null;
+  return (
+    <p className="mt-2 rounded-md bg-muted px-2.5 py-1.5 text-[11.5px] text-muted-foreground">
+      {quantidade === 1 ? "1 projeto pausado fica" : `${quantidade} projetos pausados ficam`} fora desta lista.
+    </p>
+  );
+}
+
 export function ListaPrazos({ data }: { data: PainelGestao }) {
   const navigate = useNavigate();
   const itens = data.projetos.prazos15Dias;
-  if (itens.length === 0) return <Vazio>Nenhuma disciplina em aberto vence nos próximos 15 dias.</Vazio>;
+  const pausados = data.projetos.totais.paralisado;
+  if (itens.length === 0) {
+    return (
+      <>
+        <Vazio>Nenhuma disciplina em aberto vence nos próximos 15 dias.</Vazio>
+        <NotaPausados quantidade={pausados} />
+      </>
+    );
+  }
   return (
     <div className="flex flex-col">
       {itens.map((p) => {
@@ -43,6 +61,7 @@ export function ListaPrazos({ data }: { data: PainelGestao }) {
           </button>
         );
       })}
+      <NotaPausados quantidade={pausados} />
     </div>
   );
 }
