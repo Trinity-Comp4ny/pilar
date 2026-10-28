@@ -51,6 +51,7 @@ WITH permitido(coluna, motivo) AS (
     -- quem toca a obra compara cotação. Ver MATRIZ_DE_ACESSO.md, decisões abertas.
     ('obra_cotacao_proposta.valor', 'operação da obra'),
     ('obra_cotacao_proposta.valor_parcelado', 'operação da obra'),
+    ('obra_cotacao_proposta.desconto_pct', 'operação da obra'),
     ('obra_cotacao_proposta_item.preco_unitario', 'operação da obra'),
     ('obra_cotacao_proposta_item.valor_total', 'operação da obra'),
     ('obra_material_mov.valor_unitario', 'operação da obra'),

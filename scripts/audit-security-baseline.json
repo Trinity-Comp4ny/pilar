@@ -7,7 +7,7 @@
     "anon_trigger_inerte": "0, mas prioridade baixa: Postgres recusa chamar função que retorna trigger fora de contexto de trigger, então não é caminho de exploração. Limpar só pra parar de mascarar achado real no advisor.",
     "policy_auth_por_linha": "0. Trocar auth.uid() por (select auth.uid()) na policy. É performance, não segurança, e só dói quando a tabela cresce.",
     "fk_sem_indice": "descer. Cada FK sem índice deixa delete e join lentos.",
-    "authenticated_chamavel": "159 em staging e prod (2026-10-21). Prod mede 148 hoje e chega a 159 no release que leva o que já está no staging: ops_decidir_acao, ops_definir_agente_ativo, ops_marcar_empresa_interna, ops_produto, ops_receita, ops_saude_empresas (time de agentes no Ultra, SPEC 126/128-131), rpc_meta_historico, rpc_metas_progresso (metas, SPEC 123) e campo_aceitar_audio, campo_listar_registros, campo_responder_efetivo (diário no Pilar Campo, SPEC 135: validam o token de campo no corpo e estão nas allowlists de anon). Já passam pelo teste de função exposta sem checagem."
+    "authenticated_chamavel": "159 em staging e prod (2026-10-21). Prod mede 148 hoje e chega a 159 no release que leva o que já está no staging: ops_decidir_acao, ops_definir_agente_ativo, ops_marcar_empresa_interna, ops_produto, ops_receita, ops_saude_empresas (time de agentes no Ultra, SPEC 126/128-131), rpc_meta_historico, rpc_metas_progresso (metas, SPEC 123) e campo_aceitar_audio, campo_listar_registros, campo_responder_efetivo (diário no Pilar Campo, SPEC 135: validam o token de campo no corpo e estão nas allowlists de anon). Já passam pelo teste de função exposta sem checagem. 164 em 2026-10-28: +2 de rpc_pausar_projeto e rpc_retomar_projeto (SPEC 141, ainda não contadas) e +3 da SPEC 144 (rpc_criar_convite_cotacao, rpc_revogar_convite_cotacao, rpc_avaliar_fornecedor: conferem empresa e permissão no corpo). A parte pública do link de cotação (cotacao_link_consultar e cotacao_link_responder) é só do service_role e não entra. Medido no banco local montado das migrations; sobe a baseline antes do deploy para a auditoria não ficar vermelha."
   },
   "prod": {
     "verificado_em": "2026-10-21",
@@ -16,7 +16,7 @@
     "anon_trigger_inerte": 0,
     "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
-    "authenticated_chamavel": 159,
+    "authenticated_chamavel": 164,
     "search_path_mutavel": 0,
     "policy_auth_por_linha": 0,
     "fk_sem_indice": 51,
@@ -39,7 +39,7 @@
     "anon_trigger_inerte": 0,
     "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
-    "authenticated_chamavel": 159,
+    "authenticated_chamavel": 164,
     "search_path_mutavel": 0,
     "policy_auth_por_linha": 0,
     "fk_sem_indice": 51,

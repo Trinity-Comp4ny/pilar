@@ -2803,6 +2803,86 @@ export type Database = {
           },
         ]
       }
+      fornecedor_avaliacao: {
+        Row: {
+          avaliado_em: string
+          avaliado_por: string
+          comentario: string | null
+          cotacao_id: string
+          empresa_id: string
+          fornecedor_id: string
+          id: string
+          nota_demora: number | null
+          nota_geral: number | null
+          nota_prazo: number | null
+          nota_preco: number | null
+          nota_qualidade: number | null
+          proposta_id: string
+          updated_at: string
+        }
+        Insert: {
+          avaliado_em?: string
+          avaliado_por?: string
+          comentario?: string | null
+          cotacao_id: string
+          empresa_id: string
+          fornecedor_id: string
+          id?: string
+          nota_demora?: number | null
+          nota_geral?: number | null
+          nota_prazo?: number | null
+          nota_preco?: number | null
+          nota_qualidade?: number | null
+          proposta_id: string
+          updated_at?: string
+        }
+        Update: {
+          avaliado_em?: string
+          avaliado_por?: string
+          comentario?: string | null
+          cotacao_id?: string
+          empresa_id?: string
+          fornecedor_id?: string
+          id?: string
+          nota_demora?: number | null
+          nota_geral?: number | null
+          nota_prazo?: number | null
+          nota_preco?: number | null
+          nota_qualidade?: number | null
+          proposta_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fornecedor_avaliacao_cotacao_id_fkey"
+            columns: ["cotacao_id"]
+            isOneToOne: false
+            referencedRelation: "obra_cotacao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fornecedor_avaliacao_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fornecedor_avaliacao_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fornecedor_avaliacao_proposta_id_fkey"
+            columns: ["proposta_id"]
+            isOneToOne: true
+            referencedRelation: "obra_cotacao_proposta"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fornecedores: {
         Row: {
           cnpj: string | null
@@ -3798,6 +3878,83 @@ export type Database = {
           },
         ]
       }
+      obra_cotacao_convite: {
+        Row: {
+          aberto_em: string | null
+          cotacao_id: string
+          created_at: string
+          created_by: string
+          empresa_id: string
+          expira_em: string
+          fornecedor_id: string
+          fornecedor_nome: string
+          id: string
+          proposta_id: string | null
+          respondido_em: string | null
+          revogado_em: string | null
+          token_hash: string
+        }
+        Insert: {
+          aberto_em?: string | null
+          cotacao_id: string
+          created_at?: string
+          created_by?: string
+          empresa_id: string
+          expira_em: string
+          fornecedor_id: string
+          fornecedor_nome: string
+          id?: string
+          proposta_id?: string | null
+          respondido_em?: string | null
+          revogado_em?: string | null
+          token_hash: string
+        }
+        Update: {
+          aberto_em?: string | null
+          cotacao_id?: string
+          created_at?: string
+          created_by?: string
+          empresa_id?: string
+          expira_em?: string
+          fornecedor_id?: string
+          fornecedor_nome?: string
+          id?: string
+          proposta_id?: string | null
+          respondido_em?: string | null
+          revogado_em?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_cotacao_convite_cotacao_id_fkey"
+            columns: ["cotacao_id"]
+            isOneToOne: false
+            referencedRelation: "obra_cotacao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_cotacao_convite_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_cotacao_convite_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_cotacao_convite_proposta_id_fkey"
+            columns: ["proposta_id"]
+            isOneToOne: false
+            referencedRelation: "obra_cotacao_proposta"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obra_cotacao_proposta: {
         Row: {
           condicao_pagamento: string | null
@@ -3805,12 +3962,14 @@ export type Database = {
           created_at: string
           created_by: string
           deleted_at: string | null
+          desconto_pct: number | null
           empresa_id: string
           fornecedor_id: string | null
           fornecedor_nome: string | null
           id: string
           link_orcamento: string | null
           observacoes: string | null
+          origem: string
           prazo_entrega_dias: number | null
           quantidade: number | null
           unidade: string | null
@@ -3825,12 +3984,14 @@ export type Database = {
           created_at?: string
           created_by?: string
           deleted_at?: string | null
+          desconto_pct?: number | null
           empresa_id: string
           fornecedor_id?: string | null
           fornecedor_nome?: string | null
           id?: string
           link_orcamento?: string | null
           observacoes?: string | null
+          origem?: string
           prazo_entrega_dias?: number | null
           quantidade?: number | null
           unidade?: string | null
@@ -3845,12 +4006,14 @@ export type Database = {
           created_at?: string
           created_by?: string
           deleted_at?: string | null
+          desconto_pct?: number | null
           empresa_id?: string
           fornecedor_id?: string | null
           fornecedor_nome?: string | null
           id?: string
           link_orcamento?: string | null
           observacoes?: string | null
+          origem?: string
           prazo_entrega_dias?: number | null
           quantidade?: number | null
           unidade?: string | null
@@ -9275,6 +9438,19 @@ export type Database = {
         Returns: undefined
       }
       cleanup_pending_signups: { Args: never; Returns: number }
+      cotacao_link_consultar: { Args: { p_token_hash: string }; Returns: Json }
+      cotacao_link_responder: {
+        Args: {
+          p_condicao: string
+          p_desconto_pct: number
+          p_observacoes: string
+          p_prazo_dias: number
+          p_token_hash: string
+          p_valor: number
+          p_valor_parcelado: number
+        }
+        Returns: Json
+      }
       create_convite: {
         Args: { p_cargo: string; p_email: string; p_nome?: string }
         Returns: string
@@ -9983,6 +10159,17 @@ export type Database = {
       retencao_pos_trial_disparar: { Args: never; Returns: undefined }
       reverificar_documentos_disparar: { Args: never; Returns: undefined }
       rpc_atualizar_status_atrasados: { Args: never; Returns: Json }
+      rpc_avaliar_fornecedor: {
+        Args: {
+          p_comentario?: string
+          p_demora?: number
+          p_prazo?: number
+          p_preco?: number
+          p_proposta_id: string
+          p_qualidade?: number
+        }
+        Returns: number
+      }
       rpc_calcular_wip: {
         Args: { p_ano: number; p_mes: number }
         Returns: number
@@ -9998,6 +10185,15 @@ export type Database = {
       rpc_converter_proposta_projeto: {
         Args: { p_proposta_id: string }
         Returns: string
+      }
+      rpc_criar_convite_cotacao: {
+        Args: {
+          p_cotacao_id: string
+          p_fornecedor_id?: string
+          p_fornecedor_nome?: string
+          p_validade_dias?: number
+        }
+        Returns: Json
       }
       rpc_criar_transferencia: {
         Args: {
@@ -10223,6 +10419,10 @@ export type Database = {
       }
       rpc_retomar_projeto: {
         Args: { p_etapa_id?: string; p_projeto_id: string }
+        Returns: undefined
+      }
+      rpc_revogar_convite_cotacao: {
+        Args: { p_convite_id: string }
         Returns: undefined
       }
       rpc_salvar_proposta_disciplinas: {
