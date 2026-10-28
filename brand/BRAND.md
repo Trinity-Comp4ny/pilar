@@ -3,7 +3,7 @@
 > **Fonte única de verdade da marca.** Índice + essência. Detalhes nos arquivos vizinhos.
 > Sempre consultar antes de escrever copy, landing, UI text, e-mail ou material de venda.
 >
-> Última atualização: `2026-06-10` · Versão `v0`
+> Última atualização: `2026-10-27` · Versão `v1` (identidade visual completa + Instagram)
 
 ## Mapa
 
@@ -11,7 +11,16 @@
 |---|---|
 | **BRAND.md** (este) | Essência, posicionamento, tagline, decisões pendentes |
 | [voice-tone.md](./voice-tone.md) | Voz, tom, princípios de copy, do/don't, glossário, palavras banidas |
-| [visual.md](./visual.md) | Identidade visual — **aponta pra `src/styles/tokens.css`** (não duplica valores) |
+| [visual.md](./visual.md) | Identidade visual: resumo e índice dos arquivos abaixo |
+| [logo.md](./logo.md) | Logotipo: construção, proporções, respiro, tamanho mínimo, fundos, usos proibidos, arquivos |
+| [typography.md](./typography.md) | Famílias, escala, pesos, piso da fonte, composição |
+| [color.md](./color.md) | Paleta, hex, contraste medido, cor semântica |
+| [design-language.md](./design-language.md) | O tipo de design: estilo, princípios, forma, espaço, ícone, imagem, movimento |
+| [imagery.md](./imagery.md) | Imagem: tela do produto, croqui, padrão colunata, fotografia, gráficos |
+| [motion.md](./motion.md) | Movimento da marca em vídeo e animação |
+| [social-instagram.md](./social-instagram.md) | Perfil @pilar.software: formatos, templates, grade do feed, checklist |
+| [usage.md](./usage.md) | Nome, uso por terceiros, cobranding, arquitetura de marca |
+| [guidelines.html](./guidelines.html) | O brand book em uma página visual (abrir no navegador) |
 | [messaging.md](./messaging.md) | Mensagens-chave, one-liners, objeções, provas |
 | [personas.md](./personas.md) | ICP e personas |
 
@@ -62,7 +71,7 @@
 
 ## 5. Naming
 
-- Nome: **Pilar** (marca registrada — usa `®` em contexto institucional: "Pilar®").
+- Nome: **Pilar**. O símbolo ™ ou ® só entra com o registro no INPI concedido em nome da empresa (ver [logo.md](./logo.md), seção 10).
 - Origem do nome: `[A DEFINIR — Matheus]` (sustentação/estrutura/engenharia? documentar a história).
 - Grafia: sempre "Pilar", nunca "PILAR" caixa-alta nem "pilar" minúsculo no meio de frase.
 - Domínio / produto: `[A DEFINIR — confirmar url e nome do produto vs empresa Labrynth AI]`.
@@ -80,5 +89,5 @@ Tensões reais entre o que está em produção e a estratégia. **Resolver antes
 
 - Estratégia/posicionamento: memória `project-icp-positioning`, `project-agentic-strategy-2026-06`, `project-icp-positioning`
 - Inteligência de mercado: `research/INSIGHTS.md`, `research/INDEX.md`
-- Identidade visual (verdade técnica): `src/styles/tokens.css`
+- Identidade visual (verdade técnica): `src/styles/tokens.css`; logotipo em `brand/assets/logo/` (gerado por `scripts/brand/build.py`)
 - Copy viva: `src/pages/landing/`
