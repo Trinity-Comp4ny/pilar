@@ -10,16 +10,16 @@
 - Sempre "Pilar" sozinho no nome do produto. A descrição vem depois ("Pilar, gestão para escritórios de
   engenharia e arquitetura"), nunca dentro do nome.
 - O símbolo ™ ou ® só entra com o registro concedido ([logo.md](./logo.md), seção 10).
-- Handles: `@pilar.software` (Instagram) e o mesmo nome nas demais redes quando disponível.
+- Handles: `@pilarsoft.app` (Instagram) e o mesmo nome nas demais redes quando disponível.
 
 ## 2. Quem pode usar o logotipo
 
-| Pode, sem pedir | Precisa de autorização por escrito |
-|---|---|
-| Cliente dizendo, com verdade, que usa a Pilar | Fornecedor, integrador ou parceiro que apresente a Pilar como parte do seu produto |
-| Imprensa e blog descrevendo a Pilar | Uso em nome de empresa, produto, domínio ou perfil |
-| Parceiro comercial listando a Pilar entre as ferramentas que integra | Brinde, camiseta, material impresso em quantidade |
-| | Qualquer uso que sugira aprovação, parceria ou endosso |
+| Pode, sem pedir                                                      | Precisa de autorização por escrito                                                 |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Cliente dizendo, com verdade, que usa a Pilar                        | Fornecedor, integrador ou parceiro que apresente a Pilar como parte do seu produto |
+| Imprensa e blog descrevendo a Pilar                                  | Uso em nome de empresa, produto, domínio ou perfil                                 |
+| Parceiro comercial listando a Pilar entre as ferramentas que integra | Brinde, camiseta, material impresso em quantidade                                  |
+|                                                                      | Qualquer uso que sugira aprovação, parceria ou endosso                             |
 
 Em todo uso permitido: arquivo oficial de `assets/logo/`, sem modificação, com o respiro de 2X,
 **sem destaque maior que o da marca de quem usa**, e sem sugerir endosso.
