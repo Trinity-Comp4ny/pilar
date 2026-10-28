@@ -7,8 +7,30 @@ function discBarClass(d: ProjetoDisciplinaDB): string {
   return (DISCIPLINA_STATUS_COLORS[d.status] || DISCIPLINA_STATUS_COLORS["Não Iniciado"]).bar;
 }
 
+/**
+ * Modo "Meus projetos" (SPEC 143): com `pessoaId`, só as disciplinas dela aparecem; as outras ficam
+ * atrás de uma linha "+N disciplinas de outras pessoas". Coluna e timeline usam a mesma regra para
+ * as linhas continuarem alinhadas.
+ */
+function separarPorPessoa(disciplinas: ProjetoDisciplinaDB[], pessoaId: string | undefined, mostrarOutras: boolean) {
+  if (!pessoaId) return { exibidas: disciplinas, outras: 0 };
+  const minhas = disciplinas.filter((d) => d.responsaveis?.some((r) => r.id === pessoaId));
+  const outras = disciplinas.length - minhas.length;
+  return { exibidas: mostrarOutras ? disciplinas : minhas, outras };
+}
+
 /** Sub-linhas da coluna fixa esquerda (nomes) para as disciplinas de um projeto expandido. */
-export function DisciplinaLeftRows({ projetoId }: { projetoId: string }) {
+export function DisciplinaLeftRows({
+  projetoId,
+  pessoaId,
+  mostrarOutras = false,
+  onMostrarOutras,
+}: {
+  projetoId: string;
+  pessoaId?: string;
+  mostrarOutras?: boolean;
+  onMostrarOutras?: () => void;
+}) {
   const { data: disciplinas, isLoading } = useProjetoDisciplinas(projetoId);
 
   if (isLoading) {
@@ -27,9 +49,12 @@ export function DisciplinaLeftRows({ projetoId }: { projetoId: string }) {
     );
   }
 
+  const { exibidas, outras } = separarPorPessoa(disciplinas, pessoaId, mostrarOutras);
+  const rotulo = `+${outras} disciplina${outras === 1 ? "" : "s"} de outras pessoas`;
+
   return (
     <>
-      {disciplinas.map((d) => (
+      {exibidas.map((d) => (
         <div key={d.id} className="h-10 border-b pl-8 pr-3 flex items-center gap-1.5">
           <span className={cn("inline-block h-1.5 w-1.5 rounded-full shrink-0", discBarClass(d))} aria-hidden />
           <span className="text-[11px] truncate">
@@ -38,6 +63,26 @@ export function DisciplinaLeftRows({ projetoId }: { projetoId: string }) {
           </span>
         </div>
       ))}
+      {outras > 0 && (
+        <div className="h-10 border-b pl-8 pr-3 flex items-center">
+          <button
+            type="button"
+            onClick={onMostrarOutras}
+            aria-label={mostrarOutras ? undefined : rotulo}
+            className="text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
+          >
+            {mostrarOutras ? (
+              "Ocultar disciplinas de outras pessoas"
+            ) : (
+              <>
+                {/* Coluna de 104px no celular: o rótulo curto cabe, o completo fica no nome acessível. */}
+                <span className="sm:hidden" aria-hidden>{`+${outras} de outras`}</span>
+                <span className="hidden sm:inline">{rotulo}</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
     </>
   );
 }
@@ -50,11 +95,15 @@ export function DisciplinaTimelineRows({
   timelineStart,
   timelineEnd,
   onNavigate,
+  pessoaId,
+  mostrarOutras = false,
 }: {
   projetoId: string;
   timelineStart: Date;
   timelineEnd: Date;
   onNavigate: () => void;
+  pessoaId?: string;
+  mostrarOutras?: boolean;
 }) {
   const { data: disciplinas, isLoading } = useProjetoDisciplinas(projetoId);
 
@@ -62,9 +111,11 @@ export function DisciplinaTimelineRows({
     return <div className="h-10 border-b relative" />;
   }
 
+  const { exibidas, outras } = separarPorPessoa(disciplinas, pessoaId, mostrarOutras);
+
   return (
     <>
-      {disciplinas.map((d) => {
+      {exibidas.map((d) => {
         const start = parseDate(d.data_inicio);
         const end = parseDate(d.data_fim);
 
@@ -96,6 +147,7 @@ export function DisciplinaTimelineRows({
           </div>
         );
       })}
+      {outras > 0 && <div className="h-10 border-b" />}
     </>
   );
 }
