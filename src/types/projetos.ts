@@ -57,6 +57,8 @@ export interface DisciplinaResponsavel {
 export function isDiscAtrasada(disc: DisciplinaResponsavel): boolean {
   // data_final preenchida = concluída de fato, independente do campo status
   if (disc.status === "Concluído" || disc.data_final) return false;
+  // Pausada tem o prazo congelado (spec 141): não é atraso.
+  if (disc.status === "Pausada") return false;
   if (!disc.data_previsao) return false;
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
