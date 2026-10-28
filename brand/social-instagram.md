@@ -32,9 +32,9 @@ Cinco regras valem para qualquer peça:
 | Item | Regra |
 |---|---|
 | Nome de usuário | `@pilar.software` |
-| Nome (campo de busca) | `Pilar | Gestão para engenharia` |
+| Nome (campo de busca) | `Pilar | Gestão com agentes de IA` |
 | Foto | `assets/social/avatar.png`: símbolo Ink sobre verde da marca, 1080 × 1080. O Instagram corta em círculo; o símbolo ocupa metade da largura e sobra respiro. Sem o nome na foto. |
-| Bio (135 caracteres, limite 150) | "Saiba se cada projeto está dando lucro antes de terminar. Gestão para escritórios de engenharia e arquitetura. Teste grátis por 3 dias." |
+| Bio (125 caracteres, limite 150) | "Do contrato à execução, num fluxo só. Gestão com agentes de IA para escritórios de engenharia e arquitetura. Agende uma demo." |
 | Link | Landing com UTM: `utm_source=instagram&utm_medium=bio&utm_campaign=perfil` |
 | Categoria | Software (ou Serviço de tecnologia) |
 | Botão de contato | WhatsApp do Matheus, quando o fundador aprovar |

@@ -140,7 +140,7 @@ ou ponto. Aspas retas. Reticências só quando o texto realmente se interrompe.
 
 A assinatura tipográfica da Pilar é **uma palavra do título em itálico, dentro de uma pílula
 verde**. Está no hero (`RotatingWord`, `apps/marketing/src/components/RotatingWord.tsx`), onde o
-verbo troca ("Onde times e agentes *organizam* gestão, projetos e obras").
+verbo troca ("Do contrato à execução, agentes *preparam* e você aprova").
 
 | Propriedade | Valor |
 |---|---|

@@ -122,7 +122,7 @@ e-mail, deck, anúncio — consultar `brand/BRAND.md` (índice) e o arquivo espe
 voz/tom → `brand/voice-tone.md`, visual → `brand/visual.md`, mensagens → `brand/messaging.md`,
 público → `brand/personas.md`. Cor/token: a verdade é `src/styles/tokens.css`.
 
-- Tagline: "Saiba se cada projeto está dando lucro antes de terminar."
+- Tagline: "Do contrato à execução, num fluxo só." Agentes são o primeiro pilar ("A IA prepara. O sistema confere. Você aprova."). Lucro e prazo são prova, não promessa-mãe (DECISOES.md, 2026-10-28).
 - ICP: escritórios de projeto técnico — engenharia multidisciplinar (civil/estrutural/MEP) e
   arquitetura (desde 2026-09-01, ver DECISOES.md) — NÃO construtora/incorporadora.
 - Voz: direta, técnica na medida, confiante, sem hype. Ver palavras banidas em voice-tone.md.

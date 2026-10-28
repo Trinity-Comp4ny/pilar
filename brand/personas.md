@@ -8,7 +8,7 @@
 **Escritórios de projeto técnico** — engenharia multidisciplinar (civil + estrutural + MEP/HVAC) e arquitetura.
 
 - ✅ **É:** escritório de engenharia ou arquitetura que vende projeto técnico por proposta, com fluxo de disciplina/etapa.
-- ❌ **Não é:** construtora / incorporadora (precisa gestão de obra como núcleo do negócio, fora do escopo).
+- ❌ **Não é:** construtora / incorporadora (a gestão de obra é o negócio dela e pede ERP próprio). Escritório que projeta e acompanha a obra é ICP.
 - **Porte:** pequeno a médio. Planos por usuário — Starter ≤3, Pro ≤15, Enterprise ilimitado.
 - **Maturidade digital:** sai de planilha + WhatsApp; conservador, técnico, cético com hype.
 
@@ -26,7 +26,7 @@
 - **Medo:** trocar a planilha que (mal) funciona; confiar número que a IA gerou.
 - **Gatilho de compra:** levou prejuízo num projeto que parecia ok; cresceu e perdeu o controle de cabeça.
 - **Como fala com ele:** número e clareza, respeitando que ele é o especialista técnico. Sem hype.
-- **Mensagem-âncora:** "Saiba se cada projeto está dando lucro antes de terminar."
+- **Mensagem-âncora:** "Do contrato à execução, num fluxo só." (o lucro antes do fim é a prova, não a promessa-mãe).
 
 ## Persona secundária — Gerente de projetos / Coordenador
 

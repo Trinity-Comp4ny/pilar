@@ -1,9 +1,9 @@
-# Pilar — Brand Book
+# Pilar: brand book
 
 > **Fonte única de verdade da marca.** Índice + essência. Detalhes nos arquivos vizinhos.
 > Sempre consultar antes de escrever copy, landing, UI text, e-mail ou material de venda.
 >
-> Última atualização: `2026-10-27` · Versão `v1` (identidade visual completa + Instagram)
+> Última atualização: `2026-10-28` · Versão `v1.1` (promessa "Do contrato à execução" e agentes como pilar; identidade visual de 27/10)
 
 ## Mapa
 
@@ -21,73 +21,75 @@
 | [social-instagram.md](./social-instagram.md) | Perfil @pilar.software: formatos, templates, grade do feed, checklist |
 | [usage.md](./usage.md) | Nome, uso por terceiros, cobranding, arquitetura de marca |
 | [guidelines.html](./guidelines.html) | O brand book em uma página visual (abrir no navegador) |
-| [messaging.md](./messaging.md) | Mensagens-chave, one-liners, objeções, provas |
+| [messaging.md](./messaging.md) | Mensagens-chave, one-liners, agentes, objeções, provas |
 | [personas.md](./personas.md) | ICP e personas |
 
 ---
 
 ## 1. Essência
 
-**O que é o Pilar:** sistema de gestão para empresas de engenharia que conecta proposta → projeto → cobrança → portal do cliente num único fluxo, e dá ao dono clareza de lucro por projeto **antes** dele terminar.
+**O que é o Pilar:** sistema de gestão com agentes de IA para escritórios de engenharia e arquitetura. Leva o dado do contrato à execução num fluxo só (proposta, projeto, obra, cliente e financeiro), sem redigitar.
 
-**Categoria:** SaaS vertical de gestão para AEC (Arquitetura, Engenharia e Construção), com tese AI-native (agentes que executam trabalho, não só dashboards).
+**Categoria:** SaaS vertical de gestão para AEC (Arquitetura, Engenharia e Construção), AI-native: os agentes preparam o trabalho, o sistema confere os números, uma pessoa aprova.
 
 **Tagline oficial:**
-> **Saiba se cada projeto está dando lucro antes de terminar.**
+> **Do contrato à execução, num fluxo só.**
 
-**Hero atual em produção** (landing):
-> Pare de trabalhar no caos. *Lidere seus projetos.*
-> Único fluxo — proposta, projeto, cobrança e portal do cliente conectados no mesmo sistema.
+**Assinatura dos agentes:**
+> **A IA prepara. O sistema confere. Você aprova.**
+
+**Hero em produção** (landing):
+> Do contrato à execução, agentes *preparam* e você aprova.
 
 ## 2. Posicionamento
 
-**Para** donos e sócios de empresas de **engenharia multidisciplinar** (civil + estrutural + MEP/HVAC)
-**que** não sabem se um projeto está dando lucro até ele acabar,
-**o Pilar é** o sistema de gestão que conecta orçamento, execução e financeiro num fluxo só
-**diferente de** planilhas dispersas e ERPs de construção pesados,
-**porque** mostra a rentabilidade de cada projeto em tempo real — e usa agentes de IA pra fazer o trabalho operacional (orçar, cobrar, reportar), com humano no loop.
+**Para** donos e sócios de escritórios de **engenharia e arquitetura**
+**que** tocam contrato, projeto, obra e caixa em ferramentas que não conversam,
+**o Pilar é** o sistema de gestão que leva o dado do contrato à execução num fluxo só, com agentes de IA que preparam o trabalho operacional
+**diferente de** planilhas dispersas, ferramentas genéricas de tarefa e ERPs de construtora,
+**porque** cada número que a IA escreve é conferido pelo sistema e nada segue sem a aprovação de uma pessoa.
 
-**Dor central:** o dono só descobre o prejuízo no fim. O Pilar antecipa.
+**Escopo:** o Pilar é o sistema do escritório que projeta e acompanha a obra. Não é o ERP da construtora.
 
-**Arquétipo de PMF (a validar):** provavelmente *Hard Fact* (Sequoia) — o mercado está resignado ("não tem como saber antes"), não com cabelo em chamas. → GTM é **quebrar a resignação** (educar, demo com dados reais), não vencer comparação de features. Ref: `research/INSIGHTS.md` #6.
+**Dor central:** a proposta está no Word, o cronograma no Excel, o diário de obra no WhatsApp e o caixa no banco. O dono monta o quadro na cabeça e só vê o resultado quando já acabou. O Pilar junta tudo e mostra enquanto ainda dá para agir.
+
+**Arquétipo de PMF (a validar):** provavelmente *Hard Fact* (Sequoia). O mercado está resignado ("não tem como saber antes"), não com cabelo em chamas. O GTM é **quebrar a resignação** (educar, demo com dados reais), não vencer comparação de features. Ref: `research/INSIGHTS.md` #6.
 
 ## 3. Valores de marca
 
-> _v0 — ancorar nas decisões já tomadas; refinar com o Matheus._
-
 1. **Clareza antes de tudo.** Número certo, sem enfeite. A marca tira o cliente da névoa.
-2. **Lucro como bússola.** Toda feature responde: "isso ajuda o dono a saber se o projeto dá lucro?"
-3. **Trabalho feito, não só medido.** A IA executa (orça, cobra, reporta) com humano no loop — não é mais um dashboard.
-4. **Respeito ao engenheiro.** Linguagem técnica certa, sem infantilizar; sem jargão de consultoria vazio.
-5. **Honestidade.** Não prometer autonomia que não existe; mostrar a conta real.
+2. **Trabalho feito, não só medido.** Os agentes lançam, organizam, rascunham e resumem. Não é mais um dashboard.
+3. **Conferido, não presumido.** A IA redige; custo, horas e valor saem do cálculo do sistema, nunca do modelo.
+4. **Resultado à vista.** Lucro, prazo e custo aparecem enquanto ainda dá para agir.
+5. **Respeito ao engenheiro.** Linguagem técnica certa, sem infantilizar; sem jargão de consultoria vazio.
+6. **Honestidade.** Não prometer autonomia que não existe; mostrar a conta real.
 
 ## 4. Pilares de mensagem
 
-1. **Lucro antes do fim** — visibilidade de rentabilidade por projeto em tempo real.
-2. **Um fluxo só** — proposta, projeto, cobrança e portal conectados; fim das planilhas soltas.
-3. **Agentes que trabalham** — IA que faz a tarefa (com aprovação humana), não só sugere.
+1. **Agentes que trabalham.** A IA prepara o lançamento, o aditivo, o resumo da semana e o diário do dia. O sistema confere, você aprova.
+2. **Um fluxo só.** Lead, proposta, projeto, obra e financeiro conectados, do contrato à execução.
+3. **Canteiro e cliente por dentro.** O Pilar Campo registra a obra sem sinal; o portal mostra ao cliente sem cadastro.
+4. **Número antes do fim.** Lucro, prazo e custo de cada projeto e obra, enquanto dá tempo de agir.
 
 → Desdobramento completo em [messaging.md](./messaging.md).
 
 ## 5. Naming
 
-- Nome: **Pilar**. O símbolo ™ ou ® só entra com o registro no INPI concedido em nome da empresa (ver [logo.md](./logo.md), seção 10).
-- Origem do nome: `[A DEFINIR — Matheus]` (sustentação/estrutura/engenharia? documentar a história).
+- Nome: **Pilar**, domínio `pilarsoft.com.br` (app em `app.pilarsoft.com.br`). A troca para "Prumeo" (19/08) foi cancelada em 28/10/2026. O símbolo ™ ou ® só entra com o registro no INPI concedido em nome da empresa (ver [logo.md](./logo.md), seção 10).
+- Origem do nome: `[A DEFINIR: Matheus]` (sustentação/estrutura/engenharia? documentar a história).
 - Grafia: sempre "Pilar", nunca "PILAR" caixa-alta nem "pilar" minúsculo no meio de frase.
-- Domínio / produto: `[A DEFINIR — confirmar url e nome do produto vs empresa Labrynth AI]`.
+- Empresa titular: Bez Company. Como a marca-mãe aparece no material do produto continua em aberto (seção 6).
 
-## 6. Decisões de marca pendentes ⚠️
+## 6. Decisões de marca
 
-Tensões reais entre o que está em produção e a estratégia. **Resolver antes de v1.**
-
-1. ~~**ICP na copy diverge da estratégia.**~~ **Resolvido em 2026-09-01** (`DECISOES.md`): o ICP oficial expandiu pra incluir arquitetura — a landing já estava certa, a estratégia é que ficou pra trás. Ver `personas.md`.
-2. **Tagline vs hero.** Tagline oficial é "saiba se dá lucro antes de terminar"; hero vende "pare do caos / único fluxo". São ângulos diferentes (resultado financeiro vs organização). → Decidir hierarquia: qual é a promessa #1?
-3. **Empresa vs produto.** Labrynth AI (empresa) × Pilar (produto). Definir como a marca-mãe aparece (ou não) no material.
-4. **Eixo AI-native na comunicação.** Estratégia aposta em "agentes que executam"; landing atual não comunica isso. → Decidir quando/quanto expor (IA Hub ainda dormente em produção — ver `CLAUDE.md`).
+1. ~~**ICP na copy diverge da estratégia.**~~ **Resolvido em 2026-09-01** (`DECISOES.md`): o ICP oficial inclui arquitetura. Ver `personas.md`.
+2. ~~**Tagline vs hero.**~~ **Resolvido em 2026-10-28** (`DECISOES.md`): a promessa-mãe é "Do contrato à execução, num fluxo só". Lucro e prazo viram o pilar "Número antes do fim", não a promessa única.
+3. ~~**Eixo AI-native na comunicação.**~~ **Resolvido em 2026-10-28** (`DECISOES.md`): agentes são o primeiro pilar. Só se promete o que roda em produção, sempre com aprovação humana.
+4. **Empresa vs produto.** Bez Company (empresa) × Pilar (produto). Definir como a marca-mãe aparece (ou não) no material.
 
 ## 7. Fontes
 
-- Estratégia/posicionamento: memória `project-icp-positioning`, `project-agentic-strategy-2026-06`, `project-icp-positioning`
+- Estratégia/posicionamento: `docs/strategy/DECISOES.md` (vale sobre qualquer outro doc), memória `project-icp-positioning`, `project-agentic-strategy-2026-06`
 - Inteligência de mercado: `research/INSIGHTS.md`, `research/INDEX.md`
 - Identidade visual (verdade técnica): `src/styles/tokens.css`; logotipo em `brand/assets/logo/` (gerado por `scripts/brand/build.py`)
-- Copy viva: `src/pages/landing/`
+- Copy viva: `apps/marketing/src/`

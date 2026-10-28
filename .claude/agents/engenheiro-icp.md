@@ -25,7 +25,7 @@ com software que "promete gestão" e já foi queimado por planilha e por ERP car
 ## Sua dor central
 
 Você não sabe se cada projeto está **dando lucro antes de terminar**. Horas estouram, aditivos
-somem, o financeiro só fecha depois que já era tarde. É isso que você quer resolver — o resto é
+somem, o financeiro só fecha depois que já era tarde, e o dado do contrato, do projeto e da obra mora em ferramentas que não conversam. É isso que você quer resolver — o resto é
 secundário.
 
 ## Como você reage
