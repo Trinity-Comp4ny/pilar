@@ -20,6 +20,9 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useFornecedorAvaliacoes } from "@/hooks/useFornecedorAvaliacoes";
+import { formatarNota } from "@/lib/cotacaoConvite";
+import { AvaliacoesFornecedor, notaMedia } from "./AvaliacoesFornecedor";
 import { useFornecedorDetalhe, type CompraView, type CotacaoView, type ItemView } from "@/hooks/useFornecedorDetalhe";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import type { ObraRollup } from "@/lib/fornecedorInsights";
@@ -137,6 +140,7 @@ export default function FornecedorDetalhePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data, isLoading, isError } = useFornecedorDetalhe(id);
+  const { data: avaliacoes = [] } = useFornecedorAvaliacoes(id);
   usePageTitle(data?.fornecedor.nome ?? "Fornecedor");
   const formatCurrency = useMoneyMask();
 
@@ -192,6 +196,7 @@ export default function FornecedorDetalhePage() {
     { id: "cotacoes", label: "Cotações", badge: cotacoes.length },
     { id: "obras", label: "Obras", badge: obras.length },
     { id: "compras", label: "Compras", badge: compras.length },
+    { id: "avaliacoes", label: "Avaliações", badge: avaliacoes.length },
   ];
 
   return (
@@ -223,7 +228,7 @@ export default function FornecedorDetalhePage() {
       </div>
 
       {/* KPIs */}
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
         <KpiCard label="Obras" value={String(resumo.obras)} />
         <KpiCard label="Total comprado" value={formatCurrency(resumo.totalComprado)} hint="Conta da obra" />
         <KpiCard
@@ -233,6 +238,15 @@ export default function FornecedorDetalhePage() {
         />
         <KpiCard label="Ticket médio" value={formatCurrency(resumo.ticketMedio)} />
         <KpiCard label="Última compra" value={resumo.ultimaCompra ? formatDate(resumo.ultimaCompra) : "—"} />
+        <KpiCard
+          label="Nota"
+          value={avaliacoes.length > 0 ? formatarNota(notaMedia(avaliacoes)) : "Sem avaliação"}
+          hint={
+            avaliacoes.length > 0
+              ? `${avaliacoes.length} ${avaliacoes.length === 1 ? "avaliação" : "avaliações"}`
+              : undefined
+          }
+        />
       </div>
 
       <Tabs value={tab} onValueChange={setTab} className="mt-6">
@@ -316,6 +330,11 @@ export default function FornecedorDetalhePage() {
               />
             </div>
           )}
+        </TabsContent>
+
+        {/* Avaliações (SPEC 144) */}
+        <TabsContent value="avaliacoes" className="mt-4">
+          <AvaliacoesFornecedor avaliacoes={avaliacoes} />
         </TabsContent>
       </Tabs>
     </PageLayout>

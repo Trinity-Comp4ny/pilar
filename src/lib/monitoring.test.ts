@@ -41,6 +41,14 @@ describe("monitoring scrubber — keys sensíveis", () => {
     expect(extra.message).toBe("Cliente [CPF] atualizado");
   });
 
+  it("mascara o token do link público de cotação (SPEC 144)", () => {
+    monitoring.captureException(new Error("x"), {
+      url: "https://app.pilarsoft.com.br/cotar/xK3v9Qe2mT7pAbCdEfGhIjKlMnOpQrStUvWxYz01234?a=1",
+    });
+    const extra = getLastExtra() as Record<string, unknown>;
+    expect(extra.url).toBe("https://app.pilarsoft.com.br/cotar/[link]?a=1");
+  });
+
   it("mascara CNPJ dentro de strings", () => {
     monitoring.captureException(new Error("x"), {
       payload: "Empresa 12.345.678/0001-90 cadastrada",
