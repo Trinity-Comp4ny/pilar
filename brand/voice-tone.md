@@ -20,7 +20,7 @@ Quatro traços:
 
 | Contexto | Tom | Exemplo |
 |---|---|---|
-| **Landing / venda** | Provocativo + aspiracional | "Pare de trabalhar no caos. Lidere seus projetos." |
+| **Landing / venda** | Provocativo + aspiracional | "Do contrato à execução, agentes preparam e você aprova." |
 | **UI / produto** | Funcional, neutro, breve | "Projeto sem orçamento vinculado." → ação clara |
 | **Erro / vazio** | Calmo, prestativo, sem culpa | "Nenhuma proposta ainda. Crie a primeira →" |
 | **Sucesso** | Sóbrio, confirmatório | "Proposta enviada." (sem festa) |
@@ -38,7 +38,7 @@ Quatro traços:
 
 ## UI microcopy — regras
 
-- Botões: verbo + objeto, Title Case curto. "Criar proposta", "Enviar fatura".
+- Botões: verbo + objeto, sentence case. "Criar proposta", "Enviar fatura".
 - Vazios: contexto + ação. Nunca só "Nada aqui".
 - Erros: o que houve + o que fazer. Sem stack trace, sem "Ops!".
 - Confirmação destrutiva: nomear o que será perdido. "Excluir proposta #12? Não dá pra desfazer."
@@ -63,10 +63,12 @@ Quatro traços:
 | Usar | Não usar |
 |---|---|
 | **proposta** | orçamento comercial, cotação |
-| **projeto** | obra, job |
+| **projeto** (o trabalho técnico contratado) e **obra** (a execução acompanhada no canteiro) | job; "obra" como sinônimo de projeto |
 | **escopo / aditivo** | fase / extra |
 | **portal do cliente** | área do cliente, dashboard externo |
 | **rentabilidade / lucro do projeto** | margem bruta (a menos que técnico) |
+| **do contrato à execução** | "ponta a ponta", "360", "end-to-end" |
+| **a IA prepara, você aprova** | "a IA decide", "piloto automático" |
 | **agente** (de IA) | bot, assistente, robô |
 | **revisar e aprovar** (HITL) | automático, autônomo |
 
