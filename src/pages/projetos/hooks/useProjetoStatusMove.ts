@@ -40,6 +40,15 @@ export function useProjetoStatusMove(projetos: Projeto[], canEdit: boolean, etap
     | null
   >(null);
 
+  // Pausar e retomar nunca passam pelo update direto: abrem o diálogo (motivo,
+  // antes e depois dos prazos) e vão pelas RPCs (spec 141).
+  const [pendingPausa, setPendingPausa] = useState<{ projetoId: string; projetoNome: string } | null>(null);
+  const [pendingRetomada, setPendingRetomada] = useState<{
+    projetoId: string;
+    dataPrevisao?: string;
+    etapaId?: string;
+  } | null>(null);
+
   // Aplica a mudança no cache e no banco. Quando `etapaId` vem, grava a coluna
   // (o trigger deriva o status pelo bucket); senão grava o status direto (mobile).
   // clearDataFinal=true zera data_final (usado na reabertura de projeto concluído).
@@ -87,6 +96,17 @@ export function useProjetoStatusMove(projetos: Projeto[], canEdit: boolean, etap
     const projeto = projetos.find((p) => p.id === projetoId);
     const fromStatus = projeto?.status;
 
+    if (newStatus === PROJECT_STATUS.PARALISADO && fromStatus !== PROJECT_STATUS.PARALISADO) {
+      setPendingPausa({ projetoId, projetoNome: projeto?.nome ?? "Projeto" });
+      return;
+    }
+
+    if (fromStatus === PROJECT_STATUS.PARALISADO && newStatus !== PROJECT_STATUS.PARALISADO) {
+      const etapaId = etapas.find((e) => e.bucket === newStatus)?.id;
+      setPendingRetomada({ projetoId, dataPrevisao: projeto?.data_previsao, etapaId });
+      return;
+    }
+
     if (fromStatus === PROJECT_STATUS.CONCLUIDO && newStatus !== PROJECT_STATUS.CONCLUIDO) {
       setPendingReopen({
         projetoId,
@@ -114,6 +134,16 @@ export function useProjetoStatusMove(projetos: Projeto[], canEdit: boolean, etap
     if (!bucketDestino) return;
     const projeto = projetos.find((p) => p.id === draggableId);
 
+    if (bucketDestino === PROJECT_STATUS.PARALISADO && bucketOrigem !== PROJECT_STATUS.PARALISADO) {
+      setPendingPausa({ projetoId: draggableId, projetoNome: projeto?.nome ?? "Projeto" });
+      return;
+    }
+
+    if (bucketOrigem === PROJECT_STATUS.PARALISADO && bucketDestino !== PROJECT_STATUS.PARALISADO) {
+      setPendingRetomada({ projetoId: draggableId, dataPrevisao: projeto?.data_previsao, etapaId: etapaDestino });
+      return;
+    }
+
     // Saindo de uma coluna Concluído? Pede confirmação antes de zerar data_final.
     if (bucketOrigem === PROJECT_STATUS.CONCLUIDO && bucketDestino !== PROJECT_STATUS.CONCLUIDO) {
       setPendingReopen({
@@ -130,6 +160,10 @@ export function useProjetoStatusMove(projetos: Projeto[], canEdit: boolean, etap
   };
 
   return {
+    pendingPausa,
+    setPendingPausa,
+    pendingRetomada,
+    setPendingRetomada,
     pendingReopen,
     setPendingReopen,
     applyStatusMove,
