@@ -34,6 +34,7 @@ import {
   CONSENTIMENTO_TEXTO_VERSAO,
   CONSENTIMENTO_TEXTO_VERSAO_IMEDIATA,
   ehTokenizacaoSemPermissao,
+  mensagemCobrancaRecusada,
   modoEfetivo,
   primeiraCobrancaEm as dataPrimeiraCobranca,
   verificarAssinatura,
@@ -219,13 +220,7 @@ serve(
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Erro Asaas";
         log.error("cobrança imediata recusada", { empresaId, error: msg });
-        return jsonResponse(
-          {
-            error: `A cobrança não foi aprovada: ${msg.replace(/^Asaas: /, "")}. Confira os dados ou use outro cartão.`,
-          },
-          502,
-          req
-        );
+        return jsonResponse({ error: mensagemCobrancaRecusada(msg) }, 502, req);
       }
       await gravarConsentimento();
       return jsonResponse(
