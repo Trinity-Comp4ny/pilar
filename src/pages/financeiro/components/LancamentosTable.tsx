@@ -32,7 +32,15 @@ import { LancamentosGroupRow } from "./LancamentosGroupRow";
 import { SortableTH } from "./LancamentosSortableTH";
 import { LancamentosItemRow } from "./LancamentosItemRow";
 import { LancamentosListaMobile } from "./LancamentosListaMobile";
-import { isOverdue, isPaidStatus, rowKey, stripParcelaSuffix, type FlatRow } from "./lancamentosRows";
+import {
+  isOverdue,
+  isPaidStatus,
+  montarLinhasAgrupadas,
+  rowKey,
+  stripParcelaSuffix,
+  type FlatRow,
+} from "./lancamentosRows";
+import { useParcelasDosGrupos } from "../hooks/useParcelasDosGrupos";
 
 import { PageLoader } from "@/components/motion/PageLoader";
 interface Props {
@@ -122,56 +130,16 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
     setSelected(new Set());
   }, [filters]);
 
-  const flatRows = useMemo((): FlatRow[] => {
-    if (!grouped) return items.map((l) => ({ kind: "item" as const, data: l, isChild: false }));
+  // Grupo expandido mostra o plano inteiro, não só as parcelas do período (BEZ-442).
+  const parcelasDoPlano = useParcelasDosGrupos([...expandedGroups]);
 
-    const groups = new Map<string, Lancamento[]>();
-    for (const l of items) {
-      if (l.grupo_parcela && l.parcela_total && l.parcela_total > 1) {
-        const arr = groups.get(l.grupo_parcela) ?? [];
-        arr.push(l);
-        groups.set(l.grupo_parcela, arr);
-      }
-    }
-
-    const groupAnchors = new Map<string, string>();
-    for (const [gid, groupItems] of groups) {
-      const anchor = groupItems.reduce((best, cur) =>
-        (cur.parcela_numero ?? Infinity) < (best.parcela_numero ?? Infinity) ? cur : best
-      );
-      groupAnchors.set(gid, rowKey(anchor));
-    }
-
-    const result: FlatRow[] = [];
-    const emitted = new Set<string>();
-    for (const l of items) {
-      if (l.grupo_parcela && l.parcela_total && l.parcela_total > 1) {
-        const gid = l.grupo_parcela;
-        if (!emitted.has(gid) && groupAnchors.get(gid) === rowKey(l)) {
-          emitted.add(gid);
-          const groupItems = groups.get(gid)!;
-          const orderedItems = [...groupItems].sort((a, b) => (a.parcela_numero ?? 0) - (b.parcela_numero ?? 0));
-          result.push({ kind: "group", groupId: gid, items: orderedItems });
-          if (expandedGroups.has(gid)) {
-            for (const item of orderedItems) result.push({ kind: "item", data: item, isChild: true });
-          }
-        }
-      } else {
-        result.push({ kind: "item", data: l, isChild: false });
-      }
-    }
-
-    for (const [gid, groupItems] of groups) {
-      if (!emitted.has(gid)) {
-        const orderedItems = [...groupItems].sort((a, b) => (a.parcela_numero ?? 0) - (b.parcela_numero ?? 0));
-        result.push({ kind: "group", groupId: gid, items: orderedItems });
-        if (expandedGroups.has(gid)) {
-          for (const item of orderedItems) result.push({ kind: "item", data: item, isChild: true });
-        }
-      }
-    }
-    return result;
-  }, [items, grouped, expandedGroups]);
+  const flatRows = useMemo(
+    (): FlatRow[] =>
+      grouped
+        ? montarLinhasAgrupadas(items, expandedGroups, parcelasDoPlano)
+        : items.map((l) => ({ kind: "item" as const, data: l, isChild: false })),
+    [items, grouped, expandedGroups, parcelasDoPlano]
+  );
 
   const allGroupIds = useMemo(
     () => flatRows.filter((r): r is Extract<FlatRow, { kind: "group" }> => r.kind === "group").map((r) => r.groupId),
