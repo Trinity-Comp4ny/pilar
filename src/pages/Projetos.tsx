@@ -534,6 +534,7 @@ export default function ProjetosKanban() {
           <CronogramaProjetosTab
             projetos={filteredProjetos}
             onDatesChange={canEdit ? handleCronogramaProjetoDates : undefined}
+            canReorder={canEdit}
           />
         </div>
       ) : activeTab === "mapa" ? (

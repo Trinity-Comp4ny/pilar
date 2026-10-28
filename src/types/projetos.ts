@@ -165,6 +165,8 @@ export interface Projeto {
   status: ProjectStatus;
   /** Coluna do quadro (projeto_etapas). O status deriva do bucket da etapa. */
   etapa_id?: string | null;
+  /** Ordem de prioridade do coordenador (1 = primeiro). Nulo = sem ordem (SPEC 143). */
+  ordem_prioridade?: number | null;
   prioridade: ProjectPriority;
   valor_contrato: number;
   observacao: string;
