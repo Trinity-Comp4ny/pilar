@@ -1,9 +1,8 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   AlertTriangle,
-  Check,
   ChevronDown,
   ChevronRight,
   ExternalLink,
@@ -43,6 +42,9 @@ import { useCriarFornecedor } from "@/hooks/useFornecedorDetalhe";
 import { usePermissions } from "@/hooks/usePermissions";
 
 import { BusyMark } from "@/components/motion/BusyMark";
+import { ImportStepper, useImportSteps } from "./ImportStepper";
+import { CotacaoConvites } from "./CotacaoConvites";
+import { AvaliarFornecedor } from "./AvaliarFornecedor";
 
 const OUTRO = "__outro__";
 // Opção que cria o cadastro na hora (evita a dívida de reconciliação na origem).
@@ -108,6 +110,8 @@ export function CotacaoDetailDialog({ open, onOpenChange, obraId, cotacao, canEd
             </div>
           )}
 
+          {canEdit && <CotacaoConvites obraId={obraId} cotacao={cotacao} />}
+
           {propostas.length === 0 ? (
             <EmptyState
               title="Nenhuma proposta ainda"
@@ -164,6 +168,11 @@ export function CotacaoDetailDialog({ open, onOpenChange, obraId, cotacao, canEd
                                 {[p.quantidade, p.unidade].filter((x) => x != null && x !== "").join(" ")}
                               </span>
                             )}
+                            {p.origem === "link" && (
+                              <Badge variant="outline" className="ml-1.5 text-[10px] font-normal">
+                                Preenchido pelo fornecedor
+                              </Badge>
+                            )}
                             {p.link_orcamento && (
                               <a
                                 href={p.link_orcamento}
@@ -193,6 +202,11 @@ export function CotacaoDetailDialog({ open, onOpenChange, obraId, cotacao, canEd
                                 {formatCurrency(valor / Number(p.quantidade))}/{p.unidade || "un"}
                               </div>
                             )}
+                            {p.desconto_pct != null && Number(p.desconto_pct) > 0 && (
+                              <div className="text-xs text-muted-foreground">
+                                com {Number(p.desconto_pct)}% de desconto
+                              </div>
+                            )}
                             {p.valor_parcelado != null && Number(p.valor_parcelado) !== valor && (
                               <div className="text-xs text-muted-foreground tabular-nums">
                                 parc. {formatCurrency(Number(p.valor_parcelado))}
@@ -209,6 +223,13 @@ export function CotacaoDetailDialog({ open, onOpenChange, obraId, cotacao, canEd
                                 <Button variant="ghost" size="sm" className="h-7" onClick={() => setDecisao(p)}>
                                   Escolher
                                 </Button>
+                              )}
+                              {canEdit && isVencedora && (
+                                <AvaliarFornecedor
+                                  propostaId={p.id}
+                                  fornecedorId={p.fornecedor_id}
+                                  fornecedorNome={nomeFornecedorProposta(p)}
+                                />
                               )}
                               {canEdit && !decidida && (
                                 <>
@@ -381,55 +402,6 @@ const linhaVazia = (): ItemDraft => ({
 });
 
 const ACCEPT_ORCAMENTO = "application/pdf,image/png,image/jpeg,image/webp";
-
-// Etapas reais do import (enviar → ler → estruturar). O Gemini structured output
-// não emite progresso token a token, então avançamos por tempo: dá feedback
-// honesto de atividade sem prometer streaming que a API não entrega.
-const ETAPAS_IMPORT = ["Enviando o arquivo", "Lendo o orçamento com a IA", "Organizando os itens"];
-
-/** Avança as etapas do import por tempo enquanto `pending` (setState só a partir de timers). */
-function useImportSteps(pending: boolean): number {
-  const [step, setStep] = useState(0);
-  useEffect(() => {
-    if (!pending) return;
-    const t0 = setTimeout(() => setStep(0), 0);
-    const t1 = setTimeout(() => setStep(1), 500);
-    const t2 = setTimeout(() => setStep(2), 4000);
-    return () => {
-      clearTimeout(t0);
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
-  }, [pending]);
-  return step;
-}
-
-/** Lista de etapas do import com check/spinner (feedback de progresso da IA). */
-function ImportStepper({ step }: { step: number }) {
-  return (
-    <ol className="space-y-1.5 rounded-md bg-muted/40 p-3 text-sm">
-      {ETAPAS_IMPORT.map((label, i) => {
-        const feito = i < step;
-        const atual = i === step;
-        return (
-          <li
-            key={label}
-            className={`flex items-center gap-2 ${feito || atual ? "text-ink" : "text-muted-foreground/50"}`}
-          >
-            {feito ? (
-              <Check className="h-4 w-4 text-positive-strong" />
-            ) : atual ? (
-              <BusyMark className="h-4 w-4" />
-            ) : (
-              <span className="h-4 w-4 rounded-full border border-current/30" />
-            )}
-            {label}
-          </li>
-        );
-      })}
-    </ol>
-  );
-}
 
 /** Tabela editável de itens de uma cesta (descrição, qtd, unidade, preço unit., total). */
 function ItensEditor({

@@ -72,6 +72,8 @@ const SENSITIVE_KEYS =
 
 // Padrões PII brasileiros — mascarados em valores string mesmo quando a key é benigna.
 const PII_PATTERNS: Array<{ re: RegExp; replace: string }> = [
+  // Link público de cotação (SPEC 144): o token na rota é o segredo, não pode ir ao Sentry.
+  { re: /\/cotar\/[A-Za-z0-9_-]{16,}/g, replace: "/cotar/[link]" },
   // CPF: 123.456.789-00 ou 12345678900
   { re: /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g, replace: "[CPF]" },
   // CNPJ: 12.345.678/0001-90 ou 12345678000190
@@ -170,9 +172,12 @@ const sentryMonitoring: Monitoring = {
       beforeSendTransaction(event) {
         const txName = event.transaction ?? "";
         if (IGNORED_TX_ROUTES.some((re) => re.test(txName))) return null;
+        if (event.transaction) event.transaction = scrubString(event.transaction);
+        if (event.request?.url) event.request.url = scrubString(event.request.url);
         return event;
       },
       beforeSend(event) {
+        if (event.request?.url) event.request.url = scrubString(event.request.url);
         if (event.request?.data) {
           event.request.data = scrub(event.request.data);
         }

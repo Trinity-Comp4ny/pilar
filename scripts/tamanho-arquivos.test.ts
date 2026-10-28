@@ -16,7 +16,7 @@ const LIMITE = 700;
 const TETO: Record<string, number> = {
   "pages/obras/components/RdoFormDialog.tsx": 933,
   "pages/propostas/index.tsx": 1290,
-  "pages/obras/components/CotacaoDetailDialog.tsx": 1196,
+  "pages/obras/components/CotacaoDetailDialog.tsx": 1168,
   "pages/campo/CampoRegistrarDia.tsx": 990,
   "pages/leads/index.tsx": 901,
   "pages/financeiro/components/LancamentoFormDialog.tsx": 852,

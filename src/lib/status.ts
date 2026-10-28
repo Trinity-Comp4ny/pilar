@@ -63,6 +63,7 @@ export type StatusDomain =
   | "obra"
   | "estimativa_obra"
   | "cotacao"
+  | "cotacao_convite"
   | "escopo"
   | "status_componente"
   | "status_incidente"
@@ -126,6 +127,13 @@ export const STATUS_REGISTRY: Record<StatusDomain, Record<string, StatusDef>> = 
     aberta: { label: "Aberta", tone: "info" },
     decidida: { label: "Decidida", tone: "positive" },
     cancelada: { label: "Cancelada", tone: "neutral" },
+  },
+  cotacao_convite: {
+    enviado: { label: "Enviado", tone: "neutral" },
+    aberto: { label: "Aberto", tone: "info" },
+    respondido: { label: "Respondido", tone: "positive" },
+    expirado: { label: "Expirado", tone: "warning" },
+    revogado: { label: "Revogado", tone: "danger" },
   },
   escopo: {
     rascunho: { label: "Rascunho", tone: "neutral" },
