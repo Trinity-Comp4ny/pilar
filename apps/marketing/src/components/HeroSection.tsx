@@ -18,11 +18,12 @@ import { DEMO_URL } from "../lib/contato";
  * duas coisas competindo pela mesma atenção.
  */
 
-const LINHA_1 = "Onde times e agentes";
-const LINHA_2 = "gestão, projetos e obras.";
+const LINHA_1 = "Do contrato à execução,";
+const LINHA_2_INICIO = "agentes";
+const LINHA_2_FIM = "e você aprova.";
 
-/** Os verbos que giram no lugar do destaque, um por matiz de módulo. */
-const VERBOS = ["organizam", "conectam", "centralizam", "executam"];
+/** Os verbos que giram no lugar do destaque: só o que os agentes fazem em produção. */
+const VERBOS = ["preparam", "lançam", "conferem", "registram"];
 
 /** Cada palavra sobe de dentro da própria linha, escalonada. */
 function Palavras({ texto, atraso = 0, className }: { texto: string; atraso?: number; className?: string }) {
@@ -57,25 +58,24 @@ export function HeroSection() {
 
       <div className="relative z-10 mx-auto max-w-6xl px-4 md:px-10">
         <div className="text-center">
-          {/* Duas linhas, sempre. A largura não é limitada por `ch` e cada linha
-              é `whitespace-nowrap`: com limite em ch, o verbo mais longo
-              ("centralizam") empurrava o título para três linhas e a hero
+          {/* Duas linhas no desktop. A largura não é limitada por `ch` e cada
+              linha é `whitespace-nowrap`: com limite em ch, o verbo mais longo
+              ("registram") empurrava o título para três linhas e a hero
               saltava a cada troca de palavra. O corpo cai um pouco para a linha
               mais larga caber. */}
           <h1 className="text-[62px] max-[1100px]:text-[50px] max-[850px]:text-[34px] max-[420px]:text-[27px] font-medium tracking-[-0.035em] leading-[1.1] text-ink mb-6 mx-auto">
             {/* Acima de 850px as duas linhas não quebram, então trocar o verbo
                 nunca vira uma terceira linha. Abaixo disso o `nowrap` faria o
-                título vazar a tela, então a pílula cai para uma linha só dela:
-                são três linhas fixas no celular, igualmente estáveis. */}
+                título vazar a tela, então o texto quebra livre no celular. */}
             <span className="block max-[850px]:whitespace-normal min-[851px]:whitespace-nowrap">
               <Palavras texto={LINHA_1} atraso={0.1} />
-              <span className="max-[850px]:block min-[851px]:inline">
-                <span className="max-[850px]:hidden"> </span>
-                <RotatingWord palavras={VERBOS} atraso={0.26} />
-              </span>
             </span>
             <span className="block max-[850px]:whitespace-normal min-[851px]:whitespace-nowrap">
-              <Palavras texto={LINHA_2} atraso={0.34} />
+              <Palavras texto={LINHA_2_INICIO} atraso={0.26} />{" "}
+              <RotatingWord palavras={VERBOS} atraso={0.4} />{" "}
+              <span className="inline-block whitespace-nowrap">
+                <Palavras texto={LINHA_2_FIM} atraso={0.5} />
+              </span>
             </span>
           </h1>
 
@@ -85,8 +85,8 @@ export function HeroSection() {
             transition={{ duration: 0.7, ease: EASE.out, delay: 0.55 }}
             className="text-[14px] md:text-[17px] text-ink-soft max-w-xl mx-auto mb-8 md:mb-9 leading-relaxed px-2"
           >
-            Feche propostas, controle cronogramas e acompanhe obras, com agentes de IA feitos pro seu escritório de
-            engenharia.
+            Proposta, projeto, obra e financeiro num fluxo só, com agentes de IA feitos pro seu escritório de
+            engenharia e arquitetura.
           </m.p>
 
           <m.div
