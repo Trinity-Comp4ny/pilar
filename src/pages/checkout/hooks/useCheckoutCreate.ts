@@ -73,7 +73,12 @@ export function useCheckoutCreate() {
       });
 
       if (error) {
-        throw new Error(await edgeFunctionErrorMessage(error, "Erro ao processar checkout"));
+        throw new Error(
+          await edgeFunctionErrorMessage(
+            error,
+            "Não foi possível processar o pagamento agora. Tente de novo em instantes ou fale com o time."
+          )
+        );
       }
 
       if (!data || !("success" in data) || !data.success) {
