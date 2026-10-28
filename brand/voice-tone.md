@@ -20,7 +20,7 @@ Quatro traços:
 
 | Contexto | Tom | Exemplo |
 |---|---|---|
-| **Landing / venda** | Provocativo + aspiracional | "Do contrato à execução, agentes preparam e você aprova." |
+| **Landing / venda** | Provocativo + aspiracional | "Onde times e agentes organizam gestão, projetos e obras." |
 | **UI / produto** | Funcional, neutro, breve | "Projeto sem orçamento vinculado." → ação clara |
 | **Erro / vazio** | Calmo, prestativo, sem culpa | "Nenhuma proposta ainda. Crie a primeira →" |
 | **Sucesso** | Sóbrio, confirmatório | "Proposta enviada." (sem festa) |
