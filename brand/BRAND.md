@@ -7,22 +7,22 @@
 
 ## Mapa
 
-| Arquivo | O que tem |
-|---|---|
-| **BRAND.md** (este) | Essência, posicionamento, tagline, decisões pendentes |
-| [voice-tone.md](./voice-tone.md) | Voz, tom, princípios de copy, do/don't, glossário, palavras banidas |
-| [visual.md](./visual.md) | Identidade visual: resumo e índice dos arquivos abaixo |
-| [logo.md](./logo.md) | Logotipo: construção, proporções, respiro, tamanho mínimo, fundos, usos proibidos, arquivos |
-| [typography.md](./typography.md) | Famílias, escala, pesos, piso da fonte, composição |
-| [color.md](./color.md) | Paleta, hex, contraste medido, cor semântica |
-| [design-language.md](./design-language.md) | O tipo de design: estilo, princípios, forma, espaço, ícone, imagem, movimento |
-| [imagery.md](./imagery.md) | Imagem: tela do produto, croqui, padrão colunata, fotografia, gráficos |
-| [motion.md](./motion.md) | Movimento da marca em vídeo e animação |
-| [social-instagram.md](./social-instagram.md) | Perfil @pilar.software: formatos, templates, grade do feed, checklist |
-| [usage.md](./usage.md) | Nome, uso por terceiros, cobranding, arquitetura de marca |
-| [guidelines.html](./guidelines.html) | O brand book em uma página visual (abrir no navegador) |
-| [messaging.md](./messaging.md) | Mensagens-chave, one-liners, agentes, objeções, provas |
-| [personas.md](./personas.md) | ICP e personas |
+| Arquivo                                      | O que tem                                                                                   |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| **BRAND.md** (este)                          | Essência, posicionamento, tagline, decisões pendentes                                       |
+| [voice-tone.md](./voice-tone.md)             | Voz, tom, princípios de copy, do/don't, glossário, palavras banidas                         |
+| [visual.md](./visual.md)                     | Identidade visual: resumo e índice dos arquivos abaixo                                      |
+| [logo.md](./logo.md)                         | Logotipo: construção, proporções, respiro, tamanho mínimo, fundos, usos proibidos, arquivos |
+| [typography.md](./typography.md)             | Famílias, escala, pesos, piso da fonte, composição                                          |
+| [color.md](./color.md)                       | Paleta, hex, contraste medido, cor semântica                                                |
+| [design-language.md](./design-language.md)   | O tipo de design: estilo, princípios, forma, espaço, ícone, imagem, movimento               |
+| [imagery.md](./imagery.md)                   | Imagem: tela do produto, croqui, padrão colunata, fotografia, gráficos                      |
+| [motion.md](./motion.md)                     | Movimento da marca em vídeo e animação                                                      |
+| [social-instagram.md](./social-instagram.md) | Perfil @pilarsoft.app: formatos, templates, grade do feed, checklist                        |
+| [usage.md](./usage.md)                       | Nome, uso por terceiros, cobranding, arquitetura de marca                                   |
+| [guidelines.html](./guidelines.html)         | O brand book em uma página visual (abrir no navegador)                                      |
+| [messaging.md](./messaging.md)               | Mensagens-chave, one-liners, agentes, objeções, provas                                      |
+| [personas.md](./personas.md)                 | ICP e personas                                                                              |
 
 ---
 
@@ -33,13 +33,16 @@
 **Categoria:** SaaS vertical de gestão para AEC (Arquitetura, Engenharia e Construção), AI-native: os agentes preparam o trabalho, o sistema confere os números, uma pessoa aprova.
 
 **Tagline oficial:**
+
 > **Do contrato à execução, num fluxo só.**
 
 **Assinatura dos agentes:**
+
 > **A IA prepara. O sistema confere. Você aprova.**
 
 **Hero em produção** (landing):
-> Onde times e agentes *organizam* gestão, projetos e obras.
+
+> Onde times e agentes _organizam_ gestão, projetos e obras.
 > Do contrato à execução num fluxo só: prazos, entregas e governança do projeto. Agentes de IA preparam, você aprova.
 
 ## 2. Posicionamento
@@ -54,7 +57,7 @@
 
 **Dor central:** a proposta está no Word, o cronograma no Excel, o diário de obra no WhatsApp e o caixa no banco. O dono monta o quadro na cabeça e só vê o resultado quando já acabou. O Pilar junta tudo e mostra enquanto ainda dá para agir.
 
-**Arquétipo de PMF (a validar):** provavelmente *Hard Fact* (Sequoia). O mercado está resignado ("não tem como saber antes"), não com cabelo em chamas. O GTM é **quebrar a resignação** (educar, demo com dados reais), não vencer comparação de features. Ref: `research/INSIGHTS.md` #6.
+**Arquétipo de PMF (a validar):** provavelmente _Hard Fact_ (Sequoia). O mercado está resignado ("não tem como saber antes"), não com cabelo em chamas. O GTM é **quebrar a resignação** (educar, demo com dados reais), não vencer comparação de features. Ref: `research/INSIGHTS.md` #6.
 
 ## 3. Valores de marca
 
