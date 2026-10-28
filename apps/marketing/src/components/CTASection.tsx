@@ -34,7 +34,7 @@ export function CTASection() {
 
           <div className="relative">
             <h2 className="text-[58px] max-[1100px]:text-[44px] max-[850px]:text-[30px] max-[420px]:text-[26px] font-medium tracking-[-0.035em] leading-[1.06] text-ink mb-5 max-w-[20ch] mx-auto">
-              Saiba se cada projeto está dando lucro <span className="italic">antes de terminar.</span>
+              Do contrato à execução, <span className="italic">num fluxo só.</span>
             </h2>
 
             <m.p
@@ -44,8 +44,8 @@ export function CTASection() {
               transition={{ duration: 0.6, ease: EASE.out, delay: 0.15 }}
               className="text-[15px] text-ink/70 max-w-lg mx-auto mb-9 leading-relaxed"
             >
-              Mostramos o Pilar com o fluxo do seu escritório e deixamos a conta pronta para usar. Do lead ao resultado,
-              num lugar só.
+              Mostramos o Pilar com o fluxo do seu escritório e deixamos a conta pronta para usar. Os agentes preparam,
+              você aprova.
             </m.p>
 
             <div className="flex flex-col items-center gap-4">

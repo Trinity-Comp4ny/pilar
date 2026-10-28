@@ -18,13 +18,13 @@ export function Home() {
   // Restaura as metas do index.html ao voltar de outra rota (SPA: a última
   // página visitada teria deixado as dela penduradas no head).
   usePageMeta({
-    titulo: "Pilar | Gestão integrada para empresas de engenharia",
+    titulo: "Pilar | Gestão com agentes de IA para engenharia e arquitetura",
     descricao:
-      "Saiba se cada projeto está dando lucro antes de terminar. Gestão financeira para escritórios de engenharia e arquitetura.",
+      "Do contrato à execução, num fluxo só. Gestão com agentes de IA para escritórios de engenharia e arquitetura: proposta, projeto, obra e financeiro.",
     caminho: "/",
-    ogTitulo: "Pilar | Onde times e agentes centralizam gestão, projetos e obras.",
+    ogTitulo: "Pilar | Do contrato à execução, num fluxo só.",
     ogDescricao:
-      "Do lead à cobrança, um fluxo só: proposta, projeto e portal do cliente conectados, com agentes de IA que preparam o trabalho sob aprovação da equipe.",
+      "Proposta, projeto, obra e financeiro num fluxo só, com agentes de IA que preparam o trabalho e esperam a aprovação da equipe.",
   });
 
   return (
