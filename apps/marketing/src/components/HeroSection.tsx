@@ -85,8 +85,8 @@ export function HeroSection() {
             transition={{ duration: 0.7, ease: EASE.out, delay: 0.55 }}
             className="text-[14px] md:text-[17px] text-ink-soft max-w-xl mx-auto mb-8 md:mb-9 leading-relaxed px-2"
           >
-            Feche propostas, controle cronogramas e acompanhe obras, com agentes de IA feitos pro seu escritório de
-            engenharia.
+            Do contrato à execução num fluxo só: prazos, entregas e governança do projeto. Agentes de IA preparam, você
+            aprova.
           </m.p>
 
           <m.div

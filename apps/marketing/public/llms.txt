@@ -1,6 +1,6 @@
 # Pilar
 
-> Sistema de gestão para empresas de engenharia multidisciplinar (civil, estrutural, MEP/HVAC). Conecta lead, proposta, projeto, obra, cobrança e portal do cliente em um único fluxo, com agentes de IA que preparam o trabalho e esperam a aprovação da equipe. A promessa central: saber se cada projeto está dando lucro antes de terminar.
+> Sistema de gestão para escritórios de engenharia e arquitetura (civil, estrutural, MEP/HVAC). Conecta lead, proposta, projeto, obra, financeiro e portal do cliente em um único fluxo, com agentes de IA que preparam o trabalho, um sistema que confere os números e a aprovação da equipe. A promessa central: do contrato à execução, num fluxo só.
 
 ## Produto
 

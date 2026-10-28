@@ -6080,8 +6080,10 @@ export type Database = {
           pausado_em: string
           pausado_por: string | null
           projeto_disciplina_id: string
+          projeto_pausa_id: string | null
           retomado_em: string | null
           retomado_por: string | null
+          status_anterior: string | null
         }
         Insert: {
           created_at?: string
@@ -6090,8 +6092,10 @@ export type Database = {
           pausado_em?: string
           pausado_por?: string | null
           projeto_disciplina_id: string
+          projeto_pausa_id?: string | null
           retomado_em?: string | null
           retomado_por?: string | null
+          status_anterior?: string | null
         }
         Update: {
           created_at?: string
@@ -6100,8 +6104,10 @@ export type Database = {
           pausado_em?: string
           pausado_por?: string | null
           projeto_disciplina_id?: string
+          projeto_pausa_id?: string | null
           retomado_em?: string | null
           retomado_por?: string | null
+          status_anterior?: string | null
         }
         Relationships: [
           {
@@ -6130,6 +6136,13 @@ export type Database = {
             columns: ["projeto_disciplina_id"]
             isOneToOne: false
             referencedRelation: "projeto_disciplinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_disciplina_pausas_projeto_pausa_id_fkey"
+            columns: ["projeto_pausa_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_pausas"
             referencedColumns: ["id"]
           },
           {
@@ -6483,6 +6496,109 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "projetos_safe"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      projeto_pausas: {
+        Row: {
+          created_at: string
+          etapa_anterior_id: string | null
+          id: string
+          motivo: string
+          pausado_em: string
+          pausado_por: string | null
+          projeto_id: string
+          retomado_em: string | null
+          retomado_por: string | null
+          status_anterior: string | null
+        }
+        Insert: {
+          created_at?: string
+          etapa_anterior_id?: string | null
+          id?: string
+          motivo: string
+          pausado_em?: string
+          pausado_por?: string | null
+          projeto_id: string
+          retomado_em?: string | null
+          retomado_por?: string | null
+          status_anterior?: string | null
+        }
+        Update: {
+          created_at?: string
+          etapa_anterior_id?: string | null
+          id?: string
+          motivo?: string
+          pausado_em?: string
+          pausado_por?: string | null
+          projeto_id?: string
+          retomado_em?: string | null
+          retomado_por?: string | null
+          status_anterior?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_pausas_etapa_anterior_id_fkey"
+            columns: ["etapa_anterior_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_etapas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_pausas_pausado_por_fkey"
+            columns: ["pausado_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_pausas_pausado_por_fkey"
+            columns: ["pausado_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_pausas_pausado_por_fkey"
+            columns: ["pausado_por"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
+          },
+          {
+            foreignKeyName: "projeto_pausas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_pausas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_pausas_retomado_por_fkey"
+            columns: ["retomado_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_pausas_retomado_por_fkey"
+            columns: ["retomado_por"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_pausas_retomado_por_fkey"
+            columns: ["retomado_por"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
           },
         ]
       }
@@ -8928,6 +9044,21 @@ export type Database = {
         Args: { p_account_id: string; p_token_hash: string }
         Returns: undefined
       }
+      _projeto_pausa_abrir: {
+        Args: {
+          p_etapa_anterior: string
+          p_motivo: string
+          p_pausado_em: string
+          p_pessoa: string
+          p_projeto_id: string
+          p_status_anterior: string
+        }
+        Returns: string
+      }
+      _projeto_pausa_fechar: {
+        Args: { p_pessoa: string; p_projeto_id: string; p_retomado_em?: string }
+        Returns: undefined
+      }
       _registro_gravar_organizacao: {
         Args: {
           p_erro: string
@@ -9735,9 +9866,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      pilar_disciplina_pausada: { Args: { p_status: string }; Returns: boolean }
       pilar_disciplina_status_canonico: {
         Args: { p_bucket: string }
         Returns: string
+      }
+      pilar_projeto_pausado: {
+        Args: { p_projeto_id: string }
+        Returns: boolean
       }
       pilar_set_ultra_admin_scope: {
         Args: { p_scoped: boolean }
@@ -10048,6 +10184,10 @@ export type Database = {
         Args: { p_disciplina_id: string; p_motivo: string }
         Returns: string
       }
+      rpc_pausar_projeto: {
+        Args: { p_motivo: string; p_projeto_id: string }
+        Returns: string
+      }
       rpc_perfil_publico: {
         Args: { p_pessoa_id: string }
         Returns: {
@@ -10079,6 +10219,10 @@ export type Database = {
       rpc_restaurar_projeto: { Args: { p_id: string }; Returns: undefined }
       rpc_retomar_disciplina: {
         Args: { p_disciplina_id: string }
+        Returns: undefined
+      }
+      rpc_retomar_projeto: {
+        Args: { p_etapa_id?: string; p_projeto_id: string }
         Returns: undefined
       }
       rpc_salvar_proposta_disciplinas: {

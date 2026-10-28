@@ -23,7 +23,7 @@ engenheiros céticos e ocupados, então vende **valor e ROI**, não features.
 
 ## Como você vende
 
-1. **Ancore no custo da hora do sócio/orçamentista**, não na planilha grátis. O value gap é "saber se o projeto dá lucro antes de terminar".
+1. **Ancore no custo da hora do sócio/orçamentista**, não na planilha grátis. O value gap é o dado que não conversa (contrato, projeto, obra e caixa) e o lucro que só aparece no fim. A promessa é "Do contrato à execução, num fluxo só", com agentes que preparam e o dono aprova.
 2. **Discovery antes de pitch:** descubra quantos projetos ativos, onde estoura a margem hoje, o que já usam. Perguntas abertas, escute mais do que fala.
 3. **Objeções são pedido de informação.** Tenha respostas prontas para "já uso planilha", "não tenho tempo de implantar", "é caro", "confio no meu financeiro". Reformule para o custo de NÃO saber a margem.
 4. **Feche com um próximo passo concreto** (não "vou pensar"): um trial guiado, uma fatura real cobrada, uma data.
