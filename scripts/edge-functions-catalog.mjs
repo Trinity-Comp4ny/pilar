@@ -21,6 +21,7 @@ export const DOMINIOS = {
   "cobranca-cliente": "Cobrança do cliente da empresa (Asaas da empresa)",
   portal: "Portal do cliente",
   campo: "Pilar Campo",
+  obras: "Obras (links públicos de cotação)",
   acesso: "Membros e acesso",
   auth: "Autenticação",
   comunicacao: "E-mail",
@@ -66,7 +67,9 @@ function lerFuncoes(raiz) {
       .filter((f) => !f.endsWith(".test.ts"))
       .map((f) => readFileSync(f, "utf8"))
       .join("\n");
-    const secrets = [...new Set([...codigo.matchAll(/Deno\.env\.get\(\s*["']([A-Z0-9_]+)["']/g)].map((m) => m[1]))].sort();
+    const secrets = [
+      ...new Set([...codigo.matchAll(/Deno\.env\.get\(\s*["']([A-Z0-9_]+)["']/g)].map((m) => m[1])),
+    ].sort();
     return {
       nome,
       app: codigoApp.includes(`"${nome}"`) || codigoApp.includes(`functions/v1/${nome}`),
@@ -89,7 +92,7 @@ export function gerarCatalogo(raiz) {
     "",
     `${funcoes.length} funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas`,
     "migrations) ou origem externa declarada no manifesto. **Login**: `verify_jwt` do `config.toml`",
-    "(JWT aceita a chave anon; \"própria\" = a função faz a autorização). **Secrets**: lidos direto",
+    '(JWT aceita a chave anon; "própria" = a função faz a autorização). **Secrets**: lidos direto',
     "na pasta da função (o que vem de `_shared`, como a chave do Gemini, não aparece).",
     "**Sem chamador conhecido**: nenhuma das origens",
     "acima; candidata a remoção, lembrando que apagar o código não despublica a função no Supabase.",
@@ -99,7 +102,12 @@ export function gerarCatalogo(raiz) {
   for (const [dominio, titulo] of Object.entries(DOMINIOS)) {
     const doDominio = funcoes.filter((f) => manifesto[f.nome]?.dominio === dominio);
     if (doDominio.length === 0) continue;
-    linhas.push(`## ${titulo}`, "", "| Função | O que faz | Chamada por | Login | Secrets | Teste |", "| --- | --- | --- | --- | --- | --- |");
+    linhas.push(
+      `## ${titulo}`,
+      "",
+      "| Função | O que faz | Chamada por | Login | Secrets | Teste |",
+      "| --- | --- | --- | --- | --- | --- |"
+    );
     for (const f of doDominio) {
       const m = manifesto[f.nome];
       const origens = [f.app && "app", f.cron && "cron", m.chamada_externa].filter(Boolean);
