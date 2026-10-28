@@ -53,6 +53,10 @@
     "dominio": "campo",
     "descricao": "Upload de foto do Pilar Campo, autorizado pelo token de campo (conta sem usuário Supabase)."
   },
+  "cotacao-link": {
+    "dominio": "obras",
+    "descricao": "Cotação por link (SPEC 144): o fornecedor consulta a cotação e envia preço e prazo sem login. Autorizado pelo token no corpo (só o hash fica no banco); token inexistente, expirado ou revogado responde igual."
+  },
   "create-company-owner": {
     "dominio": "plataforma",
     "descricao": "Convite de dono de empresa nova (bootstrap manual com chave de super admin).",
