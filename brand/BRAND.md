@@ -39,7 +39,8 @@
 > **A IA prepara. O sistema confere. Você aprova.**
 
 **Hero em produção** (landing):
-> Do contrato à execução, agentes *preparam* e você aprova.
+> Onde times e agentes *organizam* gestão, projetos e obras.
+> Do contrato à execução num fluxo só: prazos, entregas e governança do projeto. Agentes de IA preparam, você aprova.
 
 ## 2. Posicionamento
 

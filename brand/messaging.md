@@ -20,7 +20,8 @@ Assinatura dos agentes (sempre nesta ordem):
 
 Variações de campanha (mesmo núcleo):
 
-- "Do contrato à execução, agentes preparam e você aprova." _(hero)_
+- "Onde times e agentes organizam gestão, projetos e obras." _(título do hero; o subtítulo carrega "Do contrato à execução, num fluxo só")_
+- "Do contrato à execução, agentes preparam e você aprova."
 - "O dado entra na proposta e chega ao canteiro sem redigitar."
 - "Você não precisa descobrir o prejuízo só no fim."
 
