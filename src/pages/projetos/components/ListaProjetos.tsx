@@ -1,6 +1,6 @@
-import { useMemo } from "react";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { Badge } from "@/components/ui/badge";
+import { EtapaSelect } from "@/pages/projetos/components/EtapaSelect";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/dateUtils";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
@@ -12,15 +12,24 @@ interface ListaProjetosProps {
   projetos: Projeto[];
   etapas: ProjetoEtapa[];
   rentabilidadeMap: Record<string, number>;
+  canEdit: boolean;
   onCardClick: (projeto: Projeto) => void;
+  /** Muda a etapa pela mesma regra do arraste no quadro (SPEC 142). */
+  onMoverEtapa: (projetoId: string, etapaId: string) => void;
 }
 
 // Visão Lista (desktop): tabela dos projetos filtrados/ordenados. Espelha o
 // padrão de tabela de "Meu trabalho". A coluna "Coluna" mostra a etapa (nome+cor).
 // Abaixo de md o DataTable vira lista de cards (nome, cliente, prazo e valor).
-export function ListaProjetos({ projetos, etapas, rentabilidadeMap, onCardClick }: ListaProjetosProps) {
+export function ListaProjetos({
+  projetos,
+  etapas,
+  rentabilidadeMap,
+  canEdit,
+  onCardClick,
+  onMoverEtapa,
+}: ListaProjetosProps) {
   const formatCurrency = useMoneyMask();
-  const etapaById = useMemo(() => new Map(etapas.map((e) => [e.id, e])), [etapas]);
 
   const columns: ColumnDef<Projeto>[] = [
     { key: "nome", header: "Projeto", className: "font-medium", mobile: "title", cell: (p) => p.nome },
@@ -29,20 +38,31 @@ export function ListaProjetos({ projetos, etapas, rentabilidadeMap, onCardClick 
       header: "Cliente",
       className: "text-muted-foreground",
       mobile: "subtitle",
-      cell: (p) => p.cliente_nome ?? "—",
+      // No card do celular a coluna Prazo não cabe: o prazo vem junto do cliente.
+      cell: (p) => {
+        const prazo = getDeadlineStatus(p);
+        return (
+          <>
+            {p.cliente_nome ?? "—"}
+            {prazo && <span className="md:hidden">{` · ${prazo.label}`}</span>}
+          </>
+        );
+      },
     },
     {
       key: "coluna",
       header: "Coluna",
-      cell: (p) => {
-        const etapa = p.etapa_id ? etapaById.get(p.etapa_id) : undefined;
-        return (
-          <span className="inline-flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: etapa?.cor ?? "#94a3b8" }} />
-            <span className="text-sm">{etapa?.nome ?? p.status}</span>
-          </span>
-        );
-      },
+      mobile: "badge",
+      cell: (p) => (
+        <EtapaSelect
+          projetoNome={p.nome}
+          etapaId={p.etapa_id}
+          statusFallback={p.status}
+          etapas={etapas}
+          canEdit={canEdit}
+          onSelect={(etapaId) => onMoverEtapa(p.id, etapaId)}
+        />
+      ),
     },
     {
       key: "prioridade",
@@ -60,7 +80,6 @@ export function ListaProjetos({ projetos, etapas, rentabilidadeMap, onCardClick 
     {
       key: "prazo",
       header: "Prazo",
-      mobile: "badge",
       cell: (p) => {
         const prazo = getDeadlineStatus(p);
         return prazo ? (

@@ -125,6 +125,7 @@ export default function ProjetosKanban() {
     setPendingReopen,
     applyStatusMove,
     handleMoveStatus,
+    moverParaEtapa,
     onDragEnd,
   } = useProjetoStatusMove(projetos, canEdit, etapas);
 
@@ -477,7 +478,9 @@ export default function ProjetosKanban() {
               projetos={filteredProjetos}
               etapas={etapas}
               rentabilidadeMap={rentabilidadeMap}
+              canEdit={canEdit}
               onCardClick={handleCardClick}
+              onMoverEtapa={moverParaEtapa}
             />
           </div>
         ) : (
