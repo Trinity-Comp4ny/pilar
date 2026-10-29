@@ -57,6 +57,15 @@ describe("moverParaEtapa", () => {
     expect(mockEq).toHaveBeenCalledWith("id", "p-and");
   });
 
+  it("refresca o Histórico do projeto depois de mover (BEZ-462)", async () => {
+    const invalidar = vi.spyOn(QueryClient.prototype, "invalidateQueries");
+    const { result } = montar();
+    await act(() => result.current.moverParaEtapa("p-and", "e-rev"));
+
+    expect(invalidar).toHaveBeenCalledWith({ queryKey: ["projeto-timeline", "p-and"] });
+    invalidar.mockRestore();
+  });
+
   it("escolher a etapa atual não grava nada", async () => {
     const { result } = montar();
     await act(() => result.current.moverParaEtapa("p-and", "e-and"));

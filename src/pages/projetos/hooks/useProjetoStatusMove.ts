@@ -83,6 +83,7 @@ export function useProjetoStatusMove(projetos: Projeto[], canEdit: boolean, etap
     }
     const label = nomeDe(etapaId) ?? statusConfig[newStatus as keyof typeof statusConfig]?.label ?? newStatus;
     toast.success(`Movido para ${label}`);
+    queryClient.invalidateQueries({ queryKey: ["projeto-timeline", projetoId] });
     // Confia no update otimista. Só revalida quando o servidor pode ter mexido
     // em data_final: ao concluir (trigger preenche) ou reabrir (limpamos).
     if (newStatus === PROJECT_STATUS.CONCLUIDO || clearDataFinal) {
