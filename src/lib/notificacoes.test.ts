@@ -10,6 +10,8 @@ import {
   SEVERIDADE_TONE,
   emailPadraoCategoria,
   contarPorCategoria,
+  condicoesTipoPortal,
+  tipoPortal,
 } from "./notificacoes";
 
 describe("emailPadraoCategoria", () => {
@@ -84,5 +86,36 @@ describe("contarPorCategoria", () => {
   });
   it("devolve objeto vazio sem itens", () => {
     expect(contarPorCategoria([])).toEqual({});
+  });
+});
+
+describe("tipoPortal", () => {
+  it("separa problema e sugestão pelo título e cadastro pelo tipo", () => {
+    expect(tipoPortal({ tipo: "feedback_recebido", titulo: "Problema relatado" })).toBe("problema");
+    expect(tipoPortal({ tipo: "feedback_recebido", titulo: "Sugestão: filtro por cliente" })).toBe("sugestao");
+    expect(tipoPortal({ tipo: "novo_cadastro", titulo: "Nova empresa" })).toBe("cadastro");
+    expect(tipoPortal({ tipo: "plano_bloqueado", titulo: "Plano bloqueado" })).toBe("outros");
+  });
+});
+
+describe("condicoesTipoPortal", () => {
+  it("sem tipo não filtra", () => {
+    expect(condicoesTipoPortal(null)).toEqual([]);
+  });
+  it("problema e sugestão filtram tipo e título; outros exclui feedback e cadastro", () => {
+    expect(condicoesTipoPortal("problema")).toEqual([
+      { coluna: "tipo", operador: "eq", valor: "feedback_recebido" },
+      { coluna: "titulo", operador: "eq", valor: "Problema relatado" },
+    ]);
+    expect(condicoesTipoPortal("sugestao")[1]).toEqual({ coluna: "titulo", operador: "like", valor: "Sugestão:*" });
+    expect(condicoesTipoPortal("outros")).toEqual([
+      { coluna: "tipo", operador: "not.in", valor: "(feedback_recebido,novo_cadastro)" },
+    ]);
+  });
+});
+
+describe("rotuloCategoria do portal", () => {
+  it("chama sistema de Portal", () => {
+    expect(rotuloCategoria("sistema")).toBe("Portal");
   });
 });

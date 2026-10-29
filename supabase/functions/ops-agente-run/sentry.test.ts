@@ -67,6 +67,17 @@ Deno.test("sentry: erros do ambiente com os escritórios da tag empresa_id", asy
   assertEquals(lista.searchParams.get("statsPeriod"), "24h");
 });
 
+Deno.test("sentry: erro sem a tag empresa_id (404 do Sentry) fica sem escritórios, não falha", async () => {
+  const { buscar } = falso([
+    ["/tags/empresa_id/values/", { detail: "Tag not found" }, 404],
+    ["/organizations/bez-company/issues/", [issue("1")]],
+    ["/projects/bez-company/pilar/", { id: "42" }],
+  ]);
+  const erros = await errosDas24h(CFG, buscar);
+  assertEquals(erros.length, 1);
+  assertEquals(erros[0].empresas, []);
+});
+
 Deno.test("sentry: só os primeiros erros consultam escritórios (uma chamada por erro)", async () => {
   const muitos = Array.from({ length: ERROS_COM_ESCRITORIOS + 3 }, (_, i) => issue(String(i)));
   const { buscar, pedidas } = falso([

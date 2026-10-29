@@ -59,3 +59,5 @@ flowchart TD
 - [x] `entrada.test.ts` cobre validação do corpo e as transições permitidas.
 - [x] `scripts/feedback-ids.sh` extrai ids de trailers e ignora o que não é uuid.
 - [ ] Depois do primeiro release com isto: um commit de teste com `Feedback: <id>` leva um feedback de `novo` a `planejado` no merge e a `resolvido` no release.
+
+Primeiro uso real: 2026-10-29 (BEZ-487), com os 4 feedbacks do Ultra tratados antes de o trailer existir.

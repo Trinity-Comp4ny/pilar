@@ -46,7 +46,14 @@ const valorDeTagSchema = z.object({ value: z.string().nullable() });
 
 type Buscar = typeof fetch;
 
-async function ler(cfg: ConfigSentry, caminho: string, params: Record<string, string>, buscar: Buscar) {
+/** `ausenteVazio`: 404 vira null em vez de erro (o Sentry responde 404 quando a tag nunca apareceu no erro). */
+async function ler(
+  cfg: ConfigSentry,
+  caminho: string,
+  params: Record<string, string>,
+  buscar: Buscar,
+  ausenteVazio = false
+) {
   const url = new URL(`${cfg.apiUrl}/api/0/${caminho}`);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   const r = await buscar(url, { headers: { Authorization: `Bearer ${cfg.token}` } });
@@ -55,6 +62,7 @@ async function ler(cfg: ConfigSentry, caminho: string, params: Record<string, st
       `Sentry recusou o token (${r.status}): confira o SENTRY_READ_TOKEN e as permissões de leitura (Issue & Event, Project, Organization).`
     );
   }
+  if (ausenteVazio && r.status === 404) return null;
   if (!r.ok) throw new Error(`Sentry respondeu ${r.status} em ${caminho}`);
   return await r.json();
 }
@@ -96,16 +104,16 @@ export async function errosDas24h(cfg: ConfigSentry, buscar: Buscar = fetch): Pr
   for (const [i, issue] of issues.entries()) {
     let empresas: string[] = [];
     if (i < ERROS_COM_ESCRITORIOS) {
-      const valores = contrato(
-        z.array(valorDeTagSchema),
-        await ler(
-          cfg,
-          `organizations/${cfg.org}/issues/${issue.id}/tags/empresa_id/values/`,
-          { environment: cfg.ambiente },
-          buscar
-        ),
-        "escritórios do erro"
+      // Erro de Edge Function ou de antes do login nunca recebe a tag empresa_id: o Sentry
+      // responde 404 e isso significa "nenhum escritório", não falha da leitura.
+      const bruto = await ler(
+        cfg,
+        `organizations/${cfg.org}/issues/${issue.id}/tags/empresa_id/values/`,
+        { environment: cfg.ambiente },
+        buscar,
+        true
       );
+      const valores = bruto === null ? [] : contrato(z.array(valorDeTagSchema), bruto, "escritórios do erro");
       empresas = valores.map((v) => v.value).filter((v): v is string => !!v);
     }
     erros.push({
