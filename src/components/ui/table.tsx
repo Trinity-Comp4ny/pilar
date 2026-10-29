@@ -12,9 +12,10 @@ const TABLE_CELL_CLASS = "p-4 align-middle";
 /** Densidade das listas longas e virtualizadas (muitas colunas): menos altura e menos respiro lateral. */
 export const TABLE_CELL_DENSE_CLASS = "px-3 py-3 align-middle";
 
+/** `container-type`: `100cqw` nos filhos = largura visível do scroll (estado vazio e erro do DataTable). */
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
-    <div className="relative w-full overflow-auto">
+    <div className="relative w-full overflow-auto [container-type:inline-size]">
       <table ref={ref} className={cn("min-w-full caption-bottom text-sm", className)} {...props} />
     </div>
   )

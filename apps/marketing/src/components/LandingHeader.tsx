@@ -79,7 +79,7 @@ export function LandingHeader() {
         }`}
       >
         <div className="flex h-16 md:h-20 items-center gap-6 px-5 md:px-7">
-          <Link to="/" className="shrink-0" onClick={() => setMobileMenuOpen(false)}>
+          <Link to="/" aria-label="Pilar, página inicial" className="shrink-0" onClick={() => setMobileMenuOpen(false)}>
             <Logo size="sm" className="text-ink" />
           </Link>
 

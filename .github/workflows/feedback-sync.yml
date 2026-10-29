@@ -1,0 +1,67 @@
+name: Feedback fecha pela PR
+
+# SPEC 145. Commit com a linha `Feedback: <uuid>` move o feedback no portal Ultra admin:
+# push em staging = planejado; push em main (release) = resolvido. O release vira um commit só,
+# então os feedbacks vêm dos hashes que o PR de release lista no corpo (promote-staging-to-main).
+# O feedback mora no banco de produção, então os dois passos chamam a função de produção.
+# Segredos de repositório: FEEDBACK_SYNC_URL (URL da função em produção) e FEEDBACK_SYNC_TOKEN.
+# Sem eles o passo só avisa. Armadilha da branch default: o gatilho em main só vale com este
+# arquivo em main.
+on:
+  push:
+    branches: [staging, main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: feedback-sync-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  sincronizar:
+    name: Mover feedback
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      FEEDBACK_SYNC_URL: ${{ secrets.FEEDBACK_SYNC_URL }}
+      FEEDBACK_SYNC_TOKEN: ${{ secrets.FEEDBACK_SYNC_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: staging, feedback vai para planejado
+        if: github.ref_name == 'staging'
+        env:
+          ANTES: ${{ github.event.before }}
+          DEPOIS: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          # Branch nova ou force-push: ANTES não existe, olha só o commit do push.
+          if [ "$ANTES" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$ANTES^{commit}" 2>/dev/null; then
+            RANGE="$DEPOIS^!"
+          else
+            RANGE="$ANTES..$DEPOIS"
+          fi
+          git log "$RANGE" --format=%B | scripts/feedback-sync.sh planejado
+
+      - name: main, feedback do release vai para resolvido
+        if: github.ref_name == 'main'
+        env:
+          REPO: ${{ github.repository }}
+          DEPOIS: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          CORPO=$(gh api "repos/$REPO/commits/$DEPOIS/pulls" --jq '.[0].body // ""')
+          HASHES=$(printf '%s\n' "$CORPO" | grep -oE "\`[0-9a-f]{7,40}\`" | tr -d '\`' | sort -u || true)
+          if [ -z "$HASHES" ]; then
+            echo "::notice::Push em main sem PR de release com lista de commits: nada a sincronizar."
+            exit 0
+          fi
+          git fetch origin staging --quiet
+          for h in $HASHES; do
+            git show -s --format=%B "$h" 2>/dev/null || true
+          done | scripts/feedback-sync.sh resolvido
