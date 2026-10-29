@@ -29,7 +29,7 @@ export function EmpresaAtividadeTab({ empresaId }: { empresaId: string }) {
       <EmptyState
         icon={Activity}
         title="Nada registrado nesta empresa"
-        description="Ações do portal e alterações de dados feitas pela equipe dela aparecem aqui."
+        description="Ações do portal e mudanças de funcionalidade ou papel nesta empresa aparecem aqui."
       />
     );
   }
