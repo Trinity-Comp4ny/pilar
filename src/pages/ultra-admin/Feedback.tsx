@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bug, Image as ImageIcon, Lightbulb, MessageSquare } from "lucide-react";
+import { Bug, Copy, Image as ImageIcon, Lightbulb, MessageSquare } from "lucide-react";
+import { toast } from "sonner";
 import { PilarPage } from "@/components/PilarPage";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { EmptyState } from "@/components/EmptyState";
+import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -171,6 +173,9 @@ export default function Feedback() {
   );
 }
 
+/** SPEC 145: a linha no commit que fecha este feedback sozinho (planejado no staging, resolvido no release). */
+const linhaDoCommit = (id: string) => `Feedback: ${id}`;
+
 function DetalheFeedback({ item, onStatus }: { item: Linha; onStatus: (s: FeedbackStatus) => void }) {
   const [printUrl, setPrintUrl] = useState<string | null>(null);
   const [printErro, setPrintErro] = useState(false);
@@ -228,6 +233,25 @@ function DetalheFeedback({ item, onStatus }: { item: Linha; onStatus: (s: Feedba
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="space-y-1.5">
+        <p className="text-xs font-medium text-ink-muted">Fechar pela PR</p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            navigator.clipboard.writeText(linhaDoCommit(item.id)).then(
+              () =>
+                toast.success("Linha copiada", {
+                  description: "Cole na mensagem do commit que corrige este feedback.",
+                }),
+              () => toast.error("Não foi possível copiar")
+            )
+          }
+        >
+          <Copy size={14} aria-hidden /> Copiar linha do commit
+        </Button>
       </div>
 
       <p className="whitespace-pre-line text-sm leading-relaxed text-ink">{item.descricao}</p>
