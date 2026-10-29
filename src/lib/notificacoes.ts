@@ -27,7 +27,7 @@ export function emailPadraoCategoria(categoria: string): boolean {
   return categoria === "financeiro" || categoria === "projeto" || categoria === "disciplina" || categoria === "obra";
 }
 
-export const CATEGORIA_LABEL: Record<CategoriaNotificacao, string> = {
+const CATEGORIA_LABEL: Record<CategoriaNotificacao, string> = {
   tarefa: "Tarefas",
   projeto: "Projetos",
   disciplina: "Disciplinas",
