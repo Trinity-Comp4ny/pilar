@@ -3,7 +3,8 @@
 -- Roda como authenticated com o JWT do admin da empresa A (RLS ligada: como
 -- superuser a RLS não se aplica). Datas relativas a CURRENT_DATE para o teste
 -- não envelhecer. A pausa é "envelhecida" por UPDATE como postgres, porque
--- retomar no mesmo dia desloca 0 dias.
+-- retomar no mesmo dia desloca 0 dias. O 'vencido' usa pelo menos 2 dias atrás: o resumo conta o dia de São
+-- Paulo, que entre 00h e 03h UTC ainda é o dia anterior ao CURRENT_DATE do banco (BEZ-453).
 
 BEGIN;
 
@@ -48,7 +49,7 @@ VALUES ('77777777-0000-0000-0000-000000141001', '00000000-0000-0000-0000-0000000
 INSERT INTO public.projeto_disciplinas (id, projeto_id, nome, status, data_inicio, data_fim)
 VALUES
   ('88888888-0000-0000-0000-000000141001', '77777777-0000-0000-0000-000000141001', 'Estrutura',  'Em Andamento', CURRENT_DATE - 60, CURRENT_DATE - 8),
-  ('88888888-0000-0000-0000-000000141002', '77777777-0000-0000-0000-000000141001', 'Hidráulica', 'Em Andamento', CURRENT_DATE - 40, CURRENT_DATE - 1),
+  ('88888888-0000-0000-0000-000000141002', '77777777-0000-0000-0000-000000141001', 'Hidráulica', 'Em Andamento', CURRENT_DATE - 40, CURRENT_DATE - 2),
   ('88888888-0000-0000-0000-000000141003', '77777777-0000-0000-0000-000000141001', 'Elétrica',   'Não Iniciado', CURRENT_DATE - 10, CURRENT_DATE + 13),
   ('88888888-0000-0000-0000-000000141004', '77777777-0000-0000-0000-000000141001', 'Fundação',   'Concluído',    CURRENT_DATE - 90, CURRENT_DATE - 40);
 
