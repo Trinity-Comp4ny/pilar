@@ -38,6 +38,7 @@ function invalidarPausaDoProjeto(queryClient: QueryClient, projetoId: string) {
   queryClient.invalidateQueries({ queryKey: ["projeto-pausas", projetoId] });
   queryClient.invalidateQueries({ queryKey: ["projeto-detail", projetoId] });
   queryClient.invalidateQueries({ queryKey: ["projeto-disciplinas", projetoId] });
+  queryClient.invalidateQueries({ queryKey: ["projeto-timeline", projetoId] });
   queryClient.invalidateQueries({ queryKey: ["disciplina-pausas"] });
   queryClient.invalidateQueries({ queryKey: ["projetos"] });
   queryClient.invalidateQueries({ queryKey: ["painel-gestao"] });
