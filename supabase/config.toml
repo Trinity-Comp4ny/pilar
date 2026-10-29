@@ -123,6 +123,10 @@ verify_jwt = false
 [functions.ops-export-funil]
 verify_jwt = false
 
+# Feedback fecha pela PR (SPEC 145): chamado pelo GitHub Actions com token próprio, sem JWT.
+[functions.feedback-sync]
+verify_jwt = false
+
 [functions.registro-audio-limpar]
 verify_jwt = false
 

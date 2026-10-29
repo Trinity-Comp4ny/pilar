@@ -290,14 +290,12 @@ export function DataTable<T>({
     if (error) {
       return (
         <TableRow className="hover:bg-transparent">
-          {/* `sticky left-0` prende o conteúdo à borda esquerda VISÍVEL do
-              scroll horizontal em vez de deixá-lo centralizado dentro da
-              largura total da tabela (que os cabeçalhos de coluna esticam
-              além de 390px mesmo sem nenhuma linha de dado, achado da
-              auditoria mobile: texto de estado vazio/erro ficava fora da
-              área visível). */}
-          <TableCell colSpan={totalCols} className="py-14">
-            <div className="sticky left-4 w-[calc(100vw-4rem)] max-w-lg">
+          {/* O bloco tem a largura visível do scroll (`100cqw`, o `Table` é o container) e
+              `sticky left-0` o prende à borda esquerda dela: o conteúdo centraliza na área
+              que o usuário vê, não na largura total da tabela (que as colunas esticam além
+              de 390px mesmo sem linha, auditoria mobile). */}
+          <TableCell colSpan={totalCols} className="p-0">
+            <div className="sticky left-0 w-[100cqw] px-4 py-14">
               {errorState ?? (
                 <div className="flex flex-col items-center justify-center text-center px-6" role="alert">
                   <AlertCircle className="h-8 w-8 text-destructive mb-3" aria-hidden />
@@ -335,17 +333,12 @@ export function DataTable<T>({
     if (bodyRows.length === 0) {
       return (
         <TableRow className="hover:bg-transparent">
-          {/* `sticky left-4` prende o conteúdo à borda esquerda VISÍVEL do
-              scroll horizontal em vez de deixá-lo centralizado dentro da
-              largura total da tabela (que os cabeçalhos de coluna esticam
-              além de 390px mesmo sem nenhuma linha de dado, achado da
-              auditoria mobile: texto de estado vazio ficava fora da área
-              visível). */}
-          <TableCell colSpan={totalCols} className={cn(!emptyState && "py-14")}>
+          {/* Mesma regra do estado de erro: largura visível do scroll + `sticky left-0`. */}
+          <TableCell colSpan={totalCols} className="p-0">
             <div
               className={cn(
-                "sticky left-4 w-[calc(100vw-4rem)] max-w-lg",
-                !emptyState && "text-center text-sm text-muted-foreground"
+                "sticky left-0 w-[100cqw]",
+                emptyState ? "p-4" : "px-4 py-14 text-center text-sm text-muted-foreground"
               )}
             >
               {emptyState ?? emptyMessage}
