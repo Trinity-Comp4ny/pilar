@@ -86,8 +86,8 @@ export default function CompanySetup() {
 
       analytics.track("empresa_onboarding_concluido", { empresa_id: profile.empresa_id });
 
-      toast.success("Empresa configurada!", {
-        description: "Bem-vindo ao sistema Pilar.",
+      toast.success("Empresa configurada.", {
+        description: "Bem-vindo ao Pilar.",
       });
 
       navigate("/inicio");
@@ -245,10 +245,10 @@ export default function CompanySetup() {
             </div>
 
             <blockquote className="text-3xl font-light leading-snug">
-              "Uma empresa bem configurada vira processo. Processo vira escala."
+              "Do contrato à execução, num fluxo só."
             </blockquote>
 
-            <p className="text-sm text-white/70">Você está a um clique do dashboard. Vamos começar.</p>
+            <p className="text-sm text-white/70">Falta só isto para abrir o Pilar. Vamos começar.</p>
           </div>
 
           <div className="text-xs text-white/40 text-right animate-in fade-in duration-1000 delay-300">
