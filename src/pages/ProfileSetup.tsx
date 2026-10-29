@@ -503,12 +503,10 @@ export default function ProfileSetup() {
             </div>
 
             <blockquote className="text-3xl font-light leading-snug">
-              "Antes do primeiro dashboard, uma base bem feita."
+              "Do contrato à execução, num fluxo só."
             </blockquote>
 
-            <p className="text-sm text-white/70">
-              Vamos deixar sua conta pronta com as informações essenciais — rápido, bonito e sem fricção.
-            </p>
+            <p className="text-sm text-white/70">Vamos deixar sua conta pronta com o essencial. Leva poucos minutos.</p>
           </div>
 
           <div className="text-xs text-white/40 text-right animate-in fade-in duration-1000 delay-300">
