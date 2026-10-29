@@ -1,15 +1,1 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pilar logo">
-  <!-- Compact square pillar mark: semi-bold black strokes -->
-  <g transform="translate(2,4)" stroke="#0A0A0A" stroke-width="1.6" stroke-linecap="round">
-    <!-- Capital (top line) -->
-    <line x1="1" y1="2" x2="27" y2="2" />
-    <!-- Abacus (subtle line) -->
-    <line x1="3" y1="6" x2="25" y2="6" opacity="0.85" />
-    <!-- Flutes (shaft) -->
-    <line x1="7" y1="9" x2="7" y2="23" />
-    <line x1="12" y1="9" x2="12" y2="23" />
-    <line x1="17" y1="9" x2="17" y2="23" />
-    <line x1="22" y1="9" x2="22" y2="23" />
-  </g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110.400 90.400" width="110" height="90" role="img" aria-label="Pilar"><title>Pilar</title><g stroke="#1A1A1A" stroke-width="6.4" stroke-linecap="round" fill="none"><path d="M3.2 3.2H107.2"/><path d="M11.2 19.2H99.2" stroke-opacity="0.85"/><path d="M25.2 31.2V87.2"/><path d="M45.2 31.2V87.2"/><path d="M65.2 31.2V87.2"/><path d="M85.2 31.2V87.2"/></g></svg>
