@@ -30,8 +30,9 @@ fornecedor e, em uma tela, saber se vale comprar dele de novo.
 
 - Compras do escritório (tabela `despesas`): o "comprado" soma **apenas** a conta
   da obra (`obra_conta_lancamento`). Decisão do design partner.
-- Nota/rating manual, comparador lado a lado entre fornecedores, portal do
-  fornecedor, ranking automático de "melhor fornecedor".
+- Comparador lado a lado entre fornecedores e ranking automático de "melhor fornecedor". (Nota manual e
+  link para o fornecedor preencher a cotação saíram deste "fora de escopo" na
+  [SPEC 144](./144-cotacao-por-link-e-nota-do-fornecedor.md), 28/10/2026.)
 - Qualquer mudança no fluxo de criar cotação ou lançar despesa.
 
 ## Requisitos

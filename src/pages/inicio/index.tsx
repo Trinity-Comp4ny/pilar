@@ -142,7 +142,7 @@ export default function Inicio() {
 
         {/* Porta dos agentes: fica fora do painel porque não é indicador, é ação. */}
         {podeAgentes && !editando && (
-          <section aria-label="Assistente">
+          <section aria-label="Agentes">
             <form
               onSubmit={(event) => {
                 event.preventDefault();

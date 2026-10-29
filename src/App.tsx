@@ -67,6 +67,7 @@ const Propostas = lazy(() => import("./pages/propostas"));
 const ProjetoDetail = lazy(() => import("./pages/projetos/ProjetoDetail"));
 const ClienteLogin = lazy(() => import("./pages/cliente/ClienteLogin"));
 const ClienteConvite = lazy(() => import("./pages/cliente/ClienteConvite"));
+const CotarPage = lazy(() => import("./pages/cotar/CotarPage"));
 const CampoLogin = lazy(() => import("./pages/campo/CampoLogin"));
 const CampoConvite = lazy(() => import("./pages/campo/CampoConvite"));
 const CampoTrocarSenha = lazy(() => import("./pages/campo/CampoTrocarSenha"));
@@ -433,6 +434,9 @@ const App = () => {
                           <Route path="projeto/:id/entregas" element={<ClienteProjetoDetail />} />
                           <Route path="obra/:id" element={<ClienteObraDetail />} />
                         </Route>
+
+                        {/* Cotação por link (SPEC 144): o fornecedor preenche preço e prazo, sem login */}
+                        <Route path="/cotar/:token" element={<CotarPage />} />
 
                         {/* Pilar Campo — app de campo (conta própria, escopo por obra) */}
                         <Route path="/campo/login" element={<CampoLogin />} />

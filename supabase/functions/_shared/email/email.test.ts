@@ -417,7 +417,7 @@ Deno.test("logo, faixa de morros e fonte ignoram PUBLIC_SITE_URL de ambiente e u
   Deno.env.set("PUBLIC_SITE_URL", "https://staging-preview-que-pode-nao-existir.vercel.app");
   try {
     const mod = await import(`./brand.ts?cachebust=${crypto.randomUUID()}`);
-    assertStringIncludes(mod.BRAND.logoUrl, "https://www.pilarsoft.com.br/email/logo-v1.png");
+    assertStringIncludes(mod.BRAND.logoUrl, "https://www.pilarsoft.com.br/email/logo-v2.png");
     assertStringIncludes(mod.BRAND.waveUrl, "https://www.pilarsoft.com.br/email/wave-v1.png");
     assertStringIncludes(mod.FONT_FACE_CSS, "https://www.pilarsoft.com.br/fonts/geist-variable.woff2");
     assertEquals(mod.BRAND.siteUrl, "https://staging-preview-que-pode-nao-existir.vercel.app");

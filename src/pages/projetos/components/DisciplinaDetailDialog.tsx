@@ -48,7 +48,7 @@ import { useDisciplinaPausas, totalDiasParados } from "@/pages/projetos/hooks/us
 import { useDisciplinaRevisoes, revisaoAberta } from "@/pages/projetos/hooks/useDisciplinaRevisoes";
 import { FormDialog } from "@/components/FormDialog";
 import { toast } from "sonner";
-import { mensagemDaPausa } from "@/pages/projetos/lib/pausa";
+import { mensagemDaPausa, comEstadoDaDisciplina, type EstadoDaDisciplina } from "@/pages/projetos/lib/pausa";
 import { PausarDialog } from "./PausarDialog";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { notificarMencao } from "@/lib/notificarMencao";
@@ -135,7 +135,7 @@ export function DisciplinaDetailDialog(props: DisciplinaDetailDialogProps) {
 
 /** Corpo remontado por `key` a cada disciplina — estado local nasce limpo. */
 function DisciplinaDetailBody({
-  disciplina,
+  disciplina: disciplinaDoPai,
   disciplinas,
   pessoas,
   onUpdateField,
@@ -154,6 +154,10 @@ function DisciplinaDetailBody({
   projetoDataInicio,
   onDelete,
 }: DisciplinaDetailDialogProps & { disciplina: DisciplinaResponsavel }) {
+  // O RPC de pausar/retomar mexe em status e prazo no banco: o estado que ele devolve vale mais que
+  // o snapshot do pai, e regravar o snapshot desfaria o prazo empurrado (BEZ-460).
+  const [sincronizada, setSincronizada] = useState<EstadoDaDisciplina | null>(null);
+  const disciplina = sincronizada ? comEstadoDaDisciplina(disciplinaDoPai, sincronizada) : disciplinaDoPai;
   const [descricao, setDescricao] = useState(disciplina.descricao ?? "");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const persistida = !!disciplina.id;
@@ -178,11 +182,9 @@ function DisciplinaDetailBody({
 
   const confirmarPausar = (motivo: string) => {
     pausas.pausar.mutate(motivo, {
-      onSuccess: () => {
+      onSuccess: (estado) => {
         setPausarOpen(false);
-        // A mutation não passa por onUpdateField, então o pai (dono do `disciplina.status`
-        // exibido) não se resincroniza sozinho: atualiza aqui pro Select/texto não ficar preso.
-        onUpdateField("status", "Pausada");
+        setSincronizada(estado);
       },
       onError: (e) => toast.error(mensagemDaPausa(e, "Não foi possível pausar a disciplina. Tente de novo.")),
     });
@@ -191,7 +193,7 @@ function DisciplinaDetailBody({
   // O banco devolve a mensagem certa (ex.: "Disciplina pausada junto com o projeto. Retome o projeto.").
   const confirmarRetomar = () => {
     pausas.retomar.mutate(undefined, {
-      onSuccess: () => onUpdateField("status", "Em Andamento"),
+      onSuccess: (estado) => setSincronizada(estado),
       onError: (e) => toast.error(mensagemDaPausa(e, "Não foi possível retomar a disciplina. Tente de novo.")),
     });
   };

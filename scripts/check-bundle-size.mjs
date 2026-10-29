@@ -43,7 +43,9 @@ const BUDGETS = {
   // 2026-10-19: 327 kB (era 325). A casca mobile (SPEC 134: barra flutuante, painel de baixo
   // com alça, botão flutuante) somou ~1,3 kB gzip ao boot (323,9 para 325,2 kB). O MoreSheet
   // já saiu do boot (lazy). Reavaliar se voltar a encostar.
-  initialLoad: 327 * 1024,
+  // 2026-10-29: 328 kB (era 327). O Logo passou a desenhar o nome em curva (PilarWordmark, ~1,7 kB de
+  // caminho SVG, ~0,6 kB gzip) em vez de texto na fonte da página (BEZ-385). O Logo está em toda tela.
+  initialLoad: 328 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app

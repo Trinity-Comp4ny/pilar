@@ -151,6 +151,7 @@ export function useProjetosData() {
           data_final: proj.data_final as string | undefined,
           status: proj.status as Projeto["status"],
           etapa_id: (proj.etapa_id as string | null) ?? null,
+          ordem_prioridade: (proj.ordem_prioridade as number | null) ?? null,
           prioridade: (proj.prioridade as ProjectPriority) || PROJECT_PRIORITY.MEDIA,
           valor_contrato: proj.valor_contrato as number,
           observacao: proj.observacao as string,

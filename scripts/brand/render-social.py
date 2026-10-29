@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 TPL = ROOT / "brand/social/templates"
 OUT = ROOT / "brand/assets/social"
 
-BASE = {"brand": "Pilar", "handle": "@pilar.software"}
+BASE = {"brand": "Pilar", "handle": "@pilarsoft.app"}
 SAMPLES = {
     "foto-pergunta": {"badge": "Pergunta", "hook_a": "Qual projeto seu deu prejuízo em", "hook_pill": "2026", "hook_b": "?"},
     "carrossel-capa": {"badge": "Dica prática", "hook_a": "Como saber o lucro do projeto", "hook_pill": "antes de terminar", "body": "5 passos, sem planilha nova."},

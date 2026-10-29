@@ -83,7 +83,6 @@ export type TarefaInput = {
 const chavePessoas = (pessoaIds: string[] | null) => (pessoaIds ? [...pessoaIds].sort() : null);
 
 const KEY = {
-  minhaPessoa: (userId?: string) => ["meu-trabalho", "minha-pessoa", userId] as const,
   pessoas: ["meu-trabalho", "pessoas"] as const,
   disciplinas: (pessoaIds: string[] | null) => ["meu-trabalho", "disciplinas", chavePessoas(pessoaIds)] as const,
   tarefas: (pessoaIds: string[] | null) => ["meu-trabalho", "tarefas", chavePessoas(pessoaIds)] as const,
@@ -96,25 +95,7 @@ export const PESSOAS_EMPRESA_QUERY_KEY = KEY.pessoas;
 export const tarefasQueryKey = KEY.tarefas;
 export const disciplinasQueryKey = KEY.disciplinas;
 
-/** Pessoa vinculada ao usuário logado (profile_id = auth.uid()). */
-export function useMinhaPessoa() {
-  const { user } = useAuth();
-  return useQuery({
-    queryKey: KEY.minhaPessoa(user?.id),
-    enabled: !!user?.id,
-    staleTime: 10 * 60 * 1000,
-    queryFn: async (): Promise<PessoaOpcao | null> => {
-      const { data, error } = await supabase
-        .from("pessoas")
-        .select("id, nome")
-        .eq("profile_id", user!.id)
-        .is("deleted_at", null)
-        .maybeSingle();
-      if (error) throw error;
-      return data ?? null;
-    },
-  });
-}
+export { useMinhaPessoa } from "@/hooks/useMinhaPessoa";
 
 /** Projetos da empresa (id + nome) para vincular numa tarefa. RLS escopa. */
 export function useProjetosLite() {
