@@ -10038,6 +10038,13 @@ export type Database = {
           usuarios_ativos_14d: number
         }[]
       }
+      ops_ultimo_acesso_usuarios: {
+        Args: never
+        Returns: {
+          ultimo_acesso: string
+          user_id: string
+        }[]
+      }
       pagar_fatura: {
         Args: {
           p_conta_id: string

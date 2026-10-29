@@ -13,7 +13,8 @@ export const KEYS = {
   empresas: ["ultra-admin", "empresas"] as const,
   empresa: (id: string) => ["ultra-admin", "empresa", id] as const,
   usuarios: ["ultra-admin", "usuarios"] as const,
-  atividade: (empresaId: string | null) => ["ultra-admin", "atividade", empresaId ?? "todas"] as const,
+  atividade: (empresaId: string | null, limite: number) =>
+    ["ultra-admin", "atividade", empresaId ?? "todas", limite] as const,
   mutacoes: (empresaId: string) => ["ultra-admin", "mutacoes", empresaId] as const,
   feedback: ["ultra-admin", "feedback"] as const,
   incidentes: ["ultra-admin", "incidentes"] as const,
@@ -64,7 +65,7 @@ const TIPO_AVISO: Record<string, TipoEvento> = {
 export function useAtividade(empresaId: string | null, limite = 150) {
   const { user } = useAuth();
   return useQuery({
-    queryKey: KEYS.atividade(empresaId),
+    queryKey: KEYS.atividade(empresaId, limite),
     staleTime: 30_000,
     queryFn: async (): Promise<EventoAtividade[]> => {
       let qAudit = supabase
@@ -125,18 +126,27 @@ export function useAtividade(empresaId: string | null, limite = 150) {
   });
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export type Mutacao = { id: string; ator: string | null; action: string; tabela: string | null; quando: string };
 
-/** Alterações de dados da empresa (audit_logs): quem criou, editou ou apagou o quê. */
+/**
+ * Mudanças de funcionalidade e papel da empresa (audit_logs). Os triggers gravam
+ * a empresa em metadata.empresa_id e deixam a coluna empresa_id nula, então filtrar
+ * só pela coluna devolvia sempre vazio. Alteração de dado de negócio (projeto,
+ * despesa) ainda não é registrada em nenhuma tabela.
+ */
 export function useMutacoesEmpresa(empresaId: string) {
   return useQuery({
     queryKey: KEYS.mutacoes(empresaId),
     staleTime: 30_000,
+    // O id entra na string do .or(): só UUID passa (vem da rota).
+    enabled: UUID.test(empresaId),
     queryFn: async (): Promise<Mutacao[]> => {
       const { data, error } = await supabase
         .from("audit_logs")
         .select("id, actor_email, action, target_table, created_at")
-        .eq("empresa_id", empresaId)
+        .or(`empresa_id.eq.${empresaId},metadata->>empresa_id.eq.${empresaId}`)
         .order("created_at", { ascending: false })
         .limit(50);
       if (error) throw error;

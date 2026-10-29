@@ -122,6 +122,12 @@ describe("descreverMutacao", () => {
     expect(descreverMutacao("UPDATE", "tabela_nova")).toBe("editou um registro em tabela nova");
     expect(descreverMutacao("UPDATE", null)).toBe("editou um registro");
   });
+
+  it("usa a frase própria das ações que o audit_logs grava hoje", () => {
+    expect(descreverMutacao("company_features_change", "empresas")).toBe("mudou as funcionalidades da empresa");
+    expect(descreverMutacao("features_change", "profiles")).toBe("mudou as funcionalidades de um usuário");
+    expect(descreverMutacao("role_change", "profiles")).toBe("mudou o papel de um usuário");
+  });
 });
 
 describe("estadoDosComponentes", () => {

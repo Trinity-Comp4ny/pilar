@@ -27,7 +27,7 @@ export function emailPadraoCategoria(categoria: string): boolean {
   return categoria === "financeiro" || categoria === "projeto" || categoria === "disciplina" || categoria === "obra";
 }
 
-export const CATEGORIA_LABEL: Record<CategoriaNotificacao, string> = {
+const CATEGORIA_LABEL: Record<CategoriaNotificacao, string> = {
   tarefa: "Tarefas",
   projeto: "Projetos",
   disciplina: "Disciplinas",
@@ -43,6 +43,62 @@ const CATEGORIA_ICON: Record<CategoriaNotificacao, LucideIcon> = {
   obra: HardHat,
 };
 
+/**
+ * Avisos do portal ultra admin (categoria "sistema": feedback, cadastro, plano
+ * bloqueado). Fica fora de CATEGORIAS de propósito: não há o que configurar em
+ * Preferências, só o ultra admin os recebe e filtra no sino.
+ */
+export const CATEGORIA_PORTAL = "sistema";
+
+/** Filtro de categoria do sino: as do usuário comum mais "sistema" (só o ultra admin vê). */
+export type CategoriaFiltro = CategoriaNotificacao | typeof CATEGORIA_PORTAL;
+
+export type TipoPortal = "problema" | "sugestao" | "cadastro" | "outros";
+
+export const TIPOS_PORTAL: readonly TipoPortal[] = ["problema", "sugestao", "cadastro", "outros"] as const;
+
+export const TIPO_PORTAL_LABEL: Record<TipoPortal, string> = {
+  problema: "Problemas",
+  sugestao: "Sugestões",
+  cadastro: "Cadastros",
+  outros: "Outros",
+};
+
+// O trigger do feedback grava o tipo do relato só no título (tg_feedback_avisa_ultra_admins).
+const TITULO_PROBLEMA = "Problema relatado";
+const PREFIXO_SUGESTAO = "Sugestão:";
+
+/** Tipo de um aviso do portal, a partir de `tipo` e `titulo`. */
+export function tipoPortal(n: { tipo: string; titulo: string }): TipoPortal {
+  if (n.tipo === "novo_cadastro") return "cadastro";
+  if (n.tipo === "feedback_recebido") return n.titulo.startsWith(PREFIXO_SUGESTAO) ? "sugestao" : "problema";
+  return "outros";
+}
+
+export type CondicaoNotificacao = { coluna: "tipo" | "titulo"; operador: "eq" | "like" | "not.in"; valor: string };
+
+/** Condições PostgREST equivalentes a `tipoPortal`, pra filtrar no banco (o limite de 50 vale pelo filtro). */
+export function condicoesTipoPortal(tipo: TipoPortal | null): CondicaoNotificacao[] {
+  switch (tipo) {
+    case "problema":
+      return [
+        { coluna: "tipo", operador: "eq", valor: "feedback_recebido" },
+        { coluna: "titulo", operador: "eq", valor: TITULO_PROBLEMA },
+      ];
+    case "sugestao":
+      return [
+        { coluna: "tipo", operador: "eq", valor: "feedback_recebido" },
+        { coluna: "titulo", operador: "like", valor: `${PREFIXO_SUGESTAO}*` },
+      ];
+    case "cadastro":
+      return [{ coluna: "tipo", operador: "eq", valor: "novo_cadastro" }];
+    case "outros":
+      return [{ coluna: "tipo", operador: "not.in", valor: "(feedback_recebido,novo_cadastro)" }];
+    default:
+      return [];
+  }
+}
+
 /** Soma de itens por categoria (ex.: não lidas de cada uma). Categoria vem do banco, então a chave é string. */
 export function contarPorCategoria(itens: readonly { categoria: string }[]): Record<string, number> {
   const contagem: Record<string, number> = {};
@@ -57,6 +113,7 @@ export function iconeCategoria(categoria: string): LucideIcon {
 
 /** Rótulo da categoria, com fallback legível. */
 export function rotuloCategoria(categoria: string): string {
+  if (categoria === CATEGORIA_PORTAL) return "Portal";
   return CATEGORIA_LABEL[categoria as CategoriaNotificacao] ?? "Notificação";
 }
 
