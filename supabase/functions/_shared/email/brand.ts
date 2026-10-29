@@ -36,10 +36,10 @@ export const BRAND = {
   /** Caixa que recebe resposta dos e-mails de plataforma. Vazio = sem reply-to. */
   replyTo: Deno.env.get("RESEND_REPLY_TO") ?? "",
   /**
-   * Símbolo em PNG 3x (apps/marketing/public/email/logo-v1.png, 96px). SVG não entra em <img> de
+   * Símbolo em PNG 3x (apps/marketing/public/email/logo-v2.png, 96px). SVG não entra em <img> de
    * e-mail (Gmail bloqueia). Versionar o nome ao trocar de logo.
    */
-  logoUrl: Deno.env.get("EMAIL_LOGO_URL") ?? `${assetHost}/email/logo-v1.png`,
+  logoUrl: Deno.env.get("EMAIL_LOGO_URL") ?? `${assetHost}/email/logo-v2.png`,
   /** Faixa de morros da hero, 1200x225 (apps/marketing/public/email/wave-v1.png), servida a 600px. */
   waveUrl: Deno.env.get("EMAIL_WAVE_URL") ?? `${assetHost}/email/wave-v1.png`,
 } as const;

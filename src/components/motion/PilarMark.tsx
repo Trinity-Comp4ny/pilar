@@ -1,7 +1,8 @@
 import type { CSSProperties } from "react";
 
-// A marca são seis linhas num box de 28x25: capitel, ábaco e quatro caneluras.
-const CANELURAS = [7, 12, 17, 22];
+// A marca são seis linhas num box de 28x25: capitel, ábaco e quatro caneluras. Geometria do logotipo
+// oficial (scripts/brand/build.py): caneluras centradas no eixo do capitel, x = 14.
+const CANELURAS = [6.5, 11.5, 16.5, 21.5];
 
 type PilarMarkVariant = "static" | "rhythm" | "draw";
 
