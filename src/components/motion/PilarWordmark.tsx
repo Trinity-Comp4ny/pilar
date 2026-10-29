@@ -1,14 +1,14 @@
 import type { CSSProperties } from "react";
 
 /** Tamanho do `Logo` (lado do quadrado da marca, em px) e a altura do nome ao lado, no mesmo ritmo. */
-export type WordmarkSize = "xs" | "sm" | "md" | "lg" | "xl";
+type WordmarkSize = "xs" | "sm" | "md" | "lg" | "xl";
 
 /**
  * Altura do nome em px para cada tamanho do Logo: a altura das maiúsculas fica em 0,588 da altura
  * da marca, a proporção do logotipo horizontal oficial (brand/logo.md, seção 4). Lado da marca
  * 28, 32, 40, 48 e 64 px, vezes 0,4795.
  */
-export const WORDMARK_HEIGHT_PX: Record<WordmarkSize, number> = { xs: 13.4, sm: 15.3, md: 19.2, lg: 23, xl: 30.7 };
+const WORDMARK_HEIGHT_PX: Record<WordmarkSize, number> = { xs: 13.4, sm: 15.3, md: 19.2, lg: 23, xl: 30.7 };
 
 // Nome "Pilar" em curva (Geist), o mesmo caminho de brand/assets/logo/pilar-wordmark-ink.svg.
 // Copiado do arquivo oficial; logotipo.oficial.test.ts confere que continua igual. O desenho vem em
