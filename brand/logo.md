@@ -23,16 +23,16 @@ O logotipo tem duas peças: o **símbolo** (uma coluna desenhada com seis linhas
 
 Use SVG sempre que o destino aceitar. PNG só para apresentação, redes sociais e documento.
 
-| Peça | Arquivo | Quando usar |
-|---|---|---|
-| Lockup horizontal (primário) | `pilar-logo-horizontal-{ink,white,black,brand}.svg` | Cabeçalho, rodapé, documento, assinatura de e-mail, material de venda |
-| Lockup empilhado | `pilar-logo-vertical-{ink,white,black,brand}.svg` | Capa, slide de abertura, quando o espaço é mais alto que largo |
-| Símbolo | `pilar-mark-{ink,white,black,brand}.svg` | Quando o nome já aparece perto, avatar, selo, marca d'água |
-| Símbolo, traço reforçado | `pilar-mark-small-{ink,white}.svg` | Símbolo com menos de 24 px de altura |
-| Só o nome | `pilar-wordmark-{ink,white}.svg` | Texto corrido institucional, rodapé de contrato |
-| Ícone do app | `pilar-app-icon.svg` | Ícone de app, PWA, perfil de rede social |
-| Favicon | `pilar-favicon.svg` | Aba do navegador |
-| PNG | `png/` | Tamanhos prontos: símbolo 1024, lockup horizontal 2000, empilhado 1200, ícone 1024 |
+| Peça                         | Arquivo                                             | Quando usar                                                                        |
+| ---------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Lockup horizontal (primário) | `pilar-logo-horizontal-{ink,white,black,brand}.svg` | Cabeçalho, rodapé, documento, assinatura de e-mail, material de venda              |
+| Lockup empilhado             | `pilar-logo-vertical-{ink,white,black,brand}.svg`   | Capa, slide de abertura, quando o espaço é mais alto que largo                     |
+| Símbolo                      | `pilar-mark-{ink,white,black,brand}.svg`            | Quando o nome já aparece perto, avatar, selo, marca d'água                         |
+| Símbolo, traço reforçado     | `pilar-mark-small-{ink,white}.svg`                  | Símbolo com menos de 24 px de altura                                               |
+| Só o nome                    | `pilar-wordmark-{ink,white}.svg`                    | Texto corrido institucional, rodapé de contrato                                    |
+| Ícone do app                 | `pilar-app-icon.svg`                                | Ícone de app, PWA, perfil de rede social                                           |
+| Favicon                      | `pilar-favicon.svg`                                 | Aba do navegador                                                                   |
+| PNG                          | `png/`                                              | Tamanhos prontos: símbolo 1024, lockup horizontal 2000, empilhado 1200, ícone 1024 |
 
 Sufixos de cor: `ink` (#1A1A1A, padrão sobre claro), `white` (sobre escuro), `brand`
 (nome branco e símbolo verde, só sobre Ink), `black` (#000000, só impressão a uma cor, com ábaco opaco).
@@ -43,15 +43,15 @@ Sufixos de cor: `ink` (#1A1A1A, padrão sobre claro), `white` (sobre escuro), `b
 
 Medidas em **u**, a unidade do desenho. 1u = altura visível do símbolo ÷ 22,6.
 
-| Elemento | Medida |
-|---|---|
-| Caixa visível (com o traço) | 27,6u × 22,6u, proporção 1,22 : 1 |
-| Traço | 1,6u, ponta redonda de raio 0,8u |
-| Capitel | linha de 26u, opacidade 100% |
-| Ábaco | linha de 22u, opacidade 85%, 4u abaixo do capitel |
-| Caneluras | 4 linhas de 14u, opacidade 100% |
-| Módulo X | 5u, a distância entre eixos de duas caneluras vizinhas |
-| Eixo de simetria | capitel, ábaco e caneluras centrados em x = 14u |
+| Elemento                    | Medida                                                 |
+| --------------------------- | ------------------------------------------------------ |
+| Caixa visível (com o traço) | 27,6u × 22,6u, proporção 1,22 : 1                      |
+| Traço                       | 1,6u, ponta redonda de raio 0,8u                       |
+| Capitel                     | linha de 26u, opacidade 100%                           |
+| Ábaco                       | linha de 22u, opacidade 85%, 4u abaixo do capitel      |
+| Caneluras                   | 4 linhas de 14u, opacidade 100%                        |
+| Módulo X                    | 5u, a distância entre eixos de duas caneluras vizinhas |
+| Eixo de simetria            | capitel, ábaco e caneluras centrados em x = 14u        |
 
 O módulo X é a régua de toda a marca: o respiro e o espaço entre símbolo e nome saem dele.
 
@@ -67,21 +67,21 @@ O módulo X é a régua de toda a marca: o respiro e o espaço entre símbolo e 
 
 ### Horizontal (primário)
 
-| Relação | Valor |
-|---|---|
-| Altura do símbolo | 1,7 × altura da caixa-alta do nome |
-| Alinhamento vertical | o centro do símbolo coincide com o centro da caixa-alta |
-| Espaço entre símbolo e nome | 2X, contado da tinta do símbolo até a tinta do "P" |
-| Proporção do conjunto | 3,26 : 1 (393,5 × 120,7 no arquivo) |
+| Relação                     | Valor                                                   |
+| --------------------------- | ------------------------------------------------------- |
+| Altura do símbolo           | 1,7 × altura da caixa-alta do nome                      |
+| Alinhamento vertical        | o centro do símbolo coincide com o centro da caixa-alta |
+| Espaço entre símbolo e nome | 2X, contado da tinta do símbolo até a tinta do "P"      |
+| Proporção do conjunto       | 3,26 : 1 (393,5 × 120,7 no arquivo)                     |
 
 ### Empilhado
 
-| Relação | Valor |
-|---|---|
-| Altura do símbolo | 2,0 × altura da caixa-alta do nome |
-| Alinhamento horizontal | símbolo e nome centrados no mesmo eixo |
-| Espaço entre símbolo e nome | 1,5X |
-| Proporção do conjunto | 0,73 : 1 (192,7 × 265,0 no arquivo) |
+| Relação                     | Valor                                  |
+| --------------------------- | -------------------------------------- |
+| Altura do símbolo           | 2,0 × altura da caixa-alta do nome     |
+| Alinhamento horizontal      | símbolo e nome centrados no mesmo eixo |
+| Espaço entre símbolo e nome | 1,5X                                   |
+| Proporção do conjunto       | 0,73 : 1 (192,7 × 265,0 no arquivo)    |
 
 ### Quando usar cada peça
 
@@ -106,11 +106,11 @@ em capa e abertura dê mais.
 
 ![Tamanhos mínimos](./assets/logo/diagram-minsize.svg)
 
-| Peça | Tela | Impressão |
-|---|---|---|
-| Símbolo | 16 px de altura | 5 mm de altura |
+| Peça              | Tela                            | Impressão        |
+| ----------------- | ------------------------------- | ---------------- |
+| Símbolo           | 16 px de altura                 | 5 mm de altura   |
 | Lockup horizontal | 56 px de largura (nome a 14 px) | 15 mm de largura |
-| Lockup empilhado | 40 px de largura | 11 mm de largura |
+| Lockup empilhado  | 40 px de largura                | 11 mm de largura |
 
 Abaixo do mínimo de tela, o símbolo deixa de ser legível. Use o ícone do app (disco verde),
 que mantém a forma em 16 px.
@@ -121,12 +121,12 @@ que mantém a forma em 16 px.
 
 O logotipo usa só as cores da tabela. Nunca pinte o logo com outra cor, nem com cor de status.
 
-| Versão | Cor do símbolo | Cor do nome | Fundo |
-|---|---|---|---|
-| `ink` | #1A1A1A | #1A1A1A | Paper (#FFFFFF a #EDEDED) e verde da marca |
-| `white` | #FFFFFF | #FFFFFF | Ink (#1A1A1A) e fundos escuros |
-| `brand` | #A4EC86 | #FFFFFF | Só Ink (#1A1A1A) |
-| `black` | #000000 | #000000 | Impressão a uma cor, gravação, carimbo (ábaco opaco) |
+| Versão  | Cor do símbolo | Cor do nome | Fundo                                                |
+| ------- | -------------- | ----------- | ---------------------------------------------------- |
+| `ink`   | #1A1A1A        | #1A1A1A     | Paper (#FFFFFF a #EDEDED) e verde da marca           |
+| `white` | #FFFFFF        | #FFFFFF     | Ink (#1A1A1A) e fundos escuros                       |
+| `brand` | #A4EC86        | #FFFFFF     | Só Ink (#1A1A1A)                                     |
+| `black` | #000000        | #000000     | Impressão a uma cor, gravação, carimbo (ábaco opaco) |
 
 Regras:
 
@@ -170,25 +170,18 @@ empresa titular. Até lá, o logo e o nome aparecem sem símbolo.
 - Produto e landing usam o componente `Logo` (`src/components/Logo.tsx`) e o `PilarMark`
   (`src/components/motion/PilarMark.tsx`). Não recrie o símbolo com `<svg>` solto nem o nome como
   texto estilizado.
-- E-mail usa PNG (Gmail bloqueia SVG em `<img>`): `apps/marketing/public/email/logo-v1.png`,
+- E-mail usa PNG (Gmail bloqueia SVG em `<img>`): `apps/marketing/public/email/logo-v2.png`,
   configurado em `supabase/functions/_shared/email/brand.ts`. Versione o nome ao trocar de logo.
 - Cor do logo no código é `currentColor`: o contêiner decide (`text-ink` ou `text-white`).
 
-### Divergências entre o código e esta especificação
+### Código e especificação coincidem
 
-O código de produção foi o ponto de partida e tem quatro diferenças pequenas. A especificação
-acima é a correta; o código deve convergir (cards de acompanhamento no ClickUp).
-
-1. **Caneluras 0,5u fora do eixo.** No código, capitel e ábaco estão centrados em x = 14 e as
-   caneluras em x = 14,5 (7, 12, 17, 22). Aqui as caneluras ficam em 6,5, 11,5, 16,5 e 21,5.
-   Em tela é um deslocamento de meio ponto do desenho, mas a margem esquerda fica 6u e a direita 5u.
-2. **Cor do traço.** `pilar-logo.svg`, `favicon.svg` e `app-icon.svg` usam #0A0A0A; o token de
-   tinta é #1A1A1A. O padrão é o token.
-3. **Nome do `Logo` muda de fonte.** O componente escreve "Pilar" como texto: sai em Inter no
-   app e em Geist na landing. O logotipo oficial é Geist em curva. A saída é o `Logo` usar o
-   SVG do nome.
-4. **Opacidade do ábaco.** 85% no símbolo, 90% no `app-icon.svg`. O padrão é 85% (padrão) e
-   opaco (traço reforçado e ícones).
+Até 28/10/2026 o código tinha quatro diferenças pequenas (caneluras 0,5u fora do eixo, traço
+#0A0A0A em vez do token, nome do `Logo` escrito como texto, ábaco a 90% no `app-icon.svg`). O BEZ-385
+alinhou tudo: `PilarMark` com as caneluras em 6,5, 11,5, 16,5 e 21,5; `public/*.svg` e
+`apps/marketing/public/*.svg` iguais aos de `brand/assets/logo/`; PNGs dos ícones e o PNG do e-mail
+(`logo-v2.png`) gerados do ícone oficial; `Logo` com o nome em curva (`PilarWordmark`).
+`src/components/logotipo.oficial.test.tsx` reprova se produção se afastar dos arquivos oficiais.
 
 ## 12. Como regenerar os arquivos
 

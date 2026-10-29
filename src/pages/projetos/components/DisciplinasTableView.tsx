@@ -2,13 +2,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DatePicker } from "@/components/ui/date-picker";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { DisciplinaNovaLinha } from "./DisciplinaNovaLinha";
+import { DisciplinaStatusCelula } from "./DisciplinaStatusCelula";
 import { earlierOf, isoSlice, laterOf } from "@/pages/projetos/lib/limitesDeData";
 import {
   AlertDialog,
@@ -27,7 +27,6 @@ import { PROJECT_PRIORITY, PROJECT_PRIORITY_CONFIG, PRIORITY_OPTIONS, type Proje
 import {
   type DisciplinaResponsavel,
   type ProjetoDisciplinaDB,
-  disciplinaStatusOptions,
   formatDateShort,
   isDiscAtrasada,
 } from "@/types/projetos";
@@ -62,13 +61,6 @@ interface DisciplinasTableViewProps {
 }
 
 type LinhaDisciplina = { disc: DisciplinaResponsavel; dbDisc: ProjetoDisciplinaDB | undefined; idx: number };
-
-const STATUS_DOT: Record<string, string> = {
-  Concluído: "bg-positive",
-  "Em Andamento": "bg-status-progress",
-  Pendente: "bg-status-planning",
-  "Não Iniciado": "bg-status-unknown",
-};
 
 export function DisciplinasTableView({
   canEdit,
@@ -243,43 +235,12 @@ export function DisciplinasTableView({
         const { disc, idx, checklistIncompleto } = derivar(r);
         return (
           <>
-            {canEdit ? (
-              <Select value={disc.status || "Não Iniciado"} onValueChange={(v) => handleStatusChange(idx, v)}>
-                <SelectTrigger
-                  className="h-7 text-xs border-0 bg-transparent hover:bg-muted px-2 -ml-2"
-                  aria-label="Status"
-                >
-                  <span className="flex items-center gap-1.5">
-                    <span className={cn("h-2 w-2 rounded-full", STATUS_DOT[disc.status || "Não Iniciado"])} />
-                    <SelectValue />
-                  </span>
-                </SelectTrigger>
-                <SelectContent>
-                  {disciplinaStatusOptions.map((s) => (
-                    <SelectItem
-                      key={s}
-                      value={s}
-                      className="text-xs"
-                      disabled={s === "Concluído" && checklistIncompleto}
-                      title={
-                        s === "Concluído" && checklistIncompleto
-                          ? "Conclua todos os itens do checklist antes"
-                          : undefined
-                      }
-                    >
-                      <span className="flex items-center gap-1.5">
-                        <span className={cn("h-2 w-2 rounded-full", STATUS_DOT[s])} />
-                        {s}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <Badge variant="outline" className="text-[11px]">
-                {disc.status || "Não Iniciado"}
-              </Badge>
-            )}
+            <DisciplinaStatusCelula
+              status={disc.status}
+              canEdit={canEdit}
+              checklistIncompleto={checklistIncompleto}
+              onChange={(v) => handleStatusChange(idx, v)}
+            />
           </>
         );
       },

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { ProjetoDisciplinaPausa } from "@/types/projetos";
+import type { EstadoDaDisciplina } from "@/pages/projetos/lib/pausa";
 
 interface PausaRow {
   id: string;
@@ -32,6 +33,20 @@ export function totalDiasParados(pausas: ProjetoDisciplinaPausa[]): number {
   }, 0);
 }
 
+/**
+ * Lê o estado real depois do RPC. Quem chama usa isso em vez de regravar a disciplina com o
+ * snapshot da tela, que ainda tem o prazo de antes da retomada e desfaria o empurrão (BEZ-460).
+ */
+async function lerEstadoDaDisciplina(disciplinaId: string): Promise<EstadoDaDisciplina> {
+  const { data, error } = await supabase
+    .from("projeto_disciplinas")
+    .select("status, data_inicio, data_fim")
+    .eq("id", disciplinaId)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 /** Histórico de pausas de uma disciplina + ações de pausar/retomar (spec 084). */
 export function useDisciplinaPausas(disciplinaId: string | undefined) {
   const queryClient = useQueryClient();
@@ -58,6 +73,7 @@ export function useDisciplinaPausas(disciplinaId: string | undefined) {
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["disciplina-pausas", disciplinaId] });
     queryClient.invalidateQueries({ queryKey: ["projeto-disciplinas"] });
+    queryClient.invalidateQueries({ queryKey: ["projeto-timeline"] });
   };
 
   const pausar = useMutation({
@@ -68,6 +84,7 @@ export function useDisciplinaPausas(disciplinaId: string | undefined) {
         p_motivo: motivo,
       });
       if (error) throw error;
+      return lerEstadoDaDisciplina(disciplinaId);
     },
     onSuccess: invalidate,
   });
@@ -77,6 +94,7 @@ export function useDisciplinaPausas(disciplinaId: string | undefined) {
       if (!disciplinaId) throw new Error("Disciplina ainda não foi salva");
       const { error } = await supabase.rpc("rpc_retomar_disciplina", { p_disciplina_id: disciplinaId });
       if (error) throw error;
+      return lerEstadoDaDisciplina(disciplinaId);
     },
     onSuccess: invalidate,
   });

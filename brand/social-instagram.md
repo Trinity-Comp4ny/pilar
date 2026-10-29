@@ -1,6 +1,6 @@
 # Instagram
 
-> Sistema visual do perfil **@pilar.software**: como o perfil se apresenta, o desenho de cada
+> Sistema visual do perfil **@pilarsoft.app**: como o perfil se apresenta, o desenho de cada
 > formato, a grade do feed e o que conferir antes de publicar. Estratégia, pilares, cadência e
 > calendário vivem no repo `post-automation` (`docs/plano-presenca-social.md`, `pilares.md`,
 > `voice.md`). Este arquivo diz **como cada peça se parece**; aquele diz **o que publicar e quando**.
@@ -29,17 +29,17 @@ Cinco regras valem para qualquer peça:
 
 ## 2. O perfil
 
-| Item | Regra |
-|---|---|
-| Nome de usuário | `@pilar.software` |
-| Nome (campo de busca) | `Pilar | Gestão com agentes de IA` |
-| Foto | `assets/social/avatar.png`: símbolo Ink sobre verde da marca, 1080 × 1080. O Instagram corta em círculo; o símbolo ocupa metade da largura e sobra respiro. Sem o nome na foto. |
-| Bio (125 caracteres, limite 150) | "Do contrato à execução, num fluxo só. Gestão com agentes de IA para escritórios de engenharia e arquitetura. Agende uma demo." |
-| Link | Landing com UTM: `utm_source=instagram&utm_medium=bio&utm_campaign=perfil` |
-| Categoria | Software (ou Serviço de tecnologia) |
-| Botão de contato | WhatsApp do Matheus, quando o fundador aprovar |
-| Destaques | Como funciona, Clientes, Dicas, Bastidores, Planos |
-| Capas dos destaques | `assets/social/destaque-*.png`: ícone de linha em verde sobre Ink, 1080 × 1920, ícone no centro. O Instagram mostra um círculo central, então nada fora do centro. |
+| Item                             | Regra                                                                                                                                                                           |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nome de usuário                  | `@pilarsoft.app`                                                                                                                                                                |
+| Nome (campo de busca)            | `Pilar                                                                                                                                                                          | Gestão com agentes de IA` |
+| Foto                             | `assets/social/avatar.png`: símbolo Ink sobre verde da marca, 1080 × 1080. O Instagram corta em círculo; o símbolo ocupa metade da largura e sobra respiro. Sem o nome na foto. |
+| Bio (125 caracteres, limite 150) | "Do contrato à execução, num fluxo só. Gestão com agentes de IA para escritórios de engenharia e arquitetura. Agende uma demo."                                                 |
+| Link                             | Landing com UTM: `utm_source=instagram&utm_medium=bio&utm_campaign=perfil`                                                                                                      |
+| Categoria                        | Software (ou Serviço de tecnologia)                                                                                                                                             |
+| Botão de contato                 | WhatsApp do Matheus, quando o fundador aprovar                                                                                                                                  |
+| Destaques                        | Como funciona, Clientes, Dicas, Bastidores, Planos                                                                                                                              |
+| Capas dos destaques              | `assets/social/destaque-*.png`: ícone de linha em verde sobre Ink, 1080 × 1920, ícone no centro. O Instagram mostra um círculo central, então nada fora do centro.              |
 
 As capas dos destaques são Ink com ícone verde de propósito: formam uma faixa escura e pequena no
 topo do perfil, que contrasta com o feed claro e leva o olho aos destaques. É um uso de verde
@@ -49,24 +49,24 @@ topo do perfil, que contrasta com o feed claro e leva o olho aos destaques. É u
 
 Traço de 3,2 px, ponta e junção redondas, só linha (sem preenchimento), a mesma regra do símbolo:
 
-| Destaque | Desenho |
-|---|---|
+| Destaque      | Desenho                              |
+| ------------- | ------------------------------------ |
 | Como funciona | Três nós ligados por linha (o fluxo) |
-| Clientes | Edifício com janelas |
-| Dicas | Lâmpada |
-| Bastidores | Régua |
-| Planos | Etiqueta |
+| Clientes      | Edifício com janelas                 |
+| Dicas         | Lâmpada                              |
+| Bastidores    | Régua                                |
+| Planos        | Etiqueta                             |
 
 ## 3. Formatos e medidas
 
-| Formato | Canvas | Proporção | Uso |
-|---|---|---|---|
-| Post e carrossel | 1080 × 1350 px | 4:5 | Foto-pergunta, carrossel, número, prova |
-| Story | 1080 × 1920 px | 9:16 | Enquete, caixinha, bastidor, repost |
-| Reel (vídeo e capa) | 1080 × 1920 px | 9:16 | Reels sem rosto e com apresentador |
-| Capa de Reel no grid | centro de 1080 × 1440 px | 3:4 | O perfil recorta o grid em 3:4 |
-| Foto do perfil | 1080 × 1080 px | 1:1 | Mostrada em círculo |
-| Capa de destaque | 1080 × 1920 px | 9:16 | Mostrada em círculo central |
+| Formato              | Canvas                   | Proporção | Uso                                     |
+| -------------------- | ------------------------ | --------- | --------------------------------------- |
+| Post e carrossel     | 1080 × 1350 px           | 4:5       | Foto-pergunta, carrossel, número, prova |
+| Story                | 1080 × 1920 px           | 9:16      | Enquete, caixinha, bastidor, repost     |
+| Reel (vídeo e capa)  | 1080 × 1920 px           | 9:16      | Reels sem rosto e com apresentador      |
+| Capa de Reel no grid | centro de 1080 × 1440 px | 3:4       | O perfil recorta o grid em 3:4          |
+| Foto do perfil       | 1080 × 1080 px           | 1:1       | Mostrada em círculo                     |
+| Capa de destaque     | 1080 × 1920 px           | 9:16      | Mostrada em círculo central             |
 
 O Instagram muda medidas e recortes de tempos em tempos. Antes de produzir em escala, confira
 no aplicativo se o grid continua 3:4 e se as zonas livres do story continuam valendo.
@@ -92,15 +92,15 @@ base 120 px (4 módulos). Nada de texto fora dessa caixa.
    90 px                90 px
 ```
 
-| Peça | Medida no canvas de 1080 px |
-|---|---|
-| Selo (badge) | 28 px, peso 500, caixa-alta, tracking +0,08 em, pílula verde, ~60 px de altura |
-| Gancho (hook) | 104 px (capa), 84 px (padrão), 68 px (texto longo). Entrelinha 1,04 a 1,1 |
+| Peça               | Medida no canvas de 1080 px                                                                                       |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| Selo (badge)       | 28 px, peso 500, caixa-alta, tracking +0,08 em, pílula verde, ~60 px de altura                                    |
+| Gancho (hook)      | 104 px (capa), 84 px (padrão), 68 px (texto longo). Entrelinha 1,04 a 1,1                                         |
 | Destaque do gancho | Palavra em itálico dentro de pílula verde (raio 0,28 em, folga 0,16 em). **Uma por peça**, de uma a três palavras |
-| Apoio (body) | 40 px, peso 400, Ink 800, no máximo 860 px de largura, no máximo 3 linhas |
-| Número grande | 178 a 260 px, peso 500 (dado) ou 300 (numeral de slide), algarismos tabulares |
-| Rodapé | Símbolo (42 px de altura), "Pilar" e handle em 28 px, peso 500 |
-| Linha e filete | 2 px em Paper 300 (`#D9D9D9`) |
+| Apoio (body)       | 40 px, peso 400, Ink 800, no máximo 860 px de largura, no máximo 3 linhas                                         |
+| Número grande      | 178 a 260 px, peso 500 (dado) ou 300 (numeral de slide), algarismos tabulares                                     |
+| Rodapé             | Símbolo (42 px de altura), "Pilar" e handle em 28 px, peso 500                                                    |
+| Linha e filete     | 2 px em Paper 300 (`#D9D9D9`)                                                                                     |
 
 **Fundos.** Paper (`#FCFCFC`) é o padrão. Ink (`#1A1A1A`) é para o slide final de carrossel e
 para peça de impacto; sobre Ink o texto é branco e o verde pode ser traço. Grade de pontos
@@ -112,18 +112,18 @@ Ficam em `brand/social/templates/` (HTML, `{{placeholder}}`, o mesmo contrato do
 `post-automation`: `hook`, `badge`, `brand`, `handle`) e são renderizados com
 `python3 scripts/brand/render-social.py` para `brand/assets/social/`.
 
-| Template | Arquivo | Pilar de conteúdo | Quando |
-|---|---|---|---|
-| Foto-pergunta | `foto-pergunta` | Dor, dica | Segunda. Croqui + pergunta de até 12 palavras; pede comentário |
-| Capa de carrossel | `carrossel-capa` | Dica | Slide 1. Gancho com pílula + "Arraste" |
-| Slide de carrossel | `carrossel-item` | Dica | Slides 2 a 6. Numeral, título, apoio, barra de progresso |
-| Número | `dado` | Dor, prova | O dado grande + a conta em três linhas. Dado de exemplo sempre marcado |
-| Final de carrossel | `carrossel-final` | Todos | Último slide, Ink, um CTA em pílula verde |
-| Prova social | `prova` | Prova | Depoimento. **Só com autorização escrita** do escritório |
-| Story | `story` | Dor | Enquete e caixinha; 250 px livres no topo e 340 px na base |
-| Capa de Reel | `reel-capa` | Todos | Texto e rodapé dentro do centro 3:4 |
-| Foto do perfil | `avatar` | nenhum | Uma vez |
-| Capas de destaque | `destaque-*` | nenhum | Uma vez, cinco arquivos |
+| Template           | Arquivo           | Pilar de conteúdo | Quando                                                                 |
+| ------------------ | ----------------- | ----------------- | ---------------------------------------------------------------------- |
+| Foto-pergunta      | `foto-pergunta`   | Dor, dica         | Segunda. Croqui + pergunta de até 12 palavras; pede comentário         |
+| Capa de carrossel  | `carrossel-capa`  | Dica              | Slide 1. Gancho com pílula + "Arraste"                                 |
+| Slide de carrossel | `carrossel-item`  | Dica              | Slides 2 a 6. Numeral, título, apoio, barra de progresso               |
+| Número             | `dado`            | Dor, prova        | O dado grande + a conta em três linhas. Dado de exemplo sempre marcado |
+| Final de carrossel | `carrossel-final` | Todos             | Último slide, Ink, um CTA em pílula verde                              |
+| Prova social       | `prova`           | Prova             | Depoimento. **Só com autorização escrita** do escritório               |
+| Story              | `story`           | Dor               | Enquete e caixinha; 250 px livres no topo e 340 px na base             |
+| Capa de Reel       | `reel-capa`       | Todos             | Texto e rodapé dentro do centro 3:4                                    |
+| Foto do perfil     | `avatar`          | nenhum            | Uma vez                                                                |
+| Capas de destaque  | `destaque-*`      | nenhum            | Uma vez, cinco arquivos                                                |
 
 Os arquivos `story-guia.png` e `reel-capa-guia.png` mostram as zonas livres em vermelho.
 
