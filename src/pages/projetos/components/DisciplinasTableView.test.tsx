@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { DisciplinasTableView } from "./DisciplinasTableView";
 import type { DisciplinaResponsavel, ProjetoDisciplinaDB } from "@/types/projetos";
 
@@ -60,5 +60,31 @@ describe("DisciplinasTableView, badge de revisões", () => {
     const badges = screen.getAllByTitle(/revis/i);
     expect(badges).toHaveLength(1);
     expect(badges[0]).toHaveTextContent("2");
+  });
+});
+
+// BEZ-461: Pausada nasce do botão Pausar do detalhe (motivo + prazo congelado). Escolher
+// pela tabela gravava só o status, sem pausa aberta, e deixava o prazo correndo.
+describe("DisciplinasTableView, seletor de status", () => {
+  const comPausada = [
+    { ...disciplinasLegacy[0], status: "Pausada" },
+    { ...disciplinasLegacy[1], status: "Em Andamento" },
+  ] as unknown as DisciplinaResponsavel[];
+
+  it("disciplina pausada não troca de status pela tabela", () => {
+    render(<DisciplinasTableView {...baseProps} canEdit disciplinasLegacy={comPausada} />);
+    const [pausada, emAndamento] = screen.getAllByRole("combobox", { name: "Status" });
+    expect(pausada).toBeDisabled();
+    expect(emAndamento).toBeEnabled();
+  });
+
+  it("não oferece Pausada como destino", () => {
+    render(<DisciplinasTableView {...baseProps} canEdit disciplinasLegacy={comPausada} />);
+    const [, emAndamento] = screen.getAllByRole("combobox", { name: "Status" });
+    fireEvent.keyDown(emAndamento, { key: "Enter" });
+    expect(within(screen.getByRole("listbox")).getByRole("option", { name: "Pausada" })).toHaveAttribute(
+      "aria-disabled",
+      "true"
+    );
   });
 });
