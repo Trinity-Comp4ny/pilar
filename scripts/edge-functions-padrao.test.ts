@@ -36,6 +36,7 @@ const SEM_RATE_LIMIT: Record<string, string> = {
   "excluir-dados-titular": "só ultra admin (fila LGPD)",
   "exportar-dados-titular": "trigger via pg_net, autenticado por segredo",
   "guardiao-margem-cron": "cron (cronAutorizado)",
+  "feedback-sync": "GitHub Actions por token próprio (cronAutorizado), só avança status de feedback",
   health: "leitura pública sem efeito colateral; Better Stack e smoke de deploy",
   "log-impersonation": "só ultra admin",
   "notificacoes-email-cron": "cron (cronAutorizado)",

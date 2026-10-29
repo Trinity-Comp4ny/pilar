@@ -156,6 +156,10 @@ O repo permite squash e rebase, mas BLOQUEIA merge commit.
 - Merge do PR de release com `gh pr merge <n> --admin --squash --delete-branch` (`enforce_admins=false` deixa o admin passar o review requerido). Como a branch release já é 1 commit, squash e rebase são equivalentes aqui.
 - Só mergear com TODOS os checks verdes, incluindo Security audit e "types.ts em sync".
 
+**Feedback de cliente (SPEC 145)**
+
+- Commit que corrige um feedback do Ultra leva a linha `Feedback: <id>` (botão "Copiar linha do commit" no detalhe). O merge em `staging` move o feedback para `planejado` e o release para `resolvido`.
+
 **Limpeza obrigatória após CADA merge**
 
 - Deletar a branch merged, local e remota (`--delete-branch`, ou `git branch -D` + `git push origin --delete`).

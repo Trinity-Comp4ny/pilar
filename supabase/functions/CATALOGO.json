@@ -113,6 +113,10 @@
     "dominio": "jobs",
     "descricao": "Cron: manda por e-mail o que está na central de notificações e ninguém leu."
   },
+  "feedback-sync": {
+    "dominio": "plataforma",
+    "descricao": "Move o status do feedback (planejado no merge em staging, resolvido no release) a partir da linha Feedback: id do commit, chamado pelo GitHub Actions com token próprio (SPEC 145)."
+  },
   "ops-agente-run": {
     "dominio": "plataforma",
     "descricao": "Executa um agente de operação da Pilar (Receita, Clientes, Chefe de gabinete): fatos do banco, texto do modelo aterrado em código, ações pendentes no Ultra e resumo do dia por e-mail (SPEC 126)."
