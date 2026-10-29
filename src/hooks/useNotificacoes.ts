@@ -21,7 +21,7 @@ const NAO_LIDAS_KEY = ["notificacoes-nao-lidas"];
 /** Categoria do sino e, dentro de "sistema", o tipo do aviso (só o ultra admin usa). */
 export type FiltroNotificacao = { categoria: CategoriaFiltro | null; tipo: TipoPortal | null };
 
-export const SEM_FILTRO: FiltroNotificacao = { categoria: null, tipo: null };
+const SEM_FILTRO: FiltroNotificacao = { categoria: null, tipo: null };
 
 /** Aplica o filtro a qualquer query de `notificacoes` (lista, marcar lidas, arquivar). */
 function comFiltro<Q extends { eq: (c: string, v: string) => Q; filter: (c: string, o: string, v: string) => Q }>(
