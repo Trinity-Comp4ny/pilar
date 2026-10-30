@@ -28,7 +28,7 @@ function PrintReal({ img, alt, mock, modulo }: { img: string; alt: string; mock:
     if (ehFone) return <GroupMock mock={mock} />;
     return (
       <BrowserFrame url={modulo.url}>
-        <div className="p-5 md:p-6">
+        <div className="bg-app p-5 md:p-6">
           <GroupMock mock={mock} />
         </div>
       </BrowserFrame>

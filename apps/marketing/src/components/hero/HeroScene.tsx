@@ -87,7 +87,7 @@ export function HeroScene() {
           <div className="flex" style={{ height: PALCO.altura - 40 }}>
             <AppSidebar ato={ato} />
 
-            <div className="relative flex-1 overflow-hidden">
+            <div className="relative flex-1 overflow-hidden bg-app">
               {/* Uma tela por vez, com troca suave: é o agente navegando, não um
                   carrossel. `key` remonta o conteúdo, então cada tela reanima. */}
               <m.div
