@@ -6,23 +6,81 @@
 import { m, useReducedMotion } from "framer-motion";
 import type { MockNome, ModuloSlug } from "../../lib/modules";
 
+/* As cores seguem o app, não a identidade da landing: cartão branco com borda
+   black/5 sobre o fundo do shell, colunas em muted/40, status em tom suave com
+   texto forte (`TONE_BADGE`) e ponto de status do registry. Antes os painéis
+   eram cinza chapado e as barras do cronograma usavam o tom escuro dos módulos
+   (azul-marinho, verde-musgo, marrom), que não existe no produto. */
+
+/** Cartão do app: branco, cantos de 16px e borda black/5. */
+const PAINEL = "bg-white border border-black/5 rounded-2xl";
+
+/** Chip de status: tom suave com texto forte, o `TONE_BADGE` do app. */
+const CHIP = {
+  ok: "bg-success-soft text-success-strong",
+  info: "bg-info-soft text-info-strong",
+  neutro: "bg-app-muted text-ink-muted",
+} as const;
+
+/** Abas de uma tela de detalhe, em linha com sublinhado, como no app. */
+function Abas({ itens, ativa }: { itens: string[]; ativa: string }) {
+  return (
+    <div className="flex items-center gap-4 border-b border-black/5 mb-4 overflow-hidden">
+      {itens.map((item) => (
+        <span
+          key={item}
+          className={`pb-1.5 -mb-px border-b-2 text-[9px] whitespace-nowrap ${
+            item === ativa ? "border-ink font-medium text-ink" : "border-transparent text-black/60"
+          }`}
+        >
+          {item}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+const ABAS_OBRA = ["Visão", "Diário", "Cronograma", "Tarefas", "Cotações", "Estoque", "Conta da obra", "Acessos"];
+const ABAS_PROJETO = ["Disciplinas", "Atividades", "Pagamentos", "Escopo", "Histórico"];
+
 /* ── Gestão: funil de leads, com um card trocando de coluna ───────────── */
 
 const LEADS = [
-  { col: "Em contato", n: 4, cards: [{ t: "Retrofit elétrico, hospital", v: "R$ 84.000" }] },
-  { col: "Proposta", n: 3, cards: [{ t: "Climatização, centro cirúrgico", v: "R$ 128.400" }] },
-  { col: "Negociação", n: 2, cards: [{ t: "Fotovoltaico, condomínio", v: "R$ 71.200" }] },
-  { col: "Ganho", n: 6, cards: [{ t: "Gases medicinais, clínica", v: "R$ 58.000" }] },
+  {
+    col: "Em Contato",
+    n: 4,
+    dot: "bg-pipeline-contato",
+    cards: [{ t: "Retrofit elétrico, hospital", v: "R$ 84.000" }],
+  },
+  {
+    col: "Proposta Enviada",
+    n: 3,
+    dot: "bg-pipeline-negociacao",
+    cards: [{ t: "Climatização, centro cirúrgico", v: "R$ 128.400" }],
+  },
+  { col: "Em Negociação", n: 2, dot: "bg-brand", cards: [{ t: "Fotovoltaico, condomínio", v: "R$ 71.200" }] },
+  { col: "Ganho", n: 6, dot: "bg-status-done", cards: [{ t: "Gases medicinais, clínica", v: "R$ 58.000" }] },
 ];
 
 function Card({ t, v, className = "" }: { t: string; v: string; className?: string }) {
   return (
-    <div className={`bg-white border border-paper-border/60 rounded-md p-2 shadow-sm ${className}`}>
+    <div className={`bg-white border border-app-border rounded-lg p-2 shadow-sm ${className}`}>
       <p className="text-[9.5px] leading-tight font-medium text-ink mb-1.5">{t}</p>
       <div className="flex items-center gap-1.5">
-        <span className="w-3 h-3 rounded-full bg-paper-border shrink-0" />
+        <span className="w-3 h-3 rounded-full bg-app-muted shrink-0" />
         <span className="text-[8px] text-ink-muted tabular-nums">{v}</span>
       </div>
+    </div>
+  );
+}
+
+/** Cabeçalho de coluna de quadro: ponto de cor, nome e contagem em pílula. */
+function CabecalhoColuna({ dot, nome, n }: { dot: string; nome: string; n: number }) {
+  return (
+    <div className="flex items-center gap-1.5 mb-2">
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} />
+      <span className="text-[8.5px] font-medium text-ink truncate">{nome}</span>
+      <span className="ml-auto rounded-full bg-app-muted px-1.5 text-[8px] tabular-nums text-ink-muted">{n}</span>
     </div>
   );
 }
@@ -37,15 +95,13 @@ export function KanbanScreen() {
       <ScreenHead crumb="Gestão · Comercial" title="Funil de leads" chip="+ Novo lead" />
       <div className="grid grid-cols-4 gap-2">
         {LEADS.map((c) => (
-          <div key={c.col} className="bg-paper-alt rounded-lg p-2 min-h-[168px]">
-            <div className="flex justify-between text-[8px] uppercase tracking-wider text-ink-muted mb-2">
-              <span>{c.col}</span>
-              <span>{c.n}</span>
+          <div key={c.col}>
+            <CabecalhoColuna dot={c.dot} nome={c.col} n={c.n} />
+            <div className="bg-app-muted/40 rounded-xl p-2 min-h-[150px]">
+              {c.cards.map((card) => (
+                <Card key={card.t} {...card} />
+              ))}
             </div>
-
-            {c.cards.map((card) => (
-              <Card key={card.t} {...card} />
-            ))}
           </div>
         ))}
       </div>
@@ -55,13 +111,21 @@ export function KanbanScreen() {
 
 /* ── Projetos: Gantt das disciplinas ──────────────────────────────────── */
 
-const BARRAS = [
-  { label: "Estrutural", left: "2%", width: "44%", tone: "bg-modulo-projetos-strong" },
-  { label: "Elétrico", left: "14%", width: "38%", tone: "bg-modulo-projetos-strong" },
-  { label: "Hidrossanitário", left: "22%", width: "34%", tone: "bg-modulo-gestao-strong" },
-  { label: "Climatização", left: "38%", width: "31%", tone: "bg-modulo-obra-strong" },
-  { label: "Compatibilização", left: "62%", width: "26%", tone: "bg-paper-border" },
-  { label: "Entrega final", left: "84%", width: "13%", tone: "bg-paper-border" },
+/** Barra por status, nas cores do registry do app (Cronograma de Projetos). */
+const STATUS_GANTT = {
+  concluido: { nome: "Concluído", tom: "bg-status-done" },
+  andamento: { nome: "Em andamento", tom: "bg-status-progress" },
+  revisao: { nome: "Revisão", tom: "bg-status-review" },
+  planejamento: { nome: "Planejamento", tom: "bg-status-planning" },
+} as const;
+
+const BARRAS: { label: string; left: string; width: string; status: keyof typeof STATUS_GANTT }[] = [
+  { label: "Estrutural", left: "2%", width: "44%", status: "concluido" },
+  { label: "Elétrico", left: "14%", width: "38%", status: "revisao" },
+  { label: "Hidrossanitário", left: "22%", width: "34%", status: "andamento" },
+  { label: "Climatização", left: "38%", width: "31%", status: "andamento" },
+  { label: "Compatibilização", left: "62%", width: "26%", status: "planejamento" },
+  { label: "Entrega final", left: "84%", width: "13%", status: "planejamento" },
 ];
 
 export function GanttScreen() {
@@ -69,28 +133,45 @@ export function GanttScreen() {
 
   return (
     <div>
-      <ScreenHead crumb="Projetos · Carteira" title="Cronograma das disciplinas" chip="Gantt" />
-      <div className="flex justify-between text-[7.5px] uppercase tracking-wider text-ink-muted pl-[104px] mb-1">
-        {["Set", "Out", "Nov", "Dez", "Jan"].map((mes) => (
-          <span key={mes}>{mes}</span>
-        ))}
-      </div>
-      <div className="flex flex-col gap-1.5">
-        {BARRAS.map((b, i) => (
-          <div key={b.label} className="grid grid-cols-[100px_1fr] gap-1.5 items-center">
-            <span className="text-[9.5px] text-ink-soft truncate">{b.label}</span>
-            <div className="h-[15px] bg-paper-alt rounded relative overflow-hidden">
-              <m.span
-                className={`absolute top-0.5 h-[11px] rounded-sm origin-left ${b.tone}`}
-                style={{ left: b.left, width: b.width }}
-                initial={reduced ? false : { scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ duration: 1.1, ease: [0.22, 0.9, 0.28, 1], delay: reduced ? 0 : i * 0.09 }}
-              />
-              <span className="absolute inset-y-0 w-px bg-ink/30" style={{ left: "46%" }} />
+      <ScreenHead crumb="Projetos · Cronograma" title="Cronograma das disciplinas" chip="Gantt" />
+      <div className={`${PAINEL} p-3`}>
+        <div className="flex justify-between text-[7.5px] uppercase tracking-wider text-ink-muted pl-[104px] mb-1">
+          {["Set", "Out", "Nov", "Dez", "Jan"].map((mes) => (
+            <span key={mes}>{mes}</span>
+          ))}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          {BARRAS.map((b, i) => (
+            <div key={b.label} className="grid grid-cols-[100px_1fr] gap-1.5 items-center">
+              <span className="text-[9.5px] text-ink-soft truncate">{b.label}</span>
+              <div className="h-[15px] bg-app-muted/50 rounded relative overflow-hidden">
+                <m.span
+                  className={`absolute top-0.5 h-[11px] rounded-sm origin-left ${STATUS_GANTT[b.status].tom}`}
+                  style={{ left: b.left, width: b.width }}
+                  initial={reduced ? false : { scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ duration: 1.1, ease: [0.22, 0.9, 0.28, 1], delay: reduced ? 0 : i * 0.09 }}
+                />
+                {/* Marcador de hoje, vermelho como no app. */}
+                <span className="absolute inset-y-0 w-px bg-chart-danger" style={{ left: "46%" }} />
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+
+        {/* Legenda de status, a mesma do app. */}
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mt-3 text-[7.5px] text-ink-muted">
+          {Object.values(STATUS_GANTT).map((st) => (
+            <span key={st.nome} className="flex items-center gap-1">
+              <span className={`w-2.5 h-1.5 rounded-full ${st.tom}`} />
+              {st.nome}
+            </span>
+          ))}
+          <span className="flex items-center gap-1">
+            <span className="w-px h-2 bg-chart-danger" />
+            Hoje
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -103,9 +184,10 @@ export function DiarioScreen() {
 
   return (
     <div>
-      <ScreenHead crumb="Obra · Diário" title="Diário de obra de hoje" chip="Veio do campo" />
+      <ScreenHead crumb="Obras › Residencial Santa Rita" title="Diário de obra de hoje" chip="Veio do campo" />
+      <Abas itens={ABAS_OBRA} ativa="Diário" />
       <div className="grid md:grid-cols-[1.15fr_1fr] gap-3">
-        <div className="bg-paper-alt rounded-lg p-3">
+        <div className="bg-white border border-black/5 rounded-2xl p-3">
           <p className="text-[8px] uppercase tracking-wider text-ink-muted mb-2">Registro do dia</p>
           {[
             ["Clima", "Nublado"],
@@ -115,25 +197,25 @@ export function DiarioScreen() {
           ].map(([k, v]) => (
             <div
               key={k}
-              className="flex justify-between text-[9.5px] text-ink-soft py-1 border-b border-paper-border/50 last:border-0"
+              className="flex justify-between text-[9.5px] text-ink-soft py-1 border-b border-black/5 last:border-0"
             >
               <span>{k}</span>
               <span className="text-ink tabular-nums">{v}</span>
             </div>
           ))}
-          <div className="flex items-center gap-1.5 mt-2 text-[8px] uppercase tracking-wider text-modulo-gestao-strong">
-            <span className="w-1.5 h-1.5 rounded-full bg-modulo-gestao-strong" />
+          <div className="flex items-center gap-1.5 mt-2 text-[8px] uppercase tracking-wider text-positive-strong">
+            <span className="w-1.5 h-1.5 rounded-full bg-positive" />
             Sincronizado do celular
           </div>
         </div>
 
-        <div className="bg-paper-alt rounded-lg p-3">
+        <div className="bg-white border border-black/5 rounded-2xl p-3">
           <p className="text-[8px] uppercase tracking-wider text-ink-muted mb-2">Fotos do canteiro</p>
           <div className="grid grid-cols-3 gap-1.5">
             {[0, 1, 2].map((i) => (
               <m.span
                 key={i}
-                className="aspect-square rounded bg-linear-to-br from-paper-border to-paper-alt block"
+                className="aspect-square rounded bg-app-muted block"
                 initial={reduced ? false : { opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.6, delay: reduced ? 0 : i * 0.14 }}
@@ -146,7 +228,7 @@ export function DiarioScreen() {
           ].map(([k, v]) => (
             <div
               key={k}
-              className="flex justify-between text-[9.5px] text-ink-soft py-1 border-b border-paper-border/50 last:border-0 mt-2 first:mt-2"
+              className="flex justify-between text-[9.5px] text-ink-soft py-1 border-b border-black/5 last:border-0 mt-2 first:mt-2"
             >
               <span>{k}</span>
               <span className="text-ink">{v}</span>
@@ -183,7 +265,7 @@ export function PortalScreen() {
         chip="Link compartilhado"
       />
       <div className="grid md:grid-cols-2 gap-3">
-        <div className="bg-paper-alt rounded-lg p-3">
+        <div className="bg-white border border-black/5 rounded-2xl p-3">
           <p className="text-[8px] uppercase tracking-wider text-ink-muted mb-2.5">Andamento por disciplina</p>
           {DISCIPLINAS_PORTAL.map((d, i) => (
             <div key={d.nome} className="mb-2.5 last:mb-0">
@@ -191,9 +273,9 @@ export function PortalScreen() {
                 <span className="text-ink-soft">{d.nome}</span>
                 <span className="text-ink tabular-nums">{d.pct}%</span>
               </div>
-              <div className="h-1.5 rounded-full bg-paper-border/50 overflow-hidden">
+              <div className="h-1.5 rounded-full bg-app-muted overflow-hidden">
                 <m.span
-                  className={`block h-full rounded-full origin-left ${d.pct === 100 ? "bg-ink" : "bg-brand"}`}
+                  className={`block h-full rounded-full origin-left ${d.pct === 100 ? "bg-status-done" : "bg-brand"}`}
                   style={{ width: `${d.pct}%` }}
                   initial={reduced ? false : { scaleX: 0 }}
                   animate={{ scaleX: 1 }}
@@ -202,24 +284,24 @@ export function PortalScreen() {
               </div>
             </div>
           ))}
-          <p className="mt-2.5 pt-2 border-t border-paper-border/50 text-[8.5px] text-ink-muted">
+          <p className="mt-2.5 pt-2 border-t border-black/5 text-[8.5px] text-ink-muted">
             Atualizado hoje, direto do cronograma
           </p>
         </div>
 
-        <div className="bg-paper-alt rounded-lg p-3">
+        <div className="bg-white border border-black/5 rounded-2xl p-3">
           <p className="text-[8px] uppercase tracking-wider text-ink-muted mb-2">Parcelas do contrato</p>
           {PARCELAS_PORTAL.map((p) => (
             <div
               key={p.nome}
-              className="flex items-center justify-between gap-2 py-1.5 border-b border-paper-border/50 last:border-0"
+              className="flex items-center justify-between gap-2 py-1.5 border-b border-black/5 last:border-0"
             >
               <span className="text-[9.5px] text-ink-soft">{p.nome}</span>
               <span className="flex items-center gap-2">
                 <span className="text-[9.5px] font-medium text-ink tabular-nums">{p.valor}</span>
                 <span
                   className={`text-[7.5px] uppercase tracking-wider px-1.5 py-0.5 rounded-full ${
-                    p.paga ? "bg-brand text-ink" : "bg-paper-border/60 text-ink-muted"
+                    p.paga ? CHIP.ok : CHIP.neutro
                   }`}
                 >
                   {p.status}
@@ -241,7 +323,7 @@ export function CampoScreen() {
   return (
     <div className="mx-auto w-[300px]">
       <div className="rounded-[36px] border-[3px] border-ink bg-ink shadow-[0_28px_56px_-20px_rgba(0,0,0,0.45)]">
-        <div className="relative overflow-hidden rounded-[32px] bg-frame">
+        <div className="relative overflow-hidden rounded-[32px] bg-app">
           <span className="absolute left-1/2 top-3.5 h-6 w-20 -translate-x-1/2 rounded-full bg-ink" />
 
           <div className="px-4 pb-6 pt-12">
@@ -250,13 +332,13 @@ export function CampoScreen() {
                 <p className="text-[8px] uppercase tracking-wider text-ink-muted">Obra Santa Rita</p>
                 <p className="text-[13px] font-semibold tracking-tight text-ink">Diário de hoje</p>
               </div>
-              <span className="flex items-center gap-1 rounded-full bg-paper-alt px-2 py-1 text-[7.5px] uppercase tracking-wider text-ink-muted">
+              <span className="flex items-center gap-1 rounded-full bg-app-muted px-2 py-1 text-[7.5px] uppercase tracking-wider text-ink-muted">
                 <span className="h-1.5 w-1.5 rounded-full bg-chart-warning" />
                 Sem sinal
               </span>
             </div>
 
-            <div className="rounded-lg bg-paper-alt p-2.5 mb-2.5">
+            <div className="rounded-lg border border-black/5 bg-white p-2.5 mb-2.5">
               {[
                 ["Clima", "Nublado"],
                 ["Efetivo em obra", "14"],
@@ -264,7 +346,7 @@ export function CampoScreen() {
               ].map(([k, v]) => (
                 <div
                   key={k}
-                  className="flex justify-between text-[10px] text-ink-soft py-1 border-b border-paper-border/50 last:border-0"
+                  className="flex justify-between text-[10px] text-ink-soft py-1 border-b border-black/5 last:border-0"
                 >
                   <span>{k}</span>
                   <span className="text-ink tabular-nums">{v}</span>
@@ -276,7 +358,7 @@ export function CampoScreen() {
               {[0, 1, 2].map((i) => (
                 <m.span
                   key={i}
-                  className="aspect-square rounded-md bg-linear-to-br from-paper-border to-paper-alt block"
+                  className="aspect-square rounded-md bg-app-muted block"
                   initial={reduced ? false : { opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5, delay: reduced ? 0 : 0.3 + i * 0.12 }}
@@ -284,9 +366,9 @@ export function CampoScreen() {
               ))}
             </div>
 
-            <div className="flex items-center justify-between rounded-lg bg-paper-alt px-2.5 py-2 mb-3">
+            <div className="flex items-center justify-between rounded-lg border border-black/5 bg-white px-2.5 py-2 mb-3">
               <span className="text-[10px] text-ink">Tarefa do cronograma</span>
-              <span className="text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-brand text-ink">
+              <span className="text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-success-soft text-success-strong">
                 Concluída
               </span>
             </div>
@@ -323,20 +405,20 @@ export function FinanceiroScreen() {
   return (
     <div>
       <ScreenHead crumb="Gestão · Financeiro" title="Extrato importado" chip="Lido por IA" />
-      <div className="bg-paper-alt rounded-lg p-3">
+      <div className="bg-white border border-black/5 rounded-2xl p-3">
         {linhas.map((l) => (
           <div
             key={l.desc}
-            className="flex items-center justify-between gap-2 py-1.5 border-b border-paper-border/50 last:border-0"
+            className="flex items-center justify-between gap-2 py-1.5 border-b border-black/5 last:border-0"
           >
             <div className="min-w-0">
               <p className="text-[9.5px] text-ink truncate">{l.desc}</p>
-              <span className="inline-block mt-0.5 text-[7.5px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-white border border-paper-border/60 text-ink-muted">
+              <span className="inline-block mt-0.5 text-[7.5px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-app-muted text-ink-muted">
                 {l.cat}
               </span>
             </div>
             <span
-              className={`text-[9.5px] font-medium tabular-nums shrink-0 ${l.entrada ? "text-modulo-gestao-strong" : "text-ink"}`}
+              className={`text-[9.5px] font-medium tabular-nums shrink-0 ${l.entrada ? "text-positive-strong" : "text-ink"}`}
             >
               {l.valor}
             </span>
@@ -358,14 +440,14 @@ export function FolhaScreen() {
   return (
     <div>
       <ScreenHead crumb="Gestão · Folha" title="Competência de agosto" chip="Fechada" />
-      <div className="bg-paper-alt rounded-lg p-3">
+      <div className="bg-white border border-black/5 rounded-2xl p-3">
         {pessoas.map((p) => (
           <div
             key={p.nome}
-            className="flex items-center justify-between gap-2 py-1.5 border-b border-paper-border/50 last:border-0"
+            className="flex items-center justify-between gap-2 py-1.5 border-b border-black/5 last:border-0"
           >
             <div className="flex items-center gap-2 min-w-0">
-              <span className="w-5 h-5 rounded-full bg-paper-border shrink-0" />
+              <span className="w-5 h-5 rounded-full bg-app-muted shrink-0" />
               <div className="min-w-0">
                 <p className="text-[9.5px] font-medium text-ink truncate">{p.nome}</p>
                 <p className="text-[8px] text-ink-muted truncate">{p.papel}</p>
@@ -373,13 +455,13 @@ export function FolhaScreen() {
             </div>
             <span className="flex items-center gap-1.5 shrink-0">
               <span className="text-[9.5px] font-medium tabular-nums text-ink">{p.valor}</span>
-              <span className="text-[7.5px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-brand text-ink-on-brand">
+              <span className="text-[7.5px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-success-soft text-success-strong">
                 PDF enviado
               </span>
             </span>
           </div>
         ))}
-        <div className="flex justify-between mt-2 pt-1.5 border-t border-paper-border/50 text-[9px]">
+        <div className="flex justify-between mt-2 pt-1.5 border-t border-black/5 text-[9px]">
           <span className="text-ink-muted">Total da competência</span>
           <span className="font-semibold tabular-nums text-ink">R$ 17.500</span>
         </div>
@@ -391,27 +473,45 @@ export function FolhaScreen() {
 /** Projetos · quadro: colunas definidas pelo escritório. */
 export function QuadroScreen() {
   const colunas = [
-    { col: "Em estudo", n: 2, cards: [{ t: "Galpão logístico", d: "2 disciplinas" }] },
-    { col: "Em projeto", n: 4, cards: [{ t: "Centro cirúrgico", d: "5 disciplinas" }] },
-    { col: "Compatibilização", n: 1, cards: [{ t: "Retrofit elétrico", d: "3 disciplinas" }] },
-    { col: "Entregue", n: 7, cards: [{ t: "Fotovoltaico", d: "1 disciplina" }] },
+    {
+      col: "Em estudo",
+      n: 2,
+      dot: "bg-status-planning",
+      cards: [{ t: "Galpão logístico", d: "2 disciplinas", pct: 10 }],
+    },
+    {
+      col: "Em projeto",
+      n: 4,
+      dot: "bg-status-progress",
+      cards: [{ t: "Centro cirúrgico", d: "5 disciplinas", pct: 72 }],
+    },
+    {
+      col: "Compatibilização",
+      n: 1,
+      dot: "bg-status-review",
+      cards: [{ t: "Retrofit elétrico", d: "3 disciplinas", pct: 90 }],
+    },
+    { col: "Entregue", n: 7, dot: "bg-status-done", cards: [{ t: "Fotovoltaico", d: "1 disciplina", pct: 100 }] },
   ];
   return (
     <div>
       <ScreenHead crumb="Projetos · Quadro" title="Carteira por status" chip="Suas colunas" />
       <div className="grid grid-cols-4 gap-2">
         {colunas.map((c) => (
-          <div key={c.col} className="bg-paper-alt rounded-lg p-2 min-h-[140px]">
-            <div className="flex justify-between text-[7.5px] uppercase tracking-wider text-ink-muted mb-2">
-              <span className="truncate">{c.col}</span>
-              <span>{c.n}</span>
+          <div key={c.col}>
+            <CabecalhoColuna dot={c.dot} nome={c.col} n={c.n} />
+            <div className="bg-app-muted/40 rounded-xl p-2 min-h-[128px]">
+              {c.cards.map((card) => (
+                <div key={card.t} className="bg-white border border-app-border rounded-lg p-2 shadow-sm">
+                  <p className="text-[9px] leading-tight font-medium text-ink mb-1">{card.t}</p>
+                  <p className="text-[7.5px] text-ink-muted mb-1.5">{card.d}</p>
+                  {/* Barra de progresso do card: preta no quadro do app. */}
+                  <span className="block h-[3px] rounded-full bg-app-muted overflow-hidden">
+                    <span className="block h-full rounded-full bg-ink" style={{ width: `${card.pct}%` }} />
+                  </span>
+                </div>
+              ))}
             </div>
-            {c.cards.map((card) => (
-              <div key={card.t} className="bg-white border border-paper-border/60 rounded-md p-2 shadow-sm">
-                <p className="text-[9px] leading-tight font-medium text-ink mb-1">{card.t}</p>
-                <p className="text-[7.5px] text-ink-muted">{card.d}</p>
-              </div>
-            ))}
           </div>
         ))}
       </div>
@@ -429,19 +529,20 @@ export function ParcelasScreen() {
   ];
   return (
     <div>
-      <ScreenHead crumb="Projetos · Centro cirúrgico" title="Parcelas do contrato" chip="R$ 214.000" />
-      <div className="bg-paper-alt rounded-lg p-3">
+      <ScreenHead crumb="Projetos › Centro cirúrgico" title="Parcelas do contrato" chip="R$ 214.000" />
+      <Abas itens={ABAS_PROJETO} ativa="Pagamentos" />
+      <div className="bg-white border border-black/5 rounded-2xl p-3">
         {parcelas.map((p) => (
           <div
             key={p.nome}
-            className="flex items-center justify-between gap-2 py-1.5 border-b border-paper-border/50 last:border-0"
+            className="flex items-center justify-between gap-2 py-1.5 border-b border-black/5 last:border-0"
           >
             <span className="text-[9.5px] text-ink-soft truncate">{p.nome}</span>
             <span className="flex items-center gap-1.5 shrink-0">
               <span className="text-[9.5px] font-medium tabular-nums text-ink">{p.valor}</span>
               <span
                 className={`text-[7.5px] uppercase tracking-wider px-1.5 py-0.5 rounded-full ${
-                  p.ok ? "bg-brand text-ink-on-brand" : "bg-paper-border/60 text-ink-muted"
+                  p.ok ? CHIP.ok : CHIP.neutro
                 }`}
               >
                 {p.status}
@@ -449,7 +550,7 @@ export function ParcelasScreen() {
             </span>
           </div>
         ))}
-        <div className="flex justify-between mt-2 pt-1.5 border-t border-paper-border/50 text-[8.5px] text-ink-muted">
+        <div className="flex justify-between mt-2 pt-1.5 border-t border-black/5 text-[8.5px] text-ink-muted">
           <span>
             Recebido <span className="font-medium text-ink tabular-nums">R$ 107.000</span>
           </span>
@@ -471,9 +572,14 @@ export function CotacaoScreen() {
   ];
   return (
     <div>
-      <ScreenHead crumb="Obra · Suprimentos" title="Cotação: cesta de aço e cimento" chip="3 fornecedores" />
-      <div className="bg-paper-alt rounded-lg p-3">
-        <div className="grid grid-cols-[1fr_60px_70px_58px] gap-1 text-[7.5px] uppercase tracking-wider text-ink-muted pb-1.5 border-b border-paper-border/50">
+      <ScreenHead
+        crumb="Obras › Residencial Santa Rita"
+        title="Cotação: cesta de aço e cimento"
+        chip="3 fornecedores"
+      />
+      <Abas itens={ABAS_OBRA} ativa="Cotações" />
+      <div className="bg-white border border-black/5 rounded-2xl p-3">
+        <div className="grid grid-cols-[1fr_60px_70px_58px] gap-1 text-[7.5px] uppercase tracking-wider text-ink-muted pb-1.5 border-b border-black/5">
           <span>Fornecedor</span>
           <span>Prazo</span>
           <span className="text-right">Total</span>
@@ -482,14 +588,14 @@ export function CotacaoScreen() {
         {propostas.map((p) => (
           <div
             key={p.loja}
-            className="grid grid-cols-[1fr_60px_70px_58px] gap-1 items-center py-1.5 border-b border-paper-border/50 last:border-0"
+            className="grid grid-cols-[1fr_60px_70px_58px] gap-1 items-center py-1.5 border-b border-black/5 last:border-0"
           >
             <span className="text-[9.5px] text-ink truncate">{p.loja}</span>
             <span className="text-[9px] text-ink-muted">{p.prazo}</span>
             <span className="text-[9.5px] font-medium tabular-nums text-ink text-right">{p.total}</span>
             <span className="text-right">
               {p.vence && (
-                <span className="text-[7.5px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-brand text-ink-on-brand">
+                <span className="text-[7.5px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-success-soft text-success-strong">
                   Vencedora
                 </span>
               )}
@@ -510,23 +616,24 @@ export function ContaObraScreen() {
   ];
   return (
     <div>
-      <ScreenHead crumb="Obra · Conta da obra" title="Residencial Santa Rita" chip="Prestação de contas" />
+      <ScreenHead crumb="Obras › Residencial Santa Rita" title="Conta da obra" chip="Prestação de contas" />
+      <Abas itens={ABAS_OBRA} ativa="Conta da obra" />
       <div className="grid md:grid-cols-[1fr_120px] gap-3">
-        <div className="bg-paper-alt rounded-lg p-3">
+        <div className="bg-white border border-black/5 rounded-2xl p-3">
           {linhas.map((l) => (
             <div
               key={l.k}
-              className="flex justify-between text-[9.5px] text-ink-soft py-1.5 border-b border-paper-border/50 last:border-0"
+              className="flex justify-between text-[9.5px] text-ink-soft py-1.5 border-b border-black/5 last:border-0"
             >
               <span>{l.k}</span>
               <span className="text-ink font-medium tabular-nums">{l.v}</span>
             </div>
           ))}
         </div>
-        <div className="bg-paper-alt rounded-lg p-3 flex flex-col items-start justify-center">
+        <div className="bg-white border border-black/5 rounded-2xl p-3 flex flex-col items-start justify-center">
           <p className="text-[7.5px] uppercase tracking-wider text-ink-muted mb-1">Saldo em conta</p>
           <p className="text-[16px] font-semibold tabular-nums text-ink leading-none">R$ 45.700</p>
-          <p className="mt-1.5 text-[8px] text-modulo-gestao-strong">Atualizado a cada lançamento</p>
+          <p className="mt-1.5 text-[8px] text-positive-strong">Atualizado a cada lançamento</p>
         </div>
       </div>
     </div>
@@ -543,22 +650,22 @@ export function PortalObraScreen() {
   return (
     <div>
       <ScreenHead crumb="Portal do cliente · Obra" title="Prestação de contas" chip="Só leitura" />
-      <div className="bg-paper-alt rounded-lg p-3">
+      <div className="bg-white border border-black/5 rounded-2xl p-3">
         {linhas.map((l) => (
           <div
             key={l.k}
-            className="flex items-center justify-between gap-2 py-1.5 border-b border-paper-border/50 last:border-0"
+            className="flex items-center justify-between gap-2 py-1.5 border-b border-black/5 last:border-0"
           >
             <span className="text-[9.5px] text-ink-soft truncate">{l.k}</span>
             <span className="flex items-center gap-1.5 shrink-0">
               <span className="text-[9.5px] font-medium tabular-nums text-ink">{l.v}</span>
-              <span className="text-[7.5px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-white border border-paper-border/60 text-ink-muted">
+              <span className="text-[7.5px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-app-muted text-ink-muted">
                 {l.chip}
               </span>
             </span>
           </div>
         ))}
-        <div className="flex justify-between mt-2 pt-1.5 border-t border-paper-border/50 text-[9px]">
+        <div className="flex justify-between mt-2 pt-1.5 border-t border-black/5 text-[9px]">
           <span className="text-ink-muted">Saldo da obra</span>
           <span className="font-semibold tabular-nums text-ink">R$ 45.700</span>
         </div>
@@ -577,7 +684,7 @@ export function CampoTarefasScreen() {
   return (
     <div className="mx-auto w-[300px]">
       <div className="rounded-[36px] border-[3px] border-ink bg-ink shadow-[0_28px_56px_-20px_rgba(0,0,0,0.45)]">
-        <div className="relative overflow-hidden rounded-[32px] bg-frame">
+        <div className="relative overflow-hidden rounded-[32px] bg-app">
           <span className="absolute left-1/2 top-3.5 h-6 w-20 -translate-x-1/2 rounded-full bg-ink" />
           <div className="px-4 pb-6 pt-12">
             <div className="pb-3">
@@ -587,12 +694,12 @@ export function CampoTarefasScreen() {
             {tarefas.map((t) => (
               <div
                 key={t.t}
-                className="flex items-center justify-between gap-2 rounded-lg bg-paper-alt px-2.5 py-2.5 mb-2"
+                className="flex items-center justify-between gap-2 rounded-lg border border-black/5 bg-white px-2.5 py-2.5 mb-2"
               >
                 <span className="text-[10px] text-ink truncate">{t.t}</span>
                 <span
                   className={`text-[7.5px] uppercase tracking-wider px-1.5 py-0.5 rounded-full shrink-0 ${
-                    t.ok ? "bg-brand text-ink-on-brand" : "bg-paper-border/60 text-ink-muted"
+                    t.ok ? CHIP.ok : CHIP.neutro
                   }`}
                 >
                   {t.status}

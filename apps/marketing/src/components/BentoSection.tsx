@@ -85,8 +85,8 @@ function CartaoGestao() {
     { nome: "Fotovoltaico", valor: "71.200", etapa: "Negociação", dot: "bg-brand" },
   ];
   const financeiro = [
-    { label: "Receitas", valor: "R$ 96.400", pct: 0.9, tom: "bg-brand" },
-    { label: "Despesas", valor: "R$ 61.200", pct: 0.57, tom: "bg-ink/25" },
+    { label: "Receitas", valor: "R$ 96.400", pct: 0.9, tom: "bg-chart-success" },
+    { label: "Despesas", valor: "R$ 61.200", pct: 0.57, tom: "bg-chart-danger" },
   ];
 
   return (
@@ -181,9 +181,9 @@ function CartaoGestao() {
 function CartaoProjetos() {
   const reducedMotion = useReducedMotion();
   const barras = [
-    { nome: "Estrutural", inicio: 0, larg: 0.5, tom: "bg-modulo-projetos", pct: "100%" },
-    { nome: "Elétrico", inicio: 0.18, larg: 0.46, tom: "bg-modulo-projetos", pct: "100%" },
-    { nome: "Climatização", inicio: 0.4, larg: 0.52, tom: "bg-brand", pct: "45%" },
+    { nome: "Estrutural", inicio: 0, larg: 0.5, tom: "bg-status-done", pct: "100%" },
+    { nome: "Elétrico", inicio: 0.18, larg: 0.46, tom: "bg-status-done", pct: "100%" },
+    { nome: "Climatização", inicio: 0.4, larg: 0.52, tom: "bg-status-progress", pct: "45%" },
   ];
 
   return (
@@ -282,10 +282,10 @@ function CartaoObras() {
             {frentes.map((f, i) => (
               <div key={f.nome} className="flex flex-col items-center gap-1.5">
                 <span className="text-[10px] font-semibold tabular-nums text-ink">{f.pct}%</span>
-                <div className="relative h-[88px] w-11 overflow-hidden rounded-md bg-paper-alt">
+                <div className="relative h-[88px] w-11 overflow-hidden rounded-md bg-app-muted">
                   <m.span
                     className={`absolute inset-x-0 bottom-0 origin-bottom rounded-md ${
-                      f.pct === 100 ? "bg-ink" : "bg-brand"
+                      f.pct === 100 ? "bg-status-done" : "bg-brand"
                     }`}
                     style={{ height: `${f.pct}%` }}
                     initial={reducedMotion ? false : { scaleY: 0 }}

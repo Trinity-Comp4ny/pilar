@@ -15,12 +15,18 @@ export default {
         sans: ["Geist", "Inter", "system-ui", "sans-serif"],
       },
       colors: {
-        ...(rootConfig.theme?.extend as Record<string, unknown>)?.colors as Record<string, unknown>,
+        ...((rootConfig.theme?.extend as Record<string, unknown>)?.colors as Record<string, unknown>),
         // Superfície da moldura e dos cartões claros sobre o fundo cinza.
         frame: "hsl(var(--surface-landing-white) / <alpha-value>)",
         // Cartões do bento: cheio no verde da marca, e a lavagem clara dele.
         "card-brand": "hsl(var(--brand-accent) / <alpha-value>)",
         "card-brand-soft": "hsl(var(--brand-accent-soft) / <alpha-value>)",
+        // Superfícies do shell do app, para os mocks do produto. O app as
+        // recebe pelas variáveis do shadcn (index.css), que a landing não
+        // importa; aqui apontam direto para os mesmos tokens semânticos.
+        app: "hsl(var(--surface-app) / <alpha-value>)",
+        "app-muted": "hsl(var(--surface-muted) / <alpha-value>)",
+        "app-border": "hsl(var(--border-default) / <alpha-value>)",
       },
     },
   },
