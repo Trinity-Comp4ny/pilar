@@ -224,6 +224,100 @@ export type Database = {
           },
         ]
       }
+      agente_pendencias: {
+        Row: {
+          acao_sugerida: string | null
+          adiada_ate: string | null
+          area: string
+          chave: string
+          dados: Json
+          detalhe: string | null
+          empresa_id: string
+          id: string
+          link: string | null
+          primeira_deteccao: string
+          projeto_id: string | null
+          referencia_id: string | null
+          referencia_tipo: string | null
+          resolvida_em: string | null
+          resolvida_motivo: string | null
+          severidade: string
+          status: string
+          tipo: string
+          titulo: string
+          ultima_deteccao: string
+          vence_em: string | null
+        }
+        Insert: {
+          acao_sugerida?: string | null
+          adiada_ate?: string | null
+          area: string
+          chave: string
+          dados?: Json
+          detalhe?: string | null
+          empresa_id: string
+          id?: string
+          link?: string | null
+          primeira_deteccao?: string
+          projeto_id?: string | null
+          referencia_id?: string | null
+          referencia_tipo?: string | null
+          resolvida_em?: string | null
+          resolvida_motivo?: string | null
+          severidade?: string
+          status?: string
+          tipo: string
+          titulo: string
+          ultima_deteccao?: string
+          vence_em?: string | null
+        }
+        Update: {
+          acao_sugerida?: string | null
+          adiada_ate?: string | null
+          area?: string
+          chave?: string
+          dados?: Json
+          detalhe?: string | null
+          empresa_id?: string
+          id?: string
+          link?: string | null
+          primeira_deteccao?: string
+          projeto_id?: string | null
+          referencia_id?: string | null
+          referencia_tipo?: string | null
+          resolvida_em?: string | null
+          resolvida_motivo?: string | null
+          severidade?: string
+          status?: string
+          tipo?: string
+          titulo?: string
+          ultima_deteccao?: string
+          vence_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agente_pendencias_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agente_pendencias_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agente_pendencias_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_model_precos: {
         Row: {
           created_at: string
@@ -9290,6 +9384,34 @@ export type Database = {
         }
         Returns: string
       }
+      agente_pendencia_adiar: {
+        Args: { p_dias: number; p_id: string }
+        Returns: undefined
+      }
+      agente_pendencia_dispensar: { Args: { p_id: string }; Returns: undefined }
+      agente_pendencia_visivel: { Args: { p_area: string }; Returns: boolean }
+      agente_pendencias_atualizar: { Args: never; Returns: Json }
+      agente_pendencias_detectar: {
+        Args: { p_empresa?: string }
+        Returns: {
+          acao_sugerida: string
+          area: string
+          chave: string
+          dados: Json
+          detalhe: string
+          empresa_id: string
+          link: string
+          projeto_id: string
+          referencia_id: string
+          referencia_tipo: string
+          severidade: string
+          tipo: string
+          titulo: string
+          vence_em: string
+        }[]
+      }
+      agente_pendencias_varrer: { Args: { p_empresa?: string }; Returns: Json }
+      agente_pendencias_varrer_cron: { Args: never; Returns: undefined }
       aprovar_orcamento_agente: { Args: { p_run_id: string }; Returns: Json }
       audit_log_cleanup: { Args: never; Returns: number }
       audit_log_cleanup_monitored: { Args: never; Returns: undefined }
