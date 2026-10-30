@@ -777,6 +777,13 @@ export function useProjetoForm({
               saveCoords(lat, lng);
               return;
             }
+            if (data?.indisponivel) {
+              toast.warning("Mapa indisponível agora", {
+                description:
+                  "O serviço de mapas não respondeu. Salve o projeto de novo mais tarde para ele aparecer no mapa.",
+              });
+              return;
+            }
             toast.warning("Endereço não localizado", {
               description: "Não foi possível encontrar as coordenadas do endereço. O projeto não aparecerá no mapa.",
             });
