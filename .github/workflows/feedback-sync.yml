@@ -2,7 +2,8 @@ name: Feedback fecha pela PR
 
 # SPEC 145. Commit com a linha `Feedback: <uuid>` move o feedback no portal Ultra admin:
 # push em staging = planejado; push em main (release) = resolvido. O release vira um commit só,
-# então os feedbacks vêm dos hashes que o PR de release lista no corpo (promote-staging-to-main).
+# então o intervalo vem da árvore: o commit de staging com a árvore do release (scripts/feedback-release-commits.sh).
+# O corpo do PR de release só serve de fallback.
 # O feedback mora no banco de produção, então os dois passos chamam a função de produção.
 # Segredos de repositório: FEEDBACK_SYNC_URL (URL da função em produção) e FEEDBACK_SYNC_TOKEN.
 # Sem eles o passo só avisa. Armadilha da branch default: o gatilho em main só vale com este
@@ -52,16 +53,25 @@ jobs:
         if: github.ref_name == 'main'
         env:
           REPO: ${{ github.repository }}
+          ANTES: ${{ github.event.before }}
           DEPOIS: ${{ github.sha }}
         run: |
           set -euo pipefail
+          git fetch origin staging --quiet
+          # O release é um commit com a árvore de staging: acha o intervalo por ela, sem depender
+          # do corpo do PR (que pode ser escrito à mão). Árvore sem par em staging (staging andou
+          # depois, ou primeiro push): cai nos hashes que o corpo do PR lista.
+          if MSGS=$(scripts/feedback-release-commits.sh "$DEPOIS" "$ANTES"); then
+            printf '%s\n' "$MSGS" | scripts/feedback-sync.sh resolvido
+            exit 0
+          fi
+          echo "::notice::Árvore do release sem par em staging: usando os hashes do corpo do PR."
           CORPO=$(gh api "repos/$REPO/commits/$DEPOIS/pulls" --jq '.[0].body // ""')
           HASHES=$(printf '%s\n' "$CORPO" | grep -oE "\`[0-9a-f]{7,40}\`" | tr -d '\`' | sort -u || true)
           if [ -z "$HASHES" ]; then
-            echo "::notice::Push em main sem PR de release com lista de commits: nada a sincronizar."
+            echo "::warning::Release sem par em staging e sem lista de commits no corpo do PR: feedback não sincronizado."
             exit 0
           fi
-          git fetch origin staging --quiet
           for h in $HASHES; do
             git show -s --format=%B "$h" 2>/dev/null || true
           done | scripts/feedback-sync.sh resolvido
