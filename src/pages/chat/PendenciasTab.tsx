@@ -21,6 +21,7 @@ import {
   type PendenciaAditivo,
 } from "@/hooks/useEscopos";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { usePendenciasOrcamentoAusente } from "@/pages/chat/hooks/useAgentePendencias";
 import { useAgentHeartbeat } from "@/pages/chat/hooks/useAgentHeartbeat";
 import { formatDateTime } from "@/lib/format";
 
@@ -38,6 +39,7 @@ export function PendenciasTab() {
   const rejeitar = useRejeitarEscopo();
   const adiar = useAdiarEscopo();
   const heartbeat = useAgentHeartbeat("guardiao_margem_cron");
+  const semOrcamento = usePendenciasOrcamentoAusente();
   const { canEdit } = useFeatureAccess("projetos");
 
   const [confirmAprovar, setConfirmAprovar] = useState<PendenciaAditivo | null>(null);
@@ -112,6 +114,26 @@ export function PendenciasTab() {
             </p>
           )
         ))}
+
+      {semOrcamento.data && semOrcamento.data.total > 0 && (
+        <div className="rounded-xl border bg-muted/40 p-3 text-sm text-foreground">
+          <p>
+            {semOrcamento.data.total === 1
+              ? "1 projeto em andamento está sem orçamento por disciplina."
+              : `${semOrcamento.data.total} projetos em andamento estão sem orçamento por disciplina.`}{" "}
+            O guardião de margem só vigia projeto com orçamento, por isso a última verificação não achou nada. Defina o
+            orçamento na aba Escopo do projeto.
+          </p>
+          {semOrcamento.data.primeiroProjetoId && (
+            <NavLink
+              to={`/projetos/${semOrcamento.data.primeiroProjetoId}#escopo`}
+              className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium underline"
+            >
+              Definir orçamento <ArrowUpRight className="h-3 w-3" />
+            </NavLink>
+          )}
+        </div>
+      )}
 
       {itens.length === 0 ? (
         <Card>
