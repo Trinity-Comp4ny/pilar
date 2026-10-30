@@ -11,6 +11,19 @@ Regras de manutenção:
 
 ---
 
+## 2026-10-30 · Agentes: pendência vem de regra em SQL; o chat consulta registros e age com confirmação
+
+**Decisão:** o agente de acompanhamento detecta por regra (parcela e conta vencidas ou a vencer, prazo de projeto e
+disciplina, orçamento incorreto ou ausente, tarefa da obra vencendo, o que falta planejar) e mantém a fila na aba
+Pendências com idade e fechamento automático. A IA fica no chat: escolhe entre ferramentas de leitura fechadas e
+responde com os registros e link. Ação continua com card de confirmação. Detalhes na SPEC 146, SPEC 147 e ADR 0065.
+
+Contexto: a aba estava vazia porque o guardião de margem só olha projeto com orçamento por disciplina e nenhum dos 21
+projetos em andamento tinha. O agente de projetos do chat respondia "0 projetos" desde que `valor_contrato` perdeu o
+SELECT (ADR 0034). O sino avisava de receita excluída (129 de 139 avisos de recebimento atrasado). Cards: BEZ-508 a 513.
+
+---
+
 ## 2026-10-28 · Marca: promessa "Do contrato à execução" e agentes como primeiro pilar
 
 **Decisão:** a promessa-mãe do Pilar passa a ser "Do contrato à execução, num fluxo só". Agentes de IA viram o primeiro
