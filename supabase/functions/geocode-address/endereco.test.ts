@@ -1,5 +1,12 @@
 import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
-import { escolherCidade, lerCepGeo, lerEndereco } from "./endereco.ts";
+import {
+  escolherCidade,
+  type GeoResult,
+  lerCepGeo,
+  lerEndereco,
+  type Provedores,
+  resolverEndereco,
+} from "./endereco.ts";
 
 const santaMaria = [
   { name: "Santa Maria", latitude: -29.68, longitude: -53.8, admin1: "Rio Grande do Sul" },
@@ -47,4 +54,92 @@ Deno.test("lerCepGeo recusa resposta fora do formato", () => {
     lerCepGeo({ city: "X", location: { coordinates: { latitude: "abc", longitude: "1" } } })?.coordenadas,
     null
   );
+});
+
+const MARILIA: GeoResult = {
+  lat: "-22.21",
+  lon: "-49.95",
+  display_name: "Marília, São Paulo",
+};
+const ENDERECO = {
+  street: "Rua A 10",
+  city: "Marília",
+  state: "SP",
+  hasStructured: true,
+};
+
+function provedores(over: Partial<Provedores> = {}): Provedores {
+  return {
+    nominatim: () => Promise.resolve(null),
+    openMeteoCidade: () => Promise.resolve(null),
+    brasilApiCep: () => Promise.resolve(null),
+    ...over,
+  };
+}
+
+const bloqueado = () => Promise.reject(new Error("Nominatim retornou 403"));
+
+Deno.test("cascata: Nominatim bloqueado cai no centro da cidade", async () => {
+  const r = await resolverEndereco(
+    ENDERECO,
+    provedores({
+      nominatim: bloqueado,
+      openMeteoCidade: () => Promise.resolve(MARILIA),
+    })
+  );
+  assertEquals(r, { found: true, result: MARILIA });
+});
+
+Deno.test("cascata: bloqueado e sem cidade nem CEP não é erro, é indisponível", async () => {
+  const r = await resolverEndereco({ street: "Rua A 10", hasStructured: true }, provedores({ nominatim: bloqueado }));
+  assertEquals(r, { found: false, indisponivel: true });
+});
+
+Deno.test("cascata: bloqueado e Open-Meteo sem a cidade ou fora do ar também é indisponível", async () => {
+  assertEquals(await resolverEndereco(ENDERECO, provedores({ nominatim: bloqueado })), {
+    found: false,
+    indisponivel: true,
+  });
+  const fora = provedores({
+    nominatim: bloqueado,
+    openMeteoCidade: () => Promise.reject(new Error("Open-Meteo retornou 500")),
+  });
+  assertEquals(await resolverEndereco(ENDERECO, fora), {
+    found: false,
+    indisponivel: true,
+  });
+});
+
+Deno.test("cascata: sem cidade, o CEP dá a cidade para o Open-Meteo", async () => {
+  const r = await resolverEndereco(
+    { postalcode: "17500-000", hasStructured: true },
+    provedores({
+      nominatim: bloqueado,
+      brasilApiCep: () => Promise.resolve({ coordenadas: null, city: "Marília", state: "SP" }),
+      openMeteoCidade: (c, s) => Promise.resolve(c === "Marília" && s === "SP" ? MARILIA : null),
+    })
+  );
+  assertEquals(r, { found: true, result: MARILIA });
+});
+
+Deno.test("cascata: ninguém achou, sem falha de provedor, é só não localizado", async () => {
+  assertEquals(await resolverEndereco(ENDERECO, provedores()), {
+    found: false,
+    indisponivel: false,
+  });
+});
+
+Deno.test("cascata: Nominatim sem endereço tenta só a cidade antes de desistir", async () => {
+  const pedidas: string[] = [];
+  const r = await resolverEndereco(
+    ENDERECO,
+    provedores({
+      nominatim: (params) => {
+        pedidas.push(params.has("street") ? "endereco" : "cidade");
+        return Promise.resolve(params.has("street") ? null : MARILIA);
+      },
+    })
+  );
+  assertEquals(pedidas, ["endereco", "cidade"]);
+  assertEquals(r.found && r.result, MARILIA);
 });
