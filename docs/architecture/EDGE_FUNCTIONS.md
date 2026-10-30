@@ -14,7 +14,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
-| `ai-chat` | Copiloto do chat: classifica a intenção e responde com dados do usuário (só leitura, RLS do próprio usuário). | app | JWT | `AI_GATEWAY_API_KEY` `GEMINI_API_KEY` | sim |
+| `ai-chat` | Copiloto do chat: classifica a intenção e responde com dados do usuário (só leitura, RLS do próprio usuário). | app | JWT | `AI_CHAT_FERRAMENTAS` `AI_GATEWAY_API_KEY` `GEMINI_API_KEY` | sim |
 | `ai-cotacao-import` | Lê PDF ou imagem de orçamento de fornecedor e extrai os itens (Gemini, spec 023). | app | JWT |  | sim |
 | `ai-estimativa-itens` | Lê a descrição da obra e devolve só itens do catálogo da estimativa, com quantidade, o que ficou de fora e o que faltou saber; nunca preço nem prazo (Gemini, SPEC 138). | app | JWT | `AI_GATEWAY_API_KEY` `GEMINI_API_KEY` | sim |
 | `ai-import-financeiro` | Extrai lançamentos do texto de um extrato ou fatura (spec 017). | app | JWT |  | sim |
