@@ -117,3 +117,87 @@ export function lerCepGeo(raw: unknown): CepGeo | null {
     state,
   };
 }
+
+/** Provedores de geocodificação, injetados para a cascata ser testável sem rede. */
+export interface Provedores {
+  nominatim(params: URLSearchParams): Promise<GeoResult | null>;
+  openMeteoCidade(city: string, state?: string): Promise<GeoResult | null>;
+  brasilApiCep(postalcode: string): Promise<CepGeo | null>;
+  /** Telemetria do fallback (só quando o Nominatim falhou). */
+  fallback?(provider: "brasilapi-cep" | "open-meteo", found: boolean): void;
+}
+
+export type Resolucao =
+  | { found: true; result: GeoResult }
+  | {
+      found: false;
+      /** Algum provedor falhou (bloqueio do Nominatim, Open-Meteo fora) e nada o substituiu: tentar de novo depois pode achar. */
+      indisponivel: boolean;
+    };
+
+/**
+ * Cascata: Nominatim (endereço) → Nominatim (só cidade) → CEP quando falta a cidade →
+ * centro da cidade no Open-Meteo. Endereço que nenhum provedor localiza não é erro:
+ * volta `found: false`, com `indisponivel` dizendo se foi falha de provedor ou só ausência.
+ */
+export async function resolverEndereco(
+  endereco: Endereco & { hasStructured: boolean },
+  p: Provedores
+): Promise<Resolucao> {
+  const { address, street, city, state, postalcode, hasStructured } = endereco;
+
+  const primary = new URLSearchParams({
+    format: "json",
+    limit: "1",
+    country: "Brazil",
+  });
+  if (hasStructured) {
+    if (street) primary.set("street", street);
+    if (city) primary.set("city", city);
+    if (state) primary.set("state", state);
+    if (postalcode) primary.set("postalcode", postalcode);
+  } else {
+    primary.set("q", (address ?? "").trim());
+    primary.set("countrycodes", "br");
+  }
+
+  let result: GeoResult | null = null;
+  let falhouNominatim = false;
+  let falhouFallback = false;
+  try {
+    result = await p.nominatim(primary);
+    if (!result && city) {
+      const soCidade = new URLSearchParams({
+        format: "json",
+        limit: "1",
+        country: "Brazil",
+        city,
+      });
+      if (state) soCidade.set("state", state);
+      result = await p.nominatim(soCidade);
+    }
+  } catch {
+    falhouNominatim = true;
+  }
+
+  let cidade = city;
+  let estado = state;
+  if (!result && !cidade && postalcode) {
+    const cep = await p.brasilApiCep(postalcode).catch(() => null);
+    result = cep?.coordenadas ?? null;
+    cidade = cep?.city;
+    estado = estado ?? cep?.state;
+    if (falhouNominatim) p.fallback?.("brasilapi-cep", Boolean(result));
+  }
+  if (!result && cidade) {
+    try {
+      result = await p.openMeteoCidade(cidade, estado);
+    } catch {
+      falhouFallback = true;
+    }
+    if (falhouNominatim) p.fallback?.("open-meteo", Boolean(result));
+  }
+
+  if (result) return { found: true, result };
+  return { found: false, indisponivel: falhouNominatim || falhouFallback };
+}

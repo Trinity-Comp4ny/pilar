@@ -2,7 +2,15 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { recordMetric, withSentry } from "../_shared/sentry.ts";
 import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { getRateLimitKey, RateLimiter } from "../_shared/rate-limiter.ts";
-import { escolherCidade, type GeoResult, lerCepGeo, lerEndereco, type OpenMeteoGeo, type CepGeo } from "./endereco.ts";
+import {
+  escolherCidade,
+  type GeoResult,
+  lerCepGeo,
+  lerEndereco,
+  type OpenMeteoGeo,
+  type CepGeo,
+  resolverEndereco,
+} from "./endereco.ts";
 import { fetchComTempo } from "../_shared/http.ts";
 
 // User-Agent exigido pelo fair-use do Nominatim. Sem ele o IP é bloqueado.
@@ -80,62 +88,30 @@ serve(
     try {
       const endereco = lerEndereco(await req.json().catch(() => null));
       if (!endereco.ok) return jsonResponse({ error: endereco.error }, 400, req);
-      const { address, street, city, state, postalcode, hasStructured } = endereco.data;
+      const resolucao = await resolverEndereco(endereco.data, {
+        nominatim: queryNominatim,
+        openMeteoCidade: queryOpenMeteoCidade,
+        brasilApiCep: queryBrasilApiCep,
+        fallback: (provider, found) => recordMetric("geocode.fallback", 1, { tags: { provider, found } }),
+      });
 
-      // Query principal: estruturada quando há campos, senão query livre.
-      const primary = new URLSearchParams({ format: "json", limit: "1", country: "Brazil" });
-      if (hasStructured) {
-        if (street) primary.set("street", street);
-        if (city) primary.set("city", city);
-        if (state) primary.set("state", state);
-        if (postalcode) primary.set("postalcode", postalcode);
-      } else {
-        primary.set("q", address!.trim());
-        primary.set("countrycodes", "br");
+      // Endereço que nenhum provedor localiza não é erro de requisição: 200 com found=false
+      // e `indisponivel` para o formulário dizer se vale tentar de novo mais tarde.
+      if (!resolucao.found) {
+        if (resolucao.indisponivel) recordMetric("geocode.indisponivel", 1);
+        return jsonResponse(
+          {
+            lat: null,
+            lng: null,
+            found: false,
+            indisponivel: resolucao.indisponivel,
+          },
+          200,
+          req
+        );
       }
 
-      let result: GeoResult | null = null;
-      let falhaNominatim: unknown = null;
-      try {
-        result = await queryNominatim(primary);
-
-        // Fallback: cidade + estado (ao menos posiciona no mapa em nível de cidade).
-        if (!result && city) {
-          const fallback = new URLSearchParams({ format: "json", limit: "1", country: "Brazil" });
-          fallback.set("city", city);
-          if (state) fallback.set("state", state);
-          result = await queryNominatim(fallback);
-        }
-      } catch (err) {
-        falhaNominatim = err;
-      }
-
-      // Nominatim fora do ar ou bloqueando o IP da edge: cai pro centro da cidade.
-      let cidadeFallback = city;
-      let estadoFallback = state;
-      if (!result && !cidadeFallback && postalcode) {
-        // Formulário sem cidade: o CEP diz a coordenada (ou ao menos a cidade).
-        const cep = await queryBrasilApiCep(postalcode).catch(() => null);
-        result = cep?.coordenadas ?? null;
-        cidadeFallback = cep?.city;
-        estadoFallback = estadoFallback ?? cep?.state;
-        if (falhaNominatim) {
-          recordMetric("geocode.fallback", 1, { tags: { provider: "brasilapi-cep", found: Boolean(result) } });
-        }
-      }
-      if (!result && cidadeFallback) {
-        result = await queryOpenMeteoCidade(cidadeFallback, estadoFallback);
-        if (falhaNominatim) {
-          recordMetric("geocode.fallback", 1, { tags: { provider: "open-meteo", found: Boolean(result) } });
-        }
-      }
-
-      if (!result && falhaNominatim) throw falhaNominatim;
-
-      if (!result) {
-        return jsonResponse({ lat: null, lng: null, found: false }, 200, req);
-      }
-
+      const { result } = resolucao;
       return jsonResponse(
         {
           lat: parseFloat(result.lat),
