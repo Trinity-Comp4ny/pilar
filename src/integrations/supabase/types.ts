@@ -1356,6 +1356,80 @@ export type Database = {
           },
         ]
       }
+      cobrancas: {
+        Row: {
+          abertura: string
+          assunto: string
+          criada_em: string
+          decidida_em: string | null
+          decidida_por: string | null
+          destinatario_email: string
+          empresa_id: string
+          etapa: number
+          fatos: Json
+          id: string
+          receita_id: string
+          status: string
+        }
+        Insert: {
+          abertura: string
+          assunto: string
+          criada_em?: string
+          decidida_em?: string | null
+          decidida_por?: string | null
+          destinatario_email: string
+          empresa_id: string
+          etapa: number
+          fatos?: Json
+          id?: string
+          receita_id: string
+          status?: string
+        }
+        Update: {
+          abertura?: string
+          assunto?: string
+          criada_em?: string
+          decidida_em?: string | null
+          decidida_por?: string | null
+          destinatario_email?: string
+          empresa_id?: string
+          etapa?: number
+          fatos?: Json
+          id?: string
+          receita_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cobrancas_decidida_por_fkey"
+            columns: ["decidida_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cobrancas_decidida_por_fkey"
+            columns: ["decidida_por"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "cobrancas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cobrancas_receita_id_fkey"
+            columns: ["receita_id"]
+            isOneToOne: false
+            referencedRelation: "receitas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consentimentos_cobranca: {
         Row: {
           created_at: string
@@ -9410,6 +9484,25 @@ export type Database = {
           vence_em: string
         }[]
       }
+      agente_pendencias_detectar_cobranca: {
+        Args: { p_empresa?: string }
+        Returns: {
+          acao_sugerida: string
+          area: string
+          chave: string
+          dados: Json
+          detalhe: string
+          empresa_id: string
+          link: string
+          projeto_id: string
+          referencia_id: string
+          referencia_tipo: string
+          severidade: string
+          tipo: string
+          titulo: string
+          vence_em: string
+        }[]
+      }
       agente_pendencias_varrer: { Args: { p_empresa?: string }; Returns: Json }
       agente_pendencias_varrer_cron: { Args: never; Returns: undefined }
       aprovar_orcamento_agente: { Args: { p_run_id: string }; Returns: Json }
@@ -9566,6 +9659,26 @@ export type Database = {
         Returns: undefined
       }
       cleanup_pending_signups: { Args: never; Returns: number }
+      cobranca_decidir: {
+        Args: { p_id: string; p_status: string }
+        Returns: undefined
+      }
+      cobranca_gerar_rascunhos: {
+        Args: { p_empresa?: string }
+        Returns: number
+      }
+      cobranca_montar_abertura: {
+        Args: {
+          p_cliente: string
+          p_contatos: string
+          p_dias: number
+          p_etapa: number
+          p_media_atraso: number
+          p_ref: string
+          p_venc: string
+        }
+        Returns: string
+      }
       cotacao_link_consultar: { Args: { p_token_hash: string }; Returns: Json }
       cotacao_link_responder: {
         Args: {
