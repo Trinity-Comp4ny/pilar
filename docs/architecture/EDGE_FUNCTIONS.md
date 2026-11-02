@@ -3,7 +3,7 @@
 <!-- Gerado por scripts/edge-functions-catalog.mjs a partir de supabase/functions/CATALOGO.json.
      Não editar à mão: edite o CATALOGO.json e rode `node scripts/edge-functions-catalog.mjs`. -->
 
-59 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
+60 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
 migrations) ou origem externa declarada no manifesto. **Login**: `verify_jwt` do `config.toml`
 (JWT aceita a chave anon; "própria" = a função faz a autorização). **Secrets**: lidos direto
 na pasta da função (o que vem de `_shared`, como a chave do Gemini, não aparece).
@@ -14,7 +14,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
-| `ai-chat` | Copiloto do chat: classifica a intenção e responde com dados do usuário (só leitura, RLS do próprio usuário). | app | JWT | `AI_GATEWAY_API_KEY` `GEMINI_API_KEY` | sim |
+| `ai-chat` | Copiloto do chat: classifica a intenção e responde com dados do usuário (só leitura, RLS do próprio usuário). | app | JWT | `AI_CHAT_FERRAMENTAS` `AI_GATEWAY_API_KEY` `GEMINI_API_KEY` | sim |
 | `ai-cotacao-import` | Lê PDF ou imagem de orçamento de fornecedor e extrai os itens (Gemini, spec 023). | app | JWT |  | sim |
 | `ai-estimativa-itens` | Lê a descrição da obra e devolve só itens do catálogo da estimativa, com quantidade, o que ficou de fora e o que faltou saber; nunca preço nem prazo (Gemini, SPEC 138). | app | JWT | `AI_GATEWAY_API_KEY` `GEMINI_API_KEY` | sim |
 | `ai-import-financeiro` | Extrai lançamentos do texto de um extrato ou fatura (spec 017). | app | JWT |  | sim |
@@ -39,6 +39,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `asaas-config` | Configuração do Asaas da própria empresa (chave cifrada no Vault). A tela que chamava foi removida em 7602833d. | **sem chamador conhecido** | JWT |  | sim |
 | `asaas-criar-cobranca` | Cria cobrança no Asaas da empresa para uma receita do cliente dela. | **sem chamador conhecido** | JWT |  | sim |
 | `asaas-webhook` | Recebe eventos do Asaas da empresa e atualiza a receita (recebida, atrasada, estornada). | Asaas da empresa (webhook) | própria | `ASAAS_WEBHOOK_TOKEN` | sim |
+| `cobranca-enviar` | Envia ao cliente o e-mail de cobrança que o agente de acompanhamento preparou, só depois da aprovação do usuário (SPEC 148). | app | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 
 ## Portal do cliente
 

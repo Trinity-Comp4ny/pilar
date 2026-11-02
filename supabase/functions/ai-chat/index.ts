@@ -31,11 +31,11 @@ import {
   releaseAtual,
   respostaDeErroIa,
 } from "../_shared/ai-client.ts";
-import { coletarDados } from "./coleta.ts";
 import { streamConsulta } from "./consulta.ts";
-import { carregarHistorico, comContexto } from "./contexto.ts";
+import { carregarHistorico } from "./contexto.ts";
 import { processarCriacao } from "./criacao.ts";
 import { ENTIDADE_CFG } from "./entidades.ts";
+import { prepararConsulta } from "./preparar.ts";
 import { logAction, recordAndSaldo, respondFinal, respostaPrompt } from "./resposta.ts";
 import { classificarIntencao } from "./roteamento.ts";
 import { AGENTE_LABEL, FEATURE_KEY, RequestSchema, RespostaSchema } from "./schemas.ts";
@@ -93,9 +93,10 @@ serve(
       const projetoId = parsed.data.projetoId;
       let focoProjeto = "";
       if (projetoId) {
+        // projetos_safe: valor_contrato da tabela base é fechado para leitura direta (ADR 0034).
         const { data: proj } = await authClient
-          .from("projetos")
-          .select("id, nome, status, valor_contrato, data_inicio, data_previsao, clientes(nome)")
+          .from("projetos_safe")
+          .select("id, nome, status, valor_contrato, pode_ver_valor, data_inicio, data_previsao, cliente_id")
           .eq("id", projetoId)
           .single();
         if (proj) {
@@ -273,26 +274,30 @@ serve(
         { agente, modo, motivo: rota.data.motivo, via: rota.via }
       );
 
-      // 2) Agente de domínio coleta os dados (read-only, RLS).
-      const dados = await coletarDados(agente, authClient, empresaId);
-      await logAction(
-        authClient,
-        consultaRunId,
-        `consultar_${agente}`,
-        { fonte: agente },
-        { chaves: Object.keys(dados) }
-      );
-
-      const userMessage = comContexto(
+      // 2) Investigação: o agente decide quais consultas fazer, roda as ferramentas de leitura
+      //    (RLS) e olha o resultado antes de responder. Cai nos coletores agregados se falhar.
+      const preparo = await prepararConsulta({
+        db: authClient,
+        empresaId,
+        agente,
         historico,
         message,
-        `Responda à mensagem atual do usuário usando SOMENTE os dados abaixo.\n\nDados disponíveis (JSON):\n${JSON.stringify(dados)}${focoProjeto}`
-      );
+        focoProjeto,
+        sessionId,
+        runId: consultaRunId,
+      });
+      const userMessage = preparo.userMessage;
+      const rotaTotal = {
+        in: rota.tokensEntrada + preparo.uso.tokensEntrada,
+        out: rota.tokensSaida + preparo.uso.tokensSaida,
+        calls: rota.attempts + preparo.uso.chamadas,
+      };
       const meta = {
         agente,
         agente_label: AGENTE_LABEL[agente],
         motivo: rota.data.motivo,
         model: modeloEmUso(FEATURE_KEY),
+        ...(preparo.ferramentas.length > 0 && { ferramentas: [...new Set(preparo.ferramentas)] }),
       };
 
       // 3a) Streaming (SSE): resposta em linguagem natural token-a-token.
@@ -308,7 +313,7 @@ serve(
           userMessage,
           userId: user.id,
           runId: consultaRunId,
-          rotaTok: { in: rota.tokensEntrada, out: rota.tokensSaida, calls: rota.attempts },
+          rotaTok: rotaTotal,
         });
       }
 
@@ -324,9 +329,9 @@ serve(
         RespostaSchema
       );
 
-      const tokensIn = rota.tokensEntrada + resp.tokensEntrada;
-      const tokensOut = rota.tokensSaida + resp.tokensSaida;
-      const chamadas = rota.attempts + resp.attempts;
+      const tokensIn = rotaTotal.in + resp.tokensEntrada;
+      const tokensOut = rotaTotal.out + resp.tokensSaida;
+      const chamadas = rotaTotal.calls + resp.attempts;
 
       // Grava a resposta do assistente.
       await authClient.from("chat_messages").insert({
