@@ -40,6 +40,13 @@ const AREA_VARIANT: Record<PendenciaArea, "brand" | "info" | "warning" | "attent
 
 const DIAS_ADIAR = [1, 3, 7, 30];
 
+/** Pendências que abrem um painel de revisão, com o rótulo do botão principal. */
+const ROTULO_REVISAO: Record<string, string> = {
+  cobranca_pronta: "Revisar e enviar",
+  orcamento_ausente: "Definir orçamento",
+  projeto_prazo_proximo: "Revisar plano",
+};
+
 type Fato = { texto: string; tom?: "perigo" | "aviso" };
 
 /** Fatos da regra viram etiquetas curtas. Tudo vem de `dados`, que o código do banco preenche. */
@@ -117,9 +124,9 @@ export function PendenciaCard({ pendencia: p, onRevisar, onAdiar, onDispensar }:
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-2">
-          {pronta ? (
-            <Button variant="brand" size="sm" onClick={() => onRevisar?.(p)}>
-              Revisar e enviar
+          {onRevisar && ROTULO_REVISAO[p.tipo] ? (
+            <Button variant="brand" size="sm" onClick={() => onRevisar(p)}>
+              {ROTULO_REVISAO[p.tipo]}
             </Button>
           ) : (
             p.link && (
