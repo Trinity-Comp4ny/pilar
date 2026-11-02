@@ -13,7 +13,29 @@ const adiarMutate = vi.fn();
 const dispensarMutate = vi.fn();
 const enviarMutate = vi.fn();
 const decidirMutate = vi.fn();
+const salvarOrcamentoMutate = vi.fn();
+const aplicarPlanoMutate = vi.fn();
 let podeEditarFinanceiro = true;
+let orcamento: { nome: string; contrato: number | null; podeVerValor: boolean; disciplinas: string[] } = {
+  nome: "Casa Jardim",
+  contrato: 50000,
+  podeVerValor: true,
+  disciplinas: ["Arquitetônico", "Estrutural"],
+};
+let planoPrazo: {
+  nome: string;
+  entrega: string | null;
+  cliente: { id: string; nome: string; email: string | null } | null;
+  disciplinas: { nome: string; status: string | null; data_fim: string | null }[];
+} = {
+  nome: "Aurora",
+  entrega: "2026-11-07",
+  cliente: { id: "cl1", nome: "Cliente Exemplo", email: "cliente@exemplo.test" },
+  disciplinas: [
+    { nome: "Hidráulica", status: "Em Andamento", data_fim: "2026-11-05" },
+    { nome: "Estrutural", status: "Concluído", data_fim: "2026-10-30" },
+  ],
+};
 
 vi.mock("@/hooks/useEscopos", () => ({
   usePendenciasAgentes: () => useAditivos(),
@@ -21,8 +43,11 @@ vi.mock("@/hooks/useEscopos", () => ({
   useRejeitarEscopo: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useAdiarEscopo: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
+const useFeatureAccessMock = { canEditProjetos: true };
 vi.mock("@/hooks/useFeatureAccess", () => ({
-  useFeatureAccess: (feature: string) => ({ canEdit: feature === "financeiro" ? podeEditarFinanceiro : true }),
+  useFeatureAccess: (feature: string) => ({
+    canEdit: feature === "financeiro" ? podeEditarFinanceiro : useFeatureAccessMock.canEditProjetos,
+  }),
 }));
 vi.mock("@/pages/chat/hooks/useAgentHeartbeat", () => ({ useAgentHeartbeat: (tipo: string) => useHeartbeat(tipo) }));
 vi.mock("@/pages/chat/hooks/useAgentePendencias", () => ({
@@ -32,6 +57,10 @@ vi.mock("@/pages/chat/hooks/useAgentePendencias", () => ({
   useCobranca: () => useCobranca(),
   useEnviarCobranca: () => ({ mutateAsync: enviarMutate, isPending: false }),
   useDecidirCobranca: () => ({ mutateAsync: decidirMutate, isPending: false }),
+  useOrcamentoGuiado: () => ({ isLoading: false, isError: false, data: orcamento }),
+  useSalvarOrcamentoGuiado: () => ({ mutateAsync: salvarOrcamentoMutate, isPending: false }),
+  usePlanoPrazo: () => ({ isLoading: false, isError: false, data: planoPrazo }),
+  useAplicarPlanoPrazo: () => ({ mutateAsync: aplicarPlanoMutate, isPending: false }),
 }));
 
 const base: Pendencia = {
@@ -93,6 +122,21 @@ describe("PendenciasTab", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     podeEditarFinanceiro = true;
+    orcamento = {
+      nome: "Casa Jardim",
+      contrato: 50000,
+      podeVerValor: true,
+      disciplinas: ["Arquitetônico", "Estrutural"],
+    };
+    planoPrazo = {
+      nome: "Aurora",
+      entrega: "2026-11-07",
+      cliente: { id: "cl1", nome: "Cliente Exemplo", email: "cliente@exemplo.test" },
+      disciplinas: [
+        { nome: "Hidráulica", status: "Em Andamento", data_fim: "2026-11-05" },
+        { nome: "Estrutural", status: "Concluído", data_fim: "2026-10-30" },
+      ],
+    };
     useAditivos.mockReturnValue({ isLoading: false, data: [] });
     useHeartbeat.mockImplementation(() => ({
       isLoading: false,
@@ -253,5 +297,149 @@ describe("PendenciasTab", () => {
     }));
     montar();
     expect(screen.getByText(/Guardião de margem sem sinal de execução recente/)).toBeInTheDocument();
+  });
+
+  describe("orçamento guiado", () => {
+    const orcamentoAusente = p({
+      id: "o1",
+      tipo: "orcamento_ausente",
+      area: "orcamento",
+      severidade: "low",
+      titulo: "Sem orçamento por disciplina: Casa Jardim",
+      projeto_id: "proj1",
+      link: "/projetos/proj1#escopo",
+    });
+
+    const abrir = async () => {
+      usePendencias.mockReturnValue({ isLoading: false, isError: false, data: [orcamentoAusente] });
+      montar();
+      await userEvent.click(screen.getByRole("button", { name: "Ver" }));
+      await userEvent.click(screen.getByRole("button", { name: "Definir orçamento" }));
+      return await screen.findByRole("dialog");
+    };
+
+    it("lista as disciplinas e calcula custo e margem na hora", async () => {
+      const painel = await abrir();
+      await userEvent.type(within(painel).getByLabelText("Horas de Arquitetônico"), "80");
+      await userEvent.type(within(painel).getByLabelText("Custo por hora de Arquitetônico"), "12000");
+      const resumo = within(painel).getByRole("group", { name: "Resumo do orçamento" });
+      expect(within(resumo).getByText("Custo orçado").previousSibling).toHaveTextContent("R$ 9.600,00");
+      expect(within(resumo).getByText("Margem prevista").previousSibling).toHaveTextContent("80,8%");
+    });
+
+    it("só salva disciplina com horas e custo e leva os números do usuário", async () => {
+      salvarOrcamentoMutate.mockResolvedValue(undefined);
+      const painel = await abrir();
+      const salvar = within(painel).getByRole("button", { name: "Salvar orçamento" });
+      expect(salvar).toBeDisabled();
+      await userEvent.type(within(painel).getByLabelText("Horas de Estrutural"), "100");
+      await userEvent.type(within(painel).getByLabelText("Custo por hora de Estrutural"), "15000");
+      await userEvent.type(within(painel).getByLabelText("Horas de Arquitetônico"), "40");
+      expect(salvar).toBeEnabled();
+      await userEvent.click(salvar);
+      expect(salvarOrcamentoMutate).toHaveBeenCalledWith({
+        projetoId: "proj1",
+        linhas: [{ disciplina: "Estrutural", horasEstimadas: 100, custoHora: 150 }],
+      });
+    });
+
+    it("avisa quando o custo orçado passa do contrato", async () => {
+      const painel = await abrir();
+      await userEvent.type(within(painel).getByLabelText("Horas de Estrutural"), "1000");
+      await userEvent.type(within(painel).getByLabelText("Custo por hora de Estrutural"), "10000");
+      expect(within(painel).getByText(/passa do valor do contrato/)).toBeInTheDocument();
+    });
+
+    it("projeto sem disciplinas orienta a cadastrar", async () => {
+      orcamento = { ...orcamento, disciplinas: [] };
+      const painel = await abrir();
+      expect(within(painel).getByText(/ainda não tem disciplinas/)).toBeInTheDocument();
+      expect(within(painel).getByRole("button", { name: "Salvar orçamento" })).toBeDisabled();
+    });
+  });
+
+  describe("prazo em risco", () => {
+    const prazo = p({
+      id: "z1",
+      tipo: "projeto_prazo_proximo",
+      area: "prazos",
+      severidade: "high",
+      titulo: "Prazo próximo: Aurora",
+      projeto_id: "proj2",
+      dados: { dias_para_vencer: 5 },
+    });
+
+    const abrir = async () => {
+      usePendencias.mockReturnValue({ isLoading: false, isError: false, data: [prazo] });
+      montar();
+      await userEvent.click(screen.getByRole("button", { name: "Revisar plano" }));
+      return await screen.findByRole("dialog");
+    };
+
+    it("mostra só as disciplinas abertas e explica que não prevê data", async () => {
+      const painel = await abrir();
+      expect(within(painel).getByText("Hidráulica")).toBeInTheDocument();
+      expect(within(painel).queryByText("Estrutural")).toBeNull();
+      expect(within(painel).getByText(/não prevê a nova data/)).toBeInTheDocument();
+    });
+
+    it("aplica aviso e comunicado, sem aditivo, e não exige dias", async () => {
+      aplicarPlanoMutate.mockResolvedValue([
+        { acao: "avisar", ok: true },
+        { acao: "comunicado", ok: true },
+      ]);
+      const painel = await abrir();
+      await userEvent.click(within(painel).getByRole("button", { name: "Aplicar selecionadas" }));
+      const chamada = aplicarPlanoMutate.mock.calls[0][0];
+      expect(chamada.avisar).toBe(true);
+      expect(chamada.aditivo).toBeNull();
+      expect(chamada.comunicado).toMatchObject({
+        clienteId: "cl1",
+        assunto: "Projeto Aurora: acompanhamento da entrega",
+      });
+      expect(chamada.comunicado.mensagem).toContain("1 disciplina(s) em andamento");
+    });
+
+    it("aditivo exige os dias antes de liberar o botão", async () => {
+      const painel = await abrir();
+      await userEvent.click(within(painel).getByLabelText("Criar rascunho de aditivo de prazo"));
+      const aplicar = within(painel).getByRole("button", { name: "Aplicar selecionadas" });
+      expect(aplicar).toBeDisabled();
+      await userEvent.type(within(painel).getByLabelText("Dias a mais"), "11");
+      expect(aplicar).toBeEnabled();
+    });
+
+    it("cliente sem e-mail não permite comunicar", async () => {
+      planoPrazo = { ...planoPrazo, cliente: { id: "cl1", nome: "Cliente Exemplo", email: null } };
+      const painel = await abrir();
+      expect(within(painel).getByLabelText("Comunicar o cliente por e-mail")).toBeDisabled();
+      expect(within(painel).getByText(/sem e-mail cadastrado/)).toBeInTheDocument();
+    });
+
+    it("falha parcial trava o que já foi aplicado e reenvia só o que falhou", async () => {
+      aplicarPlanoMutate
+        .mockResolvedValueOnce([
+          { acao: "avisar", ok: true },
+          { acao: "comunicado", ok: false, erro: "503" },
+        ])
+        .mockResolvedValueOnce([{ acao: "comunicado", ok: true }]);
+      const painel = await abrir();
+      await userEvent.click(within(painel).getByRole("button", { name: "Aplicar selecionadas" }));
+      expect(await within(painel).findByText("já aplicado")).toBeInTheDocument();
+      expect(within(painel).getByLabelText(/Avisar os responsáveis/)).toBeDisabled();
+
+      await userEvent.click(within(painel).getByRole("button", { name: "Aplicar selecionadas" }));
+      const segunda = aplicarPlanoMutate.mock.calls[1][0];
+      expect(segunda.avisar).toBe(false);
+      expect(segunda.aditivo).toBeNull();
+      expect(segunda.comunicado).not.toBeNull();
+    });
+
+    it("quem só visualiza não aplica", async () => {
+      useFeatureAccessMock.canEditProjetos = false;
+      const painel = await abrir();
+      expect(within(painel).getByRole("button", { name: "Aplicar selecionadas" })).toBeDisabled();
+      useFeatureAccessMock.canEditProjetos = true;
+    });
   });
 });

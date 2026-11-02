@@ -32,6 +32,8 @@ import {
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { CobrancaDrawer } from "./CobrancaDrawer";
+import { OrcamentoDrawer } from "./OrcamentoDrawer";
+import { PrazoDrawer } from "./PrazoDrawer";
 import { PendenciaCard } from "./PendenciaCard";
 import { AREAS, agrupar, contarPorArea, plural } from "./lib/pendencias";
 
@@ -347,7 +349,13 @@ export function PendenciasTab() {
               </div>
               {mostrarPlanejar &&
                 grupos.planejar.map((p) => (
-                  <PendenciaCard key={p.id} pendencia={p} onAdiar={handleAdiar} onDispensar={handleDispensar} />
+                  <PendenciaCard
+                    key={p.id}
+                    pendencia={p}
+                    onRevisar={setEmRevisao}
+                    onAdiar={handleAdiar}
+                    onDispensar={handleDispensar}
+                  />
                 ))}
             </section>
           )}
@@ -361,9 +369,19 @@ export function PendenciasTab() {
       )}
 
       <CobrancaDrawer
-        pendencia={emRevisao}
+        pendencia={emRevisao?.tipo === "cobranca_pronta" ? emRevisao : null}
         onOpenChange={(aberto) => !aberto && setEmRevisao(null)}
         canEdit={podeEditarFinanceiro}
+      />
+      <OrcamentoDrawer
+        pendencia={emRevisao?.tipo === "orcamento_ausente" ? emRevisao : null}
+        onOpenChange={(aberto) => !aberto && setEmRevisao(null)}
+      />
+      <PrazoDrawer
+        key={emRevisao?.id}
+        pendencia={emRevisao?.tipo === "projeto_prazo_proximo" ? emRevisao : null}
+        onOpenChange={(aberto) => !aberto && setEmRevisao(null)}
+        canEdit={podeEditarProjetos}
       />
 
       <ConfirmDialog

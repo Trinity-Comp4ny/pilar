@@ -1,7 +1,7 @@
 # SPEC: Agente de acompanhamento: a aba Pendências mostra tudo que segue em aberto
 
 **Data:** 2026-10-30
-**Status:** Em implementação (backend pronto; tela aguarda protótipo, BEZ-511)
+**Status:** Em implementação (backend e tela da aba prontos; ver SPEC 148 para os painéis de revisão)
 **Autor:** Matheus (com apoio de agente de IA)
 **Módulo:** agentes / financeiro / projetos / obras
 **ClickUp:** BEZ-508 (pai), BEZ-509, BEZ-510, BEZ-511
