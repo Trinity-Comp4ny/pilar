@@ -9464,7 +9464,10 @@ export type Database = {
       }
       agente_pendencia_dispensar: { Args: { p_id: string }; Returns: undefined }
       agente_pendencia_visivel: { Args: { p_area: string }; Returns: boolean }
-      agente_pendencias_atualizar: { Args: never; Returns: Json }
+      agente_pendencias_atualizar: {
+        Args: { p_forcar?: boolean }
+        Returns: Json
+      }
       agente_pendencias_detectar: {
         Args: { p_empresa?: string }
         Returns: {
@@ -10363,6 +10366,11 @@ export type Database = {
         Args: { p_token: string }
         Returns: Json
       }
+      projeto_aditivo_prazo_criar: {
+        Args: { p_dias: number; p_justificativa?: string; p_projeto: string }
+        Returns: string
+      }
+      projeto_prazo_avisar: { Args: { p_projeto: string }; Returns: number }
       projetos_com_escopo_estourado: {
         Args: never
         Returns: {
