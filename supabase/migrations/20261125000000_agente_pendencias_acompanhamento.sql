@@ -20,7 +20,7 @@
 -- ---------------------------------------------------------------------------
 -- 0. Sino: ignorar receita e despesa excluídas
 -- ---------------------------------------------------------------------------
-CREATE FUNCTION pg_temp.sub(p_def text, p_de text, p_para text, p_esperado integer)
+CREATE FUNCTION pg_temp.sub_sino_146(p_def text, p_de text, p_para text, p_esperado integer)
 RETURNS text
 LANGUAGE plpgsql
 AS $$
@@ -38,10 +38,10 @@ DO $ambient$
 DECLARE
   v_def text := pg_get_functiondef('public.gerar_notificacoes_ambient()'::regprocedure);
 BEGIN
-  v_def := pg_temp.sub(v_def,
+  v_def := pg_temp.sub_sino_146(v_def,
     $x$WHERE d.status = 'Pendente' AND d.is_fatura_payment = false$x$,
     $x$WHERE d.deleted_at IS NULL AND d.status = 'Pendente' AND d.is_fatura_payment = false$x$, 2);
-  v_def := pg_temp.sub(v_def,
+  v_def := pg_temp.sub_sino_146(v_def,
     $x$WHERE r.status = 'Pendente' AND r.data_vencimento$x$,
     $x$WHERE r.deleted_at IS NULL AND r.status = 'Pendente' AND r.data_vencimento$x$, 2);
   EXECUTE v_def;
