@@ -62,24 +62,40 @@ export function templateCobrancaDireta(params: {
   vencida: boolean;
   pixChave?: string;
   pixInstrucoes?: string;
+  /** Texto de abertura (SPEC 148): substitui o lead padrão. Texto livre, escapado aqui. */
+  abertura?: string;
+  /** Assunto próprio (SPEC 148): substitui o padrão por vencida/a vencer. */
+  assunto?: string;
 }): EmailTemplate {
-  const { clienteNome, empresaNome, descricao, valorFormatado, dataVencimento, vencida, pixChave, pixInstrucoes } =
-    params;
+  const {
+    clienteNome,
+    empresaNome,
+    descricao,
+    valorFormatado,
+    dataVencimento,
+    vencida,
+    pixChave,
+    pixInstrucoes,
+    abertura,
+    assunto,
+  } = params;
 
   const pix = pixChave
     ? [spacer(26), label("Chave Pix"), codeBox(pixChave), ...(pixInstrucoes ? [small(pixInstrucoes, { mt: 8 })] : [])]
     : [];
 
   return {
-    subject: vencida ? `Fatura em atraso: ${descricao}` : `Lembrete de pagamento: ${descricao}`,
+    subject: assunto ?? (vencida ? `Fatura em atraso: ${descricao}` : `Lembrete de pagamento: ${descricao}`),
     html: shell({
       preview: vencida ? `Fatura em atraso, ${valorFormatado}` : `Vence em ${dataVencimento}, ${valorFormatado}`,
       footerNote: `Você recebeu esta cobrança de ${empresaNome} via ${BRAND.nome}.`,
       hero: {
         titulo: vencida ? html`Fatura ${emphasis(em("em atraso"), "negative")}` : html`${em("Lembrete")} de pagamento`,
-        lead: vencida
-          ? html`Olá, ${strong(clienteNome)}. A fatura de ${strong(empresaNome)} abaixo venceu e continua em aberto.`
-          : html`Olá, ${strong(clienteNome)}. ${strong(empresaNome)} enviou esta cobrança referente ao serviço abaixo.`,
+        lead: abertura
+          ? multiline(abertura)
+          : vencida
+            ? html`Olá, ${strong(clienteNome)}. A fatura de ${strong(empresaNome)} abaixo venceu e continua em aberto.`
+            : html`Olá, ${strong(clienteNome)}. ${strong(empresaNome)} enviou esta cobrança referente ao serviço abaixo.`,
       },
       content: [
         card(

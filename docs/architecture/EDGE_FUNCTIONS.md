@@ -3,7 +3,7 @@
 <!-- Gerado por scripts/edge-functions-catalog.mjs a partir de supabase/functions/CATALOGO.json.
      Não editar à mão: edite o CATALOGO.json e rode `node scripts/edge-functions-catalog.mjs`. -->
 
-59 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
+60 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
 migrations) ou origem externa declarada no manifesto. **Login**: `verify_jwt` do `config.toml`
 (JWT aceita a chave anon; "própria" = a função faz a autorização). **Secrets**: lidos direto
 na pasta da função (o que vem de `_shared`, como a chave do Gemini, não aparece).
@@ -39,6 +39,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `asaas-config` | Configuração do Asaas da própria empresa (chave cifrada no Vault). A tela que chamava foi removida em 7602833d. | **sem chamador conhecido** | JWT |  | sim |
 | `asaas-criar-cobranca` | Cria cobrança no Asaas da empresa para uma receita do cliente dela. | **sem chamador conhecido** | JWT |  | sim |
 | `asaas-webhook` | Recebe eventos do Asaas da empresa e atualiza a receita (recebida, atrasada, estornada). | Asaas da empresa (webhook) | própria | `ASAAS_WEBHOOK_TOKEN` | sim |
+| `cobranca-enviar` | Envia ao cliente o e-mail de cobrança que o agente de acompanhamento preparou, só depois da aprovação do usuário (SPEC 148). | app | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 
 ## Portal do cliente
 
