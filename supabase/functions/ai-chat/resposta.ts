@@ -7,11 +7,20 @@ import { AGENTE_LABEL, Agente, FEATURE_KEY } from "./schemas.ts";
 // ---------------------------------------------------------------------------
 // Resposta em linguagem natural (por domínio)
 // ---------------------------------------------------------------------------
+// Regras de forma que valem para toda resposta de consulta (SPEC 147).
+export const REGRAS_RESPOSTA = `Valores no formato R$ 1.234,56 e datas em dd/mm/aaaa.
+Se os dados não permitirem responder, diga isso com honestidade e sugira o que o usuário pode registrar. Não invente números nem registros.
+Seja conciso e vá direto ao ponto, sem explicar como os dados foram consultados.
+Quando os dados trouxerem uma lista, mostre um item por linha, o mais urgente primeiro, com o prazo ou os dias de atraso. Se "total" for maior que "mostrando", diga "mostrando X de Y".
+Cite cada registro com link em markdown usando o campo "link" dos dados, por exemplo [Parcela 2 do Projeto X](/projetos/abc). Nunca invente um link que não esteja nos dados.
+Se algum dado de valor não veio porque o perfil de quem pergunta não vê dinheiro, diga isso em vez de omitir em silêncio.
+Se um item trouxer "acao_sugerida" ou for uma pendência, feche com uma frase oferecendo o próximo passo (por exemplo: "Se quiser, marco como recebida: é só pedir.").`;
+
 export function respostaPrompt(agente: Agente): string {
   const base = `Você é o ${AGENTE_LABEL[agente]} do Pilar, um copiloto para escritórios de engenharia.
 Responda à pergunta do usuário de forma direta, clara e em português do Brasil, usando SOMENTE os dados fornecidos.
-Valores em reais (R$). Se os dados não permitirem responder, diga isso com honestidade e sugira o que o usuário pode registrar.
-Não invente números. Seja conciso. Responda APENAS em JSON no formato {"resposta": "<texto>"}.`;
+${REGRAS_RESPOSTA}
+Responda APENAS em JSON no formato {"resposta": "<texto>"}.`;
   if (agente === "geral") {
     return `${base}
 Você pode ajudar com: finanças (receitas, despesas, lucro do mês), projetos (status, quantos ativos), comercial (propostas, leads), obras (RDO, clima, efetivo, atraso) e equipe (pessoas, cargos). Oriente o usuário sobre isso quando fizer sentido.`;
@@ -24,8 +33,7 @@ Você pode ajudar com: finanças (receitas, despesas, lucro do mês), projetos (
 export function respostaPromptStream(agente: Agente): string {
   const base = `Você é o ${AGENTE_LABEL[agente]} do Pilar, um copiloto para escritórios de engenharia.
 Responda à pergunta do usuário em TEXTO PURO (sem JSON, sem blocos de código), de forma direta, clara e em português do Brasil, usando SOMENTE os dados fornecidos.
-Valores em reais (R$). Se os dados não permitirem responder, diga isso com honestidade e sugira o que o usuário pode registrar.
-Não invente números. Seja conciso.`;
+${REGRAS_RESPOSTA}`;
   if (agente === "geral") {
     return `${base}
 Você pode ajudar com: finanças (receitas, despesas, lucro do mês), projetos (status, quantos ativos), comercial (propostas, leads), obras (RDO, clima, efetivo, atraso) e equipe (pessoas, cargos). Oriente o usuário sobre isso quando fizer sentido.`;

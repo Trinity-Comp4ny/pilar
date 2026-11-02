@@ -469,3 +469,20 @@ Deno.test(
     assert(fechaChave > fimDoMedia, "regra data-ogsc não está fora do bloco @media");
   }
 );
+
+Deno.test("cobrança com abertura própria escapa o texto e usa o assunto da etapa", () => {
+  const t = T.templateCobrancaDireta({
+    clienteNome: "Cliente",
+    empresaNome: "Escritório",
+    descricao: "Parcela 2",
+    valorFormatado: "R$ 1,00",
+    dataVencimento: "01/01/2026",
+    vencida: true,
+    abertura: "Olá <script>alert(1)</script>\nSegunda linha",
+    assunto: "Parcela 2 do Projeto X, vencida em 01/01",
+  });
+  assertEquals(t.subject, "Parcela 2 do Projeto X, vencida em 01/01");
+  assert(!t.html.includes("<script>"), "script não pode passar");
+  assertStringIncludes(t.html, "&lt;script&gt;");
+  assertStringIncludes(t.html, "Segunda linha");
+});
