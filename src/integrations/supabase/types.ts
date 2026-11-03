@@ -728,89 +728,6 @@ export type Database = {
           },
         ]
       }
-      asaas_config: {
-        Row: {
-          ambiente: string
-          api_key: string | null
-          api_key_secret_id: string | null
-          created_at: string
-          empresa_id: string
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          ambiente?: string
-          api_key?: string | null
-          api_key_secret_id?: string | null
-          created_at?: string
-          empresa_id: string
-          id?: string
-          updated_at?: string
-        }
-        Update: {
-          ambiente?: string
-          api_key?: string | null
-          api_key_secret_id?: string | null
-          created_at?: string
-          empresa_id?: string
-          id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "asaas_config_empresa_id_fkey"
-            columns: ["empresa_id"]
-            isOneToOne: true
-            referencedRelation: "empresas"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      asaas_webhook_logs: {
-        Row: {
-          empresa_id: string | null
-          event: string
-          id: string
-          payload: Json | null
-          payment_id: string | null
-          processed_at: string | null
-          receita_id: string | null
-        }
-        Insert: {
-          empresa_id?: string | null
-          event: string
-          id?: string
-          payload?: Json | null
-          payment_id?: string | null
-          processed_at?: string | null
-          receita_id?: string | null
-        }
-        Update: {
-          empresa_id?: string | null
-          event?: string
-          id?: string
-          payload?: Json | null
-          payment_id?: string | null
-          processed_at?: string | null
-          receita_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "asaas_webhook_logs_empresa_id_fkey"
-            columns: ["empresa_id"]
-            isOneToOne: false
-            referencedRelation: "empresas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "asaas_webhook_logs_receita_id_fkey"
-            columns: ["receita_id"]
-            isOneToOne: false
-            referencedRelation: "receitas"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       audit_logs: {
         Row: {
           action: string
@@ -9847,7 +9764,6 @@ export type Database = {
       }
       gerar_notificacoes_ambient: { Args: never; Returns: number }
       gerar_notificacoes_ambient_monitored: { Args: never; Returns: undefined }
-      get_asaas_api_key: { Args: { p_empresa_id: string }; Returns: string }
       get_cliente_obra_detail: {
         Args: { p_obra_id: string; p_token: string }
         Returns: Json
@@ -10706,10 +10622,6 @@ export type Database = {
       }
       set_access_profile: {
         Args: { p_perfil: string; p_user_id: string }
-        Returns: undefined
-      }
-      set_asaas_api_key: {
-        Args: { p_api_key: string; p_empresa_id: string }
         Returns: undefined
       }
       set_disciplina_status: {

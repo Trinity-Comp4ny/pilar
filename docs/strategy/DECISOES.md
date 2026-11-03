@@ -11,6 +11,23 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-03 · Sai o backend do Asaas por empresa; fica só o Asaas que cobra a assinatura do Pilar
+
+**Decisão:** removidas as edge functions `asaas-config`, `asaas-criar-cobranca` e `asaas-webhook`, as tabelas
+`asaas_config` e `asaas_webhook_logs` e as RPCs `set_asaas_api_key`/`get_asaas_api_key`. Não vai haver UI de cobrança
+pelo Asaas de cada empresa. Conexão bancária e conciliação seguem outro caminho (card BEZ-539).
+
+Contexto: a decisão de 2026-09-03 já abandonou a integração por empresa, mas deixou o backend de pé. Sem tela e sem
+chamador, era superfície de ataque e custo de manutenção sem uso. O Asaas da plataforma (checkout, assinatura, pacote
+de tokens, reconciliação diária) não muda.
+
+Pendente em passo próprio: colunas `asaas_*` de `receitas`/`lancamentos`, `clientes.asaas_customer_id` e os links de
+pagamento do portal, que dependem da view `lancamentos` e de `get_lancamentos_pagina`.
+
+**Supera:** a nota de 2026-09-03 que deixava essas functions e tabelas "para auditoria separada".
+
+---
+
 ## 2026-10-30 · Agentes: pendência vem de regra em SQL; o chat consulta registros e age com confirmação
 
 **Decisão:** o agente de acompanhamento detecta por regra (parcela e conta vencidas ou a vencer, prazo de projeto e

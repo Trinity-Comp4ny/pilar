@@ -28,9 +28,6 @@ const FETCH_CRU_PERMITIDO = new Set([
 // por usuário; função de ultra admin é fechada por papel e usada por poucas pessoas. Função
 // nova de usuário final NÃO entra aqui: usa limitarOuResponder (_shared/db-rate-limit.ts).
 const SEM_RATE_LIMIT: Record<string, string> = {
-  "asaas-config": "dormente, só admin da empresa, sem chamador",
-  "asaas-criar-cobranca": "dormente, só admin da empresa, sem chamador",
-  "asaas-webhook": "webhook da Asaas, autenticado por token",
   "auth-email-hook": "chamada pelo Supabase Auth, autenticada por segredo do hook",
   "aviso-ultra-admin-email": "trigger via pg_net, autenticado por segredo",
   "excluir-dados-titular": "só ultra admin (fila LGPD)",

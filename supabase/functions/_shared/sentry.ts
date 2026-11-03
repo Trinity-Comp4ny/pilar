@@ -385,7 +385,7 @@ async function sendTransaction(params: {
  * detalhes pro cliente.
  *
  * Uso:
- *   serve(withSentry("asaas-webhook", async (req) => { ... }))
+ *   serve(withSentry("pilar-checkout-webhook", async (req) => { ... }))
  */
 export function withSentry(
   fnName: string,
