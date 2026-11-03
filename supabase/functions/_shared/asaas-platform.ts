@@ -1,8 +1,8 @@
 /**
  * Cliente HTTP pro Asaas da plataforma Pilar.
  *
- * Diferente de asaas_config (B2B — cada empresa tem sua chave), este módulo
- * usa uma única chave global pra cobrar assinantes do próprio Pilar.
+ * Usa uma única chave global pra cobrar assinantes do próprio Pilar
+ * (o Asaas por empresa foi removido, ver DECISOES.md de 2026-11-03).
  *
  * Env vars obrigatórias:
  *   ASAAS_PLATFORM_API_KEY   chave da conta Asaas da plataforma

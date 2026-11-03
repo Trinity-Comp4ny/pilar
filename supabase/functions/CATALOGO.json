@@ -15,19 +15,6 @@
     "dominio": "ia",
     "descricao": "Extrai lançamentos do texto de um extrato ou fatura (spec 017)."
   },
-  "asaas-config": {
-    "dominio": "cobranca-cliente",
-    "descricao": "Configuração do Asaas da própria empresa (chave cifrada no Vault). A tela que chamava foi removida em 7602833d."
-  },
-  "asaas-criar-cobranca": {
-    "dominio": "cobranca-cliente",
-    "descricao": "Cria cobrança no Asaas da empresa para uma receita do cliente dela."
-  },
-  "asaas-webhook": {
-    "dominio": "cobranca-cliente",
-    "descricao": "Recebe eventos do Asaas da empresa e atualiza a receita (recebida, atrasada, estornada).",
-    "chamada_externa": "Asaas da empresa (webhook)"
-  },
   "ativar-plano": {
     "dominio": "billing",
     "descricao": "Tokeniza o cartão no trial sem cobrar e grava o consentimento datado (SPEC 098)."
