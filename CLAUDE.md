@@ -47,7 +47,7 @@ Relatórios, Portal Cliente.
 - Financeiro: Projeção de caixa, Aging, DRE, Rentabilidade, WIP
 - Timesheet, Capacidade, Templates, Metas, Planejamento
 - IA Hub: todas as 11 edge functions `ai-*`
-- Asaas: backend pronto, UI zero
+- Asaas por empresa: removido (DECISOES 2026-11-03). O Asaas da plataforma (assinatura e pacote de tokens) segue ativo
 
 ## Padrões
 

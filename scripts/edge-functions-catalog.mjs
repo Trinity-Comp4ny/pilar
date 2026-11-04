@@ -18,7 +18,7 @@ import { join } from "node:path";
 export const DOMINIOS = {
   ia: "IA",
   billing: "Assinatura do Pilar (Asaas da plataforma)",
-  "cobranca-cliente": "Cobrança do cliente da empresa (Asaas da empresa)",
+  "cobranca-cliente": "Cobrança do cliente da empresa",
   portal: "Portal do cliente",
   campo: "Pilar Campo",
   obras: "Obras (links públicos de cotação)",

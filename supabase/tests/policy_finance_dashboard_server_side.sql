@@ -9,7 +9,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(11);
+SELECT plan(10);
 
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
 VALUES
@@ -124,15 +124,10 @@ SELECT is(
 );
 
 -- =============================================
--- View lancamentos: Asaas só populado pra receita, recorrente/periodicidade só p/ despesa
+-- View lancamentos: recorrente/periodicidade só p/ despesa
 -- (RESET ROLE: checagem estrutural, não depende de RLS/empresa)
 -- =============================================
 RESET ROLE;
-SELECT is(
-  (SELECT asaas_payment_id FROM public.lancamentos WHERE tipo = 'despesa' LIMIT 1),
-  NULL::text,
-  'view lancamentos: asaas_payment_id é sempre NULL pra despesa'
-);
 SELECT is(
   (SELECT recorrente FROM public.lancamentos WHERE tipo = 'receita' LIMIT 1),
   NULL::boolean,

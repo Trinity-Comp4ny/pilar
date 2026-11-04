@@ -189,7 +189,4 @@ jobs:
           echo "   $A"
           [ "$A" = "f" ] || { echo "::error::anon ainda tem EXECUTE em alguma RPC"; exit 1; }
 
-          echo "-- policies de asaas_config (esperado as 4 admin_*)"
-          psql "$PGURL" -At -c "SELECT string_agg(policyname, ', ' ORDER BY policyname) FROM pg_policies WHERE schemaname='public' AND tablename='asaas_config';"
-
           echo "✅ correção verificada em produção."

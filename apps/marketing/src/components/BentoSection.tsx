@@ -219,7 +219,7 @@ function CartaoProjetos() {
                     viewport={VISTA}
                     transition={{ duration: 0.65, delay: 0.2 + i * 0.14, ease: EASE.out }}
                   >
-                    <span className="truncate text-[6.5px] font-medium text-ink/70">{b.pct}</span>
+                    <span className="truncate text-[6.5px] font-medium text-ink">{b.pct}</span>
                   </m.span>
                 </span>
               </div>
