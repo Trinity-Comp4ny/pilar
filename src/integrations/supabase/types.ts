@@ -1201,7 +1201,6 @@ export type Database = {
       }
       clientes: {
         Row: {
-          asaas_customer_id: string | null
           chaves_pix: Json | null
           contas_bancarias: Json | null
           contato: string | null
@@ -1222,7 +1221,6 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
-          asaas_customer_id?: string | null
           chaves_pix?: Json | null
           contas_bancarias?: Json | null
           contato?: string | null
@@ -1243,7 +1241,6 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
-          asaas_customer_id?: string | null
           chaves_pix?: Json | null
           contas_bancarias?: Json | null
           contato?: string | null
@@ -7298,10 +7295,6 @@ export type Database = {
       }
       receitas: {
         Row: {
-          asaas_billing_type: string | null
-          asaas_payment_id: string | null
-          asaas_payment_status: string | null
-          asaas_payment_url: string | null
           categoria_id: string | null
           centro_custo_id: string | null
           cliente_id: string | null
@@ -7332,10 +7325,6 @@ export type Database = {
           valor: number
         }
         Insert: {
-          asaas_billing_type?: string | null
-          asaas_payment_id?: string | null
-          asaas_payment_status?: string | null
-          asaas_payment_url?: string | null
           categoria_id?: string | null
           centro_custo_id?: string | null
           cliente_id?: string | null
@@ -7366,10 +7355,6 @@ export type Database = {
           valor: number
         }
         Update: {
-          asaas_billing_type?: string | null
-          asaas_payment_id?: string | null
-          asaas_payment_status?: string | null
-          asaas_payment_url?: string | null
           categoria_id?: string | null
           centro_custo_id?: string | null
           cliente_id?: string | null
@@ -8351,10 +8336,6 @@ export type Database = {
       }
       lancamentos: {
         Row: {
-          asaas_billing_type: string | null
-          asaas_payment_id: string | null
-          asaas_payment_status: string | null
-          asaas_payment_url: string | null
           cartao_id: string | null
           categoria_id: string | null
           categoria_nome: string | null
@@ -9874,10 +9855,6 @@ export type Database = {
           p_valor_min?: number
         }
         Returns: {
-          asaas_billing_type: string | null
-          asaas_payment_id: string | null
-          asaas_payment_status: string | null
-          asaas_payment_url: string | null
           cartao_id: string | null
           categoria_id: string | null
           categoria_nome: string | null

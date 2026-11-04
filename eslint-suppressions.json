@@ -59,11 +59,6 @@
       "count": 2
     }
   },
-  "src/pages/portal/PendenciasCard.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
   "src/pages/projetos/components/CronogramaProjetosTab.tsx": {
     "no-restricted-syntax": {
       "count": 6

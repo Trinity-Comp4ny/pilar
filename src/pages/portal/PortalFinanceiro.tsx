@@ -2,11 +2,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { KPICard } from "@/components/KPICard";
 import { formatDate } from "@/lib/format";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { statusBadgeClasses } from "@/lib/status";
-import { CheckCircle2, Clock, Receipt, ExternalLink } from "lucide-react";
+import { CheckCircle2, Clock, Receipt } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
 
@@ -86,21 +84,8 @@ export function FinanceiroContent({ receitas }: { receitas: ClienteReceita[] }) 
                     <div className="text-right space-y-1.5">
                       <p className="text-sm font-bold">{formatCurrency(r.valor)}</p>
                       <div className="flex items-center justify-end gap-1.5 flex-wrap">
-                        {!isRecebido && r.asaas_billing_type && (
-                          <Badge className="text-[10px] bg-info-soft text-info-strong">
-                            {r.asaas_billing_type === "PIX" ? "PIX" : "Boleto"}
-                          </Badge>
-                        )}
                         <StatusBadge domain="financeiro" status={statusKey} className="text-[10px]" />
                       </div>
-                      {!isRecebido && r.asaas_payment_url && (
-                        <Button asChild size="sm" variant="brand" className="h-11 sm:h-8 text-xs px-3">
-                          <a href={r.asaas_payment_url} target="_blank" rel="noopener noreferrer">
-                            Pagar agora
-                            <ExternalLink className="h-3 w-3 ml-1" />
-                          </a>
-                        </Button>
-                      )}
                     </div>
                   </div>
                 );

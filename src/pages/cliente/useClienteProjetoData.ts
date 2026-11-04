@@ -9,8 +9,6 @@ export interface ClienteReceita {
   data_vencimento: string;
   data_recebimento: string | null;
   status: string;
-  asaas_payment_url?: string | null;
-  asaas_billing_type?: string | null;
 }
 
 export interface ClienteProjetoData {
