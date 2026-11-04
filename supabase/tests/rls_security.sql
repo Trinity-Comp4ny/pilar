@@ -7,8 +7,7 @@
 --   2. Signup escalation — metadata user-controllable é bloqueada
 --   3. RPCs SECURITY DEFINER validam empresa_id
 --   4. Policies financeiras fechadas para roles não autorizadas
---   5. asaas_config só admin/financeiro lê
---   6. Convites — token server-side exigido
+--   5. Convites — token server-side exigido
 
 BEGIN;
 
@@ -18,7 +17,7 @@ SET search_path = public, extensions;
 -- 20, não 16: o arquivo foi ganhando asserts sem atualizar o plano, e como o job de
 -- pgTAP estava desligado desde f5a86ea ninguém viu. Plano errado faz o pg_prove
 -- reportar "Bad plan" e marcar os asserts extras como falha.
-SELECT plan(31);
+SELECT plan(28);
 
 -- =============================================
 -- Setup: duas empresas e usuários de cada
@@ -131,41 +130,6 @@ SELECT is(
   (SELECT COUNT(*)::int FROM public.receitas WHERE id = '50000000-0000-0000-0000-00000000000a'),
   1,
   'Admin A vê receita da própria empresa'
-);
-
--- =============================================
--- Teste 5: Admin A NÃO vê asaas_config da Empresa B
--- =============================================
--- Setup: insere asaas_config nas duas empresas com role postgres (bypass RLS).
-RESET ROLE;
-INSERT INTO public.asaas_config (id, empresa_id, api_key, ambiente)
-VALUES
-  ('a1111111-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000a', 'secret_a', 'sandbox'),
-  ('a2222222-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000b', 'secret_b', 'sandbox')
-ON CONFLICT (id) DO NOTHING;
-SELECT test_set_auth('aaaaaaaa-0000-0000-0000-000000000001'); -- admin A
-
-SELECT is(
-  (SELECT COUNT(*)::int FROM public.asaas_config WHERE empresa_id = '00000000-0000-0000-0000-00000000000b'),
-  0,
-  'Admin A não vê asaas_config da Empresa B'
-);
-
-SELECT is(
-  (SELECT COUNT(*)::int FROM public.asaas_config WHERE empresa_id = '00000000-0000-0000-0000-00000000000a'),
-  1,
-  'Admin A vê asaas_config da própria empresa'
-);
-
--- =============================================
--- Teste 6: User NÃO vê asaas_config (só admin/financeiro)
--- =============================================
-SELECT test_set_auth('aaaaaaaa-0000-0000-0000-000000000002'); -- role=user
-
-SELECT is(
-  (SELECT COUNT(*)::int FROM public.asaas_config WHERE empresa_id = '00000000-0000-0000-0000-00000000000a'),
-  0,
-  'User sem role financeiro NÃO lê asaas_config (api_key protegida)'
 );
 
 -- =============================================

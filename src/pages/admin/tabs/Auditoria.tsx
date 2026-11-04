@@ -138,7 +138,6 @@ const SENSITIVE_TABLES = [
   "marcos_faturamento",
   "propostas",
   "leads",
-  "asaas_config",
   "profiles",
   "empresas",
   "cliente_portal_accounts",

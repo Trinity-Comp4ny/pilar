@@ -184,6 +184,9 @@ test.describe("Portal do cliente", () => {
     // Sem novo goto: a sessão do portal vive na página, recarregar volta pro login.
     await page.waitForLoadState("networkidle");
     await page.evaluate(() => document.fonts.ready);
+    // Entra por login, não por abrir(): sem isto "Início: 03/11/2026" fica com a largura
+    // dos dígitos do dia e a máscara muda de caixa de um dia para o outro (CI de 03/11, 107 px).
+    await fixarTextoVariavel(page);
     await expect(page.getByRole("heading", { level: 1, name: /Olá/i })).toBeVisible();
     await expect(page).toHaveScreenshot("portal-dashboard.png", opcoes(page));
   });

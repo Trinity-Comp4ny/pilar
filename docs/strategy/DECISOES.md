@@ -11,6 +11,39 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-04 · Conexão bancária: por enquanto só arquivo CSV; sem OFX, sem Open Finance
+
+**Decisão:** o Financeiro continua recebendo extrato só por arquivo CSV (SPEC 017, tela "Importar"). Não entram OFX,
+agregador de Open Finance nem Asaas por empresa agora. Reabrir quando 3 ou 4 clientes pedirem conexão automática.
+
+Contexto: não existe conexão bancária gratuita para um produto. Agregador (Pluggy, Belvo, Celcoin) custa a partir de
+R$ 2.500/mês mais cerca de R$ 5 a 10 por conta conectada (valores de relatos de desenvolvedores, sem tabela oficial),
+e Open Finance direto exige ser instituição autorizada pelo Banco Central. O CSV já funciona e não tem custo.
+
+**Supera:** a recomendação de "OFX + CSV primeiro" do card BEZ-539; fica só o CSV. A SPEC 017 mantém PDF e XLSX como
+pendências de importação, sem prazo.
+
+---
+
+## 2026-11-03 · Sai o backend do Asaas por empresa; fica só o Asaas que cobra a assinatura do Pilar
+
+**Decisão:** removidas as edge functions `asaas-config`, `asaas-criar-cobranca` e `asaas-webhook`, as tabelas
+`asaas_config` e `asaas_webhook_logs` e as RPCs `set_asaas_api_key`/`get_asaas_api_key`. Não vai haver UI de cobrança
+pelo Asaas de cada empresa. Conexão bancária e conciliação seguem outro caminho (card BEZ-539).
+
+Contexto: a decisão de 2026-09-03 já abandonou a integração por empresa, mas deixou o backend de pé. Sem tela e sem
+chamador, era superfície de ataque e custo de manutenção sem uso. O Asaas da plataforma (checkout, assinatura, pacote
+de tokens, reconciliação diária) não muda.
+
+Também saíram (BEZ-553): as colunas `asaas_*` de `receitas` (e da view `lancamentos`), `clientes.asaas_customer_id` e o
+botão "Pagar" do portal, que só aparecia com `asaas_payment_url` preenchido. Em produção só a Bez Company tinha dado, de
+um teste em sandbox de 16/04/2026 (1 receita pendente, 1 cliente, 1 config). Correção da nota de 2026-09-03: havia 1
+`asaas_config` em produção, não zero.
+
+**Supera:** a nota de 2026-09-03 que deixava essas functions e tabelas "para auditoria separada".
+
+---
+
 ## 2026-10-30 · Agentes: pendência vem de regra em SQL; o chat consulta registros e age com confirmação
 
 **Decisão:** o agente de acompanhamento detecta por regra (parcela e conta vencidas ou a vencer, prazo de projeto e

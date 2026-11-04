@@ -163,7 +163,7 @@ export function AppSidebar({ ato }: { ato: number }) {
           {grupos.map((grupo) => (
             <div key={grupo || "sem-grupo"} className="space-y-1">
               {grupo && (
-                <p className="px-3 pt-1 text-[10px] font-medium uppercase tracking-wider text-black/35">{grupo}</p>
+                <p className="px-3 pt-1 text-[10px] font-medium uppercase tracking-wider text-black/60">{grupo}</p>
               )}
               {itens
                 .filter((n) => (n.grupo ?? "") === grupo)

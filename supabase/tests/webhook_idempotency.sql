@@ -1,8 +1,8 @@
--- pgTAP: idempotência/concorrência de webhooks Asaas e do convite de owner.
+-- pgTAP: idempotência/concorrência do webhook de checkout e do convite de owner.
 --
 -- Contexto (auditoria de hardening pré-lançamento, item "Confirmar
 -- idempotência/concorrência de webhooks e convites"):
---   1. asaas-webhook e pilar-checkout-webhook já inserem o log ANTES de
+--   1. pilar-checkout-webhook já insere o log ANTES de
 --      processar o efeito colateral, e um índice único em (event, payment_id)
 --      [ou (event, subscription_id)] faz o segundo INSERT falhar com 23505.
 --      Isso cobre tanto reentrega (retry) quanto corrida real: o índice único
@@ -26,34 +26,10 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(12);
+SELECT plan(9);
 
 -- =============================================
--- Grupo 1: asaas-webhook — idempotência por (event, payment_id)
--- =============================================
-
-SELECT lives_ok(
-  $$ INSERT INTO public.asaas_webhook_logs (event, payment_id, payload)
-     VALUES ('PAYMENT_CONFIRMED', 'pay_idem_test_1', '{}'::jsonb) $$,
-  'primeira entrega do webhook grava o log normalmente'
-);
-
-SELECT throws_ok(
-  $$ INSERT INTO public.asaas_webhook_logs (event, payment_id, payload)
-     VALUES ('PAYMENT_CONFIRMED', 'pay_idem_test_1', '{}'::jsonb) $$,
-  '23505',
-  NULL,
-  'reentrega do MESMO evento é rejeitada pelo índice único (idempotência)'
-);
-
-SELECT is(
-  (SELECT COUNT(*)::INTEGER FROM public.asaas_webhook_logs WHERE payment_id = 'pay_idem_test_1'),
-  1,
-  'só existe 1 log para o pagamento mesmo após a tentativa de duplicata'
-);
-
--- =============================================
--- Grupo 2: pilar-checkout-webhook — idempotência por (event, payment_id)
+-- Grupo 1: pilar-checkout-webhook — idempotência por (event, payment_id)
 -- =============================================
 
 SELECT lives_ok(
