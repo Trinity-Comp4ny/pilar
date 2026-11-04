@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, FileCheck, Clock, ChevronRight, ExternalLink } from "lucide-react";
+import { AlertCircle, FileCheck, Clock, ChevronRight } from "lucide-react";
 import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
 
 interface PendenciasCardProps {
@@ -23,9 +23,6 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
     (r) => r.data_vencimento >= hoje && r.data_vencimento <= em7dias
   );
   const faturasProximasVencimento = faturasProximasVencimentoList.length;
-
-  const paymentLinkAtrasada = faturasAtrasadasList.find((r) => r.asaas_payment_url)?.asaas_payment_url ?? null;
-  const paymentLinkProxima = faturasProximasVencimentoList.find((r) => r.asaas_payment_url)?.asaas_payment_url ?? null;
 
   const pendencias = {
     entregasPendentes: portalEntregasPendentes,
@@ -97,17 +94,6 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
                 </div>
                 <ChevronRight className="h-3.5 w-3.5 text-danger-strong" />
               </button>
-              {paymentLinkAtrasada && (
-                <a
-                  href={paymentLinkAtrasada}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 px-3 min-h-11 sm:min-h-0 sm:py-2 rounded-md bg-brand hover:bg-brand/90 text-ink text-xs font-medium transition-colors whitespace-nowrap"
-                >
-                  Pagar
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
             </div>
           )}
 
@@ -126,17 +112,6 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
                 </div>
                 <ChevronRight className="h-3.5 w-3.5 text-warning-mid" />
               </button>
-              {paymentLinkProxima && (
-                <a
-                  href={paymentLinkProxima}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 px-3 min-h-11 sm:min-h-0 sm:py-2 rounded-md bg-brand hover:bg-brand/90 text-ink text-xs font-medium transition-colors whitespace-nowrap"
-                >
-                  Pagar
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
             </div>
           )}
         </div>
