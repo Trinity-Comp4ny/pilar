@@ -1,0 +1,15 @@
+1
+00:00:00,350 --> 00:00:05,366
+Quanto sobrou este mês? E qual projeto puxou para baixo?
+
+2
+00:00:06,296 --> 00:00:11,600
+Lucro, receitas, despesas e o que falta receber, no mesmo lugar.
+
+3
+00:00:12,530 --> 00:00:19,226
+E toda semana, um resumo do que importa. Cada número é conferido antes de chegar a você.
+
+4
+00:00:20,156 --> 00:00:23,564
+Pilar. Número antes do fim.

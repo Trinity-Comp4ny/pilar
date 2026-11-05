@@ -1,0 +1,15 @@
+1
+00:00:00,350 --> 00:00:05,606
+O lead entra no funil e vira proposta, com as disciplinas e o valor de cada uma.
+
+2
+00:00:06,536 --> 00:00:12,920
+Proposta aceita vira projeto, com as disciplinas, os responsáveis e as parcelas no financeiro.
+
+3
+00:00:13,850 --> 00:00:19,058
+O financeiro já sabe o que tem a receber. Ninguém redigita nada.
+
+4
+00:00:19,988 --> 00:00:24,788
+Pilar. Do contrato à execução, num fluxo só.
