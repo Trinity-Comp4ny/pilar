@@ -1,0 +1,41 @@
+caso_e ocr {'vetor': 19, 't_vetor': 15.7, 'blocos': '18/20', 't_ocr': 99.2, 'ocr': 169, 'recuperou': '12/19', 'recuperou_com_nome': '8/19', 'sobras': 157, 'sobras_com_nome': 20}
+   COPA                       1.30
+   WC.                        1.30
+   LAJE                     781.00
+   ROUPARIA                   7.00
+   NHO                        4.32
+   COM                        4.52
+   DIS                        2.90
+   EXPO                       6.74
+   ÍNTIMA                   781.15
+   SAL                       81.15
+   ALTURA                     2.10
+   RGALERY.                  77.21
+   LAVABO                     5.18
+   BIBLIOTECA                12.80
+   CIRCULAÇÃO                17.63
+   ADEGA                    774.72
+   CLIM.                    777.27
+   WC.                        2.53
+   LAJE                      50.14
+   COPA                     777.27
+   GALER                    777.27
+   LAVABO                   777.27
+   JEGA                     774.12
+   SAL                       17.35
+   CASA                     777.12
+   COPA                       2.53
+   SUARITA                  776.60
+   GALER                     71.54
+                             14.00
+                              2.96
+                              7.99
+                              2.65
+                              1.25
+                              2.67
+                              4.00
+                              3.00
+                              4.31
+                              2.97
+                              2.00
+                              4.00

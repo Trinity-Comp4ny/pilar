@@ -1,0 +1,334 @@
+{
+ "tabela": {
+  "PCM90": {
+   "largura": 0.98,
+   "altura": 2.45,
+   "quant": 3
+  },
+  "PCV160": {
+   "largura": 1.6,
+   "altura": 2.5,
+   "quant": 1
+  },
+  "PCV260": {
+   "largura": 2.6,
+   "altura": 2.8,
+   "quant": 2
+  },
+  "PCV360": {
+   "largura": 3.6,
+   "altura": 2.8,
+   "quant": 1
+  },
+  "PCV715": {
+   "largura": 7.15,
+   "altura": 3.0,
+   "quant": 1
+  },
+  "PGA70": {
+   "largura": 0.7,
+   "altura": 1.0,
+   "quant": 1
+  },
+  "PGA80A": {
+   "largura": 0.88,
+   "altura": 2.53,
+   "quant": 1
+  },
+  "PGA80B": {
+   "largura": 0.88,
+   "altura": 2.45,
+   "quant": 1
+  },
+  "PGA100": {
+   "largura": 1.0,
+   "altura": 1.04,
+   "quant": 1
+  },
+  "PGM60": {
+   "largura": 0.68,
+   "altura": 2.15,
+   "quant": 1
+  },
+  "PGM80": {
+   "largura": 0.88,
+   "altura": 2.45,
+   "quant": 8
+  },
+  "PGV70": {
+   "largura": 0.78,
+   "altura": 2.45,
+   "quant": 1
+  },
+  "PPA140": {
+   "largura": 1.48,
+   "altura": 3.0,
+   "quant": 1
+  },
+  "JBV80": {
+   "largura": 0.8,
+   "altura": 0.5,
+   "quant": 1
+  },
+  "JBV140": {
+   "largura": 1.4,
+   "altura": 0.8,
+   "quant": 2
+  },
+  "JBV390": {
+   "largura": 3.9,
+   "altura": 0.8,
+   "quant": 1
+  },
+  "JCV150": {
+   "largura": 1.5,
+   "altura": 2.0,
+   "quant": 1
+  }
+ },
+ "rotulos": [
+  {
+   "cod": "PPA140",
+   "px": [
+    3639,
+    2896
+   ],
+   "girado": false,
+   "vao": 1.48
+  },
+  {
+   "cod": "PGM80",
+   "px": [
+    3951,
+    2570
+   ],
+   "girado": false,
+   "vao": 0.88
+  },
+  {
+   "cod": "PGM60",
+   "px": [
+    4821,
+    1636
+   ],
+   "girado": false,
+   "vao": 0.68
+  },
+  {
+   "cod": "PGM80",
+   "px": [
+    3951,
+    2262
+   ],
+   "girado": false,
+   "vao": 0.88
+  },
+  {
+   "cod": "JBV80",
+   "px": [
+    3722,
+    1798
+   ],
+   "girado": false,
+   "vao": 0.8
+  },
+  {
+   "cod": "JCV150",
+   "px": [
+    4299,
+    1798
+   ],
+   "girado": false,
+   "vao": 1.49
+  },
+  {
+   "cod": "PGA80A",
+   "px": [
+    4605,
+    614
+   ],
+   "girado": false,
+   "vao": 0.88
+  },
+  {
+   "cod": "PGA80B",
+   "px": [
+    6254,
+    2685
+   ],
+   "girado": false,
+   "vao": 0.88
+  },
+  {
+   "cod": "PCM90",
+   "px": [
+    4943,
+    2421
+   ],
+   "girado": false,
+   "vao": 0.98
+  },
+  {
+   "cod": "PGA100",
+   "px": [
+    5085,
+    604
+   ],
+   "girado": false,
+   "vao": 0.98
+  },
+  {
+   "cod": "PGM80",
+   "px": [
+    6084,
+    6264
+   ],
+   "girado": false,
+   "vao": 0.88
+  },
+  {
+   "cod": "PGM80",
+   "px": [
+    6619,
+    6264
+   ],
+   "girado": false,
+   "vao": 0.88
+  },
+  {
+   "cod": "PGM80",
+   "px": [
+    4611,
+    5851
+   ],
+   "girado": false,
+   "vao": 0.88
+  },
+  {
+   "cod": "PGM80",
+   "px": [
+    5437,
+    5851
+   ],
+   "girado": false,
+   "vao": 0.88
+  },
+  {
+   "cod": "PGM80",
+   "px": [
+    4611,
+    5579
+   ],
+   "girado": false,
+   "vao": 0.88
+  },
+  {
+   "cod": "PGM80",
+   "px": [
+    5437,
+    5579
+   ],
+   "girado": false,
+   "vao": 0.88
+  },
+  {
+   "cod": "PCV260",
+   "px": [
+    4269,
+    4941
+   ],
+   "girado": false,
+   "vao": 2.6
+  },
+  {
+   "cod": "JBV140",
+   "px": [
+    4813,
+    4941
+   ],
+   "girado": false,
+   "vao": 1.4
+  },
+  {
+   "cod": "JBV140",
+   "px": [
+    5215,
+    4941
+   ],
+   "girado": false,
+   "vao": 1.4
+  },
+  {
+   "cod": "PCV260",
+   "px": [
+    5757,
+    4941
+   ],
+   "girado": false,
+   "vao": 2.6
+  },
+  {
+   "cod": "PCV360",
+   "px": [
+    6584,
+    4601
+   ],
+   "girado": false,
+   "vao": 3.59
+  },
+  {
+   "cod": "PCM90",
+   "px": [
+    4070,
+    2426
+   ],
+   "girado": true,
+   "vao": 0.98
+  },
+  {
+   "cod": "PCM90",
+   "px": [
+    4908,
+    1150
+   ],
+   "girado": true,
+   "vao": 0.93
+  },
+  {
+   "cod": "PCV160",
+   "px": [
+    4860,
+    905
+   ],
+   "girado": true,
+   "vao": 1.65
+  },
+  {
+   "cod": "PGV70",
+   "px": [
+    6838,
+    2828
+   ],
+   "girado": true,
+   "vao": 0.78
+  },
+  {
+   "cod": "PCV715",
+   "px": [
+    6043,
+    1965
+   ],
+   "girado": true,
+   "vao": 7.15
+  },
+  {
+   "cod": "JBV390",
+   "px": [
+    6989,
+    5915
+   ],
+   "girado": true,
+   "vao": 3.9
+  }
+ ]
+}

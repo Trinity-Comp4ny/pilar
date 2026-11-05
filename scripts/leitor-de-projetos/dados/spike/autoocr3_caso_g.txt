@@ -1,0 +1,41 @@
+caso_g ocr {'vetor': 17, 't_vetor': 5.9, 'criterio': 'parede', 'dpis': (149, 299, 449), 'bloco_pt': 700, 'blocos': '5/12', 't_ocr': 37.9, 'ocr': 194, 'com_m2': 17, 'com_m2_e_nome': 16, 'recuperou': '17/17', 'recuperou_com_nome': '16/17', 'recuperou_com_m2': '17/17', 'sobras': 177, 'sobras_com_nome': 23, 'sobras_com_m2': 0}
+   REA                        2.10
+   ram                        2.00
+   BHO SUÍTE                  3.90
+   LAVANDERIA                 7.06
+   SALA JANTAR               29.59
+   GARAGEM                   29.93
+   COZINHA                   21.85
+   LAVABO                     1.90
+   PROJEÇÃO BEIRAL IMPERM     1.60
+   PROJEÇÃO BEIRAL IMPERM     1.00
+   SUÍTE                     10.43
+   FOSSO LUZ                  9.48
+   CIRCULAÇÃO EXT            30.12
+   SUÍTE                      9.99
+   CIRCULAÇÃO                 6.89
+   CLOSET. SUÍTE              9.98
+   BHO SUÍTE                  3.59
+   BHO SUÍTE                  2.80
+   TERÁ REVESTIMENTO          1.20
+   ATÉ                        1.00
+   BHO SUÍTE                  2.80
+   AMA                        1.15
+   AMA                        1.85
+   BHO SUÍTE                  8.82
+   LAVABO                     3.45
+   DEPÓSITO                   3.00
+   COZINHA                    3.00
+   DEPÓSITO                   3.25
+   SuíTE                      2.85
+   SALA JANTAR                3.90
+   DORM. SUÍTE                8.81
+   Das                        1.06
+   LAVANDERIA                 3.00
+   CLOSET. SUÍTE              2.85
+   BHO SUÍTE                  2.80
+   SUÍTE                      2.85
+   CIRCULAÇÃO                 2.85
+   DORM. SUÍTE                2.85
+   GARAGEM                    2.65
+                              1.40

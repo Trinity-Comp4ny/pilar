@@ -1,0 +1,12 @@
+
+### caso J - MARÍLIA - PLANTA BAIXA E ÁREAS - AGOSTO 2026 - R  págs=1  produtor='GPL Ghostscript 9.53.3' criador='PDF24 Creator'
+  p1: 1107x594mm linhas=1240 curvas=880 rects=13 chars=1948 imgs=112 imagem_grande=não rótulos_área=0 códigos={}
+
+### caso I R06_EXEC.01 - PLANTA BAIXA TÉRREO LAYOUT - MEDIDAS.  págs=1  produtor='Adobe PDF Library 18.0.5' criador=''
+  p1: 841x594mm linhas=20732 curvas=8416 rects=914 chars=5403 imgs=1 imagem_grande=não rótulos_área=5 códigos={'EX05': 8, 'EX03': 4, 'EX04': 4, 'EX06': 4, 'EX01': 1}
+
+### caso_d.pdf  págs=1  produtor='pdfplot16.hdi 16.01.051.00000' criador='AutoCAD 2022 - English 2022 (24.1s (LMS Tech)'
+  p1: 1189x841mm linhas=9586 curvas=21524 rects=64 chars=976 imgs=0 imagem_grande=não rótulos_área=0 códigos={}
+
+### PSAR-AP-02-PLANTA ÁREAS EXIS. PLANTAS ÁREAS NOVAS-R02.pdf  págs=1  produtor='Adobe PDF Library 18.0.5' criador=''
+  p1: 841x594mm linhas=26433 curvas=418 rects=461 chars=1172 imgs=1 imagem_grande=não rótulos_área=0 códigos={}
