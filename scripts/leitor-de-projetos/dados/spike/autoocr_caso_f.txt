@@ -1,0 +1,41 @@
+caso_f ocr {'vetor': 14, 't_vetor': 3.6, 'blocos': '11/12', 't_ocr': 42.2, 'ocr': 197, 'recuperou': '9/14', 'recuperou_com_nome': '6/14', 'sobras': 188, 'sobras_com_nome': 12}
+   LAVANDERIA                 5.06
+   FOSSO                      6.56
+   JANTAR                    13.50
+   FOSSO                      6.90
+   HALL                      14.91
+   QUARTO                    11.64
+   SALA                       9.20
+   SALA                      13.64
+   FOSSO                      6.88
+   QUARTO                    11.64
+   VARANDA                    6.16
+   COZINHA                   24.91
+   COZINHA                   12.24
+   GOURMET                   11.43
+   JANTAR                    19.11
+   QUARTO                    13.72
+   RCULAÇ                   218.52
+   QUARTO                    13.72
+                              4.00
+                              3.00
+                              4.25
+                              4.23
+                              4.25
+                              8.38
+                              3.45
+                              4.05
+                              1.30
+                              8.38
+                              4.00
+                              3.02
+                              3.30
+                              4.25
+                              3.45
+                              4.00
+                              2.90
+                              1.48
+                              1.20
+                              3.10
+                              4.05
+                              3.10

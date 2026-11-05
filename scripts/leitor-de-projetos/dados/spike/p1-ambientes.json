@@ -1,0 +1,152 @@
+[
+ {
+  "nome": "Suíte visitas",
+  "area_rotulo": 9.66,
+  "vista": "Planta baixa - Térreo",
+  "px": [
+   4416,
+   2149
+  ],
+  "seed": [
+   4408,
+   2178
+  ],
+  "area_calc": 1.81,
+  "erro_pct": -81.3
+ },
+ {
+  "nome": "Lavatório",
+  "area_rotulo": 2.16,
+  "vista": "Planta baixa - Térreo",
+  "px": [
+   3880,
+   2418
+  ],
+  "seed": [
+   3943,
+   2433
+  ],
+  "area_calc": 7.35,
+  "erro_pct": 240.3
+ },
+ {
+  "nome": "Despensa",
+  "area_rotulo": 1.6,
+  "vista": "Planta baixa - Térreo",
+  "px": [
+   4740,
+   1699
+  ],
+  "seed": [
+   4796,
+   1416
+  ],
+  "area_calc": 3.07,
+  "erro_pct": 92.0
+ },
+ {
+  "nome": "Área gourmet",
+  "area_rotulo": 77.06,
+  "vista": "Planta baixa - Térreo",
+  "px": [
+   6509,
+   1834
+  ],
+  "seed": [
+   6514,
+   1551
+  ],
+  "area_calc": 4.66,
+  "erro_pct": -94.0
+ },
+ {
+  "nome": "Lavabo",
+  "area_rotulo": 2.24,
+  "vista": "Planta baixa - Térreo",
+  "px": [
+   6256,
+   2800
+  ],
+  "seed": [
+   6298,
+   2517
+  ],
+  "area_calc": 22.04,
+  "erro_pct": 884.1
+ },
+ {
+  "nome": "Estar/ Cozinha",
+  "area_rotulo": 45.6,
+  "vista": "Planta baixa - Térreo",
+  "px": [
+   5511,
+   1928
+  ],
+  "seed": [
+   5228,
+   1645
+  ],
+  "area_calc": 42.14,
+  "erro_pct": -7.6
+ },
+ {
+  "nome": "Hall",
+  "area_rotulo": 11.98,
+  "vista": "Planta baixa - Térreo",
+  "px": [
+   4317,
+   2724
+  ],
+  "seed": [
+   4599,
+   2829
+  ],
+  "area_calc": 15.01,
+  "erro_pct": 25.3
+ },
+ {
+  "nome": "Suíte 01",
+  "area_rotulo": 12.74,
+  "vista": "Planta baixa - Superior",
+  "px": [
+   4267,
+   5337
+  ],
+  "seed": [
+   4238,
+   5338
+  ],
+  "area_calc": 2.15,
+  "erro_pct": -83.2
+ },
+ {
+  "nome": "Suíte 02",
+  "area_rotulo": 12.74,
+  "vista": "Planta baixa - Superior",
+  "px": [
+   5644,
+   5337
+  ],
+  "seed": [
+   5750,
+   5535
+  ],
+  "area_calc": 17.02,
+  "erro_pct": 33.6
+ },
+ {
+  "nome": "Circulação",
+  "area_rotulo": 9.31,
+  "vista": "Planta baixa - Superior",
+  "px": [
+   5493,
+   6214
+  ],
+  "seed": [
+   5270,
+   6179
+  ],
+  "area_calc": 86.79,
+  "erro_pct": 832.2
+ }
+]

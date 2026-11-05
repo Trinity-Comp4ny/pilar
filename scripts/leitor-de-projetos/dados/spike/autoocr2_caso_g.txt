@@ -1,0 +1,41 @@
+caso_g ocr {'vetor': 17, 't_vetor': 5.7, 'blocos': '12/12', 't_ocr': 68.6, 'ocr': 234, 'recuperou': '17/17', 'recuperou_com_nome': '17/17', 'sobras': 217, 'sobras_com_nome': 29}
+   PUTO                       1.03
+   LHA                        2.90
+   ram                        2.00
+   HEM                        2.80
+   CIRCULAÇÃO                 6.89
+   SUÍTE                     10.43
+   BHO SUÍTE                  8.82
+   CLOSET. SUÍTE              9.98
+   FOSSO LUZ                  9.48
+   BHO SUÍTE                  3.90
+   SALA JANTAR               29.59
+   GARAGEM                   29.93
+   EsERITÓRIO                 5.07
+   PASSARELAJDE MANUTENÇÃ     3.70
+   TERÁ REVESTIMENTO          1.20
+   ATÉ                        1.00
+   PROJEÇÃO BEIRAL IMPERM     1.60
+   PROJEÇÃO BEIRAL IMPERM     1.00
+   CIRCULAÇÃO EXT            30.12
+   SUÍTE                      9.99
+   DORM. SUÍTE                8.81
+   BHO SUÍTE                  2.80
+   Das                        1.06
+   COZINHA                   21.85
+   SALA JANTAR                3.90
+   LAVABO                     1.90
+   BHO SUÍTE                  3.59
+   COZINHA                    3.00
+   DEPÓSITO                   3.00
+   DEPÓSITO                   3.25
+   NDA Eder                   1.90
+   LAVABO                     3.45
+   LAVANDERIA                 7.06
+   SUÍTE                      2.85
+   BHO SUÍTE                  2.80
+   BHO SUÍTE                  2.80
+   DORM. SUÍTE                2.85
+   SALA                      40.35
+   CLOSET. SUÍTE              2.85
+   LAVANDERIA                 3.00

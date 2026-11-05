@@ -1,0 +1,15 @@
+# dado de cliente e arquivos de terceiros: nunca versionar
+dados/raw/
+dados/raw2/
+dados/raw3/aberto/duplex/*.ifc
+dados/raw3/aberto/duplex/*.IFC
+dados/raw4/
+dados/dxf/
+dados/render/
+dados/render2/
+dados/spike/**/*.png
+dados/spike/**/*.jpg
+ferramentas/venv/
+ferramentas/tessdata/
+**/__pycache__/
+*.pyc

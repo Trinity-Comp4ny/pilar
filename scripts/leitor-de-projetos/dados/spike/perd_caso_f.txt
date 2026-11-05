@@ -1,0 +1,2 @@
+4 perdidos: [('BANHO', 5.35), ('CIRC.', 1.71), ('P.N.E. FEM.', 4.28), ('CIRCULAÇÃO', 33.51)]
+ok (1334, 444)

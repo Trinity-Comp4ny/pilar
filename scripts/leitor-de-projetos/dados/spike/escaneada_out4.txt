@@ -1,0 +1,61 @@
+FONTE ocr {'vetor': 0, 't_vetor': 1.5, 'criterio': 'conteudo', 'dpis': (150, 300, 400, 600, 900), 'bloco_pt': 480, 'blocos': '4/4', 't_ocr': 40.6, 'ocr': 66, 'com_m2': 3, 'com_m2_e_nome': 3}
+   Torgura. Dimensões Altur     3.00  x=251 y=40 conf=72
+   Largura Altura               4.60  x=283 y=60 conf=76
+   PAV. TÉRREO SUPERIOR        66.29  x=488 y=106 conf=44
+   OCUPAÇÃO. CPF RRI/ART/TR    54.27  x=505 y=107 conf=95
+   ÁREA LIVRE [nome removido] ENG    91.15  x=498 y=107 conf=68
+   CONSTRUIR TÉRREO           108.18  x=484 y=107 conf=79
+   PAV. PAV. TÉRREO... SUPE   174.47  x=491 y=107 conf=38
+   CPF RRI/ART/TRT            199.33  x=474 y=107 conf=82
+   SITUAÇÃO semEsCALA          10.17  x=426 y=155 conf=96
+   Pelos                       21.50  x=110 y=164 conf=90
+   Pelos                        3.57  x=118 y=164 conf=42
+   Ventilação mecânica          1.55  x=72 y=165 conf=96
+   pré                          1.60  x=415 y=371 conf=96
+   pré                          1.20  x=422 y=371 conf=96
+   acordo Ill lei com artig     3.20  x=399 y=435 conf=94
+   iii                          1.60  x=153 y=503 conf=96
+   com corrimão artigo          1.26  x=162 y=505 conf=94
+   Área técnica                 2.41  x=126 y=511 conf=75
+   IES                          1.21  x=163 y=517 conf=96
+   Área técnica                 1.15  x=126 y=529 conf=86
+   mecânica                    10.17  x=54 y=533 conf=96
+   mecânica                     2.70  x=58 y=537 conf=94
+   Vazi                         3.00  x=205 y=538 conf=79
+   Área técnica                 3.20  x=116 y=554 conf=96
+   Área técnica                48.47  x=110 y=555 conf=89
+   Ventilação mecânica          1.21  x=58 y=558 conf=96
+   Área técnica                 4.71  x=126 y=558 conf=94
+   acoldo lei com artigo        4.71  x=163 y=558 conf=78
+   Ventilação mecânica          1.55  x=58 y=574 conf=96
+   Lau                          3.57  x=82 y=575 conf=82
+   sanduíche estrutura metá     8.10  x=350 y=629 conf=92
+   Ventilação mecânica Vent     2.50  x=53 y=636 conf=96
+   metálica Cobetura telha      7.20  x=359 y=648 conf=96
+   metálico                     3.20  x=399 y=650 conf=96
+   Eme Eme                      2.62  x=261 y=662 conf=79
+   Ventilação mecânica          5.06  x=57 y=674 conf=95
+   Sala                         3.36  x=126 y=683 conf=88
+   Eme Eme                      2.45  x=261 y=687 conf=76
+   Guia rebaixada               7.80  x=286 y=699 conf=83
+   Guia rebaixada               9.80  x=286 y=700 conf=88
+   mecânica Ventilação mecâ    10.17  x=53 y=700 conf=96
+   restrito                     1.60  x=184 y=706 conf=96
+   metálica Cobetura com sa     6.20  x=369 y=708 conf=95
+   Ventilação mecânica Vent     1.55  x=57 y=709 conf=96
+   PNEMpsc PNE Fem.             3.57  x=84 y=711 conf=79
+   Eme Eme                      2.45  x=261 y=712 conf=92
+   acoldo lei com artigo        5.86  x=163 y=719 conf=96
+   metálico                     3.20  x=399 y=721 conf=96
+   Sala                        43.43  x=120 y=723 conf=41
+   Ventilação mecânica Vent     1.21  x=58 y=725 conf=96
+   PNE Msc PNE Fem.             4.71  x=91 y=725 conf=82
+   PNE Msc PNE Fem.             3.57  x=84 y=740 conf=96
+   Ventilação mecânica Vent     1.55  x=57 y=741 conf=96
+                                6.87  x=166 y=149 conf=31
+                                1.50  x=210 y=330 conf=96
+                                1.50  x=124 y=330 conf=96
+                               10.17  x=53 y=373 conf=96
+                                8.67  x=211 y=381 conf=96
+                                5.86  x=57 y=393 conf=93
+                                2.50  x=54 y=469 conf=96

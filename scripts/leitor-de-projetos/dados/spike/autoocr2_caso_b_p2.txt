@@ -1,0 +1,41 @@
+caso_b_p2 ocr {'vetor': 9, 't_vetor': 0.3, 'blocos': '3/4', 't_ocr': 10.0, 'ocr': 63, 'recuperou': '8/9', 'recuperou_com_nome': '8/9', 'sobras': 55, 'sobras_com_nome': 6}
+   Suite                      4.93
+   Suite                      4.93
+   Closet                     4.93
+   Banho                      4.93
+   Laje Impermeabilizada      9.20
+   Circulação                 4.93
+   Banho                      5.50
+   Circulação                 6.98
+   Banho                      3.64
+   Banho                      3.64
+   Suite                     11.84
+   Closet                     6.80
+   Suite                     14.74
+   Suite                     14.74
+                             13.30
+                              7.90
+                              4.63
+                              4.93
+                              2.20
+                              1.00
+                             11.00
+                              1.00
+                             13.00
+                              8.20
+                              1.00
+                              3.10
+                              1.00
+                              3.80
+                              3.80
+                              3.90
+                              1.00
+                              1.70
+                              3.00
+                              3.20
+                              2.20
+                              2.20
+                              5.50
+                              5.50
+                              9.20
+                              4.63

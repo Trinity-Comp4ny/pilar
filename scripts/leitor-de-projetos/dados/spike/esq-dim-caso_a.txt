@@ -1,0 +1,3 @@
+caso_a: máscara=limiar110 | medidas lidas=31 | vãos geométricos=89 | medida escrita = vão medido (±12 cm): 27/31
+   erro de largura nos casados: mediana 1 cm, máximo 11 cm
+   sem par: [('475x50/2,50', 4.75, 2.65), ('05,2/05x073', 3.7, 2.07), ('150x200/1,00', 1.5, None), ('1,00x1,04', 1.0, 0.79)]

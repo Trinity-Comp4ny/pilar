@@ -1,0 +1,2 @@
+8 perdidos: [('Depósito', 3.72), ('Suíte 02', 11.47), ('Banheiro SM', 7.77), ('Mezanino', 18.65), ('Banheiro Mezan', 3.65), ('Circulação/ Ro', 8.58), ('Suíte 01', 11.47), ('Closet', 6.71)]
+ok (1332, 888)
