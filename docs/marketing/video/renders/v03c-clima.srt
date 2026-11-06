@@ -1,0 +1,15 @@
+1
+00:00:00,350 --> 00:00:03,734
+Sua concretagem de sábado vai pegar chuva?
+
+2
+00:00:04,664 --> 00:00:11,696
+Marque a tarefa como sensível ao clima. A Pilar cruza o cronograma com a previsão do local da obra.
+
+3
+00:00:12,626 --> 00:00:20,114
+E avisa antes, citando a tarefa, o dia e a chance de chuva. Quem decide reprogramar é você.
+
+4
+00:00:21,044 --> 00:00:24,740
+Pilar. Obra não para por surpresa.

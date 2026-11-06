@@ -1,0 +1,15 @@
+1
+00:00:00,350 --> 00:00:05,966
+O retrofit passou do orçamento de horas. A margem já está negativa.
+
+2
+00:00:06,896 --> 00:00:11,720
+O agente montou o aditivo e citou as despesas que justificam cada valor.
+
+3
+00:00:12,650 --> 00:00:18,098
+O sistema confere a conta. Nada vai para o cliente sem você aprovar.
+
+4
+00:00:19,028 --> 00:00:25,652
+A IA prepara. O sistema confere. Você aprova.
