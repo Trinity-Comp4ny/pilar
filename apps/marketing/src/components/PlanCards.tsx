@@ -8,7 +8,7 @@ import { DEMO_URL } from "../lib/contato";
  * Os três planos, no mesmo desenho na home e na /planos.
  *
  * Cada cartão mostra só o que muda entre planos: faixa de projetos, cota de
- * tokens de IA e nível de atendimento. A lista de funcionalidades saiu porque
+ * créditos de IA e nível de atendimento. A lista de funcionalidades saiu porque
  * ela não existe: todo plano tem a plataforma inteira (ADR 0026), e repetir a
  * mesma lista em três colunas sugeria o contrário.
  *
@@ -61,7 +61,7 @@ export function PlanCards({ contexto }: { contexto: string }) {
             <ul className="mt-7 flex flex-col gap-3.5 border-t border-paper-border/70 pt-6">
               {[
                 { Icone: InfinityIcon, texto: p.projetos },
-                { Icone: Sparkles, texto: p.tokensMes },
+                { Icone: Sparkles, texto: p.creditosMes },
                 { Icone: Users, texto: p.atendimento },
               ].map(({ Icone, texto }) => (
                 <li key={texto} className="flex items-start gap-2.5">

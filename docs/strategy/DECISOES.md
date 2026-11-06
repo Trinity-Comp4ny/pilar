@@ -11,6 +11,22 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-06 · Preço R$ 299/499/899, IA vendida em créditos e entrada só por demonstração
+
+**Decisão:** os planos passam a R$ 299 (Essencial), R$ 499 (Profissional) e R$ 899 (Escala). A cota de IA é
+comunicada em **créditos**, não em tokens, na razão fixa de 1 crédito = 5 mil tokens: 100, 400 e 1.600 créditos por
+mês. A landing não fala mais em teste grátis: a entrada é por convite, depois de agendar a demonstração.
+
+Contexto: "500 mil tokens" não diz nada ao sócio do escritório; um número pequeno e redondo de créditos é palpável. O
+motor de tokens continua contando token por baixo; crédito é só a unidade exposta ao cliente (a razão fixa permite
+converter sem mudar o motor). Cadastro por convite já valia desde 19/10 (SPEC 133).
+
+**Supera:** os preços R$ 490/690/1.290 da tabela v3 de PRICING.md e a entrada de 2026-08-31 na parte "token é a
+unidade exposta". **Pendente:** `pilar_subscription_plans` (preço do checkout), a tela de saldo/compra de tokens do
+app e o preço do pacote avulso ainda estão na régua antiga; alinhar antes de enviar link de checkout com o novo preço.
+
+---
+
 ## 2026-11-04 · Conexão bancária: por enquanto só arquivo CSV; sem OFX, sem Open Finance
 
 **Decisão:** o Financeiro continua recebendo extrato só por arquivo CSV (SPEC 017, tela "Importar"). Não entram OFX,

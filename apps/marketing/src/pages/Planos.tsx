@@ -33,8 +33,8 @@ const PERGUNTAS = [
     a: "Não. O preço é da empresa inteira. Coloque o escritório todo, estagiário e sócio, sem mudar a conta.",
   },
   {
-    q: "O que é um token?",
-    a: "A unidade de uso dos agentes de IA — mesmo termo que OpenAI e Anthropic usam. Toda conversa, leitura ou ação consome tokens; sua conta mostra o saldo real, sem tradução. Acabou a cota do mês? Compre um pacote avulso a qualquer momento.",
+    q: "O que é um crédito de IA?",
+    a: "A medida de uso dos agentes. Uma pergunta simples gasta pouco; ler um PDF ou montar uma proposta gasta mais. A conta mostra o saldo do mês, e a cota renova todo mês. Acabou antes? Compre um pacote avulso a qualquer momento.",
   },
 ];
 
