@@ -60,7 +60,7 @@ export function Faq() {
   usePageMeta({
     titulo: "Perguntas frequentes | Pilar",
     descricao:
-      "Para quem é o Pilar, como os módulos se conectam e o que a IA faz (e o que ela nunca faz sem o seu aval). As respostas antes de testar.",
+      "Para quem é o Pilar, como os módulos se conectam e o que a IA faz (e o que ela nunca faz sem o seu aval). As respostas antes da demonstração.",
     caminho: "/faq",
   });
 
