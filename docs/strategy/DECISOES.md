@@ -11,6 +11,23 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-06 (mais tarde) · Capacidade por módulo: projetos, obras e leads ativos
+
+**Decisão:** o plano limita os três módulos, não só projetos. Essencial: 10 projetos, 2 obras, 50 leads ativos.
+Profissional: 30 projetos, 5 obras, 200 leads. Escala: projetos e leads ilimitados, 15 obras. Usuários seguem
+ilimitados e toda empresa segue com a plataforma inteira (ADR 0026): o plano muda quanto, nunca o quê.
+
+Contexto: o Pilar deixou de ser só Projetos; Gestão e Obras são produto real, e cobrar tudo pela régua de projeto
+sub ou superprecifica o escritório que toca poucas obras ou muito comercial. Ativo = em andamento (projeto, obra) ou
+aberto no funil (lead); concluído, cancelado, ganho ou perdido não conta.
+
+**Supera:** as faixas 15/40/ilimitado de projetos da tabela v3 de PRICING.md e a coluna "obras ativas" (2/5/12) que
+lá era só diretriz. **Pendente:** o banco só aplica `max_projetos` nos planos pagos. `max_obras` existe apenas em
+`trial_niveis`, e não há limite de leads. Antes de vender pelo limite novo, levar `max_projetos` (10/30/null),
+`max_obras` e `max_leads` para `pilar_subscription_plans` e bloquear a criação no app ao atingir a faixa.
+
+---
+
 ## 2026-11-06 · Preço R$ 299/499/899, IA vendida em créditos e entrada só por demonstração
 
 **Decisão:** os planos passam a R$ 299 (Essencial), R$ 499 (Profissional) e R$ 899 (Escala). A cota de IA é

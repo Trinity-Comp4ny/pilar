@@ -16,7 +16,8 @@ export function PricingSection() {
             Um preço por escritório. <span className="italic text-ink/70">Sem contar cabeças.</span>
           </h2>
           <p className="text-[15px] text-ink-soft leading-relaxed">
-            Todo plano tem a plataforma inteira. O que muda é quantos projetos você toca ao mesmo tempo.
+            Todo plano tem a plataforma inteira. O que muda é o tamanho da operação: projetos, obras e leads ativos ao
+            mesmo tempo.
           </p>
         </Reveal>
 

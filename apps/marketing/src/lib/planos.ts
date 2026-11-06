@@ -21,8 +21,10 @@ export interface Plano {
   publico: string;
   /** Mensal, em reais. Anual saiu: a v3 registra ciclo anual como N/A. */
   preco: number;
-  /** Eixo de cobrança: faixa de projetos ativos. */
+  /** Eixos de capacidade, um por módulo (DECISOES.md 2026-11-06): projetos, obras e leads ativos. */
   projetos: string;
+  obras: string;
+  leads: string;
   /** Cota mensal em créditos de IA (DECISOES.md 2026-11-06: 1 crédito = 5 mil tokens). */
   creditosMes: string;
   /** O que muda no atendimento, que é serviço e não feature. */
@@ -36,7 +38,9 @@ export const PLANOS: Plano[] = [
     nome: "Essencial",
     publico: "Escritório de 5 a 8 pessoas",
     preco: 299,
-    projetos: "Até 15 projetos ativos",
+    projetos: "Até 10 projetos ativos",
+    obras: "Até 2 obras ativas",
+    leads: "Até 50 leads ativos no funil",
     creditosMes: "100 créditos de IA por mês",
     atendimento: "Suporte por e-mail e WhatsApp",
   },
@@ -45,7 +49,9 @@ export const PLANOS: Plano[] = [
     nome: "Profissional",
     publico: "O mais escolhido, e onde a maioria fica",
     preco: 499,
-    projetos: "Até 40 projetos ativos",
+    projetos: "Até 30 projetos ativos",
+    obras: "Até 5 obras ativas",
+    leads: "Até 200 leads ativos no funil",
     creditosMes: "400 créditos de IA por mês",
     atendimento: "Migração assistida da sua planilha",
     destaque: true,
@@ -56,6 +62,8 @@ export const PLANOS: Plano[] = [
     publico: "Operação maior ou multiequipe",
     preco: 899,
     projetos: "Projetos ativos ilimitados",
+    obras: "Até 15 obras ativas",
+    leads: "Leads ilimitados no funil",
     creditosMes: "1.600 créditos de IA por mês",
     atendimento: "Implantação acompanhada e canal direto",
   },
