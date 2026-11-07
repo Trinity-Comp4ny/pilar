@@ -29,7 +29,7 @@ export function PosicaoChips({ tipo, posicao, loading, ativo, onSelect }: Props)
     <div
       role="group"
       aria-label={tipo === "receita" ? "Posição do que há a receber" : "Posição do que há a pagar"}
-      className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-none"
     >
       {itens.map(({ balde, label, tom }) => {
         const v = posicao?.baldes[balde];
@@ -42,7 +42,7 @@ export function PosicaoChips({ tipo, posicao, loading, ativo, onSelect }: Props)
             aria-pressed={selecionado}
             onClick={() => onSelect(balde)}
             className={cn(
-              "flex min-w-[148px] shrink-0 flex-col items-start gap-0.5 rounded-xl border px-3.5 py-2.5 text-left transition-colors",
+              "flex min-w-40 shrink-0 flex-col items-start gap-0.5 rounded-xl border px-3.5 py-2.5 text-left transition-colors",
               "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
               selecionado ? "border-ink bg-ink text-white" : "border-border bg-background hover:bg-muted/50",
               vazio && !selecionado && "opacity-60"

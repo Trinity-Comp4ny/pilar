@@ -270,7 +270,7 @@ export function LancamentosListaMobile({
       {agruparPorDia(items).map((g) => (
         <section key={`${g.dia}-${g.itens[0].tipo}-${g.itens[0].id}`}>
           {/* Cabeçalho do dia fica preso no topo ao rolar, com o líquido do dia. */}
-          <h3 className="sticky top-0 z-10 flex items-baseline justify-between gap-3 bg-background/95 px-5 pb-1.5 pt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur supports-[backdrop-filter]:bg-background/80">
+          <h3 className="sticky top-0 z-10 flex items-baseline justify-between gap-3 bg-background/95 px-5 pb-1.5 pt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur">
             <span>{rotuloDoDia(g.dia)}</span>
             {g.itens.some((l) => l.tipo !== "transferencia") && (
               <span className="normal-case tracking-normal tabular-nums">

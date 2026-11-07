@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import type { ConfiancaDuplicata, DuplicateMatch } from "@/lib/duplicateCheck";
 
 /** O que o usuário está tentando gravar, para comparar lado a lado com o existente. */
-export interface LancamentoNovoResumo {
+interface LancamentoNovoResumo {
   descricao: string;
   valor: number;
   data: Date;

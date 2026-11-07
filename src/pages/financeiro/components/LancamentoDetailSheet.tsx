@@ -109,7 +109,7 @@ export function LancamentoDetailSheet({
         side={isMobile ? "bottom" : "right"}
         className={cn(
           "flex flex-col gap-0 overflow-hidden p-0",
-          isMobile ? "h-[92dvh] rounded-t-2xl" : "w-full sm:max-w-[480px]"
+          isMobile ? "h-[92dvh] rounded-t-2xl" : "w-full sm:max-w-md"
         )}
       >
         <SheetHeader className="space-y-3 border-b px-6 pb-5 pt-6 text-left">
