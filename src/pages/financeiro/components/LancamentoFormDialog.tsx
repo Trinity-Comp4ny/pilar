@@ -22,7 +22,7 @@ import { checkDuplicates } from "@/lib/duplicateCheck";
 import { DuplicateWarningDialog } from "@/components/DuplicateWarningDialog";
 import { TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import { useFinanceAuxData } from "../hooks/useFinanceAuxData";
-import { defaultValues, schema, type FormData, type FormInput } from "../lib/lancamentoFormSchema";
+import { defaultValues, rateiosValidos, schema, type FormData, type FormInput } from "../lib/lancamentoFormSchema";
 import { clienteDoProjeto, projetoContinuaValido, projetosDoCliente } from "../lib/vinculoClienteProjeto";
 import type { Lancamento, TipoLancamento } from "../hooks/useLancamentosUnified";
 import { CentroCustoManager } from "./CentroCustoManager";
@@ -60,6 +60,9 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
   const [rateios, setRateios] = useState<{ centro_custo_id: string; percentual: string }[]>([]);
   const [rateioOn, setRateioOn] = useState(false);
 
+  const erros = form.formState.errors;
+  // No modo cartão o campo Conta some: o erro "efetivado sem conta" (path contaId) aparece no cartão.
+  const erroCartao = erros.cartaoId ?? erros.contaId;
   const formaPagamento = form.watch("formaPagamento");
   const isCartaoPayment = formaPagamento === "Cartão de Crédito" || formaPagamento === "Cartão de Débito";
   const tipoCartaoFiltro = formaPagamento === "Cartão de Débito" ? "debito" : "credito";
@@ -129,22 +132,8 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
     }
   }, [open, lancamento, tipo]);
 
-  // Rateios preenchidos; lança se a soma não fecha 100%. Chamado ANTES de gravar
-  // o lançamento: se só falhasse depois do insert, o lançamento ficava gravado
-  // sem rateio, o form seguia aberto e um novo "Salvar" duplicava o registro.
-  const rateiosValidados = () => {
-    if (!rateioOn || rateios.length === 0) return [];
-    const validRateios = rateios.filter((r) => r.centro_custo_id && r.percentual);
-    if (validRateios.length === 0) return [];
-    const soma = validRateios.reduce((acc, r) => acc + Number(r.percentual || 0), 0);
-    if (Math.abs(soma - 100) > 0.01) {
-      throw new Error(`Soma dos percentuais do rateio deve ser 100 (atual: ${soma})`);
-    }
-    return validRateios;
-  };
-
   const persistRateio = async (lancamentoId: string, tipoLanc: TipoLancamento) => {
-    const validRateios = rateiosValidados();
+    const validRateios = rateiosValidos(rateioOn, rateios);
     if (validRateios.length === 0) return;
     const { error } = await supabase.rpc("rpc_lancamento_set_rateio", {
       p_lancamento_id: lancamentoId,
@@ -160,7 +149,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
   const save = async (data: FormData) => {
     setSaving(true);
     try {
-      rateiosValidados();
+      rateiosValidos(rateioOn, rateios); // valida antes de gravar (ver rateiosValidos)
       const numParcelas = Math.min(60, Math.max(1, parseInt(data.parcelas || "1") || 1));
       const valorNum = parseCurrencyString(data.valorTotal);
       const valorParcela = Math.round((valorNum / numParcelas) * 100) / 100;
@@ -406,9 +395,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                 <div className="space-y-1.5">
                   <Label className="text-xs">Parcelas</Label>
                   <Input type="number" min="1" max="60" {...form.register("parcelas")} className="h-9" />
-                  {form.formState.errors.parcelas && (
-                    <p className="text-xs text-destructive">{form.formState.errors.parcelas.message}</p>
-                  )}
+                  {erros.parcelas && <p className="text-xs text-destructive">{erros.parcelas.message}</p>}
                 </div>
               )}
             </div>
@@ -581,12 +568,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                   {form.watch("status") === "Pago" && <span className="text-destructive ml-0.5">*</span>}
                 </Label>
                 <Select value={form.watch("cartaoId")} onValueChange={(v) => form.setValue("cartaoId", v)}>
-                  <SelectTrigger
-                    className={cn(
-                      "h-9",
-                      (form.formState.errors.cartaoId || form.formState.errors.contaId) && "border-destructive"
-                    )}
-                  >
+                  <SelectTrigger className={cn("h-9", erroCartao && "border-destructive")}>
                     <SelectValue placeholder="Selecione o cartão" />
                   </SelectTrigger>
                   <SelectContent>
@@ -597,13 +579,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                     ))}
                   </SelectContent>
                 </Select>
-                {/* No modo cartão o campo Conta some; o erro "efetivado sem conta/cartão"
-                    (path contaId) aparece aqui para o submit não falhar em silêncio. */}
-                {(form.formState.errors.cartaoId ?? form.formState.errors.contaId) && (
-                  <p className="text-xs text-destructive">
-                    {(form.formState.errors.cartaoId ?? form.formState.errors.contaId)?.message}
-                  </p>
-                )}
+                {erroCartao && <p className="text-xs text-destructive">{erroCartao.message}</p>}
               </div>
             ) : (
               <div className="space-y-1.5">

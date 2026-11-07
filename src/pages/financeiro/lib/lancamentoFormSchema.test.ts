@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultValues, schema } from "./lancamentoFormSchema";
+import { defaultValues, rateiosValidos, schema } from "./lancamentoFormSchema";
 
 // Regras do schema do formulário de lançamento, isoladas da tela.
 
@@ -95,5 +95,28 @@ describe("lancamentoFormSchema", () => {
       // Defaults sozinhos não passam: o usuário precisa preencher descrição e valor.
       expect(schema.safeParse(d).success).toBe(false);
     }
+  });
+});
+
+describe("rateiosValidos", () => {
+  const cc = (id: string, p: string) => ({ centro_custo_id: id, percentual: p });
+
+  it("rateio desligado ou vazio não valida nada", () => {
+    expect(rateiosValidos(false, [cc("a", "10")])).toEqual([]);
+    expect(rateiosValidos(true, [])).toEqual([]);
+    expect(rateiosValidos(true, [cc("", ""), cc("b", "")])).toEqual([]);
+  });
+
+  it("soma 100 (com casas decimais) passa e descarta linhas incompletas", () => {
+    expect(rateiosValidos(true, [cc("a", "33.33"), cc("b", "33.33"), cc("c", "33.34"), cc("", "")])).toHaveLength(3);
+  });
+
+  it.each([
+    ["90", "0"],
+    ["60", "50"],
+  ])("soma diferente de 100 lança (%s + %s)", (p1, p2) => {
+    expect(() => rateiosValidos(true, [cc("a", p1), cc("b", p2)])).toThrow(
+      /Soma dos percentuais do rateio deve ser 100/
+    );
   });
 });
