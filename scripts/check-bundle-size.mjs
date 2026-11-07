@@ -45,7 +45,10 @@ const BUDGETS = {
   // já saiu do boot (lazy). Reavaliar se voltar a encostar.
   // 2026-10-29: 328 kB (era 327). O Logo passou a desenhar o nome em curva (PilarWordmark, ~1,7 kB de
   // caminho SVG, ~0,6 kB gzip) em vez de texto na fonte da página (BEZ-385). O Logo está em toda tela.
-  initialLoad: 328 * 1024,
+  // 2026-11-07: 329 kB (era 328). staging já media 328,0 kB; o onboarding da SPEC 149 não pôs
+  // nenhum módulo no boot (telas e cartões são lazy), mas os chunks novos aumentam a tabela de
+  // preload da entrada em ~0,1 kB. Reavaliar se voltar a encostar.
+  initialLoad: 329 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app
