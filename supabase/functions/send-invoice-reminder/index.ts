@@ -9,7 +9,7 @@ import { createLogger } from "../_shared/logger.ts";
 import { getRateLimitKey, RateLimiter } from "../_shared/rate-limiter.ts";
 import { lerJson } from "../_shared/schemas.ts";
 import { lerEntrada } from "./entrada.ts";
-import { lembreteVencido, podeEnviarLembrete } from "./regras.ts";
+import { lembreteVencido, parcelaEmAberto, podeEnviarLembrete } from "./regras.ts";
 
 const log = createLogger("send-invoice-reminder");
 
@@ -94,6 +94,10 @@ serve(
       };
 
       if (rec.empresa_id !== profile.empresa_id) return safeErrorResponse(403, "Acesso negado", req);
+
+      if (!parcelaEmAberto(rec.status)) {
+        return safeErrorResponse(409, "Esta parcela não está em aberto", req);
+      }
 
       const clienteEmail = rec.clientes?.email;
       if (!clienteEmail || !EMAIL_RE.test(clienteEmail)) {

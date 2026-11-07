@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
-import { lembreteVencido, podeEnviarLembrete } from "./regras.ts";
+import { lembreteVencido, parcelaEmAberto, podeEnviarLembrete } from "./regras.ts";
 
 Deno.test("admin, financeiro e operacional enviam lembrete", () => {
   for (const role of ["admin", "financeiro", "operacional"]) assertEquals(podeEnviarLembrete(role), true, role);
@@ -24,4 +24,13 @@ Deno.test("não vencida: vence hoje ou depois", () => {
 Deno.test("parcela já recebida ou cancelada nunca é tratada como atraso", () => {
   assertEquals(lembreteVencido("2026-10-01", "Recebido", "2026-11-07"), false);
   assertEquals(lembreteVencido("2026-10-01", "Cancelado", "2026-11-07"), false);
+});
+
+Deno.test("só parcela pendente ou atrasada recebe lembrete", () => {
+  assertEquals(parcelaEmAberto("Pendente"), true);
+  assertEquals(parcelaEmAberto("Atrasado"), true);
+  assertEquals(parcelaEmAberto("Pago"), false);
+  assertEquals(parcelaEmAberto("Recebido"), false);
+  assertEquals(parcelaEmAberto("Cancelado"), false);
+  assertEquals(parcelaEmAberto(""), false);
 });
