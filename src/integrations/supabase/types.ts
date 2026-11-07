@@ -10327,6 +10327,29 @@ export type Database = {
         }
         Returns: number
       }
+      rpc_buscar_duplicatas: {
+        Args: {
+          p_contraparte_id?: string
+          p_data: string
+          p_descricao: string
+          p_excluir_id?: string
+          p_grupo_parcela?: string
+          p_nota_fiscal?: string
+          p_tipo: string
+          p_valor: number
+        }
+        Returns: {
+          confianca: string
+          contraparte_nome: string
+          data_vencimento: string
+          descricao: string
+          id: string
+          motivo: string
+          nota_fiscal: string
+          status: string
+          valor: number
+        }[]
+      }
       rpc_calcular_wip: {
         Args: { p_ano: number; p_mes: number }
         Returns: number

@@ -18,8 +18,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { parseCurrencyString } from "@/lib/currencyUtils";
 import { MoneyInput } from "@/components/forms/MoneyInput";
-import { checkDuplicates } from "@/lib/duplicateCheck";
-import { DuplicateWarningDialog } from "@/components/DuplicateWarningDialog";
+import { useChecagemDuplicata } from "../hooks/useChecagemDuplicata";
 import { TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import { useFinanceAuxData } from "../hooks/useFinanceAuxData";
 import { defaultValues, rateiosValidos, schema, type FormData, type FormInput } from "../lib/lancamentoFormSchema";
@@ -54,9 +53,6 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
   });
 
   const [saving, setSaving] = useState(false);
-  const [duplicates, setDuplicates] = useState<Awaited<ReturnType<typeof checkDuplicates>>>([]);
-  const [showDupWarning, setShowDupWarning] = useState(false);
-  const [pendingData, setPendingData] = useState<FormData | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [ccManagerOpen, setCcManagerOpen] = useState(false);
   const [rateios, setRateios] = useState<{ centro_custo_id: string; percentual: string }[]>([]);
@@ -258,26 +254,18 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
     }
   };
 
+  const duplicata = useChecagemDuplicata({
+    isReceita,
+    contrapartes: isReceita ? aux.clientes : aux.fornecedores,
+    salvar: save,
+  });
+
   const onSubmit = form.handleSubmit(async (data) => {
     if (isEdit) {
       await save(data);
       return;
     }
-    const valorNum = parseCurrencyString(data.valorTotal);
-    const numParcelas = parseInt(data.parcelas || "1") || 1;
-    const found = await checkDuplicates({
-      table: isReceita ? "receitas" : "despesas",
-      descricao: data.descricao,
-      valor: valorNum / numParcelas,
-      dataVencimento: data.dataVencimento,
-    });
-    if (found.length > 0) {
-      setDuplicates(found);
-      setPendingData(data);
-      setShowDupWarning(true);
-      return;
-    }
-    await save(data);
+    await duplicata.verificarESalvar(data);
   });
 
   const clienteId = form.watch("clienteId") ?? "";
@@ -735,16 +723,11 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs">Nota fiscal</Label>
-                <Select value={form.watch("notaFiscal")} onValueChange={(v) => form.setValue("notaFiscal", v)}>
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Sim">Sim</SelectItem>
-                    <SelectItem value="Não">Não</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* Número da NF (antes era um Sim/Não): é o sinal mais forte de duplicata. */}
+                <Label htmlFor="nota-fiscal" className="text-xs">
+                  Nº da nota fiscal
+                </Label>
+                <Input id="nota-fiscal" {...form.register("notaFiscal")} placeholder="Ex.: 1234" className="h-9" />
               </div>
               <div className="space-y-1.5 md:col-span-2">
                 <Label className="text-xs">Observação</Label>
@@ -794,21 +777,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
         }}
       />
 
-      <DuplicateWarningDialog
-        open={showDupWarning}
-        onOpenChange={(v) => {
-          setShowDupWarning(v);
-          if (!v) setPendingData(null);
-        }}
-        duplicates={duplicates}
-        onConfirm={() => {
-          setShowDupWarning(false);
-          if (pendingData) {
-            save(pendingData);
-            setPendingData(null);
-          }
-        }}
-      />
+      {duplicata.dialog}
     </>
   );
 }

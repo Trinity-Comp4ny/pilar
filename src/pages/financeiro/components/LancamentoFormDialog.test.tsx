@@ -484,14 +484,26 @@ describe("LancamentoFormDialog: falhas do servidor", () => {
 describe("LancamentoFormDialog: duplicata", () => {
   it("possível duplicata pede confirmação antes de gravar; confirmar grava", async () => {
     checkDuplicates.mockResolvedValue([
-      { id: "dup-1", descricao: "Aluguel", valor: 5000, data_vencimento: "2026-11-09", status: "Pendente" },
+      {
+        id: "dup-1",
+        descricao: "Aluguel",
+        valor: 5000,
+        data_vencimento: "2026-11-09",
+        status: "Pendente",
+        contraparte_nome: "Imobiliária Exemplo",
+        nota_fiscal: null,
+        confianca: "media",
+        motivo: "Descrição parecida, mesmo valor e vencimento próximo",
+      },
     ]);
     const { onSaved } = setup();
     descricao("Aluguel");
     valor("500000");
     salvar();
 
-    expect(await screen.findByText("Possível duplicata detectada")).toBeInTheDocument();
+    expect(await screen.findByText("Possível duplicata")).toBeInTheDocument();
+    expect(screen.getByText("Descrição parecida, mesmo valor e vencimento próximo")).toBeInTheDocument();
+    expect(screen.getByText("Você está lançando")).toBeInTheDocument();
     expect(checkDuplicates).toHaveBeenCalledWith(
       expect.objectContaining({ table: "despesas", descricao: "Aluguel", valor: 5000 })
     );
@@ -512,17 +524,62 @@ describe("LancamentoFormDialog: duplicata", () => {
     expect(checkDuplicates.mock.calls[0][0]).toMatchObject({ valor: 1000 });
   });
 
+  it("envia fornecedor e nota fiscal para o motor (sinais mais fortes que a descrição)", async () => {
+    setup();
+    descricao("Material");
+    valor("48000");
+    fireEvent.click(screen.getByRole("button", { name: /Mais opções/ }));
+    escolher("Fornecedor", "forn-1");
+    fireEvent.change(screen.getByLabelText("Nº da nota fiscal"), { target: { value: "NF 1234" } });
+    salvar();
+    await waitFor(() => expect(checkDuplicates).toHaveBeenCalled());
+    expect(checkDuplicates.mock.calls[0][0]).toMatchObject({ contraparteId: "forn-1", notaFiscal: "NF 1234" });
+  });
+
+  it("mesma nota fiscal aparece como quase certo", async () => {
+    checkDuplicates.mockResolvedValue([
+      {
+        id: "dup-2",
+        descricao: "Material de escritório",
+        valor: 480,
+        data_vencimento: "2026-11-09",
+        status: "Pago",
+        contraparte_nome: "Papelaria Central",
+        nota_fiscal: "NF 1234",
+        confianca: "certeza",
+        motivo: "Mesma nota fiscal",
+      },
+    ]);
+    setup();
+    descricao("Material");
+    valor("48000");
+    salvar();
+    expect(await screen.findByText("Este lançamento parece já existir")).toBeInTheDocument();
+    expect(screen.getByText("Quase certo")).toBeInTheDocument();
+    expect(screen.getByText("Mesma nota fiscal")).toBeInTheDocument();
+  });
+
   it("cancelar a duplicata não grava", async () => {
     checkDuplicates.mockResolvedValue([
-      { id: "dup-1", descricao: "Aluguel", valor: 5000, data_vencimento: "2026-11-09", status: "Pendente" },
+      {
+        id: "dup-1",
+        descricao: "Aluguel",
+        valor: 5000,
+        data_vencimento: "2026-11-09",
+        status: "Pendente",
+        contraparte_nome: "Imobiliária Exemplo",
+        nota_fiscal: null,
+        confianca: "media",
+        motivo: "Descrição parecida, mesmo valor e vencimento próximo",
+      },
     ]);
     const { onSaved } = setup();
     descricao("Aluguel");
     valor("500000");
     salvar();
     const alerta = await screen.findByRole("alertdialog");
-    fireEvent.click(within(alerta).getByRole("button", { name: "Cancelar" }));
-    await waitFor(() => expect(screen.queryByText("Possível duplicata detectada")).not.toBeInTheDocument());
+    fireEvent.click(within(alerta).getByRole("button", { name: "Não salvar" }));
+    await waitFor(() => expect(screen.queryByText("Possível duplicata")).not.toBeInTheDocument());
     expect(chamadasCriar("despesas")).toHaveLength(0);
     expect(onSaved).not.toHaveBeenCalled();
   });
