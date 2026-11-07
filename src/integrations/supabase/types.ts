@@ -1702,6 +1702,30 @@ export type Database = {
           },
         ]
       }
+      demo_interesses: {
+        Row: {
+          canal: string
+          created_at: string
+          id: string
+          origem: Json
+          pagina: string | null
+        }
+        Insert: {
+          canal: string
+          created_at?: string
+          id?: string
+          origem?: Json
+          pagina?: string | null
+        }
+        Update: {
+          canal?: string
+          created_at?: string
+          id?: string
+          origem?: Json
+          pagina?: string | null
+        }
+        Relationships: []
+      }
       despesas: {
         Row: {
           cartao_id: string | null
@@ -2060,10 +2084,12 @@ export type Database = {
           cidade: string | null
           cnae_principal: string | null
           cnpj: string | null
+          como_conheceu: string | null
           contato: string | null
           created_at: string | null
           created_by: string | null
           deleted_at: string | null
+          disciplinas: string[] | null
           documento_tipo: string | null
           documento_verificacao: string | null
           documento_verificado_em: string | null
@@ -2082,10 +2108,13 @@ export type Database = {
           nivel_override_motivo: string | null
           nivel_override_por: string | null
           nome: string
+          objetivo_inicial: string | null
           onboarding_completed: boolean | null
+          origem: string | null
           owner_id: string | null
           pix_chave: string | null
           pix_instrucoes: string | null
+          porte: string | null
           preservar_dados: boolean
           preservar_dados_em: string | null
           preservar_dados_motivo: string | null
@@ -2093,6 +2122,7 @@ export type Database = {
           razao_social: string | null
           retencao_aviso_60d_sent_at: string | null
           retencao_aviso_85d_sent_at: string | null
+          site: string | null
           situacao_cadastral: string | null
           status: Database["public"]["Enums"]["status_empresa"] | null
           updated_at: string | null
@@ -2103,10 +2133,12 @@ export type Database = {
           cidade?: string | null
           cnae_principal?: string | null
           cnpj?: string | null
+          como_conheceu?: string | null
           contato?: string | null
           created_at?: string | null
           created_by?: string | null
           deleted_at?: string | null
+          disciplinas?: string[] | null
           documento_tipo?: string | null
           documento_verificacao?: string | null
           documento_verificado_em?: string | null
@@ -2125,10 +2157,13 @@ export type Database = {
           nivel_override_motivo?: string | null
           nivel_override_por?: string | null
           nome: string
+          objetivo_inicial?: string | null
           onboarding_completed?: boolean | null
+          origem?: string | null
           owner_id?: string | null
           pix_chave?: string | null
           pix_instrucoes?: string | null
+          porte?: string | null
           preservar_dados?: boolean
           preservar_dados_em?: string | null
           preservar_dados_motivo?: string | null
@@ -2136,6 +2171,7 @@ export type Database = {
           razao_social?: string | null
           retencao_aviso_60d_sent_at?: string | null
           retencao_aviso_85d_sent_at?: string | null
+          site?: string | null
           situacao_cadastral?: string | null
           status?: Database["public"]["Enums"]["status_empresa"] | null
           updated_at?: string | null
@@ -2146,10 +2182,12 @@ export type Database = {
           cidade?: string | null
           cnae_principal?: string | null
           cnpj?: string | null
+          como_conheceu?: string | null
           contato?: string | null
           created_at?: string | null
           created_by?: string | null
           deleted_at?: string | null
+          disciplinas?: string[] | null
           documento_tipo?: string | null
           documento_verificacao?: string | null
           documento_verificado_em?: string | null
@@ -2168,10 +2206,13 @@ export type Database = {
           nivel_override_motivo?: string | null
           nivel_override_por?: string | null
           nome?: string
+          objetivo_inicial?: string | null
           onboarding_completed?: boolean | null
+          origem?: string | null
           owner_id?: string | null
           pix_chave?: string | null
           pix_instrucoes?: string | null
+          porte?: string | null
           preservar_dados?: boolean
           preservar_dados_em?: string | null
           preservar_dados_motivo?: string | null
@@ -2179,6 +2220,7 @@ export type Database = {
           razao_social?: string | null
           retencao_aviso_60d_sent_at?: string | null
           retencao_aviso_85d_sent_at?: string | null
+          site?: string | null
           situacao_cadastral?: string | null
           status?: Database["public"]["Enums"]["status_empresa"] | null
           updated_at?: string | null
@@ -6140,8 +6182,10 @@ export type Database = {
           equipe_delegado: boolean
           financeiro_delegado: boolean
           first_name: string
+          funcao: string | null
           id: string
           last_name: string
+          linkedin_url: string | null
           metas_delegado: boolean
           nome: string | null
           onboarding_completed: boolean | null
@@ -6162,8 +6206,10 @@ export type Database = {
           equipe_delegado?: boolean
           financeiro_delegado?: boolean
           first_name?: string
+          funcao?: string | null
           id: string
           last_name?: string
+          linkedin_url?: string | null
           metas_delegado?: boolean
           nome?: string | null
           onboarding_completed?: boolean | null
@@ -6184,8 +6230,10 @@ export type Database = {
           equipe_delegado?: boolean
           financeiro_delegado?: boolean
           first_name?: string
+          funcao?: string | null
           id?: string
           last_name?: string
+          linkedin_url?: string | null
           metas_delegado?: boolean
           nome?: string | null
           onboarding_completed?: boolean | null
