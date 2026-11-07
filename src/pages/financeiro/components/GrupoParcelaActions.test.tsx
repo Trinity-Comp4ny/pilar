@@ -12,6 +12,8 @@ vi.mock("@/integrations/supabase/client", async () => ({
   supabase: (await import("../testing/supabaseMock")).sb.client,
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+vi.mock("@/components/ui/select", async () => await import("../testing/nativeSelect"));
+vi.mock("../hooks/useContasOpcoes", () => ({ useContasOpcoes: () => [{ id: "conta-1", nome: "Itaú PJ" }] }));
 
 import { toast } from "sonner";
 import { GrupoParcelaActions } from "./GrupoParcelaActions";
@@ -73,7 +75,8 @@ describe("GrupoParcelaActions", () => {
       sb.rpcResultado("rpc_grupo_parcela_editar_em_aberto", { data: 10, error: null });
       const { user, onChanged } = setup();
       await abrir(user, "Editar parcelas em aberto");
-      await user.type(screen.getByPlaceholderText("Deixe vazio para manter"), "150.5");
+      // MoneyInput: dígitos entram como centavos ("15050" → R$ 150,50).
+      await user.type(screen.getByPlaceholderText("Deixe vazio para manter"), "15050");
       await user.click(screen.getByRole("button", { name: "Aplicar" }));
       await waitFor(() => expect(onChanged).toHaveBeenCalled());
       expect(sb.argsRpc("rpc_grupo_parcela_editar_em_aberto")).toMatchObject({
@@ -92,7 +95,7 @@ describe("GrupoParcelaActions", () => {
       expect(sb.argsRpc("rpc_grupo_parcela_editar_em_aberto")?.p_novo_valor_parcela).toBeUndefined();
     });
 
-    it.each(["0", "-20"])("valor por parcela %s é recusado sem chamar o banco", async (v) => {
+    it.each(["0", "000"])("valor por parcela %s é recusado sem chamar o banco", async (v) => {
       const { user, onChanged } = setup();
       await abrir(user, "Editar parcelas em aberto");
       await user.type(screen.getByPlaceholderText("Deixe vazio para manter"), v);
@@ -184,7 +187,7 @@ describe("GrupoParcelaActions", () => {
       vi.useFakeTimers({ toFake: ["Date"] });
       vi.setSystemTime(new Date(2026, 10, 10, 23, 0)); // 23h em SP = dia 11 em UTC
       sb.rpcResultado("rpc_grupo_parcela_quitar_antecipado", { data: 10, error: null });
-      const { user, onChanged } = setup();
+      const { user, onChanged } = setup({ ...l, conta_id: "conta-1" });
       await abrir(user, "Quitar antecipado");
       await user.click(screen.getByRole("button", { name: "Quitar" }));
       await waitFor(() => expect(onChanged).toHaveBeenCalled());
@@ -193,6 +196,7 @@ describe("GrupoParcelaActions", () => {
         p_data_pagamento: "2026-11-10",
         p_quantidade: undefined,
         p_desconto_total: 0,
+        p_conta_id: "conta-1",
       });
       expect(toast.success).toHaveBeenCalledWith("10 parcela(s) quitada(s)");
       vi.useRealTimers();
@@ -200,11 +204,11 @@ describe("GrupoParcelaActions", () => {
 
     it("envia quantidade e desconto informados", async () => {
       sb.rpcResultado("rpc_grupo_parcela_quitar_antecipado", { data: 3, error: null });
-      const { user, onChanged } = setup();
+      const { user, onChanged } = setup({ ...l, conta_id: "conta-1" });
       const dlg = await abrir(user, "Quitar antecipado");
-      const [qtd, desc] = Array.from(dlg.querySelectorAll("input[type=number]")) as HTMLInputElement[];
+      const [qtd] = Array.from(dlg.querySelectorAll("input[type=number]")) as HTMLInputElement[];
       await user.type(qtd, "3");
-      await user.type(desc, "45.9");
+      await user.type(screen.getByRole("textbox", { name: "Desconto total" }), "4590");
       await user.click(screen.getByRole("button", { name: "Quitar" }));
       await waitFor(() => expect(onChanged).toHaveBeenCalled());
       expect(sb.argsRpc("rpc_grupo_parcela_quitar_antecipado")).toMatchObject({
@@ -213,14 +217,33 @@ describe("GrupoParcelaActions", () => {
       });
     });
 
-    it("desconto negativo é recusado (aumentaria o valor pago)", async () => {
-      const { user } = setup();
-      const dlg = await abrir(user, "Quitar antecipado");
-      const [, desc] = Array.from(dlg.querySelectorAll("input[type=number]")) as HTMLInputElement[];
-      await user.type(desc, "-50");
+    it("sem conta escolhida não quita (o saldo da conta não bateria)", async () => {
+      const { user, onChanged } = setup();
+      await abrir(user, "Quitar antecipado");
       await user.click(screen.getByRole("button", { name: "Quitar" }));
-      expect(toast.error).toHaveBeenCalledWith("Desconto não pode ser negativo");
+      expect(toast.error).toHaveBeenCalledWith("Escolha a conta do pagamento");
       expect(sb.client.rpc).not.toHaveBeenCalled();
+      expect(onChanged).not.toHaveBeenCalled();
+    });
+
+    it("escolher a conta envia p_conta_id", async () => {
+      sb.rpcResultado("rpc_grupo_parcela_quitar_antecipado", { data: 1, error: null });
+      const { user, onChanged } = setup();
+      await abrir(user, "Quitar antecipado");
+      await user.selectOptions(screen.getByRole("combobox", { name: "Conta" }), "conta-1");
+      await user.click(screen.getByRole("button", { name: "Quitar" }));
+      await waitFor(() => expect(onChanged).toHaveBeenCalled());
+      expect(sb.argsRpc("rpc_grupo_parcela_quitar_antecipado")).toMatchObject({ p_conta_id: "conta-1" });
+    });
+
+    it("despesa no cartão não pede conta (quem paga é a fatura)", async () => {
+      sb.rpcResultado("rpc_grupo_parcela_quitar_antecipado", { data: 1, error: null });
+      const { user, onChanged } = setup({ ...l, cartao_id: "cartao-1" });
+      await abrir(user, "Quitar antecipado");
+      expect(screen.queryByRole("combobox", { name: "Conta" })).not.toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Quitar" }));
+      await waitFor(() => expect(onChanged).toHaveBeenCalled());
+      expect(sb.argsRpc("rpc_grupo_parcela_quitar_antecipado")?.p_conta_id).toBeUndefined();
     });
 
     it("quantidade zero é recusada", async () => {

@@ -1,4 +1,3 @@
-import { format } from "date-fns";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -9,11 +8,9 @@ import { getSafeErrorMessage } from "@/lib/safeError";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { FormDialog } from "@/components/FormDialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DatePicker } from "@/components/ui/date-picker";
-import { Label } from "@/components/ui/label";
+import { restaurar } from "@/lib/softDelete";
 import { getDisplayDate } from "@/lib/dateUtils";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -34,6 +31,7 @@ import { LancamentosGroupRow } from "./LancamentosGroupRow";
 import { SortableTH } from "./LancamentosSortableTH";
 import { LancamentosItemRow } from "./LancamentosItemRow";
 import { LancamentosListaMobile } from "./LancamentosListaMobile";
+import { useRegistrarPagamento } from "./RegistrarPagamento";
 import {
   isOverdue,
   isPaidStatus,
@@ -182,11 +180,8 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
     );
   };
 
-  // Pendência de data de efetivação: marcar como recebido/pago não grava mais a data de
-  // hoje direto — abre este diálogo pra confirmar a data REAL do pagamento (ex. cartão de
-  // crédito debitado semanas antes de alguém lembrar de marcar o lançamento no sistema).
-  const [pagamentoAlvo, setPagamentoAlvo] = useState<{ l: Lancamento; novoStatus: string } | Lancamento[] | null>(null);
-  const [dataEfetivacao, setDataEfetivacao] = useState(() => format(new Date(), "yyyy-MM-dd"));
+  // Data real + conta do pagamento: diálogo único em RegistrarPagamento.
+  const pagamento = useRegistrarPagamento({ onDone: () => refetchAll() });
 
   const setStatus = async (l: Lancamento, novoStatus: string) => {
     if (l.tipo === "transferencia") {
@@ -214,8 +209,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
       (l.tipo === "receita" && (novoStatus === "Recebido" || novoStatus === "Recebida")) ||
       (l.tipo === "despesa" && novoStatus === "Pago");
     if (isPaying) {
-      setDataEfetivacao(format(new Date(), "yyyy-MM-dd"));
-      setPagamentoAlvo({ l, novoStatus });
+      pagamento.abrir({ l, novoStatus });
       return;
     }
     const table = l.tipo === "receita" ? "receitas" : "despesas";
@@ -236,78 +230,43 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
     refetchAll();
   };
 
-  const executarMarcarPago = async (rows: Lancamento[], data: string) => {
-    const recIds = rows.filter((l) => l.tipo === "receita" && !isPaidStatus(l)).map((l) => l.id);
-    const despIds = rows.filter((l) => l.tipo === "despesa" && !isPaidStatus(l)).map((l) => l.id);
-    const ops: PromiseLike<{ error: unknown }>[] = [];
-    if (recIds.length)
-      ops.push(
-        supabase
-          .from("receitas")
-          .update({ status: "Recebido", data_recebimento: data } as never)
-          .in("id", recIds) as unknown as PromiseLike<{ error: unknown }>
-      );
-    if (despIds.length)
-      ops.push(
-        supabase
-          .from("despesas")
-          .update({ status: "Pago", data_pagamento: data } as never)
-          .in("id", despIds) as unknown as PromiseLike<{ error: unknown }>
-      );
-    if (!ops.length) {
-      toast.info("Nada a marcar — já efetivados");
-      return;
-    }
-    const results = await Promise.all(ops);
-    if (results.find((r) => (r as { error?: unknown }).error)) {
-      toast.error("Falha em alguns registros");
-      return;
-    }
-    toast.success(`${recIds.length + despIds.length} marcado(s) como pago/recebido`);
-    refetchAll();
-  };
-
-  const markItemsPaid = (rows: Lancamento[]) => {
-    setDataEfetivacao(format(new Date(), "yyyy-MM-dd"));
-    setPagamentoAlvo(rows);
-  };
-
-  const confirmarPagamento = async () => {
-    if (!pagamentoAlvo) return;
-    if (Array.isArray(pagamentoAlvo)) {
-      await executarMarcarPago(pagamentoAlvo, dataEfetivacao);
-      setSelected(new Set());
-    } else {
-      const { l, novoStatus } = pagamentoAlvo;
-      const table = l.tipo === "receita" ? "receitas" : "despesas";
-      const dataField = l.tipo === "receita" ? "data_recebimento" : "data_pagamento";
-      const normalized = l.tipo === "receita" && novoStatus === "Recebida" ? "Recebido" : novoStatus;
-      const { error } = await supabase
-        .from(table)
-        .update({ status: normalized, [dataField]: dataEfetivacao } as never)
-        .eq("id", l.id);
-      if (error) {
-        toast.error("Não foi possível atualizar o status", {
-          description: getSafeErrorMessage(error, "Tente de novo em instantes."),
-        });
-        return;
-      }
-      toast.success("Status atualizado");
-      refetchAll();
-    }
-    setPagamentoAlvo(null);
-  };
+  const markItemsPaid = (rows: Lancamento[]) => pagamento.abrir(rows, () => setSelected(new Set()));
 
   const bulkMarkPaid = () => {
     if (selectedRows.length === 0) return;
     markItemsPaid(selectedRows);
   };
 
+  // Exclusão é sempre soft (rpc_soft_delete) e oferece "Desfazer" no toast. Antes era
+  // DELETE físico: sem volta e sem trilha (diagnóstico 2026-11-07, B4).
+  const desfazerExclusao = async (rows: Lancamento[]) => {
+    const results = await Promise.all(
+      rows
+        .filter((l) => l.tipo !== "transferencia")
+        .map((l) => restaurar(l.tipo === "receita" ? "receitas" : "despesas", l.id))
+    );
+    if (results.some(Boolean)) {
+      toast.error("Não foi possível desfazer", { description: "Tente de novo em instantes." });
+      return;
+    }
+    toast.success(rows.length === 1 ? "Lançamento restaurado" : `${rows.length} lançamentos restaurados`);
+    refetchAll();
+  };
+
+  const avisarExcluido = (rows: Lancamento[], titulo: string) => {
+    const reversiveis = rows.filter((l) => l.tipo !== "transferencia");
+    if (!reversiveis.length) {
+      toast.success(titulo);
+      return;
+    }
+    toast.success(titulo, { action: { label: "Desfazer", onClick: () => void desfazerExclusao(reversiveis) } });
+  };
+
   const deleteItems = async (rows: Lancamento[]) => {
     const { excluidos, falhas, erro } = await excluirLancamentos(rows);
     if (excluidos > 0) refetchAll();
     if (falhas === 0) {
-      toast.success(`${excluidos} excluído(s)`);
+      avisarExcluido(rows, `${excluidos} excluído(s)`);
       return;
     }
     toast.error(`Falha ao excluir ${falhas} de ${rows.length} lançamento(s)`, {
@@ -330,16 +289,17 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
-    const ehTransferencia = deleteTarget.tipo === "transferencia";
+    const alvo = deleteTarget;
+    const ehTransferencia = alvo.tipo === "transferencia";
     setDeleteTarget(null);
-    const { excluidos, erro } = await excluirLancamentos([deleteTarget]);
+    const { excluidos, erro } = await excluirLancamentos([alvo]);
     if (excluidos === 0) {
       toast.error(ehTransferencia ? "Não foi possível excluir" : "Falha ao excluir", {
         description: getSafeErrorMessage(erro, "Sem permissão ou já removido. Recarregue a lista e confira."),
       });
       return;
     }
-    toast.success(ehTransferencia ? "Transferência excluída" : "Lançamento excluído");
+    avisarExcluido([alvo], ehTransferencia ? "Transferência excluída" : "Lançamento excluído");
     refetchAll();
   };
 
@@ -655,8 +615,8 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
         itemName={deleteTarget?.descricao || undefined}
         description={
           deleteTarget?.grupo_parcela
-            ? "Esta é uma parcela de um grupo. Apenas esta parcela será excluída."
-            : "Esta ação não pode ser desfeita."
+            ? "Esta é uma parcela de um grupo. Apenas esta parcela será excluída. Dá para desfazer logo em seguida."
+            : "Dá para desfazer logo em seguida, pelo aviso que aparece."
         }
         confirmText="Excluir"
         variant="destructive"
@@ -667,36 +627,19 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
         onOpenChange={setBulkConfirm}
         onConfirm={bulkDelete}
         title={`Excluir ${selectedRows.length} lançamento(s)?`}
-        description="Esta ação não pode ser desfeita."
+        description="Dá para desfazer logo em seguida, pelo aviso que aparece."
         confirmText="Excluir todos"
         variant="destructive"
       />
 
-      <FormDialog
-        open={pagamentoAlvo !== null}
-        onOpenChange={(v) => !v && setPagamentoAlvo(null)}
-        title={
-          Array.isArray(pagamentoAlvo)
-            ? `Marcar ${pagamentoAlvo.length} lançamento(s) como pago/recebido`
-            : "Confirmar recebimento/pagamento"
-        }
-        description="Confirme a data em que o pagamento realmente caiu — não precisa ser hoje. Você pode reverter o status depois."
-        size="sm"
-        onSubmit={confirmarPagamento}
-        submitLabel="Confirmar"
-      >
-        <div className="space-y-2">
-          <Label>Data</Label>
-          <DatePicker value={dataEfetivacao} onChange={setDataEfetivacao} />
-        </div>
-      </FormDialog>
+      {pagamento.dialog}
 
       <ConfirmDialog
         open={deleteGroupTarget !== null}
         onOpenChange={(v) => !v && setDeleteGroupTarget(null)}
         onConfirm={confirmDeleteGroup}
         title={`Excluir grupo inteiro (${deleteGroupTarget?.length ?? 0} parcelas)?`}
-        description="Todas as parcelas do grupo serão excluídas. Esta ação não pode ser desfeita."
+        description="Todas as parcelas do grupo serão excluídas. Dá para desfazer logo em seguida."
         confirmText="Excluir grupo"
         variant="destructive"
       />

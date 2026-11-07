@@ -10433,6 +10433,7 @@ export type Database = {
       }
       rpc_grupo_parcela_quitar_antecipado: {
         Args: {
+          p_conta_id?: string
           p_data_pagamento?: string
           p_desconto_total?: number
           p_grupo_id: string
@@ -10457,6 +10458,10 @@ export type Database = {
           p_tipo_lancamento: string
         }
         Returns: number
+      }
+      rpc_lancamentos_criar: {
+        Args: { p_linhas: Json; p_rateios?: Json; p_tipo: string }
+        Returns: string[]
       }
       rpc_meta_historico: {
         Args: { p_meta_id: string; p_periodos?: number }

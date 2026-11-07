@@ -33,7 +33,7 @@ vi.mock("@/integrations/supabase/client", () => ({
   },
 }));
 
-import { useImportFinanceiro, type AuxData, type ItemImport } from "./useImportFinanceiro";
+import { marcarJaImportados, useImportFinanceiro, type AuxData, type ItemImport } from "./useImportFinanceiro";
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -192,6 +192,26 @@ describe("useImportFinanceiro", () => {
       expect(result.current.temDesfazer).toBe(false);
     });
 
+    it("extrato entra efetivado na data da linha (não como Pendente que vira Atrasado)", async () => {
+      const result = setup();
+      await act(async () => {
+        await result.current.gravarLote(itens, { contaId: "conta-1", projetoId: null, tipoDoc: "extrato" });
+      });
+      const insert = chamadas.find((c) => c.tabela === "despesas" && c.metodo === "insert");
+      expect(insert?.args[0]).toEqual([
+        expect.objectContaining({ status: "Pago", data_pagamento: item({}).data, conta_id: "conta-1" }),
+      ]);
+    });
+
+    it("fatura segue em aberto (é paga depois, pela fatura)", async () => {
+      const result = setup();
+      await act(async () => {
+        await result.current.gravarLote(itens, { contaId: null, projetoId: null, tipoDoc: "fatura" });
+      });
+      const insert = chamadas.find((c) => c.tabela === "despesas" && c.metodo === "insert");
+      expect(insert?.args[0]).toEqual([expect.objectContaining({ status: "Pendente", data_pagamento: null })]);
+    });
+
     it("sem conta escolhida, a conciliação não mexe na conta do pendente", async () => {
       const result = setup();
       await act(async () => {
@@ -200,6 +220,18 @@ describe("useImportFinanceiro", () => {
 
       const conciliacao = chamadas.find((c) => c.tabela === "receitas" && c.metodo === "update");
       expect(conciliacao?.args[0]).toEqual({ status: "Recebido", data_recebimento: "2026-10-11" });
+    });
+  });
+
+  describe("marcarJaImportados", () => {
+    it("linha com hash já gravado vem desmarcada e sinalizada; as outras não mudam", async () => {
+      resultados.set("despesas.select", { data: [{ import_line_hash: "h-velho" }], error: null });
+      const r = await marcarJaImportados([item({ lineHash: "h-velho" }), item({ lineHash: "h-novo" })]);
+      expect(r[0]).toMatchObject({ jaImportado: true, incluir: false });
+      expect(r[1].jaImportado).toBeUndefined();
+      expect(r[1].incluir).toBe(true);
+      const consulta = chamadas.find((c) => c.tabela === "despesas" && c.metodo === "in");
+      expect(consulta?.args).toEqual(["import_line_hash", ["h-velho", "h-novo"]]);
     });
   });
 });

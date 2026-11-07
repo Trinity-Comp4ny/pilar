@@ -79,7 +79,15 @@ const escolher = (rotulo: string | RegExp, value: string) =>
   fireEvent.change(campoSelect(rotulo), { target: { value } });
 
 type Row = Record<string, unknown>;
-const linhasInseridas = (tabela = "despesas") => (sb.de(tabela, "insert")[0]?.args[0] ?? []) as Row[];
+// Criação passa por rpc_lancamentos_criar (linhas + rateio numa transação só).
+const chamadasCriar = (tabela = "despesas") =>
+  sb.client.rpc.mock.calls.filter(
+    (c) =>
+      c[0] === "rpc_lancamentos_criar" &&
+      (c[1] as { p_tipo: string }).p_tipo === (tabela === "receitas" ? "receita" : "despesa")
+  );
+const linhasInseridas = (tabela = "despesas") =>
+  ((chamadasCriar(tabela)[0]?.[1] as { p_linhas?: Row[] } | undefined)?.p_linhas ?? []) as Row[];
 
 beforeAll(() => {
   // Checkbox do Radix mede o tamanho com ResizeObserver; o jsdom não tem.
@@ -98,9 +106,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date(2026, 10, 10, 9, 0)); // 10/11/2026
   vi.clearAllMocks();
   sb.reset();
-  sb.rpcResultado("get_user_empresa_id", { data: "emp-1", error: null });
-  sb.resultado("despesas.insert", { data: [{ id: "d-1" }], error: null });
-  sb.resultado("receitas.insert", { data: [{ id: "r-1" }], error: null });
+  sb.rpcResultado("rpc_lancamentos_criar", { data: ["d-1"], error: null });
   checkDuplicates.mockResolvedValue([]);
 });
 
@@ -124,7 +130,7 @@ describe("LancamentoFormDialog: validação (nada é gravado)", () => {
     salvar();
     expect(await screen.findByText("Valor obrigatório")).toBeInTheDocument();
     expect(screen.queryByText("Descrição obrigatória")).not.toBeInTheDocument();
-    expect(sb.de("despesas", "insert")).toHaveLength(0);
+    expect(chamadasCriar("despesas")).toHaveLength(0);
     expect(onOpenChange).not.toHaveBeenCalled();
     expect(onSaved).not.toHaveBeenCalled();
   });
@@ -134,7 +140,7 @@ describe("LancamentoFormDialog: validação (nada é gravado)", () => {
     valor("15000");
     salvar();
     expect(await screen.findByText("Descrição obrigatória")).toBeInTheDocument();
-    expect(sb.de("despesas", "insert")).toHaveLength(0);
+    expect(chamadasCriar("despesas")).toHaveLength(0);
   });
 
   it("valor zero (R$ 0,00) é recusado", async () => {
@@ -143,7 +149,7 @@ describe("LancamentoFormDialog: validação (nada é gravado)", () => {
     valor("000");
     salvar();
     expect(await screen.findByText("Valor deve ser maior que zero")).toBeInTheDocument();
-    expect(sb.de("despesas", "insert")).toHaveLength(0);
+    expect(chamadasCriar("despesas")).toHaveLength(0);
   });
 
   it.each(["0", "61", "-3"])("parcelas = %s é recusado com mensagem visível", async (n) => {
@@ -157,7 +163,7 @@ describe("LancamentoFormDialog: validação (nada é gravado)", () => {
     expect(screen.getByRole("spinbutton")).toHaveAttribute("max", "60");
     fireEvent.submit(screen.getByRole("spinbutton").closest("form") as HTMLFormElement);
     expect(await screen.findByText("Parcelas deve ser entre 1 e 60")).toBeInTheDocument();
-    expect(sb.de("despesas", "insert")).toHaveLength(0);
+    expect(chamadasCriar("despesas")).toHaveLength(0);
   });
 
   it("despesa marcada como Pago sem conta exige a conta", async () => {
@@ -167,7 +173,7 @@ describe("LancamentoFormDialog: validação (nada é gravado)", () => {
     escolher("Status", "Pago");
     salvar();
     expect(await screen.findByText("Conta obrigatória para lançamentos efetivados")).toBeInTheDocument();
-    expect(sb.de("despesas", "insert")).toHaveLength(0);
+    expect(chamadasCriar("despesas")).toHaveLength(0);
   });
 
   it("receita Recebida sem conta exige a conta", async () => {
@@ -177,7 +183,7 @@ describe("LancamentoFormDialog: validação (nada é gravado)", () => {
     escolher("Status", "Recebida");
     salvar();
     expect(await screen.findByText("Conta obrigatória para lançamentos efetivados")).toBeInTheDocument();
-    expect(sb.de("receitas", "insert")).toHaveLength(0);
+    expect(chamadasCriar("receitas")).toHaveLength(0);
   });
 
   it("pago no cartão de crédito sem escolher o cartão mostra o motivo (o campo conta some nesse modo)", async () => {
@@ -188,7 +194,7 @@ describe("LancamentoFormDialog: validação (nada é gravado)", () => {
     escolher("Status", "Pago");
     salvar();
     expect(await screen.findByText("Conta obrigatória para lançamentos efetivados")).toBeInTheDocument();
-    expect(sb.de("despesas", "insert")).toHaveLength(0);
+    expect(chamadasCriar("despesas")).toHaveLength(0);
   });
 
   it("cartão de crédito mostra só cartões de crédito; débito só de débito", () => {
@@ -233,7 +239,6 @@ describe("LancamentoFormDialog: criação", () => {
       centro_custo_id: null,
       nota_fiscal: null,
       observacao: null,
-      empresa_id: "emp-1",
       grupo_parcela: null,
       parcela_numero: null,
       parcela_total: null,
@@ -265,7 +270,7 @@ describe("LancamentoFormDialog: criação", () => {
     salvar();
 
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
-    expect(sb.de("despesas", "insert")).toHaveLength(0);
+    expect(chamadasCriar("despesas")).toHaveLength(0);
     const [row] = linhasInseridas("receitas");
     expect(row).toMatchObject({
       valor: 15000,
@@ -273,7 +278,6 @@ describe("LancamentoFormDialog: criação", () => {
       data_recebimento: "2026-11-10",
       cliente_id: "cli-1",
       conta_id: "conta-1",
-      empresa_id: "emp-1",
     });
     expect(row).not.toHaveProperty("recorrente");
     expect(row).not.toHaveProperty("cartao_id");
@@ -404,8 +408,7 @@ describe("LancamentoFormDialog: rateio entre centros de custo", () => {
     fireEvent.change(pcts[1], { target: { value: p2 } });
   }
 
-  it("rateio somando 100% é gravado para cada parcela criada", async () => {
-    sb.resultado("despesas.insert", { data: [{ id: "d-1" }, { id: "d-2" }], error: null });
+  it("rateio somando 100% vai junto com as parcelas na mesma chamada (tudo-ou-nada)", async () => {
     const { onSaved } = setup();
     descricao("Topografia");
     valor("200000");
@@ -414,16 +417,14 @@ describe("LancamentoFormDialog: rateio entre centros de custo", () => {
     expect(screen.getByText("Soma: 100.00%")).toBeInTheDocument();
     salvar();
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
-    const chamadas = sb.client.rpc.mock.calls.filter((c) => c[0] === "rpc_lancamento_set_rateio");
-    expect(chamadas.map((c) => (c[1] as { p_lancamento_id: string }).p_lancamento_id)).toEqual(["d-1", "d-2"]);
-    expect(chamadas[0][1]).toEqual({
-      p_lancamento_id: "d-1",
-      p_tipo_lancamento: "despesa",
-      p_rateios: [
-        { centro_custo_id: "cc-1", percentual: 60 },
-        { centro_custo_id: "cc-2", percentual: 40 },
-      ],
-    });
+    const [chamada] = chamadasCriar();
+    expect((chamada[1] as { p_linhas: Row[] }).p_linhas).toHaveLength(2);
+    expect((chamada[1] as { p_rateios: unknown }).p_rateios).toEqual([
+      { centro_custo_id: "cc-1", percentual: 60 },
+      { centro_custo_id: "cc-2", percentual: 40 },
+    ]);
+    // O rateio não é mais gravado em chamadas soltas depois do insert.
+    expect(sb.client.rpc.mock.calls.filter((c) => c[0] === "rpc_lancamento_set_rateio")).toHaveLength(0);
   });
 
   it("rateio que não soma 100% bloqueia ANTES de gravar o lançamento", async () => {
@@ -440,7 +441,7 @@ describe("LancamentoFormDialog: rateio entre centros de custo", () => {
     );
     // Antes da correção a despesa era inserida e só depois o rateio falhava:
     // o form ficava aberto e um novo "Salvar" duplicava o lançamento.
-    expect(sb.de("despesas", "insert")).toHaveLength(0);
+    expect(chamadasCriar("despesas")).toHaveLength(0);
     expect(onSaved).not.toHaveBeenCalled();
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
@@ -448,7 +449,10 @@ describe("LancamentoFormDialog: rateio entre centros de custo", () => {
 
 describe("LancamentoFormDialog: falhas do servidor", () => {
   it("erro no insert mantém o form aberto com os dados e avisa", async () => {
-    sb.resultado("despesas.insert", { data: null, error: { message: "violates check constraint", details: "valor" } });
+    sb.rpcResultado("rpc_lancamentos_criar", {
+      data: null,
+      error: { message: "violates check constraint", details: "valor" },
+    });
     const { onOpenChange, onSaved } = setup();
     descricao("Aluguel");
     valor("500000");
@@ -464,8 +468,8 @@ describe("LancamentoFormDialog: falhas do servidor", () => {
     expect(screen.getByRole("button", { name: "Salvar" })).not.toBeDisabled();
   });
 
-  it("usuário sem empresa não grava nada", async () => {
-    sb.rpcResultado("get_user_empresa_id", { data: null, error: null });
+  it("usuário sem empresa: o servidor recusa e o form avisa", async () => {
+    sb.rpcResultado("rpc_lancamentos_criar", { data: null, error: { message: "Usuário sem empresa" } });
     const { onSaved } = setup();
     descricao("Aluguel");
     valor("500000");
@@ -473,7 +477,6 @@ describe("LancamentoFormDialog: falhas do servidor", () => {
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith("Erro ao salvar", { description: "Usuário sem empresa" })
     );
-    expect(sb.de("despesas", "insert")).toHaveLength(0);
     expect(onSaved).not.toHaveBeenCalled();
   });
 });
@@ -492,11 +495,11 @@ describe("LancamentoFormDialog: duplicata", () => {
     expect(checkDuplicates).toHaveBeenCalledWith(
       expect.objectContaining({ table: "despesas", descricao: "Aluguel", valor: 5000 })
     );
-    expect(sb.de("despesas", "insert")).toHaveLength(0);
+    expect(chamadasCriar("despesas")).toHaveLength(0);
 
     fireEvent.click(screen.getByRole("button", { name: "Salvar mesmo assim" }));
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
-    expect(sb.de("despesas", "insert")).toHaveLength(1);
+    expect(chamadasCriar("despesas")).toHaveLength(1);
   });
 
   it("parcelado confere duplicata pelo valor da parcela", async () => {
@@ -520,7 +523,7 @@ describe("LancamentoFormDialog: duplicata", () => {
     const alerta = await screen.findByRole("alertdialog");
     fireEvent.click(within(alerta).getByRole("button", { name: "Cancelar" }));
     await waitFor(() => expect(screen.queryByText("Possível duplicata detectada")).not.toBeInTheDocument());
-    expect(sb.de("despesas", "insert")).toHaveLength(0);
+    expect(chamadasCriar("despesas")).toHaveLength(0);
     expect(onSaved).not.toHaveBeenCalled();
   });
 });
@@ -603,12 +606,26 @@ describe("LancamentoFormDialog: edição", () => {
     expect(payload).not.toHaveProperty("periodicidade");
   });
 
-  it("voltar a despesa para Pendente limpa a data de pagamento", async () => {
+  it("voltar a despesa vencida para em aberto limpa a data de pagamento e grava Atrasado", async () => {
     const { onSaved } = setup({ lancamento: lancamentoBase });
     escolher("Status", "Pendente");
     salvar();
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
-    expect(sb.de("despesas", "update")[0].args[0]).toMatchObject({ status: "Pendente", data_pagamento: null });
+    // Vencimento 05/10 < hoje (10/11): em aberto e vencido é Atrasado.
+    expect(sb.de("despesas", "update")[0].args[0]).toMatchObject({ status: "Atrasado", data_pagamento: null });
+  });
+
+  it("lançamento Atrasado carrega como Pendente no select (opção que existe)", () => {
+    setup({ lancamento: { ...lancamentoBase, status: "Atrasado", data_efetivacao: null } });
+    expect(campoSelect("Status")).toHaveValue("Pendente");
+  });
+
+  it("adiar o vencimento de um Atrasado para o futuro volta a Pendente", async () => {
+    const atrasado = { ...lancamentoBase, status: "Atrasado", data_efetivacao: null, data_vencimento: "2026-12-20" };
+    const { onSaved } = setup({ lancamento: atrasado });
+    salvar();
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(sb.de("despesas", "update")[0].args[0]).toMatchObject({ status: "Pendente", data_vencimento: "2026-12-20" });
   });
 
   it("receita Recebido carrega como Recebida e grava de volta como Recebido", async () => {
@@ -627,7 +644,8 @@ describe("LancamentoFormDialog: edição", () => {
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
     expect(sb.de("receitas", "update")[0].args[0]).toMatchObject({
       status: "Recebido",
-      data_recebimento: "2026-10-05",
+      // Data real do recebimento (data_efetivacao), não o vencimento (B3).
+      data_recebimento: "2026-10-03",
       cliente_id: "cli-1",
     });
   });
