@@ -1,7 +1,7 @@
 # SPEC: Financeiro com títulos, baixas e nova experiência (desktop e mobile)
 
 **Data:** 2026-11-07
-**Status:** Draft
+**Status:** Em implementação
 **Autor:** Matheus + Claude (pesquisa de mercado, UX e diagnóstico de código)
 **Módulo:** financeiro
 
@@ -196,6 +196,21 @@ Ver diagnóstico, seção 2. Resumo: `rpc_buscar_duplicatas` no servidor, com po
 | **4. Baixas**              | `lancamento_baixas`, status derivado, diálogo "Registrar pagamento", lote com conta, comprovante            | Média                                                           |
 | **5. Mobile**              | Itens P0 e P1 da seção 5                                                                                    | Grande (mobile)                                                 |
 | **6. Conciliação e OFX**   | Aba Conciliação, `ofx-data-extractor`, regras de categorização, desconciliar                                | Grande                                                          |
+
+## Andamento
+
+| Fase                   | Situação                                                                                                                                                               | Commit    |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| 1. Integridade (B1–B8) | Entregue na branch                                                                                                                                                     | `e53c1ca` |
+| 2. Duplicatas          | Entregue na branch: motor no servidor, diálogo com motivo e confiança, campo "Nº da nota fiscal" (era Sim/Não)                                                         | `44aacd5` |
+| 3. Navegação e detalhe | Entregue na branch: A pagar / A receber / Tudo, chips de posição, painel lateral, cor por sentido                                                                      | `d102af7` |
+| 4. Baixas              | Pendente: muda o modelo de dados, pede aprovação desta spec                                                                                                            | —         |
+| 5. Mobile              | Parcial: cabeçalho do dia fixo com líquido, cor por sentido, detalhe em tela cheia. Faltam chips sob a busca, filtros em bottom sheet, "+" flutuante e fatura agregada | `d102af7` |
+| 6. Conciliação e OFX   | Pendente                                                                                                                                                               | —         |
+
+Fica para depois da fase 2: checagem de duplicata na edição e nas RPCs dos agentes, memória de "não é duplicata" e varredura periódica.
+
+Antes e depois das telas da fase 3: `docs/design/antes-depois/spec-149/`.
 
 ## Critérios de aceite (por fase, resumidos)
 
