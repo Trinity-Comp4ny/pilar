@@ -184,6 +184,11 @@ describe("SimpleEntityCard", () => {
     expect(onCancelar).toHaveBeenCalledWith("r1");
   });
 
+  it("criado concorda com o gênero do título", () => {
+    montar("categoria", { nome: "Viagens" }, { status: "criado", entityId: "cat-1" });
+    expect(screen.getByText("Nova categoria criada")).toBeInTheDocument();
+  });
+
   it("criado: link para a área e desfazer; falha ao desfazer avisa", async () => {
     const user = userEvent.setup();
     montar("cliente", { nome: "Lima" }, { status: "criado", entityId: "cli-9" });
