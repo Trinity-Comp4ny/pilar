@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { PilarPage } from "@/components/PilarPage";
 import { supabase } from "@/integrations/supabase/client";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
@@ -41,7 +42,7 @@ export default function Pessoas() {
   useEffect(() => {
     if (fetchError) {
       toast.error("Erro ao carregar equipe", {
-        description: fetchError.message,
+        description: getSafeErrorMessage(fetchError, "Tente recarregar a página."),
       });
     }
   }, [fetchError]);

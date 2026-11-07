@@ -45,8 +45,8 @@ function parseSupabaseError(err: unknown): string {
     if (msg.includes("telefone")) return "Telefone já cadastrado na empresa";
     return "Registro duplicado — verifique CPF, email ou telefone";
   }
-  if (e.code === "23502") return `Campo obrigatório não preenchido: ${e.message}`;
-  return e.message ?? "Erro desconhecido";
+  if (e.code === "23502") return "Preencha todos os campos obrigatórios.";
+  return err instanceof Error && !e.code ? err.message : "Não foi possível salvar. Tente de novo.";
 }
 
 export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: PessoaFormDialogProps) {
