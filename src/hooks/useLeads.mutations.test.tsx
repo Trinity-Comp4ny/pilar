@@ -194,7 +194,8 @@ describe("useConvertLeadToClient", () => {
     const [cli] = supabaseFake.callsTo("clientes", "update");
     expect(cli.payload).toEqual({
       cpf_cnpj: "11222333000181",
-      tipo_pessoa: "juridica",
+      // Mesmo domínio do formulário de cliente: CHECK aceita só 'PF' | 'PJ'.
+      tipo_pessoa: "PJ",
       nome: "Alfa Engenharia",
       endereco: "Rua A, 1",
     });
