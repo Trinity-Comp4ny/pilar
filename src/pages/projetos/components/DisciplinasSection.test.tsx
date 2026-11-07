@@ -52,6 +52,9 @@ vi.mock("./FluxoPipelineGraph", () => ({
 
 import { DisciplinasSection } from "./DisciplinasSection";
 
+// Tela pesada (Radix + muitos campos): sob cobertura passa dos 5s padrão.
+vi.setConfig({ testTimeout: 20000 });
+
 type Props = ComponentProps<typeof DisciplinasSection>;
 
 const fluxo: FluxoDisciplinas = {

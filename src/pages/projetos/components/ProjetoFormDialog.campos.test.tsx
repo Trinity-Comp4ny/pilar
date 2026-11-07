@@ -56,6 +56,9 @@ vi.mock("@/components/ui/date-picker", () => ({
 
 import { ProjetoFormDialog } from "./ProjetoFormDialog";
 
+// Tela pesada (Radix + muitos campos): sob cobertura passa dos 5s padrão.
+vi.setConfig({ testTimeout: 20000 });
+
 const handleInputChange = vi.fn();
 const fetchCep = vi.fn();
 const handleSubmit = vi.fn();

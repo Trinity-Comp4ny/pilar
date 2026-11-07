@@ -76,6 +76,9 @@ vi.mock("sonner", () => ({ toast }));
 
 import { RdoFormDialog } from "./RdoFormDialog";
 
+// Diálogo grande com muitos Selects: sob cobertura (v8) passa dos 5s padrão.
+vi.setConfig({ testTimeout: 20000 });
+
 // O Checkbox (Radix) mede o próprio tamanho com ResizeObserver; o jsdom não tem.
 globalThis.ResizeObserver ??= class {
   observe() {}
