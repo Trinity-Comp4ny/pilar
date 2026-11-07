@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -25,9 +25,18 @@ export function OrigemField({
 }) {
   const [choice, setChoice] = useState("");
   const [custom, setCustom] = useState("");
+  // Valor que o próprio campo acabou de emitir. Escolher "Outro" sem texto emite "",
+  // e ressincronizar com esse "" fechava o campo livre na hora (o select voltava a
+  // vazio): quem estava em "Instagram" não conseguia trocar para "Outro".
+  const emitido = useRef<string | null>(null);
 
   useEffect(() => {
     const val = value ?? "";
+    if (emitido.current !== null && val === emitido.current) {
+      emitido.current = null;
+      return;
+    }
+    emitido.current = null;
     if (!val) {
       setChoice("");
       setCustom("");
@@ -40,14 +49,19 @@ export function OrigemField({
     }
   }, [value]);
 
+  const emitir = (v: string) => {
+    emitido.current = v;
+    onChange(v);
+  };
+
   const handleSelect = (v: string) => {
     setChoice(v);
-    onChange(v === ORIGEM_OUTRO ? custom : v);
+    emitir(v === ORIGEM_OUTRO ? custom : v);
   };
 
   const handleCustom = (v: string) => {
     setCustom(v);
-    onChange(v);
+    emitir(v);
   };
 
   return (
