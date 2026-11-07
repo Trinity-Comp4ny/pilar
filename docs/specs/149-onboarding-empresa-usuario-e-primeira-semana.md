@@ -60,7 +60,7 @@ BQE Core, Deltek Ajera):
   appcues.com/customer-stories/how-fullstory-increased-activation-with-personal-role-based-messages--in-and-out-of-the-app)
 - **Formulário:** 3 a 4 campos convertem bem mais que 8+ (5,2% contra 1,9% em tráfego pago,
   saashero.net/google-ppc/landing-page-performance-benchmarks). A HubSpot conclui que pesa mais
-  *qual* campo do que quantos.
+  _qual_ campo do que quantos.
 - **Convidado:** e-mail e escritório já vêm do convite; mostra quem convidou e com qual papel;
   pede só nome, senha e uma pergunta de função. Foto, telefone e LinkedIn ficam para "complete
   seu perfil", nunca bloqueando a entrada.
@@ -177,6 +177,7 @@ Três telas curtas, com barra "Etapa N de 3", cada uma com no máximo 4 campos.
     Obras entra no lugar do item 3 só se ele escolheu "Obras que acompanho". Equipe (RH),
     fornecedor, fluxo de disciplinas e lançamento saem do checklist e viram dica contextual
     (tour) quando ele abre a tela.
+
 22. **Convidado**, 3 itens: Perfil completo (foto; já marcado se tiver); abra um projeto em que
     você está; conheça o agente. Coordenador ganha "registre um avanço de fase" no lugar do
     segundo.
@@ -264,14 +265,14 @@ Depois da migration: `npm run gen:types:local` e commit do `types.ts`.
 
 ## Plano de implementação (fatias, um PR cada)
 
-| # | Fatia | Tamanho | Visual? |
-|---|---|---|---|
-| 1 | Migration (colunas novas) + edge do ultra-admin + diálogo de criação com os campos novos | P | Sim (diálogo) |
-| 2 | `/profile-setup` com função, LinkedIn, cabeçalho do convidado e celular opcional para convidado | P | Sim |
-| 3 | `/company-setup` com site, disciplinas, porte, CNPJ com consulta; nova etapa "Por onde começar" + convite em lote | M | Sim |
-| 4 | Checklist refeito (dono e convidado), filtro `exemplo`, cartão de boas-vindas | M | Sim |
-| 5 | Escritório de exemplo (carregar/remover) | M | Sim |
-| 6 | Eventos, `empresa_ativada`, painel no ultra-admin, régua da SPEC 130 usando função e objetivo | P | Sim (ultra) |
+| #   | Fatia                                                                                                             | Tamanho | Visual?       |
+| --- | ----------------------------------------------------------------------------------------------------------------- | ------- | ------------- |
+| 1   | Migration (colunas novas) + edge do ultra-admin + diálogo de criação com os campos novos                          | P       | Sim (diálogo) |
+| 2   | `/profile-setup` com função, LinkedIn, cabeçalho do convidado e celular opcional para convidado                   | P       | Sim           |
+| 3   | `/company-setup` com site, disciplinas, porte, CNPJ com consulta; nova etapa "Por onde começar" + convite em lote | M       | Sim           |
+| 4   | Checklist refeito (dono e convidado), filtro `exemplo`, cartão de boas-vindas                                     | M       | Sim           |
+| 5   | Escritório de exemplo (carregar/remover)                                                                          | M       | Sim           |
+| 6   | Eventos, `empresa_ativada`, painel no ultra-admin, régua da SPEC 130 usando função e objetivo                     | P       | Sim (ultra)   |
 
 As fatias 1 a 3 já entregam o dado de lead; 4 e 5 atacam a ativação. Cada PR com antes e depois
 (regra do dono).
