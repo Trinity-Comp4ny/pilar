@@ -30,20 +30,26 @@ const SEM_RESPONSAVEL = "__none__";
 const SEM_PROJETO = "__none__";
 const SEM_CLIENTE = "__none__";
 
-const schema = z.object({
-  nome: z.string().min(1, "Dê um nome à obra"),
-  status: z.enum(["planejada", "em_andamento", "paralisada", "concluida"]),
-  modelo_cobranca: z.enum(["administracao", "preco_fechado"]),
-  taxa_administracao_pct: z.string(),
-  projeto_id: z.string(),
-  responsavel_id: z.string(),
-  cliente_id: z.string(),
-  visivel_portal: z.boolean(),
-  cep: z.string(),
-  data_inicio_prevista: z.string(),
-  data_fim_prevista: z.string(),
-  observacoes: z.string(),
-});
+const schema = z
+  .object({
+    nome: z.string().trim().min(1, "Dê um nome à obra"),
+    status: z.enum(["planejada", "em_andamento", "paralisada", "concluida"]),
+    modelo_cobranca: z.enum(["administracao", "preco_fechado"]),
+    taxa_administracao_pct: z.string(),
+    projeto_id: z.string(),
+    responsavel_id: z.string(),
+    cliente_id: z.string(),
+    visivel_portal: z.boolean(),
+    cep: z.string(),
+    data_inicio_prevista: z.string(),
+    data_fim_prevista: z.string(),
+    observacoes: z.string(),
+  })
+  .superRefine((d, ctx) => {
+    if (d.data_inicio_prevista && d.data_fim_prevista && d.data_fim_prevista < d.data_inicio_prevista) {
+      ctx.addIssue({ code: "custom", path: ["data_fim_prevista"], message: "O fim não pode ser antes do início" });
+    }
+  });
 type FormData = z.infer<typeof schema>;
 
 const VAZIO: FormData = {
@@ -411,6 +417,9 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
           <div className="space-y-1.5">
             <Label htmlFor="fim">Fim previsto</Label>
             <Input id="fim" type="date" {...register("data_fim_prevista")} />
+            {formState.errors.data_fim_prevista && (
+              <p className="text-xs text-danger-strong">{formState.errors.data_fim_prevista.message}</p>
+            )}
           </div>
         </div>
 
