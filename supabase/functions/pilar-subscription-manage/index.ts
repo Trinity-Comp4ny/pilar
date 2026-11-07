@@ -23,6 +23,14 @@ import {
 import { createLogger } from "../_shared/logger.ts";
 import { limitarOuResponder } from "../_shared/db-rate-limit.ts";
 import { type Entrada, lerEntrada } from "./entrada.ts";
+import {
+  alteracoesDoCancelamento,
+  cobrancaParaEstornar,
+  dentroDoArrependimento,
+  planejarTrocaDePlano,
+  verificarAssinatura,
+  verificarCancelamento,
+} from "./gestao.ts";
 
 const log = createLogger("pilar-subscription-manage");
 
@@ -73,38 +81,29 @@ serve(
     const body: Entrada = entrada.data;
 
     // --- Fetch subscription ---
-    const { data: sub, error: subErr } = await admin
+    const { data: subLida, error: subErr } = await admin
       .from("pilar_subscriptions")
       .select("id, asaas_subscription_id, plan_id, billing_cycle, status, current_period_start")
       .eq("empresa_id", profile.empresa_id)
       .maybeSingle();
 
-    if (subErr || !sub) {
-      return jsonResponse({ error: "Assinatura não encontrada" }, 404, req);
-    }
-    if (!sub.asaas_subscription_id) {
-      return jsonResponse({ error: "Assinatura sem referência Asaas" }, 400, req);
-    }
+    const verificacao = verificarAssinatura(subErr ? null : subLida);
+    if (!verificacao.ok) return jsonResponse({ error: verificacao.error }, verificacao.status, req);
+    const sub = verificacao.sub;
 
     // --- CANCEL ---
     if (body.action === "cancel") {
-      if (sub.status === "canceled") {
-        return jsonResponse({ error: "Assinatura já cancelada" }, 400, req);
-      }
+      const podeCancelar = verificarCancelamento(sub.status);
+      if (!podeCancelar.ok) return jsonResponse({ error: podeCancelar.error }, podeCancelar.status, req);
 
       // SPEC 098 requisito 18: cancelamento até 7 dias após a 1ª cobrança
       // (current_period_start, gravado pelo trial-expiry-cron na conversão)
       // gera estorno integral automático, sem o admin precisar pedir.
       let refunded = false;
-      const dentroDoArrependimento =
-        !!sub.current_period_start &&
-        Date.now() - new Date(sub.current_period_start).getTime() <= 7 * 24 * 60 * 60 * 1000;
-
-      if (dentroDoArrependimento) {
+      if (dentroDoArrependimento(sub.current_period_start, Date.now())) {
         try {
-          const payments = await getSubscriptionPayments(sub.asaas_subscription_id);
-          const primeiraCobranca = payments[0];
-          if (primeiraCobranca && (primeiraCobranca.status === "CONFIRMED" || primeiraCobranca.status === "RECEIVED")) {
+          const primeiraCobranca = cobrancaParaEstornar(await getSubscriptionPayments(sub.asaas_subscription_id));
+          if (primeiraCobranca) {
             await refundPayment(primeiraCobranca.id);
             refunded = true;
           }
@@ -123,16 +122,7 @@ serve(
         return jsonResponse({ error: `Falha ao cancelar: ${msg}` }, 502, req);
       }
 
-      await admin
-        .from("pilar_subscriptions")
-        .update({
-          status: "canceled",
-          canceled_at: new Date().toISOString(),
-          // Com estorno o dinheiro voltou: o acesso termina agora. Sem estorno,
-          // segue até o fim do período pago (o que a tela e os Termos prometem).
-          ...(refunded ? { current_period_end: new Date().toISOString() } : {}),
-        })
-        .eq("id", sub.id);
+      await admin.from("pilar_subscriptions").update(alteracoesDoCancelamento(refunded, new Date())).eq("id", sub.id);
 
       return jsonResponse({ success: true, status: "canceled", refunded }, 200, req);
     }
@@ -150,20 +140,12 @@ serve(
         return jsonResponse({ error: "Plano não encontrado" }, 404, req);
       }
 
-      const cycle = body.new_cycle ?? sub.billing_cycle ?? "monthly";
-      const value = cycle === "yearly" ? newPlan.preco_anual : newPlan.preco_mensal;
-
-      if (!value || value <= 0) {
-        return jsonResponse({ error: "Valor do plano indisponível" }, 400, req);
-      }
+      const troca = planejarTrocaDePlano(newPlan, body.new_cycle, sub.billing_cycle);
+      if (!troca.ok) return jsonResponse({ error: troca.error }, troca.status, req);
+      const { cycle, value } = troca;
 
       try {
-        await updateSubscription(sub.asaas_subscription_id, {
-          value,
-          cycle: cycle === "yearly" ? "YEARLY" : "MONTHLY",
-          description: `Pilar ${newPlan.nome} — assinatura ${cycle === "yearly" ? "anual" : "mensal"}`,
-          updatePendingPayments: true,
-        });
+        await updateSubscription(sub.asaas_subscription_id, troca.asaas);
       } catch (err) {
         log.error("asaas update subscription failed", err, { subscription_id: sub.id });
         const msg = err instanceof Error ? err.message : "Erro Asaas";
