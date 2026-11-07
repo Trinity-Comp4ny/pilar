@@ -430,7 +430,12 @@ export function useBulkSaveDisciplinas() {
       }>;
     }) => {
       // Get current disciplinas for this project
-      const { data: existing } = await supabase.from("projeto_disciplinas").select("id").eq("projeto_id", projetoId);
+      // Sem a lista atual, as disciplinas com id seriam reinseridas como novas (duplicando).
+      const { data: existing, error: existingError } = await supabase
+        .from("projeto_disciplinas")
+        .select("id")
+        .eq("projeto_id", projetoId);
+      if (existingError) throw existingError;
 
       const existingIds = new Set((existing || []).map((d) => d.id));
       const incomingIds = new Set(disciplinas.filter((d) => d.id).map((d) => d.id!));
