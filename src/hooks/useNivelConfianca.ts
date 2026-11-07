@@ -21,7 +21,7 @@ export interface LimitesEmpresa {
 export function useNivelConfianca() {
   const { profile } = useAuth();
   const empresaId = profile?.empresa_id ?? null;
-  const isAdmin = profile?.role === "admin" || profile?.role === "owner" || profile?.role === "ultra_admin";
+  const isAdmin = profile?.role === "admin" || profile?.role === "ultra_admin";
 
   const query = useQuery({
     queryKey: ["limites-empresa", empresaId],

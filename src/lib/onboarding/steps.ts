@@ -31,7 +31,7 @@ export interface OnboardingStep {
   /** Rota do CTA e alvo do tour por página. */
   rota: string;
   feature: Feature;
-  /** Só aparece para admin/owner (ex.: Equipe). */
+  /** Só aparece para admin (ex.: Equipe). */
   adminOnly?: boolean;
   /** Não conta para o "obrigatório", mas soma no progresso. */
   opcional?: boolean;

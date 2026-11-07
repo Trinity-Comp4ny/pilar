@@ -17,7 +17,7 @@ import type { OnboardingPilar } from "@/lib/onboarding/steps";
 /**
  * Painel flutuante de primeiros passos (canto inferior direito). Três seções por
  * pilar (Gestão / Projetos / Obras), progresso derivado de dados reais. Só para
- * admin/owner. Minimiza para uma pílula (estado local) e dispensa de vez (banco).
+ * admin. Minimiza para uma pílula (estado local) e dispensa de vez (banco).
  */
 export function OnboardingChecklist() {
   const navigate = useNavigate();

@@ -5,9 +5,9 @@
  * (profiles.role) via service_role — NUNCA confiando no JWT/metadata.
  *
  *   ultra_admin → acesso de plataforma, cross-empresa
- *   owner       → dono da empresa; equivalente a admin para operações admin
  *   admin       → acesso administrativo da empresa, escopado por empresa_id
  *   coordenador / colaborador / user → sem acesso administrativo
+ *   (owner foi aposentado em 2026-11-07: o banco recusa o papel, 20261202000000)
  */
 
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -50,8 +50,8 @@ type AdminFailure = { error: Response; svc?: never; userId?: never };
 
 /**
  * Admin da própria empresa (admin ou ultra_admin com empresa_id), para as funções
- * que já leram o profile e só precisam decidir. `owner` fica de fora de propósito:
- * foi migrado para `admin` (20260870000000) e não é mais atribuído.
+ * que já leram o profile e só precisam decidir. `owner` foi aposentado:
+ * migrado para `admin` e recusado pelo banco (20261202000000).
  */
 export function ehAdminDaEmpresa<P extends { empresa_id: string | null; role: string | null }>(
   profile: P | null | undefined
@@ -142,12 +142,11 @@ export async function requireUltraAdmin(req: Request): Promise<AdminSuccess | Ad
 }
 
 // ---------------------------------------------------------------------------
-// Company admin gate (aceita ultra_admin, owner ou admin).
-// owner e admin são reportados como "admin" para fins de auditoria/escopo.
+// Company admin gate (aceita ultra_admin ou admin).
 // ---------------------------------------------------------------------------
 
 export async function requireAdmin(req: Request): Promise<AdminSuccess | AdminFailure> {
-  const result = await requireRole(req, ["ultra_admin", "owner", "admin"]);
+  const result = await requireRole(req, ["ultra_admin", "admin"]);
   if (result.error) return { error: result.error };
 
   if (result.actorRole !== "ultra_admin" && result.empresaId === null) {
