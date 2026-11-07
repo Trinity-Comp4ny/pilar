@@ -14,7 +14,8 @@ export function useObjectUrl(file: Blob | null | undefined): string | null {
       return;
     }
     const criada = URL.createObjectURL(file);
-    setUrl(criada);
+    // Só aceita URL blob: gerada pelo navegador; qualquer outra coisa não vira src.
+    setUrl(/^blob:/.test(criada) ? criada : null);
     return () => URL.revokeObjectURL(criada);
   }, [file]);
 
