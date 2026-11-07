@@ -106,7 +106,7 @@ describe("LancamentosListaMobile: agrupamento e conteúdo", () => {
         lanc({ id: "3", descricao: "Amanhã", data_vencimento: "2026-11-11" }),
         lanc({ id: "4", descricao: "Ontem", data_vencimento: "2026-11-09" }),
         lanc({ id: "5", descricao: "Sexta", data_vencimento: "2026-11-13" }),
-        lanc({ id: "6", descricao: "Sem", data_vencimento: null }),
+        lanc({ id: "6", descricao: "Sem", data_vencimento: undefined }),
       ],
     });
     const titulos = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
