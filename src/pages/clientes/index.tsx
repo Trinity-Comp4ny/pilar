@@ -40,7 +40,7 @@ export default function Clientes() {
   // Mutations e ações de portal. enableListQueries: false porque a lista agora
   // vem paginada do servidor; este hook aqui é só para deleteCliente e o status
   // do portal (query própria, sempre ligada, independente de enableListQueries).
-  const { deleteCliente, portalStatusPorCliente } = useClientes({ enableListQueries: false });
+  const { deleteCliente, portalStatusPorCliente } = useClientes({ enableListQueries: false, enablePortalStatus: true });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
