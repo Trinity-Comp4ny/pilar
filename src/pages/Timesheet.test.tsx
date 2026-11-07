@@ -109,7 +109,7 @@ describe("Timesheet: meus lançamentos", () => {
       lanc({}),
       lanc({ id: "t2", fase_nome: "Executivo", horas: 1, status: "aprovado" }),
       lanc({ id: "t3", horas: 4, status: "rejeitado" }),
-      lanc({ id: "t4", horas: 0.5, status: "outro" }),
+      lanc({ id: "t4", horas: 0.5, status: "outro" as TimesheetLancamento["status"] }),
     ];
     render(<Timesheet />);
     expect(screen.getByText("Total:")).toHaveTextContent("8.0h");
