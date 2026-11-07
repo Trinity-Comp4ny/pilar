@@ -137,6 +137,54 @@ Deno.test("cobrança recusada: uma frase só, sem ponto duplicado", () => {
   );
 });
 
+Deno.test("status desconhecido ou vazio não ativa por aqui (400)", () => {
+  for (const status of ["paused", "", "ACTIVE"]) {
+    const r = verificarAssinatura({ ...emTrial, status }, antesDoFim);
+    assertEquals(r.ok ? 0 : r.status, 400, status);
+  }
+});
+
+Deno.test("trial que vence exatamente agora já cobra na hora", () => {
+  const r = verificarAssinatura(emTrial, new Date(emTrial.trial_ends_at));
+  assertEquals(r.ok && r.modo, "imediata");
+});
+
+Deno.test("entrada: cartão, CPF/CNPJ e CEP do titular fora do formato são recusados", () => {
+  const comCartao = (c: object) =>
+    bodySchema.safeParse({ ...corpoValido, credit_card: { ...corpoValido.credit_card, ...c } }).success;
+  const comTitular = (h: object) =>
+    bodySchema.safeParse({
+      ...corpoValido,
+      credit_card_holder_info: { ...corpoValido.credit_card_holder_info, ...h },
+    }).success;
+  assertEquals(comCartao({ number: "5555" }), false);
+  assertEquals(comCartao({ number: "5555-5555-5555-4444" }), false);
+  assertEquals(comCartao({ expiryMonth: "13" }), false);
+  assertEquals(comCartao({ ccv: "" }), false);
+  assertEquals(comTitular({ cpfCnpj: "123" }), false);
+  assertEquals(comTitular({ postalCode: "30140" }), false);
+  assertEquals(comTitular({ email: "x" }), false);
+  assertEquals(comTitular({ addressNumber: "" }), false);
+});
+
+Deno.test("entrada: corpo nulo ou vazio é recusado", () => {
+  assertEquals(bodySchema.safeParse(null).success, false);
+  assertEquals(bodySchema.safeParse({}).success, false);
+});
+
+Deno.test("cobrança recusada sem prefixo do Asaas ou com espaços no fim continua uma frase só", () => {
+  assertEquals(
+    mensagemCobrancaRecusada("Saldo insuficiente.  "),
+    "A cobrança não foi aprovada: Saldo insuficiente. Confira os dados ou use outro cartão."
+  );
+});
+
+Deno.test("falha de rede ou outra recusa não é confundida com tokenização não liberada", () => {
+  assertEquals(ehTokenizacaoSemPermissao("Asaas 500"), false);
+  assertEquals(ehTokenizacaoSemPermissao("signal timed out"), false);
+  assertEquals(ehTokenizacaoSemPermissao("Asaas: Voce nao possui permissao para utilizar este recurso"), true);
+});
+
 Deno.test("entrada: cobrar_agora é opcional e só aceita boolean", () => {
   assertEquals(bodySchema.safeParse({ ...corpoValido, cobrar_agora: true }).success, true);
   assertEquals(bodySchema.safeParse({ ...corpoValido, cobrar_agora: "sim" }).success, false);
