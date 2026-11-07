@@ -80,8 +80,8 @@ const row = { id: "s1", empresa_id: "e1", plan_id: "p1", billing_cycle: "monthly
 const plano = { nome: "Pro", preco_mensal: 690, preco_anual: 6900 };
 const opts = { appUrl: "https://app.test", origem: "trial_expirado" as const };
 
-// deno-lint-ignore no-explicit-any
-const comoCliente = (c: unknown) => c as any;
+type Cliente = Parameters<typeof converterEmAssinaturaAtiva>[0];
+const comoCliente = (c: unknown) => c as Cliente;
 
 Deno.test("conversão mensal com token: cobra o preço mensal no Asaas e ativa a assinatura", async () => {
   const { client, ops } = fakeAdmin({ plano, empresa: { nome: "Escritório" } });
