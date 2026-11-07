@@ -8,12 +8,14 @@
 
 ## 1. O que é
 
-O logotipo tem duas peças: o **símbolo** (uma coluna desenhada com seis linhas) e o **nome**
+O logotipo tem duas peças: o **símbolo** (uma coluna desenhada com cinco linhas) e o **nome**
 (Pilar, em Geist Medium). Usadas juntas formam o **lockup**.
 
 - **Símbolo.** A coluna é a tradução direta do nome: o elemento que sustenta a estrutura.
   É feita só de linhas de mesmo traço e ponta redonda, o jeito de um desenho técnico de
-  escritório de projeto. Capitel e ábaco em cima, quatro caneluras embaixo, sem base.
+  escritório de projeto. Capitel e ábaco em cima, três caneluras embaixo, sem base.
+- **Três caneluras.** Três apoios sustentam o capitel: a trindade que segura a estrutura, com a
+  canelura do meio sobre o eixo. Até 07/11/2026 eram quatro (DECISOES.md, 2026-11-07).
 - **Nome.** "Pilar" em Geist, peso 500, tracking -0,025 em, convertido em curva. Grafia sempre
   "Pilar" (nunca "PILAR" nem "pilar").
 - **Personalidade.** Calmo, preciso, estrutural. O símbolo é leve de propósito: o peso visual
@@ -23,16 +25,19 @@ O logotipo tem duas peças: o **símbolo** (uma coluna desenhada com seis linhas
 
 Use SVG sempre que o destino aceitar. PNG só para apresentação, redes sociais e documento.
 
-| Peça                         | Arquivo                                             | Quando usar                                                                        |
-| ---------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Lockup horizontal (primário) | `pilar-logo-horizontal-{ink,white,black,brand}.svg` | Cabeçalho, rodapé, documento, assinatura de e-mail, material de venda              |
-| Lockup empilhado             | `pilar-logo-vertical-{ink,white,black,brand}.svg`   | Capa, slide de abertura, quando o espaço é mais alto que largo                     |
-| Símbolo                      | `pilar-mark-{ink,white,black,brand}.svg`            | Quando o nome já aparece perto, avatar, selo, marca d'água                         |
-| Símbolo, traço reforçado     | `pilar-mark-small-{ink,white}.svg`                  | Símbolo com menos de 24 px de altura                                               |
-| Só o nome                    | `pilar-wordmark-{ink,white}.svg`                    | Texto corrido institucional, rodapé de contrato                                    |
-| Ícone do app                 | `pilar-app-icon.svg`                                | Ícone de app, PWA, perfil de rede social                                           |
-| Favicon                      | `pilar-favicon.svg`                                 | Aba do navegador                                                                   |
-| PNG                          | `png/`                                              | Tamanhos prontos: símbolo 1024, lockup horizontal 2000, empilhado 1200, ícone 1024 |
+| Peça                         | Arquivo                                                | Quando usar                                                                          |
+| ---------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| Lockup horizontal (primário) | `pilar-logo-horizontal-{ink,white,black,brand}.svg`    | Cabeçalho, rodapé, documento, assinatura de e-mail, material de venda                |
+| Lockup empilhado             | `pilar-logo-vertical-{ink,white,black,brand}.svg`      | Capa, slide de abertura, quando o espaço é mais alto que largo                       |
+| Símbolo                      | `pilar-mark-{ink,white,black,brand}.svg`               | Quando o nome já aparece perto, avatar, selo, marca d'água                           |
+| Símbolo, traço reforçado     | `pilar-mark-small-{ink,white}.svg`                     | Símbolo com menos de 24 px de altura                                                 |
+| Só o nome                    | `pilar-wordmark-{ink,white}.svg`                       | Texto corrido institucional, rodapé de contrato                                      |
+| Ícone do app (paisagem)      | `pilar-app-icon.svg`                                   | Ícone de app, PWA, perfil de rede social. Padrão                                     |
+| Ícone do app, verde          | `pilar-app-icon-verde.svg`                             | Perfil de rede social e selo, quando a paisagem pesar ao lado de outra arte          |
+| Ícone do app, disco          | `pilar-app-icon-disco.svg`                             | Avatar redondo sobre papel, continuidade com o favicon                               |
+| Lockup sobre paisagem        | `pilar-logo-{horizontal,vertical,banner}-paisagem.svg` | Capa de documento e slide (2:1), post quadrado (1:1), capa do LinkedIn (4:1)         |
+| Favicon                      | `pilar-favicon.svg`                                    | Aba do navegador                                                                     |
+| PNG                          | `png/`                                                 | Tamanhos prontos: símbolo 1024, lockups 2000/1200, ícones 1024, paisagens no formato |
 
 Sufixos de cor: `ink` (#1A1A1A, padrão sobre claro), `white` (sobre escuro), `brand`
 (nome branco e símbolo verde, só sobre Ink), `black` (#000000, só impressão a uma cor, com ábaco opaco).
@@ -49,9 +54,9 @@ Medidas em **u**, a unidade do desenho. 1u = altura visível do símbolo ÷ 22,6
 | Traço                       | 1,6u, ponta redonda de raio 0,8u                       |
 | Capitel                     | linha de 26u, opacidade 100%                           |
 | Ábaco                       | linha de 22u, opacidade 85%, 4u abaixo do capitel      |
-| Caneluras                   | 4 linhas de 14u, opacidade 100%                        |
-| Módulo X                    | 5u, a distância entre eixos de duas caneluras vizinhas |
-| Eixo de simetria            | capitel, ábaco e caneluras centrados em x = 14u        |
+| Caneluras                   | 3 linhas de 14u, opacidade 100%, em x = 7, 14 e 21u    |
+| Módulo X                    | 7u, a distância entre eixos de duas caneluras vizinhas |
+| Eixo de simetria            | capitel e ábaco centrados na canelura do meio, x = 14u |
 
 O módulo X é a régua de toda a marca: o respiro e o espaço entre símbolo e nome saem dele.
 
@@ -71,8 +76,8 @@ O módulo X é a régua de toda a marca: o respiro e o espaço entre símbolo e 
 | --------------------------- | ------------------------------------------------------- |
 | Altura do símbolo           | 1,7 × altura da caixa-alta do nome                      |
 | Alinhamento vertical        | o centro do símbolo coincide com o centro da caixa-alta |
-| Espaço entre símbolo e nome | 2X, contado da tinta do símbolo até a tinta do "P"      |
-| Proporção do conjunto       | 3,26 : 1 (393,5 × 120,7 no arquivo)                     |
+| Espaço entre símbolo e nome | 1,5X, contado da tinta do símbolo até a tinta do "P"    |
+| Proporção do conjunto       | 3,28 : 1 (396,2 × 120,7 no arquivo)                     |
 
 ### Empilhado
 
@@ -80,8 +85,8 @@ O módulo X é a régua de toda a marca: o respiro e o espaço entre símbolo e 
 | --------------------------- | -------------------------------------- |
 | Altura do símbolo           | 2,0 × altura da caixa-alta do nome     |
 | Alinhamento horizontal      | símbolo e nome centrados no mesmo eixo |
-| Espaço entre símbolo e nome | 1,5X                                   |
-| Proporção do conjunto       | 0,73 : 1 (192,7 × 265,0 no arquivo)    |
+| Espaço entre símbolo e nome | 1X                                     |
+| Proporção do conjunto       | 0,74 : 1 (192,7 × 261,8 no arquivo)    |
 
 ### Quando usar cada peça
 
@@ -98,7 +103,9 @@ Não monte um lockup novo. Não aproxime, afaste, aumente ou reposicione as peç
 
 ![Respiro do logotipo](./assets/logo/diagram-clearspace.svg)
 
-Em todos os lados do logotipo fica uma área livre de **2X**, medida com o X do próprio lockup.
+Em todos os lados do logotipo fica uma área livre de **1,5X**, medida com o X do próprio lockup.
+(Com X = 7u são 10,5u, praticamente os 10u da coluna de quatro caneluras: as medidas mudaram de
+nome, não de tamanho.)
 Nada entra nela: texto, borda, imagem, linha de grade, outro logo. O respiro é mínimo, não ideal;
 em capa e abertura dê mais.
 
@@ -112,7 +119,7 @@ em capa e abertura dê mais.
 | Lockup horizontal | 56 px de largura (nome a 14 px) | 15 mm de largura |
 | Lockup empilhado  | 40 px de largura                | 11 mm de largura |
 
-Abaixo do mínimo de tela, o símbolo deixa de ser legível. Use o ícone do app (disco verde),
+Abaixo do mínimo de tela, o símbolo deixa de ser legível. Use o favicon (disco verde),
 que mantém a forma em 16 px.
 
 ## 7. Cor e fundo
@@ -137,13 +144,41 @@ Regras:
 - Sobre foto: só com véu escuro que leve o fundo a 4,5 : 1, e com o logo branco.
 - Uma cor só (carimbo, gravação, bordado): use `black`, que já vem com o ábaco opaco, porque
   esses processos não fazem transparência.
+- **Paisagem** (seção 7.1) leva sempre o símbolo e o nome em Ink, no céu, acima dos morros.
+
+### 7.1 Variações claras: a paisagem
+
+O fundo preto deixou de ser a cara da marca. A versão de apresentação do Pilar é clara e usa a
+mesma arte da hero da landing (`HeroBackdrop`): céu branco que esfria para o azul-gelo e três
+morros nos verdes da marca, com a trama de pontos do dithering nas peças grandes.
+
+![Ícone do app sobre a paisagem](./assets/logo/png/pilar-app-icon-1024.png)
+
+| Peça                                 | Formato | Uso                                                       |
+| ------------------------------------ | ------- | --------------------------------------------------------- |
+| `pilar-app-icon.svg`                 | 1:1     | Ícone do app e do PWA, foto de perfil. É o ícone padrão   |
+| `pilar-app-icon-verde.svg`           | 1:1     | Perfil e selo onde a paisagem disputaria com outra imagem |
+| `pilar-app-icon-disco.svg`           | 1:1     | Avatar recortado em círculo, sobre papel                  |
+| `pilar-logo-horizontal-paisagem.svg` | 2:1     | Capa de proposta, slide de abertura, cabeçalho de página  |
+| `pilar-logo-vertical-paisagem.svg`   | 1:1     | Post de abertura, capa quadrada                           |
+| `pilar-logo-banner-paisagem.svg`     | 4:1     | Capa do LinkedIn, topo de e-mail marketing                |
+
+Regras da paisagem:
+
+- O símbolo é o foco: fica no céu, em Ink, acima dos morros. No ícone a coluna fica de pé sobre o
+  morro de trás, como apoio sobre o terreno.
+- Nunca o logo branco ou verde sobre a paisagem: o céu é claro (Ink dá mais de 15 : 1 ali).
+- Não redesenhe os morros nem troque as cores: os degradês vêm do `build.py`, que espelha a hero.
+- A trama de pontos só existe nas peças grandes; no ícone ela vira moiré em 32 px.
+- A versão escura (`white` e `brand` sobre Ink) continua valendo para fundo escuro e modo escuro,
+  mas não é mais a apresentação padrão.
 
 ## 8. Usos proibidos
 
 ![Usos proibidos](./assets/logo/diagram-misuse.svg)
 
 Não distorça, não gire, não recolora, não aplique sombra ou brilho, não troque a fonte do nome,
-não mude o desenho do símbolo (nem o número de caneluras), não use só o contorno e não use em
+não mude o desenho do símbolo (nem volte às quatro caneluras), não use só o contorno e não use em
 fundo sem contraste. Também não: animar o logo fora do que a seção 9 permite, colocar o logo dentro
 de caixa, balão ou moldura que reduza o respiro, usar o símbolo como bullet, e escrever o nome em
 caixa-alta ou minúscula.
@@ -170,7 +205,7 @@ empresa titular. Até lá, o logo e o nome aparecem sem símbolo.
 - Produto e landing usam o componente `Logo` (`src/components/Logo.tsx`) e o `PilarMark`
   (`src/components/motion/PilarMark.tsx`). Não recrie o símbolo com `<svg>` solto nem o nome como
   texto estilizado.
-- E-mail usa PNG (Gmail bloqueia SVG em `<img>`): `apps/marketing/public/email/logo-v2.png`,
+- E-mail usa PNG (Gmail bloqueia SVG em `<img>`): `apps/marketing/public/email/logo-v3.png`,
   configurado em `supabase/functions/_shared/email/brand.ts`. Versione o nome ao trocar de logo.
 - Cor do logo no código é `currentColor`: o contêiner decide (`text-ink` ou `text-white`).
 
@@ -183,6 +218,10 @@ alinhou tudo: `PilarMark` com as caneluras em 6,5, 11,5, 16,5 e 21,5; `public/*.
 (`logo-v2.png`) gerados do ícone oficial; `Logo` com o nome em curva (`PilarWordmark`).
 `src/components/logotipo.oficial.test.tsx` reprova se produção se afastar dos arquivos oficiais.
 
+Em 07/11/2026 a coluna passou a três caneluras e o ícone do app saiu do tile preto para a
+paisagem. O `build.py` agora também escreve os arquivos de produção (`public/*.svg`, os PNGs de
+ícone do PWA e o `logo-v3.png` do e-mail), então trocar o desenho é rodar o script e commitar.
+
 ## 12. Como regenerar os arquivos
 
 ```bash
@@ -190,7 +229,8 @@ python3 -m venv /tmp/fvenv && /tmp/fvenv/bin/pip install fonttools brotli
 /tmp/fvenv/bin/python scripts/brand/build.py
 ```
 
-Requer `rsvg-convert` (`brew install librsvg`) para os PNG. A geometria do símbolo e os
+Requer `rsvg-convert` (`brew install librsvg`) para os PNG; qualquer conversor com a mesma
+interface (`-w <largura> entrada.svg -o saida.png`) serve, por exemplo um shim sobre `cairosvg`. A geometria do símbolo e os
 parâmetros dos lockups ficam no topo de `scripts/brand/build.py`; o nome em curva vem da Geist
 variável em `apps/marketing/public/fonts/` (licença SIL OFL 1.1). Mexeu na geometria? Rode o
 script e confira os diagramas: eles se atualizam junto.
