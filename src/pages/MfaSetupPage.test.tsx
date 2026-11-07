@@ -164,4 +164,53 @@ describe("MfaSetupPage", () => {
     expect(await screen.findByTestId("landing")).toBeInTheDocument();
     expect(h.signOut).toHaveBeenCalled();
   });
+  it("teclado no código: Backspace apaga e volta, setas navegam", async () => {
+    renderPage();
+    await irAoPasso(4);
+    const inputs = () => screen.getAllByRole("textbox") as HTMLInputElement[];
+    digitar("12");
+    expect(inputs()[1]).toHaveValue("2");
+    // Backspace com dígito: apaga no lugar.
+    fireEvent.keyDown(inputs()[1], { key: "Backspace" });
+    expect(inputs()[1]).toHaveValue("");
+    // Backspace em campo vazio: apaga o anterior e volta o foco.
+    fireEvent.keyDown(inputs()[1], { key: "Backspace" });
+    expect(inputs()[0]).toHaveValue("");
+    expect(document.activeElement).toBe(inputs()[0]);
+    // No primeiro campo vazio não faz nada.
+    fireEvent.keyDown(inputs()[0], { key: "Backspace" });
+    fireEvent.keyDown(inputs()[0], { key: "ArrowRight" });
+    expect(document.activeElement).toBe(inputs()[1]);
+    fireEvent.keyDown(inputs()[1], { key: "ArrowLeft" });
+    expect(document.activeElement).toBe(inputs()[0]);
+    fireEvent.keyDown(inputs()[0], { key: "ArrowLeft" });
+    fireEvent.keyDown(inputs()[5], { key: "ArrowRight" });
+    expect(h.verifyTotp).not.toHaveBeenCalled();
+  });
+
+  it("copiar a chave manual confirma e volta ao ícone; falha avisa", async () => {
+    const writeText = vi.fn().mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error("negado"));
+    // O userEvent troca o clipboard pelo dele: o stub entra depois e o clique vai por fireEvent.
+    renderPage();
+    await irAoPasso(3);
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    fireEvent.click(await screen.findByRole("button", { name: "Copiar chave" }));
+    expect(writeText).toHaveBeenCalledWith(ENROLL.secret);
+    expect(await screen.findByRole("button", { name: "Copiado" })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole("button", { name: "Copiar chave" })).toBeInTheDocument(), {
+      timeout: 3000,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Copiar chave" }));
+    await waitFor(() => expect(h.toastError).toHaveBeenCalledWith("Não foi possível copiar"));
+  });
+
+  it("voltar entre os passos", async () => {
+    renderPage();
+    const user = await irAoPasso(4);
+    await user.click(screen.getByRole("button", { name: /Voltar para o QR Code/ }));
+    await user.click(await screen.findByRole("button", { name: "← Voltar" }));
+    expect(screen.getByRole("button", { name: /Estou com o app pronto/ })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "← Voltar" }));
+    expect(screen.getByRole("button", { name: /Já tenho o app instalado/ })).toBeInTheDocument();
+  });
 });
