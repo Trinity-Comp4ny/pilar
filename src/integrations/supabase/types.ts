@@ -5753,6 +5753,8 @@ export type Database = {
           destaque: boolean
           features: Json
           id: string
+          max_leads: number | null
+          max_obras: number | null
           max_projetos: number | null
           max_usuarios: number | null
           nome: string
@@ -5769,6 +5771,8 @@ export type Database = {
           destaque?: boolean
           features?: Json
           id?: string
+          max_leads?: number | null
+          max_obras?: number | null
           max_projetos?: number | null
           max_usuarios?: number | null
           nome: string
@@ -5785,6 +5789,8 @@ export type Database = {
           destaque?: boolean
           features?: Json
           id?: string
+          max_leads?: number | null
+          max_obras?: number | null
           max_projetos?: number | null
           max_usuarios?: number | null
           nome?: string
@@ -9987,6 +9993,7 @@ export type Database = {
         Args: { p_empresa_id: string }
         Returns: {
           import_habilitado: boolean
+          max_leads: number
           max_obras: number
           max_projetos: number
           max_usuarios: number
