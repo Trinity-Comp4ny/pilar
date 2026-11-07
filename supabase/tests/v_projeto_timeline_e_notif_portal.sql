@@ -28,7 +28,7 @@ SET LOCAL session_replication_role = 'origin';
 
 INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed)
 VALUES
-  ('77777777-0000-0000-0000-00000000f001', '00000000-0000-0000-0000-00000000f0aa', 'TL', 'Owner', 'tl_owner@test.com', 'owner', TRUE),
+  ('77777777-0000-0000-0000-00000000f001', '00000000-0000-0000-0000-00000000f0aa', 'TL', 'Owner', 'tl_owner@test.com', 'admin', TRUE),
   ('77777777-0000-0000-0000-00000000f002', '00000000-0000-0000-0000-00000000f0aa', 'TL', 'Resp', 'tl_resp@test.com', 'coordenador', TRUE)
 ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role;
 
