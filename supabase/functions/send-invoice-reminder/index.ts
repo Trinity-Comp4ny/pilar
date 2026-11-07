@@ -9,6 +9,7 @@ import { createLogger } from "../_shared/logger.ts";
 import { getRateLimitKey, RateLimiter } from "../_shared/rate-limiter.ts";
 import { lerJson } from "../_shared/schemas.ts";
 import { lerEntrada } from "./entrada.ts";
+import { lembreteVencido, podeEnviarLembrete } from "./regras.ts";
 
 const log = createLogger("send-invoice-reminder");
 
@@ -53,7 +54,7 @@ serve(
         .single();
 
       if (profileError || !profile?.empresa_id) return safeErrorResponse(403, "Perfil sem empresa", req);
-      if (!["admin", "financeiro", "operacional"].includes(profile.role)) {
+      if (!podeEnviarLembrete(profile.role)) {
         return safeErrorResponse(403, "Sem permissão para enviar cobrança", req);
       }
 
@@ -103,7 +104,7 @@ serve(
         return safeErrorResponse(422, "Cadastre o e-mail da empresa em Configurações para enviar ao cliente", req);
 
       const hoje = new Date().toISOString().split("T")[0];
-      const vencida = rec.data_vencimento < hoje && rec.status === "Pendente";
+      const vencida = lembreteVencido(rec.data_vencimento, rec.status, hoje);
 
       await sendEmail({
         classe: "escritorio",
