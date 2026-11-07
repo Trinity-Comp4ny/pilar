@@ -22,9 +22,10 @@ sub ou superprecifica o escritório que toca poucas obras ou muito comercial. At
 aberto no funil (lead); concluído, cancelado, ganho ou perdido não conta.
 
 **Supera:** as faixas 15/40/ilimitado de projetos da tabela v3 de PRICING.md e a coluna "obras ativas" (2/5/12) que
-lá era só diretriz. **Pendente:** o banco só aplica `max_projetos` nos planos pagos. `max_obras` existe apenas em
-`trial_niveis`, e não há limite de leads. Antes de vender pelo limite novo, levar `max_projetos` (10/30/null),
-`max_obras` e `max_leads` para `pilar_subscription_plans` e bloquear a criação no app ao atingir a faixa.
+lá era só diretriz. **Aplicado** pela migration `20261130000000_planos_v4_preco_e_capacidade_por_modulo`: colunas
+`max_obras` e `max_leads` no plano, `limites_empresa()` devolvendo as três faixas e o trigger
+`enforce_capacidade_leads`. Quem bate na faixa vê o diálogo de limite do plano, com o caminho para subir de plano.
+Assinatura que já está acima da faixa nova não perde nada: o bloqueio vale só para criar o próximo.
 
 ---
 
@@ -39,8 +40,10 @@ motor de tokens continua contando token por baixo; crédito é só a unidade exp
 converter sem mudar o motor). Cadastro por convite já valia desde 19/10 (SPEC 133).
 
 **Supera:** os preços R$ 490/690/1.290 da tabela v3 de PRICING.md e a entrada de 2026-08-31 na parte "token é a
-unidade exposta". **Pendente:** `pilar_subscription_plans` (preço do checkout), a tela de saldo/compra de tokens do
-app e o preço do pacote avulso ainda estão na régua antiga; alinhar antes de enviar link de checkout com o novo preço.
+unidade exposta". **Aplicado no app** pela migration `20261130000000_planos_v4_preco_e_capacidade_por_modulo` (preço
+do checkout) e pela UI em créditos (`src/lib/creditos.ts`). O preço do pacote avulso não mudou (só o rótulo, em
+créditos). Ainda em tokens: os textos das notificações geradas no banco ("Tokens de IA acabando", "Pedido de mais
+tokens").
 
 ---
 
