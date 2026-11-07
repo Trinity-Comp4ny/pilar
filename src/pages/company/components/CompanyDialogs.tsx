@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ROLES } from "../types";
+import { useObjectUrl } from "@/hooks/useObjectUrl";
 
 interface LogoPreviewDialogProps {
   open: boolean;
@@ -30,6 +31,7 @@ interface LogoPreviewDialogProps {
 }
 
 export function LogoPreviewDialog({ open, onOpenChange, pendingLogoFile, logoUrl }: LogoPreviewDialogProps) {
+  const previaLogo = useObjectUrl(pendingLogoFile);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl">
@@ -39,11 +41,7 @@ export function LogoPreviewDialog({ open, onOpenChange, pendingLogoFile, logoUrl
         </DialogHeader>
         <div className="bg-black/5 border border-black/10 rounded-xl p-6 flex items-center justify-center min-h-[320px]">
           {pendingLogoFile ? (
-            <img
-              src={URL.createObjectURL(pendingLogoFile)}
-              alt="Logo (prévia)"
-              className="max-h-[520px] w-full object-contain"
-            />
+            <img src={previaLogo ?? undefined} alt="Logo (prévia)" className="max-h-[520px] w-full object-contain" />
           ) : logoUrl ? (
             <img src={logoUrl} alt="Logo" className="max-h-[520px] w-full object-contain" />
           ) : (

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { CompanyData } from "../types";
 import { getStatusBadge } from "../types";
+import { useObjectUrl } from "@/hooks/useObjectUrl";
 
 interface CompanySummaryCardProps {
   companyData: CompanyData;
@@ -20,6 +21,7 @@ export function CompanySummaryCard({
   pendingLogoFile,
   onLogoPreview,
 }: CompanySummaryCardProps) {
+  const previaLogo = useObjectUrl(pendingLogoFile);
   const openPreview = () => {
     if (pendingLogoFile || companyData.logoUrl) onLogoPreview();
   };
@@ -42,11 +44,7 @@ export function CompanySummaryCard({
             }}
           >
             {pendingLogoFile ? (
-              <img
-                src={URL.createObjectURL(pendingLogoFile)}
-                alt="Logo (prévia)"
-                className="w-full h-full object-contain p-4"
-              />
+              <img src={previaLogo ?? undefined} alt="Logo (prévia)" className="w-full h-full object-contain p-4" />
             ) : companyData.logoUrl ? (
               <img src={companyData.logoUrl} alt="Logo" className="w-full h-full object-contain p-4" />
             ) : (
