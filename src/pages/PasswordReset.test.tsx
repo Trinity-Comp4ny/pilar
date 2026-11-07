@@ -48,6 +48,9 @@ function renderPage() {
 
 const unsubscribe = vi.fn();
 
+// Formulários longos preenchidos tecla a tecla passam de 5s com a suíte inteira em paralelo.
+vi.setConfig({ testTimeout: 15000 });
+
 beforeEach(() => {
   vi.clearAllMocks();
   auth.getSession.mockResolvedValue({ data: { session: { user: { id: "u" } } } });
