@@ -16,6 +16,13 @@ describe("parseCapacidadeError", () => {
     });
   });
 
+  it("reconhece capacidade:leads com limite no hint", () => {
+    expect(parseCapacidadeError({ message: "capacidade:leads", hint: "50" })).toEqual({
+      recurso: "leads",
+      limite: 50,
+    });
+  });
+
   it("sem hint, limite vem null (nível ilimitado ou hint ausente)", () => {
     expect(parseCapacidadeError({ message: "capacidade:projetos" })).toEqual({
       recurso: "projetos",

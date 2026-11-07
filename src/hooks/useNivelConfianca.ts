@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export interface LimitesEmpresa {
   maxProjetos: number | null;
   maxObras: number | null;
+  maxLeads: number | null;
   maxUsuarios: number | null;
   tokensTotal: number | null;
   portalHabilitado: boolean;
@@ -33,6 +34,7 @@ export function useNivelConfianca() {
       return {
         maxProjetos: data.max_projetos,
         maxObras: data.max_obras,
+        maxLeads: data.max_leads,
         maxUsuarios: data.max_usuarios,
         tokensTotal: data.tokens_total,
         portalHabilitado: data.portal_habilitado,

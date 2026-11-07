@@ -23,6 +23,10 @@ import { ListaLeads } from "./components/ListaLeads";
 import { LeadMotivoPerdasDialog, LeadCreatePropostaDialog } from "./components/LeadActionDialogs";
 import { LeadCnpjConvertDialog, type ConvertEnrichment } from "./components/LeadCnpjConvertDialog";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { useNivelConfianca } from "@/hooks/useNivelConfianca";
+import { DesbloqueioNivel } from "@/components/trial/DesbloqueioNivel";
+import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
+import { analytics } from "@/lib/analytics";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useLeadEtapas, type LeadEtapa } from "@/pages/leads/hooks/useLeadEtapas";
 import { useEtapasDoFunil } from "@/pages/leads/hooks/useEtapasDoFunil";
@@ -113,6 +117,10 @@ export default function Leads() {
   const primariaDoLead = (leadId: string) => propostaPrimaria(propostasByLead.get(leadId) ?? []);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // Faixa de leads ativos do plano (DECISOES.md 2026-11-06): o trigger recusa o
+  // lead novo e aqui abre o mesmo diálogo de limite de projetos e obras.
+  const [capacidadeErro, setCapacidadeErro] = useState<CapacidadeErro | null>(null);
+  const { isAdmin } = useNivelConfianca();
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -252,6 +260,12 @@ export default function Leads() {
         onSuccess: () => {
           setFormData(EMPTY_LEAD_FORM);
           setIsDialogOpen(false);
+        },
+        onError: (err) => {
+          const capacidade = parseCapacidadeError(err);
+          if (!capacidade) return;
+          analytics.track("trial_limite_atingido", { recurso: capacidade.recurso, limite: capacidade.limite });
+          setCapacidadeErro(capacidade);
         },
       }
     );
@@ -658,6 +672,16 @@ export default function Leads() {
       )}
 
       {/* Dialogs */}
+      {capacidadeErro && (
+        <DesbloqueioNivel
+          open
+          onOpenChange={(o) => !o && setCapacidadeErro(null)}
+          recurso={capacidadeErro.recurso}
+          limite={capacidadeErro.limite}
+          isAdmin={isAdmin}
+        />
+      )}
+
       <LeadFormDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}

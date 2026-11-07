@@ -9,10 +9,13 @@ import { formatDocument, onlyDigits, validateCNPJ, validateCPF } from "@/lib/mas
 import { edgeFunctionErrorMessage } from "@/lib/edgeFunctionError";
 import { analytics } from "@/lib/analytics";
 import type { RecursoCapacidade } from "@/lib/capacidade";
+import { useMySubscription } from "@/pages/billing/hooks/useMySubscription";
+import { useSettingsModal } from "@/contexts/SettingsModalContext";
 
 const NOME_RECURSO: Record<RecursoCapacidade, string> = {
-  projetos: "projetos",
-  obras: "obras",
+  projetos: "projetos ativos",
+  obras: "obras ativas",
+  leads: "leads ativos",
 };
 
 interface DesbloqueioNivelProps {
@@ -25,10 +28,20 @@ interface DesbloqueioNivelProps {
 
 /**
  * SPEC 098, requisitos 10 e 19: aberto quando o trigger de capacidade recusa
- * criar projeto/obra. Admin informa CNPJ ou CPF pra subir a empresa a Prata
- * (mais capacidade); quem não é admin só avisa quem pode fazer isso.
+ * criar projeto, obra ou lead. No período de teste, o admin informa CNPJ ou CPF
+ * pra subir a empresa a Prata (mais capacidade). Com plano ativo, a faixa é do
+ * plano (DECISOES.md 2026-11-06), então o caminho é subir de plano. Quem não é
+ * admin, nos dois casos, só avisa quem pode resolver.
  */
 export function DesbloqueioNivel({ open, onOpenChange, recurso, limite, isAdmin }: DesbloqueioNivelProps) {
+  const { data: assinatura } = useMySubscription();
+  const planoAtivo = assinatura?.status === "active";
+
+  if (planoAtivo) {
+    return (
+      <LimiteDoPlano open={open} onOpenChange={onOpenChange} recurso={recurso} limite={limite} isAdmin={isAdmin} />
+    );
+  }
   if (isAdmin) {
     return <DesbloqueioDocumento open={open} onOpenChange={onOpenChange} recurso={recurso} limite={limite} />;
   }
@@ -39,6 +52,42 @@ function limiteFrase(recurso: RecursoCapacidade, limite: number | null): string 
   const nome = NOME_RECURSO[recurso];
   if (limite == null) return `o limite de ${nome} do período de teste`;
   return `o limite de ${limite} ${nome} do período de teste`;
+}
+
+function LimiteDoPlano({ open, onOpenChange, recurso, limite, isAdmin }: DesbloqueioNivelProps) {
+  const { openSettings } = useSettingsModal();
+  const nome = NOME_RECURSO[recurso];
+  const frase = limite == null ? `o limite de ${nome} do seu plano` : `o limite de ${limite} ${nome} do seu plano`;
+
+  if (!isAdmin) {
+    return (
+      <AvisarAdministrador
+        open={open}
+        onOpenChange={onOpenChange}
+        recurso={recurso}
+        limite={limite}
+        titulo="Você atingiu um limite do plano"
+        descricao={`Sua empresa bateu ${frase}. Só um administrador pode trocar de plano; avise agora e continue depois.`}
+      />
+    );
+  }
+
+  return (
+    <ConfirmDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      onConfirm={() => {
+        analytics.track("plano_limite_ver_planos", { recurso, limite });
+        onOpenChange(false);
+        openSettings("pagamento");
+      }}
+      title="Você atingiu um limite do plano"
+      description={`Sua empresa bateu ${frase}. Conclua ou arquive o que já terminou, ou suba de plano para liberar mais capacidade.`}
+      variant="default"
+      confirmText="Ver planos"
+      cancelText="Fechar"
+    />
+  );
 }
 
 function DesbloqueioDocumento({ open, onOpenChange, recurso, limite }: Omit<DesbloqueioNivelProps, "isAdmin">) {
@@ -115,7 +164,14 @@ function DesbloqueioDocumento({ open, onOpenChange, recurso, limite }: Omit<Desb
   );
 }
 
-function AvisarAdministrador({ open, onOpenChange, recurso, limite }: Omit<DesbloqueioNivelProps, "isAdmin">) {
+function AvisarAdministrador({
+  open,
+  onOpenChange,
+  recurso,
+  limite,
+  titulo = "Você atingiu um limite do período de teste",
+  descricao,
+}: Omit<DesbloqueioNivelProps, "isAdmin"> & { titulo?: string; descricao?: string }) {
   const [isPending, setIsPending] = useState(false);
   const sucedeu = useRef(false);
 
@@ -151,8 +207,11 @@ function AvisarAdministrador({ open, onOpenChange, recurso, limite }: Omit<Desbl
       open={open}
       onOpenChange={handleOpenChange}
       onConfirm={handleConfirm}
-      title="Você atingiu um limite do período de teste"
-      description={`Sua empresa bateu ${limiteFrase(recurso, limite)}. Só um administrador pode liberar mais capacidade; avise agora e continue depois.`}
+      title={titulo}
+      description={
+        descricao ??
+        `Sua empresa bateu ${limiteFrase(recurso, limite)}. Só um administrador pode liberar mais capacidade; avise agora e continue depois.`
+      }
       variant="default"
       confirmText="Avisar administrador"
       cancelText="Fechar"
