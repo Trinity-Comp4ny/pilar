@@ -13,7 +13,14 @@ vi.mock("@/integrations/supabase/client", async () => ({
 }));
 
 import { useLancamentosResumo } from "./useLancamentosResumo";
-import { gerarFaturasCartao, useFaturas, useFaturasPendentes } from "./useFaturas";
+import {
+  gerarFaturasCartao,
+  useContas,
+  useDespesasFatura,
+  useFaturas,
+  useFaturasPendentes,
+  useInvalidateFaturas,
+} from "./useFaturas";
 import { defaultFilters } from "../components/lancamentosFilters";
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -153,5 +160,93 @@ describe("gerarFaturasCartao", () => {
   it("outro erro propaga", async () => {
     sb.rpcResultado("gerar_fatura", { data: null, error: { code: "42501", message: "sem permissão" } });
     await expect(gerarFaturasCartao("k1")).rejects.toThrow("sem permissão");
+  });
+});
+
+describe("useFaturas: bordas", () => {
+  it("erro ao ler as faturas do cartão vira erro da query", async () => {
+    sb.resultado("view_fatura_resumo.select", { data: null, error: { message: "x" } });
+    const { result } = renderHook(() => useFaturas("k1"), { wrapper });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+  });
+
+  it("sem linhas devolve lista vazia (cartão e pendentes)", async () => {
+    sb.resultado("view_fatura_resumo.select", { data: null, error: null });
+    const cartao = renderHook(() => useFaturas("k1"), { wrapper });
+    const pendentes = renderHook(() => useFaturasPendentes(), { wrapper });
+    await waitFor(() => expect(cartao.result.current.isSuccess).toBe(true));
+    await waitFor(() => expect(pendentes.result.current.isSuccess).toBe(true));
+    expect(cartao.result.current.data).toEqual([]);
+    expect(pendentes.result.current.data).toEqual([]);
+  });
+
+  it("geração rejeitada (falha de rede) propaga o erro", async () => {
+    sb.client.rpc.mockRejectedValueOnce(new Error("rede"));
+    await expect(gerarFaturasCartao("k1")).rejects.toThrow("rede");
+  });
+});
+
+describe("useContas", () => {
+  it("lista contas não excluídas", async () => {
+    sb.resultado("contas.select", { data: [{ id: "c1", nome: "Itaú" }], error: null });
+    const { result } = renderHook(() => useContas(), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual([{ id: "c1", nome: "Itaú" }]);
+    expect(sb.de("contas", "is")[0].args).toEqual(["deleted_at", null]);
+  });
+
+  it("sem dados devolve vazio; erro vira erro da query", async () => {
+    sb.resultado("contas.select", [
+      { data: null, error: null },
+      { data: null, error: { message: "x" } },
+    ]);
+    const vazio = renderHook(() => useContas(), { wrapper });
+    await waitFor(() => expect(vazio.result.current.isSuccess).toBe(true));
+    expect(vazio.result.current.data).toEqual([]);
+    const erro = renderHook(() => useContas(), { wrapper });
+    await waitFor(() => expect(erro.result.current.isError).toBe(true));
+  });
+});
+
+describe("useDespesasFatura", () => {
+  it("lista as despesas de cartão da fatura, por vencimento", async () => {
+    const linha = { id: "d1", descricao: "Uber", valor: 30, categorias_financeiras: { nome: "Transporte" } };
+    sb.resultado("despesas.select", { data: [linha], error: null });
+    const { result } = renderHook(() => useDespesasFatura("f1"), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual([linha]);
+    expect(sb.de("despesas", "eq")[0].args).toEqual(["fatura_id", "f1"]);
+    expect(sb.de("despesas", "not")[0].args).toEqual(["cartao_id", "is", null]);
+  });
+
+  it("sem fatura não consulta", () => {
+    renderHook(() => useDespesasFatura(null), { wrapper });
+    expect(sb.client.from).not.toHaveBeenCalled();
+  });
+
+  it("sem dados devolve vazio; erro vira erro da query", async () => {
+    sb.resultado("despesas.select", [
+      { data: null, error: null },
+      { data: null, error: { message: "x" } },
+    ]);
+    const vazio = renderHook(() => useDespesasFatura("f1"), { wrapper });
+    await waitFor(() => expect(vazio.result.current.isSuccess).toBe(true));
+    expect(vazio.result.current.data).toEqual([]);
+    const erro = renderHook(() => useDespesasFatura("f2"), { wrapper });
+    await waitFor(() => expect(erro.result.current.isError).toBe(true));
+  });
+});
+
+describe("useInvalidateFaturas", () => {
+  it("invalida faturas, resumo de cartões e despesas da fatura", () => {
+    const client = new QueryClient();
+    const spy = vi.spyOn(client, "invalidateQueries");
+    const { result } = renderHook(() => useInvalidateFaturas(), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    });
+    result.current();
+    expect(spy.mock.calls.map((c) => c[0]?.queryKey)).toEqual([["faturas"], ["cartoes-resumo"], ["despesas-fatura"]]);
   });
 });
