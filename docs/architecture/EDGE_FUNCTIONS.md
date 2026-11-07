@@ -125,7 +125,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `geocode-address` | Geocodifica endereço pelo Nominatim (mapa). | app | JWT |  | sim |
 | `health` | Saúde do backend (banco, Asaas, Resend); usado pelo smoke de deploy e pelo monitor de produção. | monitor de produção e smoke de deploy | própria | `HEALTH_CHECK_ASAAS` `HEALTH_CHECK_RESEND` `RELEASE_SHA` `SENTRY_RELEASE` `VERCEL_GIT_COMMIT_SHA` | sim |
 | `lookup-cep` | Busca CEP sem login (checkout), BrasilAPI com fallback de provedor. | app | JWT |  | sim |
-| `registrar-interesse-demo` | Grava o canal de origem (UTM ou referrer) de cada clique em Agendar demonstração na landing, sem dado pessoal (SPEC 149). | landing (apps/marketing), por sendBeacon | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `registrar-interesse-demo` | Grava o canal de origem (UTM ou referrer) de cada clique em Agendar demonstração na landing, sem dado pessoal (SPEC 149). | app, landing (apps/marketing), por sendBeacon | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `turnstile-verify` | Verifica no servidor o token do Cloudflare Turnstile. | **sem chamador conhecido** | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` `TURNSTILE_SECRET_KEY` | sim |
 
 ## Sem chamador conhecido

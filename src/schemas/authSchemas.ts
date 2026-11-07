@@ -164,6 +164,13 @@ export const profileEditSchema = z.object({
   firstName: z.string().trim().min(1, "Nome é obrigatório"),
   lastName: z.string().trim().min(1, "Sobrenome é obrigatório"),
   contact: z.string().trim().optional().default(""),
+  // SPEC 149: quem entrou antes do onboarding novo pode não ter função ainda.
+  funcao: z
+    .string()
+    .optional()
+    .default("")
+    .refine((v) => !v || FUNCOES.some((f) => f.value === v), { message: "Função inválida" }),
+  linkedin: linkedinSchema,
 });
 export type ProfileEditFormData = z.infer<typeof profileEditSchema>;
 export type ProfileEditFormInput = z.input<typeof profileEditSchema>;
@@ -171,6 +178,8 @@ export const profileEditDefaultValues: ProfileEditFormData = {
   firstName: "",
   lastName: "",
   contact: "",
+  funcao: "",
+  linkedin: "",
 };
 
 export const clienteLoginSchema = z.object({

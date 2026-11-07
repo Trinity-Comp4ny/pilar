@@ -9,6 +9,7 @@ import { CompanyDataTab } from "@/pages/company/components/CompanyDataTab";
 import { CompanyVisualTab } from "@/pages/company/components/CompanyVisualTab";
 import { CompanySummaryCard } from "@/pages/company/components/CompanySummaryCard";
 import { LogoPreviewDialog } from "@/pages/company/components/CompanyDialogs";
+import { normalizarSite } from "@/lib/perfilEscritorio";
 import type { CompanyData } from "@/pages/company/types";
 
 type Props = {
@@ -63,6 +64,9 @@ export function EmpresaTab({ companyId, companyData, setCompanyData, usersCount,
           cidade: companyData.cidade,
           estado: companyData.estado,
           cep: companyData.cep,
+          site: normalizarSite(companyData.site ?? ""),
+          porte: companyData.porte || null,
+          disciplinas: companyData.disciplinas?.length ? companyData.disciplinas : null,
         })
         .eq("id", companyId);
       if (error) throw error;
@@ -149,6 +153,7 @@ export function EmpresaTab({ companyId, companyData, setCompanyData, usersCount,
               onSave={handleSaveData}
               onChange={handleFieldChange}
               onStatusChange={(v) => setCompanyData((prev) => ({ ...prev, status: v }))}
+              onDisciplinasChange={(v) => setCompanyData((prev) => ({ ...prev, disciplinas: v }))}
             />
           </TabsContent>
 
