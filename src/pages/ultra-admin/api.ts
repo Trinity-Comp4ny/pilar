@@ -38,7 +38,7 @@ export type EmpresaRow = {
 };
 
 /** Perfil do escritório (SPEC 149): o que o ultra-admin anotou na criação e o que o dono respondeu. */
-export type PerfilEscritorio = {
+type PerfilEscritorio = {
   site: string | null;
   porte: string | null;
   disciplinas: string[];

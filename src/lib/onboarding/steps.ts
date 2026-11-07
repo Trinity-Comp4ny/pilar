@@ -16,7 +16,7 @@ import type { Objetivo } from "@/lib/perfilEscritorio";
 export type OnboardingPilar = "conta" | "gestao" | "projetos" | "obras";
 
 /** Tabelas usadas para derivar "passo concluído". Todas têm `empresa_id`. */
-export type OnboardingCountSource =
+type OnboardingCountSource =
   | "pessoas"
   | "clientes"
   | "propostas"

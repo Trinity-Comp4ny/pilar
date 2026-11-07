@@ -10,7 +10,6 @@ export const PORTES = [
   { value: "16-40", label: "16 a 40" },
   { value: "40+", label: "Mais de 40" },
 ] as const satisfies readonly Opcao<string>[];
-export type Porte = (typeof PORTES)[number]["value"];
 
 export const DISCIPLINAS = [
   { value: "arquitetura", label: "Arquitetura" },
@@ -20,7 +19,6 @@ export const DISCIPLINAS = [
   { value: "geotecnia", label: "Geotecnia" },
   { value: "outra", label: "Outra" },
 ] as const satisfies readonly Opcao<string>[];
-export type Disciplina = (typeof DISCIPLINAS)[number]["value"];
 
 export const FUNCOES = [
   { value: "socio", label: "Sócio ou diretor" },
@@ -29,7 +27,6 @@ export const FUNCOES = [
   { value: "financeiro", label: "Financeiro ou administrativo" },
   { value: "outra", label: "Outra" },
 ] as const satisfies readonly Opcao<string>[];
-export type Funcao = (typeof FUNCOES)[number]["value"];
 
 /** Canal de aquisição: resposta "como conheceu" do dono e origem anotada pelo ultra-admin. */
 export const CANAIS = [
@@ -42,7 +39,6 @@ export const CANAIS = [
   { value: "evento", label: "Evento" },
   { value: "outro", label: "Outro" },
 ] as const satisfies readonly Opcao<string>[];
-export type Canal = (typeof CANAIS)[number]["value"];
 
 /** Pilar por onde o escritório quer começar. Os três pesam igual. */
 export const OBJETIVOS = [
