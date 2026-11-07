@@ -1,21 +1,50 @@
 import type { Feature } from "@/lib/permissions";
+import type { Objetivo } from "@/lib/perfilEscritorio";
 
 /**
- * Registro canônico do onboarding guiado. Fonte única dos passos, agrupados por
- * pilar (Gestão / Projetos / Obras). O PROGRESSO de cada passo é derivado de
- * contagem de entidades reais (ver useOnboardingProgress), nunca gravado: se a
- * empresa tem ao menos 1 registro em `count.source`, o passo está concluído.
+ * Registro canônico do onboarding guiado (SPEC 034, refeito na SPEC 149). Fonte
+ * única dos passos, agrupados em "Sua conta" e nos três pilares (Gestão,
+ * Projetos, Obras), que pesam igual: a ordem dos pilares segue o que o dono
+ * escolheu em "Por onde começar". O PROGRESSO de cada passo é derivado de dado
+ * real (ver useOnboardingProgress), nunca gravado.
  *
- * Cada passo declara a `feature` que exige e (quando for o caso) `adminOnly`, e é
- * filtrado pelo mesmo mecanismo que gateia as rotas (usePermissions). A seção
- * Obras só aparece para empresas com a feature `obras` ligada.
+ * Cada passo declara a `feature` que exige (quando exige) e `adminOnly` quando
+ * só faz sentido para quem administra; o filtro é o mesmo que gateia as rotas.
+ * Admin e convidado veem o mesmo checklist, menos os passos de admin.
  */
 
-export type OnboardingPilar = "gestao" | "projetos" | "obras";
+export type OnboardingPilar = "conta" | "gestao" | "projetos" | "obras";
 
-/** Tabelas/views usadas para derivar "passo concluído". Todas têm `empresa_id`. */
+/** Tabelas usadas para derivar "passo concluído". Todas têm `empresa_id`. */
 export type OnboardingCountSource =
-  "pessoas" | "clientes" | "lancamentos" | "projetos" | "fluxos_disciplinas" | "obras" | "fornecedores";
+  | "pessoas"
+  | "clientes"
+  | "propostas"
+  | "lancamentos"
+  | "projetos"
+  | "fluxos_disciplinas"
+  | "obras"
+  | "fornecedores"
+  | "profiles";
+
+/** Como o passo é considerado feito. */
+export type OnboardingCheck =
+  /** Já vem feito: progresso concedido, a pessoa nunca começa do zero. */
+  | { tipo: "sempre" }
+  /** Campo preenchido no próprio perfil de quem vê. */
+  | { tipo: "perfil"; campo: "avatar_url" }
+  /**
+   * Contagem de registros da empresa. `ativos` diz que coluna marca registro
+   * removido; `minimo` é quantos precisam existir (padrão 1); `semExemplo` não
+   * conta o dado de demonstração (`exemplo = true`).
+   */
+  | {
+      tipo: "tabela";
+      source: OnboardingCountSource;
+      ativos: "deleted_at" | "desativado_em" | null;
+      minimo?: number;
+      semExemplo?: boolean;
+    };
 
 export interface OnboardingStep {
   key: string;
@@ -24,54 +53,88 @@ export interface OnboardingStep {
   descricao: string;
   /** Rota do CTA e alvo do tour por página. */
   rota: string;
-  feature: Feature;
-  /** Só aparece para admin (ex.: Equipe). */
+  /** Feature exigida; sem ela, o passo vale para todo mundo. */
+  feature?: Feature;
+  /** Só aparece para admin/owner (ex.: convidar colega). */
   adminOnly?: boolean;
   /** Não conta para o "obrigatório", mas soma no progresso. */
   opcional?: boolean;
-  count: { source: OnboardingCountSource; softDelete: boolean };
+  check: OnboardingCheck;
   /** Coach mark da página: aponta para o elemento com `[data-tour=selector]`. */
-  tour: { selector: string; titulo: string; texto: string };
+  tour?: { selector: string; titulo: string; texto: string };
 }
 
 export const PILAR_LABEL: Record<OnboardingPilar, string> = {
+  conta: "Sua conta",
   gestao: "Gestão",
   projetos: "Projetos",
   obras: "Obras",
 };
 
-export const PILAR_ORDER: OnboardingPilar[] = ["gestao", "projetos", "obras"];
+export const PILAR_ORDER: OnboardingPilar[] = ["conta", "gestao", "projetos", "obras"];
+
+/** "Sua conta" sempre primeiro; depois o pilar escolhido em "Por onde começar", e os outros dois. */
+export function ordemDosPilares(objetivo: Objetivo | null | undefined): OnboardingPilar[] {
+  if (!objetivo) return PILAR_ORDER;
+  return ["conta", objetivo, ...PILAR_ORDER.filter((p) => p !== "conta" && p !== objetivo)];
+}
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
-  // ————— Gestão —————
+  // ————— Sua conta —————
   {
-    key: "equipe",
-    pilar: "gestao",
-    titulo: "Cadastre sua equipe",
-    descricao: "As pessoas que executam os projetos do escritório.",
-    rota: "/gestao/equipe",
-    feature: "pessoas",
-    adminOnly: true,
-    count: { source: "pessoas", softDelete: true },
-    tour: {
-      selector: "onb-nova-pessoa",
-      titulo: "Comece pela equipe",
-      texto:
-        "Clique aqui para adicionar a primeira pessoa. Ela poderá receber disciplinas e responsabilidades nos projetos.",
-    },
+    key: "conta",
+    pilar: "conta",
+    titulo: "Entre no Pilar",
+    descricao: "Conta criada e escritório configurado.",
+    rota: "/inicio",
+    check: { tipo: "sempre" },
   },
+  {
+    key: "colega",
+    pilar: "conta",
+    titulo: "Convide um colega",
+    descricao: "O Pilar rende quando o time inteiro registra no mesmo lugar.",
+    rota: "/admin",
+    adminOnly: true,
+    check: { tipo: "tabela", source: "profiles", ativos: "desativado_em", minimo: 2 },
+  },
+  {
+    key: "foto",
+    pilar: "conta",
+    titulo: "Coloque sua foto",
+    descricao: "Ajuda o time a saber quem fez o quê em cada projeto e obra.",
+    rota: "/profile",
+    opcional: true,
+    check: { tipo: "perfil", campo: "avatar_url" },
+  },
+
+  // ————— Gestão —————
   {
     key: "cliente",
     pilar: "gestao",
     titulo: "Cadastre um cliente",
-    descricao: "Quem contrata os serviços. É pré-requisito para abrir um projeto.",
+    descricao: "Quem contrata o escritório. Proposta, projeto e obra partem dele.",
     rota: "/gestao/clientes",
     feature: "clientes",
-    count: { source: "clientes", softDelete: true },
+    check: { tipo: "tabela", source: "clientes", ativos: "deleted_at" },
     tour: {
       selector: "onb-novo-cliente",
       titulo: "Cadastre um cliente",
-      texto: "Sem cliente não dá para abrir projeto. Clique aqui para criar o primeiro.",
+      texto: "Sem cliente não dá para abrir proposta nem projeto. Clique aqui para criar o primeiro.",
+    },
+  },
+  {
+    key: "proposta",
+    pilar: "gestao",
+    titulo: "Crie uma proposta",
+    descricao: "Escopo, valor e condições. Aprovada, vira projeto sem redigitar.",
+    rota: "/gestao/propostas",
+    feature: "propostas",
+    check: { tipo: "tabela", source: "propostas", ativos: "deleted_at" },
+    tour: {
+      selector: "onb-nova-proposta",
+      titulo: "Monte a primeira proposta",
+      texto: "Clique aqui para montar a proposta. Quando o cliente aprovar, ela abre o projeto.",
     },
   },
   {
@@ -82,11 +145,28 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     rota: "/gestao/financeiro",
     feature: "financeiro",
     opcional: true,
-    count: { source: "lancamentos", softDelete: true },
+    check: { tipo: "tabela", source: "lancamentos", ativos: "deleted_at" },
     tour: {
       selector: "onb-lancamentos",
       titulo: "Controle o caixa",
       texto: "Na aba Lançamentos você registra receitas e despesas e vincula ao projeto.",
+    },
+  },
+  {
+    key: "equipe",
+    pilar: "gestao",
+    titulo: "Cadastre sua equipe",
+    descricao: "Quem executa os projetos, com custo e disciplina de cada um.",
+    rota: "/gestao/equipe",
+    feature: "pessoas",
+    adminOnly: true,
+    opcional: true,
+    check: { tipo: "tabela", source: "pessoas", ativos: "deleted_at" },
+    tour: {
+      selector: "onb-nova-pessoa",
+      titulo: "Cadastre a equipe",
+      texto:
+        "Clique aqui para adicionar a primeira pessoa. Ela poderá receber disciplinas e responsabilidades nos projetos.",
     },
   },
 
@@ -95,10 +175,10 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     key: "projeto",
     pilar: "projetos",
     titulo: "Abra seu primeiro projeto",
-    descricao: "Escopo, prazo e equipe por disciplina. O coração do Pilar.",
+    descricao: "Escopo, fases, disciplinas e prazo de cada entrega.",
     rota: "/projetos",
     feature: "projetos",
-    count: { source: "projetos", softDelete: true },
+    check: { tipo: "tabela", source: "projetos", ativos: "deleted_at", semExemplo: true },
     tour: {
       selector: "onb-novo-projeto",
       titulo: "Crie um projeto",
@@ -113,7 +193,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     rota: "/projetos",
     feature: "projetos",
     opcional: true,
-    count: { source: "fluxos_disciplinas", softDelete: true },
+    check: { tipo: "tabela", source: "fluxos_disciplinas", ativos: "deleted_at" },
     tour: {
       selector: "onb-fluxos",
       titulo: "Padronize seu fluxo",
@@ -121,7 +201,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     },
   },
 
-  // ————— Obras (só empresas com a feature `obras`) —————
+  // ————— Obras —————
   {
     key: "obra",
     pilar: "obras",
@@ -129,7 +209,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     descricao: "A execução em campo, com diário, cronograma e conta da obra.",
     rota: "/obras",
     feature: "obras",
-    count: { source: "obras", softDelete: true },
+    check: { tipo: "tabela", source: "obras", ativos: "deleted_at" },
     tour: {
       selector: "onb-nova-obra",
       titulo: "Registre uma obra",
@@ -144,7 +224,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     rota: "/obras/fornecedores",
     feature: "obras",
     opcional: true,
-    count: { source: "fornecedores", softDelete: true },
+    check: { tipo: "tabela", source: "fornecedores", ativos: "deleted_at" },
     tour: {
       selector: "onb-novo-fornecedor",
       titulo: "Adicione fornecedores",
@@ -152,3 +232,8 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     },
   },
 ];
+
+/** Chave da contagem de um passo de tabela (a mesma tabela pode ter filtros diferentes). */
+export function chaveDaContagem(check: Extract<OnboardingCheck, { tipo: "tabela" }>): string {
+  return check.semExemplo ? `${check.source}:sem_exemplo` : check.source;
+}
