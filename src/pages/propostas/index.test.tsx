@@ -50,6 +50,12 @@ vi.mock("@/hooks/usePropostas", async (orig) => ({
   usePropostaDisciplinas: () => ({ data: [], isFetched: true }),
 }));
 vi.mock("@/hooks/useUserRole", () => ({ useUserRole: () => ({ data: role }) }));
+vi.mock("@/hooks/useNivelConfianca", () => ({ useNivelConfianca: () => ({ isAdmin: true, limites: null }) }));
+vi.mock("@/components/trial/DesbloqueioNivel", () => ({
+  DesbloqueioNivel: ({ recurso, limite }: { recurso: string; limite: number | null }) => (
+    <div data-testid="desbloqueio">{`${recurso}:${limite}`}</div>
+  ),
+}));
 vi.mock("@/hooks/usePermissions", () => ({
   usePermissions: () => ({
     can: (f: string) => (f === "estimativa_obra" ? false : podeCriar),
@@ -390,6 +396,24 @@ describe("Propostas: converter em projeto", () => {
 
     expect(toastError).toHaveBeenCalledWith("Erro na conversão");
     expect(screen.queryByText(/Faturamento do projeto/)).not.toBeInTheDocument();
+  });
+
+  it("no limite de projetos do plano abre o diálogo de limite, não o erro genérico", async () => {
+    mocks.converter.mutate.mockImplementationOnce((_v: unknown, opts?: MutateOpts) =>
+      opts?.onError?.({ message: "capacidade:projetos", hint: "10" })
+    );
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getAllByText("Galpão Logístico")[0]);
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Aceitar e criar projeto" }));
+    await user.click(
+      within(screen.getByRole("dialog", { name: /Converter em Projeto/ })).getByRole("button", {
+        name: "Criar projeto",
+      })
+    );
+
+    expect(toastError).not.toHaveBeenCalledWith("Erro na conversão");
+    expect(screen.getByTestId("desbloqueio")).toHaveTextContent("projetos:10");
   });
 });
 

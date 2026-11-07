@@ -35,6 +35,9 @@ import {
 import { DialogDescription as DD, DialogFooter } from "@/components/ui/dialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useNivelConfianca } from "@/hooks/useNivelConfianca";
+import { DesbloqueioNivel } from "@/components/trial/DesbloqueioNivel";
+import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
 import { PageLayout } from "@/components/PageLayout";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
@@ -136,6 +139,10 @@ export default function Propostas() {
   const [vinculoTipo, setVinculoTipo] = useState<"cliente" | "lead">("cliente");
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; titulo: string } | null>(null);
   const [convertPropostaId, setConvertPropostaId] = useState<string | null>(null);
+  // Converter cria projeto: no limite do plano, abre o mesmo diálogo de limite da
+  // criação de projeto em vez de um "Erro na conversão" sem explicação.
+  const [capacidadeErro, setCapacidadeErro] = useState<CapacidadeErro | null>(null);
+  const { isAdmin: isAdminEmpresa } = useNivelConfianca();
   const [gerarDocxPropostaId, setGerarDocxPropostaId] = useState<string | null>(null);
   const [gerarContratoPropostaId, setGerarContratoPropostaId] = useState<string | null>(null);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
@@ -390,7 +397,16 @@ export default function Propostas() {
           navigate(`/projetos/${projetoId}`);
         }
       },
-      onError: () => toast.error("Erro na conversão"),
+      onError: (err) => {
+        const capacidade = parseCapacidadeError(err);
+        if (!capacidade) {
+          toast.error("Erro na conversão");
+          return;
+        }
+        analytics.track("trial_limite_atingido", { recurso: capacidade.recurso, limite: capacidade.limite });
+        setConvertPropostaId(null);
+        setCapacidadeErro(capacidade);
+      },
     });
   };
 
@@ -1099,6 +1115,16 @@ export default function Propostas() {
         confirmText="Excluir"
         onConfirm={handleDelete}
       />
+
+      {capacidadeErro && (
+        <DesbloqueioNivel
+          open
+          onOpenChange={(o) => !o && setCapacidadeErro(null)}
+          recurso={capacidadeErro.recurso}
+          limite={capacidadeErro.limite}
+          isAdmin={isAdminEmpresa}
+        />
+      )}
 
       {/* Dialog Conversão Proposta → Projeto */}
       <Dialog
