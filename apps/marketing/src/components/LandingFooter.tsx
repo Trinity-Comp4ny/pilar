@@ -5,6 +5,7 @@ import { COMPARATIVOS } from "../lib/comparativos";
 import { MODULOS } from "../lib/modules";
 import { Logo } from "./Logo";
 import { DEMO_URL } from "../lib/contato";
+import { trackCta } from "../analytics";
 
 /**
  * Rodapé no verde da marca, como na referência: o fim da página é um bloco de
@@ -39,8 +40,8 @@ export function LandingFooter() {
           <div>
             <Logo size="sm" className="text-ink mb-5" />
             <p className="text-[13.5px] text-ink/80 max-w-xs leading-relaxed">
-              Do contrato à execução, num fluxo só. Feito para escritórios de engenharia e
-              arquitetura, com agentes que preparam o trabalho e esperam o seu aval.
+              Do contrato à execução, num fluxo só. Feito para escritórios de engenharia e arquitetura, com agentes que
+              preparam o trabalho e esperam o seu aval.
             </p>
           </div>
 
@@ -98,6 +99,7 @@ export function LandingFooter() {
                   href={DEMO_URL}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackCta("agende_demo", "footer")}
                   className="text-[13.5px] text-ink/75 hover:text-ink transition-colors"
                 >
                   Agendar demonstração
