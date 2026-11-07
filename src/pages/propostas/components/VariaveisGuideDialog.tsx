@@ -35,7 +35,12 @@ export function VariaveisGuideDialog({ open, onOpenChange }: VariaveisGuideDialo
   const [copiedVar, setCopiedVar] = useState<string | null>(null);
 
   const handleCopy = async (varName: string) => {
-    await navigator.clipboard.writeText(`{{${varName}}}`);
+    try {
+      await navigator.clipboard.writeText(`{{${varName}}}`);
+    } catch {
+      toast.error("Não foi possível copiar. Selecione e copie a variável manualmente.");
+      return;
+    }
     setCopiedVar(varName);
     toast.success(`{{${varName}}} copiado`);
     setTimeout(() => setCopiedVar(null), 1500);
