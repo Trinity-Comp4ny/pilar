@@ -157,6 +157,10 @@ describe("Equipe (página)", () => {
   it("erro ao carregar avisa", async () => {
     h.resolve.mockReturnValue({ error: new Error("timeout") });
     renderPage();
-    await waitFor(() => expect(h.toastError).toHaveBeenCalledWith("Erro ao carregar equipe", expect.anything()));
+    await waitFor(() =>
+      expect(h.toastError).toHaveBeenCalledWith("Erro ao carregar equipe", {
+        description: "Tente recarregar a página.",
+      })
+    );
   });
 });

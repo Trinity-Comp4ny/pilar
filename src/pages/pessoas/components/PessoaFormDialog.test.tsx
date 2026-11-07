@@ -143,6 +143,14 @@ describe("Equipe › PessoaFormDialog", () => {
     await waitFor(() => expect(h.toastError).toHaveBeenCalledWith("Email já cadastrado na empresa"));
   });
 
+  it("erro desconhecido do banco não vaza o texto técnico", async () => {
+    h.resolve.mockReturnValue({ error: { code: "XX000", message: 'relation "pessoas" internal failure at node 3' } });
+    const { user } = renderDialog();
+    await preencherMinimo(user);
+    await user.click(screen.getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(h.toastError).toHaveBeenCalledWith("Não foi possível salvar. Tente de novo."));
+  });
+
   it("PJ exige CNPJ", async () => {
     const { user } = renderDialog({ ...PESSOA, tipo_contrato: "pj", pode_ver_sensivel: true });
     await user.click(screen.getByRole("button", { name: "Atualizar" }));
