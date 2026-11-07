@@ -29,11 +29,6 @@
       "count": 5
     }
   },
-  "src/pages/chat/index.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
   "src/pages/cliente/ClienteDashboard.tsx": {
     "no-restricted-syntax": {
       "count": 2
