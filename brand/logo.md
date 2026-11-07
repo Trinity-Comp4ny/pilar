@@ -25,19 +25,20 @@ O logotipo tem duas peças: o **símbolo** (uma coluna desenhada com cinco linha
 
 Use SVG sempre que o destino aceitar. PNG só para apresentação, redes sociais e documento.
 
-| Peça                         | Arquivo                                                | Quando usar                                                                          |
-| ---------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------ |
-| Lockup horizontal (primário) | `pilar-logo-horizontal-{ink,white,black,brand}.svg`    | Cabeçalho, rodapé, documento, assinatura de e-mail, material de venda                |
-| Lockup empilhado             | `pilar-logo-vertical-{ink,white,black,brand}.svg`      | Capa, slide de abertura, quando o espaço é mais alto que largo                       |
-| Símbolo                      | `pilar-mark-{ink,white,black,brand}.svg`               | Quando o nome já aparece perto, avatar, selo, marca d'água                           |
-| Símbolo, traço reforçado     | `pilar-mark-small-{ink,white}.svg`                     | Símbolo com menos de 24 px de altura                                                 |
-| Só o nome                    | `pilar-wordmark-{ink,white}.svg`                       | Texto corrido institucional, rodapé de contrato                                      |
-| Ícone do app (paisagem)      | `pilar-app-icon.svg`                                   | Ícone de app, PWA, perfil de rede social. Padrão                                     |
-| Ícone do app, verde          | `pilar-app-icon-verde.svg`                             | Perfil de rede social e selo, quando a paisagem pesar ao lado de outra arte          |
-| Ícone do app, disco          | `pilar-app-icon-disco.svg`                             | Avatar redondo sobre papel, continuidade com o favicon                               |
-| Lockup sobre paisagem        | `pilar-logo-{horizontal,vertical,banner}-paisagem.svg` | Capa de documento e slide (2:1), post quadrado (1:1), capa do LinkedIn (4:1)         |
-| Favicon                      | `pilar-favicon.svg`                                    | Aba do navegador                                                                     |
-| PNG                          | `png/`                                                 | Tamanhos prontos: símbolo 1024, lockups 2000/1200, ícones 1024, paisagens no formato |
+| Peça                         | Arquivo                                                | Quando usar                                                                           |
+| ---------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| Lockup horizontal (primário) | `pilar-logo-horizontal-{ink,white,black,brand}.svg`    | Cabeçalho, rodapé, documento, assinatura de e-mail, material de venda                 |
+| Lockup empilhado             | `pilar-logo-vertical-{ink,white,black,brand}.svg`      | Capa, slide de abertura, quando o espaço é mais alto que largo                        |
+| Símbolo                      | `pilar-mark-{ink,white,black,brand}.svg`               | Quando o nome já aparece perto, avatar, selo, marca d'água                            |
+| Símbolo, traço reforçado     | `pilar-mark-small-{ink,white}.svg`                     | Símbolo com menos de 24 px de altura                                                  |
+| Só o nome                    | `pilar-wordmark-{ink,white}.svg`                       | Texto corrido institucional, rodapé de contrato                                       |
+| Ícone do app (verde)         | `pilar-app-icon.svg`                                   | Ícone do app instalado (PWA), tela inicial, favicon, foto de perfil. Padrão           |
+| Ícone do app, paisagem       | `pilar-app-icon-paisagem.svg`                          | Capa de destaque e peça de campanha, onde o ícone aparece grande                      |
+| Ícone do app, disco          | `pilar-app-icon-disco.svg`                             | Avatar redondo sobre papel                                                            |
+| Lockup sobre paisagem        | `pilar-logo-{horizontal,vertical,banner}-paisagem.svg` | Capa de documento e slide (2:1), post quadrado (1:1), capa do LinkedIn (4:1)          |
+| Favicon                      | `pilar-favicon.svg`                                    | Aba do navegador: o ícone verde com cantos arredondados e traço reforçado             |
+| Imagem de compartilhamento   | `pilar-og.svg`                                         | Prévia de link (WhatsApp, LinkedIn, Slack): sai como `og-image-v2.jpg` nos dois sites |
+| PNG                          | `png/`                                                 | Tamanhos prontos: símbolo 1024, lockups 2000/1200, ícones 1024, paisagens no formato  |
 
 Sufixos de cor: `ink` (#1A1A1A, padrão sobre claro), `white` (sobre escuro), `brand`
 (nome branco e símbolo verde, só sobre Ink), `black` (#000000, só impressão a uma cor, com ábaco opaco).
@@ -119,7 +120,7 @@ em capa e abertura dê mais.
 | Lockup horizontal | 56 px de largura (nome a 14 px) | 15 mm de largura |
 | Lockup empilhado  | 40 px de largura                | 11 mm de largura |
 
-Abaixo do mínimo de tela, o símbolo deixa de ser legível. Use o favicon (disco verde),
+Abaixo do mínimo de tela, o símbolo deixa de ser legível. Use o favicon (tile verde),
 que mantém a forma em 16 px.
 
 ## 7. Cor e fundo
@@ -152,16 +153,16 @@ O fundo preto deixou de ser a cara da marca. A versão de apresentação do Pila
 mesma arte da hero da landing (`HeroBackdrop`): céu branco que esfria para o azul-gelo e três
 morros nos verdes da marca, com a trama de pontos do dithering nas peças grandes.
 
-![Ícone do app sobre a paisagem](./assets/logo/png/pilar-app-icon-1024.png)
+![Imagem de compartilhamento](./assets/logo/png/pilar-og-1200.png)
 
-| Peça                                 | Formato | Uso                                                       |
-| ------------------------------------ | ------- | --------------------------------------------------------- |
-| `pilar-app-icon.svg`                 | 1:1     | Ícone do app e do PWA, foto de perfil. É o ícone padrão   |
-| `pilar-app-icon-verde.svg`           | 1:1     | Perfil e selo onde a paisagem disputaria com outra imagem |
-| `pilar-app-icon-disco.svg`           | 1:1     | Avatar recortado em círculo, sobre papel                  |
-| `pilar-logo-horizontal-paisagem.svg` | 2:1     | Capa de proposta, slide de abertura, cabeçalho de página  |
-| `pilar-logo-vertical-paisagem.svg`   | 1:1     | Post de abertura, capa quadrada                           |
-| `pilar-logo-banner-paisagem.svg`     | 4:1     | Capa do LinkedIn, topo de e-mail marketing                |
+| Peça                                 | Formato | Uso                                                      |
+| ------------------------------------ | ------- | -------------------------------------------------------- |
+| `pilar-og.svg`                       | 1,9:1   | Prévia de link do app e da landing (og:image)            |
+| `pilar-app-icon-paisagem.svg`        | 1:1     | Ícone grande em peça de campanha                         |
+| `pilar-app-icon-disco.svg`           | 1:1     | Avatar recortado em círculo, sobre papel                 |
+| `pilar-logo-horizontal-paisagem.svg` | 2:1     | Capa de proposta, slide de abertura, cabeçalho de página |
+| `pilar-logo-vertical-paisagem.svg`   | 1:1     | Post de abertura, capa quadrada                          |
+| `pilar-logo-banner-paisagem.svg`     | 4:1     | Capa do LinkedIn, topo de e-mail marketing               |
 
 Regras da paisagem:
 
@@ -172,6 +173,21 @@ Regras da paisagem:
 - A trama de pontos só existe nas peças grandes; no ícone ela vira moiré em 32 px.
 - A versão escura (`white` e `brand` sobre Ink) continua valendo para fundo escuro e modo escuro,
   mas não é mais a apresentação padrão.
+
+### 7.2 Onde o ícone verde entra
+
+O ícone verde (`pilar-app-icon.svg`) é o único ícone do produto. O `build.py` escreve cada uso:
+
+| Onde                                   | Arquivo servido                                    |
+| -------------------------------------- | -------------------------------------------------- |
+| Aba do navegador (app e landing)       | `favicon.svg` e `favicon.ico` (16, 32 e 48 px)     |
+| App instalado (PWA, Android, desktop)  | `icon-192.png`, `icon-512.png`, `maskable-512.png` |
+| Tela inicial do iPhone (app e landing) | `apple-touch-icon.png` (180 px)                    |
+| Foto de perfil das redes               | `brand/assets/social/avatar.png` (1080 px)         |
+
+O tile vai cheio até a borda: o sistema do celular arredonda os cantos. Só o favicon já vem
+arredondado, porque a aba do navegador não recorta. Ao trocar a og:image, versione o nome
+(`og-image-v3.jpg`): as redes guardam a prévia pela URL.
 
 ## 8. Usos proibidos
 

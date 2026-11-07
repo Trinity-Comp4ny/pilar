@@ -1,6 +1,6 @@
 """Gera os arquivos do logotipo Pilar (SVG, PNG) e os diagramas do brand book.
 
-    python3 -m venv /tmp/fvenv && /tmp/fvenv/bin/pip install fonttools brotli
+    python3 -m venv /tmp/fvenv && /tmp/fvenv/bin/pip install fonttools brotli pillow
     /tmp/fvenv/bin/python scripts/brand/build.py
 
 Saída em brand/assets/logo/. A geometria do símbolo vive aqui, em um lugar só:
@@ -225,8 +225,7 @@ def icon_paisagem():
 
 
 def icon_verde():
-    g = _grad("v", [(0, _hsl(102, 73, 80)), (100, _hsl(88, 55, 56))], vertical=False)
-    body = f'<defs>{g}</defs><rect width="512" height="512" fill="url(#v)"/>' + _icon_mark(8.0)
+    body = f'<defs>{_verde_defs()}</defs><rect width="512" height="512" fill="url(#v)"/>' + _icon_mark(8.0)
     return svg(512, 512, body, "Pilar")
 
 
@@ -262,6 +261,44 @@ def lockup_paisagem(w, h, kind):
     y = (top - lh * z) / 2 + h * (0.04 if kind == "v" else 0.02)
     g = f'<g transform="translate({x:.3f} {y:.3f}) scale({z:.5f})">{body}</g>'
     return svg(w, h, paisagem(w, h, top, band, trama=True, pid="l") + g, "Pilar")
+
+def _verde_defs(gid="v"):
+    return _grad(gid, [(0, _hsl(102, 73, 80)), (100, _hsl(88, 55, 56))], vertical=False)
+
+
+def favicon():
+    f = 32
+    mw, mh = mark_size(STROKE_SMALL)
+    s = 22 / mw
+    body = (
+        f'<defs>{_verde_defs()}</defs><rect width="{f}" height="{f}" rx="7" fill="url(#v)"/>'
+        + mark_group(INK, s, (f - mw * s) / 2, (f - mh * s) / 2, w=STROKE_SMALL, solid=True)
+    )
+    return svg(f, f, body, "Pilar")
+
+
+TAGLINE = "Do contrato à execução, num fluxo só."
+OG_SUB = "Gestão para escritórios de engenharia e arquitetura"
+MUTED = "#5F646D"  # --text-secondary
+
+
+def _texto(font, txt, size, cx, baseline, color):
+    d, w = glyphs.word_path(font, txt, size)
+    return f'<path d="{d}" transform="translate({cx - w / 2:.2f} {baseline:.2f})" fill="{color}"/>'
+
+
+def og_image():
+    w, h = 1200, 630
+    band = 220
+    body = paisagem(w, h, h - band, band, trama=True, pid="o")
+    lw, lh, lock, _ = lockup_h(INK)
+    z = 230 / lw
+    body += f'<g transform="translate({(w - lw * z) / 2:.2f} 92) scale({z:.5f})">{lock}</g>'
+    regular = glyphs.load(weight=400)
+    body += _texto(FONT, TAGLINE, 58, w / 2, 292, INK)
+    body += _texto(regular, OG_SUB, 26, w / 2, 344, MUTED)
+    return svg(w, h, body, "Pilar: do contrato à execução, num fluxo só")
+
 
 def write(name, text):
     (OUT / name).write_text(text)
@@ -304,28 +341,22 @@ def build_assets():
         w, h, body = wordmark(color)
         write(f"pilar-wordmark-{tag}.svg", svg(w, h, body, "Pilar"))
 
-    # Ícone do app: a paisagem da hero da landing, coluna em ink de pé sobre os morros.
-    # Fundo claro por decisão do CEO (DECISOES 2026-11-07); o tile escuro saiu.
-    write("pilar-app-icon.svg", icon_paisagem())
-    write("pilar-app-icon-verde.svg", icon_verde())
+    # Ícone do app: tile verde, coluna em ink (DECISOES 2026-11-07). É o que vai para PWA,
+    # tela inicial, favicon e avatar. A paisagem e o disco ficam como variações.
+    write("pilar-app-icon.svg", icon_verde())
+    write("pilar-app-icon-paisagem.svg", icon_paisagem())
     write("pilar-app-icon-disco.svg", icon_disco())
 
     # Lockups sobre a paisagem: capa, slide, banner e post. Sempre o nome em ink.
     for tag, (w, h, kind) in PAISAGEM_FORMATOS.items():
         write(f"pilar-logo-{tag}-paisagem.svg", lockup_paisagem(w, h, kind))
 
-    # Favicon: disco verde cheio, símbolo ink
-    f = 32
-    s = 0.85
-    mw, mh = mark_size(1.6 * 1.0)
-    tx = f / 2 - mw * s / 2
-    ty = f / 2 - mh * s / 2 + 0.2
-    fav = (
-        '<defs><radialGradient id="d" cx="50%" cy="40%" r="65%"><stop offset="0%" stop-color="#D8F7CA"/>'
-        '<stop offset="100%" stop-color="#A4EC86"/></radialGradient></defs>'
-        '<circle cx="16" cy="16" r="16" fill="url(#d)"/>' + mark_group(INK, s, tx, ty, w=1.6)
-    )
-    write("pilar-favicon.svg", svg(f, f, fav, "Pilar"))
+    # Favicon: o ícone verde com cantos arredondados (a aba não recorta como o celular).
+    # Traço reforçado: em 16-32 px o traço padrão some.
+    write("pilar-favicon.svg", favicon())
+
+    # Imagem de compartilhamento (og:image): paisagem, lockup e a tagline.
+    write("pilar-og.svg", og_image())
 
     # PNG para quem não abre SVG (apresentação, redes sociais, documentos)
     exports = [
@@ -337,7 +368,7 @@ def build_assets():
         ("pilar-logo-vertical-ink", 1200),
         ("pilar-logo-vertical-white", 1200),
         ("pilar-app-icon", 1024),
-        ("pilar-app-icon-verde", 1024),
+        ("pilar-app-icon-paisagem", 1024),
         ("pilar-app-icon-disco", 1024),
         ("pilar-logo-horizontal-paisagem", 1600),
         ("pilar-logo-vertical-paisagem", 1080),
@@ -355,22 +386,48 @@ def build_assets():
 # ---- Produção ---------------------------------------------------------------
 # O que o app e a landing servem. logotipo.oficial.test.tsx reprova se divergir.
 EMAIL_LOGO = "logo-v3.png"  # versione ao trocar o desenho: cliente de e-mail guarda cache
+# Versione também a og:image: LinkedIn, WhatsApp e Slack guardam a prévia pela URL.
+OG_IMAGE = "og-image-v2.jpg"
+SITES = ["public", "apps/marketing/public"]  # app e landing
 
 
 def build_producao():
     import shutil
 
+    from PIL import Image
+
     copias = {
         "pilar-favicon.svg": ["public/favicon.svg", "apps/marketing/public/favicon.svg"],
-        "pilar-app-icon.svg": ["public/app-icon.svg"],
+        "pilar-app-icon.svg": ["public/app-icon.svg", "apps/marketing/public/app-icon.svg"],
         "pilar-mark-ink.svg": ["public/pilar-logo.svg", "apps/marketing/public/pilar-logo.svg"],
     }
     for ofic, destinos in copias.items():
         for d in destinos:
             shutil.copyfile(OUT / ofic, ROOT / d)
     icone = str(OUT / "pilar-app-icon.svg")
+    # PWA do app. O tile é cheio até a borda: o sistema recorta, e a coluna (44% da largura)
+    # cabe na zona segura do maskable (círculo de 80%).
     for nome, lado in [("apple-touch-icon.png", 180), ("icon-192.png", 192), ("icon-512.png", 512), ("maskable-512.png", 512)]:
         subprocess.run(["rsvg-convert", "-w", str(lado), icone, "-o", str(ROOT / "public" / nome)], check=True)
+    # Landing: "Adicionar à tela de início" no iPhone usa o mesmo ícone.
+    shutil.copyfile(ROOT / "public/apple-touch-icon.png", ROOT / "apps/marketing/public/apple-touch-icon.png")
+    # favicon.ico (16/32/48): buscador, leitor de RSS e navegador antigo pedem /favicon.ico direto.
+    tmp = OUT / "_fav.png"
+    subprocess.run(["rsvg-convert", "-w", "256", str(OUT / "pilar-favicon.svg"), "-o", str(tmp)], check=True)
+    ico = Image.open(tmp)
+    for site in SITES:
+        ico.save(ROOT / site / "favicon.ico", sizes=[(16, 16), (32, 32), (48, 48)])
+    tmp.unlink()
+    # og:image em JPG (WhatsApp e LinkedIn não leem SVG), igual nos dois sites.
+    tmp = OUT / "_og.png"
+    subprocess.run(["rsvg-convert", "-w", "1200", str(OUT / "pilar-og.svg"), "-o", str(tmp)], check=True)
+    og = Image.open(tmp).convert("RGB")
+    for site in SITES:
+        og.save(ROOT / site / OG_IMAGE, quality=90, optimize=True, progressive=True)
+    og.save(PNG / "pilar-og-1200.png")
+    tmp.unlink()
+    # Foto de perfil das redes (brand/social-instagram.md): o ícone do app em 1080.
+    subprocess.run(["rsvg-convert", "-w", "1080", icone, "-o", str(ROOT / "brand/assets/social/avatar.png")], check=True)
     # E-mail: o símbolo em ink, 96 px (3x), centrado num quadrado transparente.
     mw, mh = mark_size()
     s = 88 / mw

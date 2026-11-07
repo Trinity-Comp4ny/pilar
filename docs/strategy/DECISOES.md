@@ -36,6 +36,8 @@ e passa a ser clara, sobre a paisagem de morros verdes da hero da landing, com o
 Contexto: o ícone do app era um disco verde num tile preto, e o preto não conversava com a landing, que é
 clara. Entram variações claras (ícone paisagem, verde e disco sobre papel; lockups horizontal, empilhado e
 banner sobre a paisagem), todas geradas por `scripts/brand/build.py`. Regras em `brand/logo.md` (seção 7.1).
+O **ícone verde** (coluna em Ink sobre o tile verde) é o ícone do produto: app instalado, tela inicial,
+favicon e foto de perfil. A paisagem fica para a imagem de compartilhamento (og:image) e peças grandes.
 
 **Supera:** a coluna de quatro caneluras e o ícone verde sobre Ink de `brand/logo.md` (BEZ-385). As versões
 `white` e `brand` sobre Ink seguem válidas para fundo escuro, só não são mais a cara da marca.
