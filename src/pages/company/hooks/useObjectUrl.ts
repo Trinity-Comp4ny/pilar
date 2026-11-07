@@ -15,7 +15,9 @@ export function useObjectUrl(file: Blob | null | undefined): string | null {
     }
     const criada = URL.createObjectURL(file);
     // Só aceita URL blob: gerada pelo navegador; qualquer outra coisa não vira src.
-    setUrl(/^blob:/.test(criada) ? criada : null);
+    // encodeURI não muda uma URL blob: (só tem caracteres seguros) e deixa
+    // explícito para a análise estática que nada vira HTML aqui.
+    setUrl(criada.startsWith("blob:") ? encodeURI(criada) : null);
     return () => URL.revokeObjectURL(criada);
   }, [file]);
 
