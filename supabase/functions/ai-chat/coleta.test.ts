@@ -7,6 +7,7 @@ import {
   coletarFinanceiro,
   coletarObras,
   coletarProjetos,
+  hojeBrasilia,
   inicioDoMes,
 } from "./coleta.ts";
 
@@ -50,9 +51,8 @@ const HOJE = new Date().toISOString().slice(0, 10);
 
 Deno.test("inicioDoMes: primeiro dia do mês corrente em yyyy-mm-dd", () => {
   const v = inicioDoMes();
-  assert(/^\d{4}-\d{2}-\d{2}$/.test(v));
-  const d = new Date();
-  assertEquals(v, new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10));
+  assert(/^\d{4}-\d{2}-01$/.test(v));
+  assertEquals(v.slice(0, 7), hojeBrasilia().slice(0, 7));
 });
 
 Deno.test("coletarFinanceiro: soma recebido, pago, pendente, vencido e folha; nulo conta zero", async () => {
@@ -290,4 +290,15 @@ Deno.test("coletarDados: cada agente lê o seu domínio; geral junta os cinco", 
   assertEquals([...(await tabelasDe("equipe")).tabelas], ["pessoas"]);
   const geral = await tabelasDe("geral");
   assertEquals(Object.keys(geral.r).sort(), ["comercial", "equipe", "financeiro", "obras", "projetos"]);
+});
+
+Deno.test("hojeBrasilia: depois das 21h de Brasília ainda é o mesmo dia", () => {
+  // 23h30 de 07/11 em Brasília = 02h30 UTC de 08/11.
+  assertEquals(hojeBrasilia(new Date("2026-11-08T02:30:00Z")), "2026-11-07");
+  assertEquals(hojeBrasilia(new Date("2026-11-08T03:30:00Z")), "2026-11-08");
+});
+
+Deno.test("inicioDoMes: vira o mês pelo horário de Brasília", () => {
+  assertEquals(inicioDoMes(new Date("2026-12-01T01:00:00Z")), "2026-11-01");
+  assertEquals(inicioDoMes(new Date("2026-12-01T04:00:00Z")), "2026-12-01");
 });
