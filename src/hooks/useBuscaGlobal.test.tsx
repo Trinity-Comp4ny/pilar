@@ -8,7 +8,7 @@ vi.mock("@/integrations/supabase/client", async () => ({
   supabase: (await import("@/hooks/testing/supabaseFake")).supabaseFake.client,
 }));
 
-import { useBuscaGlobal } from "./useBuscaGlobal";
+import { useBuscaGlobal, escaparLike } from "./useBuscaGlobal";
 
 let client: QueryClient;
 const wrapper = ({ children }: { children: ReactNode }) => (
@@ -62,6 +62,20 @@ describe("useBuscaGlobal", () => {
     await waitFor(() => expect(result.current.grupos).toHaveLength(1));
     expect(result.current.grupos[0]).toMatchObject({ tipo: "pessoa", label: "Pessoas" });
     expect(result.current.grupos[0].itens[0].rota).toBe("/gestao/equipe");
+  });
+
+  it("escapa curingas do LIKE e a barra antes de montar o padrão", async () => {
+    const { result } = renderHook(() => useBuscaGlobal("50%_a\\b"), { wrapper });
+    await waitFor(() => expect(result.current.isFetching).toBe(false));
+    expect(supabaseFake.callsTo("clientes")[0].chain).toContainEqual(["ilike", ["nome", "%50\\%\\_a\\\\b%"]]);
+    expect(supabaseFake.callsTo("propostas")[0].chain).toContainEqual(["ilike", ["titulo", "%50\\%\\_a\\\\b%"]]);
+  });
+
+  it("escaparLike não mexe em texto comum", () => {
+    expect(escaparLike("Torre Alfa")).toBe("Torre Alfa");
+    expect(escaparLike("%")).toBe("\\%");
+    expect(escaparLike("_")).toBe("\\_");
+    expect(escaparLike("\\")).toBe("\\\\");
   });
 
   it("nenhum resultado: sem grupos", async () => {
