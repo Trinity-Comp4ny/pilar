@@ -136,12 +136,16 @@ export function useAprovarEscopo() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (params: { escopoId: string; projetoId: string }): Promise<void> => {
+      // Aprovação sem aprovador não serve de trilha: sem usuário, não grava.
       const {
         data: { user },
+        error: authError,
       } = await supabase.auth.getUser();
+      if (authError) throw authError;
+      if (!user) throw new Error("Sessão expirada: faça login novamente para aprovar.");
       const { error } = await supabase
         .from("escopos")
-        .update({ status: "aprovado", aprovado_por: user?.id ?? null, aprovado_em: new Date().toISOString() })
+        .update({ status: "aprovado", aprovado_por: user.id, aprovado_em: new Date().toISOString() })
         .eq("id", params.escopoId);
       if (error) throw error;
     },
