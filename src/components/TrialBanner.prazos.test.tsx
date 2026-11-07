@@ -97,7 +97,7 @@ describe("TrialBanner: prazos do teste", () => {
   });
 
   it("sem empresa no perfil não consulta assinatura", async () => {
-    const { container } = renderBanner({ status: "trialing", trial_ends_at: emHoras(3) }, { empresa_id: null });
+    const { container } = renderBanner({ status: "trialing", trial_ends_at: emHoras(3) }, {});
     expect(container).toBeEmptyDOMElement();
     expect(mockFrom).not.toHaveBeenCalled();
   });
