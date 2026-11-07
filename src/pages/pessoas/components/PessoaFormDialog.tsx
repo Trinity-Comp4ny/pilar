@@ -83,7 +83,10 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
       form.reset({
         primeiro_nome: editPessoa.primeiro_nome || editPessoa.nome?.split(" ")[0] || "",
         sobrenome: editPessoa.sobrenome ?? (editPessoa.nome ? editPessoa.nome.split(" ").slice(1).join(" ") : ""),
-        cpf: editPessoa.cpf || "",
+        // Sem acesso à folha o CPF chega mascarado ("***.***.***-12") e nunca é
+        // gravado; mantê-lo no form reprovava a validação de CPF num campo
+        // desabilitado e travava o salvamento. Exibição usa editPessoa.cpf.
+        cpf: editPessoa.pode_ver_sensivel ? editPessoa.cpf || "" : "",
         data_nascimento: editPessoa.data_nascimento || "",
         tipo_contrato: (editPessoa.tipo_contrato as ContractType) || CONTRACT_TYPES.CLT,
         status: (editPessoa.status as PessoaStatus) || PESSOA_STATUS.ATIVO,
@@ -366,7 +369,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                 </Label>
                 <Input
                   id="cpf"
-                  value={form.watch("cpf")}
+                  value={canEditSensitive ? form.watch("cpf") : (editPessoa?.cpf ?? "")}
                   onChange={(e) => form.setValue("cpf", formatCPF(e.target.value), { shouldValidate: true })}
                   maxLength={14}
                   placeholder="000.000.000-00"
