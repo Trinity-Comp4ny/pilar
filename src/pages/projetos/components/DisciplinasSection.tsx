@@ -504,7 +504,8 @@ export function DisciplinasSection({
               </Select>
               {disciplinas.length === 0 && (
                 <p className="text-xs text-muted-foreground">
-                  Nenhuma disciplina cadastrada. Crie a primeira em Disciplinas, na tela de Projetos. Ex.: Arquitetônico.
+                  Nenhuma disciplina cadastrada. Crie a primeira em Disciplinas, na tela de Projetos. Ex.:
+                  Arquitetônico.
                 </p>
               )}
             </div>
