@@ -25,7 +25,7 @@ import { resolverDadosCliente } from "../_shared/asaas-customer.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
 import { parseOr400 } from "../_shared/schemas.ts";
-import { purchaseSchema, statusInicialDaCompra, TIER_CATALOG, type PurchasePayload, type TierId } from "./compra.ts";
+import { cobrancaDoTier, purchaseSchema, statusInicialDaCompra, type PurchasePayload, type TierId } from "./compra.ts";
 
 const log = createLogger("pilar-token-pack-create");
 
@@ -170,9 +170,8 @@ serve(
       }
     }
 
-    const tier = TIER_CATALOG[body.tier_id as TierId];
-    const valorCentavos = tier.valorCentavos;
-    const valor = valorCentavos / 100;
+    const tier = cobrancaDoTier(body.tier_id as TierId);
+    const { valorCentavos, valor } = tier;
 
     // --- Cria a compra pendente ANTES do Asaas (mesmo padrão do checkout de
     // signup: se a chamada ao Asaas falhar no meio, já existe uma linha que o
@@ -207,8 +206,7 @@ serve(
         billingType: body.billing_type,
         value: valor,
         dueDate: todayISO(),
-        // Cliente vê créditos (1 crédito = 5 mil tokens, DECISOES.md 2026-11-06).
-        description: `Pilar — ${(tier.tokens / 5000).toLocaleString("pt-BR")} créditos de IA`,
+        description: tier.descricao,
         externalReference: purchase.id,
         ...(body.billing_type === "CREDIT_CARD" && body.credit_card && body.credit_card_holder_info
           ? { creditCard: body.credit_card, creditCardHolderInfo: body.credit_card_holder_info, remoteIp }
