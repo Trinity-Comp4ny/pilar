@@ -16,7 +16,7 @@ const pessoas = [
   { id: "p4", nome: "Duda" },
 ];
 
-let onSubmit: ReturnType<typeof vi.fn>;
+let onSubmit: ReturnType<typeof vi.fn<(texto: string, mencionados: string[]) => void>>;
 function montar(placeholder?: string) {
   onSubmit = vi.fn();
   render(<AtividadeComposer pessoas={pessoas} onSubmit={onSubmit} placeholder={placeholder} />);
