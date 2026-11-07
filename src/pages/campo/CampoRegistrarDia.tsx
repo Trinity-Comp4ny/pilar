@@ -280,16 +280,23 @@ export default function CampoRegistrarDia() {
       p_pendencias: null,
     };
 
-    // Só medições com item e quantidade válida entram; linha em branco é
-    // deixada de lado em silêncio (o usuário só clicou "+" e não preencheu).
-    const medicoesValidas: FilaMedicao[] = medicoes
-      .filter((m) => m.item.trim() !== "" && m.quantidade.trim() !== "" && m.unidade.trim() !== "")
-      .map((m) => ({
-        item: m.item.trim(),
-        quantidade: Number(m.quantidade),
-        unidade: m.unidade.trim(),
-        enviada: false,
-      }));
+    // Só medições completas entram; linha em branco é deixada de lado em silêncio
+    // (o usuário só clicou "+" e não preencheu).
+    const medicoesCompletas = medicoes.filter(
+      (m) => m.item.trim() !== "" && m.quantidade.trim() !== "" && m.unidade.trim() !== ""
+    );
+    // Quantidade que não é número positivo (ex.: "muitos") virava NaN e travava o item na fila.
+    const medicaoInvalida = medicoesCompletas.find((m) => !(Number(m.quantidade) > 0));
+    if (medicaoInvalida) {
+      toast.error("Quantidade inválida na medição", { description: medicaoInvalida.item.trim() });
+      return;
+    }
+    const medicoesValidas: FilaMedicao[] = medicoesCompletas.map((m) => ({
+      item: m.item.trim(),
+      quantidade: Number(m.quantidade),
+      unidade: m.unidade.trim(),
+      enviada: false,
+    }));
 
     const tarefasSelecionadas: FilaTarefaVinculo[] = Object.entries(selTarefas).map(([tarefaId, s]) => ({
       tarefaId,
