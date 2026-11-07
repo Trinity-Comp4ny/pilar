@@ -16,7 +16,7 @@ const ontem = fmtKey(addDays(new Date(), -1));
 const em3dias = fmtKey(addDays(new Date(), 3));
 const em30dias = fmtKey(addDays(new Date(), 30));
 
-function projeto(over: Partial<Projeto> & { disciplinas?: unknown[] }): Projeto {
+function projeto(over: Omit<Partial<Projeto>, "disciplinas"> & { disciplinas?: unknown[] }): Projeto {
   return {
     id: "p1",
     nome: "Residencial Seed",
