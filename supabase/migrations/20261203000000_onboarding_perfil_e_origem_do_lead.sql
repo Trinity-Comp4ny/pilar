@@ -43,32 +43,15 @@ ALTER TABLE public.empresas
 COMMENT ON COLUMN public.empresas.como_conheceu IS
   'Resposta do dono no onboarding: como conheceu o Pilar (SPEC 149).';
 COMMENT ON COLUMN public.empresas.origem IS
-  'Canal de aquisição registrado pelo ultra-admin na criação. O admin da empresa não altera (SPEC 149).';
+  'Canal de aquisição registrado pelo ultra-admin na criação. Sem GRANT de UPDATE para authenticated: só service_role grava (SPEC 149).';
 COMMENT ON COLUMN public.empresas.objetivo_inicial IS
   'Pilar por onde o escritório quer começar (gestao, projetos, obras): ordena o checklist (SPEC 149).';
 
--- origem é dado comercial da plataforma: o admin da empresa edita a própria
--- linha (policy empresas_admin_update), mas não esta coluna. service_role
--- (edge do ultra-admin) passa porque auth.uid() é nulo.
-CREATE OR REPLACE FUNCTION public.empresas_origem_so_ultra_admin()
-RETURNS trigger
-LANGUAGE plpgsql
-SET search_path = public
-AS $$
-BEGIN
-  IF NEW.origem IS DISTINCT FROM OLD.origem
-     AND auth.uid() IS NOT NULL
-     AND NOT public.is_ultra_admin() THEN
-    RAISE EXCEPTION 'Só o ultra-admin altera a origem da empresa';
-  END IF;
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS tg_empresas_origem_so_ultra_admin ON public.empresas;
-CREATE TRIGGER tg_empresas_origem_so_ultra_admin
-  BEFORE UPDATE OF origem ON public.empresas
-  FOR EACH ROW EXECUTE FUNCTION public.empresas_origem_so_ultra_admin();
+-- profiles e empresas usam UPDATE por coluna para authenticated
+-- (20260870000000 e 20261101000000): coluna nova só é gravável pelo app se
+-- entrar na lista. origem fica de fora de propósito: é dado comercial da
+-- plataforma, gravado só pela edge do ultra-admin (service_role).
+GRANT UPDATE (site, porte, disciplinas, como_conheceu, objetivo_inicial) ON public.empresas TO authenticated;
 
 -- =============================================
 -- 2. profiles
@@ -89,6 +72,10 @@ ALTER TABLE public.profiles
 
 COMMENT ON COLUMN public.profiles.funcao IS
   'Função da pessoa no escritório, perguntada no onboarding (SPEC 149).';
+
+-- Cada pessoa edita a própria função e o LinkedIn (a policy de UPDATE de
+-- profiles já restringe à própria linha).
+GRANT UPDATE (funcao, linkedin_url) ON public.profiles TO authenticated;
 
 -- =============================================
 -- 3. demo_interesses
