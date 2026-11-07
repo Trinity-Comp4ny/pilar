@@ -71,6 +71,13 @@ describe("useLancamentosResumo", () => {
     const { result } = renderHook(() => useLancamentosResumo(defaultFilters), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.resumo).toMatchObject({ totalCount: 0, saldo: 0, atrasadosCount: 0 });
+    expect(result.current.isError).toBe(false);
+  });
+
+  it("erro do banco expõe isError (zeros não passam por dado real)", async () => {
+    sb.rpcResultado("get_lancamentos_resumo", { data: null, error: { message: "timeout" } });
+    const { result } = renderHook(() => useLancamentosResumo(defaultFilters), { wrapper });
+    await waitFor(() => expect(result.current.isError).toBe(true));
   });
 });
 
