@@ -4,14 +4,24 @@ import { Agente, N } from "./schemas.ts";
 // ---------------------------------------------------------------------------
 // Agentes de domínio (read-only) — coletam dados via RLS
 // ---------------------------------------------------------------------------
-export function inicioDoMes(): string {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+// A função roda em UTC; o escritório vive no horário de Brasília. Depois das 21h
+// o dia UTC já virou e o que vence hoje apareceria como vencido.
+const FUSO = "America/Sao_Paulo";
+
+/** Data de hoje (YYYY-MM-DD) no horário de Brasília. */
+export function hojeBrasilia(agora: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: FUSO, year: "numeric", month: "2-digit", day: "2-digit" }).format(
+    agora
+  );
+}
+
+export function inicioDoMes(agora: Date = new Date()): string {
+  return `${hojeBrasilia(agora).slice(0, 7)}-01`;
 }
 
 export async function coletarFinanceiro(db: SupabaseClient, empresaId: string): Promise<Record<string, unknown>> {
   const inicio = inicioDoMes();
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = hojeBrasilia();
   const [receitasMes, aReceber, despesasMes, aPagar, receitasVencidas, despesasVencidas, folhaMes] = await Promise.all([
     db
       .from("receitas")
@@ -51,8 +61,8 @@ export async function coletarFinanceiro(db: SupabaseClient, empresaId: string): 
       .from("folha_pagamento")
       .select("total_receber")
       .eq("empresa_id", empresaId)
-      .eq("mes", new Date().getMonth() + 1)
-      .eq("ano", new Date().getFullYear()),
+      .eq("mes", Number(hojeBrasilia().slice(5, 7)))
+      .eq("ano", Number(hojeBrasilia().slice(0, 4))),
   ]);
   const soma = (rows: { valor: number }[] | null) => (rows ?? []).reduce((s, r) => s + Number(r.valor || 0), 0);
   const custoFolha = ((folhaMes.data as { total_receber: number }[] | null) ?? []).reduce(
@@ -96,7 +106,7 @@ export type ProjetoRow = {
  * "0 projetos" sem aviso. Quem não pode ver dinheiro recebe o projeto sem o valor.
  */
 export async function coletarProjetos(db: SupabaseClient, empresaId: string): Promise<Record<string, unknown>> {
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = hojeBrasilia();
   const { data, error } = await db
     .from("projetos_safe")
     .select(
@@ -224,7 +234,7 @@ export type ObraRdoRow = {
 
 /** Obras ativas da empresa + o RDO mais recente de cada uma (cap 30 pra caber no contexto). */
 export async function coletarObras(db: SupabaseClient, empresaId: string): Promise<Record<string, unknown>> {
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = hojeBrasilia();
   const { data } = await db
     .from("obras")
     .select("id, nome, status, data_fim_prevista, data_fim_real, projetos(nome)")
