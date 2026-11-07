@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { extrairOrigem, registrarOrigem } from "./origem";
+import { classificarCanal, extrairOrigem, registrarOrigem } from "./origem";
 
 describe("extrairOrigem", () => {
   it("pega UTMs e o host de quem mandou o visitante", () => {
@@ -53,5 +53,35 @@ describe("registrarOrigem", () => {
       },
     });
     expect(() => registrarOrigem()).not.toThrow();
+  });
+});
+
+describe("classificarCanal (SPEC 149)", () => {
+  it("separa as IAs pelo utm_source ou pelo site que mandou", () => {
+    expect(classificarCanal({ utm_source: "chatgpt.com" })).toBe("chatgpt");
+    expect(classificarCanal({ ref: "chat.openai.com" })).toBe("chatgpt");
+    expect(classificarCanal({ ref: "www.perplexity.ai" })).toBe("perplexity");
+    expect(classificarCanal({ ref: "gemini.google.com" })).toBe("gemini");
+    expect(classificarCanal({ ref: "claude.ai" })).toBe("claude");
+  });
+
+  it("anúncio vem antes do resto", () => {
+    expect(classificarCanal({ gclid: "abc", utm_source: "chatgpt.com" })).toBe("google_ads");
+    expect(classificarCanal({ fbclid: "abc" })).toBe("meta_ads");
+  });
+
+  it("busca orgânica e redes pelo referrer", () => {
+    expect(classificarCanal({ ref: "www.google.com.br" })).toBe("google");
+    expect(classificarCanal({ ref: "lnkd.in" })).toBe("linkedin");
+    expect(classificarCanal({ ref: "l.instagram.com" })).toBe("instagram");
+    expect(classificarCanal({ ref: "blog.qualquer.com.br" })).toBe("outro_site");
+  });
+
+  it("utm_source desconhecido vira o próprio nome, saneado", () => {
+    expect(classificarCanal({ utm_source: "Newsletter CREA" })).toBe("newsletter_crea");
+  });
+
+  it("sem nada é acesso direto", () => {
+    expect(classificarCanal({})).toBe("direto");
   });
 });
