@@ -53,7 +53,13 @@ function textoVisivel(): Trecho[] {
   const doCodigo = arquivosFonte(SRC).flatMap((caminho) =>
     textosDoArquivo(caminho).map((texto) => ({ origem: caminho.replace(`${RAIZ_APP}/`, ""), texto }))
   );
-  const html = readFileSync(join(RAIZ_APP, "index.html"), "utf8").replace(/<!--[\s\S]*?-->/g, "");
+  // Comentário do HTML não é texto visível. Remove em laço até estabilizar: uma passada
+  // só deixaria sobrar "<!--" de comentários aninhados ou quebrados.
+  let html = readFileSync(join(RAIZ_APP, "index.html"), "utf8");
+  for (let antes = ""; antes !== html;) {
+    antes = html;
+    html = html.replace(/<!--[\s\S]*?-->/g, "");
+  }
   const llms = readFileSync(join(RAIZ_APP, "public/llms.txt"), "utf8");
   return [...doCodigo, { origem: "index.html", texto: html }, { origem: "public/llms.txt", texto: llms }];
 }
