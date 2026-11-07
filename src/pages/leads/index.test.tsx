@@ -80,6 +80,16 @@ vi.mock("@/hooks/usePermissions", () => ({
     isAdmin: false,
   }),
 }));
+let isAdmin = true;
+let planoAtivo = false;
+const openSettings = vi.fn();
+const track = vi.fn();
+vi.mock("@/lib/analytics", () => ({ analytics: { track: (...a: unknown[]) => track(...a) } }));
+vi.mock("@/hooks/useNivelConfianca", () => ({ useNivelConfianca: () => ({ isAdmin }) }));
+vi.mock("@/pages/billing/hooks/useMySubscription", () => ({
+  useMySubscription: () => ({ data: planoAtivo ? { status: "active" } : null }),
+}));
+vi.mock("@/contexts/SettingsModalContext", () => ({ useSettingsModal: () => ({ openSettings }) }));
 vi.mock("@/hooks/usePageTitle", () => ({ usePageTitle: vi.fn() }));
 vi.mock("@/hooks/useRecentes", () => ({ useRegistrarPagina: vi.fn() }));
 vi.mock("@/components/ui/sidebar", async (orig) => ({
@@ -114,6 +124,8 @@ beforeEach(() => {
   leadsState = { isLoading: false, isError: false };
   etapas = ETAPAS;
   canEdit = true;
+  isAdmin = true;
+  planoAtivo = false;
   mocks = {
     createLead: mut(),
     updateStatus: mut(),
@@ -216,6 +228,70 @@ describe("Leads: criar lead", () => {
 
     expect(mocks.createLead.mutate).toHaveBeenCalledTimes(1);
     expect(within(dialogo("Novo lead")).getByLabelText("Nome *")).toHaveValue("Carlos");
+  });
+});
+
+describe("Leads: limite de leads ativos (capacidade:leads)", () => {
+  const criarBatendoNoLimite = async () => {
+    mocks.createLead.mutate.mockImplementationOnce((_v: unknown, opts?: MutateOpts) =>
+      opts?.onError?.({ message: "capacidade:leads", hint: "50", code: "P0001" })
+    );
+    const user = userEvent.setup();
+    abrir();
+    await user.click(novoLead());
+    const form = dialogo("Novo lead");
+    await user.type(within(form).getByLabelText("Nome *"), "Carlos");
+    await user.click(within(form).getByRole("button", { name: "Salvar" }));
+    return user;
+  };
+
+  it("no teste, admin vê o desbloqueio por documento com o limite", async () => {
+    await criarBatendoNoLimite();
+    expect(screen.getByRole("dialog", { name: "Você atingiu um limite do período de teste" })).toBeInTheDocument();
+    expect(screen.getByText(/limite de 50 leads ativos/)).toBeInTheDocument();
+    expect(track).toHaveBeenCalledWith("trial_limite_atingido", { recurso: "leads", limite: 50 });
+    // O formulário continua lá (atrás do diálogo de limite) com o que foi digitado.
+    const form = screen
+      .getAllByRole("dialog", { hidden: true })
+      .find((d) => d.textContent?.startsWith("Novo lead")) as HTMLElement;
+    expect(within(form).getByLabelText("Nome *")).toHaveValue("Carlos");
+  });
+
+  it("no teste, quem não é admin só pode avisar o administrador", async () => {
+    isAdmin = false;
+    await criarBatendoNoLimite();
+    const aviso = screen.getByRole("alertdialog");
+    expect(within(aviso).getByText("Você atingiu um limite do período de teste")).toBeInTheDocument();
+    expect(within(aviso).getByRole("button", { name: "Avisar administrador" })).toBeInTheDocument();
+  });
+
+  it("com plano ativo, admin é levado aos planos", async () => {
+    planoAtivo = true;
+    const user = await criarBatendoNoLimite();
+    const aviso = screen.getByRole("alertdialog");
+    expect(within(aviso).getByText("Você atingiu um limite do plano")).toBeInTheDocument();
+    expect(within(aviso).getByText(/limite de 50 leads ativos do seu plano/)).toBeInTheDocument();
+    await user.click(within(aviso).getByRole("button", { name: "Ver planos" }));
+    expect(openSettings).toHaveBeenCalledWith("pagamento");
+  });
+
+  it("com plano ativo, quem não é admin avisa o administrador", async () => {
+    planoAtivo = true;
+    isAdmin = false;
+    await criarBatendoNoLimite();
+    const aviso = screen.getByRole("alertdialog");
+    expect(within(aviso).getByText("Você atingiu um limite do plano")).toBeInTheDocument();
+    expect(within(aviso).getByRole("button", { name: "Avisar administrador" })).toBeInTheDocument();
+  });
+
+  it("erro que não é de capacidade não abre o diálogo de limite", async () => {
+    falharNoServidor(mocks.createLead);
+    const user = userEvent.setup();
+    abrir();
+    await user.click(novoLead());
+    await user.type(within(dialogo("Novo lead")).getByLabelText("Nome *"), "Carlos");
+    await user.click(within(dialogo("Novo lead")).getByRole("button", { name: "Salvar" }));
+    expect(screen.queryByText(/Você atingiu um limite/)).not.toBeInTheDocument();
   });
 });
 
