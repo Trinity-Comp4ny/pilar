@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { CLIMA_OPCOES, TIPO_IMPEDIMENTO_OPCOES, somaEfetivo, type TipoImpedimento } from "@/lib/obras";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { getCampoToken } from "./useCampoAuth";
+import { clearCampoToken, getCampoToken } from "./useCampoAuth";
 import { filaOfflineDb } from "./campoOfflineDb";
 import type {
   FilaDiaPayload,
@@ -157,6 +157,13 @@ export default function CampoRegistrarDia() {
     const usaLivre = novoEfetivo.fornecedorId === OUTRO;
     if (!novoEfetivo.fornecedorId || !novoEfetivo.quantidade.trim()) return;
     if (usaLivre && !novoEfetivo.nomeLivre.trim()) return;
+    // Quantidade de pessoas é inteira e positiva: "dez" ou "2,5" virariam NaN e
+    // travariam o envio na fila offline.
+    const pessoas = Number(novoEfetivo.quantidade.trim());
+    if (!Number.isInteger(pessoas) || pessoas <= 0) {
+      toast.error("Quantidade de pessoas inválida", { description: "Use um número inteiro maior que zero." });
+      return;
+    }
     setEfetivos((prev) => [...prev, novoEfetivo]);
     setNovoEfetivo(efetivoVazio());
   };
@@ -355,6 +362,14 @@ export default function CampoRegistrarDia() {
       );
       if (error) throw error;
       if (!res?.ok || !res.rdo_id) {
+        // Sessão vencida no servidor: volta ao login em vez de deixar a pessoa
+        // tentando de novo num formulário que nunca vai aceitar.
+        if (res?.erro === "Sessão inválida") {
+          clearCampoToken();
+          toast.error("Sua sessão expirou", { description: "Entre de novo para registrar o dia." });
+          navigate("/campo/login", { replace: true });
+          return;
+        }
         toast.error("Não foi possível registrar", { description: res?.erro ?? "Tente de novo" });
         return;
       }
