@@ -552,10 +552,10 @@ export function DisciplinasSection({
                         <span
                           className={`h-1.5 w-1.5 rounded-full ${
                             p === PROJECT_PRIORITY.ALTA
-                              ? "bg-red-500"
+                              ? "bg-chart-danger"
                               : p === PROJECT_PRIORITY.MEDIA
-                                ? "bg-amber-400"
-                                : "bg-blue-400"
+                                ? "bg-chart-warning"
+                                : "bg-chart-info"
                           }`}
                         />
                         {PROJECT_PRIORITY_CONFIG[p].label}
