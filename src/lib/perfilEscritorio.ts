@@ -1,6 +1,6 @@
 // Perfil do escritório e da pessoa (SPEC 149): as listas fechadas que o
 // onboarding, as Configurações e o ultra-admin usam. Os valores batem com os
-// CHECK da migration 20261202000000; mudar aqui exige mudar lá.
+// CHECK da migration 20261203000000; mudar aqui exige mudar lá.
 
 export type Opcao<T extends string> = { value: T; label: string };
 

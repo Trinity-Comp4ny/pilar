@@ -4,7 +4,7 @@ const obj = (v: unknown) => (v && typeof v === "object" ? (v as Record<string, u
 const texto = (v: unknown) => (typeof v === "string" ? v.trim() : "");
 
 // Listas fechadas do perfil do escritório (SPEC 149). Batem com os CHECK da
-// migration 20261202000000 e com src/lib/perfilEscritorio.ts.
+// migration 20261203000000 e com src/lib/perfilEscritorio.ts.
 const PORTES = ["1-5", "6-15", "16-40", "40+"];
 const DISCIPLINAS = ["arquitetura", "estrutural", "instalacoes", "civil_infra", "geotecnia", "outra"];
 const CANAIS = ["indicacao", "google", "ia", "linkedin", "instagram", "youtube", "evento", "outro"];
