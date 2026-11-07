@@ -43,7 +43,6 @@ import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
 import { FilterBar, FilterClear, FilterPopover, FilterSelect } from "@/components/filters/FilterBar";
 import { PageHeader } from "@/components/PageHeader";
-import { useUserRole } from "@/hooks/useUserRole";
 import { toast } from "sonner";
 import { analytics } from "@/lib/analytics";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -120,7 +119,6 @@ export default function Propostas() {
   usePageTitle("Propostas");
   useRegistrarPagina("pagina", "/documentos", "Documentos");
   const queryClient = useQueryClient();
-  const { data: userRole } = useUserRole();
   const { data: propostas = [], isLoading } = usePropostas();
   const createProposta = useCreateProposta();
   const updateProposta = useUpdateProposta();
@@ -131,9 +129,11 @@ export default function Propostas() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const canEdit = userRole === "admin" || userRole === "ultra_admin";
-  // Com a estimativa ligada na empresa, a proposta oferece "Estimar obra" (SPEC 136, BEZ-143).
-  const podeEstimar = usePermissions().can("estimativa_obra", "create");
+  // Permissão por módulo (ADR 0029), igual a "Nova proposta"; status pede edit. Estimar: SPEC 136.
+  const { can } = usePermissions();
+  const canEdit = can("propostas", "edit");
+  const canDelete = can("propostas", "delete");
+  const podeEstimar = can("estimativa_obra", "create");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [vinculoTipo, setVinculoTipo] = useState<"cliente" | "lead">("cliente");
@@ -343,6 +343,7 @@ export default function Propostas() {
   };
 
   const handleStatusChange = (id: string, status: string) => {
+    if (!canEdit) return;
     updateProposta.mutate(
       { id, status },
       {
@@ -356,7 +357,7 @@ export default function Propostas() {
   };
 
   const handleDelete = () => {
-    if (!confirmDelete) return;
+    if (!confirmDelete || !canDelete) return;
     const { id, titulo } = confirmDelete;
     deleteProposta.mutate(id, {
       onSuccess: () => {
@@ -617,7 +618,7 @@ export default function Propostas() {
         </span>
       ),
     },
-    ...(canEdit
+    ...(canDelete
       ? [
           {
             key: "acoes",
@@ -757,7 +758,7 @@ export default function Propostas() {
                           <Badge className={`text-[10px] ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
                             {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
                           </Badge>
-                          {canEdit && (
+                          {canDelete && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                                 <Button
@@ -831,6 +832,7 @@ export default function Propostas() {
         }}
         proposta={detailProposta}
         canEdit={canEdit}
+        canDelete={canDelete}
         hoje={hoje}
         onEdit={() => detailPropostaId && openEdit(detailPropostaId)}
         onDelete={() => {
@@ -860,12 +862,12 @@ export default function Propostas() {
             : undefined
         }
         onMarcarContratoAssinado={() => {
-          if (detailPropostaId) {
+          if (detailPropostaId && canEdit) {
             updateProposta.mutate({ id: detailPropostaId, contrato_assinado: true } as never);
           }
         }}
         onRecusarContrato={() => {
-          if (detailPropostaId) {
+          if (detailPropostaId && canEdit) {
             updateProposta.mutate({ id: detailPropostaId, contrato_recusado: true } as never, {
               onSuccess: () =>
                 toast.info("Contrato recusado registrado.", {

@@ -35,6 +35,8 @@ const falharNoServidor = (m: Mut) =>
 let propostas: Proposta[] = [];
 let role = "admin";
 let podeCriar = true;
+let podeEditar = true;
+let podeExcluir = true;
 let mocks: Record<string, Mut> = {};
 const navigate = vi.fn();
 
@@ -58,7 +60,12 @@ vi.mock("@/components/trial/DesbloqueioNivel", () => ({
 }));
 vi.mock("@/hooks/usePermissions", () => ({
   usePermissions: () => ({
-    can: (f: string) => (f === "estimativa_obra" ? false : podeCriar),
+    can: (f: string, action?: string) => {
+      if (f === "estimativa_obra") return false;
+      if (action === "edit") return podeEditar;
+      if (action === "delete") return podeExcluir;
+      return podeCriar;
+    },
     getButtonProps: () => ({ disabled: !podeCriar, title: "", "aria-disabled": !podeCriar }),
     isAdmin: role === "admin",
   }),
@@ -121,6 +128,8 @@ beforeEach(() => {
   ];
   role = "admin";
   podeCriar = true;
+  podeEditar = true;
+  podeExcluir = true;
   mocks = {
     create: mut({ id: "nova" }),
     update: mut(),
@@ -446,15 +455,48 @@ describe("Propostas: lista, filtros e permissão", () => {
     expect(screen.getAllByText("Expirada").length).toBeGreaterThan(0);
   });
 
-  it("quem não é admin não edita nem exclui pelo detalhe", async () => {
-    role = "membro";
+  it("sem permissão de edição no módulo não edita, não muda status nem exclui pelo detalhe", async () => {
+    podeEditar = false;
+    podeExcluir = false;
     const user = userEvent.setup();
     abrir();
     await user.click(screen.getAllByText("Residência Almeida")[0]);
     const det = screen.getByRole("dialog");
     expect(within(det).queryByRole("button", { name: "Editar" })).not.toBeInTheDocument();
     expect(within(det).queryByRole("button", { name: "Excluir" })).not.toBeInTheDocument();
+    expect(within(det).queryByRole("button", { name: "Enviei manualmente" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Mais opções" })).not.toBeInTheDocument();
+  });
+
+  it("sem permissão de edição, proposta enviada não oferece Aceita/Recusada", async () => {
+    podeEditar = false;
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getAllByText("Galpão Logístico")[0]);
+    const det = screen.getByRole("dialog");
+    expect(within(det).queryByRole("button", { name: "Aceita" })).not.toBeInTheDocument();
+    expect(within(det).queryByRole("button", { name: "Recusada" })).not.toBeInTheDocument();
+    expect(mocks.update.mutate).not.toHaveBeenCalled();
+  });
+
+  it("permissão segue o módulo, não o role: membro com edição muda status", async () => {
+    role = "membro";
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getAllByText("Residência Almeida")[0]);
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Enviei manualmente" }));
+    expect(mocks.update.mutate).toHaveBeenCalledWith({ id: "p1", status: "enviada" }, expect.anything());
+  });
+
+  it("edita mas não exclui: Excluir some do detalhe e do menu da linha", async () => {
+    podeExcluir = false;
+    const user = userEvent.setup();
+    abrir();
+    expect(screen.queryByRole("button", { name: "Mais opções" })).not.toBeInTheDocument();
+    await user.click(screen.getAllByText("Residência Almeida")[0]);
+    const det = screen.getByRole("dialog");
+    expect(within(det).getByRole("button", { name: "Editar" })).toBeInTheDocument();
+    expect(within(det).queryByRole("button", { name: "Excluir" })).not.toBeInTheDocument();
   });
 
   it("sem permissão no módulo, Nova proposta fica travada", () => {
