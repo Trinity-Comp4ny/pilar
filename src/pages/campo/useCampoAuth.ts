@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 // Sessão do Pilar Campo: token próprio (não é auth do Supabase), guardado por
@@ -108,4 +109,14 @@ export function useCampoAuth() {
 
 export function campoLogout(): void {
   clearCampoToken();
+}
+
+/**
+ * O servidor recusou a ação porque a sessão do campo venceu: limpa o token, avisa e
+ * volta ao login, em vez de deixar a pessoa tentando num formulário que não vai aceitar.
+ */
+export function sairPorSessaoVencida(navigate: (to: string, opts: { replace: boolean }) => void): void {
+  clearCampoToken();
+  toast.error("Sua sessão expirou", { description: "Entre de novo para registrar o dia." });
+  navigate("/campo/login", { replace: true });
 }
