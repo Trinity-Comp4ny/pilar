@@ -95,16 +95,26 @@ describe("CompanySetup", () => {
     expect(h.refreshProfile).toHaveBeenCalled();
   });
 
-  // O nome não é campo editável aqui (vem do cadastro), então o erro de
-  // validação não tem onde aparecer: o envio só é bloqueado. Ver relatório.
-  it("sem nome da empresa o envio é bloqueado e nada é gravado", async () => {
+  it("sem nome no cadastro o campo fica editável e o envio vazio mostra o erro", async () => {
     h.profile = { empresas: { nome: "", cnpj: "" } };
     renderPage();
-    await userEvent.setup().click(finalizar());
-    await new Promise((r) => setTimeout(r, 50));
+    const user = userEvent.setup();
+    await user.click(finalizar());
+    expect(await screen.findByText("Nome é obrigatório")).toBeInTheDocument();
     expect(h.getUser).not.toHaveBeenCalled();
     expect(h.calls.some((c) => c.table === "empresas")).toBe(false);
     expect(screen.queryByTestId("inicio")).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Nome da empresa"), "Seed Projetos");
+    await user.click(finalizar());
+    expect(await screen.findByTestId("inicio")).toBeInTheDocument();
+    const up = h.calls.find((c) => c.table === "empresas" && c.op === "update");
+    expect(up?.payload).toMatchObject({ nome: "Seed Projetos" });
+  });
+
+  it("com nome no cadastro não oferece campo de nome (só confirmação)", () => {
+    renderPage();
+    expect(screen.queryByLabelText("Nome da empresa")).not.toBeInTheDocument();
   });
 
   it("usuário sem empresa vinculada recebe erro e não grava nada", async () => {

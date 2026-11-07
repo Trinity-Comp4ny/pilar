@@ -48,6 +48,10 @@ export default function CompanySetup() {
     setHydrated(true);
   }, [profile?.empresas, hydrated, reset]);
 
+  // Sem nome no cadastro (empresa criada sem ele), o campo vira editável: antes o
+  // envio era barrado pela validação sem nenhuma mensagem visível.
+  const nomeDoCadastro = Boolean(profile?.empresas?.nome?.trim());
+
   const targetProgress = useMemo(() => {
     const step = 2;
     const total = 2;
@@ -148,13 +152,36 @@ export default function CompanySetup() {
             <form onSubmit={form.handleSubmit(handleUpdate)} className="space-y-5">
               {/* Nome já veio do cadastro; aqui é só confirmação. Ajuste depois em
                   Configurações › Empresa, se precisar. */}
-              <div className="space-y-2">
-                <span className="text-ink-soft font-medium text-sm">Empresa</span>
-                <div className="flex items-center gap-2 rounded-md border border-paper-border bg-paper-alt px-3 h-11">
-                  <Building2 className="h-4 w-4 text-ink/40 shrink-0" />
-                  <span className="text-sm text-ink truncate">{form.watch("name") || "Sua empresa"}</span>
+              {nomeDoCadastro ? (
+                <div className="space-y-2">
+                  <span className="text-ink-soft font-medium text-sm">Empresa</span>
+                  <div className="flex items-center gap-2 rounded-md border border-paper-border bg-paper-alt px-3 h-11">
+                    <Building2 className="h-4 w-4 text-ink/40 shrink-0" />
+                    <span className="text-sm text-ink truncate">{form.watch("name") || "Sua empresa"}</span>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-ink-soft font-medium">Nome da empresa</FormLabel>
+                      <div className="relative group">
+                        <Building2 className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Nome do escritório"
+                            className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                          />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <FormField
                 control={form.control}
