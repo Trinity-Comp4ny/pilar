@@ -25,7 +25,7 @@ function renderForm(props: Partial<Parameters<typeof CheckoutForm>[0]> = {}) {
     <CheckoutForm
       planSlug="pro"
       planNome="Pro"
-      planValue={690}
+      planValue={499}
       cycle="monthly"
       onSubmit={onSubmit}
       isSubmitting={false}
@@ -184,7 +184,7 @@ describe("CheckoutForm: validação antes do pagamento", () => {
   });
 
   it("o valor do botão é o do plano no ciclo escolhido", () => {
-    renderForm({ planValue: 6900, cycle: "yearly" });
-    expect(pagar()).toHaveTextContent("R$ 6.900,00");
+    renderForm({ planValue: 4990, cycle: "yearly" });
+    expect(pagar()).toHaveTextContent("R$ 4.990,00");
   });
 });
