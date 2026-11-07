@@ -56,6 +56,12 @@ vi.mock("@/pages/meu-trabalho/hooks", () => ({
 }));
 let isAdmin = true;
 vi.mock("@/hooks/useNivelConfianca", () => ({ useNivelConfianca: () => ({ isAdmin }) }));
+let assinaturaStatus: string | null = null;
+const openSettings = vi.fn();
+vi.mock("@/pages/billing/hooks/useMySubscription", () => ({
+  useMySubscription: () => ({ data: assinaturaStatus ? { status: assinaturaStatus } : null }),
+}));
+vi.mock("@/contexts/SettingsModalContext", () => ({ useSettingsModal: () => ({ openSettings }) }));
 const lookupCEP = vi.fn();
 vi.mock("@/lib/brasilApi", () => ({ lookupCEP: (...a: unknown[]) => lookupCEP(...a) }));
 const geocodarCidade = vi.fn();
@@ -97,6 +103,7 @@ describe("ObraFormDialog: nova obra", () => {
     rpc.mockResolvedValue({ data: "emp-1", error: null });
     podeVerProjetos = true;
     isAdmin = true;
+    assinaturaStatus = null;
   });
 
   it("sem nome mostra o erro e não grava", async () => {
@@ -219,7 +226,7 @@ describe("ObraFormDialog: nova obra", () => {
     digitar("Nome da obra *", "Terceira obra");
     criar();
     expect(await screen.findByText("Você atingiu um limite do período de teste")).toBeInTheDocument();
-    expect(screen.getByText(/o limite de 2 obras do período de teste/)).toBeInTheDocument();
+    expect(screen.getByText(/o limite de 2 obras ativas do período de teste/)).toBeInTheDocument();
     expect(toast.error).not.toHaveBeenCalled();
   });
 
@@ -230,6 +237,18 @@ describe("ObraFormDialog: nova obra", () => {
     digitar("Nome da obra *", "Terceira obra");
     criar();
     expect(await screen.findByText(/Só um administrador pode liberar mais capacidade/)).toBeInTheDocument();
+  });
+
+  it("com plano ativo, capacidade:obras leva o admin aos planos", async () => {
+    assinaturaStatus = "active";
+    respostaEscrita = { data: null, error: { message: "capacidade:obras", hint: "10" } };
+    montar();
+    digitar("Nome da obra *", "Décima primeira");
+    criar();
+    expect(await screen.findByText("Você atingiu um limite do plano")).toBeInTheDocument();
+    expect(screen.getByText(/o limite de 10 obras ativas do seu plano/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Ver planos" }));
+    expect(openSettings).toHaveBeenCalledWith("pagamento");
   });
 
   it("sem acesso a projetos o vínculo de projeto some", () => {
