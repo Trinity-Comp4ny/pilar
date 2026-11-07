@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { LancarHorasDialog } from "./LancarHorasDialog";
 
 const h = vi.hoisted(() => ({
-  projetos: { data: [] as unknown[], error: null as unknown },
+  projetos: { data: [] as unknown[] | null, error: null as unknown },
   rpc: vi.fn(),
   lancar: vi.fn(),
   isPending: false,
