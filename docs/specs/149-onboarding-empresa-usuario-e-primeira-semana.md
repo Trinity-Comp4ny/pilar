@@ -1,7 +1,7 @@
 # SPEC: Onboarding da empresa, do usuário convidado e da primeira semana
 
 **Data:** 2026-11-07
-**Status:** Draft (aguarda as decisões da seção "Decisões em aberto")
+**Status:** Em implementação (fatias 1 a 4 e origem do lead entregues; ver "Entregue e pendente")
 **Autor:** Claude, a pedido do Matheus
 **Módulo:** onboarding | ultra-admin | configurações | início
 
@@ -263,29 +263,47 @@ checando admin da `empresa_id` de `auth.uid()`.
 
 Depois da migration: `npm run gen:types:local` e commit do `types.ts`.
 
-## Plano de implementação (fatias, um PR cada)
+## Decisões do Matheus (07/11)
 
-| #   | Fatia                                                                                                             | Tamanho | Visual?       |
-| --- | ----------------------------------------------------------------------------------------------------------------- | ------- | ------------- |
-| 1   | Migration (colunas novas) + edge do ultra-admin + diálogo de criação com os campos novos                          | P       | Sim (diálogo) |
-| 2   | `/profile-setup` com função, LinkedIn, cabeçalho do convidado e celular opcional para convidado                   | P       | Sim           |
-| 3   | `/company-setup` com site, disciplinas, porte, CNPJ com consulta; nova etapa "Por onde começar" + convite em lote | M       | Sim           |
-| 4   | Checklist refeito (dono e convidado), filtro `exemplo`, cartão de boas-vindas                                     | M       | Sim           |
-| 5   | Escritório de exemplo (carregar/remover)                                                                          | M       | Sim           |
-| 6   | Eventos, `empresa_ativada`, painel no ultra-admin, régua da SPEC 130 usando função e objetivo                     | P       | Sim (ultra)   |
+Valem sobre o texto dos requisitos acima onde houver conflito.
 
-As fatias 1 a 3 já entregam o dado de lead; 4 e 5 atacam a ativação. Cada PR com antes e depois
-(regra do dono).
+1. **Celular do convidado continua obrigatório** (requisito 16 muda: só LinkedIn é opcional).
+2. **Gestão, Projetos e Obras pesam igual.** "Por onde começar" tem os três pilares (não quatro
+   cartões), Obras tem checklist próprio para todo escritório e a ordem dos pilares segue a
+   escolha. Substitui o requisito 21 ("Obras só para quem escolher").
+3. **Origem só o ultra-admin preenche**, na criação. Ao dono se pergunta, à parte, **"Como você
+   conheceu o Pilar?"** (opcional, na etapa do escritório).
+4. **Registrar de onde vem o lead** (UTM e site de origem: Google, ChatGPT etc.), mesmo antes de
+   virar empresa.
+5. **Escritório de exemplo:** fica para depois, até ficar claro o que é (fatia 5 não entra).
 
-## Decisões em aberto (para o Matheus)
+## Entregue e pendente
 
-1. **Celular do convidado:** opcional (recomendado) ou obrigatório como hoje?
-2. **Escritório de exemplo:** vale construir (fatia 5) ou o dono deve começar com dado real
-   desde o dia 1, já que passou por demonstração?
-3. **Obras no onboarding:** sai do checklist padrão e só aparece para quem escolhe "Obras que
-   acompanho" (recomendado), ou continua para todos?
-4. **"Origem" do cliente:** preenchida só pelo ultra-admin na criação (recomendado, ele sabe da
-   demonstração), ou perguntada também ao dono?
+**Entregue (branch `claude/nice-cerf-fvb9t8`):**
+
+| Fatia   | O quê                                                                                                                                                                                                                                                                                |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Dados   | Migration `20261202000000`: `empresas.site/porte/disciplinas/como_conheceu/origem/objetivo_inicial` (`origem` só ultra-admin altera, por trigger), `profiles.funcao/linkedin_url`, tabela `demo_interesses` (leitura só ultra-admin)                                                 |
+| 1       | Diálogo "Criar empresa" com nome do dono, site (sugerido pelo e-mail), CNPJ, disciplinas, porte e origem; detalhe da empresa com "Perfil do escritório" e função, celular e LinkedIn de quem administra                                                                              |
+| 2       | `/profile-setup`: função (obrigatória), LinkedIn (opcional), "Etapa 1 de 3" para o dono; convidado vê "Fulano convidou você como Coordenador" e o nome do escritório, numa tela só                                                                                                   |
+| 3       | `/company-setup` em duas etapas: "Seu escritório" (nome editável, CNPJ, site, disciplinas, porte, como conheceu) e "Por onde começar" (Gestão, Projetos, Obras) com convite de até 3 colegas, opcional                                                                               |
+| 4       | Checklist com "Sua conta" (1º item já marcado, convidar colega conta usuários ativos, foto) + os três pilares na ordem escolhida; Propostas entra em Gestão; projeto de exemplo não conta; convidado também tem checklist e tours; cartão de boas-vindas no Início                   |
+| Origem  | Landing classifica o canal (ChatGPT, Perplexity, Gemini, Claude, Google, Google Ads, Meta Ads, LinkedIn, Instagram, direto...) e grava cada clique em "Agendar demonstração" pela edge `registrar-interesse-demo`; Visão geral do ultra-admin mostra os cliques por canal em 30 dias |
+| Config. | Conta: função e LinkedIn. Empresa (Configurações e Administração): site, disciplinas e porte                                                                                                                                                                                         |
+| Eventos | `onboarding_etapa_concluida`, `onboarding_objetivo_escolhido`, `onboarding_boas_vindas_acao`; `convite_enviado` com origem `onboarding`                                                                                                                                              |
+
+**Pendente:**
+
+- Consulta do CNPJ na Receita no `/company-setup` (hoje só valida o dígito; a edge
+  `verificar-documento` sobe o nível do trial, então chamar no cadastro contraria a decisão de
+  2026-09-08 e fica para conversa).
+- Passo "veja o agente trabalhar" no checklist (falta definir o que conta como feito).
+- Evento `empresa_ativada` e uso de função/objetivo nos textos da régua da SPEC 130.
+- Escritório de exemplo (decisão 5) e envio ao HubSpot (fase 6).
+- Ligar a origem do clique à empresa criada: o clique é anônimo; o vínculo hoje é o campo
+  "Origem" que o ultra-admin preenche e o "Como conheceu" do dono.
+- **Operação:** a landing precisa de `VITE_SUPABASE_URL` no deploy para enviar o clique; sem
+  ela, o registro não acontece (falha silenciosa, sem quebrar o botão).
 
 ## Riscos
 

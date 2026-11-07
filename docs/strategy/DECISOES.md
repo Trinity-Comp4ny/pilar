@@ -11,6 +11,23 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-07 · Onboarding: perfil do escritório na entrada, três pilares iguais e origem do lead
+
+**Decisão:** a entrada no Pilar passa a coletar quem é o escritório e quem é a pessoa, e o primeiro uso trata
+Gestão, Projetos e Obras com o mesmo peso. O ultra-admin anota na criação o que soube na demonstração (site,
+CNPJ, disciplinas, porte, origem); o dono confirma e responde "Como você conheceu o Pilar?"; cada pessoa informa
+a função (obrigatória) e o LinkedIn (opcional). Celular segue obrigatório para dono e convidado. Cada clique em
+"Agendar demonstração" registra o canal de origem (UTM ou site: Google, ChatGPT, LinkedIn...).
+
+Contexto: o escritório entrava num sistema vazio e o Pilar não sabia nada dele além do nome. Como toda entrada é
+por demonstração (2026-11-06), o dado de lead vem de quem já conversou com o cliente, sem pesar no formulário. O
+primeiro passo segue o pilar que o dono escolher; Obras não é módulo de segunda classe no onboarding.
+
+**Supera:** o onboarding de 2 etapas (perfil + só CNPJ) e o checklist só para admin da SPEC 034. Detalhe e o que
+ficou pendente (escritório de exemplo, consulta à Receita, evento de ativação) na SPEC 149.
+
+---
+
 ## 2026-11-07 · Papel `owner` aposentado
 
 **Decisão:** o acesso dentro da empresa tem só administrador, coordenador e usuário. O papel `owner` sai de uso.
