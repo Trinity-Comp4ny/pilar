@@ -42,8 +42,8 @@ converter sem mudar o motor). Cadastro por convite já valia desde 19/10 (SPEC 1
 **Supera:** os preços R$ 490/690/1.290 da tabela v3 de PRICING.md e a entrada de 2026-08-31 na parte "token é a
 unidade exposta". **Aplicado no app** pela migration `20261130000000_planos_v4_preco_e_capacidade_por_modulo` (preço
 do checkout) e pela UI em créditos (`src/lib/creditos.ts`). O preço do pacote avulso não mudou (só o rótulo, em
-créditos). Ainda em tokens: os textos das notificações geradas no banco ("Tokens de IA acabando", "Pedido de mais
-tokens").
+créditos). As notificações geradas no banco ("Créditos de IA acabando", "Pedido de mais créditos de IA") passaram
+a créditos na migration `20261201000000_notificacoes_ia_em_creditos`.
 
 ---
 
