@@ -27,6 +27,21 @@ plano ia para o Google Agenda. Quem já decidiu comprar não precisa passar por 
 
 ---
 
+## 2026-11-07 · Logo: coluna de três caneluras e apresentação clara sobre a paisagem
+
+**Decisão:** o símbolo passa a ter três caneluras (eram quatro), com a do meio no eixo: três apoios
+sustentando o capitel, a ideia de trindade e de base. A apresentação padrão da marca deixa o fundo preto
+e passa a ser clara, sobre a paisagem de morros verdes da hero da landing, com o símbolo em Ink como foco.
+
+Contexto: o ícone do app era um disco verde num tile preto, e o preto não conversava com a landing, que é
+clara. Entram variações claras (ícone paisagem, verde e disco sobre papel; lockups horizontal, empilhado e
+banner sobre a paisagem), todas geradas por `scripts/brand/build.py`. Regras em `brand/logo.md` (seção 7.1).
+
+**Supera:** a coluna de quatro caneluras e o ícone verde sobre Ink de `brand/logo.md` (BEZ-385). As versões
+`white` e `brand` sobre Ink seguem válidas para fundo escuro, só não são mais a cara da marca.
+
+---
+
 ## 2026-11-07 · Onboarding: perfil do escritório na entrada, três pilares iguais e origem do lead
 
 **Decisão:** a entrada no Pilar passa a coletar quem é o escritório e quem é a pessoa, e o primeiro uso trata

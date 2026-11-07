@@ -83,7 +83,7 @@ def construction():
     # módulo X entre as duas primeiras caneluras
     xa, xb = px(B.FLUTES[0]), px(B.FLUTES[1])
     ym = py(B.FLUTE_Y[1]) + 44
-    ann = dim_h(xa, xb, ym, "X = 5u", 13)
+    ann = dim_h(xa, xb, ym, f"X = {B.PITCH:g}u", 13)
     # largura do capitel e do ábaco
     ann += dim_h(px(B.CAP[0]), px(B.CAP[1]), oy - 30, "capitel 26u", 13)
     ann += dim_h(px(B.ABA[0]), px(B.ABA[1]), py(B.FLUTE_Y[1]) + 90, "ábaco 22u", 13)
@@ -95,8 +95,8 @@ def construction():
         ("Traço", "1,6u, ponta redonda (raio 0,8u)"),
         ("Capitel", "linha de 26u, opacidade 100%"),
         ("Ábaco", "linha de 22u, opacidade 85%"),
-        ("Caneluras", "4 linhas de 14u, 1 por módulo X"),
-        ("Módulo X", "5u, distância entre eixos das caneluras"),
+        ("Caneluras", "3 linhas de 14u, a do meio no eixo"),
+        ("Módulo X", f"{B.PITCH:g}u, distância entre eixos das caneluras"),
         ("Caixa", "27,6u × 22,6u, já contando o traço"),
         ("Eixo", "capitel, ábaco e caneluras centrados em x = 14"),
     ]
@@ -109,8 +109,14 @@ def construction():
     return wrap(1200, 700, "".join(g) + mark + ann + leg, "Construção do símbolo Pilar")
 
 
+def xlabel(k):
+    """1.5 -> "1,5X", 1 -> "X"."""
+    return "X" if k == 1 else f"{k:g}X".replace(".", ",")
+
+
 # ---- 2. Respiro ------------------------------------------------------------
 def clearspace(measures):
+    C, CL = B.CLEAR, xlabel(B.CLEAR)
     panels = []
     # (largura painel, corpo, w, h, X em unidades do corpo)
     wh, hh, bh, mh_ = B.lockup_h(B.INK)
@@ -127,13 +133,13 @@ def clearspace(measures):
     x = 30
     for (name, w, h, body, X), pw in zip(items, widths):
         ph = 470
-        z = min((pw - 30) / (w + 4 * X), (ph - 110) / (h + 4 * X))
-        cw, ch = (w + 4 * X) * z, (h + 4 * X) * z
-        ox = x + (pw - cw) / 2 + 2 * X * z
-        oy = 70 + (ph - 110 - ch) / 2 + 2 * X * z
+        z = min((pw - 30) / (w + 2 * C * X), (ph - 110) / (h + 2 * C * X))
+        cw, ch = (w + 2 * C * X) * z, (h + 2 * C * X) * z
+        ox = x + (pw - cw) / 2 + C * X * z
+        oy = 70 + (ph - 110 - ch) / 2 + C * X * z
         # área de respiro
         out.append(
-            f'<rect x="{ox - 2 * X * z:.1f}" y="{oy - 2 * X * z:.1f}" width="{cw:.1f}" height="{ch:.1f}" fill="#A4EC86" fill-opacity=".16" '
+            f'<rect x="{ox - C * X * z:.1f}" y="{oy - C * X * z:.1f}" width="{cw:.1f}" height="{ch:.1f}" fill="#A4EC86" fill-opacity=".16" '
             f'stroke="{GUIDE}" stroke-dasharray="5 4"/>'
         )
         out.append(f'<rect x="{ox:.1f}" y="{oy:.1f}" width="{w * z:.1f}" height="{h * z:.1f}" fill="{CARD}" stroke="{LINE}"/>')
@@ -150,11 +156,11 @@ def clearspace(measures):
                 f'<rect x="{cx_:.1f}" y="{cy_:.1f}" width="{sq:.1f}" height="{sq:.1f}" fill="{GUIDE}" fill-opacity=".18" stroke="{GUIDE}"/>'
             )
             out.append(text(cx_ + sq / 2, cy_ + sq / 2 + 5, "X", 14, GUIDE, 700, "middle"))
-        top_y = oy - 2 * X * z
-        out.append(dim_v(ox - 2 * X * z - 8, top_y, oy, "2X", 12, side="left"))
-        out.append(dim_h(ox, ox + 2 * X * z, oy + h * z + 2 * X * z + 14, "2X", 12))
+        top_y = oy - C * X * z
+        out.append(dim_v(ox - C * X * z - 8, top_y, oy, CL, 12, side="left"))
+        out.append(dim_h(ox, ox + C * X * z, oy + h * z + C * X * z + 14, CL, 12))
         out.append(text(x + pw / 2, 52, name, 15, B.INK, 600, "middle"))
-        out.append(text(x + pw / 2, 70 + ph - 55, "respiro mínimo = 2X em todos os lados", 12, MUTED, 400, "middle"))
+        out.append(text(x + pw / 2, 70 + ph - 55, f"respiro mínimo = {CL} em todos os lados", 12, MUTED, 400, "middle"))
         x += pw + 20
     out.append(text(30, 560, "X = módulo do símbolo (distância entre eixos de duas caneluras vizinhas), medido no próprio lockup. Nada entra na área verde: texto, borda, imagem, outro logo.", 13))
     return wrap(1200, 600, "".join(out), "Respiro do logotipo Pilar")
@@ -190,7 +196,7 @@ def anatomy():
     gx1 = ox + mw * m["s"] * z
     gx2 = ox + (m["wx"] + m["lsb"]) * z
     yy = oy + (m["top"] + m["hm"]) * z + 44
-    g.append(dim_h(gx1, gx2, yy, "2X", 13))
+    g.append(dim_h(gx1, gx2, yy, xlabel(B.GAP_H), 13))
     g.append(dim_v(ox + w * z + 20, oy, oy + m["hm"] * z, "símbolo = 1,7 × caixa-alta", 13))
     g.append(text(60, 440, "O centro do símbolo coincide com o centro da caixa-alta do nome. O nome é Geist Medium (500), tracking -0,025 em, convertido em curva.", 13))
     return wrap(1240, 470, "".join(g), "Anatomia do lockup horizontal")
@@ -303,11 +309,9 @@ def misuse():
     s = (h * z) / mh
     other = B.mark_group(B.INK, s, cx, cy) + text(cx + mw * s + 14, cy + h * z * 0.68, "Pilar", 40, B.INK, 400, family="Georgia, serif")
     add("Não troque a fonte do nome", other)
-    # cinco caneluras
-    five = B.mark_group(B.INK, s, cx, cy).replace("</g>", "") + ""
-    extra = f'<path d="M{cx + (B.FLUTES[3] + 5 - B.mark_bbox()[0]) * s:.2f} {cy + (B.FLUTE_Y[0] - B.mark_bbox()[1]) * s:.2f}V{cy + (B.FLUTE_Y[1] - B.mark_bbox()[1]) * s:.2f}"/>'
-    five = five + extra + "</g>"
-    add("Não mude o desenho do símbolo", five + place(f'<path d="{B.glyphs.word_path(B.FONT, "Pilar", B.F)[0]}" transform="translate({m["wx"] + 5 * m["s"]:.2f} {m["base"]:.2f})" fill="{B.INK}"/>', z, cx, cy))
+    # a coluna antiga, de quatro caneluras
+    four = B.mark_group(B.INK, s, cx, cy, flutes=[6.5, 11.5, 16.5, 21.5])
+    add("Não mude o número de caneluras", four + place(f'<path d="{B.glyphs.word_path(B.FONT, "Pilar", B.F)[0]}" transform="translate({m["wx"]:.2f} {m["base"]:.2f})" fill="{B.INK}"/>', z, cx, cy))
     # contorno
     d, _ = B.glyphs.word_path(B.FONT, "Pilar", B.F)
     outline = B.mark_group(B.INK, s, cx, cy) + place(f'<path d="{d}" transform="translate({m["wx"]:.2f} {m["base"]:.2f})" fill="none" stroke="{B.INK}" stroke-width="2"/>', z, cx, cy)

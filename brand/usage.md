@@ -21,14 +21,14 @@
 | Parceiro comercial listando a Pilar entre as ferramentas que integra | Brinde, camiseta, material impresso em quantidade                                  |
 |                                                                      | Qualquer uso que sugira aprovação, parceria ou endosso                             |
 
-Em todo uso permitido: arquivo oficial de `assets/logo/`, sem modificação, com o respiro de 2X,
+Em todo uso permitido: arquivo oficial de `assets/logo/`, sem modificação, com o respiro de 1,5X,
 **sem destaque maior que o da marca de quem usa**, e sem sugerir endosso.
 
 ## 3. Cobranding
 
 Quando a Pilar aparece ao lado de outra marca (cliente, evento, parceiro):
 
-- **Lado a lado**, separadas por um traço vertical fino (2 px, Gray 300) com **2X** de cada lado.
+- **Lado a lado**, separadas por um traço vertical fino (2 px, Gray 300) com **1,5X** de cada lado.
 - **Mesma altura visual** das duas marcas: compare a altura de caixa-alta, não a caixa do arquivo.
 - Cada marca com o próprio respiro; a Pilar usa o lockup horizontal.
 - Fundo único: Paper ou Ink. Se a outra marca só existe em cor, use o fundo dela e ajuste a Pilar
