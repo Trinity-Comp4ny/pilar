@@ -19,6 +19,8 @@ import {
   useSalvarPropostaDisciplinas,
 } from "./usePropostas";
 
+type MutacaoGenerica = { mutateAsync: (a: unknown) => Promise<unknown> };
+
 let client: QueryClient;
 const wrapper = ({ children }: { children: ReactNode }) => (
   <QueryClientProvider client={client}>{children}</QueryClientProvider>
@@ -134,5 +136,57 @@ describe("mutations de proposta", () => {
   it("disciplinas de proposta nula não consultam", () => {
     renderHook(() => usePropostaDisciplinas(null), { wrapper });
     expect(supabaseFake.calls).toHaveLength(0);
+  });
+
+  it("disciplinas da proposta: lista filtrada; nula vira vazia; erro propaga", async () => {
+    supabaseFake.respond(
+      "proposta_disciplinas",
+      "select",
+      { data: [{ id: "d1", disciplina: "Civil" }] },
+      { data: null },
+      { error: { message: "permission denied" } }
+    );
+    const a = renderHook(() => usePropostaDisciplinas("p1"), { wrapper });
+    await waitFor(() => expect(a.result.current.data).toEqual([{ id: "d1", disciplina: "Civil" }]));
+    expect(supabaseFake.callsTo("proposta_disciplinas")[0].chain).toContainEqual(["eq", ["proposta_id", "p1"]]);
+
+    const b = renderHook(() => usePropostaDisciplinas("p2"), { wrapper });
+    await waitFor(() => expect(b.result.current.data).toEqual([]));
+
+    const c = renderHook(() => usePropostaDisciplinas("p3"), { wrapper });
+    await waitFor(() => expect(c.result.current.isError).toBe(true));
+  });
+
+  it("listagem com cliente e lead preenchidos e data nula", async () => {
+    supabaseFake.respond(
+      "propostas",
+      "select",
+      { data: [{ id: "p1", clientes: null, leads: { nome: "Lead A" } }] },
+      { data: null }
+    );
+    const { result } = renderHook(() => usePropostas(), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data?.[0]).toMatchObject({ cliente_nome: null, lead_nome: "Lead A" });
+    await result.current.refetch();
+    await waitFor(() => expect(result.current.data).toEqual([]));
+  });
+
+  it.each([
+    ["atualizar", () => useUpdateProposta(), { id: "p1", status: "x" }],
+    ["restaurar", () => useRestoreProposta(), "p1"],
+  ] as const)("%s com erro rejeita", async (_n, hook, arg) => {
+    supabaseFake.respond("propostas", "update", { error: { message: "permission denied" } });
+    const { result } = renderHook(() => hook() as unknown as MutacaoGenerica, { wrapper });
+    await expect(result.current.mutateAsync(arg)).rejects.toMatchObject({
+      message: "permission denied",
+    });
+  });
+
+  it("salvar disciplinas com erro do RPC rejeita", async () => {
+    supabaseFake.respondRpc("rpc_salvar_proposta_disciplinas", { error: { message: "rpc" } });
+    const { result } = renderHook(() => useSalvarPropostaDisciplinas(), { wrapper });
+    await expect(result.current.mutateAsync({ propostaId: "p1", disciplinas: [] })).rejects.toMatchObject({
+      message: "rpc",
+    });
   });
 });
