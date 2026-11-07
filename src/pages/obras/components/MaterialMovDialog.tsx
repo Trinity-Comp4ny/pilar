@@ -43,6 +43,17 @@ const schema = z
         message: "Informe uma quantidade maior que zero",
       });
     }
+    // O banco recusa valor negativo (CHECK) e um texto inválido virava NaN, gravado como nulo sem aviso.
+    if (d.tipo === "entrada" && d.valor_unitario.trim()) {
+      const v = parseNum(d.valor_unitario);
+      if (!Number.isFinite(v) || v < 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["valor_unitario"],
+          message: "Informe um valor unitário válido",
+        });
+      }
+    }
     if (d.material === NOVO) {
       if (!d.nome.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["nome"], message: "Nome do material" });
       if (!d.unidade.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["unidade"], message: "Unidade" });
@@ -230,6 +241,9 @@ export function MaterialMovDialog({
         <div className="space-y-1.5">
           <Label htmlFor="valor_unitario">Valor unitário (R$, opcional)</Label>
           <Input id="valor_unitario" inputMode="decimal" placeholder="0,00" {...register("valor_unitario")} />
+          {formState.errors.valor_unitario && (
+            <p className="text-xs text-danger-strong">{formState.errors.valor_unitario.message}</p>
+          )}
           <p className="text-xs text-muted-foreground">Usado para valorizar o saldo parado no canteiro.</p>
         </div>
       )}
