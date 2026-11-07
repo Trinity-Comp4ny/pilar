@@ -31,7 +31,13 @@ const MEDIDAS = {
 function Seta({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 16 16" fill="none" className={className} aria-hidden="true">
-      <path d="M3 8h10M9.5 4.5 13 8l-3.5 3.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M3 8h10M9.5 4.5 13 8l-3.5 3.5"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -50,7 +56,9 @@ export function SplitButton({
   const classe = [
     "group inline-flex items-center justify-center rounded-full font-medium transition-colors",
     m.corpo,
-    fantasma ? "border border-paper-border bg-frame text-ink hover:bg-paper-alt" : "bg-brand text-ink hover:bg-brand/85",
+    fantasma
+      ? "border border-paper-border bg-frame text-ink hover:bg-paper-alt"
+      : "bg-brand text-ink hover:bg-brand/85",
     className ?? "",
   ].join(" ");
 
@@ -69,8 +77,19 @@ export function SplitButton({
     );
   }
 
+  // Destino fora do Pilar (a agenda da demonstração) abre em nova aba e sem
+  // `window.opener`, como os cartões de plano e o rodapé já faziam; app e login
+  // continuam na mesma aba.
+  const externo =
+    !!href && /^https?:\/\//.test(href) && !/^https:\/\/([a-z0-9-]+\.)*pilarsoft\.com\.br(\/|$)/.test(href);
+
   return (
-    <a href={href} onClick={onClick} className={classe}>
+    <a
+      href={href}
+      onClick={onClick}
+      className={classe}
+      {...(externo ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+    >
       {conteudo}
     </a>
   );
