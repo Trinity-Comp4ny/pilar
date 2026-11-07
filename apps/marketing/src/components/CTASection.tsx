@@ -33,8 +33,8 @@ export function CTASection() {
           </div>
 
           <div className="relative">
-            <h2 className="text-[58px] max-[1100px]:text-[44px] max-[850px]:text-[30px] max-[420px]:text-[26px] font-medium tracking-[-0.035em] leading-[1.06] text-ink mb-5 max-w-[20ch] mx-auto">
-              Do contrato à execução, <span className="italic">num fluxo só.</span>
+            <h2 className="text-[58px] max-[1100px]:text-[44px] max-[850px]:text-[30px] max-[420px]:text-[26px] font-medium tracking-[-0.035em] leading-[1.06] text-ink mb-5 max-w-[24ch] mx-auto text-balance">
+              Gestão com agentes de IA para escritórios de <span className="italic">engenharia e arquitetura.</span>
             </h2>
 
             <m.p

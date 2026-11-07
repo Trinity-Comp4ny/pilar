@@ -4,9 +4,9 @@
  * A cena é uma sessão contínua no Pilar conduzida por um agente: ele escreve o
  * pedido em português, monta o lançamento, pede aprovação, o lead fecha e vira
  * projeto, a receita entra no financeiro, a margem e o cronograma do projeto
- * aparecem, e a obra recebe o diário do campo. É a tagline inteira ("do
- * contrato à execução, num fluxo só") em vinte segundos, sem o visitante clicar
- * em nada.
+ * aparecem, e a obra recebe o diário do campo. É a tagline ("gestão com agentes
+ * de IA para escritórios de engenharia e arquitetura") mostrada em vinte segundos,
+ * sem o visitante clicar em nada.
  *
  * As coordenadas são em pixels de um palco fixo de 1120x680, que o `HeroScene`
  * escala por CSS para caber no container. Assim a posição do cursor é um número

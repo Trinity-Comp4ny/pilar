@@ -193,7 +193,9 @@ describe("LandingFooter", () => {
 
   it("assina com a tagline da marca", () => {
     renderNaRota(<LandingFooter />);
-    expect(screen.getByText(/Do contrato à execução, num fluxo só\./)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Gestão com agentes de IA para escritórios de engenharia e arquitetura\./)
+    ).toBeInTheDocument();
   });
 });
 

@@ -27,6 +27,22 @@ plano ia para o Google Agenda. Quem já decidiu comprar não precisa passar por 
 
 ---
 
+## 2026-11-07 (mais tarde) · Tagline: "Gestão com agentes de IA para escritórios de engenharia e arquitetura."
+
+**Decisão:** a frase principal do Pilar passa a ser **"Gestão com agentes de IA para escritórios de engenharia e
+arquitetura."** "Do contrato à execução, num fluxo só." sai: não é mais tagline nem headline e não aparece em título,
+meta, imagem de compartilhamento, tela de entrada ou material de venda.
+
+Contexto: a frase do fluxo soava como slogan de marketing; a nova diz o que o sistema é e para quem, e põe os agentes
+na frente. A assinatura dos agentes ("A IA prepara. O sistema confere. Você aprova.") continua. Trocado no app (telas de
+entrada e cadastro), na landing (subtítulo da hero, fecho e rodapé), nas metas e og:image, no `CLAUDE.md`, em `brand/`
+e no agente de vendas. "Do contrato à execução" fica só como termo do glossário (`voice-tone.md`) em texto corrido.
+
+**Supera:** a tagline "Do contrato à execução, num fluxo só." de 2026-10-28. O resto daquela decisão (agentes como
+primeiro pilar, lucro e prazo como prova) segue valendo.
+
+---
+
 ## 2026-11-07 · Logo: coluna de três caneluras e apresentação clara sobre a paisagem
 
 **Decisão:** o símbolo passa a ter três caneluras (eram quatro), com a do meio no eixo: três apoios
@@ -155,7 +171,7 @@ SELECT (ADR 0034). O sino avisava de receita excluída (129 de 139 avisos de rec
 
 ---
 
-## 2026-10-28 · Marca: promessa "Do contrato à execução" e agentes como primeiro pilar
+## 2026-10-28 · Marca: promessa "Do contrato à execução" e agentes como primeiro pilar (tagline superada em 2026-11-07)
 
 **Decisão:** a promessa-mãe do Pilar passa a ser "Do contrato à execução, num fluxo só". Agentes de IA viram o primeiro
 pilar de mensagem, com a assinatura "A IA prepara. O sistema confere. Você aprova." Lucro e prazo continuam, como prova

@@ -85,8 +85,8 @@ export function HeroSection() {
             transition={{ duration: 0.7, ease: EASE.out, delay: 0.55 }}
             className="text-[14px] md:text-[17px] text-ink-soft max-w-xl mx-auto mb-8 md:mb-9 leading-relaxed px-2"
           >
-            Do contrato à execução num fluxo só: prazos, entregas e governança do projeto. Agentes de IA preparam, você
-            aprova.
+            Gestão com agentes de IA para escritórios de engenharia e arquitetura. Prazos, entregas e governança do
+            projeto: a IA prepara, você aprova.
           </m.p>
 
           <m.div

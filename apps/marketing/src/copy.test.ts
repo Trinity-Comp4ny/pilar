@@ -93,7 +93,7 @@ describe("copy da landing", () => {
     expect(trechos.length).toBeGreaterThan(500);
     expect(tudo).toContain("Agendar demonstração");
     expect(tudo).toContain("créditos de IA por mês");
-    expect(tudo).toContain("Do contrato à execução");
+    expect(tudo).toContain("Gestão com agentes de IA");
   });
 
   it.each(PROIBIDOS.map((p) => [p.padrao.source, p] as const))("não usa /%s/", (_fonte, { motivo, padrao }) => {
@@ -103,7 +103,8 @@ describe("copy da landing", () => {
 
   it("a tagline da marca aparece na home e no fecho", () => {
     const tudo = trechos.map((t) => t.texto).join("\n");
-    expect(tudo).toMatch(/Do contrato à execução,? num fluxo só/);
+    expect(tudo).toContain("Gestão com agentes de IA para escritórios de engenharia e arquitetura");
+    expect(tudo).not.toMatch(/num fluxo só/);
     expect(tudo).toContain("A IA prepara");
   });
 });
