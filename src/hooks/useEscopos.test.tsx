@@ -188,11 +188,26 @@ describe("useAprovarEscopo", () => {
     }
   });
 
-  it("sem usuário na sessão grava aprovador nulo", async () => {
+  it("sem usuário na sessão não aprova (não grava aprovador nulo)", async () => {
     supabaseFake.setUser(null);
+    const spy = vi.spyOn(client, "invalidateQueries");
     const { result } = renderHook(() => useAprovarEscopo(), { wrapper });
-    await act(() => result.current.mutateAsync({ escopoId: "e1", projetoId: "p1" }));
-    expect(supabaseFake.callsTo("escopos", "update")[0].payload).toMatchObject({ aprovado_por: null });
+    await expect(result.current.mutateAsync({ escopoId: "e1", projetoId: "p1" })).rejects.toThrow(
+      "Sessão expirada: faça login novamente para aprovar."
+    );
+    expect(supabaseFake.callsTo("escopos")).toHaveLength(0);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("erro ao ler o usuário é propagado sem gravar", async () => {
+    const authErro = { name: "AuthSessionMissingError", message: "Auth session missing!" };
+    vi.spyOn(supabaseFake.client.auth, "getUser").mockResolvedValueOnce({
+      data: { user: null },
+      error: authErro,
+    } as never);
+    const { result } = renderHook(() => useAprovarEscopo(), { wrapper });
+    await expect(result.current.mutateAsync({ escopoId: "e1", projetoId: "p1" })).rejects.toEqual(authErro);
+    expect(supabaseFake.callsTo("escopos")).toHaveLength(0);
   });
 
   it("propaga erro sem invalidar", async () => {
