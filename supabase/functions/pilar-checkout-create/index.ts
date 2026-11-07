@@ -23,6 +23,7 @@ import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
 import { parseOr400 } from "../_shared/schemas.ts";
 import { cartaoRecusado, type CheckoutPayload, checkoutSchema } from "./entrada.ts";
+import { metadataDaCobranca, statusInicialDoSignup, valorDoPlano } from "./regras.ts";
 
 const log = createLogger("pilar-checkout-create");
 
@@ -112,8 +113,8 @@ serve(
       return jsonResponse({ error: "Plano não encontrado" }, 404, req);
     }
 
-    const value = body.billing_cycle === "yearly" ? plan.preco_anual : plan.preco_mensal;
-    if (!value || value <= 0) {
+    const value = valorDoPlano(plan, body.billing_cycle);
+    if (value == null) {
       return jsonResponse({ error: "Valor do plano indisponível" }, 400, req);
     }
 
@@ -221,13 +222,7 @@ serve(
     }
 
     // --- Metadata para o front renderizar ---
-    const metadata: Record<string, unknown> = {
-      billing_type: body.billing_type,
-      value,
-      cycle: body.billing_cycle,
-      payment_id: firstPayment?.id ?? null,
-      invoice_url: firstPayment?.invoiceUrl ?? null,
-    };
+    const metadata = metadataDaCobranca(body.billing_type, value, body.billing_cycle, firstPayment);
 
     if (body.billing_type === "PIX" && firstPayment) {
       try {
@@ -242,20 +237,8 @@ serve(
       }
     }
 
-    if (body.billing_type === "BOLETO" && firstPayment) {
-      metadata.boleto = {
-        bank_slip_url: firstPayment.bankSlipUrl ?? null,
-        identification_field: firstPayment.identificationField ?? null,
-        nosso_numero: firstPayment.nossoNumero ?? null,
-      };
-    }
-
     // Status inicial — cartão aprovado na hora atualiza já aqui
-    const initialStatus =
-      body.billing_type === "CREDIT_CARD" &&
-      (firstPayment?.status === "CONFIRMED" || firstPayment?.status === "RECEIVED")
-        ? "paid"
-        : "pending";
+    const initialStatus = statusInicialDoSignup(body.billing_type, firstPayment?.status);
 
     await admin
       .from("pilar_pending_signups")
