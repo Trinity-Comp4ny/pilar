@@ -130,6 +130,17 @@ describe("CampoRegistrarDia", () => {
     expect(fila.itens).toHaveLength(0);
   });
 
+  it("sessão vencida no servidor: limpa o token e volta para o login", async () => {
+    rpcCampo({ campo_salvar_rdo: { data: { ok: false, erro: "Sessão inválida" }, error: null } });
+    montar();
+    digitar("O que foi feito hoje", "Pintura");
+    salvar();
+    expect(await screen.findByText("Tela de login")).toBeInTheDocument();
+    expect(toast.error).toHaveBeenCalledWith("Sua sessão expirou", expect.anything());
+    expect(sessionStorage.getItem("pilar_campo_token")).toBeNull();
+    expect(fila.itens).toHaveLength(0);
+  });
+
   it("data no futuro e efetivo negativo são barrados pelos campos", async () => {
     montar();
     digitar("Data", "2999-01-01");
