@@ -69,6 +69,9 @@ async function preencherTudo(
 
 const botaoCriar = () => screen.getByRole("button", { name: /Criar conta|Criando conta/ });
 
+// Formulários longos preenchidos tecla a tecla passam de 5s com a suíte inteira em paralelo.
+vi.setConfig({ testTimeout: 15000 });
+
 beforeEach(() => {
   vi.clearAllMocks();
   envMock.VITE_TURNSTILE_SITE_KEY = "";

@@ -88,6 +88,9 @@ async function preencherBasico(user: ReturnType<typeof userEvent.setup>) {
 
 const salvar = () => screen.getByRole("button", { name: /Continuar|Salvar|Concluir|Salvando/ });
 
+// Formulários longos preenchidos tecla a tecla passam de 5s com a suíte inteira em paralelo.
+vi.setConfig({ testTimeout: 15000 });
+
 beforeEach(() => {
   vi.clearAllMocks();
   h.calls.length = 0;

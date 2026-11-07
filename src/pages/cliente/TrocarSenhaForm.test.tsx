@@ -24,6 +24,9 @@ async function preencher(atual: string, nova: string, conf: string) {
 
 const salvar = () => screen.getByRole("button", { name: /Salvar nova senha|Salvando/ });
 
+// Formulários longos preenchidos tecla a tecla passam de 5s com a suíte inteira em paralelo.
+vi.setConfig({ testTimeout: 15000 });
+
 beforeEach(() => {
   vi.clearAllMocks();
   sessionStorage.clear();
