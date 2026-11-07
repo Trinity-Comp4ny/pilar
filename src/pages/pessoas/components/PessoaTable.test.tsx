@@ -106,7 +106,9 @@ describe("PessoaTable", () => {
     const { user } = renderTabela();
     await user.click(within(screen.getByTestId("toolbar")).getByRole("button", { name: "Cargo" }));
     const lista = await screen.findByRole("listbox", { name: "Cargo" });
-    const opcoes = within(lista).getAllByRole("option").map((o) => o.textContent);
+    const opcoes = within(lista)
+      .getAllByRole("option")
+      .map((o) => o.textContent);
     expect(opcoes).toEqual(["Todos os cargos", "Arquiteto", "Projetista"]);
     await user.click(within(lista).getByRole("option", { name: "Arquiteto" }));
     expect(linhas()).toHaveLength(2);
