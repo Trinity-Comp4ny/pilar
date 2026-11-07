@@ -364,3 +364,110 @@ describe("enviarRegistroRemoto", () => {
     expect(corpo.audio).toEqual(expect.objectContaining({ mime_type: "audio/webm", duracao_s: 12 }));
   });
 });
+
+describe("useCampoSync: dia completo", () => {
+  function montar() {
+    const qc = new QueryClient();
+    const invalidate = vi.spyOn(qc, "invalidateQueries");
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    );
+    return { ...renderHook(() => useCampoSync(), { wrapper }), invalidate };
+  }
+
+  const diaCompleto = (): FilaDiaItem => ({
+    ...dia("d-1"),
+    fotos: [{ contentType: "image/jpeg", imageBase64: "AAA", enviada: false }],
+    medicoes: [{ item: "Alvenaria", quantidade: 12, unidade: "m²", enviada: false }],
+    tarefas: [{ tarefaId: "t-1", resultado: "concluiu", observacao: "ok", enviada: false }],
+    efetivos: [{ fornecedorId: "f-1", fornecedorNome: "Empreiteira", quantidade: 4, enviada: false }],
+    impedimentos: [{ descricao: "Chuva", tipo: "clima", enviada: false }],
+    visitas: [{ fornecedorId: null, fornecedorNome: "Fiscal", observacao: "Vistoria", enviada: false }],
+  });
+
+  it("envia o RDO, a foto e cada lançamento do dia com o token da sessão", async () => {
+    definirOnline(false);
+    setCampoToken("tok-1");
+    await filas.dias.salvar(diaCompleto());
+    fake.invoke.mockResolvedValue({ data: { success: true }, error: null });
+    fake.rpc.mockImplementation(async (nome: string) =>
+      nome === "campo_salvar_rdo"
+        ? { data: { ok: true, rdo_id: "rdo-1" }, error: null }
+        : { data: { ok: true }, error: null }
+    );
+    const { result, invalidate } = montar();
+    await act(() => result.current.sincronizar());
+    await waitFor(() => expect(result.current.pendentes).toBe(0));
+
+    expect(fake.invoke).toHaveBeenCalledWith("campo-upload-foto", {
+      body: { token: "tok-1", rdo_id: "rdo-1", image_base64: "AAA", content_type: "image/jpeg" },
+    });
+    expect(fake.rpc).toHaveBeenCalledWith("campo_registrar_medicao", {
+      p_token: "tok-1",
+      p_rdo_id: "rdo-1",
+      p_item: "Alvenaria",
+      p_quantidade: 12,
+      p_unidade: "m²",
+    });
+    expect(fake.rpc).toHaveBeenCalledWith("campo_registrar_tarefa_rdo", {
+      p_token: "tok-1",
+      p_rdo_id: "rdo-1",
+      p_tarefa_id: "t-1",
+      p_resultado: "concluiu",
+      p_observacao: "ok",
+    });
+    expect(fake.rpc).toHaveBeenCalledWith("campo_registrar_efetivo", {
+      p_token: "tok-1",
+      p_rdo_id: "rdo-1",
+      p_fornecedor_id: "f-1",
+      p_fornecedor_nome: "Empreiteira",
+      p_quantidade: 4,
+    });
+    expect(fake.rpc).toHaveBeenCalledWith("campo_registrar_impedimento", {
+      p_token: "tok-1",
+      p_rdo_id: "rdo-1",
+      p_descricao: "Chuva",
+      p_tipo: "clima",
+    });
+    expect(fake.rpc).toHaveBeenCalledWith("campo_registrar_visita", {
+      p_token: "tok-1",
+      p_rdo_id: "rdo-1",
+      p_fornecedor_id: null,
+      p_fornecedor_nome: "Fiscal",
+      p_observacao: "Vistoria",
+    });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["campo_rdos"] });
+    expect(filas.dias.itens.size).toBe(0);
+  });
+
+  it("falha em cada lançamento mantém o dia na fila com o RDO já criado", async () => {
+    definirOnline(false);
+    setCampoToken("tok-1");
+    await filas.dias.salvar(diaCompleto());
+    fake.invoke.mockResolvedValue({ data: { success: false }, error: null });
+    fake.rpc.mockImplementation(async (nome: string) =>
+      nome === "campo_salvar_rdo"
+        ? { data: { ok: true, rdo_id: "rdo-1" }, error: null }
+        : { data: null, error: { message: "rls" } }
+    );
+    const { result, invalidate } = montar();
+    await act(() => result.current.sincronizar());
+    await waitFor(() => expect(result.current.pendentes).toBe(1));
+    const item = filas.dias.itens.get("d-1");
+    expect(item?.rdoId).toBe("rdo-1");
+    expect(item?.fotos[0].enviada).toBe(false);
+    expect(item?.medicoes[0].enviada).toBe(false);
+    expect(invalidate).not.toHaveBeenCalledWith({ queryKey: ["campo_rdos"] });
+  });
+
+  it("RDO sem id devolvido conta como falha", async () => {
+    definirOnline(false);
+    setCampoToken("tok-1");
+    await filas.dias.salvar(dia("d-1"));
+    fake.rpc.mockResolvedValue({ data: { ok: true }, error: null });
+    const { result } = montar();
+    await act(() => result.current.sincronizar());
+    await waitFor(() => expect(result.current.pendentes).toBe(1));
+    expect(filas.dias.itens.get("d-1")?.rdoId).toBeUndefined();
+  });
+});
