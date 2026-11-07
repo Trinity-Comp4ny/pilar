@@ -65,3 +65,21 @@ export const defaultValues = (tipo: TipoLancamento): FormData => ({
   recorrente: false,
   periodicidade: "mensal",
 });
+
+export type RateioLinha = { centro_custo_id: string; percentual: string };
+
+/**
+ * Linhas de rateio preenchidas; lança se a soma não fecha 100%. O form chama
+ * ANTES de gravar: se só falhasse depois do insert, o lançamento ficava gravado
+ * sem rateio, o form seguia aberto e um novo "Salvar" duplicava o registro.
+ */
+export function rateiosValidos(rateioOn: boolean, rateios: RateioLinha[]): RateioLinha[] {
+  if (!rateioOn || rateios.length === 0) return [];
+  const validos = rateios.filter((r) => r.centro_custo_id && r.percentual);
+  if (validos.length === 0) return [];
+  const soma = validos.reduce((acc, r) => acc + Number(r.percentual || 0), 0);
+  if (Math.abs(soma - 100) > 0.01) {
+    throw new Error(`Soma dos percentuais do rateio deve ser 100 (atual: ${soma})`);
+  }
+  return validos;
+}
