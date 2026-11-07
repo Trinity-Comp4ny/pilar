@@ -27,7 +27,6 @@ import { pessoaSchema, pessoaDefaultValues, type PessoaFormData, type PessoaForm
 import { Badge } from "@/components/ui/badge";
 import { detectTipoChavePix, normalizarChavePix, TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import type { Pessoa, ContaBancaria, ChavePix } from "../types";
-
 import { BusyMark } from "@/components/motion/BusyMark";
 
 interface PessoaFormDialogProps {
@@ -83,9 +82,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
       form.reset({
         primeiro_nome: editPessoa.primeiro_nome || editPessoa.nome?.split(" ")[0] || "",
         sobrenome: editPessoa.sobrenome ?? (editPessoa.nome ? editPessoa.nome.split(" ").slice(1).join(" ") : ""),
-        // Sem acesso à folha o CPF chega mascarado ("***.***.***-12") e nunca é
-        // gravado; mantê-lo no form reprovava a validação de CPF num campo
-        // desabilitado e travava o salvamento. Exibição usa editPessoa.cpf.
+        // Sem folha, o CPF vem mascarado e só é exibido (editPessoa.cpf), nunca validado.
         cpf: editPessoa.pode_ver_sensivel ? editPessoa.cpf || "" : "",
         data_nascimento: editPessoa.data_nascimento || "",
         tipo_contrato: (editPessoa.tipo_contrato as ContractType) || CONTRACT_TYPES.CLT,

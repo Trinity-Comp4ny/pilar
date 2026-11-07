@@ -14,7 +14,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { CLIMA_OPCOES, TIPO_IMPEDIMENTO_OPCOES, somaEfetivo, type TipoImpedimento } from "@/lib/obras";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { clearCampoToken, getCampoToken } from "./useCampoAuth";
+import { getCampoToken, sairPorSessaoVencida } from "./useCampoAuth";
+import {
+  medicaoVazia,
+  pessoasValidas,
+  separarMedicoes,
+  sessaoVencida,
+  type MedicaoDigitada,
+} from "./registrarDiaRegras";
 import { filaOfflineDb } from "./campoOfflineDb";
 import type {
   FilaDiaPayload,
@@ -82,13 +89,6 @@ interface FotoLocal {
   preview: string;
 }
 
-interface MedicaoLocal {
-  item: string;
-  quantidade: string;
-  unidade: string;
-}
-const medicaoVazia = (): MedicaoLocal => ({ item: "", quantidade: "", unidade: "" });
-
 // Comprime a foto no cliente (max 1600px, JPEG 0.8): essencial para subir em 4G
 // ruim de canteiro. Devolve base64 puro (sem o prefixo data:) para a edge.
 async function comprimir(file: File): Promise<string> {
@@ -123,7 +123,7 @@ export default function CampoRegistrarDia() {
   const [atividades, setAtividades] = useState("");
   const [ocorrencias, setOcorrencias] = useState("");
   const [fotos, setFotos] = useState<FotoLocal[]>([]);
-  const [medicoes, setMedicoes] = useState<MedicaoLocal[]>([]);
+  const [medicoes, setMedicoes] = useState<MedicaoDigitada[]>([]);
   const [selTarefas, setSelTarefas] = useState<Record<string, SelTarefa>>({});
   const [novaTarefaTitulo, setNovaTarefaTitulo] = useState("");
   const [criandoTarefa, setCriandoTarefa] = useState(false);
@@ -157,10 +157,7 @@ export default function CampoRegistrarDia() {
     const usaLivre = novoEfetivo.fornecedorId === OUTRO;
     if (!novoEfetivo.fornecedorId || !novoEfetivo.quantidade.trim()) return;
     if (usaLivre && !novoEfetivo.nomeLivre.trim()) return;
-    // Quantidade de pessoas é inteira e positiva: "dez" ou "2,5" virariam NaN e
-    // travariam o envio na fila offline.
-    const pessoas = Number(novoEfetivo.quantidade.trim());
-    if (!Number.isInteger(pessoas) || pessoas <= 0) {
+    if (pessoasValidas(novoEfetivo.quantidade) === null) {
       toast.error("Quantidade de pessoas inválida", { description: "Use um número inteiro maior que zero." });
       return;
     }
@@ -219,7 +216,7 @@ export default function CampoRegistrarDia() {
 
   const addMedicao = () => setMedicoes((prev) => [...prev, medicaoVazia()]);
   const removerMedicao = (i: number) => setMedicoes((prev) => prev.filter((_, k) => k !== i));
-  const setMedicaoCampo = (i: number, campo: keyof MedicaoLocal, valor: string) =>
+  const setMedicaoCampo = (i: number, campo: keyof MedicaoDigitada, valor: string) =>
     setMedicoes((prev) => prev.map((m, k) => (k === i ? { ...m, [campo]: valor } : m)));
 
   const toggleTarefa = (id: string) => {
@@ -287,23 +284,11 @@ export default function CampoRegistrarDia() {
       p_pendencias: null,
     };
 
-    // Só medições completas entram; linha em branco é deixada de lado em silêncio
-    // (o usuário só clicou "+" e não preencheu).
-    const medicoesCompletas = medicoes.filter(
-      (m) => m.item.trim() !== "" && m.quantidade.trim() !== "" && m.unidade.trim() !== ""
-    );
-    // Quantidade que não é número positivo (ex.: "muitos") virava NaN e travava o item na fila.
-    const medicaoInvalida = medicoesCompletas.find((m) => !(Number(m.quantidade) > 0));
+    const { invalida: medicaoInvalida, validas: medicoesValidas } = separarMedicoes(medicoes);
     if (medicaoInvalida) {
       toast.error("Quantidade inválida na medição", { description: medicaoInvalida.item.trim() });
       return;
     }
-    const medicoesValidas: FilaMedicao[] = medicoesCompletas.map((m) => ({
-      item: m.item.trim(),
-      quantidade: Number(m.quantidade),
-      unidade: m.unidade.trim(),
-      enviada: false,
-    }));
 
     const tarefasSelecionadas: FilaTarefaVinculo[] = Object.entries(selTarefas).map(([tarefaId, s]) => ({
       tarefaId,
@@ -362,14 +347,7 @@ export default function CampoRegistrarDia() {
       );
       if (error) throw error;
       if (!res?.ok || !res.rdo_id) {
-        // Sessão vencida no servidor: volta ao login em vez de deixar a pessoa
-        // tentando de novo num formulário que nunca vai aceitar.
-        if (res?.erro === "Sessão inválida") {
-          clearCampoToken();
-          toast.error("Sua sessão expirou", { description: "Entre de novo para registrar o dia." });
-          navigate("/campo/login", { replace: true });
-          return;
-        }
+        if (sessaoVencida(res?.erro)) return sairPorSessaoVencida(navigate);
         toast.error("Não foi possível registrar", { description: res?.erro ?? "Tente de novo" });
         return;
       }
