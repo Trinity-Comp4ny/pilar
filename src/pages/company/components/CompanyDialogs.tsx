@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ROLES } from "../types";
-import { useObjectUrl } from "@/hooks/useObjectUrl";
+import { useObjectUrl } from "@/pages/company/hooks/useObjectUrl";
 
 interface LogoPreviewDialogProps {
   open: boolean;
