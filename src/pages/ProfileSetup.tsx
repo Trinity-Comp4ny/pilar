@@ -612,7 +612,7 @@ export default function ProfileSetup() {
             </div>
 
             <blockquote className="text-3xl font-light leading-snug">
-              "Do contrato à execução, num fluxo só."
+              "Gestão com agentes de IA para escritórios de engenharia e arquitetura."
             </blockquote>
 
             <p className="text-sm text-white/70">Vamos deixar sua conta pronta com o essencial. Leva poucos minutos.</p>

@@ -277,8 +277,8 @@ def favicon():
     return svg(f, f, body, "Pilar")
 
 
-TAGLINE = "Do contrato à execução, num fluxo só."
-OG_SUB = "Gestão para escritórios de engenharia e arquitetura"
+TAGLINE = ["Gestão com agentes de IA para", "escritórios de engenharia e arquitetura."]
+OG_SUB = "A IA prepara. O sistema confere. Você aprova."
 MUTED = "#5F646D"  # --text-secondary
 
 
@@ -295,9 +295,11 @@ def og_image():
     z = 230 / lw
     body += f'<g transform="translate({(w - lw * z) / 2:.2f} 92) scale({z:.5f})">{lock}</g>'
     regular = glyphs.load(weight=400)
-    body += _texto(FONT, TAGLINE, 58, w / 2, 292, INK)
-    body += _texto(regular, OG_SUB, 26, w / 2, 344, MUTED)
-    return svg(w, h, body, "Pilar: do contrato à execução, num fluxo só")
+    # A tagline em duas linhas, quebrada no "para": "Gestão com agentes de IA" é o que se lê primeiro.
+    for i, linha in enumerate(TAGLINE):
+        body += _texto(FONT, linha, 50, w / 2, 262 + i * 60, INK)
+    body += _texto(regular, OG_SUB, 24, w / 2, 372, MUTED)
+    return svg(w, h, body, "Pilar: gestão com agentes de IA para escritórios de engenharia e arquitetura")
 
 
 def write(name, text):
