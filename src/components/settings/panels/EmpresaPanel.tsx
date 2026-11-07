@@ -19,6 +19,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useRequireAal2 } from "@/hooks/useRequireAal2";
 import { analytics } from "@/lib/analytics";
 import { isValidEmail } from "@/lib/emailValidator";
+import { normalizarSite } from "@/lib/perfilEscritorio";
 
 // Conteúdo da aba Empresa do modal de configurações. É o antigo /company sem a casca
 // de página (PageLayout/PageHeader): todo o estado e handlers seguem centralizados
@@ -76,7 +77,7 @@ export function EmpresaPanel() {
       const { data: profile } = await supabase
         .from("profiles")
         .select(
-          "id, empresa_id, role, empresas(id, nome, cnpj, status, email, contato, endereco, cidade, estado, cep, logo_url, pix_chave, pix_instrucoes)"
+          "id, empresa_id, role, empresas(id, nome, cnpj, status, email, contato, endereco, cidade, estado, cep, logo_url, pix_chave, pix_instrucoes, site, porte, disciplinas)"
         )
         .eq("id", user.id)
         .single();
@@ -98,6 +99,9 @@ export function EmpresaPanel() {
           logo_url?: string;
           pix_chave?: string;
           pix_instrucoes?: string;
+          site?: string | null;
+          porte?: string | null;
+          disciplinas?: string[] | null;
         };
         setCompanyData({
           nomeEmpresa: emp.nome || "",
@@ -112,6 +116,9 @@ export function EmpresaPanel() {
           logoUrl: emp.logo_url || "",
           pixChave: emp.pix_chave || "",
           pixInstrucoes: emp.pix_instrucoes || "",
+          site: emp.site || "",
+          porte: emp.porte || "",
+          disciplinas: emp.disciplinas ?? [],
         });
       }
 
@@ -200,6 +207,9 @@ export function EmpresaPanel() {
           cep: companyData.cep,
           pix_chave: companyData.pixChave || null,
           pix_instrucoes: companyData.pixInstrucoes || null,
+          site: normalizarSite(companyData.site ?? ""),
+          porte: companyData.porte || null,
+          disciplinas: companyData.disciplinas?.length ? companyData.disciplinas : null,
         } as never)
         .eq("id", profile.empresa_id);
       if (error) throw error;
@@ -428,6 +438,7 @@ export function EmpresaPanel() {
                 onSave={handleSaveCompany}
                 onChange={handleCompanyFieldChange}
                 onStatusChange={(v) => setCompanyData((prev) => ({ ...prev, status: v }))}
+                onDisciplinasChange={(v) => setCompanyData((prev) => ({ ...prev, disciplinas: v }))}
               />
             </TabsContent>
 

@@ -195,11 +195,21 @@ describe("Configurações › Conta", () => {
     });
   });
 
-  it("guia de primeiros passos só aparece para admin", async () => {
-    const view = renderPanel();
-    expect(screen.queryByRole("button", { name: "Refazer o guia" })).not.toBeInTheDocument();
-    view.unmount();
-    h.isAdmin = true;
+  it("grava função e LinkedIn normalizado (SPEC 149)", async () => {
+    renderPanel();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Editar" }));
+    await user.click(screen.getByRole("radio", { name: "Coordenação de projetos" }));
+    await user.type(screen.getByPlaceholderText("linkedin.com/in/seu-perfil"), "ana-souza");
+    await user.click(screen.getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(h.toastSuccess).toHaveBeenCalledWith("Conta atualizada", expect.anything()));
+    expect(h.calls.find((c) => c.op === "update")?.payload).toMatchObject({
+      funcao: "coordenador",
+      linkedin_url: "https://www.linkedin.com/in/ana-souza",
+    });
+  });
+
+  it("guia de primeiros passos aparece para todo mundo (SPEC 149: convidado também tem checklist)", async () => {
     renderPanel();
     await userEvent.setup().click(screen.getByRole("button", { name: "Refazer o guia" }));
     await waitFor(() => expect(h.toastSuccess).toHaveBeenCalledWith("Guia reativado", expect.anything()));
