@@ -36,7 +36,12 @@ describe("DisciplinasEditor", () => {
   });
 
   it("calcula custo da linha, totais e margem positiva", () => {
-    render(<DisciplinasEditor rows={[linha(), linha({ id: "l2", disciplina: "Elétrico", horas_estimadas: 5 })]} onChange={vi.fn()} />);
+    render(
+      <DisciplinasEditor
+        rows={[linha(), linha({ id: "l2", disciplina: "Elétrico", horas_estimadas: 5 })]}
+        onChange={vi.fn()}
+      />
+    );
     expect(screen.getByText("15h")).toBeInTheDocument();
     expect(screen.getByText(/Custo: R\$\s?1\.500,00/)).toBeInTheDocument();
     expect(screen.getByText(/Soma venda: R\$\s?4\.000,00/)).toBeInTheDocument();

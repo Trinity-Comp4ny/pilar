@@ -264,14 +264,20 @@ describe("ImportarLancamentosDialog: revisão e gravação", () => {
     setup();
     await colarEExtrair();
     const selectCat = within(linhas()[0]).getByRole("combobox");
-    const opcoes = within(selectCat).getAllByRole("option").map((o) => o.textContent);
+    const opcoes = within(selectCat)
+      .getAllByRole("option")
+      .map((o) => o.textContent);
     expect(opcoes).toEqual(["(vazio)", "Sem categoria", "Material", "Geral"]);
     fireEvent.change(selectCat, { target: { value: "cat-mat" } });
     expect(within(linhas()[0]).getByRole("combobox")).toHaveValue("cat-mat");
     fireEvent.click(within(linhas()[0]).getByRole("button", { name: /Saída/ }));
     const depois = within(linhas()[0]).getByRole("combobox");
     expect(depois).toHaveValue("__none__");
-    expect(within(depois).getAllByRole("option").map((o) => o.textContent)).toContain("Honorários");
+    expect(
+      within(depois)
+        .getAllByRole("option")
+        .map((o) => o.textContent)
+    ).toContain("Honorários");
   });
 
   it("edições na linha vão para a gravação com conta e projeto escolhidos", async () => {

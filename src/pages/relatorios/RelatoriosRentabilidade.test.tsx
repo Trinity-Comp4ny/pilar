@@ -37,7 +37,7 @@ const rpcRows = [
   },
   {
     projeto_id: "p2",
-    projeto_nome: "=HYPERLINK(\"x\")",
+    projeto_nome: '=HYPERLINK("x")',
     codigo_projeto: "PRJ-2",
     status: "Concluído",
     valor_contrato: "50000",
@@ -149,15 +149,17 @@ describe("RelatoriosRentabilidade: por projeto", () => {
     setup();
     await screen.findByRole("table");
     const selCliente = screen.getByRole("combobox", { name: "Filtrar por cliente" });
-    const opcoes = within(selCliente).getAllByRole("option").map((o) => o.textContent);
+    const opcoes = within(selCliente)
+      .getAllByRole("option")
+      .map((o) => o.textContent);
     expect(opcoes).toEqual(["(vazio)", "Beta Incorporações", "Construtora Alfa"]);
     // status "-" não vira opção
     const selStatus = screen.getByRole("combobox", { name: "Filtrar por status" });
-    expect(within(selStatus).getAllByRole("option").map((o) => o.textContent)).toEqual([
-      "(vazio)",
-      "Concluído",
-      "Em andamento",
-    ]);
+    expect(
+      within(selStatus)
+        .getAllByRole("option")
+        .map((o) => o.textContent)
+    ).toEqual(["(vazio)", "Concluído", "Em andamento"]);
 
     fireEvent.change(selCliente, { target: { value: "Construtora Alfa" } });
     expect(linhasTabela()).toHaveLength(2);
@@ -313,9 +315,7 @@ describe("RelatoriosRentabilidade: exportação", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: /PDF/ }));
     });
-    await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith("Erro ao exportar", { description: "sem memória" })
-    );
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Erro ao exportar", { description: "sem memória" }));
     expect(toast.success).not.toHaveBeenCalled();
   });
 });

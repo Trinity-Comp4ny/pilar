@@ -97,9 +97,23 @@ function comDados(extra: Record<string, unknown> = {}) {
   const tabelas: Record<string, unknown> = {
     obra_rdo: rdos,
     obra_rdo_tarefa: [
-      { id: "v-1", rdo_id: "r-1", tarefa_id: "t-1", resultado: "concluiu", observacao: "liberado", tarefa: { titulo: "Laje" } },
+      {
+        id: "v-1",
+        rdo_id: "r-1",
+        tarefa_id: "t-1",
+        resultado: "concluiu",
+        observacao: "liberado",
+        tarefa: { titulo: "Laje" },
+      },
       { id: "v-2", rdo_id: "r-1", tarefa_id: "t-2", resultado: "parou", observacao: null, tarefa: null },
-      { id: "v-3", rdo_id: "r-2", tarefa_id: "t-3", resultado: "avancou", observacao: null, tarefa: { titulo: "Alvenaria" } },
+      {
+        id: "v-3",
+        rdo_id: "r-2",
+        tarefa_id: "t-3",
+        resultado: "avancou",
+        observacao: null,
+        tarefa: { titulo: "Alvenaria" },
+      },
     ],
     obra_rdo_efetivo: [
       { id: "e-1", rdo_id: "r-1", fornecedor: { nome: "Equipe Forma" }, fornecedor_nome: null, quantidade: 4 },
@@ -117,7 +131,9 @@ function comDados(extra: Record<string, unknown> = {}) {
     obra_registro: [],
     ...extra,
   };
-  fake.responder((c) => (c.op === "select" && c.tabela in tabelas ? { data: tabelas[c.tabela], error: null } : undefined));
+  fake.responder((c) =>
+    c.op === "select" && c.tabela in tabelas ? { data: tabelas[c.tabela], error: null } : undefined
+  );
   fake.supabase.storage.from.mockImplementation(
     () =>
       ({

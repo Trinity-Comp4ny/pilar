@@ -19,11 +19,7 @@ export function OnboardingTourController() {
 
   const candidate = useMemo(() => {
     if (!isAdmin || loading || state.dismissed) return null;
-    return (
-      steps.find(
-        (s) => s.rota === pathname && !s.done && !state.tours_seen.includes(s.key),
-      ) ?? null
-    );
+    return steps.find((s) => s.rota === pathname && !s.done && !state.tours_seen.includes(s.key)) ?? null;
   }, [isAdmin, loading, state.dismissed, state.tours_seen, steps, pathname]);
 
   const candidateKey = candidate?.key ?? null;

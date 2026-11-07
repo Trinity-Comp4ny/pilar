@@ -149,9 +149,7 @@ describe("FluxoDisciplinasDialog", () => {
       responsaveis_nomes: ["Bruno"],
     });
     expect(payload.disciplinas[0]).not.toHaveProperty("_key");
-    expect(
-      payload.disciplinas.find((d: { nome: string }) => d.nome === "Elétrica").duracao_dias_uteis
-    ).toBeUndefined();
+    expect(payload.disciplinas.find((d: { nome: string }) => d.nome === "Elétrica").duracao_dias_uteis).toBeUndefined();
     expect(payload.disciplinas.find((d: { nome: string }) => d.nome === "Elétrica")).toMatchObject({
       checklist_padrao: [expect.objectContaining({ texto: "Memorial" })],
     });

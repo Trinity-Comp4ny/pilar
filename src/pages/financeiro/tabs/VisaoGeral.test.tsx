@@ -33,7 +33,9 @@ vi.mock("recharts", async (orig) => {
   return {
     ...real,
     ResponsiveContainer: ({ children }: { children: ReactNode }) =>
-      isValidElement(children) ? cloneElement(children as ReactElement<Record<string, unknown>>, { width: 600, height: 300 }) : null,
+      isValidElement(children)
+        ? cloneElement(children as ReactElement<Record<string, unknown>>, { width: 600, height: 300 })
+        : null,
   };
 });
 
@@ -68,7 +70,10 @@ const dadosCheios = {
   despesasCategoriaData: [{ name: "Pessoal", value: 60000, color: "#a00", count: 6 }],
 };
 
-function setup(props: { onNavigateTab?: (t: string) => void; onNovoLancamento?: () => void } = {}, viz: Visualizacao = "mes") {
+function setup(
+  props: { onNavigateTab?: (t: string) => void; onNovoLancamento?: () => void } = {},
+  viz: Visualizacao = "mes"
+) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const filtro = {
     dateFrom: new Date(2026, 9, 1),
@@ -115,8 +120,22 @@ beforeEach(() => {
   sb.resultado("lancamentos.select", {
     data: [
       { id: "l1", tipo: "despesa", descricao: "Cimento", valor: "150", data_vencimento: "2026-10-04", status: "Pago" },
-      { id: "l2", tipo: "receita", descricao: "Sinal projeto", valor: 2000, data_vencimento: "2026-10-02", status: "Pago" },
-      { id: "l3", tipo: "transferencia", descricao: "Entre contas", valor: null, data_vencimento: "2026-10-01", status: "Pago" },
+      {
+        id: "l2",
+        tipo: "receita",
+        descricao: "Sinal projeto",
+        valor: 2000,
+        data_vencimento: "2026-10-02",
+        status: "Pago",
+      },
+      {
+        id: "l3",
+        tipo: "transferencia",
+        descricao: "Entre contas",
+        valor: null,
+        data_vencimento: "2026-10-01",
+        status: "Pago",
+      },
     ],
     error: null,
   });

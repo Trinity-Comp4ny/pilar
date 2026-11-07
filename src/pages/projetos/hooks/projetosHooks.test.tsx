@@ -88,7 +88,14 @@ describe("useProjetosData", () => {
         return {
           data: [
             { id: "p-1", nome: "Casa", cliente_id: "c-1", status: "Em Andamento", prioridade: null, etapa_id: null },
-            { id: "p-2", nome: "Galpão", cliente_id: null, status: "Concluído", prioridade: "Alta", ordem_prioridade: 2 },
+            {
+              id: "p-2",
+              nome: "Galpão",
+              cliente_id: null,
+              status: "Concluído",
+              prioridade: "Alta",
+              ordem_prioridade: 2,
+            },
           ],
           error: null,
         };
@@ -104,7 +111,13 @@ describe("useProjetosData", () => {
               status: "Em Andamento",
               projeto_disciplina_responsaveis: [{ pessoa_id: "pes-1", pessoas: { id: "pes-1", nome: "Bia" } }],
             },
-            { id: "d-2", projeto_id: "p-1", nome: "Elétrica", status: "Não Iniciado", projeto_disciplina_responsaveis: null },
+            {
+              id: "d-2",
+              projeto_id: "p-1",
+              nome: "Elétrica",
+              status: "Não Iniciado",
+              projeto_disciplina_responsaveis: null,
+            },
           ],
           error: null,
         };
@@ -212,7 +225,13 @@ describe("rentabilidade", () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data!.totalReceitas).toBe(1000);
     expect(result.current.data!.clientes).toEqual([
-      expect.objectContaining({ cliente_id: "c-1", cliente_nome: "Ana", margem_bruta: 700, num_projetos: 2, concentracao_pct: 100 }),
+      expect.objectContaining({
+        cliente_id: "c-1",
+        cliente_nome: "Ana",
+        margem_bruta: 700,
+        num_projetos: 2,
+        concentracao_pct: 100,
+      }),
       expect.objectContaining({ cliente_id: "c-2", margem_bruta_pct: 0, num_projetos: 1 }),
     ]);
   });
@@ -307,30 +326,56 @@ describe("filtros na URL", () => {
   }
 
   it("lê a visão pelo caminho e respeita o acesso ao mapa", () => {
-    expect(hook(comLocal(() => useProjetosUrlState(true)), "/projetos/disciplinas").result.current.estado.activeTab).toBe(
-      "disciplinas"
-    );
-    expect(hook(comLocal(() => useProjetosUrlState(true)), "/projetos/cronograma").result.current.estado.activeTab).toBe(
-      "cronograma"
-    );
-    expect(hook(comLocal(() => useProjetosUrlState(true)), "/projetos/mapa").result.current.estado.activeTab).toBe("mapa");
-    expect(hook(comLocal(() => useProjetosUrlState(false)), "/projetos/mapa").result.current.estado.activeTab).toBe(
-      "quadro"
-    );
-    expect(hook(comLocal(() => useProjetosUrlState(true)), "/projetos?v=lista").result.current.estado.viewMode).toBe(
-      "lista"
-    );
+    expect(
+      hook(
+        comLocal(() => useProjetosUrlState(true)),
+        "/projetos/disciplinas"
+      ).result.current.estado.activeTab
+    ).toBe("disciplinas");
+    expect(
+      hook(
+        comLocal(() => useProjetosUrlState(true)),
+        "/projetos/cronograma"
+      ).result.current.estado.activeTab
+    ).toBe("cronograma");
+    expect(
+      hook(
+        comLocal(() => useProjetosUrlState(true)),
+        "/projetos/mapa"
+      ).result.current.estado.activeTab
+    ).toBe("mapa");
+    expect(
+      hook(
+        comLocal(() => useProjetosUrlState(false)),
+        "/projetos/mapa"
+      ).result.current.estado.activeTab
+    ).toBe("quadro");
+    expect(
+      hook(
+        comLocal(() => useProjetosUrlState(true)),
+        "/projetos?v=lista"
+      ).result.current.estado.viewMode
+    ).toBe("lista");
   });
 
   it("link antigo ?view= redireciona para a rota nova", async () => {
-    const a = hook(comLocal(() => useProjetosUrlState(true)), "/projetos?view=cronograma");
+    const a = hook(
+      comLocal(() => useProjetosUrlState(true)),
+      "/projetos?view=cronograma"
+    );
     await waitFor(() => expect(a.result.current.local.pathname).toBe("/projetos/cronograma"));
-    const b = hook(comLocal(() => useProjetosUrlState(true)), "/projetos?view=qualquer");
+    const b = hook(
+      comLocal(() => useProjetosUrlState(true)),
+      "/projetos?view=qualquer"
+    );
     await waitFor(() => expect(b.result.current.local.search).toBe(""));
   });
 
   it("filtros, coluna recolhida e troca de visão vão para a URL", async () => {
-    const { result } = hook(comLocal(() => useProjetosUrlState(true)), "/projetos?q=ini");
+    const { result } = hook(
+      comLocal(() => useProjetosUrlState(true)),
+      "/projetos?q=ini"
+    );
     expect(result.current.estado.filters.search).toBe("ini");
     act(() => result.current.estado.setFilters({ ...vazio, search: "galpão" }));
     await waitFor(() => expect(result.current.local.search).toContain("q=galp"));
@@ -369,7 +414,9 @@ describe("checklist da disciplina", () => {
 
   it("CRUD: adiciona na próxima ordem, marca e remove", async () => {
     fake.responder((c) =>
-      c.op === "select" ? { data: [{ id: "i-1", texto: "Memorial", concluido: false, ordem: 0 }], error: null } : undefined
+      c.op === "select"
+        ? { data: [{ id: "i-1", texto: "Memorial", concluido: false, ordem: 0 }], error: null }
+        : undefined
     );
     const { result, invalidar } = hook(() => useDisciplinaChecklist("d-1"));
     await waitFor(() => expect(result.current.data).toHaveLength(1));
@@ -479,7 +526,10 @@ describe("revisões da disciplina", () => {
 
 describe("etapas do quadro", () => {
   it("lista e cor padrão", async () => {
-    fake.responder(() => ({ data: [{ id: "e-1", nome: "Briefing", ordem: 1, cor: null, bucket: "Em Andamento" }], error: null }));
+    fake.responder(() => ({
+      data: [{ id: "e-1", nome: "Briefing", ordem: 1, cor: null, bucket: "Em Andamento" }],
+      error: null,
+    }));
     const { result } = hook(() => useProjetoEtapas());
     await waitFor(() => expect(result.current.data).toHaveLength(1));
     expect(corDaEtapaProjeto(null)).toBe("#94a3b8");
@@ -488,7 +538,9 @@ describe("etapas do quadro", () => {
 
   it("criar, editar, reordenar e excluir", async () => {
     fake.responder((c) =>
-      c.op === "insert" ? { data: { id: "e-n", nome: "Nova", ordem: 3, cor: null, bucket: "Em Andamento" }, error: null } : undefined
+      c.op === "insert"
+        ? { data: { id: "e-n", nome: "Nova", ordem: 3, cor: null, bucket: "Em Andamento" }, error: null }
+        : undefined
     );
     const { result, invalidar } = hook(() => useProjetoEtapaMutations());
     let criada: unknown;
@@ -509,7 +561,13 @@ describe("etapas do quadro", () => {
       cor: null,
       bucket: "Em andamento",
     });
-    expect(fake.escritas("projeto_etapas").map((e) => e.op)).toEqual(["insert", "update", "update", "update", "delete"]);
+    expect(fake.escritas("projeto_etapas").map((e) => e.op)).toEqual([
+      "insert",
+      "update",
+      "update",
+      "update",
+      "delete",
+    ]);
     expect(invalidar).toHaveBeenCalledWith({ queryKey: ["projetos"] });
   });
 
@@ -559,14 +617,28 @@ describe("atividades, pessoas sem conta e timeline", () => {
   it("timeline mapeia os eventos; erro e sem id", async () => {
     fake.responder(() => ({
       data: [
-        { disciplina_id: null, disciplina_nome: null, tipo: "projeto_iniciado", ocorrido_em: "x", detalhe: null, autor_nome: "Ana" },
+        {
+          disciplina_id: null,
+          disciplina_nome: null,
+          tipo: "projeto_iniciado",
+          ocorrido_em: "x",
+          detalhe: null,
+          autor_nome: "Ana",
+        },
       ],
       error: null,
     }));
     const a = hook(() => useProjetoTimeline("p-1"));
     await waitFor(() =>
       expect(a.result.current.data).toEqual([
-        { disciplinaId: null, disciplinaNome: null, tipo: "projeto_iniciado", ocorridoEm: "x", detalhe: null, autorNome: "Ana" },
+        {
+          disciplinaId: null,
+          disciplinaNome: null,
+          tipo: "projeto_iniciado",
+          ocorridoEm: "x",
+          detalhe: null,
+          autorNome: "Ana",
+        },
       ])
     );
     fake.responder(() => ({ data: null, error: erro("x") }));
@@ -595,7 +667,10 @@ describe("useReordenarProjetos", () => {
   it("erro volta a ordem anterior e avisa", async () => {
     rpcComEmpresa({ rpc_reordenar_projetos: { data: null, error: erro("sem permissão") } });
     const m = montar();
-    const antes = [{ id: "a", ordem_prioridade: 1 }, { id: "b", ordem_prioridade: 2 }];
+    const antes = [
+      { id: "a", ordem_prioridade: 1 },
+      { id: "b", ordem_prioridade: 2 },
+    ];
     m.qc.setQueryData(["projetos"], antes);
     const { result } = renderHook(() => useReordenarProjetos(), { wrapper: m.wrapper });
     await act(async () => {
