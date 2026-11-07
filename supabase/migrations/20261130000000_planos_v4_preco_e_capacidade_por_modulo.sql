@@ -148,7 +148,12 @@ DECLARE
   v_max   integer;
   v_count integer;
 BEGIN
-  IF auth.role() <> 'authenticated' OR NEW.status IN ('Ganho', 'Perdido') THEN
+  -- Lead de outra empresa não é assunto deste gatilho: a RLS de leads já recusa
+  -- o INSERT, e consultar os limites de outra empresa daria erro de permissão
+  -- antes da RLS (ex.: superusuário com claims de JWT de um usuário na sessão).
+  IF auth.role() <> 'authenticated'
+     OR NEW.status IN ('Ganho', 'Perdido')
+     OR NEW.empresa_id IS DISTINCT FROM public.get_user_empresa_id() THEN
     RETURN NEW;
   END IF;
 
@@ -170,6 +175,10 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+-- Função de gatilho não precisa de EXECUTE para ninguém (o Postgres só checa
+-- no CREATE TRIGGER); o teste anon_function_grants exige o REVOKE.
+REVOKE ALL ON FUNCTION public.enforce_capacidade_leads() FROM PUBLIC, anon, authenticated;
 
 DROP TRIGGER IF EXISTS trg_enforce_capacidade_leads ON public.leads;
 CREATE TRIGGER trg_enforce_capacidade_leads
