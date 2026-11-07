@@ -38,6 +38,22 @@ describe("folhaCalc", () => {
       expect(firstPix("chave-solta")).toBe("chave-solta");
     });
 
+    it("lê o formato do cadastro de pessoas ([{ chave, tipo }])", () => {
+      expect(firstPix([{ chave: "joao@escritorio.com.br", tipo: "email" }])).toBe("joao@escritorio.com.br");
+      expect(
+        firstPix([
+          { chave: "", tipo: "cpf" },
+          { chave: "11999990000", tipo: "celular" },
+        ])
+      ).toBe("11999990000");
+      expect(firstPix([{ tipo: "cpf" }])).toBeNull();
+    });
+
+    it("folha com área fracionada e valor/m² com centavos", () => {
+      expect(calcularVariavel(123.45, 3.1)).toBeCloseTo(382.695, 10);
+      expect(calcularTotal(0, 0)).toBe(0);
+    });
+
     it("degrada para null quando vazio ou inválido", () => {
       expect(firstPix(null)).toBeNull();
       expect(firstPix([])).toBeNull();

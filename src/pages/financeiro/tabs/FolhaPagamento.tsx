@@ -269,11 +269,13 @@ export default function FolhaPagamento() {
 
   const startEditing = () => {
     if (!selectedPerson) return;
+    // Total só entra pré-preenchido se já foi ajustado à mão antes. Pré-preencher
+    // sempre fazia o total antigo "grudar": mudar salário ou área não recalculava
+    // o total salvo (e o diálogo acusava total desacoplado sem ninguém mexer nele).
     setEditForm({
       p_salario_fixo: selectedPerson.p_salario_fixo,
       soma_area: selectedPerson.soma_area,
-      v_variavel: selectedPerson.v_variavel,
-      v_total: selectedPerson.v_total,
+      ...(selectedPerson.edited_fields?.includes("total") ? { v_total: selectedPerson.v_total } : {}),
     });
     setIsEditingDetail(true);
   };
