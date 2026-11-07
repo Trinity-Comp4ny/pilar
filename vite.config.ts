@@ -215,14 +215,18 @@ export default defineConfig(({ mode }) => ({
       // um módulo só desceram de src/lib e src/components para o módulo, e os testes de
       // acesso e autenticação entraram. Medido: lib 72/70/72/74, hooks 15/12/13/16,
       // components 22/20/17/22, financeiro 21/17/13/21, obras 13/12/9/13, projetos 8/5/7/8.
+      // 07/11 (varredura de testes por módulo: cobrança, comercial, projetos/obras/campo,
+      // financeiro, autenticação/portal/admin e landing): medido lib 82/80/82/84, hooks
+      // 51/42/49/54, hooks de módulo 35/28/32/40, components 51/48/43/53, financeiro
+      // 58/52/48/60, obras 49/46/43/51, projetos 33/28/29/36. Pisos ~2 pontos abaixo.
       thresholds: {
-        "src/lib/**": { statements: 70, branches: 68, functions: 70, lines: 72 },
-        "src/hooks/**": { statements: 14, branches: 10, functions: 12, lines: 15 },
-        "src/pages/*/hooks/**": { statements: 15, branches: 11, functions: 11, lines: 17 },
-        "src/components/**": { statements: 21, branches: 19, functions: 16, lines: 22 },
-        "src/pages/financeiro/**": { statements: 20, branches: 16, functions: 12, lines: 20 },
-        "src/pages/obras/**": { statements: 12, branches: 11, functions: 8, lines: 12 },
-        "src/pages/projetos/**": { statements: 7, branches: 4, functions: 6, lines: 7 },
+        "src/lib/**": { statements: 80, branches: 78, functions: 80, lines: 82 },
+        "src/hooks/**": { statements: 49, branches: 40, functions: 47, lines: 52 },
+        "src/pages/*/hooks/**": { statements: 33, branches: 26, functions: 30, lines: 38 },
+        "src/components/**": { statements: 49, branches: 46, functions: 41, lines: 51 },
+        "src/pages/financeiro/**": { statements: 56, branches: 50, functions: 46, lines: 58 },
+        "src/pages/obras/**": { statements: 47, branches: 44, functions: 41, lines: 49 },
+        "src/pages/projetos/**": { statements: 31, branches: 26, functions: 27, lines: 34 },
         // Por criticidade, não por pasta: arquivo que decide acesso, autentica ou mexe
         // com dinheiro tem piso próprio, alto, para não se esconder na média da pasta.
         // Uma entrada por arquivo de propósito: `perFile` dentro de glob agrega (medido

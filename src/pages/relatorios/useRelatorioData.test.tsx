@@ -149,6 +149,16 @@ describe("fetchFinancialData", () => {
     expect(sb.de("despesas", "or")).toHaveLength(0);
   });
 
+  it("o período usa o dia local, sem invadir o dia seguinte nem o anterior", async () => {
+    sb.resultado("receitas.select", { data: [], error: null });
+    await fetchFinancialData("receitas", new Date(2026, 9, 1), new Date(2026, 9, 31, 23, 59));
+    const [filtro] = sb.de("receitas", "or")[0].args as [string];
+    expect(filtro).toBe(
+      "and(data_recebimento.gte.2026-10-01,data_recebimento.lte.2026-10-31)," +
+        "and(data_recebimento.is.null,data_vencimento.gte.2026-10-01,data_vencimento.lte.2026-10-31)"
+    );
+  });
+
   it("só data inicial: aplica só o limite inferior", async () => {
     sb.resultado("despesas.select", { data: [], error: null });
     await fetchFinancialData("despesas", new Date(2026, 9, 1));
