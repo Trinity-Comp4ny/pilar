@@ -6,6 +6,8 @@
  * suave). Os stubs ficam aqui, e não no setup global do Vitest, porque só a
  * landing precisa deles: cada arquivo de teste chama `prepararAmbiente()`.
  */
+// Tipos dos matchers do jest-dom para o tsconfig da landing (o setup global já os registra).
+import "@testing-library/jest-dom/vitest";
 import type { ReactNode } from "react";
 import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -22,7 +24,8 @@ export function prepararAmbiente({ movimentoReduzido = false }: OpcoesAmbiente =
     configurable: true,
     writable: true,
     value: (query: string) => ({
-      matches: movimentoReduzido && query.includes("prefers-reduced-motion: reduce"),
+      // O framer-motion pergunta "(prefers-reduced-motion)", sem o ": reduce".
+      matches: movimentoReduzido && query.includes("prefers-reduced-motion") && !query.includes("no-preference"),
       media: query,
       onchange: null,
       addListener: () => {},
