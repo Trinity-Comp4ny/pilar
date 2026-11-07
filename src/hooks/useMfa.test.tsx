@@ -63,6 +63,48 @@ describe("useMfa: estado inicial", () => {
   });
 });
 
+describe("refresh com falha", () => {
+  it("erro do nível de garantia vira `error` sem rejeitar nem rebaixar o estado", async () => {
+    const { result } = await montar();
+    expect(result.current.error).toBeNull();
+
+    const erro = new Error("Auth session missing!");
+    mfa.getAuthenticatorAssuranceLevel.mockResolvedValue({ data: null, error: erro });
+    await act(() => result.current.refresh());
+
+    expect(result.current.error).toBe(erro);
+    expect(result.current.loading).toBe(false);
+    expect(result.current.nextLevel).toBe("aal2");
+    expect(result.current.factors).toHaveLength(1);
+  });
+
+  it("erro ao listar fatores no mount vira `error`", async () => {
+    mfa.listFactors.mockResolvedValue({ data: null, error: { message: "network" } });
+    const { result } = await montar();
+    expect(result.current.error).toEqual(new Error("network"));
+    expect(result.current.factors).toEqual([]);
+  });
+
+  it("exceção do client não vira rejeição não tratada; próximo refresh limpa o erro", async () => {
+    mfa.getAuthenticatorAssuranceLevel.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    const { result } = await montar();
+    expect(result.current.error).toBeInstanceOf(TypeError);
+
+    await act(() => result.current.refresh());
+    expect(result.current.error).toBeNull();
+    expect(result.current.mfaRequired).toBe(true);
+  });
+
+  it("verify bem-sucedido não falha por causa do refresh", async () => {
+    mfa.challenge.mockResolvedValue({ data: { id: "ch1" }, error: null });
+    mfa.verify.mockResolvedValue({ error: null });
+    const { result } = await montar();
+    mfa.listFactors.mockResolvedValue({ data: null, error: { message: "list" } });
+    await act(() => result.current.verifyTotp("f1", "123456"));
+    expect(result.current.error?.message).toBe("list");
+  });
+});
+
 describe("enrollTotp", () => {
   it("devolve QR e segredo", async () => {
     mfa.enroll.mockResolvedValue({ data: { id: "f2", totp: { qr_code: "qr", secret: "s" } }, error: null });
