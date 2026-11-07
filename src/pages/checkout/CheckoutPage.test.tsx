@@ -30,12 +30,16 @@ import Checkout from "./index";
 const PRO: Plan = {
   id: "p-pro",
   slug: "pro",
-  nome: "Pro",
+  nome: "Profissional",
   descricao: null,
-  preco_mensal: 690,
-  preco_anual: 6900,
+  // Planos v4 (DECISOES.md 2026-11-06).
+  preco_mensal: 499,
+  preco_anual: 4990,
   max_usuarios: null,
-  max_projetos: null,
+  max_projetos: 30,
+  max_obras: 5,
+  max_leads: 200,
+  tokens_mensais: 2_000_000,
   features: [],
   destaque: false,
   ordem: 1,
@@ -71,10 +75,10 @@ const respostaCheckout = (over: Record<string, unknown> = {}) => ({
   session_token: "tok_sessao_123456789012345",
   billing_type: "PIX",
   payment_status: "pending",
-  plan: { slug: "pro", nome: "Pro", cycle: "monthly", value: 690 },
+  plan: { slug: "pro", nome: "Profissional", cycle: "monthly", value: 499 },
   metadata: {
     billing_type: "PIX",
-    value: 690,
+    value: 499,
     cycle: "monthly",
     payment_id: "pay_1",
     invoice_url: null,
@@ -106,12 +110,12 @@ describe("Checkout", () => {
 
   it("ciclo desconhecido na URL cai no mensal (não cobra valor anual por engano)", () => {
     abrir("/checkout?plano=pro&ciclo=weekly");
-    expect(screen.getByRole("button", { name: /Pagar/ })).toHaveTextContent("R$ 690,00");
+    expect(screen.getByRole("button", { name: /Pagar/ })).toHaveTextContent("R$ 499,00");
   });
 
   it("ciclo anual usa o preço anual do plano", () => {
     abrir("/checkout?plano=pro&ciclo=yearly");
-    expect(screen.getByRole("button", { name: /Pagar/ })).toHaveTextContent("R$ 6.900,00");
+    expect(screen.getByRole("button", { name: /Pagar/ })).toHaveTextContent("R$ 4.990,00");
   });
 
   it("erro do servidor (corpo { error }) aparece no formulário, sem sair dele", async () => {

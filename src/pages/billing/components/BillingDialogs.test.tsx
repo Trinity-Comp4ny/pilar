@@ -10,7 +10,13 @@ import type { MySubscription } from "../hooks/useMySubscription";
 import type { Plan } from "@/hooks/usePlans";
 
 const { invoke, toast, PLANOS } = vi.hoisted(() => {
-  const plano = (slug: string, nome: string, mensal: number, anual: number | null): Plan => ({
+  const plano = (
+    slug: string,
+    nome: string,
+    mensal: number,
+    anual: number | null,
+    limites: Pick<Plan, "max_projetos" | "max_obras" | "max_leads" | "tokens_mensais">
+  ): Plan => ({
     id: `id-${slug}`,
     slug,
     nome,
@@ -18,7 +24,7 @@ const { invoke, toast, PLANOS } = vi.hoisted(() => {
     preco_mensal: mensal,
     preco_anual: anual,
     max_usuarios: null,
-    max_projetos: null,
+    ...limites,
     features: [],
     destaque: false,
     ordem: 0,
@@ -26,7 +32,21 @@ const { invoke, toast, PLANOS } = vi.hoisted(() => {
   return {
     invoke: vi.fn(),
     toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() },
-    PLANOS: [plano("essencial", "Essencial", 290, 2900), plano("pro", "Pro", 690, 6900)],
+    // Planos v4 (DECISOES.md 2026-11-06): R$ 299/499 e capacidade por módulo.
+    PLANOS: [
+      plano("starter", "Essencial", 299, 2990, {
+        max_projetos: 10,
+        max_obras: 2,
+        max_leads: 50,
+        tokens_mensais: 500_000,
+      }),
+      plano("pro", "Profissional", 499, 4990, {
+        max_projetos: 30,
+        max_obras: 5,
+        max_leads: 200,
+        tokens_mensais: 2_000_000,
+      }),
+    ],
   };
 });
 
@@ -35,7 +55,10 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 vi.mock("sonner", () => ({ toast }));
 
-vi.mock("@/hooks/usePlans", () => ({ usePlans: () => ({ data: PLANOS }) }));
+vi.mock("@/hooks/usePlans", async () => {
+  const actual = await vi.importActual<typeof import("@/hooks/usePlans")>("@/hooks/usePlans");
+  return { ...actual, usePlans: () => ({ data: PLANOS }) };
+});
 
 import { ChangePlanDialog } from "./ChangePlanDialog";
 import { CancelDialog } from "./CancelDialog";
@@ -46,7 +69,7 @@ function assinatura(over: Partial<MySubscription> = {}): MySubscription {
   return {
     id: "s1",
     empresa_id: "e1",
-    plan_id: "id-essencial",
+    plan_id: "id-starter",
     status: "active",
     billing_cycle: "monthly",
     billing_type: "CREDIT_CARD",
@@ -76,6 +99,23 @@ function pendente<T>() {
 describe("ChangePlanDialog", () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it("mostra preço mensal e capacidade de cada plano (projetos, obras, leads e créditos)", () => {
+    comQuery(<ChangePlanDialog open onOpenChange={vi.fn()} current={assinatura()} />);
+    expect(screen.getByText("R$ 299,00")).toBeInTheDocument();
+    expect(screen.getByText("R$ 499,00")).toBeInTheDocument();
+    expect(screen.getByText("Até 10 projetos ativos")).toBeInTheDocument();
+    expect(screen.getByText("Até 2 obras ativas")).toBeInTheDocument();
+    expect(screen.getByText("Até 200 leads ativos")).toBeInTheDocument();
+    expect(screen.getByText("400 créditos de IA por mês")).toBeInTheDocument();
+  });
+
+  it("no anual mostra o equivalente mensal do preço anual", async () => {
+    comQuery(<ChangePlanDialog open onOpenChange={vi.fn()} current={assinatura()} />);
+    await userEvent.click(screen.getByRole("tab", { name: /anual/i }));
+    // 2990 / 12
+    expect(screen.getByText("R$ 249,17")).toBeInTheDocument();
+  });
+
   it("confirmar sem mudar plano nem ciclo avisa e não chama o servidor", async () => {
     comQuery(<ChangePlanDialog open onOpenChange={vi.fn()} current={assinatura()} />);
     await userEvent.click(screen.getByRole("button", { name: "Confirmar mudança" }));
@@ -87,7 +127,7 @@ describe("ChangePlanDialog", () => {
     invoke.mockResolvedValue({ data: { success: true }, error: null });
     const onOpenChange = vi.fn();
     comQuery(<ChangePlanDialog open onOpenChange={onOpenChange} current={assinatura()} />);
-    await userEvent.click(screen.getByText("Pro"));
+    await userEvent.click(screen.getByText("Profissional"));
     await userEvent.click(screen.getByRole("button", { name: "Confirmar mudança" }));
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
     expect(invoke).toHaveBeenCalledWith("pilar-subscription-manage", {
@@ -104,7 +144,7 @@ describe("ChangePlanDialog", () => {
     await waitFor(() => expect(invoke).toHaveBeenCalled());
     expect(invoke.mock.calls[0][1].body).toEqual({
       action: "update_plan",
-      new_plan_slug: "essencial",
+      new_plan_slug: "starter",
       new_cycle: "yearly",
     });
   });
@@ -113,7 +153,7 @@ describe("ChangePlanDialog", () => {
     invoke.mockResolvedValue({ data: { success: false, error: "Falha ao atualizar: Asaas 500" }, error: null });
     const onOpenChange = vi.fn();
     comQuery(<ChangePlanDialog open onOpenChange={onOpenChange} current={assinatura()} />);
-    await userEvent.click(screen.getByText("Pro"));
+    await userEvent.click(screen.getByText("Profissional"));
     await userEvent.click(screen.getByRole("button", { name: "Confirmar mudança" }));
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith("Erro ao trocar plano", {
@@ -130,7 +170,7 @@ describe("ChangePlanDialog", () => {
     });
     const onOpenChange = vi.fn();
     comQuery(<ChangePlanDialog open onOpenChange={onOpenChange} current={assinatura()} />);
-    await userEvent.click(screen.getByText("Pro"));
+    await userEvent.click(screen.getByText("Profissional"));
     await userEvent.click(screen.getByRole("button", { name: "Confirmar mudança" }));
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
     expect(toast.error.mock.calls[0][1].description).toBe("Apenas admin da empresa pode gerenciar a assinatura");
@@ -141,7 +181,7 @@ describe("ChangePlanDialog", () => {
     const voo = pendente<unknown>();
     invoke.mockReturnValue(voo.promessa);
     comQuery(<ChangePlanDialog open onOpenChange={vi.fn()} current={assinatura()} />);
-    await userEvent.click(screen.getByText("Pro"));
+    await userEvent.click(screen.getByText("Profissional"));
     const confirmar = screen.getByRole("button", { name: "Confirmar mudança" });
     await userEvent.dblClick(confirmar);
     expect(await screen.findByRole("button", { name: /Atualizando/ })).toBeDisabled();
