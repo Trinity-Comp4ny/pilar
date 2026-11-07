@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pencil, Trash2, Users as UsersIcon } from "lucide-react";
+import { isValidEmail } from "@/lib/emailValidator";
 import type { CompanyUser } from "../types";
 import { ROLES } from "../types";
 
@@ -44,6 +45,8 @@ export function CompanyUsersTab({
   onEditUser,
   onDeleteUser,
 }: CompanyUsersTabProps) {
+  // Formato só é cobrado depois que algo foi digitado; vazio já desabilita o botão.
+  const emailInvalido = inviteEmail.trim().length > 0 && !isValidEmail(inviteEmail);
   const usersColumns: ColumnDef<CompanyUser>[] = [
     {
       key: "nome",
@@ -65,8 +68,14 @@ export function CompanyUsersTab({
       cell: (u) =>
         isAdmin && !u.id.startsWith("pending-") ? (
           <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" className="rounded-full" onClick={() => onEditUser(u)}>
-              <Pencil className="h-4 w-4" />
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full"
+              onClick={() => onEditUser(u)}
+              aria-label={`Editar ${u.name}`}
+            >
+              <Pencil className="h-4 w-4" aria-hidden="true" />
             </Button>
             <Button
               variant="outline"
@@ -74,8 +83,9 @@ export function CompanyUsersTab({
               className="rounded-full text-danger-mid"
               onClick={() => onDeleteUser(u.id)}
               disabled={u.id === currentUserId}
+              aria-label={`Remover ${u.name}`}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
         ) : (
@@ -123,12 +133,19 @@ export function CompanyUsersTab({
                   value={inviteEmail}
                   onChange={(e) => onInviteEmailChange(e.target.value)}
                   placeholder="email@empresa.com"
+                  aria-invalid={emailInvalido}
+                  aria-describedby={emailInvalido ? "invite-email-erro" : undefined}
                 />
+                {emailInvalido && (
+                  <p id="invite-email-erro" className="text-xs text-danger-mid">
+                    E-mail em formato inválido
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
-                <Label>Função</Label>
+                <Label htmlFor="invite-role">Função</Label>
                 <Select value={inviteRole} onValueChange={(v) => onInviteRoleChange(v as (typeof ROLES)[number])}>
-                  <SelectTrigger>
+                  <SelectTrigger id="invite-role">
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
@@ -146,7 +163,7 @@ export function CompanyUsersTab({
                 onClick={onAddUser}
                 variant="brand"
                 className="rounded-full"
-                disabled={isInviting || !inviteFirstName.trim() || !inviteEmail.trim()}
+                disabled={isInviting || !inviteFirstName.trim() || !inviteEmail.trim() || emailInvalido}
               >
                 {isInviting ? "Enviando convite..." : "Adicionar usuário"}
               </Button>

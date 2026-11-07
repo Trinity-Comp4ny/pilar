@@ -18,6 +18,7 @@ import { LogoPreviewDialog, EditUserDialog, DeleteUserDialog } from "@/pages/com
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useRequireAal2 } from "@/hooks/useRequireAal2";
 import { analytics } from "@/lib/analytics";
+import { isValidEmail } from "@/lib/emailValidator";
 
 // Conteúdo da aba Empresa do modal de configurações. É o antigo /company sem a casca
 // de página (PageLayout/PageHeader): todo o estado e handlers seguem centralizados
@@ -215,6 +216,10 @@ export function EmpresaPanel() {
 
   const addUser = async () => {
     if (!inviteFirstName.trim() || !inviteEmail.trim()) return;
+    if (!isValidEmail(inviteEmail)) {
+      toast.error("E-mail em formato inválido", { description: "Confira o endereço antes de enviar o convite." });
+      return;
+    }
     if (!(await requireAal2())) return;
     setIsInviting(true);
     try {
