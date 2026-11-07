@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { useState, useEffect, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -319,8 +320,8 @@ export default function FolhaPagamento() {
       setData((prev) => prev.map((item) => (item.folha_id === folhaId ? { ...item, status: newStatus } : item)));
 
       if (previousStatus !== "pago" && newStatus === "pago") {
-        const today = new Date();
-        const dateStr = today.toISOString().slice(0, 10);
+        // Data local: toISOString (UTC) à noite já cai no dia seguinte.
+        const dateStr = format(new Date(), "yyyy-MM-dd");
 
         const { data: categorias } = await supabase
           .from("categorias_financeiras")

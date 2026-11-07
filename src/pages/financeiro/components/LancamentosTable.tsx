@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -185,7 +186,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
   // hoje direto — abre este diálogo pra confirmar a data REAL do pagamento (ex. cartão de
   // crédito debitado semanas antes de alguém lembrar de marcar o lançamento no sistema).
   const [pagamentoAlvo, setPagamentoAlvo] = useState<{ l: Lancamento; novoStatus: string } | Lancamento[] | null>(null);
-  const [dataEfetivacao, setDataEfetivacao] = useState(() => new Date().toISOString().slice(0, 10));
+  const [dataEfetivacao, setDataEfetivacao] = useState(() => format(new Date(), "yyyy-MM-dd"));
 
   const setStatus = async (l: Lancamento, novoStatus: string) => {
     if (l.tipo === "transferencia") {
@@ -213,7 +214,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
       (l.tipo === "receita" && (novoStatus === "Recebido" || novoStatus === "Recebida")) ||
       (l.tipo === "despesa" && novoStatus === "Pago");
     if (isPaying) {
-      setDataEfetivacao(new Date().toISOString().slice(0, 10));
+      setDataEfetivacao(format(new Date(), "yyyy-MM-dd"));
       setPagamentoAlvo({ l, novoStatus });
       return;
     }
@@ -267,7 +268,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
   };
 
   const markItemsPaid = (rows: Lancamento[]) => {
-    setDataEfetivacao(new Date().toISOString().slice(0, 10));
+    setDataEfetivacao(format(new Date(), "yyyy-MM-dd"));
     setPagamentoAlvo(rows);
   };
 
