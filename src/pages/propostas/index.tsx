@@ -77,12 +77,14 @@ import { SmartInvoiceDialog } from "@/pages/propostas/components/SmartInvoiceDia
 
 import { BusyMark } from "@/components/motion/BusyMark";
 import { ReadingRing } from "@/components/motion/ReadingRing";
+import { disciplinasDoDocumento } from "./lib/disciplinasDocumento";
 
 interface PropostaDisciplina {
   id: string;
   disciplina: string;
   horas_estimadas: number | null;
   custo_hora: number | null;
+  valor_venda: number | null;
 }
 
 const VISAO_OPCOES: ViewOption<ViewMode>[] = [
@@ -1239,11 +1241,7 @@ export default function Propostas() {
             if (!open) setGerarDocxPropostaId(null);
           }}
           proposta={gerarDocxProposta}
-          disciplinas={gerarDocxDisciplinas.map((d: PropostaDisciplina) => ({
-            disciplina: d.disciplina,
-            horas_estimadas: Number(d.horas_estimadas),
-            custo_hora: Number(d.custo_hora),
-          }))}
+          disciplinas={disciplinasDoDocumento(gerarDocxDisciplinas)}
           onSent={() => {
             setGerarDocxPropostaId(null);
             handleStatusChange(gerarDocxProposta.id, "enviada");
@@ -1259,11 +1257,7 @@ export default function Propostas() {
           }}
           mode="contrato"
           proposta={gerarContratoProposta}
-          disciplinas={gerarContratoDisciplinas.map((d: PropostaDisciplina) => ({
-            disciplina: d.disciplina,
-            horas_estimadas: Number(d.horas_estimadas),
-            custo_hora: Number(d.custo_hora),
-          }))}
+          disciplinas={disciplinasDoDocumento(gerarContratoDisciplinas)}
           onSent={() => {
             queryClient.invalidateQueries({ queryKey: ["propostas"] });
             setGerarContratoPropostaId(null);
