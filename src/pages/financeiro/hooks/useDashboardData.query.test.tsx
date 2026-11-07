@@ -26,8 +26,14 @@ beforeEach(() => {
   vi.setSystemTime(new Date(2026, 9, 15, 12));
   // receitas: mês, mês anterior, pendentes, próximas (ordem do Promise.all)
   sb.resultado("receitas.select", [
-    { data: [{ valor: 1000, status: "Recebido", data_recebimento: "2026-10-05", data_vencimento: "2026-10-05" }], error: null },
-    { data: [{ valor: 500, status: "Recebido", data_recebimento: "2026-09-05", data_vencimento: "2026-09-05" }], error: null },
+    {
+      data: [{ valor: 1000, status: "Recebido", data_recebimento: "2026-10-05", data_vencimento: "2026-10-05" }],
+      error: null,
+    },
+    {
+      data: [{ valor: 500, status: "Recebido", data_recebimento: "2026-09-05", data_vencimento: "2026-09-05" }],
+      error: null,
+    },
     { data: [{ valor: 300 }], error: null },
     {
       data: [
@@ -47,7 +53,10 @@ beforeEach(() => {
     },
   ]);
   sb.resultado("despesas.select", [
-    { data: [{ valor: 400, status: "Pago", data_pagamento: "2026-10-03", data_vencimento: "2026-10-03" }], error: null },
+    {
+      data: [{ valor: 400, status: "Pago", data_pagamento: "2026-10-03", data_vencimento: "2026-10-03" }],
+      error: null,
+    },
     { data: [], error: null },
     { data: [{ valor: 200 }], error: null },
     { data: [], error: null },
@@ -65,7 +74,10 @@ beforeEach(() => {
   sb.resultado("clientes.select", { data: [{ id: "c1", nome: "Alfa" }], error: null });
   sb.resultado("leads.select", { data: [{ id: "l1", status: "novo", nome: "Lead" }], error: null });
   sb.resultado("alertas.select", [
-    { data: [{ id: "a1", tipo: "x", severidade: "alta", titulo: "Atraso", mensagem: "m", created_at: "2026-10-14" }], error: null },
+    {
+      data: [{ id: "a1", tipo: "x", severidade: "alta", titulo: "Atraso", mensagem: "m", created_at: "2026-10-14" }],
+      error: null,
+    },
     { data: null, error: null, count: 3 },
   ]);
 });

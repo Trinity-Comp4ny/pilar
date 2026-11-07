@@ -104,7 +104,10 @@ function comObra(o: Record<string, unknown> | null = obra) {
   });
 }
 
-const abas = () => within(screen.getByRole("tablist", { name: "Seções da obra" })).getAllByRole("tab").map((t) => t.textContent);
+const abas = () =>
+  within(screen.getByRole("tablist", { name: "Seções da obra" }))
+    .getAllByRole("tab")
+    .map((t) => t.textContent);
 
 describe("ObraDetalhePage", () => {
   beforeEach(() => {
@@ -189,8 +192,22 @@ describe("ObraDetalhePage", () => {
 
   it("alerta de clima lista as etapas e leva ao cronograma", async () => {
     clima.alertas = [
-      { tarefaId: "t-1", titulo: "Concretar laje", tipo: "concretagem", data: "2026-11-10", detalhe: "chuva (90%)", motivo: "chuva" },
-      { tarefaId: "t-2", titulo: "Içar treliça", tipo: "icamento", data: "2026-11-11", detalhe: "vento 60 km/h", motivo: "vento" },
+      {
+        tarefaId: "t-1",
+        titulo: "Concretar laje",
+        tipo: "concretagem",
+        data: "2026-11-10",
+        detalhe: "chuva (90%)",
+        motivo: "chuva",
+      },
+      {
+        tarefaId: "t-2",
+        titulo: "Içar treliça",
+        tipo: "icamento",
+        data: "2026-11-11",
+        detalhe: "vento 60 km/h",
+        motivo: "vento",
+      },
     ];
     comObra();
     montar();
@@ -201,7 +218,9 @@ describe("ObraDetalhePage", () => {
   });
 
   it("um alerta só usa o singular", async () => {
-    clima.alertas = [{ tarefaId: "t-1", titulo: "Concretar", tipo: "concretagem", data: "2026-11-10", detalhe: "chuva" }];
+    clima.alertas = [
+      { tarefaId: "t-1", titulo: "Concretar", tipo: "concretagem", data: "2026-11-10", detalhe: "chuva" },
+    ];
     comObra();
     montar();
     expect(await screen.findByText("Clima pode atrapalhar uma etapa")).toBeInTheDocument();

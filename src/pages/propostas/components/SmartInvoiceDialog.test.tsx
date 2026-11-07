@@ -106,7 +106,12 @@ describe("SmartInvoiceDialog: parcelas", () => {
     fireEvent.click(screen.getByRole("button", { name: "Confirmar (1 parcela)" }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(sb.de("receitas", "insert")[0].args[0]).toEqual([
-      expect.objectContaining({ descricao: "Casa Verde", grupo_parcela: null, parcela_numero: null, parcela_total: null }),
+      expect.objectContaining({
+        descricao: "Casa Verde",
+        grupo_parcela: null,
+        parcela_numero: null,
+        parcela_total: null,
+      }),
     ]);
   });
 
@@ -194,7 +199,9 @@ describe("SmartInvoiceDialog: manual", () => {
   it("só fecha, sem criar nada", () => {
     const { onClose } = setup();
     fireEvent.click(screen.getByRole("radio", { name: /Vou criar manualmente/ }));
-    fireEvent.click(screen.getAllByRole("button", { name: "Fechar" }).find((b) => b.textContent === "Fechar") as HTMLElement);
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Fechar" }).find((b) => b.textContent === "Fechar") as HTMLElement
+    );
     expect(onClose).toHaveBeenCalled();
     expect(sb.de("receitas", "insert")).toHaveLength(0);
   });

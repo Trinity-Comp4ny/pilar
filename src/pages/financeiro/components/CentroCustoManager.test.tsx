@@ -61,7 +61,10 @@ describe("CentroCustoManager", () => {
   });
 
   it("erro ao carregar avisa e mostra lista vazia", async () => {
-    sb.resultado("centros_custo.select", { data: null, error: { message: "permission denied for table centros_custo" } });
+    sb.resultado("centros_custo.select", {
+      data: null,
+      error: { message: "permission denied for table centros_custo" },
+    });
     await setup();
     expect(toast.error).toHaveBeenCalledWith("Não foi possível carregar os centros de custo", {
       description: "Você não tem permissão para realizar esta ação.",

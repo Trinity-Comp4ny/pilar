@@ -180,7 +180,12 @@ describe("LancamentosFilterBar: popover de filtros", () => {
     const { onChange } = setup();
     abrirFiltros();
     fireEvent.click(within(popover()).getByRole("button", { name: "Em aberto" }));
-    expect(onChange).toHaveBeenLastCalledWith({ status: "pendentes", periodo: "tudo", customFrom: null, customTo: null });
+    expect(onChange).toHaveBeenLastCalledWith({
+      status: "pendentes",
+      periodo: "tudo",
+      customFrom: null,
+      customTo: null,
+    });
     fireEvent.click(within(popover()).getByRole("button", { name: "Vence esta semana" }));
     const hoje = format(new Date(), "yyyy-MM-dd");
     expect(onChange).toHaveBeenLastCalledWith(
@@ -192,7 +197,12 @@ describe("LancamentosFilterBar: popover de filtros", () => {
     const { onChange } = setup({ status: "pagos", periodo: "tudo" });
     abrirFiltros();
     fireEvent.click(within(popover()).getByRole("button", { name: "Pagos" }));
-    expect(onChange).toHaveBeenLastCalledWith({ status: "todos", periodo: "mes-atual", customFrom: null, customTo: null });
+    expect(onChange).toHaveBeenLastCalledWith({
+      status: "todos",
+      periodo: "mes-atual",
+      customFrom: null,
+      customTo: null,
+    });
   });
 
   it("seção de lista: abre, busca, sem resultado e marca/desmarca", () => {

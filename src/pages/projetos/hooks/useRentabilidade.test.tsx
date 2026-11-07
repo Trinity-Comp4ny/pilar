@@ -41,7 +41,14 @@ const row = (p: Record<string, unknown>) => ({
 
 const rows = [
   // margem bruta 100 - (20+30) = 50 (50%); indireto 3 -> líquida 47
-  row({ projeto_id: "a", receitas_total: "100", despesas_diretas: 20, custo_mao_de_obra: 30, horas_orcadas: 10, horas_consumidas: 5 }),
+  row({
+    projeto_id: "a",
+    receitas_total: "100",
+    despesas_diretas: 20,
+    custo_mao_de_obra: 30,
+    horas_orcadas: 10,
+    horas_consumidas: 5,
+  }),
   // margem bruta 200 - 300 = -100 (-50%)
   row({ projeto_id: "b", receitas_total: 200, despesas_diretas: 300, horas_orcadas: 10, horas_consumidas: 15 }),
   // sem receita: fora das médias e dos tops; margem bruta -10

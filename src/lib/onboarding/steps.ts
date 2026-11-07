@@ -15,13 +15,7 @@ export type OnboardingPilar = "gestao" | "projetos" | "obras";
 
 /** Tabelas/views usadas para derivar "passo concluído". Todas têm `empresa_id`. */
 export type OnboardingCountSource =
-  | "pessoas"
-  | "clientes"
-  | "lancamentos"
-  | "projetos"
-  | "fluxos_disciplinas"
-  | "obras"
-  | "fornecedores";
+  "pessoas" | "clientes" | "lancamentos" | "projetos" | "fluxos_disciplinas" | "obras" | "fornecedores";
 
 export interface OnboardingStep {
   key: string;
@@ -62,7 +56,8 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     tour: {
       selector: "onb-nova-pessoa",
       titulo: "Comece pela equipe",
-      texto: "Clique aqui para adicionar a primeira pessoa. Ela poderá receber disciplinas e responsabilidades nos projetos.",
+      texto:
+        "Clique aqui para adicionar a primeira pessoa. Ela poderá receber disciplinas e responsabilidades nos projetos.",
     },
   },
   {

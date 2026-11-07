@@ -104,7 +104,15 @@ const propostasPadrao = [
         valor_total: 1500,
         ordem: 0,
       },
-      { id: "it-2", descricao: "Frete", quantidade: null, unidade: null, preco_unitario: null, valor_total: 300, ordem: 1 },
+      {
+        id: "it-2",
+        descricao: "Frete",
+        quantidade: null,
+        unidade: null,
+        preco_unitario: null,
+        valor_total: 300,
+        ordem: 1,
+      },
     ] as unknown as PropostaComFornecedor["itens"],
   }),
 ];
@@ -499,7 +507,14 @@ describe("CotacaoDetailDialog: analisar orçamento com IA", () => {
         modo: "comparativo",
         classificacao: { tipo: "comparativo", confianca: 0.9, motivo: "duas lojas" },
         propostas: [
-          { fornecedor_nome: "Loja A", quantidade: 10, unidade: "sc", valor_a_vista: 300, valor_parcelado: 320, confianca: 0.9 },
+          {
+            fornecedor_nome: "Loja A",
+            quantidade: 10,
+            unidade: "sc",
+            valor_a_vista: 300,
+            valor_parcelado: 320,
+            confianca: 0.9,
+          },
           { fornecedor_nome: "Loja B", valor_a_vista: 280, confianca: 0.4, condicao_pagamento: "10x" },
           { fornecedor_nome: "", valor_a_vista: 1 },
         ],
@@ -589,9 +604,7 @@ describe("CotacaoDetailDialog: analisar orçamento com IA", () => {
   });
 
   it("erro ao gravar o lote mostra o toast", async () => {
-    fake.responder((c) =>
-      c.tabela === "obra_cotacao_proposta" ? { data: null, error: new Error("RLS") } : undefined
-    );
+    fake.responder((c) => (c.tabela === "obra_cotacao_proposta" ? { data: null, error: new Error("RLS") } : undefined));
     fake.invoke.mockResolvedValue({
       data: { modo: "comparativo", propostas: [{ fornecedor_nome: "Loja A", valor_a_vista: 10 }] },
       error: null,
@@ -600,8 +613,6 @@ describe("CotacaoDetailDialog: analisar orçamento com IA", () => {
     subir();
     await screen.findByDisplayValue("Loja A");
     fireEvent.click(screen.getByRole("button", { name: "Adicionar propostas" }));
-    await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith("Não foi possível salvar", { description: "RLS" })
-    );
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível salvar", { description: "RLS" }));
   });
 });

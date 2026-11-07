@@ -25,9 +25,7 @@ describe("VariaveisGuideDialog", () => {
       expect(screen.getAllByText(descricao).length).toBeGreaterThan(0);
     }
     expect(screen.getByText("João da Silva")).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Copiar variável" })).toHaveLength(
-      Object.keys(AUTO_VARIABLES).length
-    );
+    expect(screen.getAllByRole("button", { name: "Copiar variável" })).toHaveLength(Object.keys(AUTO_VARIABLES).length);
   });
 
   it("fechado não renderiza o conteúdo", () => {

@@ -59,9 +59,42 @@ const previsao = {
     { hora: "2026-11-08T00:00", code: 0, temp: 22, chuvaProb: 0, chuvaMm: 0, ehDia: true },
   ],
   dias: [
-    { data: "2026-11-07", code: 0, tempMax: 31, tempMin: 19, chuvaProb: 10, chuvaMm: 0, ventoMax: 20, uvMax: 9, nascer: "2026-11-07T05:20", ocaso: "2026-11-07T18:30" },
-    { data: "2026-11-08", code: 63, tempMax: 25, tempMin: 18, chuvaProb: 80, chuvaMm: 12, ventoMax: 30, uvMax: 4, nascer: null, ocaso: null },
-    { data: "2026-11-09", code: 95, tempMax: 24, tempMin: 17, chuvaProb: 0, chuvaMm: 0, ventoMax: 30, uvMax: 3, nascer: null, ocaso: null },
+    {
+      data: "2026-11-07",
+      code: 0,
+      tempMax: 31,
+      tempMin: 19,
+      chuvaProb: 10,
+      chuvaMm: 0,
+      ventoMax: 20,
+      uvMax: 9,
+      nascer: "2026-11-07T05:20",
+      ocaso: "2026-11-07T18:30",
+    },
+    {
+      data: "2026-11-08",
+      code: 63,
+      tempMax: 25,
+      tempMin: 18,
+      chuvaProb: 80,
+      chuvaMm: 12,
+      ventoMax: 30,
+      uvMax: 4,
+      nascer: null,
+      ocaso: null,
+    },
+    {
+      data: "2026-11-09",
+      code: 95,
+      tempMax: 24,
+      tempMin: 17,
+      chuvaProb: 0,
+      chuvaMm: 0,
+      ventoMax: 30,
+      uvMax: 3,
+      nascer: null,
+      ocaso: null,
+    },
   ],
 };
 
@@ -171,7 +204,14 @@ describe("ObraClimaPage", () => {
 
     it("busca, escolhe e passa a mostrar a previsão", async () => {
       api.buscarLocais.mockResolvedValue([
-        { nome: "Campos", latitude: -21.7, longitude: -41.3, admin1: "RJ", pais: "Brasil", rotulo: "Campos, RJ, Brasil" },
+        {
+          nome: "Campos",
+          latitude: -21.7,
+          longitude: -41.3,
+          admin1: "RJ",
+          pais: "Brasil",
+          rotulo: "Campos, RJ, Brasil",
+        },
       ]);
       montar();
       abrir();

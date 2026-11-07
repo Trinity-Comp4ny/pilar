@@ -104,7 +104,15 @@ function montar(id: string | undefined = "proj-1") {
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={["/projetos/proj-1"]}>
         <Routes>
-          <Route path="*" element={<>{children}<Espiao /></>} />
+          <Route
+            path="*"
+            element={
+              <>
+                {children}
+                <Espiao />
+              </>
+            }
+          />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>
@@ -286,7 +294,9 @@ describe("useProjetoDetail: disciplinas", () => {
     await act(async () => {
       await result.current.handleSaveDiscChanges(disciplinas[0] as never);
     });
-    expect(disc.upsert).toHaveBeenCalledWith(expect.objectContaining({ id: "d-1", responsavel_ids: ["pes-1", "pes-2"] }));
+    expect(disc.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "d-1", responsavel_ids: ["pes-1", "pes-2"] })
+    );
     disc.upsert.mockRejectedValue(new Error("x"));
     await act(async () => {
       await result.current.handleSaveDiscChanges({ ...disciplinas[0], responsaveis: undefined } as never);

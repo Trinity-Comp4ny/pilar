@@ -101,7 +101,10 @@ describe("leituras de estimativa", () => {
 
   it("lead para estimar: empresa do lead tem prioridade sobre o nome", async () => {
     porTabela({
-      leads: { data: { id: "l-1", nome: "Ana", sobrenome: null, empresa_lead: "Construtora X", cliente_id: "c-1" }, error: null },
+      leads: {
+        data: { id: "l-1", nome: "Ana", sobrenome: null, empresa_lead: "Construtora X", cliente_id: "c-1" },
+        error: null,
+      },
     });
     const { result } = hook(() => useLeadParaEstimar("l-1"));
     await waitFor(() =>
@@ -110,7 +113,9 @@ describe("leituras de estimativa", () => {
   });
 
   it("lead pessoa física, inexistente, erro e sem id", async () => {
-    porTabela({ leads: { data: { id: "l-2", nome: "Ana", sobrenome: "Lima", empresa_lead: null, cliente_id: null }, error: null } });
+    porTabela({
+      leads: { data: { id: "l-2", nome: "Ana", sobrenome: "Lima", empresa_lead: null, cliente_id: null }, error: null },
+    });
     const a = hook(() => useLeadParaEstimar("l-2"));
     await waitFor(() => expect(a.result.current.data?.nomeCompleto).toBe("Ana Lima"));
 
@@ -130,7 +135,15 @@ describe("leituras de estimativa", () => {
   it("proposta para estimar: cliente, lead e sem nenhum", async () => {
     porTabela({
       propostas: {
-        data: { id: "p-1", titulo: "Casa", area_m2: 200, lead_id: "l", cliente_id: "c", clientes: { nome: "Cliente SA" }, leads: null },
+        data: {
+          id: "p-1",
+          titulo: "Casa",
+          area_m2: 200,
+          lead_id: "l",
+          cliente_id: "c",
+          clientes: { nome: "Cliente SA" },
+          leads: null,
+        },
         error: null,
       },
     });
@@ -203,7 +216,12 @@ describe("leituras de estimativa", () => {
     });
     const a = hook(() => useEstimativa("e-1"));
     await waitFor(() => expect(a.result.current.isSuccess).toBe(true));
-    expect(a.result.current.data).toMatchObject({ obraId: "o-1", premissas: {}, resultado: null, status: "virou_obra" });
+    expect(a.result.current.data).toMatchObject({
+      obraId: "o-1",
+      premissas: {},
+      resultado: null,
+      status: "virou_obra",
+    });
 
     porTabela({});
     const b = hook(() => useEstimativa("e-x"));
@@ -342,7 +360,13 @@ describe("escritas de estimativa", () => {
     const resultado = resultadoDoSobrado(true);
     const { result } = hook(() => useSalvarVersao());
     await act(async () => {
-      await result.current.mutateAsync({ estimativaId: "e-1", nota: null, ficha: FICHA_SOBRADO, premissas: {}, resultado });
+      await result.current.mutateAsync({
+        estimativaId: "e-1",
+        nota: null,
+        ficha: FICHA_SOBRADO,
+        premissas: {},
+        resultado,
+      });
     });
     expect(fake.escritas("estimativa_obra_versoes")[0].payload).toMatchObject({
       empresa_id: "emp-1",

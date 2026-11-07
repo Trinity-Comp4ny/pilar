@@ -11,7 +11,9 @@ const navigate = vi.fn();
 const templatesState: { data: PropostaTemplate[] } = { data: [] };
 const downloadTemplateFile = vi.fn(async (_path: string) => new ArrayBuffer(8));
 const generateDocx = vi.fn((_buf: ArrayBuffer, _data: Record<string, string>) => fakeBlob);
-const convertToHtml = vi.fn(async (_i: unknown) => ({ value: "<h1>Proposta Casa Verde</h1><script>alert(1)</script>" }));
+const convertToHtml = vi.fn(async (_i: unknown) => ({
+  value: "<h1>Proposta Casa Verde</h1><script>alert(1)</script>",
+}));
 const saveAs = vi.fn();
 const reportInvokeError = vi.fn();
 const track = vi.fn();
@@ -173,7 +175,11 @@ describe("GerarPropostaDialog: visualizar e baixar", () => {
 
     expect(downloadTemplateFile).toHaveBeenCalledWith("emp-1/modelo.docx");
     const dados = generateDocx.mock.calls[0][1];
-    expect(dados).toMatchObject({ CLIENTE_NOME: "João", EMPRESA_NOME: "Trinity Engenharia", forma_pagamento: "À vista" });
+    expect(dados).toMatchObject({
+      CLIENTE_NOME: "João",
+      EMPRESA_NOME: "Trinity Engenharia",
+      forma_pagamento: "À vista",
+    });
     expect(dados.DISCIPLINAS_COM_VALOR).toMatch(/Estrutural — R\$\s?2\.000,00/);
     expect(sb.de("propostas", "update")[0].args[0]).toEqual({
       template_id: "t1",
@@ -242,9 +248,9 @@ describe("GerarPropostaDialog: enviar", () => {
     const email = await irParaEnvio();
     expect(email).toHaveValue("joao@cliente.com");
     expect(screen.getByDisplayValue("Proposta — Casa Verde")).toBeInTheDocument();
-    expect((screen.getByPlaceholderText("Mensagem personalizada para o cliente...") as HTMLTextAreaElement).value).toContain(
-      "Olá, João!"
-    );
+    expect(
+      (screen.getByPlaceholderText("Mensagem personalizada para o cliente...") as HTMLTextAreaElement).value
+    ).toContain("Olá, João!");
   });
 
   it("contrato monta o assunto sem o prefixo Proposta", async () => {
@@ -253,9 +259,9 @@ describe("GerarPropostaDialog: enviar", () => {
     await waitFor(() => expect(sb.de("leads", "single")).toHaveLength(1));
     await irParaEnvio();
     expect(screen.getByDisplayValue("Contrato — Casa Verde")).toBeInTheDocument();
-    expect((screen.getByPlaceholderText("Mensagem personalizada para o cliente...") as HTMLTextAreaElement).value).toContain(
-      "o contrato"
-    );
+    expect(
+      (screen.getByPlaceholderText("Mensagem personalizada para o cliente...") as HTMLTextAreaElement).value
+    ).toContain("o contrato");
   });
 
   it("envia o anexo em base64 pela edge function, avisa e fecha", async () => {
@@ -338,7 +344,12 @@ describe("GerarPropostaDialog: enviar", () => {
     await irParaEnvio();
     const tree = (open: boolean) => (
       <QueryClientProvider client={client}>
-        <GerarPropostaDialog open={open} onOpenChange={onOpenChange} proposta={propostaBase} disciplinas={disciplinas} />
+        <GerarPropostaDialog
+          open={open}
+          onOpenChange={onOpenChange}
+          proposta={propostaBase}
+          disciplinas={disciplinas}
+        />
       </QueryClientProvider>
     );
     rerender(tree(false));

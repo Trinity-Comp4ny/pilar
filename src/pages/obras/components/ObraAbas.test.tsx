@@ -73,8 +73,24 @@ describe("ObraEstoqueTab", () => {
       categoria: "Básico",
       deleted_at: null,
       movimentos: [
-        { id: "mv-1", tipo: "entrada", quantidade: 10, data: "2026-11-01", valor_unitario: 40, obra_frente_id: "et-1", deleted_at: null },
-        { id: "mv-2", tipo: "baixa", quantidade: 4, data: "2026-11-03", valor_unitario: null, obra_frente_id: null, deleted_at: null },
+        {
+          id: "mv-1",
+          tipo: "entrada",
+          quantidade: 10,
+          data: "2026-11-01",
+          valor_unitario: 40,
+          obra_frente_id: "et-1",
+          deleted_at: null,
+        },
+        {
+          id: "mv-2",
+          tipo: "baixa",
+          quantidade: 4,
+          data: "2026-11-03",
+          valor_unitario: null,
+          obra_frente_id: null,
+          deleted_at: null,
+        },
       ],
     },
     { id: "mat-2", nome: "Areia", unidade: "m³", categoria: null, deleted_at: null, movimentos: [] },
@@ -229,9 +245,33 @@ describe("ObraAcessosTab", () => {
     rpcComEmpresa({
       campo_listar_contas_obra: {
         data: [
-          { id: "a-1", nome: "Zé", email: "ze@x", login_gerado: false, ativo: true, convite_pendente: false, ultimo_acesso: "2026-11-01T10:00:00Z" },
-          { id: "a-2", nome: "Tião", email: null, login_gerado: true, ativo: true, convite_pendente: true, ultimo_acesso: null },
-          { id: "a-3", nome: "Rui", email: "rui@x", login_gerado: false, ativo: false, convite_pendente: false, ultimo_acesso: null },
+          {
+            id: "a-1",
+            nome: "Zé",
+            email: "ze@x",
+            login_gerado: false,
+            ativo: true,
+            convite_pendente: false,
+            ultimo_acesso: "2026-11-01T10:00:00Z",
+          },
+          {
+            id: "a-2",
+            nome: "Tião",
+            email: null,
+            login_gerado: true,
+            ativo: true,
+            convite_pendente: true,
+            ultimo_acesso: null,
+          },
+          {
+            id: "a-3",
+            nome: "Rui",
+            email: "rui@x",
+            login_gerado: false,
+            ativo: false,
+            convite_pendente: false,
+            ultimo_acesso: null,
+          },
         ],
         error: null,
       },
@@ -332,10 +372,29 @@ describe("ObraCurvaS", () => {
   it("desenha planejado × realizado quando há tarefas com prazo", async () => {
     responderComTabelas({
       tarefas: [
-        { id: "t-1", created_at: "2026-10-01", titulo: "t-1", status: "concluida", data_inicio: "2026-10-01", prazo: "2026-10-10", updated_at: "2026-10-09T00:00:00Z" },
-        { id: "t-2", created_at: "2026-10-02", titulo: "t-2", status: "pendente", data_inicio: "2026-10-05", prazo: "2026-10-20", updated_at: "2026-10-05T00:00:00Z" },
+        {
+          id: "t-1",
+          created_at: "2026-10-01",
+          titulo: "t-1",
+          status: "concluida",
+          data_inicio: "2026-10-01",
+          prazo: "2026-10-10",
+          updated_at: "2026-10-09T00:00:00Z",
+        },
+        {
+          id: "t-2",
+          created_at: "2026-10-02",
+          titulo: "t-2",
+          status: "pendente",
+          data_inicio: "2026-10-05",
+          prazo: "2026-10-20",
+          updated_at: "2026-10-05T00:00:00Z",
+        },
       ],
-      obra_rdo: [{ id: "r-1", data: "2026-10-08" }, { id: "r-2", data: "2026-10-07" }],
+      obra_rdo: [
+        { id: "r-1", data: "2026-10-08" },
+        { id: "r-2", data: "2026-10-07" },
+      ],
       obra_rdo_tarefa: [
         { id: "v-1", rdo_id: "r-1", tarefa_id: "t-1", resultado: "concluiu" },
         { id: "v-2", rdo_id: "r-2", tarefa_id: "t-1", resultado: "concluiu" },

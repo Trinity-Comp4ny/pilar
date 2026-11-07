@@ -115,7 +115,12 @@ describe("LancamentoDetailDialog", () => {
   });
 
   it("parcelado mostra as ações do grupo; mudar o grupo fecha e avisa", () => {
-    const { onGroupChanged, onOpenChange } = setup({ ...base, grupo_parcela: "g1", parcela_numero: 1, parcela_total: 2 });
+    const { onGroupChanged, onOpenChange } = setup({
+      ...base,
+      grupo_parcela: "g1",
+      parcela_numero: 1,
+      parcela_total: 2,
+    });
     fireEvent.click(screen.getByRole("button", { name: "Ações do grupo" }));
     expect(onGroupChanged).toHaveBeenCalled();
     expect(onOpenChange).toHaveBeenCalledWith(false);

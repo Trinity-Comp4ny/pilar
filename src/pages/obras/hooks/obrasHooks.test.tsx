@@ -88,7 +88,14 @@ beforeEach(() => {
 describe("useObras / useObra", () => {
   it("lista as obras com o avanço calculado pelas tarefas", async () => {
     fake.responder((c) => {
-      if (c.tabela === "obras") return { data: [{ id: "o-1", nome: "Casa" }, { id: "o-2", nome: "Galpão" }], error: null };
+      if (c.tabela === "obras")
+        return {
+          data: [
+            { id: "o-1", nome: "Casa" },
+            { id: "o-2", nome: "Galpão" },
+          ],
+          error: null,
+        };
       if (c.tabela === "tarefas")
         return {
           data: [
@@ -274,7 +281,10 @@ describe("useObraFotos", () => {
 
   describe("upload", () => {
     function prepararCanvas(blob: Blob | null) {
-      vi.stubGlobal("createImageBitmap", vi.fn(async () => ({ width: 3200, height: 1600 })));
+      vi.stubGlobal(
+        "createImageBitmap",
+        vi.fn(async () => ({ width: 3200, height: 1600 }))
+      );
       const drawImage = vi.fn();
       vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({ drawImage } as never);
       vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(function (cb: BlobCallback) {
@@ -544,7 +554,13 @@ describe("useObraTarefas", () => {
 
   it("atualizar com sucesso aplica o patch no cache", async () => {
     const m = montar();
-    m.qc.setQueryData(["obra_tarefas", "o-1"], [{ id: "t-1", status: "pendente" }, { id: "t-2", status: "x" }]);
+    m.qc.setQueryData(
+      ["obra_tarefas", "o-1"],
+      [
+        { id: "t-1", status: "pendente" },
+        { id: "t-2", status: "x" },
+      ]
+    );
     const { result } = renderHook(() => useUpdateObraTarefa("o-1"), { wrapper: m.wrapper });
     let promessa: Promise<void> | undefined;
     act(() => {
@@ -592,11 +608,7 @@ describe("RDO e suas tabelas-ponte", () => {
     });
     const { result } = hook(() => ({
       rdos: useObraRdos("o-1"),
-      autores: useObraRdoAutores([
-        { created_by: "u-2" },
-        { created_by: "u-1" },
-        { created_by: null },
-      ] as never),
+      autores: useObraRdoAutores([{ created_by: "u-2" }, { created_by: "u-1" }, { created_by: null }] as never),
       tarefas: useObraRdoTarefas("o-1"),
       efetivo: useObraRdoEfetivo("o-1"),
       imped: useObraRdoImpedimentos("o-1"),
@@ -712,7 +724,9 @@ describe("RDO e suas tabelas-ponte", () => {
     expect(fake.escritas()).toHaveLength(1);
 
     for (const alvo of ["delete", "insert"] as const) {
-      fake.responder((c) => (c.tabela === "obra_rdo_tarefa" && c.op === alvo ? { data: null, error: erro(alvo) } : undefined));
+      fake.responder((c) =>
+        c.tabela === "obra_rdo_tarefa" && c.op === alvo ? { data: null, error: erro(alvo) } : undefined
+      );
       await act(async () => {
         await expect(
           result.current.mutateAsync({ rdoId: "r", obraId: "o", entradas: [{ tarefa_id: "t", resultado: "avancou" }] })
@@ -736,20 +750,38 @@ describe("RDO e suas tabelas-ponte", () => {
   });
 
   it.each([
-    ["efetivo", () => useSaveRdoEfetivo(), "obra_rdo_efetivo", { fornecedor_nome: "  Equipe A ", quantidade: 4 }, {
-      fornecedor_id: null,
-      fornecedor_nome: "Equipe A",
-      quantidade: 4,
-    }],
-    ["impedimentos", () => useSaveRdoImpedimentos(), "obra_rdo_impedimento", { descricao: " chuva ", tipo: "clima" }, {
-      descricao: "chuva",
-      tipo: "clima",
-    }],
-    ["visitas", () => useSaveRdoVisitas(), "obra_rdo_visita", { fornecedor_id: "forn-1", observacao: " entregou " }, {
-      fornecedor_id: "forn-1",
-      fornecedor_nome: null,
-      observacao: "entregou",
-    }],
+    [
+      "efetivo",
+      () => useSaveRdoEfetivo(),
+      "obra_rdo_efetivo",
+      { fornecedor_nome: "  Equipe A ", quantidade: 4 },
+      {
+        fornecedor_id: null,
+        fornecedor_nome: "Equipe A",
+        quantidade: 4,
+      },
+    ],
+    [
+      "impedimentos",
+      () => useSaveRdoImpedimentos(),
+      "obra_rdo_impedimento",
+      { descricao: " chuva ", tipo: "clima" },
+      {
+        descricao: "chuva",
+        tipo: "clima",
+      },
+    ],
+    [
+      "visitas",
+      () => useSaveRdoVisitas(),
+      "obra_rdo_visita",
+      { fornecedor_id: "forn-1", observacao: " entregou " },
+      {
+        fornecedor_id: "forn-1",
+        fornecedor_nome: null,
+        observacao: "entregou",
+      },
+    ],
   ])("salvar %s substitui as linhas do dia", async (_n, usar, tabela, entrada, esperado) => {
     const { result } = hook(usar as () => ReturnType<typeof useSaveRdoEfetivo>);
     await act(async () => {
@@ -866,7 +898,9 @@ describe("useObraFrentes", () => {
     });
     fake.responder(() => ({ data: null, error: erro("RLS") }));
     await act(async () => {
-      await expect(result.current.c.mutateAsync({ nome: "x", ordem: 1, nivel: "fase", parent_id: null })).rejects.toBeTruthy();
+      await expect(
+        result.current.c.mutateAsync({ nome: "x", ordem: 1, nivel: "fase", parent_id: null })
+      ).rejects.toBeTruthy();
       await expect(result.current.u.mutateAsync({ id: "n" })).rejects.toBeTruthy();
       await expect(result.current.d.mutateAsync("n")).rejects.toBeTruthy();
     });
@@ -1037,7 +1071,14 @@ describe("convites e cotações", () => {
   it("pendentes da empresa trazem o nome da obra ou 'Obra removida'", async () => {
     fake.responder(() => ({
       data: [
-        { id: "c-1", obra_id: "o-1", descricao: "Aço", prazo_necessidade: null, created_at: "x", obras: { nome: "Casa" } },
+        {
+          id: "c-1",
+          obra_id: "o-1",
+          descricao: "Aço",
+          prazo_necessidade: null,
+          created_at: "x",
+          obras: { nome: "Casa" },
+        },
         { id: "c-2", obra_id: "o-2", descricao: "Brita", prazo_necessidade: null, created_at: "y", obras: null },
       ],
       error: null,
@@ -1202,7 +1243,14 @@ describe("alertas de clima", () => {
   it("cronograma: com coordenada cruza as tarefas sensíveis com a previsão", async () => {
     clima.buscarPrevisao.mockResolvedValue({ dias: [dia({ chuvaProb: 90 })] });
     const tarefas = [
-      { id: "t-1", titulo: "Concretar laje", sensivel_clima: "concretagem", data_inicio: "2026-11-07", prazo: "2026-11-07", status: "pendente" },
+      {
+        id: "t-1",
+        titulo: "Concretar laje",
+        sensivel_clima: "concretagem",
+        data_inicio: "2026-11-07",
+        prazo: "2026-11-07",
+        status: "pendente",
+      },
     ];
     const { result } = hook(() => useAlertasClimaCronograma(1, 2, tarefas as never));
     await waitFor(() => expect(clima.buscarPrevisao).toHaveBeenCalledWith(1, 2));
