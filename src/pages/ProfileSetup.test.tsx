@@ -43,11 +43,16 @@ type Cenario = {
 
 function cenario(c: Cenario = {}) {
   const { profile = { first_name: "", last_name: "", contato: "", empresa_id: "e1" }, aceite = false } = c;
+  const perfilCarregado = profile && {
+    role: c.role ?? "user",
+    empresas: { nome: "Alfa Engenharia", onboarding_completed: c.empresaOk ?? true },
+    ...profile,
+  };
   h.resolve.mockImplementation((q) => {
-    if (q.table === "profiles" && q.op === "select" && q.columns?.includes("role")) {
+    if (q.table === "profiles" && q.op === "select" && q.columns?.startsWith("role")) {
       return { data: { role: c.role ?? "user", empresas: { onboarding_completed: c.empresaOk ?? true } } };
     }
-    if (q.table === "profiles" && q.op === "select") return { data: profile };
+    if (q.table === "profiles" && q.op === "select") return { data: perfilCarregado };
     if (q.table === "profiles" && q.op === "update") return { error: c.updateError ?? null };
     if (q.table === "terms_acceptances" && q.op === "select") return { data: aceite ? { id: "t" } : null };
     if (q.table === "terms_acceptances" && q.op === "insert") return { error: c.termsError ?? null };
@@ -55,13 +60,16 @@ function cenario(c: Cenario = {}) {
   });
 }
 
-function usuario(meta: { provider?: string; invite?: boolean; identities?: string[] } = {}) {
+function usuario(meta: { provider?: string; invite?: boolean; identities?: string[]; convidadoPor?: string } = {}) {
   h.auth.getUser.mockResolvedValue({
     data: {
       user: {
         id: "u1",
         app_metadata: { provider: meta.provider ?? "email" },
-        user_metadata: meta.invite ? { invite_token: "tok" } : {},
+        user_metadata: {
+          ...(meta.invite ? { invite_token: "tok" } : {}),
+          ...(meta.convidadoPor ? { convidado_por: meta.convidadoPor } : {}),
+        },
         identities: (meta.identities ?? ["email"]).map((p) => ({ provider: p })),
       },
     },
@@ -84,6 +92,7 @@ async function preencherBasico(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByPlaceholderText("Ex: Maria"), "Maria");
   await user.type(screen.getByPlaceholderText("Ex: Souza"), "Souza");
   await user.type(screen.getByPlaceholderText("(00) 00000-0000"), "11999998888");
+  await user.click(screen.getByRole("radio", { name: "Sócio ou diretor" }));
 }
 
 const salvar = () => screen.getByRole("button", { name: /Continuar|Salvar|Concluir|Salvando/ });
@@ -147,7 +156,13 @@ describe("ProfileSetup", () => {
     const insert = h.calls.find((c) => c.table === "terms_acceptances" && c.op === "insert");
     expect(insert?.payload).toMatchObject({ user_id: "u1", empresa_id: "e1", source: "profile_setup" });
     const update = h.calls.find((c) => c.table === "profiles" && c.op === "update");
-    expect(update?.payload).toMatchObject({ first_name: "Maria", last_name: "Souza", onboarding_completed: true });
+    expect(update?.payload).toMatchObject({
+      first_name: "Maria",
+      last_name: "Souza",
+      funcao: "socio",
+      linkedin_url: null,
+      onboarding_completed: true,
+    });
     expect(h.refreshProfile).toHaveBeenCalled();
   });
 
@@ -241,6 +256,49 @@ describe("ProfileSetup", () => {
     renderPage();
     await waitFor(() => expect(screen.getByPlaceholderText("Ex: Maria")).toHaveValue("Ana"));
     expect(screen.getByPlaceholderText("Ex: Souza")).toHaveValue("Lima");
+  });
+
+  it("convidado vê quem convidou, o escritório e o papel (SPEC 149)", async () => {
+    usuario({ invite: true, convidadoPor: "Ana Souza" });
+    cenario({ role: "coordenador" });
+    renderPage();
+    expect(await screen.findByRole("heading", { name: "Boas-vindas ao Alfa Engenharia" })).toBeInTheDocument();
+    expect(screen.getByText("Ana Souza")).toBeInTheDocument();
+    expect(screen.getByText("Coordenador")).toBeInTheDocument();
+    expect(screen.getByText("Entrada no escritório")).toBeInTheDocument();
+  });
+
+  it("dono de escritório novo vê a etapa 1 de 3", async () => {
+    cenario({ role: "admin", empresaOk: false });
+    renderPage();
+    expect(await screen.findByText("Configuração inicial · Etapa 1 de 3")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Seu perfil" })).toBeInTheDocument();
+  });
+
+  it("sem função escolhida não salva", async () => {
+    usuario({ provider: "google", identities: ["google"] });
+    renderPage();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("checkbox"));
+    await user.type(screen.getByPlaceholderText("Ex: Maria"), "Maria");
+    await user.type(screen.getByPlaceholderText("Ex: Souza"), "Souza");
+    await user.type(screen.getByPlaceholderText("(00) 00000-0000"), "11999998888");
+    await user.click(salvar());
+    expect(await screen.findByText("Escolha sua função no escritório")).toBeInTheDocument();
+    expect(h.calls.some((c) => c.table === "profiles" && c.op === "update")).toBe(false);
+  });
+
+  it("LinkedIn informado é gravado normalizado", async () => {
+    usuario({ provider: "google", identities: ["google"] });
+    renderPage();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("checkbox"));
+    await preencherBasico(user);
+    await user.type(screen.getByPlaceholderText("linkedin.com/in/seu-perfil"), "linkedin.com/in/maria-souza");
+    await user.click(salvar());
+    await screen.findByTestId("inicio");
+    const update = h.calls.find((c) => c.table === "profiles" && c.op === "update");
+    expect(update?.payload).toMatchObject({ linkedin_url: "https://linkedin.com/in/maria-souza" });
   });
 
   it("sessão perdida no envio mostra erro e não navega", async () => {

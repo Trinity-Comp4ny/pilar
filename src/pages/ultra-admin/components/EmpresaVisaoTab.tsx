@@ -8,6 +8,7 @@ import { useCustosIa, useFormatCusto } from "../custos";
 import { quandoRelativo } from "../lib";
 import { Fato } from "./Fato";
 import { EmptyState } from "@/components/EmptyState";
+import { CANAIS, DISCIPLINAS, FUNCOES, OBJETIVOS, PORTES, rotuloDe } from "@/lib/perfilEscritorio";
 
 export function EmpresaVisaoTab({ empresa, onVerAtividade }: { empresa: Empresa; onVerAtividade: () => void }) {
   const formatCusto = useFormatCusto();
@@ -16,8 +17,42 @@ export function EmpresaVisaoTab({ empresa, onVerAtividade }: { empresa: Empresa;
   const ia = custosQ.data?.porEmpresa.find((e) => e.empresaId === empresa.id);
   const admins = empresa.usuarios.filter((u) => !u.isPending && (u.role === "admin" || u.role === "ultra_admin"));
 
+  const { perfil } = empresa;
+  const disciplinas = perfil.disciplinas.map((d) => rotuloDe(DISCIPLINAS, d) ?? d).join(", ");
+
   return (
     <div className="grid gap-4 lg:grid-cols-3">
+      <Card className="border border-black/5 lg:col-span-3">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Perfil do escritório</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <dl className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+            <Fato label="Site">
+              {perfil.site ? (
+                <a
+                  href={`https://${perfil.site}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline-offset-2 hover:underline"
+                >
+                  {perfil.site}
+                </a>
+              ) : (
+                "-"
+              )}
+            </Fato>
+            <Fato label="Porte">{rotuloDe(PORTES, perfil.porte) ?? "-"}</Fato>
+            <Fato label="Disciplinas">{disciplinas || "-"}</Fato>
+            <Fato label="Origem (anotada)">{rotuloDe(CANAIS, perfil.origem) ?? "-"}</Fato>
+            <Fato label="Como conheceu (dono)">{rotuloDe(CANAIS, perfil.comoConheceu) ?? "-"}</Fato>
+            <Fato label="Quer começar por">
+              {OBJETIVOS.find((o) => o.value === perfil.objetivoInicial)?.label ?? "-"}
+            </Fato>
+          </dl>
+        </CardContent>
+      </Card>
+
       <Card className="border border-black/5">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">IA no mês</CardTitle>
@@ -53,6 +88,24 @@ export function EmpresaVisaoTab({ empresa, onVerAtividade }: { empresa: Empresa;
                   <p className="truncate text-xs text-ink-muted">
                     {u.email} · {quandoRelativo(u.lastSignInAt) ?? "nunca entrou"}
                   </p>
+                  {(u.funcao || u.contato || u.linkedinUrl) && (
+                    <p className="truncate text-xs text-ink-muted">
+                      {[rotuloDe(FUNCOES, u.funcao), u.contato].filter(Boolean).join(" · ")}
+                      {u.linkedinUrl && (
+                        <>
+                          {(u.funcao || u.contato) && " · "}
+                          <a
+                            href={u.linkedinUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline-offset-2 hover:underline"
+                          >
+                            LinkedIn
+                          </a>
+                        </>
+                      )}
+                    </p>
+                  )}
                 </li>
               ))}
             </ul>

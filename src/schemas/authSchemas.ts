@@ -1,5 +1,17 @@
 import { z } from "zod";
 import { passwordSchema } from "@/lib/passwordPolicy";
+import { CANAIS, DISCIPLINAS, FUNCOES, PORTES, normalizarLinkedin } from "@/lib/perfilEscritorio";
+
+// SPEC 149: função no escritório (obrigatória) e LinkedIn (opcional) no perfil.
+const funcaoSchema = z
+  .string()
+  .refine((v) => FUNCOES.some((f) => f.value === v), { message: "Escolha sua função no escritório" });
+const linkedinSchema = z
+  .string()
+  .trim()
+  .optional()
+  .default("")
+  .refine((v) => normalizarLinkedin(v).ok, { message: "Informe o endereço do seu perfil no LinkedIn" });
 
 export const loginSchema = z.object({
   email: z.string().trim().toLowerCase().email("Email inválido"),
@@ -63,6 +75,8 @@ export const profileSetupSchema = z
     firstName: z.string().trim().min(1, "Nome é obrigatório"),
     lastName: z.string().trim().min(1, "Sobrenome é obrigatório"),
     phone: z.string().trim().min(10, "Telefone obrigatório"),
+    funcao: funcaoSchema,
+    linkedin: linkedinSchema,
     password: passwordSchema,
     confirmPassword: z.string().min(1, "Confirme a senha"),
     termsAccepted: z.boolean().optional(),
@@ -77,6 +91,8 @@ export const profileSetupOAuthSchema = z.object({
   firstName: z.string().trim().min(1, "Nome é obrigatório"),
   lastName: z.string().trim().min(1, "Sobrenome é obrigatório"),
   phone: z.string().trim().min(10, "Telefone obrigatório"),
+  funcao: funcaoSchema,
+  linkedin: linkedinSchema,
   termsAccepted: z.boolean().optional(),
 });
 
@@ -85,6 +101,8 @@ export const profileSetupDefaultValues: ProfileSetupFormData = {
   firstName: "",
   lastName: "",
   phone: "",
+  funcao: "",
+  linkedin: "",
   password: "",
   confirmPassword: "",
   termsAccepted: false,
@@ -104,6 +122,24 @@ export const companySetupSchema = z
   .object({
     name: z.string().trim().min(1, "Nome é obrigatório"),
     cnpj: z.string().trim().optional().default(""),
+    // SPEC 149: perfil do escritório, tudo opcional (o ultra-admin costuma
+    // pré-preencher pela demonstração; o dono só confirma).
+    site: z.string().trim().max(200).optional().default(""),
+    porte: z
+      .string()
+      .optional()
+      .default("")
+      .refine((v) => !v || PORTES.some((p) => p.value === v), { message: "Porte inválido" }),
+    disciplinas: z
+      .array(z.string())
+      .optional()
+      .default([])
+      .refine((l) => l.every((d) => DISCIPLINAS.some((o) => o.value === d)), { message: "Disciplina inválida" }),
+    comoConheceu: z
+      .string()
+      .optional()
+      .default("")
+      .refine((v) => !v || CANAIS.some((c) => c.value === v), { message: "Opção inválida" }),
   })
   .refine(
     (d) => {
@@ -115,7 +151,14 @@ export const companySetupSchema = z
   );
 export type CompanySetupFormData = z.infer<typeof companySetupSchema>;
 export type CompanySetupFormInput = z.input<typeof companySetupSchema>;
-export const companySetupDefaultValues: CompanySetupFormData = { name: "", cnpj: "" };
+export const companySetupDefaultValues: CompanySetupFormData = {
+  name: "",
+  cnpj: "",
+  site: "",
+  porte: "",
+  disciplinas: [],
+  comoConheceu: "",
+};
 
 export const profileEditSchema = z.object({
   firstName: z.string().trim().min(1, "Nome é obrigatório"),

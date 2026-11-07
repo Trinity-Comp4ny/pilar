@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import type { SubscriptionPlanSlug } from "@/lib/features";
+import { EscolhaChips } from "@/components/forms/EscolhaChips";
+import { CANAIS, DISCIPLINAS, PORTES, sugerirSite } from "@/lib/perfilEscritorio";
 import { PLAN_LABEL, type EmpresaDetalhe } from "../api";
 
 /**
@@ -77,21 +79,46 @@ function ConfirmarComNome({
 
 type DialogBase = { open: boolean; onOpenChange: (open: boolean) => void; isPending: boolean };
 
+export type NovaEmpresa = {
+  nome: string;
+  ownerEmail: string;
+  ownerNome: string;
+  cnpj: string;
+  site: string;
+  porte: string | null;
+  disciplinas: string[];
+  origem: string | null;
+};
+
+const NOVA_VAZIA: NovaEmpresa = {
+  nome: "",
+  ownerEmail: "",
+  ownerNome: "",
+  cnpj: "",
+  site: "",
+  porte: null,
+  disciplinas: [],
+  origem: null,
+};
+
+/**
+ * Criação da empresa (SPEC 149). Nome e e-mail bastam; o resto é o que você já
+ * sabe da demonstração e chega pré-preenchido para o dono só confirmar.
+ */
 export function CriarEmpresaDialog({
   open,
   onOpenChange,
   isPending,
   onConfirm,
-}: DialogBase & { onConfirm: (input: { nome: string; ownerEmail: string }) => void }) {
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
+}: DialogBase & { onConfirm: (input: NovaEmpresa) => void }) {
+  const [form, setForm] = useState<NovaEmpresa>(NOVA_VAZIA);
+  const [perfilAberto, setPerfilAberto] = useState(true);
   useEffect(() => {
-    if (!open) {
-      setNome("");
-      setEmail("");
-    }
+    if (!open) setForm(NOVA_VAZIA);
   }, [open]);
-  const emailValido = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim());
+  const set = <K extends keyof NovaEmpresa>(k: K, v: NovaEmpresa[K]) => setForm((f) => ({ ...f, [k]: v }));
+  const emailValido = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.ownerEmail.trim());
+  const siteSugerido = sugerirSite(form.ownerEmail);
 
   return (
     <FormDialog
@@ -99,32 +126,107 @@ export function CriarEmpresaDialog({
       onOpenChange={onOpenChange}
       title="Criar empresa"
       description="Nasce convidada (usa sem pagar) e o dono recebe um convite de admin por e-mail."
-      size="sm"
+      size="md"
       submitLabel="Criar e convidar dono"
       isPending={isPending}
-      submitDisabled={!nome.trim() || !emailValido}
-      onSubmit={() => onConfirm({ nome: nome.trim(), ownerEmail: email.trim() })}
+      submitDisabled={!form.nome.trim() || !emailValido}
+      onSubmit={() =>
+        onConfirm({
+          ...form,
+          nome: form.nome.trim(),
+          ownerEmail: form.ownerEmail.trim(),
+          ownerNome: form.ownerNome.trim(),
+        })
+      }
     >
-      <div className="space-y-1.5">
-        <Label htmlFor="criar-empresa-nome">Nome da empresa</Label>
-        <Input
-          id="criar-empresa-nome"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-          placeholder="Ex.: Alfa Engenharia"
-          autoFocus
-        />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label htmlFor="criar-empresa-nome">Nome da empresa</Label>
+          <Input
+            id="criar-empresa-nome"
+            value={form.nome}
+            onChange={(e) => set("nome", e.target.value)}
+            placeholder="Ex.: Alfa Engenharia"
+            autoFocus
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="criar-empresa-email">E-mail do dono</Label>
+          <Input
+            id="criar-empresa-email"
+            type="email"
+            value={form.ownerEmail}
+            onChange={(e) => set("ownerEmail", e.target.value)}
+            placeholder="dono@empresa.com.br"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="criar-empresa-dono">Nome do dono (opcional)</Label>
+          <Input
+            id="criar-empresa-dono"
+            value={form.ownerNome}
+            onChange={(e) => set("ownerNome", e.target.value)}
+            placeholder="Ex.: Ana Souza"
+          />
+        </div>
       </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="criar-empresa-email">E-mail do dono</Label>
-        <Input
-          id="criar-empresa-email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="dono@empresa.com.br"
-        />
-      </div>
+
+      <Collapsible open={perfilAberto} onOpenChange={setPerfilAberto}>
+        <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md py-1 text-sm font-medium text-ink">
+          Perfil do escritório (da demonstração)
+          <ChevronDown className={`h-4 w-4 transition-transform ${perfilAberto ? "rotate-180" : ""}`} />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-4 pt-3">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="criar-empresa-site">Site</Label>
+              <Input
+                id="criar-empresa-site"
+                value={form.site}
+                onChange={(e) => set("site", e.target.value)}
+                placeholder={siteSugerido ?? "alfaengenharia.com.br"}
+              />
+              {siteSugerido && !form.site && (
+                <button
+                  type="button"
+                  className="text-xs text-ink-muted underline-offset-2 hover:underline"
+                  onClick={() => set("site", siteSugerido)}
+                >
+                  Usar {siteSugerido}
+                </button>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="criar-empresa-cnpj">CNPJ</Label>
+              <Input
+                id="criar-empresa-cnpj"
+                value={form.cnpj}
+                onChange={(e) => set("cnpj", e.target.value)}
+                placeholder="00.000.000/0000-00"
+                inputMode="numeric"
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Disciplinas</Label>
+            <EscolhaChips
+              multiplo
+              ariaLabel="Disciplinas"
+              opcoes={DISCIPLINAS}
+              value={form.disciplinas}
+              onChange={(v) => set("disciplinas", v)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Porte</Label>
+            <EscolhaChips ariaLabel="Porte" opcoes={PORTES} value={form.porte} onChange={(v) => set("porte", v)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Origem</Label>
+            <EscolhaChips ariaLabel="Origem" opcoes={CANAIS} value={form.origem} onChange={(v) => set("origem", v)} />
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </FormDialog>
   );
 }

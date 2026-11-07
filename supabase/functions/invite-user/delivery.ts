@@ -13,12 +13,14 @@ export async function deliverInvite(
   email: string,
   token: string,
   nome: string,
-  origin: string
+  origin: string,
+  // SPEC 149: nome de quem convidou, para a tela de entrada dizer "Ana convidou você".
+  convidadoPor?: string | null
 ): Promise<DeliveryResult> {
   const normalizedEmail = email.trim().toLowerCase();
   const { error } = await svc.auth.admin.inviteUserByEmail(normalizedEmail, {
     redirectTo: `${origin}/profile-setup`,
-    data: { invite_token: token, nome },
+    data: convidadoPor ? { invite_token: token, nome, convidado_por: convidadoPor } : { invite_token: token, nome },
   });
   if (!error) return { ok: true, conta_existente: false };
   if (!isEmailExistsError(error)) {

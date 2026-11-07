@@ -22,6 +22,9 @@ export type EventoProduto =
   | "signup_email_ja_cadastrado"
   | "demo_agendar_clicado"
   | "empresa_onboarding_concluido"
+  | "onboarding_etapa_concluida"
+  | "onboarding_objetivo_escolhido"
+  | "onboarding_boas_vindas_acao"
   // Uso dos módulos (ativação e adoção)
   | "cliente_criado"
   | "lead_criado"
