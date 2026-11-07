@@ -59,16 +59,6 @@
       "count": 6
     }
   },
-  "src/pages/projetos/components/CronogramaTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 7
-    }
-  },
-  "src/pages/projetos/components/DisciplinasSection.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "src/pages/projetos/components/DisciplinasTab.tsx": {
     "no-restricted-syntax": {
       "count": 1
