@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -250,5 +250,31 @@ describe("ChatPage", () => {
     expect(screen.queryByRole("button", { name: /Nova conversa/ })).not.toBeInTheDocument();
     await userEvent.click(screen.getAllByRole("button", { name: "Conversar" })[0]);
     expect(screen.getByLabelText("Mensagem para os agentes")).toBeInTheDocument();
+  });
+});
+
+describe("ChatPage: rolagem da conversa", () => {
+  it("longe do fim mostra 'descer'; clicar rola até a última mensagem e esconde o botão", async () => {
+    const user = userEvent.setup();
+    h.messages = [
+      { id: "1", role: "user", content: "oi" },
+      { id: "2", role: "assistant", content: "olá" },
+    ];
+    montar();
+    const area = screen.getByText("olá").closest(".overflow-y-auto") as HTMLDivElement;
+    const scrollTo = vi.fn();
+    area.scrollTo = scrollTo as unknown as typeof area.scrollTo;
+    Object.defineProperty(area, "scrollHeight", { value: 2000, configurable: true });
+    Object.defineProperty(area, "clientHeight", { value: 500, configurable: true });
+
+    area.scrollTop = 1450; // perto do fim: sem botão
+    fireEvent.scroll(area);
+    expect(screen.queryByRole("button", { name: "Descer para a mensagem mais recente" })).not.toBeInTheDocument();
+
+    area.scrollTop = 100; // longe do fim
+    fireEvent.scroll(area);
+    await user.click(screen.getByRole("button", { name: "Descer para a mensagem mais recente" }));
+    expect(scrollTo).toHaveBeenCalledWith({ top: 2000, behavior: "smooth" });
+    expect(screen.queryByRole("button", { name: "Descer para a mensagem mais recente" })).not.toBeInTheDocument();
   });
 });
