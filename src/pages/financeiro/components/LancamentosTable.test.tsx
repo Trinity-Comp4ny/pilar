@@ -135,8 +135,6 @@ beforeEach(() => {
   vi.setSystemTime(new Date(2026, 10, 10, 22, 30)); // 22h30 em SP: em UTC já é dia 11
   sb.resultado("despesas.update", { data: null, error: null });
   sb.resultado("receitas.update", { data: null, error: null });
-  sb.resultado("despesas.delete", { data: null, error: null });
-  sb.resultado("receitas.delete", { data: null, error: null });
 });
 afterEach(() => vi.useRealTimers());
 
@@ -214,10 +212,10 @@ describe("LancamentosTable: excluir", () => {
     const { onMutated } = setup();
     const dlg = abrirExclusao("Aluguel");
     expect(within(dlg).getByText("Excluir despesa")).toBeInTheDocument();
-    expect(sb.de("despesas", "delete")).toHaveLength(0);
+    expect(sb.argsRpc("rpc_soft_delete")).toBeUndefined();
     fireEvent.click(within(dlg).getByRole("button", { name: "Excluir" }));
     await waitFor(() => expect(onMutated).toHaveBeenCalled());
-    expect(sb.de("despesas", "eq")[0].args).toEqual(["id", "d-1"]);
+    expect(sb.argsRpc("rpc_soft_delete")).toEqual({ p_tabela: "despesas", p_id: "d-1" });
     expect(toast.success).toHaveBeenCalledWith("Lançamento excluído");
   });
 
@@ -238,7 +236,7 @@ describe("LancamentosTable: excluir", () => {
     fireEvent.click(within(dlg).getByRole("button", { name: "Excluir" }));
     await waitFor(() => expect(onMutated).toHaveBeenCalled());
     expect(sb.argsRpc("rpc_excluir_transferencia")).toEqual({ p_id: "t-1" });
-    expect(sb.de("despesas", "delete")).toHaveLength(0);
+    expect(sb.argsRpc("rpc_soft_delete")).toBeUndefined();
   });
 
   it("cancelar não exclui", () => {
@@ -246,16 +244,27 @@ describe("LancamentosTable: excluir", () => {
     setup();
     const dlg = abrirExclusao("Aluguel");
     fireEvent.click(within(dlg).getByRole("button", { name: "Cancelar" }));
-    expect(sb.de("despesas", "delete")).toHaveLength(0);
+    expect(sb.argsRpc("rpc_soft_delete")).toBeUndefined();
   });
 
   it("erro do servidor avisa e não recarrega", async () => {
-    sb.resultado("despesas.delete", { data: null, error: { message: "foreign key" } });
+    sb.rpcResultado("rpc_soft_delete", { data: null, error: { message: "foreign key" } });
     itens = [lanc({})];
     const { onMutated } = setup();
     const dlg = abrirExclusao("Aluguel");
     fireEvent.click(within(dlg).getByRole("button", { name: "Excluir" }));
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Falha ao excluir", { description: "foreign key" }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Falha ao excluir", expect.anything()));
+    expect(onMutated).not.toHaveBeenCalled();
+  });
+
+  it("linha barrada pelo banco (RLS ou já excluída) avisa falha em vez de sucesso", async () => {
+    sb.rpcResultado("rpc_soft_delete", { data: null, error: { message: "Registro não encontrado", code: "P0002" } });
+    itens = [lanc({})];
+    const { onMutated } = setup();
+    const dlg = abrirExclusao("Aluguel");
+    fireEvent.click(within(dlg).getByRole("button", { name: "Excluir" }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Falha ao excluir", expect.anything()));
+    expect(toast.success).not.toHaveBeenCalled();
     expect(onMutated).not.toHaveBeenCalled();
   });
 });
