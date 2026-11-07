@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Palette, Upload, Maximize2 } from "lucide-react";
 import type { CompanyData } from "../types";
-import { useObjectUrl } from "@/hooks/useObjectUrl";
+import { useObjectUrl } from "@/pages/company/hooks/useObjectUrl";
 
 interface CompanyVisualTabProps {
   companyData: CompanyData;

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { CompanyData } from "../types";
 import { getStatusBadge } from "../types";
-import { useObjectUrl } from "@/hooks/useObjectUrl";
+import { useObjectUrl } from "@/pages/company/hooks/useObjectUrl";
 
 interface CompanySummaryCardProps {
   companyData: CompanyData;
