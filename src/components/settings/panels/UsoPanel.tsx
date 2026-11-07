@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FolderKanban, Users, ArrowUpRight, Coins, Plus, Lock } from "lucide-react";
+import { FolderKanban, HardHat, UserPlus, Users, ArrowUpRight, Coins, Plus, Lock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,7 +12,8 @@ import { EquipeTokensSection } from "@/components/settings/panels/EquipeTokensSe
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
-import { formatNumberCompact, formatNumber, formatDateTime } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
+import { formatConsumoCreditos, formatCreditos, tokensParaCreditos } from "@/lib/creditos";
 import { DataTable } from "@/components/data/DataTable";
 import { toDataSourceResult } from "@/types/dataSource";
 import type { ColumnDef } from "@/components/data/DataTable";
@@ -98,15 +99,16 @@ const extratoColumns: ColumnDef<ExtratoTokenEvento>[] = [
   },
   {
     key: "tokensTotal",
-    header: "Tokens",
-    cell: (e) => <span className="tabular-nums text-ink">{formatNumber(e.tokensTotal)}</span>,
+    header: "Créditos",
+    cell: (e) => <span className="tabular-nums text-ink">{formatConsumoCreditos(e.tokensTotal)}</span>,
     getSortValue: (e) => e.tokensTotal,
   },
 ];
 
-// Aba Uso: medidor do eixo de cobrança (faixa de projetos ativos, PRICING v2) + saldo
-// e extrato de tokens de IA (motor de tokens, spec 076). Usuários são ilimitados no
-// modelo, então aparecem só como contagem informativa.
+// Aba Uso: medidores das faixas do plano (projetos, obras e leads ativos, DECISOES.md
+// 2026-11-06) + saldo e extrato de IA em créditos (o motor conta tokens, a tela mostra
+// créditos, ver lib/creditos.ts). Usuários são ilimitados no modelo, então aparecem só
+// como contagem informativa.
 export function UsoPanel() {
   const { uso, isLoading, error } = useUsoEmpresa();
   const { eventos, isLoading: extratoLoading, error: extratoError } = useExtratoTokens();
@@ -138,8 +140,11 @@ export function UsoPanel() {
     );
   }
 
-  const nearProjetos =
-    typeof uso.maxProjetos === "number" && uso.maxProjetos > 0 && uso.projetosAtivos / uso.maxProjetos >= 0.8;
+  const perto = (usado: number, max: number | null) => typeof max === "number" && max > 0 && usado / max >= 0.8;
+  const nearFaixa =
+    perto(uso.projetosAtivos, uso.maxProjetos) ||
+    perto(uso.obrasAtivas, uso.maxObras) ||
+    perto(uso.leadsAtivos, uso.maxLeads);
 
   return (
     <div className="space-y-5">
@@ -156,7 +161,21 @@ export function UsoPanel() {
           label="Projetos ativos"
           used={uso.projetosAtivos}
           max={uso.maxProjetos}
-          hint="Conta os projetos não arquivados. É o que define a faixa da sua assinatura."
+          hint="Projetos em andamento. Concluído ou cancelado não ocupa faixa."
+        />
+        <Medidor
+          icon={HardHat}
+          label="Obras ativas"
+          used={uso.obrasAtivas}
+          max={uso.maxObras}
+          hint="Obras em andamento. Obra concluída não ocupa faixa."
+        />
+        <Medidor
+          icon={UserPlus}
+          label="Leads ativos"
+          used={uso.leadsAtivos}
+          max={uso.maxLeads}
+          hint="Leads abertos no funil. Ganho ou perdido não ocupa faixa."
         />
         <Medidor
           icon={Users}
@@ -168,7 +187,7 @@ export function UsoPanel() {
       </div>
 
       <div>
-        <h3 className="text-base font-semibold text-ink">Tokens de IA</h3>
+        <h3 className="text-base font-semibold text-ink">Créditos de IA</h3>
         <p className="text-sm text-black/55">
           Consumo dos agentes de IA (chat, leitura de cotação, importação financeira) neste ciclo.
         </p>
@@ -178,9 +197,9 @@ export function UsoPanel() {
         <Card className="border border-black/5">
           <CardContent className="pt-5 space-y-1">
             <span className="flex items-center gap-2 text-sm font-medium text-black/70">
-              <Coins size={16} className="text-black/40" /> Tokens do plano
+              <Coins size={16} className="text-black/40" /> Créditos do plano
             </span>
-            <p className="text-lg font-semibold text-ink">{formatNumberCompact(uso.tokensPlano)}</p>
+            <p className="text-lg font-semibold text-ink">{formatCreditos(uso.tokensPlano)}</p>
             <p className="text-xs text-black/45">Renovados a cada ciclo mensal; o que sobra não acumula.</p>
           </CardContent>
         </Card>
@@ -188,7 +207,7 @@ export function UsoPanel() {
           <CardContent className="pt-5 space-y-1">
             <div className="flex items-center justify-between gap-2">
               <span className="flex items-center gap-2 text-sm font-medium text-black/70">
-                <Coins size={16} className="text-black/40" /> Tokens comprados
+                <Coins size={16} className="text-black/40" /> Créditos comprados
               </span>
               {canComprar && (
                 <Button
@@ -204,7 +223,7 @@ export function UsoPanel() {
                 </Button>
               )}
             </div>
-            <p className="text-lg font-semibold text-ink">{formatNumberCompact(uso.tokensComprado)}</p>
+            <p className="text-lg font-semibold text-ink">{formatCreditos(uso.tokensComprado)}</p>
             <p className="text-xs text-black/45">Pacote avulso, não expira no ciclo.</p>
           </CardContent>
         </Card>
@@ -214,12 +233,12 @@ export function UsoPanel() {
         <div className="space-y-3">
           <Medidor
             icon={Lock}
-            label="Seu limite de tokens"
-            used={meuUso.tokensCiclo}
-            max={meuUso.limiteMensal}
+            label="Seu limite de créditos"
+            used={tokensParaCreditos(meuUso.tokensCiclo)}
+            max={tokensParaCreditos(meuUso.limiteMensal)}
             hint="Teto pessoal definido pelo administrador da sua empresa, sobre o saldo acima."
-            nearMessage="Você está perto do seu limite pessoal de tokens."
-            fullMessage="Limite pessoal atingido. Peça mais tokens ao administrador abaixo."
+            nearMessage="Você está perto do seu limite pessoal de créditos."
+            fullMessage="Limite pessoal atingido. Peça mais créditos ao administrador abaixo."
           />
           {nearLimitePessoal &&
             (pedindoTokens ? (
@@ -255,7 +274,7 @@ export function UsoPanel() {
               </Card>
             ) : (
               <Button variant="outline" size="sm" className="rounded-full" onClick={() => setPedindoTokens(true)}>
-                Pedir mais tokens ao administrador
+                Pedir mais créditos ao administrador
               </Button>
             ))}
         </div>
@@ -280,16 +299,16 @@ export function UsoPanel() {
 
       {can("pessoas") && <EquipeTokensSection />}
 
-      {(nearProjetos || !uso.planoNome) && (
+      {(nearFaixa || !uso.planoNome) && (
         <Card className="border border-black/5 bg-black/2">
           <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-4">
             <div>
               <p className="text-sm font-medium text-ink">
-                {uso.planoNome ? "Precisa de mais projetos ativos?" : "Escolha um plano"}
+                {uso.planoNome ? "Precisa de mais capacidade?" : "Escolha um plano"}
               </p>
               <p className="text-sm text-black/55">
                 {uso.planoNome
-                  ? "Suba de faixa e abra mais projetos sem trocar de ferramenta."
+                  ? "Suba de plano e abra mais projetos, obras e leads sem trocar de ferramenta."
                   : "Assine para liberar o uso completo do Pilar."}
               </p>
             </div>

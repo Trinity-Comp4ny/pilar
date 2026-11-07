@@ -76,12 +76,12 @@ export function msgErroChat(e: unknown, porTimeout = false, motivoBloqueio?: str
   }
   if (status === 402) {
     if (motivoBloqueio === "limite_usuario") {
-      return "Você atingiu seu limite de tokens de IA deste mês. Peça mais tokens ao administrador da sua empresa em Configurações > Uso.";
+      return "Você atingiu seu limite de créditos de IA deste mês. Peça mais créditos ao administrador da sua empresa em Configurações > Uso.";
     }
     if (motivoBloqueio === "trial_pausado") {
       return "Uso de IA em contas de teste está pausado por hoje. Volta amanhã, ou fale com a gente pra liberar antes.";
     }
-    return "Os tokens de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador.";
+    return "Os créditos de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador.";
   }
   if (status === 401 || status === 403) {
     return "Você não tem permissão para essa ação. Fale com um administrador da empresa.";

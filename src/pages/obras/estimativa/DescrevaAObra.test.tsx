@@ -75,7 +75,7 @@ describe("DescrevaAObra", () => {
   it("diz o custo e o saldo, e só libera o botão com texto", async () => {
     const user = userEvent.setup();
     render(<Tela />);
-    expect(screen.getByText(/Usa cerca de 4 mil tokens\. Saldo da empresa: 120 mil\./)).toBeInTheDocument();
+    expect(screen.getByText(/Usa cerca de 0,8 crédito de IA\. Saldo da empresa: 24 créditos\./)).toBeInTheDocument();
     const botao = screen.getByRole("button", { name: /Preencher a lista/ });
     expect(botao).toBeDisabled();
     await user.type(screen.getByLabelText("Descreva a obra"), "6 splits de 12.000 BTU");
