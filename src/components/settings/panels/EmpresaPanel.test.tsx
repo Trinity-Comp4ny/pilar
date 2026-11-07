@@ -152,6 +152,30 @@ describe("Configurações › Empresa", () => {
       expect(add).toBeDisabled();
     });
 
+    it("email em formato inválido avisa no campo e não envia", async () => {
+      const user = await renderPanel();
+      await user.click(screen.getByRole("tab", { name: /Usuários/ }));
+      await user.type(screen.getByPlaceholderText("Nome"), "Caio");
+      const email = screen.getByPlaceholderText("email@empresa.com");
+      await user.type(email, "caio@seed");
+      expect(screen.getByText("E-mail em formato inválido")).toBeInTheDocument();
+      expect(email).toHaveAttribute("aria-invalid", "true");
+      expect(email).toHaveAccessibleDescription("E-mail em formato inválido");
+      expect(screen.getByRole("button", { name: "Adicionar usuário" })).toBeDisabled();
+      await user.type(email, ".test");
+      expect(screen.queryByText("E-mail em formato inválido")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Adicionar usuário" })).toBeEnabled();
+      expect(h.invoke).not.toHaveBeenCalled();
+    });
+
+    it("botões de editar e remover usuário têm nome acessível", async () => {
+      const user = await renderPanel();
+      await user.click(screen.getByRole("tab", { name: /Usuários/ }));
+      expect(screen.getByRole("button", { name: "Editar Bia User" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Remover Bia User" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Remover Ana Admin" })).toBeDisabled();
+    });
+
     it("2FA negado não envia o convite", async () => {
       h.requireAal2.mockResolvedValue(false);
       const user = await renderPanel();
