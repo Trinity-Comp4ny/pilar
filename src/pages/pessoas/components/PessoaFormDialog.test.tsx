@@ -217,4 +217,99 @@ describe("Equipe › PessoaFormDialog", () => {
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
     expect(h.calls.find((c) => c.op === "update")?.payload).toHaveProperty("salario_fixo");
   });
+  describe("contas bancárias e chaves PIX", () => {
+    async function abrirBanco(user: ReturnType<typeof userEvent.setup>) {
+      await preencherMinimo(user);
+      await user.click(screen.getByRole("button", { name: /Dados bancários/ }));
+    }
+    async function addConta(user: ReturnType<typeof userEvent.setup>, banco: string) {
+      await user.type(screen.getByPlaceholderText("Nome do banco"), banco);
+      await user.type(screen.getByPlaceholderText("0000"), "1234");
+      await user.type(screen.getByPlaceholderText("000000-0"), "55555-1");
+      await user.click(screen.getByRole("button", { name: "Adicionar conta" }));
+    }
+    const payloadInsert = () => h.calls.find((c) => c.op === "insert")?.payload as Record<string, unknown>;
+
+    it("conta incompleta no '+' avisa; a primeira vira principal e a principal pode mudar e ser removida", async () => {
+      const { user, onSaved } = renderDialog();
+      await abrirBanco(user);
+      await user.click(screen.getByRole("button", { name: "Adicionar conta" }));
+      expect(h.toastError).toHaveBeenCalledWith("Dados incompletos", expect.anything());
+
+      await addConta(user, "Banco A");
+      await addConta(user, "Banco B");
+      expect(screen.getAllByText("Principal")).toHaveLength(1);
+      const definir = screen.getAllByTitle("Definir como principal");
+      await user.click(definir[1]);
+      // Remove a principal (B): a primeira restante (A) volta a ser principal.
+      await user.click(screen.getAllByRole("button", { name: "Remover conta" })[1]);
+      expect(screen.queryByText("Banco B")).not.toBeInTheDocument();
+      expect(screen.getByText("Principal")).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Salvar" }));
+      await waitFor(() => expect(onSaved).toHaveBeenCalled());
+      expect(payloadInsert().contas_bancarias).toEqual([
+        { banco: "Banco A", agencia: "1234", conta: "55555-1", tipo: "corrente", is_primary: true },
+      ]);
+    });
+
+    it("chave PIX: inválida e repetida avisam; Enter adiciona; remover tira da lista", async () => {
+      const { user, onSaved } = renderDialog();
+      await abrirBanco(user);
+      const campo = screen.getByPlaceholderText("CPF, CNPJ, e-mail, celular ou chave aleatória");
+      await user.type(campo, "xx");
+      expect(screen.getByText("...")).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "Adicionar chave PIX" }));
+      expect(h.toastError).toHaveBeenCalledWith("Chave PIX inválida", expect.anything());
+
+      await user.clear(campo);
+      await user.type(campo, "rita@pix.test{Enter}");
+      expect(screen.getByText("rita@pix.test")).toBeInTheDocument();
+      await user.type(campo, "rita@pix.test");
+      await user.click(screen.getByRole("button", { name: "Adicionar chave PIX" }));
+      expect(h.toastError).toHaveBeenCalledWith("Chave já cadastrada");
+
+      await user.clear(campo);
+      await user.type(campo, "outra@pix.test{Enter}");
+      const badge = screen.getByText("outra@pix.test").closest("div") as HTMLElement;
+      await user.click(badge.querySelector("button") as HTMLButtonElement);
+      expect(screen.queryByText("outra@pix.test")).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Salvar" }));
+      await waitFor(() => expect(onSaved).toHaveBeenCalled());
+      expect(payloadInsert().chaves_pix).toEqual([{ chave: "rita@pix.test", tipo: expect.any(String) }]);
+    });
+
+    it("conta e PIX digitados sem '+' entram no salvamento", async () => {
+      const { user, onSaved } = renderDialog();
+      await abrirBanco(user);
+      await user.type(screen.getByPlaceholderText("Nome do banco"), "Banco C");
+      await user.type(screen.getByPlaceholderText("0000"), "1");
+      await user.type(screen.getByPlaceholderText("000000-0"), "2");
+      await user.type(screen.getByPlaceholderText("CPF, CNPJ, e-mail, celular ou chave aleatória"), "c@pix.test");
+      await user.click(screen.getByRole("button", { name: "Salvar" }));
+      await waitFor(() => expect(onSaved).toHaveBeenCalled());
+      expect(payloadInsert()).toMatchObject({
+        contas_bancarias: [{ banco: "Banco C", agencia: "1", conta: "2", tipo: "corrente", is_primary: true }],
+        chaves_pix: [{ chave: "c@pix.test" }],
+      });
+    });
+
+    it("telefone duplicado e outros duplicados viram mensagem de negócio", async () => {
+      h.resolve
+        .mockReturnValueOnce({ error: { code: "23505", message: "dup telefone" } })
+        .mockReturnValueOnce({ error: { code: "23505", message: "dup key" } })
+        .mockReturnValueOnce({ error: { code: "23502", message: "null" } });
+      const { user } = renderDialog();
+      await preencherMinimo(user);
+      await user.click(screen.getByRole("button", { name: "Salvar" }));
+      await waitFor(() => expect(h.toastError).toHaveBeenCalledWith("Telefone já cadastrado na empresa"));
+      await user.click(screen.getByRole("button", { name: "Salvar" }));
+      await waitFor(() =>
+        expect(h.toastError).toHaveBeenCalledWith("Registro duplicado — verifique CPF, email ou telefone")
+      );
+      await user.click(screen.getByRole("button", { name: "Salvar" }));
+      await waitFor(() => expect(h.toastError).toHaveBeenCalledWith("Preencha todos os campos obrigatórios."));
+    });
+  });
 });
