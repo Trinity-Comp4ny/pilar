@@ -35,13 +35,30 @@ vi.mock("../hooks/useLancamentosResumo", () => ({
 vi.mock("../components/LancamentosTable", () => ({ LancamentosTable: () => null }));
 vi.mock("../components/ImportarLancamentosDialog", () => ({ ImportarLancamentosDialog: () => null }));
 vi.mock("@/components/DataFrescor", () => ({ DataFrescor: () => null }));
+vi.mock("../hooks/useTitulosPosicao", () => ({
+  useTitulosPosicao: (tipo: string | null) => ({
+    isLoading: false,
+    data: tipo
+      ? {
+          hoje: "2026-11-10",
+          baldes: {
+            vencidos: { qtd: 2, valor: 8050 },
+            hoje: { qtd: 1, valor: 3400 },
+            semana: { qtd: 2, valor: 1720.35 },
+            futuro: { qtd: 6, valor: 6100 },
+            pagos_mes: { qtd: 1, valor: 289.9 },
+          },
+        }
+      : undefined,
+  }),
+}));
 
 import Lancamentos from "./Lancamentos";
 
-function renderTab() {
+function renderTab(url = "/") {
   return render(
     <QueryClientProvider client={new QueryClient()}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[url]}>
         <Lancamentos />
       </MemoryRouter>
     </QueryClientProvider>
@@ -57,7 +74,8 @@ describe("Lancamentos: KPIs", () => {
   it("com o resumo carregado mostra os quatro KPIs", () => {
     renderTab();
     expect(screen.getByText("Recebido")).toBeInTheDocument();
-    expect(screen.getByText("A pagar")).toBeInTheDocument();
+    // "A pagar" aparece no seletor de visão e no KPI.
+    expect(screen.getAllByText("A pagar")).toHaveLength(2);
     expect(screen.queryByText("Não foi possível carregar os dados financeiros")).not.toBeInTheDocument();
   });
 
@@ -68,5 +86,27 @@ describe("Lancamentos: KPIs", () => {
     expect(screen.queryByText("Recebido")).not.toBeInTheDocument();
     await userEvent.setup().click(screen.getByRole("button", { name: "Tentar de novo" }));
     expect(resumoHook.refetch).toHaveBeenCalled();
+  });
+});
+
+describe("Lancamentos: visões A pagar / A receber", () => {
+  it("A pagar troca os KPIs gerais pelos chips de posição", () => {
+    renderTab("/?ft=despesa&fs=pendentes");
+    expect(screen.getByRole("button", { name: /Vencidos/ })).toHaveTextContent("R$ 8.050,00");
+    expect(screen.getByRole("button", { name: /Pagos no mês/ })).toBeInTheDocument();
+    expect(screen.queryByText("Recebido")).not.toBeInTheDocument();
+  });
+
+  it("clicar em Vencidos marca o chip (filtro aplicado na URL)", async () => {
+    renderTab("/?ft=despesa&fs=pendentes");
+    const vencidos = screen.getByRole("button", { name: /Vencidos/ });
+    expect(vencidos).toHaveAttribute("aria-pressed", "false");
+    await userEvent.setup().click(vencidos);
+    expect(screen.getByRole("button", { name: /Vencidos/ })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("A receber nomeia o balde de pagos como recebidos", () => {
+    renderTab("/?ft=receita&fs=pendentes");
+    expect(screen.getByRole("button", { name: /Recebidos no mês/ })).toBeInTheDocument();
   });
 });

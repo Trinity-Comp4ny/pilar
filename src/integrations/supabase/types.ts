@@ -9952,6 +9952,7 @@ export type Database = {
       }
       get_resumo_semanal: { Args: never; Returns: Json }
       get_resumo_semanal_fatos: { Args: never; Returns: Json }
+      get_titulos_posicao: { Args: { p_tipo: string }; Returns: Json }
       get_user_empresa_id: { Args: never; Returns: string }
       get_user_empresa_id_text: { Args: never; Returns: string }
       get_user_role: { Args: never; Returns: string }

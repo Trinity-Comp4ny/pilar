@@ -19,7 +19,7 @@ import { useLancamentosPaginados } from "../hooks/useLancamentosPaginados";
 import { useGruposParcelaResumo } from "../hooks/useGruposParcelaResumo";
 import type { LancamentosResumo } from "../hooks/useLancamentosResumo";
 import { invalidateLancamentos } from "../tabs/Lancamentos";
-import { LancamentoDetailDialog } from "./LancamentoDetailDialog";
+import { LancamentoDetailSheet } from "./LancamentoDetailSheet";
 import { LancamentoFormDialog } from "./LancamentoFormDialog";
 import { TransferenciaFormDialog } from "./TransferenciaFormDialog";
 import { LancamentosFilterBar } from "./LancamentosFilterBar";
@@ -569,7 +569,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
         </div>
       )}
 
-      <LancamentoDetailDialog
+      <LancamentoDetailSheet
         lancamento={detailTarget}
         open={detailTarget !== null}
         onOpenChange={(v) => !v && setDetailTarget(null)}
@@ -582,6 +582,11 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
           setEditTarget(l);
         }}
         onGroupChanged={refetchAll}
+        onSelect={setDetailTarget}
+        onRegistrarPagamento={(l) => {
+          setDetailTarget(null);
+          void setStatus(l, l.tipo === "receita" ? "Recebido" : "Pago");
+        }}
       />
 
       {editTarget && (

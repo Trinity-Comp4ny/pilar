@@ -46,8 +46,8 @@ vi.mock("../hooks/useGruposParcelaResumo", () => ({ useGruposParcelaResumo: () =
 vi.mock("../hooks/useParcelasDosGrupos", () => ({ useParcelasDosGrupos: () => new Map() }));
 vi.mock("./LancamentosFilterBar", () => ({ LancamentosFilterBar: () => null }));
 // Detalhe simplificado: expõe o "Excluir" que a tabela recebe.
-vi.mock("./LancamentoDetailDialog", () => ({
-  LancamentoDetailDialog: ({
+vi.mock("./LancamentoDetailSheet", () => ({
+  LancamentoDetailSheet: ({
     lancamento,
     open,
     onDelete,
