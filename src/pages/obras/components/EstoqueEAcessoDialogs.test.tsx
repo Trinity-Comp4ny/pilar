@@ -142,6 +142,9 @@ describe("MaterialMovDialog", () => {
     salvar();
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível salvar", { description: "falhou" }));
     expect(onOpenChange).not.toHaveBeenCalled();
+    // O form continua em "novo material" com o que foi digitado: o id criado fica guardado
+    // fora do campo, que o Select esvaziaria enquanto a lista não recarrega.
+    expect(screen.getByLabelText("Nome *")).toHaveValue("Areia média");
 
     falhaMov = false;
     salvar();

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -88,11 +88,17 @@ export function MaterialMovDialog({
 
   const form = useForm<FormData>({ resolver: zodResolver(schema) });
   const { register, handleSubmit, reset, watch, setValue, formState } = form;
+  // Material criado neste diálogo, guardado fora do form: se o movimento falhar, a nova
+  // tentativa reusa o id em vez de criar outro material com o mesmo nome. Não vai para o
+  // campo "Material" porque o Select esvazia um valor que ainda não está na lista
+  // (a lista só recarrega depois), e a nova tentativa caía em "Escolha o material".
+  const materialCriado = useRef<string | null>(null);
   const material = watch("material");
   const tipo = watch("tipo");
 
   useEffect(() => {
     if (!open) return;
+    materialCriado.current = null;
     reset({
       material: movInicial?.obra_material_id ?? materialIdInicial ?? "",
       nome: "",
@@ -112,10 +118,11 @@ export function MaterialMovDialog({
     try {
       let materialId = d.material;
       if (!editando && d.material === NOVO) {
-        materialId = await saveMaterial.mutateAsync({ nome: d.nome.trim(), unidade: d.unidade.trim() });
-        // Fixa o material recém-criado no form: se o movimento abaixo falhar, um novo
-        // envio reusa este id em vez de criar um segundo material com o mesmo nome.
-        setValue("material", materialId);
+        materialCriado.current ??= await saveMaterial.mutateAsync({
+          nome: d.nome.trim(),
+          unidade: d.unidade.trim(),
+        });
+        materialId = materialCriado.current;
       }
       await saveMov.mutateAsync({
         id: movInicial?.id ?? undefined,
