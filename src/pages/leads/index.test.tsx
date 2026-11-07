@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
@@ -538,5 +538,106 @@ describe("Leads: estados da tela, busca e permissão", () => {
     leads = [];
     abrir();
     expect(screen.queryByRole("button", { name: "Criar primeiro lead" })).not.toBeInTheDocument();
+  });
+});
+
+describe("Leads: filtros, busca e visão em lista", () => {
+  const CARLA: Lead = {
+    id: "l3",
+    nome: "Carla",
+    status: "Novo",
+    etapa_id: "e-novo",
+    origem: "Indicação",
+    responsavel_id: "u1",
+    previsao_fechamento: "2026-11-12",
+    valor_estimado: 5000,
+  };
+  const DANI: Lead = {
+    id: "l4",
+    nome: "Dani",
+    status: "Novo",
+    etapa_id: "e-novo",
+    origem: "Site",
+    previsao_fechamento: "2026-10-01",
+  };
+  const ELIS: Lead = {
+    id: "l5",
+    nome: "Elis",
+    status: "Novo",
+    etapa_id: "e-novo",
+    previsao_fechamento: "2026-11-28",
+  };
+
+  beforeEach(() => {
+    leads = [ANA, BETO, CARLA, DANI, ELIS];
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 10, 10, 12, 0));
+  });
+  afterEach(() => vi.useRealTimers());
+
+  const visiveis = () =>
+    ["Ana Lima", "Beto", "Carla", "Dani", "Elis"].filter((n) => screen.queryAllByText(n).length > 0);
+  const busca = () =>
+    screen
+      .getAllByLabelText("Buscar por nome, empresa ou email")
+      .find((el) => el.tagName === "INPUT") as HTMLInputElement;
+
+  async function escolher(user: ReturnType<typeof userEvent.setup>, filtro: string, opcao: string) {
+    await user.click(screen.getByRole("button", { name: filtro }));
+    await user.click(await screen.findByRole("option", { name: opcao }));
+  }
+
+  it("busca por nome, empresa ou email", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.type(busca(), "alfa");
+    expect(visiveis()).toEqual(["Ana Lima"]);
+    await user.clear(busca());
+    await user.type(busca(), "zzz");
+    expect(visiveis()).toEqual([]);
+  });
+
+  it("filtra por origem e por responsável (inclusive sem responsável)", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await escolher(user, "Origem", "Site");
+    expect(visiveis()).toEqual(["Beto", "Dani"]);
+    await user.click(screen.getByRole("button", { name: "Limpar filtro Origem" }));
+
+    await escolher(user, "Responsável", "Carla Souza");
+    expect(visiveis()).toEqual(["Carla"]);
+    await escolher(user, "Responsável", "Sem responsável");
+    expect(visiveis()).toEqual(["Ana Lima", "Beto", "Dani", "Elis"]);
+  });
+
+  it("filtra pela previsão de fechamento: 7 dias, vencida e este mês", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await escolher(user, "Previsão", "Fecham em 7 dias");
+    expect(visiveis()).toEqual(["Carla"]);
+    await escolher(user, "Previsão", "Previsão vencida");
+    expect(visiveis()).toEqual(["Dani"]);
+    await escolher(user, "Previsão", "Fecham este mês");
+    expect(visiveis()).toEqual(["Carla", "Elis"]);
+  });
+
+  it("visão em lista mostra a tabela e o clique abre o detalhe", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: /Lista/ }));
+    const tabela = await screen.findByRole("table");
+    const carla = within(tabela).getByText("Carla").closest("tr") as HTMLElement;
+    expect(within(carla).getByText("Carla Souza")).toBeInTheDocument();
+    expect(within(carla).getByText("12/11/2026")).toBeInTheDocument();
+    expect(within(carla).getByText("Indicação")).toBeInTheDocument();
+    const beto = within(tabela).getByText("Beto").closest("tr") as HTMLElement;
+    expect(within(beto).getAllByText("—").length).toBeGreaterThan(0);
+
+    await user.click(carla);
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+    await user.click(screen.getByRole("button", { name: /Quadro/ }));
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
   });
 });
