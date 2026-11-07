@@ -63,7 +63,7 @@ serve(
     const { data: profile } = await admin.from("profiles").select("empresa_id, role").eq("id", user.id).maybeSingle();
 
     if (!ehAdminDaEmpresa(profile)) {
-      return jsonResponse({ error: "Apenas admin da empresa pode comprar tokens" }, 403, req);
+      return jsonResponse({ error: "Apenas admin da empresa pode comprar créditos de IA" }, 403, req);
     }
 
     // --- Rate limit por empresa (DB, atômico cross-instance) ---
@@ -102,7 +102,8 @@ serve(
     if (!sub) {
       return jsonResponse(
         {
-          error: "Sua empresa ainda não tem cobrança ativa. Fale com o suporte para ativar antes de comprar tokens.",
+          error:
+            "Sua empresa ainda não tem cobrança ativa. Fale com o suporte para ativar antes de comprar créditos de IA.",
         },
         400,
         req
@@ -206,7 +207,8 @@ serve(
         billingType: body.billing_type,
         value: valor,
         dueDate: todayISO(),
-        description: `Pilar — ${tier.tokens.toLocaleString("pt-BR")} tokens`,
+        // Cliente vê créditos (1 crédito = 5 mil tokens, DECISOES.md 2026-11-06).
+        description: `Pilar — ${(tier.tokens / 5000).toLocaleString("pt-BR")} créditos de IA`,
         externalReference: purchase.id,
         ...(body.billing_type === "CREDIT_CARD" && body.credit_card && body.credit_card_holder_info
           ? { creditCard: body.credit_card, creditCardHolderInfo: body.credit_card_holder_info, remoteIp }

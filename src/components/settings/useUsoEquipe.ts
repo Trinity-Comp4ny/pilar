@@ -122,7 +122,7 @@ export function useUsoEquipe() {
     },
     onSuccess: (_data, variables) => {
       invalidar();
-      toast.success(variables.limiteMensal === null ? "Limite removido" : "Limite de tokens atualizado");
+      toast.success(variables.limiteMensal === null ? "Limite removido" : "Limite de créditos atualizado");
     },
     onError: (err) => {
       reportInvokeError(err, "ai_token_limite_usuario:upsert");
