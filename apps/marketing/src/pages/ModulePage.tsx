@@ -162,7 +162,7 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
         <div className="mx-auto max-w-6xl">
           <Reveal variant="up" className="mb-8 max-w-2xl">
             <h2 className="text-[40px] font-medium leading-[1.08] tracking-[-0.035em] text-ink max-[1100px]:text-[34px] max-[850px]:text-[27px] max-[420px]:text-[24px]">
-              Antes de testar, <span className="italic text-ink/45">o que todo mundo pergunta.</span>
+              Antes da demonstração, <span className="italic text-ink/45">o que todo mundo pergunta.</span>
             </h2>
           </Reveal>
 

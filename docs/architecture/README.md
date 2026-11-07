@@ -4,6 +4,8 @@ Decisões arquiteturais registradas (ADRs). ← [voltar ao índice](../README.md
 
 Um ADR documenta uma decisão técnica relevante, seu contexto e consequências. Ordem cronológica.
 
+**Pesquisas técnicas:** [Leitor de projetos](./leitor-de-projetos/README.md) (leitura de planta em PDF, escaneado e IFC: cascata, regras medidas, custo de LLM e pendências; versão pública sem nomes de pessoas).
+
 | ADR                                                                              | Decisão                                                                                                                                                                                                                                                                                                                                            |
 | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [0001](./adr/0001-arquitetura-multi-tenant.md)                                   | Arquitetura multi-tenant via RLS por `empresa_id`                                                                                                                                                                                                                                                                                                  |

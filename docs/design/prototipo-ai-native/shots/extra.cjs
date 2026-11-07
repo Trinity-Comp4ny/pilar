@@ -1,0 +1,24 @@
+const { chromium } = require(process.argv[2]);
+const path = require('path');
+const url = 'file://' + path.resolve(__dirname, '../prototipo-ai-native/index.html');
+(async () => {
+  const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'] });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.click('.rail .ri.desk[data-go="obra"]'); await page.waitForTimeout(400);
+  await page.evaluate(() => document.querySelector('.gantt').scrollIntoView());
+  await page.screenshot({ path: path.join(__dirname, 'gantt.png') });
+  await page.click('.rail .ri.desk[data-go="proposta"]'); await page.waitForTimeout(300);
+  await page.click('.step:nth-child(3)'); await page.waitForTimeout(300);
+  await page.screenshot({ path: path.join(__dirname, 'proposta-2b.png') });
+  await page.click('.rail .ri.desk[data-go="campo"]'); await page.waitForTimeout(300);
+  await page.click('[data-act="rec"]'); await page.waitForTimeout(5300);
+  await page.screenshot({ path: path.join(__dirname, 'campo-anim.png') });
+  await page.click('[data-dev="mobile"]'); await page.waitForTimeout(800);
+  await page.evaluate(() => { const d = document.getElementById('device'); d.scrollTop = 620; });
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: path.join(__dirname, 'm-campo-3d.png') });
+  await page.click('[data-st="erro"]'); await page.waitForTimeout(300);
+  await page.screenshot({ path: path.join(__dirname, 'm-erro.png') });
+  await browser.close();
+})();

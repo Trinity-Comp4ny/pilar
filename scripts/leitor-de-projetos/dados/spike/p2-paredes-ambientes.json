@@ -1,0 +1,212 @@
+[
+ {
+  "nome": "Suíte visitas",
+  "area_rotulo": 9.66,
+  "vista": "Planta baixa - Térreo",
+  "px": [
+   4437,
+   2170
+  ],
+  "seed": [
+   4437,
+   2225
+  ],
+  "area_calc": 10.2,
+  "erro_pct": 5.6
+ },
+ {
+  "nome": "55",
+  "area_rotulo": 2.16,
+  "vista": "Planta baixa - Térreo",
+  "px": [
+   3904,
+   2401
+  ],
+  "seed": [
+   3947,
+   2427
+  ],
+  "area_calc": 5.61,
+  "erro_pct": 159.8
+ },
+ {
+  "nome": "160x50/2,50",
+  "area_rotulo": 1.6,
+  "vista": "Planta baixa - Térreo",
+  "px": [
+   4740,
+   1710
+  ],
+  "seed": [
+   4794,
+   1724
+  ],
+  "area_calc": 1.72,
+  "erro_pct": 7.6
+ },
+ {
+  "nome": "Área gourmet",
+  "area_rotulo": 77.06,
+  "vista": "Planta baixa - Térreo",
+  "px": [
+   6526,
+   1809
+  ],
+  "seed": [
+   6497,
+   1797
+  ],
+  "area_calc": 174.21,
+  "erro_pct": 126.1
+ },
+ {
+  "nome": "27",
+  "area_rotulo": 11.98,
+  "vista": "Planta baixa - Térreo",
+  "px": [
+   3798,
+   2830
+  ],
+  "seed": [
+   3913,
+   2847
+  ],
+  "area_calc": 8.34,
+  "erro_pct": -30.4
+ },
+ {
+  "nome": "Lavabo",
+  "area_rotulo": 2.24,
+  "vista": "Planta baixa - Térreo",
+  "px": [
+   6275,
+   2866
+  ],
+  "seed": [
+   6301,
+   2876
+  ],
+  "area_calc": 2.43,
+  "erro_pct": 8.3
+ },
+ {
+  "nome": "Estar/ Cozinha",
+  "area_rotulo": 45.6,
+  "vista": "Planta baixa - Térreo",
+  "px": [
+   5528,
+   1923
+  ],
+  "seed": [
+   5645,
+   1805
+  ],
+  "area_calc": 0.16,
+  "erro_pct": -99.6
+ },
+ {
+  "nome": "Jardim",
+  "area_rotulo": 8.17,
+  "vista": "Planta baixa - Térreo",
+  "px": [
+   3111,
+   368
+  ],
+  "seed": [
+   2993,
+   485
+  ],
+  "area_calc": 0.08,
+  "erro_pct": -99.0
+ },
+ {
+  "nome": "Jardim",
+  "area_rotulo": 35.68,
+  "vista": "Planta baixa - Térreo",
+  "px": [
+   7775,
+   504
+  ],
+  "seed": [
+   7657,
+   621
+  ],
+  "area_calc": 0.08,
+  "erro_pct": -99.8
+ },
+ {
+  "nome": "Jardim",
+  "area_rotulo": 11.8,
+  "vista": "Planta baixa - Térreo",
+  "px": [
+   2811,
+   2140
+  ],
+  "seed": [
+   2693,
+   2022
+  ],
+  "area_calc": 0.2,
+  "erro_pct": -98.3
+ },
+ {
+  "nome": "Suíte 01",
+  "area_rotulo": 12.74,
+  "vista": "Planta baixa - Superior",
+  "px": [
+   4267,
+   5604
+  ],
+  "seed": [
+   4278,
+   5579
+  ],
+  "area_calc": 13.25,
+  "erro_pct": 4.0
+ },
+ {
+  "nome": "55",
+  "area_rotulo": 12.74,
+  "vista": "Planta baixa - Superior",
+  "px": [
+   5761,
+   5604
+  ],
+  "seed": [
+   5748,
+   5584
+  ],
+  "area_calc": 13.2,
+  "erro_pct": 3.6
+ },
+ {
+  "nome": "Circulação",
+  "area_rotulo": 9.31,
+  "vista": "Planta baixa - Superior",
+  "px": [
+   5633,
+   6257
+  ],
+  "seed": [
+   5515,
+   6268
+  ],
+  "area_calc": 14.92,
+  "erro_pct": 60.3
+ },
+ {
+  "nome": "Suíte 03",
+  "area_rotulo": 11.02,
+  "vista": "Planta baixa - Superior",
+  "px": [
+   6622,
+   5016
+  ],
+  "seed": [
+   6584,
+   4898
+  ],
+  "area_calc": 11.48,
+  "erro_pct": 4.1
+ }
+]

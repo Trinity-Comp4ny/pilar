@@ -1,0 +1,2 @@
+{"caso": "caso_b_p1", "vetor": 9, "blocos300": {"recuperou": "6/9", "blocos": 4, "numeros_lidos": 52, "t": 4.7}, "uniao": "6/9"}
+{"caso": "caso_b_p1", "vetor": 9, "blocos300": {"recuperou": "6/9", "blocos": 4, "numeros_lidos": 52, "t": 4.7}, "uniao": "8/9", "blocos400": {"recuperou": "8/9", "blocos": 4, "numeros_lidos": 49, "t": 6.3}}

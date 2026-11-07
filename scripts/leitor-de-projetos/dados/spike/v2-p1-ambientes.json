@@ -1,0 +1,218 @@
+[
+ {
+  "nome": "Suíte visitas",
+  "area_rotulo": 9.66,
+  "vista": "Térreo",
+  "girado": false,
+  "px": [
+   4416,
+   2179
+  ],
+  "area_calc": 9.38,
+  "erro_pct": -2.9
+ },
+ {
+  "nome": "Lavatório",
+  "area_rotulo": 2.16,
+  "vista": "Térreo",
+  "girado": false,
+  "px": [
+   3880,
+   2448
+  ],
+  "area_calc": 1.79,
+  "erro_pct": -17.1
+ },
+ {
+  "nome": "Despensa",
+  "area_rotulo": 1.6,
+  "vista": "Térreo",
+  "girado": false,
+  "px": [
+   4740,
+   1730
+  ],
+  "area_calc": 1.6,
+  "erro_pct": 0.0
+ },
+ {
+  "nome": "Área gourmet",
+  "area_rotulo": 77.06,
+  "vista": "Térreo",
+  "girado": false,
+  "px": [
+   6509,
+   1865
+  ],
+  "area_calc": 24.7,
+  "erro_pct": -67.9
+ },
+ {
+  "nome": "Lavabo",
+  "area_rotulo": 2.24,
+  "vista": "Térreo",
+  "girado": false,
+  "px": [
+   6256,
+   2830
+  ],
+  "area_calc": 1.44,
+  "erro_pct": -35.7
+ },
+ {
+  "nome": "Hall",
+  "area_rotulo": 11.98,
+  "vista": "Térreo",
+  "girado": false,
+  "px": [
+   4317,
+   2754
+  ],
+  "area_calc": 11.13,
+  "erro_pct": -7.1
+ },
+ {
+  "nome": "Estar/ Cozinha",
+  "area_rotulo": 45.6,
+  "vista": "Térreo",
+  "girado": false,
+  "px": [
+   5511,
+   1958
+  ],
+  "area_calc": 46.49,
+  "erro_pct": 2.0
+ },
+ {
+  "nome": "Suíte 01",
+  "area_rotulo": 12.74,
+  "vista": "Superior",
+  "girado": false,
+  "px": [
+   4267,
+   5367
+  ],
+  "area_calc": 12.98,
+  "erro_pct": 1.9
+ },
+ {
+  "nome": "Suíte 02",
+  "area_rotulo": 12.74,
+  "vista": "Superior",
+  "girado": false,
+  "px": [
+   5644,
+   5367
+  ],
+  "area_calc": 12.65,
+  "erro_pct": -0.7
+ },
+ {
+  "nome": "Circulação",
+  "area_rotulo": 9.31,
+  "vista": "Superior",
+  "girado": false,
+  "px": [
+   5493,
+   6244
+  ],
+  "area_calc": 8.2,
+  "erro_pct": -11.9
+ },
+ {
+  "nome": "Banho",
+  "area_rotulo": 3.04,
+  "vista": "Térreo",
+  "girado": true,
+  "px": [
+   3878,
+   2079
+  ],
+  "area_calc": 3.13,
+  "erro_pct": 3.0
+ },
+ {
+  "nome": "Lavand.",
+  "area_rotulo": 5.04,
+  "vista": "Térreo",
+  "girado": true,
+  "px": [
+   4796,
+   1200
+  ],
+  "area_calc": 5.26,
+  "erro_pct": 4.4
+ },
+ {
+  "nome": "Sauna",
+  "area_rotulo": 2.32,
+  "vista": "Térreo",
+  "girado": true,
+  "px": [
+   6695,
+   2880
+  ],
+  "area_calc": 2.4,
+  "erro_pct": 3.4
+ },
+ {
+  "nome": "Banho S02",
+  "area_rotulo": 4.2,
+  "vista": "Superior",
+  "girado": true,
+  "px": [
+   5255,
+   5318
+  ],
+  "area_calc": 4.34,
+  "erro_pct": 3.3
+ },
+ {
+  "nome": "Banho S01",
+  "area_rotulo": 4.2,
+  "vista": "Superior",
+  "girado": true,
+  "px": [
+   4779,
+   5318
+  ],
+  "area_calc": 4.16,
+  "erro_pct": -1.0
+ },
+ {
+  "nome": "Banho S03",
+  "area_rotulo": 6.4,
+  "vista": "Superior",
+  "girado": true,
+  "px": [
+   6817,
+   5839
+  ],
+  "area_calc": 6.31,
+  "erro_pct": -1.4
+ },
+ {
+  "nome": "Suíte 03",
+  "area_rotulo": 11.02,
+  "vista": "Superior",
+  "girado": true,
+  "px": [
+   6393,
+   4985
+  ],
+  "area_calc": 10.97,
+  "erro_pct": -0.5
+ },
+ {
+  "nome": "Closet",
+  "area_rotulo": 8.37,
+  "vista": "Superior",
+  "girado": true,
+  "px": [
+   6393,
+   5839
+  ],
+  "area_calc": 8.43,
+  "erro_pct": 0.7
+ }
+]

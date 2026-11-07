@@ -1,0 +1,41 @@
+caso_e ocr {'vetor': 19, 't_vetor': 16.7, 'criterio': 'parede', 'dpis': (150, 300, 400), 'bloco_pt': 700, 'blocos': '11/20', 't_ocr': 76.2, 'ocr': 165, 'com_m2': 12, 'com_m2_e_nome': 12, 'recuperou': '16/19', 'recuperou_com_nome': '15/19', 'recuperou_com_m2': '9/19', 'sobras': 149, 'sobras_com_nome': 35, 'sobras_com_m2': 3}
+   alalalala                  3.82
+   RAMPA                      3.32
+   COPA                       1.30
+   WC.                        1.30
+   JOAO                       3.33
+   LAJE IMPERM.             781.00
+   ROUPARIA                   7.00
+   NHO                        4.32
+   NHO                        4.32
+   Bla Sja                    1.00
+   METÁLICA COM INCLINAÇÃ     4.52
+   ola                        1.10
+   Ela DIS                    2.90
+   Eli                        1.00
+   sia                        2.82
+   EXPO                       6.74
+   eua ÍNTIMA               781.15
+   SAL ÍNTIMA                81.15
+   UARITA                   776.20
+   RGALERY.                  77.21
+   LAVABO                     5.18
+   BIBLIOTECA                12.80
+   Ojo                        2.10
+   CLIM.                    777.27
+   WC.                        2.53
+   CIRCULAÇÃO                17.63
+   tom                        1.60
+   LAJE IMPERM.              50.14
+   zip                        2.90
+   JEGA                     774.72
+   COPA                     777.27
+   GALER                    777.27
+   IVING                      6.39
+   clo                        2.10
+   LAVABO                   777.27
+   JEGA                     774.12
+   DIDI                       4.78
+   tom                        1.60
+   CLOSET                     5.11
+   SAL ÍNTIMA                17.35

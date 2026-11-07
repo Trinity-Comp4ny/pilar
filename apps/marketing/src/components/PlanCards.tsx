@@ -1,4 +1,4 @@
-import { Check, Infinity as InfinityIcon, Sparkles, Users } from "lucide-react";
+import { Check, FolderKanban, HardHat, Sparkles, UserPlus, Users } from "lucide-react";
 import { trackCta } from "../analytics";
 import { RevealGroup } from "./motion";
 import { INCLUSO_EM_TODOS, PLANOS } from "../lib/planos";
@@ -7,8 +7,8 @@ import { DEMO_URL } from "../lib/contato";
 /**
  * Os três planos, no mesmo desenho na home e na /planos.
  *
- * Cada cartão mostra só o que muda entre planos: faixa de projetos, cota de
- * tokens de IA e nível de atendimento. A lista de funcionalidades saiu porque
+ * Cada cartão mostra só o que muda entre planos: a capacidade de cada módulo
+ * (projetos, obras e leads ativos), a cota de créditos de IA e o nível de atendimento. A lista de funcionalidades saiu porque
  * ela não existe: todo plano tem a plataforma inteira (ADR 0026), e repetir a
  * mesma lista em três colunas sugeria o contrário.
  *
@@ -57,11 +57,13 @@ export function PlanCards({ contexto }: { contexto: string }) {
               Agendar demonstração
             </a>
 
-            {/* Só as três réguas que separam um plano do outro. */}
+            {/* Só as réguas que separam um plano do outro: uma por módulo, mais IA e atendimento. */}
             <ul className="mt-7 flex flex-col gap-3.5 border-t border-paper-border/70 pt-6">
               {[
-                { Icone: InfinityIcon, texto: p.projetos },
-                { Icone: Sparkles, texto: p.tokensMes },
+                { Icone: FolderKanban, texto: p.projetos },
+                { Icone: HardHat, texto: p.obras },
+                { Icone: UserPlus, texto: p.leads },
+                { Icone: Sparkles, texto: p.creditosMes },
                 { Icone: Users, texto: p.atendimento },
               ].map(({ Icone, texto }) => (
                 <li key={texto} className="flex items-start gap-2.5">

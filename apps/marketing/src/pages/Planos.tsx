@@ -21,8 +21,8 @@ import { usePageMeta } from "../lib/seo";
 
 const PERGUNTAS = [
   {
-    q: "O que conta como projeto ativo?",
-    a: "Projeto em andamento na sua carteira. Concluído ou cancelado não ocupa faixa, então o número que importa é quantos você toca ao mesmo tempo.",
+    q: "O que conta como ativo?",
+    a: "Projeto ou obra em andamento, e lead aberto no funil. Concluído, cancelado, ganho ou perdido não ocupa faixa, então o número que importa é quantos você toca ao mesmo tempo.",
   },
   {
     q: "E se eu passar da faixa?",
@@ -33,8 +33,8 @@ const PERGUNTAS = [
     a: "Não. O preço é da empresa inteira. Coloque o escritório todo, estagiário e sócio, sem mudar a conta.",
   },
   {
-    q: "O que é um token?",
-    a: "A unidade de uso dos agentes de IA — mesmo termo que OpenAI e Anthropic usam. Toda conversa, leitura ou ação consome tokens; sua conta mostra o saldo real, sem tradução. Acabou a cota do mês? Compre um pacote avulso a qualquer momento.",
+    q: "O que é um crédito de IA?",
+    a: "A medida de uso dos agentes. Uma pergunta simples gasta pouco; ler um PDF ou montar uma proposta gasta mais. A conta mostra o saldo do mês, e a cota renova todo mês. Acabou antes? Compre um pacote avulso a qualquer momento.",
   },
 ];
 
@@ -42,7 +42,7 @@ export function Planos() {
   usePageMeta({
     titulo: "Planos e preços | Pilar",
     descricao:
-      "Um preço por escritório, sem contar cabeças. Todo plano tem a plataforma inteira; o que muda é quantos projetos você toca ao mesmo tempo. Para começar, agende uma demonstração.",
+      "Um preço por escritório, sem contar cabeças. Todo plano tem a plataforma inteira; o que muda é quantos projetos, obras e leads você toca ao mesmo tempo. Para começar, agende uma demonstração.",
     caminho: "/planos",
   });
 
@@ -67,8 +67,8 @@ export function Planos() {
               Um preço por escritório. <span className="italic text-ink/45">Sem contar cabeças.</span>
             </h1>
             <p className="text-[15px] leading-relaxed text-ink-soft">
-              Todo plano tem a plataforma inteira. O que muda é quantos projetos você toca ao mesmo tempo e quanto de IA
-              usa no mês. Cartão, PIX ou boleto, sem fidelidade.
+              Todo plano tem a plataforma inteira. O que muda é quantos projetos, obras e leads você toca ao mesmo tempo
+              e quanto de IA usa no mês. Cartão, PIX ou boleto, sem fidelidade.
             </p>
           </Reveal>
 
