@@ -6,6 +6,7 @@ import { Calendar as CheckCircle2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { monitoring } from "@/lib/monitoring";
+import { softDelete } from "@/lib/softDelete";
 import { FiltroCompetencia } from "@/pages/financeiro/components/FiltroCompetencia";
 import { PageToolbar } from "@/components/PageSlots";
 import { FilterBar, FilterSelect } from "@/components/filters/FilterBar";
@@ -19,6 +20,9 @@ import { FinanceErrorState } from "../components/FinanceErrorState";
 import { gerarComprovantePDF, gerarLoteComprovantesPDF } from "./folha-pagamento/folhaComprovante";
 import { calcularVariavel, calcularTotal, parseDetalhe, firstPix } from "./folha-pagamento/folhaCalc";
 import { CloseMonthDialog, DetailEditDialog, HistoryDetailDialog } from "./folha-pagamento/components/FolhaDialogs";
+
+/** Marca a despesa que a folha gera ao ser paga; é por ela que o estorno a encontra. */
+const OBS_DESPESA_FOLHA = "Lançamento automático de Folha de Pagamento";
 
 export default function FolhaPagamento() {
   const [loading, setLoading] = useState(true);
@@ -314,12 +318,32 @@ export default function FolhaPagamento() {
     const currentItem = data.find((item) => item.folha_id === folhaId);
     if (!currentItem) return;
     const previousStatus = currentItem.status;
+    const descricao = `Folha de Pagamento ${getMonthLabel(selectedMonth)}/${selectedYear} - ${currentItem.p_nome}`;
+    // Despesa gerada ao marcar pago: mesma descrição e valor (a policy de SELECT já esconde as excluídas).
+    const despesasDaFolha = () =>
+      supabase
+        .from("despesas")
+        .select("id")
+        .eq("descricao", descricao)
+        .eq("valor", currentItem.v_total)
+        .eq("observacao", OBS_DESPESA_FOLHA);
 
     try {
       const { error } = await supabase.from("folha_pagamento").update({ status: newStatus }).eq("id", folhaId);
       if (error) throw error;
 
       setData((prev) => prev.map((item) => (item.folha_id === folhaId ? { ...item, status: newStatus } : item)));
+
+      if (previousStatus === "pago" && newStatus !== "pago") {
+        // Voltou de pago: a despesa gerada no pagamento sai (soft delete, igual à
+        // exclusão no Financeiro), senão o caixa mostra um pagamento que não houve.
+        const { data: geradas, error: buscaError } = await despesasDaFolha();
+        if (buscaError) throw buscaError;
+        for (const { id } of geradas ?? []) {
+          const deleteError = await softDelete("despesas", id);
+          if (deleteError) throw deleteError;
+        }
+      }
 
       if (previousStatus !== "pago" && newStatus === "pago") {
         // Data local: toISOString (UTC) à noite já cai no dia seguinte.
@@ -342,15 +366,12 @@ export default function FolhaPagamento() {
           categoriaFolhaPagamento = insertedCategory;
         }
 
-        const descricao = `Folha de Pagamento ${getMonthLabel(selectedMonth)}/${selectedYear} - ${currentItem.p_nome}`;
-        const { data: existingDespesa } = await supabase
-          .from("despesas")
-          .select("id")
-          .eq("descricao", descricao)
-          .eq("valor", currentItem.v_total)
-          .maybeSingle();
+        // limit(1) + array: maybeSingle() dá erro com 2+ linhas (duplicata antiga),
+        // o erro era ignorado e a despesa era inserida de novo.
+        const { data: existentes, error: buscaError } = await despesasDaFolha().limit(1);
+        if (buscaError) throw buscaError;
 
-        if (!existingDespesa) {
+        if (!existentes?.length) {
           const { error: despesaError } = await supabase.from("despesas").insert([
             {
               data_vencimento: dateStr,
@@ -364,7 +385,7 @@ export default function FolhaPagamento() {
               status: "Pago",
               conta_id: null,
               cartao_id: null,
-              observacao: "Lançamento automático de Folha de Pagamento",
+              observacao: OBS_DESPESA_FOLHA,
             },
           ] as never);
           if (despesaError) throw despesaError;

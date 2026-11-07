@@ -240,14 +240,58 @@ describe("FolhaPagamento: mês fechado", () => {
     expect(toast.success).toHaveBeenCalledWith("Status atualizado", expect.anything());
   });
 
-  it("despesa da folha que já existe não é duplicada", async () => {
-    sb.resultado("despesas.select", { data: { id: "d-ja" }, error: null });
+  it("despesa da folha que já existe não é duplicada (nem com duplicata antiga)", async () => {
+    sb.resultado("despesas.select", { data: [{ id: "d-ja" }], error: null });
     const { user } = setup();
     const ana = await linha("Ana Souza");
     await user.click(within(ana).getByRole("button", { name: /pendente/ }));
     await user.click(await screen.findByRole("menuitem", { name: "Marcar como pago" }));
     await waitFor(() => expect(toast.success).toHaveBeenCalled());
     expect(sb.de("despesas", "insert")).toHaveLength(0);
+    expect(sb.de("despesas", "limit")[0].args).toEqual([1]);
+    expect(sb.de("despesas", "maybeSingle")).toHaveLength(0);
+  });
+
+  describe("voltar de pago para pendente", () => {
+    const paga = [{ ...fechada[0], status: "pago", data_pagamento: "2026-11-05" }];
+
+    it("exclui (soft) a despesa gerada no pagamento", async () => {
+      sb.resultado("folha_pagamento.select", { data: paga, error: null });
+      sb.resultado("despesas.select", { data: [{ id: "d-folha" }], error: null });
+      const { user } = setup();
+      const ana = await linha("Ana Souza");
+      await user.click(within(ana).getByRole("button", { name: /pago/ }));
+      await user.click(await screen.findByRole("menuitem", { name: /pendente/i }));
+
+      await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Status atualizado", expect.anything()));
+      expect(sb.de("folha_pagamento", "update")[0].args[0]).toEqual({ status: "pendente" });
+      expect(sb.de("despesas", "eq").map((c) => c.args)).toEqual([
+        ["descricao", "Folha de Pagamento Novembro/2026 - Ana Souza"],
+        ["valor", 5800],
+        ["observacao", "Lançamento automático de Folha de Pagamento"],
+      ]);
+      expect(sb.argsRpc("rpc_soft_delete")).toEqual({ p_tabela: "despesas", p_id: "d-folha" });
+      expect(sb.de("despesas", "delete")).toHaveLength(0);
+      expect(sb.de("despesas", "insert")).toHaveLength(0);
+    });
+
+    it("falha ao excluir a despesa devolve a folha para pago", async () => {
+      sb.resultado("folha_pagamento.select", { data: paga, error: null });
+      sb.resultado("despesas.select", { data: [{ id: "d-folha" }], error: null });
+      sb.rpcResultado("rpc_soft_delete", { data: null, error: { message: "Registro não encontrado" } });
+      const { user } = setup();
+      const ana = await linha("Ana Souza");
+      await user.click(within(ana).getByRole("button", { name: /pago/ }));
+      await user.click(await screen.findByRole("menuitem", { name: /pendente/i }));
+
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith(
+          "Erro ao atualizar status. A alteração foi revertida, tente novamente."
+        )
+      );
+      const updates = sb.de("folha_pagamento", "update").map((c) => c.args[0]);
+      expect(updates).toEqual([{ status: "pendente" }, { status: "pago" }]);
+    });
   });
 
   it("falha ao gerar a despesa reverte o status da folha", async () => {
