@@ -27,6 +27,9 @@ vi.mock("@/components/ui/date-picker", () => ({
 
 import { DisciplinasTableView } from "./DisciplinasTableView";
 
+// Tela pesada (Radix + muitos campos): sob cobertura passa dos 5s padrão.
+vi.setConfig({ testTimeout: 20000 });
+
 // Edição inline da tabela de disciplinas: nome, prioridade, datas, status com
 // confirmação de conclusão e justificativa de atraso, responsáveis, observações
 // e exclusão; e a leitura (sem permissão de edição).

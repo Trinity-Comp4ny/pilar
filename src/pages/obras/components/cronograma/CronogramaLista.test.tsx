@@ -100,6 +100,9 @@ globalThis.ResizeObserver ??= class {
 
 import { CronogramaLista } from "./CronogramaLista";
 
+// Tela pesada (Radix + muitos campos): sob cobertura passa dos 5s padrão.
+vi.setConfig({ testTimeout: 20000 });
+
 type Arvore = NoArvore<ObraFrenteRow, ObraTarefa>;
 
 const tarefa = (p: Partial<ObraTarefa>): ObraTarefa =>
