@@ -19,8 +19,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from "../_shared/logger.ts";
 import { withSentry } from "../_shared/sentry.ts";
-import { safeEqual } from "../_shared/crypto.ts";
 import { gerarConviteToken } from "../_shared/convite-token.ts";
+import { autorizarWebhook } from "./autorizacao.ts";
 import { dataPagamento, planejarWebhook } from "./plano.ts";
 
 const log = createLogger("pilar-checkout-webhook");
@@ -58,14 +58,15 @@ serve(
       return new Response("Method not allowed", { status: 405 });
     }
 
-    const receivedToken = req.headers.get("asaas-access-token");
-    const expectedToken = Deno.env.get("ASAAS_PLATFORM_WEBHOOK_TOKEN");
-
-    if (!expectedToken) {
+    const autorizacao = autorizarWebhook(
+      req.headers.get("asaas-access-token"),
+      Deno.env.get("ASAAS_PLATFORM_WEBHOOK_TOKEN")
+    );
+    if (autorizacao === "sem_configuracao") {
       log.error("ASAAS_PLATFORM_WEBHOOK_TOKEN não configurado");
       return new Response("Misconfigured", { status: 500 });
     }
-    if (!receivedToken || !safeEqual(receivedToken, expectedToken)) {
+    if (autorizacao === "nao_autorizado") {
       return new Response("Unauthorized", { status: 401 });
     }
 

@@ -21,7 +21,7 @@ import { createLogger } from "../_shared/logger.ts";
 import { withSentryCron } from "../_shared/sentry.ts";
 import { sendEmail, templateTrialAviso, templateTrialExpirado } from "../_shared/email/index.ts";
 import { converterEmAssinaturaAtiva } from "../_shared/converter-assinatura.ts";
-import { JANELAS_DE_AVISO, limitesDaJanela } from "./avisos.ts";
+import { JANELAS_DE_AVISO, limitesDaJanela, separarTrialsVencidos } from "./avisos.ts";
 import { cronAutorizado } from "../_shared/cron-auth.ts";
 
 const log = createLogger("trial-expiry-cron");
@@ -89,8 +89,7 @@ serve(
     if (dueQueryErr) {
       log.error("falha ao buscar trials vencidos", dueQueryErr);
     } else if (dueRows && dueRows.length > 0) {
-      const toConvert = dueRows.filter((r) => r.asaas_credit_card_token && r.asaas_customer_id && r.plan_id);
-      const toExpire = dueRows.filter((r) => !(r.asaas_credit_card_token && r.asaas_customer_id && r.plan_id));
+      const { converter: toConvert, expirar: toExpire } = separarTrialsVencidos(dueRows);
 
       // --- Conversão automática (cobra com o token salvo, sem pedir o cartão de novo) ---
       for (const row of toConvert) {

@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { useState, useEffect, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -268,11 +269,13 @@ export default function FolhaPagamento() {
 
   const startEditing = () => {
     if (!selectedPerson) return;
+    // Total só entra pré-preenchido se já foi ajustado à mão antes. Pré-preencher
+    // sempre fazia o total antigo "grudar": mudar salário ou área não recalculava
+    // o total salvo (e o diálogo acusava total desacoplado sem ninguém mexer nele).
     setEditForm({
       p_salario_fixo: selectedPerson.p_salario_fixo,
       soma_area: selectedPerson.soma_area,
-      v_variavel: selectedPerson.v_variavel,
-      v_total: selectedPerson.v_total,
+      ...(selectedPerson.edited_fields?.includes("total") ? { v_total: selectedPerson.v_total } : {}),
     });
     setIsEditingDetail(true);
   };
@@ -319,8 +322,8 @@ export default function FolhaPagamento() {
       setData((prev) => prev.map((item) => (item.folha_id === folhaId ? { ...item, status: newStatus } : item)));
 
       if (previousStatus !== "pago" && newStatus === "pago") {
-        const today = new Date();
-        const dateStr = today.toISOString().slice(0, 10);
+        // Data local: toISOString (UTC) à noite já cai no dia seguinte.
+        const dateStr = format(new Date(), "yyyy-MM-dd");
 
         const { data: categorias } = await supabase
           .from("categorias_financeiras")

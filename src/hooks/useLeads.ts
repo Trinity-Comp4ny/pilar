@@ -254,7 +254,8 @@ export function buildClienteEnrichmentUpdate(
     if (digits) {
       updates.cpf_cnpj = digits;
       // Cliente com CNPJ é pessoa jurídica; sem isso nasce com tipo_pessoa NULL.
-      updates.tipo_pessoa = "juridica";
+      // "PJ" é o único valor que o CHECK clientes_tipo_pessoa_check aceita além de "PF".
+      updates.tipo_pessoa = "PJ";
     }
   }
   if (enrichment.razao_social) updates.nome = enrichment.razao_social;

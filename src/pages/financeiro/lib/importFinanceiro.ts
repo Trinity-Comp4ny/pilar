@@ -53,6 +53,8 @@ export function normalizeValorBR(raw: unknown): number | null {
     if (mDC[1].toUpperCase() === "D") sinal = -1;
     s = s.slice(0, mDC.index).trim();
   }
+  // "R$ -50,00": o símbolo vem antes do sinal em alguns extratos.
+  s = s.replace(/R\$/gi, "").replace(/\s/g, "");
   if (s.startsWith("-")) {
     sinal = -1;
     s = s.slice(1);
@@ -60,11 +62,13 @@ export function normalizeValorBR(raw: unknown): number | null {
     s = s.slice(1);
   }
 
-  s = s.replace(/R\$/gi, "").replace(/\s/g, "");
   const temVirgula = s.includes(",");
   const temPonto = s.includes(".");
   if (temVirgula && temPonto) {
     s = s.lastIndexOf(",") > s.lastIndexOf(".") ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
+  } else if (/^\d{1,3}([.,])\d{3}(\1\d{3})+$/.test(s)) {
+    // Só separador de milhar repetido, sem centavos: "1.234.567" ou "1,234,567".
+    s = s.replace(/[.,]/g, "");
   } else if (temVirgula) {
     s = s.replace(",", ".");
   }
@@ -73,6 +77,12 @@ export function normalizeValorBR(raw: unknown): number | null {
   const n = parseFloat(s);
   if (Number.isNaN(n)) return null;
   return sinal * n;
+}
+
+// Dia existe no mês (31/02 e 29/02 fora de ano bissexto não existem: o banco
+// recusaria a data e derrubaria o lote inteiro da importação).
+function diaExiste(ano: number, mes: number, dia: number): boolean {
+  return new Date(Date.UTC(ano, mes - 1, dia)).getUTCDate() === dia;
 }
 
 /** Converte data BR/ISO para ISO yyyy-mm-dd. Retorna null se não reconhecer. */
@@ -85,14 +95,14 @@ export function parseDataBR(raw: unknown): string | null {
     const d = parseInt(m[1], 10);
     const mo = parseInt(m[2], 10);
     const ano = m[3].length === 2 ? 2000 + parseInt(m[3], 10) : parseInt(m[3], 10);
-    if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+    if (mo < 1 || mo > 12 || d < 1 || d > 31 || !diaExiste(ano, mo, d)) return null;
     return `${ano}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   }
   m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
   if (m) {
     const mo = parseInt(m[2], 10);
     const d = parseInt(m[3], 10);
-    if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+    if (mo < 1 || mo > 12 || d < 1 || d > 31 || !diaExiste(parseInt(m[1], 10), mo, d)) return null;
     return `${m[1]}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   }
   return null;
@@ -212,7 +222,8 @@ export function csvParaLinhas(text: string): { linhas: LinhaExtrato[]; avisos: s
     if (idx.debito < 0 && HEADER_DEBITO.test(h)) idx.debito = i;
     else if (idx.credito < 0 && HEADER_CREDITO.test(h)) idx.credito = i;
     else if (idx.valor < 0 && HEADER_VALOR.test(h)) idx.valor = i;
-    if (idx.desc < 0 && HEADER_DESC.test(h)) idx.desc = i;
+    // "Data Lançamento" casa com data E descrição: a coluna da data não serve de descrição.
+    if (idx.desc < 0 && i !== idx.data && HEADER_DESC.test(h)) idx.desc = i;
   });
 
   const temHeaderValor = idx.valor >= 0 || idx.debito >= 0 || idx.credito >= 0;

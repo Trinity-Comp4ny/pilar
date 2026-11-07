@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Copy, Check, RefreshCw, ShieldCheck } from "lucide-react";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
 import { monitoring } from "@/lib/monitoring";
+import { getSafeErrorMessage } from "@/lib/safeError";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 import { BusyMark } from "@/components/motion/BusyMark";
@@ -23,7 +24,7 @@ async function generateCodes(): Promise<string[]> {
 function reportGenerateError(err: unknown) {
   monitoring.captureException(err, { context: "generateBackupCodes" });
   toast.error("Erro ao gerar", {
-    description: err instanceof Error ? err.message : "Confirme o código do app autenticador e tente de novo.",
+    description: getSafeErrorMessage(err, "Confirme o código do app autenticador e tente de novo."),
   });
 }
 

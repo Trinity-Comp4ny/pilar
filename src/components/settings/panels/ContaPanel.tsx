@@ -282,7 +282,20 @@ export function ContaPanel() {
           </Button>
         ) : (
           <div className="flex gap-2 shrink-0">
-            <Button variant="outline" onClick={() => setEditing(false)} className="rounded-full">
+            <Button
+              variant="outline"
+              onClick={() => {
+                // Descarta o que foi digitado: sem o reset, o texto não salvo
+                // continuava na tela como se fosse o dado gravado.
+                form.reset({
+                  firstName: profile?.first_name ?? "",
+                  lastName: profile?.last_name ?? "",
+                  contact: profile?.contato ?? "",
+                });
+                setEditing(false);
+              }}
+              className="rounded-full"
+            >
               Cancelar
             </Button>
             <Button onClick={form.handleSubmit(handleSave)} variant="brand" className="rounded-full">

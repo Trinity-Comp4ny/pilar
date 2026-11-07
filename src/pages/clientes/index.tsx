@@ -153,7 +153,7 @@ export default function Clientes() {
   }, [searchParams, clientes]);
 
   const handleSendMessage = async () => {
-    if (!selectedClienteForMessage || !messageText || !subjectText) return;
+    if (!selectedClienteForMessage || !messageText.trim() || !subjectText.trim()) return;
     const nomeCompleto = `${selectedClienteForMessage.nome}${selectedClienteForMessage.sobrenome ? " " + selectedClienteForMessage.sobrenome : ""}`;
     try {
       const { error } = await supabase.functions.invoke("send-manual-client-email", {
@@ -165,7 +165,7 @@ export default function Clientes() {
       });
 
       if (error) {
-        resetMessageModal();
+        // Mantém o diálogo aberto com assunto e texto: o usuário tenta de novo sem redigitar.
         toast.error(`Não foi possível enviar a mensagem para ${nomeCompleto}`, {
           description: await mensagemDaFunction(error, "Tente novamente em instantes."),
         });
@@ -178,7 +178,6 @@ export default function Clientes() {
     } catch (error) {
       monitoring.captureException(error, { context: "sendClientMessage unexpected" });
       toast.error("Não foi possível enviar a mensagem", { description: "Tente novamente em instantes." });
-      resetMessageModal();
     }
   };
 
@@ -256,15 +255,17 @@ export default function Clientes() {
         >
           <Mail className="h-4 w-4" />
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={(e) => handleEditClick(cliente, e)}
-          aria-label="Editar cliente"
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
+        <Can feature="clientes" action="edit">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={(e) => handleEditClick(cliente, e)}
+            aria-label="Editar cliente"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+        </Can>
         <Can feature="clientes" action="delete">
           <Button
             variant="ghost"
