@@ -8,7 +8,7 @@ import { startStepTour, type TourInstance } from "@/lib/onboarding/tour";
 /**
  * Dispara o coach mark da página quando o usuário chega numa rota cujo passo de
  * onboarding ainda está pendente e cujo tour ele ainda não viu. Montado uma vez no
- * Layout, acompanha a rota. Só para admin/owner (v1). Nada visual próprio.
+ * Layout, acompanha a rota. Só para admin (v1). Nada visual próprio.
  */
 export function OnboardingTourController() {
   const { pathname } = useLocation();

@@ -379,7 +379,7 @@ const App = () => {
                           />
 
                           {/* Revisão IA virou aba dentro de Agentes; redireciona links antigos.
-                          O gate de owner (ACH-ADM-01) agora vive na própria aba. */}
+                          O gate de admin (ACH-ADM-01) agora vive na própria aba. */}
                           <Route path="/revisao-ia" element={<Navigate to="/agentes" replace />} />
                           <Route path="/company-setup" element={<CompanySetup />} />
                           <Route path="/profile-setup" element={<ProfileSetup />} />

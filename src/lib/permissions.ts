@@ -7,8 +7,7 @@ export const ROLE_LABEL: Record<string, string> = {
   ultra_admin: "Ultra Admin",
   admin: "Admin",
   user: "Usuário",
-  // Roles de contrato (modelo atual)
-  owner: "Dono",
+  // Roles de contrato (modelo atual; owner aposentado em 2026-11-07)
   coordenador: "Coordenador",
   colaborador: "Colaborador",
   // Legados (backfilled para 'user' na migration; ficam aqui só para

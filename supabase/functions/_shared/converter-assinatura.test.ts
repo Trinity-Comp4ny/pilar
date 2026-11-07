@@ -257,7 +257,7 @@ Deno.test("com admins, o recibo sai para eles (dry run aqui) e a conversão conc
     // Só admins ativos da própria empresa recebem.
     assertEquals(consultaAdmins?.filtros, [
       ["eq", "empresa_id", "e1"],
-      ["in", "role", ["owner", "admin", "ultra_admin"]],
+      ["in", "role", ["admin", "ultra_admin"]],
       ["is", "desativado_em", null],
     ]);
   } finally {

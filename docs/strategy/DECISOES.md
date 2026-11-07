@@ -11,6 +11,18 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-07 · Papel `owner` aposentado
+
+**Decisão:** o acesso dentro da empresa tem só administrador, coordenador e usuário. O papel `owner` sai de uso.
+
+Contexto: desde agosto nenhum perfil tinha `owner` (backfill para admin achou zero linhas em staging e produção), mas o
+valor seguia no enum e em listas do código, com tratamento diferente em cada lugar (um hook tratava como admin, o
+`canDo` não). **Aplicado** pela migration `20261202000000_papel_owner_aposentado`: rede de segurança owner → admin e
+trava (CHECK) em `profiles.role` e `convites.cargo`. O valor continua no enum porque removê-lo exige recriar o tipo
+usado por políticas de RLS; com a trava, ninguém volta a recebê-lo.
+
+---
+
 ## 2026-11-06 (mais tarde) · Capacidade por módulo: projetos, obras e leads ativos
 
 **Decisão:** o plano limita os três módulos, não só projetos. Essencial: 10 projetos, 2 obras, 50 leads ativos.

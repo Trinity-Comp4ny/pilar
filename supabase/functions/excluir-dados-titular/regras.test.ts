@@ -6,7 +6,7 @@ const ID = "00000000-0000-0000-0000-0000000000aa";
 
 Deno.test("único admin ativo: só quando é admin, está ativo e não há outro", () => {
   assertEquals(ehUnicoAdmin("admin", null, 0), true);
-  assertEquals(ehUnicoAdmin("owner", null, 0), true);
+  assertEquals(ehUnicoAdmin("owner", null, 0), false); // papel aposentado
   assertEquals(ehUnicoAdmin("admin", null, 1), false);
   assertEquals(ehUnicoAdmin("colaborador", null, 0), false);
   assertEquals(ehUnicoAdmin("admin", "2026-10-13T00:00:00Z", 0), false);
