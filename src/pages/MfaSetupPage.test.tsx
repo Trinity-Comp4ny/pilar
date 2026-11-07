@@ -95,20 +95,22 @@ describe("MfaSetupPage", () => {
     expect(h.enrollTotp).toHaveBeenCalledTimes(2);
   });
 
-  it("recarregar a página reaproveita o enrollment em andamento (não gera QR novo)", async () => {
-    sessionStorage.setItem("mfa_setup_enrollment", JSON.stringify(ENROLL));
+  it("recarregar a página não reaproveita segredo salvo: limpa o fator pendente e gera um novo", async () => {
+    // Sobra de uma versão antiga, que guardava o segredo no sessionStorage.
+    sessionStorage.setItem("mfa_setup_enrollment", JSON.stringify({ ...ENROLL, secret: "SEGREDOANTIGO" }));
+    // Fator TOTP não verificado deixado pelo setup interrompido.
+    h.listFactors.mockResolvedValue({ data: { totp: [{ id: "f-velho", status: "unverified" }] } });
+    const setItem = vi.spyOn(Storage.prototype, "setItem");
     renderPage();
     await irAoPasso(3);
     expect(await screen.findByText(ENROLL.secret)).toBeInTheDocument();
-    expect(h.enrollTotp).not.toHaveBeenCalled();
-  });
-
-  it("enrollment salvo corrompido é ignorado e gera um novo", async () => {
-    sessionStorage.setItem("mfa_setup_enrollment", "{não é json");
-    renderPage();
-    await irAoPasso(3);
-    expect(await screen.findByAltText("QR Code MFA")).toBeInTheDocument();
+    expect(screen.queryByText("SEGREDOANTIGO")).not.toBeInTheDocument();
+    expect(h.resetAllFactors).toHaveBeenCalledBefore(h.enrollTotp);
     expect(h.enrollTotp).toHaveBeenCalledOnce();
+    expect(sessionStorage.getItem("mfa_setup_enrollment")).toBeNull();
+    expect(setItem).not.toHaveBeenCalled();
+    expect(JSON.stringify({ ...sessionStorage })).not.toContain(ENROLL.secret);
+    setItem.mockRestore();
   });
 
   it("código errado avisa, limpa os dígitos e permite nova tentativa", async () => {
@@ -137,7 +139,6 @@ describe("MfaSetupPage", () => {
   });
 
   it("código certo leva aos códigos de recuperação antes de liberar o app", async () => {
-    sessionStorage.setItem("mfa_setup_enrollment", JSON.stringify(ENROLL));
     renderPage();
     const user = await irAoPasso(4);
     digitar("123456");

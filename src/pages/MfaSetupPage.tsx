@@ -82,25 +82,20 @@ function OtpInput({ value, onChange, disabled }: { value: string; onChange: (v: 
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+/**
+ * Chave antiga: o segredo TOTP e o QR ficavam no sessionStorage até a
+ * confirmação, legíveis por qualquer script na origem. Hoje o enrollment vive
+ * só em memória; a chave é apagada na entrada para não sobrar segredo de
+ * versões anteriores.
+ */
+const LEGACY_SESSION_KEY = "mfa_setup_enrollment";
 
-const SESSION_KEY = "mfa_setup_enrollment";
-
-function saveEnrollment(data: MfaEnrollResult) {
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
-}
-
-function loadEnrollment(): MfaEnrollResult | null {
+function clearLegacyEnrollment() {
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
-    return raw ? (JSON.parse(raw) as MfaEnrollResult) : null;
+    sessionStorage.removeItem(LEGACY_SESSION_KEY);
   } catch {
-    return null;
+    // Storage bloqueado (modo privado restrito): não há o que limpar.
   }
-}
-
-function clearEnrollment() {
-  sessionStorage.removeItem(SESSION_KEY);
 }
 
 export default function MfaSetupPage() {
@@ -124,16 +119,6 @@ export default function MfaSetupPage() {
     async (force = false) => {
       setStarting(true);
       setStartError(null);
-
-      if (!force) {
-        const saved = loadEnrollment();
-        if (saved) {
-          setEnrollment(saved);
-          setStarting(false);
-          return;
-        }
-      }
-
       setEnrollment(null);
       try {
         const { data: factorsData } = await supabase.auth.mfa.listFactors();
@@ -142,9 +127,11 @@ export default function MfaSetupPage() {
           navigate("/inicio", { replace: true });
           return;
         }
+        // Sem nada verificado, o que existir é sobra de um setup não concluído (ex.:
+        // recarregou a página): o segredo dele não foi guardado, então sai antes do
+        // enroll novo. No "recomeçar" (force) sai tudo.
         await resetAllFactors();
         const result = await enrollTotp("Authenticator");
-        saveEnrollment(result);
         setEnrollment(result);
       } catch (err) {
         setStartError(translateAuthError(err));
@@ -156,6 +143,7 @@ export default function MfaSetupPage() {
   );
 
   useEffect(() => {
+    clearLegacyEnrollment();
     startEnrollment();
   }, []);
 
@@ -166,7 +154,6 @@ export default function MfaSetupPage() {
       setSubmitting(true);
       try {
         await verifyTotp(enrollment.factorId, otp);
-        clearEnrollment();
         await refreshMfaLevel();
         toast.success("MFA configurado com sucesso");
         // Passo 5: exibir códigos de recuperação ANTES de liberar o app.
