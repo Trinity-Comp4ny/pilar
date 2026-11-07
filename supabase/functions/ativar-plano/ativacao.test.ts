@@ -85,6 +85,12 @@ Deno.test("valor vem do plano pelo ciclo; ciclo sem preço devolve null", () => 
   assertEquals(valorDoCiclo({ preco_mensal: 690, preco_anual: null }, "yearly"), null);
 });
 
+Deno.test("plano com preço zero ou negativo não vira cobrança", () => {
+  assertEquals(valorDoCiclo({ preco_mensal: 0, preco_anual: 0 }, "monthly"), null);
+  assertEquals(valorDoCiclo({ preco_mensal: -10, preco_anual: 100 }, "monthly"), null);
+  assertEquals(valorDoCiclo({ preco_mensal: 299, preco_anual: 0 }, "yearly"), null);
+});
+
 Deno.test("primeira cobrança é a data (sem hora) do fim do trial", () => {
   assertEquals(primeiraCobrancaEm(emTrial.trial_ends_at), "2026-10-21");
 });
