@@ -27,6 +27,12 @@ vi.mock("@/hooks/usePermissions", () => ({
 }));
 let isAdmin = true;
 vi.mock("@/hooks/useNivelConfianca", () => ({ useNivelConfianca: () => ({ isAdmin }) }));
+let assinaturaStatus: string | null = null;
+const openSettings = vi.fn();
+vi.mock("@/pages/billing/hooks/useMySubscription", () => ({
+  useMySubscription: () => ({ data: assinaturaStatus ? { status: assinaturaStatus } : null }),
+}));
+vi.mock("@/contexts/SettingsModalContext", () => ({ useSettingsModal: () => ({ openSettings }) }));
 vi.mock("./DisciplinaDetailDialog", () => ({ DisciplinaDetailDialog: () => null }));
 vi.mock("@/lib/analytics", () => ({ analytics: { track: vi.fn() } }));
 const toast = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn(), info: vi.fn(), warning: vi.fn() }));
@@ -67,6 +73,7 @@ describe("ProjetoFormDialog", () => {
     window.localStorage.clear();
     podeFinanceiro = true;
     isAdmin = true;
+    assinaturaStatus = null;
     rpc.mockResolvedValue({ data: "novo-id", error: null });
   });
 
@@ -129,7 +136,7 @@ describe("ProjetoFormDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
 
     expect(await screen.findByText("Você atingiu um limite do período de teste")).toBeInTheDocument();
-    expect(screen.getByText(/o limite de 5 projetos do período de teste/)).toBeInTheDocument();
+    expect(screen.getByText(/o limite de 5 projetos ativos do período de teste/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Confirmar documento" })).toBeInTheDocument();
     expect(toast.error).not.toHaveBeenCalled();
   });
@@ -145,6 +152,36 @@ describe("ProjetoFormDialog", () => {
 
     expect(await screen.findByText(/Só um administrador pode liberar mais capacidade/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Confirmar documento" })).not.toBeInTheDocument();
+  });
+
+  it("com plano ativo, o limite é do plano: admin vai para os planos", async () => {
+    assinaturaStatus = "active";
+    rpc.mockResolvedValueOnce({ data: null, error: { message: "capacidade:projetos", hint: "20" } });
+    montar();
+    fireEvent.change(screen.getByLabelText("Nome do Projeto *"), { target: { value: "Vigésimo primeiro" } });
+    proximo();
+    proximo();
+    fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(await screen.findByText("Você atingiu um limite do plano")).toBeInTheDocument();
+    expect(screen.getByText(/o limite de 20 projetos ativos do seu plano/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Confirmar documento" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Ver planos" }));
+    expect(openSettings).toHaveBeenCalledWith("pagamento");
+  });
+
+  it("com plano ativo, quem não é admin só avisa o administrador", async () => {
+    assinaturaStatus = "active";
+    isAdmin = false;
+    rpc.mockResolvedValueOnce({ data: null, error: { message: "capacidade:projetos", hint: "20" } });
+    montar();
+    fireEvent.change(screen.getByLabelText("Nome do Projeto *"), { target: { value: "X" } });
+    proximo();
+    proximo();
+    fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(await screen.findByText(/Só um administrador pode trocar de plano/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ver planos" })).not.toBeInTheDocument();
   });
 
   it("cancelar com alteração pede confirmação antes de descartar", () => {
