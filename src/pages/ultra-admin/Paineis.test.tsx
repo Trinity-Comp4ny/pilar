@@ -31,6 +31,8 @@ vi.mock("./custos", async (orig) => ({
   useCustosIa: () => ({ data: h.custos, isLoading: h.carregando, error: h.erroCustos }),
   useUltimasRequisicoes: () => ({ data: h.requisicoes, isLoading: false, error: null }),
 }));
+// O cartão de origem das demonstrações tem teste próprio (OrigemDemos.test.ts).
+vi.mock("./components/OrigemDemos", () => ({ OrigemDemos: () => null }));
 vi.mock("@/hooks/useFeedbackNovosCount", () => ({ useFeedbackNovosCount: () => ({ data: h.feedbackNovos }) }));
 vi.mock("@/components/PilarPage", () => ({
   PilarPage: ({ title, children }: { title: string; children: React.ReactNode }) => (
