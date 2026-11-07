@@ -78,7 +78,7 @@ describe("LinksEditor", () => {
     render(<Links />);
     const input = screen.getByPlaceholderText(/Colar URL/);
     await user.type(input, "drive.google.com/x{Enter}");
-    expect(screen.getByRole("link", { name: /https:\/\/drive.google.com\/x/ })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "https://drive.google.com/x" })).toHaveAttribute(
       "rel",
       "noopener noreferrer"
     );

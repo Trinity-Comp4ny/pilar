@@ -37,4 +37,10 @@ describe("useObjectUrl", () => {
     unmount();
     expect(revogar).toHaveBeenCalledWith("blob:b.png");
   });
+
+  it("descarta o que não for URL blob:", () => {
+    criar.mockReturnValueOnce("javascript:alert(1)");
+    const { result } = renderHook(() => useObjectUrl(new File(["x"], "x.png")));
+    expect(result.current).toBeNull();
+  });
 });
