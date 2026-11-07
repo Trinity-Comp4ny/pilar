@@ -239,7 +239,13 @@ export function ManageDisciplinasDialog({
             </div>
           </div>
           <DialogFooter className="mt-4 gap-2">
-            <Button variant="outline" onClick={() => setAddOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setAddOpen(false);
+                setNewDisciplina("");
+              }}
+            >
               Cancelar
             </Button>
             <Button variant="brand" onClick={handleAdd} disabled={adding || !newDisciplina.trim()}>
