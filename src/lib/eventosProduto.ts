@@ -47,6 +47,7 @@ export type EventoProduto =
   | "assinatura_ativada"
   | "pacote_tokens_comprado"
   | "trial_limite_atingido"
+  | "plano_limite_ver_planos"
   | "trial_nivel_subiu"
   | "trial_desbloqueio_abandonado"
   | "trial_admin_avisado"

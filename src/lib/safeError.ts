@@ -5,8 +5,9 @@ const KNOWN_USER_ERRORS: Record<string, string> = {
   // do queryClient (App.tsx) MESMO já tratando o erro localmente pra abrir o
   // desbloqueio (ver src/lib/capacidade.ts) — os dois toasts/diálogos coexistem,
   // então a mensagem aqui precisa fazer sentido sozinha, não repetir o diálogo.
-  "capacidade:projetos": "Limite de projetos do período de teste atingido.",
-  "capacidade:obras": "Limite de obras do período de teste atingido.",
+  "capacidade:projetos": "Limite de projetos ativos atingido.",
+  "capacidade:obras": "Limite de obras ativas atingido.",
+  "capacidade:leads": "Limite de leads ativos atingido.",
   projetos_unique_empresa_codigo: "Já existe um projeto com esse código.",
   "valor de contrato": "Só quem tem acesso ao Financeiro pode informar valor de contrato ou margem.",
   "duplicate key value": "Já existe um registro com esses dados.",
