@@ -33,7 +33,9 @@ describe("CriarEmpresaDialog", () => {
     fireEvent.change(screen.getByLabelText("E-mail do dono"), { target: { value: " dono@alfa.com.br " } });
     expect(criar).toBeEnabled();
     fireEvent.click(criar);
-    expect(onConfirm).toHaveBeenCalledWith({ nome: "Alfa Engenharia", ownerEmail: "dono@alfa.com.br" });
+    expect(onConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({ nome: "Alfa Engenharia", ownerEmail: "dono@alfa.com.br" })
+    );
   });
 
   it("nome em branco mantém o botão travado", () => {

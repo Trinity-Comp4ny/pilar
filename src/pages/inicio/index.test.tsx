@@ -50,6 +50,8 @@ vi.mock("@/components/ui/sidebar", async (orig) => ({
   useSidebar: () => ({ state: "expanded", isMobile: false, open: true, setOpenMobile: vi.fn() }),
 }));
 vi.mock("@/components/ModuleChipNav", () => ({ ModuleChipNav: () => null }));
+// O cartão de boas-vindas tem teste próprio (CartaoBoasVindas.test.tsx).
+vi.mock("./CartaoBoasVindas", () => ({ CartaoBoasVindas: () => null }));
 vi.mock("./CartaoPendenciasAgentes", () => ({ CartaoPendenciasAgentes: () => <div data-testid="pendencias" /> }));
 vi.mock("./hero/HeroInicio", () => ({
   HeroInicio: (p: { nome: string | null; tema: string; editando: boolean; acoes: ReactNode }) => (

@@ -123,6 +123,7 @@ function empresa(over: Partial<Empresa> = {}): Empresa {
     planoMaxUsuarios: 5,
     projetosAtivos: 4,
     interna: false,
+    perfil: { site: null, porte: null, disciplinas: [], origem: null, comoConheceu: null, objetivoInicial: null },
     ...over,
   };
 }
