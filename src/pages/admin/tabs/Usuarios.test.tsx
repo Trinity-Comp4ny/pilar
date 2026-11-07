@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { UsuariosTab } from "./Usuarios";
 
@@ -36,17 +36,13 @@ const SEED: RawUser[] = [
   { id: "pending-c1", inviteId: "c1", nome: "Davi", email: "davi@seed.test", role: "user", isPending: true },
 ];
 
-let lastUsers: RawUser[] = [];
+const estado = { users: [] as RawUser[] };
 function Harness({ initial = SEED }: { initial?: RawUser[] }) {
   const [users, setUsersState] = useState(initial);
-  lastUsers = users;
-  return (
-    <UsuariosTab
-      users={users}
-      setUsers={(fn) => setUsersState((prev) => fn(prev))}
-      currentUserId="me"
-    />
-  );
+  useEffect(() => {
+    estado.users = users;
+  }, [users]);
+  return <UsuariosTab users={users} setUsers={(fn) => setUsersState((prev) => fn(prev))} currentUserId="me" />;
 }
 
 function httpError(body: unknown) {
@@ -108,7 +104,7 @@ describe("Admin › Usuários: convite", () => {
     expect(h.invoke).toHaveBeenCalledWith("invite-user", {
       body: { email: "eva@seed.test", nome: "Eva Lima", role: "coordenador" },
     });
-    expect(lastUsers.at(-1)).toMatchObject({ email: "eva@seed.test", isPending: true, role: "coordenador" });
+    expect(estado.users.at(-1)).toMatchObject({ email: "eva@seed.test", isPending: true, role: "coordenador" });
     expect(h.toastSuccess).toHaveBeenCalledWith("Convite enviado", { description: "Email enviado para eva@seed.test" });
   });
 
@@ -126,7 +122,7 @@ describe("Admin › Usuários: convite", () => {
     );
     expect(screen.getByRole("dialog", { name: "Convidar usuário" })).toBeInTheDocument();
     expect(within(dialog).getByPlaceholderText("email@empresa.com")).toHaveValue("eva@seed.test");
-    expect(lastUsers).toHaveLength(SEED.length);
+    expect(estado.users).toHaveLength(SEED.length);
   });
 
   it("erro sem corpo legível usa mensagem genérica (não o 'non-2xx')", async () => {
@@ -167,7 +163,7 @@ describe("Admin › Usuários: convite", () => {
     await waitFor(() =>
       expect(h.invoke).toHaveBeenCalledWith("invite-user", { method: "DELETE", body: { convite_id: "c1" } })
     );
-    await waitFor(() => expect(lastUsers.some((u) => u.inviteId === "c1")).toBe(false));
+    await waitFor(() => expect(estado.users.some((u) => u.inviteId === "c1")).toBe(false));
   });
 
   it("falha ao cancelar convite mantém o convite na lista", async () => {
@@ -179,7 +175,7 @@ describe("Admin › Usuários: convite", () => {
         description: "Convite não encontrado.",
       })
     );
-    expect(lastUsers.some((u) => u.inviteId === "c1")).toBe(true);
+    expect(estado.users.some((u) => u.inviteId === "c1")).toBe(true);
   });
 
   it("convite sem id (recém-criado) pede recarregar para reenviar", async () => {
@@ -210,10 +206,8 @@ describe("Admin › Usuários: papel, acessos e remoção", () => {
     const dialog = await screen.findByRole("dialog");
     await user.click(within(dialog).getByRole("radio", { name: /Admin da empresa/ }));
     await user.click(within(dialog).getByRole("button", { name: "Salvar alterações" }));
-    await waitFor(() =>
-      expect(h.rpc).toHaveBeenCalledWith("update_user_access", { p_user_id: "u3", p_role: "admin" })
-    );
-    await waitFor(() => expect(lastUsers.find((u) => u.id === "u3")?.role).toBe("admin"));
+    await waitFor(() => expect(h.rpc).toHaveBeenCalledWith("update_user_access", { p_user_id: "u3", p_role: "admin" }));
+    await waitFor(() => expect(estado.users.find((u) => u.id === "u3")?.role).toBe("admin"));
   });
 
   it("RPC negando a troca de papel não altera a lista", async () => {
@@ -225,7 +219,7 @@ describe("Admin › Usuários: papel, acessos e remoção", () => {
     await user.click(within(dialog).getByRole("radio", { name: /Admin da empresa/ }));
     await user.click(within(dialog).getByRole("button", { name: "Salvar alterações" }));
     await waitFor(() => expect(h.toastError).toHaveBeenCalledWith("Erro ao salvar", expect.anything()));
-    expect(lastUsers.find((u) => u.id === "u3")?.role).toBe("user");
+    expect(estado.users.find((u) => u.id === "u3")?.role).toBe("user");
   });
 
   it("2FA negado bloqueia a troca de papel antes da RPC", async () => {
@@ -261,7 +255,7 @@ describe("Admin › Usuários: papel, acessos e remoção", () => {
     await waitFor(() =>
       expect(h.rpc).toHaveBeenCalledWith("set_metas_delegado", { p_user_id: "u2", p_delegado: true })
     );
-    expect(lastUsers.find((u) => u.id === "u2")).toMatchObject({
+    expect(estado.users.find((u) => u.id === "u2")).toMatchObject({
       financeiroDelegado: true,
       equipeDelegado: true,
       metasDelegado: true,
@@ -276,7 +270,7 @@ describe("Admin › Usuários: papel, acessos e remoção", () => {
     const dialog = await screen.findByRole("dialog");
     await user.click(within(dialog).getByRole("switch", { name: "Acesso financeiro de Bruno Coord" }));
     await waitFor(() => expect(h.toastError).toHaveBeenCalled());
-    expect(lastUsers.find((u) => u.id === "u2")?.financeiroDelegado).toBeFalsy();
+    expect(estado.users.find((u) => u.id === "u2")?.financeiroDelegado).toBeFalsy();
   });
 
   it("remover pede confirmação e chama delete-user", async () => {
@@ -286,7 +280,7 @@ describe("Admin › Usuários: papel, acessos e remoção", () => {
     expect(await screen.findByText("Remover usuário")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Remover" }));
     await waitFor(() => expect(h.invoke).toHaveBeenCalledWith("delete-user", { body: { user_id: "u3" } }));
-    await waitFor(() => expect(lastUsers.some((u) => u.id === "u3")).toBe(false));
+    await waitFor(() => expect(estado.users.some((u) => u.id === "u3")).toBe(false));
   });
 
   it("falha ao remover mantém o usuário", async () => {
@@ -296,6 +290,6 @@ describe("Admin › Usuários: papel, acessos e remoção", () => {
     await user.click(screen.getByRole("button", { name: "Remover Carla User" }));
     await user.click(await screen.findByRole("button", { name: "Remover" }));
     await waitFor(() => expect(h.toastError).toHaveBeenCalledWith("Erro ao remover usuário"));
-    expect(lastUsers.some((u) => u.id === "u3")).toBe(true);
+    expect(estado.users.some((u) => u.id === "u3")).toBe(true);
   });
 });
