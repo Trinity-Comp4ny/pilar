@@ -103,7 +103,9 @@ describe("useClientes: portal do cliente", () => {
         { cliente_id: "c2", senha_hash: "x" },
       ],
     });
-    const { result } = renderHook(() => useClientes({ enableListQueries: false }), { wrapper });
+    const { result } = renderHook(() => useClientes({ enableListQueries: false, enablePortalStatus: true }), {
+      wrapper,
+    });
 
     await waitFor(() => expect(result.current.portalStatusPorCliente.size).toBe(2));
     expect(result.current.portalStatusPorCliente.get("c1")).toBe("convite_pendente");
@@ -380,5 +382,63 @@ describe("useClientes: listas completas e bordas", () => {
     supabaseFake.respondRpc("listar_origens_clientes", { error: { message: "boom" } });
     const erro = renderHook(() => useOrigensClientes(), { wrapper });
     await waitFor(() => expect(erro.result.current.isError).toBe(true));
+  });
+});
+
+describe("useClientes: erros do Supabase não viram 'sem dados'", () => {
+  const NEGADO = { code: "42501", message: "permission denied for table cliente_portal_accounts" };
+
+  it("erro no status do portal aparece como erro, não como 'sem portal'", async () => {
+    supabaseFake.respond("cliente_portal_accounts", "select", { error: NEGADO });
+    const { result } = renderHook(() => useClientes({ enableListQueries: false, enablePortalStatus: true }), {
+      wrapper,
+    });
+    await waitFor(() => expect(result.current.isPortalStatusError).toBe(true));
+    expect(result.current.portalStatusPorCliente.size).toBe(0);
+  });
+
+  it("erro nos ids com projeto vira erro da query", async () => {
+    supabaseFake.respond("projetos", "select", { error: NEGADO });
+    renderHook(() => useClientes(), { wrapper });
+    await waitFor(() => expect(client.getQueryState(["cliente-ids-com-projeto"])?.status).toBe("error"));
+  });
+
+  it("enableListQueries:false também desliga o status do portal, salvo pedido explícito", async () => {
+    renderHook(() => useClientes({ enableListQueries: false }), { wrapper });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(supabaseFake.callsTo("cliente_portal_accounts")).toHaveLength(0);
+    expect(supabaseFake.callsTo("projetos")).toHaveLength(0);
+    expect(supabaseFake.callsTo("clientes")).toHaveLength(0);
+
+    renderHook(() => useClientes({ enableListQueries: false, enablePortalStatus: true }), { wrapper });
+    await waitFor(() => expect(supabaseFake.callsTo("cliente_portal_accounts")).toHaveLength(1));
+    expect(supabaseFake.callsTo("clientes")).toHaveLength(0);
+  });
+
+  it("checkPortalAccess e fetchPortalEmail propagam o erro", async () => {
+    supabaseFake.respond("cliente_portal_accounts", "select", { error: NEGADO });
+    const { result } = renderHook(() => useClientes({ enableListQueries: false }), { wrapper });
+    await expect(result.current.checkPortalAccess("c1")).rejects.toEqual(NEGADO);
+    await expect(result.current.fetchPortalEmail("c1")).rejects.toEqual(NEGADO);
+  });
+
+  it("criar sem empresa vinculada não grava e explica a causa", async () => {
+    supabaseFake.respondRpc("get_user_empresa_id", { data: null });
+    const { result } = renderHook(() => useClientes({ enableListQueries: false }), { wrapper });
+    await expect(result.current.upsertCliente({ data: FORM })).rejects.toThrow("Usuário não associado a uma empresa");
+    expect(supabaseFake.callsTo("clientes", "insert")).toHaveLength(0);
+    expect(toastError).toHaveBeenCalledWith("Erro ao salvar", {
+      description: "Usuário não está associado a uma empresa.",
+    });
+  });
+
+  it("criar com erro ao resolver a empresa não grava", async () => {
+    supabaseFake.respondRpc("get_user_empresa_id", { error: { message: "JWT expired" } });
+    const { result } = renderHook(() => useClientes({ enableListQueries: false }), { wrapper });
+    await expect(result.current.upsertCliente({ data: FORM })).rejects.toEqual({ message: "JWT expired" });
+    expect(supabaseFake.callsTo("clientes", "insert")).toHaveLength(0);
+    expect(toastError).toHaveBeenCalledWith("Erro ao salvar", {
+      description: "Sua sessão expirou. Faça login novamente.",
+    });
   });
 });
