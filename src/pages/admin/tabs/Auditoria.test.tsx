@@ -241,9 +241,20 @@ describe("Auditoria: mutações de dados", () => {
     expect(lastCall("audit_logs").filters).toContainEqual(["eq", "target_table", "receitas"]);
   });
 
-  it("erro do banco aparece com texto padrão quando não é Error", async () => {
+  it("erro do banco mostra a mensagem real, não o texto padrão", async () => {
     h.resolve.mockImplementation((q) =>
-      q.table === "audit_logs" ? { data: null, error: { message: "x" } } : { data: ADMIN_LOGS }
+      q.table === "audit_logs"
+        ? { data: null, error: { message: "permission denied for audit_logs" } }
+        : { data: ADMIN_LOGS }
+    );
+    const user = renderTab();
+    await user.click(toolbar().getByRole("button", { name: "Mutações de dados" }));
+    expect(await screen.findByText("permission denied for audit_logs")).toBeInTheDocument();
+  });
+
+  it("erro sem mensagem cai no texto padrão", async () => {
+    h.resolve.mockImplementation((q) =>
+      q.table === "audit_logs" ? { data: null, error: { message: "" } } : { data: ADMIN_LOGS }
     );
     const user = renderTab();
     await user.click(toolbar().getByRole("button", { name: "Mutações de dados" }));

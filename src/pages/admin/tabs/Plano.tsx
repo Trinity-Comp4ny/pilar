@@ -102,7 +102,7 @@ export function PlanoTab({ empresaId, currentPlan }: { empresaId: string | null;
           </ul>
         </CardContent>
       </Card>
-      <FalarComercialDialog open={comercialOpen} onOpenChange={setComercialOpen} />
+      <FalarComercialDialog open={comercialOpen} onOpenChange={setComercialOpen} currentPlan={currentPlan} />
     </div>
   );
 }
