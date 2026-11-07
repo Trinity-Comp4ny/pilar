@@ -157,7 +157,7 @@ describe("CronogramaTab", () => {
     fireEvent.click(barra);
     expect(p.onDisciplinaClick).toHaveBeenCalledWith(expect.objectContaining({ disciplina: "Hidráulica" }));
     g.suprimir = true;
-    p.onDisciplinaClick.mockClear();
+    vi.mocked(p.onDisciplinaClick).mockClear();
     fireEvent.click(barra);
     expect(p.onDisciplinaClick).not.toHaveBeenCalled();
   });

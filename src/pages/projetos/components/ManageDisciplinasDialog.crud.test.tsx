@@ -36,7 +36,7 @@ const projetos = [
   { id: "p3", disciplinas: [{ id: "pd3", disciplina: "Elétrica" }] },
 ] as unknown as Projeto[];
 
-let onChanged: ReturnType<typeof vi.fn>;
+let onChanged: ReturnType<typeof vi.fn<() => void>>;
 function montar(disciplinas = catalogo) {
   onChanged = vi.fn();
   render(
