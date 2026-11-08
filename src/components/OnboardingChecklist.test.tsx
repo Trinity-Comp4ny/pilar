@@ -68,8 +68,13 @@ beforeEach(() => {
 });
 
 describe("OnboardingChecklist", () => {
+  it("convidado (não admin) também vê os primeiros passos (SPEC 149)", () => {
+    h.isAdmin = false;
+    render(<OnboardingChecklist />);
+    expect(screen.getByText(/2 de 3 concluídos · 67%/)).toBeInTheDocument();
+  });
+
   it.each([
-    ["não-admin", () => (h.isAdmin = false)],
     ["sem empresa", () => (h.progress.hasEmpresa = false)],
     ["carregando", () => (h.progress.loading = true)],
     ["dispensado", () => (h.state.dismissed = true)],
