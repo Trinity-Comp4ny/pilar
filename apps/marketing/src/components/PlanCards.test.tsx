@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { prepararAmbiente, renderNaRota } from "../test/ambiente";
 import { DEMO_URL } from "../lib/contato";
+import { APP_URL } from "../config";
 import { INCLUSO_EM_TODOS, PLANOS } from "../lib/planos";
 import { IncluidoEmTodos, PlanCards } from "./PlanCards";
 import { PricingSection } from "./PricingSection";
@@ -14,9 +15,9 @@ vi.mock("../analytics", () => ({ trackCta, applyCookieConsent: vi.fn(), initAnal
 beforeAll(() => prepararAmbiente());
 beforeEach(() => trackCta.mockClear());
 
-/** O cartão de um plano, achado pelo botão de agendar dele. */
+/** O cartão de um plano, achado pelo botão de assinar dele. */
 function cartaoDo(nome: string) {
-  const botao = screen.getByRole("link", { name: `Agendar demonstração do plano ${nome}` });
+  const botao = screen.getByRole("link", { name: `Assinar o plano ${nome}` });
   return botao.closest("div.relative") as HTMLElement;
 }
 
@@ -49,23 +50,32 @@ describe("PlanCards", () => {
     expect(within(cartaoDo("Profissional")).getByText("Mais escolhido")).toBeInTheDocument();
   });
 
-  it("todo botão leva para a demonstração em nova aba, com noopener", () => {
+  it("o botão de cada plano leva ao checkout daquele plano, na mesma aba", () => {
     renderNaRota(<PlanCards contexto="home" />);
-    const botoes = screen.getAllByRole("link", { name: /Agendar demonstração do plano/ });
-    expect(botoes).toHaveLength(3);
-    for (const b of botoes) {
-      expect(b).toHaveAttribute("href", DEMO_URL);
-      expect(b).toHaveAttribute("target", "_blank");
-      expect(b.getAttribute("rel")).toMatch(/noopener/);
+    for (const p of PLANOS) {
+      const b = screen.getByRole("link", { name: `Assinar o plano ${p.nome}` });
+      expect(b).toHaveAttribute("href", `${APP_URL}/checkout?plano=${p.slug}`);
+      expect(b).not.toHaveAttribute("target");
+    }
+  });
+
+  it("cada plano oferece a demonstração como caminho secundário, em nova aba com noopener", () => {
+    renderNaRota(<PlanCards contexto="home" />);
+    const demos = screen.getAllByRole("link", { name: "ou agende uma demonstração" });
+    expect(demos).toHaveLength(3);
+    for (const d of demos) {
+      expect(d).toHaveAttribute("href", DEMO_URL);
+      expect(d).toHaveAttribute("target", "_blank");
+      expect(d.getAttribute("rel")).toMatch(/noopener/);
     }
   });
 
   it("o clique registra o CTA com o contexto e o plano", async () => {
     renderNaRota(<PlanCards contexto="planos" />);
-    const botao = screen.getByRole("link", { name: "Agendar demonstração do plano Profissional" });
+    const botao = screen.getByRole("link", { name: "Assinar o plano Profissional" });
     botao.addEventListener("click", (e) => e.preventDefault());
     await userEvent.click(botao);
-    expect(trackCta).toHaveBeenCalledWith("agende_demo", "planos_pro");
+    expect(trackCta).toHaveBeenCalledWith("assinar", "planos_pro");
   });
 });
 

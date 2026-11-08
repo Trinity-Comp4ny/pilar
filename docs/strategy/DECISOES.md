@@ -11,6 +11,22 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-08 · Landing leva aos planos; assinatura direta pelo site, demonstração como caminho secundário
+
+**Decisão:** os botões principais da landing passam a ser "Ver planos" e "Entrar". Cada plano tem "Assinar", que
+leva direto ao checkout do app: o escritório paga, recebe o convite e entra. "Agendar demonstração" vira caminho
+secundário: uma linha discreta abaixo dos botões na hero, nas páginas de módulo e comparativo e no fecho, um link
+em cada plano e o link do rodapé. Segue sem teste grátis; a cena dos agentes na hero é a amostra do produto (sem
+vídeo gravado por ora).
+
+Contexto: os preços já são públicos e o checkout existe, mas a landing não levava ninguém até ele; todo botão de
+plano ia para o Google Agenda. Quem já decidiu comprar não precisa passar por uma conversa.
+
+**Supera:** a parte "entrada só por demonstração" de 2026-11-06 e o comentário da SPEC 133 de que o checkout era só
+"para o link que o time envia". O cadastro com teste grátis (`/cadastro`) continua fechado.
+
+---
+
 ## 2026-11-07 · Onboarding: perfil do escritório na entrada, três pilares iguais e origem do lead
 
 **Decisão:** a entrada no Pilar passa a coletar quem é o escritório e quem é a pessoa, e o primeiro uso trata
