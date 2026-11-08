@@ -87,14 +87,20 @@ describe("LandingHeader", () => {
     for (const m of MODULOS) {
       expect(container.querySelectorAll(`a[href="/${m.slug}"]`)).toHaveLength(2);
     }
-    expect(container.querySelectorAll('a[href="/planos"]')).toHaveLength(2);
+    // Link "Planos" e botão "Ver planos", no desktop e no celular.
+    expect(container.querySelectorAll('a[href="/planos"]')).toHaveLength(4);
   });
 
-  it("deslogado: Entrar vai para o login e o CTA para a demonstração", () => {
+  it("deslogado: Entrar vai para o login e o botão principal para os planos", () => {
     const { container } = renderNaRota(<LandingHeader />);
-    expect(screen.getByRole("link", { name: "Entrar" })).toHaveAttribute("href", `${APP_URL}/login`);
-    expect(screen.getByRole("link", { name: /Agendar demo$/ })).toHaveAttribute("href", DEMO_URL);
-    confereDemos(container, 2);
+    for (const a of screen.getAllByRole("link", { name: "Entrar" })) {
+      expect(a).toHaveAttribute("href", `${APP_URL}/login`);
+    }
+    const verPlanos = screen.getAllByRole("link", { name: /Ver planos/ });
+    expect(verPlanos).toHaveLength(2);
+    for (const a of verPlanos) expect(a).toHaveAttribute("href", "/planos");
+    // A demonstração saiu do topo (2026-11-08): fica na hero, nos planos, no fecho e no rodapé.
+    expect(links(container).filter((a) => a.getAttribute("href") === DEMO_URL)).toHaveLength(0);
   });
 
   it("com o hint de login, troca o CTA por 'Abrir Pilar' e esconde o Entrar", () => {
@@ -211,11 +217,17 @@ describe("CTAs para a demonstração em toda página", () => {
     confereDemos(container, 1);
   });
 
-  it("o CTA da hero registra o clique antes de sair", async () => {
+  it("na hero, o botão principal leva aos planos e a demonstração fica como link secundário", async () => {
     renderNaRota(<HeroSection />);
-    const cta = screen.getByRole("link", { name: /Agendar demonstração/ });
-    cta.addEventListener("click", (e) => e.preventDefault());
-    await userEvent.click(cta);
+    const verPlanos = screen.getByRole("link", { name: /Ver planos/ });
+    expect(verPlanos).toHaveAttribute("href", "/planos");
+    verPlanos.addEventListener("click", (e) => e.preventDefault());
+    await userEvent.click(verPlanos);
+    expect(trackCta).toHaveBeenCalledWith("ver_planos", "hero");
+
+    const demo = screen.getByRole("link", { name: "Agende uma demonstração" });
+    demo.addEventListener("click", (e) => e.preventDefault());
+    await userEvent.click(demo);
     expect(trackCta).toHaveBeenCalledWith("agende_demo", "hero");
   });
 

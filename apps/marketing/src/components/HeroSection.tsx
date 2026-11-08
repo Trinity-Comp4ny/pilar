@@ -6,7 +6,7 @@ import { HeroBackdrop } from "./hero/HeroBackdrop";
 import { SplitButton } from "./ui/SplitButton";
 import { RotatingWord } from "./RotatingWord";
 import { EASE } from "../lib/motion";
-import { DEMO_URL } from "../lib/contato";
+import { LinkDemo } from "./LinkDemo";
 
 /**
  * Hero.
@@ -96,14 +96,14 @@ export function HeroSection() {
             className="flex flex-col items-center gap-3"
           >
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <SplitButton href={DEMO_URL} onClick={() => trackCta("agende_demo", "hero")}>
-                Agendar demonstração
+              <SplitButton to="/planos" onClick={() => trackCta("ver_planos", "hero")}>
+                Ver planos
               </SplitButton>
               <SplitButton href={`${APP_URL}/login`} onClick={() => trackCta("entrar", "hero")} fantasma>
                 Entrar
               </SplitButton>
             </div>
-            <p className="text-[12.5px] text-ink-muted">Mostramos o Pilar com o fluxo do seu escritório</p>
+            <LinkDemo local="hero" />
           </m.div>
         </div>
       </div>
