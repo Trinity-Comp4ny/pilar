@@ -23,7 +23,6 @@ import { EMPTY_ONBOARDING_STATE, parseOnboardingState, persistOnboardingState } 
 import { startStepTour } from "./onboarding/tour";
 import { comprimirFoto } from "./comprimirFoto";
 import { extrairTextoPdf } from "./pdfText";
-import type { OnboardingStep } from "./onboarding/steps";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -46,6 +45,7 @@ describe("onboarding/state", () => {
       dismissed: true,
       completed_at: "2026-11-01",
       tours_seen: ["a", "b"],
+      boas_vindas_dispensada: false,
     });
     expect(parseOnboardingState(undefined)).not.toBe(EMPTY_ONBOARDING_STATE);
   });
@@ -60,7 +60,9 @@ describe("onboarding/state", () => {
 });
 
 describe("onboarding/tour", () => {
-  const STEP = { tour: { selector: "novo-projeto", titulo: "Crie", texto: "Clique aqui" } } as OnboardingStep;
+  const STEP = { tour: { selector: "novo-projeto", titulo: "Crie", texto: "Clique aqui" } } as Parameters<
+    typeof startStepTour
+  >[0];
 
   it("sem o alvo na tela não dispara", () => {
     expect(startStepTour(STEP, vi.fn())).toBeNull();
