@@ -6,7 +6,12 @@ import { OnboardingTourController } from "./OnboardingTourController";
 const h = vi.hoisted(() => ({
   isAdmin: true,
   loading: false,
-  steps: [] as { key: string; rota: string; done: boolean }[],
+  steps: [] as {
+    key: string;
+    rota: string;
+    done: boolean;
+    tour?: { selector: string; titulo: string; texto: string };
+  }[],
   state: { dismissed: false, tours_seen: [] as string[] },
   markTourSeen: vi.fn(),
   startStepTour: vi.fn(),
@@ -36,9 +41,10 @@ beforeEach(() => {
   h.isAdmin = true;
   h.loading = false;
   h.state = { dismissed: false, tours_seen: [] };
+  const tour = { selector: "onb-novo-projeto", titulo: "Crie", texto: "Clique aqui" };
   h.steps = [
-    { key: "feito", rota: "/projetos", done: true },
-    { key: "projeto", rota: "/projetos", done: false },
+    { key: "feito", rota: "/projetos", done: true, tour },
+    { key: "projeto", rota: "/projetos", done: false, tour },
   ];
   h.startStepTour.mockReturnValue({ destroy: h.destroy });
 });
@@ -66,8 +72,15 @@ describe("OnboardingTourController", () => {
     expect(h.startStepTour).not.toHaveBeenCalled();
   });
 
+  it("convidado (não admin) também recebe o tour (SPEC 149)", () => {
+    h.isAdmin = false;
+    montar();
+    act(() => vi.advanceTimersByTime(700));
+    expect(h.startStepTour).toHaveBeenCalledWith(expect.objectContaining({ key: "projeto" }), expect.any(Function));
+  });
+
   it.each([
-    ["não-admin", () => (h.isAdmin = false)],
+    ["passo sem tour", () => (h.steps = h.steps.map((s) => ({ ...s, tour: undefined })))],
     ["carregando", () => (h.loading = true)],
     ["dispensado", () => (h.state.dismissed = true)],
     ["tour já visto", () => (h.state.tours_seen = ["projeto"])],
