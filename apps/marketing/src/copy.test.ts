@@ -13,7 +13,7 @@ import { describe, expect, it } from "vitest";
  *
  * O que é proibido vem de decisão registrada:
  * - token: a cota de IA é vendida em créditos (DECISOES.md, 2026-11-06);
- * - teste grátis, trial, "14 dias": a entrada é só por demonstração (2026-10-19 e 2026-11-06);
+ * - teste grátis, trial, "14 dias": não há teste grátis; entra-se assinando ou pela demonstração (2026-10-19, 2026-11-06 e 2026-11-08);
  * - preço antigo (490/690/1.290): a tabela v3 foi superada em 2026-11-06;
  * - palavras banidas da voz da marca (`brand/voice-tone.md`).
  */
@@ -66,10 +66,10 @@ function textoVisivel(): Trecho[] {
 
 const PROIBIDOS: { motivo: string; padrao: RegExp }[] = [
   { motivo: "IA é vendida em créditos, não em tokens", padrao: /\btokens?\b/i },
-  { motivo: "entrada só por demonstração: sem teste grátis", padrao: /teste\s+gr[aá]tis/i },
-  { motivo: "entrada só por demonstração: sem teste grátis", padrao: /gr[aá]tis/i },
-  { motivo: "entrada só por demonstração: sem trial", padrao: /\btrial\b/i },
-  { motivo: "entrada só por demonstração: sem período de teste", padrao: /per[ií]odo\s+de\s+teste/i },
+  { motivo: "sem teste grátis: assinatura direta ou demonstração", padrao: /teste\s+gr[aá]tis/i },
+  { motivo: "sem teste grátis: assinatura direta ou demonstração", padrao: /gr[aá]tis/i },
+  { motivo: "sem teste grátis: sem trial", padrao: /\btrial\b/i },
+  { motivo: "sem teste grátis: sem período de teste", padrao: /per[ií]odo\s+de\s+teste/i },
   { motivo: "o trial de 14 dias acabou", padrao: /\b14\s+dias\b/i },
   { motivo: "cadastro aberto acabou (SPEC 133)", padrao: /crie\s+sua\s+conta|comece\s+agora|cadastre-se/i },
   { motivo: "preço antigo da tabela v3", padrao: /R\$\s*(490|690|1\.?290)\b/ },

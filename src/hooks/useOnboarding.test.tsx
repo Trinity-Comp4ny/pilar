@@ -20,7 +20,7 @@ vi.mock("@/contexts/AuthContext", () => ({
 const can = (f: string) => h.liberadas.has(f);
 vi.mock("@/hooks/usePermissions", () => ({ usePermissions: () => ({ can, isAdmin: h.isAdmin }) }));
 
-// Um passo extra sem soft delete, para exercitar a contagem sem filtro de deleted_at.
+// Um passo extra sem coluna de removido, para exercitar a contagem sem filtro de deleted_at.
 vi.mock("@/lib/onboarding/steps", async (importOriginal) => {
   const orig = await importOriginal<typeof import("@/lib/onboarding/steps")>();
   const base = orig.ONBOARDING_STEPS[0];
@@ -28,13 +28,23 @@ vi.mock("@/lib/onboarding/steps", async (importOriginal) => {
     ...orig,
     ONBOARDING_STEPS: [
       ...orig.ONBOARDING_STEPS,
-      { ...base, id: "extra-sem-soft-delete", feature: "extra", count: { source: "extra_src", softDelete: false } },
+      {
+        ...base,
+        key: "extra-sem-soft-delete",
+        pilar: "gestao",
+        feature: "extra",
+        check: { tipo: "tabela", source: "extra_src", ativos: null },
+      },
     ],
   };
 });
 
 import { useOnboardingProgress } from "./useOnboardingProgress";
 import { useOnboardingState } from "./useOnboardingState";
+import type { OnboardingStepView } from "./useOnboardingProgress";
+
+// Fonte da contagem de um passo de tabela; os demais (conta, foto) pela chave.
+const fonte = (s: OnboardingStepView) => (s.check.tipo === "tabela" ? s.check.source : s.key);
 
 let client: QueryClient;
 const wrapper = ({ children }: { children: ReactNode }) => (
@@ -59,7 +69,7 @@ describe("useOnboardingProgress", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.hasEmpresa).toBe(true);
-    const done = Object.fromEntries(result.current.steps.map((s) => [s.count.source, s.done]));
+    const done = Object.fromEntries(result.current.steps.map((s) => [fonte(s), s.done]));
     expect(done.clientes).toBe(true);
     expect(done.projetos).toBe(false);
     expect(done.extra_src).toBe(false);
@@ -76,7 +86,8 @@ describe("useOnboardingProgress", () => {
     h.isAdmin = false;
     const { result } = renderHook(() => useOnboardingProgress(), { wrapper });
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.steps.some((s) => s.count.source === "pessoas")).toBe(false);
+    expect(result.current.steps.some((s) => fonte(s) === "pessoas")).toBe(false);
+    expect(result.current.steps.some((s) => s.key === "colega")).toBe(false);
     expect(supabaseFake.callsTo("pessoas")).toHaveLength(0);
   });
 
@@ -84,22 +95,23 @@ describe("useOnboardingProgress", () => {
     h.profile = null;
     const { result } = renderHook(() => useOnboardingProgress(), { wrapper });
     expect(result.current.hasEmpresa).toBe(false);
-    expect(result.current.doneSteps).toBe(0);
+    // Só "Entre no Pilar", que nasce marcado.
+    expect(result.current.doneSteps).toBe(1);
     expect(supabaseFake.calls).toHaveLength(0);
   });
 
-  it("nenhuma feature liberada: sem passos e sem consulta", () => {
+  it("nenhuma feature liberada: só a seção Sua conta, sem consultar os pilares", () => {
     h.liberadas = new Set();
     const { result } = renderHook(() => useOnboardingProgress(), { wrapper });
-    expect(result.current.totalSteps).toBe(0);
-    expect(supabaseFake.calls).toHaveLength(0);
+    expect(result.current.steps.map((s) => s.key)).toEqual(["conta", "colega", "foto"]);
+    expect(supabaseFake.calls.every((c) => c.table === "profiles")).toBe(true);
   });
 
-  it("erro numa contagem: nada concluído", async () => {
+  it("erro numa contagem: só o passo de conta fica marcado", async () => {
     supabaseFake.respond("clientes", "select", { error: { message: "permission denied" } });
     const { result } = renderHook(() => useOnboardingProgress(), { wrapper });
     await waitFor(() => expect(client.getQueryCache().getAll()[0]?.state.status).toBe("error"));
-    expect(result.current.doneSteps).toBe(0);
+    expect(result.current.doneSteps).toBe(1);
   });
 });
 
@@ -112,7 +124,12 @@ describe("useOnboardingState", () => {
   it("estado inválido no profile vira estado vazio", () => {
     h.profile = { onboarding_state: "lixo" };
     const { result } = renderHook(() => useOnboardingState());
-    expect(result.current.state).toEqual({ dismissed: false, completed_at: null, tours_seen: [] });
+    expect(result.current.state).toEqual({
+      dismissed: false,
+      completed_at: null,
+      tours_seen: [],
+      boas_vindas_dispensada: false,
+    });
   });
 
   it("dismiss e reset persistem e recarregam o profile", async () => {
@@ -123,7 +140,7 @@ describe("useOnboardingState", () => {
     expect(rpcPatches()).toEqual([
       { dismissed: true },
       { dismissed: false },
-      { dismissed: false, completed_at: null, tours_seen: [] },
+      { dismissed: false, completed_at: null, tours_seen: [], boas_vindas_dispensada: false },
     ]);
     expect(h.refreshProfile).toHaveBeenCalledTimes(3);
   });

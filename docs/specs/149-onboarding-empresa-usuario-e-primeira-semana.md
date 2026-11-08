@@ -292,11 +292,14 @@ Valem sobre o texto dos requisitos acima onde houver conflito.
 | Config. | Conta: função e LinkedIn. Empresa (Configurações e Administração): site, disciplinas e porte                                                                                                                                                                                         |
 | Eventos | `onboarding_etapa_concluida`, `onboarding_objetivo_escolhido`, `onboarding_boas_vindas_acao`; `convite_enviado` com origem `onboarding`                                                                                                                                              |
 
+**Entregue depois do merge (2026-11-08):** consulta do CNPJ na Receita no `/company-setup`. Com o CNPJ
+completo, a tela mostra razão social, situação, nome fantasia e cidade/UF (edge `verificar-documento` em modo
+`apenas_consultar`, sem gravar). Ao continuar, o endereço da Receita preenche só o que o escritório ainda não tem, e o
+CNPJ é registrado como verificado pela mesma edge (o que também sobe o nível do trial, sem efeito para empresa
+convidada ou pagante).
+
 **Pendente:**
 
-- Consulta do CNPJ na Receita no `/company-setup` (hoje só valida o dígito; a edge
-  `verificar-documento` sobe o nível do trial, então chamar no cadastro contraria a decisão de
-  2026-09-08 e fica para conversa).
 - Passo "veja o agente trabalhar" no checklist (falta definir o que conta como feito).
 - Evento `empresa_ativada` e uso de função/objetivo nos textos da régua da SPEC 130.
 - Escritório de exemplo (decisão 5) e envio ao HubSpot (fase 6).

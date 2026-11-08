@@ -11,7 +11,7 @@ import { SplitButton } from "../components/ui/SplitButton";
 import { MODULOS, MODULOS_POR_SLUG, type MockNome, type Modulo, type ModuloSlug } from "../lib/modules";
 import { useJsonLd, usePageMeta } from "../lib/seo";
 
-import { DEMO_URL } from "../lib/contato";
+import { LinkDemo } from "../components/LinkDemo";
 
 /**
  * Print real da tela, com rede de segurança: enquanto o PNG não existe em
@@ -100,10 +100,11 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
             <p className="mb-8 max-w-xl text-[15px] leading-relaxed text-ink-soft md:text-[16px]">{modulo.lede}</p>
 
             <div className="flex flex-wrap gap-3">
-              <SplitButton href={DEMO_URL} onClick={() => trackCta("agende_demo", `modulo_${slug}`)}>
-                Agendar demonstração
+              <SplitButton to="/planos" onClick={() => trackCta("ver_planos", `modulo_${slug}`)}>
+                Ver planos
               </SplitButton>
             </div>
+            <LinkDemo local={`modulo_${slug}`} className="mt-3" />
           </Reveal>
         </div>
       </section>
@@ -162,7 +163,7 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
         <div className="mx-auto max-w-6xl">
           <Reveal variant="up" className="mb-8 max-w-2xl">
             <h2 className="text-[40px] font-medium leading-[1.08] tracking-[-0.035em] text-ink max-[1100px]:text-[34px] max-[850px]:text-[27px] max-[420px]:text-[24px]">
-              Antes da demonstração, <span className="italic text-ink/45">o que todo mundo pergunta.</span>
+              Antes de assinar, <span className="italic text-ink/45">o que todo mundo pergunta.</span>
             </h2>
           </Reveal>
 

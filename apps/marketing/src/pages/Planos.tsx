@@ -42,7 +42,7 @@ export function Planos() {
   usePageMeta({
     titulo: "Planos e preços | Pilar",
     descricao:
-      "Um preço por escritório, sem contar cabeças. Todo plano tem a plataforma inteira; o que muda é quantos projetos, obras e leads você toca ao mesmo tempo. Para começar, agende uma demonstração.",
+      "Um preço por escritório, sem contar cabeças. Todo plano tem a plataforma inteira; o que muda é quantos projetos, obras e leads você toca ao mesmo tempo. Assine pelo site ou agende uma demonstração.",
     caminho: "/planos",
   });
 
