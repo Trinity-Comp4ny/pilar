@@ -57,10 +57,20 @@ export function validarDigitoCpf(digits: string): boolean {
   return digits === digits.slice(0, 9) + String(d1) + String(d2);
 }
 
+export interface CnpjEndereco {
+  logradouro: string;
+  cidade: string | null;
+  uf: string | null;
+  cep: string | null;
+}
+
 export interface CnpjInfo {
   razaoSocial: string;
   situacaoCadastral: string;
   cnaePrincipal: string | null;
+  /** SPEC 149: nome fantasia e endereço, para pré-preencher o cadastro do escritório. */
+  nomeFantasia?: string;
+  endereco?: CnpjEndereco;
 }
 
 export type CnpjConsultaResultado = { status: "ok"; info: CnpjInfo } | { status: "indisponivel" }; // BrasilAPI fora do ar / mudou de formato: fica "pendente"
@@ -69,7 +79,33 @@ const brasilApiCnpjSchema = z.object({
   razao_social: z.string().min(1),
   descricao_situacao_cadastral: z.string().min(1),
   cnae_fiscal: z.union([z.string(), z.number()]).optional(),
+  nome_fantasia: z.string().nullish(),
+  descricao_tipo_de_logradouro: z.string().nullish(),
+  logradouro: z.string().nullish(),
+  numero: z.string().nullish(),
+  complemento: z.string().nullish(),
+  bairro: z.string().nullish(),
+  municipio: z.string().nullish(),
+  uf: z.string().nullish(),
+  cep: z.union([z.string(), z.number()]).nullish(),
 });
+
+const limpo = (v: string | null | undefined) => v?.trim() || null;
+
+/** Endereço em uma linha ("Rua X, 100, Sala 2 - Centro"); null quando a Receita não traz logradouro. */
+function montarEndereco(d: z.infer<typeof brasilApiCnpjSchema>): CnpjEndereco | null {
+  const rua = [limpo(d.descricao_tipo_de_logradouro), limpo(d.logradouro)].filter(Boolean).join(" ");
+  if (!rua) return null;
+  const linha = [rua, limpo(d.numero), limpo(d.complemento)].filter(Boolean).join(", ");
+  const bairro = limpo(d.bairro);
+  const cep = d.cep != null ? String(d.cep).replace(/\D/g, "").padStart(8, "0") : null;
+  return {
+    logradouro: bairro ? `${linha} - ${bairro}` : linha,
+    cidade: limpo(d.municipio),
+    uf: limpo(d.uf)?.toUpperCase() ?? null,
+    cep: cep && cep.length === 8 ? cep : null,
+  };
+}
 
 export async function consultarCnpjBrasilApi(cnpjDigits: string): Promise<CnpjConsultaResultado> {
   let res: Response;
@@ -106,12 +142,16 @@ export async function consultarCnpjBrasilApi(cnpjDigits: string): Promise<CnpjCo
   }
 
   const d = parsed.data;
+  const nomeFantasia = limpo(d.nome_fantasia);
+  const endereco = montarEndereco(d);
   return {
     status: "ok",
     info: {
       razaoSocial: d.razao_social,
       situacaoCadastral: d.descricao_situacao_cadastral.toUpperCase(),
       cnaePrincipal: d.cnae_fiscal != null ? String(d.cnae_fiscal) : null,
+      ...(nomeFantasia ? { nomeFantasia } : {}),
+      ...(endereco ? { endereco } : {}),
     },
   };
 }

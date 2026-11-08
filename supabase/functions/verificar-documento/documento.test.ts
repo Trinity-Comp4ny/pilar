@@ -79,6 +79,40 @@ Deno.test("consultarCnpjBrasilApi devolve razão social e situação quando a re
   }
 });
 
+Deno.test("consultarCnpjBrasilApi traz nome fantasia e endereço quando a Receita informa (SPEC 149)", async () => {
+  const restore = stubFetch(() =>
+    jsonResponse({
+      razao_social: "ALFA ENGENHARIA LTDA",
+      descricao_situacao_cadastral: "ATIVA",
+      cnae_fiscal: 7112000,
+      nome_fantasia: "ALFA ENGENHARIA",
+      descricao_tipo_de_logradouro: "RUA",
+      logradouro: "DAS FLORES",
+      numero: "100",
+      complemento: "SALA 2",
+      bairro: "CENTRO",
+      municipio: "BAURU",
+      uf: "sp",
+      cep: "17010000",
+    })
+  );
+  try {
+    const result = await consultarCnpjBrasilApi("11222333000181");
+    assertEquals(result, {
+      status: "ok",
+      info: {
+        razaoSocial: "ALFA ENGENHARIA LTDA",
+        situacaoCadastral: "ATIVA",
+        cnaePrincipal: "7112000",
+        nomeFantasia: "ALFA ENGENHARIA",
+        endereco: { logradouro: "RUA DAS FLORES, 100, SALA 2 - CENTRO", cidade: "BAURU", uf: "SP", cep: "17010000" },
+      },
+    });
+  } finally {
+    restore();
+  }
+});
+
 Deno.test("consultarCnpjBrasilApi devolve indisponivel (não joga erro) no 404", async () => {
   const restore = stubFetch(() => new Response(null, { status: 404 }));
   try {

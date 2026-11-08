@@ -108,7 +108,8 @@ export const profileSetupDefaultValues: ProfileSetupFormData = {
   termsAccepted: false,
 };
 
-function validCnpjChecksum(digits: string): boolean {
+/** Dígitos verificadores do CNPJ (14 dígitos, sem máscara). */
+export function validCnpjChecksum(digits: string): boolean {
   if (digits.length !== 14 || /^(\d)\1+$/.test(digits)) return false;
   const calc = (s: string, w: number[]) => s.split("").reduce((sum, n, i) => sum + parseInt(n) * w[i], 0);
   const w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
