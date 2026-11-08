@@ -157,6 +157,77 @@ describe("CompanySetup · Seu escritório (etapa 2)", () => {
   });
 });
 
+describe("CompanySetup · consulta do CNPJ na Receita (SPEC 149)", () => {
+  const RECEITA = {
+    status: "ok",
+    razao_social: "ALFA ENGENHARIA LTDA",
+    situacao_cadastral: "ATIVA",
+    nome_fantasia: "ALFA",
+    endereco: { logradouro: "RUA DAS FLORES, 100 - CENTRO", cidade: "BAURU", uf: "SP", cep: "17010000" },
+  };
+
+  beforeEach(() => {
+    h.invoke.mockImplementation((fn: string, opts: { body: Record<string, unknown> }) =>
+      Promise.resolve(
+        fn === "verificar-documento" && opts.body.apenas_consultar
+          ? { data: RECEITA, error: null }
+          : { data: { success: true }, error: null }
+      )
+    );
+  });
+
+  it("CNPJ válido mostra razão social, situação e cidade da Receita", async () => {
+    renderPage();
+    await userEvent.setup().type(cnpj(), CNPJ_VALIDO);
+    expect(await screen.findByText("ALFA ENGENHARIA LTDA")).toBeInTheDocument();
+    expect(screen.getByText(/Situação ativa · ALFA · BAURU\/SP/)).toBeInTheDocument();
+    expect(h.invoke).toHaveBeenCalledWith("verificar-documento", {
+      body: { documento: CNPJ_VALIDO, apenas_consultar: true },
+    });
+  });
+
+  it("CNPJ incompleto ou inválido não consulta", async () => {
+    renderPage();
+    await userEvent.setup().type(cnpj(), "11222333000182");
+    await new Promise((r) => setTimeout(r, 500));
+    expect(h.invoke).not.toHaveBeenCalled();
+  });
+
+  it("Receita fora do ar avisa sem travar", async () => {
+    h.invoke.mockResolvedValue({ data: { status: "indisponivel" }, error: null });
+    renderPage();
+    await userEvent.setup().type(cnpj(), CNPJ_VALIDO);
+    expect(await screen.findByText(/A Receita não respondeu agora/)).toBeInTheDocument();
+  });
+
+  it("ao continuar, preenche o endereço vazio e registra o CNPJ como verificado", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await user.type(cnpj(), CNPJ_VALIDO);
+    await screen.findByText("ALFA ENGENHARIA LTDA");
+    await irParaEtapa3(user);
+    expect(updates()[0]?.payload).toMatchObject({
+      endereco: "RUA DAS FLORES, 100 - CENTRO",
+      cidade: "BAURU",
+      estado: "SP",
+      cep: "17010000",
+    });
+    expect(h.invoke).toHaveBeenCalledWith("verificar-documento", { body: { documento: CNPJ_VALIDO } });
+  });
+
+  it("não sobrescreve endereço que o escritório já tem", async () => {
+    h.profile = { empresa_id: "e1", empresas: { nome: "Alfa", cidade: "Marília", estado: "SP" } };
+    renderPage();
+    const user = userEvent.setup();
+    await user.type(cnpj(), CNPJ_VALIDO);
+    await screen.findByText("ALFA ENGENHARIA LTDA");
+    await irParaEtapa3(user);
+    expect(updates()[0]?.payload).not.toHaveProperty("cidade");
+    expect(updates()[0]?.payload).not.toHaveProperty("estado");
+    expect(updates()[0]?.payload).toMatchObject({ endereco: "RUA DAS FLORES, 100 - CENTRO", cep: "17010000" });
+  });
+});
+
 describe("CompanySetup · Por onde começar (etapa 3)", () => {
   it("os três pilares aparecem com o mesmo peso", async () => {
     renderPage();

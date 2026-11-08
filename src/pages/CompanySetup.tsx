@@ -26,6 +26,7 @@ import { Logo } from "@/components/Logo";
 import { BusyMark } from "@/components/motion/BusyMark";
 import { EscolhaChips } from "@/components/forms/EscolhaChips";
 import { cn } from "@/lib/utils";
+import { useConsultaCnpj, type ConsultaCnpj } from "@/hooks/useConsultaCnpj";
 import {
   CANAIS,
   DISCIPLINAS,
@@ -118,6 +119,7 @@ export default function CompanySetup() {
   }, [targetProgress]);
 
   const empresaId = profile?.empresa_id ?? null;
+  const receita = useConsultaCnpj(form.watch("cnpj") ?? "");
 
   // Etapa 2: grava o perfil do escritório já (sem concluir o onboarding), para
   // não perder o que foi digitado se a pessoa fechar a aba na etapa 3.
@@ -128,6 +130,17 @@ export default function CompanySetup() {
     }
     setIsLoading(true);
     try {
+      // Endereço da Receita só preenche o que o escritório ainda não tem.
+      const empresa = profile?.empresas;
+      const enderecoReceita = receita.estado === "ok" ? receita.dados.endereco : null;
+      const doEndereco = enderecoReceita
+        ? {
+            ...(!empresa?.endereco && enderecoReceita.logradouro ? { endereco: enderecoReceita.logradouro } : {}),
+            ...(!empresa?.cidade && enderecoReceita.cidade ? { cidade: enderecoReceita.cidade } : {}),
+            ...(!empresa?.estado && enderecoReceita.uf ? { estado: enderecoReceita.uf } : {}),
+            ...(!empresa?.cep && enderecoReceita.cep ? { cep: enderecoReceita.cep } : {}),
+          }
+        : {};
       const { error } = await supabase
         .from("empresas")
         .update({
@@ -137,9 +150,19 @@ export default function CompanySetup() {
           porte: values.porte || null,
           disciplinas: values.disciplinas.length > 0 ? values.disciplinas : null,
           como_conheceu: values.comoConheceu || null,
+          ...doEndereco,
         })
         .eq("id", empresaId);
       if (error) throw error;
+
+      // CNPJ confirmado na Receita fica registrado como verificado (razão social,
+      // situação, CNAE), pela mesma edge do nível Prata (SPEC 098). Não bloqueia:
+      // se falhar, o CNPJ já está salvo e o cron de reverificação cobre.
+      if (receita.estado === "ok" && values.cnpj) {
+        await supabase.functions
+          .invoke("verificar-documento", { body: { documento: values.cnpj.replace(/\D/g, "") } })
+          .catch(() => undefined);
+      }
 
       analytics.track("onboarding_etapa_concluida", {
         etapa: "escritorio",
@@ -367,6 +390,8 @@ export default function CompanySetup() {
                     />
                   </div>
 
+                  <ResultadoReceita consulta={receita} />
+
                   <FormField
                     control={form.control}
                     name="disciplinas"
@@ -582,6 +607,52 @@ export default function CompanySetup() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** O que a Receita tem para o CNPJ digitado (SPEC 149): conferência, sem bloquear o cadastro. */
+function ResultadoReceita({ consulta }: { consulta: ConsultaCnpj }) {
+  if (consulta.estado === "inativo") return null;
+  if (consulta.estado === "consultando") {
+    return (
+      <p className="flex items-center gap-2 text-xs text-ink-soft" role="status">
+        <BusyMark className="h-3.5 w-3.5" /> Consultando a Receita Federal...
+      </p>
+    );
+  }
+  if (consulta.estado === "indisponivel") {
+    return (
+      <p className="text-xs text-ink-soft" role="status">
+        A Receita não respondeu agora. Pode seguir: o CNPJ fica salvo e conferimos depois.
+      </p>
+    );
+  }
+  if (consulta.estado === "erro") {
+    return (
+      <p className="text-xs text-ink-soft" role="status">
+        {consulta.mensagem}
+      </p>
+    );
+  }
+  const { dados } = consulta;
+  const ativa = dados.situacao === "ATIVA";
+  const local = [dados.endereco?.cidade, dados.endereco?.uf].filter(Boolean).join("/");
+  return (
+    <div
+      role="status"
+      className={cn(
+        "rounded-lg border px-3 py-2.5 text-sm",
+        ativa ? "border-paper-border bg-paper-alt" : "border-warning-mid-border bg-warning-soft"
+      )}
+    >
+      <p className="text-xs text-ink-soft">Receita Federal</p>
+      <p className="font-medium text-ink">{dados.razaoSocial}</p>
+      <p className={cn("text-xs", ativa ? "text-ink-soft" : "text-warning-strong")}>
+        {[ativa ? "Situação ativa" : `Situação: ${dados.situacao.toLowerCase()}`, dados.nomeFantasia, local]
+          .filter(Boolean)
+          .join(" · ")}
+      </p>
     </div>
   );
 }
