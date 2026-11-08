@@ -1,4 +1,4 @@
--- pgTAP: integridade de parcelas (SPEC 149, fase 1; migration 20261202100000).
+-- pgTAP: integridade de parcelas (SPEC 150, fase 1; migration 20261204000000).
 -- B1: parcela inserida com grupo_parcela sem linha em grupos_parcela ganha o grupo.
 -- B2: rpc_lancamentos_criar grava linhas + rateio numa transação só.
 -- B7: quitação antecipada grava a conta do pagamento.

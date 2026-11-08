@@ -1,4 +1,4 @@
--- Financeiro, fase 1 da SPEC 149 (integridade). Diagnóstico em
+-- Financeiro, fase 1 da SPEC 150 (integridade). Diagnóstico em
 -- docs/qa/2026-11-07/financeiro-lancamentos-parcelas-duplicatas.md.
 --
 -- B1. Grupo de parcela garantido no banco.

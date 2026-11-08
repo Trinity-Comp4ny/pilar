@@ -61,7 +61,7 @@ function useRateio(l: Lancamento | null) {
 }
 
 /**
- * Detalhe do lançamento em painel lateral (SPEC 149, fase 3). Abre sem tirar o usuário
+ * Detalhe do lançamento em painel lateral (SPEC 150, fase 3). Abre sem tirar o usuário
  * da lista, como Omie e Conta Azul: valor e status no topo, a ação principal
  * (registrar pagamento) à mão, todos os dados do título, o plano de parcelas inteiro
  * com progresso e o registro de quando foi criado/alterado. No celular vira tela cheia

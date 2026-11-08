@@ -13,7 +13,7 @@ interface Opcoes {
 }
 
 /**
- * Checagem de duplicata antes de criar um lançamento (SPEC 149, fase 2). Consulta o
+ * Checagem de duplicata antes de criar um lançamento (SPEC 150, fase 2). Consulta o
  * motor no servidor com valor da parcela, vencimento, descrição, contraparte e nota
  * fiscal; se houver parecido, segura o salvamento e abre o diálogo de comparação.
  */

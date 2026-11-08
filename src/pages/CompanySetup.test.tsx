@@ -8,25 +8,33 @@ import type { ChainQuery, ChainResult } from "@/test/supabaseChain";
 const h = vi.hoisted(() => ({
   resolve: vi.fn<(q: ChainQuery) => ChainResult>(),
   calls: [] as ChainQuery[],
-  getUser: vi.fn(),
+  invoke: vi.fn(),
   refreshProfile: vi.fn(),
-  profile: { empresas: { nome: "Escritório Seed", cnpj: "" } } as Record<string, unknown> | null,
+  profile: null as Record<string, unknown> | null,
+  user: { id: "u1", email: "dono@alfaeng.com.br" } as Record<string, unknown> | null,
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
+  track: vi.fn(),
 }));
 
 vi.mock("@/integrations/supabase/client", async () => {
   const { createSupabaseFrom } = await import("@/test/supabaseChain");
   const chain = createSupabaseFrom((q) => h.resolve(q));
   h.calls = chain.calls;
-  return { supabase: { from: chain.from, auth: { getUser: h.getUser } } };
+  return { supabase: { from: chain.from, functions: { invoke: h.invoke } } };
 });
 vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: () => ({ profile: h.profile, refreshProfile: h.refreshProfile }),
+  useAuth: () => ({ profile: h.profile, user: h.user, refreshProfile: h.refreshProfile }),
 }));
 vi.mock("sonner", () => ({ toast: { error: h.toastError, success: h.toastSuccess } }));
 vi.mock("@/hooks/usePageTitle", () => ({ usePageTitle: vi.fn() }));
-vi.mock("@/lib/analytics", () => ({ analytics: { track: vi.fn() } }));
+vi.mock("@/lib/analytics", () => ({ analytics: { track: h.track } }));
+
+globalThis.ResizeObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
 
 const CNPJ_VALIDO = "11222333000181";
 
@@ -42,24 +50,40 @@ function renderPage() {
 }
 
 const cnpj = () => screen.getByPlaceholderText("00.000.000/0000-00");
-const finalizar = () => screen.getByRole("button", { name: /Finalizar e entrar|Salvando/ });
+const continuar = () => screen.getByRole("button", { name: /Continuar|Salvando/ });
+const entrar = () => screen.getByRole("button", { name: /Entrar no Pilar|Convidar e entrar|Entrando/ });
+const updates = () => h.calls.filter((c) => c.table === "empresas" && c.op === "update");
+
+async function irParaEtapa3(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(continuar());
+  expect(await screen.findByRole("heading", { name: "Por onde começar?" })).toBeInTheDocument();
+}
+
+vi.setConfig({ testTimeout: 15000 });
 
 beforeEach(() => {
   vi.clearAllMocks();
   h.calls.length = 0;
-  h.profile = { empresas: { nome: "Escritório Seed", cnpj: "" } };
-  h.getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
+  h.profile = { empresa_id: "e1", empresas: { nome: "Escritório Seed", cnpj: "" } };
+  h.user = { id: "u1", email: "dono@alfaeng.com.br" };
   h.refreshProfile.mockResolvedValue(undefined);
-  h.resolve.mockImplementation((q) => {
-    if (q.table === "profiles") return { data: { empresa_id: "e1" } };
-    return { error: null };
-  });
+  h.invoke.mockResolvedValue({ data: { success: true }, error: null });
+  h.resolve.mockImplementation(() => ({ error: null }));
 });
 
-describe("CompanySetup", () => {
-  it("pré-preenche o nome da empresa vindo do cadastro", () => {
+describe("CompanySetup · Seu escritório (etapa 2)", () => {
+  it("pré-preenche o que o ultra-admin anotou na criação", () => {
+    h.profile = {
+      empresa_id: "e1",
+      empresas: { nome: "Alfa", cnpj: CNPJ_VALIDO, site: "alfa.com.br", porte: "6-15", disciplinas: ["estrutural"] },
+    };
     renderPage();
-    expect(screen.getByText("Escritório Seed")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Alfa")).toBeInTheDocument();
+    expect(cnpj()).toHaveValue("11.222.333/0001-81");
+    expect(screen.getByDisplayValue("alfa.com.br")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "6 a 15" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("button", { name: "Estrutural" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("Configuração inicial · Etapa 2 de 3")).toBeInTheDocument();
   });
 
   it("aplica máscara de CNPJ enquanto digita", async () => {
@@ -72,90 +96,129 @@ describe("CompanySetup", () => {
     renderPage();
     const user = userEvent.setup();
     await user.type(cnpj(), "11222333000182");
-    await user.click(finalizar());
+    await user.click(continuar());
     expect(await screen.findByText("CNPJ inválido")).toBeInTheDocument();
-    expect(h.calls.some((c) => c.table === "empresas")).toBe(false);
+    expect(updates()).toHaveLength(0);
   });
 
-  it("CNPJ com todos os dígitos iguais é recusado", async () => {
+  it("sem nome do escritório não avança", async () => {
+    h.profile = { empresa_id: "e1", empresas: { nome: "", cnpj: "" } };
     renderPage();
-    const user = userEvent.setup();
-    await user.type(cnpj(), "11111111111111");
-    await user.click(finalizar());
-    expect(await screen.findByText("CNPJ inválido")).toBeInTheDocument();
-  });
-
-  it("CNPJ vazio é permitido (preenche depois) e conclui o onboarding", async () => {
-    renderPage();
-    await userEvent.setup().click(finalizar());
-    expect(await screen.findByTestId("inicio")).toBeInTheDocument();
-    const up = h.calls.find((c) => c.table === "empresas" && c.op === "update");
-    expect(up?.payload).toEqual({ nome: "Escritório Seed", cnpj: "", onboarding_completed: true });
-    expect(up?.filters).toContainEqual(["eq", "id", "e1"]);
-    expect(h.refreshProfile).toHaveBeenCalled();
-  });
-
-  it("sem nome no cadastro o campo fica editável e o envio vazio mostra o erro", async () => {
-    h.profile = { empresas: { nome: "", cnpj: "" } };
-    renderPage();
-    const user = userEvent.setup();
-    await user.click(finalizar());
+    await userEvent.setup().click(continuar());
     expect(await screen.findByText("Nome é obrigatório")).toBeInTheDocument();
-    expect(h.getUser).not.toHaveBeenCalled();
-    expect(h.calls.some((c) => c.table === "empresas")).toBe(false);
-    expect(screen.queryByTestId("inicio")).not.toBeInTheDocument();
-
-    await user.type(screen.getByLabelText("Nome da empresa"), "Seed Projetos");
-    await user.click(finalizar());
-    expect(await screen.findByTestId("inicio")).toBeInTheDocument();
-    const up = h.calls.find((c) => c.table === "empresas" && c.op === "update");
-    expect(up?.payload).toMatchObject({ nome: "Seed Projetos" });
+    expect(updates()).toHaveLength(0);
   });
 
-  it("com nome no cadastro não oferece campo de nome (só confirmação)", () => {
-    renderPage();
-    expect(screen.queryByLabelText("Nome da empresa")).not.toBeInTheDocument();
-  });
-
-  it("usuário sem empresa vinculada recebe erro e não grava nada", async () => {
-    h.resolve.mockImplementation((q) => (q.table === "profiles" ? { data: { empresa_id: null } } : { error: null }));
-    renderPage();
-    await userEvent.setup().click(finalizar());
-    await waitFor(() => expect(h.toastError).toHaveBeenCalledWith("Erro ao salvar", expect.anything()));
-    expect(h.calls.some((c) => c.table === "empresas")).toBe(false);
-    expect(screen.queryByTestId("inicio")).not.toBeInTheDocument();
-  });
-
-  it("RLS negando (não-admin) mostra mensagem segura e mantém o formulário", async () => {
-    h.resolve.mockImplementation((q) =>
-      q.table === "profiles"
-        ? { data: { empresa_id: "e1" } }
-        : { error: { message: 'new row violates row-level security policy for table "empresas"' } }
-    );
+  it("sugere o site pelo domínio do e-mail e grava o perfil sem concluir o onboarding", async () => {
     renderPage();
     const user = userEvent.setup();
-    await user.type(cnpj(), CNPJ_VALIDO);
-    await user.click(finalizar());
+    await user.click(screen.getByRole("button", { name: "Usar alfaeng.com.br" }));
+    await user.click(screen.getByRole("radio", { name: "1 a 5 pessoas" }));
+    await user.click(screen.getByRole("button", { name: "Arquitetura" }));
+    await user.click(screen.getByRole("radio", { name: "ChatGPT ou outra IA" }));
+    await irParaEtapa3(user);
+    expect(updates()[0]?.payload).toEqual({
+      nome: "Escritório Seed",
+      cnpj: null,
+      site: "alfaeng.com.br",
+      porte: "1-5",
+      disciplinas: ["arquitetura"],
+      como_conheceu: "ia",
+    });
+    expect(updates()[0]?.filters).toContainEqual(["eq", "id", "e1"]);
+  });
+
+  it("e-mail pessoal não gera sugestão de site", () => {
+    h.user = { id: "u1", email: "dono@gmail.com" };
+    renderPage();
+    expect(screen.queryByRole("button", { name: /Usar / })).not.toBeInTheDocument();
+  });
+
+  it("RLS negando mostra mensagem segura e fica na etapa", async () => {
+    h.resolve.mockImplementation(() => ({
+      error: { message: 'new row violates row-level security policy for table "empresas"' },
+    }));
+    renderPage();
+    await userEvent.setup().click(continuar());
     await waitFor(() =>
       expect(h.toastError).toHaveBeenCalledWith("Erro ao salvar", {
         description: "Você não tem permissão para realizar esta ação.",
       })
     );
-    expect(h.refreshProfile).not.toHaveBeenCalled();
-    expect(cnpj()).toHaveValue("11.222.333/0001-81");
-    expect(finalizar()).toBeEnabled();
+    expect(screen.queryByRole("heading", { name: "Por onde começar?" })).not.toBeInTheDocument();
   });
 
-  it("desabilita enquanto salva", async () => {
-    let liberar: (v: ChainResult) => void = () => {};
-    h.resolve.mockImplementation((q) =>
-      q.table === "profiles" ? { data: { empresa_id: "e1" } } : (new Promise((r) => (liberar = r)) as never)
-    );
+  it("usuário sem empresa vinculada recebe erro e não grava nada", async () => {
+    h.profile = { empresa_id: null, empresas: { nome: "Seed" } };
+    renderPage();
+    await userEvent.setup().click(continuar());
+    await waitFor(() => expect(h.toastError).toHaveBeenCalledWith("Empresa não encontrada"));
+    expect(updates()).toHaveLength(0);
+  });
+});
+
+describe("CompanySetup · Por onde começar (etapa 3)", () => {
+  it("os três pilares aparecem com o mesmo peso", async () => {
+    renderPage();
+    await irParaEtapa3(userEvent.setup());
+    expect(screen.getAllByRole("radio").map((r) => r.textContent)).toEqual([
+      expect.stringContaining("Gestão"),
+      expect.stringContaining("Projetos"),
+      expect.stringContaining("Obras"),
+    ]);
+  });
+
+  it("grava o pilar escolhido, conclui o onboarding e entra sem convidar ninguém", async () => {
     renderPage();
     const user = userEvent.setup();
-    await user.click(finalizar());
-    expect(await screen.findByRole("button", { name: /Salvando/ })).toBeDisabled();
-    liberar({ error: null });
+    await irParaEtapa3(user);
+    await user.click(screen.getByRole("radio", { name: /Obras/ }));
+    await user.click(entrar());
     expect(await screen.findByTestId("inicio")).toBeInTheDocument();
+    expect(updates()[1]?.payload).toEqual({ objetivo_inicial: "obras", onboarding_completed: true });
+    expect(h.invoke).not.toHaveBeenCalled();
+    expect(h.refreshProfile).toHaveBeenCalled();
+    expect(h.track).toHaveBeenCalledWith("onboarding_objetivo_escolhido", { objetivo: "obras" });
+  });
+
+  it("pular a escolha também conclui", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await irParaEtapa3(user);
+    await user.click(entrar());
+    expect(await screen.findByTestId("inicio")).toBeInTheDocument();
+    expect(updates()[1]?.payload).toEqual({ objetivo_inicial: null, onboarding_completed: true });
+  });
+
+  it("convida os colegas informados pela mesma função do painel de usuários", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await irParaEtapa3(user);
+    await user.type(screen.getByLabelText("E-mail do colega 1"), "Bia@AlfaEng.com.br");
+    await user.click(entrar());
+    expect(await screen.findByTestId("inicio")).toBeInTheDocument();
+    expect(h.invoke).toHaveBeenCalledTimes(1);
+    expect(h.invoke).toHaveBeenCalledWith("invite-user", {
+      body: { email: "bia@alfaeng.com.br", nome: "", role: "user" },
+    });
+  });
+
+  it("e-mail de colega inválido trava o botão", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await irParaEtapa3(user);
+    await user.type(screen.getByLabelText("E-mail do colega 1"), "bia@");
+    expect(entrar()).toBeDisabled();
+  });
+
+  it("convite que falha não impede a entrada", async () => {
+    h.invoke.mockResolvedValue({ data: null, error: new Error("Limite de usuários") });
+    renderPage();
+    const user = userEvent.setup();
+    await irParaEtapa3(user);
+    await user.type(screen.getByLabelText("E-mail do colega 1"), "bia@alfaeng.com.br");
+    await user.click(entrar());
+    expect(await screen.findByTestId("inicio")).toBeInTheDocument();
+    expect(h.toastError).toHaveBeenCalledWith("Convite para bia@alfaeng.com.br não saiu", expect.anything());
   });
 });

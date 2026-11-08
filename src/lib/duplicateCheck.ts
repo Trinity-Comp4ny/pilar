@@ -33,7 +33,7 @@ interface DuplicateCheckParams {
 
 /**
  * Procura lançamentos que podem ser o mesmo que está sendo gravado. A regra vive no
- * servidor (rpc_buscar_duplicatas, SPEC 149 fase 2) para valer igual em todo caminho
+ * servidor (rpc_buscar_duplicatas, SPEC 150 fase 2) para valer igual em todo caminho
  * de entrada: nota fiscal, contraparte + valor + data, e descrição parecida (pg_trgm)
  * em vez de idêntica. Falha de rede não bloqueia o salvamento: devolve lista vazia.
  */

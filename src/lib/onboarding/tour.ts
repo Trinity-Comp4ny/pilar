@@ -10,7 +10,10 @@ export type TourInstance = ReturnType<typeof driver>;
  * um balão. Só dispara se o alvo já está montado; senão devolve null (o controller
  * tenta de novo quando a tela terminar de montar). Tematizado em onboarding-tour.css.
  */
-export function startStepTour(step: OnboardingStep, onDone: () => void): TourInstance | null {
+export function startStepTour(
+  step: OnboardingStep & { tour: NonNullable<OnboardingStep["tour"]> },
+  onDone: () => void
+): TourInstance | null {
   if (typeof document === "undefined") return null;
 
   const selector = `[data-tour="${step.tour.selector}"]`;

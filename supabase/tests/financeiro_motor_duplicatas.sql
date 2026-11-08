@@ -1,4 +1,4 @@
--- pgTAP: rpc_buscar_duplicatas (SPEC 149, fase 2; migration 20261204000000).
+-- pgTAP: rpc_buscar_duplicatas (SPEC 150, fase 2; migration 20261206000000).
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;

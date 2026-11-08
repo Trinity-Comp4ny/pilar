@@ -212,7 +212,7 @@ function Linha({
         </div>
         {/* Cor só pelo sentido, como nos apps de banco: entrada em verde com "+", saída
             neutra. Vermelho fica para o que venceu. Efetivado em peso cheio, em aberto
-            mais leve (SPEC 149, mobile P0). */}
+            mais leve (SPEC 150, mobile P0). */}
         <span
           className={cn(
             "shrink-0 text-[15px] tabular-nums",
@@ -220,7 +220,7 @@ function Linha({
             atrasada ? "text-danger-mid" : isTransf ? "text-ink" : isReceita ? "text-positive-strong" : "text-ink"
           )}
         >
-          {isTransf ? "⇄ " : isReceita ? "+" : "−"}
+          {isTransf ? "⇄" : isReceita ? "+" : "−"}
           {formatCurrency(l.valor)}
         </span>
       </div>

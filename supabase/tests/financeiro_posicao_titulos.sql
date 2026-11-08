@@ -1,4 +1,4 @@
--- pgTAP: get_titulos_posicao (SPEC 149, fase 3; migration 20261203000000).
+-- pgTAP: get_titulos_posicao (SPEC 150, fase 3; migration 20261205000000).
 -- Os chips de A receber / A pagar contam o conjunto inteiro por vencimento, com a
 -- mesma regra do filtro que aplicam, e só da empresa de quem chama (RLS da view).
 

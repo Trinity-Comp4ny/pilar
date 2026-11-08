@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { Lancamento } from "../hooks/useLancamentosUnified";
 
-// Painel lateral do lançamento (SPEC 149, fase 3): valor e status no topo, ação de
+// Painel lateral do lançamento (SPEC 150, fase 3): valor e status no topo, ação de
 // pagamento à mão, dados do título e o plano de parcelas inteiro.
 
 vi.mock("@/integrations/supabase/client", async () => ({

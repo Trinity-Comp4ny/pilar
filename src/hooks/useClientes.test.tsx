@@ -103,7 +103,9 @@ describe("useClientes: portal do cliente", () => {
         { cliente_id: "c2", senha_hash: "x" },
       ],
     });
-    const { result } = renderHook(() => useClientes({ enableListQueries: false }), { wrapper });
+    const { result } = renderHook(() => useClientes({ enableListQueries: false, enablePortalStatus: true }), {
+      wrapper,
+    });
 
     await waitFor(() => expect(result.current.portalStatusPorCliente.size).toBe(2));
     expect(result.current.portalStatusPorCliente.get("c1")).toBe("convite_pendente");
@@ -251,5 +253,192 @@ describe("listagem paginada", () => {
     supabaseFake.respondRpc("listar_origens_clientes", { data: [{ origem: "Site" }, { origem: "Indicação" }] });
     const { result } = renderHook(() => useOrigensClientes(), { wrapper });
     await waitFor(() => expect(result.current.data).toEqual(["Site", "Indicação"]));
+  });
+});
+
+describe("useClientes: listas completas e bordas", () => {
+  it("carrega clientes, status do portal e ids com projeto", async () => {
+    supabaseFake.respond("clientes", "select", { data: [{ id: "c1", nome: "Ana" }] });
+    supabaseFake.respond("cliente_portal_accounts", "select", {
+      data: [
+        { cliente_id: "c1", senha_hash: "h" },
+        { cliente_id: "c2", senha_hash: null },
+      ],
+    });
+    supabaseFake.respond("projetos", "select", { data: [{ cliente_id: "c1" }, { cliente_id: null }] });
+    const { result } = renderHook(() => useClientes(), { wrapper });
+
+    await waitFor(() => expect(result.current.clientes).toHaveLength(1));
+    await waitFor(() => expect(result.current.portalStatusPorCliente.size).toBe(2));
+    await waitFor(() => expect(result.current.clienteIdsComProjeto.size).toBe(1));
+    expect(result.current.portalStatusPorCliente.get("c1")).toBe("ativo");
+    expect(result.current.portalStatusPorCliente.get("c2")).toBe("convite_pendente");
+    expect(result.current.clienteIdsComProjeto.has("c1")).toBe(true);
+  });
+
+  it("listas vazias quando o banco não devolve nada", async () => {
+    supabaseFake.respond("clientes", "select", { data: null });
+    supabaseFake.respond("cliente_portal_accounts", "select", { data: null });
+    supabaseFake.respond("projetos", "select", { data: null });
+    const { result } = renderHook(() => useClientes(), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.clientes).toEqual([]);
+    expect(result.current.portalStatusPorCliente.size).toBe(0);
+    expect(result.current.clienteIdsComProjeto.size).toBe(0);
+  });
+
+  it("erro na lista completa aparece como isError", async () => {
+    supabaseFake.respond("clientes", "select", { error: { message: "permission denied" } });
+    const { result } = renderHook(() => useClientes(), { wrapper });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+  });
+
+  it("CPF/CNPJ duplicado tem mensagem própria", async () => {
+    supabaseFake.respond("clientes", "insert", {
+      error: { code: "23505", message: 'duplicate key value violates "clientes_cpf_cnpj_key"' },
+    });
+    const { result } = renderHook(() => useClientes({ enableListQueries: false }), { wrapper });
+    await expect(result.current.upsertCliente({ data: FORM })).rejects.toBeTruthy();
+    expect(toastError).toHaveBeenCalledWith("CPF/CNPJ já cadastrado", expect.anything());
+  });
+
+  it("campos opcionais vazios viram null", async () => {
+    const { result } = renderHook(() => useClientes({ enableListQueries: false }), { wrapper });
+    await result.current.upsertCliente({
+      data: { ...FORM, sobrenome: undefined as unknown as string, tipo_pessoa: "" as never, cpf_cnpj: "" },
+    });
+    expect(supabaseFake.callsTo("clientes", "insert")[0].payload).toMatchObject({
+      sobrenome: null,
+      tipo_pessoa: null,
+      cpf_cnpj: null,
+    });
+  });
+
+  it("erro na atualização avisa", async () => {
+    supabaseFake.respond("clientes", "update", { error: { message: "x" } });
+    const { result } = renderHook(() => useClientes({ enableListQueries: false }), { wrapper });
+    await expect(result.current.upsertCliente({ id: "c1", data: FORM })).rejects.toBeTruthy();
+    expect(toastError).toHaveBeenCalledWith("Erro ao salvar", expect.anything());
+  });
+
+  it("excluir com sucesso oferece desfazer que restaura", async () => {
+    const { result } = renderHook(() => useClientes({ enableListQueries: false }), { wrapper });
+    await result.current.deleteCliente("c1");
+    const [titulo, opts] = toastSuccess.mock.calls[0] as [string, { action: { onClick: () => void } }];
+    expect(titulo).toBe("Cliente excluído");
+    opts.action.onClick();
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith("Cliente restaurado"));
+  });
+
+  it("sem conta no portal: sem acesso e sem e-mail", async () => {
+    supabaseFake.respond("cliente_portal_accounts", "select", { data: null });
+    const { result } = renderHook(() => useClientes({ enableListQueries: false }), { wrapper });
+    await expect(result.current.checkPortalAccess("c1")).resolves.toBe(false);
+    await expect(result.current.fetchPortalEmail("c1")).resolves.toBeNull();
+  });
+
+  it("erro HTTP sem corpo usa a mensagem do erro; sem mensagem, genérico", async () => {
+    supabaseFake.respondInvoke("invite-cliente-portal", { error: new Error("Edge Function returned 500") });
+    const { result } = renderHook(() => useClientes({ enableListQueries: false }), { wrapper });
+    await expect(result.current.invitePortal({ clienteId: "c1", email: "a@b.c" })).rejects.toThrow(
+      "Edge Function returned 500"
+    );
+
+    supabaseFake.respondInvoke("invite-cliente-portal", {
+      error: { message: "", context: { json: () => Promise.reject(new Error("not json")) } },
+    });
+    await expect(result.current.invitePortal({ clienteId: "c1", email: "a@b.c" })).rejects.toThrow("Erro desconhecido");
+  });
+
+  it("redefinir senha: sucesso, erro no corpo e erro sem corpo", async () => {
+    supabaseFake.respondInvoke("reset-cliente-portal-password", { data: { email: "ana@lima.com" } });
+    const { result } = renderHook(() => useClientes({ enableListQueries: false }), { wrapper });
+    await expect(result.current.resetPortalPassword({ clienteId: "c1", nomeCliente: "Ana" })).resolves.toEqual({
+      email: "ana@lima.com",
+    });
+
+    supabaseFake.respondInvoke("reset-cliente-portal-password", { data: { error: "Conta não encontrada" } });
+    await expect(result.current.resetPortalPassword({ clienteId: "c1", nomeCliente: "Ana" })).rejects.toThrow(
+      "Conta não encontrada"
+    );
+
+    supabaseFake.respondInvoke("reset-cliente-portal-password", { error: { message: "" } });
+    await expect(result.current.resetPortalPassword({ clienteId: "c1", nomeCliente: "Ana" })).rejects.toThrow(
+      "Erro desconhecido"
+    );
+  });
+
+  it("paginada vazia e origens nulas ou com erro", async () => {
+    supabaseFake.respondRpc("listar_clientes_paginado", { data: null });
+    const pag = renderHook(() => useClientesPaginados(), { wrapper });
+    await waitFor(() => expect(pag.result.current.isLoading).toBe(false));
+    expect(pag.result.current.clientes).toEqual([]);
+
+    supabaseFake.respondRpc("listar_origens_clientes", { data: null });
+    const vazio = renderHook(() => useOrigensClientes(), { wrapper });
+    await waitFor(() => expect(vazio.result.current.data).toEqual([]));
+
+    client.clear();
+    supabaseFake.respondRpc("listar_origens_clientes", { error: { message: "boom" } });
+    const erro = renderHook(() => useOrigensClientes(), { wrapper });
+    await waitFor(() => expect(erro.result.current.isError).toBe(true));
+  });
+});
+
+describe("useClientes: erros do Supabase não viram 'sem dados'", () => {
+  const NEGADO = { code: "42501", message: "permission denied for table cliente_portal_accounts" };
+
+  it("erro no status do portal aparece como erro, não como 'sem portal'", async () => {
+    supabaseFake.respond("cliente_portal_accounts", "select", { error: NEGADO });
+    const { result } = renderHook(() => useClientes({ enableListQueries: false, enablePortalStatus: true }), {
+      wrapper,
+    });
+    await waitFor(() => expect(result.current.isPortalStatusError).toBe(true));
+    expect(result.current.portalStatusPorCliente.size).toBe(0);
+  });
+
+  it("erro nos ids com projeto vira erro da query", async () => {
+    supabaseFake.respond("projetos", "select", { error: NEGADO });
+    renderHook(() => useClientes(), { wrapper });
+    await waitFor(() => expect(client.getQueryState(["cliente-ids-com-projeto"])?.status).toBe("error"));
+  });
+
+  it("enableListQueries:false também desliga o status do portal, salvo pedido explícito", async () => {
+    renderHook(() => useClientes({ enableListQueries: false }), { wrapper });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(supabaseFake.callsTo("cliente_portal_accounts")).toHaveLength(0);
+    expect(supabaseFake.callsTo("projetos")).toHaveLength(0);
+    expect(supabaseFake.callsTo("clientes")).toHaveLength(0);
+
+    renderHook(() => useClientes({ enableListQueries: false, enablePortalStatus: true }), { wrapper });
+    await waitFor(() => expect(supabaseFake.callsTo("cliente_portal_accounts")).toHaveLength(1));
+    expect(supabaseFake.callsTo("clientes")).toHaveLength(0);
+  });
+
+  it("checkPortalAccess e fetchPortalEmail propagam o erro", async () => {
+    supabaseFake.respond("cliente_portal_accounts", "select", { error: NEGADO });
+    const { result } = renderHook(() => useClientes({ enableListQueries: false }), { wrapper });
+    await expect(result.current.checkPortalAccess("c1")).rejects.toEqual(NEGADO);
+    await expect(result.current.fetchPortalEmail("c1")).rejects.toEqual(NEGADO);
+  });
+
+  it("criar sem empresa vinculada não grava e explica a causa", async () => {
+    supabaseFake.respondRpc("get_user_empresa_id", { data: null });
+    const { result } = renderHook(() => useClientes({ enableListQueries: false }), { wrapper });
+    await expect(result.current.upsertCliente({ data: FORM })).rejects.toThrow("Usuário não associado a uma empresa");
+    expect(supabaseFake.callsTo("clientes", "insert")).toHaveLength(0);
+    expect(toastError).toHaveBeenCalledWith("Erro ao salvar", {
+      description: "Usuário não está associado a uma empresa.",
+    });
+  });
+
+  it("criar com erro ao resolver a empresa não grava", async () => {
+    supabaseFake.respondRpc("get_user_empresa_id", { error: { message: "JWT expired" } });
+    const { result } = renderHook(() => useClientes({ enableListQueries: false }), { wrapper });
+    await expect(result.current.upsertCliente({ data: FORM })).rejects.toEqual({ message: "JWT expired" });
+    expect(supabaseFake.callsTo("clientes", "insert")).toHaveLength(0);
+    expect(toastError).toHaveBeenCalledWith("Erro ao salvar", {
+      description: "Sua sessão expirou. Faça login novamente.",
+    });
   });
 });

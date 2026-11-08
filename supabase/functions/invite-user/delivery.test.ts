@@ -103,6 +103,14 @@ Deno.test("convite novo segue fluxo original", async () => {
     false
   );
 });
+Deno.test("convite leva o nome de quem convidou quando informado (SPEC 149)", async () => {
+  const { svc, calls } = client();
+  await deliverInvite(svc, "bia@test.com", "token", "Bia", "https://app.test", "Ana Souza");
+  assertEquals(calls.find((c) => c.method === "invite")?.args[1], {
+    redirectTo: "https://app.test/profile-setup",
+    data: { invite_token: "token", nome: "Bia", convidado_por: "Ana Souza" },
+  });
+});
 Deno.test("falha comum de envio mantém cleanup original", async () => {
   const { svc } = client({ inviteError: { code: "unexpected_failure" } });
   const result = await deliverInvite(svc, "bia@test.com", "token", "Bia", "https://app.test");

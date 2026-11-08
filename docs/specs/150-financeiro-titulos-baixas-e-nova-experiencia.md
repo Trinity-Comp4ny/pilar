@@ -210,7 +210,7 @@ Ver diagnóstico, seção 2. Resumo: `rpc_buscar_duplicatas` no servidor, com po
 
 Fica para depois da fase 2: checagem de duplicata na edição e nas RPCs dos agentes, memória de "não é duplicata" e varredura periódica.
 
-Antes e depois das telas da fase 3: `docs/design/antes-depois/spec-149/`.
+Antes e depois das telas da fase 3: `docs/design/antes-depois/spec-150/`.
 
 ## Critérios de aceite (por fase, resumidos)
 

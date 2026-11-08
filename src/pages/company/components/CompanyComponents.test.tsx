@@ -50,6 +50,7 @@ describe("CompanyDataTab", () => {
     onSave: vi.fn(),
     onChange: vi.fn(),
     onStatusChange: vi.fn(),
+    onDisciplinasChange: vi.fn(),
   });
 
   it("leitura: campos somente leitura, status como selo e editar habilitado para admin", async () => {

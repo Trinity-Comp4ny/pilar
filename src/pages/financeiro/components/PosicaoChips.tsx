@@ -11,7 +11,7 @@ interface Props {
 }
 
 /**
- * Posição dos títulos em chips clicáveis (SPEC 149): o que o dono pergunta toda manhã,
+ * Posição dos títulos em chips clicáveis (SPEC 150): o que o dono pergunta toda manhã,
  * "o que venceu, o que vence hoje e nesta semana". Cada chip aplica o filtro e mostra
  * quantidade e valor do conjunto inteiro. Rola na horizontal no celular.
  */

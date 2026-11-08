@@ -97,7 +97,7 @@ export default function Lancamentos() {
 
   const [importar, setImportar] = useState(false);
 
-  // Visões A pagar / A receber / Tudo (SPEC 149): são o filtro de tipo promovido para o
+  // Visões A pagar / A receber / Tudo (SPEC 150): são o filtro de tipo promovido para o
   // topo, com a posição por vencimento em chips. A última visão usada volta ao abrir,
   // a menos que o link já traga filtros.
   const visao: Visao = filters.tipo;

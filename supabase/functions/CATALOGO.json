@@ -233,5 +233,10 @@
   "verificar-documento": {
     "dominio": "billing",
     "descricao": "Sobe a empresa para o nível Prata ao informar CNPJ ou CPF (SPEC 098)."
+  },
+  "registrar-interesse-demo": {
+    "dominio": "utilitario",
+    "descricao": "Grava o canal de origem (UTM ou referrer) de cada clique em Agendar demonstração na landing, sem dado pessoal (SPEC 149).",
+    "chamada_externa": "landing (apps/marketing), por sendBeacon"
   }
 }

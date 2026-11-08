@@ -220,13 +220,18 @@ export default defineConfig(({ mode }) => ({
       // 51/42/49/54, hooks de módulo 35/28/32/40, components 51/48/43/53, financeiro
       // 58/52/48/60, obras 49/46/43/51, projetos 33/28/29/36. Pisos ~2 pontos abaixo.
       thresholds: {
-        "src/lib/**": { statements: 81, branches: 79, functions: 82, lines: 83 },
-        "src/hooks/**": { statements: 50, branches: 42, functions: 48, lines: 53 },
-        "src/pages/*/hooks/**": { statements: 86, branches: 73, functions: 89, lines: 90 },
-        "src/components/**": { statements: 54, branches: 50, functions: 47, lines: 56 },
-        "src/pages/financeiro/**": { statements: 77, branches: 67, functions: 74, lines: 79 },
-        "src/pages/obras/**": { statements: 82, branches: 76, functions: 76, lines: 84 },
-        "src/pages/projetos/**": { statements: 79, branches: 70, functions: 75, lines: 82 },
+        // Piso global (todo o código coberto pelo include), medido em 07/11/2026.
+        statements: 93,
+        branches: 86,
+        functions: 92,
+        lines: 95,
+        "src/lib/**": { statements: 94, branches: 89, functions: 94, lines: 96 },
+        "src/hooks/**": { statements: 94, branches: 88, functions: 94, lines: 96 },
+        "src/pages/*/hooks/**": { statements: 93, branches: 82, functions: 95, lines: 96 },
+        "src/components/**": { statements: 93, branches: 87, functions: 91, lines: 95 },
+        "src/pages/financeiro/**": { statements: 91, branches: 83, functions: 87, lines: 93 },
+        "src/pages/obras/**": { statements: 92, branches: 85, functions: 89, lines: 93 },
+        "src/pages/projetos/**": { statements: 93, branches: 86, functions: 94, lines: 96 },
         // Por criticidade, não por pasta: arquivo que decide acesso, autentica ou mexe
         // com dinheiro tem piso próprio, alto, para não se esconder na média da pasta.
         // Uma entrada por arquivo de propósito: `perFile` dentro de glob agrega (medido

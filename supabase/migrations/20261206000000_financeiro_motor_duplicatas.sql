@@ -1,4 +1,4 @@
--- Financeiro, fase 2 da SPEC 149: motor único de duplicatas no servidor.
+-- Financeiro, fase 2 da SPEC 150: motor único de duplicatas no servidor.
 --
 -- Antes (diagnóstico 2026-11-07, seção 2) a checagem rodava no navegador e só
 -- achava descrição IDÊNTICA + valor ±1% + data ±5 dias. Não olhava fornecedor/

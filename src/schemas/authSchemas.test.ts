@@ -82,6 +82,7 @@ describe("profileSetupSchema", () => {
     firstName: "João",
     lastName: "Silva",
     phone: "11999999999",
+    funcao: "socio",
     password: "Senha@123456!",
     confirmPassword: "Senha@123456!",
   };
@@ -101,5 +102,36 @@ describe("profileSetupSchema", () => {
 
   it("rejeita telefone muito curto", () => {
     expect(profileSetupSchema.safeParse({ ...validBase, phone: "123" }).success).toBe(false);
+  });
+
+  it("exige a função no escritório (SPEC 149)", () => {
+    const r = profileSetupSchema.safeParse({ ...validBase, funcao: "" });
+    expect(r.success).toBe(false);
+    if (!r.success) expect(r.error.issues.find((i) => i.path.includes("funcao"))?.message).toContain("função");
+  });
+
+  it("LinkedIn é opcional, mas quando vem precisa ser do LinkedIn", () => {
+    expect(profileSetupSchema.safeParse({ ...validBase, linkedin: "" }).success).toBe(true);
+    expect(profileSetupSchema.safeParse({ ...validBase, linkedin: "linkedin.com/in/joao" }).success).toBe(true);
+    expect(profileSetupSchema.safeParse({ ...validBase, linkedin: "https://site.com/joao" }).success).toBe(false);
+  });
+});
+
+describe("companySetupSchema — perfil do escritório (SPEC 149)", () => {
+  it("aceita o perfil completo", () => {
+    const r = companySetupSchema.safeParse({
+      name: "Alfa",
+      site: "alfa.com.br",
+      porte: "6-15",
+      disciplinas: ["estrutural", "arquitetura"],
+      comoConheceu: "ia",
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("recusa valor fora das listas", () => {
+    expect(companySetupSchema.safeParse({ name: "Alfa", porte: "100" }).success).toBe(false);
+    expect(companySetupSchema.safeParse({ name: "Alfa", disciplinas: ["eletrica"] }).success).toBe(false);
+    expect(companySetupSchema.safeParse({ name: "Alfa", comoConheceu: "tv" }).success).toBe(false);
   });
 });

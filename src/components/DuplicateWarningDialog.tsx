@@ -62,7 +62,7 @@ function Linha({
 }
 
 /**
- * Aviso de duplicata (SPEC 149, fase 2): mostra o que está sendo lançado e cada
+ * Aviso de duplicata (SPEC 150, fase 2): mostra o que está sendo lançado e cada
  * lançamento parecido que já existe, com o motivo ("Mesma nota fiscal", "Mesmo
  * fornecedor, mesmo valor e vencimento próximo") e o grau de certeza. A decisão é do
  * usuário: duas compras iguais no mesmo dia podem ser legítimas.

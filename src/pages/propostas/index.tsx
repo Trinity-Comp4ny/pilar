@@ -661,6 +661,7 @@ export default function Propostas() {
         label: "Nova proposta",
         icon: Plus,
         feature: "propostas",
+        dataTour: "onb-nova-proposta",
         onClick: () => {
           resetForm();
           setCodigoAutomatico(true);

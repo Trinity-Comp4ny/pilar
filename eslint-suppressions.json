@@ -14,11 +14,6 @@
       "count": 2
     }
   },
-  "src/components/calendario/eventos.ts": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
   "src/lib/analytics.ts": {
     "no-console": {
       "count": 4
@@ -57,16 +52,6 @@
   "src/pages/projetos/components/CronogramaProjetosTab.tsx": {
     "no-restricted-syntax": {
       "count": 6
-    }
-  },
-  "src/pages/projetos/components/CronogramaTab.tsx": {
-    "no-restricted-syntax": {
-      "count": 7
-    }
-  },
-  "src/pages/projetos/components/DisciplinasSection.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "src/pages/projetos/components/DisciplinasTab.tsx": {

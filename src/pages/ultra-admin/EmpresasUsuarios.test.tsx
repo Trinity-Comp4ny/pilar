@@ -201,7 +201,16 @@ describe("Empresas", () => {
     await waitFor(() => expect(screen.getByTestId("local")).toHaveTextContent("/ultra-admin/empresas/e9"));
     expect(h.edgeFetch).toHaveBeenCalledWith("ultra-admin-empresas", {
       method: "POST",
-      body: { nome: "Delta", owner_email: "dono@delta.com" },
+      body: {
+        nome: "Delta",
+        owner_email: "dono@delta.com",
+        owner_nome: null,
+        cnpj: null,
+        site: null,
+        porte: null,
+        disciplinas: [],
+        origem: null,
+      },
     });
     expect(toast.success).toHaveBeenCalledWith("Empresa criada", expect.anything());
   });

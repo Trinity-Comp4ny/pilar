@@ -13,9 +13,10 @@ vi.mock("@/integrations/supabase/client", async () => ({
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock("@/lib/monitoring", () => ({ monitoring: { captureException: vi.fn(), captureMessage: vi.fn() } }));
 const gerarComprovantePDF = vi.fn();
+const gerarLoteComprovantesPDF = vi.fn();
 vi.mock("./folha-pagamento/folhaComprovante", () => ({
   gerarComprovantePDF: (...a: unknown[]) => gerarComprovantePDF(...a),
-  gerarLoteComprovantesPDF: vi.fn(),
+  gerarLoteComprovantesPDF: (...a: unknown[]) => gerarLoteComprovantesPDF(...a),
 }));
 // A toolbar real vai por portal para o cabeçalho da página; aqui renderiza no lugar.
 vi.mock("@/components/PageSlots", () => ({
@@ -28,6 +29,7 @@ vi.mock("@/hooks/useFeatureAccess", () => ({
 }));
 
 import { toast } from "sonner";
+import { monitoring } from "@/lib/monitoring";
 import FolhaPagamento from "./FolhaPagamento";
 
 const TZ_ORIGINAL = process.env.TZ;
@@ -320,6 +322,284 @@ describe("FolhaPagamento: mês fechado", () => {
       p_cpf: "123.456.789-00",
       p_chave_pix: "ana@x.com",
       v_total: 5800,
+    });
+  });
+});
+
+// Ordem das leituras de folha_pagamento ao montar: histórico, mês anterior (delta) e
+// por fim a folha do mês (que antes espera a empresa e os projetos). O detalhe do
+// histórico vem depois, ao clicar.
+describe("FolhaPagamento: busca, filtro de status e competência", () => {
+  const fechada = [
+    { id: "f-ana", pessoa_id: "p-ana", mes: 11, ano: 2026, salario_fixo: 5000, total_receber: 5000, status: "pago" },
+    { id: "f-bruno", pessoa_id: "p-bruno", mes: 11, ano: 2026, salario_fixo: 3000, status: "pendente" },
+    { id: "f-x", pessoa_id: null, mes: 11, ano: 2026, salario_fixo: null, status: null },
+  ];
+
+  it("busca por nome filtra a tabela", async () => {
+    const { user } = setup();
+    await linha("Ana Souza");
+    await user.type(screen.getByLabelText("Buscar colaborador"), "bru");
+    expect(screen.queryByText("Ana Souza")).not.toBeInTheDocument();
+    expect(screen.getByText("Bruno Lima")).toBeInTheDocument();
+  });
+
+  it("folha fechada: lê nomes das pessoas, cai em 'Desconhecido' e filtra por status", async () => {
+    sb.resultado("folha_pagamento.select", { data: fechada, error: null });
+    sb.resultado("pessoas.select", {
+      data: [
+        { id: "p-ana", nome: "Ana Souza", cargo: "Engenheira" },
+        { id: "p-bruno", nome: "Bruno Lima", cargo: null },
+      ],
+      error: null,
+    });
+    const { user } = setup();
+    const bruno = await linha("Bruno Lima");
+    // Sem total gravado: total = fixo + variável.
+    expect(nbsp(bruno.textContent)).toContain("R$ 3.000,00");
+    expect(screen.getByText("Desconhecido")).toBeInTheDocument();
+    expect(sb.de("pessoas", "in")[0].args).toEqual(["id", ["p-ana", "p-bruno"]]);
+
+    await user.click(screen.getByRole("button", { name: "Status" }));
+    await user.click(await screen.findByRole("option", { name: "Pago" }));
+    expect(screen.getByText("Ana Souza")).toBeInTheDocument();
+    expect(screen.queryByText("Bruno Lima")).not.toBeInTheDocument();
+  });
+
+  it("trocar a competência recarrega a prévia do mês escolhido e o mês anterior para o delta", async () => {
+    const { user } = setup();
+    await linha("Ana Souza");
+    await user.click(screen.getByRole("button", { name: "Mês" }));
+    await user.click(await screen.findByRole("option", { name: "Janeiro" }));
+    await waitFor(() => expect(sb.argsRpc("get_folha_preview", 1)).toEqual({ p_mes: 1, p_ano: 2026 }));
+    // Janeiro olha dezembro do ano anterior.
+    const eqs = sb.de("folha_pagamento", "eq").map((c) => c.args);
+    expect(eqs).toEqual(
+      expect.arrayContaining([
+        ["mes", 12],
+        ["ano", 2025],
+      ])
+    );
+  });
+
+  it("delta contra o mês anterior aparece quando a pessoa tinha folha", async () => {
+    sb.resultado("folha_pagamento.select", [
+      { data: [], error: null },
+      {
+        data: [
+          { pessoa_id: "p-ana", total_receber: 5000 },
+          { pessoa_id: null, total_receber: 1 },
+        ],
+        error: null,
+      },
+      { data: [], error: null },
+    ]);
+    setup();
+    const ana = await linha("Ana Souza");
+    await waitFor(() => expect(nbsp(ana.textContent)).toContain("800,00"));
+  });
+});
+
+describe("FolhaPagamento: histórico", () => {
+  const historico = [
+    { mes: 10, ano: 2026, total_receber: 5000, status: "pago" },
+    { mes: 10, ano: 2026, total_receber: 3000, status: "pendente" },
+    { mes: 9, ano: 2026, total_receber: null, status: null },
+  ];
+  const detalheOutubro = [
+    {
+      id: "f-ana-10",
+      pessoa_id: "p-ana",
+      mes: 10,
+      ano: 2026,
+      salario_fixo: 5000,
+      valor_m2: 2,
+      total_area_projetada: 100,
+      adicional_variavel: null,
+      total_receber: null,
+      status: "pago",
+      data_pagamento: "2026-10-30",
+      detalhe_projetos: [{ nome: "Torre", area_m2: 100 }],
+    },
+    { id: "f-y", pessoa_id: null, mes: 10, ano: 2026, salario_fixo: null, status: null },
+  ];
+
+  function prepararHistorico() {
+    sb.resultado("folha_pagamento.select", [
+      { data: historico, error: null },
+      { data: [], error: null },
+      { data: [], error: null },
+      { data: detalheOutubro, error: null },
+    ]);
+    sb.resultado("pessoas.select", { data: [{ id: "p-ana", nome: "Ana Souza", cargo: "Engenheira" }], error: null });
+  }
+
+  const cartao = async (titulo: string) => (await screen.findByText(titulo)).closest("div.p-4") as HTMLElement;
+
+  it("agrupa por competência, soma o total e marca status misto", async () => {
+    prepararHistorico();
+    setup();
+    const outubro = await cartao("Outubro 2026");
+    expect(nbsp(outubro.textContent)).toContain("2 colaboradores");
+    expect(nbsp(outubro.textContent)).toContain("R$ 8.000,00");
+    expect(within(outubro).getByText("misto")).toBeInTheDocument();
+    const setembro = await cartao("Setembro 2026");
+    expect(within(setembro).getByText("pendente")).toBeInTheDocument();
+  });
+
+  it("erro no histórico avisa", async () => {
+    sb.resultado("folha_pagamento.select", [
+      { data: null, error: { message: "x" } },
+      { data: [], error: null },
+      { data: [], error: null },
+    ]);
+    setup();
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Erro ao carregar histórico da folha"));
+    expect(screen.getByText("Nenhum histórico encontrado.")).toBeInTheDocument();
+  });
+
+  it("abre o detalhe, baixa um comprovante e o lote com a competência do histórico", async () => {
+    prepararHistorico();
+    sb.resultado("empresas.select", { data: { nome: "Escritório X" }, error: null });
+    const { user } = setup();
+    await linha("Ana Souza");
+    await user.click(await screen.findByText("Outubro 2026"));
+    const dlg = await screen.findByRole("dialog");
+    expect(within(dlg).getByText("Detalhes da folha Outubro/2026")).toBeInTheDocument();
+    const ana = (await within(dlg).findByText("Ana Souza")).closest("tr") as HTMLElement;
+    // Sem variável/total gravados: 100 m² × 2 = 200; total 5200.
+    expect(nbsp(ana.textContent)).toContain("R$ 5.200,00");
+    expect(within(dlg).getByText("Desconhecido")).toBeInTheDocument();
+
+    await user.click(within(ana).getByRole("button", { name: /PDF/ }));
+    await waitFor(() => expect(gerarComprovantePDF).toHaveBeenCalled());
+    expect(gerarComprovantePDF.mock.calls[0][1]).toEqual({ empresaNome: "Escritório X", mes: 10, ano: 2026 });
+    expect(gerarComprovantePDF.mock.calls[0][0]).toMatchObject({
+      detalhe_projetos: [{ nome: "Torre", area_m2: 100 }],
+    });
+
+    await user.click(within(dlg).getByRole("button", { name: "Baixar lote de comprovantes" }));
+    await waitFor(() => expect(gerarLoteComprovantesPDF).toHaveBeenCalled());
+    expect(gerarLoteComprovantesPDF.mock.calls[0][0]).toHaveLength(2);
+    expect(gerarLoteComprovantesPDF.mock.calls[0][1]).toEqual({ empresaNome: "Escritório X", mes: 10, ano: 2026 });
+  });
+
+  it("falha ao gerar comprovante e lote do histórico é registrada e avisada", async () => {
+    prepararHistorico();
+    gerarComprovantePDF.mockRejectedValueOnce(new Error("pdf"));
+    gerarLoteComprovantesPDF.mockRejectedValueOnce(new Error("pdf"));
+    const { user } = setup();
+    await linha("Ana Souza");
+    await user.click(await screen.findByText("Outubro 2026"));
+    const dlg = await screen.findByRole("dialog");
+    const ana = (await within(dlg).findByText("Ana Souza")).closest("tr") as HTMLElement;
+    await user.click(within(ana).getByRole("button", { name: /PDF/ }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Erro ao gerar comprovante"));
+    await user.click(within(dlg).getByRole("button", { name: "Baixar lote de comprovantes" }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Erro ao gerar lote de comprovantes"));
+    expect(monitoring.captureException).toHaveBeenCalledTimes(2);
+  });
+
+  it("competência sem registros mostra vazio; erro ao abrir outra avisa", async () => {
+    sb.resultado("folha_pagamento.select", [
+      { data: historico, error: null },
+      { data: [], error: null },
+      { data: [], error: null },
+      { data: [], error: null },
+      { data: null, error: { message: "x" } },
+    ]);
+    const { user } = setup();
+    await linha("Ana Souza");
+    await user.click(await screen.findByText("Outubro 2026"));
+    expect(await screen.findByText("Nenhum registro encontrado para esta folha.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Baixar lote de comprovantes" })).not.toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await user.click(screen.getByText("Setembro 2026"));
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Erro ao carregar detalhes", {
+        description: "Não foi possível carregar os detalhes da folha selecionada.",
+      })
+    );
+  });
+});
+
+describe("FolhaPagamento: bordas do pagamento e do comprovante", () => {
+  const fechada = [
+    {
+      id: "f-ana",
+      pessoa_id: "p-ana",
+      mes: 11,
+      ano: 2026,
+      salario_fixo: 5000,
+      valor_m2: 0,
+      total_area_projetada: 0,
+      adicional_variavel: 0,
+      total_receber: 5000,
+      status: "pendente",
+    },
+  ];
+
+  beforeEach(() => {
+    sb.resultado("folha_pagamento.select", { data: fechada, error: null });
+    sb.resultado("pessoas.select", { data: [{ id: "p-ana", nome: "Ana Souza", cargo: "Engenheira" }], error: null });
+    sb.resultado("folha_pagamento.update", { data: null, error: null });
+    sb.resultado("despesas.select", { data: [], error: null });
+    sb.resultado("despesas.insert", { data: null, error: null });
+  });
+
+  async function marcarPago() {
+    const { user } = setup();
+    const ana = await linha("Ana Souza");
+    await user.click(within(ana).getByRole("button", { name: /pendente/ }));
+    await user.click(await screen.findByRole("menuitem", { name: "Marcar como pago" }));
+  }
+
+  it("sem categoria 'Folha de Pagamento' cria a categoria antes da despesa", async () => {
+    sb.resultado("categorias_financeiras.select", { data: [{ id: "c-x", nome: "Outra" }], error: null });
+    sb.resultado("categorias_financeiras.insert", {
+      data: { id: "cat-nova", nome: "Folha de Pagamento" },
+      error: null,
+    });
+    await marcarPago();
+    await waitFor(() => expect(sb.de("despesas", "insert")).toHaveLength(1));
+    expect(sb.de("categorias_financeiras", "insert")[0].args[0]).toEqual({
+      nome: "Folha de Pagamento",
+      tipo: "Despesa",
+      empresa_id: "emp-1",
+    });
+    const [despesa] = sb.de("despesas", "insert")[0].args[0] as Array<Record<string, unknown>>;
+    expect(despesa.categoria_id).toBe("cat-nova");
+  });
+
+  it("erro ao criar a categoria reverte o status sem gerar despesa", async () => {
+    sb.resultado("categorias_financeiras.select", { data: [], error: null });
+    sb.resultado("categorias_financeiras.insert", { data: null, error: { message: "rls" } });
+    await marcarPago();
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Erro ao atualizar status. A alteração foi revertida, tente novamente.")
+    );
+    expect(sb.de("despesas", "insert")).toHaveLength(0);
+  });
+
+  it("erro ao gravar o status da folha reverte e avisa", async () => {
+    sb.resultado("folha_pagamento.update", { data: null, error: { message: "rls" } });
+    await marcarPago();
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith("Erro ao atualizar status. A alteração foi revertida, tente novamente.")
+    );
+    expect(sb.de("despesas", "insert")).toHaveLength(0);
+  });
+
+  it("falha ao gerar o comprovante da folha atual é registrada e avisada", async () => {
+    gerarComprovantePDF.mockRejectedValueOnce(new Error("pdf"));
+    const { user } = setup();
+    await linha("Ana Souza");
+    await user.click(screen.getByRole("button", { name: "Baixar comprovante de Ana Souza" }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Erro ao gerar comprovante"));
+    expect(monitoring.captureException).toHaveBeenCalledWith(expect.any(Error), {
+      source: "folha.downloadComprovante",
+      pessoa_id: "p-ana",
     });
   });
 });

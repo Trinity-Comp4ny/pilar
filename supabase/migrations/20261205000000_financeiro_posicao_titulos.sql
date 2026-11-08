@@ -1,4 +1,4 @@
--- Financeiro, fase 3 da SPEC 149: posição dos títulos para as abas A receber / A pagar.
+-- Financeiro, fase 3 da SPEC 150: posição dos títulos para as abas A receber / A pagar.
 --
 -- Os chips do topo das abas (Vencidos · Vencem hoje · Próximos 7 dias · A vencer ·
 -- Pagos no mês) precisam de contagem e valor do conjunto INTEIRO, não da página
