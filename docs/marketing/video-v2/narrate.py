@@ -46,7 +46,7 @@ def http_json(url, body, headers):
 GEMINI_STYLE = os.environ.get(
     "GEMINI_STYLE",
     "Leia em português do Brasil, com sotaque neutro, no tom de um sócio de escritório de engenharia "
-    "explicando algo a um colega: calmo, confiante, próximo, sem empolgação de propaganda. "
+    "explicando algo a um colega: calma, confiante, próxima, sem empolgação de propaganda. "
     "Pronuncie IA como 'i-á'. Texto:",
 )
 
@@ -64,7 +64,7 @@ def pcm_to_wav(pcm, rate):
 def tts_gemini(text):
     key = os.environ["GEMINI_API_KEY"]
     model = os.environ.get("GEMINI_TTS_MODEL", "gemini-2.5-flash-preview-tts")
-    voice = os.environ.get("VOICE_GEMINI", "Charon")
+    voice = os.environ.get("VOICE_GEMINI", "Kore")  # feminina
     out = http_json(
         f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
         {
@@ -82,7 +82,7 @@ def tts_gemini(text):
 
 def tts_google(text):
     key = os.environ["GOOGLE_TTS_API_KEY"]
-    voice = os.environ.get("VOICE_GOOGLE", "pt-BR-Chirp3-HD-Charon")
+    voice = os.environ.get("VOICE_GOOGLE", "pt-BR-Chirp3-HD-Kore")  # feminina
     out = http_json(
         f"https://texttospeech.googleapis.com/v1/text:synthesize?key={key}",
         {"input": {"text": text}, "voice": {"languageCode": "pt-BR", "name": voice},
