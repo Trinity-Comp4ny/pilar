@@ -36,6 +36,26 @@ updates:
       - dependency-name: "@types/node"
         update-types:
           - version-update:semver-major
+      # PRs fechadas em 2026-11-09 (#610, #614, #615, #616). Tirar daqui quando o bloqueio cair.
+      # TypeScript 7: o typescript-eslint 8.x ainda não suporta (o lint aborta).
+      - dependency-name: typescript
+        versions:
+          - ">=7.0.0 <8.0.0"
+      # Vite 8 (Rolldown) muda o fatiamento: a carga inicial vai de 329 para 619 kB e os
+      # vendor-pdf/charts/maps entram no boot. Exige refazer o manualChunks, tarefa própria.
+      - dependency-name: vite
+        versions:
+          - ">=8.0.0 <9.0.0"
+      # v4 renomeia a API (PanelGroup/PanelResizeHandle); pouco valor pelo custo de migrar.
+      - dependency-name: react-resizable-panels
+        update-types:
+          - version-update:semver-major
+      # pdf.js 5+: o build moderno usa Map.prototype.getOrInsertComputed sem polyfill (quebra o
+      # "Importar lançamentos" em navegador não tão novo) e o legacy pesa +52 kB gzip. A 4.x
+      # extrai texto sem problema; reavaliar quando a API estiver nos navegadores do ICP.
+      - dependency-name: pdfjs-dist
+        update-types:
+          - version-update:semver-major
     commit-message:
       prefix: chore(deps)
       prefix-development: chore(deps-dev)
