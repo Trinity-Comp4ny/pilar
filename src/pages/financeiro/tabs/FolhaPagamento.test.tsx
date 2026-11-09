@@ -369,7 +369,7 @@ describe("FolhaPagamento: busca, filtro de status e competência", () => {
   it("trocar a competência recarrega a prévia do mês escolhido e o mês anterior para o delta", async () => {
     const { user } = setup();
     await linha("Ana Souza");
-    await user.click(screen.getByRole("button", { name: "Mês" }));
+    await user.click(screen.getByRole("button", { name: /^Mês: / }));
     await user.click(await screen.findByRole("option", { name: "Janeiro" }));
     await waitFor(() => expect(sb.argsRpc("get_folha_preview", 1)).toEqual({ p_mes: 1, p_ano: 2026 }));
     // Janeiro olha dezembro do ano anterior.
