@@ -64,8 +64,8 @@ VALUES
   ('00000000-0000-0000-0000-0000000d1b01'::uuid, 'Medicao da vizinha', 99000, 'Pendente', current_date - 10);
 
 -- Resumos já gravados (como service role, antes de trocar de papel).
--- A semana é a de Brasília, como em get_resumo_semanal: em UTC, domingo à noite já
--- cai na semana seguinte e o resumo gravado não era achado.
+-- A semana é a de São Paulo, igual à da função: com current_date (UTC) o domingo à noite
+-- já caía na semana seguinte e o get_resumo_semanal não achava a linha.
 INSERT INTO public.resumos_semanais (empresa_id, escopo, user_id, semana_inicio, conteudo, fatos)
 VALUES
   ('00000000-0000-0000-0000-0000000d1a01'::uuid, 'empresa', NULL, date_trunc('week', (now() AT TIME ZONE 'America/Sao_Paulo')::date)::date, '{"manchete":"empresa A"}'::jsonb, '{}'::jsonb),
