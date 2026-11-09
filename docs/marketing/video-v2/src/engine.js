@@ -340,37 +340,68 @@ export function mark(parent, { x, y, w, weight = 1.6, color = cssVar("--fg") }) 
 }
 
 /* ---------- logotipo oficial (brand/assets/logo/pilar-logo-horizontal-white.svg) ---------- */
-export function lockup(parent, { x, y, w, theme = THEME }) {
+// Logotipo horizontal desenhado a partir da geometria oficial
+// (brand/assets/logo/pilar-logo-horizontal-*.svg): capitel, ábaco, três caneluras e o nome.
+// Uma cor só, como o CEO pediu em 2026-11-09: o ábaco sai opaco, igual às versões de uma cor.
+const LK = { cap: 4.273, aba: 25.635, fTop: 41.658, fBot: 116.427, cx: 73.702, capL: 4.273, capR: 143.131, abaL: 14.954, abaR: 132.45, flutes: [36.317, 73.702, 111.087], sw: 8.545 };
+
+export function lockup(parent, { x, y, w, theme = THEME, color }) {
+  const ink = color || (theme === "light" ? "#1A1A1A" : "#FFFFFF");
   const s = el("div", "", parent);
   pos(s, x, y, w);
   s.style.position = "absolute";
-  s.innerHTML = theme === "light" ? window.LOCKUP_INK : window.LOCKUP;
-  const svg = s.querySelector("svg");
-  svg.removeAttribute("width");
-  svg.removeAttribute("height");
-  svg.style.width = "100%";
-  svg.style.overflow = "visible";
-  const strokes = svg.querySelectorAll("g path");
-  strokes.forEach((p) => p.setAttribute("pathLength", "1"));
-  // o texto vai num grupo: animar o path direto apagaria o translate do SVG oficial
-  const raw = svg.querySelector(":scope > path");
-  const word = document.createElementNS("http://www.w3.org/2000/svg", "g");
-  raw.replaceWith(word);
-  word.appendChild(raw);
+  const word = (window.LOCKUP.match(/<path d="(M8\.6[^"]+)" transform="([^"]+)"/) || []).slice(1);
+  const half = (yy, x1, x2, cls) =>
+    `<path class="${cls}" pathLength="1" d="M${LK.cx} ${yy}H${x1}"/><path class="${cls}" pathLength="1" d="M${LK.cx} ${yy}H${x2}"/>`;
+  s.innerHTML = `<svg viewBox="0 0 396.181 120.700" style="width:100%;overflow:visible">
+    <g class="guides" stroke="${ink}" stroke-width="0.7" fill="none" opacity="0">
+      <path class="gd" pathLength="1" d="M${LK.cx} -26V146" stroke-dasharray="4 4"/>
+      <path class="gd" pathLength="1" d="M-30 ${LK.cap}H180"/>
+      <path class="gd" pathLength="1" d="M-30 ${LK.aba}H180"/>
+      <path class="gd" pathLength="1" d="M-30 ${LK.fBot}H180"/>
+      ${LK.flutes.map((fx) => `<path class="gd" pathLength="1" d="M${fx} ${LK.aba}V140" stroke-dasharray="2 4"/>`).join("")}
+      ${LK.flutes.map((fx) => `<circle cx="${fx}" cy="${LK.fBot}" r="2.6"/>`).join("")}
+    </g>
+    <g class="mk" stroke="${ink}" stroke-width="${LK.sw}" stroke-linecap="round" fill="none">
+      ${half(LK.cap, LK.capL, LK.capR, "cap")}
+      ${half(LK.aba, LK.abaL, LK.abaR, "aba")}
+      ${LK.flutes.map((fx, i) => `<path class="fl f${i}" pathLength="1" d="M${fx} ${LK.fTop}V${LK.fBot}"/>`).join("")}
+    </g>
+    <defs><clipPath id="wclip${x}${y}"><rect class="wr" x="190" y="-10" width="0" height="140"/></clipPath></defs>
+    <g clip-path="url(#wclip${x}${y})"><g class="wd"><path d="${word[0]}" transform="${word[1]}" fill="${ink}"/></g></g>
+  </svg>`;
+  const q = (sel) => s.querySelectorAll(sel);
+  const strokes = q(".mk path");
   return {
     el: s,
-    word,
-    draw(t) {
+    word: s.querySelector(".wd"),
+    // Traço técnico: guias de construção, capitel e ábaco do eixo para fora, caneluras
+    // descendo do ábaco, guias somem, o nome se revela. ~1,6 s.
+    draw(t, { guides = true } = {}) {
       tl.set(strokes, { strokeDasharray: "1 2", strokeDashoffset: 1.001 }, 0);
-      const d = [0, 0.16, 0.34, 0.42, 0.5];
-      strokes.forEach((p, i) => tl.to(p, { strokeDashoffset: 0, duration: 0.55, ease: "power4.out" }, t + d[i]));
-      tl.fromTo(word, { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.7, ease: EXPO }, t + 0.45);
+      tl.set(q(".gd"), { strokeDashoffset: 0 }, 0);
+      if (guides) {
+        tl.set(s.querySelector(".guides"), { opacity: 0.32 }, t);
+        q(".gd").forEach((g, i) => {
+          tl.fromTo(g, { strokeDasharray: "1 2", strokeDashoffset: 1.001 }, { strokeDashoffset: 0, duration: 0.5, ease: "power2.out", immediateRender: false }, t + i * 0.04);
+        });
+        tl.fromTo(q(".guides circle"), { opacity: 0 }, { opacity: 1, duration: 0.2, stagger: 0.05, immediateRender: false }, t + 0.35);
+        tl.to(s.querySelector(".guides"), { opacity: 0, duration: 0.45, ease: "power2.in" }, t + 1.15);
+      }
+      const t0 = t + (guides ? 0.25 : 0);
+      tl.to(q(".cap"), { strokeDashoffset: 0, duration: 0.5, ease: "power3.out" }, t0);
+      tl.to(q(".aba"), { strokeDashoffset: 0, duration: 0.45, ease: "power3.out" }, t0 + 0.14);
+      // canelura do meio primeiro, as de fora logo depois
+      [1, 0, 2].forEach((i, k) => tl.to(s.querySelector(".f" + i), { strokeDashoffset: 0, duration: 0.5, ease: "power3.out" }, t0 + 0.32 + k * 0.07));
+      tl.to(s.querySelector(".wr"), { attr: { width: 220 }, duration: 0.7, ease: "power3.inOut" }, t0 + 0.75);
+      tl.fromTo(s.querySelector(".wd"), { x: -18 }, { x: 0, duration: 0.8, ease: EXPO, immediateRender: false }, t0 + 0.75);
       cue("draw", t);
+      cue("tick", t0 + 0.32);
     },
-    green(t) {
-      const flute = theme === "light" ? "hsl(102, 55%, 32%)" : "#A4EC86";
-      [2, 3, 4].forEach((i, k) => tl.to(strokes[i], { stroke: flute, duration: 0.3 }, t + k * 0.12));
-      cue("chime", t);
+    // logotipo já pronto, sem animação
+    show(t) {
+      tl.set(strokes, { strokeDasharray: "none" }, t);
+      tl.set(s.querySelector(".wr"), { attr: { width: 220 } }, t);
     },
   };
 }

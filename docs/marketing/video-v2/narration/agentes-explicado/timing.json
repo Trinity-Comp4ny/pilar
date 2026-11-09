@@ -1,73 +1,73 @@
 {
  "provider": "kokoro",
  "voice": "kokoro/pm_alex",
- "total": 55.429,
+ "total": 59.609,
  "lines": [
   {
    "id": "l01",
    "text": "Lançar um pagamento. Montar um aditivo. Resumir a semana.",
    "start": 0.5,
-   "dur": 3.448
+   "dur": 3.709
   },
   {
    "id": "l02",
    "text": "É trabalho que toma horas do sócio, e não é engenharia.",
-   "start": 4.298,
-   "dur": 3.076
+   "start": 4.559,
+   "dur": 3.254
   },
   {
    "id": "l03",
    "text": "Na Pilar, agentes de IA fazem esse preparo. E nada vai adiante sem você.",
-   "start": 7.973,
-   "dur": 4.391
+   "start": 8.412,
+   "dur": 4.898
   },
   {
    "id": "l04",
    "text": "Funciona em três passos. Primeiro, a IA prepara.",
-   "start": 12.864,
-   "dur": 2.895
+   "start": 13.81,
+   "dur": 3.159
   },
   {
    "id": "l05",
    "text": "Você conta como falaria: recebi 128 mil do centro cirúrgico, primeira de três parcelas.",
-   "start": 16.059,
-   "dur": 6.307
+   "start": 17.27,
+   "dur": 6.789
   },
   {
    "id": "l06",
    "text": "O agente acha o projeto e monta o lançamento.",
-   "start": 22.716,
-   "dur": 2.691
+   "start": 24.408,
+   "dur": 2.912
   },
   {
    "id": "l07",
    "text": "Depois, o sistema confere: o projeto pelo nome, a parcela calculada, a categoria do seu plano de contas.",
-   "start": 25.858,
-   "dur": 6.195
+   "start": 27.77,
+   "dur": 6.938
   },
   {
    "id": "l08",
    "text": "Por último, você aprova. Só então o lançamento entra no financeiro.",
-   "start": 32.503,
-   "dur": 4.061
+   "start": 35.158,
+   "dur": 4.281
   },
   {
    "id": "l09",
    "text": "O mesmo vale para o aditivo: o projeto passou do orçamento de horas, e o agente monta o aditivo citando as despesas de cada valor.",
-   "start": 37.164,
-   "dur": 7.805
+   "start": 40.039,
+   "dur": 8.514
   },
   {
    "id": "l10",
    "text": "E toda semana, o resumo chega pronto, com cada número conferido.",
-   "start": 45.468,
-   "dur": 3.661
+   "start": 49.052,
+   "dur": 3.968
   },
   {
    "id": "l11",
    "text": "Pilar. A IA prepara. O sistema confere. Você aprova.",
-   "start": 49.83,
-   "dur": 2.999
+   "start": 53.72,
+   "dur": 3.289
   }
  ]
 }

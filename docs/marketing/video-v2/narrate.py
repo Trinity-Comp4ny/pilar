@@ -105,6 +105,24 @@ def tts_elevenlabs(text):
 
 _kokoro = None
 
+# Correções de pronúncia para o fonetizador local (espeak), que é treinado com sons do inglês:
+#   "IA" sai emendado como "iá" numa sílaba só  -> as duas letras, cada uma com acento
+#   "a" final átono sai como o "a" de "cat" (æ) -> [ɐ], como se fala no Brasil
+#   "e" final átono sai como "ü" (y) ou some (j) -> [i]
+def fix_phonemes(ph):
+    out = []
+    for tok in ph.split(" "):
+        m = re.match(r"^(.*?)([.,:;!?]*)$", tok)
+        w, punct = m.group(1), m.group(2)
+        if w == "ˌiˈa":
+            w = "ˈiː ˈaː"
+        else:
+            w = re.sub(r"æ(s|z)?$", lambda g: "ɐ" + (g.group(1) or ""), w)
+            w = re.sub(r"y(s|z)?$", lambda g: "i" + ("s" if g.group(1) else ""), w)
+            w = re.sub(r"(?<=[^aeiouɐɛɔʊiɪ̃ˈˌ])j$", "i", w)
+        out.append(w + punct)
+    return " ".join(out)
+
 
 def tts_kokoro(text):
     global _kokoro
@@ -113,11 +131,11 @@ def tts_kokoro(text):
 
     d = Path(os.environ["KOKORO_DIR"])
     voice = os.environ.get("VOICE_KOKORO", "pm_alex")
+    speed = float(os.environ.get("KOKORO_SPEED", "0.9"))  # um pouco mais lento: dicção mais clara
     if _kokoro is None:
         _kokoro = Kokoro(str(d / "kokoro-v1.0.onnx"), str(d / "voices-v1.0.bin"))
-    # o fonetizador local lê "IA" como a palavra "ia"; soletrado sai "i-á"
-    text = re.sub(r"\bIA\b", "I A", text)
-    audio, sr = _kokoro.create(text, voice=voice, speed=1.0, lang="pt-br")
+    ph = fix_phonemes(_kokoro.tokenizer.phonemize(text, "pt-br"))
+    audio, sr = _kokoro.create(ph, voice=voice, speed=speed, lang="pt-br", is_phonemes=True)
     buf = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
     sf.write(buf.name, audio, sr)
     return Path(buf.name).read_bytes(), f"kokoro/{voice}"
@@ -177,7 +195,7 @@ def main():
             raw = (manual / f"{ln['id']}.wav").read_bytes()
         else:
             say = ln.get("say", ln["text"])
-            key = hashlib.sha1(f"{provider}|{os.environ.get('VOICE_' + provider.upper(), '')}|{say}".encode()).hexdigest()[:16]
+            key = hashlib.sha1(f"{provider}|{os.environ.get('VOICE_' + provider.upper(), '')}|{os.environ.get('KOKORO_SPEED', '')}|fon2|{say}".encode()).hexdigest()[:16]
             hit = cache / f"{key}.wav"
             if hit.exists():
                 raw = hit.read_bytes()

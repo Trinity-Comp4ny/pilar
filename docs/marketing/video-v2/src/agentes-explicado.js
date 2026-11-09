@@ -65,10 +65,8 @@ const cap = captions(document.getElementById("stage"), T.lines, { y: 1470, max: 
   pos(glow, 90, 300, 900, 900);
   glow.style.background = "rgba(164,236,134,.35)";
   tl.set(glow, { opacity: 0.6 }, t0);
-  readingRing(s, { cx: 540, cy: 640, size: 860, t0, scale: 1.5, theme: "dark" });
-  const m = mark(s, { x: 445, y: 556, w: 190, weight: 1.7, color: "#fff" });
-  m.draw(t0 + 0.15);
-  m.green(t0 + 0.8, "#A4EC86");
+  const Lk = lockup(s, { x: 210, y: 560, w: 660, theme: "dark" });
+  Lk.draw(t0 + 0.1);
   const h = headline(s, "Agentes de IA fazem|o *preparo*.", { y: 1000, size: 76, align: "center", x: 60, w: 960 });
   textIn(h, S("l03", 0.1));
   const h2 = el("div", "chip", s, `${icon("shield-check")} Nada vai adiante sem você`);
@@ -246,10 +244,8 @@ const STEP_T = [S("l04", 0.62), S("l07", 0.02), S("l08", 0.05)];
 {
   const t0 = S("l11") - 0.1;
   const s = scene("fim", t0);
-  readingRing(s, { cx: 540, cy: 560, size: 980, t0, scale: 1.5 });
-  const Lk = lockup(s, { x: 230, y: 450, w: 620 });
-  Lk.draw(t0 + 0.05);
-  Lk.green(t0 + 0.7);
+  const Lk = lockup(s, { x: 210, y: 440, w: 660 });
+  Lk.draw(t0 + 0.05, { guides: false });
   const lines = ["A IA prepara.", "O sistema confere.", "Você aprova."];
   lines.forEach((t, i) => {
     const h = headline(s, i === 2 ? "*Você* aprova." : t, { y: 740 + i * 100, size: 72, align: "center", x: 60, w: 960 });

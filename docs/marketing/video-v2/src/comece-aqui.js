@@ -5,7 +5,7 @@
 // comentar, enviar) nem abaixo de y=1600 (legenda e nome). O primeiro quadro já traz o gancho.
 import {
   THEME, tl, W, el, pos, icon, scene, headline, textIn, textOut, popIn, fadeOut, appWindow, lift, cursor,
-  counter, brl, typer, readingRing, mark, lockup, background, cue, finalize, EXPO, QUINT,
+  counter, brl, typer, lockup, background, cue, finalize, EXPO, QUINT,
 } from "./engine.js";
 
 const DUR = 48.0;
@@ -101,26 +101,13 @@ tl.fromTo(BG.glows[1], { opacity: 0.2, x: 60, y: 0 }, { opacity: 0.35, x: -200, 
 {
   const s = scene("brand", 6.0, 10.05, { theme: "dark" });
   const glow = el("div", "glow", s);
-  pos(glow, 90, 410, 900, 900);
-  glow.style.background = "rgba(164,236,134,.3)";
-  tl.set(glow, { opacity: 0.7 }, 6.0);
-  const ring = readingRing(s, { cx: 540, cy: 860, size: 980, t0: 6.0, scale: 1.6, theme: "dark" });
-  const m = mark(s, { x: 420, y: 758, w: 240, weight: 1.7, color: "#fff" });
-  m.draw(6.3);
-  m.green(6.95, "#A4EC86");
-  // o símbolo assenta no logotipo
-  tl.to(m.el, { x: -201, y: -12, scale: 1.048, transformOrigin: "0 0", duration: 0.7, ease: "power3.inOut" }, 7.75);
-  tl.to(ring.opacity, { v: 0, duration: 0.6, ease: "power2.in" }, 7.7);
-  tl.set(ring.cv, { opacity: 0 }, 8.4);
-  const L = lockup(s, { x: 230, y: 760, w: 620, theme: "dark" });
-  const strokes = L.el.querySelectorAll("g path");
-  tl.set(L.el, { opacity: 0 }, 0);
-  tl.set(L.el, { opacity: 1 }, 8.42);
-  tl.set(m.el, { opacity: 0 }, 8.45);
-  [2, 3, 4].forEach((i) => tl.set(strokes[i], { stroke: "#A4EC86" }, 0));
-  tl.fromTo(L.word, { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.7, ease: EXPO }, 8.1);
-  const tag = headline(s, "Gestão com *agentes_de_IA*|para escritórios de|engenharia e arquitetura.", { y: 1010, size: 62, align: "center", x: 60, w: 960 });
-  textIn(tag, 8.45, { stagger: 0.05 });
+  pos(glow, 90, 360, 900, 900);
+  glow.style.background = "rgba(164,236,134,.22)";
+  tl.fromTo(glow, { opacity: 0 }, { opacity: 0.8, duration: 1.2, ease: "power2.out" }, 6.0);
+  const L = lockup(s, { x: 210, y: 700, w: 660, theme: "dark" });
+  L.draw(6.2);
+  const tag = headline(s, "Gestão com *agentes_de_IA*|para escritórios de|engenharia e arquitetura.", { y: 960, size: 62, align: "center", x: 60, w: 960 });
+  textIn(tag, 7.85, { stagger: 0.05 });
   cue("impact", 6.0);
 }
 
@@ -456,23 +443,20 @@ tl.to(app.el, { opacity: 0, y: 200, scale: 0.94, duration: 0.45, ease: "power3.i
 /* =============== 13. Fechamento (43 a 48 s) =============== */
 {
   const s = scene("end", 43.0);
-  const ring = readingRing(s, { cx: 540, cy: 760, size: 1100, t0: 43.0, scale: 1.6 });
-  tl.set(ring.cv, { opacity: 0.6 }, 43.0);
-  const L = lockup(s, { x: 230, y: 650, w: 620 });
-  L.draw(43.15);
-  L.green(43.9);
-  const tag = headline(s, "Gestão com *agentes_de_IA*|para escritórios de|engenharia e arquitetura.", { y: 940, size: 60, align: "center", x: 60, w: 960 });
-  textIn(tag, 43.7, { stagger: 0.04 });
+  const L = lockup(s, { x: 210, y: 620, w: 660 });
+  L.draw(43.1);
+  const tag = headline(s, "Gestão com *agentes_de_IA*|para escritórios de|engenharia e arquitetura.", { y: 900, size: 60, align: "center", x: 60, w: 960 });
+  textIn(tag, 44.2, { stagger: 0.04 });
   const cta = el("div", "", s);
-  pos(cta, 190, 1270, 700, 112);
+  pos(cta, 190, 1240, 700, 112);
   Object.assign(cta.style, { position: "absolute", borderRadius: "999px", background: "#A4EC86", color: "#1A1A1A", font: "600 40px Geist", letterSpacing: "-.02em", display: "flex", alignItems: "center", justifyContent: "center", gap: "16px" });
   cta.innerHTML = `Agende uma demonstração ${icon("arrow-right", "ico i40 ink")}`;
-  popIn(cta, 44.5, { y: 40 });
+  popIn(cta, 44.8, { y: 40 });
   const url = el("div", "", s);
-  pos(url, 0, 1410, W);
+  pos(url, 0, 1380, W);
   Object.assign(url.style, { position: "absolute", textAlign: "center", font: "500 32px Geist", color: "var(--fg-soft)" });
   url.innerHTML = `Link na bio · pilarsoft.com.br`;
-  popIn(url, 44.8, { y: 20, sound: null });
+  popIn(url, 45.1, { y: 20, sound: null });
   cue("impact-soft", 43.0);
 }
 
