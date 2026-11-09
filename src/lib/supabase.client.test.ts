@@ -23,19 +23,12 @@ vi.mock("./supabaseFetch", () => ({ createInstrumentedFetch: () => "fetch-instru
 
 import { verifyCurrentPassword } from "./supabase";
 
-function opcoesDoApp(): Opts {
-  return h.createClient.mock.calls[0][2] as Opts;
-}
-
-// O client do app é criado no import; guarda as opções antes de limpar os mocks.
-let storage: Armazenamento;
-let lock: Opts["auth"]["lock"];
+// O client do app é criado no import. Guarda as opções aqui, no carregamento do arquivo:
+// o Vitest 5 limpa o histórico dos mocks antes de cada teste (clearMocks: true por padrão).
+const opcoesDoApp = h.createClient.mock.calls[0][2] as Opts & { global: { fetch: unknown } };
+const { storage, lock } = opcoesDoApp.auth;
 
 beforeEach(() => {
-  if (!storage) {
-    storage = opcoesDoApp().auth.storage;
-    lock = opcoesDoApp().auth.lock;
-  }
   localStorage.clear();
   sessionStorage.clear();
 });
@@ -46,9 +39,7 @@ afterEach(() => {
 
 describe("client Supabase do app", () => {
   it("usa o fetch instrumentado e lock no-op", () => {
-    expect((h.createClient.mock.calls[0][2] as { global: { fetch: unknown } }).global.fetch).toBe(
-      "fetch-instrumentado"
-    );
+    expect(opcoesDoApp.global.fetch).toBe("fetch-instrumentado");
     expect(lock("x", 0, () => 42)).toBe(42);
   });
 
