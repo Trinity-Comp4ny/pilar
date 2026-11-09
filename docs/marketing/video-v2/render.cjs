@@ -57,7 +57,7 @@ const server = http.createServer((req, res) => {
   } else {
     const out = path.join(dir, id + ".video.mp4");
     const ff = spawn("ffmpeg", ["-v", "error", "-y", "-f", "image2pipe", "-framerate", String(meta.fps), "-c:v", "mjpeg", "-i", "-",
-      "-c:v", "libx264", "-preset", "slow", "-crf", "17", "-pix_fmt", "yuv420p", "-movflags", "+faststart", out], { stdio: ["pipe", "inherit", "inherit"] });
+      "-c:v", "libx264", "-preset", "slow", "-crf", "20", "-pix_fmt", "yuv420p", "-movflags", "+faststart", out], { stdio: ["pipe", "inherit", "inherit"] });
     const frames = Math.round(meta.duration * meta.fps);
     for (let f = 0; f < frames; f++) {
       const buf = await shot(f / meta.fps);
