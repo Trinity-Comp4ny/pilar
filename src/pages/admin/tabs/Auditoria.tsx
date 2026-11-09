@@ -13,6 +13,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 import { BusyMark } from "@/components/motion/BusyMark";
+import { errorMessage } from "@/lib/errors";
 import { ReadingRing } from "@/components/motion/ReadingRing";
 
 // ─── audit_logs (triggers DB) ────────────────────────────────────────────────
@@ -231,7 +232,7 @@ function DataAuditTab({ visao }: { visao: React.ReactNode }) {
       if (err) throw err;
       setLogs(data ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar logs");
+      setError(errorMessage(err, "Erro ao carregar logs"));
     } finally {
       setLoading(false);
     }
@@ -363,7 +364,7 @@ function AdminActionsTab({ visao }: { visao: React.ReactNode }) {
       if (err) throw err;
       setLogs(data ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar logs admin");
+      setError(errorMessage(err, "Erro ao carregar logs admin"));
     } finally {
       setLoading(false);
     }

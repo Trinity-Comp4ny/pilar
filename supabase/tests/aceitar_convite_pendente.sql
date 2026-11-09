@@ -28,6 +28,9 @@ INSERT INTO public.empresas (id, nome, onboarding_completed, leitura_desde) VALU
 UPDATE public.empresas SET leitura_desde = now() WHERE id = 'b0600000-0000-0000-0000-000000000003';
 INSERT INTO public.profiles (id, email, empresa_id, role, first_name, onboarding_completed)
 VALUES ('a0600000-0000-0000-0000-000000000007', 'orphan7@recovery.test', 'b0600000-0000-0000-0000-000000000001', 'user', 'Existing', true);
+-- Convite owner de antes da trava (20261202000000): a trava é NOT VALID, então
+-- linha antiga pode existir; tira e repõe a trava só para montar esse caso.
+ALTER TABLE public.convites DROP CONSTRAINT convites_cargo_sem_owner;
 INSERT INTO public.convites (id, empresa_id, email, cargo, nome, created_at, expira_em, usado_em) VALUES
 ('c0600000-0000-0000-0000-000000000001', 'b0600000-0000-0000-0000-000000000001', 'ORPHAN1@recovery.test', 'user', 'Beatriz Zavattin', now(), now() + interval '1 day', NULL),
 ('c0600000-0000-0000-0000-000000000002', 'b0600000-0000-0000-0000-000000000001', 'orphan3@recovery.test', 'user', 'Beatriz Zavattin', now(), now() - interval '1 day', NULL),
@@ -43,6 +46,7 @@ INSERT INTO public.convites (id, empresa_id, email, cargo, nome, created_at, exp
 ('c0600000-0000-0000-0000-000000000012', 'b0600000-0000-0000-0000-000000000003', 'orphan12@recovery.test', 'user', 'Beatriz Zavattin', now(), now() + interval '1 day', NULL),
 ('c0600000-0000-0000-0000-000000000013', 'b0600000-0000-0000-0000-000000000001', 'orphan13@recovery.test', 'user', 'Beatriz Zavattin', now(), now() + interval '1 day', NULL),
 ('c0600000-0000-0000-0000-000000000014', 'b0600000-0000-0000-0000-000000000002', 'orphan13@recovery.test', 'admin', 'Beatriz Zavattin', now(), now() + interval '1 day', NULL);
+ALTER TABLE public.convites ADD CONSTRAINT convites_cargo_sem_owner CHECK (cargo IS DISTINCT FROM 'owner') NOT VALID;
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims', '{"sub":"a0600000-0000-0000-0000-000000000001","email":"forged@invalid.test","role":"authenticated"}', true);
 SELECT is(public.aceitar_convite_pendente(), 'a0600000-0000-0000-0000-000000000001'::uuid, 'convite válido recupera a própria conta por email confirmado');

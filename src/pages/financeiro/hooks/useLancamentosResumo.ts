@@ -34,7 +34,7 @@ const EMPTY: LancamentosResumo = {
 export function useLancamentosResumo(filters: LancamentosFilters) {
   const rpcArgs = useMemo(() => filtersToRpcArgs(filters), [filters]);
 
-  const { data, isLoading, isFetching, dataUpdatedAt, refetch } = useQuery({
+  const { data, isLoading, isError, isFetching, dataUpdatedAt, refetch } = useQuery({
     queryKey: ["lancamentos-resumo", rpcArgs],
     queryFn: async (): Promise<LancamentosResumo> => {
       const { data, error } = await supabase.rpc("get_lancamentos_resumo", rpcArgs);
@@ -57,5 +57,7 @@ export function useLancamentosResumo(filters: LancamentosFilters) {
     staleTime: 30 * 1000,
   });
 
-  return { resumo: data ?? EMPTY, isLoading, isFetching, dataUpdatedAt, refetch };
+  // `resumo` cai em zeros quando falha; quem exibe confere `isError` antes, para
+  // um erro não virar "R$ 0,00" como se fosse dado real.
+  return { resumo: data ?? EMPTY, isLoading, isError, isFetching, dataUpdatedAt, refetch };
 }

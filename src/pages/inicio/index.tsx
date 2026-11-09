@@ -15,6 +15,7 @@ import { DataFrescor } from "@/components/DataFrescor";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CartaoPendenciasAgentes } from "./CartaoPendenciasAgentes";
+import { CartaoBoasVindas } from "./CartaoBoasVindas";
 import { PainelGrid } from "./painel/PainelGrid";
 import { HeroInicio } from "./hero/HeroInicio";
 import { LAYOUT_PADRAO } from "./painel/catalogo";
@@ -103,6 +104,9 @@ export default function Inicio() {
       }
     >
       <div className="flex flex-col gap-5">
+        {/* Primeiro acesso (SPEC 149): os três pilares e o primeiro passo de cada um. */}
+        {!editando && <CartaoBoasVindas />}
+
         {painel.isLoading ? (
           <>
             {renderHero(null)}

@@ -117,6 +117,8 @@ export function FolhaCard({ draft, onConfirmar, onCancelar, onDesfazerFolha }: P
   };
 
   const competencia = `${MESES[mes] ?? mes}/${ano}`;
+  // Depois de fechada, o preview não roda mais: ao reabrir o chat as linhas vêm do rascunho salvo.
+  const pessoasFechadas = draft.campos.linhas?.length ?? rows.length;
 
   if (draft.status === "criado") {
     return (
@@ -125,7 +127,7 @@ export function FolhaCard({ draft, onConfirmar, onCancelar, onDesfazerFolha }: P
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive/15 text-positive-strong">
             <Check className="h-3.5 w-3.5" />
           </span>
-          Folha de {competencia} fechada · {rows.length} pessoa{rows.length === 1 ? "" : "s"}
+          Folha de {competencia} fechada · {pessoasFechadas} pessoa{pessoasFechadas === 1 ? "" : "s"}
         </div>
         <div className="mt-3 flex items-center gap-2 pl-8">
           <NavLink
@@ -240,7 +242,7 @@ export function FolhaCard({ draft, onConfirmar, onCancelar, onDesfazerFolha }: P
       <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-3">
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Coins className="h-3.5 w-3.5" />
-          Fechar consome tokens de IA
+          Fechar consome créditos de IA
         </span>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={cancelar} disabled={salvando}>

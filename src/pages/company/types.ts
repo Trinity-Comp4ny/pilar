@@ -19,6 +19,10 @@ export type CompanyData = {
   logoUrl?: string;
   pixChave?: string;
   pixInstrucoes?: string;
+  // Perfil do escritório (SPEC 149)
+  site?: string;
+  porte?: string;
+  disciplinas?: string[];
 };
 
 export const ROLES = ["admin", "user"] as const;

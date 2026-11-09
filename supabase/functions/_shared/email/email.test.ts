@@ -261,6 +261,35 @@ Deno.test("assunto: imediato com 1 item usa o título; semanal conta total inclu
   );
 });
 
+Deno.test("assunto: menção com 1 item usa o título; com várias conta as menções", () => {
+  assertEquals(
+    N.assuntoNotificacoes({
+      modo: "mencao",
+      itens: [item("projeto", "medium", 'Ana marcou você em "Ponte X"')],
+      totalOculto: 0,
+    }),
+    'Ana marcou você em "Ponte X"'
+  );
+  assertEquals(
+    N.assuntoNotificacoes({ modo: "mencao", itens: [item("projeto"), item("tarefa")], totalOculto: 0 }),
+    "2 menções para você no Pilar"
+  );
+});
+
+Deno.test("e-mail de menção explica a marcação e linka o comentário", () => {
+  const { html: out } = T.templateNotificacoes({
+    nome: "Lia",
+    modo: "mencao",
+    totalOculto: 0,
+    gerenciarUrl: "https://l/gerenciar",
+    sinoUrl: "https://l/sino",
+    itens: [{ ...item("projeto", "medium", 'Ana marcou você em "Ponte X"'), url: "https://l/projetos/1?comentario=9" }],
+  });
+  assertStringIncludes(out, "Alguém marcou você numa conversa");
+  assertStringIncludes(out, "https://l/projetos/1?comentario=9");
+  assertStringIncludes(out, "marca você com @");
+});
+
 Deno.test("severidadeTone: high/critical negativo, medium aviso, low neutro", () => {
   assertEquals(N.severidadeTone("critical"), "negative");
   assertEquals(N.severidadeTone("high"), "negative");
@@ -417,7 +446,7 @@ Deno.test("logo, faixa de morros e fonte ignoram PUBLIC_SITE_URL de ambiente e u
   Deno.env.set("PUBLIC_SITE_URL", "https://staging-preview-que-pode-nao-existir.vercel.app");
   try {
     const mod = await import(`./brand.ts?cachebust=${crypto.randomUUID()}`);
-    assertStringIncludes(mod.BRAND.logoUrl, "https://www.pilarsoft.com.br/email/logo-v2.png");
+    assertStringIncludes(mod.BRAND.logoUrl, "https://www.pilarsoft.com.br/email/logo-v3.png");
     assertStringIncludes(mod.BRAND.waveUrl, "https://www.pilarsoft.com.br/email/wave-v1.png");
     assertStringIncludes(mod.FONT_FACE_CSS, "https://www.pilarsoft.com.br/fonts/geist-variable.woff2");
     assertEquals(mod.BRAND.siteUrl, "https://staging-preview-que-pode-nao-existir.vercel.app");

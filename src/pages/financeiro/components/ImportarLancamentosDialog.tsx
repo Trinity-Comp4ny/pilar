@@ -218,10 +218,18 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
 
   async function onConfirmar() {
     if (incluidos.length === 0) return;
+    // Extrato entra efetivado: sem a conta, o saldo da conta não bateria com o banco.
+    if (tipoDoc === "extrato" && contaId === NONE) {
+      toast.error("Escolha a conta do extrato", {
+        description: "As linhas do extrato entram como pagas/recebidas nesta conta.",
+      });
+      return;
+    }
     try {
       const r = await gravarLote(itens, {
         contaId: contaId === NONE ? null : contaId,
         projetoId: projetoId === NONE ? null : projetoId,
+        tipoDoc,
       });
       setResumo(r);
       setItens([]);
@@ -399,7 +407,9 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
                 {/* Ações em massa */}
                 <div className="flex flex-wrap items-end gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">Conta bancária (todas)</label>
+                    <label className="text-xs text-muted-foreground">
+                      {tipoDoc === "extrato" ? "Conta do extrato *" : "Conta bancária (todas)"}
+                    </label>
                     <Select value={contaId} onValueChange={setContaId}>
                       <SelectTrigger className="w-52">
                         <SelectValue placeholder="Nenhuma" />
@@ -579,7 +589,14 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
                               </Select>
                             </TableCell>
                             <TableCell>
-                              {it.duplicataId ? (
+                              {it.jaImportado ? (
+                                <Badge
+                                  variant="outline"
+                                  title="Esta linha já entrou numa importação anterior. Marque para incluir mesmo assim."
+                                >
+                                  já importado
+                                </Badge>
+                              ) : it.duplicataId ? (
                                 <button
                                   type="button"
                                   className="text-left"

@@ -18,7 +18,8 @@ describe("FilterSelect", () => {
   it("ativo mostra Rótulo: opção, fica verde e limpa pelo x", () => {
     const onChange = vi.fn();
     render(<FilterSelect label="Status" value="pago" emptyValue="todos" onChange={onChange} options={OPCOES} />);
-    const gatilho = screen.getByRole("button", { name: "Status" });
+    // O nome acessível acompanha o texto visível (WCAG 2.5.3, regra label-content-name-mismatch do Axe).
+    const gatilho = screen.getByRole("button", { name: "Status: Pago" });
     expect(gatilho).toHaveTextContent("Status: Pago");
     expect(gatilho).toHaveClass("bg-brand", "text-ink");
     fireEvent.click(screen.getByRole("button", { name: "Limpar filtro Status" }));

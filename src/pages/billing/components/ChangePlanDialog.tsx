@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { usePlans } from "@/hooks/usePlans";
+import { usePlans, capacidadeDoPlano } from "@/hooks/usePlans";
 import { CycleToggle, type BillingCycle } from "@/components/CycleToggle";
 import { useSubscriptionManage } from "../hooks/useSubscriptionManage";
 import type { MySubscription } from "../hooks/useMySubscription";
@@ -106,6 +106,13 @@ export function ChangePlanDialog({ open, onOpenChange, current }: ChangePlanDial
                 <p className="text-sm font-medium text-ink">{plan.nome}</p>
                 <p className="text-2xl font-semibold text-ink mt-2">{formatBRL(price)}</p>
                 <p className="text-xs text-ink-muted">/mês</p>
+                <ul className="mt-2 space-y-0.5">
+                  {capacidadeDoPlano(plan).map((linha) => (
+                    <li key={linha} className="text-[11px] leading-snug text-ink-muted">
+                      {linha}
+                    </li>
+                  ))}
+                </ul>
               </button>
             );
           })}

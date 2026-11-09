@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { ArrowDownCircle, ArrowUpCircle, Pencil, Trash2, Wallet } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -230,11 +231,18 @@ export function ObraContaTab({ obra, canEdit }: { obra: ObraResumo; canEdit: boo
                           size="icon"
                           className="h-7 w-7"
                           onClick={() => setDialog({ tipo: "despesa", lancamento: l })}
+                          aria-label={`Editar ${l.descricao}`}
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setConfirmDel(l)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => setConfirmDel(l)}
+                        aria-label={`Excluir lançamento ${l.descricao}`}
+                      >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -261,8 +269,14 @@ export function ObraContaTab({ obra, canEdit }: { obra: ObraResumo; canEdit: boo
         onOpenChange={(v) => !v && setConfirmDel(null)}
         onConfirm={async () => {
           if (!confirmDel) return;
-          await del.mutateAsync({ id: confirmDel.id, tipo: confirmDel.tipo });
-          setConfirmDel(null);
+          try {
+            await del.mutateAsync({ id: confirmDel.id, tipo: confirmDel.tipo });
+            setConfirmDel(null);
+          } catch (e) {
+            toast.error("Não foi possível excluir", {
+              description: e instanceof Error ? e.message : "Tente novamente",
+            });
+          }
         }}
         title="Excluir lançamento?"
         itemName={confirmDel?.descricao}

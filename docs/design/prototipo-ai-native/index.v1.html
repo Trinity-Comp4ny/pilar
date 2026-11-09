@@ -1,0 +1,1103 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pilar AI-native · protótipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
+<style>
+:root{
+  --app:0 0% 99%;--card:0 0% 100%;--side:0 0% 97%;--muted:0 0% 93%;
+  --border:220 13% 91%;--border-subtle:0 0% 85%;--border-strong:216 12% 84%;
+  --ink:0 0% 10%;--ink-soft:0 0% 24%;--text-muted:220 9% 41%;--disabled:220 9% 65%;
+  --brand:102 73% 73%;--brand-soft:102 62% 91%;
+  --success-soft:138 76% 97%;--success-border:141 79% 85%;--success-strong:143 64% 24%;--success-mid:142 72% 29%;
+  --danger-soft:0 93% 94%;--danger-border:0 96% 89%;--danger-strong:0 63% 31%;--danger-mid:0 74% 42%;
+  --info-soft:214 100% 97%;--info-border:214 95% 93%;--info-strong:226 71% 40%;--info-mid:224 76% 48%;
+  --warning-soft:48 100% 96%;--warning-border:48 96% 89%;--warning-strong:23 83% 31%;--warning-mid:26 90% 37%;
+  --attention-soft:33 100% 96%;--attention-border:34 100% 92%;--attention-strong:15 79% 34%;
+  --highlight-soft:270 100% 98%;--highlight-border:269 100% 95%;--highlight-strong:273 67% 39%;
+  --obra:32 78% 86%;--obra-strong:28 66% 32%;--projetos:210 68% 89%;--projetos-strong:212 53% 34%;
+  --chart-info:217 91% 60%;--chart-warning:48 96% 47%;--chart-success:142 71% 45%;--chart-danger:0 84% 60%;--chart-grid:220 13% 91%;
+  --shadow-card:0 1px 3px 0 hsl(0 0% 10% / .06),0 1px 2px -1px hsl(0 0% 10% / .06);
+  --shadow-pop:0 8px 32px -4px hsl(0 0% 10% / .12);
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:hsl(var(--muted));color:hsl(var(--ink));font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:inherit}
+svg.i{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+svg.i.sm{width:15px;height:15px}
+svg.i.lg{width:22px;height:22px}
+
+/* barra do protótipo (fora do app) */
+#proto{position:sticky;top:0;z-index:50;display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:10px 16px;background:hsl(var(--ink));color:#fff}
+#proto .t{font-weight:600;font-size:13px;margin-right:auto;display:flex;gap:8px;align-items:center}
+#proto .t small{font-weight:400;opacity:.65}
+.seg{display:inline-flex;background:hsl(0 0% 100% / .1);border-radius:999px;padding:3px}
+.seg button{border:0;background:transparent;color:#fff;padding:5px 12px;border-radius:999px;font-size:12px;opacity:.8}
+.seg button.on{background:hsl(var(--brand));color:hsl(var(--ink));opacity:1;font-weight:600}
+#stage{padding:0}
+#device.desktop{min-height:calc(100vh - 50px);background:hsl(var(--app))}
+#device.mobile{width:390px;height:800px;margin:24px auto;border:10px solid hsl(var(--ink));border-radius:44px;overflow:auto;background:hsl(var(--app));position:relative;box-shadow:var(--shadow-pop)}
+#app{container-type:inline-size;container-name:app;min-height:100%}
+
+/* shell */
+.shell{display:grid;grid-template-columns:84px 1fr;min-height:calc(100vh - 50px)}
+#device.mobile .shell{min-height:780px}
+.rail{background:hsl(var(--side));border-right:1px solid hsl(var(--border));padding:12px 8px;display:flex;flex-direction:column;gap:2px;position:sticky;top:50px;height:calc(100vh - 50px);overflow:auto}
+.logo{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0 12px;font-weight:700;font-size:13px;letter-spacing:-.01em}
+.logo .mk{display:flex;gap:2px;align-items:flex-end;height:20px}
+.logo .mk i{display:block;width:5px;background:hsl(var(--ink));border-radius:1px}
+.logo .mk i:nth-child(2){background:hsl(var(--brand))}
+.ri{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border-radius:10px;border:0;background:transparent;font-size:10.5px;color:hsl(var(--text-muted));position:relative}
+.ri:hover{background:hsl(var(--muted));color:hsl(var(--ink))}
+.ri.on{background:hsl(var(--brand));color:hsl(var(--ink));font-weight:600}
+.ri .dot{position:absolute;top:5px;right:14px;width:7px;height:7px;border-radius:9px;background:hsl(var(--chart-danger))}
+.ri.sep{margin-top:8px}
+main{min-width:0}
+.ph{position:sticky;top:50px;z-index:5;background:hsl(var(--app) / .94);backdrop-filter:blur(6px);border-bottom:1px solid hsl(var(--border));padding:16px 28px 0}
+.ph .crumbs{font-size:12px;color:hsl(var(--text-muted));margin-bottom:2px}
+.ph .row{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;padding-bottom:14px}
+.ph h1{font-size:22px;letter-spacing:-.02em;margin:0;font-weight:700}
+.ph p.sub{margin:2px 0 0;color:hsl(var(--ink-soft))}
+.tabs{display:flex;gap:18px;overflow-x:auto;margin-top:-4px}
+.tabs button{border:0;background:none;padding:8px 0 10px;color:hsl(var(--text-muted));border-bottom:2px solid transparent;white-space:nowrap;display:flex;gap:6px;align-items:center}
+.tabs button.on{color:hsl(var(--ink));border-color:hsl(var(--ink));font-weight:600}
+.pc{padding:20px 28px 48px;max-width:1440px}
+
+/* blocos */
+.card{background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:12px;box-shadow:var(--shadow-card)}
+.card.p{padding:16px}
+.card h3,.h3{font-size:14px;margin:0 0 10px;font-weight:600;display:flex;gap:8px;align-items:center}
+.card h3 .r{margin-left:auto}
+.muted{color:hsl(var(--text-muted))}
+.soft{color:hsl(var(--ink-soft))}
+.xs{font-size:12px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g-side{grid-template-columns:minmax(0,1fr) 340px}
+.g-side-l{grid-template-columns:300px minmax(0,1fr)}
+.row{display:flex;gap:8px;align-items:center}
+.wrap{flex-wrap:wrap}
+.between{justify-content:space-between}
+.stack{display:flex;flex-direction:column;gap:10px}
+.mt{margin-top:16px}.mt8{margin-top:8px}.mb{margin-bottom:16px}
+hr.s{border:0;border-top:1px solid hsl(var(--border));margin:12px 0}
+
+.btn{display:inline-flex;gap:6px;align-items:center;justify-content:center;border:1px solid transparent;border-radius:10px;padding:8px 14px;font-weight:600;font-size:13px;white-space:nowrap;transition:transform .2s var(--ease),background .2s}
+.btn:active{transform:scale(.98)}
+.btn.brand{background:hsl(var(--brand));color:hsl(var(--ink))}
+.btn.brand:hover{background:hsl(102 73% 66%)}
+.btn.outline{background:hsl(var(--card));border-color:hsl(var(--border-strong))}
+.btn.outline:hover{background:hsl(var(--muted))}
+.btn.ghost{background:transparent;color:hsl(var(--ink-soft))}
+.btn.ghost:hover{background:hsl(var(--muted))}
+.btn.sm{padding:5px 10px;font-size:12px;border-radius:8px}
+.btn[disabled]{opacity:.5;pointer-events:none}
+
+.b{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:500;border:1px solid transparent;white-space:nowrap}
+.b-success{background:hsl(var(--success-soft));border-color:hsl(var(--success-border));color:hsl(var(--success-strong))}
+.b-danger{background:hsl(var(--danger-soft));border-color:hsl(var(--danger-border));color:hsl(var(--danger-strong))}
+.b-info{background:hsl(var(--info-soft));border-color:hsl(var(--info-border));color:hsl(var(--info-strong))}
+.b-warning{background:hsl(var(--warning-soft));border-color:hsl(var(--warning-border));color:hsl(var(--warning-strong))}
+.b-attention{background:hsl(var(--attention-soft));border-color:hsl(var(--attention-border));color:hsl(var(--attention-strong))}
+.b-highlight{background:hsl(var(--highlight-soft));border-color:hsl(var(--highlight-border));color:hsl(var(--highlight-strong))}
+.b-neutral{background:hsl(var(--muted));color:hsl(var(--text-muted))}
+.b-brand{background:hsl(var(--brand-soft));color:hsl(var(--success-strong))}
+.b-obra{background:hsl(var(--obra));color:hsl(var(--obra-strong))}
+.b-proj{background:hsl(var(--projetos));color:hsl(var(--projetos-strong))}
+
+.agent{display:flex;gap:10px;padding:12px;border-radius:12px;background:hsl(var(--brand-soft) / .55);border:1px solid hsl(var(--brand) / .55)}
+.agent .av{width:28px;height:28px;border-radius:8px;background:hsl(var(--ink));color:hsl(var(--brand));display:grid;place-items:center;flex:none}
+.agent .av svg{width:16px;height:16px}
+.callout{display:flex;gap:10px;padding:12px;border-radius:12px;border:1px solid}
+.callout.warn{background:hsl(var(--warning-soft));border-color:hsl(var(--warning-border));color:hsl(var(--warning-strong))}
+.callout.info{background:hsl(var(--info-soft));border-color:hsl(var(--info-border));color:hsl(var(--info-strong))}
+.callout.danger{background:hsl(var(--danger-soft));border-color:hsl(var(--danger-border));color:hsl(var(--danger-strong))}
+.callout.ok{background:hsl(var(--success-soft));border-color:hsl(var(--success-border));color:hsl(var(--success-strong))}
+.callout b{color:hsl(var(--ink))}
+
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{text-align:left;font-weight:500;color:hsl(var(--text-muted));font-size:12px;padding:8px 10px;border-bottom:1px solid hsl(var(--border));white-space:nowrap}
+table.t td{padding:10px;border-bottom:1px solid hsl(var(--border));vertical-align:top}
+table.t tr.sel td{background:hsl(var(--brand-soft) / .45)}
+table.t tr.click{cursor:pointer}
+table.t tr.click:hover td{background:hsl(var(--muted) / .6)}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.kpi .v{font-size:24px;font-weight:700;letter-spacing:-.02em}
+.kpi .l{font-size:12px;color:hsl(var(--text-muted))}
+.scroll-x{overflow-x:auto}
+
+/* mesa */
+.col{background:hsl(var(--side));border:1px solid hsl(var(--border));border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:10px;min-height:120px}
+.col>.hd{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;padding:2px 4px}
+.col>.hd .n{margin-left:auto;font-size:12px;color:hsl(var(--text-muted))}
+.item{background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.item .tt{font-weight:600}
+.item .who{font-size:12px;color:hsl(var(--text-muted));display:flex;gap:6px;align-items:center}
+
+/* stepper */
+.steps{display:flex;gap:0;overflow-x:auto;padding-bottom:4px}
+.step{flex:1;min-width:120px;display:flex;flex-direction:column;gap:6px;border:0;background:none;text-align:left;padding:0 8px 0 0}
+.step .bar{height:4px;border-radius:9px;background:hsl(var(--muted))}
+.step.done .bar{background:hsl(var(--chart-success))}
+.step.on .bar{background:hsl(var(--ink))}
+.step .lb{font-size:12px;color:hsl(var(--text-muted))}
+.step.on .lb,.step.done .lb{color:hsl(var(--ink))}
+.step .lb b{display:block;font-size:11px;font-weight:500;color:hsl(var(--text-muted))}
+.log{display:flex;flex-direction:column;gap:0}
+.log .e{display:grid;grid-template-columns:44px 1fr;gap:8px;padding:8px 0;border-bottom:1px dashed hsl(var(--border));font-size:12.5px;animation:in .5s var(--ease)}
+.log .e .h{color:hsl(var(--text-muted));font-variant-numeric:tabular-nums}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fld{display:grid;grid-template-columns:150px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid hsl(var(--border))}
+.fld .k{color:hsl(var(--text-muted));font-size:12.5px}
+
+/* gantt */
+.gantt{--cw:36px;font-size:12px;min-width:max-content}
+.g-head,.g-row{display:grid;grid-template-columns:230px repeat(21,var(--cw))}
+.g-head .d{text-align:center;padding:4px 0;color:hsl(var(--text-muted));border-left:1px solid hsl(var(--border) / .6)}
+.g-head .d b{display:block;color:hsl(var(--ink));font-weight:600}
+.g-head .d.today{background:hsl(var(--brand-soft))}
+.g-head .w{display:grid;place-items:center;padding:4px 0;border-left:1px solid hsl(var(--border) / .6)}
+.g-head .w.rain{background:hsl(var(--info-soft))}
+.g-row{position:relative;border-top:1px solid hsl(var(--border))}
+.g-row .nm{padding:8px 10px 8px 0;display:flex;gap:6px;align-items:center;min-width:0}
+.g-row .nm span.tx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g-row .c{border-left:1px solid hsl(var(--border) / .6)}
+.g-row .c.rain{background:hsl(var(--info-soft) / .8)}
+.g-row .c.wk{background:hsl(var(--muted) / .5)}
+.g-grp{grid-column:1/-1;padding:10px 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:hsl(var(--text-muted));font-weight:600}
+.gbar{position:absolute;top:7px;height:22px;border-radius:6px;display:flex;align-items:center;padding:0 8px;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;transition:left .8s var(--ease),width .8s var(--ease),background .4s}
+.gbar.done{background:hsl(var(--chart-success) / .25);color:hsl(var(--success-strong))}
+.gbar.progress{background:hsl(var(--chart-warning) / .35);color:hsl(var(--warning-strong))}
+.gbar.planned{background:hsl(var(--projetos));color:hsl(var(--projetos-strong))}
+.gbar.blocked{background:repeating-linear-gradient(45deg,hsl(var(--danger-soft)),hsl(var(--danger-soft)) 6px,hsl(var(--danger-border)) 6px,hsl(var(--danger-border)) 12px);color:hsl(var(--danger-strong))}
+.gbar.critical{background:hsl(var(--ink));color:hsl(var(--brand))}
+.gbar.ext::after{content:"";position:absolute;right:4px;top:4px;width:6px;height:6px;border-radius:9px;background:hsl(var(--chart-info))}
+.gbar.moved{outline:2px solid hsl(var(--ink));outline-offset:1px}
+.todayline{position:absolute;top:0;bottom:0;width:2px;background:hsl(var(--ink));pointer-events:none}
+
+/* clima */
+.wx{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.wx .d{border:1px solid hsl(var(--border));border-radius:12px;padding:10px;background:hsl(var(--card));display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.wx .d.rain{background:hsl(var(--info-soft));border-color:hsl(var(--info-border))}
+.wx .d.today{outline:2px solid hsl(var(--ink));outline-offset:-1px}
+.wx .d .tp{font-size:18px;font-weight:700}
+.wx .d .dd{font-size:12px;color:hsl(var(--text-muted))}
+.chk{display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid hsl(var(--border))}
+.ok{color:hsl(var(--success-mid))}.no{color:hsl(var(--danger-mid))}
+
+/* 3d / planta */
+.viewer{position:relative;border-radius:12px;border:1px solid hsl(var(--border));background:linear-gradient(180deg,hsl(0 0% 100%),hsl(80 10% 95%));overflow:hidden;height:440px}
+.viewer canvas{display:block;touch-action:none;cursor:grab}
+.viewer canvas:active{cursor:grabbing}
+.viewer .hud{position:absolute;left:12px;top:12px;display:flex;gap:6px;flex-wrap:wrap;z-index:2}
+.viewer .hud2{position:absolute;right:12px;top:12px;z-index:2}
+.viewer .legend{position:absolute;left:12px;bottom:12px;display:flex;gap:10px;flex-wrap:wrap;background:hsl(var(--card) / .9);padding:6px 10px;border-radius:999px;font-size:11.5px;z-index:2;border:1px solid hsl(var(--border))}
+.viewer .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.viewer .lbls{position:absolute;inset:0;pointer-events:none;z-index:1}
+.viewer .lbls span{position:absolute;transform:translate(-50%,-50%);font-size:11px;font-weight:600;background:hsl(var(--card) / .85);padding:1px 6px;border-radius:6px;white-space:nowrap;transition:background .3s}
+.viewer .lbls span.hl{background:hsl(var(--ink));color:hsl(var(--brand))}
+.viewer .hint{position:absolute;right:12px;bottom:12px;font-size:11px;color:hsl(var(--text-muted));z-index:2}
+.viewer .plan2d{width:100%;height:100%;display:grid;place-items:center;padding:12px}
+.viewer .plan2d svg{width:100%;height:100%}
+.v-err{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px}
+
+/* scanner */
+.drop{border:1.5px dashed hsl(var(--border-strong));border-radius:12px;padding:18px;text-align:center;background:hsl(var(--side))}
+.file{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid hsl(var(--border));border-radius:10px;background:hsl(var(--card))}
+.file .ic{width:34px;height:40px;border-radius:6px;background:hsl(var(--danger-soft));color:hsl(var(--danger-mid));display:grid;place-items:center;font-size:10px;font-weight:700}
+.pipe .s{display:flex;gap:8px;align-items:flex-start;padding:7px 0;font-size:13px;color:hsl(var(--disabled))}
+.pipe .s.on{color:hsl(var(--ink))}
+.pipe .s.done{color:hsl(var(--ink-soft))}
+.pipe .s .m{width:18px;height:18px;border-radius:9px;border:1.5px solid currentColor;display:grid;place-items:center;flex:none;margin-top:1px}
+.pipe .s.done .m{background:hsl(var(--chart-success));border-color:hsl(var(--chart-success));color:#fff}
+.pipe .s.on .m{border-color:hsl(var(--ink));animation:pulse 1s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 4px hsl(var(--brand) / .6)}}
+.scanline{position:absolute;left:0;right:0;height:3px;background:hsl(var(--ink) / .7);animation:scan 1.6s linear infinite;z-index:3}
+@keyframes scan{from{top:0}to{top:100%}}
+
+/* campo / celular */
+.phone{width:320px;flex:none;border:9px solid hsl(var(--ink));border-radius:38px;background:hsl(var(--app));overflow:hidden;box-shadow:var(--shadow-pop)}
+.phone .bar0{height:26px;display:flex;justify-content:space-between;padding:6px 18px 0;font-size:11px;font-weight:600}
+.phone .pb{padding:10px 14px 16px;display:flex;flex-direction:column;gap:10px;min-height:560px}
+.rec{width:84px;height:84px;border-radius:50%;border:0;background:hsl(var(--brand));display:grid;place-items:center;margin:8px auto 0;box-shadow:0 0 0 8px hsl(var(--brand-soft))}
+.rec.on{background:hsl(var(--chart-danger));color:#fff;animation:pulse2 1.2s infinite}
+@keyframes pulse2{50%{box-shadow:0 0 0 14px hsl(var(--danger-soft))}}
+.wave{display:flex;gap:3px;align-items:center;justify-content:center;height:36px}
+.wave i{display:block;width:4px;border-radius:3px;background:hsl(var(--ink));animation:wv .9s ease-in-out infinite}
+@keyframes wv{0%,100%{height:6px}50%{height:30px}}
+.bubble{background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:14px;padding:10px 12px;font-size:13px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid hsl(var(--border-strong));background:hsl(var(--card));border-radius:999px;padding:5px 12px;font-size:12px}
+.chip.on{background:hsl(var(--brand));border-color:transparent;font-weight:600}
+
+/* loading / estados */
+.ring{width:44px;height:44px}
+.ring circle{fill:none;stroke-width:4}
+.ring .bg{stroke:hsl(var(--muted))}
+.ring .fg{stroke:hsl(var(--ink));stroke-dasharray:110;stroke-dashoffset:110;animation:read 1.6s var(--ease) infinite;transform-origin:center;transform:rotate(-90deg)}
+@keyframes read{0%{stroke-dashoffset:110}60%{stroke-dashoffset:0}100%{stroke-dashoffset:-110}}
+.sk{border-radius:10px;background:linear-gradient(90deg,hsl(var(--muted)),hsl(var(--side)),hsl(var(--muted)));background-size:200% 100%;animation:sh 1.4s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}
+.state{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:56px 20px;max-width:520px;margin:0 auto}
+.state .ic{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;background:hsl(var(--muted))}
+.state.err .ic{background:hsl(var(--danger-soft));color:hsl(var(--danger-mid))}
+.state h2{margin:4px 0 0;font-size:18px}
+.state p{margin:0;color:hsl(var(--ink-soft))}
+
+/* plano */
+.lane{border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;border:1px solid hsl(var(--border))}
+.lane h4{margin:0;font-size:13px;display:flex;gap:8px;align-items:center}
+.lane .k{font-size:11.5px;color:hsl(var(--text-muted));margin-top:-4px}
+.lane button.it{display:flex;gap:8px;align-items:flex-start;text-align:left;padding:9px 10px;border-radius:10px;border:1px solid hsl(var(--border));background:hsl(var(--card));width:100%}
+.lane button.it:hover{border-color:hsl(var(--ink))}
+.lane button.it .x{font-size:11.5px;color:hsl(var(--text-muted));display:block;font-weight:400}
+.lane.now{background:hsl(var(--brand-soft) / .5)}
+.lane.la{background:hsl(var(--projetos) / .35)}
+.lane.lb{background:hsl(var(--obra) / .4)}
+.lane.later{background:hsl(var(--side))}
+.lane.out{background:hsl(var(--muted) / .6)}
+.lane.out button.it{opacity:.7;cursor:default}
+
+/* portal */
+.portal-hero{border-radius:14px;padding:18px;background:hsl(var(--ink));color:#fff}
+.portal-hero .b{background:hsl(0 0% 100% / .12);color:#fff}
+.photo{border-radius:10px;aspect-ratio:4/3;background:linear-gradient(135deg,hsl(32 30% 78%),hsl(28 20% 62%));position:relative;overflow:hidden}
+.photo::after{content:"";position:absolute;inset:auto 0 0 0;height:40%;background:repeating-linear-gradient(0deg,hsl(15 40% 52%),hsl(15 40% 52%) 9px,hsl(30 15% 85%) 9px,hsl(30 15% 85%) 11px)}
+
+#toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);opacity:0;background:hsl(var(--ink));color:#fff;padding:10px 16px;border-radius:12px;font-size:13px;z-index:99;transition:all .4s var(--ease);max-width:min(560px,90vw);box-shadow:var(--shadow-pop)}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+.sheet-bg{position:absolute;inset:0;background:hsl(0 0% 10% / .35);z-index:30;display:flex;align-items:flex-end}
+.sheet{background:hsl(var(--card));border-radius:20px 20px 0 0;padding:16px;width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sheet button{border:1px solid hsl(var(--border));background:hsl(var(--side));border-radius:12px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px}
+.fab{display:none}
+
+/* celular (container) */
+@container app (max-width: 760px){
+  .shell{display:flex;flex-direction:column;min-height:100%}
+  .rail{order:2;position:sticky;top:auto;bottom:14px;height:auto;flex-direction:row;justify-content:space-around;margin:0 14px;border:1px solid hsl(var(--border));border-radius:999px;background:hsl(var(--card) / .85);backdrop-filter:blur(10px);padding:6px;z-index:20;box-shadow:var(--shadow-pop)}
+  .rail .logo,.rail .ri.desk{display:none}
+  .rail .ri{flex:1;padding:6px 2px;border-radius:999px;font-size:10px}
+  .rail .ri.sep{margin-top:0}
+  .rail .ri.mob{display:flex}
+  main{flex:1}
+  .ph{top:0;padding:12px 16px 0}
+  .ph h1{font-size:19px}
+  .ph .row .acts{display:none}
+  .pc{padding:14px 16px 96px}
+  .g2,.g3,.g4,.g-side,.g-side-l{grid-template-columns:1fr}
+  .wx{grid-template-columns:repeat(7,86px);overflow-x:auto}
+  .fld{grid-template-columns:1fr auto}
+  .fld .k{grid-column:1/-1}
+  .phone{width:100%;border:0;border-radius:0;box-shadow:none;background:transparent}
+  .phone .bar0{display:none}
+  .phone .pb{padding:0;min-height:0}
+  .viewer{height:340px}
+  .hide-m{display:none !important}
+  .fab{display:inline-flex;position:sticky;bottom:84px;margin-left:auto;margin-right:16px;float:right;z-index:19;box-shadow:var(--shadow-pop);border-radius:999px;padding:12px 16px}
+  .gantt{--cw:32px}
+  .g-head,.g-row{grid-template-columns:150px repeat(21,var(--cw))}
+  table.t.cards thead{display:none}
+  table.t.cards tr{display:block;border:1px solid hsl(var(--border));border-radius:12px;margin-bottom:8px;padding:6px 4px;background:hsl(var(--card))}
+  table.t.cards td{display:block;border:0;padding:3px 10px}
+  table.t.cards td.hm{display:none}
+}
+.ri.mob{display:none}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+<div id="proto">
+  <div class="t">
+    <svg class="i sm" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg>
+    Protótipo · Pilar AI-native <small>dado fictício · 04/11/2026</small>
+  </div>
+  <div class="seg" id="segDevice"><button data-dev="desktop" class="on">Desktop</button><button data-dev="mobile">Celular</button></div>
+  <div class="seg" id="segState"><button data-st="cheio" class="on">Cheio</button><button data-st="vazio">Vazio</button><button data-st="carregando">Carregando</button><button data-st="erro">Erro</button></div>
+</div>
+<div id="stage"><div id="device" class="desktop"><div id="app"></div></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ============ ícones ============ */
+const IC={
+  map:'<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>',
+  home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>',
+  funnel:'<path d="M3 4h18l-7 8v6l-4 2v-8z"/>',
+  file:'<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/>',
+  layers:'<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>',
+  scan:'<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M7 12h10"/>',
+  building:'<path d="M4 21V8l8-5 8 5v13"/><path d="M9 21v-6h6v6"/>',
+  mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+  calc:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M14 12h2M8 16h2M14 16h2"/>',
+  cart:'<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.5 12h12L22 7H6"/>',
+  chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  eye:'<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  spark:'<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
+  check:'<path d="m5 12 5 5 9-10"/>',
+  x:'<path d="M6 6l12 12M18 6 6 18"/>',
+  alert:'<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17v.01"/>',
+  send:'<path d="m22 2-11 11M22 2l-7 20-4-9-9-4z"/>',
+  msg:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  upload:'<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v4h16v-4"/>',
+  cube:'<path d="m12 2 9 5v10l-9 5-9-5V7z"/><path d="m3 7 9 5 9-5M12 12v10"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  cloud:'<path d="M7 18a5 5 0 1 1 1-9.9A6 6 0 0 1 19.5 10 4 4 0 0 1 18 18z"/>',
+  rain:'<path d="M7 15a5 5 0 1 1 1-9.9A6 6 0 0 1 19.5 7 4 4 0 0 1 18 15z"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3"/>',
+  user:'<circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="m16 11 2 2 4-4"/>',
+  cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  plan:'<rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 12h9V3M12 12v9M16 12h5"/>',
+  arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+  lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  photo:'<rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 17-5-5-9 8"/>',
+  refresh:'<path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/>',
+  menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+  copy:'<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>'
+};
+const ic=(n,c='')=>`<svg class="i ${c}" viewBox="0 0 24 24" aria-hidden="true">${IC[n]||''}</svg>`;
+const b=(tone,t)=>`<span class="b b-${tone}">${t}</span>`;
+const brl=n=>'R$ '+n.toLocaleString('pt-BR',{minimumFractionDigits:n%1?2:0,maximumFractionDigits:2});
+const ORIG={conversa:['highlight','da conversa'],pdf:['info','da planta'],calc:['neutral','calculado'],tabela:['success','sua tabela'],falta:['warning','falta'],inferido:['attention','inferido, confirme'],regra:['brand','regra do template'],cub:['info','CUB-SP set/26'],sinapi:['proj','SINAPI out/26'],empresa:['success','tabela da empresa'],usuario:['highlight','valor do usuário'],definir:['warning','a definir'],ref:['attention','referência provisória']};
+const og=k=>b(ORIG[k][0],ORIG[k][1]);
+const agent=(html,who='Agente')=>`<div class="agent"><div class="av">${ic('spark')}</div><div><div class="xs muted" style="margin-bottom:2px">${who}</div>${html}</div></div>`;
+
+/* ============ estado ============ */
+const S={screen:'plano',device:'desktop',state:'cheio',lead:'carla',waParsed:false,prop:0,tpl:'proposta',scan:'idle',scanStep:0,scanView:'original',campo:'idle',campoView:'3d',clima:false,obraView:'cronograma',frete:false,sheet:false,proposalReplied:false};
+const SCREENS=[
+  {id:'plano',label:'Plano',icon:'map'},
+  {id:'inicio',label:'Início',icon:'home'},
+  {id:'comercial',label:'Comercial',icon:'funnel'},
+  {id:'proposta',label:'Proposta',icon:'file'},
+  {id:'templates',label:'Templates',icon:'layers'},
+  {id:'documentos',label:'Planta',icon:'scan'},
+  {id:'obra',label:'Obra',icon:'building',dot:true},
+  {id:'campo',label:'Campo',icon:'mic'},
+  {id:'orcamento',label:'Orçamento',icon:'calc'},
+  {id:'compras',label:'Compras',icon:'cart'},
+  {id:'precos',label:'Preços',icon:'chart'},
+  {id:'portal',label:'Cliente',icon:'eye'}
+];
+const MOB=['inicio','comercial','obra','campo'];
+
+/* ============ planta (dado da casa) ============ */
+const H3=2.8,T3=0.15;
+const PLAN={
+  rooms:[
+    {id:'sala',nome:'Sala',x0:0,y0:0,x1:6,y1:5,floor:0xf3eee4},
+    {id:'cozinha',nome:'Cozinha',x0:6,y0:0,x1:12,y1:5,floor:0xeef1f3},
+    {id:'quarto1',nome:'Quarto 1',x0:0,y0:5,x1:4.5,y1:9,floor:0xf1efe9},
+    {id:'banho',nome:'Banheiro',x0:4.5,y0:5,x1:7,y1:9,floor:0xe9f0f2},
+    {id:'quarto2',nome:'Quarto 2',x0:7,y0:5,x1:12,y1:9,floor:0xf1efe9}
+  ],
+  walls:[
+    {id:'w1',a:[0,0],b:[6,0],nome:'frente da sala',op:[{t:'door',at:0.6,w:0.9},{t:'win',at:2.6,w:2.2}]},
+    {id:'w2',a:[6,0],b:[12,0],op:[{t:'win',at:2.2,w:1.6}]},
+    {id:'w3',a:[12,0],b:[12,5],op:[{t:'win',at:1.6,w:1.2}]},
+    {id:'w4',a:[12,5],b:[12,9],op:[{t:'win',at:1.2,w:1.5}]},
+    {id:'w5',a:[7,9],b:[12,9]},
+    {id:'w6',a:[4.5,9],b:[7,9],op:[{t:'win',at:0.9,w:0.6}]},
+    {id:'w7',a:[0,9],b:[4.5,9],op:[{t:'win',at:1.5,w:1.5}]},
+    {id:'w8',a:[0,5],b:[0,9]},
+    {id:'w9',a:[0,0],b:[0,5],nome:'lateral da sala',op:[{t:'win',at:1.6,w:1.6}]},
+    {id:'w10',a:[6,0],b:[6,5],nome:'divisa com a cozinha',op:[{t:'door',at:3.6,w:0.9}]},
+    {id:'w11',a:[0,5],b:[4.5,5],nome:'fundo da sala',op:[{t:'door',at:3.4,w:0.8}]},
+    {id:'w12',a:[4.5,5],b:[6,5],op:[{t:'door',at:0.3,w:0.7}]},
+    {id:'w13',a:[6,5],b:[7,5]},
+    {id:'w14',a:[7,5],b:[12,5],op:[{t:'door',at:0.4,w:0.8}]},
+    {id:'w15',a:[4.5,5],b:[4.5,9]},
+    {id:'w16',a:[7,5],b:[7,9]}
+  ]
+};
+const area=r=>((r.x1-r.x0)*(r.y1-r.y0));
+const per=r=>2*((r.x1-r.x0)+(r.y1-r.y0));
+const fmt=n=>n.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:2});
+function wallPieces(w){
+  const len=Math.hypot(w.b[0]-w.a[0],w.b[1]-w.a[1]);let cur=-T3/2;const out=[];
+  (w.op||[]).slice().sort((x,y)=>x.at-y.at).forEach(o=>{
+    if(o.at>cur) out.push({s:cur,l:o.at-cur,y0:0,y1:H3,k:'solid'});
+    if(o.t==='door') out.push({s:o.at,l:o.w,y0:2.1,y1:H3,k:'lintel',o});
+    else {out.push({s:o.at,l:o.w,y0:0,y1:1.0,k:'sill',o});out.push({s:o.at,l:o.w,y0:2.1,y1:H3,k:'lintel',o});}
+    cur=o.at+o.w;
+  });
+  out.push({s:cur,l:len+T3/2-cur,y0:0,y1:H3,k:'solid'});
+  return {len,pieces:out};
+}
+/* estados de parede por cenário */
+const BASE_WALLS={w4:'done',w5:'done',w6:'done',w7:'done',w8:'done',w15:'done',w16:'done'};
+const SALA=['w1','w9','w10'];
+function wallStatesCampo(){
+  const s={...BASE_WALLS};
+  if(S.campo==='reported') SALA.forEach(i=>s[i]='reported');
+  if(S.campo==='confirmed') SALA.forEach(i=>s[i]='done');
+  return s;
+}
+const WCOL={done:'#5fb84f',reported:'#f0a92e',none:'#cfcfcf',divergent:'#e5534b',neutral:'#e7e2d6'};
+
+/* ============ planta 2D (SVG) ============ */
+function plan2D({states=null,mode='clean',hl=null}={}){
+  const K=40,P=46,W=12*K+P*2,Hh=9*K+P*2+(mode==='paper'?54:0);
+  const X=x=>P+x*K,Y=y=>P+y*K;
+  const paper=mode==='paper';
+  let s=`<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Planta baixa">`;
+  if(paper){
+    s+=`<rect width="${W}" height="${Hh}" fill="#fbfaf5"/>`;
+    for(let i=0;i<W;i+=20) s+=`<line x1="${i}" y1="0" x2="${i}" y2="${Hh}" stroke="#ece9df" stroke-width=".6"/>`;
+    for(let j=0;j<Hh;j+=20) s+=`<line x1="0" y1="${j}" x2="${W}" y2="${j}" stroke="#ece9df" stroke-width=".6"/>`;
+  }
+  PLAN.rooms.forEach(r=>{
+    const fill=paper?'none':(hl===r.id?'hsl(38 92% 50% / .18)':'#'+r.floor.toString(16));
+    s+=`<rect x="${X(r.x0)}" y="${Y(r.y0)}" width="${(r.x1-r.x0)*K}" height="${(r.y1-r.y0)*K}" fill="${fill}"/>`;
+  });
+  PLAN.walls.forEach(w=>{
+    const {pieces}=wallPieces(w);const dx=(w.b[0]-w.a[0]),dy=(w.b[1]-w.a[1]);const len=Math.hypot(dx,dy);const ux=dx/len,uy=dy/len,nx=-uy,ny=ux;
+    const st=states?(states[w.id]||'none'):null;
+    const col=paper?'#55524a':(st?WCOL[st]:'#2b2b2b');
+    const dash=st==='none'?'stroke-dasharray="4 4"':'';
+    const sw=st==='none'?2:T3*K;
+    pieces.forEach(p=>{
+      const x1=X(w.a[0]+ux*p.s),y1=Y(w.a[1]+uy*p.s),x2=X(w.a[0]+ux*(p.s+p.l)),y2=Y(w.a[1]+uy*(p.s+p.l));
+      if(p.k==='solid') s+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="${sw}" ${dash} stroke-linecap="square"/>`;
+      if(p.k==='sill'){
+        const o=T3*K/3;
+        s+=`<line x1="${x1+nx*o}" y1="${y1+ny*o}" x2="${x2+nx*o}" y2="${y2+ny*o}" stroke="${paper?'#55524a':'#6b7280'}" stroke-width="1.2"/><line x1="${x1-nx*o}" y1="${y1-ny*o}" x2="${x2-nx*o}" y2="${y2-ny*o}" stroke="${paper?'#55524a':'#6b7280'}" stroke-width="1.2"/>`;
+      }
+      if(p.k==='lintel'&&p.o.t==='door'){
+        const r=p.l*K;const hx=x1,hy=y1;const ex=hx+nx*r,ey=hy+ny*r;
+        s+=`<path d="M${x2} ${y2} A${r} ${r} 0 0 0 ${ex} ${ey}" fill="none" stroke="${paper?'#8a8578':'#9ca3af'}" stroke-width="1" stroke-dasharray="3 3"/><line x1="${hx}" y1="${hy}" x2="${ex}" y2="${ey}" stroke="${paper?'#55524a':'#6b7280'}" stroke-width="1.4"/>`;
+      }
+    });
+  });
+  PLAN.rooms.forEach(r=>{
+    const cx=X((r.x0+r.x1)/2),cy=Y((r.y0+r.y1)/2);
+    s+=`<text x="${cx}" y="${cy-3}" text-anchor="middle" font-size="${paper?11:13}" font-weight="${paper?500:600}" fill="${paper?'#3d3a33':'#1a1a1a'}" ${paper?'letter-spacing="1"':''}>${paper?r.nome.toUpperCase():r.nome}</text><text x="${cx}" y="${cy+13}" text-anchor="middle" font-size="11" fill="${paper?'#6b675d':'#5f6570'}">${fmt(area(r))} m²</text>`;
+  });
+  const dc=paper?'#6b675d':'#9ca3af';
+  s+=`<line x1="${X(0)}" y1="${P-22}" x2="${X(12)}" y2="${P-22}" stroke="${dc}"/><line x1="${X(0)}" y1="${P-27}" x2="${X(0)}" y2="${P-17}" stroke="${dc}"/><line x1="${X(12)}" y1="${P-27}" x2="${X(12)}" y2="${P-17}" stroke="${dc}"/><text x="${X(6)}" y="${P-27}" text-anchor="middle" font-size="11" fill="${dc}">12,00</text>`;
+  s+=`<line x1="${P-22}" y1="${Y(0)}" x2="${P-22}" y2="${Y(9)}" stroke="${dc}"/><line x1="${P-27}" y1="${Y(0)}" x2="${P-17}" y2="${Y(0)}" stroke="${dc}"/><line x1="${P-27}" y1="${Y(9)}" x2="${P-17}" y2="${Y(9)}" stroke="${dc}"/><text x="${P-28}" y="${Y(4.5)}" text-anchor="middle" font-size="11" fill="${dc}" transform="rotate(-90 ${P-28} ${Y(4.5)})">9,00</text>`;
+  if(paper){
+    const by=Y(9)+18;
+    s+=`<rect x="${X(5.5)}" y="${by}" width="${6.5*K}" height="40" fill="none" stroke="#55524a"/><text x="${X(5.7)}" y="${by+16}" font-size="10" fill="#3d3a33" font-weight="600">RESIDÊNCIA ALVES · PLANTA BAIXA TÉRREO</text><text x="${X(5.7)}" y="${by+31}" font-size="9" fill="#6b675d">ESC. 1:50 · FOLHA 01/04 · ARQ. REV. 02</text>`;
+  }
+  return s+'</svg>';
+}
+
+/* ============ 3D (three.js) ============ */
+let VIEWERS=[];
+function dispose3D(){VIEWERS.forEach(v=>v.dispose());VIEWERS=[]}
+function mount3D(el,{states={},hlRoom=null,auto=true}={}){
+  if(!window.THREE){el.insertAdjacentHTML('beforeend',`<div class="v-err"><div class="stack" style="align-items:center">${ic('cube','lg')}<b>A visualização 3D não abriu neste navegador</b><span class="muted xs">A planta 2D continua disponível no botão acima.</span></div></div>`);return null}
+  const w=el.clientWidth||600,h=el.clientHeight||420;
+  const R=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  R.setPixelRatio(Math.min(2,window.devicePixelRatio||1));R.setSize(w,h);el.appendChild(R.domElement);
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(38,w/h,0.1,200);
+  scene.add(new THREE.HemisphereLight(0xffffff,0xc9ccc2,0.95));
+  const dl=new THREE.DirectionalLight(0xffffff,0.6);dl.position.set(14,20,2);scene.add(dl);
+  const mat=c=>new THREE.MeshStandardMaterial({color:c,roughness:.92});
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(60,60),mat(0xeef0e8));ground.rotation.x=-Math.PI/2;ground.position.set(6,-0.13,4.5);scene.add(ground);
+  const slab=new THREE.Mesh(new THREE.BoxGeometry(12.4,0.12,9.4),mat(0xd9d4c7));slab.position.set(6,-0.06,4.5);scene.add(slab);
+  const floors={};
+  PLAN.rooms.forEach(r=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(r.x1-r.x0-0.15,r.y1-r.y0-0.15),mat(r.floor));m.rotation.x=-Math.PI/2;m.position.set((r.x0+r.x1)/2,0.006,(r.y0+r.y1)/2);scene.add(m);floors[r.id]=m});
+  const groups={};const edgeMat=new THREE.LineBasicMaterial({color:0x3a3a3a,transparent:true,opacity:.28});
+  PLAN.walls.forEach(wl=>{
+    const g=new THREE.Group();const dx=wl.b[0]-wl.a[0],dz=wl.b[1]-wl.a[1];
+    g.position.set(wl.a[0],0,wl.a[1]);g.rotation.y=-Math.atan2(dz,dx);
+    const m=new THREE.MeshStandardMaterial({color:WCOL.none,roughness:.85,transparent:true,opacity:1});
+    wallPieces(wl).pieces.forEach(p=>{const geo=new THREE.BoxGeometry(Math.max(p.l,0.01),p.y1-p.y0,T3);const mesh=new THREE.Mesh(geo,m);mesh.position.set(p.s+p.l/2,(p.y0+p.y1)/2,0);g.add(mesh);const ed=new THREE.LineSegments(new THREE.EdgesGeometry(geo),edgeMat);ed.position.copy(mesh.position);g.add(ed)});
+    scene.add(g);groups[wl.id]={g,m,from:1,to:1,t0:0,dur:1,delay:0};
+  });
+  const lbl=document.createElement('div');lbl.className='lbls';el.appendChild(lbl);
+  const spans=PLAN.rooms.map(r=>{const sp=document.createElement('span');sp.textContent=r.nome;lbl.appendChild(sp);return {r,sp,v:new THREE.Vector3((r.x0+r.x1)/2,0.3,(r.y0+r.y1)/2)}});
+  const fit=()=>{const a=(el.clientWidth||600)/(el.clientHeight||420);return 21*Math.min(1.9,Math.max(1,1.8/a))};let theta=-2.2,phi=0.92,rad=fit(),drag=null,touched=!auto;const tgt=new THREE.Vector3(6,0.6,4.5);
+  const cv=R.domElement;
+  cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY};touched=true;cv.setPointerCapture(e.pointerId)});
+  cv.addEventListener('pointermove',e=>{if(!drag)return;theta+=(e.clientX-drag.x)*0.008;phi=Math.min(1.42,Math.max(0.2,phi-(e.clientY-drag.y)*0.006));drag={x:e.clientX,y:e.clientY}});
+  cv.addEventListener('pointerup',()=>drag=null);
+  cv.addEventListener('wheel',e=>{e.preventDefault();rad=Math.min(48,Math.max(9,rad+e.deltaY*0.01))},{passive:false});
+  const ease=t=>1-Math.pow(1-t,3);
+  function setState(id,st,anim=false,delay=0){
+    const G=groups[id];if(!G)return;
+    G.m.color.set(WCOL[st]||WCOL.none);G.m.opacity=st==='none'?0.35:1;
+    const to=st==='none'?0.05:1;
+    if(anim){G.from=st==='none'?1:0.05;G.to=to;G.t0=performance.now();G.delay=delay;G.dur=1500;G.g.scale.y=G.from}
+    else{G.from=G.to=to;G.g.scale.y=to}
+  }
+  function hl(id){Object.entries(floors).forEach(([k,m])=>m.material.color.set(k===id?0xf7dfae:PLAN.rooms.find(r=>r.id===k).floor));spans.forEach(s=>s.sp.classList.toggle('hl',s.r.id===id))}
+  PLAN.walls.forEach(wl=>setState(wl.id,states[wl.id]||'none'));
+  if(hlRoom)hl(hlRoom);
+  let raf;
+  const loop=now=>{
+    if(!touched)theta+=0.0016;
+    cam.position.set(tgt.x+rad*Math.sin(phi)*Math.cos(theta),tgt.y+rad*Math.cos(phi),tgt.z+rad*Math.sin(phi)*Math.sin(theta));cam.lookAt(tgt);
+    Object.values(groups).forEach(G=>{if(G.from!==G.to){const t=Math.min(1,Math.max(0,(now-G.t0-G.delay)/G.dur));G.g.scale.y=G.from+(G.to-G.from)*ease(t);if(t>=1)G.from=G.to}});
+    R.render(scene,cam);
+    const W=el.clientWidth,Hh=el.clientHeight;
+    spans.forEach(s=>{const p=s.v.clone().project(cam);s.sp.style.left=((p.x+1)/2*W)+'px';s.sp.style.top=((1-p.y)/2*Hh)+'px'});
+    raf=requestAnimationFrame(loop);
+  };
+  raf=requestAnimationFrame(loop);
+  const ro=new ResizeObserver(()=>{const W=el.clientWidth,Hh=el.clientHeight;if(!W||!Hh)return;R.setSize(W,Hh);cam.aspect=W/Hh;cam.updateProjectionMatrix();if(!touched)rad=fit()});ro.observe(el);
+  const api={setState,hl,dispose(){cancelAnimationFrame(raf);ro.disconnect();R.dispose();scene.traverse(o=>{o.geometry&&o.geometry.dispose()})}};
+  VIEWERS.push(api);return api;
+}
+const legend=()=>`<div class="legend"><span><i style="background:${WCOL.none};opacity:.6"></i>Não iniciado</span><span><i style="background:${WCOL.reported}"></i>Relatado</span><span><i style="background:${WCOL.done}"></i>Confirmado</span><span><i style="background:${WCOL.divergent}"></i>Divergente</span></div>`;
+
+/* ============ estados genéricos ============ */
+const EMPTY={
+  plano:['Nenhum plano registrado','Registre as decisões no DECISOES.md e o mapa aparece aqui.','Registrar decisão'],
+  inicio:['Nada para decidir agora','Quando a Pilar preparar um trabalho ou encontrar um bloqueio, ele aparece aqui. Comece cadastrando um lead ou uma obra.','Cadastrar lead'],
+  comercial:['Nenhum lead ainda','Cole uma conversa do WhatsApp ou cadastre o primeiro lead. A Pilar organiza o pedido e diz se ele combina com o seu escritório.','Colar conversa'],
+  proposta:['Nenhuma proposta em andamento','Escolha um lead aderente e a Pilar monta a proposta a partir do seu template.','Escolher lead'],
+  templates:['Nenhum template ainda','Comece por um modelo pronto e ajuste à forma de trabalhar do escritório.','Usar modelo Residencial térrea'],
+  documentos:['Nenhuma planta enviada','Envie a planta arquitetônica em PDF. A Pilar lê escala, paredes e ambientes e monta a planta 2D e o modelo 3D para você conferir.','Enviar planta'],
+  obra:['Cronograma vazio','Monte o cronograma a partir da estimativa ou de um template de obra. O clima passa a ser cruzado com as tarefas externas.','Montar cronograma'],
+  campo:['Nenhum registro hoje','A equipe grava um áudio, tira uma foto ou escreve. A Pilar liga o relato ao ambiente e ao serviço certo.','Gravar primeiro registro'],
+  orcamento:['Nenhuma estimativa nesta obra','Crie a estimativa a partir da planta conferida. Cada linha mostra de onde veio o preço.','Criar estimativa'],
+  compras:['Nada a comprar nas próximas 4 semanas','Quando o cronograma e os quantitativos indicarem uma necessidade, a Pilar avisa a data de começar a cotar.','Ver cronograma'],
+  precos:['Nenhuma referência ativa','Escolha os estados e a Pilar busca CUB e SINAPI sozinha todo mês.','Escolher estados'],
+  portal:['Nada liberado ao cliente ainda','Só entra aqui o que você liberar. Registros do Campo nascem internos.','Liberar primeiro relatório']
+};
+const ERR={
+  documentos:['Não consegui ler a escala desta planta','O PDF veio digitalizado e a cota está ilegível. Envie o PDF exportado do CAD ou informe uma medida conhecida para eu calibrar.','Informar uma medida'],
+  precos:['A busca do CUB-RS falhou hoje','O site do Sinduscon-RS não respondeu. A última referência válida (set/2026) continua ativa. Nova tentativa às 18:00.','Tentar agora'],
+  obra:['Previsão do tempo indisponível','O serviço de clima não respondeu às 06:00. Nenhuma tarefa foi mudada. Nova tentativa em 1 hora.','Tentar agora'],
+  campo:['O áudio ainda não subiu','Sem internet no canteiro. O registro está guardado no celular e sobe sozinho quando a conexão voltar.','Ver fila do celular'],
+  _:['Não foi possível carregar esta tela','A conexão caiu antes de os dados chegarem. Nada foi perdido. Tente de novo em instantes.','Tentar de novo']
+};
+const LOADING={plano:'Abrindo o plano',inicio:'Juntando o que a Pilar preparou',comercial:'Avaliando os leads',proposta:'Montando a proposta',templates:'Abrindo templates',documentos:'Abrindo a planta',obra:'Cruzando cronograma e previsão',campo:'Buscando registros de hoje',orcamento:'Calculando a estimativa',compras:'Calculando necessidades',precos:'Conferindo referências',portal:'Montando o relatório'};
+function stateView(id){
+  if(S.state==='carregando')return `<div class="state"><svg class="ring" viewBox="0 0 44 44"><circle class="bg" cx="22" cy="22" r="17"/><circle class="fg" cx="22" cy="22" r="17"/></svg><p class="muted">${LOADING[id]}</p></div><div class="grid g3" style="padding:0 0 24px">${'<div class="sk" style="height:120px"></div>'.repeat(3)}</div><div class="sk" style="height:260px"></div>`;
+  if(S.state==='vazio'){const [t,p,a]=EMPTY[id];return `<div class="state"><div class="ic">${ic(SCREENS.find(s=>s.id===id).icon,'lg')}</div><h2>${t}</h2><p>${p}</p><button class="btn brand mt8" data-act="st" data-arg="cheio">${a}</button></div>`}
+  const [t,p,a]=ERR[id]||ERR._;
+  return `<div class="state err"><div class="ic">${ic('alert','lg')}</div><h2>${t}</h2><p>${p}</p><button class="btn outline mt8" data-act="st" data-arg="cheio">${ic('refresh','sm')}${a}</button></div>`;
+}
+
+/* ============ cabeçalho ============ */
+function head({crumbs='',title,sub='',acts='',tabs=''}){
+  return `<div class="ph">${crumbs?`<div class="crumbs">${crumbs}</div>`:''}<div class="row"><div><h1>${title}</h1>${sub?`<p class="sub">${sub}</p>`:''}</div><div class="acts row wrap">${acts}</div></div>${tabs}</div>`;
+}
+const tabsBar=(items,cur,act)=>`<div class="tabs">${items.map(([k,l,i])=>`<button class="${k===cur?'on':''}" data-act="${act}" data-arg="${k}">${i?ic(i,'sm'):''}${l}</button>`).join('')}</div>`;
+
+/* ============ telas ============ */
+const V={};
+
+/* ---- plano ---- */
+V.plano=()=>{
+  const it=(go,t,x,tag='')=>`<button class="it" data-go="${go}"><span style="margin-top:1px">${ic(SCREENS.find(s=>s.id===go)?.icon||'check','sm')}</span><span><b>${t}</b>${tag?' '+tag:''}<span class="x">${x}</span></span></button>`;
+  const out=(t,x)=>`<button class="it"><span>${ic('x','sm')}</span><span><b>${t}</b><span class="x">${x}</span></span></button>`;
+  return head({title:'O plano em uma tela',sub:'Cada cartão abre a tela do protótipo. A ordem segue a análise de 03/11 e as suas respostas de 04/11.',acts:`<button class="btn brand" data-go="proposta">${ic('play','sm')}Ver o fluxo da proposta</button>`})+`<div class="pc">
+  <div class="grid g4">
+    <div class="lane now"><h4>${ic('clock','sm')}Agora, até o lançamento</h4><div class="k">nov/2026 a jan/2027</div>
+      ${it('campo','Evidência do Campo imutável','Reenvio offline não troca a mídia sem aviso')}
+      ${it('obra','Licença do clima','Open-Meteo no plano comercial ou proxy com chave')}
+      ${it('precos','CUB e SINAPI automáticos','Sem upload manual; erro vai para quarentena')}
+      ${it('orcamento','Total parcial na estimativa','Lacuna aparece no total e no PDF')}
+      ${it('inicio','Medir os agentes 146 a 148','4 semanas de uso real antes da próxima onda')}
+    </div>
+    <div class="lane la"><h4>${ic('funnel','sm')}Esteira A · do lead ao projeto</h4><div class="k">primeiro fluxo grande</div>
+      ${it('comercial','Agente do funil','Qualifica lead e lê o funil por origem')}
+      ${it('comercial','WhatsApp por link','wa.me com texto pronto; você envia')}
+      ${it('templates','Templates de proposta e projeto','Volta o módulo, agora ligado ao funil')}
+      ${it('proposta','Proposta automática','Lead aderente vira proposta pronta para revisar')}
+      ${it('proposta','Aceite e conversão','Lead vira cliente e projeto planejado')}
+      ${it('documentos','Planta para 2D e 3D','Scanner lê a planta e monta os ambientes')}
+    </div>
+    <div class="lane lb"><h4>${ic('building','sm')}Esteira B · obra</h4><div class="k">segundo fluxo grande</div>
+      ${it('obra','Cronograma com clima','Chuva prevista vira alternativa conferida')}
+      ${it('campo','Campo por voz no 3D','"Levantamos as paredes da sala" aparece no modelo')}
+      ${it('orcamento','Orçamento com origem','CUB, SINAPI e tabela da empresa')}
+      ${it('compras','Cotação antecipada','Data de cotar sai do cronograma')}
+      ${it('portal','Relatório ao cliente','Só o que foi conferido e liberado')}
+    </div>
+    <div class="stack">
+      <div class="lane later"><h4>${ic('cal','sm')}Depois</h4>
+        ${out('WhatsApp oficial (API da Meta)','Quando o volume pedir; até lá, wa.me')}
+        ${out('Prospecção em fontes públicas','PNCP e alvarás, como experimento')}
+        ${out('Pedido, entrega e divergência','Depois da cotação provar valor')}
+        ${out('Assinatura eletrônica','Depois de escolher o fornecedor')}
+        ${out('Passaporte pós-obra, API/MCP','Depois dos gates de uso')}
+      </div>
+      <div class="lane out"><h4>${ic('x','sm')}Fora</h4>
+        ${out('Scraping sem autorização','Nem contas de terceiros')}
+        ${out('Compra automática','A Pilar prepara; você autoriza')}
+        ${out('3D fotorealista','O 3D serve para acompanhar, não para vender')}
+      </div>
+    </div>
+  </div>
+  <div class="card p mt">
+    <h3>${ic('check','sm')}Decisões desta conversa</h3>
+    <div class="grid g2 xs soft">
+      <div class="stack">
+        <div>${b('success','sim')} WhatsApp por link <code>wa.me</code> com texto pronto. Sem API oficial agora; a resposta do cliente entra colando a conversa ou com um clique.</div>
+        <div>${b('success','sim')} Agente do funil: qualifica leads e lê conversão por origem e post. Prospecção ativa fica como experimento depois.</div>
+        <div>${b('success','sim')} Templates voltam, ligados a proposta e projeto: lead aderente gera proposta pronta.</div>
+      </div>
+      <div class="stack">
+        <div>${b('success','sim')} Orçamento e cotação completos, sem virar ERP de construtora: a Pilar prepara e compara, o escritório decide.</div>
+        <div>${b('warning','a confirmar')} CUB automático tem a mesma complexidade do SINAPI se cada estado tiver URL estável. Conferir as 27 fontes antes de prometer.</div>
+        <div>${b('info','fora do repo')} O documento original fica fora do repo público; no repo entra só a decisão e o plano enxuto.</div>
+      </div>
+    </div>
+  </div></div>`;
+};
+
+/* ---- início ---- */
+V.inicio=()=>head({title:'Bom dia, Marina',sub:'A Pilar trabalhou em 9 casos desde ontem. 3 precisam de você.',acts:`<button class="btn outline">${ic('msg','sm')}Perguntar à Pilar</button>`})+`<div class="pc">
+  <div class="grid g4">
+    <div class="col"><div class="hd">${ic('check','sm')}Pronto para decidir<span class="n">3</span></div>
+      <div class="item"><div class="who">${ic('spark','sm')}Agente comercial · template Residencial térrea v3</div><div class="tt">Proposta da Carla Alves pronta</div><div class="xs soft">${brl(18400)} · 4 disciplinas · 1 lacuna resolvida pelo WhatsApp</div><button class="btn brand sm" data-go="proposta" data-act="prop" data-arg="2">Revisar e enviar</button></div>
+      <div class="item"><div class="who">${ic('rain','sm')}Clima · Residência Alves</div><div class="tt">Chuva amanhã: alternativa pronta</div><div class="xs soft">2 tarefas internas com pré-requisitos conferidos. Concretagem espera o responsável técnico.</div><button class="btn brand sm" data-go="obra">Ver alternativa</button></div>
+      <div class="item"><div class="who">${ic('cart','sm')}Compras · Residência Alves</div><div class="tt">Blocos: 3 respostas para comparar</div><div class="xs soft">1 sem frete, 1 fora do prazo</div><button class="btn outline sm" data-go="compras">Comparar</button></div>
+    </div>
+    <div class="col"><div class="hd">${ic('clock','sm')}Em execução<span class="n">3</span></div>
+      <div class="item"><div class="tt">Acompanhando proposta do Galpão Vale Norte</div><div class="xs soft">Enviada há 3 dias, aberta 2 vezes. Lembrete pronto para 06/11.</div></div>
+      <div class="item"><div class="tt">Importando SINAPI out/2026</div><div class="xs soft">Nova competência detectada às 06:10. 4.881 insumos conferidos.</div></div>
+      <div class="item"><div class="tt">Relatório semanal da Residência Alves</div><div class="xs soft">Sai sexta às 17:00 com o que você liberar.</div></div>
+    </div>
+    <div class="col"><div class="hd">${ic('user','sm')}Aguardando terceiro<span class="n">2</span></div>
+      <div class="item"><div class="tt">Arquitetura: posição do quadro elétrico</div><div class="xs soft">Pedido enviado 01/11. Elétrico segue nos quartos; sala espera.</div></div>
+      <div class="item"><div class="tt">Cerâmica Bauru: frete não informado</div><div class="xs soft">Pergunta pronta para enviar pelo WhatsApp.</div></div>
+    </div>
+    <div class="col"><div class="hd">${ic('alert','sm')}Bloqueado<span class="n">1</span></div>
+      <div class="item"><div class="tt">Piso da sala sem argamassa AC-III</div><div class="xs soft">Falta material e a alvenaria da sala ainda não foi conferida.</div><button class="btn outline sm" data-go="compras">Ver necessidade</button></div>
+    </div>
+  </div>
+  <div class="grid g-side mt">
+    <div class="card p"><h3>${ic('mic','sm')}Relatado pelo Campo hoje</h3>
+      <div class="row between wrap"><div><b>Seu Joaquim, 09:42</b> · Residência Alves<div class="soft xs">"Levantamos as paredes da sala, só falta a do fundo, que tá esperando o bloco."</div></div>${b('warning','3 de 4 paredes · aguardando conferência')}</div>
+      <div class="row mt8"><button class="btn brand sm" data-go="campo">Conferir no 3D</button><span class="xs muted">Relatado não é confirmado: o portal do cliente só recebe depois da conferência.</span></div>
+    </div>
+    <div class="card p"><h3>${ic('spark','sm')}Entrega concluída</h3><div class="xs soft">Projeto estrutural do Galpão Vale Norte foi aceito pelo cliente.</div><div class="mt8 xs">Seu próximo cliente pode conhecer seu trabalho por esta entrega.</div><button class="btn outline sm mt8">Conhecer a EkoAI</button></div>
+  </div></div>`;
+
+/* ---- comercial ---- */
+const LEADS={
+  carla:{nome:'Carla Alves',pedido:'Casa térrea 108 m², estrutural e complementares',origem:'Indicação · Arq. Bruna Reis',av:['success','Aderente'],mot:'Serviço que o escritório faz, região atendida, arquitetura pronta.',prox:'Proposta pronta',tel:'5514900000001'},
+  vale:{nome:'Construtora Vale Norte',pedido:'Galpão 1.200 m², estrutural metálico',origem:'Google · busca "projeto estrutural bauru"',av:['success','Aderente'],mot:'Cliente recorrente em potencial; disciplina com capacidade em dezembro.',prox:'Proposta enviada',tel:'5514900000002'},
+  clinica:{nome:'Clínica Sorriso',pedido:'Reforma comercial 180 m², arquitetura e elétrico',origem:'Instagram · post "antes e depois"',av:['warning','Talvez'],mot:'Arquitetura não é o foco; elétrico sim. Sugerir parceria com arquiteto.',prox:'Perguntar escopo',tel:'5514900000003'},
+  rodrigo:{nome:'Rodrigo Menezes',pedido:'Reforma de apartamento, quer só execução',origem:'Instagram · post "reforma em 30 dias"',av:['neutral','Fora do perfil'],mot:'Pede execução de obra, não projeto. O escritório não executa.',prox:'Encerrar com indicação',tel:'5514900000004'},
+  edu:{nome:'Edu Paiva',pedido:'Orçamento de pintura externa',origem:'Instagram · post "reforma em 30 dias"',av:['neutral','Fora do perfil'],mot:'Serviço fora do catálogo do escritório.',prox:'Encerrar',tel:'5514900000005'}
+};
+const WA_CONVERSA=`[03/11 19:12] Carla: Oi! A Bruna me passou seu contato. Estamos construindo uma casa térrea em Bauru, uns 108 m².
+[03/11 19:13] Carla: Precisamos do projeto estrutural, elétrico e hidráulico. Te mando a planta da arquitetura.
+[03/11 19:13] Carla: <anexo: planta-residencia-alves.pdf>
+[03/11 19:15] Carla: A ideia é começar a obra em março.`;
+V.comercial=()=>{
+  const L=LEADS[S.lead];
+  const waText=`Oi, ${L.nome.split(' ')[0]}! Aqui é a Marina, da Duarte & Lima. Recebi a planta, obrigada. Para fechar a proposta só preciso confirmar: a arquitetura já está aprovada na prefeitura?`;
+  const rows=Object.entries(LEADS).map(([k,l])=>`<tr class="click ${k===S.lead?'sel':''}" data-act="lead" data-arg="${k}"><td><b>${l.nome}</b><div class="xs muted">${l.pedido}</div></td><td class="xs hm">${l.origem}</td><td>${b(l.av[0],l.av[1])}<div class="xs muted mt8 hide-m" style="max-width:260px">${l.mot}</div></td><td class="xs">${l.prox}</td></tr>`).join('');
+  const parsed=S.waParsed?`<div class="stack mt8">${agent('<b>Organizei a conversa.</b> Nada foi inventado; o que falta virou pergunta.')}
+    <div class="fld"><span class="k">Serviços</span><span>Estrutural, elétrico, hidrossanitário</span>${og('conversa')}</div>
+    <div class="fld"><span class="k">Área</span><span>108 m², térrea</span>${og('conversa')}</div>
+    <div class="fld"><span class="k">Cidade</span><span>Bauru/SP</span>${og('conversa')}</div>
+    <div class="fld"><span class="k">Início desejado</span><span>mar/2027 <span class="xs muted">(expectativa do cliente, não prazo do escritório)</span></span>${og('conversa')}</div>
+    <div class="fld"><span class="k">Documento</span><span>planta-residencia-alves.pdf</span>${b('info','salvo no dossiê')}</div>
+    <div class="fld"><span class="k">Arquitetura aprovada?</span><span class="muted">não informado</span>${og('falta')}</div></div>`:'';
+  return head({title:'Comercial',sub:'O agente do funil avalia cada lead contra o perfil do escritório e lê a conversão por origem.',acts:`<button class="btn outline">${ic('copy','sm')}Colar conversa</button><button class="btn brand">Novo lead</button>`,tabs:tabsBar([['leads','Leads','funnel'],['funil','Leitura do funil','chart']],S.comTab||'leads','comtab')})+`<div class="pc">
+  ${(S.comTab||'leads')==='leads'?`
+  <div class="grid g4 mb">
+    <div class="card p kpi"><div class="l">Leads em outubro</div><div class="v">24</div></div>
+    <div class="card p kpi"><div class="l">Aderentes</div><div class="v">9</div><div class="xs muted">38% do total</div></div>
+    <div class="card p kpi"><div class="l">Fora do perfil</div><div class="v">11</div><div class="xs muted">7 vieram de 1 post</div></div>
+    <div class="card p kpi"><div class="l">Sem dados para avaliar</div><div class="v">4</div><div class="xs muted">pergunta pronta em cada um</div></div>
+  </div>
+  <div class="grid g-side">
+    <div class="card"><table class="t cards"><thead><tr><th>Lead</th><th class="hm">Origem</th><th>Avaliação do agente</th><th>Próximo passo</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="card p"><h3>${L.nome}<span class="r">${b(L.av[0],L.av[1])}</span></h3>
+      <div class="xs soft">${L.pedido}</div><div class="xs muted mt8">Origem: ${L.origem}</div>
+      <hr class="s">
+      <div class="h3">${ic('msg','sm')}WhatsApp por link</div>
+      <div class="bubble xs">${waText}</div>
+      <div class="row wrap mt8"><a class="btn brand sm" target="_blank" rel="noopener" href="https://wa.me/${L.tel}?text=${encodeURIComponent(waText)}">${ic('send','sm')}Abrir no WhatsApp</a><button class="btn outline sm" data-act="toast" data-arg="Resposta registrada. A Pilar volta a acompanhar a partir dela.">Cliente respondeu</button></div>
+      <div class="xs muted mt8">Abre o seu WhatsApp com o texto pronto. Você envia; a Pilar não envia sozinha.</div>
+      <hr class="s">
+      <div class="h3">${ic('copy','sm')}Conversa colada</div>
+      <textarea style="width:100%;min-height:96px;border:1px solid hsl(var(--border-strong));border-radius:10px;padding:8px;font:12px/1.4 ui-monospace,monospace">${WA_CONVERSA}</textarea>
+      <button class="btn ${S.waParsed?'outline':'brand'} sm mt8" data-act="waparse">${ic('spark','sm')}${S.waParsed?'Organizado':'Organizar conversa'}</button>
+      ${parsed}
+      ${S.waParsed?`<button class="btn brand mt" style="width:100%" data-go="proposta" data-act="prop" data-arg="1">Preparar proposta ${ic('arrow','sm')}</button>`:''}
+    </div>
+  </div>`:`
+  <div class="grid g-side">
+    <div class="card"><table class="t"><thead><tr><th>Origem</th><th class="num">Leads</th><th class="num">Aderentes</th><th class="num">Propostas</th><th class="num">Fechados</th></tr></thead><tbody>
+      <tr><td><b>Indicação de arquitetos</b><div class="xs muted">3 parceiros</div></td><td class="num">5</td><td class="num">4</td><td class="num">3</td><td class="num">2</td></tr>
+      <tr><td><b>Google</b><div class="xs muted">busca orgânica</div></td><td class="num">6</td><td class="num">3</td><td class="num">2</td><td class="num">1</td></tr>
+      <tr><td><b>Instagram · "reforma em 30 dias"</b><div class="xs muted">utm_campaign=reforma30 · post-automation</div></td><td class="num">9</td><td class="num">1</td><td class="num">0</td><td class="num">0</td></tr>
+      <tr><td><b>Instagram · "antes e depois"</b><div class="xs muted">utm_campaign=antesdepois</div></td><td class="num">4</td><td class="num">1</td><td class="num">1</td><td class="num">0</td></tr>
+    </tbody></table></div>
+    <div class="stack">
+      ${agent('<b>O post "reforma em 30 dias" traz quem quer execução.</b><div class="xs soft mt8">7 de 9 leads pediram obra, não projeto. Sugestão: trocar a chamada para "projeto estrutural e complementares".</div><button class="btn outline sm mt8" data-act="toast" data-arg="Sugestão enviada à plataforma de marketing com o link do post.">Enviar sugestão ao marketing</button>','Agente do funil')}
+      ${agent('<b>Indicação de arquiteto converte 4 vezes mais.</b><div class="xs soft mt8">3 parceiros não recebem notícia há 60 dias. Preparei uma mensagem curta para cada um.</div><button class="btn outline sm mt8" data-act="toast" data-arg="3 mensagens prontas. Abra cada uma pelo WhatsApp para enviar.">Ver mensagens</button>','Agente do funil')}
+      <div class="callout info xs">${ic('alert','sm')}<div>Prospecção em fontes públicas (PNCP, alvarás) fica como experimento depois. Aqui o agente só lê o que já entrou no funil.</div></div>
+    </div>
+  </div>`}</div>`;
+};
+
+/* ---- proposta ---- */
+const PSTEPS=[['Lead','qualificado'],['Briefing','organizado'],['Proposta','pelo template'],['Envio','e-mail, link ou WhatsApp'],['Acompanhar','resposta e lembrete'],['Aceite','vira cliente e projeto']];
+const PLOG=[
+  [['09:02','Avaliei o lead: aderente (serviço, região e arquitetura pronta).'],['09:02','Liguei a conversa colada e a planta ao lead.']],
+  [['09:04','Extraí 5 dados da conversa e 2 da planta.'],['09:04','Abri 1 pergunta: arquitetura aprovada? Texto pronto no WhatsApp.'],['10:31','Marina registrou a resposta: aprovada em 20/10.']],
+  [['10:32','Apliquei o template Residencial térrea v3.'],['10:32','Calculei honorários pela sua tabela por m² (108 m²).'],['10:33','Prazo pela regra do template: 35 dias úteis após a arquitetura.']],
+  [['10:41','Marina aprovou a proposta v2.'],['10:42','E-mail enviado com PDF e link de aceite.'],['10:42','Texto do WhatsApp pronto; Marina enviou pelo celular.']],
+  [['14:05','Cliente abriu o link (2 vezes).'],['14:20','Pergunta da cliente colada: "dá para parcelar em 3x?"'],['14:21','Resposta preparada pela regra comercial (até 3x).'],['14:21','Lembrete marcado para 07/11 se não houver resposta.']],
+  [['16:48','Cliente aceitou no portal. Versão aceita guardada.'],['16:48','Lead virou cliente: Carla Alves.'],['16:48','Projeto criado com 4 disciplinas e cronograma do template.'],['16:49','Sinal de 30% programado no financeiro.']]
+];
+V.proposta=()=>{
+  const p=S.prop;
+  const steps=PSTEPS.map(([t,s],i)=>`<button class="step ${i<p?'done':i===p?'on':''}" data-act="prop" data-arg="${i}"><div class="bar"></div><div class="lb">${i+1}. ${t}<b>${s}</b></div></button>`).join('');
+  const log=PLOG.slice(0,p+1).flat().map(([h,t])=>`<div class="e"><span class="h">${h}</span><span>${t}</span></div>`).join('');
+  let body='';
+  if(p===0) body=`<div class="card p"><h3>Carla Alves ${b('success','Aderente')}</h3><div class="soft">Casa térrea de 108 m² em Bauru. Pede estrutural, elétrico e hidrossanitário.</div>
+    <div class="grid g3 mt"><div class="kpi"><div class="l">Origem</div><b>Indicação · Arq. Bruna Reis</b></div><div class="kpi"><div class="l">Capacidade</div><b>Estrutural livre em dez/26</b></div><div class="kpi"><div class="l">Ticket provável</div><b>${brl(15000)} a ${brl(20000)}</b></div></div>
+    ${'<div class="mt">'+agent('Combina com o escritório: serviço do catálogo, cidade atendida, arquitetura pronta e indicação de parceiro. <b>Próximo passo: organizar o briefing.</b>','Agente do funil')+'</div>'}</div>`;
+  if(p===1) body=`<div class="card p"><h3>Briefing</h3>
+    <div class="fld"><span class="k">Serviços</span><span>Estrutural, elétrico, hidrossanitário</span>${og('conversa')}</div>
+    <div class="fld"><span class="k">Área construída</span><span>108,0 m²</span>${og('pdf')}</div>
+    <div class="fld"><span class="k">Pavimentos</span><span>1 (térreo)</span>${og('pdf')}</div>
+    <div class="fld"><span class="k">Ambientes</span><span>5 (sala, cozinha, 2 quartos, banheiro)</span>${og('pdf')}</div>
+    <div class="fld"><span class="k">Cidade</span><span>Bauru/SP</span>${og('conversa')}</div>
+    <div class="fld"><span class="k">Início desejado</span><span>mar/2027 (expectativa)</span>${og('conversa')}</div>
+    <div class="fld"><span class="k">Arquitetura aprovada?</span><span>${S.proposalReplied?'Sim, aprovada em 20/10':'<span class="muted">aguardando cliente</span>'}</span>${S.proposalReplied?og('conversa'):og('falta')}</div>
+    ${S.proposalReplied?'':`<div class="row wrap mt"><a class="btn outline sm" target="_blank" rel="noopener" href="https://wa.me/5514900000001?text=${encodeURIComponent('Oi, Carla! A arquitetura já está aprovada na prefeitura?')}">${ic('send','sm')}Perguntar pelo WhatsApp</a><button class="btn brand sm" data-act="replied">Registrar resposta: aprovada</button></div>`}</div>`;
+  if(p===2) body=`<div class="card p"><h3>Proposta v2 · Residencial térrea v3 <span class="r">${b('neutral','rascunho')}</span></h3>
+    <table class="t"><thead><tr><th>Disciplina</th><th>Como saiu o valor</th><th class="num">Valor</th></tr></thead><tbody>
+    <tr><td>Estrutural</td><td class="xs">108 m² × ${brl(70)}/m² ${og('tabela')}</td><td class="num">${brl(7560)}</td></tr>
+    <tr><td>Elétrico</td><td class="xs">108 m² × ${brl(40)}/m² ${og('tabela')}</td><td class="num">${brl(4320)}</td></tr>
+    <tr><td>Hidrossanitário</td><td class="xs">108 m² × ${brl(40)}/m² ${og('tabela')}</td><td class="num">${brl(4320)}</td></tr>
+    <tr><td>Compatibilização</td><td class="xs">valor fixo ${og('regra')}</td><td class="num">${brl(2200)}</td></tr>
+    <tr><td><b>Total</b></td><td></td><td class="num"><b>${brl(18400)}</b></td></tr></tbody></table>
+    <div class="grid g2 mt xs soft"><div><b>Inclui</b><br>2 revisões por disciplina · memorial · ART · compatibilização com a arquitetura</div><div><b>Não inclui</b><br>taxas de prefeitura · projeto de arquitetura · acompanhamento de obra (opcional)</div><div><b>Prazo</b><br>35 dias úteis após a arquitetura aprovada ${og('regra')}</div><div><b>Pagamento</b><br>30% de sinal, saldo em até 3x ${og('regra')}</div></div>
+    <div class="callout warn xs mt">${ic('alert','sm')}<div>Honorário não sai da área da planta como regra universal: aqui vem da <b>sua tabela por m²</b> neste template. Mudar valor reabre a revisão.</div></div>
+    <div class="row mt"><button class="btn brand" data-act="prop" data-arg="3">Aprovar proposta</button><button class="btn outline">Editar</button><button class="btn ghost">${ic('file','sm')}Ver PDF</button></div></div>`;
+  if(p===3) body=`<div class="card p"><h3>Envio</h3><div class="grid g3">
+    <div class="card p"><div class="h3">${ic('send','sm')}E-mail</div><div class="xs soft">PDF + link de aceite no portal. Enviado às 10:42.</div><div class="mt8">${b('success','entregue')} ${b('info','aberto 14:05')}</div></div>
+    <div class="card p"><div class="h3">${ic('msg','sm')}WhatsApp por link</div><div class="xs soft">Texto e link prontos. Você envia do seu número.</div><a class="btn outline sm mt8" target="_blank" rel="noopener" href="https://wa.me/5514900000001?text=${encodeURIComponent('Carla, segue a proposta do projeto da sua casa: https://app.pilarsoft.com.br/p/7f3k. Qualquer dúvida me chama aqui.')}">Abrir no WhatsApp</a></div>
+    <div class="card p"><div class="h3">${ic('copy','sm')}Link</div><div class="xs soft">app.pilarsoft.com.br/p/7f3k</div><button class="btn ghost sm mt8" data-act="toast" data-arg="Link copiado.">Copiar link</button></div></div>
+    <button class="btn brand mt" data-act="prop" data-arg="4">Acompanhar resposta ${ic('arrow','sm')}</button></div>`;
+  if(p===4) body=`<div class="card p"><h3>Acompanhamento</h3>
+    <div class="bubble xs"><b>Carla, 14:20 (colado do WhatsApp):</b> dá para parcelar em 3x?</div>
+    <div class="mt8">${agent(`Pela regra do template, até 3x sem juros após o sinal. <b>Resposta pronta:</b><div class="bubble xs mt8">Dá sim, Carla: 30% de sinal e o restante em até 3x. Se preferir, já ajusto na proposta.</div><div class="row wrap mt8"><a class="btn brand sm" target="_blank" rel="noopener" href="https://wa.me/5514900000001?text=${encodeURIComponent('Dá sim, Carla: 30% de sinal e o restante em até 3x. Se preferir, já ajusto na proposta.')}">Enviar pelo WhatsApp</a><button class="btn outline sm">Editar</button></div>`,'Agente comercial')}</div>
+    <div class="callout info xs mt">${ic('clock','sm')}<div>Sem resposta até 07/11, preparo um lembrete. No máximo 2 lembretes, como manda o template. Se a cliente pedir para parar, paro.</div></div>
+    <button class="btn brand mt" data-act="prop" data-arg="5">Simular aceite no portal ${ic('arrow','sm')}</button></div>`;
+  if(p===5) body=`<div class="card p"><h3>${ic('check','sm')}Proposta aceita · 04/11 16:48</h3>
+    <div class="grid g3">
+      <div class="card p"><div class="xs muted">Lead</div><b>Carla Alves</b><div class="mt8">${b('success','virou cliente')}</div><div class="xs soft mt8">Conversa, planta e proposta aceita (snapshot v2) ficam no dossiê.</div></div>
+      <div class="card p"><div class="xs muted">Projeto criado</div><b>Residência Alves · complementares</b><div class="mt8">${b('proj','4 disciplinas')}</div><div class="xs soft mt8">Cronograma do template: estrutural 15 d, elétrico e hidro 10 d em paralelo, compatibilização 5 d.</div></div>
+      <div class="card p"><div class="xs muted">Financeiro</div><b>Sinal de ${brl(5520)}</b><div class="mt8">${b('info','programado')}</div><div class="xs soft mt8">Saldo em 3x, nas datas das entregas.</div></div>
+    </div>
+    <div class="mt">${agent('A planta já está no projeto. <b>Quer acompanhar a obra também?</b> A planta conferida vira os ambientes da obra e o modelo 3D.<div class="row wrap mt8"><button class="btn brand sm" data-go="documentos">Conferir a planta</button><button class="btn outline sm" data-go="obra">Criar obra vinculada</button></div>')}</div></div>`;
+  return head({crumbs:'Comercial › Carla Alves',title:'Do lead ao projeto',sub:'Cada passo mostra o que a Pilar fez e o que precisa de você.'})+`<div class="pc">
+    <div class="card p mb"><div class="steps">${steps}</div></div>
+    <div class="grid g-side"><div>${body}</div>
+      <div class="card p"><h3>${ic('spark','sm')}O que a Pilar fez</h3><div class="log">${log}</div>
+      <div class="row mt between"><button class="btn ghost sm" data-act="prop" data-arg="${Math.max(0,p-1)}" ${p===0?'disabled':''}>Voltar</button><button class="btn outline sm" data-act="prop" data-arg="${Math.min(5,p+1)}" ${p===5?'disabled':''}>Próximo passo</button></div></div>
+    </div></div>`;
+};
+
+/* ---- templates ---- */
+V.templates=()=>{
+  const t=S.tpl;
+  const list=`<div class="card p"><h3>Templates</h3><div class="stack">
+    <button class="item" style="text-align:left;border-color:hsl(var(--ink))"><span class="tt">Residencial térrea</span><span class="xs muted">proposta + projeto · v3 · usado em 12</span></button>
+    <button class="item" style="text-align:left"><span class="tt">Sobrado</span><span class="xs muted">proposta + projeto · v1 · usado em 4</span></button>
+    <button class="item" style="text-align:left"><span class="tt">Galpão metálico</span><span class="xs muted">proposta + projeto · v2 · usado em 3</span></button>
+    <button class="item" style="text-align:left"><span class="tt">Obra residencial</span><span class="xs muted">cronograma de obra · v1</span></button></div>
+    <button class="btn outline sm mt" style="width:100%">Novo template</button></div>`;
+  const prop=`<div class="card p"><h3>Proposta</h3>
+    <table class="t"><thead><tr><th>Disciplina</th><th>Preço</th><th>Mínimo</th><th>Revisões</th></tr></thead><tbody>
+    <tr><td>Estrutural</td><td>${brl(70)}/m²</td><td>${brl(4500)}</td><td>2</td></tr><tr><td>Elétrico</td><td>${brl(40)}/m²</td><td>${brl(2500)}</td><td>2</td></tr><tr><td>Hidrossanitário</td><td>${brl(40)}/m²</td><td>${brl(2500)}</td><td>2</td></tr><tr><td>Compatibilização</td><td>${brl(2200)} fixo</td><td>,</td><td>1</td></tr></tbody></table>
+    <div class="grid g2 mt xs soft"><div><b>Prazo</b><br>35 dias úteis após a arquitetura aprovada</div><div><b>Pagamento</b><br>30% de sinal, saldo em até 3x</div><div><b>Exclusões padrão</b><br>taxas de prefeitura, arquitetura, acompanhamento de obra</div><div><b>Acompanhamento</b><br>lembrete em 3 dias, no máximo 2, para quando o cliente pedir</div></div>
+    <div class="callout info xs mt">${ic('spark','sm')}<div>Lead aderente com área e serviços conhecidos gera a proposta sozinho por este template. Valor fora da tabela sempre pede sua revisão.</div></div></div>`;
+  const proj=`<div class="card p"><h3>Projeto</h3>
+    <table class="t"><thead><tr><th>Entregável</th><th>Depende de</th><th>Pronto quando</th><th class="num">Dias</th></tr></thead><tbody>
+    <tr><td>Estrutural: lançamento</td><td>arquitetura aprovada</td><td class="xs">planta de formas revisada pelo responsável</td><td class="num">8</td></tr>
+    <tr><td>Estrutural: detalhamento</td><td>lançamento</td><td class="xs">pranchas + memorial + ART</td><td class="num">7</td></tr>
+    <tr><td>Elétrico</td><td>layout de arquitetura</td><td class="xs">quadro de cargas + pranchas</td><td class="num">10</td></tr>
+    <tr><td>Hidrossanitário</td><td>layout de arquitetura</td><td class="xs">isométricos + pranchas</td><td class="num">10</td></tr>
+    <tr><td>Compatibilização</td><td>todas as disciplinas</td><td class="xs">relatório de interferências zerado</td><td class="num">5</td></tr></tbody></table>
+    <div class="xs soft mt"><b>Documentos de entrada exigidos:</b> planta de arquitetura (PDF ou DWG), sondagem para o estrutural, ponto de entrada de energia.</div></div>`;
+  return head({crumbs:'Configurações',title:'Templates',sub:'O jeito de trabalhar do escritório. A Pilar usa o template para montar proposta, projeto e cronograma.',acts:`<button class="btn brand">Salvar como v4</button>`,tabs:tabsBar([['proposta','Proposta','file'],['projeto','Projeto','layers']],t,'tpl')})+`<div class="pc"><div class="grid g-side-l">${list}<div class="stack">${t==='proposta'?prop:proj}<div class="callout ok xs">${ic('lock','sm')}<div>Mudar o template não altera propostas e projetos em andamento: cada um guarda a versão usada.</div></div></div></div></div>`;
+};
+
+/* ---- documentos / scanner ---- */
+const SCAN_STEPS=['Página 1 lida (PDF vetorial)','Escala 1:50 encontrada e conferida pela cota de 12,00 m','16 paredes e 13 aberturas detectadas','5 ambientes reconhecidos pelo texto da planta','Pé-direito não está na planta: usando 2,80 m'];
+V.documentos=()=>{
+  const st=S.scan;const done=st==='done';
+  const pipe=SCAN_STEPS.map((t,i)=>{const c=done||i<S.scanStep?'done':(st==='reading'&&i===S.scanStep?'on':'');return `<div class="s ${c}"><span class="m">${c==='done'?ic('check','sm'):''}</span><span>${t}</span></div>`}).join('');
+  const views=[['original','Original','file'],['2d','2D','plan'],['3d','3D','cube']];
+  const vbtn=views.map(([k,l,i])=>`<button class="btn sm ${S.scanView===k?'brand':'outline'}" data-act="scanview" data-arg="${k}" ${!done&&k!=='original'?'disabled':''}>${ic(i,'sm')}${l}</button>`).join('');
+  const rooms=PLAN.rooms.map(r=>`<tr><td><b>${r.nome}</b></td><td class="num">${fmt(area(r))} m²</td><td class="num">${fmt(per(r))} m</td><td>${og('pdf')}</td></tr>`).join('');
+  return head({crumbs:'Clientes › Carla Alves › Documentos',title:'Planta para 2D e 3D',sub:'A Pilar lê a planta arquitetônica e monta os ambientes. Você confere antes de usar em orçamento ou obra.',acts:`<button class="btn outline">${ic('upload','sm')}Enviar outra versão</button>`})+`<div class="pc">
+  <div class="grid" style="grid-template-columns:300px minmax(0,1fr) 300px">
+    <div class="stack">
+      <div class="drop">${ic('upload','lg')}<div class="xs soft mt8">Arraste a planta (PDF, DWG ou imagem)</div></div>
+      <div class="file"><div class="ic">PDF</div><div style="min-width:0"><b class="xs">planta-residencia-alves.pdf</b><div class="xs muted">2,4 MB · v1 · veio do WhatsApp</div></div></div>
+      <div class="card p"><h3>${ic('scan','sm')}Leitura</h3><div class="pipe">${pipe}</div>
+        ${st==='idle'?`<button class="btn brand mt8" style="width:100%" data-act="scan">${ic('spark','sm')}Ler planta</button>`:''}
+        ${done?`<div class="xs muted mt8">Original guardado sem alteração. Leitura v1 · 12 s · modelo e parser registrados.</div>`:''}
+      </div>
+    </div>
+    <div class="stack">
+      <div class="row wrap">${vbtn}<span class="xs muted" style="margin-left:auto">${S.scanView==='3d'?'Arraste para girar, role para aproximar':''}</span></div>
+      <div class="viewer" id="scanViewer" style="height:520px">${st==='reading'?'<div class="scanline"></div>':''}${S.scanView!=='3d'?`<div class="plan2d">${plan2D({mode:S.scanView==='original'?'paper':'clean'})}</div>`:''}${S.scanView==='3d'?'<div class="hint">Geometria simplificada: paredes e aberturas, sem estrutura</div>':''}</div>
+    </div>
+    <div class="stack">
+      ${done?`<div class="card"><table class="t"><thead><tr><th>Ambiente</th><th class="num">Área</th><th class="num">Perím.</th><th></th></tr></thead><tbody>${rooms}</tbody></table></div>
+      <div class="card p"><h3>${ic('alert','sm')}Lacunas</h3><div class="fld" style="grid-template-columns:1fr auto"><span class="xs">Pé-direito 2,80 m</span>${og('inferido')}</div><div class="fld" style="grid-template-columns:1fr auto"><span class="xs">Espessura de parede 15 cm</span>${og('inferido')}</div><div class="xs muted mt8">Nada inferido entra em quantitativo aprovado sem você confirmar.</div></div>
+      <div class="card p"><h3>${ic('calc','sm')}Quantitativos</h3><div class="fld" style="grid-template-columns:1fr auto auto"><span class="xs">Alvenaria</span><b class="xs">214 m²</b>${og('calc')}</div><div class="fld" style="grid-template-columns:1fr auto auto"><span class="xs">Piso</span><b class="xs">108 m²</b>${og('calc')}</div><div class="xs muted mt8">Paredes × pé-direito − aberturas. Fórmula e entradas ficam visíveis.</div></div>
+      <button class="btn brand" data-act="toast" data-arg="Ambientes confirmados. A obra Residência Alves passa a usar a planta v1.">Confirmar ambientes</button>
+      <button class="btn outline" data-go="obra">Usar na obra</button>`:`<div class="card p xs soft">Depois da leitura aparecem aqui os ambientes, as lacunas e os quantitativos derivados, cada um com a origem.</div>`}
+    </div>
+  </div></div>`;
+};
+
+/* ---- obra (cronograma + clima) ---- */
+const DAYS=Array.from({length:21},(_,i)=>{const d=new Date(2026,10,2+i);return {i,dd:String(d.getDate()).padStart(2,'0'),dw:['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][d.getDay()],wk:d.getDay()===0}});
+const RAIN=[3,4];const TODAY=2;
+function tasks(){
+  const a=S.clima;
+  return [
+    {g:'Estrutura',n:'Concretagem da laje da garagem',s:3,d:1,k:'critical',ext:1,eq:'Equipe Joaquim'},
+    {g:'Alvenaria',n:'Alvenaria quartos e banheiro',s:0,d:2,k:'done'},
+    {g:'Alvenaria',n:'Alvenaria da sala',s:1,d:3,k:'progress'},
+    {g:'Alvenaria',n:'Alvenaria da cozinha',s:16,d:3,k:'planned'},
+    {g:'Instalações',n:'Elétrica interna dos quartos',s:a?3:8,d:4,k:'planned',mv:a},
+    {g:'Revestimentos',n:'Reboco externo da fachada',s:a?7:3,d:2,k:'planned',ext:1,mv:a},
+    {g:'Revestimentos',n:'Contrapiso do banheiro',s:a?4:9,d:2,k:'planned',mv:a},
+    {g:'Revestimentos',n:'Piso da sala',s:11,d:3,k:'blocked'}
+  ];
+}
+const WX=[['Qua','04/11','sun',31,'0 mm'],['Qui','05/11','rain',22,'18 mm · 80%'],['Sex','06/11','rain',24,'6 mm · 60%'],['Sáb','07/11','cloud',27,'0 mm'],['Dom','08/11','sun',29,'0 mm'],['Seg','09/11','sun',30,'0 mm'],['Ter','10/11','cloud',28,'1 mm · 20%']];
+function gantt(){
+  const T=tasks();let html=`<div class="gantt"><div class="g-head"><div></div>${DAYS.map(d=>`<div class="d ${d.i===TODAY?'today':''}">${d.dw}<b>${d.dd}</b></div>`).join('')}</div><div class="g-head"><div class="xs muted" style="padding:4px 0">Clima</div>${DAYS.map(d=>`<div class="w ${RAIN.includes(d.i)?'rain':''}">${d.i<9?ic(RAIN.includes(d.i)?'rain':d.i===5||d.i===8?'cloud':'sun','sm'):''}</div>`).join('')}</div>`;
+  let g='';
+  T.forEach(t=>{
+    if(t.g!==g){g=t.g;html+=`<div class="g-row" style="border:0"><div class="g-grp">${g}</div></div>`}
+    const label=t.k==='blocked'?'bloqueado':t.k==='critical'?'RT':t.k==='progress'?'relatado':t.k==='done'?'feito':'';
+    html+=`<div class="g-row"><div class="nm">${t.ext?`<span title="Tarefa externa">${ic('sun','sm')}</span>`:''}<span class="tx">${t.n}</span></div>${DAYS.map(d=>`<div class="c ${RAIN.includes(d.i)?'rain':''} ${d.wk?'wk':''}"></div>`).join('')}<div class="gbar ${t.k} ${t.ext?'ext':''} ${t.mv?'moved':''}" style="left:calc(var(--g-name) + ${t.s} * var(--cw) + 2px);width:calc(${t.d} * var(--cw) - 4px)">${label}</div></div>`;
+  });
+  return html+`</div>`;
+}
+V.obra=()=>{
+  const a=S.clima;
+  const wx=WX.map((w,i)=>`<div class="d ${w[2]==='rain'?'rain':''} ${i===0?'today':''}"><span class="dd">${w[0]} ${w[1]}</span>${ic(w[2],'lg')}<span class="tp">${w[3]}°</span><span class="xs ${w[2]==='rain'?'':'muted'}">${w[4]}</span></div>`).join('');
+  const alt=`<div class="card p"><h3>${ic('rain','sm')}Chuva forte amanhã: 2 tarefas externas afetadas ${a?`<span class="r">${b('success','plano v14 aplicado')}</span>`:''}</h3>
+    <div class="grid g2">
+      <div><div class="xs muted mb" style="margin-bottom:6px">Afetadas</div>
+        <div class="chk">${ic('alert','sm')}<div><b>Concretagem da laje da garagem</b><div class="xs soft">Crítica. A Pilar não remarca sozinha: o responsável técnico decide.</div><button class="btn outline sm mt8" data-act="toast" data-arg="Pedido de decisão enviado ao Eng. Paulo Lima com a previsão anexada.">Pedir decisão ao RT</button></div></div>
+        <div class="chk">${ic('sun','sm')}<div><b>Reboco externo da fachada</b><div class="xs soft">${a?'Movido para seg 09/11 (sol).':'Proposta: mover para seg 09/11 (sol). Folga da etapa cobre.'}</div></div></div>
+      </div>
+      <div><div class="xs muted" style="margin-bottom:6px">Alternativa para a equipe amanhã</div>
+        <div class="chk"><span class="ok">${ic('check','sm')}</span><div><b>Elétrica interna dos quartos</b><div class="xs soft">Alvenaria confirmada · eletroduto em estoque · eletricista livre</div></div></div>
+        <div class="chk"><span class="ok">${ic('check','sm')}</span><div><b>Contrapiso do banheiro</b><div class="xs soft">Tubulação testada · cimento em estoque</div></div></div>
+        <div class="chk"><span class="no">${ic('x','sm')}</span><div><b>Piso da sala</b><div class="xs soft">Falta argamassa AC-III e a alvenaria da sala só foi relatada</div></div></div>
+      </div>
+    </div>
+    <div class="callout ${a?'ok':'info'} xs mt">${ic(a?'check':'clock','sm')}<div>${a?'Aviso enviado ao Pilar Campo de 3 pessoas. Leram: 1 de 3. O RDO de amanhã confirma o que foi feito de verdade.':'O prazo final da etapa não muda. Nenhum compromisso com o cliente é alterado.'}</div></div>
+    ${a?'':`<div class="row wrap mt"><button class="btn brand" data-act="clima">Aplicar e avisar a equipe</button><button class="btn outline">Ajustar</button></div>`}
+  </div>`;
+  const campoMsg=a?`<div class="card p"><h3>${ic('mic','sm')}Como chega no Campo</h3><div class="bubble xs"><b>Pilar · Residência Alves</b><br>Amanhã (qui 05/11) tem chuva forte. Plano novo para a equipe:<br>1. Elétrica interna dos quartos<br>2. Contrapiso do banheiro<br>Reboco da fachada passa para segunda. Concretagem: aguardar o Eng. Paulo.<br><span class="muted">Plano v14 · enviado por Marina</span></div><button class="btn outline sm mt8">Ver confirmações</button></div>`:'';
+  return head({crumbs:'Obras',title:'Residência Alves',sub:'Rua das Acácias, 210 · Bauru/SP · 38% concluída',acts:`<button class="btn outline">${ic('file','sm')}Diário</button>`,tabs:tabsBar([['cronograma','Cronograma e clima','cal'],['3d','Progresso 2D/3D','cube']],S.obraView,'obraview')})+`<div class="pc">
+  ${S.obraView==='cronograma'?`
+  <div class="row between wrap mb"><div class="h3" style="margin:0">${ic('sun','sm')}Próximos 7 dias</div><span class="xs muted">Open-Meteo (plano comercial) · consultado 06:00 · lat -22,31 · previsão não é certeza</span></div>
+  <div class="wx mb">${wx}</div>
+  <div class="grid g-side">${alt}<div class="stack">${campoMsg}<div class="card p xs soft"><b>Parâmetros por atividade</b><div class="mt8">Reboco externo: para com chuva acima de 5 mm.<br>Concretagem: decisão do responsável técnico.<br>Pintura externa: umidade acima de 85%.</div><div class="muted mt8">Definidos pelo responsável técnico do escritório.</div></div></div></div>
+  <div class="card mt"><div class="row between wrap" style="padding:12px 14px"><div class="h3" style="margin:0">${ic('cal','sm')}Cronograma · 02 a 22/11</div><div class="row wrap xs"><span>${b('success','feito')}</span><span>${b('warning','relatado')}</span><span>${b('proj','planejado')}</span><span>${b('danger','bloqueado')}</span><span class="b" style="background:hsl(var(--ink));color:hsl(var(--brand))">crítico</span></div></div><div class="scroll-x" style="padding:0 14px 14px">${gantt()}</div></div>`:`
+  <div class="grid g-side"><div class="stack"><div class="row wrap"><button class="btn sm ${S.campoView==='3d'?'brand':'outline'}" data-act="campoview" data-arg="3d">${ic('cube','sm')}3D</button><button class="btn sm ${S.campoView==='2d'?'brand':'outline'}" data-act="campoview" data-arg="2d">${ic('plan','sm')}2D</button></div>
+  <div class="viewer" id="obraViewer">${S.campoView==='2d'?`<div class="plan2d">${plan2D({states:wallStatesCampo(),hl:S.campo==='reported'?'sala':null})}</div>`:''}${legend()}</div></div>${progressTable()}</div>`}
+  </div>`;
+};
+function progressTable(){
+  const sala=S.campo==='reported'?b('warning','relatado 75%'):S.campo==='confirmed'?b('success','75%'):b('neutral','0%');
+  return `<div class="card"><div style="padding:12px 14px 0" class="h3">${ic('grid','sm')}Progresso por ambiente e serviço</div><table class="t"><thead><tr><th>Ambiente</th><th>Alvenaria</th><th>Elétrica</th><th>Piso</th></tr></thead><tbody>
+  <tr><td><b>Sala</b></td><td>${sala}</td><td>${b('neutral','0%')}</td><td>${b('danger','bloqueado')}</td></tr>
+  <tr><td><b>Cozinha</b></td><td>${b('neutral','0%')}</td><td>${b('neutral','0%')}</td><td>${b('neutral','0%')}</td></tr>
+  <tr><td><b>Quarto 1</b></td><td>${b('success','100%')}</td><td>${b('neutral','0%')}</td><td>${b('neutral','0%')}</td></tr>
+  <tr><td><b>Banheiro</b></td><td>${b('success','100%')}</td><td>${b('neutral','0%')}</td><td>${b('neutral','0%')}</td></tr>
+  <tr><td><b>Quarto 2</b></td><td>${b('success','100%')}</td><td>${b('neutral','0%')}</td><td>${b('neutral','0%')}</td></tr></tbody></table>
+  <div class="xs muted" style="padding:10px 14px">Progresso por serviço e parede, não "sala 60%" sem base. O relato muda o estado; a planta continua a mesma.</div></div>`;
+}
+
+/* ---- campo ---- */
+V.campo=()=>{
+  const c=S.campo;
+  let ph='';
+  if(c==='idle') ph=`<div class="xs muted">Residência Alves · qua 04/11</div><div class="bubble xs">Plano de hoje: <b>alvenaria da sala</b>. Amanhã chuva: elétrica interna e contrapiso.</div><div style="flex:1"></div><div class="xs muted" style="text-align:center">Fale o que foi feito. Pode sair: a Pilar organiza depois.</div><button class="rec" data-act="rec" aria-label="Gravar áudio">${ic('mic','lg')}</button><div class="row" style="justify-content:center;gap:16px"><button class="btn ghost sm">${ic('photo','sm')}Foto</button><button class="btn ghost sm">${ic('file','sm')}Texto</button></div>`;
+  if(c==='recording') ph=`<div class="xs muted">Gravando · 0:09</div><div style="flex:1"></div><div class="wave">${Array.from({length:18},(_,i)=>`<i style="animation-delay:${(i%6)*0.1}s"></i>`).join('')}</div><button class="rec on" aria-label="Parar">${ic('mic','lg')}</button><div class="xs muted" style="text-align:center">Toque para parar</div>`;
+  if(c==='processing') ph=`<div class="bubble xs">${ic('mic','sm')} Áudio 0:14 · enviado</div><div class="row xs muted"><svg class="ring" viewBox="0 0 44 44" style="width:22px;height:22px"><circle class="bg" cx="22" cy="22" r="17"/><circle class="fg" cx="22" cy="22" r="17"/></svg>Organizando o relato</div>`;
+  if(c==='reported'||c==='confirmed') ph=`<div class="bubble xs">${ic('mic','sm')} Áudio 0:14 · <i>"Levantamos as paredes da sala até em cima, só falta a do fundo, que tá esperando o bloco."</i></div>
+    ${agent(`<div class="xs"><b>Entendi assim:</b><br>Ambiente: Sala (planta v1)<br>Serviço: alvenaria<br>Paredes: frente, lateral e divisa com a cozinha<br>Falta: parede do fundo, aguardando bloco</div>`,'Pilar')}
+    <div class="xs">A parede do fundo é a que divide com o quarto 1?</div><div class="chips"><button class="chip on">Sim</button><button class="chip">Não</button></div>
+    <div class="callout ok xs">${ic('check','sm')}<div>Virou necessidade de bloco para conferir em Compras. Nada foi comprado.</div></div>`;
+  const phone=`<div class="phone"><div class="bar0"><span>9:42</span><span>Pilar Campo</span><span>4G</span></div><div class="pb"><div class="row between"><b>Registrar</b>${b('obra','Residência Alves')}</div>${ph}</div></div>`;
+  const statusCard=c==='reported'?`<div class="card p"><h3>${ic('mic','sm')}Relatado por Seu Joaquim, 09:42 <span class="r">${b('warning','aguardando conferência')}</span></h3><div class="xs soft">3 de 4 paredes da sala. O relato fica guardado como foi dito; a interpretação e a sua correção ficam ao lado.</div><div class="row wrap mt"><button class="btn brand" data-act="confirm">${ic('photo','sm')}Confirmar com foto</button><button class="btn outline" data-act="toast" data-arg="Marcado como divergente. A equipe recebe a pergunta no Campo.">Não confere</button></div></div>`
+    :c==='confirmed'?`<div class="card p"><h3>${ic('check','sm')}Conferido por Marina, 11:20 <span class="r">${b('success','confirmado')}</span></h3><div class="xs soft">Foto anexada. Agora pode entrar no relatório do cliente se você liberar.</div><button class="btn outline sm mt8" data-go="portal">Ver como o cliente vê</button></div>`
+    :`<div class="card p xs soft">${ic('clock','sm')} Grave um relato no celular para ver a obra subir no modelo.</div>`;
+  return head({crumbs:'Obras › Residência Alves',title:'Campo e progresso no 3D',sub:'O pedreiro fala; a Pilar liga o relato ao ambiente e ao serviço, e o modelo mostra o que mudou.',tabs:tabsBar([['3d','3D','cube'],['2d','2D','plan']],S.campoView,'campoview')})+`<div class="pc">
+    <div class="row" style="gap:20px;align-items:flex-start;flex-wrap:wrap">${phone}
+      <div class="stack" style="flex:1;min-width:280px"><div class="viewer" id="campoViewer" style="height:470px">${S.campoView==='2d'?`<div class="plan2d">${plan2D({states:wallStatesCampo(),hl:c==='reported'?'sala':null})}</div>`:''}${legend()}${S.campoView==='3d'?'<div class="hint hide-m">Arraste para girar</div>':''}</div>${statusCard}</div>
+    </div>
+    <div class="grid g2 mt">${progressTable()}<div class="card p"><h3>${ic('lock','sm')}O que fica guardado</h3><div class="xs soft stack"><div>Áudio original 0:14, por 12 meses (ADR 0062)</div><div>Transcrição e interpretação, com a versão do modelo</div><div>Correção do gestor, separada do original</div><div>Reenvio offline com o mesmo identificador não troca a mídia sem aviso</div></div></div></div>
+  </div>`;
+};
+
+/* ---- orçamento ---- */
+V.orcamento=()=>{
+  const L=[['Fundação (radier)','SINAPI 104658 · 108 m²','sinapi',38900],['Estrutura e alvenaria','CUB R8-N proporcional','cub',148200],['Instalações elétricas','tabela da empresa','empresa',21600],['Instalações hidrossanitárias','tabela da empresa','empresa',18400],['Esquadrias de alumínio','SINAPI 94573 · 13 un','sinapi',26300],['Revestimentos e pisos','CUB R8-N proporcional','cub',61500],['Muro de arrimo','valor do usuário','usuario',22000],['Marcenaria','referência do Pilar','ref',28000],['Climatização',',','definir',null],['Energia solar',',','definir',null]];
+  const total=L.reduce((s,l)=>s+(l[3]||0),0);
+  return head({crumbs:'Obras › Residência Alves',title:'Estimativa da obra',sub:'Cada linha mostra de onde veio o preço. A IA não inventa preço.',acts:`<button class="btn outline">${ic('file','sm')}PDF para o cliente</button>`})+`<div class="pc">
+    <div class="callout warn mb">${ic('alert','sm')}<div><b>Total parcial: ${brl(total)}</b><br><span class="xs">Faltam 2 itens sem preço (climatização e energia solar). O PDF também mostra "total parcial".</span></div></div>
+    <div class="grid g3 mb">
+      <div class="card p kpi"><div class="l">Procedência</div><div class="v">92%</div><div class="xs muted">do valor tem fonte identificada</div></div>
+      <div class="card p kpi"><div class="l">Completude</div><div class="v">80%</div><div class="xs muted">8 de 10 itens do escopo com preço</div></div>
+      <div class="card p kpi"><div class="l">Calibração</div><div class="v" style="font-size:16px;padding-top:6px">sem histórico</div><div class="xs muted">aparece depois de 3 obras comparáveis</div></div>
+    </div>
+    <div class="card"><table class="t cards"><thead><tr><th>Item</th><th>Base</th><th>Origem</th><th class="num">Valor</th></tr></thead><tbody>
+    ${L.map(l=>`<tr><td><b>${l[0]}</b></td><td class="xs soft">${l[1]}</td><td>${og(l[2])}</td><td class="num">${l[3]?brl(l[3]):'<span class="muted">a definir</span>'}</td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="callout info xs mt">${ic('lock','sm')}<div>Estimativa aprovada guarda mês, UF e regime das referências. Quando sair o SINAPI novo, a Pilar mostra a diferença e pergunta se você quer reorçar.</div></div>
+  </div>`;
+};
+
+/* ---- compras ---- */
+V.compras=()=>head({crumbs:'Obras › Residência Alves',title:'Compras',sub:'A Pilar calcula o que falta e quando começar a cotar. Comprar continua sendo decisão sua.'})+`<div class="pc">
+  <div class="grid g2">
+    <div class="card p"><h3>${ic('cart','sm')}Bloco cerâmico 14×19×29 <span class="r">${b('info','cotação em andamento')}</span></h3>
+      <div class="fld" style="grid-template-columns:1fr auto auto"><span class="xs">Demanda (cozinha + parede do fundo da sala)</span><b class="xs">2.150 un</b>${og('calc')}</div>
+      <div class="fld" style="grid-template-columns:1fr auto auto"><span class="xs">Perda aprovada 5%</span><b class="xs">+ 108 un</b>${og('regra')}</div>
+      <div class="fld" style="grid-template-columns:1fr auto auto"><span class="xs">Estoque na obra</span><b class="xs">− 600 un</b>${b('neutral','estoque')}</div>
+      <div class="fld" style="grid-template-columns:1fr auto auto"><span class="xs"><b>Necessidade líquida</b></span><b>1.658 un</b><span></span></div>
+      <div class="xs muted mt8">Necessário em 18/11 − entrega 4 d − aprovação 1 d − cotação 3 d − margem 2 d = <b>cotar até 08/11</b></div>
+    </div>
+    <div class="card p"><h3>${ic('alert','sm')}Argamassa AC-III <span class="r">${b('warning','só consultar')}</span></h3>
+      <div class="xs soft">40 sacos para o piso da sala.</div>
+      ${'<div class="mt8">'+agent('<b>Vale consultar; ainda não emitir pedido.</b><div class="xs soft mt8">A cliente escolhe o piso até 12/11 e a especificação pode mudar.</div>')+'</div>'}
+    </div>
+  </div>
+  <div class="card mt"><div class="row between wrap" style="padding:12px 14px"><div class="h3" style="margin:0">Respostas da cotação · 3 de 3</div><span class="xs muted">Referência: SINAPI 00007271 · ${brl(1.48)}/un · SP out/26</span></div>
+    <table class="t cards"><thead><tr><th>Fornecedor</th><th class="num">Unitário</th><th class="num">Frete</th><th>Entrega</th><th>Validade</th><th class="num">Total conhecido</th></tr></thead><tbody>
+      <tr><td><b>Depósito Central</b><div class="xs muted">nota 4,6 em 8 entregas</div></td><td class="num">${brl(1.55)}</td><td class="num">${brl(180)}</td><td>2 dias ${b('success','no prazo')}</td><td>15/11</td><td class="num"><b>${brl(2749.9)}</b></td></tr>
+      <tr><td><b>Cerâmica Bauru</b><div class="xs muted">nota 4,2 em 3 entregas</div></td><td class="num">${brl(1.42)}</td><td class="num">${S.frete?brl(220):b('warning','não informado')}</td><td>3 dias ${b('success','no prazo')}</td><td>10/11</td><td class="num">${S.frete?`<b>${brl(2574.36)}</b>`:'<span class="muted">incompleto</span>'}</td></tr>
+      <tr><td><b>Olaria São José</b><div class="xs muted">sem histórico</div></td><td class="num">${brl(1.35)}</td><td class="num">${brl(250)}</td><td>6 dias ${b('danger','chega 20/11')}</td><td>20/11</td><td class="num">${brl(2488.3)}</td></tr>
+    </tbody></table>
+    <div class="grid g3" style="padding:14px">
+      <div class="card p"><div class="xs muted">Menor total conhecido no prazo</div><b>${S.frete?'Cerâmica Bauru':'Depósito Central'}</b><div class="xs soft">${S.frete?brl(2574.36):brl(2749.9)}</div></div>
+      <div class="card p"><div class="xs muted">Menor unitário, falta frete</div><b>Cerâmica Bauru</b>${S.frete?`<div class="mt8">${b('success','frete recebido')}</div>`:`<a class="btn outline sm mt8" target="_blank" rel="noopener" data-act="frete" href="https://wa.me/5514900000010?text=${encodeURIComponent('Oi! Sobre a cotação de 1.658 blocos para a Rua das Acácias, 210: qual o valor do frete?')}">Perguntar frete</a>`}</div>
+      <div class="card p"><div class="xs muted">Fora do prazo</div><b>Olaria São José</b><div class="xs soft">Mais barato, mas chega 2 dias depois do necessário.</div></div>
+    </div>
+    <div class="row wrap" style="padding:0 14px 14px"><button class="btn brand" data-act="toast" data-arg="Pedido preparado. Falta a sua autorização para enviar ao fornecedor.">Preparar pedido</button><span class="xs muted">Frete ausente nunca vira zero. A Pilar não compra sozinha.</span></div>
+  </div></div>`;
+
+/* ---- preços ---- */
+V.precos=()=>{
+  const UF=[['SP','Sinduscon-SP',2238.58,2162.78,'out/26','ok'],['PR','Sinduscon-PR',2105.12,2031.4,'out/26','ok'],['MG','Sinduscon-MG',2011.9,1942.33,'out/26','ok'],['RJ','Sinduscon-Rio',2189.07,2114.55,'set/26','wait'],['RS','Sinduscon-RS',2201.6,2125.02,'set/26','q'],['SC','Sinduscon-SC',2290.44,2210.9,'out/26','ok']];
+  const st={ok:b('success','atualizado sozinho'),wait:b('neutral','aguardando publicação'),q:b('danger','quarentena')};
+  return head({crumbs:'Configurações',title:'Referências de preço',sub:'CUB e SINAPI chegam sozinhos. Você só é avisado quando algo foge do normal.'})+`<div class="pc">
+    <div class="grid g-side">
+      <div class="card"><div style="padding:12px 14px 0" class="h3">${ic('chart','sm')}CUB R8-N por estado</div><table class="t cards"><thead><tr><th>UF</th><th>Fonte</th><th class="num">Sem desoneração</th><th class="num">Com desoneração</th><th>Competência</th><th>Estado</th></tr></thead><tbody>
+      ${UF.map(u=>`<tr><td><b>${u[0]}</b></td><td class="xs">${u[1]}</td><td class="num">${brl(u[2])}</td><td class="num">${brl(u[3])}</td><td>${u[4]}</td><td>${st[u[5]]}</td></tr>`).join('')}
+      </tbody></table><div class="xs muted" style="padding:10px 14px">Mostrando 6 de 27 estados. Cada estado tem a sua fonte; conferir as 27 URLs é o primeiro passo.</div></div>
+      <div class="stack">
+        <div class="card p"><h3>${ic('refresh','sm')}SINAPI out/2026</h3><div class="xs soft">Importado sozinho em 09/10 às 06:10.<br>4.881 insumos · 10.612 composições · 27 UFs · 3 regimes</div><div class="xs muted mt8">Arquivo bruto guardado com hash a1f3…9c. Importar de novo não duplica nada.</div></div>
+        <div class="callout danger xs">${ic('alert','sm')}<div><b>CUB-RS em quarentena</b><br>A tabela de outubro veio em PDF digitalizado. A referência de setembro continua valendo, com aviso de defasagem nas estimativas do RS.<div class="row mt8"><button class="btn outline sm">Revisar</button></div></div></div>
+        <div class="card p xs soft"><b>Como funciona</b><div class="mt8">Todo dia às 06:00 a Pilar confere se saiu publicação nova. Só baixa quando o arquivo muda. Valida mês, UF, regime, código e unidade antes de ativar. Célula vazia nunca vira zero.</div></div>
+      </div>
+    </div></div>`;
+};
+
+/* ---- portal do cliente ---- */
+V.portal=()=>head({crumbs:'Visão do cliente',title:'Residência Alves',sub:'O que a Carla vê no portal. Só entra o que foi conferido e liberado.'})+`<div class="pc"><div style="max-width:760px">
+  <div class="portal-hero"><div class="xs" style="opacity:.7">Semana de 02 a 08/11</div><div style="font-size:20px;font-weight:700;margin:4px 0">Sua obra avançou 6% esta semana</div><div class="row wrap">${b('neutral','38% concluída')}${b('neutral','entrega prevista 20/03/2027')}</div></div>
+  <div class="card p mt"><h3>${ic('alert','sm')}Precisamos de você</h3><div class="row between wrap"><div><b>Escolher o piso da cozinha até 12/11</b><div class="xs soft">Para comprar a tempo da etapa de revestimentos.</div></div><button class="btn brand">Escolher piso</button></div></div>
+  <div class="card p mt"><h3>${ic('check','sm')}O que avançou</h3>
+    <div class="stack"><div><b>Paredes dos quartos e do banheiro levantadas</b><div class="xs muted">Conferido pela Eng. Marina em 03/11</div></div>
+    ${S.campo==='confirmed'?'<div><b>Paredes da sala levantadas (3 de 4)</b><div class="xs muted">Conferido em 04/11 · a última parede espera material</div></div>':''}
+    <div class="grid g3"><div class="photo"></div><div class="photo"></div><div class="photo"></div></div></div></div>
+  <div class="card p mt"><h3>${ic('rain','sm')}Clima</h3><div class="xs soft">Chuva prevista para quinta. A equipe vai trabalhar nas instalações internas. A data de entrega não muda.</div></div>
+  <div class="card mt"><div style="padding:12px 14px 0" class="h3">${ic('plan','sm')}Andamento na planta</div><div class="viewer" style="height:300px;border:0"><div class="plan2d">${plan2D({states:wallStatesCampo()})}</div></div></div>
+  <div class="xs muted mt">O cliente não vê áudio, notas internas, valores restritos nem avaliação de fornecedor.</div>
+</div></div>`;
+
+/* ============ shell e render ============ */
+function rail(){
+  const items=SCREENS.map(s=>`<button class="ri desk ${S.screen===s.id?'on':''} ${s.id==='inicio'?'sep':''}" data-go="${s.id}" aria-label="${s.label}">${ic(s.icon)}${s.label}${s.dot?'<span class="dot"></span>':''}</button>`).join('');
+  const mob=MOB.map(id=>{const s=SCREENS.find(x=>x.id===id);return `<button class="ri mob ${S.screen===id?'on':''}" data-go="${id}">${ic(s.icon)}${s.label}</button>`}).join('')+`<button class="ri mob ${!MOB.includes(S.screen)?'on':''}" data-act="sheet">${ic('menu')}Menu</button>`;
+  return `<nav class="rail" aria-label="Módulos"><div class="logo"><span class="mk"><i style="height:12px"></i><i style="height:20px"></i><i style="height:16px"></i></span>pilar</div>${items}${mob}</nav>`;
+}
+function sheet(){
+  if(!S.sheet)return '';
+  return `<div class="sheet-bg" data-act="sheet"><div class="sheet" onclick="event.stopPropagation()">${SCREENS.map(s=>`<button data-go="${s.id}">${ic(s.icon)}${s.label}</button>`).join('')}</div></div>`;
+}
+function render(){
+  dispose3D();
+  const id=S.screen;
+  let content;
+  if(S.state!=='cheio'){const v=V[id]();const h=v.slice(0,v.indexOf('<div class="pc">'));content=h+`<div class="pc">${stateView(id)}</div>`}
+  else content=V[id]();
+  document.getElementById('app').innerHTML=`<div class="shell">${rail()}<main>${content}</main></div>${sheet()}`;
+  document.querySelectorAll('#segDevice button').forEach(x=>x.classList.toggle('on',x.dataset.dev===S.device));
+  document.querySelectorAll('#segState button').forEach(x=>x.classList.toggle('on',x.dataset.st===S.state));
+  const g=document.querySelector('.gantt');if(g){g.style.setProperty('--g-name',getComputedStyle(g.querySelector('.g-head')).gridTemplateColumns.split(' ')[0])}
+  if(S.state!=='cheio')return;
+  requestAnimationFrame(after);
+}
+let SCAN3D=null,CAMPO3D=null;
+function after(){
+  const id=S.screen;
+  if(id==='documentos'&&S.scanView==='3d'){const el=document.getElementById('scanViewer');if(el)SCAN3D=mount3D(el,{states:Object.fromEntries(PLAN.walls.map(w=>[w.id,'neutral']))})}
+  if(id==='campo'&&S.campoView==='3d'){const el=document.getElementById('campoViewer');if(el){CAMPO3D=mount3D(el,{states:wallStatesCampo(),hlRoom:S.campo==='reported'?'sala':null});if(CAMPO3D&&S._animSala){SALA.forEach((w,i)=>CAMPO3D.setState(w,S._animSala,S._animSala==='reported',i*350));CAMPO3D.hl('sala');S._animSala=null}}}
+  if(id==='obra'&&S.obraView==='3d'&&S.campoView==='3d'){const el=document.getElementById('obraViewer');if(el)mount3D(el,{states:wallStatesCampo()})}
+}
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('on'),3600)}
+function go(id){S.screen=id;S.sheet=false;render();const d=document.getElementById('device');d.scrollTop=0;window.scrollTo({top:0})}
+
+function act(a,arg,el){
+  switch(a){
+    case 'st':S.state=arg;render();break;
+    case 'sheet':S.sheet=!S.sheet;render();break;
+    case 'toast':toast(arg);break;
+    case 'lead':S.lead=arg;S.waParsed=false;render();break;
+    case 'comtab':S.comTab=arg;render();break;
+    case 'waparse':S.waParsed=true;render();break;
+    case 'prop':S.prop=+arg;if(+arg>1)S.proposalReplied=true;render();break;
+    case 'replied':S.proposalReplied=true;render();toast('Resposta registrada no briefing, com a origem "da conversa".');break;
+    case 'tpl':S.tpl=arg;render();break;
+    case 'scanview':S.scanView=arg;render();break;
+    case 'scan':
+      S.scan='reading';S.scanStep=0;render();
+      const tick=()=>{S.scanStep++;if(S.scanStep>=SCAN_STEPS.length){S.scan='done';S.scanView='2d';render();toast('Planta lida. Confira os ambientes antes de usar.');return}render();setTimeout(tick,850)};
+      setTimeout(tick,850);break;
+    case 'obraview':S.obraView=arg;render();break;
+    case 'campoview':S.campoView=arg;render();break;
+    case 'clima':S.clima=true;render();toast('Plano v14 aplicado. Equipe avisada no Pilar Campo.');break;
+    case 'rec':
+      S.campo='recording';render();
+      setTimeout(()=>{S.campo='processing';render();setTimeout(()=>{S.campo='reported';
+        if(CAMPO3D&&S.campoView==='3d'){S._animSala='reported'}
+        render();toast('Relato ligado à sala. Paredes marcadas como relatadas.')},1600)},2600);break;
+    case 'confirm':S.campo='confirmed';if(S.campoView==='3d')S._animSala='done';render();toast('Conferido. Pode ir para o relatório do cliente.');break;
+    case 'frete':setTimeout(()=>{S.frete=true;render();toast('Frete recebido: R$ 220. Comparação atualizada.')},1500);break;
+  }
+}
+document.addEventListener('click',e=>{
+  const dv=e.target.closest('[data-dev]');if(dv){S.device=dv.dataset.dev;document.getElementById('device').className=S.device;render();return}
+  const st=e.target.closest('[data-st]');if(st){S.state=st.dataset.st;render();return}
+  const t=e.target.closest('[data-go],[data-act]');if(!t)return;
+  if(t.dataset.act)act(t.dataset.act,t.dataset.arg,t);
+  if(t.dataset.go)go(t.dataset.go);
+});
+render();
+</script>
+</body>
+</html>

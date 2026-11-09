@@ -172,7 +172,7 @@ export const MODULOS: Modulo[] = [
       {
         pergunta: "Quanto custa?",
         resposta:
-          "O preço é por escritório, sem cobrança por usuário, e todo plano tem a plataforma inteira. Para começar, agende uma demonstração: a gente mostra o Pilar e cria a conta do escritório com você.",
+          "O preço é por escritório, sem cobrança por usuário, e todo plano tem a plataforma inteira. Para começar, escolha o plano e assine pelo site: a conta fica pronta assim que o pagamento é confirmado. Prefere ver antes? Agende uma demonstração.",
       },
     ],
   },

@@ -1,0 +1,41 @@
+caso_b_p1 ocr {'vetor': 9, 't_vetor': 0.3, 'criterio': 'conteudo', 'dpis': (150, 300, 450), 'bloco_pt': 700, 'blocos': '3/4', 't_ocr': 13.4, 'ocr': 58, 'com_m2': 6, 'com_m2_e_nome': 6, 'recuperou': '8/9', 'recuperou_com_nome': '8/9', 'recuperou_com_m2': '5/9', 'sobras': 50, 'sobras_com_nome': 2, 'sobras_com_m2': 1}
+   Lavatório                  1.60
+   Piscina                   10.40
+   Prailha                    5.20
+   Living                    68.34
+   Lavabo                     2.40
+   Garagem                   32.24
+   Hall                      12.67
+   Lavanderia                 7.35
+   Lavatório                  2.40
+   Suite visitas              9.62
+                              3.70
+                              2.60
+                              1.90
+                              2.20
+                              6.70
+                              2.90
+                             10.22
+                              1.50
+                              1.50
+                              4.50
+                              1.50
+                              1.60
+                              2.30
+                              2.60
+                              6.60
+                              4.90
+                              4.01
+                              4.03
+                              3.00
+                              1.20
+                              3.90
+                              3.30
+                              4.50
+                              2.00
+                              2.00
+                              8.50
+                              5.00
+                              5.00
+                              1.50
+                              4.00

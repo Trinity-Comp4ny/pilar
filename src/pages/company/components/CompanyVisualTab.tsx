@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Palette, Upload, Maximize2 } from "lucide-react";
 import type { CompanyData } from "../types";
+import { useObjectUrl } from "@/pages/company/hooks/useObjectUrl";
 
 interface CompanyVisualTabProps {
   companyData: CompanyData;
@@ -30,6 +31,7 @@ export function CompanyVisualTab({
   onLogoFileChange,
   onLogoPreview,
 }: CompanyVisualTabProps) {
+  const previaLogo = useObjectUrl(pendingLogoFile);
   const openPreview = () => {
     if (pendingLogoFile || companyData.logoUrl) onLogoPreview();
   };
@@ -90,7 +92,7 @@ export function CompanyVisualTab({
             >
               {pendingLogoFile ? (
                 <img
-                  src={URL.createObjectURL(pendingLogoFile)}
+                  src={previaLogo ?? undefined}
                   alt="Logo (prévia)"
                   className="max-h-[240px] w-full object-contain"
                 />

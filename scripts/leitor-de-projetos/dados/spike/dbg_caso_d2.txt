@@ -1,0 +1,2 @@
+bbox rot 2036 4043 mask (6367, 9000) P.m(11)= 1110
+den=75.0 erodir=True pares h/v=659/404 parede_px=495936 vaos=0 seed=(2036,4043) comp=1 area_livre=5574.6 m2 (rotulo 193.68)

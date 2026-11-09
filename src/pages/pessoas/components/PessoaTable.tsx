@@ -75,7 +75,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
   const filteredPessoas = useMemo(() => {
     const term = searchTerm.trim();
     const matchesCargoFilter = (pessoa: Pessoa) =>
-      filterCargo === "todos" || normalize(pessoa.cargo ?? "") === normalize(filterCargo);
+      filterCargo === "todos" || normalize((pessoa.cargo ?? "").trim()) === normalize(filterCargo.trim());
 
     return pessoas.filter((pessoa) => {
       if (!term) return matchesCargoFilter(pessoa);

@@ -35,3 +35,20 @@ export type PurchasePayload = z.infer<typeof purchaseSchema>;
 export function statusInicialDaCompra(statusAsaas: string): "paid" | "pending" {
   return statusAsaas === "CONFIRMED" || statusAsaas === "RECEIVED" ? "paid" : "pending";
 }
+
+/** Valor (em reais, como o Asaas espera) e descrição da cobrança, sempre do catálogo. */
+export function cobrancaDoTier(tierId: TierId): {
+  tokens: number;
+  valorCentavos: number;
+  valor: number;
+  descricao: string;
+} {
+  const tier = TIER_CATALOG[tierId];
+  return {
+    tokens: tier.tokens,
+    valorCentavos: tier.valorCentavos,
+    valor: tier.valorCentavos / 100,
+    // Cliente vê créditos (1 crédito = 5 mil tokens, DECISOES.md 2026-11-06).
+    descricao: `Pilar — ${(tier.tokens / 5000).toLocaleString("pt-BR")} créditos de IA`,
+  };
+}

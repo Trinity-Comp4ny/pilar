@@ -3,10 +3,45 @@ import { lerAcaoEmMassa, lerExclusaoEmpresa, lerNovaEmpresa } from "./entrada.ts
 
 Deno.test("empresa nova: nome obrigatório e e-mail do dono normalizado", () => {
   const r = lerNovaEmpresa({ nome: " VRZ Engenharia ", owner_email: " Dono@VRZ.com.br ", cnpj: "" });
-  assertEquals(r.ok && r.data, { nome: "VRZ Engenharia", cnpj: null, ownerEmail: "dono@vrz.com.br", ownerNome: null });
+  assertEquals(r.ok && r.data, {
+    nome: "VRZ Engenharia",
+    cnpj: null,
+    ownerEmail: "dono@vrz.com.br",
+    ownerNome: null,
+    site: null,
+    porte: null,
+    disciplinas: null,
+    origem: null,
+  });
   assertEquals(lerNovaEmpresa({ owner_email: "a@b.co" }), { ok: false, error: "Nome da empresa é obrigatório" });
   assertEquals(lerNovaEmpresa({ nome: "X", owner_email: "dono" }), { ok: false, error: "E-mail do dono inválido" });
   assertEquals(lerNovaEmpresa(null), { ok: false, error: "Nome da empresa é obrigatório" });
+});
+
+Deno.test("empresa nova: perfil do escritório vindo da demonstração", () => {
+  const r = lerNovaEmpresa({
+    nome: "Alfa",
+    owner_email: "dono@alfa.com.br",
+    owner_nome: " Ana Souza ",
+    site: "https://www.Alfa.com.br/",
+    porte: "6-15",
+    disciplinas: ["estrutural", "arquitetura", "estrutural"],
+    origem: "ia",
+  });
+  assertEquals(r.ok && r.data, {
+    nome: "Alfa",
+    cnpj: null,
+    ownerEmail: "dono@alfa.com.br",
+    ownerNome: "Ana Souza",
+    site: "alfa.com.br",
+    porte: "6-15",
+    disciplinas: ["estrutural", "arquitetura"],
+    origem: "ia",
+  });
+  const base = { nome: "Alfa", owner_email: "dono@alfa.com.br" };
+  assertEquals(lerNovaEmpresa({ ...base, porte: "200" }), { ok: false, error: "Porte inválido" });
+  assertEquals(lerNovaEmpresa({ ...base, origem: "tv" }), { ok: false, error: "Origem inválida" });
+  assertEquals(lerNovaEmpresa({ ...base, disciplinas: ["eletrica"] }), { ok: false, error: "Disciplina inválida" });
 });
 
 Deno.test("ação em massa: feature em snake_case, valor booleano e escopo conhecido", () => {

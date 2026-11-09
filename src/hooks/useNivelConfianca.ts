@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export interface LimitesEmpresa {
   maxProjetos: number | null;
   maxObras: number | null;
+  maxLeads: number | null;
   maxUsuarios: number | null;
   tokensTotal: number | null;
   portalHabilitado: boolean;
@@ -20,7 +21,7 @@ export interface LimitesEmpresa {
 export function useNivelConfianca() {
   const { profile } = useAuth();
   const empresaId = profile?.empresa_id ?? null;
-  const isAdmin = profile?.role === "admin" || profile?.role === "owner" || profile?.role === "ultra_admin";
+  const isAdmin = profile?.role === "admin" || profile?.role === "ultra_admin";
 
   const query = useQuery({
     queryKey: ["limites-empresa", empresaId],
@@ -33,6 +34,7 @@ export function useNivelConfianca() {
       return {
         maxProjetos: data.max_projetos,
         maxObras: data.max_obras,
+        maxLeads: data.max_leads,
         maxUsuarios: data.max_usuarios,
         tokensTotal: data.tokens_total,
         portalHabilitado: data.portal_habilitado,

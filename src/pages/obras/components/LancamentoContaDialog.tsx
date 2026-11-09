@@ -47,8 +47,9 @@ export function LancamentoContaDialog({ open, onOpenChange, obraId, tipo, lancam
   const saving = saveAporte.isPending || saveDespesa.isPending;
 
   const submit = async () => {
+    // Number("") é 0: sem checar o vazio, deixar o valor em branco gravava um lançamento de R$ 0.
     const v = Number(valor);
-    if (!descricao.trim() || !Number.isFinite(v) || v < 0) {
+    if (!descricao.trim() || valor.trim() === "" || !Number.isFinite(v) || v < 0) {
       toast.error("Preencha descrição e um valor válido");
       return;
     }

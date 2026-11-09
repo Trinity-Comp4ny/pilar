@@ -21,8 +21,16 @@ export function firstPix(raw: unknown): string | null {
   if (!raw) return null;
   if (typeof raw === "string") return raw || null;
   if (Array.isArray(raw)) {
-    const first = raw.find((v) => typeof v === "string" && v) as string | undefined;
-    return first ?? null;
+    // Formato gravado pelo cadastro de pessoas: [{ chave, tipo }]. Sem este caso
+    // a folha e o comprovante saíam sem PIX para todo mundo.
+    for (const v of raw) {
+      if (typeof v === "string" && v) return v;
+      if (v && typeof v === "object" && typeof (v as { chave?: unknown }).chave === "string") {
+        const chave = (v as { chave: string }).chave;
+        if (chave) return chave;
+      }
+    }
+    return null;
   }
   if (typeof raw === "object") {
     const first = Object.values(raw as Record<string, unknown>).find((v) => typeof v === "string" && v);

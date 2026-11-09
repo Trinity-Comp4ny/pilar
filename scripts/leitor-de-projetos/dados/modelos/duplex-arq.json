@@ -1,0 +1,2453 @@
+{
+ "arquivo": "Duplex_A_20110907.ifc",
+ "esquema": "IFC2X3",
+ "ferramenta": [
+  "Autodesk Revit Architecture 2011"
+ ],
+ "pavimentos": [
+  {
+   "nome": "T/FDN",
+   "cota": -1.25,
+   "guid": "1xS3BCk291UvhgP2dvNsgp"
+  },
+  {
+   "nome": "Level 1",
+   "cota": 0.0,
+   "guid": "1xS3BCk291UvhgP2dvNMKI"
+  },
+  {
+   "nome": "Level 2",
+   "cota": 3.1,
+   "guid": "1xS3BCk291UvhgP2dvNMQJ"
+  },
+  {
+   "nome": "Roof",
+   "cota": 6.0,
+   "guid": "1xS3BCk291UvhgP2dvNtSE"
+  }
+ ],
+ "ambientes": [
+  {
+   "guid": "0BTBFw6f90Nfh9rP1dlXr2",
+   "codigo": "A102",
+   "nome": "Living Room",
+   "pavimento": "Level 1",
+   "z": [
+    0.02,
+    2.6
+   ],
+   "area_geometria": 27.66,
+   "area_ifc": 30.14,
+   "pe_direito": 2.6,
+   "perimetro": 22.03,
+   "contorno": [
+    [
+     6.2,
+     -17.383
+    ],
+    [
+     0.417,
+     -17.383
+    ],
+    [
+     0.417,
+     -12.6
+    ],
+    [
+     6.2,
+     -12.6
+    ],
+    [
+     6.2,
+     -17.383
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "0BTBFw6f90Nfh9rP1dlXr$",
+   "codigo": "A103",
+   "nome": "Kitchen",
+   "pavimento": "Level 1",
+   "z": [
+    0.01,
+    2.6
+   ],
+   "area_geometria": 12.95,
+   "area_ifc": 13.9,
+   "pe_direito": 2.6,
+   "perimetro": 16.42,
+   "contorno": [
+    [
+     0.417,
+     -12.6
+    ],
+    [
+     0.417,
+     -10.37
+    ],
+    [
+     6.226,
+     -10.37
+    ],
+    [
+     6.226,
+     -12.6
+    ],
+    [
+     0.417,
+     -12.6
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "0BTBFw6f90Nfh9rP1dlXru",
+   "codigo": "A104",
+   "nome": "Bathroom 1",
+   "pavimento": "Level 1",
+   "z": [
+    0.01,
+    2.6
+   ],
+   "area_geometria": 3.16,
+   "area_ifc": 4.0,
+   "pe_direito": 2.6,
+   "perimetro": 8.2,
+   "contorno": [
+    [
+     4.77,
+     -8.075
+    ],
+    [
+     6.226,
+     -8.075
+    ],
+    [
+     6.226,
+     -10.246
+    ],
+    [
+     4.77,
+     -10.246
+    ],
+    [
+     4.77,
+     -8.075
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "0BTBFw6f90Nfh9rP1dlXrr",
+   "codigo": "A101",
+   "nome": "Foyer",
+   "pavimento": "Level 1",
+   "z": [
+    0.02,
+    2.6
+   ],
+   "area_geometria": 15.59,
+   "area_ifc": 17.94,
+   "pe_direito": 2.6,
+   "perimetro": 24.22,
+   "contorno": [
+    [
+     6.2,
+     -13.8
+    ],
+    [
+     6.2,
+     -12.6
+    ],
+    [
+     6.226,
+     -12.6
+    ],
+    [
+     6.226,
+     -12.462
+    ],
+    [
+     6.226,
+     -10.995
+    ],
+    [
+     6.35,
+     -10.995
+    ],
+    [
+     6.35,
+     -10.308
+    ],
+    [
+     6.35,
+     -10.053
+    ],
+    [
+     6.35,
+     -9.291
+    ],
+    [
+     6.35,
+     -8.075
+    ],
+    [
+     7.369,
+     -8.075
+    ],
+    [
+     7.369,
+     -11.825
+    ],
+    [
+     8.383,
+     -11.825
+    ],
+    [
+     8.383,
+     -17.383
+    ],
+    [
+     6.324,
+     -17.383
+    ],
+    [
+     6.324,
+     -13.8
+    ],
+    [
+     6.2,
+     -13.8
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "0BTBFw6f90Nfh9rP1dlXri",
+   "codigo": "A201",
+   "nome": "Hallway",
+   "pavimento": "Level 2",
+   "z": [
+    3.12,
+    6.0
+   ],
+   "area_geometria": 6.89,
+   "area_ifc": 7.8,
+   "pe_direito": 2.9,
+   "perimetro": 15.32,
+   "contorno": [
+    [
+     6.418,
+     -7.945
+    ],
+    [
+     6.418,
+     -7.783
+    ],
+    [
+     6.418,
+     -6.728
+    ],
+    [
+     6.418,
+     -6.25
+    ],
+    [
+     6.478,
+     -6.25
+    ],
+    [
+     6.915,
+     -6.25
+    ],
+    [
+     8.383,
+     -6.25
+    ],
+    [
+     8.383,
+     -8.075
+    ],
+    [
+     7.369,
+     -8.075
+    ],
+    [
+     7.369,
+     -11.55
+    ],
+    [
+     7.321,
+     -11.55
+    ],
+    [
+     6.457,
+     -11.55
+    ],
+    [
+     6.418,
+     -11.55
+    ],
+    [
+     6.418,
+     -11.042
+    ],
+    [
+     6.418,
+     -8.809
+    ],
+    [
+     6.418,
+     -7.945
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "0BTBFw6f90Nfh9rP1dlXre",
+   "codigo": "A204",
+   "nome": "Bathroom 2",
+   "pavimento": "Level 2",
+   "z": [
+    3.11,
+    5.7
+   ],
+   "area_geometria": 4.73,
+   "area_ifc": 5.42,
+   "pe_direito": 2.6,
+   "perimetro": 9.84,
+   "contorno": [
+    [
+     6.294,
+     -7.845
+    ],
+    [
+     6.294,
+     -10.95
+    ],
+    [
+     4.77,
+     -10.95
+    ],
+    [
+     4.77,
+     -7.845
+    ],
+    [
+     6.294,
+     -7.845
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "0BTBFw6f90Nfh9rP1dlXrb",
+   "codigo": "A203",
+   "nome": "Bedroom 2",
+   "pavimento": "Level 2",
+   "z": [
+    3.12,
+    5.7
+   ],
+   "area_geometria": 22.04,
+   "area_ifc": 26.18,
+   "pe_direito": 2.6,
+   "perimetro": 21.48,
+   "contorno": [
+    [
+     7.321,
+     -11.674
+    ],
+    [
+     7.369,
+     -11.674
+    ],
+    [
+     8.383,
+     -11.674
+    ],
+    [
+     8.383,
+     -17.383
+    ],
+    [
+     4.675,
+     -17.383
+    ],
+    [
+     4.675,
+     -11.134
+    ],
+    [
+     4.694,
+     -11.134
+    ],
+    [
+     6.294,
+     -11.134
+    ],
+    [
+     6.294,
+     -11.674
+    ],
+    [
+     6.457,
+     -11.674
+    ],
+    [
+     7.321,
+     -11.674
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "0BTBFw6f90Nfh9rP1dlXrc",
+   "codigo": "A202",
+   "nome": "Bedroom 1",
+   "pavimento": "Level 2",
+   "z": [
+    3.12,
+    5.7
+   ],
+   "area_geometria": 22.04,
+   "area_ifc": 26.12,
+   "pe_direito": 2.6,
+   "perimetro": 21.42,
+   "contorno": [
+    [
+     4.675,
+     -6.666
+    ],
+    [
+     4.675,
+     -0.417
+    ],
+    [
+     8.383,
+     -0.417
+    ],
+    [
+     8.383,
+     -6.126
+    ],
+    [
+     7.342,
+     -6.126
+    ],
+    [
+     6.478,
+     -6.126
+    ],
+    [
+     6.294,
+     -6.126
+    ],
+    [
+     6.294,
+     -6.666
+    ],
+    [
+     4.694,
+     -6.666
+    ],
+    [
+     4.675,
+     -6.666
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "0BTBFw6f90Nfh9rP1dl_CZ",
+   "codigo": "B102",
+   "nome": "Living Room",
+   "pavimento": "Level 1",
+   "z": [
+    0.02,
+    2.6
+   ],
+   "area_geometria": 27.66,
+   "area_ifc": 30.14,
+   "pe_direito": 2.6,
+   "perimetro": 22.03,
+   "contorno": [
+    [
+     2.6,
+     -0.417
+    ],
+    [
+     8.383,
+     -0.417
+    ],
+    [
+     8.383,
+     -5.2
+    ],
+    [
+     2.6,
+     -5.2
+    ],
+    [
+     2.6,
+     -0.417
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "0BTBFw6f90Nfh9rP1dl_3S",
+   "codigo": "B103",
+   "nome": "Kitchen",
+   "pavimento": "Level 1",
+   "z": [
+    0.01,
+    2.6
+   ],
+   "area_geometria": 12.95,
+   "area_ifc": 13.9,
+   "pe_direito": 2.6,
+   "perimetro": 16.42,
+   "contorno": [
+    [
+     8.383,
+     -5.2
+    ],
+    [
+     8.383,
+     -7.43
+    ],
+    [
+     2.574,
+     -7.43
+    ],
+    [
+     2.574,
+     -5.2
+    ],
+    [
+     8.383,
+     -5.2
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "0BTBFw6f90Nfh9rP1dl_3P",
+   "codigo": "B104",
+   "nome": "Bathroom 1",
+   "pavimento": "Level 1",
+   "z": [
+    0.01,
+    2.6
+   ],
+   "area_geometria": 3.16,
+   "area_ifc": 4.0,
+   "pe_direito": 2.6,
+   "perimetro": 8.2,
+   "contorno": [
+    [
+     4.03,
+     -9.725
+    ],
+    [
+     2.574,
+     -9.725
+    ],
+    [
+     2.574,
+     -7.554
+    ],
+    [
+     4.03,
+     -7.554
+    ],
+    [
+     4.03,
+     -9.725
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "0BTBFw6f90Nfh9rP1dl_3Q",
+   "codigo": "B101",
+   "nome": "Foyer",
+   "pavimento": "Level 1",
+   "z": [
+    0.02,
+    2.6
+   ],
+   "area_geometria": 15.59,
+   "area_ifc": 17.94,
+   "pe_direito": 2.6,
+   "perimetro": 24.22,
+   "contorno": [
+    [
+     1.431,
+     -5.975
+    ],
+    [
+     0.417,
+     -5.975
+    ],
+    [
+     0.417,
+     -0.417
+    ],
+    [
+     2.476,
+     -0.417
+    ],
+    [
+     2.476,
+     -4.0
+    ],
+    [
+     2.6,
+     -4.0
+    ],
+    [
+     2.6,
+     -5.2
+    ],
+    [
+     2.574,
+     -5.2
+    ],
+    [
+     2.574,
+     -5.338
+    ],
+    [
+     2.574,
+     -6.805
+    ],
+    [
+     2.45,
+     -6.805
+    ],
+    [
+     2.45,
+     -7.492
+    ],
+    [
+     2.45,
+     -7.749
+    ],
+    [
+     2.45,
+     -8.513
+    ],
+    [
+     2.45,
+     -9.725
+    ],
+    [
+     1.431,
+     -9.725
+    ],
+    [
+     1.431,
+     -5.975
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "0BTBFw6f90Nfh9rP1dl_3G",
+   "codigo": "B201",
+   "nome": "Hallway",
+   "pavimento": "Level 2",
+   "z": [
+    3.12,
+    6.0
+   ],
+   "area_geometria": 6.89,
+   "area_ifc": 7.8,
+   "pe_direito": 2.9,
+   "perimetro": 15.32,
+   "contorno": [
+    [
+     2.282,
+     -11.55
+    ],
+    [
+     1.418,
+     -11.55
+    ],
+    [
+     0.417,
+     -11.55
+    ],
+    [
+     0.417,
+     -9.725
+    ],
+    [
+     1.431,
+     -9.725
+    ],
+    [
+     1.431,
+     -6.25
+    ],
+    [
+     1.483,
+     -6.25
+    ],
+    [
+     2.001,
+     -6.25
+    ],
+    [
+     2.347,
+     -6.25
+    ],
+    [
+     2.382,
+     -6.25
+    ],
+    [
+     2.382,
+     -6.758
+    ],
+    [
+     2.382,
+     -9.006
+    ],
+    [
+     2.382,
+     -9.87
+    ],
+    [
+     2.382,
+     -10.032
+    ],
+    [
+     2.382,
+     -11.072
+    ],
+    [
+     2.382,
+     -11.55
+    ],
+    [
+     2.282,
+     -11.55
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "0BTBFw6f90Nfh9rP1dl_3C",
+   "codigo": "B204",
+   "nome": "Bathroom 2",
+   "pavimento": "Level 2",
+   "z": [
+    3.11,
+    5.7
+   ],
+   "area_geometria": 4.75,
+   "area_ifc": 5.44,
+   "pe_direito": 2.6,
+   "perimetro": 9.87,
+   "contorno": [
+    [
+     2.506,
+     -9.97
+    ],
+    [
+     2.506,
+     -6.85
+    ],
+    [
+     4.03,
+     -6.85
+    ],
+    [
+     4.03,
+     -9.97
+    ],
+    [
+     2.506,
+     -9.97
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "0BTBFw6f90Nfh9rP1dl_39",
+   "codigo": "B203",
+   "nome": "Bedroom 2",
+   "pavimento": "Level 2",
+   "z": [
+    3.12,
+    5.7
+   ],
+   "area_geometria": 22.04,
+   "area_ifc": 26.18,
+   "pe_direito": 2.6,
+   "perimetro": 21.91,
+   "contorno": [
+    [
+     4.125,
+     -6.666
+    ],
+    [
+     4.106,
+     -6.666
+    ],
+    [
+     2.506,
+     -6.666
+    ],
+    [
+     2.506,
+     -6.126
+    ],
+    [
+     2.347,
+     -6.126
+    ],
+    [
+     1.483,
+     -6.126
+    ],
+    [
+     1.431,
+     -6.126
+    ],
+    [
+     0.417,
+     -6.126
+    ],
+    [
+     0.417,
+     -0.417
+    ],
+    [
+     4.125,
+     -0.417
+    ],
+    [
+     4.125,
+     -6.666
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "0BTBFw6f90Nfh9rP1dl_3A",
+   "codigo": "B202",
+   "nome": "Bedroom 1",
+   "pavimento": "Level 2",
+   "z": [
+    3.12,
+    5.7
+   ],
+   "area_geometria": 22.04,
+   "area_ifc": 26.12,
+   "pe_direito": 2.6,
+   "perimetro": 21.42,
+   "contorno": [
+    [
+     2.282,
+     -11.674
+    ],
+    [
+     2.506,
+     -11.674
+    ],
+    [
+     2.506,
+     -11.134
+    ],
+    [
+     4.106,
+     -11.134
+    ],
+    [
+     4.125,
+     -11.134
+    ],
+    [
+     4.125,
+     -17.383
+    ],
+    [
+     0.417,
+     -17.383
+    ],
+    [
+     0.417,
+     -11.674
+    ],
+    [
+     1.418,
+     -11.674
+    ],
+    [
+     2.282,
+     -11.674
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "2gRXFgjRn2HPE$YoDLX3FV",
+   "codigo": "A205",
+   "nome": "Utility",
+   "pavimento": "Level 2",
+   "z": [
+    3.11,
+    5.7
+   ],
+   "area_geometria": 1.42,
+   "area_ifc": 1.75,
+   "pe_direito": 2.6,
+   "perimetro": 5.43,
+   "contorno": [
+    [
+     6.294,
+     -6.79
+    ],
+    [
+     6.294,
+     -7.721
+    ],
+    [
+     4.77,
+     -7.721
+    ],
+    [
+     4.77,
+     -6.79
+    ],
+    [
+     6.294,
+     -6.79
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "2gRXFgjRn2HPE$YoDLX3FC",
+   "codigo": "B205",
+   "nome": "Utility",
+   "pavimento": "Level 2",
+   "z": [
+    3.11,
+    5.7
+   ],
+   "area_geometria": 1.4,
+   "area_ifc": 1.73,
+   "pe_direito": 2.6,
+   "perimetro": 5.4,
+   "contorno": [
+    [
+     2.506,
+     -11.01
+    ],
+    [
+     2.506,
+     -10.094
+    ],
+    [
+     4.03,
+     -10.094
+    ],
+    [
+     4.03,
+     -11.01
+    ],
+    [
+     2.506,
+     -11.01
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "10mjSDZJj9gPS2PrQaxa3z",
+   "codigo": "A105",
+   "nome": "Stair",
+   "pavimento": "Level 1",
+   "z": [
+    0.02,
+    5.7
+   ],
+   "area_geometria": 3.8,
+   "area_ifc": 4.92,
+   "pe_direito": 5.7,
+   "perimetro": 10.5,
+   "contorno": [
+    [
+     7.369,
+     -11.825
+    ],
+    [
+     7.369,
+     -8.075
+    ],
+    [
+     8.383,
+     -8.075
+    ],
+    [
+     8.383,
+     -11.825
+    ],
+    [
+     7.369,
+     -11.825
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "10mjSDZJj9gPS2PrQaxa4o",
+   "codigo": "B105",
+   "nome": "Room",
+   "pavimento": "Level 1",
+   "z": [
+    0.02,
+    5.7
+   ],
+   "area_geometria": 3.8,
+   "area_ifc": 4.92,
+   "pe_direito": 5.7,
+   "perimetro": 10.5,
+   "contorno": [
+    [
+     0.417,
+     -9.725
+    ],
+    [
+     0.417,
+     -5.975
+    ],
+    [
+     1.431,
+     -5.975
+    ],
+    [
+     1.431,
+     -9.725
+    ],
+    [
+     0.417,
+     -9.725
+    ]
+   ],
+   "origem": "ifc"
+  },
+  {
+   "guid": "0pNy6pOyf7JPmXRLgxs3sW",
+   "codigo": "R301",
+   "nome": "Roof",
+   "pavimento": "Roof",
+   "z": [
+    6.0,
+    9.0
+   ],
+   "area_geometria": 135.15,
+   "area_ifc": 145.72,
+   "pe_direito": 3.0,
+   "perimetro": 51.53,
+   "contorno": [
+    [
+     8.383,
+     -0.417
+    ],
+    [
+     8.383,
+     -17.383
+    ],
+    [
+     0.417,
+     -17.383
+    ],
+    [
+     0.417,
+     -0.417
+    ],
+    [
+     8.383,
+     -0.417
+    ]
+   ],
+   "origem": "ifc"
+  }
+ ],
+ "paredes": [
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FKau",
+   "nome": "Basic Wall:Party Wall - CMU Residential Unit Dimising Wall:143239",
+   "pavimento": "Level 2",
+   "comprimento": 16.966,
+   "espessura": 0.55,
+   "altura": 2.9,
+   "externa": true,
+   "faces": [
+    "Bedroom 1",
+    "Bedroom 2"
+   ],
+   "area_bruta": 49.2,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 49.2
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FNtn",
+   "nome": "Basic Wall:Exterior - Brick on Block:138062",
+   "pavimento": "Level 1",
+   "comprimento": 8.8,
+   "espessura": 0.417,
+   "altura": 3.1,
+   "externa": true,
+   "faces": [
+    "Foyer",
+    "Living Room"
+   ],
+   "area_bruta": 27.28,
+   "aberturas_m2": 13.67,
+   "origem": "ifc",
+   "area_liquida": 13.61
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FNqI",
+   "nome": "Basic Wall:Exterior - Brick on Block:138157",
+   "pavimento": "Level 1",
+   "comprimento": 17.383,
+   "espessura": 0.417,
+   "altura": 3.1,
+   "externa": true,
+   "faces": [
+    "Foyer",
+    "Kitchen",
+    "Living Room",
+    "Stair"
+   ],
+   "area_bruta": 53.89,
+   "aberturas_m2": 4.16,
+   "origem": "ifc",
+   "area_liquida": 49.73
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FNr2",
+   "nome": "Basic Wall:Exterior - Brick on Block:138237",
+   "pavimento": "Level 1",
+   "comprimento": 8.383,
+   "espessura": 0.417,
+   "altura": 3.1,
+   "externa": true,
+   "faces": [
+    "Foyer",
+    "Living Room"
+   ],
+   "area_bruta": 25.99,
+   "aberturas_m2": 13.67,
+   "origem": "ifc",
+   "area_liquida": 12.32
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FNhv",
+   "nome": "Basic Wall:Exterior - Brick on Block:138310",
+   "pavimento": "Level 1",
+   "comprimento": 16.966,
+   "espessura": 0.417,
+   "altura": 3.1,
+   "externa": true,
+   "faces": [
+    "Foyer",
+    "Kitchen",
+    "Living Room",
+    "Room"
+   ],
+   "area_bruta": 52.59,
+   "aberturas_m2": 4.16,
+   "origem": "ifc",
+   "area_liquida": 48.43
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FNld",
+   "nome": "Basic Wall:Interior - Partition (92mm Stud):138584",
+   "pavimento": "Level 1",
+   "comprimento": 3.583,
+   "espessura": 0.124,
+   "altura": 2.795,
+   "externa": false,
+   "faces": [
+    "Foyer",
+    "Living Room"
+   ],
+   "area_bruta": 10.01,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 10.01
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FNau",
+   "nome": "Basic Wall:Interior - Partition (92mm Stud):139143",
+   "pavimento": "Level 1",
+   "comprimento": 2.92,
+   "espessura": 0.124,
+   "altura": 2.795,
+   "externa": false,
+   "faces": [
+    "Bathroom 1",
+    "Foyer",
+    "Kitchen"
+   ],
+   "area_bruta": 8.16,
+   "aberturas_m2": 1.55,
+   "origem": "ifc",
+   "area_liquida": 6.61
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FNbT",
+   "nome": "Basic Wall:Party Wall - CMU Residential Unit Dimising Wall:139234",
+   "pavimento": "Level 1",
+   "comprimento": 4.201,
+   "espessura": 0.493,
+   "altura": 2.795,
+   "externa": true,
+   "faces": [
+    "Bathroom 1",
+    "Foyer",
+    "Stair"
+   ],
+   "area_bruta": 11.74,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 11.74
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FKRi",
+   "nome": "Basic Wall:Party Wall - CMU Residential Unit Dimising Wall:139347",
+   "pavimento": "Level 1",
+   "comprimento": 4.201,
+   "espessura": 0.493,
+   "altura": 2.795,
+   "externa": true,
+   "faces": [
+    "Bathroom 1",
+    "Foyer",
+    "Room"
+   ],
+   "area_bruta": 11.74,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 11.74
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FKRH",
+   "nome": "Basic Wall:Party Wall - CMU Residential Unit Dimising Wall:139374",
+   "pavimento": "Level 1",
+   "comprimento": 2.2,
+   "espessura": 0.55,
+   "altura": 2.795,
+   "externa": true,
+   "faces": [],
+   "area_bruta": 6.15,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 6.15
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FKST",
+   "nome": "Basic Wall:Interior - Partition (92mm Stud):139682",
+   "pavimento": "Level 1",
+   "comprimento": 2.92,
+   "espessura": 0.124,
+   "altura": 2.795,
+   "externa": false,
+   "faces": [
+    "Bathroom 1",
+    "Foyer",
+    "Kitchen"
+   ],
+   "area_bruta": 8.16,
+   "aberturas_m2": 1.55,
+   "origem": "ifc",
+   "area_liquida": 6.61
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FKIu",
+   "nome": "Basic Wall:Interior - Partition (92mm Stud):139783",
+   "pavimento": "Level 1",
+   "comprimento": 1.456,
+   "espessura": 0.124,
+   "altura": 2.795,
+   "externa": false,
+   "faces": [
+    "Bathroom 1",
+    "Kitchen"
+   ],
+   "area_bruta": 4.07,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 4.07
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FKGS",
+   "nome": "Basic Wall:Interior - Partition (92mm Stud):139939",
+   "pavimento": "Level 1",
+   "comprimento": 3.583,
+   "espessura": 0.124,
+   "altura": 2.795,
+   "externa": false,
+   "faces": [
+    "Foyer",
+    "Living Room"
+   ],
+   "area_bruta": 10.01,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 10.01
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FK80",
+   "nome": "Basic Wall:Foundation - Concrete (417mm):140479",
+   "pavimento": "T/FDN",
+   "comprimento": 8.8,
+   "espessura": 0.417,
+   "altura": 1.25,
+   "externa": true,
+   "faces": [],
+   "area_bruta": 11.0,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 11.0
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FK9N",
+   "nome": "Basic Wall:Foundation - Concrete (417mm):140520",
+   "pavimento": "T/FDN",
+   "comprimento": 17.383,
+   "espessura": 0.417,
+   "altura": 1.25,
+   "externa": true,
+   "faces": [],
+   "area_bruta": 21.73,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 21.73
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FKEr",
+   "nome": "Basic Wall:Foundation - Concrete (417mm):140554",
+   "pavimento": "T/FDN",
+   "comprimento": 8.383,
+   "espessura": 0.417,
+   "altura": 1.25,
+   "externa": true,
+   "faces": [],
+   "area_bruta": 10.48,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 10.48
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FKE5",
+   "nome": "Basic Wall:Foundation - Concrete (417mm):140602",
+   "pavimento": "T/FDN",
+   "comprimento": 16.966,
+   "espessura": 0.417,
+   "altura": 1.25,
+   "externa": true,
+   "faces": [],
+   "area_bruta": 21.21,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 21.21
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FK3E",
+   "nome": "Basic Wall:Foundation - Concrete (435mm):140913",
+   "pavimento": "T/FDN",
+   "comprimento": 4.2,
+   "espessura": 0.435,
+   "altura": 1.25,
+   "externa": true,
+   "faces": [],
+   "area_bruta": 5.25,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 5.25
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FK04",
+   "nome": "Basic Wall:Foundation - Concrete (435mm):140987",
+   "pavimento": "T/FDN",
+   "comprimento": 4.2,
+   "espessura": 0.435,
+   "altura": 1.25,
+   "externa": true,
+   "faces": [],
+   "area_bruta": 5.25,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 5.25
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FK1b",
+   "nome": "Basic Wall:Foundation - Concrete (435mm):141018",
+   "pavimento": "T/FDN",
+   "comprimento": 1.765,
+   "espessura": 0.435,
+   "altura": 1.123,
+   "externa": true,
+   "faces": [],
+   "area_bruta": 1.98,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 1.98
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FLQD",
+   "nome": "Basic Wall:Exterior - Brick on Block:143410",
+   "pavimento": "Level 2",
+   "comprimento": 8.8,
+   "espessura": 0.417,
+   "altura": 2.9,
+   "externa": true,
+   "faces": [
+    "Bedroom 1",
+    "Bedroom 2"
+   ],
+   "area_bruta": 25.52,
+   "aberturas_m2": 8.61,
+   "origem": "ifc",
+   "area_liquida": 16.91
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FLR9",
+   "nome": "Basic Wall:Exterior - Brick on Block:143478",
+   "pavimento": "Level 2",
+   "comprimento": 17.8,
+   "espessura": 0.417,
+   "altura": 2.9,
+   "externa": true,
+   "faces": [
+    "Bedroom 1",
+    "Bedroom 2",
+    "Hallway"
+   ],
+   "area_bruta": 51.62,
+   "aberturas_m2": 10.26,
+   "origem": "ifc",
+   "area_liquida": 41.36
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FLOH",
+   "nome": "Basic Wall:Exterior - Brick on Block:143534",
+   "pavimento": "Level 2",
+   "comprimento": 8.8,
+   "espessura": 0.417,
+   "altura": 2.9,
+   "externa": true,
+   "faces": [
+    "Bedroom 1",
+    "Bedroom 2"
+   ],
+   "area_bruta": 25.52,
+   "aberturas_m2": 8.61,
+   "origem": "ifc",
+   "area_liquida": 16.91
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FLPP",
+   "nome": "Basic Wall:Exterior - Brick on Block:143590",
+   "pavimento": "Level 2",
+   "comprimento": 17.8,
+   "espessura": 0.417,
+   "altura": 2.9,
+   "externa": true,
+   "faces": [
+    "Bedroom 1",
+    "Bedroom 2",
+    "Hallway"
+   ],
+   "area_bruta": 51.62,
+   "aberturas_m2": 10.26,
+   "origem": "ifc",
+   "area_liquida": 41.36
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FLTF",
+   "nome": "Basic Wall:Interior - Partition (92mm Stud):143856",
+   "pavimento": "Level 1",
+   "comprimento": 2.089,
+   "espessura": 0.124,
+   "altura": 3.388,
+   "externa": false,
+   "faces": [
+    "Foyer",
+    "Room"
+   ],
+   "area_bruta": 7.08,
+   "aberturas_m2": 1.76,
+   "origem": "ifc",
+   "area_liquida": 5.32
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FLIE",
+   "nome": "Basic Wall:Interior - Partition (92mm Stud):143921",
+   "pavimento": "Level 2",
+   "comprimento": 5.424,
+   "espessura": 0.124,
+   "altura": 2.9,
+   "externa": false,
+   "faces": [
+    "Bathroom 2",
+    "Bedroom 1",
+    "Bedroom 2",
+    "Hallway",
+    "Utility"
+   ],
+   "area_bruta": 15.73,
+   "aberturas_m2": 1.76,
+   "origem": "ifc",
+   "area_liquida": 13.97
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FLJd",
+   "nome": "Basic Wall:Interior - Partition (92mm Stud):143960",
+   "pavimento": "Level 2",
+   "comprimento": 1.965,
+   "espessura": 0.124,
+   "altura": 2.9,
+   "externa": false,
+   "faces": [
+    "Bedroom 1",
+    "Hallway"
+   ],
+   "area_bruta": 5.7,
+   "aberturas_m2": 1.76,
+   "origem": "ifc",
+   "area_liquida": 3.94
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FLMr",
+   "nome": "Basic Wall:Interior - Plumbing (152mm Stud):144138",
+   "pavimento": "Level 2",
+   "comprimento": 1.619,
+   "espessura": 0.184,
+   "altura": 2.9,
+   "externa": false,
+   "faces": [
+    "Bathroom 2",
+    "Bedroom 2"
+   ],
+   "area_bruta": 4.7,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 4.7
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FLKI",
+   "nome": "Basic Wall:Interior - Partition (92mm Stud):144301",
+   "pavimento": "Level 2",
+   "comprimento": 1.619,
+   "espessura": 0.124,
+   "altura": 2.9,
+   "externa": false,
+   "faces": [
+    "Bedroom 1",
+    "Utility"
+   ],
+   "area_bruta": 4.7,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 4.7
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FL8v",
+   "nome": "Basic Wall:Interior - Partition (92mm Stud):144518",
+   "pavimento": "Level 1",
+   "comprimento": 2.089,
+   "espessura": 0.124,
+   "altura": 3.388,
+   "externa": false,
+   "faces": [
+    "Foyer",
+    "Stair"
+   ],
+   "area_bruta": 7.08,
+   "aberturas_m2": 1.76,
+   "origem": "ifc",
+   "area_liquida": 5.32
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FL9r",
+   "nome": "Basic Wall:Interior - Partition (92mm Stud):144586",
+   "pavimento": "Level 2",
+   "comprimento": 5.424,
+   "espessura": 0.124,
+   "altura": 2.9,
+   "externa": false,
+   "faces": [
+    "Bathroom 2",
+    "Bedroom 1",
+    "Bedroom 2",
+    "Hallway",
+    "Utility"
+   ],
+   "area_bruta": 15.73,
+   "aberturas_m2": 1.76,
+   "origem": "ifc",
+   "area_liquida": 13.97
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FL96",
+   "nome": "Basic Wall:Interior - Partition (92mm Stud):144633",
+   "pavimento": "Level 2",
+   "comprimento": 1.965,
+   "espessura": 0.124,
+   "altura": 2.9,
+   "externa": false,
+   "faces": [
+    "Bedroom 1",
+    "Hallway"
+   ],
+   "area_bruta": 5.7,
+   "aberturas_m2": 1.76,
+   "origem": "ifc",
+   "area_liquida": 3.94
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FLEJ",
+   "nome": "Basic Wall:Interior - Partition (92mm Stud):144684",
+   "pavimento": "Level 2",
+   "comprimento": 1.619,
+   "espessura": 0.124,
+   "altura": 2.9,
+   "externa": false,
+   "faces": [
+    "Bedroom 1",
+    "Utility"
+   ],
+   "area_bruta": 4.7,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 4.7
+  },
+  {
+   "guid": "2O2Fr$t4X7Zf8NOew3FLCm",
+   "nome": "Basic Wall:Interior - Plumbing (152mm Stud):144783",
+   "pavimento": "Level 2",
+   "comprimento": 1.619,
+   "espessura": 0.184,
+   "altura": 2.9,
+   "externa": false,
+   "faces": [
+    "Bathroom 2",
+    "Bedroom 2"
+   ],
+   "area_bruta": 4.7,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 4.7
+  },
+  {
+   "guid": "0jf0rYHfX3RAB3bSIRjmmy",
+   "nome": "Basic Wall:Exterior - Brick on Block:184944",
+   "pavimento": "Roof",
+   "comprimento": 8.8,
+   "espessura": 0.417,
+   "altura": 0.609,
+   "externa": true,
+   "faces": [
+    "Roof"
+   ],
+   "area_bruta": 5.36,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 5.36
+  },
+  {
+   "guid": "0jf0rYHfX3RAB3bSIRjmpw",
+   "nome": "Basic Wall:Exterior - Brick on Block:185014",
+   "pavimento": "Roof",
+   "comprimento": 17.383,
+   "espessura": 0.417,
+   "altura": 0.609,
+   "externa": true,
+   "faces": [
+    "Roof"
+   ],
+   "area_bruta": 10.59,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 10.59
+  },
+  {
+   "guid": "0jf0rYHfX3RAB3bSIRjmoa",
+   "nome": "Basic Wall:Exterior - Brick on Block:185064",
+   "pavimento": "Roof",
+   "comprimento": 8.383,
+   "espessura": 0.417,
+   "altura": 0.609,
+   "externa": true,
+   "faces": [
+    "Roof"
+   ],
+   "area_bruta": 5.11,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 5.11
+  },
+  {
+   "guid": "0jf0rYHfX3RAB3bSIRjmr1",
+   "nome": "Basic Wall:Exterior - Brick on Block:185101",
+   "pavimento": "Roof",
+   "comprimento": 16.966,
+   "espessura": 0.417,
+   "altura": 0.609,
+   "externa": true,
+   "faces": [
+    "Roof"
+   ],
+   "area_bruta": 10.33,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 10.33
+  },
+  {
+   "guid": "0iEHWY1$XA8eQeeULq4jZ1",
+   "nome": "Basic Wall:Interior - Furring (152 mm Stud):189074",
+   "pavimento": "Level 1",
+   "comprimento": 4.353,
+   "espessura": 0.152,
+   "altura": 2.795,
+   "externa": false,
+   "faces": [
+    "Kitchen"
+   ],
+   "area_bruta": 12.17,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 12.17
+  },
+  {
+   "guid": "0iEHWY1$XA8eQeeULq4j_U",
+   "nome": "Basic Wall:Interior - Furring (152 mm Stud):189901",
+   "pavimento": "Level 1",
+   "comprimento": 2.143,
+   "espessura": 0.152,
+   "altura": 3.1,
+   "externa": false,
+   "faces": [
+    "Bathroom 1"
+   ],
+   "area_bruta": 6.64,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 6.64
+  },
+  {
+   "guid": "0iEHWY1$XA8eQeeULq4jpl",
+   "nome": "Basic Wall:Interior - Partition (92mm Stud):190140",
+   "pavimento": "Level 1",
+   "comprimento": 1.456,
+   "espessura": 0.124,
+   "altura": 2.795,
+   "externa": false,
+   "faces": [
+    "Bathroom 1",
+    "Kitchen"
+   ],
+   "area_bruta": 4.07,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 4.07
+  },
+  {
+   "guid": "0iEHWY1$XA8eQeeULq4jDb",
+   "nome": "Basic Wall:Interior - Furring (152 mm Stud):190774",
+   "pavimento": "Level 1",
+   "comprimento": 2.295,
+   "espessura": 0.152,
+   "altura": 2.795,
+   "externa": false,
+   "faces": [
+    "Bathroom 1",
+    "Kitchen"
+   ],
+   "area_bruta": 6.41,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 6.41
+  },
+  {
+   "guid": "0iEHWY1$XA8eQeeULq4jE6",
+   "nome": "Basic Wall:Interior - Furring (152 mm Stud):190933",
+   "pavimento": "Level 1",
+   "comprimento": 4.201,
+   "espessura": 0.152,
+   "altura": 2.795,
+   "externa": false,
+   "faces": [
+    "Kitchen"
+   ],
+   "area_bruta": 11.74,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 11.74
+  },
+  {
+   "guid": "0dxE1Sy6nDqfpDb5vIMNiA",
+   "nome": "Basic Wall:Interior - Furring (152 mm Stud):193247",
+   "pavimento": "Level 2",
+   "comprimento": 4.16,
+   "espessura": 0.152,
+   "altura": 2.595,
+   "externa": false,
+   "faces": [
+    "Bathroom 2",
+    "Utility"
+   ],
+   "area_bruta": 10.8,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 10.8
+  },
+  {
+   "guid": "0dxE1Sy6nDqfpDb5vIMN_Z",
+   "nome": "Basic Wall:Interior - Furring (152 mm Stud):194166",
+   "pavimento": "Level 2",
+   "comprimento": 4.16,
+   "espessura": 0.152,
+   "altura": 2.595,
+   "externa": false,
+   "faces": [
+    "Bathroom 2",
+    "Utility"
+   ],
+   "area_bruta": 10.8,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 10.8
+  },
+  {
+   "guid": "1aj$VJZFn2TxepZUBcKpvt",
+   "nome": "Basic Wall:Interior - Partition (92mm Stud):203347",
+   "pavimento": "Level 2",
+   "comprimento": 1.524,
+   "espessura": 0.124,
+   "altura": 2.9,
+   "externa": false,
+   "faces": [
+    "Bathroom 2",
+    "Utility"
+   ],
+   "area_bruta": 4.42,
+   "aberturas_m2": 1.55,
+   "origem": "ifc",
+   "area_liquida": 2.87
+  },
+  {
+   "guid": "1aj$VJZFn2TxepZUBcKpZw",
+   "nome": "Basic Wall:Interior - Partition (92mm Stud):203998",
+   "pavimento": "Level 2",
+   "comprimento": 1.524,
+   "espessura": 0.124,
+   "altura": 2.9,
+   "externa": false,
+   "faces": [
+    "Bathroom 2",
+    "Utility"
+   ],
+   "area_bruta": 4.42,
+   "aberturas_m2": 1.55,
+   "origem": "ifc",
+   "area_liquida": 2.87
+  },
+  {
+   "guid": "1aj$VJZFn2TxepZUBcKpee",
+   "nome": "Basic Wall:Interior - Partition (92mm Stud):204300",
+   "pavimento": "Level 1",
+   "comprimento": 3.475,
+   "espessura": 0.124,
+   "altura": 0.488,
+   "externa": false,
+   "faces": [
+    "Foyer",
+    "Room"
+   ],
+   "area_bruta": 1.7,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 1.7
+  },
+  {
+   "guid": "1aj$VJZFn2TxepZUBcKphf",
+   "nome": "Basic Wall:Interior - Partition (92mm Stud):204493",
+   "pavimento": "Level 1",
+   "comprimento": 3.475,
+   "espessura": 0.124,
+   "altura": 0.488,
+   "externa": false,
+   "faces": [
+    "Foyer",
+    "Stair"
+   ],
+   "area_bruta": 1.7,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 1.7
+  },
+  {
+   "guid": "3Y4YRln2r91vflHcHE5IVS",
+   "nome": "Basic Wall:Interior - Furring (38 mm Stud):217414",
+   "pavimento": "Level 2",
+   "comprimento": 1.083,
+   "espessura": 0.054,
+   "altura": 0.288,
+   "externa": false,
+   "faces": [
+    "Hallway"
+   ],
+   "area_bruta": 0.31,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 0.31
+  },
+  {
+   "guid": "3Y4YRln2r91vflHcHE5IVT",
+   "nome": "Basic Wall:Interior - Furring (38 mm Stud):217415",
+   "pavimento": "Level 2",
+   "comprimento": 1.135,
+   "espessura": 0.054,
+   "altura": 0.288,
+   "externa": false,
+   "faces": [
+    "Hallway"
+   ],
+   "area_bruta": 0.33,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 0.33
+  },
+  {
+   "guid": "3Y4YRln2r91vflHcHE5IVI",
+   "nome": "Basic Wall:Interior - Furring (38 mm Stud):217416",
+   "pavimento": "Level 2",
+   "comprimento": 1.083,
+   "espessura": 0.054,
+   "altura": 0.288,
+   "externa": false,
+   "faces": [
+    "Hallway"
+   ],
+   "area_bruta": 0.31,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 0.31
+  },
+  {
+   "guid": "3Y4YRln2r91vflHcHE5IVJ",
+   "nome": "Basic Wall:Interior - Furring (38 mm Stud):217417",
+   "pavimento": "Level 2",
+   "comprimento": 1.135,
+   "espessura": 0.054,
+   "altura": 0.288,
+   "externa": false,
+   "faces": [
+    "Hallway"
+   ],
+   "area_bruta": 0.33,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 0.33
+  },
+  {
+   "guid": "3Y4YRln2r91vflHcHE5ITp",
+   "nome": "Basic Wall:Interior - Furring (38 mm Stud):217577",
+   "pavimento": "Level 2",
+   "comprimento": 1.083,
+   "espessura": 0.054,
+   "altura": 0.288,
+   "externa": false,
+   "faces": [
+    "Hallway"
+   ],
+   "area_bruta": 0.31,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 0.31
+  },
+  {
+   "guid": "3Y4YRln2r91vflHcHE5ITm",
+   "nome": "Basic Wall:Interior - Furring (38 mm Stud):217578",
+   "pavimento": "Level 2",
+   "comprimento": 1.135,
+   "espessura": 0.054,
+   "altura": 0.288,
+   "externa": false,
+   "faces": [
+    "Hallway"
+   ],
+   "area_bruta": 0.33,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 0.33
+  },
+  {
+   "guid": "3Y4YRln2r91vflHcHE5ITn",
+   "nome": "Basic Wall:Interior - Furring (38 mm Stud):217579",
+   "pavimento": "Level 2",
+   "comprimento": 1.083,
+   "espessura": 0.054,
+   "altura": 0.288,
+   "externa": false,
+   "faces": [
+    "Hallway"
+   ],
+   "area_bruta": 0.31,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 0.31
+  },
+  {
+   "guid": "3Y4YRln2r91vflHcHE5ITs",
+   "nome": "Basic Wall:Interior - Furring (38 mm Stud):217580",
+   "pavimento": "Level 2",
+   "comprimento": 1.135,
+   "espessura": 0.054,
+   "altura": 0.288,
+   "externa": false,
+   "faces": [
+    "Hallway"
+   ],
+   "area_bruta": 0.33,
+   "aberturas_m2": 0.0,
+   "origem": "ifc",
+   "area_liquida": 0.33
+  }
+ ],
+ "vaos": [
+  {
+   "guid": "1hOSvn6df7F8_7GcBWlRGQ",
+   "classe": "porta",
+   "tipo": "1250mm x 2010mm",
+   "pavimento": "Level 1",
+   "largura": 1.25,
+   "altura": 2.01,
+   "peitoril": 0.0,
+   "parede": "2O2Fr$t4X7Zf8NOew3FNqI",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1hOSvn6df7F8_7GcBWlRH8",
+   "classe": "porta",
+   "tipo": "1250mm x 2010mm",
+   "pavimento": "Level 1",
+   "largura": 1.25,
+   "altura": 2.01,
+   "peitoril": 0.0,
+   "parede": "2O2Fr$t4X7Zf8NOew3FNhv",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1hOSvn6df7F8_7GcBWlS8Z",
+   "classe": "porta",
+   "tipo": "0762 x 2032mm",
+   "pavimento": "Level 1",
+   "largura": 0.762,
+   "altura": 2.032,
+   "peitoril": 0.0,
+   "parede": "2O2Fr$t4X7Zf8NOew3FKST",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1hOSvn6df7F8_7GcBWlS9F",
+   "classe": "porta",
+   "tipo": "0762 x 2032mm",
+   "pavimento": "Level 1",
+   "largura": 0.762,
+   "altura": 2.032,
+   "peitoril": 0.0,
+   "parede": "2O2Fr$t4X7Zf8NOew3FNau",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1hOSvn6df7F8_7GcBWlSFK",
+   "classe": "porta",
+   "tipo": "0864 x 2032mm",
+   "pavimento": "Level 2",
+   "largura": 0.864,
+   "altura": 2.032,
+   "peitoril": 0.0,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLTF",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1hOSvn6df7F8_7GcBWlSDm",
+   "classe": "porta",
+   "tipo": "0864 x 2032mm",
+   "pavimento": "Level 2",
+   "largura": 0.864,
+   "altura": 2.032,
+   "peitoril": 0.0,
+   "parede": "2O2Fr$t4X7Zf8NOew3FL8v",
+   "origem": "ifc"
+  },
+  {
+   "guid": "2OBrcmyk58NupXoVOHUuXp",
+   "classe": "porta",
+   "tipo": "0864 x 2032mm",
+   "pavimento": "Level 2",
+   "largura": 0.864,
+   "altura": 2.032,
+   "peitoril": 0.0,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLJd",
+   "origem": "ifc"
+  },
+  {
+   "guid": "2OBrcmyk58NupXoVOHUvVV",
+   "classe": "porta",
+   "tipo": "0864 x 2032mm",
+   "pavimento": "Level 2",
+   "largura": 0.864,
+   "altura": 2.032,
+   "peitoril": 0.0,
+   "parede": "2O2Fr$t4X7Zf8NOew3FL96",
+   "origem": "ifc"
+  },
+  {
+   "guid": "2OBrcmyk58NupXoVOHUvR4",
+   "classe": "porta",
+   "tipo": "0864 x 2032mm",
+   "pavimento": "Level 2",
+   "largura": 0.864,
+   "altura": 2.032,
+   "peitoril": 0.0,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLIE",
+   "origem": "ifc"
+  },
+  {
+   "guid": "2OBrcmyk58NupXoVOHUvPL",
+   "classe": "porta",
+   "tipo": "0864 x 2032mm",
+   "pavimento": "Level 2",
+   "largura": 0.864,
+   "altura": 2.032,
+   "peitoril": 0.0,
+   "parede": "2O2Fr$t4X7Zf8NOew3FL9r",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1s1jVhK8z0pgKYcr9jt781",
+   "classe": "porta",
+   "tipo": "0813 x 2420mm",
+   "pavimento": "Level 1",
+   "largura": 0.813,
+   "altura": 2.42,
+   "peitoril": 0.0,
+   "parede": "2O2Fr$t4X7Zf8NOew3FNtn",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1s1jVhK8z0pgKYcr9jt7AB",
+   "classe": "porta",
+   "tipo": "0813 x 2420mm",
+   "pavimento": "Level 1",
+   "largura": 0.813,
+   "altura": 2.42,
+   "peitoril": 0.0,
+   "parede": "2O2Fr$t4X7Zf8NOew3FNr2",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1aj$VJZFn2TxepZUBcKp$i",
+   "classe": "porta",
+   "tipo": "0762 x 2032mm",
+   "pavimento": "Level 2",
+   "largura": 0.762,
+   "altura": 2.032,
+   "peitoril": 0.0,
+   "parede": "1aj$VJZFn2TxepZUBcKpvt",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1aj$VJZFn2TxepZUBcKpac",
+   "classe": "porta",
+   "tipo": "0762 x 2032mm",
+   "pavimento": "Level 2",
+   "largura": 0.762,
+   "altura": 2.032,
+   "peitoril": 0.0,
+   "parede": "1aj$VJZFn2TxepZUBcKpZw",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1hOSvn6df7F8_7GcBWlR72",
+   "classe": "janela",
+   "tipo": "4835mm x 2420mm",
+   "pavimento": "Level 1",
+   "largura": 4.835,
+   "altura": 2.42,
+   "peitoril": 0.1,
+   "parede": "2O2Fr$t4X7Zf8NOew3FNtn",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1hOSvn6df7F8_7GcBWlRBU",
+   "classe": "janela",
+   "tipo": "4835mm x 2420mm",
+   "pavimento": "Level 1",
+   "largura": 4.835,
+   "altura": 2.42,
+   "peitoril": 0.1,
+   "parede": "2O2Fr$t4X7Zf8NOew3FNr2",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1hOSvn6df7F8_7GcBWlRLx",
+   "classe": "janela",
+   "tipo": "750mm x 2200mm",
+   "pavimento": "Level 1",
+   "largura": 0.75,
+   "altura": 2.2,
+   "peitoril": 0.1,
+   "parede": "2O2Fr$t4X7Zf8NOew3FNqI",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1hOSvn6df7F8_7GcBWlRRL",
+   "classe": "janela",
+   "tipo": "750mm x 2200mm",
+   "pavimento": "Level 1",
+   "largura": 0.75,
+   "altura": 2.2,
+   "peitoril": 0.1,
+   "parede": "2O2Fr$t4X7Zf8NOew3FNhv",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1hOSvn6df7F8_7GcBWlSXO",
+   "classe": "janela",
+   "tipo": "2800mm x 2410mm",
+   "pavimento": "Level 2",
+   "largura": 2.8,
+   "altura": 2.41,
+   "peitoril": 0.1,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLQD",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1hOSvn6df7F8_7GcBWlSga",
+   "classe": "janela",
+   "tipo": "819mm x 759mm",
+   "pavimento": "Level 2",
+   "largura": 0.819,
+   "altura": 0.759,
+   "peitoril": 0.1,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLQD",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1hOSvn6df7F8_7GcBWlSp1",
+   "classe": "janela",
+   "tipo": "819mm x 759mm",
+   "pavimento": "Level 2",
+   "largura": 0.819,
+   "altura": 0.759,
+   "peitoril": 0.93,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLQD",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1hOSvn6df7F8_7GcBWlSnC",
+   "classe": "janela",
+   "tipo": "819mm x 759mm",
+   "pavimento": "Level 2",
+   "largura": 0.819,
+   "altura": 0.759,
+   "peitoril": 1.75,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLQD",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1hOSvn6df7F8_7GcBWlS_W",
+   "classe": "janela",
+   "tipo": "2800mm x 2410mm",
+   "pavimento": "Level 2",
+   "largura": 2.8,
+   "altura": 2.41,
+   "peitoril": 0.1,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLOH",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1hOSvn6df7F8_7GcBWlS2V",
+   "classe": "janela",
+   "tipo": "819mm x 759mm",
+   "pavimento": "Level 2",
+   "largura": 0.819,
+   "altura": 0.759,
+   "peitoril": 0.1,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLOH",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1hOSvn6df7F8_7GcBWlS1M",
+   "classe": "janela",
+   "tipo": "819mm x 759mm",
+   "pavimento": "Level 2",
+   "largura": 0.819,
+   "altura": 0.759,
+   "peitoril": 0.93,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLOH",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1hOSvn6df7F8_7GcBWlS4Q",
+   "classe": "janela",
+   "tipo": "819mm x 759mm",
+   "pavimento": "Level 2",
+   "largura": 0.819,
+   "altura": 0.759,
+   "peitoril": 1.75,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLOH",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1l0GAJtRTFv8$zmKJOH4$e",
+   "classe": "janela",
+   "tipo": "2800mm x 2410mm",
+   "pavimento": "Level 2",
+   "largura": 2.8,
+   "altura": 2.41,
+   "peitoril": 0.1,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLPP",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1l0GAJtRTFv8$zmKJOH4u1",
+   "classe": "janela",
+   "tipo": "819mm x 759mm",
+   "pavimento": "Level 2",
+   "largura": 0.819,
+   "altura": 0.759,
+   "peitoril": 1.75,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLPP",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1l0GAJtRTFv8$zmKJOH4qs",
+   "classe": "janela",
+   "tipo": "819mm x 759mm",
+   "pavimento": "Level 2",
+   "largura": 0.819,
+   "altura": 0.759,
+   "peitoril": 0.1,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLPP",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1l0GAJtRTFv8$zmKJOH4oq",
+   "classe": "janela",
+   "tipo": "819mm x 759mm",
+   "pavimento": "Level 2",
+   "largura": 0.819,
+   "altura": 0.759,
+   "peitoril": 0.93,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLPP",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1l0GAJtRTFv8$zmKJOH4pU",
+   "classe": "janela",
+   "tipo": "2800mm x 2410mm",
+   "pavimento": "Level 2",
+   "largura": 2.8,
+   "altura": 2.41,
+   "peitoril": 0.1,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLR9",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1l0GAJtRTFv8$zmKJOH4kJ",
+   "classe": "janela",
+   "tipo": "819mm x 759mm",
+   "pavimento": "Level 2",
+   "largura": 0.819,
+   "altura": 0.759,
+   "peitoril": 1.75,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLR9",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1l0GAJtRTFv8$zmKJOH4gQ",
+   "classe": "janela",
+   "tipo": "819mm x 759mm",
+   "pavimento": "Level 2",
+   "largura": 0.819,
+   "altura": 0.759,
+   "peitoril": 0.93,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLR9",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1l0GAJtRTFv8$zmKJOH4hv",
+   "classe": "janela",
+   "tipo": "819mm x 759mm",
+   "pavimento": "Level 2",
+   "largura": 0.819,
+   "altura": 0.759,
+   "peitoril": 0.1,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLR9",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1l0GAJtRTFv8$zmKJOH4aS",
+   "classe": "janela",
+   "tipo": "750mm x 2200mm",
+   "pavimento": "Level 2",
+   "largura": 0.75,
+   "altura": 2.2,
+   "peitoril": 0.1,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLR9",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1l0GAJtRTFv8$zmKJOH4ZZ",
+   "classe": "janela",
+   "tipo": "750mm x 2200mm",
+   "pavimento": "Level 2",
+   "largura": 0.75,
+   "altura": 2.2,
+   "peitoril": 0.1,
+   "parede": "2O2Fr$t4X7Zf8NOew3FLPP",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1Eo2$BaHX42AEkDvQQDocD",
+   "classe": "janela",
+   "tipo": "1180 x 1170mm",
+   "pavimento": "Roof",
+   "largura": 1.118,
+   "altura": 1.17,
+   "peitoril": 0.46,
+   "parede": "0jf0rYHfX3RAB3bSIRjmxl",
+   "origem": "ifc"
+  },
+  {
+   "guid": "1Eo2$BaHX42AEkDvQQDoy2",
+   "classe": "janela",
+   "tipo": "1180 x 1170mm",
+   "pavimento": "Roof",
+   "largura": 1.118,
+   "altura": 1.17,
+   "peitoril": 0.46,
+   "parede": "0jf0rYHfX3RAB3bSIRjmxl",
+   "origem": "ifc"
+  }
+ ],
+ "avisos": []
+}

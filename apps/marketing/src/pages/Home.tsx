@@ -20,11 +20,11 @@ export function Home() {
   usePageMeta({
     titulo: "Pilar | Gestão com agentes de IA para engenharia e arquitetura",
     descricao:
-      "Do contrato à execução, num fluxo só. Gestão com agentes de IA para escritórios de engenharia e arquitetura: proposta, projeto, obra e financeiro.",
+      "Gestão com agentes de IA para escritórios de engenharia e arquitetura: proposta, projeto, obra e financeiro conectados, com a aprovação da equipe.",
     caminho: "/",
-    ogTitulo: "Pilar | Do contrato à execução, num fluxo só.",
+    ogTitulo: "Pilar | Gestão com agentes de IA para engenharia e arquitetura",
     ogDescricao:
-      "Proposta, projeto, obra e financeiro num fluxo só, com agentes de IA que preparam o trabalho e esperam a aprovação da equipe.",
+      "Proposta, projeto, obra e financeiro conectados, com agentes de IA que preparam o trabalho e esperam a aprovação da equipe.",
   });
 
   return (

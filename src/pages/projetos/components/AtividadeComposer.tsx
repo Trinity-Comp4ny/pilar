@@ -39,7 +39,9 @@ export function AtividadeComposer({ pessoas, onSubmit, placeholder }: AtividadeC
   const sugestoes = mentionOpen
     ? [
         ...("all".startsWith(consulta) || "todos".startsWith(consulta) ? [{ id: TODOS_ID, nome: "all" }] : []),
-        ...pessoas.filter((p) => p.nome.toLowerCase().includes(consulta)),
+        // Só quem tem login: marcar quem não acessa o Pilar não avisa ninguém. O acesso
+        // se dá na Equipe (convite ou ligar a uma conta existente).
+        ...pessoas.filter((p) => !semConta.has(p.id) && p.nome.toLowerCase().includes(consulta)),
       ]
     : [];
   // A fonte da verdade é o texto: marcar pelo menu ou digitar o nome inteiro dá no mesmo.
@@ -185,7 +187,6 @@ export function AtividadeComposer({ pessoas, onSubmit, placeholder }: AtividadeC
                 ) : (
                   p.nome
                 )}
-                {semConta.has(p.id) && <span className="ml-auto text-[10px] text-muted-foreground">sem acesso</span>}
               </button>
             ))}
           </PopoverContent>

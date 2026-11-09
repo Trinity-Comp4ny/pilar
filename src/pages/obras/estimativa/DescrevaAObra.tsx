@@ -7,6 +7,7 @@ import { BusyMark } from "@/components/motion/BusyMark";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { formatNumber } from "@/lib/format";
+import { formatConsumoCreditos, formatCreditos } from "@/lib/creditos";
 import {
   aplicarInterpretacao,
   frasesDoQueMais,
@@ -31,8 +32,6 @@ const CATALOGO = new Map<AdicionalId, ItemDoCatalogo>(GRUPOS.flatMap((g) => g.it
 const EXEMPLOS = ["6 splits de 12.000 BTU e aquecedor solar", "Piscina de 8 x 4 m, área gourmet e elevador"];
 const PLACEHOLDER =
   "Ex.: 6 splits de 12.000 BTU e 2 de 18.000, aquecedor solar, painel fotovoltaico de 10 kWp, automação, piscina de 20 m², terreno inclinado com 60 m² de muro de arrimo";
-
-const formatarTokens = (n: number) => (n >= 1000 ? `${Math.round(n / 1000)} mil` : formatNumber(n));
 
 type Estado =
   | { tipo: "parado" }
@@ -136,8 +135,8 @@ export function DescrevaAObra({ ficha, atualizar, aplicar, insumos, premissas }:
       <div className="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <p className="max-w-lg text-xs text-ink-soft">
           A IA só transforma o texto em itens da lista abaixo, com a sua confirmação. Ela não define preço nem prazo.
-          Usa cerca de {formatarTokens(TOKENS_ESTIMADOS)} tokens.
-          {typeof saldo.data === "number" && ` Saldo da empresa: ${formatarTokens(saldo.data)}.`}
+          Usa cerca de {formatConsumoCreditos(TOKENS_ESTIMADOS)} crédito de IA.
+          {typeof saldo.data === "number" && ` Saldo da empresa: ${formatCreditos(saldo.data)}.`}
         </p>
         {!lendo && (
           <Button

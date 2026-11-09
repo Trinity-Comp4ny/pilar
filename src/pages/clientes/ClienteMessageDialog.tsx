@@ -53,7 +53,7 @@ export function ClienteMessageDialog({
       size="md"
       onSubmit={handleSend}
       isPending={isSending}
-      submitDisabled={!message || !subject || !cliente}
+      submitDisabled={!message.trim() || !subject.trim() || !cliente}
       submitLabel="Enviar"
     >
       <div className="space-y-4">

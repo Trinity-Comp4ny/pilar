@@ -50,10 +50,8 @@ describe("getSafeErrorMessage", () => {
 
   it("SPEC 098: capacidade:projetos/obras tem mensagem própria (fallback do toast global, coexiste com o diálogo de desbloqueio)", () => {
     expect(getSafeErrorMessage({ message: "capacidade:projetos", hint: "2" })).toBe(
-      "Limite de projetos do período de teste atingido."
+      "Limite de projetos ativos atingido."
     );
-    expect(getSafeErrorMessage({ message: "capacidade:obras", hint: "1" })).toBe(
-      "Limite de obras do período de teste atingido."
-    );
+    expect(getSafeErrorMessage({ message: "capacidade:obras", hint: "1" })).toBe("Limite de obras ativas atingido.");
   });
 });

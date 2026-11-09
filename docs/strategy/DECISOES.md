@@ -11,6 +11,147 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-09 (mais tarde) · Menção com @ sai por e-mail na hora, junto com o sino
+
+**Decisão:** quando alguém marca uma pessoa com @ num comentário (projeto, disciplina ou tarefa), o e-mail sai no
+mesmo instante em que a notificação aparece no sino, sem a janela de 5 minutos e sem esperar o resumo de segunda.
+Vale para toda categoria, inclusive tarefa; só não sai para quem desligou o e-mail daquela categoria. O ciclo de
+5 minutos fica como rede de segurança, se o envio na hora falhar.
+
+Contexto: o cliente reclamou que as pessoas marcadas "não recebiam nada"; o CEO quer o e-mail no mesmo instante do app.
+
+**Supera:** o "por e-mail em ~5 min se não for lida" da decisão de Equipe logo abaixo.
+
+---
+
+## 2026-11-09 · Equipe é onde se dá acesso ao Pilar; o @ só oferece quem tem login
+
+**Decisão:** cadastrar alguém na Equipe é também dar o acesso: o cadastro de pessoa nova já envia o convite (caixa
+"Dar acesso ao Pilar", marcada por padrão, só para admin) e a ficha da pessoa mostra se ela tem login, convida ou liga a
+um login que já existe com outro e-mail. O menu de @ das atividades lista só quem tem login (sai a etiqueta "sem
+acesso"). Menção chega no sistema e por e-mail em ~5 min se não for lida.
+
+Contexto: num escritório cliente, pessoas com login corporativo estavam na Equipe com o e-mail pessoal; o vínculo era só por
+e-mail idêntico, então apareciam "sem acesso" no @ e não recebiam menção. Os dois casos foram ligados à mão em produção.
+
+**Supera:** a etiqueta "sem acesso" no menu de menção (SPEC 132) e a menção só no resumo semanal por e-mail (SPEC 096).
+
+---
+
+## 2026-11-08 · Landing leva aos planos; assinatura direta pelo site, demonstração como caminho secundário
+
+**Decisão:** os botões principais da landing passam a ser "Ver planos" e "Entrar". Cada plano tem "Assinar", que
+leva direto ao checkout do app: o escritório paga, recebe o convite e entra. "Agendar demonstração" vira caminho
+secundário: uma linha discreta abaixo dos botões na hero, nas páginas de módulo e comparativo e no fecho, um link
+em cada plano e o link do rodapé. Segue sem teste grátis; a cena dos agentes na hero é a amostra do produto (sem
+vídeo gravado por ora).
+
+Contexto: os preços já são públicos e o checkout existe, mas a landing não levava ninguém até ele; todo botão de
+plano ia para o Google Agenda. Quem já decidiu comprar não precisa passar por uma conversa.
+
+**Supera:** a parte "entrada só por demonstração" de 2026-11-06 e o comentário da SPEC 133 de que o checkout era só
+"para o link que o time envia". O cadastro com teste grátis (`/cadastro`) continua fechado.
+
+---
+
+## 2026-11-07 (mais tarde) · Tagline: "Gestão com agentes de IA para escritórios de engenharia e arquitetura."
+
+**Decisão:** a frase principal do Pilar passa a ser **"Gestão com agentes de IA para escritórios de engenharia e
+arquitetura."** "Do contrato à execução, num fluxo só." sai: não é mais tagline nem headline e não aparece em título,
+meta, imagem de compartilhamento, tela de entrada ou material de venda.
+
+Contexto: a frase do fluxo soava como slogan de marketing; a nova diz o que o sistema é e para quem, e põe os agentes
+na frente. A assinatura dos agentes ("A IA prepara. O sistema confere. Você aprova.") continua. Trocado no app (telas de
+entrada e cadastro), na landing (subtítulo da hero, fecho e rodapé), nas metas e og:image, no `CLAUDE.md`, em `brand/`
+e no agente de vendas. "Do contrato à execução" fica só como termo do glossário (`voice-tone.md`) em texto corrido.
+
+**Supera:** a tagline "Do contrato à execução, num fluxo só." de 2026-10-28. O resto daquela decisão (agentes como
+primeiro pilar, lucro e prazo como prova) segue valendo.
+
+---
+
+## 2026-11-07 · Logo: coluna de três caneluras e apresentação clara sobre a paisagem
+
+**Decisão:** o símbolo passa a ter três caneluras (eram quatro), com a do meio no eixo: três apoios
+sustentando o capitel, a ideia de trindade e de base. A apresentação padrão da marca deixa o fundo preto
+e passa a ser clara, sobre a paisagem de morros verdes da hero da landing, com o símbolo em Ink como foco.
+
+Contexto: o ícone do app era um disco verde num tile preto, e o preto não conversava com a landing, que é
+clara. Entram variações claras (ícone paisagem, verde e disco sobre papel; lockups horizontal, empilhado e
+banner sobre a paisagem), todas geradas por `scripts/brand/build.py`. Regras em `brand/logo.md` (seção 7.1).
+O **ícone verde** (coluna em Ink sobre o tile verde) é o ícone do produto: app instalado, tela inicial,
+favicon e foto de perfil. A paisagem fica para a imagem de compartilhamento (og:image) e peças grandes.
+
+**Supera:** a coluna de quatro caneluras e o ícone verde sobre Ink de `brand/logo.md` (BEZ-385). As versões
+`white` e `brand` sobre Ink seguem válidas para fundo escuro, só não são mais a cara da marca.
+
+---
+
+## 2026-11-07 · Onboarding: perfil do escritório na entrada, três pilares iguais e origem do lead
+
+**Decisão:** a entrada no Pilar passa a coletar quem é o escritório e quem é a pessoa, e o primeiro uso trata
+Gestão, Projetos e Obras com o mesmo peso. O ultra-admin anota na criação o que soube na demonstração (site,
+CNPJ, disciplinas, porte, origem); o dono confirma e responde "Como você conheceu o Pilar?"; cada pessoa informa
+a função (obrigatória) e o LinkedIn (opcional). Celular segue obrigatório para dono e convidado. Cada clique em
+"Agendar demonstração" registra o canal de origem (UTM ou site: Google, ChatGPT, LinkedIn...).
+
+Contexto: o escritório entrava num sistema vazio e o Pilar não sabia nada dele além do nome. Como toda entrada é
+por demonstração (2026-11-06), o dado de lead vem de quem já conversou com o cliente, sem pesar no formulário. O
+primeiro passo segue o pilar que o dono escolher; Obras não é módulo de segunda classe no onboarding.
+
+**Supera:** o onboarding de 2 etapas (perfil + só CNPJ) e o checklist só para admin da SPEC 034. Detalhe e o que
+ficou pendente (escritório de exemplo, consulta à Receita, evento de ativação) na SPEC 149.
+
+---
+
+## 2026-11-07 · Papel `owner` aposentado
+
+**Decisão:** o acesso dentro da empresa tem só administrador, coordenador e usuário. O papel `owner` sai de uso.
+
+Contexto: desde agosto nenhum perfil tinha `owner` (backfill para admin achou zero linhas em staging e produção), mas o
+valor seguia no enum e em listas do código, com tratamento diferente em cada lugar (um hook tratava como admin, o
+`canDo` não). **Aplicado** pela migration `20261202000000_papel_owner_aposentado`: rede de segurança owner → admin e
+trava (CHECK) em `profiles.role` e `convites.cargo`. O valor continua no enum porque removê-lo exige recriar o tipo
+usado por políticas de RLS; com a trava, ninguém volta a recebê-lo.
+
+---
+
+## 2026-11-06 (mais tarde) · Capacidade por módulo: projetos, obras e leads ativos
+
+**Decisão:** o plano limita os três módulos, não só projetos. Essencial: 10 projetos, 2 obras, 50 leads ativos.
+Profissional: 30 projetos, 5 obras, 200 leads. Escala: projetos e leads ilimitados, 15 obras. Usuários seguem
+ilimitados e toda empresa segue com a plataforma inteira (ADR 0026): o plano muda quanto, nunca o quê.
+
+Contexto: o Pilar deixou de ser só Projetos; Gestão e Obras são produto real, e cobrar tudo pela régua de projeto
+sub ou superprecifica o escritório que toca poucas obras ou muito comercial. Ativo = em andamento (projeto, obra) ou
+aberto no funil (lead); concluído, cancelado, ganho ou perdido não conta.
+
+**Supera:** as faixas 15/40/ilimitado de projetos da tabela v3 de PRICING.md e a coluna "obras ativas" (2/5/12) que
+lá era só diretriz. **Aplicado** pela migration `20261130000000_planos_v4_preco_e_capacidade_por_modulo`: colunas
+`max_obras` e `max_leads` no plano, `limites_empresa()` devolvendo as três faixas e o trigger
+`enforce_capacidade_leads`. Quem bate na faixa vê o diálogo de limite do plano, com o caminho para subir de plano.
+Assinatura que já está acima da faixa nova não perde nada: o bloqueio vale só para criar o próximo.
+
+---
+
+## 2026-11-06 · Preço R$ 299/499/899, IA vendida em créditos e entrada só por demonstração
+
+**Decisão:** os planos passam a R$ 299 (Essencial), R$ 499 (Profissional) e R$ 899 (Escala). A cota de IA é
+comunicada em **créditos**, não em tokens, na razão fixa de 1 crédito = 5 mil tokens: 100, 400 e 1.600 créditos por
+mês. A landing não fala mais em teste grátis: a entrada é por convite, depois de agendar a demonstração.
+
+Contexto: "500 mil tokens" não diz nada ao sócio do escritório; um número pequeno e redondo de créditos é palpável. O
+motor de tokens continua contando token por baixo; crédito é só a unidade exposta ao cliente (a razão fixa permite
+converter sem mudar o motor). Cadastro por convite já valia desde 19/10 (SPEC 133).
+
+**Supera:** os preços R$ 490/690/1.290 da tabela v3 de PRICING.md e a entrada de 2026-08-31 na parte "token é a
+unidade exposta". **Aplicado no app** pela migration `20261130000000_planos_v4_preco_e_capacidade_por_modulo` (preço
+do checkout) e pela UI em créditos (`src/lib/creditos.ts`). O preço do pacote avulso não mudou (só o rótulo, em
+créditos). As notificações geradas no banco ("Créditos de IA acabando", "Pedido de mais créditos de IA") passaram
+a créditos na migration `20261201000000_notificacoes_ia_em_creditos`.
+
+---
+
 ## 2026-11-04 · Conexão bancária: por enquanto só arquivo CSV; sem OFX, sem Open Finance
 
 **Decisão:** o Financeiro continua recebendo extrato só por arquivo CSV (SPEC 017, tela "Importar"). Não entram OFX,
@@ -57,7 +198,7 @@ SELECT (ADR 0034). O sino avisava de receita excluída (129 de 139 avisos de rec
 
 ---
 
-## 2026-10-28 · Marca: promessa "Do contrato à execução" e agentes como primeiro pilar
+## 2026-10-28 · Marca: promessa "Do contrato à execução" e agentes como primeiro pilar (tagline superada em 2026-11-07)
 
 **Decisão:** a promessa-mãe do Pilar passa a ser "Do contrato à execução, num fluxo só". Agentes de IA viram o primeiro
 pilar de mensagem, com a assinatura "A IA prepara. O sistema confere. Você aprova." Lucro e prazo continuam, como prova

@@ -38,7 +38,7 @@ const DATA_TABLE: DataItem[] = [
     baseLegal: "Legítimo interesse (LGPD Art. 7, IX)",
   },
   {
-    categoria: "Conta com período de teste encerrado sem plano ativado",
+    categoria: "Conta com período de avaliação encerrado sem plano ativado",
     retencao:
       "90 dias em modo somente leitura (exportação disponível). Depois: dados fiscais/financeiros são anonimizados, o restante é eliminado",
     baseLegal: "Execução de contrato e obrigação legal fiscal (LGPD Art. 7, II e V)",

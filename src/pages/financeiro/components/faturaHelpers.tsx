@@ -26,7 +26,8 @@ export function getStatusBadge(status: string, dataVencimento: string) {
     return <Badge className="bg-positive/10 text-positive-strong hover:bg-positive/10">Paga</Badge>;
   if (isFaturaVencida(status, dataVencimento))
     return <Badge className="bg-danger-soft text-danger-strong hover:bg-danger-soft">Vencida</Badge>;
-  if (status === "Parcial") return <Badge className="bg-warning-soft text-warning-strong hover:bg-warning-soft">Parcial</Badge>;
+  if (status === "Parcial")
+    return <Badge className="bg-warning-soft text-warning-strong hover:bg-warning-soft">Parcial</Badge>;
   if (status === "Fechada") return <Badge className="bg-info-soft text-info-strong hover:bg-info-soft">Fechada</Badge>;
   return <Badge className="bg-muted text-ink hover:bg-muted">Aberta</Badge>;
 }

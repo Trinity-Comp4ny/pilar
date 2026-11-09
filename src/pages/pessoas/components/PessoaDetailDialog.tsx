@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { useMetasProgresso } from "@/hooks/useMetas";
 import { formatarValor, percentual, rotuloDaMeta } from "@/lib/metas";
 import type { Pessoa } from "../types";
+import { PessoaAcessoSecao } from "./PessoaAcessoSecao";
 
 const formatDateBR = (iso?: string) => {
   if (!iso) return "-";
@@ -46,11 +47,24 @@ interface PessoaDetailDialogProps {
   isAdmin: boolean;
   onEdit: (pessoa: Pessoa) => void;
   onDelete: (id: string) => void;
+  /** Login da pessoa ligado ou desligado: a página recarrega o que depende disso. */
+  onAcessoAlterado?: () => void;
 }
 
-export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit, onDelete }: PessoaDetailDialogProps) {
+export function PessoaDetailDialog({
+  open,
+  onOpenChange,
+  pessoa,
+  isAdmin,
+  onEdit,
+  onDelete,
+  onAcessoAlterado,
+}: PessoaDetailDialogProps) {
   // CPF é PII: mascarado por padrão, revelado só sob ação explícita.
   const [showCpf, setShowCpf] = useState(false);
+  // O diálogo guarda a pessoa da abertura; ligar/desligar o login vale na hora para ela.
+  const [vinculo, setVinculo] = useState<{ pessoaId: string; profileId: string | null } | null>(null);
+  const profileId = vinculo && vinculo.pessoaId === pessoa?.id ? vinculo.profileId : (pessoa?.profile_id ?? null);
 
   useEffect(() => {
     setShowCpf(false);
@@ -207,6 +221,14 @@ export function PessoaDetailDialog({ open, onOpenChange, pessoa, isAdmin, onEdit
               </div>
             </div>
           </div>
+
+          <PessoaAcessoSecao
+            pessoa={{ ...pessoa, profile_id: profileId }}
+            onVinculoAlterado={(id) => {
+              setVinculo({ pessoaId: pessoa.id, profileId: id });
+              onAcessoAlterado?.();
+            }}
+          />
 
           {podeVerSensivel && (
             <div className="border-t pt-4 space-y-2">

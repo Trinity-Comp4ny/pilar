@@ -89,6 +89,8 @@ test("pagamento confirmado vira conta com empresa e o dono entra pelo convite", 
   await page.getByPlaceholder("Ex: Maria").fill("Ana");
   await page.getByPlaceholder("Ex: Souza").fill("Jornada");
   await page.getByPlaceholder("(00) 00000-0000").fill("11988887777");
+  // SPEC 149: a função no escritório é obrigatória no perfil.
+  await page.getByRole("radio", { name: "Sócio ou diretor" }).click();
   const senhas = page.getByPlaceholder("••••••••");
   if ((await senhas.count()) > 0) {
     await senhas.nth(0).fill("Pilar!Jornada2026");

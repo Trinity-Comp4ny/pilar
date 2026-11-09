@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
-import { formatCurrency, formatNumber } from "@/lib/format";
+import { formatCurrency } from "@/lib/format";
+import { formatCreditos } from "@/lib/creditos";
 import { lookupCEP } from "@/lib/brasilApi";
 import { detectCardBrand, formatCardNumber, formatExpiry, validateCreditCard } from "@/lib/creditCard";
 import { CheckoutShell } from "@/pages/checkout/components/CheckoutShell";
@@ -31,10 +32,10 @@ import { ReadingRing } from "@/components/motion/ReadingRing";
 // Espelha o catálogo do backend (pilar-token-pack-create) só pra exibição — o preço
 // que vale de verdade é sempre resolvido no servidor a partir do tier_id (SPEC 080).
 const TIER_CATALOG: Record<TokenPackTierId, { tokens: number; valorCentavos: number; label: string }> = {
-  starter: { tokens: 500_000, valorCentavos: 4900, label: "500 mil tokens" },
-  cresce: { tokens: 1_500_000, valorCentavos: 12900, label: "1,5 milhão de tokens" },
-  escala: { tokens: 3_000_000, valorCentavos: 22800, label: "3 milhões de tokens" },
-  maximo: { tokens: 6_000_000, valorCentavos: 39900, label: "6 milhões de tokens" },
+  starter: { tokens: 500_000, valorCentavos: 4900, label: "100 créditos de IA" },
+  cresce: { tokens: 1_500_000, valorCentavos: 12900, label: "300 créditos de IA" },
+  escala: { tokens: 3_000_000, valorCentavos: 22800, label: "600 créditos de IA" },
+  maximo: { tokens: 6_000_000, valorCentavos: 39900, label: "1.200 créditos de IA" },
 };
 
 const TIER_ORDER: TokenPackTierId[] = ["starter", "cresce", "escala", "maximo"];
@@ -84,7 +85,7 @@ const PAYMENT_METHODS: { value: TokenPackBillingType; label: string; icon: React
 ];
 
 export default function ComprarTokens() {
-  usePageTitle("Comprar tokens");
+  usePageTitle("Comprar créditos");
   const navigate = useNavigate();
   const { profile, isAuthenticated, loading } = useAuth();
   const queryClient = useQueryClient();
@@ -225,9 +226,9 @@ export default function ComprarTokens() {
                 <CheckCircle2 className="w-8 h-8" />
               </div>
               <div>
-                <h2 className="text-3xl font-medium text-ink">Tokens creditados</h2>
+                <h2 className="text-3xl font-medium text-ink">Créditos liberados</h2>
                 <p className="text-ink-muted mt-2">
-                  {formatNumber(result.tokens)} tokens já estão disponíveis no seu saldo.
+                  {formatCreditos(result.tokens)} já estão disponíveis no seu saldo.
                 </p>
               </div>
               <Button

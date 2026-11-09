@@ -162,12 +162,12 @@ export async function verificarTokens(
  */
 export function mensagemBloqueioTokens(motivo: TokenBlockMotivo): string {
   if (motivo === "limite_usuario") {
-    return "Você atingiu seu limite de tokens de IA deste mês. Peça mais tokens ao administrador da sua empresa.";
+    return "Você atingiu seu limite de créditos de IA deste mês. Peça mais créditos ao administrador da sua empresa.";
   }
   if (motivo === "trial_pausado") {
     return "Uso de IA em contas de teste está pausado por hoje. Volta amanhã, ou fale com a gente pra liberar antes.";
   }
-  return "Os tokens de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador.";
+  return "Os créditos de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador.";
 }
 
 /**

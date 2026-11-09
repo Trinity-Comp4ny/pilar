@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PendenciasTab } from "./PendenciasTab";
 import type { Pendencia } from "./hooks/useAgentePendencias";
 
+const toastMock = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
+vi.mock("sonner", () => ({ toast: toastMock }));
 const usePendencias = vi.fn();
 const useAditivos = vi.fn();
 const useHeartbeat = vi.fn();
@@ -440,6 +442,40 @@ describe("PendenciasTab", () => {
       const painel = await abrir();
       expect(within(painel).getByRole("button", { name: "Aplicar selecionadas" })).toBeDisabled();
       useFeatureAccessMock.canEditProjetos = true;
+    });
+  });
+  describe("adiar e dispensar", () => {
+    // O primeiro card da fila é a cobrança (c1).
+    async function abrirMenu(user: ReturnType<typeof userEvent.setup>) {
+      await user.click(screen.getAllByRole("button", { name: /Adiar/ })[0]);
+    }
+
+    it("adiar avisa por quantos dias; falha avisa para atualizar", async () => {
+      const user = userEvent.setup();
+      adiarMutate.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error("x"));
+      montar();
+      await abrirMenu(user);
+      await user.click((await screen.findAllByRole("menuitem", { name: /^Por / }))[0]);
+      expect(adiarMutate).toHaveBeenCalledWith({ id: "c1", dias: expect.any(Number) });
+      expect(toastMock.success).toHaveBeenCalledWith(expect.stringMatching(/^Adiado por/), expect.anything());
+
+      await abrirMenu(user);
+      await user.click((await screen.findAllByRole("menuitem", { name: /^Por / }))[0]);
+      expect(toastMock.error).toHaveBeenCalledWith("Não foi possível adiar", expect.anything());
+    });
+
+    it("dispensar avisa; falha avisa para atualizar", async () => {
+      const user = userEvent.setup();
+      dispensarMutate.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error("x"));
+      montar();
+      await abrirMenu(user);
+      await user.click(await screen.findByRole("menuitem", { name: "Dispensar" }));
+      expect(dispensarMutate).toHaveBeenCalledWith("c1");
+      expect(toastMock.success).toHaveBeenCalledWith("Pendência dispensada", expect.anything());
+
+      await abrirMenu(user);
+      await user.click(await screen.findByRole("menuitem", { name: "Dispensar" }));
+      expect(toastMock.error).toHaveBeenCalledWith("Não foi possível dispensar", expect.anything());
     });
   });
 });

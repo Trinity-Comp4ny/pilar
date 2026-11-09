@@ -31,7 +31,7 @@ describe("DataFrescor", () => {
   it("com onRefresh vira botão que dispara refetch", () => {
     const onRefresh = vi.fn();
     render(<DataFrescor updatedAt={Date.now()} onRefresh={onRefresh} />);
-    fireEvent.click(screen.getByRole("button", { name: "Atualizar dados agora" }));
+    fireEvent.click(screen.getByRole("button", { name: /Atualizar dados agora/ }));
     expect(onRefresh).toHaveBeenCalledOnce();
   });
 });

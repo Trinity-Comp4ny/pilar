@@ -25,7 +25,7 @@ import { resolverDadosCliente } from "../_shared/asaas-customer.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
 import { parseOr400 } from "../_shared/schemas.ts";
-import { purchaseSchema, statusInicialDaCompra, TIER_CATALOG, type PurchasePayload, type TierId } from "./compra.ts";
+import { cobrancaDoTier, purchaseSchema, statusInicialDaCompra, type PurchasePayload, type TierId } from "./compra.ts";
 
 const log = createLogger("pilar-token-pack-create");
 
@@ -63,7 +63,7 @@ serve(
     const { data: profile } = await admin.from("profiles").select("empresa_id, role").eq("id", user.id).maybeSingle();
 
     if (!ehAdminDaEmpresa(profile)) {
-      return jsonResponse({ error: "Apenas admin da empresa pode comprar tokens" }, 403, req);
+      return jsonResponse({ error: "Apenas admin da empresa pode comprar créditos de IA" }, 403, req);
     }
 
     // --- Rate limit por empresa (DB, atômico cross-instance) ---
@@ -102,7 +102,8 @@ serve(
     if (!sub) {
       return jsonResponse(
         {
-          error: "Sua empresa ainda não tem cobrança ativa. Fale com o suporte para ativar antes de comprar tokens.",
+          error:
+            "Sua empresa ainda não tem cobrança ativa. Fale com o suporte para ativar antes de comprar créditos de IA.",
         },
         400,
         req
@@ -169,9 +170,8 @@ serve(
       }
     }
 
-    const tier = TIER_CATALOG[body.tier_id as TierId];
-    const valorCentavos = tier.valorCentavos;
-    const valor = valorCentavos / 100;
+    const tier = cobrancaDoTier(body.tier_id as TierId);
+    const { valorCentavos, valor } = tier;
 
     // --- Cria a compra pendente ANTES do Asaas (mesmo padrão do checkout de
     // signup: se a chamada ao Asaas falhar no meio, já existe uma linha que o
@@ -206,7 +206,7 @@ serve(
         billingType: body.billing_type,
         value: valor,
         dueDate: todayISO(),
-        description: `Pilar — ${tier.tokens.toLocaleString("pt-BR")} tokens`,
+        description: tier.descricao,
         externalReference: purchase.id,
         ...(body.billing_type === "CREDIT_CARD" && body.credit_card && body.credit_card_holder_info
           ? { creditCard: body.credit_card, creditCardHolderInfo: body.credit_card_holder_info, remoteIp }

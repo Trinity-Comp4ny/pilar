@@ -1,0 +1,2 @@
+{"caso": "caso_g", "folha_pt": [2384, 1684], "vetor": 17, "t_vetor": 5.6, "ocr200": {"dpi": 200, "recuperou": "2/17", "rotulos_ocr": 24, "extras": 22, "palavras": 1110, "t": 6.2}}
+{"caso": "caso_g", "folha_pt": [2384, 1684], "vetor": 17, "t_vetor": 5.6, "ocr200": {"dpi": 200, "recuperou": "2/17", "rotulos_ocr": 24, "extras": 22, "palavras": 1110, "t": 6.2}, "ocr400": {"dpi": 272, "recuperou": "10/17", "rotulos_ocr": 28, "extras": 18, "palavras": 1116, "t": 7.2}}

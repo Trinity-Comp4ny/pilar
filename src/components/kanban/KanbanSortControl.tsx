@@ -36,7 +36,7 @@ export function KanbanSortControl({ sort, onChange, keys }: Props) {
         <Button
           variant="outline"
           className="h-9 gap-1.5 rounded-full px-3.5 text-[13px] font-normal"
-          aria-label="Ordenar"
+          aria-label={`Ordenar por ${KANBAN_SORT_LABELS[sort.key]}`}
         >
           <ArrowUpDown size={14} className="text-black/50" />
           <span className="hidden sm:inline">{KANBAN_SORT_LABELS[sort.key]}</span>

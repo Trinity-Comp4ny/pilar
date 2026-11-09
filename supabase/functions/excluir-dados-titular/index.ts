@@ -67,7 +67,7 @@ serve(
       .select("id", { count: "exact", head: true })
       .eq("empresa_id", titular.empresa_id)
       .neq("id", titular.id)
-      .in("role", ["admin", "owner"])
+      .eq("role", "admin")
       .is("desativado_em", null);
     if (countErr) {
       reqLog.error("contagem de admins falhou", countErr);

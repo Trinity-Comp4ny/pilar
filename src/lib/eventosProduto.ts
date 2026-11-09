@@ -22,6 +22,9 @@ export type EventoProduto =
   | "signup_email_ja_cadastrado"
   | "demo_agendar_clicado"
   | "empresa_onboarding_concluido"
+  | "onboarding_etapa_concluida"
+  | "onboarding_objetivo_escolhido"
+  | "onboarding_boas_vindas_acao"
   // Uso dos módulos (ativação e adoção)
   | "cliente_criado"
   | "lead_criado"
@@ -47,6 +50,7 @@ export type EventoProduto =
   | "assinatura_ativada"
   | "pacote_tokens_comprado"
   | "trial_limite_atingido"
+  | "plano_limite_ver_planos"
   | "trial_nivel_subiu"
   | "trial_desbloqueio_abandonado"
   | "trial_admin_avisado"

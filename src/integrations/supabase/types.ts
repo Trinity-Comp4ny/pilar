@@ -1455,6 +1455,7 @@ export type Database = {
           expira_em: string
           id: string
           nome: string | null
+          pessoa_id: string | null
           token: string | null
           token_hash: string | null
           usado_em: string | null
@@ -1468,6 +1469,7 @@ export type Database = {
           expira_em?: string
           id?: string
           nome?: string | null
+          pessoa_id?: string | null
           token?: string | null
           token_hash?: string | null
           usado_em?: string | null
@@ -1481,6 +1483,7 @@ export type Database = {
           expira_em?: string
           id?: string
           nome?: string | null
+          pessoa_id?: string | null
           token?: string | null
           token_hash?: string | null
           usado_em?: string | null
@@ -1492,6 +1495,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convites_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convites_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convites_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
           },
         ]
       }
@@ -1701,6 +1725,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      demo_interesses: {
+        Row: {
+          canal: string
+          created_at: string
+          id: string
+          origem: Json
+          pagina: string | null
+        }
+        Insert: {
+          canal: string
+          created_at?: string
+          id?: string
+          origem?: Json
+          pagina?: string | null
+        }
+        Update: {
+          canal?: string
+          created_at?: string
+          id?: string
+          origem?: Json
+          pagina?: string | null
+        }
+        Relationships: []
       }
       despesas: {
         Row: {
@@ -2060,10 +2108,12 @@ export type Database = {
           cidade: string | null
           cnae_principal: string | null
           cnpj: string | null
+          como_conheceu: string | null
           contato: string | null
           created_at: string | null
           created_by: string | null
           deleted_at: string | null
+          disciplinas: string[] | null
           documento_tipo: string | null
           documento_verificacao: string | null
           documento_verificado_em: string | null
@@ -2082,10 +2132,13 @@ export type Database = {
           nivel_override_motivo: string | null
           nivel_override_por: string | null
           nome: string
+          objetivo_inicial: string | null
           onboarding_completed: boolean | null
+          origem: string | null
           owner_id: string | null
           pix_chave: string | null
           pix_instrucoes: string | null
+          porte: string | null
           preservar_dados: boolean
           preservar_dados_em: string | null
           preservar_dados_motivo: string | null
@@ -2093,6 +2146,7 @@ export type Database = {
           razao_social: string | null
           retencao_aviso_60d_sent_at: string | null
           retencao_aviso_85d_sent_at: string | null
+          site: string | null
           situacao_cadastral: string | null
           status: Database["public"]["Enums"]["status_empresa"] | null
           updated_at: string | null
@@ -2103,10 +2157,12 @@ export type Database = {
           cidade?: string | null
           cnae_principal?: string | null
           cnpj?: string | null
+          como_conheceu?: string | null
           contato?: string | null
           created_at?: string | null
           created_by?: string | null
           deleted_at?: string | null
+          disciplinas?: string[] | null
           documento_tipo?: string | null
           documento_verificacao?: string | null
           documento_verificado_em?: string | null
@@ -2125,10 +2181,13 @@ export type Database = {
           nivel_override_motivo?: string | null
           nivel_override_por?: string | null
           nome: string
+          objetivo_inicial?: string | null
           onboarding_completed?: boolean | null
+          origem?: string | null
           owner_id?: string | null
           pix_chave?: string | null
           pix_instrucoes?: string | null
+          porte?: string | null
           preservar_dados?: boolean
           preservar_dados_em?: string | null
           preservar_dados_motivo?: string | null
@@ -2136,6 +2195,7 @@ export type Database = {
           razao_social?: string | null
           retencao_aviso_60d_sent_at?: string | null
           retencao_aviso_85d_sent_at?: string | null
+          site?: string | null
           situacao_cadastral?: string | null
           status?: Database["public"]["Enums"]["status_empresa"] | null
           updated_at?: string | null
@@ -2146,10 +2206,12 @@ export type Database = {
           cidade?: string | null
           cnae_principal?: string | null
           cnpj?: string | null
+          como_conheceu?: string | null
           contato?: string | null
           created_at?: string | null
           created_by?: string | null
           deleted_at?: string | null
+          disciplinas?: string[] | null
           documento_tipo?: string | null
           documento_verificacao?: string | null
           documento_verificado_em?: string | null
@@ -2168,10 +2230,13 @@ export type Database = {
           nivel_override_motivo?: string | null
           nivel_override_por?: string | null
           nome?: string
+          objetivo_inicial?: string | null
           onboarding_completed?: boolean | null
+          origem?: string | null
           owner_id?: string | null
           pix_chave?: string | null
           pix_instrucoes?: string | null
+          porte?: string | null
           preservar_dados?: boolean
           preservar_dados_em?: string | null
           preservar_dados_motivo?: string | null
@@ -2179,6 +2244,7 @@ export type Database = {
           razao_social?: string | null
           retencao_aviso_60d_sent_at?: string | null
           retencao_aviso_85d_sent_at?: string | null
+          site?: string | null
           situacao_cadastral?: string | null
           status?: Database["public"]["Enums"]["status_empresa"] | null
           updated_at?: string | null
@@ -5753,6 +5819,8 @@ export type Database = {
           destaque: boolean
           features: Json
           id: string
+          max_leads: number | null
+          max_obras: number | null
           max_projetos: number | null
           max_usuarios: number | null
           nome: string
@@ -5769,6 +5837,8 @@ export type Database = {
           destaque?: boolean
           features?: Json
           id?: string
+          max_leads?: number | null
+          max_obras?: number | null
           max_projetos?: number | null
           max_usuarios?: number | null
           nome: string
@@ -5785,6 +5855,8 @@ export type Database = {
           destaque?: boolean
           features?: Json
           id?: string
+          max_leads?: number | null
+          max_obras?: number | null
           max_projetos?: number | null
           max_usuarios?: number | null
           nome?: string
@@ -6134,8 +6206,10 @@ export type Database = {
           equipe_delegado: boolean
           financeiro_delegado: boolean
           first_name: string
+          funcao: string | null
           id: string
           last_name: string
+          linkedin_url: string | null
           metas_delegado: boolean
           nome: string | null
           onboarding_completed: boolean | null
@@ -6156,8 +6230,10 @@ export type Database = {
           equipe_delegado?: boolean
           financeiro_delegado?: boolean
           first_name?: string
+          funcao?: string | null
           id: string
           last_name?: string
+          linkedin_url?: string | null
           metas_delegado?: boolean
           nome?: string | null
           onboarding_completed?: boolean | null
@@ -6178,8 +6254,10 @@ export type Database = {
           equipe_delegado?: boolean
           financeiro_delegado?: boolean
           first_name?: string
+          funcao?: string | null
           id?: string
           last_name?: string
+          linkedin_url?: string | null
           metas_delegado?: boolean
           nome?: string | null
           onboarding_completed?: boolean | null
@@ -9594,7 +9672,12 @@ export type Database = {
         Returns: Json
       }
       create_convite: {
-        Args: { p_cargo: string; p_email: string; p_nome?: string }
+        Args: {
+          p_cargo: string
+          p_email: string
+          p_nome?: string
+          p_pessoa_id?: string
+        }
         Returns: string
       }
       create_portal_token: {
@@ -9946,6 +10029,7 @@ export type Database = {
       }
       get_resumo_semanal: { Args: never; Returns: Json }
       get_resumo_semanal_fatos: { Args: never; Returns: Json }
+      get_titulos_posicao: { Args: { p_tipo: string }; Returns: Json }
       get_user_empresa_id: { Args: never; Returns: string }
       get_user_empresa_id_text: { Args: never; Returns: string }
       get_user_role: { Args: never; Returns: string }
@@ -9987,6 +10071,7 @@ export type Database = {
         Args: { p_empresa_id: string }
         Returns: {
           import_habilitado: boolean
+          max_leads: number
           max_obras: number
           max_projetos: number
           max_usuarios: number
@@ -10043,9 +10128,13 @@ export type Database = {
         Returns: undefined
       }
       notificacoes_email_imediato_monitored: { Args: never; Returns: undefined }
+      notificacoes_email_mencao_disparar: {
+        Args: { p_ids: string[] }
+        Returns: undefined
+      }
       notificacoes_email_semanal_monitored: { Args: never; Returns: undefined }
       notificacoes_pendentes_email: {
-        Args: { p_modo: string }
+        Args: { p_ids?: string[]; p_modo: string }
         Returns: {
           categoria: string
           created_at: string
@@ -10319,6 +10408,29 @@ export type Database = {
         }
         Returns: number
       }
+      rpc_buscar_duplicatas: {
+        Args: {
+          p_contraparte_id?: string
+          p_data: string
+          p_descricao: string
+          p_excluir_id?: string
+          p_grupo_parcela?: string
+          p_nota_fiscal?: string
+          p_tipo: string
+          p_valor: number
+        }
+        Returns: {
+          confianca: string
+          contraparte_nome: string
+          data_vencimento: string
+          descricao: string
+          id: string
+          motivo: string
+          nota_fiscal: string
+          status: string
+          valor: number
+        }[]
+      }
       rpc_calcular_wip: {
         Args: { p_ano: number; p_mes: number }
         Returns: number
@@ -10426,6 +10538,7 @@ export type Database = {
       }
       rpc_grupo_parcela_quitar_antecipado: {
         Args: {
+          p_conta_id?: string
           p_data_pagamento?: string
           p_desconto_total?: number
           p_grupo_id: string
@@ -10450,6 +10563,10 @@ export type Database = {
           p_tipo_lancamento: string
         }
         Returns: number
+      }
+      rpc_lancamentos_criar: {
+        Args: { p_linhas: Json; p_rateios?: Json; p_tipo: string }
+        Returns: string[]
       }
       rpc_meta_historico: {
         Args: { p_meta_id: string; p_periodos?: number }
@@ -10738,6 +10855,10 @@ export type Database = {
       user_has_feature: {
         Args: { p_feature: string; p_min_level?: string }
         Returns: boolean
+      }
+      vincular_pessoa_conta: {
+        Args: { p_pessoa_id: string; p_profile_id: string }
+        Returns: undefined
       }
     }
     Enums: {

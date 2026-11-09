@@ -5,21 +5,21 @@ describe("msgErroChat", () => {
   it("402 sem motivo: mensagem de saldo da empresa (comportamento original)", () => {
     const err = { context: { status: 402 } };
     expect(msgErroChat(err)).toBe(
-      "Os tokens de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador."
+      "Os créditos de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador."
     );
   });
 
   it("402 com motivo saldo_empresa: mesma mensagem de saldo (prioridade sobre teto pessoal)", () => {
     const err = { context: { status: 402 } };
     expect(msgErroChat(err, false, "saldo_empresa")).toBe(
-      "Os tokens de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador."
+      "Os créditos de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador."
     );
   });
 
   it("402 com motivo limite_usuario: mensagem de teto pessoal, aponta pedir mais ao admin", () => {
     const err = { context: { status: 402 } };
     expect(msgErroChat(err, false, "limite_usuario")).toBe(
-      "Você atingiu seu limite de tokens de IA deste mês. Peça mais tokens ao administrador da sua empresa em Configurações > Uso."
+      "Você atingiu seu limite de créditos de IA deste mês. Peça mais créditos ao administrador da sua empresa em Configurações > Uso."
     );
   });
 
@@ -94,6 +94,6 @@ describe("extrairMensagemErroIa", () => {
 
   it("msgErroChat mantém timeout e 402 acima da mensagem do tipo", () => {
     expect(msgErroChat({ context: { status: 502 } }, true, undefined, corpo.error)).toContain("demorou demais");
-    expect(msgErroChat({ context: { status: 402 } }, false, undefined, corpo.error)).toContain("tokens de IA");
+    expect(msgErroChat({ context: { status: 402 } }, false, undefined, corpo.error)).toContain("créditos de IA");
   });
 });

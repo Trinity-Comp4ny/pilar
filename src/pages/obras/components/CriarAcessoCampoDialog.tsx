@@ -54,7 +54,10 @@ export function CriarAcessoCampoDialog({ open, onOpenChange, obraId }: Props) {
   }, [open]);
 
   const criar = async () => {
-    if (!nome.trim()) return;
+    if (!nome.trim()) {
+      toast.error("Informe o nome de quem vai usar o acesso");
+      return;
+    }
     try {
       const r = await invite.mutateAsync({ obraId, nome: nome.trim(), email: email.trim() });
       setResultado(r);

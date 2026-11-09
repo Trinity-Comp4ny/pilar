@@ -165,10 +165,13 @@ export interface UseClientesOptions {
   // conjuntos auxiliares (portal/projeto). A lista de Clientes usa a paginação
   // server-side e só precisa das mutations deste hook.
   enableListQueries?: boolean;
+  // Status do portal por cliente. Segue enableListQueries por padrão; a lista
+  // paginada desliga as listas completas mas ainda mostra o selo do portal.
+  enablePortalStatus?: boolean;
 }
 
 export const useClientes = (options: UseClientesOptions = {}) => {
-  const { enableListQueries = true } = options;
+  const { enableListQueries = true, enablePortalStatus = enableListQueries } = options;
   const queryClient = useQueryClient();
 
   const clientesQuery = useQuery({
@@ -215,10 +218,13 @@ export const useClientes = (options: UseClientesOptions = {}) => {
         const { error } = await clientesTable.update(payload).eq("id", id);
         if (error) throw error;
       } else {
-        const { data: empresaData } = await supabase.rpc("get_user_empresa_id");
+        const { data: empresaId, error: empresaError } = await supabase.rpc("get_user_empresa_id");
+        if (empresaError) throw empresaError;
+        // Texto casa com KNOWN_USER_ERRORS (safeError), então o toast mostra a causa.
+        if (!empresaId) throw new Error("Usuário não associado a uma empresa");
         const { error } = await clientesTable.insert({
           ...payload,
-          empresa_id: empresaData as string,
+          empresa_id: empresaId,
         });
         if (error) throw error;
       }
@@ -291,16 +297,18 @@ export const useClientes = (options: UseClientesOptions = {}) => {
   const portalStatusQuery = useQuery({
     queryKey: ["portal-status-por-cliente"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("cliente_portal_accounts")
         .select("cliente_id, senha_hash")
         .eq("ativo", true);
+      if (error) throw error;
       const map = new Map<string, PortalStatus>();
       for (const row of data ?? []) {
         map.set(row.cliente_id as string, row.senha_hash ? "ativo" : "convite_pendente");
       }
       return map;
     },
+    enabled: enablePortalStatus,
     staleTime: 1000 * 60 * 3,
   });
 
@@ -308,7 +316,8 @@ export const useClientes = (options: UseClientesOptions = {}) => {
   const clienteIdsComProjetoQuery = useQuery({
     queryKey: ["cliente-ids-com-projeto"],
     queryFn: async () => {
-      const { data } = await supabase.from("projetos").select("cliente_id").is("deleted_at", null);
+      const { data, error } = await supabase.from("projetos").select("cliente_id").is("deleted_at", null);
+      if (error) throw error;
       return new Set((data ?? []).map((r) => r.cliente_id).filter(Boolean) as string[]);
     },
     enabled: enableListQueries,
@@ -316,12 +325,13 @@ export const useClientes = (options: UseClientesOptions = {}) => {
   });
 
   const checkPortalAccess = async (clienteId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("cliente_portal_accounts")
       .select("id")
       .eq("cliente_id", clienteId)
       .eq("ativo", true)
       .maybeSingle();
+    if (error) throw error;
 
     return !!data;
   };
@@ -367,11 +377,12 @@ export const useClientes = (options: UseClientesOptions = {}) => {
   });
 
   const fetchPortalEmail = async (clienteId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("cliente_portal_accounts")
       .select("email")
       .eq("cliente_id", clienteId)
       .maybeSingle();
+    if (error) throw error;
 
     return data?.email ?? null;
   };
@@ -398,6 +409,7 @@ export const useClientes = (options: UseClientesOptions = {}) => {
     isError: clientesQuery.isError,
     refetch: clientesQuery.refetch,
     portalStatusPorCliente: portalStatusQuery.data ?? new Map<string, PortalStatus>(),
+    isPortalStatusError: portalStatusQuery.isError,
     clienteIdsComProjeto: clienteIdsComProjetoQuery.data ?? new Set<string>(),
     upsertCliente: upsertMutation.mutateAsync,
     isSaving: upsertMutation.isPending,

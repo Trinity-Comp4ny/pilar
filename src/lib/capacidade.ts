@@ -1,13 +1,14 @@
 /**
  * SPEC 098: os triggers `enforce_capacidade_projetos`/`enforce_capacidade_obras`
  * (migration 20260921000000) recusam a escrita com `RAISE EXCEPTION` cuja
- * mensagem É o código (`capacidade:projetos` | `capacidade:obras`) e o `HINT`
+ * mensagem É o código (`capacidade:projetos` | `capacidade:obras` | `capacidade:leads`,
+ * este da migration 20261130000000) e o `HINT`
  * carrega o limite do nível atual. `supabase-js` expõe os dois em
  * PostgrestError (`.message`, `.hint`), desde que o erro não seja reembrulhado
  * em `new Error(...)` no caminho até aqui (isso descartaria o hint).
  */
 
-export type RecursoCapacidade = "projetos" | "obras";
+export type RecursoCapacidade = "projetos" | "obras" | "leads";
 
 export interface CapacidadeErro {
   recurso: RecursoCapacidade;
@@ -24,7 +25,7 @@ function extrairCampo(error: unknown, campo: "message" | "hint"): string {
 
 export function parseCapacidadeError(error: unknown): CapacidadeErro | null {
   const message = extrairCampo(error, "message");
-  const match = /^capacidade:(projetos|obras)$/.exec(message.trim());
+  const match = /^capacidade:(projetos|obras|leads)$/.exec(message.trim());
   if (!match) return null;
 
   const hint = extrairCampo(error, "hint");
