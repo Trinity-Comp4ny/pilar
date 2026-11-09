@@ -4,6 +4,8 @@
 
 const STAGE = document.getElementById("stage");
 export const W = +STAGE.dataset.w;
+export const THEME = STAGE.dataset.theme || "dark";
+const cssVar = (name, node = STAGE) => getComputedStyle(node).getPropertyValue(name).trim();
 export const H = +STAGE.dataset.h;
 STAGE.style.width = W + "px";
 STAGE.style.height = H + "px";
@@ -31,8 +33,8 @@ export const pos = (n, x, y, w, h) => {
 export const icon = (name, cls = "ico") => `<span class="${cls}">${window.ICONS[name] || ""}</span>`;
 
 /* ---------- cenas: corte seco ---------- */
-export function scene(id, t0, t1) {
-  const s = el("div", "scene");
+export function scene(id, t0, t1, { theme } = {}) {
+  const s = el("div", "scene" + (theme ? " is-" + theme : ""));
   s.id = id;
   tl.set(s, { visibility: "visible" }, t0);
   if (t1 != null) tl.set(s, { visibility: "hidden" }, t1);
@@ -131,7 +133,7 @@ export function appWindow(parent, { x, y, w, h, url = "app.pilarsoft.com.br" }) 
       tl.to(api.shot(name), { ...api.frame(r), duration: dur, ease }, t);
     },
     dim(t, amount = 0.55, dur = 0.4) {
-      tl.to(win.querySelector(".dim"), { backgroundColor: `rgba(12,14,12,${amount})`, duration: dur, ease: "power2.out" }, t);
+      tl.to(win.querySelector(".dim"), { opacity: amount, duration: dur, ease: "power2.out" }, t);
     },
     // posição na tela (stage) de um ponto da imagem, dado o enquadramento r
     toStage(r, px, py) {
@@ -214,7 +216,11 @@ export function typer(n, t, text, cps = 28) {
 
 /* ---------- anel de leitura (src/components/motion/readingRingEngine.ts, sem estado) ---------- */
 const TONES = ["hsl(160 45% 72%)", "#A4EC86", "hsl(78 62% 58%)"];
-const RING_DARK = { dust: "#7e857d", strong: "hsl(160 45% 72%)", mid: "#a4ec86", soft: "hsl(78 62% 58%)", halo: "rgba(164, 236, 134, 0.16)" };
+// cores de src/styles/motion.css: :root (claro) e .dark
+const RING_PAL = {
+  dark: { dust: "#7e857d", strong: "hsl(160 45% 72%)", mid: "#a4ec86", soft: "hsl(78 62% 58%)", halo: "rgba(164,236,134,.22)" },
+  light: { dust: "#8f948d", strong: "hsl(102 55% 27%)", mid: "hsl(96 42% 38%)", soft: "hsl(88 55% 50%)", halo: "rgba(164,236,134,.45)" },
+};
 const rng = (seed) => {
   let s = seed >>> 0;
   return () => {
@@ -226,7 +232,7 @@ const rng = (seed) => {
   };
 };
 const RINGS = [];
-export function readingRing(parent, { cx, cy, size, t0, t1, scale = 1 }) {
+export function readingRing(parent, { cx, cy, size, t0, t1, scale = 1, theme = THEME }) {
   const cv = el("canvas", "", parent);
   const dpr = 1;
   cv.width = size * dpr;
@@ -252,7 +258,7 @@ export function readingRing(parent, { cx, cy, size, t0, t1, scale = 1 }) {
       phase: r() * Math.PI * 2,
     };
   });
-  const ring = { cv, ctx: cv.getContext("2d"), ps, size, radius, t0, t1, opacity: { v: 1 } };
+  const ring = { cv, ctx: cv.getContext("2d"), ps, size, radius, t0, t1, opacity: { v: 1 }, pal: RING_PAL[theme] };
   RINGS.push(ring);
   return ring;
 }
@@ -270,7 +276,8 @@ function paintRing(R, T) {
   const hx = cx + Math.cos(head - 0.35) * radius;
   const hy = cy + Math.sin(head - 0.35) * radius;
   const g = ctx.createRadialGradient(hx, hy, 0, hx, hy, radius * 0.55);
-  g.addColorStop(0, "rgba(164,236,134,.22)");
+  const RING_DARK = R.pal;
+  g.addColorStop(0, RING_DARK.halo);
   g.addColorStop(1, "rgba(164,236,134,0)");
   ctx.globalAlpha = fade;
   ctx.fillStyle = g;
@@ -299,7 +306,7 @@ function paintRing(R, T) {
 }
 
 /* ---------- símbolo (PilarMark): capitel, ábaco e três caneluras ---------- */
-export function mark(parent, { x, y, w, weight = 1.6, color = "#fff" }) {
+export function mark(parent, { x, y, w, weight = 1.6, color = cssVar("--fg") }) {
   const s = el("div", "", parent);
   pos(s, x, y, w);
   s.style.position = "absolute";
@@ -317,7 +324,7 @@ export function mark(parent, { x, y, w, weight = 1.6, color = "#fff" }) {
       cue("draw", t);
     },
     // Caneluras verdes uma a uma (A07)
-    green(t, color = "#A4EC86") {
+    green(t, color = cssVar("--flute")) {
       s.querySelectorAll(".fl").forEach((p, i) => tl.to(p, { stroke: color, duration: 0.3, ease: "power2.out" }, t + i * 0.12));
       cue("chime", t);
     },
@@ -333,11 +340,11 @@ export function mark(parent, { x, y, w, weight = 1.6, color = "#fff" }) {
 }
 
 /* ---------- logotipo oficial (brand/assets/logo/pilar-logo-horizontal-white.svg) ---------- */
-export function lockup(parent, { x, y, w }) {
+export function lockup(parent, { x, y, w, theme = THEME }) {
   const s = el("div", "", parent);
   pos(s, x, y, w);
   s.style.position = "absolute";
-  s.innerHTML = window.LOCKUP;
+  s.innerHTML = theme === "light" ? window.LOCKUP_INK : window.LOCKUP;
   const svg = s.querySelector("svg");
   svg.removeAttribute("width");
   svg.removeAttribute("height");
@@ -361,17 +368,41 @@ export function lockup(parent, { x, y, w }) {
       cue("draw", t);
     },
     green(t) {
-      [2, 3, 4].forEach((i, k) => tl.to(strokes[i], { stroke: "#A4EC86", duration: 0.3 }, t + k * 0.12));
+      const flute = theme === "light" ? "hsl(102, 55%, 32%)" : "#A4EC86";
+      [2, 3, 4].forEach((i, k) => tl.to(strokes[i], { stroke: flute, duration: 0.3 }, t + k * 0.12));
       cue("chime", t);
     },
   };
 }
 
 /* ---------- fundo ---------- */
+// Paisagem da landing (apps/marketing/src/components/hero/HeroBackdrop.tsx), em SVG.
+const HILLS = (w, h) => `<svg class="hills" width="${w}" height="${h}" viewBox="0 0 1440 860" preserveAspectRatio="xMidYMax slice" style="position:absolute;inset:0">
+  <defs>
+    <linearGradient id="hL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(160 45% 78%)"/><stop offset="1" stop-color="hsl(102 73% 73% / .7)"/></linearGradient>
+    <linearGradient id="hM" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(102 73% 73%)"/><stop offset="1" stop-color="hsl(78 62% 58%)"/></linearGradient>
+    <linearGradient id="hP" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(88 55% 52%)"/><stop offset="1" stop-color="hsl(96 42% 38%)"/></linearGradient>
+    <pattern id="tr" width="3" height="3" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".62" fill="#fff"/></pattern>
+  </defs>
+  <g class="h1"><path d="M0 690 C160 640 260 664 400 652 C560 638 640 590 800 606 C960 622 1060 660 1200 648 C1320 638 1380 656 1440 668 V860 H0Z" fill="url(#hL)" opacity=".75"/></g>
+  <g class="h2"><path d="M0 752 C180 714 300 742 460 730 C620 718 720 682 880 700 C1020 716 1140 744 1280 732 C1350 726 1400 736 1440 744 V860 H0Z" fill="url(#hM)" opacity=".8"/></g>
+  <g class="h3"><path d="M0 806 C200 780 340 800 520 792 C700 784 820 760 980 772 C1140 784 1300 800 1440 796 V860 H0Z" fill="url(#hP)" opacity=".7"/></g>
+  <rect width="1440" height="860" fill="url(#tr)" opacity=".28"/>
+</svg>`;
+
 export function background({ glows = [] } = {}) {
-  const bg = el("div", "layer", STAGE);
+  const bg = el("div", "layer " + (THEME === "light" ? "bg-light" : "bg-dark"), STAGE);
   bg.id = "bg";
-  bg.innerHTML = `<svg id="colunata" width="${W}" height="${H}"><defs><pattern id="col" width="96" height="${H}" patternUnits="userSpaceOnUse"><path d="M48 0V${H}" stroke="#fff" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(#col)"/></svg>`;
+  let hills = null;
+  if (THEME === "light") {
+    // a paisagem ocupa o terço de baixo; o céu fica limpo para o texto
+    const hw = el("div", "", bg);
+    Object.assign(hw.style, { position: "absolute", left: 0, right: 0, bottom: 0, height: H * 0.42 + "px" });
+    hw.innerHTML = HILLS(W, H * 0.42);
+    hills = hw;
+  } else {
+    bg.innerHTML = `<svg class="colunata" width="${W}" height="${H}"><defs><pattern id="col" width="96" height="${H}" patternUnits="userSpaceOnUse"><path d="M48 0V${H}" stroke="#fff" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(#col)"/></svg>`;
+  }
   const gl = glows.map(([gx, gy, gs, c]) => {
     const g = el("div", "glow", bg);
     pos(g, gx - gs / 2, gy - gs / 2, gs, gs);
@@ -382,10 +413,47 @@ export function background({ glows = [] } = {}) {
   grain.id = "grain";
   grain.width = W / 3;
   grain.height = H / 3;
-  const vig = el("div", "", STAGE);
-  vig.id = "vignette";
-  return { bg, glows: gl, grain, vig };
+  if (THEME === "dark") el("div", "vignette", STAGE);
+  return { bg, glows: gl, grain, hills };
 }
+
+/* ---------- legenda sincronizada à fala ---------- */
+// Cada fala (de narration/<id>/timing.json) vira blocos de até `max` palavras; a palavra
+// falada acende. O tempo de cada palavra é proporcional ao tamanho dela dentro da fala.
+export function captions(parent, lines, { y, max = 6 } = {}) {
+  const box = el("div", "cap", parent);
+  box.style.top = y + "px";
+  box.style.zIndex = 60;
+  for (const ln of lines) {
+    const words = ln.text.split(/\s+/);
+    const weights = words.map((w) => w.replace(/[^\p{L}\p{N}]/gu, "").length + 2);
+    const total = weights.reduce((a, b) => a + b, 0);
+    let acc = 0;
+    const times = weights.map((w) => {
+      const t = ln.start + (acc / total) * ln.dur;
+      acc += w;
+      return t;
+    });
+    for (let i = 0; i < words.length; i += max) {
+      const chunk = words.slice(i, i + max);
+      const row = el("div", "", box);
+      Object.assign(row.style, { position: "absolute", left: 0, right: 0, top: 0, opacity: 0 });
+      row.innerHTML = chunk.map((w) => `<span class="cw">${w}</span>`).join(" ");
+      const t0 = times[i];
+      const t1 = i + max < words.length ? times[i + max] : ln.start + ln.dur + 0.25;
+      tl.fromTo(row, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.18, ease: "power2.out", immediateRender: false }, t0 - 0.05);
+      tl.set(row, { opacity: 0 }, t1);
+      row.querySelectorAll(".cw").forEach((sp, k) => {
+        const tw = times[i + k];
+        tl.set(sp, { attr: { class: "cw now" } }, tw);
+        const next = times[i + k + 1] ?? ln.start + ln.dur;
+        tl.set(sp, { attr: { class: "cw said" } }, Math.min(next, t1 - 0.01));
+      });
+    }
+  }
+  return box;
+}
+
 let GRAIN;
 function paintGrain(frame) {
   if (!GRAIN) GRAIN = document.getElementById("grain");

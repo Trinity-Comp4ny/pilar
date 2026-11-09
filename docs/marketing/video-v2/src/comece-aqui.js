@@ -1,15 +1,15 @@
 // Comece aqui: a Pilar inteira em 49 s (9:16, 1080x1920).
 // Dado fictício da empresa de vídeo (Atrium Engenharia), telas reais do app.
 import {
-  tl, W, el, pos, icon, scene, headline, textIn, textOut, popIn, fadeOut, appWindow, lift, cursor,
+  THEME, tl, W, el, pos, icon, scene, headline, textIn, textOut, popIn, fadeOut, appWindow, lift, cursor,
   counter, brl, typer, readingRing, mark, lockup, background, cue, finalize, EXPO, QUINT,
 } from "./engine.js";
 
 const BG = background({
-  glows: [
-    [180, 300, 900, "rgba(164,236,134,.35)"],
-    [950, 1500, 1000, "rgba(120,200,160,.25)"],
-  ],
+  glows:
+    THEME === "light"
+      ? [[180, 300, 900, "rgba(190,235,240,.9)"], [950, 1200, 900, "rgba(164,236,134,.55)"]]
+      : [[180, 300, 900, "rgba(164,236,134,.35)"], [950, 1500, 1000, "rgba(120,200,160,.25)"]],
 });
 // o brilho deriva devagar o vídeo inteiro
 tl.fromTo(BG.glows[0], { opacity: 0.25, x: -80, y: 0 }, { opacity: 0.45, x: 160, y: 220, duration: 49, ease: "sine.inOut" }, 0);
@@ -61,23 +61,23 @@ tl.fromTo(BG.glows[1], { opacity: 0.2, x: 60, y: 0 }, { opacity: 0.35, x: -200, 
   const s = scene("loss", 3.5, 6.05);
   const h = headline(s, "E o prejuízo só|aparece no ~fim~.", { y: 290, size: 92 });
   textIn(h, 3.5);
-  const c = el("div", "card dark", s);
+  const c = el("div", "surf", s);
   pos(c, 70, 680, 940, 640);
   c.innerHTML = `
     <div style="padding:40px 44px 0;display:flex;justify-content:space-between;align-items:flex-start">
-      <div><div class="label" style="color:rgba(255,255,255,.55)">Lucro do projeto</div>
-      <div style="font:600 26px Inter;margin-top:10px;color:rgba(255,255,255,.85)">Retrofit Hotel Serra Verde</div></div>
-      <div class="lv" style="font:600 76px Geist;letter-spacing:-.03em;color:var(--brand)">+18%</div>
+      <div><div class="label" style="color:var(--surf-soft)">Lucro do projeto</div>
+      <div style="font:600 26px Inter;margin-top:10px;color:var(--surf-fg)">Retrofit Hotel Serra Verde</div></div>
+      <div class="lv" style="font:600 76px Geist;letter-spacing:-.03em;color:var(--flute)">+18%</div>
     </div>
     <svg viewBox="0 0 860 400" style="position:absolute;left:40px;top:190px;width:860px;height:400px;overflow:visible">
       <defs><linearGradient id="lg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ef4444" stop-opacity=".35"/><stop offset="1" stop-color="#ef4444" stop-opacity="0"/></linearGradient></defs>
-      <line x1="0" x2="860" y1="200" y2="200" stroke="rgba(255,255,255,.18)" stroke-dasharray="6 8"/>
-      <text x="0" y="190" fill="rgba(255,255,255,.4)" font-family="Inter" font-size="20">0%</text>
-      <path class="ln" pathLength="1" d="M0 60 C120 64 200 80 300 110 S470 150 560 200 S720 300 860 330" fill="none" stroke="#A4EC86" stroke-width="7" stroke-linecap="round"/>
+      <line x1="0" x2="860" y1="200" y2="200" style="stroke:var(--line)" stroke-dasharray="6 8"/>
+      <text x="0" y="190" style="fill:var(--surf-soft)" font-family="Inter" font-size="20">0%</text>
+      <path class="ln" pathLength="1" d="M0 60 C120 64 200 80 300 110 S470 150 560 200 S720 300 860 330" fill="none" style="stroke:var(--flute)" stroke-width="7" stroke-linecap="round"/>
       <path class="ln2" pathLength="1" d="M560 200 S720 300 860 330" fill="none" stroke="#ef4444" stroke-width="7" stroke-linecap="round"/>
       <circle class="dot" cx="860" cy="330" r="14" fill="#ef4444"/>
       <circle class="dotr" cx="860" cy="330" r="14" fill="none" stroke="#ef4444" stroke-width="4"/>
-      ${["Jun", "Jul", "Ago", "Set", "Out", "Nov"].map((m, i) => `<text x="${i * 168}" y="395" fill="rgba(255,255,255,.4)" font-family="Inter" font-size="20">${m}</text>`).join("")}
+      ${["Jun", "Jul", "Ago", "Set", "Out", "Nov"].map((m, i) => `<text x="${i * 168}" y="395" style="fill:var(--surf-soft)" font-family="Inter" font-size="20">${m}</text>`).join("")}
       <text x="860" y="290" text-anchor="end" fill="#ef4444" font-family="Inter" font-weight="600" font-size="22">entrega</text>
     </svg>`;
   popIn(c, 3.6, { y: 80 });
@@ -136,15 +136,15 @@ tl.fromTo(BG.glows[1], { opacity: 0.2, x: 60, y: 0 }, { opacity: 0.35, x: -200, 
   Object.assign(line.style, { position: "absolute", background: "linear-gradient(#A4EC86,#A4EC86)", transformOrigin: "50% 0", borderRadius: "4px" });
   const base = el("div", "", s);
   pos(base, X + 54, Y0 + 60, 4, STEP * 4);
-  Object.assign(base.style, { position: "absolute", background: "rgba(255,255,255,.12)" });
+  Object.assign(base.style, { position: "absolute", background: "var(--line)" });
   s.appendChild(line);
   tl.fromTo(line, { scaleY: 0 }, { scaleY: 1, duration: 1.9, ease: "power1.inOut" }, 10.55);
   nodes.forEach(([ic, t1, t2], i) => {
-    const n = el("div", "card dark", s);
+    const n = el("div", "surf", s);
     pos(n, X, Y0 + i * STEP, 860, 120);
     n.innerHTML = `<div style="display:flex;align-items:center;gap:28px;height:100%;padding:0 26px">
-      <div class="ib" style="width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.08);display:grid;place-items:center;flex:none">${icon(ic, "ico i30")}</div>
-      <div><div style="font:600 34px Geist;letter-spacing:-.02em">${t1}</div><div style="font:400 24px Inter;color:rgba(255,255,255,.6);margin-top:4px">${t2}</div></div>
+      <div class="ib" style="width:60px;height:60px;border-radius:50%;background:var(--soft-fill);display:grid;place-items:center;flex:none">${icon(ic, "ico i30")}</div>
+      <div><div style="font:600 34px Geist;letter-spacing:-.02em">${t1}</div><div style="font:400 24px Inter;color:var(--surf-soft);margin-top:4px">${t2}</div></div>
       <div class="ok" style="margin-left:auto;width:44px;height:44px;border-radius:50%;background:var(--brand);display:grid;place-items:center;opacity:0">${icon("check", "ico i24 ink")}</div></div>`;
     popIn(n, 10.2 + i * 0.09, { y: 60, sound: i === 0 ? "whoosh" : null });
     const at = 10.55 + i * 0.47;
@@ -340,12 +340,12 @@ const overlay = (t0, t1) => scene("ov" + t0, t0, t1);
   app.show("diario", 28.95, R.diario, { fade: 0.2 });
   app.dim(29.5, 0.5);
   const s = overlay(29.0, 32.5);
-  const v = el("div", "card dark", s);
+  const v = el("div", "surf", s);
   pos(v, 50, 1060, 980, 170);
-  const bars = Array.from({ length: 18 }, (_, i) => `<i style="display:block;width:8px;border-radius:4px;background:#A4EC86;height:${18 + ((i * 37) % 50)}px;transform-origin:50% 50%"></i>`).join("");
+  const bars = Array.from({ length: 18 }, (_, i) => `<i style="display:block;width:8px;border-radius:4px;background:var(--accent-icon);height:${18 + ((i * 37) % 50)}px;transform-origin:50% 50%"></i>`).join("");
   v.innerHTML = `<div style="display:flex;align-items:center;gap:26px;height:100%;padding:0 34px">
     <div class="mic" style="width:84px;height:84px;border-radius:50%;background:#A4EC86;display:grid;place-items:center;flex:none">${icon("mic", "ico i40 ink")}</div>
-    <div><div style="font:600 30px Geist;white-space:nowrap">Jorge Matos</div><div style="font:400 23px Inter;color:rgba(255,255,255,.6);margin-top:2px">mestre de obras</div><div style="font:400 23px Inter;color:rgba(255,255,255,.6);margin-top:4px">gravando o dia · 0:14</div></div>
+    <div><div style="font:600 30px Geist;white-space:nowrap">Jorge Matos</div><div style="font:400 23px Inter;color:var(--surf-soft);margin-top:2px">mestre de obras</div><div style="font:400 23px Inter;color:var(--surf-soft);margin-top:4px">gravando o dia · 0:14</div></div>
     <div class="wave" style="margin-left:auto;display:flex;gap:6px;align-items:center;height:80px">${bars}</div></div>`;
   popIn(v, 29.5);
   v.querySelectorAll(".wave i").forEach((b, i) => tl.fromTo(b, { scaleY: 0.3 }, { scaleY: 1, duration: 0.18 + (i % 5) * 0.03, repeat: 7, yoyo: true, ease: "sine.inOut" }, 29.6 + (i % 7) * 0.02));
@@ -418,7 +418,7 @@ textOut(lastHead, 38.65, { dur: 0.28 });
     ["chart-column", "Relatórios"], ["globe", "Portal do cliente"], ["sparkles", "Agentes de IA"],
   ];
   mods.forEach(([ic, name], i) => {
-    const c = el("div", "card dark", s);
+    const c = el("div", "surf", s);
     const col = i % 3, row = Math.floor(i / 3);
     pos(c, 60 + col * 325, 600 + row * 205, 305, 185);
     c.innerHTML = `<div style="padding:28px 26px;display:grid;gap:22px">${icon(ic, "ico i40 brand")}<div style="font:600 30px Geist;letter-spacing:-.02em">${name}</div></div>`;
@@ -445,7 +445,7 @@ textOut(lastHead, 38.65, { dur: 0.28 });
   popIn(cta, 44.6, { y: 40 });
   const url = el("div", "", s);
   pos(url, 0, 1440, W);
-  Object.assign(url.style, { position: "absolute", textAlign: "center", font: "500 34px Geist", color: "rgba(255,255,255,.7)" });
+  Object.assign(url.style, { position: "absolute", textAlign: "center", font: "500 34px Geist", color: "var(--fg-soft)" });
   url.textContent = "pilarsoft.com.br";
   popIn(url, 44.9, { y: 20, sound: null });
   cue("impact-soft", 43.0);

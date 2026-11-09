@@ -256,6 +256,41 @@ def build_music(dur, S):
     return mus
 
 
+def build_bed(dur, S):
+    """Trilha de fundo para vídeo narrado: harmonia e pulso leves, sem disputar com a voz."""
+    mus = np.zeros((2, int((dur + 3) * SR)))
+    drums = np.zeros_like(mus)
+    padbus = np.zeros_like(mus)
+    end0 = S.get("end", dur - 4)
+    nbar = int(end0 / (4 * BEAT)) + 1
+    for bar in range(nbar):
+        t = bar * 4 * BEAT
+        c = bar % 4
+        add(padbus, pad(CHORDS[c], 4 * BEAT + 0.4, 1300), t, 0.24)
+        add(mus, bass(ROOTS[c], 4 * BEAT * 0.95), t, 0.28)
+        for k in range(8):
+            add(mus, pluck(ARP[c][k % 4], 0.3, 2400), t + k * BEAT / 2, 0.075, pan=-0.45 if k % 2 else 0.45)
+        if t > 1.0:
+            add(drums, kick(0.6), t, 0.32)
+            add(drums, kick(0.5), t + 2 * BEAT, 0.22)
+            for k in range(8):
+                add(drums, hat(), t + k * BEAT / 2 + BEAT / 4, 0.045, pan=0.3)
+    for b0 in S.get("brand", []):
+        add(mus, bp_sweep(1.2, 300, 5000, 4) * np.linspace(0, 1, int(1.2 * SR)) ** 2, b0 - 1.2, 0.14)
+        add(mus, np.tanh(sine(42, 2.2) * np.exp(-secs(2.2) * 1.8) * 2), b0, 0.45)
+        for k, m in enumerate([74, 77, 81, 84]):
+            add(mus, bell(m), b0 + 0.3 + k * BEAT / 2, 0.07, pan=(k - 1.5) * 0.3)
+    add(drums, kick(1.0), end0, 0.5)
+    add(padbus, pad([41, 53, 57, 60, 64, 67], dur - end0 + 2, 2400), end0, 0.3)
+    for k, m in enumerate([72, 76, 79, 84]):
+        add(mus, bell(m, 2.5), end0 + 0.3 + k * BEAT, 0.08, pan=(k - 1.5) * 0.3)
+    mus = reverb(mus, 1.8, 0.25) + reverb(padbus, 2.8, 0.35) + drums
+    fe = int((dur - 1.5) * SR)
+    mus[:, fe : int(dur * SR)] *= np.linspace(1, 0, int(dur * SR) - fe)
+    mus[:, int(dur * SR) :] = 0
+    return mus
+
+
 # ---------------- efeitos ----------------
 
 def sfx(cues, dur):
@@ -308,8 +343,10 @@ def main():
     meta = json.load(open(sys.argv[1]))
     dur = meta["duration"]
     S = meta.get("sections")
-    mus = build_music(dur, S)
+    mus = build_bed(dur, S) if S.get("style") == "bed" else build_music(dur, S)
     fx = sfx(meta["cues"], dur)
+    if S.get("voice"):
+        fx *= 0.6  # com narração, os efeitos ficam por baixo
     L = int(dur * SR)
     mix = mus[:, :L] * 0.8 + fx[:, :L]
     mix = np.tanh(mix * 1.1) * 0.9
