@@ -1,0 +1,7 @@
+vendor/
+out/
+renders/*.wav
+renders/*.video.mp4
+renders/*.cues.json
+renders/*_[0-9]*.jpg
+renders/render.log
