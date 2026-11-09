@@ -39,6 +39,11 @@ ON CONFLICT (id) DO NOTHING;
 
 SET LOCAL session_replication_role = 'origin';
 
+-- Projeto criado aqui, como postgres e antes de qualquer sessão simulada (o gatilho de
+-- projetos exige e-mail confirmado de quem está na sessão authenticated).
+INSERT INTO public.projetos (id, empresa_id, nome, status)
+VALUES ('b3000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000b3001', '500 - Projeto Vinculo', 'Em andamento');
+
 -- Pessoas com e-mail pessoal, diferente do login corporativo.
 INSERT INTO public.pessoas (id, empresa_id, nome, primeiro_nome, sobrenome, email, cargo) VALUES
   ('b3000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-0000000b3001', 'Amanda VC', 'Amanda', 'VC', 'amanda@pessoal-vc.test', 'Engenheira'),
@@ -130,9 +135,6 @@ SELECT is(
 );
 
 -- ── Menção chega a quem foi ligado, e vai por e-mail no ciclo imediato ───────
-INSERT INTO public.projetos (id, empresa_id, nome, status)
-VALUES ('b3000000-0000-0000-0000-0000000000f1', '00000000-0000-0000-0000-0000000b3001', '500 - Projeto Vinculo', 'Em andamento');
-
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.como('b3000000-0000-0000-0000-00000000000a');
 SELECT is(
