@@ -7,7 +7,8 @@ A voz vem da primeira fonte disponível, nesta ordem:
   1. gravação manual: narration/<id>/manual/lNN.wav (a sua voz, uma fala por arquivo)
   2. Gemini TTS, cota grátis do AI Studio, sem cartão (GEMINI_API_KEY; VOICE_GEMINI muda a voz)
   3. Google Cloud TTS, voz Chirp 3 HD   (GOOGLE_TTS_API_KEY; 1 milhão de caracteres grátis/mês)
-  4. ElevenLabs, multilingual v2         (ELEVENLABS_API_KEY e ELEVENLABS_VOICE_ID; plano pago)
+  4. ElevenLabs, multilingual v2         (ELEVENLABS_API_KEY e ELEVENLABS_VOICE_ID; uso comercial
+                                         pede plano pago; liberar api.elevenlabs.io na rede)
   5. Kokoro local, só como voz-guia      (KOKORO_DIR com kokoro-v1.0.onnx e voices-v1.0.bin)
 VOICE_PROVIDER=manual|gemini|google|elevenlabs|kokoro força uma delas.
 
@@ -91,16 +92,28 @@ def tts_google(text):
     return base64.b64decode(json.loads(out)["audioContent"]), voice
 
 
-def tts_elevenlabs(text):
+def tts_elevenlabs(text, prev="", nxt=""):
+    """ElevenLabs. prev/next dão o contexto da fala vizinha: a entonação emenda entre as frases."""
     key = os.environ["ELEVENLABS_API_KEY"]
     voice = os.environ["ELEVENLABS_VOICE_ID"]
-    pcm = http_json(
-        f"https://api.elevenlabs.io/v1/text-to-speech/{voice}?output_format=pcm_44100",
-        {"text": text, "model_id": "eleven_multilingual_v2",
-         "voice_settings": {"stability": 0.45, "similarity_boost": 0.8, "style": 0.2, "use_speaker_boost": True}},
-        {"xi-api-key": key},
-    )
-    return pcm_to_wav(pcm, SR), voice
+    model = os.environ.get("ELEVENLABS_MODEL", "eleven_multilingual_v2")
+    body = {
+        "text": text,
+        "model_id": model,
+        "voice_settings": {
+            "stability": float(os.environ.get("ELEVENLABS_STABILITY", "0.45")),
+            "similarity_boost": 0.8,
+            "style": float(os.environ.get("ELEVENLABS_STYLE", "0.15")),
+            "use_speaker_boost": True,
+            "speed": float(os.environ.get("ELEVENLABS_SPEED", "1.0")),
+        },
+        "previous_text": prev,
+        "next_text": nxt,
+    }
+    if "v2_5" in model or "flash" in model or "turbo" in model or "v3" in model:
+        body["language_code"] = "pt"
+    pcm = http_json(f"https://api.elevenlabs.io/v1/text-to-speech/{voice}?output_format=pcm_44100", body, {"xi-api-key": key})
+    return pcm_to_wav(pcm, SR), f"elevenlabs/{voice}"
 
 
 _kokoro = None
@@ -190,7 +203,8 @@ def main():
     cache.mkdir(exist_ok=True)
     t = script.get("lead", 0.5)
     lines, voice_name = [], provider
-    for ln in script["lines"]:
+    lines_in = script["lines"]
+    for idx, ln in enumerate(lines_in):
         dst = out / f"{ln['id']}.wav"
         if provider == "manual":
             raw = (manual / f"{ln['id']}.wav").read_bytes()
@@ -201,7 +215,12 @@ def main():
             if hit.exists():
                 raw = hit.read_bytes()
             else:
-                raw, voice_name = fn(say)
+                if provider == "elevenlabs":
+                    prev = lines_in[idx - 1].get("say", lines_in[idx - 1]["text"]) if idx else ""
+                    nxt = lines_in[idx + 1].get("say", lines_in[idx + 1]["text"]) if idx + 1 < len(lines_in) else ""
+                    raw, voice_name = fn(say, prev, nxt)
+                else:
+                    raw, voice_name = fn(say)
                 hit.write_bytes(raw)
         dur = process(raw, dst)
         lines.append({"id": ln["id"], "text": ln["text"], "start": round(t, 3), "dur": round(dur, 3)})

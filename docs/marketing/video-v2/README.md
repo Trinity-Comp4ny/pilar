@@ -83,6 +83,25 @@ reposiciona o vídeo inteiro sozinho. Custos verificados em 2026-11-09:
 
 Os hosts do Gemini e do Google Cloud TTS já são acessíveis no ambiente de nuvem; basta a chave.
 
+### ElevenLabs, passo a passo
+
+1. Conta em elevenlabs.io. Em **Developers → API Keys**, crie uma chave com permissão de
+   *Text to Speech* e *Voices (read)*.
+2. Escolha a voz. Na conta grátis, use uma das vozes padrão (a Voice Library não sai pela API no
+   plano grátis). Para sotaque brasileiro de verdade, uma voz brasileira da Voice Library, que
+   pede plano pago.
+3. No ambiente de nuvem (menu do ambiente → Edit): variáveis `ELEVENLABS_API_KEY` e
+   `ELEVENLABS_VOICE_ID`, e `api.elevenlabs.io` em Network access → Allowed domains. Abra uma
+   sessão nova.
+4. `python3 check_elevenlabs.py` confere a conexão e lista as vozes (não gasta crédito).
+5. `./make.sh agentes-explicado light` gera a voz e o vídeo. Ajustes finos: `ELEVENLABS_SPEED`,
+   `ELEVENLABS_STABILITY`, `ELEVENLABS_STYLE`, `ELEVENLABS_MODEL`.
+
+Custo: o roteiro do vídeo dos agentes tem ~1.000 caracteres (1 crédito por caractere). O plano
+grátis dá 10.000 por mês, mas **não permite uso comercial** e exige crédito ao ElevenLabs;
+para publicar, o Starter (~US$ 5 a 6/mês). As falas geradas ficam em cache: refazer o vídeo
+sem mudar o texto não gasta crédito.
+
 ## Música
 
 Sem arquivo, `audio.py` sintetiza a trilha (original, sem licença de terceiros). Para usar uma
