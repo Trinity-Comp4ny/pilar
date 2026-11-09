@@ -11,6 +11,7 @@ const h = vi.hoisted(() => ({
   rpc: vi.fn(),
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
+  convidar: vi.fn(),
 }));
 
 vi.mock("@/integrations/supabase/client", async () => {
@@ -19,6 +20,7 @@ vi.mock("@/integrations/supabase/client", async () => {
   h.calls = chain.calls;
   return { supabase: { from: chain.from, rpc: h.rpc } };
 });
+vi.mock("../hooks/useAcessoPessoa", () => ({ convidarPessoa: h.convidar }));
 vi.mock("sonner", () => ({ toast: { error: h.toastError, success: h.toastSuccess } }));
 
 globalThis.ResizeObserver ??= class {
@@ -47,10 +49,18 @@ const PESSOA: Pessoa = {
   pode_ver_sensivel: false,
 };
 
-function renderDialog(editPessoa: Pessoa | null = null) {
+function renderDialog(editPessoa: Pessoa | null = null, podeConvidar = false) {
   const onOpenChange = vi.fn();
   const onSaved = vi.fn();
-  render(<PessoaFormDialog open onOpenChange={onOpenChange} editPessoa={editPessoa} onSaved={onSaved} />);
+  render(
+    <PessoaFormDialog
+      open
+      onOpenChange={onOpenChange}
+      editPessoa={editPessoa}
+      onSaved={onSaved}
+      podeConvidar={podeConvidar}
+    />
+  );
   return { onOpenChange, onSaved, user: userEvent.setup() };
 }
 
@@ -107,6 +117,39 @@ describe("Equipe › PessoaFormDialog", () => {
       salario_fixo: null,
     });
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("admin cadastra e já convida, com o convite ligado à pessoa criada", async () => {
+    h.resolve.mockReturnValue({ data: { id: "p-nova" }, error: null });
+    h.convidar.mockResolvedValue({ contaExistente: false });
+    const { user, onSaved } = renderDialog(null, true);
+    await preencherMinimo(user);
+    expect(screen.getByRole("checkbox", { name: "Dar acesso ao Pilar" })).toBeChecked();
+    await user.click(screen.getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(h.convidar).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "p-nova", nome: "Rita Alves", email: "rita@seed.test" })
+    );
+  });
+
+  it("desmarcar o acesso cadastra sem convite", async () => {
+    h.resolve.mockReturnValue({ data: { id: "p-nova" }, error: null });
+    const { user, onSaved } = renderDialog(null, true);
+    await preencherMinimo(user);
+    await user.click(screen.getByRole("checkbox", { name: "Dar acesso ao Pilar" }));
+    await user.click(screen.getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(h.convidar).not.toHaveBeenCalled();
+  });
+
+  it("convite que falha não desfaz o cadastro, só avisa", async () => {
+    h.resolve.mockReturnValue({ data: { id: "p-nova" }, error: null });
+    h.convidar.mockRejectedValue(new Error("limite"));
+    const { user, onSaved } = renderDialog(null, true);
+    await preencherMinimo(user);
+    await user.click(screen.getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(h.toastError).toHaveBeenCalledWith("Pessoa cadastrada, mas o convite não saiu", expect.anything());
   });
 
   it("sem empresa identificada não grava e avisa", async () => {

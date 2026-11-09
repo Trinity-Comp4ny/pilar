@@ -119,7 +119,7 @@ serve(
         return jsonResponse({ success: true, conta_existente: delivery.conta_existente }, 200, req);
       }
 
-      const { email, nome, role } = body ?? {};
+      const { email, nome, role, pessoa_id } = body ?? {};
 
       if (!email || !EMAIL_RE.test(String(email))) {
         return safeErrorResponse(400, "Invalid email format", req);
@@ -172,6 +172,9 @@ serve(
         p_email: email,
         p_cargo: safeRole,
         p_nome: nome || null,
+        // Convite feito a partir da Equipe: a conta criada é ligada a essa pessoa
+        // mesmo que o e-mail do login seja outro (migration 20261207000000).
+        p_pessoa_id: typeof pessoa_id === "string" && pessoa_id ? pessoa_id : null,
       });
 
       if (conviteError || !token) {
@@ -211,7 +214,7 @@ serve(
         targetType: "user",
         targetName: nome || email,
         empresaId: profile.empresa_id,
-        metadata: { email, role: safeRole },
+        metadata: { email, role: safeRole, pessoa_id: pessoa_id ?? null },
         req,
       });
 

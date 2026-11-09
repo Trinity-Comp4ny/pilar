@@ -22,6 +22,8 @@ vi.mock("@/integrations/supabase/client", async () => {
 });
 vi.mock("@/hooks/useFeatureAccess", () => ({ useFeatureAccess: () => ({ canEdit: h.canEdit }) }));
 vi.mock("@/hooks/usePageTitle", () => ({ usePageTitle: vi.fn() }));
+vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ profile: { role: "admin", empresa_id: "e1" } }) }));
+vi.mock("./components/PessoaAcessoSecao", () => ({ PessoaAcessoSecao: () => null }));
 vi.mock("sonner", () => ({ toast: { error: h.toastError, success: h.toastSuccess } }));
 vi.mock("@/components/PilarPage", () => ({
   PilarPage: ({
