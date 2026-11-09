@@ -47,7 +47,8 @@ function dbFalso(responder: (c: Consulta) => Resposta) {
 }
 
 const temFiltro = (c: Consulta, ...f: unknown[]) => c.filtros.some((x) => JSON.stringify(x) === JSON.stringify(f));
-const HOJE = new Date().toISOString().slice(0, 10);
+// Mesmo relógio da coleta (Brasília): a data UTC vira às 21h e o teste quebrava à noite.
+const HOJE = hojeBrasilia();
 
 Deno.test("inicioDoMes: primeiro dia do mês corrente em yyyy-mm-dd", () => {
   const v = inicioDoMes();
