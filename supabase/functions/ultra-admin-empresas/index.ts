@@ -76,7 +76,9 @@ serve(
             svc.from("empresas").select("*").eq("id", id).single(),
             svc
               .from("profiles")
-              .select("id, nome, email, role, financeiro_delegado, equipe_delegado, metas_delegado")
+              .select(
+                "id, nome, email, role, financeiro_delegado, equipe_delegado, metas_delegado, funcao, linkedin_url, contato"
+              )
               .eq("empresa_id", id)
               .is("desativado_em", null),
             svc
@@ -208,12 +210,22 @@ serve(
     if (req.method === "POST") {
       const nova = lerNovaEmpresa(await req.json().catch(() => null));
       if (!nova.ok) return safeErrorResponse(400, nova.error, req);
-      const { nome, cnpj, ownerEmail, ownerNome } = nova.data;
+      const { nome, cnpj, ownerEmail, ownerNome, site, porte, disciplinas, origem } = nova.data;
 
       // 1. Cria a empresa (service_role bypassa RLS)
       const { data: empresa, error: empErr } = await svc
         .from("empresas")
-        .insert({ nome, cnpj, email: ownerEmail, status: "active", created_by: userId })
+        .insert({
+          nome,
+          cnpj,
+          email: ownerEmail,
+          status: "active",
+          created_by: userId,
+          site,
+          porte,
+          disciplinas,
+          origem,
+        })
         .select("id, nome")
         .single();
 
@@ -266,7 +278,7 @@ serve(
         targetId: empresa.id,
         targetName: empresa.nome,
         empresaId: empresa.id,
-        metadata: { owner_email: ownerEmail, plano: "starter", invite_warning: inviteWarning },
+        metadata: { owner_email: ownerEmail, plano: "starter", origem, invite_warning: inviteWarning },
         req,
       });
 

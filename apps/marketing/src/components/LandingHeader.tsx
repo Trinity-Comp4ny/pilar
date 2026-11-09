@@ -7,7 +7,6 @@ import { useLoginHint } from "../loginHint";
 import { MODULOS } from "../lib/modules";
 import { Logo } from "./Logo";
 import { SplitButton } from "./ui/SplitButton";
-import { DEMO_URL } from "../lib/contato";
 
 type MenuNome = "produto";
 
@@ -141,13 +140,15 @@ export function LandingHeader() {
                 Entrar
               </a>
             )}
-            <SplitButton
-              tamanho="sm"
-              href={loggedIn ? `${APP_URL}/inicio` : DEMO_URL}
-              onClick={() => trackCta(loggedIn ? "abrir_pilar" : "agende_demo", "header")}
-            >
-              {loggedIn ? "Abrir Pilar" : "Agendar demo"}
-            </SplitButton>
+            {loggedIn ? (
+              <SplitButton tamanho="sm" href={`${APP_URL}/inicio`} onClick={() => trackCta("abrir_pilar", "header")}>
+                Abrir Pilar
+              </SplitButton>
+            ) : (
+              <SplitButton tamanho="sm" to="/planos" onClick={() => trackCta("ver_planos", "header")}>
+                Ver planos
+              </SplitButton>
+            )}
           </div>
 
           <button
@@ -190,13 +191,35 @@ export function LandingHeader() {
           <Link to="/planos" onClick={() => setMobileMenuOpen(false)} className="py-2.5 text-[15px] text-ink">
             Planos
           </Link>
-          <SplitButton
-            className="mt-3"
-            href={loggedIn ? `${APP_URL}/inicio` : DEMO_URL}
-            onClick={() => trackCta(loggedIn ? "abrir_pilar" : "agende_demo", "header_mobile")}
-          >
-            {loggedIn ? "Abrir Pilar" : "Agendar demonstração"}
-          </SplitButton>
+          {loggedIn ? (
+            <SplitButton
+              className="mt-3"
+              href={`${APP_URL}/inicio`}
+              onClick={() => trackCta("abrir_pilar", "header_mobile")}
+            >
+              Abrir Pilar
+            </SplitButton>
+          ) : (
+            <>
+              <a
+                href={`${APP_URL}/login`}
+                onClick={() => trackCta("entrar", "header_mobile")}
+                className="py-2.5 text-[15px] text-ink"
+              >
+                Entrar
+              </a>
+              <SplitButton
+                className="mt-3"
+                to="/planos"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  trackCta("ver_planos", "header_mobile");
+                }}
+              >
+                Ver planos
+              </SplitButton>
+            </>
+          )}
         </div>
       </div>
     </header>

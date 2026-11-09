@@ -20,6 +20,7 @@ import { getPayment } from "../_shared/asaas-platform.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
 import { tokenDaSessao } from "./entrada.ts";
+import { deveConsultarAsaas, deveEnviarConvite, pagamentoConfirmado, pagoEm } from "./estado.ts";
 
 const log = createLogger("pilar-checkout-status");
 
@@ -95,18 +96,16 @@ serve(
     }
 
     // Consulta Asaas direto se ainda pendente e tem payment_id
-    if (signup.payment_status === "pending" && signup.asaas_payment_id) {
+    if (deveConsultarAsaas(signup) && signup.asaas_payment_id) {
       try {
         const asaasPayment = await getPayment(signup.asaas_payment_id);
 
-        if (asaasPayment.status === "CONFIRMED" || asaasPayment.status === "RECEIVED") {
+        if (pagamentoConfirmado(asaasPayment.status)) {
           await admin
             .from("pilar_pending_signups")
             .update({
               payment_status: "paid",
-              paid_at: asaasPayment.paymentDate
-                ? new Date(asaasPayment.paymentDate).toISOString()
-                : new Date().toISOString(),
+              paid_at: pagoEm(asaasPayment.paymentDate, new Date()),
             })
             .eq("id", signup.id);
 
@@ -123,7 +122,7 @@ serve(
 
     // Fallback de invite: se pago mas webhook não disparou o invite ainda, dispara aqui.
     // Garante entrega mesmo se o webhook falhar ou demorar.
-    if (signup.payment_status === "paid" && !signup.invite_dispatched_at) {
+    if (deveEnviarConvite(signup)) {
       try {
         const appOrigin =
           (Deno.env.get("ALLOWED_ORIGINS") ?? "").split(",")[0].trim().replace(/\/$/, "") ||

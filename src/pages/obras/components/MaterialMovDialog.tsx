@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -43,6 +43,17 @@ const schema = z
         message: "Informe uma quantidade maior que zero",
       });
     }
+    // O banco recusa valor negativo (CHECK) e um texto inválido virava NaN, gravado como nulo sem aviso.
+    if (d.tipo === "entrada" && d.valor_unitario.trim()) {
+      const v = parseNum(d.valor_unitario);
+      if (!Number.isFinite(v) || v < 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["valor_unitario"],
+          message: "Informe um valor unitário válido",
+        });
+      }
+    }
     if (d.material === NOVO) {
       if (!d.nome.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["nome"], message: "Nome do material" });
       if (!d.unidade.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["unidade"], message: "Unidade" });
@@ -77,11 +88,17 @@ export function MaterialMovDialog({
 
   const form = useForm<FormData>({ resolver: zodResolver(schema) });
   const { register, handleSubmit, reset, watch, setValue, formState } = form;
+  // Material criado neste diálogo, guardado fora do form: se o movimento falhar, a nova
+  // tentativa reusa o id em vez de criar outro material com o mesmo nome. Não vai para o
+  // campo "Material" porque o Select esvazia um valor que ainda não está na lista
+  // (a lista só recarrega depois), e a nova tentativa caía em "Escolha o material".
+  const materialCriado = useRef<string | null>(null);
   const material = watch("material");
   const tipo = watch("tipo");
 
   useEffect(() => {
     if (!open) return;
+    materialCriado.current = null;
     reset({
       material: movInicial?.obra_material_id ?? materialIdInicial ?? "",
       nome: "",
@@ -101,10 +118,11 @@ export function MaterialMovDialog({
     try {
       let materialId = d.material;
       if (!editando && d.material === NOVO) {
-        materialId = await saveMaterial.mutateAsync({ nome: d.nome.trim(), unidade: d.unidade.trim() });
-        // Fixa o material recém-criado no form: se o movimento abaixo falhar, um novo
-        // envio reusa este id em vez de criar um segundo material com o mesmo nome.
-        setValue("material", materialId);
+        materialCriado.current ??= await saveMaterial.mutateAsync({
+          nome: d.nome.trim(),
+          unidade: d.unidade.trim(),
+        });
+        materialId = materialCriado.current;
       }
       await saveMov.mutateAsync({
         id: movInicial?.id ?? undefined,
@@ -230,6 +248,9 @@ export function MaterialMovDialog({
         <div className="space-y-1.5">
           <Label htmlFor="valor_unitario">Valor unitário (R$, opcional)</Label>
           <Input id="valor_unitario" inputMode="decimal" placeholder="0,00" {...register("valor_unitario")} />
+          {formState.errors.valor_unitario && (
+            <p className="text-xs text-danger-strong">{formState.errors.valor_unitario.message}</p>
+          )}
           <p className="text-xs text-muted-foreground">Usado para valorizar o saldo parado no canteiro.</p>
         </div>
       )}

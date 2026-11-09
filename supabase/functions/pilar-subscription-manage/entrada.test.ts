@@ -23,3 +23,21 @@ Deno.test("corpo nulo ou ação desconhecida vira 400, não erro de runtime", ()
   assertEquals(lerEntrada(null).ok, false);
   assertEquals(lerEntrada({ action: "refund" }).ok, false);
 });
+
+Deno.test("update_plan sem ciclo é aceito (mantém o ciclo atual) e o slug é aparado", () => {
+  const r = lerEntrada({ action: "update_plan", new_plan_slug: "  pro  " });
+  assertEquals(r.ok && r.data, { action: "update_plan", new_plan_slug: "pro" });
+});
+
+Deno.test("slug com maiúscula, espaço interno ou longo demais é recusado", () => {
+  assertEquals(lerEntrada({ action: "update_plan", new_plan_slug: "Pro" }).ok, false);
+  assertEquals(lerEntrada({ action: "update_plan", new_plan_slug: "pro max" }).ok, false);
+  assertEquals(lerEntrada({ action: "update_plan", new_plan_slug: "a".repeat(65) }).ok, false);
+  assertEquals(lerEntrada({ action: "update_plan", new_plan_slug: 42 }).ok, false);
+});
+
+Deno.test("sem action, ou action em formato errado, é 400", () => {
+  assertEquals(lerEntrada({}).ok, false);
+  assertEquals(lerEntrada({ action: "CANCEL" }).ok, false);
+  assertEquals(lerEntrada("cancel").ok, false);
+});

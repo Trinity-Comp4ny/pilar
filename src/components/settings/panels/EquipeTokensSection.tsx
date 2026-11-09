@@ -6,7 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DataTable } from "@/components/data/DataTable";
 import { toDataSourceResult } from "@/types/dataSource";
 import type { ColumnDef } from "@/components/data/DataTable";
-import { formatNumberCompact, formatDateTime } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
+import { creditosParaTokens, formatConsumoCreditos, tokensParaCreditos } from "@/lib/creditos";
 import { useUsoEquipe, type MembroUsoToken, type SolicitacaoTokenPendente } from "../useUsoEquipe";
 
 // Campo de teto por usuário: sem linha em ai_token_limite_usuario = sem limite
@@ -24,20 +25,20 @@ function LimiteCell({
   salvando: boolean;
 }) {
   const [editando, setEditando] = useState(false);
-  const [valor, setValor] = useState(membro.limiteMensal ? String(membro.limiteMensal) : "");
+  const [valor, setValor] = useState(membro.limiteMensal ? String(tokensParaCreditos(membro.limiteMensal)) : "");
 
   if (!editando) {
     return (
       <button
         type="button"
         onClick={() => {
-          setValor(membro.limiteMensal ? String(membro.limiteMensal) : "");
+          setValor(membro.limiteMensal ? String(tokensParaCreditos(membro.limiteMensal)) : "");
           setEditando(true);
         }}
         className="inline-flex items-center gap-1.5 text-sm text-black/70 hover:text-ink"
       >
         {membro.limiteMensal ? (
-          <span className="tabular-nums">{formatNumberCompact(membro.limiteMensal)} / mês</span>
+          <span className="tabular-nums">{tokensParaCreditos(membro.limiteMensal)} créditos / mês</span>
         ) : (
           <span className="text-black/40">sem limite</span>
         )}
@@ -53,7 +54,7 @@ function LimiteCell({
         min={1}
         value={valor}
         onChange={(e) => setValor(e.target.value)}
-        placeholder="ex: 500000"
+        placeholder="ex: 100 créditos"
         className="h-8 w-32 text-sm"
         autoFocus
       />
@@ -63,7 +64,7 @@ function LimiteCell({
         className="h-8 w-8 p-0 rounded-full"
         disabled={salvando || !valor || Number(valor) <= 0}
         onClick={() => {
-          onSalvar(Number(valor));
+          onSalvar(creditosParaTokens(Number(valor)));
           setEditando(false);
         }}
       >
@@ -100,7 +101,9 @@ function PedidoPendente({
   resolvendo: boolean;
 }) {
   const [aprovando, setAprovando] = useState(false);
-  const [valor, setValor] = useState(solicitacao.limiteSugerido ? String(solicitacao.limiteSugerido) : "");
+  const [valor, setValor] = useState(
+    solicitacao.limiteSugerido ? String(tokensParaCreditos(solicitacao.limiteSugerido)) : ""
+  );
 
   return (
     <Card className="border border-black/5">
@@ -112,7 +115,7 @@ function PedidoPendente({
           </div>
           {solicitacao.limiteSugerido && (
             <span className="text-xs text-black/55 tabular-nums whitespace-nowrap">
-              sugeriu {formatNumberCompact(solicitacao.limiteSugerido)}
+              sugeriu {tokensParaCreditos(solicitacao.limiteSugerido)} créditos
             </span>
           )}
         </div>
@@ -125,7 +128,7 @@ function PedidoPendente({
               min={1}
               value={valor}
               onChange={(e) => setValor(e.target.value)}
-              placeholder="vazio = sem limite"
+              placeholder="créditos; vazio = sem limite"
               className="h-8 w-40 text-sm"
               autoFocus
             />
@@ -134,7 +137,7 @@ function PedidoPendente({
               variant="brand"
               className="h-8 rounded-full"
               disabled={resolvendo}
-              onClick={() => onAprovar(valor ? Number(valor) : null)}
+              onClick={() => onAprovar(valor ? creditosParaTokens(Number(valor)) : null)}
             >
               Confirmar
             </Button>
@@ -177,8 +180,8 @@ const membroColumns: ColumnDef<MembroUsoToken>[] = [
   },
   {
     key: "tokensCiclo",
-    header: "Consumo (mês)",
-    cell: (m) => <span className="tabular-nums text-black/70">{formatNumberCompact(m.tokensCiclo)}</span>,
+    header: "Consumo (créditos no mês)",
+    cell: (m) => <span className="tabular-nums text-black/70">{formatConsumoCreditos(m.tokensCiclo)}</span>,
     getSortValue: (m) => m.tokensCiclo,
   },
 ];
@@ -211,8 +214,8 @@ export function EquipeTokensSection() {
       <div>
         <h3 className="text-base font-semibold text-ink">Equipe</h3>
         <p className="text-sm text-black/55">
-          Consumo de tokens por pessoa neste ciclo. Defina um limite mensal só para travar alguém especificamente — sem
-          limite, cada um consome livre do saldo da empresa.
+          Consumo de créditos de IA por pessoa neste ciclo. Defina um limite mensal só para travar alguém
+          especificamente — sem limite, cada um consome livre do saldo da empresa.
         </p>
       </div>
 

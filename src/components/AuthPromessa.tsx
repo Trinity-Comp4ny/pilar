@@ -1,7 +1,7 @@
 import { CheckCircle2 } from "lucide-react";
 
 // Mensagens-chave da marca (brand/messaging.md): reusar literalmente, sem reescrever por tela.
-const TAGLINE = "Do contrato à execução, num fluxo só.";
+const TAGLINE = "Gestão com agentes de IA para escritórios de engenharia e arquitetura.";
 const ASSINATURA_AGENTES = "A IA prepara. O sistema confere. Você aprova.";
 const PONTOS = [
   "Agentes preparam, você aprova",

@@ -14,7 +14,7 @@ const log = createLogger("invite-campo");
 
 // Papéis de gestão que podem emitir credencial de campo (alinha com o RLS da
 // tabela campo_accounts: admin/owner/ultra_admin + coordenador).
-const ROLES_GESTAO = new Set(["admin", "ultra_admin", "owner", "coordenador"]);
+const ROLES_GESTAO = new Set(["admin", "ultra_admin", "coordenador"]);
 
 // Senha legível: sem caracteres ambíguos (0/O, 1/l/I). O pedreiro digita à mão.
 function generatePassword(length = 8): string {

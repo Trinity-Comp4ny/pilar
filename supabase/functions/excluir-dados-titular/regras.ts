@@ -7,7 +7,7 @@ export type Recusa = { status: number; error: string };
 /** Só pedido aberto (ou que falhou ao executar) recebe decisão. */
 const DECIDIVEL = new Set(["pending", "failed"]);
 
-const PAPEIS_ADMIN = new Set(["admin", "owner"]);
+const PAPEIS_ADMIN = new Set(["admin"]);
 
 /** Titular ativo com papel de admin e nenhum outro admin ativo na empresa. */
 export function ehUnicoAdmin(papel: string | null, desativadoEm: string | null, outrosAdminsAtivos: number): boolean {

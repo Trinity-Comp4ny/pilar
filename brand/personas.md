@@ -26,7 +26,7 @@
 - **Medo:** trocar a planilha que (mal) funciona; confiar número que a IA gerou.
 - **Gatilho de compra:** levou prejuízo num projeto que parecia ok; cresceu e perdeu o controle de cabeça.
 - **Como fala com ele:** número e clareza, respeitando que ele é o especialista técnico. Sem hype.
-- **Mensagem-âncora:** "Do contrato à execução, num fluxo só." (o lucro antes do fim é a prova, não a promessa-mãe).
+- **Mensagem-âncora:** "Gestão com agentes de IA para escritórios de engenharia e arquitetura." (o lucro antes do fim é a prova, não a promessa-mãe).
 
 ## Persona secundária — Gerente de projetos / Coordenador
 
@@ -44,7 +44,7 @@
 ## GTM (contexto pra copy)
 
 - **Founder-led sales:** Matheus fecha os 10–25 primeiros à mão; objeções viram playbook. Ref: `research/INSIGHTS.md` #7.
-- **Onboarding manual ("do things that don't scale"):** gerar o 1º orçamento *com* o cliente. Ref: #5.
+- **Onboarding manual ("do things that don't scale"):** gerar o 1º orçamento _com_ o cliente. Ref: #5.
 - **Arquétipo Hard Fact (a validar):** público resignado ("não dá pra saber antes"). Copy quebra a resignação, não compara feature a feature. Ref: #6.
 
 ## Anti-persona (não perseguir)

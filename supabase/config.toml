@@ -93,6 +93,11 @@ verify_jwt = false
 [functions.pilar-checkout-create]
 verify_jwt = false
 
+# Landing (SPEC 149): clique em "Agendar demonstração" chega por sendBeacon, sem
+# login nem header de autorização. Sem dado pessoal; limite por IP na função.
+[functions.registrar-interesse-demo]
+verify_jwt = false
+
 [functions.pilar-checkout-status]
 verify_jwt = false
 

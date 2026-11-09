@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { useState } from "react";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
@@ -134,6 +135,10 @@ function EditarEmAbertoDialog({ open, grupoId, onClose, onDone }: OpProps) {
   const [saving, setSaving] = useState(false);
 
   const submit = async () => {
+    if (valor && !(Number(valor) > 0)) {
+      toast.error("Valor da parcela deve ser maior que zero");
+      return;
+    }
     setSaving(true);
     try {
       const { data, error } = await supabase.rpc("rpc_grupo_parcela_editar_em_aberto", {
@@ -203,6 +208,11 @@ function RenegociarDialog({ open, grupoId, onClose, onDone }: OpProps) {
   const submit = async () => {
     if (parseCurrencyString(novoTotal) <= 0 || !numParcelas || !primeiraData) {
       toast.error("Preencha total, parcelas e primeira data");
+      return;
+    }
+    const n = Number(numParcelas);
+    if (!Number.isInteger(n) || n < 1 || n > 360) {
+      toast.error("Nº de parcelas deve ser entre 1 e 360");
       return;
     }
     setSaving(true);
@@ -276,12 +286,21 @@ function RenegociarDialog({ open, grupoId, onClose, onDone }: OpProps) {
 }
 
 function QuitarAntecipadoDialog({ open, grupoId, onClose, onDone }: OpProps) {
-  const [dataPagamento, setDataPagamento] = useState(new Date().toISOString().slice(0, 10));
+  const [dataPagamento, setDataPagamento] = useState(() => format(new Date(), "yyyy-MM-dd"));
   const [quantidade, setQuantidade] = useState("");
   const [desconto, setDesconto] = useState("");
   const [saving, setSaving] = useState(false);
 
   const submit = async () => {
+    if (quantidade && !(Number.isInteger(Number(quantidade)) && Number(quantidade) >= 1)) {
+      toast.error("Quantidade deve ser um número inteiro maior que zero");
+      return;
+    }
+    // Desconto negativo aumentaria o valor pago.
+    if (desconto && !(Number(desconto) >= 0)) {
+      toast.error("Desconto não pode ser negativo");
+      return;
+    }
     setSaving(true);
     try {
       const { data, error } = await supabase.rpc("rpc_grupo_parcela_quitar_antecipado", {

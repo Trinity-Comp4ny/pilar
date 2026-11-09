@@ -65,8 +65,9 @@ const SECTIONS: { titulo: string; corpo: React.ReactNode }[] = [
             Plataforma.
           </li>
           <li>
-            Criar conta, inclusive em período de teste, com a finalidade de fazer engenharia reversa, benchmarking
-            comercial competitivo ou reprodução do produto, sem consentimento prévio e por escrito do Pilar.
+            Criar ou usar conta, inclusive em período de avaliação, com a finalidade de fazer engenharia reversa,
+            benchmarking comercial competitivo ou reprodução do produto, sem consentimento prévio e por escrito do
+            Pilar.
           </li>
           <li>
             Sobrecarregar a infraestrutura de forma deliberada (scraping agressivo, testes de carga não autorizados).
@@ -96,10 +97,10 @@ const SECTIONS: { titulo: string; corpo: React.ReactNode }[] = [
           insere na Plataforma.
         </li>
         <li>
-          Ao encerrar o contrato (incluindo o fim do período de teste sem ativação de plano), o Cliente pode exportar
-          seus dados por até <strong>90 dias</strong>, período em que a Conta fica em modo somente leitura. Depois
-          disso, os dados são anonimizados ou eliminados conforme a Política de Privacidade e obrigações legais de
-          retenção (ex.: fiscal, 5 anos).
+          Ao encerrar o contrato (incluindo o fim de um período de avaliação sem ativação de plano), o Cliente pode
+          exportar seus dados por até <strong>90 dias</strong>, período em que a Conta fica em modo somente leitura.
+          Depois disso, os dados são anonimizados ou eliminados conforme a Política de Privacidade e obrigações legais
+          de retenção (ex.: fiscal, 5 anos).
         </li>
       </ul>
     ),
@@ -132,8 +133,9 @@ const SECTIONS: { titulo: string; corpo: React.ReactNode }[] = [
           disposição legal em contrário.
         </li>
         <li>
-          Ao ativar um plano ao final do período de teste, a primeira cobrança só ocorre na data informada no momento da
-          ativação. Cancelamentos em até <strong>7 dias</strong> dessa primeira cobrança geram estorno integral.
+          Ao ativar um plano ao final de um período de avaliação, a primeira cobrança só ocorre na data informada no
+          momento da ativação. Cancelamentos em até <strong>7 dias</strong> dessa primeira cobrança geram estorno
+          integral.
         </li>
       </ul>
     ),
@@ -210,7 +212,7 @@ const SECTIONS: { titulo: string; corpo: React.ReactNode }[] = [
 export function Termos() {
   usePageMeta({
     titulo: "Termos de Uso | Pilar",
-    descricao: "As condições de uso da plataforma Pilar: conta, trial, pagamento, dados e responsabilidades.",
+    descricao: "As condições de uso da plataforma Pilar: conta, contratação, pagamento, dados e responsabilidades.",
     caminho: "/termos",
   });
 
@@ -238,8 +240,8 @@ export function Termos() {
             <strong className="text-foreground">Finalidade deste documento:</strong> estabelecer as condições sob as
             quais a plataforma Pilar, oferecida por <strong className="text-foreground">Pilar</strong> (razão social e
             CNPJ próprios em regularização), pode ser usada por escritórios de engenharia e seus usuários — incluindo
-            durante o período de teste gratuito. Ao criar uma conta ou usar a plataforma, você concorda com estes
-            Termos. Veja também a{" "}
+            durante eventual período de avaliação concedido após a demonstração. Ao criar uma conta ou usar a
+            plataforma, você concorda com estes Termos. Veja também a{" "}
             <Link to="/privacidade" className="text-ink underline">
               Política de Privacidade
             </Link>

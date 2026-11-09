@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getSafeErrorMessage } from "@/lib/safeError";
 
 import { BusyMark } from "@/components/motion/BusyMark";
 
@@ -61,8 +62,9 @@ export function QuickAddCard({ etapaId, clientes, onCreated }: QuickAddCardProps
       reset();
       onCreated();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erro ao criar projeto";
-      toast.error(msg);
+      // PostgREST rejeita com objeto simples (não Error): sem isto o limite do plano
+      // (capacidade:projetos) e o código duplicado viravam "Erro ao criar projeto".
+      toast.error(getSafeErrorMessage(err, "Erro ao criar projeto"));
     } finally {
       setSaving(false);
     }

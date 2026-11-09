@@ -24,14 +24,20 @@ export function useMfa() {
   const [currentLevel, setCurrentLevel] = useState<MfaLevel>("aal1");
   const [nextLevel, setNextLevel] = useState<MfaLevel>("aal1");
 
+  const [error, setError] = useState<Error | null>(null);
+
+  // Nunca rejeita: é chamado no mount e sem await pelas telas. Falha vira `error`
+  // e mantém o último estado conhecido (não rebaixa nível nem some com fatores).
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: levelData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      const { data: levelData, error: levelError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (levelError) throw levelError;
+      const { data: factorsData, error: factorsError } = await supabase.auth.mfa.listFactors();
+      if (factorsError) throw factorsError;
+
       setCurrentLevel((levelData?.currentLevel as MfaLevel) ?? "aal1");
       setNextLevel((levelData?.nextLevel as MfaLevel) ?? "aal1");
-
-      const { data: factorsData } = await supabase.auth.mfa.listFactors();
       const totpFactors: MfaFactor[] =
         factorsData?.totp?.map((f) => ({
           id: f.id,
@@ -40,6 +46,9 @@ export function useMfa() {
           status: f.status,
         })) ?? [];
       setFactors(totpFactors);
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e : new Error(String((e as { message?: unknown })?.message ?? e)));
     } finally {
       setLoading(false);
     }
@@ -130,6 +139,8 @@ export function useMfa() {
 
   return {
     loading,
+    /** Falha do último refresh (nível/fatores); null quando a leitura deu certo. */
+    error,
     factors,
     currentLevel,
     nextLevel,

@@ -5,7 +5,7 @@
 // (recebido/pago) filtra pela data efetiva; pendente filtra pelo vencimento.
 // A lógica de dinheiro aqui é a mesma da página original, apenas movida.
 import { useState } from "react";
-import { startOfDay, endOfDay } from "date-fns";
+import { format } from "date-fns";
 import { getDisplayDate, formatDateDisplay } from "@/lib/dateUtils";
 import { monitoring } from "@/lib/monitoring";
 import { supabase } from "@/integrations/supabase/client";
@@ -99,15 +99,11 @@ export async function fetchFinancialData(
         tipo === "receitas"
           ? supabase
               .from("receitas")
-              .select(
-                "*, projetos (nome), categorias_financeiras (nome), contas (nome), clientes (nome)"
-              )
+              .select("*, projetos (nome), categorias_financeiras (nome), contas (nome), clientes (nome)")
               .is("deleted_at", null)
           : supabase
               .from("despesas")
-              .select(
-                "*, projetos (nome), categorias_financeiras (nome), contas (nome), fornecedores (nome)"
-              )
+              .select("*, projetos (nome), categorias_financeiras (nome), contas (nome), fornecedores (nome)")
               .is("deleted_at", null)
               .eq("is_fatura_payment", false);
 
@@ -125,14 +121,15 @@ export async function fetchFinancialData(
       // sobre a mesma coluna dentro de um único .or().
       const effCol = tipo === "receitas" ? "data_recebimento" : "data_pagamento";
       const dueCol = "data_vencimento";
-      const start = dateFrom ? startOfDay(dateFrom).toISOString() : null;
-      const end = dateTo ? endOfDay(dateTo).toISOString() : null;
+      // As colunas são `date`: compara com o dia local (yyyy-MM-dd). O fim do dia em
+      // ISO (UTC) caía no dia seguinte e o relatório de outubro trazia o 1º de novembro.
+      const start = dateFrom ? format(dateFrom, "yyyy-MM-dd") : null;
+      const end = dateTo ? format(dateTo, "yyyy-MM-dd") : null;
 
       if (start || end) {
-        const effBounds = [
-          start && `${effCol}.gte.${start}`,
-          end && `${effCol}.lte.${end}`,
-        ].filter(Boolean) as string[];
+        const effBounds = [start && `${effCol}.gte.${start}`, end && `${effCol}.lte.${end}`].filter(
+          Boolean
+        ) as string[];
         const dueBounds = [
           `${effCol}.is.null`,
           start && `${dueCol}.gte.${start}`,
@@ -153,10 +150,7 @@ export async function fetchFinancialData(
   }
 
   if (page >= MAX_PAGES) {
-    monitoring.captureMessage(
-      "Relatório atingiu o teto de 50k registros; resultado pode estar truncado",
-      "warning"
-    );
+    monitoring.captureMessage("Relatório atingiu o teto de 50k registros; resultado pode estar truncado", "warning");
   }
 
   return all;

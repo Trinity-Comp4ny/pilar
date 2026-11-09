@@ -30,8 +30,8 @@ export type DadosCliente = { name: string; email: string; cpfCnpj: string; phone
 export type ResolucaoCliente = { ok: true; dados: DadosCliente } | { ok: false; error: string };
 
 const SEM_DOCUMENTO =
-  "Cadastre o CNPJ da empresa em Configurações antes de comprar tokens, ou pague com cartão para informar o CPF/CNPJ do titular.";
-const SEM_CONTATO = "Complete o nome e o e-mail da empresa em Configurações antes de comprar tokens.";
+  "Cadastre o CNPJ da empresa em Configurações antes de comprar créditos de IA, ou pague com cartão para informar o CPF/CNPJ do titular.";
+const SEM_CONTATO = "Complete o nome e o e-mail da empresa em Configurações antes de comprar créditos de IA.";
 
 export function resolverDadosCliente(params: {
   holder?: HolderInfo;

@@ -25,6 +25,7 @@ const abrir = (status: string, onEstimar?: () => void) =>
       onOpenChange={vi.fn()}
       proposta={proposta(status)}
       canEdit
+      canDelete
       hoje="2026-10-21"
       onEdit={vi.fn()}
       onDelete={vi.fn()}
@@ -54,5 +55,49 @@ describe("PropostaDetailDialog: estimar obra", () => {
   it.each(["aceita", "recusada"])("proposta %s não oferece estimar", (status) => {
     abrir(status, vi.fn());
     expect(screen.queryByRole("button", { name: "Estimar obra" })).not.toBeInTheDocument();
+  });
+});
+
+const handlers = () => ({
+  onOpenChange: vi.fn(),
+  onEdit: vi.fn(),
+  onDelete: vi.fn(),
+  onStatusChange: vi.fn(),
+  onGerarDocx: vi.fn(),
+  onGerarContrato: vi.fn(),
+  onConverter: vi.fn(),
+});
+
+describe("PropostaDetailDialog: permissão", () => {
+  it("sem edição, contrato enviado não oferece Assinado/Recusado nem Editar", () => {
+    render(
+      <PropostaDetailDialog
+        open
+        proposta={{ ...proposta("aceita"), contrato_enviado: true }}
+        canEdit={false}
+        canDelete={false}
+        hoje="2026-10-21"
+        {...handlers()}
+      />
+    );
+    expect(screen.getByText("Contrato enviado, aguardando o cliente.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Assinado" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Recusado" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Editar" })).not.toBeInTheDocument();
+  });
+
+  it("com exclusão mas sem edição, recusada oferece Excluir e não Reabrir", () => {
+    render(
+      <PropostaDetailDialog
+        open
+        proposta={proposta("recusada")}
+        canEdit={false}
+        canDelete
+        hoje="2026-10-21"
+        {...handlers()}
+      />
+    );
+    expect(screen.getByRole("button", { name: "Excluir" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Reabrir/ })).not.toBeInTheDocument();
   });
 });

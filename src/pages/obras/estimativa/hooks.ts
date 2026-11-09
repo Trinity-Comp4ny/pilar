@@ -2,6 +2,7 @@
 // de chegar à tela: ficha ou resultado fora do formato viram `null`, e a tela mostra o estado de erro.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { errorMessage } from "@/lib/errors";
 import type { Json, TablesUpdate } from "@/integrations/supabase/types";
 import { lerAjustes, lerCub, lerParametros, lerPrecosSinapi } from "@/lib/estimativaObra";
 import type {
@@ -449,7 +450,8 @@ export function useInsumosDaEstimativa(): Insumos {
   });
 
   const erro = cub.error ?? parametros.error ?? ajustes.error ?? precosSinapi.error;
-  if (erro) return { estado: "erro", mensagem: erro instanceof Error ? erro.message : "Falha ao carregar" };
+  // PostgREST rejeita com objeto simples, não Error: `errorMessage` lê o `.message` das duas formas.
+  if (erro) return { estado: "erro", mensagem: errorMessage(erro, "Falha ao carregar") };
   if (!cub.data || !parametros.data || ajustes.data === undefined || !precosSinapi.data) {
     return { estado: "carregando" };
   }

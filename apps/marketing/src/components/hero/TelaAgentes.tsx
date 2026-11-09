@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { m } from "framer-motion";
 import { Plus, Sparkles } from "lucide-react";
 import { EASE } from "../../lib/motion";
-import { FRASE, RASCUNHO, idx } from "./scene";
+import { FRASE, MS_POR_CHAR, RASCUNHO, idx } from "./scene";
 
 /**
  * Tela de Agentes, copiada de `src/pages/chat/index.tsx`.
@@ -14,7 +14,7 @@ import { FRASE, RASCUNHO, idx } from "./scene";
  */
 
 /** Digitação caractere a caractere enquanto o ato é "digita". */
-function useDigitacao(ligado: boolean, texto: string, msPorChar = 42) {
+function useDigitacao(ligado: boolean, texto: string, msPorChar = MS_POR_CHAR) {
   const [n, setN] = useState(0);
 
   useEffect(() => {
@@ -99,7 +99,7 @@ export function TelaAgentes({ ato }: { ato: number }) {
                     key={i}
                     className="w-1.5 h-1.5 rounded-full bg-black/25"
                     animate={{ y: [0, -4, 0], opacity: [0.35, 1, 0.35] }}
-                    transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.15 }}
+                    transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.1 }}
                   />
                 ))}
               </div>

@@ -101,7 +101,7 @@ serve(
           .from("profiles")
           .select("email")
           .eq("empresa_id", empresa.id)
-          .in("role", ["owner", "admin", "ultra_admin"])
+          .in("role", ["admin", "ultra_admin"])
           .is("desativado_em", null)) as { data: { email: string | null }[] | null };
         const recipients = (admins ?? []).map((p) => p.email).filter((e): e is string => !!e);
 

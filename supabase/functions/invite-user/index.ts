@@ -38,7 +38,7 @@ serve(
     try {
       const { data: profile, error: profileError } = await supabaseClient
         .from("profiles")
-        .select("empresa_id, role, email")
+        .select("empresa_id, role, email, nome")
         .eq("id", user.id)
         .single();
 
@@ -99,7 +99,7 @@ serve(
           p_convite_id: convite_id,
         });
         if (regenErr || !newToken) return safeErrorResponse(400, "Falha ao reenviar o convite", req);
-        const delivery = await deliverInvite(svc, conv.email, newToken, conv.nome ?? "", redirectOrigin);
+        const delivery = await deliverInvite(svc, conv.email, newToken, conv.nome ?? "", redirectOrigin, profile.nome);
         if (!delivery.ok) {
           log.error("resend delivery failed", delivery.error, { actor: user.id });
           return safeErrorResponse(delivery.status, delivery.message, req);
@@ -179,7 +179,7 @@ serve(
         return safeErrorResponse(400, conviteError?.message ?? "Falha ao criar convite", req);
       }
 
-      const delivery = await deliverInvite(svc, email, token, nome || "", redirectOrigin);
+      const delivery = await deliverInvite(svc, email, token, nome || "", redirectOrigin, profile.nome);
       if (!delivery.ok) {
         // E-mail que já tem conta é resposta de negócio (o admin vê o aviso), não
         // falha: como erro, virava issue no Sentry a cada tentativa (PILAR-2E).

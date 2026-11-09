@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Circle, ChevronRight, ChevronDown, ChevronUp, X, Rocket } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { usePermissions } from "@/hooks/usePermissions";
 import {
   useOnboardingProgress,
   type OnboardingSectionView,
@@ -15,13 +14,14 @@ import { useOnboardingState } from "@/hooks/useOnboardingState";
 import type { OnboardingPilar } from "@/lib/onboarding/steps";
 
 /**
- * Painel flutuante de primeiros passos (canto inferior direito). Três seções por
- * pilar (Gestão / Projetos / Obras), progresso derivado de dados reais. Só para
- * admin/owner. Minimiza para uma pílula (estado local) e dispensa de vez (banco).
+ * Painel flutuante de primeiros passos (canto inferior direito). "Sua conta" e os
+ * três pilares (Gestão / Projetos / Obras), na ordem que o escritório escolheu;
+ * progresso derivado de dados reais. Admin e convidado veem (SPEC 149), cada um
+ * com os passos que pode fazer. Minimiza para uma pílula (estado local) e
+ * dispensa de vez (banco).
  */
 export function OnboardingChecklist() {
   const navigate = useNavigate();
-  const { isAdmin } = usePermissions();
   const { hasEmpresa, loading, sections, doneSteps, totalSteps, percent, allDone } = useOnboardingProgress();
   const { state, dismiss, setCompleted } = useOnboardingState();
 
@@ -32,7 +32,7 @@ export function OnboardingChecklist() {
     if (allDone && !state.completed_at) void setCompleted();
   }, [allDone, state.completed_at, setCompleted]);
 
-  if (!isAdmin || !hasEmpresa || loading || state.dismissed || sections.length === 0) {
+  if (!hasEmpresa || loading || state.dismissed || sections.length === 0) {
     return null;
   }
 

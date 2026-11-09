@@ -28,13 +28,13 @@
 
 ## 1. Essência
 
-**O que é o Pilar:** sistema de gestão com agentes de IA para escritórios de engenharia e arquitetura. Leva o dado do contrato à execução num fluxo só (proposta, projeto, obra, cliente e financeiro), sem redigitar.
+**O que é o Pilar:** sistema de gestão com agentes de IA para escritórios de engenharia e arquitetura. Proposta, projeto, obra, cliente e financeiro conectados: o dado do contrato chega à execução sem redigitar.
 
 **Categoria:** SaaS vertical de gestão para AEC (Arquitetura, Engenharia e Construção), AI-native: os agentes preparam o trabalho, o sistema confere os números, uma pessoa aprova.
 
 **Tagline oficial:**
 
-> **Do contrato à execução, num fluxo só.**
+> **Gestão com agentes de IA para escritórios de engenharia e arquitetura.**
 
 **Assinatura dos agentes:**
 
@@ -43,13 +43,13 @@
 **Hero em produção** (landing):
 
 > Onde times e agentes _organizam_ gestão, projetos e obras.
-> Do contrato à execução num fluxo só: prazos, entregas e governança do projeto. Agentes de IA preparam, você aprova.
+> Gestão com agentes de IA para escritórios de engenharia e arquitetura. Prazos, entregas e governança do projeto: a IA prepara, você aprova.
 
 ## 2. Posicionamento
 
 **Para** donos e sócios de escritórios de **engenharia e arquitetura**
 **que** tocam contrato, projeto, obra e caixa em ferramentas que não conversam,
-**o Pilar é** o sistema de gestão que leva o dado do contrato à execução num fluxo só, com agentes de IA que preparam o trabalho operacional
+**o Pilar é** o sistema de gestão que conecta proposta, projeto, obra e financeiro, com agentes de IA que preparam o trabalho operacional
 **diferente de** planilhas dispersas, ferramentas genéricas de tarefa e ERPs de construtora,
 **porque** cada número que a IA escreve é conferido pelo sistema e nada segue sem a aprovação de uma pessoa.
 
@@ -87,7 +87,7 @@
 ## 6. Decisões de marca
 
 1. ~~**ICP na copy diverge da estratégia.**~~ **Resolvido em 2026-09-01** (`DECISOES.md`): o ICP oficial inclui arquitetura. Ver `personas.md`.
-2. ~~**Tagline vs hero.**~~ **Resolvido em 2026-10-28** (`DECISOES.md`): a promessa-mãe é "Do contrato à execução, num fluxo só". Lucro e prazo viram o pilar "Número antes do fim", não a promessa única.
+2. ~~**Tagline vs hero.**~~ **Resolvido em 2026-10-28** (`DECISOES.md`): a promessa-mãe era "Do contrato à execução, num fluxo só". Lucro e prazo viram o pilar "Número antes do fim", não a promessa única. **Atualizado em 2026-11-07:** a tagline passa a ser "Gestão com agentes de IA para escritórios de engenharia e arquitetura."
 3. ~~**Eixo AI-native na comunicação.**~~ **Resolvido em 2026-10-28** (`DECISOES.md`): agentes são o primeiro pilar. Só se promete o que roda em produção, sempre com aprovação humana.
 4. **Empresa vs produto.** Bez Company (empresa) × Pilar (produto). Definir como a marca-mãe aparece (ou não) no material.
 

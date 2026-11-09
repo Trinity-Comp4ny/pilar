@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { m } from "framer-motion";
 import { Check, Sparkles } from "lucide-react";
 import { EASE } from "../../lib/motion";
-import { FRASE, RASCUNHO, idx } from "./scene";
+import { FRASE, MS_POR_CHAR, RASCUNHO, idx, type Ato } from "./scene";
 
 /**
  * Versão retrato da cena, para telas estreitas.
@@ -17,7 +17,7 @@ import { FRASE, RASCUNHO, idx } from "./scene";
  * é o mesmo índice, então as duas nunca contam histórias diferentes.
  */
 
-function useDigitacao(ligado: boolean, texto: string, msPorChar = 42) {
+function useDigitacao(ligado: boolean, texto: string, msPorChar = MS_POR_CHAR) {
   const [n, setN] = useState(0);
 
   useEffect(() => {
@@ -37,6 +37,14 @@ function useDigitacao(ligado: boolean, texto: string, msPorChar = 42) {
   return ligado ? texto.slice(0, n) : "";
 }
 
+/** O que muda em cada módulo, revelado no ato correspondente. */
+const RESULTADOS: { rotulo: string; valor: string; desde: Ato }[] = [
+  { rotulo: "Lead ganho", valor: "Virou projeto", desde: "convertido" },
+  { rotulo: "Recebido no mês", valor: "R$ 412.900", desde: "financeiro" },
+  { rotulo: "Margem do projeto", valor: "31,4%", desde: "projeto" },
+  { rotulo: "Diário da obra", valor: "Chegou do campo", desde: "obra" },
+];
+
 export function HeroSceneMobile({ ato, estatico }: { ato: number; estatico: boolean }) {
   const digitando = !estatico && ato === idx("digita");
   const jaEscreveu = ato > idx("digita");
@@ -46,7 +54,6 @@ export function HeroSceneMobile({ ato, estatico }: { ato: number; estatico: bool
   const pensando = !estatico && ato === idx("pensa");
   const mostraRascunho = estatico || ato >= idx("rascunho");
   const aprovado = ato >= idx("confirma");
-  const mostraResultado = ato >= idx("financeiro");
 
   return (
     <div
@@ -91,7 +98,7 @@ export function HeroSceneMobile({ ato, estatico }: { ato: number; estatico: bool
                 key={i}
                 className="w-1.5 h-1.5 rounded-full bg-ink-muted"
                 animate={{ y: [0, -4, 0], opacity: [0.35, 1, 0.35] }}
-                transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.15 }}
+                transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.1 }}
               />
             ))}
           </div>
@@ -126,7 +133,7 @@ export function HeroSceneMobile({ ato, estatico }: { ato: number; estatico: bool
           <m.div
             className="mt-3 flex items-center justify-center gap-1.5 rounded-full py-2 text-[12px] font-medium"
             animate={{
-              backgroundColor: aprovado ? "hsl(var(--brand-accent))" : "hsl(var(--brand-accent))",
+              backgroundColor: aprovado ? "hsl(var(--positive-strong))" : "hsl(var(--brand-accent))",
               color: aprovado ? "#ffffff" : "hsl(var(--text-on-brand))",
             }}
             transition={{ duration: 0.3 }}
@@ -136,21 +143,27 @@ export function HeroSceneMobile({ ato, estatico }: { ato: number; estatico: bool
           </m.div>
         </m.div>
 
-        {/* Resultado: o que mudou no sistema depois do aval */}
-        <m.div
-          className="mt-auto grid grid-cols-2 gap-2"
-          animate={{ opacity: mostraResultado ? 1 : 0, y: mostraResultado ? 0 : 12 }}
-          transition={{ duration: 0.5, ease: EASE.out }}
-        >
-          <div className="rounded-xl border border-paper-border/70 bg-paper-alt/50 px-3 py-2.5">
-            <p className="text-[8.5px] uppercase tracking-widest text-ink-muted mb-1">Recebido no mês</p>
-            <p className="text-[15px] font-medium text-ink tabular-nums">R$ 412.900</p>
-          </div>
-          <div className="rounded-xl border border-paper-border/70 bg-paper-alt/50 px-3 py-2.5">
-            <p className="text-[8.5px] uppercase tracking-widest text-ink-muted mb-1">Margem do projeto</p>
-            <p className="text-[15px] font-medium text-ink tabular-nums">31,4%</p>
-          </div>
-        </m.div>
+        {/* Resultado: o que mudou no sistema depois do aval, um módulo por
+            vez, no mesmo compasso da cena de desktop. */}
+        <div className="mt-auto grid grid-cols-2 gap-2">
+          {RESULTADOS.map((r) => {
+            const visivel = estatico || ato >= idx(r.desde);
+            return (
+              <m.div
+                key={r.rotulo}
+                className="rounded-xl border border-paper-border/70 bg-paper-alt/50 px-3 py-2.5"
+                initial={false}
+                animate={{ opacity: visivel ? 1 : 0.35, y: visivel ? 0 : 6 }}
+                transition={{ duration: 0.4, ease: EASE.out }}
+              >
+                <p className="text-[8.5px] uppercase tracking-widest text-ink-muted mb-1">{r.rotulo}</p>
+                <p className="text-[13.5px] font-medium text-ink tabular-nums leading-snug">
+                  {visivel ? r.valor : "…"}
+                </p>
+              </m.div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="flex items-center gap-2 px-4 py-3 border-t border-paper-border/70">

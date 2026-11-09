@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -28,6 +29,7 @@ import { LancamentosFilterBar } from "./LancamentosFilterBar";
 import { useLancamentosFiltersData } from "../hooks/useLancamentosFiltersData";
 import { defaultFilters, type LancamentosFilters } from "./lancamentosFilters";
 import { LancamentosBulkBar } from "./LancamentosBulkBar";
+import { excluirLancamentos } from "./excluirLancamentos";
 import { LancamentosGroupRow } from "./LancamentosGroupRow";
 import { SortableTH } from "./LancamentosSortableTH";
 import { LancamentosItemRow } from "./LancamentosItemRow";
@@ -41,7 +43,6 @@ import {
   type FlatRow,
 } from "./lancamentosRows";
 import { useParcelasDosGrupos } from "../hooks/useParcelasDosGrupos";
-
 import { PageLoader } from "@/components/motion/PageLoader";
 interface Props {
   resumo: LancamentosResumo;
@@ -185,7 +186,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
   // hoje direto — abre este diálogo pra confirmar a data REAL do pagamento (ex. cartão de
   // crédito debitado semanas antes de alguém lembrar de marcar o lançamento no sistema).
   const [pagamentoAlvo, setPagamentoAlvo] = useState<{ l: Lancamento; novoStatus: string } | Lancamento[] | null>(null);
-  const [dataEfetivacao, setDataEfetivacao] = useState(() => new Date().toISOString().slice(0, 10));
+  const [dataEfetivacao, setDataEfetivacao] = useState(() => format(new Date(), "yyyy-MM-dd"));
 
   const setStatus = async (l: Lancamento, novoStatus: string) => {
     if (l.tipo === "transferencia") {
@@ -213,7 +214,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
       (l.tipo === "receita" && (novoStatus === "Recebido" || novoStatus === "Recebida")) ||
       (l.tipo === "despesa" && novoStatus === "Pago");
     if (isPaying) {
-      setDataEfetivacao(new Date().toISOString().slice(0, 10));
+      setDataEfetivacao(format(new Date(), "yyyy-MM-dd"));
       setPagamentoAlvo({ l, novoStatus });
       return;
     }
@@ -267,7 +268,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
   };
 
   const markItemsPaid = (rows: Lancamento[]) => {
-    setDataEfetivacao(new Date().toISOString().slice(0, 10));
+    setDataEfetivacao(format(new Date(), "yyyy-MM-dd"));
     setPagamentoAlvo(rows);
   };
 
@@ -303,29 +304,15 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
   };
 
   const deleteItems = async (rows: Lancamento[]) => {
-    const recIds = rows.filter((l) => l.tipo === "receita").map((l) => l.id);
-    const despIds = rows.filter((l) => l.tipo === "despesa").map((l) => l.id);
-    const transfIds = rows.filter((l) => l.tipo === "transferencia").map((l) => l.id);
-    const stamp = new Date().toISOString();
-    const ops: PromiseLike<{ error: unknown }>[] = [];
-    if (recIds.length)
-      ops.push(supabase.from("receitas").delete().in("id", recIds) as unknown as PromiseLike<{ error: unknown }>);
-    if (despIds.length)
-      ops.push(supabase.from("despesas").delete().in("id", despIds) as unknown as PromiseLike<{ error: unknown }>);
-    if (transfIds.length)
-      ops.push(
-        supabase
-          .from("transferencias")
-          .update({ deleted_at: stamp } as never)
-          .in("id", transfIds) as unknown as PromiseLike<{ error: unknown }>
-      );
-    const results = await Promise.all(ops);
-    if (results.find((r) => (r as { error?: unknown }).error)) {
-      toast.error("Falha em alguns registros");
+    const { excluidos, falhas, erro } = await excluirLancamentos(rows);
+    if (excluidos > 0) refetchAll();
+    if (falhas === 0) {
+      toast.success(`${excluidos} excluído(s)`);
       return;
     }
-    toast.success(`${rows.length} excluído(s)`);
-    refetchAll();
+    toast.error(`Falha ao excluir ${falhas} de ${rows.length} lançamento(s)`, {
+      description: getSafeErrorMessage(erro, "Sem permissão ou já removidos. Recarregue a lista e confira."),
+    });
   };
 
   const bulkDelete = async () => {
@@ -343,27 +330,16 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
-    const { id, tipo } = deleteTarget;
+    const ehTransferencia = deleteTarget.tipo === "transferencia";
     setDeleteTarget(null);
-    if (tipo === "transferencia") {
-      const { error } = await supabase.rpc("rpc_excluir_transferencia", { p_id: id } as never);
-      if (error) {
-        toast.error("Não foi possível excluir", {
-          description: getSafeErrorMessage(error, "Tente de novo em instantes."),
-        });
-        return;
-      }
-      toast.success("Transferência excluída");
-      refetchAll();
+    const { excluidos, erro } = await excluirLancamentos([deleteTarget]);
+    if (excluidos === 0) {
+      toast.error(ehTransferencia ? "Não foi possível excluir" : "Falha ao excluir", {
+        description: getSafeErrorMessage(erro, "Sem permissão ou já removido. Recarregue a lista e confira."),
+      });
       return;
     }
-    const table = tipo === "receita" ? "receitas" : "despesas";
-    const { error } = await supabase.from(table).delete().eq("id", id);
-    if (error) {
-      toast.error("Falha ao excluir", { description: error.message });
-      return;
-    }
-    toast.success("Lançamento excluído");
+    toast.success(ehTransferencia ? "Transferência excluída" : "Lançamento excluído");
     refetchAll();
   };
 
