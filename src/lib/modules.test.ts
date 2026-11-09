@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { moduleOfFeature, type FeatureKey } from "./features";
 import {
   EMPRESA_ITEMS,
@@ -97,10 +97,11 @@ describe("integridade do mapa de módulos", () => {
 });
 
 describe("último módulo (localStorage)", () => {
-  // Ambiente de teste é node: stub simples em memória.
+  // Stub simples em memória. `vi.stubGlobal`, não atribuição: no jsdom do Vitest 5 o
+  // `localStorage` da janela só tem getter.
   beforeEach(() => {
     const store = new Map<string, string>();
-    globalThis.localStorage = {
+    vi.stubGlobal("localStorage", {
       getItem: (k: string) => store.get(k) ?? null,
       setItem: (k: string, v: string) => void store.set(k, String(v)),
       removeItem: (k: string) => void store.delete(k),
@@ -109,7 +110,7 @@ describe("último módulo (localStorage)", () => {
       get length() {
         return store.size;
       },
-    } as Storage;
+    } as Storage);
   });
 
   it("fallback é projetos quando não há nada salvo", () => {
