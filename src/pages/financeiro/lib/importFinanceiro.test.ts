@@ -8,6 +8,7 @@ import {
   lineHash,
   linhaParaCandidato,
   encontrarDuplicata,
+  parearComPendentes,
   type Candidato,
   type ContaPendente,
 } from "./importFinanceiro";
@@ -133,8 +134,32 @@ describe("encontrarDuplicata", () => {
     const pendentes: ContaPendente[] = [{ id: "p1", valor: 3000, data: "2026-07-20", tipo: "despesa" }];
     expect(encontrarDuplicata(cand, pendentes)).toBeNull();
   });
+  it("entre dois que casam, fica o de data mais próxima", () => {
+    const pendentes: ContaPendente[] = [
+      { id: "longe", valor: 3000, data: "2026-07-13", tipo: "despesa" },
+      { id: "perto", valor: 3000, data: "2026-07-10", tipo: "despesa" },
+    ];
+    expect(encontrarDuplicata(cand, pendentes)).toBe("perto");
+  });
   it("não casa tipo diferente", () => {
     const pendentes: ContaPendente[] = [{ id: "p1", valor: 3000, data: "2026-07-10", tipo: "receita" }];
     expect(encontrarDuplicata(cand, pendentes)).toBeNull();
+  });
+});
+
+describe("parearComPendentes", () => {
+  it("duas linhas iguais no extrato nunca conciliam o mesmo título (1:1)", () => {
+    const c: Candidato = { data: "2026-07-10", descricao: "Fornecedor", valor: 500, tipo: "despesa", lineHash: "a" };
+    const pendentes: ContaPendente[] = [{ id: "p1", valor: 500, data: "2026-07-10", tipo: "despesa" }];
+    expect(parearComPendentes([c, { ...c, lineHash: "b" }], pendentes)).toEqual(["p1", null]);
+  });
+
+  it("com dois pendentes, cada linha fica com um", () => {
+    const c: Candidato = { data: "2026-07-10", descricao: "Fornecedor", valor: 500, tipo: "despesa", lineHash: "a" };
+    const pendentes: ContaPendente[] = [
+      { id: "p1", valor: 500, data: "2026-07-10", tipo: "despesa" },
+      { id: "p2", valor: 500, data: "2026-07-11", tipo: "despesa" },
+    ];
+    expect(parearComPendentes([c, { ...c, lineHash: "b" }], pendentes)).toEqual(["p1", "p2"]);
   });
 });

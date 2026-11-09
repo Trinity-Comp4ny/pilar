@@ -93,9 +93,7 @@ export function CartaoDetailPanel({ cartao, contas, canEdit, onEdit, onDelete }:
       {cartao.conta_pagamento_id && (
         <div className="p-4 rounded-lg bg-muted/50 border">
           <p className="text-xs text-muted-foreground mb-1">Conta para pagamento de faturas</p>
-          <p className="text-sm font-medium">
-            {contas.find((c) => c.id === cartao.conta_pagamento_id)?.nome ?? "—"}
-          </p>
+          <p className="text-sm font-medium">{contas.find((c) => c.id === cartao.conta_pagamento_id)?.nome ?? "—"}</p>
         </div>
       )}
     </div>

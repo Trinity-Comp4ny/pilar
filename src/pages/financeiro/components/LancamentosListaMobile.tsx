@@ -55,6 +55,14 @@ function agruparPorDia(items: Lancamento[]) {
   return grupos;
 }
 
+/** Líquido do dia (entradas − saídas), sem transferências (só movem entre contas). */
+function liquidoDoDia(itens: Lancamento[]): number {
+  return itens.reduce(
+    (acc, l) => (l.tipo === "receita" ? acc + l.valor : l.tipo === "despesa" ? acc - l.valor : acc),
+    0
+  );
+}
+
 function Linha({
   l,
   canEdit,
@@ -202,10 +210,14 @@ function Linha({
             </span>
           </p>
         </div>
+        {/* Cor só pelo sentido, como nos apps de banco: entrada em verde com "+", saída
+            neutra. Vermelho fica para o que venceu. Efetivado em peso cheio, em aberto
+            mais leve (SPEC 150, mobile P0). */}
         <span
           className={cn(
-            "shrink-0 text-[15px] font-semibold tabular-nums",
-            isTransf ? "text-info-mid" : isReceita ? "text-positive-strong" : "text-negative-strong"
+            "shrink-0 text-[15px] tabular-nums",
+            paga ? "font-semibold" : "font-medium",
+            atrasada ? "text-danger-mid" : isTransf ? "text-ink" : isReceita ? "text-positive-strong" : "text-ink"
           )}
         >
           {isTransf ? "⇄" : isReceita ? "+" : "−"}
@@ -234,6 +246,7 @@ export function LancamentosListaMobile({
   isFetchingNextPage,
   onLoadMore,
 }: Props) {
+  const formatCurrency = useMoneyMask();
   if (loading && items.length === 0) {
     return <PageLoader size="section" label="Buscando lançamentos" />;
   }
@@ -253,11 +266,18 @@ export function LancamentosListaMobile({
   }
 
   return (
-    <div className="-mx-6 overflow-hidden border-y border-black/5 bg-background">
+    <div className="-mx-6 border-y border-black/5 bg-background">
       {agruparPorDia(items).map((g) => (
         <section key={`${g.dia}-${g.itens[0].tipo}-${g.itens[0].id}`}>
-          <h3 className="bg-background px-5 pb-1.5 pt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {rotuloDoDia(g.dia)}
+          {/* Cabeçalho do dia fica preso no topo ao rolar, com o líquido do dia. */}
+          <h3 className="sticky top-0 z-10 flex items-baseline justify-between gap-3 bg-background/95 px-5 pb-1.5 pt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur">
+            <span>{rotuloDoDia(g.dia)}</span>
+            {g.itens.some((l) => l.tipo !== "transferencia") && (
+              <span className="normal-case tracking-normal tabular-nums">
+                {liquidoDoDia(g.itens) >= 0 ? "+" : "−"}
+                {formatCurrency(Math.abs(liquidoDoDia(g.itens)))}
+              </span>
+            )}
           </h3>
           {g.itens.map((l) => (
             <Linha

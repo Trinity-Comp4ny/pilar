@@ -109,7 +109,8 @@ describe("LancamentosListaMobile: agrupamento e conteúdo", () => {
         lanc({ id: "6", descricao: "Sem", data_vencimento: undefined }),
       ],
     });
-    const titulos = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
+    // O cabeçalho do dia também traz o líquido do dia; o rótulo é o primeiro span.
+    const titulos = screen.getAllByRole("heading", { level: 3 }).map((h) => h.querySelector("span")?.textContent);
     expect(titulos).toEqual(["Hoje, 10 nov", "Amanhã, 11 nov", "Ontem, 9 nov", "sexta-feira, 13 nov", "Sem data"]);
     const hoje = screen.getByText("Hoje, 10 nov").closest("section") as HTMLElement;
     expect(within(hoje).getAllByRole("button", { name: /despesa/ })).toHaveLength(2);
