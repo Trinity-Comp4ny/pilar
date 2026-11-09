@@ -480,6 +480,8 @@ export function finalize(duration, sections = {}, fps = 30) {
   tl.set({}, {}, duration);
   window.__meta = { duration, fps, w: W, h: H, cues: CUES, sections };
   window.__seek = async (t) => {
+    // em t=0 exato o GSAP não aplica o que está posicionado em 0; um instante depois, sim
+    t = Math.max(t, 0.0005);
     tl.seek(t, false);
     for (const c of COUNTERS) {
       const p = Math.min(1, Math.max(0, (t - c.t) / c.dur));

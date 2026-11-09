@@ -5,17 +5,23 @@ python3 narrate.py <id>     lê src/<id>.script.json, grava narration/<id>/lNN.w
 
 A voz vem da primeira fonte disponível, nesta ordem:
   1. gravação manual: narration/<id>/manual/lNN.wav (a sua voz, uma fala por arquivo)
-  2. Google Cloud TTS, voz Chirp 3 HD   (variável GOOGLE_TTS_API_KEY; VOICE_GOOGLE muda a voz)
-  3. ElevenLabs, multilingual v2         (variáveis ELEVENLABS_API_KEY e ELEVENLABS_VOICE_ID)
-  4. Kokoro local, só como voz-guia      (KOKORO_DIR com kokoro-v1.0.onnx e voices-v1.0.bin)
-VOICE_PROVIDER=manual|google|elevenlabs|kokoro força uma delas.
+  2. Gemini TTS, cota grátis do AI Studio, sem cartão (GEMINI_API_KEY; VOICE_GEMINI muda a voz)
+  3. Google Cloud TTS, voz Chirp 3 HD   (GOOGLE_TTS_API_KEY; 1 milhão de caracteres grátis/mês)
+  4. ElevenLabs, multilingual v2         (ELEVENLABS_API_KEY e ELEVENLABS_VOICE_ID; plano pago)
+  5. Kokoro local, só como voz-guia      (KOKORO_DIR com kokoro-v1.0.onnx e voices-v1.0.bin)
+VOICE_PROVIDER=manual|gemini|google|elevenlabs|kokoro força uma delas.
+
+A cota grátis do Gemini é pequena (poucas requisições por dia): cada fala gerada fica em cache
+(narration/<id>/cache/), e só as falas cujo texto mudou voltam a ser pedidas.
 
 Toda fala passa pelo mesmo tratamento (corte de silêncio, filtro de graves, presença,
 compressão leve), então trocar a fonte não muda o resto do vídeo: a composição lê timing.json.
 """
 import base64
+import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -33,6 +39,44 @@ def http_json(url, body, headers):
     req = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"content-type": "application/json", **headers})
     with urllib.request.urlopen(req, timeout=120) as r:
         return r.read()
+
+
+# Direção de voz para o Gemini: o tom de um sócio explicando, não de locutor de anúncio.
+GEMINI_STYLE = os.environ.get(
+    "GEMINI_STYLE",
+    "Leia em português do Brasil, com sotaque neutro, no tom de um sócio de escritório de engenharia "
+    "explicando algo a um colega: calmo, confiante, próximo, sem empolgação de propaganda. "
+    "Pronuncie IA como 'i-á'. Texto:",
+)
+
+
+def pcm_to_wav(pcm, rate):
+    buf = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+    with wave.open(buf.name, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(rate)
+        w.writeframes(pcm)
+    return Path(buf.name).read_bytes()
+
+
+def tts_gemini(text):
+    key = os.environ["GEMINI_API_KEY"]
+    model = os.environ.get("GEMINI_TTS_MODEL", "gemini-2.5-flash-preview-tts")
+    voice = os.environ.get("VOICE_GEMINI", "Charon")
+    out = http_json(
+        f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+        {
+            "contents": [{"parts": [{"text": f"{GEMINI_STYLE} {text}"}]}],
+            "generationConfig": {
+                "responseModalities": ["AUDIO"],
+                "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}}},
+            },
+        },
+        {"x-goog-api-key": key},
+    )
+    data = json.loads(out)["candidates"][0]["content"]["parts"][0]["inlineData"]["data"]
+    return pcm_to_wav(base64.b64decode(data), 24000), f"gemini/{voice}"
 
 
 def tts_google(text):
@@ -56,13 +100,7 @@ def tts_elevenlabs(text):
          "voice_settings": {"stability": 0.45, "similarity_boost": 0.8, "style": 0.2, "use_speaker_boost": True}},
         {"xi-api-key": key},
     )
-    buf = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
-    with wave.open(buf.name, "wb") as w:
-        w.setnchannels(1)
-        w.setsampwidth(2)
-        w.setframerate(SR)
-        w.writeframes(pcm)
-    return Path(buf.name).read_bytes(), voice
+    return pcm_to_wav(pcm, SR), voice
 
 
 _kokoro = None
@@ -77,6 +115,8 @@ def tts_kokoro(text):
     voice = os.environ.get("VOICE_KOKORO", "pm_alex")
     if _kokoro is None:
         _kokoro = Kokoro(str(d / "kokoro-v1.0.onnx"), str(d / "voices-v1.0.bin"))
+    # o fonetizador local lê "IA" como a palavra "ia"; soletrado sai "i-á"
+    text = re.sub(r"\bIA\b", "I A", text)
     audio, sr = _kokoro.create(text, voice=voice, speed=1.0, lang="pt-br")
     buf = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
     sf.write(buf.name, audio, sr)
@@ -89,13 +129,15 @@ def pick_provider(manual_dir):
         return forced
     if manual_dir.exists() and any(manual_dir.glob("*.wav")):
         return "manual"
+    if os.environ.get("GEMINI_API_KEY"):
+        return "gemini"
     if os.environ.get("GOOGLE_TTS_API_KEY"):
         return "google"
     if os.environ.get("ELEVENLABS_API_KEY") and os.environ.get("ELEVENLABS_VOICE_ID"):
         return "elevenlabs"
     if os.environ.get("KOKORO_DIR"):
         return "kokoro"
-    sys.exit("Nenhuma voz disponível: grave narration/<id>/manual/lNN.wav ou defina GOOGLE_TTS_API_KEY, ELEVENLABS_API_KEY ou KOKORO_DIR.")
+    sys.exit("Nenhuma voz disponível: grave narration/<id>/manual/lNN.wav ou defina GEMINI_API_KEY, GOOGLE_TTS_API_KEY, ELEVENLABS_API_KEY ou KOKORO_DIR.")
 
 
 # Tratamento de voz: tira silêncio das pontas, corta grave, abre presença, comprime leve.
@@ -124,7 +166,9 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     manual = out / "manual"
     provider = pick_provider(manual)
-    fn = {"google": tts_google, "elevenlabs": tts_elevenlabs, "kokoro": tts_kokoro}.get(provider)
+    fn = {"gemini": tts_gemini, "google": tts_google, "elevenlabs": tts_elevenlabs, "kokoro": tts_kokoro}.get(provider)
+    cache = out / "cache"
+    cache.mkdir(exist_ok=True)
     t = script.get("lead", 0.5)
     lines, voice_name = [], provider
     for ln in script["lines"]:
@@ -132,7 +176,14 @@ def main():
         if provider == "manual":
             raw = (manual / f"{ln['id']}.wav").read_bytes()
         else:
-            raw, voice_name = fn(ln.get("say", ln["text"]))
+            say = ln.get("say", ln["text"])
+            key = hashlib.sha1(f"{provider}|{os.environ.get('VOICE_' + provider.upper(), '')}|{say}".encode()).hexdigest()[:16]
+            hit = cache / f"{key}.wav"
+            if hit.exists():
+                raw = hit.read_bytes()
+            else:
+                raw, voice_name = fn(say)
+                hit.write_bytes(raw)
         dur = process(raw, dst)
         lines.append({"id": ln["id"], "text": ln["text"], "start": round(t, 3), "dur": round(dur, 3)})
         print(f"{ln['id']} {t:6.2f}s +{dur:.2f}s  {ln['text'][:60]}")

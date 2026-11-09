@@ -339,11 +339,35 @@ def sfx(cues, dur):
     return fx
 
 
+def load_track(path, dur):
+    """Música de biblioteca (ex.: YouTube Audio Library, Pixabay Music) no lugar da sintetizada."""
+    import subprocess
+
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-t", str(dur + 3), "-f", "s16le", "-ac", "2", "-ar", str(SR), "-"],
+                         check=True, capture_output=True).stdout
+    x = np.frombuffer(raw, dtype="<i2").astype(np.float64).reshape(-1, 2).T / 32768
+    out = np.zeros((2, int((dur + 3) * SR)))
+    out[:, : x.shape[1]] = x[:, : out.shape[1]]
+    fe = int((dur - 1.5) * SR)
+    out[:, fe : int(dur * SR)] *= np.linspace(1, 0, int(dur * SR) - fe)
+    out[:, int(dur * SR) :] = 0
+    return out / (np.abs(out).max() + 1e-9)
+
+
 def main():
     meta = json.load(open(sys.argv[1]))
     dur = meta["duration"]
     S = meta.get("sections")
-    mus = build_bed(dur, S) if S.get("style") == "bed" else build_music(dur, S)
+    # music/<nome do vídeo>.mp3 (ou .wav), se existir, substitui a trilha sintetizada
+    from pathlib import Path
+
+    name = Path(sys.argv[1]).name.replace(".cues.json", "")
+    track = next((p for p in (Path(__file__).parent / "music").glob(f"{name}.*") if p.suffix in (".mp3", ".wav", ".m4a")), None)
+    if track:
+        mus = load_track(track, dur)
+        print("trilha:", track.name)
+    else:
+        mus = build_bed(dur, S) if S.get("style") == "bed" else build_music(dur, S)
     fx = sfx(meta["cues"], dur)
     if S.get("voice"):
         fx *= 0.6  # com narração, os efeitos ficam por baixo

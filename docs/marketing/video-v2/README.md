@@ -31,8 +31,8 @@ inteiro ou num momento de marca dentro de um vídeo claro (`scene(..., { theme: 
 
 | Vídeo | Formato | Tema | Áudio | Arquivo |
 | --- | --- | --- | --- | --- |
-| Comece aqui | 9:16, 49 s | claro | música | `renders/comece-aqui-light.mp4` |
-| Comece aqui (variação) | 9:16, 49 s | escuro | música | `renders/comece-aqui-dark.mp4` |
+| Comece aqui | 9:16, 48 s | claro, marca no escuro | música | `renders/comece-aqui-light.mp4` (capa `comece-aqui-light-capa.jpg`) |
+| Comece aqui (variação, versão anterior) | 9:16, 49 s | escuro | música | `renders/comece-aqui-dark.mp4` |
 | Agentes de IA, explicado | 9:16, ~56 s | claro com a marca no escuro | narração | `renders/agentes-explicado-light.mp4` |
 
 Roteiro do "Comece aqui": gancho (o mesmo número digitado em 4 arquivos), depois o prejuízo que
@@ -71,20 +71,38 @@ soltos em `renders/`.
 
 `narrate.py` usa a primeira voz disponível e trata todas igual (corte de silêncio, presença,
 compressão). Como a composição lê os tempos da fala, trocar a voz e rodar `make.sh` de novo
-reposiciona o vídeo inteiro sozinho.
+reposiciona o vídeo inteiro sozinho. Custos verificados em 2026-11-09:
 
-1. **Sua voz** (recomendado para venda founder-led): grave uma fala por arquivo em
-   `narration/<id>/manual/l01.wav`, `l02.wav`... (celular, ambiente quieto, 30 cm do microfone).
-2. **Google Cloud TTS, Chirp 3 HD** (voz humana, pt-BR): variável `GOOGLE_TTS_API_KEY`. O host
-   `texttospeech.googleapis.com` já é acessível no ambiente de nuvem. Voz padrão
-   `pt-BR-Chirp3-HD-Charon`; troque com `VOICE_GOOGLE` (ex.: `pt-BR-Chirp3-HD-Kore`, feminina).
-3. **ElevenLabs** (multilingual v2): `ELEVENLABS_API_KEY` e `ELEVENLABS_VOICE_ID`; pede liberar
-   `api.elevenlabs.io` na rede do ambiente.
-4. **Kokoro local** (`KOKORO_DIR`): só como **voz-guia** para acertar tempo e roteiro. Tem sotaque;
-   não publicar com ela.
+| Voz | Custo | Observação |
+| --- | --- | --- |
+| **Sua voz** (`narration/<id>/manual/l01.wav`...) | grátis | Mais autêntica para venda feita pelo fundador. Celular, ambiente quieto, 30 cm |
+| **Gemini TTS** (`GEMINI_API_KEY`, do Google AI Studio) | grátis, sem cartão | Cota pequena (dezenas de falas por dia); as falas ficam em cache e só a que mudou é pedida de novo. Aceita direção de tom (`GEMINI_STYLE`) |
+| **Google Cloud TTS, Chirp 3 HD** (`GOOGLE_TTS_API_KEY`) | 1 milhão de caracteres grátis por mês | Pede conta de faturamento (cartão) no Google Cloud. Um roteiro de 1 min tem ~1.000 caracteres |
+| **ElevenLabs** (`ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`) | plano grátis **não permite uso comercial** | Comercial a partir do Starter (~US$ 5 a 6/mês); pede liberar `api.elevenlabs.io` na rede |
+| **Kokoro local** (`KOKORO_DIR`) | grátis | Só voz-guia: sotaque estrangeiro, não publicar |
 
-O render atual do vídeo narrado usa a voz-guia (Kokoro): serve para aprovar roteiro, ritmo e
-animação, e precisa ser regerado com uma das vozes 1 a 3 antes de publicar.
+Os hosts do Gemini e do Google Cloud TTS já são acessíveis no ambiente de nuvem; basta a chave.
+
+## Música
+
+Sem arquivo, `audio.py` sintetiza a trilha (original, sem licença de terceiros). Para usar uma
+música de biblioteca grátis com uso comercial liberado (YouTube Audio Library, Pixabay Music),
+salve como `music/<nome do vídeo>.mp3` (ex.: `music/comece-aqui-light.mp3`) e rode o `make.sh`:
+ela entra no lugar da sintetizada, com os efeitos por cima. Os cortes do vídeo caem a cada 0,5 s
+(120 BPM): música entre 115 e 125 BPM casa melhor.
+
+## Formatos da série (para não ficar tudo igual)
+
+| Formato | Para quê | Tema | Áudio | Duração |
+| --- | --- | --- | --- | --- |
+| Tour (Comece aqui) | Mostrar o sistema inteiro, destaque fixo | claro, marca no escuro | música | 45 a 50 s |
+| Funcionalidade em foco (agentes, clima, diário) | Explicar uma coisa a fundo | claro | narração | 30 a 60 s |
+| Texto cinético / opinião ("3 sinais de que...") | Parar o dedo, gerar conversa | escuro | música | 12 a 20 s |
+| Conta rápida (quanto custa o retrabalho) | Prova com número, linha a linha | claro | música ou voz | 20 a 40 s |
+| Antes e depois (planilha x Pilar), tela dividida | Contraste direto | claro | música | 15 a 25 s |
+| Chamada para ação (demonstração, planos) | Converter, em loop | escuro ou verde | música | 8 a 15 s |
+| Fundador falando (câmera do celular + telas por cima) | Confiança, venda founder-led | real | sua voz | 30 a 60 s |
+| Horizontal 16:9 (YouTube, landing, venda) | Apresentação completa | claro | narração | 90 s |
 
 ## Desvio consciente do guia de movimento
 
