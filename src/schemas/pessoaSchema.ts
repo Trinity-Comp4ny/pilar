@@ -78,6 +78,15 @@ export const pessoaSchema = z
     data_demissao: z.string().optional().default(""),
     salario_fixo: z.string().optional().default(""),
     valor_m2: z.string().optional().default(""),
+    percentual_producao: z
+      .string()
+      .optional()
+      .default("")
+      .refine((v) => {
+        if (!v?.trim()) return true;
+        const n = parsePercentual(v);
+        return n !== null && n >= 0 && n <= 100;
+      }, "Use um percentual entre 0 e 100"),
     cnpj: z.string().optional().default(""),
     razao_social: z.string().optional().default(""),
   })
@@ -120,6 +129,15 @@ export const pessoaDefaultValues: PessoaFormData = {
   data_demissao: "",
   salario_fixo: "",
   valor_m2: "",
+  percentual_producao: "",
   cnpj: "",
   razao_social: "",
 };
+
+/** "10", "2,5" ou "2.5" → número; vazio ou inválido → null. */
+export function parsePercentual(v: string | null | undefined): number | null {
+  const t = (v ?? "").trim().replace("%", "").replace(",", ".");
+  if (!t) return null;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : null;
+}

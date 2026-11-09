@@ -18,7 +18,14 @@ import { FolhaTable } from "./folha-pagamento/components/FolhaTable";
 import { FolhaHistory } from "./folha-pagamento/components/FolhaHistory";
 import { FinanceErrorState } from "../components/FinanceErrorState";
 import { gerarComprovantePDF, gerarLoteComprovantesPDF } from "./folha-pagamento/folhaComprovante";
-import { calcularVariavel, calcularTotal, parseDetalhe, firstPix } from "./folha-pagamento/folhaCalc";
+import {
+  calcularVariavel,
+  calcularTotal,
+  parseDetalhe,
+  firstPix,
+  folhaItemDeRegistro,
+  type RegistroFolha,
+} from "./folha-pagamento/folhaCalc";
 import { CloseMonthDialog, DetailEditDialog, HistoryDetailDialog } from "./folha-pagamento/components/FolhaDialogs";
 
 /** Marca a despesa que a folha gera ao ser paga; é por ela que o estorno a encontra. */
@@ -163,32 +170,9 @@ export default function FolhaPagamento() {
         const peopleMap = new Map((peopleData || []).map((p) => [p.id, p]));
 
         setData(
-          existingData.map((item) => {
-            const salario_fixo = Number(item.salario_fixo ?? 0);
-            const valor_m2 = Number(item.valor_m2 ?? 0);
-            const soma_area = Number(item.total_area_projetada ?? 0);
-            const v_variavel = Number(item.adicional_variavel ?? soma_area * valor_m2);
-            const v_total = Number(item.total_receber ?? salario_fixo + v_variavel);
-            const pessoa = item.pessoa_id ? peopleMap.get(item.pessoa_id) : undefined;
-            return {
-              p_id: item.pessoa_id ?? "",
-              p_nome: pessoa?.nome || "Desconhecido",
-              p_cargo: pessoa?.cargo || "-",
-              p_cpf: null,
-              p_chave_pix: null,
-              p_salario_fixo: salario_fixo,
-              p_valor_m2: valor_m2,
-              soma_area,
-              v_variavel,
-              v_total,
-              lista_projetos: [],
-              detalhe_projetos: parseDetalhe((item as unknown as { detalhe_projetos?: unknown }).detalhe_projetos),
-              status: item.status ?? undefined,
-              data_pagamento: item.data_pagamento ?? undefined,
-              folha_id: item.id,
-              edited_fields: [],
-            };
-          })
+          existingData.map((item) =>
+            folhaItemDeRegistro(item as RegistroFolha, item.pessoa_id ? peopleMap.get(item.pessoa_id) : undefined)
+          )
         );
       } else {
         setStatusFolha("preview");
@@ -202,8 +186,14 @@ export default function FolhaPagamento() {
           ((previewData || []) as Record<string, unknown>[]).map((item) => {
             const salario_fixo = Number(item.p_salario_fixo ?? item.salario_fixo ?? 0);
             const valor_m2 = Number(item.p_valor_m2 ?? item.valor_m2 ?? 0);
+            const percentual = Number(item.percentual_producao ?? 0);
             const soma_area = Number(item.soma_area ?? item.total_area ?? 0);
-            const v_variavel = Number(item.v_variavel ?? item.total_variavel ?? soma_area * valor_m2);
+            const soma_valor_base = Number(item.total_valor_base ?? 0);
+            const v_variavel = Number(
+              item.v_variavel ??
+                item.total_variavel ??
+                calcularVariavel(soma_area, valor_m2, soma_valor_base, percentual)
+            );
             const v_total = Number(item.v_total ?? item.total_receber ?? salario_fixo + v_variavel);
             const detalhe = parseDetalhe(item.detalhe_projetos);
             return {
@@ -212,7 +202,9 @@ export default function FolhaPagamento() {
               p_cargo: String(item.p_cargo ?? item.cargo ?? ""),
               p_salario_fixo: salario_fixo,
               p_valor_m2: valor_m2,
+              p_percentual: percentual,
               soma_area,
+              soma_valor_base,
               v_variavel,
               v_total,
               lista_projetos: (item.projetos_nomes ?? []) as string[],
@@ -242,6 +234,8 @@ export default function FolhaPagamento() {
         salario_fixo: item.p_salario_fixo,
         total_area_projetada: item.soma_area,
         valor_m2: item.p_valor_m2,
+        percentual_producao: item.p_percentual ?? 0,
+        total_valor_base: item.soma_valor_base ?? 0,
         adicional_variavel: item.v_variavel,
         total_receber: item.v_total,
         // Snapshot da origem do variável: fica congelado mesmo que o projeto mude.
@@ -279,6 +273,7 @@ export default function FolhaPagamento() {
     setEditForm({
       p_salario_fixo: selectedPerson.p_salario_fixo,
       soma_area: selectedPerson.soma_area,
+      soma_valor_base: selectedPerson.soma_valor_base ?? 0,
       ...(selectedPerson.edited_fields?.includes("total") ? { v_total: selectedPerson.v_total } : {}),
     });
     setIsEditingDetail(true);
@@ -288,13 +283,15 @@ export default function FolhaPagamento() {
     if (!selectedPerson) return;
     const salario = editForm.p_salario_fixo ?? selectedPerson.p_salario_fixo;
     const area = editForm.soma_area ?? selectedPerson.soma_area;
+    const valorBase = editForm.soma_valor_base ?? selectedPerson.soma_valor_base ?? 0;
     // Recalcula os derivados pela fórmula; total só diverge se editado à mão.
-    const variavel = calcularVariavel(area, selectedPerson.p_valor_m2);
+    const variavel = calcularVariavel(area, selectedPerson.p_valor_m2, valorBase, selectedPerson.p_percentual ?? 0);
     const total = editForm.v_total ?? calcularTotal(salario, variavel);
 
     const newEditedFields = new Set(selectedPerson.edited_fields || []);
     if (salario !== selectedPerson.p_salario_fixo) newEditedFields.add("salario");
     if (area !== selectedPerson.soma_area) newEditedFields.add("area");
+    if (valorBase !== (selectedPerson.soma_valor_base ?? 0)) newEditedFields.add("base");
     if (variavel !== selectedPerson.v_variavel) newEditedFields.add("variavel");
     if (total !== selectedPerson.v_total) newEditedFields.add("total");
 
@@ -302,6 +299,7 @@ export default function FolhaPagamento() {
       ...selectedPerson,
       p_salario_fixo: salario,
       soma_area: area,
+      soma_valor_base: valorBase,
       v_variavel: variavel,
       v_total: total,
       edited_fields: Array.from(newEditedFields),
@@ -424,31 +422,9 @@ export default function FolhaPagamento() {
         const peopleMap = new Map((peopleData || []).map((p) => [p.id, p]));
 
         setHistoryDetailItems(
-          existingData.map((item) => {
-            const salario_fixo = Number(item.salario_fixo ?? 0);
-            const valor_m2 = Number(item.valor_m2 ?? 0);
-            const soma_area = Number(item.total_area_projetada ?? 0);
-            const v_variavel = Number(item.adicional_variavel ?? soma_area * valor_m2);
-            const v_total = Number(item.total_receber ?? salario_fixo + v_variavel);
-            const pessoa = item.pessoa_id ? peopleMap.get(item.pessoa_id) : undefined;
-            return {
-              p_id: item.pessoa_id ?? "",
-              p_nome: pessoa?.nome || "Desconhecido",
-              p_cargo: pessoa?.cargo || "-",
-              p_cpf: null,
-              p_chave_pix: null,
-              p_salario_fixo: salario_fixo,
-              p_valor_m2: valor_m2,
-              soma_area,
-              v_variavel,
-              v_total,
-              lista_projetos: [],
-              detalhe_projetos: parseDetalhe((item as unknown as { detalhe_projetos?: unknown }).detalhe_projetos),
-              status: item.status ?? undefined,
-              data_pagamento: item.data_pagamento ?? undefined,
-              folha_id: item.id,
-            };
-          })
+          existingData.map((item) =>
+            folhaItemDeRegistro(item as RegistroFolha, item.pessoa_id ? peopleMap.get(item.pessoa_id) : undefined)
+          )
         );
       }
     } catch {

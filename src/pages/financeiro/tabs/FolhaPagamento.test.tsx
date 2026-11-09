@@ -603,3 +603,95 @@ describe("FolhaPagamento: bordas do pagamento e do comprovante", () => {
     });
   });
 });
+
+describe("FolhaPagamento: produtividade por percentual", () => {
+  // Montador: sem fixo, 10% do valor do projeto (armário de R$ 10 mil = R$ 1.000).
+  // Carla: fixo + m² + percentual somados.
+  const previewPercentual = [
+    {
+      pessoa_id: "p-montador",
+      nome: "Marcos Montador",
+      cargo: "Montador",
+      salario_fixo: 0,
+      valor_m2: 0,
+      total_area: 0,
+      percentual_producao: 10,
+      total_valor_base: 10000,
+      total_variavel: 1000,
+      total_receber: 1000,
+      projetos_nomes: ["Armário cozinha"],
+      detalhe_projetos: [{ nome: "Armário cozinha", area_m2: 0, valor_base: 10000 }],
+    },
+    {
+      pessoa_id: "p-carla",
+      nome: "Carla Dias",
+      cargo: "Arquiteta",
+      salario_fixo: 3000,
+      valor_m2: 5,
+      total_area: 120,
+      percentual_producao: 2.5,
+      total_valor_base: 40000,
+      total_variavel: 1600,
+      total_receber: 4600,
+      projetos_nomes: ["Casa 120m²"],
+      detalhe_projetos: [{ nome: "Casa 120m²", area_m2: 120, valor_base: 40000 }],
+    },
+  ];
+
+  beforeEach(() => {
+    sb.rpcResultado("get_folha_preview", { data: previewPercentual, error: null });
+  });
+
+  it("mostra a base e o percentual na produtividade e soma no total", async () => {
+    setup();
+    const montador = nbsp((await linha("Marcos Montador")).textContent);
+    expect(montador).toContain("R$ 10.000,00");
+    expect(montador).toContain("x 10,0%");
+    expect(montador).not.toContain("m²");
+    expect(montador).toContain("R$ 1.000,00");
+    const carla = nbsp((await linha("Carla Dias")).textContent);
+    expect(carla).toContain("120 m²");
+    expect(carla).toContain("x 2,5%");
+    expect(carla).toContain("R$ 4.600,00");
+  });
+
+  it("editar o valor dos projetos recalcula o variável pelo percentual", async () => {
+    const { user } = setup();
+    await user.click(await screen.findByLabelText("Ver detalhes de Marcos Montador"));
+    const dlg = screen.getByRole("dialog");
+    expect(nbsp(dlg.textContent)).toContain("10,0% de R$ 10.000,00 = R$ 1.000,00");
+    await user.click(within(dlg).getByRole("button", { name: "Editar" }));
+    // Sem m²: os campos são salário, valor dos projetos e total.
+    const [, base] = within(dlg).getAllByRole("spinbutton");
+    await user.clear(base);
+    await user.type(base, "15000");
+    await user.click(within(dlg).getByRole("button", { name: "Salvar alterações" }));
+    expect(nbsp((await linha("Marcos Montador")).textContent)).toContain("R$ 1.500,00");
+  });
+
+  it("fechar grava o percentual e a base junto com o variável", async () => {
+    const { user } = setup();
+    await linha("Marcos Montador");
+    await user.click(screen.getByRole("button", { name: /Fechar folha/ }));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: /Confirmar fechamento/ }));
+    await waitFor(() => expect(sb.de("folha_pagamento", "insert")).toHaveLength(1));
+    const payload = sb.de("folha_pagamento", "insert")[0].args[0] as Array<Record<string, unknown>>;
+    expect(payload).toEqual([
+      expect.objectContaining({
+        pessoa_id: "p-montador",
+        percentual_producao: 10,
+        total_valor_base: 10000,
+        adicional_variavel: 1000,
+        total_receber: 1000,
+        detalhe_projetos: [{ nome: "Armário cozinha", area_m2: 0, valor_base: 10000 }],
+      }),
+      expect.objectContaining({
+        pessoa_id: "p-carla",
+        percentual_producao: 2.5,
+        total_valor_base: 40000,
+        adicional_variavel: 1600,
+        total_receber: 4600,
+      }),
+    ]);
+  });
+});
