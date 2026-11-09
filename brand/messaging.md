@@ -6,13 +6,16 @@
 
 ## One-liner (elevator)
 
-> O Pilar leva o dado do contrato à execução num fluxo só (proposta, projeto, obra e financeiro) e põe agentes de IA para preparar o trabalho: você revisa e aprova.
+> O Pilar é gestão com agentes de IA para escritórios de engenharia e arquitetura: proposta, projeto, obra e financeiro conectados, e os agentes preparam o trabalho para você revisar e aprovar.
 
 ## Tagline
 
-> **Do contrato à execução, num fluxo só.**
+> **Gestão com agentes de IA para escritórios de engenharia e arquitetura.**
 
-Descritor (logo seguido do nome): "Pilar, gestão com agentes de IA para escritórios de engenharia e arquitetura."
+Com o nome antes: "Pilar, gestão com agentes de IA para escritórios de engenharia e arquitetura."
+
+Desde 2026-11-07 (DECISOES.md) "Do contrato à execução, num fluxo só." não é mais frase de marca: não use
+em título, meta, imagem nem venda. "Do contrato à execução" segue só como termo do glossário em texto corrido.
 
 Assinatura dos agentes (sempre nesta ordem):
 
@@ -20,8 +23,7 @@ Assinatura dos agentes (sempre nesta ordem):
 
 Variações de campanha (mesmo núcleo):
 
-- "Onde times e agentes organizam gestão, projetos e obras." _(título do hero; o subtítulo carrega "Do contrato à execução, num fluxo só")_
-- "Do contrato à execução, agentes preparam e você aprova."
+- "Onde times e agentes organizam gestão, projetos e obras." _(título do hero; o subtítulo carrega a tagline)_
 - "O dado entra na proposta e chega ao canteiro sem redigitar."
 - "Você não precisa descobrir o prejuízo só no fim."
 
@@ -37,7 +39,7 @@ Variações de campanha (mesmo núcleo):
 
 - **Promessa:** lead, proposta, projeto, obra e financeiro conectados. O que foi vendido chega à execução sem redigitar.
 - **Prova:** a proposta aceita vira projeto com as disciplinas e as parcelas no financeiro; o diário do canteiro aparece na tela do escritório.
-- **Headline:** "Do contrato à execução, num fluxo só."
+- **Headline:** "O dado entra na proposta e chega ao canteiro sem redigitar."
 
 ### 3. Canteiro e cliente por dentro
 
@@ -55,14 +57,14 @@ Variações de campanha (mesmo núcleo):
 
 Só entra aqui o que roda em produção. Mudou o produto, muda esta tabela primeiro.
 
-| Agente | O que prepara | O que o sistema confere | Quem aprova |
-|---|---|---|---|
-| Conversa (aba Agentes) | Lançamento, lead, projeto, folha ou aditivo, a partir do que você conta | Acha o projeto pelo nome, calcula a parcela, categoriza no seu plano de contas | Você, no cartão de confirmação, antes de gravar |
-| Extrato e fatura | Lê o PDF do banco ou do cartão, separa receita de despesa, identifica "parcela 3 de 12" | Categoria vem do seu plano de contas | Você |
-| Guardião de margem | Todo dia, rascunho de aditivo do projeto que estourou o orçamento | Cada item cita as despesas que o sustentam; custo, horas e valor saem das despesas, não do modelo | Você, na aba Escopo do projeto |
-| Resumo da semana | Texto do Início sobre a semana da empresa | O código confere cada número contra os fatos; se não bater, mostra o resumo automático | Leitura |
-| Orçamento de fornecedor | Lê o orçamento e alimenta a cotação | Cotações dos fornecedores comparadas lado a lado | Você |
-| Diário por áudio (Pilar Campo) | Você fala, o agente organiza o registro do dia | O registro nasce interno e só vai ao cliente quando o gestor liga "Mostrar ao cliente" | O gestor |
+| Agente                         | O que prepara                                                                           | O que o sistema confere                                                                           | Quem aprova                                     |
+| ------------------------------ | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Conversa (aba Agentes)         | Lançamento, lead, projeto, folha ou aditivo, a partir do que você conta                 | Acha o projeto pelo nome, calcula a parcela, categoriza no seu plano de contas                    | Você, no cartão de confirmação, antes de gravar |
+| Extrato e fatura               | Lê o PDF do banco ou do cartão, separa receita de despesa, identifica "parcela 3 de 12" | Categoria vem do seu plano de contas                                                              | Você                                            |
+| Guardião de margem             | Todo dia, rascunho de aditivo do projeto que estourou o orçamento                       | Cada item cita as despesas que o sustentam; custo, horas e valor saem das despesas, não do modelo | Você, na aba Escopo do projeto                  |
+| Resumo da semana               | Texto do Início sobre a semana da empresa                                               | O código confere cada número contra os fatos; se não bater, mostra o resumo automático            | Leitura                                         |
+| Orçamento de fornecedor        | Lê o orçamento e alimenta a cotação                                                     | Cotações dos fornecedores comparadas lado a lado                                                  | Você                                            |
+| Diário por áudio (Pilar Campo) | Você fala, o agente organiza o registro do dia                                          | O registro nasce interno e só vai ao cliente quando o gestor liga "Mostrar ao cliente"            | O gestor                                        |
 
 ## Provas / credibilidade
 
@@ -72,14 +74,14 @@ Só entra aqui o que roda em produção. Mudou o produto, muda esta tabela prime
 
 ## Objeções → resposta
 
-| Objeção | Resposta |
-|---|---|
-| "Já uso planilha." | "Planilha não te avisa quando o projeto vira prejuízo, nem leva o dado do contrato ao canteiro. O Pilar faz os dois." |
-| "É mais um sistema pra alimentar." | "Um fluxo só: o dado entra na proposta e segue até a obra e o financeiro. Os agentes lançam o resto. Você alimenta menos, não mais." |
-| "Confio no que a IA escreve?" | "A IA prepara o rascunho, o sistema confere os números e você aprova. Nada vai pro cliente nem pro financeiro sem o seu OK." |
-| "A IA erra conta." | "A conta não é da IA. Custo, horas e valor saem do cálculo do sistema, a partir das suas despesas." |
-| "É caro / mais um SaaS." | "Custa menos que um projeto no vermelho que você descobriu tarde demais." |
-| "Serve pro meu escritório?" | "Feito pra escritório de projeto técnico: engenharia (civil, estrutural, MEP/HVAC) e arquitetura, inclusive quando o escritório acompanha a obra. Não é o ERP da construtora." |
+| Objeção                            | Resposta                                                                                                                                                                       |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| "Já uso planilha."                 | "Planilha não te avisa quando o projeto vira prejuízo, nem leva o dado do contrato ao canteiro. O Pilar faz os dois."                                                          |
+| "É mais um sistema pra alimentar." | "Um fluxo só: o dado entra na proposta e segue até a obra e o financeiro. Os agentes lançam o resto. Você alimenta menos, não mais."                                           |
+| "Confio no que a IA escreve?"      | "A IA prepara o rascunho, o sistema confere os números e você aprova. Nada vai pro cliente nem pro financeiro sem o seu OK."                                                   |
+| "A IA erra conta."                 | "A conta não é da IA. Custo, horas e valor saem do cálculo do sistema, a partir das suas despesas."                                                                            |
+| "É caro / mais um SaaS."           | "Custa menos que um projeto no vermelho que você descobriu tarde demais."                                                                                                      |
+| "Serve pro meu escritório?"        | "Feito pra escritório de projeto técnico: engenharia (civil, estrutural, MEP/HVAC) e arquitetura, inclusive quando o escritório acompanha a obra. Não é o ERP da construtora." |
 
 ## CTAs padrão
 

@@ -40,8 +40,8 @@ export function LandingFooter() {
           <div>
             <Logo size="sm" className="text-ink mb-5" />
             <p className="text-[13.5px] text-ink/80 max-w-xs leading-relaxed">
-              Do contrato à execução, num fluxo só. Feito para escritórios de engenharia e arquitetura, com agentes que
-              preparam o trabalho e esperam o seu aval.
+              Gestão com agentes de IA para escritórios de engenharia e arquitetura. Os agentes preparam o trabalho e
+              esperam o seu aval.
             </p>
           </div>
 
