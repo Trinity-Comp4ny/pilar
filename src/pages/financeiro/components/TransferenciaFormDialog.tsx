@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { format } from "date-fns";
 import { FormDialog } from "@/components/FormDialog";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -38,7 +39,8 @@ export function TransferenciaFormDialog({ open, onOpenChange, transferencia, onS
   const [contas, setContas] = useState<Conta[]>([]);
   const [saving, setSaving] = useState(false);
 
-  const today = new Date().toISOString().slice(0, 10);
+  // Data local (não UTC): à noite no Brasil o toISOString já está no dia seguinte.
+  const today = format(new Date(), "yyyy-MM-dd");
 
   const [form, setForm] = useState({
     conta_origem_id: "",

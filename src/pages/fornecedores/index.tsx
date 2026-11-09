@@ -17,7 +17,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getSafeErrorMessage } from "@/lib/safeError";
+import { getRawErrorMessage, getSafeErrorMessage } from "@/lib/safeError";
 import { formatCNPJ, formatPhone, onlyDigits, validateEmail } from "@/lib/maskUtils";
 import { isValidCNPJ } from "@/lib/brasilApi";
 import { ReconciliarDialog } from "./ReconciliarDialog";
@@ -193,7 +193,9 @@ export default function Fornecedores() {
       setIsDialogOpen(false);
       fetchFornecedores();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "";
+      // PostgrestError é objeto plano (não `instanceof Error`): ler a mensagem por getRawErrorMessage,
+      // senão o CNPJ duplicado (fornecedores_unique_empresa_cnpj) caía no aviso genérico.
+      const message = getRawErrorMessage(err);
       if (message.includes("unique") || message.includes("duplicate") || message.includes("fornecedores_cnpj")) {
         toast.error("CNPJ já cadastrado para outro fornecedor");
       } else {

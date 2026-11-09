@@ -11,6 +11,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { Mail, Phone, Building2, Rocket, Camera, X } from "lucide-react";
+import { EscolhaChips } from "@/components/forms/EscolhaChips";
+import { FUNCOES, normalizarLinkedin } from "@/lib/perfilEscritorio";
 import { formatPhone } from "@/lib/maskUtils";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -23,7 +25,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { AvatarStack } from "@/components/AvatarStack";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmailChangeCard } from "@/components/profile/EmailChangeCard";
-import { usePermissions } from "@/hooks/usePermissions";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { PESSOAS_EMPRESA_QUERY_KEY } from "@/pages/meu-trabalho/hooks";
 
@@ -35,7 +36,6 @@ const AVATAR_MAX_SIZE = 2 * 1024 * 1024; // 2MB, mesmo limite do logo de empresa
 export function ContaPanel() {
   const { user, profile, profileError, refreshProfile } = useAuth();
   const [retrying, setRetrying] = useState(false);
-  const { isAdmin } = usePermissions();
   const { reset: resetOnboarding } = useOnboardingState();
   const [editing, setEditing] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -72,6 +72,8 @@ export function ContaPanel() {
       firstName: profile.first_name ?? "",
       lastName: profile.last_name ?? "",
       contact: profile.contato ?? "",
+      funcao: profile.funcao ?? "",
+      linkedin: profile.linkedin_url ?? "",
     });
   }, [profile, form]);
 
@@ -84,6 +86,11 @@ export function ContaPanel() {
           first_name: values.firstName.trim(),
           last_name: values.lastName.trim(),
           contato: values.contact,
+          funcao: values.funcao || null,
+          linkedin_url: (() => {
+            const l = normalizarLinkedin(values.linkedin ?? "");
+            return l.ok ? l.url : null;
+          })(),
         })
         .eq("id", user.id);
 
@@ -282,7 +289,22 @@ export function ContaPanel() {
           </Button>
         ) : (
           <div className="flex gap-2 shrink-0">
-            <Button variant="outline" onClick={() => setEditing(false)} className="rounded-full">
+            <Button
+              variant="outline"
+              onClick={() => {
+                // Descarta o que foi digitado: sem o reset, o texto não salvo
+                // continuava na tela como se fosse o dado gravado.
+                form.reset({
+                  firstName: profile?.first_name ?? "",
+                  lastName: profile?.last_name ?? "",
+                  contact: profile?.contato ?? "",
+                  funcao: profile?.funcao ?? "",
+                  linkedin: profile?.linkedin_url ?? "",
+                });
+                setEditing(false);
+              }}
+              className="rounded-full"
+            >
               Cancelar
             </Button>
             <Button onClick={form.handleSubmit(handleSave)} variant="brand" className="rounded-full">
@@ -349,6 +371,44 @@ export function ContaPanel() {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="funcao"
+                render={({ field }) => (
+                  <FormItem className="space-y-2 md:col-span-2">
+                    <FormLabel>Função no escritório</FormLabel>
+                    <FormControl>
+                      <EscolhaChips
+                        ariaLabel="Função no escritório"
+                        opcoes={FUNCOES}
+                        value={field.value || null}
+                        onChange={field.onChange}
+                        disabled={!editing}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="linkedin"
+                render={({ field }) => (
+                  <FormItem className="space-y-2 md:col-span-2">
+                    <FormLabel>LinkedIn</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        value={field.value ?? ""}
+                        readOnly={!editing}
+                        className={inputReadonlyClass}
+                        placeholder="linkedin.com/in/seu-perfil"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </form>
           </Form>
         </CardContent>
@@ -361,21 +421,19 @@ export function ContaPanel() {
         }}
       />
 
-      {isAdmin && (
-        <Card className="border border-black/5">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Rocket size={16} className="text-ink" /> Guia de primeiros passos
-            </CardTitle>
-            <CardDescription>Reative o checklist e os balões de ajuda do início.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" className="rounded-full" onClick={handleRefazerTour}>
-              Refazer o guia
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      <Card className="border border-black/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Rocket size={16} className="text-ink" /> Guia de primeiros passos
+          </CardTitle>
+          <CardDescription>Reative o checklist e os balões de ajuda do início.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="outline" className="rounded-full" onClick={handleRefazerTour}>
+            Refazer o guia
+          </Button>
+        </CardContent>
+      </Card>
 
       <ConfirmDialog
         open={isRemoveAvatarConfirmOpen}

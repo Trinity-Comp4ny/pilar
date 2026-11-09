@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { addDays, format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, FileCheck, Clock, ChevronRight } from "lucide-react";
@@ -13,8 +14,10 @@ interface PendenciasCardProps {
 export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: PendenciasCardProps) {
   const navigate = useNavigate();
 
-  const hoje = new Date().toISOString().split("T")[0];
-  const em7dias = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  // Datas locais (YYYY-MM-DD): toISOString (UTC) à noite já cai no dia seguinte e
+  // marcava como atrasada a parcela que vence hoje.
+  const hoje = format(new Date(), "yyyy-MM-dd");
+  const em7dias = format(addDays(new Date(), 7), "yyyy-MM-dd");
 
   const naoRecebidas = receitas.filter((r) => r.status !== "Recebido" && r.data_vencimento);
   const faturasAtrasadasList = naoRecebidas.filter((r) => r.data_vencimento < hoje);

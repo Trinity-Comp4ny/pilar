@@ -18,6 +18,7 @@ describe("arquivos de produção são os oficiais", () => {
     ["public/favicon.svg", "pilar-favicon.svg"],
     ["apps/marketing/public/favicon.svg", "pilar-favicon.svg"],
     ["public/app-icon.svg", "pilar-app-icon.svg"],
+    ["apps/marketing/public/app-icon.svg", "pilar-app-icon.svg"],
     ["public/pilar-logo.svg", "pilar-mark-ink.svg"],
     ["apps/marketing/public/pilar-logo.svg", "pilar-mark-ink.svg"],
   ])("%s é igual a brand/assets/logo/%s", (producao, ofic) => {
@@ -40,16 +41,39 @@ function dimensoesPng(rel: string): [number, number] {
 describe("PNGs saem do ícone oficial", () => {
   it.each([
     ["public/apple-touch-icon.png", 180],
+    ["apps/marketing/public/apple-touch-icon.png", 180],
     ["public/icon-192.png", 192],
     ["public/icon-512.png", 512],
     ["public/maskable-512.png", 512],
-    ["apps/marketing/public/email/logo-v2.png", 96],
+    ["apps/marketing/public/email/logo-v3.png", 96],
   ])("%s tem %i px", (rel, lado) => {
     expect(dimensoesPng(rel)).toEqual([lado, lado]);
   });
 
-  it("o e-mail aponta para a logo versionada v2", () => {
-    expect(ler("supabase/functions/_shared/email/brand.ts")).toContain("/email/logo-v2.png");
+  it.each(["public/og-image-v2.jpg", "apps/marketing/public/og-image-v2.jpg"])("%s existe", (rel) => {
+    expect(readFileSync(join(raiz, rel)).length).toBeGreaterThan(10_000);
+  });
+
+  it.each(["index.html", "apps/marketing/index.html"])(
+    "%s declara favicon.ico, apple-touch-icon e a og:image v2",
+    (rel) => {
+      const html = ler(rel);
+      expect(html).toContain('href="/favicon.ico"');
+      expect(html).toContain('href="/apple-touch-icon.png"');
+      expect(html).toMatch(/og:image" content="https:\/\/[^"]+\/og-image-v2\.jpg"/);
+      expect(html).not.toContain("/og-image.jpg");
+    }
+  );
+
+  it.each(["public/favicon.ico", "apps/marketing/public/favicon.ico"])("%s é um .ico com 16, 32 e 48 px", (rel) => {
+    const b = readFileSync(join(raiz, rel));
+    expect(b.readUInt16LE(2)).toBe(1); // tipo 1 = ícone
+    const lados = Array.from({ length: b.readUInt16LE(4) }, (_, i) => b[6 + i * 16] || 256).sort((x, y) => x - y);
+    expect(lados).toEqual([16, 32, 48]);
+  });
+
+  it("o e-mail aponta para a logo versionada v3", () => {
+    expect(ler("supabase/functions/_shared/email/brand.ts")).toContain("/email/logo-v3.png");
   });
 });
 

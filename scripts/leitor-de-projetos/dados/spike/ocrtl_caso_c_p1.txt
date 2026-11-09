@@ -1,0 +1,2 @@
+{"caso": "caso_c_p1", "vetor": 26, "blocos400": {"recuperou": "18/26", "blocos": 8, "numeros_lidos": 110, "t": 5.3}}
+{"caso": "caso_c_p1", "vetor": 26, "blocos400": {"recuperou": "18/26", "blocos": 8, "numeros_lidos": 110, "t": 5.3}, "blocos600": {"recuperou": "12/26", "blocos": 8, "numeros_lidos": 98, "t": 8.3}}

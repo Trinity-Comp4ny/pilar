@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { verifyCurrentPassword } from "@/lib/supabase";
 import { passwordSchema } from "@/lib/passwordPolicy";
@@ -21,6 +21,9 @@ export function PasswordChangeCard({ currentEmail }: Props) {
   const [newPwd, setNewPwd] = useState("");
   const [confirmPwd, setConfirmPwd] = useState("");
   const [saving, setSaving] = useState(false);
+  // Ids únicos para ligar cada Label ao seu campo (leitor de tela e clique no rótulo).
+  const idBase = useId();
+  const ids = { atual: `${idBase}-atual`, nova: `${idBase}-nova`, confirmar: `${idBase}-confirmar` };
 
   const reset = () => {
     setCurrentPwd("");
@@ -81,8 +84,9 @@ export function PasswordChangeCard({ currentEmail }: Props) {
         {editing ? (
           <>
             <div className="space-y-2">
-              <Label>Senha atual</Label>
+              <Label htmlFor={ids.atual}>Senha atual</Label>
               <Input
+                id={ids.atual}
                 type="password"
                 value={currentPwd}
                 onChange={(e) => setCurrentPwd(e.target.value)}
@@ -91,8 +95,9 @@ export function PasswordChangeCard({ currentEmail }: Props) {
               />
             </div>
             <div className="space-y-2">
-              <Label>Nova senha</Label>
+              <Label htmlFor={ids.nova}>Nova senha</Label>
               <Input
+                id={ids.nova}
                 type="password"
                 value={newPwd}
                 onChange={(e) => setNewPwd(e.target.value)}
@@ -102,8 +107,9 @@ export function PasswordChangeCard({ currentEmail }: Props) {
               <PasswordRequirements password={newPwd} />
             </div>
             <div className="space-y-2">
-              <Label>Confirmar nova senha</Label>
+              <Label htmlFor={ids.confirmar}>Confirmar nova senha</Label>
               <Input
+                id={ids.confirmar}
                 type="password"
                 value={confirmPwd}
                 onChange={(e) => setConfirmPwd(e.target.value)}

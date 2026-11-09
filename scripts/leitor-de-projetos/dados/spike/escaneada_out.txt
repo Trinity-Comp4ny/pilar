@@ -1,0 +1,20 @@
+FONTE ocr {'vetor': 0, 't_vetor': 1.4, 'blocos': '2/2', 't_ocr': 12.7, 'ocr': 19}
+   Torgura. Dimensões Altur     3.00  x=251 y=40 conf=72
+   Tabela montantes fixos       4.60  x=283 y=60 conf=76
+   CONSTRUIR TÉRREO..           8.18  x=484 y=106 conf=46
+   PAV. CONSTRUIR TÉRREO..     66.29  x=488 y=106 conf=40
+   OCUPAÇÃO. CpFrê.            54.27  x=505 y=107 conf=84
+   RRI/ARI/TRT                199.33  x=474 y=107 conf=69
+   feniilação                   1.55  x=72 y=165 conf=85
+   acordo ortimão artigo        3.20  x=399 y=435 conf=88
+   ventilação                   1.55  x=58 y=574 conf=67
+   mecênica ventilação          2.50  x=53 y=636 conf=88
+   eid nduiche metálica pel     7.20  x=359 y=648 conf=64
+   mei                          3.20  x=399 y=651 conf=94
+   mecênica                    10.17  x=53 y=700 conf=74
+   mecênica                     1.55  x=56 y=709 conf=83
+   mei                          3.20  x=399 y=721 conf=61
+                                6.87  x=166 y=149 conf=45
+                               10.17  x=53 y=373 conf=74
+                               19.17  x=54 y=533 conf=74
+                                2.70  x=58 y=537 conf=56

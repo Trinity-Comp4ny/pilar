@@ -1,0 +1,38 @@
+{
+ "arquitetura": "Duplex_A_20110907.ifc",
+ "instalacao": "Duplex_Electrical_20121207.ifc",
+ "n_arq": 86,
+ "n_inst": 94,
+ "caixa_arq": [
+  [
+   -0.0,
+   -22.18,
+   -1.25
+  ],
+  [
+   8.8,
+   4.38,
+   6.61
+  ]
+ ],
+ "caixa_inst": [
+  [
+   -0.04,
+   -17.53,
+   0.0
+  ],
+  [
+   8.44,
+   -0.27,
+   5.7
+  ]
+ ],
+ "sobreposicao_planta": 0.995,
+ "classificacao": {
+  "embutido (esperado) | IfcWall": 68,
+  "embutido (esperado) | IfcSlab": 8
+ },
+ "por_classe": {
+  "embutido (esperado)": 76
+ }
+}

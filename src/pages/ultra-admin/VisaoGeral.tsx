@@ -18,6 +18,7 @@ import { PilarPage } from "@/components/PilarPage";
 import { KPICard } from "@/components/KPICard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { OrigemDemos } from "./components/OrigemDemos";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useFeedbackNovosCount } from "@/hooks/useFeedbackNovosCount";
@@ -340,6 +341,8 @@ export default function VisaoGeral() {
           </CardContent>
         </Card>
       </div>
+
+      <OrigemDemos />
     </PilarPage>
   );
 }

@@ -35,7 +35,8 @@ describe("buildClienteEnrichmentUpdate", () => {
       razao_social: null,
       endereco: null,
     });
-    expect(updates).toEqual({ cpf_cnpj: "12345678000190", tipo_pessoa: "juridica" });
+    // tipo_pessoa só aceita 'PF' | 'PJ' (CHECK clientes_tipo_pessoa_check).
+    expect(updates).toEqual({ cpf_cnpj: "12345678000190", tipo_pessoa: "PJ" });
     expect(updates).not.toHaveProperty("cnpj");
   });
 
@@ -56,7 +57,7 @@ describe("buildClienteEnrichmentUpdate", () => {
     });
     expect(updates).toEqual({
       cpf_cnpj: "12345678000190",
-      tipo_pessoa: "juridica",
+      tipo_pessoa: "PJ",
       nome: "Construtora Alfa LTDA",
       endereco: "Rua X, 100",
     });

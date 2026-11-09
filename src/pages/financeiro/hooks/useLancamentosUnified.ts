@@ -1,5 +1,5 @@
 // Tipos do domínio de lançamentos financeiros — compartilhados entre
-// LancamentosTable, LancamentoFormDialog, LancamentoDetailDialog,
+// LancamentosTable, LancamentoFormDialog, LancamentoDetailSheet,
 // GrupoParcelaActions e useLancamentosPaginados.
 //
 // Arquitetura de dados financeiros:

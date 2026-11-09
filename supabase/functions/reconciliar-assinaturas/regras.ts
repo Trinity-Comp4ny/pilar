@@ -124,3 +124,12 @@ export function deveAvisar(
   if (ultimoAviso.chave !== assinaturaDaLista(divergencias)) return true;
   return agora - new Date(ultimoAviso.em).getTime() >= SILENCIO_DIAS * DIA_MS;
 }
+
+/** Só conta como "último aviso" o registro de auditoria que de fato avisou e tem a chave. */
+export function ultimoAvisoDoRegistro(
+  registro: { created_at: string; metadata: { chave?: string; avisado?: boolean } | null } | null
+): { chave: string; em: string } | null {
+  return registro?.metadata?.avisado && registro.metadata.chave
+    ? { chave: registro.metadata.chave, em: registro.created_at }
+    : null;
+}

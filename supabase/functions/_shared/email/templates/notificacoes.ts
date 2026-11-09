@@ -1,7 +1,8 @@
 /**
- * E-mail de notificação da central (SPEC 096). Dois modos:
+ * E-mail de notificação da central (SPEC 096). Três modos:
  * - "imediato": itens high/critical que ainda não foram lidos no app.
  * - "semanal": resumo de segunda-feira, itens agrupados por categoria.
+ * - "mencao": alguém marcou a pessoa com @ num comentário; sai na hora (DECISOES 2026-11-09).
  * Layout de lista, sem card: cada item tem barra de severidade, título com link e mensagem.
  */
 
@@ -25,7 +26,7 @@ export interface NotifItem {
 
 export interface NotificacoesParams {
   nome: string | null;
-  modo: "imediato" | "semanal";
+  modo: "imediato" | "semanal" | "mencao";
   itens: NotifItem[];
   /** Itens além dos exibidos. */
   totalOculto: number;
@@ -87,6 +88,9 @@ export function agruparPorCategoria(itens: NotifItem[]): Array<{ categoria: Noti
 
 export function assuntoNotificacoes(params: Pick<NotificacoesParams, "modo" | "itens" | "totalOculto">): string {
   const total = params.itens.length + params.totalOculto;
+  if (params.modo === "mencao") {
+    return total === 1 ? params.itens[0].titulo : `${total} menções para você no ${BRAND.nome}`;
+  }
   if (params.modo === "imediato") {
     return total === 1 ? params.itens[0].titulo : `${total} alertas importantes no ${BRAND.nome}`;
   }
@@ -99,18 +103,25 @@ export function templateNotificacoes(params: NotificacoesParams, agora = new Dat
   const saudacao = nome ? html`Olá, ${strong(nome)}.` : html`Olá.`;
 
   const tituloHtml =
-    modo === "imediato"
+    modo === "mencao"
       ? total === 1
-        ? html`Um alerta ${em("importante")}`
-        : html`${total} alertas ${em("importantes")}`
-      : html`Seu ${em("resumo")} da semana`;
+        ? html`Marcaram ${em("você")}`
+        : html`${total} ${em("menções")} para você`
+      : modo === "imediato"
+        ? total === 1
+          ? html`Um alerta ${em("importante")}`
+          : html`${total} alertas ${em("importantes")}`
+        : html`Seu ${em("resumo")} da semana`;
 
   const leadHtml =
-    modo === "imediato"
-      ? html`${saudacao} ${total === 1 ? "Este item precisa" : "Estes itens precisam"} da sua atenção e ainda
-        ${total === 1 ? "não foi visto" : "não foram vistos"} na ${BRAND.nome}.`
-      : html`${saudacao} Você tem ${strong(`${total} ${total === 1 ? "pendência" : "pendências"}`)}
-        ${total === 1 ? "não lida" : "não lidas"}. Clique num item para abrir direto.`;
+    modo === "mencao"
+      ? html`${saudacao} ${total === 1 ? "Alguém marcou você numa conversa" : "Marcaram você em conversas"} da
+        ${BRAND.nome}. Clique para abrir e responder.`
+      : modo === "imediato"
+        ? html`${saudacao} ${total === 1 ? "Este item precisa" : "Estes itens precisam"} da sua atenção e ainda
+          ${total === 1 ? "não foi visto" : "não foram vistos"} na ${BRAND.nome}.`
+        : html`${saudacao} Você tem ${strong(`${total} ${total === 1 ? "pendência" : "pendências"}`)}
+          ${total === 1 ? "não lida" : "não lidas"}. Clique num item para abrir direto.`;
 
   const grupos = agruparPorCategoria(itens);
   const lista = grupos.flatMap((g, i) => [
@@ -143,9 +154,11 @@ export function templateNotificacoes(params: NotificacoesParams, agora = new Dat
     html: shell({
       preview: itens[0]?.titulo ?? assuntoNotificacoes(params),
       footerNote:
-        modo === "imediato"
-          ? `Alerta de alta prioridade sai por e-mail quando não é lido no aplicativo em alguns minutos.`
-          : `Resumo diário das suas notificações.`,
+        modo === "mencao"
+          ? `Você recebe este e-mail quando alguém marca você com @ num comentário.`
+          : modo === "imediato"
+            ? `Alerta de alta prioridade sai por e-mail quando não é lido no aplicativo em alguns minutos.`
+            : `Resumo diário das suas notificações.`,
       footerLinks: [{ label: "Gerenciar notificações por e-mail", href: gerenciarUrl }],
       hero: { titulo: tituloHtml, lead: leadHtml },
       content: [

@@ -68,20 +68,17 @@
     height: 1em;
   }
 
-  /* Ritmo (L02): as quatro caneluras sobem e descem fora de fase. */
+  /* Ritmo (L02): as três caneluras sobem e descem fora de fase. */
   .pilar-mark--rhythm .pm-fl {
     transform-box: fill-box;
     transform-origin: 50% 100%;
     animation: pm-breathe 0.9s cubic-bezier(0.65, 0, 0.35, 1) infinite alternate;
   }
   .pilar-mark--rhythm .pm-f2 {
-    animation-delay: -0.22s;
+    animation-delay: -0.3s;
   }
   .pilar-mark--rhythm .pm-f3 {
-    animation-delay: -0.45s;
-  }
-  .pilar-mark--rhythm .pm-f4 {
-    animation-delay: -0.67s;
+    animation-delay: -0.6s;
   }
 
   /* Traço técnico (A01): capitel, ábaco e as caneluras descendo em sequência. */
@@ -102,9 +99,6 @@
   .pilar-mark--draw .pm-f3 {
     animation-delay: 0.5s;
   }
-  .pilar-mark--draw .pm-f4 {
-    animation-delay: 0.58s;
-  }
 
   /* Hover (A07): só cor, uma canelura de cada vez. Nunca gira nem desloca. */
   .pilar-mark .pm-fl {
@@ -118,9 +112,6 @@
   }
   .pilar-logo:hover .pilar-mark .pm-f3 {
     transition-delay: 0.12s;
-  }
-  .pilar-logo:hover .pilar-mark .pm-f4 {
-    transition-delay: 0.18s;
   }
 
   /* Anel de leitura (R1): canvas por baixo, a marca no ritmo no centro. */

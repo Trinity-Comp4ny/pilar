@@ -77,7 +77,7 @@ export default function Admin() {
         const { data: profile } = await supabase
           .from("profiles")
           .select(
-            "id, empresa_id, role, empresas(id, nome, cnpj, status, email, contato, endereco, cidade, estado, cep, logo_url, features)"
+            "id, empresa_id, role, empresas(id, nome, cnpj, status, email, contato, endereco, cidade, estado, cep, logo_url, features, site, porte, disciplinas)"
           )
           .eq("id", user.id)
           .single();
@@ -97,6 +97,9 @@ export default function Admin() {
             cep: emp.cep || "",
             status: emp.status || "active",
             logoUrl: emp.logo_url || "",
+            site: emp.site || "",
+            porte: emp.porte || "",
+            disciplinas: emp.disciplinas ?? [],
           });
         }
 

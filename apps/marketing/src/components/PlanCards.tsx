@@ -1,19 +1,21 @@
-import { Check, Infinity as InfinityIcon, Sparkles, Users } from "lucide-react";
+import { Check, FolderKanban, HardHat, Sparkles, UserPlus, Users } from "lucide-react";
 import { trackCta } from "../analytics";
 import { RevealGroup } from "./motion";
 import { INCLUSO_EM_TODOS, PLANOS } from "../lib/planos";
-import { DEMO_URL } from "../lib/contato";
+import { APP_URL } from "../config";
+import { LinkDemo } from "./LinkDemo";
 
 /**
  * Os três planos, no mesmo desenho na home e na /planos.
  *
- * Cada cartão mostra só o que muda entre planos: faixa de projetos, cota de
- * tokens de IA e nível de atendimento. A lista de funcionalidades saiu porque
+ * Cada cartão mostra só o que muda entre planos: a capacidade de cada módulo
+ * (projetos, obras e leads ativos), a cota de créditos de IA e o nível de atendimento. A lista de funcionalidades saiu porque
  * ela não existe: todo plano tem a plataforma inteira (ADR 0026), e repetir a
  * mesma lista em três colunas sugeria o contrário.
  *
- * Cadastro por convite (SPEC 133): o botão de todo plano leva para agendar a
- * demonstração. O checkout continua existindo para o link que o time envia.
+ * Desde 2026-11-08 o botão de cada plano leva direto ao checkout do app (assina,
+ * paga e recebe o convite para entrar). Quem quer ver antes tem a demonstração
+ * logo abaixo, como caminho secundário.
  */
 export function PlanCards({ contexto }: { contexto: string }) {
   return (
@@ -45,23 +47,29 @@ export function PlanCards({ contexto }: { contexto: string }) {
             <p className="mb-7 text-[12px] text-ink-muted">A empresa inteira, sem cobrança por usuário</p>
 
             <a
-              href={DEMO_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => trackCta("agende_demo", `${contexto}_${p.slug}`)}
-              aria-label={`Agendar demonstração do plano ${p.nome}`}
+              href={`${APP_URL}/checkout?plano=${p.slug}`}
+              onClick={() => trackCta("assinar", `${contexto}_${p.slug}`)}
+              aria-label={`Assinar o plano ${p.nome}`}
               className={`flex h-11 items-center justify-center rounded-full text-[14px] font-medium transition-colors ${
                 p.destaque ? "bg-brand text-ink hover:bg-brand/85" : "bg-paper-alt text-ink hover:bg-paper-border/60"
               }`}
             >
-              Agendar demonstração
+              Assinar
             </a>
+            <LinkDemo
+              local={`${contexto}_${p.slug}`}
+              texto={null}
+              rotulo="ou agende uma demonstração"
+              className="mt-2.5 text-center"
+            />
 
-            {/* Só as três réguas que separam um plano do outro. */}
+            {/* Só as réguas que separam um plano do outro: uma por módulo, mais IA e atendimento. */}
             <ul className="mt-7 flex flex-col gap-3.5 border-t border-paper-border/70 pt-6">
               {[
-                { Icone: InfinityIcon, texto: p.projetos },
-                { Icone: Sparkles, texto: p.tokensMes },
+                { Icone: FolderKanban, texto: p.projetos },
+                { Icone: HardHat, texto: p.obras },
+                { Icone: UserPlus, texto: p.leads },
+                { Icone: Sparkles, texto: p.creditosMes },
                 { Icone: Users, texto: p.atendimento },
               ].map(({ Icone, texto }) => (
                 <li key={texto} className="flex items-start gap-2.5">

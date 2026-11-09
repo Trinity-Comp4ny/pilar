@@ -1,0 +1,10 @@
+caso C: máscara=cor | medidas lidas=29 | vãos geométricos=33 | medida escrita = vão medido (±12 cm): 19/29
+   erro de largura nos casados: mediana 1 cm, máximo 10 cm
+   sem par: [('7.20X2.70', 7.2, None), ('07.2X51.2', 2.15, 0.95), ('2.15X1.00', 2.15, np.float64(0.21)), ('2.12X1.00', 2.12, np.float64(0.18)), ('1.80X0.50', 1.8, np.float64(0.14)), ('1.00X5.48', 1.0, None), ('0.90X2.20', 0.9, None), ('0.70X2.10', 0.7, None)]
+caso_a: máscara=limiar50 | medidas lidas=31 | vãos geométricos=0 | medida escrita = vão medido (±12 cm): 0/31
+   sem par: [('00,3x51,7', 7.15, None), ('475x50/2,50', 4.75, None), ('00,2/08x093', 3.9, None), ('05,2/05x073', 3.7, None), ('3,60x2,80', 3.6, None), ('2,60x2,80', 2.6, None), ('2,60x2,80', 2.6, None), ('05,2x06,1', 1.6, None)]
+caso_g: máscara=dupla | medidas lidas=30 | vãos geométricos=100 | medida escrita = vão medido (±12 cm): 3/30
+   erro de largura nos casados: mediana 7 cm, máximo 8 cm
+   sem par: [('PA-385x250', 3.85, None), ('3,85x0,50', 3.85, None), ('3,85x0,50', 3.85, None), ('2,55x0,70', 2.55, 0.14), ('052x522-AP', 2.25, 1.01), ('2,00x2,10', 2.0, None), ('2,00x1,10', 2.0, 0.39), ('2,00x1,10', 2.0, 0.79)]
+caso_f: máscara=dupla | medidas lidas=14 | vãos geométricos=86 | medida escrita = vão medido (±12 cm): 0/14
+   sem par: [('5,00×2,45', 5.0, None), ('3,10×1,10', 3.1, None), ('2,85×1,10', 2.85, None), ('2,60×2,35', 2.6, None), ('2,00×0,60', 2.0, None), ('2,00×1,10', 2.0, None), ('1,95×2,75', 1.95, None), ('1,50×2,10', 1.5, None)]

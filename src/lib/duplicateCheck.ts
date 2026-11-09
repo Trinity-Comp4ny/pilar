@@ -1,5 +1,8 @@
+import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { format, addDays, subDays } from "date-fns";
+
+/** Quão forte é o indício de duplicata (regra em rpc_buscar_duplicatas). */
+export type ConfiancaDuplicata = "certeza" | "alta" | "media";
 
 export interface DuplicateMatch {
   id: string;
@@ -7,6 +10,10 @@ export interface DuplicateMatch {
   valor: number;
   data_vencimento: string | null;
   status: string | null;
+  contraparte_nome: string | null;
+  nota_fiscal: string | null;
+  confianca: ConfiancaDuplicata;
+  motivo: string;
 }
 
 interface DuplicateCheckParams {
@@ -14,57 +21,52 @@ interface DuplicateCheckParams {
   descricao: string;
   valor: number;
   dataVencimento: Date;
+  /** Cliente (receita) ou fornecedor (despesa). Com ele, mesmo valor + data vira "alta". */
+  contraparteId?: string | null;
+  /** Mesma NF + mesma contraparte é "certeza". */
+  notaFiscal?: string | null;
+  /** Edição: o próprio lançamento não é duplicata dele mesmo. */
   excludeId?: string;
+  /** Parcelas do mesmo grupo nunca são duplicata entre si. */
+  grupoParcela?: string | null;
 }
 
 /**
- * Remove sufixos de parcela "(1/3)" da descrição para comparação
- */
-function stripParcelaSuffix(desc: string): string {
-  return desc.replace(/\s*\(\d+\/\d+\)\s*$/, "").trim();
-}
-
-const IGNORED_STATUSES = ["Cancelado"];
-const VALUE_TOLERANCE = 0.01; // 1%
-
-/**
- * Verifica se existem lançamentos similares que podem ser duplicatas.
- * Critérios: mesma descrição (sem sufixo parcela) + valor ±1% + data ±5 dias.
- * Ignora registros soft-deleted e com status "Cancelado".
+ * Procura lançamentos que podem ser o mesmo que está sendo gravado. A regra vive no
+ * servidor (rpc_buscar_duplicatas, SPEC 150 fase 2) para valer igual em todo caminho
+ * de entrada: nota fiscal, contraparte + valor + data, e descrição parecida (pg_trgm)
+ * em vez de idêntica. Falha de rede não bloqueia o salvamento: devolve lista vazia.
  */
 export async function checkDuplicates({
   table,
   descricao,
   valor,
   dataVencimento,
+  contraparteId,
+  notaFiscal,
   excludeId,
+  grupoParcela,
 }: DuplicateCheckParams): Promise<DuplicateMatch[]> {
-  const baseDesc = stripParcelaSuffix(descricao);
-  const dateFrom = format(subDays(dataVencimento, 5), "yyyy-MM-dd");
-  const dateTo = format(addDays(dataVencimento, 5), "yyyy-MM-dd");
-  const valorMin = valor * (1 - VALUE_TOLERANCE);
-  const valorMax = valor * (1 + VALUE_TOLERANCE);
-
-  let query = supabase
-    .from(table)
-    .select("id, descricao, valor, data_vencimento, status")
-    .is("deleted_at", null)
-    .not("status", "in", `(${IGNORED_STATUSES.join(",")})`)
-    .gte("data_vencimento", dateFrom)
-    .lte("data_vencimento", dateTo)
-    .gte("valor", valorMin)
-    .lte("valor", valorMax);
-
-  if (excludeId) {
-    query = query.neq("id", excludeId);
-  }
-
-  const { data, error } = await query;
-
-  if (error || !data) return [];
-
-  return data.filter((item) => {
-    const itemBase = stripParcelaSuffix(item.descricao).toLowerCase();
-    return itemBase === baseDesc.toLowerCase();
+  const { data, error } = await supabase.rpc("rpc_buscar_duplicatas", {
+    p_tipo: table === "receitas" ? "receita" : "despesa",
+    p_valor: valor,
+    p_data: format(dataVencimento, "yyyy-MM-dd"),
+    p_descricao: descricao,
+    p_contraparte_id: contraparteId || undefined,
+    p_nota_fiscal: notaFiscal || undefined,
+    p_excluir_id: excludeId,
+    p_grupo_parcela: grupoParcela || undefined,
   });
+  if (error || !data) return [];
+  return (data as Array<Record<string, unknown>>).map((d) => ({
+    id: String(d.id),
+    descricao: String(d.descricao ?? ""),
+    valor: Number(d.valor ?? 0),
+    data_vencimento: (d.data_vencimento as string | null) ?? null,
+    status: (d.status as string | null) ?? null,
+    contraparte_nome: (d.contraparte_nome as string | null) ?? null,
+    nota_fiscal: (d.nota_fiscal as string | null) ?? null,
+    confianca: (d.confianca as ConfiancaDuplicata) ?? "media",
+    motivo: String(d.motivo ?? ""),
+  }));
 }

@@ -13,6 +13,7 @@
  */
 import posthog from "posthog-js";
 import { getCookieConsent, saveCookieConsent } from "./cookieConsent";
+import { registrarInteresseDemo } from "./lib/origem";
 
 const KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
 const HOST = (import.meta.env.VITE_POSTHOG_HOST as string | undefined) ?? "https://us.i.posthog.com";
@@ -43,6 +44,9 @@ export function initAnalytics() {
 
 /** Clique em CTA que sai da LP pro app (cadastro, planos, login). No-op sem consentimento. */
 export function trackCta(cta: string, location: string) {
+  // Origem do pedido de demonstração (SPEC 149): independe do consentimento de
+  // cookies porque não identifica ninguém nem guarda nada no navegador.
+  if (cta === "agende_demo") registrarInteresseDemo(location);
   if (!KEY || !hasAnalyticsConsent()) return;
   ensurePosthogInit();
   posthog.capture("landing_cta_clicked", { cta, location });

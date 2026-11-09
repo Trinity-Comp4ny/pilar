@@ -1,0 +1,4 @@
+den=75.0 erodir=True pares h/v=659/404 parede_px=4277277 vaos=19 seed=(2036,4043) comp=6 area_livre=190.3 m2 (rotulo 193.68)
+den=75.0 erodir=False pares h/v=659/404 parede_px=4379127 vaos=16 seed=(2036,4043) comp=8 area_livre=189.4 m2 (rotulo 193.68)
+den=100.0 erodir=True pares h/v=794/562 parede_px=3226924 vaos=26 seed=(2036,4043) comp=8 area_livre=416.1 m2 (rotulo 193.68)
+den=100.0 erodir=False pares h/v=794/562 parede_px=3322632 vaos=25 seed=(2036,4043) comp=8 area_livre=321.2 m2 (rotulo 193.68)

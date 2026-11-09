@@ -38,7 +38,7 @@ serve(
       return safeErrorResponse(429, "Rate limit excedido", req);
     }
 
-    const body = (await req.json().catch(() => ({}))) as { documento?: string };
+    const body = (await req.json().catch(() => ({}))) as { documento?: string; apenas_consultar?: boolean };
     const digits = apenasDigitos(body.documento ?? "");
     const tipo = detectarTipoDocumento(digits);
 
@@ -52,6 +52,23 @@ serve(
       }
 
       const consulta = await consultarCnpjBrasilApi(digits);
+
+      // SPEC 149: no cadastro do escritório, só mostra o que a Receita tem para o dono
+      // confirmar. Não grava nada; a verificação de fato roda ao concluir a etapa.
+      if (body.apenas_consultar) {
+        if (consulta.status === "indisponivel") return jsonResponse({ status: "indisponivel" }, 200, req);
+        return jsonResponse(
+          {
+            status: "ok",
+            razao_social: consulta.info.razaoSocial,
+            situacao_cadastral: consulta.info.situacaoCadastral,
+            nome_fantasia: consulta.info.nomeFantasia ?? null,
+            endereco: consulta.info.endereco ?? null,
+          },
+          200,
+          req
+        );
+      }
 
       if (consulta.status === "indisponivel") {
         // BrasilAPI fora do ar / mudou de formato: sobe a Prata como `pendente`,
@@ -88,7 +105,9 @@ serve(
       }
 
       const { data: empresaAtual } = await svc.from("empresas").select("nome").eq("id", empresaId).maybeSingle();
-      const razaoDivergente = !!empresaAtual?.nome && empresaAtual.nome.trim().toUpperCase() !== consulta.info.razaoSocial.trim().toUpperCase();
+      const razaoDivergente =
+        !!empresaAtual?.nome &&
+        empresaAtual.nome.trim().toUpperCase() !== consulta.info.razaoSocial.trim().toUpperCase();
 
       const { error } = await svc
         .from("empresas")
@@ -120,7 +139,12 @@ serve(
       }
 
       return jsonResponse(
-        { status: "verificado", nivel: "prata", razao_social: consulta.info.razaoSocial, alerta_divergencia: razaoDivergente },
+        {
+          status: "verificado",
+          nivel: "prata",
+          razao_social: consulta.info.razaoSocial,
+          alerta_divergencia: razaoDivergente,
+        },
         200,
         req
       );

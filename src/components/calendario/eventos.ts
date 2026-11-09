@@ -271,10 +271,10 @@ export function groupByDia(eventos: PrazoEvento[]): Map<string, PrazoEvento[]> {
 
 // ── Estilos por estado, partilhados pelas visões ──────────────────────────────
 export const ESTADO_CHIP: Record<EventoEstado, string> = {
-  atrasado: "bg-red-100 text-red-700 border-red-500",
-  proximo: "bg-amber-100 text-amber-700 border-amber-500",
+  atrasado: "bg-danger-soft text-danger-strong border-danger-mid-border",
+  proximo: "bg-warning-soft text-warning-strong border-warning-mid-border",
   concluido: "bg-positive/10 text-positive-strong border-positive",
-  futuro: "bg-blue-100 text-blue-700 border-blue-500",
+  futuro: "bg-info-soft text-info-strong border-info-mid-border",
   pausado: "bg-muted text-muted-foreground border-border",
 };
 

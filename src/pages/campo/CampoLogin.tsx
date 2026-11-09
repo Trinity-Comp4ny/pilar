@@ -28,7 +28,10 @@ export default function CampoLogin() {
 
   const entrar = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !senha) return;
+    if (!email.trim() || !senha) {
+      toast.error("Informe email e senha");
+      return;
+    }
     setLoading(true);
     try {
       const { data, error } = await supabase.rpc("campo_login", { p_email: email.trim(), p_senha: senha });

@@ -7,7 +7,7 @@ import { HeroBackdrop } from "../components/hero/HeroBackdrop";
 import { Reveal } from "../components/Reveal";
 import { SplitButton } from "../components/ui/SplitButton";
 
-import { DEMO_URL } from "../lib/contato";
+import { LinkDemo } from "../components/LinkDemo";
 
 /**
  * Página "Pilar vs X". Mesmo esqueleto das páginas de módulo (hero com a
@@ -49,10 +49,11 @@ export function ComparativoPage({ slug }: { slug: ComparativoSlug }) {
             <p className="mb-8 max-w-xl text-[15px] leading-relaxed text-ink-soft md:text-[16px]">{c.lede}</p>
 
             <div className="flex flex-wrap gap-3">
-              <SplitButton href={DEMO_URL} onClick={() => trackCta("agende_demo", `vs_${slug}`)}>
-                Agendar demonstração
+              <SplitButton to="/planos" onClick={() => trackCta("ver_planos", `vs_${slug}`)}>
+                Ver planos
               </SplitButton>
             </div>
+            <LinkDemo local={`vs_${slug}`} className="mt-3" />
           </Reveal>
         </div>
       </section>

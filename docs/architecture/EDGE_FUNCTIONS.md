@@ -3,7 +3,7 @@
 <!-- Gerado por scripts/edge-functions-catalog.mjs a partir de supabase/functions/CATALOGO.json.
      Não editar à mão: edite o CATALOGO.json e rode `node scripts/edge-functions-catalog.mjs`. -->
 
-57 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
+58 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
 migrations) ou origem externa declarada no manifesto. **Login**: `verify_jwt` do `config.toml`
 (JWT aceita a chave anon; "própria" = a função faz a autorização). **Secrets**: lidos direto
 na pasta da função (o que vem de `_shared`, como a chave do Gemini, não aparece).
@@ -125,6 +125,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `geocode-address` | Geocodifica endereço pelo Nominatim (mapa). | app | JWT |  | sim |
 | `health` | Saúde do backend (banco, Asaas, Resend); usado pelo smoke de deploy e pelo monitor de produção. | monitor de produção e smoke de deploy | própria | `HEALTH_CHECK_ASAAS` `HEALTH_CHECK_RESEND` `RELEASE_SHA` `SENTRY_RELEASE` `VERCEL_GIT_COMMIT_SHA` | sim |
 | `lookup-cep` | Busca CEP sem login (checkout), BrasilAPI com fallback de provedor. | app | JWT |  | sim |
+| `registrar-interesse-demo` | Grava o canal de origem (UTM ou referrer) de cada clique em Agendar demonstração na landing, sem dado pessoal (SPEC 149). | app, landing (apps/marketing), por sendBeacon | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `turnstile-verify` | Verifica no servidor o token do Cloudflare Turnstile. | **sem chamador conhecido** | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` `TURNSTILE_SECRET_KEY` | sim |
 
 ## Sem chamador conhecido

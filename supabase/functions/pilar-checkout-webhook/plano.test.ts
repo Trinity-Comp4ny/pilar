@@ -145,6 +145,88 @@ Deno.test("data do pagamento: usa a do Asaas e cai no agora quando ausente", () 
   assertEquals(referenciaCompraTokens("x"), "token_pack_purchase:x");
 });
 
+const VAZIO = planejarWebhook("PAYMENT_CREATED", nada, AGORA);
+
+Deno.test("pagamento recebido sem nenhum registro conhecido (cobrança órfã) não grava nada", () => {
+  for (const evento of ["PAYMENT_CONFIRMED", "PAYMENT_RECEIVED", "PAYMENT_OVERDUE", "PAYMENT_REFUNDED"]) {
+    assertEquals(planejarWebhook(evento, nada, AGORA), VAZIO, evento);
+  }
+});
+
+Deno.test("renovação anual via webhook estende 365 dias", () => {
+  const plano = planejarWebhook(
+    "PAYMENT_CONFIRMED",
+    { ...nada, assinatura: { ...assinaturaMensal, billing_cycle: "yearly" } },
+    AGORA
+  );
+  assertEquals(plano.renovarAssinaturaAte, "2027-10-07T12:00:00.000Z");
+});
+
+Deno.test("replay do mesmo evento gera o mesmo plano e a mesma referência de crédito (UNIQUE barra o 2º)", () => {
+  const a = planejarWebhook("PAYMENT_CONFIRMED", { ...nada, compra: compraPendente }, AGORA);
+  const b = planejarWebhook("PAYMENT_CONFIRMED", { ...nada, compra: compraPaga }, AGORA);
+  assertEquals(a.creditoTokens?.referenceId, b.creditoTokens?.referenceId);
+  assertEquals(a.creditoTokens?.tokens, b.creditoTokens?.tokens);
+});
+
+Deno.test("PAYMENT_RECEIVED depois de PAYMENT_CONFIRMED da mesma compra credita com a mesma referência", () => {
+  const confirmado = planejarWebhook("PAYMENT_CONFIRMED", { ...nada, compra: compraPendente }, AGORA);
+  const recebido = planejarWebhook("PAYMENT_RECEIVED", { ...nada, compra: compraPaga }, AGORA);
+  assertEquals(recebido.creditoTokens, confirmado.creditoTokens);
+  assertEquals(recebido.marcarCompraPaga, false);
+});
+
+Deno.test("inadimplência sem assinatura não inventa status de assinatura", () => {
+  const plano = planejarWebhook("PAYMENT_OVERDUE", { ...nada, signup: signupPendente }, AGORA);
+  assertEquals(plano.statusAssinatura, null);
+  assertEquals(plano.statusSignup, "failed");
+});
+
+Deno.test("inadimplência não mexe em signup já falho ou cancelado", () => {
+  for (const payment_status of ["failed", "canceled"]) {
+    const plano = planejarWebhook("PAYMENT_OVERDUE", { ...nada, signup: { ...signupPendente, payment_status } }, AGORA);
+    assertEquals(plano.statusSignup, null, payment_status);
+  }
+});
+
+Deno.test("inadimplência e estorno nunca creditam tokens nem renovam", () => {
+  for (const evento of ["PAYMENT_OVERDUE", "PAYMENT_REFUNDED", "PAYMENT_DELETED"]) {
+    const plano = planejarWebhook(
+      evento,
+      { signup: null, assinatura: assinaturaMensal, compra: compraPendente },
+      AGORA
+    );
+    assertEquals(plano.creditoTokens, null, evento);
+    assertEquals(plano.renovarAssinaturaAte, null, evento);
+    assertEquals(plano.marcarCompraPaga, false, evento);
+  }
+});
+
+Deno.test("estorno de signup sem assinatura cancela o signup e não encerra acesso de ninguém", () => {
+  const plano = planejarWebhook("PAYMENT_REFUNDED", { ...nada, signup: signupJaPagoEConvidado }, AGORA);
+  assertEquals(plano.statusSignup, "canceled");
+  assertEquals(plano.statusAssinatura, null);
+  assertEquals(plano.encerrarAcessoAgora, false);
+});
+
+Deno.test("estorno de compra que falhou antes vira cancelada", () => {
+  const plano = planejarWebhook(
+    "PAYMENT_REFUNDED",
+    { ...nada, compra: { ...compraPendente, status: "failed" } },
+    AGORA
+  );
+  assertEquals(plano.statusCompra, "canceled");
+});
+
+Deno.test("fim de assinatura sem assinatura encontrada não grava nada", () => {
+  assertEquals(planejarWebhook("SUBSCRIPTION_DELETED", { ...nada, signup: signupPendente }, AGORA), VAZIO);
+});
+
+Deno.test("evento com nome em caixa diferente não é reconhecido (Asaas manda maiúsculo)", () => {
+  const plano = planejarWebhook("payment_confirmed", { ...nada, compra: compraPendente }, AGORA);
+  assertEquals(plano, VAZIO);
+});
+
 Deno.test("fim de assinatura sem estorno mantém o acesso até o fim do período", () => {
   for (const evento of ["SUBSCRIPTION_ENDED", "SUBSCRIPTION_DELETED"]) {
     const plano = planejarWebhook(evento, { signup: null, assinatura: assinaturaMensal, compra: null }, AGORA);

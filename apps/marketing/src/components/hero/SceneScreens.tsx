@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { m, useReducedMotion } from "framer-motion";
 import {
   CalendarClock,
+  Check,
   CalendarDays,
   ChevronDown,
   CircleDollarSign,
@@ -41,18 +42,35 @@ function CartaoLead({
   empresa,
   valor,
   destacado,
+  virouProjeto,
 }: {
   titulo: string;
   empresa: string;
   valor: string;
   destacado?: boolean;
+  virouProjeto?: boolean;
 }) {
   return (
     <div
-      className={`rounded-lg bg-white border px-2.5 py-2 shadow-sm ${
-        destacado ? "border-brand shadow-[0_8px_22px_-10px_rgba(0,0,0,0.3)]" : "border-app-border"
+      className={`relative rounded-lg bg-white border px-2.5 py-2 shadow-sm transition-colors duration-300 ${
+        virouProjeto
+          ? "border-positive shadow-[0_8px_22px_-10px_rgba(0,0,0,0.3)]"
+          : destacado
+            ? "border-brand shadow-[0_8px_22px_-10px_rgba(0,0,0,0.3)]"
+            : "border-app-border"
       }`}
     >
+      {virouProjeto && (
+        <m.span
+          className="absolute -top-2 right-2 flex items-center gap-0.5 rounded-full bg-positive px-1.5 text-[8.5px] font-semibold leading-4 text-ink shadow-sm"
+          initial={{ opacity: 0, scale: 0.6 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, ease: EASE.out }}
+        >
+          <Check className="w-2.5 h-2.5" strokeWidth={3} />
+          Projeto
+        </m.span>
+      )}
       <div className="flex items-start gap-1.5 mb-1">
         <p className="flex-1 text-[10.5px] font-medium text-ink leading-tight truncate">{titulo}</p>
         <MoreVertical className="w-2.5 h-2.5 text-black/30 shrink-0 mt-0.5" strokeWidth={2} />
@@ -103,13 +121,22 @@ const ICONES_KPI_LEADS = [
   { Icone: Handshake, tom: "atencao" },
 ] as const;
 
+/** Valor no funil antes e depois do ganho: o lead sai do pipeline aberto. */
+const KPIS_DEPOIS_DO_GANHO: Record<string, string> = {
+  "Pipeline ativo": "11",
+  "Valor no funil": "R$ 271.200",
+  "Conversão de leads": "64%",
+};
+
 export function TelaLeads({ ato }: { ato: number }) {
   const moveu = ato >= idx("funil");
+  const perguntando = ato === idx("converte");
+  const convertido = ato >= idx("convertido");
   const iProposta = 2;
   const iGanho = 4;
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="relative h-full flex flex-col">
       <PageHeader titulo="Leads" busca="Buscar por nome, empresa ou email" acao={{ label: "Novo lead" }} />
 
       {/* Barra de ferramentas: Quadro/Lista, filtros e ordenação. */}
@@ -134,7 +161,17 @@ export function TelaLeads({ ato }: { ato: number }) {
             <KPICard
               key={k.rotulo}
               rotulo={k.rotulo}
-              valor={k.valor}
+              valor={
+                <m.span
+                  key={moveu ? "depois" : "antes"}
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, ease: EASE.out }}
+                  className="inline-block"
+                >
+                  {(moveu && KPIS_DEPOIS_DO_GANHO[k.rotulo]) || k.valor}
+                </m.span>
+              }
               tom={k.tom as "positivo" | undefined}
               icone={ICONES_KPI_LEADS[i].Icone}
               tomIcone={ICONES_KPI_LEADS[i].tom}
@@ -164,7 +201,11 @@ export function TelaLeads({ ato }: { ato: number }) {
                   </m.span>
                 </div>
 
-                <div className="flex flex-col gap-2 rounded-xl bg-app-muted/40 p-2 min-h-[204px]">
+                <div
+                  className={`flex flex-col gap-2 rounded-xl p-2 min-h-[204px] transition-colors duration-500 ${
+                    i === iGanho && moveu ? "bg-positive/10 ring-1 ring-positive/40" : "bg-app-muted/40"
+                  }`}
+                >
                   {/* Vaga do lead que o agente move: sem ela a coluna salta. */}
                   {i === iProposta && <span className="h-[54px] shrink-0" />}
                   {coluna.cards.map((c) => (
@@ -187,11 +228,58 @@ export function TelaLeads({ ato }: { ato: number }) {
             }
           >
             <m.div animate={{ rotate: moveu ? [0, -2.5, 0] : 0 }} transition={{ duration: 0.85, ease: EASE.inOut }}>
-              <CartaoLead {...LEAD_HEROI} destacado />
+              <CartaoLead {...LEAD_HEROI} destacado virouProjeto={convertido} />
             </m.div>
           </m.div>
         </div>
       </div>
+
+      {/* O app pergunta, ao ganhar o lead, se ele vira projeto: converter é uma
+          ação explícita, nunca efeito de arrastar (`src/pages/leads`). */}
+      <m.div
+        className="absolute inset-0 z-20 flex items-start justify-center bg-ink/15 pt-[226px]"
+        initial={false}
+        animate={{ opacity: perguntando ? 1 : 0 }}
+        transition={{ duration: 0.2 }}
+        style={{ pointerEvents: "none" }}
+      >
+        <m.div
+          className="w-[360px] rounded-2xl border border-black/5 bg-white p-5 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.4)]"
+          initial={false}
+          animate={{ scale: perguntando ? 1 : 0.96, y: perguntando ? 0 : 6 }}
+          transition={{ duration: 0.25, ease: EASE.out }}
+        >
+          <p className="text-[14px] font-medium tracking-tight text-ink">Converter em projeto</p>
+          <p className="mt-1.5 text-[11.5px] leading-relaxed text-ink-muted">
+            {LEAD_HEROI.titulo} · {LEAD_HEROI.valor}. O Hospital Santa Rita vira cliente e o projeto já nasce com o
+            valor do contrato.
+          </p>
+          <div className="mt-4 flex justify-end gap-2">
+            <span className="flex h-8 items-center rounded-full border border-black/10 px-3.5 text-[11.5px] text-ink-muted">
+              Agora não
+            </span>
+            <span className="flex h-8 items-center rounded-full bg-brand px-4 text-[11.5px] font-medium text-ink">
+              Converter em projeto
+            </span>
+          </div>
+        </m.div>
+      </m.div>
+
+      {/* Confirmação no canto, como o toast do app. */}
+      <m.div
+        className="absolute bottom-5 right-5 z-20 flex items-center gap-3 rounded-xl bg-ink px-4 py-3 shadow-[0_16px_32px_-10px_rgba(0,0,0,0.5)]"
+        initial={false}
+        animate={{ opacity: convertido ? 1 : 0, y: convertido ? 0 : 12 }}
+        transition={{ duration: 0.35, ease: EASE.out }}
+      >
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive">
+          <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />
+        </span>
+        <span>
+          <span className="block text-[12px] font-medium text-white">Projeto criado</span>
+          <span className="block text-[10.5px] text-white/70">Hospital Santa Rita agora é cliente</span>
+        </span>
+      </m.div>
     </div>
   );
 }
@@ -390,8 +478,70 @@ const DISCIPLINAS: {
 
 const COLUNAS_DISC = "grid-cols-[1.3fr_0.8fr_1.1fr_0.7fr_1fr]";
 
+/** Barras do Gantt, em % de uma janela de jul a dez. Mock estático, não cálculo. */
+const GANTT: { disc: string; ini: number; fim: number; cor: string; feito: number }[] = [
+  { disc: "Estrutural", ini: 0, fim: 26, cor: "bg-status-done", feito: 1 },
+  { disc: "Elétrico", ini: 14, fim: 52, cor: "bg-status-review", feito: 0.85 },
+  { disc: "Climatização", ini: 22, fim: 76, cor: "bg-status-progress", feito: 0.55 },
+  { disc: "Gases medicinais", ini: 48, fim: 92, cor: "bg-status-planning", feito: 0.1 },
+];
+const MESES_GANTT = ["jul", "ago", "set", "out", "nov", "dez"];
+const HOJE_GANTT = 58;
+
+function GanttProjeto() {
+  return (
+    <div className="rounded-lg border border-app-border overflow-hidden">
+      <div className="grid grid-cols-[120px_1fr] border-b border-app-border">
+        <span className="px-3 py-1.5 text-[8.5px] uppercase tracking-wide text-ink-muted">Disciplina</span>
+        <div className="grid grid-cols-6">
+          {MESES_GANTT.map((mes) => (
+            <span key={mes} className="py-1.5 text-center text-[8.5px] uppercase tracking-wide text-ink-muted">
+              {mes}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="relative">
+        {GANTT.map((g, i) => (
+          <div
+            key={g.disc}
+            className="grid grid-cols-[120px_1fr] items-center border-b border-app-border last:border-0"
+          >
+            <span className="px-3 py-[7px] text-[10.5px] font-medium text-ink">{g.disc}</span>
+            <div className="relative h-[26px]">
+              <m.span
+                className={`absolute top-[7px] h-3 rounded-full ${g.cor} origin-left overflow-hidden`}
+                style={{ left: `${g.ini}%`, width: `${g.fim - g.ini}%` }}
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 0.45, delay: 0.1 + i * 0.08, ease: EASE.out }}
+              >
+                {/* Parte já executada, mais escura. */}
+                <span className="absolute inset-y-0 left-0 bg-ink/20" style={{ width: `${g.feito * 100}%` }} />
+              </m.span>
+            </div>
+          </div>
+        ))}
+        {/* Linha de hoje atravessando as disciplinas. */}
+        <m.span
+          className="absolute top-0 bottom-0 w-px bg-chart-danger"
+          style={{ left: `calc(120px + (100% - 120px) * ${HOJE_GANTT / 100})` }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.5 }}
+        >
+          <span className="absolute -top-px left-1 rounded bg-chart-danger px-1 text-[7.5px] font-medium leading-3 text-white">
+            hoje
+          </span>
+        </m.span>
+      </div>
+    </div>
+  );
+}
+
 export function TelaProjeto({ ato }: { ato: number }) {
   const ligado = ato >= idx("projeto");
+  const gantt = ato >= idx("gantt");
   const reducedMotion = useReducedMotion();
 
   return (
@@ -485,47 +635,51 @@ export function TelaProjeto({ ato }: { ato: number }) {
         </div>
 
         <div className="flex justify-end mb-2">
-          <AlternanciaVisao itens={["Tabela", "Gantt", "Fluxo"]} ativo="Tabela" />
+          <AlternanciaVisao itens={["Tabela", "Gantt", "Fluxo"]} ativo={gantt ? "Gantt" : "Tabela"} />
         </div>
 
         {/* Tabela de disciplinas, num cartão com ação de adicionar. */}
         <div className="rounded-2xl border border-black/5 bg-white p-3">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] text-ink-muted">3 disciplinas</span>
+            <span className="text-[10px] text-ink-muted">{gantt ? "4 disciplinas" : "3 disciplinas"}</span>
             <span className="flex items-center h-6 rounded-full bg-brand px-3 text-[10px] font-medium text-ink">
               Adicionar disciplina
             </span>
           </div>
 
-          <div className="rounded-lg border border-app-border overflow-hidden">
-            <div className={`grid ${COLUNAS_DISC} gap-2 px-3 py-1.5 border-b border-app-border`}>
-              {["Disciplina", "Prioridade", "Status", "Previsão", "Responsáveis"].map((c) => (
-                <span key={c} className="text-[8.5px] uppercase tracking-wide text-ink-muted">
-                  {c}
-                </span>
+          {gantt ? (
+            <GanttProjeto />
+          ) : (
+            <div className="rounded-lg border border-app-border overflow-hidden">
+              <div className={`grid ${COLUNAS_DISC} gap-2 px-3 py-1.5 border-b border-app-border`}>
+                {["Disciplina", "Prioridade", "Status", "Previsão", "Responsáveis"].map((c) => (
+                  <span key={c} className="text-[8.5px] uppercase tracking-wide text-ink-muted">
+                    {c}
+                  </span>
+                ))}
+              </div>
+              {DISCIPLINAS.map(({ disc, prioridade, status, resp, prev }, i) => (
+                <m.div
+                  key={disc}
+                  className={`grid ${COLUNAS_DISC} gap-2 px-3 py-[7px] border-b border-app-border last:border-0 items-center`}
+                  animate={{ opacity: ligado ? 1 : 0, x: ligado ? 0 : 8 }}
+                  transition={{ duration: 0.4, delay: 0.35 + i * 0.08, ease: EASE.out }}
+                >
+                  <span className="text-[10.5px] font-medium text-ink">{disc}</span>
+                  <span className="flex items-center gap-1.5 text-[9.5px] text-ink">
+                    <span className={`w-1.5 h-1.5 rounded-full ${prioridade[1]}`} />
+                    {prioridade[0]}
+                  </span>
+                  <span className="flex items-center gap-1.5 text-[9.5px] text-ink">
+                    <span className={`w-1.5 h-1.5 rounded-full ${status[1]}`} />
+                    {status[0]}
+                  </span>
+                  <span className="text-[9.5px] text-ink-muted tabular-nums">{prev}</span>
+                  <span className="text-[9.5px] text-ink">{resp}</span>
+                </m.div>
               ))}
             </div>
-            {DISCIPLINAS.map(({ disc, prioridade, status, resp, prev }, i) => (
-              <m.div
-                key={disc}
-                className={`grid ${COLUNAS_DISC} gap-2 px-3 py-[7px] border-b border-app-border last:border-0 items-center`}
-                animate={{ opacity: ligado ? 1 : 0, x: ligado ? 0 : 8 }}
-                transition={{ duration: 0.4, delay: 0.35 + i * 0.08, ease: EASE.out }}
-              >
-                <span className="text-[10.5px] font-medium text-ink">{disc}</span>
-                <span className="flex items-center gap-1.5 text-[9.5px] text-ink">
-                  <span className={`w-1.5 h-1.5 rounded-full ${prioridade[1]}`} />
-                  {prioridade[0]}
-                </span>
-                <span className="flex items-center gap-1.5 text-[9.5px] text-ink">
-                  <span className={`w-1.5 h-1.5 rounded-full ${status[1]}`} />
-                  {status[0]}
-                </span>
-                <span className="text-[9.5px] text-ink-muted tabular-nums">{prev}</span>
-                <span className="text-[9.5px] text-ink">{resp}</span>
-              </m.div>
-            ))}
-          </div>
+          )}
         </div>
       </div>
     </div>

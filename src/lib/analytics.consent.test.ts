@@ -39,7 +39,8 @@ class MemoryStorage {
     this.store.clear();
   }
 }
-globalThis.localStorage = new MemoryStorage() as unknown as Storage;
+// `vi.stubGlobal`, não atribuição: no jsdom do Vitest 5 o `localStorage` da janela só tem getter.
+vi.stubGlobal("localStorage", new MemoryStorage() as unknown as Storage);
 
 const COOKIE_NAME = "pilar_cookie_consent";
 

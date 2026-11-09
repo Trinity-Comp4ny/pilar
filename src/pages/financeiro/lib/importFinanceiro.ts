@@ -53,6 +53,8 @@ export function normalizeValorBR(raw: unknown): number | null {
     if (mDC[1].toUpperCase() === "D") sinal = -1;
     s = s.slice(0, mDC.index).trim();
   }
+  // "R$ -50,00": o símbolo vem antes do sinal em alguns extratos.
+  s = s.replace(/R\$/gi, "").replace(/\s/g, "");
   if (s.startsWith("-")) {
     sinal = -1;
     s = s.slice(1);
@@ -60,11 +62,13 @@ export function normalizeValorBR(raw: unknown): number | null {
     s = s.slice(1);
   }
 
-  s = s.replace(/R\$/gi, "").replace(/\s/g, "");
   const temVirgula = s.includes(",");
   const temPonto = s.includes(".");
   if (temVirgula && temPonto) {
     s = s.lastIndexOf(",") > s.lastIndexOf(".") ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
+  } else if (/^\d{1,3}([.,])\d{3}(\1\d{3})+$/.test(s)) {
+    // Só separador de milhar repetido, sem centavos: "1.234.567" ou "1,234,567".
+    s = s.replace(/[.,]/g, "");
   } else if (temVirgula) {
     s = s.replace(",", ".");
   }
@@ -73,6 +77,12 @@ export function normalizeValorBR(raw: unknown): number | null {
   const n = parseFloat(s);
   if (Number.isNaN(n)) return null;
   return sinal * n;
+}
+
+// Dia existe no mês (31/02 e 29/02 fora de ano bissexto não existem: o banco
+// recusaria a data e derrubaria o lote inteiro da importação).
+function diaExiste(ano: number, mes: number, dia: number): boolean {
+  return new Date(Date.UTC(ano, mes - 1, dia)).getUTCDate() === dia;
 }
 
 /** Converte data BR/ISO para ISO yyyy-mm-dd. Retorna null se não reconhecer. */
@@ -85,14 +95,14 @@ export function parseDataBR(raw: unknown): string | null {
     const d = parseInt(m[1], 10);
     const mo = parseInt(m[2], 10);
     const ano = m[3].length === 2 ? 2000 + parseInt(m[3], 10) : parseInt(m[3], 10);
-    if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+    if (mo < 1 || mo > 12 || d < 1 || d > 31 || !diaExiste(ano, mo, d)) return null;
     return `${ano}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   }
   m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
   if (m) {
     const mo = parseInt(m[2], 10);
     const d = parseInt(m[3], 10);
-    if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+    if (mo < 1 || mo > 12 || d < 1 || d > 31 || !diaExiste(parseInt(m[1], 10), mo, d)) return null;
     return `${m[1]}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
   }
   return null;
@@ -212,7 +222,8 @@ export function csvParaLinhas(text: string): { linhas: LinhaExtrato[]; avisos: s
     if (idx.debito < 0 && HEADER_DEBITO.test(h)) idx.debito = i;
     else if (idx.credito < 0 && HEADER_CREDITO.test(h)) idx.credito = i;
     else if (idx.valor < 0 && HEADER_VALOR.test(h)) idx.valor = i;
-    if (idx.desc < 0 && HEADER_DESC.test(h)) idx.desc = i;
+    // "Data Lançamento" casa com data E descrição: a coluna da data não serve de descrição.
+    if (idx.desc < 0 && i !== idx.data && HEADER_DESC.test(h)) idx.desc = i;
   });
 
   const temHeaderValor = idx.valor >= 0 || idx.debito >= 0 || idx.credito >= 0;
@@ -276,16 +287,36 @@ export function linhaParaCandidato(l: LinhaExtrato): Candidato {
 
 /**
  * Conciliação leve: acha uma conta pendente que casa com o candidato (mesmo tipo,
- * valor igual e vencimento dentro da janela de dias). Retorna o id ou null.
+ * valor igual e vencimento dentro da janela de dias). Entre os que casam, fica o de
+ * data mais próxima. `usados` garante o pareamento 1:1: um pendente já casado com
+ * outra linha do extrato não casa de novo (antes duas linhas de R$ 500 podiam
+ * conciliar o MESMO título). Retorna o id ou null.
  */
-export function encontrarDuplicata(c: Candidato, pendentes: ContaPendente[], janelaDias = 3): string | null {
+export function encontrarDuplicata(
+  c: Candidato,
+  pendentes: ContaPendente[],
+  janelaDias = 3,
+  usados?: Set<string>
+): string | null {
   const alvo = new Date(`${c.data}T00:00:00`).getTime();
   const limite = janelaDias * 86_400_000;
-  const match = pendentes.find(
-    (p) =>
-      p.tipo === c.tipo &&
-      Math.abs(p.valor - c.valor) < 0.005 &&
-      Math.abs(new Date(`${p.data}T00:00:00`).getTime() - alvo) <= limite
-  );
-  return match?.id ?? null;
+  let melhor: { id: string; dist: number } | null = null;
+  for (const p of pendentes) {
+    if (p.tipo !== c.tipo || Math.abs(p.valor - c.valor) >= 0.005) continue;
+    if (usados?.has(p.id)) continue;
+    const dist = Math.abs(new Date(`${p.data}T00:00:00`).getTime() - alvo);
+    if (dist > limite) continue;
+    if (!melhor || dist < melhor.dist) melhor = { id: p.id, dist };
+  }
+  return melhor?.id ?? null;
+}
+
+/** Pareia cada candidato com no máximo um pendente, e cada pendente com no máximo um candidato. */
+export function parearComPendentes(cands: Candidato[], pendentes: ContaPendente[], janelaDias = 3): (string | null)[] {
+  const usados = new Set<string>();
+  return cands.map((c) => {
+    const id = encontrarDuplicata(c, pendentes, janelaDias, usados);
+    if (id) usados.add(id);
+    return id;
+  });
 }

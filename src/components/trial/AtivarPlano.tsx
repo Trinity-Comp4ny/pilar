@@ -11,7 +11,7 @@ import { onlyDigits, formatDocument, formatCEP, formatPhone, validateCPF, valida
 import { detectCardBrand, formatCardNumber, formatExpiry, validateCreditCard } from "@/lib/creditCard";
 import { edgeFunctionErrorDetail } from "@/lib/edgeFunctionError";
 import { analytics } from "@/lib/analytics";
-import { usePlans, calculateYearlySavingPct } from "@/hooks/usePlans";
+import { usePlans, calculateYearlySavingPct, capacidadeDoPlano } from "@/hooks/usePlans";
 import { CycleToggle, type BillingCycle } from "@/components/CycleToggle";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -223,6 +223,13 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
                 <p className="text-xs text-ink-muted">
                   /mês{cycle === "yearly" && savingPct ? ` · ${savingPct}% off no anual` : ""}
                 </p>
+                <ul className="mt-2 space-y-0.5">
+                  {capacidadeDoPlano(plan).map((linha) => (
+                    <li key={linha} className="text-[11px] leading-snug text-ink-muted">
+                      {linha}
+                    </li>
+                  ))}
+                </ul>
               </button>
             );
           })}

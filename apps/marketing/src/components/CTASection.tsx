@@ -6,7 +6,7 @@ import { Reveal } from "./Reveal";
 import { SplitButton } from "./ui/SplitButton";
 import { HeroBackdrop } from "./hero/HeroBackdrop";
 import { EASE } from "../lib/motion";
-import { DEMO_URL } from "../lib/contato";
+import { LinkDemo } from "./LinkDemo";
 
 /**
  * Fecho da página: um cartão largo com a paisagem desfocada por dentro, no
@@ -19,8 +19,8 @@ export function CTASection() {
   const reducedMotion = useReducedMotion();
 
   const primario = loggedIn
-    ? { href: `${APP_URL}/inicio`, label: "Abrir Pilar", evento: "abrir_pilar" }
-    : { href: DEMO_URL, label: "Agendar demonstração", evento: "agende_demo" };
+    ? { href: `${APP_URL}/inicio`, to: undefined, label: "Abrir Pilar", evento: "abrir_pilar" }
+    : { href: undefined, to: "/planos", label: "Ver planos", evento: "ver_planos" };
 
   return (
     <section className="w-full bg-paper px-4 md:px-10 pb-10 md:pb-20">
@@ -33,8 +33,8 @@ export function CTASection() {
           </div>
 
           <div className="relative">
-            <h2 className="text-[58px] max-[1100px]:text-[44px] max-[850px]:text-[30px] max-[420px]:text-[26px] font-medium tracking-[-0.035em] leading-[1.06] text-ink mb-5 max-w-[20ch] mx-auto">
-              Do contrato à execução, <span className="italic">num fluxo só.</span>
+            <h2 className="text-[58px] max-[1100px]:text-[44px] max-[850px]:text-[30px] max-[420px]:text-[26px] font-medium tracking-[-0.035em] leading-[1.06] text-ink mb-5 max-w-[24ch] mx-auto text-balance">
+              Gestão com agentes de IA para escritórios de <span className="italic">engenharia e arquitetura.</span>
             </h2>
 
             <m.p
@@ -44,19 +44,24 @@ export function CTASection() {
               transition={{ duration: 0.6, ease: EASE.out, delay: 0.15 }}
               className="text-[15px] text-ink/70 max-w-lg mx-auto mb-9 leading-relaxed"
             >
-              Mostramos o Pilar com o fluxo do seu escritório e deixamos a conta pronta para usar. Os agentes preparam,
-              você aprova.
+              Escolha o plano e comece hoje: a conta fica pronta assim que o pagamento é confirmado. Os agentes
+              preparam, você aprova.
             </m.p>
 
             <div className="flex flex-col items-center gap-4">
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <SplitButton href={primario.href} onClick={() => trackCta(primario.evento, "cta_final")}>
+                <SplitButton
+                  href={primario.href}
+                  to={primario.to}
+                  onClick={() => trackCta(primario.evento, "cta_final")}
+                >
                   {primario.label}
                 </SplitButton>
                 <SplitButton href={`${APP_URL}/login`} onClick={() => trackCta("entrar", "cta_final")} fantasma>
                   Entrar
                 </SplitButton>
               </div>
+              {!loggedIn && <LinkDemo local="cta_final" />}
             </div>
           </div>
         </div>

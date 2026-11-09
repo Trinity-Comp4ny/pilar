@@ -68,10 +68,11 @@ describe("AtividadeComposer, marcação", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
-  it("mostra 'sem acesso' no menu para quem não tem conta", () => {
+  it("não oferece no menu quem não tem login no Pilar", () => {
     render(<AtividadeComposer pessoas={pessoas} onSubmit={vi.fn()} />);
 
-    digitar("@Carlos");
-    expect(screen.getByRole("button", { name: /Carlos Sem Conta/ })).toHaveTextContent("sem acesso");
+    digitar("@");
+    expect(screen.getByRole("button", { name: "Maria Silva" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Carlos Sem Conta/ })).not.toBeInTheDocument();
   });
 });

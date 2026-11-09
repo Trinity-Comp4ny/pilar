@@ -16,7 +16,7 @@ import { getRecentSubscriptionPayments, getSubscription } from "../_shared/asaas
 import { cronAutorizado } from "../_shared/cron-auth.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { withSentryCron } from "../_shared/sentry.ts";
-import { assinaturaDaLista, compararAssinatura, deveAvisar } from "./regras.ts";
+import { assinaturaDaLista, compararAssinatura, deveAvisar, ultimoAvisoDoRegistro } from "./regras.ts";
 
 const log = createLogger("reconciliar-assinaturas");
 
@@ -93,11 +93,7 @@ serve(
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle<{ created_at: string; metadata: { chave?: string; avisado?: boolean } | null }>();
-        // Só conta como "último aviso" o registro que de fato avisou.
-        const ultimoAviso =
-          ultimo?.metadata?.avisado && ultimo.metadata.chave
-            ? { chave: ultimo.metadata.chave, em: ultimo.created_at }
-            : null;
+        const ultimoAviso = ultimoAvisoDoRegistro(ultimo);
 
         const avisar = deveAvisar(divergencias, ultimoAviso, agora);
         const nome = sub.empresa?.nome ?? "empresa";

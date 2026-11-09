@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, ArrowRight, Eye, EyeOff, Lock, Phone, User } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, EyeOff, Link2, Lock, Phone, User } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { getSafeErrorMessage } from "@/lib/safeError";
@@ -24,6 +24,19 @@ import {
 } from "@/schemas";
 
 import { BusyMark } from "@/components/motion/BusyMark";
+import { EscolhaChips } from "@/components/forms/EscolhaChips";
+import { FUNCOES, normalizarLinkedin } from "@/lib/perfilEscritorio";
+import { ROLE_LABEL } from "@/lib/permissions";
+import { analytics } from "@/lib/analytics";
+
+/**
+ * Quem está entrando (SPEC 149). O dono configura o escritório depois desta
+ * tela (3 etapas); o convidado entra num escritório que já existe, então é uma
+ * tela só, com quem convidou e com qual papel no topo.
+ */
+type Entrada =
+  | { tipo: "dono" }
+  | { tipo: "convidado"; empresaNome: string | null; papel: string | null; convidadoPor: string | null };
 
 export default function ProfileSetup() {
   usePageTitle("Configuração do Perfil");
@@ -40,6 +53,7 @@ export default function ProfileSetup() {
   // null = ainda não sabemos (carregando); evita liberar o botão antes de checar.
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState<boolean | null>(null);
   const [empresaId, setEmpresaId] = useState<string | null>(null);
+  const [entrada, setEntrada] = useState<Entrada>({ tipo: "dono" });
   const navigate = useNavigate();
   const { refreshProfile } = useAuth();
 
@@ -59,12 +73,9 @@ export default function ProfileSetup() {
 
   const password = form.watch("password");
   const termsAccepted = form.watch("termsAccepted");
+  const ehConvidado = entrada.tipo === "convidado";
 
-  const targetProgress = useMemo(() => {
-    const step = 1;
-    const total = 2;
-    return Math.round((step / total) * 100);
-  }, []);
+  const targetProgress = ehConvidado ? 100 : Math.round((1 / 3) * 100);
 
   useEffect(() => {
     const t = window.setTimeout(() => setProgressValue(targetProgress), 150);
@@ -96,7 +107,9 @@ export default function ProfileSetup() {
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("first_name, last_name, contato, email, empresa_id")
+          .select(
+            "first_name, last_name, contato, email, empresa_id, funcao, linkedin_url, role, empresas(nome, onboarding_completed)"
+          )
           .eq("id", user.id)
           .single();
 
@@ -105,10 +118,23 @@ export default function ProfileSetup() {
             firstName: profile.first_name ?? "",
             lastName: profile.last_name ?? "",
             phone: profile.contato ?? "",
+            funcao: profile.funcao ?? "",
+            linkedin: profile.linkedin_url ?? "",
             password: "",
             confirmPassword: "",
           });
           setEmpresaId(profile.empresa_id ?? null);
+          const ehAdmin = profile.role === "admin" || profile.role === "ultra_admin";
+          const escritorioPronto = Boolean(profile.empresas?.onboarding_completed);
+          if (!ehAdmin || escritorioPronto) {
+            const convidadoPor = user.user_metadata?.convidado_por;
+            setEntrada({
+              tipo: "convidado",
+              empresaNome: profile.empresas?.nome ?? null,
+              papel: profile.role ? (ROLE_LABEL[profile.role] ?? null) : null,
+              convidadoPor: typeof convidadoPor === "string" && convidadoPor.trim() ? convidadoPor.trim() : null,
+            });
+          }
         }
 
         // SPEC 049: quem já aceitou em /cadastro (self-serve com terms_accepted
@@ -161,12 +187,15 @@ export default function ProfileSetup() {
       }
 
       // 3. Só então gravar o perfil e concluir o onboarding.
+      const linkedin = normalizarLinkedin(values.linkedin ?? "");
       const { error } = await supabase
         .from("profiles")
         .update({
           first_name: values.firstName.trim(),
           last_name: values.lastName.trim(),
           contato: values.phone,
+          funcao: values.funcao,
+          linkedin_url: linkedin.ok ? linkedin.url : null,
           onboarding_completed: true,
         })
         .eq("id", user.id);
@@ -176,7 +205,12 @@ export default function ProfileSetup() {
       // 4. Forçar refresh do contexto para garantir que PrivateRoute leia onboarding_completed: true
       await refreshProfile();
 
-      toast.success("Perfil atualizado!", { description: "Você já pode acessar o sistema." });
+      analytics.track("onboarding_etapa_concluida", {
+        etapa: "perfil",
+        entrada: entrada.tipo,
+        funcao: values.funcao,
+        tem_linkedin: linkedin.ok && Boolean(linkedin.url),
+      });
 
       const { data: updatedProfile } = await supabase
         .from("profiles")
@@ -187,6 +221,9 @@ export default function ProfileSetup() {
       const isAdmin = updatedProfile?.role === "admin" || updatedProfile?.role === "ultra_admin";
       const needsCompanySetup = isAdmin && !updatedProfile?.empresas?.onboarding_completed;
 
+      if (!needsCompanySetup) {
+        toast.success("Tudo pronto.", { description: "Boas-vindas ao Pilar." });
+      }
       navigate(needsCompanySetup ? "/company-setup" : "/inicio");
     } catch (err: unknown) {
       toast.error("Erro ao salvar", { description: getSafeErrorMessage(err) });
@@ -217,14 +254,19 @@ export default function ProfileSetup() {
                 <Logo variant="mark" size="md" />
                 <div className="leading-tight">
                   <div className="text-sm font-semibold text-ink">Pilar</div>
-                  <div className="text-xs text-ink-soft">Configuração inicial · Etapa 1 de 2</div>
+                  <div className="text-xs text-ink-soft">
+                    {ehConvidado ? "Entrada no escritório" : "Configuração inicial · Etapa 1 de 3"}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <div className="h-2.5 w-2.5 rounded-full bg-brand shadow-sm shadow-brand/30" />
-                <div className="h-2.5 w-2.5 rounded-full bg-muted" />
-              </div>
+              {!ehConvidado && (
+                <div className="flex items-center gap-2">
+                  <div className="h-2.5 w-2.5 rounded-full bg-brand shadow-sm shadow-brand/30" />
+                  <div className="h-2.5 w-2.5 rounded-full bg-muted" />
+                  <div className="h-2.5 w-2.5 rounded-full bg-muted" />
+                </div>
+              )}
             </div>
 
             <Progress
@@ -235,7 +277,29 @@ export default function ProfileSetup() {
           </div>
 
           <div className="space-y-2">
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Seu perfil</h1>
+            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">
+              {entrada.tipo === "convidado" && entrada.empresaNome
+                ? `Boas-vindas ao ${entrada.empresaNome}`
+                : "Seu perfil"}
+            </h1>
+            {entrada.tipo === "convidado" && (entrada.convidadoPor || entrada.papel) && (
+              <p className="text-sm text-ink">
+                {entrada.convidadoPor ? (
+                  <>
+                    <span className="font-medium">{entrada.convidadoPor}</span> convidou você
+                  </>
+                ) : (
+                  "Você foi convidado"
+                )}
+                {entrada.papel && (
+                  <>
+                    {" "}
+                    como <span className="font-medium">{entrada.papel}</span>
+                  </>
+                )}
+                .
+              </p>
+            )}
             <p className="text-sm text-ink-soft">
               {pulaSenha
                 ? "Confirme seus dados para continuar."
@@ -295,7 +359,7 @@ export default function ProfileSetup() {
                 render={({ field }) => (
                   <FormItem className="space-y-2">
                     <FormLabel className="text-ink-soft font-medium">
-                      Telefone <span className="text-danger-mid">*</span>
+                      Celular (WhatsApp) <span className="text-danger-mid">*</span>
                     </FormLabel>
                     <FormControl>
                       <div className="relative group">
@@ -313,6 +377,51 @@ export default function ProfileSetup() {
                               .slice(0, 15);
                             field.onChange(formatted);
                           }}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="funcao"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel className="text-ink-soft font-medium">
+                      Sua função no escritório <span className="text-danger-mid">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <EscolhaChips
+                        ariaLabel="Sua função no escritório"
+                        opcoes={FUNCOES}
+                        value={field.value || null}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="linkedin"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel className="text-ink-soft font-medium">
+                      LinkedIn <span className="font-normal text-ink-muted">(opcional)</span>
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative group">
+                        <Link2 className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                        <Input
+                          {...field}
+                          value={field.value ?? ""}
+                          placeholder="linkedin.com/in/seu-perfil"
+                          className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
                         />
                       </div>
                     </FormControl>
@@ -503,7 +612,7 @@ export default function ProfileSetup() {
             </div>
 
             <blockquote className="text-3xl font-light leading-snug">
-              "Do contrato à execução, num fluxo só."
+              "Gestão com agentes de IA para escritórios de engenharia e arquitetura."
             </blockquote>
 
             <p className="text-sm text-white/70">Vamos deixar sua conta pronta com o essencial. Leva poucos minutos.</p>

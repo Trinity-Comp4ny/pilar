@@ -12,11 +12,17 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { withSentry } from "../_shared/sentry.ts";
 import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { sendEmail, templateCobrancaDireta } from "../_shared/email/index.ts";
-import { EMAIL_RE } from "../_shared/validators.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { getRateLimitKey, RateLimiter } from "../_shared/rate-limiter.ts";
 import { lerJson } from "../_shared/schemas.ts";
 import { lerEntrada } from "./entrada.ts";
+import {
+  erroDoEnvioPulado,
+  parcelaCobravel,
+  podeEnviarCobranca,
+  verificarDestinos,
+  verificarRascunho,
+} from "./regras.ts";
 
 const log = createLogger("cobranca-enviar");
 
@@ -74,7 +80,7 @@ serve(
         userClient.rpc("can_view_financeiro"),
         userClient.rpc("user_has_feature", { p_feature: "financeiro", p_min_level: "editor" }),
       ]);
-      if (verDinheiro.data !== true || editor.data !== true) {
+      if (!podeEnviarCobranca(verDinheiro.data, editor.data)) {
         return safeErrorResponse(403, "Sem permissão para enviar cobrança", req);
       }
 
@@ -92,13 +98,9 @@ serve(
         .select("id, empresa_id, receita_id, etapa, status, destinatario_email, assunto, abertura")
         .eq("id", cobranca_id)
         .single();
-      const cobranca = cobData as Cobranca | null;
-      if (!cobranca || cobranca.empresa_id !== profile.empresa_id) {
-        return safeErrorResponse(404, "Cobrança não encontrada", req);
-      }
-      if (cobranca.status !== "rascunho") {
-        return safeErrorResponse(409, "Esta cobrança já foi decidida", req);
-      }
+      const rascunho = verificarRascunho(cobData as Cobranca | null, profile.empresa_id);
+      if (!rascunho.ok) return safeErrorResponse(rascunho.status, rascunho.error, req);
+      const { cobranca } = rascunho;
 
       const { data: recData } = await admin
         .from("receitas")
@@ -108,7 +110,7 @@ serve(
         .eq("id", cobranca.receita_id)
         .single();
       const receita = recData as unknown as Receita | null;
-      if (!receita || receita.deleted_at || !["Pendente", "Atrasado"].includes(receita.status)) {
+      if (!parcelaCobravel(receita)) {
         await admin
           .from("cobrancas")
           .update({ status: "cancelada", decidida_em: new Date().toISOString() })
@@ -117,12 +119,8 @@ serve(
         return safeErrorResponse(409, "A parcela já foi paga ou excluída; nada foi enviado", req);
       }
 
-      if (!EMAIL_RE.test(cobranca.destinatario_email)) {
-        return safeErrorResponse(400, "O cliente está sem e-mail válido cadastrado", req);
-      }
-      if (!receita.empresas.email) {
-        return safeErrorResponse(422, "Cadastre o e-mail da empresa em Configurações para enviar ao cliente", req);
-      }
+      const destinos = verificarDestinos(cobranca.destinatario_email, receita.empresas.email);
+      if (!destinos.ok) return safeErrorResponse(destinos.status, destinos.error, req);
 
       const texto = abertura ?? cobranca.abertura;
       const vencida = receita.data_vencimento < new Date().toISOString().slice(0, 10);
@@ -149,9 +147,8 @@ serve(
       });
       if (!envio.ok) {
         // Nada saiu: a cobrança continua como rascunho para o usuário tentar de novo.
-        return envio.skipped === "dry_run"
-          ? safeErrorResponse(503, "O envio de e-mail está desligado neste ambiente; nada foi enviado", req)
-          : safeErrorResponse(422, "O e-mail do cliente está bloqueado para envio (descadastro ou devolução)", req);
+        const erro = erroDoEnvioPulado(envio.skipped);
+        return safeErrorResponse(erro.status, erro.error, req);
       }
 
       await admin

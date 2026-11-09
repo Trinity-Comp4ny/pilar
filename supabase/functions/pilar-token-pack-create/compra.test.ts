@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
-import { purchaseSchema, statusInicialDaCompra, TIER_CATALOG } from "./compra.ts";
+import { cobrancaDoTier, purchaseSchema, statusInicialDaCompra, TIER_CATALOG } from "./compra.ts";
 
 const cartao = {
   holderName: "Fulano Silva",
@@ -74,6 +74,65 @@ Deno.test("cartão com número inválido é rejeitado antes de chegar no Asaas",
     credit_card_holder_info: titular,
   });
   assertEquals(r.success, false);
+});
+
+Deno.test("cobrança do tier: valor em reais (Asaas) e descrição vêm do catálogo", () => {
+  assertEquals(cobrancaDoTier("starter"), {
+    tokens: 500_000,
+    valorCentavos: 4900,
+    valor: 49,
+    descricao: "Pilar — 100 créditos de IA",
+  });
+  assertEquals(cobrancaDoTier("escala").valor, 228);
+  assertEquals(cobrancaDoTier("maximo").valor, 399);
+  assertEquals(cobrancaDoTier("cresce").descricao, "Pilar — 300 créditos de IA");
+  assertEquals(cobrancaDoTier("maximo").descricao, "Pilar — 1.200 créditos de IA");
+});
+
+Deno.test("titular sem telefone, com telefone sem DDD ou CPF/CEP inválido é rejeitado (Asaas recusaria)", () => {
+  const { phone: _semFone, ...titularSemFone } = titular;
+  for (const holder of [
+    titularSemFone,
+    { ...titular, phone: "98765-4321" },
+    { ...titular, cpfCnpj: "123.456.789" },
+    { ...titular, cpfCnpj: "" },
+    { ...titular, postalCode: "0131" },
+    { ...titular, email: "fulano" },
+  ]) {
+    const r = purchaseSchema.safeParse({
+      tier_id: "starter",
+      billing_type: "CREDIT_CARD",
+      credit_card: cartao,
+      credit_card_holder_info: holder,
+    });
+    assertEquals(r.success, false, JSON.stringify(holder));
+  }
+});
+
+Deno.test("cartão com validade ou CCV inválidos é rejeitado", () => {
+  for (const errado of [{ expiryMonth: "13" }, { expiryYear: "30" }, { ccv: "1" }, { holderName: "" }]) {
+    const r = purchaseSchema.safeParse({
+      tier_id: "starter",
+      billing_type: "CREDIT_CARD",
+      credit_card: { ...cartao, ...errado },
+      credit_card_holder_info: titular,
+    });
+    assertEquals(r.success, false, JSON.stringify(errado));
+  }
+});
+
+Deno.test("PIX e boleto não exigem cartão; cartão mandado junto é ignorado na cobrança, mas validado", () => {
+  assertEquals(purchaseSchema.safeParse({ tier_id: "maximo", billing_type: "BOLETO" }).success, true);
+  // Cartão malformado reprova mesmo em PIX: não chega lixo ao log nem ao Asaas.
+  assertEquals(
+    purchaseSchema.safeParse({ tier_id: "maximo", billing_type: "PIX", credit_card: { number: "x" } }).success,
+    false
+  );
+});
+
+Deno.test("corpo nulo ou vazio é rejeitado", () => {
+  assertEquals(purchaseSchema.safeParse(null).success, false);
+  assertEquals(purchaseSchema.safeParse({}).success, false);
 });
 
 Deno.test("status inicial: cartão aprovado na hora já nasce pago, o resto espera o webhook", () => {

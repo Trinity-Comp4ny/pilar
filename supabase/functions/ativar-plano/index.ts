@@ -148,7 +148,7 @@ serve(
 
     const valor = valorDoCiclo(plan, body.billing_cycle);
     if (valor == null) {
-      return jsonResponse({ error: "Este plano não tem preço anual configurado" }, 400, req);
+      return jsonResponse({ error: "Este plano não tem preço configurado para este ciclo" }, 400, req);
     }
 
     // --- Cliente Asaas (cria se a empresa nunca teve, mesmo padrão do pack de tokens) ---

@@ -10,7 +10,7 @@ import {
   linhaParaCandidato,
   lineHash,
   parseDataBR,
-  encontrarDuplicata,
+  parearComPendentes,
   type Candidato,
   type ContaPendente,
   type ImportTipoDoc,
@@ -57,6 +57,8 @@ export interface ItemImport {
   lineHash: string;
   duplicataId: string | null;
   acao: "criar" | "conciliar";
+  /** A mesma linha (data + valor + descrição) já entrou numa importação anterior. */
+  jaImportado?: boolean;
 }
 
 export interface ResumoImport {
@@ -120,8 +122,9 @@ function casarCategoriaId(nome: string | null, tipo: "despesa" | "receita", cate
 }
 
 function montarItens(cands: CandidatoExt[], aux: AuxData): ItemImport[] {
-  return cands.map((c) => {
-    const dup = encontrarDuplicata(c, aux.pendentes);
+  const pares = parearComPendentes(cands, aux.pendentes);
+  return cands.map((c, i) => {
+    const dup = pares[i];
     return {
       id: crypto.randomUUID(),
       incluir: true,
@@ -175,6 +178,28 @@ async function fetchAux(): Promise<AuxData> {
   };
 }
 
+/**
+ * Marca as linhas que já entraram numa importação anterior (mesmo hash de linha).
+ * O hash era gravado e nunca consultado: reimportar um extrato com período
+ * sobreposto duplicava as linhas em comum (diagnóstico 2026-11-07, B6). A linha
+ * fica no preview, desmarcada e sinalizada, e o usuário pode incluir se quiser.
+ */
+export async function marcarJaImportados(itens: ItemImport[]): Promise<ItemImport[]> {
+  const hashes = [...new Set(itens.map((i) => i.lineHash))];
+  if (hashes.length === 0) return itens;
+  const [desp, rec] = await Promise.all([
+    supabase.from("despesas").select("import_line_hash").in("import_line_hash", hashes).is("deleted_at", null),
+    supabase.from("receitas").select("import_line_hash").in("import_line_hash", hashes).is("deleted_at", null),
+  ]);
+  const existentes = new Set(
+    [...(desp.data ?? []), ...(rec.data ?? [])]
+      .map((r) => (r as { import_line_hash: string | null }).import_line_hash)
+      .filter((h): h is string => !!h)
+  );
+  if (existentes.size === 0) return itens;
+  return itens.map((i) => (existentes.has(i.lineHash) ? { ...i, jaImportado: true, incluir: false } : i));
+}
+
 export function useImportFinanceiro() {
   const auxQuery = useQuery({ queryKey: ["import-financeiro-aux"], queryFn: fetchAux, staleTime: 60_000 });
   const [gravando, setGravando] = useState(false);
@@ -213,7 +238,7 @@ export function useImportFinanceiro() {
     }
     const { linhas, avisos } = csvParaLinhas(texto);
     const cands: CandidatoExt[] = linhas.map((l) => ({ ...linhaParaCandidato(l), confianca: 1 }));
-    return { itens: montarItens(cands, aux), avisos };
+    return { itens: await marcarJaImportados(montarItens(cands, aux)), avisos };
   }, []);
 
   /** Caminho IA: texto (extraído do PDF localmente) estruturado pela edge function. */
@@ -264,11 +289,14 @@ export function useImportFinanceiro() {
         parcelaTotal: l.parcela_total ?? null,
       });
     }
-    return { itens: montarItens(cands, aux), avisos };
+    return { itens: await marcarJaImportados(montarItens(cands, aux)), avisos };
   }, []);
 
   const gravarLote = useCallback(
-    async (itens: ItemImport[], opts: { contaId: string | null; projetoId: string | null }): Promise<ResumoImport> => {
+    async (
+      itens: ItemImport[],
+      opts: { contaId: string | null; projetoId: string | null; tipoDoc?: ImportTipoDoc }
+    ): Promise<ResumoImport> => {
       setGravando(true);
       try {
         const incluidos = itens.filter((i) => i.incluir);
@@ -278,6 +306,11 @@ export function useImportFinanceiro() {
         const batchId = crypto.randomUUID();
         const contaId = opts.contaId || null;
         const projetoId = opts.projetoId || null;
+        // Linha de extrato é dinheiro que já se moveu: entra efetivada na data da
+        // linha. Antes entrava "Pendente" com data passada e o job a marcava como
+        // Atrasada, inflando o "a pagar" (diagnóstico 2026-11-07, B5). Fatura e
+        // planilha seguem em aberto (a fatura é paga depois; planilha é genérica).
+        const efetivado = opts.tipoDoc === "extrato";
 
         const despesasInsert: DespesaInsert[] = [];
         const receitasInsert: ReceitaInsert[] = [];
@@ -304,7 +337,8 @@ export function useImportFinanceiro() {
               categoria_id: it.categoriaId,
               projeto_id: projetoId,
               conta_id: contaId,
-              status: "Pendente",
+              status: efetivado ? "Pago" : "Pendente",
+              data_pagamento: efetivado ? it.data : null,
               parcela_numero: it.parcelaNumero,
               parcela_total: it.parcelaTotal,
               import_batch_id: batchId,
@@ -319,7 +353,8 @@ export function useImportFinanceiro() {
               categoria_id: it.categoriaId,
               projeto_id: projetoId,
               conta_id: contaId,
-              status: "Pendente",
+              status: efetivado ? "Recebido" : "Pendente",
+              data_recebimento: efetivado ? it.data : null,
               parcela_numero: it.parcelaNumero,
               parcela_total: it.parcelaTotal,
               import_batch_id: batchId,

@@ -13,7 +13,7 @@ import { PLAN_LABEL, edgeFetch, type EmpresaRow } from "./api";
 import { useAcaoEmpresa, useEmpresas } from "./hooks";
 import { SITUACOES, prazoTeste, quandoRelativo, situacaoEmpresa, type Situacao } from "./lib";
 import { FiltroChips, type OpcaoChip } from "./components/FiltroChips";
-import { CriarEmpresaDialog } from "./components/EmpresaDialogs";
+import { CriarEmpresaDialog, type NovaEmpresa } from "./components/EmpresaDialogs";
 
 type Linha = EmpresaRow & { situacao: Situacao };
 type Filtro = "ativas" | Situacao;
@@ -57,10 +57,19 @@ export default function Empresas() {
   }, [linhas, filtro, busca]);
 
   const criar = useAcaoEmpresa({
-    run: async (input: { nome: string; ownerEmail: string }) => {
+    run: async (input: NovaEmpresa) => {
       const res = (await edgeFetch("ultra-admin-empresas", {
         method: "POST",
-        body: { nome: input.nome, owner_email: input.ownerEmail },
+        body: {
+          nome: input.nome,
+          owner_email: input.ownerEmail,
+          owner_nome: input.ownerNome || null,
+          cnpj: input.cnpj.replace(/\D/g, "") || null,
+          site: input.site || null,
+          porte: input.porte,
+          disciplinas: input.disciplinas,
+          origem: input.origem,
+        },
       })) as { warning?: string | null; empresa_id?: string };
       return res;
     },

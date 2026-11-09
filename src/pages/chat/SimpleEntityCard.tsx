@@ -57,6 +57,11 @@ type Field = {
   full?: boolean;
 };
 
+// "Nova categoria criada", "Novo cliente criado": concorda com o gênero do título.
+function tituloCriado(titulo: string): string {
+  return `${titulo} ${titulo.startsWith("Nova ") ? "criada" : "criado"}`;
+}
+
 type EntConfig = { titulo: string; icon: LucideIcon; verbo: string; link: string; fields: Field[] };
 
 const CONFIG: Partial<Record<Entidade, EntConfig>> = {
@@ -292,7 +297,7 @@ export function SimpleEntityCard({ index, draft, entidade, onConfirmar, onCancel
     setSalvando(true);
     try {
       await onConfirmar(draft.runId, entidade, form as DraftCampos);
-      toast.success(`${cfg.titulo} criado`);
+      toast.success(tituloCriado(cfg.titulo));
     } catch (e) {
       toast.error("Não foi possível criar", { description: msgErro(e) });
     } finally {
@@ -329,7 +334,7 @@ export function SimpleEntityCard({ index, draft, entidade, onConfirmar, onCancel
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-positive/15 text-positive-strong">
             <Check className="h-3.5 w-3.5" />
           </span>
-          {cfg.titulo} criado
+          {tituloCriado(cfg.titulo)}
         </div>
         <div className="mt-3 flex items-center gap-2 pl-8">
           <NavLink
@@ -480,7 +485,7 @@ export function SimpleEntityCard({ index, draft, entidade, onConfirmar, onCancel
       <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-3">
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Coins className="h-3.5 w-3.5" />
-          Criar consome tokens de IA
+          Criar consome créditos de IA
         </span>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={cancelar} disabled={salvando}>

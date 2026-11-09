@@ -35,12 +35,14 @@ import {
 import { DialogDescription as DD, DialogFooter } from "@/components/ui/dialog";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useNivelConfianca } from "@/hooks/useNivelConfianca";
+import { DesbloqueioNivel } from "@/components/trial/DesbloqueioNivel";
+import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
 import { PageLayout } from "@/components/PageLayout";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
 import { FilterBar, FilterClear, FilterPopover, FilterSelect } from "@/components/filters/FilterBar";
 import { PageHeader } from "@/components/PageHeader";
-import { useUserRole } from "@/hooks/useUserRole";
 import { toast } from "sonner";
 import { analytics } from "@/lib/analytics";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -75,12 +77,14 @@ import { SmartInvoiceDialog } from "@/pages/propostas/components/SmartInvoiceDia
 
 import { BusyMark } from "@/components/motion/BusyMark";
 import { ReadingRing } from "@/components/motion/ReadingRing";
+import { disciplinasDoDocumento } from "./lib/disciplinasDocumento";
 
 interface PropostaDisciplina {
   id: string;
   disciplina: string;
   horas_estimadas: number | null;
   custo_hora: number | null;
+  valor_venda: number | null;
 }
 
 const VISAO_OPCOES: ViewOption<ViewMode>[] = [
@@ -117,7 +121,6 @@ export default function Propostas() {
   usePageTitle("Propostas");
   useRegistrarPagina("pagina", "/documentos", "Documentos");
   const queryClient = useQueryClient();
-  const { data: userRole } = useUserRole();
   const { data: propostas = [], isLoading } = usePropostas();
   const createProposta = useCreateProposta();
   const updateProposta = useUpdateProposta();
@@ -128,14 +131,20 @@ export default function Propostas() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const canEdit = userRole === "admin" || userRole === "ultra_admin";
-  // Com a estimativa ligada na empresa, a proposta oferece "Estimar obra" (SPEC 136, BEZ-143).
-  const podeEstimar = usePermissions().can("estimativa_obra", "create");
+  // Permissão por módulo (ADR 0029), igual a "Nova proposta"; status pede edit. Estimar: SPEC 136.
+  const { can } = usePermissions();
+  const canEdit = can("propostas", "edit");
+  const canDelete = can("propostas", "delete");
+  const podeEstimar = can("estimativa_obra", "create");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [vinculoTipo, setVinculoTipo] = useState<"cliente" | "lead">("cliente");
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; titulo: string } | null>(null);
   const [convertPropostaId, setConvertPropostaId] = useState<string | null>(null);
+  // Converter cria projeto: no limite do plano, abre o mesmo diálogo de limite da
+  // criação de projeto em vez de um "Erro na conversão" sem explicação.
+  const [capacidadeErro, setCapacidadeErro] = useState<CapacidadeErro | null>(null);
+  const { isAdmin: isAdminEmpresa } = useNivelConfianca();
   const [gerarDocxPropostaId, setGerarDocxPropostaId] = useState<string | null>(null);
   const [gerarContratoPropostaId, setGerarContratoPropostaId] = useState<string | null>(null);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
@@ -336,6 +345,7 @@ export default function Propostas() {
   };
 
   const handleStatusChange = (id: string, status: string) => {
+    if (!canEdit) return;
     updateProposta.mutate(
       { id, status },
       {
@@ -349,7 +359,7 @@ export default function Propostas() {
   };
 
   const handleDelete = () => {
-    if (!confirmDelete) return;
+    if (!confirmDelete || !canDelete) return;
     const { id, titulo } = confirmDelete;
     deleteProposta.mutate(id, {
       onSuccess: () => {
@@ -390,7 +400,16 @@ export default function Propostas() {
           navigate(`/projetos/${projetoId}`);
         }
       },
-      onError: () => toast.error("Erro na conversão"),
+      onError: (err) => {
+        const capacidade = parseCapacidadeError(err);
+        if (!capacidade) {
+          toast.error("Erro na conversão");
+          return;
+        }
+        analytics.track("trial_limite_atingido", { recurso: capacidade.recurso, limite: capacidade.limite });
+        setConvertPropostaId(null);
+        setCapacidadeErro(capacidade);
+      },
     });
   };
 
@@ -601,7 +620,7 @@ export default function Propostas() {
         </span>
       ),
     },
-    ...(canEdit
+    ...(canDelete
       ? [
           {
             key: "acoes",
@@ -642,6 +661,7 @@ export default function Propostas() {
         label: "Nova proposta",
         icon: Plus,
         feature: "propostas",
+        dataTour: "onb-nova-proposta",
         onClick: () => {
           resetForm();
           setCodigoAutomatico(true);
@@ -741,7 +761,7 @@ export default function Propostas() {
                           <Badge className={`text-[10px] ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
                             {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
                           </Badge>
-                          {canEdit && (
+                          {canDelete && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                                 <Button
@@ -815,6 +835,7 @@ export default function Propostas() {
         }}
         proposta={detailProposta}
         canEdit={canEdit}
+        canDelete={canDelete}
         hoje={hoje}
         onEdit={() => detailPropostaId && openEdit(detailPropostaId)}
         onDelete={() => {
@@ -844,12 +865,12 @@ export default function Propostas() {
             : undefined
         }
         onMarcarContratoAssinado={() => {
-          if (detailPropostaId) {
+          if (detailPropostaId && canEdit) {
             updateProposta.mutate({ id: detailPropostaId, contrato_assinado: true } as never);
           }
         }}
         onRecusarContrato={() => {
-          if (detailPropostaId) {
+          if (detailPropostaId && canEdit) {
             updateProposta.mutate({ id: detailPropostaId, contrato_recusado: true } as never, {
               onSuccess: () =>
                 toast.info("Contrato recusado registrado.", {
@@ -1100,6 +1121,16 @@ export default function Propostas() {
         onConfirm={handleDelete}
       />
 
+      {capacidadeErro && (
+        <DesbloqueioNivel
+          open
+          onOpenChange={(o) => !o && setCapacidadeErro(null)}
+          recurso={capacidadeErro.recurso}
+          limite={capacidadeErro.limite}
+          isAdmin={isAdminEmpresa}
+        />
+      )}
+
       {/* Dialog Conversão Proposta → Projeto */}
       <Dialog
         open={!!convertPropostaId}
@@ -1211,11 +1242,7 @@ export default function Propostas() {
             if (!open) setGerarDocxPropostaId(null);
           }}
           proposta={gerarDocxProposta}
-          disciplinas={gerarDocxDisciplinas.map((d: PropostaDisciplina) => ({
-            disciplina: d.disciplina,
-            horas_estimadas: Number(d.horas_estimadas),
-            custo_hora: Number(d.custo_hora),
-          }))}
+          disciplinas={disciplinasDoDocumento(gerarDocxDisciplinas)}
           onSent={() => {
             setGerarDocxPropostaId(null);
             handleStatusChange(gerarDocxProposta.id, "enviada");
@@ -1231,11 +1258,7 @@ export default function Propostas() {
           }}
           mode="contrato"
           proposta={gerarContratoProposta}
-          disciplinas={gerarContratoDisciplinas.map((d: PropostaDisciplina) => ({
-            disciplina: d.disciplina,
-            horas_estimadas: Number(d.horas_estimadas),
-            custo_hora: Number(d.custo_hora),
-          }))}
+          disciplinas={disciplinasDoDocumento(gerarContratoDisciplinas)}
           onSent={() => {
             queryClient.invalidateQueries({ queryKey: ["propostas"] });
             setGerarContratoPropostaId(null);

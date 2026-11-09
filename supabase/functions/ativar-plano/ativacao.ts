@@ -89,7 +89,10 @@ export function valorDoCiclo(
   plan: { preco_mensal: number | null; preco_anual: number | null },
   ciclo: Body["billing_cycle"]
 ): number | null {
-  return (ciclo === "yearly" ? plan.preco_anual : plan.preco_mensal) ?? null;
+  const valor = ciclo === "yearly" ? plan.preco_anual : plan.preco_mensal;
+  // Preço ausente, zero ou negativo é plano mal configurado: nunca vai ao Asaas
+  // (o checkout e a troca de plano já recusam o mesmo caso).
+  return typeof valor === "number" && valor > 0 ? valor : null;
 }
 
 /** A primeira cobrança acontece no fim do trial (data, sem hora). */

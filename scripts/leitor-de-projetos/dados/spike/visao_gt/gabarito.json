@@ -1,0 +1,163 @@
+{
+ "bloco_caso_a.png": {
+  "ambientes": [
+   {
+    "nome": "Suíte visitas",
+    "area": 9.66
+   },
+   {
+    "nome": "Lavatório",
+    "area": 2.16
+   },
+   {
+    "nome": "Hall",
+    "area": 11.98
+   },
+   {
+    "nome": "Banho",
+    "area": 3.04
+   }
+  ],
+  "esquadrias": [],
+  "cotas": [
+   "3,45",
+   "5,76"
+  ]
+ },
+ "bloco_caso_f.png": {
+  "ambientes": [
+   {
+    "nome": "BANHO",
+    "area": 5.35
+   },
+   {
+    "nome": "CIRC.",
+    "area": 1.71
+   },
+   {
+    "nome": "FOSSO ILUMINAÇÃO",
+    "area": 6.9
+   },
+   {
+    "nome": "QUARTO 01",
+    "area": 11.64
+   },
+   {
+    "nome": "5Área",
+    "area": 3.52
+   }
+  ],
+  "esquadrias": [
+   "J02",
+   "J04",
+   "P02",
+   "P04",
+   "P06"
+  ],
+  "cotas": [
+   "1,07",
+   "1,21",
+   "1,29",
+   "2,01",
+   "3,25",
+   "3,33",
+   "3,43",
+   "3,48",
+   "3,50",
+   "6,73"
+  ]
+ },
+ "bloco_caso_g.png": {
+  "ambientes": [
+   {
+    "nome": "CIRCULAÇÃO",
+    "area": 6.89
+   },
+   {
+    "nome": "CLOSET. SUÍTE 3",
+    "area": 9.98
+   },
+   {
+    "nome": "BHO SUÍTE 3",
+    "area": 8.82
+   },
+   {
+    "nome": "BHO SUÍTE 2",
+    "area": 3.9
+   }
+  ],
+  "esquadrias": [],
+  "cotas": [
+   "0,80",
+   "0,90",
+   "1,30",
+   "1,80",
+   "2,20",
+   "2,80",
+   "2,85",
+   "2,85",
+   "3,35"
+  ]
+ },
+ "bloco_caso_e.png": {
+  "ambientes": [
+   {
+    "nome": "BANHO 01",
+    "area": 4.32
+   },
+   {
+    "nome": "BANHO 02",
+    "area": 4.32
+   },
+   {
+    "nome": "SUÍTE 01",
+    "area": 19.21
+   },
+   {
+    "nome": "SUÍTE 02",
+    "area": 19.21
+   },
+   {
+    "nome": "SALA ÍNTIMA",
+    "area": 17.35
+   },
+   {
+    "nome": "ROUPARIA",
+    "area": 7.0
+   },
+   {
+    "nome": "CLOSET 01",
+    "area": 5.11
+   },
+   {
+    "nome": "CLOSET 02",
+    "area": 5.11
+   }
+  ],
+  "esquadrias": [
+   "J07",
+   "J07",
+   "P06",
+   "P06",
+   "P06",
+   "P06",
+   "P06",
+   "P08",
+   "P08",
+   "P09",
+   "P09"
+  ],
+  "cotas": [
+   "0,35",
+   "1,60",
+   "1,60",
+   "3,50",
+   "3,50",
+   "4,16",
+   "4,16",
+   "4,74",
+   "5,96",
+   "5,96"
+  ]
+ }
+}

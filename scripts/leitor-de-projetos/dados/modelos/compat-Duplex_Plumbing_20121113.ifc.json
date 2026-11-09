@@ -1,0 +1,47 @@
+{
+ "arquitetura": "Duplex_A_20110907.ifc",
+ "instalacao": "Duplex_Plumbing_20121113.ifc",
+ "n_arq": 86,
+ "n_inst": 494,
+ "caixa_arq": [
+  [
+   -0.0,
+   -22.18,
+   -1.25
+  ],
+  [
+   8.8,
+   4.38,
+   6.61
+  ]
+ ],
+ "caixa_inst": [
+  [
+   -0.39,
+   -12.93,
+   -0.76
+  ],
+  [
+   6.29,
+   -5.01,
+   6.62
+  ]
+ ],
+ "sobreposicao_planta": 0.942,
+ "classificacao": {
+  "embutido (esperado) | IfcWall": 79,
+  "travessia (furação) | IfcSlab": 74,
+  "contato (verificar) | IfcWall": 65,
+  "embutido (esperado) | IfcSlab": 46,
+  "embutimento longo (rasgo ou shaft) | IfcWall": 34,
+  "travessia (furação) | IfcWall": 34,
+  "contato (verificar) | IfcSlab": 18,
+  "embutimento longo (rasgo ou shaft) | IfcSlab": 8
+ },
+ "por_classe": {
+  "embutido (esperado)": 125,
+  "contato (verificar)": 83,
+  "travessia (furação)": 108,
+  "embutimento longo (rasgo ou shaft)": 42
+ }
+}
