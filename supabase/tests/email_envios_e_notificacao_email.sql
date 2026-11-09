@@ -181,7 +181,7 @@ SELECT ok(
 
 SELECT throws_ok(
   $$ SELECT * FROM public.notificacoes_pendentes_email('diario') $$,
-  'modo inválido: diario (use imediato ou semanal)',
+  'modo inválido: diario (use imediato, semanal ou mencao)',
   'modo desconhecido é recusado com mensagem clara');
 
 SELECT is(

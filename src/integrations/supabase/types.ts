@@ -10128,9 +10128,13 @@ export type Database = {
         Returns: undefined
       }
       notificacoes_email_imediato_monitored: { Args: never; Returns: undefined }
+      notificacoes_email_mencao_disparar: {
+        Args: { p_ids: string[] }
+        Returns: undefined
+      }
       notificacoes_email_semanal_monitored: { Args: never; Returns: undefined }
       notificacoes_pendentes_email: {
-        Args: { p_modo: string }
+        Args: { p_ids?: string[]; p_modo: string }
         Returns: {
           categoria: string
           created_at: string

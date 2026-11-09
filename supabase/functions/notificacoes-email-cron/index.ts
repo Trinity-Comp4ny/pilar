@@ -5,6 +5,8 @@
  * Chamada por pg_cron (migration 20260912000000) com o service role no header:
  *   POST { "modo": "imediato" }  a cada 5 min, severidade high/critical
  *   POST { "modo": "semanal"  }  segunda 11:00 UTC (08:00 BRT)
+ * E pela rpc_notificar_mencao (migration 20261208000000), na hora da menção:
+ *   POST { "modo": "mencao", "ids": [...] }  só as notificações daquela menção
  *
  * Quem recebe o quê é decidido no banco (`notificacoes_pendentes_email`), que
  * respeita a preferência de categoria e o roteamento original da notificação.
@@ -33,6 +35,16 @@ const CRON_SECRET = Deno.env.get("CRON_SECRET") ?? "";
 const MAX_PESSOAS_IMEDIATO = 200;
 const MAX_PESSOAS_SEMANAL = 2000;
 
+type Modo = "imediato" | "semanal" | "mencao";
+const MODOS: Modo[] = ["imediato", "semanal", "mencao"];
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const TIPO_ENVIO: Record<Modo, string> = {
+  imediato: "notificacao_imediata",
+  semanal: "notificacao_semanal",
+  mencao: "notificacao_mencao",
+};
+
 function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 }
@@ -49,16 +61,27 @@ serve(
       return json({ error: "Unauthorized" }, 401);
     }
 
-    let modo: string;
+    let body: { modo?: string; ids?: unknown };
     try {
-      const body = (await req.json()) as { modo?: string };
-      modo = body.modo ?? "";
+      body = (await req.json()) as { modo?: string; ids?: unknown };
     } catch {
       return json({ error: "Invalid JSON" }, 400);
     }
 
-    if (modo !== "imediato" && modo !== "semanal") {
-      return json({ error: "modo deve ser 'imediato' ou 'semanal'" }, 400);
+    const modo = body.modo as Modo;
+    if (!MODOS.includes(modo)) {
+      return json({ error: "modo deve ser 'imediato', 'semanal' ou 'mencao'" }, 400);
+    }
+
+    // Menção manda só as notificações daquela menção: sem ids, não varre a base toda.
+    let ids: string[] | null = null;
+    if (modo === "mencao") {
+      const valido =
+        Array.isArray(body.ids) &&
+        body.ids.length > 0 &&
+        body.ids.every((i) => typeof i === "string" && UUID_RE.test(i));
+      if (!valido) return json({ error: "ids deve ser uma lista de uuids" }, 400);
+      ids = body.ids as string[];
     }
 
     if (!SUPABASE_URL) {
@@ -68,7 +91,7 @@ serve(
 
     const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
-    const { data, error } = await admin.rpc("notificacoes_pendentes_email", { p_modo: modo });
+    const { data, error } = await admin.rpc("notificacoes_pendentes_email", { p_modo: modo, p_ids: ids ?? undefined });
     if (error) {
       log.error("falha ao buscar pendências", error, { modo });
       return json({ error: "Query failed" }, 500);
@@ -85,7 +108,7 @@ serve(
     const lotes = agruparPorPessoa(linhas, {
       appUrl: BRAND.appUrl,
       sinoUrl,
-      maxPessoas: modo === "imediato" ? MAX_PESSOAS_IMEDIATO : MAX_PESSOAS_SEMANAL,
+      maxPessoas: modo === "semanal" ? MAX_PESSOAS_SEMANAL : MAX_PESSOAS_IMEDIATO,
     });
 
     let enviados = 0;
@@ -104,7 +127,7 @@ serve(
       try {
         const res = await sendEmail({
           classe: "plataforma",
-          tipo: modo === "imediato" ? "notificacao_imediata" : "notificacao_semanal",
+          tipo: TIPO_ENVIO[modo],
           to: lote.email,
           empresa: { id: lote.empresaId, nome: BRAND.nome },
           referencia: { tipo: "notificacoes_lote" },
