@@ -1,73 +1,73 @@
 {
  "provider": "kokoro",
- "voice": "kokoro/pm_alex",
- "total": 59.609,
+ "voice": "kokoro/pf_dora",
+ "total": 54.977,
  "lines": [
   {
    "id": "l01",
    "text": "Lançar um pagamento. Montar um aditivo. Resumir a semana.",
    "start": 0.5,
-   "dur": 3.709
+   "dur": 3.439
   },
   {
    "id": "l02",
    "text": "É trabalho que toma horas do sócio, e não é engenharia.",
-   "start": 4.559,
-   "dur": 3.254
+   "start": 4.199,
+   "dur": 2.997
   },
   {
    "id": "l03",
-   "text": "Na Pilar, agentes de IA fazem esse preparo. E nada vai adiante sem você.",
-   "start": 8.412,
-   "dur": 4.898
+   "text": "A Pilar faz esse preparo por você. E nada vai adiante sem a sua aprovação.",
+   "start": 7.646,
+   "dur": 4.627
   },
   {
    "id": "l04",
    "text": "Funciona em três passos. Primeiro, a IA prepara.",
-   "start": 13.81,
-   "dur": 3.159
+   "start": 12.653,
+   "dur": 2.977
   },
   {
    "id": "l05",
    "text": "Você conta como falaria: recebi 128 mil do centro cirúrgico, primeira de três parcelas.",
-   "start": 17.27,
-   "dur": 6.789
+   "start": 15.85,
+   "dur": 6.372
   },
   {
    "id": "l06",
-   "text": "O agente acha o projeto e monta o lançamento.",
-   "start": 24.408,
-   "dur": 2.912
+   "text": "A Pilar acha o projeto e monta o lançamento.",
+   "start": 22.481,
+   "dur": 2.612
   },
   {
    "id": "l07",
    "text": "Depois, o sistema confere: o projeto pelo nome, a parcela calculada, a categoria do seu plano de contas.",
-   "start": 27.77,
-   "dur": 6.938
+   "start": 25.433,
+   "dur": 6.448
   },
   {
    "id": "l08",
    "text": "Por último, você aprova. Só então o lançamento entra no financeiro.",
-   "start": 35.158,
-   "dur": 4.281
+   "start": 32.222,
+   "dur": 4.082
   },
   {
    "id": "l09",
-   "text": "O mesmo vale para o aditivo: o projeto passou do orçamento de horas, e o agente monta o aditivo citando as despesas de cada valor.",
-   "start": 40.039,
-   "dur": 8.514
+   "text": "O mesmo vale para o aditivo: o projeto passou do orçamento de horas, e a Pilar monta o aditivo citando as despesas de cada valor.",
+   "start": 36.754,
+   "dur": 7.79
   },
   {
    "id": "l10",
    "text": "E toda semana, o resumo chega pronto, com cada número conferido.",
-   "start": 49.052,
-   "dur": 3.968
+   "start": 44.923,
+   "dur": 3.761
   },
   {
    "id": "l11",
    "text": "Pilar. A IA prepara. O sistema confere. Você aprova.",
-   "start": 53.72,
-   "dur": 3.289
+   "start": 49.204,
+   "dur": 3.173
   }
  ]
 }

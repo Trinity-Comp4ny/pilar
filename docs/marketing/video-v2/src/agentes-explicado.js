@@ -67,7 +67,7 @@ const cap = captions(document.getElementById("stage"), T.lines, { y: 1470, max: 
   tl.set(glow, { opacity: 0.6 }, t0);
   const Lk = lockup(s, { x: 210, y: 560, w: 660, theme: "dark" });
   Lk.draw(t0 + 0.1);
-  const h = headline(s, "Agentes de IA fazem|o *preparo*.", { y: 1000, size: 76, align: "center", x: 60, w: 960 });
+  const h = headline(s, "A Pilar faz|o *preparo*.", { y: 1000, size: 76, align: "center", x: 60, w: 960 });
   textIn(h, S("l03", 0.1));
   const h2 = el("div", "chip", s, `${icon("shield-check")} Nada vai adiante sem você`);
   pos(h2, 260, 1230);

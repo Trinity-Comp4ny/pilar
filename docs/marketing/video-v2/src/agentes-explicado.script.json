@@ -6,58 +6,58 @@
     {
       "id": "l01",
       "text": "Lançar um pagamento. Montar um aditivo. Resumir a semana.",
-      "gap": 0.35
+      "gap": 0.26
     },
     {
       "id": "l02",
       "text": "É trabalho que toma horas do sócio, e não é engenharia.",
-      "gap": 0.6
+      "gap": 0.45
     },
     {
       "id": "l03",
-      "text": "Na Pilar, agentes de IA fazem esse preparo. E nada vai adiante sem você.",
-      "gap": 0.5
+      "text": "A Pilar faz esse preparo por você. E nada vai adiante sem a sua aprovação.",
+      "gap": 0.38
     },
     {
       "id": "l04",
       "text": "Funciona em três passos. Primeiro, a IA prepara.",
-      "gap": 0.3
+      "gap": 0.22
     },
     {
       "id": "l05",
       "text": "Você conta como falaria: recebi 128 mil do centro cirúrgico, primeira de três parcelas.",
       "say": "Você conta como falaria: recebi cento e vinte e oito mil do centro cirúrgico, primeira de três parcelas.",
-      "gap": 0.35
+      "gap": 0.26
     },
     {
       "id": "l06",
-      "text": "O agente acha o projeto e monta o lançamento.",
-      "gap": 0.45
+      "text": "A Pilar acha o projeto e monta o lançamento.",
+      "gap": 0.34
     },
     {
       "id": "l07",
       "text": "Depois, o sistema confere: o projeto pelo nome, a parcela calculada, a categoria do seu plano de contas.",
-      "gap": 0.45
+      "gap": 0.34
     },
     {
       "id": "l08",
       "text": "Por último, você aprova. Só então o lançamento entra no financeiro.",
-      "gap": 0.6
+      "gap": 0.45
     },
     {
       "id": "l09",
-      "text": "O mesmo vale para o aditivo: o projeto passou do orçamento de horas, e o agente monta o aditivo citando as despesas de cada valor.",
-      "gap": 0.5
+      "text": "O mesmo vale para o aditivo: o projeto passou do orçamento de horas, e a Pilar monta o aditivo citando as despesas de cada valor.",
+      "gap": 0.38
     },
     {
       "id": "l10",
       "text": "E toda semana, o resumo chega pronto, com cada número conferido.",
-      "gap": 0.7
+      "gap": 0.52
     },
     {
       "id": "l11",
       "text": "Pilar. A IA prepara. O sistema confere. Você aprova.",
-      "gap": 0
+      "gap": 0.0
     }
   ]
 }

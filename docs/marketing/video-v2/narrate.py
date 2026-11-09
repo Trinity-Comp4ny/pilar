@@ -130,8 +130,8 @@ def tts_kokoro(text):
     from kokoro_onnx import Kokoro
 
     d = Path(os.environ["KOKORO_DIR"])
-    voice = os.environ.get("VOICE_KOKORO", "pm_alex")
-    speed = float(os.environ.get("KOKORO_SPEED", "0.9"))  # um pouco mais lento: dicção mais clara
+    voice = os.environ.get("VOICE_KOKORO", "pf_dora")  # feminina (pedido do CEO, 2026-11-09)
+    speed = float(os.environ.get("KOKORO_SPEED", "1.0"))
     if _kokoro is None:
         _kokoro = Kokoro(str(d / "kokoro-v1.0.onnx"), str(d / "voices-v1.0.bin"))
     ph = fix_phonemes(_kokoro.tokenizer.phonemize(text, "pt-br"))
@@ -163,7 +163,8 @@ VOICE_CHAIN = (
     "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.02,"
     "areverse,silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.05,areverse,"
     "highpass=f=80,equalizer=f=220:t=q:w=1.2:g=-1.5,equalizer=f=3200:t=q:w=1.4:g=2.5,"
-    "equalizer=f=9000:t=h:w=1:g=1.5,acompressor=threshold=-21dB:ratio=3:attack=4:release=90:makeup=2,"
+    "equalizer=f=9000:t=h:w=1:g=1.5,deesser=i=0.4,acompressor=threshold=-21dB:ratio=3:attack=4:release=90:makeup=2,"
+    "aecho=0.9:0.6:18|31:0.07|0.05,"
     f"aresample={SR}"
 )
 
@@ -195,7 +196,7 @@ def main():
             raw = (manual / f"{ln['id']}.wav").read_bytes()
         else:
             say = ln.get("say", ln["text"])
-            key = hashlib.sha1(f"{provider}|{os.environ.get('VOICE_' + provider.upper(), '')}|{os.environ.get('KOKORO_SPEED', '')}|fon2|{say}".encode()).hexdigest()[:16]
+            key = hashlib.sha1(f"{provider}|{os.environ.get('VOICE_' + provider.upper(), '')}|{os.environ.get('KOKORO_SPEED', '')}|fon3|{say}".encode()).hexdigest()[:16]
             hit = cache / f"{key}.wav"
             if hit.exists():
                 raw = hit.read_bytes()
