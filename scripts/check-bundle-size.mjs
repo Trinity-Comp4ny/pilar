@@ -48,7 +48,10 @@ const BUDGETS = {
   // 2026-11-07: 329 kB (era 328). staging já media 328,0 kB; o onboarding da SPEC 149 não pôs
   // nenhum módulo no boot (telas e cartões são lazy), mas os chunks novos aumentam a tabela de
   // preload da entrada em ~0,1 kB. Reavaliar se voltar a encostar.
-  initialLoad: 329 * 1024,
+  // 2026-11-09: 330 kB (era 329). staging media 328,1 kB; a rodada de minor/patch do Dependabot
+  // (PR #755: supabase-js 2.118, Radix 1.x→1.y, lucide-react) somou ~0,9 kB gzip ao boot e
+  // encostou em 329,0. Nenhum módulo novo no boot, só versão nova das mesmas libs.
+  initialLoad: 330 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app
