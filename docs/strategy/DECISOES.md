@@ -11,6 +11,19 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-09 (mais tarde) · Menção com @ sai por e-mail na hora, junto com o sino
+
+**Decisão:** quando alguém marca uma pessoa com @ num comentário (projeto, disciplina ou tarefa), o e-mail sai no
+mesmo instante em que a notificação aparece no sino, sem a janela de 5 minutos e sem esperar o resumo de segunda.
+Vale para toda categoria, inclusive tarefa; só não sai para quem desligou o e-mail daquela categoria. O ciclo de
+5 minutos fica como rede de segurança, se o envio na hora falhar.
+
+Contexto: o cliente reclamou que as pessoas marcadas "não recebiam nada"; o CEO quer o e-mail no mesmo instante do app.
+
+**Supera:** o "por e-mail em ~5 min se não for lida" da decisão de Equipe logo abaixo.
+
+---
+
 ## 2026-11-09 · Equipe é onde se dá acesso ao Pilar; o @ só oferece quem tem login
 
 **Decisão:** cadastrar alguém na Equipe é também dar o acesso: o cadastro de pessoa nova já envia o convite (caixa
