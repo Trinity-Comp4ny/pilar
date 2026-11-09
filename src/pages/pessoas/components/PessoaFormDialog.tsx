@@ -28,28 +28,19 @@ import { Badge } from "@/components/ui/badge";
 import { detectTipoChavePix, normalizarChavePix, TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import type { Pessoa, ContaBancaria, ChavePix } from "../types";
 import { BusyMark } from "@/components/motion/BusyMark";
+import { parseSupabaseError } from "./pessoaErros";
+import { CampoDarAcesso } from "./ConviteNovaPessoa";
+import { convidarNovaPessoa } from "./convidarNovaPessoa";
 
 interface PessoaFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editPessoa: Pessoa | null;
   onSaved: () => void;
+  podeConvidar?: boolean; // admin convida a pessoa nova já no cadastro
 }
 
-function parseSupabaseError(err: unknown): string {
-  const e = err as { code?: string; message?: string };
-  if (e.code === "23505") {
-    const msg = (e.message ?? "").toLowerCase();
-    if (msg.includes("cpf")) return "CPF já cadastrado na empresa";
-    if (msg.includes("email")) return "Email já cadastrado na empresa";
-    if (msg.includes("telefone")) return "Telefone já cadastrado na empresa";
-    return "Registro duplicado — verifique CPF, email ou telefone";
-  }
-  if (e.code === "23502") return "Preencha todos os campos obrigatórios.";
-  return err instanceof Error && !e.code ? err.message : "Não foi possível salvar. Tente de novo.";
-}
-
-export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: PessoaFormDialogProps) {
+export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved, podeConvidar }: PessoaFormDialogProps) {
   const isEditMode = editPessoa !== null;
   // Na criação todos veem/gravam os campos sensíveis. Na edição, quem não
   // tem acesso à folha abre o registro mascarado (salário/contas/PIX/CPF vêm
@@ -74,9 +65,11 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
   const [chavesPix, setChavesPix] = useState<ChavePix[]>([]);
   const [newChavePix, setNewChavePix] = useState("");
   const [bankOpen, setBankOpen] = useState(false);
+  const [enviarConvite, setEnviarConvite] = useState(true);
 
   useEffect(() => {
     if (!open) return;
+    setEnviarConvite(true);
 
     if (editPessoa) {
       form.reset({
@@ -239,12 +232,11 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
             empresaError ?? new Error("Não foi possível identificar sua empresa. Recarregue a página e tente de novo.")
           );
         }
-        const { error } = await supabase.from("pessoas").insert({
-          ...payload,
-          empresa_id: empresaId,
-        } as never);
+        const ins = { ...payload, empresa_id: empresaId } as never;
+        const { data: criada, error } = await supabase.from("pessoas").insert(ins).select("id").single();
         if (error) throw error;
         toast.success("Pessoa cadastrada", { description: "Nova pessoa adicionada com sucesso" });
+        if (podeConvidar && enviarConvite && criada?.id) await convidarNovaPessoa({ ...payload, id: criada.id });
       }
 
       onOpenChange(false);
@@ -726,6 +718,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
             )}
           </div>
 
+          {podeConvidar && !isEditMode && <CampoDarAcesso checked={enviarConvite} onCheckedChange={setEnviarConvite} />}
           {/* Footer */}
           <div className="flex items-center gap-2 px-6 py-4 bg-muted/30">
             <Button type="button" variant="ghost" size="sm" onClick={() => onOpenChange(false)} disabled={isSubmitting}>

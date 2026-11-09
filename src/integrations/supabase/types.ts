@@ -1455,6 +1455,7 @@ export type Database = {
           expira_em: string
           id: string
           nome: string | null
+          pessoa_id: string | null
           token: string | null
           token_hash: string | null
           usado_em: string | null
@@ -1468,6 +1469,7 @@ export type Database = {
           expira_em?: string
           id?: string
           nome?: string | null
+          pessoa_id?: string | null
           token?: string | null
           token_hash?: string | null
           usado_em?: string | null
@@ -1481,6 +1483,7 @@ export type Database = {
           expira_em?: string
           id?: string
           nome?: string | null
+          pessoa_id?: string | null
           token?: string | null
           token_hash?: string | null
           usado_em?: string | null
@@ -1492,6 +1495,27 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "empresas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convites_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convites_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "pessoas_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "convites_pessoa_id_fkey"
+            columns: ["pessoa_id"]
+            isOneToOne: false
+            referencedRelation: "view_folha_pagamento"
+            referencedColumns: ["pessoa_id"]
           },
         ]
       }
@@ -9648,7 +9672,12 @@ export type Database = {
         Returns: Json
       }
       create_convite: {
-        Args: { p_cargo: string; p_email: string; p_nome?: string }
+        Args: {
+          p_cargo: string
+          p_email: string
+          p_nome?: string
+          p_pessoa_id?: string
+        }
         Returns: string
       }
       create_portal_token: {
@@ -10822,6 +10851,10 @@ export type Database = {
       user_has_feature: {
         Args: { p_feature: string; p_min_level?: string }
         Returns: boolean
+      }
+      vincular_pessoa_conta: {
+        Args: { p_pessoa_id: string; p_profile_id: string }
+        Returns: undefined
       }
     }
     Enums: {

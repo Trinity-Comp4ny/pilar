@@ -11,6 +11,20 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-09 · Equipe é onde se dá acesso ao Pilar; o @ só oferece quem tem login
+
+**Decisão:** cadastrar alguém na Equipe é também dar o acesso: o cadastro de pessoa nova já envia o convite (caixa
+"Dar acesso ao Pilar", marcada por padrão, só para admin) e a ficha da pessoa mostra se ela tem login, convida ou liga a
+um login que já existe com outro e-mail. O menu de @ das atividades lista só quem tem login (sai a etiqueta "sem
+acesso"). Menção chega no sistema e por e-mail em ~5 min se não for lida.
+
+Contexto: num escritório cliente, pessoas com login corporativo estavam na Equipe com o e-mail pessoal; o vínculo era só por
+e-mail idêntico, então apareciam "sem acesso" no @ e não recebiam menção. Os dois casos foram ligados à mão em produção.
+
+**Supera:** a etiqueta "sem acesso" no menu de menção (SPEC 132) e a menção só no resumo semanal por e-mail (SPEC 096).
+
+---
+
 ## 2026-11-08 · Landing leva aos planos; assinatura direta pelo site, demonstração como caminho secundário
 
 **Decisão:** os botões principais da landing passam a ser "Ver planos" e "Entrar". Cada plano tem "Assinar", que

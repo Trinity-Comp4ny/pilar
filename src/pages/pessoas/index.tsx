@@ -13,10 +13,14 @@ import { PessoaDetailDialog } from "./components/PessoaDetailDialog";
 import { PessoaTable } from "./components/PessoaTable";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PESSOAS_EMPRESA_QUERY_KEY } from "@/pages/meu-trabalho/hooks";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Pessoas() {
   usePageTitle("Equipe");
   const { canEdit: isAdmin } = useFeatureAccess("pessoas");
+  // Convidar para o Pilar é de admin (create_convite); editar a Equipe pode ser delegado.
+  const { profile } = useAuth();
+  const podeConvidar = ["admin", "owner", "ultra_admin"].includes(String(profile?.role ?? ""));
   const queryClient = useQueryClient();
 
   const {
@@ -123,12 +127,17 @@ export default function Pessoas() {
         isAdmin={isAdmin}
         onEdit={handleEditClick}
         onDelete={handleDeleteClick}
+        onAcessoAlterado={() => {
+          queryClient.invalidateQueries({ queryKey: ["pessoas"] });
+          queryClient.invalidateQueries({ queryKey: PESSOAS_EMPRESA_QUERY_KEY });
+        }}
       />
 
       <PessoaFormDialog
         open={isFormDialogOpen}
         onOpenChange={setIsFormDialogOpen}
         editPessoa={editingPessoa}
+        podeConvidar={podeConvidar}
         onSaved={() => {
           queryClient.invalidateQueries({ queryKey: ["pessoas"] });
           queryClient.invalidateQueries({ queryKey: PESSOAS_EMPRESA_QUERY_KEY });

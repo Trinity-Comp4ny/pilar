@@ -53,18 +53,26 @@ describe("AtividadeComposer: menu de menção pelo teclado", () => {
 
   it("Tab também escolhe; Esc fecha sem mexer no texto", () => {
     const caixa = montar();
-    digitar(caixa, "@Ca");
+    digitar(caixa, "@Andr");
     fireEvent.keyDown(caixa, { key: "Tab" });
-    expect(caixa).toHaveValue("@Caio ");
+    expect(caixa).toHaveValue("@André ");
 
-    digitar(caixa, "@Caio @D");
-    expect(screen.getByRole("button", { name: /Duda/ })).toBeInTheDocument();
+    digitar(caixa, "@André @An");
+    expect(screen.getByRole("button", { name: "Ana" })).toBeInTheDocument();
     fireEvent.keyDown(caixa, { key: "Escape" });
-    expect(screen.queryByRole("button", { name: /Duda/ })).not.toBeInTheDocument();
-    expect(caixa).toHaveValue("@Caio @D");
+    expect(screen.queryByRole("button", { name: "Ana" })).not.toBeInTheDocument();
+    expect(caixa).toHaveValue("@André @An");
     // Com o menu fechado, outra tecla qualquer não faz nada.
     fireEvent.keyDown(caixa, { key: "ArrowDown" });
-    expect(caixa).toHaveValue("@Caio @D");
+    expect(caixa).toHaveValue("@André @An");
+  });
+
+  it("quem não tem login não aparece no menu", () => {
+    const caixa = montar();
+    digitar(caixa, "@");
+    expect(screen.getByRole("button", { name: "Ana" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Caio" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Duda" })).not.toBeInTheDocument();
   });
 
   it("consulta sem ninguém deixa o menu fechado e Enter envia", () => {
