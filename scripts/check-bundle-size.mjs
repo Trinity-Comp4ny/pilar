@@ -5,7 +5,7 @@
 // Tunar limites em BUDGETS abaixo. Variável BUDGET_OVERRIDE=relaxed
 // permite passagem temporária com warning (use só em emergência).
 
-import { readdir, readFile, stat } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 
@@ -69,17 +69,19 @@ function fmt(bytes) {
 async function main() {
   let entries;
   try {
-    entries = await readdir(DIST);
+    entries = await readdir(DIST, { withFileTypes: true });
   } catch {
     console.error(`[budget] dist/assets não encontrado. Rode 'npm run build' antes.`);
     process.exit(1);
   }
 
   const chunks = [];
-  for (const name of entries) {
+  // O tipo vem do próprio readdir: sem stat() antes do readFile() no mesmo caminho
+  // (CodeQL js/file-system-race).
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    const name = entry.name;
     const full = join(DIST, name);
-    const s = await stat(full);
-    if (!s.isFile()) continue;
     const ext = name.endsWith(".js") ? "js" : name.endsWith(".css") ? "css" : null;
     if (!ext) continue;
     const raw = await readFile(full);
