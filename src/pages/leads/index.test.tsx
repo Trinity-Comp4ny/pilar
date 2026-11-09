@@ -583,7 +583,8 @@ describe("Leads: filtros, busca e visão em lista", () => {
       .find((el) => el.tagName === "INPUT") as HTMLInputElement;
 
   async function escolher(user: ReturnType<typeof userEvent.setup>, filtro: string, opcao: string) {
-    await user.click(screen.getByRole("button", { name: filtro }));
+    // Com filtro ativo o nome vira "Rótulo: opção" (acompanha o texto visível).
+    await user.click(screen.getByRole("button", { name: new RegExp(`^${filtro}(:|$)`) }));
     await user.click(await screen.findByRole("option", { name: opcao }));
   }
 

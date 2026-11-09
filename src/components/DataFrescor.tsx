@@ -63,7 +63,9 @@ export function DataFrescor({ updatedAt, isFetching, onRefresh, className, compa
       disabled={isFetching}
       className="transition-opacity hover:opacity-70 disabled:cursor-default disabled:opacity-100"
       title="Atualizar agora"
-      aria-label="Atualizar dados agora"
+      // O nome acessível contém o texto visível (WCAG 2.5.3): quem usa comando de voz
+      // fala o que vê ("Atualizado há 2 minutos") e o leitor de tela diz a ação.
+      aria-label={`${label}. Atualizar dados agora`}
     >
       {content}
     </button>
