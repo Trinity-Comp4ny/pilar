@@ -287,16 +287,36 @@ export function linhaParaCandidato(l: LinhaExtrato): Candidato {
 
 /**
  * Conciliação leve: acha uma conta pendente que casa com o candidato (mesmo tipo,
- * valor igual e vencimento dentro da janela de dias). Retorna o id ou null.
+ * valor igual e vencimento dentro da janela de dias). Entre os que casam, fica o de
+ * data mais próxima. `usados` garante o pareamento 1:1: um pendente já casado com
+ * outra linha do extrato não casa de novo (antes duas linhas de R$ 500 podiam
+ * conciliar o MESMO título). Retorna o id ou null.
  */
-export function encontrarDuplicata(c: Candidato, pendentes: ContaPendente[], janelaDias = 3): string | null {
+export function encontrarDuplicata(
+  c: Candidato,
+  pendentes: ContaPendente[],
+  janelaDias = 3,
+  usados?: Set<string>
+): string | null {
   const alvo = new Date(`${c.data}T00:00:00`).getTime();
   const limite = janelaDias * 86_400_000;
-  const match = pendentes.find(
-    (p) =>
-      p.tipo === c.tipo &&
-      Math.abs(p.valor - c.valor) < 0.005 &&
-      Math.abs(new Date(`${p.data}T00:00:00`).getTime() - alvo) <= limite
-  );
-  return match?.id ?? null;
+  let melhor: { id: string; dist: number } | null = null;
+  for (const p of pendentes) {
+    if (p.tipo !== c.tipo || Math.abs(p.valor - c.valor) >= 0.005) continue;
+    if (usados?.has(p.id)) continue;
+    const dist = Math.abs(new Date(`${p.data}T00:00:00`).getTime() - alvo);
+    if (dist > limite) continue;
+    if (!melhor || dist < melhor.dist) melhor = { id: p.id, dist };
+  }
+  return melhor?.id ?? null;
+}
+
+/** Pareia cada candidato com no máximo um pendente, e cada pendente com no máximo um candidato. */
+export function parearComPendentes(cands: Candidato[], pendentes: ContaPendente[], janelaDias = 3): (string | null)[] {
+  const usados = new Set<string>();
+  return cands.map((c) => {
+    const id = encontrarDuplicata(c, pendentes, janelaDias, usados);
+    if (id) usados.add(id);
+    return id;
+  });
 }

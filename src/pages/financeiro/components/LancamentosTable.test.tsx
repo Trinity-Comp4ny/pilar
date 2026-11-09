@@ -14,6 +14,13 @@ vi.mock("@/integrations/supabase/client", async () => ({
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => true }));
+vi.mock("@/components/ui/select", async () => await import("../testing/nativeSelect"));
+vi.mock("../hooks/useContasOpcoes", () => ({
+  useContasOpcoes: () => [
+    { id: "conta-1", nome: "Itaú PJ" },
+    { id: "conta-2", nome: "Nubank" },
+  ],
+}));
 
 const acesso = { canEdit: true };
 vi.mock("@/hooks/useFeatureAccess", () => ({
@@ -39,8 +46,8 @@ vi.mock("../hooks/useGruposParcelaResumo", () => ({ useGruposParcelaResumo: () =
 vi.mock("../hooks/useParcelasDosGrupos", () => ({ useParcelasDosGrupos: () => new Map() }));
 vi.mock("./LancamentosFilterBar", () => ({ LancamentosFilterBar: () => null }));
 // Detalhe simplificado: expõe o "Excluir" que a tabela recebe.
-vi.mock("./LancamentoDetailDialog", () => ({
-  LancamentoDetailDialog: ({
+vi.mock("./LancamentoDetailSheet", () => ({
+  LancamentoDetailSheet: ({
     lancamento,
     open,
     onDelete,
@@ -135,7 +142,12 @@ beforeEach(() => {
   vi.setSystemTime(new Date(2026, 10, 10, 22, 30)); // 22h30 em SP: em UTC já é dia 11
   sb.resultado("despesas.update", { data: null, error: null });
   sb.resultado("receitas.update", { data: null, error: null });
+  sb.rpcResultado("rpc_soft_delete", { data: null, error: null });
+  sb.rpcResultado("rpc_restaurar", { data: null, error: null });
 });
+
+const escolherConta = (id: string) =>
+  fireEvent.change(screen.getByRole("combobox", { name: "Conta" }), { target: { value: id } });
 afterEach(() => vi.useRealTimers());
 
 describe("LancamentosTable: marcar pago/recebido", () => {
@@ -146,20 +158,37 @@ describe("LancamentosTable: marcar pago/recebido", () => {
     expect(screen.getByRole("heading", { name: "Confirmar recebimento/pagamento" })).toBeInTheDocument();
     expect(sb.de("despesas", "update")).toHaveLength(0);
 
+    escolherConta("conta-1");
     fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
     await waitFor(() => expect(onMutated).toHaveBeenCalled());
-    expect(sb.de("despesas", "update")[0].args[0]).toEqual({ status: "Pago", data_pagamento: "2026-11-10" });
+    expect(sb.de("despesas", "update")[0].args[0]).toEqual({
+      status: "Pago",
+      data_pagamento: "2026-11-10",
+      conta_id: "conta-1",
+    });
     expect(sb.de("despesas", "eq")[0].args).toEqual(["id", "d-1"]);
     expect(toast.success).toHaveBeenCalledWith("Status atualizado");
   });
 
   it("receita: grava Recebido com a data de recebimento", async () => {
-    itens = [lanc({ id: "r-1", tipo: "receita", descricao: "Honorários" })];
+    itens = [lanc({ id: "r-1", tipo: "receita", descricao: "Honorários", conta_id: "conta-2" })];
     const { onMutated } = setup();
     fireEvent.click(botaoMarcar("Marcar recebido"));
     fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
     await waitFor(() => expect(onMutated).toHaveBeenCalled());
+    // Já tem conta: não pede e não troca.
+    expect(screen.queryByRole("combobox", { name: "Conta" })).not.toBeInTheDocument();
     expect(sb.de("receitas", "update")[0].args[0]).toEqual({ status: "Recebido", data_recebimento: "2026-11-10" });
+  });
+
+  it("sem conta escolhida não grava e explica o motivo (B7)", async () => {
+    itens = [lanc({})];
+    const { onMutated } = setup();
+    fireEvent.click(botaoMarcar("Marcar pago"));
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Escolha a conta", expect.anything()));
+    expect(sb.de("despesas", "update")).toHaveLength(0);
+    expect(onMutated).not.toHaveBeenCalled();
   });
 
   it("cancelar a confirmação não grava", () => {
@@ -175,6 +204,7 @@ describe("LancamentosTable: marcar pago/recebido", () => {
     itens = [lanc({})];
     const { onMutated } = setup();
     fireEvent.click(botaoMarcar("Marcar pago"));
+    escolherConta("conta-1");
     fireEvent.click(screen.getByRole("button", { name: "Confirmar" }));
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith("Não foi possível atualizar o status", expect.anything())
@@ -212,20 +242,35 @@ describe("LancamentosTable: excluir", () => {
     const { onMutated } = setup();
     const dlg = abrirExclusao("Aluguel");
     expect(within(dlg).getByText("Excluir despesa")).toBeInTheDocument();
-    expect(sb.argsRpc("rpc_soft_delete")).toBeUndefined();
+    expect(sb.client.rpc).not.toHaveBeenCalled();
     fireEvent.click(within(dlg).getByRole("button", { name: "Excluir" }));
     await waitFor(() => expect(onMutated).toHaveBeenCalled());
+    // Soft delete (reversível), nunca DELETE físico.
     expect(sb.argsRpc("rpc_soft_delete")).toEqual({ p_tabela: "despesas", p_id: "d-1" });
-    expect(toast.success).toHaveBeenCalledWith("Lançamento excluído");
+    expect(sb.de("despesas", "delete")).toHaveLength(0);
+    expect(toast.success).toHaveBeenCalledWith("Lançamento excluído", {
+      action: { label: "Desfazer", onClick: expect.any(Function) },
+    });
+  });
+
+  it("Desfazer restaura o lançamento excluído", async () => {
+    itens = [lanc({})];
+    const { onMutated } = setup();
+    const dlg = abrirExclusao("Aluguel");
+    fireEvent.click(within(dlg).getByRole("button", { name: "Excluir" }));
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+    const opts = vi.mocked(toast.success).mock.calls[0][1] as unknown as { action: { onClick: () => void } };
+    opts.action.onClick();
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Lançamento restaurado"));
+    expect(sb.argsRpc("rpc_restaurar")).toEqual({ p_tabela: "despesas", p_id: "d-1" });
+    expect(onMutated).toHaveBeenCalledTimes(2);
   });
 
   it("parcela avisa que só ela será excluída", () => {
     itens = [lanc({ grupo_parcela: "g1", parcela_numero: 2, parcela_total: 3 })];
     setup();
     const dlg = abrirExclusao("Aluguel");
-    expect(
-      within(dlg).getByText("Esta é uma parcela de um grupo. Apenas esta parcela será excluída.")
-    ).toBeInTheDocument();
+    expect(within(dlg).getByText(/Apenas esta parcela será excluída/)).toBeInTheDocument();
   });
 
   it("transferência usa a RPC de exclusão (apaga os dois lados)", async () => {

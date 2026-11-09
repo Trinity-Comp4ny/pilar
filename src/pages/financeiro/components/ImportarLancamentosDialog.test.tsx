@@ -86,6 +86,9 @@ async function colarEExtrair(texto = "05/10 CIMENTO 150,00") {
   });
 }
 const linhas = () => within(screen.getByRole("table")).getAllByRole("row").slice(1);
+// Extrato entra efetivado e exige a conta; o 2º combobox do preview é a conta.
+const escolherContaDoExtrato = (id = "conta-1") =>
+  fireEvent.change(screen.getAllByRole("combobox")[1], { target: { value: id } });
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -297,7 +300,7 @@ describe("ImportarLancamentosDialog: revisão e gravação", () => {
     const [itensGravados, opts] = hook.gravarLote.mock.calls[0];
     expect(itensGravados[0]).toMatchObject({ descricao: "Cimento CP-II", data: "2026-10-06", valor: 200 });
     expect(itensGravados[0].lineHash).not.toBe("h");
-    expect(opts).toEqual({ contaId: "conta-1", projetoId: "proj-1" });
+    expect(opts).toEqual({ contaId: "conta-1", projetoId: "proj-1", tipoDoc: "extrato" });
     expect(onImported).toHaveBeenCalled();
     expect(toast.success).toHaveBeenCalledWith("Importação concluída", {
       description: "2 lançamento(s) criado(s), 1 conciliado(s).",
@@ -307,19 +310,31 @@ describe("ImportarLancamentosDialog: revisão e gravação", () => {
     expect(screen.getByText(/criado\(s\)/).closest("span")).toHaveTextContent(/Saídas R\$\s?250,00/);
   });
 
-  it("sem conta/projeto grava com nulos", async () => {
+  it("extrato sem conta não grava e explica (as linhas entram pagas nesta conta)", async () => {
     setup();
     await colarEExtrair();
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Importar 2 lançamento(s)" }));
     });
-    expect(hook.gravarLote.mock.calls[0][1]).toEqual({ contaId: null, projetoId: null });
+    expect(hook.gravarLote).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith("Escolha a conta do extrato", expect.anything());
+  });
+
+  it("planilha sem conta/projeto grava com nulos", async () => {
+    setup();
+    fireEvent.change(screen.getAllByRole("combobox")[0], { target: { value: "planilha" } });
+    await colarEExtrair();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Importar 2 lançamento(s)" }));
+    });
+    expect(hook.gravarLote.mock.calls[0][1]).toEqual({ contaId: null, projetoId: null, tipoDoc: "planilha" });
   });
 
   it("erro ao gravar mantém o preview e avisa", async () => {
     hook.gravarLote.mockRejectedValueOnce(new Error("permission denied for table despesas"));
     const { onImported } = setup();
     await colarEExtrair();
+    escolherContaDoExtrato();
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Importar 2 lançamento(s)" }));
     });
@@ -362,6 +377,7 @@ describe("ImportarLancamentosDialog: revisão e gravação", () => {
 describe("ImportarLancamentosDialog: desfazer", () => {
   async function importar() {
     await colarEExtrair();
+    escolherContaDoExtrato();
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Importar 2 lançamento(s)" }));
     });

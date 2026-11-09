@@ -1,0 +1,5 @@
+.venv/
+vendor/
+cuts/
+shared/
+.auth.json

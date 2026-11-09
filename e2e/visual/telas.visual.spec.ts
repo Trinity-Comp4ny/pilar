@@ -101,9 +101,30 @@ async function fixarTextoVariavel(page: Page) {
   );
 }
 
+/**
+ * "networkidle" não basta: o Início ainda mostrava "Atualizando…" e os cards em esqueleto
+ * quando a foto saía, e a referência pegava um ponto diferente do carregamento a cada
+ * execução (CI de 09/11, ~12 mil pixels). Espera sumir todo sinal de carregamento. Se uma
+ * tela nunca parar de carregar, a espera desiste e a foto sai como antes (a diferença
+ * aparece na comparação, não num timeout).
+ */
+async function esperarCarregado(page: Page) {
+  await page
+    .waitForFunction(
+      () =>
+        !document.body.innerText.includes("Atualizando…") &&
+        !document.querySelector('.animate-pulse, [aria-busy="true"]'),
+      null,
+      { timeout: 15_000 }
+    )
+    .catch(() => undefined);
+  await page.waitForLoadState("networkidle");
+}
+
 async function abrir(page: Page, rota: string) {
   await page.goto(rota);
   await page.waitForLoadState("networkidle");
+  await esperarCarregado(page);
   await page.evaluate(() => document.fonts.ready);
   await fixarTextoVariavel(page);
 }

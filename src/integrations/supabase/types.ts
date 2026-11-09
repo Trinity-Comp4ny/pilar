@@ -10000,6 +10000,7 @@ export type Database = {
       }
       get_resumo_semanal: { Args: never; Returns: Json }
       get_resumo_semanal_fatos: { Args: never; Returns: Json }
+      get_titulos_posicao: { Args: { p_tipo: string }; Returns: Json }
       get_user_empresa_id: { Args: never; Returns: string }
       get_user_empresa_id_text: { Args: never; Returns: string }
       get_user_role: { Args: never; Returns: string }
@@ -10374,6 +10375,29 @@ export type Database = {
         }
         Returns: number
       }
+      rpc_buscar_duplicatas: {
+        Args: {
+          p_contraparte_id?: string
+          p_data: string
+          p_descricao: string
+          p_excluir_id?: string
+          p_grupo_parcela?: string
+          p_nota_fiscal?: string
+          p_tipo: string
+          p_valor: number
+        }
+        Returns: {
+          confianca: string
+          contraparte_nome: string
+          data_vencimento: string
+          descricao: string
+          id: string
+          motivo: string
+          nota_fiscal: string
+          status: string
+          valor: number
+        }[]
+      }
       rpc_calcular_wip: {
         Args: { p_ano: number; p_mes: number }
         Returns: number
@@ -10481,6 +10505,7 @@ export type Database = {
       }
       rpc_grupo_parcela_quitar_antecipado: {
         Args: {
+          p_conta_id?: string
           p_data_pagamento?: string
           p_desconto_total?: number
           p_grupo_id: string
@@ -10505,6 +10530,10 @@ export type Database = {
           p_tipo_lancamento: string
         }
         Returns: number
+      }
+      rpc_lancamentos_criar: {
+        Args: { p_linhas: Json; p_rateios?: Json; p_tipo: string }
+        Returns: string[]
       }
       rpc_meta_historico: {
         Args: { p_meta_id: string; p_periodos?: number }

@@ -102,6 +102,10 @@ export function FilterSelect({
   const atual = options.find((o) => o.value === value);
   const ativo = !showValue && emptyValue !== undefined && value !== emptyValue && !!atual;
   const comBusca = searchable ?? options.length > LIMITE_SEM_BUSCA;
+  // Com valor à mostra, o nome acessível leva o rótulo e o valor: contém o texto visível
+  // (WCAG 2.5.3) e não perde o "Status" que diz o que o botão filtra.
+  const textoVisivel = showValue ? (atual?.label ?? label) : ativo ? `${label}: ${atual.label}` : label;
+  const nomeAcessivel = showValue && atual ? `${label}: ${atual.label}` : textoVisivel;
 
   const escolher = (v: string) => {
     onChange(v);
@@ -116,11 +120,9 @@ export function FilterSelect({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" aria-label={label} className={filterTriggerClass(ativo, className)}>
+        <Button variant="outline" aria-label={nomeAcessivel} className={filterTriggerClass(ativo, className)}>
           {Icon && <Icon size={14} aria-hidden className={cn("shrink-0", !ativo && "text-black/50")} />}
-          <span className="truncate">
-            {showValue ? (atual?.label ?? label) : ativo ? `${label}: ${atual.label}` : label}
-          </span>
+          <span className="truncate">{textoVisivel}</span>
           {ativo ? (
             <span
               role="button"

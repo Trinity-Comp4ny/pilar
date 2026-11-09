@@ -152,7 +152,7 @@ describe("Início", () => {
 
   it("atualizar pelo selo de frescor refaz a consulta", async () => {
     const user = renderInicio();
-    await user.click(screen.getByRole("button", { name: "Atualizar dados agora" }));
+    await user.click(screen.getByRole("button", { name: /Atualizar dados agora/ }));
     expect(h.painel.refetch).toHaveBeenCalledOnce();
   });
 

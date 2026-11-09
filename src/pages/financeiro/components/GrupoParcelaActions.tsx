@@ -21,6 +21,8 @@ import { MoneyInput } from "@/components/forms/MoneyInput";
 import { parseCurrencyString } from "@/lib/currencyUtils";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useContasOpcoes } from "../hooks/useContasOpcoes";
 import { ChevronDown, Pencil, RefreshCw, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
@@ -115,6 +117,8 @@ export function GrupoParcelaActions({ lancamento: l, onChanged }: Props) {
       <QuitarAntecipadoDialog
         open={action === "quitar"}
         grupoId={l.grupo_parcela}
+        contaInicial={l.conta_id ?? ""}
+        exigeConta={!l.cartao_id}
         onClose={() => setAction(null)}
         onDone={onChanged}
       />
@@ -135,7 +139,8 @@ function EditarEmAbertoDialog({ open, grupoId, onClose, onDone }: OpProps) {
   const [saving, setSaving] = useState(false);
 
   const submit = async () => {
-    if (valor && !(Number(valor) > 0)) {
+    const valorNum = valor ? parseCurrencyString(valor) : null;
+    if (valorNum !== null && !(valorNum > 0)) {
       toast.error("Valor da parcela deve ser maior que zero");
       return;
     }
@@ -143,7 +148,7 @@ function EditarEmAbertoDialog({ open, grupoId, onClose, onDone }: OpProps) {
     try {
       const { data, error } = await supabase.rpc("rpc_grupo_parcela_editar_em_aberto", {
         p_grupo_id: grupoId,
-        p_novo_valor_parcela: valor ? Number(valor) : undefined,
+        p_novo_valor_parcela: valorNum ?? undefined,
         p_nova_categoria_id: undefined,
         p_novo_centro_custo_id: undefined,
         p_nova_conta_id: undefined,
@@ -172,13 +177,7 @@ function EditarEmAbertoDialog({ open, grupoId, onClose, onDone }: OpProps) {
         <div className="space-y-3 py-2">
           <div>
             <Label>Novo valor por parcela (opcional)</Label>
-            <Input
-              type="number"
-              step="0.01"
-              value={valor}
-              onChange={(e) => setValor(e.target.value)}
-              placeholder="Deixe vazio para manter"
-            />
+            <MoneyInput value={valor} onChange={setValor} placeholder="Deixe vazio para manter" />
           </div>
           <div>
             <Label>Observação (opcional)</Label>
@@ -285,20 +284,30 @@ function RenegociarDialog({ open, grupoId, onClose, onDone }: OpProps) {
   );
 }
 
-function QuitarAntecipadoDialog({ open, grupoId, onClose, onDone }: OpProps) {
+function QuitarAntecipadoDialog({
+  open,
+  grupoId,
+  contaInicial,
+  exigeConta,
+  onClose,
+  onDone,
+}: OpProps & { contaInicial: string; exigeConta: boolean }) {
   const [dataPagamento, setDataPagamento] = useState(() => format(new Date(), "yyyy-MM-dd"));
   const [quantidade, setQuantidade] = useState("");
   const [desconto, setDesconto] = useState("");
+  const [contaId, setContaId] = useState(contaInicial);
   const [saving, setSaving] = useState(false);
+  const contas = useContasOpcoes(open && exigeConta);
 
   const submit = async () => {
     if (quantidade && !(Number.isInteger(Number(quantidade)) && Number(quantidade) >= 1)) {
       toast.error("Quantidade deve ser um número inteiro maior que zero");
       return;
     }
-    // Desconto negativo aumentaria o valor pago.
-    if (desconto && !(Number(desconto) >= 0)) {
-      toast.error("Desconto não pode ser negativo");
+    // Sem a conta, a quitação baixava as parcelas sem dizer de onde saiu o dinheiro
+    // e o saldo da conta não batia com o banco (diagnóstico 2026-11-07, B7).
+    if (exigeConta && !contaId) {
+      toast.error("Escolha a conta do pagamento");
       return;
     }
     setSaving(true);
@@ -307,7 +316,8 @@ function QuitarAntecipadoDialog({ open, grupoId, onClose, onDone }: OpProps) {
         p_grupo_id: grupoId,
         p_data_pagamento: dataPagamento,
         p_quantidade: quantidade ? Number(quantidade) : undefined,
-        p_desconto_total: desconto ? Number(desconto) : 0,
+        p_desconto_total: desconto ? parseCurrencyString(desconto) : 0,
+        p_conta_id: exigeConta ? contaId : undefined,
       });
       if (error) throw error;
       toast.success(`${data ?? 0} parcela(s) quitada(s)`);
@@ -338,9 +348,26 @@ function QuitarAntecipadoDialog({ open, grupoId, onClose, onDone }: OpProps) {
             <Label>Quantidade (vazio = todas em aberto)</Label>
             <Input type="number" min={1} value={quantidade} onChange={(e) => setQuantidade(e.target.value)} />
           </div>
+          {exigeConta && (
+            <div>
+              <Label htmlFor="quitar-conta">Conta *</Label>
+              <Select value={contaId} onValueChange={setContaId}>
+                <SelectTrigger id="quitar-conta" aria-label="Conta">
+                  <SelectValue placeholder="De qual conta saiu / em qual entrou" />
+                </SelectTrigger>
+                <SelectContent>
+                  {contas.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div>
-            <Label>Desconto total (R$)</Label>
-            <Input type="number" step="0.01" value={desconto} onChange={(e) => setDesconto(e.target.value)} />
+            <Label>Desconto total (opcional)</Label>
+            <MoneyInput value={desconto} onChange={setDesconto} aria-label="Desconto total" />
           </div>
         </div>
         <DialogFooter>
