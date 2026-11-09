@@ -22,6 +22,7 @@ import {
   Calendar,
   AlertTriangle,
   FolderPlus,
+  Calculator,
   Pencil as PencilIcon,
 } from "lucide-react";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
@@ -50,6 +51,8 @@ interface LeadDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   lead: Lead | null;
+  /** Nome da coluna do lead no funil (editável); sem ele mostra o status. */
+  etapaNome?: string;
   canEdit: boolean;
   members: LeadMember[];
   onEdit: (lead: Lead) => void;
@@ -61,12 +64,15 @@ interface LeadDetailDialogProps {
   onOpenProposta?: (id: string) => void;
   onConvertProjeto?: () => void;
   convertProjetoPending?: boolean;
+  /** Abre a estimativa de obra já ligada a este lead; ausente quando a empresa não tem a estimativa. */
+  onEstimar?: () => void;
 }
 
 export function LeadDetailDialog({
   open,
   onOpenChange,
   lead,
+  etapaNome,
   canEdit,
   members,
   onEdit,
@@ -78,6 +84,7 @@ export function LeadDetailDialog({
   onOpenProposta,
   onConvertProjeto,
   convertProjetoPending = false,
+  onEstimar,
 }: LeadDetailDialogProps) {
   const formatCurrency = useMoneyMask();
   if (!lead) return null;
@@ -91,11 +98,11 @@ export function LeadDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex flex-wrap items-center gap-2 pr-6">
             {nomeCompleto}
-            <Badge className={statusConfig?.color}>{statusConfig?.label ?? lead.status}</Badge>
+            <Badge className={statusConfig?.color}>{etapaNome ?? statusConfig?.label ?? lead.status}</Badge>
             {lead.status === "Perdido" && (
               <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-danger-soft text-danger-strong flex items-center gap-1">
                 <AlertTriangle size={10} /> Perdido
@@ -141,6 +148,21 @@ export function LeadDetailDialog({
               </span>
             )}
           </div>
+
+          {onEstimar && lead.status !== "Perdido" && (
+            <div className="space-y-2 rounded-lg border border-brand/40 bg-brand/10 p-3">
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                <Calculator className="h-4 w-4" aria-hidden="true" /> Estimar a obra
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Leve para a reunião uma faixa de custo e um prazo, com fonte de preço. A estimativa fica ligada a este
+                lead.
+              </p>
+              <Button size="sm" variant="outline" onClick={onEstimar}>
+                Estimar obra
+              </Button>
+            </div>
+          )}
 
           {proposta && (
             <div className="space-y-2 rounded-lg border border-border p-3">

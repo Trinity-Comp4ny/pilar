@@ -129,7 +129,7 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen w-full flex overflow-hidden bg-paper">
+    <div className="min-h-dvh w-full flex overflow-hidden bg-paper">
       {/* Lado Esquerdo - Formulário de Cadastro */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-paper relative">
         <Link
@@ -485,7 +485,7 @@ export default function Signup() {
             </div>
 
             <blockquote className="text-3xl font-light leading-snug">
-              "Saiba se cada projeto está dando lucro antes de terminar."
+              "Gestão com agentes de IA para escritórios de engenharia e arquitetura."
             </blockquote>
 
             <div className="flex flex-col items-end gap-3 pt-4 border-t border-white/20">

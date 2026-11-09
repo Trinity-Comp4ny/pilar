@@ -124,7 +124,7 @@ export function ProjetoRentabilidadeDetalheDialog({
             Não foi possível carregar o detalhe. Tente novamente em instantes.
           </p>
         ) : (
-          <div className="max-h-[65vh] space-y-5 overflow-auto pr-1">
+          <div className="max-h-[65dvh] space-y-5 overflow-auto pr-1">
             <Bloco titulo="Receitas" linhas={data.receitas} tone="positive" vazioMsg="Nenhuma receita lançada." />
             <Bloco
               titulo="Despesas diretas"

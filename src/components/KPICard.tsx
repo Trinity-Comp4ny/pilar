@@ -1,7 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { TONE_BADGE, TONE_VALUE, type StatusTone } from "@/lib/status";
 import { cn } from "@/lib/utils";
@@ -114,7 +113,12 @@ export function KPICard({
             TONE_VALUE[valueTone ?? tone]
           )}
         >
-          {loading ? <Skeleton className="inline-block h-6 w-24 align-middle" /> : valorFormatado}
+          {loading ? (
+            // span, não Skeleton (div): dentro de <p> o div é HTML inválido.
+            <span aria-hidden="true" className="inline-block h-6 w-24 animate-pulse rounded-md bg-muted align-middle" />
+          ) : (
+            valorFormatado
+          )}
         </p>
       )}
       {!loading && deltaNode && <p className="text-xs mt-1 flex items-center gap-1">{deltaNode}</p>}

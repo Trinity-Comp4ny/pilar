@@ -14,15 +14,19 @@ export const toCurrency = (value: string | number | null | undefined) => {
 
 // Em relatório misto (receitas + despesas) somar tudo produz um número sem sentido.
 // Nesse caso mostramos o Saldo (receitas − despesas); em relatório de tipo único, o Total.
+// Somas fechadas no centavo: sem isso 0,1 + 0,2 saía 0.30000000000000004 na
+// célula numérica do XLSX.
+const centavos = (n: number) => Math.round(n * 100) / 100;
+
 export const computeReportTotal = (data: ReportRow[]): { label: string; value: number } => {
   const hasReceita = data.some((r) => r.Tipo === "Receita");
   const hasDespesa = data.some((r) => r.Tipo === "Despesa");
   if (hasReceita && hasDespesa) {
     const receitas = data.filter((r) => r.Tipo === "Receita").reduce((a, r) => a + (r.Valor ?? 0), 0);
     const despesas = data.filter((r) => r.Tipo === "Despesa").reduce((a, r) => a + (r.Valor ?? 0), 0);
-    return { label: "Saldo", value: receitas - despesas };
+    return { label: "Saldo", value: centavos(receitas - despesas) };
   }
-  return { label: "Total", value: data.reduce((a, r) => a + (r.Valor ?? 0), 0) };
+  return { label: "Total", value: centavos(data.reduce((a, r) => a + (r.Valor ?? 0), 0)) };
 };
 
 export function generateCSV(data: ReportRow[], columns: (keyof ReportRow)[], filename: string) {

@@ -1,0 +1,3 @@
+{"caso": "caso_e", "vetor": 19, "blocos300": {"recuperou": "15/19", "blocos": 20, "numeros_lidos": 130, "t": 15.7}, "uniao": "15/19"}
+{"caso": "caso_e", "vetor": 19, "blocos300": {"recuperou": "15/19", "blocos": 20, "numeros_lidos": 130, "t": 15.7}, "uniao": "17/19", "blocos400": {"recuperou": "16/19", "blocos": 20, "numeros_lidos": 141, "t": 20.7}}
+{"caso": "caso_e", "vetor": 19, "blocos300": {"recuperou": "15/19", "blocos": 20, "numeros_lidos": 130, "t": 15.7}, "uniao": "18/19", "blocos400": {"recuperou": "16/19", "blocos": 20, "numeros_lidos": 141, "t": 20.7}, "blocos500": {"recuperou": "18/19", "blocos": 20, "numeros_lidos": 137, "t": 27.8}}

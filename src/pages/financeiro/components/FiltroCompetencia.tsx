@@ -1,4 +1,4 @@
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FilterSelect } from "@/components/filters/FilterBar";
 import { cn } from "@/lib/utils";
 
 const MESES = [
@@ -39,30 +39,22 @@ export function FiltroCompetencia({ mes, ano, onChange, fromYear, toYear, classN
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      <Select value={mes.toString()} onValueChange={(v) => onChange(parseInt(v, 10), ano)}>
-        <SelectTrigger className="w-[140px] h-9 rounded-full text-sm">
-          <SelectValue placeholder="Mês" />
-        </SelectTrigger>
-        <SelectContent>
-          {MESES.map((label, i) => (
-            <SelectItem key={i + 1} value={(i + 1).toString()}>
-              {label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Select value={ano.toString()} onValueChange={(v) => onChange(mes, parseInt(v, 10))}>
-        <SelectTrigger className="w-[100px] h-9 rounded-full text-sm">
-          <SelectValue placeholder="Ano" />
-        </SelectTrigger>
-        <SelectContent>
-          {anos.map((y) => (
-            <SelectItem key={y} value={y.toString()}>
-              {y}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <FilterSelect
+        label="Mês"
+        showValue
+        value={mes.toString()}
+        onChange={(v) => onChange(parseInt(v, 10), ano)}
+        options={MESES.map((label, i) => ({ value: (i + 1).toString(), label }))}
+        searchable={false}
+      />
+      <FilterSelect
+        label="Ano"
+        showValue
+        value={ano.toString()}
+        onChange={(v) => onChange(mes, parseInt(v, 10))}
+        options={anos.map((y) => ({ value: y.toString(), label: y.toString() }))}
+        searchable={false}
+      />
     </div>
   );
 }

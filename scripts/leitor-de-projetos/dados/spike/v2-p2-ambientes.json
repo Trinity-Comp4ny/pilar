@@ -1,0 +1,254 @@
+[
+ {
+  "nome": "Lavabo",
+  "area_rotulo": 2.24,
+  "vista": "Térreo",
+  "girado": false,
+  "px": [
+   6275,
+   2896
+  ],
+  "area_calc": 3.02,
+  "erro_pct": 34.8
+ },
+ {
+  "nome": "Suíte visitas",
+  "area_rotulo": 9.66,
+  "vista": "Térreo",
+  "girado": false,
+  "px": [
+   4437,
+   2200
+  ],
+  "area_calc": 9.59,
+  "erro_pct": -0.7
+ },
+ {
+  "nome": "Lavatório",
+  "area_rotulo": 2.16,
+  "vista": "Térreo",
+  "girado": false,
+  "px": [
+   3904,
+   2431
+  ],
+  "area_calc": 2.56,
+  "erro_pct": 18.5
+ },
+ {
+  "nome": "Despensa",
+  "area_rotulo": 1.6,
+  "vista": "Térreo",
+  "girado": false,
+  "px": [
+   4740,
+   1740
+  ],
+  "area_calc": 1.65,
+  "erro_pct": 3.1
+ },
+ {
+  "nome": "Área gourmet",
+  "area_rotulo": 77.06,
+  "vista": "Térreo",
+  "girado": false,
+  "px": [
+   6526,
+   1840
+  ],
+  "area_calc": 26.0,
+  "erro_pct": -66.3
+ },
+ {
+  "nome": "Hall",
+  "area_rotulo": 11.98,
+  "vista": "Térreo",
+  "girado": false,
+  "px": [
+   3798,
+   2860
+  ],
+  "area_calc": 16.35,
+  "erro_pct": 36.5
+ },
+ {
+  "nome": "Estar/ Cozinha",
+  "area_rotulo": 45.6,
+  "vista": "Térreo",
+  "girado": false,
+  "px": [
+   5528,
+   1953
+  ],
+  "area_calc": 37.74,
+  "erro_pct": -17.2
+ },
+ {
+  "nome": "Jardim",
+  "area_rotulo": 11.8,
+  "vista": "Térreo",
+  "girado": false,
+  "px": [
+   2811,
+   2170
+  ],
+  "area_calc": 0.2,
+  "erro_pct": -98.3
+ },
+ {
+  "nome": "Jardim",
+  "area_rotulo": 8.17,
+  "vista": "Térreo",
+  "girado": false,
+  "px": [
+   3111,
+   398
+  ],
+  "area_calc": 0.08,
+  "erro_pct": -99.0
+ },
+ {
+  "nome": "Jardim",
+  "area_rotulo": 35.68,
+  "vista": "Térreo",
+  "girado": false,
+  "px": [
+   7775,
+   534
+  ],
+  "area_calc": 76.59,
+  "erro_pct": 114.7
+ },
+ {
+  "nome": "Circulação",
+  "area_rotulo": 9.31,
+  "vista": "Superior",
+  "girado": false,
+  "px": [
+   5633,
+   6288
+  ],
+  "area_calc": 3.55,
+  "erro_pct": -61.9
+ },
+ {
+  "nome": "Suíte 01",
+  "area_rotulo": 12.74,
+  "vista": "Superior",
+  "girado": false,
+  "px": [
+   4267,
+   5634
+  ],
+  "area_calc": 17.71,
+  "erro_pct": 39.0
+ },
+ {
+  "nome": "Suíte 02",
+  "area_rotulo": 12.74,
+  "vista": "Superior",
+  "girado": false,
+  "px": [
+   5761,
+   5634
+  ],
+  "area_calc": 13.68,
+  "erro_pct": 7.4
+ },
+ {
+  "nome": "Suíte 03",
+  "area_rotulo": 11.02,
+  "vista": "Superior",
+  "girado": false,
+  "px": [
+   6622,
+   5046
+  ],
+  "area_calc": 9.74,
+  "erro_pct": -11.6
+ },
+ {
+  "nome": "ohnaB",
+  "area_rotulo": 3.04,
+  "vista": "Térreo",
+  "girado": true,
+  "px": [
+   3880,
+   2074
+  ],
+  "area_calc": 5.59,
+  "erro_pct": 83.9
+ },
+ {
+  "nome": ".dnavaL",
+  "area_rotulo": 5.04,
+  "vista": "Térreo",
+  "girado": true,
+  "px": [
+   4793,
+   1210
+  ],
+  "area_calc": 5.02,
+  "erro_pct": -0.4
+ },
+ {
+  "nome": "anuaS",
+  "area_rotulo": 2.32,
+  "vista": "Térreo",
+  "girado": true,
+  "px": [
+   6690,
+   2899
+  ],
+  "area_calc": 2.42,
+  "erro_pct": 4.3
+ },
+ {
+  "nome": "20S ohnaB",
+  "area_rotulo": 4.2,
+  "vista": "Superior",
+  "girado": true,
+  "px": [
+   5269,
+   5368
+  ],
+  "area_calc": 4.25,
+  "erro_pct": 1.2
+ },
+ {
+  "nome": "10S ohnaB",
+  "area_rotulo": 4.2,
+  "vista": "Superior",
+  "girado": true,
+  "px": [
+   4774,
+   5368
+  ],
+  "area_calc": 4.14,
+  "erro_pct": -1.4
+ },
+ {
+  "nome": "30S ohnaB",
+  "area_rotulo": 6.4,
+  "vista": "Superior",
+  "girado": true,
+  "px": [
+   6793,
+   5936
+  ],
+  "area_calc": 6.19,
+  "erro_pct": -3.3
+ },
+ {
+  "nome": "tesolC",
+  "area_rotulo": 8.37,
+  "vista": "Superior",
+  "girado": true,
+  "px": [
+   6417,
+   5796
+  ],
+  "area_calc": 9.85,
+  "erro_pct": 17.7
+ }
+]

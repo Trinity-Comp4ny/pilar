@@ -12,6 +12,7 @@ export interface ExtratoTokenEvento {
 
 const AGENT_LABEL: Record<string, string> = {
   ai_chat: "Chat de Agentes",
+  resumo_semanal: "Resumo semanal do Início",
   "cotacao-import": "Leitura de cotação",
   "import-financeiro": "Importação financeira",
 };

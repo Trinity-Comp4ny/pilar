@@ -163,3 +163,12 @@ update public.profiles
 set onboarding_state = onboarding_state || '{"dismissed": true}'::jsonb
 where empresa_id = '00000000-0000-0000-0000-000000000001'
   and coalesce((onboarding_state->>'dismissed')::boolean, false) = false;
+
+-- MFA do ultra_admin (ADR 0031): em produção o acesso entre empresas exige sessão aal2,
+-- no banco e nas Edge Functions. O usuário dev@local.test não tem fator e o front local
+-- já dispensa o desafio (mfaDevBypass), então o ambiente local e o E2E desligam a
+-- exigência aqui. Só neste seed: staging e produção ficam com o padrão (ligada).
+update public.platform_settings
+set exigir_mfa_ultra_admin = false
+where id = 'default'
+  and exigir_mfa_ultra_admin is distinct from false;

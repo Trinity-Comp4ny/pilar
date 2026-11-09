@@ -26,7 +26,7 @@ import {
   Cell,
   Label,
 } from "recharts";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
 import { CustomTooltip } from "../components/CustomTooltip";
 import { FinanceErrorState } from "../components/FinanceErrorState";
 import { CategoriaDetalheDialog } from "../components/CategoriaDetalheDialog";
@@ -87,71 +87,83 @@ function DonutChart({ data, totalLabel }: DonutProps) {
   const formatCurrency = useMoneyMask();
   const total = data.reduce((acc, item) => acc + item.value, 0);
 
+  // O gráfico é desenho: o Recharts marca cada fatia como imagem sem texto alternativo
+  // (Axe svg-img-alt). O desenho fica oculto para leitor de tela e o resumo em texto leva os valores.
+  const resumo = `Gráfico de rosca, total ${formatCurrency(total)}: ${data
+    .map((item) => `${item.name} ${formatCurrency(item.value)}`)
+    .join(", ")}`;
+
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
-        <Pie
-          data={data}
-          cx="50%"
-          cy="50%"
-          innerRadius={70}
-          outerRadius={100}
-          paddingAngle={3}
-          dataKey="value"
-          stroke="none"
-        >
-          {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.color} />
-          ))}
-          <Label
-            position="center"
-            content={({ viewBox }) => {
-              const { cx, cy } = (viewBox as { cx: number; cy: number }) ?? { cx: 0, cy: 0 };
-              return (
-                <>
-                  <text
-                    x={cx}
-                    y={cy - 8}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fontSize={10}
-                    fontWeight={600}
-                    fill="hsl(var(--chart-neutral))"
-                    style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}
-                  >
-                    {totalLabel}
-                  </text>
-                  <text
-                    x={cx}
-                    y={cy + 10}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fontSize={13}
-                    fontWeight={700}
-                    fill="hsl(var(--foreground))"
-                  >
-                    {formatCurrency(total)}
-                  </text>
-                </>
-              );
-            }}
-          />
-        </Pie>
-        <Tooltip content={<CustomTooltip />} />
-        <Legend
-          verticalAlign="bottom"
-          height={36}
-          formatter={(value, entry) => {
-            const v = (entry?.payload as { value?: number } | undefined)?.value ?? 0;
-            return (
-              <span className="text-xs text-foreground">
-                {value} — {formatCurrency(v)}
-              </span>
-            );
-          }}
-        />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="h-full w-full">
+      <p className="sr-only">{resumo}</p>
+      <div aria-hidden="true" className="h-full w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart accessibilityLayer={false}>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={70}
+              outerRadius={100}
+              paddingAngle={3}
+              dataKey="value"
+              stroke="none"
+              rootTabIndex={-1}
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+              <Label
+                position="center"
+                content={({ viewBox }) => {
+                  const { cx, cy } = (viewBox as { cx: number; cy: number }) ?? { cx: 0, cy: 0 };
+                  return (
+                    <>
+                      <text
+                        x={cx}
+                        y={cy - 8}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fontSize={10}
+                        fontWeight={600}
+                        fill="hsl(var(--chart-neutral))"
+                        style={{ textTransform: "uppercase", letterSpacing: "0.05em" }}
+                      >
+                        {totalLabel}
+                      </text>
+                      <text
+                        x={cx}
+                        y={cy + 10}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fontSize={13}
+                        fontWeight={700}
+                        fill="hsl(var(--foreground))"
+                      >
+                        {formatCurrency(total)}
+                      </text>
+                    </>
+                  );
+                }}
+              />
+            </Pie>
+            <Tooltip content={<CustomTooltip />} />
+            <Legend
+              verticalAlign="bottom"
+              height={36}
+              formatter={(value, entry) => {
+                const v = (entry?.payload as { value?: number } | undefined)?.value ?? 0;
+                return (
+                  <span className="text-xs text-foreground">
+                    {value}: {formatCurrency(v)}
+                  </span>
+                );
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
   );
 }
 
@@ -161,6 +173,11 @@ interface VisaoGeralProps {
   /** Abre o seletor de tipo de lançamento (botão global "Novo lançamento" do header). */
   onNovoLancamento?: () => void;
 }
+
+const GRAFICO_OPCOES: ViewOption<"comparativo" | "performance">[] = [
+  { value: "comparativo", label: "Comparativo" },
+  { value: "performance", label: "Performance" },
+];
 
 export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGeralProps) {
   const { visualizacao, dateFrom, dateTo } = useFinanceFilter();
@@ -262,21 +279,13 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
                 : "Receitas e despesas acumuladas ao longo do período"}
             </CardDescription>
           </div>
-          <ToggleGroup
-            type="single"
+          <ViewSwitcher
+            options={GRAFICO_OPCOES}
             value={chartView}
-            onValueChange={(v) => v && setChartView(v as "comparativo" | "performance")}
-            variant="outline"
-            size="sm"
-            className="shrink-0 self-start"
-          >
-            <ToggleGroupItem value="comparativo" aria-label="Gráfico comparativo">
-              Comparativo
-            </ToggleGroupItem>
-            <ToggleGroupItem value="performance" aria-label="Gráfico de performance">
-              Performance
-            </ToggleGroupItem>
-          </ToggleGroup>
+            onChange={setChartView}
+            ariaLabel="Tipo de gráfico"
+            className="self-start"
+          />
         </CardHeader>
         <CardContent>
           <div className="h-[350px] w-full relative">

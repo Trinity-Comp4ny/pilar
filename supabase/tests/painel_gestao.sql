@@ -85,11 +85,18 @@ VALUES ('aaaaaaaa-0000-0000-0000-0000000ba004'::uuid, '00000000-0000-0000-0000-0
         'Proposta em analise', 'enviada', current_date + 20, now() - interval '40 days', now() - interval '40 days');
 
 -- Projeto entregue no prazo, projeto entregue atrasado, e ativo sem previsão.
+-- As entregas ficam presas a meses do calendário (dia 5 de dois meses atrás e dia 15 do
+-- mês passado), não a "hoje menos N dias": com dias corridos, as duas caíam no mesmo mês
+-- em parte do mês (a partir de 16/10/2026 caíam ambas em setembro) e o teste falhava.
 INSERT INTO public.projetos (id, empresa_id, nome, status, data_previsao, data_final)
 VALUES ('bbbbbbbb-0000-0000-0000-0000000ba001'::uuid, '00000000-0000-0000-0000-0000000ba001'::uuid,
-        'Entregue no prazo', 'Concluído', current_date - 40, current_date - 45),
+        'Entregue no prazo', 'Concluído',
+        (date_trunc('month', current_date) - interval '2 months')::date + 9,
+        (date_trunc('month', current_date) - interval '2 months')::date + 4),
        ('bbbbbbbb-0000-0000-0000-0000000ba002'::uuid, '00000000-0000-0000-0000-0000000ba001'::uuid,
-        'Entregue atrasado', 'Concluído', current_date - 40, current_date - 20);
+        'Entregue atrasado', 'Concluído',
+        (date_trunc('month', current_date) - interval '1 month')::date + 4,
+        (date_trunc('month', current_date) - interval '1 month')::date + 14);
 
 INSERT INTO public.projetos (id, empresa_id, nome, status, data_previsao)
 VALUES ('bbbbbbbb-0000-0000-0000-0000000ba003'::uuid, '00000000-0000-0000-0000-0000000ba001'::uuid,

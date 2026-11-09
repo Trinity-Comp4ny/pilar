@@ -1,7 +1,9 @@
+import { format } from "date-fns";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ArrowDownCircle, ArrowUp, ArrowUpDown, ArrowDown } from "lucide-react";
+import { ArrowDownCircle, ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
+import { TABLE_CELL_DENSE_CLASS, TABLE_HEAD_CLASS } from "@/components/ui/table";
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { cn } from "@/lib/utils";
@@ -14,6 +16,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { getDisplayDate } from "@/lib/dateUtils";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { Lancamento } from "../hooks/useLancamentosUnified";
 import { useLancamentosPaginados } from "../hooks/useLancamentosPaginados";
 import { useGruposParcelaResumo } from "../hooks/useGruposParcelaResumo";
@@ -26,9 +29,20 @@ import { LancamentosFilterBar } from "./LancamentosFilterBar";
 import { useLancamentosFiltersData } from "../hooks/useLancamentosFiltersData";
 import { defaultFilters, type LancamentosFilters } from "./lancamentosFilters";
 import { LancamentosBulkBar } from "./LancamentosBulkBar";
+import { excluirLancamentos } from "./excluirLancamentos";
 import { LancamentosGroupRow } from "./LancamentosGroupRow";
+import { SortableTH } from "./LancamentosSortableTH";
 import { LancamentosItemRow } from "./LancamentosItemRow";
-
+import { LancamentosListaMobile } from "./LancamentosListaMobile";
+import {
+  isOverdue,
+  isPaidStatus,
+  montarLinhasAgrupadas,
+  rowKey,
+  stripParcelaSuffix,
+  type FlatRow,
+} from "./lancamentosRows";
+import { useParcelasDosGrupos } from "../hooks/useParcelasDosGrupos";
 import { PageLoader } from "@/components/motion/PageLoader";
 interface Props {
   resumo: LancamentosResumo;
@@ -45,32 +59,10 @@ interface SortState {
 
 const ROW_HEIGHT = 56;
 
-type FlatRow =
-  { kind: "item"; data: Lancamento; isChild: boolean } | { kind: "group"; groupId: string; items: Lancamento[] };
-
-export const isPaidStatus = (l: Lancamento) =>
-  (l.tipo === "receita" && (l.status === "Recebido" || l.status === "Recebida")) ||
-  (l.tipo === "despesa" && l.status === "Pago") ||
-  (l.tipo === "transferencia" && l.status === "Concluída");
-
-export const isOverdue = (l: Lancamento): boolean => {
-  if (isPaidStatus(l)) return false;
-  if (!l.data_vencimento) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const venc = new Date(l.data_vencimento + "T00:00:00");
-  return venc < today;
-};
-
-export const stripParcelaSuffix = (desc: string) => desc.replace(/\s*\(\d+\/\d+\)$/, "").trim();
-
-export function rowKey(l: Lancamento): string {
-  return `${l.tipo}-${l.id}`;
-}
-
 export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }: Props) {
   const { canEdit } = useFeatureAccess("financeiro");
   const aux = useLancamentosFiltersData();
+  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
 
   const [sort, setSort] = useState<SortState>({ key: "data", dir: "desc" });
@@ -139,56 +131,16 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
     setSelected(new Set());
   }, [filters]);
 
-  const flatRows = useMemo((): FlatRow[] => {
-    if (!grouped) return items.map((l) => ({ kind: "item" as const, data: l, isChild: false }));
+  // Grupo expandido mostra o plano inteiro, não só as parcelas do período (BEZ-442).
+  const parcelasDoPlano = useParcelasDosGrupos([...expandedGroups]);
 
-    const groups = new Map<string, Lancamento[]>();
-    for (const l of items) {
-      if (l.grupo_parcela && l.parcela_total && l.parcela_total > 1) {
-        const arr = groups.get(l.grupo_parcela) ?? [];
-        arr.push(l);
-        groups.set(l.grupo_parcela, arr);
-      }
-    }
-
-    const groupAnchors = new Map<string, string>();
-    for (const [gid, groupItems] of groups) {
-      const anchor = groupItems.reduce((best, cur) =>
-        (cur.parcela_numero ?? Infinity) < (best.parcela_numero ?? Infinity) ? cur : best
-      );
-      groupAnchors.set(gid, rowKey(anchor));
-    }
-
-    const result: FlatRow[] = [];
-    const emitted = new Set<string>();
-    for (const l of items) {
-      if (l.grupo_parcela && l.parcela_total && l.parcela_total > 1) {
-        const gid = l.grupo_parcela;
-        if (!emitted.has(gid) && groupAnchors.get(gid) === rowKey(l)) {
-          emitted.add(gid);
-          const groupItems = groups.get(gid)!;
-          const orderedItems = [...groupItems].sort((a, b) => (a.parcela_numero ?? 0) - (b.parcela_numero ?? 0));
-          result.push({ kind: "group", groupId: gid, items: orderedItems });
-          if (expandedGroups.has(gid)) {
-            for (const item of orderedItems) result.push({ kind: "item", data: item, isChild: true });
-          }
-        }
-      } else {
-        result.push({ kind: "item", data: l, isChild: false });
-      }
-    }
-
-    for (const [gid, groupItems] of groups) {
-      if (!emitted.has(gid)) {
-        const orderedItems = [...groupItems].sort((a, b) => (a.parcela_numero ?? 0) - (b.parcela_numero ?? 0));
-        result.push({ kind: "group", groupId: gid, items: orderedItems });
-        if (expandedGroups.has(gid)) {
-          for (const item of orderedItems) result.push({ kind: "item", data: item, isChild: true });
-        }
-      }
-    }
-    return result;
-  }, [items, grouped, expandedGroups]);
+  const flatRows = useMemo(
+    (): FlatRow[] =>
+      grouped
+        ? montarLinhasAgrupadas(items, expandedGroups, parcelasDoPlano)
+        : items.map((l) => ({ kind: "item" as const, data: l, isChild: false })),
+    [items, grouped, expandedGroups, parcelasDoPlano]
+  );
 
   const allGroupIds = useMemo(
     () => flatRows.filter((r): r is Extract<FlatRow, { kind: "group" }> => r.kind === "group").map((r) => r.groupId),
@@ -222,15 +174,19 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
   };
 
   const SortIcon = ({ k }: { k: SortKey }) => {
-    if (sort.key !== k) return <ArrowUpDown className="h-3 w-3 opacity-40" />;
-    return sort.dir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />;
+    if (sort.key !== k) return <ChevronsUpDown className="h-3.5 w-3.5 opacity-60" aria-hidden />;
+    return sort.dir === "asc" ? (
+      <ChevronUp className="h-3.5 w-3.5 opacity-60" aria-hidden />
+    ) : (
+      <ChevronDown className="h-3.5 w-3.5 opacity-60" aria-hidden />
+    );
   };
 
   // Pendência de data de efetivação: marcar como recebido/pago não grava mais a data de
   // hoje direto — abre este diálogo pra confirmar a data REAL do pagamento (ex. cartão de
   // crédito debitado semanas antes de alguém lembrar de marcar o lançamento no sistema).
   const [pagamentoAlvo, setPagamentoAlvo] = useState<{ l: Lancamento; novoStatus: string } | Lancamento[] | null>(null);
-  const [dataEfetivacao, setDataEfetivacao] = useState(() => new Date().toISOString().slice(0, 10));
+  const [dataEfetivacao, setDataEfetivacao] = useState(() => format(new Date(), "yyyy-MM-dd"));
 
   const setStatus = async (l: Lancamento, novoStatus: string) => {
     if (l.tipo === "transferencia") {
@@ -258,7 +214,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
       (l.tipo === "receita" && (novoStatus === "Recebido" || novoStatus === "Recebida")) ||
       (l.tipo === "despesa" && novoStatus === "Pago");
     if (isPaying) {
-      setDataEfetivacao(new Date().toISOString().slice(0, 10));
+      setDataEfetivacao(format(new Date(), "yyyy-MM-dd"));
       setPagamentoAlvo({ l, novoStatus });
       return;
     }
@@ -312,7 +268,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
   };
 
   const markItemsPaid = (rows: Lancamento[]) => {
-    setDataEfetivacao(new Date().toISOString().slice(0, 10));
+    setDataEfetivacao(format(new Date(), "yyyy-MM-dd"));
     setPagamentoAlvo(rows);
   };
 
@@ -348,29 +304,15 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
   };
 
   const deleteItems = async (rows: Lancamento[]) => {
-    const recIds = rows.filter((l) => l.tipo === "receita").map((l) => l.id);
-    const despIds = rows.filter((l) => l.tipo === "despesa").map((l) => l.id);
-    const transfIds = rows.filter((l) => l.tipo === "transferencia").map((l) => l.id);
-    const stamp = new Date().toISOString();
-    const ops: PromiseLike<{ error: unknown }>[] = [];
-    if (recIds.length)
-      ops.push(supabase.from("receitas").delete().in("id", recIds) as unknown as PromiseLike<{ error: unknown }>);
-    if (despIds.length)
-      ops.push(supabase.from("despesas").delete().in("id", despIds) as unknown as PromiseLike<{ error: unknown }>);
-    if (transfIds.length)
-      ops.push(
-        supabase
-          .from("transferencias")
-          .update({ deleted_at: stamp } as never)
-          .in("id", transfIds) as unknown as PromiseLike<{ error: unknown }>
-      );
-    const results = await Promise.all(ops);
-    if (results.find((r) => (r as { error?: unknown }).error)) {
-      toast.error("Falha em alguns registros");
+    const { excluidos, falhas, erro } = await excluirLancamentos(rows);
+    if (excluidos > 0) refetchAll();
+    if (falhas === 0) {
+      toast.success(`${excluidos} excluído(s)`);
       return;
     }
-    toast.success(`${rows.length} excluído(s)`);
-    refetchAll();
+    toast.error(`Falha ao excluir ${falhas} de ${rows.length} lançamento(s)`, {
+      description: getSafeErrorMessage(erro, "Sem permissão ou já removidos. Recarregue a lista e confira."),
+    });
   };
 
   const bulkDelete = async () => {
@@ -388,27 +330,16 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
-    const { id, tipo } = deleteTarget;
+    const ehTransferencia = deleteTarget.tipo === "transferencia";
     setDeleteTarget(null);
-    if (tipo === "transferencia") {
-      const { error } = await supabase.rpc("rpc_excluir_transferencia", { p_id: id } as never);
-      if (error) {
-        toast.error("Não foi possível excluir", {
-          description: getSafeErrorMessage(error, "Tente de novo em instantes."),
-        });
-        return;
-      }
-      toast.success("Transferência excluída");
-      refetchAll();
+    const { excluidos, erro } = await excluirLancamentos([deleteTarget]);
+    if (excluidos === 0) {
+      toast.error(ehTransferencia ? "Não foi possível excluir" : "Falha ao excluir", {
+        description: getSafeErrorMessage(erro, "Sem permissão ou já removido. Recarregue a lista e confira."),
+      });
       return;
     }
-    const table = tipo === "receita" ? "receitas" : "despesas";
-    const { error } = await supabase.from(table).delete().eq("id", id);
-    if (error) {
-      toast.error("Falha ao excluir", { description: error.message });
-      return;
-    }
-    toast.success("Lançamento excluído");
+    toast.success(ehTransferencia ? "Transferência excluída" : "Lançamento excluído");
     refetchAll();
   };
 
@@ -429,7 +360,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
   }, [filters, sort, grouped]);
 
   const cellTextSize = "text-sm";
-  const cellPad = "py-3 px-3";
+  const cellPad = TABLE_CELL_DENSE_CLASS;
   const colCount = canEdit ? 11 : 10;
 
   return (
@@ -462,203 +393,221 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
         onClear={() => setSelected(new Set())}
       />
 
-      <div className="rounded-xl border border-black/10 bg-white overflow-hidden">
-        <div ref={scrollRef} className="overflow-auto" style={{ maxHeight: "min(70vh, 720px)" }}>
-          <table className="min-w-full text-left border-collapse">
-            <thead className="sticky top-0 bg-white z-10 shadow-[0_1px_0_rgba(0,0,0,0.06)]">
-              <tr className="text-xs text-muted-foreground">
-                {canEdit && (
-                  <th className="w-[40px] px-3 py-2">
-                    <Checkbox
-                      checked={allSelected ? true : someSelected ? "indeterminate" : false}
-                      onCheckedChange={toggleAll}
-                      aria-label="Selecionar todos"
-                    />
-                  </th>
-                )}
-                <th className="w-[60px] px-3 py-2 whitespace-nowrap">Tipo</th>
-                <SortableTH
-                  label="Data"
-                  k="data"
-                  sort={sort}
-                  onSort={headerSort}
-                  icon={<SortIcon k="data" />}
-                  className="min-w-[90px]"
-                />
-                <SortableTH
-                  label="Descrição"
-                  k="descricao"
-                  sort={sort}
-                  onSort={headerSort}
-                  icon={<SortIcon k="descricao" />}
-                  className="min-w-[220px]"
-                />
-                <SortableTH
-                  label="Cliente/Fornecedor"
-                  k="contraparte"
-                  sort={sort}
-                  onSort={headerSort}
-                  icon={<SortIcon k="contraparte" />}
-                  className="min-w-[160px]"
-                />
-                <SortableTH
-                  label="Categoria"
-                  k="categoria"
-                  sort={sort}
-                  onSort={headerSort}
-                  icon={<SortIcon k="categoria" />}
-                  className="min-w-[110px]"
-                />
-                <SortableTH
-                  label="Projeto"
-                  k="projeto"
-                  sort={sort}
-                  onSort={headerSort}
-                  icon={<SortIcon k="projeto" />}
-                  className="min-w-[120px]"
-                />
-                <th className="px-3 py-2 min-w-[80px] whitespace-nowrap">Parcela</th>
-                <SortableTH
-                  label="Valor"
-                  k="valor"
-                  sort={sort}
-                  onSort={headerSort}
-                  icon={<SortIcon k="valor" />}
-                  className="min-w-[110px] text-right"
-                />
-                <SortableTH
-                  label="Status"
-                  k="status"
-                  sort={sort}
-                  onSort={headerSort}
-                  icon={<SortIcon k="status" />}
-                  className="min-w-[90px]"
-                />
-                <th className="w-[60px] px-3 py-2" />
-              </tr>
-            </thead>
-            <tbody>
-              {loading && items.length === 0 ? (
-                <tr>
-                  <td colSpan={colCount}>
-                    <PageLoader label="Carregando lançamentos" />
-                  </td>
-                </tr>
-              ) : items.length === 0 ? (
-                <tr>
-                  <td colSpan={colCount}>
-                    <div className="flex flex-col items-center gap-3 py-12 text-center">
-                      <ArrowDownCircle className="h-8 w-8 text-muted-foreground/30" />
-                      <p className="text-sm font-medium text-muted-foreground">
-                        {hasActiveFilters ? "Nenhum lançamento com esses filtros" : "Nenhum lançamento ainda"}
-                      </p>
-                      <p className="text-xs text-muted-foreground/70">
-                        {hasActiveFilters
-                          ? "Ajuste os filtros ou amplie o período"
-                          : "Crie uma receita ou despesa para começar"}
-                      </p>
-                      {hasActiveFilters &&
-                        (filters.periodo !== "tudo" ? (
-                          <button
-                            onClick={() =>
-                              onFiltersChange({ ...filters, periodo: "tudo", customFrom: null, customTo: null })
-                            }
-                            className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
-                          >
-                            Ver todo o período
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => onFiltersChange(defaultFilters)}
-                            className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
-                          >
-                            Limpar filtros
-                          </button>
-                        ))}
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                <>
-                  {paddingTop > 0 && (
-                    <tr aria-hidden>
-                      <td colSpan={colCount} style={{ height: paddingTop, padding: 0 }} />
-                    </tr>
+      {isMobile ? (
+        <LancamentosListaMobile
+          items={items}
+          loading={loading}
+          temFiltro={hasActiveFilters}
+          canEdit={canEdit}
+          isPaid={isPaidStatus}
+          isOverdue={isOverdue}
+          onOpen={setDetailTarget}
+          onMarkPaid={(l) => void setStatus(l, l.tipo === "receita" ? "Recebido" : "Pago")}
+          hasNextPage={!!paginated.hasNextPage}
+          isFetchingNextPage={paginated.isFetchingNextPage}
+          onLoadMore={() => void paginated.fetchNextPage()}
+        />
+      ) : (
+        <div className="rounded-xl border border-black/10 bg-white overflow-hidden">
+          <div ref={scrollRef} className="overflow-auto" style={{ maxHeight: "min(70dvh, 720px)" }}>
+            <table className="min-w-full text-left border-collapse">
+              <thead className="sticky top-0 bg-white z-10 shadow-[0_1px_0_rgba(0,0,0,0.06)]">
+                <tr className="text-sm">
+                  {canEdit && (
+                    <th className={cn(TABLE_HEAD_CLASS, "h-11 w-[48px] px-3")}>
+                      <Checkbox
+                        checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                        onCheckedChange={toggleAll}
+                        aria-label="Selecionar todos"
+                      />
+                    </th>
                   )}
-                  {virtualItems.map((vi) => {
-                    const row = flatRows[vi.index];
-                    if (row.kind === "group") {
+                  <th className={cn(TABLE_HEAD_CLASS, "h-11 w-[60px] px-3 whitespace-nowrap")}>Tipo</th>
+                  <SortableTH
+                    label="Data"
+                    k="data"
+                    sort={sort}
+                    onSort={headerSort}
+                    icon={<SortIcon k="data" />}
+                    className="min-w-[90px]"
+                  />
+                  <SortableTH
+                    label="Descrição"
+                    k="descricao"
+                    sort={sort}
+                    onSort={headerSort}
+                    icon={<SortIcon k="descricao" />}
+                    className="min-w-[220px]"
+                  />
+                  <SortableTH
+                    label="Cliente/Fornecedor"
+                    k="contraparte"
+                    sort={sort}
+                    onSort={headerSort}
+                    icon={<SortIcon k="contraparte" />}
+                    className="min-w-[160px]"
+                  />
+                  <SortableTH
+                    label="Categoria"
+                    k="categoria"
+                    sort={sort}
+                    onSort={headerSort}
+                    icon={<SortIcon k="categoria" />}
+                    className="min-w-[110px]"
+                  />
+                  <SortableTH
+                    label="Projeto"
+                    k="projeto"
+                    sort={sort}
+                    onSort={headerSort}
+                    icon={<SortIcon k="projeto" />}
+                    className="min-w-[120px]"
+                  />
+                  <th className={cn(TABLE_HEAD_CLASS, "h-11 min-w-[80px] px-3 whitespace-nowrap")}>Parcela</th>
+                  <SortableTH
+                    label="Valor"
+                    k="valor"
+                    sort={sort}
+                    onSort={headerSort}
+                    icon={<SortIcon k="valor" />}
+                    className="min-w-[110px] text-right"
+                  />
+                  <SortableTH
+                    label="Status"
+                    k="status"
+                    sort={sort}
+                    onSort={headerSort}
+                    icon={<SortIcon k="status" />}
+                    className="min-w-[90px]"
+                  />
+                  <th className={cn(TABLE_HEAD_CLASS, "h-11 w-[60px] px-3")} />
+                </tr>
+              </thead>
+              <tbody>
+                {loading && items.length === 0 ? (
+                  <tr>
+                    <td colSpan={colCount}>
+                      <PageLoader label="Carregando lançamentos" />
+                    </td>
+                  </tr>
+                ) : items.length === 0 ? (
+                  <tr>
+                    <td colSpan={colCount}>
+                      <div className="flex flex-col items-center gap-3 py-12 text-center">
+                        <ArrowDownCircle className="h-8 w-8 text-muted-foreground/30" />
+                        <p className="text-sm font-medium text-muted-foreground">
+                          {hasActiveFilters ? "Nenhum lançamento com esses filtros" : "Nenhum lançamento ainda"}
+                        </p>
+                        <p className="text-xs text-muted-foreground/70">
+                          {hasActiveFilters
+                            ? "Ajuste os filtros ou amplie o período"
+                            : "Crie uma receita ou despesa para começar"}
+                        </p>
+                        {hasActiveFilters &&
+                          (filters.periodo !== "tudo" ? (
+                            <button
+                              onClick={() =>
+                                onFiltersChange({ ...filters, periodo: "tudo", customFrom: null, customTo: null })
+                              }
+                              className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+                            >
+                              Ver todo o período
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => onFiltersChange(defaultFilters)}
+                              className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+                            >
+                              Limpar filtros
+                            </button>
+                          ))}
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  <>
+                    {paddingTop > 0 && (
+                      <tr aria-hidden>
+                        <td colSpan={colCount} style={{ height: paddingTop, padding: 0 }} />
+                      </tr>
+                    )}
+                    {virtualItems.map((vi) => {
+                      const row = flatRows[vi.index];
+                      if (row.kind === "group") {
+                        return (
+                          <LancamentosGroupRow
+                            key={`group-${row.groupId}`}
+                            groupId={row.groupId}
+                            items={row.items}
+                            resumo={gruposResumo.get(row.groupId)}
+                            isExpanded={expandedGroups.has(row.groupId)}
+                            canEdit={canEdit}
+                            selected={selected}
+                            cellPad={cellPad}
+                            cellTextSize={cellTextSize}
+                            measureRef={virtualizer.measureElement}
+                            dataIndex={vi.index}
+                            isPaidStatus={isPaidStatus}
+                            rowKey={rowKey}
+                            stripParcelaSuffix={stripParcelaSuffix}
+                            onToggle={() => toggleGroup(row.groupId)}
+                            onToggleSelection={toggleGroupSelection}
+                            onMarkPaid={markItemsPaid}
+                            onDeleteGroup={setDeleteGroupTarget}
+                          />
+                        );
+                      }
                       return (
-                        <LancamentosGroupRow
-                          key={`group-${row.groupId}`}
-                          groupId={row.groupId}
-                          items={row.items}
-                          resumo={gruposResumo.get(row.groupId)}
-                          isExpanded={expandedGroups.has(row.groupId)}
+                        <LancamentosItemRow
+                          key={rowKey(row.data)}
+                          l={row.data}
+                          isChild={row.isChild}
+                          isSel={selected.has(rowKey(row.data))}
                           canEdit={canEdit}
-                          selected={selected}
                           cellPad={cellPad}
                           cellTextSize={cellTextSize}
                           measureRef={virtualizer.measureElement}
                           dataIndex={vi.index}
                           isPaidStatus={isPaidStatus}
+                          isOverdue={isOverdue}
+                          getDisplayDate={getDisplayDate}
                           rowKey={rowKey}
-                          stripParcelaSuffix={stripParcelaSuffix}
-                          onToggle={() => toggleGroup(row.groupId)}
-                          onToggleSelection={toggleGroupSelection}
-                          onMarkPaid={markItemsPaid}
-                          onDeleteGroup={setDeleteGroupTarget}
+                          onToggleRow={toggleRow}
+                          onRowClick={(l) =>
+                            l.tipo === "transferencia" ? setEditTransferencia(l) : setDetailTarget(l)
+                          }
+                          onEdit={(l) => (l.tipo === "transferencia" ? setEditTransferencia(l) : setEditTarget(l))}
+                          onDelete={setDeleteTarget}
+                          onStatusChange={setStatus}
                         />
                       );
-                    }
-                    return (
-                      <LancamentosItemRow
-                        key={rowKey(row.data)}
-                        l={row.data}
-                        isChild={row.isChild}
-                        isSel={selected.has(rowKey(row.data))}
-                        canEdit={canEdit}
-                        cellPad={cellPad}
-                        cellTextSize={cellTextSize}
-                        measureRef={virtualizer.measureElement}
-                        dataIndex={vi.index}
-                        isPaidStatus={isPaidStatus}
-                        isOverdue={isOverdue}
-                        getDisplayDate={getDisplayDate}
-                        rowKey={rowKey}
-                        onToggleRow={toggleRow}
-                        onRowClick={(l) => (l.tipo === "transferencia" ? setEditTransferencia(l) : setDetailTarget(l))}
-                        onEdit={(l) => (l.tipo === "transferencia" ? setEditTransferencia(l) : setEditTarget(l))}
-                        onDelete={setDeleteTarget}
-                        onStatusChange={setStatus}
-                      />
-                    );
-                  })}
-                  {paddingBottom > 0 && (
-                    <tr aria-hidden>
-                      <td colSpan={colCount} style={{ height: paddingBottom, padding: 0 }} />
-                    </tr>
-                  )}
-                </>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {paginated.hasNextPage && (
-          <div className="border-t border-black/10 bg-white px-4 py-3 flex justify-center">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => paginated.fetchNextPage()}
-              loading={paginated.isFetchingNextPage}
-              className="text-xs"
-            >
-              Carregar mais
-            </Button>
+                    })}
+                    {paddingBottom > 0 && (
+                      <tr aria-hidden>
+                        <td colSpan={colCount} style={{ height: paddingBottom, padding: 0 }} />
+                      </tr>
+                    )}
+                  </>
+                )}
+              </tbody>
+            </table>
           </div>
-        )}
-      </div>
+
+          {paginated.hasNextPage && (
+            <div className="border-t border-black/10 bg-white px-4 py-3 flex justify-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => paginated.fetchNextPage()}
+                loading={paginated.isFetchingNextPage}
+                className="text-xs"
+              >
+                Carregar mais
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
 
       <LancamentoDetailDialog
         lancamento={detailTarget}
@@ -752,39 +701,5 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
         variant="destructive"
       />
     </div>
-  );
-}
-
-function SortableTH({
-  label,
-  k,
-  sort,
-  onSort,
-  icon,
-  className,
-}: {
-  label: string;
-  k: SortKey;
-  sort: SortState;
-  onSort: (k: SortKey) => void;
-  icon: React.ReactNode;
-  className?: string;
-}) {
-  const active = sort.key === k;
-  return (
-    <th
-      className={cn("px-3 py-2 cursor-pointer select-none whitespace-nowrap font-medium text-xs", className)}
-      onClick={() => onSort(k)}
-    >
-      <span
-        className={cn(
-          "inline-flex items-center gap-1 hover:text-foreground transition-colors",
-          active ? "text-foreground" : "text-muted-foreground"
-        )}
-      >
-        {label}
-        {icon}
-      </span>
-    </th>
   );
 }

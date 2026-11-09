@@ -13,12 +13,9 @@ const log = createLogger("portal-entrega-download");
 /**
  * Retorna signed URL de 5min para arquivo do bucket portal-entregas.
  *
- * Aceita dois fluxos:
- *   - { token, entrega_id }           → portal público via verify_portal_token
- *   - { session_token, entrega_id }   → portal autenticado via portal_verify_session
- *
- * Em ambos, valida que entrega pertence ao projeto/empresa do contexto e
- * gera signed URL com SERVICE_ROLE_KEY (contorna RLS do storage).
+ * Entrada: { session_token, entrega_id }, sessão do portal validada por
+ * portal_verify_session_readonly. Valida que a entrega pertence à empresa e a um projeto
+ * do cliente da sessão e gera a signed URL com SERVICE_ROLE_KEY (contorna RLS do storage).
  */
 serve(
   withSentry("portal-entrega-download", async (req) => {
@@ -50,30 +47,19 @@ serve(
     try {
       const entrada = lerEntrada(await lerJson(req));
       if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
-      const { entrega_id, token, session_token } = entrada.data;
+      const { entrega_id, session_token } = entrada.data;
 
       const anonClient = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_ANON_KEY") ?? "");
 
-      let projeto_id: string | undefined;
-      let empresa_id: string | undefined;
-      let cliente_id: string | undefined;
+      // Verificador read-only: NÃO rotaciona o token. O portal_verify_session
+      // rotaciona e devolve new_token; como este endpoint de download descartava
+      // o new_token, cada download invalidava a sessão e deslogava o cliente.
+      const { data, error } = await anonClient.rpc("portal_verify_session_readonly", { p_token: session_token });
+      if (error || !data) return safeErrorResponse(401, "Sessão inválida", req);
+      const empresa_id = (data as { empresa_id?: string }).empresa_id;
+      const cliente_id = (data as { cliente_id?: string }).cliente_id;
 
-      if (typeof token === "string" && token.length > 0) {
-        const { data, error } = await anonClient.rpc("verify_portal_token", { p_token: token });
-        if (error || !data) return safeErrorResponse(401, "Token inválido", req);
-        projeto_id = (data as { projeto_id?: string }).projeto_id;
-        empresa_id = (data as { empresa_id?: string }).empresa_id;
-      } else if (typeof session_token === "string" && session_token.length > 0) {
-        // Verificador read-only: NÃO rotaciona o token. O portal_verify_session
-        // rotaciona e devolve new_token; como este endpoint de download descartava
-        // o new_token, cada download invalidava a sessão e deslogava o cliente.
-        const { data, error } = await anonClient.rpc("portal_verify_session_readonly", { p_token: session_token });
-        if (error || !data) return safeErrorResponse(401, "Sessão inválida", req);
-        empresa_id = (data as { empresa_id?: string }).empresa_id;
-        cliente_id = (data as { cliente_id?: string }).cliente_id;
-      }
-
-      if (!empresa_id) return safeErrorResponse(401, "Contexto sem escopo", req);
+      if (!empresa_id || !cliente_id) return safeErrorResponse(401, "Contexto sem escopo", req);
 
       const { data: entrega, error: entregaError } = await adminClient
         .from("portal_entregas")
@@ -87,22 +73,15 @@ serve(
         return safeErrorResponse(403, "Entrega fora do escopo", req);
       }
 
-      if (token && projeto_id && entrega.projeto_id !== projeto_id) {
-        return safeErrorResponse(403, "Entrega fora do escopo deste portal", req);
-      }
-
-      // Fluxo do cliente logado (session_token): a entrega precisa pertencer a um
-      // projeto DO cliente da sessão, não só à mesma empresa (evita IDOR entre
-      // clientes da mesma empresa). ACH-PORT-02.
-      if (cliente_id) {
-        const { data: proj } = await adminClient
-          .from("projetos")
-          .select("id")
-          .eq("id", entrega.projeto_id)
-          .eq("cliente_id", cliente_id)
-          .maybeSingle();
-        if (!proj) return safeErrorResponse(403, "Entrega fora do seu acesso", req);
-      }
+      // A entrega precisa pertencer a um projeto DO cliente da sessão, não só à mesma
+      // empresa (evita IDOR entre clientes da mesma empresa). ACH-PORT-02.
+      const { data: proj } = await adminClient
+        .from("projetos")
+        .select("id")
+        .eq("id", entrega.projeto_id)
+        .eq("cliente_id", cliente_id)
+        .maybeSingle();
+      if (!proj) return safeErrorResponse(403, "Entrega fora do seu acesso", req);
 
       if (!entrega.arquivo_path) return safeErrorResponse(404, "Entrega sem arquivo", req);
 

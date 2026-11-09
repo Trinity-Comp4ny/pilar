@@ -23,11 +23,10 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { pessoaSchema, pessoaDefaultValues, type PessoaFormData } from "@/schemas";
+import { pessoaSchema, pessoaDefaultValues, type PessoaFormData, type PessoaFormInput } from "@/schemas";
 import { Badge } from "@/components/ui/badge";
 import { detectTipoChavePix, normalizarChavePix, TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import type { Pessoa, ContaBancaria, ChavePix } from "../types";
-
 import { BusyMark } from "@/components/motion/BusyMark";
 
 interface PessoaFormDialogProps {
@@ -46,8 +45,8 @@ function parseSupabaseError(err: unknown): string {
     if (msg.includes("telefone")) return "Telefone já cadastrado na empresa";
     return "Registro duplicado — verifique CPF, email ou telefone";
   }
-  if (e.code === "23502") return `Campo obrigatório não preenchido: ${e.message}`;
-  return e.message ?? "Erro desconhecido";
+  if (e.code === "23502") return "Preencha todos os campos obrigatórios.";
+  return err instanceof Error && !e.code ? err.message : "Não foi possível salvar. Tente de novo.";
 }
 
 export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: PessoaFormDialogProps) {
@@ -58,7 +57,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
   // evita sobrescrever os valores reais com o placeholder.
   const canEditSensitive = !isEditMode || (editPessoa?.pode_ver_sensivel ?? false);
 
-  const form = useForm<PessoaFormData>({
+  const form = useForm<PessoaFormInput, unknown, PessoaFormData>({
     resolver: zodResolver(pessoaSchema),
     defaultValues: pessoaDefaultValues,
     mode: "onChange",
@@ -83,7 +82,8 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
       form.reset({
         primeiro_nome: editPessoa.primeiro_nome || editPessoa.nome?.split(" ")[0] || "",
         sobrenome: editPessoa.sobrenome ?? (editPessoa.nome ? editPessoa.nome.split(" ").slice(1).join(" ") : ""),
-        cpf: editPessoa.cpf || "",
+        // Sem folha, o CPF vem mascarado e só é exibido (editPessoa.cpf), nunca validado.
+        cpf: editPessoa.pode_ver_sensivel ? editPessoa.cpf || "" : "",
         data_nascimento: editPessoa.data_nascimento || "",
         tipo_contrato: (editPessoa.tipo_contrato as ContractType) || CONTRACT_TYPES.CLT,
         status: (editPessoa.status as PessoaStatus) || PESSOA_STATUS.ATIVO,
@@ -256,7 +256,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+      <DialogContent className="sm:max-w-2xl max-h-[90dvh] overflow-y-auto p-0">
         <div className="px-6 pt-6 pb-4 border-b">
           <DialogHeader>
             <DialogTitle>{isEditMode ? "Editar pessoa" : "Nova pessoa"}</DialogTitle>
@@ -366,7 +366,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                 </Label>
                 <Input
                   id="cpf"
-                  value={form.watch("cpf")}
+                  value={canEditSensitive ? form.watch("cpf") : (editPessoa?.cpf ?? "")}
                   onChange={(e) => form.setValue("cpf", formatCPF(e.target.value), { shouldValidate: true })}
                   maxLength={14}
                   placeholder="000.000.000-00"
@@ -498,7 +498,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                     </Label>
                     <MoneyInput
                       id="salario_fixo"
-                      value={form.watch("salario_fixo")}
+                      value={form.watch("salario_fixo") ?? ""}
                       onChange={(v) => form.setValue("salario_fixo", v)}
                     />
                   </div>
@@ -508,7 +508,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
                     </Label>
                     <MoneyInput
                       id="valor_m2"
-                      value={form.watch("valor_m2")}
+                      value={form.watch("valor_m2") ?? ""}
                       onChange={(v) => form.setValue("valor_m2", v)}
                     />
                   </div>

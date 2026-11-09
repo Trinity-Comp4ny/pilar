@@ -61,6 +61,7 @@ import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useProjetoDetail } from "../hooks/useProjetoDetail";
 import { useAuth } from "@/contexts/AuthContext";
 import { DisciplinaDetailDialog } from "./DisciplinaDetailDialog";
+import { DisciplinaStatusSelect } from "./DisciplinaStatusSelect";
 import { ProjetoAtividadesPanel } from "./ProjetoAtividadesPanel";
 import { LinksEditor } from "@/components/LinksEditor";
 import { useProjetoAtividades } from "../hooks/useProjetoAtividades";
@@ -85,33 +86,6 @@ interface ProjectDetailDialogProps {
   onEdit: (projeto: Projeto) => void;
   onDelete: (id: string) => void;
   onProjectUpdated?: () => void;
-}
-
-type DiscStatusKey = "nao_iniciado" | "em_andamento" | "concluido" | "pendente";
-
-const DISC_STATUS_INFO: Record<DiscStatusKey, { label: string; dot: string }> = {
-  nao_iniciado: { label: "Não iniciado", dot: "bg-status-unknown" },
-  em_andamento: { label: "Em andamento", dot: "bg-status-progress" },
-  concluido: { label: "Concluído", dot: "bg-status-done" },
-  pendente: { label: "Pendente", dot: "bg-status-planning" },
-};
-
-/**
- * projeto_disciplinas.status é `text` livre no banco (sem enum), e hoje convivem
- * dois formatos no mesmo dado: "Em Andamento" (legado, Título Case) e
- * "em_andamento"/"concluida" (snake_case, sem acento) — achado da auditoria mobile
- * (08/09), que via o valor cru aparecer na tela porque nenhum batia com o mapa
- * antigo. Normaliza por substring em vez de listar literais, pra não quebrar nas
- * próximas variações de grafia.
- */
-function normalizeDiscStatus(raw: string | null | undefined): DiscStatusKey {
-  // Compara por substring sem acento nos dois lados ("conclu" casa "Concluído" e
-  // "concluida"), então não precisa normalizar diacríticos aqui.
-  const s = (raw ?? "").toLowerCase();
-  if (s.includes("conclu")) return "concluido";
-  if (s.includes("andamento")) return "em_andamento";
-  if (s.includes("pendente")) return "pendente";
-  return "nao_iniciado";
 }
 
 export function ProjectDetailDialog({
@@ -258,7 +232,7 @@ export function ProjectDetailDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-none w-[96vw] h-[92vh] overflow-hidden p-0 gap-0 flex flex-col">
+        <DialogContent className="max-w-none w-[96vw] h-[92dvh] overflow-hidden p-0 gap-0 flex flex-col">
           {/* Header compacto */}
           <div className="shrink-0 px-8 pt-6 pb-4 border-b bg-muted/50">
             <DialogHeader className="mb-0">
@@ -484,18 +458,14 @@ export function ProjectDetailDialog({
                                   </p>
                                 )}
                               </div>
-
-                              <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground shrink-0">
-                                <span
-                                  className={cn(
-                                    "h-2 w-2 rounded-full",
-                                    DISC_STATUS_INFO[normalizeDiscStatus(disc.status)].dot
-                                  )}
-                                />
-                                {DISC_STATUS_INFO[normalizeDiscStatus(disc.status)].label}
-                              </span>
                             </div>
                           </button>
+                          <DisciplinaStatusSelect
+                            status={disc.status}
+                            canEdit={canEdit}
+                            disciplina={disc.disciplina}
+                            onChange={(status) => handleDisciplineStatusChange(idx, status)}
+                          />
                           {canEdit && (
                             <Button
                               variant="ghost"

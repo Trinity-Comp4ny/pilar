@@ -60,7 +60,7 @@ export default function StatusPage() {
   const incidents = incidentsQuery.data ?? [];
 
   return (
-    <div className="min-h-screen bg-background px-6 py-10">
+    <div className="min-h-dvh bg-background px-6 py-10">
       <div className="mx-auto max-w-2xl space-y-8">
         <Logo />
 

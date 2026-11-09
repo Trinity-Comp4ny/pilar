@@ -78,6 +78,8 @@ export default {
         },
         brand: {
           DEFAULT: "hsl(var(--brand-accent) / <alpha-value>)",
+          // Lavagem clara do verde para superfície grande (cabeçalho do Início).
+          soft: "hsl(var(--brand-accent-soft) / <alpha-value>)",
         },
         // Identidade por módulo na landing. DEFAULT = fill (pílula/card),
         // strong = texto/traço (WCAG AA). Ver tokens.css.

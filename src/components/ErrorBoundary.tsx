@@ -44,10 +44,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   handleBack = () => {
     window.history.back();
-    setTimeout(
-      () => this.setState({ hasError: false, error: null, eventId: null, copied: false }),
-      100,
-    );
+    setTimeout(() => this.setState({ hasError: false, error: null, eventId: null, copied: false }), 100);
   };
 
   handleCopy = () => {
@@ -69,7 +66,7 @@ export class ErrorBoundary extends Component<Props, State> {
     const message = error?.message ?? "Erro desconhecido";
 
     return (
-      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center bg-background px-4 py-10">
+      <div className="min-h-[calc(100dvh-8rem)] flex items-center justify-center bg-background px-4 py-10">
         <div className="w-full max-w-md">
           <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
             <div className="w-11 h-11 rounded-full bg-destructive/10 flex items-center justify-center mb-5">
@@ -89,12 +86,10 @@ export class ErrorBoundary extends Component<Props, State> {
               </svg>
             </div>
 
-            <h1 className="text-lg font-semibold text-foreground">
-              Esta página não carregou
-            </h1>
+            <h1 className="text-lg font-semibold text-foreground">Esta página não carregou</h1>
             <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-              O erro foi registrado e a equipe já foi avisada. Tente abrir de novo. Se continuar,
-              volte e siga por outro caminho, seus dados não foram afetados.
+              O erro foi registrado e a equipe já foi avisada. Tente abrir de novo. Se continuar, volte e siga por outro
+              caminho, seus dados não foram afetados.
             </p>
 
             <div className="flex flex-wrap gap-2 mt-6">
@@ -129,14 +124,8 @@ export class ErrorBoundary extends Component<Props, State> {
                 Detalhes técnicos
               </summary>
               <div className="mt-3 bg-muted/50 rounded-lg px-4 py-3 border border-border">
-                <p className="text-xs font-mono text-destructive break-all leading-relaxed">
-                  {message}
-                </p>
-                {eventId && (
-                  <p className="text-[11px] text-muted-foreground mt-2 font-mono">
-                    Código: {eventId}
-                  </p>
-                )}
+                <p className="text-xs font-mono text-destructive break-all leading-relaxed">{message}</p>
+                {eventId && <p className="text-[11px] text-muted-foreground mt-2 font-mono">Código: {eventId}</p>}
                 <button
                   type="button"
                   onClick={this.handleCopy}

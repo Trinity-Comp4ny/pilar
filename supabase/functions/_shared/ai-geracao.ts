@@ -26,16 +26,20 @@ export function aceitaTetoDeRaciocinio(modelo: string): boolean {
   return /^gemini-2\.5-/.test(modelo);
 }
 
+/**
+ * `semRaciocinio` zera o orçamento de raciocínio: transcrever áudio não precisa pensar, e
+ * cada token de raciocínio é tempo de espera (SPEC 135). Só vale na família 2.5.
+ */
 export function configDeGeracao(
   modelo: string,
-  o: { modo: ModoGeracao; maxOutputTokens: number }
+  o: { modo: ModoGeracao; maxOutputTokens: number; semRaciocinio?: boolean }
 ): Record<string, unknown> {
   return {
     temperature: TEMPERATURA[o.modo],
     maxOutputTokens: o.maxOutputTokens,
     ...(o.modo === "json" && { responseMimeType: "application/json" }),
     ...(aceitaTetoDeRaciocinio(modelo) && {
-      thinkingConfig: { thinkingBudget: Math.floor(o.maxOutputTokens * FRACAO_RACIOCINIO) },
+      thinkingConfig: { thinkingBudget: o.semRaciocinio ? 0 : Math.floor(o.maxOutputTokens * FRACAO_RACIOCINIO) },
     }),
   };
 }

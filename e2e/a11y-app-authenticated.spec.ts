@@ -22,6 +22,16 @@ const TELAS = [
   ["equipe", "/gestao/equipe"],
   ["metas", "/gestao/metas"],
   ["detalhe do cliente", "/gestao/clientes/00000000-0000-0000-0000-000000000101"],
+  // Ampliação de 14/10: o resto das telas navegáveis do app (cronograma, mapa, agentes,
+  // fornecedores, relatórios, financeiro, administração).
+  ["disciplinas", "/projetos/disciplinas"],
+  ["cronograma de projetos", "/projetos/cronograma"],
+  ["mapa de projetos", "/projetos/mapa"],
+  ["agentes", "/agentes"],
+  ["fornecedores", "/obras/fornecedores"],
+  ["relatórios", "/relatorios"],
+  ["financeiro, visão geral", "/financeiro"],
+  ["administração, usuários", "/admin?tab=usuarios"],
 ] as const;
 
 test.use({ contextOptions: { reducedMotion: "reduce" } });

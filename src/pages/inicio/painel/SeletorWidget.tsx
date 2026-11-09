@@ -61,7 +61,7 @@ export function SeletorWidget({ aberto, onFechar, secaoInicial, jaNoPainel, pode
 
   return (
     <Dialog open={aberto} onOpenChange={(v) => (v ? undefined : fechar())}>
-      <DialogContent className="flex max-h-[85vh] max-w-3xl flex-col gap-0 overflow-hidden p-0">
+      <DialogContent className="flex max-h-[85dvh] max-w-3xl flex-col gap-0 overflow-hidden p-0">
         {preview ? (
           <>
             <DialogHeader className="shrink-0 border-b border-border px-5 py-4 pr-12 text-left">

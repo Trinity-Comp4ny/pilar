@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
-import { filaOfflineDb } from "./campoOfflineDb";
+import { filaOfflineDb, filaRegistroDb } from "./campoOfflineDb";
 import {
   sincronizarFila,
   type FilaDiaPayload,
@@ -13,6 +13,8 @@ import {
   type FilaTarefaVinculo,
   type FilaVisita,
 } from "./campoOfflineQueue";
+import { sincronizarRegistros, type FilaRegistroItem } from "./campoRegistroFila";
+import { enviarRegistroRemoto } from "./enviarRegistro";
 import { getCampoToken } from "./useCampoAuth";
 
 async function salvarRdoRemoto(token: string, dia: FilaDiaPayload) {
@@ -91,26 +93,29 @@ async function registrarVisitaRemota(token: string, rdoId: string, visita: FilaV
   return { ok: true as const };
 }
 
+// Uma sincronização por vez no app inteiro: a tela de gravar e a home montam este hook ao
+// mesmo tempo, e sem a trava os dois enviariam o mesmo item.
+let sincronizacaoAtual: Promise<void> | null = null;
+
 /**
- * Sincroniza a fila offline com o servidor: dispara ao montar, quando a rede
- * volta (`online`) e sob demanda (`sincronizar()`). Expõe a contagem de
- * pendentes para a UI mostrar "aguardando envio".
+ * Sincroniza as filas offline (dias e registros) com o servidor: dispara ao montar, quando a
+ * rede volta (`online`) e sob demanda (`sincronizar()`). Expõe a contagem de pendentes para a
+ * UI mostrar "aguardando envio" e os registros que ainda estão só no aparelho.
  */
 export function useCampoSync() {
   const queryClient = useQueryClient();
   const [pendentes, setPendentes] = useState(0);
+  const [locais, setLocais] = useState<FilaRegistroItem[]>([]);
   const [sincronizando, setSincronizando] = useState(false);
 
   const atualizarContagem = useCallback(async () => {
-    const itens = await filaOfflineDb.listar();
-    setPendentes(itens.length);
+    const [dias, registros] = await Promise.all([filaOfflineDb.listar(), filaRegistroDb.listar()]);
+    setLocais(registros);
+    setPendentes(dias.length + registros.filter((r) => !r.erroDefinitivo).length);
   }, []);
 
-  const sincronizar = useCallback(async () => {
-    const token = getCampoToken();
-    if (!token || sincronizando) return;
-    setSincronizando(true);
-    try {
+  const executar = useCallback(
+    async (token: string) => {
       const resumo = await sincronizarFila(filaOfflineDb, {
         salvarRdo: (dia) => salvarRdoRemoto(token, dia),
         subirFoto: (rdoId, foto) => subirFotoRemota(token, rdoId, foto),
@@ -120,23 +125,58 @@ export function useCampoSync() {
         registrarImpedimento: (rdoId, impedimento) => registrarImpedimentoRemoto(token, rdoId, impedimento),
         registrarVisita: (rdoId, visita) => registrarVisitaRemota(token, rdoId, visita),
       });
-      if (resumo.enviados > 0) {
-        queryClient.invalidateQueries({ queryKey: ["campo_rdos"] });
-      }
+      if (resumo.enviados > 0) queryClient.invalidateQueries({ queryKey: ["campo_rdos"] });
+
+      const registros = await sincronizarRegistros(filaRegistroDb, (item) => enviarRegistroRemoto(token, item));
+      if (registros.enviados > 0) queryClient.invalidateQueries({ queryKey: ["campo_registros"] });
+    },
+    [queryClient]
+  );
+
+  const sincronizar = useCallback(async () => {
+    const token = getCampoToken();
+    if (!token) return;
+    if (!sincronizacaoAtual) {
+      setSincronizando(true);
+      sincronizacaoAtual = executar(token).finally(() => {
+        sincronizacaoAtual = null;
+      });
+    }
+    try {
+      await sincronizacaoAtual;
     } finally {
       setSincronizando(false);
       await atualizarContagem();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [atualizarContagem, queryClient]);
+  }, [executar, atualizarContagem]);
+
+  /** Guarda o registro no aparelho ANTES de qualquer envio e já tenta enviar. */
+  const registrar = useCallback(
+    async (item: FilaRegistroItem) => {
+      await filaRegistroDb.salvar(item);
+      await atualizarContagem();
+      // O envio segue depois de a tela fechar; o registro já está seguro no aparelho.
+      void sincronizar();
+    },
+    [atualizarContagem, sincronizar]
+  );
+
+  const descartarRegistro = useCallback(
+    async (id: string) => {
+      await filaRegistroDb.remover(id);
+      await atualizarContagem();
+    },
+    [atualizarContagem]
+  );
 
   useEffect(() => {
-    atualizarContagem();
-    if (navigator.onLine) sincronizar();
-    window.addEventListener("online", sincronizar);
-    return () => window.removeEventListener("online", sincronizar);
+    void atualizarContagem();
+    if (navigator.onLine) void sincronizar();
+    const aoVoltarRede = () => void sincronizar();
+    window.addEventListener("online", aoVoltarRede);
+    return () => window.removeEventListener("online", aoVoltarRede);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { pendentes, sincronizando, sincronizar };
+  return { pendentes, locais, sincronizando, sincronizar, registrar, descartarRegistro };
 }

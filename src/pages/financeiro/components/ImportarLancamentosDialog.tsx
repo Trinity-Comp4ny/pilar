@@ -251,7 +251,7 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl w-[96vw] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl w-[96vw] max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Importar lançamentos</DialogTitle>
           <DialogDescription>

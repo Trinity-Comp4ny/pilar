@@ -53,6 +53,20 @@ jobs:
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
 
+      # A cifragem é a barreira de confidencialidade do artifact: derivação forte não
+      # compensa segredo fraco. Chave com menos de 32 caracteres derruba o backup da noite
+      # (o notify-cron-failure abre a issue), em vez de guardar 30 dias de dump protegido
+      # por senha fraca. Gere com `openssl rand -hex 32` e siga a rotação em
+      # DISASTER_RECOVERY.md (sem perder o acesso aos artifacts antigos).
+      - name: Exigir chave de cifragem forte
+        env:
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          if [ "${#BACKUP_ENCRYPTION_KEY}" -lt 32 ]; then
+            echo "::error::BACKUP_ENCRYPTION_KEY precisa ter pelo menos 32 caracteres. Rotacione a chave (DISASTER_RECOVERY.md, seção Rotação da chave)."
+            exit 1
+          fi
+
       # A CLI valida o config.toml inteiro antes de QUALQUER comando (mesmo
       # `db dump --db-url`, que não deveria precisar disso), e
       # [auth.hook.send_email] referencia env(AUTH_HOOK_SEND_EMAIL_SECRET) —
@@ -102,10 +116,13 @@ jobs:
 
       - name: Criptografar
         # AES-256-CBC simétrico com PBKDF2 (openssl já vem no runner). O dump em
-        # texto puro nunca sobe como artifact, só o .enc.
+        # texto puro nunca sobe como artifact, só o .enc. 600000 iterações de PBKDF2
+        # (o default do openssl é 10000): encarece tentativa de adivinhar a chave por
+        # força bruta. Artifacts gerados até 14/10/2026 usam o default (ver
+        # DISASTER_RECOVERY.md para decifrar os dois formatos).
         run: |
           set -euo pipefail
-          tar -czf - backup | openssl enc -aes-256-cbc -pbkdf2 -salt \
+          tar -czf - backup | openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -salt \
             -out "backup-${{ matrix.target }}.tar.gz.enc" -k "$BACKUP_ENCRYPTION_KEY"
           rm -rf backup
         env:
@@ -133,7 +150,7 @@ jobs:
           set -euo pipefail
           node scripts/storage-backup.mjs backup storage-backup
           tar -czf - storage-backup \
-            | openssl enc -aes-256-cbc -pbkdf2 -salt -out "storage-${{ matrix.target }}.tar.gz.enc" -k "$BACKUP_ENCRYPTION_KEY"
+            | openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -salt -out "storage-${{ matrix.target }}.tar.gz.enc" -k "$BACKUP_ENCRYPTION_KEY"
           rm -rf storage-backup
 
       - name: Upload do backup do Storage

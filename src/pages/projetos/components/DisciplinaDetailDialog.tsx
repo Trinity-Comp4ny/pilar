@@ -47,6 +47,9 @@ import { useDisciplinaChecklist } from "@/pages/projetos/hooks/useProjetoDiscipl
 import { useDisciplinaPausas, totalDiasParados } from "@/pages/projetos/hooks/useDisciplinaPausas";
 import { useDisciplinaRevisoes, revisaoAberta } from "@/pages/projetos/hooks/useDisciplinaRevisoes";
 import { FormDialog } from "@/components/FormDialog";
+import { toast } from "sonner";
+import { mensagemDaPausa, comEstadoDaDisciplina, type EstadoDaDisciplina } from "@/pages/projetos/lib/pausa";
+import { PausarDialog } from "./PausarDialog";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { notificarMencao } from "@/lib/notificarMencao";
 import { ComentarioCard } from "@/components/atividades/ComentarioCard";
@@ -123,7 +126,7 @@ export function DisciplinaDetailDialog(props: DisciplinaDetailDialogProps) {
   const { open, onOpenChange, disciplina } = props;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-none w-[96vw] h-[92vh] p-0 gap-0 overflow-hidden flex flex-col">
+      <DialogContent className="max-w-none w-[96vw] h-[92dvh] p-0 gap-0 overflow-hidden flex flex-col">
         {disciplina && <DisciplinaDetailBody key={disciplina.id ?? "nova"} {...props} disciplina={disciplina} />}
       </DialogContent>
     </Dialog>
@@ -132,7 +135,7 @@ export function DisciplinaDetailDialog(props: DisciplinaDetailDialogProps) {
 
 /** Corpo remontado por `key` a cada disciplina — estado local nasce limpo. */
 function DisciplinaDetailBody({
-  disciplina,
+  disciplina: disciplinaDoPai,
   disciplinas,
   pessoas,
   onUpdateField,
@@ -151,6 +154,10 @@ function DisciplinaDetailBody({
   projetoDataInicio,
   onDelete,
 }: DisciplinaDetailDialogProps & { disciplina: DisciplinaResponsavel }) {
+  // O RPC de pausar/retomar mexe em status e prazo no banco: o estado que ele devolve vale mais que
+  // o snapshot do pai, e regravar o snapshot desfaria o prazo empurrado (BEZ-460).
+  const [sincronizada, setSincronizada] = useState<EstadoDaDisciplina | null>(null);
+  const disciplina = sincronizada ? comEstadoDaDisciplina(disciplinaDoPai, sincronizada) : disciplinaDoPai;
   const [descricao, setDescricao] = useState(disciplina.descricao ?? "");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const persistida = !!disciplina.id;
@@ -170,27 +177,25 @@ function DisciplinaDetailBody({
   // vem fresco da própria query, então é a fonte confiável pra saber se está pausada agora.
   const estaPausada = historicoPausas.some((p) => !p.retomado_em);
   const [pausarOpen, setPausarOpen] = useState(false);
-  const [motivoPausa, setMotivoPausa] = useState("");
 
-  const abrirPausar = () => {
-    setMotivoPausa("");
-    setPausarOpen(true);
-  };
+  const abrirPausar = () => setPausarOpen(true);
 
-  const confirmarPausar = () => {
-    if (!motivoPausa.trim()) return;
-    pausas.pausar.mutate(motivoPausa.trim(), {
-      onSuccess: () => {
+  const confirmarPausar = (motivo: string) => {
+    pausas.pausar.mutate(motivo, {
+      onSuccess: (estado) => {
         setPausarOpen(false);
-        // A mutation não passa por onUpdateField, então o pai (dono do `disciplina.status`
-        // exibido) não se resincroniza sozinho: atualiza aqui pro Select/texto não ficar preso.
-        onUpdateField("status", "Pausada");
+        setSincronizada(estado);
       },
+      onError: (e) => toast.error(mensagemDaPausa(e, "Não foi possível pausar a disciplina. Tente de novo.")),
     });
   };
 
+  // O banco devolve a mensagem certa (ex.: "Disciplina pausada junto com o projeto. Retome o projeto.").
   const confirmarRetomar = () => {
-    pausas.retomar.mutate(undefined, { onSuccess: () => onUpdateField("status", "Em Andamento") });
+    pausas.retomar.mutate(undefined, {
+      onSuccess: (estado) => setSincronizada(estado),
+      onError: (e) => toast.error(mensagemDaPausa(e, "Não foi possível retomar a disciplina. Tente de novo.")),
+    });
   };
 
   const revisoes = useDisciplinaRevisoes(persistida ? disciplina.id : undefined);
@@ -695,29 +700,15 @@ function DisciplinaDetailBody({
         </AlertDialogContent>
       </AlertDialog>
 
-      <FormDialog
+      <PausarDialog
         open={pausarOpen}
         onOpenChange={setPausarOpen}
         title="Pausar disciplina"
         description="Registra o motivo e a data de início da pausa. Fica no histórico até você retomar."
-        size="sm"
-        onSubmit={confirmarPausar}
-        submitLabel="Pausar"
+        dica="O motivo fica no histórico da disciplina."
         isPending={pausas.pausar.isPending}
-        submitDisabled={!motivoPausa.trim()}
-      >
-        <div className="space-y-2">
-          <Label htmlFor="motivo-pausa">Motivo</Label>
-          <Textarea
-            id="motivo-pausa"
-            value={motivoPausa}
-            onChange={(e) => setMotivoPausa(e.target.value)}
-            placeholder="Ex.: aguardando confirmação do cliente sobre o briefing"
-            rows={3}
-            autoFocus
-          />
-        </div>
-      </FormDialog>
+        onConfirmar={confirmarPausar}
+      />
 
       <FormDialog
         open={revisarOpen}

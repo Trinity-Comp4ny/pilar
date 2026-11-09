@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Circle, ChevronRight, ChevronDown, ChevronUp, X, Rocket } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { usePermissions } from "@/hooks/usePermissions";
 import {
   useOnboardingProgress,
   type OnboardingSectionView,
@@ -15,13 +14,14 @@ import { useOnboardingState } from "@/hooks/useOnboardingState";
 import type { OnboardingPilar } from "@/lib/onboarding/steps";
 
 /**
- * Painel flutuante de primeiros passos (canto inferior direito). Três seções por
- * pilar (Gestão / Projetos / Obras), progresso derivado de dados reais. Só para
- * admin/owner. Minimiza para uma pílula (estado local) e dispensa de vez (banco).
+ * Painel flutuante de primeiros passos (canto inferior direito). "Sua conta" e os
+ * três pilares (Gestão / Projetos / Obras), na ordem que o escritório escolheu;
+ * progresso derivado de dados reais. Admin e convidado veem (SPEC 149), cada um
+ * com os passos que pode fazer. Minimiza para uma pílula (estado local) e
+ * dispensa de vez (banco).
  */
 export function OnboardingChecklist() {
   const navigate = useNavigate();
-  const { isAdmin } = usePermissions();
   const { hasEmpresa, loading, sections, doneSteps, totalSteps, percent, allDone } = useOnboardingProgress();
   const { state, dismiss, setCompleted } = useOnboardingState();
 
@@ -32,7 +32,7 @@ export function OnboardingChecklist() {
     if (allDone && !state.completed_at) void setCompleted();
   }, [allDone, state.completed_at, setCompleted]);
 
-  if (!isAdmin || !hasEmpresa || loading || state.dismissed || sections.length === 0) {
+  if (!hasEmpresa || loading || state.dismissed || sections.length === 0) {
     return null;
   }
 
@@ -50,7 +50,7 @@ export function OnboardingChecklist() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full bg-brand px-4 py-2.5 text-ink shadow-elegant transition-transform hover:scale-[1.02]"
+        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-40 md:bottom-4 flex items-center gap-2 rounded-full bg-brand px-4 py-2.5 text-ink shadow-elegant transition-transform hover:scale-[1.02]"
       >
         <Rocket className="h-4 w-4" />
         <span className="text-sm font-medium">Primeiros passos</span>
@@ -63,7 +63,7 @@ export function OnboardingChecklist() {
 
   if (allDone) {
     return (
-      <div className="fixed bottom-4 right-4 z-40 w-[340px] max-w-[calc(100vw-2rem)]">
+      <div className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-40 md:bottom-4 w-[340px] max-w-[calc(100vw-2rem)]">
         <Card className="border-success-soft-border bg-success-soft">
           <CardContent className="flex items-center justify-between gap-3 p-4">
             <div className="flex items-center gap-3">
@@ -85,7 +85,7 @@ export function OnboardingChecklist() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 w-[360px] max-w-[calc(100vw-2rem)]">
+    <div className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-40 md:bottom-4 w-[360px] max-w-[calc(100vw-2rem)]">
       <Card className="border-brand/30 shadow-elegant">
         <CardContent className="space-y-3 p-4">
           <div className="flex items-start justify-between gap-3">

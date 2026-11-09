@@ -347,7 +347,7 @@ SELECT public.debitar_tokens(
   1, 999000, 'zera-saldo-c');
 SELECT test_set_postgres();
 
--- Empresa C precisa de um dono pra receber a notificação (_notif_gestao exige owner/admin).
+-- Empresa C precisa de um dono pra receber a notificação (_notif_gestao exige admin).
 SET LOCAL session_replication_role = 'replica';
 INSERT INTO auth.users (id, email, raw_user_meta_data, aud, role)
 VALUES ('a70e1111-0000-0000-0000-00000000000c', 'dono_c@test.com', '{}'::jsonb, 'authenticated', 'authenticated')
@@ -355,8 +355,8 @@ ON CONFLICT (id) DO NOTHING;
 SET LOCAL session_replication_role = 'origin';
 
 INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed)
-VALUES ('a70e1111-0000-0000-0000-00000000000c', 'a70e0000-0000-0000-0000-00000000000c', 'Dono', 'C', 'dono_c@test.com', 'owner', TRUE)
-ON CONFLICT (id) DO UPDATE SET empresa_id = EXCLUDED.empresa_id, role = 'owner';
+VALUES ('a70e1111-0000-0000-0000-00000000000c', 'a70e0000-0000-0000-0000-00000000000c', 'Dono', 'C', 'dono_c@test.com', 'admin', TRUE)
+ON CONFLICT (id) DO UPDATE SET empresa_id = EXCLUDED.empresa_id, role = 'admin';
 
 SELECT public.gerar_notificacoes_ambient();
 

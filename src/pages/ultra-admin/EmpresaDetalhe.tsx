@@ -1,13 +1,23 @@
 import { useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Archive, Building2, MoreHorizontal, Pencil, PauseCircle, PlayCircle, Trash2 } from "lucide-react";
+import {
+  Archive,
+  Building2,
+  FlaskConical,
+  MoreHorizontal,
+  Pencil,
+  PauseCircle,
+  PlayCircle,
+  Trash2,
+} from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { PageLoader } from "@/components/motion/PageLoader";
 import { EmptyState } from "@/components/EmptyState";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +33,7 @@ import { Fato } from "./components/Fato";
 import { EmpresaVisaoTab } from "./components/EmpresaVisaoTab";
 import { EmpresaUsuariosTab } from "./components/EmpresaUsuariosTab";
 import { EmpresaAtividadeTab } from "./components/EmpresaAtividadeTab";
-import { atualizarEmpresa, useAcaoEmpresa, useEmpresa } from "./hooks";
+import { atualizarEmpresa, marcarEmpresaInterna, useAcaoEmpresa, useEmpresa } from "./hooks";
 import { prazoTeste, quandoRelativo, situacaoEmpresa, type Situacao } from "./lib";
 import {
   ArquivarDialog,
@@ -84,6 +94,13 @@ export default function EmpresaDetalhe() {
     erro: "Não foi possível salvar",
     contexto: "ultra-admin-empresas:update",
   });
+  const interna = useAcaoEmpresa({
+    run: (valor: boolean) => marcarEmpresaInterna(id, valor),
+    sucesso: (valor) =>
+      valor ? "Marcada como empresa de teste: fica fora dos números do Time" : "Voltou a contar nos números do Time",
+    erro: "Não foi possível mudar a marcação",
+    contexto: "ultra-admin-empresas:interna",
+  });
   const mudarStatus = useAcaoEmpresa({
     run: (input: { status: "active" | "suspended" | "cancelled"; confirmName?: string }) =>
       atualizarEmpresa(id, { status: input.status, confirm_name: input.confirmName }),
@@ -137,8 +154,23 @@ export default function EmpresaDetalhe() {
   const convitesPendentes = empresa.usuarios.filter((u) => u.isPending).length;
   const naoPaga = !empresa.cobranca.isPaying && !empresa.cobranca.convidada;
 
+  // Seções da empresa (SPEC 124): abas sob o header, como nos demais detalhes.
+  const secoes: SectionTab[] = [
+    { id: "visao", label: "Visão geral" },
+    { id: "usuarios", label: "Usuários", badge: empresa.usersCount },
+    { id: "atividade", label: "Atividade" },
+  ];
+
   return (
     <PageLayout
+      tabs={
+        <SectionTabs
+          tabs={secoes}
+          value={aba}
+          onValueChange={(v) => setParams(v === "visao" ? {} : { tab: v }, { replace: true })}
+          ariaLabel="Seções da empresa"
+        />
+      }
       header={
         <PageHeader title={empresa.nome} breadcrumbs={[{ label: "Empresas", to: "/ultra-admin/empresas" }]}>
           <Button variant="outline" size="sm" className="gap-1.5 rounded-full" onClick={() => setDialog("editar")}>
@@ -157,6 +189,11 @@ export default function EmpresaDetalhe() {
               )}
               {naoPaga && <DropdownMenuItem onClick={() => setDialog("convidada")}>Tornar convidada</DropdownMenuItem>}
               {(empresa.cobranca.convidada || naoPaga) && <DropdownMenuSeparator />}
+              <DropdownMenuItem onClick={() => interna.mutate(!empresa.interna)} className="gap-2">
+                <FlaskConical size={14} />
+                {empresa.interna ? "Contar nos números do Time" : "Marcar como empresa de teste"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               {empresa.status === "active" ? (
                 <DropdownMenuItem onClick={() => setDialog("suspender")} className="gap-2">
                   <PauseCircle size={14} /> Suspender acesso
@@ -236,11 +273,6 @@ export default function EmpresaDetalhe() {
       </Card>
 
       <Tabs value={aba} onValueChange={(v) => setParams(v === "visao" ? {} : { tab: v }, { replace: true })}>
-        <TabsList>
-          <TabsTrigger value="visao">Visão geral</TabsTrigger>
-          <TabsTrigger value="usuarios">Usuários ({empresa.usersCount})</TabsTrigger>
-          <TabsTrigger value="atividade">Atividade</TabsTrigger>
-        </TabsList>
         <TabsContent value="visao" className="mt-4">
           <EmpresaVisaoTab
             empresa={empresa}

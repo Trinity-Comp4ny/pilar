@@ -47,7 +47,7 @@ Relatórios, Portal Cliente.
 - Financeiro: Projeção de caixa, Aging, DRE, Rentabilidade, WIP
 - Timesheet, Capacidade, Templates, Metas, Planejamento
 - IA Hub: todas as 11 edge functions `ai-*`
-- Asaas: backend pronto, UI zero
+- Asaas por empresa: removido (DECISOES 2026-11-03). O Asaas da plataforma (assinatura e pacote de tokens) segue ativo
 
 ## Padrões
 
@@ -84,6 +84,23 @@ usar, o que é proibido). Regras que valem sempre:
   e [SPEC 041](docs/specs/041-adocao-tanstack-table-e-consolidacao-gantt-kanban.md):
   headless (TanStack/dnd-kit) sim, widget estilizado (DHTMLX/ag-Grid) não.
 
+## Mudança visual: antes e depois no PR (REGRA DO DONO)
+
+Todo PR (ou fase de uma sprint) que muda a aparência de uma tela mostra **o antes e o depois**
+no corpo, para o Matheus acompanhar a evolução. Sem exceção para mudança visual.
+
+- **Antes** = como a tela era na base do PR (`origin/staging` no momento de abrir). Suba a base
+  numa worktree separada (`git worktree add --detach /tmp/pilar-antes <base>`, `node_modules`
+  por symlink, `vite --port 8081`) e capture ali. Nunca "reconstrua de memória".
+- **Depois** = a branch do PR, mesma rota, mesmo viewport (1440px; mobile 390px quando o
+  layout mobile muda), mesmo dado seed (`dev@local.test`).
+- Guarde as imagens em `docs/design/antes-depois/<spec-ou-pr>/` (`antes-<tela>.jpg`,
+  `depois-<tela>.jpg`) e embuta no corpo do PR por link permanente com o SHA do commit
+  (`https://raw.githubusercontent.com/Trinity-Comp4ny/pilar/<sha>/docs/design/antes-depois/...`),
+  em tabela `Antes | Depois` por tela. Cada nova fase do mesmo PR acrescenta as suas telas.
+- Dado seed apenas (repo público): nada de dado real de cliente nos prints.
+- Fase sem mudança visual (só código/teste) diz isso em uma linha em vez de tabela.
+
 ## Documentação
 
 Toda a documentação vive em `docs/`, organizada por tema com índices navegáveis.
@@ -105,14 +122,14 @@ e-mail, deck, anúncio — consultar `brand/BRAND.md` (índice) e o arquivo espe
 voz/tom → `brand/voice-tone.md`, visual → `brand/visual.md`, mensagens → `brand/messaging.md`,
 público → `brand/personas.md`. Cor/token: a verdade é `src/styles/tokens.css`.
 
-- Tagline: "Saiba se cada projeto está dando lucro antes de terminar."
+- Tagline: "Gestão com agentes de IA para escritórios de engenharia e arquitetura." (DECISOES.md, 2026-11-07). "Do contrato à execução, num fluxo só." saiu: não usar como frase de marca. Agentes são o primeiro pilar ("A IA prepara. O sistema confere. Você aprova."). Lucro e prazo são prova, não promessa-mãe (DECISOES.md, 2026-10-28).
 - ICP: escritórios de projeto técnico — engenharia multidisciplinar (civil/estrutural/MEP) e
   arquitetura (desde 2026-09-01, ver DECISOES.md) — NÃO construtora/incorporadora.
 - Voz: direta, técnica na medida, confiante, sem hype. Ver palavras banidas em voice-tone.md.
 
 ## DB
 
-183 migrations em `supabase/migrations/`, dois esquemas convivendo: 000..029 (antigo) e
+368 migrations em `supabase/migrations/`, dois esquemas convivendo: 000..029 (antigo) e
 timestamp 2026*. Tipos gerados em `src/integrations/supabase/types.ts`.
 Rodar `npm run gen:types:local` após qualquer migration, e commitar o `types.ts`. O CI **valida
 isso**: o job `types-sync` (Fase 1 do `docs/operations/PLANO_ENGENHARIA_2026-07.md`, já
@@ -138,6 +155,10 @@ O repo permite squash e rebase, mas BLOQUEIA merge commit.
 - Método correto: branch `release/staging-AAAA-MM-DD[-slug]` a partir de `origin/main`, depois `git read-tree --reset -u origin/staging`, `git commit --no-verify`, e PR para `main`. Isso vira UM commit cuja árvore = `staging`, sem replay de histórico.
 - Merge do PR de release com `gh pr merge <n> --admin --squash --delete-branch` (`enforce_admins=false` deixa o admin passar o review requerido). Como a branch release já é 1 commit, squash e rebase são equivalentes aqui.
 - Só mergear com TODOS os checks verdes, incluindo Security audit e "types.ts em sync".
+
+**Feedback de cliente (SPEC 145)**
+
+- Commit que corrige um feedback do Ultra leva a linha `Feedback: <id>` (botão "Copiar linha do commit" no detalhe). O merge em `staging` move o feedback para `planejado` e o release para `resolvido`.
 
 **Limpeza obrigatória após CADA merge**
 

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { ShieldCheck, LogOut, Copy, Check, HelpCircle, AlertCircle, RefreshCw, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, LogOut, Copy, Check, HelpCircle, AlertCircle, RefreshCw } from "lucide-react";
 import { useMfa, type MfaEnrollResult } from "@/hooks/useMfa";
 import { useAuth } from "@/contexts/AuthContext";
 import { translateAuthError } from "@/lib/authErrors";
@@ -11,6 +11,7 @@ import { MfaBackupCodes } from "@/components/MfaBackupCodes";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
+import { AuthPromessa } from "@/components/AuthPromessa";
 
 import { BusyMark } from "@/components/motion/BusyMark";
 
@@ -81,25 +82,20 @@ function OtpInput({ value, onChange, disabled }: { value: string; onChange: (v: 
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+/**
+ * Chave antiga: o segredo TOTP e o QR ficavam no sessionStorage até a
+ * confirmação, legíveis por qualquer script na origem. Hoje o enrollment vive
+ * só em memória; a chave é apagada na entrada para não sobrar segredo de
+ * versões anteriores.
+ */
+const LEGACY_SESSION_KEY = "mfa_setup_enrollment";
 
-const SESSION_KEY = "mfa_setup_enrollment";
-
-function saveEnrollment(data: MfaEnrollResult) {
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(data));
-}
-
-function loadEnrollment(): MfaEnrollResult | null {
+function clearLegacyEnrollment() {
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
-    return raw ? (JSON.parse(raw) as MfaEnrollResult) : null;
+    sessionStorage.removeItem(LEGACY_SESSION_KEY);
   } catch {
-    return null;
+    // Storage bloqueado (modo privado restrito): não há o que limpar.
   }
-}
-
-function clearEnrollment() {
-  sessionStorage.removeItem(SESSION_KEY);
 }
 
 export default function MfaSetupPage() {
@@ -123,16 +119,6 @@ export default function MfaSetupPage() {
     async (force = false) => {
       setStarting(true);
       setStartError(null);
-
-      if (!force) {
-        const saved = loadEnrollment();
-        if (saved) {
-          setEnrollment(saved);
-          setStarting(false);
-          return;
-        }
-      }
-
       setEnrollment(null);
       try {
         const { data: factorsData } = await supabase.auth.mfa.listFactors();
@@ -141,9 +127,11 @@ export default function MfaSetupPage() {
           navigate("/inicio", { replace: true });
           return;
         }
+        // Sem nada verificado, o que existir é sobra de um setup não concluído (ex.:
+        // recarregou a página): o segredo dele não foi guardado, então sai antes do
+        // enroll novo. No "recomeçar" (force) sai tudo.
         await resetAllFactors();
         const result = await enrollTotp("Authenticator");
-        saveEnrollment(result);
         setEnrollment(result);
       } catch (err) {
         setStartError(translateAuthError(err));
@@ -155,6 +143,7 @@ export default function MfaSetupPage() {
   );
 
   useEffect(() => {
+    clearLegacyEnrollment();
     startEnrollment();
   }, []);
 
@@ -165,7 +154,6 @@ export default function MfaSetupPage() {
       setSubmitting(true);
       try {
         await verifyTotp(enrollment.factorId, otp);
-        clearEnrollment();
         await refreshMfaLevel();
         toast.success("MFA configurado com sucesso");
         // Passo 5: exibir códigos de recuperação ANTES de liberar o app.
@@ -204,7 +192,7 @@ export default function MfaSetupPage() {
   };
 
   return (
-    <div className="landing-grain min-h-screen w-full flex overflow-hidden bg-paper">
+    <div className="landing-grain min-h-dvh w-full flex overflow-hidden bg-paper">
       {/* Lado Esquerdo - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-paper relative overflow-hidden">
         <div className="absolute inset-0 -z-10 pointer-events-none">
@@ -504,26 +492,7 @@ export default function MfaSetupPage() {
             </div>
           </div>
 
-          <div className="space-y-8 max-w-lg ml-auto text-right animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
-            <blockquote className="text-3xl font-light leading-snug">
-              "A gestão eficiente é o alicerce onde grandes empresas constroem seu futuro."
-            </blockquote>
-
-            <div className="flex flex-col items-end gap-3 pt-4 border-t border-white/20">
-              <div className="flex items-center gap-2 text-sm font-medium text-white/80">
-                <span>Controle Financeiro Integrado</span>
-                <CheckCircle2 className="w-5 h-5 text-brand" />
-              </div>
-              <div className="flex items-center gap-2 text-sm font-medium text-white/80">
-                <span>Gestão de Projetos e Obras</span>
-                <CheckCircle2 className="w-5 h-5 text-brand" />
-              </div>
-              <div className="flex items-center gap-2 text-sm font-medium text-white/80">
-                <span>CRM e Relacionamento</span>
-                <CheckCircle2 className="w-5 h-5 text-brand" />
-              </div>
-            </div>
-          </div>
+          <AuthPromessa />
 
           <div className="text-xs text-white/40 text-right animate-in fade-in duration-1000 delay-300">
             © {new Date().getFullYear()} Pilar. Todos os direitos reservados.

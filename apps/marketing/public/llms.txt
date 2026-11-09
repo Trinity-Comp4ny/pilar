@@ -1,6 +1,6 @@
 # Pilar
 
-> Sistema de gestão para empresas de engenharia multidisciplinar (civil, estrutural, MEP/HVAC). Conecta lead, proposta, projeto, obra, cobrança e portal do cliente em um único fluxo, com agentes de IA que preparam o trabalho e esperam a aprovação da equipe. A promessa central: saber se cada projeto está dando lucro antes de terminar.
+> Sistema de gestão para escritórios de engenharia e arquitetura (civil, estrutural, MEP/HVAC). Conecta lead, proposta, projeto, obra, financeiro e portal do cliente em um único fluxo, com agentes de IA que preparam o trabalho, um sistema que confere os números e a aprovação da equipe. A frase da marca: gestão com agentes de IA para escritórios de engenharia e arquitetura.
 
 ## Produto
 
@@ -18,7 +18,7 @@
 
 ## Planos
 
-- [Planos e preços](https://www.pilarsoft.com.br/planos): preço por escritório, sem cobrança por usuário; o que muda entre planos é a quantidade de projetos ativos e a cota mensal de IA. Todo plano tem a plataforma inteira e trial de 14 dias sem cartão.
+- [Planos e preços](https://www.pilarsoft.com.br/planos): preço por escritório, sem cobrança por usuário; o que muda entre planos é a quantidade de projetos, obras e leads ativos e a cota mensal de créditos de IA. Todo plano tem a plataforma inteira; para começar, agende uma demonstração com o time.
 
 ## Perguntas frequentes
 

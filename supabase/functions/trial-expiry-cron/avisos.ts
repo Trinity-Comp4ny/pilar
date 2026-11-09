@@ -26,3 +26,22 @@ export function limitesDaJanela(days: number, agora: Date): { depoisDe: string; 
     ateInclusive: new Date(agora.getTime() + days * DIA_MS).toISOString(),
   };
 }
+
+export interface TrialVencido {
+  id: string;
+  empresa_id: string;
+  plan_id: string | null;
+  billing_cycle: string | null;
+  asaas_customer_id: string | null;
+  asaas_credit_card_token: string | null;
+}
+
+/**
+ * Trial vencido converte em assinatura ativa só se o admin ativou o plano: cartão
+ * tokenizado, cliente no Asaas e plano escolhido. Faltando qualquer um, expira (modo
+ * leitura). A ordem de entrada é preservada nas duas listas.
+ */
+export function separarTrialsVencidos<T extends TrialVencido>(rows: T[]): { converter: T[]; expirar: T[] } {
+  const podeConverter = (r: T) => !!(r.asaas_credit_card_token && r.asaas_customer_id && r.plan_id);
+  return { converter: rows.filter(podeConverter), expirar: rows.filter((r) => !podeConverter(r)) };
+}

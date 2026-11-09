@@ -82,7 +82,7 @@ export function ReconciliarDialog({ open, onOpenChange }: ReconciliarDialogProps
             description="Nenhuma cotação com fornecedor em texto livre pendente."
           />
         ) : (
-          <div className="max-h-[60vh] space-y-2 overflow-y-auto pr-1">
+          <div className="max-h-[60dvh] space-y-2 overflow-y-auto pr-1">
             {nomes.map((n) => (
               <div key={n.nome} className="rounded-lg border p-3">
                 <div className="flex items-baseline justify-between gap-2">

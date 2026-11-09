@@ -103,6 +103,7 @@ export const pessoaSchema = z
   );
 
 export type PessoaFormData = z.infer<typeof pessoaSchema>;
+export type PessoaFormInput = z.input<typeof pessoaSchema>;
 
 export const pessoaDefaultValues: PessoaFormData = {
   primeiro_nome: "",

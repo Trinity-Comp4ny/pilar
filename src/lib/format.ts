@@ -38,7 +38,10 @@ export type CurrencyOptions = {
 };
 
 export function formatCurrency(value: number, opts: CurrencyOptions = {}): string {
-  const v = Number.isFinite(value) ? value : 0;
+  const finito = Number.isFinite(value) ? value : 0;
+  // Resíduo de float que arredonda para zero (0,3 − 0,1 − 0,2 = −2,7e−17) saía
+  // "-R$ 0,00" num saldo zerado. Abaixo de meio centavo é zero, sem sinal.
+  const v = Math.abs(finito) < 0.005 ? 0 : finito;
   if (opts.compact) return BRL_COMPACT.format(v);
   return (opts.decimals === 0 ? BRL_0 : BRL_2).format(v);
 }

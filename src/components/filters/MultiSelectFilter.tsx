@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { filterTriggerClass } from "./filterStyles";
 
 export interface MultiSelectOption {
   value: string;
@@ -57,15 +58,7 @@ export function MultiSelectFilter({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={cn(
-            "h-8 rounded-full gap-1.5 text-xs font-normal max-w-[220px]",
-            hasSelection && "border-brand bg-brand text-ink hover:bg-brand/90 hover:text-ink",
-            className
-          )}
-        >
+        <Button variant="outline" className={filterTriggerClass(hasSelection, className)}>
           <span className="truncate">{triggerLabel}</span>
           {hasSelection ? (
             <span

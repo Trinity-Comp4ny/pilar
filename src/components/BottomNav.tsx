@@ -1,131 +1,119 @@
-import { Home, Menu as MenuIcon, Sparkles } from "lucide-react";
+import { Home, Menu as MenuIcon } from "lucide-react";
 import { NavLink } from "react-router-dom";
-import { useState, type ReactNode } from "react";
+import { lazy, Suspense, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { MODULES, type ModuleId } from "@/lib/modules";
 import { useModuleNav } from "@/hooks/useModuleNav";
+import { useBarraVisivel } from "@/hooks/useBarraVisivel";
 import { usePendenciasAgentes } from "@/hooks/useEscopos";
-import { MoreSheet } from "@/components/MoreSheet";
 
-const PILAR_ORDER: ModuleId[] = ["gestao", "projetos", "obras"];
+// O Menu só abre ao toque: o painel (com conta, notificações e feedback) fica fora do carregamento inicial.
+const carregarMoreSheet = () => import("@/components/MoreSheet");
+const MoreSheet = lazy(() => carregarMoreSheet().then((m) => ({ default: m.MoreSheet })));
 
-/** Ícone com pill de fundo (verde quando ativo, a única cor de destaque —
- * nunca como cor de texto, regra do design system: "verde só como fundo").
- * A transição de cor/escala em todos os estados é o que dá vida à troca de
- * aba, sem precisar de lib de animação nova. */
-function BottomNavPill({ active, children }: { active: boolean; children: ReactNode }) {
-  return (
-    <span
-      className={cn(
-        "flex items-center justify-center rounded-full px-3.5 py-1 transition-all duration-300 ease-out",
-        active ? "bg-brand text-ink" : "bg-transparent text-muted-foreground"
-      )}
-    >
-      {children}
-    </span>
-  );
-}
-
-function BottomNavLabel({ active, children }: { active: boolean; children: ReactNode }) {
-  return (
-    <span
-      className={cn(
-        "text-[10px] font-semibold tracking-tight transition-colors duration-300",
-        active ? "text-ink" : "text-muted-foreground"
-      )}
-    >
-      {children}
-    </span>
-  );
-}
+/** Ordem dos pilares na barra (SPEC 134): Início, Projetos, Obra, Gestão, Menu. */
+const PILAR_ORDER: ModuleId[] = ["projetos", "obras", "gestao"];
 
 const ITEM_CLASS =
-  "flex flex-1 flex-col items-center justify-center gap-1 py-1.5 outline-hidden transition-transform duration-150 active:scale-90 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2";
+  "relative flex flex-1 flex-col items-center justify-center gap-0.5 rounded-[26px] outline-hidden transition-[background-color,color,transform] duration-300 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-ring";
+
+/** Item ativo: fundo verde da marca com ícone e texto pretos; inativo: cinza. */
+const itemTone = (active: boolean) => (active ? "bg-brand text-ink" : "bg-transparent text-muted-foreground");
+
+function BottomNavItem({ active, label, children }: { active: boolean; label: string; children: ReactNode }) {
+  return (
+    <>
+      <span className="relative flex h-6 items-center justify-center">{children}</span>
+      <span className={cn("text-[10.5px] font-semibold leading-none tracking-tight", active && "text-ink")}>
+        {label}
+      </span>
+    </>
+  );
+}
 
 /**
- * Navegação mobile (< 768px, spec 097 / ADR 0040): substitui o drawer da
- * sidebar. Barra fixa de 6 itens, sempre nesta ordem: Início, Agentes, Gestão,
- * Projetos, Obra, Menu. Os 3 pilares mantêm slot fixo mesmo sem feature
- * liberada para a empresa (decisão do ADR 0040) — quem barra o acesso é o
- * `FeatureRoute` da rota, não este componente.
+ * Navegação mobile (< 768px, SPEC 134 sobre a spec 097 / ADR 0040): pílula flutuante
+ * solta das bordas, com blur. Cinco itens, sempre nesta ordem: Início, Projetos, Obra,
+ * Gestão, Menu. Os 3 pilares mantêm slot fixo mesmo sem feature liberada para a empresa
+ * (decisão do ADR 0040): quem barra o acesso é o `FeatureRoute` da rota, não este
+ * componente. Agentes mora no Menu, com o contador de pendências no ícone dele.
+ * Some ao rolar para baixo e com o teclado aberto (`useBarraVisivel`).
  */
 export function BottomNav() {
   const { routeModule, selectModule } = useModuleNav();
   const { data: pendenciasAgentes } = usePendenciasAgentes();
   const numPendenciasAgentes = pendenciasAgentes?.length ?? 0;
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuMontado, setMenuMontado] = useState(false);
+  const visivel = useBarraVisivel();
 
   return (
     <>
-      <nav
-        aria-label="Navegação principal"
-        className="fixed inset-x-0 bottom-0 z-50 flex rounded-t-2xl border-t bg-background pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_20px_-4px_rgba(0,0,0,0.08)] md:hidden"
-      >
-        <NavLink to="/inicio" className={ITEM_CLASS}>
-          {({ isActive }) => (
-            <>
-              <BottomNavPill active={isActive}>
-                <Home size={20} strokeWidth={isActive ? 2 : 1.75} />
-              </BottomNavPill>
-              <BottomNavLabel active={isActive}>Início</BottomNavLabel>
-            </>
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
+        <nav
+          aria-label="Navegação principal"
+          data-visivel={visivel}
+          className={cn(
+            "pointer-events-auto mx-auto flex h-16 max-w-md gap-0.5 rounded-[32px] border border-ink/10 bg-background/90 p-1.5 shadow-[0_12px_32px_-10px_rgba(26,26,26,0.35)] backdrop-blur-xl transition-transform duration-300 ease-out motion-reduce:transition-none",
+            visivel ? "translate-y-0" : "translate-y-[calc(100%+1.5rem)]"
           )}
-        </NavLink>
-
-        <NavLink to="/agentes" className={ITEM_CLASS}>
-          {({ isActive }) => (
-            <>
-              <span className="relative">
-                <BottomNavPill active={isActive}>
-                  <Sparkles size={20} strokeWidth={isActive ? 2 : 1.75} />
-                </BottomNavPill>
-                {numPendenciasAgentes > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 animate-pulse items-center justify-center rounded-full bg-danger px-1 text-[9px] font-bold leading-none text-white">
-                    {numPendenciasAgentes}
-                  </span>
-                )}
-              </span>
-              <BottomNavLabel active={isActive}>Agentes</BottomNavLabel>
-            </>
-          )}
-        </NavLink>
-
-        {PILAR_ORDER.map((id) => {
-          const mod = MODULES[id];
-          const Icon = mod.icon;
-          const active = routeModule === id;
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => selectModule(id)}
-              className={ITEM_CLASS}
-              aria-label={mod.label}
-              aria-current={active ? "page" : undefined}
-            >
-              <BottomNavPill active={active}>
-                <Icon size={20} strokeWidth={active ? 2 : 1.75} />
-              </BottomNavPill>
-              <BottomNavLabel active={active}>{mod.label}</BottomNavLabel>
-            </button>
-          );
-        })}
-
-        <button
-          type="button"
-          onClick={() => setMenuOpen(true)}
-          className={ITEM_CLASS}
-          aria-label="Menu"
-          aria-haspopup="dialog"
         >
-          <BottomNavPill active={menuOpen}>
-            <MenuIcon size={20} strokeWidth={menuOpen ? 2 : 1.75} />
-          </BottomNavPill>
-          <BottomNavLabel active={menuOpen}>Menu</BottomNavLabel>
-        </button>
-      </nav>
+          <NavLink to="/inicio" className={({ isActive }) => cn(ITEM_CLASS, itemTone(isActive))}>
+            {({ isActive }) => (
+              <BottomNavItem active={isActive} label="Início">
+                <Home size={21} strokeWidth={isActive ? 2.1 : 1.8} />
+              </BottomNavItem>
+            )}
+          </NavLink>
 
-      <MoreSheet open={menuOpen} onOpenChange={setMenuOpen} />
+          {PILAR_ORDER.map((id) => {
+            const mod = MODULES[id];
+            const Icon = mod.icon;
+            const active = routeModule === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => selectModule(id)}
+                className={cn(ITEM_CLASS, itemTone(active))}
+                aria-label={mod.label}
+                aria-current={active ? "page" : undefined}
+              >
+                <BottomNavItem active={active} label={mod.label}>
+                  <Icon size={21} strokeWidth={active ? 2.1 : 1.8} />
+                </BottomNavItem>
+              </button>
+            );
+          })}
+
+          <button
+            type="button"
+            onClick={() => {
+              setMenuMontado(true);
+              setMenuOpen(true);
+            }}
+            onPointerDown={() => void carregarMoreSheet()}
+            className={cn(ITEM_CLASS, itemTone(menuOpen))}
+            aria-label={numPendenciasAgentes > 0 ? `Menu, ${numPendenciasAgentes} pendências de agentes` : "Menu"}
+            aria-haspopup="dialog"
+          >
+            <BottomNavItem active={menuOpen} label="Menu">
+              <MenuIcon size={21} strokeWidth={menuOpen ? 2.1 : 1.8} />
+              {numPendenciasAgentes > 0 && (
+                <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[9px] font-bold leading-none text-white">
+                  {numPendenciasAgentes}
+                </span>
+              )}
+            </BottomNavItem>
+          </button>
+        </nav>
+      </div>
+
+      {menuMontado && (
+        <Suspense fallback={null}>
+          <MoreSheet open={menuOpen} onOpenChange={setMenuOpen} />
+        </Suspense>
+      )}
     </>
   );
 }

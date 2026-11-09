@@ -75,12 +75,24 @@ export function ehTokenizacaoSemPermissao(mensagemAsaas: string): boolean {
   return /permiss[aã]o para utilizar este recurso|gerente de contas/i.test(mensagemAsaas);
 }
 
+/**
+ * Texto da cobrança recusada. O Asaas já termina a mensagem com ponto, então o
+ * ponto final é tirado antes de emendar a orientação (evita ".." na tela).
+ */
+export function mensagemCobrancaRecusada(mensagemAsaas: string): string {
+  const motivo = mensagemAsaas.replace(/^Asaas: /, "").replace(/[.\s]+$/, "");
+  return `A cobrança não foi aprovada: ${motivo}. Confira os dados ou use outro cartão.`;
+}
+
 /** Valor do ciclo escolhido, sempre do plano no banco. null = plano sem preço nesse ciclo. */
 export function valorDoCiclo(
   plan: { preco_mensal: number | null; preco_anual: number | null },
   ciclo: Body["billing_cycle"]
 ): number | null {
-  return (ciclo === "yearly" ? plan.preco_anual : plan.preco_mensal) ?? null;
+  const valor = ciclo === "yearly" ? plan.preco_anual : plan.preco_mensal;
+  // Preço ausente, zero ou negativo é plano mal configurado: nunca vai ao Asaas
+  // (o checkout e a troca de plano já recusam o mesmo caso).
+  return typeof valor === "number" && valor > 0 ? valor : null;
 }
 
 /** A primeira cobrança acontece no fim do trial (data, sem hora). */

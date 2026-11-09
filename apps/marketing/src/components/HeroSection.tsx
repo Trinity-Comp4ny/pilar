@@ -6,7 +6,7 @@ import { HeroBackdrop } from "./hero/HeroBackdrop";
 import { SplitButton } from "./ui/SplitButton";
 import { RotatingWord } from "./RotatingWord";
 import { EASE } from "../lib/motion";
-import { linkCadastro } from "../lib/origem";
+import { LinkDemo } from "./LinkDemo";
 
 /**
  * Hero.
@@ -85,8 +85,8 @@ export function HeroSection() {
             transition={{ duration: 0.7, ease: EASE.out, delay: 0.55 }}
             className="text-[14px] md:text-[17px] text-ink-soft max-w-xl mx-auto mb-8 md:mb-9 leading-relaxed px-2"
           >
-            Feche propostas, controle cronogramas e acompanhe obras, com agentes de IA feitos pro seu escritório de
-            engenharia.
+            Gestão com agentes de IA para escritórios de engenharia e arquitetura. Prazos, entregas e governança do
+            projeto: a IA prepara, você aprova.
           </m.p>
 
           <m.div
@@ -96,14 +96,14 @@ export function HeroSection() {
             className="flex flex-col items-center gap-3"
           >
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <SplitButton href={linkCadastro()} onClick={() => trackCta("testar_gratis", "hero")}>
-                Testar grátis por 3 dias
+              <SplitButton to="/planos" onClick={() => trackCta("ver_planos", "hero")}>
+                Ver planos
               </SplitButton>
               <SplitButton href={`${APP_URL}/login`} onClick={() => trackCta("entrar", "hero")} fantasma>
                 Entrar
               </SplitButton>
             </div>
-            <p className="text-[12.5px] text-ink-muted">Sem cartão · Cancele quando quiser</p>
+            <LinkDemo local="hero" />
           </m.div>
         </div>
       </div>

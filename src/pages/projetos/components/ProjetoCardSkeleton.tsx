@@ -1,11 +1,9 @@
 export function ProjetoCardSkeleton() {
   return (
-    <div className="rounded-lg border bg-white p-3 space-y-2 animate-pulse">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <div className="h-1.5 w-1.5 rounded-full bg-muted" />
-          <div className="h-3 w-20 rounded bg-muted" />
-        </div>
+    <div className="flex animate-pulse flex-col gap-2 rounded-lg border border-border bg-surface-card p-3">
+      <div className="flex min-h-5 items-center gap-1.5">
+        <div className="h-2 w-2 rounded-full bg-muted" />
+        <div className="h-3 w-16 rounded bg-muted" />
       </div>
       <div className="space-y-1.5">
         <div className="h-3.5 w-full rounded bg-muted" />
@@ -22,7 +20,7 @@ export function ProjetoCardSkeleton() {
 
 export function ProjetoColumnSkeleton({ count = 3 }: { count?: number }) {
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-2">
       {Array.from({ length: count }).map((_, i) => (
         <ProjetoCardSkeleton key={i} />
       ))}

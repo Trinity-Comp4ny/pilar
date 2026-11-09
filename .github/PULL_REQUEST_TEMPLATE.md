@@ -44,6 +44,7 @@ teste automatizado (qual) ou exercício do fluxo real (qual tela, qual caminho).
 
 ### Se tocou UI
 
+- [ ] **Antes e depois** de cada tela alterada no corpo do PR (tabela `Antes | Depois`, 1440px; 390px se o mobile mudou). Ver "Mudança visual" no `CLAUDE.md`
 - [ ] Página usa `PilarPage`, modal de formulário usa `FormDialog` (largura `sm`/`md`/`lg`)
 - [ ] Cor só por token semântico, botão primário via `variant="brand"`
 - [ ] Status via `StatusBadge`, dinheiro e data via `@/lib/format`, exclusão via `ConfirmDialog`

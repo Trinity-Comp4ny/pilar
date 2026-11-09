@@ -1,13 +1,14 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Pencil, Trash2, Truck, Link2 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { PageLayout } from "@/components/PageLayout";
+import { FilterBar } from "@/components/filters/FilterBar";
 import { PageHeader } from "@/components/PageHeader";
 import { Can } from "@/components/Can";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -16,7 +17,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getSafeErrorMessage } from "@/lib/safeError";
+import { getRawErrorMessage, getSafeErrorMessage } from "@/lib/safeError";
 import { formatCNPJ, formatPhone, onlyDigits, validateEmail } from "@/lib/maskUtils";
 import { isValidCNPJ } from "@/lib/brasilApi";
 import { ReconciliarDialog } from "./ReconciliarDialog";
@@ -192,7 +193,9 @@ export default function Fornecedores() {
       setIsDialogOpen(false);
       fetchFornecedores();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "";
+      // PostgrestError é objeto plano (não `instanceof Error`): ler a mensagem por getRawErrorMessage,
+      // senão o CNPJ duplicado (fornecedores_unique_empresa_cnpj) caía no aviso genérico.
+      const message = getRawErrorMessage(err);
       if (message.includes("unique") || message.includes("duplicate") || message.includes("fornecedores_cnpj")) {
         toast.error("CNPJ já cadastrado para outro fornecedor");
       } else {
@@ -352,8 +355,22 @@ export default function Fornecedores() {
     />
   );
 
+  // Toolbar padrão (SPEC 124): a lista não tem filtro além da busca do header, então traz só a contagem.
+  const toolbar = (
+    <FilterBar
+      end={
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {filtered.length} de {fornecedores.length}
+        </span>
+      }
+    >
+      {null}
+    </FilterBar>
+  );
+
   return (
     <PageLayout
+      toolbar={toolbar}
       className="overflow-y-hidden"
       containerClassName="h-full flex flex-col min-h-0"
       header={
@@ -501,18 +518,7 @@ export default function Fornecedores() {
       }
     >
       <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden">
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <CardTitle className="text-lg font-medium tracking-tight">Lista de Fornecedores</CardTitle>
-              <CardDescription className="text-sm text-muted-foreground mt-1">
-                Total de {filtered.length} de {fornecedores.length} fornecedor(es)
-              </CardDescription>
-            </div>
-            {/* Busca de texto migrou para o PageHeader (spec 002). */}
-          </div>
-        </CardHeader>
-        <CardContent className="flex-1 min-h-0 flex flex-col">
+        <CardContent className="flex-1 min-h-0 flex flex-col p-4">
           {/* O main está com overflow-y-hidden (página de altura fixa), então o
               scroll precisa viver aqui, senão a tabela é cortada sem rolar. */}
           <div className="overflow-x-auto overflow-y-auto w-full flex-1 min-h-0">

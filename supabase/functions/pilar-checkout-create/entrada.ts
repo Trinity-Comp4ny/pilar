@@ -38,3 +38,8 @@ export const checkoutSchema = z
   });
 
 export type CheckoutPayload = z.infer<typeof checkoutSchema>;
+
+/** Mensagem do Asaas quando o banco emissor recusa o cartão (não é falha da plataforma). */
+export function cartaoRecusado(mensagem: string): boolean {
+  return /transa[cç][aã]o n[aã]o autorizada/i.test(mensagem);
+}

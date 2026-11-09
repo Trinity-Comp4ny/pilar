@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isUltraAdminPath, rotaDaAbaLegada, ultraSecaoAtiva } from "./ultraAdminNav";
+import { ULTRA_SECOES, isUltraAdminPath, rotaDaAbaLegada, ultraSecaoAtiva } from "./ultraAdminNav";
 
 describe("ultraAdminNav", () => {
   it("reconhece rotas do portal", () => {
@@ -16,6 +16,13 @@ describe("ultraAdminNav", () => {
     expect(ultraSecaoAtiva("/ultra-admin/empresas/abc")).toBe("empresas");
     expect(ultraSecaoAtiva("/ultra-admin/custos-ia")).toBe("custos-ia");
     expect(ultraSecaoAtiva("/projetos")).toBeNull();
+  });
+
+  it("Time é um item só: a Central e as fichas dos agentes marcam ele", () => {
+    expect(ultraSecaoAtiva("/ultra-admin/time")).toBe("time");
+    expect(ultraSecaoAtiva("/ultra-admin/time/receita")).toBe("time");
+    expect(ultraSecaoAtiva("/ultra-admin/time/clientes/")).toBe("time");
+    expect(ULTRA_SECOES.filter((s) => s.group === "Time")).toHaveLength(1);
   });
 
   it("leva os links antigos ?tab= pra rota nova", () => {

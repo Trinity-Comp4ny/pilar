@@ -1,27 +1,23 @@
-import { Check, Infinity as InfinityIcon, Sparkles, Users } from "lucide-react";
-import { APP_URL } from "../config";
+import { Check, FolderKanban, HardHat, Sparkles, UserPlus, Users } from "lucide-react";
 import { trackCta } from "../analytics";
 import { RevealGroup } from "./motion";
 import { INCLUSO_EM_TODOS, PLANOS } from "../lib/planos";
-import { linkCadastro } from "../lib/origem";
+import { APP_URL } from "../config";
+import { LinkDemo } from "./LinkDemo";
 
 /**
  * Os três planos, no mesmo desenho na home e na /planos.
  *
- * Cada cartão mostra só o que muda entre planos: faixa de projetos, cota de
- * tokens de IA e nível de atendimento. A lista de funcionalidades saiu porque
+ * Cada cartão mostra só o que muda entre planos: a capacidade de cada módulo
+ * (projetos, obras e leads ativos), a cota de créditos de IA e o nível de atendimento. A lista de funcionalidades saiu porque
  * ela não existe: todo plano tem a plataforma inteira (ADR 0026), e repetir a
  * mesma lista em três colunas sugeria o contrário.
  *
- * `modo` decide o que o botão faz, porque as duas telas onde este componente
- * aparece têm intenção diferente:
- * - "testar" (home): visitante ainda decidindo, CTA suave pro trial, sem cartão.
- * - "assinar" (/planos): visitante já escolheu o plano, o botão vai direto pro
- *   checkout daquele plano (`/checkout?plano=slug`), como a página fazia antes
- *   de ser reescrita. Trocar isso por um CTA de trial genérico tiraria o
- *   caminho mais curto até pagamento da própria página comercial.
+ * Desde 2026-11-08 o botão de cada plano leva direto ao checkout do app (assina,
+ * paga e recebe o convite para entrar). Quem quer ver antes tem a demonstração
+ * logo abaixo, como caminho secundário.
  */
-export function PlanCards({ contexto, modo = "testar" }: { contexto: string; modo?: "testar" | "assinar" }) {
+export function PlanCards({ contexto }: { contexto: string }) {
   return (
     <RevealGroup className="grid md:grid-cols-3 gap-4 items-stretch" stagger={0.1}>
       {PLANOS.map((p) => (
@@ -51,21 +47,29 @@ export function PlanCards({ contexto, modo = "testar" }: { contexto: string; mod
             <p className="mb-7 text-[12px] text-ink-muted">A empresa inteira, sem cobrança por usuário</p>
 
             <a
-              href={modo === "assinar" ? `${APP_URL}/checkout?plano=${p.slug}` : linkCadastro()}
-              onClick={() => trackCta(modo === "assinar" ? "assinar_plano" : "testar_gratis", `${contexto}_${p.slug}`)}
-              aria-label={modo === "assinar" ? `Assinar plano ${p.nome}` : undefined}
+              href={`${APP_URL}/checkout?plano=${p.slug}`}
+              onClick={() => trackCta("assinar", `${contexto}_${p.slug}`)}
+              aria-label={`Assinar o plano ${p.nome}`}
               className={`flex h-11 items-center justify-center rounded-full text-[14px] font-medium transition-colors ${
                 p.destaque ? "bg-brand text-ink hover:bg-brand/85" : "bg-paper-alt text-ink hover:bg-paper-border/60"
               }`}
             >
-              {modo === "assinar" ? `Assinar ${p.nome}` : "Testar grátis por 3 dias"}
+              Assinar
             </a>
+            <LinkDemo
+              local={`${contexto}_${p.slug}`}
+              texto={null}
+              rotulo="ou agende uma demonstração"
+              className="mt-2.5 text-center"
+            />
 
-            {/* Só as três réguas que separam um plano do outro. */}
+            {/* Só as réguas que separam um plano do outro: uma por módulo, mais IA e atendimento. */}
             <ul className="mt-7 flex flex-col gap-3.5 border-t border-paper-border/70 pt-6">
               {[
-                { Icone: InfinityIcon, texto: p.projetos },
-                { Icone: Sparkles, texto: p.tokensMes },
+                { Icone: FolderKanban, texto: p.projetos },
+                { Icone: HardHat, texto: p.obras },
+                { Icone: UserPlus, texto: p.leads },
+                { Icone: Sparkles, texto: p.creditosMes },
                 { Icone: Users, texto: p.atendimento },
               ].map(({ Icone, texto }) => (
                 <li key={texto} className="flex items-start gap-2.5">

@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { cn } from "@/lib/utils";
+import { AvatarDiretorioContext } from "@/contexts/AvatarDiretorioContext";
+import { chaveDeNome } from "@/lib/avatarDiretorio";
 
 export type PessoaAvatar = string | { nome: string; avatarUrl?: string | null };
 
@@ -67,7 +69,13 @@ function AvatarCirculo({ nome, avatarUrl, dim }: { nome: string; avatarUrl?: str
 }
 
 export function AvatarStack({ pessoas, max = 3, size = "sm", className }: AvatarStackProps) {
-  const normalizadas = pessoas.map(normaliza).filter((p) => p.nome);
+  const fotos = useContext(AvatarDiretorioContext);
+  // Foto primeiro: a que o chamador passou, senão a da empresa pelo nome; sem
+  // nenhuma, o círculo cai para as iniciais.
+  const normalizadas = pessoas
+    .map(normaliza)
+    .filter((p) => p.nome)
+    .map((p) => ({ ...p, avatarUrl: p.avatarUrl ?? fotos.get(chaveDeNome(p.nome)) ?? null }));
   const unique = Array.from(new Map(normalizadas.map((p) => [p.nome, p])).values());
   if (unique.length === 0) return null;
 

@@ -47,7 +47,6 @@ k6 run tests/load/scenarios/login.js
 k6 run tests/load/scenarios/dashboard-read.js
 k6 run tests/load/scenarios/criar-receita.js
 k6 run tests/load/scenarios/listar-lancamentos.js
-k6 run tests/load/scenarios/webhook-asaas.js
 
 # Com saida JSON para analise posterior
 k6 run --out json=results/login-$(date +%s).json tests/load/scenarios/login.js
@@ -58,13 +57,12 @@ k6 run --vus 10 --duration 30s tests/load/scenarios/dashboard-read.js
 
 ## Cenarios
 
-| Arquivo                 | O que testa                                      | VUs alvo |
-| ----------------------- | ------------------------------------------------ | -------- |
-| `login.js`              | 100 logins concorrentes — rate limit + Auth      | 100      |
-| `dashboard-read.js`     | GETs do dashboard — RLS + cache                  | 100      |
-| `criar-receita.js`      | POST `/rest/v1/lancamentos` — writes + triggers  | 100      |
-| `listar-lancamentos.js` | GET com paginacao e filtros — indexes            | 100      |
-| `webhook-asaas.js`      | 500 webhook calls — idempotencia + edge function | 500      |
+| Arquivo                 | O que testa                                     | VUs alvo |
+| ----------------------- | ----------------------------------------------- | -------- |
+| `login.js`              | 100 logins concorrentes — rate limit + Auth     | 100      |
+| `dashboard-read.js`     | GETs do dashboard — RLS + cache                 | 100      |
+| `criar-receita.js`      | POST `/rest/v1/lancamentos` — writes + triggers | 100      |
+| `listar-lancamentos.js` | GET com paginacao e filtros — indexes           | 100      |
 
 ## Thresholds (default)
 

@@ -8,7 +8,7 @@
 **Escritórios de projeto técnico** — engenharia multidisciplinar (civil + estrutural + MEP/HVAC) e arquitetura.
 
 - ✅ **É:** escritório de engenharia ou arquitetura que vende projeto técnico por proposta, com fluxo de disciplina/etapa.
-- ❌ **Não é:** construtora / incorporadora (precisa gestão de obra como núcleo do negócio, fora do escopo).
+- ❌ **Não é:** construtora / incorporadora (a gestão de obra é o negócio dela e pede ERP próprio). Escritório que projeta e acompanha a obra é ICP.
 - **Porte:** pequeno a médio. Planos por usuário — Starter ≤3, Pro ≤15, Enterprise ilimitado.
 - **Maturidade digital:** sai de planilha + WhatsApp; conservador, técnico, cético com hype.
 
@@ -26,7 +26,7 @@
 - **Medo:** trocar a planilha que (mal) funciona; confiar número que a IA gerou.
 - **Gatilho de compra:** levou prejuízo num projeto que parecia ok; cresceu e perdeu o controle de cabeça.
 - **Como fala com ele:** número e clareza, respeitando que ele é o especialista técnico. Sem hype.
-- **Mensagem-âncora:** "Saiba se cada projeto está dando lucro antes de terminar."
+- **Mensagem-âncora:** "Gestão com agentes de IA para escritórios de engenharia e arquitetura." (o lucro antes do fim é a prova, não a promessa-mãe).
 
 ## Persona secundária — Gerente de projetos / Coordenador
 
@@ -44,7 +44,7 @@
 ## GTM (contexto pra copy)
 
 - **Founder-led sales:** Matheus fecha os 10–25 primeiros à mão; objeções viram playbook. Ref: `research/INSIGHTS.md` #7.
-- **Onboarding manual ("do things that don't scale"):** gerar o 1º orçamento *com* o cliente. Ref: #5.
+- **Onboarding manual ("do things that don't scale"):** gerar o 1º orçamento _com_ o cliente. Ref: #5.
 - **Arquétipo Hard Fact (a validar):** público resignado ("não dá pra saber antes"). Copy quebra a resignação, não compara feature a feature. Ref: #6.
 
 ## Anti-persona (não perseguir)

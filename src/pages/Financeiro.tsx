@@ -6,11 +6,12 @@ import { startOfMonth, endOfMonth, parseISO, format, isValid } from "date-fns";
 import { LayoutDashboard, Plus, Receipt, Users2, Wallet, FileBarChart } from "lucide-react";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
+import { FilterBar } from "@/components/filters/FilterBar";
 import { PeriodoPopover } from "./financeiro/components/PeriodoPopover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useRegistrarPagina } from "@/hooks/useRecentes";
-import { SecondSidebar, type SecondSidebarTab } from "@/components/SecondSidebar";
+import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
 import { FinanceFilterProvider, type Visualizacao } from "./financeiro/contexts/FinanceFilterContext";
 import { NovoLancamentoDialog } from "./financeiro/components/NovoLancamentoDialog";
 import { LancamentoFormDialog } from "./financeiro/components/LancamentoFormDialog";
@@ -23,7 +24,7 @@ const Lancamentos = lazy(() => import("./financeiro/tabs/Lancamentos"));
 const FolhaPagamento = lazy(() => import("./financeiro/tabs/FolhaPagamento"));
 const Relatorios = lazy(() => import("./Relatorios"));
 
-const FINANCEIRO_TABS_ALL: SecondSidebarTab[] = [
+const FINANCEIRO_TABS_ALL: SectionTab[] = [
   { id: "visao-geral", label: "Visão Geral", icon: LayoutDashboard },
   { id: "lancamentos", label: "Lançamentos", icon: Receipt, dataTour: "onb-lancamentos" },
   { id: "folha-pagamento", label: "Folha de Pagamento", icon: Users2 },
@@ -121,11 +122,23 @@ export default function Financeiro() {
             title={isRoot ? "Financeiro" : activeLabel}
             breadcrumbs={isRoot ? undefined : [{ label: "Financeiro", onClick: () => handleTabChange("visao-geral") }]}
             primaryAction={{ label: "Novo lançamento", icon: Plus, onClick: () => setEscolhendoTipo(true) }}
-          >
-            <PeriodoPopover activeTab={activeTab} />
-          </PageHeader>
+          />
         }
-        sidebar={<SecondSidebar tabs={FINANCEIRO_TABS_ALL} value={activeTab} onValueChange={handleTabChange} />}
+        toolbar={
+          isRoot ? (
+            <FilterBar>
+              <PeriodoPopover activeTab={activeTab} />
+            </FilterBar>
+          ) : undefined
+        }
+        tabs={
+          <SectionTabs
+            tabs={FINANCEIRO_TABS_ALL}
+            value={activeTab}
+            onValueChange={handleTabChange}
+            ariaLabel="Seções do financeiro"
+          />
+        }
       >
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsContent value="visao-geral" className="mt-0 w-full focus-visible:ring-0">

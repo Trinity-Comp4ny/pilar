@@ -4,9 +4,9 @@ import type { SortingState } from "@tanstack/react-table";
 import { monitoring } from "@/lib/monitoring";
 import { supabase } from "@/integrations/supabase/client";
 import { mensagemDaFunction } from "@/lib/edgeError";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FilterBar, FilterClear, FilterSelect } from "@/components/filters/FilterBar";
 import { Plus, ChevronLeft, ChevronRight, Mail, Trash2, Pencil, UsersRound, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -40,7 +40,7 @@ export default function Clientes() {
   // Mutations e ações de portal. enableListQueries: false porque a lista agora
   // vem paginada do servidor; este hook aqui é só para deleteCliente e o status
   // do portal (query própria, sempre ligada, independente de enableListQueries).
-  const { deleteCliente, portalStatusPorCliente } = useClientes({ enableListQueries: false });
+  const { deleteCliente, portalStatusPorCliente } = useClientes({ enableListQueries: false, enablePortalStatus: true });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
@@ -153,7 +153,7 @@ export default function Clientes() {
   }, [searchParams, clientes]);
 
   const handleSendMessage = async () => {
-    if (!selectedClienteForMessage || !messageText || !subjectText) return;
+    if (!selectedClienteForMessage || !messageText.trim() || !subjectText.trim()) return;
     const nomeCompleto = `${selectedClienteForMessage.nome}${selectedClienteForMessage.sobrenome ? " " + selectedClienteForMessage.sobrenome : ""}`;
     try {
       const { error } = await supabase.functions.invoke("send-manual-client-email", {
@@ -165,7 +165,7 @@ export default function Clientes() {
       });
 
       if (error) {
-        resetMessageModal();
+        // Mantém o diálogo aberto com assunto e texto: o usuário tenta de novo sem redigitar.
         toast.error(`Não foi possível enviar a mensagem para ${nomeCompleto}`, {
           description: await mensagemDaFunction(error, "Tente novamente em instantes."),
         });
@@ -178,7 +178,6 @@ export default function Clientes() {
     } catch (error) {
       monitoring.captureException(error, { context: "sendClientMessage unexpected" });
       toast.error("Não foi possível enviar a mensagem", { description: "Tente novamente em instantes." });
-      resetMessageModal();
     }
   };
 
@@ -256,15 +255,17 @@ export default function Clientes() {
         >
           <Mail className="h-4 w-4" />
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={(e) => handleEditClick(cliente, e)}
-          aria-label="Editar cliente"
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
+        <Can feature="clientes" action="edit">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={(e) => handleEditClick(cliente, e)}
+            aria-label="Editar cliente"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+        </Can>
         <Can feature="clientes" action="delete">
           <Button
             variant="ghost"
@@ -324,8 +325,76 @@ export default function Clientes() {
     ...(canShowActions ? [acoesColumn] : []),
   ];
 
+  const filtrosAtivos =
+    (filterTipo !== "all" ? 1 : 0) +
+    (filterOrigem !== "all" ? 1 : 0) +
+    (filterProjeto !== "all" ? 1 : 0) +
+    (filterPortal !== "all" ? 1 : 0);
+  const limparFiltros = () => {
+    setFilterTipo("all");
+    setFilterOrigem("all");
+    setFilterProjeto("all");
+    setFilterPortal("all");
+  };
+
+  // Toolbar padrão (SPEC 124). Busca de texto fica no header.
+  const toolbar = (
+    <FilterBar
+      end={
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {total > 0 ? `${range.from}-${range.to} de ${total}` : "Nenhum cliente"}
+        </span>
+      }
+    >
+      <FilterSelect
+        label="Tipo"
+        value={filterTipo}
+        emptyValue="all"
+        onChange={setFilterTipo}
+        options={[
+          { value: "all", label: "Todos os tipos" },
+          { value: "PF", label: "Pessoa física" },
+          { value: "PJ", label: "Pessoa jurídica" },
+        ]}
+      />
+      {origens.length > 0 && (
+        <FilterSelect
+          label="Origem"
+          value={filterOrigem}
+          emptyValue="all"
+          onChange={setFilterOrigem}
+          options={[{ value: "all", label: "Todas as origens" }, ...origens.map((o) => ({ value: o, label: o }))]}
+        />
+      )}
+      <FilterSelect
+        label="Projeto"
+        value={filterProjeto}
+        emptyValue="all"
+        onChange={(v) => setFilterProjeto(v as FiltroTriplo)}
+        options={[
+          { value: "all", label: "Todos" },
+          { value: "com", label: "Com projeto" },
+          { value: "sem", label: "Sem projeto" },
+        ]}
+      />
+      <FilterSelect
+        label="Portal"
+        value={filterPortal}
+        emptyValue="all"
+        onChange={(v) => setFilterPortal(v as FiltroTriplo)}
+        options={[
+          { value: "all", label: "Todos" },
+          { value: "com", label: "Com portal" },
+          { value: "sem", label: "Sem portal" },
+        ]}
+      />
+      <FilterClear count={filtrosAtivos} onClick={limparFiltros} />
+    </FilterBar>
+  );
+
   return (
     <PilarPage
+      toolbar={toolbar}
       className="overflow-y-hidden"
       containerClassName="h-full flex flex-col min-h-0"
       title="Clientes"
@@ -339,67 +408,7 @@ export default function Clientes() {
       }}
     >
       <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden">
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <CardTitle className="text-lg font-medium tracking-tight">Lista de clientes</CardTitle>
-              <CardDescription className="text-sm text-muted-foreground mt-1">
-                {total > 0
-                  ? `Mostrando ${range.from}-${range.to} de ${total} cliente(s)`
-                  : "Nenhum cliente para exibir"}
-              </CardDescription>
-            </div>
-            <div className="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
-              {/* Busca de texto migrou para o PageHeader (spec 002). */}
-              <Select value={filterTipo} onValueChange={setFilterTipo}>
-                <SelectTrigger className="h-9 w-full sm:w-32 rounded-full text-sm" aria-label="Tipo de cliente">
-                  <SelectValue placeholder="Tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os tipos</SelectItem>
-                  <SelectItem value="PF">Pessoa física</SelectItem>
-                  <SelectItem value="PJ">Pessoa jurídica</SelectItem>
-                </SelectContent>
-              </Select>
-              {origens.length > 0 && (
-                <Select value={filterOrigem} onValueChange={setFilterOrigem}>
-                  <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm" aria-label="Origem">
-                    <SelectValue placeholder="Origem" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas origens</SelectItem>
-                    {origens.map((o) => (
-                      <SelectItem key={o} value={o}>
-                        {o}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              <Select value={filterProjeto} onValueChange={(v) => setFilterProjeto(v as FiltroTriplo)}>
-                <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm" aria-label="Projeto">
-                  <SelectValue placeholder="Projeto" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="com">Com projeto</SelectItem>
-                  <SelectItem value="sem">Sem projeto</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterPortal} onValueChange={(v) => setFilterPortal(v as FiltroTriplo)}>
-                <SelectTrigger className="h-9 w-full sm:w-36 rounded-full text-sm" aria-label="Portal do cliente">
-                  <SelectValue placeholder="Portal" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="com">Com portal</SelectItem>
-                  <SelectItem value="sem">Sem portal</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="flex-1 min-h-0 flex flex-col">
+        <CardContent className="flex-1 min-h-0 flex flex-col p-4">
           <div className="overflow-x-auto overflow-y-auto w-full flex-1 min-h-0">
             <DataTable
               columns={columns}

@@ -29,6 +29,7 @@ import {
   type Severidade,
 } from "./hooks";
 import { estadoDosComponentes, quandoRelativo } from "./lib";
+import { EmptyState } from "@/components/EmptyState";
 
 const SEVERIDADES: Array<{ value: Severidade; label: string; ajuda: string }> = [
   { value: "degradado", label: "Lento ou instável", ajuda: "Funciona, mas com lentidão ou erro intermitente." },
@@ -190,7 +191,7 @@ export default function Incidentes() {
         <h2 id="abertos-titulo" className="text-sm font-semibold text-ink">
           Em aberto <span className="font-normal text-ink-muted">({abertos.length})</span>
         </h2>
-        {!carregando && abertos.length === 0 && <p className="text-sm text-ink-muted">Nenhum incidente aberto.</p>}
+        {!carregando && abertos.length === 0 && <EmptyState compact title="Nenhum incidente aberto." />}
         {abertos.map((i) => (
           <CardIncidente key={i.id} incidente={i} componentes={componentes} onAtualizar={() => setAtualizarAlvo(i)} />
         ))}

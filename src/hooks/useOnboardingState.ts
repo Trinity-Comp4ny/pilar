@@ -1,10 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  parseOnboardingState,
-  persistOnboardingState,
-  type OnboardingState,
-} from "@/lib/onboarding/state";
+import { parseOnboardingState, persistOnboardingState, type OnboardingState } from "@/lib/onboarding/state";
 
 /**
  * Lê o meta-estado do onboarding do profile já carregado no AuthContext e expõe
@@ -22,14 +18,14 @@ export function useOnboardingState() {
       await persistOnboardingState(patch);
       await refreshProfile();
     },
-    [refreshProfile],
+    [refreshProfile]
   );
 
   const dismiss = useCallback((value = true) => mutate({ dismissed: value }), [mutate]);
 
   const reset = useCallback(
-    () => mutate({ dismissed: false, completed_at: null, tours_seen: [] }),
-    [mutate],
+    () => mutate({ dismissed: false, completed_at: null, tours_seen: [], boas_vindas_dispensada: false }),
+    [mutate]
   );
 
   const markTourSeen = useCallback(
@@ -37,7 +33,7 @@ export function useOnboardingState() {
       if (state.tours_seen.includes(key)) return Promise.resolve();
       return mutate({ tours_seen: [...state.tours_seen, key] });
     },
-    [mutate, state.tours_seen],
+    [mutate, state.tours_seen]
   );
 
   const setCompleted = useCallback(() => {
@@ -45,5 +41,7 @@ export function useOnboardingState() {
     return mutate({ completed_at: new Date().toISOString() });
   }, [mutate, state.completed_at]);
 
-  return { state, dismiss, reset, markTourSeen, setCompleted };
+  const dispensarBoasVindas = useCallback(() => mutate({ boas_vindas_dispensada: true }), [mutate]);
+
+  return { state, dismiss, reset, markTourSeen, setCompleted, dispensarBoasVindas };
 }

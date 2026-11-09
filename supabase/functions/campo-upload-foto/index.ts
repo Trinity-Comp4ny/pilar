@@ -4,6 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/logger.ts";
+import { limitarOuResponder } from "../_shared/db-rate-limit.ts";
 import { lerJson } from "../_shared/schemas.ts";
 import { decodificarImagem, EXT, lerEntrada } from "./entrada.ts";
 
@@ -34,6 +35,16 @@ serve(
       const { data: sess, error: sessErr } = await supabaseAdmin.rpc("campo_verify_session", { p_token: token });
       const s = sess as { ok?: boolean; obra_id?: string; empresa_id?: string; must_change_senha?: boolean } | null;
       if (sessErr || !s?.ok || s.must_change_senha) return safeErrorResponse(401, "Sessão inválida", req);
+
+      // Limite por obra (token válido): foto de RDO são dezenas por dia; 200/h barra loop e
+      // abuso de storage sem atrapalhar a equipe de campo.
+      const limite = await limitarOuResponder(supabaseAdmin, req, {
+        bucket: "campo_upload_foto",
+        key: `obra:${s.obra_id}`,
+        max: 200,
+        windowSeconds: 3600,
+      });
+      if (limite) return limite;
 
       const ext = EXT[content_type];
       const path = `${s.empresa_id}/${s.obra_id}/${rdo_id}/${crypto.randomUUID()}.${ext}`;

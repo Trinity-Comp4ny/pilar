@@ -62,7 +62,7 @@ export default function ClienteConvite() {
 
   if (!token) {
     return (
-      <div className="landing-grain min-h-screen w-full flex items-center justify-center bg-paper p-8">
+      <div className="landing-grain min-h-dvh w-full flex items-center justify-center bg-paper p-8">
         <div className="w-full max-w-[400px] space-y-4 text-center">
           <Logo size="lg" className="text-ink mx-auto" />
           <h1 className="text-xl font-semibold text-ink">Link inválido</h1>
@@ -78,7 +78,7 @@ export default function ClienteConvite() {
   }
 
   return (
-    <div className="landing-grain min-h-screen w-full flex items-center justify-center bg-paper p-8">
+    <div className="landing-grain min-h-dvh w-full flex items-center justify-center bg-paper p-8">
       <div className="w-full max-w-[400px] space-y-8 animate-in fade-in slide-in-from-left-8 duration-700">
         <div className="text-center space-y-2">
           <div className="flex justify-center mb-6">

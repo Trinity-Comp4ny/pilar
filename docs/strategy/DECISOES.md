@@ -11,6 +11,394 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-08 · Landing leva aos planos; assinatura direta pelo site, demonstração como caminho secundário
+
+**Decisão:** os botões principais da landing passam a ser "Ver planos" e "Entrar". Cada plano tem "Assinar", que
+leva direto ao checkout do app: o escritório paga, recebe o convite e entra. "Agendar demonstração" vira caminho
+secundário: uma linha discreta abaixo dos botões na hero, nas páginas de módulo e comparativo e no fecho, um link
+em cada plano e o link do rodapé. Segue sem teste grátis; a cena dos agentes na hero é a amostra do produto (sem
+vídeo gravado por ora).
+
+Contexto: os preços já são públicos e o checkout existe, mas a landing não levava ninguém até ele; todo botão de
+plano ia para o Google Agenda. Quem já decidiu comprar não precisa passar por uma conversa.
+
+**Supera:** a parte "entrada só por demonstração" de 2026-11-06 e o comentário da SPEC 133 de que o checkout era só
+"para o link que o time envia". O cadastro com teste grátis (`/cadastro`) continua fechado.
+
+---
+
+## 2026-11-07 (mais tarde) · Tagline: "Gestão com agentes de IA para escritórios de engenharia e arquitetura."
+
+**Decisão:** a frase principal do Pilar passa a ser **"Gestão com agentes de IA para escritórios de engenharia e
+arquitetura."** "Do contrato à execução, num fluxo só." sai: não é mais tagline nem headline e não aparece em título,
+meta, imagem de compartilhamento, tela de entrada ou material de venda.
+
+Contexto: a frase do fluxo soava como slogan de marketing; a nova diz o que o sistema é e para quem, e põe os agentes
+na frente. A assinatura dos agentes ("A IA prepara. O sistema confere. Você aprova.") continua. Trocado no app (telas de
+entrada e cadastro), na landing (subtítulo da hero, fecho e rodapé), nas metas e og:image, no `CLAUDE.md`, em `brand/`
+e no agente de vendas. "Do contrato à execução" fica só como termo do glossário (`voice-tone.md`) em texto corrido.
+
+**Supera:** a tagline "Do contrato à execução, num fluxo só." de 2026-10-28. O resto daquela decisão (agentes como
+primeiro pilar, lucro e prazo como prova) segue valendo.
+
+---
+
+## 2026-11-07 · Logo: coluna de três caneluras e apresentação clara sobre a paisagem
+
+**Decisão:** o símbolo passa a ter três caneluras (eram quatro), com a do meio no eixo: três apoios
+sustentando o capitel, a ideia de trindade e de base. A apresentação padrão da marca deixa o fundo preto
+e passa a ser clara, sobre a paisagem de morros verdes da hero da landing, com o símbolo em Ink como foco.
+
+Contexto: o ícone do app era um disco verde num tile preto, e o preto não conversava com a landing, que é
+clara. Entram variações claras (ícone paisagem, verde e disco sobre papel; lockups horizontal, empilhado e
+banner sobre a paisagem), todas geradas por `scripts/brand/build.py`. Regras em `brand/logo.md` (seção 7.1).
+O **ícone verde** (coluna em Ink sobre o tile verde) é o ícone do produto: app instalado, tela inicial,
+favicon e foto de perfil. A paisagem fica para a imagem de compartilhamento (og:image) e peças grandes.
+
+**Supera:** a coluna de quatro caneluras e o ícone verde sobre Ink de `brand/logo.md` (BEZ-385). As versões
+`white` e `brand` sobre Ink seguem válidas para fundo escuro, só não são mais a cara da marca.
+
+---
+
+## 2026-11-07 · Onboarding: perfil do escritório na entrada, três pilares iguais e origem do lead
+
+**Decisão:** a entrada no Pilar passa a coletar quem é o escritório e quem é a pessoa, e o primeiro uso trata
+Gestão, Projetos e Obras com o mesmo peso. O ultra-admin anota na criação o que soube na demonstração (site,
+CNPJ, disciplinas, porte, origem); o dono confirma e responde "Como você conheceu o Pilar?"; cada pessoa informa
+a função (obrigatória) e o LinkedIn (opcional). Celular segue obrigatório para dono e convidado. Cada clique em
+"Agendar demonstração" registra o canal de origem (UTM ou site: Google, ChatGPT, LinkedIn...).
+
+Contexto: o escritório entrava num sistema vazio e o Pilar não sabia nada dele além do nome. Como toda entrada é
+por demonstração (2026-11-06), o dado de lead vem de quem já conversou com o cliente, sem pesar no formulário. O
+primeiro passo segue o pilar que o dono escolher; Obras não é módulo de segunda classe no onboarding.
+
+**Supera:** o onboarding de 2 etapas (perfil + só CNPJ) e o checklist só para admin da SPEC 034. Detalhe e o que
+ficou pendente (escritório de exemplo, consulta à Receita, evento de ativação) na SPEC 149.
+
+---
+
+## 2026-11-07 · Papel `owner` aposentado
+
+**Decisão:** o acesso dentro da empresa tem só administrador, coordenador e usuário. O papel `owner` sai de uso.
+
+Contexto: desde agosto nenhum perfil tinha `owner` (backfill para admin achou zero linhas em staging e produção), mas o
+valor seguia no enum e em listas do código, com tratamento diferente em cada lugar (um hook tratava como admin, o
+`canDo` não). **Aplicado** pela migration `20261202000000_papel_owner_aposentado`: rede de segurança owner → admin e
+trava (CHECK) em `profiles.role` e `convites.cargo`. O valor continua no enum porque removê-lo exige recriar o tipo
+usado por políticas de RLS; com a trava, ninguém volta a recebê-lo.
+
+---
+
+## 2026-11-06 (mais tarde) · Capacidade por módulo: projetos, obras e leads ativos
+
+**Decisão:** o plano limita os três módulos, não só projetos. Essencial: 10 projetos, 2 obras, 50 leads ativos.
+Profissional: 30 projetos, 5 obras, 200 leads. Escala: projetos e leads ilimitados, 15 obras. Usuários seguem
+ilimitados e toda empresa segue com a plataforma inteira (ADR 0026): o plano muda quanto, nunca o quê.
+
+Contexto: o Pilar deixou de ser só Projetos; Gestão e Obras são produto real, e cobrar tudo pela régua de projeto
+sub ou superprecifica o escritório que toca poucas obras ou muito comercial. Ativo = em andamento (projeto, obra) ou
+aberto no funil (lead); concluído, cancelado, ganho ou perdido não conta.
+
+**Supera:** as faixas 15/40/ilimitado de projetos da tabela v3 de PRICING.md e a coluna "obras ativas" (2/5/12) que
+lá era só diretriz. **Aplicado** pela migration `20261130000000_planos_v4_preco_e_capacidade_por_modulo`: colunas
+`max_obras` e `max_leads` no plano, `limites_empresa()` devolvendo as três faixas e o trigger
+`enforce_capacidade_leads`. Quem bate na faixa vê o diálogo de limite do plano, com o caminho para subir de plano.
+Assinatura que já está acima da faixa nova não perde nada: o bloqueio vale só para criar o próximo.
+
+---
+
+## 2026-11-06 · Preço R$ 299/499/899, IA vendida em créditos e entrada só por demonstração
+
+**Decisão:** os planos passam a R$ 299 (Essencial), R$ 499 (Profissional) e R$ 899 (Escala). A cota de IA é
+comunicada em **créditos**, não em tokens, na razão fixa de 1 crédito = 5 mil tokens: 100, 400 e 1.600 créditos por
+mês. A landing não fala mais em teste grátis: a entrada é por convite, depois de agendar a demonstração.
+
+Contexto: "500 mil tokens" não diz nada ao sócio do escritório; um número pequeno e redondo de créditos é palpável. O
+motor de tokens continua contando token por baixo; crédito é só a unidade exposta ao cliente (a razão fixa permite
+converter sem mudar o motor). Cadastro por convite já valia desde 19/10 (SPEC 133).
+
+**Supera:** os preços R$ 490/690/1.290 da tabela v3 de PRICING.md e a entrada de 2026-08-31 na parte "token é a
+unidade exposta". **Aplicado no app** pela migration `20261130000000_planos_v4_preco_e_capacidade_por_modulo` (preço
+do checkout) e pela UI em créditos (`src/lib/creditos.ts`). O preço do pacote avulso não mudou (só o rótulo, em
+créditos). As notificações geradas no banco ("Créditos de IA acabando", "Pedido de mais créditos de IA") passaram
+a créditos na migration `20261201000000_notificacoes_ia_em_creditos`.
+
+---
+
+## 2026-11-04 · Conexão bancária: por enquanto só arquivo CSV; sem OFX, sem Open Finance
+
+**Decisão:** o Financeiro continua recebendo extrato só por arquivo CSV (SPEC 017, tela "Importar"). Não entram OFX,
+agregador de Open Finance nem Asaas por empresa agora. Reabrir quando 3 ou 4 clientes pedirem conexão automática.
+
+Contexto: não existe conexão bancária gratuita para um produto. Agregador (Pluggy, Belvo, Celcoin) custa a partir de
+R$ 2.500/mês mais cerca de R$ 5 a 10 por conta conectada (valores de relatos de desenvolvedores, sem tabela oficial),
+e Open Finance direto exige ser instituição autorizada pelo Banco Central. O CSV já funciona e não tem custo.
+
+**Supera:** a recomendação de "OFX + CSV primeiro" do card BEZ-539; fica só o CSV. A SPEC 017 mantém PDF e XLSX como
+pendências de importação, sem prazo.
+
+---
+
+## 2026-11-03 · Sai o backend do Asaas por empresa; fica só o Asaas que cobra a assinatura do Pilar
+
+**Decisão:** removidas as edge functions `asaas-config`, `asaas-criar-cobranca` e `asaas-webhook`, as tabelas
+`asaas_config` e `asaas_webhook_logs` e as RPCs `set_asaas_api_key`/`get_asaas_api_key`. Não vai haver UI de cobrança
+pelo Asaas de cada empresa. Conexão bancária e conciliação seguem outro caminho (card BEZ-539).
+
+Contexto: a decisão de 2026-09-03 já abandonou a integração por empresa, mas deixou o backend de pé. Sem tela e sem
+chamador, era superfície de ataque e custo de manutenção sem uso. O Asaas da plataforma (checkout, assinatura, pacote
+de tokens, reconciliação diária) não muda.
+
+Também saíram (BEZ-553): as colunas `asaas_*` de `receitas` (e da view `lancamentos`), `clientes.asaas_customer_id` e o
+botão "Pagar" do portal, que só aparecia com `asaas_payment_url` preenchido. Em produção só a Bez Company tinha dado, de
+um teste em sandbox de 16/04/2026 (1 receita pendente, 1 cliente, 1 config). Correção da nota de 2026-09-03: havia 1
+`asaas_config` em produção, não zero.
+
+**Supera:** a nota de 2026-09-03 que deixava essas functions e tabelas "para auditoria separada".
+
+---
+
+## 2026-10-30 · Agentes: pendência vem de regra em SQL; o chat consulta registros e age com confirmação
+
+**Decisão:** o agente de acompanhamento detecta por regra (parcela e conta vencidas ou a vencer, prazo de projeto e
+disciplina, orçamento incorreto ou ausente, tarefa da obra vencendo, o que falta planejar) e mantém a fila na aba
+Pendências com idade e fechamento automático. A IA fica no chat: escolhe entre ferramentas de leitura fechadas e
+responde com os registros e link. Ação continua com card de confirmação. Detalhes na SPEC 146, SPEC 147 e ADR 0065.
+
+Contexto: a aba estava vazia porque o guardião de margem só olha projeto com orçamento por disciplina e nenhum dos 21
+projetos em andamento tinha. O agente de projetos do chat respondia "0 projetos" desde que `valor_contrato` perdeu o
+SELECT (ADR 0034). O sino avisava de receita excluída (129 de 139 avisos de recebimento atrasado). Cards: BEZ-508 a 513.
+
+---
+
+## 2026-10-28 · Marca: promessa "Do contrato à execução" e agentes como primeiro pilar (tagline superada em 2026-11-07)
+
+**Decisão:** a promessa-mãe do Pilar passa a ser "Do contrato à execução, num fluxo só". Agentes de IA viram o primeiro
+pilar de mensagem, com a assinatura "A IA prepara. O sistema confere. Você aprova." Lucro e prazo continuam, como prova
+do fluxo e não como promessa única. O nome fica **Pilar** e o domínio `pilarsoft.com.br`: a troca para "Prumeo" (19/08)
+está cancelada. O Clima é feature de Obras, não um quarto módulo (os módulos seguem Gestão, Projetos e Obras, mais
+Portal do cliente, Pilar Campo e Agentes).
+
+Contexto: o discurso "saiba se o projeto dá lucro antes de terminar" cobria só uma parte do produto, que já tem comercial,
+projetos, obra (diário, cronograma, cotação, estoque, conta da obra, estimativa), portal, Campo offline e agentes. Só se
+promete o que roda em produção. Supera a tagline de 2026-06 e o "não posicionar como ERP de construção" do
+`messaging.md`: o Pilar é o sistema do escritório que projeta e acompanha a obra, não o ERP da construtora. Cards:
+BEZ-398 (pai), BEZ-399 (brand book), BEZ-400 (landing), BEZ-401 (microcopy do app e e-mails).
+
+---
+
+## 2026-10-20 · Estimativa de obra: itens com origem do preço, catálogo fechado e IA depois
+
+**Decisão:** toda linha de custo da estimativa mostra de onde veio o preço (CUB, SINAPI, tabela da empresa, valor do
+usuário, referência provisória do Pilar ou "a definir"). O usuário descreve a obra escolhendo itens de um catálogo
+curado; a IA vem depois e só preenche esse catálogo a partir de texto. Item sem fonte fica "a definir" ou recebe o
+valor informado pela empresa ou pelo usuário. O valor de referência do Pilar só aparece marcado como provisório e
+sai à medida que as outras fontes entram.
+
+Contexto: no teste da obra Canaã (R$ 2,5 mi esperado) o provável saiu R$ 2,27 mi, com cerca de 35% do total em
+adicionais provisórios e faltando climatização, aquecimento, energia solar, automação e terraplenagem. O SINAPI de
+set/2026 cobre fundação, estrutura e instalações, mas não painel fotovoltaico, automação, churrasqueira, paisagismo nem
+móveis planejados. Estende a decisão de 2026-10-20 sobre leitura de texto por IA (que a retirou da ficha): agora a IA
+volta como intérprete sobre o catálogo, nunca como fonte de preço. Virou [SPEC 137](../specs/137-estimativa-de-obra-itens-com-origem-do-preco.md)
+e [ADR 0064](../architecture/adr/0064-toda-linha-da-estimativa-tem-origem-do-preco-e-a-ia-so-preenche-o-catalogo.md).
+Cards: BEZ-82, BEZ-83, BEZ-69.
+
+---
+
+## 2026-10-20 · Diário de obra: registro nasce interno e o áudio fica 12 meses
+
+**Decisão:** os registros do diário nascem internos (só vão ao portal do cliente quando o gestor liga "Mostrar ao
+cliente") e o áudio de cada registro é guardado por 12 meses, depois só o texto fica. O Matheus mandou assumir os
+dois padrões.
+
+Contexto: no protótipo os registros apareciam como "Cliente vê"; o padrão interno evita vazar texto de campo ao
+cliente por descuido. Fecha as suposições da [SPEC 135](../specs/135-diario-de-obra-em-registros.md) e da
+[ADR 0062](../architecture/adr/0062-guardar-o-audio-do-registro-de-obra.md) (agora Accepted). Registrado em
+[BEZ-67](https://linear.app/bez-company/issue/BEZ-67).
+
+---
+
+## 2026-10-20 · Estimativa de obra: terreno inclinado, padrão médio e SINAPI como próximo passo
+
+**Decisão:** a ficha da estimativa passa a informar o relevo do terreno (inclinado soma muro de arrimo e deixa
+terraplenagem e fundação especial a definir), o padrão "normal" do CUB aparece como "Médio", e a Caixa (SINAPI) é o
+próximo passo para tirar os valores provisórios dos adicionais.
+
+Contexto: o primeiro teste real (casa de 461 m² em SP, terreno inclinado) mostrou que o modelo ignorava o relevo. O
+valor do muro de arrimo é provisório (não achei percentual confiável em fonte pública, só faixa de mercado de R$ 300 a
+R$ 2.500 por m²). Registrado em [BEZ-68](https://linear.app/bez-company/issue/BEZ-68).
+
+---
+
+## 2026-10-20 · Estimativa de obra: CUB com e sem desoneração
+
+**Decisão:** o Pilar guarda o CUB nas duas versões que os Sinduscons publicam, sem desoneração (série clássica) e
+com desoneração da folha, e cada estimativa escolhe qual usar. Sem escolha, vale sem desoneração, a mais cara.
+Mais adiante a tela mostra as duas cotações lado a lado.
+
+Contexto: os valores diferem uns 3% (R-8 normal de SP em set/2026: R$ 2.238,58 sem e R$ 2.162,78 com), e há
+cliente que trabalha em cada regime. Fica registrado em [BEZ-51](https://linear.app/bez-company/issue/BEZ-51).
+Acrescenta a coluna `regime` em `cub_valores`; a SPEC 136 foi atualizada.
+
+---
+
+## 2026-10-20 · Estimativa de obra: sem leitura de texto livre por IA
+
+**Decisão:** a estimativa não terá o campo de texto livre lido por IA. A ficha é preenchida só pelo assistente
+(contadores e opções). A IA entra uma vez, na fase seguinte, lendo o PDF da planta.
+
+Contexto: o assistente já cobre a ficha com poucos cliques, e o texto livre só duplicaria o passo 3. Supera o
+item 4 da entrada de 2026-10-19 na parte do texto livre; a regra de que tudo que usa token consome os tokens do
+usuário continua valendo para a leitura do PDF. Cancela o BEZ-15.
+
+---
+
+## 2026-10-19 · Cadastro por convite: o teste grátis self-serve acaba agora
+
+**Decisão:** o Pilar deixa de ser aberto ao público. Toda empresa nova entra conversando com o
+time: a landing troca "Testar grátis" por "Agendar demonstração" (WhatsApp do time) e o banco
+recusa conta nova sem convite. Quem já tem conta, convite de membro, empresa criada pelo
+ultra-admin e checkout pago pelo link que o time envia continuam. Reabrir é uma flag
+(`platform_settings.cadastro_aberto`), sem migration.
+
+Contexto: o único cadastro orgânico de produção usou o produto 5 minutos e sumiu; com poucos
+clientes e venda de alto contato, a conversa converte melhor que o trial sozinho. Virou
+[SPEC 133](../specs/133-cadastro-por-convite.md). Supera a decisão de 2026-09-08 ("cadastro fica
+aberto, sem demo obrigatória") e a parte self-serve de 2026-10-08 (trial de 3 dias continua valendo
+para as empresas que o time cria). Um bot de WhatsApp que qualifica e agenda fica para depois, como
+produto dentro do Pilar; até lá vale a decisão de 2026-10-15 (sem API oficial do WhatsApp).
+
+---
+
+## 2026-10-19 · Gate D2 reaberto: estimativa de obra na proposta (CUB/SINAPI + cronograma)
+
+**Decisão:** o Pilar passa a gerar uma **estimativa paramétrica de obra** para o escritório de
+projeto levar ao cliente na fase de proposta: o usuário descreve a obra (tipo, padrão, área, o
+que ela tem; na fase 2, enviando o PDF do projeto) e recebe custo em faixa, com fonte de preço
+(CUB no MVP, SINAPI depois), e um cronograma pré-montado em fase, etapa e serviço, editável. O
+resultado vira a obra (árvore de cronograma e previsto por etapa que já existem) ou um PDF para o
+cliente.
+
+Contexto: reunião do CEO de 18/10 ("melhorar drasticamente o módulo Obra"). Enquadramento que
+mantém o ICP: quem usa é o escritório de projeto respondendo "quanto custa e quanto tempo leva",
+não a construtora fazendo orçamento executivo. Regras: a IA só interpreta a descrição e monta a
+ficha técnica; preço e prazo saem de um motor determinístico com a fonte citada; sempre faixa,
+nunca número único, com o aviso "não substitui orçamento executivo"; previsto x realizado só por
+grande etapa, sem curva ABC de insumo.
+
+Supera o gate D2 de 2026-08-26 nos itens "template por tipo de obra", "IA de leitura de planta" e
+"catálogo de composição" (este só como base de preço de referência, não como orçamento editável
+item a item), os guardrails "sem SINAPI" da ADR 0011 e das specs 015, 016 e 019, e o item SINAPI e
+leitura de planta da lista "não vender" do PRICING.md (só entra em material de venda quando estiver
+na branch principal). Orçamento por ambiente continua fora. Próximo passo: protótipo no Claude
+Design, depois spec.
+
+**Decisões de escopo do MVP 1 (mesmo dia, depois do protótipo v0):**
+
+1. A estimativa é um item próprio (Obras › Estimativas), ligado a lead ou proposta. Vira obra com um
+   clique; a obra não exige projeto (ADR 0012), e o vínculo com projeto é opcional.
+2. O preço de referência é o CUB por UF e padrão, e o ultra admin importa a planilha todo mês.
+   Automação de coleta fica para depois. A fonte exata é confirmada com o Claudio.
+3. Os adicionais (fundação, piscina, marcenaria, paisagismo, elevador) têm valor de referência do
+   Pilar, e cada empresa ajusta os seus.
+4. Tudo que usa token (leitura do texto livre e, na Fase 2, do PDF do projeto) consome os tokens
+   do usuário, pelo motor de tokens. O cálculo de preço e prazo não usa IA.
+5. A faixa padrão é de ±12%, editável em cada estimativa.
+
+---
+
+## 2026-10-19 · Diário de obra vira timeline de registros e o áudio passa a ser guardado
+
+**Decisão:** o diário deixa de ser um formulário por dia e vira uma timeline de registros curtos
+(áudio, foto, texto), quantos a equipe quiser por dia, inclusive do Pilar Campo. A IA organiza cada
+registro em segundo plano e monta o "Resumo do dia", que o gestor revisa e fecha como RDO. O áudio
+original fica guardado junto do registro.
+
+Contexto: reunião de 18/10. O RDO por voz demorava (a pessoa esperava a transcrição terminar), só
+existia no escritório e pedia campos fixos. Guardar o áudio permite processar depois sem prender a
+pessoa na tela e deixa o registro original ouvível. Supera a decisão da [SPEC 080](../specs/080-rdo-por-voz.md)
+("áudio bruto não persiste"); retenção, acesso e exclusão do áudio estão na [ADR 0062](../architecture/adr/0062-guardar-o-audio-do-registro-de-obra.md). Junto
+disso, o mobile do app ganha casca própria (barra flutuante, lista em cards, formulário em sheet)
+em vez de encolher o desktop ([SPEC 134](../specs/134-casca-mobile-barra-flutuante-lista-em-cards-e-sheet.md); o diário é a [SPEC 135](../specs/135-diario-de-obra-em-registros.md)). Protótipo aprovado no Claude Design em 19/10.
+
+---
+
+## 2026-10-16 · Marketing é produto próprio; o Pilar só abre a plataforma e devolve o funil
+
+**Decisão:** tudo de marketing (campanhas, posts, carrosséis, vídeos, agendamento, analytics de
+redes, anúncios e Search Console, e o agente de marketing) vive na plataforma web do repo
+`post-automation`, como produto que pode ser vendido a outros escritórios. A Pilar é o primeiro
+cliente dela. Dentro do Pilar fica só o botão "Abrir plataforma de marketing" no Ultra › Time, e o
+Pilar devolve à plataforma cadastros, ativados e pagantes por link publicado (UTM), sem dado pessoal.
+
+Contexto: decidido nos chats do `post-automation` (ADR 0002 de lá) e confirmado aqui. Supera parte
+da decisão de 2026-10-15 e da ADR 0060: a ficha de Marketing no Ultra com números das redes e o
+`ops-ingest` (o Pilar recebendo métrica social) saem do plano. Receita, Clientes, Produto, Qualidade
+e Finanças continuam no Ultra, porque leem o banco do Pilar. Virou [ADR 0061](../architecture/adr/0061-marketing-e-produto-proprio-o-pilar-devolve-o-funil.md)
+e [SPEC 128](../specs/128-plataforma-de-marketing-externa-e-funil-por-utm.md).
+
+---
+
+## 2026-10-15 · Lançamento público mira janeiro de 2027, com um time de agentes no Ultra
+
+**Decisão:** três decisões que valem juntas:
+
+1. O lançamento público tem data guia em janeiro de 2027 (T0 = terça, 19/01/2027). É data de
+   referência para o calendário, não promessa a ninguém: antecipar é permitido.
+2. Toda automação de conteúdo (gerar, renderizar, agendar e publicar post, carrossel e vídeo,
+   e coletar métricas de redes, anúncios e Search Console) fica no repo `post-automation` e no
+   banco dele. O Pilar recebe só os números e devolve o funil por UTM (ADR 0060).
+3. Contato com cliente pelo agente é por link `wa.me` com o texto pronto; quem envia é o
+   fundador. Sem API oficial do WhatsApp por enquanto.
+
+Contexto: founder solo perto do lançamento quer agentes de receita, clientes, marketing,
+produto e qualidade que rodem sozinhos e um painel único (grupo "Time" no Ultra). Virou
+[SPEC 126](../specs/126-time-de-agentes-no-ultra.md) e [SPEC 125](../specs/125-telemetria-de-produto-e-erros.md).
+Atualiza o roster de `docs/AGENTS_TEAM.md`, que só previa agentes chamados no Claude Code.
+
+---
+
+## 2026-10-14 · Release: o que fica manual de propósito
+
+**Decisão:** três pontos do pipeline de release ficam como estão, por escolha:
+
+1. `enforce_admins` continua desligado na `main`. O release usa `gh pr merge --admin --squash`
+   para passar o review obrigatório de um time de uma pessoa. Ligar bloquearia o próprio release.
+   O que protege no lugar: os dois checks obrigatórios (`CI OK` e `CodeQL`, este desde hoje) e o
+   gate humano do Environment `Production` no deploy.
+2. O CLI do Supabase fica pinado em 2.109.1 (`ci.yml`, `backup-nightly.yml`, `drill-restore-mensal.yml`).
+   Subir é mudança que só um release prova: depois de trocar o pin, rodar `workflow_dispatch` do
+   backup e do drill antes de confiar. Reproduzir build vale mais que aviso de versão nova.
+3. O smoke de `/health` pós-deploy passa a falhar quando falta o secret (`SMOKE_OBRIGATORIO`), em
+   staging e produção. Antes, secret ausente pulava o teste e o job saía verde.
+
+Contexto: auditoria de produção de 14/10 (docs/operations/AUDITORIA_PRODUCAO_2026-10-14.md). O CI
+passou a subir o Postgres em 17, a mesma versão major de produção; o `config.toml` do repo segue em 15
+porque é o stack local de dev, compartilhado entre sessões.
+
+---
+
+## 2026-10-14 · Sem disciplinas "padrão do sistema"
+
+**Decisão:** o Pilar não entrega mais disciplinas prontas. A lista de disciplinas nasce vazia, cada
+empresa cria as suas e pode editar ou excluir qualquer uma. O estado vazio orienta a primeira ação
+com um exemplo ("Arquitetônico"), sem card criado.
+Contexto: feedback de 14/10, o usuário não conseguia excluir as "padrão do sistema" (RLS só deixa
+apagar a da própria empresa). Quem já usava uma delas em projeto recebeu uma cópia própria na
+migration, então ninguém perdeu opção. Supera o modelo de semente global da SPEC 058 (follow-up).
+
+---
+
+## 2026-10-14 · Tarefas visíveis para toda a empresa
+
+**Decisão:** todo usuário da empresa vê as tarefas de todos (estilo Trello/ClickUp) e filtra por
+pessoa quando quiser; sem filtro, vê o quadro inteiro. Editar e excluir seguem com admin,
+coordenador, criador e responsáveis.
+Contexto: tarefa sem responsável sumia de todas as telas e o usuário comum só enxergava as próprias.
+Supera a regra "usuário comum só vê onde é responsável" (SPEC 118).
+
+---
+
 ## 2026-10-08 · 2FA desligado por padrão; senha de 12 com tipos em todas as telas
 
 **Decisão:** autenticação em dois fatores fica desligada para todo mundo e cada usuário ativa,

@@ -162,12 +162,12 @@ export async function verificarTokens(
  */
 export function mensagemBloqueioTokens(motivo: TokenBlockMotivo): string {
   if (motivo === "limite_usuario") {
-    return "Você atingiu seu limite de tokens de IA deste mês. Peça mais tokens ao administrador da sua empresa.";
+    return "Você atingiu seu limite de créditos de IA deste mês. Peça mais créditos ao administrador da sua empresa.";
   }
   if (motivo === "trial_pausado") {
     return "Uso de IA em contas de teste está pausado por hoje. Volta amanhã, ou fale com a gente pra liberar antes.";
   }
-  return "Os tokens de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador.";
+  return "Os créditos de IA da empresa acabaram neste ciclo. Aguarde a renovação ou fale com o administrador.";
 }
 
 /**
@@ -303,6 +303,7 @@ async function fetchGeminiRaw(
     deadline?: number;
     files?: Array<{ mimeType: string; dataBase64: string }>;
     maxOutputTokens?: number;
+    semRaciocinio?: boolean;
     conversationId?: string;
     empresaId?: string;
   } = {}
@@ -331,7 +332,11 @@ async function fetchGeminiRaw(
         parts: userParts,
       },
     ],
-    generationConfig: configDeGeracao(alvo.modelo, { modo: "json", maxOutputTokens: opts.maxOutputTokens ?? 4096 }),
+    generationConfig: configDeGeracao(alvo.modelo, {
+      modo: "json",
+      maxOutputTokens: opts.maxOutputTokens ?? 4096,
+      semRaciocinio: opts.semRaciocinio,
+    }),
   };
 
   // Teto desta chamada: o menor entre o limite por chamada e o que resta do orçamento total.
@@ -421,6 +426,8 @@ interface OpcoesChamada {
   deadline?: number;
   files?: Array<{ mimeType: string; dataBase64: string }>;
   maxOutputTokens?: number;
+  /** Gemini 2.5: sem orçamento de raciocínio (transcrição). O gateway segue o padrão dele. */
+  semRaciocinio?: boolean;
   conversationId?: string;
   empresaId?: string;
 }
@@ -796,7 +803,7 @@ export interface StructuredResult<T> {
 export async function callGeminiStructured<T>(
   request: AiRequest,
   schema: z.ZodType<T>,
-  opts: { maxRetries?: number; maxOutputTokens?: number } = {}
+  opts: { maxRetries?: number; maxOutputTokens?: number; semRaciocinio?: boolean } = {}
 ): Promise<StructuredResult<T>> {
   const maxRetries = opts.maxRetries ?? 2;
   const alvo = resolverModelo(request.tipo);
@@ -829,6 +836,7 @@ export async function callGeminiStructured<T>(
         deadline,
         files: request.files,
         maxOutputTokens: opts.maxOutputTokens,
+        semRaciocinio: opts.semRaciocinio,
         conversationId: request.conversationId,
         empresaId: request.empresaId,
       });

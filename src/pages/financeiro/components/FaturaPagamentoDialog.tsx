@@ -63,7 +63,9 @@ export function FaturaPagamentoDialog({ fatura, contas, open, onOpenChange, onPa
       return;
     }
     const restante = fatura.valor_total - fatura.valor_pago;
-    if (valor > restante) {
+    // Compara em centavos: 1000,30 − 500,10 em float dá 500,1999…, e o restante
+    // pré-preenchido (500,20) era recusado como acima do saldo.
+    if (Math.round(valor * 100) > Math.round(restante * 100)) {
       toast.error(`Valor acima do saldo devedor (${formatCurrency(restante)})`);
       return;
     }

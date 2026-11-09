@@ -458,7 +458,7 @@ export default function Relatorios() {
 
   const renderFilterSelect = (value: string, onChange: (v: string) => void, options: string[], placeholder: string) => (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-9 text-xs bg-white">
+      <SelectTrigger className="h-9 text-xs bg-white" aria-label={placeholder}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
@@ -488,7 +488,7 @@ export default function Relatorios() {
                   setRentabilidadeMode(null);
                 }}
               >
-                <SelectTrigger className="h-9 bg-white">
+                <SelectTrigger className="h-9 bg-white" aria-label="Tipo de relatório">
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -672,7 +672,7 @@ export default function Relatorios() {
                 columnVisibility={reportColumnVisibility}
                 data={{ rows: rowsWithIndex }}
                 rowKey={(row) => String(row.__idx)}
-                maxHeight="60vh"
+                maxHeight="60dvh"
                 emptyMessage="Nenhum registro encontrado com os filtros aplicados."
                 footer={
                   visibleColumns.has("Valor")

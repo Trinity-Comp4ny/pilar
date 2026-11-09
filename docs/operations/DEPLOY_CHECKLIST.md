@@ -69,7 +69,7 @@ Todas as ações que **precisam** ser feitas manualmente (config de dashboards) 
 - [ ] `VITE_SENTRY_ENV` = `production`
 - [ ] `VITE_SENTRY_TRACES_SAMPLE_RATE` = `0.1`
 - [ ] `SENTRY_AUTH_TOKEN` = auth token com escopo `project:releases` (build-time, sem prefixo VITE_ — não vai pro bundle)
-- [ ] `SENTRY_ORG` = `trinity-company`
+- [ ] `SENTRY_ORG` = `bez-company`
 - [ ] `SENTRY_PROJECT` = slug do projeto React no Sentry
 - [x] `VITE_TURNSTILE_SITE_KEY` = site key Cloudflare (17/08)
 
@@ -177,6 +177,12 @@ Checklist por ambiente, na ordem. Tudo aqui é fora do repo; o código já esper
 - [ ] Testar: mandar um e-mail para `bounce@resend.dev` (endereço de teste do Resend) e conferir
       `email_envios.status = 'bounce'` e a linha em `email_supressoes`.
 
+### Secrets do deploy de produção (Environment `Production`)
+
+- [x] `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_URL`, `SUPABASE_PROJECT_REF`
+- [x] `SUPABASE_ANON_KEY` (chave anon legada, JWT; o smoke de `/health` usa como Bearer). Sem
+      ela o job de deploy falha de propósito (`SMOKE_OBRIGATORIO`), em vez de passar sem testar.
+
 ### DNS (deliverability; hoje o apex não tem MX nem DMARC, ver gate de lançamento de 28/08)
 
 - [ ] SPF no apex: `v=spf1 include:amazonses.com ~all` (o `send.` do Resend já tem o dele)
@@ -207,18 +213,18 @@ uma vez por ambiente e gravar **o mesmo valor** nos dois lados:
 - [ ] Terminal: `supabase secrets set CRON_SECRET='<valor>' --project-ref <project-ref>`
 - [ ] SQL Editor:
       `sql
-    SELECT vault.create_secret('https://<project-ref>.supabase.co', 'app_supabase_url', 'URL do próprio projeto');
-    SELECT vault.create_secret('<mesmo valor de CRON_SECRET>', 'app_cron_secret', 'Segredo compartilhado só entre os cron jobs e as edge functions de cron');
-    `
+  SELECT vault.create_secret('https://<project-ref>.supabase.co', 'app_supabase_url', 'URL do próprio projeto');
+  SELECT vault.create_secret('<mesmo valor de CRON_SECRET>', 'app_cron_secret', 'Segredo compartilhado só entre os cron jobs e as edge functions de cron');
+  `
       (sem eles, `notificacoes_email_disparar()`, `trial_expiry_disparar()` e
       `guardiao_margem_disparar()` pulam com `NOTICE`, sem lançar erro; se os
       dois lados não baterem, a edge function responde 401)
 - [ ] Monitor de cron do banco no Sentry (migration `20261012000000`): mesmo DSN do Sentry das edge
       functions, ambiente `staging` ou `production`:
       `sql
-    SELECT vault.create_secret('<SENTRY_DSN>', 'app_sentry_dsn', 'DSN para check-in de cron');
-    SELECT vault.create_secret('production', 'app_sentry_env', 'Ambiente do check-in de cron');
-    `
+  SELECT vault.create_secret('<SENTRY_DSN>', 'app_sentry_dsn', 'DSN para check-in de cron');
+  SELECT vault.create_secret('production', 'app_sentry_env', 'Ambiente do check-in de cron');
+  `
 - [ ] **Verificar de verdade** (o job fica `succeeded` no `cron.job_run_details` mesmo pulando o
       disparo, foi assim que produção ficou um mês sem expirar trial):
       `SELECT public.ops_saude_crons();` → `secrets_faltando: []`, e

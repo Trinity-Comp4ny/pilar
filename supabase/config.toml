@@ -30,7 +30,7 @@ enabled = true
 port = 54333
 api_url = "http://127.0.0.1"
 
-[inbucket]
+[local_smtp]
 enabled = true
 port = 54334
 smtp_port = 54335
@@ -87,13 +87,15 @@ verify_jwt = false
 [functions.resend-webhook]
 verify_jwt = false
 
-[functions.asaas-webhook]
-verify_jwt = false
-
 [functions.pilar-checkout-webhook]
 verify_jwt = false
 
 [functions.pilar-checkout-create]
+verify_jwt = false
+
+# Landing (SPEC 149): clique em "Agendar demonstração" chega por sendBeacon, sem
+# login nem header de autorização. Sem dado pessoal; limite por IP na função.
+[functions.registrar-interesse-demo]
 verify_jwt = false
 
 [functions.pilar-checkout-status]
@@ -113,6 +115,21 @@ verify_jwt = false
 # Os três abaixo também são chamados por cron com CRON_SECRET (não é JWT).
 # Sem isto o gateway devolvia "Invalid JWT" antes da função rodar.
 [functions.guardiao-margem-cron]
+verify_jwt = false
+
+# Agentes de operação (SPEC 126): cron por segredo ou ultra admin pelo "Rodar agora".
+[functions.ops-agente-run]
+verify_jwt = false
+
+# Funil por UTM para a plataforma de marketing (SPEC 128): token próprio, sem JWT.
+[functions.ops-export-funil]
+verify_jwt = false
+
+# Feedback fecha pela PR (SPEC 145): chamado pelo GitHub Actions com token próprio, sem JWT.
+[functions.feedback-sync]
+verify_jwt = false
+
+[functions.registro-audio-limpar]
 verify_jwt = false
 
 [functions.retencao-pos-trial]

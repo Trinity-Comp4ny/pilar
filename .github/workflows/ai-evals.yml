@@ -1,6 +1,7 @@
 name: Evals da IA
 
-# Mede o ai-chat contra o modelo de verdade (supabase/functions/ai-chat/evals): intenção
+# Mede o ai-chat (supabase/functions/ai-chat/evals) e o ai-estimativa-itens (SPEC 138, evals do próprio
+# diretório) contra o modelo de verdade. No ai-chat: intenção
 # (agente, modo, entidade, operação) e campos extraídos nas ações, incluindo casos de
 # injeção de instrução. Reprova abaixo dos limites de evals/avaliar.ts.
 #
@@ -23,6 +24,10 @@ on:
       - "supabase/functions/ai-chat/contexto.ts"
       - "supabase/functions/ai-chat/roteamento.ts"
       - "supabase/functions/ai-chat/evals/**"
+      - "supabase/functions/ai-estimativa-itens/**"
+      - "supabase/migrations/20261114000100_estimativa_obra.sql"
+      - "supabase/migrations/20261116000100_estimativa_terreno_inclinado.sql"
+      - "supabase/migrations/20261117000100_estimativa_itens_catalogo.sql"
       - "supabase/functions/_shared/ai-client.ts"
       - "supabase/functions/_shared/llm.ts"
   schedule:
@@ -85,4 +90,54 @@ jobs:
         uses: ./.github/actions/notify-cron-failure
         with:
           job-name: Evals da IA
+          token: ${{ github.token }}
+
+  evals-estimativa:
+    name: Evals do ai-estimativa-itens
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v1.45.x
+
+      # Item e quantidade certos, nenhum item fora do catálogo, o que faltou vira pergunta, instrução dentro do
+      # texto não vira ordem. Limites em ai-estimativa-itens/evals/avaliar.ts. O catálogo vem das migrations.
+      - name: Rodar os evals
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AI_GATEWAY_API_KEY: ${{ secrets.AI_GATEWAY_API_KEY }}
+          AI_MODELO_ESTIMATIVA_ITENS: ${{ vars.AI_MODELO_ESTIMATIVA_ITENS }}
+        run: |
+          set -uo pipefail
+          if [ -z "$GEMINI_API_KEY" ] && [ -z "$AI_GATEWAY_API_KEY" ]; then
+            echo "::warning::Sem os secrets GEMINI_API_KEY e AI_GATEWAY_API_KEY: evals da IA pulados."
+            exit 0
+          fi
+          deno run --allow-env --allow-net --allow-read --allow-write \
+            supabase/functions/ai-estimativa-itens/evals/rodar.ts --saida evals-estimativa-resultado.json | tee evals-estimativa.log
+          status=${PIPESTATUS[0]}
+          {
+            echo "### Evals do ai-estimativa-itens"
+            echo '```'
+            sed -n '/^Modelo:/,$p' evals-estimativa.log
+            grep -E '^FAIL' -A3 evals-estimativa.log || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        if: ${{ !cancelled() }}
+        with:
+          name: ai-evals-estimativa-${{ github.run_id }}
+          path: evals-estimativa-resultado.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Notificar falha
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: Evals do ai-estimativa-itens
           token: ${{ github.token }}

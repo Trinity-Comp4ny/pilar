@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useMemo, useState, type ReactNode } from "react";
+import { Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -9,9 +10,12 @@ interface MesViewProps {
   cursor: Date;
   eventosPorDia: Map<string, PrazoEvento[]>;
   onEventoClick: (evento: PrazoEvento) => void;
+  /** Quando existe, cada dia ganha o botão + que abre este conteúdo (criar algo naquele dia). */
+  renderNovoNoDia?: (dia: Date, fechar: () => void) => ReactNode;
 }
 
-export function MesView({ cursor, eventosPorDia, onEventoClick }: MesViewProps) {
+export function MesView({ cursor, eventosPorDia, onEventoClick, renderNovoNoDia }: MesViewProps) {
+  const [diaAberto, setDiaAberto] = useState<string | null>(null);
   const dias = useMemo(() => {
     const start = startOfMonth(cursor);
     const end = endOfMonth(cursor);
@@ -44,52 +48,72 @@ export function MesView({ cursor, eventosPorDia, onEventoClick }: MesViewProps) 
             const isFimDeSemana = d.getDay() === 0 || d.getDay() === 6;
 
             return (
-              <Popover key={idx}>
-                <PopoverTrigger asChild disabled={eventosDoDia.length === 0}>
-                  <button
-                    type="button"
-                    className={cn(
-                      "min-h-[100px] border-r border-b p-1.5 text-left transition-colors",
-                      isFimDeSemana && "bg-muted/20",
-                      isToday && "bg-brand/5",
-                      eventosDoDia.length > 0 && "hover:bg-muted/40 cursor-pointer"
-                    )}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span
-                        className={cn(
-                          "text-xs",
-                          isToday
-                            ? "bg-brand text-ink rounded-full w-5 h-5 flex items-center justify-center font-semibold"
-                            : "text-muted-foreground"
-                        )}
-                      >
-                        {d.getDate()}
-                      </span>
-                    </div>
-                    <div className="space-y-0.5">
-                      {eventosDoDia.slice(0, 3).map((e, i) => (
-                        <EventoChip key={i} evento={e} />
-                      ))}
-                      {eventosDoDia.length > 3 && (
-                        <div className="text-[11px] text-muted-foreground px-1.5">+{eventosDoDia.length - 3} mais</div>
+              <div key={idx} className="group relative">
+                <Popover>
+                  <PopoverTrigger asChild disabled={eventosDoDia.length === 0}>
+                    <button
+                      type="button"
+                      className={cn(
+                        "h-full min-h-[100px] w-full border-r border-b p-1.5 text-left transition-colors",
+                        isFimDeSemana && "bg-muted/20",
+                        isToday && "bg-brand/5",
+                        eventosDoDia.length > 0 && "hover:bg-muted/40 cursor-pointer"
                       )}
-                    </div>
-                  </button>
-                </PopoverTrigger>
-                {eventosDoDia.length > 0 && (
-                  <PopoverContent align="start" collisionPadding={12} className="w-80 max-w-[calc(100vw-2rem)] p-3">
-                    <div className="text-xs font-medium mb-2">
-                      {d.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
-                    </div>
-                    <div className="space-y-2">
-                      {eventosDoDia.map((e, i) => (
-                        <EventoDetalhe key={i} evento={e} onOpen={() => onEventoClick(e)} />
-                      ))}
-                    </div>
-                  </PopoverContent>
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span
+                          className={cn(
+                            "text-xs",
+                            isToday
+                              ? "bg-brand text-ink rounded-full w-5 h-5 flex items-center justify-center font-semibold"
+                              : "text-muted-foreground"
+                          )}
+                        >
+                          {d.getDate()}
+                        </span>
+                      </div>
+                      <div className="space-y-0.5">
+                        {eventosDoDia.slice(0, 3).map((e, i) => (
+                          <EventoChip key={i} evento={e} />
+                        ))}
+                        {eventosDoDia.length > 3 && (
+                          <div className="text-[11px] text-muted-foreground px-1.5">
+                            +{eventosDoDia.length - 3} mais
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  </PopoverTrigger>
+                  {eventosDoDia.length > 0 && (
+                    <PopoverContent align="start" collisionPadding={12} className="w-80 max-w-[calc(100vw-2rem)] p-3">
+                      <div className="text-xs font-medium mb-2">
+                        {d.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+                      </div>
+                      <div className="space-y-2">
+                        {eventosDoDia.map((e, i) => (
+                          <EventoDetalhe key={i} evento={e} onOpen={() => onEventoClick(e)} />
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  )}
+                </Popover>
+                {renderNovoNoDia && (
+                  <Popover open={diaAberto === key} onOpenChange={(aberto) => setDiaAberto(aberto ? key : null)}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={`Nova tarefa em ${d.toLocaleDateString("pt-BR", { day: "numeric", month: "long" })}`}
+                        className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-md border bg-card text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus-visible:opacity-100 group-focus-within:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" collisionPadding={12} className="w-80 max-w-[calc(100vw-2rem)] p-3">
+                      {renderNovoNoDia(d, () => setDiaAberto(null))}
+                    </PopoverContent>
+                  </Popover>
                 )}
-              </Popover>
+              </div>
             );
           })}
         </div>

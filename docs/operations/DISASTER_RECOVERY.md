@@ -33,7 +33,7 @@ melhor que o intervalo do backup manual.
   - `manifesto.json` (linhas por tabela, `scripts/backup/manifesto.mjs`; o job falha se
     `auth.users`, `empresas` ou `profiles` vierem vazias)
 
-  Empacotado e criptografado com `openssl` (AES-256-CBC, `BACKUP_ENCRYPTION_KEY`),
+  Empacotado e criptografado com `openssl` (AES-256-CBC, PBKDF2 com 600000 iterações, `BACKUP_ENCRYPTION_KEY` de pelo menos 32 caracteres, gerada com `openssl rand -hex 32`),
   artifact `backup-<Ambiente>-<run>` com retenção de 30 dias.
   **Limitação honesta:** RPO de até 24h, não recovery point-in-time.
 
@@ -68,6 +68,27 @@ O dump do banco guarda a tabela `storage.objects`, não os bytes dos arquivos
 - **Limitação:** mesmo RPO do banco (até 24h). Arquivo enviado e apagado no mesmo dia
   não volta.
 
+### Rotação da chave de backup (`BACKUP_ENCRYPTION_KEY`)
+
+A chave é UM secret de repositório (Settings > Secrets and variables > Actions), usado por
+Staging e Produção. O GitHub nunca mostra o valor de volta: quem não guardou a chave em outro
+lugar não consegue lê-la. Os artifacts dos últimos 30 dias ficam cifrados com a chave que valia
+na noite deles, então trocar o secret "no seco" deixa todos irrecuperáveis. Ordem segura:
+
+1. Gerar a nova: `openssl rand -hex 32` (64 caracteres) e guardar no gerenciador de senhas. O
+   backup noturno exige pelo menos 32 caracteres.
+2. Só se a chave atual (a que vai sair) estiver guardada em algum lugar: cadastrá-la como
+   `BACKUP_ENCRYPTION_KEY_PREVIOUS` (secret de repositório). O drill mensal tenta a atual e depois
+   a anterior. Se ela se perdeu, pule este passo: os artifacts antigos deixam de abrir.
+3. Trocar o secret `BACKUP_ENCRYPTION_KEY` pela nova.
+4. Disparar o backup à mão (`workflow_dispatch` do `backup-nightly.yml`) e rodar o drill
+   (`drill-restore-mensal.yml`) contra ele: só depois o backup novo conta como válido.
+5. Sem chave anterior, apagar os artifacts antigos (já não abrem) depois de o backup novo
+   passar no drill. Com chave anterior, esperar 30 dias (retenção do último artifact antigo).
+6. Remover `BACKUP_ENCRYPTION_KEY_PREVIOUS` e destruir a chave antiga.
+
+Para decifrar na mão um artifact antigo, use a chave antiga no `-k` dos comandos abaixo.
+
 ### Secrets
 
 - GitHub Environments (Staging/Production) + `gh secret set`. Sem cópia externa
@@ -83,8 +104,9 @@ O dump do banco guarda a tabela `storage.objects`, não os bytes dos arquivos
 # 2. Baixar o backup noturno mais recente:
 #      gh run download <run_id> -n backup-Production-<run_id>
 # 3. Decriptar e extrair (gera a pasta backup/):
-#      openssl enc -d -aes-256-cbc -pbkdf2 -in backup-Production.tar.gz.enc \
+#      openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -in backup-Production.tar.gz.enc \
 #        -k "$BACKUP_ENCRYPTION_KEY" | tar -xzf -
+#      (artifact gerado até 14/10/2026: o mesmo comando SEM o -iter 600000)
 # 4. Restaurar num Supabase VAZIO primeiro (NUNCA em prod direto). Local:
 #      mkdir /tmp/drill && cd /tmp/drill && supabase init --force
 #      (major_version = 17 e portas livres no config.toml) && supabase start
@@ -131,8 +153,8 @@ O dump do banco guarda a tabela `storage.objects`, não os bytes dos arquivos
 gh run download <run_id> -n storage-Production-<run_id>
 
 # 2. Decifrar e extrair
-openssl enc -d -aes-256-cbc -pbkdf2 -in storage-Production.tar.gz.enc \
-  -k "$BACKUP_ENCRYPTION_KEY" | tar -xzf -
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -in storage-Production.tar.gz.enc \
+  -k "$BACKUP_ENCRYPTION_KEY" | tar -xzf -   # até 14/10/2026: sem o -iter 600000
 
 # 3. Repor (só o que sumiu; --sobrescrever volta tudo para o estado do backup)
 SUPABASE_URL=https://<ref>.supabase.co SUPABASE_SERVICE_ROLE_KEY=<service key> \

@@ -288,7 +288,7 @@ export function HistoryDetailDialog({
   const formatCurrency = useMoneyMask();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-4xl max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             Detalhes da folha {selectedHistory && `${getMonthLabel(selectedHistory.mes)}/${selectedHistory.ano}`}
@@ -309,7 +309,7 @@ export function HistoryDetailDialog({
         ) : items.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhum registro encontrado para esta folha.</p>
         ) : (
-          <div className="overflow-x-auto max-h-[60vh]">
+          <div className="overflow-x-auto max-h-[60dvh]">
             <Table>
               <TableHeader>
                 <TableRow>

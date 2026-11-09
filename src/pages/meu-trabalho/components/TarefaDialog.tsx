@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { ResponsiveDetailPanels } from "@/components/ui/responsive-detail-panels";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DatePicker } from "@/components/ui/date-picker";
 import { LabelsEditor } from "@/components/LabelsEditor";
 import { LinksEditor, type LinkItem } from "@/components/LinksEditor";
+import { mencionaTodos } from "@/lib/mencoes";
 import { AtividadeComposer } from "@/pages/projetos/components/AtividadeComposer";
 import { SeletorResponsaveis } from "@/components/SeletorResponsaveis";
 import { HorasMinutosField } from "@/components/HorasMinutosField";
-import { Calendar, CheckSquare, Circle, Clock, Flag, FolderOpen, MessageSquare, Tag, User } from "lucide-react";
+import {
+  Calendar,
+  CheckSquare,
+  Circle,
+  Clock,
+  Flag,
+  FolderOpen,
+  HardHat,
+  MessageSquare,
+  Tag,
+  User,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   PRIORIDADE_DOT_CLASS,
@@ -24,6 +36,7 @@ import {
 } from "../status";
 import type { Etapa } from "../useEtapas";
 import type { Comentario, PessoaOpcao, TarefaInput, TarefaItem } from "../hooks";
+import type { ServicoObra } from "../servicoObra";
 import { notificarMencao } from "@/lib/notificarMencao";
 import { ComentarioCard } from "@/components/atividades/ComentarioCard";
 
@@ -63,6 +76,10 @@ type Props = {
   etapas: Etapa[];
   /** Etapa inicial numa nova tarefa (coluna onde ela nasce). */
   defaultEtapaId?: string | null;
+  /** Prazo inicial numa nova tarefa (AAAA-MM-DD), ex.: o dia clicado na Agenda. */
+  defaultPrazo?: string | null;
+  /** Nome inicial numa nova tarefa, ex.: o que já foi digitado no quadro curto da Agenda. */
+  defaultTitulo?: string;
   /** Responsável default numa nova tarefa (a pessoa do usuário). */
   defaultResponsavelId: string | null;
   /** Só admin escolhe o responsável; os demais criam já atribuído a si. */
@@ -74,6 +91,8 @@ type Props = {
   saving: boolean;
   /** Sem permissão de edição: mostra os detalhes, sem salvar. */
   readOnly?: boolean;
+  /** Serviços do cronograma da obra ("Fase › Etapa › Serviço"). Com a lista, o formulário mostra o campo. */
+  servicosObra?: ServicoObra[];
   /** Comentário de destino de um link de notificação: rola até ele e destaca (spec 103). */
   comentarioDestacado?: string | null;
 };
@@ -90,6 +109,8 @@ function TarefaFormBody({
   projetos,
   etapas,
   defaultEtapaId,
+  defaultPrazo,
+  defaultTitulo,
   defaultResponsavelId,
   podeEscolherResponsavel = true,
   autorNome,
@@ -98,8 +119,9 @@ function TarefaFormBody({
   saving,
   readOnly = false,
   comentarioDestacado,
+  servicosObra,
 }: Omit<Props, "open">) {
-  const [titulo, setTitulo] = useState(tarefa?.titulo ?? "");
+  const [titulo, setTitulo] = useState(tarefa?.titulo ?? defaultTitulo ?? "");
   const [descricao, setDescricao] = useState(tarefa?.descricao ?? "");
   // Status = coluna (etapa) do quadro. Editável aqui e por drag no board; ambos
   // gravam etapa_id + o bucket derivado da coluna. Cai na etapa passada, na do
@@ -114,7 +136,8 @@ function TarefaFormBody({
     tarefa ? tarefa.responsaveis.map((r) => r.id) : defaultResponsavelId ? [defaultResponsavelId] : []
   );
   const [projetoId, setProjetoId] = useState<string | null>(tarefa?.projeto_id ?? null);
-  const [prazo, setPrazo] = useState(tarefa?.prazo ?? "");
+  const [servicoId, setServicoId] = useState<string | null>(tarefa?.obra_frente_id ?? null);
+  const [prazo, setPrazo] = useState(tarefa?.prazo ?? defaultPrazo ?? "");
   const [horas, setHoras] = useState<number | null>(tarefa?.horas_estimadas ?? null);
   const [horasReais, setHorasReais] = useState<number | null>(tarefa?.horas_reais ?? null);
   const [labels, setLabels] = useState<string[]>(tarefa?.labels ?? []);
@@ -125,7 +148,13 @@ function TarefaFormBody({
   // como em Projeto/Disciplina), e só as novas — reabrir uma tarefa antiga não deve renotificar.
   const [pendentesMencao, setPendentesMencao] = useState<{ id: string; texto: string; mencionados: string[] }[]>([]);
 
-  const podeSalvar = !readOnly && titulo.trim().length > 0 && !saving;
+  // O nome é o único campo obrigatório. O botão Salvar não some em silêncio quando ele falta
+  // (feedback da VRZ, 17/10: "o botão salvar não acende"): clicar mostra o erro e foca o campo.
+  const tituloRef = useRef<HTMLInputElement>(null);
+  const [tentouSalvar, setTentouSalvar] = useState(false);
+  const tituloVazio = titulo.trim().length === 0;
+  const mostrarErroTitulo = tentouSalvar && tituloVazio;
+  const podeSalvar = !readOnly && !saving;
 
   const adicionarComentario = (texto: string, mencionados: string[]) => {
     const t = texto.trim();
@@ -141,11 +170,16 @@ function TarefaFormBody({
         mencionados: mencionados.length ? mencionados : undefined,
       },
     ]);
-    if (mencionados.length) setPendentesMencao((prev) => [...prev, { id, texto: t, mencionados }]);
+    if (mencionados.length || mencionaTodos(t)) setPendentesMencao((prev) => [...prev, { id, texto: t, mencionados }]);
   };
 
   const salvar = async () => {
     if (!podeSalvar) return;
+    if (tituloVazio) {
+      setTentouSalvar(true);
+      tituloRef.current?.focus();
+      return;
+    }
     const tarefaId = await onSave({
       titulo: titulo.trim(),
       descricao: descricao.trim() || null,
@@ -154,6 +188,8 @@ function TarefaFormBody({
       prioridade,
       responsaveis,
       projeto_id: projetoId,
+      // Só manda o serviço quando o formulário o oferece: fora da obra o campo nem existe.
+      ...(servicosObra ? { obra_frente_id: servicoId } : {}),
       prazo: prazo || null,
       horas_estimadas: horas,
       horas_reais: horasReais,
@@ -187,13 +223,26 @@ function TarefaFormBody({
           )}
         </div>
         <Input
+          ref={tituloRef}
           value={titulo}
           onChange={(e) => setTitulo(e.target.value)}
           placeholder="Nome da tarefa"
           autoFocus={!readOnly}
           disabled={readOnly}
-          className="h-auto border-0 bg-transparent px-1 text-2xl font-medium shadow-none focus-visible:ring-0 md:text-2xl"
+          aria-label="Nome da tarefa"
+          aria-required="true"
+          aria-invalid={mostrarErroTitulo}
+          aria-describedby={mostrarErroTitulo ? "tarefa-titulo-erro" : undefined}
+          className={cn(
+            "h-auto rounded-none border-0 border-b bg-transparent px-1 text-2xl font-medium shadow-none focus-visible:ring-0 md:text-2xl",
+            mostrarErroTitulo ? "border-destructive" : "border-border"
+          )}
         />
+        {mostrarErroTitulo && (
+          <p id="tarefa-titulo-erro" role="alert" className="mt-1.5 px-1 text-xs text-destructive">
+            Dê um nome à tarefa para salvar.
+          </p>
+        )}
       </div>
 
       {/* Corpo: principal (redimensionável no desktop, abas no mobile) + atividades */}
@@ -281,6 +330,28 @@ function TarefaFormBody({
                 </Select>
               </Prop>
 
+              {servicosObra && (
+                <Prop icon={HardHat} label="Serviço da obra" className="md:col-span-2">
+                  <Select
+                    value={servicoId ?? SEM}
+                    onValueChange={(v) => setServicoId(v === SEM ? null : v)}
+                    disabled={readOnly}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Sem serviço" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={SEM}>Sem serviço</SelectItem>
+                      {servicosObra.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.caminho}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Prop>
+              )}
+
               <Prop icon={Clock} label="Horas est.">
                 <HorasMinutosField value={horas} onChange={setHoras} disabled={readOnly} />
               </Prop>
@@ -359,10 +430,10 @@ function TarefaFormBody({
 export function TarefaDialog({ open, onOpenChange, tarefa, ...rest }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[92vh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden p-0">
+      <DialogContent className="flex h-[92dvh] w-[96vw] max-w-none flex-col gap-0 overflow-hidden p-0">
         {open && (
           <TarefaFormBody
-            key={tarefa?.id ?? `nova-${rest.defaultEtapaId ?? "padrao"}`}
+            key={tarefa?.id ?? `nova-${rest.defaultEtapaId ?? "padrao"}-${rest.defaultPrazo ?? ""}`}
             tarefa={tarefa}
             onOpenChange={onOpenChange}
             {...rest}

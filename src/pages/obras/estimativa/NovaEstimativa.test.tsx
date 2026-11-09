@@ -1,0 +1,391 @@
+import type { ReactNode } from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
+import { CUB_FIXTURE, insumosProntos } from "@/test/estimativaFixtures";
+import type { Insumos } from "./hooks";
+import NovaEstimativa from "./NovaEstimativa";
+
+/**
+ * Assistente em quatro passos (SPEC 136): cada passo valida o que é dele, tipo e subtipo mudam as opções
+ * seguintes, e a revisão só gera a estimativa quando o cálculo fecha.
+ */
+
+let insumos: Insumos = insumosProntos();
+let lead: { id: string; nomeCompleto: string; clienteId: string | null } | null = null;
+let proposta: {
+  id: string;
+  titulo: string;
+  nomeCliente: string;
+  leadId: string | null;
+  clienteId: string | null;
+  areaM2: number | null;
+} | null = null;
+
+const { navegar, criar } = vi.hoisted(() => ({
+  navegar: vi.fn(),
+  criar: vi.fn(async (..._a: unknown[]) => "nova-id"),
+}));
+
+vi.mock("react-router-dom", async (original) => ({
+  ...(await original<typeof import("react-router-dom")>()),
+  useNavigate: () => navegar,
+}));
+
+vi.mock("./hooks", () => ({
+  useInsumosDaEstimativa: () => insumos,
+  useEstimativa: () => ({ data: undefined, isLoading: false }),
+  useLeadParaEstimar: () => ({ data: lead, isLoading: false }),
+  usePropostaParaEstimar: () => ({ data: proposta, isLoading: false }),
+  useCriarEstimativa: () => ({ mutateAsync: criar, isPending: false }),
+  useAtualizarEstimativa: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
+
+vi.mock("./useDescreverObra", () => ({
+  useSaldoDeTokens: () => ({ data: null, refetch: vi.fn() }),
+  useInterpretarObra: () => ({ mutate: vi.fn() }),
+  FalhaDaIa: class extends Error {},
+}));
+
+vi.mock("@/components/PilarPage", () => ({
+  PilarPage: ({ title, children }: { title: string; children: ReactNode }) => (
+    <main>
+      <h1>{title}</h1>
+      {children}
+    </main>
+  ),
+}));
+vi.mock("@/hooks/usePermissions", () => ({ usePermissions: () => ({ can: () => true }) }));
+vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => false }));
+
+const abrir = (url = "/obras/estimativas/nova") =>
+  render(
+    <MemoryRouter initialEntries={[url]}>
+      <NovaEstimativa />
+    </MemoryRouter>
+  );
+
+beforeEach(() => {
+  insumos = insumosProntos();
+  lead = null;
+  proposta = null;
+  navegar.mockClear();
+  criar.mockClear();
+});
+
+describe("NovaEstimativa", () => {
+  it("começa pelo tipo de obra, com residencial, casa e padrão médio", () => {
+    abrir();
+    expect(screen.getByText("Que obra é essa?")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Residencial/ })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("button", { name: "Casa térrea" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("radio", { name: /^Médio/ })).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("padrão sem tabela de preço para o subtipo fica desligado", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("radio", { name: /^Baixo/ }));
+    await user.click(screen.getByRole("radio", { name: /Comercial/ }));
+    // CSL-8 só tem normal e alto: o baixo escolhido antes passa para o normal, e o baixo não dá mais para escolher.
+    expect(screen.getByRole("radio", { name: /^Baixo/ })).toBeDisabled();
+    expect(screen.getByRole("radio", { name: /^Médio/ })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByText("Sem tabela de preço para este subtipo")).toBeInTheDocument();
+  });
+
+  it("terreno inclinado pede a medida do muro de arrimo e grava na ficha", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.type(screen.getByLabelText("Nome da estimativa"), "Casa na encosta");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.queryByLabelText("Muro de arrimo")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Inclinado" }));
+    await user.type(screen.getByLabelText("Muro de arrimo"), "80");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByText(/terreno inclinado, 80 m² de muro de arrimo/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Gerar estimativa" }));
+    await waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
+    const [nova] = criar.mock.calls[0] as [{ ficha: { topografia: string; arrimo: number } }];
+    expect(nova.ficha.topografia).toBe("inclinado");
+    expect(nova.ficha.arrimo).toBe(80);
+  });
+
+  it("inclinado sem medir o muro avisa na revisão que o item fica a medir", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.type(screen.getByLabelText("Nome da estimativa"), "Casa na encosta");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Inclinado" }));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByText(/terreno inclinado, muro de arrimo a medir/)).toBeInTheDocument();
+  });
+
+  it("os itens do catálogo mostram de onde vem o preço antes de calcular", async () => {
+    insumos = {
+      ...insumosProntos(),
+      precosSinapi: [
+        {
+          codigo: 42425,
+          uf: "SP",
+          regime: "onerado",
+          mes_base: "2026-09-01",
+          valor: 2175.13,
+          origem: "CR",
+          descricao: "Split 12.000 BTU",
+          unidade: "UN",
+        },
+      ],
+    };
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.type(screen.getByLabelText("Nome da estimativa"), "Casa Teste");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+
+    expect(screen.getByText(/R\$\s2\.175 por aparelho/)).toBeInTheDocument();
+    expect(screen.getAllByText("Sem preço do SINAPI em SP: você informa", { exact: false }).length).toBe(4);
+    expect(screen.getAllByText("Sem preço de referência: você informa").length).toBeGreaterThan(0);
+    expect(screen.getByText(/6% da base/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Descreva a obra")).toBeEnabled();
+  });
+
+  it("incluir aparelhos e energia solar entra na ficha e no resumo do passo", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.type(screen.getByLabelText("Nome da estimativa"), "Casa Teste");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+
+    await user.click(screen.getByRole("button", { name: "Mais split 12.000 btu" }));
+    await user.click(screen.getByRole("button", { name: "Mais split 12.000 btu" }));
+    await user.click(screen.getByRole("button", { name: "Mais energia solar fotovoltaica" }));
+    const resumo = screen.getAllByRole("status").find((e) => e.textContent?.includes("itens até aqui"));
+    expect(resumo).toHaveTextContent("3 itens até aqui, 3 sem preço");
+
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByText(/2 × split 12\.000 btu/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Gerar estimativa" }));
+    await waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
+    const [nova] = criar.mock.calls[0] as [{ ficha: { itens: Record<string, number> } }];
+    expect(nova.ficha.itens).toEqual({ ac12: 2, fv: 1 });
+  });
+
+  it("baixar a quantidade a zero tira o item da ficha", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.type(screen.getByLabelText("Nome da estimativa"), "Casa Teste");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Mais split 9.000 btu" }));
+    await user.click(screen.getByRole("button", { name: "Menos split 9.000 btu" }));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Gerar estimativa" }));
+    await waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
+    const [nova] = criar.mock.calls[0] as [{ ficha: { itens: Record<string, number> } }];
+    expect(nova.ficha.itens).toEqual({});
+  });
+
+  it("sem nome, o passo de local não avança e diz o motivo", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByText("Onde e de que tamanho?")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByText("Dê um nome à estimativa")).toBeInTheDocument();
+    expect(screen.getByText("Onde e de que tamanho?")).toBeInTheDocument();
+  });
+
+  it("área zerada mostra o erro do campo", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.type(screen.getByLabelText("Nome da estimativa"), "Casa Teste");
+    await user.clear(screen.getByLabelText("Área construída"));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByText("Informe um número")).toBeInTheDocument();
+    await user.type(screen.getByLabelText("Área construída"), "0");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByText("Informe a área construída")).toBeInTheDocument();
+  });
+
+  it("percorre os quatro passos, mostra a fonte na revisão e grava a estimativa", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.type(screen.getByLabelText("Nome da estimativa"), "Casa Teste");
+    await user.type(screen.getByLabelText("Cliente"), "Maria");
+    await user.clear(screen.getByLabelText("Área construída"));
+    await user.type(screen.getByLabelText("Área construída"), "150");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+
+    expect(screen.getByText("O que a obra tem?")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Mais vagas" }));
+    await user.click(screen.getByRole("button", { name: "Completa" }));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+
+    expect(screen.getByText("Confira o que entendemos")).toBeInTheDocument();
+    expect(screen.getByText("CUB R1-N · SP · set/2026 · sem desoneração")).toBeInTheDocument();
+    expect(screen.getByText(/marcenaria completa/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Gerar estimativa" }));
+
+    await waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
+    const [nova] = criar.mock.calls[0] as [
+      {
+        nome: string;
+        clienteNome: string;
+        ficha: { area: number; vagas: number; marcenaria: string };
+        resultado: { provavel: number };
+      },
+    ];
+    expect(nova.nome).toBe("Casa Teste");
+    expect(nova.clienteNome).toBe("Maria");
+    expect(nova.ficha.area).toBe(150);
+    expect(nova.ficha.vagas).toBe(3);
+    expect(nova.ficha.marcenaria).toBe("completa");
+    expect(nova.resultado.provavel).toBeGreaterThan(0);
+    expect(navegar).toHaveBeenCalledWith("/obras/estimativas/nova-id");
+  });
+
+  it("a revisão leva de volta ao passo da linha que o usuário quer corrigir", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.type(screen.getByLabelText("Nome da estimativa"), "Casa Teste");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: /Editar tamanho/ }));
+    expect(screen.getByText("Onde e de que tamanho?")).toBeInTheDocument();
+    expect(screen.getByLabelText("Nome da estimativa")).toHaveValue("Casa Teste");
+  });
+
+  it("trocar para comercial esconde o programa de casa", async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("radio", { name: /Comercial/ }));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.type(screen.getByLabelText("Nome da estimativa"), "Clínica");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.queryByRole("button", { name: "Mais suítes" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Piscina")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Mais banheiros" })).toBeInTheDocument();
+  });
+
+  it("sem nenhum CUB, explica em vez de abrir o assistente", () => {
+    insumos = { ...insumosProntos(), cub: [] };
+    abrir();
+    expect(screen.getByText("O Pilar ainda não tem a tabela do CUB")).toBeInTheDocument();
+    expect(screen.queryByText("Que obra é essa?")).not.toBeInTheDocument();
+  });
+
+  it("falha ao carregar os insumos mostra o motivo", () => {
+    insumos = { estado: "erro", mensagem: "sem permissão" };
+    abrir();
+    expect(screen.getByText("Não foi possível carregar a tabela de preços")).toBeInTheDocument();
+    expect(screen.getByText("sem permissão")).toBeInTheDocument();
+  });
+
+  it("o CUB da fixture cobre os subtipos usados nos testes", () => {
+    expect(CUB_FIXTURE.some((l) => l.subtipo === "GI")).toBe(true);
+  });
+
+  it("vindo do lead, traz o nome e o cliente dele e grava a estimativa ligada ao lead", async () => {
+    lead = { id: "lead-1", nomeCompleto: "Família Almeida", clienteId: "cli-1" };
+    const user = userEvent.setup();
+    abrir("/obras/estimativas/nova?lead=lead-1");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByLabelText("Nome da estimativa")).toHaveValue("Obra Família Almeida");
+    expect(screen.getByLabelText("Cliente")).toHaveValue("Família Almeida");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Gerar estimativa" }));
+    await waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
+    const [nova] = criar.mock.calls[0] as [{ leadId: string | null; clienteId: string | null; nome: string }];
+    expect(nova.leadId).toBe("lead-1");
+    expect(nova.clienteId).toBe("cli-1");
+    expect(nova.nome).toBe("Obra Família Almeida");
+  });
+
+  it("lead que não existe (ou é de outra empresa) cai no assistente em branco, sem vínculo", async () => {
+    lead = null;
+    const user = userEvent.setup();
+    abrir("/obras/estimativas/nova?lead=inexistente");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByLabelText("Nome da estimativa")).toHaveValue("");
+    await user.type(screen.getByLabelText("Nome da estimativa"), "Casa");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Gerar estimativa" }));
+    await waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
+    const [nova] = criar.mock.calls[0] as [{ leadId: string | null }];
+    expect(nova.leadId).toBeNull();
+  });
+
+  it("vindo da proposta, traz o título, o cliente e a área e grava ligada à proposta e ao lead dela", async () => {
+    proposta = {
+      id: "prop-1",
+      titulo: "Residência Almeida",
+      nomeCliente: "Família Almeida",
+      leadId: "lead-9",
+      clienteId: "cli-2",
+      areaM2: 320,
+    };
+    const user = userEvent.setup();
+    abrir("/obras/estimativas/nova?proposta=prop-1");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByLabelText("Nome da estimativa")).toHaveValue("Residência Almeida");
+    expect(screen.getByLabelText("Cliente")).toHaveValue("Família Almeida");
+    expect(screen.getByLabelText("Área construída")).toHaveValue("320");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Gerar estimativa" }));
+    await waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
+    const [nova] = criar.mock.calls[0] as [
+      { propostaId: string | null; leadId: string | null; clienteId: string | null; ficha: { area: number } },
+    ];
+    expect([nova.propostaId, nova.leadId, nova.clienteId]).toEqual(["prop-1", "lead-9", "cli-2"]);
+    expect(nova.ficha.area).toBe(320);
+  });
+
+  it("proposta sem área mantém a área padrão da ficha", async () => {
+    proposta = { id: "prop-2", titulo: "Galpão", nomeCliente: "", leadId: null, clienteId: null, areaM2: null };
+    const user = userEvent.setup();
+    abrir("/obras/estimativas/nova?proposta=prop-2");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByLabelText("Área construída")).not.toHaveValue("320");
+    expect(screen.getByLabelText("Cliente")).toHaveValue("");
+  });
+
+  it("com proposta e lead na URL, a proposta manda", async () => {
+    lead = { id: "lead-1", nomeCompleto: "Outro Lead", clienteId: null };
+    proposta = {
+      id: "prop-1",
+      titulo: "Residência Almeida",
+      nomeCliente: "Almeida",
+      leadId: null,
+      clienteId: null,
+      areaM2: null,
+    };
+    const user = userEvent.setup();
+    abrir("/obras/estimativas/nova?proposta=prop-1&lead=lead-1");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByLabelText("Nome da estimativa")).toHaveValue("Residência Almeida");
+  });
+
+  it("proposta que não existe (ou é de outra empresa) cai no assistente em branco, sem vínculo", async () => {
+    proposta = null;
+    const user = userEvent.setup();
+    abrir("/obras/estimativas/nova?proposta=inexistente");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByLabelText("Nome da estimativa")).toHaveValue("");
+    await user.type(screen.getByLabelText("Nome da estimativa"), "Casa");
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Gerar estimativa" }));
+    await waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
+    const [nova] = criar.mock.calls[0] as [{ propostaId: string | null }];
+    expect(nova.propostaId).toBeNull();
+  });
+});

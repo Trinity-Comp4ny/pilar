@@ -1,0 +1,41 @@
+caso_a ocr {'vetor': 17, 't_vetor': 0.8, 'criterio': 'conteudo', 'dpis': (150, 300, 450), 'bloco_pt': 700, 'blocos': '12/12', 't_ocr': 36.8, 'ocr': 97, 'com_m2': 11, 'com_m2_e_nome': 11, 'recuperou': '17/17', 'recuperou_com_nome': '16/17', 'recuperou_com_m2': '11/17', 'sobras': 80, 'sobras_com_nome': 3, 'sobras_com_m2': 0}
+   lim                        1.50
+   Estar/ Cozinha            45.60
+   Área gourmet              77.06
+   Banho                      4.20
+   Banho                      4.20
+   Lavabo                     2.24
+   Despensa                   1.60
+   Banho                      3.04
+   Lavand.                    5.04
+   Suíte visitas              9.66
+   Banho                      6.40
+   Hall                      11.98
+   Lavatório                  2.16
+   Suíte                     12.74
+   Suíte                     12.74
+   Suíte                     11.02
+   Área gourmet              77.06
+   Sauna                      2.32
+   Closet                     8.37
+                              4.00
+                             11.52
+                              5.70
+                             25.00
+                              1.60
+                              3.45
+                              1.96
+                              1.96
+                              5.76
+                              5.70
+                              3.15
+                              7.50
+                              1.20
+                              5.00
+                              3.76
+                              1.55
+                              1.00
+                              2.80
+                              4.75
+                              3.00
+                              1.20

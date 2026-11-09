@@ -43,7 +43,7 @@ export function useMySubscription() {
         .select(
           `id, empresa_id, plan_id, status, billing_cycle, billing_type, trial_ends_at,
            current_period_start, current_period_end, canceled_at, created_at, asaas_subscription_id,
-           plan:pilar_subscription_plans(id, slug, nome, descricao, preco_mensal, preco_anual, max_usuarios, max_projetos, features, destaque, ordem)`
+           plan:pilar_subscription_plans(id, slug, nome, descricao, preco_mensal, preco_anual, max_usuarios, max_projetos, max_obras, max_leads, tokens_mensais, features, destaque, ordem)`
         )
         .maybeSingle();
 

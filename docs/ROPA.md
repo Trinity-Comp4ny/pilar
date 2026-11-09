@@ -38,9 +38,10 @@ subprocessador novo entrar (ver [`legal/SUBPROCESSADORES.md`](legal/SUBPROCESSAD
 | 14  | Monitoramento de erro                | Diagnóstico técnico                                                  | Qualquer usuário (incidental, PII scrubbed)             | Stacktrace, contexto técnico, id do usuário (sem e-mail), PII filtrada por `src/lib/monitoring.ts`; replay de sessão com erro com texto, campos e mídia mascarados | N/A (Sentry, fora do Postgres)                                                    | Legítimo interesse                        | Conforme retenção padrão Sentry                                                            | Sentry                                                                                        |
 
 **Nota item 9 (confirmado 2026-09-08):** o provedor de LLM é o **Gemini (Google)**, usado pelas 3
-IA vivas do produto (`ai-chat`, `ai-cotacao-import`, `ai-import-financeiro` — ver DECISOES.md
-2026-08-31). O texto digitado pelo usuário no chat e o conteúdo enviado pra cotação/importação
-financeira trafegam pra API do Google. O projeto que gera a `GEMINI_API_KEY` tem billing ativo
+IA vivas do produto (`ai-chat`, `ai-cotacao-import`, `ai-import-financeiro`, ver DECISOES.md
+2026-08-31, e, a partir da SPEC 138, `ai-estimativa-itens`). O texto digitado pelo usuário no chat, o
+conteúdo enviado pra cotação/importação financeira e a descrição da obra da estimativa trafegam pra API
+do Google. O projeto que gera a `GEMINI_API_KEY` tem billing ativo
 (tier pago da Gemini API): o Google não usa esse conteúdo pra treinar modelo. Adicionado como
 subprocessador em [`legal/SUBPROCESSADORES.md`](legal/SUBPROCESSADORES.md).
 

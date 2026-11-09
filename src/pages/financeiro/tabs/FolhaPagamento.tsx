@@ -1,12 +1,15 @@
+import { format } from "date-fns";
 import { useState, useEffect, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Calendar as CalendarIcon, CheckCircle2, Search } from "lucide-react";
+import { Calendar as CheckCircle2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { monitoring } from "@/lib/monitoring";
+import { softDelete } from "@/lib/softDelete";
 import { FiltroCompetencia } from "@/pages/financeiro/components/FiltroCompetencia";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PageToolbar } from "@/components/PageSlots";
+import { FilterBar, FilterSelect } from "@/components/filters/FilterBar";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import type { FolhaItem, HistoryItem } from "./folha-pagamento/types";
 import { getMonthLabel, buildYearRange } from "./folha-pagamento/types";
@@ -17,6 +20,9 @@ import { FinanceErrorState } from "../components/FinanceErrorState";
 import { gerarComprovantePDF, gerarLoteComprovantesPDF } from "./folha-pagamento/folhaComprovante";
 import { calcularVariavel, calcularTotal, parseDetalhe, firstPix } from "./folha-pagamento/folhaCalc";
 import { CloseMonthDialog, DetailEditDialog, HistoryDetailDialog } from "./folha-pagamento/components/FolhaDialogs";
+
+/** Marca a despesa que a folha gera ao ser paga; é por ela que o estorno a encontra. */
+const OBS_DESPESA_FOLHA = "Lançamento automático de Folha de Pagamento";
 
 export default function FolhaPagamento() {
   const [loading, setLoading] = useState(true);
@@ -267,11 +273,13 @@ export default function FolhaPagamento() {
 
   const startEditing = () => {
     if (!selectedPerson) return;
+    // Total só entra pré-preenchido se já foi ajustado à mão antes. Pré-preencher
+    // sempre fazia o total antigo "grudar": mudar salário ou área não recalculava
+    // o total salvo (e o diálogo acusava total desacoplado sem ninguém mexer nele).
     setEditForm({
       p_salario_fixo: selectedPerson.p_salario_fixo,
       soma_area: selectedPerson.soma_area,
-      v_variavel: selectedPerson.v_variavel,
-      v_total: selectedPerson.v_total,
+      ...(selectedPerson.edited_fields?.includes("total") ? { v_total: selectedPerson.v_total } : {}),
     });
     setIsEditingDetail(true);
   };
@@ -310,6 +318,15 @@ export default function FolhaPagamento() {
     const currentItem = data.find((item) => item.folha_id === folhaId);
     if (!currentItem) return;
     const previousStatus = currentItem.status;
+    const descricao = `Folha de Pagamento ${getMonthLabel(selectedMonth)}/${selectedYear} - ${currentItem.p_nome}`;
+    // Despesa gerada ao marcar pago: mesma descrição e valor (a policy de SELECT já esconde as excluídas).
+    const despesasDaFolha = () =>
+      supabase
+        .from("despesas")
+        .select("id")
+        .eq("descricao", descricao)
+        .eq("valor", currentItem.v_total)
+        .eq("observacao", OBS_DESPESA_FOLHA);
 
     try {
       const { error } = await supabase.from("folha_pagamento").update({ status: newStatus }).eq("id", folhaId);
@@ -317,9 +334,20 @@ export default function FolhaPagamento() {
 
       setData((prev) => prev.map((item) => (item.folha_id === folhaId ? { ...item, status: newStatus } : item)));
 
+      if (previousStatus === "pago" && newStatus !== "pago") {
+        // Voltou de pago: a despesa gerada no pagamento sai (soft delete, igual à
+        // exclusão no Financeiro), senão o caixa mostra um pagamento que não houve.
+        const { data: geradas, error: buscaError } = await despesasDaFolha();
+        if (buscaError) throw buscaError;
+        for (const { id } of geradas ?? []) {
+          const deleteError = await softDelete("despesas", id);
+          if (deleteError) throw deleteError;
+        }
+      }
+
       if (previousStatus !== "pago" && newStatus === "pago") {
-        const today = new Date();
-        const dateStr = today.toISOString().slice(0, 10);
+        // Data local: toISOString (UTC) à noite já cai no dia seguinte.
+        const dateStr = format(new Date(), "yyyy-MM-dd");
 
         const { data: categorias } = await supabase
           .from("categorias_financeiras")
@@ -338,15 +366,12 @@ export default function FolhaPagamento() {
           categoriaFolhaPagamento = insertedCategory;
         }
 
-        const descricao = `Folha de Pagamento ${getMonthLabel(selectedMonth)}/${selectedYear} - ${currentItem.p_nome}`;
-        const { data: existingDespesa } = await supabase
-          .from("despesas")
-          .select("id")
-          .eq("descricao", descricao)
-          .eq("valor", currentItem.v_total)
-          .maybeSingle();
+        // limit(1) + array: maybeSingle() dá erro com 2+ linhas (duplicata antiga),
+        // o erro era ignorado e a despesa era inserida de novo.
+        const { data: existentes, error: buscaError } = await despesasDaFolha().limit(1);
+        if (buscaError) throw buscaError;
 
-        if (!existingDespesa) {
+        if (!existentes?.length) {
           const { error: despesaError } = await supabase.from("despesas").insert([
             {
               data_vencimento: dateStr,
@@ -360,7 +385,7 @@ export default function FolhaPagamento() {
               status: "Pago",
               conta_id: null,
               cartao_id: null,
-              observacao: "Lançamento automático de Folha de Pagamento",
+              observacao: OBS_DESPESA_FOLHA,
             },
           ] as never);
           if (despesaError) throw despesaError;
@@ -514,13 +539,35 @@ export default function FolhaPagamento() {
   return (
     <div className="space-y-8 pb-10">
       <div className="space-y-6">
-        {/* Filtros e ações */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg border border-border shadow-sm">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Período:</span>
-            </div>
+        {/* Toolbar padrão (SPEC 124): competência, busca local da aba e status; fechar folha à direita. */}
+        <PageToolbar>
+          <FilterBar
+            end={
+              <>
+                {statusFolha === "preview" && data.length > 0 && canEdit && (
+                  <CloseMonthDialog
+                    open={confirmDialogOpen}
+                    onOpenChange={setConfirmDialogOpen}
+                    selectedMonth={selectedMonth}
+                    selectedYear={selectedYear}
+                    peopleCount={data.length}
+                    totalFolha={totalFolha}
+                    saving={saving}
+                    onConfirm={handleCloseMonth}
+                  />
+                )}
+                {statusFolha === "closed" && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-positive/10 text-positive-strong px-3 py-1 text-sm flex gap-1 items-center"
+                  >
+                    <CheckCircle2 className="h-3 w-3" />
+                    Folha fechada
+                  </Badge>
+                )}
+              </>
+            }
+          >
             <FiltroCompetencia
               mes={selectedMonth}
               ano={selectedYear}
@@ -531,54 +578,32 @@ export default function FolhaPagamento() {
               fromYear={years[0]}
               toYear={years[years.length - 1]}
             />
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <div className="relative w-[220px] shrink-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar colaborador"
-                className="pl-8 w-[200px]"
+                aria-label="Buscar colaborador"
+                className="h-9 rounded-full pl-9 text-[13px]"
               />
             </div>
             {statusFolha === "closed" && (
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos os status</SelectItem>
-                  <SelectItem value="pendente">Pendente</SelectItem>
-                  <SelectItem value="pago">Pago</SelectItem>
-                  <SelectItem value="cancelado">Cancelado</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-
-          <div className="flex items-center gap-4">
-            {statusFolha === "preview" && data.length > 0 && canEdit && (
-              <CloseMonthDialog
-                open={confirmDialogOpen}
-                onOpenChange={setConfirmDialogOpen}
-                selectedMonth={selectedMonth}
-                selectedYear={selectedYear}
-                peopleCount={data.length}
-                totalFolha={totalFolha}
-                saving={saving}
-                onConfirm={handleCloseMonth}
+              <FilterSelect
+                label="Status"
+                value={statusFilter}
+                emptyValue="todos"
+                onChange={setStatusFilter}
+                options={[
+                  { value: "todos", label: "Todos os status" },
+                  { value: "pendente", label: "Pendente" },
+                  { value: "pago", label: "Pago" },
+                  { value: "cancelado", label: "Cancelado" },
+                ]}
               />
             )}
-            {statusFolha === "closed" && (
-              <Badge
-                variant="secondary"
-                className="bg-positive/10 text-positive-strong px-3 py-1 text-sm flex gap-1 items-center"
-              >
-                <CheckCircle2 className="h-3 w-3" />
-                Folha fechada
-              </Badge>
-            )}
-          </div>
-        </div>
+          </FilterBar>
+        </PageToolbar>
 
         {loadError && !loading ? (
           <FinanceErrorState onRetry={() => void fetchData()} />

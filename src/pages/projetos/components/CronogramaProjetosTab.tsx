@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ZoomSwitcher } from "@/components/gantt/ZoomSwitcher";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,26 +10,36 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calendar, ChevronDown, ChevronRight, Layers, ZoomIn, ZoomOut, AlertTriangle } from "lucide-react";
+import { Calendar, ChevronDown, Layers, AlertTriangle } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
+import { PageLoader } from "@/components/motion/PageLoader";
 import { cn } from "@/lib/utils";
-import { type Projeto, type ProjetoDisciplinaDB, getDeadlineStatus, isDiscAtrasada } from "@/types/projetos";
+import { type Projeto, getDeadlineStatus, isDiscAtrasada } from "@/types/projetos";
 import { PROJECT_STATUS, PROJECT_STATUS_CONFIG, type ProjectStatus } from "@/constants";
 import {
   addDays,
-  barPosition,
   diffDays,
-  DISCIPLINA_STATUS_COLORS,
   endOfMonth,
   generateColumns,
   parseDate,
   startOfMonth,
+  textoSobreBarra,
   toIso,
   type GanttDragType,
   type ZoomLevel,
 } from "@/lib/cronograma";
 import { useGanttDrag } from "@/components/gantt/useGanttDrag";
-import { useProjetoDisciplinas } from "@/hooks/useProjetoDisciplinas";
+import { DisciplinaTimelineRows } from "./CronogramaDisciplinaRows";
+import { CronogramaColunaProjetos } from "./CronogramaColunaProjetos";
+import { CronogramaMeusToggle, useFiltroMeusProjetos } from "./CronogramaMeusToggle";
+import { useMinhaPessoa } from "@/hooks/useMinhaPessoa";
+import { useReordenarProjetos } from "@/pages/projetos/hooks/useReordenarProjetos";
+import {
+  compararPorPrioridade,
+  idsParaGravar,
+  moverNaLista,
+  projetoTemDisciplinaDaPessoa,
+} from "@/pages/projetos/lib/ordemPrioridade";
 
 interface MultiSelectProps {
   options: string[];
@@ -96,6 +107,8 @@ interface CronogramaProjetosTabProps {
   projetos: Projeto[];
   /** Grava a nova data ao arrastar a barra. Sem isto, as barras não arrastam. */
   onDatesChange?: (projetoId: string, updates: { data_inicio: string; data_previsao: string }) => Promise<void>;
+  /** Quem edita projetos arrasta a alça para mudar a ordem de prioridade (SPEC 143). */
+  canReorder?: boolean;
 }
 
 const STATUS_BAR_COLORS: Record<string, string> = {
@@ -113,102 +126,7 @@ function formatDateBR(d: string | undefined | Date): string {
   return date.toLocaleDateString("pt-BR");
 }
 
-function discBarClass(d: ProjetoDisciplinaDB): string {
-  return (DISCIPLINA_STATUS_COLORS[d.status] || DISCIPLINA_STATUS_COLORS["Não Iniciado"]).bar;
-}
-
-/** Sub-linhas da coluna fixa esquerda (nomes) para as disciplinas de um projeto expandido. */
-function DisciplinaLeftRows({ projetoId }: { projetoId: string }) {
-  const { data: disciplinas, isLoading } = useProjetoDisciplinas(projetoId);
-
-  if (isLoading) {
-    return (
-      <div className="h-10 border-b pl-8 pr-3 flex items-center">
-        <div className="h-2 w-24 rounded bg-muted animate-pulse" />
-      </div>
-    );
-  }
-
-  if (!disciplinas || disciplinas.length === 0) {
-    return (
-      <div className="h-10 border-b pl-8 pr-3 flex items-center">
-        <span className="text-[10px] text-muted-foreground">Nenhuma disciplina cadastrada</span>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      {disciplinas.map((d) => (
-        <div key={d.id} className="h-10 border-b pl-8 pr-3 flex items-center gap-1.5">
-          <span className={cn("inline-block h-1.5 w-1.5 rounded-full shrink-0", discBarClass(d))} aria-hidden />
-          <span className="text-[11px] truncate">
-            {d.codigo && <span className="font-mono text-muted-foreground mr-1">{d.codigo}</span>}
-            {d.nome}
-          </span>
-        </div>
-      ))}
-    </>
-  );
-}
-
-/** Sub-linhas da timeline (barras) para as disciplinas de um projeto expandido. Mesma
- *  query do useProjetoDisciplinas de DisciplinaLeftRows: o react-query dedupe evita
- *  refetch duplicado das duas colunas. */
-function DisciplinaTimelineRows({
-  projetoId,
-  timelineStart,
-  timelineEnd,
-  onNavigate,
-}: {
-  projetoId: string;
-  timelineStart: Date;
-  timelineEnd: Date;
-  onNavigate: () => void;
-}) {
-  const { data: disciplinas, isLoading } = useProjetoDisciplinas(projetoId);
-
-  if (isLoading || !disciplinas || disciplinas.length === 0) {
-    return <div className="h-10 border-b relative" />;
-  }
-
-  return (
-    <>
-      {disciplinas.map((d) => {
-        const start = parseDate(d.data_inicio);
-        const end = parseDate(d.data_fim);
-
-        if (!start || !end) {
-          return (
-            <div key={d.id} className="h-10 border-b relative flex items-center justify-center">
-              <span className="text-[10px] text-muted-foreground/60">sem datas</span>
-            </div>
-          );
-        }
-
-        const { leftPct, widthPct } = barPosition(start, end, timelineStart, timelineEnd);
-
-        return (
-          <div key={d.id} className="h-10 border-b relative">
-            <button
-              type="button"
-              onClick={onNavigate}
-              className={cn(
-                "absolute top-2 h-6 rounded flex items-center overflow-hidden shadow-sm border border-black/5 cursor-pointer",
-                discBarClass(d)
-              )}
-              style={{ left: `${leftPct}%`, width: `${widthPct}%`, minWidth: "24px" }}
-            >
-              <span className="text-[9px] text-white font-medium truncate mx-2">{d.nome}</span>
-            </button>
-          </div>
-        );
-      })}
-    </>
-  );
-}
-
-export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaProjetosTabProps) {
+export function CronogramaProjetosTab({ projetos, onDatesChange, canReorder = false }: CronogramaProjetosTabProps) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [zoom, setZoom] = useState<ZoomLevel>("months");
@@ -216,6 +134,10 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
   const [clienteFilter, setClienteFilter] = useState<string[]>([]);
   const [responsavelFilter, setResponsavelFilter] = useState<string[]>([]);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [outrasAbertas, setOutrasAbertas] = useState<Set<string>>(new Set());
+  const [meus, setMeus] = useFiltroMeusProjetos();
+  const { data: minhaPessoa, isPending: carregandoPessoa } = useMinhaPessoa();
+  const reordenarMut = useReordenarProjetos();
   const scrollRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
 
@@ -243,14 +165,21 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
           const hasResp = (p.disciplinas || []).some((d) => responsavelFilter.includes(d.responsavel_nome ?? ""));
           if (!hasResp) return false;
         }
+        if (meus && !(minhaPessoa && projetoTemDisciplinaDaPessoa(p, minhaPessoa.id))) return false;
         return parseDate(p.data_inicio) && parseDate(p.data_previsao);
       })
-      .sort((a, b) => {
-        const da = parseDate(a.data_inicio)!;
-        const db = parseDate(b.data_inicio)!;
-        return da.getTime() - db.getTime();
-      });
-  }, [projetos, statusFilter, clienteFilter, responsavelFilter]);
+      .sort(compararPorPrioridade);
+  }, [projetos, statusFilter, clienteFilter, responsavelFilter, meus, minhaPessoa]);
+
+  // A alça só aparece sem filtro ativo: reordenar uma lista filtrada renumeraria só uma parte dos projetos.
+  const semFiltro = statusFilter === "all" && clienteFilter.length === 0 && responsavelFilter.length === 0 && !meus;
+  const podeReordenar = canReorder && !isMobile && semFiltro && !reordenarMut.isPending;
+  const reordenar = (de: number, para: number) => {
+    const novaOrdem = moverNaLista(visibleProjetos, de, para);
+    if (novaOrdem !== visibleProjetos) reordenarMut.mutate(idsParaGravar(novaOrdem, projetos));
+  };
+
+  const pessoaDoFiltro = meus ? minhaPessoa?.id : undefined;
 
   const { timelineStart, timelineEnd, columns, rows } = useMemo(() => {
     if (visibleProjetos.length === 0) {
@@ -313,6 +242,16 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
     const pct = (diffDays(timelineStart, today) / totalDays) * 100;
     return pct >= 0 && pct <= 100 ? pct : -1;
   }, [timelineStart, timelineEnd]);
+
+  // Em "Meus projetos" as disciplinas da pessoa já vêm abertas; o clique no chevron recolhe.
+  const estaExpandido = (projetoId: string) => (meus ? !expandedIds.has(projetoId) : expandedIds.has(projetoId));
+  const toggleOutras = (projetoId: string) =>
+    setOutrasAbertas((prev) => {
+      const next = new Set(prev);
+      if (next.has(projetoId)) next.delete(projetoId);
+      else next.add(projetoId);
+      return next;
+    });
 
   const toggleExpandDisciplinas = (projetoId: string) => {
     setExpandedIds((prev) => {
@@ -423,33 +362,15 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                 >
                   Hoje
                 </Button>
-                <div className="flex items-center border rounded-md overflow-hidden">
-                  <Button
-                    variant={zoom === "months" ? "secondary" : "ghost"}
-                    size="sm"
-                    className="h-7 text-xs rounded-none px-2"
-                    onClick={() => setZoom("months")}
-                    aria-label="Meses"
-                  >
-                    <ZoomOut className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Meses</span>
-                  </Button>
-                  <Button
-                    variant={zoom === "weeks" ? "secondary" : "ghost"}
-                    size="sm"
-                    className="h-7 text-xs rounded-none px-2"
-                    onClick={() => setZoom("weeks")}
-                    aria-label="Semanas"
-                  >
-                    <ZoomIn className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Semanas</span>
-                  </Button>
-                </div>
+                <ZoomSwitcher value={zoom} onChange={setZoom} />
               </div>
             </div>
 
             {/* Filters row */}
             <div className="flex items-center gap-2 flex-wrap">
+              <CronogramaMeusToggle value={meus} onChange={setMeus} />
               <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as ProjectStatus | "all")}>
-                <SelectTrigger className="h-7 text-xs w-[160px]">
+                <SelectTrigger className="h-7 text-xs w-[160px]" aria-label="Filtrar por status">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -498,7 +419,20 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
         </div>
       )}
 
-      {visibleProjetos.length === 0 ? (
+      {meus && carregandoPessoa ? (
+        <PageLoader size="section" label="Carregando seus projetos" />
+      ) : visibleProjetos.length === 0 && meus ? (
+        <Card>
+          <CardContent className="p-0">
+            <EmptyState
+              icon={Layers}
+              title="Nenhum projeto com disciplina sua"
+              description="Peça ao coordenador para atribuir você a uma disciplina."
+              action={{ label: "Ver todos os projetos", variant: "outline", onClick: () => setMeus(false) }}
+            />
+          </CardContent>
+        </Card>
+      ) : visibleProjetos.length === 0 ? (
         <Card>
           <CardContent className="p-4">
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -512,65 +446,27 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
         <Card>
           <CardContent className="p-0">
             <div className="flex items-start max-h-[calc(100svh-420px)] overflow-y-auto">
-              {/* Fixed left column: colapsa em mobile (achado da auditoria: a coluna
-                  fixa de 260px sozinha consumia 66% de uma tela de 390px, sobrando
-                  só uma faixa estreita pra timeline). Some código e status/cliente,
-                  mantém só o nome truncado. */}
-              <div className={cn("shrink-0 border-r bg-muted/30", isMobile ? "w-[104px]" : "w-[260px]")}>
-                <div className="h-10 border-b px-3 flex items-center">
-                  <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                    Projeto
-                  </span>
-                </div>
-                {rows.map((row) => {
-                  const cfg = PROJECT_STATUS_CONFIG[row.projeto.status];
-                  const isExpanded = expandedIds.has(row.projeto.id);
-                  return (
-                    <div key={row.projeto.id} className={cn("border-b", row.atrasado && "bg-danger-soft/40")}>
-                      <div className="w-full h-14 flex items-stretch">
-                        <button
-                          type="button"
-                          onClick={() => toggleExpandDisciplinas(row.projeto.id)}
-                          className="shrink-0 w-6 flex items-center justify-center hover:bg-muted/50 transition-colors"
-                          aria-label={isExpanded ? "Recolher disciplinas" : "Expandir disciplinas"}
-                        >
-                          <ChevronRight
-                            className={cn(
-                              "h-3.5 w-3.5 text-muted-foreground transition-transform",
-                              isExpanded && "rotate-90"
-                            )}
-                          />
-                        </button>
-                        <button
-                          onClick={() => navigate(`/projetos/${row.projeto.id}#cronograma`)}
-                          className="flex-1 min-w-0 h-full pr-3 flex flex-col justify-center text-left hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="flex items-center gap-1.5">
-                            {row.atrasado && <AlertTriangle className="h-3 w-3 text-danger-mid shrink-0" />}
-                            <span className="text-xs font-medium truncate">{row.projeto.nome}</span>
-                          </div>
-                          {!isMobile && (
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <span
-                                className={cn("inline-block h-1.5 w-1.5 rounded-full shrink-0", row.barClass)}
-                                aria-hidden
-                              />
-                              <span className="text-[10px] text-muted-foreground truncate">
-                                {cfg?.label || row.projeto.status}
-                                {row.projeto.cliente_nome && ` · ${row.projeto.cliente_nome}`}
-                              </span>
-                            </div>
-                          )}
-                        </button>
-                      </div>
-                      {isExpanded && <DisciplinaLeftRows projetoId={row.projeto.id} />}
-                    </div>
-                  );
-                })}
-              </div>
+              <CronogramaColunaProjetos
+                rows={rows}
+                isMobile={isMobile}
+                isExpanded={estaExpandido}
+                onToggleExpand={toggleExpandDisciplinas}
+                onOpen={(id) => navigate(`/projetos/${id}#cronograma`)}
+                podeReordenar={podeReordenar}
+                onReordenar={reordenar}
+                pessoaId={pessoaDoFiltro}
+                outrasAbertas={outrasAbertas}
+                onToggleOutras={toggleOutras}
+              />
 
               {/* Scrollable timeline */}
-              <div ref={scrollRef} className="flex-1 overflow-x-auto">
+              <div
+                ref={scrollRef}
+                className="flex-1 overflow-x-auto"
+                tabIndex={0}
+                role="region"
+                aria-label="Linha do tempo dos projetos (role com as setas do teclado)"
+              >
                 <div
                   ref={timelineRef}
                   className="relative"
@@ -592,7 +488,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                         className="absolute top-0 bottom-0 w-0.5 bg-red-500 pointer-events-none"
                         style={{ left: `${todayPct}%` }}
                       >
-                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-red-500 text-white text-[8px] px-1.5 py-0.5 font-bold whitespace-nowrap rounded-t-sm z-10">
+                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-fill-danger text-fill-danger-foreground text-[9px] px-1.5 py-0.5 font-bold whitespace-nowrap rounded-t-sm z-10">
                           HOJE
                         </div>
                       </div>
@@ -635,7 +531,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                         const geo = getBarGeometry(row.projeto.id, base);
                         const isThisDragging = dragOverride?.key === row.projeto.id;
                         const canDrag = !!onDatesChange && !!geo;
-                        const isExpanded = expandedIds.has(row.projeto.id);
+                        const isExpanded = estaExpandido(row.projeto.id);
 
                         if (!geo) {
                           return (
@@ -647,6 +543,8 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                                   timelineStart={timelineStart}
                                   timelineEnd={timelineEnd}
                                   onNavigate={() => navigate(`/projetos/${row.projeto.id}#cronograma`)}
+                                  pessoaId={pessoaDoFiltro}
+                                  mostrarOutras={outrasAbertas.has(row.projeto.id)}
                                 />
                               )}
                             </div>
@@ -716,7 +614,12 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                                         navigate(`/projetos/${row.projeto.id}#cronograma`);
                                       }}
                                     >
-                                      <span className="text-[10px] text-white font-medium truncate">
+                                      <span
+                                        className={cn(
+                                          "text-[10px] font-medium truncate",
+                                          textoSobreBarra(row.barClass)
+                                        )}
+                                      >
                                         {row.projeto.nome}
                                       </span>
                                     </div>
@@ -803,6 +706,8 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
                                 timelineStart={timelineStart}
                                 timelineEnd={timelineEnd}
                                 onNavigate={() => navigate(`/projetos/${row.projeto.id}#cronograma`)}
+                                pessoaId={pessoaDoFiltro}
+                                mostrarOutras={outrasAbertas.has(row.projeto.id)}
                               />
                             )}
                           </div>
@@ -830,7 +735,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange }: CronogramaPro
           <span>Hoje</span>
         </div>
         {onDatesChange && (
-          <div className="flex items-center gap-1.5 text-muted-foreground/50">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
             <span>↔</span>
             <span>Arraste as bordas para ajustar datas</span>
           </div>

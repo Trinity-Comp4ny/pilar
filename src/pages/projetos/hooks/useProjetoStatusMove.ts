@@ -40,6 +40,15 @@ export function useProjetoStatusMove(projetos: Projeto[], canEdit: boolean, etap
     | null
   >(null);
 
+  // Pausar e retomar nunca passam pelo update direto: abrem o diálogo (motivo,
+  // antes e depois dos prazos) e vão pelas RPCs (spec 141).
+  const [pendingPausa, setPendingPausa] = useState<{ projetoId: string; projetoNome: string } | null>(null);
+  const [pendingRetomada, setPendingRetomada] = useState<{
+    projetoId: string;
+    dataPrevisao?: string;
+    etapaId?: string;
+  } | null>(null);
+
   // Aplica a mudança no cache e no banco. Quando `etapaId` vem, grava a coluna
   // (o trigger deriva o status pelo bucket); senão grava o status direto (mobile).
   // clearDataFinal=true zera data_final (usado na reabertura de projeto concluído).
@@ -74,6 +83,7 @@ export function useProjetoStatusMove(projetos: Projeto[], canEdit: boolean, etap
     }
     const label = nomeDe(etapaId) ?? statusConfig[newStatus as keyof typeof statusConfig]?.label ?? newStatus;
     toast.success(`Movido para ${label}`);
+    queryClient.invalidateQueries({ queryKey: ["projeto-timeline", projetoId] });
     // Confia no update otimista. Só revalida quando o servidor pode ter mexido
     // em data_final: ao concluir (trigger preenche) ou reabrir (limpamos).
     if (newStatus === PROJECT_STATUS.CONCLUIDO || clearDataFinal) {
@@ -86,6 +96,17 @@ export function useProjetoStatusMove(projetos: Projeto[], canEdit: boolean, etap
   const handleMoveStatus = async (projetoId: string, newStatus: string) => {
     const projeto = projetos.find((p) => p.id === projetoId);
     const fromStatus = projeto?.status;
+
+    if (newStatus === PROJECT_STATUS.PARALISADO && fromStatus !== PROJECT_STATUS.PARALISADO) {
+      setPendingPausa({ projetoId, projetoNome: projeto?.nome ?? "Projeto" });
+      return;
+    }
+
+    if (fromStatus === PROJECT_STATUS.PARALISADO && newStatus !== PROJECT_STATUS.PARALISADO) {
+      const etapaId = etapas.find((e) => e.bucket === newStatus)?.id;
+      setPendingRetomada({ projetoId, dataPrevisao: projeto?.data_previsao, etapaId });
+      return;
+    }
 
     if (fromStatus === PROJECT_STATUS.CONCLUIDO && newStatus !== PROJECT_STATUS.CONCLUIDO) {
       setPendingReopen({
@@ -100,24 +121,35 @@ export function useProjetoStatusMove(projetos: Projeto[], canEdit: boolean, etap
     await applyStatusMove(projetoId, newStatus);
   };
 
-  // Desktop: move por etapa (droppableId = etapa.id). As âncoras (reabrir concluído,
-  // não notificar cancelado) olham o bucket da etapa de origem/destino.
-  const onDragEnd = async (result: DropResult) => {
-    const { source, destination, draggableId } = result;
-    if (!destination) return;
-    if (source.droppableId === destination.droppableId) return;
+  // Move por etapa (quadro e lista). As âncoras (pausar, retomar, reabrir concluído) olham o
+  // bucket da etapa de origem/destino. `origemEtapaId` é a coluna de onde o projeto sai: o
+  // quadro passa o droppableId de origem; a lista usa a etapa atual do projeto.
+  const moverParaEtapa = async (projetoId: string, etapaDestino: string, origemEtapaId?: string | null) => {
     if (!canEdit) return;
 
-    const etapaDestino = destination.droppableId;
+    const projeto = projetos.find((p) => p.id === projetoId);
+    const origem = origemEtapaId === undefined ? projeto?.etapa_id : origemEtapaId;
+    if (origem === etapaDestino) return;
+
     const bucketDestino = bucketDe(etapaDestino);
-    const bucketOrigem = bucketDe(source.droppableId);
     if (!bucketDestino) return;
-    const projeto = projetos.find((p) => p.id === draggableId);
+    // Projeto sem etapa (legado) parte do status canônico dele.
+    const bucketOrigem = bucketDe(origem) ?? (origem === projeto?.etapa_id ? projeto?.status : undefined);
+
+    if (bucketDestino === PROJECT_STATUS.PARALISADO && bucketOrigem !== PROJECT_STATUS.PARALISADO) {
+      setPendingPausa({ projetoId, projetoNome: projeto?.nome ?? "Projeto" });
+      return;
+    }
+
+    if (bucketOrigem === PROJECT_STATUS.PARALISADO && bucketDestino !== PROJECT_STATUS.PARALISADO) {
+      setPendingRetomada({ projetoId, dataPrevisao: projeto?.data_previsao, etapaId: etapaDestino });
+      return;
+    }
 
     // Saindo de uma coluna Concluído? Pede confirmação antes de zerar data_final.
     if (bucketOrigem === PROJECT_STATUS.CONCLUIDO && bucketDestino !== PROJECT_STATUS.CONCLUIDO) {
       setPendingReopen({
-        projetoId: draggableId,
+        projetoId,
         newStatus: bucketDestino,
         etapaId: etapaDestino,
         projetoNome: projeto?.nome ?? "Projeto",
@@ -126,14 +158,26 @@ export function useProjetoStatusMove(projetos: Projeto[], canEdit: boolean, etap
       return;
     }
 
-    await applyStatusMove(draggableId, bucketDestino, false, etapaDestino);
+    await applyStatusMove(projetoId, bucketDestino, false, etapaDestino);
+  };
+
+  // Desktop (quadro): droppableId = etapa.id.
+  const onDragEnd = async (result: DropResult) => {
+    const { source, destination, draggableId } = result;
+    if (!destination) return;
+    await moverParaEtapa(draggableId, destination.droppableId, source.droppableId);
   };
 
   return {
+    pendingPausa,
+    setPendingPausa,
+    pendingRetomada,
+    setPendingRetomada,
     pendingReopen,
     setPendingReopen,
     applyStatusMove,
     handleMoveStatus,
+    moverParaEtapa,
     onDragEnd,
   };
 }

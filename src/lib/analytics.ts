@@ -54,6 +54,8 @@ const SENSITIVE_KEYS =
   /password|senha|token|api_key|secret|authorization|cookie|cpf|cnpj|rg|pix|conta_bancaria|agencia|salario|e_?mail|telefone|phone|celular/i;
 
 const PII_PATTERNS: Array<{ re: RegExp; replace: string }> = [
+  // Link público de cotação (SPEC 144): o token na rota é o segredo, não pode ir ao PostHog.
+  { re: /\/cotar\/[A-Za-z0-9_-]{16,}/g, replace: "/cotar/[link]" },
   { re: /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g, replace: "[CPF]" },
   { re: /\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/g, replace: "[CNPJ]" },
   { re: /\b\d{5}-?\d{3}\b/g, replace: "[CEP]" },

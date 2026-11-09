@@ -27,6 +27,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   PenLine,
+  Calculator,
 } from "lucide-react";
 import { PROPOSTA_STATUS_CONFIG } from "@/hooks/usePropostas";
 
@@ -55,7 +56,10 @@ interface PropostaDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   proposta: Proposta | null;
+  /** Editar e mudar status (enviada/aceita/recusada/contrato) pedem permissão de edição no módulo. */
   canEdit: boolean;
+  /** Excluir pede permissão de exclusão no módulo. */
+  canDelete: boolean;
   hoje: string;
   onEdit: () => void;
   onDelete: () => void;
@@ -65,6 +69,8 @@ interface PropostaDetailDialogProps {
   onConverter: () => void;
   onMarcarContratoAssinado?: () => void;
   onRecusarContrato?: () => void;
+  /** Abre a estimativa de obra já ligada a esta proposta; ausente quando a empresa não tem a estimativa. */
+  onEstimar?: () => void;
   isUpdating?: boolean;
 }
 
@@ -142,6 +148,7 @@ export function PropostaDetailDialog({
   onOpenChange,
   proposta,
   canEdit,
+  canDelete,
   hoje,
   onEdit,
   onDelete,
@@ -151,6 +158,7 @@ export function PropostaDetailDialog({
   onConverter,
   onMarcarContratoAssinado,
   onRecusarContrato,
+  onEstimar,
   isUpdating,
 }: PropostaDetailDialogProps) {
   const [confirmRecusar, setConfirmRecusar] = useState(false);
@@ -180,7 +188,7 @@ export function PropostaDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-start justify-between gap-3 pr-6">
             <div className="min-w-0">
@@ -235,6 +243,21 @@ export function PropostaDetailDialog({
             </div>
           )}
 
+          {onEstimar && (displayStatus === "rascunho" || displayStatus === "enviada") && (
+            <div className="space-y-2 rounded-lg border border-brand/40 bg-brand/10 p-3">
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                <Calculator className="h-4 w-4" aria-hidden="true" /> Estimar a obra
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Leve ao cliente uma faixa de custo e um prazo, com fonte de preço. A estimativa fica ligada a esta
+                proposta.
+              </p>
+              <Button size="sm" variant="outline" onClick={onEstimar}>
+                Estimar obra
+              </Button>
+            </div>
+          )}
+
           <Separator />
 
           {/* Ações por estágio */}
@@ -252,19 +275,21 @@ export function PropostaDetailDialog({
                   </Button>
                 )}
               </div>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="gap-1.5 text-muted-foreground hover:text-foreground"
-                  disabled={isUpdating}
-                  onClick={() => onStatusChange(proposta.id, "enviada")}
-                >
-                  {isUpdating ? <BusyMark className="h-3.5 w-3.5" /> : <Send className="h-3.5 w-3.5" />}
-                  Enviei manualmente
-                </Button>
-              </div>
               {canEdit && (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="gap-1.5 text-muted-foreground hover:text-foreground"
+                    disabled={isUpdating}
+                    onClick={() => onStatusChange(proposta.id, "enviada")}
+                  >
+                    {isUpdating ? <BusyMark className="h-3.5 w-3.5" /> : <Send className="h-3.5 w-3.5" />}
+                    Enviei manualmente
+                  </Button>
+                </div>
+              )}
+              {canDelete && (
                 <Button
                   size="sm"
                   variant="ghost"
@@ -280,29 +305,31 @@ export function PropostaDetailDialog({
 
           {displayStatus === "enviada" && (
             <div className="space-y-3">
-              <div className="rounded-lg border border-dashed border-border bg-muted/50 p-3">
-                <p className="text-xs text-muted-foreground mb-2 font-medium">A proposta foi:</p>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="outline"
-                    className="gap-1.5 border-positive/30 text-positive-strong hover:bg-positive hover:text-white hover:border-positive transition-colors"
-                    disabled={isUpdating}
-                    onClick={() => onStatusChange(proposta.id, "aceita")}
-                  >
-                    {isUpdating ? <BusyMark className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
-                    Aceita
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="gap-1.5 border-danger-mid-border text-danger-mid hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
-                    disabled={isUpdating}
-                    onClick={() => setConfirmRecusar(true)}
-                  >
-                    {isUpdating ? <BusyMark className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                    Recusada
-                  </Button>
+              {canEdit && (
+                <div className="rounded-lg border border-dashed border-border bg-muted/50 p-3">
+                  <p className="text-xs text-muted-foreground mb-2 font-medium">A proposta foi:</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      className="gap-1.5 border-positive/30 text-positive-strong hover:bg-positive hover:text-white hover:border-positive transition-colors"
+                      disabled={isUpdating}
+                      onClick={() => onStatusChange(proposta.id, "aceita")}
+                    >
+                      {isUpdating ? <BusyMark className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                      Aceita
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="gap-1.5 border-danger-mid-border text-danger-mid hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
+                      disabled={isUpdating}
+                      onClick={() => setConfirmRecusar(true)}
+                    >
+                      {isUpdating ? <BusyMark className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                      Recusada
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
               <ConfirmDialog
                 open={confirmRecusar}
                 onOpenChange={setConfirmRecusar}
@@ -350,7 +377,7 @@ export function PropostaDetailDialog({
                   </>
                 )}
               </div>
-              {canEdit && (
+              {canDelete && (
                 <Button
                   size="sm"
                   variant="ghost"
@@ -389,27 +416,31 @@ export function PropostaDetailDialog({
                 </div>
               ) : proposta.contrato_enviado ? (
                 <div className="rounded-lg border border-dashed border-border bg-muted/50 p-3">
-                  <p className="text-xs text-muted-foreground mb-2 font-medium">O contrato foi:</p>
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="outline"
-                      className="gap-1.5 border-positive/30 text-positive-strong hover:bg-positive hover:text-white hover:border-positive transition-colors"
-                      disabled={isUpdating}
-                      onClick={onMarcarContratoAssinado}
-                    >
-                      {isUpdating ? <BusyMark className="h-4 w-4" /> : <PenLine className="h-4 w-4" />}
-                      Assinado
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="gap-1.5 border-danger-mid-border text-danger-mid hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
-                      disabled={isUpdating}
-                      onClick={onRecusarContrato}
-                    >
-                      {isUpdating ? <BusyMark className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                      Recusado
-                    </Button>
-                  </div>
+                  <p className="text-xs text-muted-foreground mb-2 font-medium">
+                    {canEdit ? "O contrato foi:" : "Contrato enviado, aguardando o cliente."}
+                  </p>
+                  {canEdit && (
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        className="gap-1.5 border-positive/30 text-positive-strong hover:bg-positive hover:text-white hover:border-positive transition-colors"
+                        disabled={isUpdating}
+                        onClick={onMarcarContratoAssinado}
+                      >
+                        {isUpdating ? <BusyMark className="h-4 w-4" /> : <PenLine className="h-4 w-4" />}
+                        Assinado
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="gap-1.5 border-danger-mid-border text-danger-mid hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
+                        disabled={isUpdating}
+                        onClick={onRecusarContrato}
+                      >
+                        {isUpdating ? <BusyMark className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                        Recusado
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex items-center gap-2 rounded-lg border border-dashed border-warning-mid-border bg-warning-soft/50 px-3 py-2.5">
@@ -473,7 +504,7 @@ export function PropostaDetailDialog({
                   <FileOutput className="h-3.5 w-3.5" />
                   Baixar documento
                 </Button>
-                {canEdit && (
+                {canDelete && (
                   <Button
                     size="sm"
                     variant="ghost"
@@ -503,7 +534,7 @@ export function PropostaDetailDialog({
                   <FileOutput className="h-3.5 w-3.5" />
                   Baixar documento
                 </Button>
-                {canEdit && (
+                {canDelete && (
                   <Button
                     size="sm"
                     variant="ghost"

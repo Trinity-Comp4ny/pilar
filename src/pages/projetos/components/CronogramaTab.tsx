@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ZoomSwitcher } from "@/components/gantt/ZoomSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calendar, User, AlertTriangle, Layers, ZoomIn, ZoomOut } from "lucide-react";
+import { Calendar, User, AlertTriangle, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   type GanttDragType,
@@ -259,22 +260,22 @@ export function CronogramaTab({
       id: "inicio",
       pct: projetoInicioPct,
       label: "INÍCIO",
-      lineClass: "bg-emerald-500",
-      chipClass: "bg-emerald-500",
+      lineClass: "bg-chart-success",
+      chipClass: "bg-chart-success",
     },
     todayPct >= 0 && {
       id: "hoje",
       pct: todayPct,
       label: "HOJE",
-      lineClass: "bg-red-500",
-      chipClass: "bg-red-500",
+      lineClass: "bg-chart-danger",
+      chipClass: "bg-chart-danger",
     },
     projetoPrevisaoPct >= 0 && {
       id: "previsao",
       pct: projetoPrevisaoPct,
       label: `PREV. · ${parseDate(projetoDataPrevisao) ? formatDateShort(parseDate(projetoDataPrevisao)!) : ""}`,
-      lineClass: "bg-violet-500",
-      chipClass: "bg-violet-500",
+      lineClass: "bg-status-review",
+      chipClass: "bg-status-review",
     },
   ].filter(Boolean) as Omit<MarkerDef, "chipRow">[];
 
@@ -345,26 +346,7 @@ export function CronogramaTab({
               >
                 Hoje
               </Button>
-              <div className="flex items-center border rounded-md overflow-hidden">
-                <Button
-                  variant={zoom === "months" ? "secondary" : "ghost"}
-                  size="sm"
-                  className="h-7 text-xs rounded-none px-2"
-                  onClick={() => setZoom("months")}
-                  aria-label="Meses"
-                >
-                  <ZoomOut className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Meses</span>
-                </Button>
-                <Button
-                  variant={zoom === "weeks" ? "secondary" : "ghost"}
-                  size="sm"
-                  className="h-7 text-xs rounded-none px-2"
-                  onClick={() => setZoom("weeks")}
-                  aria-label="Semanas"
-                >
-                  <ZoomIn className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Semanas</span>
-                </Button>
-              </div>
+              <ZoomSwitcher value={zoom} onChange={setZoom} />
             </div>
           </div>
         </CardContent>
@@ -373,7 +355,7 @@ export function CronogramaTab({
       {discsSemDatas.length > 0 && (
         <div className="rounded-lg border border-warning-mid-border bg-warning-soft text-warning-strong text-xs overflow-hidden">
           <button
-            className="flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-amber-100/60 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 w-full text-left hover:bg-warning-soft transition-colors"
             onClick={() => setDiscsSemDatasExpanded((v) => !v)}
           >
             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
@@ -486,11 +468,11 @@ export function CronogramaTab({
                   {/* Vertical guide line during drag */}
                   {guideX !== null && (
                     <div
-                      className="absolute top-0 bottom-0 w-px bg-blue-400/70 z-30 pointer-events-none"
+                      className="absolute top-0 bottom-0 w-px bg-chart-info/70 z-30 pointer-events-none"
                       style={{ left: `${guideX}px` }}
                     >
                       {/* Date chip at top of guide */}
-                      <div className="absolute top-1 left-2 bg-blue-600 text-white text-[9px] px-1.5 py-0.5 rounded whitespace-nowrap shadow-md font-medium">
+                      <div className="absolute top-1 left-2 bg-chart-info text-white text-[9px] px-1.5 py-0.5 rounded whitespace-nowrap shadow-md font-medium">
                         {guideDateLabel()}
                       </div>
                     </div>
@@ -679,7 +661,7 @@ export function CronogramaTab({
                               <div
                                 className={cn(
                                   "text-white text-[10px] px-2 py-1 rounded-md whitespace-nowrap shadow-lg font-medium",
-                                  isSnapping ? "bg-orange-600" : isBeyondEnd ? "bg-orange-500" : "bg-ink/90"
+                                  isSnapping ? "bg-chart-warning" : isBeyondEnd ? "bg-chart-warning-alt" : "bg-ink/90"
                                 )}
                               >
                                 {getDragLabel(geo, dragOverride.type)}

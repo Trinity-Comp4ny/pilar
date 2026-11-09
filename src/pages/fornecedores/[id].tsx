@@ -16,11 +16,16 @@ import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePageTitle } from "@/hooks/usePageTitle";
-import { useFornecedorDetalhe, type CotacaoView } from "@/hooks/useFornecedorDetalhe";
+import { useFornecedorAvaliacoes } from "@/hooks/useFornecedorAvaliacoes";
+import { formatarNota } from "@/lib/cotacaoConvite";
+import { AvaliacoesFornecedor, notaMedia } from "./AvaliacoesFornecedor";
+import { useFornecedorDetalhe, type CompraView, type CotacaoView, type ItemView } from "@/hooks/useFornecedorDetalhe";
+import { DataTable, type ColumnDef } from "@/components/data/DataTable";
+import type { ObraRollup } from "@/lib/fornecedorInsights";
 import { formatDate } from "@/lib/format";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { formatCNPJ, formatPhone } from "@/lib/maskUtils";
@@ -48,13 +53,98 @@ function KpiCard({ label, value, hint }: { label: string; value: string; hint?: 
   );
 }
 
+type Moeda = (valor: number) => string;
+
+// Colunas das tabelas do detalhe (SPEC 127): todas no DataTable padrão.
+const obrasColumns = (formatCurrency: Moeda): ColumnDef<ObraRollup>[] => [
+  { key: "obra", header: "Obra", className: "font-medium", cell: (o) => o.obraNome },
+  {
+    key: "cotado",
+    header: "Total cotado",
+    align: "end",
+    className: "tabular-nums",
+    cell: (o) => formatCurrency(o.totalCotado),
+  },
+  {
+    key: "comprado",
+    header: "Total comprado",
+    align: "end",
+    className: "tabular-nums",
+    cell: (o) => formatCurrency(o.totalComprado),
+  },
+  { key: "cotacoes", header: "Cotações", align: "end", className: "tabular-nums", cell: (o) => o.cotacoes },
+  { key: "vitorias", header: "Vitórias", align: "end", className: "tabular-nums", cell: (o) => o.vitorias },
+];
+
+const comprasColumns = (formatCurrency: Moeda, abrirObra: (obraId: string) => void): ColumnDef<CompraView>[] => [
+  { key: "data", header: "Data", className: "whitespace-nowrap tabular-nums", cell: (c) => formatDate(c.data) },
+  {
+    key: "obra",
+    header: "Obra",
+    cell: (c) => (
+      <button className="underline-offset-2 hover:underline" onClick={() => abrirObra(c.obraId)}>
+        {c.obraNome}
+      </button>
+    ),
+  },
+  { key: "etapa", header: "Etapa", className: "text-sm text-muted-foreground", cell: (c) => c.frente ?? "—" },
+  { key: "descricao", header: "Descrição", cell: (c) => c.descricao },
+  { key: "valor", header: "Valor", align: "end", className: "tabular-nums", cell: (c) => formatCurrency(c.valor) },
+  {
+    key: "comprovante",
+    header: <span className="sr-only">Comprovante</span>,
+    align: "end",
+    cell: (c) =>
+      c.comprovanteUrl ? (
+        <a
+          href={c.comprovanteUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center text-muted-foreground hover:text-foreground"
+          aria-label="Abrir comprovante"
+        >
+          <ExternalLink className="h-4 w-4" />
+        </a>
+      ) : null,
+  },
+];
+
+type ItemComIndice = ItemView & { indice: number };
+
+const itensColumns = (formatCurrency: Moeda): ColumnDef<ItemComIndice>[] => [
+  { key: "item", header: "Item", cell: (it) => it.descricao },
+  {
+    key: "qtd",
+    header: "Qtd",
+    align: "end",
+    className: "tabular-nums",
+    cell: (it) => `${it.quantidade ?? "—"} ${it.unidade ?? ""}`,
+  },
+  {
+    key: "preco",
+    header: "Preço unit.",
+    align: "end",
+    className: "tabular-nums",
+    cell: (it) => (it.preco_unitario != null ? formatCurrency(it.preco_unitario) : "—"),
+  },
+  {
+    key: "total",
+    header: "Total",
+    align: "end",
+    className: "tabular-nums",
+    cell: (it) => formatCurrency(it.valor_total),
+  },
+];
+
 export default function FornecedorDetalhePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data, isLoading, isError } = useFornecedorDetalhe(id);
+  const { data: avaliacoes = [] } = useFornecedorAvaliacoes(id);
   usePageTitle(data?.fornecedor.nome ?? "Fornecedor");
   const formatCurrency = useMoneyMask();
 
+  const [tab, setTab] = useState("cotacoes");
   const [obraFiltro, setObraFiltro] = useState<string>(TODAS);
   const [expandida, setExpandida] = useState<Set<string>>(new Set());
 
@@ -101,8 +191,19 @@ export default function FornecedorDetalhePage() {
     });
   };
 
+  // Abas de seção (SPEC 124), no slot do header.
+  const secoes: SectionTab[] = [
+    { id: "cotacoes", label: "Cotações", badge: cotacoes.length },
+    { id: "obras", label: "Obras", badge: obras.length },
+    { id: "compras", label: "Compras", badge: compras.length },
+    { id: "avaliacoes", label: "Avaliações", badge: avaliacoes.length },
+  ];
+
   return (
-    <PageLayout header={<PageHeader title={fornecedor.nome} breadcrumbs={BREADCRUMB} />}>
+    <PageLayout
+      header={<PageHeader title={fornecedor.nome} breadcrumbs={BREADCRUMB} />}
+      tabs={<SectionTabs tabs={secoes} value={tab} onValueChange={setTab} ariaLabel="Seções do fornecedor" />}
+    >
       {/* Dados do cadastro */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
         {fornecedor.cnpj && <span className="tabular-nums">{formatCNPJ(fornecedor.cnpj)}</span>}
@@ -127,7 +228,7 @@ export default function FornecedorDetalhePage() {
       </div>
 
       {/* KPIs */}
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
         <KpiCard label="Obras" value={String(resumo.obras)} />
         <KpiCard label="Total comprado" value={formatCurrency(resumo.totalComprado)} hint="Conta da obra" />
         <KpiCard
@@ -137,15 +238,18 @@ export default function FornecedorDetalhePage() {
         />
         <KpiCard label="Ticket médio" value={formatCurrency(resumo.ticketMedio)} />
         <KpiCard label="Última compra" value={resumo.ultimaCompra ? formatDate(resumo.ultimaCompra) : "—"} />
+        <KpiCard
+          label="Nota"
+          value={avaliacoes.length > 0 ? formatarNota(notaMedia(avaliacoes)) : "Sem avaliação"}
+          hint={
+            avaliacoes.length > 0
+              ? `${avaliacoes.length} ${avaliacoes.length === 1 ? "avaliação" : "avaliações"}`
+              : undefined
+          }
+        />
       </div>
 
-      <Tabs defaultValue="cotacoes" className="mt-6">
-        <TabsList>
-          <TabsTrigger value="cotacoes">Cotações ({cotacoes.length})</TabsTrigger>
-          <TabsTrigger value="obras">Obras ({obras.length})</TabsTrigger>
-          <TabsTrigger value="compras">Compras ({compras.length})</TabsTrigger>
-        </TabsList>
-
+      <Tabs value={tab} onValueChange={setTab} className="mt-6">
         {/* Cotações */}
         <TabsContent value="cotacoes" className="mt-4">
           {cotacoes.length === 0 ? (
@@ -198,28 +302,13 @@ export default function FornecedorDetalhePage() {
             />
           ) : (
             <div className="overflow-x-auto rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Obra</TableHead>
-                    <TableHead className="text-right">Total cotado</TableHead>
-                    <TableHead className="text-right">Total comprado</TableHead>
-                    <TableHead className="text-right">Cotações</TableHead>
-                    <TableHead className="text-right">Vitórias</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {obras.map((o) => (
-                    <TableRow key={o.obraId} className="cursor-pointer" onClick={() => navigate(`/obras/${o.obraId}`)}>
-                      <TableCell className="font-medium">{o.obraNome}</TableCell>
-                      <TableCell className="text-right tabular-nums">{formatCurrency(o.totalCotado)}</TableCell>
-                      <TableCell className="text-right tabular-nums">{formatCurrency(o.totalComprado)}</TableCell>
-                      <TableCell className="text-right tabular-nums">{o.cotacoes}</TableCell>
-                      <TableCell className="text-right tabular-nums">{o.vitorias}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <DataTable
+                columns={obrasColumns(formatCurrency)}
+                data={{ rows: obras, isPending: false, error: null }}
+                rowKey={(o) => o.obraId}
+                onRowClick={(o) => navigate(`/obras/${o.obraId}`)}
+                rowLabel={(o) => `Abrir a obra ${o.obraNome}`}
+              />
             </div>
           )}
         </TabsContent>
@@ -234,51 +323,18 @@ export default function FornecedorDetalhePage() {
             />
           ) : (
             <div className="overflow-x-auto rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Obra</TableHead>
-                    <TableHead>Etapa</TableHead>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead className="text-right">Valor</TableHead>
-                    <TableHead />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {compras.map((c) => (
-                    <TableRow key={c.lancamentoId}>
-                      <TableCell className="whitespace-nowrap tabular-nums">{formatDate(c.data)}</TableCell>
-                      <TableCell>
-                        <button
-                          className="underline-offset-2 hover:underline"
-                          onClick={() => navigate(`/obras/${c.obraId}`)}
-                        >
-                          {c.obraNome}
-                        </button>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{c.frente ?? "—"}</TableCell>
-                      <TableCell>{c.descricao}</TableCell>
-                      <TableCell className="text-right tabular-nums">{formatCurrency(c.valor)}</TableCell>
-                      <TableCell className="text-right">
-                        {c.comprovanteUrl && (
-                          <a
-                            href={c.comprovanteUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center text-muted-foreground hover:text-foreground"
-                            aria-label="Abrir comprovante"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </a>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <DataTable
+                columns={comprasColumns(formatCurrency, (obraId) => navigate(`/obras/${obraId}`))}
+                data={{ rows: compras, isPending: false, error: null }}
+                rowKey={(c) => c.lancamentoId}
+              />
             </div>
           )}
+        </TabsContent>
+
+        {/* Avaliações (SPEC 144) */}
+        <TabsContent value="avaliacoes" className="mt-4">
+          <AvaliacoesFornecedor avaliacoes={avaliacoes} />
         </TabsContent>
       </Tabs>
     </PageLayout>
@@ -324,30 +380,11 @@ function CotacaoLinha({
       </div>
       {aberta && temItens && (
         <div className="border-t px-3 py-2">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Item</TableHead>
-                <TableHead className="text-right">Qtd</TableHead>
-                <TableHead className="text-right">Preço unit.</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {cotacao.itens.map((it, i) => (
-                <TableRow key={i}>
-                  <TableCell>{it.descricao}</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {it.quantidade ?? "—"} {it.unidade ?? ""}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {it.preco_unitario != null ? formatCurrency(it.preco_unitario) : "—"}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{formatCurrency(it.valor_total)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={itensColumns(formatCurrency)}
+            data={{ rows: cotacao.itens.map((it, indice) => ({ ...it, indice })), isPending: false, error: null }}
+            rowKey={(it) => String(it.indice)}
+          />
         </div>
       )}
     </div>

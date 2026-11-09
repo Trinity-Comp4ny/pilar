@@ -2,6 +2,7 @@ import {
   BarChart,
   Boxes,
   Building2,
+  Calculator,
   Calendar,
   ClipboardList,
   CloudSun,
@@ -47,7 +48,11 @@ export type FeatureKey =
   | "obras_cronograma"
   | "obras_cotacoes"
   | "obras_estoque"
-  | "obras_conta";
+  | "obras_conta"
+  // Estimativa de obra (SPEC 136): feature-raiz do módulo Obras, opt-in por empresa. Diferente das
+  // sub-features acima, a chave ausente do JSONB significa DESLIGADA (não herda o módulo), porque os
+  // parâmetros de preço ainda estão em validação.
+  | "estimativa_obra";
 
 export type FeatureGroup = "visao" | "comercial" | "operacao" | "financeiro" | "equipe" | "extras";
 
@@ -336,6 +341,16 @@ export const FEATURES: readonly FeatureDefinition[] = [
     parent: "obras",
   },
   {
+    key: "estimativa_obra",
+    label: "Estimativa de obra",
+    description: "Faixa de custo e cronograma a partir da descrição da obra",
+    group: "operacao",
+    icon: Calculator,
+    core: false,
+    universal: false,
+    addon: false,
+  },
+  {
     key: "timesheet",
     label: "Timesheet",
     description: "Registro de horas por projeto e colaborador",
@@ -384,6 +399,7 @@ export const FEATURE_MODULE: Record<FeatureKey, FeatureModuleId | null> = {
   obras_cotacoes: "obras",
   obras_estoque: "obras",
   obras_conta: "obras",
+  estimativa_obra: "obras",
   // Transversal / plataforma (fora dos 3 pilares)
   dashboard: null,
   relatorios: null,

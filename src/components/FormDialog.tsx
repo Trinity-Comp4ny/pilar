@@ -74,7 +74,8 @@ export function FormDialog({
           className="space-y-4 min-w-0"
         >
           {children}
-          <DialogFooter>
+          {/* Celular (SPEC 134): botões presos ao fim do painel, acima do teclado e da safe area. */}
+          <DialogFooter className="max-md:sticky max-md:bottom-[calc(-1*max(1rem,env(safe-area-inset-bottom)))] max-md:z-10 max-md:-mx-4 max-md:-mb-[max(1rem,env(safe-area-inset-bottom))] max-md:border-t max-md:bg-background max-md:px-4 max-md:pb-[max(0.75rem,env(safe-area-inset-bottom))] max-md:pt-3">
             <DialogClose asChild>
               <Button type="button" variant="ghost" disabled={isPending}>
                 {cancelLabel}

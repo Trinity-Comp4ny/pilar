@@ -329,7 +329,7 @@ export function LeadConfirmationCard({ index, draft, onConfirmar, onCancelar, on
       <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-3">
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Coins className="h-3.5 w-3.5" />
-          Criar consome tokens de IA
+          Criar consome créditos de IA
         </span>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={cancelar} disabled={salvando}>

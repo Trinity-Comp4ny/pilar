@@ -1,14 +1,27 @@
 import { textoObrigatorio, validar, z } from "../_shared/schemas.ts";
 
 export const MAX_FOTOS = 30;
+export const MAX_REGISTROS = 60;
+
+const listaDeUuid = (campo: string, max: number) =>
+  z
+    .array(z.unknown(), { invalid_type_error: `${campo} inválido` })
+    .max(max, `${campo} inválido`)
+    .pipe(z.array(z.string().uuid(`${campo} inválido`)))
+    .default([]);
 
 export const entradaSchema = z.object({
   session_token: textoObrigatorio("session_token obrigatório"),
-  foto_ids: z
-    .array(z.unknown(), { required_error: "foto_ids obrigatório", invalid_type_error: "foto_ids obrigatório" })
-    .min(1, "foto_ids obrigatório")
-    .max(MAX_FOTOS, "foto_ids inválido")
-    .pipe(z.array(z.string().uuid("foto_ids inválido"))),
+  // Fotos de RDO (spec 087) e registros da equipe liberados ao cliente (SPEC 135, fase C).
+  foto_ids: listaDeUuid("foto_ids", MAX_FOTOS),
+  registro_ids: listaDeUuid("registro_ids", MAX_REGISTROS),
 });
 
-export const lerEntrada = (corpo: unknown) => validar(entradaSchema, corpo);
+export function lerEntrada(corpo: unknown) {
+  const r = validar(entradaSchema, corpo);
+  if (!r.ok) return r;
+  if (r.data.foto_ids.length === 0 && r.data.registro_ids.length === 0) {
+    return { ok: false as const, error: "foto_ids obrigatório" };
+  }
+  return r;
+}

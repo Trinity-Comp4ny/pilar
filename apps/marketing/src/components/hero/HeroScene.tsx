@@ -5,6 +5,7 @@ import { CursorAgente } from "./SceneParts";
 import { AppSidebar, BarraNavegador } from "./SceneChrome";
 import { TelaFinanceiro, TelaLeads, TelaProjeto } from "./SceneScreens";
 import { TelaAgentes } from "./TelaAgentes";
+import { TelaObra } from "./TelaObra";
 import { HeroSceneMobile } from "./HeroSceneMobile";
 import { CURSOR, DURACAO_LOOP, MARCOS, PALCO, ATOS, idx, telaDoAto } from "./scene";
 import { useAbaVisivel, useScene } from "./useScene";
@@ -27,7 +28,8 @@ function useEscala(alvo: React.RefObject<HTMLDivElement>) {
 
 /**
  * A cena da hero: uma sessão contínua no Pilar conduzida por um agente, em loop
- * de ~20 segundos, sem aba nem clique do visitante (SPEC 072).
+ * de ~20 segundos, sem aba nem clique do visitante (SPEC 072). Passa pelos três
+ * módulos: Gestão (agente, funil, caixa), Projetos (margem e cronograma) e Obras.
  *
  * Substitui o `ProductTour`, que dividia a atenção em três telas e exigia
  * esperar 7 segundos por aba para entender qualquer coisa.
@@ -87,7 +89,7 @@ export function HeroScene() {
           <div className="flex" style={{ height: PALCO.altura - 40 }}>
             <AppSidebar ato={ato} />
 
-            <div className="relative flex-1 overflow-hidden">
+            <div className="relative flex-1 overflow-hidden bg-app">
               {/* Uma tela por vez, com troca suave: é o agente navegando, não um
                   carrossel. `key` remonta o conteúdo, então cada tela reanima. */}
               <m.div
@@ -101,6 +103,7 @@ export function HeroScene() {
                 {tela === "funil" && <TelaLeads ato={ato} />}
                 {tela === "financeiro" && <TelaFinanceiro ato={ato} />}
                 {tela === "projeto" && <TelaProjeto ato={ato} />}
+                {tela === "obra" && <TelaObra ato={ato} />}
               </m.div>
             </div>
           </div>
@@ -114,7 +117,8 @@ export function HeroScene() {
       <p className="sr-only">
         Demonstração do Pilar: um agente de IA recebe o pedido em português "recebi 128 mil do centro cirúrgico,
         primeira de três parcelas", monta o lançamento financeiro como rascunho para aprovação, move o lead para ganho
-        no funil, registra a receita no financeiro do mês e recalcula a margem prevista do projeto em 31,4%.
+        no funil e o converte em projeto, registra a receita no financeiro do mês, mostra a margem do projeto em 31,4% e
+        o cronograma das disciplinas, e termina na obra, com o diário de hoje chegando do campo e o avanço das frentes.
       </p>
     </div>
   );

@@ -417,7 +417,7 @@ Deno.test("logo, faixa de morros e fonte ignoram PUBLIC_SITE_URL de ambiente e u
   Deno.env.set("PUBLIC_SITE_URL", "https://staging-preview-que-pode-nao-existir.vercel.app");
   try {
     const mod = await import(`./brand.ts?cachebust=${crypto.randomUUID()}`);
-    assertStringIncludes(mod.BRAND.logoUrl, "https://www.pilarsoft.com.br/email/logo-v1.png");
+    assertStringIncludes(mod.BRAND.logoUrl, "https://www.pilarsoft.com.br/email/logo-v3.png");
     assertStringIncludes(mod.BRAND.waveUrl, "https://www.pilarsoft.com.br/email/wave-v1.png");
     assertStringIncludes(mod.FONT_FACE_CSS, "https://www.pilarsoft.com.br/fonts/geist-variable.woff2");
     assertEquals(mod.BRAND.siteUrl, "https://staging-preview-que-pode-nao-existir.vercel.app");
@@ -469,3 +469,20 @@ Deno.test(
     assert(fechaChave > fimDoMedia, "regra data-ogsc não está fora do bloco @media");
   }
 );
+
+Deno.test("cobrança com abertura própria escapa o texto e usa o assunto da etapa", () => {
+  const t = T.templateCobrancaDireta({
+    clienteNome: "Cliente",
+    empresaNome: "Escritório",
+    descricao: "Parcela 2",
+    valorFormatado: "R$ 1,00",
+    dataVencimento: "01/01/2026",
+    vencida: true,
+    abertura: "Olá <script>alert(1)</script>\nSegunda linha",
+    assunto: "Parcela 2 do Projeto X, vencida em 01/01",
+  });
+  assertEquals(t.subject, "Parcela 2 do Projeto X, vencida em 01/01");
+  assert(!t.html.includes("<script>"), "script não pode passar");
+  assertStringIncludes(t.html, "&lt;script&gt;");
+  assertStringIncludes(t.html, "Segunda linha");
+});

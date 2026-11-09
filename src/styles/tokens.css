@@ -206,19 +206,20 @@
 
   /* ── Fill sólido/saturado (ADR 0008 D6) ───────────────────── */
   /* Fundo CHEIO e saturado para banner, CTA de alerta e badge sólido, com
-   * texto claro/escuro por cima (par -fg com contraste AA). Diferente das
+   * texto claro/escuro por cima (par -fg com contraste AA, conferido por
+ * tokens.contraste.test.ts: todos >= 4,5:1). Diferente das
    * tinted surfaces (-soft), que são fundo suave. Consumir via classes bg-fill-X
    * com o par text-fill-X-foreground. */
   --fill-danger: var(--c-red-600); /* banner urgente / destrutivo cheio */
-  --fill-danger-fg: 0 0% 100%; /* branco (12.6:1 sobre red-600) */
+  --fill-danger-fg: 0 0% 100%; /* branco (4,8:1 sobre red-600) */
   --fill-warning: var(--c-amber-500); /* aviso sólido */
   --fill-warning-fg: var(--c-ink-900); /* tinta (amarelo pede texto escuro) */
   --fill-attention: var(--c-orange-500); /* atenção sólida */
-  --fill-attention-fg: 0 0% 100%;
+  --fill-attention-fg: var(--c-ink-900); /* tinta (6,3:1); branco dava 2,8:1 sobre o laranja */
   --fill-info: var(--c-blue-600); /* info sólida */
   --fill-info-fg: 0 0% 100%;
-  --fill-success: var(--c-green-600); /* sucesso sólido */
-  --fill-success-fg: 0 0% 100%;
+  --fill-success: var(--c-green-700); /* sucesso sólido (green-600 dava 3,3:1 com branco) */
+  --fill-success-fg: 0 0% 100%; /* branco (5,1:1 sobre green-700) */
 
   /* ── Tinted surfaces / strong text para KPIs e badges ─────── */
   /* Cada família expõe três aliases:

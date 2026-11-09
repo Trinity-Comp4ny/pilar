@@ -26,7 +26,7 @@ export function CheckoutShell({
   children,
 }: CheckoutShellProps) {
   return (
-    <div className="landing-grain min-h-screen bg-paper text-ink-soft font-sans">
+    <div className="landing-grain min-h-dvh bg-paper text-ink-soft font-sans">
       <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-brand/5 rounded-full blur-[120px]" />
       </div>

@@ -1,6 +1,12 @@
 import { FiltroPeriodo } from "@/components/filters/FiltroPeriodo";
-import { cn } from "@/lib/utils";
+import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
 import { useFinanceFilter } from "../hooks/useFinanceFilter";
+import type { Visualizacao } from "../contexts/FinanceFilterContext";
+
+const AGRUPAR_OPCOES: ViewOption<Visualizacao>[] = [
+  { value: "dia", label: "Diário" },
+  { value: "mes", label: "Mensal" },
+];
 
 // Apenas estas abas são regidas pelo período do header. As demais têm filtros
 // próprios (Lançamentos, Folha) ou não usam período (Faturas, Contas).
@@ -29,21 +35,12 @@ export function PeriodoPopover({ activeTab }: { activeTab?: string }) {
         showVisualizacao ? (
           <div className="flex items-center justify-between gap-2 px-3 py-2">
             <span className="text-xs text-black/50">Agrupar por</span>
-            <div className="inline-flex rounded-full bg-black/4 p-0.5">
-              {(["dia", "mes"] as const).map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => setVisualizacao(v)}
-                  className={cn(
-                    "px-3 h-7 rounded-full text-xs transition-colors",
-                    visualizacao === v ? "bg-white shadow-sm text-ink font-medium" : "text-black/50 hover:text-ink"
-                  )}
-                >
-                  {v === "dia" ? "Diário" : "Mensal"}
-                </button>
-              ))}
-            </div>
+            <ViewSwitcher
+              options={AGRUPAR_OPCOES}
+              value={visualizacao}
+              onChange={setVisualizacao}
+              ariaLabel="Agrupar por"
+            />
           </div>
         ) : undefined
       }

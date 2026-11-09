@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { m } from "framer-motion";
-import { Coins, PenLine, Sparkles } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import { EASE } from "../../lib/motion";
-import { FRASE, RASCUNHO, idx } from "./scene";
+import { FRASE, MS_POR_CHAR, RASCUNHO, idx } from "./scene";
 
 /**
  * Tela de Agentes, copiada de `src/pages/chat/index.tsx`.
@@ -14,7 +14,7 @@ import { FRASE, RASCUNHO, idx } from "./scene";
  */
 
 /** Digitação caractere a caractere enquanto o ato é "digita". */
-function useDigitacao(ligado: boolean, texto: string, msPorChar = 42) {
+function useDigitacao(ligado: boolean, texto: string, msPorChar = MS_POR_CHAR) {
   const [n, setN] = useState(0);
 
   useEffect(() => {
@@ -44,21 +44,20 @@ export function TelaAgentes({ ato }: { ato: number }) {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Cabeçalho do app: título, alternância e saldo de créditos. */}
+      {/* Cabeçalho do app: título, alternância Conversar/Pendências e ação primária. */}
       <header className="h-14 shrink-0 flex items-center gap-3 px-6 border-b border-black/5">
         <h3 className="text-[15px] font-medium tracking-tight text-ink">Agentes</h3>
 
-        <span className="mx-auto inline-flex rounded-full bg-black/5 p-0.5 text-[11px] font-medium">
-          <span className="px-3.5 py-1 rounded-full text-ink-soft">Trabalho</span>
-          <span className="px-3.5 py-1 rounded-full bg-brand text-ink">Conversa</span>
+        <span className="mx-auto inline-flex items-center gap-1 text-[11.5px] font-medium">
+          <span className="px-3 py-1.5 rounded-full bg-app-muted text-ink">Conversar</span>
+          <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-ink-soft">
+            Pendências
+            <span className="rounded-full bg-brand px-1.5 text-[9.5px] font-semibold leading-4 text-ink">1</span>
+          </span>
         </span>
 
-        <span className="flex items-center gap-1.5 rounded-lg border border-black/10 px-2.5 py-1.5 text-[10.5px] font-medium text-ink-muted">
-          <Coins className="w-3 h-3" strokeWidth={1.8} />
-          48 créditos restantes
-        </span>
-        <span className="flex items-center gap-1.5 rounded-lg border border-black/10 px-2.5 py-1.5 text-[10.5px] font-medium text-ink">
-          <PenLine className="w-3 h-3" strokeWidth={1.8} />
+        <span className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-brand text-[13px] font-medium text-ink">
+          <Plus className="w-3.5 h-3.5" strokeWidth={2} />
           Nova conversa
         </span>
       </header>
@@ -100,7 +99,7 @@ export function TelaAgentes({ ato }: { ato: number }) {
                     key={i}
                     className="w-1.5 h-1.5 rounded-full bg-black/25"
                     animate={{ y: [0, -4, 0], opacity: [0.35, 1, 0.35] }}
-                    transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.15 }}
+                    transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.1 }}
                   />
                 ))}
               </div>

@@ -10,6 +10,8 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageLoader } from "@/components/motion/PageLoader";
 import { VeilExit } from "@/components/motion/EntryVeil";
 import { useRouteEnter } from "@/components/motion/useRouteEnter";
+import { AvatarDiretorioProvider } from "@/contexts/AvatarDiretorioContext";
+import { DentroDoMainProvider } from "@/components/mainLandmark";
 
 // Lazy: o CommandPalette carrega o cmdk. Fora do bundle de entrada; só baixa no 1º ⌘K.
 const CommandPalette = lazy(() => import("@/components/CommandPalette").then((m) => ({ default: m.CommandPalette })));
@@ -51,7 +53,7 @@ function LayoutContent() {
   useRouteEnter(mainRef);
 
   return (
-    <div className="min-h-screen w-full flex-1 min-w-0 bg-background">
+    <div className="min-h-dvh w-full flex-1 min-w-0 bg-background">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-9999 focus:rounded focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:shadow-md focus:outline-hidden focus:ring-2 focus:ring-ring"
@@ -63,15 +65,20 @@ function LayoutContent() {
         <main
           ref={mainRef}
           id="main-content"
-          className="pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:px-10 md:pb-10 md:pt-4"
+          // Alvo do skip link: sem tabIndex o foco não vai para o conteúdo (Safari e leitores
+          // de tela ficam no link). -1 = focável por script e por âncora, fora da ordem do Tab.
+          tabIndex={-1}
+          className="pb-[calc(6.5rem+env(safe-area-inset-bottom))] outline-hidden md:px-10 md:pb-10 md:pt-4"
         >
-          <ErrorBoundary>
-            <DevErrorTrigger />
-            {/* Página preguiçosa baixando: a sidebar fica e o anel ocupa só o conteúdo. */}
-            <Suspense fallback={<PageLoader size="page" />}>
-              <Outlet />
-            </Suspense>
-          </ErrorBoundary>
+          <DentroDoMainProvider value>
+            <ErrorBoundary>
+              <DevErrorTrigger />
+              {/* Página preguiçosa baixando: a sidebar fica e o anel ocupa só o conteúdo. */}
+              <Suspense fallback={<PageLoader size="page" />}>
+                <Outlet />
+              </Suspense>
+            </ErrorBoundary>
+          </DentroDoMainProvider>
         </main>
       </div>
       {/* Navegação mobile (spec 097 / ADR 0040): substitui o drawer da sidebar
@@ -90,7 +97,9 @@ function LayoutContent() {
 export default function Layout() {
   return (
     <SidebarProvider>
-      <LayoutContent />
+      <AvatarDiretorioProvider>
+        <LayoutContent />
+      </AvatarDiretorioProvider>
     </SidebarProvider>
   );
 }

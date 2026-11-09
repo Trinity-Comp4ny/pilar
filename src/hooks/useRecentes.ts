@@ -28,8 +28,12 @@ const subscribe = (l: () => void) => {
 
 const cache = new Map<string, Recente[]>();
 
+// Referência estável: o snapshot do useSyncExternalStore precisa ser o mesmo
+// objeto entre leituras, senão um [] novo a cada render entra em loop infinito.
+const VAZIO: Recente[] = [];
+
 function readStore(userId: string | null): Recente[] {
-  if (!userId) return [];
+  if (!userId) return VAZIO;
   const cached = cache.get(userId);
   if (cached) return cached;
   let parsed: Recente[] = [];
@@ -59,7 +63,7 @@ export function useRecentes() {
   const recentes = useSyncExternalStore(
     subscribe,
     () => readStore(userId),
-    () => [] as Recente[]
+    () => VAZIO
   );
 
   const registrar = useCallback(

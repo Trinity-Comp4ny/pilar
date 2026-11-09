@@ -37,13 +37,32 @@ export type EmpresaRow = {
   ultimoAcesso: string | null;
 };
 
+/** Perfil do escritório (SPEC 149): o que o ultra-admin anotou na criação e o que o dono respondeu. */
+type PerfilEscritorio = {
+  site: string | null;
+  porte: string | null;
+  disciplinas: string[];
+  origem: string | null;
+  comoConheceu: string | null;
+  objetivoInicial: string | null;
+};
+
 export type EmpresaDetalhe = EmpresaRow & {
-  usuarios: Array<ManagedUser & { lastSignInAt?: string | null }>;
+  usuarios: Array<
+    ManagedUser & {
+      lastSignInAt?: string | null;
+      funcao?: string | null;
+      linkedinUrl?: string | null;
+      contato?: string | null;
+    }
+  >;
+  perfil: PerfilEscritorio;
   maxProjetosOverride: number | null;
   maxUsuariosOverride: number | null;
   planoMaxProjetos: number | null;
   planoMaxUsuarios: number | null;
   projetosAtivos: number | null;
+  interna: boolean;
 };
 
 export type UsuarioPlataforma = {
@@ -159,6 +178,14 @@ type EmpresaDetalheRaw = {
     created_at?: string | null;
     max_projetos_override: number | null;
     max_usuarios_override: number | null;
+    /** SPEC 129: empresa da equipe ou de teste, fora dos números do Time. Opcional: edge antiga não manda. */
+    interna?: boolean | null;
+    site?: string | null;
+    porte?: string | null;
+    disciplinas?: string[] | null;
+    origem?: string | null;
+    como_conheceu?: string | null;
+    objetivo_inicial?: string | null;
   };
   plano: SubscriptionPlanSlug | null;
   planoMaxProjetos: number | null;
@@ -174,6 +201,9 @@ type EmpresaDetalheRaw = {
     equipe_delegado: boolean | null;
     metas_delegado: boolean | null;
     last_sign_in_at?: string | null;
+    funcao?: string | null;
+    linkedin_url?: string | null;
+    contato?: string | null;
   }>;
   convites?: Array<{ id: string; email: string; nome: string | null; cargo: string | null }>;
 };
@@ -190,6 +220,9 @@ export async function buscarEmpresa(id: string): Promise<EmpresaDetalhe> {
     equipeDelegado: u.equipe_delegado ?? false,
     metasDelegado: u.metas_delegado ?? false,
     lastSignInAt: u.last_sign_in_at ?? null,
+    funcao: u.funcao ?? null,
+    linkedinUrl: u.linkedin_url ?? null,
+    contato: u.contato ?? null,
   }));
   // Convites pendentes entram na mesma lista como "Pendente".
   for (const c of raw.convites ?? []) {
@@ -216,6 +249,15 @@ export async function buscarEmpresa(id: string): Promise<EmpresaDetalhe> {
     projetosAtivos: raw.uso?.projetos_ativos ?? null,
     maxProjetosOverride: raw.empresa.max_projetos_override,
     maxUsuariosOverride: raw.empresa.max_usuarios_override,
+    interna: raw.empresa.interna ?? false,
+    perfil: {
+      site: raw.empresa.site ?? null,
+      porte: raw.empresa.porte ?? null,
+      disciplinas: raw.empresa.disciplinas ?? [],
+      origem: raw.empresa.origem ?? null,
+      comoConheceu: raw.empresa.como_conheceu ?? null,
+      objetivoInicial: raw.empresa.objetivo_inicial ?? null,
+    },
     planoMaxProjetos: raw.planoMaxProjetos,
     planoMaxUsuarios: raw.planoMaxUsuarios,
     usersCount: usuarios.filter((u) => !u.isPending).length,

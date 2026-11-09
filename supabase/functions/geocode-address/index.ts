@@ -2,7 +2,15 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { recordMetric, withSentry } from "../_shared/sentry.ts";
 import { authenticateUser, jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
 import { getRateLimitKey, RateLimiter } from "../_shared/rate-limiter.ts";
-import { escolherCidade, type GeoResult, lerEndereco, type OpenMeteoGeo } from "./endereco.ts";
+import {
+  escolherCidade,
+  type GeoResult,
+  lerCepGeo,
+  lerEndereco,
+  type OpenMeteoGeo,
+  type CepGeo,
+  resolverEndereco,
+} from "./endereco.ts";
 import { fetchComTempo } from "../_shared/http.ts";
 
 // User-Agent exigido pelo fair-use do Nominatim. Sem ele o IP é bloqueado.
@@ -11,6 +19,7 @@ const NOMINATIM_BASE = "https://nominatim.openstreetmap.org/search";
 // Fallback em nível de cidade. O Nominatim bloqueia faixas de IP de nuvem (403
 // vindo da própria edge, PILAR-2W) e aí o projeto não entrava no mapa.
 const OPEN_METEO_GEO = "https://geocoding-api.open-meteo.com/v1/search";
+const BRASIL_API_CEP = "https://brasilapi.com.br/api/cep/v2";
 
 // Só o formulário de projeto chama, uma vez por endereço salvo. O teto por usuário
 // respeita a cota do Nominatim (fair-use de 1 req/s), que é por IP da edge e
@@ -52,6 +61,19 @@ async function queryOpenMeteoCidade(city: string, state?: string): Promise<GeoRe
   return escolherCidade(results, state);
 }
 
+/** CEP → coordenada (quando o BrasilAPI tem) ou cidade/UF. Última rede quando o Nominatim bloqueia e o form veio sem cidade. */
+async function queryBrasilApiCep(postalcode: string): Promise<CepGeo | null> {
+  const digitos = postalcode.replace(/\D/g, "");
+  if (digitos.length !== 8) return null;
+  const response = await fetchComTempo(
+    `${BRASIL_API_CEP}/${digitos}`,
+    { headers: { Accept: "application/json" } },
+    5_000
+  );
+  if (!response.ok) return null;
+  return lerCepGeo(await response.json().catch(() => null));
+}
+
 serve(
   withSentry("geocode-address", async (req) => {
     if (req.method === "OPTIONS") return optionsResponse(req);
@@ -66,50 +88,30 @@ serve(
     try {
       const endereco = lerEndereco(await req.json().catch(() => null));
       if (!endereco.ok) return jsonResponse({ error: endereco.error }, 400, req);
-      const { address, street, city, state, postalcode, hasStructured } = endereco.data;
+      const resolucao = await resolverEndereco(endereco.data, {
+        nominatim: queryNominatim,
+        openMeteoCidade: queryOpenMeteoCidade,
+        brasilApiCep: queryBrasilApiCep,
+        fallback: (provider, found) => recordMetric("geocode.fallback", 1, { tags: { provider, found } }),
+      });
 
-      // Query principal: estruturada quando há campos, senão query livre.
-      const primary = new URLSearchParams({ format: "json", limit: "1", country: "Brazil" });
-      if (hasStructured) {
-        if (street) primary.set("street", street);
-        if (city) primary.set("city", city);
-        if (state) primary.set("state", state);
-        if (postalcode) primary.set("postalcode", postalcode);
-      } else {
-        primary.set("q", address!.trim());
-        primary.set("countrycodes", "br");
+      // Endereço que nenhum provedor localiza não é erro de requisição: 200 com found=false
+      // e `indisponivel` para o formulário dizer se vale tentar de novo mais tarde.
+      if (!resolucao.found) {
+        if (resolucao.indisponivel) recordMetric("geocode.indisponivel", 1);
+        return jsonResponse(
+          {
+            lat: null,
+            lng: null,
+            found: false,
+            indisponivel: resolucao.indisponivel,
+          },
+          200,
+          req
+        );
       }
 
-      let result: GeoResult | null = null;
-      let falhaNominatim: unknown = null;
-      try {
-        result = await queryNominatim(primary);
-
-        // Fallback: cidade + estado (ao menos posiciona no mapa em nível de cidade).
-        if (!result && city) {
-          const fallback = new URLSearchParams({ format: "json", limit: "1", country: "Brazil" });
-          fallback.set("city", city);
-          if (state) fallback.set("state", state);
-          result = await queryNominatim(fallback);
-        }
-      } catch (err) {
-        falhaNominatim = err;
-      }
-
-      // Nominatim fora do ar ou bloqueando o IP da edge: cai pro centro da cidade.
-      if (!result && city) {
-        result = await queryOpenMeteoCidade(city, state);
-        if (falhaNominatim) {
-          recordMetric("geocode.fallback", 1, { tags: { provider: "open-meteo", found: Boolean(result) } });
-        }
-      }
-
-      if (!result && falhaNominatim) throw falhaNominatim;
-
-      if (!result) {
-        return jsonResponse({ lat: null, lng: null, found: false }, 200, req);
-      }
-
+      const { result } = resolucao;
       return jsonResponse(
         {
           lat: parseFloat(result.lat),

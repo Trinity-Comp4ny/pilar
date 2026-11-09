@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-const { maybeSingleMock, insertMock, applyMock } = vi.hoisted(() => ({
+const { maybeSingleMock, insertMock, applyMock, getSessionMock } = vi.hoisted(() => ({
+  getSessionMock: vi.fn(),
   maybeSingleMock: vi.fn(),
   insertMock: vi.fn(),
   applyMock: vi.fn(),
@@ -16,7 +17,7 @@ vi.mock("@/integrations/supabase/client", () => {
     maybeSingle: maybeSingleMock,
     insert: insertMock,
   };
-  return { supabase: { from: () => chain } };
+  return { supabase: { from: () => chain, auth: { getSession: getSessionMock } } };
 });
 
 vi.mock("./analytics", () => ({ applyCookieConsent: applyMock }));
@@ -38,6 +39,7 @@ describe("cookieConsentSync (SPEC 059)", () => {
   beforeEach(() => {
     clearConsentCookie();
     maybeSingleMock.mockReset();
+    getSessionMock.mockReset().mockResolvedValue({ data: { session: { user: { id: "user-1" } } } });
     insertMock.mockReset().mockResolvedValue({ error: null });
     applyMock.mockReset();
   });
@@ -75,6 +77,17 @@ describe("cookieConsentSync (SPEC 059)", () => {
     maybeSingleMock.mockRejectedValue(new Error("rede fora"));
 
     await expect(syncConsentForUser("user-1")).resolves.toBeUndefined();
+    expect(applyMock).not.toHaveBeenCalled();
+  });
+
+  it("sem sessão ativa do usuário, não consulta nem grava nada (PILAR-G)", async () => {
+    setConsentCookie(true);
+    getSessionMock.mockResolvedValue({ data: { session: null } });
+
+    await syncConsentForUser("user-1");
+
+    expect(maybeSingleMock).not.toHaveBeenCalled();
+    expect(insertMock).not.toHaveBeenCalled();
     expect(applyMock).not.toHaveBeenCalled();
   });
 

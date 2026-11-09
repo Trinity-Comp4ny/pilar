@@ -34,7 +34,7 @@ import { usePendenciasAgentes } from "@/hooks/useEscopos";
 import { useModuleNav } from "@/hooks/useModuleNav";
 import { MODULES, type ModuleId, type ModuleMenuItem } from "@/lib/modules";
 import { PANEL_WIDTH, RAIL_WIDTH } from "@/lib/shellLayout";
-import { ULTRA_ADMIN_BASE, ULTRA_SECOES, isUltraAdminPath, ultraSecaoAtiva } from "@/lib/ultraAdminNav";
+import { ULTRA_ADMIN_BASE, ULTRA_GRUPOS, ULTRA_SECOES, isUltraAdminPath, ultraSecaoAtiva } from "@/lib/ultraAdminNav";
 import { useFeedbackNovosCount } from "@/hooks/useFeedbackNovosCount";
 
 // Shell dos 3 pilares (spec 001-shell-3-pilares): o menu vem do mapa central de
@@ -355,36 +355,42 @@ export function AppSidebar() {
           aria-label="Menu do portal ultra admin"
           className="flex-1 space-y-3 overflow-y-auto px-3 pb-3 scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         >
-          {(["Plataforma", "Produto", "Operação"] as const).map((group) => (
-            <div key={group} className="space-y-1">
-              <p className="px-3 pt-1 text-[10px] font-medium uppercase tracking-wider text-black/35">{group}</p>
-              {ULTRA_SECOES.filter((s) => s.group === group).map((secao) => {
-                const Icon = secao.icon;
-                const isActive = ultraAtiva === secao.id;
-                const contador = secao.id === "feedback" ? feedbackNovos : 0;
-                return (
-                  <NavLink
-                    key={secao.id}
-                    to={secao.url}
-                    end={secao.id === "visao-geral"}
-                    aria-current={isActive ? "page" : undefined}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200",
-                      isActive ? "bg-brand text-black/80 font-medium" : "text-black/70 hover:bg-brand/30"
-                    )}
-                  >
-                    <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] shrink-0" />
-                    <span className="tracking-tight flex-1">{secao.title}</span>
-                    {contador > 0 && (
-                      <span className="min-w-5 rounded-full bg-brand px-1.5 text-center text-[10px] font-semibold leading-5 text-ink tabular-nums">
-                        {contador}
-                      </span>
-                    )}
-                  </NavLink>
-                );
-              })}
-            </div>
-          ))}
+          {ULTRA_GRUPOS.map((group) => {
+            const secoes = ULTRA_SECOES.filter((s) => s.group === group);
+            return (
+              <div key={group} className="space-y-1">
+                {/* Grupo de um item só (Time) dispensa o título: o item já se chama assim. */}
+                {secoes.length > 1 && (
+                  <p className="px-3 pt-1 text-[10px] font-medium uppercase tracking-wider text-black/35">{group}</p>
+                )}
+                {secoes.map((secao) => {
+                  const Icon = secao.icon;
+                  const isActive = ultraAtiva === secao.id;
+                  const contador = secao.id === "feedback" ? feedbackNovos : 0;
+                  return (
+                    <NavLink
+                      key={secao.id}
+                      to={secao.url}
+                      end={secao.id === "visao-geral"}
+                      aria-current={isActive ? "page" : undefined}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 rounded-full text-sm transition-all duration-200",
+                        isActive ? "bg-brand text-black/80 font-medium" : "text-black/70 hover:bg-brand/30"
+                      )}
+                    >
+                      <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] shrink-0" />
+                      <span className="tracking-tight flex-1">{secao.title}</span>
+                      {contador > 0 && (
+                        <span className="min-w-5 rounded-full bg-brand px-1.5 text-center text-[10px] font-semibold leading-5 text-ink tabular-nums">
+                          {contador}
+                        </span>
+                      )}
+                    </NavLink>
+                  );
+                })}
+              </div>
+            );
+          })}
         </nav>
       ) : (
         /* Itens do módulo ativo, agrupados por seção (Comercial/Financeiro/Empresa) */
@@ -412,7 +418,7 @@ export function AppSidebar() {
   if (isMobile) return null;
 
   return (
-    <div className="fixed left-0 top-0 z-50 flex h-screen border-r border-black/5 bg-white">
+    <div className="fixed left-0 top-0 z-50 flex h-dvh border-r border-black/5 bg-white">
       {rail}
       {!collapsed && panel}
     </div>

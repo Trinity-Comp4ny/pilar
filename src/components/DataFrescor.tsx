@@ -13,6 +13,8 @@ interface DataFrescorProps {
   /** Se passado, o selo vira botão que dispara `refetch`. */
   onRefresh?: () => void;
   className?: string;
+  /** Abaixo de `md` corta o texto e deixa só o ícone (o texto segue no DOM para leitor de tela). */
+  compactOnMobile?: boolean;
 }
 
 /**
@@ -20,7 +22,7 @@ interface DataFrescorProps {
  * Reduz a ansiedade do "será que esse número está certo?" mostrando que o dado é vivo.
  * O número já é revalidado em segundo plano pelo React Query; aqui só se expõe isso.
  */
-export function DataFrescor({ updatedAt, isFetching, onRefresh, className }: DataFrescorProps) {
+export function DataFrescor({ updatedAt, isFetching, onRefresh, className, compactOnMobile }: DataFrescorProps) {
   // Re-renderiza a cada 30s para o "há X min" avançar sem depender de novo fetch.
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -38,7 +40,12 @@ export function DataFrescor({ updatedAt, isFetching, onRefresh, className }: Dat
 
   const content = (
     <span
-      className={cn("inline-flex items-center gap-1.5 text-xs text-muted-foreground", className)}
+      className={cn(
+        "inline-flex items-center gap-1.5 text-xs text-muted-foreground",
+        compactOnMobile &&
+          "max-md:w-6 max-md:justify-start max-md:overflow-hidden max-md:pl-1.5 max-md:whitespace-nowrap",
+        className
+      )}
       role="status"
       aria-live="polite"
     >

@@ -8,6 +8,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme="light"
       className="toaster group"
       closeButton
+      mobileOffset={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
       toastOptions={{
         classNames: {
           toast:

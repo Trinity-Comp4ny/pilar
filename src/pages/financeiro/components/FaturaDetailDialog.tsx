@@ -22,7 +22,7 @@ export function FaturaDetailDialog({ fatura, open, onOpenChange, onPagar }: Fatu
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[80dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Fatura {fatura && `${MESES[fatura.mes_referencia - 1]} ${fatura.ano_referencia}`}</DialogTitle>
           <DialogDescription>{fatura && `${fatura.cartao_nome} — ${fatura.qtd_despesas} despesa(s)`}</DialogDescription>

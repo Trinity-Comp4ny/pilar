@@ -9,12 +9,15 @@ export interface OnboardingState {
   dismissed: boolean;
   completed_at: string | null;
   tours_seen: string[];
+  /** Fechou o cartão de boas-vindas do Início (SPEC 149). */
+  boas_vindas_dispensada: boolean;
 }
 
 export const EMPTY_ONBOARDING_STATE: OnboardingState = {
   dismissed: false,
   completed_at: null,
   tours_seen: [],
+  boas_vindas_dispensada: false,
 };
 
 /** Valida o JSON vindo do banco na fronteira; nunca confia no shape cru. */
@@ -24,9 +27,8 @@ export function parseOnboardingState(raw: unknown): OnboardingState {
   return {
     dismissed: o.dismissed === true,
     completed_at: typeof o.completed_at === "string" ? o.completed_at : null,
-    tours_seen: Array.isArray(o.tours_seen)
-      ? o.tours_seen.filter((x): x is string => typeof x === "string")
-      : [],
+    tours_seen: Array.isArray(o.tours_seen) ? o.tours_seen.filter((x): x is string => typeof x === "string") : [],
+    boas_vindas_dispensada: o.boas_vindas_dispensada === true,
   };
 }
 
@@ -36,7 +38,7 @@ export function parseOnboardingState(raw: unknown): OnboardingState {
 type OnboardingRpcClient = {
   rpc: (
     fn: "set_onboarding_state",
-    args: { patch: Partial<OnboardingState> },
+    args: { patch: Partial<OnboardingState> }
   ) => Promise<{ data: unknown; error: { message: string } | null }>;
 };
 

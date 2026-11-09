@@ -12,10 +12,24 @@ import {
   useMarcarTodasLidas,
   useArquivar,
   useArquivarTodas,
+  type FiltroNotificacao,
   type Notificacao,
   type AbaNotificacao,
 } from "@/hooks/useNotificacoes";
-import { iconeCategoria, toneSeveridade, resolveLink, formatTimeAgo } from "@/lib/notificacoes";
+import {
+  CATEGORIAS,
+  CATEGORIA_PORTAL,
+  TIPOS_PORTAL,
+  TIPO_PORTAL_LABEL,
+  iconeCategoria,
+  rotuloCategoria,
+  toneSeveridade,
+  resolveLink,
+  formatTimeAgo,
+  type CategoriaFiltro,
+  type TipoPortal,
+} from "@/lib/notificacoes";
+import { usePermissions } from "@/hooks/usePermissions";
 import { setFaviconBadge } from "@/lib/favicon";
 import { PreferenciasDialog } from "@/pages/notificacoes/PreferenciasDialog";
 
@@ -39,6 +53,9 @@ interface NotificationInboxProps {
 export function NotificationInbox({ side = "right", align = "end" }: NotificationInboxProps = {}) {
   const [open, setOpen] = useState(false);
   const [aba, setAba] = useState<AbaNotificacao>("inbox");
+  const [categoria, setCategoria] = useState<CategoriaFiltro | null>(null);
+  const [tipo, setTipo] = useState<TipoPortal | null>(null);
+  const { isUltraAdmin } = usePermissions();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   // "Gerenciar notificações por e-mail" no rodapé do e-mail (SPEC 096) chega com
@@ -53,8 +70,18 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams]);
 
-  const { data: itens = [] } = useNotificacoes(aba, 50);
-  const { data: naoLidas = 0 } = useNotificacoesNaoLidas();
+  const filtro: FiltroNotificacao = { categoria, tipo };
+  const { data: itens = [] } = useNotificacoes(aba, 50, filtro);
+  const { data: contagem } = useNotificacoesNaoLidas();
+  const naoLidas = contagem?.total ?? 0;
+  const porCategoria = contagem?.porCategoria ?? {};
+  const porTipoPortal = contagem?.porTipoPortal ?? {};
+  // "Marcar todas" e "Arquivar todas" valem para o que o filtro mostra.
+  const naoLidasNoFiltro = categoria ? (tipo ? (porTipoPortal[tipo] ?? 0) : (porCategoria[categoria] ?? 0)) : naoLidas;
+  const escolherCategoria = (c: CategoriaFiltro | null) => {
+    setCategoria(c);
+    setTipo(null);
+  };
   const marcarLida = useMarcarLida();
   const marcarTodas = useMarcarTodasLidas();
   const arquivar = useArquivar();
@@ -123,11 +150,66 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
             </Button>
           </div>
 
+          {/* Filtro por categoria: o limite de 50 vale por categoria, e a contagem de não lidas
+              mostra onde há coisa nova mesmo com outra categoria enchendo a lista. */}
+          <div className="flex flex-wrap gap-1.5 border-b px-2 py-2" role="group" aria-label="Filtrar por categoria">
+            <ChipCategoria ativo={categoria === null} onClick={() => escolherCategoria(null)}>
+              Todas
+            </ChipCategoria>
+            {categoriasDoSino(isUltraAdmin).map((c) => {
+              const n = aba === "inbox" ? (porCategoria[c] ?? 0) : 0;
+              return (
+                <ChipCategoria
+                  key={c}
+                  ativo={categoria === c}
+                  onClick={() => escolherCategoria(categoria === c ? null : c)}
+                  label={n > 0 ? `${rotuloCategoria(c)}, ${n} não lidas` : undefined}
+                >
+                  {rotuloCategoria(c)}
+                  {n > 0 && <span className="ml-1 tabular-nums font-semibold">{n}</span>}
+                </ChipCategoria>
+              );
+            })}
+          </div>
+
+          {/* Avisos do portal: feedback e cadastros se misturam na mesma categoria, então ganham um segundo filtro. */}
+          {isUltraAdmin && categoria === CATEGORIA_PORTAL && (
+            <div
+              className="flex flex-wrap gap-1.5 border-b px-2 py-2"
+              role="group"
+              aria-label="Filtrar por tipo de aviso"
+            >
+              <ChipCategoria ativo={tipo === null} onClick={() => setTipo(null)}>
+                Todos
+              </ChipCategoria>
+              {TIPOS_PORTAL.map((t) => {
+                const n = aba === "inbox" ? (porTipoPortal[t] ?? 0) : 0;
+                return (
+                  <ChipCategoria
+                    key={t}
+                    ativo={tipo === t}
+                    onClick={() => setTipo(tipo === t ? null : t)}
+                    label={n > 0 ? `${TIPO_PORTAL_LABEL[t]}, ${n} não lidas` : undefined}
+                  >
+                    {TIPO_PORTAL_LABEL[t]}
+                    {n > 0 && <span className="ml-1 tabular-nums font-semibold">{n}</span>}
+                  </ChipCategoria>
+                );
+              })}
+            </div>
+          )}
+
           {/* Lista */}
           <div className="max-h-[420px] overflow-y-auto">
             {itens.length === 0 ? (
               <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-                {aba === "inbox" ? "Tudo em dia. Nada por aqui." : "Nada arquivado."}
+                {categoria
+                  ? aba === "inbox"
+                    ? `Tudo em dia em ${rotuloCategoria(categoria).toLowerCase()}.`
+                    : `Nada arquivado em ${rotuloCategoria(categoria).toLowerCase()}.`
+                  : aba === "inbox"
+                    ? "Tudo em dia. Nada por aqui."
+                    : "Nada arquivado."}
               </div>
             ) : (
               itens.map((n) => {
@@ -184,8 +266,8 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
                 variant="ghost"
                 size="sm"
                 className="h-7 text-xs text-muted-foreground"
-                disabled={naoLidas === 0}
-                onClick={() => marcarTodas.mutate()}
+                disabled={naoLidasNoFiltro === 0}
+                onClick={() => marcarTodas.mutate(filtro)}
               >
                 <CheckCheck className="mr-1.5 h-3.5 w-3.5" />
                 Marcar todas como lidas
@@ -194,7 +276,7 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
                 variant="ghost"
                 size="sm"
                 className="h-7 text-xs text-muted-foreground"
-                onClick={() => arquivarTodas.mutate()}
+                onClick={() => arquivarTodas.mutate(filtro)}
               >
                 <Archive className="mr-1.5 h-3.5 w-3.5" />
                 Arquivar todas
@@ -209,6 +291,11 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
   );
 }
 
+/** Chips de categoria do sino: "Portal" vem primeiro pro ultra admin, que é quem recebe esses avisos. */
+function categoriasDoSino(isUltraAdmin: boolean): CategoriaFiltro[] {
+  return isUltraAdmin ? [CATEGORIA_PORTAL, ...CATEGORIAS] : [...CATEGORIAS];
+}
+
 function AbaBtn({ ativo, onClick, children }: { ativo: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
@@ -217,6 +304,33 @@ function AbaBtn({ ativo, onClick, children }: { ativo: boolean; onClick: () => v
       className={cn(
         "rounded-md px-3 py-1 text-xs font-medium transition-colors",
         ativo ? "bg-white text-ink shadow-sm" : "text-muted-foreground hover:text-ink"
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ChipCategoria({
+  ativo,
+  onClick,
+  label,
+  children,
+}: {
+  ativo: boolean;
+  onClick: () => void;
+  label?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={ativo}
+      aria-label={label}
+      className={cn(
+        "whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+        ativo ? "border-ink bg-ink text-white" : "border-border text-muted-foreground hover:bg-muted/60 hover:text-ink"
       )}
     >
       {children}

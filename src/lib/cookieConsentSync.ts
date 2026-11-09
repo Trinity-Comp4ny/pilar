@@ -40,6 +40,12 @@ async function insertConsent(userId: string, analytics: boolean, source: Consent
  */
 export async function syncConsentForUser(userId: string): Promise<void> {
   try {
+    // A sessão pode ter caído entre o login e este disparo (logout rápido, token
+    // revogado): sem JWT a requisição vai como anon e o banco nega a tabela
+    // (42501, PILAR-G). Sem sessão do mesmo usuário, não há o que sincronizar.
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.user.id !== userId) return;
+
     const stored = await fetchLatestConsent(userId);
 
     if (stored !== null) {

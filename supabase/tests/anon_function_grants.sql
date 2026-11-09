@@ -40,6 +40,10 @@ WITH allowed(sig) AS (
     ('campo_registrar_tarefa_rdo(text, uuid, uuid, text, text)'),
     ('campo_registrar_medicao(text, uuid, text, numeric, text)'),
     ('campo_listar_fornecedores(text)'),
+    -- SPEC 135: o campo (sem usuário Supabase) lê os registros da própria obra e aceita o
+    -- aviso do áudio guardado; as duas validam o token de sessão no corpo.
+    ('campo_listar_registros(text, integer)'), ('campo_aceitar_audio(text)'),
+    ('campo_responder_efetivo(text, uuid, integer)'),
     ('campo_registrar_efetivo(text, uuid, uuid, text, integer)'),
     ('campo_registrar_impedimento(text, uuid, text, text)'),
     ('campo_registrar_visita(text, uuid, uuid, text, text)'),

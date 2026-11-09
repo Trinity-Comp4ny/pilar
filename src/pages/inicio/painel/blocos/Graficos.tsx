@@ -36,9 +36,7 @@ const EIXO = { fontSize: 10.5, fill: "hsl(var(--text-muted))" };
 const GRID = "hsl(var(--chart-grid))";
 
 function CaixaTooltip({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="rounded-lg border border-black/10 bg-white px-3 py-2 text-xs shadow-sm">{children}</div>
-  );
+  return <div className="rounded-2xl border border-black/10 bg-white px-3 py-2 text-xs shadow-popover">{children}</div>;
 }
 
 const mesCurto = (iso: string) =>
@@ -48,11 +46,7 @@ const mesCurto = (iso: string) =>
  * Painel de cima: contagem de propostas decididas (ganhas/perdidas).
  * Painel de baixo: a taxa, em escala própria de 0 a 100%.
  */
-export function ConversaoMensalChart({
-  dados,
-}: {
-  dados: { mes: string; ganhas: number; perdidas: number }[];
-}) {
+export function ConversaoMensalChart({ dados }: { dados: { mes: string; ganhas: number; perdidas: number }[] }) {
   const linhas = useMemo(
     () =>
       dados.map((d) => {
@@ -70,9 +64,7 @@ export function ConversaoMensalChart({
 
   return (
     <div className="flex flex-col">
-      <p className="mb-1 text-[10.5px] uppercase tracking-wide text-muted-foreground">
-        propostas decididas no mês
-      </p>
+      <p className="mb-1 text-[10.5px] uppercase tracking-wide text-muted-foreground">propostas decididas no mês</p>
       <ResponsiveContainer width="100%" height={132}>
         <BarChart data={linhas} margin={{ top: 4, right: 10, left: 0, bottom: 0 }} barCategoryGap="26%">
           <CartesianGrid stroke={GRID} vertical={false} />
@@ -92,14 +84,12 @@ export function ConversaoMensalChart({
               );
             }}
           />
-          <Bar dataKey="ganhas" stackId="d" fill="hsl(var(--chart-info))" radius={[0, 0, 3, 3]} />
-          <Bar dataKey="perdidas" stackId="d" fill="hsl(var(--chart-neutral))" radius={[3, 3, 0, 0]} />
+          <Bar dataKey="ganhas" stackId="d" fill="hsl(var(--chart-info))" radius={[0, 0, 5, 5]} />
+          <Bar dataKey="perdidas" stackId="d" fill="hsl(var(--chart-neutral))" radius={[5, 5, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
 
-      <p className="mb-1 mt-2 text-[10.5px] uppercase tracking-wide text-muted-foreground">
-        taxa de conversão
-      </p>
+      <p className="mb-1 mt-2 text-[10.5px] uppercase tracking-wide text-muted-foreground">taxa de conversão</p>
       <ResponsiveContainer width="100%" height={64}>
         <LineChart data={linhas} margin={{ top: 6, right: 10, left: 0, bottom: 0 }}>
           <CartesianGrid stroke={GRID} vertical={false} />
@@ -130,7 +120,9 @@ export function ConversaoMensalChart({
             type="linear"
             dataKey="taxa"
             stroke="hsl(var(--chart-info))"
-            strokeWidth={2}
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
             dot={false}
             activeDot={{ r: 4 }}
             connectNulls
@@ -149,10 +141,7 @@ export function PontualidadeChart({
   dados: { mes: string; pct: number | null; total: number }[];
   meta?: number;
 }) {
-  const linhas = useMemo(
-    () => dados.map((d) => ({ mes: mesCurto(d.mes), pct: d.pct, total: d.total })),
-    [dados]
-  );
+  const linhas = useMemo(() => dados.map((d) => ({ mes: mesCurto(d.mes), pct: d.pct, total: d.total })), [dados]);
 
   return (
     <ResponsiveContainer width="100%" height={168}>
@@ -185,7 +174,12 @@ export function PontualidadeChart({
           content={({ active, payload, label }) => {
             if (!active || !payload?.length) return null;
             const p = payload[0]?.payload as (typeof linhas)[number];
-            if (p.pct === null) return <CaixaTooltip><p className="text-ink-soft">{label}: nada concluído</p></CaixaTooltip>;
+            if (p.pct === null)
+              return (
+                <CaixaTooltip>
+                  <p className="text-ink-soft">{label}: nada concluído</p>
+                </CaixaTooltip>
+              );
             return (
               <CaixaTooltip>
                 <p className="mb-0.5 font-medium text-ink">{label}</p>
@@ -203,7 +197,9 @@ export function PontualidadeChart({
           type="linear"
           dataKey="pct"
           stroke="hsl(var(--chart-info))"
-          strokeWidth={2}
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
           fill="url(#grad-pontualidade)"
           dot={false}
           activeDot={{ r: 4 }}
@@ -215,13 +211,7 @@ export function PontualidadeChart({
 }
 
 /* ── Ritmo de entrega contra a média ────────────────────────────────────── */
-export function ThroughputChart({
-  dados,
-  media,
-}: {
-  dados: { semana: string; n: number }[];
-  media: number | null;
-}) {
+export function ThroughputChart({ dados, media }: { dados: { semana: string; n: number }[]; media: number | null }) {
   const linhas = useMemo(
     () =>
       dados.map((d, i) => {
@@ -270,7 +260,7 @@ export function ThroughputChart({
             );
           }}
         />
-        <Bar dataKey="n" radius={[4, 4, 0, 0]}>
+        <Bar dataKey="n" radius={[7, 7, 0, 0]}>
           <LabelList
             dataKey="n"
             position="top"
@@ -289,17 +279,12 @@ export function ThroughputChart({
   );
 }
 
-
 /* ── Faturamento previsto contra realizado ───────────────────────────────────
  * Duas séries na MESMA unidade (reais), então um eixo só. Previsto é a linha
  * tracejada de referência, faturado é a série cheia: a distância entre as duas
  * é o dinheiro contratado que ninguém cobrou.
  */
-export function FaturamentoChart({
-  dados,
-}: {
-  dados: { mes: string; previsto: number; faturado: number }[];
-}) {
+export function FaturamentoChart({ dados }: { dados: { mes: string; previsto: number; faturado: number }[] }) {
   const linhas = useMemo(
     () =>
       dados.map((d) => ({
@@ -335,19 +320,22 @@ export function FaturamentoChart({
             );
           }}
         />
+        {/* Série acumulada e contínua (sem mês sem medição): aqui a curva suave não inventa dado. */}
         <Line
-          type="linear"
+          type="monotone"
           dataKey="previsto"
           stroke="hsl(var(--chart-neutral))"
           strokeWidth={2}
           strokeDasharray="5 4"
+          strokeLinecap="round"
           dot={false}
         />
         <Line
-          type="linear"
+          type="monotone"
           dataKey="faturado"
           stroke="hsl(var(--chart-info))"
-          strokeWidth={2}
+          strokeWidth={2.5}
+          strokeLinecap="round"
           dot={false}
           activeDot={{ r: 4 }}
         />

@@ -4,6 +4,7 @@ import {
   CONSENTIMENTO_TEXTO_VERSAO,
   CONSENTIMENTO_TEXTO_VERSAO_IMEDIATA,
   ehTokenizacaoSemPermissao,
+  mensagemCobrancaRecusada,
   modoEfetivo,
   primeiraCobrancaEm,
   valorDoCiclo,
@@ -84,6 +85,12 @@ Deno.test("valor vem do plano pelo ciclo; ciclo sem preço devolve null", () => 
   assertEquals(valorDoCiclo({ preco_mensal: 690, preco_anual: null }, "yearly"), null);
 });
 
+Deno.test("plano com preço zero ou negativo não vira cobrança", () => {
+  assertEquals(valorDoCiclo({ preco_mensal: 0, preco_anual: 0 }, "monthly"), null);
+  assertEquals(valorDoCiclo({ preco_mensal: -10, preco_anual: 100 }, "monthly"), null);
+  assertEquals(valorDoCiclo({ preco_mensal: 299, preco_anual: 0 }, "yearly"), null);
+});
+
 Deno.test("primeira cobrança é a data (sem hora) do fim do trial", () => {
   assertEquals(primeiraCobrancaEm(emTrial.trial_ends_at), "2026-10-21");
 });
@@ -121,6 +128,67 @@ Deno.test("reconhece a recusa do Asaas por tokenização não liberada", () => {
     true
   );
   assertEquals(ehTokenizacaoSemPermissao("Asaas: Cartão recusado pela operadora"), false);
+});
+
+Deno.test("cobrança recusada: uma frase só, sem ponto duplicado", () => {
+  assertEquals(
+    mensagemCobrancaRecusada(
+      "Asaas: Transação não autorizada. Verifique os dados do cartão de crédito e tente novamente."
+    ),
+    "A cobrança não foi aprovada: Transação não autorizada. Verifique os dados do cartão de crédito e tente novamente. Confira os dados ou use outro cartão."
+  );
+  assertEquals(
+    mensagemCobrancaRecusada("Asaas: Cartão recusado"),
+    "A cobrança não foi aprovada: Cartão recusado. Confira os dados ou use outro cartão."
+  );
+});
+
+Deno.test("status desconhecido ou vazio não ativa por aqui (400)", () => {
+  for (const status of ["paused", "", "ACTIVE"]) {
+    const r = verificarAssinatura({ ...emTrial, status }, antesDoFim);
+    assertEquals(r.ok ? 0 : r.status, 400, status);
+  }
+});
+
+Deno.test("trial que vence exatamente agora já cobra na hora", () => {
+  const r = verificarAssinatura(emTrial, new Date(emTrial.trial_ends_at));
+  assertEquals(r.ok && r.modo, "imediata");
+});
+
+Deno.test("entrada: cartão, CPF/CNPJ e CEP do titular fora do formato são recusados", () => {
+  const comCartao = (c: object) =>
+    bodySchema.safeParse({ ...corpoValido, credit_card: { ...corpoValido.credit_card, ...c } }).success;
+  const comTitular = (h: object) =>
+    bodySchema.safeParse({
+      ...corpoValido,
+      credit_card_holder_info: { ...corpoValido.credit_card_holder_info, ...h },
+    }).success;
+  assertEquals(comCartao({ number: "5555" }), false);
+  assertEquals(comCartao({ number: "5555-5555-5555-4444" }), false);
+  assertEquals(comCartao({ expiryMonth: "13" }), false);
+  assertEquals(comCartao({ ccv: "" }), false);
+  assertEquals(comTitular({ cpfCnpj: "123" }), false);
+  assertEquals(comTitular({ postalCode: "30140" }), false);
+  assertEquals(comTitular({ email: "x" }), false);
+  assertEquals(comTitular({ addressNumber: "" }), false);
+});
+
+Deno.test("entrada: corpo nulo ou vazio é recusado", () => {
+  assertEquals(bodySchema.safeParse(null).success, false);
+  assertEquals(bodySchema.safeParse({}).success, false);
+});
+
+Deno.test("cobrança recusada sem prefixo do Asaas ou com espaços no fim continua uma frase só", () => {
+  assertEquals(
+    mensagemCobrancaRecusada("Saldo insuficiente.  "),
+    "A cobrança não foi aprovada: Saldo insuficiente. Confira os dados ou use outro cartão."
+  );
+});
+
+Deno.test("falha de rede ou outra recusa não é confundida com tokenização não liberada", () => {
+  assertEquals(ehTokenizacaoSemPermissao("Asaas 500"), false);
+  assertEquals(ehTokenizacaoSemPermissao("signal timed out"), false);
+  assertEquals(ehTokenizacaoSemPermissao("Asaas: Voce nao possui permissao para utilizar este recurso"), true);
 });
 
 Deno.test("entrada: cobrar_agora é opcional e só aceita boolean", () => {

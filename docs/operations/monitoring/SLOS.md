@@ -39,14 +39,14 @@ não disparar todo dia; descem para a meta quando o `/inicio` for otimizado.
 
 ## Alertas
 
-| O quê                                       | Onde                                         | Chega por                           |
-| ------------------------------------------- | -------------------------------------------- | ----------------------------------- |
-| Componente fora (monitor por componente)    | Better Stack                                 | E-mail e app do Better Stack        |
-| Erros em produção > 10 em 10 min            | Sentry, monitor "Erros em produção acima..." | E-mail (alerta "Saúde da produção") |
-| Edge Function p95 > 3 s por 15 min (sem IA) | Sentry, monitor de latência                  | E-mail (mesmo alerta)               |
-| Página p95 > 10 s por 30 min                | Sentry, monitor de carregamento              | E-mail (mesmo alerta)               |
-| Issue nova de prioridade alta               | Sentry, alerta já existente                  | E-mail                              |
-| Monitor sintético (login real) falhou       | GitHub Actions, issue "Cron falhando: ..."   | E-mail do GitHub                    |
+| O quê                                                   | Onde                                         | Chega por                           |
+| ------------------------------------------------------- | -------------------------------------------- | ----------------------------------- |
+| Componente fora (monitor por componente)                | Better Stack                                 | E-mail e app do Better Stack        |
+| Erros em produção > 10 em 10 min                        | Sentry, monitor "Erros em produção acima..." | E-mail (alerta "Saúde da produção") |
+| Edge Function p95 > 3 s por 1 h (sem IA e sem `health`) | Sentry, monitor de latência                  | E-mail (mesmo alerta)               |
+| Página p95 > 10 s por 30 min                            | Sentry, monitor de carregamento              | E-mail (mesmo alerta)               |
+| Issue nova de prioridade alta                           | Sentry, alerta já existente                  | E-mail                              |
+| Monitor sintético (login real) falhou                   | GitHub Actions, issue "Cron falhando: ..."   | E-mail do GitHub                    |
 
 ## Orçamento de erro
 

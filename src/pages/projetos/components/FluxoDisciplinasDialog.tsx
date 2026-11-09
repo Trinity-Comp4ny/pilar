@@ -226,8 +226,8 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
         <DialogContent
           className={
             mode === "form"
-              ? "max-w-none w-[94vw] h-[88vh] p-0 gap-0 overflow-hidden flex flex-col"
-              : "sm:max-w-2xl max-h-[90vh] overflow-y-auto"
+              ? "max-w-none w-[94vw] h-[88dvh] p-0 gap-0 overflow-hidden flex flex-col"
+              : "sm:max-w-2xl max-h-[90dvh] overflow-y-auto"
           }
         >
           {mode === "list" ? (

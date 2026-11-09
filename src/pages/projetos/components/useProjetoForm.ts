@@ -24,6 +24,7 @@ import { useBulkSaveDisciplinas } from "@/hooks/useProjetoDisciplinas";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useFormPersist, clearFormPersist } from "@/pages/projetos/hooks/useFormPersist";
 import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
+import { gerarParcelasDoProjeto, parcelasDoForm } from "../lib/parcelasDoForm";
 
 const PROJETO_DRAFT_KEY = "projeto-novo";
 
@@ -524,6 +525,15 @@ export function useProjetoForm({
       return;
     }
 
+    // Sem cliente, a parcela nasce órfã no financeiro (relato da VRZ, 16/10). Só na criação.
+    const parcelas = parcelasDoForm(formData);
+    if (!isEditMode && parcelas.faltaCliente) {
+      toast.error("Escolha o cliente do projeto", {
+        description: "As parcelas entram no financeiro com o cliente. Selecione um ou deixe as parcelas em branco.",
+      });
+      return;
+    }
+
     // Safety net: se o usuário preencheu disciplina temp mas esqueceu de clicar
     // em "Incluir na lista", inclui automaticamente antes de salvar.
     let finalDisciplinas = projetosDisciplinas;
@@ -709,29 +719,7 @@ export function useProjetoForm({
           }
         }
 
-        const numParcelas = parseInt(formData.parcelas || "0", 10);
-        const diaFixo = parseInt(formData.dia_pagamento || "0", 10);
-        if (newProjetoId && numParcelas > 0 && diaFixo >= 1 && diaFixo <= 31) {
-          const { error: parcelasError } = await (
-            supabase.rpc as unknown as (
-              name: "rpc_gerar_parcelas_dia_fixo",
-              args: { p_projeto_id: string; p_num_parcelas: number; p_dia_fixo: number }
-            ) => Promise<{ error: { message: string } | null }>
-          )("rpc_gerar_parcelas_dia_fixo", {
-            p_projeto_id: newProjetoId as string,
-            p_num_parcelas: numParcelas,
-            p_dia_fixo: diaFixo,
-          });
-          if (parcelasError) {
-            toast.error("Projeto salvo, mas as parcelas não foram geradas", {
-              description: getSafeErrorMessage(parcelasError, "Gere as parcelas de novo na aba de pagamentos."),
-            });
-          } else {
-            toast.success(`${numParcelas} parcela(s) geradas`, {
-              description: `Vencimento dia ${diaFixo} de cada mês`,
-            });
-          }
-        }
+        if (newProjetoId && parcelas.geraParcelas) await gerarParcelasDoProjeto(newProjetoId as string, parcelas);
 
         toast.success("Projeto cadastrado", { description: "Novo projeto foi adicionado com sucesso" });
         clearFormPersist(PROJETO_DRAFT_KEY);
@@ -787,6 +775,13 @@ export function useProjetoForm({
             const lng = typeof data?.lng === "number" ? data.lng : NaN;
             if (data?.found && !isNaN(lat) && !isNaN(lng)) {
               saveCoords(lat, lng);
+              return;
+            }
+            if (data?.indisponivel) {
+              toast.warning("Mapa indisponível agora", {
+                description:
+                  "O serviço de mapas não respondeu. Salve o projeto de novo mais tarde para ele aparecer no mapa.",
+              });
               return;
             }
             toast.warning("Endereço não localizado", {

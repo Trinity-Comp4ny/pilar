@@ -5,6 +5,8 @@
  *
  * Recebe checkout_session_token (assumimos que só quem iniciou o checkout o
  * tem) e retorna status atual + metadata. Usado pra PIX/boleto aguardando.
+ * Só POST, com o token no corpo: token em query string vai parar em log de acesso,
+ * histórico e ferramenta de monitoramento.
  *
  * Também consulta Asaas diretamente se status ainda = pending, pra evitar
  * depender só do webhook.
@@ -18,13 +20,14 @@ import { getPayment } from "../_shared/asaas-platform.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { checkDbRateLimit, getClientKey } from "../_shared/db-rate-limit.ts";
 import { tokenDaSessao } from "./entrada.ts";
+import { deveConsultarAsaas, deveEnviarConvite, pagamentoConfirmado, pagoEm } from "./estado.ts";
 
 const log = createLogger("pilar-checkout-status");
 
 serve(
   withSentry("pilar-checkout-status", async (req) => {
     if (req.method === "OPTIONS") return optionsResponse(req);
-    if (req.method !== "POST" && req.method !== "GET") {
+    if (req.method !== "POST") {
       return jsonResponse({ error: "Method not allowed" }, 405, req);
     }
 
@@ -49,17 +52,11 @@ serve(
     }
 
     let sessionToken: string | null = null;
-
-    if (req.method === "GET") {
-      const url = new URL(req.url);
-      sessionToken = tokenDaSessao(url.searchParams.get("token"));
-    } else {
-      try {
-        const body = (await req.json()) as { session_token?: unknown } | null;
-        sessionToken = tokenDaSessao(body?.session_token);
-      } catch {
-        return jsonResponse({ error: "JSON inválido" }, 400, req);
-      }
+    try {
+      const body = (await req.json()) as { session_token?: unknown } | null;
+      sessionToken = tokenDaSessao(body?.session_token);
+    } catch {
+      return jsonResponse({ error: "JSON inválido" }, 400, req);
     }
 
     if (!sessionToken) {
@@ -99,18 +96,16 @@ serve(
     }
 
     // Consulta Asaas direto se ainda pendente e tem payment_id
-    if (signup.payment_status === "pending" && signup.asaas_payment_id) {
+    if (deveConsultarAsaas(signup) && signup.asaas_payment_id) {
       try {
         const asaasPayment = await getPayment(signup.asaas_payment_id);
 
-        if (asaasPayment.status === "CONFIRMED" || asaasPayment.status === "RECEIVED") {
+        if (pagamentoConfirmado(asaasPayment.status)) {
           await admin
             .from("pilar_pending_signups")
             .update({
               payment_status: "paid",
-              paid_at: asaasPayment.paymentDate
-                ? new Date(asaasPayment.paymentDate).toISOString()
-                : new Date().toISOString(),
+              paid_at: pagoEm(asaasPayment.paymentDate, new Date()),
             })
             .eq("id", signup.id);
 
@@ -127,7 +122,7 @@ serve(
 
     // Fallback de invite: se pago mas webhook não disparou o invite ainda, dispara aqui.
     // Garante entrega mesmo se o webhook falhar ou demorar.
-    if (signup.payment_status === "paid" && !signup.invite_dispatched_at) {
+    if (deveEnviarConvite(signup)) {
       try {
         const appOrigin =
           (Deno.env.get("ALLOWED_ORIGINS") ?? "").split(",")[0].trim().replace(/\/$/, "") ||

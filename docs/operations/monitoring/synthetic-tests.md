@@ -59,7 +59,7 @@ própria, com dado só de leitura. Ainda não existe.
 ## Quando o alerta disparar
 
 1. `curl https://vepnsonbnsimqcsfcagm.supabase.co/functions/v1/health`
-2. Sentry (org `trinity-company`): erro novo no mesmo horário?
+2. Sentry (org `bez-company`): erro novo no mesmo horário?
 3. Artifact `monitor-producao-<run>` do run: screenshot e trace do check que falhou.
 4. Deploy recente? Rollback é o caminho mais rápido.
 5. Confirmado: comunicar pela status page (`/status`) e seguir `../INCIDENT_RESPONSE.md`.

@@ -1,5 +1,6 @@
 import type { Locator, Page } from "@playwright/test";
 import { test, expect } from "./fixtures";
+import { abrirNovaObra } from "./helpers/novaObra";
 
 /**
  * Cronograma da obra em quatro níveis (spec 111): fase > etapa > serviço > tarefa.
@@ -33,11 +34,7 @@ async function criar(page: Page, botao: string, nome: string) {
 
 test("cria a obra", async ({ page }) => {
   await page.goto("/obras");
-  await page
-    .getByRole("button", { name: /Nova obra/i })
-    .first()
-    .click();
-  const dialog = page.getByRole("dialog", { name: /Nova obra/i });
+  const dialog = await abrirNovaObra(page);
   await dialog.getByLabel("Nome da obra *").fill(obra);
   await dialog.getByRole("button", { name: "Criar obra" }).click();
   await expect(page.getByText("Obra criada").first()).toBeVisible({ timeout: 10_000 });
@@ -76,15 +73,15 @@ test("Gantt sem datas orienta a voltar pra lista e a visão escolhida persiste",
   await abrirCronograma(page);
 
   // Nenhum item tem data ainda: o Gantt explica o que falta em vez de abrir vazio.
-  await page.getByRole("tab", { name: "Gantt" }).click();
+  await page.getByRole("button", { name: "Gantt", exact: true }).click();
   await expect(page.getByText("Sem datas para a linha do tempo")).toBeVisible();
 
   await page.reload();
   await page.getByRole("tab", { name: "Cronograma" }).click();
-  await expect(page.getByRole("tab", { name: "Gantt" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("button", { name: "Gantt", exact: true })).toHaveAttribute("aria-pressed", "true");
 
   await page.getByRole("button", { name: "Ir para a lista" }).click();
-  await expect(page.getByRole("tab", { name: "Lista" })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("button", { name: "Lista", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByText("Escavar sapatas", { exact: true })).toBeVisible();
 });
 
@@ -103,7 +100,7 @@ test("datas na lista desenham a barra da tarefa e o período da fase no Gantt", 
   await escolherDia(page, tarefa, "Início", 10);
   await escolherDia(page, tarefa, "Prazo", 20);
 
-  await page.getByRole("tab", { name: "Gantt" }).click();
+  await page.getByRole("button", { name: "Gantt", exact: true }).click();
   await expect(page.getByText("Sem datas para a linha do tempo")).toHaveCount(0);
   // A tarefa vira barra própria; a fase herda o período dos itens abaixo dela.
   await expect(page.locator('[title^="Escavar sapatas ·"]')).toBeVisible();

@@ -35,9 +35,9 @@ ON CONFLICT (id) DO NOTHING;
 
 SET LOCAL session_replication_role = 'origin';
 
--- Gestão da empresa (owner) — é quem _notif_gestao() resolve como destinatário.
+-- Gestão da empresa (admin) — é quem _notif_gestao() resolve como destinatário.
 INSERT INTO public.profiles (id, empresa_id, first_name, last_name, email, role, onboarding_completed)
-VALUES ('77777777-0000-0000-0000-0000000ec001', '00000000-0000-0000-0000-00000000ec01', 'Gestor', 'Guardiao', 'gestor-guardiao@test.com', 'owner', TRUE)
+VALUES ('77777777-0000-0000-0000-0000000ec001', '00000000-0000-0000-0000-00000000ec01', 'Gestor', 'Guardiao', 'gestor-guardiao@test.com', 'admin', TRUE)
 ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role;
 
 -- Projeto A: orçamento vivo R$10k (100h x R$100/h), despesa R$12k, sem aditivo aberto → deve notificar

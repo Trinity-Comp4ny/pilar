@@ -180,7 +180,7 @@ describe("ObraCronogramaTab · lista", () => {
   it("a escolha Lista/Gantt fica salva", async () => {
     nos = [no("Estrutura", "fase", null)];
     renderTab();
-    await userEvent.click(screen.getByRole("tab", { name: /Gantt/ }));
+    await userEvent.click(screen.getByRole("button", { name: /Gantt/ }));
     expect(localStorage.getItem("pilar:obra-cronograma-visao")).toBe("gantt");
     expect(screen.getByText("Sem datas para a linha do tempo")).toBeInTheDocument();
   });

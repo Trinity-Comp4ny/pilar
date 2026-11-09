@@ -39,8 +39,8 @@ comunicação e pós-mortem.
 Contatos:
 
 - Oncall: ver `#oncall` no Slack
-- Security: `security@labrynth.ai`
-- DPO (LGPD): `dpo@labrynth.ai`
+- Security: reporte privado do GitHub (ver `docs/security/SECURITY.md`); e-mail próprio do Pilar a definir
+- DPO (LGPD): a definir (o Pilar ainda não tem e-mail próprio)
 
 ## Convenção de severidade
 

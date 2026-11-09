@@ -82,7 +82,7 @@ export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, pr
     queryFn: async () => {
       const { data, error } = await supabase
         .from("marcos_faturamento")
-        .select("id, nome, valor, data_prevista, status")
+        .select("id, nome, valor, data_prevista, status, receita_id")
         .eq("projeto_id", projetoId)
         .is("deleted_at", null)
         .order("data_prevista", { ascending: true });
@@ -103,6 +103,8 @@ export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, pr
 
       if (opcao === "parcelas") {
         if (!(propostaValor > 0)) throw new Error("Valor da proposta precisa ser maior que zero");
+        // Um único grupo para todas as parcelas (antes cada linha ganhava um UUID próprio).
+        const grupoParcela = qtdParcelas > 1 ? crypto.randomUUID() : null;
         const rows = parcelas.map((p) => ({
           descricao: qtdParcelas > 1 ? `${propostaNome} (${p.numero}/${qtdParcelas})` : propostaNome,
           valor: p.valor,
@@ -110,7 +112,7 @@ export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, pr
           status: "Pendente",
           empresa_id: empresaId,
           projeto_id: projetoId,
-          grupo_parcela: qtdParcelas > 1 ? crypto.randomUUID() : null,
+          grupo_parcela: grupoParcela,
           parcela_numero: qtdParcelas > 1 ? p.numero : null,
           parcela_total: qtdParcelas > 1 ? qtdParcelas : null,
         }));
@@ -170,7 +172,7 @@ export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, pr
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Receipt className="h-4 w-4 text-info-mid" />

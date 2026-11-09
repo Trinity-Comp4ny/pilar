@@ -28,7 +28,7 @@ import {
 export function useProjetoDetail(id: string | undefined) {
   const navigate = useNavigate();
   const { canEdit } = useFeatureAccess("projetos");
-  const { can } = usePermissions();
+  const { can, ready } = usePermissions();
   const queryClient = useQueryClient();
 
   // ---- Project data via React Query ----
@@ -74,7 +74,10 @@ export function useProjetoDetail(id: string | undefined) {
   });
 
   // ---- Rentabilidade ----
-  const { data: rentabilidade, isLoading: rentabilidadeLoading } = useProjetoRentabilidade(id, can("financeiro"));
+  const { data: rentabilidade, isLoading: rentabilidadeLoading } = useProjetoRentabilidade(
+    id,
+    ready && can("financeiro")
+  );
 
   // ---- Relational disciplinas ----
   const { data: dbDisciplinas = [] } = useProjetoDisciplinas(id);
@@ -291,6 +294,7 @@ export function useProjetoDetail(id: string | undefined) {
   // ---- Refetch project after edit ----
   const refetchProjeto = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["projeto-detail", id] });
+    queryClient.invalidateQueries({ queryKey: ["projeto-timeline", id] });
   }, [queryClient, id]);
 
   // ---- Quick edit inline (header/KPIs) — patch pontual, sem passar pela RPC

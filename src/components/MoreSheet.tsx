@@ -1,4 +1,14 @@
-import { Eye, EyeOff, LogOut, MessageSquare, Settings, ShieldCheck, Zap, type LucideIcon } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  LogOut,
+  MessageSquare,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -8,6 +18,7 @@ import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { usePermissions } from "@/hooks/usePermissions";
+import { usePendenciasAgentes } from "@/hooks/useEscopos";
 import { useValoresOcultos } from "@/contexts/ValoresOcultosContext";
 import { cn } from "@/lib/utils";
 
@@ -21,11 +32,14 @@ function MoreSheetRow({
   label,
   onClick,
   destructive,
+  badge,
 }: {
   icon: LucideIcon;
   label: string;
   onClick: () => void;
   destructive?: boolean;
+  /** Contador à direita (ex.: pendências dos agentes). */
+  badge?: number;
 }) {
   return (
     <button
@@ -38,14 +52,20 @@ function MoreSheetRow({
     >
       <Icon size={18} className="shrink-0" />
       <span className="flex-1 tracking-tight">{label}</span>
+      {badge ? (
+        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1.5 text-[11px] font-bold leading-none text-white">
+          {badge}
+        </span>
+      ) : null}
     </button>
   );
 }
 
 /**
  * "Menu" da bottom bar mobile (spec 097 / ADR 0040): o que hoje é o dropdown do
- * avatar na sidebar desktop (`AppSidebar.tsx`), num bottom sheet. Nunca uma tela
- * de módulo — cada pilar (Gestão/Projetos/Obra) já tem slot próprio na barra.
+ * avatar na sidebar desktop (`AppSidebar.tsx`), num bottom sheet, mais a caixa de
+ * Agentes (SPEC 134: saiu da barra). Nunca uma tela de módulo — cada pilar
+ * (Gestão/Projetos/Obra) já tem slot próprio na barra.
  *
  * `NotificationInbox` é self-contained (ícone + popover próprio), então fica no
  * cabeçalho do sheet em vez de virar uma linha de lista — passa `side="bottom"`
@@ -63,6 +83,7 @@ export function MoreSheet({ open, onOpenChange }: MoreSheetProps) {
   const { isAdmin, isUltraAdmin } = usePermissions();
   const { ocultos: valoresOcultos, toggle: toggleValoresOcultos } = useValoresOcultos();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const { data: pendenciasAgentes } = usePendenciasAgentes();
 
   const userName = profile
     ? [profile.first_name, profile.last_name].filter(Boolean).join(" ").trim() || user?.email || "Usuário"
@@ -105,6 +126,12 @@ export function MoreSheet({ open, onOpenChange }: MoreSheetProps) {
 
           <div className="my-1 border-t" />
 
+          <MoreSheetRow
+            icon={Sparkles}
+            label="Agentes"
+            badge={pendenciasAgentes?.length ?? 0}
+            onClick={closeAnd(() => navigate("/agentes"))}
+          />
           <MoreSheetRow icon={MessageSquare} label="Feedback" onClick={closeAnd(() => setFeedbackOpen(true))} />
           <MoreSheetRow
             icon={valoresOcultos ? Eye : EyeOff}

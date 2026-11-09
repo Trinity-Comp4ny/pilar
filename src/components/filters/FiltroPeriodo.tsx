@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { type PeriodoPreset, detectPreset, labelForPreset, rangeForPreset } from "@/lib/periodo";
 import { makeMonthYearCaption } from "./CalendarCaption";
+import { filterTriggerClass } from "./filterStyles";
 
 interface FiltroPeriodoProps {
   from: Date | undefined;
@@ -22,6 +23,8 @@ interface FiltroPeriodoProps {
   numberOfMonths?: 1 | 2;
   fromYear?: number;
   toYear?: number;
+  /** Pinta o gatilho de verde quando o período difere do padrão da tela. */
+  active?: boolean;
   className?: string;
 }
 
@@ -52,6 +55,7 @@ export function FiltroPeriodo({
   numberOfMonths = 1,
   fromYear,
   toYear,
+  active = false,
   className,
 }: FiltroPeriodoProps) {
   const [open, setOpen] = useState(false);
@@ -100,8 +104,8 @@ export function FiltroPeriodo({
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <Button variant="outline" className={cn("rounded-full h-9 px-3.5 text-[13px] font-normal gap-1.5", className)}>
-          <CalendarDays size={14} className="text-black/50" />
+        <Button variant="outline" className={filterTriggerClass(active, className)}>
+          <CalendarDays size={14} className={cn(!active && "text-black/50")} />
           {triggerLabel}
         </Button>
       </PopoverTrigger>

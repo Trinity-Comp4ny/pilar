@@ -73,3 +73,22 @@ describe("filtrarVisiveis", () => {
     expect(visiveis.map((e) => e.camada).sort()).toEqual(["disciplina", "tarefa"]);
   });
 });
+
+describe("prazo congelado (spec 141)", () => {
+  it("disciplina pausada não vira atraso nem próximo", () => {
+    const eventos = buildEventosDisciplinas([
+      { id: "pausada", titulo: "Estrutura", prazo: ontem, concluida: false, pausada: true, projetoId: "p1" },
+      { id: "ativa", titulo: "Hidráulica", prazo: ontem, concluida: false, projetoId: "p1" },
+    ]);
+    const porId = Object.fromEntries(eventos.map((e) => [e.id, e]));
+    expect(porId.pausada.estado).toBe("pausado");
+    expect(porId.ativa.estado).toBe("atrasado");
+  });
+
+  it("concluída vence a pausa", () => {
+    const [e] = buildEventosDisciplinas([
+      { id: "x", titulo: "Fundação", prazo: ontem, concluida: true, pausada: true, projetoId: "p1" },
+    ]);
+    expect(e.estado).toBe("concluido");
+  });
+});

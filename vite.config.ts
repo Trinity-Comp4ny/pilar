@@ -108,7 +108,7 @@ export default defineConfig(({ mode }) => ({
     mode === "production" &&
       process.env.SENTRY_AUTH_TOKEN &&
       sentryVitePlugin({
-        org: process.env.SENTRY_ORG ?? "trinity-company",
+        org: process.env.SENTRY_ORG ?? "bez-company",
         project: process.env.SENTRY_PROJECT,
         authToken: process.env.SENTRY_AUTH_TOKEN,
         release: {
@@ -215,14 +215,23 @@ export default defineConfig(({ mode }) => ({
       // um módulo só desceram de src/lib e src/components para o módulo, e os testes de
       // acesso e autenticação entraram. Medido: lib 72/70/72/74, hooks 15/12/13/16,
       // components 22/20/17/22, financeiro 21/17/13/21, obras 13/12/9/13, projetos 8/5/7/8.
+      // 07/11 (varredura de testes por módulo: cobrança, comercial, projetos/obras/campo,
+      // financeiro, autenticação/portal/admin e landing): medido lib 82/80/82/84, hooks
+      // 51/42/49/54, hooks de módulo 35/28/32/40, components 51/48/43/53, financeiro
+      // 58/52/48/60, obras 49/46/43/51, projetos 33/28/29/36. Pisos ~2 pontos abaixo.
       thresholds: {
-        "src/lib/**": { statements: 70, branches: 68, functions: 70, lines: 72 },
-        "src/hooks/**": { statements: 14, branches: 10, functions: 12, lines: 15 },
-        "src/pages/*/hooks/**": { statements: 15, branches: 11, functions: 11, lines: 17 },
-        "src/components/**": { statements: 21, branches: 19, functions: 16, lines: 22 },
-        "src/pages/financeiro/**": { statements: 20, branches: 16, functions: 12, lines: 20 },
-        "src/pages/obras/**": { statements: 12, branches: 11, functions: 8, lines: 12 },
-        "src/pages/projetos/**": { statements: 7, branches: 4, functions: 6, lines: 7 },
+        // Piso global (todo o código coberto pelo include), medido em 07/11/2026.
+        statements: 93,
+        branches: 86,
+        functions: 92,
+        lines: 95,
+        "src/lib/**": { statements: 94, branches: 89, functions: 94, lines: 96 },
+        "src/hooks/**": { statements: 94, branches: 88, functions: 94, lines: 96 },
+        "src/pages/*/hooks/**": { statements: 93, branches: 82, functions: 95, lines: 96 },
+        "src/components/**": { statements: 93, branches: 87, functions: 91, lines: 95 },
+        "src/pages/financeiro/**": { statements: 91, branches: 83, functions: 87, lines: 93 },
+        "src/pages/obras/**": { statements: 92, branches: 85, functions: 89, lines: 93 },
+        "src/pages/projetos/**": { statements: 93, branches: 86, functions: 94, lines: 96 },
         // Por criticidade, não por pasta: arquivo que decide acesso, autentica ou mexe
         // com dinheiro tem piso próprio, alto, para não se esconder na média da pasta.
         // Uma entrada por arquivo de propósito: `perFile` dentro de glob agrega (medido

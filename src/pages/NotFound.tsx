@@ -38,11 +38,11 @@ const NotFound = () => {
   }, [isAuthenticated]);
 
   if (isAuthenticated === null) {
-    return <PageLoader size="page" className="min-h-screen" />;
+    return <PageLoader size="page" className="min-h-dvh" />;
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-white to-slate-50 px-6 py-12">
+    <div className="min-h-dvh flex items-center justify-center bg-linear-to-b from-white to-slate-50 px-6 py-12">
       <div className="w-full max-w-2xl">
         <div className="mb-6 flex justify-center">
           <Logo size="sm" className="text-ink" />

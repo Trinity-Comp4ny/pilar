@@ -35,7 +35,7 @@ test("usuário sem acesso ao financeiro vê o aditivo sem valor e sem os botões
   test.skip(process.env.E2E_SEED_DEMO !== "1", "Depende do seed de demo (só no banco local)");
   const page = await loginComo(browser, "user@local.test");
   await page.goto(PROJETO_DEMO);
-  await page.getByRole("button", { name: "Escopo", exact: true }).click();
+  await page.getByRole("tab", { name: "Escopo", exact: true }).click();
 
   await expect(page.getByText("A aprovação fica com quem tem acesso ao financeiro do escritório.").first()).toBeVisible(
     {
@@ -53,7 +53,7 @@ test("aprovar aditivo soma o valor dele no contrato do projeto", async ({ page }
   await expect(page.getByText("Contrato", { exact: true })).toBeVisible({ timeout: 10_000 });
   const contratoAntes = await valorDoContrato(page);
 
-  await page.getByRole("button", { name: "Escopo", exact: true }).click();
+  await page.getByRole("tab", { name: "Escopo", exact: true }).click();
 
   const aprovar = page.getByRole("button", { name: "Aprovar", exact: true });
   await expect(aprovar.first()).toBeVisible({ timeout: 8_000 });

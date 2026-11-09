@@ -15,31 +15,29 @@ import { AgentDemo } from "./agents/AgentDemo";
  */
 
 /**
- * Os passos falam da dor, não do mecanismo.
- *
- * A versão anterior anunciava "você escreve em português", que não é benefício
- * nenhum: ninguém troca de sistema para poder escrever no próprio idioma. O que
- * o sócio reconhece é a noite de sexta lançando o que aconteceu na semana, e o
- * projeto que ele descobre no vermelho quando já acabou.
+ * Os passos seguem a assinatura da marca: a IA prepara, o sistema confere,
+ * você aprova. Cada um só promete o que roda em produção (brand/messaging.md,
+ * tabela "O que os agentes fazem hoje"). "Você escreve em português" ficou de
+ * fora de propósito: ninguém troca de sistema para escrever no próprio idioma.
  */
 const PASSOS = [
   {
     n: "01",
-    titulo: "Some o lançamento manual",
+    titulo: "A IA prepara",
     texto:
-      "Aquela hora de sexta abrindo formulário, escolhendo categoria e conferindo parcela. Você conta o que aconteceu e acabou.",
+      "Você conta o que aconteceu, solta o PDF do banco ou fala no canteiro. O agente lança, categoriza e organiza o registro do dia.",
   },
   {
     n: "02",
-    titulo: "Ele não erra o projeto",
+    titulo: "O sistema confere",
     texto:
-      "Acha pelo nome, calcula a parcela, categoriza no seu plano de contas. É o trabalho que o estagiário faria, sem a revisão que ele exigiria.",
+      "Acha o projeto pelo nome, calcula a parcela e confere cada número contra os seus dados. A conta não é da IA: sai do cálculo do sistema.",
   },
   {
     n: "03",
-    titulo: "A margem se refaz na hora",
+    titulo: "Você aprova",
     texto:
-      "No segundo em que você aprova, o projeto sabe se ainda está dando lucro. Você descobre agora, não quando já entregou.",
+      "Nada grava e nada vai ao cliente sem o seu aval. Aprovou, a margem do projeto se refaz na hora.",
   },
 ];
 
@@ -55,8 +53,8 @@ export function AgentsSection() {
         <div className="max-w-2xl mb-14">
           <TextReveal
             as="h2"
-            text="A IA faz o trabalho chato. Você só dá o aval."
-            highlight="Você só dá o aval."
+            text="A IA prepara. O sistema confere. Você aprova."
+            highlight="Você aprova."
             highlightClassName="italic text-white/45"
             className="text-[52px] max-[1100px]:text-[42px] max-[850px]:text-[29px] max-[420px]:text-[25px] font-medium text-white leading-[1.08] tracking-[-0.035em]"
           />

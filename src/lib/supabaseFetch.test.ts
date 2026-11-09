@@ -1,8 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createInstrumentedFetch, routeOf, redactQuery, SupabaseRequestError } from "./supabaseFetch";
+import {
+  createInstrumentedFetch,
+  fingerprintFor,
+  routeOf,
+  redactQuery,
+  SupabaseRequestError,
+  withAccessToken,
+} from "./supabaseFetch";
 
 const captureException = vi.fn((..._args: unknown[]) => "evt-1");
-const refreshSession = vi.fn(async () => ({ error: null as { message: string } | null }));
+type RefreshResult = { data: { session: { access_token: string } | null }; error: { message: string } | null };
+const refreshSession = vi.fn(async (): Promise<RefreshResult> => ({
+  data: { session: { access_token: "token-novo" } },
+  error: null,
+}));
 
 vi.mock("./monitoring", () => ({
   monitoring: {
@@ -156,11 +167,11 @@ describe("createInstrumentedFetch", () => {
   });
 });
 
-describe("retry em JWT com iat no futuro (PGRST303)", () => {
+describe("retry em JWT rejeitado (PGRST303)", () => {
   beforeEach(() => {
     captureException.mockClear();
     refreshSession.mockClear();
-    refreshSession.mockResolvedValue({ error: null });
+    refreshSession.mockResolvedValue({ data: { session: { access_token: "token-novo" } }, error: null });
   });
 
   it("renova a sessão e repete a chamada sem reportar falha", async () => {
@@ -182,7 +193,7 @@ describe("retry em JWT com iat no futuro (PGRST303)", () => {
   });
 
   it("reporta a falha original quando o refresh não resolve", async () => {
-    refreshSession.mockResolvedValue({ error: { message: "refresh failed" } });
+    refreshSession.mockResolvedValue({ data: { session: null }, error: { message: "refresh failed" } });
     const f = createInstrumentedFetch(async () =>
       jsonResponse(401, { code: "PGRST303", message: "JWT issued at future" })
     );
@@ -195,6 +206,53 @@ describe("retry em JWT com iat no futuro (PGRST303)", () => {
     expect(captureException).toHaveBeenCalledTimes(1);
   });
 
+  it("repete com o token renovado, não com o vencido que veio no init", async () => {
+    const enviados: (string | null)[] = [];
+    const f = createInstrumentedFetch(async (_input, init) => {
+      const auth = new Headers(init?.headers).get("Authorization");
+      enviados.push(auth);
+      return auth === "Bearer token-novo"
+        ? jsonResponse(200, [{ id: "1" }])
+        : jsonResponse(401, { code: "PGRST303", message: "JWT expired" });
+    });
+
+    const res = await f(URL_BASE, { headers: { Authorization: "Bearer token-vencido", apikey: "anon" } });
+    await flush();
+
+    expect(enviados).toEqual(["Bearer token-vencido", "Bearer token-novo"]);
+    expect(res.status).toBe(200);
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it("renova uma vez só quando a tela inteira falha junto", async () => {
+    const f = createInstrumentedFetch(async (_input, init) =>
+      new Headers(init?.headers).get("Authorization") === "Bearer token-novo"
+        ? jsonResponse(200, [])
+        : jsonResponse(401, { code: "PGRST303", message: "JWT expired" })
+    );
+    const init = { headers: { Authorization: "Bearer token-vencido" } };
+
+    const respostas = await Promise.all([f(URL_BASE, init), f(`${URL_BASE}?x=1`, init), f(URL_BASE, init)]);
+
+    expect(refreshSession).toHaveBeenCalledTimes(1);
+    expect(respostas.map((r) => r.status)).toEqual([200, 200, 200]);
+  });
+
+  it("HEAD de contagem (401 sem corpo) também renova e repete", async () => {
+    const f = createInstrumentedFetch(async (_input, init) =>
+      new Headers(init?.headers).get("Authorization") === "Bearer token-novo"
+        ? new Response(null, { status: 200 })
+        : new Response(null, { status: 401 })
+    );
+
+    const res = await f(URL_BASE, { method: "HEAD", headers: { Authorization: "Bearer token-vencido" } });
+    await flush();
+
+    expect(refreshSession).toHaveBeenCalledTimes(1);
+    expect(res.status).toBe(200);
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
   it("não mexe em 401 sem o code PGRST303", async () => {
     const f = createInstrumentedFetch(async () => jsonResponse(401, { message: "JWT expired" }));
 
@@ -203,5 +261,31 @@ describe("retry em JWT com iat no futuro (PGRST303)", () => {
 
     expect(refreshSession).not.toHaveBeenCalled();
     expect(captureException).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("withAccessToken", () => {
+  it("troca só o Bearer e mantém os outros headers", () => {
+    const init = withAccessToken(URL_BASE, { headers: { Authorization: "Bearer velho", apikey: "anon" } }, "novo");
+    const headers = new Headers(init?.headers);
+    expect(headers.get("Authorization")).toBe("Bearer novo");
+    expect(headers.get("apikey")).toBe("anon");
+  });
+
+  it("chamada sem Authorization segue como veio", () => {
+    const init = { headers: { apikey: "anon" } };
+    expect(withAccessToken(URL_BASE, init, "novo")).toBe(init);
+  });
+});
+
+describe("fingerprintFor", () => {
+  it("401 de rotas diferentes cai no mesmo issue", () => {
+    expect(fingerprintFor("GET", "rest/v1/projetos", 401, "PGRST303")).toEqual(
+      fingerprintFor("HEAD", "rest/v1/pessoas", 401, "PGRST303")
+    );
+  });
+
+  it("403 continua separado por rota", () => {
+    expect(fingerprintFor("GET", "rest/v1/projetos", 403)).not.toEqual(fingerprintFor("GET", "rest/v1/pessoas", 403));
   });
 });

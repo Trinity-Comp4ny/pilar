@@ -4,7 +4,8 @@ import { requestCookieConsentReview } from "../cookieConsent";
 import { COMPARATIVOS } from "../lib/comparativos";
 import { MODULOS } from "../lib/modules";
 import { Logo } from "./Logo";
-import { linkCadastro } from "../lib/origem";
+import { DEMO_URL } from "../lib/contato";
+import { trackCta } from "../analytics";
 
 /**
  * Rodapé no verde da marca, como na referência: o fim da página é um bloco de
@@ -39,8 +40,8 @@ export function LandingFooter() {
           <div>
             <Logo size="sm" className="text-ink mb-5" />
             <p className="text-[13.5px] text-ink/80 max-w-xs leading-relaxed">
-              Saiba se cada projeto está dando lucro antes de terminar. Feito para escritórios de engenharia e
-              arquitetura, com agentes que preparam o trabalho e esperam o seu aval.
+              Gestão com agentes de IA para escritórios de engenharia e arquitetura. Os agentes preparam o trabalho e
+              esperam o seu aval.
             </p>
           </div>
 
@@ -94,8 +95,14 @@ export function LandingFooter() {
                 </a>
               </li>
               <li>
-                <a href={linkCadastro()} className="text-[13.5px] text-ink/75 hover:text-ink transition-colors">
-                  Criar conta
+                <a
+                  href={DEMO_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackCta("agende_demo", "footer")}
+                  className="text-[13.5px] text-ink/75 hover:text-ink transition-colors"
+                >
+                  Agendar demonstração
                 </a>
               </li>
               <li>

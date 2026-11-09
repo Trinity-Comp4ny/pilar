@@ -101,7 +101,7 @@ describe("stripComments", () => {
 });
 
 describe("contrato do pipeline", () => {
-  // Mesmo padrão do test_deploy_safety_contract.py do labrynth-platform: quem
+  // Contrato de segurança de deploy: quem
   // remover o guard, ou movê-lo para depois do deploy, quebra o CI.
   // cwd, não import.meta.url: no ambiente jsdom do vitest a URL do módulo não é file://
   const ci = readFileSync(resolve(process.cwd(), ".github/workflows/ci.yml"), "utf8");
@@ -144,6 +144,17 @@ describe("contrato do pipeline", () => {
     expect(deployLines.length).toBeGreaterThanOrEqual(2); // staging e production
     for (const line of deployLines) {
       expect(line).toContain("scripts/retry-on-network-error.sh");
+    }
+  });
+
+  // Docker Hub limita pulls por IP do runner compartilhado ("toomanyrequests: Data limit
+  // exceeded"), e o deploy em Docker puxa a imagem do edge-runtime a cada run. Duas
+  // falhas seguidas em staging (runs 39307383109 e 39315007872) mesmo com o retry.
+  it("o deploy das edge functions empacota no servidor, sem Docker", () => {
+    const deployLines = ci.split("\n").filter((l) => l.includes("supabase functions deploy"));
+    expect(deployLines.length).toBeGreaterThanOrEqual(2);
+    for (const line of deployLines) {
+      expect(line).toContain("--use-api");
     }
   });
 

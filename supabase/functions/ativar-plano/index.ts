@@ -34,6 +34,7 @@ import {
   CONSENTIMENTO_TEXTO_VERSAO,
   CONSENTIMENTO_TEXTO_VERSAO_IMEDIATA,
   ehTokenizacaoSemPermissao,
+  mensagemCobrancaRecusada,
   modoEfetivo,
   primeiraCobrancaEm as dataPrimeiraCobranca,
   verificarAssinatura,
@@ -147,7 +148,7 @@ serve(
 
     const valor = valorDoCiclo(plan, body.billing_cycle);
     if (valor == null) {
-      return jsonResponse({ error: "Este plano não tem preço anual configurado" }, 400, req);
+      return jsonResponse({ error: "Este plano não tem preço configurado para este ciclo" }, 400, req);
     }
 
     // --- Cliente Asaas (cria se a empresa nunca teve, mesmo padrão do pack de tokens) ---
@@ -219,13 +220,7 @@ serve(
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Erro Asaas";
         log.error("cobrança imediata recusada", { empresaId, error: msg });
-        return jsonResponse(
-          {
-            error: `A cobrança não foi aprovada: ${msg.replace(/^Asaas: /, "")}. Confira os dados ou use outro cartão.`,
-          },
-          502,
-          req
-        );
+        return jsonResponse({ error: mensagemCobrancaRecusada(msg) }, 502, req);
       }
       await gravarConsentimento();
       return jsonResponse(

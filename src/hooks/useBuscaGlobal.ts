@@ -32,8 +32,16 @@ async function buscarEntidade(fn: () => Promise<BuscaResultado[]>): Promise<Busc
   }
 }
 
+/**
+ * Escapa os curingas do LIKE (`%`, `_`) e a barra (caractere de escape padrão do
+ * Postgres), para "50%" ou "a_b" buscarem o texto literal e não virarem padrão.
+ */
+export function escaparLike(termo: string): string {
+  return termo.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
+
 async function buscar(termo: string): Promise<BuscaGrupo[]> {
-  const like = `%${termo}%`;
+  const like = `%${escaparLike(termo)}%`;
 
   const [clientes, projetos, fornecedores, leads, propostas, pessoas] = await Promise.all([
     buscarEntidade(async () => {

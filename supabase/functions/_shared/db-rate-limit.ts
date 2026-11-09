@@ -9,6 +9,7 @@
  */
 
 import { type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { jsonResponse } from "./cors.ts";
 
 export interface RateLimitOptions {
   /** Identificador do bucket — ex: "checkout_create", "delete_user". */
@@ -50,4 +51,27 @@ export function getClientKey(req: Request, userId?: string | null): string {
   const realIp = req.headers.get("x-real-ip");
   if (realIp) return `ip:${realIp.trim()}`;
   return "anonymous";
+}
+
+/**
+ * Resposta HTTP para um resultado de rate limit, ou null quando a requisição pode seguir.
+ * Fail-closed: erro da RPC vira 503, estouro vira 429.
+ */
+export function respostaDeRateLimit(rl: RateLimitResult, req: Request): Response | null {
+  if (rl.rpcError) {
+    return jsonResponse({ error: "Serviço temporariamente indisponível. Tente novamente em instantes." }, 503, req);
+  }
+  if (!rl.allowed) {
+    return jsonResponse({ error: "Muitas tentativas. Aguarde antes de tentar novamente." }, 429, req);
+  }
+  return null;
+}
+
+/** Confere o limite e devolve a resposta de bloqueio (429/503), ou null se pode seguir. */
+export async function limitarOuResponder(
+  svc: SupabaseClient,
+  req: Request,
+  opts: RateLimitOptions
+): Promise<Response | null> {
+  return respostaDeRateLimit(await checkDbRateLimit(svc, opts), req);
 }

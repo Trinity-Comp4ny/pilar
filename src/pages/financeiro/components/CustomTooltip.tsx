@@ -1,3 +1,5 @@
+import { useMoneyMask } from "@/hooks/useMoneyMask";
+
 interface TooltipPayloadEntry {
   color: string;
   name: string;
@@ -11,6 +13,8 @@ interface CustomTooltipProps {
 }
 
 export const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+  // Moeda com 2 casas e respeitando "ocultar valores" (antes: "R$ 1.234,5" e valor sempre visível).
+  const formatCurrency = useMoneyMask();
   if (active && payload && payload.length) {
     return (
       <div className="bg-white p-4 border border-black/10 rounded-lg shadow-lg">
@@ -20,7 +24,7 @@ export const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) =>
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
             <span className="text-ink-muted">{entry.name}:</span>
             <span className="font-medium">
-              R$ {typeof entry.value === "number" ? entry.value.toLocaleString("pt-BR") : entry.value}
+              {typeof entry.value === "number" ? formatCurrency(entry.value) : `R$ ${entry.value}`}
             </span>
           </div>
         ))}

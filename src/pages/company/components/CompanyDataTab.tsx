@@ -6,7 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Building2, QrCode } from "lucide-react";
+import { Building2, QrCode, Users } from "lucide-react";
+import { EscolhaChips } from "@/components/forms/EscolhaChips";
+import { DISCIPLINAS, PORTES } from "@/lib/perfilEscritorio";
 import type { CompanyData } from "../types";
 import { STATUS_OPTIONS, getStatusBadge } from "../types";
 
@@ -20,6 +22,7 @@ interface CompanyDataTabProps {
   onSave: () => void;
   onChange: (field: keyof CompanyData, value: string) => void;
   onStatusChange: (value: string) => void;
+  onDisciplinasChange: (value: string[]) => void;
 }
 
 export function CompanyDataTab({
@@ -32,6 +35,7 @@ export function CompanyDataTab({
   onSave,
   onChange,
   onStatusChange,
+  onDisciplinasChange,
 }: CompanyDataTabProps) {
   const inputClass = !editing
     ? "bg-black/5 border-black/10 text-black/80"
@@ -180,6 +184,47 @@ export function CompanyDataTab({
                   readOnly={!editing}
                   className={inputClass}
                 />
+              </div>
+            </div>
+
+            <div className="mt-6 pt-6 border-t">
+              <div className="flex items-center gap-2 mb-3">
+                <Users size={16} className="text-foreground" />
+                <span className="text-sm font-semibold">Perfil do escritório</span>
+              </div>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="company-site">Site</Label>
+                  <Input
+                    id="company-site"
+                    value={companyData.site || ""}
+                    onChange={(e) => onChange("site", e.target.value)}
+                    readOnly={!editing}
+                    className={inputClass}
+                    placeholder="seuescritorio.com.br"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Disciplinas</Label>
+                  <EscolhaChips
+                    multiplo
+                    ariaLabel="Disciplinas do escritório"
+                    opcoes={DISCIPLINAS}
+                    value={companyData.disciplinas ?? []}
+                    onChange={onDisciplinasChange}
+                    disabled={!editing}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Porte</Label>
+                  <EscolhaChips
+                    ariaLabel="Porte do escritório"
+                    opcoes={PORTES}
+                    value={companyData.porte || null}
+                    onChange={(v) => onChange("porte", v)}
+                    disabled={!editing}
+                  />
+                </div>
               </div>
             </div>
 

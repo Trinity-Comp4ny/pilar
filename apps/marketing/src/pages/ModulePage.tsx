@@ -10,9 +10,8 @@ import { Reveal } from "../components/Reveal";
 import { SplitButton } from "../components/ui/SplitButton";
 import { MODULOS, MODULOS_POR_SLUG, type MockNome, type Modulo, type ModuloSlug } from "../lib/modules";
 import { useJsonLd, usePageMeta } from "../lib/seo";
-import { linkCadastro } from "../lib/origem";
 
-const WHATSAPP = "https://wa.me/5514998721100";
+import { LinkDemo } from "../components/LinkDemo";
 
 /**
  * Print real da tela, com rede de segurança: enquanto o PNG não existe em
@@ -29,7 +28,7 @@ function PrintReal({ img, alt, mock, modulo }: { img: string; alt: string; mock:
     if (ehFone) return <GroupMock mock={mock} />;
     return (
       <BrowserFrame url={modulo.url}>
-        <div className="p-5 md:p-6">
+        <div className="bg-app p-5 md:p-6">
           <GroupMock mock={mock} />
         </div>
       </BrowserFrame>
@@ -82,11 +81,6 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
     })),
   });
 
-  const primario =
-    modulo.ctaPrimario.tipo === "cadastro"
-      ? { href: linkCadastro(), evento: "testar_gratis" }
-      : { href: WHATSAPP, evento: "falar_conosco" };
-
   const outras = MODULOS.filter((m) => m.slug !== slug);
 
   return (
@@ -106,13 +100,11 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
             <p className="mb-8 max-w-xl text-[15px] leading-relaxed text-ink-soft md:text-[16px]">{modulo.lede}</p>
 
             <div className="flex flex-wrap gap-3">
-              <SplitButton href={primario.href} onClick={() => trackCta(primario.evento, `modulo_${slug}`)}>
-                {modulo.ctaPrimario.label}
-              </SplitButton>
-              <SplitButton fantasma href={WHATSAPP} onClick={() => trackCta("agende_demo", `modulo_${slug}`)}>
-                Agende uma demo
+              <SplitButton to="/planos" onClick={() => trackCta("ver_planos", `modulo_${slug}`)}>
+                Ver planos
               </SplitButton>
             </div>
+            <LinkDemo local={`modulo_${slug}`} className="mt-3" />
           </Reveal>
         </div>
       </section>
@@ -171,7 +163,7 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
         <div className="mx-auto max-w-6xl">
           <Reveal variant="up" className="mb-8 max-w-2xl">
             <h2 className="text-[40px] font-medium leading-[1.08] tracking-[-0.035em] text-ink max-[1100px]:text-[34px] max-[850px]:text-[27px] max-[420px]:text-[24px]">
-              Antes de testar, <span className="italic text-ink/45">o que todo mundo pergunta.</span>
+              Antes de assinar, <span className="italic text-ink/45">o que todo mundo pergunta.</span>
             </h2>
           </Reveal>
 

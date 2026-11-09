@@ -17,13 +17,13 @@ function perfil(p: Record<string, unknown>) {
   mockUseAuth.mockReturnValue({ profile: { empresas: { features: { [MODULO]: true } }, ...p } });
 }
 
-function comImpersonation(viewAsRole: UserRole | null) {
+function comImpersonation(viewAsRole: UserRole | null, loading = false) {
   return ({ children }: { children: ReactNode }) => (
     <ImpersonationContext.Provider
       value={{
         viewAsRole,
         isImpersonating: !!viewAsRole,
-        loading: false,
+        loading,
         startImpersonation: vi.fn(),
         stopImpersonation: vi.fn(),
       }}
@@ -49,6 +49,17 @@ describe("usePermissions", () => {
     expect(result.current.isAdmin).toBe(true);
     expect(result.current.can("admin_portal")).toBe(true);
     expect(result.current.can("financeiro", "edit")).toBe(true);
+  });
+
+  it("ready fica falso enquanto a impersonation hidrata do servidor", () => {
+    perfil({ role: "admin" });
+    const hidratando = renderHook(() => usePermissions(), { wrapper: comImpersonation(null, true) });
+    expect(hidratando.result.current.ready).toBe(false);
+    const pronto = renderHook(() => usePermissions(), { wrapper: comImpersonation(null, false) });
+    expect(pronto.result.current.ready).toBe(true);
+    // Sem provider de impersonation (rotas públicas), não há o que esperar.
+    const semProvider = renderHook(() => usePermissions());
+    expect(semProvider.result.current.ready).toBe(true);
   });
 
   it("colaborador não vê financeiro e o botão explica o motivo", () => {

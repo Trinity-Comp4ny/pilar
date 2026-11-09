@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CalendarClock, ChevronDown, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
+import { ZoomSwitcher } from "@/components/gantt/ZoomSwitcher";
+import { CalendarClock, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/EmptyState";
@@ -134,26 +135,7 @@ export function CronogramaGantt({
             <Button variant="outline" size="sm" className="h-7 text-xs" onClick={scrollToToday} disabled={todayPct < 0}>
               Hoje
             </Button>
-            <div className="flex items-center overflow-hidden rounded-md border">
-              <Button
-                variant={zoom === "months" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-7 rounded-none px-2 text-xs"
-                onClick={() => setZoom("months")}
-                aria-label="Meses"
-              >
-                <ZoomOut className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Meses</span>
-              </Button>
-              <Button
-                variant={zoom === "weeks" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-7 rounded-none px-2 text-xs"
-                onClick={() => setZoom("weeks")}
-                aria-label="Semanas"
-              >
-                <ZoomIn className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Semanas</span>
-              </Button>
-            </div>
+            <ZoomSwitcher value={zoom} onChange={setZoom} />
           </div>
         </div>
 

@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
+import { addDays, format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, FileCheck, Clock, ChevronRight, ExternalLink } from "lucide-react";
+import { AlertCircle, FileCheck, Clock, ChevronRight } from "lucide-react";
 import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
 
 interface PendenciasCardProps {
@@ -13,8 +14,10 @@ interface PendenciasCardProps {
 export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: PendenciasCardProps) {
   const navigate = useNavigate();
 
-  const hoje = new Date().toISOString().split("T")[0];
-  const em7dias = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  // Datas locais (YYYY-MM-DD): toISOString (UTC) à noite já cai no dia seguinte e
+  // marcava como atrasada a parcela que vence hoje.
+  const hoje = format(new Date(), "yyyy-MM-dd");
+  const em7dias = format(addDays(new Date(), 7), "yyyy-MM-dd");
 
   const naoRecebidas = receitas.filter((r) => r.status !== "Recebido" && r.data_vencimento);
   const faturasAtrasadasList = naoRecebidas.filter((r) => r.data_vencimento < hoje);
@@ -23,9 +26,6 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
     (r) => r.data_vencimento >= hoje && r.data_vencimento <= em7dias
   );
   const faturasProximasVencimento = faturasProximasVencimentoList.length;
-
-  const paymentLinkAtrasada = faturasAtrasadasList.find((r) => r.asaas_payment_url)?.asaas_payment_url ?? null;
-  const paymentLinkProxima = faturasProximasVencimentoList.find((r) => r.asaas_payment_url)?.asaas_payment_url ?? null;
 
   const pendencias = {
     entregasPendentes: portalEntregasPendentes,
@@ -97,17 +97,6 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
                 </div>
                 <ChevronRight className="h-3.5 w-3.5 text-danger-strong" />
               </button>
-              {paymentLinkAtrasada && (
-                <a
-                  href={paymentLinkAtrasada}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 px-3 min-h-11 sm:min-h-0 sm:py-2 rounded-md bg-brand hover:bg-brand/90 text-ink text-xs font-medium transition-colors whitespace-nowrap"
-                >
-                  Pagar
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
             </div>
           )}
 
@@ -126,17 +115,6 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
                 </div>
                 <ChevronRight className="h-3.5 w-3.5 text-warning-mid" />
               </button>
-              {paymentLinkProxima && (
-                <a
-                  href={paymentLinkProxima}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 px-3 min-h-11 sm:min-h-0 sm:py-2 rounded-md bg-brand hover:bg-brand/90 text-ink text-xs font-medium transition-colors whitespace-nowrap"
-                >
-                  Pagar
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
             </div>
           )}
         </div>

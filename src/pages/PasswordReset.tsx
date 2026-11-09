@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Check, CheckCircle2, Eye, EyeOff, HelpCircle, KeyRound, Lock, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Check, Eye, EyeOff, HelpCircle, KeyRound, Lock, ShieldCheck } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { translateAuthError } from "@/lib/authErrors";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
@@ -16,6 +16,7 @@ import { useMfa } from "@/hooks/useMfa";
 import { passwordChecks } from "@/lib/passwordPolicy";
 import { passwordResetSchema, passwordResetDefaultValues, type PasswordResetFormData } from "@/schemas";
 import { Logo } from "@/components/Logo";
+import { AuthPromessa } from "@/components/AuthPromessa";
 
 import { BusyMark } from "@/components/motion/BusyMark";
 
@@ -159,7 +160,7 @@ export default function PasswordReset() {
   };
 
   return (
-    <div className="landing-grain min-h-screen w-full flex overflow-hidden bg-paper">
+    <div className="landing-grain min-h-dvh w-full flex overflow-hidden bg-paper">
       {/* Lado Esquerdo - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16 bg-paper relative overflow-hidden">
         <div className="absolute inset-0 -z-10 pointer-events-none">
@@ -440,26 +441,7 @@ export default function PasswordReset() {
             </div>
           </div>
 
-          <div className="space-y-8 max-w-lg ml-auto text-right animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
-            <blockquote className="text-3xl font-light leading-snug">
-              "A gestão eficiente é o alicerce onde grandes empresas constroem seu futuro."
-            </blockquote>
-
-            <div className="flex flex-col items-end gap-3 pt-4 border-t border-white/20">
-              <div className="flex items-center gap-2 text-sm font-medium text-white/80">
-                <span>Controle Financeiro Integrado</span>
-                <CheckCircle2 className="w-5 h-5 text-brand" />
-              </div>
-              <div className="flex items-center gap-2 text-sm font-medium text-white/80">
-                <span>Gestão de Projetos e Obras</span>
-                <CheckCircle2 className="w-5 h-5 text-brand" />
-              </div>
-              <div className="flex items-center gap-2 text-sm font-medium text-white/80">
-                <span>CRM e Relacionamento</span>
-                <CheckCircle2 className="w-5 h-5 text-brand" />
-              </div>
-            </div>
-          </div>
+          <AuthPromessa />
 
           <div className="text-xs text-white/40 text-right animate-in fade-in duration-1000 delay-300">
             © {new Date().getFullYear()} Pilar. Todos os direitos reservados.

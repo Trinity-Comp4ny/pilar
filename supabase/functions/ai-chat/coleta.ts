@@ -4,14 +4,24 @@ import { Agente, N } from "./schemas.ts";
 // ---------------------------------------------------------------------------
 // Agentes de domínio (read-only) — coletam dados via RLS
 // ---------------------------------------------------------------------------
-export function inicioDoMes(): string {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+// A função roda em UTC; o escritório vive no horário de Brasília. Depois das 21h
+// o dia UTC já virou e o que vence hoje apareceria como vencido.
+const FUSO = "America/Sao_Paulo";
+
+/** Data de hoje (YYYY-MM-DD) no horário de Brasília. */
+export function hojeBrasilia(agora: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: FUSO, year: "numeric", month: "2-digit", day: "2-digit" }).format(
+    agora
+  );
+}
+
+export function inicioDoMes(agora: Date = new Date()): string {
+  return `${hojeBrasilia(agora).slice(0, 7)}-01`;
 }
 
 export async function coletarFinanceiro(db: SupabaseClient, empresaId: string): Promise<Record<string, unknown>> {
   const inicio = inicioDoMes();
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = hojeBrasilia();
   const [receitasMes, aReceber, despesasMes, aPagar, receitasVencidas, despesasVencidas, folhaMes] = await Promise.all([
     db
       .from("receitas")
@@ -51,8 +61,8 @@ export async function coletarFinanceiro(db: SupabaseClient, empresaId: string): 
       .from("folha_pagamento")
       .select("total_receber")
       .eq("empresa_id", empresaId)
-      .eq("mes", new Date().getMonth() + 1)
-      .eq("ano", new Date().getFullYear()),
+      .eq("mes", Number(hojeBrasilia().slice(5, 7)))
+      .eq("ano", Number(hojeBrasilia().slice(0, 4))),
   ]);
   const soma = (rows: { valor: number }[] | null) => (rows ?? []).reduce((s, r) => s + Number(r.valor || 0), 0);
   const custoFolha = ((folhaMes.data as { total_receber: number }[] | null) ?? []).reduce(
@@ -83,31 +93,47 @@ export type ProjetoRow = {
   status: string;
   prioridade: string | null;
   valor_contrato: number | null;
+  pode_ver_valor: boolean | null;
   data_inicio: string | null;
   data_previsao: string | null;
   data_final: string | null;
-  clientes: { nome: string } | null;
+  cliente_id: string | null;
 };
 
+/**
+ * Projetos da empresa pela view projetos_safe: `valor_contrato` na tabela base tem SELECT
+ * revogado (ADR 0034), e ler a coluna direto derruba a consulta inteira, o que aqui virava
+ * "0 projetos" sem aviso. Quem não pode ver dinheiro recebe o projeto sem o valor.
+ */
 export async function coletarProjetos(db: SupabaseClient, empresaId: string): Promise<Record<string, unknown>> {
-  const hoje = new Date().toISOString().slice(0, 10);
-  const { data } = await db
-    .from("projetos")
+  const hoje = hojeBrasilia();
+  const { data, error } = await db
+    .from("projetos_safe")
     .select(
-      "nome, status, prioridade, valor_contrato, data_inicio, data_previsao, data_final, clientes(nome)"
+      "nome, status, prioridade, valor_contrato, pode_ver_valor, data_inicio, data_previsao, data_final, cliente_id"
     )
     .eq("empresa_id", empresaId)
     .is("deleted_at", null);
+  if (error) throw new Error(`falha ao ler projetos: ${error.message}`);
   const projetos = (data ?? []) as unknown as ProjetoRow[];
+
+  const clienteIds = [...new Set(projetos.map((p) => p.cliente_id).filter((id): id is string => !!id))];
+  const nomeCliente = new Map<string, string>();
+  if (clienteIds.length > 0) {
+    const { data: clientes } = await db.from("clientes").select("id, nome").in("id", clienteIds);
+    for (const c of (clientes ?? []) as { id: string; nome: string }[]) nomeCliente.set(c.id, c.nome);
+  }
+
   const porStatus: Record<string, number> = {};
   for (const p of projetos) porStatus[p.status] = (porStatus[p.status] ?? 0) + 1;
   const ativos = projetos.filter((p) => STATUS_ATIVOS.includes(p.status));
+  const veValor = projetos.some((p) => p.pode_ver_valor === true);
   const detalhe = (p: ProjetoRow) => ({
     nome: p.nome,
     status: p.status,
     prioridade: p.prioridade,
-    cliente: p.clientes?.nome ?? null,
-    valor_contrato: Number(p.valor_contrato || 0),
+    cliente: p.cliente_id ? (nomeCliente.get(p.cliente_id) ?? null) : null,
+    ...(p.pode_ver_valor ? { valor_contrato: Number(p.valor_contrato || 0) } : {}),
     data_inicio: p.data_inicio,
     data_previsao_entrega: p.data_previsao,
     data_conclusao: p.data_final,
@@ -120,7 +146,9 @@ export async function coletarProjetos(db: SupabaseClient, empresaId: string): Pr
     total_projetos: projetos.length,
     projetos_ativos: ativos.length,
     por_status: porStatus,
-    valor_em_contratos_ativos: ativos.reduce((s, p) => s + Number(p.valor_contrato || 0), 0),
+    ...(veValor
+      ? { valor_em_contratos_ativos: ativos.reduce((s, p) => s + Number(p.valor_contrato || 0), 0) }
+      : { valores_ocultos: "O perfil de quem pergunta não vê valores de contrato." }),
     projetos_com_prazo_estourado: ativosDetalhe.filter((p) => p.atrasado).length,
     // Lista dos ativos com datas/prazos (limite p/ caber no contexto do modelo).
     projetos_ativos_detalhe: ativosDetalhe.slice(0, 30),
@@ -206,7 +234,7 @@ export type ObraRdoRow = {
 
 /** Obras ativas da empresa + o RDO mais recente de cada uma (cap 30 pra caber no contexto). */
 export async function coletarObras(db: SupabaseClient, empresaId: string): Promise<Record<string, unknown>> {
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = hojeBrasilia();
   const { data } = await db
     .from("obras")
     .select("id, nome, status, data_fim_prevista, data_fim_real, projetos(nome)")
@@ -261,7 +289,11 @@ export async function coletarObras(db: SupabaseClient, empresaId: string): Promi
   };
 }
 
-export async function coletarDados(agente: Agente, db: SupabaseClient, empresaId: string): Promise<Record<string, unknown>> {
+export async function coletarDados(
+  agente: Agente,
+  db: SupabaseClient,
+  empresaId: string
+): Promise<Record<string, unknown>> {
   switch (agente) {
     case "financeiro":
       return coletarFinanceiro(db, empresaId);

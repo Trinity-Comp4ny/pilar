@@ -40,13 +40,7 @@ const projetoNavItems = [
   { path: "/entregas", label: "Entregas", icon: FileCheck, end: false },
 ];
 
-export function ClienteShell({
-  account,
-  children,
-  projetoId,
-  projetoNome,
-  obraNome,
-}: ClienteShellProps) {
+export function ClienteShell({ account, children, projetoId, projetoNome, obraNome }: ClienteShellProps) {
   const navigate = useNavigate();
   const [isAdminSession, setIsAdminSession] = useState(false);
   const [senhaDialogOpen, setSenhaDialogOpen] = useState(false);
@@ -63,7 +57,7 @@ export function ClienteShell({
   };
 
   return (
-    <div className="min-h-screen bg-muted flex flex-col">
+    <div className="min-h-dvh bg-muted flex flex-col">
       {/* Header: subtítulo "Portal do Cliente" e o texto de "Voltar ao
           painel" somem em mobile (achado da auditoria: "Portal do Cliente"
           quebrava em 2 linhas coladas no logo, e o botão de admin espremia o

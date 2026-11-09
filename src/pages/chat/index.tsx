@@ -31,9 +31,6 @@ import { MarkdownResposta } from "./MarkdownResposta";
 import { PendenciasTab } from "./PendenciasTab";
 import { usePendenciasAgentes } from "@/hooks/useEscopos";
 
-// Saldo de tokens no chip: compacto no rótulo ("1,9 mi"), cheio no title.
-const fmtTokens = new Intl.NumberFormat("pt-BR", { notation: "compact", maximumFractionDigits: 1 });
-const fmtTokensCheio = new Intl.NumberFormat("pt-BR");
 import { LeadConfirmationCard } from "./LeadConfirmationCard";
 import { ProjetoConfirmationCard } from "./ProjetoConfirmationCard";
 import { LancamentoCard } from "./LancamentoCard";
@@ -44,6 +41,7 @@ import { AditivoCard } from "./AditivoCard";
 import { AcaoCard } from "./AcaoCard";
 
 import { BusyMark } from "@/components/motion/BusyMark";
+import { formatCreditos } from "@/lib/creditos";
 
 /** Domínios que o orquestrador roteia — refletem os agentes da edge function ai-chat. */
 const DOMINIOS: { key: string; label: string; icon: LucideIcon; hint: string }[] = [
@@ -211,10 +209,10 @@ export default function ChatPage() {
           {saldo && (
             <span
               className="hidden lg:flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground"
-              title={`Tokens de IA: ${fmtTokensCheio.format(saldo.tokens_plano)} do plano + ${fmtTokensCheio.format(saldo.tokens_comprado)} avulsos`}
+              title={`Créditos de IA: ${formatCreditos(saldo.tokens_plano)} do plano + ${formatCreditos(saldo.tokens_comprado)} avulsos`}
             >
               <Coins className="h-3.5 w-3.5" />
-              {fmtTokens.format(saldo.tokens_restantes)} tokens
+              {formatCreditos(saldo.tokens_restantes)}
             </span>
           )}
           {aba === "conversar" && (
@@ -492,7 +490,10 @@ function InputPanel({
           ) : (
             <>
               <Select value="" onValueChange={(v) => onProjeto(v || null)}>
-                <SelectTrigger className="h-8 w-auto gap-1.5 rounded-full border-black/10 px-3 text-xs text-ink-soft">
+                <SelectTrigger
+                  aria-label="Escolher projeto em foco"
+                  className="h-8 w-auto gap-1.5 rounded-full border-black/10 px-3 text-xs text-ink-soft"
+                >
                   <FolderKanban className="h-3.5 w-3.5" />
                   <SelectValue placeholder="Escolher projeto" />
                 </SelectTrigger>

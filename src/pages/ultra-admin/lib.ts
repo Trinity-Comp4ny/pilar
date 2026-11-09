@@ -259,8 +259,17 @@ const TABELA_LABEL: Record<string, string> = {
   profiles: "um perfil",
 };
 
+/** Ações que a tabela audit_logs registra hoje (triggers de funcionalidade e papel), fora de INSERT/UPDATE/DELETE. */
+const ACAO_AUDITADA: Record<string, string> = {
+  company_features_change: "mudou as funcionalidades da empresa",
+  features_change: "mudou as funcionalidades de um usuário",
+  role_change: "mudou o papel de um usuário",
+};
+
 /** Frase de uma mutação de dados (audit_logs): "criou um projeto", "apagou uma despesa". */
 export function descreverMutacao(action: string, tabela: string | null): string {
+  const conhecida = ACAO_AUDITADA[action];
+  if (conhecida) return conhecida;
   const verbo = action === "INSERT" ? "criou" : action === "DELETE" ? "apagou" : "editou";
   const alvo = tabela ? (TABELA_LABEL[tabela] ?? `um registro em ${tabela.replace(/_/g, " ")}`) : "um registro";
   return `${verbo} ${alvo}`;

@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useObras, type ObraResumo } from "@/pages/obras/hooks/useObras";
+import { EscolherInicioObraDialog } from "./components/EscolherInicioObraDialog";
 import { ObraFormDialog } from "./components/ObraFormDialog";
 import { FilaCotacoesPendentes } from "./components/FilaCotacoesPendentes";
 
@@ -66,8 +67,12 @@ export default function ObrasPage() {
   usePageTitle("Obras");
   const { can } = usePermissions();
   const canCreate = can("obras", "create");
+  // Com a estimativa ligada na empresa, "Nova obra" pergunta como começar (SPEC 136, BEZ-24).
+  const podeEstimar = can("estimativa_obra", "create");
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [escolhaOpen, setEscolhaOpen] = useState(false);
+  const iniciarObra = () => (podeEstimar ? setEscolhaOpen(true) : setDialogOpen(true));
   const { data: obras = [], isLoading, isError } = useObras();
 
   const filtradas = useMemo(() => {
@@ -85,7 +90,7 @@ export default function ObrasPage() {
       search={{ value: search, onChange: setSearch, placeholder: "Buscar obra ou projeto" }}
       primaryAction={{
         label: "Nova obra",
-        onClick: () => setDialogOpen(true),
+        onClick: iniciarObra,
         icon: Plus,
         feature: "obras",
         dataTour: "onb-nova-obra",
@@ -116,7 +121,7 @@ export default function ObrasPage() {
           icon={HardHat}
           title="Nenhuma obra ainda"
           description="Crie a primeira obra a partir de um projeto para acompanhar a execução em campo."
-          action={canCreate ? { label: "Nova obra", onClick: () => setDialogOpen(true) } : undefined}
+          action={canCreate ? { label: "Nova obra", onClick: iniciarObra } : undefined}
         />
       ) : filtradas.length === 0 ? (
         <EmptyState icon={HardHat} title="Nada encontrado" description="Nenhuma obra bate com a busca." />
@@ -128,6 +133,11 @@ export default function ObrasPage() {
         </div>
       )}
 
+      <EscolherInicioObraDialog
+        open={escolhaOpen}
+        onOpenChange={setEscolhaOpen}
+        onEmBranco={() => setDialogOpen(true)}
+      />
       <ObraFormDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </PilarPage>
   );
