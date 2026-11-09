@@ -298,6 +298,10 @@ jobs:
     name: E2E (Playwright, Supabase local)
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    # TEMPORÁRIO: escrita só para o passo que grava as referências novas na branch do
+    # PR (abaixo). Sai no próximo commit deste PR.
+    permissions:
+      contents: write
     env:
       CI: "true"
     steps:
@@ -331,7 +335,27 @@ jobs:
         env:
           # "1" regrava as referências da regressão visual em vez de comparar. Só
           # ligar num PR para atualizar a referência (e2e/visual/README.md).
-          E2E_VISUAL_ATUALIZAR: ""
+          E2E_VISUAL_ATUALIZAR: "1"
+      # TEMPORÁRIO: grava as referências regravadas na própria branch do PR, porque a
+      # sessão que abriu o PR não consegue baixar artifacts (rede do ambiente). Sai no
+      # próximo commit deste PR, junto com E2E_VISUAL_ATUALIZAR.
+      - name: Gravar referências novas na branch do PR
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          cp e2e/visual/telas.visual.spec.ts-snapshots/*.png "$tmp/"
+          git fetch --no-tags --depth=1 origin "$HEAD_REF"
+          git checkout -f -B refs-update FETCH_HEAD
+          cp "$tmp"/*.png e2e/visual/telas.visual.spec.ts-snapshots/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add e2e/visual/telas.visual.spec.ts-snapshots/
+          if git diff --cached --quiet; then echo "Referências sem mudança."; exit 0; fi
+          git commit -m "test(visual): regenerate references for the three-flute logo and new tagline"
+          git push origin "HEAD:refs/heads/$HEAD_REF"
       - name: Referências da regressão visual
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: ${{ !cancelled() }}
