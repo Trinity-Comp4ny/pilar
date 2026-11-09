@@ -2885,11 +2885,13 @@ export type Database = {
           empresa_id: string
           id: string
           mes: number
+          percentual_producao: number | null
           pessoa_id: string | null
           salario_fixo: number | null
           status: string | null
           total_area_projetada: number | null
           total_receber: number | null
+          total_valor_base: number | null
           updated_at: string
           valor_m2: number | null
         }
@@ -2902,11 +2904,13 @@ export type Database = {
           empresa_id: string
           id?: string
           mes: number
+          percentual_producao?: number | null
           pessoa_id?: string | null
           salario_fixo?: number | null
           status?: string | null
           total_area_projetada?: number | null
           total_receber?: number | null
+          total_valor_base?: number | null
           updated_at?: string
           valor_m2?: number | null
         }
@@ -2919,11 +2923,13 @@ export type Database = {
           empresa_id?: string
           id?: string
           mes?: number
+          percentual_producao?: number | null
           pessoa_id?: string | null
           salario_fixo?: number | null
           status?: string | null
           total_area_projetada?: number | null
           total_receber?: number | null
+          total_valor_base?: number | null
           updated_at?: string
           valor_m2?: number | null
         }
@@ -5568,6 +5574,7 @@ export type Database = {
           horas_semanais: number | null
           id: string
           nome: string
+          percentual_producao: number | null
           pis_nit: string | null
           primeiro_nome: string
           profile_id: string | null
@@ -5600,6 +5607,7 @@ export type Database = {
           horas_semanais?: number | null
           id?: string
           nome: string
+          percentual_producao?: number | null
           pis_nit?: string | null
           primeiro_nome: string
           profile_id?: string | null
@@ -5632,6 +5640,7 @@ export type Database = {
           horas_semanais?: number | null
           id?: string
           nome?: string
+          percentual_producao?: number | null
           pis_nit?: string | null
           primeiro_nome?: string
           profile_id?: string | null
@@ -8576,6 +8585,7 @@ export type Database = {
           horas_semanais: number | null
           id: string | null
           nome: string | null
+          percentual_producao: number | null
           pis_nit: string | null
           pode_ver_sensivel: boolean | null
           primeiro_nome: string | null
@@ -8607,6 +8617,7 @@ export type Database = {
           horas_semanais?: number | null
           id?: string | null
           nome?: string | null
+          percentual_producao?: never
           pis_nit?: string | null
           pode_ver_sensivel?: never
           primeiro_nome?: string | null
@@ -8638,6 +8649,7 @@ export type Database = {
           horas_semanais?: number | null
           id?: string | null
           nome?: string | null
+          percentual_producao?: never
           pis_nit?: string | null
           pode_ver_sensivel?: never
           primeiro_nome?: string | null
@@ -9891,11 +9903,13 @@ export type Database = {
           cargo: string
           detalhe_projetos: Json
           nome: string
+          percentual_producao: number
           pessoa_id: string
           projetos_nomes: string[]
           salario_fixo: number
           total_area: number
           total_receber: number
+          total_valor_base: number
           total_variavel: number
           valor_m2: number
         }[]

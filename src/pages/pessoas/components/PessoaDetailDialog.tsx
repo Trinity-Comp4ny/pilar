@@ -22,6 +22,7 @@ import { useMetasProgresso } from "@/hooks/useMetas";
 import { formatarValor, percentual, rotuloDaMeta } from "@/lib/metas";
 import type { Pessoa } from "../types";
 import { PessoaAcessoSecao } from "./PessoaAcessoSecao";
+import { formatPercent } from "@/lib/format";
 
 const formatDateBR = (iso?: string) => {
   if (!iso) return "-";
@@ -172,6 +173,12 @@ export function PessoaDetailDialog({
                     {pessoa.valor_m2
                       ? `R$ ${pessoa.valor_m2.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
                       : "-"}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">% do valor do projeto</Label>
+                  <p className="font-medium">
+                    {pessoa.percentual_producao ? formatPercent(Number(pessoa.percentual_producao)) : "-"}
                   </p>
                 </div>
               </>

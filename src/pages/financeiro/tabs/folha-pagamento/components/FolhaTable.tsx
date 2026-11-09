@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
+import { formatPercent } from "@/lib/format";
 import type { FolhaItem } from "../types";
 
 interface FolhaTableProps {
@@ -87,18 +88,35 @@ export function FolhaTable({
       key: "produtividade",
       header: "Produtividade",
       align: "center",
-      cell: (item) => (
-        <div className="flex flex-col items-center">
-          <span className="font-medium">
-            {(item.soma_area ?? 0).toLocaleString("pt-BR")} m² {isEdited(item, "area") && "*"}
-          </span>
-          <span className="text-xs text-muted-foreground">x {formatCurrency(item.p_valor_m2)}/m²</span>
-        </div>
-      ),
+      cell: (item) => {
+        // Uma linha por regra de produtividade da pessoa: m², percentual ou as duas.
+        const temPercentual = (item.p_percentual ?? 0) > 0;
+        const temM2 = item.p_valor_m2 > 0 || !temPercentual;
+        return (
+          <div className="flex flex-col items-center gap-0.5">
+            {temM2 && (
+              <>
+                <span className="font-medium">
+                  {(item.soma_area ?? 0).toLocaleString("pt-BR")} m² {isEdited(item, "area") && "*"}
+                </span>
+                <span className="text-xs text-muted-foreground">x {formatCurrency(item.p_valor_m2)}/m²</span>
+              </>
+            )}
+            {temPercentual && (
+              <>
+                <span className="font-medium">
+                  {formatCurrency(item.soma_valor_base ?? 0)} {isEdited(item, "base") && "*"}
+                </span>
+                <span className="text-xs text-muted-foreground">x {formatPercent(item.p_percentual ?? 0)}</span>
+              </>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: "variavel",
-      header: "Variável (m²)",
+      header: "Variável",
       align: "end",
       cell: (item) => (
         <span className={`font-medium ${isEdited(item, "variavel") ? "text-foreground" : "text-positive-strong"}`}>

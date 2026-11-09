@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { CheckCircle2, FileDown } from "lucide-react";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
+import { formatPercent } from "@/lib/format";
 import type { FolhaItem, HistoryItem } from "../types";
 import { getMonthLabel } from "../types";
 import { calcularVariavel, calcularTotal, subtotalProjeto } from "../folhaCalc";
@@ -107,12 +108,23 @@ export function DetailEditDialog({
   onEditFormChange,
 }: DetailEditDialogProps) {
   const formatCurrency = useMoneyMask();
-  // Fórmula: variável = área × valor/m²; total = fixo + variável. Ao editar,
-  // recalculamos os derivados para não fechar folha com total inconsistente.
+  // Fórmula: variável = área × valor/m² + valor dos projetos × percentual;
+  // total = fixo + variável. Ao editar, recalculamos os derivados para não
+  // fechar folha com total inconsistente.
   const salario = editForm.p_salario_fixo ?? person?.p_salario_fixo ?? 0;
   const area = editForm.soma_area ?? person?.soma_area ?? 0;
+  const valorBase = editForm.soma_valor_base ?? person?.soma_valor_base ?? 0;
   const valorM2 = person?.p_valor_m2 ?? 0;
-  const variavelCalc = calcularVariavel(area, valorM2);
+  const percentual = person?.p_percentual ?? 0;
+  const temPercentual = percentual > 0;
+  const temM2 = valorM2 > 0 || !temPercentual;
+  const variavelCalc = calcularVariavel(area, valorM2, valorBase, percentual);
+  const regraVariavel = [
+    temM2 ? `área × ${formatCurrency(valorM2)}/m²` : null,
+    temPercentual ? `${formatPercent(percentual)} do valor dos projetos` : null,
+  ]
+    .filter(Boolean)
+    .join(" + ");
   const totalCalc = calcularTotal(salario, variavelCalc);
   const totalManual = editForm.v_total;
   const totalDesacoplado = isEditing && totalManual !== undefined && Math.abs(totalManual - totalCalc) > 0.01;
@@ -144,14 +156,26 @@ export function DetailEditDialog({
                 onChange={(v) => onEditFormChange("p_salario_fixo", v)}
                 isCurrency
               />
-              <EditableField
-                label="Produtividade (m²)"
-                isEditing={isEditing}
-                value={person.soma_area}
-                editValue={editForm.soma_area}
-                onChange={(v) => onEditFormChange("soma_area", v)}
-                suffix=" m²"
-              />
+              {temM2 && (
+                <EditableField
+                  label="Produtividade (m²)"
+                  isEditing={isEditing}
+                  value={person.soma_area}
+                  editValue={editForm.soma_area}
+                  onChange={(v) => onEditFormChange("soma_area", v)}
+                  suffix=" m²"
+                />
+              )}
+              {temPercentual && (
+                <EditableField
+                  label={`Valor dos projetos (${formatPercent(percentual)})`}
+                  isEditing={isEditing}
+                  value={person.soma_valor_base ?? 0}
+                  editValue={editForm.soma_valor_base}
+                  onChange={(v) => onEditFormChange("soma_valor_base", v)}
+                  isCurrency
+                />
+              )}
               <EditableField
                 label="Variável"
                 isEditing={isEditing}
@@ -174,8 +198,7 @@ export function DetailEditDialog({
 
             {isEditing && (
               <p className="text-xs text-muted-foreground">
-                Variável recalculado de área × {formatCurrency(valorM2)}/m². Total sugerido: {formatCurrency(totalCalc)}
-                .
+                Variável recalculado de {regraVariavel}. Total sugerido: {formatCurrency(totalCalc)}.
               </p>
             )}
             {totalDesacoplado && (
@@ -192,9 +215,14 @@ export function DetailEditDialog({
                   {person.detalhe_projetos.map((p, i) => (
                     <div key={`${p.nome}-${i}`} className="flex justify-between px-2 py-1 text-sm">
                       <span className="truncate max-w-[220px]">{p.nome}</span>
-                      <span className="text-muted-foreground">
-                        {(p.area_m2 || 0).toLocaleString("pt-BR")} m² ={" "}
-                        {formatCurrency(subtotalProjeto(p, person.p_valor_m2))}
+                      <span className="text-muted-foreground text-right">
+                        {[
+                          temM2 ? `${(p.area_m2 || 0).toLocaleString("pt-BR")} m²` : null,
+                          temPercentual ? `${formatPercent(percentual)} de ${formatCurrency(p.valor_base ?? 0)}` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" + ")}{" "}
+                        = {formatCurrency(subtotalProjeto(p, person.p_valor_m2, percentual))}
                       </span>
                     </div>
                   ))}
@@ -315,7 +343,7 @@ export function HistoryDetailDialog({
                 <TableRow>
                   <TableHead>Colaborador</TableHead>
                   <TableHead className="text-right">Salário fixo</TableHead>
-                  <TableHead className="text-right">Variável (m²)</TableHead>
+                  <TableHead className="text-right">Variável</TableHead>
                   <TableHead className="text-right">Total a receber</TableHead>
                   <TableHead className="text-center">Status</TableHead>
                   <TableHead className="text-right">Comprovante</TableHead>
