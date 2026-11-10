@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 type Comentario = { id: string; texto: string; autor: string; data: string; mencionados?: string[] };
 const estado = vi.hoisted(() => ({
@@ -8,6 +8,7 @@ const estado = vi.hoisted(() => ({
   mutateAsync: vi.fn(),
 }));
 const notificarMencao = vi.hoisted(() => vi.fn());
+const apagarNotificacoesComentario = vi.hoisted(() => vi.fn());
 
 vi.mock("../hooks/useProjetoAtividades", () => ({
   useProjetoAtividades: () => ({
@@ -18,7 +19,7 @@ vi.mock("../hooks/useProjetoAtividades", () => ({
 vi.mock("@/hooks/useComentarioAutoria", () => ({
   useComentarioAutoria: () => ({ autorId: "u-eu", podeExcluir: (c: Comentario) => c.autor === "Eu" }),
 }));
-vi.mock("@/lib/notificarMencao", () => ({ notificarMencao }));
+vi.mock("@/lib/notificarMencao", () => ({ notificarMencao, apagarNotificacoesComentario }));
 vi.mock("./AtividadeComposer", () => ({
   AtividadeComposer: ({ onSubmit }: { onSubmit: (t: string, m: string[]) => void }) => (
     <>
@@ -51,6 +52,7 @@ beforeEach(() => {
   estado.mutate.mockReset();
   estado.mutateAsync.mockReset();
   notificarMencao.mockReset();
+  apagarNotificacoesComentario.mockReset();
 });
 
 describe("ProjetoAtividadesPanel", () => {
@@ -88,7 +90,7 @@ describe("ProjetoAtividadesPanel", () => {
     expect(estado.mutate.mock.calls[0][0].comentarios[0].mencionados).toBeUndefined();
   });
 
-  it("só oferece apagar o que o usuário pode apagar e grava a lista sem ele", () => {
+  it("só oferece apagar o que o usuário pode apagar, grava a lista sem ele e limpa a notificação", async () => {
     estado.comentarios = [
       { id: "c1", texto: "meu", autor: "Eu", data: "2026-01-01" },
       { id: "c2", texto: "do outro", autor: "B", data: "2026-01-02" },
@@ -97,5 +99,6 @@ describe("ProjetoAtividadesPanel", () => {
     expect(screen.queryByText("apagar-c2")).not.toBeInTheDocument();
     fireEvent.click(screen.getByText("apagar-c1"));
     expect(estado.mutateAsync).toHaveBeenCalledWith({ comentarios: [estado.comentarios[1]] });
+    await waitFor(() => expect(apagarNotificacoesComentario).toHaveBeenCalledWith("projeto", "p1", "c1"));
   });
 });

@@ -637,6 +637,7 @@ function DisciplinaDetailBody({
                     autorNome={autorNome}
                     destacadoId={comentarioDestacado}
                     onExcluir={(id) => onUpdateComentarios?.(comentarios.filter((x) => x.id !== id))}
+                    entidade={disciplina.id ? { tipo: "disciplina", id: disciplina.id } : undefined}
                   />
                 </div>
                 <div className="shrink-0 border-t bg-background/60 p-4">
