@@ -8706,6 +8706,30 @@ export type Database = {
         }
         Relationships: []
       }
+      usuario_dispositivos: {
+        Row: {
+          descricao: string | null
+          dispositivo_id: string
+          primeiro_em: string
+          ultimo_em: string
+          user_id: string
+        }
+        Insert: {
+          descricao?: string | null
+          dispositivo_id: string
+          primeiro_em?: string
+          ultimo_em?: string
+          user_id: string
+        }
+        Update: {
+          descricao?: string | null
+          dispositivo_id?: string
+          primeiro_em?: string
+          ultimo_em?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       escopos_safe: {
@@ -10745,6 +10769,10 @@ export type Database = {
       regenerate_convite_token: {
         Args: { p_convite_id: string }
         Returns: string
+      }
+      registrar_dispositivo: {
+        Args: { p_descricao: string; p_dispositivo_id: string }
+        Returns: boolean
       }
       registrar_heartbeat_agente: {
         Args: { p_agent_type: string; p_detail?: Json; p_status: string }
