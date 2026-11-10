@@ -5,6 +5,13 @@ import { applyCookieConsent } from "../analytics";
 import { getCookieConsent, hasCookieDecision, CONSENT_REVIEW_REQUESTED_EVENT } from "../cookieConsent";
 
 /**
+ * Recusar e aceitar com o mesmo peso visual (Guia de Cookies da ANPD, 2022): destacar só
+ * o "aceitar" empurra a escolha. Os dois botões usam esta mesma classe.
+ */
+const BOTAO_ESCOLHA =
+  "rounded-full border border-ink/25 bg-frame px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-paper-alt";
+
+/**
  * Alternador on/off pra uma categoria de cookie. Essencial não usa isso (é
  * sempre ligado, sem escolha); só "Análise" tem estado pra alternar.
  */
@@ -97,27 +104,15 @@ export function CookieConsentBanner() {
           )}
 
           <div className="flex shrink-0 flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => decidir(false)}
-              className="rounded-full border border-ink/15 px-4 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-paper-alt"
-            >
+            <button type="button" onClick={() => decidir(false)} className={BOTAO_ESCOLHA}>
               Recusar não essenciais
             </button>
             {expandido ? (
-              <button
-                type="button"
-                onClick={() => decidir(analytics)}
-                className="rounded-full bg-brand px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-brand/80"
-              >
+              <button type="button" onClick={() => decidir(analytics)} className={BOTAO_ESCOLHA}>
                 Salvar preferências
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={() => decidir(true)}
-                className="rounded-full bg-brand px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-brand/80"
-              >
+              <button type="button" onClick={() => decidir(true)} className={BOTAO_ESCOLHA}>
                 Aceitar todos
               </button>
             )}

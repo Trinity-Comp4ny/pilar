@@ -61,6 +61,13 @@ Por isso:
 - Obrigações novas que os Termos v2 criam e precisam de processo: avisar por e-mail os
   administradores 30 dias antes de reajuste, de mudança material e de fornecedor novo (Anexo A5), e
   avisar incidente ao Cliente em até 2 dias úteis (Anexo A8).
+- Registro de acesso do Marco Civil (art. 15): migration `20261211000000_registros_acesso_marco_civil`
+  grava IP, data e hora de cada login no app (`auth.sessions`), no portal do cliente e no Pilar
+  Campo, guarda 6 meses e entra na exportação de dados do titular. A política passou a 2.1 com
+  esse prazo (a 2.0 prometia o registro sem o sistema guardar).
+- Aviso dos Termos aos administradores: edge function `aviso-legal-admins` e cartão "Avisos
+  legais" na aba Pedidos LGPD do ultra admin (conferir e enviar, sem duplicar quem já recebeu).
+- Banner de cookies com "Recusar" e "Aceitar" do mesmo peso visual (Guia de Cookies da ANPD).
 - Continua pendente (decisão ou contratação, não código): CNPJ, nome do encarregado, DPAs dos
   fornecedores com cláusulas-padrão da ANPD (Res. 19/2024) e revisão por advogado.
 
