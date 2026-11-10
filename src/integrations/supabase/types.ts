@@ -610,6 +610,44 @@ export type Database = {
           },
         ]
       }
+      ajuda_perguntas_sem_resposta: {
+        Row: {
+          created_at: string
+          created_by: string
+          empresa_id: string | null
+          id: string
+          origem: string
+          rota: string | null
+          texto: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          empresa_id?: string | null
+          id?: string
+          origem: string
+          rota?: string | null
+          texto: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          empresa_id?: string | null
+          id?: string
+          origem?: string
+          rota?: string | null
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ajuda_perguntas_sem_resposta_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alertas: {
         Row: {
           created_at: string | null
