@@ -4,6 +4,7 @@
 // em `/wp-json/wp/v2/media`. Aqui só se escolhe QUAL PDF é o do mês e do regime: a leitura e as conferências
 // são as mesmas do portal da CBIC (`lerPdfCub`), então um link errado vira recusa, não preço errado.
 import type { Regime, Uf } from "@/schemas/estimativaObra";
+import { textoPuro } from "./cub";
 
 export interface PortalEstadual {
   uf: Uf;
@@ -68,13 +69,6 @@ export interface LinkPdf {
 
 const semMarca = (l: LinkPdf): LinkPdf => ({ ...l, semMarcaDeRegime: true });
 
-const limpar = (t: string) =>
-  t
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;|&#160;/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
 /** Links para PDF numa página HTML, com o texto da âncora. Só https. */
 export function linksPdfDaPagina(html: string, paginaUrl: string): LinkPdf[] {
   const links: LinkPdf[] = [];
@@ -87,7 +81,7 @@ export function linksPdfDaPagina(html: string, paginaUrl: string): LinkPdf[] {
       continue;
     }
     if (!url.startsWith("https://") || !/\.pdf(\?|#|$)/i.test(url)) continue;
-    links.push({ url, texto: limpar(m[2]) });
+    links.push({ url, texto: textoPuro(m[2]) });
   }
   return links;
 }
@@ -97,7 +91,7 @@ export function linksPdfDoWordpress(json: unknown): LinkPdf[] {
   if (!Array.isArray(json)) return [];
   return json.flatMap((item) => {
     const url = typeof item?.source_url === "string" ? item.source_url : "";
-    const texto = typeof item?.title?.rendered === "string" ? limpar(item.title.rendered) : "";
+    const texto = typeof item?.title?.rendered === "string" ? textoPuro(item.title.rendered) : "";
     return url.startsWith("https://") && /\.pdf$/i.test(url) ? [{ url, texto }] : [];
   });
 }

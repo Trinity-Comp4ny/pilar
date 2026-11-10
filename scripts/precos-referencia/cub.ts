@@ -51,6 +51,21 @@ export function cookiesDaResposta(setCookies: string[]): string {
     .join("; ");
 }
 
+/**
+ * Texto de um trecho de HTML de site de terceiro, para log e para a coluna `fonte`. Tira as tags e depois
+ * qualquer `<` ou `>` que sobre (tag quebrada ou aninhada, como `<<b>script>`): o resultado nunca carrega
+ * marcação. Corta em 200 caracteres.
+ */
+export function textoPuro(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/[<>]/g, "")
+    .replace(/&nbsp;|&#160;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 200);
+}
+
 /** Opções do `<select name="sinduscon">` da página da UF, sem o "-1" de "selecione". */
 export function lerOpcoesSinduscon(html: string): OpcaoSinduscon[] {
   const select = /<select[^>]*name=["']sinduscon["'][^>]*>([\s\S]*?)<\/select>/i.exec(html);
@@ -58,10 +73,7 @@ export function lerOpcoesSinduscon(html: string): OpcaoSinduscon[] {
   const opcoes: OpcaoSinduscon[] = [];
   for (const m of select[1].matchAll(/<option[^>]*value=["']([^"']*)["'][^>]*>([\s\S]*?)<\/option>/gi)) {
     const valor = m[1].trim();
-    const rotulo = m[2]
-      .replace(/<[^>]+>/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
+    const rotulo = textoPuro(m[2]);
     if (!valor || valor === "-1" || !/^\d+$/.test(valor)) continue;
     opcoes.push({ valor, rotulo });
   }
