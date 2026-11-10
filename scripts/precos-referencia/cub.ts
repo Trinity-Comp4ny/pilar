@@ -8,7 +8,6 @@
 // os 19 códigos da NBR 12721 com a contagem certa, valores em faixa plausível, padrão alto acima do normal e
 // normal acima do baixo, e o mês e o regime pedidos. Qualquer falha recusa a UF inteira: preço errado é pior
 // que nenhum, e a UF fica para a importação manual.
-import { lerValor } from "@/pages/ultra-admin/estimativaCubImport";
 import type { Regime, Uf } from "@/schemas/estimativaObra";
 
 export type PadraoCub = "baixo" | "normal" | "alto" | "unico";
@@ -225,7 +224,13 @@ export function juntarCodigos(texto: string): string {
 // "R-1" (padrão pela tabela) ou "R1-N" (padrão no próprio código, como no destaque do CUB médio).
 const RE_CODIGO = /^(R-?1|PP-?4|R-?8|R-?16|PIS|CAL-?8|CSL-?8|CSL-?16|RP-?1Q|GI)(?:-([BNA]))?$/i;
 const SUFIXO: Record<string, PadraoCub> = { B: "baixo", N: "normal", A: "alto" };
-const RE_VALOR = /^(?:R\$)?\d{1,3}(?:\.\d{3})*,\d{2}$/;
+// Reais com duas casas ("2.593,86") ou três ("2.593,860", como na tabela de composição do Sinduscon-RS).
+const RE_VALOR = /^(?:R\$)?\d{1,3}(?:\.\d{3})*,\d{2,3}$/;
+
+function lerReais(token: string): number {
+  const n = Number(token.replace(/^R\$/, "").replace(/\./g, "").replace(",", "."));
+  return Math.round(n * 100) / 100;
+}
 const VALOR_MINIMO = 500;
 const VALOR_MAXIMO = 30_000;
 
@@ -303,14 +308,14 @@ export function interpretarTextoCub(
     if (!cod) continue;
     const id = cod[1].toUpperCase().replace(/-/g, "");
     const regra = PADROES_POR_OCORRENCIA[id];
-    // Valor: o próximo token em reais antes do próximo código. "R$" solto e a variação em % são pulados.
+    // Valor: o primeiro número depois do código, antes do próximo código. Tem de ser reais: se o primeiro número
+    // for outra coisa, a linha não é de preço (pular para o número seguinte já pegou o valor de "Materiais" na
+    // tabela de composição do RS).
     let valor: number | null = null;
     for (let j = i + 1; j < tokens.length && !RE_CODIGO.test(tokens[j]); j++) {
-      if (tokens[j].includes("%")) continue;
-      if (RE_VALOR.test(tokens[j])) {
-        valor = lerValor(tokens[j]);
-        break;
-      }
+      if (!/\d/.test(tokens[j])) continue; // "R$", "=", descrição
+      if (!tokens[j].includes("%") && RE_VALOR.test(tokens[j])) valor = lerReais(tokens[j]);
+      break;
     }
     if (valor === null) continue; // código citado em texto corrido, sem valor ao lado
     if (valor < VALOR_MINIMO || valor > VALOR_MAXIMO) {

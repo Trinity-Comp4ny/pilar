@@ -191,6 +191,12 @@ describe("interpretarTextoCub", () => {
     expect(interpretarTextoCub(trocadas, "GO", "2026-10-01", "onerado").erro).toMatch(/não está acima/);
   });
 
+  it("o primeiro número depois do código tem de ser o preço", () => {
+    // Uma linha em que o primeiro número não é reais não pode emprestar o número seguinte.
+    const linhas = empilhadas().map((l) => (l.startsWith("GI") ? "GI 12 1.200,00 0,1%" : l));
+    expect(interpretarTextoCub(linhas, "GO", "2026-10-01", "onerado").erro).toBe("Faltam no PDF: GI unico.");
+  });
+
   it("recusa valor fora da faixa e código repetido demais", () => {
     const fora = empilhadas().map((l) => (l.startsWith("GI") ? "GI 120,00 0,1%" : l));
     expect(interpretarTextoCub(fora, "GO", "2026-10-01", "onerado").erro).toMatch(/fora da faixa/);
@@ -475,6 +481,39 @@ describe("PDF real do Sinduscon-RS (out/2026, texto do diagnóstico)", () => {
     expect(v("CSL-16", "alto")).toBe(4705.58);
     expect(v("PIS", "baixo")).toBe(1874.29);
     expect(v("GI", "unico")).toBe(1422.31);
+  });
+
+  it("com a página 2 (composição, valores com três casas e colunas de materiais), lê o mesmo CUB", () => {
+    const pagina1 = linhas.map((texto, i) => ({ texto, x: 20, y: 800 - i * 12 }));
+    const pagina2 = [
+      "PREÇOS E CUSTOS DA CONSTRUÇÃO",
+      "Composição CUB/RS do mês de – OUTUBRO/2026",
+      "R$/m Mão-de- Despesas Mão-de- Despesas",
+      "R 1-B 2.593,860 1.246,94 1.132,38 197,17 17,37 48,07% 43,66% 7,60% 0,67%",
+      "R 1-N 3.476,310 1.706,78 1.583,19 185,12 1,22 49,10% 45,54% 5,33% 0,04%",
+      "R 1-A 4.689,490 2.794,95 1.718,03 175,01 1,50 59,60% 36,64% 3,73% 0,03%",
+      "PP 4-B 2.473,960 1.451,68 953,07 52,42 16,79 58,68% 38,52% 2,12% 0,68%",
+      "PP 4-N 3.411,450 1.789,40 1.399,83 221,99 0,23 52,45% 41,03% 6,51% 0,01%",
+      "R 8-B 2.348,380 1.387,84 895,76 47,17 17,61 59,10% 38,14% 2,01% 0,75%",
+      "R 8-N 2.969,000 1.584,04 1.258,96 102,41 23,59 53,35% 42,40% 3,45% 0,79%",
+      "R 8-A 3.815,520 2.343,69 1.328,80 120,76 22,27 61,43% 34,83% 3,16% 0,58%",
+      "R 16-N 2.913,690 1.595,09 1.211,37 84,75 22,48 54,74% 41,58% 2,91% 0,77%",
+      "R 16-A 3.895,700 2.264,01 1.493,18 104,75 33,76 58,12% 38,33% 2,69% 0,87%",
+      "PIS 1.874,290 1.045,38 771,24 48,89 8,78 55,77% 41,15% 2,61% 0,47%",
+      "RP1Q 2.640,080 1.098,13 1.519,83 0,00 22,12 41,59% 57,57% 0,00% 0,84%",
+      "CAL 8-N 3.906,190 2.323,10 1.406,02 137,21 39,86 59,47% 35,99% 3,51% 1,02%",
+      "CAL 8-A 4.552,530 2.956,07 1.419,37 137,23 39,86 64,93% 31,18% 3,01% 0,88%",
+      "CSL 8-N 2.954,290 1.554,53 1.266,16 108,33 25,27 52,62% 42,86% 3,67% 0,86%",
+      "CSL 8-A 3.490,210 2.055,87 1.300,53 108,33 25,48 58,90% 37,26% 3,10% 0,73%",
+      "CSL 16-N 3.989,730 2.143,62 1.685,43 121,51 39,17 53,73% 42,24% 3,05% 0,98%",
+      "CSL 16-A 4.705,580 2.813,26 1.731,93 121,50 38,89 59,79% 36,81% 2,58% 0,83%",
+      "GI 1.422,310 708,83 704,18 0,00 9,30 49,84% 49,51% 0,00% 0,65%",
+    ].map((texto, i) => ({ texto, x: 20, y: 800 - i * 12 }));
+    const r = lerPdfCub([pagina1, pagina2], "RS", "2026-10-01", "onerado", { exigirRegimeNoTexto: true });
+    expect(r.erro).toBeNull();
+    expect(r.linhas).toHaveLength(19);
+    expect(r.linhas.find((l) => l.subtipo === "R1" && l.padrao === "baixo")?.valor_m2).toBe(2593.86);
+    expect(r.linhas.find((l) => l.subtipo === "CAL-8" && l.padrao === "alto")?.valor_m2).toBe(4552.53);
   });
 
   it("o PDF sem a palavra desoneração não serve como desonerado", () => {

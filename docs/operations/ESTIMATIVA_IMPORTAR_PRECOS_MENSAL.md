@@ -22,19 +22,27 @@ Retificação (`_Retificacao01.zip`) de mês já gravado é lida de novo. Format
 
 ### CUB: de onde vem cada UF
 
-| Fonte                                                       | UFs                                                                                                                             | Como                                                                            |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Portal da CBIC (`cub.org.br/cub-m2-estadual/{UF}/`)         | as que estão nele (AC, AM, BA, CE, DF, ES, GO, MA, MG, MT, PA, PB, PE, PI, PR, RJ, RN, RO, RR, SC, SE; AL e MS quando aparecem) | formulário do mês e regime, resposta em PDF                                     |
-| Portal do SindusCon-SP (`sindusconsp.com.br/servicos/cub/`) | SP                                                                                                                              | PDF do mês na página do CUB ou na listagem do WordPress                         |
-| Portal do Sinduscon-RS (`sinduscon-rs.com.br`)              | RS                                                                                                                              | PDF "Preços e custos da construção", publicado no mês seguinte ao de referência |
-| Portal do Sinduscon-MS (`sindusconms.com.br/cub/`)          | MS, quando a CBIC não tem o mês                                                                                                 | PDF do mês                                                                      |
-| Variável `CUB_PORTAIS`                                      | qualquer UF (TO, AL, AP...)                                                                                                     | o mesmo leitor de portal, sem deploy                                            |
+Situação conferida pela sondagem contra os sites reais em 2026-11-10 (job "Sondar fontes reais" do PR #786):
+
+| Fonte                                                       | UFs                                                                    | Situação real                                                                                                                                                        |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Portal da CBIC (`cub.org.br/cub-m2-estadual/{UF}/`)         | AM, BA, CE, DF, ES, GO, MA, MG, MT, PA, PB, PE, PI, PR, RJ, RN, RR, SC | lido e conferido nos dois regimes. MG, PI e RN publicam com 2 a 3 meses de atraso: entra o mês mais novo que existir                                                 |
+| Portal da CBIC                                              | AC, RO, SE                                                             | nenhum mês nos últimos 6 no portal: importação manual                                                                                                                |
+| Portal do Sinduscon-MS (`sindusconms.com.br/cub/`)          | MS                                                                     | lido (sem desoneração); o Sinduscon-MS não publica a versão com desoneração                                                                                          |
+| Portal do Sinduscon-RS (`sinduscon-rs.com.br/cub-rs/`)      | RS                                                                     | PDF "Preços e custos da construção de MÊS-AAAA" (traz o CUB do próprio mês); só sem desoneração                                                                      |
+| Portal do SindusCon-SP (`sindusconsp.com.br/servicos/cub/`) | SP                                                                     | os arquivos do mês ficam no Download Manager, com a API fechada (401); o robô tenta o feed RSS da categoria. A planilha de série histórica só tem o R8-N e não serve |
+| Variável `CUB_PORTAIS`                                      | TO, AL, AP e quem mais precisar                                        | o mesmo leitor de portal, sem deploy                                                                                                                                 |
+
+O robô busca até 6 meses para trás por UF e regime, do mais novo ao mais antigo, e para no primeiro mês encontrado
+ou já gravado. Quem não tem fonte automática aparece no resumo do job e no alerta de atraso.
 
 Em cada UF, a primeira fonte que passa nas conferências vence. **Nenhum PDF é gravado sem passar em todas:** os 19
 códigos da NBR 12721 (R1, PP-4, R8, R16, PIS, CAL-8, CSL-8, CSL-16, RP1Q, GI) nos padrões certos; padrão alto acima
 do normal e normal acima do baixo; o mês pedido citado no PDF; o regime certo (fora da CBIC, "com desoneração"
 precisa estar escrito no PDF); valores entre R$ 500 e R$ 30.000 por m²; variação de até 15% contra o mês anterior;
-e não idêntico ao mês anterior (arquivo repetido). O PDF é lido por linha e por coluna (tabelas lado a lado) e, se
+e não idêntico ao mês anterior (arquivo repetido). Do portal da CBIC, o PDF ainda precisa citar o Sinduscon pedido:
+na sondagem o portal devolveu, para a BA, o PDF do Sinduscon-MT de outro mês (o robô pede de novo uma vez e, se
+continuar trocado, recusa). O PDF é lido por linha e por coluna (tabelas lado a lado) e, se
 trouxer os dois regimes, página por página; leituras que discordam são recusadas. O RP1Q é conferido mas não é
 gravado (o motor não usa e o banco não aceita esse código).
 
