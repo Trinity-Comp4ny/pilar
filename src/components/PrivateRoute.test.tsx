@@ -124,6 +124,38 @@ describe("PrivateRoute", () => {
     });
   });
 
+  it("SPEC 151: login que começou num pedido de conexão volta para a tela de autorização", async () => {
+    sessionStorage.setItem("pilar_oauth_autorizacao", "auth_1234abcd");
+    mockUseAuth.mockReturnValue({
+      ...baseAuth,
+      isAuthenticated: true,
+      loading: false,
+      profile: {
+        id: "user-123",
+        empresa_id: "empresa-123",
+        role: "user",
+        onboarding_completed: true,
+        empresas: { onboarding_completed: true } as ProfileWithEmpresa["empresas"],
+      } as ProfileWithEmpresa,
+    });
+
+    vi.resetModules();
+    const { PrivateRoute } = (await import("./PrivateRoute")) as { PrivateRoute: ComponentType };
+    render(
+      <MemoryRouter initialEntries={["/inicio"]}>
+        <Routes>
+          <Route path="/oauth/autorizar" element={<div data-testid="autorizar">Autorizar</div>} />
+          <Route element={<PrivateRoute />}>
+            <Route path="/inicio" element={<div data-testid="inicio">Início</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(screen.getByTestId("autorizar")).toBeInTheDocument());
+    sessionStorage.clear();
+  });
+
   it("redirects to profile-setup when onboarding not completed", async () => {
     mockUseAuth.mockReturnValue({
       ...baseAuth,

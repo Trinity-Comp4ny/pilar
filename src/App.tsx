@@ -40,6 +40,7 @@ const Signup = lazy(() => import("./pages/Signup"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const Inicio = lazy(() => import("./pages/inicio"));
 const ComprarTokens = lazy(() => import("./pages/comprar-tokens"));
+const AutorizarApp = lazy(() => import("./pages/oauth/Autorizar"));
 const MeuTrabalho = lazy(() => import("./pages/meu-trabalho"));
 const Obras = lazy(() => import("./pages/obras"));
 const ObraClima = lazy(() => import("./pages/obras/clima"));
@@ -246,6 +247,11 @@ const App = () => {
                           SPEC 082), sem a sidebar do app. Guarda de autenticação própria
                           dentro do componente, mesmo padrão de /profile-setup. */}
                         <Route path="/comprar-tokens" element={<ComprarTokens />} />
+
+                        {/* Tela de autorização do conector (SPEC 151): ChatGPT/Claude mandam o
+                          usuário para cá pelo OAuth do Supabase Auth. Fora do PrivateRoute: sem
+                          login ela guarda o pedido e manda para o login, e o PrivateRoute retoma. */}
+                        <Route path="/oauth/autorizar" element={<AutorizarApp />} />
 
                         <Route element={<PrivateRoute />}>
                           <Route path="/inicio" element={<Inicio />} />
