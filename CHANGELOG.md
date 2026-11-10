@@ -8,10 +8,13 @@ Regras deste repo:
 - **`[Não lançado]`** = está em `staging`, ainda não promovido para produção (`main`). Ao promover, renomeia-se a seção para a versão e a data.
 - Todo PR de feature ou fix visível ao usuário acrescenta uma linha em `[Não lançado]`, na categoria certa (Adicionado / Alterado / Corrigido / Removido).
 - A versão de runtime em produção é o commit SHA exposto em `/health` (`RELEASE_SHA`); esta é a versão amigável, voltada a suporte e ao cliente.
+- **O cliente vê as novidades dentro do app (SPEC 152).** Commit que muda o que o usuário vê ou faz leva as linhas `Novidade: <frase para o cliente>` e `Impacto: fluxo | melhoria | correcao` (opcional `Modulo: <feature>`). No deploy em produção elas viram rascunho em `/ultra-admin/releases`; publicado, aparece em Novidades. Este arquivo segue como histórico técnico.
 
 ## [Não lançado]
 
 ### Adicionado
+
+- Novidades dentro do app: página Novidades, modal "O que mudou" quando o caminho de uma tarefa muda, aviso de versão nova com a contagem do que veio, e aviso no sino para quem pediu a mudança. Releases revisadas e publicadas em `/ultra-admin/releases`. (SPEC 152)
 
 - Onboarding guiado: checklist de primeiros passos por pilar (Gestão/Projetos/Obras) e tour com coach marks nas ações principais. (#202)
 - Command palette (⌘K / Ctrl+K) para navegar e criar registros rápido. (#194)
