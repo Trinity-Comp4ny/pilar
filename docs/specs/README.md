@@ -140,3 +140,4 @@ Decisão de arquitetura no meio do caminho vira um [ADR](../architecture/README.
 | [155](./155-agente-da-ajuda-no-canto-da-tela.md) | Agente da ajuda no canto da tela: "Como faço?" responde pela central com o botão Ir para a tela, segue para os agentes ou o suporte com a pergunta, e lacunas da ajuda no Ultra admin | Em implementação |
 | [156](./156-nps-e-esforco-dentro-do-app.md) | NPS no Início (14 dias de conta, a cada 90 dias) e "Foi fácil?" depois de lançamento, proposta e lead; detrator avisa o ultra admin; painel Satisfação | Em implementação |
 | [157](./157-comunicados-da-plataforma.md) | Comunicados do ultra admin para os escritórios: faixa ou modal, público por escritório, plano e papel, dispensa gravada no banco | Em implementação |
+| [159](./159-alerta-de-acesso-novo.md) | Alerta de acesso por navegador novo no sino e por e-mail (sai mesmo lido), e lista dos navegadores da conta em Segurança | Em implementação |

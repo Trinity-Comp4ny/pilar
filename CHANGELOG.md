@@ -14,6 +14,8 @@ Regras deste repo:
 
 ### Adicionado
 
+- Alerta de acesso à conta por navegador novo, no sino e por e-mail, e lista dos navegadores que entraram em Configurações → Segurança. (SPEC 159)
+
 - Comunicados da plataforma: o time do Pilar avisa os escritórios dentro do app, em faixa ou modal, por escritório, plano ou papel. Criados em `/ultra-admin/comunicados`. (SPEC 157)
 
 - Pesquisa de satisfação (NPS) no Início, no máximo a cada 90 dias, e pergunta rápida "Foi fácil?" depois de lançar, criar proposta ou lead. Respostas em `/ultra-admin/satisfacao`; detrator avisa o ultra admin na hora. (SPEC 156)

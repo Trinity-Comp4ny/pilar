@@ -407,6 +407,7 @@ const App = () => {
                           <Route path="/company-setup" element={<CompanySetup />} />
                           <Route path="/profile-setup" element={<ProfileSetup />} />
                           <Route path="/profile" element={<SettingsRedirect section="conta" />} />
+                          <Route path="/seguranca" element={<SettingsRedirect section="seguranca" />} />
                           <Route path="/company" element={<SettingsRedirect section="empresa" />} />
                           <Route path="/billing" element={<SettingsRedirect section="pagamento" />} />
 
