@@ -29,6 +29,7 @@ const FETCH_CRU_PERMITIDO = new Set([
 // nova de usuário final NÃO entra aqui: usa limitarOuResponder (_shared/db-rate-limit.ts).
 const SEM_RATE_LIMIT: Record<string, string> = {
   "auth-email-hook": "chamada pelo Supabase Auth, autenticada por segredo do hook",
+  "aviso-legal-admins": "só ultra admin com MFA; conteúdo fixo do catálogo",
   "aviso-ultra-admin-email": "trigger via pg_net, autenticado por segredo",
   "excluir-dados-titular": "só ultra admin (fila LGPD)",
   "exportar-dados-titular": "trigger via pg_net, autenticado por segredo",

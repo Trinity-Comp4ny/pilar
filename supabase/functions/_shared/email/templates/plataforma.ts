@@ -410,3 +410,42 @@ export function templateAvisoPlataforma(params: {
     }),
   };
 }
+
+/**
+ * Aviso legal aos administradores das contas (Termos de Uso, Política de Privacidade,
+ * reajuste, fornecedor novo). Os Termos v2 (cláusula 15 e Anexo A5) prometem esse aviso
+ * por e-mail antes da mudança valer.
+ */
+export function templateAvisoLegal(params: {
+  nome: string;
+  assunto: string;
+  titulo: string;
+  lead: string;
+  itens: string[];
+  vigencia: string;
+  link: string;
+  linkLabel: string;
+  rodape: string;
+}): EmailTemplate {
+  const { nome, assunto, titulo, lead, itens, vigencia, link: href, linkLabel, rodape } = params;
+  return {
+    subject: assunto,
+    html: shell({
+      preview: lead.slice(0, 120),
+      footerNote: `Você recebeu este e-mail porque administra uma conta no ${BRAND.nome}. ${rodape}`,
+      hero: {
+        titulo: html`${titulo}`,
+        lead: html`Olá, ${strong(nome)}. ${lead}`,
+      },
+      content: [
+        card(
+          itens.map((item, i) => paragraph(html`${strong("·")} ${item}`, { mt: i === 0 ? 0 : 8 })),
+          { accent: "info", mt: 0 }
+        ),
+        card([kv("Vale a partir de", vigencia)], { mt: 16 }),
+        button(linkLabel, href),
+        small(html`Dúvidas ou discordância? Responda este e-mail ou escreva para privacidade@pilarsoft.com.br.`),
+      ],
+    }),
+  };
+}
