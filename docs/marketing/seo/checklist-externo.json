@@ -1,0 +1,45 @@
+{
+  "_leia": "Itens de SEO fora do código, atualizados à mão. Entram na nota calculada por apps/marketing/scripts/seo-nota.mjs (ver NOTA_SEO.md). Marque feito: true ou atualize a quantidade e anote a data em 'em'.",
+  "searchConsole": {
+    "feito": false,
+    "em": null,
+    "nota": "Verificar www.pilarsoft.com.br como propriedade de domínio (registro TXT no DNS)."
+  },
+  "sitemapEnviado": {
+    "feito": false,
+    "em": null,
+    "nota": "Search Console > Sitemaps > https://www.pilarsoft.com.br/sitemap.xml"
+  },
+  "bing": { "feito": false, "em": null, "nota": "Bing Webmaster Tools > Importar do Google Search Console." },
+  "conversaoMedida": {
+    "feito": false,
+    "em": null,
+    "nota": "Clique em Agendar demonstração por origem (utm/ref) visível num painel do PostHog."
+  },
+  "coreWebVitals": {
+    "feito": false,
+    "em": null,
+    "nota": "Relatório Core Web Vitals do Search Console sem URL ruim (ou PageSpeed mobile >= 90)."
+  },
+  "perfisOficiais": {
+    "feito": false,
+    "em": null,
+    "nota": "LinkedIn da empresa e Instagram @pilarsoft.app com link para o site, e no sameAs do index.html."
+  },
+  "diretorios": {
+    "quantidade": 0,
+    "em": null,
+    "lista": [],
+    "nota": "Capterra, GetApp, Software Advice, B2B Stack, G2."
+  },
+  "dominiosComLink": {
+    "quantidade": 0,
+    "em": null,
+    "nota": "Search Console > Links > Sites com mais links (domínios distintos)."
+  },
+  "avaliacoes": {
+    "quantidade": 0,
+    "em": null,
+    "nota": "Avaliações reais publicadas (Capterra, Google, G2). Nunca inventar."
+  }
+}
