@@ -1,6 +1,9 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, CheckCircle2, ExternalLink, Wrench, X } from "lucide-react";
-import { useAvisosPlataforma } from "@/hooks/useAvisosPlataforma";
+import { AVISOS_PLATAFORMA_KEY, useAvisosPlataforma } from "@/hooks/useAvisosPlataforma";
 import type { Aviso } from "@/lib/avisosPlataforma";
 import { TONE_BADGE } from "@/lib/status";
 import { env } from "@/lib/env";
@@ -40,6 +43,7 @@ function Icone({ aviso }: { aviso: Aviso }) {
  */
 export function FaixaAvisos() {
   const avisos = useAvisosPlataforma();
+  const queryClient = useQueryClient();
   const [dispensados, setDispensados] = useState<string[]>(lerDispensados);
 
   const visiveis = avisos.filter((a) => !dispensados.includes(a.chave));
@@ -48,10 +52,16 @@ export function FaixaAvisos() {
   const statusUrl = env.VITE_STATUS_URL ?? "/status";
   const externo = statusUrl.startsWith("http");
 
-  const dispensar = (chave: string) => {
-    const proximos = [...dispensados, chave];
+  const dispensar = (aviso: Aviso) => {
+    const proximos = [...dispensados, aviso.chave];
     setDispensados(proximos);
     gravarDispensados(proximos);
+    // Comunicado dispensado não volta em nenhum dispositivo (SPEC 157).
+    if (aviso.comunicadoId) {
+      void supabase
+        .rpc("dispensar_comunicado", { p_comunicado_id: aviso.comunicadoId })
+        .then(() => queryClient.invalidateQueries({ queryKey: AVISOS_PLATAFORMA_KEY }));
+    }
   };
 
   return (
@@ -68,7 +78,26 @@ export function FaixaAvisos() {
             <p>{a.texto}</p>
             {a.detalhe && <p className="text-xs opacity-80">{a.detalhe}</p>}
           </div>
-          {a.tom !== "positive" && (
+          {a.link &&
+            (a.link.url.startsWith("/") ? (
+              <Link
+                to={a.link.url}
+                className="inline-flex shrink-0 items-center gap-1 text-xs font-medium underline-offset-2 hover:underline"
+              >
+                {a.link.rotulo}
+              </Link>
+            ) : (
+              <a
+                href={a.link.url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex shrink-0 items-center gap-1 text-xs font-medium underline-offset-2 hover:underline"
+              >
+                {a.link.rotulo}
+                <ExternalLink size={12} aria-hidden />
+              </a>
+            ))}
+          {a.tom !== "positive" && !a.comunicadoId && (
             <a
               href={statusUrl}
               target={externo ? "_blank" : undefined}
@@ -82,7 +111,7 @@ export function FaixaAvisos() {
           <button
             type="button"
             aria-label="Dispensar aviso"
-            onClick={() => dispensar(a.chave)}
+            onClick={() => dispensar(a)}
             className="shrink-0 rounded p-0.5 opacity-70 hover:opacity-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black/20"
           >
             <X size={14} aria-hidden />

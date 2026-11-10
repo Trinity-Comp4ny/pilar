@@ -14,6 +14,8 @@ Regras deste repo:
 
 ### Adicionado
 
+- Comunicados da plataforma: o time do Pilar avisa os escritórios dentro do app, em faixa ou modal, por escritório, plano ou papel. Criados em `/ultra-admin/comunicados`. (SPEC 157)
+
 - Pesquisa de satisfação (NPS) no Início, no máximo a cada 90 dias, e pergunta rápida "Foi fácil?" depois de lançar, criar proposta ou lead. Respostas em `/ultra-admin/satisfacao`; detrator avisa o ultra admin na hora. (SPEC 156)
 
 - Agente da ajuda no canto da tela ("Como faço?"): responde com o passo a passo e leva até a tela; o que não tem artigo segue para os agentes ou para o suporte. Perguntas sem resposta aparecem em `/ultra-admin/ajuda`. (SPEC 155)

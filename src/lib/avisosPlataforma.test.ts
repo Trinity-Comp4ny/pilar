@@ -97,3 +97,19 @@ describe("janelaManutencao", () => {
     );
   });
 });
+
+describe("comunicados na faixa (SPEC 157)", () => {
+  it("só formato faixa entra, depois de incidente e antes de Normalizado", () => {
+    const avisos = montarAvisos(
+      [incidente({ id: "r", status: "resolvido", resolvidoEm: min(-5) }), incidente({ id: "a" })],
+      [],
+      AGORA,
+      [
+        { id: "c1", titulo: "Preço", mensagem: "Dezembro", formato: "faixa", link_url: null, link_rotulo: null },
+        { id: "c2", titulo: "Modal", mensagem: "x", formato: "modal", link_url: null, link_rotulo: null },
+      ]
+    );
+    expect(avisos.map((a) => a.chave)).toEqual(["incidente:a:u1", "comunicado:c1", "incidente:r:resolvido"]);
+    expect(avisos[1].comunicadoId).toBe("c1");
+  });
+});

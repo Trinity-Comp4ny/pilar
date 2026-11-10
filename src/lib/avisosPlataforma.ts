@@ -35,6 +35,33 @@ export interface Aviso {
   titulo: string;
   texto: string;
   detalhe: string | null;
+  /** Comunicado (SPEC 157): link opcional e dispensa gravada no banco, não só na aba. */
+  link?: { url: string; rotulo: string } | null;
+  comunicadoId?: string;
+}
+
+export interface ComunicadoAviso {
+  id: string;
+  titulo: string;
+  mensagem: string;
+  formato: string;
+  link_url: string | null;
+  link_rotulo: string | null;
+}
+
+/** Comunicado em faixa vira aviso informativo, depois de incidentes e manutenções. */
+export function comunicadosEmFaixa(comunicados: ComunicadoAviso[]): Aviso[] {
+  return comunicados
+    .filter((c) => c.formato === "faixa")
+    .map((c) => ({
+      chave: `comunicado:${c.id}`,
+      tom: "info" as const,
+      titulo: c.titulo,
+      texto: c.mensagem,
+      detalhe: null,
+      link: c.link_url ? { url: c.link_url, rotulo: c.link_rotulo || "Saiba mais" } : null,
+      comunicadoId: c.id,
+    }));
 }
 
 export const JANELA_NORMALIZADO_MS = 30 * 60 * 1000;
@@ -61,7 +88,12 @@ export function janelaManutencao(inicio: Date, fim: Date): string {
   return `de ${dia.format(inicio)} ${hora.format(inicio)} a ${dia.format(fim)} ${hora.format(fim)}`;
 }
 
-export function montarAvisos(incidentes: IncidenteAviso[], manutencoes: ManutencaoAviso[], agora: Date): Aviso[] {
+export function montarAvisos(
+  incidentes: IncidenteAviso[],
+  manutencoes: ManutencaoAviso[],
+  agora: Date,
+  comunicados: ComunicadoAviso[] = []
+): Aviso[] {
   const t = agora.getTime();
 
   const abertos = incidentes
@@ -113,5 +145,5 @@ export function montarAvisos(incidentes: IncidenteAviso[], manutencoes: Manutenc
     }
   }
 
-  return [...abertos, ...emAndamento, ...programadas, ...normalizados];
+  return [...abertos, ...emAndamento, ...programadas, ...comunicadosEmFaixa(comunicados), ...normalizados];
 }
