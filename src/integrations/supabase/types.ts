@@ -6203,6 +6203,95 @@ export type Database = {
           },
         ]
       }
+      product_release_itens: {
+        Row: {
+          commit_sha: string | null
+          criado_em: string
+          feedback_ids: string[]
+          id: string
+          impacto: string
+          modulo: string | null
+          ordem: number
+          release_id: string
+          texto: string
+        }
+        Insert: {
+          commit_sha?: string | null
+          criado_em?: string
+          feedback_ids?: string[]
+          id?: string
+          impacto: string
+          modulo?: string | null
+          ordem?: number
+          release_id: string
+          texto: string
+        }
+        Update: {
+          commit_sha?: string | null
+          criado_em?: string
+          feedback_ids?: string[]
+          id?: string
+          impacto?: string
+          modulo?: string | null
+          ordem?: number
+          release_id?: string
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_release_itens_release_id_fkey"
+            columns: ["release_id"]
+            isOneToOne: false
+            referencedRelation: "product_releases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_release_vistas: {
+        Row: {
+          user_id: string
+          visto_ate: string
+        }
+        Insert: {
+          user_id: string
+          visto_ate?: string
+        }
+        Update: {
+          user_id?: string
+          visto_ate?: string
+        }
+        Relationships: []
+      }
+      product_releases: {
+        Row: {
+          criada_em: string
+          id: string
+          publicada_em: string | null
+          publicada_por: string | null
+          sha: string | null
+          titulo: string
+          versao: string | null
+        }
+        Insert: {
+          criada_em?: string
+          id?: string
+          publicada_em?: string | null
+          publicada_por?: string | null
+          sha?: string | null
+          titulo: string
+          versao?: string | null
+        }
+        Update: {
+          criada_em?: string
+          id?: string
+          publicada_em?: string | null
+          publicada_por?: string | null
+          sha?: string | null
+          titulo?: string
+          versao?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -10174,6 +10263,7 @@ export type Database = {
           origem: string
         }[]
       }
+      marcar_novidades_vistas: { Args: never; Returns: undefined }
       mfa_backup_codes_remaining: { Args: never; Returns: number }
       mfa_consume_backup_code: { Args: { p_code: string }; Returns: boolean }
       mfa_generate_backup_codes: { Args: never; Returns: string[] }
@@ -10248,6 +10338,7 @@ export type Database = {
         }
         Returns: number
       }
+      novidades_publicadas: { Args: never; Returns: Json }
       ops_agente_disparar: { Args: { p_agente_id: string }; Returns: undefined }
       ops_decidir_acao: {
         Args: {
@@ -10423,6 +10514,7 @@ export type Database = {
           projeto_id: string
         }[]
       }
+      publicar_release: { Args: { p_release_id: string }; Returns: number }
       rate_limit_cleanup: { Args: never; Returns: undefined }
       rate_limit_cleanup_monitored: { Args: never; Returns: undefined }
       recalc_disciplina_status_por_checklist: {
