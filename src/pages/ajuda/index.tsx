@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { BookOpen, ChevronRight } from "lucide-react";
 import { PilarPage } from "@/components/PilarPage";
@@ -9,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ARTIGOS, GRUPOS_AJUDA, type ArtigoAjuda } from "@/content/ajuda/indice";
 import { artigosDaRota, buscarArtigos } from "@/lib/ajudaBusca";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { registrarPerguntaSemResposta } from "@/lib/ajudaLacunas";
 
 function ListaArtigos({ artigos }: { artigos: ArtigoAjuda[] }) {
   return (
@@ -42,6 +44,14 @@ export default function Ajuda() {
 
   const resultados = useMemo(() => buscarArtigos(busca), [busca]);
   const daTela = useMemo(() => (tela ? artigosDaRota(tela) : []), [tela]);
+
+  // Busca que parou sem resultado vira pauta de artigo (SPEC 155). Espera a pessoa parar de digitar.
+  const buscaParada = useDebouncedValue(busca.trim(), 1500);
+  useEffect(() => {
+    if (buscaParada.length >= 4 && buscarArtigos(buscaParada).length === 0) {
+      void registrarPerguntaSemResposta(buscaParada, tela ?? "/ajuda", "central");
+    }
+  }, [buscaParada, tela]);
 
   return (
     <PilarPage title="Central de ajuda" search={{ value: busca, onChange: setBusca, placeholder: "Buscar na ajuda" }}>

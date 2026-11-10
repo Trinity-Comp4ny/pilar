@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ARTIGOS, GRUPOS_AJUDA } from "../src/content/ajuda/indice";
+import { ARTIGOS, GRUPOS_AJUDA, NOME_DA_TELA } from "../src/content/ajuda/indice";
 
 /**
  * Central de ajuda (SPEC 154): o artigo só ajuda se o caminho que ele ensina existe. Esta régua
@@ -51,6 +51,11 @@ describe("central de ajuda", () => {
       }
     }
     expect(quebradas).toEqual([]);
+  });
+
+  it("toda tela principal de artigo tem nome para o botão Ir para", () => {
+    const semNome = ARTIGOS.filter((a) => a.rotas[0] && !NOME_DA_TELA[a.rotas[0]]).map((a) => a.slug);
+    expect(semNome).toEqual([]);
   });
 
   it("texto sem palavra banida da marca", () => {

@@ -14,6 +14,8 @@ Regras deste repo:
 
 ### Adicionado
 
+- Agente da ajuda no canto da tela ("Como faço?"): responde com o passo a passo e leva até a tela; o que não tem artigo segue para os agentes ou para o suporte. Perguntas sem resposta aparecem em `/ultra-admin/ajuda`. (SPEC 155)
+
 - Central de ajuda (`/ajuda`) com passo a passo das tarefas mais comuns, botão "?" no topo das telas que têm artigo e artigos na busca ⌘K. (SPEC 154)
 
 - Faixa de aviso no topo do app quando há instabilidade declarada ou manutenção programada, com o que é afetado e o link para a status page. Manutenções cadastradas em `/ultra-admin/incidentes`. (SPEC 153)

@@ -2,6 +2,7 @@ import {
   Eye,
   EyeOff,
   HelpCircle,
+  MessageCircleQuestion,
   LogOut,
   Megaphone,
   MessageSquare,
@@ -22,6 +23,7 @@ import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { usePendenciasAgentes } from "@/hooks/useEscopos";
 import { useNovidades } from "@/hooks/useNovidades";
+import { abrirAgenteAjuda } from "@/lib/agenteAjudaEvento";
 import { useValoresOcultos } from "@/contexts/ValoresOcultosContext";
 import { cn } from "@/lib/utils";
 
@@ -141,6 +143,7 @@ export function MoreSheet({ open, onOpenChange }: MoreSheetProps) {
             badge={pendenciasAgentes?.length ?? 0}
             onClick={closeAnd(() => navigate("/agentes"))}
           />
+          <MoreSheetRow icon={MessageCircleQuestion} label="Como faço?" onClick={closeAnd(abrirAgenteAjuda)} />
           <MoreSheetRow icon={HelpCircle} label="Central de ajuda" onClick={closeAnd(() => navigate("/ajuda"))} />
           <MoreSheetRow
             icon={Megaphone}

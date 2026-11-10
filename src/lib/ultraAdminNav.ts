@@ -13,6 +13,7 @@ import {
   FlaskConical,
   LayoutDashboard,
   Megaphone,
+  LifeBuoy,
   MessageSquare,
   ShieldCheck,
   Siren,
@@ -32,6 +33,7 @@ export type UltraSecaoId =
   | "funcionalidades"
   | "feedback"
   | "releases"
+  | "ajuda"
   | "atividade"
   | "incidentes"
   | "custos-ia"
@@ -71,6 +73,7 @@ export const ULTRA_SECOES: readonly UltraSecao[] = [
   },
   { id: "feedback", title: "Feedback", url: `${ULTRA_ADMIN_BASE}/feedback`, icon: MessageSquare, group: "Produto" },
   { id: "releases", title: "Releases", url: `${ULTRA_ADMIN_BASE}/releases`, icon: Megaphone, group: "Produto" },
+  { id: "ajuda", title: "Lacunas da ajuda", url: `${ULTRA_ADMIN_BASE}/ajuda`, icon: LifeBuoy, group: "Produto" },
   {
     id: "estimativa",
     title: "Estimativa de obra",

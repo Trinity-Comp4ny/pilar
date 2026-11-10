@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import Ajuda from "./index";
 
+vi.mock("@/lib/ajudaLacunas", () => ({ registrarPerguntaSemResposta: vi.fn() }));
 vi.mock("@/components/FeedbackDialog", () => ({
   FeedbackDialog: ({ open }: { open: boolean }) => (open ? <div data-testid="feedback-aberto" /> : null),
 }));

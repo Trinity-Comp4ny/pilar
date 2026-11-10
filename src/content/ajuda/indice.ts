@@ -26,6 +26,17 @@ export interface ArtigoAjuda {
   palavras: string[];
 }
 
+/** Nome da tela no botão "Ir para ..." do agente e do artigo. */
+export const NOME_DA_TELA: Record<string, string> = {
+  "/gestao/leads": "Leads",
+  "/gestao/propostas": "Propostas",
+  "/gestao/clientes": "Clientes",
+  "/gestao/financeiro": "Financeiro",
+  "/gestao/equipe": "Equipe",
+  "/projetos": "Projetos",
+  "/novidades": "Novidades",
+};
+
 export const ARTIGOS: readonly ArtigoAjuda[] = [
   {
     slug: "busca-rapida",

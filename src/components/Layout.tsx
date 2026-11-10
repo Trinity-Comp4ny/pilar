@@ -23,6 +23,8 @@ const OnboardingChecklist = lazy(() =>
 );
 // Lazy: modal "O que mudou" (SPEC 152). Só monta conteúdo quando há mudança de fluxo nova.
 const OQueMudou = lazy(() => import("@/components/novidades/OQueMudou").then((m) => ({ default: m.OQueMudou })));
+// Lazy: agente da ajuda no canto (SPEC 155). Traz o markdown dos artigos; fora do bundle de entrada.
+const AgenteAjuda = lazy(() => import("@/components/agente/AgenteAjuda").then((m) => ({ default: m.AgenteAjuda })));
 const OnboardingTourController = lazy(() =>
   import("@/components/onboarding/OnboardingTourController").then((m) => ({
     default: m.OnboardingTourController,
@@ -95,6 +97,7 @@ function LayoutContent() {
         <OnboardingChecklist />
         <OnboardingTourController />
         <OQueMudou />
+        <AgenteAjuda />
       </Suspense>
     </div>
   );

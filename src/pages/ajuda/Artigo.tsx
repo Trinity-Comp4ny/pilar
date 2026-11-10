@@ -6,7 +6,7 @@ import { PilarPage } from "@/components/PilarPage";
 import { EmptyState } from "@/components/EmptyState";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { PageLoader } from "@/components/motion/PageLoader";
-import { ArtigoMarkdown } from "./ArtigoMarkdown";
+import { ArtigoMarkdown } from "@/components/ajuda/ArtigoMarkdown";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { artigoPorSlug, carregarCorpo } from "@/lib/ajudaBusca";
