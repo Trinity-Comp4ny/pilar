@@ -67,6 +67,18 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.pilarsoft.com.br/blog/aporte-obra-administracao</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/art-rrt-projeto-obra</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.pilarsoft.com.br/blog/como-organizar-escritorio-arquitetura</loc>
     <lastmod>2026-11-10</lastmod>
     <changefreq>monthly</changefreq>
@@ -86,6 +98,12 @@
   </url>
   <url>
     <loc>https://www.pilarsoft.com.br/blog/compatibilizacao-de-projetos</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/conciliacao-bancaria-escritorio</loc>
     <lastmod>2026-11-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -127,7 +145,37 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.pilarsoft.com.br/blog/efetivo-de-obra</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/entrega-tecnica-pos-obra</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/escopo-de-projeto-engenharia</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.pilarsoft.com.br/blog/fluxo-de-caixa-escritorio-engenharia</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/gestao-de-equipe-escritorio-engenharia</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/gestao-de-obra-para-arquitetos</loc>
     <lastmod>2026-11-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -139,13 +187,73 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.pilarsoft.com.br/blog/inadimplencia-escritorio-arquitetura</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/indicadores-escritorio-engenharia</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/medicao-de-obra</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/modelo-proposta-projeto-arquitetura</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.pilarsoft.com.br/blog/obra-por-administracao-prestacao-de-contas</loc>
     <lastmod>2026-11-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.pilarsoft.com.br/blog/planilha-controle-de-projetos</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/portal-do-cliente-arquitetura</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/prazo-projeto-estrutural</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/projeto-instalacoes-prediais-mep</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.pilarsoft.com.br/blog/proposta-projeto-engenharia</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/quanto-cobrar-projeto-eletrico</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/quanto-cobrar-projeto-estrutural</loc>
     <lastmod>2026-11-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -175,7 +283,19 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.pilarsoft.com.br/blog/software-arquitetura-vs-gestao</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.pilarsoft.com.br/blog/software-gestao-escritorio-engenharia</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/taxa-de-administracao-de-obra</loc>
     <lastmod>2026-11-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

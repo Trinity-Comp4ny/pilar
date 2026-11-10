@@ -59,7 +59,19 @@ describe("artigos publicados", () => {
   it("link interno de artigo aponta para rota ou artigo que existe", () => {
     const slugs = new Set(ARTIGOS.map((a) => a.slug));
     const fixas = new Set(["/", "/gestao", "/projetos", "/obra", "/portal", "/campo", "/planos", "/faq", "/blog"]);
-    for (const extra of ["/vs/planilha", "/vs/trello", "/engenharia", "/arquitetura"]) fixas.add(extra);
+    for (const extra of [
+      "/vs/planilha",
+      "/vs/trello",
+      "/vs/whatsapp",
+      "/vs/notion",
+      "/vs/erp-construtora",
+      "/engenharia",
+      "/arquitetura",
+      "/ferramentas",
+      "/ferramentas/calculadora-de-honorarios",
+      "/ferramentas/modelo-de-proposta",
+    ])
+      fixas.add(extra);
     for (const a of ARTIGOS) {
       for (const [, href] of a.corpo.matchAll(/\]\((\/[^)\s#]*)/g)) {
         const ok = fixas.has(href) || (href.startsWith("/blog/") && slugs.has(href.slice(6)));

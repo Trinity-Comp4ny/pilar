@@ -11,35 +11,49 @@
  * chamado pelo banner e pelo link "Preferências de cookies" no rodapé. A
  * decisão é gravada em cookie de .pilarsoft.com.br, então já vale no app.
  */
-import posthog from "posthog-js";
+import type { PostHog } from "posthog-js";
 import { getCookieConsent, saveCookieConsent } from "./cookieConsent";
-import { registrarInteresseDemo } from "./lib/origem";
+import { classificarCanal, lerOrigem, registrarInteresseDemo } from "./lib/origem";
 
 const KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
 const HOST = (import.meta.env.VITE_POSTHOG_HOST as string | undefined) ?? "https://us.i.posthog.com";
 
-let posthogInitialized = false;
+/**
+ * O PostHog só é baixado depois do consentimento (import dinâmico): quem não
+ * aceitou cookies, ou ainda não decidiu, não paga o peso dele na primeira visita.
+ * É a maior parte do JavaScript da landing que não aparece na tela, e pesa no
+ * LCP e no INP medidos pelo Google (Core Web Vitals).
+ */
+let carregando: Promise<PostHog> | null = null;
 
 function hasAnalyticsConsent(): boolean {
   return getCookieConsent()?.analytics === true;
 }
 
-function ensurePosthogInit() {
-  if (posthogInitialized || !KEY) return;
-  posthog.init(KEY, {
-    api_host: HOST,
-    capture_pageview: true,
-    capture_pageleave: true,
-    autocapture: false,
-    person_profiles: "identified_only",
-    disable_session_recording: true,
-  });
-  posthogInitialized = true;
+function obterPosthog(): Promise<PostHog> {
+  if (!carregando) {
+    carregando = import("posthog-js").then(({ default: posthog }) => {
+      posthog.init(KEY as string, {
+        api_host: HOST,
+        capture_pageview: true,
+        capture_pageleave: true,
+        autocapture: false,
+        person_profiles: "identified_only",
+        disable_session_recording: true,
+      });
+      return posthog;
+    });
+    // Falha de rede no download: libera para tentar de novo no próximo clique.
+    carregando.catch(() => {
+      carregando = null;
+    });
+  }
+  return carregando;
 }
 
 export function initAnalytics() {
   if (!KEY || !hasAnalyticsConsent()) return;
-  ensurePosthogInit();
+  void obterPosthog().catch(() => undefined);
 }
 
 /** Clique em CTA que sai da LP pro app (cadastro, planos, login). No-op sem consentimento. */
@@ -48,8 +62,20 @@ export function trackCta(cta: string, location: string) {
   // cookies porque não identifica ninguém nem guarda nada no navegador.
   if (cta === "agende_demo") registrarInteresseDemo(location);
   if (!KEY || !hasAnalyticsConsent()) return;
-  ensurePosthogInit();
-  posthog.capture("landing_cta_clicked", { cta, location });
+  // Canal e página no evento: o painel quebra cliques por origem (Google, ChatGPT,
+  // LinkedIn...) e por artigo do blog sem cruzar com outra tabela. Lidos agora,
+  // antes do download, para valerem a página do clique.
+  const origem = lerOrigem();
+  const propriedades = {
+    cta,
+    location,
+    canal: classificarCanal(origem),
+    pagina: window.location.pathname,
+    ...(origem.utm_campaign ? { utm_campaign: origem.utm_campaign } : {}),
+  };
+  void obterPosthog()
+    .then((posthog) => posthog.capture("landing_cta_clicked", propriedades))
+    .catch(() => undefined);
 }
 
 /** Chamado pelo banner de consentimento e pelo link "Preferências de cookies" no rodapé. */
@@ -59,9 +85,14 @@ export function applyCookieConsent(analyticsAccepted: boolean) {
     initAnalytics();
     return;
   }
-  if (posthogInitialized) {
-    posthog.opt_out_capturing();
-    posthog.reset();
-    posthogInitialized = false;
+  if (carregando) {
+    const anterior = carregando;
+    carregando = null;
+    void anterior
+      .then((posthog) => {
+        posthog.opt_out_capturing();
+        posthog.reset();
+      })
+      .catch(() => undefined);
   }
 }

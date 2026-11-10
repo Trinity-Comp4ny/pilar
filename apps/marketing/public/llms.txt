@@ -55,6 +55,27 @@
 - [Rentabilidade de projeto de engenharia: como saber se o projeto deu lucro](https://www.pilarsoft.com.br/blog/rentabilidade-projeto-engenharia)
 - [Como reduzir retrabalho em projeto de engenharia](https://www.pilarsoft.com.br/blog/retrabalho-projeto-engenharia)
 
+- [Aporte de obra por administração: como organizar o dinheiro do cliente](https://www.pilarsoft.com.br/blog/aporte-obra-administracao)
+- [ART e RRT: quando emitir em projeto e em obra](https://www.pilarsoft.com.br/blog/art-rrt-projeto-obra)
+- [Conciliação bancária para escritório de engenharia e arquitetura](https://www.pilarsoft.com.br/blog/conciliacao-bancaria-escritorio)
+- [Efetivo de obra: como registrar e por que ele importa](https://www.pilarsoft.com.br/blog/efetivo-de-obra)
+- [Entrega técnica e pós-obra: o que documentar e entregar ao cliente](https://www.pilarsoft.com.br/blog/entrega-tecnica-pos-obra)
+- [Escopo de projeto de engenharia: como escrever para não perder dinheiro em aditivo](https://www.pilarsoft.com.br/blog/escopo-de-projeto-engenharia)
+- [Gestão de equipe em escritório de engenharia: responsável, carga e prioridade](https://www.pilarsoft.com.br/blog/gestao-de-equipe-escritorio-engenharia)
+- [Gestão de obra para arquitetos: acompanhamento, administração ou gerenciamento?](https://www.pilarsoft.com.br/blog/gestao-de-obra-para-arquitetos)
+- [Inadimplência em escritório de arquitetura: como cobrar sem desgastar o cliente](https://www.pilarsoft.com.br/blog/inadimplencia-escritorio-arquitetura)
+- [Indicadores de escritório de engenharia: os poucos números que importam](https://www.pilarsoft.com.br/blog/indicadores-escritorio-engenharia)
+- [Medição de obra: avanço físico e o que mostrar ao cliente](https://www.pilarsoft.com.br/blog/medicao-de-obra)
+- [Proposta de projeto de arquitetura: estrutura comentada, etapa por etapa](https://www.pilarsoft.com.br/blog/modelo-proposta-projeto-arquitetura)
+- [Planilha de controle de projetos: modelo de colunas e quando ela deixa de servir](https://www.pilarsoft.com.br/blog/planilha-controle-de-projetos)
+- [Portal do cliente para escritório de arquitetura: o que mostrar e o que não mostrar](https://www.pilarsoft.com.br/blog/portal-do-cliente-arquitetura)
+- [Prazo de projeto estrutural: dependências com a arquitetura e o que atrasa](https://www.pilarsoft.com.br/blog/prazo-projeto-estrutural)
+- [Projeto de instalações prediais (MEP): como coordenar elétrica, hidráulica e HVAC](https://www.pilarsoft.com.br/blog/projeto-instalacoes-prediais-mep)
+- [Quanto cobrar por projeto elétrico: método para chegar ao preço](https://www.pilarsoft.com.br/blog/quanto-cobrar-projeto-eletrico)
+- [Quanto cobrar por projeto estrutural: horas, área e complexidade](https://www.pilarsoft.com.br/blog/quanto-cobrar-projeto-estrutural)
+- [Software de arquitetura ou software de gestão? A diferença e por que o escritório precisa dos dois](https://www.pilarsoft.com.br/blog/software-arquitetura-vs-gestao)
+- [Taxa de administração de obra: como calcular e cobrar](https://www.pilarsoft.com.br/blog/taxa-de-administracao-de-obra)
+
 ## Planos
 
 - [Planos e preços](https://www.pilarsoft.com.br/planos): preço por escritório, sem cobrança por usuário; o que muda entre planos é a quantidade de projetos, obras e leads ativos e a cota mensal de créditos de IA. Todo plano tem a plataforma inteira; para começar, agende uma demonstração com o time.

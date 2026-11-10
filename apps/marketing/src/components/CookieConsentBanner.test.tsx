@@ -62,7 +62,13 @@ describe("CookieConsentBanner", () => {
     expect(posthog.init).toHaveBeenCalledTimes(1);
 
     trackCta("agende_demo", "hero");
-    expect(posthog.capture).toHaveBeenCalledWith("landing_cta_clicked", { cta: "agende_demo", location: "hero" });
+    // O PostHog chega por import dinâmico depois do consentimento.
+    await vi.waitFor(() =>
+      expect(posthog.capture).toHaveBeenCalledWith(
+        "landing_cta_clicked",
+        expect.objectContaining({ cta: "agende_demo", location: "hero" })
+      )
+    );
   });
 
   it("recusar grava a recusa, some e nenhum evento sai, nem no clique de CTA", async () => {
