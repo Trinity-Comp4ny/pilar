@@ -136,7 +136,7 @@ export const pessoaDefaultValues: PessoaFormData = {
 
 /** "10", "2,5" ou "2.5" → número; vazio ou inválido → null. */
 export function parsePercentual(v: string | null | undefined): number | null {
-  const t = (v ?? "").trim().replace("%", "").replace(",", ".");
+  const t = (v ?? "").replace(/%/g, "").trim().replace(/,/g, ".");
   if (!t) return null;
   const n = Number(t);
   return Number.isFinite(n) ? n : null;
