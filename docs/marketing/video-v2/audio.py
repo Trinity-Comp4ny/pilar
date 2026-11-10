@@ -78,6 +78,9 @@ def sine(f, n, phase=0.0):
 
 def add(buf, x, t, gain=1.0, pan=0.0):
     i = int(t * SR)
+    if i < 0:  # som que começaria antes do zero: entra já pela metade
+        x = x[-i:]
+        i = 0
     if i >= buf.shape[1] or i + len(x) <= 0:
         return
     x = x[: buf.shape[1] - i]
