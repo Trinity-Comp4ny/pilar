@@ -36,7 +36,7 @@ jobs:
   # - Tudo que é independente roda em paralelo, um job por pergunta. Antes, lint,
   #   typecheck, testes e build eram um job só de ~13 min: um erro de tipo PULAVA os
   #   testes, e só se descobria o próximo erro no run seguinte.
-  # - A suíte do Vitest (1.743 arquivos) roda em 4 shards; o job `coverage` junta os
+  # - A suíte do Vitest (509 arquivos) roda em 8 shards; o job `coverage` junta os
   #   relatórios e aplica os pisos de cobertura do vite.config.ts sobre a soma.
   # - O E2E roda em 3 shards, cada um com o PRÓPRIO Supabase local (banco isolado,
   #   sem disputa de dado entre specs). O stack sobe em segundo plano enquanto o
@@ -53,36 +53,44 @@ jobs:
     timeout-minutes: 5
     outputs:
       code: ${{ steps.escopo.outputs.code }}
+      unit: ${{ steps.escopo.outputs.unit }}
+      e2e: ${{ steps.escopo.outputs.e2e }}
+      db: ${{ steps.escopo.outputs.db }}
+      functions: ${{ steps.escopo.outputs.functions }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # Em PR o checkout é o merge commit (refs/pull/N/merge): HEAD^1 é a ponta da
           # base, então HEAD^1..HEAD é exatamente o que o PR muda. Profundidade 2 basta.
           fetch-depth: 2
+      # CI seletivo: cada grupo de checks roda só se o PR mexe no que ele verifica
+      # (regras e o porquê de cada uma em scripts/ci-escopo.sh). Arquivo desconhecido
+      # liga tudo. Em 10/11, 52% dos commits só mexiam em teste unitário e não
+      # precisavam de E2E, banco nem Edge Functions.
+      #
+      # Push em staging/main e dispatch rodam TUDO: é de lá que sai deploy, e é a rede
+      # de segurança do que um PR pulou (falha em staging abre issue sozinha).
       - id: escopo
         env:
           EVENTO: ${{ github.event_name }}
         run: |
           set -euo pipefail
           if [ "$EVENTO" != "pull_request" ]; then
-            echo "code=true" >> "$GITHUB_OUTPUT"
+            printf '%s\n' code=true unit=true e2e=true db=true functions=true >> "$GITHUB_OUTPUT"
             exit 0
           fi
           ARQUIVOS="$(git diff --name-only HEAD^1 HEAD)"
-          echo "Arquivos do PR:"; printf '%s\n' "$ARQUIVOS"
-          # "Só docs" = tudo em docs/ ou research/, ou .md solto na raiz ou em
-          # .claude/agents/. Exceções que testes LEEM (então contam como código):
-          # docs/architecture/EDGE_FUNCTIONS.md (scripts/edge-functions-catalog.test.ts).
-          # brand/ fica de fora de propósito: brand/assets/logo é comparado por teste.
-          CODIGO="$(printf '%s\n' "$ARQUIVOS" \
-            | grep -vE '^(docs|research)/|^[^/]+\.md$|^\.claude/agents/[^/]+\.md$' || true)"
-          CODIGO="$CODIGO$(printf '%s\n' "$ARQUIVOS" | grep -E '^docs/architecture/EDGE_FUNCTIONS\.md$' || true)"
-          if [ -n "$CODIGO" ]; then
-            echo "code=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "code=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::PR só de documentação: roda o scan de segredo e pula os gates de código."
-          fi
+          echo "::group::Arquivos do PR"; printf '%s\n' "$ARQUIVOS"; echo "::endgroup::"
+          ESCOPO="$(printf '%s\n' "$ARQUIVOS" | scripts/ci-escopo.sh)"
+          echo "$ESCOPO" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Escopo do PR"
+            echo ""
+            echo "| Grupo | Roda? |"
+            echo "|---|---|"
+            echo "$ESCOPO" | sed -E 's/^([a-z]+)=true$/| \1 | ✅ |/; s/^([a-z]+)=false$/| \1 | ⏭️ pulado (nada que ele verifica mudou) |/'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "$ESCOPO"
 
   # Merge em staging é por rebase: cada commit do PR entra no histórico como está.
   # Reprova wip, fixup!/squash! esquecido e assunto fora do padrão convencional.
@@ -140,9 +148,9 @@ jobs:
         run: npm run typecheck:marketing
 
   unit-tests:
-    name: Testes unitários (${{ matrix.shard }}/4)
+    name: Testes unitários (${{ matrix.shard }}/8)
     needs: [changes]
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.unit == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -150,16 +158,16 @@ jobs:
       # num run só, não a primeira.
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: ./.github/actions/setup-deps
-      - name: Vitest (shard ${{ matrix.shard }}/4, com cobertura)
+      - name: Vitest (shard ${{ matrix.shard }}/8, com cobertura)
         # O relatório blob carrega resultado e cobertura do shard; o job `coverage`
         # junta os 4. 39% do tempo da suíte é subir jsdom por arquivo (medido em
         # 10/11), e isso só cai dividindo arquivos entre máquinas: pool threads não
         # muda nada e --no-isolate quebra 62 arquivos.
-        run: npx vitest run --coverage --shard=${{ matrix.shard }}/4 --reporter=blob --reporter=dot
+        run: npx vitest run --coverage --shard=${{ matrix.shard }}/8 --reporter=blob --reporter=dot
         env:
           # O piso de cobertura vale para a soma dos shards, não para cada um (ver
           # vite.config.ts e o job `coverage`).
@@ -175,8 +183,8 @@ jobs:
           retention-days: 1
           if-no-files-found: error
 
-  # Junta os 4 shards e aplica os pisos de cobertura (thresholds do vite.config.ts)
-  # sobre o total. Piso por shard não faria sentido: cada um vê só 1/4 dos testes.
+  # Junta os 8 shards e aplica os pisos de cobertura (thresholds do vite.config.ts)
+  # sobre o total. Piso por shard não faria sentido: cada um vê só 1/8 dos testes.
   coverage:
     name: Piso de cobertura
     needs: [unit-tests]
@@ -195,9 +203,9 @@ jobs:
         # piso, mas com uma mensagem enganosa ("cobertura caiu") em vez de "faltou shard".
         run: |
           set -euo pipefail
-          N=$(ls .vitest/blob/blob-*-4.json | wc -l)
-          if [ "$N" -ne 4 ]; then
-            echo "::error::Esperava 4 relatórios de shard, chegaram $N."
+          N=$(ls .vitest/blob/blob-*-8.json | wc -l)
+          if [ "$N" -ne 8 ]; then
+            echo "::error::Esperava 8 relatórios de shard, chegaram $N."
             exit 1
           fi
           npx vitest run --merge-reports=.vitest/blob --coverage --reporter=dot
@@ -293,7 +301,7 @@ jobs:
   database:
     name: Migrations + RLS
     needs: [changes]
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.db == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     outputs:
@@ -446,7 +454,7 @@ jobs:
   edge-functions:
     name: Edge Functions (deno check)
     needs: [changes]
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.functions == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -493,7 +501,7 @@ jobs:
   e2e-local:
     name: E2E (Playwright, Supabase local, ${{ matrix.shard }}/3)
     needs: [changes]
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     strategy:
@@ -568,7 +576,7 @@ jobs:
   # este ficava "skipped", e o GitHub conta job skipped como sucesso em required check:
   # o PR vermelho ficava mergeável (visto no run 42688785280, typecheck falhou e o
   # CI OK saiu skipped). Agora ele roda sempre e reprova se algo não passou. "skipped"
-  # só é aceito quando o PR é só documentação (changes.code == false).
+  # só é aceito para um job cujo grupo o escopo do PR desligou (scripts/ci-escopo.sh).
   #
   # Note que o conjunto que bloqueia MERGE (aqui) é maior que o que bloqueia DEPLOY
   # (abaixo). São perguntas diferentes: "esta mudança está boa para entrar?" inclui
@@ -583,23 +591,39 @@ jobs:
       - name: Conferir todos os gates
         env:
           RESULTADOS: ${{ toJSON(needs) }}
-          SO_DOCS: ${{ needs.changes.outputs.code == 'false' }}
+          # Grupo de cada job (scripts/ci-escopo.sh). "skipped" só é aceito quando o
+          # grupo do job estava desligado para este PR; em qualquer outro caso (job
+          # pulado porque uma dependência falhou, por exemplo) o gate reprova.
+          GRUPOS: >-
+            {"lint":"code","typecheck":"code","build":"code","audit":"code",
+             "unit-tests":"unit","coverage":"unit",
+             "database":"db","types-sync":"db",
+             "edge-functions":"functions","e2e-local":"e2e"}
+          ESCOPO: >-
+            {"code":"${{ needs.changes.outputs.code }}","unit":"${{ needs.changes.outputs.unit }}",
+             "e2e":"${{ needs.changes.outputs.e2e }}","db":"${{ needs.changes.outputs.db }}",
+             "functions":"${{ needs.changes.outputs.functions }}"}
         run: |
           set -euo pipefail
-          FALHAS=$(echo "$RESULTADOS" | jq -r --arg so_docs "$SO_DOCS" '
-            to_entries
+          FALHAS=$(jq -rn --argjson r "$RESULTADOS" --argjson g "$GRUPOS" --argjson e "$ESCOPO" '
+            $r | to_entries
             | map(select(.value.result != "success"
-                         and ((.value.result == "skipped" and $so_docs == "true") | not)))
+                         and ((.value.result == "skipped"
+                               and ($g[.key] // "") != ""
+                               and $e[$g[.key]] == "false") | not)))
             | map("\(.key) = \(.value.result)") | join("; ")')
-          # Tabela no resumo do run: um olhar diz o que falhou, sem abrir job por job.
+          # Tabela no resumo do run: um olhar diz o que falhou e o que o escopo pulou.
           {
             echo "### Gates do CI"
             echo ""
             echo "| Gate | Resultado |"
             echo "|---|---|"
-            echo "$RESULTADOS" | jq -r 'to_entries[]
+            jq -rn --argjson r "$RESULTADOS" --argjson g "$GRUPOS" --argjson e "$ESCOPO" '
+              $r | to_entries[]
               | "| \(.key) | \(if .value.result == "success" then "✅ passou"
-                             elif .value.result == "skipped" then "⏭️ pulado"
+                             elif .value.result == "skipped" and ($g[.key] // "") != "" and $e[$g[.key]] == "false"
+                               then "⏭️ fora do escopo do PR"
+                             elif .value.result == "skipped" then "❌ pulado"
                              elif .value.result == "cancelled" then "⚪ cancelado"
                              else "❌ \(.value.result)" end) |"'
           } >> "$GITHUB_STEP_SUMMARY"
@@ -607,11 +631,7 @@ jobs:
             echo "::error::Gates que não passaram: $FALHAS"
             exit 1
           fi
-          if [ "$SO_DOCS" = "true" ]; then
-            echo "::notice::PR só de documentação: secrets scan passou, gates de código pulados."
-          else
-            echo "Todos os gates obrigatórios passaram."
-          fi
+          echo "Todos os gates do escopo deste PR passaram."
 
   # Deploy do backend no Supabase de STAGING.
   # Roda como job do próprio CI (gatilho push do branch staging), então se
