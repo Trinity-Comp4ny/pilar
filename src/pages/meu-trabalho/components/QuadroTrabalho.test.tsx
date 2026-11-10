@@ -108,8 +108,8 @@ describe("QuadroTrabalho", () => {
     renderQuadro();
     const prazos = screen.getAllByText(/10 de jan|10 jan/);
     const [daTarefa, daDisciplina] = prazos;
-    expect(daTarefa.closest("span")).toHaveClass("text-destructive");
-    expect(daDisciplina.closest("span")).not.toHaveClass("text-destructive");
+    expect(daTarefa.closest("span")).toHaveClass("text-negative-strong");
+    expect(daDisciplina.closest("span")).not.toHaveClass("text-negative-strong");
   });
 
   it("abrir, mudar prioridade e excluir pelo card da tarefa", async () => {
