@@ -14,7 +14,7 @@
 # 2. Nada faltando: sai.
 # 3. Há .deb em cache (mesma imagem do runner, mesmo Playwright): `dpkg -i` direto.
 # 4. Sem cache, ou o cache não resolveu: baixa os que faltam para o diretório do
-#    cache (que o actions/cache salva no fim do job) e instala com `dpkg -i`.
+#    cache, instala com `dpkg -i` e avisa (output baixou=true) para a action salvar.
 #    Se até isso falhar, cai no `install-deps` oficial: nunca fica pior que antes.
 set -euo pipefail
 
@@ -61,6 +61,8 @@ if sudo apt-get update -qq \
   # O actions/cache roda como o usuário do runner: os .deb precisam ser legíveis.
   sudo rm -rf "$CACHE_DIR/partial" "$CACHE_DIR/lock"
   sudo chown -R "$(id -u):$(id -g)" "$CACHE_DIR"
+  # A action salva o cache só quando este passo baixou pacote (ver setup-playwright).
+  echo "baixou=true" >>"${GITHUB_OUTPUT:-/dev/null}"
   echo "Dependências instaladas; .deb guardados para o próximo run."
   exit 0
 fi
