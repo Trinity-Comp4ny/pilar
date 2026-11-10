@@ -1,6 +1,7 @@
 import {
   Eye,
   EyeOff,
+  HelpCircle,
   LogOut,
   Megaphone,
   MessageSquare,
@@ -140,6 +141,7 @@ export function MoreSheet({ open, onOpenChange }: MoreSheetProps) {
             badge={pendenciasAgentes?.length ?? 0}
             onClick={closeAnd(() => navigate("/agentes"))}
           />
+          <MoreSheetRow icon={HelpCircle} label="Central de ajuda" onClick={closeAnd(() => navigate("/ajuda"))} />
           <MoreSheetRow
             icon={Megaphone}
             label="Novidades"

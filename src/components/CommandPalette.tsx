@@ -17,6 +17,7 @@ import {
   UserPlus,
   Users,
   Wallet,
+  HelpCircle,
 } from "lucide-react";
 import {
   CommandDialog,
@@ -34,6 +35,7 @@ import { type PaletteCreateEvent } from "@/hooks/useCommandPalette";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useBuscaGlobal, type BuscaResultado, type BuscaTipo } from "@/hooks/useBuscaGlobal";
 import { useRecentItems, type RecentItem } from "@/hooks/useRecentItems";
+import { buscarArtigos } from "@/lib/ajudaBusca";
 
 interface CommandPaletteProps {
   open: boolean;
@@ -147,6 +149,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const recs = recentes();
 
   const navFiltrado = NAV_COMMANDS.filter((cmd) => combina(query, cmd.label, cmd.keywords));
+  // Central de ajuda (SPEC 154): artigos que respondem ao que foi digitado.
+  const ajuda = query.trim().length >= 3 ? buscarArtigos(query).slice(0, 4) : [];
   const createFiltrado = CREATE_COMMANDS.filter((cmd) => combina(query, cmd.label, cmd.keywords));
 
   const close = () => {
@@ -214,6 +218,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         {!buscando &&
         favs.length === 0 &&
         recs.length === 0 &&
+        ajuda.length === 0 &&
         navFiltrado.length === 0 &&
         createFiltrado.length === 0 ? (
           <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
@@ -287,6 +292,20 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               );
             })}
           </CommandGroup>
+        ) : null}
+
+        {ajuda.length > 0 ? (
+          <>
+            {buscando ? <CommandSeparator /> : null}
+            <CommandGroup heading="Ajuda">
+              {ajuda.map((a) => (
+                <CommandItem key={a.slug} value={`ajuda ${a.slug}`} onSelect={() => runNavigate(`/ajuda/${a.slug}`)}>
+                  <HelpCircle className="mr-2 h-4 w-4" />
+                  <span className="truncate">{a.titulo}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </>
         ) : null}
 
         {navFiltrado.length > 0 ? (

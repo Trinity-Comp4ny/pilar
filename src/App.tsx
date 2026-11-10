@@ -40,6 +40,8 @@ const Signup = lazy(() => import("./pages/Signup"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const Inicio = lazy(() => import("./pages/inicio"));
 const Novidades = lazy(() => import("./pages/novidades"));
+const Ajuda = lazy(() => import("./pages/ajuda"));
+const ArtigoAjuda = lazy(() => import("./pages/ajuda/Artigo"));
 const ComprarTokens = lazy(() => import("./pages/comprar-tokens"));
 const AutorizarApp = lazy(() => import("./pages/oauth/Autorizar"));
 const MeuTrabalho = lazy(() => import("./pages/meu-trabalho"));
@@ -265,6 +267,8 @@ const App = () => {
                         <Route element={<PrivateRoute />}>
                           <Route path="/inicio" element={<Inicio />} />
                           <Route path="/novidades" element={<Novidades />} />
+                          <Route path="/ajuda" element={<Ajuda />} />
+                          <Route path="/ajuda/:slug" element={<ArtigoAjuda />} />
 
                           {/* ===== Rotas aninhadas por módulo (ADR 0016) ===== */}
 
