@@ -183,6 +183,46 @@ const POSTS = {};
   );
 }
 
+/* Carrossel 4 · Conta aberta: quanto cobrar por um projeto, disciplina por disciplina.
+   Conta conferida: 420 h × R$ 95 = R$ 39.900; ÷ (1 − 15% − 25%) = R$ 66.500
+   (impostos R$ 9.975 + lucro R$ 16.625 + custo R$ 39.900 = R$ 66.500). Números de exemplo. */
+{
+  const N = 7;
+  POSTS["c4-preco-por-disciplina-01-capa"] = page(
+    `<div class="stack"><span class="badge">Conta aberta</span>
+     <div class="hook md">Quanto cobrar por um projeto, ${hl("*disciplina*")} por disciplina?</div>
+     <p class="body">O método em cinco passos, com números de exemplo. Troque pelos do seu escritório.</p></div>
+     <div class="row"><span class="badge line" style="font-size:26px">Arraste →</span></div>${foot}`,
+    { land: true },
+  );
+  const item = (i, num, title, inner, body) =>
+    page(`${prog(i, N)}<div class="stack"><span class="num">${num}</span><div class="title">${title}</div>${inner}<p class="body">${body}</p></div>${foot}`);
+  const linhas = (rows, total) =>
+    `<div class="sum">${rows.map(([a, b]) => `<div class="row" style="display:flex;justify-content:space-between"><span>${a}</span><span>${b}</span></div>`).join("")}${total ? `<div class="row" style="display:flex;justify-content:space-between"><span>${total[0]}</span><span>${total[1]}</span></div>` : ""}</div>`;
+  POSTS["c4-preco-por-disciplina-02"] = item(1, "01", "Estime as horas de cada disciplina",
+    linhas([["Estrutural", "220 h"], ["Hidrossanitário", "90 h"], ["Elétrico", "110 h"]], ["Total", "420 h"]),
+    "Use o histórico dos projetos parecidos, não o feeling.");
+  POSTS["c4-preco-por-disciplina-03"] = item(2, "02", "Descubra o custo da hora da equipe",
+    `<div class="big" style="font-size:170px">R$ 95</div>`,
+    "Salários, encargos e o rateio do escritório (aluguel, software, contador), divididos pelas horas que viram projeto.");
+  POSTS["c4-preco-por-disciplina-04"] = item(3, "03", "Calcule o custo do projeto",
+    linhas([["420 h × R$ 95", ""]], ["Custo", "R$ 39.900"]),
+    "É o que o projeto custa para o escritório, antes de imposto e de lucro.");
+  POSTS["c4-preco-por-disciplina-05"] = item(4, "04", "Ponha imposto e lucro por dentro",
+    linhas([["Custo ÷ (1 − 15% − 25%)", ""], ["Impostos (15%)", "R$ 9.975"], ["Lucro (25%)", "R$ 16.625"]], ["Preço", "R$ 66.500"]),
+    "Somar 40% em cima do custo dá menos: o imposto incide sobre o preço, não sobre o custo.");
+  POSTS["c4-preco-por-disciplina-06"] = item(5, "05", "Acompanhe as horas reais",
+    `<div class="big red" style="font-size:150px">+40 h</div>`,
+    "Se o estrutural passou de 220 h, ou é aditivo ou é lucro indo embora. Descobrir no fim não adianta.");
+  POSTS["c4-preco-por-disciplina-07-final"] = page(
+    `${prog(7, N)}<div class="stack"><span class="badge">Na Pilar</span>
+     <div class="hook md">As horas de cada disciplina, contra o orçado, ${hl("*durante*")} o projeto.</div>
+     <p class="body">Passou do orçamento? A Pilar prepara o aditivo, citando as despesas de cada valor. Você aprova.</p></div>
+     <span class="cta">Veja os planos · link na bio</span>${foot}`,
+    { land: true },
+  );
+}
+
 /* Estático 1 · Número: 4× (território "dor nomeada") */
 POSTS["e1-numero-4x"] = page(
   `<div class="stack"><span class="badge">O dado redigitado</span>

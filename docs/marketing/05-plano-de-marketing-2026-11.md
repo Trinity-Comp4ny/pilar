@@ -21,7 +21,7 @@
    fornecedores mostram tela sem ensinar. A Pilar faz as duas coisas (seção 3).
 5. **Conteúdo variado, não padronizado:** oito formatos com papéis diferentes (seção 6), e a
    regra de nunca repetir o mesmo formato em dois posts seguidos.
-6. **Peças prontas desta rodada:** 6 vídeos e 22 slides de post (seção 9), além do kit de
+6. **Peças prontas desta rodada:** 7 vídeos e 29 slides de post (seção 9), além do kit de
    lançamento de 09/11.
 
 ## 1. O que mudou desde o plano de 05/11
@@ -203,7 +203,7 @@ kit em `brand/assets/social/lancamento/` (branch `claude/bold-newton-yhsliy`, a 
 | **S2** 16/11 | kit: agentes | Reel **Agentes, explicado** (com a voz final) | carrossel **C3 Como a IA trabalha** | Reel **Planos** (loop) | Seg: "a IA prepara, você aprova". Qua: C3 em PDF |
 | **S3** 23/11 | **E1 Número 4×** | Reel **Hora do sócio** | carrossel **C1 Hora do sócio** | Reel do fundador: "por que eu cobro por escritório e não por usuário" | Seg: conta da hora do sócio. Qua: C1 em PDF |
 | **S4** 30/11 | **E2 Pergunta da chuva** | Reel **Chuva** | carrossel **C2 Cinco sinais** | Reel **Planos** | Seg: dor da planilha. Qua: C2 em PDF |
-| **S5** 07/12 | **E3 Para quem projeta** | Reel novo: diário por áudio (a fazer) | carrossel novo: honorário por disciplina (a fazer) | Reel do fundador | Seg: engenharia não é interiores |
+| **S5** 07/12 | **E3 Para quem projeta** | Reel **Diário por áudio** | carrossel **C4 Preço por disciplina** | Reel do fundador | Seg: engenharia não é interiores. Qua: C4 em PDF |
 
 Stories, todo dia: a enquete do tema (seg), um bastidor (ter), o repost do post do dia, e na sexta
 o story com adesivo de link para os planos.
@@ -239,6 +239,7 @@ e a tela por cima depois). Um por semana a partir da S3.
 | `hora-do-socio-light.mp4` | conta rápida, 22 s | pronto |
 | `antes-depois-light.mp4` | tela dividida, 20 s | pronto |
 | `planos-light.mp4` | convite em loop, 10 s | pronto |
+| `diario-light.mp4` | diário por áudio, na tela, 20 s | pronto |
 
 **Posts** (`docs/marketing/posts/out/`, gerados por `docs/marketing/posts/render-posts.mjs`):
 
@@ -247,6 +248,7 @@ e a tela por cima depois). Um por semana a partir da S3.
 | C1 Quanto custa uma hora do sócio | 6 | conta aberta |
 | C2 Cinco sinais de que seu escritório passou da planilha | 7 | dor nomeada |
 | C3 Como a IA trabalha na Pilar | 6 | na tela |
+| C4 Quanto cobrar por um projeto, disciplina por disciplina | 7 | conta aberta |
 | E1 Número 4× | 1 | dor nomeada |
 | E2 Quem marcou a concretagem para o dia da chuva? | 1 | obra e clima |
 | E3 Para quem projeta | 1 | posicionamento |
@@ -314,6 +316,22 @@ A primeira linha é o gancho (é o que aparece antes de "mais"). Link só na bio
 >
 > Os quatro passos, com a tela real. E a lista do que já roda hoje: lançamento, aditivo, resumo da
 > semana e diário da obra a partir do áudio.
+
+**Reel Diário por áudio**
+> O diário da obra ainda está no grupo do WhatsApp?
+>
+> Quem está no canteiro fala, a Pilar organiza o registro do dia: o que avançou, o que ficou pendente, o
+> efetivo e o clima. Ele nasce interno e só vai ao cliente quando você liberar.
+>
+> #engenhariacivil #diariodeobra #obra #gestaodeobras #engenharia
+
+**Carrossel C4 Preço por disciplina**
+> Quanto cobrar por um projeto, disciplina por disciplina? (números de exemplo)
+>
+> Horas por disciplina × custo da hora da equipe = custo. Imposto e lucro entram por dentro: custo ÷ (1 −
+> imposto − lucro). Depois, acompanhe as horas reais: o que passa do orçado é aditivo ou é lucro indo embora.
+>
+> Salve para a próxima proposta.
 
 **E1 Número 4×**
 > Quantas vezes o mesmo número foi digitado no seu escritório esta semana?
