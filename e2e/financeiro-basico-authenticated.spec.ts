@@ -100,7 +100,11 @@ test.describe("Financeiro — criar receita", () => {
 
     // 8b. App tem detecção de duplicata (mesma descrição+valor recentes) — se o
     // alertdialog aparecer, confirmar explicitamente em vez de travar no toast.
-    const duplicataDialog = page.getByRole("alertdialog", { name: /duplicata/i });
+    // O motor de duplicatas da SPEC 150 trocou o título quando a duplicata é certa
+    // ("Este lançamento parece já existir"). Só com /duplicata/ o spec deixava de
+    // ver o diálogo em staging, onde a receita da rodada anterior existe, e travava
+    // no toast (09/11).
+    const duplicataDialog = page.getByRole("alertdialog", { name: /duplicata|parece já existir/i });
     if (await duplicataDialog.isVisible({ timeout: 2_000 }).catch(() => false)) {
       await duplicataDialog.getByRole("button", { name: /Salvar mesmo assim/i }).click();
     }
