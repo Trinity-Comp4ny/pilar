@@ -7899,6 +7899,39 @@ export type Database = {
         }
         Relationships: []
       }
+      status_manutencoes: {
+        Row: {
+          cancelada_em: string | null
+          created_at: string
+          created_by: string | null
+          fim: string
+          id: string
+          inicio: string
+          mensagem: string | null
+          titulo: string
+        }
+        Insert: {
+          cancelada_em?: string | null
+          created_at?: string
+          created_by?: string | null
+          fim: string
+          id?: string
+          inicio: string
+          mensagem?: string | null
+          titulo: string
+        }
+        Update: {
+          cancelada_em?: string | null
+          created_at?: string
+          created_by?: string | null
+          fim?: string
+          id?: string
+          inicio?: string
+          mensagem?: string | null
+          titulo?: string
+        }
+        Relationships: []
+      }
       tarefa_contadores: {
         Row: {
           empresa_id: string
