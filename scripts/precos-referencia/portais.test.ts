@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  arquivosDaPaginaDeDownload,
   candidatosDoMes,
   lerPortaisExtras,
   linksPdfDaPagina,
   linksPdfDoWordpress,
+  paginasDeDownload,
   portaisDaUf,
   urlWordpressMedia,
   type LinkPdf,
@@ -100,5 +102,50 @@ describe("configuração", () => {
     expect(portaisDaUf("SP", extras)).toMatchObject({ paginas: ["https://outro.sp/cub/"], mesNoArquivo: "publicacao" });
     expect(portaisDaUf("RS", [])).toMatchObject({ soPortal: true, mesNoArquivo: "publicacao" });
     expect(portaisDaUf("GO", [])).toBeNull();
+  });
+});
+
+describe("SindusCon-SP: páginas de download por mês (links do diagnóstico real)", () => {
+  const html = `
+    <a href="https://sindusconsp.com.br/wp-content/uploads/2026/11/Cub-Serie-Historica-Outubro-26.xlsx">série</a>
+    <a href="https://sindusconsp.com.br/downloads/2026-cub/">2026</a>
+    <a href="https://sindusconsp.com.br/downloads/10-outubro-2026-cub/">Outubro</a>
+    <a href="https://sindusconsp.com.br/downloads/incc-10-outubro-2026-cub/">INCC</a>
+    <a href="https://sindusconsp.com.br/downloads/encargos-sociais-10-outubro-2026-cub/">Encargos</a>
+    <a href="https://sindusconsp.com.br/downloads/09-setembro-2026-cub/">Setembro</a>
+    <a href="https://outro.site/downloads/10-outubro-2026-cub/">fora</a>`;
+
+  it("acha as páginas de download do site e o CUB do mês, sem INCC nem encargos", () => {
+    const paginas = paginasDeDownload(html, "https://sindusconsp.com.br/servicos/cub/");
+    expect(paginas.map((p) => p.texto)).toEqual([
+      "2026-cub",
+      "10-outubro-2026-cub",
+      "incc-10-outubro-2026-cub",
+      "encargos-sociais-10-outubro-2026-cub",
+      "09-setembro-2026-cub",
+    ]);
+    const outubro = candidatosDoMes(paginas, "2026-10-01", "onerado", "referencia");
+    expect(outubro.map((p) => p.texto)).toEqual(["10-outubro-2026-cub"]);
+  });
+
+  it("pega o arquivo da página de download, com o mês da página", () => {
+    const pagina = { url: "https://sindusconsp.com.br/downloads/10-outubro-2026-cub", texto: "10-outubro-2026-cub" };
+    const arquivos = arquivosDaPaginaDeDownload(
+      `<a class="wpdm-download-link" href="https://sindusconsp.com.br/download/10-outubro-2026-cub/?wpdmdl=88123&amp;refresh=abc">Baixar</a>
+       <a href="https://sindusconsp.com.br/wp-content/uploads/2026/11/CUB-Outubro-2026.pdf">pdf</a>
+       <a href="/contato">contato</a>`,
+      pagina
+    );
+    expect(arquivos).toEqual([
+      {
+        url: "https://sindusconsp.com.br/download/10-outubro-2026-cub/?wpdmdl=88123&refresh=abc",
+        texto: "10-outubro-2026-cub",
+      },
+      {
+        url: "https://sindusconsp.com.br/wp-content/uploads/2026/11/CUB-Outubro-2026.pdf",
+        texto: "10-outubro-2026-cub",
+      },
+    ]);
+    expect(candidatosDoMes(arquivos, "2026-10-01", "onerado", "referencia")).toHaveLength(2);
   });
 });
