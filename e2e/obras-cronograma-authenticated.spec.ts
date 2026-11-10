@@ -86,7 +86,8 @@ test("Gantt sem datas orienta a voltar pra lista e a visão escolhida persiste",
 });
 
 async function escolherDia(page: Page, linha: Locator, campo: "Início" | "Prazo", dia: number) {
-  await linha.getByRole("button", { name: campo }).click();
+  // O campo de data é digitável (DatePicker): clicar nele abre o calendário.
+  await linha.getByRole("textbox", { name: campo }).click();
   const calendario = page.locator("[data-radix-popper-content-wrapper]");
   // Só dias do mês exibido: o calendário mostra os de fora (day-outside) também.
   await calendario.locator("td:not(.day-outside) button", { hasText: new RegExp(`^${dia}$`) }).click();
