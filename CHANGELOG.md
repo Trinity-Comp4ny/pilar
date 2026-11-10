@@ -14,6 +14,8 @@ Regras deste repo:
 
 ### Adicionado
 
+- Prévia de recursos: ligue um recurso novo antes de todo mundo em Configurações → Conta, com feedback e volta à versão atual. No Ultra admin, prazo de 7 dias em cada problema relatado. (SPEC 160)
+
 - Alerta de acesso à conta por navegador novo, no sino e por e-mail, e lista dos navegadores que entraram em Configurações → Segurança. (SPEC 159)
 
 - Comunicados da plataforma: o time do Pilar avisa os escritórios dentro do app, em faixa ou modal, por escritório, plano ou papel. Criados em `/ultra-admin/comunicados`. (SPEC 157)
