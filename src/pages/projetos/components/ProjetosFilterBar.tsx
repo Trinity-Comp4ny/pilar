@@ -166,6 +166,9 @@ function FiltersPanel({
             );
           })}
         </div>
+        <p className="mt-1.5 text-[11px] text-muted-foreground">
+          Vale a prioridade da disciplina; sem ela, a do projeto.
+        </p>
       </FilterSection>
 
       {/* Atraso */}
