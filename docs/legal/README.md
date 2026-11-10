@@ -10,27 +10,22 @@ Documentos legais e de privacidade. ← [voltar ao índice](../README.md)
 | [SUBPROCESSADORES.md](./SUBPROCESSADORES.md) | ✅ v1, 2026-09-08                           | Lista pública dos fornecedores que processam dado pessoal em nome do Pilar                                             |
 | [RIPD.md](./RIPD.md)                         | ✅ v1, 2026-10-13                           | Relatório de Impacto à Proteção de Dados: tratamento, riscos, controles e plano dos riscos residuais                   |
 
-## Situação da identidade legal (CNPJ próprio pendente)
+## Identidade legal
 
-A Pilar hoje **não tem CNPJ próprio**: é uma iniciativa em processo de virar
-pessoa jurídica separada (decisão de negócio, 2026-08-18). A marca é sempre
-"Pilar" em toda a superfície visível ao usuário (produto, site, `/privacidade`,
-`/termos`); não citamos mais Trinity Company nem Labrynth AI em nenhum lugar.
+Quem opera o Pilar é **MATHEUS PREZIA REZENDE TECH LTDA**, CNPJ **63.418.862/0001-59**, com sede
+na Rua Pedro Salido Nogueira, 63, Casa 10, Solar das Esmeraldas, Marília, SP, CEP 17516-545.
+Encarregado pelo tratamento de dados (LGPD art. 41): **Matheus Prezia Rezende**,
+`privacidade@pilarsoft.com.br`. A marca visível continua sendo "Pilar"; não citamos Trinity
+Company nem Labrynth AI.
 
-A LGPD (Art. 9) exige que a política de privacidade identifique o controlador
-com razão social e CNPJ reais; um contrato (Termos de Uso) sem parte
-identificada nem foro definido tem o mesmo problema, agravado por ser um
-contrato, não só uma política informativa. `/privacidade` e `/termos` dizem
-"Pilar" e qualificam razão social/CNPJ/foro como "em regularização", em vez de
-inventar dados fictícios. **Risco aceito conscientemente pelo CEO** em duas
-decisões (2026-08-18: publicar a marca Pilar sem CNPJ; hoje: publicar `/termos`
-mesmo assim), não pendência esquecida.
+Fonte única dos dados: `apps/marketing/src/lib/empresa.ts`, usada por `/privacidade` (controlador
+e encarregado), `/termos` (parte do contrato) e pelo rodapé do site (Decreto 7.962/2013, art. 2º).
+O JSON-LD de `apps/marketing/index.html` repete razão social, CNPJ e endereço. Mudou algum dado:
+atualizar os dois lugares. Os `.md` desta pasta são rascunho/referência, não o que está ao vivo.
 
-Por isso:
+Até 2026-11-10 a política e os Termos diziam "razão social e CNPJ em regularização" (risco aceito
+pelo CEO em 2026-08-18). Encerrado com o CNPJ acima.
 
-- Quando o CNPJ, endereço e foro saírem, atualizar `src/pages/Termos.tsx` e
-  `src/pages/Privacidade.tsx` com os dados reais (não os `.md` em `docs/legal/`
-  diretamente, que são referência/rascunho, não o que está ao vivo).
 - O **Termos de Uso** publicado ainda não passou por revisão de advogado (não
   cobre nuances contratuais específicas do setor nem tem foro definitivo).
   Contratar essa revisão continua pendente, agora com mais urgência por já

@@ -11,16 +11,15 @@ brasileiro específico do Pilar.
 
 **Quando usar:** anexo obrigatório ao contrato comercial (Termos de Uso) de todo cliente que
 processa dado pessoal de terceiros através do Pilar — ou seja, todo cliente, já que
-`clientes`, `cliente_portal_accounts` e `pessoas`/`folha_pagamento` sempre têm dado pessoal. Sem
-CNPJ próprio da Pilar (ver `docs/legal/README.md`), este documento não pode ser assinado de
-verdade ainda: os campos entre colchetes só saem "[A PREENCHER]" quando a pessoa jurídica sair.
+`clientes`, `cliente_portal_accounts` e `pessoas`/`folha_pagamento` sempre têm dado pessoal. Os
+campos entre colchetes que sobram são os do cliente.
 
 ---
 
 ## Anexo de Processamento de Dados
 
 Este Anexo de Processamento de Dados ("DPA") complementa o contrato de prestação de serviço
-("Contrato") entre **[RAZÃO SOCIAL DA PILAR, A PREENCHER], CNPJ [A PREENCHER]** ("Operador",
+("Contrato") entre **MATHEUS PREZIA REZENDE TECH LTDA, CNPJ 63.418.862/0001-59** ("Operador",
 "Pilar") e **[RAZÃO SOCIAL DO CLIENTE]**, CNPJ **[CNPJ DO CLIENTE]** ("Controlador", "Cliente").
 Em caso de conflito entre este Anexo e o Contrato quanto a proteção de dados pessoais, prevalece
 este Anexo.
@@ -113,7 +112,7 @@ natureza, devam perdurar (ex. dever de eliminar/devolver dado, confidencialidade
 
 ---
 
-**Foro:** **[A DEFINIR — depende do CNPJ e endereço da Pilar, ver `docs/legal/README.md`]**.
+**Foro:** domicílio do Cliente (mesmo foro da cláusula 16 dos Termos de Uso).
 
 **Assinatura eletrônica:** este Anexo é incorporado ao aceite do Contrato principal, salvo
 exigência específica de assinatura em separado por política interna do Cliente.
