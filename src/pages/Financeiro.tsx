@@ -10,10 +10,12 @@ import { FilterBar } from "@/components/filters/FilterBar";
 import { PeriodoPopover } from "./financeiro/components/PeriodoPopover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useAbrirCriacaoPelaUrl, PARAM_CRIACAO } from "@/hooks/useAbrirCriacaoPelaUrl";
 import { useRegistrarPagina } from "@/hooks/useRecentes";
 import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
 import { FinanceFilterProvider, type Visualizacao } from "./financeiro/contexts/FinanceFilterContext";
-import { NovoLancamentoDialog } from "./financeiro/components/NovoLancamentoDialog";
+import { NovoLancamentoDialog, type NovoLancamentoEscolha } from "./financeiro/components/NovoLancamentoDialog";
 import { LancamentoFormDialog } from "./financeiro/components/LancamentoFormDialog";
 import { TransferenciaFormDialog } from "./financeiro/components/TransferenciaFormDialog";
 import type { TipoLancamento } from "./financeiro/hooks/useLancamentosUnified";
@@ -67,12 +69,32 @@ export default function Financeiro() {
   const [dateFrom, setDateFrom] = useState<Date | undefined>(initial.from);
   const [dateTo, setDateTo] = useState<Date | undefined>(initial.to);
 
+  const [escolhendoTipo, setEscolhendoTipo] = useState(false);
+  const [newTipo, setNewTipo] = useState<TipoLancamento | null>(null);
+  const [newTransferencia, setNewTransferencia] = useState(false);
+
+  const escolherNovo = (escolha: NovoLancamentoEscolha) => {
+    if (escolha === "transferencia") setNewTransferencia(true);
+    else setNewTipo(escolha);
+  };
+
+  // "Nova receita"/"Nova despesa" da busca rápida (⌘K) chegam com ?new=receita|despesa
+  // e abrem o formulário já no tipo; outro valor abre a escolha de tipo.
+  // Fica antes do sync abaixo: os dois gravam a URL no mesmo ciclo e o último vence.
+  const { can } = usePermissions();
+  useAbrirCriacaoPelaUrl(can("financeiro", "create"), (valor) => {
+    if (valor === "receita" || valor === "despesa" || valor === "transferencia") escolherNovo(valor);
+    else setEscolhendoTipo(true);
+  });
+
   // Sync state → URL. Preserva os demais params (ex.: filtros de Lançamentos)
   // em vez de reescrever a query inteira.
   useEffect(() => {
     setSearchParams(
       (prev) => {
         const params = new URLSearchParams(prev);
+        // Consumido por useAbrirCriacaoPelaUrl; não regravar.
+        params.delete(PARAM_CRIACAO);
         params.set("tab", activeTab);
         if (dateFrom) params.set("from", format(dateFrom, "yyyy-MM-dd"));
         else params.delete("from");
@@ -89,9 +111,6 @@ export default function Financeiro() {
   const handleTabChange = (v: string) => setActiveTab(v);
 
   const queryClient = useQueryClient();
-  const [escolhendoTipo, setEscolhendoTipo] = useState(false);
-  const [newTipo, setNewTipo] = useState<TipoLancamento | null>(null);
-  const [newTransferencia, setNewTransferencia] = useState(false);
 
   // União das queries que Visão Geral, Lançamentos e Carteira mantêm sobre o
   // mesmo dado: o botão global fica fora de qualquer aba, então precisa
@@ -183,14 +202,7 @@ export default function Financeiro() {
         </Tabs>
       </PageLayout>
 
-      <NovoLancamentoDialog
-        open={escolhendoTipo}
-        onOpenChange={setEscolhendoTipo}
-        onEscolher={(escolha) => {
-          if (escolha === "transferencia") setNewTransferencia(true);
-          else setNewTipo(escolha);
-        }}
-      />
+      <NovoLancamentoDialog open={escolhendoTipo} onOpenChange={setEscolhendoTipo} onEscolher={escolherNovo} />
 
       {newTipo && (
         <LancamentoFormDialog

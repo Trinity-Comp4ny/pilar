@@ -5,6 +5,7 @@ import { getSafeErrorMessage } from "@/lib/safeError";
 import { PilarPage } from "@/components/PilarPage";
 import { supabase } from "@/integrations/supabase/client";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { useAbrirCriacaoPelaUrl } from "@/hooks/useAbrirCriacaoPelaUrl";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import type { Pessoa } from "./types";
@@ -62,6 +63,9 @@ export default function Pessoas() {
     setEditingPessoa(null);
     setIsFormDialogOpen(true);
   };
+
+  // "Novo membro de equipe" da busca rápida (⌘K) chega com ?new=1. Mesmo gate do botão.
+  useAbrirCriacaoPelaUrl(isAdmin, handleNewPessoa);
 
   const handleEditClick = (pessoa: Pessoa, e?: React.MouseEvent) => {
     e?.stopPropagation();

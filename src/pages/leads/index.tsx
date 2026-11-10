@@ -28,6 +28,7 @@ import { DesbloqueioNivel } from "@/components/trial/DesbloqueioNivel";
 import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
 import { analytics } from "@/lib/analytics";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useAbrirCriacaoPelaUrl } from "@/hooks/useAbrirCriacaoPelaUrl";
 import { useLeadEtapas, type LeadEtapa } from "@/pages/leads/hooks/useLeadEtapas";
 import { useEtapasDoFunil } from "@/pages/leads/hooks/useEtapasDoFunil";
 import { KanbanSkeleton } from "./components/KanbanSkeleton";
@@ -117,6 +118,8 @@ export default function Leads() {
   const primariaDoLead = (leadId: string) => propostaPrimaria(propostasByLead.get(leadId) ?? []);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // "Novo lead" da busca rápida (⌘K) chega com ?new=1. Mesmo gate do botão.
+  useAbrirCriacaoPelaUrl(can("leads", "edit"), () => setIsDialogOpen(true));
   // Faixa de leads ativos do plano (DECISOES.md 2026-11-06): o trigger recusa o
   // lead novo e aqui abre o mesmo diálogo de limite de projetos e obras.
   const [capacidadeErro, setCapacidadeErro] = useState<CapacidadeErro | null>(null);
