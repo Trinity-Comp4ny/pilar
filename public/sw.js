@@ -40,9 +40,7 @@ self.addEventListener("fetch", (event) => {
   if (
     url.hostname.includes("supabase.co") ||
     url.hostname.includes("googletagmanager.com") ||
-    url.hostname.includes("google-analytics.com") ||
-    url.hostname.includes("fonts.googleapis.com") ||
-    url.hostname.includes("fonts.gstatic.com")
+    url.hostname.includes("google-analytics.com")
   ) {
     return;
   }
