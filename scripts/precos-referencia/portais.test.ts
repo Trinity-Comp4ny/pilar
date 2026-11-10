@@ -233,3 +233,20 @@ describe("SindusCon-SP: feed RSS da categoria (a API responde 401)", () => {
     expect(pacotesDoFeed("<html>não é feed</html>", pagina)).toEqual([]);
   });
 });
+
+describe("SindusCon-SP: pacotes reais do feed de outubro", () => {
+  const base = "https://sindusconsp.com.br/download";
+  const pacotes = [
+    ["encargos-sociais-com", 155664, "Encargos Sociais – Outubro 2026 – Com Desoneração"],
+    ["encargos-sociais-sem", 155663, "Encargos Sociais – Outubro 2026 – Sem Desoneração"],
+    ["boletim-com", 155662, "Boletim Econômico – Outubro 2026 – Com Desoneração"],
+    ["boletim-sem", 155661, "Boletim Econômico – Outubro 2026 – Sem Desoneração"],
+    ["incc", 155609, "INCC – Outubro 2026"],
+  ].map(([slug, id, titulo]) => ({ url: `${base}/${slug}/?wpdmdl=${id}`, texto: `${titulo} 10-outubro-2026-cub` }));
+
+  it("o CUB de cada regime é o Boletim Econômico daquele regime; encargos e INCC ficam de fora", () => {
+    const id = (l: { url: string }) => new URL(l.url).searchParams.get("wpdmdl");
+    expect(candidatosDoMes(pacotes, "2026-10-01", "onerado", "referencia").map(id)).toEqual(["155661"]);
+    expect(candidatosDoMes(pacotes, "2026-10-01", "desonerado", "referencia").map(id)).toEqual(["155662"]);
+  });
+});
