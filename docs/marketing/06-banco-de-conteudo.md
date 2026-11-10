@@ -55,6 +55,22 @@ Tema: claro (padrão), escuro (manifesto, provocativo) ou verde (jogo, convite).
 | `planos-light.mp4` | convite em loop | planos | 10 s | "Usuários ilimitados. A plataforma inteira." |
 | `agentes-explicado-light.mp4` | tela + narração | na tela | 55 s | **trocar a voz antes de postar** |
 
+### Leva de 10/11 (noite)
+
+| Arquivo | Formato | Pilar | Trilha |
+| --- | --- | --- | --- |
+| `quiz-2-art-light.mp4` | quiz #2 (fundo azul) | educativo | quirky |
+| `quiz-3-revisao-light.mp4` | quiz #3 (fundo areia) | conta aberta | quirky |
+| `manifesto-2-gestao-dark.mp4` | manifesto #2: revisão não é favor | posicionamento | cinematic |
+| `nao-faz-dark.mp4` | "Não." gigante, os 5 limites | confiança | cinematic |
+| `glossario-light.mp4` | verbetes de dicionário | educativo | lofi |
+| `novidades-dark.mp4` | novidades da semana (série de sexta) | bastidores | groove |
+| `contagem-dark.mp4` | faltam 10 dias (troque o número) | lançamento | cinematic |
+| `asmr-light.mp4` | ASMR do escritório, sem música | na tela | foley |
+| `comentario-light.mp4` | respondendo comentário | objeção | lofi |
+| `mito-fato-light.mp4` | cartões que viram | agentes | quirky |
+| `fala-03-ia-nao-aprova-dark.mp4` | **prévia** do vídeo do fundador (sem gravação) | modelo | lofi |
+
 ## 3. Posts prontos (`docs/marketing/posts/out/`, prancha em `prancha-posts.jpg`)
 
 | Peça | Slides | Layout | Pilar |
@@ -76,6 +92,16 @@ Tema: claro (padrão), escuro (manifesto, provocativo) ou verde (jogo, convite).
 | E7 O que mudou na Pilar esta semana (14/11) | 1 | novidades, toda sexta | bastidores |
 | E8 A partir de R$ 299 | 1 | preço | planos |
 | E9 Gestão de escritório não é só interiores | 1 | frase sobre verde | posicionamento |
+
+**Leva de 10/11 (noite):** carrosséis C9 Honorário (por m², hora ou disciplina), C10 Curva S, C11 Sete
+documentos, C12 De 5 para 15 pessoas, C13 Fechar o mês em 30 minutos, C14 As 4 perguntas do cliente,
+C15 Carta do fundador (**revisar o texto com o Matheus antes de postar**), C16 Glossário; posts E10
+Revisão não é favor, E11 Previsão × cronograma, E12 Frase do fundador, E13 e E14 Dica rápida, E15
+Enquete da maior dor, E16 19.01, E17 Por usuário × Pilar (exemplo), E18 Em uma frase.
+
+**Stories** (`docs/marketing/posts/out/stories/`, 1080 × 1920, com espaço para os adesivos):
+enquete da margem (3), quiz (2), caixinha "pergunte ao fundador", isso ou aquilo (4), bastidor (2,
+com espaço para foto real), contagem 10/7/3/1, novidades, link dos planos.
 
 ## 4. Calendário das semanas 6 a 10 (até o lançamento)
 

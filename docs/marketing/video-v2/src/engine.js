@@ -507,6 +507,29 @@ export function cue(kind, t, extra = {}) {
 }
 
 /* ---------- seek ---------- */
+/* ---------- gravação real (o fundador falando, tela gravada no celular) ---------- */
+// A gravação vira uma sequência de JPG em footage/<id>/frames/ (make.sh extrai com ffmpeg).
+// Sem gravação, aparece um quadro-guia com o enquadramento, para revisar o formato antes de gravar.
+const FOOTS = [];
+export function footage(parent, { x, y, w, h, id, t0 = 0, fps = 30, radius = 0, label = "Seu vídeo aqui" }) {
+  const box = el("div", "", parent);
+  pos(box, x, y, w, h);
+  Object.assign(box.style, { position: "absolute", overflow: "hidden", borderRadius: radius + "px", background: "#2A2D2A" });
+  const info = window.FOOTAGE && window.FOOTAGE[id];
+  if (info) {
+    const img = el("img", "", box);
+    Object.assign(img.style, { width: "100%", height: "100%", objectFit: "cover" });
+    FOOTS.push({ img, t0, fps, n: info.frames, base: `../footage/${id}/frames/` });
+  } else {
+    box.innerHTML = `<div style="position:absolute;inset:0;background:radial-gradient(60% 50% at 50% 38%, #4A4F4A 0%, #2A2D2A 70%)"></div>
+      <svg viewBox="0 0 200 260" style="position:absolute;left:50%;top:52%;width:62%;transform:translate(-50%,-50%);opacity:.35"><circle cx="100" cy="80" r="46" fill="#8A908A"/><path d="M20 260 C20 170 60 140 100 140 C140 140 180 170 180 260Z" fill="#8A908A"/></svg>
+      <div style="position:absolute;left:0;right:0;top:46px;text-align:center;font:600 30px Inter;color:rgba(255,255,255,.75);letter-spacing:.06em;text-transform:uppercase">${label}</div>
+      <div style="position:absolute;inset:40px;border:2px dashed rgba(255,255,255,.25);border-radius:24px"></div>
+      <div style="position:absolute;left:0;right:0;top:34%;height:2px;background:rgba(164,236,134,.35)"></div>`;
+  }
+  return box;
+}
+
 export function finalize(duration, sections = {}, fps = 30) {
   tl.set({}, {}, duration);
   window.__meta = { duration, fps, w: W, h: H, cues: CUES, sections };
@@ -524,5 +547,14 @@ export function finalize(duration, sections = {}, fps = 30) {
     }
     for (const R of RINGS) paintRing(R, t);
     paintGrain(Math.round(t * fps));
+    await Promise.all(
+      FOOTS.map((f) => {
+        const k = Math.min(f.n, Math.max(1, Math.floor((t - f.t0) * f.fps) + 1));
+        const src = f.base + String(k).padStart(5, "0") + ".jpg";
+        if (f.img.getAttribute("src") === src) return null;
+        f.img.src = src;
+        return f.img.decode().catch(() => {});
+      }),
+    );
   };
 }

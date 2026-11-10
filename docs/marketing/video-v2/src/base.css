@@ -132,3 +132,9 @@ body { font-family: "Geist", system-ui, sans-serif; -webkit-font-smoothing: anti
 .cap .cw { display: inline-block; padding: 0 .1em; border-radius: .2em; color: var(--fg-faint); }
 .cap .cw.said { color: var(--fg); }
 .cap .cw.now { color: var(--ink-900); background: var(--brand); }
+
+/* Legenda sobre gravação (vídeo do fundador): branca, grande, contorno de sombra */
+.cap.cap-video { font: 700 62px/1.2 Geist, sans-serif; color: #fff; text-shadow: 0 4px 18px rgba(0,0,0,.55); }
+.cap.cap-video .cw { color: rgba(255,255,255,.92); }
+.cap.cap-video .cw.said { color: #fff; }
+.cap.cap-video .cw.now { color: #1A1A1A; background: #A4EC86; text-shadow: none; }

@@ -2,7 +2,7 @@
 // e (se houver) os tempos da narração.
 //   node build.mjs <id> [--theme light|dark] [--w 1080] [--h 1920]
 // O arquivo sai como out/<id>.html, ou out/<id>-<tema>.html quando o tema é passado.
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -20,9 +20,11 @@ const w = opt("w", "1080");
 const h = opt("h", "1920");
 const name = theme ? `${id}-${theme}` : id;
 
-const src = readFileSync(join(here, "src", id + ".js"), "utf8") + readFileSync(join(here, "src", "engine.js"), "utf8");
+// ícones: procura em todas as composições (os modelos compartilhados, como fala-base, também usam)
+const src = readdirSync(join(here, "src")).filter((f) => f.endsWith(".js") || f.endsWith(".json")).map((f) => readFileSync(join(here, "src", f), "utf8")).join("\n");
 const names = new Set([...src.matchAll(/icon\("([a-z0-9-]+)"/g)].map((m) => m[1]));
 for (const m of src.matchAll(/\["([a-z0-9-]+)",\s*"/g)) names.add(m[1]);
+for (const m of src.matchAll(/"icone":\s*"([a-z0-9-]+)"/g)) names.add(m[1]);
 names.add("lock");
 const icons = {};
 for (const n of names) {
@@ -35,6 +37,17 @@ for (const n of names) {
 const logo = (v) => readFileSync(join(repo, `brand/assets/logo/pilar-logo-horizontal-${v}.svg`), "utf8").replace(/<title>.*?<\/title>/, "");
 const timingFile = join(here, "narration", id, "timing.json");
 const timing = existsSync(timingFile) ? readFileSync(timingFile, "utf8") : "null";
+const scriptFile = join(here, "src", id + ".script.json");
+const script = existsSync(scriptFile) ? readFileSync(scriptFile, "utf8") : "null";
+// gravações reais já preparadas por footage.py
+const footage = {};
+const fdir = join(here, "footage");
+if (existsSync(fdir)) {
+  for (const d of readdirSync(fdir)) {
+    const info = join(fdir, d, "info.json");
+    if (existsSync(info)) footage[d] = JSON.parse(readFileSync(info, "utf8"));
+  }
+}
 
 mkdirSync(join(here, "out"), { recursive: true });
 writeFileSync(
@@ -43,7 +56,7 @@ writeFileSync(
 <link rel="stylesheet" href="../src/base.css"></head><body>
 <div id="stage" data-w="${w}" data-h="${h}" data-theme="${theme || "dark"}"></div>
 <script src="../vendor/node_modules/gsap/dist/gsap.min.js"></script>
-<script>window.ICONS=${JSON.stringify(icons)};window.LOCKUP=${JSON.stringify(logo("white"))};window.LOCKUP_INK=${JSON.stringify(logo("ink"))};window.TIMING=${timing};</script>
+<script>window.ICONS=${JSON.stringify(icons)};window.LOCKUP=${JSON.stringify(logo("white"))};window.LOCKUP_INK=${JSON.stringify(logo("ink"))};window.TIMING=${timing};window.SCRIPT=${script};window.FOOTAGE=${JSON.stringify(footage)};</script>
 <script type="module" src="../src/${id}.js"></script></body></html>`,
 );
 console.log(`out/${name}.html (${Object.keys(icons).length} ícones${timing !== "null" ? ", com narração" : ""})`);

@@ -9,7 +9,9 @@ id="${1:?informe o id do vídeo (src/<id>.js)}"
 theme="${2:-}"
 name="$id${theme:+-$theme}"
 [ -d vendor/node_modules/gsap ] || npm install --prefix vendor gsap@3.12.5 lucide-static@0.460.0 --no-audit --no-fund
-if [ -f "src/$id.script.json" ] && [ "${SKIP_NARRATION:-}" != "1" ]; then
+if ls footage/"$id".* >/dev/null 2>&1; then
+  python3 footage.py "$id"          # gravação real: quadros, voz e legenda alinhada
+elif [ -f "src/$id.script.json" ] && [ "${SKIP_NARRATION:-}" != "1" ] && grep -q '"narrated": *true' "src/$id.script.json"; then
   python3 narrate.py "$id"
 fi
 node build.mjs "$id" ${theme:+--theme "$theme"}

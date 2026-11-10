@@ -6,3 +6,6 @@ renders/*.cues.json
 renders/*_[0-9]*.jpg
 renders/render.log
 __pycache__/
+footage/*/frames/
+footage/*.mp4
+footage/*.mov

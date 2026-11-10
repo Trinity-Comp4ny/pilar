@@ -427,18 +427,204 @@ POSTS["e3-para-quem-projeta"] = page(
   { land: true },
 );
 
+/* ============ Leva 4 (10/11): mais carrosséis, posts e os stories ============ */
+
+const itemPage = (i, N, num, title, body, extra = "") =>
+  page(`${prog(i, N)}<div class="stack"><span class="num">${num}</span><div class="title" style="font-size:80px">${title}</div>${extra}<p class="body">${body}</p></div>${foot}`);
+const capa = (badge, hook, body) =>
+  page(`<div class="stack"><span class="badge">${badge}</span><div class="hook md">${hook}</div><p class="body">${body}</p></div>
+    <div class="row"><span class="badge line" style="font-size:26px">Arraste →</span></div>${foot}`, { land: true });
+const final = (N, badge, hook, body) =>
+  page(`${prog(N, N)}<div class="stack"><span class="badge">${badge}</span><div class="hook md">${hook}</div><p class="body">${body}</p></div>
+    <span class="cta">Veja os planos · link na bio</span>${foot}`, { land: true });
+const serie = (slug, N, capaArgs, itens, finalArgs) => {
+  POSTS[`${slug}-01-capa`] = capa(...capaArgs);
+  itens.forEach(([t, b, extra], i) => (POSTS[`${slug}-${String(i + 2).padStart(2, "0")}`] = itemPage(i + 1, N, String(i + 1).padStart(2, "0"), t, b, extra || "")));
+  POSTS[`${slug}-${String(itens.length + 2).padStart(2, "0")}-final`] = final(N, ...finalArgs);
+};
+
+/* C9 · Honorário: por m², por hora ou por disciplina */
+serie("c9-honorario", 6,
+  ["Conta aberta", `Honorário: por m², por hora ou por ${hl("*disciplina*")}?`, "Os três jeitos de cobrar projeto, sem romantizar nenhum."],
+  [
+    ["Por m²", "Simples de explicar ao cliente. Mas ignora a complexidade: o m² de um hospital não é o m² de um galpão."],
+    ["Por hora", "Justo com o escritório. Mas o cliente não gosta de conta aberta, e a negociação vira desconfiança."],
+    ["Por disciplina", "Um preço por entrega (estrutural, elétrico, hidrossanitário), com as horas estimadas por trás de cada um."],
+    ["O que muda o jogo", "Qualquer modelo funciona se você comparar a hora real com a estimada durante o projeto. É aí que mora o lucro."],
+  ],
+  ["Na Pilar", `Orçamento por disciplina e hora real ${hl("*lado_a_lado*").replace("_", " ").replace("_", " ")}.`, "Passou do estimado? O aditivo chega pronto, com a base."]);
+
+/* C10 · Curva S em 5 slides */
+serie("c10-curva-s", 6,
+  ["Explicado", `A ${hl("*curva_S*").replace("_", " ")} em cinco slides`, "O gráfico que mostra se a obra está no ritmo, antes de virar atraso."],
+  [
+    ["O que é", "O avanço acumulado da obra no tempo. Começa devagar, acelera no meio e desacelera no fim: por isso o S."],
+    ["Planejado × realizado", "Duas curvas no mesmo gráfico: a que você combinou e a que está acontecendo."],
+    ["Como ler", "Realizado abaixo do planejado é atraso. A distância entre as curvas é o tamanho do problema."],
+    ["Quando se preocupar", "Quando a distância cresce semana após semana. Uma semana ruim é ruído; três seguidas é tendência."],
+  ],
+  ["Na Pilar", `A curva S de cada obra, ${hl("*atualizada*")} pelo cronograma.`, "Planejado e realizado no mesmo gráfico, sem planilha paralela."]);
+
+/* C11 · 7 documentos que todo projeto deveria ter */
+{
+  const docs = [
+    ["Contrato assinado", "Com o escopo por disciplina."],
+    ["Proposta aceita", "A versão que o cliente aprovou, com data."],
+    ["ART ou RRT", "Registrada antes de começar."],
+    ["Cronograma", "Com os marcos de entrega."],
+    ["Registro de pedidos de revisão", "Quem pediu, quando e o que muda."],
+    ["Diário da obra", "Quando o escritório acompanha a execução."],
+    ["Termo de entrega", "O aceite do cliente em cada etapa."],
+  ];
+  POSTS["c11-sete-documentos-01-capa"] = capa("Salve este post", `7 documentos que todo projeto ${hl("*deveria*")} ter`, "Quando o cliente questiona, é isso que te protege.");
+  const lst = (part, n, off) => page(`<span class="badge">Os 7 documentos · ${n} de 2</span><div class="chk">${part.map(([t, b], i) => `<div style="align-items:flex-start;padding:34px 0"><b style="font-size:30px">${off + i + 1}</b><span><span style="font-weight:600;font-size:46px">${t}</span><br><span style="font-size:36px;color:var(--ink-soft)">${b}</span></span></div>`).join("")}</div>${foot}`);
+  POSTS["c11-sete-documentos-02"] = lst(docs.slice(0, 4), 1, 0);
+  POSTS["c11-sete-documentos-03"] = lst(docs.slice(4), 2, 4);
+  POSTS["c11-sete-documentos-04-final"] = final(4, "Na Pilar", `Proposta, projeto, diário e financeiro no ${hl("*mesmo*")} lugar.`, "O histórico do projeto não depende da memória de ninguém.");
+}
+
+/* C12 · De 5 para 15 pessoas: o que quebra primeiro */
+serie("c12-crescer", 7,
+  ["Gestão", `De 5 para 15 pessoas: o que ${hl("*quebra*")} primeiro`, "Crescer é bom. Mas o controle que funcionava na cabeça do sócio para de funcionar."],
+  [
+    ["A informação na cabeça do sócio", "Com 5, ele sabe tudo. Com 15, vira gargalo: tudo passa por ele."],
+    ["As versões de arquivo", "Cada um salva a sua. Ninguém sabe qual é a certa."],
+    ["A cobrança", "Parcela vence e ninguém percebe, porque cada um acha que o outro cobrou."],
+    ["A margem", "Ninguém sabe qual projeto dá lucro. Só o que dá trabalho."],
+    ["O cliente", "Liga para saber como está, e a resposta depende de quem atende."],
+  ],
+  ["Na Pilar", `O escritório cresce e o controle ${hl("*acompanha*")}.`, "Usuários ilimitados em todo plano: quem entra já entra no sistema."]);
+
+/* C13 · Fechar o mês do escritório em 30 minutos */
+serie("c13-fechar-o-mes", 7,
+  ["Rotina", `Fechar o mês do escritório em ${hl("*30_minutos*").replace("_", " ")}`, "Cinco conferências, nessa ordem."],
+  [
+    ["Recebido × a receber", "O que entrou, o que venceu e não entrou, o que vence no mês que vem."],
+    ["Despesas lançadas", "Tudo que saiu, na categoria certa e no projeto certo."],
+    ["Horas por projeto", "Quanto cada projeto consumiu de hora da equipe."],
+    ["Margem por projeto", "Preço menos custo e imposto. Quem puxou o mês para baixo?"],
+    ["O que vence na semana", "Entregas, parcelas e contas. É a lista da segunda-feira."],
+  ],
+  ["Na Pilar", `Toda semana, o ${hl("*resumo*")} chega pronto no Início.`, "Escrito pela Pilar, com cada número conferido pelo sistema."]);
+
+/* C14 · As perguntas que todo cliente faz */
+serie("c14-perguntas-do-cliente", 6,
+  ["Cliente", `As 4 perguntas que ${hl("*todo*")} cliente faz`, "E onde a resposta deveria estar, para ninguém parar o que está fazendo."],
+  [
+    ["“Como está?”", "No portal do cliente, com o andamento e o diário que você liberou."],
+    ["“Quando termina?”", "No cronograma, com os marcos de entrega."],
+    ["“Quanto falta pagar?”", "Nas parcelas, ligadas a cada entrega."],
+    ["“Por que custou mais?”", "No aditivo, com as horas e as despesas que sustentam cada valor."],
+  ],
+  ["Na Pilar", `O cliente acompanha por um ${hl("*link*")}.`, "Ele vê só o que você liberar. O seu telefone descansa."]);
+
+/* C15 · Carta do fundador (revisar com o Matheus antes de postar) */
+{
+  const N = 4;
+  POSTS["c15-carta-do-fundador-01-capa"] = page(`<span class="badge">Carta do fundador</span>
+    <div class="hook md">Por que eu estou construindo a ${hl("*Pilar*")}</div><p class="body">Matheus Rezende, fundador.</p>
+    <div class="row"><span class="badge line" style="font-size:26px">Arraste →</span></div>${foot}`, { land: true });
+  const carta = (i, t) => page(`${prog(i, N)}<div style="font-size:52px;line-height:1.4;letter-spacing:-.015em;font-weight:400">${t}</div>${foot}`);
+  POSTS["c15-carta-do-fundador-02"] = carta(1, "Eu vi muito escritório de engenharia bom perdendo dinheiro sem perceber.<br><br>A proposta ficava num lugar, o controle em outro e a obra no grupo do WhatsApp. O lucro do projeto só aparecia quando ele já tinha acabado.");
+  POSTS["c15-carta-do-fundador-03"] = carta(2, "Ninguém ali era desorganizado. Faltava um lugar onde o dado entrasse uma vez só e servisse para todo mundo.<br><br>E faltava alguém fazendo o trabalho repetitivo, para o sócio voltar a fazer engenharia.");
+  POSTS["c15-carta-do-fundador-04-final"] = page(`${prog(4, N)}<div class="stack"><div class="hook md">Quem projeta merece ganhar pelo que ${hl("*projeta*")}.</div>
+    <p class="body">É isso que eu construo. Se fizer sentido para você, me chama: eu leio toda mensagem.</p></div><span class="cta">Veja os planos · link na bio</span>${foot}`, { land: true });
+}
+
+/* C16 · Glossário (versão carrossel do vídeo) */
+serie("c16-glossario", 7,
+  ["Glossário", `5 termos que todo estagiário de ${hl("*projeto*")} precisa saber`, "Salve e mande para quem acabou de chegar."],
+  [
+    ["ART", "Anotação de Responsabilidade Técnica. Registrada no CREA, diz quem responde pelo projeto de engenharia."],
+    ["RRT", "Registro de Responsabilidade Técnica. O equivalente da ART na arquitetura, registrado no CAU."],
+    ["Aditivo", "O que muda no escopo e no valor depois do contrato assinado."],
+    ["Curva S", "O avanço acumulado no tempo: planejado contra realizado."],
+    ["Margem", "O que sobra do preço depois do custo e do imposto."],
+  ],
+  ["Na Pilar", `Contrato, aditivo, cronograma e margem no ${hl("*mesmo*")} sistema.`, "Gestão com agentes de IA para escritórios de engenharia e arquitetura."]);
+
+/* Estáticos da leva 4 */
+POSTS["e10-revisao-nao-e-favor"] = page(`<span class="badge">Manifesto</span>
+  <div style="font-size:150px;font-weight:600;letter-spacing:-.06em;line-height:.98">Revisão<br>não é<br><span class="pill">favor.</span></div>
+  <p class="body">É escopo. E escopo a mais tem nome: aditivo.</p>${foot}`, { land: true });
+POSTS["e11-previsao-x-cronograma"] = page(`<span class="badge">Quem nunca?</span>
+  <div class="stack" style="gap:24px">
+    <div class="card" style="display:flex;gap:28px;align-items:center"><div style="font-size:70px">⛈</div><div><div class="ex">Previsão · sábado</div><div style="font-size:52px;font-weight:600;color:#B45309">94% de trovoada</div></div></div>
+    <div class="card" style="display:flex;gap:28px;align-items:center"><div style="font-size:70px">🏗</div><div><div class="ex">Cronograma · sábado</div><div style="font-size:52px;font-weight:600">Concretagem da laje</div></div></div></div>
+  <div class="hook sm">Marque quem precisa ser ${hl("*avisado*")} antes.</div>${foot}`, { land: true });
+POSTS["e12-frase-do-fundador"] = page(`<div style="font-size:200px;line-height:.6;color:#A4EC86;font-weight:600">“</div>
+  <div style="font-size:96px;font-weight:600;letter-spacing:-.045em;line-height:1.04;color:#fff">Quem projeta merece ganhar pelo que projeta.</div>
+  <div style="font-size:36px;color:#a9aab0">Matheus Rezende, fundador da Pilar</div>${foot}`, { ink: true });
+const dica = (n, t, b) => page(`<span class="badge">Dica rápida #${n}</span><div class="hook md">${t}</div><p class="body">${b}</p>${foot}`);
+POSTS["e13-dica-1-pedido"] = dica(1, `Registre o pedido do cliente no ${hl("*dia*")} em que ele chega.`, "Data, quem pediu e o que muda. É a base do aditivo que você ainda vai pedir.");
+POSTS["e14-dica-2-parcela"] = dica(2, `Ligue cada parcela a uma ${hl("*entrega*")}.`, "Entregou o anteprojeto, fatura a parcela 2. O cliente entende, e o caixa agradece.");
+POSTS["e15-enquete-dor"] = page(`<span class="badge">Responda nos comentários</span>
+  <div class="hook md">Qual é a sua maior ${hl("*dor*")} hoje?</div>
+  <div class="stack" style="gap:18px">${["A · Margem dos projetos", "B · Prazo das entregas", "C · Cobrança das parcelas", "D · Cliente pedindo status"].map((t) => `<div style="border:3px solid #1A1A1A;border-radius:999px;padding:24px 40px;font-size:42px;font-weight:500">${t}</div>`).join("")}</div>${foot}`);
+POSTS["e16-lancamento-19-01"] = page(`<span class="badge">Anote</span>
+  <div style="font-size:300px;font-weight:600;letter-spacing:-.07em;line-height:.9">19.01</div>
+  <div class="hook sm">Lançamento público da ${hl("*Pilar*")}.</div><p class="body">Gestão com agentes de IA para escritórios de engenharia e arquitetura.</p>${foot}`, { land: true });
+POSTS["e17-por-usuario-x-pilar"] = page(`<span class="badge">Faça a conta · exemplo</span>
+  <div class="hook sm">Escritório de 12 pessoas</div>
+  <div class="card" style="font-size:38px"><div class="ex">Sistema que cobra por usuário (exemplo)</div><div style="font-size:72px;font-weight:600;margin-top:10px;white-space:nowrap">12 × R$ 89 = <span style="color:#DC2626">R$ 1.068</span></div></div>
+  <div class="card" style="font-size:38px;box-shadow:0 0 0 4px #A4EC86"><div class="ex">Pilar Profissional</div><div style="font-size:84px;font-weight:600;margin-top:10px">R$ 499 <span style="font-size:36px;font-weight:500;color:#5F6572">usuários ilimitados</span></div></div>${foot}`);
+POSTS["e18-em-uma-frase"] = page(`<span class="badge">Em uma frase</span>
+  <div class="hook md">Gestão com agentes de IA para escritórios de engenharia e ${hl("*arquitetura*")}.</div>
+  <p class="body">A Pilar prepara. O sistema confere. Você aprova.</p>${foot}`, { land: true });
+
+/* ============ Stories (1080 × 1920): 250 px livres no topo, 340 px na base ============ */
+const STORY = {};
+const story = (body, { bg = "", ink = false, land = false } = {}) => `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<link rel="stylesheet" href="${pathToFileURL(resolve(TPL, "social.css"))}"><style>${css}
+:root{--h:1920px}.canvas{padding:250px 90px 340px;justify-content:flex-start;gap:60px}
+.sticker{border:4px dashed rgba(26,26,26,.25);border-radius:40px;height:300px;display:grid;place-items:center;font-size:30px;font-weight:500;color:rgba(26,26,26,.4)}
+.ink .sticker{border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.45)}
+.sfoot{position:absolute!important;left:90px;right:90px;bottom:200px}</style></head><body>
+${land ? paisagem(1080, 1920, 1500, 420) : ""}<div class="canvas${ink ? " ink" : ""}${land ? " land" : ""}" ${bg ? `style="background:${bg}"` : ""}>${body}<div class="sfoot">${foot}</div></div></body></html>`;
+const ESPACO = (t) => `<div class="sticker">${t}</div>`;
+// ST1 enquete da margem
+STORY["st1-enquete-margem-1"] = story(`<span class="badge">Enquete</span><div class="hook">Você sabe a margem de cada ${hl("*disciplina*")}?</div>${ESPACO("adesivo de enquete: Sim / Não")}`);
+STORY["st1-enquete-margem-2"] = story(`<span class="badge">Por que importa</span><div class="hook md">A margem do projeto inteiro esconde a disciplina que dá ${hl("*prejuízo*")}.</div><p class="body">O estrutural pode pagar o elétrico, e ninguém percebe.</p>`);
+STORY["st1-enquete-margem-3"] = story(`<span class="badge">Na Pilar</span><div class="hook md">Orçamento e hora real por ${hl("*disciplina*")}, durante o projeto.</div>${ESPACO("adesivo de link: planos")}`, { land: true });
+// ST2 quiz
+STORY["st2-quiz-1"] = story(`<span class="badge">Quiz</span><div class="hook md">O que precisa estar registrado antes de começar um projeto de ${hl("*engenharia*")}?</div>${ESPACO("adesivo de quiz: Alvará / ART / Logo")}`, { bg: "linear-gradient(165deg,#D4F7C3 0%,#A4EC86 60%,#8FD46A 100%)" });
+STORY["st2-quiz-2"] = story(`<span class="badge" style="background:#1A1A1A;color:#fff">Resposta</span><div style="font-size:260px;font-weight:600;letter-spacing:-.06em">ART</div><p class="body" style="color:#1A1A1A">No CREA, antes de começar. Na arquitetura, o RRT, no CAU.</p>`, { bg: "linear-gradient(165deg,#D4F7C3 0%,#A4EC86 60%,#8FD46A 100%)" });
+// ST3 caixinha
+STORY["st3-caixinha"] = story(`<span class="badge">Pergunte ao fundador</span><div class="hook md">O que você quer saber sobre gestão de escritório de ${hl("*projeto*")}?</div>${ESPACO("adesivo de perguntas")}<p class="body">Eu respondo em vídeo.</p>`);
+// ST4 isso ou aquilo
+[["Planilha", "Sistema"], ["WhatsApp", "Portal do cliente"], ["Revisão de graça", "Aditivo"], ["Cobrar por hora", "Cobrar por disciplina"]].forEach(([a, b], i) => {
+  STORY[`st4-isso-ou-aquilo-${i + 1}`] = story(`<span class="badge">Isso ou aquilo ${i + 1}/4</span>
+    <div style="display:flex;flex-direction:column;gap:30px;margin-top:60px"><div class="card" style="font-size:72px;font-weight:600;text-align:center;padding:60px">${a}</div>
+    <div style="text-align:center;font-size:40px;font-weight:500;color:var(--muted)">ou</div><div class="card" style="font-size:72px;font-weight:600;text-align:center;padding:60px;box-shadow:0 0 0 4px #A4EC86">${b}</div></div>${ESPACO("adesivo de enquete")}`);
+});
+// ST5 bastidor
+STORY["st5-bastidor-1"] = story(`<span class="badge">Bastidor</span><div class="hook md">O que eu estou construindo esta ${hl("*semana*")}</div>${ESPACO("sua foto ou print da tela aqui")}`, { ink: true });
+STORY["st5-bastidor-2"] = story(`<span class="badge">Bastidor</span><div class="hook md">Uma coisa que eu ${hl("*cortei*")} e por quê</div>${ESPACO("sua foto aqui")}<p class="body">Responde aqui: você teria cortado?</p>`, { ink: true });
+// ST6 contagem
+[10, 7, 3, 1].forEach((d) => {
+  STORY[`st6-contagem-${String(d).padStart(2, "0")}`] = story(`<span class="badge">Lançamento público</span>
+    <div style="font-size:${d > 9 ? 480 : 560}px;font-weight:600;letter-spacing:-.08em;line-height:.9;margin-top:40px">${d}</div>
+    <div class="hook sm">${d === 1 ? "É amanhã." : "dias para o lançamento."}</div><p class="body">19 de janeiro. Ative o lembrete.</p>${ESPACO("adesivo de contagem regressiva")}`, { ink: true });
+});
+// ST7 novidades e ST8 link
+STORY["st7-novidades"] = story(`<span class="badge">Novidades da semana</span><div class="hook md">4 coisas novas na ${hl("*Pilar*")} esta semana.</div><p class="body">Estão no post de hoje. Toca para ver.</p>${ESPACO("repost do post de novidades")}`);
+STORY["st8-planos-link"] = story(`<span class="badge">Planos</span><div style="font-size:220px;font-weight:600;letter-spacing:-.06em;line-height:.9">R$ 299</div><div class="hook sm">por mês, usuários ${hl("*ilimitados*")}.</div>${ESPACO("adesivo de link: planos")}`, { land: true });
+
 // ---------------- render ----------------
 const filtro = process.argv[2];
 mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch();
 const pg = await browser.newPage({ viewport: { width: 1080, height: 1350 }, deviceScaleFactor: 1 });
-for (const [name, html] of Object.entries(POSTS)) {
+mkdirSync(resolve(OUT, "stories"), { recursive: true });
+const ALL = [...Object.entries(POSTS).map(([n, h]) => [n, h, 1350, OUT]), ...Object.entries(STORY).map(([n, h]) => [n, h, 1920, resolve(OUT, "stories")])];
+for (const [name, html, hgt, dir] of ALL) {
   if (filtro && !name.includes(filtro)) continue;
   const tmp = resolve(TPL, `_tmp-${name}.html`);
   writeFileSync(tmp, html);
   await pg.goto(pathToFileURL(tmp).href);
   await pg.evaluate(() => document.fonts.ready);
-  await pg.screenshot({ path: resolve(OUT, `${name}.png`) });
+  await pg.setViewportSize({ width: 1080, height: hgt });
+  await pg.screenshot({ path: resolve(dir, `${name}.png`) });
   unlinkSync(tmp);
   console.log("ok", name);
 }

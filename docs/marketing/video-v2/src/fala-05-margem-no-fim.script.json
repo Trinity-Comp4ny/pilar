@@ -1,0 +1,48 @@
+{
+  "id": "fala-05-margem-no-fim",
+  "hook": "O dia em que a margem *apareceu no fim*",
+  "tail": 3.4,
+  "lines": [
+    {
+      "id": "l01",
+      "text": "Imagina um projeto que parecia ótimo: contrato bom, cliente bom."
+    },
+    {
+      "id": "l02",
+      "text": "Aí veio uma revisão sem aditivo, uma compatibilização refeita, uma versão errada.",
+      "show": {
+        "type": "lista",
+        "itens": [
+          "+60 h de revisão",
+          "+40 h de compatibilização",
+          "+30 h de versão errada"
+        ],
+        "icone": "triangle-alert",
+        "cor": "#FCA5A5"
+      }
+    },
+    {
+      "id": "l03",
+      "text": "No fim, o lucro caiu de vinte e cinco para seis por cento. E ninguém viu acontecer.",
+      "show": {
+        "type": "numero",
+        "valor": "6%",
+        "rotulo": "de lucro, no lugar de 25% (exemplo)",
+        "cor": "#F87171"
+      }
+    },
+    {
+      "id": "l04",
+      "text": "Na Pilar, a hora real aparece contra o orçado enquanto o projeto anda.",
+      "show": {
+        "type": "tela",
+        "tela": "margem",
+        "legenda": "Hora real contra o orçado"
+      }
+    },
+    {
+      "id": "l05",
+      "text": "Descobrir no fim não adianta. Tem que ser durante."
+    }
+  ]
+}
