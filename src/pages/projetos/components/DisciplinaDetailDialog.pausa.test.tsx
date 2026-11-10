@@ -9,6 +9,9 @@ import type { DisciplinaResponsavel } from "@/types/projetos";
 const mutate = vi.fn();
 let pausasAbertas = false;
 
+vi.mock("@/hooks/useComentarioAutoria", () => ({
+  useComentarioAutoria: () => ({ autorId: "u-eu", podeExcluir: () => false }),
+}));
 vi.mock("@/pages/projetos/hooks/useDisciplinaPausas", async (importar) => ({
   ...(await importar<typeof import("@/pages/projetos/hooks/useDisciplinaPausas")>()),
   useDisciplinaPausas: () => ({

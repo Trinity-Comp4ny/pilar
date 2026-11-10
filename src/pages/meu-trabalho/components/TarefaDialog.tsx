@@ -38,7 +38,8 @@ import type { Etapa } from "../useEtapas";
 import type { Comentario, PessoaOpcao, TarefaInput, TarefaItem } from "../hooks";
 import type { ServicoObra } from "../servicoObra";
 import { notificarMencao } from "@/lib/notificarMencao";
-import { ComentarioCard } from "@/components/atividades/ComentarioCard";
+import { ComentariosLista } from "@/components/atividades/ComentariosLista";
+import { useComentarioAutoria } from "@/hooks/useComentarioAutoria";
 
 const SEM = "__none__";
 
@@ -143,6 +144,7 @@ function TarefaFormBody({
   const [labels, setLabels] = useState<string[]>(tarefa?.labels ?? []);
   const [links, setLinks] = useState<LinkItem[]>(tarefa?.links ?? []);
   const [comentarios, setComentarios] = useState<Comentario[]>(tarefa?.comentarios ?? []);
+  const { autorId } = useComentarioAutoria(autorNome);
   // Menções de comentários adicionados nesta sessão do dialog, ainda não notificadas: só
   // notifica quando o Salvar do rodapé persistir de fato (comentário de tarefa não salva sozinho
   // como em Projeto/Disciplina), e só as novas — reabrir uma tarefa antiga não deve renotificar.
@@ -166,6 +168,7 @@ function TarefaFormBody({
         id,
         texto: t,
         autor: autorNome,
+        autorId,
         data: new Date().toISOString(),
         mencionados: mencionados.length ? mencionados : undefined,
       },
@@ -390,18 +393,20 @@ function TarefaFormBody({
               </Label>
             </div>
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-5 py-4">
-              {comentarios.length === 0 ? (
-                <p className="py-8 text-center text-xs text-muted-foreground">Nenhum comentário ainda</p>
-              ) : (
-                comentarios.map((c) => (
-                  <ComentarioCard
-                    key={c.id}
-                    comentario={c}
-                    pessoas={pessoas}
-                    destacado={c.id === comentarioDestacado}
-                  />
-                ))
-              )}
+              <ComentariosLista
+                comentarios={comentarios}
+                pessoas={pessoas}
+                autorNome={autorNome}
+                destacadoId={comentarioDestacado}
+                onExcluir={
+                  readOnly
+                    ? undefined
+                    : (id) => {
+                        setComentarios((prev) => prev.filter((x) => x.id !== id));
+                        setPendentesMencao((prev) => prev.filter((x) => x.id !== id));
+                      }
+                }
+              />
             </div>
             {!readOnly && (
               <div className="shrink-0 border-t bg-background/60 p-4">
