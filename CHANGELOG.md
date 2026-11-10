@@ -14,6 +14,8 @@ Regras deste repo:
 
 ### Adicionado
 
+- Faixa de aviso no topo do app quando há instabilidade declarada ou manutenção programada, com o que é afetado e o link para a status page. Manutenções cadastradas em `/ultra-admin/incidentes`. (SPEC 153)
+
 - Novidades dentro do app: página Novidades, modal "O que mudou" quando o caminho de uma tarefa muda, aviso de versão nova com a contagem do que veio, e aviso no sino para quem pediu a mudança. Releases revisadas e publicadas em `/ultra-admin/releases`. (SPEC 152)
 
 - Onboarding guiado: checklist de primeiros passos por pilar (Gestão/Projetos/Obras) e tour com coach marks nas ações principais. (#202)
