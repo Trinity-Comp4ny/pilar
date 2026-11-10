@@ -46,7 +46,8 @@ ${m("M0 216 C200 188 340 210 520 202 C700 194 800 168 980 182 C1140 194 1260 212
 };
 
 // *palavra* vira a pílula verde (uma por peça)
-const hl = (t) => t.replace(/\*(.+?)\*/g, '<span class="pill">$1</span>');
+// a pontuação logo depois da pílula vai junto com ela (não cai sozinha na linha de baixo)
+const hl = (t) => t.replace(/\*(.+?)\*([.,!?:;]?)/g, '<span style="white-space:nowrap"><span class="pill">$1</span>$2</span>');
 
 // recorte de uma tela real (px CSS da tela 1440 × 900), como imagem com borda e sombra
 const tela = (still, r, w) => {
@@ -222,6 +223,180 @@ const POSTS = {};
     { land: true },
   );
 }
+
+/* ============ Leva 3 (10/11): layouts variados, não só o modelo de carrossel ============ */
+
+/* Carrossel 5 · Mito × fato sobre IA: tela dividida (escuro em cima, claro embaixo) */
+{
+  const N = 6;
+  const split = (i, mito, fato) =>
+    `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><link rel="stylesheet" href="${pathToFileURL(resolve(TPL, "social.css"))}"><style>${css}
+      .half{position:absolute;left:0;right:0;padding:0 90px;display:flex;flex-direction:column;justify-content:center;gap:26px}
+      .tag{font-size:30px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
+      .t{font-size:66px;font-weight:500;letter-spacing:-.03em;line-height:1.08}</style></head><body>
+      <div class="half" style="top:0;height:675px;background:#1A1A1A;color:#fff">${i ? `<div class="prog" style="position:absolute;top:120px;left:90px;right:90px">${Array.from({ length: N }, (_, k) => `<i style="background:${k < i ? "#fff" : "#3a3a3a"}"></i>`).join("")}</div>` : ""}
+        <span class="tag" style="color:#F87171">✕ Mito</span><div class="t" style="color:#d8d8d8;text-decoration:line-through;text-decoration-thickness:4px;text-decoration-color:#F87171">${mito}</div></div>
+      <div class="half" style="top:675px;height:675px;background:#FCFCFC"><span class="tag" style="color:#15803D">✓ Fato</span><div class="t">${fato}</div>
+        <div style="position:absolute;left:90px;right:90px;bottom:90px">${foot}</div></div></body></html>`;
+  POSTS["c5-mito-fato-01-capa"] = page(
+    `<div class="stack"><span class="badge">Mito × fato</span><div class="hook">4 mitos sobre ${hl("*IA*")} no escritório de engenharia</div>
+     <p class="body">E o que acontece de verdade na Pilar.</p></div><div class="row"><span class="badge line" style="font-size:26px">Arraste →</span></div>${foot}`,
+    { land: true },
+  );
+  POSTS["c5-mito-fato-02"] = split(1, "A IA vai decidir pelo engenheiro.", "A IA prepara. Você aprova. Nada grava sem o seu ok.");
+  POSTS["c5-mito-fato-03"] = split(2, "A IA inventa número.", "A conta é do sistema: projeto, valor e parcela são conferidos antes de chegar a você.");
+  POSTS["c5-mito-fato-04"] = split(3, "Precisa aprender a mexer em IA.", "Você escreve como falaria: “recebi 128 mil do centro cirúrgico”.");
+  POSTS["c5-mito-fato-05"] = split(4, "IA é coisa de escritório grande.", "Usuários ilimitados em todo plano, a partir de R$ 299 por mês.");
+  POSTS["c5-mito-fato-06-final"] = page(
+    `${prog(6, N)}<div class="stack"><span class="badge">Resumo</span><div class="hook md">A IA prepara. O sistema confere. ${hl("*Você_aprova.*").replace("_", " ")}</div></div>
+     <span class="cta">Veja os planos · link na bio</span>${foot}`,
+    { land: true },
+  );
+}
+
+/* Carrossel 6 · O que a Pilar NÃO faz (lição da Attio: dizer o que a IA não muda). Fundo tinta. */
+{
+  const N = 7;
+  const nao = (i, t, b) =>
+    page(`<div class="prog">${Array.from({ length: N }, (_, k) => `<i style="background:${k < i ? "#fff" : "#3a3a3a"}"></i>`).join("")}</div>
+      <div class="stack"><div style="font-size:220px;font-weight:600;letter-spacing:-.06em;line-height:.9;color:#A4EC86">Não.</div>
+      <div class="title" style="color:#fff">${t}</div><p class="body">${b}</p></div>${foot}`, { ink: true });
+  POSTS["c6-o-que-nao-faz-01-capa"] = page(
+    `<span class="badge">Transparência</span><div class="hook" style="color:#fff">O que a Pilar ${hl("*não*")} faz.</div>
+     <p class="body">Cinco limites de propósito. É por eles que dá para confiar no resto.</p>${foot}`,
+    { ink: true },
+  );
+  POSTS["c6-o-que-nao-faz-02"] = nao(1, "Não aprova nada por você.", "A Pilar prepara o lançamento, o aditivo e o resumo. Quem aprova é você.");
+  POSTS["c6-o-que-nao-faz-03"] = nao(2, "Não manda nada ao cliente sem o seu ok.", "O registro da obra nasce interno. Só vai ao portal quando você liberar.");
+  POSTS["c6-o-que-nao-faz-04"] = nao(3, "Não inventa número.", "Valor, parcela e categoria saem do cálculo do sistema, não do texto da IA.");
+  POSTS["c6-o-que-nao-faz-05"] = nao(4, "Não assina a ART nem o RRT.", "A responsabilidade técnica é de quem projeta. A Pilar cuida da gestão em volta.");
+  POSTS["c6-o-que-nao-faz-06"] = nao(5, "Não cobra por usuário.", "O estagiário, o mestre de obras e o sócio entram no mesmo plano.");
+  POSTS["c6-o-que-nao-faz-07-final"] = page(
+    `<div class="stack"><span class="badge">O que ela faz</span><div class="hook md">Prepara o trabalho repetitivo. ${hl("*Você_decide.*").replace("_", " ")}</div>
+     <p class="body">Gestão com agentes de IA para escritórios de engenharia e arquitetura.</p></div>
+     <span class="cta">Veja os planos · link na bio</span>${foot}`,
+    { land: true },
+  );
+}
+
+/* Carrossel 7 · Checklist antes de começar um projeto (para salvar) */
+{
+  const itens = [
+    ["Contrato com escopo por disciplina", "O que está dentro e o que está fora, escrito."],
+    ["ART ou RRT registrada", "ART no CREA (engenharia), RRT no CAU (arquitetura), antes de começar."],
+    ["Número de revisões combinado", "Quantas estão incluídas. A partir daí, é aditivo."],
+    ["Cronograma com marcos de entrega", "Uma data por entrega, não só a data final."],
+    ["Parcelas ligadas às entregas", "Entregou o anteprojeto, fatura a parcela 2."],
+    ["Um responsável por disciplina", "Quem responde pelo estrutural, pelo elétrico, pelo hidrossanitário."],
+  ];
+  POSTS["c7-checklist-inicio-01-capa"] = page(
+    `<div class="stack"><span class="badge">Salve este post</span><div class="hook md">6 coisas para ter ${hl("*antes*")} de começar um projeto</div>
+     <p class="body">O checklist que evita a revisão de graça e a parcela atrasada.</p></div>
+     <div class="row"><span class="badge line" style="font-size:26px">Arraste →</span></div>${foot}`,
+    { land: true },
+  );
+  const lista = (part, n) =>
+    page(
+      `<span class="badge">Checklist · ${n} de 2</span><div class="chk">${part
+        .map(([t, b]) => `<div style="align-items:flex-start;padding:40px 0"><b>✓</b><span><span style="font-weight:600;font-size:46px">${t}</span><br><span style="font-size:36px;color:var(--ink-soft)">${b}</span></span></div>`)
+        .join("")}</div>${foot}`,
+    );
+  POSTS["c7-checklist-inicio-02-lista"] = lista(itens.slice(0, 3), 1);
+  POSTS["c7-checklist-inicio-03-lista"] = lista(itens.slice(3), 2);
+  POSTS["c7-checklist-inicio-04-final"] = page(
+    `<div class="stack"><span class="badge">Na Pilar</span><div class="hook md">Proposta aceita vira projeto com disciplinas, responsáveis e ${hl("*parcelas*")}.</div>
+     <p class="body">Sem redigitar o que já estava na proposta.</p></div>
+     <span class="cta">Veja os planos · link na bio</span>${foot}`,
+    { land: true },
+  );
+}
+
+/* Carrossel 8 · Aditivo sem perder o cliente: 5 passos */
+{
+  const N = 7;
+  POSTS["c8-aditivo-01-capa"] = page(
+    `<div class="stack"><span class="badge">Conta aberta</span><div class="hook md">Como pedir um ${hl("*aditivo*")} sem perder o cliente</div>
+     <p class="body">Cinco passos. O segredo é a base, não a coragem.</p></div>
+     <div class="row"><span class="badge line" style="font-size:26px">Arraste →</span></div>${foot}`,
+    { land: true },
+  );
+  const passos = [
+    ["Combine no contrato", "Quantas revisões estão incluídas. O resto já nasce como aditivo, não como favor."],
+    ["Registre o pedido no dia", "Data, quem pediu e o que muda. Pedido de corredor some na memória."],
+    ["Estime antes de fazer", "Horas a mais por disciplina. Depois de feito, vira briga."],
+    ["Mostre a base", "Horas, despesas e o porquê de cada valor. Número sem base parece cobrança."],
+    ["Comece depois do ok", "Por escrito. É o que transforma pedido em receita."],
+  ];
+  passos.forEach(([t, b], i) => {
+    POSTS[`c8-aditivo-0${i + 2}`] = page(
+      `${prog(i + 1, N)}<div class="stack"><span class="num">0${i + 1}</span><div class="title" style="font-size:84px">${t}</div><p class="body">${b}</p></div>${foot}`,
+    );
+  });
+  POSTS["c8-aditivo-07-final"] = page(
+    `${prog(7, N)}<div class="stack"><span class="badge">Na Pilar</span><div class="hook md">Passou do orçado? O aditivo chega ${hl("*pronto*")}, citando as despesas.</div>
+     <p class="body">Você revisa, aprova e manda. Nada vai ao cliente sem o seu ok.</p></div>
+     <span class="cta">Veja os planos · link na bio</span>${foot}`,
+    { land: true },
+  );
+}
+
+/* Estático 4 · Assinatura em tipografia grande, sobre tinta */
+POSTS["e4-assinatura"] = page(
+  `<span class="badge">Pilar</span>
+   <div style="font-size:150px;font-weight:600;letter-spacing:-.055em;line-height:.98;color:#fff">A IA<br>prepara.<br><span style="color:#8a8a8a">O sistema<br>confere.</span><br><span style="color:#A4EC86;font-style:italic">Você<br>aprova.</span></div>${foot}`,
+  { ink: true },
+);
+
+/* Estático 5 · O arquivo (humor, pede marcação) */
+POSTS["e5-arquivo-final"] = page(
+  `<span class="badge">Marque quem tem</span>
+   <div style="display:flex;flex-direction:column;align-items:center;gap:40px">
+     <div style="width:300px;height:380px;border-radius:24px;background:#fff;box-shadow:0 0 0 3px #E2E2E2,0 40px 60px -30px rgba(0,0,0,.35);position:relative;display:grid;place-items:center">
+       <div style="position:absolute;top:0;right:0;width:90px;height:90px;background:linear-gradient(225deg,#FCFCFC 50%,#E2E2E2 50%);border-bottom-left-radius:18px"></div>
+       <div style="width:170px;height:170px;border-radius:20px;background:#DCFCE7;display:grid;place-items:center;font:700 80px Geist;color:#15803D">X</div></div>
+     <div style="font-size:52px;font-weight:600;letter-spacing:-.02em;text-align:center">Controle_projetos_<br>FINAL_v7 (2) - Cópia.xlsx</div></div>
+   <div class="hook sm" style="text-align:center">Todo escritório tem ${hl("*um*")}.</div>${foot}`,
+  { land: true },
+);
+
+/* Estático 6 · Enquete nos comentários */
+POSTS["e6-enquete-margem"] = page(
+  `<span class="badge">Responda nos comentários</span>
+   <div class="hook md">Você sabe a margem de ${hl("*cada*")} disciplina do projeto?</div>
+   <div class="stack" style="gap:20px">${["A · Sim, toda semana", "B · No fim do projeto", "C · Sinceramente, não"]
+     .map((t) => `<div style="border:3px solid #1A1A1A;border-radius:999px;padding:26px 40px;font-size:44px;font-weight:500">${t}</div>`)
+     .join("")}</div>${foot}`,
+);
+
+/* Estático 7 · O que mudou na Pilar esta semana (lição do Linear: changelog fixo, toda sexta) */
+POSTS["e7-novidades-2026-11-14"] = page(
+  `<div class="row"><span class="badge">Novidades da semana</span><span style="font-size:30px;font-weight:500;color:var(--muted)">14/11/2026</span></div>
+   <div class="hook sm">O que mudou na ${hl("*Pilar*")} esta semana</div>
+   <div class="chk">${[
+     ["@ chega por e-mail na hora", "Marcou alguém num comentário? Ela recebe no mesmo instante."],
+     ["Cadastrou na Equipe, já tem acesso", "O convite sai junto com o cadastro."],
+     ["Produtividade em % do projeto", "A folha paga a produção como percentual do valor do projeto."],
+     ["A pagar e A receber, lado a lado", "Novas visões do financeiro, com painel lateral."],
+   ]
+     .map(([t, b]) => `<div style="align-items:flex-start;font-size:40px;padding:24px 0"><b style="width:52px;height:52px;font-size:30px;background:#A4EC86;border:0">+</b><span><span style="font-weight:600">${t}</span><br><span style="font-size:32px;color:var(--ink-soft)">${b}</span></span></div>`)
+     .join("")}</div>${foot}`,
+);
+
+/* Estático 8 · Preço, direto */
+POSTS["e8-preco"] = page(
+  `<span class="badge">Planos</span>
+   <div class="stack" style="gap:10px"><span class="ex">a partir de</span><div class="big" style="font-size:260px">R$ 299</div><span style="font-size:44px;font-weight:500">por mês, por escritório.</span></div>
+   <div class="chk" style="border-top:0">${["Usuários ilimitados", "A plataforma inteira em todo plano", "O plano muda quanto, nunca o quê"].map((t) => `<div style="padding:18px 0;font-size:38px"><b style="width:44px;height:44px;font-size:26px">✓</b>${t}</div>`).join("")}</div>
+   <span class="cta">Veja os planos · link na bio</span>${foot}`,
+  { land: true },
+);
+
+/* Estático 9 · Posicionamento: engenharia não é interiores (verde cheio) */
+POSTS["e9-engenharia-nao-e-interiores"] = page(
+  `<span class="badge" style="background:#1A1A1A;color:#fff">Para quem é</span>
+   <div style="font-size:120px;font-weight:600;letter-spacing:-.05em;line-height:1">Gestão de escritório não é só ${'<span style="font-style:italic;text-decoration:line-through;text-decoration-thickness:8px">interiores</span>'}.</div>
+   <p class="body" style="color:#1A1A1A">Estrutural, MEP, hidrossanitário, elétrico. Quem projeta por disciplina também precisa de lucro na tela.</p>${foot}`,
+).replace('<div class="canvas">', '<div class="canvas" style="background:linear-gradient(165deg,#D4F7C3 0%,#A4EC86 60%,#8FD46A 100%)">');
 
 /* Estático 1 · Número: 4× (território "dor nomeada") */
 POSTS["e1-numero-4x"] = page(

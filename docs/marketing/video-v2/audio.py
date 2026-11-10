@@ -339,6 +339,10 @@ def sfx(cues, dur):
                 add(fx, bell(m, 1.2), t + i * 0.12, 0.06, pan=(i - 1) * 0.4)
         elif k == "thud":
             add(fx, np.tanh(sine(55, 0.5) * np.exp(-secs(0.5) * 9) * 2), t, 0.35)
+        else:
+            from styles import sfx_extra
+
+            sfx_extra(fx, c)
     return fx
 
 
@@ -370,7 +374,16 @@ def main():
         mus = load_track(track, dur)
         print("trilha:", track.name)
     else:
-        mus = build_bed(dur, S) if S.get("style") == "bed" else build_music(dur, S)
+        style = S.get("style")
+        if style == "bed":
+            mus = build_bed(dur, S)
+        elif style in ("cinematic", "lofi", "clock", "quirky", "piano", "foley"):
+            from styles import build_style
+
+            mus = build_style(style, dur, S)
+        else:
+            mus = build_music(dur, S)
+        print("estilo:", style or "groove")
     fx = sfx(meta["cues"], dur)
     if S.get("voice"):
         fx *= 0.6  # com narração, os efeitos ficam por baixo

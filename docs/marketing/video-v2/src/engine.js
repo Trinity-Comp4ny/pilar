@@ -55,7 +55,7 @@ export function headline(parent, text, { x = 70, y, size = 78, w = W - 140, alig
         .map((raw) => {
           // pílula com mais de uma palavra: *agentes_de_IA*
           const word = raw.replace(/_/g, " ");
-          const m = word.match(/^([*~])(.+)\1([.,!?]?)$/);
+          const m = word.match(/^([*~])(.+)\1([.,!?:;]?)$/);
           if (m) {
             const red = m[1] === "~" ? " red" : "";
             return `<span class="w"><span class="wi"><span class="hl${red}"><span class="pillbg"></span><em>${m[2]}</em></span>${m[3]}</span></span>`;

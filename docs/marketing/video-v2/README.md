@@ -104,6 +104,12 @@ sem mudar o texto não gasta crédito.
 
 ## Música
 
+Sete trilhas sintetizadas, escolhidas por vídeo em `finalize(..., { style })` (`styles.py`):
+`groove` (padrão), `cinematic`, `lofi`, `quirky`, `piano`, `clock`, `foley` (sem música) e `bed`
+(fundo para narração). Efeitos extras: notificação, mensagem, erro, glitch, ding, buzz, máquina de
+escrever, obturador, relógio, braam e riser. Catálogo de conceitos e trilhas em
+`docs/marketing/06-banco-de-conteudo.md`.
+
 Sem arquivo, `audio.py` sintetiza a trilha (original, sem licença de terceiros). Para usar uma
 música de biblioteca grátis com uso comercial liberado (YouTube Audio Library, Pixabay Music),
 salve como `music/<nome do vídeo>.mp3` (ex.: `music/comece-aqui-light.mp3`) e rode o `make.sh`:
