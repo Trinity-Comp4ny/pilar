@@ -37,7 +37,7 @@ import {
 import type { Etapa } from "../useEtapas";
 import type { Comentario, PessoaOpcao, TarefaInput, TarefaItem } from "../hooks";
 import type { ServicoObra } from "../servicoObra";
-import { notificarMencao } from "@/lib/notificarMencao";
+import { apagarNotificacoesComentario, notificarMencao } from "@/lib/notificarMencao";
 import { ComentariosLista } from "@/components/atividades/ComentariosLista";
 import { useComentarioAutoria } from "@/hooks/useComentarioAutoria";
 
@@ -176,6 +176,10 @@ function TarefaFormBody({
     if (mencionados.length || mencionaTodos(t)) setPendentesMencao((prev) => [...prev, { id, texto: t, mencionados }]);
   };
 
+  // Comentários apagados nesta sessão do dialog: a notificação deles só sai do sino depois que
+  // o Salvar gravar a lista sem eles (a RPC recusa enquanto o comentário existe no banco).
+  const [apagados, setApagados] = useState<string[]>([]);
+
   const salvar = async () => {
     if (!podeSalvar) return;
     if (tituloVazio) {
@@ -204,6 +208,10 @@ function TarefaFormBody({
     if (tarefaId && pendentesMencao.length) {
       await Promise.all(pendentesMencao.map((p) => notificarMencao("tarefa", tarefaId, p.mencionados, p.texto, p.id)));
       setPendentesMencao([]);
+    }
+    if (tarefaId && apagados.length) {
+      await Promise.all(apagados.map((id) => apagarNotificacoesComentario("tarefa", tarefaId, id)));
+      setApagados([]);
     }
   };
 
@@ -404,6 +412,7 @@ function TarefaFormBody({
                     : (id) => {
                         setComentarios((prev) => prev.filter((x) => x.id !== id));
                         setPendentesMencao((prev) => prev.filter((x) => x.id !== id));
+                        setApagados((prev) => [...prev, id]);
                       }
                 }
               />

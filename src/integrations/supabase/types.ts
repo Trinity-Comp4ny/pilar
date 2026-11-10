@@ -10456,6 +10456,14 @@ export type Database = {
       }
       retencao_pos_trial_disparar: { Args: never; Returns: undefined }
       reverificar_documentos_disparar: { Args: never; Returns: undefined }
+      rpc_apagar_notificacoes_comentario: {
+        Args: {
+          p_comentario_id: string
+          p_entidade_id: string
+          p_entidade_tipo: string
+        }
+        Returns: number
+      }
       rpc_atualizar_status_atrasados: { Args: never; Returns: Json }
       rpc_avaliar_fornecedor: {
         Args: {

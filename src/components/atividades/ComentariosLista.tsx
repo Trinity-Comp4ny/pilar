@@ -1,5 +1,6 @@
 import { ComentarioCard, type ComentarioExibido } from "./ComentarioCard";
 import { useComentarioAutoria } from "@/hooks/useComentarioAutoria";
+import { apagarNotificacoesComentario, type EntidadeMencao } from "@/lib/notificarMencao";
 
 interface ComentariosListaProps {
   comentarios: ComentarioExibido[];
@@ -11,6 +12,11 @@ interface ComentariosListaProps {
   vazio?: string;
   /** Apaga pelo id. Sem ele, ninguém apaga (tela só leitura). */
   onExcluir?: (id: string) => void | Promise<void>;
+  /**
+   * Item já gravado com a exclusão: depois do `onExcluir`, a notificação de menção do
+   * comentário sai do sino. Omitir quando a exclusão só grava depois (tarefa, no Salvar).
+   */
+  entidade?: { tipo: EntidadeMencao; id: string };
 }
 
 /**
@@ -24,8 +30,14 @@ export function ComentariosLista({
   destacadoId,
   vazio = "Nenhum comentário ainda",
   onExcluir,
+  entidade,
 }: ComentariosListaProps) {
   const { podeExcluir } = useComentarioAutoria(autorNome);
+
+  const excluir = async (id: string) => {
+    await onExcluir?.(id);
+    if (entidade) await apagarNotificacoesComentario(entidade.tipo, entidade.id, id);
+  };
 
   if (comentarios.length === 0) {
     return <p className="py-8 text-center text-xs text-muted-foreground">{vazio}</p>;
@@ -39,7 +51,7 @@ export function ComentariosLista({
           comentario={c}
           pessoas={pessoas}
           destacado={c.id === destacadoId}
-          onExcluir={onExcluir && podeExcluir(c) ? () => onExcluir(c.id) : undefined}
+          onExcluir={onExcluir && podeExcluir(c) ? () => excluir(c.id) : undefined}
         />
       ))}
     </>

@@ -54,6 +54,7 @@ export function ProjetoAtividadesPanel({
           destacadoId={comentarioDestacado}
           vazio="Nenhuma atividade ainda"
           onExcluir={excluir}
+          entidade={{ tipo: "projeto", id: projetoId }}
         />
       </div>
       <div className="shrink-0 pt-3">

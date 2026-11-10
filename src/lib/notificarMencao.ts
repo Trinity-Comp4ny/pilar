@@ -35,3 +35,21 @@ export async function notificarMencao(
 
   if (error) monitoring.captureException(error, { entidadeTipo, entidadeId });
 }
+
+/**
+ * Comentário apagado: tira do sino a notificação de menção que apontava para ele. Chamar só
+ * depois de o comentário sair do item com sucesso (a RPC recusa se ele ainda existe).
+ * Best-effort como a menção: falha aqui não desfaz a exclusão, só reporta.
+ */
+export async function apagarNotificacoesComentario(
+  entidadeTipo: EntidadeMencao,
+  entidadeId: string,
+  comentarioId: string
+) {
+  const { error } = await supabase.rpc("rpc_apagar_notificacoes_comentario", {
+    p_entidade_tipo: entidadeTipo,
+    p_entidade_id: entidadeId,
+    p_comentario_id: comentarioId,
+  });
+  if (error) monitoring.captureException(error, { entidadeTipo, entidadeId, comentarioId });
+}
