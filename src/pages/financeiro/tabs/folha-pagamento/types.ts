@@ -6,7 +6,7 @@ export interface ProjetoDetalhe {
   // Valor do contrato do projeto, base do percentual. Ausente em folhas
   // fechadas antes do percentual existir.
   valor_base?: number;
-  /** Dia em que a pessoa concluiu a última disciplina dela no projeto. */
+  /** Dia em que a pessoa concluiu a disciplina que pagou o projeto (a primeira dela ali). */
   concluido_em?: string;
 }
 

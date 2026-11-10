@@ -14,7 +14,7 @@ export function FolhaSummaryCards({ totalFolha, peopleCount, totalUniqueArea }: 
       <KPICard
         label="Total Área Projetada"
         value={`${totalUniqueArea.toLocaleString("pt-BR")} m²`}
-        subtitle="Projetos com a parte da equipe concluída no mês"
+        subtitle="Projetos com disciplina concluída no mês"
       />
     </div>
   );

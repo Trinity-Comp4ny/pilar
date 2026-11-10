@@ -1,16 +1,18 @@
 -- pgTAP: bônus da folha entra na conclusão (migration 20261221000000).
 --
---   1. projeto que começou no mês mas não terminou não paga bônus
---   2. o projeto conta no mês em que a pessoa conclui a ÚLTIMA disciplina dela
+--   1. projeto que começou no mês mas não teve disciplina concluída não paga bônus
+--   2. o projeto conta no mês em que a pessoa conclui a primeira disciplina dela ali,
+--      e uma vez só (a segunda disciplina no mesmo projeto não paga de novo)
 --   3. projeto cancelado não paga
---   4. disciplina concluída pela troca de status ganha data_fim_real; reaberta perde
+--   4. projeto já pago numa folha fechada de outro mês não volta
+--   5. disciplina concluída pela troca de status ganha data_fim_real; reaberta perde
 
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(7);
+SELECT plan(8);
 
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed, features)
 VALUES ('00000000-0000-0000-0000-0000000f0101'::uuid, 'Empresa Folha', NULL, TRUE,
@@ -33,6 +35,9 @@ BEGIN
     json_build_object('sub', p_user_id, 'role', 'authenticated')::text, true);
   PERFORM set_config('role', 'authenticated', true);
 END; $$;
+
+-- Seed como service_role: o limite de projetos do plano só vale para usuário logado.
+SELECT set_config('request.jwt.claims', '{"role": "service_role"}', true);
 
 INSERT INTO public.pessoas (id, empresa_id, nome, primeiro_nome, sobrenome, email, salario_fixo, valor_m2, percentual_producao)
 VALUES ('aaaaaaaa-0000-0000-0000-0000000f0101'::uuid, '00000000-0000-0000-0000-0000000f0101'::uuid,
@@ -64,27 +69,41 @@ FROM unnest(ARRAY[
 SELECT test_set_auth('dddddddd-0000-0000-0000-0000000f0101'::uuid);
 
 SELECT is(
-  (SELECT projetos_nomes FROM public.get_folha_preview(11, 2026) WHERE pessoa_id = 'aaaaaaaa-0000-0000-0000-0000000f0101'),
+  (SELECT projetos_nomes FROM public.get_folha_preview(10, 2026) WHERE pessoa_id = 'aaaaaaaa-0000-0000-0000-0000000f0101'),
   ARRAY['Casa']::text[],
-  'novembro: só a Casa, onde a última disciplina do Iago concluiu; nem Chayanne nem o cancelado'
+  'outubro: a Casa entra com a primeira disciplina do Iago concluída; Chayanne não'
 );
 
 SELECT is(
-  (SELECT total_variavel FROM public.get_folha_preview(11, 2026) WHERE pessoa_id = 'aaaaaaaa-0000-0000-0000-0000000f0101'),
+  (SELECT total_variavel FROM public.get_folha_preview(10, 2026) WHERE pessoa_id = 'aaaaaaaa-0000-0000-0000-0000000f0101'),
   2200.00::numeric,
   'variável = 200 m² × 1 + 20.000 × 10%'
 );
 
 SELECT is(
-  (SELECT cardinality(projetos_nomes) FROM public.get_folha_preview(10, 2026) WHERE pessoa_id = 'aaaaaaaa-0000-0000-0000-0000000f0101'),
-  0,
-  'outubro: a Casa ainda tinha disciplina dele aberta, não paga'
+  (SELECT detalhe_projetos -> 0 ->> 'concluido_em' FROM public.get_folha_preview(10, 2026) WHERE pessoa_id = 'aaaaaaaa-0000-0000-0000-0000000f0101'),
+  '2026-10-20',
+  'o detalhe diz quando a disciplina concluiu'
 );
 
 SELECT is(
-  (SELECT detalhe_projetos -> 0 ->> 'concluido_em' FROM public.get_folha_preview(11, 2026) WHERE pessoa_id = 'aaaaaaaa-0000-0000-0000-0000000f0101'),
-  '2026-11-05',
-  'o detalhe diz quando a parte da pessoa concluiu'
+  (SELECT cardinality(projetos_nomes) FROM public.get_folha_preview(11, 2026) WHERE pessoa_id = 'aaaaaaaa-0000-0000-0000-0000000f0101'),
+  0,
+  'novembro: a segunda disciplina na Casa não paga de novo e o Galpão cancelado não paga'
+);
+
+-- Outubro fechado com a Casa; a Hidráulica é reaberta e concluída em novembro.
+RESET role;
+INSERT INTO public.folha_pagamento (empresa_id, pessoa_id, mes, ano, status, detalhe_projetos)
+VALUES ('00000000-0000-0000-0000-0000000f0101'::uuid, 'aaaaaaaa-0000-0000-0000-0000000f0101'::uuid, 10, 2026, 'pago',
+        '[{"projeto_id": "bbbbbbbb-0000-0000-0000-0000000f0102", "nome": "Casa", "area_m2": 200}]'::jsonb);
+UPDATE public.projeto_disciplinas SET data_fim_real = '2026-11-12' WHERE id = 'cccccccc-0000-0000-0000-0000000f0102';
+SELECT test_set_auth('dddddddd-0000-0000-0000-0000000f0101'::uuid);
+
+SELECT is(
+  (SELECT cardinality(projetos_nomes) FROM public.get_folha_preview(11, 2026) WHERE pessoa_id = 'aaaaaaaa-0000-0000-0000-0000000f0101'),
+  0,
+  'projeto já pago na folha fechada de outubro não volta em novembro'
 );
 
 RESET role;
@@ -106,7 +125,7 @@ SELECT is(
 UPDATE public.projeto_disciplinas SET nome = 'Hidráulica rev' WHERE id = 'cccccccc-0000-0000-0000-0000000f0102';
 SELECT is(
   (SELECT data_fim_real FROM public.projeto_disciplinas WHERE id = 'cccccccc-0000-0000-0000-0000000f0102'),
-  '2026-10-20'::date,
+  '2026-11-12'::date,
   'editar outra coisa mantém a data de conclusão'
 );
 

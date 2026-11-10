@@ -1,15 +1,18 @@
--- Folha: o bônus de produtividade entra quando a pessoa conclui a parte dela.
+-- Folha: o bônus de produtividade entra quando a disciplina é concluída.
 --
 -- Até aqui get_folha_preview pegava os projetos que COMEÇARAM no mês da folha
 -- (projetos.data_inicio). Na VRZ (10/11) o bônus de um projeto fechado na semana
 -- anterior, que nem tinha começado, já aparecia na folha. Regra nova, pedida pelo
--- escritório: o bônus só entra depois de concluído.
+-- escritório: o bônus entra quando a disciplina da pessoa é concluída.
 --
---   * O projeto conta para a pessoa no mês em que ela conclui a ÚLTIMA disciplina
---     dela naquele projeto (todas as disciplinas em que é responsável estão
---     concluídas, e a data de conclusão mais recente cai no mês da folha).
---   * Cada projeto conta uma vez por pessoa, como antes (área × valor/m² e
---     valor do contrato × percentual).
+--   * O projeto conta para a pessoa no mês em que ela conclui uma disciplina dela
+--     naquele projeto. A base do bônus é do projeto (área × valor/m² e valor do
+--     contrato × percentual), então cada projeto paga UMA vez por pessoa: no mês da
+--     primeira disciplina dela concluída ali. Uma segunda disciplina da mesma pessoa
+--     no mesmo projeto não paga de novo.
+--   * Projeto já pago à pessoa numa folha fechada de outro mês não volta (disciplina
+--     reaberta e concluída de novo não paga duas vezes). Vale para folhas fechadas a
+--     partir desta regra, que gravam projeto_id no detalhe.
 --   * Vínculo pela tabela relacional projeto_disciplina_responsaveis (a fonte de
 --     verdade). O JSON legado projetos.disciplinas fica para trás: só olhava o
 --     primeiro responsável e não acompanhava status mudado fora do formulário.
@@ -53,7 +56,7 @@ SET data_fim_real = updated_at::date
 WHERE data_fim_real IS NULL
   AND public.pilar_status_bucket(status) = 'concluida';
 
--- 2. Prévia da folha pela conclusão -------------------------------------------
+-- 2. Prévia da folha pela conclusão da disciplina -------------------------------------------
 -- Mesmo tipo de retorno de 20261209000000 (CREATE OR REPLACE basta). O
 -- detalhe_projetos ganha projeto_id e concluido_em, chaves a mais no jsonb.
 CREATE OR REPLACE FUNCTION public.get_folha_preview(p_mes integer, p_ano integer)
@@ -86,14 +89,15 @@ BEGIN
 
   RETURN QUERY
   WITH parte_da_pessoa AS (
-    -- Uma linha por pessoa e projeto: a parte dela está concluída e quando.
+    -- Uma linha por pessoa e projeto: quando ela concluiu a primeira disciplina ali.
     SELECT
       r.pessoa_id AS pe_id,
       d.projeto_id,
-      bool_and(public.pilar_status_bucket(d.status) = 'concluida') AS tudo_concluido,
-      max(d.data_fim_real) AS concluido_em
+      min(d.data_fim_real) AS concluido_em
     FROM public.projeto_disciplina_responsaveis r
     JOIN public.projeto_disciplinas d ON d.id = r.projeto_disciplina_id
+    WHERE public.pilar_status_bucket(d.status) = 'concluida'
+      AND d.data_fim_real IS NOT NULL
     GROUP BY r.pessoa_id, d.projeto_id
   ),
   projetos_periodo AS (
@@ -109,10 +113,20 @@ BEGIN
     WHERE pr.empresa_id = v_empresa_id
       AND pr.deleted_at IS NULL
       AND pr.status IS DISTINCT FROM 'Cancelado'
-      AND pp.tudo_concluido
-      AND pp.concluido_em IS NOT NULL
       AND EXTRACT(MONTH FROM pp.concluido_em) = p_mes
       AND EXTRACT(YEAR FROM pp.concluido_em) = p_ano
+      AND NOT EXISTS (
+        SELECT 1
+        FROM public.folha_pagamento f
+        CROSS JOIN LATERAL jsonb_array_elements(
+          CASE WHEN jsonb_typeof(f.detalhe_projetos) = 'array' THEN f.detalhe_projetos ELSE '[]'::jsonb END
+        ) AS e
+        WHERE f.empresa_id = v_empresa_id
+          AND f.pessoa_id = pp.pe_id
+          AND f.status IS DISTINCT FROM 'cancelado'
+          AND (f.ano, f.mes) <> (p_ano, p_mes)
+          AND e ->> 'projeto_id' = pr.id::text
+      )
   ),
   calculo_por_pessoa AS (
     SELECT

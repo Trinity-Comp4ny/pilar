@@ -11,16 +11,17 @@ Regras de manutenção:
 
 ---
 
-## 2026-11-10 (mais tarde) · Bônus da folha só depois de concluído; portal liberado também ao coordenador
+## 2026-11-10 (mais tarde) · Bônus da folha quando a disciplina é concluída; portal liberado também ao coordenador
 
-**Decisão:** o bônus de produtividade (m² e percentual) entra na folha do mês em que a pessoa conclui a última
-disciplina dela no projeto, não mais no mês em que o projeto começou. Projeto cancelado não paga bônus. Dar acesso
-ao portal do cliente passa a ser possível de dentro do projeto, por admin e coordenador (antes só admin, só pela
-tela de Clientes).
+**Decisão:** o bônus de produtividade (m² e percentual) entra na folha do mês em que a disciplina da pessoa é
+concluída, não mais no mês em que o projeto começou. Como a base do bônus é do projeto, cada projeto paga uma vez por
+pessoa: no mês da primeira disciplina dela concluída ali; projeto já pago numa folha fechada não volta. Projeto
+cancelado não paga. Dar acesso ao portal do cliente passa a ser possível de dentro do projeto, por admin e
+coordenador (antes só admin, só pela tela de Clientes).
 
 Contexto: na VRZ um projeto fechado na semana anterior, que nem tinha começado, já aparecia no bônus da folha. O sócio
-quer pagar só o que foi entregue. O coordenador é quem fala com o cliente; o portal precisava estar a um clique, no
-projeto.
+pediu "quando concluir a disciplina". O coordenador é quem fala com o cliente; o portal precisava estar a um clique,
+no projeto.
 
 **Supera:** a regra "projeto que começou no mês da folha" (SPEC 032, migration 20261209000000) e o "só admin" do convite
 ao portal.
