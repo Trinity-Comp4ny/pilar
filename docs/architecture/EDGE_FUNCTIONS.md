@@ -86,7 +86,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
-| `aviso-legal-admins` | Ultra admin manda por e-mail um aviso legal do catálogo (ex.: Termos de Uso 2.0) a todos os administradores ativos, sem duplicar quem já recebeu. Cumpre o aviso de 30 dias da cláusula 15 e do Anexo A5 dos Termos. | aba Pedidos LGPD do ultra admin | JWT |  | sim |
+| `aviso-legal-admins` | Ultra admin manda por e-mail um aviso legal do catálogo (ex.: Termos de Uso 2.0) a todos os administradores ativos, sem duplicar quem já recebeu. Cumpre o aviso de 30 dias da cláusula 15 e do Anexo A5 dos Termos. | app, aba Pedidos LGPD do ultra admin | JWT |  | sim |
 | `exportar-dados-titular` | Atende o pedido de exportação de dados (LGPD art. 18): monta a cópia, guarda em bucket privado e manda link de 7 dias (SPEC 115). | cron, trigger notify_data_export_request (pg_net) | própria | `DATA_DELETION_NOTIFY_SECRET` `LGPD_DPO_EMAIL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `resend-webhook` | Recebe o status de entrega do Resend e fecha o ciclo do e-mail enviado. | Resend (webhook) | própria | `RESEND_WEBHOOK_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `send-data-deletion-notification` | E-mail de confirmação de exclusão de dados (LGPD), disparado por trigger. | cron | JWT | `APP_URL` `DATA_DELETION_NOTIFY_SECRET` `LGPD_DPO_EMAIL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
