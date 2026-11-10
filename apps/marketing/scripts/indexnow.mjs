@@ -16,7 +16,11 @@ const CHAVE = "613ff39428e88696677951c3d0721901";
 const HOST = "www.pilarsoft.com.br";
 
 const sitemap = readFileSync(fileURLToPath(new URL("../public/sitemap.xml", import.meta.url)), "utf8");
-const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+// Só URLs do próprio domínio: o IndexNow recusa as de outro host, e nada além das
+// páginas públicas do sitemap sai daqui.
+const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)]
+  .map((m) => m[1])
+  .filter((u) => u.startsWith(`https://${HOST}/`));
 
 const resposta = await fetch("https://api.indexnow.org/indexnow", {
   method: "POST",

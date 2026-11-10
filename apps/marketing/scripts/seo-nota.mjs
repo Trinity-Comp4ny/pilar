@@ -67,13 +67,14 @@ function semAcento(texto) {
 }
 
 function decodificar(texto) {
+  // &amp; por último: decodificar antes faria "&amp;quot;" virar aspas (escape duplo).
   return texto
-    .replace(/&amp;/g, "&")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
-    .replace(/&nbsp;/g, " ");
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&");
 }
 
 const textoPuro = (html) =>
@@ -111,6 +112,9 @@ function jsonLds(html) {
 /** O <main>, sem header e footer: é o conteúdo próprio da página. */
 const corpoPrincipal = (html) => html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i)?.[1] ?? html;
 
+/** Link para o próprio site: caminho relativo ("/x", não "//outro.com") ou URL absoluta do domínio exato. */
+const ehInterno = (h) => (h.startsWith("/") && !h.startsWith("//")) || h === BASE || h.startsWith(`${BASE}/`);
+
 function analisarPagina(rota) {
   const arquivo = rota === "/" ? join(DIST, "index.html") : join(DIST, rota.replace(/^\//, ""), "index.html");
   const html = ler(arquivo);
@@ -134,8 +138,7 @@ function analisarPagina(rota) {
     imagens: imgs.length,
     // alt="" é a marcação certa de imagem decorativa; falta é não ter o atributo.
     imagensSemAlt: imgs.filter((t) => atributo(t, "alt") === null).length,
-    linksInternos: new Set(links.filter((h) => h.startsWith("/") || h.startsWith(BASE)).map((h) => h.replace(BASE, "")))
-      .size,
+    linksInternos: new Set(links.filter(ehInterno).map((h) => h.replace(BASE, ""))).size,
     palavras: textoPuro(main).split(" ").filter(Boolean).length,
     jsonLd: jsonLds(html),
   };
