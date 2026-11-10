@@ -142,3 +142,4 @@ Decisão de arquitetura no meio do caminho vira um [ADR](../architecture/README.
 | [157](./157-comunicados-da-plataforma.md) | Comunicados do ultra admin para os escritórios: faixa ou modal, público por escritório, plano e papel, dispensa gravada no banco | Em implementação |
 | [159](./159-alerta-de-acesso-novo.md) | Alerta de acesso por navegador novo no sino e por e-mail (sai mesmo lido), e lista dos navegadores da conta em Segurança | Em implementação |
 | [160](./160-previa-de-recursos-e-bug-zero.md) | Prévia de recursos (opt-in por usuário em Configurações, catálogo no Ultra admin, usePrevia) e bug zero com prazo de 7 dias no Feedback | Em implementação |
+| [161](./161-escritorio-de-exemplo.md) | Escritório de exemplo e modelos que ensinam: explorar dados realistas do pilar antes de cadastrar; três decisões pendentes (onde mora, Templates, dono do conteúdo) | Draft |

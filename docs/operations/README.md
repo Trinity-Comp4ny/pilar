@@ -7,6 +7,7 @@ Deploy, resposta a incidentes, runbooks e monitoramento. ← [voltar ao índice]
 | [EMAILS.md](./EMAILS.md)                                                           | **Catálogo de e-mails**: todo disparo, quem recebe cada um, onde aparece valor em R$ e as regras de roteamento                 |
 | [DEPLOY_CHECKLIST.md](./DEPLOY_CHECKLIST.md)                                       | Checklist de hardening de deploy (Supabase/Vercel/Cloudflare/Sentry)                                                           |
 | [INCIDENT_RESPONSE.md](./INCIDENT_RESPONSE.md)                                     | **Fonte de verdade** para severidade, comunicação e resposta a incidentes                                                      |
+| [BUG_ZERO_E_POLIMENTO.md](./BUG_ZERO_E_POLIMENTO.md) | Prazo de 7 dias para bug relatado e bloco semanal de polimento (SPEC 160) |
 | [DISASTER_RECOVERY.md](./DISASTER_RECOVERY.md)                                     | Plano de recuperação de desastres (PITR, restore, RTO/RPO)                                                                     |
 | [FINOPS.md](./FINOPS.md)                                                           | **Custo de infraestrutura**: plano e consumo por fornecedor, risco da Vercel, custo por empresa, revisão mensal                |
 | [load-testing.md](./load-testing.md)                                               | Estratégia de teste de carga, quando rodar, baseline                                                                           |
