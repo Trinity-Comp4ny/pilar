@@ -1,9 +1,13 @@
 export interface ProjetoDetalhe {
+  /** Ausente em folhas fechadas antes da regra por conclusão. */
+  projeto_id?: string;
   nome: string;
   area_m2: number;
   // Valor do contrato do projeto, base do percentual. Ausente em folhas
   // fechadas antes do percentual existir.
   valor_base?: number;
+  /** Dia em que a pessoa concluiu a última disciplina dela no projeto. */
+  concluido_em?: string;
 }
 
 export interface FolhaItem {

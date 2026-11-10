@@ -89,13 +89,18 @@ Não-funcionais:
   `detalhe_projetos jsonb` por pessoa: `array_agg` de `{ nome, area_m2 }` dos
   projetos onde a pessoa é responsável no período. `projetos_nomes` é mantido por
   compatibilidade (ou derivado de `detalhe_projetos` no front).
+- **Regra do período (revista em 2026-11-10, migration `20261221000000`)**: o projeto
+  entra no mês em que a pessoa conclui a ÚLTIMA disciplina dela nele (vínculo por
+  `projeto_disciplina_responsaveis`, conclusão por `data_fim_real`), não mais no mês
+  de início. Projeto excluído ou cancelado não paga. O detalhe ganha `projeto_id` e
+  `concluido_em`. Ver DECISOES.md 2026-11-10.
 - **Front consome**: `FolhaItem` ganha `detalhe_projetos: { nome: string; area_m2:
-  number }[]`, preenchido no preview (do RPC) e no closed (da coluna nova).
+number }[]`, preenchido no preview (do RPC) e no closed (da coluna nova).
 
 ## Plano de implementação
 
 1. Migration: `ALTER TABLE folha_pagamento ADD COLUMN detalhe_projetos jsonb NOT
-   NULL DEFAULT '[]'::jsonb`; `DROP` + `CREATE` de `get_folha_preview` com o novo
+NULL DEFAULT '[]'::jsonb`; `DROP` + `CREATE` de `get_folha_preview` com o novo
    campo (Supabase falha silenciosamente em overload, sempre DROP + CREATE).
    Migration SÓ LOCAL primeiro; `gen:types:local`.
 2. `types.ts` (folha): adicionar `detalhe_projetos` a `FolhaItem`; mapear no
