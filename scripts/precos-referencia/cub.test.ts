@@ -4,6 +4,7 @@ import {
   escolherSinduscon,
   formularioCub,
   igualAoAnterior,
+  juntarCodigos,
   interpretarTextoCub,
   lerCsrf,
   lerFixos,
@@ -319,5 +320,103 @@ describe("textoPuro", () => {
     expect(textoPuro("<<b>script>alert(1)<</b>/script>")).not.toMatch(/[<>]/);
     expect(textoPuro("a <img src=x onerror=1")).toBe("a img src=x onerror=1");
     expect(textoPuro("x".repeat(300))).toHaveLength(200);
+  });
+});
+
+describe("PDF real do Sinduscon-MS (set/2026, texto do diagnóstico)", () => {
+  // Três tabelas residenciais lado a lado, comerciais lado a lado, "CAL - 8" com espaços e o mês como
+  // "MÊS: SETEMBRO ANO: 2026". Itens com a posição de cada célula, como o pdf.js devolve.
+  const cab = [
+    "CUSTOS UNITÁRIOS BÁSICOS DE CONSTRUÇÃO",
+    "MÊS: SETEMBRO ANO: 2026",
+    "(NBR 12.721:2006 - CUB 2006)",
+    "PROJETOS - PADRÃO RESIDENCIAIS",
+  ];
+  const residenciais = [
+    [
+      ["R-1", "1.859,76", "0,21%"],
+      ["R-1", "2.180,16", "0,23%"],
+      ["R-1", "2.694,82", "0,40%"],
+    ],
+    [
+      ["PP-4", "1.794,27", "0,16%"],
+      ["PP-4", "2.119,94", "0,17%"],
+      ["R-8", "2.242,84", "0,31%"],
+    ],
+    [
+      ["R-8", "1.718,95", "0,15%"],
+      ["R-8", "1.877,57", "0,20%"],
+      ["R-16", "2.424,94", "0,17%"],
+    ],
+    [
+      ["PIS", "1.287,84", "0,17%"],
+      ["R-16", "1.827,31", "0,19%"],
+    ],
+  ];
+  const comerciais = [
+    [
+      ["CAL - 8", "2.220,38", "0,18%"],
+      ["CAL - 8", "2.360,48", "0,17%"],
+    ],
+    [
+      ["CSL - 8", "1.896,88", "0,20%"],
+      ["CSL - 8", "2.062,34", "0,18%"],
+    ],
+    [
+      ["CSL - 16", "2.547,41", "0,19%"],
+      ["CSL - 16", "2.764,02", "0,17%"],
+    ],
+  ];
+  function itens(): ItemDeTexto[] {
+    const out: ItemDeTexto[] = cab.map((texto, i) => ({ texto, x: 30, y: 800 - i * 12 }));
+    out.push(
+      { texto: "PADRÃO BAIXO", x: 30, y: 740 },
+      { texto: "PADRÃO NORMAL", x: 230, y: 740 },
+      { texto: "PADRÃO ALTO", x: 430, y: 740 }
+    );
+    residenciais.forEach((linha, r) =>
+      linha.forEach((cel, c) =>
+        cel.forEach((t, k) => out.push({ texto: t, x: 30 + c * 200 + k * 60, y: 720 - r * 12 }))
+      )
+    );
+    out.push({ texto: "CUB/M² - R8-N = R$ 1.877,57", x: 30, y: 660 });
+    out.push({ texto: "PROJETOS - PADRÃO COMERCIAIS", x: 30, y: 600 });
+    comerciais.forEach((linha, r) =>
+      linha.forEach((cel, c) =>
+        cel.forEach((t, k) => out.push({ texto: t, x: 30 + c * 300 + k * 70, y: 580 - r * 12 }))
+      )
+    );
+    out.push(
+      { texto: "RP1Q", x: 30, y: 520 },
+      { texto: "1.889,13", x: 90, y: 520 },
+      { texto: "0,21%", x: 150, y: 520 }
+    );
+    out.push({ texto: "GI", x: 30, y: 508 }, { texto: "1.055,91", x: 90, y: 508 }, { texto: "0,32%", x: 150, y: 508 });
+    out.push(
+      { texto: "R-1: Residência Unifamiliar", x: 30, y: 480 },
+      { texto: "RPQ1: Residência Popular", x: 330, y: 480 }
+    );
+    out.push({ texto: "CSL-16: Comercial Salas e Lojas", x: 330, y: 468 });
+    return out;
+  }
+
+  it("lê as 19 linhas certas: R8 normal é 1.877,57 (o destaque), não o R-8 do baixo", () => {
+    const r = lerPdfCub([itens()], "MS", "2026-09-01", "onerado", { exigirRegimeNoTexto: true });
+    expect(r.erro).toBeNull();
+    const v = (s: string, p: string) => r.linhas.find((l) => l.subtipo === s && l.padrao === p)?.valor_m2;
+    expect(v("R8", "baixo")).toBe(1718.95);
+    expect(v("R8", "normal")).toBe(1877.57);
+    expect(v("R8", "alto")).toBe(2242.84);
+    expect(v("R16", "normal")).toBe(1827.31);
+    expect(v("R16", "alto")).toBe(2424.94);
+    expect(v("CAL-8", "alto")).toBe(2360.48);
+    expect(v("CSL-16", "normal")).toBe(2547.41);
+    expect(v("GI", "unico")).toBe(1055.91);
+    expect(r.linhas).toHaveLength(19);
+  });
+
+  it("junta códigos com espaço e não mexe no resto", () => {
+    expect(juntarCodigos("CAL - 8 2.220,38 CSL - 16 x")).toBe("CAL-8 2.220,38 CSL-16 x");
+    expect(juntarCodigos("NBR 12.721 - 2006")).toBe("NBR 12.721 - 2006");
   });
 });

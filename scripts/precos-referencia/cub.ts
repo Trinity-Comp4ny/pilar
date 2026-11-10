@@ -170,7 +170,7 @@ export function linhasDaPagina(itens: ItemDeTexto[], tolerancia = 3): string[] {
 export function linhasPorColuna(itens: ItemDeTexto[], tolerancia = 3): string[] {
   const inicios: number[] = [];
   for (const x of itens
-    .filter((i) => RE_CODIGO.test(i.texto.trim()))
+    .filter((i) => RE_CODIGO.test(juntarCodigos(i.texto.trim())))
     .map((i) => i.x)
     .sort((a, b) => a - b)) {
     if (inicios.length === 0 || x - inicios[inicios.length - 1] > 20) inicios.push(x);
@@ -205,6 +205,11 @@ const PADROES_POR_OCORRENCIA: Record<string, { subtipo: string; padroes: PadraoC
 
 /** Quantas linhas um PDF completo dá: a soma das ocorrências acima (19). */
 export const TOTAL_CODIGOS = Object.values(PADROES_POR_OCORRENCIA).reduce((s, c) => s + c.padroes.length, 0);
+
+/** "CAL - 8", "CSL - 16", "R - 1", "PP - 4" (com espaço, como no PDF do Sinduscon-MS) viram "CAL-8" etc. */
+export function juntarCodigos(texto: string): string {
+  return texto.replace(/(^|[^A-Za-z0-9])(R|PP|CAL|CSL|RP)\s+-\s+(\d{1,2}Q?)(?![0-9])/g, "$1$2-$3");
+}
 
 // "R-1" (padrão pela tabela) ou "R1-N" (padrão no próprio código, como no destaque do CUB médio).
 const RE_CODIGO = /^(R-?1|PP-?4|R-?8|R-?16|PIS|CAL-?8|CSL-?8|CSL-?16|RP-?1Q|GI)(?:-([BNA]))?$/i;
@@ -241,7 +246,8 @@ export interface LeituraCub {
 /** Meses citados no texto como "Outubro/2026" ou "OUTUBRO DE 2026", no formato `AAAA-MM-01`. */
 function mesesCitados(texto: string): Set<string> {
   const meses = new Set<string>();
-  const re = new RegExp(`(${MESES.join("|")})\\s*(?:/|DE)\\s*(\\d{4})`, "g");
+  // "Outubro/2026", "OUTUBRO DE 2026" e "MÊS: OUTUBRO ANO: 2026" (Sinduscon-MS).
+  const re = new RegExp(`(${MESES.join("|")})\\s*(?:/|DE|ANO:?)\\s*(\\d{4})`, "g");
   for (const m of texto.matchAll(re)) {
     meses.add(`${m[2]}-${String(MESES.indexOf(m[1]) + 1).padStart(2, "0")}-01`);
   }
@@ -278,7 +284,7 @@ export function interpretarTextoCub(
     return falha("O PDF não diz que é com desoneração.");
   }
 
-  const tokens = linhas.flatMap((l) => l.split(/\s+/).filter(Boolean));
+  const tokens = linhas.flatMap((l) => juntarCodigos(l).split(/\s+/).filter(Boolean));
   const ocorrencias = new Map<string, number>();
   const lidas: LinhaCub[] = [];
   for (let i = 0; i < tokens.length; i++) {

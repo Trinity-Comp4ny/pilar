@@ -55,8 +55,10 @@ import {
 import {
   candidatosDoMes,
   lerPortaisExtras,
+  arquivosDaPaginaDeDownload,
   linksPdfDaPagina,
   linksPdfDoWordpress,
+  paginasDeDownload,
   portaisDaUf,
   urlWordpressMedia,
   type LinkPdf,
@@ -130,6 +132,16 @@ async function buscar(url: string, tempo = 180_000): Promise<Response> {
       if (m) cookies.set(m[1], m[2]);
     }
     const destino = r.headers.get("location");
+    if (r.status >= 300 && r.status < 400) {
+      diag(
+        `redirecionamento ${i + 1}: ${r.status} ${new URL(atual).pathname} para ${(destino ?? "?").slice(0, 120)}; cookies: ${
+          r.headers
+            .getSetCookie()
+            .map((c) => c.split("=")[0])
+            .join(", ") || "nenhum"
+        }`
+      );
+    }
     if (r.status < 300 || r.status >= 400 || !destino) return r;
     await r.body?.cancel();
     const proximo = new URL(destino, atual);
@@ -325,9 +337,20 @@ async function fonteCbic(base: string, uf: Uf, fixos: Partial<Record<Uf, string>
       }
       const bytes = await corpoLimitado(resp, TAMANHO_MAXIMO_PDF, "PDF da CBIC");
       if (!ehPdf(bytes)) {
-        diag(
-          `CBIC ${uf} ${mes} ${regime} devolveu ${resp.headers.get("content-type") ?? "?"} (${bytes.length} bytes): ${new TextDecoder().decode(bytes.slice(0, 4000))}`
-        );
+        if (diagnostico) {
+          const html = new TextDecoder().decode(bytes);
+          const avisos = [
+            ...html.matchAll(
+              /class=["'][^"']*(?:alert|message|erro|error|aviso|warning)[^"']*["'][^>]*>([\s\S]{0,400})/gi
+            ),
+          ].map((m) => textoPuro(m[1]));
+          const perto = /(n[aã]o (?:h[aá]|existe|foi|encontr)|indispon|sem dados|nenhum)[\s\S]{0,200}/i.exec(
+            textoPuro(html)
+          );
+          diag(
+            `CBIC ${uf} ${mes} ${regime}: ${resp.headers.get("content-type") ?? "?"}, ${bytes.length} bytes, Sinduscon ${sinduscon.valor}=${sinduscon.rotulo} de ${opcoes.length}; avisos: ${avisos.join(" | ") || "nenhum"}; ${perto ? perto[0] : ""}`
+          );
+        }
         return { tipo: "indisponivel", motivo: "mês ainda não publicado no portal da CBIC" };
       }
       const paginas = await textoDoPdf(bytes);
@@ -351,6 +374,35 @@ async function fontePortal(portal: PortalEstadual): Promise<FonteCub | string> {
         const html = await r.text();
         const achados = linksPdfDaPagina(html, r.url || pagina);
         links.push(...achados);
+        // Páginas de download por mês (SindusCon-SP): abre as dos meses que interessam e pega o arquivo.
+        const meses = mesesDaColeta.flatMap((m) => [m, somarMes(m, 1)]);
+        const downloads = paginasDeDownload(html, r.url || pagina)
+          .filter((d) =>
+            meses.some(
+              (m) =>
+                candidatosDoMes([d], m, "onerado", "referencia").length > 0 ||
+                candidatosDoMes([d], m, "desonerado", "referencia").length > 0
+            )
+          )
+          .slice(0, 8);
+        for (const d of downloads) {
+          await pausa(CUB_PAUSA_MS);
+          try {
+            const rd = await buscar(d.url, 30_000);
+            if (!rd.ok) {
+              diag(`página de download ${d.url} respondeu ${rd.status}`);
+              await rd.body?.cancel();
+              continue;
+            }
+            const arquivos = arquivosDaPaginaDeDownload(await rd.text(), d);
+            diag(
+              `página de download ${d.texto}: ${arquivos.length} arquivo(s) ${arquivos.map((a) => a.url.split("/").pop()).join(", ")}`
+            );
+            links.push(...arquivos);
+          } catch (e) {
+            diag(`página de download ${d.url}: ${(e as Error).message}`);
+          }
+        }
         if (diagnostico) {
           const hrefs = [...html.matchAll(/href\s*=\s*["']([^"']+)["']/gi)].map((m) => m[1]);
           const doCub = hrefs.filter((h) => /cub|custo|tabela|\.pdf/i.test(h)).slice(0, 15);
@@ -388,7 +440,7 @@ async function fontePortal(portal: PortalEstadual): Promise<FonteCub | string> {
     async ler(mes, regime) {
       const candidatos = candidatosDoMes(links, mes, regime, portal.mesNoArquivo);
       if (candidatos.length === 0) {
-        if (diagnostico && mes === mesesDaSondagem[0] && regime === "onerado") {
+        if (diagnostico && mes === mesesDaColeta[0] && regime === "onerado") {
           for (const l of links.slice(0, 20))
             diag(`PDF no portal ${portal.uf}: ${l.url.split("/").pop()} | ${l.texto}`);
         }
@@ -437,8 +489,14 @@ async function fontePortal(portal: PortalEstadual): Promise<FonteCub | string> {
   };
 }
 
-/** Meses que a sondagem lê (o primeiro é o mais antigo), para o diagnóstico não repetir a lista de PDFs. */
-let mesesDaSondagem: MesBase[] = [];
+/** Meses que a coleta do CUB lê (o primeiro é o mais antigo). */
+let mesesDaColeta: MesBase[] = [];
+
+function somarMes(mes: MesBase, n: number): MesBase {
+  const [a, m] = mes.split("-").map(Number);
+  const d = new Date(Date.UTC(a, m - 1 + n, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`;
+}
 
 const mesAnterior = (mes: MesBase): MesBase => {
   const [a, m] = mes.split("-").map(Number);
@@ -465,7 +523,7 @@ async function coletarCub(db: Banco): Promise<void> {
     // O mês passado e, se faltou, o retrasado.
     meses = mesesPendentes(null, new Date(), 2);
   }
-  mesesDaSondagem = meses;
+  mesesDaColeta = meses;
   const gravado: CubGravado[] = await db.cubDesde(mesAnterior(meses[0]));
   const tem = (uf: Uf, mes: MesBase, regime: Regime) =>
     gravado.some((l) => l.uf === uf && l.mes_base === mes && l.regime === regime);

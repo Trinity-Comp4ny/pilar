@@ -27,7 +27,7 @@ export const PORTAIS: PortalEstadual[] = [
   { uf: "SP", paginas: ["https://sindusconsp.com.br/servicos/cub/"], mesNoArquivo: "referencia", soPortal: true },
   {
     uf: "RS",
-    paginas: ["https://sinduscon-rs.com.br/cub/", "https://sinduscon-rs.com.br/"],
+    paginas: ["https://sinduscon-rs.com.br/cub-rs/"],
     mesNoArquivo: "publicacao",
     soPortal: true,
   },
@@ -84,6 +84,52 @@ export function linksPdfDaPagina(html: string, paginaUrl: string): LinkPdf[] {
     links.push({ url, texto: textoPuro(m[2]) });
   }
   return links;
+}
+
+/**
+ * Páginas de download de um mês (WordPress Download Manager, como no SindusCon-SP:
+ * `/downloads/10-outubro-2026-cub/`). Só do mesmo site, com "cub" no caminho.
+ */
+export function paginasDeDownload(html: string, paginaUrl: string): LinkPdf[] {
+  const origem = new URL(paginaUrl).origin;
+  const vistas = new Set<string>();
+  const paginas: LinkPdf[] = [];
+  for (const m of html.matchAll(/href\s*=\s*["']([^"']+)["']/gi)) {
+    let url: URL;
+    try {
+      url = new URL(m[1].replace(/&amp;/g, "&"), paginaUrl);
+    } catch {
+      continue;
+    }
+    if (url.origin !== origem || !/\/downloads?\/[^/]*cub[^/]*\/?$/i.test(url.pathname)) continue;
+    const chave = url.origin + url.pathname;
+    if (vistas.has(chave)) continue;
+    vistas.add(chave);
+    paginas.push({ url: chave, texto: url.pathname.split("/").filter(Boolean).pop() ?? "" });
+  }
+  return paginas;
+}
+
+/**
+ * Arquivo de uma página de download: link para PDF ou o link do Download Manager (`?wpdmdl=`). O texto fica o da
+ * página (o nome do mês), porque o link do arquivo nem sempre o traz.
+ */
+export function arquivosDaPaginaDeDownload(html: string, pagina: LinkPdf): LinkPdf[] {
+  const vistos = new Set<string>();
+  const arquivos: LinkPdf[] = [];
+  for (const m of html.matchAll(/href\s*=\s*["']([^"']+)["']/gi)) {
+    let url: string;
+    try {
+      url = new URL(m[1].replace(/&amp;/g, "&"), pagina.url).toString();
+    } catch {
+      continue;
+    }
+    if (!url.startsWith("https://") || !(/\.pdf(\?|#|$)/i.test(url) || /[?&]wpdmdl=\d+/.test(url))) continue;
+    if (vistos.has(url)) continue;
+    vistos.add(url);
+    arquivos.push({ url, texto: pagina.texto });
+  }
+  return arquivos;
 }
 
 /** PDFs listados por `/wp-json/wp/v2/media` (campos `source_url` e `title.rendered`). */
@@ -145,6 +191,8 @@ function citaMes(link: LinkPdf, mes: string): boolean {
 }
 
 const DESONERADO = /desonera/;
+// Outros relatórios que saem junto com o CUB e citam o mesmo mês.
+const OUTRO_RELATORIO = /incc|encargo|boletim|insumo|salari|serie[^a-z]?historica|indice|informativo|vencedor|panorama/;
 const SEM_DESONERACAO = /(sem|nao)[^a-z]{0,3}desonera/;
 
 /**
@@ -162,6 +210,7 @@ export function candidatosDoMes(
   const vistos = new Set<string>();
   const doMes = links.filter((l) => {
     if (vistos.has(l.url) || !citaMes(l, mesDoArquivo)) return false;
+    if (OUTRO_RELATORIO.test(normalizar(`${l.url} ${l.texto}`))) return false;
     vistos.add(l.url);
     return true;
   });
