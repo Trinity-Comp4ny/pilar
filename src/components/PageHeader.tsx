@@ -8,6 +8,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import type { Feature } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { AjudaDaTela } from "@/components/ajuda/AjudaDaTela";
+import { isTypingTarget } from "@/lib/teclado";
 
 /**
  * Header fino padrão (spec 002-header-padrao).
@@ -45,12 +46,6 @@ interface PageHeaderProps {
     /** Âncora do coach mark de onboarding (vira [data-tour=...] no botão). */
     dataTour?: string;
   };
-}
-
-function isTypingTarget(el: Element | null): boolean {
-  if (!el) return false;
-  const tag = el.tagName;
-  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (el as HTMLElement).isContentEditable;
 }
 
 export function PageHeader({ title, breadcrumbs, children, search, center, primaryAction }: PageHeaderProps) {
