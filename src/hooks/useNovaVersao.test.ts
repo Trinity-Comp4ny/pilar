@@ -8,6 +8,10 @@ vi.mock("sonner", () => ({ toast: { info } }));
 const captureMessage = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/monitoring", () => ({ monitoring: { captureMessage } }));
 
+// SPEC 152: o aviso consulta as novidades publicadas para dizer quantas vieram.
+const rpc = vi.hoisted(() => vi.fn());
+vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc } }));
+
 function resposta(headers: Record<string, string>, body: unknown) {
   return {
     ok: true,
@@ -24,6 +28,8 @@ function servidorRespondendo(release: string) {
 beforeEach(() => {
   info.mockClear();
   captureMessage.mockClear();
+  rpc.mockReset();
+  rpc.mockResolvedValue({ data: null, error: { message: "sem sessão" } });
   vi.stubGlobal("__SENTRY_RELEASE__", "sha-do-bundle");
 });
 
@@ -40,6 +46,32 @@ describe("useNovaVersao", () => {
     expect(info.mock.calls[0][0]).toBe("Nova versão disponível");
     // Sem duration finita o aviso desapareceria antes de a pessoa reagir.
     expect(info.mock.calls[0][1]).toMatchObject({ duration: Infinity });
+  });
+
+  it("diz quantas novidades vieram quando a release do servidor já foi publicada", async () => {
+    servidorRespondendo("abc1234def5678");
+    const item = (id: string) => ({ id, texto: "x", impacto: "melhoria", modulo: null, voce_pediu: false });
+    rpc.mockResolvedValue({
+      data: {
+        visto_ate: null,
+        releases: [
+          {
+            id: "r1",
+            sha: "abc1234def5678",
+            titulo: "Atualização",
+            versao: null,
+            publicada_em: "2026-11-10T12:00:00Z",
+            nova: true,
+            itens: [item("a"), item("b")],
+          },
+        ],
+      },
+      error: null,
+    });
+    renderHook(() => useNovaVersao());
+
+    await waitFor(() => expect(info).toHaveBeenCalledTimes(1));
+    expect(info.mock.calls[0][0]).toBe("Nova versão com 2 novidades");
   });
 
   it("fica calado quando o release do servidor é o mesmo do bundle", async () => {

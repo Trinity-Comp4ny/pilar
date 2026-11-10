@@ -7,6 +7,7 @@ export { default as Usuarios } from "./Usuarios";
 export { default as Testes } from "./Testes";
 export { default as Funcionalidades } from "./Funcionalidades";
 export { default as Feedback } from "./Feedback";
+export { default as Releases } from "./Releases";
 export { default as Atividade } from "./Atividade";
 export { default as Incidentes } from "./Incidentes";
 export { default as CustosIa } from "./CustosIa";

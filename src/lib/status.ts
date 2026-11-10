@@ -70,6 +70,8 @@ export type StatusDomain =
   | "empresa_situacao"
   | "feedback"
   | "pedido_lgpd"
+  | "release"
+  | "novidade"
   | "ops_agente"
   | "saude_cliente";
 
@@ -190,6 +192,16 @@ export const STATUS_REGISTRY: Record<StatusDomain, Record<string, StatusDef>> = 
     planejado: { label: "Planejado", tone: "highlight" },
     resolvido: { label: "Resolvido", tone: "positive" },
     descartado: { label: "Descartado", tone: "neutral" },
+  },
+  // Novidades do produto (SPEC 152): situação da release no Ultra admin e impacto do item.
+  release: {
+    rascunho: { label: "Rascunho", tone: "warning" },
+    publicada: { label: "Publicada", tone: "positive" },
+  },
+  novidade: {
+    fluxo: { label: "Mudou o caminho", tone: "attention" },
+    melhoria: { label: "Novo", tone: "brand" },
+    correcao: { label: "Correção", tone: "info" },
   },
   pedido_lgpd: {
     pending: { label: "Aguardando", tone: "warning" },

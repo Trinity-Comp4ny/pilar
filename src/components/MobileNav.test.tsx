@@ -11,6 +11,7 @@ const h = vi.hoisted(() => ({
   navigate: vi.fn(),
   nav: {} as Record<string, unknown>,
   pendencias: [] as unknown[] | undefined,
+  novidadesDestaque: false,
   visivel: true,
   auth: {
     user: { email: "dev@local.test" } as Record<string, unknown> | null,
@@ -29,6 +30,9 @@ vi.mock("react-router-dom", async (orig) => ({
 }));
 vi.mock("@/hooks/useModuleNav", () => ({ useModuleNav: () => h.nav }));
 vi.mock("@/hooks/useEscopos", () => ({ usePendenciasAgentes: () => ({ data: h.pendencias }) }));
+vi.mock("@/hooks/useNovidades", () => ({
+  useNovidades: () => ({ pendentes: { comFluxo: [], temDestaque: h.novidadesDestaque } }),
+}));
 vi.mock("@/hooks/useBarraVisivel", () => ({ useBarraVisivel: () => h.visivel }));
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => h.auth }));
 vi.mock("@/contexts/SettingsModalContext", () => ({ useSettingsModal: () => ({ openSettings: h.openSettings }) }));
@@ -50,6 +54,7 @@ const item = (title: string, url: string, disabled = false, dica = "") => ({
 beforeEach(() => {
   vi.clearAllMocks();
   h.pendencias = [];
+  h.novidadesDestaque = false;
   h.visivel = true;
   h.perms = { isAdmin: false, isUltraAdmin: false };
   h.ocultos = false;
@@ -166,6 +171,14 @@ describe("MoreSheet", () => {
     expect(h.toggle).toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "Feedback" }));
     expect(screen.getByTestId("feedback-aberto")).toBeInTheDocument();
+  });
+
+  it("Novidades com ponto quando há algo novo (SPEC 152)", async () => {
+    h.novidadesDestaque = true;
+    const user = renderSheet();
+    expect(screen.getByLabelText("Há novidades")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Novidades/ }));
+    expect(h.navigate).toHaveBeenCalledWith("/novidades");
   });
 
   it("admin vê Portal Admin", async () => {

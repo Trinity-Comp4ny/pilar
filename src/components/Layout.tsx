@@ -20,6 +20,8 @@ const CommandPalette = lazy(() => import("@/components/CommandPalette").then((m)
 const OnboardingChecklist = lazy(() =>
   import("@/components/OnboardingChecklist").then((m) => ({ default: m.OnboardingChecklist }))
 );
+// Lazy: modal "O que mudou" (SPEC 152). Só monta conteúdo quando há mudança de fluxo nova.
+const OQueMudou = lazy(() => import("@/components/novidades/OQueMudou").then((m) => ({ default: m.OQueMudou })));
 const OnboardingTourController = lazy(() =>
   import("@/components/onboarding/OnboardingTourController").then((m) => ({
     default: m.OnboardingTourController,
@@ -89,6 +91,7 @@ function LayoutContent() {
       <Suspense fallback={null}>
         <OnboardingChecklist />
         <OnboardingTourController />
+        <OQueMudou />
       </Suspense>
     </div>
   );
