@@ -67,14 +67,14 @@ const CREATE_COMMANDS: CreateCmd[] = [
   {
     label: "Nova receita",
     event: "palette:create-receita",
-    path: "/gestao/financeiro?tab=receitas&new=1",
+    path: "/gestao/financeiro?tab=lancamentos&new=1",
     icon: TrendingUp,
     keywords: "criar adicionar entrada lancamento",
   },
   {
     label: "Nova despesa",
     event: "palette:create-despesa",
-    path: "/gestao/financeiro?tab=despesas&new=1",
+    path: "/gestao/financeiro?tab=lancamentos&new=1",
     icon: TrendingDown,
     keywords: "criar adicionar pagamento lancamento",
   },

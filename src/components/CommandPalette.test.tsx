@@ -93,6 +93,12 @@ describe("CommandPalette", () => {
     window.removeEventListener("palette:create-lead", listener);
   });
 
+  it("nova receita e nova despesa abrem a aba Lançamentos, que existe no Financeiro", async () => {
+    const user = abrir();
+    await user.click(screen.getByText("Nova receita"));
+    expect(h.navigate).toHaveBeenCalledWith("/gestao/financeiro?tab=lancamentos&new=1");
+  });
+
   it("configurações abre o modal na aba conta", async () => {
     const user = abrir();
     await user.click(screen.getByText("Configurações"));
