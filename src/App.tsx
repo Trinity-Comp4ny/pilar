@@ -39,6 +39,7 @@ const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const Inicio = lazy(() => import("./pages/inicio"));
+const Novidades = lazy(() => import("./pages/novidades"));
 const ComprarTokens = lazy(() => import("./pages/comprar-tokens"));
 const AutorizarApp = lazy(() => import("./pages/oauth/Autorizar"));
 const MeuTrabalho = lazy(() => import("./pages/meu-trabalho"));
@@ -95,6 +96,7 @@ const UltraUsuarios = lazy(() => ultraAdmin().then((m) => ({ default: m.Usuarios
 const UltraTestes = lazy(() => ultraAdmin().then((m) => ({ default: m.Testes })));
 const UltraFuncionalidades = lazy(() => ultraAdmin().then((m) => ({ default: m.Funcionalidades })));
 const UltraFeedback = lazy(() => ultraAdmin().then((m) => ({ default: m.Feedback })));
+const UltraReleases = lazy(() => ultraAdmin().then((m) => ({ default: m.Releases })));
 const UltraAtividade = lazy(() => ultraAdmin().then((m) => ({ default: m.Atividade })));
 const UltraIncidentes = lazy(() => ultraAdmin().then((m) => ({ default: m.Incidentes })));
 const UltraCustosIa = lazy(() => ultraAdmin().then((m) => ({ default: m.CustosIa })));
@@ -262,6 +264,7 @@ const App = () => {
 
                         <Route element={<PrivateRoute />}>
                           <Route path="/inicio" element={<Inicio />} />
+                          <Route path="/novidades" element={<Novidades />} />
 
                           {/* ===== Rotas aninhadas por módulo (ADR 0016) ===== */}
 
@@ -417,6 +420,7 @@ const App = () => {
                               <Route path="testes" element={<UltraTestes />} />
                               <Route path="funcionalidades" element={<UltraFuncionalidades />} />
                               <Route path="feedback" element={<UltraFeedback />} />
+                              <Route path="releases" element={<UltraReleases />} />
                               <Route path="atividade" element={<UltraAtividade />} />
                               <Route path="incidentes" element={<UltraIncidentes />} />
                               <Route path="custos-ia" element={<UltraCustosIa />} />
