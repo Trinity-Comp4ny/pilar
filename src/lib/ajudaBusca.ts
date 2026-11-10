@@ -24,23 +24,47 @@ export function artigosDaRota(pathname: string, artigos: readonly ArtigoAjuda[] 
     .map((x) => x.a);
 }
 
-/** Busca por título, resumo e palavras-chave, sem acento. Título pesa mais. */
+// Palavras da pergunta que não dizem o assunto ("como eu faço para...").
+const VAZIAS = new Set(
+  "como eu faco fazer onde que qual quais para pra por um uma uns umas o a os as de do da dos das no na nos nas em e ou meu minha meus minhas seu sua posso consigo quero preciso tem ter vou ir ver se isso esse essa aqui ai la sobre com sem ja nao sim".split(
+    " "
+  )
+);
+
+/** Raiz curta da palavra: "crio" e "criar" casam, "propostas" e "proposta" também. */
+function raiz(palavra: string): string {
+  return palavra.length <= 4 ? palavra.slice(0, 3) : palavra.slice(0, palavra.length - 2);
+}
+
+/** Fração mínima das palavras da pergunta que precisa aparecer no artigo. */
+const MINIMO_CASADO = 0.6;
+
+/**
+ * Busca em linguagem natural ("como eu crio um lead?") por título, resumo e palavras-chave, sem
+ * acento. Título pesa mais; a maior parte das palavras do assunto precisa casar.
+ */
 export function buscarArtigos(termo: string, artigos: readonly ArtigoAjuda[] = ARTIGOS): ArtigoAjuda[] {
-  const palavras = normalizar(termo)
-    .split(/\s+/)
-    .filter((p) => p.length >= 2);
-  if (palavras.length === 0) return [];
+  const raizes = normalizar(termo)
+    .split(/[^a-z0-9]+/)
+    .filter((p) => p.length >= 2 && !VAZIAS.has(p))
+    .map(raiz);
+  if (raizes.length === 0) return [];
   return artigos
     .map((a) => {
       const titulo = normalizar(a.titulo);
       const resto = normalizar(`${a.resumo} ${a.palavras.join(" ")}`);
       let nota = 0;
-      for (const p of palavras) {
-        if (titulo.includes(p)) nota += 3;
-        else if (resto.includes(p)) nota += 1;
-        else return { a, nota: 0 };
+      let casadas = 0;
+      for (const r of raizes) {
+        if (titulo.includes(r)) {
+          nota += 3;
+          casadas += 1;
+        } else if (resto.includes(r)) {
+          nota += 1;
+          casadas += 1;
+        }
       }
-      return { a, nota };
+      return { a, nota: casadas / raizes.length >= MINIMO_CASADO ? nota : 0 };
     })
     .filter((x) => x.nota > 0)
     .sort((x, y) => y.nota - x.nota)

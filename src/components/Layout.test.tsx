@@ -18,6 +18,7 @@ vi.mock("@/components/OnboardingChecklist", () => ({ OnboardingChecklist: () => 
 vi.mock("@/components/onboarding/OnboardingTourController", () => ({ OnboardingTourController: () => null }));
 vi.mock("@/components/novidades/OQueMudou", () => ({ OQueMudou: () => null }));
 vi.mock("@/components/FaixaAvisos", () => ({ FaixaAvisos: () => null }));
+vi.mock("@/components/agente/AgenteAjuda", () => ({ AgenteAjuda: () => null }));
 vi.mock("@/lib/monitoring", () => ({ monitoring: { captureException: vi.fn(), addBreadcrumb: vi.fn() } }));
 
 function renderLayout(rota = "/inicio") {

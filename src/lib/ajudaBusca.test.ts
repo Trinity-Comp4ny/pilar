@@ -34,6 +34,13 @@ describe("central de ajuda: busca (SPEC 154)", () => {
     expect(buscarArtigos("a", BASE)).toEqual([]);
   });
 
+  it("entende pergunta em linguagem natural nos artigos reais", () => {
+    expect(buscarArtigos("como eu crio um lead?")[0]?.slug).toBe("criar-lead");
+    expect(buscarArtigos("como faço para enviar a proposta pro cliente")[0]?.slug).toBe("criar-e-enviar-proposta");
+    expect(buscarArtigos("onde convido alguém da equipe")[0]?.slug).toBe("convidar-equipe");
+    expect(buscarArtigos("emitir nota fiscal eletrônica")).toEqual([]);
+  });
+
   it("acha o artigo real pelo slug, e slug desconhecido vira null", () => {
     expect(artigoPorSlug("criar-lead")?.titulo).toBe("Criar um lead");
     expect(artigoPorSlug("nao-existe")).toBeNull();
