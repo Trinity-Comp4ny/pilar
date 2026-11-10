@@ -196,7 +196,7 @@ def sfx_extra(fx, c):
         add(fx, sine(1320, 0.09) * env(0.09, 0.001, 0.05, 5), t, 0.12, pan=c.get("pan", 0.2))
         add(fx, sine(1760, 0.14) * env(0.14, 0.001, 0.08, 5), t + 0.08, 0.1, pan=c.get("pan", 0.2))
     elif k == "msg":  # bolha de mensagem
-        add(fx, sine(620, 0.06) * env(0.06, 0.001, 0.02, 6) + sine(1240, 0.04) * env(0.04, 0.001, 0.01, 6) * 0.3, t, 0.14, pan=c.get("pan", -0.2))
+        add(fx, sine(620, 0.06) * env(0.06, 0.001, 0.02, 6) + sine(1240, 0.06) * env(0.06, 0.001, 0.01, 6) * 0.3, t, 0.14, pan=c.get("pan", -0.2))
     elif k == "error":
         add(fx, lp_fast(saw(110, 0.25) * env(0.25, 0.003, 0.2, 2), 900), t, 0.22)
     elif k == "glitch":
