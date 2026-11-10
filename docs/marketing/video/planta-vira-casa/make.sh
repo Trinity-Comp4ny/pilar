@@ -14,8 +14,8 @@ N=378 PAGE=obra3.html node capture.cjs full frames        # ~10 s por quadro em 
 node capture_overlay.cjs oframes 378 30
 python3 -I sound.py frames/events.json trilha.wav
 ffmpeg -y -loglevel error -framerate 30 -i frames/f%04d.jpg -framerate 30 -i oframes/o%04d.png -i trilha.wav \
-  -filter_complex "[0][1]overlay" -c:v libx264 -preset slow -crf 17 -pix_fmt yuv420p -profile:v high \
+  -filter_complex "[0][1]overlay" -c:v libx264 -preset slow -crf 19 -pix_fmt yuv420p -profile:v high \
   -c:a aac -b:a 192k -shortest -movflags +faststart v20-planta-vira-casa.mp4
 ffmpeg -y -loglevel error -framerate 30 -i frames/f%04d.jpg -i trilha.wav -t 10.2 -af "afade=t=out:st=9.6:d=0.6" \
-  -c:v libx264 -preset slow -crf 17 -pix_fmt yuv420p -c:a aac -b:a 192k -movflags +faststart v20-planta-vira-casa-limpo.mp4
+  -c:v libx264 -preset slow -crf 19 -pix_fmt yuv420p -c:a aac -b:a 192k -movflags +faststart v20-planta-vira-casa-limpo.mp4
 echo "pronto: $WORK/v20-planta-vira-casa.mp4"

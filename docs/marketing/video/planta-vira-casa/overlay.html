@@ -35,7 +35,7 @@ window.render=(t)=>{
   // gancho
   const hk=document.getElementById('hook'); hk.style.display=t<2.5?'flex':'none'; document.getElementById('hb').style.opacity=1;
   enter(document.getElementById('h1'),t,-1); enter(document.getElementById('h2'),t,-1);
-  document.getElementById('p1').style.setProperty('--s',quint(lin(t,0.15,0.55)));
+  document.getElementById('p1').style.setProperty('--s',1);
   // etapas
   const cb=document.getElementById('cb'); let cur=-1; STAGES.forEach((s,i)=>{if(t>=s[0])cur=i;});
   if(cur<0||t>=10.25){cb.style.opacity=0;} else { const s=STAGES[cur]; document.getElementById('cn').style.display=s[1]?'block':'none';
