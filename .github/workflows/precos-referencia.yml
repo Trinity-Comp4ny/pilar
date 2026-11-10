@@ -4,8 +4,11 @@ name: Preços de referência (CUB e SINAPI)
 # 1. `sinapi`: busca na Caixa o SINAPI do mês que falta no banco (ou que a Caixa retificou), lê com o
 #    mesmo leitor da importação manual e grava só os códigos do catálogo. Mês ainda não publicado não é
 #    falha. Arquivo fora do formato falha sem gravar nada e abre issue.
-# 2. `conferir`: abre issue quando o CUB (dia 10) ou o SINAPI (dia 15) do mês anterior não chegou.
-#    O CUB ainda é importado à mão em Ultra > Estimativa de obra; esta issue é o lembrete.
+# 2. `cub`: pede ao portal da CBIC (cub.org.br) o PDF da tabela de cada UF, nos dois regimes, para os meses
+#    que faltam, e grava o que passa nas conferências (19 códigos, padrão alto > normal > baixo, mês e regime
+#    certos, variação de até 15% contra o mês anterior). UF fora do portal (SP, RS e outras) segue manual.
+#    PDF recusado não grava nada daquela UF e abre issue.
+# 3. `conferir`: abre issue quando o CUB (dia 10) ou o SINAPI (dia 15) do mês anterior não chegou.
 # Runbook: docs/operations/ESTIMATIVA_IMPORTAR_PRECOS_MENSAL.md.
 #
 # Segredos por environment do GitHub (`precos-referencia-staging` e `precos-referencia-producao`):
@@ -16,7 +19,11 @@ on:
   workflow_dispatch:
     inputs:
       mes:
-        description: "Forçar um mês do SINAPI (AAAA-MM). Vazio = meses que faltam."
+        description: "Forçar um mês (AAAA-MM), para o SINAPI e o CUB. Vazio = meses que faltam."
+        required: false
+        default: ""
+      cub_ufs:
+        description: "Só estas UFs do CUB (ex. GO,MG). Vazio = todas."
         required: false
         default: ""
       dry_run:
@@ -76,9 +83,55 @@ jobs:
           token: ${{ github.token }}
           status: success
 
+  cub:
+    name: CUB (${{ matrix.alvo }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 1 # um alvo por vez, para não dobrar a carga no portal da CBIC
+      matrix:
+        alvo: [staging, producao]
+    environment: precos-referencia-${{ matrix.alvo }}
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      CUB_MES: ${{ inputs.mes }}
+      CUB_UFS: ${{ inputs.cub_ufs }}
+      # UF com mais de um Sinduscon no portal: variável de repositório, ex. "MG=12,PR=3".
+      CUB_SINDUSCON: ${{ vars.CUB_SINDUSCON }}
+      DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+      - name: Coletar
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_KEY" ]; then
+            echo "::warning::Environment precos-referencia-${{ matrix.alvo }} sem SUPABASE_URL/SUPABASE_SERVICE_KEY: pulado."
+            exit 0
+          fi
+          deno run --config scripts/precos-referencia/deno.json \
+            --allow-net --allow-env --allow-read --allow-write \
+            scripts/precos-referencia/coletar.ts cub
+      - name: Notificar falha
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: CUB automático (${{ matrix.alvo }})
+          token: ${{ github.token }}
+      - name: Fechar a issue de falha (voltou a passar)
+        if: success() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: CUB automático (${{ matrix.alvo }})
+          token: ${{ github.token }}
+          status: success
+
   conferir:
     name: Conferir atraso (${{ matrix.alvo }})
-    needs: [sinapi]
+    needs: [sinapi, cub]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5

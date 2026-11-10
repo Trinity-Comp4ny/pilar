@@ -17,12 +17,20 @@ Roda todo dia às 08:23 (Brasília), em staging e em produção:
   importação manual abaixo continua valendo.
 - **Atraso abre issue.** Sem o CUB do mês anterior a partir do dia 10, ou sem o SINAPI a partir do dia 15, abre
   "Preço de referência atrasado: CUB/SINAPI do mês (alvo)". A issue fecha sozinha quando o mês chega.
-- **O CUB continua manual** (passos abaixo): cada Sinduscon publica num formato, e a coleta dele é a próxima etapa.
+- **CUB entra sozinho nas UFs do portal da CBIC.** Para cada UF, o robô abre `cub.org.br/cub-m2-estadual/{UF}/`,
+  escolhe o Sinduscon da UF e pede o PDF da tabela do mês nos dois regimes. O PDF só é gravado quando traz os 19
+  códigos da NBR 12721, cada padrão acima do anterior (alto > normal > baixo), o mês e o regime pedidos, valores
+  entre R$ 500 e R$ 30.000 por m² e variação de até 15% contra o mês anterior. Falhou uma conferência: aquela UF
+  não grava nada, as outras seguem, e abre "Cron falhando: CUB automático (alvo)" com o motivo.
+- **UFs que seguem manuais:** as que não estão no portal da CBIC (SP e RS têm portal próprio; AP, TO, AL e MS
+  aparecem fora ou intermitentes) e as com mais de um Sinduscon sem um chamado "Sinduscon-UF". O resumo do job lista
+  quais foram e por quê. Para fixar o Sinduscon de uma UF, crie a variável de repositório `CUB_SINDUSCON`
+  (ex. `MG=12,PR=3`, com o número que o resumo mostra).
 
 Configuração, uma vez: criar no GitHub os environments `precos-referencia-staging` e `precos-referencia-producao`, cada
 um com `SUPABASE_URL` e `SUPABASE_SERVICE_KEY` do projeto. Sem eles o alvo é pulado com aviso. Para testar, rode o
 workflow à mão (Actions > Preços de referência > Run workflow): por padrão ele só lê e mostra o resumo, sem gravar.
-O campo "mês" força um mês (AAAA-MM). Rodar local:
+O campo "mês" força um mês (AAAA-MM) e "cub_ufs" limita as UFs do CUB. Rodar local (troque `sinapi` por `cub`):
 `SUPABASE_URL=... SUPABASE_SERVICE_KEY=... DRY_RUN=1 deno run --config scripts/precos-referencia/deno.json -A scripts/precos-referencia/coletar.ts sinapi`.
 
 ## CUB (todo dia 5, por estado)

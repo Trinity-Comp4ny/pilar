@@ -6,14 +6,21 @@
 // `sinapi`: para cada mês que falta no banco (ou que a Caixa retificou), baixa o zip do mês, tira a planilha
 // SINAPI_Referência, lê as abas ISD e ICD com o mesmo leitor da importação manual e grava só os códigos do
 // catálogo. Mês ainda não publicado não é erro. Arquivo fora do formato é erro e nada é gravado.
+// `cub`: para cada UF do portal da CBIC (cub.org.br) e cada mês e regime que faltam, pede o PDF da tabela do
+// mês, lê com as conferências de `cub.ts` e grava. UF fora do portal (SP, RS e outras) fica na importação
+// manual. UF com PDF que não passa nas conferências não grava nada e faz o job falhar no fim.
 // `conferir`: falha quando o CUB ou o SINAPI do mês anterior não chegou no prazo, para abrir a issue do cron.
 //
 // Variáveis: SUPABASE_URL, SUPABASE_SERVICE_KEY (obrigatórias); DRY_RUN=1 lê e confere sem gravar;
-// SINAPI_MES=AAAA-MM força um mês; SINAPI_PAGINA_URL e SINAPI_DOWNLOAD_BASE trocam os endereços da Caixa.
+// SINAPI_MES=AAAA-MM força um mês; SINAPI_PAGINA_URL e SINAPI_DOWNLOAD_BASE trocam os endereços da Caixa;
+// CUB_MES=AAAA-MM força um mês do CUB; CUB_UFS="GO,MG" limita as UFs; CUB_SINDUSCON="MG=12" fixa o Sinduscon
+// de uma UF com mais de um; CUB_BASE_URL troca o endereço do portal.
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { unzipSync } from "fflate";
 import * as XLSX from "xlsx";
+import { getDocumentProxy } from "unpdf";
 import { lerParametros } from "@/lib/estimativaObra";
+import { UFS, type Regime, type Uf } from "@/schemas/estimativaObra";
 import { codigosDoCatalogo, interpretarSinapi, type AbaSinapi } from "@/pages/ultra-admin/estimativaSinapiImport";
 import {
   acharZipsSinapi,
@@ -28,6 +35,18 @@ import {
   type Base,
   type MesBase,
 } from "./fonte.ts";
+import {
+  cookiesDaResposta,
+  escolherSinduscon,
+  formularioCub,
+  lerCsrf,
+  lerFixos,
+  lerOpcoesSinduscon,
+  lerPdfCub,
+  saltoSuspeito,
+  type ItemDeTexto,
+  type LinhaCub,
+} from "./cub.ts";
 
 const PAGINA_PADRAO = "https://www.caixa.gov.br/poder-publico/modernizacao-gestao/sinapi/Paginas/default.aspx";
 const DOWNLOAD_PADRAO = "https://www.caixa.gov.br/Downloads/sinapi-relatorios-mensais";
@@ -244,10 +263,205 @@ async function conferir(): Promise<void> {
   }
 }
 
-const comandos: Record<string, () => Promise<void>> = { sinapi: coletarSinapi, conferir };
+// ─── CUB (portal da CBIC) ───────────────────────────────────────────────────
+
+const CUB_BASE_PADRAO = "http://www.cub.org.br";
+const CUB_PAUSA_MS = 1_500;
+const CUB_TAMANHO_MAXIMO_PDF = 10_000_000;
+// Navegador comum: o portal é um Django que espera formulário enviado de navegador.
+const CUB_CABECALHOS = {
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36",
+  Accept: "text/html,application/xhtml+xml,application/pdf;q=0.9,*/*;q=0.8",
+  "Accept-Language": "pt-BR,pt;q=0.9",
+};
+
+const pausa = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function textoDoPdf(pdf: Uint8Array): Promise<ItemDeTexto[][]> {
+  const doc = await getDocumentProxy(pdf);
+  const paginas: ItemDeTexto[][] = [];
+  for (let n = 1; n <= doc.numPages; n++) {
+    const conteudo = await (await doc.getPage(n)).getTextContent();
+    paginas.push(
+      conteudo.items.flatMap((item) =>
+        "str" in item ? [{ texto: item.str, x: item.transform[4], y: item.transform[5] }] : []
+      )
+    );
+  }
+  return paginas;
+}
+
+interface SessaoCub {
+  url: string;
+  csrf: string;
+  cookie: string;
+  sinduscon: { valor: string; rotulo: string };
+}
+
+/** Abre a página da UF: token, cookies e o Sinduscon. `null` com motivo quando a UF não está no portal. */
+async function abrirUf(base: string, uf: Uf, fixos: Partial<Record<Uf, string>>): Promise<SessaoCub | string> {
+  const url = `${base}/cub-m2-estadual/${uf}/`;
+  const r = await fetch(url, { headers: CUB_CABECALHOS, signal: AbortSignal.timeout(30_000) });
+  if (r.status === 404) return "fora do portal da CBIC";
+  if (!r.ok) throw new Error(`${uf}: a página do portal respondeu ${r.status}.`);
+  const html = await r.text();
+  const opcoes = lerOpcoesSinduscon(html);
+  if (opcoes.length === 0) return "fora do portal da CBIC (sem Sinduscon no formulário)";
+  const sinduscon = escolherSinduscon(uf, opcoes, fixos);
+  if (!sinduscon) {
+    return `mais de um Sinduscon (${opcoes.map((o) => `${o.valor}=${o.rotulo}`).join(", ")}): fixe um em CUB_SINDUSCON`;
+  }
+  const setCookies = r.headers.getSetCookie();
+  const csrf = lerCsrf(html, setCookies.join(", "));
+  if (!csrf) throw new Error(`${uf}: a página do portal não trouxe o token do formulário.`);
+  return { url, csrf, cookie: cookiesDaResposta(setCookies), sinduscon };
+}
+
+/** Pede o PDF do mês. `null` quando o mês ainda não saiu (o portal devolve uma página no lugar do PDF). */
+async function pdfDoMes(s: SessaoCub, uf: Uf, mes: MesBase, regime: Regime): Promise<Uint8Array | null> {
+  const r = await fetch(s.url, {
+    method: "POST",
+    headers: {
+      ...CUB_CABECALHOS,
+      "Content-Type": "application/x-www-form-urlencoded",
+      Referer: s.url,
+      Cookie: s.cookie,
+    },
+    body: new URLSearchParams(formularioCub(uf, s.sinduscon.valor, mes, regime, s.csrf)),
+    signal: AbortSignal.timeout(60_000),
+  });
+  if (!r.ok) throw new Error(`${uf}: o pedido do PDF respondeu ${r.status}.`);
+  const bytes = new Uint8Array(await r.arrayBuffer());
+  if (bytes.length > CUB_TAMANHO_MAXIMO_PDF) throw new Error(`${uf}: PDF passa de ${CUB_TAMANHO_MAXIMO_PDF} bytes.`);
+  const ehPdf = bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46; // %PDF
+  return ehPdf ? bytes : null;
+}
+
+interface CubGravado {
+  uf: string;
+  subtipo: string;
+  padrao: string;
+  mes_base: string;
+  regime: string;
+  valor_m2: number;
+}
+
+async function cubGravado(db: SupabaseClient, desde: MesBase): Promise<CubGravado[]> {
+  const { data, error } = await db
+    .from("cub_valores")
+    .select("uf, subtipo, padrao, mes_base, regime, valor_m2")
+    .gte("mes_base", desde)
+    .limit(20_000);
+  if (error) throw new Error(`Falha ao ler cub_valores: ${error.message}`);
+  return (data ?? []).map((l) => ({ ...l, valor_m2: Number(l.valor_m2) })) as CubGravado[];
+}
+
+async function gravarCub(db: SupabaseClient, linhas: LinhaCub[], fonte: string): Promise<void> {
+  const { data, error } = await db
+    .from("cub_valores")
+    .upsert(
+      linhas.map((l) => ({ ...l, fonte })),
+      { onConflict: "uf,subtipo,padrao,mes_base,regime" }
+    )
+    .select("id");
+  if (error) throw new Error(`O banco recusou o CUB: ${error.message}`);
+  if ((data?.length ?? 0) < linhas.length) throw new Error("O banco não aceitou todas as linhas do CUB.");
+}
+
+function mesAnterior(mes: MesBase): MesBase {
+  const [a, m] = mes.split("-").map(Number);
+  const d = new Date(Date.UTC(a, m - 2, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`;
+}
+
+async function coletarCub(): Promise<void> {
+  const db = cliente();
+  const base = (env("CUB_BASE_URL") || CUB_BASE_PADRAO).replace(/\/+$/, "");
+  const fixos = lerFixos(env("CUB_SINDUSCON"));
+  const filtro = env("CUB_UFS")
+    .split(",")
+    .map((u) => u.trim().toUpperCase())
+    .filter(Boolean);
+  const ufs = (UFS as readonly Uf[]).filter((u) => filtro.length === 0 || filtro.includes(u));
+
+  const forcado = env("CUB_MES");
+  let meses: MesBase[];
+  if (forcado) {
+    if (!mesValido(`${forcado}-01`)) throw new Error(`CUB_MES deve ser AAAA-MM (veio "${forcado}").`);
+    meses = [`${forcado}-01`];
+  } else {
+    // Os dois últimos meses: o do mês passado e, se faltou, o retrasado.
+    meses = mesesPendentes(null, new Date(), 2);
+  }
+  const gravado = await cubGravado(db, mesAnterior(meses[0]));
+  const tem = (uf: Uf, mes: MesBase, regime: Regime) =>
+    gravado.some((l) => l.uf === uf && l.mes_base === mes && l.regime === regime);
+
+  resumo(`### CUB${dryRun ? " (sem gravar)" : ""}`);
+  const falhas: string[] = [];
+  const manuais: string[] = [];
+  let gravadas = 0;
+  for (const uf of ufs) {
+    const pendentes = meses.flatMap((mes) =>
+      (["onerado", "desonerado"] as Regime[])
+        .filter((r) => forcado || !tem(uf, mes, r))
+        .map((r) => ({ mes, regime: r }))
+    );
+    if (pendentes.length === 0) continue;
+    let sessao: SessaoCub | string;
+    try {
+      sessao = await abrirUf(base, uf, fixos);
+    } catch (e) {
+      falhas.push((e as Error).message);
+      continue;
+    }
+    if (typeof sessao === "string") {
+      manuais.push(`${uf} (${sessao})`);
+      continue;
+    }
+    for (const { mes, regime } of pendentes) {
+      await pausa(CUB_PAUSA_MS + Math.random() * 1_000);
+      const rotulo = `${uf} ${mes.slice(5, 7)}/${mes.slice(0, 4)} ${regime === "desonerado" ? "com" : "sem"} desoneração`;
+      try {
+        const pdf = await pdfDoMes(sessao, uf, mes, regime);
+        if (!pdf) {
+          resumo(`- ${rotulo}: ainda não publicado.`);
+          continue;
+        }
+        const leitura = lerPdfCub(await textoDoPdf(pdf), uf, mes, regime);
+        if (leitura.erro) throw new Error(`${rotulo}: ${leitura.erro}`);
+        const anteriores = gravado.filter((l) => l.uf === uf && l.regime === regime && l.mes_base === mesAnterior(mes));
+        const salto = saltoSuspeito(leitura.linhas, anteriores as Pick<LinhaCub, "subtipo" | "padrao" | "valor_m2">[]);
+        if (salto) throw new Error(`${rotulo}: variação suspeita contra o mês anterior, nada gravado. ${salto}`);
+        const fonte =
+          `CUB ${mes.slice(5, 7)}/${mes.slice(0, 4)} (coleta automática: cub.org.br, ${sessao.sinduscon.rotulo})`.slice(
+            0,
+            200
+          );
+        if (!dryRun) await gravarCub(db, leitura.linhas, fonte);
+        gravado.push(...leitura.linhas);
+        gravadas += leitura.linhas.length;
+        resumo(
+          `- ${rotulo}: ${leitura.linhas.length} valores ${dryRun ? "lidos" : "gravados"} (${sessao.sinduscon.rotulo}).`
+        );
+      } catch (e) {
+        falhas.push((e as Error).message);
+      }
+    }
+  }
+  if (manuais.length > 0) resumo(`- Fica na importação manual: ${manuais.join("; ")}.`);
+  resumo(`- Total: ${gravadas} valores${dryRun ? " lidos" : " gravados"}.`);
+  if (falhas.length > 0) {
+    for (const f of falhas) resumo(`- FALHA ${f}`);
+    throw new Error(`CUB: ${falhas.length} leitura(s) recusada(s); as demais UFs foram gravadas.`);
+  }
+}
+
+const comandos: Record<string, () => Promise<void>> = { sinapi: coletarSinapi, cub: coletarCub, conferir };
 const comando = comandos[Deno.args[0] ?? ""];
 if (!comando) {
-  console.error("Uso: coletar.ts sinapi | conferir");
+  console.error("Uso: coletar.ts sinapi | cub | conferir");
   Deno.exit(2);
 }
 try {
