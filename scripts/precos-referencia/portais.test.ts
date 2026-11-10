@@ -100,7 +100,7 @@ describe("configuração", () => {
     );
     expect(extras.map((p) => p.uf)).toEqual(["TO", "SP"]);
     expect(portaisDaUf("SP", extras)).toMatchObject({ paginas: ["https://outro.sp/cub/"], mesNoArquivo: "publicacao" });
-    expect(portaisDaUf("RS", [])).toMatchObject({ soPortal: true, mesNoArquivo: "publicacao" });
+    expect(portaisDaUf("RS", [])).toMatchObject({ soPortal: true, mesNoArquivo: "referencia" });
     expect(portaisDaUf("GO", [])).toBeNull();
   });
 });
@@ -147,5 +147,26 @@ describe("SindusCon-SP: páginas de download por mês (links do diagnóstico rea
       },
     ]);
     expect(candidatosDoMes(arquivos, "2026-10-01", "onerado", "referencia")).toHaveLength(2);
+  });
+});
+
+describe("Sinduscon-RS (links reais da página /cub-rs/)", () => {
+  const base = "https://sinduscon-rs.com.br/wp-content/uploads";
+  const links = [
+    `${base}/2026/11/PRECOS-E-CUSTOS-DA-CONSTRUCAO-DE-OUTUBRO-2026.pdf`,
+    `${base}/2026/11/SERIE-HISTORICA-VALOR-OUTUBRO-2026.pdf`,
+    `${base}/2026/11/SERIE-HISTORICA-VARIACAO-OUTUBRO-2026.pdf`,
+    `${base}/2026/10/PRECOS-E-CUSTOS-DA-CONSTRUCAO-DE-SETEMBRO-2026-REV.pdf`,
+  ].map((url) => ({ url, texto: "" }));
+
+  it("o CUB de outubro é o 'Preços e custos de OUTUBRO', sem a série histórica", () => {
+    const rs = portaisDaUf("RS", [])!;
+    const nome = (l: { url: string }) => l.url.split("/").pop();
+    expect(candidatosDoMes(links, "2026-10-01", "onerado", rs.mesNoArquivo).map(nome)).toEqual([
+      "PRECOS-E-CUSTOS-DA-CONSTRUCAO-DE-OUTUBRO-2026.pdf",
+    ]);
+    expect(candidatosDoMes(links, "2026-09-01", "onerado", rs.mesNoArquivo).map(nome)).toEqual([
+      "PRECOS-E-CUSTOS-DA-CONSTRUCAO-DE-SETEMBRO-2026-REV.pdf",
+    ]);
   });
 });

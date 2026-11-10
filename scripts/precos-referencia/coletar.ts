@@ -81,6 +81,32 @@ function diag(linha: string): void {
   if (diagnostico) resumo(`  - diagnóstico: ${textoPuro(linha.replace(/\s+/g, " ")).slice(0, 200)}`);
 }
 
+/** Abas e primeiras linhas de uma planilha do CUB, para ver se serve de fonte (sondagem). */
+async function diagPlanilha(url: string): Promise<void> {
+  try {
+    const r = await buscar(url, 60_000);
+    if (!r.ok) {
+      diag(`planilha ${url}: ${r.status}`);
+      await r.body?.cancel();
+      return;
+    }
+    const livro = XLSX.read(await corpoLimitado(r, 20_000_000, url), { type: "array" });
+    resumo(
+      `  - diagnóstico, planilha ${textoPuro(url.split("/").pop() ?? url)}: abas ${livro.SheetNames.map(textoPuro).join(", ")}`
+    );
+    for (const aba of livro.SheetNames.slice(0, 4)) {
+      const linhas = XLSX.utils.sheet_to_json<unknown[]>(livro.Sheets[aba], { header: 1, raw: false, defval: "" });
+      resumo(`    aba ${textoPuro(aba)}: ${linhas.length} linhas`);
+      const comConteudo = linhas.filter((l) => l.some((c) => String(c).trim() !== ""));
+      for (const l of [...comConteudo.slice(0, 12), ...comConteudo.slice(-4)]) {
+        resumo(`    | ${textoPuro(l.map((c) => String(c)).join(" ; ")).slice(0, 180)}`);
+      }
+    }
+  } catch (e) {
+    diag(`planilha ${url}: ${(e as Error).message}`);
+  }
+}
+
 /** Primeiras linhas do PDF, para ver o layout de um PDF recusado na sondagem. */
 function diagPdf(nome: string, paginas: ItemDeTexto[][]): void {
   if (!diagnostico) return;
@@ -119,11 +145,16 @@ const TAMANHO_MAXIMO_ZIP = 300_000_000;
  * GET que segue redirecionamento guardando os cookies no caminho. A Caixa responde com um redirecionamento que
  * grava um cookie e volta para o mesmo endereço; sem devolver o cookie, o fetch entra em loop.
  */
+/** Cookies por site, guardados entre pedidos: a Caixa só libera o zip com o cookie que a página grava. */
+const cookiesPorSite = new Map<string, Map<string, string>>();
+
 async function buscar(url: string, tempo = 180_000): Promise<Response> {
   const sinal = AbortSignal.timeout(tempo);
-  const cookies = new Map<string, string>();
   let atual = url;
   for (let i = 0; i < 10; i++) {
+    const host = new URL(atual).host;
+    const cookies = cookiesPorSite.get(host) ?? new Map<string, string>();
+    cookiesPorSite.set(host, cookies);
     const cabecalhos: Record<string, string> = { ...NAVEGADOR };
     if (cookies.size > 0) cabecalhos.Cookie = [...cookies].map(([k, v]) => `${k}=${v}`).join("; ");
     const r = await fetch(atual, { headers: cabecalhos, signal: sinal, redirect: "manual" });
@@ -162,7 +193,16 @@ async function linksDaPagina(paginaUrl: string): Promise<Map<MesBase, ArquivoSin
       resumo(`- Página do SINAPI respondeu ${r.status}; sigo pelo endereço direto.`);
       return new Map();
     }
-    return acharZipsSinapi(await r.text(), paginaUrl);
+    const html = await r.text();
+    const achados = acharZipsSinapi(html, r.url || paginaUrl);
+    if (diagnostico) {
+      const hrefs = [...html.matchAll(/href\s*=\s*["']([^"']+)["']/gi)].map((m) => m[1]);
+      diag(
+        `página do SINAPI: ${r.status}, ${html.length} bytes, ${hrefs.length} links, ${achados.size} zips do padrão`
+      );
+      for (const h of hrefs.filter((h) => /sinapi|\.zip|download/i.test(h)).slice(0, 20)) diag(`link SINAPI: ${h}`);
+    }
+    return achados;
   } catch (e) {
     resumo(`- Página do SINAPI não abriu (${(e as Error).message}); sigo pelo endereço direto.`);
     return new Map();
@@ -394,7 +434,16 @@ async function fontePortal(portal: PortalEstadual): Promise<FonteCub | string> {
               await rd.body?.cancel();
               continue;
             }
-            const arquivos = arquivosDaPaginaDeDownload(await rd.text(), d);
+            const htmlDownload = await rd.text();
+            const arquivos = arquivosDaPaginaDeDownload(htmlDownload, d);
+            if (diagnostico && arquivos.length === 0) {
+              const atributos = [
+                ...htmlDownload.matchAll(/\b([a-z-]+)\s*=\s*["']([^"']*(?:wpdm|download|\.pdf|\.xlsx?)[^"']*)["']/gi),
+              ]
+                .map((m) => `${m[1]}=${m[2]}`)
+                .filter((a) => !/\.(css|js)(\?|$)/i.test(a));
+              for (const a of [...new Set(atributos)].slice(0, 20)) diag(`na página de download: ${a}`);
+            }
             diag(
               `página de download ${d.texto}: ${arquivos.length} arquivo(s) ${arquivos.map((a) => a.url.split("/").pop()).join(", ")}`
             );
@@ -404,6 +453,8 @@ async function fontePortal(portal: PortalEstadual): Promise<FonteCub | string> {
           }
         }
         if (diagnostico) {
+          const planilha = /href\s*=\s*["'](https:[^"']*cub[^"']*\.xlsx)["']/i.exec(html)?.[1];
+          if (planilha) await diagPlanilha(planilha);
           const hrefs = [...html.matchAll(/href\s*=\s*["']([^"']+)["']/gi)].map((m) => m[1]);
           const doCub = hrefs.filter((h) => /cub|custo|tabela|\.pdf/i.test(h)).slice(0, 15);
           diag(`${pagina}: ${r.status}, ${html.length} bytes, ${hrefs.length} links, ${achados.length} PDFs https`);
@@ -561,6 +612,7 @@ async function coletarCub(db: Banco): Promise<void> {
       continue;
     }
 
+    let algumOk = false;
     for (const { mes, regime } of pendentes) {
       const rotulo = `${uf} ${mes.slice(5, 7)}/${mes.slice(0, 4)} ${regime === "desonerado" ? "com" : "sem"} desoneração`;
       const motivos: string[] = [];
@@ -589,6 +641,7 @@ async function coletarCub(db: Banco): Promise<void> {
         if (r.tipo === "recusado") recusado = true;
         motivos.push(r.motivo);
       }
+      if (aceito) algumOk = true;
       if (!aceito) {
         if (recusado) falhas.push(`${rotulo}: ${motivos.join(" | ")}`);
         else resumo(`- ${rotulo}: ainda não publicado (${motivos.join("; ")}).`);
@@ -600,6 +653,21 @@ async function coletarCub(db: Banco): Promise<void> {
       gravado.push(...linhas);
       total += linhas.length;
       resumo(`- ${rotulo}: ${linhas.length} valores ${dryRun ? "lidos" : "gravados"} (${aceito.fonte}).`);
+    }
+    // Sondagem: UF em que nenhum mês veio. Tenta meses mais antigos para saber se a fonte está atrasada ou se o
+    // pedido não serve para ela.
+    if (diagnostico && !algumOk) {
+      for (const atras of [3, 6, 12]) {
+        const antigo = somarMes(meses[0], -atras);
+        for (const fonte of fontes) {
+          try {
+            const r = await fonte.ler(antigo, "onerado");
+            diag(`${uf} ${antigo} por ${fonte.nome}: ${r.tipo}${r.tipo === "ok" ? "" : ` (${r.motivo})`}`);
+          } catch (e) {
+            diag(`${uf} ${antigo} por ${fonte.nome}: ${(e as Error).message}`);
+          }
+        }
+      }
     }
   }
 

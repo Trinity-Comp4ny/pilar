@@ -420,3 +420,70 @@ describe("PDF real do Sinduscon-MS (set/2026, texto do diagnóstico)", () => {
     expect(juntarCodigos("NBR 12.721 - 2006")).toBe("NBR 12.721 - 2006");
   });
 });
+
+describe("PDF real do Sinduscon-RS (out/2026, texto do diagnóstico)", () => {
+  const linhas = [
+    "PREÇOS E CUSTOS DA CONSTRUÇÃO",
+    "CUB/RS do mês de OUTUBRO/2026 - NBR 12.721- Versão 2006",
+    "Padrão de Custo Variação %",
+    "PROJETOS acabamento R$/m Mensal Anual 12 meses",
+    "RESIDENCIAIS",
+    "Baixo R 1-B 2.593,86 1,03 7,26 6,95",
+    "R - 1 (Residência Unifamiliar) Normal R 1-N 3.476,31 0,70 8,83 8,95",
+    "Alto R 1-A 4.689,49 0,53 9,57 10,05",
+    "Baixo PP 4-B 2.473,96 1,10 7,63 7,46",
+    "PP (Prédio Popular)",
+    "Normal PP 4-N 3.411,45 0,82 9,25 9,26",
+    "Baixo R 8-B 2.348,38 1,13 7,58 7,35",
+    "R - 8 (Residência Multifamiliar) Normal R 8-N 2.969,00 0,86 9,19 9,23",
+    "Alto R 8-A 3.815,52 0,68 9,68 10,18",
+    "Normal R 16-N 2.913,69 0,90 9,42 9,52",
+    "R - 16 (Residência Multifamiliar)",
+    "Alto R 16-A 3.895,70 0,86 9,67 9,79",
+    "PIS (Projeto de Interesse Social) PIS 1.874,29 0,61 6,32 6,62",
+    "RPQ1 (Residência Popular) RP1Q 2.640,08 0,74 5,83 5,73",
+    "COMERCIAIS",
+    "Normal CAL 8-N 3.906,19 0,99 11,21 11,25",
+    "CAL- 8 (Comercial Andar Livres)",
+    "Alto CAL 8-A 4.552,53 0,85 12,31 12,72",
+    "Normal CSL 8-N 2.954,29 1,10 9,04 8,87",
+    "CSL- 8 (Comercial Salas e Lojas)",
+    "Alto CSL 8-A 3.490,21 0,92 9,16 9,65",
+    "Normal CSL 16-N 3.989,73 1,05 9,29 9,18",
+    "CSL- 16 (Comercial Salas e Lojas)",
+    "Alto CSL 16-A 4.705,58 0,88 9,44 9,95",
+    "GI (Galpão Industrial) GI 1.422,31 0,91 6,12 5,87",
+    "Fonte: DEE – Sinduscon/RS",
+    "partir de fevereiro/2007, a ser calculados de acordo, com os novos projetos-padrão",
+    "OUT/26 1.243,905 1,47 4,97 5,24 1.301,724 0,35 6,23 6,75",
+  ];
+
+  it("lê os 19 códigos com o padrão escrito no próprio código", () => {
+    const itens = linhas.map((texto, i) => ({ texto, x: 20, y: 800 - i * 12 }));
+    const r = lerPdfCub([itens], "RS", "2026-10-01", "onerado", { exigirRegimeNoTexto: true });
+    expect(r.erro).toBeNull();
+    expect(r.linhas).toHaveLength(19);
+    const v = (s: string, p: string) => r.linhas.find((l) => l.subtipo === s && l.padrao === p)?.valor_m2;
+    expect(v("R1", "normal")).toBe(3476.31);
+    expect(v("R8", "normal")).toBe(2969);
+    expect(v("PP-4", "baixo")).toBe(2473.96);
+    expect(v("R16", "alto")).toBe(3895.7);
+    expect(v("CAL-8", "normal")).toBe(3906.19);
+    expect(v("CSL-16", "alto")).toBe(4705.58);
+    expect(v("PIS", "baixo")).toBe(1874.29);
+    expect(v("GI", "unico")).toBe(1422.31);
+  });
+
+  it("o PDF sem a palavra desoneração não serve como desonerado", () => {
+    const itens = linhas.map((texto, i) => ({ texto, x: 20, y: 800 - i * 12 }));
+    expect(lerPdfCub([itens], "RS", "2026-10-01", "desonerado", { exigirRegimeNoTexto: true }).erro).toMatch(
+      /não diz que é com desoneração/
+    );
+  });
+
+  it("junta os códigos do RS", () => {
+    expect(juntarCodigos("Baixo R 1-B 2.593,86 Normal CSL 16-N 3.989,73 GI 1")).toBe(
+      "Baixo R1-B 2.593,86 Normal CSL16-N 3.989,73 GI 1"
+    );
+  });
+});
