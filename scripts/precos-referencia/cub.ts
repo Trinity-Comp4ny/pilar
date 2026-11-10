@@ -206,9 +206,14 @@ const PADROES_POR_OCORRENCIA: Record<string, { subtipo: string; padroes: PadraoC
 /** Quantas linhas um PDF completo dá: a soma das ocorrências acima (19). */
 export const TOTAL_CODIGOS = Object.values(PADROES_POR_OCORRENCIA).reduce((s, c) => s + c.padroes.length, 0);
 
-/** "CAL - 8", "CSL - 16", "R - 1", "PP - 4" (com espaço, como no PDF do Sinduscon-MS) viram "CAL-8" etc. */
+/** Códigos escritos com espaço: "CAL - 8" (Sinduscon-MS) vira "CAL-8"; "R 1-B" (Sinduscon-RS) vira "R1-B". */
 export function juntarCodigos(texto: string): string {
-  return texto.replace(/(^|[^A-Za-z0-9])(R|PP|CAL|CSL|RP)\s+-\s+(\d{1,2}Q?)(?![0-9])/g, "$1$2-$3");
+  return (
+    texto
+      .replace(/(^|[^A-Za-z0-9])(R|PP|CAL|CSL|RP)\s+-\s+(\d{1,2}Q?)(?![0-9])/g, "$1$2-$3")
+      // "R 1-B", "PP 4-N", "CSL 16-A" (Sinduscon-RS) viram "R1-B" etc.
+      .replace(/(^|[^A-Za-z0-9])(R|PP|CAL|CSL)\s+(\d{1,2})-([BNA])(?![A-Za-z0-9])/g, "$1$2$3-$4")
+  );
 }
 
 // "R-1" (padrão pela tabela) ou "R1-N" (padrão no próprio código, como no destaque do CUB médio).

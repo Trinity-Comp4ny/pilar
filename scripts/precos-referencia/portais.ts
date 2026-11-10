@@ -11,8 +11,8 @@ export interface PortalEstadual {
   /** Páginas onde o Sinduscon lista os PDFs do CUB. */
   paginas: string[];
   /**
-   * Mês que o nome do arquivo cita: o de referência do CUB, ou o de publicação (mês seguinte). O Sinduscon-RS
-   * publica em fevereiro o "Preços e custos da construção" com o CUB de janeiro.
+   * Mês que o nome do arquivo cita: o de referência do CUB, ou o de publicação (mês seguinte), para o portal que
+   * nomeia o arquivo pelo mês em que publica.
    */
   mesNoArquivo: "referencia" | "publicacao";
   /** Só o portal estadual (a UF não está no portal da CBIC). */
@@ -20,15 +20,16 @@ export interface PortalEstadual {
 }
 
 /**
- * Portais conhecidos. Endereços tirados das publicações dos próprios Sinduscons; ainda sem execução contra o site
- * real (conferir no primeiro run em modo leitura). Outros entram pela variável `CUB_PORTAIS`, sem deploy.
+ * Portais conhecidos, conferidos pela sondagem contra os sites reais (job "Sondar fontes reais"). Outros entram pela
+ * variável `CUB_PORTAIS`, sem deploy.
  */
 export const PORTAIS: PortalEstadual[] = [
   { uf: "SP", paginas: ["https://sindusconsp.com.br/servicos/cub/"], mesNoArquivo: "referencia", soPortal: true },
   {
     uf: "RS",
+    // O PDF "Preços e custos da construção de OUTUBRO-2026" traz o CUB de outubro (conferido no PDF real).
     paginas: ["https://sinduscon-rs.com.br/cub-rs/"],
-    mesNoArquivo: "publicacao",
+    mesNoArquivo: "referencia",
     soPortal: true,
   },
   { uf: "MS", paginas: ["https://sindusconms.com.br/cub/"], mesNoArquivo: "referencia", soPortal: false },
