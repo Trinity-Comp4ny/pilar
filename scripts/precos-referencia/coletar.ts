@@ -45,8 +45,10 @@ import {
   lerFixos,
   lerOpcoesSinduscon,
   lerPdfCub,
+  linhasDaPagina,
   paraGravar,
   saltoSuspeito,
+  textoPuro,
   type ItemDeTexto,
   type LinhaCub,
 } from "./cub.ts";
@@ -64,11 +66,26 @@ import { abrirBanco, bancoDeSondagem, type Banco, type CubGravado } from "./banc
 
 const env = (nome: string) => Deno.env.get(nome)?.trim() ?? "";
 let dryRun = env("DRY_RUN") === "1" || env("DRY_RUN") === "true";
+/** Na sondagem, registra o que cada fonte devolveu (só dado público), para ajustar leitor contra o site real. */
+let diagnostico = false;
 
 function resumo(linha: string): void {
   console.warn(linha);
   const arquivo = env("GITHUB_STEP_SUMMARY");
   if (arquivo) Deno.writeTextFileSync(arquivo, `${linha}\n`, { append: true });
+}
+
+function diag(linha: string): void {
+  if (diagnostico) resumo(`  - diagnóstico: ${textoPuro(linha.replace(/\s+/g, " ")).slice(0, 200)}`);
+}
+
+/** Primeiras linhas do PDF, para ver o layout de um PDF recusado na sondagem. */
+function diagPdf(nome: string, paginas: ItemDeTexto[][]): void {
+  if (!diagnostico) return;
+  resumo(`  - diagnóstico, texto de ${textoPuro(nome)} (${paginas.length} página(s)):`);
+  for (const linha of paginas.flatMap((p) => linhasDaPagina(p)).slice(0, 60)) {
+    resumo(`    | ${textoPuro(linha).slice(0, 160)}`);
+  }
 }
 
 const pausa = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -96,8 +113,33 @@ const PAGINA_PADRAO = "https://www.caixa.gov.br/poder-publico/modernizacao-gesta
 const DOWNLOAD_PADRAO = "https://www.caixa.gov.br/Downloads/sinapi-relatorios-mensais";
 const TAMANHO_MAXIMO_ZIP = 300_000_000;
 
+/**
+ * GET que segue redirecionamento guardando os cookies no caminho. A Caixa responde com um redirecionamento que
+ * grava um cookie e volta para o mesmo endereço; sem devolver o cookie, o fetch entra em loop.
+ */
 async function buscar(url: string, tempo = 180_000): Promise<Response> {
-  return await fetch(url, { headers: NAVEGADOR, signal: AbortSignal.timeout(tempo), redirect: "follow" });
+  const sinal = AbortSignal.timeout(tempo);
+  const cookies = new Map<string, string>();
+  let atual = url;
+  for (let i = 0; i < 10; i++) {
+    const cabecalhos: Record<string, string> = { ...NAVEGADOR };
+    if (cookies.size > 0) cabecalhos.Cookie = [...cookies].map(([k, v]) => `${k}=${v}`).join("; ");
+    const r = await fetch(atual, { headers: cabecalhos, signal: sinal, redirect: "manual" });
+    for (const c of r.headers.getSetCookie()) {
+      const m = /^([^=;\s]+)=([^;]*)/.exec(c);
+      if (m) cookies.set(m[1], m[2]);
+    }
+    const destino = r.headers.get("location");
+    if (r.status < 300 || r.status >= 400 || !destino) return r;
+    await r.body?.cancel();
+    const proximo = new URL(destino, atual);
+    // Nunca desce de https para http.
+    if (new URL(atual).protocol === "https:" && proximo.protocol !== "https:") {
+      throw new Error(`redirecionamento para ${proximo.protocol} recusado`);
+    }
+    atual = proximo.toString();
+  }
+  throw new Error("redirecionamento demais (mais de 10)");
 }
 
 /** Lê a página da Caixa atrás dos links. Página fora do ar não impede a coleta: sobra o endereço direto. */
@@ -282,8 +324,15 @@ async function fonteCbic(base: string, uf: Uf, fixos: Partial<Record<Uf, string>
         return { tipo: "indisponivel", motivo: `pedido do PDF respondeu ${resp.status}` };
       }
       const bytes = await corpoLimitado(resp, TAMANHO_MAXIMO_PDF, "PDF da CBIC");
-      if (!ehPdf(bytes)) return { tipo: "indisponivel", motivo: "mês ainda não publicado no portal da CBIC" };
-      const leitura = lerPdfCub(await textoDoPdf(bytes), uf, mes, regime);
+      if (!ehPdf(bytes)) {
+        diag(
+          `CBIC ${uf} ${mes} ${regime} devolveu ${resp.headers.get("content-type") ?? "?"} (${bytes.length} bytes): ${new TextDecoder().decode(bytes.slice(0, 4000))}`
+        );
+        return { tipo: "indisponivel", motivo: "mês ainda não publicado no portal da CBIC" };
+      }
+      const paginas = await textoDoPdf(bytes);
+      const leitura = lerPdfCub(paginas, uf, mes, regime);
+      if (leitura.erro) diagPdf(`CBIC ${uf} ${mes} ${regime}`, paginas);
       return leitura.erro
         ? { tipo: "recusado", motivo: `CBIC: ${leitura.erro}` }
         : { tipo: "ok", linhas: leitura.linhas, fonte: `cub.org.br, ${sinduscon.rotulo}` };
@@ -298,8 +347,17 @@ async function fontePortal(portal: PortalEstadual): Promise<FonteCub | string> {
   for (const pagina of portal.paginas) {
     try {
       const r = await buscar(pagina, 30_000);
-      if (r.ok) links.push(...linksPdfDaPagina(await r.text(), r.url || pagina));
-      else {
+      if (r.ok) {
+        const html = await r.text();
+        const achados = linksPdfDaPagina(html, r.url || pagina);
+        links.push(...achados);
+        if (diagnostico) {
+          const hrefs = [...html.matchAll(/href\s*=\s*["']([^"']+)["']/gi)].map((m) => m[1]);
+          const doCub = hrefs.filter((h) => /cub|custo|tabela|\.pdf/i.test(h)).slice(0, 15);
+          diag(`${pagina}: ${r.status}, ${html.length} bytes, ${hrefs.length} links, ${achados.length} PDFs https`);
+          for (const h of doCub) diag(`link: ${h}`);
+        }
+      } else {
         problemas.push(`${pagina} respondeu ${r.status}`);
         await r.body?.cancel();
       }
@@ -308,9 +366,14 @@ async function fontePortal(portal: PortalEstadual): Promise<FonteCub | string> {
     }
     try {
       const r = await buscar(urlWordpressMedia(pagina), 30_000);
-      if (r.ok && (r.headers.get("content-type") ?? "").includes("json"))
-        links.push(...linksPdfDoWordpress(await r.json()));
-      else await r.body?.cancel();
+      if (r.ok && (r.headers.get("content-type") ?? "").includes("json")) {
+        const achados = linksPdfDoWordpress(await r.json());
+        links.push(...achados);
+        diag(`WordPress de ${pagina}: ${achados.length} PDFs`);
+      } else {
+        diag(`WordPress de ${pagina}: ${r.status} ${r.headers.get("content-type") ?? ""}`);
+        await r.body?.cancel();
+      }
     } catch {
       // Sem WordPress: fica só com os links da página.
     }
@@ -324,7 +387,13 @@ async function fontePortal(portal: PortalEstadual): Promise<FonteCub | string> {
     nome: `portal do Sinduscon-${portal.uf}`,
     async ler(mes, regime) {
       const candidatos = candidatosDoMes(links, mes, regime, portal.mesNoArquivo);
-      if (candidatos.length === 0) return { tipo: "indisponivel", motivo: "portal do Sinduscon sem PDF deste mês" };
+      if (candidatos.length === 0) {
+        if (diagnostico && mes === mesesDaSondagem[0] && regime === "onerado") {
+          for (const l of links.slice(0, 20))
+            diag(`PDF no portal ${portal.uf}: ${l.url.split("/").pop()} | ${l.texto}`);
+        }
+        return { tipo: "indisponivel", motivo: "portal do Sinduscon sem PDF deste mês" };
+      }
       if (candidatos.length > 5)
         return { tipo: "recusado", motivo: `portal: ${candidatos.length} PDFs do mês, ambíguo` };
       const aceitas: { linhas: LinhaCub[]; url: string }[] = [];
@@ -351,7 +420,10 @@ async function fontePortal(portal: PortalEstadual): Promise<FonteCub | string> {
         const leitura = lerPdfCub(paginas, portal.uf, mes, regime, { exigirRegimeNoTexto: true });
         if (!leitura.erro) aceitas.push({ linhas: leitura.linhas, url: c.url });
         else if (c.semMarcaDeRegime && leitura.erro.includes("não diz que é com desoneração")) semRegime++;
-        else erros.push(`${c.url.split("/").pop()}: ${leitura.erro}`);
+        else {
+          erros.push(`${c.url.split("/").pop()}: ${leitura.erro}`);
+          diagPdf(c.url.split("/").pop() ?? c.url, paginas);
+        }
       }
       const distintas = new Set(aceitas.map((a) => a.linhas.map((l) => `${l.subtipo}${l.padrao}${l.valor_m2}`).join()));
       if (distintas.size > 1) return { tipo: "recusado", motivo: "portal: dois PDFs do mês com valores diferentes" };
@@ -364,6 +436,9 @@ async function fontePortal(portal: PortalEstadual): Promise<FonteCub | string> {
     },
   };
 }
+
+/** Meses que a sondagem lê (o primeiro é o mais antigo), para o diagnóstico não repetir a lista de PDFs. */
+let mesesDaSondagem: MesBase[] = [];
 
 const mesAnterior = (mes: MesBase): MesBase => {
   const [a, m] = mes.split("-").map(Number);
@@ -390,6 +465,7 @@ async function coletarCub(db: Banco): Promise<void> {
     // O mês passado e, se faltou, o retrasado.
     meses = mesesPendentes(null, new Date(), 2);
   }
+  mesesDaSondagem = meses;
   const gravado: CubGravado[] = await db.cubDesde(mesAnterior(meses[0]));
   const tem = (uf: Uf, mes: MesBase, regime: Regime) =>
     gravado.some((l) => l.uf === uf && l.mes_base === mes && l.regime === regime);
@@ -534,6 +610,7 @@ function parametrosDasMigrations(): unknown {
  */
 async function sondar(): Promise<void> {
   dryRun = true;
+  diagnostico = true;
   const hoje = new Date();
   const tresAtras = new Date(Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth() - 3, 1)).toISOString().slice(0, 10);
   const db = bancoDeSondagem(parametrosDasMigrations(), tresAtras);
