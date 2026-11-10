@@ -97,34 +97,50 @@ Configurado via Husky:
 1. `gitleaks` — bloqueia commit com secrets.
 2. `tsc --noEmit` — typecheck.
 3. `lint-staged` — eslint + prettier nos staged.
-4. `vitest run` — testes unitários.
+4. `vitest related` — só os testes ligados aos arquivos staged (pelo grafo de imports).
+   A suíte inteira roda no CI.
 
 Para pular em emergência: `git commit --no-verify` (use com discrição, CI ainda valida).
 
 ## CI
 
-O que roda hoje (`.github/workflows/ci.yml`), em push e PR para `main` e `staging`:
+O que roda hoje (`.github/workflows/ci.yml`), em push e PR para `main` e `staging`. Cada
+pergunta é um job, e todos rodam em paralelo: uma falha não esconde as outras.
 
-- **lint-test-build**: eslint, typecheck, vitest com piso de cobertura, Knip (código morto
-  não cresce), build e budget de bundle. Regras de design system e `no-console` são erro;
+- **changes** — decide se o PR toca código. PR só de documentação (`docs/`, `research/`,
+  `.md` solto na raiz ou em `.claude/agents/`) roda só o secrets scan e pula o resto.
+  `docs/architecture/EDGE_FUNCTIONS.md` e `brand/` contam como código (testes leem).
+- **lint** — eslint e `prettier --check`. Regras de design system e `no-console` são erro;
   ocorrências antigas ficam congeladas em `eslint-suppressions.json` (ADR 0045).
-- **e2e-local**: Playwright contra Supabase local no runner, em todo PR. Mesmo comando
-  local: `npm run test:e2e:local` (precisa `supabase start`).
-- **audit** — `npm audit --audit-level=high`.
-- **secrets-scan** — gitleaks sobre o histórico inteiro.
-- **deploy-staging** — só em push no `staging`, depois dos três acima. Aplica migrations
-  e deploya edge functions no Supabase de staging.
+- **typecheck** — `tsc` do app e da LP (`apps/marketing`).
+- **unit-tests** — Vitest em 4 shards, com cobertura coletada em cada um.
+- **coverage** — junta os 4 shards (`vitest --merge-reports`) e aplica os pisos do
+  `vite.config.ts` sobre o total. Shard isolado não aplica piso (`VITEST_SHARD_SEM_PISO`).
+- **build** — Knip (código morto não cresce), build do app, budget de bundle, build da LP.
+- **e2e-local** — Playwright contra Supabase local, em 2 shards, cada um com o próprio
+  banco. Regressão visual só no shard 1. Mesmo comando local: `npm run test:e2e:local`
+  (precisa `supabase start`; `E2E_SHARD=1/2` reproduz um shard).
+- **audit** — `npm audit --audit-level=high` (lê só o lockfile; SBOM no push).
+- **secrets-scan** — gitleaks sobre o histórico inteiro. Roda inclusive em PR só de docs.
+- **database** — sobe o stack Supabase (sem Studio, edge-runtime e imgproxy), aplica todas
+  as migrations num banco vazio em Postgres 17, roda as suites pgTAP de `supabase/tests/`
+  e avalia se `types.ts` está em sync com as migrations. Inclui o **guard de migration
+  destrutiva**, que roda antes de qualquer `db push`.
+- **types-sync** — reprova se o `types.ts` commitado diverge do schema das migrations.
+- **edge-functions** — `deno check` e `deno test` em `supabase/functions/`.
+- **ci-ok** — job agregado, único required check do branch protection. Roda sempre
+  (`if: always()`) e reprova se qualquer gate não passou: job pulado conta como sucesso
+  para o GitHub, então sem isso um PR vermelho ficava mergeável.
+- **deploy-staging** — só em push no `staging`, depois dos gates de código e banco. Aplica
+  migrations e deploya edge functions no Supabase de staging.
 - **deploy-production** — só em push no `main`, com aprovação do Environment `Production`.
-
-- **database** — sobe o stack Supabase completo (`supabase start`), aplica as 183
-  migrations num banco vazio, roda as 9 suites pgTAP de `supabase/tests/` (~80 asserts em
-  RLS, impersonation e features) e confere que `types.ts` está em sync com as migrations.
-  Inclui o **guard de migration destrutiva**, que roda antes de qualquer `db push`.
-- **edge-functions** — `deno check` nas 44 funções de `supabase/functions/`.
-- **ci-ok**: job agregado, required check do branch protection de `staging`.
 - **CodeQL** (workflow `codeql.yml`): o check "Code scanning results / CodeQL" também é
   required em `staging` desde 2026-10-08. Reprova só alerta NOVO de severidade alta
   introduzido pelo PR; os alertas antigos não travam merge.
+
+Velocidade: `node_modules` e os browsers do Playwright vêm de cache
+(`.github/actions/setup-deps`), e o `supabase start` corre em segundo plano enquanto o
+Node instala (`scripts/ci-wait-supabase.sh`).
 
 Antes de abrir PR com migration nova, dá para rodar o guard local:
 
