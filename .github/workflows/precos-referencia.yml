@@ -9,12 +9,18 @@ name: Preços de referência (CUB e SINAPI)
 #    mês e regime certos, variação de até 15% contra o mês anterior, não repetido). PDF recusado não grava
 #    nada daquela UF e abre issue.
 # 3. `conferir`: abre issue quando o CUB (dia 10) ou o SINAPI (dia 15) do mês anterior não chegou.
+# No PR que mexe no coletor, só `sondar`: lê as fontes reais e roda as conferências sem banco, sem segredo
+# e sem gravar. O resumo do job mostra o que cada fonte devolveu; site fora do ar não reprova o PR.
 # Runbook: docs/operations/ESTIMATIVA_IMPORTAR_PRECOS_MENSAL.md.
 #
 # Segredo: o SUPABASE_DB_URL que os environments `Staging` e `production-automation` já têm (o mesmo do
 # backup noturno). `production-automation`, não `Production`: environment com reviewer trava cron em
 # `waiting` (ver backup-nightly.yml).
 on:
+  pull_request:
+    paths:
+      - "scripts/precos-referencia/**"
+      - ".github/workflows/precos-referencia.yml"
   schedule:
     - cron: "23 11 * * *" # 08:23 em Brasília
   workflow_dispatch:
@@ -37,12 +43,29 @@ permissions:
   issues: write # notify-cron-failure
 
 concurrency:
-  group: precos-referencia
-  cancel-in-progress: false
+  group: precos-referencia-${{ github.event_name == 'pull_request' && github.ref || 'cron' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  sondar:
+    name: Sondar fontes reais (sem gravar)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+      - name: Sondar
+        run: |
+          deno run --config scripts/precos-referencia/deno.json \
+            --allow-net --allow-env --allow-read --allow-write \
+            scripts/precos-referencia/coletar.ts sondar
+
   sinapi:
     name: SINAPI (${{ matrix.alvo }})
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -84,6 +107,7 @@ jobs:
 
   cub:
     name: CUB (${{ matrix.alvo }})
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     strategy:
@@ -133,7 +157,7 @@ jobs:
   conferir:
     name: Conferir atraso (${{ matrix.alvo }})
     needs: [sinapi, cub]
-    if: always()
+    if: always() && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     strategy:
