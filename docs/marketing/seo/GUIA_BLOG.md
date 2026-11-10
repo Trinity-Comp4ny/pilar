@@ -52,36 +52,23 @@ e levar essa pessoa a ver os planos ou agendar uma demonstração.
 
 ## Pauta
 
-Publicados em 2026-11-10 (20): software de gestão para escritório de engenharia, sistema para escritório de arquitetura,
-proposta de projeto de engenharia, como precificar projeto, controle de prazo por disciplina, aditivo de projeto,
-diário de obra (RDO), obra por administração, fluxo de caixa, contrato de projeto, cronograma de projeto de arquitetura,
-compatibilização de projetos, relatório de obra para o cliente, CRM para escritório de arquitetura, retrabalho em
-projeto, rentabilidade de projeto, cotação de material de obra, como organizar escritório de engenharia, como organizar
-escritório de arquitetura e IA para escritório de engenharia.
+Publicados em 2026-11-10: 40 artigos (a meta da nota). A lista completa está em `apps/marketing/src/content/blog/`
+e no feed `https://www.pilarsoft.com.br/blog/feed.xml`.
 
-Próximos, em ordem de prioridade:
+Daqui em diante, a pauta sai do Search Console (Desempenho › Consultas): busca com impressão e posição entre 8 e 20
+vira atualização do artigo existente ou artigo vizinho. Ideias ainda não cobertas:
 
-| #   | Palavra-chave                                    | Ângulo                                                                  | Módulo   |
-| --- | ------------------------------------------------ | ----------------------------------------------------------------------- | -------- |
-| 1   | ART e RRT: quando emitir em projeto e obra       | Conceito e rotina do escritório (sem número de resolução não conferido) | gestao   |
-| 2   | como cobrar taxa de administração de obra        | Percentual, base de cálculo, nota e contrato                            | obra     |
-| 3   | portal do cliente arquitetura                    | Mostrar andamento sem montar relatório                                  | portal   |
-| 4   | gestão de equipe em escritório de engenharia     | Responsável por disciplina, carga, prioridade                           | projetos |
-| 5   | planilha de controle de projetos                 | Quando a planilha deixa de servir                                       | projetos |
-| 6   | inadimplência em escritório de arquitetura       | Parcelas por entrega, cobrança sem constrangimento                      | gestao   |
-| 7   | gestão de obra para arquitetos                   | Acompanhamento × administração × gerenciamento                          | obra     |
-| 8   | conciliação bancária para escritório             | Extrato lido por IA, revisado pela equipe                               | gestao   |
-| 9   | modelo de proposta de projeto de arquitetura     | Estrutura comentada, linkando a ferramenta                              | gestao   |
-| 10  | escopo de projeto de engenharia                  | Como escrever escopo que evita aditivo não pago                         | projetos |
-| 11  | prazo de projeto estrutural                      | Dependências com arquitetura e o que atrasa                             | projetos |
-| 12  | projeto de instalações prediais (MEP)            | Como coordenar elétrica, hidráulica e HVAC                              | projetos |
-| 13  | efetivo de obra                                  | Como registrar e por que importa                                        | campo    |
-| 14  | aporte de obra por administração                 | Como organizar o dinheiro do cliente                                    | obra     |
-| 15  | medição de obra                                  | Avanço físico e o que mostrar ao cliente                                | campo    |
-| 16  | quanto cobrar por projeto de engenharia elétrica | Método, sem tabela inventada, linkando a calculadora                    | gestao   |
-| 17  | quanto cobrar por projeto estrutural             | Idem                                                                    | gestao   |
-| 18  | software de arquitetura × software de gestão     | CAD/BIM × gestão do escritório                                          | projetos |
-| 19  | pós-obra e entrega técnica                       | Documentação, garantia, relacionamento                                  | obra     |
-| 20  | indicadores de escritório de engenharia          | Os poucos números que importam                                          | gestao   |
+| #   | Palavra-chave                                      | Ângulo                                             | Módulo   |
+| --- | -------------------------------------------------- | -------------------------------------------------- | -------- |
+| 1   | onboarding de cliente em escritório de arquitetura | Do aceite da proposta à primeira entrega           | gestao   |
+| 2   | como montar o fluxo padrão de projeto              | Colunas e etapas que servem para todos os projetos | projetos |
+| 3   | folha de pagamento de escritório de engenharia     | Comprovante, rateio por projeto, rotina do mês     | gestao   |
+| 4   | levantamento de campo para projeto                 | O que registrar antes de projetar                  | campo    |
+| 5   | revisão de projeto: como controlar versões         | Rodadas, registro de decisão, cliente aprovando    | projetos |
+| 6   | precificação de projeto de climatização (HVAC)     | Método, sem tabela inventada                       | gestao   |
+| 7   | como apresentar proposta ao cliente                | Reunião, prazo de validade, objeções               | gestao   |
+| 8   | gestão de fornecedores de obra                     | Cadastro, cotação, histórico                       | obra     |
+| 9   | reforma por administração                          | Particularidades de obra pequena                   | obra     |
+| 10  | estoque de obra                                    | Entrada, saída e saldo valorizado                  | obra     |
 
-Ritmo sugerido: 2 artigos por semana. Com isso, os 40 artigos da meta chegam em cerca de 10 semanas.
+Ritmo sugerido: 1 a 2 artigos por semana, mais a revisão dos artigos que o Search Console mostrar perto da primeira página.
