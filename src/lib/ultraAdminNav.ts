@@ -38,6 +38,7 @@ export type UltraSecaoId =
   | "ajuda"
   | "satisfacao"
   | "comunicados"
+  | "previas"
   | "atividade"
   | "incidentes"
   | "custos-ia"
@@ -79,6 +80,13 @@ export const ULTRA_SECOES: readonly UltraSecao[] = [
   { id: "releases", title: "Releases", url: `${ULTRA_ADMIN_BASE}/releases`, icon: Megaphone, group: "Produto" },
   { id: "ajuda", title: "Lacunas da ajuda", url: `${ULTRA_ADMIN_BASE}/ajuda`, icon: LifeBuoy, group: "Produto" },
   { id: "satisfacao", title: "Satisfação", url: `${ULTRA_ADMIN_BASE}/satisfacao`, icon: Smile, group: "Produto" },
+  {
+    id: "previas",
+    title: "Prévia de recursos",
+    url: `${ULTRA_ADMIN_BASE}/previas`,
+    icon: FlaskConical,
+    group: "Produto",
+  },
   {
     id: "estimativa",
     title: "Estimativa de obra",

@@ -25,11 +25,12 @@ import {
 } from "./hooks";
 import { quandoRelativo } from "./lib";
 import { FiltroChips } from "./components/FiltroChips";
+import { bugVencido, diasAtePrazoDoBug, PRAZO_BUG_DIAS } from "./feedbackPrazo";
 
 const STATUS: FeedbackStatus[] = ["novo", "em_analise", "planejado", "resolvido", "descartado"];
 const ABERTOS: FeedbackStatus[] = ["novo", "em_analise", "planejado"];
 
-type FiltroStatus = "abertos" | "todos" | FeedbackStatus;
+type FiltroStatus = "abertos" | "vencidos" | "todos" | FeedbackStatus;
 type FiltroTipo = "todos" | "bug" | "sugestao";
 
 /** Signed URL curta: o print pode ter dado de cliente, nada de link permanente. */
@@ -48,6 +49,9 @@ export default function Feedback() {
   const [busca, setBusca] = useState("");
   const [abertoId, setAbertoId] = useState<string | null>(null);
 
+  // Hora da última busca: prazo dos bugs calculado sem relógio na render (SPEC 160).
+  const agora = query.dataUpdatedAt;
+
   const linhas = useMemo<Linha[]>(() => {
     const autores = new Map((usuariosQ.data ?? []).map((u) => [u.id, u.nome ?? u.email]));
     const empresas = new Map((empresasQ.data ?? []).map((e) => [e.id, e.nome]));
@@ -61,12 +65,16 @@ export default function Feedback() {
   const visiveis = useMemo(() => {
     const q = busca.trim().toLowerCase();
     return linhas.filter((f) => {
-      if (status === "abertos" ? !ABERTOS.includes(f.status) : status !== "todos" && f.status !== status) return false;
+      if (status === "vencidos") {
+        if (!bugVencido(f, agora)) return false;
+      } else if (status === "abertos" ? !ABERTOS.includes(f.status) : status !== "todos" && f.status !== status) {
+        return false;
+      }
       if (tipo !== "todos" && f.tipo !== tipo) return false;
       if (!q) return true;
       return [f.titulo ?? "", f.descricao, f.autor ?? "", f.empresaNome ?? ""].some((t) => t.toLowerCase().includes(q));
     });
-  }, [linhas, status, tipo, busca]);
+  }, [linhas, status, tipo, busca, agora]);
 
   const conta = (s: FeedbackStatus) => linhas.filter((f) => f.status === s).length;
   const aberto = linhas.find((f) => f.id === abertoId) ?? null;
@@ -111,6 +119,17 @@ export default function Feedback() {
       cell: (f) => <span className="text-ink-soft">{quandoRelativo(f.createdAt)}</span>,
     },
     {
+      key: "prazo",
+      header: "Prazo",
+      getSortValue: (f) => diasAtePrazoDoBug(f, agora) ?? Number.MAX_SAFE_INTEGER,
+      cell: (f) => {
+        const dias = diasAtePrazoDoBug(f, agora);
+        if (dias === null) return <span className="text-ink-muted">-</span>;
+        if (dias < 0) return <span className="font-medium text-danger-strong">{`Atrasado ${-dias} d`}</span>;
+        return <span className={dias <= 2 ? "font-medium text-warning-strong" : "text-ink"}>{`${dias} d`}</span>;
+      },
+    },
+    {
       key: "status",
       header: "Status",
       mobile: "badge",
@@ -128,6 +147,11 @@ export default function Feedback() {
           onChange={setStatus}
           opcoes={[
             { value: "abertos", label: "Em aberto", count: linhas.filter((f) => ABERTOS.includes(f.status)).length },
+            {
+              value: "vencidos",
+              label: `Bugs com mais de ${PRAZO_BUG_DIAS} dias`,
+              count: linhas.filter((f) => bugVencido(f, agora)).length,
+            },
             ...STATUS.map((s) => ({ value: s, label: statusLabel("feedback", s), count: conta(s) })),
             { value: "todos", label: "Todos", count: linhas.length },
           ]}

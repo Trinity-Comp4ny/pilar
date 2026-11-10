@@ -11,6 +11,7 @@ export { default as Releases } from "./Releases";
 export { default as AjudaLacunas } from "./AjudaLacunas";
 export { default as Satisfacao } from "./Satisfacao";
 export { default as Comunicados } from "./Comunicados";
+export { default as Previas } from "./Previas";
 export { default as Atividade } from "./Atividade";
 export { default as Incidentes } from "./Incidentes";
 export { default as CustosIa } from "./CustosIa";

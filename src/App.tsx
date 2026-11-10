@@ -102,6 +102,7 @@ const UltraReleases = lazy(() => ultraAdmin().then((m) => ({ default: m.Releases
 const UltraAjudaLacunas = lazy(() => ultraAdmin().then((m) => ({ default: m.AjudaLacunas })));
 const UltraSatisfacao = lazy(() => ultraAdmin().then((m) => ({ default: m.Satisfacao })));
 const UltraComunicados = lazy(() => ultraAdmin().then((m) => ({ default: m.Comunicados })));
+const UltraPrevias = lazy(() => ultraAdmin().then((m) => ({ default: m.Previas })));
 const UltraAtividade = lazy(() => ultraAdmin().then((m) => ({ default: m.Atividade })));
 const UltraIncidentes = lazy(() => ultraAdmin().then((m) => ({ default: m.Incidentes })));
 const UltraCustosIa = lazy(() => ultraAdmin().then((m) => ({ default: m.CustosIa })));
@@ -432,6 +433,7 @@ const App = () => {
                               <Route path="ajuda" element={<UltraAjudaLacunas />} />
                               <Route path="satisfacao" element={<UltraSatisfacao />} />
                               <Route path="comunicados" element={<UltraComunicados />} />
+                              <Route path="previas" element={<UltraPrevias />} />
                               <Route path="atividade" element={<UltraAtividade />} />
                               <Route path="incidentes" element={<UltraIncidentes />} />
                               <Route path="custos-ia" element={<UltraCustosIa />} />
