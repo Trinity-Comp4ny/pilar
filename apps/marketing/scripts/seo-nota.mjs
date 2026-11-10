@@ -45,6 +45,12 @@ const ALVOS = {
   "/engenharia": "software gestão escritório engenharia",
   "/arquitetura": "sistema gestão escritório arquitetura",
   "/blog": "blog gestão escritório engenharia arquitetura",
+  "/vs/whatsapp": "whatsapp projeto obra",
+  "/vs/notion": "notion escritório engenharia arquitetura",
+  "/vs/erp-construtora": "erp construtora escritório projeto",
+  "/ferramentas": "ferramentas escritório engenharia arquitetura",
+  "/ferramentas/calculadora-de-honorarios": "calculadora honorários",
+  "/ferramentas/modelo-de-proposta": "modelo proposta projeto",
 };
 
 /** Metas de volume: o ponto cheio do item chega quando o número bate aqui. */

@@ -25,6 +25,7 @@ const COLUNAS = [
     titulo: "Conteúdo",
     links: [
       { label: "Blog", to: "/blog" },
+      { label: "Ferramentas", to: "/ferramentas" },
       { label: "Para engenharia", to: "/engenharia" },
       { label: "Para arquitetura", to: "/arquitetura" },
     ],

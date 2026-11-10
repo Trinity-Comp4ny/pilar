@@ -20,6 +20,15 @@
 
 - [Pilar vs Planilha](https://www.pilarsoft.com.br/vs/planilha): diferença lado a lado para quem hoje controla projeto em Excel ou Google Sheets
 - [Pilar vs Trello](https://www.pilarsoft.com.br/vs/trello): diferença lado a lado para quem hoje usa um quadro genérico de tarefas
+- [Pilar vs WhatsApp](https://www.pilarsoft.com.br/vs/whatsapp): para quem acompanha projeto e obra por grupo de WhatsApp
+- [Pilar vs Notion](https://www.pilarsoft.com.br/vs/notion): para quem montou o escritório numa ferramenta genérica de documentos
+- [Pilar vs ERP de construtora](https://www.pilarsoft.com.br/vs/erp-construtora): por que escritório de projeto precisa de outro tipo de sistema
+
+## Ferramentas
+
+- [Ferramentas](https://www.pilarsoft.com.br/ferramentas): ferramentas abertas, sem cadastro
+- [Calculadora de honorários](https://www.pilarsoft.com.br/ferramentas/calculadora-de-honorarios): custo da hora técnica, preço da hora com lucro e impostos, valor do projeto pelas horas
+- [Modelo de proposta de projeto](https://www.pilarsoft.com.br/ferramentas/modelo-de-proposta): estrutura por disciplina com escopo, exclusões, revisões, prazo e parcelas
 
 ## Blog
 
@@ -32,6 +41,19 @@
 - [Aditivo de projeto: quando cobrar escopo extra e como registrar](https://www.pilarsoft.com.br/blog/aditivo-de-projeto)
 - [Diário de obra (RDO): o que registrar e como fazer pelo celular](https://www.pilarsoft.com.br/blog/diario-de-obra-rdo)
 - [Obra por administração: como prestar contas e cobrar a sua taxa](https://www.pilarsoft.com.br/blog/obra-por-administracao-prestacao-de-contas)
+
+- [Como organizar um escritório de arquitetura: do contato à obra entregue](https://www.pilarsoft.com.br/blog/como-organizar-escritorio-arquitetura)
+- [Como organizar um escritório de engenharia: processos, prazos e financeiro](https://www.pilarsoft.com.br/blog/como-organizar-escritorio-engenharia)
+- [Compatibilização de projetos: como organizar as rodadas entre disciplinas](https://www.pilarsoft.com.br/blog/compatibilizacao-de-projetos)
+- [Contrato de projeto de engenharia e arquitetura: o que não pode faltar](https://www.pilarsoft.com.br/blog/contrato-de-projeto)
+- [Cotação de material de obra: como comparar fornecedores sem planilha](https://www.pilarsoft.com.br/blog/cotacao-material-obra)
+- [CRM para escritório de arquitetura: como não perder cliente entre o contato e a proposta](https://www.pilarsoft.com.br/blog/crm-escritorio-arquitetura)
+- [Cronograma de projeto de arquitetura: etapas, prazos e dependências](https://www.pilarsoft.com.br/blog/cronograma-projeto-arquitetura)
+- [Fluxo de caixa de escritório de engenharia: como fechar o mês sem planilha](https://www.pilarsoft.com.br/blog/fluxo-de-caixa-escritorio-engenharia)
+- [IA para escritório de engenharia e arquitetura: o que um agente faz (e o que não deve fazer sozinho)](https://www.pilarsoft.com.br/blog/ia-escritorio-engenharia)
+- [Relatório de obra para o cliente: o que mostrar todo mês](https://www.pilarsoft.com.br/blog/relatorio-de-obra-cliente)
+- [Rentabilidade de projeto de engenharia: como saber se o projeto deu lucro](https://www.pilarsoft.com.br/blog/rentabilidade-projeto-engenharia)
+- [Como reduzir retrabalho em projeto de engenharia](https://www.pilarsoft.com.br/blog/retrabalho-projeto-engenharia)
 
 ## Planos
 

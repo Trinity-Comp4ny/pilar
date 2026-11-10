@@ -67,7 +67,31 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.pilarsoft.com.br/blog/como-organizar-escritorio-arquitetura</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/como-organizar-escritorio-engenharia</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.pilarsoft.com.br/blog/como-precificar-projeto-arquitetura-engenharia</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/compatibilizacao-de-projetos</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/contrato-de-projeto</loc>
     <lastmod>2026-11-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -79,7 +103,37 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.pilarsoft.com.br/blog/cotacao-material-obra</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/crm-escritorio-arquitetura</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/cronograma-projeto-arquitetura</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.pilarsoft.com.br/blog/diario-de-obra-rdo</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/fluxo-de-caixa-escritorio-engenharia</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/ia-escritorio-engenharia</loc>
     <lastmod>2026-11-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -97,6 +151,24 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.pilarsoft.com.br/blog/relatorio-de-obra-cliente</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/rentabilidade-projeto-engenharia</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/blog/retrabalho-projeto-engenharia</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.pilarsoft.com.br/blog/sistema-gestao-escritorio-arquitetura</loc>
     <lastmod>2026-11-10</lastmod>
     <changefreq>monthly</changefreq>
@@ -109,6 +181,24 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.pilarsoft.com.br/ferramentas</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/ferramentas/calculadora-de-honorarios</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/ferramentas/modelo-de-proposta</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://www.pilarsoft.com.br/vs/planilha</loc>
     <lastmod>2026-11-10</lastmod>
     <changefreq>monthly</changefreq>
@@ -116,6 +206,24 @@
   </url>
   <url>
     <loc>https://www.pilarsoft.com.br/vs/trello</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/vs/whatsapp</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/vs/notion</loc>
+    <lastmod>2026-11-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.pilarsoft.com.br/vs/erp-construtora</loc>
     <lastmod>2026-11-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
