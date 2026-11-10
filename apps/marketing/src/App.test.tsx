@@ -42,6 +42,7 @@ describe("roteamento da landing", () => {
     ["/planos", /Preço do software de gestão/],
     ["/termos", /Termos de Uso/],
     ["/privacidade", /Política de Privacidade/],
+    ["/seguranca", /Segurança e confiança/],
   ];
 
   it.each(rotas)("%s abre a própria página, com header, footer e banner de cookies", async (rota, titulo) => {
