@@ -31,7 +31,6 @@ import {
 } from "@/components/ui/command";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
-import { type PaletteCreateEvent } from "@/hooks/useCommandPalette";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useBuscaGlobal, type BuscaResultado, type BuscaTipo } from "@/hooks/useBuscaGlobal";
 import { useRecentItems, type RecentItem } from "@/hooks/useRecentItems";
@@ -43,9 +42,9 @@ interface CommandPaletteProps {
 }
 
 type NavCmd = { label: string; path: string; icon: typeof Home; keywords?: string };
+// `path` leva ?new=: a página abre o formulário de criação (useAbrirCriacaoPelaUrl).
 type CreateCmd = {
   label: string;
-  event: PaletteCreateEvent;
   path: string;
   icon: typeof Plus;
   keywords?: string;
@@ -66,42 +65,36 @@ const NAV_COMMANDS: NavCmd[] = [
 const CREATE_COMMANDS: CreateCmd[] = [
   {
     label: "Nova receita",
-    event: "palette:create-receita",
-    path: "/gestao/financeiro?tab=lancamentos&new=1",
+    path: "/gestao/financeiro?tab=lancamentos&new=receita",
     icon: TrendingUp,
     keywords: "criar adicionar entrada lancamento",
   },
   {
     label: "Nova despesa",
-    event: "palette:create-despesa",
-    path: "/gestao/financeiro?tab=lancamentos&new=1",
+    path: "/gestao/financeiro?tab=lancamentos&new=despesa",
     icon: TrendingDown,
     keywords: "criar adicionar pagamento lancamento",
   },
   {
     label: "Novo projeto",
-    event: "palette:create-projeto",
     path: "/projetos?new=1",
     icon: Calendar,
     keywords: "criar adicionar obra",
   },
   {
     label: "Novo lead",
-    event: "palette:create-lead",
     path: "/gestao/leads?new=1",
     icon: UserPlus,
     keywords: "criar adicionar prospect",
   },
   {
     label: "Novo cliente",
-    event: "palette:create-cliente",
     path: "/gestao/clientes?new=1",
     icon: Building2,
     keywords: "criar adicionar contato",
   },
   {
     label: "Novo membro de equipe",
-    event: "palette:create-pessoa",
     path: "/gestao/equipe?new=1",
     icon: Users,
     keywords: "criar adicionar pessoa colaborador",
@@ -171,8 +164,6 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const runCreate = (cmd: CreateCmd) => {
     close();
     navigate(cmd.path);
-    // Em um próximo passo, as páginas podem ouvir esse evento para abrir o dialog automaticamente.
-    window.dispatchEvent(new CustomEvent(cmd.event));
   };
 
   const runLogout = async () => {
@@ -337,7 +328,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 const Icon = cmd.icon;
                 return (
                   <CommandItem
-                    key={cmd.event}
+                    key={cmd.path}
                     value={`criar ${cmd.label} ${cmd.keywords ?? ""}`}
                     onSelect={() => runCreate(cmd)}
                   >

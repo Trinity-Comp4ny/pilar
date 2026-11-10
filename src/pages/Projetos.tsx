@@ -15,6 +15,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useAbrirCriacaoPelaUrl } from "@/hooks/useAbrirCriacaoPelaUrl";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
 import { type Projeto, getDeadlineStatus } from "@/types/projetos";
@@ -144,6 +145,9 @@ export default function ProjetosKanban() {
     setEditingProjeto(null);
     setIsFormDialogOpen(true);
   };
+
+  // "Novo projeto" da busca rápida (⌘K) chega com ?new=1. Mesmo gate do botão.
+  useAbrirCriacaoPelaUrl(canEdit, handleNewProjeto);
 
   const handleDelete = (id: string) => {
     const projeto = projetos.find((p) => p.id === id);

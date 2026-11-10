@@ -83,20 +83,23 @@ describe("CommandPalette", () => {
     expect(screen.getByText("Sair")).toBeInTheDocument();
   });
 
-  it("criar navega e dispara o evento da paleta", async () => {
-    const listener = vi.fn();
-    window.addEventListener("palette:create-lead", listener);
+  it("criar navega para a página com ?new=, que abre o formulário", async () => {
     const user = abrir();
     await user.click(screen.getByText("Novo lead"));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(h.navigate).toHaveBeenCalledWith("/gestao/leads?new=1");
-    expect(listener).toHaveBeenCalled();
-    window.removeEventListener("palette:create-lead", listener);
   });
 
-  it("nova receita e nova despesa abrem a aba Lançamentos, que existe no Financeiro", async () => {
+  it("nova receita leva o tipo receita", async () => {
     const user = abrir();
     await user.click(screen.getByText("Nova receita"));
-    expect(h.navigate).toHaveBeenCalledWith("/gestao/financeiro?tab=lancamentos&new=1");
+    expect(h.navigate).toHaveBeenCalledWith("/gestao/financeiro?tab=lancamentos&new=receita");
+  });
+
+  it("nova despesa leva o tipo despesa", async () => {
+    const user = abrir();
+    await user.click(screen.getByText("Nova despesa"));
+    expect(h.navigate).toHaveBeenCalledWith("/gestao/financeiro?tab=lancamentos&new=despesa");
   });
 
   it("configurações abre o modal na aba conta", async () => {

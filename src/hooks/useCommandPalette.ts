@@ -23,23 +23,3 @@ export function useCommandPalette() {
 
   return { open, setOpen, toggle, close };
 }
-
-/**
- * Evento global disparado quando o usuário escolhe um item de "Criar"
- * na Command Palette. As páginas alvo podem ouvir e abrir o dialog
- * correspondente.
- *
- * Exemplo:
- *   useEffect(() => {
- *     const onCreate = () => setDialogOpen(true);
- *     window.addEventListener("palette:create-projeto", onCreate);
- *     return () => window.removeEventListener("palette:create-projeto", onCreate);
- *   }, []);
- */
-export type PaletteCreateEvent =
-  | "palette:create-projeto"
-  | "palette:create-lead"
-  | "palette:create-cliente"
-  | "palette:create-pessoa"
-  | "palette:create-receita"
-  | "palette:create-despesa";
