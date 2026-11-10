@@ -65,8 +65,8 @@ export function CookieConsentBanner() {
         <div className="flex items-start gap-3">
           <Cookie className="mt-0.5 h-5 w-5 shrink-0 text-ink-soft" strokeWidth={1.5} />
           <p className="text-sm leading-relaxed font-light text-ink-soft">
-            Usamos cookies essenciais para o site funcionar e, com sua permissão, cookies de análise para entender o uso
-            da página. Veja a{" "}
+            Usamos cookies essenciais para o site e o aplicativo funcionarem e, com sua permissão, cookies de análise
+            (PostHog e Google, processados nos EUA) para entender o uso do site e do aplicativo. Veja a{" "}
             <Link to="/privacidade" className="text-ink underline underline-offset-2">
               política de privacidade
             </Link>
