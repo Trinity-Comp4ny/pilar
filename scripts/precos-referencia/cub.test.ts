@@ -12,6 +12,7 @@ import {
   linhasDaPagina,
   paraGravar,
   saltoSuspeito,
+  textoPuro,
   TOTAL_CODIGOS,
   type ItemDeTexto,
 } from "./cub";
@@ -309,5 +310,14 @@ describe("antes de gravar", () => {
     expect(novas.some((l) => l.subtipo === "RP1Q")).toBe(true);
     expect(paraGravar(novas)).toHaveLength(18);
     expect(paraGravar(novas).some((l) => l.subtipo === "RP1Q")).toBe(false);
+  });
+});
+
+describe("textoPuro", () => {
+  it("não deixa marcação passar, nem com tag quebrada ou aninhada", () => {
+    expect(textoPuro("Sinduscon <b>JF</b>&nbsp;")).toBe("Sinduscon JF");
+    expect(textoPuro("<<b>script>alert(1)<</b>/script>")).not.toMatch(/[<>]/);
+    expect(textoPuro("a <img src=x onerror=1")).toBe("a img src=x onerror=1");
+    expect(textoPuro("x".repeat(300))).toHaveLength(200);
   });
 });
