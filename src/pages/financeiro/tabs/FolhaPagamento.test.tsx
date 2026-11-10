@@ -659,7 +659,8 @@ describe("FolhaPagamento: produtividade por percentual", () => {
     const { user } = setup();
     await user.click(await screen.findByLabelText("Ver detalhes de Marcos Montador"));
     const dlg = screen.getByRole("dialog");
-    expect(nbsp(dlg.textContent)).toContain("10,0% de R$ 10.000,00 = R$ 1.000,00");
+    expect(nbsp(dlg.textContent)).toContain("10,0% de R$ 10.000,00");
+    expect(nbsp(dlg.textContent)).toContain("R$ 1.000,00");
     await user.click(within(dlg).getByRole("button", { name: "Editar" }));
     // Sem m²: os campos são salário, valor dos projetos e total.
     const [, base] = within(dlg).getAllByRole("spinbutton");

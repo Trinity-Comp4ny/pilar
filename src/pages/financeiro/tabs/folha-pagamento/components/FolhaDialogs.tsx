@@ -213,17 +213,23 @@ export function DetailEditDialog({
                 <span className="text-xs font-semibold text-muted-foreground">Variável por projeto</span>
                 <div className="rounded border border-border divide-y">
                   {person.detalhe_projetos.map((p, i) => (
-                    <div key={`${p.nome}-${i}`} className="flex justify-between px-2 py-1 text-sm">
-                      <span className="truncate max-w-[220px]">{p.nome}</span>
-                      <span className="text-muted-foreground text-right">
+                    <div key={`${p.nome}-${i}`} className="px-2 py-1.5 text-sm">
+                      <div className="flex justify-between gap-3">
+                        <span className="truncate min-w-0">{p.nome}</span>
+                        <span className="font-medium shrink-0">
+                          {formatCurrency(subtotalProjeto(p, person.p_valor_m2, percentual))}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
                         {[
-                          temM2 ? `${(p.area_m2 || 0).toLocaleString("pt-BR")} m²` : null,
+                          temM2
+                            ? `${(p.area_m2 || 0).toLocaleString("pt-BR")} m² × ${formatCurrency(person.p_valor_m2)}`
+                            : null,
                           temPercentual ? `${formatPercent(percentual)} de ${formatCurrency(p.valor_base ?? 0)}` : null,
                         ]
                           .filter(Boolean)
-                          .join(" + ")}{" "}
-                        = {formatCurrency(subtotalProjeto(p, person.p_valor_m2, percentual))}
-                      </span>
+                          .join(" + ")}
+                      </div>
                     </div>
                   ))}
                 </div>
