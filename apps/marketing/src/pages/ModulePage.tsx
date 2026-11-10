@@ -66,8 +66,8 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
   const modulo = MODULOS_POR_SLUG[slug];
 
   usePageMeta({
-    titulo: `${modulo.nome} | Pilar`,
-    descricao: modulo.lede,
+    titulo: `${modulo.seo.titulo} | Pilar`,
+    descricao: modulo.seo.descricao,
     caminho: `/${slug}`,
   });
 
@@ -89,14 +89,16 @@ export function ModulePage({ slug }: { slug: ModuloSlug }) {
         <HeroBackdrop />
         <div className="relative z-10 mx-auto max-w-6xl">
           <Reveal variant="up" className="max-w-3xl">
-            <p className="mb-4 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-ink/50">
-              <span className={`h-1.5 w-1.5 rounded-full ${modulo.cor.strong}`} />
-              {modulo.nome}
-            </p>
-
-            <h1 className="mb-5 text-[58px] font-medium leading-[1.06] tracking-[-0.035em] text-ink max-[1100px]:text-[44px] max-[850px]:text-[32px] max-[420px]:text-[27px]">
-              {modulo.headline} <span className="italic text-ink/45">{modulo.headlineFim}</span>
+            {/* O H1 é a linha pequena com a palavra-chave (o que se busca no Google);
+                a headline grande segue como frase de marca, num <p> com o mesmo desenho. */}
+            <h1 className="mb-4 flex items-center gap-2 text-[11px] font-medium uppercase leading-snug tracking-[0.16em] text-ink/50">
+              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${modulo.cor.strong}`} />
+              {modulo.seo.h1}
             </h1>
+
+            <p className="mb-5 text-[58px] font-medium leading-[1.06] tracking-[-0.035em] text-ink max-[1100px]:text-[44px] max-[850px]:text-[32px] max-[420px]:text-[27px]">
+              {modulo.headline} <span className="italic text-ink/45">{modulo.headlineFim}</span>
+            </p>
             <p className="mb-8 max-w-xl text-[15px] leading-relaxed text-ink-soft md:text-[16px]">{modulo.lede}</p>
 
             <div className="flex flex-wrap gap-3">

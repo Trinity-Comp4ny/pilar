@@ -25,6 +25,8 @@ export interface Comparativo {
   headline: string;
   headlineFim: string;
   lede: string;
+  /** Title (sem " | Pilar"), meta description e H1 com a palavra-chave (ver Modulo.seo). */
+  seo: { titulo: string; descricao: string; h1: string };
   linhas: LinhaComparacao[];
   /** Sinais de que vale a pena migrar, ditos sem prometer autonomia mágica. */
   quandoMigrar: string[];
@@ -38,6 +40,12 @@ export const COMPARATIVOS: Comparativo[] = [
     headline: "Planilha guarda o número.",
     headlineFim: "O Pilar avisa antes de virar prejuízo.",
     lede: "Excel e Google Sheets não têm nada de errado: o problema é o que eles não fazem sozinhos. Toda linha depende de alguém lembrar de atualizar, e ninguém avisa quando o projeto entra no vermelho.",
+    seo: {
+      titulo: "Planilha ou sistema de gestão de projetos de engenharia?",
+      descricao:
+        "Planilha de Excel ou sistema de gestão de projetos de engenharia? Compare lado a lado prazo, proposta, financeiro e obra, e veja quando vale migrar.",
+      h1: "Pilar vs planilha na gestão de projetos de engenharia",
+    },
     linhas: [
       {
         criterio: "Proposta por disciplina",
@@ -98,6 +106,12 @@ export const COMPARATIVOS: Comparativo[] = [
     headline: "Trello organiza tarefa.",
     headlineFim: "O Pilar organiza o escritório inteiro.",
     lede: "Trello (e ClickUp, e Asana) são bons quadros genéricos. O problema aparece quando o trabalho do escritório de engenharia é mais que mover cartão: é proposta, é financeiro, é obra, é o cliente perguntando andamento.",
+    seo: {
+      titulo: "Trello na gestão de projetos de engenharia? Compare",
+      descricao:
+        "Trello, ClickUp ou Asana na gestão de projetos de engenharia? Compare com um sistema feito para escritório: proposta, disciplina, financeiro e obra.",
+      h1: "Pilar vs Trello na gestão de projetos de engenharia",
+    },
     linhas: [
       {
         criterio: "Quadro por disciplina e prazo",

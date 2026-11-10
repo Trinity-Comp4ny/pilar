@@ -211,8 +211,9 @@ const SECTIONS: { titulo: string; corpo: React.ReactNode }[] = [
 
 export function Termos() {
   usePageMeta({
-    titulo: "Termos de Uso | Pilar",
-    descricao: "As condições de uso da plataforma Pilar: conta, contratação, pagamento, dados e responsabilidades.",
+    titulo: "Termos de Uso da plataforma de gestão Pilar | Pilar",
+    descricao:
+      "As condições de uso da plataforma Pilar para escritórios de engenharia e arquitetura: conta, contratação, pagamento, dados e responsabilidades.",
     caminho: "/termos",
   });
 
