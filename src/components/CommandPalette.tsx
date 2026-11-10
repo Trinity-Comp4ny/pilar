@@ -7,6 +7,7 @@ import {
   Clock,
   FileText,
   Home,
+  Keyboard,
   LogOut,
   MapPin,
   Plus,
@@ -31,6 +32,7 @@ import {
 } from "@/components/ui/command";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
+import { abrirAtalhosTeclado } from "@/hooks/useAtalhosTeclado";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useBuscaGlobal, type BuscaResultado, type BuscaTipo } from "@/hooks/useBuscaGlobal";
 import { useRecentItems, type RecentItem } from "@/hooks/useRecentItems";
@@ -164,6 +166,11 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const runCreate = (cmd: CreateCmd) => {
     close();
     navigate(cmd.path);
+  };
+
+  const runAtalhos = () => {
+    close();
+    abrirAtalhosTeclado();
   };
 
   const runLogout = async () => {
@@ -348,6 +355,11 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <CommandItem value="acoes configuracoes perfil ajustes preferencias" onSelect={runSettings}>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Configurações</span>
+              </CommandItem>
+              <CommandItem value="acoes atalhos de teclado teclas shortcuts ajuda" onSelect={runAtalhos}>
+                <Keyboard className="mr-2 h-4 w-4" />
+                <span>Atalhos de teclado</span>
+                <CommandShortcut>?</CommandShortcut>
               </CommandItem>
               <CommandItem value="acoes sair logout signout" onSelect={runLogout}>
                 <LogOut className="mr-2 h-4 w-4" />

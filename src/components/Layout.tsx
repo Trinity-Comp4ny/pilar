@@ -6,6 +6,7 @@ import { sidebarOffset } from "@/lib/shellLayout";
 import { BottomNav } from "@/components/BottomNav";
 import { CommandPaletteHint } from "@/components/CommandPaletteHint";
 import { useCommandPalette } from "@/hooks/useCommandPalette";
+import { useAtalhosTeclado } from "@/hooks/useAtalhosTeclado";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { FaixaAvisos } from "@/components/FaixaAvisos";
 import { PageLoader } from "@/components/motion/PageLoader";
@@ -16,6 +17,11 @@ import { DentroDoMainProvider } from "@/components/mainLandmark";
 
 // Lazy: o CommandPalette carrega o cmdk. Fora do bundle de entrada; só baixa no 1º ⌘K.
 const CommandPalette = lazy(() => import("@/components/CommandPalette").then((m) => ({ default: m.CommandPalette })));
+
+// Lazy: o painel de atalhos só baixa no 1º "?" (ou pelo item da paleta).
+const AtalhosTecladoDialog = lazy(() =>
+  import("@/components/AtalhosTecladoDialog").then((m) => ({ default: m.AtalhosTecladoDialog }))
+);
 
 // Lazy: onboarding (checklist + tour driver.js) fica fora do bundle de entrada.
 const OnboardingChecklist = lazy(() =>
@@ -42,6 +48,12 @@ function CommandPaletteMount() {
       <Suspense fallback={null}>{open && <CommandPalette open={open} onOpenChange={setOpen} />}</Suspense>
     </>
   );
+}
+
+// Atalho "?" sempre ativo (hook leve); o painel só monta quando aberto.
+function AtalhosTecladoMount() {
+  const { open, setOpen } = useAtalhosTeclado();
+  return <Suspense fallback={null}>{open && <AtalhosTecladoDialog open={open} onOpenChange={setOpen} />}</Suspense>;
 }
 
 // Gatilho só-dev para pré-visualizar o ErrorBoundary: abra qualquer página com ?boom
@@ -95,6 +107,7 @@ function LayoutContent() {
       <BottomNav />
       <VeilExit />
       <CommandPaletteMount />
+      <AtalhosTecladoMount />
       <Suspense fallback={null}>
         <OnboardingChecklist />
         <OnboardingTourController />
