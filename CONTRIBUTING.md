@@ -117,9 +117,12 @@ pergunta é um job, e todos rodam em paralelo: uma falha não esconde as outras.
 - **coverage** — junta os 4 shards (`vitest --merge-reports`) e aplica os pisos do
   `vite.config.ts` sobre o total. Shard isolado não aplica piso (`VITEST_SHARD_SEM_PISO`).
 - **build** — Knip (código morto não cresce), build do app, budget de bundle, build da LP.
-- **e2e-local** — Playwright contra Supabase local, em 2 shards, cada um com o próprio
+- **e2e-local** — Playwright contra Supabase local, em 3 shards, cada um com o próprio
   banco. Regressão visual só no shard 1. Mesmo comando local: `npm run test:e2e:local`
-  (precisa `supabase start`; `E2E_SHARD=1/2` reproduz um shard).
+  (precisa `supabase start`; `E2E_SHARD=1/3` reproduz um shard).
+- **commits** — mensagens dos commits do PR no padrão `tipo(escopo): descrição`, sem
+  `wip` nem `fixup!` esquecido (o merge é por rebase, então viram histórico). O hook
+  `commit-msg` confere o mesmo padrão no commit.
 - **audit** — `npm audit --audit-level=high` (lê só o lockfile; SBOM no push).
 - **secrets-scan** — gitleaks sobre o histórico inteiro. Roda inclusive em PR só de docs.
 - **database** — sobe o stack Supabase (sem Studio, edge-runtime e imgproxy), aplica todas
@@ -138,9 +141,10 @@ pergunta é um job, e todos rodam em paralelo: uma falha não esconde as outras.
   required em `staging` desde 2026-10-08. Reprova só alerta NOVO de severidade alta
   introduzido pelo PR; os alertas antigos não travam merge.
 
-Velocidade: `node_modules` e os browsers do Playwright vêm de cache
-(`.github/actions/setup-deps`), e o `supabase start` corre em segundo plano enquanto o
-Node instala (`scripts/ci-wait-supabase.sh`).
+Velocidade: `node_modules` vem de cache (`.github/actions/setup-deps`); o browser do
+Playwright e os pacotes de sistema dele também (`.github/actions/setup-playwright`, que
+evita o `apt-get update` do `install-deps` oficial); e o `supabase start` corre em
+segundo plano enquanto o Node instala (`scripts/ci-wait-supabase.sh`).
 
 Antes de abrir PR com migration nova, dá para rodar o guard local:
 
@@ -177,6 +181,9 @@ Depois do deploy em staging (não em PR):
   sozinho, por rebase, quando todos os required checks passam. Major fica para revisão.
   Depende de "Allow auto-merge" ligado nas configurações do repositório.
 - **Resumo do CI**: o job `CI OK` escreve uma tabela gate a gate no resumo do run.
+- **Limpeza de branches** (`limpar-branches.yml`, segunda de manhã): apaga a branch
+  remota cujo PR foi mergeado e não recebeu nada depois. Sem PR, PR aberto ou fechado
+  sem merge fica e aparece no resumo do run para revisão.
 
 ## Edge Functions
 

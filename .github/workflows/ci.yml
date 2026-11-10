@@ -84,6 +84,30 @@ jobs:
             echo "::notice::PR só de documentação: roda o scan de segredo e pula os gates de código."
           fi
 
+  # Merge em staging é por rebase: cada commit do PR entra no histórico como está.
+  # Reprova wip, fixup!/squash! esquecido e assunto fora do padrão convencional.
+  # Fora de PR (push, dispatch) não há "commits do PR": passa direto.
+  commits:
+    name: Commits do PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: github.event_name == 'pull_request'
+        with:
+          sparse-checkout: scripts
+      - name: Conferir mensagens
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          COMMITS_JSON="$(gh api --paginate "repos/$REPO/pulls/$PR/commits?per_page=100" | jq -s 'add')"
+          export COMMITS_JSON
+          scripts/check-commits-pr.sh
+
   lint:
     name: Lint + formatação
     needs: [changes]
@@ -551,7 +575,7 @@ jobs:
   # sincronia de tipos e E2E; "é seguro aplicar no banco?" não.
   ci-ok:
     name: CI OK (aggregate gate)
-    needs: [changes, lint, typecheck, unit-tests, coverage, build, audit, secrets-scan, database, types-sync, edge-functions, e2e-local]
+    needs: [changes, commits, lint, typecheck, unit-tests, coverage, build, audit, secrets-scan, database, types-sync, edge-functions, e2e-local]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
