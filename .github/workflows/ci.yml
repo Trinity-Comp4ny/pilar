@@ -38,7 +38,7 @@ jobs:
   #   testes, e só se descobria o próximo erro no run seguinte.
   # - A suíte do Vitest (1.743 arquivos) roda em 4 shards; o job `coverage` junta os
   #   relatórios e aplica os pisos de cobertura do vite.config.ts sobre a soma.
-  # - O E2E roda em 2 shards, cada um com o PRÓPRIO Supabase local (banco isolado,
+  # - O E2E roda em 3 shards, cada um com o PRÓPRIO Supabase local (banco isolado,
   #   sem disputa de dado entre specs). O stack sobe em segundo plano enquanto o
   #   Node e o Playwright instalam.
   # - node_modules e os browsers do Playwright vêm de cache.
@@ -463,11 +463,11 @@ jobs:
   # PR e o seed cria o usuário de teste, então não há secret, não há dado compartilhado
   # e não há como sujar staging. Mesmo comando do dev: `npm run test:e2e:local`.
   #
-  # Em 2 shards, cada um com o seu Supabase: os specs mutam o seed (aprovar aditivo é
+  # Em 3 shards, cada um com o seu Supabase: os specs mutam o seed (aprovar aditivo é
   # definitivo), então dividir por máquina é seguro e subir workers no mesmo banco não.
   # A regressão visual roda só no shard 1 (ver scripts/e2e-local.sh).
   e2e-local:
-    name: E2E (Playwright, Supabase local, ${{ matrix.shard }}/2)
+    name: E2E (Playwright, Supabase local, ${{ matrix.shard }}/3)
     needs: [changes]
     if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
@@ -475,7 +475,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        shard: [1, 2, 3]
     env:
       CI: "true"
     steps:
@@ -505,30 +505,17 @@ jobs:
       # node 22: o auth.setup.ts cria um client Supabase, que exige WebSocket nativo.
       - uses: ./.github/actions/setup-deps
 
-      # Browsers em cache por versão do Playwright. Só o headless shell (+ ffmpeg,
-      # para o vídeo de falha), que é o que roda em headless: o Chromium completo
-      # nunca era usado e dobrava o download. Antes: 17 s a 3 min 44 s por run.
-      - name: Versão do Playwright
-        id: pw
-        run: echo "version=$(node -p 'require("@playwright/test/package.json").version')" >> "$GITHUB_OUTPUT"
-      - id: pw-cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-headless-shell
-      - name: Instalar o browser do Playwright
-        if: steps.pw-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps --only-shell chromium
-      - name: Dependências de sistema do browser
-        if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
+      # Browser e pacotes de sistema em cache (.github/actions/setup-playwright). O
+      # `install-deps` oficial rodava apt-get update + install todo run, mesmo com nada
+      # faltando: 1m26 a 2m09, o passo mais lento do caminho crítico em 10/11.
+      - uses: ./.github/actions/setup-playwright
 
       - name: Esperar o stack local
         run: scripts/ci-wait-supabase.sh
-      - name: Specs do app (shard ${{ matrix.shard }}/2)
+      - name: Specs do app (shard ${{ matrix.shard }}/3)
         run: npm run test:e2e:local
         env:
-          E2E_SHARD: ${{ matrix.shard }}/2
+          E2E_SHARD: ${{ matrix.shard }}/3
           # "1" regrava as referências da regressão visual em vez de comparar. Só
           # ligar num PR para atualizar a referência (e2e/visual/README.md).
           E2E_VISUAL_ATUALIZAR: ""
@@ -717,19 +704,13 @@ jobs:
       E2E_PORTAL_PASSWORD: ${{ secrets.E2E_PORTAL_PASSWORD }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          # Só este job usa 22 (o resto do ci.yml fica em 20, sem motivo pra mudar).
-          # e2e/auth.setup.ts cria um client Supabase, e o construtor sempre inicializa
-          # o RealtimeClient internamente (mesmo sem chamar .channel() nunca) — sem
-          # WebSocket nativo (Node 22+) ele derruba com "Node.js detected but native
-          # WebSocket not found". Achado real, 17/08: os specs autenticados nunca
-          # tinham rodado de verdade em CI (secrets não existiam até esta sessão), e
-          # assim que passaram a rodar, quebravam aqui — antes mesmo de chegar no login.
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # Node 22: e2e/auth.setup.ts cria um client Supabase, e o construtor sempre
+      # inicializa o RealtimeClient, que exige WebSocket nativo (Node 22+). Achado real,
+      # 17/08: os specs autenticados quebravam aqui antes mesmo do login.
+      - uses: ./.github/actions/setup-deps
+      # Mesmo cache de browser e pacotes do E2E de PR: antes, `install --with-deps`
+      # baixava Chromium completo + apt-get a cada push em staging (até 3m44).
+      - uses: ./.github/actions/setup-playwright
       - run: npm run build
 
       # A empresa do usuário de E2E fica sempre ativa, sem depender do relógio do
