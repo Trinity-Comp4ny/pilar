@@ -60,7 +60,7 @@ jobs:
       - name: Sondar
         run: |
           deno run --config scripts/precos-referencia/deno.json \
-            --allow-net --allow-env --allow-read --allow-write \
+            --allow-import=cdn.sheetjs.com:443 --allow-net --allow-env --allow-read --allow-write \
             scripts/precos-referencia/coletar.ts sondar
 
   sinapi:
@@ -89,7 +89,7 @@ jobs:
       - name: Coletar
         run: |
           deno run --config scripts/precos-referencia/deno.json \
-            --allow-net --allow-env --allow-read --allow-write \
+            --allow-import=cdn.sheetjs.com:443 --allow-net --allow-env --allow-read --allow-write \
             scripts/precos-referencia/coletar.ts sinapi
       - name: Notificar falha
         if: failure() && github.event_name == 'schedule'
@@ -138,7 +138,7 @@ jobs:
       - name: Coletar
         run: |
           deno run --config scripts/precos-referencia/deno.json \
-            --allow-net --allow-env --allow-read --allow-write \
+            --allow-import=cdn.sheetjs.com:443 --allow-net --allow-env --allow-read --allow-write \
             scripts/precos-referencia/coletar.ts cub
       - name: Notificar falha
         if: failure() && github.event_name == 'schedule'
@@ -179,7 +179,7 @@ jobs:
       - name: Conferir
         run: |
           deno run --config scripts/precos-referencia/deno.json \
-            --allow-net --allow-env --allow-read --allow-write \
+            --allow-import=cdn.sheetjs.com:443 --allow-net --allow-env --allow-read --allow-write \
             scripts/precos-referencia/coletar.ts conferir
       - name: Notificar atraso
         if: failure() && github.event_name == 'schedule'
