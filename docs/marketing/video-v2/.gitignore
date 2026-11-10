@@ -9,3 +9,4 @@ __pycache__/
 footage/*/frames/
 footage/*.mp4
 footage/*.mov
+*.tmp.mp4
