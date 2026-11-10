@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:prerender": "vite build && node scripts/prerender.mjs",
+    "seo:nota": "node scripts/seo-nota.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "preview": "vite preview"
   },

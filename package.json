@@ -10,6 +10,7 @@
     "dev:marketing": "npm run dev --workspace=apps/marketing",
     "dev:all": "concurrently -n app,marketing -c blue,green \"npm run dev:app\" \"npm run dev:marketing\"",
     "build:marketing": "npm run build --workspace=apps/marketing",
+    "seo:nota": "npm run seo:nota --workspace=apps/marketing",
     "typecheck:marketing": "npm run typecheck --workspace=apps/marketing",
     "dev": "bash scripts/dev-full.sh",
     "dev:app": "vite",
