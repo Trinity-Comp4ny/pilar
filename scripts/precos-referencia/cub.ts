@@ -57,10 +57,16 @@ export function cookiesDaResposta(setCookies: string[]): string {
  * marcação. Corta em 200 caracteres.
  */
 export function textoPuro(html: string): string {
-  return html
+  // Entidades primeiro: um "&#60;" decodificado vira "<" e é tirado logo abaixo, junto com o resto.
+  const decodificado = html
+    .replace(/&#(\d{1,6});/g, (_, n) => String.fromCodePoint(Math.min(Number(n), 0x10ffff)))
+    .replace(/&#x([0-9a-f]{1,6});/gi, (_, h) => String.fromCodePoint(Math.min(parseInt(h, 16), 0x10ffff)))
+    .replace(/&nbsp;/g, " ")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&");
+  return decodificado
     .replace(/<[^>]*>/g, " ")
     .replace(/[<>]/g, "")
-    .replace(/&nbsp;|&#160;/g, " ")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 200);
@@ -445,4 +451,21 @@ const SUBTIPO_DO_BANCO = /^[A-Z]{1,3}[0-9]{0,2}(-[0-9]{1,2})?$/;
 
 export function paraGravar(linhas: LinhaCub[]): LinhaCub[] {
   return linhas.filter((l) => SUBTIPO_DO_BANCO.test(l.subtipo));
+}
+
+/**
+ * O PDF é do Sinduscon pedido? O portal da CBIC já devolveu, para a BA, o PDF do Sinduscon-MT de outro mês (visto
+ * na sondagem): sem esta conferência, um PDF de outro estado no mês certo passaria. Compara palavras inteiras, sem
+ * acento, caixa e pontuação ("Sinduscon-João Pessoa" casa com "SINDUSCON JOAO PESSOA").
+ */
+export function citaSinduscon(paginas: ItemDeTexto[][], rotulo: string): boolean {
+  const palavras = (t: string) =>
+    tirarAcento(t)
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, " ")
+      .trim();
+  const alvo = palavras(rotulo);
+  if (alvo.length < 6) return false;
+  // Palavra inteira: "Sinduscon-PA" não casa com "Sinduscon Paraná".
+  return ` ${palavras(paginas.flatMap((p) => p.map((i) => i.texto)).join(" "))} `.includes(` ${alvo} `);
 }

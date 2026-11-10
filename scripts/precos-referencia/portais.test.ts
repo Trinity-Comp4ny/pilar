@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   arquivosDaPaginaDeDownload,
+  arquivosDosPacotesWpdm,
+  categoriaWpdm,
   candidatosDoMes,
   lerPortaisExtras,
   linksPdfDaPagina,
   linksPdfDoWordpress,
   paginasDeDownload,
+  urlPacotesWpdm,
   portaisDaUf,
   urlWordpressMedia,
   type LinkPdf,
@@ -168,5 +171,42 @@ describe("Sinduscon-RS (links reais da página /cub-rs/)", () => {
     expect(candidatosDoMes(links, "2026-09-01", "onerado", rs.mesNoArquivo).map(nome)).toEqual([
       "PRECOS-E-CUSTOS-DA-CONSTRUCAO-DE-SETEMBRO-2026-REV.pdf",
     ]);
+  });
+});
+
+describe("SindusCon-SP: Download Manager (atributos reais da página de categoria)", () => {
+  it("acha a categoria pelo link da API ou pela classe do body", () => {
+    expect(categoriaWpdm('<link href="https://sindusconsp.com.br/wp-json/wp/v2/wpdmcategory/1108">')).toBe("1108");
+    expect(
+      categoriaWpdm('<body class="archive tax-wpdmcategory term-10-outubro-2026-cub term-1108 wp-theme-yootheme">')
+    ).toBe("1108");
+    expect(categoriaWpdm("<body class='home'>")).toBeNull();
+    expect(urlPacotesWpdm("https://sindusconsp.com.br/downloads/10-outubro-2026-cub/", "1108")).toBe(
+      "https://sindusconsp.com.br/wp-json/wp/v2/wpdmpro?wpdmcategory=1108&per_page=20"
+    );
+  });
+
+  it("monta o download de cada pacote e guarda o mês da página", () => {
+    const pagina = { url: "https://sindusconsp.com.br/downloads/10-outubro-2026-cub", texto: "10-outubro-2026-cub" };
+    const arquivos = arquivosDosPacotesWpdm(
+      [
+        {
+          id: 9101,
+          link: "https://sindusconsp.com.br/download/cub-outubro-2026/",
+          title: { rendered: "CUB &#8211; Outubro" },
+        },
+        { id: "x", link: "https://sindusconsp.com.br/download/ruim/" },
+        { id: 3, link: "http://inseguro/" },
+      ],
+      pagina
+    );
+    expect(arquivos).toEqual([
+      {
+        url: "https://sindusconsp.com.br/download/cub-outubro-2026/?wpdmdl=9101",
+        texto: "CUB – Outubro 10-outubro-2026-cub",
+      },
+    ]);
+    expect(candidatosDoMes(arquivos, "2026-10-01", "onerado", "referencia")).toHaveLength(1);
+    expect(arquivosDosPacotesWpdm({ code: "rest_forbidden" }, pagina)).toEqual([]);
   });
 });

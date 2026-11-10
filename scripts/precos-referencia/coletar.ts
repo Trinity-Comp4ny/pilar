@@ -37,6 +37,7 @@ import {
   type MesBase,
 } from "./fonte.ts";
 import {
+  citaSinduscon,
   cookiesDaResposta,
   escolherSinduscon,
   formularioCub,
@@ -60,6 +61,9 @@ import {
   linksPdfDoWordpress,
   paginasDeDownload,
   portaisDaUf,
+  urlPacotesWpdm,
+  arquivosDosPacotesWpdm,
+  categoriaWpdm,
   urlWordpressMedia,
   type LinkPdf,
   type PortalEstadual,
@@ -111,9 +115,10 @@ async function diagPlanilha(url: string): Promise<void> {
 function diagPdf(nome: string, paginas: ItemDeTexto[][]): void {
   if (!diagnostico) return;
   resumo(`  - diagnóstico, texto de ${textoPuro(nome)} (${paginas.length} página(s)):`);
-  for (const linha of paginas.flatMap((p) => linhasDaPagina(p)).slice(0, 60)) {
-    resumo(`    | ${textoPuro(linha).slice(0, 160)}`);
-  }
+  paginas.slice(0, 6).forEach((p, n) => {
+    resumo(`    página ${n + 1}:`);
+    for (const linha of linhasDaPagina(p).slice(0, 32)) resumo(`    | ${textoPuro(linha).slice(0, 160)}`);
+  });
 }
 
 const pausa = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -310,6 +315,7 @@ async function coletarSinapi(db: Banco): Promise<void> {
 
 const CUB_BASE_PADRAO = "http://www.cub.org.br";
 const CUB_PAUSA_MS = 1_500;
+const JANELA_CUB_MESES = 6;
 const TAMANHO_MAXIMO_PDF = 15_000_000;
 
 async function textoDoPdf(pdf: Uint8Array): Promise<ItemDeTexto[][]> {
@@ -359,16 +365,30 @@ async function fonteCbic(base: string, uf: Uf, fixos: Partial<Record<Uf, string>
   const setCookies = r.headers.getSetCookie();
   const csrf = lerCsrf(html, setCookies.join(", "));
   if (!csrf) return "portal da CBIC sem o token do formulário";
+  // Constantes já conferidas acima, para a função de pedido (o TypeScript não estreita dentro dela).
+  const escolhido: { valor: string; rotulo: string } = sinduscon;
+  const token: string = csrf;
   const cookie = cookiesDaResposta(setCookies);
 
   return {
     nome: `cub.org.br, ${sinduscon.rotulo}`,
     async ler(mes, regime) {
+      const primeira = await pedir(mes, regime);
+      // O portal já devolveu PDF de outro estado ou de outro mês (cache do lado deles): tenta uma vez mais.
+      if (primeira.tipo !== "recusado" || !primeira.trocado) return primeira;
+      diag(`CBIC ${uf} ${mes} ${regime}: PDF trocado (${primeira.motivo}), pedindo de novo`);
+      await pausa(5_000);
+      return await pedir(mes, regime);
+    },
+  };
+
+  async function pedir(mes: MesBase, regime: Regime): Promise<Resultado & { trocado?: boolean }> {
+    {
       await pausa(CUB_PAUSA_MS + Math.random() * 1_000);
       const resp = await fetch(url, {
         method: "POST",
         headers: { ...NAVEGADOR, "Content-Type": "application/x-www-form-urlencoded", Referer: url, Cookie: cookie },
-        body: new URLSearchParams(formularioCub(uf, sinduscon.valor, mes, regime, csrf)),
+        body: new URLSearchParams(formularioCub(uf, escolhido.valor, mes, regime, token)),
         signal: AbortSignal.timeout(60_000),
       });
       if (!resp.ok) {
@@ -388,19 +408,24 @@ async function fonteCbic(base: string, uf: Uf, fixos: Partial<Record<Uf, string>
             textoPuro(html)
           );
           diag(
-            `CBIC ${uf} ${mes} ${regime}: ${resp.headers.get("content-type") ?? "?"}, ${bytes.length} bytes, Sinduscon ${sinduscon.valor}=${sinduscon.rotulo} de ${opcoes.length}; avisos: ${avisos.join(" | ") || "nenhum"}; ${perto ? perto[0] : ""}`
+            `CBIC ${uf} ${mes} ${regime}: ${resp.headers.get("content-type") ?? "?"}, ${bytes.length} bytes, Sinduscon ${escolhido.valor}=${escolhido.rotulo} de ${opcoes.length}; avisos: ${avisos.join(" | ") || "nenhum"}; ${perto ? perto[0] : ""}`
           );
         }
         return { tipo: "indisponivel", motivo: "mês ainda não publicado no portal da CBIC" };
       }
       const paginas = await textoDoPdf(bytes);
       const leitura = lerPdfCub(paginas, uf, mes, regime);
-      if (leitura.erro) diagPdf(`CBIC ${uf} ${mes} ${regime}`, paginas);
-      return leitura.erro
-        ? { tipo: "recusado", motivo: `CBIC: ${leitura.erro}` }
-        : { tipo: "ok", linhas: leitura.linhas, fonte: `cub.org.br, ${sinduscon.rotulo}` };
-    },
-  };
+      if (leitura.erro) {
+        diagPdf(`CBIC ${uf} ${mes} ${regime}`, paginas);
+        return { tipo: "recusado", motivo: `CBIC: ${leitura.erro}`, trocado: leitura.erro.includes("não é de") };
+      }
+      if (!citaSinduscon(paginas, escolhido.rotulo)) {
+        diagPdf(`CBIC ${uf} ${mes} ${regime} (Sinduscon)`, paginas);
+        return { tipo: "recusado", motivo: `CBIC: o PDF não é do ${escolhido.rotulo}`, trocado: true };
+      }
+      return { tipo: "ok", linhas: leitura.linhas, fonte: `cub.org.br, ${escolhido.rotulo}` };
+    }
+  }
 }
 
 /** Portal do Sinduscon: acha os PDFs na página do CUB e na listagem do WordPress, e lê o do mês. */
@@ -436,6 +461,22 @@ async function fontePortal(portal: PortalEstadual): Promise<FonteCub | string> {
             }
             const htmlDownload = await rd.text();
             const arquivos = arquivosDaPaginaDeDownload(htmlDownload, d);
+            // Página de categoria do Download Manager (SindusCon-SP): os arquivos não vêm no HTML, vêm pela API.
+            const categoria = arquivos.length === 0 ? categoriaWpdm(htmlDownload) : null;
+            if (categoria) {
+              const rp = await buscar(urlPacotesWpdm(d.url, categoria), 30_000);
+              const tipo = rp.headers.get("content-type") ?? "";
+              if (rp.ok && tipo.includes("json")) {
+                const pacotes = arquivosDosPacotesWpdm(await rp.json(), d);
+                diag(
+                  `Download Manager, categoria ${categoria}: ${pacotes.length} pacote(s) ${pacotes.map((p) => p.texto).join(" | ")}`
+                );
+                arquivos.push(...pacotes);
+              } else {
+                diag(`Download Manager, categoria ${categoria}: ${rp.status} ${tipo}`);
+                await rp.body?.cancel();
+              }
+            }
             if (diagnostico && arquivos.length === 0) {
               const atributos = [
                 ...htmlDownload.matchAll(/\b([a-z-]+)\s*=\s*["']([^"']*(?:wpdm|download|\.pdf|\.xlsx?)[^"']*)["']/gi),
@@ -571,13 +612,25 @@ async function coletarCub(db: Banco): Promise<void> {
     if (!mesValido(`${forcado}-01`)) throw new Error(`CUB_MES deve ser AAAA-MM (veio "${forcado}").`);
     meses = [`${forcado}-01`];
   } else {
-    // O mês passado e, se faltou, o retrasado.
-    meses = mesesPendentes(null, new Date(), 2);
+    // Até seis meses para trás: há Sinduscon que publica no portal da CBIC com meses de atraso (AC, MG, PI e RN
+    // estavam com junho como o mais novo em novembro, na sondagem). Vale o mais novo que existir.
+    meses = mesesPendentes(null, new Date(), JANELA_CUB_MESES);
   }
   mesesDaColeta = meses;
+  const doMaisNovo = [...meses].reverse();
   const gravado: CubGravado[] = await db.cubDesde(mesAnterior(meses[0]));
   const tem = (uf: Uf, mes: MesBase, regime: Regime) =>
     gravado.some((l) => l.uf === uf && l.mes_base === mes && l.regime === regime);
+  /** O mês gravado mais recente antes de `mes`, para a conferência de salto (com até três meses de intervalo). */
+  const anterioresA = (uf: Uf, regime: Regime, mes: MesBase) => {
+    const antes = gravado.filter((l) => l.uf === uf && l.regime === regime && l.mes_base < mes);
+    const ultimo = antes
+      .map((l) => l.mes_base)
+      .sort()
+      .pop();
+    if (!ultimo || ultimo < somarMes(mes, -3)) return [];
+    return antes.filter((l) => l.mes_base === ultimo) as unknown as LinhaCub[];
+  };
 
   resumo(`### CUB${dryRun ? " (sem gravar)" : ""}`);
   const falhas: string[] = [];
@@ -585,12 +638,11 @@ async function coletarCub(db: Banco): Promise<void> {
   let total = 0;
 
   for (const uf of ufs) {
-    const pendentes = meses.flatMap((mes) =>
-      (["onerado", "desonerado"] as Regime[])
-        .filter((r) => Boolean(forcado) || !tem(uf, mes, r))
-        .map((regime) => ({ mes, regime }))
+    // Por regime, do mês mais novo ao mais antigo, até o primeiro que já está no banco.
+    const aBuscar = (["onerado", "desonerado"] as Regime[]).filter(
+      (r) => Boolean(forcado) || !tem(uf, doMaisNovo[0], r)
     );
-    if (pendentes.length === 0) continue;
+    if (aBuscar.length === 0) continue;
 
     // Fontes da UF em ordem. SP e RS publicam só no portal próprio.
     const portal = portaisDaUf(uf, extras);
@@ -612,61 +664,66 @@ async function coletarCub(db: Banco): Promise<void> {
       continue;
     }
 
-    let algumOk = false;
-    for (const { mes, regime } of pendentes) {
-      const rotulo = `${uf} ${mes.slice(5, 7)}/${mes.slice(0, 4)} ${regime === "desonerado" ? "com" : "sem"} desoneração`;
-      const motivos: string[] = [];
-      let aceito: { linhas: LinhaCub[]; fonte: string } | null = null;
-      let recusado = false;
-      for (const fonte of fontes) {
-        let r: Resultado;
-        try {
-          r = await fonte.ler(mes, regime);
-        } catch (e) {
-          r = { tipo: "recusado", motivo: `${fonte.nome}: ${(e as Error).message}` };
+    for (const regime of aBuscar) {
+      const nomeRegime = regime === "desonerado" ? "com" : "sem";
+      let primeiroMotivo = "";
+      let achou = false;
+      for (const mes of doMaisNovo) {
+        if (!forcado && tem(uf, mes, regime)) {
+          achou = true; // já temos este mês: os mais antigos não interessam
+          break;
         }
-        if (r.tipo === "ok") {
-          const anteriores = gravado.filter(
-            (l) => l.uf === uf && l.regime === regime && l.mes_base === mesAnterior(mes)
-          );
-          const salto = saltoSuspeito(r.linhas, anteriores as LinhaCub[]);
-          if (salto) r = { tipo: "recusado", motivo: `${r.fonte}: variação suspeita contra o mês anterior. ${salto}` };
-          else if (igualAoAnterior(r.linhas, anteriores as LinhaCub[])) {
-            r = { tipo: "recusado", motivo: `${r.fonte}: valores idênticos ao mês anterior (arquivo repetido)` };
-          } else {
-            aceito = { linhas: r.linhas, fonte: r.fonte };
-            break;
-          }
-        }
-        if (r.tipo === "recusado") recusado = true;
-        motivos.push(r.motivo);
-      }
-      if (aceito) algumOk = true;
-      if (!aceito) {
-        if (recusado) falhas.push(`${rotulo}: ${motivos.join(" | ")}`);
-        else resumo(`- ${rotulo}: ainda não publicado (${motivos.join("; ")}).`);
-        continue;
-      }
-      const linhas = paraGravar(aceito.linhas);
-      const fonte = `CUB ${mes.slice(5, 7)}/${mes.slice(0, 4)} (coleta automática: ${aceito.fonte})`.slice(0, 200);
-      if (!dryRun) await db.gravarCub(linhas, fonte);
-      gravado.push(...linhas);
-      total += linhas.length;
-      resumo(`- ${rotulo}: ${linhas.length} valores ${dryRun ? "lidos" : "gravados"} (${aceito.fonte}).`);
-    }
-    // Sondagem: UF em que nenhum mês veio. Tenta meses mais antigos para saber se a fonte está atrasada ou se o
-    // pedido não serve para ela.
-    if (diagnostico && !algumOk) {
-      for (const atras of [3, 6, 12]) {
-        const antigo = somarMes(meses[0], -atras);
+        const rotulo = `${uf} ${mes.slice(5, 7)}/${mes.slice(0, 4)} ${nomeRegime} desoneração`;
+        const motivos: string[] = [];
+        let aceito: { linhas: LinhaCub[]; fonte: string } | null = null;
+        let recusado = false;
         for (const fonte of fontes) {
+          let r: Resultado;
           try {
-            const r = await fonte.ler(antigo, "onerado");
-            diag(`${uf} ${antigo} por ${fonte.nome}: ${r.tipo}${r.tipo === "ok" ? "" : ` (${r.motivo})`}`);
+            r = await fonte.ler(mes, regime);
           } catch (e) {
-            diag(`${uf} ${antigo} por ${fonte.nome}: ${(e as Error).message}`);
+            r = { tipo: "recusado", motivo: `${fonte.nome}: ${(e as Error).message}` };
           }
+          if (r.tipo === "ok") {
+            const anteriores = anterioresA(uf, regime, mes);
+            const salto = saltoSuspeito(r.linhas, anteriores);
+            if (salto)
+              r = { tipo: "recusado", motivo: `${r.fonte}: variação suspeita contra o mês anterior. ${salto}` };
+            else if (igualAoAnterior(r.linhas, anteriores)) {
+              r = { tipo: "recusado", motivo: `${r.fonte}: valores idênticos ao mês anterior (arquivo repetido)` };
+            } else {
+              aceito = { linhas: r.linhas, fonte: r.fonte };
+              break;
+            }
+          }
+          if (r.tipo === "recusado") recusado = true;
+          motivos.push(r.motivo);
         }
+        if (recusado && !aceito) {
+          falhas.push(`${rotulo}: ${motivos.join(" | ")}`);
+          achou = true; // recusa já vira issue; não desce para um mês mais antigo por cima dela
+          break;
+        }
+        if (!aceito) {
+          primeiroMotivo ||= motivos.join("; ");
+          continue;
+        }
+        const linhas = paraGravar(aceito.linhas);
+        const fonte = `CUB ${mes.slice(5, 7)}/${mes.slice(0, 4)} (coleta automática: ${aceito.fonte})`.slice(0, 200);
+        if (!dryRun) await db.gravarCub(linhas, fonte);
+        gravado.push(...linhas);
+        total += linhas.length;
+        const pulados = doMaisNovo.indexOf(mes);
+        resumo(
+          `- ${rotulo}: ${linhas.length} valores ${dryRun ? "lidos" : "gravados"} (${aceito.fonte})${pulados > 0 ? `; o Sinduscon ainda não publicou os ${pulados} mês(es) seguinte(s)` : ""}.`
+        );
+        achou = true;
+        break;
+      }
+      if (!achou) {
+        resumo(
+          `- ${uf} ${nomeRegime} desoneração: nenhum dos últimos ${doMaisNovo.length} meses disponível (${primeiroMotivo}).`
+        );
       }
     }
   }

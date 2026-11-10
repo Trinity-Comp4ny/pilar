@@ -133,6 +133,39 @@ export function arquivosDaPaginaDeDownload(html: string, pagina: LinkPdf): LinkP
   return arquivos;
 }
 
+/**
+ * Número da categoria do WordPress Download Manager numa página de categoria (`term-1108` na classe do body, ou
+ * o link `wp-json/wp/v2/wpdmcategory/1108`). É por ela que a API lista os arquivos do mês.
+ */
+export function categoriaWpdm(html: string): string | null {
+  const m =
+    /wp-json\/wp\/v2\/wpdmcategory\/(\d+)/.exec(html) ??
+    /class=["'][^"']*\btax-wpdmcategory\b[^"']*\bterm-(\d+)\b/.exec(html);
+  return m ? m[1] : null;
+}
+
+/** Endereço da API que lista os pacotes de uma categoria do Download Manager. */
+export function urlPacotesWpdm(paginaUrl: string, categoria: string): string {
+  return `${new URL(paginaUrl).origin}/wp-json/wp/v2/wpdmpro?wpdmcategory=${categoria}&per_page=20`;
+}
+
+/**
+ * Arquivos dos pacotes que a API devolve: o download do Download Manager é o link do pacote com `?wpdmdl=<id>`. O
+ * texto junta o título do pacote e o nome da página do mês, que é onde está o mês.
+ */
+export function arquivosDosPacotesWpdm(json: unknown, pagina: LinkPdf): LinkPdf[] {
+  if (!Array.isArray(json)) return [];
+  return json.flatMap((p) => {
+    const id = typeof p?.id === "number" ? p.id : Number(p?.id);
+    const link = typeof p?.link === "string" ? p.link : "";
+    if (!Number.isInteger(id) || id <= 0 || !link.startsWith("https://")) return [];
+    const titulo = typeof p?.title?.rendered === "string" ? textoPuro(p.title.rendered) : "";
+    const url = new URL(link);
+    url.searchParams.set("wpdmdl", String(id));
+    return [{ url: url.toString(), texto: `${titulo} ${pagina.texto}`.trim() }];
+  });
+}
+
 /** PDFs listados por `/wp-json/wp/v2/media` (campos `source_url` e `title.rendered`). */
 export function linksPdfDoWordpress(json: unknown): LinkPdf[] {
   if (!Array.isArray(json)) return [];
