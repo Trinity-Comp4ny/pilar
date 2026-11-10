@@ -5593,6 +5593,53 @@ export type Database = {
           },
         ]
       }
+      pesquisas_satisfacao: {
+        Row: {
+          comentario: string | null
+          created_at: string
+          created_by: string
+          dispensou: boolean
+          empresa_id: string | null
+          fluxo: string | null
+          id: string
+          nota: number | null
+          rota: string | null
+          tipo: string
+        }
+        Insert: {
+          comentario?: string | null
+          created_at?: string
+          created_by?: string
+          dispensou?: boolean
+          empresa_id?: string | null
+          fluxo?: string | null
+          id?: string
+          nota?: number | null
+          rota?: string | null
+          tipo: string
+        }
+        Update: {
+          comentario?: string | null
+          created_at?: string
+          created_by?: string
+          dispensou?: boolean
+          empresa_id?: string | null
+          fluxo?: string | null
+          id?: string
+          nota?: number | null
+          rota?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pesquisas_satisfacao_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pessoas: {
         Row: {
           cargo: string | null
