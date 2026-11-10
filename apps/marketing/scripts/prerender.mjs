@@ -90,6 +90,7 @@ const ROTAS = [
   "/faq",
   "/termos",
   "/privacidade",
+  "/seguranca",
 ];
 
 /** Escapa texto para XML (título e descrição dos artigos no feed). */
