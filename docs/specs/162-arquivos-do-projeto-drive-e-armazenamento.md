@@ -1,7 +1,7 @@
-# SPEC: Arquivos do projeto: pasta do Drive dentro da Pilar e armazenamento próprio
+# SPEC: Arquivos do projeto no Google Drive conectado à Pilar
 
 **Data:** 2026-11-10  
-**Status:** Draft (análise para decisão do CEO)  
+**Status:** Em implementação (opção B aprovada pelo CEO em 2026-11-10)  
 **Autor:** —  
 **Módulo:** projetos | portal
 
@@ -73,31 +73,56 @@ ficam guardadas na Pilar, com versão e aceite do cliente, e continuam acessíve
 Reaproveita o bucket `portal-entregas` e as duas edge functions que já existem, trocando o destino para R2 se o
 volume crescer.
 
-## Recomendação
+## Decisão (CEO, 2026-11-10)
 
-Fazer na ordem **A → C → B**:
+- **Opção B aprovada:** conectar o Google Drive de verdade, não só colar link. A ideia é ficar fácil de mexer
+  sem sair da Pilar.
+- **Opção A descartada como entrega própria:** colar o link do Drive no projeto já existe.
+- **Opção C fora:** a Pilar não guarda arquivo por enquanto. Segue valendo a decisão de 2026-07-30.
 
-1. **A agora:** resolve "ver o Drive dentro da Pilar" e "cliente acessa" sem custo e sem OAuth. Junto, corrigir o
-   que a reunião expôs: links do projeto na página `/projetos/:id` e chave "Mostrar ao cliente" por link.
-2. **C em seguida:** é o que dá valor de venda (portal com as entregas para sempre, prova de entrega e aceite) e
-   tem volume controlado. Revê em parte a decisão de 2026-07-30: a Pilar passa a guardar entregas finais, não o
-   acervo de trabalho.
-3. **B quando houver 3+ escritórios pedindo organizar pasta pela Pilar:** é o maior esforço (OAuth do Google, token
-   por empresa, tela de conexão, verificação do app) e o ganho sobre A é criar e organizar pastas.
+## Como ficou (opção B)
 
-**Fora de escopo:** sincronizar o Drive inteiro, OneDrive/Dropbox (mesma ideia da opção A serve para OneDrive
-com o link de incorporação deles), visualizador de DWG/IFC (fica para o leitor de projetos).
+**Conexão por escritório.** Em Configurações > Integrações, o admin conecta UMA conta Google (a do escritório).
+A Pilar pede o escopo `drive.file` e cria no Drive dessa conta a pasta `Pilar - <Escritório>`. O refresh token
+fica cifrado (AES-GCM) em `google_drive_conexoes`; só a Edge Function lê. Desconectar revoga o token no Google e
+apaga as ligações de pasta; os arquivos ficam no Drive.
 
-## Critérios de aceite (opção A)
+**Pasta por projeto.** A aba **Arquivos** do projeto chama `google-drive` (`pasta_projeto`): quem edita o projeto
+ganha, na primeira vez, a pasta com o nome do projeto e uma subpasta por disciplina (as que faltarem, sempre que
+abrir). As ligações ficam em `drive_pastas`, que também é a lista do que a função aceita listar e mexer
+(tenancy: pasta fora da lista ou de outra empresa é recusada; arquivo só se o pai estiver na lista).
 
-- [ ] Admin ou coordenador cola o link de uma pasta do Drive no projeto; a Pilar aceita só link de pasta do
-      Google Drive e guarda o id da pasta.
-- [ ] A aba "Arquivos" do projeto mostra a pasta embutida; sem pasta, mostra como vincular.
-- [ ] Quem não tem acesso à pasta no Google vê o aviso do Google e um botão "Abrir no Drive", sem erro da Pilar.
-- [ ] Com "Mostrar ao cliente" ligado, o projeto no portal mostra a mesma pasta; desligado, não aparece.
-- [ ] Links do projeto aparecem também na página `/projetos/:id`.
+**Na aba Arquivos:** navegar pelas pastas (caminho clicável), enviar arquivos (botão ou arrastar; o binário vai do
+navegador direto para o Google por upload retomável, sem passar pela Pilar, até 5 GB por arquivo), criar pasta,
+baixar (passa pela função: quem vê pela Pilar não precisa ter acesso à conta Google), abrir no Drive e mandar
+para a lixeira (restaurável no Drive por 30 dias). A pasta de disciplina não vai para a lixeira. Quem só vê o
+projeto navega e baixa; criar, enviar e excluir pedem edição em Projetos.
 
-## Decisões em aberto (CEO)
+**Limite conhecido do `drive.file`:** arquivo salvo direto no Drive, fora da Pilar, não aparece na lista (a tela
+avisa e oferece "Abrir no Drive"). Ver tudo exige o escopo `drive` completo, que é restrito: verificação do Google
+e auditoria de segurança (CASA) todo ano. Rever quando houver demanda de clientes.
 
-- Aprovar a ordem A → C → B.
-- Rever a decisão de 2026-07-30 para a opção C (entregas finais guardadas na Pilar, com cota por plano).
+**Para ligar em cada ambiente** (Google Cloud Console, projeto da Pilar):
+
+1. Ativar a Google Drive API.
+2. Tela de consentimento OAuth: app externo, escopos `openid`, `email` e `.../auth/drive.file`, domínio
+   `pilarsoft.com.br`, publicar o app (escopo não sensível: verificação de marca, sem CASA).
+3. Credencial OAuth "Aplicativo da Web" com o URI de redirecionamento
+   `https://<projeto>.supabase.co/functions/v1/google-drive-oauth` (ou o domínio próprio da API, se usado; aí
+   também `GOOGLE_DRIVE_REDIRECT_URI`).
+4. Secrets das Edge Functions: `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET` e `GOOGLE_DRIVE_TOKEN_KEY`
+   (32 bytes aleatórios em base64: `openssl rand -base64 32`). Sem eles, as funções respondem 503 e a tela
+   mostra que a integração não está configurada.
+5. CSP do app libera `https://www.googleapis.com` em `connect-src` (o envio sai do navegador).
+
+**Fora desta entrega:** mostrar a pasta no portal do cliente, renomear, mover entre pastas, OneDrive.
+
+## Critérios de aceite (opção B)
+
+- [x] Só admin conecta e desconecta; o retorno do Google volta para a tela de onde saiu, com aviso.
+- [x] O state do OAuth é de uso único, expira em 10 minutos e só o hash fica no banco.
+- [x] O refresh token fica cifrado; nenhuma tela ou papel `authenticated` lê `google_drive_conexoes`.
+- [x] Abrir a aba Arquivos cria a pasta do projeto e as das disciplinas (quem edita); quem só vê não cria.
+- [x] Listar, criar pasta, enviar, baixar e excluir só em pasta ligada à empresa de quem chama.
+- [x] Conexão revogada no Google vira "conecte de novo", não erro genérico.
+- [x] Envio direto ao Google com progresso; nada do arquivo passa pela Pilar.

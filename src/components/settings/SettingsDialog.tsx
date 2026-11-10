@@ -1,4 +1,7 @@
-import { Building2, CreditCard, Gauge, Lock, ShieldCheck, User } from "lucide-react";
+import { useEffect } from "react";
+import { Building2, CreditCard, Gauge, Lock, Plug, ShieldCheck, User } from "lucide-react";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useSettingsModal, type SettingsSection } from "@/contexts/SettingsModalContext";
@@ -8,6 +11,8 @@ import { EmpresaPanel } from "./panels/EmpresaPanel";
 import { UsoPanel } from "./panels/UsoPanel";
 import { PagamentoPanel } from "./panels/PagamentoPanel";
 import { PrivacidadePanel } from "./panels/PrivacidadePanel";
+import { IntegracoesPanel } from "./panels/IntegracoesPanel";
+import { lerRetornoDoDrive } from "@/lib/googleDrive";
 
 type SectionDef = {
   id: SettingsSection;
@@ -20,6 +25,7 @@ const SECTIONS: SectionDef[] = [
   { id: "conta", label: "Conta", icon: User, Panel: ContaPanel },
   { id: "seguranca", label: "Segurança", icon: ShieldCheck, Panel: SegurancaPanel },
   { id: "empresa", label: "Empresa", icon: Building2, Panel: EmpresaPanel },
+  { id: "integracoes", label: "Integrações", icon: Plug, Panel: IntegracoesPanel },
   { id: "uso", label: "Uso", icon: Gauge, Panel: UsoPanel },
   { id: "pagamento", label: "Pagamento", icon: CreditCard, Panel: PagamentoPanel },
   { id: "privacidade", label: "Privacidade", icon: Lock, Panel: PrivacidadePanel },
@@ -30,6 +36,19 @@ const SECTIONS: SectionDef[] = [
 // useSettingsModal().openSettings(secao).
 export function SettingsDialog() {
   const { isOpen, section, openSettings, closeSettings } = useSettingsModal();
+  const queryClient = useQueryClient();
+
+  // Volta do consentimento do Google Drive (SPEC 162): avisa e tira o ?drive= da URL.
+  useEffect(() => {
+    const retorno = lerRetornoDoDrive();
+    if (!retorno) return;
+    queryClient.invalidateQueries({ queryKey: ["google-drive-status"] });
+    queryClient.invalidateQueries({ queryKey: ["google-drive-projeto"] });
+    if (retorno === "conectado")
+      toast.success("Google Drive conectado", { description: "A pasta de cada projeto aparece na aba Arquivos." });
+    else if (retorno === "negado") toast.info("Conexão com o Google Drive cancelada");
+    else toast.error("Não foi possível conectar o Google Drive", { description: "Tente de novo em Configurações." });
+  }, [queryClient]);
 
   const active = SECTIONS.find((s) => s.id === section) ?? SECTIONS[0];
   const Panel = active.Panel;

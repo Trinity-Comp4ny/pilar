@@ -2003,6 +2003,71 @@ export type Database = {
           },
         ]
       }
+      drive_pastas: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          pasta_id: string
+          pasta_pai_id: string | null
+          projeto_disciplina_id: string | null
+          projeto_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          id?: string
+          nome: string
+          pasta_id: string
+          pasta_pai_id?: string | null
+          projeto_disciplina_id?: string | null
+          projeto_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          pasta_id?: string
+          pasta_pai_id?: string | null
+          projeto_disciplina_id?: string | null
+          projeto_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drive_pastas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drive_pastas_projeto_disciplina_id_fkey"
+            columns: ["projeto_disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_disciplinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drive_pastas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drive_pastas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_dominios_bloqueados: {
         Row: {
           created_at: string
@@ -3115,6 +3180,79 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "fornecedores_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_drive_conexoes: {
+        Row: {
+          conectado_por: string | null
+          created_at: string
+          empresa_id: string
+          google_email: string
+          pasta_raiz_id: string
+          refresh_token_cifrado: string
+          updated_at: string
+        }
+        Insert: {
+          conectado_por?: string | null
+          created_at?: string
+          empresa_id: string
+          google_email: string
+          pasta_raiz_id: string
+          refresh_token_cifrado: string
+          updated_at?: string
+        }
+        Update: {
+          conectado_por?: string | null
+          created_at?: string
+          empresa_id?: string
+          google_email?: string
+          pasta_raiz_id?: string
+          refresh_token_cifrado?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_drive_conexoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_drive_oauth_estados: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          estado_hash: string
+          expira_em: string
+          retorno: string
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          estado_hash: string
+          expira_em: string
+          retorno?: string
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          estado_hash?: string
+          expira_em?: string
+          retorno?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_drive_oauth_estados_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
@@ -10338,6 +10476,14 @@ export type Database = {
           total_valor_base: number
           total_variavel: number
           valor_m2: number
+        }[]
+      }
+      get_google_drive_status: {
+        Args: never
+        Returns: {
+          conectado: boolean
+          conectado_em: string
+          google_email: string
         }[]
       }
       get_grupos_parcela_resumo: {

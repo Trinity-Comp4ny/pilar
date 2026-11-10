@@ -11,6 +11,20 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-10 (mais tarde) · Google Drive conectado à Pilar; a Pilar segue sem guardar arquivo
+
+**Decisão:** o escritório conecta o Google Drive dele à Pilar (botão em Configurações, só admin) e cada projeto
+ganha uma pasta no Drive, com uma subpasta por disciplina, que a equipe navega, alimenta e baixa na aba Arquivos do
+projeto. O arquivo vai do navegador direto para o Google; a Pilar não guarda binário. Escopo `drive.file` (só o que a
+Pilar cria): sem auditoria anual do Google. Detalhe na SPEC 162.
+
+Contexto: na reunião com a VRZ o sócio pediu para ver e gerenciar as pastas do Drive dentro da Pilar; colar link já
+existe e não basta. Guardar os arquivos na Pilar (opção C da SPEC 162) ficou para depois.
+
+**Supera:** nada; confirma a de 2026-07-30 (a Pilar não hospeda binário) e acrescenta a integração.
+
+---
+
 ## 2026-11-10 (mais tarde) · Bônus da folha quando a disciplina é concluída; portal liberado também ao coordenador
 
 **Decisão:** o bônus de produtividade (m² e percentual) entra na folha do mês em que a disciplina da pessoa é
