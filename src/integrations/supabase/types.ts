@@ -7796,6 +7796,30 @@ export type Database = {
           },
         ]
       }
+      recursos_previa: {
+        Row: {
+          ativo: boolean
+          chave: string
+          created_at: string
+          descricao: string
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean
+          chave: string
+          created_at?: string
+          descricao: string
+          nome: string
+        }
+        Update: {
+          ativo?: boolean
+          chave?: string
+          created_at?: string
+          descricao?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       registros_acesso: {
         Row: {
           conta_id: string | null
@@ -8729,6 +8753,32 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      usuario_previas: {
+        Row: {
+          chave: string
+          ligado_em: string
+          user_id: string
+        }
+        Insert: {
+          chave: string
+          ligado_em?: string
+          user_id: string
+        }
+        Update: {
+          chave?: string
+          ligado_em?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_previas_chave_fkey"
+            columns: ["chave"]
+            isOneToOne: false
+            referencedRelation: "recursos_previa"
+            referencedColumns: ["chave"]
+          },
+        ]
       }
     }
     Views: {
