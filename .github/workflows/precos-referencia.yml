@@ -1,18 +1,19 @@
 name: Preços de referência (CUB e SINAPI)
 
-# Estimativa de obra. Todo dia:
+# Estimativa de obra. Todo dia, em staging e em produção:
 # 1. `sinapi`: busca na Caixa o SINAPI do mês que falta no banco (ou que a Caixa retificou), lê com o
 #    mesmo leitor da importação manual e grava só os códigos do catálogo. Mês ainda não publicado não é
 #    falha. Arquivo fora do formato falha sem gravar nada e abre issue.
-# 2. `cub`: pede ao portal da CBIC (cub.org.br) o PDF da tabela de cada UF, nos dois regimes, para os meses
-#    que faltam, e grava o que passa nas conferências (19 códigos, padrão alto > normal > baixo, mês e regime
-#    certos, variação de até 15% contra o mês anterior). UF fora do portal (SP, RS e outras) segue manual.
-#    PDF recusado não grava nada daquela UF e abre issue.
+# 2. `cub`: para cada UF, tenta o portal da CBIC (cub.org.br) e, onde houver, o portal do Sinduscon (SP e RS
+#    só o portal próprio). Grava o PDF que passa nas conferências (19 códigos, padrão alto > normal > baixo,
+#    mês e regime certos, variação de até 15% contra o mês anterior, não repetido). PDF recusado não grava
+#    nada daquela UF e abre issue.
 # 3. `conferir`: abre issue quando o CUB (dia 10) ou o SINAPI (dia 15) do mês anterior não chegou.
 # Runbook: docs/operations/ESTIMATIVA_IMPORTAR_PRECOS_MENSAL.md.
 #
-# Segredos por environment do GitHub (`precos-referencia-staging` e `precos-referencia-producao`):
-# SUPABASE_URL e SUPABASE_SERVICE_KEY. Sem eles o alvo é pulado com aviso.
+# Segredo: o SUPABASE_DB_URL que os environments `Staging` e `production-automation` já têm (o mesmo do
+# backup noturno). `production-automation`, não `Production`: environment com reviewer trava cron em
+# `waiting` (ver backup-nightly.yml).
 on:
   schedule:
     - cron: "23 11 * * *" # 08:23 em Brasília
@@ -23,7 +24,7 @@ on:
         required: false
         default: ""
       cub_ufs:
-        description: "Só estas UFs do CUB (ex. GO,MG). Vazio = todas."
+        description: "Só estas UFs do CUB (ex. SP,RS). Vazio = todas."
         required: false
         default: ""
       dry_run:
@@ -47,11 +48,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        alvo: [staging, producao]
-    environment: precos-referencia-${{ matrix.alvo }}
+        include:
+          - alvo: staging
+            environment: Staging
+          - alvo: producao
+            environment: production-automation
+    environment: ${{ matrix.environment }}
     env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
       SINAPI_MES: ${{ inputs.mes }}
       DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
     steps:
@@ -60,12 +64,7 @@ jobs:
         with:
           deno-version: v2.x
       - name: Coletar
-        id: coletar
         run: |
-          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_KEY" ]; then
-            echo "::warning::Environment precos-referencia-${{ matrix.alvo }} sem SUPABASE_URL/SUPABASE_SERVICE_KEY: pulado."
-            exit 0
-          fi
           deno run --config scripts/precos-referencia/deno.json \
             --allow-net --allow-env --allow-read --allow-write \
             scripts/precos-referencia/coletar.ts sinapi
@@ -86,20 +85,26 @@ jobs:
   cub:
     name: CUB (${{ matrix.alvo }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     strategy:
       fail-fast: false
-      max-parallel: 1 # um alvo por vez, para não dobrar a carga no portal da CBIC
+      max-parallel: 1 # um alvo por vez, para não dobrar a carga nos portais
       matrix:
-        alvo: [staging, producao]
-    environment: precos-referencia-${{ matrix.alvo }}
+        include:
+          - alvo: staging
+            environment: Staging
+          - alvo: producao
+            environment: production-automation
+    environment: ${{ matrix.environment }}
     env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
       CUB_MES: ${{ inputs.mes }}
       CUB_UFS: ${{ inputs.cub_ufs }}
-      # UF com mais de um Sinduscon no portal: variável de repositório, ex. "MG=12,PR=3".
+      # Variáveis de repositório (Settings > Secrets and variables > Actions > Variables), opcionais:
+      # CUB_SINDUSCON: UF com mais de um Sinduscon no portal da CBIC, ex. "MG=12,PR=3".
+      # CUB_PORTAIS: portal estadual extra ou corrigido, ex. "TO=https://.../cub/;AL=https://.../cub/|publicacao".
       CUB_SINDUSCON: ${{ vars.CUB_SINDUSCON }}
+      CUB_PORTAIS: ${{ vars.CUB_PORTAIS }}
       DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -108,10 +113,6 @@ jobs:
           deno-version: v2.x
       - name: Coletar
         run: |
-          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_KEY" ]; then
-            echo "::warning::Environment precos-referencia-${{ matrix.alvo }} sem SUPABASE_URL/SUPABASE_SERVICE_KEY: pulado."
-            exit 0
-          fi
           deno run --config scripts/precos-referencia/deno.json \
             --allow-net --allow-env --allow-read --allow-write \
             scripts/precos-referencia/coletar.ts cub
@@ -138,11 +139,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        alvo: [staging, producao]
-    environment: precos-referencia-${{ matrix.alvo }}
+        include:
+          - alvo: staging
+            environment: Staging
+          - alvo: producao
+            environment: production-automation
+    environment: ${{ matrix.environment }}
     env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
@@ -150,10 +154,6 @@ jobs:
           deno-version: v2.x
       - name: Conferir
         run: |
-          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_KEY" ]; then
-            echo "::warning::Environment precos-referencia-${{ matrix.alvo }} sem segredos: pulado."
-            exit 0
-          fi
           deno run --config scripts/precos-referencia/deno.json \
             --allow-net --allow-env --allow-read --allow-write \
             scripts/precos-referencia/coletar.ts conferir
