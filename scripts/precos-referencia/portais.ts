@@ -254,8 +254,9 @@ function citaMes(link: LinkPdf, mes: string): boolean {
 }
 
 const DESONERADO = /desonera/;
-// Outros relatórios que saem junto com o CUB e citam o mesmo mês.
-const OUTRO_RELATORIO = /incc|encargo|boletim|insumo|salari|serie[^a-z]?historica|indice|informativo|vencedor|panorama/;
+// Outros relatórios que saem junto com o CUB e citam o mesmo mês. O "Boletim Econômico" do SindusCon-SP não
+// entra aqui: é nele que o CUB paulista sai, um por regime (visto no feed real).
+const OUTRO_RELATORIO = /incc|encargo|insumo|salari|serie[^a-z]?historica|indice|informativo|vencedor|panorama/;
 const SEM_DESONERACAO = /(sem|nao)[^a-z]{0,3}desonera/;
 
 /**
