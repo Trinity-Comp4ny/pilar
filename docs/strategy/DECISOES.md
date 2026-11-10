@@ -11,6 +11,21 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-10 · A Pilar vira conector para ChatGPT e Claude (MCP), começando só leitura
+
+**Decisão:** a Pilar ganha um conector MCP para o cliente consultar os dados do escritório de dentro do ChatGPT,
+do Claude (claude.ai e Desktop) e de outros clientes MCP. A conexão é por OAuth na tela da Pilar, com o login de
+sempre. A fase 1 só lê (projetos, aditivos, propostas, leads, clientes, resumo financeiro); escrita vem depois, como
+rascunho que o usuário aprova no app. O usuário não deve ver o endereço do provedor: o conector usa o domínio próprio
+(`api.pilarsoft.com.br`, add-on de domínio do Supabase) antes de abrir para cliente.
+
+Contexto: o ICP já usa ChatGPT e Claude no dia a dia (não Claude Code); empresas buscam serviço, não só software, e o
+conector leva a Pilar para onde o sócio já conversa. Detalhe e runbook na SPEC 151.
+
+**Supera:** nada; é a primeira decisão sobre integração com assistentes externos.
+
+---
+
 ## 2026-11-09 (mais tarde) · Menção com @ sai por e-mail na hora, junto com o sino
 
 **Decisão:** quando alguém marca uma pessoa com @ num comentário (projeto, disciplina ou tarefa), o e-mail sai no
