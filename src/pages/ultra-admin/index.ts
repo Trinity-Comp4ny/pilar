@@ -9,6 +9,7 @@ export { default as Funcionalidades } from "./Funcionalidades";
 export { default as Feedback } from "./Feedback";
 export { default as Releases } from "./Releases";
 export { default as AjudaLacunas } from "./AjudaLacunas";
+export { default as Satisfacao } from "./Satisfacao";
 export { default as Atividade } from "./Atividade";
 export { default as Incidentes } from "./Incidentes";
 export { default as CustosIa } from "./CustosIa";

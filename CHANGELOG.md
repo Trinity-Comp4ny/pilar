@@ -14,6 +14,8 @@ Regras deste repo:
 
 ### Adicionado
 
+- Pesquisa de satisfação (NPS) no Início, no máximo a cada 90 dias, e pergunta rápida "Foi fácil?" depois de lançar, criar proposta ou lead. Respostas em `/ultra-admin/satisfacao`; detrator avisa o ultra admin na hora. (SPEC 156)
+
 - Agente da ajuda no canto da tela ("Como faço?"): responde com o passo a passo e leva até a tela; o que não tem artigo segue para os agentes ou para o suporte. Perguntas sem resposta aparecem em `/ultra-admin/ajuda`. (SPEC 155)
 
 - Central de ajuda (`/ajuda`) com passo a passo das tarefas mais comuns, botão "?" no topo das telas que têm artigo e artigos na busca ⌘K. (SPEC 154)

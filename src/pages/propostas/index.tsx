@@ -78,6 +78,7 @@ import { SmartInvoiceDialog } from "@/pages/propostas/components/SmartInvoiceDia
 import { BusyMark } from "@/components/motion/BusyMark";
 import { ReadingRing } from "@/components/motion/ReadingRing";
 import { disciplinasDoDocumento } from "./lib/disciplinasDocumento";
+import { perguntarEsforco } from "@/components/pesquisas/perguntarEsforco";
 
 interface PropostaDisciplina {
   id: string;
@@ -334,6 +335,7 @@ export default function Propostas() {
       createProposta.mutate(createPayload, {
         onSuccess: (data) => {
           persistDisciplinas(data.id, () => {
+            void perguntarEsforco("proposta");
             toast.success("Proposta criada");
             setIsFormOpen(false);
             resetForm();

@@ -25,6 +25,8 @@ const OnboardingChecklist = lazy(() =>
 const OQueMudou = lazy(() => import("@/components/novidades/OQueMudou").then((m) => ({ default: m.OQueMudou })));
 // Lazy: agente da ajuda no canto (SPEC 155). Traz o markdown dos artigos; fora do bundle de entrada.
 const AgenteAjuda = lazy(() => import("@/components/agente/AgenteAjuda").then((m) => ({ default: m.AgenteAjuda })));
+// Lazy: NPS no Início (SPEC 156).
+const NpsCard = lazy(() => import("@/components/pesquisas/NpsCard").then((m) => ({ default: m.NpsCard })));
 const OnboardingTourController = lazy(() =>
   import("@/components/onboarding/OnboardingTourController").then((m) => ({
     default: m.OnboardingTourController,
@@ -98,6 +100,7 @@ function LayoutContent() {
         <OnboardingTourController />
         <OQueMudou />
         <AgenteAjuda />
+        <NpsCard />
       </Suspense>
     </div>
   );
