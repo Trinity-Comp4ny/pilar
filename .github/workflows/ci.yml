@@ -335,6 +335,14 @@ jobs:
       # Node e o guard. Fora Studio (a maior imagem, ~360 MB), edge-runtime e
       # imgproxy, que nem migration nem pgTAP usam. GoTrue, Storage e Realtime ficam:
       # criam os schemas auth/storage/realtime que as migrations referenciam.
+      # Portas do Supabase fora da faixa efêmera do Linux (32768-60999 por padrão).
+      # Com o stack subindo em segundo plano junto de downloads (npm, apt, Playwright),
+      # uma conexão de saída podia pegar uma porta do Supabase (543xx) como porta de
+      # origem e o container não subia: "failed to bind host port 0.0.0.0:54336:
+      # address already in use" (E2E local 2/3, run 42752780750). Limitar a faixa
+      # efêmera a 60000+ tira essa corrida.
+      - name: Reservar as portas do Supabase
+        run: sudo sysctl -w net.ipv4.ip_local_port_range="60000 65000"
       - name: Subir o stack local (em segundo plano)
         run: |
           # `|| rc=$?`: o bash do Actions roda com -e, e sem isto uma falha mataria o
@@ -524,6 +532,14 @@ jobs:
       # Em segundo plano, aplicando as migrations do PR, enquanto Node e Playwright
       # instalam. Só o Studio fica de fora: o resto (inclusive edge-runtime e
       # imgproxy) é o app de verdade que os specs exercitam.
+      # Portas do Supabase fora da faixa efêmera do Linux (32768-60999 por padrão).
+      # Com o stack subindo em segundo plano junto de downloads (npm, apt, Playwright),
+      # uma conexão de saída podia pegar uma porta do Supabase (543xx) como porta de
+      # origem e o container não subia: "failed to bind host port 0.0.0.0:54336:
+      # address already in use" (E2E local 2/3, run 42752780750). Limitar a faixa
+      # efêmera a 60000+ tira essa corrida.
+      - name: Reservar as portas do Supabase
+        run: sudo sysctl -w net.ipv4.ip_local_port_range="60000 65000"
       - name: Subir o stack local em segundo plano (aplica as migrations do PR)
         run: |
           # `|| rc=$?`: o bash do Actions roda com -e, e sem isto uma falha mataria o
