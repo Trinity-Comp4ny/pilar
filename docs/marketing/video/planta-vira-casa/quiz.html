@@ -36,7 +36,7 @@ strokes.forEach(p=>{const L=p.getTotalLength();p.style.strokeDasharray=L;p.datas
 const C=2*Math.PI*78;
 window.render=(st,items)=>{
   $('top').style.display=st.mode==='hook'?'flex':'none';
-  if(st.mode==='hook'){enter($('h1'),st.u,-1);enter($('h2'),st.u,-1);$('p1').style.setProperty('--s',quint(lin(st.u,0.15,0.55)));enter($('hs'),st.u,0.5,20);}
+  if(st.mode==='hook'){enter($('h1'),st.u,-1);enter($('h2'),st.u,-1);$('p1').style.setProperty('--s',1);enter($('hs'),st.u,0.5,20);}
   const showQ=st.mode==='item'||st.mode==='play'||st.mode==='score'; $('q').style.display=showQ?'flex':'none';
   const ring=$('ring'); ring.style.display=st.mode==='item'?'block':'none';
   if(st.mode==='item'){const it=items[st.i]; $('cnt').textContent=(st.i+1)+'/8'; const ans=st.u>=1.1;
@@ -45,7 +45,7 @@ window.render=(st,items)=>{
     const c=$('c'),d=$('d'),l=$('l'); c.setAttribute('cx',it.sx);c.setAttribute('cy',it.sy);d.setAttribute('cx',it.sx);d.setAttribute('cy',it.sy);
     c.style.strokeDasharray=C; c.style.strokeDashoffset=C*(1-quint(lin(st.u,0.05,0.5))); c.setAttribute('transform','rotate(-90 '+it.sx+' '+it.sy+')');
     d.style.opacity=expo(lin(st.u,0,0.3)); const y0=520, y1=it.sy-90; const lk=quint(lin(st.u,0.2,0.6));
-    l.setAttribute('x1',540);l.setAttribute('y1',y0);l.setAttribute('x2',540+(it.sx-540)*lk);l.setAttribute('y2',y0+(y1-y0)*lk); l.style.opacity=0.9;
+    l.setAttribute('x1',540);l.setAttribute('y1',y0);l.setAttribute('x2',540+(it.sx-540)*lk);l.setAttribute('y2',y0+(y1-y0)*lk); l.style.opacity=it.sy<700?0:0.9;
   } else if(st.mode==='play'){ $('cnt').textContent=(st.i+2)+'/8'; $('ans').innerHTML=''; }
   else if(st.mode==='score'){ $('cnt').textContent='8/8'; $('ans').innerHTML='<span class="qm" style="font-size:80px">E aí, quantas?</span>'; const k=expo(lin(st.u,0,0.5)); $('ans').style.opacity=k; $('ans').style.transform='translateY('+((1-k)*24)+'px)'; }
   const e=$('end'); e.style.opacity=st.mode==='end'?lin(st.u,0,0.3):0;
