@@ -69,46 +69,63 @@ async function buscarFontes(admin: SupabaseClient, userId: string): Promise<Font
       )
     : [];
 
-  const [prefs, cookies, termos, cobranca, notificacoes, feedbacks, horas, usoIa, acoes, exportacoes, exclusoes] =
-    await Promise.all([
-      linhas(doUsuario("notificacao_preferencias")),
-      linhas(doUsuario("cookie_consents")),
-      linhas(doUsuario("terms_acceptances")),
-      linhas(doUsuario("consentimentos_cobranca")),
-      linhas(
-        admin
-          .from("notificacoes")
-          .select("tipo, categoria, titulo, mensagem, link, created_at, lido_em, arquivada_em")
-          .eq("destinatario_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(LIMITES.notificacoes)
-      ),
-      linhas(
-        admin
-          .from("feature_suggestions")
-          .select("tipo, titulo, descricao, contexto, created_at")
-          .eq("created_by", userId)
-      ),
-      linhas(
-        admin
-          .from("timesheet_lancamentos")
-          .select("data, horas, descricao, status, projeto_id, created_at")
-          .eq("user_id", userId)
-          .order("data", { ascending: false })
-          .limit(LIMITES.horasLancadas)
-      ),
-      linhas(doUsuario("ai_token_ledger").order("created_at", { ascending: false }).limit(LIMITES.usoIa)),
-      linhas(
-        admin
-          .from("audit_logs")
-          .select("action, target_table, created_at")
-          .eq("actor_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(LIMITES.acoes)
-      ),
-      linhas(doUsuario("data_export_requests")),
-      linhas(doUsuario("data_deletion_requests")),
-    ]);
+  const [
+    prefs,
+    cookies,
+    termos,
+    cobranca,
+    notificacoes,
+    feedbacks,
+    horas,
+    usoIa,
+    acoes,
+    acessos,
+    exportacoes,
+    exclusoes,
+  ] = await Promise.all([
+    linhas(doUsuario("notificacao_preferencias")),
+    linhas(doUsuario("cookie_consents")),
+    linhas(doUsuario("terms_acceptances")),
+    linhas(doUsuario("consentimentos_cobranca")),
+    linhas(
+      admin
+        .from("notificacoes")
+        .select("tipo, categoria, titulo, mensagem, link, created_at, lido_em, arquivada_em")
+        .eq("destinatario_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(LIMITES.notificacoes)
+    ),
+    linhas(
+      admin.from("feature_suggestions").select("tipo, titulo, descricao, contexto, created_at").eq("created_by", userId)
+    ),
+    linhas(
+      admin
+        .from("timesheet_lancamentos")
+        .select("data, horas, descricao, status, projeto_id, created_at")
+        .eq("user_id", userId)
+        .order("data", { ascending: false })
+        .limit(LIMITES.horasLancadas)
+    ),
+    linhas(doUsuario("ai_token_ledger").order("created_at", { ascending: false }).limit(LIMITES.usoIa)),
+    linhas(
+      admin
+        .from("audit_logs")
+        .select("action, target_table, created_at")
+        .eq("actor_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(LIMITES.acoes)
+    ),
+    linhas(
+      admin
+        .from("registros_acesso")
+        .select("origem, ip, user_agent, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(LIMITES.acessos)
+    ),
+    linhas(doUsuario("data_export_requests")),
+    linhas(doUsuario("data_deletion_requests")),
+  ]);
 
   return {
     perfil: (perfil.data as Linha | null) ?? null,
@@ -122,6 +139,7 @@ async function buscarFontes(admin: SupabaseClient, userId: string): Promise<Font
     horasLancadas: horas,
     usoIa,
     acoes,
+    acessos,
     pedidosExportacao: exportacoes,
     pedidosExclusao: exclusoes,
   };

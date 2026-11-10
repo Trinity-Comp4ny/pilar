@@ -7537,6 +7537,50 @@ export type Database = {
           },
         ]
       }
+      registros_acesso: {
+        Row: {
+          conta_id: string | null
+          created_at: string
+          empresa_id: string | null
+          id: string
+          ip: string | null
+          origem: string
+          sessao_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          conta_id?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          ip?: string | null
+          origem: string
+          sessao_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          conta_id?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          ip?: string | null
+          origem?: string
+          sessao_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registros_acesso_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resumos_semanais: {
         Row: {
           conteudo: Json
@@ -10076,6 +10120,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      ip_da_requisicao: { Args: never; Returns: string }
       is_company_admin: { Args: never; Returns: boolean }
       is_feature_flag_enabled: { Args: { p_key: string }; Returns: boolean }
       is_impersonating: { Args: never; Returns: boolean }
@@ -10093,6 +10138,7 @@ export type Database = {
           tokens_total: number
         }[]
       }
+      limpar_registros_acesso: { Args: never; Returns: number }
       listar_clientes_paginado: {
         Args: {
           p_com_projeto?: boolean
@@ -10866,6 +10912,7 @@ export type Database = {
         Args: { p_role: string; p_user_id: string }
         Returns: undefined
       }
+      user_agent_da_requisicao: { Args: never; Returns: string }
       user_has_feature: {
         Args: { p_feature: string; p_min_level?: string }
         Returns: boolean

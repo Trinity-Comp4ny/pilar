@@ -13,7 +13,7 @@ import { usePageMeta } from "../lib/seo";
  */
 
 const ATUALIZADA_EM = "10 de novembro de 2026";
-const VERSAO = "2.0";
+const VERSAO = "2.1";
 
 type Linha = string[];
 
@@ -135,7 +135,11 @@ const RETENCAO: Linha[] = [
     "90 dias em modo somente leitura, com exportação disponível. Depois, o que tem obrigação fiscal é anonimizado e o restante é eliminado",
   ],
   ["Registros financeiros e fiscais", "5 anos, como exige a legislação fiscal"],
-  ["Registros de auditoria e de acesso", "1 ano em uso e mais 4 anos arquivados, depois eliminados"],
+  ["Registros de auditoria (ações feitas no sistema)", "1 ano em uso e mais 4 anos arquivados, depois eliminados"],
+  [
+    "Registros de acesso (IP, data e hora de cada entrada no aplicativo, no portal e no Pilar Campo)",
+    "6 meses, como exige o Marco Civil da Internet (art. 15), depois eliminados",
+  ],
   ["Áudio gravado no Pilar Campo", "12 meses. Depois o áudio é apagado e o texto do registro continua"],
   ["Cópias de segurança", "30 dias, cifradas"],
   ["Arquivo de exportação dos seus dados", "Link válido por 7 dias"],
