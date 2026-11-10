@@ -98,3 +98,10 @@ jobs:
         with:
           job-name: Auditoria de segurança do banco (${{ matrix.environment }})
           token: ${{ github.token }}
+      - name: Fechar a issue de falha (voltou a passar)
+        if: success() && github.event_name != 'pull_request'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: Auditoria de segurança do banco (${{ matrix.environment }})
+          token: ${{ github.token }}
+          status: success

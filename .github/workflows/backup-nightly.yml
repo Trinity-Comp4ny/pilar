@@ -168,3 +168,10 @@ jobs:
         with:
           job-name: Backup noturno (${{ matrix.target }})
           token: ${{ github.token }}
+      - name: Fechar a issue de falha (voltou a passar)
+        if: success()
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: Backup noturno (${{ matrix.target }})
+          token: ${{ github.token }}
+          status: success

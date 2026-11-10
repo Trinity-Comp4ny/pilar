@@ -91,6 +91,13 @@ jobs:
         with:
           job-name: Evals da IA
           token: ${{ github.token }}
+      - name: Fechar a issue de falha (voltou a passar)
+        if: success() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: Evals da IA
+          token: ${{ github.token }}
+          status: success
 
   evals-estimativa:
     name: Evals do ai-estimativa-itens
@@ -141,3 +148,10 @@ jobs:
         with:
           job-name: Evals do ai-estimativa-itens
           token: ${{ github.token }}
+      - name: Fechar a issue de falha (voltou a passar)
+        if: success() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: Evals do ai-estimativa-itens
+          token: ${{ github.token }}
+          status: success

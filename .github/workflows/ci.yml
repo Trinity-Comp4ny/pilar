@@ -580,6 +580,18 @@ jobs:
             | map(select(.value.result != "success"
                          and ((.value.result == "skipped" and $so_docs == "true") | not)))
             | map("\(.key) = \(.value.result)") | join("; ")')
+          # Tabela no resumo do run: um olhar diz o que falhou, sem abrir job por job.
+          {
+            echo "### Gates do CI"
+            echo ""
+            echo "| Gate | Resultado |"
+            echo "|---|---|"
+            echo "$RESULTADOS" | jq -r 'to_entries[]
+              | "| \(.key) | \(if .value.result == "success" then "✅ passou"
+                             elif .value.result == "skipped" then "⏭️ pulado"
+                             elif .value.result == "cancelled" then "⚪ cancelado"
+                             else "❌ \(.value.result)" end) |"'
+          } >> "$GITHUB_STEP_SUMMARY"
           if [ -n "$FALHAS" ]; then
             echo "::error::Gates que não passaram: $FALHAS"
             exit 1
@@ -780,17 +792,52 @@ jobs:
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # issues: write só aqui, para abrir/fechar a issue "Pipeline quebrado: staging".
+    permissions:
+      contents: read
+      issues: write
     steps:
       - name: CI, deploy (com smoke) e E2E de staging verdes neste commit
+        id: veredito
         env:
           RESULTADOS: ${{ toJSON(needs) }}
         run: |
           FALTA=$(echo "$RESULTADOS" | jq -r 'to_entries | map(select(.value.result != "success") | "\(.key) = \(.value.result)") | join("; ")')
+          # Falha de verdade vs. run cancelado: o concurrency do CI cancela o run
+          # anterior a cada push novo em staging, e cancelamento não é "staging
+          # quebrado". Só falha real abre issue; o check fica vermelho nos dois casos.
+          FALHOU=$(echo "$RESULTADOS" | jq -r '[.[] | select(.result == "failure")] | length > 0')
+          echo "falta=$FALTA" >> "$GITHUB_OUTPUT"
+          echo "falhou=$FALHOU" >> "$GITHUB_OUTPUT"
           if [ -n "$FALTA" ]; then
             echo "::error::Staging não está pronto em ${GITHUB_SHA:0:8}: $FALTA"
             exit 1
           fi
           echo "::notice::Staging pronto em ${GITHUB_SHA:0:8}."
+
+      # Antes, um deploy ou E2E de staging vermelho depois do merge ficava só como um
+      # X na aba Actions: ninguém era avisado. Agora vira issue (uma só, que acumula
+      # comentários) e fecha sozinha no primeiro push verde.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: ${{ !cancelled() && (success() || steps.veredito.outputs.falhou == 'true') }}
+        with:
+          sparse-checkout: .github/actions
+      - name: Abrir issue de staging quebrado
+        if: ${{ failure() && steps.veredito.outputs.falhou == 'true' }}
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: staging
+          title-prefix: Pipeline quebrado
+          details: "Gates que não passaram: ${{ steps.veredito.outputs.falta }}"
+          token: ${{ github.token }}
+      - name: Fechar a issue de staging quebrado
+        if: success()
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: staging
+          title-prefix: Pipeline quebrado
+          status: success
+          token: ${{ github.token }}
 
   # Deploy do backend em PRODUÇÃO. DORMENTE até este ci.yml chegar no branch main:
   # só dispara em push no main (github.ref) E o job precisa existir no arquivo do
@@ -858,3 +905,44 @@ jobs:
           # Em produção o smoke pulado em silêncio não vale: sem o secret, o job falha.
           SMOKE_OBRIGATORIO: "true"
         run: scripts/smoke-health.sh
+
+  # Mesmo aviso do staging-ready, para o push em main (release). Olha os gates E o
+  # deploy: se um gate falhou, o deploy de produção fica skipped, e isso também é
+  # release que não chegou. Cancelado ou reprovado no Environment não abre issue.
+  production-alert:
+    name: Alerta de produção
+    needs: [lint, typecheck, unit-tests, coverage, build, audit, secrets-scan, database, edge-functions, deploy-production]
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Avaliar o release
+        id: veredito
+        env:
+          RESULTADOS: ${{ toJSON(needs) }}
+        run: |
+          FALHAS=$(echo "$RESULTADOS" | jq -r 'to_entries | map(select(.value.result == "failure") | .key) | join(", ")')
+          DEPLOY=$(echo "$RESULTADOS" | jq -r '."deploy-production".result')
+          if [ -n "$FALHAS" ]; then STATUS=failure
+          elif [ "$DEPLOY" = "success" ]; then STATUS=success
+          else STATUS=nenhum
+          fi
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          echo "falhas=$FALHAS" >> "$GITHUB_OUTPUT"
+          echo "Release ${GITHUB_SHA:0:8}: status=$STATUS deploy=$DEPLOY falhas=[$FALHAS]"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: steps.veredito.outputs.status != 'nenhum'
+        with:
+          sparse-checkout: .github/actions
+      - name: Abrir ou fechar a issue de produção
+        if: steps.veredito.outputs.status != 'nenhum'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: produção
+          title-prefix: Pipeline quebrado
+          status: ${{ steps.veredito.outputs.status }}
+          details: "Jobs que falharam: ${{ steps.veredito.outputs.falhas }}"
+          token: ${{ github.token }}
