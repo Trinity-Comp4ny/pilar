@@ -9,7 +9,7 @@
  * o tom é factual, não zoeira de concorrente.
  */
 
-export type ComparativoSlug = "planilha" | "trello";
+export type ComparativoSlug = "planilha" | "trello" | "whatsapp" | "notion" | "erp-construtora";
 
 export interface LinhaComparacao {
   criterio: string;
@@ -158,6 +158,200 @@ export const COMPARATIVOS: Comparativo[] = [
       {
         pergunta: "Meu time já está acostumado com quadro kanban.",
         resposta: "O Pilar também tem quadro, com coluna que o escritório define. A curva de aprendizado é baixa.",
+      },
+    ],
+  },
+  {
+    slug: "whatsapp",
+    adversario: "WhatsApp",
+    headline: "WhatsApp é onde o cliente pergunta.",
+    headlineFim: "O Pilar é onde a resposta já está.",
+    lede: "Grupo por projeto, áudio do canteiro, foto da obra e o cliente perguntando andamento: o WhatsApp é ótimo para conversar e péssimo para guardar o que foi decidido. O histórico some na rolagem.",
+    seo: {
+      titulo: "WhatsApp para gerenciar projeto e obra? Compare",
+      descricao:
+        "Gerenciar projeto e obra pelo WhatsApp funciona até o histórico sumir. Compare com um sistema de gestão: diário de obra, prazo, decisões e portal do cliente.",
+      h1: "Pilar vs WhatsApp na gestão de projeto e obra",
+    },
+    linhas: [
+      {
+        criterio: "Diário de obra",
+        pilar: "Registro do dia com foto, efetivo e impedimento, preenchido pelo celular, mesmo sem sinal.",
+        alternativa: "Foto e áudio soltos no grupo, sem data de serviço nem frente.",
+      },
+      {
+        criterio: "Andamento para o cliente",
+        pilar: "Portal só de leitura: disciplinas, entregas, parcelas e prestação de contas.",
+        alternativa: "Resposta escrita na hora, cada vez que ele pergunta.",
+      },
+      {
+        criterio: "Prazo por disciplina",
+        pilar: "Gantt da carteira, responsável em cada disciplina e motivo quando a data muda.",
+        alternativa: false,
+      },
+      {
+        criterio: "Histórico de decisões",
+        pilar: "Fica no projeto, com quem registrou e quando.",
+        alternativa: "Perdido entre mensagens, figurinhas e outros assuntos.",
+      },
+      {
+        criterio: "Comprovante de despesa",
+        pilar: "Anexado à despesa da conta da obra, que vira prestação de contas.",
+        alternativa: "Foto do cupom no grupo, que alguém precisa achar depois.",
+      },
+      {
+        criterio: "Acesso de quem sai da equipe",
+        pilar: "O histórico fica no projeto, não no celular de alguém.",
+        alternativa: "A conversa vai embora junto com o celular da pessoa.",
+      },
+    ],
+    quandoMigrar: [
+      'Quando a pergunta "em que pé está?" chega toda semana e a resposta exige rolar o grupo.',
+      "Quando uma decisão de obra foi combinada por áudio e ninguém acha mais.",
+      "Quando o encarregado manda foto, mas o diário de obra nunca é fechado.",
+    ],
+    faq: [
+      {
+        pergunta: "Vou parar de usar WhatsApp com o cliente?",
+        resposta:
+          "Não precisa. A conversa continua onde ele está acostumado; o que muda é que o andamento, as parcelas e a prestação de contas ficam num link que ele abre sozinho.",
+      },
+      {
+        pergunta: "O encarregado vai aceitar mais um aplicativo?",
+        resposta:
+          "O Pilar Campo abre no navegador do celular, sem instalar nada, e o gestor entrega usuário e senha na mão, sem e-mail.",
+      },
+      {
+        pergunta: "E as fotos que já estão no grupo?",
+        resposta: "Ficam onde estão. Comece pelo registro de hoje; o histórico novo já nasce organizado.",
+      },
+    ],
+  },
+  {
+    slug: "notion",
+    adversario: "Notion",
+    headline: "Notion é uma folha em branco.",
+    headlineFim: "O Pilar já vem com o escritório montado.",
+    lede: "Notion é ótimo para documentação e wiki. Para virar sistema de escritório de engenharia ou arquitetura, alguém precisa desenhar as bases, as relações e as fórmulas, e manter tudo isso de pé.",
+    seo: {
+      titulo: "Notion para escritório de engenharia e arquitetura?",
+      descricao:
+        "Notion como sistema de escritório de engenharia ou arquitetura? Compare com um software de gestão pronto: proposta, prazo por disciplina, financeiro e obra.",
+      h1: "Pilar vs Notion para escritório de engenharia e arquitetura",
+    },
+    linhas: [
+      {
+        criterio: "Pronto para usar",
+        pilar: "Funil, proposta, projetos, financeiro e obra já conectados.",
+        alternativa: "Bases montadas do zero, por alguém da equipe.",
+      },
+      {
+        criterio: "Proposta por disciplina",
+        pilar: "Sai em DOCX no template do escritório e vira projeto quando aprovada.",
+        alternativa: "Página copiada de um modelo, sem ligação com o financeiro.",
+      },
+      {
+        criterio: "Financeiro do escritório",
+        pilar: "Contas, cartões, extrato lido por IA e folha com comprovante.",
+        alternativa: false,
+      },
+      {
+        criterio: "Diário de obra no canteiro",
+        pilar: "Pilar Campo no celular, funciona sem sinal.",
+        alternativa: "Depende de sinal e de o encarregado ter conta no workspace.",
+      },
+      {
+        criterio: "Portal do cliente",
+        pilar: "Link só de leitura, sem conta e sem senha.",
+        alternativa: "Página pública compartilhada, montada e atualizada à mão.",
+      },
+      {
+        criterio: "Manutenção",
+        pilar: "Por conta do Pilar.",
+        alternativa: "Quem montou vira o suporte do sistema.",
+      },
+    ],
+    quandoMigrar: [
+      "Quando só uma pessoa sabe como as bases do Notion se ligam.",
+      "Quando o financeiro continua numa planilha porque o Notion não fecha o mês.",
+      "Quando o canteiro não usa porque não tem sinal ou não tem conta.",
+    ],
+    faq: [
+      {
+        pergunta: "Posso continuar usando Notion para documentação?",
+        resposta:
+          "Pode. Wiki, padrões e atas ficam bem no Notion. O Pilar cuida do que tem número, prazo e dinheiro: proposta, projeto, financeiro e obra.",
+      },
+      {
+        pergunta: "Consigo adaptar o Pilar ao meu fluxo?",
+        resposta:
+          "O quadro usa as colunas do escritório e o fluxo padrão é configurado uma vez. O que não muda é a ligação entre proposta, projeto e financeiro, que é o que dá trabalho montar no Notion.",
+      },
+      {
+        pergunta: "Quanto custa comparado ao Notion?",
+        resposta:
+          "O Pilar cobra por escritório, não por usuário, a partir de R$ 299 por mês. Os planos estão na página de preços.",
+      },
+    ],
+  },
+  {
+    slug: "erp-construtora",
+    adversario: "ERP de construtora",
+    headline: "ERP de construtora gerencia canteiro.",
+    headlineFim: "O Pilar gerencia o escritório que projeta.",
+    lede: "ERPs de construtora são feitos para quem vende obra: suprimentos em escala, medição de empreiteiro, contabilidade de obra. Escritório de projeto vende proposta por disciplina e precisa de outra coisa.",
+    seo: {
+      titulo: "ERP de construtora para escritório de projeto? Compare",
+      descricao:
+        "ERP de construtora ou software de gestão para escritório de projeto de engenharia e arquitetura? Compare proposta, disciplina, prazo, obra e preço.",
+      h1: "Pilar vs ERP de construtora para escritório de projeto",
+    },
+    linhas: [
+      {
+        criterio: "Unidade de trabalho",
+        pilar: "Projeto com disciplinas, responsáveis e entregas.",
+        alternativa: "Obra com orçamento, insumos e centros de custo.",
+      },
+      {
+        criterio: "Proposta de projeto",
+        pilar: "Por disciplina, no template do escritório, em DOCX.",
+        alternativa: "Orçamento de obra por composição de custos.",
+      },
+      {
+        criterio: "Obra por administração",
+        pilar: "Conta da obra com aporte, despesa com comprovante e a taxa do escritório.",
+        alternativa: "Pensado para a construtora que executa, não para quem administra pelo cliente.",
+      },
+      {
+        criterio: "Implantação",
+        pilar: "Entrada guiada, sem projeto de implantação longo.",
+        alternativa: "Costuma envolver parametrização e implantação dedicadas.",
+      },
+      {
+        criterio: "Preço",
+        pilar: "Por escritório, sem cobrança por usuário.",
+        alternativa: "É comum cobrar por usuário ou por módulo.",
+      },
+    ],
+    quandoMigrar: [
+      "Quando o escritório paga por módulos de suprimentos e contabilidade de obra que não usa.",
+      "Quando a proposta de projeto continua sendo feita fora do sistema.",
+      "Quando a equipe de projeto não usa o ERP porque ele não fala a língua de disciplina e entrega.",
+    ],
+    faq: [
+      {
+        pergunta: "O Pilar substitui o ERP de uma construtora?",
+        resposta:
+          "Não. Construtora e incorporadora com gestão de obra como núcleo do negócio estão fora do foco do Pilar. Ele é feito para escritórios de projeto de engenharia e arquitetura.",
+      },
+      {
+        pergunta: "E se o escritório também administra obra?",
+        resposta:
+          "Para obra por administração, o Pilar tem diário do canteiro, cotação de material e a conta da obra com prestação de contas ao cliente.",
+      },
+      {
+        pergunta: "O Pilar emite nota fiscal ou faz contabilidade?",
+        resposta: "Não é um sistema contábil. Ele organiza o financeiro do escritório e gera os relatórios do mês.",
       },
     ],
   },
