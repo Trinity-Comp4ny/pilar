@@ -64,10 +64,7 @@ export function useRecentItems() {
   const record = useCallback(
     (item: RecentItemInput) => {
       setRecentesState((atual) => {
-        const next = [{ ...item, ts: Date.now() }, ...atual.filter((x) => !mesmoItem(x, item))].slice(
-          0,
-          MAX_RECENTES
-        );
+        const next = [{ ...item, ts: Date.now() }, ...atual.filter((x) => !mesmoItem(x, item))].slice(0, MAX_RECENTES);
         gravar(keyRecentes, next);
         return next;
       });
@@ -79,9 +76,7 @@ export function useRecentItems() {
     (item: RecentItemInput) => {
       setFavoritosState((atual) => {
         const existe = atual.some((x) => mesmoItem(x, item));
-        const next = existe
-          ? atual.filter((x) => !mesmoItem(x, item))
-          : [{ ...item, ts: Date.now() }, ...atual];
+        const next = existe ? atual.filter((x) => !mesmoItem(x, item)) : [{ ...item, ts: Date.now() }, ...atual];
         gravar(keyFavoritos, next);
         return next;
       });

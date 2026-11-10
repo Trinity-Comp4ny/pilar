@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input";
 import { formatCurrencyInput } from "@/lib/currencyUtils";
 import { cn } from "@/lib/utils";
 
-export interface MoneyInputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "type" | "inputMode"> {
+export interface MoneyInputProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "value" | "onChange" | "type" | "inputMode"
+> {
   /**
    * Valor mascarado em reais (ex.: "R$ 1.234,56"). Guarde ESTA string no form e
    * converta com `parseCurrencyString` no submit (schema `valorCurrencyField`).
