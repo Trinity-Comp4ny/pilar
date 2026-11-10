@@ -11,6 +11,21 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-10 (mais tarde) · Conector da Pilar vai para os diretórios oficiais do Claude e do ChatGPT
+
+**Decisão:** o usuário final não vai colar URL de conector. O conector da Pilar será publicado no diretório de
+conectores do Claude e no diretório de apps do ChatGPT, para o usuário conectar pedindo na conversa ("conecte a
+Pilar") ou com um clique no diretório. Fica como próximo passo planejado, depois da fase 1 validada: tem revisão
+externa e exige domínio próprio, produção, política de privacidade do conector, página pública, material de listagem
+e conta de teste. Checklist completo na SPEC 151, "Próximos passos".
+
+Contexto: o ICP usa Claude e ChatGPT pelo app, não por configuração técnica; é assim que Notion, Canva e Slack
+distribuem os conectores deles.
+
+**Supera:** a URL colada à mão como forma de o cliente conectar (fica só para teste e piloto).
+
+---
+
 ## 2026-11-10 · A Pilar vira conector para ChatGPT e Claude (MCP), começando só leitura
 
 **Decisão:** a Pilar ganha um conector MCP para o cliente consultar os dados do escritório de dentro do ChatGPT,

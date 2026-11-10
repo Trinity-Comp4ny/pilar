@@ -1,7 +1,7 @@
 # SPEC 151: Conector da Pilar para ChatGPT e Claude (MCP + OAuth)
 
 **Data:** 2026-11-10
-**Status:** Em implementação (fase 1 entregue no código; ativação em staging/produção pendente, ver Runbook)
+**Status:** Em implementação (fase 1 no ar em staging desde 2026-11-10; produção e publicação nos diretórios pendentes, ver "Próximos passos")
 **Autor:** CEO + Claude
 **Módulo:** plataforma | ia
 
@@ -147,7 +147,57 @@ projeto; com o domínio, os dois apontam para ele.
    painel nas primeiras semanas (o registro dinâmico aceita qualquer cliente; quem decide é o
    usuário na tela de autorização).
 
-## Fase 2 (próximos passos)
+## Próximos passos
+
+Decisão do CEO (DECISOES.md, 2026-11-10): o usuário final não vai colar URL de conector. O
+caminho é **publicar a Pilar nos diretórios oficiais do Claude e do ChatGPT**, como fazem Notion,
+Canva e Slack. É um processo com revisão externa (dias a semanas), então fica planejado para
+depois da fase 1 validada em staging.
+
+### Como fica para o usuário depois de publicado
+
+- **Claude:** o usuário escreve "conecte a Pilar" (ou só pergunta algo do escritório). O Claude
+  sugere o conector do diretório, a instalação é um clique, a tela `/oauth/autorizar` abre, ele
+  permite, e a Pilar fica em todas as conversas.
+- **ChatGPT:** a Pilar aparece em chatgpt.com/apps; o usuário começa a frase com "Pilar, ..." ou
+  "@Pilar" e, na primeira vez, conecta em dois cliques mais a tela da Pilar.
+- O clique em "Permitir acesso" na tela da Pilar continua: é o consentimento do dono da conta,
+  e nenhum diretório pula essa etapa.
+
+### Checklist para publicar (fase 3)
+
+Já atendido pela fase 1: servidor remoto em HTTPS, OAuth 2.1 com tela de consentimento, e toda
+ferramenta com `title`, `readOnlyHint` e `destructiveHint` (o motivo de reprovação mais comum).
+
+- [ ] **Domínio próprio** `api.pilarsoft.com.br` (add-on de domínio do Supabase) e secrets
+      `MCP_PUBLIC_URL` / `MCP_AUTH_ISSUER`. Fazer ANTES de submeter: a URL fica gravada no
+      diretório e trocar depois obriga todo usuário a reconectar.
+- [ ] **Produção:** release staging→main com a fase 1 e OAuth 2.1 Server ligado no painel de
+      produção (mesma configuração de staging).
+- [ ] **Teste ponta a ponta** em staging e produção (critérios em aberto acima), incluindo o risco
+      do `PUT /auth/v1/user` com token OAuth.
+- [ ] **Política de privacidade** com seção do conector: que dados saem, para quem (OpenAI,
+      Anthropic), base legal LGPD, como revogar. Sem isso a submissão é reprovada.
+- [ ] **Página pública** do conector no site (o que faz, como conectar, como desconectar, suporte).
+- [ ] **Material da listagem:** nome, descrição curta e longa, ícone/logo, capturas de tela,
+      e-mail de suporte, categorias. Copy pela voz da marca (`brand/voice-tone.md`).
+- [ ] **Conta de teste para os revisores**, num escritório de exemplo só com dado fictício.
+- [ ] **Botão "Usar a Pilar no Claude / ChatGPT"** em Configurações (e no onboarding) que leva à
+      página do conector no diretório; até a aprovação, mostra a URL para copiar.
+- [ ] **"Apps conectados"** em Configurações (listar e revogar acessos), que os revisores esperam
+      ver como forma de desconectar.
+- [ ] **Submeter ao Claude:** portal em claude.ai/directory/manage (opção "MCP connector"),
+      seguindo `claude.com/docs/connectors/building/submission` e `.../review-criteria`.
+- [ ] **Submeter ao ChatGPT:** fluxo de submissão de apps na plataforma de desenvolvedores da
+      OpenAI (Apps SDK), seguindo as app submission guidelines vigentes.
+- [ ] Conferir nas páginas oficiais, no dia, os requisitos e quem pode submeter: os guias de
+      terceiros divergem e as regras mudam com frequência.
+
+**Atalho até a aprovação:** escritórios com Claude Team/Enterprise ou ChatGPT Business/Enterprise
+podem ter o conector adicionado uma vez pelo administrador da organização; cada pessoa só clica
+em "Conectar". Serve para o piloto com o design partner.
+
+### Evolução do conector (fase 2)
 
 - "Apps conectados" em Configurações: listar e revogar (`supabase.auth.oauth.listGrants` /
   `revokeGrant`).
