@@ -48,6 +48,22 @@ begin
     and nome like 'E2E %'
     and deleted_at is null;
 
+  -- Mesmo problema com obras e leads desde os planos v4 (20261130000000): assinatura
+  -- ativa passou a ter teto de obras (2/5/15) e de leads, e as obras "E2E ..." dos
+  -- specs de obra acumulavam um por push. Bateu o teto em 09/11 e os três specs que
+  -- criam obra falharam no toast "Obra criada", sem mensagem de limite no log.
+  update public.obras
+  set deleted_at = now()
+  where empresa_id = v_empresa_id
+    and nome like 'E2E %'
+    and deleted_at is null;
+
+  update public.leads
+  set deleted_at = now()
+  where empresa_id = v_empresa_id
+    and nome like 'E2E %'
+    and deleted_at is null;
+
   -- Tour e checklist de onboarding interceptam clique (ver scripts/seed-local.sql).
   update public.profiles
   set onboarding_state = onboarding_state || '{"dismissed": true}'::jsonb
