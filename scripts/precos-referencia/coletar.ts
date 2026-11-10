@@ -553,7 +553,7 @@ async function fontePortal(portal: PortalEstadual): Promise<FonteCub | string> {
       }
       if (candidatos.length > 5)
         return { tipo: "recusado", motivo: `portal: ${candidatos.length} PDFs do mês, ambíguo` };
-      const aceitas: { linhas: LinhaCub[]; url: string }[] = [];
+      const aceitas: { linhas: LinhaCub[]; url: string; texto: string }[] = [];
       const erros: string[] = [];
       let semRegime = 0;
       for (const c of candidatos) {
@@ -575,7 +575,7 @@ async function fontePortal(portal: PortalEstadual): Promise<FonteCub | string> {
           lidos.set(c.url, paginas);
         }
         const leitura = lerPdfCub(paginas, portal.uf, mes, regime, { exigirRegimeNoTexto: true });
-        if (!leitura.erro) aceitas.push({ linhas: leitura.linhas, url: c.url });
+        if (!leitura.erro) aceitas.push({ linhas: leitura.linhas, url: c.url, texto: c.texto });
         else if (c.semMarcaDeRegime && leitura.erro.includes("não diz que é com desoneração")) semRegime++;
         else {
           erros.push(`${c.url.split("/").pop()}: ${leitura.erro}`);
@@ -588,7 +588,9 @@ async function fontePortal(portal: PortalEstadual): Promise<FonteCub | string> {
         return { tipo: "indisponivel", motivo: "portal do Sinduscon sem a versão com desoneração deste mês" };
       }
       if (aceitas.length === 0) return { tipo: "recusado", motivo: `portal: ${erros.join("; ")}` };
-      const arquivo = decodeURIComponent(aceitas[0].url.split("/").pop() ?? "");
+      // Nome do arquivo; no Download Manager (`?wpdmdl=`) o nome não diz nada, vale o título do pacote.
+      const nome = decodeURIComponent(new URL(aceitas[0].url).pathname.split("/").filter(Boolean).pop() ?? "");
+      const arquivo = /\.pdf$/i.test(nome) ? nome : textoPuro(aceitas[0].texto) || nome;
       return { tipo: "ok", linhas: aceitas[0].linhas, fonte: `${new URL(aceitas[0].url).host}, ${arquivo}` };
     },
   };
