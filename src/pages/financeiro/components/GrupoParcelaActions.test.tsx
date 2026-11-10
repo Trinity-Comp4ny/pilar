@@ -139,7 +139,7 @@ describe("GrupoParcelaActions", () => {
     });
 
     async function escolherDia15(user: ReturnType<typeof userEvent.setup>) {
-      await user.click(screen.getByRole("button", { name: /Selecione/ }));
+      await user.click(screen.getByPlaceholderText("Selecione"));
       const dias = await screen.findAllByRole("button", { name: /15/ });
       await user.click(dias[0]);
     }

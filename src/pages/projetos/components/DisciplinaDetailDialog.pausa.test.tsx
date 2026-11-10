@@ -78,12 +78,12 @@ describe("DisciplinaDetailDialog, retomar disciplina", () => {
   it("mostra o prazo empurrado e não regrava a disciplina", () => {
     mutate.mockImplementation((_vars, opcoes) => opcoes.onSuccess(estadoRetomado));
     const onUpdateField = abrir();
-    expect(screen.getByText("03/11/2026")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("03/11/2026")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Retomar/ }));
 
     expect(onUpdateField).not.toHaveBeenCalled();
-    expect(screen.getByText("08/11/2026")).toBeInTheDocument();
-    expect(screen.queryByText("03/11/2026")).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue("08/11/2026")).toBeInTheDocument();
+    expect(screen.queryByDisplayValue("03/11/2026")).not.toBeInTheDocument();
   });
 });
