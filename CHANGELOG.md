@@ -14,6 +14,8 @@ Regras deste repo:
 
 ### Adicionado
 
+- Central de ajuda (`/ajuda`) com passo a passo das tarefas mais comuns, botão "?" no topo das telas que têm artigo e artigos na busca ⌘K. (SPEC 154)
+
 - Faixa de aviso no topo do app quando há instabilidade declarada ou manutenção programada, com o que é afetado e o link para a status page. Manutenções cadastradas em `/ultra-admin/incidentes`. (SPEC 153)
 
 - Novidades dentro do app: página Novidades, modal "O que mudou" quando o caminho de uma tarefa muda, aviso de versão nova com a contagem do que veio, e aviso no sino para quem pediu a mudança. Releases revisadas e publicadas em `/ultra-admin/releases`. (SPEC 152)
@@ -31,6 +33,8 @@ Regras deste repo:
 - Microcopy de botões padronizada em sentence case.
 
 ### Corrigido
+
+- Nova receita e Nova despesa na busca ⌘K abriam abas do Financeiro que não existem mais; agora abrem Lançamentos.
 
 - Toasts que não apareciam: os avisos disparados pelo sistema antigo de toast (não montado) foram migrados para o sistema ativo. (#194)
 - Mensagens de erro que vazavam texto técnico cru agora são sanitizadas e trazem o próximo passo, em Projetos, Clientes e Financeiro. (#204)
