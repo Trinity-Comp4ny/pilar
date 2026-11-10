@@ -100,6 +100,11 @@
     "dominio": "utilitario",
     "descricao": "Busca CEP sem login (checkout), BrasilAPI com fallback de provedor."
   },
+  "mcp": {
+    "dominio": "ia",
+    "descricao": "Conector MCP da Pilar para ChatGPT, Claude e outros clientes: OAuth 2.1 pelo Supabase Auth e seis ferramentas só de leitura (projetos, propostas, leads, clientes, resumo financeiro) com o token e a RLS do usuário (SPEC 151).",
+    "chamada_externa": "clientes MCP (ChatGPT, Claude) com token OAuth do usuário"
+  },
   "notificacoes-email-cron": {
     "dominio": "jobs",
     "descricao": "Cron: manda por e-mail o que está na central de notificações e ninguém leu."
