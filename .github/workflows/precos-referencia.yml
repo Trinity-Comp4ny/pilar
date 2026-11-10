@@ -1,0 +1,121 @@
+name: Preços de referência (CUB e SINAPI)
+
+# Estimativa de obra. Todo dia:
+# 1. `sinapi`: busca na Caixa o SINAPI do mês que falta no banco (ou que a Caixa retificou), lê com o
+#    mesmo leitor da importação manual e grava só os códigos do catálogo. Mês ainda não publicado não é
+#    falha. Arquivo fora do formato falha sem gravar nada e abre issue.
+# 2. `conferir`: abre issue quando o CUB (dia 10) ou o SINAPI (dia 15) do mês anterior não chegou.
+#    O CUB ainda é importado à mão em Ultra > Estimativa de obra; esta issue é o lembrete.
+# Runbook: docs/operations/ESTIMATIVA_IMPORTAR_PRECOS_MENSAL.md.
+#
+# Segredos por environment do GitHub (`precos-referencia-staging` e `precos-referencia-producao`):
+# SUPABASE_URL e SUPABASE_SERVICE_KEY. Sem eles o alvo é pulado com aviso.
+on:
+  schedule:
+    - cron: "23 11 * * *" # 08:23 em Brasília
+  workflow_dispatch:
+    inputs:
+      mes:
+        description: "Forçar um mês do SINAPI (AAAA-MM). Vazio = meses que faltam."
+        required: false
+        default: ""
+      dry_run:
+        description: "Ler e conferir sem gravar"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  issues: write # notify-cron-failure
+
+concurrency:
+  group: precos-referencia
+  cancel-in-progress: false
+
+jobs:
+  sinapi:
+    name: SINAPI (${{ matrix.alvo }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        alvo: [staging, producao]
+    environment: precos-referencia-${{ matrix.alvo }}
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      SINAPI_MES: ${{ inputs.mes }}
+      DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+      - name: Coletar
+        id: coletar
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_KEY" ]; then
+            echo "::warning::Environment precos-referencia-${{ matrix.alvo }} sem SUPABASE_URL/SUPABASE_SERVICE_KEY: pulado."
+            exit 0
+          fi
+          deno run --config scripts/precos-referencia/deno.json \
+            --allow-net --allow-env --allow-read --allow-write \
+            scripts/precos-referencia/coletar.ts sinapi
+      - name: Notificar falha
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: SINAPI automático (${{ matrix.alvo }})
+          token: ${{ github.token }}
+      - name: Fechar a issue de falha (voltou a passar)
+        if: success() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: SINAPI automático (${{ matrix.alvo }})
+          token: ${{ github.token }}
+          status: success
+
+  conferir:
+    name: Conferir atraso (${{ matrix.alvo }})
+    needs: [sinapi]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        alvo: [staging, producao]
+    environment: precos-referencia-${{ matrix.alvo }}
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+      - name: Conferir
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_KEY" ]; then
+            echo "::warning::Environment precos-referencia-${{ matrix.alvo }} sem segredos: pulado."
+            exit 0
+          fi
+          deno run --config scripts/precos-referencia/deno.json \
+            --allow-net --allow-env --allow-read --allow-write \
+            scripts/precos-referencia/coletar.ts conferir
+      - name: Notificar atraso
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: CUB/SINAPI do mês (${{ matrix.alvo }})
+          title-prefix: Preço de referência atrasado
+          token: ${{ github.token }}
+      - name: Fechar a issue de atraso (em dia)
+        if: success() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: CUB/SINAPI do mês (${{ matrix.alvo }})
+          title-prefix: Preço de referência atrasado
+          token: ${{ github.token }}
+          status: success
