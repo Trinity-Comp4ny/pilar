@@ -147,6 +147,7 @@
 - [metrics](./themes/metrics.md) — métrica norte, Levels, benchmarks (NRR/CLTV-CAC/Rule of 40)
 - [positioning](./themes/positioning.md) — Dunford, "AI-powered não é posição", alternativa = Excel+chute
 - [fundraising](./themes/fundraising.md) — seed/SAFE, default alive, deck/Why Now, ramen profitable
+- [profissionalizacao-saas-referencias](./themes/profissionalizacao-saas-referencias.md) — Linear, GitHub, Intercom Fin, Canny, Notion, Omie, Procore: changelog in-app, NPS, bug zero, suporte com IA, trust center; backlog adotado pelo Pilar
 
 ## Notas temáticas mais relevantes pro Pilar
 
