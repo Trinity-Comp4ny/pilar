@@ -36,12 +36,10 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(req.url);
 
-  // Não interceptar chamadas de API/Supabase/analytics
-  if (
-    url.hostname.includes("supabase.co") ||
-    url.hostname.includes("googletagmanager.com") ||
-    url.hostname.includes("google-analytics.com")
-  ) {
+  // Não interceptar chamadas de API/Supabase/analytics. Compara o domínio inteiro
+  // (ou subdomínio dele): `includes` aceitaria "supabase.co.qualquer.com".
+  const FORA_DO_CACHE = ["supabase.co", "googletagmanager.com", "google-analytics.com"];
+  if (FORA_DO_CACHE.some((d) => url.hostname === d || url.hostname.endsWith(`.${d}`))) {
     return;
   }
 
