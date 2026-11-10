@@ -112,3 +112,19 @@ export function abrirBanco(url: string) {
 }
 
 export type Banco = ReturnType<typeof abrirBanco>;
+
+/**
+ * Banco de mentira para a sondagem: nada gravado, nada lido além dos parâmetros dados. Serve para conferir as
+ * fontes reais (Caixa, CBIC, portais) sem credencial, por exemplo no PR.
+ */
+export function bancoDeSondagem(parametros: unknown, ultimoSinapi: MesBase): Banco {
+  return {
+    ultimoMes: async (tabela: Tabela) => (tabela === "sinapi_precos_insumo" ? ultimoSinapi : null),
+    parametros: async () => parametros,
+    fonteSinapi: async () => null,
+    gravarSinapi: async () => {},
+    cubDesde: async () => [],
+    gravarCub: async () => {},
+    fechar: async () => {},
+  };
+}

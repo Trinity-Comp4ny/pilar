@@ -10,6 +10,7 @@
 // `cub`: para cada UF e cada mês e regime que faltam, tenta as fontes da UF em ordem (portal da CBIC, depois o
 // portal do Sinduscon; SP e RS só o portal próprio), lê o PDF com as conferências de `cub.ts` e grava. A primeira
 // fonte que passa nas conferências vence. UF em que nenhuma passa não grava nada e faz o job falhar no fim.
+// `sondar`: lê as fontes reais e roda as conferências sem banco e sem gravar (roda no PR).
 // `conferir`: falha quando o CUB ou o SINAPI do mês anterior não chegou no prazo, para abrir a issue do cron.
 //
 // Variáveis: SUPABASE_DB_URL (obrigatória, a mesma do backup); DRY_RUN=1 lê e confere sem gravar;
@@ -59,10 +60,10 @@ import {
   type LinkPdf,
   type PortalEstadual,
 } from "./portais.ts";
-import { abrirBanco, type Banco, type CubGravado } from "./banco.ts";
+import { abrirBanco, bancoDeSondagem, type Banco, type CubGravado } from "./banco.ts";
 
 const env = (nome: string) => Deno.env.get(nome)?.trim() ?? "";
-const dryRun = env("DRY_RUN") === "1" || env("DRY_RUN") === "true";
+let dryRun = env("DRY_RUN") === "1" || env("DRY_RUN") === "true";
 
 function resumo(linha: string): void {
   console.warn(linha);
@@ -502,10 +503,62 @@ async function conferir(db: Banco): Promise<void> {
   }
 }
 
+// ─── Sondagem (sem banco) ──────────────────────────────────────────────────
+
+/** Parâmetros do motor como as migrations semeiam: o catálogo do SINAPI sem precisar do banco. */
+function parametrosDasMigrations(): unknown {
+  const pasta = new URL("../../supabase/migrations/", import.meta.url);
+  const ler = (arquivo: string) => {
+    const sql = Deno.readTextFileSync(new URL(arquivo, pasta));
+    const json = /\$json\$([\s\S]*?)\$json\$/.exec(sql)?.[1];
+    if (!json) throw new Error(`JSON de parâmetros não encontrado em ${arquivo}`);
+    return JSON.parse(json) as Record<string, unknown>;
+  };
+  const base = ler("20261114000100_estimativa_obra.sql");
+  const { adicionais: itens, ...outros } = ler("20261117000100_estimativa_itens_catalogo.sql");
+  return {
+    ...base,
+    ...outros,
+    natureza_base: ler("20261116000200_estimativa_natureza_cub.sql"),
+    adicionais: {
+      ...(base.adicionais as Record<string, unknown>),
+      ...ler("20261116000100_estimativa_terreno_inclinado.sql"),
+      ...(itens as Record<string, unknown>),
+    },
+  };
+}
+
+/**
+ * Lê as fontes reais e roda todas as conferências sem banco e sem gravar. Não falha por causa de site fora do
+ * ar: o resultado é o resumo (roda no PR que mexe no coletor, para ver o comportamento contra os sites de verdade).
+ */
+async function sondar(): Promise<void> {
+  dryRun = true;
+  const hoje = new Date();
+  const tresAtras = new Date(Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth() - 3, 1)).toISOString().slice(0, 10);
+  const db = bancoDeSondagem(parametrosDasMigrations(), tresAtras);
+  resumo("## Sondagem das fontes reais (nada é gravado)");
+  for (const [nome, etapa] of [
+    ["SINAPI", coletarSinapi],
+    ["CUB", coletarCub],
+  ] as const) {
+    try {
+      await etapa(db);
+    } catch (e) {
+      resumo(`- ${nome}: ${(e as Error).message}`);
+    }
+  }
+}
+
 const comandos: Record<string, (db: Banco) => Promise<void>> = { sinapi: coletarSinapi, cub: coletarCub, conferir };
-const comando = comandos[Deno.args[0] ?? ""];
+const nome = Deno.args[0] ?? "";
+if (nome === "sondar") {
+  await sondar();
+  Deno.exit(0);
+}
+const comando = comandos[nome];
 if (!comando) {
-  console.error("Uso: coletar.ts sinapi | cub | conferir");
+  console.error("Uso: coletar.ts sinapi | cub | conferir | sondar");
   Deno.exit(2);
 }
 let db: Banco | null = null;
