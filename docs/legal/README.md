@@ -2,13 +2,13 @@
 
 Documentos legais e de privacidade. ← [voltar ao índice](../README.md)
 
-| Documento                                    | Status                                      | O que é                                                                                                    |
-| -------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| [PRIVACY_POLICY.md](./PRIVACY_POLICY.md)     | ⚠️ Superado pela v2.0 ao vivo (2026-11-10)  | Rascunho antigo. A política publicada e completa é `apps/marketing/src/pages/Privacidade.tsx` (v2.0)       |
-| [TERMS_OF_SERVICE.md](./TERMS_OF_SERVICE.md) | ✅ Publicado em `/termos` (2026-08-18)      | `src/pages/Termos.tsx`; ainda sem revisão de advogado, ver risco abaixo                                    |
-| [COOKIE_POLICY.md](./COOKIE_POLICY.md)       | 🚧 Rascunho; tabela de cookies já publicada | A seção 7 de `/privacidade` (v2.0) traz a tabela de cookies; este texto longo ainda não tem página própria |
-| [SUBPROCESSADORES.md](./SUBPROCESSADORES.md) | ✅ v1, 2026-09-08                           | Lista pública dos fornecedores que processam dado pessoal em nome do Pilar                                 |
-| [RIPD.md](./RIPD.md)                         | ✅ v1, 2026-10-13                           | Relatório de Impacto à Proteção de Dados: tratamento, riscos, controles e plano dos riscos residuais       |
+| Documento                                    | Status                                      | O que é                                                                                                                |
+| -------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| [PRIVACY_POLICY.md](./PRIVACY_POLICY.md)     | ⚠️ Superado pela v2.0 ao vivo (2026-11-10)  | Rascunho antigo. A política publicada e completa é `apps/marketing/src/pages/Privacidade.tsx` (v2.0)                   |
+| [TERMS_OF_SERVICE.md](./TERMS_OF_SERVICE.md) | ⚠️ Superado pela v2.0 ao vivo (2026-11-10)  | Rascunho antigo. O Termos publicado (v2.0, com o Anexo de Tratamento de Dados) é `apps/marketing/src/pages/Termos.tsx` |
+| [COOKIE_POLICY.md](./COOKIE_POLICY.md)       | 🚧 Rascunho; tabela de cookies já publicada | A seção 7 de `/privacidade` (v2.0) traz a tabela de cookies; este texto longo ainda não tem página própria             |
+| [SUBPROCESSADORES.md](./SUBPROCESSADORES.md) | ✅ v1, 2026-09-08                           | Lista pública dos fornecedores que processam dado pessoal em nome do Pilar                                             |
+| [RIPD.md](./RIPD.md)                         | ✅ v1, 2026-10-13                           | Relatório de Impacto à Proteção de Dados: tratamento, riscos, controles e plano dos riscos residuais                   |
 
 ## Situação da identidade legal (CNPJ próprio pendente)
 
@@ -50,10 +50,19 @@ Por isso:
 - Google Tag Manager do app só carrega com consentimento de análise (`src/lib/gtm.ts`); antes
   carregava em toda página pelo `index.html`. Google Fonts trocado por Inter autohospedada.
 - Aviso do áudio do Pilar Campo passa a dizer que a transcrição é feita por IA (Google Gemini).
+- `/termos` v2.0 (vale para contas antigas a partir de 2026-12-10, cumprindo o aviso de 30 dias da
+  v1): agentes de IA e responsabilidade técnica (ART/RRT), créditos de IA (cota do plano expira no
+  ciclo, comprado não expira, desistência em 7 dias se não usado), acesso do suporte, teto de
+  responsabilidade (12 meses pagos), reajuste com 30 dias, foro do domicílio do Cliente e o Anexo
+  de Tratamento de Dados Pessoais (substitui o `DPA_TEMPLATE.md` como DPA padrão). `TERMS_VERSION`
+  passou a 2.0.
+- Portal do cliente, link de cotação e Pilar Campo mostram quem é o controlador e o link da política
+  (`src/components/legal/AvisoPrivacidadeConvidado.tsx`).
+- Obrigações novas que os Termos v2 criam e precisam de processo: avisar por e-mail os
+  administradores 30 dias antes de reajuste, de mudança material e de fornecedor novo (Anexo A5), e
+  avisar incidente ao Cliente em até 2 dias úteis (Anexo A8).
 - Continua pendente (decisão ou contratação, não código): CNPJ, nome do encarregado, DPAs dos
-  fornecedores com cláusulas-padrão da ANPD (Res. 19/2024), Termos v2 (IA e responsabilidade
-  técnica, créditos de IA, acesso do suporte, teto de responsabilidade, foro) com o DPA de
-  clientes anexo, avisos no portal do cliente, cotação e Campo, e revisão por advogado.
+  fornecedores com cláusulas-padrão da ANPD (Res. 19/2024) e revisão por advogado.
 
 O **mecanismo técnico de consentimento de cookies já está ativo em produção**,
 independente do CNPJ. Ver [SPEC 048](../specs/048-consentimento-cookies.md) e
