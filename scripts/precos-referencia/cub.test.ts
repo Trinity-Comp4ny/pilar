@@ -3,6 +3,7 @@ import {
   cookiesDaResposta,
   escolherSinduscon,
   formularioCub,
+  citaSinduscon,
   igualAoAnterior,
   juntarCodigos,
   interpretarTextoCub,
@@ -320,6 +321,8 @@ describe("textoPuro", () => {
     expect(textoPuro("<<b>script>alert(1)<</b>/script>")).not.toMatch(/[<>]/);
     expect(textoPuro("a <img src=x onerror=1")).toBe("a img src=x onerror=1");
     expect(textoPuro("x".repeat(300))).toHaveLength(200);
+    expect(textoPuro("CUB &#8211; Outubro &amp; mais")).toBe("CUB – Outubro & mais");
+    expect(textoPuro("&#60;script&#62;alert(1)&#60;/script&#62;")).not.toMatch(/[<>]/);
   });
 });
 
@@ -485,5 +488,21 @@ describe("PDF real do Sinduscon-RS (out/2026, texto do diagnóstico)", () => {
     expect(juntarCodigos("Baixo R 1-B 2.593,86 Normal CSL 16-N 3.989,73 GI 1")).toBe(
       "Baixo R1-B 2.593,86 Normal CSL16-N 3.989,73 GI 1"
     );
+  });
+});
+
+describe("citaSinduscon", () => {
+  const pagina = (t: string) => [
+    [
+      { texto: "VALORES EM R$/m²", x: 0, y: 10 },
+      { texto: t, x: 0, y: 0 },
+    ],
+  ];
+  it("confere o Sinduscon pedido e recusa o PDF de outro estado", () => {
+    expect(citaSinduscon(pagina("Sinduscon-BA Data de emissão: 10/11/2026"), "Sinduscon-BA")).toBe(true);
+    expect(citaSinduscon(pagina("Sinduscon-MT Data de emissão: 10/11/2026 15:07"), "Sinduscon-BA")).toBe(false);
+    expect(citaSinduscon(pagina("SINDUSCON JOAO PESSOA"), "Sinduscon-João Pessoa")).toBe(true);
+    expect(citaSinduscon(pagina("sem rodapé"), "Sinduscon-BA")).toBe(false);
+    expect(citaSinduscon(pagina("Sinduscon Paraná"), "Sinduscon-PA")).toBe(false);
   });
 });
