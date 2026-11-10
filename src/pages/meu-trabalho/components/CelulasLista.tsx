@@ -142,7 +142,7 @@ export function PrazoCell({ prazo, atrasado, editavel, onChange }: PrazoCellProp
     <span
       className={cn(
         "inline-flex items-center gap-1 text-xs text-muted-foreground",
-        atrasado && "font-medium text-destructive"
+        atrasado && "font-medium text-negative-strong"
       )}
     >
       <CalendarPlus className={cn("h-3 w-3 shrink-0", atrasado ? "text-destructive" : "text-muted-foreground/50")} />
