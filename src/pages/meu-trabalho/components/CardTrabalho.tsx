@@ -88,7 +88,9 @@ export function CardTrabalho({ item, onAbrir, onPrioridade, onExcluir, isDraggin
               </span>
             )}
             {prazo && (
-              <span className={cn("inline-flex items-center gap-1", prazo.atrasado && "font-medium text-negative-strong")}>
+              <span
+                className={cn("inline-flex items-center gap-1", prazo.atrasado && "font-medium text-negative-strong")}
+              >
                 <CalendarDays className="h-3 w-3" />
                 {prazo.texto}
               </span>
