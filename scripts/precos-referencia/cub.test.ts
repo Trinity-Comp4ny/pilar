@@ -3,12 +3,14 @@ import {
   cookiesDaResposta,
   escolherSinduscon,
   formularioCub,
+  igualAoAnterior,
   interpretarTextoCub,
   lerCsrf,
   lerFixos,
   lerOpcoesSinduscon,
   lerPdfCub,
   linhasDaPagina,
+  paraGravar,
   saltoSuspeito,
   TOTAL_CODIGOS,
   type ItemDeTexto,
@@ -251,5 +253,61 @@ describe("formulário da CBIC", () => {
     expect(cookiesDaResposta(["csrftoken=a; Path=/", "sessionid=b; HttpOnly", "lixo"])).toBe(
       "csrftoken=a; sessionid=b"
     );
+  });
+});
+
+describe("portal estadual", () => {
+  const itens = (linhas: string[]) => linhas.map((texto, i) => ({ texto, x: 10, y: 800 - i * 12 }));
+  const comRegime = (regime: string) => [`CUB/m² Outubro/2026 - ${regime}`, ...empilhadas().slice(2)];
+
+  it("exige o regime escrito quando o pedido é com desoneração", () => {
+    const semMarca = ["CUB Outubro/2026", ...empilhadas().slice(2)];
+    expect(interpretarTextoCub(semMarca, "SP", "2026-10-01", "desonerado", { exigirRegimeNoTexto: true }).erro).toMatch(
+      /não diz que é com desoneração/
+    );
+    expect(interpretarTextoCub(semMarca, "SP", "2026-10-01", "onerado", { exigirRegimeNoTexto: true }).erro).toBeNull();
+    expect(
+      interpretarTextoCub(comRegime("CUB DESONERADO"), "SP", "2026-10-01", "desonerado", { exigirRegimeNoTexto: true })
+        .erro
+    ).toBeNull();
+  });
+
+  it("PDF com os dois regimes, um por página: lê a página do regime pedido", () => {
+    const dobro = (l: string) =>
+      l.replace(/(\d{1,3}(?:\.\d{3})*,\d{2})/, (v) => fmt(Number(v.replace(/\./g, "").replace(",", ".")) * 0.95));
+    const paginas = [itens(comRegime("SEM DESONERAÇÃO")), itens(comRegime("COM DESONERAÇÃO").map(dobro))];
+    const on = lerPdfCub(paginas, "RS", "2026-10-01", "onerado", { exigirRegimeNoTexto: true });
+    const des = lerPdfCub(paginas, "RS", "2026-10-01", "desonerado", { exigirRegimeNoTexto: true });
+    expect(on.erro).toBeNull();
+    expect(des.erro).toBeNull();
+    expect(on.linhas.find((l) => l.subtipo === "R1" && l.padrao === "baixo")?.valor_m2).toBe(2100);
+    expect(des.linhas.find((l) => l.subtipo === "R1" && l.padrao === "baixo")?.valor_m2).toBe(1995);
+  });
+
+  it("duas páginas que servem ao mesmo regime com valores diferentes: recusa", () => {
+    const outra = comRegime("SEM DESONERAÇÃO").map((l) => l.replace("2.100,00", "2.150,00"));
+    const r = lerPdfCub([itens(comRegime("SEM DESONERAÇÃO")), itens(outra)], "RS", "2026-10-01", "onerado");
+    expect(r.erro).toMatch(/Mais de uma página/);
+  });
+});
+
+describe("antes de gravar", () => {
+  const novas = interpretarTextoCub(empilhadas(), "GO", "2026-10-01", "onerado").linhas;
+
+  it("arquivo repetido do mês anterior é detectado", () => {
+    expect(igualAoAnterior(novas, novas)).toBe(true);
+    expect(
+      igualAoAnterior(
+        novas,
+        novas.map((l) => ({ ...l, valor_m2: l.valor_m2 + 1 }))
+      )
+    ).toBe(false);
+    expect(igualAoAnterior(novas, [])).toBe(false);
+  });
+
+  it("RP1Q é conferido mas não vai para o banco", () => {
+    expect(novas.some((l) => l.subtipo === "RP1Q")).toBe(true);
+    expect(paraGravar(novas)).toHaveLength(18);
+    expect(paraGravar(novas).some((l) => l.subtipo === "RP1Q")).toBe(false);
   });
 });

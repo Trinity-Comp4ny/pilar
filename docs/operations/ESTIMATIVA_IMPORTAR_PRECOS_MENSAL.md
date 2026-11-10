@@ -6,32 +6,62 @@ Os dois preços valem para todas as empresas. Específico do módulo: [SPEC 136]
 
 ## Automação (workflow `precos-referencia.yml`)
 
-Roda todo dia às 08:23 (Brasília), em staging e em produção:
+Roda todo dia às 08:23 (Brasília), em staging e em produção. Código em `scripts/precos-referencia/`.
 
-- **SINAPI entra sozinho.** O robô procura na página do SINAPI da Caixa o zip do mês que falta no banco (sem link na
-  página, tenta o endereço direto `Downloads/sinapi-relatorios-mensais/SINAPI-AAAA-MM-formato-xlsx.zip`), tira a
-  planilha `SINAPI_Referência_AAAA_MM.xlsx` e passa pelo mesmo leitor da aba SINAPI. Mês ainda não publicado não é
-  falha: ele tenta de novo no dia seguinte. Quando a Caixa publica uma retificação (`_Retificacao01.zip`) de um mês
-  já gravado, o robô lê de novo e corrige. A `fonte` das linhas diz `coleta automática` e o nome do zip.
-- **Formato fora do esperado não grava nada** e abre a issue "Cron falhando: SINAPI automático (alvo)". Aí a
-  importação manual abaixo continua valendo.
-- **Atraso abre issue.** Sem o CUB do mês anterior a partir do dia 10, ou sem o SINAPI a partir do dia 15, abre
-  "Preço de referência atrasado: CUB/SINAPI do mês (alvo)". A issue fecha sozinha quando o mês chega.
-- **CUB entra sozinho nas UFs do portal da CBIC.** Para cada UF, o robô abre `cub.org.br/cub-m2-estadual/{UF}/`,
-  escolhe o Sinduscon da UF e pede o PDF da tabela do mês nos dois regimes. O PDF só é gravado quando traz os 19
-  códigos da NBR 12721, cada padrão acima do anterior (alto > normal > baixo), o mês e o regime pedidos, valores
-  entre R$ 500 e R$ 30.000 por m² e variação de até 15% contra o mês anterior. Falhou uma conferência: aquela UF
-  não grava nada, as outras seguem, e abre "Cron falhando: CUB automático (alvo)" com o motivo.
-- **UFs que seguem manuais:** as que não estão no portal da CBIC (SP e RS têm portal próprio; AP, TO, AL e MS
-  aparecem fora ou intermitentes) e as com mais de um Sinduscon sem um chamado "Sinduscon-UF". O resumo do job lista
-  quais foram e por quê. Para fixar o Sinduscon de uma UF, crie a variável de repositório `CUB_SINDUSCON`
-  (ex. `MG=12,PR=3`, com o número que o resumo mostra).
+**Configuração:** nenhuma nova. O robô grava pelo `SUPABASE_DB_URL` que os environments `Staging` e
+`production-automation` do GitHub já têm (o mesmo do backup noturno). Ele só toca `cub_valores`,
+`sinapi_precos_insumo` (escrita) e `estimativa_parametros` (leitura), e cada mês de cada UF entra numa transação.
 
-Configuração, uma vez: criar no GitHub os environments `precos-referencia-staging` e `precos-referencia-producao`, cada
-um com `SUPABASE_URL` e `SUPABASE_SERVICE_KEY` do projeto. Sem eles o alvo é pulado com aviso. Para testar, rode o
-workflow à mão (Actions > Preços de referência > Run workflow): por padrão ele só lê e mostra o resumo, sem gravar.
-O campo "mês" força um mês (AAAA-MM) e "cub_ufs" limita as UFs do CUB. Rodar local (troque `sinapi` por `cub`):
-`SUPABASE_URL=... SUPABASE_SERVICE_KEY=... DRY_RUN=1 deno run --config scripts/precos-referencia/deno.json -A scripts/precos-referencia/coletar.ts sinapi`.
+### SINAPI
+
+O robô procura na página do SINAPI da Caixa o zip do mês que falta no banco (sem link na página, tenta o endereço
+direto `Downloads/sinapi-relatorios-mensais/SINAPI-AAAA-MM-formato-xlsx.zip`), tira a planilha
+`SINAPI_Referência_AAAA_MM.xlsx` e passa pelo mesmo leitor da aba SINAPI. Mês ainda não publicado não é falha.
+Retificação (`_Retificacao01.zip`) de mês já gravado é lida de novo. Formato fora do esperado não grava nada e abre
+"Cron falhando: SINAPI automático (alvo)"; aí vale a importação manual abaixo.
+
+### CUB: de onde vem cada UF
+
+| Fonte                                                       | UFs                                                                                                                             | Como                                                                            |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Portal da CBIC (`cub.org.br/cub-m2-estadual/{UF}/`)         | as que estão nele (AC, AM, BA, CE, DF, ES, GO, MA, MG, MT, PA, PB, PE, PI, PR, RJ, RN, RO, RR, SC, SE; AL e MS quando aparecem) | formulário do mês e regime, resposta em PDF                                     |
+| Portal do SindusCon-SP (`sindusconsp.com.br/servicos/cub/`) | SP                                                                                                                              | PDF do mês na página do CUB ou na listagem do WordPress                         |
+| Portal do Sinduscon-RS (`sinduscon-rs.com.br`)              | RS                                                                                                                              | PDF "Preços e custos da construção", publicado no mês seguinte ao de referência |
+| Portal do Sinduscon-MS (`sindusconms.com.br/cub/`)          | MS, quando a CBIC não tem o mês                                                                                                 | PDF do mês                                                                      |
+| Variável `CUB_PORTAIS`                                      | qualquer UF (TO, AL, AP...)                                                                                                     | o mesmo leitor de portal, sem deploy                                            |
+
+Em cada UF, a primeira fonte que passa nas conferências vence. **Nenhum PDF é gravado sem passar em todas:** os 19
+códigos da NBR 12721 (R1, PP-4, R8, R16, PIS, CAL-8, CSL-8, CSL-16, RP1Q, GI) nos padrões certos; padrão alto acima
+do normal e normal acima do baixo; o mês pedido citado no PDF; o regime certo (fora da CBIC, "com desoneração"
+precisa estar escrito no PDF); valores entre R$ 500 e R$ 30.000 por m²; variação de até 15% contra o mês anterior;
+e não idêntico ao mês anterior (arquivo repetido). O PDF é lido por linha e por coluna (tabelas lado a lado) e, se
+trouxer os dois regimes, página por página; leituras que discordam são recusadas. O RP1Q é conferido mas não é
+gravado (o motor não usa e o banco não aceita esse código).
+
+Recusa não grava nada daquela UF e mês, as outras seguem, e abre "Cron falhando: CUB automático (alvo)" com o motivo.
+O resumo do job lista as UFs sem fonte automática; elas seguem na importação manual abaixo.
+
+**Ajustes sem deploy** (Settings > Secrets and variables > Actions > Variables):
+
+- `CUB_SINDUSCON`: UF com mais de um Sinduscon no portal da CBIC e nenhum chamado "Sinduscon-UF", ex. `MG=12,PR=3`
+  (o número sai no resumo do job).
+- `CUB_PORTAIS`: portal estadual novo ou corrigido, ex. `TO=https://site/cub/;AL=https://site/cub/|publicacao`
+  (`|publicacao` quando o nome do arquivo cita o mês de publicação, não o de referência).
+
+### Atraso
+
+Sem o CUB do mês anterior a partir do dia 10, ou sem o SINAPI a partir do dia 15, abre "Preço de referência
+atrasado: CUB/SINAPI do mês (alvo)". Fecha sozinha quando o mês chega.
+
+### Testar e rodar à mão
+
+Actions > Preços de referência > Run workflow: por padrão só lê e mostra o resumo, sem gravar. "mês" força um mês
+(AAAA-MM), "cub_ufs" limita as UFs (ex. `SP,RS`). Local, com o banco de staging:
+
+```bash
+SUPABASE_DB_URL=... DRY_RUN=1 CUB_UFS=SP deno run --config scripts/precos-referencia/deno.json -A \
+  scripts/precos-referencia/coletar.ts cub   # ou sinapi, ou conferir
+```
 
 ## CUB (todo dia 5, por estado)
 

@@ -216,6 +216,11 @@ const MESES = [
   "DEZEMBRO",
 ];
 
+export interface OpcoesLeitura {
+  /** O regime precisa estar escrito no PDF (portal estadual, onde o regime não vem do formulário). */
+  exigirRegimeNoTexto?: boolean;
+}
+
 export interface LeituraCub {
   linhas: LinhaCub[];
   erro: string | null;
@@ -235,7 +240,13 @@ function mesesCitados(texto: string): Set<string> {
  * Lê as linhas de texto do PDF de uma UF, mês e regime. Pareia cada código com o primeiro valor em reais que
  * vem depois dele (a variação, com %, é pulada) e dá o padrão pela ordem de ocorrência.
  */
-export function interpretarTextoCub(linhas: string[], uf: Uf, mes: string, regime: Regime): LeituraCub {
+export function interpretarTextoCub(
+  linhas: string[],
+  uf: Uf,
+  mes: string,
+  regime: Regime,
+  { exigirRegimeNoTexto = false }: OpcoesLeitura = {}
+): LeituraCub {
   const falha = (erro: string): LeituraCub => ({ linhas: [], erro });
   const texto = tirarAcento(linhas.join("\n")).toUpperCase();
 
@@ -244,10 +255,15 @@ export function interpretarTextoCub(linhas: string[], uf: Uf, mes: string, regim
     const outros = [...citados].sort().join(", ");
     return falha(`O PDF não é de ${mes.slice(5, 7)}/${mes.slice(0, 4)}${outros ? ` (cita ${outros})` : ""}.`);
   }
-  const com = /COM\s+DESONERACAO/.test(texto);
-  const sem = /SEM\s+DESONERACAO/.test(texto);
+  const com = /COM\s+DESONERA|(?<!NAO\s)DESONERADO/.test(texto);
+  const sem = /SEM\s+DESONERA|NAO\s+DESONERADO/.test(texto);
   if ((regime === "desonerado" && sem && !com) || (regime === "onerado" && com && !sem)) {
     return falha(`O PDF é do outro regime (pedido ${regime === "desonerado" ? "com" : "sem"} desoneração).`);
+  }
+  // Fora do formulário da CBIC o regime não vem do pedido: o desonerado precisa estar escrito no PDF. O onerado
+  // é a série clássica, sem marca.
+  if (exigirRegimeNoTexto && regime === "desonerado" && !com) {
+    return falha("O PDF não diz que é com desoneração.");
   }
 
   const tokens = linhas.flatMap((l) => l.split(/\s+/).filter(Boolean));
@@ -335,33 +351,75 @@ export function saltoSuspeito(
   return null;
 }
 
-/**
- * Lê o PDF (itens de texto por página) das duas formas, por linha e por coluna, e fica com a que passa nas
- * conferências. Se as duas passam com valores diferentes, o layout é ambíguo e nada é aceito.
- */
-export function lerPdfCub(paginas: ItemDeTexto[][], uf: Uf, mes: string, regime: Regime): LeituraCub {
+const assinatura = (l: LeituraCub) =>
+  l.linhas
+    .map((x) => `${x.subtipo}|${x.padrao}|${x.valor_m2}`)
+    .sort()
+    .join(";");
+
+/** Lê um conjunto de páginas por linha e por coluna e fica com a leitura que passa (as duas têm de concordar). */
+function lerPaginas(paginas: ItemDeTexto[][], uf: Uf, mes: string, regime: Regime, opcoes: OpcoesLeitura): LeituraCub {
   const porLinha = interpretarTextoCub(
     paginas.flatMap((p) => linhasDaPagina(p)),
     uf,
     mes,
-    regime
+    regime,
+    opcoes
   );
   const porColuna = interpretarTextoCub(
     paginas.flatMap((p) => linhasPorColuna(p)),
     uf,
     mes,
-    regime
+    regime,
+    opcoes
   );
   if (porLinha.erro && porColuna.erro) return porLinha;
   if (porLinha.erro) return porColuna;
   if (porColuna.erro) return porLinha;
-  const assinatura = (l: LeituraCub) =>
-    l.linhas
-      .map((x) => `${x.subtipo}|${x.padrao}|${x.valor_m2}`)
-      .sort()
-      .join(";");
   if (assinatura(porLinha) !== assinatura(porColuna)) {
     return { linhas: [], erro: "O PDF admite duas leituras diferentes: layout ambíguo, nada aceito." };
   }
   return porLinha;
+}
+
+/**
+ * Lê o PDF (itens de texto por página) por linha e por coluna e fica com a leitura que passa nas conferências.
+ * Se o documento inteiro não passa (ex.: os dois regimes, um por página), tenta página por página e aceita só
+ * se exatamente uma página passar.
+ */
+export function lerPdfCub(
+  paginas: ItemDeTexto[][],
+  uf: Uf,
+  mes: string,
+  regime: Regime,
+  opcoes: OpcoesLeitura = {}
+): LeituraCub {
+  const inteiro = lerPaginas(paginas, uf, mes, regime, opcoes);
+  if (!inteiro.erro || paginas.length < 2) return inteiro;
+  const porPagina = paginas.map((p) => lerPaginas([p], uf, mes, regime, opcoes)).filter((l) => !l.erro);
+  const distintas = new Set(porPagina.map(assinatura));
+  if (distintas.size === 1) return porPagina[0];
+  if (distintas.size > 1) {
+    return { linhas: [], erro: "Mais de uma página do PDF serve para o mesmo regime: layout ambíguo, nada aceito." };
+  }
+  return inteiro;
+}
+
+/** O mesmo valor em todos os códigos que o mês anterior: arquivo repetido, não mês novo. */
+export function igualAoAnterior(
+  novas: LinhaCub[],
+  anteriores: Pick<LinhaCub, "subtipo" | "padrao" | "valor_m2">[]
+): boolean {
+  if (anteriores.length === 0) return false;
+  return novas.every((n) =>
+    anteriores.some((a) => a.subtipo === n.subtipo && a.padrao === n.padrao && a.valor_m2 === n.valor_m2)
+  );
+}
+
+// O banco só aceita subtipo no formato `^[A-Z]{1,3}[0-9]{0,2}(-[0-9]{1,2})?$`, e o motor não usa o RP1Q: ele é
+// lido (para conferir que o PDF está completo) mas não é gravado.
+const SUBTIPO_DO_BANCO = /^[A-Z]{1,3}[0-9]{0,2}(-[0-9]{1,2})?$/;
+
+export function paraGravar(linhas: LinhaCub[]): LinhaCub[] {
+  return linhas.filter((l) => SUBTIPO_DO_BANCO.test(l.subtipo));
 }
