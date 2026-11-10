@@ -107,14 +107,16 @@ Para pular em emergência: `git commit --no-verify` (use com discrição, CI ain
 O que roda hoje (`.github/workflows/ci.yml`), em push e PR para `main` e `staging`. Cada
 pergunta é um job, e todos rodam em paralelo: uma falha não esconde as outras.
 
-- **changes** — decide se o PR toca código. PR só de documentação (`docs/`, `research/`,
-  `.md` solto na raiz ou em `.claude/agents/`) roda só o secrets scan e pula o resto.
-  `docs/architecture/EDGE_FUNCTIONS.md` e `brand/` contam como código (testes leem).
+- **changes** — CI seletivo: decide, pelos arquivos do PR, quais grupos de checks rodam
+  (`scripts/ci-escopo.sh`). Ex.: PR só de teste unitário pula E2E, banco e Edge Functions;
+  PR só da LP pula E2E e banco; PR só de docs roda só o secrets scan. Arquivo que não cai
+  em nenhuma regra liga tudo, e push em `staging`/`main` roda tudo sempre. Lint,
+  typecheck, build e audit rodam em todo PR com código.
 - **lint** — eslint e `prettier --check`. Regras de design system e `no-console` são erro;
   ocorrências antigas ficam congeladas em `eslint-suppressions.json` (ADR 0045).
 - **typecheck** — `tsc` do app e da LP (`apps/marketing`).
-- **unit-tests** — Vitest em 4 shards, com cobertura coletada em cada um.
-- **coverage** — junta os 4 shards (`vitest --merge-reports`) e aplica os pisos do
+- **unit-tests** — Vitest em 8 shards, com cobertura coletada em cada um.
+- **coverage** — junta os 8 shards (`vitest --merge-reports`) e aplica os pisos do
   `vite.config.ts` sobre o total. Shard isolado não aplica piso (`VITEST_SHARD_SEM_PISO`).
 - **build** — Knip (código morto não cresce), build do app, budget de bundle, build da LP.
 - **e2e-local** — Playwright contra Supabase local, em 3 shards, cada um com o próprio
@@ -133,7 +135,8 @@ pergunta é um job, e todos rodam em paralelo: uma falha não esconde as outras.
 - **edge-functions** — `deno check` e `deno test` em `supabase/functions/`.
 - **ci-ok** — job agregado, único required check do branch protection. Roda sempre
   (`if: always()`) e reprova se qualquer gate não passou: job pulado conta como sucesso
-  para o GitHub, então sem isso um PR vermelho ficava mergeável.
+  para o GitHub, então sem isso um PR vermelho ficava mergeável. "Pulado" só é aceito
+  para job cujo grupo o escopo do PR desligou.
 - **deploy-staging** — só em push no `staging`, depois dos gates de código e banco. Aplica
   migrations e deploya edge functions no Supabase de staging.
 - **deploy-production** — só em push no `main`, com aprovação do Environment `Production`.
