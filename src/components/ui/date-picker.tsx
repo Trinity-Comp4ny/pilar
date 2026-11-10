@@ -4,6 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { CalendarIcon, X } from "lucide-react";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { mascararData, parseDataDigitada } from "@/lib/data-digitada";
 
@@ -56,6 +57,9 @@ export function DatePicker({
   const [open, setOpen] = useState(false);
   const [editando, setEditando] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const conteudoRef = useRef<HTMLDivElement>(null);
+  // Por que a última digitação não valeu (erro inline, ADR 0008: nada de toast em validação).
+  const [erro, setErro] = useState<string | null>(null);
 
   const selected = parseIso(value);
   const fromDate = parseIso(minDate);
@@ -79,17 +83,53 @@ export function DatePicker({
     setOpen(true);
   };
 
-  /** Confirma o que foi digitado. Data inválida ou fora do limite volta ao valor anterior. */
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const hojePermitido = !foraDoIntervalo(hoje);
+
+  const escolher = (data: Date | undefined) => {
+    setErro(null);
+    onChange(data ? toIso(data) : "");
+    setEditando(false);
+    setOpen(false);
+  };
+
+  /**
+   * Confirma o que foi digitado. Data inválida ou fora do limite volta ao valor anterior
+   * e diz o porquê (não some em silêncio).
+   */
   const confirmarTexto = () => {
     setEditando(false);
     if (!texto.trim()) {
       if (value) onChange("");
       return;
     }
+    if (texto === displayValue) return;
     const data = parseDataDigitada(texto);
-    if (!data || foraDoIntervalo(data)) return;
+    if (!data) {
+      setErro(`"${texto}" não é uma data válida. Use dia/mês/ano.`);
+      return;
+    }
+    if (fromDate && isBefore(data, fromDate)) {
+      setErro(`A data precisa ser a partir de ${format(fromDate, "dd/MM/yyyy")}.`);
+      return;
+    }
+    if (toDate && isAfter(data, toDate)) {
+      setErro(`A data precisa ser até ${format(toDate, "dd/MM/yyyy")}.`);
+      return;
+    }
     const iso = toIso(data);
     if (iso !== value) onChange(iso);
+  };
+
+  /** Seta para baixo leva o foco ao calendário (setas andam nos dias, Enter escolhe). */
+  const focarCalendario = () => {
+    const raiz = conteudoRef.current;
+    const alvo =
+      raiz?.querySelector<HTMLButtonElement>("[data-selected] button") ??
+      raiz?.querySelector<HTMLButtonElement>("[data-today] button:not([disabled])") ??
+      raiz?.querySelector<HTMLButtonElement>("[role=gridcell] button:not([disabled])");
+    alvo?.focus();
   };
 
   return (
@@ -120,21 +160,25 @@ export function DatePicker({
               type="text"
               inputMode="numeric"
               autoComplete="off"
+              aria-invalid={!!erro}
               disabled={disabled}
               value={texto}
               placeholder={editando ? "dd/mm/aaaa" : placeholder}
               maxLength={10}
               // Abre o calendário no clique, não no foco: passar pelo campo com Tab (ou o
               // foco inicial de um dialog) não deve estourar um calendário na tela.
-              onFocus={() => {
+              onFocus={(e) => {
                 setRascunho(displayValue);
                 setEditando(true);
+                // Selecionado, digitar uma data nova substitui a anterior de uma vez.
+                e.currentTarget.select();
               }}
               onClick={abrir}
               onChange={(e) => {
                 const mascarado = mascararData(e.target.value);
                 setRascunho(mascarado);
                 setEditando(true);
+                setErro(null);
                 const data = parseDataDigitada(mascarado);
                 if (data && mascarado.length === 10) setMes(data);
               }}
@@ -144,6 +188,11 @@ export function DatePicker({
                   e.preventDefault();
                   confirmarTexto();
                   setOpen(false);
+                } else if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  if (!open) abrir();
+                  // O calendário monta no próximo frame quando acabou de abrir.
+                  requestAnimationFrame(focarCalendario);
                 }
               }}
               className={cn(
@@ -154,6 +203,7 @@ export function DatePicker({
           </div>
         </PopoverAnchor>
         <PopoverContent
+          ref={conteudoRef}
           className="w-auto max-w-[calc(100vw-2rem)] p-0"
           align="start"
           collisionPadding={12}
@@ -168,11 +218,7 @@ export function DatePicker({
           <Calendar
             mode="single"
             selected={selected}
-            onSelect={(date) => {
-              onChange(date ? toIso(date) : "");
-              setEditando(false);
-              setOpen(false);
-            }}
+            onSelect={escolher}
             month={mes}
             onMonthChange={setMes}
             startMonth={startMonth}
@@ -182,6 +228,19 @@ export function DatePicker({
             fixedWeeks
             locale={ptBR}
           />
+          {hojePermitido && (
+            <div className="flex justify-end border-t px-3 py-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => escolher(hoje)}
+              >
+                Hoje
+              </Button>
+            </div>
+          )}
         </PopoverContent>
       </Popover>
       {displayValue && !disabled && (
@@ -197,6 +256,11 @@ export function DatePicker({
         >
           <X className="h-4 w-4" />
         </button>
+      )}
+      {erro && (
+        <p role="alert" className="mt-1 text-xs text-destructive">
+          {erro}
+        </p>
       )}
     </div>
   );
