@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-import { jsonResponse, optionsResponse, safeErrorResponse } from "../_shared/cors.ts";
+import { jsonResponse, optionsResponse, safeErrorResponse, recusarAppExterno } from "../_shared/cors.ts";
 import { createLogger } from "../_shared/logger.ts";
 import { limitarOuResponder } from "../_shared/db-rate-limit.ts";
 import { lerJson } from "../_shared/schemas.ts";
@@ -53,6 +53,9 @@ serve(
       });
       const { data: u, error: uErr } = await comoUsuario.auth.getUser();
       if (uErr || !u.user) return safeErrorResponse(401, "Não autenticado", req);
+      // Token de app externo (ChatGPT, Claude) é só leitura e só pelo conector (SPEC 151).
+      const appExterno = recusarAppExterno(req);
+      if (appExterno) return appExterno;
 
       // A RLS só devolve a obra da empresa do usuário; "não existe" e "é de outra empresa" dão a mesma resposta.
       const { data: obra } = await comoUsuario.from("obras").select("id, empresa_id").eq("id", e.obra_id).maybeSingle();

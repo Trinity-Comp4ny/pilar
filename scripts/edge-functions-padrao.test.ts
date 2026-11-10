@@ -101,6 +101,19 @@ describe("padrão das Edge Functions (ADR 0056)", () => {
     expect(obsoletas, "Tire da lista quem foi removida ou ganhou rate limit").toEqual([]);
   });
 
+  // SPEC 151: o token que ChatGPT/Claude recebem pelo OAuth vale como o usuário em qualquer
+  // função. Só a `mcp` o aceita (só leitura); toda outra que autentica usuário o recusa.
+  it("função que autentica usuário recusa token de app externo (só a mcp aceita)", () => {
+    const ACEITA_APP_EXTERNO = new Set(["mcp"]);
+    const sem = funcoes.filter((f) => {
+      if (ACEITA_APP_EXTERNO.has(f)) return false;
+      const codigo = readFileSync(join(RAIZ, f, "index.ts"), "utf8");
+      if (/authenticateUser\(/.test(codigo)) return false; // o helper de cors.ts já recusa
+      return /\.auth\.getUser\(/.test(codigo) && !/recusarAppExterno\(/.test(codigo);
+    });
+    expect(sem, "Chame recusarAppExterno(req) (cors.ts) logo após o getUser").toEqual([]);
+  });
+
   it("ninguém usa o corsHeaders estático", () => {
     const legado = arquivos(RAIZ).filter((f) =>
       /import \{[^}]*\bcorsHeaders\b[^}]*\} from ".*cors\.ts"/.test(readFileSync(f, "utf8"))
