@@ -9,6 +9,7 @@ import { useCommandPalette } from "@/hooks/useCommandPalette";
 import { useAtalhosTeclado } from "@/hooks/useAtalhosTeclado";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { FaixaAvisos } from "@/components/FaixaAvisos";
+import { useRegistrarDispositivo } from "@/hooks/useRegistrarDispositivo";
 import { PageLoader } from "@/components/motion/PageLoader";
 import { VeilExit } from "@/components/motion/EntryVeil";
 import { useRouteEnter } from "@/components/motion/useRouteEnter";
@@ -71,6 +72,8 @@ function DevErrorTrigger() {
 }
 
 function LayoutContent() {
+  // Alerta de acesso por navegador novo (SPEC 159).
+  useRegistrarDispositivo();
   const { state, isMobile } = useSidebar();
   const mainRef = useRef<HTMLElement>(null);
   useRouteEnter(mainRef);

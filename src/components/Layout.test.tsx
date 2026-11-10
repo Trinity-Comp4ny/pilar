@@ -24,6 +24,7 @@ vi.mock("@/components/FaixaAvisos", () => ({ FaixaAvisos: () => null }));
 vi.mock("@/components/agente/AgenteAjuda", () => ({ AgenteAjuda: () => null }));
 vi.mock("@/components/pesquisas/NpsCard", () => ({ NpsCard: () => null }));
 vi.mock("@/components/ComunicadoModal", () => ({ ComunicadoModal: () => null }));
+vi.mock("@/hooks/useRegistrarDispositivo", () => ({ useRegistrarDispositivo: () => undefined }));
 vi.mock("@/lib/monitoring", () => ({ monitoring: { captureException: vi.fn(), addBreadcrumb: vi.fn() } }));
 
 function renderLayout(rota = "/inicio") {
