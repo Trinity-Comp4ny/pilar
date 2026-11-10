@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, FileText } from "lucide-react";
 import { usePageMeta } from "../lib/seo";
+import { EMPRESA } from "../lib/empresa";
 
 /**
  * Termos de Uso publicados (v2.0), com o Anexo de Tratamento de Dados Pessoais
@@ -441,9 +442,9 @@ export function Termos() {
         <section className="rounded-lg border bg-muted/30 p-6 space-y-2">
           <p className="text-sm text-muted-foreground leading-relaxed">
             {forte("Finalidade deste documento:")} estabelecer as condições de uso da plataforma Pilar, oferecida por{" "}
-            {forte("Pilar")} (razão social e CNPJ próprios em regularização), por escritórios de engenharia e
-            arquitetura, seus usuários e convidados. Ao criar uma conta ou usar a plataforma, você concorda com estes
-            Termos e com o Anexo de Tratamento de Dados Pessoais. Veja também a{" "}
+            {forte(EMPRESA.razaoSocial)}, CNPJ {EMPRESA.cnpj}, com sede na {EMPRESA.endereco} ("Pilar"), por escritórios
+            de engenharia e arquitetura, seus usuários e convidados. Ao criar uma conta ou usar a plataforma, você
+            concorda com estes Termos e com o Anexo de Tratamento de Dados Pessoais. Veja também a{" "}
             <Link to="/privacidade" className="text-ink underline">
               Política de Privacidade
             </Link>

@@ -6,6 +6,7 @@ import { MODULOS } from "../lib/modules";
 import { Logo } from "./Logo";
 import { DEMO_URL } from "../lib/contato";
 import { trackCta } from "../analytics";
+import { EMPRESA, IDENTIFICACAO } from "../lib/empresa";
 
 /**
  * Rodapé no verde da marca, como na referência: o fim da página é um bloco de
@@ -129,6 +130,9 @@ export function LandingFooter() {
 
         <div className="pt-7 border-t border-ink/10">
           <p className="text-[12.5px] text-ink/75">© 2026 Pilar. Todos os direitos reservados.</p>
+          <p className="mt-1.5 text-[12px] leading-relaxed text-ink/60">
+            {IDENTIFICACAO}. {EMPRESA.endereco}. {EMPRESA.email}
+          </p>
         </div>
       </div>
     </footer>

@@ -4,6 +4,7 @@ import { ArrowLeft, Cookie, ShieldCheck } from "lucide-react";
 import { APP_URL } from "../config";
 import { getCookieConsent, CONSENT_CHANGED_EVENT, requestCookieConsentReview } from "../cookieConsent";
 import { usePageMeta } from "../lib/seo";
+import { EMPRESA } from "../lib/empresa";
 
 /**
  * Política de Privacidade publicada (v2.0). Fonte de verdade do que está ao vivo;
@@ -234,8 +235,8 @@ export function Privacidade() {
 
         <Secao titulo="1. Quem somos e quem decide sobre os dados">
           <p>
-            <strong className="text-foreground">Controlador:</strong> Pilar (razão social, CNPJ e endereço próprios em
-            regularização; serão publicados nesta página assim que a formalização for concluída).
+            <strong className="text-foreground">Controlador:</strong> {EMPRESA.razaoSocial}, CNPJ {EMPRESA.cnpj}, com
+            sede na {EMPRESA.endereco}, titular da marca Pilar.
           </p>
           <p>O Pilar tem dois papéis, e eles mudam a quem você deve se dirigir:</p>
           <ul className="list-disc pl-6 space-y-1">
@@ -384,7 +385,8 @@ export function Privacidade() {
 
         <Secao titulo="10. Encarregado pelo tratamento de dados">
           <p>
-            Fale com o encarregado pelo e-mail{" "}
+            O encarregado pelo tratamento de dados pessoais (LGPD, art. 41) é {EMPRESA.encarregado}. Fale com ele pelo
+            e-mail{" "}
             <a href="mailto:privacidade@pilarsoft.com.br" className="text-ink underline">
               privacidade@pilarsoft.com.br
             </a>
