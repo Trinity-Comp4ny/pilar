@@ -9,6 +9,7 @@ import {
   Settings,
   MessageSquare,
   Megaphone,
+  HelpCircle,
   Eye,
   EyeOff,
 } from "lucide-react";
@@ -304,6 +305,10 @@ export function AppSidebar() {
               <Settings size={16} className="shrink-0 text-muted-foreground" />
             </DropdownMenuItem>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate("/ajuda")} className="justify-between">
+              Central de ajuda
+              <HelpCircle size={16} className="text-muted-foreground" />
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate("/novidades")} className="justify-between">
               Novidades
               <span className="flex items-center gap-2">

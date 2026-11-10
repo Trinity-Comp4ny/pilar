@@ -7,6 +7,7 @@ import { MobileFab } from "@/components/MobileFab";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { Feature } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
+import { AjudaDaTela } from "@/components/ajuda/AjudaDaTela";
 
 /**
  * Header fino padrão (spec 002-header-padrao).
@@ -232,6 +233,8 @@ export function PageHeader({ title, breadcrumbs, children, search, center, prima
 
       {/* Ações: secundárias (children) + primária gated */}
       <div className={cn("flex items-center gap-2 shrink-0", !search && "ml-auto")}>
+        {/* Central de ajuda (SPEC 154): "?" com o artigo da tela, quando existe. */}
+        <AjudaDaTela />
         {children}
         {/* Celular (SPEC 134): a ação principal vira o botão flutuante (MobileFab). */}
         {primaryAction && isMobile && (
