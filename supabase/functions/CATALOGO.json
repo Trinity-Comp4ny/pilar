@@ -183,6 +183,10 @@
     "dominio": "campo",
     "descricao": "Tentar de novo a organização de um registro de obra que falhou; vale para o escritório (JWT) e para o campo (token). SPEC 135."
   },
+  "release-rascunho": {
+    "dominio": "plataforma",
+    "descricao": "Grava o rascunho das novidades de um release a partir das linhas Novidade: dos commits, chamado pelo GitHub Actions no push em main com token próprio (SPEC 152)."
+  },
   "resend-webhook": {
     "dominio": "comunicacao",
     "descricao": "Recebe o status de entrega do Resend e fecha o ciclo do e-mail enviado.",

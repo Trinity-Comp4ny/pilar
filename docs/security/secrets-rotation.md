@@ -25,6 +25,7 @@ Rotação imediata em caso de suspeita de exposição.
 | `LGPD_DPO_EMAIL`                   | Edge Functions secrets                                              | quando muda DPO             | Compliance       | Não é secret, mas centralizado              |
 | `ALLOWED_ORIGINS`                  | Edge Functions secrets                                              | quando domínios mudam       | Tech Lead        | CORS allowlist                              |
 | `APP_URL` / `PUBLIC_SITE_URL`      | Edge + Vercel                                                       | quando muda                 | Tech Lead        | URL canônica                                |
+| `RELEASE_NOTAS_TOKEN`              | Edge Functions secrets (`release-rascunho`) + GitHub Actions secret | **180d**                    | Tech Lead        | SPEC 152; junto com `RELEASE_NOTAS_URL`     |
 | Vercel deploy token                | Vercel account                                                      | **180d**                    | Tech Lead        | Settings → Tokens                           |
 | GitHub Actions secrets (se houver) | Repo Settings → Secrets                                             | **180d**                    | Tech Lead        | —                                           |
 | DB password (Postgres)             | Supabase managed                                                    | gerada pelo Supabase        | —                | Resetar via dashboard se vazar              |

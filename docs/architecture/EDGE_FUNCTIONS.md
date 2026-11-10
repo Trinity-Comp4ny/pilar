@@ -117,6 +117,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `log-impersonation` | Abre e encerra sessão de impersonation do ultra admin, com registro no servidor. | app | JWT |  | sim |
 | `ops-agente-run` | Executa um agente de operação da Pilar (Receita, Clientes, Chefe de gabinete): fatos do banco, texto do modelo aterrado em código, ações pendentes no Ultra e resumo do dia por e-mail (SPEC 126). | app, cron | própria | `APP_URL` `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `ops-export-funil` | Devolve à plataforma de marketing (post-automation) cadastros, ativados e pagantes por dia e UTM, sem dado pessoal, autenticada por token próprio (SPEC 128). | **sem chamador conhecido** | própria | `OPS_EXPORT_TOKEN` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `release-rascunho` | Grava o rascunho das novidades de um release a partir das linhas Novidade: dos commits, chamado pelo GitHub Actions no push em main com token próprio (SPEC 152). | **sem chamador conhecido** | própria | `RELEASE_NOTAS_TOKEN` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `ultra-admin-empresas` | Gestão de empresas pelo ultra admin. | app | JWT |  | sim |
 | `ultra-admin-usuarios` | Gestão de usuários pelo ultra admin. | app | JWT |  | sim |
 
@@ -138,4 +139,5 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 - `send-invoice-reminder`
 - `feedback-sync`
 - `ops-export-funil`
+- `release-rascunho`
 - `turnstile-verify`
