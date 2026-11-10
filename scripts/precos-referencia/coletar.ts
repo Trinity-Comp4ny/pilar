@@ -59,6 +59,7 @@ import {
   arquivosDaPaginaDeDownload,
   linksPdfDaPagina,
   linksPdfDoWordpress,
+  pacotesDoFeed,
   paginasDeDownload,
   portaisDaUf,
   urlPacotesWpdm,
@@ -475,6 +476,18 @@ async function fontePortal(portal: PortalEstadual): Promise<FonteCub | string> {
               } else {
                 diag(`Download Manager, categoria ${categoria}: ${rp.status} ${tipo}`);
                 await rp.body?.cancel();
+              }
+            }
+            // API fechada: o feed RSS da categoria lista os mesmos pacotes.
+            if (categoria && arquivos.length === 0) {
+              const rf = await buscar(`${d.url.replace(/\/+$/, "")}/feed/`, 30_000);
+              if (rf.ok) {
+                const pacotes = pacotesDoFeed(await rf.text(), d);
+                diag(`feed de ${d.texto}: ${pacotes.length} pacote(s) ${pacotes.map((p) => p.texto).join(" | ")}`);
+                arquivos.push(...pacotes);
+              } else {
+                diag(`feed de ${d.texto}: ${rf.status}`);
+                await rf.body?.cancel();
               }
             }
             if (diagnostico && arquivos.length === 0) {

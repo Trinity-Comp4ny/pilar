@@ -7,6 +7,7 @@ import {
   lerPortaisExtras,
   linksPdfDaPagina,
   linksPdfDoWordpress,
+  pacotesDoFeed,
   paginasDeDownload,
   urlPacotesWpdm,
   portaisDaUf,
@@ -208,5 +209,27 @@ describe("SindusCon-SP: Download Manager (atributos reais da página de categori
     ]);
     expect(candidatosDoMes(arquivos, "2026-10-01", "onerado", "referencia")).toHaveLength(1);
     expect(arquivosDosPacotesWpdm({ code: "rest_forbidden" }, pagina)).toEqual([]);
+  });
+});
+
+describe("SindusCon-SP: feed RSS da categoria (a API responde 401)", () => {
+  const pagina = { url: "https://sindusconsp.com.br/downloads/10-outubro-2026-cub", texto: "10-outubro-2026-cub" };
+  it("lê os pacotes do feed com o número do guid", () => {
+    const xml = `<?xml version="1.0"?><rss><channel>
+      <item><title><![CDATA[CUB Outubro 2026]]></title>
+        <link>https://sindusconsp.com.br/download/cub-outubro-2026/</link>
+        <guid isPermaLink="false">https://sindusconsp.com.br/?post_type=wpdmpro&#038;p=91234</guid></item>
+      <item><title>Sem guid</title><link>https://sindusconsp.com.br/download/x/</link></item>
+      <item><title>Outro site</title><link>https://outro.com/download/y/</link><guid>https://outro.com/?p=5</guid></item>
+    </channel></rss>`;
+    const pacotes = pacotesDoFeed(xml, pagina);
+    expect(pacotes).toEqual([
+      {
+        url: "https://sindusconsp.com.br/download/cub-outubro-2026/?wpdmdl=91234",
+        texto: "CUB Outubro 2026 10-outubro-2026-cub",
+      },
+    ]);
+    expect(candidatosDoMes(pacotes, "2026-10-01", "onerado", "referencia")).toHaveLength(1);
+    expect(pacotesDoFeed("<html>não é feed</html>", pagina)).toEqual([]);
   });
 });

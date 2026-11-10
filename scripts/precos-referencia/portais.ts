@@ -166,6 +166,35 @@ export function arquivosDosPacotesWpdm(json: unknown, pagina: LinkPdf): LinkPdf[
   });
 }
 
+/**
+ * Pacotes de uma categoria do Download Manager pelo feed RSS (`/downloads/<categoria>/feed/`), que segue público
+ * quando a API do WordPress pede login (o SindusCon-SP responde 401 na API). O número do pacote vem do `guid`
+ * (`?post_type=wpdmpro&p=<id>`); o download é o link do pacote com `?wpdmdl=<id>`. Só pacotes do mesmo site.
+ */
+export function pacotesDoFeed(xml: string, pagina: LinkPdf): LinkPdf[] {
+  const origem = new URL(pagina.url).origin;
+  const pacotes: LinkPdf[] = [];
+  for (const [, item] of xml.matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)) {
+    const campo = (nome: string) => {
+      const m = new RegExp(`<${nome}\\b[^>]*>([\\s\\S]*?)<\\/${nome}>`, "i").exec(item);
+      return m ? m[1].replace(/^<!\[CDATA\[|\]\]>$/g, "").trim() : "";
+    };
+    const link = textoPuro(campo("link"));
+    const id = /[?&](?:amp;|#038;)?p=(\d+)/.exec(campo("guid"))?.[1];
+    if (!id) continue;
+    let url: URL;
+    try {
+      url = new URL(link);
+    } catch {
+      continue;
+    }
+    if (url.origin !== origem || url.protocol !== "https:") continue;
+    url.searchParams.set("wpdmdl", id);
+    pacotes.push({ url: url.toString(), texto: `${textoPuro(campo("title"))} ${pagina.texto}`.trim() });
+  }
+  return pacotes;
+}
+
 /** PDFs listados por `/wp-json/wp/v2/media` (campos `source_url` e `title.rendered`). */
 export function linksPdfDoWordpress(json: unknown): LinkPdf[] {
   if (!Array.isArray(json)) return [];
