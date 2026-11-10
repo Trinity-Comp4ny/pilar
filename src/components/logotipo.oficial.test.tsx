@@ -45,7 +45,7 @@ describe("PNGs saem do ícone oficial", () => {
     ["public/icon-192.png", 192],
     ["public/icon-512.png", 512],
     ["public/maskable-512.png", 512],
-    ["apps/marketing/public/email/logo-v3.png", 96],
+    ["apps/marketing/public/email/logo-v4.png", 96],
   ])("%s tem %i px", (rel, lado) => {
     expect(dimensoesPng(rel)).toEqual([lado, lado]);
   });
@@ -72,8 +72,8 @@ describe("PNGs saem do ícone oficial", () => {
     expect(lados).toEqual([16, 32, 48]);
   });
 
-  it("o e-mail aponta para a logo versionada v3", () => {
-    expect(ler("supabase/functions/_shared/email/brand.ts")).toContain("/email/logo-v3.png");
+  it("o e-mail aponta para a logo versionada v4", () => {
+    expect(ler("supabase/functions/_shared/email/brand.ts")).toContain("/email/logo-v4.png");
   });
 });
 

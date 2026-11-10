@@ -41,7 +41,7 @@ Use SVG sempre que o destino aceitar. PNG só para apresentação, redes sociais
 | PNG                          | `png/`                                                 | Tamanhos prontos: símbolo 1024, lockups 2000/1200, ícones 1024, paisagens no formato  |
 
 Sufixos de cor: `ink` (#1A1A1A, padrão sobre claro), `white` (sobre escuro), `brand`
-(nome branco e símbolo verde, só sobre Ink), `black` (#000000, só impressão a uma cor, com ábaco opaco).
+(nome branco e símbolo verde, só sobre Ink), `black` (#000000, só impressão a uma cor).
 
 ## 3. Construção do símbolo
 
@@ -54,7 +54,7 @@ Medidas em **u**, a unidade do desenho. 1u = altura visível do símbolo ÷ 22,6
 | Caixa visível (com o traço) | 27,6u × 22,6u, proporção 1,22 : 1                      |
 | Traço                       | 1,6u, ponta redonda de raio 0,8u                       |
 | Capitel                     | linha de 26u, opacidade 100%                           |
-| Ábaco                       | linha de 22u, opacidade 85%, 4u abaixo do capitel      |
+| Ábaco                       | linha de 22u, opacidade 100%, 4u abaixo do capitel     |
 | Caneluras                   | 3 linhas de 14u, opacidade 100%, em x = 7, 14 e 21u    |
 | Módulo X                    | 7u, a distância entre eixos de duas caneluras vizinhas |
 | Eixo de simetria            | capitel e ábaco centrados na canelura do meio, x = 14u |
@@ -63,9 +63,11 @@ O módulo X é a régua de toda a marca: o respiro e o espaço entre símbolo e 
 
 **Peso do traço por tamanho.** O desenho tem dois pesos:
 
-- **Padrão**, traço 1,6u, ábaco a 85%: de 24 px de altura para cima e em qualquer impressão.
-- **Reforçado**, traço 2,2u, ábaco opaco: abaixo de 24 px. O traço fino some em tela pequena.
-  O ábaco opaco evita o cinza sujo quando o pixel não resolve a transparência.
+- **Padrão**, traço 1,6u: de 24 px de altura para cima e em qualquer impressão.
+- **Reforçado**, traço 2,2u: abaixo de 24 px. O traço fino some em tela pequena.
+
+**Uma cor só** (DECISOES 2026-11-10): as cinco linhas têm a mesma cor e a mesma opacidade em
+todo tamanho e toda versão. Até 09/11 o ábaco saía a 85% e lia como um cinza diferente do resto.
 
 ## 4. Lockups e proporções
 
@@ -134,7 +136,7 @@ O logotipo usa só as cores da tabela. Nunca pinte o logo com outra cor, nem com
 | `ink`   | #1A1A1A        | #1A1A1A     | Paper (#FFFFFF a #EDEDED) e verde da marca           |
 | `white` | #FFFFFF        | #FFFFFF     | Ink (#1A1A1A) e fundos escuros                       |
 | `brand` | #A4EC86        | #FFFFFF     | Só Ink (#1A1A1A)                                     |
-| `black` | #000000        | #000000     | Impressão a uma cor, gravação, carimbo (ábaco opaco) |
+| `black` | #000000        | #000000     | Impressão a uma cor, gravação, carimbo               |
 
 Regras:
 
@@ -143,8 +145,8 @@ Regras:
 - **Verde sobre fundo claro é proibido** (1,4 : 1). O verde da marca é fundo ou acento sobre Ink,
   nunca traço de logo sobre branco.
 - Sobre foto: só com véu escuro que leve o fundo a 4,5 : 1, e com o logo branco.
-- Uma cor só (carimbo, gravação, bordado): use `black`, que já vem com o ábaco opaco, porque
-  esses processos não fazem transparência.
+- Carimbo, gravação, bordado: use `black`. Como o símbolo é de uma cor só desde 10/11, qualquer
+  versão serve para esses processos; o `black` só troca o tom de tinta.
 - **Paisagem** (seção 7.1) leva sempre o símbolo e o nome em Ink, no céu, acima dos morros.
 
 ### 7.1 Variações claras: a paisagem
@@ -221,7 +223,7 @@ empresa titular. Até lá, o logo e o nome aparecem sem símbolo.
 - Produto e landing usam o componente `Logo` (`src/components/Logo.tsx`) e o `PilarMark`
   (`src/components/motion/PilarMark.tsx`). Não recrie o símbolo com `<svg>` solto nem o nome como
   texto estilizado.
-- E-mail usa PNG (Gmail bloqueia SVG em `<img>`): `apps/marketing/public/email/logo-v3.png`,
+- E-mail usa PNG (Gmail bloqueia SVG em `<img>`): `apps/marketing/public/email/logo-v4.png`,
   configurado em `supabase/functions/_shared/email/brand.ts`. Versione o nome ao trocar de logo.
 - Cor do logo no código é `currentColor`: o contêiner decide (`text-ink` ou `text-white`).
 
@@ -236,7 +238,7 @@ alinhou tudo: `PilarMark` com as caneluras em 6,5, 11,5, 16,5 e 21,5; `public/*.
 
 Em 07/11/2026 a coluna passou a três caneluras e o ícone do app saiu do tile preto para a
 paisagem. O `build.py` agora também escreve os arquivos de produção (`public/*.svg`, os PNGs de
-ícone do PWA e o `logo-v3.png` do e-mail), então trocar o desenho é rodar o script e commitar.
+ícone do PWA e o `logo-v4.png` do e-mail), então trocar o desenho é rodar o script e commitar.
 
 ## 12. Como regenerar os arquivos
 

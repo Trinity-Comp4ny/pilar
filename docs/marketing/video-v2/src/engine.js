@@ -311,7 +311,7 @@ export function mark(parent, { x, y, w, weight = 1.6, color = cssVar("--fg") }) 
   pos(s, x, y, w);
   s.style.position = "absolute";
   s.innerHTML = `<svg viewBox="-1 -0.5 30 25.5" fill="none" stroke="${color}" stroke-width="${weight}" stroke-linecap="round" style="width:100%;overflow:visible">
-    <path class="cap" pathLength="1" d="M1 2H27"/><path class="aba" pathLength="1" d="M3 6H25" stroke-opacity=".85"/>
+    <path class="cap" pathLength="1" d="M1 2H27"/><path class="aba" pathLength="1" d="M3 6H25"/>
     <path class="fl f1" pathLength="1" d="M7 9V23"/><path class="fl f2" pathLength="1" d="M14 9V23"/><path class="fl f3" pathLength="1" d="M21 9V23"/></svg>`;
   const paths = s.querySelectorAll("path");
   return {

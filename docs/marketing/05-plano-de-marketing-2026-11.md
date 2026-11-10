@@ -354,5 +354,4 @@ cliques, DMs). Depois de 4 semanas, dobrar o formato que gerou mais cliques e co
 5. **Pixel da Meta, tag do Google e evento "assinou"** na landing e no checkout antes do pago.
 6. **Licença comercial da previsão do tempo** antes de impulsionar o vídeo de clima.
 7. **Gravar um vídeo de fundador por semana** a partir da S3 (roteiros na seção 8).
-8. **Logo em uma cor só fora dos vídeos?** Nos vídeos e nos posts novos o ábaco já está opaco. Decidir
-   se vira regra da marca (`scripts/brand/build.py` e `brand/logo.md`), e registrar no DECISOES.
+8. ~~Logo em uma cor só fora dos vídeos?~~ **Decidido em 10/11:** uma cor só em todo lugar (DECISOES 2026-11-10).
