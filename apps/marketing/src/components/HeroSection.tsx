@@ -62,7 +62,10 @@ export function HeroSection() {
               ("centralizam") empurrava o título para três linhas e a hero
               saltava a cada troca de palavra. O corpo cai um pouco para a linha
               mais larga caber. */}
-          <h1 className="text-[62px] max-[1100px]:text-[50px] max-[850px]:text-[34px] max-[420px]:text-[27px] font-medium tracking-[-0.035em] leading-[1.1] text-ink mb-6 mx-auto">
+          {/* A frase grande é marca, não busca: vai num <p> com o desenho de título. O
+              H1 é a tagline logo abaixo, que tem as palavras que o Google procura
+              ("gestão", "escritórios de engenharia e arquitetura"). */}
+          <p className="text-[62px] max-[1100px]:text-[50px] max-[850px]:text-[34px] max-[420px]:text-[27px] font-medium tracking-[-0.035em] leading-[1.1] text-ink mb-6 mx-auto">
             {/* Acima de 850px as duas linhas não quebram, então trocar o verbo
                 nunca vira uma terceira linha. Abaixo disso o `nowrap` faria o
                 título vazar a tela, então a pílula cai para uma linha só dela:
@@ -77,17 +80,17 @@ export function HeroSection() {
             <span className="block max-[850px]:whitespace-normal min-[851px]:whitespace-nowrap">
               <Palavras texto={LINHA_2} atraso={0.34} />
             </span>
-          </h1>
+          </p>
 
-          <m.p
+          <m.div
             initial={reducedMotion ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: EASE.out, delay: 0.55 }}
             className="text-[14px] md:text-[17px] text-ink-soft max-w-xl mx-auto mb-8 md:mb-9 leading-relaxed px-2"
           >
-            Gestão com agentes de IA para escritórios de engenharia e arquitetura. Prazos, entregas e governança do
-            projeto: a IA prepara, você aprova.
-          </m.p>
+            <h1 className="inline">Gestão com agentes de IA para escritórios de engenharia e arquitetura.</h1> Prazos,
+            entregas e governança do projeto: a IA prepara, você aprova.
+          </m.div>
 
           <m.div
             initial={reducedMotion ? false : { opacity: 0, y: 12 }}

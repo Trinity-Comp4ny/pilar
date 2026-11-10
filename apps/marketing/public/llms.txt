@@ -1,6 +1,11 @@
 # Pilar
 
-> Sistema de gestão para escritórios de engenharia e arquitetura (civil, estrutural, MEP/HVAC). Conecta lead, proposta, projeto, obra, financeiro e portal do cliente em um único fluxo, com agentes de IA que preparam o trabalho, um sistema que confere os números e a aprovação da equipe. A frase da marca: gestão com agentes de IA para escritórios de engenharia e arquitetura.
+> Sistema de gestão para escritórios de engenharia e arquitetura (arquitetura, civil, estrutural, MEP/HVAC). Conecta lead, proposta, projeto, obra, financeiro e portal do cliente em um único fluxo, com agentes de IA que preparam o trabalho, um sistema que confere os números e a aprovação da equipe. A frase da marca: gestão com agentes de IA para escritórios de engenharia e arquitetura.
+
+## Para quem
+
+- [Software de gestão para escritório de engenharia](https://www.pilarsoft.com.br/engenharia): engenharia multidisciplinar (civil, estrutural, elétrica, hidráulica, HVAC) que vende projeto por proposta
+- [Sistema de gestão para escritório de arquitetura](https://www.pilarsoft.com.br/arquitetura): escritórios de arquitetura que coordenam complementares e acompanham obra
 
 ## Produto
 
@@ -16,6 +21,18 @@
 - [Pilar vs Planilha](https://www.pilarsoft.com.br/vs/planilha): diferença lado a lado para quem hoje controla projeto em Excel ou Google Sheets
 - [Pilar vs Trello](https://www.pilarsoft.com.br/vs/trello): diferença lado a lado para quem hoje usa um quadro genérico de tarefas
 
+## Blog
+
+- [Blog do Pilar](https://www.pilarsoft.com.br/blog): guias práticos de gestão para escritórios de engenharia e arquitetura
+- [Software de gestão para escritório de engenharia: o que avaliar antes de contratar](https://www.pilarsoft.com.br/blog/software-gestao-escritorio-engenharia)
+- [Sistema de gestão para escritório de arquitetura](https://www.pilarsoft.com.br/blog/sistema-gestao-escritorio-arquitetura)
+- [Como fazer uma proposta de projeto de engenharia por disciplina](https://www.pilarsoft.com.br/blog/proposta-projeto-engenharia)
+- [Como precificar projeto de arquitetura e engenharia](https://www.pilarsoft.com.br/blog/como-precificar-projeto-arquitetura-engenharia)
+- [Como controlar o prazo de projetos com várias disciplinas](https://www.pilarsoft.com.br/blog/controle-prazo-projetos-disciplinas)
+- [Aditivo de projeto: quando cobrar escopo extra e como registrar](https://www.pilarsoft.com.br/blog/aditivo-de-projeto)
+- [Diário de obra (RDO): o que registrar e como fazer pelo celular](https://www.pilarsoft.com.br/blog/diario-de-obra-rdo)
+- [Obra por administração: como prestar contas e cobrar a sua taxa](https://www.pilarsoft.com.br/blog/obra-por-administracao-prestacao-de-contas)
+
 ## Planos
 
 - [Planos e preços](https://www.pilarsoft.com.br/planos): preço por escritório, sem cobrança por usuário; o que muda entre planos é a quantidade de projetos, obras e leads ativos e a cota mensal de créditos de IA. Todo plano tem a plataforma inteira; para começar, agende uma demonstração com o time.
@@ -26,4 +43,9 @@
 
 ## Informações
 
-O Pilar atende empresas e escritórios de engenharia multidisciplinar que vendem projeto técnico por proposta e administram obra por taxa. Não é ferramenta de arquitetura nem ERP de construtora, e não substitui ferramentas de cálculo, CAD ou BIM. Os agentes de IA consultam dados reais do escritório e preparam ações (proposta, orçamento, lançamento financeiro); nada é executado sem revisão e aprovação de uma pessoa da equipe.
+O Pilar atende escritórios de projeto técnico, de engenharia multidisciplinar e de arquitetura, que vendem projeto por proposta e acompanham ou administram obra por taxa. Não é ERP de construtora nem de incorporadora, e não substitui ferramentas de desenho, cálculo, CAD ou BIM. Os agentes de IA consultam dados reais do escritório e preparam ações (proposta, orçamento, lançamento financeiro); nada é executado sem revisão e aprovação de uma pessoa da equipe.
+
+## Legal
+
+- [Termos de Uso](https://www.pilarsoft.com.br/termos)
+- [Política de Privacidade](https://www.pilarsoft.com.br/privacidade)

@@ -52,7 +52,8 @@ export function Privacidade() {
 
   usePageMeta({
     titulo: "Política de Privacidade | Pilar",
-    descricao: "Como o Pilar coleta, usa e protege os dados do seu escritório, e os seus direitos pela LGPD.",
+    descricao:
+      "Como o Pilar coleta, usa e protege os dados do seu escritório de engenharia ou arquitetura, e quais são os seus direitos pela LGPD.",
     caminho: "/privacidade",
   });
 

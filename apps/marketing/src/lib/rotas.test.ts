@@ -1,4 +1,5 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { MODULOS } from "./modules";
@@ -15,10 +16,20 @@ const ler = (relativo: string) => readFileSync(fileURLToPath(new URL(relativo, i
 
 const BASE = "https://www.pilarsoft.com.br";
 
+/** Slugs dos artigos: um arquivo `.md` por artigo em `src/content/blog`. */
+const SLUGS_BLOG = readdirSync(join(dirname(fileURLToPath(import.meta.url)), "../content/blog"))
+  .filter((n) => n.endsWith(".md"))
+  .map((n) => n.replace(/\.md$/, ""));
+
 /** Paths declarados no `<Routes>` do App, sem o curinga do 404. */
-function rotasDoApp(): string[] {
+function rotasDeclaradas(): string[] {
   const fonte = ler("../App.tsx");
   return [...fonte.matchAll(/<Route\s+path="([^"]+)"/g)].map((m) => m[1]).filter((p) => p !== "*");
+}
+
+/** As URLs de verdade: a rota dinâmica do artigo vira uma URL por arquivo do blog. */
+function rotasDoApp(): string[] {
+  return rotasDeclaradas().flatMap((p) => (p === "/blog/:slug" ? SLUGS_BLOG.map((s) => `/blog/${s}`) : [p]));
 }
 
 function rotasDoSitemap(): string[] {
@@ -45,7 +56,7 @@ describe("rotas da landing", () => {
   const app = rotasDoApp();
 
   it("o roteador tem as rotas esperadas e um curinga de 404", () => {
-    expect(ordenado(app)).toEqual(
+    expect(ordenado(rotasDeclaradas())).toEqual(
       ordenado([
         "/",
         "/gestao",
@@ -55,6 +66,10 @@ describe("rotas da landing", () => {
         "/campo",
         "/vs/planilha",
         "/vs/trello",
+        "/engenharia",
+        "/arquitetura",
+        "/blog",
+        "/blog/:slug",
         "/faq",
         "/planos",
         "/termos",
@@ -94,7 +109,19 @@ describe("rotas da landing", () => {
     for (const rota of llms) expect(app).toContain(rota);
     for (const m of MODULOS) expect(llms).toContain(`/${m.slug}`);
     for (const c of COMPARATIVOS) expect(llms).toContain(`/vs/${c.slug}`);
-    expect(llms).toEqual(expect.arrayContaining(["/", "/planos", "/faq"]));
+    for (const s of SLUGS_BLOG) expect(llms).toContain(`/blog/${s}`);
+    expect(llms).toEqual(expect.arrayContaining(["/", "/planos", "/faq", "/blog", "/engenharia", "/arquitetura"]));
+  });
+
+  it("toda URL do sitemap tem <lastmod> em AAAA-MM-DD", () => {
+    const urls = [...ler("../../public/sitemap.xml").matchAll(/<url>([\s\S]*?)<\/url>/g)].map((m) => m[1]);
+    expect(urls.length).toBeGreaterThan(0);
+    for (const u of urls) expect(u).toMatch(/<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/);
+  });
+
+  it("o blog tem artigo e nenhum artigo some do sitemap", () => {
+    expect(SLUGS_BLOG.length).toBeGreaterThan(0);
+    for (const s of SLUGS_BLOG) expect(app).toContain(`/blog/${s}`);
   });
 
   it("o robots.txt aponta para o sitemap", () => {
