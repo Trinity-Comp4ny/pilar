@@ -19,7 +19,9 @@ Encarregado pelo tratamento de dados (LGPD art. 41): **Matheus Prezia Rezende**,
 Company nem Labrynth AI.
 
 Fonte única dos dados: `apps/marketing/src/lib/empresa.ts`, usada por `/privacidade` (controlador
-e encarregado), `/termos` (parte do contrato) e pelo rodapé do site (Decreto 7.962/2013, art. 2º).
+e encarregado) e `/termos` (parte do contrato). O rodapé do site não mostra razão social, CNPJ nem
+endereço, por decisão do CEO (2026-11-10); o Decreto 7.962/2013 (art. 2º) pede esses dados "em
+local de destaque", e hoje eles ficam nas duas páginas legais, linkadas no rodapé.
 O JSON-LD de `apps/marketing/index.html` repete razão social, CNPJ e endereço. Mudou algum dado:
 atualizar os dois lugares. Os `.md` desta pasta são rascunho/referência, não o que está ao vivo.
 

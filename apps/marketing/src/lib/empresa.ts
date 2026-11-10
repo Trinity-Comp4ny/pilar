@@ -1,6 +1,6 @@
 // Identificação legal de quem opera o Pilar. Fonte única para a Política de Privacidade
-// (LGPD art. 9º, III e art. 41), os Termos de Uso e o rodapé (Decreto 7.962/2013, art. 2º:
-// nome empresarial, CNPJ e endereço físico e eletrônico em local de fácil visualização).
+// (LGPD art. 9º, III e art. 41) e os Termos de Uso. Por decisão do CEO (2026-11-10), não
+// aparece no rodapé do site.
 export const EMPRESA = {
   razaoSocial: "MATHEUS PREZIA REZENDE TECH LTDA",
   cnpj: "63.418.862/0001-59",
@@ -8,6 +8,3 @@ export const EMPRESA = {
   email: "privacidade@pilarsoft.com.br",
   encarregado: "Matheus Prezia Rezende",
 } as const;
-
-/** "Razão social, CNPJ x" numa linha, para texto corrido. */
-export const IDENTIFICACAO = `${EMPRESA.razaoSocial}, CNPJ ${EMPRESA.cnpj}`;
