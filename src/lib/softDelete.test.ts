@@ -19,9 +19,7 @@ describe("sincronia da allowlist de soft delete (front x banco)", () => {
     const corpo = sql.match(/_soft_delete_feature\(p_tabela text\)[\s\S]*?\$function\$;/);
     expect(corpo, "não achou o corpo de _soft_delete_feature na migration").not.toBeNull();
 
-    const noBanco = new Set(
-      Array.from((corpo?.[0] ?? "").matchAll(/WHEN '([a-z_]+)'\s+THEN/g)).map((m) => m[1])
-    );
+    const noBanco = new Set(Array.from((corpo?.[0] ?? "").matchAll(/WHEN '([a-z_]+)'\s+THEN/g)).map((m) => m[1]));
 
     expect([...noBanco].sort()).toEqual([...TABELAS_SOFT_DELETE_POR_RPC].sort());
   });

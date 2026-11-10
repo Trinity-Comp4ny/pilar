@@ -47,7 +47,9 @@ function OrcamentoDisciplinaRow({
   const [horas, setHoras] = useState(() => String(fase?.horas_estimadas ?? ""));
   const [custoHora, setCustoHora] = useState(() => (fase?.custo_hora ? formatCurrency(fase.custo_hora) : ""));
 
-  const dirty = horas !== String(fase?.horas_estimadas ?? "") || custoHora !== (fase?.custo_hora ? formatCurrency(fase.custo_hora) : "");
+  const dirty =
+    horas !== String(fase?.horas_estimadas ?? "") ||
+    custoHora !== (fase?.custo_hora ? formatCurrency(fase.custo_hora) : "");
 
   const salvarLinha = async () => {
     try {
@@ -149,8 +151,8 @@ export function EscopoTab({ projetoId, canEdit, disciplinas }: EscopoTabProps) {
         <CardContent className="divide-y divide-border pt-0">
           {disciplinas.length === 0 ? (
             <p className="py-4 text-sm text-muted-foreground">
-              Este projeto ainda não tem disciplinas cadastradas — adicione uma na aba
-              Disciplinas antes de definir orçamento.
+              Este projeto ainda não tem disciplinas cadastradas — adicione uma na aba Disciplinas antes de definir
+              orçamento.
             </p>
           ) : (
             disciplinas.map((nome) => (
@@ -169,9 +171,8 @@ export function EscopoTab({ projetoId, canEdit, disciplinas }: EscopoTabProps) {
       {aditivos.length === 0 ? (
         <Card>
           <CardContent className="p-6 text-center text-sm text-muted-foreground">
-            Nenhum aditivo por aqui ainda. Aditivos aparecem quando o escopo do projeto muda —
-            criados manualmente pelo chat ou sugeridos automaticamente quando as despesas passam
-            do orçamento vivo.
+            Nenhum aditivo por aqui ainda. Aditivos aparecem quando o escopo do projeto muda — criados manualmente pelo
+            chat ou sugeridos automaticamente quando as despesas passam do orçamento vivo.
           </CardContent>
         </Card>
       ) : (

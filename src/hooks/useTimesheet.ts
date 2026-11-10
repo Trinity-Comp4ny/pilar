@@ -92,9 +92,7 @@ export function useTimesheetLancamentos(filters: TimesheetFilters = {}) {
           updated_at: r.updated_at,
           projeto_nome: projetos?.nome ?? "—",
           fase_nome: fases?.disciplina ?? null,
-          user_nome: profile
-            ? [profile.nome, profile.sobrenome].filter(Boolean).join(" ")
-            : "—",
+          user_nome: profile ? [profile.nome, profile.sobrenome].filter(Boolean).join(" ") : "—",
         } as TimesheetLancamento;
       });
     },

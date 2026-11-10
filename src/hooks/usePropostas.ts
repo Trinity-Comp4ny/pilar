@@ -133,10 +133,7 @@ export const useDeleteProposta = () => {
     // Soft delete: marca deleted_at. A listagem já filtra deleted_at IS NULL,
     // então a proposta some da lista mas continua recuperável (ver useRestoreProposta).
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("propostas")
-        .update({ deleted_at: new Date().toISOString() })
-        .eq("id", id);
+      const { error } = await supabase.from("propostas").update({ deleted_at: new Date().toISOString() }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -208,19 +205,12 @@ export const useSalvarPropostaDisciplinas = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      propostaId,
-      disciplinas,
-    }: {
-      propostaId: string;
-      disciplinas: PropostaDisciplinaInput[];
-    }) => {
+    mutationFn: async ({ propostaId, disciplinas }: { propostaId: string; disciplinas: PropostaDisciplinaInput[] }) => {
       // RPC ainda não está nos tipos gerados (migration não aplicada ao remoto);
       // cast segue o padrão de useFinanceChartData.
-      const { error } = await (supabase as unknown as { rpc: (fn: string, args: unknown) => Promise<{ error: unknown }> }).rpc(
-        "rpc_salvar_proposta_disciplinas",
-        { p_proposta_id: propostaId, p_disciplinas: disciplinas }
-      );
+      const { error } = await (
+        supabase as unknown as { rpc: (fn: string, args: unknown) => Promise<{ error: unknown }> }
+      ).rpc("rpc_salvar_proposta_disciplinas", { p_proposta_id: propostaId, p_disciplinas: disciplinas });
       if (error) throw error;
     },
     onSuccess: (_data, { propostaId }) => {
