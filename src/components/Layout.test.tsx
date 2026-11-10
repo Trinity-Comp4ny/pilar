@@ -17,6 +17,7 @@ vi.mock("@/components/CommandPalette", () => ({
 vi.mock("@/components/OnboardingChecklist", () => ({ OnboardingChecklist: () => <div data-testid="checklist" /> }));
 vi.mock("@/components/onboarding/OnboardingTourController", () => ({ OnboardingTourController: () => null }));
 vi.mock("@/components/novidades/OQueMudou", () => ({ OQueMudou: () => null }));
+vi.mock("@/components/FaixaAvisos", () => ({ FaixaAvisos: () => null }));
 vi.mock("@/lib/monitoring", () => ({ monitoring: { captureException: vi.fn(), addBreadcrumb: vi.fn() } }));
 
 function renderLayout(rota = "/inicio") {

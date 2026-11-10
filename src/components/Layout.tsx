@@ -7,6 +7,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { CommandPaletteHint } from "@/components/CommandPaletteHint";
 import { useCommandPalette } from "@/hooks/useCommandPalette";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { FaixaAvisos } from "@/components/FaixaAvisos";
 import { PageLoader } from "@/components/motion/PageLoader";
 import { VeilExit } from "@/components/motion/EntryVeil";
 import { useRouteEnter } from "@/components/motion/useRouteEnter";
@@ -73,6 +74,8 @@ function LayoutContent() {
           className="pb-[calc(6.5rem+env(safe-area-inset-bottom))] outline-hidden md:px-10 md:pb-10 md:pt-4"
         >
           <DentroDoMainProvider value>
+            {/* Incidente e manutenção declarados no Ultra admin (SPEC 153). */}
+            <FaixaAvisos />
             <ErrorBoundary>
               <DevErrorTrigger />
               {/* Página preguiçosa baixando: a sidebar fica e o anel ocupa só o conteúdo. */}
