@@ -1,5 +1,9 @@
 # DPA (Data Processing Agreement) — Template
 
+> **2026-11-10:** o DPA padrão agora é o Anexo de Tratamento de Dados Pessoais publicado dentro
+> de `/termos` (v2.0), aceito junto com os Termos. Este template fica para o cliente cuja política
+> interna exija um documento assinado em separado.
+
 **Status:** 🚧 Rascunho de referência, nunca assinado com cliente real (zero pagante hoje, ver
 `docs/strategy/DECISOES.md` 2026-09-01). **Não enviar a cliente sem revisão de advogado** — este
 template cobre a estrutura padrão de mercado, não foi validado juridicamente para o contexto

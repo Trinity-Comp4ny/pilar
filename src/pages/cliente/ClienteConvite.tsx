@@ -14,6 +14,7 @@ import { passwordResetSchema, passwordResetDefaultValues, type PasswordResetForm
 import { Logo } from "@/components/Logo";
 
 import { BusyMark } from "@/components/motion/BusyMark";
+import { AvisoPrivacidadeConvidado } from "@/components/legal/AvisoPrivacidadeConvidado";
 
 type ConviteResp = { ok: boolean; token?: string; nome?: string; erro?: string };
 
@@ -159,6 +160,7 @@ export default function ClienteConvite() {
             </Button>
           </form>
         </Form>
+        <AvisoPrivacidadeConvidado />
       </div>
     </div>
   );

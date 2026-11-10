@@ -12,6 +12,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { setCampoToken } from "./useCampoAuth";
 
 import { BusyMark } from "@/components/motion/BusyMark";
+import { AvisoPrivacidadeConvidado } from "@/components/legal/AvisoPrivacidadeConvidado";
 
 type Resp = { ok: boolean; token?: string; nome?: string; erro?: string };
 
@@ -124,6 +125,7 @@ export default function CampoConvite() {
             Definir senha e entrar
           </Button>
         </form>
+        <AvisoPrivacidadeConvidado />
       </div>
     </div>
   );
