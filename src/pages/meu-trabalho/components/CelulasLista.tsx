@@ -6,7 +6,7 @@ import { format, parse, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarPlus, Check, Clock, Flag, FolderOpen, Plus, Tag, UserPlus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { DatePanel } from "@/components/ui/date-panel";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -164,29 +164,22 @@ export function PrazoCell({ prazo, atrasado, editavel, onChange }: PrazoCellProp
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger className="flex items-center rounded px-1 py-0.5 hover:bg-muted">{conteudo}</PopoverTrigger>
         <PopoverContent align="start" className="w-auto p-0">
-          <Calendar
-            mode="single"
-            selected={data}
+          <DatePanel
+            value={data}
             onSelect={(d) => {
-              onChange(d ? format(d, "yyyy-MM-dd") : null);
+              onChange(format(d, "yyyy-MM-dd"));
               setOpen(false);
             }}
-            defaultMonth={data}
-            locale={ptBR}
-            autoFocus
+            onClear={
+              prazo
+                ? () => {
+                    onChange(null);
+                    setOpen(false);
+                  }
+                : undefined
+            }
+            clearLabel="Limpar prazo"
           />
-          {prazo && (
-            <button
-              type="button"
-              onClick={() => {
-                onChange(null);
-                setOpen(false);
-              }}
-              className="w-full border-t px-3 py-2 text-left text-xs text-muted-foreground hover:bg-muted"
-            >
-              Limpar prazo
-            </button>
-          )}
         </PopoverContent>
       </Popover>
     </div>
