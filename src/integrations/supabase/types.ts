@@ -6124,6 +6124,91 @@ export type Database = {
           },
         ]
       }
+      plataforma_comunicados: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          empresa_id: string | null
+          encerrado_em: string | null
+          fim: string | null
+          formato: string
+          id: string
+          inicio: string
+          link_rotulo: string | null
+          link_url: string | null
+          mensagem: string
+          plano_slug: string | null
+          so_admins: boolean
+          titulo: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string | null
+          encerrado_em?: string | null
+          fim?: string | null
+          formato?: string
+          id?: string
+          inicio?: string
+          link_rotulo?: string | null
+          link_url?: string | null
+          mensagem: string
+          plano_slug?: string | null
+          so_admins?: boolean
+          titulo: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string | null
+          encerrado_em?: string | null
+          fim?: string | null
+          formato?: string
+          id?: string
+          inicio?: string
+          link_rotulo?: string | null
+          link_url?: string | null
+          mensagem?: string
+          plano_slug?: string | null
+          so_admins?: boolean
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plataforma_comunicados_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plataforma_comunicados_dispensas: {
+        Row: {
+          comunicado_id: string
+          dispensado_em: string
+          user_id: string
+        }
+        Insert: {
+          comunicado_id: string
+          dispensado_em?: string
+          user_id: string
+        }
+        Update: {
+          comunicado_id?: string
+          dispensado_em?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plataforma_comunicados_dispensas_comunicado_id_fkey"
+            columns: ["comunicado_id"]
+            isOneToOne: false
+            referencedRelation: "plataforma_comunicados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_settings: {
         Row: {
           cadastro_aberto: boolean
@@ -9921,6 +10006,18 @@ export type Database = {
         }
         Returns: string
       }
+      comunicados_para_mim: {
+        Args: never
+        Returns: {
+          formato: string
+          id: string
+          inicio: string
+          link_rotulo: string
+          link_url: string
+          mensagem: string
+          titulo: string
+        }[]
+      }
       cotacao_link_consultar: { Args: { p_token_hash: string }; Returns: Json }
       cotacao_link_responder: {
         Args: {
@@ -10058,6 +10155,7 @@ export type Database = {
           saldo_plano: number
         }[]
       }
+      dispensar_comunicado: { Args: { p_comunicado_id: string }; Returns: undefined }
       excluir_empresa_retencao: {
         Args: { p_empresa_id: string; p_motivo: string }
         Returns: undefined
