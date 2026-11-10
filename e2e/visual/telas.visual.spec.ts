@@ -68,6 +68,10 @@ function mascaras(page: Page) {
     // borda, porque a largura do texto muda com os dígitos do dia ("11/10" é mais
     // estreito que "28/10") e o seed gera datas relativas a hoje. O botão tem largura fixa.
     page.getByRole("button", { name: /\d{2}\/\d{2}\/\d{2,4}/ }),
+    // Campo de data digitável (DatePicker): a data mora no value do input, que a troca
+    // por "0000" não alcança (só mexe em nó de texto). Mascara o campo inteiro, que tem
+    // largura fixa, então a caixa não muda com o dia.
+    page.locator('[data-slot="date-picker"]'),
     // Tabela inteira, não só o corpo: a largura das colunas acompanha o conteúdo, que
     // muda com a data do seed, e o cabeçalho descia 1px de um dia para o outro. A
     // borda do card em volta continua na foto, então tabela que desloca ainda aparece.

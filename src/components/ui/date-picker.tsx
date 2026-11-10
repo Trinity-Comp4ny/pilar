@@ -138,6 +138,7 @@ export function DatePicker({
         <PopoverAnchor asChild>
           <div
             ref={wrapperRef}
+            data-slot="date-picker"
             className={cn(
               "flex h-10 w-full items-center rounded-md border border-input bg-background px-3 text-sm",
               "focus-within:outline-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
