@@ -1,0 +1,11 @@
+{
+  "imports": {
+    "@/": "../../src/",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.118.0",
+    "fflate": "npm:fflate@0.8.3",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs",
+    "zod": "npm:zod@4.6.7"
+  },
+  "unstable": ["sloppy-imports"],
+  "nodeModulesDir": "none"
+}
