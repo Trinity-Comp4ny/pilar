@@ -165,6 +165,19 @@ Depois do deploy em staging (não em PR):
   `workflow_run` apontava para "Deploy Supabase", workflow deletado em `bd77a39`, e
   gatilho desse tipo só se registra a partir da branch default.
 
+## Automações do GitHub
+
+- **Issue de falha que fecha sozinha** (`.github/actions/notify-cron-failure`): todo cron
+  abre issue "Cron falhando: X" quando falha e a fecha na primeira execução verde. O mesmo
+  vale para o pipeline pós-merge: "Pipeline quebrado: staging" (deploy, smoke ou E2E de
+  staging) e "Pipeline quebrado: produção" (release em `main`). Run cancelado não abre issue.
+- **`Closes #N` em staging** (`fechar-issues-staging.yml`): fecha as issues citadas nos
+  commits que chegam em `staging`, com link para o commit.
+- **Auto-merge do Dependabot** (`dependabot-auto-merge.yml`): PR de minor/patch entra
+  sozinho, por rebase, quando todos os required checks passam. Major fica para revisão.
+  Depende de "Allow auto-merge" ligado nas configurações do repositório.
+- **Resumo do CI**: o job `CI OK` escreve uma tabela gate a gate no resumo do run.
+
 ## Edge Functions
 
 O mapa de todas as funções (domínio, o que faz, quem chama, login, secrets, teste) está

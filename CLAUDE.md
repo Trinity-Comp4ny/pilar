@@ -163,7 +163,7 @@ O repo permite squash e rebase, mas BLOQUEIA merge commit.
 **Limpeza obrigatória após CADA merge**
 
 - Deletar a branch merged, local e remota (`--delete-branch`, ou `git branch -D` + `git push origin --delete`).
-- Fechar manualmente as issues resolvidas: `Closes #` não dispara porque o merge é em `staging`, não na branch default `main`. Comentar o PR/commit que corrigiu.
+- Issues resolvidas: escrever `Closes #N` (ou `Fixes`/`Resolves`) na mensagem do commit. O `Closes` nativo não dispara em `staging`, então o workflow `fechar-issues-staging.yml` fecha a issue quando o commit chega lá, com link para ele. Sem a linha no commit, fechar à mão.
 - Trocar para `staging`, `git pull --ff-only`, e apagar as branches locais já merged.
 
 **Verificação de fecho**
