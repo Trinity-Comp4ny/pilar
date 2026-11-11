@@ -30,6 +30,7 @@ const CalculadoraHonorarios = lazy(() =>
   import("./pages/Ferramentas").then((m) => ({ default: m.CalculadoraHonorarios }))
 );
 const ModeloProposta = lazy(() => import("./pages/Ferramentas").then((m) => ({ default: m.ModeloProposta })));
+const Seguranca = lazy(() => import("./pages/Seguranca").then((m) => ({ default: m.Seguranca })));
 const NotFound = lazy(() => import("./pages/NotFound").then((m) => ({ default: m.NotFound })));
 
 /**
@@ -128,6 +129,7 @@ export default function App() {
               <Route path="/planos" element={<Planos />} />
               <Route path="/termos" element={<Termos />} />
               <Route path="/privacidade" element={<Privacidade />} />
+              <Route path="/seguranca" element={<Seguranca />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

@@ -24,7 +24,7 @@ import { defaultValues, rateiosValidos, schema, type FormData, type FormInput } 
 import { clienteDoProjeto, projetoContinuaValido, projetosDoCliente } from "../lib/vinculoClienteProjeto";
 import type { Lancamento, TipoLancamento } from "../hooks/useLancamentosUnified";
 import { CentroCustoManager } from "./CentroCustoManager";
-import { analytics } from "@/lib/analytics";
+import { registrarLancamentoCriado } from "../lib/lancamentoCriado";
 import type { Json } from "@/integrations/supabase/types";
 import { montarLinhasNovas, statusEmAberto } from "../lib/lancamentoLinhas";
 
@@ -242,7 +242,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
         });
         if (error) throw new Error(error.message + (error.details ? ` (${error.details})` : ""));
 
-        analytics.track("lancamento_criado", { tipo, parcelas: numParcelas, rateio: rateioOn });
+        registrarLancamentoCriado(tipo, numParcelas, rateioOn);
         toast.success(isReceita ? "Receita cadastrada" : "Despesa cadastrada", {
           description: `${numParcelas} registro(s) criado(s)`,
         });

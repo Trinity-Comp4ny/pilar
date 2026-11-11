@@ -1,0 +1,58 @@
+name: Novidades do release
+
+# SPEC 152. No push em main (release), junta os commits de staging que entraram no release e manda
+# os que têm linha `Novidade:` para a edge release-rascunho, que grava o rascunho de novidades.
+# O ultra admin revisa e publica em /ultra-admin/releases: nada chega ao usuário sem publicar.
+# O intervalo vem da árvore do release (scripts/feedback-release-commits.sh, mesmo do SPEC 145);
+# o corpo do PR de release só serve de fallback.
+# Segredos de repositório: RELEASE_NOTAS_URL (URL da função em produção) e RELEASE_NOTAS_TOKEN.
+# Sem eles o passo só avisa. Armadilha da branch default: o gatilho em main só vale com este
+# arquivo em main.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: release-notas
+  cancel-in-progress: false
+
+jobs:
+  rascunho:
+    name: Gravar rascunho de novidades
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      RELEASE_NOTAS_URL: ${{ secrets.RELEASE_NOTAS_URL }}
+      RELEASE_NOTAS_TOKEN: ${{ secrets.RELEASE_NOTAS_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Commits do release para rascunho
+        env:
+          REPO: ${{ github.repository }}
+          ANTES: ${{ github.event.before }}
+          DEPOIS: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          git fetch origin staging --quiet
+          if MSGS=$(FORMATO='%x1e%H%n%B' scripts/feedback-release-commits.sh "$DEPOIS" "$ANTES"); then
+            printf '%s' "$MSGS" | scripts/release-notas.sh "$DEPOIS"
+            exit 0
+          fi
+          echo "::notice::Árvore do release sem par em staging: usando os hashes do corpo do PR."
+          CORPO=$(gh api "repos/$REPO/commits/$DEPOIS/pulls" --jq '.[0].body // ""')
+          HASHES=$(printf '%s\n' "$CORPO" | grep -oE "\`[0-9a-f]{7,40}\`" | tr -d '\`' | sort -u || true)
+          if [ -z "$HASHES" ]; then
+            echo "::warning::Release sem par em staging e sem lista de commits no corpo do PR: novidades não gravadas."
+            exit 0
+          fi
+          for h in $HASHES; do
+            git show -s --format='%x1e%H%n%B' "$h" 2>/dev/null || true
+          done | scripts/release-notas.sh "$DEPOIS"

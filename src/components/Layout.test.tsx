@@ -14,8 +14,17 @@ vi.mock("@/contexts/AvatarDiretorioContext", () => ({
 vi.mock("@/components/CommandPalette", () => ({
   CommandPalette: ({ open }: { open: boolean }) => (open ? <div data-testid="paleta" /> : null),
 }));
+vi.mock("@/components/AtalhosTecladoDialog", () => ({
+  AtalhosTecladoDialog: ({ open }: { open: boolean }) => (open ? <div data-testid="atalhos" /> : null),
+}));
 vi.mock("@/components/OnboardingChecklist", () => ({ OnboardingChecklist: () => <div data-testid="checklist" /> }));
 vi.mock("@/components/onboarding/OnboardingTourController", () => ({ OnboardingTourController: () => null }));
+vi.mock("@/components/novidades/OQueMudou", () => ({ OQueMudou: () => null }));
+vi.mock("@/components/FaixaAvisos", () => ({ FaixaAvisos: () => null }));
+vi.mock("@/components/agente/AgenteAjuda", () => ({ AgenteAjuda: () => null }));
+vi.mock("@/components/pesquisas/NpsCard", () => ({ NpsCard: () => null }));
+vi.mock("@/components/ComunicadoModal", () => ({ ComunicadoModal: () => null }));
+vi.mock("@/components/RegistroDispositivo", () => ({ RegistroDispositivo: () => null }));
 vi.mock("@/lib/monitoring", () => ({ monitoring: { captureException: vi.fn(), addBreadcrumb: vi.fn() } }));
 
 function renderLayout(rota = "/inicio") {
@@ -61,6 +70,24 @@ describe("Layout", () => {
       fireEvent.keyDown(window, { key: "k", metaKey: true });
     });
     expect(await screen.findByTestId("paleta")).toBeInTheDocument();
+  });
+
+  it("? abre o painel de atalhos sob demanda, mas não enquanto digita num campo", async () => {
+    renderLayout();
+    const campo = document.createElement("input");
+    document.body.appendChild(campo);
+    campo.focus();
+    await act(async () => {
+      fireEvent.keyDown(window, { key: "?", shiftKey: true });
+    });
+    expect(screen.queryByTestId("atalhos")).not.toBeInTheDocument();
+
+    campo.blur();
+    campo.remove();
+    await act(async () => {
+      fireEvent.keyDown(window, { key: "?", shiftKey: true });
+    });
+    expect(await screen.findByTestId("atalhos")).toBeInTheDocument();
   });
 
   it("?boom em dev mostra a tela de erro dentro do shell", () => {

@@ -39,6 +39,9 @@ const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const Inicio = lazy(() => import("./pages/inicio"));
+const Novidades = lazy(() => import("./pages/novidades"));
+const Ajuda = lazy(() => import("./pages/ajuda"));
+const ArtigoAjuda = lazy(() => import("./pages/ajuda/Artigo"));
 const ComprarTokens = lazy(() => import("./pages/comprar-tokens"));
 const AutorizarApp = lazy(() => import("./pages/oauth/Autorizar"));
 const MeuTrabalho = lazy(() => import("./pages/meu-trabalho"));
@@ -62,6 +65,10 @@ const Pessoas = lazy(() => import("./pages/pessoas"));
 const Metas = lazy(() => import("./pages/metas"));
 const CompanySetup = lazy(() => import("./pages/CompanySetup"));
 const ProfileSetup = lazy(() => import("./pages/ProfileSetup"));
+// Reaceite dos Termos (só admin vê): fora do carregamento inicial, que tem teto de tamanho.
+const AceiteTermosBanner = lazy(() =>
+  import("./components/AceiteTermosBanner").then((m) => ({ default: m.AceiteTermosBanner }))
+);
 const Timesheet = lazy(() => import("./pages/Timesheet"));
 const Chat = lazy(() => import("./pages/chat"));
 const Propostas = lazy(() => import("./pages/propostas"));
@@ -91,6 +98,11 @@ const UltraUsuarios = lazy(() => ultraAdmin().then((m) => ({ default: m.Usuarios
 const UltraTestes = lazy(() => ultraAdmin().then((m) => ({ default: m.Testes })));
 const UltraFuncionalidades = lazy(() => ultraAdmin().then((m) => ({ default: m.Funcionalidades })));
 const UltraFeedback = lazy(() => ultraAdmin().then((m) => ({ default: m.Feedback })));
+const UltraReleases = lazy(() => ultraAdmin().then((m) => ({ default: m.Releases })));
+const UltraAjudaLacunas = lazy(() => ultraAdmin().then((m) => ({ default: m.AjudaLacunas })));
+const UltraSatisfacao = lazy(() => ultraAdmin().then((m) => ({ default: m.Satisfacao })));
+const UltraComunicados = lazy(() => ultraAdmin().then((m) => ({ default: m.Comunicados })));
+const UltraPrevias = lazy(() => ultraAdmin().then((m) => ({ default: m.Previas })));
 const UltraAtividade = lazy(() => ultraAdmin().then((m) => ({ default: m.Atividade })));
 const UltraIncidentes = lazy(() => ultraAdmin().then((m) => ({ default: m.Incidentes })));
 const UltraCustosIa = lazy(() => ultraAdmin().then((m) => ({ default: m.CustosIa })));
@@ -225,6 +237,9 @@ const App = () => {
                   <ValoresOcultosProvider>
                     <ImpersonationBanner />
                     <TrialBanner />
+                    <Suspense fallback={null}>
+                      <AceiteTermosBanner />
+                    </Suspense>
                     <Suspense fallback={<EntryVeil />}>
                       <Routes>
                         <Route path="/" element={<ExternalRedirect />} />
@@ -255,6 +270,9 @@ const App = () => {
 
                         <Route element={<PrivateRoute />}>
                           <Route path="/inicio" element={<Inicio />} />
+                          <Route path="/novidades" element={<Novidades />} />
+                          <Route path="/ajuda" element={<Ajuda />} />
+                          <Route path="/ajuda/:slug" element={<ArtigoAjuda />} />
 
                           {/* ===== Rotas aninhadas por módulo (ADR 0016) ===== */}
 
@@ -390,6 +408,7 @@ const App = () => {
                           <Route path="/company-setup" element={<CompanySetup />} />
                           <Route path="/profile-setup" element={<ProfileSetup />} />
                           <Route path="/profile" element={<SettingsRedirect section="conta" />} />
+                          <Route path="/seguranca" element={<SettingsRedirect section="seguranca" />} />
                           <Route path="/company" element={<SettingsRedirect section="empresa" />} />
                           <Route path="/billing" element={<SettingsRedirect section="pagamento" />} />
 
@@ -410,6 +429,11 @@ const App = () => {
                               <Route path="testes" element={<UltraTestes />} />
                               <Route path="funcionalidades" element={<UltraFuncionalidades />} />
                               <Route path="feedback" element={<UltraFeedback />} />
+                              <Route path="releases" element={<UltraReleases />} />
+                              <Route path="ajuda" element={<UltraAjudaLacunas />} />
+                              <Route path="satisfacao" element={<UltraSatisfacao />} />
+                              <Route path="comunicados" element={<UltraComunicados />} />
+                              <Route path="previas" element={<UltraPrevias />} />
                               <Route path="atividade" element={<UltraAtividade />} />
                               <Route path="incidentes" element={<UltraIncidentes />} />
                               <Route path="custos-ia" element={<UltraCustosIa />} />

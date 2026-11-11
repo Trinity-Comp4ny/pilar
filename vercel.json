@@ -1,5 +1,5 @@
 {
-  "git": { "deploymentEnabled": { "dependabot/**": false } },
+  "git": { "deploymentEnabled": { "dependabot/**": false, "claude/**": false, "release/**": false, "fix/**": false } },
   "ignoreCommand": "bash scripts/vercel-ignore.sh app",
   "rewrites": [
     { "source": "/version.json", "destination": "/version.json" },

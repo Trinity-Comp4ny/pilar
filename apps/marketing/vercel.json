@@ -1,5 +1,5 @@
 {
-  "git": { "deploymentEnabled": { "dependabot/**": false } },
+  "git": { "deploymentEnabled": { "dependabot/**": false, "claude/**": false, "release/**": false, "fix/**": false } },
   "ignoreCommand": "bash ../../scripts/vercel-ignore.sh marketing",
   "redirects": [
     { "source": "/dashboard", "destination": "https://app.pilarsoft.com.br/inicio", "permanent": false },

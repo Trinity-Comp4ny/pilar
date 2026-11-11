@@ -112,7 +112,11 @@ jobs:
           PR: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
-          COMMITS_JSON="$(gh api --paginate "repos/$REPO/pulls/$PR/commits?per_page=100" | jq -s 'add')"
+          # Só o que o script lê (sha, pais, assunto): a resposta inteira da API vai numa variável de
+          # ambiente e, num PR com dezenas de commits, passava do limite do Linux para uma variável
+          # (128 KiB) e o job morria com "Argument list too long" antes de conferir nada.
+          COMMITS_JSON="$(gh api --paginate "repos/$REPO/pulls/$PR/commits?per_page=100" \
+            | jq -s 'add | map({sha, parents, commit: {message: (.commit.message | split("\n")[0])}})')"
           export COMMITS_JSON
           scripts/check-commits-pr.sh
 
