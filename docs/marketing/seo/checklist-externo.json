@@ -11,8 +11,8 @@
     "nota": "Search Console > Sitemaps > https://www.pilarsoft.com.br/sitemap.xml"
   },
   "bing": {
-    "feito": false,
-    "em": null,
+    "feito": true,
+    "em": "2026-11-11",
     "nota": "Bing Webmaster Tools > Importar do Google Search Console."
   },
   "conversaoMedida": {
@@ -21,9 +21,9 @@
     "nota": "Clique em Agendar demonstração por origem (utm/ref) visível num painel do PostHog."
   },
   "coreWebVitals": {
-    "feito": false,
-    "em": null,
-    "nota": "Relatório Core Web Vitals do Search Console sem URL ruim (ou PageSpeed mobile >= 90)."
+    "feito": true,
+    "em": "2026-11-11",
+    "nota": "Relatório Core Web Vitals do Search Console sem URL ruim (ou PageSpeed mobile >= 90). Em 11/11: PageSpeed 94 no celular e 99 no desktop (home)."
   },
   "perfisOficiais": {
     "feito": false,

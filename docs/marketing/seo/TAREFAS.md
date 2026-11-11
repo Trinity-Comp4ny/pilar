@@ -11,8 +11,8 @@ rode `npm run seo:nota` para ver a nota nova.
 ## Depois de cada release
 
 Abra `https://www.pilarsoft.com.br/engenharia` e um artigo do blog no navegador. Se der 404, o prerender não
-rodou no build da Vercel (ver o histórico de 11/11 em [NOTA_SEO.md](./NOTA_SEO.md)). Depois rode
-`npm run seo:indexnow --workspace=apps/marketing`.
+rodou no build da Vercel (ver o histórico de 11/11 em [NOTA_SEO.md](./NOTA_SEO.md)). O aviso ao IndexNow é
+automático: o workflow `IndexNow` do GitHub roda 5 minutos depois de cada release que muda a landing.
 
 ## Semana 1: medição (leva a nota de 85 para 93)
 
@@ -41,8 +41,8 @@ quantos cliques teve.
 O Bing alimenta a busca do ChatGPT e do Copilot.
 
 1. Acesse bing.com/webmasters › **Importar do Google Search Console** (depois da tarefa 1).
-2. Rode `npm run seo:indexnow --workspace=apps/marketing` para avisar o Bing de todas as páginas de uma vez.
-   Repita o comando a cada deploy que publicar artigo novo.
+2. O IndexNow (avisa o Bing de todas as páginas de uma vez) roda sozinho no GitHub depois de cada release
+   da landing. Para rodar à mão: GitHub › Actions › IndexNow › Run workflow.
 3. Marque `bing`.
 
 ### 4. Página da empresa no LinkedIn: +1 ponto, 20 minutos
@@ -112,7 +112,7 @@ Conte os domínios em Search Console › **Links › Sites com mais links** e at
 - **A cada 15 dias, no Search Console › Desempenho:** busca com muita impressão e posição entre 8 e 20 é a próxima
   a ganhar reforço (atualizar o artigo, criar artigo vizinho e linkar).
 - **Todo mês:** um post no LinkedIn e no Instagram por artigo novo, com link e `utm_source`.
-- Depois de publicar: `npm run seo:indexnow --workspace=apps/marketing`.
+- Depois de publicar: nada a fazer, o workflow `IndexNow` avisa o Bing no release.
 
 ## Resumo
 

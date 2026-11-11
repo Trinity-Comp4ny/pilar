@@ -3,8 +3,9 @@
 // alimenta a busca do ChatGPT e do Copilot. O Google não usa IndexNow: para ele,
 // vale o sitemap enviado no Search Console.
 //
-// Rodar depois de cada deploy de produção que publica ou muda página (lê o
-// sitemap que está no ar, então precisa do deploy concluído):
+// Roda sozinho no GitHub (.github/workflows/indexnow.yml) 5 minutos depois de cada
+// push em main que muda a landing; lê o sitemap que está no ar, então precisa do
+// deploy concluído. À mão: Actions › IndexNow › Run workflow, ou
 //   npm run seo:indexnow --workspace=apps/marketing
 //
 // A chave é pública por desenho do protocolo: o arquivo public/<chave>.txt prova
