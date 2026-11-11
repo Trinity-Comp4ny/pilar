@@ -16,7 +16,7 @@
     "anon_trigger_inerte": 0,
     "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
-    "authenticated_chamavel": 170,
+    "authenticated_chamavel": 171,
     "search_path_mutavel": 0,
     "policy_auth_por_linha": 0,
     "fk_sem_indice": 51,
@@ -39,7 +39,7 @@
     "anon_trigger_inerte": 0,
     "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
-    "authenticated_chamavel": 170,
+    "authenticated_chamavel": 171,
     "search_path_mutavel": 0,
     "policy_auth_por_linha": 0,
     "fk_sem_indice": 51,
@@ -87,6 +87,9 @@
     "authenticated_chamavel": "140 -> 148 em prod: só a baseline de prod que não tinha sido regravada em 01/09 (staging já registrava 148). Desde 02/09 entraram 25 funções de spec (tokens por usuário, revisões, painel, trial, retenção, ultra admin, convites, perfil público) e saíram outras tantas; todas com search_path fixo e sem anon fora da allowlist.",
     "fk_sem_indice": "104 (prod) / 117 (staging) -> 126. Tabelas novas e colunas created_by/updated_by. A maior tabela afetada em produção tem cerca de 1.000 linhas; não é hot path, segue como dívida.",
     "policy_auth_por_linha": "25 -> 7. Melhorou (migração das policies); trava o ganho."
+  },
+  "_mudou_em_2026_11_11": {
+    "authenticated_chamavel": "170 -> 171. Entrou 1: rpc_apagar_notificacoes_comentario (20261212000000, apaga a notificação de menção quando o comentário é apagado; feedback 7a4802e8). search_path fixo, REVOKE de PUBLIC/anon, filtra pela empresa de quem chama (get_user_empresa_id) e só apaga se o comentário já saiu do jsonb do item. Deveria ter subido no próprio PR #789; reprovou a auditoria do release de 2026-11-11."
   },
   "_mudou_em_2026_11_09": {
     "motivo": "Auditoria do PR de release #762 reprovou: authenticated_chamavel 169 em prod e 170 em staging, baseline 165 (regravada em 2026-10-21). Mesma causa das outras vezes: PRs criaram função SECURITY DEFINER chamável por authenticated sem atualizar a baseline. Medido ao vivo nos dois projetos em 2026-11-09.",
