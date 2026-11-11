@@ -16,7 +16,7 @@
     "anon_trigger_inerte": 0,
     "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
-    "authenticated_chamavel": 171,
+    "authenticated_chamavel": 177,
     "search_path_mutavel": 0,
     "policy_auth_por_linha": 0,
     "fk_sem_indice": 51,
@@ -39,7 +39,7 @@
     "anon_trigger_inerte": 0,
     "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
-    "authenticated_chamavel": 171,
+    "authenticated_chamavel": 177,
     "search_path_mutavel": 0,
     "policy_auth_por_linha": 0,
     "fk_sem_indice": 51,
@@ -94,5 +94,8 @@
   "_mudou_em_2026_11_09": {
     "motivo": "Auditoria do PR de release #762 reprovou: authenticated_chamavel 169 em prod e 170 em staging, baseline 165 (regravada em 2026-10-21). Mesma causa das outras vezes: PRs criaram função SECURITY DEFINER chamável por authenticated sem atualizar a baseline. Medido ao vivo nos dois projetos em 2026-11-09.",
     "authenticated_chamavel": "165 -> 170. Entraram 5, saiu nenhuma: agente_pendencias_atualizar (20261125/20261127, pendências dos agentes), cobranca_decidir (20261126, escada de cobrança), projeto_prazo_avisar e projeto_aditivo_prazo_criar (20261127, prazo em risco) já estão em prod; vincular_pessoa_conta (20261207, vínculo pessoa ↔ login) chega a prod com este release. Todas com search_path fixo, nenhuma chamável por anon, e todas filtram pela empresa de quem chama (get_user_empresa_id); vincular_pessoa_conta exige admin via has_role('admin')."
+  },
+  "_mudou_em_2026_11_11_profissionalizacao": {
+    "authenticated_chamavel": "171 -> 177. Entram 6 RPCs SECURITY DEFINER do bloco de profissionalização (SPECs 152, 157 e 159): novidades_publicadas e marcar_novidades_vistas (só auth.uid(), devolvem e gravam só o que é do próprio usuário), publicar_release (exige is_ultra_admin), comunicados_para_mim e dispensar_comunicado (filtram pelo perfil de quem chama), registrar_dispositivo (só grava o navegador de auth.uid()). Todas com search_path fixo e REVOKE de PUBLIC/anon. As funções de trigger novas (_product_release_guarda_publicacao, _pesquisa_avisar_detrator) não são chamáveis."
   }
 }
