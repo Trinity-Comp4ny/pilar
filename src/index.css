@@ -3,6 +3,7 @@
 @import "./styles/landing.css";
 @import "./styles/tailwind-compat.css";
 @import "./styles/motion.css";
+@import "./styles/vidro.css";
 @config "../tailwind.config.ts";
 
 /* Inter autohospedada (mesmos arquivos da landing). Antes vinha do Google Fonts,
