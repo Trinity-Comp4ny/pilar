@@ -16,8 +16,8 @@
     "nota": "Bing Webmaster Tools > Importar do Google Search Console."
   },
   "conversaoMedida": {
-    "feito": false,
-    "em": null,
+    "feito": true,
+    "em": "2026-11-11",
     "nota": "Clique em Agendar demonstração por origem (utm/ref) visível num painel do PostHog."
   },
   "coreWebVitals": {
