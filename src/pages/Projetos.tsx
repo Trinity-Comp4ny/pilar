@@ -27,7 +27,7 @@ import { FluxoDisciplinasDialog } from "@/pages/projetos/components/FluxoDiscipl
 import { DisciplinasTab } from "@/pages/projetos/components/DisciplinasTab";
 import { CronogramaProjetosTab } from "@/pages/projetos/components/CronogramaProjetosTab";
 import { ProjetosFilterBar, EMPTY_FILTERS, type DeadlineFilter } from "@/pages/projetos/components/ProjetosFilterBar";
-import { ProjetosKPIs } from "@/pages/projetos/components/ProjetosKPIs";
+import { ProjetosKPIs, ProjetosKPIsResumo } from "@/pages/projetos/components/ProjetosKPIs";
 import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
 import { ProjetosEmptyState } from "@/pages/projetos/components/ProjetosEmptyState";
 import { KanbanBoard } from "@/pages/projetos/components/KanbanBoard";
@@ -368,10 +368,20 @@ export default function ProjetosKanban() {
   const noProjetos = !loadingProjetos && !projetosError && projetos.length === 0;
   const noResults = !loadingProjetos && !projetosError && projetos.length > 0 && filteredProjetos.length === 0;
 
-  const preencheAltura = activeTab === "quadro" || activeTab === "cronograma";
+  const preencheAltura = activeTab === "quadro" || activeTab === "cronograma" || activeTab === "mapa";
+  const [slotCronograma, setSlotCronograma] = useState<HTMLDivElement | null>(null);
 
   const toolbar = (
-    <FilterBar end={isColecao ? <KanbanSortControl sort={sort} onChange={setSort} keys={sortKeys} /> : undefined}>
+    <FilterBar
+      end={
+        isColecao ? (
+          <KanbanSortControl sort={sort} onChange={setSort} keys={sortKeys} />
+        ) : activeTab === "cronograma" ? (
+          // Os controles do Gantt (Meus, status, zoom, legenda) entram aqui, na mesma linha.
+          <div ref={setSlotCronograma} className="flex items-center" />
+        ) : undefined
+      }
+    >
       {isColecao && <ViewSwitcher options={VISAO_OPCOES} value={viewMode} onChange={setViewMode} iconOnlyOnMobile />}
       <ProjetosFilterBar
         pessoas={pessoas}
@@ -389,6 +399,7 @@ export default function ProjetosKanban() {
       // Quadro e Cronograma cabem na altura da tela e rolam por dentro (colunas, linhas do Gantt).
       className={preencheAltura ? "md:overflow-y-hidden" : undefined}
       containerClassName={cn("flex flex-col", preencheAltura && "md:h-full md:min-h-0")}
+      density="compact"
       header={
         <PageHeader
           title="Projetos"
@@ -456,7 +467,10 @@ export default function ProjetosKanban() {
       {/* KPIs (a navegação entre recortes vive na sidebar; só entram quando há dado
           pra mostrar). Visão, filtros e ordenação ficam na toolbar (SPEC 124). */}
       {isColecao && (
-        <CollapsibleKpiSection storageKey="projetos">
+        <CollapsibleKpiSection
+          storageKey="projetos"
+          resumo={!loadingProjetos && projetos.length > 0 ? <ProjetosKPIsResumo projetos={projetos} /> : undefined}
+        >
           {!loadingProjetos && projetos.length > 0 && (
             <ProjetosKPIs
               projetos={projetos}
@@ -550,6 +564,7 @@ export default function ProjetosKanban() {
             projetos={filteredProjetos}
             onDatesChange={canEdit ? handleCronogramaProjetoDates : undefined}
             canReorder={canEdit}
+            toolbarSlot={slotCronograma}
           />
         </div>
       ) : activeTab === "mapa" ? (

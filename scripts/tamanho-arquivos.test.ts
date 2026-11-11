@@ -21,7 +21,6 @@ const TETO: Record<string, number> = {
   "pages/leads/index.tsx": 901,
   "pages/financeiro/components/LancamentoFormDialog.tsx": 750,
   "pages/projetos/components/useProjetoForm.ts": 865,
-  "pages/projetos/components/CronogramaProjetosTab.tsx": 746,
   "pages/clientes/[id]/index.tsx": 805,
   "pages/projetos/components/DisciplinasTableView.tsx": 737,
   "pages/projetos/components/DisciplinaDetailDialog.tsx": 744,
