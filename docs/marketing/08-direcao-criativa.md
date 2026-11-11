@@ -91,3 +91,61 @@ fotos em `posts/fotos/`, saída em `posts/out/conceito/`, prancha em `posts/pran
 Substituem metade dos estáticos de "frase sobre fundo liso" do [06](./06-banco-de-conteudo.md): toda
 segunda passa a ser post-conceito, alternando com os carrosséis de conta aberta da quarta. A mistura
 fica: gente real 40%, educativo 30%, conceito e produto animado 20%, convite 10%.
+
+## 6. Revisão de todos os vídeos (11/11, antes da primeira postagem)
+
+Nenhum vídeo foi postado ainda, então todos foram revisados contra a política da seção 2. O que
+mudou: **o cartão final saiu de 19 dos 25 vídeos**, a trilha do "Chuva" virou `cinematic` (a `groove`
+aparecia em 7 peças) e a música dos vídeos sem cartão agora vai até o último quadro (`audio.py` usa o
+fim do vídeo como virada quando não há cartão).
+
+| Vídeo | Fim antes | Fim agora | Outras melhorias e pendências |
+| --- | --- | --- | --- |
+| `anatomia-light` | cartão (3,4 s) | conteúdo, loop | 22 → 18,6 s |
+| `antes-depois-light` | cartão + tagline | conteúdo, loop | 20 → 16,4 s |
+| `chuva-dark` | cartão + tagline | conteúdo, loop | 16 → 9,8 s; trilha `cinematic` |
+| `dia-do-socio-light` | cartão | conteúdo, loop | 22 → 18,6 s |
+| `diario-light` | cartão | conteúdo, loop | 20 → 16,4 s |
+| `grupo-da-obra-light` | cartão | conteúdo, loop | 20 → 16,4 s |
+| `hora-do-socio-light` | cartão + nota | conteúdo, loop | 22 → 18,4 s; "faça a conta com os seus números" vai para a legenda |
+| `planilha-light` | logotipo + botão sobre o quadro | conteúdo, loop | 18 → 14,4 s |
+| `nao-faz-dark` | cartão | conteúdo, loop | 16 → 12,2 s |
+| `quiz`, `quiz-2-art`, `quiz-3-revisao` | logotipo + botão | "Acertou? Comenta a sua letra." | 15 → 13,2 s; o pedido de comentário é a chamada |
+| `manifesto`, `manifesto-2-gestao` | cena da marca | a virada ("É sistema.") é o fim | 15 → 10,6 s |
+| `glossario`, `mito-fato`, `comentario` | cartão | conteúdo, loop | 18 → 14,4 s |
+| `asmr-light` | cartão | conteúdo, loop | 20 → 16,4 s; o cartão quebrava o clima sem música |
+| `fala-*` (12 do fundador) | véu escuro + cartão | termina na última frase | só o roteiro com `"cta"` mantém o cartão |
+| `comece-aqui-light` | cartão | **mantido** | peça de apresentação (fixar no perfil); 48 s é longo para quem não conhece: usar como fixado e na landing, não como alcance |
+| `planos-light` | convite em loop | **mantido** | é a peça de conversão |
+| `contagem-dark` | cartão | **mantido** | lançamento |
+| `novidades-dark` | cartão | **mantido** | série semanal, quem assiste já segue |
+| `agentes-explicado-light` | cartão | **mantido** | explicativo narrado; **trocar a voz antes de postar** (Google Chirp 3 HD) |
+
+**Regras que a revisão deixou** (valem para os próximos):
+
+- **Primeiro quadro = gancho.** Todos abrem com a frase ou a imagem do problema, sem logotipo.
+- **Até 15 s para alcance, até 25 s para educativo.** Acima disso, só a apresentação e o narrado.
+- **A trilha não se repete em duas peças seguidas** (ver a regra de variedade do 06).
+- **A chamada mora na legenda**: "comenta PLANILHA", "salva para a próxima reunião", "marque o sócio".
+
+## 7. Leva de 11/11: o que ficou pronto
+
+**Vídeos-conceito** (`video-v2/src/conceito-*.js`, 7 a 9 s, loop, sem cartão): `conceito-carimbo`
+(a batida do carimbo "VOCÊ APROVA."), `conceito-placa` (a placa de obra se preenchendo),
+`conceito-madrugada` (o relógio correndo até 23h47), `conceito-nivel` (a tela torta que se acerta),
+`conceito-betoneira` (relâmpago e chuva), `conceito-busca` (o autocompletar de "como cobrar revisão").
+
+**Posts, série 2: objetos digitais** (sem foto, em `posts/out/conceito/13` a `20`):
+
+| # | Objeto | Frase | Legenda sugerida (primeira linha) |
+| --- | --- | --- | --- |
+| 13 | Busca com autocompletar | "O que todo escritório de projeto já pesquisou" | Salve para mandar para o sócio. |
+| 14 | Pasta de propostas `FINAL_agora_vai (1)` | "Qual dessas foi para o cliente?" | Marque quem salva assim. |
+| 15 | Relatório de ensaio | "O concreto passou no ensaio. A gestão, não." | O projeto é calculado. A margem também deveria ser. |
+| 16 | Tela de bloqueio às 6:58 | "O seu dia começa no grupo ou no planejamento?" | Responda com 🏗 ou 📋. |
+| 17 | Post-it de 12/08 | "Hoje é 11/11." | Lembrete não cobra ninguém. Aditivo, sim. |
+| 18 | Agenda da semana | "Onde foi parar a semana?" | Ajuste rápido de 14 horas tem nome. |
+| 19 | Planilha com fita zebrada | "Se ninguém pode mexer, não é controle. É risco." | Comenta quantas abas tem a sua. |
+| 20 | Conversa com o cliente | "A palavra que salva a margem." | Como você responde o "só um ajustezinho"? |
+
+A série 2 não gasta crédito de imagem: é HTML, dá para trocar o texto e gerar de novo em segundos.

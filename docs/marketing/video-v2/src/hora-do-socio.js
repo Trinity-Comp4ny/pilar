@@ -2,8 +2,9 @@
 // A conta aparece linha a linha e o resultado vem por último, maior e em cor de status
 // (brand/motion.md, "conta rápida"). Números de exemplo, marcados como exemplo.
 import { THEME, tl, W, el, pos, icon, scene, headline, textIn, textOut, popIn, fadeOut, counter, brl, lockup, background, cue, finalize, EXPO, QUINT } from "./engine.js";
+import { assinatura } from "./fim-base.js";
 
-const DUR = 22;
+const DUR = 18.4;
 const BG = background({ glows: [[200, 300, 900, "rgba(190,235,240,.9)"], [900, 1200, 900, "rgba(164,236,134,.5)"]] });
 tl.set(BG.glows, { opacity: 0.6 }, 0);
 
@@ -79,21 +80,8 @@ tl.fromTo(c3.querySelector(".b2"), { scaleX: 0 }, { scaleX: 1, duration: 0.8, ea
 const tip = el("div", "chip", S, `${icon("users")} Usuários ilimitados em todo plano`);
 pos(tip, 60, 1150);
 popIn(tip, 15.2);
-tl.to(S.children, { opacity: 0, duration: 0.3 }, 18.1);
 
-/* fecho */
-const F = scene("fim", 18.4, DUR);
-const L = lockup(F, { x: 210, y: 620, w: 660 });
-L.draw(18.5, { guides: false });
-const cta = el("div", "", F);
-pos(cta, 230, 940, 620, 104);
-Object.assign(cta.style, { position: "absolute", borderRadius: "999px", background: "#1A1A1A", color: "#fff", font: "600 38px Geist", display: "flex", alignItems: "center", justifyContent: "center" });
-cta.textContent = "Veja os planos · link na bio";
-popIn(cta, 19.3, { y: 30 });
-const nt = el("div", "", F);
-pos(nt, 0, 1080, W);
-Object.assign(nt.style, { position: "absolute", textAlign: "center", font: "500 30px Geist", color: "var(--fg-soft)" });
-nt.textContent = "Faça a conta com os números do seu escritório.";
-popIn(nt, 19.6, { y: 20, sound: null });
+// sem cartão final (08-direcao-criativa.md): acaba no conteúdo e volta em loop
+assinatura(S, 0.2);
 
-finalize(DUR, { brand: 4.3, flow: 4.6, grid: 16.4, end: 18.4 });
+finalize(DUR, { brand: 4.3, flow: 4.6, grid: 16.4 });

@@ -1,9 +1,9 @@
 // O que a Pilar não faz (9:16, 16 s, cinematográfica). Lição da Attio: dizer o que a IA não muda.
 // Fundo tinta; a cada batida, um "Não." gigante em verde e o limite logo abaixo.
 import { tl, W, el, pos, scene, cue, finalize, EXPO } from "./engine.js";
-import { fechamento } from "./fim-base.js";
+import { assinatura } from "./fim-base.js";
 
-const DUR = 16;
+const DUR = 12.2;
 const S = scene("nao", 0, 12.2, { theme: "dark" });
 S.style.background = "#0C0E0C";
 const t1 = el("div", "", S);
@@ -43,5 +43,5 @@ Object.assign(fim.style, { position: "absolute", font: "600 96px/1.04 Geist", le
 fim.innerHTML = `Ela prepara.<br><span style="color:#A4EC86;font-style:italic">Você decide.</span>`;
 tl.fromTo(fim, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: EXPO }, 11.2);
 cue("braam", 11.2);
-fechamento(12.2, DUR, { theme: "dark", bg: "#0C0E0C" });
-finalize(DUR, { style: "cinematic", hits: [11.2], end: 12.2 });
+assinatura(S, 0.2);
+finalize(DUR, { style: "cinematic", hits: [11.2] });

@@ -3,8 +3,9 @@
 // na agenda; o contador de horas de engenharia encolhe. Depois, o mesmo dia com a Pilar.
 // Agenda de exemplo, marcada como exemplo.
 import { tl, W, el, pos, icon, scene, headline, textIn, textOut, popIn, background, lockup, cue, finalize, EXPO, QUINT } from "./engine.js";
+import { assinatura } from "./fim-base.js";
 
-const DUR = 22;
+const DUR = 18.6;
 const SW = 11.6;
 const BG = background({ glows: [[200, 300, 900, "rgba(190,235,240,.9)"], [900, 1200, 900, "rgba(164,236,134,.5)"]] });
 tl.set(BG.glows, { opacity: 0.6 }, 0);
@@ -92,15 +93,8 @@ const tag = el("div", "chip on", S, `${icon("check")} Cliente no portal · parce
 Object.assign(tag.style, { fontSize: "22px" });
 pos(tag, 70, 1490);
 popIn(tag, SW + 3.2);
-tl.to(S.children, { opacity: 0, duration: 0.3 }, 18.3);
 
-const F = scene("fim", 18.6, DUR);
-const L = lockup(F, { x: 210, y: 640, w: 660 });
-L.draw(18.7, { guides: false });
-const c = el("div", "", F);
-pos(c, 230, 960, 620, 100);
-Object.assign(c.style, { position: "absolute", borderRadius: "999px", background: "#1A1A1A", color: "#fff", font: "600 36px Geist", display: "flex", alignItems: "center", justifyContent: "center" });
-c.textContent = "Veja os planos · link na bio";
-popIn(c, 19.5, { y: 30 });
+// sem cartão final (08-direcao-criativa.md): acaba no conteúdo e volta em loop
+assinatura(S, 0.2);
 
-finalize(DUR, { style: "clock", hits: [SW], end: 18.6 });
+finalize(DUR, { style: "clock", hits: [SW] });

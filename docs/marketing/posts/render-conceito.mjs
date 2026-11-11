@@ -144,6 +144,100 @@ P["12-caixa-papeis"] = `<img class="bg" src="${FOTO("caixa-papeis")}">
   <div class="a b" style="left:90px;top:1100px;width:880px;color:#3D3D3D">Na Pilar, cada documento fica dentro do projeto.</div>
   ${foot("escuro")}`;
 
+// ---------- Série 2: objetos digitais (sem foto). A tela que todo sócio reconhece, com uma virada. ----------
+const papel = (corpo, { bg = "#F2F1EE" } = {}) => `<div class="a" style="inset:0;background:${bg}"></div>${corpo}`;
+const lupa = `<svg viewBox="0 0 24 24" width="34" fill="none" stroke="#8A8F99" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>`;
+
+// 13 · Busca: o autocompletar que entrega a dor
+P["13-busca"] = papel(`
+  <div class="a h" style="left:90px;top:120px;width:900px;font-size:72px">O que todo escritório de projeto já pesquisou:</div>
+  <div class="a" style="left:90px;top:400px;width:900px;background:#fff;border-radius:34px;box-shadow:0 30px 70px -30px rgba(0,0,0,.3),0 0 0 2px #E4E4E4;overflow:hidden">
+    <div style="display:flex;align-items:center;gap:22px;padding:34px 40px;font-size:42px;border-bottom:2px solid #EDEDED">${lupa}<span>como cobrar revisão<span style="display:inline-block;width:3px;height:44px;background:#1A1A1A;vertical-align:-6px;margin-left:4px"></span></span></div>
+    ${["de projeto", "sem perder o cliente", "que o cliente jura que é ajuste", "pela quarta vez"].map((s) => `<div style="display:flex;align-items:center;gap:22px;padding:24px 40px;font-size:38px;color:#3D3D3D">${lupa}<span>como cobrar revisão <b style="font-weight:650;color:#1A1A1A">${s}</b></span></div>`).join("")}
+  </div>
+  <div class="a b" style="left:90px;top:1010px;width:880px;color:#3D3D3D">Resposta curta: <b style="color:#1A1A1A;font-weight:600">aditivo</b>, registrado no dia em que o pedido chega.</div>
+  ${foot("escuro")}`);
+
+// 14 · Arquivos: a pasta de propostas de sempre
+const arq = ["Proposta_Aurora_v2.docx", "Proposta_Aurora_v2_revisada.docx", "Proposta_Aurora_FINAL.docx", "Proposta_Aurora_FINAL_v2.docx", "Proposta_Aurora_FINAL_agora_vai.docx", "Proposta_Aurora_FINAL_agora_vai (1).docx"];
+P["14-arquivos"] = papel(`
+  <div class="a h" style="left:90px;top:120px;width:900px;font-size:84px">Qual dessas foi para o cliente?</div>
+  <div class="a" style="left:90px;top:380px;width:900px;background:#fff;border-radius:22px;box-shadow:0 30px 70px -30px rgba(0,0,0,.3),0 0 0 2px #E4E4E4;overflow:hidden">
+    <div style="display:flex;gap:12px;padding:22px 28px;background:#F7F7F7;border-bottom:2px solid #EDEDED"><i style="width:18px;height:18px;border-radius:50%;background:#D9D9D9"></i><i style="width:18px;height:18px;border-radius:50%;background:#D9D9D9"></i><i style="width:18px;height:18px;border-radius:50%;background:#D9D9D9"></i><span style="margin-left:16px;font-size:30px;color:#5F6572">Propostas › Ed. Aurora (exemplo)</span></div>
+    ${arq.map((n, i) => `<div style="display:flex;align-items:center;gap:20px;padding:20px 28px;font-size:32px;${i === arq.length - 1 ? "background:#1A1A1A;color:#fff" : i % 2 ? "background:#FAFAFA" : ""}"><span style="width:36px;height:44px;border-radius:6px;background:${i === arq.length - 1 ? "#fff" : "#DDE6F5"};flex:none"></span>${n}</div>`).join("")}
+  </div>
+  <div class="a b" style="left:90px;top:1090px;width:880px;color:#3D3D3D">Marque quem salva assim. A gente não conta pra ninguém.</div>
+  ${foot("escuro")}`);
+
+// 15 · Laudo: o concreto passou, a gestão não
+const linha = (k, v, ok) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:26px 40px;border-top:2px solid #E4E4E4;font-size:34px"><span>${k}</span><span style="display:flex;align-items:center;gap:18px;font-weight:650">${v}<i style="font-style:normal;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:28px;background:${ok ? "#1A1A1A" : "#B3261E"};color:#fff">${ok ? "✓" : "✕"}</i></span></div>`;
+P["15-laudo"] = papel(`
+  <div class="a h" style="left:90px;top:120px;width:900px;font-size:84px">O concreto passou no ensaio. A gestão, não.</div>
+  <div class="a" style="left:90px;top:440px;width:900px;background:#fff;border-radius:10px;box-shadow:0 30px 70px -30px rgba(0,0,0,.3),0 0 0 2px #E4E4E4">
+    <div style="padding:34px 40px;display:flex;justify-content:space-between;align-items:flex-end"><div><div style="font:700 30px Geist;letter-spacing:.14em">RELATÓRIO DE ENSAIO</div><div style="font-size:30px;color:#5F6572;margin-top:8px">Ed. Aurora · exemplo</div></div><div style="font-size:30px;color:#5F6572">28 dias</div></div>
+    ${linha("Resistência à compressão", "30 MPa", true)}${linha("Aprovação do cliente", "47 dias", false)}${linha("Revisões fora do escopo", "6", false)}${linha("Aditivos emitidos", "0", false)}
+  </div>
+  <div class="a b" style="left:90px;top:1080px;width:880px;color:#3D3D3D">O projeto é calculado. A margem também deveria ser.</div>
+  ${foot("escuro")}`);
+
+// 16 · Notificações: antes das 7h
+const notif = (app, tit, txt, hora) => `<div style="background:rgba(255,255,255,.14);backdrop-filter:blur(10px);border-radius:30px;padding:26px 30px;color:#fff"><div style="display:flex;justify-content:space-between;font-size:26px;opacity:.75"><span>${app}</span><span>${hora}</span></div><div style="font:600 34px Geist;margin-top:8px;letter-spacing:-.02em">${tit}</div><div style="font-size:32px;opacity:.85;margin-top:4px">${txt}</div></div>`;
+P["16-notificacoes"] = `<div class="a" style="inset:0;background:radial-gradient(120% 80% at 50% 0%,#2B3A33,#0C0E0C)"></div>
+  <div class="a" style="left:0;top:110px;width:1080px;text-align:center;color:#fff"><div style="font-size:34px;opacity:.8">terça-feira, 11 de novembro</div><div style="font:600 190px/1 Geist;letter-spacing:-.05em;margin-top:10px">6:58</div></div>
+  <div class="a" style="left:110px;top:440px;width:860px;display:flex;flex-direction:column;gap:18px">
+    ${notif("Grupo · Obra Ed. Aurora", "47 mensagens novas", "Mestre: chegou o aço, mas faltou o de 10", "agora")}
+    ${notif("Cliente", "Pode só dar uma olhadinha?", "É um ajuste rapidinho na fachada", "6:41")}
+    ${notif("Agenda", "Compatibilização às 8h", "Estrutural × hidráulica", "6:30")}
+  </div>
+  <div class="a h w" style="left:90px;top:1060px;width:900px;font-size:62px">O seu dia começa no grupo ou no planejamento?</div>
+  ${foot("claro", { degrade: false })}`;
+
+// 17 · Post-it: o lembrete que não cobra ninguém
+P["17-postit"] = papel(`
+  <div class="a h" style="left:90px;top:120px;width:900px;font-size:96px">Hoje é 11/11.</div>
+  <div class="a" style="left:230px;top:350px;width:620px;height:600px;background:#F6E27A;transform:rotate(-4deg);box-shadow:0 40px 60px -30px rgba(0,0,0,.45);padding:70px 60px;box-sizing:border-box;font:500 italic 64px/1.2 Geist;letter-spacing:-.03em;color:#2B2A26">
+    <div style="font-size:36px;font-style:normal;opacity:.7">12/08</div><div style="margin-top:26px">cobrar a revisão do Aurora!!</div><div style="margin-top:20px;font-size:40px;font-style:normal;opacity:.7">(sem falta)</div></div>
+  <div class="a b" style="left:90px;top:1060px;width:880px;color:#3D3D3D">Lembrete não cobra ninguém. <b style="color:#1A1A1A;font-weight:600">Aditivo, sim.</b></div>
+  ${foot("escuro")}`);
+
+// 18 · Agenda: onde foi parar a semana
+const bloco = (dia, top, h, txt, escuro) => `<div style="position:absolute;left:${dia * 176 + 4}px;top:${top}px;width:168px;height:${h}px;border-radius:14px;padding:14px;box-sizing:border-box;font:600 26px/1.15 Geist;letter-spacing:-.02em;background:${escuro ? "#1A1A1A" : "#E7ECEF"};color:${escuro ? "#fff" : "#1A1A1A"}">${txt}</div>`;
+P["18-agenda"] = papel(`
+  <div class="a h" style="left:90px;top:120px;width:900px;font-size:92px">Onde foi parar a semana?</div>
+  <div class="a" style="left:90px;top:380px;width:900px;height:620px;background:#fff;border-radius:22px;box-shadow:0 30px 70px -30px rgba(0,0,0,.3),0 0 0 2px #E4E4E4;padding:24px 10px 0;box-sizing:border-box">
+    <div style="display:flex;font:600 28px Geist;color:#5F6572">${["seg", "ter", "qua", "qui", "sex"].map((d) => `<span style="width:176px;text-align:center">${d}</span>`).join("")}</div>
+    <div style="position:relative;margin-top:16px;height:540px">
+      ${bloco(0, 0, 250, "Ajuste rápido na fachada", true)}${bloco(0, 270, 200, "Grupo da obra")}
+      ${bloco(1, 0, 160, "Revisar a revisão", true)}${bloco(1, 180, 300, "Ajuste rápido (parte 2)", true)}
+      ${bloco(2, 0, 200, "Reunião")}${bloco(2, 220, 230, "Planilha do mês")}
+      ${bloco(3, 0, 330, "O cliente mudou de ideia", true)}${bloco(3, 350, 140, "Grupo da obra")}
+      ${bloco(4, 0, 180, "Planilha do mês")}${bloco(4, 200, 150, "Projeto (enfim)")}
+    </div></div>
+  <div class="a b" style="left:90px;top:1060px;width:880px;color:#3D3D3D">Ajuste rápido de 14 horas tem nome: <b style="color:#1A1A1A;font-weight:600">aditivo.</b></div>
+  ${foot("escuro")}`);
+
+// 19 · Planilha interditada: fita zebrada sobre o controle
+const celulas = Array.from({ length: 9 }, (_, r) => `<div style="display:flex">${Array.from({ length: 6 }, (_, c) => `<div style="width:150px;height:62px;border:1px solid #E1E1E1;box-sizing:border-box;font-size:24px;color:#5F6572;padding:16px 10px;background:${r === 0 ? "#F2F2F2" : "#fff"}">${r === 0 ? ["Projeto", "Fase", "Valor", "Pago", "Margem", "Obs"][c] : c === 4 ? "#REF!" : ""}</div>`).join("")}</div>`).join("");
+const fita = (top, rot) => `<div style="position:absolute;left:-120px;top:${top}px;width:1320px;height:86px;transform:rotate(${rot}deg);background:repeating-linear-gradient(45deg,#F2C230 0 46px,#1A1A1A 46px 92px);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(0,0,0,.25)"><span style="background:#F2C230;padding:6px 26px;font:800 40px Geist;letter-spacing:.14em;color:#1A1A1A">NÃO MEXA NA FÓRMULA</span></div>`;
+P["19-zebrada"] = papel(`
+  <div class="a h" style="left:90px;top:120px;width:900px;font-size:72px">Controle_projetos_FINAL.xlsx</div>
+  <div class="a" style="left:90px;top:330px;width:900px;height:558px;overflow:hidden;border-radius:12px;box-shadow:0 0 0 2px #E1E1E1">${celulas}</div>
+  <div class="a" style="left:0;top:0;width:1080px;height:1350px;overflow:hidden">${fita(470, -9)}${fita(700, 7)}</div>
+  <div class="a h" style="left:90px;top:1000px;width:900px;font-size:58px">Se ninguém pode mexer, não é controle. É risco.</div>
+  ${foot("escuro")}`);
+
+// 20 · Conversa: a palavra que salva a margem
+const msg = (txt, eu) => `<div style="align-self:${eu ? "flex-end" : "flex-start"};max-width:78%;background:${eu ? "#1A1A1A" : "#fff"};color:${eu ? "#fff" : "#1A1A1A"};border-radius:${eu ? "34px 34px 8px 34px" : "34px 34px 34px 8px"};padding:26px 32px;font-size:38px;line-height:1.3;box-shadow:0 0 0 2px ${eu ? "#1A1A1A" : "#E4E4E4"}">${txt}</div>`;
+P["20-conversa"] = papel(`
+  <div class="a" style="left:90px;top:120px;width:900px;display:flex;flex-direction:column;gap:26px">
+    <div style="font-size:30px;color:#5F6572;text-align:center">Cliente · Ed. Aurora (exemplo)</div>
+    ${msg("Oi! Só um ajustezinho: dá para mudar a escada de lugar?", false)}
+    ${msg("Claro! Vou preparar o aditivo com prazo e valor e te mando hoje.", true)}
+    ${msg("Aditivo?", false)}
+  </div>
+  <div class="a h" style="left:90px;top:900px;width:900px;font-size:92px">A palavra que salva a margem.</div>
+  ${foot("escuro")}`);
+
 const filtro = process.argv[2] ?? "";
 mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch();

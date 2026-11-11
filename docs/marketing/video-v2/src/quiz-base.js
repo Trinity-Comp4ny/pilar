@@ -2,9 +2,10 @@
 // Inspiração: os quizzes de Reels que pedem a resposta nos comentários. Fundo verde da marca,
 // tipografia grande, uma alternativa com humor. Termina pedindo o comentário (engajamento).
 import { tl, W, H, el, pos, icon, scene, popIn, lockup, cue, finalize, EXPO, QUINT } from "./engine.js";
+import { assinatura } from "./fim-base.js";
 
 export function quizVideo({ tag = "Teste rápido", pergunta, opcoes, explicacao, bg = "linear-gradient(165deg, #D4F7C3 0%, #A4EC86 60%, #8FD46A 100%)" }) {
-const DUR = 15;
+const DUR = 13.2;
 const S = scene("quiz", 0, DUR, { theme: "light" });
 S.style.background = bg;
 const grain = el("canvas", "", document.getElementById("stage"));
@@ -78,13 +79,7 @@ pos(c1, 70, 560, 940);
 Object.assign(c1.style, { position: "absolute", textAlign: "center", font: "600 88px/1.05 Geist", letterSpacing: "-.04em", color: "#1A1A1A", opacity: 0 });
 c1.innerHTML = `Acertou?<br>Comenta a sua<br>letra.`;
 tl.fromTo(c1, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: EXPO }, 10.9);
-const L = lockup(S, { x: 290, y: 1010, w: 500, color: "#1A1A1A" });
-L.draw(11.6, { guides: false });
-const cta = el("div", "", S);
-pos(cta, 230, 1250, 620, 100);
-Object.assign(cta.style, { position: "absolute", borderRadius: "999px", background: "#1A1A1A", color: "#fff", font: "600 36px Geist", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0 });
-cta.textContent = "Veja os planos · link na bio";
-tl.fromTo(cta, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: EXPO }, 12.3);
+assinatura(S, 0.2);
 
-finalize(DUR, { style: "quirky", hits: [REV], end: 12.6 });
+finalize(DUR, { style: "quirky", hits: [REV] });
 }

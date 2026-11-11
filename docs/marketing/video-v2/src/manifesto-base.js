@@ -3,11 +3,12 @@
 // a palavra é a imagem. O fundo troca a cada frase (preto, verde, papel), nunca mais de 1 vez
 // por segundo (brand/motion.md §6: nada pisca mais de 3 vezes por segundo).
 import { tl, W, H, el, pos, scene, lockup, cue, finalize, EXPO } from "./engine.js";
+import { assinatura } from "./fim-base.js";
 
 const B = 0.6; // uma batida a 100 BPM
 
 export function manifestoVideo({ frases, virada, viradaDestaque, fecho = "Gestão com agentes de IA para escritórios de engenharia e arquitetura." }) {
-const DUR = 15;
+const DUR = 10.6;
 
 const stage = document.getElementById("stage");
 const grain = el("canvas", "", stage);
@@ -50,7 +51,7 @@ frases.forEach((f, i) => frase(i * 2.4, f.words, f));
 // virada: uma frase só, maior, no preto
 {
   const t0 = 7.2;
-  const s = scene("metodo", t0, 10.2);
+  const s = scene("metodo", t0, DUR);
   s.style.background = "#0C0E0C";
   const a = el("div", "", s);
   Object.assign(a.style, { position: "absolute", left: 0, right: 0, top: "650px", textAlign: "center", font: "500 120px/1 Geist", letterSpacing: "-.04em", color: "rgba(255,255,255,.55)" });
@@ -61,26 +62,9 @@ frases.forEach((f, i) => frase(i * 2.4, f.words, f));
   tl.fromTo(a, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: EXPO }, t0 + 0.1);
   tl.fromTo(b, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: EXPO }, t0 + 1.0);
   cue("braam", t0 + 1.0);
+  assinatura(s, t0 + 1.6, { color: "rgba(255,255,255,.75)" });
 }
 
-// fecho: a marca em traço técnico sobre o papel
-{
-  const t0 = 10.2;
-  const s = scene("fim", t0, DUR);
-  s.style.background = "#F7F7F7";
-  const g = grid(s, "rgba(26,26,26,.05)");
-  const L = lockup(s, { x: 210, y: 700, w: 660, theme: "light" });
-  L.draw(t0 + 0.1);
-  const t = el("div", "", s);
-  Object.assign(t.style, { position: "absolute", left: "60px", right: "60px", top: "980px", textAlign: "center", font: "500 52px/1.2 Geist", letterSpacing: "-.03em", color: "#1A1A1A", opacity: 0 });
-  t.textContent = fecho;
-  tl.fromTo(t, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: EXPO }, t0 + 1.6);
-  const c = el("div", "", s);
-  pos(c, 230, 1200, 620, 100);
-  Object.assign(c.style, { position: "absolute", borderRadius: "999px", background: "#1A1A1A", color: "#fff", font: "600 36px Geist", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0 });
-  c.textContent = "Veja os planos · link na bio";
-  tl.fromTo(c, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: EXPO }, t0 + 2.2);
-}
-
-finalize(DUR, { style: "cinematic", hits: [8.2, 10.2], end: 10.4 });
+// sem cartão: a virada é o fim, com a assinatura pequena
+finalize(DUR, { style: "cinematic", hits: [8.2] });
 }

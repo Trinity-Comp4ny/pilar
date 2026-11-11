@@ -2,8 +2,9 @@
 // O que a feature faz hoje (brand/messaging.md): você fala, a Pilar organiza o registro do dia;
 // ele nasce interno e só vai ao cliente quando o gestor liga "Mostrar ao cliente".
 import { THEME, tl, W, el, pos, icon, scene, headline, textIn, textOut, popIn, typer, lockup, background, cue, finalize, EXPO, QUINT } from "./engine.js";
+import { assinatura } from "./fim-base.js";
 
-const DUR = 20;
+const DUR = 16.4;
 const BG = background({ glows: [[200, 300, 900, "rgba(190,235,240,.9)"], [900, 1200, 900, "rgba(164,236,134,.5)"]] });
 tl.set(BG.glows, { opacity: 0.6 }, 0);
 
@@ -67,16 +68,8 @@ cue("click", 12.4);
 const port = el("div", "chip on", S, `${icon("globe")} O cliente vê pelo portal, com link`);
 pos(port, 190, 1500);
 popIn(port, 13.0);
-tl.to(S.children, { opacity: 0, duration: 0.3 }, 16.1);
 
-/* fecho */
-const F = scene("fim", 16.4, DUR);
-const L = lockup(F, { x: 210, y: 620, w: 660 });
-L.draw(16.5, { guides: false });
-const cta = el("div", "", F);
-pos(cta, 230, 940, 620, 104);
-Object.assign(cta.style, { position: "absolute", borderRadius: "999px", background: "#1A1A1A", color: "#fff", font: "600 38px Geist", display: "flex", alignItems: "center", justifyContent: "center" });
-cta.textContent = "Veja os planos · link na bio";
-popIn(cta, 17.3, { y: 30 });
+// sem cartão final (08-direcao-criativa.md): acaba no conteúdo e volta em loop
+assinatura(S, 0.2);
 
-finalize(DUR, { brand: 5.1, flow: 5.4, grid: 14.4, end: 16.4 });
+finalize(DUR, { brand: 5.1, flow: 5.4, grid: 14.4 });

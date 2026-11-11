@@ -2,8 +2,9 @@
 // Inspiração: humor de escritório e o "glitch" de vídeos de produto. Interface de planilha
 // genérica (sem marca de terceiro). Na virada, as células voam e viram o quadro de projetos.
 import { tl, W, H, el, pos, icon, scene, headline, textIn, textOut, popIn, background, cue, finalize, EXPO, QUINT, lockup, typer } from "./engine.js";
+import { assinatura } from "./fim-base.js";
 
-const DUR = 18;
+const DUR = 14.4;
 const SW = 10.0;
 const BG = background({ glows: [[200, 300, 900, "rgba(190,235,240,.9)"], [900, 1200, 900, "rgba(164,236,134,.5)"]] });
 tl.set(BG.glows, { opacity: 0.6 }, 0);
@@ -126,12 +127,6 @@ cols.forEach(([nome, cor, cards], ci) => {
 const tag = el("div", "chip on", S2, `${icon("check")} Margem de cada projeto, sem fórmula quebrada`);
 pos(tag, 40, 1250);
 popIn(tag, SW + 1.8);
-const L = lockup(S2, { x: 310, y: 1330, w: 460 });
-L.draw(SW + 3.0, { guides: false });
-const cta = el("div", "", S2);
-pos(cta, 230, 1480, 620, 96);
-Object.assign(cta.style, { position: "absolute", borderRadius: "999px", background: "#1A1A1A", color: "#fff", font: "600 34px Geist", display: "flex", alignItems: "center", justifyContent: "center" });
-cta.textContent = "Veja os planos · link na bio";
-popIn(cta, SW + 3.8, { y: 20 });
+assinatura(S, 0.2);
 
-finalize(DUR, { style: "quirky", hits: [SW], end: 16.0 });
+finalize(DUR, { style: "quirky", hits: [SW] });

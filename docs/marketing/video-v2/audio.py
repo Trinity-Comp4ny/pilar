@@ -223,6 +223,8 @@ def build_music(dur, S):
                 add(mus, pluck(ARP[c][k % 4], 0.28, 3200), t + k * BEAT / 4, 0.14, pan=-0.4 if k % 2 else 0.4)
 
     # ---- grade: rufo e riser para o fechamento ----
+    # sem "end" (vídeo sem cartão final, em loop): a virada cai no fim do vídeo
+    S.setdefault("end", dur)
     gr0, end0 = S["grid"], S["end"]
     for b in range(int((end0 - gr0) / BEAT)):
         t = gr0 + b * BEAT

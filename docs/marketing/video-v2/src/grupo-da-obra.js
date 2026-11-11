@@ -3,8 +3,9 @@
 // lofi calmo. Inspiração: os vídeos "POV" e de humor do dia a dia que o público reconhece.
 // Interface de mensagens genérica (sem marca de aplicativo de terceiro).
 import { tl, W, H, el, pos, icon, scene, headline, textIn, textOut, popIn, background, cue, finalize, EXPO, QUINT, lockup } from "./engine.js";
+import { assinatura } from "./fim-base.js";
 
-const DUR = 20;
+const DUR = 16.4;
 const SWITCH = 9.6;
 const BG = background({ glows: [[200, 300, 900, "rgba(190,235,240,.9)"], [900, 1200, 900, "rgba(164,236,134,.5)"]] });
 tl.set(BG.glows, { opacity: 0.6 }, 0);
@@ -93,15 +94,8 @@ dest.forEach(([ic, a, b, c], i) => {
   tl.fromTo(d, { opacity: 0, y: -260 + i * 30, scale: 0.85 }, { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: EXPO }, tt);
   cue("pop", tt);
 });
-tl.to(S.children, { opacity: 0, duration: 0.3 }, 16.1);
 
-const F = scene("fim", 16.4, DUR);
-const L = lockup(F, { x: 210, y: 640, w: 660 });
-L.draw(16.5, { guides: false });
-const c = el("div", "", F);
-pos(c, 230, 960, 620, 100);
-Object.assign(c.style, { position: "absolute", borderRadius: "999px", background: "#1A1A1A", color: "#fff", font: "600 36px Geist", display: "flex", alignItems: "center", justifyContent: "center" });
-c.textContent = "Veja os planos · link na bio";
-popIn(c, 17.3, { y: 30 });
+// sem cartão final (08-direcao-criativa.md): acaba no conteúdo e volta em loop
+assinatura(S, 0.2);
 
-finalize(DUR, { style: "lofi", start: SWITCH, end: 17.0 });
+finalize(DUR, { style: "lofi", start: SWITCH });

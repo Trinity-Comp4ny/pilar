@@ -4,6 +4,7 @@
 // Roteiro em src/<id>.script.json; cada fala pode ter "show": { type: "tela" | "numero" | "lista" }.
 // Sem a gravação, renderiza uma prévia com o quadro-guia, para revisar o formato antes de gravar.
 import { tl, W, H, el, pos, icon, scene, footage, captions, lockup, cue, finalize, EXPO, QUINT } from "./engine.js";
+import { assinatura } from "./fim-base.js";
 
 const RECTS = {
   aditivo: { still: "pendencias", r: { x: 470, y: 330, w: 770, h: 300 } },
@@ -34,7 +35,7 @@ export function falaVideo({ style = "lofi", nome = "Matheus Rezende", cargo = "F
   const byId = Object.fromEntries(SC.lines.map((l) => [l.id, l]));
   const last = lines[lines.length - 1];
   const END = last.start + last.dur + 0.4;
-  const DUR = END + 3.4;
+  const DUR = SC.cta ? END + 3.4 : END + 0.6;
 
   const S = scene("fala", 0, DUR);
   S.style.background = "#111";
@@ -108,18 +109,20 @@ export function falaVideo({ style = "lofi", nome = "Matheus Rezende", cargo = "F
     }
   }
 
-  // fechamento: a gravação escurece, a marca entra por cima
-  const veil = el("div", "layer", S);
-  veil.style.background = "rgba(12,14,12,.82)";
-  tl.fromTo(veil, { opacity: 0 }, { opacity: 1, duration: 0.5 }, END);
-  tl.to(cap, { opacity: 0, duration: 0.2 }, END);
-  const L = lockup(S, { x: 210, y: 720, w: 660, theme: "dark" });
-  L.draw(END + 0.2, { guides: false });
-  const cta = el("div", "", S);
-  pos(cta, 230, 1020, 620, 100);
-  Object.assign(cta.style, { position: "absolute", borderRadius: "999px", background: "#A4EC86", color: "#1A1A1A", font: "600 36px Geist", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0 });
-  cta.textContent = SC.cta || "Veja os planos · link na bio";
-  tl.fromTo(cta, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: EXPO }, END + 1.0);
+  // fim: sem cartão por padrão (08-direcao-criativa.md); o roteiro com "cta" mantém o cartão de conversão
+  if (SC.cta) {
+    const veil = el("div", "layer", S);
+    veil.style.background = "rgba(12,14,12,.82)";
+    tl.fromTo(veil, { opacity: 0 }, { opacity: 1, duration: 0.5 }, END);
+    tl.to(cap, { opacity: 0, duration: 0.2 }, END);
+    const L = lockup(S, { x: 210, y: 720, w: 660, theme: "dark" });
+    L.draw(END + 0.2, { guides: false });
+    const cta = el("div", "", S);
+    pos(cta, 230, 1020, 620, 100);
+    Object.assign(cta.style, { position: "absolute", borderRadius: "999px", background: "#A4EC86", color: "#1A1A1A", font: "600 36px Geist", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0 });
+    cta.textContent = SC.cta || "Veja os planos · link na bio";
+    tl.fromTo(cta, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, ease: EXPO }, END + 1.0);
+  } else assinatura(S, 0.2, { y: 300, color: "#fff" });
 
   finalize(DUR, { style, end: END, voice: !!window.TIMING });
 }

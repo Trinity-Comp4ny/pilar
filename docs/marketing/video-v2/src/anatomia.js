@@ -4,8 +4,9 @@
 // conta conferida: orçado 420 h × R$ 95 = R$ 39.900; preço R$ 66.500 (imposto 15% e lucro 25%
 // por dentro); real 550 h × R$ 95 = R$ 52.250 → lucro 66.500 − 9.975 − 52.250 = R$ 4.275.
 import { tl, W, H, el, pos, icon, scene, headline, textIn, textOut, popIn, background, counter, brl, lockup, cue, finalize, EXPO } from "./engine.js";
+import { assinatura } from "./fim-base.js";
 
-const DUR = 22;
+const DUR = 18.6;
 const INK = "#1A1A1A";
 const BG = background({ glows: [[200, 300, 900, "rgba(190,235,240,.7)"], [900, 1200, 900, "rgba(164,236,134,.35)"]] });
 tl.set(BG.glows, { opacity: 0.5 }, 0);
@@ -94,15 +95,8 @@ textIn(h3, 14.2);
 const tip = el("div", "chip on", S, `${icon("file-plus")} Passou do orçado? O aditivo vem pronto.`);
 pos(tip, 60, 1240);
 popIn(tip, 15.0);
-tl.to(S.children, { opacity: 0, duration: 0.3 }, 18.3);
 
-const F = scene("fim", 18.6, DUR);
-const Lk = lockup(F, { x: 210, y: 640, w: 660 });
-Lk.draw(18.7, { guides: false });
-const c = el("div", "", F);
-pos(c, 230, 960, 620, 100);
-Object.assign(c.style, { position: "absolute", borderRadius: "999px", background: "#1A1A1A", color: "#fff", font: "600 36px Geist", display: "flex", alignItems: "center", justifyContent: "center" });
-c.textContent = "Veja os planos · link na bio";
-popIn(c, 19.5, { y: 30 });
+// sem cartão final (08-direcao-criativa.md): acaba no conteúdo e volta em loop
+assinatura(S, 0.2);
 
-finalize(DUR, { style: "piano", hits: [13.0], end: 18.6 });
+finalize(DUR, { style: "piano", hits: [13.0] });

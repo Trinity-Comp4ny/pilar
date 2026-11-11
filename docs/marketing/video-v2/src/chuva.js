@@ -2,8 +2,9 @@
 // Só diz o que a feature faz: tarefa sensível + previsão do local = aviso com o motivo. Quem
 // reprograma é o responsável (docs/marketing/01-posicionamento.md, seção 7).
 import { THEME, tl, W, H, el, pos, icon, scene, headline, textIn, textOut, popIn, counter, lockup, background, cue, finalize, EXPO, QUINT } from "./engine.js";
+import { assinatura } from "./fim-base.js";
 
-const DUR = 16;
+const DUR = 9.8;
 const BG = background({ glows: [[200, 400, 900, "rgba(120,170,200,.25)"], [900, 1400, 900, "rgba(164,236,134,.18)"]] });
 tl.set(BG.glows, { opacity: 0.6 }, 0);
 
@@ -60,18 +61,8 @@ popIn(tag2, 6.9);
 const tag3 = el("div", "chip on", s1, `${icon("check")} Quem decide reprogramar é você`);
 pos(tag3, 60, 1130);
 popIn(tag3, 7.6);
-tl.to(s1.children, { opacity: 0, duration: 0.3 }, 9.5);
 
-/* fecho */
-const s2 = scene("fim", 9.8, DUR);
-const L = lockup(s2, { x: 210, y: 600, w: 660, theme: THEME });
-L.draw(9.9);
-const tg = headline(s2, "Gestão com *agentes_de_IA*|para escritórios de|engenharia e arquitetura.", { y: 880, size: 58, align: "center", x: 60, w: 960 });
-textIn(tg, 11.0, { stagger: 0.04 });
-const cta = el("div", "", s2);
-pos(cta, 230, 1210, 620, 104);
-Object.assign(cta.style, { position: "absolute", borderRadius: "999px", background: "#A4EC86", color: "#1A1A1A", font: "600 38px Geist", display: "flex", alignItems: "center", justifyContent: "center", gap: "14px" });
-cta.innerHTML = `Veja os planos · link na bio`;
-popIn(cta, 11.8, { y: 30 });
+// sem cartão final (08-direcao-criativa.md): acaba no conteúdo e volta em loop
+assinatura(s1, 0.2);
 
-finalize(DUR, { brand: 5.6, flow: 6.0, grid: 8.0, end: 9.8 });
+finalize(DUR, { style: "cinematic", hits: [5.6] });
