@@ -401,6 +401,7 @@ export default function Clientes() {
       toolbar={toolbar}
       className="overflow-y-hidden"
       containerClassName="h-full flex flex-col min-h-0"
+      density="compact"
       title="Clientes"
       search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "Buscar por nome, CPF/CNPJ ou email" }}
       primaryAction={{

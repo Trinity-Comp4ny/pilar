@@ -536,6 +536,7 @@ export default function Leads() {
       toolbar={toolbar}
       className="overflow-y-hidden"
       containerClassName="h-full flex flex-col min-h-0"
+      density="compact"
       header={
         <PageHeader
           title="Leads"
