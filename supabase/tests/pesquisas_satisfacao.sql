@@ -1,4 +1,4 @@
--- pgTAP: NPS e CES (SPEC 156, migration 20261214000000).
+-- pgTAP: NPS e CES (SPEC 156, migration 20261217000000).
 
 BEGIN;
 

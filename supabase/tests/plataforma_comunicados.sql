@@ -1,4 +1,4 @@
--- pgTAP: comunicados da plataforma (SPEC 157, migration 20261215000000).
+-- pgTAP: comunicados da plataforma (SPEC 157, migration 20261218000000).
 
 BEGIN;
 

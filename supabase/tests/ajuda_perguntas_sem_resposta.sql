@@ -1,4 +1,4 @@
--- pgTAP: lacunas da central de ajuda (SPEC 155, migration 20261213000000).
+-- pgTAP: lacunas da central de ajuda (SPEC 155, migration 20261216000000).
 -- O usuário grava só a própria pergunta, com a empresa vinda do perfil; não lê a lista; o ultra
 -- admin lê.
 

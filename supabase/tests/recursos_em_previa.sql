@@ -1,4 +1,4 @@
--- pgTAP: prévia de recursos (SPEC 160, migration 20261218000000).
+-- pgTAP: prévia de recursos (SPEC 160, migration 20261220000000).
 
 BEGIN;
 

@@ -1,4 +1,4 @@
--- pgTAP: alerta de acesso novo (SPEC 159, migration 20261217000000).
+-- pgTAP: alerta de acesso novo (SPEC 159, migration 20261219000000).
 
 BEGIN;
 
