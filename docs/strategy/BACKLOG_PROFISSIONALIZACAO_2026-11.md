@@ -18,7 +18,7 @@ conectado: um card por linha, com o estado real no código.
 | 7 | Central de ajuda e ajuda contextual | Feito (12 artigos) | SPEC 154 |
 | 8 | Agente no canto da tela | Feito (fase 1: responde pela central, sem token) | SPEC 155 |
 | 9 | Falar com o suporte com contexto | Feito (feedback com a dúvida, tela e versão) | SPEC 155 |
-| 10 | Novo aceite dos termos | Feito (desligado até a próxima mudança material) | SPEC 158 |
+| 10 | Novo aceite dos termos | Feito em staging fora deste lote (`AceiteTermosBanner`, Termos v2.0); a SPEC 158 deste lote saiu para não duplicar | — |
 | 11 | Alerta de acesso novo e navegadores da conta | Feito | SPEC 159 |
 | 12 | Versão visível ao usuário | Feito (Configurações → Conta → Sobre o Pilar) | commit `feat(settings)` |
 | 13 | Pendências do scorecard de agosto | Desfazer em leads e projetos já existia; scorecard estava desatualizado | ver abaixo |
