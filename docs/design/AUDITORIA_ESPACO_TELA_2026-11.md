@@ -291,7 +291,13 @@ flex-col"`. A altura não resolve, as colunas crescem, a página inteira rola, e
 
 Ordem por ganho ÷ esforço. Cada fase é um PR para `staging` com antes e depois (regra do dono).
 
-### P0: correções rápidas, todas as telas (1 PR)
+### P0: correções rápidas, todas as telas (1 PR) — feito
+
+Antes e depois em [`antes-depois/auditoria-espaco-p0/`](antes-depois/auditoria-espaco-p0/).
+Ajustes em relação ao plano: o ⌘K virou um botão no rodapé do trilho (abre a paleta no clique) e
+o "?" do cabeçalho abre o painel "Dúvidas" em toda tela do app, inclusive nas que não têm artigo.
+Em 1320 × 750 o Gantt foi de 5 para ~6,5 linhas; o resto do ganho depende do P1 (padding e card
+de filtros).
 
 | Item                                                                  | Onde                                       | Ganho                                |
 | --------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------ |
