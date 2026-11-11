@@ -136,7 +136,7 @@ Fase 2 em diante: os critérios entram nesta spec quando a fase for planejada.
 
 ## Dados e contratos
 
-Fase 1: nenhum dado novo. Funções puras em `src/lib/fluxoGrafo.ts`:
+Fase 1: nenhum dado novo. Funções puras em `src/pages/projetos/lib/fluxoGrafo.ts`:
 
 ```ts
 interface NoFluxo {
@@ -180,7 +180,7 @@ Fase 2 (proposta, a validar no plano da fase):
 
 Fase 1 (este PR):
 
-1. `src/lib/fluxoGrafo.ts` com `projetarFluxo` e testes cobrindo os critérios de aceite da fase 1
+1. `src/pages/projetos/lib/fluxoGrafo.ts` com `projetarFluxo` e testes cobrindo os critérios de aceite da fase 1
    (dias úteis via `src/lib/businessDays.ts`).
 2. `FluxoPipelineGraph`: props opcionais para contagem no cabeçalho da coluna, nó selecionado,
    realce de conectores (caminho crítico e "o que trava") e tom do rótulo de data. Os outros usos
