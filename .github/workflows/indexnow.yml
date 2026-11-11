@@ -1,0 +1,39 @@
+name: IndexNow (avisa Bing e outros buscadores)
+
+# Depois de cada release que muda a landing, avisa os buscadores do protocolo
+# IndexNow (Bing, Yandex, Seznam, Naver) que as páginas do sitemap mudaram. O Bing
+# alimenta a busca do ChatGPT e do Copilot. O script lê o sitemap PUBLICADO, então
+# espera o deploy de produção da Vercel terminar antes de enviar.
+#
+# Também roda à mão: Actions › IndexNow › Run workflow (ex.: depois de publicar
+# artigo sem release, ou para reenviar tudo).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/marketing/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: indexnow
+  cancel-in-progress: true
+
+jobs:
+  indexnow:
+    name: Enviar sitemap ao IndexNow
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          sparse-checkout: apps/marketing/scripts
+      - name: Esperar o deploy de produção da landing
+        if: github.event_name == 'push'
+        # O build da landing na Vercel leva 1 a 2 minutos; 5 dá folga.
+        run: sleep 300
+      - name: Enviar
+        run: node apps/marketing/scripts/indexnow.mjs
