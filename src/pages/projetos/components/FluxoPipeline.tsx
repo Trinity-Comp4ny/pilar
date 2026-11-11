@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import type { DisciplinaResponsavel } from "@/types/projetos";
 import { formatDate, formatDateShort } from "@/lib/format";
 import { formatDateLocal } from "@/lib/businessDays";
-import { diasUteisEntre, projetarFluxo, type NoFluxo, type StatusNoFluxo } from "@/lib/fluxoGrafo";
+import { diasUteisEntre, projetarFluxo, type NoFluxo, type StatusNoFluxo } from "@/pages/projetos/lib/fluxoGrafo";
 import type { ChecklistCounts } from "@/pages/projetos/hooks/useProjetoDisciplinaChecklist";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/StatusBadge";
