@@ -237,8 +237,9 @@ const App = () => {
                   <ValoresOcultosProvider>
                     <ImpersonationBanner />
                     <TrialBanner />
+                    {/* Só a janela (após a vigência); a faixa fica no Layout, depois do skip link. */}
                     <Suspense fallback={null}>
-                      <AceiteTermosBanner />
+                      <AceiteTermosBanner modo="janela" />
                     </Suspense>
                     <Suspense fallback={<EntryVeil />}>
                       <Routes>

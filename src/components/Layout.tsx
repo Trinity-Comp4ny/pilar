@@ -42,6 +42,10 @@ const RegistroDispositivo = lazy(() =>
   import("@/components/RegistroDispositivo").then((m) => ({ default: m.RegistroDispositivo }))
 );
 // Lazy: NPS no Início (SPEC 156).
+// Lazy: faixa de reaceite dos Termos (só admin vê). Depois do skip link para não roubar o 1º Tab.
+const AceiteTermosBanner = lazy(() =>
+  import("@/components/AceiteTermosBanner").then((m) => ({ default: m.AceiteTermosBanner }))
+);
 const NpsCard = lazy(() => import("@/components/pesquisas/NpsCard").then((m) => ({ default: m.NpsCard })));
 const OnboardingTourController = lazy(() =>
   import("@/components/onboarding/OnboardingTourController").then((m) => ({
@@ -89,6 +93,9 @@ function LayoutContent() {
       >
         Pular para conteúdo principal
       </a>
+      <Suspense fallback={null}>
+        <AceiteTermosBanner modo="faixa" />
+      </Suspense>
       <AppSidebar />
       <div style={{ marginLeft: sidebarOffset(state, isMobile) }}>
         <main
