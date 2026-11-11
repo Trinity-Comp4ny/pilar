@@ -314,6 +314,18 @@ de filtros).
   Projetos, Leads, Disciplinas, Lançamentos, Detalhe de projeto, Obras, Folha.
 - Cronograma: controles do card sobem para a toolbar; legenda vira popover; linha compacta.
 
+**Primeira parte feita** (antes e depois em
+[`antes-depois/auditoria-espaco-p1/`](antes-depois/auditoria-espaco-p1/README.md)):
+
+- `density="compact"` em Projetos (todas as abas), Tarefas, Leads, Propostas, Clientes e Equipe;
+  `calc` de Propostas e Mapa removidos.
+- Resumo inline dos indicadores recolhidos (`resumo` no `CollapsibleKpiSection`), aplicado em
+  Projetos. O gatilho ficou na linha própria, que recolhida custa só ~24 px.
+- Cronograma: controles na toolbar, legenda no botão (i). Gantt em 1320×750: ~10 linhas.
+
+Falta: Lançamentos (vai junto com a limpeza dos seletores do P2), resumo inline nas outras telas
+com KPI, e a linha compacta do Gantt.
+
 ### P2: limpar duplicações por tela (1 PR por módulo)
 
 - Detalhe de projeto: título repetido, KPIs recolhíveis, seletor de visão na toolbar.
