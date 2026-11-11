@@ -1,0 +1,43 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css"><style>
+:root{--H:1350px}
+.sl{position:absolute;inset:0;display:none}
+.img{position:absolute;left:0;top:0;width:1080px;height:780px;overflow:hidden;background:#15110e}
+.img img{position:absolute;left:0;width:1080px;height:1920px}
+.ring{position:absolute;border:9px solid var(--brand);border-radius:50%;width:170px;height:170px}
+.txt{position:absolute;left:80px;right:80px;top:850px}
+.n{font-weight:500;font-size:30px;color:var(--g6);margin-bottom:18px}
+.tt{font-weight:500;font-size:84px;letter-spacing:-.035em;line-height:1.02;margin-bottom:26px}
+.df{font-size:40px;line-height:1.32;color:var(--ink8)}
+.ft{position:absolute;left:80px;right:80px;bottom:56px;display:flex;justify-content:space-between;font-size:28px;color:var(--g6)}
+#c0 .img{height:1350px} #c0 .img img{top:-430px;left:40px;width:1250px;height:2222px}
+#c0 .card{position:absolute;left:70px;right:70px;top:110px;background:rgba(26,26,26,.86);border-radius:40px;padding:44px 50px 50px;color:#fff}
+#c0 .card .hook{color:#fff;font-size:92px} #c0 .sub{font-size:40px;color:var(--g3);margin-top:22px}
+#c0 .sw{position:absolute;right:70px;bottom:70px;background:var(--brand);color:var(--ink);font-weight:500;font-size:36px;border-radius:999px;padding:16px 34px}
+#c6{background:var(--ink);color:#fff}
+#c6 .in{position:absolute;left:90px;right:90px;top:250px}
+#c6 .q{font-weight:500;font-size:84px;letter-spacing:-.035em;line-height:1.05}
+#c6 .logo{width:380px;margin-top:120px}
+#c6 .tag{font-size:40px;color:var(--g3);margin-top:30px;line-height:1.25}
+#c6 .cta{display:inline-block;margin-top:44px;background:var(--brand);color:var(--ink);font-weight:500;font-size:38px;border-radius:999px;padding:20px 40px}
+</style></head><body>
+<div class="sl" id="c0"><div class="img"><img src="../frames3/f0306.jpg"></div>
+  <div class="card"><div class="hook">Você sabe o nome <span class="pill"><span>dessas peças?</span></span></div><div class="sub">Cinco partes da obra que todo mundo vê e pouca gente sabe explicar.</div></div>
+  <div class="sw">Arraste →</div></div>
+<div id="items"></div>
+<div class="sl" id="c6"><div class="in"><div class="q">Salva para mostrar <span class="pill"><span>ao estagiário.</span></span></div><div id="lg"></div>
+  <div class="tag">Gestão com agentes de IA para escritórios de engenharia e arquitetura.</div><div class="cta">Planos e demonstração no link da bio</div></div></div>
+<script src="kit.js"></script><script>
+const IT=[
+ [53,511,1473,'Baldrame','Viga de concreto armado no nível do terreno. Recebe as paredes e leva a carga até a fundação.'],
+ [159,544,533,'Verga','Peça de concreto armado acima de portas e janelas. Distribui a carga da parede sobre o vão e evita trincas nos cantos.'],
+ [183,343,1348,'Contraverga','Fica abaixo da janela. Distribui as tensões no peitoril e evita as trincas inclinadas nos cantos de baixo.'],
+ [176,617,1304,'Cinta de amarração','Viga no topo da alvenaria. Amarra as paredes e distribui a carga do telhado.'],
+ [224,532,849,'Tesoura','Estrutura triangulada de madeira que vence o vão e apoia as terças e o telhado.']];
+const box=$('items');
+IT.forEach(([f,sx,sy,t,d],i)=>{ const top=Math.max(0,Math.min(1920-780,sy-390)); box.insertAdjacentHTML('beforeend',
+ `<div class="sl" id="c${i+1}"><div class="img"><img src="../frames3/f${String(f).padStart(4,'0')}.jpg" style="top:${-top}px"><div class="ring" style="left:${sx-85}px;top:${sy-top-85}px"></div></div>
+  <div class="txt"><div class="n">${String(i+1).padStart(2,'0')} / 05</div><div class="tt">${t}</div><div class="df">${d}</div></div><div class="ft"><span>Glossário da obra</span><span>Pilar</span></div></div>`); });
+window.DUR=7/30;
+window.render=async(t)=>{ const i=Math.round(t); for(let k=0;k<7;k++) $('c'+k).style.display=k===i?'block':'none'; await new Promise(r=>setTimeout(r,50)); };
+fetch('../assets/pilar-logo-horizontal-white.svg').then(r=>r.text()).then(s=>{ $('lg').innerHTML=s.replace('width="396" height="121"','class="logo"'); window.ready=true; });
+</script></body></html>

@@ -1,0 +1,206 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css">
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js"}}</script><style>
+#hook{left:90px;right:90px;top:640px}
+#board{left:40px;right:40px;top:300px;height:1420px;overflow:hidden;border-radius:28px;background:#f7f5f0;box-shadow:0 30px 80px rgba(26,26,26,.16)}
+#plan{position:absolute;left:0;top:0;transform-origin:0 0}
+#timer{left:0;right:0;top:110px;display:flex;justify-content:center}
+.tm{width:150px;height:150px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:76px;position:relative}
+.tm svg{position:absolute;inset:-12px;width:174px;height:174px;transform:rotate(-90deg)}
+#q{left:90px;right:90px;top:120px;text-align:center}
+#ans{left:60px;right:60px;top:1500px;text-align:center}
+#ringE{position:absolute;border:10px solid var(--brand);border-radius:50%;opacity:0}
+</style></head><body>
+<div class="scene" id="s0"><div id="hook" class="abs hook"><div id="h1">Tem um <span class="pill" id="p1"><span>erro</span></span></div><div id="h1b">nesta planta.</div><div class="body" id="h2" style="margin-top:34px">Você tem 5 segundos.</div></div></div>
+<div class="scene" id="s1">
+  <div id="board" class="abs"><img id="plan"></div><div id="ringE"></div>
+  <div id="timer" class="abs"><div class="tm"><svg viewBox="0 0 174 174"><circle cx="87" cy="87" r="80" fill="none" stroke="#A4EC86" stroke-width="10" id="arc"/></svg><span id="tn">5</span></div></div>
+  <div id="q" class="abs h2" style="display:none"></div>
+  <div id="ans" class="abs"><span class="chip" style="font-size:46px;padding:22px 38px" id="ac">A porta do banheiro bate no vaso.</span></div>
+</div>
+<script src="kit.js"></script>
+<script type="module">
+import * as THREE from 'three';
+const S = 200; const PX = (x) => x - 4.5, PZ = (z) => z - 6; const WALL_H = 2.8;
+// ---------- GEOMETRIA ÚNICA DA PLANTA (fonte para a textura 2D E para o 3D) ----------
+const EXT = 0.25, INT = 0.15;
+const walls = [
+  { id:'topo',     x:[-0.125, 9.125], z:[-0.125, 0.125], axis:'x', dir:+1,
+    open:[{s:0.9,e:2.7,type:'win',sill:1.0,head:2.2},{s:4.2,e:5.0,type:'win',sill:1.6,head:2.2},{s:6.4,e:8.2,type:'win',sill:1.0,head:2.2}] },
+  { id:'direita',  x:[8.875, 9.125], z:[0.125, 11.875], axis:'z', dir:+1,
+    open:[{s:1.2,e:3.0,type:'win',sill:1.0,head:2.2},{s:6.0,e:9.5,type:'win',sill:0.3,head:2.4}] },
+  { id:'frente',   x:[-0.125, 9.125], z:[11.875, 12.125], axis:'x', dir:-1,
+    open:[{s:1.2,e:3.6,type:'win',sill:1.0,head:2.2},{s:3.9,e:4.9,type:'door',head:2.2,swing:-1,hinge:'s'},{s:7.3,e:8.4,type:'win',sill:1.0,head:2.2}] },
+  { id:'esquerda', x:[-0.125, 0.125], z:[0.125, 11.875], axis:'z', dir:-1,
+    open:[{s:5.2,e:7.2,type:'win',sill:1.1,head:2.2},{s:9.0,e:11.0,type:'win',sill:1.0,head:2.2}] },
+  { id:'int-h',    x:[0.125, 8.875], z:[4.125, 4.275], axis:'x', dir:+1,
+    open:[{s:2.6,e:3.4,type:'door',head:2.1,swing:-1,hinge:'e'},{s:4.2,e:4.9,type:'door',head:2.1,swing:-1,hinge:'s'},{s:6.5,e:7.3,type:'door',head:2.1,swing:-1,hinge:'e'}] },
+  { id:'int-v1',   x:[3.525, 3.675], z:[0.125, 4.125], axis:'z', dir:+1, open:[] },
+  { id:'int-v2',   x:[5.525, 5.675], z:[0.125, 4.125], axis:'z', dir:+1, open:[] },
+  { id:'int-v3',   x:[3.525, 3.675], z:[4.275, 6.4],   axis:'z', dir:+1, open:[] },
+];
+const rooms = [
+  { name:'QUARTO 1', area:'15,12 m²', x:[0.125,3.525], z:[0.125,4.125], lx:1.8, lz:3.2, floor:'wood' },
+  { name:'BANHO',    area:'8,40 m²',  x:[3.675,5.525], z:[0.125,4.125], lx:4.6, lz:3.25, floor:'tile' },
+  { name:'QUARTO 2', area:'14,28 m²', x:[5.675,8.875], z:[0.125,4.125], lx:7.3, lz:3.2, floor:'wood' },
+  { name:'COZINHA',  area:'',         x:[0.125,3.525], z:[4.275,11.875], lx:1.9, lz:8.6, floor:'tile', skipFloor:true },
+  { name:'ESTAR / JANTAR', area:'40,92 m²', x:[3.675,8.875], z:[4.275,11.875], lx:6.3, lz:7.6, floor:'wood', skipFloor:true },
+];
+// piso único da área social (cozinha + estar), para não deixar fresta sob a parede parcial
+const socialFloor = { x:[0.125,8.875], z:[4.275,11.875] };
+
+const furniture = [
+  { kind:'bed',   x:[0.55,2.15], z:[0.15,2.25], h:0.5, color:0xf3efe6 },
+  { kind:'bed',   x:[6.45,8.05], z:[0.15,2.25], h:0.5, color:0xf3efe6 },
+  { kind:'box',   x:[3.85,4.35], z:[0.2,0.85],  h:0.45, color:0xffffff },  // vaso
+  { kind:'box',   x:[4.75,5.45], z:[0.15,0.7],  h:0.85, color:0xd9d4cc },  // bancada
+  { kind:'box',   x:[0.125,0.75], z:[4.45,8.0], h:0.9, color:0x6f7378, top:0x2b2e31 }, // bancada cozinha
+  { kind:'box',   x:[4.6,6.2],  z:[5.2,6.6],   h:0.75, color:0xb08158 },   // mesa jantar
+  { kind:'sofa',  x:[5.4,6.25], z:[9.4,11.5],  h:0.45, color:0x7d8a99 },
+  { kind:'box',   x:[6.75,7.5], z:[9.9,11.0],  h:0.4,  color:0xb08158 },   // mesa centro
+  { kind:'box',   x:[8.45,8.875], z:[9.8,11.4], h:0.5, color:0x3a3d40 },   // rack
+];
+
+// ---------- RNG determinístico ----------
+
+// ---------- RNG determinístico ----------
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+// ---------- TEXTURA DA PLANTA (Imagem 1) ----------
+function planTexture() {
+  const c = document.createElement('canvas'); c.width = 15*S; c.height = 20*S;
+  const g = c.getContext('2d');
+  const cx = (x) => (x + 3) * S, cz = (z) => (z + 4) * S;
+  // papel
+  g.fillStyle = '#f7f5f0'; g.fillRect(0,0,c.width,c.height);
+  for (let i = 0; i < 26000; i++) { const v = 225 + rnd()*30; g.fillStyle = `rgba(${v},${v-4},${v-12},0.25)`; g.fillRect(rnd()*c.width, rnd()*c.height, 2, 2); }
+  // malha fina
+  g.strokeStyle = 'rgba(70,110,160,0.10)'; g.lineWidth = 2;
+  for (let x = 0; x <= 15; x += 0.5) { g.beginPath(); g.moveTo(x*S,0); g.lineTo(x*S,c.height); g.stroke(); }
+  for (let z = 0; z <= 20; z += 0.5) { g.beginPath(); g.moveTo(0,z*S); g.lineTo(c.width,z*S); g.stroke(); }
+  // margem do desenho
+  g.strokeStyle = '#2a2d31'; g.lineWidth = 6; g.strokeRect(0.5*S, 0.5*S, 14*S, 19*S);
+  g.lineWidth = 2; g.strokeRect(0.62*S, 0.62*S, 13.76*S, 18.76*S);
+
+  // móveis (traço fino)
+  g.strokeStyle = 'rgba(40,44,50,0.55)'; g.lineWidth = 3;
+  for (const f of furniture) {
+    g.strokeRect(cx(f.x[0]), cz(f.z[0]), (f.x[1]-f.x[0])*S, (f.z[1]-f.z[0])*S);
+    if (f.kind === 'bed') { g.strokeRect(cx(f.x[0]+0.15), cz(f.z[0]+0.12), (f.x[1]-f.x[0]-0.3)*S, 0.45*S); }
+    if (f.kind === 'sofa') { g.beginPath(); g.moveTo(cx(f.x[0]+0.22), cz(f.z[0])); g.lineTo(cx(f.x[0]+0.22), cz(f.z[1])); g.stroke(); }
+  }
+  // pisos (hachura leve em áreas molhadas)
+  g.strokeStyle = 'rgba(60,90,130,0.16)'; g.lineWidth = 2;
+  const tileRect = (r) => { for (let x = r.x[0]; x < r.x[1]; x += 0.4) { g.beginPath(); g.moveTo(cx(x), cz(r.z[0])); g.lineTo(cx(x), cz(r.z[1])); g.stroke(); }
+    for (let z = r.z[0]; z < r.z[1]; z += 0.4) { g.beginPath(); g.moveTo(cx(r.x[0]), cz(z)); g.lineTo(cx(r.x[1]), cz(z)); g.stroke(); } };
+  tileRect(rooms[1]); tileRect({x:[0.125,3.525], z:[4.275,8.0]});
+
+  // paredes (poché) = exatamente os retângulos usados na extrusão
+  for (const w of walls) {
+    for (const seg of solidSegments(w)) {
+      const r = segRect(w, seg.s, seg.e);
+      g.fillStyle = '#26292d'; g.fillRect(cx(r.x0), cz(r.z0), (r.x1-r.x0)*S, (r.z1-r.z0)*S);
+    }
+    for (const o of w.open) {
+      const r = segRect(w, o.s, o.e);
+      g.strokeStyle = '#26292d'; g.lineWidth = 3;
+      if (o.type === 'win') {
+        // janela: faces da parede + duas linhas de vidro
+        g.strokeRect(cx(r.x0), cz(r.z0), (r.x1-r.x0)*S, (r.z1-r.z0)*S);
+        g.beginPath();
+        if (w.axis === 'x') { const m = (r.z0+r.z1)/2; g.moveTo(cx(r.x0), cz(m-0.025)); g.lineTo(cx(r.x1), cz(m-0.025)); g.moveTo(cx(r.x0), cz(m+0.025)); g.lineTo(cx(r.x1), cz(m+0.025)); }
+        else { const m = (r.x0+r.x1)/2; g.moveTo(cx(m-0.025), cz(r.z0)); g.lineTo(cx(m-0.025), cz(r.z1)); g.moveTo(cx(m+0.025), cz(r.z0)); g.lineTo(cx(m+0.025), cz(r.z1)); }
+        g.stroke();
+      } else {
+        // porta: folha aberta + arco de giro
+        const d = doorGeom(w, o);
+        g.lineWidth = 4; g.beginPath(); g.moveTo(cx(d.hx), cz(d.hz)); g.lineTo(cx(d.lx), cz(d.lz)); g.stroke();
+        g.lineWidth = 2; g.setLineDash([10,8]); g.beginPath(); g.arc(cx(d.hx), cz(d.hz), d.wd*S, d.a0, d.a1, d.ccw); g.stroke(); g.setLineDash([]);
+      }
+    }
+  }
+  // rótulos
+  g.fillStyle = '#26292d'; g.textAlign = 'center';
+  for (const r of rooms) {
+    g.font = `bold ${0.30*S}px "DejaVu Sans"`; g.fillText(r.name, cx(r.lx), cz(r.lz));
+    if (r.area) { g.font = `${0.22*S}px "DejaVu Sans"`; g.fillText(r.area, cx(r.lx), cz(r.lz+0.38)); }
+  }
+  // cotas
+  const dimH = (x0, x1, z, label) => { g.strokeStyle = '#3a3e44'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(cx(x0), cz(z)); g.lineTo(cx(x1), cz(z)); g.stroke();
+    for (const x of [x0,x1]) { g.beginPath(); g.moveTo(cx(x), cz(z-0.18)); g.lineTo(cx(x), cz(z+0.18)); g.stroke(); g.beginPath(); g.moveTo(cx(x-0.1), cz(z+0.1)); g.lineTo(cx(x+0.1), cz(z-0.1)); g.stroke(); }
+    g.fillStyle = '#26292d'; g.font = `${0.24*S}px "DejaVu Sans"`; g.fillText(label, cx((x0+x1)/2), cz(z-0.12)); };
+  const dimV = (z0, z1, x, label) => { g.strokeStyle = '#3a3e44'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(cx(x), cz(z0)); g.lineTo(cx(x), cz(z1)); g.stroke();
+    for (const z of [z0,z1]) { g.beginPath(); g.moveTo(cx(x-0.18), cz(z)); g.lineTo(cx(x+0.18), cz(z)); g.stroke(); g.beginPath(); g.moveTo(cx(x-0.1), cz(z+0.1)); g.lineTo(cx(x+0.1), cz(z-0.1)); g.stroke(); }
+    g.save(); g.translate(cx(x-0.12), cz((z0+z1)/2)); g.rotate(-Math.PI/2); g.fillStyle = '#26292d'; g.font = `${0.24*S}px "DejaVu Sans"`; g.fillText(label, 0, 0); g.restore(); };
+  dimH(-0.125, 9.125, -0.9, '9,25'); dimV(-0.125, 12.125, -0.9, '12,25');
+  dimH(-0.125, 3.6, 12.9, '3,60'); dimH(3.6, 5.6, 12.9, '2,00'); dimH(5.6, 9.125, 12.9, '3,40');
+  dimV(-0.125, 4.2, 9.9, '4,20'); dimV(4.2, 12.125, 9.9, '7,90');
+  // norte
+  g.save(); g.translate(cx(10.6), cz(-2.6)); g.strokeStyle = '#26292d'; g.lineWidth = 3; g.beginPath(); g.arc(0,0,0.42*S,0,Math.PI*2); g.stroke();
+  g.fillStyle = '#26292d'; g.beginPath(); g.moveTo(0,-0.36*S); g.lineTo(0.14*S,0.2*S); g.lineTo(0,0.1*S); g.lineTo(-0.14*S,0.2*S); g.closePath(); g.fill();
+  g.font = `bold ${0.24*S}px "DejaVu Sans"`; g.fillText('N', 0, -0.5*S); g.restore();
+  // carimbo
+  const bx = cx(-2.2), bz = cz(13.7), bw = 13.4*S, bh = 1.7*S;
+  g.strokeStyle = '#26292d'; g.lineWidth = 4; g.strokeRect(bx, bz, bw, bh);
+  g.beginPath(); g.moveTo(bx + 8.2*S, bz); g.lineTo(bx + 8.2*S, bz + bh); g.moveTo(bx + 8.2*S, bz + bh/2); g.lineTo(bx + bw, bz + bh/2); g.stroke();
+  g.textAlign = 'left'; g.fillStyle = '#26292d';
+  g.font = `bold ${0.5*S}px "DejaVu Sans"`; g.fillText('PLANTA BAIXA', bx + 0.35*S, bz + 0.78*S);
+  g.font = `${0.24*S}px "DejaVu Sans"`; g.fillText('RESIDÊNCIA UNIFAMILIAR · TÉRREO', bx + 0.35*S, bz + 1.28*S);
+  g.font = `${0.22*S}px "DejaVu Sans"`; g.fillText('ESCALA 1:50', bx + 8.5*S, bz + 0.55*S); g.fillText('ÁREA 111,0 m²', bx + 8.5*S, bz + 1.4*S);
+  g.fillText('FOLHA 01/01', bx + 11.0*S, bz + 0.55*S); g.fillText('PÉ-DIREITO 2,80', bx + 11.0*S, bz + 1.4*S);
+
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+
+function solidSegments(w) {
+  const lo = w.axis === 'x' ? w.x[0] : w.z[0], hi = w.axis === 'x' ? w.x[1] : w.z[1];
+  const op = [...w.open].sort((a,b) => a.s - b.s); const out = []; let cur = lo;
+  for (const o of op) { if (o.s > cur) out.push({ s:cur, e:o.s }); cur = o.e; }
+  if (hi > cur) out.push({ s:cur, e:hi }); return out;
+}
+function segRect(w, s, e) { return w.axis === 'x' ? { x0:s, x1:e, z0:w.z[0], z1:w.z[1] } : { x0:w.x[0], x1:w.x[1], z0:s, z1:e }; }
+function doorGeom(w, o) {
+  const wd = o.e - o.s; const sw = o.swing; // -1 => abre para -z (ou -x)
+  if (w.axis === 'x') {
+    const hz = sw < 0 ? w.z[0] : w.z[1]; const hx = o.hinge === 's' ? o.s : o.e;
+    const lx = hx, lz = hz + sw * wd; const other = o.hinge === 's' ? o.e : o.s;
+    let a0 = Math.atan2(lz - hz, 0), a1 = Math.atan2(0, other - hx);
+    return { hx, hz, lx, lz, wd, a0, a1, ccw: (o.hinge === 's') === (sw > 0) };
+  }
+  const hx = sw < 0 ? w.x[0] : w.x[1]; const hz = o.hinge === 's' ? o.s : o.e;
+  return { hx, hz, lx: hx + sw*wd, lz: hz, wd, a0:0, a1:Math.PI/2, ccw:false };
+}
+
+
+furniture[2].x = [4.33, 4.83]; furniture[2].z = [3.35, 4.0]; rooms[1].lz = 1.5;
+const tex = planTexture();
+{ const g = tex.image.getContext('2d'); const cx = (x) => (x + 3) * S, cz = (z) => (z + 4) * S;
+  g.fillStyle = '#f7f5f0'; g.fillRect(cx(4.34), cz(3.36), 0.48*S, 0.63*S);
+  g.strokeStyle = 'rgba(40,44,50,0.85)'; g.lineWidth = 4;
+  g.beginPath(); g.roundRect(cx(4.36), cz(3.78), 0.44*S, 0.2*S, 10); g.stroke();
+  g.beginPath(); g.ellipse(cx(4.58), cz(3.55), 0.17*S, 0.2*S, 0, 0, Math.PI*2); g.stroke();
+  g.strokeStyle = '#26292d'; g.lineWidth = 3; g.setLineDash([10,8]); g.beginPath(); g.arc(cx(4.2), cz(4.125), 0.7*S, -Math.PI/2, 0); g.stroke(); g.setLineDash([]); } $('plan').src = tex.image.toDataURL('image/png');
+await new Promise(r => $('plan').onload = r);
+window.DUR = 15.0;
+cue(0,'start'); for (let i = 0; i < 5; i++) cue(2.3 + i, 'tick'); cue(7.3, 'hit'); cue(7.9, 'ding'); cue(12.0, 'end');
+const C = 2 * Math.PI * 80;
+window.render = async (t) => {
+  show('s0', t < 2.2); show('s1', t >= 2.2 && t < 12.0);
+  if (t < 2.2) { enter('h1', t, -1); enter('h1b', t, -1); pill('p1', t, -1); enter('h2', t, 0.3, 20); }
+  if (t >= 2.2 && t < 12.0) {
+    const b = $('board'); const bw = b.clientWidth, bh = b.clientHeight;
+    const zk = easeIO(lin(t, 7.4, 8.4));
+    const s0 = 0.47, s1 = 1.35; const sc = s0 + (s1 - s0) * zk;
+    const fx = 1500 + (1525 - 1500) * zk, fy = 1990 + (1550 - 1990) * zk;
+    const ox = bw / 2 - fx * sc, oy = bh / 2 - fy * sc; $('plan').style.transform = 'translate(' + ox + 'px,' + oy + 'px) scale(' + sc + ')';
+    const rem = Math.max(0, 5 - (t - 2.3)); $('tn').textContent = t < 7.3 ? Math.ceil(rem - 1e-6) || 0 : '0';
+    $('arc').style.strokeDasharray = C; $('arc').style.strokeDashoffset = C * (1 - clamp(rem / 5));
+    $('timer').style.opacity = 1 - lin(t, 7.3, 7.6);
+    const r = $('ringE'), bx = b.getBoundingClientRect(); const cx = bx.left + ox + 1516 * sc, cy = bx.top + oy + 1530 * sc, rad = 0.62 * S * sc;
+    r.style.width = r.style.height = (2 * rad) + 'px'; r.style.left = (cx - rad) + 'px'; r.style.top = (cy - rad) + 'px'; r.style.opacity = quint(lin(t, 8.4, 8.8));
+    enter('ans', t, 8.6, 30);
+  }
+  renderEnd(t, 12.0);
+};
+await setupEnd('Achou em quantos segundos? Comenta.');
+window.ready = true;
+</script></body></html>

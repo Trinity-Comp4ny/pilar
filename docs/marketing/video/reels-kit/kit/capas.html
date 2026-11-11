@@ -1,0 +1,29 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css"><style>
+#bg{position:absolute;left:0;top:0;width:1080px;height:1920px;object-fit:cover}
+#veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(21,17,14,.0) 0%,rgba(21,17,14,.0) 100%)}
+#c{position:absolute;left:0;right:0;top:560px;display:flex;justify-content:center}
+.box{background:rgba(26,26,26,.88);border-radius:44px;padding:44px 56px 52px;color:#fff;text-align:center;max-width:980px}
+.box .hook{color:#fff;font-size:104px}
+#x{margin-top:26px;font-size:44px;color:var(--g3)}
+#big{font-weight:600;font-size:220px;letter-spacing:-.05em;color:#ff6b6b;line-height:1;margin-top:20px}
+#brand{position:absolute;left:0;right:0;top:1560px;text-align:center;font-weight:500;font-size:36px;color:#fff;opacity:.9}
+</style></head><body>
+<img id="bg"><div id="veil"></div>
+<div id="c"><div class="box"><div class="hook" id="h"></div><div id="x"></div><div id="big"></div></div></div>
+<div id="brand">Pilar</div>
+<script src="kit.js"></script><script>
+const C=[
+ ['v20-planta-vira-casa','../frames3/f0306.jpg','Do traço no papel <span class="pill"><span>à casa pronta.</span></span>',''],
+ ['v21-quiz-nome-das-pecas','../frames3/f0183.jpg','Você sabe o <span class="pill"><span>nome disso?</span></span>','8 peças da obra'],
+ ['v24-ache-o-erro','../fr_acheerro/p0120.jpg','Tem um <span class="pill"><span>erro</span></span> nesta planta.','Você tem 5 segundos'],
+ ['v27-e-o-lucro','../fr_lucro/p0280.jpg','O projeto acabou. <span class="pill"><span>E o lucro?</span></span>',''],
+ ['v28-so-uma-mudancinha','../fr_mudancinha/p0290.jpg','Cliente: só uma <span class="pill"><span>mudancinha.</span></span>',''],
+ ['v30-chuva-na-concretagem','../fr_chuva/f0070.jpg','Concretagem marcada. <span class="pill"><span>Olha o céu.</span></span>',''],
+ ['v33-obra-e-cronograma','../fr_split/p0100.jpg','Na obra <span class="pill"><span>e no cronograma.</span></span>',''],
+ ['v26-uma-casa-cinco-projetos','../fr_xray/f0300.jpg','Uma casa. <span class="pill"><span>Cinco projetos.</span></span>',''],
+ ['v34-telhado-ou-laje','../fr_laje/f0306.jpg','Mesma casa. <span class="pill"><span>Telhado ou laje?</span></span>','']];
+window.NAMES=C.map(c=>c[0]); window.DUR=C.length/30;
+window.render=async(t)=>{ const c=C[Math.round(t)]; await setFrame($('bg'),c[1]); $('h').innerHTML=c[2]; $('x').textContent=c[3]; $('x').style.display=c[3]?'':'none';
+  $('big').textContent=c[0]==='v27-e-o-lucro'?'−1,5%':''; $('big').style.display=c[0]==='v27-e-o-lucro'?'':'none'; };
+window.ready=true;
+</script></body></html>

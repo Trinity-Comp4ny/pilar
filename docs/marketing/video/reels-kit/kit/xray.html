@@ -1,0 +1,26 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css"><style>
+body{background:#15110e}
+#f{position:absolute;left:0;top:0;width:1080px;height:1920px}
+.top{position:absolute;left:0;right:0;top:230px;display:flex;justify-content:center}
+.box{background:rgba(26,26,26,.86);border-radius:36px;padding:30px 46px 36px;text-align:center;color:#fff;max-width:960px}
+.bot{position:absolute;left:0;right:0;top:1400px;display:flex;justify-content:center}
+.dt{width:26px;height:26px;border-radius:50%;display:inline-block}
+.num{font-weight:600;font-size:36px;color:var(--ink);background:var(--brand);border-radius:999px;padding:4px 16px}
+</style></head><body>
+<img id="f">
+<div class="top" id="hk"><div class="box"><div class="hook" style="color:#fff;font-size:88px">Uma casa. <span class="pill"><span>Cinco projetos.</span></span></div></div></div>
+<div class="top" id="fin" style="display:none"><div class="box"><div class="h3" style="color:#fff" id="fint">No Pilar, cada disciplina com <span class="pill"><span>escopo, prazo e responsável.</span></span></div></div></div>
+<div class="bot" id="ch"><span class="chip" id="chip"><span class="num" id="cn"></span><span class="dt" id="cd"></span><span id="ct"></span></span></div>
+<script src="kit.js"></script><script>
+window.DUR=17.3;
+const L=[[0.7,'01','Arquitetura','#F1ECE3'],[2.4,'02','Estrutural','#A7A39C'],[4.3,'03','Elétrico','#F2C230'],[6.7,'04','Hidráulico','#2F80FF'],[9.1,'05','Sanitário','#8D7B68']];
+L.forEach(l=>cue(l[0],'tick')); cue(2.1,'whoosh'); cue(11.4,'ding'); cue(14.4,'end'); cue(0,'start');
+window.render=async(t)=>{
+  await setFrame($('f'),'../fr_xray/f'+String(Math.min(431,Math.round(t*30))).padStart(4,'0')+'.jpg');
+  $('hk').style.display=t<2.2?'flex':'none'; $('fin').style.display=t>=11.6&&t<14.4?'flex':'none'; if(t>=11.6) enter('fint',t,11.6,20);
+  let cur=-1; L.forEach((l,i)=>{if(t>=l[0])cur=i;}); const ch=$('ch');
+  if(cur<0||t>=11.6){ch.style.display='none';} else { ch.style.display='flex'; const l=L[cur]; $('cn').textContent=l[1]; $('cd').style.background=l[3]; $('ct').textContent=l[2]; enter('chip',t,l[0],20,0.35); }
+  renderEnd(t,14.4);
+};
+setupEnd().then(()=>{ window.ready=true; });
+</script></body></html>
