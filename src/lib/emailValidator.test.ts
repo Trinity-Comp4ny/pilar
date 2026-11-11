@@ -1,10 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  isValidEmail,
-  isBusinessEmail,
-  isPersonalEmail,
-  emailFormatValidator,
-} from "./emailValidator";
+import { isValidEmail, isBusinessEmail, isPersonalEmail, emailFormatValidator } from "./emailValidator";
 
 describe("isValidEmail", () => {
   it("aceita formatos válidos", () => {

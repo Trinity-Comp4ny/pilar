@@ -2,6 +2,7 @@ export {
   pessoaSchema,
   contaBancariaSchema,
   pessoaDefaultValues,
+  parsePercentual,
   type PessoaFormData,
   type PessoaFormInput,
   type ContaBancariaFormData,

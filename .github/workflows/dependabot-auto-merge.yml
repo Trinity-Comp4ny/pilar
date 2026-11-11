@@ -1,0 +1,49 @@
+name: Dependabot auto-merge
+
+# PR de minor/patch do Dependabot entra sozinho quando TODOS os required checks
+# passam (CI OK, que inclui E2E, e CodeQL). Antes, a PR verde ficava parada até
+# alguém clicar: a #766 (prod-minor-patch) ficou verde e esperando desde 09/11.
+#
+# Major NÃO entra sozinho: costuma ter breaking change e precisa de olho (ver os
+# `ignore` do dependabot.yml). Fica como está, aberta para revisão.
+#
+# Isto só LIGA o auto-merge; quem decide é a proteção da branch. Se um check
+# falhar, a PR não entra. Precisa de "Allow auto-merge" ligado em Settings > General.
+# Merge por rebase, igual à regra do repo para PR de feature (CLAUDE.md).
+
+on:
+  pull_request:
+    branches: [staging]
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    name: Ligar auto-merge (minor/patch)
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - id: meta
+        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2.5.0
+      - name: Ligar auto-merge
+        # Em PR de grupo, update-type é o MAIOR salto do grupo: um grupo com um major
+        # dentro não entra aqui.
+        if: steps.meta.outputs.update-type == 'version-update:semver-minor' || steps.meta.outputs.update-type == 'version-update:semver-patch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          TIPO: ${{ steps.meta.outputs.update-type }}
+          DEPS: ${{ steps.meta.outputs.dependency-names }}
+        run: |
+          gh pr merge --auto --rebase "$PR_URL"
+          echo "::notice::Auto-merge ligado ($TIPO): $DEPS"
+      - name: Major fica para revisão
+        if: steps.meta.outputs.update-type == 'version-update:semver-major'
+        env:
+          DEPS: ${{ steps.meta.outputs.dependency-names }}
+        run: |
+          echo "::notice::Major ($DEPS) sem auto-merge, precisa de revisão."

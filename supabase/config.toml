@@ -55,6 +55,16 @@ sms_sent = 100
 token_verifications = 100
 anonymous_users = 100
 
+# Servidor OAuth 2.1 (SPEC 151): é por ele que ChatGPT, Claude e outros clientes MCP conectam
+# a conta do usuário ao conector da Pilar. A tela de autorização é do app (Site URL + este
+# caminho). Registro dinâmico ligado porque é assim que os clientes MCP se cadastram sozinhos;
+# o usuário sempre aprova na tela da Pilar. Em staging e produção a mesma configuração é feita
+# no painel (Authentication > OAuth Server), ver o runbook da SPEC 151.
+[auth.oauth_server]
+enabled = true
+authorization_url_path = "/oauth/autorizar"
+allow_dynamic_registration = true
+
 [auth.mfa.totp]
 enroll_enabled = true
 verify_enabled = true
@@ -123,6 +133,11 @@ verify_jwt = false
 
 # Funil por UTM para a plataforma de marketing (SPEC 128): token próprio, sem JWT.
 [functions.ops-export-funil]
+verify_jwt = false
+
+# Conector MCP (SPEC 151): o 401 com WWW-Authenticate (início do OAuth) sai da própria
+# função, e o gateway responderia um 401 seco. A função valida o token com getUser().
+[functions.mcp]
 verify_jwt = false
 
 # Feedback fecha pela PR (SPEC 145): chamado pelo GitHub Actions com token próprio, sem JWT.

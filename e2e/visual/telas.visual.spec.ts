@@ -68,6 +68,10 @@ function mascaras(page: Page) {
     // borda, porque a largura do texto muda com os dígitos do dia ("11/10" é mais
     // estreito que "28/10") e o seed gera datas relativas a hoje. O botão tem largura fixa.
     page.getByRole("button", { name: /\d{2}\/\d{2}\/\d{2,4}/ }),
+    // Campo de data digitável (DatePicker): a data mora no value do input, que a troca
+    // por "0000" não alcança (só mexe em nó de texto). Mascara o campo inteiro, que tem
+    // largura fixa, então a caixa não muda com o dia.
+    page.locator('[data-slot="date-picker"]'),
     // Tabela inteira, não só o corpo: a largura das colunas acompanha o conteúdo, que
     // muda com a data do seed, e o cabeçalho descia 1px de um dia para o outro. A
     // borda do card em volta continua na foto, então tabela que desloca ainda aparece.
@@ -88,14 +92,41 @@ function mascaras(page: Page) {
  * "28 out"): a referência gerada num dia reprovava no seguinte, só nas bordas da máscara
  * (CI de 26/10: tarefas e obra-detalhe, ~170 px). Texto fixo ocupa sempre o mesmo espaço.
  */
+/**
+ * Troca o texto variável por "0000" e CONTINUA trocando até a foto. Antes era uma
+ * passada só: se o React redesenhasse um pedaço da tela depois dela (refetch,
+ * remontagem do card), a data real voltava, a máscara a cobria com uma caixa sólida
+ * e a foto diferia da referência. Foi o portal-dashboard no CI de 10/11: 3.074 px
+ * nas três tentativas, as duas datas do card ("Início" e "Previsão"), verde de novo
+ * 20 min depois sem mudança de código. O observer reaplica a troca em todo nó de
+ * texto novo ou alterado, então a foto não depende de quando o React termina.
+ */
 async function fixarTextoVariavel(page: Page) {
   await page.evaluate(
     ([fonte, flags]) => {
       const regra = new RegExp(fonte, flags);
-      const nos: Text[] = [];
-      const andador = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-      while (andador.nextNode()) nos.push(andador.currentNode as Text);
-      for (const no of nos) no.nodeValue = (no.nodeValue ?? "").replace(regra, "0000");
+      const trocarNo = (no: Text) => {
+        const atual = no.nodeValue ?? "";
+        const novo = atual.replace(regra, "0000");
+        // Só escreve quando muda: "0000" não casa com a regra, então o observer não entra em laço.
+        if (novo !== atual) no.nodeValue = novo;
+      };
+      const trocarEm = (raiz: Node) => {
+        if (raiz.nodeType === Node.TEXT_NODE) return trocarNo(raiz as Text);
+        const andador = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT);
+        while (andador.nextNode()) trocarNo(andador.currentNode as Text);
+      };
+      trocarEm(document.body);
+
+      const janela = window as unknown as { __fixarTextoObserver?: MutationObserver };
+      if (janela.__fixarTextoObserver) return;
+      janela.__fixarTextoObserver = new MutationObserver((mudancas) => {
+        for (const m of mudancas) {
+          if (m.type === "characterData") trocarEm(m.target);
+          m.addedNodes.forEach((no) => trocarEm(no));
+        }
+      });
+      janela.__fixarTextoObserver.observe(document.body, { childList: true, characterData: true, subtree: true });
     },
     [TEXTO_VARIAVEL.source, "gi"]
   );

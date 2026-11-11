@@ -5,6 +5,13 @@ import { applyCookieConsent } from "../analytics";
 import { getCookieConsent, hasCookieDecision, CONSENT_REVIEW_REQUESTED_EVENT } from "../cookieConsent";
 
 /**
+ * Recusar e aceitar com o mesmo peso visual (Guia de Cookies da ANPD, 2022): destacar só
+ * o "aceitar" empurra a escolha. Os dois botões usam esta mesma classe.
+ */
+const BOTAO_ESCOLHA =
+  "rounded-full border border-ink/25 bg-frame px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-paper-alt";
+
+/**
  * Alternador on/off pra uma categoria de cookie. Essencial não usa isso (é
  * sempre ligado, sem escolha); só "Análise" tem estado pra alternar.
  */
@@ -65,8 +72,8 @@ export function CookieConsentBanner() {
         <div className="flex items-start gap-3">
           <Cookie className="mt-0.5 h-5 w-5 shrink-0 text-ink-soft" strokeWidth={1.5} />
           <p className="text-sm leading-relaxed font-light text-ink-soft">
-            Usamos cookies essenciais para o site funcionar e, com sua permissão, cookies de análise para entender o uso
-            da página. Veja a{" "}
+            Usamos cookies essenciais para o site e o aplicativo funcionarem e, com sua permissão, cookies de análise
+            (PostHog e Google, processados nos EUA) para entender o uso do site e do aplicativo. Veja a{" "}
             <Link to="/privacidade" className="text-ink underline underline-offset-2">
               política de privacidade
             </Link>
@@ -97,27 +104,15 @@ export function CookieConsentBanner() {
           )}
 
           <div className="flex shrink-0 flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => decidir(false)}
-              className="rounded-full border border-ink/15 px-4 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-paper-alt"
-            >
+            <button type="button" onClick={() => decidir(false)} className={BOTAO_ESCOLHA}>
               Recusar não essenciais
             </button>
             {expandido ? (
-              <button
-                type="button"
-                onClick={() => decidir(analytics)}
-                className="rounded-full bg-brand px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-brand/80"
-              >
+              <button type="button" onClick={() => decidir(analytics)} className={BOTAO_ESCOLHA}>
                 Salvar preferências
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={() => decidir(true)}
-                className="rounded-full bg-brand px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-brand/80"
-              >
+              <button type="button" onClick={() => decidir(true)} className={BOTAO_ESCOLHA}>
                 Aceitar todos
               </button>
             )}

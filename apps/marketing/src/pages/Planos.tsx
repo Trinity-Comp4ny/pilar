@@ -40,9 +40,9 @@ const PERGUNTAS = [
 
 export function Planos() {
   usePageMeta({
-    titulo: "Planos e preços | Pilar",
+    titulo: "Preço do software de gestão para engenharia | Pilar",
     descricao:
-      "Um preço por escritório, sem contar cabeças. Todo plano tem a plataforma inteira; o que muda é quantos projetos, obras e leads você toca ao mesmo tempo. Assine pelo site ou agende uma demonstração.",
+      "Preço por escritório, sem cobrar por usuário: planos a partir de R$ 299 por mês, com a plataforma inteira. Muda o número de projetos, obras e leads ativos.",
     caminho: "/planos",
   });
 
@@ -63,9 +63,12 @@ export function Planos() {
           </Reveal>
 
           <Reveal variant="up" className="mb-12 max-w-2xl">
-            <h1 className="mb-4 text-[58px] font-medium leading-[1.06] tracking-[-0.035em] text-ink max-[1100px]:text-[44px] max-[850px]:text-[32px] max-[420px]:text-[27px]">
-              Um preço por escritório. <span className="italic text-ink/45">Sem contar cabeças.</span>
+            <h1 className="mb-4 text-[11px] font-medium uppercase leading-snug tracking-[0.16em] text-ink/50">
+              Preço do software de gestão para engenharia e arquitetura
             </h1>
+            <p className="mb-4 text-[58px] font-medium leading-[1.06] tracking-[-0.035em] text-ink max-[1100px]:text-[44px] max-[850px]:text-[32px] max-[420px]:text-[27px]">
+              Um preço por escritório. <span className="italic text-ink/45">Sem contar cabeças.</span>
+            </p>
             <p className="text-[15px] leading-relaxed text-ink-soft">
               Todo plano tem a plataforma inteira. O que muda é quantos projetos, obras e leads você toca ao mesmo tempo
               e quanto de IA usa no mês. Cartão, PIX ou boleto, sem fidelidade.

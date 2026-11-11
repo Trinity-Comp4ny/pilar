@@ -29,15 +29,64 @@ const DIST = fileURLToPath(new URL("../dist", import.meta.url));
 
 const ROTAS = [
   "/",
+  "/engenharia",
+  "/arquitetura",
   "/gestao",
   "/projetos",
   "/obra",
   "/portal",
   "/campo",
+  "/planos",
+  "/blog",
+  "/blog/aditivo-de-projeto",
+  "/blog/aporte-obra-administracao",
+  "/blog/art-rrt-projeto-obra",
+  "/blog/como-organizar-escritorio-arquitetura",
+  "/blog/como-organizar-escritorio-engenharia",
+  "/blog/como-precificar-projeto-arquitetura-engenharia",
+  "/blog/compatibilizacao-de-projetos",
+  "/blog/conciliacao-bancaria-escritorio",
+  "/blog/contrato-de-projeto",
+  "/blog/controle-prazo-projetos-disciplinas",
+  "/blog/cotacao-material-obra",
+  "/blog/crm-escritorio-arquitetura",
+  "/blog/cronograma-projeto-arquitetura",
+  "/blog/diario-de-obra-rdo",
+  "/blog/efetivo-de-obra",
+  "/blog/entrega-tecnica-pos-obra",
+  "/blog/escopo-de-projeto-engenharia",
+  "/blog/fluxo-de-caixa-escritorio-engenharia",
+  "/blog/gestao-de-equipe-escritorio-engenharia",
+  "/blog/gestao-de-obra-para-arquitetos",
+  "/blog/ia-escritorio-engenharia",
+  "/blog/inadimplencia-escritorio-arquitetura",
+  "/blog/indicadores-escritorio-engenharia",
+  "/blog/medicao-de-obra",
+  "/blog/modelo-proposta-projeto-arquitetura",
+  "/blog/obra-por-administracao-prestacao-de-contas",
+  "/blog/planilha-controle-de-projetos",
+  "/blog/portal-do-cliente-arquitetura",
+  "/blog/prazo-projeto-estrutural",
+  "/blog/projeto-instalacoes-prediais-mep",
+  "/blog/proposta-projeto-engenharia",
+  "/blog/quanto-cobrar-projeto-eletrico",
+  "/blog/quanto-cobrar-projeto-estrutural",
+  "/blog/relatorio-de-obra-cliente",
+  "/blog/rentabilidade-projeto-engenharia",
+  "/blog/retrabalho-projeto-engenharia",
+  "/blog/sistema-gestao-escritorio-arquitetura",
+  "/blog/software-arquitetura-vs-gestao",
+  "/blog/software-gestao-escritorio-engenharia",
+  "/blog/taxa-de-administracao-de-obra",
+  "/ferramentas",
+  "/ferramentas/calculadora-de-honorarios",
+  "/ferramentas/modelo-de-proposta",
   "/vs/planilha",
   "/vs/trello",
+  "/vs/whatsapp",
+  "/vs/notion",
+  "/vs/erp-construtora",
   "/faq",
-  "/planos",
   "/termos",
   "/privacidade",
 ];
@@ -83,6 +132,61 @@ function servirDist() {
     res.writeHead(200, { "Content-Type": tipo });
     res.end(readFileSync(caminho));
   });
+}
+
+/** Escapa texto para XML (título e descrição dos artigos no feed). */
+const xml = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/**
+ * Feed RSS do blog em dist/blog/feed.xml, lido direto dos arquivos de
+ * src/content/blog (mesma fonte da página). Leitor de feed e agregador descobrem
+ * artigo novo sem esperar o Google passar.
+ */
+function gravarFeed() {
+  const dir = fileURLToPath(new URL("../src/content/blog", import.meta.url));
+  if (!existsSync(dir)) return 0;
+  const artigos = readdirSync(dir)
+    .filter((n) => n.endsWith(".md"))
+    .map((nome) => {
+      const fm = readFileSync(join(dir, nome), "utf8").match(/^---\n([\s\S]*?)\n---/)?.[1] ?? "";
+      const campo = (c) => fm.match(new RegExp(`^${c}:\\s*(.*)$`, "m"))?.[1]?.trim() ?? "";
+      return {
+        slug: nome.replace(/\.md$/, ""),
+        titulo: campo("titulo"),
+        descricao: campo("descricao"),
+        categoria: campo("categoria"),
+        data: campo("publicadoEm"),
+      };
+    })
+    .sort((a, b) => b.data.localeCompare(a.data));
+  const BASE = "https://www.pilarsoft.com.br";
+  const itens = artigos
+    .map(
+      (a) => `    <item>
+      <title>${xml(a.titulo)}</title>
+      <link>${BASE}/blog/${a.slug}</link>
+      <guid isPermaLink="true">${BASE}/blog/${a.slug}</guid>
+      <description>${xml(a.descricao)}</description>
+      <category>${xml(a.categoria)}</category>
+      <pubDate>${new Date(`${a.data}T12:00:00Z`).toUTCString()}</pubDate>
+    </item>`
+    )
+    .join("\n");
+  const feed = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Blog do Pilar</title>
+    <link>${BASE}/blog</link>
+    <atom:link href="${BASE}/blog/feed.xml" rel="self" type="application/rss+xml" />
+    <description>Gestão para escritórios de engenharia e arquitetura: proposta, prazo, obra e financeiro.</description>
+    <language>pt-BR</language>
+${itens}
+  </channel>
+</rss>
+`;
+  mkdirSync(join(DIST, "blog"), { recursive: true });
+  writeFileSync(join(DIST, "blog", "feed.xml"), feed);
+  return artigos.length;
 }
 
 async function main() {
@@ -138,6 +242,7 @@ async function main() {
   servidor.close();
 
   console.log(`[prerender] ${ok}/${ROTAS.length} rotas gravadas em dist/, shell com boot em dist/spa.html.`);
+  console.log(`[prerender] feed do blog com ${gravarFeed()} artigos em dist/blog/feed.xml.`);
   if (ok !== ROTAS.length) process.exit(1);
 }
 

@@ -58,7 +58,7 @@ export function Faq() {
   const [aberta, setAberta] = useState<number | null>(0);
 
   usePageMeta({
-    titulo: "Perguntas frequentes | Pilar",
+    titulo: "Perguntas frequentes sobre o Pilar, software de gestão | Pilar",
     descricao:
       "Para quem é o Pilar, como os módulos se conectam e o que a IA faz (e o que ela nunca faz sem o seu aval). As respostas antes de assinar.",
     caminho: "/faq",

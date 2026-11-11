@@ -9,11 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, ChevronDown, QrCode, Settings2, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, QrCode, Settings2, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { parseCurrencyString } from "@/lib/currencyUtils";
@@ -28,6 +27,10 @@ import { CentroCustoManager } from "./CentroCustoManager";
 import { analytics } from "@/lib/analytics";
 import type { Json } from "@/integrations/supabase/types";
 import { montarLinhasNovas, statusEmAberto } from "../lib/lancamentoLinhas";
+
+// O form guarda Date; o DatePicker fala ISO (yyyy-MM-dd). Meio-dia evita virar o dia no fuso.
+const paraIso = (d: Date | undefined) => (d ? format(d, "yyyy-MM-dd") : undefined);
+const deIso = (iso: string) => new Date(`${iso}T12:00:00`);
 
 export interface LancamentoFormDialogProps {
   open: boolean;
@@ -355,29 +358,12 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1.5">
                 <Label className="text-xs">Vencimento *</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={cn(
-                        "w-full h-9 justify-start text-xs font-normal",
-                        !form.watch("dataVencimento") && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-1.5 h-3 w-3" />
-                      {form.watch("dataVencimento") ? format(form.watch("dataVencimento"), "dd/MM/yyyy") : "Selecionar"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={form.watch("dataVencimento")}
-                      onSelect={(d) => d && form.setValue("dataVencimento", d)}
-                      autoFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <DatePicker
+                  value={paraIso(form.watch("dataVencimento"))}
+                  onChange={(v) => v && form.setValue("dataVencimento", deIso(v))}
+                  placeholder="Selecionar"
+                  className="h-9 text-xs"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Status</Label>
@@ -576,31 +562,12 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
             <div className="pb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">Data de competência</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={cn(
-                        "w-full h-9 justify-start text-xs font-normal",
-                        !form.watch("dataCompetencia") && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-1.5 h-3 w-3" />
-                      {form.watch("dataCompetencia")
-                        ? format(form.watch("dataCompetencia") as Date, "dd/MM/yyyy")
-                        : "Igual ao vencimento"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={form.watch("dataCompetencia")}
-                      onSelect={(d) => form.setValue("dataCompetencia", d)}
-                      autoFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <DatePicker
+                  value={paraIso(form.watch("dataCompetencia"))}
+                  onChange={(v) => form.setValue("dataCompetencia", v ? deIso(v) : undefined)}
+                  placeholder="Igual ao vencimento"
+                  className="h-9 text-xs"
+                />
               </div>
 
               <div className="space-y-1.5">

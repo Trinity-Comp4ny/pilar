@@ -22,6 +22,15 @@ import { trackCta } from "../analytics";
 
 const COLUNAS = [
   {
+    titulo: "Conteúdo",
+    links: [
+      { label: "Blog", to: "/blog" },
+      { label: "Ferramentas", to: "/ferramentas" },
+      { label: "Para engenharia", to: "/engenharia" },
+      { label: "Para arquitetura", to: "/arquitetura" },
+    ],
+  },
+  {
     titulo: "Empresa",
     links: [
       { label: "Planos", to: "/planos" },
@@ -36,7 +45,7 @@ export function LandingFooter() {
   return (
     <footer className="w-full bg-card-brand px-5 md:px-10 pt-12 md:pt-20 pb-8 md:pb-10">
       <div className="max-w-6xl mx-auto">
-        <div className="grid md:grid-cols-[1.2fr_1fr_1fr_1fr_1fr] gap-10 md:gap-8 mb-14">
+        <div className="grid md:grid-cols-[1.2fr_1fr_1fr_1fr_1fr_1fr] gap-10 md:gap-8 mb-14">
           <div>
             <Logo size="sm" className="text-ink mb-5" />
             <p className="text-[13.5px] text-ink/80 max-w-xs leading-relaxed">

@@ -17,7 +17,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { captureException, withSentry, setSentryUser } from "../_shared/sentry.ts";
-import { getCorsHeaders, jsonResponse, optionsResponse } from "../_shared/cors.ts";
+import { getCorsHeaders, jsonResponse, optionsResponse, recusarAppExterno } from "../_shared/cors.ts";
 import { limitarOuResponder } from "../_shared/db-rate-limit.ts";
 import { lerJson, validar, z } from "../_shared/schemas.ts";
 import {
@@ -117,6 +117,9 @@ serve(
         error: userError,
       } = await authClient.auth.getUser();
       if (userError || !user) return jsonResponse({ error: "Não autenticado" }, 401, req);
+      // Token de app externo (ChatGPT, Claude) é só leitura e só pelo conector (SPEC 151).
+      const appExterno = recusarAppExterno(req);
+      if (appExterno) return appExterno;
 
       const { data: profile } = await authClient.from("profiles").select("empresa_id").eq("id", user.id).single();
       if (!profile?.empresa_id) return jsonResponse({ error: "Perfil não encontrado" }, 403, req);

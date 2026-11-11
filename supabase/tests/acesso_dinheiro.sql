@@ -15,7 +15,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(41);
+SELECT plan(45);
 
 -- =====================================================================
 -- A. Travas estruturais
@@ -221,8 +221,8 @@ VALUES ('77777777-0000-0000-0000-000000000005', '00000000-0000-0000-0000-0000000
 INSERT INTO public.receitas (empresa_id, descricao, valor, data_vencimento, status)
 VALUES ('00000000-0000-0000-0000-0000000000a1', 'Receita pgtap', 1000, CURRENT_DATE, 'Pendente');
 
-INSERT INTO public.pessoas (empresa_id, nome, email, primeiro_nome, sobrenome, salario_fixo)
-VALUES ('00000000-0000-0000-0000-0000000000a1', 'Pessoa pgtap', 'pessoa@pgtap.test', 'Pessoa', 'Pgtap', 7000);
+INSERT INTO public.pessoas (empresa_id, nome, email, primeiro_nome, sobrenome, salario_fixo, percentual_producao)
+VALUES ('00000000-0000-0000-0000-0000000000a1', 'Pessoa pgtap', 'pessoa@pgtap.test', 'Pessoa', 'Pgtap', 7000, 10);
 
 INSERT INTO public.notificacoes (empresa_id, destinatario_id, tipo, categoria, titulo)
 VALUES
@@ -270,6 +270,12 @@ SELECT is(
 SELECT is(
   (SELECT salario_fixo FROM public.pessoas_safe WHERE email = 'pessoa@pgtap.test'),
   NULL::numeric, 'user: pessoas_safe mascara salário');
+SELECT is(
+  (SELECT percentual_producao FROM public.pessoas_safe WHERE email = 'pessoa@pgtap.test'),
+  NULL::numeric, 'user: pessoas_safe mascara o percentual de produtividade');
+SELECT throws_ok(
+  $$ SELECT percentual_producao FROM public.pessoas $$,
+  '42501', NULL, 'user: ler percentual_producao direto na tabela é negado');
 SELECT throws_ok(
   $$ SELECT public.get_financial_chart_data('00000000-0000-0000-0000-0000000000a1', CURRENT_DATE - 30, CURRENT_DATE) $$,
   '42501', NULL, 'user: gráfico financeiro é negado');
@@ -330,6 +336,12 @@ SELECT pg_temp.como('66666666-0000-0000-0000-000000000001');
 SELECT is(
   (SELECT salario_fixo FROM public.pessoas_safe WHERE email = 'pessoa@pgtap.test'),
   7000::numeric, 'admin: vê salário');
+SELECT is(
+  (SELECT percentual_producao FROM public.pessoas_safe WHERE email = 'pessoa@pgtap.test'),
+  10::numeric, 'admin: vê o percentual de produtividade');
+SELECT throws_ok(
+  $$ UPDATE public.pessoas SET percentual_producao = 150 WHERE email = 'pessoa@pgtap.test' $$,
+  '23514', NULL, 'admin: percentual acima de 100 é recusado pelo banco');
 SELECT lives_ok(
   $$ UPDATE public.escopos SET status = 'aprovado' WHERE id = '77777777-0000-0000-0000-000000000002' $$,
   'admin: aprova aditivo');

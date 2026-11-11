@@ -45,7 +45,7 @@ describe("página /faq", () => {
 
   it("grava as metas e publica o FAQPage com todas as perguntas", () => {
     renderNaRota(<Faq />, "/faq");
-    expect(document.title).toBe("Perguntas frequentes | Pilar");
+    expect(document.title).toBe("Perguntas frequentes sobre o Pilar, software de gestão | Pilar");
     const jsonLd = JSON.parse(
       document.head.querySelector('script[type="application/ld+json"]')?.textContent ?? "{}"
     ) as { "@type": string; mainEntity: { name: string }[] };

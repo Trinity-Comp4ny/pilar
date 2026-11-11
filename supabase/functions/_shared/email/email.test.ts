@@ -116,6 +116,21 @@ const casos: Array<[string, () => { subject: string; html: string }]> = [
       }),
   ],
   [
+    "aviso legal",
+    () =>
+      T.templateAvisoLegal({
+        nome: XSS,
+        assunto: XSS,
+        titulo: XSS,
+        lead: XSS,
+        itens: [XSS, XSS],
+        vigencia: XSS,
+        link: "https://l",
+        linkLabel: XSS,
+        rodape: XSS,
+      }),
+  ],
+  [
     "feedback recebido",
     () =>
       T.templateFeedbackRecebido({

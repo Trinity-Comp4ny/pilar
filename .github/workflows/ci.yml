@@ -30,46 +30,224 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint-test-build:
-    name: Lint + Test + Build
+  # ---------------------------------------------------------------------------
+  # Desenho do gate de PR (reescrito em 10/11/2026):
+  #
+  # - Tudo que é independente roda em paralelo, um job por pergunta. Antes, lint,
+  #   typecheck, testes e build eram um job só de ~13 min: um erro de tipo PULAVA os
+  #   testes, e só se descobria o próximo erro no run seguinte.
+  # - A suíte do Vitest (509 arquivos) roda em 8 shards; o job `coverage` junta os
+  #   relatórios e aplica os pisos de cobertura do vite.config.ts sobre a soma.
+  # - O E2E roda em 3 shards, cada um com o PRÓPRIO Supabase local (banco isolado,
+  #   sem disputa de dado entre specs). O stack sobe em segundo plano enquanto o
+  #   Node e o Playwright instalam.
+  # - node_modules e os browsers do Playwright vêm de cache.
+  # - PR que só mexe em documentação roda o scan de segredo e pula o resto.
+  # ---------------------------------------------------------------------------
+
+  # Decide se o PR toca código. Só PR pode ser "só docs": push em staging/main e
+  # dispatch rodam tudo, porque é deles que sai deploy.
+  changes:
+    name: Escopo da mudança
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.escopo.outputs.code }}
+      unit: ${{ steps.escopo.outputs.unit }}
+      e2e: ${{ steps.escopo.outputs.e2e }}
+      db: ${{ steps.escopo.outputs.db }}
+      functions: ${{ steps.escopo.outputs.functions }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
+          # Em PR o checkout é o merge commit (refs/pull/N/merge): HEAD^1 é a ponta da
+          # base, então HEAD^1..HEAD é exatamente o que o PR muda. Profundidade 2 basta.
+          fetch-depth: 2
+      # CI seletivo: cada grupo de checks roda só se o PR mexe no que ele verifica
+      # (regras e o porquê de cada uma em scripts/ci-escopo.sh). Arquivo desconhecido
+      # liga tudo. Em 10/11, 52% dos commits só mexiam em teste unitário e não
+      # precisavam de E2E, banco nem Edge Functions.
+      #
+      # Push em staging/main e dispatch rodam TUDO: é de lá que sai deploy, e é a rede
+      # de segurança do que um PR pulou (falha em staging abre issue sozinha).
+      - id: escopo
+        env:
+          EVENTO: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENTO" != "pull_request" ]; then
+            printf '%s\n' code=true unit=true e2e=true db=true functions=true >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          ARQUIVOS="$(git diff --name-only HEAD^1 HEAD)"
+          echo "::group::Arquivos do PR"; printf '%s\n' "$ARQUIVOS"; echo "::endgroup::"
+          ESCOPO="$(printf '%s\n' "$ARQUIVOS" | scripts/ci-escopo.sh)"
+          echo "$ESCOPO" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Escopo do PR"
+            echo ""
+            echo "| Grupo | Roda? |"
+            echo "|---|---|"
+            echo "$ESCOPO" | sed -E 's/^([a-z]+)=true$/| \1 | ✅ |/; s/^([a-z]+)=false$/| \1 | ⏭️ pulado (nada que ele verifica mudou) |/'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "$ESCOPO"
+
+  # Merge em staging é por rebase: cada commit do PR entra no histórico como está.
+  # Reprova wip, fixup!/squash! esquecido e assunto fora do padrão convencional.
+  # Fora de PR (push, dispatch) não há "commits do PR": passa direto.
+  commits:
+    name: Commits do PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: github.event_name == 'pull_request'
+        with:
+          sparse-checkout: scripts
+      - name: Conferir mensagens
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          COMMITS_JSON="$(gh api --paginate "repos/$REPO/pulls/$PR/commits?per_page=100" | jq -s 'add')"
+          export COMMITS_JSON
+          scripts/check-commits-pr.sh
+
+  lint:
+    name: Lint + formatação
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/setup-deps
       - run: npm run lint
-      - name: Typecheck
+      - name: Prettier (formatação)
+        # O lint-staged formata no commit, mas commit com --no-verify (ou de bot)
+        # passava sem formatar: em 10/11 havia 18 arquivos fora do padrão em src/.
+        run: npm run format:check
+
+  typecheck:
+    name: Typecheck (app + LP)
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/setup-deps
+      - name: Typecheck do app
         run: npx tsc --noEmit -p tsconfig.app.json
-      - name: Testes unitários + piso de cobertura
-        # Com cobertura, não só `test:run`: os `thresholds` do vite.config.ts reprovam
-        # o job se a cobertura de src/lib ou do financeiro cair abaixo do piso.
-        run: npm run test:coverage
+      - name: Typecheck da LP (apps/marketing)
+        # A LP não tinha nenhum gate de tipo: só o deploy da Vercel buildava, e
+        # `vite build` não confere tipo.
+        run: npm run typecheck:marketing
+
+  unit-tests:
+    name: Testes unitários (${{ matrix.shard }}/8)
+    needs: [changes]
+    if: needs.changes.outputs.unit == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      # Todos os shards terminam mesmo se um falhar: o objetivo é ver TODA falha
+      # num run só, não a primeira.
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/setup-deps
+      - name: Vitest (shard ${{ matrix.shard }}/8, com cobertura)
+        # O relatório blob carrega resultado e cobertura do shard; o job `coverage`
+        # junta os 4. 39% do tempo da suíte é subir jsdom por arquivo (medido em
+        # 10/11), e isso só cai dividindo arquivos entre máquinas: pool threads não
+        # muda nada e --no-isolate quebra 62 arquivos.
+        run: npx vitest run --coverage --shard=${{ matrix.shard }}/8 --reporter=blob --reporter=dot
+        env:
+          # O piso de cobertura vale para a soma dos shards, não para cada um (ver
+          # vite.config.ts e o job `coverage`).
+          VITEST_SHARD_SEM_PISO: "1"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() }}
+        with:
+          name: vitest-blob-${{ matrix.shard }}
+          # Pasta padrão do blob reporter no Vitest 5 (não é mais .vitest-reports).
+          path: .vitest/blob/
+          # .vitest começa com ponto: sem isto o upload ignora a pasta.
+          include-hidden-files: true
+          retention-days: 1
+          if-no-files-found: error
+
+  # Junta os 8 shards e aplica os pisos de cobertura (thresholds do vite.config.ts)
+  # sobre o total. Piso por shard não faria sentido: cada um vê só 1/8 dos testes.
+  coverage:
+    name: Piso de cobertura
+    needs: [unit-tests]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/setup-deps
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: vitest-blob-*
+          path: .vitest/blob
+          merge-multiple: true
+      - name: Juntar shards e conferir o piso
+        # A trava dos 4 arquivos é porque um merge com shard faltando reprovaria pelo
+        # piso, mas com uma mensagem enganosa ("cobertura caiu") em vez de "faltou shard".
+        run: |
+          set -euo pipefail
+          N=$(ls .vitest/blob/blob-*-8.json | wc -l)
+          if [ "$N" -ne 8 ]; then
+            echo "::error::Esperava 8 relatórios de shard, chegaram $N."
+            exit 1
+          fi
+          npx vitest run --merge-reports=.vitest/blob --coverage --reporter=dot
+
+  build:
+    name: Build (app + LP) + Knip + bundle
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/setup-deps
       - name: Código morto não cresce (Knip)
         # Catraca: knip-baseline.json guarda a contagem de 07/10 e só pode cair.
         run: npm run check:dead-code
       - run: npm run build
       - name: Bundle size budget
         run: npm run check:bundle-size
+      - name: Build da LP (apps/marketing)
+        run: npm run build:marketing
 
   audit:
     name: Security audit
+    needs: [changes]
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      # `npm audit` lê só o package-lock.json: não precisa de node_modules (antes o
+      # job gastava ~50 s de `npm ci` para um comando de 1 s).
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
       - run: npm audit --audit-level=high --omit=dev
       # SBOM (CycloneDX) das dependências de produção: o inventário que um cliente ou
       # auditor pede depois de um CVE ("estou afetado?"). Guardado a cada push em
-      # staging e main, ou seja, um por release.
+      # staging e main, ou seja, um por release. Este sim lê a árvore instalada
+      # (`--package-lock-only` reprova por peer deps inválidas), então só instala no push.
+      - if: github.event_name == 'push'
+        uses: ./.github/actions/setup-deps
       - name: Gerar SBOM (CycloneDX)
         if: github.event_name == 'push'
         run: npm sbom --sbom-format cyclonedx --omit dev > sbom.cdx.json
@@ -81,6 +259,7 @@ jobs:
           path: sbom.cdx.json
           retention-days: 90
 
+  # Roda em todo PR, inclusive o "só docs": segredo vaza em doc tanto quanto em código.
   secrets-scan:
     name: Secrets scan (gitleaks)
     runs-on: ubuntu-latest
@@ -121,6 +300,8 @@ jobs:
   # types-sync abaixo, que fica fora do needs do deploy.
   database:
     name: Migrations + RLS
+    needs: [changes]
+    if: needs.changes.outputs.db == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     outputs:
@@ -130,14 +311,52 @@ jobs:
         with:
           # O guard compara com a base do PR, então precisa do histórico.
           fetch-depth: 0
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3
         with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+
+      # O config.toml tem `[auth.hook.send_email] secrets = env(AUTH_HOOK_SEND_EMAIL_SECRET)`,
+      # e a CLI valida o formato antes de subir qualquer coisa: sem a var, `supabase
+      # start` aborta com "must be formatted as v1,whsec_<base64>". Gera um valor
+      # descartável aqui em vez de hardcodar (hardcode viraria achado do gitleaks, e
+      # com razão). Não é segredo: o stack é local e efêmero.
+      - name: Gerar secret descartável para o parse do config
+        run: echo "AUTH_HOOK_SEND_EMAIL_SECRET=v1,whsec_$(openssl rand -base64 32)" >> "$GITHUB_ENV"
+
+      # Produção e staging rodam Postgres 17; o config.toml do repo fixa 15 porque é o
+      # stack LOCAL de dev (volume de dados em PG15, compartilhado entre sessões e
+      # worktrees). Trocar o config quebraria o dev de todo mundo, então só a cópia do
+      # checkout deste runner sobe em 17: migrations e pgTAP passam a ser provados na
+      # mesma versão major de produção (mesmo padrão do backup-nightly.yml).
+      - name: Alinhar o Postgres do stack com produção (17)
+        run: sed -i 's/^major_version = 15$/major_version = 17/' supabase/config.toml
+
+      # Em segundo plano: o pull das imagens (~1 min) corre junto com a instalação do
+      # Node e o guard. Fora Studio (a maior imagem, ~360 MB), edge-runtime e
+      # imgproxy, que nem migration nem pgTAP usam. GoTrue, Storage e Realtime ficam:
+      # criam os schemas auth/storage/realtime que as migrations referenciam.
+      # Portas do Supabase fora da faixa efêmera do Linux (32768-60999 por padrão).
+      # Com o stack subindo em segundo plano junto de downloads (npm, apt, Playwright),
+      # uma conexão de saída podia pegar uma porta do Supabase (543xx) como porta de
+      # origem e o container não subia: "failed to bind host port 0.0.0.0:54336:
+      # address already in use" (E2E local 2/3, run 42752780750). Limitar a faixa
+      # efêmera a 60000+ tira essa corrida.
+      - name: Reservar as portas do Supabase
+        run: sudo sysctl -w net.ipv4.ip_local_port_range="60000 65000"
+      - name: Subir o stack local (em segundo plano)
+        run: |
+          # `|| rc=$?`: o bash do Actions roda com -e, e sem isto uma falha mataria o
+          # subshell antes de gravar o exit code. O redirect do subshell inteiro solta o
+          # stdout do passo (senão o runner espera o processo em segundo plano).
+          # scripts/ci-wait-supabase.sh espera o .rc e mostra o log.
+          ( rc=0
+            supabase start -x studio,edge-runtime,imgproxy > "$RUNNER_TEMP/supabase-start.log" 2>&1 || rc=$?
+            echo "$rc" > "$RUNNER_TEMP/supabase-start.rc" ) > /dev/null 2>&1 &
+
+      - uses: ./.github/actions/setup-deps
 
       # Antes de tocar em qualquer banco: nenhuma migration nova apaga dado sem
-      # autorização explícita. Roda primeiro porque é barato e é o achado mais caro.
+      # autorização explícita. Barato e é o achado mais caro.
       - name: Guard de migration destrutiva
         env:
           ALLOW_DESTRUCTIVE_MIGRATION: ${{ vars.ALLOW_DESTRUCTIVE_MIGRATION }}
@@ -178,28 +397,8 @@ jobs:
           echo "Comparando migrations novas contra: $BASE"
           node scripts/check-migration-safety.mjs --base "$BASE"
 
-      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3
-        with:
-          version: ${{ env.SUPABASE_CLI_VERSION }}
-
-      # O config.toml tem `[auth.hook.send_email] secrets = env(AUTH_HOOK_SEND_EMAIL_SECRET)`,
-      # e a CLI valida o formato antes de subir qualquer coisa: sem a var, `supabase
-      # start` aborta com "must be formatted as v1,whsec_<base64>". Gera um valor
-      # descartável aqui em vez de hardcodar (hardcode viraria achado do gitleaks, e
-      # com razão). Não é segredo: o stack é local e efêmero.
-      - name: Gerar secret descartável para o parse do config
-        run: echo "AUTH_HOOK_SEND_EMAIL_SECRET=v1,whsec_$(openssl rand -base64 32)" >> "$GITHUB_ENV"
-
-      # Produção e staging rodam Postgres 17; o config.toml do repo fixa 15 porque é o
-      # stack LOCAL de dev (volume de dados em PG15, compartilhado entre sessões e
-      # worktrees). Trocar o config quebraria o dev de todo mundo, então só a cópia do
-      # checkout deste runner sobe em 17: migrations e pgTAP passam a ser provados na
-      # mesma versão major de produção (mesmo padrão do backup-nightly.yml).
-      - name: Alinhar o Postgres do stack com produção (17)
-        run: sed -i 's/^major_version = 15$/major_version = 17/' supabase/config.toml
-
-      - name: Subir o stack local
-        run: supabase start
+      - name: Esperar o stack local
+        run: scripts/ci-wait-supabase.sh
 
       - name: Aplicar todas as migrations do zero
         # Prova que a fila inteira de migrations funciona num banco vazio, não só por
@@ -262,6 +461,8 @@ jobs:
   # sintaxe ou import quebrado só aparecia no cold start, em produção.
   edge-functions:
     name: Edge Functions (deno check)
+    needs: [changes]
+    if: needs.changes.outputs.functions == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -272,7 +473,8 @@ jobs:
       # Cachear os módulos remotos resolvidos: sem isto, todo run baixa tudo de novo
       # do esm.sh, e um 5xx de lá reprova o gate sem haver nada errado no código (foi
       # o que aconteceu no run 30176697516). A chave inclui os imports das funções,
-      # então mudar dependência invalida o cache.
+      # então mudar dependência invalida o cache. Com a chave exata, o `deno check`
+      # leva ~0 s: o cache de checagem do Deno sabe que aquele grafo já passou.
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/deno
@@ -300,47 +502,74 @@ jobs:
   # staging e só então alguém descobria. Aqui o banco nasce das migrations do próprio
   # PR e o seed cria o usuário de teste, então não há secret, não há dado compartilhado
   # e não há como sujar staging. Mesmo comando do dev: `npm run test:e2e:local`.
+  #
+  # Em 3 shards, cada um com o seu Supabase: os specs mutam o seed (aprovar aditivo é
+  # definitivo), então dividir por máquina é seguro e subir workers no mesmo banco não.
+  # A regressão visual roda só no shard 1 (ver scripts/e2e-local.sh).
   e2e-local:
-    name: E2E (Playwright, Supabase local)
+    name: E2E (Playwright, Supabase local, ${{ matrix.shard }}/3)
+    needs: [changes]
+    if: needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     env:
       CI: "true"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          # 22 pelo mesmo motivo do job e2e: o auth.setup.ts cria um client Supabase,
-          # que exige WebSocket nativo (Node 22+).
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
       - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
       # Mesmo motivo do job database: sem a var, o parse do config.toml aborta.
       - name: Gerar secret descartável para o parse do config
         run: echo "AUTH_HOOK_SEND_EMAIL_SECRET=v1,whsec_$(openssl rand -base64 32)" >> "$GITHUB_ENV"
-      # Produção e staging rodam Postgres 17; o config.toml do repo fixa 15 porque é o
-      # stack LOCAL de dev (volume de dados em PG15, compartilhado entre sessões e
-      # worktrees). Trocar o config quebraria o dev de todo mundo, então só a cópia do
-      # checkout deste runner sobe em 17: migrations e pgTAP passam a ser provados na
-      # mesma versão major de produção (mesmo padrão do backup-nightly.yml).
+      # Mesmo motivo do job database: só a cópia deste runner sobe em PG 17.
       - name: Alinhar o Postgres do stack com produção (17)
         run: sed -i 's/^major_version = 15$/major_version = 17/' supabase/config.toml
+      # Em segundo plano, aplicando as migrations do PR, enquanto Node e Playwright
+      # instalam. Só o Studio fica de fora: o resto (inclusive edge-runtime e
+      # imgproxy) é o app de verdade que os specs exercitam.
+      # Portas do Supabase fora da faixa efêmera do Linux (32768-60999 por padrão).
+      # Com o stack subindo em segundo plano junto de downloads (npm, apt, Playwright),
+      # uma conexão de saída podia pegar uma porta do Supabase (543xx) como porta de
+      # origem e o container não subia: "failed to bind host port 0.0.0.0:54336:
+      # address already in use" (E2E local 2/3, run 42752780750). Limitar a faixa
+      # efêmera a 60000+ tira essa corrida.
+      - name: Reservar as portas do Supabase
+        run: sudo sysctl -w net.ipv4.ip_local_port_range="60000 65000"
+      - name: Subir o stack local em segundo plano (aplica as migrations do PR)
+        run: |
+          # `|| rc=$?`: o bash do Actions roda com -e, e sem isto uma falha mataria o
+          # subshell antes de gravar o exit code. O redirect do subshell inteiro solta o
+          # stdout do passo (senão o runner espera o processo em segundo plano).
+          # scripts/ci-wait-supabase.sh espera o .rc e mostra o log.
+          ( rc=0
+            supabase start -x studio > "$RUNNER_TEMP/supabase-start.log" 2>&1 || rc=$?
+            echo "$rc" > "$RUNNER_TEMP/supabase-start.rc" ) > /dev/null 2>&1 &
 
-      - name: Subir o stack local (aplica as migrations do PR)
-        run: supabase start
-      - name: Specs do app (visual + sem login + logado)
+      # node 22: o auth.setup.ts cria um client Supabase, que exige WebSocket nativo.
+      - uses: ./.github/actions/setup-deps
+
+      # Browser e pacotes de sistema em cache (.github/actions/setup-playwright). O
+      # `install-deps` oficial rodava apt-get update + install todo run, mesmo com nada
+      # faltando: 1m26 a 2m09, o passo mais lento do caminho crítico em 10/11.
+      - uses: ./.github/actions/setup-playwright
+
+      - name: Esperar o stack local
+        run: scripts/ci-wait-supabase.sh
+      - name: Specs do app (shard ${{ matrix.shard }}/3)
         run: npm run test:e2e:local
         env:
+          E2E_SHARD: ${{ matrix.shard }}/3
           # "1" regrava as referências da regressão visual em vez de comparar. Só
           # ligar num PR para atualizar a referência (e2e/visual/README.md).
           E2E_VISUAL_ATUALIZAR: ""
       - name: Referências da regressão visual
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && matrix.shard == 1 }}
         with:
           name: screenshots-visual-${{ github.run_id }}
           path: e2e/visual/telas.visual.spec.ts-snapshots/
@@ -349,7 +578,7 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: failure()
         with:
-          name: playwright-report-local-${{ github.run_id }}
+          name: playwright-report-local-${{ matrix.shard }}-${{ github.run_id }}
           path: |
             playwright-report/
             test-results/
@@ -359,16 +588,66 @@ jobs:
   # Único required status check do branch protection. Adicionar ou renomear job
   # deixa de exigir mexer na configuração do repositório.
   #
+  # `always()` é o que faz este gate valer. Sem ele, quando QUALQUER job acima falhava,
+  # este ficava "skipped", e o GitHub conta job skipped como sucesso em required check:
+  # o PR vermelho ficava mergeável (visto no run 42688785280, typecheck falhou e o
+  # CI OK saiu skipped). Agora ele roda sempre e reprova se algo não passou. "skipped"
+  # só é aceito para um job cujo grupo o escopo do PR desligou (scripts/ci-escopo.sh).
+  #
   # Note que o conjunto que bloqueia MERGE (aqui) é maior que o que bloqueia DEPLOY
   # (abaixo). São perguntas diferentes: "esta mudança está boa para entrar?" inclui
-  # sincronia de tipos; "é seguro aplicar no banco?" não.
+  # sincronia de tipos e E2E; "é seguro aplicar no banco?" não.
   ci-ok:
     name: CI OK (aggregate gate)
-    needs: [lint-test-build, audit, secrets-scan, database, types-sync, edge-functions, e2e-local]
+    needs: [changes, commits, lint, typecheck, unit-tests, coverage, build, audit, secrets-scan, database, types-sync, edge-functions, e2e-local]
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - run: echo "Todos os gates obrigatórios passaram."
+      - name: Conferir todos os gates
+        env:
+          RESULTADOS: ${{ toJSON(needs) }}
+          # Grupo de cada job (scripts/ci-escopo.sh). "skipped" só é aceito quando o
+          # grupo do job estava desligado para este PR; em qualquer outro caso (job
+          # pulado porque uma dependência falhou, por exemplo) o gate reprova.
+          GRUPOS: >-
+            {"lint":"code","typecheck":"code","build":"code","audit":"code",
+             "unit-tests":"unit","coverage":"unit",
+             "database":"db","types-sync":"db",
+             "edge-functions":"functions","e2e-local":"e2e"}
+          ESCOPO: >-
+            {"code":"${{ needs.changes.outputs.code }}","unit":"${{ needs.changes.outputs.unit }}",
+             "e2e":"${{ needs.changes.outputs.e2e }}","db":"${{ needs.changes.outputs.db }}",
+             "functions":"${{ needs.changes.outputs.functions }}"}
+        run: |
+          set -euo pipefail
+          FALHAS=$(jq -rn --argjson r "$RESULTADOS" --argjson g "$GRUPOS" --argjson e "$ESCOPO" '
+            $r | to_entries
+            | map(select(.value.result != "success"
+                         and ((.value.result == "skipped"
+                               and ($g[.key] // "") != ""
+                               and $e[$g[.key]] == "false") | not)))
+            | map("\(.key) = \(.value.result)") | join("; ")')
+          # Tabela no resumo do run: um olhar diz o que falhou e o que o escopo pulou.
+          {
+            echo "### Gates do CI"
+            echo ""
+            echo "| Gate | Resultado |"
+            echo "|---|---|"
+            jq -rn --argjson r "$RESULTADOS" --argjson g "$GRUPOS" --argjson e "$ESCOPO" '
+              $r | to_entries[]
+              | "| \(.key) | \(if .value.result == "success" then "✅ passou"
+                             elif .value.result == "skipped" and ($g[.key] // "") != "" and $e[$g[.key]] == "false"
+                               then "⏭️ fora do escopo do PR"
+                             elif .value.result == "skipped" then "❌ pulado"
+                             elif .value.result == "cancelled" then "⚪ cancelado"
+                             else "❌ \(.value.result)" end) |"'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "$FALHAS" ]; then
+            echo "::error::Gates que não passaram: $FALHAS"
+            exit 1
+          fi
+          echo "Todos os gates do escopo deste PR passaram."
 
   # Deploy do backend no Supabase de STAGING.
   # Roda como job do próprio CI (gatilho push do branch staging), então se
@@ -382,7 +661,7 @@ jobs:
     # segurança de tocar o banco. types-sync fica fora: exigir types.ts em sync para
     # aplicar migration cria um deadlock, porque types.ts só pode ser regenerado
     # depois que a migration está no banco.
-    needs: [lint-test-build, audit, secrets-scan, database, edge-functions]
+    needs: [lint, typecheck, unit-tests, coverage, build, audit, secrets-scan, database, edge-functions]
     if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -485,19 +764,13 @@ jobs:
       E2E_PORTAL_PASSWORD: ${{ secrets.E2E_PORTAL_PASSWORD }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          # Só este job usa 22 (o resto do ci.yml fica em 20, sem motivo pra mudar).
-          # e2e/auth.setup.ts cria um client Supabase, e o construtor sempre inicializa
-          # o RealtimeClient internamente (mesmo sem chamar .channel() nunca) — sem
-          # WebSocket nativo (Node 22+) ele derruba com "Node.js detected but native
-          # WebSocket not found". Achado real, 17/08: os specs autenticados nunca
-          # tinham rodado de verdade em CI (secrets não existiam até esta sessão), e
-          # assim que passaram a rodar, quebravam aqui — antes mesmo de chegar no login.
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # Node 22: e2e/auth.setup.ts cria um client Supabase, e o construtor sempre
+      # inicializa o RealtimeClient, que exige WebSocket nativo (Node 22+). Achado real,
+      # 17/08: os specs autenticados quebravam aqui antes mesmo do login.
+      - uses: ./.github/actions/setup-deps
+      # Mesmo cache de browser e pacotes do E2E de PR: antes, `install --with-deps`
+      # baixava Chromium completo + apt-get a cada push em staging (até 3m44).
+      - uses: ./.github/actions/setup-playwright
       - run: npm run build
 
       # A empresa do usuário de E2E fica sempre ativa, sem depender do relógio do
@@ -560,17 +833,52 @@ jobs:
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    # issues: write só aqui, para abrir/fechar a issue "Pipeline quebrado: staging".
+    permissions:
+      contents: read
+      issues: write
     steps:
       - name: CI, deploy (com smoke) e E2E de staging verdes neste commit
+        id: veredito
         env:
           RESULTADOS: ${{ toJSON(needs) }}
         run: |
           FALTA=$(echo "$RESULTADOS" | jq -r 'to_entries | map(select(.value.result != "success") | "\(.key) = \(.value.result)") | join("; ")')
+          # Falha de verdade vs. run cancelado: o concurrency do CI cancela o run
+          # anterior a cada push novo em staging, e cancelamento não é "staging
+          # quebrado". Só falha real abre issue; o check fica vermelho nos dois casos.
+          FALHOU=$(echo "$RESULTADOS" | jq -r '[.[] | select(.result == "failure")] | length > 0')
+          echo "falta=$FALTA" >> "$GITHUB_OUTPUT"
+          echo "falhou=$FALHOU" >> "$GITHUB_OUTPUT"
           if [ -n "$FALTA" ]; then
             echo "::error::Staging não está pronto em ${GITHUB_SHA:0:8}: $FALTA"
             exit 1
           fi
           echo "::notice::Staging pronto em ${GITHUB_SHA:0:8}."
+
+      # Antes, um deploy ou E2E de staging vermelho depois do merge ficava só como um
+      # X na aba Actions: ninguém era avisado. Agora vira issue (uma só, que acumula
+      # comentários) e fecha sozinha no primeiro push verde.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: ${{ !cancelled() && (success() || steps.veredito.outputs.falhou == 'true') }}
+        with:
+          sparse-checkout: .github/actions
+      - name: Abrir issue de staging quebrado
+        if: ${{ failure() && steps.veredito.outputs.falhou == 'true' }}
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: staging
+          title-prefix: Pipeline quebrado
+          details: "Gates que não passaram: ${{ steps.veredito.outputs.falta }}"
+          token: ${{ github.token }}
+      - name: Fechar a issue de staging quebrado
+        if: success()
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: staging
+          title-prefix: Pipeline quebrado
+          status: success
+          token: ${{ github.token }}
 
   # Deploy do backend em PRODUÇÃO. DORMENTE até este ci.yml chegar no branch main:
   # só dispara em push no main (github.ref) E o job precisa existir no arquivo do
@@ -580,7 +888,7 @@ jobs:
     name: Deploy → production (Supabase)
     # Mesmo conjunto do deploy-staging, pelo mesmo motivo. O gate humano de produção é
     # o required reviewer do Environment "Production", não a sincronia de tipos.
-    needs: [lint-test-build, audit, secrets-scan, database, edge-functions]
+    needs: [lint, typecheck, unit-tests, coverage, build, audit, secrets-scan, database, edge-functions]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -638,3 +946,44 @@ jobs:
           # Em produção o smoke pulado em silêncio não vale: sem o secret, o job falha.
           SMOKE_OBRIGATORIO: "true"
         run: scripts/smoke-health.sh
+
+  # Mesmo aviso do staging-ready, para o push em main (release). Olha os gates E o
+  # deploy: se um gate falhou, o deploy de produção fica skipped, e isso também é
+  # release que não chegou. Cancelado ou reprovado no Environment não abre issue.
+  production-alert:
+    name: Alerta de produção
+    needs: [lint, typecheck, unit-tests, coverage, build, audit, secrets-scan, database, edge-functions, deploy-production]
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Avaliar o release
+        id: veredito
+        env:
+          RESULTADOS: ${{ toJSON(needs) }}
+        run: |
+          FALHAS=$(echo "$RESULTADOS" | jq -r 'to_entries | map(select(.value.result == "failure") | .key) | join(", ")')
+          DEPLOY=$(echo "$RESULTADOS" | jq -r '."deploy-production".result')
+          if [ -n "$FALHAS" ]; then STATUS=failure
+          elif [ "$DEPLOY" = "success" ]; then STATUS=success
+          else STATUS=nenhum
+          fi
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          echo "falhas=$FALHAS" >> "$GITHUB_OUTPUT"
+          echo "Release ${GITHUB_SHA:0:8}: status=$STATUS deploy=$DEPLOY falhas=[$FALHAS]"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: steps.veredito.outputs.status != 'nenhum'
+        with:
+          sparse-checkout: .github/actions
+      - name: Abrir ou fechar a issue de produção
+        if: steps.veredito.outputs.status != 'nenhum'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: produção
+          title-prefix: Pipeline quebrado
+          status: ${{ steps.veredito.outputs.status }}
+          details: "Jobs que falharam: ${{ steps.veredito.outputs.falhas }}"
+          token: ${{ github.token }}

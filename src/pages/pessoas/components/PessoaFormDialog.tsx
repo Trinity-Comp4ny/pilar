@@ -9,7 +9,6 @@ import { Plus, Trash2, Landmark, X, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
-import { MoneyInput } from "@/components/forms/MoneyInput";
 import { formatCPF, formatCNPJ, formatPhone, formatAgency, formatBankAccount } from "@/lib/maskUtils";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -23,7 +22,13 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { pessoaSchema, pessoaDefaultValues, type PessoaFormData, type PessoaFormInput } from "@/schemas";
+import {
+  pessoaSchema,
+  pessoaDefaultValues,
+  parsePercentual,
+  type PessoaFormData,
+  type PessoaFormInput,
+} from "@/schemas";
 import { Badge } from "@/components/ui/badge";
 import { detectTipoChavePix, normalizarChavePix, TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import type { Pessoa, ContaBancaria, ChavePix } from "../types";
@@ -31,6 +36,7 @@ import { BusyMark } from "@/components/motion/BusyMark";
 import { parseSupabaseError } from "./pessoaErros";
 import { CampoDarAcesso } from "./ConviteNovaPessoa";
 import { convidarNovaPessoa } from "./convidarNovaPessoa";
+import { RemuneracaoCampos } from "./RemuneracaoCampos";
 
 interface PessoaFormDialogProps {
   open: boolean;
@@ -88,6 +94,8 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved, pode
         data_demissao: editPessoa.data_demissao || "",
         salario_fixo: editPessoa.salario_fixo != null ? formatValorToInput(editPessoa.salario_fixo) : "",
         valor_m2: editPessoa.valor_m2 != null ? formatValorToInput(editPessoa.valor_m2) : "",
+        percentual_producao:
+          editPessoa.percentual_producao != null ? String(editPessoa.percentual_producao).replace(".", ",") : "",
         cnpj: editPessoa.cnpj || "",
         razao_social: editPessoa.razao_social || "",
       });
@@ -204,6 +212,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved, pode
         chaves_pix: finalPix,
         salario_fixo: formData.salario_fixo ? parseCurrencyString(formData.salario_fixo) : null,
         valor_m2: formData.valor_m2 ? parseCurrencyString(formData.valor_m2) : null,
+        percentual_producao: parsePercentual(formData.percentual_producao),
         cnpj: formData.tipo_contrato === CONTRACT_TYPES.PJ ? formData.cnpj || null : null,
         razao_social: formData.tipo_contrato === CONTRACT_TYPES.PJ ? formData.razao_social || null : null,
       };
@@ -216,6 +225,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved, pode
           delete updatePayload.cpf;
           delete updatePayload.salario_fixo;
           delete updatePayload.valor_m2;
+          delete updatePayload.percentual_producao;
           delete updatePayload.contas_bancarias;
           delete updatePayload.chaves_pix;
         }
@@ -482,30 +492,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved, pode
           <div className="px-6 py-4 space-y-3">
             <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Remuneração e Datas</Label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {canEditSensitive && (
-                <>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="salario_fixo" className="text-xs">
-                      {isEstagio ? "Bolsa (R$)" : "Salário Fixo (R$)"}
-                    </Label>
-                    <MoneyInput
-                      id="salario_fixo"
-                      value={form.watch("salario_fixo") ?? ""}
-                      onChange={(v) => form.setValue("salario_fixo", v)}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="valor_m2" className="text-xs">
-                      Valor m² (R$)
-                    </Label>
-                    <MoneyInput
-                      id="valor_m2"
-                      value={form.watch("valor_m2") ?? ""}
-                      onChange={(v) => form.setValue("valor_m2", v)}
-                    />
-                  </div>
-                </>
-              )}
+              {canEditSensitive && <RemuneracaoCampos form={form} isEstagio={isEstagio} />}
               <div className="space-y-1.5">
                 <Label htmlFor="data_admissao_picker" className="text-xs">
                   Admissão

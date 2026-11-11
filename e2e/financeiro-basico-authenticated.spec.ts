@@ -98,15 +98,24 @@ test.describe("Financeiro — criar receita", () => {
     await expect(salvarBtn).toBeVisible({ timeout: 5_000 });
     await salvarBtn.click();
 
-    // 8b. App tem detecção de duplicata (mesma descrição+valor recentes) — se o
-    // alertdialog aparecer, confirmar explicitamente em vez de travar no toast.
-    const duplicataDialog = page.getByRole("alertdialog", { name: /duplicata/i });
-    if (await duplicataDialog.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    // 8b. Detecção de duplicata (SPEC 150): o salvar consulta o servidor antes de
+    // gravar e, se achar parecido, abre um alertdialog e segura o salvamento. Em
+    // staging a receita da rodada anterior existe, então o diálogo abre ali e não no
+    // banco local. Espera o que vier primeiro (diálogo ou toast): isVisible() do
+    // Playwright não espera, e a checagem no servidor chegava depois dele, deixando
+    // o spec travado no toast (E2E → staging, 09 e 10/11). O título também mudou com
+    // a SPEC 150 ("Este lançamento parece já existir"), daí o alertdialog sem nome.
+    // O toast de sucesso é "Receita cadastrada", texto exato: a regex antiga
+    // (salvo|criado|sucesso) podia casar com texto que já estava na tela.
+    const sucesso = page.getByText("Receita cadastrada").first();
+    const duplicataDialog = page.getByRole("alertdialog");
+    await expect(sucesso.or(duplicataDialog)).toBeVisible({ timeout: 15_000 });
+    if (await duplicataDialog.isVisible()) {
       await duplicataDialog.getByRole("button", { name: /Salvar mesmo assim/i }).click();
     }
 
     // 9. Verificar toast de sucesso
-    await expect(page.getByText(/salvo|criado|sucesso|Receita criada/i).first()).toBeVisible({ timeout: 8_000 });
+    await expect(sucesso).toBeVisible({ timeout: 8_000 });
 
     // 10. A receita entra na lista de lançamentos e o KPI "A receber" segue na
     // tela. Antes isto ia para /inicio procurar o KPI, mas desde a spec 092 o

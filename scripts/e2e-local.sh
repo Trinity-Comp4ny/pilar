@@ -82,10 +82,20 @@ export E2E_WEBHOOK_TOKEN="e2e-webhook-token"
 
 npm run build
 
+# E2E_SHARD="i/n" (CI): roda só a fatia i de n dos specs. Cada shard do CI tem o
+# próprio Supabase, então os specs que mutam o seed não disputam o mesmo banco. A
+# regressão visual não é dividida: roda inteira no shard 1.
+SHARD_ARGS=()
+VISUAL_NESTE_SHARD=1
+if [ -n "${E2E_SHARD:-}" ]; then
+  SHARD_ARGS=(--shard="$E2E_SHARD")
+  [ "${E2E_SHARD%%/*}" = "1" ] || VISUAL_NESTE_SHARD=0
+fi
+
 # Regressão visual primeiro, com o banco recém-semeado e antes de qualquer spec
 # criar dado. Só em Linux (referência gerada no CI; ver e2e/visual/README.md).
 # E2E_VISUAL_ATUALIZAR=1 regrava as referências em vez de comparar.
-if [ "$(uname)" = "Linux" ] && [ $# -eq 0 ]; then
+if [ "$(uname)" = "Linux" ] && [ $# -eq 0 ] && [ "$VISUAL_NESTE_SHARD" = "1" ]; then
   if [ "${E2E_VISUAL_ATUALIZAR:-}" = "1" ]; then
     npx playwright test --project=visual --update-snapshots
   else
@@ -95,4 +105,4 @@ fi
 
 # chromium = specs sem login; authenticated = specs logados (dependem do setup).
 # O projeto "marketing" fica de fora: testa o site em produção, não este commit.
-npx playwright test --project=chromium --project=authenticated "$@"
+npx playwright test --project=chromium --project=authenticated ${SHARD_ARGS[@]+"${SHARD_ARGS[@]}"} "$@"

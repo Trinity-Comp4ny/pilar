@@ -1,0 +1,198 @@
+name: Preços de referência (CUB e SINAPI)
+
+# Estimativa de obra. Todo dia, em staging e em produção:
+# 1. `sinapi`: busca na Caixa o SINAPI do mês que falta no banco (ou que a Caixa retificou), lê com o
+#    mesmo leitor da importação manual e grava só os códigos do catálogo. Mês ainda não publicado não é
+#    falha. Arquivo fora do formato falha sem gravar nada e abre issue.
+# 2. `cub`: para cada UF, tenta o portal da CBIC (cub.org.br) e, onde houver, o portal do Sinduscon (SP e RS
+#    só o portal próprio). Grava o PDF que passa nas conferências (19 códigos, padrão alto > normal > baixo,
+#    mês e regime certos, variação de até 15% contra o mês anterior, não repetido). PDF recusado não grava
+#    nada daquela UF e abre issue.
+# 3. `conferir`: abre issue quando o CUB (dia 10) ou o SINAPI (dia 15) do mês anterior não chegou.
+# No PR que mexe no coletor, só `sondar`: lê as fontes reais e roda as conferências sem banco, sem segredo
+# e sem gravar. O resumo do job mostra o que cada fonte devolveu; site fora do ar não reprova o PR.
+# Runbook: docs/operations/ESTIMATIVA_IMPORTAR_PRECOS_MENSAL.md.
+#
+# Segredo: o SUPABASE_DB_URL que os environments `Staging` e `production-automation` já têm (o mesmo do
+# backup noturno). `production-automation`, não `Production`: environment com reviewer trava cron em
+# `waiting` (ver backup-nightly.yml).
+on:
+  pull_request:
+    paths:
+      - "scripts/precos-referencia/**"
+      - ".github/workflows/precos-referencia.yml"
+  schedule:
+    - cron: "23 11 * * *" # 08:23 em Brasília
+  workflow_dispatch:
+    inputs:
+      mes:
+        description: "Forçar um mês (AAAA-MM), para o SINAPI e o CUB. Vazio = meses que faltam."
+        required: false
+        default: ""
+      cub_ufs:
+        description: "Só estas UFs do CUB (ex. SP,RS). Vazio = todas."
+        required: false
+        default: ""
+      dry_run:
+        description: "Ler e conferir sem gravar"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  issues: write # notify-cron-failure
+
+concurrency:
+  group: precos-referencia-${{ github.event_name == 'pull_request' && github.ref || 'cron' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  sondar:
+    name: Sondar fontes reais (sem gravar)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+      - name: Sondar
+        run: |
+          deno run --config scripts/precos-referencia/deno.json \
+            --allow-import=cdn.sheetjs.com:443 --allow-net --allow-env --allow-read --allow-write \
+            scripts/precos-referencia/coletar.ts sondar
+
+  sinapi:
+    name: SINAPI (${{ matrix.alvo }})
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - alvo: staging
+            environment: Staging
+          - alvo: producao
+            environment: production-automation
+    environment: ${{ matrix.environment }}
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      SINAPI_MES: ${{ inputs.mes }}
+      DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+      - name: Coletar
+        run: |
+          deno run --config scripts/precos-referencia/deno.json \
+            --allow-import=cdn.sheetjs.com:443 --allow-net --allow-env --allow-read --allow-write \
+            scripts/precos-referencia/coletar.ts sinapi
+      - name: Notificar falha
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: SINAPI automático (${{ matrix.alvo }})
+          token: ${{ github.token }}
+      - name: Fechar a issue de falha (voltou a passar)
+        if: success() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: SINAPI automático (${{ matrix.alvo }})
+          token: ${{ github.token }}
+          status: success
+
+  cub:
+    name: CUB (${{ matrix.alvo }})
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      max-parallel: 1 # um alvo por vez, para não dobrar a carga nos portais
+      matrix:
+        include:
+          - alvo: staging
+            environment: Staging
+          - alvo: producao
+            environment: production-automation
+    environment: ${{ matrix.environment }}
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      CUB_MES: ${{ inputs.mes }}
+      CUB_UFS: ${{ inputs.cub_ufs }}
+      # Variáveis de repositório (Settings > Secrets and variables > Actions > Variables), opcionais:
+      # CUB_SINDUSCON: UF com mais de um Sinduscon no portal da CBIC, ex. "MG=12,PR=3".
+      # CUB_PORTAIS: portal estadual extra ou corrigido, ex. "TO=https://.../cub/;AL=https://.../cub/|publicacao".
+      CUB_SINDUSCON: ${{ vars.CUB_SINDUSCON }}
+      CUB_PORTAIS: ${{ vars.CUB_PORTAIS }}
+      DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+      - name: Coletar
+        run: |
+          deno run --config scripts/precos-referencia/deno.json \
+            --allow-import=cdn.sheetjs.com:443 --allow-net --allow-env --allow-read --allow-write \
+            scripts/precos-referencia/coletar.ts cub
+      - name: Notificar falha
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: CUB automático (${{ matrix.alvo }})
+          token: ${{ github.token }}
+      - name: Fechar a issue de falha (voltou a passar)
+        if: success() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: CUB automático (${{ matrix.alvo }})
+          token: ${{ github.token }}
+          status: success
+
+  conferir:
+    name: Conferir atraso (${{ matrix.alvo }})
+    needs: [sinapi, cub]
+    if: always() && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - alvo: staging
+            environment: Staging
+          - alvo: producao
+            environment: production-automation
+    environment: ${{ matrix.environment }}
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
+        with:
+          deno-version: v2.x
+      - name: Conferir
+        run: |
+          deno run --config scripts/precos-referencia/deno.json \
+            --allow-import=cdn.sheetjs.com:443 --allow-net --allow-env --allow-read --allow-write \
+            scripts/precos-referencia/coletar.ts conferir
+      - name: Notificar atraso
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: CUB/SINAPI do mês (${{ matrix.alvo }})
+          title-prefix: Preço de referência atrasado
+          token: ${{ github.token }}
+      - name: Fechar a issue de atraso (em dia)
+        if: success() && github.event_name == 'schedule'
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: CUB/SINAPI do mês (${{ matrix.alvo }})
+          title-prefix: Preço de referência atrasado
+          token: ${{ github.token }}
+          status: success

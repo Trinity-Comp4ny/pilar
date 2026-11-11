@@ -3,7 +3,7 @@
 <!-- Gerado por scripts/edge-functions-catalog.mjs a partir de supabase/functions/CATALOGO.json.
      Não editar à mão: edite o CATALOGO.json e rode `node scripts/edge-functions-catalog.mjs`. -->
 
-58 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
+60 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
 migrations) ou origem externa declarada no manifesto. **Login**: `verify_jwt` do `config.toml`
 (JWT aceita a chave anon; "própria" = a função faz a autorização). **Secrets**: lidos direto
 na pasta da função (o que vem de `_shared`, como a chave do Gemini, não aparece).
@@ -18,6 +18,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `ai-cotacao-import` | Lê PDF ou imagem de orçamento de fornecedor e extrai os itens (Gemini, spec 023). | app | JWT |  | sim |
 | `ai-estimativa-itens` | Lê a descrição da obra e devolve só itens do catálogo da estimativa, com quantidade, o que ficou de fora e o que faltou saber; nunca preço nem prazo (Gemini, SPEC 138). | app | JWT | `AI_GATEWAY_API_KEY` `GEMINI_API_KEY` | sim |
 | `ai-import-financeiro` | Extrai lançamentos do texto de um extrato ou fatura (spec 017). | app | JWT |  | sim |
+| `mcp` | Conector MCP da Pilar para ChatGPT, Claude e outros clientes: OAuth 2.1 pelo Supabase Auth e seis ferramentas só de leitura (projetos, propostas, leads, clientes, resumo financeiro) com o token e a RLS do usuário (SPEC 151). | clientes MCP (ChatGPT, Claude) com token OAuth do usuário | própria | `MCP_AUTH_ISSUER` `MCP_PUBLIC_URL` `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `resumo-semanal` | Resumo semanal do Início: lê os fatos da semana pelo RLS de quem pediu (empresa para quem vê dinheiro, pessoa para os demais), o modelo redige e o código confere os números (SPEC 121). | app | JWT |  | sim |
 
 ## Assinatura do Pilar (Asaas da plataforma)
@@ -85,6 +86,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
+| `aviso-legal-admins` | Ultra admin manda por e-mail um aviso legal do catálogo (ex.: Termos de Uso 2.0) a todos os administradores ativos, sem duplicar quem já recebeu. Cumpre o aviso de 30 dias da cláusula 15 e do Anexo A5 dos Termos. | app, aba Pedidos LGPD do ultra admin | JWT |  | sim |
 | `exportar-dados-titular` | Atende o pedido de exportação de dados (LGPD art. 18): monta a cópia, guarda em bucket privado e manda link de 7 dias (SPEC 115). | cron, trigger notify_data_export_request (pg_net) | própria | `DATA_DELETION_NOTIFY_SECRET` `LGPD_DPO_EMAIL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `resend-webhook` | Recebe o status de entrega do Resend e fecha o ciclo do e-mail enviado. | Resend (webhook) | própria | `RESEND_WEBHOOK_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `send-data-deletion-notification` | E-mail de confirmação de exclusão de dados (LGPD), disparado por trigger. | cron | JWT | `APP_URL` `DATA_DELETION_NOTIFY_SECRET` `LGPD_DPO_EMAIL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |

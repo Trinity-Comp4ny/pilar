@@ -29,6 +29,8 @@ export interface Pessoa {
   data_demissao?: string;
   salario_fixo?: number;
   valor_m2?: number;
+  // Percentual (0 a 100) sobre o valor dos projetos do mês, pago como produtividade.
+  percentual_producao?: number;
   cnpj?: string;
   razao_social?: string;
   pis_nit?: string;

@@ -11,6 +11,7 @@ import { formatCurrency } from "@/lib/utils";
 import { getMonthLabel } from "./types";
 import type { FolhaItem } from "./types";
 import { subtotalProjeto } from "./folhaCalc";
+import { formatPercent } from "@/lib/format";
 
 interface ComprovanteContexto {
   empresaNome?: string;
@@ -57,34 +58,43 @@ async function desenharComprovante(
   }
 
   // Variável destrinchado por projeto: é a informação que a equipe pergunta ("de
-  // qual projeto veio meu variável"). Cada projeto: m² × valor/m² = subtotal.
+  // qual projeto veio meu variável"). Cada projeto: m² × valor/m² + valor do
+  // projeto × percentual = subtotal. A coluna de cada regra só sai se a pessoa
+  // ganha por ela.
+  const percentual = item.p_percentual ?? 0;
+  const temPercentual = percentual > 0;
+  const temM2 = (item.p_valor_m2 || 0) > 0 || !temPercentual;
   const detalhe = item.detalhe_projetos ?? [];
-  const linhasProjetos = detalhe.map((p) => {
-    const subtotal = subtotalProjeto(p, item.p_valor_m2);
-    return [
-      p.nome || "-",
-      `${(p.area_m2 || 0).toLocaleString("pt-BR")} m²`,
-      `${formatCurrency(item.p_valor_m2 || 0)}/m²`,
-      formatCurrency(subtotal),
-    ];
-  });
+  const linhasProjetos = detalhe.map((p) => [
+    p.nome || "-",
+    ...(temM2 ? [`${(p.area_m2 || 0).toLocaleString("pt-BR")} m²`, `${formatCurrency(item.p_valor_m2 || 0)}/m²`] : []),
+    ...(temPercentual ? [`${formatPercent(percentual)} de ${formatCurrency(p.valor_base ?? 0)}`] : []),
+    formatCurrency(subtotalProjeto(p, item.p_valor_m2, percentual)),
+  ]);
+  const cabecalho = [
+    "Projeto",
+    ...(temM2 ? ["Área", "Valor/m²"] : []),
+    ...(temPercentual ? ["Percentual"] : []),
+    "Subtotal",
+  ];
+  const vazias = Array(cabecalho.length - 2).fill("-");
 
   // Sem detalhe por projeto: distingue "não produziu neste mês" (variável = 0) de
   // "folha fechada antes do snapshot existir" (variável > 0, detalhe não capturado),
   // para o texto não contradizer um variável positivo.
   const linhaSemDetalhe: string[][] =
     item.v_variavel > 0
-      ? [["Detalhamento por projeto indisponível para esta folha", "-", "-", formatCurrency(item.v_variavel)]]
-      : [["Sem projetos no período", "-", "-", formatCurrency(0)]];
+      ? [["Detalhamento por projeto indisponível para esta folha", ...vazias, formatCurrency(item.v_variavel)]]
+      : [["Sem projetos no período", ...vazias, formatCurrency(0)]];
 
   autoTable(doc, {
     startY: y + 2,
-    head: [["Projeto", "Área", "Valor/m²", "Subtotal"]],
+    head: [cabecalho],
     body: linhasProjetos.length ? linhasProjetos : linhaSemDetalhe,
     theme: "grid",
     headStyles: { fillColor: [40, 40, 40], textColor: 255, fontSize: 8, fontStyle: "bold" },
     styles: { fontSize: 8, cellPadding: 2 },
-    columnStyles: { 1: { halign: "right" }, 2: { halign: "right" }, 3: { halign: "right" } },
+    columnStyles: Object.fromEntries(cabecalho.slice(1).map((_, i) => [i + 1, { halign: "right" as const }])),
     margin: { left: marginX, right: marginX },
   });
 
@@ -130,10 +140,7 @@ async function desenharComprovante(
 }
 
 async function carregarJsPDF() {
-  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
-    import("jspdf"),
-    import("jspdf-autotable"),
-  ]);
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
   return { jsPDF, autoTable: autoTable as unknown as (doc: JsPDFType, options: object) => void };
 }
 
