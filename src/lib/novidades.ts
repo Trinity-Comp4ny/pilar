@@ -1,4 +1,3 @@
-import { z } from "zod";
 import type { FeatureKey } from "@/lib/features";
 
 /**
@@ -13,39 +12,70 @@ export type Impacto = "fluxo" | "melhoria" | "correcao";
 
 export const IMPACTOS: readonly Impacto[] = ["fluxo", "melhoria", "correcao"];
 
-const itemSchema = z.object({
-  id: z.string(),
-  texto: z.string(),
-  impacto: z.enum(["fluxo", "melhoria", "correcao"]),
-  modulo: z.string().nullable(),
-  voce_pediu: z.boolean(),
-});
+export interface NovidadeItem {
+  id: string;
+  texto: string;
+  impacto: Impacto;
+  modulo: string | null;
+  voce_pediu: boolean;
+}
 
-const releaseSchema = z.object({
-  id: z.string(),
-  sha: z.string().nullable(),
-  titulo: z.string(),
-  versao: z.string().nullable(),
-  publicada_em: z.string(),
-  nova: z.boolean(),
-  itens: z.array(itemSchema),
-});
+export interface NovidadeRelease {
+  id: string;
+  sha: string | null;
+  titulo: string;
+  versao: string | null;
+  publicada_em: string;
+  nova: boolean;
+  itens: NovidadeItem[];
+}
 
-const respostaSchema = z.object({
-  visto_ate: z.string().nullable(),
-  releases: z.array(releaseSchema),
-});
-
-export type NovidadeItem = z.infer<typeof itemSchema>;
-export type NovidadeRelease = z.infer<typeof releaseSchema>;
-export type Novidades = z.infer<typeof respostaSchema>;
+export interface Novidades {
+  visto_ate: string | null;
+  releases: NovidadeRelease[];
+}
 
 const VAZIO: Novidades = { visto_ate: null, releases: [] };
 
+// Validação à mão, sem zod: este módulo vai no carregamento inicial (sidebar e aviso de versão) e
+// o zod pesaria ~30 kB gzip no boot só para conferir este formato.
+const ehTexto = (v: unknown): v is string => typeof v === "string";
+const ehTextoOuNulo = (v: unknown): v is string | null => v === null || typeof v === "string";
+
+function lerItem(v: unknown): NovidadeItem | null {
+  if (typeof v !== "object" || v === null) return null;
+  const i = v as Record<string, unknown>;
+  if (!ehTexto(i.id) || !ehTexto(i.texto) || !ehTextoOuNulo(i.modulo) || typeof i.voce_pediu !== "boolean") return null;
+  if (!IMPACTOS.includes(i.impacto as Impacto)) return null;
+  return { id: i.id, texto: i.texto, impacto: i.impacto as Impacto, modulo: i.modulo, voce_pediu: i.voce_pediu };
+}
+
+function lerRelease(v: unknown): NovidadeRelease | null {
+  if (typeof v !== "object" || v === null) return null;
+  const r = v as Record<string, unknown>;
+  if (!ehTexto(r.id) || !ehTextoOuNulo(r.sha) || !ehTexto(r.titulo) || !ehTextoOuNulo(r.versao)) return null;
+  if (!ehTexto(r.publicada_em) || typeof r.nova !== "boolean" || !Array.isArray(r.itens)) return null;
+  const itens = r.itens.map(lerItem);
+  if (itens.some((x) => x === null)) return null;
+  return {
+    id: r.id,
+    sha: r.sha,
+    titulo: r.titulo,
+    versao: r.versao,
+    publicada_em: r.publicada_em,
+    nova: r.nova,
+    itens: itens as NovidadeItem[],
+  };
+}
+
 /** Lê a resposta da RPC. Formato inesperado vira lista vazia: novidade nunca derruba a tela. */
 export function lerNovidades(json: unknown): Novidades {
-  const lido = respostaSchema.safeParse(json);
-  return lido.success ? lido.data : VAZIO;
+  if (typeof json !== "object" || json === null) return VAZIO;
+  const d = json as Record<string, unknown>;
+  if (!ehTextoOuNulo(d.visto_ate) || !Array.isArray(d.releases)) return VAZIO;
+  const releases = d.releases.map(lerRelease);
+  if (releases.some((x) => x === null)) return VAZIO;
+  return { visto_ate: d.visto_ate, releases: releases as NovidadeRelease[] };
 }
 
 /** Item vale para quem chama: sem módulo, ou com módulo que a pessoa acessa. */
