@@ -101,6 +101,21 @@ no corpo, para o Matheus acompanhar a evolução. Sem exceção para mudança vi
 - Dado seed apenas (repo público): nada de dado real de cliente nos prints.
 - Fase sem mudança visual (só código/teste) diz isso em uma linha em vez de tabela.
 
+## O dono trabalha pelo celular (REGRA DO DONO)
+
+O Matheus acompanha as sessões pelo app do Claude no celular. Nunca dar como próximo
+passo algo que exige computador: baixar artifact do GitHub, copiar arquivo, rodar
+comando local, abrir DevTools. Resolver daqui (sessão, workflow, ferramenta do
+GitHub) ou, se não houver jeito, oferecer uma ação que caiba no celular (pôr uma
+label, aprovar, clicar num link).
+
+- Regressão visual reprovou por mudança de propósito: pôr a label `atualizar-visual`
+  no PR (a sessão consegue pela ferramenta do GitHub). O workflow
+  `atualizar-referencias-visuais.yml` regrava as referências no runner Linux,
+  commita na branch e dispara o CI de novo. Ver `e2e/visual/README.md`.
+- Imagem para ele ver vai inline (arquivo enviado na conversa ou artifact), não como
+  caminho local.
+
 ## Documentação
 
 Toda a documentação vive em `docs/`, organizada por tema com índices navegáveis.
