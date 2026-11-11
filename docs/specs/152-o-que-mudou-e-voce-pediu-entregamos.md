@@ -110,7 +110,7 @@ Requisitos não-funcionais:
 
 ## Dados e contratos
 
-Migration `20261211000000_novidades_do_produto.sql`, teste `supabase/tests/novidades_do_produto.sql`.
+Migration `20261214000000_novidades_do_produto.sql`, teste `supabase/tests/novidades_do_produto.sql`.
 
 - `product_releases`: `id`, `sha` (commit de main, único; nulo se criada à mão), `titulo`,
   `versao` (amigável, ex. `2.4`), `criada_em`, `publicada_em`, `publicada_por`.

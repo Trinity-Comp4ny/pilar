@@ -1,4 +1,4 @@
--- pgTAP: novidades do produto (SPEC 152, migration 20261211000000).
+-- pgTAP: novidades do produto (SPEC 152, migration 20261214000000).
 -- Cobre: rascunho invisível para o usuário, publicação só pelo ultra admin e só pela RPC,
 -- aviso de "você pediu" uma vez por feedback, selo e marca de visto por usuário, conta nova
 -- sem histórico como novidade, e as tabelas fechadas para acesso direto.

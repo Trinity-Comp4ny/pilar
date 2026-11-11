@@ -1,4 +1,4 @@
--- pgTAP: manutenção programada (SPEC 153, migration 20261212000000).
+-- pgTAP: manutenção programada (SPEC 153, migration 20261215000000).
 -- Leitura pública como a status page; só ultra admin cria e cancela; fim depois do início.
 
 BEGIN;
