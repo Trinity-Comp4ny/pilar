@@ -95,9 +95,12 @@ no corpo, para o Matheus acompanhar a evolução. Sem exceção para mudança vi
 - **Depois** = a branch do PR, mesma rota, mesmo viewport (1440px; mobile 390px quando o
   layout mobile muda), mesmo dado seed (`dev@local.test`).
 - Guarde as imagens em `docs/design/antes-depois/<spec-ou-pr>/` (`antes-<tela>.jpg`,
-  `depois-<tela>.jpg`) e embuta no corpo do PR por link permanente com o SHA do commit
-  (`https://raw.githubusercontent.com/Trinity-Comp4ny/pilar/<sha>/docs/design/antes-depois/...`),
-  em tabela `Antes | Depois` por tela. Cada nova fase do mesmo PR acrescenta as suas telas.
+  `depois-<tela>.jpg`) com um `README.md` na mesma pasta: tabela `Antes | Depois` por
+  tela, imagens por caminho relativo (`![antes](antes-tela.jpg)`). No corpo do PR vai um
+  link comum para esse README na branch (`https://github.com/Trinity-Comp4ny/pilar/blob/<branch>/docs/design/antes-depois/<pasta>/README.md`).
+  Não embutir imagem no corpo do PR pela ferramenta do GitHub da sessão: ela troca
+  `![](url)` e `<img>` por texto em crases e a imagem aparece quebrada (11/11, PR #812).
+  Cada nova fase do mesmo PR acrescenta as suas telas ao README.
 - Dado seed apenas (repo público): nada de dado real de cliente nos prints.
 - Fase sem mudança visual (só código/teste) diz isso em uma linha em vez de tabela.
 
