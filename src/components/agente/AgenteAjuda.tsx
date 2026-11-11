@@ -101,11 +101,16 @@ export function AgenteAjuda() {
   const proximoId = useRef(0);
   const campo = useRef<HTMLTextAreaElement>(null);
   const perguntaAtual = useRef<HTMLDivElement>(null);
-  const botao = useRef<HTMLButtonElement>(null);
+  // Quem abriu o painel (o "?" do cabeçalho, o "Dúvidas" do menu mobile): o foco volta pra ele.
+  const quemAbriu = useRef<HTMLElement | null>(null);
   const devolverFoco = useRef(false);
 
   useEffect(() => {
-    const abrir = () => setAberto(true);
+    const abrir = () => {
+      const ativo = document.activeElement;
+      quemAbriu.current = ativo instanceof HTMLElement && ativo !== document.body ? ativo : null;
+      setAberto(true);
+    };
     window.addEventListener(EVENTO_ABRIR_AGENTE, abrir);
     return () => window.removeEventListener(EVENTO_ABRIR_AGENTE, abrir);
   }, []);
@@ -113,9 +118,9 @@ export function AgenteAjuda() {
   useEffect(() => {
     if (aberto) campo.current?.focus();
     else if (devolverFoco.current) {
-      // O botão volta a existir depois de fechar: devolve o foco a ele (teclado não se perde).
+      // Devolve o foco a quem abriu (teclado não se perde).
       devolverFoco.current = false;
-      botao.current?.focus();
+      quemAbriu.current?.focus();
     }
   }, [aberto]);
 
@@ -170,31 +175,19 @@ export function AgenteAjuda() {
     setSuporteAberto(true);
   };
 
-  // A própria tela dos agentes já é a conversa: o balão some lá.
-  const naTelaDosAgentes = pathname.startsWith("/agentes");
   const ultimaResposta = mensagens.at(-1);
 
+  // Sem botão flutuante (auditoria de espaço, 2026-11): a pílula "Dúvidas" ficava fixa por cima
+  // do conteúdo em toda tela. Agora abre pelo "?" do cabeçalho (AjudaDaTela) e pelo menu mobile,
+  // ambos via abrirAgenteAjuda(). O painel abre no alto, perto do "?" que o chamou.
   return (
     <>
-      {!naTelaDosAgentes && !aberto && (
-        <button
-          ref={botao}
-          type="button"
-          onClick={() => setAberto(true)}
-          aria-label="Dúvidas: pergunte como fazer algo no Pilar"
-          className="fixed bottom-16 right-4 z-40 hidden h-11 items-center gap-2 rounded-full bg-brand px-4 text-sm font-semibold text-ink shadow-elegant transition-transform hover:scale-[1.02] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:flex"
-        >
-          <Sparkles size={18} aria-hidden />
-          Dúvidas
-        </button>
-      )}
-
       {aberto && (
         <section
           role="dialog"
           aria-label="Dúvidas sobre o Pilar"
           onKeyDown={(e) => e.key === "Escape" && fechar()}
-          className="fixed inset-x-2 bottom-[calc(0.5rem+env(safe-area-inset-bottom))] z-50 flex h-[min(560px,calc(100dvh-5rem))] flex-col overflow-hidden rounded-2xl border border-border bg-surface-card shadow-elegant md:inset-x-auto md:bottom-16 md:right-4 md:w-[380px]"
+          className="fixed inset-x-2 bottom-[calc(0.5rem+env(safe-area-inset-bottom))] z-50 flex h-[min(560px,calc(100dvh-5rem))] flex-col overflow-hidden rounded-2xl border border-border bg-surface-card shadow-elegant md:inset-x-auto md:bottom-auto md:right-4 md:top-16 md:w-[380px]"
         >
           <div className="flex shrink-0 justify-end px-2 pt-2">
             <button

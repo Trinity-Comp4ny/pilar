@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import Layout from "./Layout";
+import { abrirPaletaComandos } from "@/lib/paletaComandosEvento";
 
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => false }));
 vi.mock("@/components/AppSidebar", () => ({ AppSidebar: () => <nav data-testid="sidebar" /> }));
@@ -63,7 +64,8 @@ describe("Layout", () => {
     expect(screen.getByTestId("bottom-nav")).toBeInTheDocument();
     expect(screen.getByText("Página início")).toBeInTheDocument();
     expect(await screen.findByTestId("checklist")).toBeInTheDocument();
-    expect(screen.getByText(/para comandos/)).toBeInTheDocument();
+    // A dica do ⌘K mora no trilho da sidebar, não flutuando por cima do conteúdo.
+    expect(screen.queryByText(/para comandos/)).not.toBeInTheDocument();
   });
 
   it("a faixa de reaceite dos Termos vem depois do skip link: o 1º Tab é o skip link", async () => {
@@ -79,6 +81,14 @@ describe("Layout", () => {
     expect(screen.queryByTestId("paleta")).not.toBeInTheDocument();
     await act(async () => {
       fireEvent.keyDown(window, { key: "k", metaKey: true });
+    });
+    expect(await screen.findByTestId("paleta")).toBeInTheDocument();
+  });
+
+  it("o botão do trilho abre a paleta pelo evento, sem atalho de teclado", async () => {
+    renderLayout();
+    await act(async () => {
+      abrirPaletaComandos();
     });
     expect(await screen.findByTestId("paleta")).toBeInTheDocument();
   });
