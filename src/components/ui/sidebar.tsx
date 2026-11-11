@@ -13,7 +13,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state";
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+/**
+ * Lê a escolha gravada no cookie (painel aberto ou recolhido). Antes o cookie era só escrito,
+ * nunca lido: quem recolhia o painel para ganhar 208 px de largura perdia a escolha a cada
+ * recarga (auditoria de espaço, 2026-11).
+ */
+function lerEstadoSalvo(): boolean | undefined {
+  if (typeof document === "undefined") return undefined;
+  const par = document.cookie.split("; ").find((c) => c.startsWith(`${SIDEBAR_COOKIE_NAME}=`));
+  const valor = par?.slice(SIDEBAR_COOKIE_NAME.length + 1);
+  if (valor === "true") return true;
+  if (valor === "false") return false;
+  return undefined;
+}
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
@@ -53,7 +67,7 @@ const SidebarProvider = React.forwardRef<
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
-  const [_open, _setOpen] = React.useState(defaultOpen);
+  const [_open, _setOpen] = React.useState(() => lerEstadoSalvo() ?? defaultOpen);
   const open = openProp ?? _open;
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {

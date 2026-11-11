@@ -114,6 +114,16 @@ describe("ui/sidebar", () => {
     vi.restoreAllMocks();
   });
 
+  it("começa recolhida quando o cookie diz que a pessoa recolheu", () => {
+    document.cookie = "sidebar:state=false; path=/";
+    render(
+      <SidebarProvider>
+        <Arvore />
+      </SidebarProvider>
+    );
+    expect(screen.getByTestId("estado")).toHaveTextContent("collapsed");
+  });
+
   it("desktop: trigger, rail e atalho ⌘B alternam e gravam o cookie", async () => {
     const user = userEvent.setup();
     render(
