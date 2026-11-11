@@ -130,6 +130,16 @@ describe("rotas da landing", () => {
     for (const s of SLUGS_BLOG) expect(app).toContain(`/blog/${s}`);
   });
 
+  it("o build da Vercel gera o spa.html que o rewrite do vercel.json usa", () => {
+    // Em 11/11/2026 o build da Vercel era só `vite build`: sem o prerender não havia
+    // spa.html, e toda rota abaixo da home caía em 404 em produção.
+    const vercel = JSON.parse(ler("../../vercel.json")) as { rewrites: { source: string; destination: string }[] };
+    expect(vercel.rewrites.map((r) => r.destination)).toContain("/spa.html");
+    const pacote = JSON.parse(ler("../../package.json")) as { scripts: Record<string, string> };
+    expect(pacote.scripts.build).toMatch(/node scripts\/prerender\.mjs/);
+    expect(ler("../../scripts/prerender.mjs")).toMatch(/writeFileSync\(join\(DIST, "spa\.html"\)/);
+  });
+
   it("o robots.txt aponta para o sitemap", () => {
     expect(ler("../../public/robots.txt")).toContain(`Sitemap: ${BASE}/sitemap.xml`);
   });

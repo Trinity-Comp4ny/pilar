@@ -8,6 +8,12 @@ rode `npm run seo:nota` para ver a nota nova.
 > Pré-requisito de tudo: o PR desta branch mergeado em `staging` e promovido para `main` (release), para o
 > blog, as ferramentas e o sitemap novo estarem no ar em www.pilarsoft.com.br.
 
+## Depois de cada release
+
+Abra `https://www.pilarsoft.com.br/engenharia` e um artigo do blog no navegador. Se der 404, o prerender não
+rodou no build da Vercel (ver o histórico de 11/11 em [NOTA_SEO.md](./NOTA_SEO.md)). Depois rode
+`npm run seo:indexnow --workspace=apps/marketing`.
+
 ## Semana 1: medição (leva a nota de 85 para 93)
 
 ### 1. Google Search Console: +3 pontos, 15 minutos
