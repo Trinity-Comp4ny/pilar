@@ -40,6 +40,11 @@ import { FilterBar } from "@/components/filters/FilterBar";
 import { ordenarKanban, type KanbanSortAccessors, type KanbanSortKey } from "@/lib/kanbanSort";
 import { ReopenProjetoDialog } from "@/pages/projetos/components/ProjetoStatusDialogs";
 import { useProjetosData } from "@/pages/projetos/hooks/useProjetosData";
+import {
+  projetoAtendeDisciplinas,
+  recortarDisciplinas,
+  type CriteriosDisciplina,
+} from "@/pages/projetos/lib/filtroDisciplina";
 import { useProjetosUrlState } from "@/pages/projetos/hooks/useProjetosUrlState";
 import { useProjetoStatusMove } from "@/pages/projetos/hooks/useProjetoStatusMove";
 import { PausarProjetoDialog } from "@/pages/projetos/components/PausarProjetoDialog";
@@ -210,30 +215,27 @@ export default function ProjetosKanban() {
     return new Set(filters.disciplinaIds.map((id) => map.get(id)).filter(Boolean) as string[]);
   }, [disciplinas, filters.disciplinaIds]);
 
+  const criteriosDisciplina = useMemo<CriteriosDisciplina>(
+    () => ({
+      prioridades: filters.prioridades,
+      pessoaIds: filters.pessoaIds,
+      disciplinaNomes: disciplinaNomesSelected,
+    }),
+    [filters.prioridades, filters.pessoaIds, disciplinaNomesSelected]
+  );
+
   const matchesFilters = (projeto: Projeto): boolean => {
     if (filters.search) {
       const q = filters.search.trim().toLowerCase();
       const haystack = `${projeto.nome} ${projeto.cliente_nome || ""}`.toLowerCase();
       if (!haystack.includes(q)) return false;
     }
-    if (filters.prioridades.length > 0 && !filters.prioridades.includes(projeto.prioridade as ProjectPriority)) {
-      return false;
-    }
     if (filters.clienteIds.length > 0 && !filters.clienteIds.includes(projeto.cliente_id)) {
       return false;
     }
-    if (filters.pessoaIds.length > 0) {
-      const matched = projeto.disciplinas?.some((d) => {
-        if (filters.pessoaIds.includes(d.responsavel_id || "")) return true;
-        if (d.responsaveis?.some((r) => filters.pessoaIds.includes(r.responsavel_id))) return true;
-        return false;
-      });
-      if (!matched) return false;
-    }
-    if (disciplinaNomesSelected.size > 0) {
-      const matched = projeto.disciplinas?.some((d) => disciplinaNomesSelected.has((d.disciplina || "").toLowerCase()));
-      if (!matched) return false;
-    }
+    // Prioridade, pessoa e disciplina valem por disciplina, juntos (a prioridade
+    // da disciplina manda; sem ela, vale a do projeto).
+    if (!projetoAtendeDisciplinas(projeto, criteriosDisciplina)) return false;
     if (filters.deadlineStatus.length > 0) {
       const ds = getDeadlineStatus(projeto);
       const key = ds?.status_data;
@@ -262,6 +264,12 @@ export default function ProjetosKanban() {
     () => projetos.filter(matchesFilters),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [projetos, filters, disciplinaNomesSelected]
+  );
+
+  // Na aba Disciplinas o filtro desce até a linha: só as disciplinas que atendem.
+  const disciplinasFiltradas = useMemo(
+    () => recortarDisciplinas(filteredProjetos, criteriosDisciplina),
+    [filteredProjetos, criteriosDisciplina]
   );
 
   // Agrupa e ordena por etapa (coluna) uma única vez por render, em vez de rodar
@@ -529,7 +537,7 @@ export default function ProjetosKanban() {
       ) : activeTab === "disciplinas" ? (
         <div>
           <DisciplinasTab
-            projetos={filteredProjetos}
+            projetos={disciplinasFiltradas}
             projetosTodos={projetos}
             catalogo={disciplinas}
             canEdit={canEdit}
