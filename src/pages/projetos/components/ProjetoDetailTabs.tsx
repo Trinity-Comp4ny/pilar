@@ -323,6 +323,7 @@ export function ProjetoDetailTabs({
                   disciplinas={disciplinasLegacy}
                   onOpenDisciplina={handleDiscClick}
                   checklistCounts={checklistCounts}
+                  projetoDataPrevisao={projeto.data_previsao}
                 />
               ) : (
                 <Card>

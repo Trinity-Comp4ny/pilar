@@ -73,7 +73,8 @@ export type StatusDomain =
   | "release"
   | "novidade"
   | "ops_agente"
-  | "saude_cliente";
+  | "saude_cliente"
+  | "disciplina_fluxo";
 
 type StatusDef = { label: string; tone: StatusTone };
 
@@ -184,6 +185,14 @@ export const STATUS_REGISTRY: Record<StatusDomain, Record<string, StatusDef>> = 
     saudavel: { label: "Saudável", tone: "positive" },
     atencao: { label: "Atenção", tone: "warning" },
     risco: { label: "Em risco", tone: "danger" },
+  },
+  // Status visual de uma disciplina no grafo do fluxo (SPEC 162).
+  disciplina_fluxo: {
+    concluido: { label: "Concluída", tone: "done" },
+    em_andamento: { label: "Em andamento", tone: "info" },
+    atrasado: { label: "Atrasada", tone: "danger" },
+    nao_iniciado: { label: "Aguardando", tone: "neutral" },
+    pausado: { label: "Pausada", tone: "warning" },
   },
   // Triagem de feedback do app (SPEC 112/116).
   feedback: {
