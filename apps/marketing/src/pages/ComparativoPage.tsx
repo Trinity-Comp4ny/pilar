@@ -40,13 +40,14 @@ export function ComparativoPage({ slug }: { slug: ComparativoSlug }) {
         <HeroBackdrop />
         <div className="relative z-10 mx-auto max-w-6xl">
           <Reveal variant="up" className="max-w-3xl">
-            <h1 className="mb-4 text-[11px] font-medium uppercase leading-snug tracking-[0.16em] text-ink/50">
-              {c.seo.h1}
-            </h1>
             <p className="mb-5 text-[52px] font-medium leading-[1.08] tracking-[-0.035em] text-ink max-[1100px]:text-[40px] max-[850px]:text-[30px] max-[420px]:text-[25px]">
               {c.headline} <span className="italic text-ink/45">{c.headlineFim}</span>
             </p>
-            <p className="mb-8 max-w-xl text-[15px] leading-relaxed text-ink-soft md:text-[16px]">{c.lede}</p>
+            {/* O H1 (frase da busca) abre o parágrafo de apoio, como na home e nos
+                módulos, em vez de uma etiqueta em caixa-alta acima da headline. */}
+            <div className="mb-8 max-w-xl text-[15px] leading-relaxed text-ink-soft md:text-[16px]">
+              <h1 className="inline font-normal">{c.seo.h1}.</h1> {c.lede}
+            </div>
 
             <div className="flex flex-wrap gap-3">
               <SplitButton to="/planos" onClick={() => trackCta("ver_planos", `vs_${slug}`)}>
