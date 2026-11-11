@@ -62,7 +62,10 @@ const BUDGETS = {
   // tabela de preload somam ~0,2 kB (330,2 kB).
   // 2026-11-11: 334 kB (era 331). O PR #794 soma ~2,8 kB gzip ao boot (ver o comentário da
   // entrada acima). Reavaliar se voltar a encostar.
-  initialLoad: 334 * 1024,
+  // 2026-11-11: 335 kB (era 334). O vidro líquido da barra mobile (PR #812: src/styles/vidro.css e
+  // a lente da aba ativa no BottomNav) soma ~0,9 kB gzip ao boot e estourou por 0,1 kB (334,1).
+  // A barra está em toda tela mobile, então não tem como ser lazy.
+  initialLoad: 335 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app
