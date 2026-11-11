@@ -25,6 +25,9 @@ vi.mock("@/components/agente/AgenteAjuda", () => ({ AgenteAjuda: () => null }));
 vi.mock("@/components/pesquisas/NpsCard", () => ({ NpsCard: () => null }));
 vi.mock("@/components/ComunicadoModal", () => ({ ComunicadoModal: () => null }));
 vi.mock("@/components/RegistroDispositivo", () => ({ RegistroDispositivo: () => null }));
+vi.mock("@/components/AceiteTermosBanner", () => ({
+  AceiteTermosBanner: ({ modo }: { modo?: string }) => <div data-testid="aceite-termos" data-modo={modo} />,
+}));
 vi.mock("@/lib/monitoring", () => ({ monitoring: { captureException: vi.fn(), addBreadcrumb: vi.fn() } }));
 
 function renderLayout(rota = "/inicio") {
@@ -61,6 +64,14 @@ describe("Layout", () => {
     expect(screen.getByText("Página início")).toBeInTheDocument();
     expect(await screen.findByTestId("checklist")).toBeInTheDocument();
     expect(screen.getByText(/para comandos/)).toBeInTheDocument();
+  });
+
+  it("a faixa de reaceite dos Termos vem depois do skip link: o 1º Tab é o skip link", async () => {
+    renderLayout();
+    const skip = screen.getByRole("link", { name: "Pular para conteúdo principal" });
+    const faixa = await screen.findByTestId("aceite-termos");
+    expect(faixa).toHaveAttribute("data-modo", "faixa");
+    expect(skip.compareDocumentPosition(faixa) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("⌘K abre a paleta sob demanda", async () => {
