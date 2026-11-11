@@ -24,6 +24,11 @@
     "descricao": "Hook de e-mail do Supabase Auth: monta convite e recuperação de senha e envia pelo Resend.",
     "chamada_externa": "Supabase Auth (hook de e-mail)"
   },
+  "aviso-legal-admins": {
+    "dominio": "comunicacao",
+    "descricao": "Ultra admin manda por e-mail um aviso legal do catálogo (ex.: Termos de Uso 2.0) a todos os administradores ativos, sem duplicar quem já recebeu. Cumpre o aviso de 30 dias da cláusula 15 e do Anexo A5 dos Termos.",
+    "chamada_externa": "aba Pedidos LGPD do ultra admin"
+  },
   "aviso-ultra-admin-email": {
     "dominio": "jobs",
     "descricao": "Disparada pelo trigger de notificacoes (pg_net): manda por e-mail, na hora, cada aviso de plataforma do ultra admin (feedback, novo cadastro, ativar plano bloqueado). SPEC 113."
@@ -99,6 +104,11 @@
   "lookup-cep": {
     "dominio": "utilitario",
     "descricao": "Busca CEP sem login (checkout), BrasilAPI com fallback de provedor."
+  },
+  "mcp": {
+    "dominio": "ia",
+    "descricao": "Conector MCP da Pilar para ChatGPT, Claude e outros clientes: OAuth 2.1 pelo Supabase Auth e seis ferramentas só de leitura (projetos, propostas, leads, clientes, resumo financeiro) com o token e a RLS do usuário (SPEC 151).",
+    "chamada_externa": "clientes MCP (ChatGPT, Claude) com token OAuth do usuário"
   },
   "notificacoes-email-cron": {
     "dominio": "jobs",

@@ -108,7 +108,9 @@ describe("página /planos", () => {
   it("mostra os três planos, o incluso e as perguntas antes de assinar", () => {
     renderNaRota(<Planos />, "/planos");
     confereCartoes();
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Um preço por escritório.");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Preço do software de gestão para engenharia e arquitetura"
+    );
     expect(screen.getByText("O que conta como ativo?")).toBeInTheDocument();
     expect(screen.getByText("O que é um crédito de IA?")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Voltar para a home/ })).toHaveAttribute("href", "/");
@@ -124,6 +126,6 @@ describe("página /planos", () => {
 
   it("grava title, description e canonical de /planos", () => {
     renderNaRota(<Planos />, "/planos");
-    expect(document.title).toBe("Planos e preços | Pilar");
+    expect(document.title).toBe("Preço do software de gestão para engenharia | Pilar");
   });
 });

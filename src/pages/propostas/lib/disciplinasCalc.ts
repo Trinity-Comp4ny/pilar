@@ -38,8 +38,7 @@ export const calcDisciplinasTotais = (linhas: DisciplinaLinha[]): DisciplinasTot
     { totalHoras: 0, totalCusto: 0, totalValor: 0 }
   );
 
-  const margemPct =
-    totais.totalValor > 0 ? ((totais.totalValor - totais.totalCusto) / totais.totalValor) * 100 : null;
+  const margemPct = totais.totalValor > 0 ? ((totais.totalValor - totais.totalCusto) / totais.totalValor) * 100 : null;
 
   return { ...totais, margemPct };
 };

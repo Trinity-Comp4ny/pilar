@@ -163,11 +163,11 @@ describe("ObraCronogramaTab · lista", () => {
   it("data salva aparece no campo depois do refetch", () => {
     nos = [no("Estrutura", "fase", null), no("Fundação", "etapa", "Estrutura")];
     const { rerender } = renderTab();
-    expect(within(screen.getByTestId("no-Fundação")).queryByText("20/10/2026")).toBeNull();
+    expect(within(screen.getByTestId("no-Fundação")).queryByDisplayValue("20/10/2026")).toBeNull();
 
     nos = [no("Estrutura", "fase", null), no("Fundação", "etapa", "Estrutura", { data_inicio: "2026-10-20" })];
     rerender(tela());
-    expect(within(screen.getByTestId("no-Fundação")).getByText("20/10/2026")).toBeInTheDocument();
+    expect(within(screen.getByTestId("no-Fundação")).getByDisplayValue("20/10/2026")).toBeInTheDocument();
   });
 
   it("recolher a etapa esconde serviços e tarefas", async () => {

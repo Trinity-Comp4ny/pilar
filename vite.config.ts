@@ -219,25 +219,31 @@ export default defineConfig(({ mode }) => ({
       // financeiro, autenticação/portal/admin e landing): medido lib 82/80/82/84, hooks
       // 51/42/49/54, hooks de módulo 35/28/32/40, components 51/48/43/53, financeiro
       // 58/52/48/60, obras 49/46/43/51, projetos 33/28/29/36. Pisos ~2 pontos abaixo.
-      thresholds: {
-        // Piso global (todo o código coberto pelo include), medido em 07/11/2026.
-        statements: 93,
-        branches: 86,
-        functions: 92,
-        lines: 95,
-        "src/lib/**": { statements: 94, branches: 89, functions: 94, lines: 96 },
-        "src/hooks/**": { statements: 94, branches: 88, functions: 94, lines: 96 },
-        "src/pages/*/hooks/**": { statements: 93, branches: 82, functions: 95, lines: 96 },
-        "src/components/**": { statements: 93, branches: 87, functions: 91, lines: 95 },
-        "src/pages/financeiro/**": { statements: 91, branches: 83, functions: 87, lines: 93 },
-        "src/pages/obras/**": { statements: 92, branches: 85, functions: 89, lines: 93 },
-        "src/pages/projetos/**": { statements: 93, branches: 86, functions: 94, lines: 96 },
-        // Por criticidade, não por pasta: arquivo que decide acesso, autentica ou mexe
-        // com dinheiro tem piso próprio, alto, para não se esconder na média da pasta.
-        // Uma entrada por arquivo de propósito: `perFile` dentro de glob agrega (medido
-        // em 13/10). Medido em 13/10 e piso logo abaixo; arquivo crítico novo entra aqui.
-        ...CRITICOS,
-      },
+      // Shard do CI (`vitest --shard`): cada máquina vê só uma fração dos testes, então o piso
+      // aplicado ali reprovaria sempre. O shard só coleta; o job `coverage` junta os
+      // relatórios (`--merge-reports`) e é ele que aplica o piso, sobre o total.
+      thresholds:
+        process.env.VITEST_SHARD_SEM_PISO === "1"
+          ? undefined
+          : {
+              // Piso global (todo o código coberto pelo include), medido em 07/11/2026.
+              statements: 93,
+              branches: 86,
+              functions: 92,
+              lines: 95,
+              "src/lib/**": { statements: 94, branches: 89, functions: 94, lines: 96 },
+              "src/hooks/**": { statements: 94, branches: 88, functions: 94, lines: 96 },
+              "src/pages/*/hooks/**": { statements: 93, branches: 82, functions: 95, lines: 96 },
+              "src/components/**": { statements: 93, branches: 87, functions: 91, lines: 95 },
+              "src/pages/financeiro/**": { statements: 91, branches: 83, functions: 87, lines: 93 },
+              "src/pages/obras/**": { statements: 92, branches: 85, functions: 89, lines: 93 },
+              "src/pages/projetos/**": { statements: 93, branches: 86, functions: 94, lines: 96 },
+              // Por criticidade, não por pasta: arquivo que decide acesso, autentica ou mexe
+              // com dinheiro tem piso próprio, alto, para não se esconder na média da pasta.
+              // Uma entrada por arquivo de propósito: `perFile` dentro de glob agrega (medido
+              // em 13/10). Medido em 13/10 e piso logo abaixo; arquivo crítico novo entra aqui.
+              ...CRITICOS,
+            },
     },
   },
 }));

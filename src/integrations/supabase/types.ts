@@ -2885,11 +2885,13 @@ export type Database = {
           empresa_id: string
           id: string
           mes: number
+          percentual_producao: number | null
           pessoa_id: string | null
           salario_fixo: number | null
           status: string | null
           total_area_projetada: number | null
           total_receber: number | null
+          total_valor_base: number | null
           updated_at: string
           valor_m2: number | null
         }
@@ -2902,11 +2904,13 @@ export type Database = {
           empresa_id: string
           id?: string
           mes: number
+          percentual_producao?: number | null
           pessoa_id?: string | null
           salario_fixo?: number | null
           status?: string | null
           total_area_projetada?: number | null
           total_receber?: number | null
+          total_valor_base?: number | null
           updated_at?: string
           valor_m2?: number | null
         }
@@ -2919,11 +2923,13 @@ export type Database = {
           empresa_id?: string
           id?: string
           mes?: number
+          percentual_producao?: number | null
           pessoa_id?: string | null
           salario_fixo?: number | null
           status?: string | null
           total_area_projetada?: number | null
           total_receber?: number | null
+          total_valor_base?: number | null
           updated_at?: string
           valor_m2?: number | null
         }
@@ -5568,6 +5574,7 @@ export type Database = {
           horas_semanais: number | null
           id: string
           nome: string
+          percentual_producao: number | null
           pis_nit: string | null
           primeiro_nome: string
           profile_id: string | null
@@ -5600,6 +5607,7 @@ export type Database = {
           horas_semanais?: number | null
           id?: string
           nome: string
+          percentual_producao?: number | null
           pis_nit?: string | null
           primeiro_nome: string
           profile_id?: string | null
@@ -5632,6 +5640,7 @@ export type Database = {
           horas_semanais?: number | null
           id?: string
           nome?: string
+          percentual_producao?: number | null
           pis_nit?: string | null
           primeiro_nome?: string
           profile_id?: string | null
@@ -7528,6 +7537,50 @@ export type Database = {
           },
         ]
       }
+      registros_acesso: {
+        Row: {
+          conta_id: string | null
+          created_at: string
+          empresa_id: string | null
+          id: string
+          ip: string | null
+          origem: string
+          sessao_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          conta_id?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          ip?: string | null
+          origem: string
+          sessao_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          conta_id?: string | null
+          created_at?: string
+          empresa_id?: string | null
+          id?: string
+          ip?: string | null
+          origem?: string
+          sessao_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registros_acesso_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resumos_semanais: {
         Row: {
           conteudo: Json
@@ -8576,6 +8629,7 @@ export type Database = {
           horas_semanais: number | null
           id: string | null
           nome: string | null
+          percentual_producao: number | null
           pis_nit: string | null
           pode_ver_sensivel: boolean | null
           primeiro_nome: string | null
@@ -8607,6 +8661,7 @@ export type Database = {
           horas_semanais?: number | null
           id?: string | null
           nome?: string | null
+          percentual_producao?: never
           pis_nit?: string | null
           pode_ver_sensivel?: never
           primeiro_nome?: string | null
@@ -8638,6 +8693,7 @@ export type Database = {
           horas_semanais?: number | null
           id?: string | null
           nome?: string | null
+          percentual_producao?: never
           pis_nit?: string | null
           pode_ver_sensivel?: never
           primeiro_nome?: string | null
@@ -9891,11 +9947,13 @@ export type Database = {
           cargo: string
           detalhe_projetos: Json
           nome: string
+          percentual_producao: number
           pessoa_id: string
           projetos_nomes: string[]
           salario_fixo: number
           total_area: number
           total_receber: number
+          total_valor_base: number
           total_variavel: number
           valor_m2: number
         }[]
@@ -10062,6 +10120,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      ip_da_requisicao: { Args: never; Returns: string }
       is_company_admin: { Args: never; Returns: boolean }
       is_feature_flag_enabled: { Args: { p_key: string }; Returns: boolean }
       is_impersonating: { Args: never; Returns: boolean }
@@ -10079,6 +10138,7 @@ export type Database = {
           tokens_total: number
         }[]
       }
+      limpar_registros_acesso: { Args: never; Returns: number }
       listar_clientes_paginado: {
         Args: {
           p_com_projeto?: boolean
@@ -10396,6 +10456,14 @@ export type Database = {
       }
       retencao_pos_trial_disparar: { Args: never; Returns: undefined }
       reverificar_documentos_disparar: { Args: never; Returns: undefined }
+      rpc_apagar_notificacoes_comentario: {
+        Args: {
+          p_comentario_id: string
+          p_entidade_id: string
+          p_entidade_tipo: string
+        }
+        Returns: number
+      }
       rpc_atualizar_status_atrasados: { Args: never; Returns: Json }
       rpc_avaliar_fornecedor: {
         Args: {
@@ -10852,6 +10920,7 @@ export type Database = {
         Args: { p_role: string; p_user_id: string }
         Returns: undefined
       }
+      user_agent_da_requisicao: { Args: never; Returns: string }
       user_has_feature: {
         Args: { p_feature: string; p_min_level?: string }
         Returns: boolean

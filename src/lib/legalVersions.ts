@@ -4,5 +4,5 @@
  * que já aceitaram uma versão anterior não são forçados a re-aceitar
  * automaticamente (fora de escopo da v1, ver spec).
  */
-export const TERMS_VERSION = "1.1";
-export const PRIVACY_VERSION = "1.1";
+export const TERMS_VERSION = "2.0";
+export const PRIVACY_VERSION = "2.1";

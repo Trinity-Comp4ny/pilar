@@ -13,6 +13,7 @@ const vazio: Fontes = {
   horasLancadas: [],
   usoIa: [],
   acoes: [],
+  acessos: [],
   pedidosExportacao: [],
   pedidosExclusao: [],
 };
@@ -30,6 +31,7 @@ Deno.test("todas as seções aparecem, mesmo vazias", () => {
     "horas_lancadas",
     "uso_de_ia",
     "historico_de_acoes",
+    "registros_de_acesso",
     "pedidos_lgpd",
   ]);
   assertEquals(e.notificacoes_recebidas, []);

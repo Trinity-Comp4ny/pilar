@@ -8,7 +8,15 @@ import type { Json, TablesUpdate } from "@/integrations/supabase/types";
 export type PessoaOpcao = { id: string; nome: string; avatarUrl?: string | null; profileId?: string | null };
 
 /** Comentário estruturado da tarefa (spec 013). */
-export type Comentario = { id: string; texto: string; autor: string; data: string; mencionados?: string[] };
+export type Comentario = {
+  id: string;
+  texto: string;
+  autor: string;
+  /** Id do usuário (auth) que escreveu; ausente nos comentários antigos. */
+  autorId?: string;
+  data: string;
+  mencionados?: string[];
+};
 
 export type DisciplinaItem = {
   id: string;

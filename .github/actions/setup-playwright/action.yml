@@ -1,0 +1,50 @@
+name: Playwright (browser + dependências de sistema, com cache)
+description: >
+  Deixa o headless shell do Chromium pronto para os specs, com cache do browser e dos
+  pacotes de sistema. Usado pelos dois jobs de E2E do ci.yml (PR e staging). Exige
+  node_modules instalado antes (setup-deps).
+
+runs:
+  using: composite
+  steps:
+    # ImageOS e ImageVersion são variáveis de ambiente do RUNNER: não existem no
+    # contexto `env.` do workflow (lá saem vazias, e a chave virava "pw-apt---1.64.1"
+    # no run 42749783306). Só o shell enxerga, então a chave é montada aqui.
+    - name: Versões (Playwright e imagem do runner)
+      id: v
+      shell: bash
+      run: |
+        PW="$(node -p 'require("@playwright/test/package.json").version')"
+        echo "pw=$PW" >> "$GITHUB_OUTPUT"
+        echo "apt-key=pw-apt-${ImageOS:-semimagem}-${ImageVersion:-semversao}-$PW" >> "$GITHUB_OUTPUT"
+
+    # Browser em cache por versão do Playwright. Só o headless shell (+ ffmpeg, para o
+    # vídeo de falha), que é o que roda em headless: o Chromium completo nunca era
+    # usado e dobrava o download.
+    - id: browser
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ steps.v.outputs.pw }}-headless-shell
+    - if: steps.browser.outputs.cache-hit != 'true'
+      shell: bash
+      run: npx playwright install --only-shell chromium
+
+    # Pacotes de sistema (.deb) por imagem do runner. Restore e save separados: só
+    # salva quem de fato baixou pacote. Com o cache "inteiro" (restore + save no fim
+    # do job), o primeiro shard a terminar gravava a chave, mesmo sem ter baixado nada,
+    # e os outros falhavam com "another job may be creating this cache".
+    - id: apt-restore
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+      with:
+        path: ~/.cache/pw-apt
+        key: ${{ steps.v.outputs.apt-key }}
+    - name: Dependências de sistema do browser
+      id: deps
+      shell: bash
+      run: PW_APT_CACHE="$HOME/.cache/pw-apt" scripts/ci-playwright-deps.sh
+    - if: steps.deps.outputs.baixou == 'true' && steps.apt-restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+      with:
+        path: ~/.cache/pw-apt
+        key: ${{ steps.v.outputs.apt-key }}

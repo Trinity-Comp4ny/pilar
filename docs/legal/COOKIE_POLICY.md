@@ -36,9 +36,10 @@ login e navegação básica quebram.
 Usados para entender como o produto e o site são usados (páginas visitadas,
 cliques em botões-chave), de forma agregada.
 
-| Nome/tipo                     | Finalidade                                    | Duração                |
-| ----------------------------- | --------------------------------------------- | ---------------------- |
-| PostHog (`ph_*`, distinct ID) | Métricas de uso e produto (pageview, cliques) | Até 1 ano ou revogação |
+| Nome/tipo                                             | Finalidade                                    | Duração                 |
+| ----------------------------------------------------- | --------------------------------------------- | ----------------------- |
+| PostHog (`ph_*`, distinct ID)                         | Métricas de uso e produto (pageview, cliques) | Até 1 ano ou revogação  |
+| Google Analytics (`_ga*`), via Tag Manager, só no app | Métricas de uso do app                        | Até 2 anos ou revogação |
 
 **Nenhum cookie desta categoria é gravado antes de você aceitar** no banner de
 consentimento. PostHog roda com `autocapture` desligado e gravação de sessão
@@ -70,7 +71,7 @@ novo é enviado depois disso.
 
 ## Cookies de terceiros
 
-Hoje só o PostHog (categoria Análise) roda como serviço de terceiro. Ele está
+Na categoria Análise rodam o PostHog e, no app, o Google Tag Manager/Analytics (carregado só depois do aceite, com Consent Mode e publicidade negada). Ele está
 hospedado nos EUA (`us.i.posthog.com`) sob contrato que exige proteção
 equivalente à LGPD para os dados que efetivamente saem do Brasil.
 

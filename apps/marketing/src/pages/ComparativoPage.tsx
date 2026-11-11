@@ -19,8 +19,8 @@ export function ComparativoPage({ slug }: { slug: ComparativoSlug }) {
   const c = COMPARATIVOS_POR_SLUG[slug];
 
   usePageMeta({
-    titulo: `Pilar vs ${c.adversario} | Pilar`,
-    descricao: c.lede,
+    titulo: `${c.seo.titulo} | Pilar`,
+    descricao: c.seo.descricao,
     caminho: `/vs/${slug}`,
   });
 
@@ -40,12 +40,12 @@ export function ComparativoPage({ slug }: { slug: ComparativoSlug }) {
         <HeroBackdrop />
         <div className="relative z-10 mx-auto max-w-6xl">
           <Reveal variant="up" className="max-w-3xl">
-            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.16em] text-ink/50">
-              Pilar vs {c.adversario}
-            </p>
-            <h1 className="mb-5 text-[52px] font-medium leading-[1.08] tracking-[-0.035em] text-ink max-[1100px]:text-[40px] max-[850px]:text-[30px] max-[420px]:text-[25px]">
-              {c.headline} <span className="italic text-ink/45">{c.headlineFim}</span>
+            <h1 className="mb-4 text-[11px] font-medium uppercase leading-snug tracking-[0.16em] text-ink/50">
+              {c.seo.h1}
             </h1>
+            <p className="mb-5 text-[52px] font-medium leading-[1.08] tracking-[-0.035em] text-ink max-[1100px]:text-[40px] max-[850px]:text-[30px] max-[420px]:text-[25px]">
+              {c.headline} <span className="italic text-ink/45">{c.headlineFim}</span>
+            </p>
             <p className="mb-8 max-w-xl text-[15px] leading-relaxed text-ink-soft md:text-[16px]">{c.lede}</p>
 
             <div className="flex flex-wrap gap-3">

@@ -28,11 +28,18 @@ const tituloDaPagina = () => screen.findByRole("heading", { level: 1 }, { timeou
 
 describe("roteamento da landing", () => {
   const rotas: [string, RegExp][] = [
-    ["/", /Onde times e agentes/],
-    ...MODULOS.map((m): [string, RegExp] => [`/${m.slug}`, new RegExp(m.headline)]),
-    ...COMPARATIVOS.map((c): [string, RegExp] => [`/vs/${c.slug}`, new RegExp(c.headline.replace(".", "\\."))]),
+    ["/", /Gestão com agentes de IA para escritórios de engenharia e arquitetura/],
+    ...MODULOS.map((m): [string, RegExp] => [`/${m.slug}`, new RegExp(m.seo.h1)]),
+    ...COMPARATIVOS.map((c): [string, RegExp] => [`/vs/${c.slug}`, new RegExp(c.seo.h1)]),
+    ["/engenharia", /Software de gestão para escritório de engenharia/],
+    ["/arquitetura", /Sistema de gestão para escritório de arquitetura/],
+    ["/blog", /Blog de gestão para escritórios/],
+    ["/blog/diario-de-obra-rdo", /Diário de obra/],
+    ["/ferramentas", /Ferramentas para escritório/],
+    ["/ferramentas/calculadora-de-honorarios", /Calculadora de honorários/],
+    ["/ferramentas/modelo-de-proposta", /Modelo de proposta de projeto/],
     ["/faq", /Perguntas frequentes/],
-    ["/planos", /Um preço por escritório/],
+    ["/planos", /Preço do software de gestão/],
     ["/termos", /Termos de Uso/],
     ["/privacidade", /Política de Privacidade/],
   ];
@@ -46,7 +53,7 @@ describe("roteamento da landing", () => {
     expect(screen.getByText(/Usamos cookies essenciais/)).toBeInTheDocument();
   });
 
-  it.each(["/nao-existe", "/gestao/123", "/vs/excel", "/planos/anual", "/obras"])(
+  it.each(["/nao-existe", "/gestao/123", "/vs/excel", "/planos/anual", "/obras", "/blog/nao-existe"])(
     "%s cai no 404 em vez de um main vazio",
     async (rota) => {
       abrir(rota);

@@ -22,6 +22,14 @@ const Faq = lazy(() => import("./pages/Faq").then((m) => ({ default: m.Faq })));
 const Planos = lazy(() => import("./pages/Planos").then((m) => ({ default: m.Planos })));
 const Termos = lazy(() => import("./pages/Termos").then((m) => ({ default: m.Termos })));
 const Privacidade = lazy(() => import("./pages/Privacidade").then((m) => ({ default: m.Privacidade })));
+const PublicoPage = lazy(() => import("./pages/PublicoPage").then((m) => ({ default: m.PublicoPage })));
+const Blog = lazy(() => import("./pages/Blog").then((m) => ({ default: m.Blog })));
+const BlogArtigo = lazy(() => import("./pages/BlogArtigo").then((m) => ({ default: m.BlogArtigo })));
+const Ferramentas = lazy(() => import("./pages/Ferramentas").then((m) => ({ default: m.Ferramentas })));
+const CalculadoraHonorarios = lazy(() =>
+  import("./pages/Ferramentas").then((m) => ({ default: m.CalculadoraHonorarios }))
+);
+const ModeloProposta = lazy(() => import("./pages/Ferramentas").then((m) => ({ default: m.ModeloProposta })));
 const NotFound = lazy(() => import("./pages/NotFound").then((m) => ({ default: m.NotFound })));
 
 /**
@@ -106,6 +114,16 @@ export default function App() {
               <Route path="/campo" element={<ModulePage slug="campo" />} />
               <Route path="/vs/planilha" element={<ComparativoPage slug="planilha" />} />
               <Route path="/vs/trello" element={<ComparativoPage slug="trello" />} />
+              <Route path="/vs/whatsapp" element={<ComparativoPage slug="whatsapp" />} />
+              <Route path="/vs/notion" element={<ComparativoPage slug="notion" />} />
+              <Route path="/vs/erp-construtora" element={<ComparativoPage slug="erp-construtora" />} />
+              <Route path="/engenharia" element={<PublicoPage slug="engenharia" />} />
+              <Route path="/arquitetura" element={<PublicoPage slug="arquitetura" />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogArtigo />} />
+              <Route path="/ferramentas" element={<Ferramentas />} />
+              <Route path="/ferramentas/calculadora-de-honorarios" element={<CalculadoraHonorarios />} />
+              <Route path="/ferramentas/modelo-de-proposta" element={<ModeloProposta />} />
               <Route path="/faq" element={<Faq />} />
               <Route path="/planos" element={<Planos />} />
               <Route path="/termos" element={<Termos />} />

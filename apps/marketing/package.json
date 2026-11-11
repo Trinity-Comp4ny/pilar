@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "build:prerender": "vite build && node scripts/prerender.mjs",
+    "seo:nota": "node scripts/seo-nota.mjs",
+    "seo:indexnow": "node scripts/indexnow.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "preview": "vite preview"
   },
@@ -19,7 +21,7 @@
     "react-router-dom": "^7.18.5"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.3",
+    "@tailwindcss/postcss": "^4.3.4",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react-swc": "^3.5.0",
@@ -28,6 +30,6 @@
     "tailwindcss": "^4.3.3",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.5.3",
-    "vite": "^7.2.7"
+    "vite": "^7.3.7"
   }
 }

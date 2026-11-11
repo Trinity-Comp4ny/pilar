@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+#
+# Mesmo padrão do job "Commits do PR" do CI (scripts/check-commits-pr.sh), checado
+# já no commit: o merge em staging é por rebase, então a mensagem vira histórico.
+# fixup!/squash!/amend! passam aqui (são legítimos durante o trabalho, com
+# `git rebase -i --autosquash`); o CI reprova se sobrarem no PR.
+set -e
+
+ASSUNTO=$(head -n1 "$1")
+
+case "$ASSUNTO" in
+  "fixup! "* | "squash! "* | "amend! "* | "Merge "* | "Revert \""*) exit 0 ;;
+esac
+
+if ! printf '%s' "$ASSUNTO" | grep -qE '^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([^)]+\))*!?: [^ ]'; then
+  echo "❌ Assunto fora do padrão: \"$ASSUNTO\""
+  echo "   Use tipo(escopo): descrição, em inglês. Ex.: fix(financeiro): keep the filter on reload"
+  echo "   Tipos: feat fix chore docs style refactor perf test build ci revert"
+  exit 1
+fi

@@ -12,7 +12,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { withSentry } from "../_shared/sentry.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { jsonResponse, optionsResponse } from "../_shared/cors.ts";
+import { jsonResponse, optionsResponse, recusarAppExterno } from "../_shared/cors.ts";
 import { ehAdminDaEmpresa } from "../_shared/admin-auth.ts";
 import {
   createCustomer,
@@ -59,6 +59,9 @@ serve(
     if (userErr || !user) {
       return jsonResponse({ error: "Não autenticado" }, 401, req);
     }
+    // Token de app externo (ChatGPT, Claude) é só leitura e só pelo conector (SPEC 151).
+    const appExterno = recusarAppExterno(req);
+    if (appExterno) return appExterno;
 
     const { data: profile } = await admin.from("profiles").select("empresa_id, role").eq("id", user.id).maybeSingle();
 

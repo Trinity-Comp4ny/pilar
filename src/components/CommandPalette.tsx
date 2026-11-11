@@ -209,13 +209,13 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange} shouldFilter={false}>
-      <CommandInput
-        placeholder="Digite um comando ou busque..."
-        value={query}
-        onValueChange={setQuery}
-      />
+      <CommandInput placeholder="Digite um comando ou busque..." value={query} onValueChange={setQuery} />
       <CommandList>
-        {!buscando && favs.length === 0 && recs.length === 0 && navFiltrado.length === 0 && createFiltrado.length === 0 ? (
+        {!buscando &&
+        favs.length === 0 &&
+        recs.length === 0 &&
+        navFiltrado.length === 0 &&
+        createFiltrado.length === 0 ? (
           <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
         ) : null}
 
