@@ -26,6 +26,23 @@ datas futuras quando uma etapa atrasa").
 
 ---
 
+## 2026-11-10 (mais tarde) · Bônus da folha quando a disciplina é concluída; portal liberado também ao coordenador
+
+**Decisão:** o bônus de produtividade (m² e percentual) entra na folha do mês em que a disciplina da pessoa é
+concluída, não mais no mês em que o projeto começou. Como a base do bônus é do projeto, cada projeto paga uma vez por
+pessoa: no mês da primeira disciplina dela concluída ali; projeto já pago numa folha fechada não volta. Projeto
+cancelado não paga. Dar acesso ao portal do cliente passa a ser possível de dentro do projeto, por admin e
+coordenador (antes só admin, só pela tela de Clientes).
+
+Contexto: na VRZ um projeto fechado na semana anterior, que nem tinha começado, já aparecia no bônus da folha. O sócio
+pediu "quando concluir a disciplina". O coordenador é quem fala com o cliente; o portal precisava estar a um clique,
+no projeto.
+
+**Supera:** a regra "projeto que começou no mês da folha" (SPEC 032, migration 20261209000000) e o "só admin" do convite
+ao portal.
+
+---
+
 ## 2026-11-10 (mais tarde) · Conector da Pilar vai para os diretórios oficiais do Claude e do ChatGPT
 
 **Decisão:** o usuário final não vai colar URL de conector. O conector da Pilar será publicado no diretório de

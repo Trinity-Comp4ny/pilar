@@ -53,10 +53,27 @@ export function parseDetalhe(raw: unknown): ProjetoDetalhe[] {
   return raw
     .filter((p): p is Record<string, unknown> => !!p && typeof p === "object")
     .map((p) => ({
+      ...(p.projeto_id ? { projeto_id: String(p.projeto_id) } : {}),
       nome: String(p.nome ?? "-"),
       area_m2: Number(p.area_m2 ?? 0),
       ...(p.valor_base != null ? { valor_base: Number(p.valor_base) } : {}),
+      ...(p.concluido_em ? { concluido_em: String(p.concluido_em) } : {}),
     }));
+}
+
+/**
+ * Área dos projetos únicos da folha: cada projeto conta uma vez, mesmo com
+ * várias pessoas nele. Sai das próprias linhas (prévia ou fechada), então segue
+ * a mesma regra do bônus. Folha antiga sem projeto_id cai no nome.
+ */
+export function areaDeProjetosUnicos(itens: { detalhe_projetos: ProjetoDetalhe[] }[]): number {
+  const vistos = new Map<string, number>();
+  for (const item of itens) {
+    for (const p of item.detalhe_projetos) vistos.set(p.projeto_id ?? `nome:${p.nome}`, p.area_m2 || 0);
+  }
+  let total = 0;
+  for (const area of vistos.values()) total += area;
+  return total;
 }
 
 // Registro gravado em folha_pagamento (folha fechada ou histórico) → linha da tela.
