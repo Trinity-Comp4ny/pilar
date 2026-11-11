@@ -1,0 +1,126 @@
+name: Atualizar referências visuais
+
+# Regrava as imagens de referência da regressão visual (e2e/visual) no próprio runner
+# Linux e commita na branch do PR. Antes era preciso baixar o artifact do run e copiar
+# os PNGs à mão, o que não dá para fazer pelo celular (e2e/visual/README.md).
+#
+# Como usar: pôr a label `atualizar-visual` no PR (dá pelo app do GitHub). O job regrava
+# as referências, commita, dispara o CI de novo na branch e tira a label.
+#
+# Só PR de branch deste repositório (fork não), e só quem tem escrita põe label.
+#
+# Dois jobs, de propósito (achado do CodeQL no PR #812): o que roda código do PR
+# (`regravar`) só tem leitura; o que tem escrita (`commitar`) não executa nada do PR,
+# só copia os PNGs que o primeiro gerou e faz o commit.
+on:
+  pull_request:
+    types: [labeled]
+    branches: [main, staging]
+
+permissions:
+  contents: read
+
+env:
+  SUPABASE_CLI_VERSION: "2.109.1"
+
+concurrency:
+  group: atualizar-visual-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  regravar:
+    name: Regravar referências
+    if: github.event.label.name == 'atualizar-visual' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    env:
+      CI: "true"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+      # Mesmos passos do job e2e-local do ci.yml (o motivo de cada um está lá).
+      - name: Gerar secret descartável para o parse do config
+        run: echo "AUTH_HOOK_SEND_EMAIL_SECRET=v1,whsec_$(openssl rand -base64 32)" >> "$GITHUB_ENV"
+      - name: Alinhar o Postgres do stack com produção (17)
+        run: sed -i 's/^major_version = 15$/major_version = 17/' supabase/config.toml
+      - name: Reservar as portas do Supabase
+        run: sudo sysctl -w net.ipv4.ip_local_port_range="60000 65000"
+      - name: Subir o stack local em segundo plano
+        run: |
+          ( rc=0
+            supabase start -x studio > "$RUNNER_TEMP/supabase-start.log" 2>&1 || rc=$?
+            echo "$rc" > "$RUNNER_TEMP/supabase-start.rc" ) > /dev/null 2>&1 &
+      - uses: ./.github/actions/setup-deps
+      - uses: ./.github/actions/setup-playwright
+      - name: Esperar o stack local
+        run: scripts/ci-wait-supabase.sh
+      - name: Regravar as referências
+        run: npm run test:e2e:local
+        env:
+          E2E_VISUAL_ATUALIZAR: "1"
+          E2E_SO_VISUAL: "1"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: referencias-visuais
+          path: e2e/visual/telas.visual.spec.ts-snapshots/*.png
+          retention-days: 1
+          if-no-files-found: error
+
+  commitar:
+    name: Commitar, disparar o CI e tirar a label
+    needs: regravar
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write # commitar os PNGs na branch do PR
+      actions: write # disparar o CI de novo (push com GITHUB_TOKEN não dispara workflow)
+      pull-requests: write # tirar a label
+      issues: write # a label do PR é label de issue na API
+    env:
+      BRANCH: ${{ github.event.pull_request.head.ref }}
+      PR: ${{ github.event.pull_request.number }}
+      GH_TOKEN: ${{ github.token }}
+      PASTA: e2e/visual/telas.visual.spec.ts-snapshots
+    steps:
+      # Só git a partir daqui: nenhum script, dependência ou action do PR roda neste job.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: referencias-visuais
+          path: ${{ runner.temp }}/referencias
+      - name: Copiar só os PNGs, commitar e disparar o CI
+        run: |
+          set -euo pipefail
+          # O artifact vem de um job que rodou código do PR: entra só arquivo comum, com nome
+          # de referência e assinatura de PNG de verdade. Nada dele é executado.
+          for f in "$RUNNER_TEMP"/referencias/*-visual-linux.png; do
+            [ -f "$f" ] && [ ! -L "$f" ] || { echo "::error::$f não é arquivo comum"; exit 1; }
+            [ "$(head -c 8 "$f" | od -An -tx1 | tr -d ' \n')" = "89504e470d0a1a0a" ] \
+              || { echo "::error::$f não é PNG"; exit 1; }
+            cp "$f" "$PASTA/"
+          done
+          git add "$PASTA"/*.png
+          if git diff --cached --quiet; then
+            echo "Nenhuma referência mudou."
+          else
+            git diff --cached --stat
+            git -c user.name="github-actions[bot]" \
+                -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+                commit -m "test(visual): update visual regression baselines" \
+                -m "Regenerated on the CI Linux runner by the atualizar-visual label (PR #$PR)."
+            git push origin "HEAD:$BRANCH"
+            # Push com GITHUB_TOKEN não gera evento de PR: o CI do commit novo sai daqui.
+            gh workflow run ci.yml --ref "$BRANCH"
+          fi
+      - name: Tirar a label
+        if: always()
+        run: gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --remove-label atualizar-visual

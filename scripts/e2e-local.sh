@@ -103,6 +103,10 @@ if [ "$(uname)" = "Linux" ] && [ $# -eq 0 ] && [ "$VISUAL_NESTE_SHARD" = "1" ]; 
   fi
 fi
 
+# E2E_SO_VISUAL=1: para depois da regressão visual. Usado pelo workflow que regrava as
+# referências num PR (atualizar-referencias-visuais.yml), que não precisa dos outros specs.
+[ "${E2E_SO_VISUAL:-}" = "1" ] && exit 0
+
 # chromium = specs sem login; authenticated = specs logados (dependem do setup).
 # O projeto "marketing" fica de fora: testa o site em produção, não este commit.
 npx playwright test --project=chromium --project=authenticated ${SHARD_ARGS[@]+"${SHARD_ARGS[@]}"} "$@"
