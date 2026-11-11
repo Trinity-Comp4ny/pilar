@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { artigoPorSlug, artigosDaRota, buscarArtigos } from "./ajudaBusca";
+import { artigoPorSlug, artigosDaRota, buscarArtigos, carregarCorpo } from "./ajudaBusca";
 import type { ArtigoAjuda } from "@/content/ajuda/indice";
 
 const artigo = (slug: string, titulo: string, rotas: string[], palavras: string[] = []): ArtigoAjuda => ({
@@ -45,5 +45,12 @@ describe("central de ajuda: busca (SPEC 154)", () => {
     expect(artigoPorSlug("criar-lead")?.titulo).toBe("Criar um lead");
     expect(artigoPorSlug("nao-existe")).toBeNull();
     expect(artigoPorSlug(undefined)).toBeNull();
+  });
+
+  it("carrega o texto do artigo e recusa slug fora do formato", async () => {
+    expect(await carregarCorpo("criar-lead")).toContain("Novo lead");
+    expect(await carregarCorpo("constructor")).toBeNull();
+    expect(await carregarCorpo("__proto__")).toBeNull();
+    expect(await carregarCorpo("../indice")).toBeNull();
   });
 });
