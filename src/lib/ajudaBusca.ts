@@ -75,10 +75,16 @@ export function artigoPorSlug(slug: string | undefined): ArtigoAjuda | null {
   return ARTIGOS.find((a) => a.slug === slug) ?? null;
 }
 
-const CORPOS = import.meta.glob<string>("../content/ajuda/*.md", { query: "?raw", import: "default" });
+// Map, não objeto: o slug vem da URL, e indexar um objeto comum com "constructor" ou "__proto__"
+// chamaria um método herdado em vez de carregar um artigo.
+const CORPOS = new Map(
+  Object.entries(import.meta.glob<string>("../content/ajuda/*.md", { query: "?raw", import: "default" }))
+);
+const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-/** Texto do artigo, baixado sob demanda. Sem arquivo, null. */
+/** Texto do artigo, baixado sob demanda. Slug fora do formato ou sem arquivo, null. */
 export async function carregarCorpo(slug: string): Promise<string | null> {
-  const carregar = CORPOS[`../content/ajuda/${slug}.md`];
+  if (!SLUG.test(slug)) return null;
+  const carregar = CORPOS.get(`../content/ajuda/${slug}.md`);
   return carregar ? carregar() : null;
 }
