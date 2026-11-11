@@ -89,7 +89,29 @@ describe("BottomNav", () => {
     const botoes = screen.getAllByRole("button").map((b) => b.getAttribute("aria-label"));
     expect(botoes).toEqual(["Projetos", "Obras", "Gestão", "Menu"]);
     expect(screen.getByRole("button", { name: "Projetos" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: /Início/ })).toHaveClass("bg-brand");
+    expect(screen.getByRole("link", { name: /Início/ })).toHaveAttribute("data-ativo", "true");
+    expect(screen.getByRole("button", { name: "Projetos" })).toHaveAttribute("data-ativo", "false");
+  });
+
+  it("lente de vidro fica sob a aba ativa e vai para o Menu quando ele abre", async () => {
+    renderNav();
+    const lente = screen.getByTestId("lente-ativa");
+    expect(lente).toHaveAttribute("data-ativa", "true");
+    expect(lente.style.getPropertyValue("--lente-i")).toBe("0");
+    await userEvent.setup().click(screen.getByRole("button", { name: "Menu" }));
+    expect(lente.style.getPropertyValue("--lente-i")).toBe("4");
+    // Com o MoreSheet aberto a barra fica aria-hidden (modal), por isso o hidden: true.
+    expect(screen.getByRole("button", { name: "Menu", hidden: true })).toHaveAttribute("data-ativo", "true");
+  });
+
+  it("rota fora da barra esconde a lente", () => {
+    h.nav = { ...h.nav, routeModule: null };
+    render(
+      <MemoryRouter initialEntries={["/agentes"]}>
+        <BottomNav />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId("lente-ativa")).toHaveAttribute("data-ativa", "false");
   });
 
   it("selecionar pilar delega ao useModuleNav", async () => {
