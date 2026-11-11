@@ -11,6 +11,21 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-11 · Fluxo do projeto vira grafo com dependências e caminho crítico
+
+**Decisão:** a aba Fluxo do projeto passa a funcionar como o grafo de um pipeline de CI: etapas, o que roda em
+paralelo, status, datas previstas e reais, previsão de conclusão projetada pelo andamento real e caminho crítico.
+Disciplinas ganham dependência explícita (fase 2), com a coluna anterior inteira como padrão. Plano em fases na
+SPEC 162.
+
+Contexto: hoje o sócio abre disciplina por disciplina para saber se um atraso empurra a entrega; a lista de
+disciplinas não responde isso. Continua sem biblioteca de grafo (ADR 0020): layout em colunas, desenhado à mão.
+
+**Supera:** o fora de escopo da SPEC 071 ("DAG genérico com dependências arbitrárias") e o da SPEC 051 ("recalcular
+datas futuras quando uma etapa atrasa").
+
+---
+
 ## 2026-11-10 (mais tarde) · Conector da Pilar vai para os diretórios oficiais do Claude e do ChatGPT
 
 **Decisão:** o usuário final não vai colar URL de conector. O conector da Pilar será publicado no diretório de
