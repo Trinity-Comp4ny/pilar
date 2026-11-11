@@ -151,6 +151,13 @@ const TAMANHO_MAXIMO_ZIP = 300_000_000;
  * GET que segue redirecionamento guardando os cookies no caminho. A Caixa responde com um redirecionamento que
  * grava um cookie e volta para o mesmo endereço; sem devolver o cookie, o fetch entra em loop.
  */
+/** O endereço volta para ele mesmo sem parar. A Caixa faz isso com o zip de um mês que ainda não publicou. */
+class RedirecionamentoDemais extends Error {
+  constructor() {
+    super("redirecionamento demais (mais de 10)");
+  }
+}
+
 /** Cookies por site, guardados entre pedidos: a Caixa só libera o zip com o cookie que a página grava. */
 const cookiesPorSite = new Map<string, Map<string, string>>();
 
@@ -188,7 +195,7 @@ async function buscar(url: string, tempo = 180_000): Promise<Response> {
     }
     atual = proximo.toString();
   }
-  throw new Error("redirecionamento demais (mais de 10)");
+  throw new RedirecionamentoDemais();
 }
 
 /** Lê a página da Caixa atrás dos links. Página fora do ar não impede a coleta: sobra o endereço direto. */
@@ -217,7 +224,15 @@ async function linksDaPagina(paginaUrl: string): Promise<Map<MesBase, ArquivoSin
 
 /** Baixa o zip. `null` quando o mês ainda não foi publicado (404 ou a Caixa devolvendo uma página no lugar). */
 async function baixarZip(arquivo: ArquivoSinapi): Promise<Uint8Array | null> {
-  const r = await buscar(arquivo.url);
+  let r: Response;
+  try {
+    r = await buscar(arquivo.url);
+  } catch (e) {
+    // Visto na primeira rodada em produção (11/11): o zip de outubro, ainda não publicado, redirecionou em loop
+    // em vez de responder 404. É "ainda não publicado"; o alerta de atraso cobre o caso de durar demais.
+    if (e instanceof RedirecionamentoDemais) return null;
+    throw e;
+  }
   if (r.status === 404) {
     await r.body?.cancel();
     return null;
