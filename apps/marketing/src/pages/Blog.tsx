@@ -51,7 +51,6 @@ export function Blog() {
         <HeroBackdrop />
         <div className="relative z-10 mx-auto max-w-6xl">
           <Reveal variant="up" className="max-w-3xl">
-            <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.16em] text-ink/50">Blog do Pilar</p>
             <h1 className="mb-5 text-[52px] font-medium leading-[1.08] tracking-[-0.035em] text-ink max-[1100px]:text-[40px] max-[850px]:text-[30px] max-[420px]:text-[25px]">
               Blog de gestão para escritórios de <span className="italic text-ink/45">engenharia e arquitetura.</span>
             </h1>

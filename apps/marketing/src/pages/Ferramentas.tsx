@@ -21,13 +21,12 @@ const BASE = "https://www.pilarsoft.com.br";
 const reais = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 2 });
 const numero = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
 
-function Hero({ rotulo, h1, lede }: { rotulo: string; h1: ReactNode; lede: string }) {
+function Hero({ h1, lede }: { h1: ReactNode; lede: string }) {
   return (
     <section className="relative isolate overflow-hidden px-5 pb-12 pt-24 md:px-10 md:pb-16 md:pt-32">
       <HeroBackdrop />
       <div className="relative z-10 mx-auto max-w-6xl">
         <Reveal variant="up" className="max-w-3xl">
-          <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.16em] text-ink/50">{rotulo}</p>
           <h1 className="mb-5 text-[48px] font-medium leading-[1.08] tracking-[-0.035em] text-ink max-[1100px]:text-[38px] max-[850px]:text-[29px] max-[420px]:text-[25px]">
             {h1}
           </h1>
@@ -116,7 +115,6 @@ export function Ferramentas() {
   return (
     <>
       <Hero
-        rotulo="Ferramentas"
         h1={
           <>
             Ferramentas para escritório de <span className="italic text-ink/45">engenharia e arquitetura.</span>
@@ -230,7 +228,6 @@ export function CalculadoraHonorarios() {
   return (
     <>
       <Hero
-        rotulo="Ferramenta aberta"
         h1={f.h1}
         lede="Quanto custa uma hora do seu escritório, por quanto ela precisa ser vendida e quanto vale o projeto pelas horas estimadas. Os números de exemplo são hipotéticos: troque pelos seus."
       />
@@ -394,7 +391,6 @@ export function ModeloProposta() {
   return (
     <>
       <Hero
-        rotulo="Ferramenta aberta"
         h1={f.h1}
         lede="A estrutura de uma proposta por disciplina que evita a briga mais comum: o que estava ou não estava incluído. Copie, baixe e adapte ao seu escritório."
       />
