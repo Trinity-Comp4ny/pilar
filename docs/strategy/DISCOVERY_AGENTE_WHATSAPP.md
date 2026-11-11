@@ -30,7 +30,7 @@ R$ 300 de plotagem no projeto X" sem abrir o Pilar seria o agente indo até onde
 4. **Custo:** API oficial (Meta Cloud API) cobra por conversa; somar ao custo de token por
    mensagem e ver no pricing (`docs/strategy/PRICING.md`).
 5. **LGPD:** dado financeiro passando pela Meta; base legal e aviso na política de privacidade
-   (SPEC 158 serviria para o novo aceite).
+   (o reaceite dos Termos pelo admin, `AceiteTermosBanner`, serviria para o novo aceite).
 
 ## Sinal para seguir
 
