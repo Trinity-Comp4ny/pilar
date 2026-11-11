@@ -199,6 +199,7 @@ vi.mock("@/pages/projetos/components/ProjetosFilterBar", () => ({
   },
 }));
 vi.mock("@/pages/projetos/components/ProjetosKPIs", () => ({
+  ProjetosKPIsResumo: () => <span data-testid="kpis-resumo" />,
   ProjetosKPIs: ({
     onFilterAtraso,
     onFilterProximos,

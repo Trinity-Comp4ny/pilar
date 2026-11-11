@@ -3,6 +3,7 @@ import { AlertTriangle, CalendarClock, Layers, TrendingUp } from "lucide-react";
 import { KPICard } from "@/components/KPICard";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/format";
 import { type Projeto, getDeadlineStatus } from "@/types/projetos";
 
 interface ProjetosKPIsProps {
@@ -11,10 +12,8 @@ interface ProjetosKPIsProps {
   onFilterProximos?: () => void;
 }
 
-export function ProjetosKPIs({ projetos, onFilterAtraso, onFilterProximos }: ProjetosKPIsProps) {
-  const { can } = usePermissions();
-  const podeVerValor = can("financeiro");
-  const stats = useMemo(() => {
+function useProjetosStats(projetos: Projeto[]) {
+  return useMemo(() => {
     const ativos = projetos.filter((p) => p.status !== "Cancelado" && p.status !== "Concluído");
     const atrasados = ativos.filter((p) => {
       const d = getDeadlineStatus(p);
@@ -37,6 +36,36 @@ export function ProjetosKPIs({ projetos, onFilterAtraso, onFilterProximos }: Pro
       proximos: proximos.length,
     };
   }, [projetos]);
+}
+
+/**
+ * Os mesmos números numa linha, ao lado de "Indicadores" quando a faixa está recolhida:
+ * recolher libera ~100 px de altura sem esconder o que importa (auditoria de espaço, 2026-11).
+ */
+export function ProjetosKPIsResumo({ projetos }: { projetos: Projeto[] }) {
+  const { can } = usePermissions();
+  const stats = useProjetosStats(projetos);
+  return (
+    <span className="flex items-center gap-1.5 text-xs text-muted-foreground tabular-nums">
+      <span>{stats.total} ativos</span>
+      <span aria-hidden>·</span>
+      <span className={cn(stats.atrasados > 0 && "font-medium text-danger-strong")}>{stats.atrasados} em atraso</span>
+      <span aria-hidden>·</span>
+      <span>{stats.proximos} entregas em 7 dias</span>
+      {can("financeiro") && (
+        <>
+          <span aria-hidden>·</span>
+          <span>{formatCurrency(stats.valorPipeline, { compact: true })} em pipeline</span>
+        </>
+      )}
+    </span>
+  );
+}
+
+export function ProjetosKPIs({ projetos, onFilterAtraso, onFilterProximos }: ProjetosKPIsProps) {
+  const { can } = usePermissions();
+  const podeVerValor = can("financeiro");
+  const stats = useProjetosStats(projetos);
 
   return (
     <div className={cn("grid grid-cols-2 gap-2", podeVerValor ? "md:grid-cols-4" : "md:grid-cols-3")}>
