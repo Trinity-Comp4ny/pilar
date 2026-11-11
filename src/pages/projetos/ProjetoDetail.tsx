@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Pause, Pencil, Play } from "lucide-react";
+import { Globe, Pause, Pencil, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
@@ -17,14 +17,17 @@ import { PausarProjetoDialog } from "./components/PausarProjetoDialog";
 import { RetomarProjetoDialog } from "./components/RetomarProjetoDialog";
 import { useProjetoPausas } from "./hooks/useProjetoPausas";
 import { diasDePausa } from "@/pages/projetos/lib/pausa";
+import { AcessoPortalDialog } from "@/components/portal/AcessoPortalDialog";
 
 import { ReadingRing } from "@/components/motion/ReadingRing";
 
 export default function ProjetoDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { can } = usePermissions();
+  const { can, isAdmin, role } = usePermissions();
   const podeEditarValor = can("financeiro");
+  // Acesso ao portal: só admin e coordenador (as edge functions conferem de novo).
+  const podeDarAcessoPortal = isAdmin || role === "coordenador";
 
   const {
     projeto,
@@ -58,6 +61,7 @@ export default function ProjetoDetail() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [pausarOpen, setPausarOpen] = useState(false);
   const [retomarOpen, setRetomarOpen] = useState(false);
+  const [portalOpen, setPortalOpen] = useState(false);
   const { aberta: pausaAberta } = useProjetoPausas(id);
   usePageTitle(projeto?.nome ? `Projeto · ${projeto.nome}` : "Projeto");
 
@@ -115,6 +119,12 @@ export default function ProjetoDetail() {
             <Button variant="outline" onClick={() => setPausarOpen(true)} className="rounded-full h-9 text-sm">
               <Pause className="h-3.5 w-3.5 mr-1.5" />
               Pausar projeto
+            </Button>
+          )}
+          {podeDarAcessoPortal && projeto.cliente_id && (
+            <Button variant="outline" onClick={() => setPortalOpen(true)} className="rounded-full h-9 text-sm">
+              <Globe className="h-3.5 w-3.5 mr-1.5" />
+              Portal do cliente
             </Button>
           )}
           {canEdit && (
@@ -195,6 +205,16 @@ export default function ProjetoDetail() {
         open={retomarOpen}
         onOpenChange={setRetomarOpen}
       />
+
+      {podeDarAcessoPortal && projeto.cliente_id && (
+        <AcessoPortalDialog
+          open={portalOpen}
+          onOpenChange={setPortalOpen}
+          clienteId={projeto.cliente_id}
+          clienteNome={projeto.cliente_nome ?? "O cliente"}
+          clienteEmail={projeto.cliente_email}
+        />
+      )}
 
       <ConfirmDialog
         open={pendingReopenStatus !== null}

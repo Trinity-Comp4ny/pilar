@@ -29,11 +29,6 @@
       "count": 2
     }
   },
-  "src/pages/clientes/[id]/index.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "src/pages/company/types.ts": {
     "no-restricted-syntax": {
       "count": 3
