@@ -4,7 +4,6 @@ import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { sidebarOffset } from "@/lib/shellLayout";
 import { BottomNav } from "@/components/BottomNav";
-import { CommandPaletteHint } from "@/components/CommandPaletteHint";
 import { useCommandPalette } from "@/hooks/useCommandPalette";
 import { useAtalhosTeclado } from "@/hooks/useAtalhosTeclado";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -53,15 +52,11 @@ const OnboardingTourController = lazy(() =>
   }))
 );
 
-// Atalho ⌘K sempre ativo (hook leve); o dialog pesado só monta quando aberto.
+// Atalho ⌘K sempre ativo (hook leve); o dialog pesado só monta quando aberto. A dica visual
+// do atalho mora no trilho da sidebar (CommandPaletteHint), não flutuando sobre o conteúdo.
 function CommandPaletteMount() {
   const { open, setOpen } = useCommandPalette();
-  return (
-    <>
-      <CommandPaletteHint />
-      <Suspense fallback={null}>{open && <CommandPalette open={open} onOpenChange={setOpen} />}</Suspense>
-    </>
-  );
+  return <Suspense fallback={null}>{open && <CommandPalette open={open} onOpenChange={setOpen} />}</Suspense>;
 }
 
 // Atalho "?" sempre ativo (hook leve); o painel só monta quando aberto.

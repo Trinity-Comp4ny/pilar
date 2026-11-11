@@ -22,6 +22,10 @@ function montar(rota = "/gestao/leads") {
   render(
     <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter initialEntries={[rota]}>
+        {/* Faz o papel do "?" do cabeçalho: quem abre o painel e recebe o foco de volta. */}
+        <button type="button" onClick={abrirAgenteAjuda}>
+          Abrir dúvidas
+        </button>
         <AgenteAjuda />
       </MemoryRouter>
     </QueryClientProvider>
@@ -32,9 +36,9 @@ function montar(rota = "/gestao/leads") {
 beforeEach(() => vi.clearAllMocks());
 
 describe("AgenteAjuda (SPEC 155)", () => {
-  it("abre pelo botão Dúvidas como chat, sem título, e sugere os artigos da tela", async () => {
+  it('abre pelo "?" do cabeçalho como chat, sem título, e sugere os artigos da tela', async () => {
     const user = montar();
-    await user.click(screen.getByRole("button", { name: /Dúvidas/ }));
+    await user.click(screen.getByRole("button", { name: "Abrir dúvidas" }));
     const chat = screen.getByRole("dialog", { name: "Dúvidas sobre o Pilar" });
     expect(chat).toBeInTheDocument();
     expect(screen.queryByText("Agente do Pilar")).not.toBeInTheDocument();
@@ -47,16 +51,16 @@ describe("AgenteAjuda (SPEC 155)", () => {
     expect(await screen.findByRole("link", { name: /Ir para Leads/ })).toBeInTheDocument();
   });
 
-  it("Enter envia, Esc fecha e o foco volta ao botão", async () => {
+  it("Enter envia, Esc fecha e o foco volta a quem abriu", async () => {
     const user = montar("/inicio");
-    await user.click(screen.getByRole("button", { name: /Dúvidas/ }));
+    await user.click(screen.getByRole("button", { name: "Abrir dúvidas" }));
     await user.type(screen.getByLabelText("Sua pergunta"), "como eu crio um lead{Enter}");
     expect(await screen.findByRole("link", { name: /Ir para Leads/ })).toBeInTheDocument();
     expect(screen.getByLabelText("Sua pergunta")).toHaveValue("");
 
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Dúvidas/ })).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Abrir dúvidas" })).toHaveFocus();
   });
 
   it("responde 'como eu crio um lead?' com o caminho e o botão para a tela", async () => {
@@ -90,8 +94,8 @@ describe("AgenteAjuda (SPEC 155)", () => {
     expect(screen.getByTestId("suporte")).toHaveTextContent("Dúvida: xyzw");
   });
 
-  it("some na tela dos agentes", () => {
-    montar("/agentes");
-    expect(screen.queryByRole("button", { name: /Dúvidas/ })).not.toBeInTheDocument();
+  it("não tem botão flutuante por cima do conteúdo", () => {
+    montar("/gestao/leads");
+    expect(screen.queryByRole("button", { name: /Dúvidas:/ })).not.toBeInTheDocument();
   });
 });

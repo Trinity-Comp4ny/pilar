@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { EVENTO_ABRIR_PALETA } from "@/lib/paletaComandosEvento";
 
 /**
  * Hook que controla o estado de abertura da Command Palette
@@ -17,8 +18,13 @@ export function useCommandPalette() {
         toggle();
       }
     };
+    const abrir = () => setOpen(true);
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener(EVENTO_ABRIR_PALETA, abrir);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener(EVENTO_ABRIR_PALETA, abrir);
+    };
   }, [toggle]);
 
   return { open, setOpen, toggle, close };
