@@ -1,0 +1,37 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css"><style>
+body{background:#15110e}
+#f{position:absolute;left:0;top:0;width:1080px;height:1920px}
+.top{position:absolute;left:0;right:0;top:230px;display:flex;justify-content:center}
+.box{background:rgba(26,26,26,.86);border-radius:36px;padding:30px 46px 36px;text-align:center;color:#fff;max-width:960px}
+.bot{position:absolute;left:0;right:0;top:1380px;display:flex;justify-content:center}
+#prod{position:absolute;inset:0;background:var(--paper);display:none}
+#shotO{left:40px;right:40px;top:640px;height:560px}
+#pt{position:absolute;left:90px;right:90px;top:260px}
+#pc{position:absolute;left:90px;right:90px;top:1290px}
+</style></head><body>
+<img id="f">
+<div class="top" id="hk"><div class="box"><div class="h2" style="color:#fff">Concretagem marcada <span class="pill"><span>para amanhã.</span></span></div></div></div>
+<div class="bot" id="ch"><span class="chip" id="cht"></span></div>
+<div id="prod"><div class="h2" id="pt">O Pilar cruzou o cronograma <span class="pill" id="pp"><span>com a previsão.</span></span></div>
+  <div class="shot" id="shotO"><img id="imgO" src="../assets/shots/obra.png"></div>
+  <div class="h3" id="pc"><div id="pc1">Trovoada prevista no dia da concretagem.</div><div id="pc2" style="margin-top:18px">O responsável <span class="pill"><span>reprogramou.</span></span></div></div></div>
+<script src="kit.js"></script><script>
+window.DUR=15.2;
+cue(0,'start'); cue(2.3,'whoosh'); cue(3.4,'tick'); cue(4.4,'ding'); cue(5.3,'rain'); cue(6.1,'thunder'); cue(9.8,'whoosh'); cue(10.1,'pour'); cue(12.2,'end');
+const pad=n=>String(n).padStart(4,'0');
+window.render=async(t)=>{
+  let src=null; if(t<2.3) src='../frames3/f'+pad(Math.round(t*30));
+  else if(t>=5.3&&t<9.8) src='../fr_chuva/f'+pad(Math.min(134,Math.round((t-5.3)*30)));
+  else if(t>=9.8) src='../frames3/f'+pad(Math.min(150,70+Math.round((t-9.8)*30)));
+  if(src) await setFrame($('f'),src+'.jpg');
+  $('hk').style.display=t<2.3?'flex':'none';
+  $('prod').style.display=t>=2.3&&t<5.3?'block':'none';
+  if(t>=2.3&&t<5.3){ const u=t-2.3; enter('pt',u,-1); pill('pp',u,0.15); const a=expo(lin(u,0.2,0.7)); $('shotO').style.opacity=a;
+    shotAt($('shotO'),$('imgO'),0.62+0.18*easeIO(lin(u,0.7,2.2)),1350,500); enter('pc1',u,1.0,20); enter('pc2',u,2.1,20); }
+  const ch=$('ch'); let txt=null,t0=0;
+  if(t>=5.6&&t<9.8){txt='Choveu. E o concreto não estava lá.';t0=5.6;} else if(t>=9.9&&t<12.2){txt='Concretagem no dia seco.';t0=9.9;}
+  ch.style.display=txt?'flex':'none'; if(txt){ $('cht').textContent=txt; enter('cht',t,t0,20,0.4); }
+  renderEnd(t,12.2);
+};
+setupEnd('O Pilar avisa antes. Quem decide é você.').then(()=>{ window.ready=true; });
+</script></body></html>

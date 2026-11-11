@@ -1,0 +1,40 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css"><style>
+#top3d{position:absolute;left:0;top:0;width:1080px;height:1110px;overflow:hidden;background:#15110e}
+#f3d{position:absolute;left:0;top:-430px;width:1080px;height:1920px}
+#hook{position:absolute;left:0;right:0;top:120px;display:flex;justify-content:center}
+#hook .box{background:rgba(26,26,26,.86);border-radius:36px;padding:28px 44px 34px;text-align:center;color:#fff}
+#stage{position:absolute;left:0;right:0;top:960px;display:flex;justify-content:center}
+#bottom{position:absolute;left:0;top:1110px;width:1080px;height:810px;background:var(--paper)}
+#lab{position:absolute;left:60px;top:40px;display:flex;gap:18px;align-items:center}
+.dot{width:18px;height:18px;border-radius:50%;background:var(--brand)}
+#shotC{left:40px;right:40px;top:120px;height:520px}
+#hl{position:absolute;background:rgba(164,236,134,.35);border-left:10px solid var(--brand);opacity:0}
+#cap{position:absolute;left:60px;right:60px;top:680px}
+.num{font-weight:600;font-size:36px;color:var(--ink);background:var(--brand);border-radius:999px;padding:4px 16px;margin-right:6px}
+</style></head><body>
+<div id="top3d"><img id="f3d"><div id="hook"><div class="box"><div class="h2" style="color:#fff">Na obra <span class="pill" id="p1"><span>e no cronograma.</span></span></div></div></div>
+  <div id="stage"><span class="chip" id="chip"><span class="num" id="cn">01</span><span id="ct"></span></span></div></div>
+<div id="bottom"><div id="lab" class="small"><span class="dot"></span><span id="labt">Cronograma da obra no Pilar</span></div>
+  <div class="shot" id="shotC"><img id="imgC" src="../assets/shots/cronograma.png"><img id="imgO" src="../assets/shots/obra.png" style="opacity:0"></div>
+  <div id="hl"></div>
+  <div id="cap" class="body"><span id="cp1">Cada etapa com responsável, prazo e avanço.</span></div></div>
+<script src="kit.js"></script><script>
+window.DUR=13.4;
+const ST=[[0.6,'01','Locação e baldrame',[1166,1326]],[1.9,'02','Pilares',[1710,1710]],[2.75,'03','Alvenaria',null],[4.9,'04','Vigas e contrapiso',null],[6.1,'05','Reboco e esquadrias',null],[7.3,'06','Telhado',null],[8.55,'07','Paisagismo',null],[9.2,'','Casa pronta.',null]];
+ST.forEach(s=>cue(s[0],'tick')); cue(3.3,'whoosh'); cue(10.4,'end'); cue(0,'start');
+window.render=async(t)=>{
+  const f=Math.min(306,Math.round(t*30)); await setFrame($('f3d'),'../frames3/f'+String(f).padStart(4,'0')+'.jpg');
+  $('hook').style.display=t<2.4?'flex':'none'; pill('p1',t,-1);
+  let cur=-1; ST.forEach((s,i)=>{if(t>=s[0])cur=i;}); const ch=$('chip');
+  if(cur<0||t>=10.4){ch.style.opacity=0;} else { const s=ST[cur]; $('cn').style.display=s[1]?'':'none'; $('cn').textContent=s[1]; $('ct').textContent=s[2]; enter(ch,t,s[0],20,0.35); }
+  const box=$('shotC'); const phase2=t>=3.3; const k2=easeIO(lin(t,3.3,3.8));
+  $('imgC').style.opacity=1-k2; $('imgO').style.opacity=k2;
+  $('labt').textContent=phase2?'Visão da obra no Pilar':'Cronograma da obra no Pilar';
+  const sc=0.75; const fy=1250+330*easeIO(lin(t,1.6,2.2)); const [ox,oy]=shotAt(box,$('imgC'),sc,1300,fy); const ko=easeIO(lin(t,5.5,7.5)); shotAt(box,$('imgO'),0.75,1300,500+380*ko);
+  const hl=$('hl'), bx=box.getBoundingClientRect(); const row=cur>=0&&ST[cur][3]&&!phase2?ST[cur][3]:null;
+  if(row){ const y0=row[0]-36,y1=row[1]+36; hl.style.left=(bx.left+Math.max(0,ox+640*sc))+'px'; hl.style.width=(bx.width-Math.max(0,ox+640*sc))+'px'; hl.style.top=(bx.top-1110+oy+y0*sc)+'px'; hl.style.height=((y1-y0)*sc)+'px'; hl.style.opacity=expo(lin(t,ST[cur][0],ST[cur][0]+0.3)); } else hl.style.opacity=0;
+  $('cp1').textContent=phase2?'O avanço da obra e o alerta de clima, no mesmo lugar.':'Cada etapa com responsável, prazo e avanço.';
+  renderEnd(t,10.4);
+};
+setupEnd().then(()=>{ window.ready=true; });
+</script></body></html>

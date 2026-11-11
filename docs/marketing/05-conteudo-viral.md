@@ -76,6 +76,8 @@ graphics em HyperFrames, telas reais do seed Atrium, narração edge-tts, legend
 | V-30 | Concretagem e chuva | "Concretagem marcada. Olha o céu." | 12 a 15 s | **A** |
 | V-31 | Do croqui à foto | "Croqui, maquete, foto." | 10 a 12 s | **B** |
 | V-32 | Responde o comentário | print do comentário de alguém | 30 a 45 s | **C** |
+| V-33 | Na obra e no cronograma | "Na obra e no cronograma." | 13 s | **A** |
+| V-34 | Telhado ou laje? | "Mesma casa. Qual cobertura?" | 11 s | **A** |
 
 Onze das treze são tipo A. A prioridade de produção segue a ordem da tabela.
 
@@ -343,3 +345,23 @@ Regras de leitura:
    (V-30) fica fora do pago até a licença do Open-Meteo.
 4. TikTok fica no plano depois das 4 semanas só se trouxer pelo menos uma conversa de escritório; se não,
    volta a ser só espelho, sem esforço próprio.
+
+## 6. Produzido (11/11/2026)
+
+Arquivos gerados pelo kit em [`video/reels-kit/`](./video/reels-kit/README.md) e pelo gerador 3D em
+[`video/planta-vira-casa/`](./video/planta-vira-casa/README.md). Os MP4 ficam fora do repo (peso); o código gera de novo.
+
+| ID | Vídeo | Duração | Observação |
+|---|---|---|---|
+| V-20 | Planta vira casa (9:16, 16:9, sem texto e em loop) | 12,6 s / 14,5 s | revisão técnica da ordem antes de publicar |
+| V-21 | Quiz "Você sabe o nome disso?" | 27,7 s | 8 peças |
+| V-24 | Ache o erro em 5 s | 15 s | porta do banheiro bate no vaso |
+| V-26 | Uma casa. Cinco projetos. (raio-X) | 17,3 s | arquitetura, estrutural, elétrico, hidráulico, sanitário |
+| V-27 | O projeto acabou. E o lucro? | 18,2 s | números da empresa fictícia, com "dados de exemplo" |
+| V-28 | Só uma mudancinha | 19 s | humor + aditivo real |
+| V-30 | Concretagem e chuva | 15,2 s | o Pilar avisa; quem reprograma é o responsável |
+| V-33 | Na obra e no cronograma | 13,4 s | 3D sincronizado com o cronograma real |
+| V-34 | Telhado ou laje? | 11 s | enquete nos comentários |
+| Carrossel | Glossário da obra | 7 slides | baldrame, verga, contraverga, cinta, tesoura |
+| Capas | Uma por Reel | 1080 × 1920 | essencial no centro 3:4 |
+
