@@ -143,7 +143,7 @@ export function MoreSheet({ open, onOpenChange }: MoreSheetProps) {
             badge={pendenciasAgentes?.length ?? 0}
             onClick={closeAnd(() => navigate("/agentes"))}
           />
-          <MoreSheetRow icon={MessageCircleQuestion} label="Como faço?" onClick={closeAnd(abrirAgenteAjuda)} />
+          <MoreSheetRow icon={MessageCircleQuestion} label="Dúvidas" onClick={closeAnd(abrirAgenteAjuda)} />
           <MoreSheetRow icon={HelpCircle} label="Central de ajuda" onClick={closeAnd(() => navigate("/ajuda"))} />
           <MoreSheetRow
             icon={Megaphone}
