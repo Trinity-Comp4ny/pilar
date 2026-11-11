@@ -96,11 +96,9 @@ export function NumerosPropostas({ data }: { data: PainelGestao }) {
       <Numero valor={p.enviadas} rotulo="propostas em 90 dias" onClick={ir} />
       <Numero valor={p.ganhas} rotulo="ganhas" onClick={ir} />
       <Numero valor={p.perdidas} rotulo="perdidas" onClick={ir} />
-      <Numero
-        valor={p.conversaoPct === null ? "sem decisão" : `${p.conversaoPct}%`}
-        rotulo="taxa de conversão"
-        onClick={ir}
-      />
+      {/* Sem proposta decidida (ganha + perdida = 0) o banco devolve null; aqui
+          vira 0%, no mesmo formato dos outros números, em vez de texto no lugar do número. */}
+      <Numero valor={`${p.conversaoPct ?? 0}%`} rotulo="taxa de conversão" onClick={ir} />
     </GradeNumeros>
   );
 }

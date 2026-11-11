@@ -11,15 +11,30 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-11 · Fluxo do projeto vira grafo com dependências e caminho crítico
+
+**Decisão:** a aba Fluxo do projeto passa a funcionar como o grafo de um pipeline de CI: etapas, o que roda em
+paralelo, status, datas previstas e reais, previsão de conclusão projetada pelo andamento real e caminho crítico.
+Disciplinas ganham dependência explícita (fase 2), com a coluna anterior inteira como padrão. Plano em fases na
+SPEC 162.
+
+Contexto: hoje o sócio abre disciplina por disciplina para saber se um atraso empurra a entrega; a lista de
+disciplinas não responde isso. Continua sem biblioteca de grafo (ADR 0020): layout em colunas, desenhado à mão.
+
+**Supera:** o fora de escopo da SPEC 071 ("DAG genérico com dependências arbitrárias") e o da SPEC 051 ("recalcular
+datas futuras quando uma etapa atrasa").
+
+---
+
 ## 2026-11-10 (mais tarde) · Google Drive conectado à Pilar; a Pilar segue sem guardar arquivo
 
 **Decisão:** o escritório conecta o Google Drive dele à Pilar (botão em Configurações, só admin) e cada projeto
 ganha uma pasta no Drive, com uma subpasta por disciplina, que a equipe navega, alimenta e baixa na aba Arquivos do
 projeto. O arquivo vai do navegador direto para o Google; a Pilar não guarda binário. Escopo `drive.file` (só o que a
-Pilar cria): sem auditoria anual do Google. Detalhe na SPEC 162.
+Pilar cria): sem auditoria anual do Google. Detalhe na SPEC 163.
 
 Contexto: na reunião com a VRZ o sócio pediu para ver e gerenciar as pastas do Drive dentro da Pilar; colar link já
-existe e não basta. Guardar os arquivos na Pilar (opção C da SPEC 162) ficou para depois.
+existe e não basta. Guardar os arquivos na Pilar (opção C da SPEC 163) ficou para depois.
 
 **Supera:** nada; confirma a de 2026-07-30 (a Pilar não hospeda binário) e acrescenta a integração.
 

@@ -1,4 +1,4 @@
-/** Regras puras das pastas do projeto no Drive (SPEC 162). */
+/** Regras puras das pastas do projeto no Drive (SPEC 163). */
 import { nomeLimpo } from "../_shared/google-drive.ts";
 
 /**

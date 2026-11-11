@@ -12,7 +12,7 @@ import { conectarGoogleDrive, desconectarDrive } from "@/lib/googleDrive";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { formatDateTime } from "@/lib/format";
 
-// Integrações da empresa (SPEC 162). Hoje: Google Drive, para os arquivos dos projetos.
+// Integrações da empresa (SPEC 163). Hoje: Google Drive, para os arquivos dos projetos.
 export function IntegracoesPanel() {
   const { isAdmin } = usePermissions();
   const queryClient = useQueryClient();

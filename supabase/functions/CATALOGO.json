@@ -78,11 +78,11 @@
   },
   "google-drive": {
     "dominio": "integracoes",
-    "descricao": "Arquivos do projeto no Google Drive da empresa: pasta por projeto e disciplina, listar, criar pasta, envio direto ao Google, baixar e lixeira (SPEC 162)."
+    "descricao": "Arquivos do projeto no Google Drive da empresa: pasta por projeto e disciplina, listar, criar pasta, envio direto ao Google, baixar e lixeira (SPEC 163)."
   },
   "google-drive-oauth": {
     "dominio": "integracoes",
-    "descricao": "Conecta e desconecta o Google Drive da empresa (OAuth, escopo drive.file, token cifrado; só admin) (SPEC 162)."
+    "descricao": "Conecta e desconecta o Google Drive da empresa (OAuth, escopo drive.file, token cifrado; só admin) (SPEC 163)."
   },
   "guardiao-margem-cron": {
     "dominio": "jobs",

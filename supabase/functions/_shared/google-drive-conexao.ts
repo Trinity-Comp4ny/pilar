@@ -1,5 +1,5 @@
 /**
- * Conexão da empresa com o Google Drive (SPEC 162): lê a config do ambiente e entrega um
+ * Conexão da empresa com o Google Drive (SPEC 163): lê a config do ambiente e entrega um
  * token de acesso a partir do refresh token cifrado em google_drive_conexoes.
  */
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";

@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { mensagemDaFunction } from "@/lib/edgeError";
 
 /**
- * Google Drive da empresa (SPEC 162): chamadas às Edge Functions `google-drive` e
+ * Google Drive da empresa (SPEC 163): chamadas às Edge Functions `google-drive` e
  * `google-drive-oauth`, e o envio direto do arquivo para o Google.
  */
 

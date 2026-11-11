@@ -38,7 +38,7 @@ export function SettingsDialog() {
   const { isOpen, section, openSettings, closeSettings } = useSettingsModal();
   const queryClient = useQueryClient();
 
-  // Volta do consentimento do Google Drive (SPEC 162): avisa e tira o ?drive= da URL.
+  // Volta do consentimento do Google Drive (SPEC 163): avisa e tira o ?drive= da URL.
   useEffect(() => {
     const retorno = lerRetornoDoDrive();
     if (!retorno) return;

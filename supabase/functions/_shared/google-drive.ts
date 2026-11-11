@@ -1,5 +1,5 @@
 /**
- * Google Drive da empresa (SPEC 162): OAuth, cifra do refresh token e as chamadas à API
+ * Google Drive da empresa (SPEC 163): OAuth, cifra do refresh token e as chamadas à API
  * do Drive que as funções `google-drive-oauth` e `google-drive` usam.
  *
  * Escopo `drive.file`: a Pilar só enxerga o que ela cria ou o que o usuário escolhe por

@@ -10,7 +10,7 @@ export interface StatusDrive {
 
 export const CHAVE_STATUS_DRIVE = ["google-drive-status"] as const;
 
-/** A empresa tem Google Drive conectado? (SPEC 162). Sem o token: só e-mail e data. */
+/** A empresa tem Google Drive conectado? (SPEC 163). Sem o token: só e-mail e data. */
 export function useStatusDrive() {
   return useQuery({
     queryKey: CHAVE_STATUS_DRIVE,

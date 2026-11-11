@@ -1,4 +1,4 @@
--- Google Drive conectado à Pilar (SPEC 162, opção B).
+-- Google Drive conectado à Pilar (SPEC 163, opção B).
 --
 -- O escritório conecta UMA conta Google (em Configurações, só admin). A Pilar usa o
 -- escopo drive.file: enxerga só o que ela mesma cria ou o que o usuário escolhe por ela.
@@ -36,7 +36,7 @@ ALTER TABLE public.google_drive_conexoes ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.google_drive_conexoes FROM PUBLIC, anon, authenticated;
 
 COMMENT ON TABLE public.google_drive_conexoes IS
-  'Conta Google Drive conectada por empresa (SPEC 162). Token cifrado; só service_role.';
+  'Conta Google Drive conectada por empresa (SPEC 163). Token cifrado; só service_role.';
 
 -- 2. State do OAuth ----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.google_drive_oauth_estados (
@@ -95,7 +95,7 @@ CREATE POLICY drive_pastas_select_empresa ON public.drive_pastas
   );
 
 COMMENT ON TABLE public.drive_pastas IS
-  'Pastas do Google Drive ligadas a projeto e disciplina (SPEC 162). Escrita só pela Edge Function google-drive.';
+  'Pastas do Google Drive ligadas a projeto e disciplina (SPEC 163). Escrita só pela Edge Function google-drive.';
 
 -- 4. Status da conexão para a tela ------------------------------------------
 CREATE OR REPLACE FUNCTION public.get_google_drive_status()

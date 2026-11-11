@@ -87,7 +87,7 @@ entrypoint = "./functions/auth-email-hook/index.ts"
 [functions.portal-get-projeto]
 verify_jwt = false
 
-# Retorno do OAuth do Google (SPEC 162): o Google chama sem token da Pilar; os POSTs
+# Retorno do OAuth do Google (SPEC 163): o Google chama sem token da Pilar; os POSTs
 # autenticam o usuário dentro da função.
 [functions.google-drive-oauth]
 verify_jwt = false

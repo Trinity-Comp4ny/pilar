@@ -54,7 +54,7 @@ interface Envio {
 const linkDaPasta = (id: string) => `https://drive.google.com/drive/folders/${id}`;
 
 /**
- * Arquivos do projeto no Google Drive do escritório (SPEC 162): a pasta do projeto, uma
+ * Arquivos do projeto no Google Drive do escritório (SPEC 163): a pasta do projeto, uma
  * subpasta por disciplina, navegar, enviar (arrastar ou escolher), baixar e excluir.
  */
 export function ProjetoArquivosTab({ projetoId, canEdit }: ProjetoArquivosTabProps) {

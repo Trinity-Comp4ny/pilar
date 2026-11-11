@@ -1,5 +1,5 @@
 /**
- * Conexão do Google Drive da empresa (SPEC 162).
+ * Conexão do Google Drive da empresa (SPEC 163).
  *
  *   POST { acao: "iniciar", retorno }  admin: devolve a URL de consentimento do Google.
  *   GET  ?code&state                   retorno do Google: troca o código, cria a pasta

@@ -125,8 +125,8 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
-| `google-drive` | Arquivos do projeto no Google Drive da empresa: pasta por projeto e disciplina, listar, criar pasta, envio direto ao Google, baixar e lixeira (SPEC 162). | app | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
-| `google-drive-oauth` | Conecta e desconecta o Google Drive da empresa (OAuth, escopo drive.file, token cifrado; só admin) (SPEC 162). | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `google-drive` | Arquivos do projeto no Google Drive da empresa: pasta por projeto e disciplina, listar, criar pasta, envio direto ao Google, baixar e lixeira (SPEC 163). | app | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `google-drive-oauth` | Conecta e desconecta o Google Drive da empresa (OAuth, escopo drive.file, token cifrado; só admin) (SPEC 163). | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 
 ## Utilitários
 
