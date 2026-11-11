@@ -125,4 +125,24 @@ describe("useNovaVersao", () => {
     await new Promise((r) => setTimeout(r, 20));
     expect(info).toHaveBeenCalledTimes(1);
   });
+
+  it("sem conseguir ler as novidades, cai no aviso genérico", async () => {
+    servidorRespondendo("sha-mais-nova");
+    rpc.mockRejectedValue(new Error("rede"));
+    renderHook(() => useNovaVersao());
+
+    await waitFor(() => expect(info).toHaveBeenCalledTimes(1));
+    expect(info.mock.calls[0][0]).toBe("Nova versão disponível");
+  });
+
+  it("o botão Recarregar recarrega a página", async () => {
+    servidorRespondendo("sha-mais-nova");
+    const reload = vi.fn();
+    vi.stubGlobal("location", { ...window.location, reload });
+    renderHook(() => useNovaVersao());
+
+    await waitFor(() => expect(info).toHaveBeenCalledTimes(1));
+    info.mock.calls[0][1].action.onClick();
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
 });
