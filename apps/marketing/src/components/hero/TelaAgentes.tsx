@@ -133,10 +133,9 @@ export function TelaAgentes({ ato }: { ato: number }) {
 
                 <div className="mt-3 flex gap-2">
                   <m.span
-                    className="flex h-8 flex-1 items-center justify-center rounded-full text-[11.5px] font-medium"
+                    className="flex h-8 flex-1 items-center justify-center rounded-full text-[11.5px] font-medium text-ink-on-brand"
                     animate={{
-                      backgroundColor: aprovado ? "hsl(var(--positive-strong))" : "hsl(var(--brand-accent))",
-                      color: aprovado ? "#ffffff" : "hsl(var(--text-on-brand))",
+                      backgroundColor: aprovado ? "hsl(var(--brand-accent-soft))" : "hsl(var(--brand-accent))",
                     }}
                     transition={{ duration: 0.3 }}
                   >
