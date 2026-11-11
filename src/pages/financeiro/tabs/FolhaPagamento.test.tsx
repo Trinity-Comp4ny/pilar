@@ -62,7 +62,6 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(2026, 10, 10, 22, 30));
   sb.rpcResultado("get_user_empresa_id", { data: "emp-1", error: null });
-  sb.resultado("projetos.select", { data: [], error: null });
   sb.resultado("folha_pagamento.select", { data: [], error: null });
   sb.resultado("folha_pagamento.insert", { data: null, error: null });
   sb.rpcResultado("get_folha_preview", { data: preview, error: null });
@@ -326,9 +325,8 @@ describe("FolhaPagamento: mês fechado", () => {
   });
 });
 
-// Ordem das leituras de folha_pagamento ao montar: histórico, mês anterior (delta) e
-// por fim a folha do mês (que antes espera a empresa e os projetos). O detalhe do
-// histórico vem depois, ao clicar.
+// Ordem das leituras de folha_pagamento ao montar: a folha do mês, o histórico e o
+// mês anterior (delta). O detalhe do histórico vem depois, ao clicar.
 describe("FolhaPagamento: busca, filtro de status e competência", () => {
   const fechada = [
     { id: "f-ana", pessoa_id: "p-ana", mes: 11, ano: 2026, salario_fixo: 5000, total_receber: 5000, status: "pago" },
@@ -385,6 +383,7 @@ describe("FolhaPagamento: busca, filtro de status e competência", () => {
   it("delta contra o mês anterior aparece quando a pessoa tinha folha", async () => {
     sb.resultado("folha_pagamento.select", [
       { data: [], error: null },
+      { data: [], error: null },
       {
         data: [
           { pessoa_id: "p-ana", total_receber: 5000 },
@@ -392,7 +391,6 @@ describe("FolhaPagamento: busca, filtro de status e competência", () => {
         ],
         error: null,
       },
-      { data: [], error: null },
     ]);
     setup();
     const ana = await linha("Ana Souza");
@@ -426,8 +424,8 @@ describe("FolhaPagamento: histórico", () => {
 
   function prepararHistorico() {
     sb.resultado("folha_pagamento.select", [
-      { data: historico, error: null },
       { data: [], error: null },
+      { data: historico, error: null },
       { data: [], error: null },
       { data: detalheOutubro, error: null },
     ]);
@@ -449,8 +447,8 @@ describe("FolhaPagamento: histórico", () => {
 
   it("erro no histórico avisa", async () => {
     sb.resultado("folha_pagamento.select", [
-      { data: null, error: { message: "x" } },
       { data: [], error: null },
+      { data: null, error: { message: "x" } },
       { data: [], error: null },
     ]);
     setup();
@@ -502,8 +500,8 @@ describe("FolhaPagamento: histórico", () => {
 
   it("competência sem registros mostra vazio; erro ao abrir outra avisa", async () => {
     sb.resultado("folha_pagamento.select", [
-      { data: historico, error: null },
       { data: [], error: null },
+      { data: historico, error: null },
       { data: [], error: null },
       { data: [], error: null },
       { data: null, error: { message: "x" } },
