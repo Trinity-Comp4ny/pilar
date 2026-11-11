@@ -1,0 +1,25 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css"><style>
+body{background:#15110e}
+.half{position:absolute;left:0;width:1080px;height:958px;overflow:hidden}
+.half img{position:absolute;left:0;top:-500px;width:1080px;height:1920px}
+#hA{top:0} #hB{top:962px}
+.lab{position:absolute;left:40px;bottom:36px} 
+#hook{position:absolute;left:0;right:0;top:800px;display:flex;justify-content:center;z-index:5}
+.box{background:rgba(26,26,26,.9);border-radius:36px;padding:30px 46px 36px;text-align:center;color:#fff}
+#poll{position:absolute;left:0;right:0;top:820px;display:flex;justify-content:center;z-index:5}
+</style></head><body>
+<div class="half" id="hA"><img id="iA"><div class="lab"><span class="chip">Telhado cerâmico</span></div></div>
+<div class="half" id="hB"><img id="iB"><div class="lab"><span class="chip">Laje e platibanda</span></div></div>
+<div id="hook"><div class="box"><div class="h2" style="color:#fff">Mesma casa. <span class="pill"><span>Qual cobertura?</span></span></div></div></div>
+<div id="poll"><div class="box"><div class="h2" style="color:#fff" id="pl">Comenta: <span class="pill"><span>telhado ou laje?</span></span></div></div></div>
+<script src="kit.js"></script><script>
+window.DUR=11.0; cue(0,'start'); cue(1.2,'whoosh'); cue(6.0,'ding'); cue(8.2,'end');
+const pad=n=>String(n).padStart(4,'0');
+window.render=async(t)=>{
+  const f=t<1.2?165:Math.min(306,165+Math.round((t-1.2)*30));
+  await Promise.all([setFrame($('iA'),'../frames3/f'+pad(f)+'.jpg'),setFrame($('iB'),'../fr_laje/f'+pad(f)+'.jpg')]);
+  $('hook').style.display=t<1.2?'flex':'none'; $('poll').style.display=t>=6.0&&t<8.2?'flex':'none'; if(t>=6) enter('pl',t,6.0,20);
+  renderEnd(t,8.2);
+};
+setupEnd().then(()=>{ window.ready=true; });
+</script></body></html>

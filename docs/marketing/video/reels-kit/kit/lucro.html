@@ -1,0 +1,53 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css"><style>
+#hook{left:90px;right:90px;top:640px}
+#conta{left:90px;right:90px;top:420px}
+.proj{font-size:34px;color:var(--g6);margin-bottom:40px}
+.ln{display:flex;justify-content:space-between;align-items:baseline;padding:30px 0;border-bottom:2px solid var(--p2);opacity:0}
+.ln .k{font-size:48px;color:var(--ink8)} .ln .v{font-size:62px;font-weight:500;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.ln.sub .k{font-size:38px;padding-left:30px;color:var(--g6)} .ln.sub .v{font-size:46px;color:var(--ink8)}
+#res{margin-top:70px;opacity:0}
+#res .k{font-size:44px;color:var(--ink8)} #res .v{font-size:200px;font-weight:600;letter-spacing:-.05em;color:var(--neg);line-height:1}
+#s2 .t{position:absolute;left:90px;right:90px;top:250px}
+#shotP{left:60px;right:60px;top:700px;height:430px}
+#shotQ{left:60px;right:60px;top:1200px;height:430px}
+#ringP{position:absolute;border:8px solid var(--brand);border-radius:28px;opacity:0}
+</style></head><body>
+<div class="scene" id="s0"><div id="hook" class="abs hook"><div id="h1">O projeto acabou.</div><div id="h2"><span class="pill" id="p1"><span>E o lucro?</span></span></div></div></div>
+<div class="scene" id="s1"><div id="conta" class="abs">
+  <div class="proj" id="pj">Retrofit de hotel · dados de exemplo</div>
+  <div class="ln" id="l1"><span class="k">Contrato</span><span class="v" id="v1">R$ 0</span></div>
+  <div class="ln" id="l2"><span class="k">Horas orçadas</span><span class="v" id="v2">0 h</span></div>
+  <div class="ln sub" id="l3"><span class="k">Instalações (MEP)</span><span class="v">520 h</span></div>
+  <div class="ln sub" id="l4"><span class="k">Climatização (HVAC)</span><span class="v">260 h</span></div>
+  <div class="ln" id="l5"><span class="k">O cliente trocou o forro</span><span class="v">+ horas</span></div>
+  <div id="res"><div class="k">Lucro do projeto</div><div class="v" id="v6">0%</div></div>
+</div></div>
+<div class="scene" id="s2">
+  <div class="t h2" id="t1">O Pilar mostra o número <span class="pill" id="p2"><span>enquanto dá para agir.</span></span></div>
+  <div class="shot" id="shotP"><img id="imgP" src="../assets/shots/projeto.png"></div>
+  <div class="shot" id="shotQ"><img id="imgQ" src="../assets/shots/aditivo.png"></div>
+  <div id="ringP"></div>
+  <div class="abs body" id="t2" style="left:90px;right:90px;top:1690px">E o agente já preparou o aditivo para você aprovar.</div>
+</div>
+<script src="kit.js"></script><script>
+window.DUR=18.2;
+const L=[[2.5,'l1'],[3.7,'l2'],[4.6,'l3'],[5.3,'l4'],[6.4,'l5']];
+L.forEach(([t])=>cue(t,'pop')); cue(7.8,'hit'); cue(9.6,'whoosh'); cue(11.0,'tick'); cue(12.6,'ding'); cue(15.2,'end'); cue(0,'start');
+window.render=async(t)=>{
+  show('s0',t<2.2); show('s1',t>=2.2&&t<9.6); show('s2',t>=9.6&&t<15.2);
+  if(t<2.2){ enter('h1',t,-1); enter('h2',t,-1); pill('p1',t,-1); }
+  if(t>=2.2&&t<9.6){ enter('pj',t,2.2,16); for(const [tm,id] of L) enter(id,t,tm,24);
+    countTo('v1',t,2.5,3.4,0,158000,brl); countTo('v2',t,3.7,4.5,0,780,v=>Math.round(v)+' h');
+    const k=enter('res',t,7.8,30); countTo('v6',t,7.8,8.8,8,-1.5,v=>(v<0?'−':'')+Math.abs(v).toFixed(1).replace('.',',')+'%'); }
+  if(t>=9.6&&t<15.2){ const u=t-9.6; enter('t1',u,-1); pill('p2',u,0.2);
+    const a=expo(lin(u,0.6,1.2)); $('shotP').style.opacity=a; $('shotP').style.transform='translateY('+(1-a)*50+'px)';
+    const kp=easeIO(lin(u,1.2,2.6)); const sc=0.85+0.35*kp; const [ox,oy]=shotAt($('shotP'),$('imgP'),sc,1500+(2420-1500)*kp,470);
+    const r=$('ringP'), bx=$('shotP').getBoundingClientRect(); const cx=bx.left+ox+2590*sc, cy=bx.top+oy+475*sc;
+    r.style.width=(430*sc)+'px'; r.style.height=(190*sc)+'px'; r.style.left=(cx-215*sc)+'px'; r.style.top=(cy-95*sc)+'px'; r.style.opacity=quint(lin(u,2.6,3.0));
+    const b=expo(lin(u,3.0,3.6)); $('shotQ').style.opacity=b; $('shotQ').style.transform='translateY('+(1-b)*50+'px)';
+    const kq=easeIO(lin(u,3.6,5.0)); shotAt($('shotQ'),$('imgQ'),0.9,1250+(2300-1250)*kq,1530+(1600-1530)*kq);
+    enter('t2',u,3.4,20); }
+  renderEnd(t,15.2);
+};
+setupEnd('Você descobre o lucro antes ou depois?').then(()=>{ window.ready=true; });
+</script></body></html>
