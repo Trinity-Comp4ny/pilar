@@ -91,10 +91,7 @@ export function useDadosAvisosPlataforma() {
 export function useAvisosPlataforma(): Aviso[] {
   const { data, dataUpdatedAt } = useDadosAvisosPlataforma();
   return useMemo(
-    () =>
-      data
-        ? montarAvisos(data.incidentes, data.manutencoes, new Date(dataUpdatedAt), data.comunicados)
-        : [],
+    () => (data ? montarAvisos(data.incidentes, data.manutencoes, new Date(dataUpdatedAt), data.comunicados) : []),
     [data, dataUpdatedAt]
   );
 }

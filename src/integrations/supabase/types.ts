@@ -10229,7 +10229,10 @@ export type Database = {
           saldo_plano: number
         }[]
       }
-      dispensar_comunicado: { Args: { p_comunicado_id: string }; Returns: undefined }
+      dispensar_comunicado: {
+        Args: { p_comunicado_id: string }
+        Returns: undefined
+      }
       excluir_empresa_retencao: {
         Args: { p_empresa_id: string; p_motivo: string }
         Returns: undefined
