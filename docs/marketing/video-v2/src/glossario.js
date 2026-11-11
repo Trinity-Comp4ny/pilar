@@ -1,9 +1,9 @@
 // Glossário do escritório de projeto (9:16, 18 s, lofi). Um verbete por vez, como num dicionário:
 // a palavra grande, a classe, a definição curta. Para salvar e mandar para o estagiário.
 import { tl, W, el, pos, scene, cue, finalize, EXPO, background } from "./engine.js";
-import { fechamento } from "./fim-base.js";
+import { assinatura } from "./fim-base.js";
 
-const DUR = 18;
+const DUR = 14.4;
 const BG = background({ glows: [[200, 300, 900, "rgba(190,235,240,.9)"], [900, 1200, 900, "rgba(164,236,134,.5)"]] });
 tl.set(BG.glows, { opacity: 0.6 }, 0);
 const S = scene("glossario", 0, 14.4);
@@ -30,8 +30,9 @@ V.forEach(([w, c, d], i) => {
   cue("typewriter", t + 0.2, { dur: 0.4 });
 });
 const num = el("div", "", S);
-pos(num, 70, 1500, W - 140);
+pos(num, 70, 1400, W - 140);
 Object.assign(num.style, { position: "absolute", font: "500 30px Inter", color: "var(--fg-soft)" });
 num.textContent = "Salve para mandar para o estagiário.";
-fechamento(14.4, DUR);
-finalize(DUR, { style: "lofi", end: 14.4 });
+assinatura(S, 0.2, { y: 1490 });
+// sem cartão final: o último verbete sai e o loop volta para o primeiro
+finalize(DUR, { style: "lofi" });

@@ -1,9 +1,9 @@
 // Mito × fato (9:16, 18 s, animada). Cartões que viram: o mito no escuro, riscado, e o fato no
 // claro. Inspiração: formatos de "verdade ou mentira" que pedem a opinião nos comentários.
 import { tl, W, el, pos, scene, cue, finalize, EXPO, QUINT } from "./engine.js";
-import { fechamento } from "./fim-base.js";
+import { assinatura } from "./fim-base.js";
 
-const DUR = 18;
+const DUR = 14.4;
 const S = scene("mf", 0, 14.4, { theme: "light" });
 S.style.background = "#F7F7F7";
 const tg = el("div", "", S);
@@ -34,5 +34,5 @@ M.forEach(([m, f], i) => {
   cue("ding", t + 2.3);
   tl.to(card, { opacity: 0, y: -40, duration: 0.3 }, t + 4.0);
 });
-fechamento(14.4, DUR);
-finalize(DUR, { style: "quirky", end: 14.4 });
+assinatura(S, 0.2, { y: 1490 });
+finalize(DUR, { style: "quirky" });

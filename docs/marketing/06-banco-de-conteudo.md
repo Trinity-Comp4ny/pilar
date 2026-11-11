@@ -103,6 +103,10 @@ Enquete da maior dor, E16 19.01, E17 Por usuário × Pilar (exemplo), E18 Em uma
 enquete da margem (3), quiz (2), caixinha "pergunte ao fundador", isso ou aquilo (4), bastidor (2,
 com espaço para foto real), contagem 10/7/3/1, novidades, link dos planos.
 
+**Posts-conceito (11/11):** 12 peças de foto + frase em `posts/out/conceito/` (prancha em
+`posts/prancha-conceito.jpg`). Método, legendas e a nova política de fim de vídeo (sem cartão
+fixo) em [08-direcao-criativa.md](./08-direcao-criativa.md). Toda segunda vira post-conceito.
+
 ## 4. Calendário das semanas 6 a 10 (até o lançamento)
 
 As semanas 1 a 5 estão no plano 05. A partir da S6, o ritmo segue 4 posts por semana, com

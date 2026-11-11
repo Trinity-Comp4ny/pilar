@@ -1,9 +1,9 @@
 // ASMR do escritório organizado (9:16, 20 s, sem música: só cliques, teclas e o ar da sala).
 // Close na tela real, câmera lenta, cursor que clica. Quase sem texto: o som é o conteúdo.
 import { tl, W, el, pos, scene, cursor, cue, finalize, EXPO } from "./engine.js";
-import { fechamento } from "./fim-base.js";
+import { assinatura } from "./fim-base.js";
 
-const DUR = 20;
+const DUR = 16.4;
 const S = scene("asmr", 0, 16.4, { theme: "light" });
 S.style.background = "#EDEDED";
 const tag = el("div", "", S);
@@ -46,5 +46,5 @@ passos.forEach(([still, r0, r1, t], i) => {
   if (i) cue("shutter", t);
 });
 cur.hide(15.8);
-fechamento(16.4, DUR);
-finalize(DUR, { style: "foley", end: 16.4 });
+assinatura(S, 0.2, { y: 208, color: "#555" });
+finalize(DUR, { style: "foley" });

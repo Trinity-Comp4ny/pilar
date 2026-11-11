@@ -2,9 +2,9 @@
 // balão de rede social (genérico), e a resposta vem com a tela e o número. Troque o comentário
 // por um real, com autorização de quem escreveu.
 import { tl, W, el, pos, icon, scene, headline, textIn, popIn, lift, background, cue, finalize, EXPO, QUINT } from "./engine.js";
-import { fechamento } from "./fim-base.js";
+import { assinatura } from "./fim-base.js";
 
-const DUR = 18;
+const DUR = 14.4;
 const BG = background({ glows: [[200, 300, 900, "rgba(190,235,240,.9)"], [900, 1200, 900, "rgba(164,236,134,.5)"]] });
 tl.set(BG.glows, { opacity: 0.6 }, 0);
 const S = scene("resp", 0, 14.4);
@@ -37,5 +37,5 @@ pos(q, 60, 1430, 960);
 Object.assign(q.style, { position: "absolute", font: "500 34px Inter", color: "var(--fg-soft)", opacity: 0 });
 q.textContent = "Tem uma pergunta? Comenta que eu respondo em vídeo.";
 tl.to(q, { opacity: 1, duration: 0.4 }, 9.6);
-fechamento(14.4, DUR);
-finalize(DUR, { style: "lofi", end: 14.4 });
+assinatura(S, 0.2, { y: 1520 });
+finalize(DUR, { style: "lofi" });
