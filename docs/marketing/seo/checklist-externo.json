@@ -1,16 +1,20 @@
 {
   "_leia": "Itens de SEO fora do código, atualizados à mão. Entram na nota calculada por apps/marketing/scripts/seo-nota.mjs (ver NOTA_SEO.md). Marque feito: true ou atualize a quantidade e anote a data em 'em'.",
   "searchConsole": {
-    "feito": false,
-    "em": null,
+    "feito": true,
+    "em": "2026-11-11",
     "nota": "Verificar www.pilarsoft.com.br como propriedade de domínio (registro TXT no DNS)."
   },
   "sitemapEnviado": {
-    "feito": false,
-    "em": null,
+    "feito": true,
+    "em": "2026-11-11",
     "nota": "Search Console > Sitemaps > https://www.pilarsoft.com.br/sitemap.xml"
   },
-  "bing": { "feito": false, "em": null, "nota": "Bing Webmaster Tools > Importar do Google Search Console." },
+  "bing": {
+    "feito": false,
+    "em": null,
+    "nota": "Bing Webmaster Tools > Importar do Google Search Console."
+  },
   "conversaoMedida": {
     "feito": false,
     "em": null,
