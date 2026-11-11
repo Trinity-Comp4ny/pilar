@@ -21,6 +21,7 @@ import { UltraAdminRoute } from "./components/UltraAdminRoute";
 import { FeatureRoute } from "./components/FeatureRoute";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { TrialBanner } from "./components/TrialBanner";
+import { AceiteTermosBanner } from "./components/AceiteTermosBanner";
 import { SettingsModalProvider, useSettingsModal, type SettingsSection } from "./contexts/SettingsModalContext";
 import { ValoresOcultosProvider } from "./contexts/ValoresOcultosContext";
 import { MARKETING_URL, isProductionAppHost } from "./lib/marketingSite";
@@ -225,6 +226,7 @@ const App = () => {
                   <ValoresOcultosProvider>
                     <ImpersonationBanner />
                     <TrialBanner />
+                    <AceiteTermosBanner />
                     <Suspense fallback={<EntryVeil />}>
                       <Routes>
                         <Route path="/" element={<ExternalRedirect />} />
