@@ -31,6 +31,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useValoresOcultos } from "@/contexts/ValoresOcultosContext";
 import { ImpersonationPicker } from "@/components/ImpersonationPicker";
 import { NotificationInbox } from "@/components/NotificationInbox";
+import { CommandPaletteHint } from "@/components/CommandPaletteHint";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { usePendenciasAgentes } from "@/hooks/useEscopos";
 import { useModuleNav } from "@/hooks/useModuleNav";
@@ -275,8 +276,9 @@ export function AppSidebar() {
         )}
       </nav>
 
-      {/* Sino + conta */}
+      {/* Busca/comandos (⌘K) + sino + conta */}
       <div className="flex shrink-0 flex-col items-center gap-2 pt-2">
+        <CommandPaletteHint />
         <NotificationInbox />
         <DropdownMenu open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
           <DropdownMenuTrigger asChild>
