@@ -360,6 +360,8 @@ export default function ProjetosKanban() {
   const noProjetos = !loadingProjetos && !projetosError && projetos.length === 0;
   const noResults = !loadingProjetos && !projetosError && projetos.length > 0 && filteredProjetos.length === 0;
 
+  const preencheAltura = activeTab === "quadro" || activeTab === "cronograma";
+
   const toolbar = (
     <FilterBar end={isColecao ? <KanbanSortControl sort={sort} onChange={setSort} keys={sortKeys} /> : undefined}>
       {isColecao && <ViewSwitcher options={VISAO_OPCOES} value={viewMode} onChange={setViewMode} iconOnlyOnMobile />}
@@ -376,8 +378,9 @@ export default function ProjetosKanban() {
   return (
     <PageLayout
       toolbar={toolbar}
-      className={activeTab === "quadro" ? "md:overflow-y-hidden" : undefined}
-      containerClassName={cn("flex flex-col", activeTab === "quadro" && "md:h-full md:min-h-0")}
+      // Quadro e Cronograma cabem na altura da tela e rolam por dentro (colunas, linhas do Gantt).
+      className={preencheAltura ? "md:overflow-y-hidden" : undefined}
+      containerClassName={cn("flex flex-col", preencheAltura && "md:h-full md:min-h-0")}
       header={
         <PageHeader
           title="Projetos"
@@ -534,7 +537,7 @@ export default function ProjetosKanban() {
           />
         </div>
       ) : activeTab === "cronograma" ? (
-        <div>
+        <div className="md:flex md:min-h-0 md:flex-1 md:flex-col">
           <CronogramaProjetosTab
             projetos={filteredProjetos}
             onDatesChange={canEdit ? handleCronogramaProjetoDates : undefined}

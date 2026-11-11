@@ -329,9 +329,9 @@ export function CronogramaProjetosTab({ projetos, onDatesChange, canReorder = fa
   const projetosSemDatas = projetos.filter((p) => !parseDate(p.data_inicio) || !parseDate(p.data_previsao));
 
   return (
-    <div className="space-y-4" style={{ userSelect: isDragging ? "none" : undefined }}>
-      {/* Header */}
-      <Card>
+    // Desktop: o Gantt ocupa a altura que sobra e rola por dentro (era `100svh - 420px`).
+    <div className="flex flex-col gap-4 md:min-h-0" style={{ userSelect: isDragging ? "none" : undefined }}>
+      <Card className="shrink-0">
         <CardContent className="p-4">
           <div className="flex flex-col gap-3">
             {/* Title + zoom controls: título e controles empilham em mobile
@@ -406,7 +406,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange, canReorder = fa
       </Card>
 
       {projetosSemDatas.length > 0 && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-warning-soft border border-warning-mid-border text-warning-strong text-xs">
+        <div className="flex shrink-0 items-center gap-2 px-3 py-2 rounded-lg bg-warning-soft border border-warning-mid-border text-warning-strong text-xs">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
           <span>
             {projetosSemDatas.length} projeto{projetosSemDatas.length > 1 ? "s" : ""} sem data de início ou previsão:{" "}
@@ -443,9 +443,9 @@ export function CronogramaProjetosTab({ projetos, onDatesChange, canReorder = fa
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <div className="flex items-start max-h-[calc(100svh-420px)] overflow-y-auto">
+        <Card className="md:flex md:min-h-0 md:flex-col">
+          <CardContent className="p-0 md:flex md:min-h-0 md:flex-col">
+            <div className="flex items-start max-h-[calc(100svh-420px)] overflow-y-auto md:max-h-none md:min-h-0">
               <CronogramaColunaProjetos
                 rows={rows}
                 isMobile={isMobile}
@@ -723,7 +723,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange, canReorder = fa
       )}
 
       {/* Legend */}
-      <div className="flex items-center justify-center flex-wrap gap-4 text-xs text-muted-foreground">
+      <div className="flex shrink-0 items-center justify-center flex-wrap gap-4 text-xs text-muted-foreground">
         {Object.entries(STATUS_BAR_COLORS).map(([status, color]) => (
           <div key={status} className="flex items-center gap-1.5">
             <div className={cn("h-2.5 w-6 rounded-sm", color)} />
