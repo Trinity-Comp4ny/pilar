@@ -82,7 +82,7 @@ def tts_gemini(text):
 
 def tts_google(text):
     key = os.environ["GOOGLE_TTS_API_KEY"]
-    voice = os.environ.get("VOICE_GOOGLE", "pt-BR-Chirp3-HD-Kore")  # feminina
+    voice = os.environ.get("VOICE_GOOGLE", "pt-BR-Chirp3-HD-Leda")  # feminina, escolhida pelo CEO em 2026-11-11
     out = http_json(
         f"https://texttospeech.googleapis.com/v1/text:synthesize?key={key}",
         {"input": {"text": text}, "voice": {"languageCode": "pt-BR", "name": voice},
@@ -90,6 +90,89 @@ def tts_google(text):
         {},
     )
     return base64.b64decode(json.loads(out)["audioContent"]), voice
+
+
+def tts_google_full(says):
+    """Chirp 3 HD com o roteiro inteiro numa chamada só: a entonação emenda de uma fala para a outra
+    (gerar frase a frase soa como leitura). As falas vão separadas por [pause long] e são cortadas
+    de volta nos N-1 silêncios mais longos. Devolve uma lista de WAVs, um por fala."""
+    import io
+    key = os.environ["GOOGLE_TTS_API_KEY"]
+    voice = os.environ.get("VOICE_GOOGLE", "pt-BR-Chirp3-HD-Leda")
+    out = http_json(
+        f"https://texttospeech.googleapis.com/v1/text:synthesize?key={key}",
+        {"input": {"markup": " [pause long] ".join(says)}, "voice": {"languageCode": "pt-BR", "name": voice},
+         "audioConfig": {"audioEncoding": "LINEAR16", "sampleRateHertz": SR}},
+        {},
+    )
+    with wave.open(io.BytesIO(base64.b64decode(json.loads(out)["audioContent"]))) as w:
+        sr = w.getframerate()
+        x = np.frombuffer(w.readframes(w.getnframes()), dtype="<i2")
+    win = int(0.02 * sr)
+    rms = np.sqrt(np.mean((x[: len(x) // win * win].astype(np.float32).reshape(-1, win) / 32768) ** 2, axis=1))
+    quiet = rms < max(0.004, rms.max() * 0.03)
+    runs, i = [], 0
+    while i < len(quiet):
+        if quiet[i]:
+            j = i
+            while j < len(quiet) and quiet[j]:
+                j += 1
+            if i > 0 and j < len(quiet):
+                runs.append((j - i, i, j))
+            i = j
+        else:
+            i += 1
+    # cada fronteira entre falas cai na pausa que melhor combina com a posição esperada (proporcional ao
+    # número de letras, contando só o tempo de fala) e com a duração da pausa; programação dinâmica mantém a ordem
+    K, cand = len(says) - 1, [(n * 0.02, a * 0.02, b) for n, a, b in sorted(runs, key=lambda r: r[1]) if n * 0.02 >= 0.25]
+    if len(cand) < K:
+        raise RuntimeError(f"só achei {len(cand)} pausas para {len(says)} falas")
+    # posição esperada de cada fronteira: a duração de cada fala gerada sozinha (mesma voz, ritmo quase igual)
+    # mais a média das pausas entre falas
+    def dur_fala(raw):
+        with wave.open(io.BytesIO(raw)) as w2:
+            y = np.frombuffer(w2.readframes(w2.getnframes()), dtype="<i2")
+        e = np.sqrt(np.mean((y[: len(y) // win * win].astype(np.float32).reshape(-1, win) / 32768) ** 2, axis=1))
+        on = np.nonzero(e >= max(0.004, e.max() * 0.03))[0]
+        return (on[-1] - on[0] + 1) * 0.02 if len(on) else 0.0
+    sozinhas = [dur_fala(tts_google(s_)[0]) for s_ in says]
+    pausa = max(0.0, (len(x) / sr - sum(sozinhas)) / K)
+    esp = list(np.cumsum(sozinhas)[:-1] + pausa * (np.arange(K) + 0.5))
+    st = [t + n / 2 for n, t, _ in cand]
+    INF = 1e9
+    M = len(cand)
+    dp = [[INF] * M for _ in range(K)]
+    bk = [[-1] * M for _ in range(K)]
+    for k in range(K):
+        best, bi = (0.0, -1) if k == 0 else (INF, -1)
+        for m in range(M):
+            if k and m and dp[k - 1][m - 1] < best:
+                best, bi = dp[k - 1][m - 1], m - 1
+            if best >= INF:
+                continue
+            dp[k][m] = best + abs(st[m] - esp[k]) - 0.8 * min(cand[m][0], 2.0)
+            bk[k][m] = bi
+    m = min(range(M), key=lambda j: dp[K - 1][j])
+    esc = []
+    for k in range(K - 1, -1, -1):
+        esc.append(m)
+        m = bk[k][m]
+    cuts = sorted(int((cand[j][1] + cand[j][0] / 2) * sr) for j in esc)
+    edges = [0] + cuts + [len(x)]
+    wavs = []
+    for a, b in zip(edges, edges[1:]):
+        # tira o silêncio das pontas (a pausa entre falas é do roteiro, campo "gap"), com 80 ms de folga
+        fa, fb = a // win, min(b // win, len(quiet))
+        while fa < fb and quiet[fa]:
+            fa += 1
+        while fb > fa and quiet[fb - 1]:
+            fb -= 1
+        a, b = max(a, fa * win - int(0.08 * sr)), min(b, fb * win + int(0.08 * sr))
+        buf = io.BytesIO()
+        with wave.open(buf, "wb") as w:
+            w.setnchannels(1); w.setsampwidth(2); w.setframerate(sr); w.writeframes(x[a:b].tobytes())
+        wavs.append(buf.getvalue())
+    return wavs, voice
 
 
 def tts_elevenlabs(text, prev="", nxt=""):
@@ -204,13 +287,20 @@ def main():
     t = script.get("lead", 0.5)
     lines, voice_name = [], provider
     lines_in = script["lines"]
+    ckey = lambda say: hashlib.sha1(f"{provider}|{os.environ.get('VOICE_' + provider.upper(), '')}|{os.environ.get('KOKORO_SPEED', '')}|fon3|{say}".encode()).hexdigest()[:16]
+    if provider == "google" and os.environ.get("GOOGLE_PER_LINE") != "1":
+        says = [ln.get("say", ln["text"]) for ln in lines_in]
+        if not all((cache / f"{ckey('full|' + s)}.wav").exists() for s in says):
+            wavs, voice_name = tts_google_full(says)
+            for s_, w_ in zip(says, wavs):
+                (cache / f"{ckey('full|' + s_)}.wav").write_bytes(w_)
     for idx, ln in enumerate(lines_in):
         dst = out / f"{ln['id']}.wav"
         if provider == "manual":
             raw = (manual / f"{ln['id']}.wav").read_bytes()
         else:
             say = ln.get("say", ln["text"])
-            key = hashlib.sha1(f"{provider}|{os.environ.get('VOICE_' + provider.upper(), '')}|{os.environ.get('KOKORO_SPEED', '')}|fon3|{say}".encode()).hexdigest()[:16]
+            key = ckey(("full|" if provider == "google" and os.environ.get("GOOGLE_PER_LINE") != "1" else "") + say)
             hit = cache / f"{key}.wav"
             if hit.exists():
                 raw = hit.read_bytes()

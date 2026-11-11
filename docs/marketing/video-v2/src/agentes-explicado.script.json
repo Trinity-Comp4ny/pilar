@@ -6,12 +6,14 @@
     {
       "id": "l01",
       "text": "Lançar um pagamento. Montar um aditivo. Resumir a semana.",
-      "gap": 0.26
+      "gap": 0.26,
+      "say": "Lançar um pagamento... montar um aditivo... resumir a semana."
     },
     {
       "id": "l02",
       "text": "É trabalho que toma horas do sócio, e não é engenharia.",
-      "gap": 0.45
+      "gap": 0.45,
+      "say": "É trabalho que toma horas do sócio. E não é engenharia."
     },
     {
       "id": "l03",
@@ -25,8 +27,8 @@
     },
     {
       "id": "l05",
-      "text": "Você conta como falaria: recebi 128 mil do centro cirúrgico, primeira de três parcelas.",
-      "say": "Você conta como falaria: recebi cento e vinte e oito mil do centro cirúrgico, primeira de três parcelas.",
+      "text": "Você conta do jeito que falaria: recebi 128 mil do centro cirúrgico, primeira parcela de três.",
+      "say": "Você conta do jeito que falaria. Tipo: recebi cento e vinte e oito mil do centro cirúrgico, primeira parcela de três.",
       "gap": 0.26
     },
     {
@@ -46,8 +48,9 @@
     },
     {
       "id": "l09",
-      "text": "O mesmo vale para o aditivo: o projeto passou do orçamento de horas, e a Pilar monta o aditivo citando as despesas de cada valor.",
-      "gap": 0.38
+      "text": "O mesmo vale para o aditivo: o projeto passou das horas previstas, e a Pilar monta o aditivo com a conta de cada valor.",
+      "gap": 0.38,
+      "say": "O mesmo vale para o aditivo: o projeto passou das horas previstas, e a Pilar monta o aditivo com a conta de cada valor."
     },
     {
       "id": "l10",
