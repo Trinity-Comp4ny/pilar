@@ -19,7 +19,7 @@ const h = vi.hoisted(() => ({
   invoke: vi.fn(),
   calls: [] as ChainQuery[],
   detalhe: {} as Record<string, unknown>,
-  perm: { isAdmin: true, edit: true, entregas: true },
+  perm: { isAdmin: true, edit: true, entregas: true, role: "admin" },
   requireAal2: vi.fn(),
   invitePortal: vi.fn(),
   resetPortalPassword: vi.fn(),
@@ -53,8 +53,13 @@ vi.mock("@/hooks/useClientes", () => ({
 vi.mock("@/hooks/usePermissions", () => ({
   usePermissions: () => ({
     isAdmin: h.perm.isAdmin,
+    role: h.perm.role,
     can: (feature: string) => (feature === "portal_cliente" ? h.perm.entregas : h.perm.edit),
   }),
+}));
+vi.mock("@/components/portal/AcessoPortalDialog", () => ({
+  AcessoPortalDialog: ({ open, clienteEmail }: { open: boolean; clienteEmail?: string }) =>
+    open ? <div role="dialog">acesso-portal:{clienteEmail || "sem-email"}</div> : null,
 }));
 vi.mock("@/hooks/useRequireAal2", () => ({ useRequireAal2: () => h.requireAal2 }));
 vi.mock("@/hooks/useRecentes", () => ({ useRecentes: () => ({ registrar: h.registrar }) }));
@@ -171,7 +176,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   h.calls.length = 0;
   h.detalhe = detalhe();
-  h.perm = { isAdmin: true, edit: true, entregas: true };
+  h.perm = { isAdmin: true, edit: true, entregas: true, role: "admin" };
   h.mobile = false;
   h.requireAal2.mockResolvedValue(true);
   h.invoke.mockResolvedValue({ data: {}, error: null });
@@ -204,19 +209,19 @@ describe("ClienteDetalhePage: estados", () => {
     expect(screen.getByText("Banco Seed")).toBeInTheDocument();
   });
 
-  it("sem email nem telefone mostra 'Não informado' e não oferece portal", () => {
+  it("sem email nem telefone mostra 'Não informado' e ainda oferece o portal", () => {
     h.detalhe = detalhe({ cliente: { ...ANA, email: "", contato: "", contas_bancarias: [], tipo_nf: "outro" } });
     renderPagina();
     expect(screen.getAllByText("Não informado")).toHaveLength(2);
     expect(screen.getByText("outro")).toBeInTheDocument();
-    expect(screen.getByText("Cadastre um email para criar acesso ao portal.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Criar acesso ao portal" })).toBeInTheDocument();
     expect(screen.queryByText("Contas Bancárias")).not.toBeInTheDocument();
   });
 });
 
 describe("ClienteDetalhePage: ações do cabeçalho", () => {
   it("sem permissão de edição nem admin não há ações nem portal", () => {
-    h.perm = { isAdmin: false, edit: false, entregas: false };
+    h.perm = { isAdmin: false, edit: false, entregas: false, role: "user" };
     renderPagina();
     expect(screen.queryByRole("button", { name: "Mensagem" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Editar" })).not.toBeInTheDocument();
@@ -298,36 +303,17 @@ describe("ClienteDetalhePage: portal do cliente", () => {
     expect(screen.queryByRole("button", { name: /Criar acesso/ })).not.toBeInTheDocument();
   });
 
-  it("criar acesso confirma e mostra para onde foram as credenciais", async () => {
-    h.invitePortal.mockResolvedValue({ email: "ana@seed.test" });
+  it("criar acesso abre o diálogo de acesso com o e-mail do cadastro", async () => {
     const user = renderPagina();
     await user.click(screen.getByRole("button", { name: "Criar acesso ao portal" }));
-    const dialog = await screen.findByRole("alertdialog");
-    expect(dialog).toHaveTextContent("Ana Lima");
-    await user.click(within(dialog).getByRole("button", { name: "Criar e enviar" }));
-    expect(await screen.findByText(/Acesso criado!/)).toBeInTheDocument();
-    expect(h.invitePortal).toHaveBeenCalledWith({ clienteId: "c1", email: "ana@seed.test" });
-    expect(screen.getByText("Cliente possui acesso ao portal")).toBeInTheDocument();
+    expect(await screen.findByRole("dialog")).toHaveTextContent("acesso-portal:ana@seed.test");
   });
 
-  it("2FA negado não cria acesso", async () => {
-    h.requireAal2.mockResolvedValue(false);
-    const user = renderPagina();
-    await user.click(screen.getByRole("button", { name: "Criar acesso ao portal" }));
-    await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Criar e enviar" }));
-    await waitFor(() => expect(h.requireAal2).toHaveBeenCalled());
-    expect(h.invitePortal).not.toHaveBeenCalled();
-    expect(screen.queryByText(/Acesso criado!/)).not.toBeInTheDocument();
-  });
-
-  it("falha ao criar acesso não mostra sucesso", async () => {
-    h.invitePortal.mockRejectedValue(new Error("já existe"));
-    const user = renderPagina();
-    await user.click(screen.getByRole("button", { name: "Criar acesso ao portal" }));
-    await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: "Criar e enviar" }));
-    await waitFor(() => expect(h.invitePortal).toHaveBeenCalled());
-    expect(screen.queryByText(/Acesso criado!/)).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Criar acesso ao portal" })).toBeInTheDocument();
+  it("coordenador também cuida do portal", () => {
+    h.perm.isAdmin = false;
+    h.perm.role = "coordenador";
+    renderPagina();
+    expect(screen.getByText("Portal do Cliente")).toBeInTheDocument();
   });
 
   it("com acesso: redefinir senha avisa o email e revogar limpa o aviso", async () => {
@@ -458,7 +444,7 @@ describe("ClienteDetalhePage: abas", () => {
   });
 
   it("entregas: sem permissão do portal não oferece nova entrega", async () => {
-    h.perm = { isAdmin: false, edit: true, entregas: false };
+    h.perm = { isAdmin: false, edit: true, entregas: false, role: "user" };
     const user = renderPagina();
     await user.click(aba(/Entregas/));
     await user.click(screen.getByRole("button", { name: /Casa Ipê/ }));
