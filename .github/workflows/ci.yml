@@ -571,6 +571,19 @@ jobs:
           # "1" regrava as referências da regressão visual em vez de comparar. Só
           # ligar num PR para atualizar a referência (e2e/visual/README.md).
           E2E_VISUAL_ATUALIZAR: ""
+      # TEMPORÁRIO (PR #809): imprime a captura nova de projeto-detalhe no log, para
+      # quem não alcança o storage de artifacts copiar a referência. Sai no commit seguinte.
+      - name: Captura nova de projeto-detalhe no log (temporário)
+        if: ${{ !cancelled() && matrix.shard == 1 }}
+        run: |
+          f=$(find test-results -name 'projeto-detalhe-actual.png' 2>/dev/null | sort | tail -1)
+          [ -n "$f" ] || { echo "sem captura nova"; exit 0; }
+          echo "PNG_ARQUIVO $f"
+          echo "PNG_SHA256 $(sha256sum "$f" | cut -d' ' -f1)"
+          echo "PNG_INICIO"
+          base64 -w 0 "$f" | fold -w 1000
+          echo
+          echo "PNG_FIM"
       - name: Referências da regressão visual
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: ${{ !cancelled() && matrix.shard == 1 }}
