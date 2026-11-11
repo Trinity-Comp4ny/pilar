@@ -94,3 +94,18 @@ export function formatDateTime(iso: string | null | undefined): string {
     minute: "2-digit",
   });
 }
+
+/** Tamanho de arquivo em pt-BR: "850 KB", "12,4 MB", "1,2 GB". Vazio vira "-". */
+export function formatBytes(bytes: number | string | null | undefined): string {
+  const n = Number(bytes);
+  if (bytes == null || bytes === "" || !Number.isFinite(n) || n < 0) return "-";
+  if (n < 1024) return `${n} B`;
+  const unidades = ["KB", "MB", "GB", "TB"];
+  let v = n / 1024;
+  let i = 0;
+  while (v >= 1024 && i < unidades.length - 1) {
+    v /= 1024;
+    i++;
+  }
+  return `${v.toLocaleString("pt-BR", { maximumFractionDigits: v < 10 ? 1 : 0 })} ${unidades[i]}`;
+}

@@ -11,6 +11,7 @@ import {
   GitBranch,
   History,
   MessageSquare,
+  FolderOpen,
 } from "lucide-react";
 import { PageTabs } from "@/components/PageSlots";
 import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
@@ -36,6 +37,7 @@ import { useFluxosDisciplinas } from "@/hooks/useFluxosDisciplinas";
 import { EmptyState } from "@/components/EmptyState";
 import { AplicarFluxoDialog } from "./AplicarFluxoDialog";
 import { ProjetoAtividadesPanel } from "./ProjetoAtividadesPanel";
+import { ProjetoArquivosTab } from "./ProjetoArquivosTab";
 
 interface ProjetoDetailTabsProps {
   projeto: Projeto;
@@ -62,6 +64,7 @@ interface ProjetoDetailTabsProps {
 const PROJETO_TABS: SectionTab[] = [
   { id: "disciplinas", label: "Disciplinas", icon: Layers },
   { id: "atividades", label: "Atividades", icon: MessageSquare },
+  { id: "arquivos", label: "Arquivos", icon: FolderOpen },
   { id: "pagamentos", label: "Pagamentos", icon: DollarSign },
   { id: "escopo", label: "Escopo", icon: ScrollText },
   { id: "historico", label: "Histórico", icon: History },
@@ -122,6 +125,7 @@ export function ProjetoDetailTabs({
     if (h === "escopo") return { tab: "escopo", view: null };
     if (h === "historico") return { tab: "historico", view: null };
     if (h === "atividades") return { tab: "atividades", view: null };
+    if (h === "arquivos") return { tab: "arquivos", view: null };
     return { tab: "disciplinas", view: null };
   };
 
@@ -357,6 +361,10 @@ export function ProjetoDetailTabs({
                 comentarioDestacado={disciplinaDoLink ? null : comentarioDoLink}
               />
             </Card>
+          </TabsContent>
+
+          <TabsContent value="arquivos">
+            {activeTab === "arquivos" && <ProjetoArquivosTab projetoId={projeto.id} canEdit={canEdit} />}
           </TabsContent>
 
           <TabsContent value="pagamentos">

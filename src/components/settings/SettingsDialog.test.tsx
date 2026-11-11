@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render as rtlRender, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactElement } from "react";
 import userEvent from "@testing-library/user-event";
 import { SettingsDialog } from "./SettingsDialog";
 
@@ -24,6 +26,12 @@ vi.mock("./panels/EmpresaPanel", () => ({ EmpresaPanel: () => <div>painel-empres
 vi.mock("./panels/UsoPanel", () => ({ UsoPanel: () => <div>painel-uso</div> }));
 vi.mock("./panels/PagamentoPanel", () => ({ PagamentoPanel: () => <div>painel-pagamento</div> }));
 vi.mock("./panels/PrivacidadePanel", () => ({ PrivacidadePanel: () => <div>painel-privacidade</div> }));
+vi.mock("./panels/IntegracoesPanel", () => ({ IntegracoesPanel: () => <div>painel-integracoes</div> }));
+const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }));
+vi.mock("sonner", () => ({ toast }));
+
+const render = (ui: ReactElement) =>
+  rtlRender(<QueryClientProvider client={new QueryClient()}>{ui}</QueryClientProvider>);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -52,6 +60,23 @@ describe("SettingsDialog", () => {
     h.section = "inexistente";
     render(<SettingsDialog />);
     expect(screen.getByText("painel-conta")).toBeInTheDocument();
+  });
+
+  it("volta do Google com o Drive conectado: avisa e tira o ?drive= da URL", () => {
+    window.history.replaceState(null, "", "/projetos/p1?drive=conectado#arquivos");
+    render(<SettingsDialog />);
+    expect(toast.success).toHaveBeenCalledWith("Google Drive conectado", expect.anything());
+    expect(`${window.location.pathname}${window.location.search}${window.location.hash}`).toBe("/projetos/p1#arquivos");
+  });
+
+  it("volta do Google com erro avisa o erro; sem ?drive= não avisa nada", () => {
+    window.history.replaceState(null, "", "/?drive=erro");
+    render(<SettingsDialog />);
+    expect(toast.error).toHaveBeenCalled();
+    vi.clearAllMocks();
+    render(<SettingsDialog />);
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it("Esc fecha o modal", async () => {

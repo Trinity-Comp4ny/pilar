@@ -3,7 +3,7 @@
 <!-- Gerado por scripts/edge-functions-catalog.mjs a partir de supabase/functions/CATALOGO.json.
      Não editar à mão: edite o CATALOGO.json e rode `node scripts/edge-functions-catalog.mjs`. -->
 
-61 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
+63 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
 migrations) ou origem externa declarada no manifesto. **Login**: `verify_jwt` do `config.toml`
 (JWT aceita a chave anon; "própria" = a função faz a autorização). **Secrets**: lidos direto
 na pasta da função (o que vem de `_shared`, como a chave do Gemini, não aparece).
@@ -120,6 +120,13 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `release-rascunho` | Grava o rascunho das novidades de um release a partir das linhas Novidade: dos commits, chamado pelo GitHub Actions no push em main com token próprio (SPEC 152). | **sem chamador conhecido** | própria | `RELEASE_NOTAS_TOKEN` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `ultra-admin-empresas` | Gestão de empresas pelo ultra admin. | app | JWT |  | sim |
 | `ultra-admin-usuarios` | Gestão de usuários pelo ultra admin. | app | JWT |  | sim |
+
+## Integrações (Google Drive)
+
+| Função | O que faz | Chamada por | Login | Secrets | Teste |
+| --- | --- | --- | --- | --- | --- |
+| `google-drive` | Arquivos do projeto no Google Drive da empresa: pasta por projeto e disciplina, listar, criar pasta, envio direto ao Google, baixar e lixeira (SPEC 163). | app | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `google-drive-oauth` | Conecta e desconecta o Google Drive da empresa (OAuth, escopo drive.file, token cifrado; só admin) (SPEC 163). | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 
 ## Utilitários
 
