@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { monitoring } from "@/lib/monitoring";
+import { supabase } from "@/integrations/supabase/client";
+import { contagemNovidades, lerNovidades, releaseDoSha } from "@/lib/novidades";
 
 /**
  * Avisa quem está com a aba aberta que saiu deploy novo.
@@ -17,6 +19,10 @@ import { monitoring } from "@/lib/monitoring";
  *
  * Nunca recarrega sozinho: quem está no meio de um formulário perderia o que
  * digitou. Só oferece o botão.
+ *
+ * Quando a release do SHA novo já foi publicada (SPEC 152), o aviso diz quantas
+ * novidades vieram; o que mudou aparece depois do recarregar (modal "O que mudou"
+ * ou ponto em Novidades). Sem sessão ou sem release publicada, fica o texto genérico.
  */
 
 const INTERVALO_MS = 15 * 60 * 1000;
@@ -54,6 +60,18 @@ async function releaseDoServidor(): Promise<string | null> {
   }
 }
 
+/** Quantos itens a release publicada deste SHA tem, ou null (sem sessão, sem release, erro). */
+async function itensDaRelease(sha: string): Promise<number | null> {
+  try {
+    const { data, error } = await supabase.rpc("novidades_publicadas");
+    if (error) return null;
+    const release = releaseDoSha(lerNovidades(data).releases, sha);
+    return release && release.itens.length > 0 ? release.itens.length : null;
+  } catch {
+    return null;
+  }
+}
+
 export function useNovaVersao(): void {
   const avisado = useRef(false);
 
@@ -70,8 +88,12 @@ export function useNovaVersao(): void {
       if (cancelado || !remoto || remoto === releaseLocal) return;
 
       avisado.current = true;
-      toast.info("Nova versão disponível", {
-        description: "Recarregue para usar a versão mais recente do Pilar.",
+      const itens = await itensDaRelease(remoto);
+      if (cancelado) return;
+      toast.info(itens ? `Nova versão com ${contagemNovidades(itens)}` : "Nova versão disponível", {
+        description: itens
+          ? "Recarregue para ver o que mudou no Pilar."
+          : "Recarregue para usar a versão mais recente do Pilar.",
         duration: Infinity,
         action: {
           label: "Recarregar",

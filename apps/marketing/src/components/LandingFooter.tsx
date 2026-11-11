@@ -37,6 +37,7 @@ const COLUNAS = [
       { label: "Perguntas frequentes", to: "/faq" },
       { label: "Termos de uso", to: "/termos" },
       { label: "Privacidade", to: "/privacidade" },
+      { label: "Segurança", to: "/seguranca" },
     ],
   },
 ];

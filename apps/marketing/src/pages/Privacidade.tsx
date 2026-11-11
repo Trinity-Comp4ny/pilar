@@ -357,6 +357,13 @@ export function Privacidade() {
             Se um incidente de segurança puder causar risco ou dano relevante a você, avisamos você e a ANPD nos prazos
             da Resolução CD/ANPD nº 15/2024.
           </p>
+          <p>
+            Onde cada fornecedor processa os dados, backup, controle de acesso e como reportar uma vulnerabilidade:{" "}
+            <Link to="/seguranca" className="text-ink underline">
+              Segurança e confiança
+            </Link>
+            .
+          </p>
         </Secao>
 
         <Secao titulo="9. Seus direitos (LGPD, art. 18)">

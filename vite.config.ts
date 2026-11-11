@@ -13,6 +13,10 @@ const SENTRY_RELEASE = process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.SENTRY_R
 // Vercel (build local), cai em "development". Ver ADR 0036.
 const SENTRY_ENVIRONMENT = process.env.VERCEL_ENV ?? process.env.SENTRY_ENV ?? "development";
 
+// Momento do build, mostrado junto do SHA em Configurações > Conta ("Sobre o Pilar"),
+// para o suporte saber de qual deploy o usuário está falando.
+const BUILD_TIME = new Date().toISOString();
+
 // Escreve o SHA do deploy num arquivo que o app busca sem cache pra saber que
 // já existe versão mais nova que a do bundle carregado (ver useNovaVersao).
 // Sem isto, uma aba aberta segue rodando bundle antigo por dias: foi assim que
@@ -131,6 +135,7 @@ export default defineConfig(({ mode }) => ({
   define: {
     __SENTRY_RELEASE__: JSON.stringify(SENTRY_RELEASE),
     __SENTRY_ENVIRONMENT__: JSON.stringify(SENTRY_ENVIRONMENT),
+    __BUILD_TIME__: JSON.stringify(BUILD_TIME),
   },
   // Pré-otimiza os deps que só entram via import() (exportação de relatórios). Sem
   // isto, o Vite os descobre em voo no primeiro uso, re-otimiza o cache e troca os

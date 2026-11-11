@@ -1,5 +1,7 @@
 # Scorecard de maturidade — as 36 boas práticas × estado real do código
 
+> **Atualização 2026-11-10:** parte deste scorecard ficou para trás. Command palette (#9), desfazer em leads e projetos (#4), What's New e central de novidades (#15/#16), freshness (#20) e CHANGELOG (#30) já existem no código. O estado atual e os próximos passos estão em [BACKLOG_PROFISSIONALIZACAO_2026-11.md](./BACKLOG_PROFISSIONALIZACAO_2026-11.md).
+
 ← [voltar ao índice](./README.md) · 2026-08-12 · Status: **diagnóstico, orienta priorização**
 
 Origem: releitura dos três docs de ideias que o Matheus guardou em julho

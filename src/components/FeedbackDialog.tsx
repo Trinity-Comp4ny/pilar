@@ -19,6 +19,8 @@ type FeedbackTipo = "bug" | "sugestao";
 export type FeedbackDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Texto que já entra no campo (ex.: a dúvida que o agente não resolveu, SPEC 155). */
+  mensagemInicial?: string;
 };
 
 /** Espera o modal sumir antes de capturar, senão ele aparece no próprio print. */
@@ -30,7 +32,7 @@ const ESPERA_FECHAR_MODAL_MS = 250;
  * feedback-prints, e avisam o ultra admin no sino. Bug também vai pro Sentry
  * (best-effort) pra ligar ao replay. Sem histórico pro usuário: envia e confirma.
  */
-export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
+export function FeedbackDialog({ open, onOpenChange, mensagemInicial }: FeedbackDialogProps) {
   const { user, profile } = useAuth();
   const [tipo, setTipo] = useState<FeedbackTipo>("bug");
   const [titulo, setTitulo] = useState("");
@@ -40,6 +42,14 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const annotatorRef = useRef<PrintAnnotatorHandle>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Abriu com texto pronto (dúvida vinda do agente): entra no campo, e a pessoa completa.
+  // Ajuste no render ao abrir, sem efeito (padrão do React para estado derivado de prop).
+  const [abertoAntes, setAbertoAntes] = useState(open);
+  if (open !== abertoAntes) {
+    setAbertoAntes(open);
+    if (open && mensagemInicial) setMensagem(mensagemInicial);
+  }
 
   const reset = () => {
     setTipo("bug");

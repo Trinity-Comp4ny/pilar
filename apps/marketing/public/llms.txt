@@ -84,6 +84,10 @@
 
 - [FAQ](https://www.pilarsoft.com.br/faq)
 
+## Segurança
+
+- [Segurança e confiança](https://www.pilarsoft.com.br/seguranca): onde os dados ficam (banco em São Paulo), isolamento por escritório, verificação em duas etapas, backup diário com restauração testada todo mês, exportação e exclusão de dados pela LGPD, página de status e reporte de vulnerabilidade
+
 ## Informações
 
 O Pilar atende escritórios de projeto técnico, de engenharia multidisciplinar e de arquitetura, que vendem projeto por proposta e acompanham ou administram obra por taxa. Não é ERP de construtora nem de incorporadora, e não substitui ferramentas de desenho, cálculo, CAD ou BIM. Os agentes de IA consultam dados reais do escritório e preparam ações (proposta, orçamento, lançamento financeiro); nada é executado sem revisão e aprovação de uma pessoa da equipe.

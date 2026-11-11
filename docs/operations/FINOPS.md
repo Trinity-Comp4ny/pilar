@@ -39,6 +39,12 @@ cobre.
 ## O que já segura o gasto (no código)
 
 - **Build:** `scripts/vercel-ignore.sh` (prévia só com mudança de bundle).
+- **Deploy:** branches `claude/**`, `release/**`, `fix/**` e `dependabot/**` não geram
+  deploy nos dois projetos (`git.deploymentEnabled` nos `vercel.json`). O `ignoreCommand`
+  pula o build, mas o deploy cancelado já foi criado e conta no limite de 100 por dia do
+  Hobby; em 10/11 esse limite estourou só com prévias e barrou o deploy de produção do
+  release. `main` e `staging` seguem com deploy. O antes e depois de PR vem de print
+  local (regra do `CLAUDE.md`), não do link de prévia.
 - **IA:** motor de tokens com teto por empresa e por usuário (SPEC 074, SPEC 094), custo
   estimado gravado por chamada em `ai_token_ledger.custo_estimado`.
 - **Sentry:** `tracesSampleRate` por ambiente, rotas públicas descartadas

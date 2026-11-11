@@ -26,6 +26,23 @@ distribuem os conectores deles.
 
 ---
 
+## 2026-11-10 · Profissionalizar a relação com o usuário: novidades, voz do cliente, ajuda e confiança
+
+**Decisão:** entra no roadmap o bloco de profissionalização da plataforma, com prioridade nesta ordem: "O que mudou"
+no aviso de nova versão + "Você pediu, entregamos" (SPEC 152); faixa de incidente e manutenção no app; central de
+ajuda + assistente de agentes no canto da tela (mesmo motor do `/chat`, com botão que leva à tela); bug zero com
+prazo; NPS com limite de frequência; prévia de recursos opcional. Regra editorial: só vai para o usuário o que muda
+o que ele vê ou faz; infra, refatoração e teste ficam internos.
+
+Contexto: com mais de um escritório, avisar mudança por WhatsApp não escala e o feedback não volta para quem pediu.
+Análise do código + referências globais (Linear, GitHub, Intercom, Canny, Omie) em
+`research/themes/profissionalizacao-saas-referencias.md`.
+
+**Supera:** o adiamento de "What's New", central de novidades e NPS no `SCORECARD_MATURIDADE_2026-08` ("com 1 design
+partner, WhatsApp entrega o mesmo").
+
+---
+
 ## 2026-11-10 · A Pilar vira conector para ChatGPT e Claude (MCP), começando só leitura
 
 **Decisão:** a Pilar ganha um conector MCP para o cliente consultar os dados do escritório de dentro do ChatGPT,

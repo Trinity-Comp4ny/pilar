@@ -73,12 +73,12 @@ beforeEach(() => {
   supabaseFake.respondRpc("listar_clientes_paginado", { data: [ANA, ALFA] });
 });
 
-const abrir = () =>
+const abrir = (url = "/gestao/clientes") =>
   render(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })}
     >
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[url]}>
         <Clientes />
       </MemoryRouter>
     </QueryClientProvider>
@@ -258,6 +258,18 @@ describe("Clientes: permissão", () => {
     for (const b of screen.getAllByRole("button", { name: /Novo cliente/ })) expect(b).toBeDisabled();
     expect(within(linha).queryByRole("button", { name: "Editar cliente" })).not.toBeInTheDocument();
     expect(within(linha).queryByRole("button", { name: "Excluir cliente" })).not.toBeInTheDocument();
+  });
+
+  it("busca rápida: ?new=1 abre o cadastro de novo cliente", async () => {
+    abrir("/gestao/clientes?new=1");
+    expect(await screen.findByRole("heading", { name: "Novo cliente" })).toBeInTheDocument();
+  });
+
+  it("busca rápida: sem permissão de criar não abre o cadastro", async () => {
+    permitido = { create: false };
+    abrir("/gestao/clientes?new=1");
+    await linhaDe("Ana Lima");
+    expect(screen.queryByRole("heading", { name: "Novo cliente" })).not.toBeInTheDocument();
   });
 
   it("sem permissão de criar, o vazio não oferece Novo cliente", async () => {

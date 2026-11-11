@@ -144,6 +144,10 @@ verify_jwt = false
 [functions.feedback-sync]
 verify_jwt = false
 
+# Novidades do release (SPEC 152): chamado pelo GitHub Actions com token próprio, sem JWT.
+[functions.release-rascunho]
+verify_jwt = false
+
 [functions.registro-audio-limpar]
 verify_jwt = false
 

@@ -65,6 +65,11 @@ pelo CEO em 2026-08-18). Encerrado com o CNPJ acima.
 - Aviso dos Termos aos administradores: edge function `aviso-legal-admins` e cartão "Avisos
   legais" na aba Pedidos LGPD do ultra admin (conferir e enviar, sem duplicar quem já recebeu).
 - Banner de cookies com "Recusar" e "Aceitar" do mesmo peso visual (Guia de Cookies da ANPD).
+- Aceite dos Termos v2 dentro do app (2026-11-11): o administrador da conta vê uma faixa
+  ("Agora não" / "Li e aceito") até a vigência (`TERMS_VIGENCIA_ISO` em `src/lib/legalVersions.ts`)
+  e, depois dela, uma janela que só fecha com o aceite. Grava em `terms_acceptances` com source
+  `reaceite`. Membro da equipe não precisa reaceitar. Aviso por e-mail enviado em 2026-11-11.
+  Próxima mudança material: subir `TERMS_VERSION` e `TERMS_VIGENCIA_*` juntos e repetir o aviso.
 - Continua pendente (decisão ou contratação, não código): CNPJ, nome do encarregado, DPAs dos
   fornecedores com cláusulas-padrão da ANPD (Res. 19/2024) e revisão por advogado.
 

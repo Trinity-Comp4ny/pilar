@@ -7,12 +7,14 @@
 # mesma árvore (o topo no momento do release) e faz o mesmo com o main anterior; o intervalo entre os
 # dois é o conteúdo do release. Não depende do corpo do PR (que pode ser escrito à mão).
 # Sai com 3 se a árvore do release não bate com nenhum commit de staging (staging andou depois);
-# quem chama cai no corpo do PR.
+# quem chama cai no corpo do PR. FORMATO troca o formato do git log (padrão %B, só a mensagem);
+# as novidades do release (SPEC 152) usam '%x1e%H%n%B' para saber o commit de cada mensagem.
 set -euo pipefail
 
 release="${1:?commit do release}"
 antes="${2:?main antes do release}"
 staging="${STAGING_REF:-origin/staging}"
+formato="${FORMATO:-%B}"
 
 # Primeiro commit de staging (do mais novo para o mais velho) com a árvore dada. Sem `exit` no awk:
 # fechar o pipe cedo faz o git log morrer com SIGPIPE e o `pipefail` derruba o script.
@@ -25,8 +27,8 @@ fim=$(topo_com_arvore "$(git rev-parse "$release^{tree}")")
 
 inicio=$(topo_com_arvore "$(git rev-parse "$antes^{tree}")")
 if [ -n "$inicio" ]; then
-  git log "$inicio..$fim" --format=%B
+  git log "$inicio..$fim" --format="$formato"
 else
   # Main anterior sem commit de staging equivalente: usa a data dele como corte.
-  git log "$fim" --since="$(git show -s --format=%cI "$antes")" --format=%B
+  git log "$fim" --since="$(git show -s --format=%cI "$antes")" --format="$formato"
 fi

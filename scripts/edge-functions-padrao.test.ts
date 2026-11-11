@@ -43,6 +43,7 @@ const SEM_RATE_LIMIT: Record<string, string> = {
   "pilar-checkout-webhook": "webhook da Asaas, autenticado por token",
   "reconciliar-assinaturas": "cron (cronAutorizado)",
   "registro-audio-limpar": "cron (cronAutorizado)",
+  "release-rascunho": "GitHub Actions por token próprio (cronAutorizado), só grava rascunho de release",
   "resend-webhook": "webhook do Resend, assinatura Svix",
   "retencao-pos-trial": "cron (cronAutorizado)",
   "reverificar-documentos-pendentes": "cron (cronAutorizado)",
