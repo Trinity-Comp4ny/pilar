@@ -21,7 +21,6 @@ import { UltraAdminRoute } from "./components/UltraAdminRoute";
 import { FeatureRoute } from "./components/FeatureRoute";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { TrialBanner } from "./components/TrialBanner";
-import { AceiteTermosBanner } from "./components/AceiteTermosBanner";
 import { SettingsModalProvider, useSettingsModal, type SettingsSection } from "./contexts/SettingsModalContext";
 import { ValoresOcultosProvider } from "./contexts/ValoresOcultosContext";
 import { MARKETING_URL, isProductionAppHost } from "./lib/marketingSite";
@@ -63,6 +62,10 @@ const Pessoas = lazy(() => import("./pages/pessoas"));
 const Metas = lazy(() => import("./pages/metas"));
 const CompanySetup = lazy(() => import("./pages/CompanySetup"));
 const ProfileSetup = lazy(() => import("./pages/ProfileSetup"));
+// Reaceite dos Termos (só admin vê): fora do carregamento inicial, que tem teto de tamanho.
+const AceiteTermosBanner = lazy(() =>
+  import("./components/AceiteTermosBanner").then((m) => ({ default: m.AceiteTermosBanner }))
+);
 const Timesheet = lazy(() => import("./pages/Timesheet"));
 const Chat = lazy(() => import("./pages/chat"));
 const Propostas = lazy(() => import("./pages/propostas"));
@@ -226,7 +229,9 @@ const App = () => {
                   <ValoresOcultosProvider>
                     <ImpersonationBanner />
                     <TrialBanner />
-                    <AceiteTermosBanner />
+                    <Suspense fallback={null}>
+                      <AceiteTermosBanner />
+                    </Suspense>
                     <Suspense fallback={<EntryVeil />}>
                       <Routes>
                         <Route path="/" element={<ExternalRedirect />} />
