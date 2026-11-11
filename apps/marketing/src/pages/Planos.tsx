@@ -1,5 +1,3 @@
-import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
 import { trackCta } from "../analytics";
 import { Reveal } from "../components/Reveal";
 import { IncluidoEmTodos, PlanCards } from "../components/PlanCards";
@@ -48,31 +46,21 @@ export function Planos() {
 
   return (
     <>
-      <section className="relative isolate overflow-hidden px-5 py-16 md:px-10 md:py-24">
+      <section className="relative isolate overflow-hidden px-5 pb-16 pt-24 md:px-10 md:pb-24 md:pt-32">
         <HeroBackdrop />
 
         <div className="relative z-10 mx-auto max-w-6xl">
-          <Reveal variant="down" className="mb-3">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-1.5 text-[13px] text-ink-muted transition-colors hover:text-ink"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" strokeWidth={1.9} />
-              Voltar para a home
-            </Link>
-          </Reveal>
-
           <Reveal variant="up" className="mb-12 max-w-2xl">
-            <h1 className="mb-4 text-[11px] font-medium uppercase leading-snug tracking-[0.16em] text-ink/50">
-              Preço do software de gestão para engenharia e arquitetura
-            </h1>
             <p className="mb-4 text-[58px] font-medium leading-[1.06] tracking-[-0.035em] text-ink max-[1100px]:text-[44px] max-[850px]:text-[32px] max-[420px]:text-[27px]">
               Um preço por escritório. <span className="italic text-ink/45">Sem contar cabeças.</span>
             </p>
-            <p className="text-[15px] leading-relaxed text-ink-soft">
-              Todo plano tem a plataforma inteira. O que muda é quantos projetos, obras e leads você toca ao mesmo tempo
-              e quanto de IA usa no mês. Cartão, PIX ou boleto, sem fidelidade.
-            </p>
+            {/* Sem "voltar para a home": o logo do header já leva ao início, como em
+                toda página. O H1 (frase da busca) abre o parágrafo de apoio. */}
+            <div className="text-[15px] leading-relaxed text-ink-soft">
+              <h1 className="inline font-normal">Preço do software de gestão para engenharia e arquitetura.</h1> Todo
+              plano tem a plataforma inteira. O que muda é quantos projetos, obras e leads você toca ao mesmo tempo e
+              quanto de IA usa no mês. Cartão, PIX ou boleto, sem fidelidade.
+            </div>
           </Reveal>
 
           <div className="mb-6">

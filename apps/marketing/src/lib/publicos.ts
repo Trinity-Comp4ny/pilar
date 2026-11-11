@@ -11,8 +11,6 @@ export type PublicoSlug = "engenharia" | "arquitetura";
 
 export interface Publico {
   slug: PublicoSlug;
-  /** Eyebrow do hero. */
-  rotulo: string;
   /** Title da aba e do Google, sem o " | Pilar". */
   tituloSeo: string;
   descricao: string;
@@ -33,7 +31,6 @@ export interface Publico {
 export const PUBLICOS: Publico[] = [
   {
     slug: "engenharia",
-    rotulo: "Para escritórios de engenharia",
     tituloSeo: "Software de gestão para escritório de engenharia",
     descricao:
       "Software de gestão para escritório de engenharia: proposta por disciplina, prazo de projeto, financeiro e obra no mesmo sistema, com agentes de IA.",
@@ -123,7 +120,6 @@ export const PUBLICOS: Publico[] = [
   },
   {
     slug: "arquitetura",
-    rotulo: "Para escritórios de arquitetura",
     tituloSeo: "Sistema de gestão para escritório de arquitetura",
     descricao:
       "Sistema de gestão para escritório de arquitetura: proposta, etapas do projeto, prazo, financeiro, obra e portal do cliente num lugar só, com agentes de IA.",
