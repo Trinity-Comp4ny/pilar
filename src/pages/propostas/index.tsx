@@ -581,6 +581,7 @@ export default function Propostas() {
   const propostasColumns: ColumnDef<Proposta>[] = [
     {
       key: "titulo",
+      mobile: "title",
       header: "Título",
       getSortValue: (p) => p.titulo,
       cell: (p) => (
@@ -590,9 +591,16 @@ export default function Propostas() {
         </>
       ),
     },
-    { key: "cliente", header: "Cliente/Lead", className: "text-sm", cell: (p) => p.cliente_nome || p.lead_nome || "—" },
+    {
+      key: "cliente",
+      header: "Cliente/Lead",
+      mobile: "subtitle",
+      className: "text-sm",
+      cell: (p) => p.cliente_nome || p.lead_nome || "—",
+    },
     {
       key: "valor_proposto",
+      mobile: "trailing",
       header: "Valor",
       className: "text-sm font-medium",
       getSortValue: (p) => p.valor_proposto ?? 0,
@@ -600,6 +608,7 @@ export default function Propostas() {
     },
     {
       key: "status",
+      mobile: "badge",
       header: "Status",
       align: "center",
       cell: (p) => {
@@ -700,7 +709,7 @@ export default function Propostas() {
     // Tabela preenche a altura que sobra e rola por dentro (era `100svh - 360px`, que deixava
     // ~150 px mortos embaixo num notebook 13"; auditoria de espaço, 2026-11).
     <PageLayout header={header} toolbar={toolbar} density="compact" containerClassName="h-full flex flex-col min-h-0">
-      <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col min-h-0">
+      <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col min-h-0 max-md:border-0 max-md:bg-transparent max-md:shadow-none">
         <CardContent className="flex min-h-0 flex-1 flex-col p-0 pb-4">
           {propostas.length === 0 ? (
             <EmptyState
