@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { AlertTriangle, CalendarClock, Layers, TrendingUp } from "lucide-react";
 import { KPICard } from "@/components/KPICard";
+import { KpiResumo } from "@/components/KpiResumo";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/format";
@@ -46,19 +47,16 @@ export function ProjetosKPIsResumo({ projetos }: { projetos: Projeto[] }) {
   const { can } = usePermissions();
   const stats = useProjetosStats(projetos);
   return (
-    <span className="flex items-center gap-1.5 text-xs text-muted-foreground tabular-nums">
-      <span>{stats.total} ativos</span>
-      <span aria-hidden>·</span>
-      <span className={cn(stats.atrasados > 0 && "font-medium text-danger-strong")}>{stats.atrasados} em atraso</span>
-      <span aria-hidden>·</span>
-      <span>{stats.proximos} entregas em 7 dias</span>
-      {can("financeiro") && (
-        <>
-          <span aria-hidden>·</span>
-          <span>{formatCurrency(stats.valorPipeline, { compact: true })} em pipeline</span>
-        </>
-      )}
-    </span>
+    <KpiResumo
+      itens={[
+        { texto: `${stats.total} ativos` },
+        { texto: `${stats.atrasados} em atraso`, alerta: stats.atrasados > 0 },
+        { texto: `${stats.proximos} entregas em 7 dias` },
+        ...(can("financeiro")
+          ? [{ texto: `${formatCurrency(stats.valorPipeline, { compact: true })} em pipeline` }]
+          : []),
+      ]}
+    />
   );
 }
 
