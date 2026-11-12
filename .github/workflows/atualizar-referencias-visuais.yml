@@ -118,8 +118,34 @@ jobs:
                 commit -m "test(visual): update visual regression baselines" \
                 -m "Regenerated on the CI Linux runner by the atualizar-visual label (PR #$PR)."
             git push origin "HEAD:$BRANCH"
+            NOVO="$(git rev-parse HEAD)"
             # Push com GITHUB_TOKEN não gera evento de PR: o CI do commit novo sai daqui.
-            gh workflow run ci.yml --ref "$BRANCH"
+            # Disparar logo depois do push pegava a branch ainda no commit anterior: o CI
+            # rodava contra as referências velhas e reprovava à toa (PR #816, 11/11). Espera
+            # a API ver o commit novo e confere o SHA do run disparado.
+            for _ in $(seq 1 30); do
+              [ "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$BRANCH" --jq .object.sha)" = "$NOVO" ] && break
+              sleep 2
+            done
+            ultimo_run() {
+              gh run list --workflow ci.yml --branch "$BRANCH" --event workflow_dispatch \
+                --limit 1 --json databaseId,headSha --jq '.[0] // {} | "\(.databaseId // 0) \(.headSha // "")"'
+            }
+            for tentativa in 1 2 3; do
+              antes="$(ultimo_run | cut -d' ' -f1)"
+              gh workflow run ci.yml --ref "$BRANCH"
+              sha=""
+              # Espera o run novo aparecer (id diferente do último) e lê o SHA dele.
+              for _ in $(seq 1 15); do
+                sleep 4
+                read -r id sha <<<"$(ultimo_run)"
+                [ "$id" != "$antes" ] && break
+                sha=""
+              done
+              [ "$sha" = "$NOVO" ] && { echo "CI disparado em $NOVO."; break; }
+              echo "::warning::CI saiu em ${sha:-?}, não em $NOVO (tentativa $tentativa); disparando de novo."
+              sleep 10
+            done
           fi
       - name: Tirar a label
         if: always()
