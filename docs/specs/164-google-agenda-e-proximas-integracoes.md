@@ -1,7 +1,7 @@
 # SPEC: Google Agenda conectado e as próximas integrações
 
 **Data:** 2026-11-12  
-**Status:** Em implementação (fase 1 entregue nesta branch)  
+**Status:** Em implementação (fases 1, 2 e 3 entregues nesta branch)  
 **Autor:** —  
 **Módulo:** tarefas | notificações | portal | projetos
 
@@ -75,14 +75,19 @@ push) e aviso por WhatsApp.
   acesso. Na página do cliente, o cartão do portal mostra quantas pessoas e quais e-mails, com "Gerenciar acessos".
 - O portal não muda: tudo vem da sessão (conta → cliente), então cada pessoa vê os projetos do cliente.
 
-## Fase 3: arquivos sem Drive conectado
+## Fase 3: arquivos sem Drive conectado (como ficou)
 
-- Sem Drive, a aba Arquivos do projeto não fica vazia: mostra links (rótulo + URL), com a marca "o cliente vê" para os
-  que vão ao portal. Os links do cliente aparecem no portal no lugar da pasta.
-- O botão "Conectar Google Drive" fica sempre visível na aba enquanto não houver conexão (para quem não é admin:
-  "peça ao admin").
-- A pasta do cliente no Drive passa a se chamar `Cliente (visível no portal)`, para quem mexe pelo Drive saber que o
-  conteúdo dela aparece para o cliente.
+- **Links na aba Arquivos, com ou sem Drive.** A aba ganha a seção "Links" (endereço + nome opcional) com a chave
+  "O cliente vê no portal", ligada por padrão. Cada link mostra "o cliente vê" ou "só a equipe" e alterna com um
+  toque. São os mesmos links do projeto (`projetos.links`, item ganha `cliente: true`); o que já existia segue só
+  para a equipe.
+- **No portal.** `portal-arquivos` devolve, na raiz, os links marcados para o cliente (só http/https), com ou sem
+  Drive. O bloco "Arquivos do projeto" aparece quando há pasta ou link: links em cima, arquivos do Drive embaixo.
+- **Botão de conectar fixo.** Sem Drive, a aba mostra o cartão "Conecte o Google Drive" (botão para o admin, aviso
+  para os outros) acima dos links, em vez de uma tela vazia.
+- **Pasta do cliente renomeada** para `Cliente (visível no portal)`, para quem mexe pelo Drive saber que o conteúdo
+  aparece para o cliente. As pastas criadas com o nome antigo ("Cliente") são renomeadas na próxima vez que alguém
+  que edita o projeto abre a aba (a Pilar pode renomear o que ela criou, escopo `drive.file`).
 
 ## Integrações sugeridas (para o CEO escolher a próxima)
 

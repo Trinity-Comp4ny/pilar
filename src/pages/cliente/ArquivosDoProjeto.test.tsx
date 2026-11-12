@@ -64,6 +64,27 @@ describe("ArquivosDoProjeto", () => {
     expect(screen.queryByText("Arquivos do projeto")).not.toBeInTheDocument();
   });
 
+  it("sem Drive, mas com links para o cliente: mostra só os links", async () => {
+    h.conteudo.raiz = {
+      pasta: null,
+      itens: [],
+      links: [{ url: "https://wetransfer.com/x", rotulo: "Pranchas aprovadas" }, { url: "https://site.com/" }],
+    };
+    abrir();
+    const link = await screen.findByRole("link", { name: /Pranchas aprovadas/ });
+    expect(link).toHaveAttribute("href", "https://wetransfer.com/x");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(screen.getByRole("link", { name: /site\.com/ })).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+
+  it("com Drive e links: links em cima, arquivos embaixo", async () => {
+    h.conteudo.raiz = { ...(h.conteudo.raiz as object), links: [{ url: "https://site.com/", rotulo: "Modelo 3D" }] };
+    abrir();
+    expect(await screen.findByRole("link", { name: /Modelo 3D/ })).toBeInTheDocument();
+    expect(screen.getByText("planta.pdf")).toBeInTheDocument();
+  });
+
   it("lista, baixa e navega pela subpasta", async () => {
     const user = abrir();
     expect(await screen.findByText("planta.pdf")).toBeInTheDocument();

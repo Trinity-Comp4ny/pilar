@@ -36,10 +36,11 @@ import {
   metadados,
   MIME_PASTA,
   moverParaLixeira,
+  renomear,
 } from "../_shared/google-drive.ts";
 import { acessoDaConexao, ambienteDrive, carregarConexao } from "../_shared/google-drive-conexao.ts";
 import { ACOES_DE_ESCRITA, type AcaoDrive, lerAcao } from "./entrada.ts";
-import { NOME_PASTA_CLIENTE, nomeDaPastaDoProjeto, pastasQueFaltam } from "./pastas.ts";
+import { NOME_PASTA_CLIENTE, NOME_PASTA_CLIENTE_ANTIGO, nomeDaPastaDoProjeto, pastasQueFaltam } from "./pastas.ts";
 
 const log = createLogger("google-drive");
 
@@ -276,7 +277,22 @@ async function pastaDoProjeto(req: Request, svc: SupabaseClient, ctx: Contexto, 
       if (error) await moverParaLixeira(ctx.token, criada.id).catch(() => undefined);
       else pastas.push(linha);
     }
-    // Pasta "Cliente": o que estiver nela aparece no portal do cliente.
+    // Pasta do cliente com o nome antigo ("Cliente"): passa a dizer que aparece no portal.
+    const pastaClienteAntiga = pastas.find((p) => p.para_cliente && p.nome === NOME_PASTA_CLIENTE_ANTIGO);
+    if (pastaClienteAntiga) {
+      try {
+        await renomear(ctx.token, pastaClienteAntiga.pasta_id, NOME_PASTA_CLIENTE);
+        await svc
+          .from("drive_pastas")
+          .update({ nome: NOME_PASTA_CLIENTE })
+          .eq("empresa_id", ctx.empresaId)
+          .eq("pasta_id", pastaClienteAntiga.pasta_id);
+        pastaClienteAntiga.nome = NOME_PASTA_CLIENTE;
+      } catch {
+        // Renomear é cortesia: alguém pode ter mexido na pasta pelo Drive. Tenta de novo depois.
+      }
+    }
+    // Pasta do cliente: o que estiver nela aparece no portal do cliente.
     if (!pastas.some((p) => p.para_cliente)) {
       const criada = await criarPasta(ctx.token, NOME_PASTA_CLIENTE, raiz.pasta_id);
       const linha = {

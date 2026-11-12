@@ -259,6 +259,21 @@ export function moverParaLixeira(token: string, id: string, f: Fetch = fetch): P
   );
 }
 
+/** Renomeia pasta ou arquivo que a Pilar criou (escopo drive.file permite). */
+export function renomear(token: string, id: string, nome: string, f: Fetch = fetch): Promise<ItemDrive> {
+  if (!idDriveValido(id)) throw new ErroGoogle(400, "arquivo inválido");
+  return drive<ItemDrive>(
+    token,
+    `${DRIVE}/files/${id}?fields=${CAMPOS_ITEM}&supportsAllDrives=true`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: nomeLimpo(nome) }),
+    },
+    f
+  );
+}
+
 export async function baixar(token: string, id: string, f: Fetch = fetch): Promise<Response> {
   if (!idDriveValido(id)) throw new ErroGoogle(400, "arquivo inválido");
   // Sem tempo limite curto: arquivo grande leva mais que 15 s para descer.
