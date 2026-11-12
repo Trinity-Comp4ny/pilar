@@ -34,6 +34,8 @@ vi.mock("@/lib/googleDrive", async (orig) => ({
   baixarArquivo: h.baixar,
 }));
 vi.mock("sonner", () => ({ toast: h.toast }));
+// Links têm teste próprio (LinksDoProjeto.test.tsx): aqui só importa que a seção aparece.
+vi.mock("./LinksDoProjeto", () => ({ LinksDoProjeto: () => <section aria-label="Links do projeto" /> }));
 
 import { ProjetoArquivosTab } from "./ProjetoArquivosTab";
 import { ErroDrive, MIME_PASTA } from "@/lib/googleDrive";
@@ -101,11 +103,18 @@ beforeEach(() => {
 });
 
 describe("ProjetoArquivosTab", () => {
-  it("sem Drive: admin conecta; membro vê que depende do admin", async () => {
+  it("sem Drive: o botão de conectar fica fixo e os links continuam na aba", async () => {
     h.status = { conectado: false };
     const user = abrir();
+    expect(screen.getByRole("region", { name: "Links do projeto" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Conectar Google Drive" }));
     expect(h.conectar).toHaveBeenCalled();
+  });
+
+  it("com Drive: os links ficam abaixo da pasta", () => {
+    h.pasta = { data: { raiz, pastas: [raiz] } };
+    abrir();
+    expect(screen.getByRole("region", { name: "Links do projeto" })).toBeInTheDocument();
   });
 
   it("sem Drive e sem ser admin: só o aviso", () => {

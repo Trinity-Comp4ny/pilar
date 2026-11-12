@@ -20,6 +20,8 @@ export interface ConteudoPortal {
   pasta: { id: string } | null;
   caminho?: { id: string; nome: string }[];
   itens: ArquivoPortal[];
+  /** Links que o escritório marcou para o cliente (vêm na raiz, com ou sem Drive). */
+  links?: { url: string; rotulo?: string }[];
 }
 
 const MIME_PASTA = "application/vnd.google-apps.folder";

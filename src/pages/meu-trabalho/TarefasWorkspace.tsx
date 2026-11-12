@@ -132,6 +132,8 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
 
   const chaveVisao = obra ? LS_VISAO_OBRA : LS_VISAO;
   const [visao, setVisao] = useState<Visao>(() => {
+    // Link do aviso de reunião (SPEC 164) abre direto na Agenda.
+    if (!obra && searchParams.get("visao") === "agenda") return "agenda";
     try {
       const v = localStorage.getItem(chaveVisao);
       if (v === "agenda" && !obra) return "agenda";

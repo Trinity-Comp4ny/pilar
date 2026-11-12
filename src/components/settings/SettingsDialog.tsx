@@ -50,6 +50,21 @@ export function SettingsDialog() {
     else toast.error("Não foi possível conectar o Google Drive", { description: "Tente de novo em Configurações." });
   }, [queryClient]);
 
+  // Volta do consentimento do Google Agenda (SPEC 164).
+  useEffect(() => {
+    const retorno = lerRetornoDoDrive("agenda");
+    if (!retorno) return;
+    queryClient.invalidateQueries({ queryKey: ["google-agenda-status"] });
+    queryClient.invalidateQueries({ queryKey: ["google-agenda-eventos"] });
+    queryClient.invalidateQueries({ queryKey: ["google-agenda-calendarios"] });
+    if (retorno === "conectado")
+      toast.success("Google Agenda conectado", {
+        description: "Suas reuniões aparecem na Agenda e a Pilar avisa 30 minutos antes.",
+      });
+    else if (retorno === "negado") toast.info("Conexão com o Google Agenda cancelada");
+    else toast.error("Não foi possível conectar o Google Agenda", { description: "Tente de novo em Configurações." });
+  }, [queryClient]);
+
   const active = SECTIONS.find((s) => s.id === section) ?? SECTIONS[0];
   const Panel = active.Panel;
 

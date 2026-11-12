@@ -316,36 +316,15 @@ describe("ClienteDetalhePage: portal do cliente", () => {
     expect(screen.getByText("Portal do Cliente")).toBeInTheDocument();
   });
 
-  it("com acesso: redefinir senha avisa o email e revogar limpa o aviso", async () => {
-    h.detalhe = detalhe({ portalStatus: { exists: true, email: "ana@seed.test" } });
-    h.resetPortalPassword.mockResolvedValue({ email: "ana@seed.test" });
-    h.revokePortalAccess.mockResolvedValue(undefined);
+  it("com acesso: mostra quem entra e abre o diálogo para gerenciar", async () => {
+    h.detalhe = detalhe({
+      portalStatus: { exists: true, email: "ana@seed.test", emails: ["ana@seed.test", "maria@seed.test"] },
+    });
     const user = renderPagina();
-    await user.click(screen.getByRole("button", { name: "Redefinir senha" }));
-    expect(await screen.findByText(/Senha redefinida!/)).toBeInTheDocument();
-    expect(h.resetPortalPassword).toHaveBeenCalledWith({ clienteId: "c1", nomeCliente: "Ana Lima" });
-    await user.click(screen.getByRole("button", { name: "Revogar" }));
-    await waitFor(() => expect(h.revokePortalAccess).toHaveBeenCalledWith("c1"));
-    await waitFor(() => expect(screen.queryByText(/Senha redefinida!/)).not.toBeInTheDocument());
-  });
-
-  it("2FA negado bloqueia redefinir e revogar; falhas não mostram sucesso", async () => {
-    h.detalhe = detalhe({ portalStatus: { exists: true, email: "ana@seed.test" } });
-    h.requireAal2.mockResolvedValue(false);
-    const user = renderPagina();
-    await user.click(screen.getByRole("button", { name: "Redefinir senha" }));
-    await user.click(screen.getByRole("button", { name: "Revogar" }));
-    await waitFor(() => expect(h.requireAal2).toHaveBeenCalledTimes(2));
-    expect(h.resetPortalPassword).not.toHaveBeenCalled();
-    expect(h.revokePortalAccess).not.toHaveBeenCalled();
-
-    h.requireAal2.mockResolvedValue(true);
-    h.resetPortalPassword.mockRejectedValue(new Error("x"));
-    h.revokePortalAccess.mockRejectedValue(new Error("y"));
-    await user.click(screen.getByRole("button", { name: "Redefinir senha" }));
-    await user.click(screen.getByRole("button", { name: "Revogar" }));
-    await waitFor(() => expect(h.revokePortalAccess).toHaveBeenCalled());
-    expect(screen.queryByText(/Senha redefinida!/)).not.toBeInTheDocument();
+    expect(screen.getByText("2 pessoas com acesso ao portal")).toBeInTheDocument();
+    expect(screen.getByText("ana@seed.test, maria@seed.test")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Gerenciar acessos" }));
+    expect(await screen.findByRole("dialog")).toHaveTextContent("acesso-portal:ana@seed.test");
   });
 });
 

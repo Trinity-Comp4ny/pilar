@@ -1,16 +1,25 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Clock, Send } from "lucide-react";
+import { CheckCircle2, Clock, Copy, Send, ShieldOff, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { FormDialog } from "@/components/FormDialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { PageLoader } from "@/components/motion/PageLoader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useClientes } from "@/hooks/useClientes";
-import { linkDoPortal, useAcessoPortal } from "@/hooks/useAcessoPortal";
+import {
+  type AcessoPortal,
+  chaveAcessosPortal,
+  linkDoPortal,
+  revogarAcessoPortal,
+  useAcessosPortal,
+} from "@/hooks/useAcessoPortal";
 import { useRequireAal2 } from "@/hooks/useRequireAal2";
+import { formatDateTime } from "@/lib/format";
+import { getSafeErrorMessage } from "@/lib/safeError";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -19,14 +28,15 @@ interface AcessoPortalDialogProps {
   onOpenChange: (open: boolean) => void;
   clienteId: string;
   clienteNome: string;
-  /** E-mail do cadastro do cliente; vem preenchido e pode ser trocado na hora. */
+  /** E-mail do cadastro do cliente: vem preenchido no primeiro convite, para o admin conferir. */
   clienteEmail?: string | null;
 }
 
 /**
- * Dá acesso ao portal sem sair da tela: convida, reenvia o convite pendente ou
- * manda um novo acesso. Só admin e coordenador chegam aqui (o botão e as edge
- * functions conferem o papel).
+ * Acessos ao portal do cliente (SPEC 164): um por e-mail, vários por cliente. Lista quem
+ * já entra (ou tem convite pendente), reenvia e revoga cada um, e convida mais gente (a
+ * esposa, o sócio). Só admin e coordenador chegam aqui (o botão e as edge functions
+ * conferem o papel).
  */
 export function AcessoPortalDialog({
   open,
@@ -37,20 +47,33 @@ export function AcessoPortalDialog({
 }: AcessoPortalDialogProps) {
   const queryClient = useQueryClient();
   const requireAal2 = useRequireAal2();
-  const { data: acesso, isLoading } = useAcessoPortal(clienteId, open);
-  const { invitePortal, isInvitingPortal, resetPortalPassword, isResettingPortal } = useClientes({
-    enableListQueries: false,
-  });
-  // null = ainda não mexeu: vale o e-mail do cadastro.
+  const { data: acessos = [], isLoading } = useAcessosPortal(clienteId, open);
+  const { invitePortal, isInvitingPortal, resetPortalPassword } = useClientes({ enableListQueries: false });
+
+  // null = ainda não mexeu: vale a sugestão (e-mail do cadastro, se ninguém usa ainda).
   const [emailDigitado, setEmailDigitado] = useState<string | null>(null);
-  const email = emailDigitado ?? clienteEmail ?? "";
+  const [nome, setNome] = useState("");
+  const [reenviando, setReenviando] = useState<string | null>(null);
+  const [revogar, setRevogar] = useState<AcessoPortal | null>(null);
+  const [revogando, setRevogando] = useState(false);
+
+  const cadastroJaTemAcesso = !!clienteEmail && acessos.some((a) => a.email === clienteEmail.toLowerCase());
+  const sugestao = acessos.length === 0 && clienteEmail && !cadastroJaTemAcesso ? clienteEmail : "";
+  const email = emailDigitado ?? sugestao;
+  const veioDoCadastro = emailDigitado === null && !!sugestao;
+  const emailValido = EMAIL_RE.test(email.trim());
+
+  const limpar = () => {
+    setEmailDigitado(null);
+    setNome("");
+  };
   const fechar = (aberto: boolean) => {
-    if (!aberto) setEmailDigitado(null);
+    if (!aberto) limpar();
     onOpenChange(aberto);
   };
 
   const atualizar = () => {
-    queryClient.invalidateQueries({ queryKey: ["portal-acesso", clienteId] });
+    queryClient.invalidateQueries({ queryKey: chaveAcessosPortal(clienteId) });
     queryClient.invalidateQueries({ queryKey: ["portal-status", clienteId] });
     queryClient.invalidateQueries({ queryKey: ["portal-status-por-cliente"] });
   };
@@ -69,95 +92,182 @@ export function AcessoPortalDialog({
     if (!EMAIL_RE.test(destino)) return;
     if (!(await requireAal2())) return;
     try {
-      const r = await invitePortal({ clienteId, email: destino });
-      // Cliente sem e-mail no cadastro: guarda o que foi digitado, para a próxima vez.
-      if (!clienteEmail) {
+      const r = await invitePortal({ clienteId, email: destino, nome: nome.trim() || undefined });
+      // Cliente sem e-mail no cadastro: guarda o primeiro, para a próxima vez.
+      if (!clienteEmail && acessos.length === 0) {
         await supabase.from("clientes").update({ email: r.email }).eq("id", clienteId);
         queryClient.invalidateQueries({ queryKey: ["clientes"] });
         queryClient.invalidateQueries({ queryKey: ["projeto-detail"] });
       }
-      toast.success("Convite enviado", { description: `${clienteNome} recebe o link em ${r.email}.` });
+      toast.success("Convite enviado", { description: `${nome.trim() || clienteNome} recebe o link em ${r.email}.` });
       atualizar();
-      fechar(false);
+      limpar();
     } catch {
       // erro já mostrado pelo hook
     }
   };
 
-  const reenviar = async () => {
+  const reenviar = async (acesso: AcessoPortal) => {
     if (!(await requireAal2())) return;
+    setReenviando(acesso.id);
     try {
-      const r = await resetPortalPassword({ clienteId, nomeCliente: clienteNome });
-      toast.success("Novo link enviado", { description: `Enviado para ${r.email}.` });
+      const r = await resetPortalPassword({ clienteId, nomeCliente: clienteNome, accountId: acesso.id });
+      toast.success(acesso.status === "ativo" ? "Novo acesso enviado" : "Convite reenviado", {
+        description: `Enviado para ${r.email}.`,
+      });
       atualizar();
-      fechar(false);
     } catch {
       // erro já mostrado pelo hook
+    } finally {
+      setReenviando(null);
     }
   };
 
-  const status = acesso?.status ?? "sem_acesso";
-  const emailValido = EMAIL_RE.test(email.trim());
-
-  const submit = {
-    sem_acesso: { label: "Enviar convite", acao: convidar, disabled: !emailValido },
-    convite_pendente: { label: "Reenviar convite", acao: reenviar, disabled: false },
-    ativo: { label: "Copiar link do portal", acao: copiarLink, disabled: false },
-  }[status];
+  const confirmarRevogar = async () => {
+    if (!revogar) return;
+    if (!(await requireAal2())) return;
+    setRevogando(true);
+    try {
+      await revogarAcessoPortal(revogar.id);
+      toast.success("Acesso revogado", { description: `${revogar.email} não entra mais no portal.` });
+      atualizar();
+      setRevogar(null);
+    } catch (e) {
+      toast.error("Não foi possível revogar o acesso", { description: getSafeErrorMessage(e, "Tente novamente.") });
+    } finally {
+      setRevogando(false);
+    }
+  };
 
   return (
-    <FormDialog
-      open={open}
-      onOpenChange={fechar}
-      title="Acesso ao portal do cliente"
-      description={`${clienteNome} acompanha os projetos dele com o escritório: andamento, entregas e parcelas.`}
-      onSubmit={submit.acao}
-      submitLabel={submit.label}
-      submitDisabled={isLoading || submit.disabled}
-      isPending={isInvitingPortal || isResettingPortal}
-    >
-      {isLoading ? (
-        <PageLoader />
-      ) : status === "sem_acesso" ? (
-        <div className="space-y-2">
-          <Label htmlFor="portal-email">E-mail do cliente</Label>
-          <Input
-            id="portal-email"
-            type="email"
-            autoFocus
-            value={email}
-            onChange={(e) => setEmailDigitado(e.target.value)}
-            placeholder="cliente@email.com"
-          />
-          <p className="text-xs text-muted-foreground">
-            O cliente recebe um link para criar a senha. Ele vê todos os projetos dele neste escritório.
-          </p>
-        </div>
-      ) : status === "convite_pendente" ? (
-        <div className="flex items-start gap-2 rounded-lg border border-warning-mid-border bg-warning-soft px-3 py-2.5 text-sm text-warning-strong">
-          <Clock className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>
-            Convite enviado para <strong>{acesso?.email}</strong>, ainda não aceito. Reenvie se o cliente não achou o
-            e-mail.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <div className="flex items-start gap-2 rounded-lg border border-positive/20 bg-positive/10 px-3 py-2.5 text-sm text-positive-strong">
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>
-              O cliente já acessa o portal com <strong>{acesso?.email}</strong>.
-            </p>
+    <>
+      <FormDialog
+        open={open}
+        onOpenChange={fechar}
+        title="Acesso ao portal do cliente"
+        description={`${clienteNome} acompanha os projetos com o escritório: andamento, entregas e parcelas. Cada pessoa entra com o próprio e-mail e senha.`}
+        onSubmit={convidar}
+        submitLabel="Enviar convite"
+        submitDisabled={isLoading || !emailValido}
+        isPending={isInvitingPortal}
+      >
+        {isLoading ? (
+          <PageLoader />
+        ) : (
+          <div className="space-y-5">
+            {acessos.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-ink">Quem tem acesso</p>
+                  <Button type="button" variant="ghost" size="sm" onClick={copiarLink}>
+                    <Copy className="h-3.5 w-3.5" />
+                    Copiar link do portal
+                  </Button>
+                </div>
+                <ul className="divide-y rounded-lg border" aria-label="Acessos ao portal">
+                  {acessos.map((a) => (
+                    <li key={a.id} className="flex flex-wrap items-center gap-2 px-3 py-2.5">
+                      {a.status === "ativo" ? (
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-positive-strong" aria-label="Acesso ativo" />
+                      ) : (
+                        <Clock className="h-4 w-4 shrink-0 text-warning-strong" aria-label="Convite pendente" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-ink">{a.email}</p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {a.nome && a.nome !== clienteNome ? `${a.nome} · ` : ""}
+                          {a.status === "ativo"
+                            ? a.ultimoAcesso
+                              ? `Último acesso em ${formatDateTime(a.ultimoAcesso)}`
+                              : "Senha criada"
+                            : "Convite enviado, ainda não aceito"}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => reenviar(a)}
+                        loading={reenviando === a.id}
+                        disabled={!!reenviando}
+                        aria-label={`${a.status === "ativo" ? "Enviar novo acesso" : "Reenviar convite"} para ${a.email}`}
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                        {a.status === "ativo" ? "Novo acesso" : "Reenviar"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-danger-strong"
+                        onClick={() => setRevogar(a)}
+                        aria-label={`Revogar o acesso de ${a.email}`}
+                      >
+                        <ShieldOff className="h-3.5 w-3.5" />
+                        Revogar
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-xs text-muted-foreground">
+                  "Novo acesso" troca a senha da pessoa: ela cria outra pelo link do e-mail.
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <p className="flex items-center gap-1.5 text-sm font-medium text-ink">
+                <UserPlus className="h-4 w-4" />
+                {acessos.length ? "Dar acesso a mais alguém" : "Convidar o cliente"}
+              </p>
+              <div className="space-y-1.5">
+                <Label htmlFor="portal-email">E-mail</Label>
+                <Input
+                  id="portal-email"
+                  type="email"
+                  autoFocus={acessos.length === 0}
+                  value={email}
+                  onChange={(e) => setEmailDigitado(e.target.value)}
+                  placeholder="pessoa@email.com"
+                />
+                {veioDoCadastro && (
+                  <p className="text-xs text-muted-foreground">
+                    Puxado do cadastro do cliente. Confira antes de enviar.
+                  </p>
+                )}
+              </div>
+              {acessos.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="portal-nome">Quem é (opcional)</Label>
+                  <Input
+                    id="portal-nome"
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                    placeholder="Ex.: Maria, esposa"
+                    maxLength={200}
+                  />
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                A pessoa recebe um link por e-mail para criar a senha e vê todos os projetos de {clienteNome} neste
+                escritório.
+              </p>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={reenviar} loading={isResettingPortal}>
-              <Send className="mr-1.5 h-3.5 w-3.5" />
-              Enviar novo acesso
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">Novo acesso troca a senha: o cliente cria outra pelo link.</p>
-        </div>
-      )}
-    </FormDialog>
+        )}
+      </FormDialog>
+
+      <ConfirmDialog
+        open={!!revogar}
+        onOpenChange={(aberto) => !aberto && setRevogar(null)}
+        onConfirm={confirmarRevogar}
+        loading={revogando}
+        variant="destructive"
+        title="Revogar este acesso?"
+        description="A pessoa deixa de entrar no portal. Os outros acessos do cliente continuam valendo."
+        itemName={revogar?.email}
+        confirmText="Revogar"
+      />
+    </>
   );
 }

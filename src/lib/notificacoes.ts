@@ -2,13 +2,13 @@
  * Metadados de apresentação das notificações (spec 029). Funções puras e mapas,
  * testáveis sem React: o hook e os componentes só consomem daqui.
  */
-import { Bell, HardHat, Layers, ListTodo, FolderKanban, Wallet, type LucideIcon } from "lucide-react";
+import { Bell, HardHat, Layers, ListTodo, FolderKanban, Video, Wallet, type LucideIcon } from "lucide-react";
 
 // "sistema" saiu da lista (spec 091): nenhum evento no sistema cria notificação com essa
 // categoria, e mantê-la em Preferências fazia parecer que havia algo pra controlar ali. Se um
 // evento de categoria "sistema" existir de novo no futuro, iconeCategoria/rotuloCategoria abaixo
 // seguem cobrindo com fallback (Bell / "Notificação") mesmo sem entrada explícita no mapa.
-export type CategoriaNotificacao = "tarefa" | "projeto" | "disciplina" | "financeiro" | "obra";
+export type CategoriaNotificacao = "tarefa" | "projeto" | "disciplina" | "financeiro" | "obra" | "agenda";
 
 export const CATEGORIAS: readonly CategoriaNotificacao[] = [
   "tarefa",
@@ -16,6 +16,8 @@ export const CATEGORIAS: readonly CategoriaNotificacao[] = [
   "disciplina",
   "financeiro",
   "obra",
+  // Aviso de reunião do Google Agenda, 30 min antes (SPEC 164).
+  "agenda",
 ] as const;
 
 /**
@@ -33,6 +35,7 @@ const CATEGORIA_LABEL: Record<CategoriaNotificacao, string> = {
   disciplina: "Disciplinas",
   financeiro: "Financeiro",
   obra: "Obras",
+  agenda: "Reuniões",
 };
 
 const CATEGORIA_ICON: Record<CategoriaNotificacao, LucideIcon> = {
@@ -41,6 +44,7 @@ const CATEGORIA_ICON: Record<CategoriaNotificacao, LucideIcon> = {
   disciplina: Layers,
   financeiro: Wallet,
   obra: HardHat,
+  agenda: Video,
 };
 
 /**

@@ -38,6 +38,7 @@ import {
 } from "@/lib/googleDrive";
 import { formatBytes, formatDateTime } from "@/lib/format";
 import { getSafeErrorMessage } from "@/lib/safeError";
+import { LinksDoProjeto } from "./LinksDoProjeto";
 
 interface ProjetoArquivosTabProps {
   projetoId: string;
@@ -53,10 +54,54 @@ interface Envio {
 const linkDaPasta = (id: string) => `https://drive.google.com/drive/folders/${id}`;
 
 /**
- * Arquivos do projeto no Google Drive do escritório (SPEC 163): a pasta do projeto, uma
- * subpasta por disciplina, navegar, enviar (arrastar ou escolher), baixar e excluir.
+ * Aba Arquivos do projeto: a pasta no Google Drive do escritório (SPEC 163) e os links do
+ * projeto, que vão ao portal quando marcados (SPEC 164). Sem Drive, ficam os links e o
+ * convite fixo para conectar.
  */
 export function ProjetoArquivosTab({ projetoId, canEdit }: ProjetoArquivosTabProps) {
+  return (
+    <div className="space-y-4">
+      <ArquivosDoDrive projetoId={projetoId} canEdit={canEdit} />
+      <LinksDoProjeto projetoId={projetoId} canEdit={canEdit} />
+    </div>
+  );
+}
+
+/** Convite fixo para conectar o Drive enquanto o escritório não conectou. */
+function ConectarDrive({ isAdmin }: { isAdmin: boolean }) {
+  const [conectando, setConectando] = useState(false);
+  const conectar = async () => {
+    setConectando(true);
+    try {
+      await conectarGoogleDrive();
+    } catch (e) {
+      setConectando(false);
+      toast.error("Não foi possível conectar", { description: getSafeErrorMessage(e, "Tente de novo.") });
+    }
+  };
+  return (
+    <Card>
+      <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:p-5">
+        <FolderOpen className="h-5 w-5 shrink-0 text-muted-foreground" />
+        <div className="min-w-0 flex-1 space-y-0.5">
+          <p className="text-sm font-semibold text-ink">Conecte o Google Drive</p>
+          <p className="text-sm text-muted-foreground">
+            {isAdmin
+              ? "Cada projeto ganha uma pasta no Drive do escritório, uma por disciplina e uma que o cliente vê no portal. A equipe envia e baixa daqui. Enquanto isso, use os links abaixo."
+              : "Os arquivos do projeto aparecem aqui quando o admin do escritório conectar o Google Drive. Enquanto isso, use os links abaixo."}
+          </p>
+        </div>
+        {isAdmin && (
+          <Button variant="brand" onClick={conectar} loading={conectando} className="shrink-0">
+            Conectar Google Drive
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ArquivosDoDrive({ projetoId, canEdit }: ProjetoArquivosTabProps) {
   const { isAdmin } = usePermissions();
   const status = useStatusDrive();
   const conectado = !!status.data?.conectado;
@@ -64,35 +109,7 @@ export function ProjetoArquivosTab({ projetoId, canEdit }: ProjetoArquivosTabPro
 
   if (status.isLoading) return <PageLoader />;
 
-  if (!conectado) {
-    return (
-      <Card>
-        <EmptyState
-          icon={FolderOpen}
-          title="Conecte o Google Drive"
-          description={
-            isAdmin
-              ? "Os arquivos do projeto ficam no Drive do escritório e aparecem aqui, uma pasta por disciplina."
-              : "Os arquivos do projeto aparecem aqui quando o admin do escritório conectar o Google Drive."
-          }
-          action={
-            isAdmin
-              ? {
-                  label: "Conectar Google Drive",
-                  variant: "brand",
-                  onClick: () =>
-                    conectarGoogleDrive().catch((e) =>
-                      toast.error("Não foi possível conectar", {
-                        description: getSafeErrorMessage(e, "Tente de novo."),
-                      })
-                    ),
-                }
-              : undefined
-          }
-        />
-      </Card>
-    );
-  }
+  if (!conectado) return <ConectarDrive isAdmin={isAdmin} />;
 
   if (pasta.isLoading) return <PageLoader label="Abrindo a pasta do projeto" />;
 

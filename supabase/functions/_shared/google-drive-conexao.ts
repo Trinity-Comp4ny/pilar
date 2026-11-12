@@ -10,8 +10,14 @@ export interface AmbienteDrive extends ConfigGoogle {
   siteUrl: string;
 }
 
-/** Config do Google; null quando o ambiente não tem as chaves (a função responde 503). */
-export function ambienteDrive(env: (k: string) => string | undefined = (k) => Deno.env.get(k)): AmbienteDrive | null {
+/**
+ * Config do Google; null quando o ambiente não tem as chaves (a função responde 503).
+ * O mesmo cliente OAuth serve ao Drive e à Agenda (SPEC 164); muda só a função de retorno.
+ */
+export function ambienteDrive(
+  env: (k: string) => string | undefined = (k) => Deno.env.get(k),
+  funcao: "google-drive-oauth" | "google-calendar" = "google-drive-oauth"
+): AmbienteDrive | null {
   const clientId = env("GOOGLE_DRIVE_CLIENT_ID");
   const clientSecret = env("GOOGLE_DRIVE_CLIENT_SECRET");
   const chaveToken = env("GOOGLE_DRIVE_TOKEN_KEY");
@@ -21,7 +27,9 @@ export function ambienteDrive(env: (k: string) => string | undefined = (k) => De
     clientId,
     clientSecret,
     chaveToken,
-    redirectUri: env("GOOGLE_DRIVE_REDIRECT_URI") ?? `${base.replace(/\/$/, "")}/functions/v1/google-drive-oauth`,
+    redirectUri:
+      (funcao === "google-drive-oauth" ? env("GOOGLE_DRIVE_REDIRECT_URI") : env("GOOGLE_AGENDA_REDIRECT_URI")) ??
+      `${base.replace(/\/$/, "")}/functions/v1/${funcao}`,
     // APP_URL é o app; PUBLIC_SITE_URL é o site de marketing (DEPLOY_CHECKLIST).
     siteUrl: (env("APP_URL") ?? "https://app.pilarsoft.com.br").replace(/\/$/, ""),
   };
@@ -57,9 +65,14 @@ export function retornoSeguro(valor: unknown): string {
   return v;
 }
 
-/** Junta `drive=<status>` ao caminho de retorno, preservando a query que já existir. */
-export function urlDeRetorno(siteUrl: string, retorno: string, status: "conectado" | "erro" | "negado"): string {
+/** Junta `drive=<status>` (ou `agenda=`) ao caminho de retorno, preservando a query que já existir. */
+export function urlDeRetorno(
+  siteUrl: string,
+  retorno: string,
+  status: "conectado" | "erro" | "negado",
+  parametro: "drive" | "agenda" = "drive"
+): string {
   const u = new URL(retornoSeguro(retorno), siteUrl);
-  u.searchParams.set("drive", status);
+  u.searchParams.set(parametro, status);
   return u.toString();
 }

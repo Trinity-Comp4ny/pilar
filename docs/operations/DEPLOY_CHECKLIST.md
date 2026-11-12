@@ -50,6 +50,7 @@ Todas as ações que **precisam** ser feitas manualmente (config de dashboards) 
 - [ ] `RESEND_WEBHOOK_SECRET` = o `whsec_...` que o Resend mostra ao criar o webhook (ver seção E-mail)
 - [ ] `APP_URL` = `https://app.pilarsoft.com.br`; `PUBLIC_SITE_URL` = `https://www.pilarsoft.com.br` (assets e fontes do e-mail vêm daqui)
 - [ ] `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET` (credencial OAuth "Aplicativo da Web" do Google Cloud, redirect `https://<projeto>.supabase.co/functions/v1/google-drive-oauth`) e `GOOGLE_DRIVE_TOKEN_KEY` (`openssl rand -base64 32`; trocar a chave invalida as conexões e cada escritório reconecta). Passo a passo na SPEC 163
+- [ ] Google Agenda (SPEC 164): mesma credencial OAuth do Drive, com mais um URI de redirecionamento `https://<projeto>.supabase.co/functions/v1/google-calendar`, a Google Calendar API ativada e os escopos `.../auth/calendar.events` e `.../auth/calendar.calendarlist.readonly` na tela de consentimento (escopos sensíveis: verificação do Google com vídeo, sem CASA). Sem secret novo; os crons `google-agenda` (5 min) e `google-agenda-lembretes` (1 min) usam `CRON_SECRET` e os secrets do vault (`app_supabase_url`, `app_cron_secret`)
 - [ ] NUNCA `EMAIL_DRY_RUN` em staging/prod (só no `.env` local: sem ele e sem chave, `sendEmail` lança de propósito)
 
 ### Database → Backups

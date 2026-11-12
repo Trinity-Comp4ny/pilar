@@ -1,7 +1,8 @@
 /**
- * Arquivos do projeto no portal do cliente (SPEC 163).
+ * Arquivos do projeto no portal do cliente (SPEC 163 e 164).
  *
- *   listar  conteúdo da pasta "Cliente" do projeto (ou de uma subpasta dela)
+ *   listar  conteúdo da pasta do cliente no Drive (ou de uma subpasta dela) e, na raiz,
+ *           os links do projeto marcados para o cliente (valem com ou sem Drive)
  *   baixar  arquivo de dentro dessa árvore; documento do Google sai como PDF
  *
  * Público (verify_jwt = false): o cliente entra com a sessão do portal (session_token),
@@ -20,6 +21,7 @@ import { baixar, ErroGoogle, exportarPdf, listarFilhos, metadados, MIME_PASTA } 
 import { acessoDaConexao, ambienteDrive, carregarConexao } from "../_shared/google-drive-conexao.ts";
 import { lerAcao } from "./entrada.ts";
 import { caminhoAte, dentroDaPastaDoCliente } from "./arvore.ts";
+import { linksDoCliente } from "./links.ts";
 
 const log = createLogger("portal-arquivos");
 
@@ -62,7 +64,7 @@ serve(
     // O projeto precisa ser deste cliente, não só da mesma empresa.
     const { data: projeto } = await svc
       .from("projetos")
-      .select("id")
+      .select("id, links")
       .eq("id", acao.projeto_id)
       .eq("empresa_id", empresaId)
       .eq("cliente_id", clienteId)
@@ -74,8 +76,10 @@ serve(
     const conexao = amb ? await carregarConexao(svc, empresaId) : null;
     const pastas = await pastasDoProjeto(svc, acao.projeto_id);
     const raiz = pastas.find((p) => p.para_cliente);
-    // Sem Drive conectado ou sem pasta do cliente: o portal simplesmente não mostra o bloco.
-    if (!amb || !conexao || !raiz) return jsonResponse({ pasta: null, itens: [] }, 200, req);
+    // Links para o cliente só na raiz (dentro de uma subpasta é só arquivo).
+    const links = acao.acao === "listar" && !acao.pasta_id ? linksDoCliente(projeto.links) : [];
+    // Sem Drive conectado ou sem pasta do cliente: só os links (o bloco some se não houver nada).
+    if (!amb || !conexao || !raiz) return jsonResponse({ pasta: null, itens: [], links }, 200, req);
 
     try {
       const token = await acessoDaConexao(amb, conexao);
@@ -90,7 +94,7 @@ serve(
           .filter((i) => i.mimeType !== MIME_PASTA || dentroDaPastaDoCliente(i.id, raiz.pasta_id, pastas))
           .map(({ id, name, mimeType, size, modifiedTime }) => ({ id, name, mimeType, size, modifiedTime }));
         return jsonResponse(
-          { pasta: { id: pastaId }, caminho: caminhoAte(pastaId, raiz.pasta_id, pastas), itens },
+          { pasta: { id: pastaId }, caminho: caminhoAte(pastaId, raiz.pasta_id, pastas), itens, links },
           200,
           req
         );

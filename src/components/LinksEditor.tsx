@@ -6,6 +6,8 @@ import { ExternalLink, Link2, Plus, X } from "lucide-react";
 export interface LinkItem {
   url: string;
   rotulo?: string;
+  /** Link do projeto que aparece no portal do cliente (SPEC 164). */
+  cliente?: boolean;
 }
 
 interface LinksEditorProps {

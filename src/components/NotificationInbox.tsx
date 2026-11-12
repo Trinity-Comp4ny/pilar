@@ -99,7 +99,9 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
     const link = resolveLink(n);
     if (link) {
       setOpen(false);
-      navigate(link);
+      // Link externo (sala da reunião do Google Agenda, SPEC 164) abre em outra aba.
+      if (/^https:\/\//i.test(link)) window.open(link, "_blank", "noopener,noreferrer");
+      else navigate(link);
     }
   };
 

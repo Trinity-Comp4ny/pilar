@@ -40,7 +40,8 @@ export class ErroDrive extends Error {
 
 export const ehPasta = (item: Pick<ItemDrive, "mimeType">) => item.mimeType === MIME_PASTA;
 
-async function invocar<T>(funcao: string, body: Record<string, unknown>, fallback: string): Promise<T> {
+/** Chama uma Edge Function do Google e devolve o código de erro (`codigo`) junto. */
+export async function invocar<T>(funcao: string, body: Record<string, unknown>, fallback: string): Promise<T> {
   const { data, error } = await supabase.functions.invoke(funcao, { body });
   if (error) {
     let codigo: string | undefined;
@@ -155,12 +156,12 @@ export async function conectarGoogleDrive(
   window.location.assign(url);
 }
 
-/** Lê e tira da URL o `?drive=` que o retorno do Google deixa. */
-export function lerRetornoDoDrive(): "conectado" | "erro" | "negado" | null {
+/** Lê e tira da URL o `?drive=` (ou `?agenda=`) que o retorno do Google deixa. */
+export function lerRetornoDoDrive(parametro: "drive" | "agenda" = "drive"): "conectado" | "erro" | "negado" | null {
   const url = new URL(window.location.href);
-  const v = url.searchParams.get("drive");
+  const v = url.searchParams.get(parametro);
   if (v !== "conectado" && v !== "erro" && v !== "negado") return null;
-  url.searchParams.delete("drive");
+  url.searchParams.delete(parametro);
   window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
   return v;
 }

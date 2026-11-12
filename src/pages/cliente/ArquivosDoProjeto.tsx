@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, Download, File, Folder, FolderOpen } from "lucide-react";
+import { ChevronRight, Download, ExternalLink, File, Folder, FolderOpen, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,8 +11,9 @@ import { getSafeErrorMessage } from "@/lib/safeError";
 import { baixarArquivoPortal, ehPastaPortal, listarArquivosPortal, type ArquivoPortal } from "./portalArquivos";
 
 /**
- * Arquivos que o escritório deixou na pasta "Cliente" do projeto no Google Drive
- * (SPEC 163). Sem Drive conectado ou sem a pasta, o bloco não aparece.
+ * Arquivos que o escritório deixou na pasta do cliente no Google Drive (SPEC 163) e os
+ * links do projeto marcados para o cliente (SPEC 164). Sem nenhum dos dois, o bloco não
+ * aparece.
  */
 export function ArquivosDoProjeto({ projetoId }: { projetoId: string }) {
   const [pastaId, setPastaId] = useState<string | undefined>(undefined);
@@ -23,8 +24,10 @@ export function ArquivosDoProjeto({ projetoId }: { projetoId: string }) {
     retry: false,
   });
 
-  // Na raiz: só mostra o card quando a pasta existe. Dentro de uma subpasta, sempre.
-  if (!pastaId && (consulta.isLoading || consulta.isError || !consulta.data?.pasta)) return null;
+  const links = pastaId ? [] : (consulta.data?.links ?? []);
+  const temPasta = !!consulta.data?.pasta;
+  // Na raiz: só mostra o card quando há pasta ou link. Dentro de uma subpasta, sempre.
+  if (!pastaId && (consulta.isLoading || consulta.isError || (!temPasta && links.length === 0))) return null;
 
   const caminho = consulta.data?.caminho ?? [];
   const baixar = (a: ArquivoPortal) =>
@@ -93,7 +96,26 @@ export function ArquivosDoProjeto({ projetoId }: { projetoId: string }) {
           <p className="text-sm font-semibold text-ink">Arquivos do projeto</p>
         </div>
 
-        {caminho.length > 1 && (
+        {links.length > 0 && (
+          <ul className="space-y-1" aria-label="Links do projeto">
+            {links.map((l, i) => (
+              <li key={`${l.url}-${i}`}>
+                <a
+                  href={l.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-sm text-ink hover:bg-muted/50"
+                >
+                  <Link2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate">{l.rotulo || l.url}</span>
+                  <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {(pastaId || temPasta) && caminho.length > 1 && (
           <nav aria-label="Caminho da pasta" className="flex flex-wrap items-center gap-1 text-sm">
             {caminho.map((p, idx) => (
               <span key={p.id} className="flex items-center gap-1">
@@ -114,20 +136,22 @@ export function ArquivosDoProjeto({ projetoId }: { projetoId: string }) {
           </nav>
         )}
 
-        <DataTable
-          columns={colunas}
-          data={toDataSourceResult<ArquivoPortal>({
-            data: consulta.data?.itens,
-            isLoading: consulta.isLoading,
-            error: consulta.error,
-          })}
-          rowKey={(a) => a.id}
-          onRowClick={(a) => (ehPastaPortal(a) ? setPastaId(a.id) : void baixar(a))}
-          rowLabel={(a) => (ehPastaPortal(a) ? `Abrir a pasta ${a.name}` : `Baixar ${a.name}`)}
-          defaultSortKey="nome"
-          emptyMessage="O escritório ainda não compartilhou arquivos aqui."
-          errorTitle="Não foi possível abrir os arquivos"
-        />
+        {(pastaId || temPasta) && (
+          <DataTable
+            columns={colunas}
+            data={toDataSourceResult<ArquivoPortal>({
+              data: consulta.data?.itens,
+              isLoading: consulta.isLoading,
+              error: consulta.error,
+            })}
+            rowKey={(a) => a.id}
+            onRowClick={(a) => (ehPastaPortal(a) ? setPastaId(a.id) : void baixar(a))}
+            rowLabel={(a) => (ehPastaPortal(a) ? `Abrir a pasta ${a.name}` : `Baixar ${a.name}`)}
+            defaultSortKey="nome"
+            emptyMessage="O escritório ainda não compartilhou arquivos aqui."
+            errorTitle="Não foi possível abrir os arquivos"
+          />
+        )}
       </CardContent>
     </Card>
   );

@@ -98,7 +98,7 @@ baixar (passa pela função: quem vê pela Pilar não precisa ter acesso à cont
 para a lixeira (restaurável no Drive por 30 dias). A pasta de disciplina não vai para a lixeira. Quem só vê o
 projeto navega e baixa; criar, enviar e excluir pedem edição em Projetos.
 
-**Pasta Cliente e portal (2026-11-12).** Todo projeto ganha, junto das disciplinas, a pasta `Cliente`
+**Pasta Cliente e portal (2026-11-12).** Todo projeto ganha, junto das disciplinas, a pasta `Cliente (visível no portal)` (antes `Cliente`; ver SPEC 164)
 (`drive_pastas.para_cliente`, uma por projeto). O que estiver nela (e nas subpastas criadas pela Pilar dentro dela)
 aparece no portal do cliente, no bloco "Arquivos do projeto" da visão geral do projeto: o cliente navega e baixa,
 sem ver o Drive nem ter conta Google. A função pública `portal-arquivos` valida a sessão do portal
