@@ -1,0 +1,84 @@
+{
+ "provider": "google",
+ "voice": "pt-BR-Chirp3-HD-Leda",
+ "lines": [
+  {
+   "t": 0.1,
+   "dur": 3.712,
+   "say": "Proposta no Word, controle no Excel, obra no WhatsApp.",
+   "ritmo": 1.042
+  },
+  {
+   "t": 3.9,
+   "dur": 2.103,
+   "say": "E o prejuízo só aparece no fim.",
+   "ritmo": 1.034
+  },
+  {
+   "t": 6.1,
+   "dur": 4.071,
+   "say": "Pilar. Gestão com agentes de IA para engenharia e arquitetura.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 10.7,
+   "dur": 2.431,
+   "say": "Do primeiro contato ao dinheiro na conta.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 13.6,
+   "dur": 2.851,
+   "say": "O funil comercial, com valor em cada etapa.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 17.1,
+   "dur": 2.571,
+   "say": "O lucro de cada projeto, antes do fim.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 20.6,
+   "dur": 4.251,
+   "say": "Passou do orçamento? A IA prepara o aditivo, e você aprova.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 25.6,
+   "dur": 3.071,
+   "say": "Chuva na concretagem? Você sabe antes.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 29.1,
+   "dur": 2.61,
+   "say": "O canteiro fala, e o diário chega pronto.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 32.6,
+   "dur": 2.551,
+   "say": "Quanto sobrou este mês? Está na tela.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 36.1,
+   "dur": 2.611,
+   "say": "E toda semana, o resumo do que importa.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 39.1,
+   "dur": 1.851,
+   "say": "Tudo isso num sistema só.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 43.3,
+   "dur": 3.811,
+   "say": "A IA prepara. O sistema confere. Você aprova.",
+   "ritmo": 1.0
+  }
+ ]
+}

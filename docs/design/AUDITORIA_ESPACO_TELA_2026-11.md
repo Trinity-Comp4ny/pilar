@@ -334,15 +334,24 @@ detalhe do projeto (componente `KpiResumo`).
   status/prioridade/prazo na linha dos indicadores, seletor na linha das abas.
 - ~~Lançamentos: um seletor só, "Vendo…" e "Atualizado" absorvidos pela toolbar.~~ Feito: o
   seletor da barra é o único; recorte, "Atualizado" e Importar numa linha ao lado dos indicadores.
-- Visão geral: 5 KPIs numa linha.
-- Disciplinas, Mapa, Agenda, Relatórios: filtros do conteúdo para a toolbar.
-- Cliente detalhe sem `max-w-2xl`.
+- ~~Visão geral: 5 KPIs numa linha.~~ Feito, recolhíveis com resumo.
+- ~~Disciplinas, Mapa, Agenda, Relatórios: filtros do conteúdo para a toolbar.~~ Feito nos quatro.
+- ~~Cliente detalhe sem `max-w-2xl`.~~ Feito: duas colunas no desktop.
 
 ### P3: estrutural
 
 - Sidebar com painel em sobreposição abaixo de 1536 px.
 - Faixas de aviso (`FaixaAvisos`, termos, somente leitura) reservando espaço no `PageLayout` em vez
   de ficarem por baixo ou por cima do cabeçalho.
+
+**P3 feito** (antes e depois em
+[`antes-depois/auditoria-espaco-p3/`](antes-depois/auditoria-espaco-p3/README.md)): painel da
+sidebar recolhido por padrão e flutuante abaixo de 1536 px; faixas de aviso num bloco fixo no
+topo, com `--faixas-h` empurrando o `PageLayout`, o chat e Metas. `ReadOnlyBanner` e
+`ImpersonationBanner` também entram nesse bloco (antes cobriam o topo do cabeçalho), e os filtros
+de Disciplinas foram para a barra da página
+([`antes-depois/auditoria-espaco-p4/`](antes-depois/auditoria-espaco-p4/README.md)). Com isso, o
+plano da auditoria está completo.
 
 ## 4. Regras propostas para o design system
 

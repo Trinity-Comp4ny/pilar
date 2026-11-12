@@ -1,0 +1,27 @@
+{
+  "id": "fala-08-o-que-cortei",
+  "hook": "Cortei uma funcionalidade que *dois clientes* pediram",
+  "tail": 3.4,
+  "lines": [
+    {
+      "id": "l01",
+      "text": "Essa semana eu disse não para uma funcionalidade que dois clientes pediram."
+    },
+    {
+      "id": "l02",
+      "text": "Não porque era ruim. Mas porque ela resolvia o problema de dois, e complicava a vida de todos."
+    },
+    {
+      "id": "l03",
+      "text": "Toda funcionalidade nova é uma tela a mais para quem só quer saber se o projeto dá lucro."
+    },
+    {
+      "id": "l04",
+      "text": "Eu prefiro uma Pilar que faz menos coisas, mas faz direito."
+    },
+    {
+      "id": "l05",
+      "text": "E você, já disse não para um cliente? Me conta aqui."
+    }
+  ]
+}

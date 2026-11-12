@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { formatPercent } from "@/lib/format";
+import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
+import { KpiResumo } from "@/components/KpiResumo";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { KPICard } from "@/components/KPICard";
 import { DataFrescor } from "@/components/DataFrescor";
@@ -38,7 +41,7 @@ import { VencimentoRow } from "../components/VencimentoRow";
 
 function VisaoGeralSkeleton() {
   return (
-    <div className="space-y-6 w-full max-w-none">
+    <div className="space-y-4 w-full max-w-none">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4 w-full">
         {[1, 2, 3, 4, 5].map((i) => (
           <Card key={i} className="w-full">
@@ -224,46 +227,73 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
   const hasReceitasData = categoriaData.length > 0;
   const hasDespesasData = despesasCategoriaData.length > 0;
 
-  const margem = stats.receitasTotal > 0 ? ((stats.saldo / stats.receitasTotal) * 100).toFixed(1) : 0;
+  // Formato brasileiro ("40,0%"); era toFixed, que saía "40.0%".
+  const margem = stats.receitasTotal > 0 ? formatPercent((stats.saldo / stats.receitasTotal) * 100) : "0%";
 
   return (
     <div className="space-y-6 w-full max-w-none">
-      <div className="flex justify-end">
-        <DataFrescor updatedAt={dataUpdatedAt} isFetching={isFetching} onRefresh={() => void refetch()} />
-      </div>
-      {/* KPIs uniformes: Lucro líquido é o primeiro do grid (métrica da tagline), margem no subtítulo */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4 w-full">
-        <KPICard
-          label="Lucro líquido"
-          value={stats.saldo}
-          tone={stats.saldo >= 0 ? "positive" : "danger"}
-          subtitle={`Margem de ${margem}%`}
-        />
-        <KPICard
-          label="Receitas totais"
-          value={stats.receitasTotal}
-          tone="positive"
-          delta={{ value: Number(stats.receitasMes) }}
-        />
-        <KPICard
-          label="Despesas totais"
-          value={stats.despesasTotal}
-          tone="danger"
-          delta={{ value: Number(stats.despesasMes), invert: true }}
-        />
-        <KPICard
-          label="A receber"
-          value={stats.aReceber.total}
-          tone="positive"
-          subtitle={`${stats.aReceber.count} lançamento(s) pendente(s)`}
-        />
-        <KPICard
-          label="A pagar"
-          value={stats.aPagar.total}
-          tone="danger"
-          subtitle={`${stats.aPagar.count} lançamento(s) pendente(s)`}
-        />
-      </div>
+      {/* KPIs uniformes: Lucro líquido é o primeiro do grid (métrica da tagline), margem no subtítulo.
+          Os 5 numa linha pela largura real (container): em 1440 px o grid de 3 colunas quebrava
+          em 2 linhas (~220 px). O "Atualizado" divide a linha do gatilho, e a faixa recolhe com
+          resumo (auditoria de espaço, 2026-11). */}
+      <CollapsibleKpiSection
+        storageKey="financeiro-visao"
+        controls={<DataFrescor updatedAt={dataUpdatedAt} isFetching={isFetching} onRefresh={() => void refetch()} />}
+        resumo={
+          <KpiResumo
+            itens={[
+              {
+                texto: `lucro ${formatCurrency(stats.saldo, { compact: true })} (${margem})`,
+                alerta: stats.saldo < 0,
+              },
+              { texto: `receitas ${formatCurrency(stats.receitasTotal, { compact: true })}` },
+              { texto: `despesas ${formatCurrency(stats.despesasTotal, { compact: true })}` },
+              { texto: `a receber ${formatCurrency(stats.aReceber.total, { compact: true })}` },
+              { texto: `a pagar ${formatCurrency(stats.aPagar.total, { compact: true })}` },
+            ]}
+          />
+        }
+      >
+        <div className="@container">
+          <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-5">
+            <KPICard
+              density="compact"
+              label="Lucro líquido"
+              value={stats.saldo}
+              tone={stats.saldo >= 0 ? "positive" : "danger"}
+              subtitle={`Margem de ${margem}`}
+            />
+            <KPICard
+              density="compact"
+              label="Receitas totais"
+              value={stats.receitasTotal}
+              tone="positive"
+              delta={{ value: Number(stats.receitasMes) }}
+            />
+            <KPICard
+              density="compact"
+              label="Despesas totais"
+              value={stats.despesasTotal}
+              tone="danger"
+              delta={{ value: Number(stats.despesasMes), invert: true }}
+            />
+            <KPICard
+              density="compact"
+              label="A receber"
+              value={stats.aReceber.total}
+              tone="positive"
+              subtitle={`${stats.aReceber.count} lançamento(s) pendente(s)`}
+            />
+            <KPICard
+              density="compact"
+              label="A pagar"
+              value={stats.aPagar.total}
+              tone="danger"
+              subtitle={`${stats.aPagar.count} lançamento(s) pendente(s)`}
+            />
+          </div>
+        </div>
+      </CollapsibleKpiSection>
 
       {/* Gráfico principal: alterna entre comparativo (barras + saldo) e performance (área acumulada) */}
       <Card className="w-full">

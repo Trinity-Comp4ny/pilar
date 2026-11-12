@@ -1,0 +1,36 @@
+{
+  "id": "fala-11-portal-cliente",
+  "hook": "O cliente que liga *toda semana*",
+  "tail": 3.4,
+  "lines": [
+    {
+      "id": "l01",
+      "text": "Todo escritório tem aquele cliente que liga toda semana para saber como está."
+    },
+    {
+      "id": "l02",
+      "text": "E alguém para o que está fazendo para montar a resposta."
+    },
+    {
+      "id": "l03",
+      "text": "Na Pilar, o cliente acompanha pelo portal, com um link.",
+      "show": {
+        "type": "lista",
+        "itens": [
+          "Andamento do projeto",
+          "Diário da obra liberado",
+          "Sem precisar ligar"
+        ],
+        "icone": "globe"
+      }
+    },
+    {
+      "id": "l04",
+      "text": "Ele vê só o que você liberar."
+    },
+    {
+      "id": "l05",
+      "text": "O cliente fica mais tranquilo, e o seu dia volta a ser seu."
+    }
+  ]
+}

@@ -94,7 +94,7 @@ def construction():
     rows = [
         ("Traço", "1,6u, ponta redonda (raio 0,8u)"),
         ("Capitel", "linha de 26u, opacidade 100%"),
-        ("Ábaco", "linha de 22u, opacidade 85%"),
+        ("Ábaco", "linha de 22u, opaca como o resto"),
         ("Caneluras", "3 linhas de 14u, a do meio no eixo"),
         ("Módulo X", f"{B.PITCH:g}u, distância entre eixos das caneluras"),
         ("Caixa", "27,6u × 22,6u, já contando o traço"),
@@ -447,7 +447,7 @@ def pattern(dark=False):
     w, h, pitch = 1200, 360, 60
     out = [f'<rect width="{w}" height="{h}" fill="{bg}"/>']
     out.append(f'<path d="M-10 52H{w + 10}" stroke="{line}" stroke-width="10" stroke-linecap="round"/>')
-    out.append(f'<path d="M-10 100H{w + 10}" stroke="{line}" stroke-width="10" stroke-linecap="round" stroke-opacity=".85"/>')
+    out.append(f'<path d="M-10 100H{w + 10}" stroke="{line}" stroke-width="10" stroke-linecap="round"/>')
     for i, x in enumerate(range(30, w, pitch)):
         col = B.BRAND if i == 9 else line  # um traço verde, nunca mais
         out.append(f'<path d="M{x} 150V330" stroke="{col}" stroke-width="10" stroke-linecap="round"/>')

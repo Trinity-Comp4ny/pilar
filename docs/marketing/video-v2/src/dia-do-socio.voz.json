@@ -1,0 +1,22 @@
+{
+  "voz": "narração por cima do vídeo (narrate.py, narrar_sobre); t = segundo em que a fala entra",
+  "fim": 18.6,
+  "lines": [
+    {
+      "t": 0.4,
+      "say": "Um dia do sócio de um escritório de projeto."
+    },
+    {
+      "t": 4.0,
+      "say": "Reunião, planilha, cobrança, grupo da obra..."
+    },
+    {
+      "t": 8.6,
+      "say": "Uma hora de engenharia. O resto foi administrar."
+    },
+    {
+      "t": 12.0,
+      "say": "O mesmo dia, com a Pilar: sete, oito horas de projeto."
+    }
+  ]
+}

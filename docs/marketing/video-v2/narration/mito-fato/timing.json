@@ -1,0 +1,42 @@
+{
+ "provider": "google",
+ "voice": "pt-BR-Chirp3-HD-Leda",
+ "lines": [
+  {
+   "t": 1.1,
+   "dur": 1.818,
+   "say": "A IA vai decidir pelo engenheiro?",
+   "ritmo": 1.028
+  },
+  {
+   "t": 3.0,
+   "dur": 2.324,
+   "say": "Mito. Ela prepara, você aprova.",
+   "ritmo": 1.065
+  },
+  {
+   "t": 5.4,
+   "dur": 1.371,
+   "say": "A IA inventa número?",
+   "ritmo": 1.0
+  },
+  {
+   "t": 7.3,
+   "dur": 2.223,
+   "say": "Mito. A conta é do sistema.",
+   "ritmo": 1.005
+  },
+  {
+   "t": 9.6,
+   "dur": 2.069,
+   "say": "IA é coisa de escritório grande?",
+   "ritmo": 1.068
+  },
+  {
+   "t": 11.75,
+   "dur": 2.573,
+   "say": "Mito. Começa em duzentos e noventa e nove.",
+   "ritmo": 1.102
+  }
+ ]
+}

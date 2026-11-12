@@ -1,0 +1,16 @@
+vendor/
+out/
+renders/*.wav
+renders/*.video.mp4
+renders/*.cues.json
+renders/*_[0-9]*.jpg
+renders/render.log
+__pycache__/
+footage/*/frames/
+footage/*.mp4
+footage/*.mov
+*.tmp.mp4
+
+# a cópia versionada dos vídeos prontos fica em docs/marketing/conteudo/ (organizar.py)
+renders/*.mp4
+renders/*.jpg

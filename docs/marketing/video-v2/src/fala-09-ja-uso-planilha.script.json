@@ -1,0 +1,42 @@
+{
+  "id": "fala-09-ja-uso-planilha",
+  "hook": "“Eu já uso planilha. *Por que mudar?*”",
+  "tail": 3.4,
+  "lines": [
+    {
+      "id": "l01",
+      "text": "Essa é a pergunta que eu mais ouço. E planilha funciona, até um ponto."
+    },
+    {
+      "id": "l02",
+      "text": "Funciona enquanto uma pessoa cuida dela. Quando o escritório cresce, vira cinco versões.",
+      "show": {
+        "type": "lista",
+        "itens": [
+          "Controle_v5",
+          "Controle_FINAL",
+          "Controle_FINAL_v7 (2)"
+        ],
+        "icone": "file-spreadsheet",
+        "cor": "#FCA5A5"
+      }
+    },
+    {
+      "id": "l03",
+      "text": "E a planilha não avisa nada. Não avisa a parcela atrasada, nem o projeto que passou do orçamento."
+    },
+    {
+      "id": "l04",
+      "text": "A Pilar avisa, e a informação entra uma vez só.",
+      "show": {
+        "type": "tela",
+        "tela": "inicio",
+        "legenda": "O resumo da semana, pronto"
+      }
+    },
+    {
+      "id": "l05",
+      "text": "A planilha guarda. O sistema trabalha."
+    }
+  ]
+}

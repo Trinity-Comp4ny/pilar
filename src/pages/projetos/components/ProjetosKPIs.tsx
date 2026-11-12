@@ -4,7 +4,7 @@ import { KPICard } from "@/components/KPICard";
 import { KpiResumo } from "@/components/KpiResumo";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { type Projeto, getDeadlineStatus } from "@/types/projetos";
 
 interface ProjetosKPIsProps {
@@ -46,6 +46,8 @@ function useProjetosStats(projetos: Projeto[]) {
 export function ProjetosKPIsResumo({ projetos }: { projetos: Projeto[] }) {
   const { can } = usePermissions();
   const stats = useProjetosStats(projetos);
+  // Mascarado como os cards: com "ocultar valores" ligado, o resumo não pode mostrar o pipeline.
+  const formatCurrency = useMoneyMask();
   return (
     <KpiResumo
       itens={[

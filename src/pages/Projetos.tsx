@@ -369,16 +369,16 @@ export default function ProjetosKanban() {
   const noResults = !loadingProjetos && !projetosError && projetos.length > 0 && filteredProjetos.length === 0;
 
   const preencheAltura = activeTab === "quadro" || activeTab === "cronograma" || activeTab === "mapa";
-  const [slotCronograma, setSlotCronograma] = useState<HTMLDivElement | null>(null);
+  const [slotDaAba, setSlotDaAba] = useState<HTMLDivElement | null>(null);
 
   const toolbar = (
     <FilterBar
       end={
         isColecao ? (
           <KanbanSortControl sort={sort} onChange={setSort} keys={sortKeys} />
-        ) : activeTab === "cronograma" ? (
-          // Os controles do Gantt (Meus, status, zoom, legenda) entram aqui, na mesma linha.
-          <div ref={setSlotCronograma} className="flex items-center" />
+        ) : activeTab === "cronograma" || activeTab === "mapa" || activeTab === "disciplinas" ? (
+          // Os controles do Gantt e do mapa (Meus, status, zoom, legenda) entram aqui, na mesma linha.
+          <div ref={setSlotDaAba} className="flex items-center" />
         ) : undefined
       }
     >
@@ -556,6 +556,7 @@ export default function ProjetosKanban() {
             catalogo={disciplinas}
             canEdit={canEdit}
             onChanged={refreshDisciplinas}
+            toolbarSlot={slotDaAba}
           />
         </div>
       ) : activeTab === "cronograma" ? (
@@ -564,11 +565,11 @@ export default function ProjetosKanban() {
             projetos={filteredProjetos}
             onDatesChange={canEdit ? handleCronogramaProjetoDates : undefined}
             canReorder={canEdit}
-            toolbarSlot={slotCronograma}
+            toolbarSlot={slotDaAba}
           />
         </div>
       ) : activeTab === "mapa" ? (
-        <MapaTab />
+        <MapaTab toolbarSlot={slotDaAba} />
       ) : null}
 
       <ProjectDetailDialog

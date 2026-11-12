@@ -12,7 +12,8 @@ import { useProjetoDetail } from "./hooks/useProjetoDetail";
 import { ProjetoDetailHeader } from "./components/ProjetoDetailHeader";
 import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
 import { KpiResumo } from "@/components/KpiResumo";
-import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
+import { formatDate, formatPercent } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { ProjetoDetailInfo } from "./components/ProjetoDetailInfo";
 import { ProjetoDetailTabs } from "./components/ProjetoDetailTabs";
 import { ProjetoFormDialog } from "./components/ProjetoFormDialog";
@@ -62,6 +63,8 @@ export default function ProjetoDetail() {
   } = useProjetoDetail(id);
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  // Resumo dos indicadores mascarado como os cards ("ocultar valores").
+  const formatCurrency = useMoneyMask();
   const [pausarOpen, setPausarOpen] = useState(false);
   const [retomarOpen, setRetomarOpen] = useState(false);
   const [portalOpen, setPortalOpen] = useState(false);

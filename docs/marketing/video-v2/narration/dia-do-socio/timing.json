@@ -1,0 +1,30 @@
+{
+ "provider": "google",
+ "voice": "pt-BR-Chirp3-HD-Leda",
+ "lines": [
+  {
+   "t": 0.4,
+   "dur": 2.291,
+   "say": "Um dia do sócio de um escritório de projeto.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 4.0,
+   "dur": 2.831,
+   "say": "Reunião, planilha, cobrança, grupo da obra...",
+   "ritmo": 1.0
+  },
+  {
+   "t": 8.6,
+   "dur": 3.071,
+   "say": "Uma hora de engenharia. O resto foi administrar.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 12.0,
+   "dur": 4.071,
+   "say": "O mesmo dia, com a Pilar: sete, oito horas de projeto.",
+   "ritmo": 1.0
+  }
+ ]
+}

@@ -1,19 +1,18 @@
+import { createPortal } from "react-dom";
+import { useAlvoFaixas } from "@/lib/faixasDoTopo";
 import { Eye, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { ROLE_LABEL } from "@/lib/permissions";
 
 export function ImpersonationBanner() {
+  const alvo = useAlvoFaixas();
   const { viewAsRole, isImpersonating, stopImpersonation } = useImpersonation();
 
   if (!isImpersonating || !viewAsRole) return null;
 
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="fixed top-0 left-0 right-0 z-60 bg-fill-warning text-fill-warning-foreground shadow-md"
-    >
+  const faixa = (
+    <div role="status" aria-live="polite" className="bg-fill-warning text-fill-warning-foreground">
       <div className="px-4 py-2 flex items-center justify-center gap-3 text-sm">
         <Eye className="w-4 h-4" strokeWidth={2} />
         <span className="font-medium">
@@ -29,4 +28,6 @@ export function ImpersonationBanner() {
       </div>
     </div>
   );
+  // No app, entra no bloco do topo (desce as páginas); fora dele, fixa por cima de tudo.
+  return alvo ? createPortal(faixa, alvo) : <div className="fixed left-0 right-0 top-0 z-60 shadow-md">{faixa}</div>;
 }

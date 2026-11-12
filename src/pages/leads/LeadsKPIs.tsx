@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { CalendarClock, Layers, TrendingUp, PercentCircle, Handshake } from "lucide-react";
 import { KPICard } from "@/components/KPICard";
 import { KpiResumo } from "@/components/KpiResumo";
-import { formatCurrency } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { type Lead } from "@/hooks/useLeads";
 import { type Proposta } from "@/hooks/usePropostas";
 import { propostaPrimaria, valorNoFunil, taxaFechamentoPropostas } from "@/pages/leads/lib/comercial";
@@ -59,6 +59,8 @@ function useLeadsStats(leads: Lead[], propostasByLead: Map<string, Proposta[]>) 
 /** Os indicadores numa linha, ao lado de "Indicadores" quando a faixa está recolhida. */
 export function LeadsKPIsResumo({ leads, propostasByLead }: Pick<LeadsKPIsProps, "leads" | "propostasByLead">) {
   const stats = useLeadsStats(leads, propostasByLead);
+  // Mascarado como os cards ("ocultar valores").
+  const formatCurrency = useMoneyMask();
   return (
     <KpiResumo
       itens={[

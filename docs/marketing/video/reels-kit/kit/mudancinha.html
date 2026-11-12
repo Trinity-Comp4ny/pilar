@@ -1,0 +1,68 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="kit.css"><style>
+#hook{left:90px;right:90px;top:620px}
+#phone{left:90px;right:90px;top:250px;height:1380px;background:#fff;border-radius:56px;box-shadow:0 40px 100px rgba(26,26,26,.16),0 0 0 1px rgba(26,26,26,.06);overflow:hidden}
+.ph-top{height:150px;border-bottom:1px solid var(--p2);display:flex;align-items:center;gap:26px;padding:0 44px}
+.av{width:84px;height:84px;border-radius:50%;background:var(--p2);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:34px;color:var(--ink8)}
+.nm{font-weight:500;font-size:40px;letter-spacing:-.02em}.st{font-size:28px;color:var(--g6)}
+#msgs{position:absolute;left:0;right:0;top:150px;bottom:0;padding:30px 40px;display:flex;flex-direction:column;justify-content:flex-end;gap:22px}
+.m{max-width:78%;font-size:40px;line-height:1.25;padding:24px 32px;border-radius:34px;opacity:0}
+.c{align-self:flex-start;background:var(--p2);border-bottom-left-radius:10px}
+.e{align-self:flex-end;background:var(--ink);color:#fff;border-bottom-right-radius:10px}
+.typing{display:flex;gap:12px;padding:30px 34px}.typing i{width:16px;height:16px;border-radius:50%;background:#fff;opacity:.4;display:block}
+#meter{left:90px;right:90px;top:90px;display:flex;gap:20px;justify-content:center}
+.mt{background:#fff;border-radius:999px;padding:14px 30px;font-size:34px;font-weight:500;box-shadow:0 0 0 1px rgba(26,26,26,.08);display:flex;gap:12px;align-items:baseline}
+.mt b{font-weight:600}.mt .lab{color:var(--g6);font-weight:400;font-size:30px}
+#s2 .big{position:absolute;left:90px;right:90px;top:300px}
+#shotA{left:60px;right:60px;top:720px;height:620px}
+#cap{left:90px;right:90px;top:1480px}
+#ring{position:absolute;border:8px solid var(--brand);border-radius:999px;opacity:0}
+</style></head><body>
+<div class="scene" id="s1">
+  <div id="meter" class="abs"><div class="mt"><span class="lab">mudanças</span><b id="nmud">0</b></div><div class="mt"><span class="lab">horas a mais</span><b id="nh">0 h</b></div></div>
+  <div id="phone" class="abs"><div class="ph-top"><div class="av">CL</div><div><div class="nm">Cliente</div><div class="st" id="st">online</div></div></div>
+    <div id="msgs">
+      <div class="m c" id="m1">Oi! Só uma mudancinha rápida no projeto.</div>
+      <div class="m c" id="m2">Dá pra tirar essa parede da sala?</div>
+      <div class="m e" id="m3">Essa parede tem pilar e viga. Mexe na estrutura.</div>
+      <div class="m c" id="m4">Mas é só uma paredinha.</div>
+      <div class="m c" id="m5">Ah, e a escada pro outro lado.</div>
+      <div class="m c" id="m6">E o banheiro vira suíte.</div>
+      <div class="m c" id="m7">Sem mudar o prazo, tá?</div>
+      <div class="m e typing" id="m8"><i></i><i></i><i></i></div>
+    </div></div>
+  <div class="foot">dados de exemplo</div>
+</div>
+<div class="scene" id="s0"><div id="hook" class="abs hook"><div id="h1">Cliente: só uma</div><div id="h2"><span class="pill" id="p1"><span>mudancinha.</span></span></div><div class="body" id="h3" style="margin-top:34px">Conta quantas você já ouviu.</div></div></div>
+<div class="scene" id="s2">
+  <div class="big hook" id="b1">Toda mudancinha<br><span class="pill" id="p2"><span>tem custo.</span></span></div>
+  <div class="shot" id="shotA"><img id="imgA" src="../assets/shots/aditivo.png"></div>
+  <div id="ring"></div>
+  <div id="cap" class="abs h3"><div id="c1">O agente prepara o aditivo com as horas do projeto.</div><div id="c2" style="margin-top:18px">O sistema confere. <span class="pill"><span>Você aprova.</span></span></div></div>
+</div>
+<script src="kit.js"></script><script>
+window.DUR=16.2;
+const MSG=[[2.3,'m1',0],[3.5,'m2',1],[4.8,'m3',0],[5.9,'m4',0],[6.9,'m5',2],[7.9,'m6',3],[8.9,'m7',4],[9.8,'m8',0]];
+const HRS=[[3.5,12],[6.9,30],[7.9,46],[8.9,46]];
+MSG.forEach(([t,id])=>cue(t,id==='m3'||id==='m8'?'send':'pop'));
+cue(0,'start'); cue(11.2,'whoosh'); cue(12.6,'hit'); cue(14.6,'ding');
+window.render=async(t)=>{
+  show('s0',t<2.2); show('s1',t>=2.2&&t<11.2); show('s2',t>=11.2&&t<16.2);
+  if(t<2.2){ enter('h1',t,-1); enter('h2',t,-1); pill('p1',t,-1); enter('h3',t,0.4,20); }
+  if(t>=2.2&&t<11.2){
+    let n=0,h=0; for(const [tm,id,c] of MSG){ const el=$(id); const k=expo(lin(t,tm,tm+0.35)); el.style.opacity=k; el.style.transform='translateY('+(1-k)*30+'px) scale('+(0.96+0.04*k)+')'; el.style.display=t>=tm?'':'none'; if(t>=tm&&c) n=c; }
+    for(const [tm,v] of HRS) if(t>=tm) h=v;
+    $('nmud').textContent=n; const prev=HRS.filter(x=>x[0]<=t); const last=prev[prev.length-1]; const before=prev.length>1?prev[prev.length-2][1]:0;
+    $('nh').textContent=last?Math.round(before+(last[1]-before)*quint(lin(t,last[0],last[0]+0.6)))+' h':'0 h';
+    $('st').textContent=t>=9.8?'Escritório digitando…':'online';
+    [...document.querySelectorAll('#m8 i')].forEach((d,i)=>d.style.opacity=0.35+0.65*Math.max(0,Math.sin((t*3-i*0.35)*Math.PI)));
+  }
+  if(t>=11.2&&t<16.2){ const u=t-11.2; enter('b1',u,-1); pill('p2',u,0.25);
+    const ks=expo(lin(u,0.9,1.5)); const box=$('shotA'); box.style.opacity=ks; box.style.transform='translateY('+(1-ks)*60+'px)';
+    const kp=easeIO(lin(u,1.7,3.2)); const sc=1.0; const [ox,oy]=shotAt(box,$('imgA'),sc,1110+(2400-1110)*kp,1480+(1610-1480)*kp);
+    enter('c1',u,1.6,24); enter('c2',u,3.0,24);
+    const r=$('ring'); r.style.opacity=quint(lin(u,3.3,3.7));
+    const bx=box.getBoundingClientRect(); const cx=bx.left+ox+2688*sc, cy=bx.top+oy+1652*sc; r.style.width='200px'; r.style.height='100px'; r.style.left=(cx-100)+'px'; r.style.top=(cy-50)+'px';
+  }
+};
+window.ready=true;
+</script></body></html>

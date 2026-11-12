@@ -39,7 +39,12 @@ const BUDGETS = {
   // contagem no aviso de versão nova (lib/novidades, sem zod), a escuta da tecla "?" e os ícones
   // das seções novas do Ultra admin, ~2,7 kB gzip. Faixa de avisos, modal "O que mudou", agente
   // da ajuda, NPS, comunicado, novo aceite e registro do navegador ficaram lazy.
-  entry: 127 * 1024,
+  //
+  // 2026-11-12: 128 kB (era 127). staging já estava a 0,2 kB do teto (126,8 kB); a auditoria de
+  // espaço (PR #822) soma ~0,3 kB gzip ao boot: o painel flutuante da sidebar em tela estreita
+  // (abre por cima, fecha com clique fora/Esc) e o slot de toolbar das páginas. O bloco das
+  // faixas do topo (FaixasDoTopo) ficou lazy, o que recuperou 0,14 kB.
+  entry: 128 * 1024,
   // Tudo que o navegador baixa antes da primeira tela: a entrada mais os chunks que o
   // index.html pré-carrega (modulepreload) e o CSS. O limite só da entrada não via o
   // vendor-pdf e o vendor-charts sendo pré-carregados em toda página (~860 kB brutos),
