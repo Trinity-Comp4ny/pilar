@@ -255,7 +255,7 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
         }
       >
         <div className="@container">
-          <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-5">
+          <div className="grid w-full grid-cols-2 gap-2 @3xl:grid-cols-3 @5xl:grid-cols-5">
             <KPICard
               density="compact"
               label="Lucro líquido"

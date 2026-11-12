@@ -371,6 +371,26 @@ título, card dentro de card, largura travada) achou a causa comum e alguns caso
 
 Antes e depois em [`antes-depois/auditoria-espaco-p5/`](antes-depois/auditoria-espaco-p5/README.md).
 
+### P6: terceira varredura, desktop e celular (12/11) — feito
+
+Varredura de 52 telas e abas em 1320 × 750 e em 390 × 844. Além do espaço, ela procurou elemento
+fora da tela, sobreposto, texto cortado sem reticências, alvo de toque pequeno e linha de cabeçalho
+com um controle só. Os itens automáticos que sobraram eram falsos positivos (rótulo `sr-only` de
+botão só com ícone). Os achados reais vieram da revisão das capturas:
+
+| Achado                                                                | Correção                                                      |
+| --------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Financeiro › Visão: linha de 52 px só para "Este mês"                 | No desktop, período no fim da linha das abas                  |
+| Indicadores um por linha no celular (Financeiro, Obras, Folha, Ultra) | 2 ou 3 colunas                                                |
+| Obra: linha de dados repetida em todas as abas (3 linhas no celular)  | Só na aba Visão                                               |
+| Obra › Tarefas: controles numa linha dentro do conteúdo               | `PageToolbar`, como em Gestão › Tarefas                       |
+| Obra › Acessos: "Criar acesso" no topo e no estado vazio              | Botão do topo só com acessos (padrão da aba Cotações)         |
+| Fornecedor: 6 indicadores fixos, que no celular escondem a aba        | `CollapsibleKpiSection` com resumo, 2 colunas no celular      |
+| Botão do estado vazio preto em metade das telas, verde na outra       | `EmptyState` usa `brand` por padrão                           |
+| Início no celular: "At" cortado ao lado do ícone de atualizar         | `DataFrescor` compacto mostra só o ícone (texto em `sr-only`) |
+
+Antes e depois em [`antes-depois/auditoria-espaco-p6/`](antes-depois/auditoria-espaco-p6/README.md).
+
 ## 4. Regras propostas para o design system
 
 Para não voltar a acontecer (entrar em `PILAR_DESIGN_SYSTEM.md` após aprovação):
@@ -388,3 +408,7 @@ Para não voltar a acontecer (entrar em `PILAR_DESIGN_SYSTEM.md` após aprovaç�
 7. **Recuo do conteúdo = recuo do título** (24 px em desktop). Recuo maior só desalinha e empurra o
    conteúdo para baixo.
 8. **Tabela com moldura não vai dentro de card**, e card de lista não soma padding à `DataTable`.
+9. **Grade de indicadores no celular tem pelo menos 2 colunas.** Um card por linha empurra o
+   conteúdo da tela para baixo da dobra.
+10. **Dado de cabeçalho de registro aparece uma vez** (na aba de visão geral), não repetido em
+    todas as abas.

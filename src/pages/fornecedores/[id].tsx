@@ -14,6 +14,8 @@ import {
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
+import { KpiResumo } from "@/components/KpiResumo";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -227,27 +229,41 @@ export default function FornecedorDetalhePage() {
         )}
       </div>
 
-      {/* KPIs */}
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
-        <KpiCard label="Obras" value={String(resumo.obras)} />
-        <KpiCard label="Total comprado" value={formatCurrency(resumo.totalComprado)} hint="Conta da obra" />
-        <KpiCard
-          label="Cotações"
-          value={String(resumo.cotacoesParticipadas)}
-          hint={`${Math.round(resumo.taxaVitoria * 100)}% de vitória (${resumo.vitorias})`}
-        />
-        <KpiCard label="Ticket médio" value={formatCurrency(resumo.ticketMedio)} />
-        <KpiCard label="Última compra" value={resumo.ultimaCompra ? formatDate(resumo.ultimaCompra) : "—"} />
-        <KpiCard
-          label="Nota"
-          value={avaliacoes.length > 0 ? formatarNota(notaMedia(avaliacoes)) : "Sem avaliação"}
-          hint={
-            avaliacoes.length > 0
-              ? `${avaliacoes.length} ${avaliacoes.length === 1 ? "avaliação" : "avaliações"}`
-              : undefined
-          }
-        />
-      </div>
+      {/* Indicadores recolhíveis com resumo, como nas outras telas: no celular os 6 cards
+          empilhados empurravam o conteúdo da aba para fora da tela (auditoria, 2026-11). */}
+      <CollapsibleKpiSection
+        storageKey="fornecedor-detalhe"
+        resumo={
+          <KpiResumo
+            itens={[
+              { texto: `${resumo.obras} ${resumo.obras === 1 ? "obra" : "obras"}` },
+              { texto: `${formatCurrency(resumo.totalComprado)} comprado` },
+              { texto: avaliacoes.length > 0 ? `nota ${formatarNota(notaMedia(avaliacoes))}` : "sem avaliação" },
+            ]}
+          />
+        }
+      >
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+          <KpiCard label="Obras" value={String(resumo.obras)} />
+          <KpiCard label="Total comprado" value={formatCurrency(resumo.totalComprado)} hint="Conta da obra" />
+          <KpiCard
+            label="Cotações"
+            value={String(resumo.cotacoesParticipadas)}
+            hint={`${Math.round(resumo.taxaVitoria * 100)}% de vitória (${resumo.vitorias})`}
+          />
+          <KpiCard label="Ticket médio" value={formatCurrency(resumo.ticketMedio)} />
+          <KpiCard label="Última compra" value={resumo.ultimaCompra ? formatDate(resumo.ultimaCompra) : "—"} />
+          <KpiCard
+            label="Nota"
+            value={avaliacoes.length > 0 ? formatarNota(notaMedia(avaliacoes)) : "Sem avaliação"}
+            hint={
+              avaliacoes.length > 0
+                ? `${avaliacoes.length} ${avaliacoes.length === 1 ? "avaliação" : "avaliações"}`
+                : undefined
+            }
+          />
+        </div>
+      </CollapsibleKpiSection>
 
       <Tabs value={tab} onValueChange={setTab} className="mt-6">
         {/* Cotações */}

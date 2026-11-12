@@ -113,7 +113,7 @@ export default function ObrasPage() {
           )
         }
       >
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <div className="grid grid-cols-3 gap-2">
           <KPICard density="compact" label="Obras" value={String(obras.length)} icon={HardHat} loading={isLoading} />
           <KPICard density="compact" label="Em andamento" value={String(ativas)} tone="info" loading={isLoading} />
           <KPICard
