@@ -84,7 +84,7 @@ export function CartaoBoasVindas() {
                   {info?.label}
                 </span>
                 {destaque ? (
-                  <span className="rounded-full bg-ink px-2 py-0.5 text-[11px] font-medium text-background">
+                  <span className="rounded-full bg-brand px-2 py-0.5 text-[11px] font-medium text-ink">
                     Sua escolha
                   </span>
                 ) : (

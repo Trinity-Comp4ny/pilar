@@ -4,7 +4,7 @@ type Opcao = { value: string; label: string };
 
 const CHIP =
   "inline-flex items-center rounded-full border px-3 py-1.5 text-sm transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black/10 disabled:opacity-50";
-const ATIVO = "border-transparent bg-ink font-medium text-background";
+const ATIVO = "border-transparent bg-brand font-medium text-ink";
 const INATIVO = "border-black/10 bg-background text-ink-soft hover:border-black/20 hover:text-ink";
 
 type Comum = {

@@ -97,7 +97,7 @@ export function NpsCard() {
             onClick={() => setNota(n)}
             className={cn(
               "h-8 rounded-md border text-xs font-medium transition-colors",
-              nota === n ? "border-ink bg-ink text-white" : "border-black/10 text-ink hover:bg-muted"
+              nota === n ? "border-brand bg-brand font-medium text-ink" : "border-black/10 text-ink hover:bg-muted"
             )}
           >
             {n}

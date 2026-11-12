@@ -42,7 +42,8 @@ export function DataFrescor({ updatedAt, isFetching, onRefresh, className, compa
     <span
       className={cn(
         "inline-flex items-center gap-1.5 text-xs text-muted-foreground",
-        compactOnMobile && "max-md:p-1.5",
+        // Celular: só o ícone, maior e com área de toque de 32 px (pedido do Matheus, 12/11).
+        compactOnMobile && "max-md:p-2 max-md:[&>svg]:h-4 max-md:[&>svg]:w-4",
         className
       )}
       role="status"

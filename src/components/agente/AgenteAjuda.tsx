@@ -214,7 +214,7 @@ export function AgenteAjuda() {
             {mensagens.map((m) =>
               m.de === "pessoa" ? (
                 <div key={m.id} ref={m === mensagens.at(-2) ? perguntaAtual : undefined} className="flex justify-end">
-                  <p className="max-w-[85%] rounded-2xl rounded-tr-sm bg-ink px-3.5 py-2 text-sm text-white">
+                  <p className="max-w-[85%] rounded-2xl rounded-tr-sm bg-brand px-3.5 py-2 text-sm text-ink">
                     {m.texto}
                   </p>
                 </div>
