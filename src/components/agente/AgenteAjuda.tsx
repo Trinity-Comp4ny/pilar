@@ -10,6 +10,8 @@ import { NOME_DA_TELA, type ArtigoAjuda } from "@/content/ajuda/indice";
 import { artigosDaRota, buscarArtigos, carregarCorpo } from "@/lib/ajudaBusca";
 import { registrarPerguntaSemResposta } from "@/lib/ajudaLacunas";
 import { EVENTO_ABRIR_AGENTE } from "@/lib/agenteAjudaEvento";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useAreaVisivel } from "@/hooks/useAreaVisivel";
 
 type Mensagem =
   { id: number; de: "pessoa"; texto: string } | { id: number; de: "pilar"; pergunta: string; artigos: ArtigoAjuda[] };
@@ -101,9 +103,12 @@ export function AgenteAjuda() {
   const proximoId = useRef(0);
   const campo = useRef<HTMLTextAreaElement>(null);
   const perguntaAtual = useRef<HTMLDivElement>(null);
+  const painel = useRef<HTMLElement>(null);
   // Quem abriu o painel (o "?" do cabeçalho, o "Dúvidas" do menu mobile): o foco volta pra ele.
   const quemAbriu = useRef<HTMLElement | null>(null);
   const devolverFoco = useRef(false);
+  const isMobile = useIsMobile();
+  const area = useAreaVisivel();
 
   useEffect(() => {
     const abrir = () => {
@@ -116,13 +121,15 @@ export function AgenteAjuda() {
   }, []);
 
   useEffect(() => {
-    if (aberto) campo.current?.focus();
+    // No celular o foco automático subia o teclado antes de a pessoa ler as sugestões,
+    // e o iOS empurrava a tela para cima (feedback do dono, 12/11). Lá o foco fica no painel.
+    if (aberto) (isMobile ? painel.current : campo.current)?.focus();
     else if (devolverFoco.current) {
       // Devolve o foco a quem abriu (teclado não se perde).
       devolverFoco.current = false;
       quemAbriu.current?.focus();
     }
-  }, [aberto]);
+  }, [aberto, isMobile]);
 
   // Rola até a pergunta recém-feita: a resposta é lida do começo, não do fim.
   useEffect(() => {
@@ -184,10 +191,23 @@ export function AgenteAjuda() {
     <>
       {aberto && (
         <section
+          ref={painel}
           role="dialog"
           aria-label="Dúvidas sobre o Pilar"
+          tabIndex={-1}
           onKeyDown={(e) => e.key === "Escape" && fechar()}
-          className="fixed inset-x-2 bottom-[calc(0.5rem+env(safe-area-inset-bottom))] z-50 flex h-[min(560px,calc(100dvh-5rem))] flex-col overflow-hidden rounded-2xl border border-border bg-surface-card shadow-elegant md:inset-x-auto md:bottom-auto md:right-4 md:top-16 md:w-[380px]"
+          // Celular: ocupa a área visível inteira e encolhe com o teclado (useAreaVisivel), com
+          // o campo sempre colado acima dele. Antes, ancorado embaixo com altura fixa, o teclado
+          // empurrava o painel para fora do alto da tela.
+          style={
+            isMobile && area
+              ? {
+                  top: `calc(${area.top}px + max(0.5rem, env(safe-area-inset-top)))`,
+                  height: `calc(${area.height}px - max(0.5rem, env(safe-area-inset-top)) - 0.5rem)`,
+                }
+              : undefined
+          }
+          className="fixed inset-x-2 top-[max(0.5rem,env(safe-area-inset-top))] z-60 flex h-[calc(100dvh-1rem)] flex-col overflow-hidden rounded-2xl border border-border bg-surface-card shadow-elegant outline-hidden md:inset-x-auto md:right-4 md:top-16 md:z-50 md:h-[min(560px,calc(100dvh-5rem))] md:w-[380px]"
         >
           <div className="flex shrink-0 justify-end px-2 pt-2">
             <button

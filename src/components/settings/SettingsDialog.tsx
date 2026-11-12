@@ -71,7 +71,7 @@ export function SettingsDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={(next) => !next && closeSettings()}>
       <DialogContent
-        className="z-60 flex max-w-[min(100vw-2rem,980px)] h-[min(88dvh,700px)] gap-0 p-0 overflow-hidden"
+        className="z-60 flex max-w-[min(100vw-2rem,980px)] h-[min(88dvh,700px)] max-md:h-[92dvh] gap-0 p-0 overflow-hidden"
         // Abre com o foco no próprio diálogo: focar o 1º item do menu ("Conta") deixava um anel
         // nele mesmo com outra seção aberta, parecendo dois itens selecionados.
         onOpenAutoFocus={(e) => {
@@ -110,10 +110,14 @@ export function SettingsDialog() {
 
           {/* Painel ativo */}
           <div className="flex min-h-0 flex-1 flex-col">
-            <header className="shrink-0 border-b border-black/5 px-6 py-4 pr-12">
+            <header className="shrink-0 border-b border-black/5 px-4 py-3 pr-12 sm:px-6 sm:py-4">
               <h2 className="text-lg font-semibold text-ink">{active.label}</h2>
             </header>
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">{isOpen && <Panel />}</div>
+            {/* Celular: os cards dos painéis (p-6 do shadcn) perdem metade da margem lateral, senão o
+                formulário fica espremido dentro de card dentro de painel (feedback do dono, 12/11). */}
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 max-sm:[&_.p-6]:px-4 sm:px-6 sm:py-5">
+              {isOpen && <Panel />}
+            </div>
           </div>
         </div>
       </DialogContent>

@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Search, X, ChevronRight, type LucideIcon } from "lucide-react";
+import { ArrowLeft, Search, X, ChevronRight, MoreHorizontal, type LucideIcon } from "lucide-react";
 import { useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { MobileFab } from "@/components/MobileFab";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { Feature } from "@/lib/permissions";
@@ -37,6 +43,13 @@ interface PageHeaderProps {
    * controla a própria responsividade (ex.: esconder em telas pequenas).
    */
   center?: React.ReactNode;
+  /**
+   * Ações secundárias como dados: botões contornados no desktop e um menu "⋯" no
+   * celular, onde vários botões com texto não cabem ao lado do título (o "Portal do
+   * cliente" do projeto ficava fora da tela sem como alcançar, feedback do dono 12/11).
+   * `destaque` pinta o botão com a marca no desktop (ex.: "Retomar projeto").
+   */
+  acoes?: Array<{ label: string; icon: LucideIcon; onClick: () => void; destaque?: boolean }>;
   /** Ação primária. Com `feature`, aplica getButtonProps(feature, "edit"). */
   primaryAction?: {
     label: string;
@@ -48,7 +61,7 @@ interface PageHeaderProps {
   };
 }
 
-export function PageHeader({ title, breadcrumbs, children, search, center, primaryAction }: PageHeaderProps) {
+export function PageHeader({ title, breadcrumbs, children, search, center, acoes, primaryAction }: PageHeaderProps) {
   const { isMobile } = useSidebar();
   const { getButtonProps } = usePermissions();
   const searchRef = useRef<HTMLInputElement>(null);
@@ -231,6 +244,36 @@ export function PageHeader({ title, breadcrumbs, children, search, center, prima
         {/* Central de ajuda (SPEC 154): "?" com o artigo da tela, quando existe. */}
         <AjudaDaTela />
         {children}
+        {acoes && acoes.length > 0 && isMobile && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-9 w-9 shrink-0 rounded-full" aria-label="Mais ações">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-52">
+              {acoes.map(({ label, icon: Icon, onClick }) => (
+                <DropdownMenuItem key={label} onClick={onClick} className="gap-2.5 py-2.5 text-[15px]">
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        {acoes &&
+          !isMobile &&
+          acoes.map(({ label, icon: Icon, onClick, destaque }) => (
+            <Button
+              key={label}
+              variant={destaque ? "brand" : "outline"}
+              onClick={onClick}
+              className="h-9 rounded-full text-sm"
+            >
+              <Icon className="mr-1.5 h-3.5 w-3.5" />
+              {label}
+            </Button>
+          ))}
         {/* Celular (SPEC 134): a ação principal vira o botão flutuante (MobileFab). */}
         {primaryAction && isMobile && (
           <MobileFab

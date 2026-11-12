@@ -115,32 +115,22 @@ export default function ProjetoDetail() {
     <PageLayout
       density="compact"
       header={
-        <PageHeader title={projeto.nome} breadcrumbs={[{ label: "Projetos", to: "/projetos" }]}>
-          {canEdit && pausado && (
-            <Button variant="brand" onClick={() => setRetomarOpen(true)} className="rounded-full h-9 text-sm">
-              <Play className="h-3.5 w-3.5 mr-1.5" />
-              Retomar projeto
-            </Button>
-          )}
-          {canEdit && podePausar && (
-            <Button variant="outline" onClick={() => setPausarOpen(true)} className="rounded-full h-9 text-sm">
-              <Pause className="h-3.5 w-3.5 mr-1.5" />
-              Pausar projeto
-            </Button>
-          )}
-          {podeDarAcessoPortal && projeto.cliente_id && (
-            <Button variant="outline" onClick={() => setPortalOpen(true)} className="rounded-full h-9 text-sm">
-              <Globe className="h-3.5 w-3.5 mr-1.5" />
-              Portal do cliente
-            </Button>
-          )}
-          {canEdit && (
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(true)} className="rounded-full h-9 text-sm">
-              <Pencil className="h-3.5 w-3.5 mr-1.5" />
-              Editar
-            </Button>
-          )}
-        </PageHeader>
+        <PageHeader
+          title={projeto.nome}
+          breadcrumbs={[{ label: "Projetos", to: "/projetos" }]}
+          acoes={[
+            ...(canEdit && pausado
+              ? [{ label: "Retomar projeto", icon: Play, onClick: () => setRetomarOpen(true), destaque: true }]
+              : []),
+            ...(canEdit && podePausar
+              ? [{ label: "Pausar projeto", icon: Pause, onClick: () => setPausarOpen(true) }]
+              : []),
+            ...(podeDarAcessoPortal && projeto.cliente_id
+              ? [{ label: "Portal do cliente", icon: Globe, onClick: () => setPortalOpen(true) }]
+              : []),
+            ...(canEdit ? [{ label: "Editar", icon: Pencil, onClick: () => setIsEditDialogOpen(true) }] : []),
+          ]}
+        />
       }
     >
       {pausado && pausaAberta && (

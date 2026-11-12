@@ -251,7 +251,7 @@ function DisciplinaDetailBody({
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* Cabeçalho */}
-      <div className="shrink-0 border-b px-8 pt-6 pb-4">
+      <div className="shrink-0 border-b px-4 pt-3 pb-4 md:px-8 md:pt-6">
         <div className="mb-1.5 flex items-center gap-2">
           <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             <Layers className="h-3 w-3" /> {disciplina.codigo || "Disciplina"}
@@ -280,7 +280,7 @@ function DisciplinaDetailBody({
         primaryLabel="Detalhes"
         secondaryLabel="Atividades"
         primary={
-          <div className="h-full space-y-7 overflow-y-auto px-8 py-6">
+          <div className="h-full space-y-7 overflow-y-auto px-4 py-4 md:px-8 md:py-6">
             {/* Propriedades em grade 2 colunas */}
             <div className="grid max-w-3xl grid-cols-1 gap-x-10 gap-y-4 md:grid-cols-2">
               <Prop icon={CircleDot} label="Status" className="md:col-span-2">
