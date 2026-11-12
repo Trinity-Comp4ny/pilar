@@ -5,6 +5,7 @@ import { PageSlotsContext } from "@/components/pageSlotsContext";
 import { cn } from "@/lib/utils";
 import { sidebarOffset } from "@/lib/shellLayout";
 import { useDentroDoMain } from "@/components/mainLandmark";
+import { useRecolherAoRolar } from "@/hooks/useRecolherAoRolar";
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -43,6 +44,8 @@ export function PageLayout({
   const compacta = density === "compact";
   const { state, isMobile } = useSidebar();
   const mainRef = useRef<HTMLElement>(null);
+  // Celular: a linha de atalhos do módulo recolhe ao rolar para baixo e volta ao subir.
+  const atalhosRecolhidos = useRecolherAoRolar(mainRef, isMobile && !standalone);
   // Dentro do Layout já existe um <main id="main-content">; aqui vira div (mesmo foco e
   // estilo). Fora dele (tela standalone), continua sendo o <main> da página.
   const Conteudo = useDentroDoMain() ? "div" : "main";
@@ -77,7 +80,19 @@ export function PageLayout({
             {header}
             {/* Chip-nav do módulo ativo (spec 097 / ADR 0040): só existe em mobile e
               dentro de um dos 3 pilares; ModuleChipNav se auto-oculta no resto. */}
-            {!standalone && <ModuleChipNav />}
+            {!standalone && (
+              <div
+                data-atalhos-modulo
+                className={cn(
+                  "grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none",
+                  atalhosRecolhidos ? "grid-rows-[0fr]" : "grid-rows-[1fr]"
+                )}
+              >
+                <div className="min-h-0 overflow-hidden">
+                  <ModuleChipNav />
+                </div>
+              </div>
+            )}
             {/* Ordem fixa (SPEC 124 / ADR 0059): header, chips mobile, abas de seção, toolbar. */}
             <div ref={setTabsEl}>{tabs}</div>
             <div ref={setToolbarEl}>{toolbar}</div>

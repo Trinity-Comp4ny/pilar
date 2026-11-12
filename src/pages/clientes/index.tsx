@@ -288,6 +288,7 @@ export default function Clientes() {
   const columns: ColumnDef<Cliente>[] = [
     {
       key: "nome",
+      mobile: "title",
       header: "Nome",
       getSortValue: (cliente) => cliente.nome,
       cell: (cliente) => (
@@ -299,6 +300,7 @@ export default function Clientes() {
     },
     {
       key: "cpf_cnpj",
+      mobile: "subtitle",
       header: "CPF/CNPJ",
       getSortValue: (cliente) => cliente.cpf_cnpj ?? "",
       cell: (cliente) => formatDocument(cliente.cpf_cnpj),
@@ -317,6 +319,7 @@ export default function Clientes() {
     },
     {
       key: "portal",
+      mobile: "badge",
       header: "Portal",
       className: "hidden md:table-cell",
       cell: (cliente) => {
@@ -412,7 +415,7 @@ export default function Clientes() {
         dataTour: "onb-novo-cliente",
       }}
     >
-      <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden">
+      <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden max-md:border-0 max-md:bg-transparent max-md:shadow-none">
         <CardContent className="flex-1 min-h-0 flex flex-col p-0 pb-2">
           <div className="overflow-x-auto overflow-y-auto w-full flex-1 min-h-0">
             <DataTable

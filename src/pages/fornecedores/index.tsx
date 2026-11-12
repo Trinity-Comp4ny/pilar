@@ -265,6 +265,7 @@ export default function Fornecedores() {
   const columns: ColumnDef<Fornecedor>[] = [
     {
       key: "nome",
+      mobile: "title",
       header: "Nome",
       className: "font-medium",
       getSortValue: (f) => f.nome.toLowerCase(),
@@ -272,6 +273,7 @@ export default function Fornecedores() {
     },
     {
       key: "cnpj",
+      mobile: "subtitle",
       header: "CNPJ",
       getSortValue: (f) => f.cnpj ?? "",
       cell: (f) => (f.cnpj ? formatCNPJ(f.cnpj) : "-"),
@@ -300,6 +302,7 @@ export default function Fornecedores() {
       ? [
           {
             key: "acoes",
+            mobile: "trailing" as const,
             header: "Ações",
             align: "end" as const,
             cell: (f: Fornecedor) => (
@@ -509,7 +512,7 @@ export default function Fornecedores() {
         />
       }
     >
-      <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden">
+      <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden max-md:border-0 max-md:bg-transparent max-md:shadow-none">
         <CardContent className="flex-1 min-h-0 flex flex-col p-0 pb-2">
           {/* O main está com overflow-y-hidden (página de altura fixa), então o
               scroll precisa viver aqui, senão a tabela é cortada sem rolar. */}
