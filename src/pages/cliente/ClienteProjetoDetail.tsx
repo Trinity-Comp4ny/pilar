@@ -201,8 +201,6 @@ function ProjetoOverview({ projeto, refresh }: { projeto: ClienteProjetoData; re
         </Card>
       </div>
 
-      <ArquivosDoProjeto projetoId={projeto.projeto_id} />
-
       <TimelineContent disciplinas={(projeto.disciplinas as TimelineDisciplina[]) ?? []} />
     </div>
   );
@@ -252,6 +250,8 @@ export default function ClienteProjetoDetail() {
     content = <FinanceiroContent receitas={data.receitas ?? []} />;
   } else if (subPath === "/entregas") {
     content = <EntregasContent projetoId={data.projeto_id} />;
+  } else if (subPath === "/arquivos") {
+    content = <ArquivosDoProjeto projetoId={data.projeto_id} />;
   } else {
     content = <ProjetoOverview projeto={data} refresh={refresh} />;
   }

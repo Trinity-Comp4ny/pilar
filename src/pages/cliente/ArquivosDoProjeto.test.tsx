@@ -61,7 +61,37 @@ describe("ArquivosDoProjeto", () => {
     h.conteudo.raiz = { pasta: null, itens: [] };
     abrir();
     await waitFor(() => expect(h.listar).toHaveBeenCalled());
-    expect(screen.queryByText("Arquivos do projeto")).not.toBeInTheDocument();
+    expect(await screen.findByText("Nenhum arquivo por aqui ainda")).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+
+  it("enquanto abre a lista mostra o carregamento da marca", async () => {
+    h.listar.mockImplementation(() => new Promise(() => {}));
+    abrir();
+    expect(await screen.findByText("Abrindo os arquivos")).toBeInTheDocument();
+  });
+
+  it("erro ao listar mostra o aviso com tentar de novo", async () => {
+    h.listar.mockRejectedValueOnce(new Error("falhou"));
+    const user = abrir();
+    expect(await screen.findByText("Não foi possível abrir os arquivos")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Tentar de novo" }));
+    expect(await screen.findByText("planta.pdf")).toBeInTheDocument();
+  });
+
+  it("enquanto o download prepara, o botão fica ocupado e aparece o aviso de espera", async () => {
+    let concluir!: () => void;
+    h.baixar.mockImplementation(() => new Promise<void>((r) => (concluir = r)));
+    const user = abrir();
+    await user.click(await screen.findByRole("button", { name: "Baixar planta.pdf" }));
+    expect(await screen.findByText(/Preparando o download de planta\.pdf/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Baixar planta.pdf" })).toBeDisabled();
+    // O segundo clique durante a espera não dispara outro download.
+    await user.click(screen.getByText("planta.pdf"));
+    expect(h.baixar).toHaveBeenCalledTimes(1);
+    concluir();
+    await waitFor(() => expect(screen.queryByText(/Preparando o download/)).not.toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Baixar planta.pdf" })).toBeEnabled();
   });
 
   it("sem Drive, mas com links para o cliente: mostra só os links", async () => {

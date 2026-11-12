@@ -7,6 +7,7 @@ import {
   FolderKanban,
   DollarSign,
   FileCheck,
+  FolderOpen,
   LayoutDashboard,
   ChevronDown,
   KeyRound,
@@ -40,6 +41,7 @@ const projetoNavItems = [
   { path: "", label: "Visão Geral", icon: FolderKanban, end: true },
   { path: "/financeiro", label: "Financeiro", icon: DollarSign, end: false },
   { path: "/entregas", label: "Entregas", icon: FileCheck, end: false },
+  { path: "/arquivos", label: "Arquivos", icon: FolderOpen, end: false },
 ];
 
 export function ClienteShell({ account, children, projetoId, projetoNome, obraNome }: ClienteShellProps) {

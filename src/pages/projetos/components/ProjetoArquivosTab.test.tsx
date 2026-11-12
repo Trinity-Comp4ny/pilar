@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -150,6 +150,48 @@ describe("ProjetoArquivosTab", () => {
     await user.upload(screen.getByTestId("arquivos-input"), arquivo);
     await waitFor(() => expect(h.enviar).toHaveBeenCalledWith(raiz.pasta_id, arquivo, expect.any(Function)));
     await waitFor(() => expect(h.toast.success).toHaveBeenCalledWith("Arquivo enviado"));
+  });
+
+  it("mostra o envio em andamento por fase: preparando, enviando e finalizando", async () => {
+    let progredir!: (p: number) => void;
+    let concluir!: () => void;
+    h.enviar.mockImplementation(
+      (_pasta: string, _arq: File, aoProgredir: (p: number) => void) =>
+        new Promise((resolve) => {
+          progredir = aoProgredir;
+          concluir = () => resolve({ id: "novo", name: "novo.pdf", mimeType: "application/pdf" });
+        })
+    );
+    abrir();
+    const arquivo = new File(["x"], "novo.pdf", { type: "application/pdf" });
+    await userEvent.setup().upload(await screen.findByTestId("arquivos-input"), arquivo);
+
+    const aviso = await screen.findByRole("status");
+    expect(within(aviso).getByText("Enviando 1 arquivo para o Drive…")).toBeInTheDocument();
+    expect(within(aviso).getByText("Preparando…")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Enviando…" })).toBeDisabled();
+
+    act(() => progredir(0.42));
+    expect(within(aviso).getByText("42%")).toBeInTheDocument();
+    act(() => progredir(1));
+    expect(within(aviso).getByText("Finalizando no Drive…")).toBeInTheDocument();
+
+    await act(async () => concluir());
+    await waitFor(() => expect(screen.queryByText("Enviando 1 arquivo para o Drive…")).not.toBeInTheDocument());
+    expect(h.toast.success).toHaveBeenCalledWith("Arquivo enviado");
+    expect(screen.getByRole("button", { name: "Enviar arquivos" })).toBeEnabled();
+  });
+
+  it("baixar mostra o botão ocupado até o download começar", async () => {
+    h.conteudo[raiz.pasta_id] = { itens: [{ id: "a1", name: "planta.pdf", mimeType: "application/pdf" }] };
+    let concluir!: () => void;
+    h.baixar.mockImplementation(() => new Promise<void>((r) => (concluir = r)));
+    abrir();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: "Baixar planta.pdf" }));
+    expect(screen.getByRole("button", { name: "Baixar planta.pdf" })).toBeDisabled();
+    await act(async () => concluir());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Baixar planta.pdf" })).toBeEnabled());
   });
 
   it("cria pasta e manda arquivo para a lixeira com confirmação", async () => {
