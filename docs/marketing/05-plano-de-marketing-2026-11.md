@@ -7,6 +7,9 @@
 > e as notas de referências e mídia paga em `research/` (ver `research/INDEX.md`).
 > Escrito em 10/11/2026.
 
+> **Peças prontas para postar (mídia + legenda): [`conteudo/`](./conteudo/README.md).** Os caminhos
+> `posts/out/` e `video-v2/renders/` citados abaixo são as pastas de geração (fora do Git).
+
 ## 0. Em uma página
 
 1. **Um objetivo:** assinatura pelo site ("Ver planos"). Demonstração é o caminho secundário.

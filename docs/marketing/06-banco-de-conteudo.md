@@ -4,6 +4,9 @@
 > lançamento público (19/01/2027). Estratégia, cadência e métricas em
 > [05-plano-de-marketing-2026-11.md](./05-plano-de-marketing-2026-11.md). Atualizado em 10/11/2026.
 
+> **Peças prontas para postar (mídia + legenda): [`conteudo/`](./conteudo/README.md).** Os caminhos
+> `posts/out/` e `video-v2/renders/` citados abaixo são as pastas de geração (fora do Git).
+
 ## 1. A regra de variedade
 
 O CEO pediu (10/11) que os vídeos parem de parecer todos iguais. Daqui em diante, cada peça

@@ -1,5 +1,7 @@
 # Vídeos de marketing v2
 
+> Os vídeos prontos (com legenda e capa) ficam versionados em [`../conteudo/reels/`](../conteudo/README.md); `renders/` é a pasta de geração. Depois de renderizar, rode `python3 docs/marketing/conteudo/organizar.py`.
+
 Segunda geração dos vídeos da Pilar. A primeira (branch `docs/marketing-plan-and-videos`, pasta
 `docs/marketing/video/`) foi reprovada pelo CEO em 2026-11-09: lenta, pouca informação, fundo
 branco com texto solto, narração sintética fraca e logotipo e tagline antigos.

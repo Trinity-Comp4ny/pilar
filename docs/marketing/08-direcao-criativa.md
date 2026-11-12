@@ -4,6 +4,9 @@
 > entende em 1 segundo. Escrito em 11/11/2026, a pedido do CEO, depois de comparar com contas de
 > referência (Zapia e outras). Complementa a [07 · Direção de conteúdo](./07-direcao-de-conteudo.md).
 
+> **Peças prontas para postar (mídia + legenda): [`conteudo/`](./conteudo/README.md).** Os caminhos
+> `posts/out/` e `video-v2/renders/` citados abaixo são as pastas de geração (fora do Git).
+
 ## 1. O que as contas de referência fazem (e a Pilar não fazia)
 
 Olhando a Zapia (@zapia_pt) e outras marcas de software com perfil forte, o padrão não é a arte, é o

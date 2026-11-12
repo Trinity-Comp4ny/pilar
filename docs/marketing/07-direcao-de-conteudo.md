@@ -4,6 +4,9 @@
 > público reconhece como real. Complementa o plano ([05](./05-plano-de-marketing-2026-11.md)) e o
 > banco de conteúdo ([06](./06-banco-de-conteudo.md)). Escrito em 10/11/2026, a pedido do CEO.
 
+> **Peças prontas para postar (mídia + legenda): [`conteudo/`](./conteudo/README.md).** Os caminhos
+> `posts/out/` e `video-v2/renders/` citados abaixo são as pastas de geração (fora do Git).
+
 ## 1. Diagnóstico honesto
 
 O que temos é bem feito, mas tem um teto: **nenhuma peça mostra uma pessoa nem o produto sendo usado
