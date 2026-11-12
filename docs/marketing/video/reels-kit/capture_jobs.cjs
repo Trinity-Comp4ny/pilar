@@ -12,9 +12,10 @@ srv.listen(0, '127.0.0.1', async () => {
   pg.on('pageerror', e => console.log('ERR', e.message));
   await pg.goto(`http://localhost:${port}/${job.url}`); await pg.waitForFunction(() => window.ready, null, { timeout: 120000 });
   fs.mkdirSync(outDir, { recursive: true }); const t0 = Date.now();
-  for (let i = 0; i < job.frames.length; i++) { const f = job.frames[i]; const out = path.join(outDir, f.name + '.jpg'); if (fs.existsSync(out)) continue;
+  const prontos = new Set(fs.readdirSync(outDir)); // retoma um lote interrompido sem refazer quadros
+  for (let i = 0; i < job.frames.length; i++) { const f = job.frames[i]; if (prontos.has(f.name + '.jpg')) continue; const out = path.join(outDir, f.name + '.jpg');
     const url = await pg.evaluate(([t, o]) => window.grab(t, 0.93, o), [f.t, f.o || {}]);
-    fs.writeFileSync(out, Buffer.from(url.split(',')[1], 'base64'));
+    try { fs.writeFileSync(out, Buffer.from(url.split(',')[1], 'base64'), { flag: 'wx' }); } catch (e) { if (e.code !== 'EEXIST') throw e; }
     if (i % 30 === 0) console.log(job.url, 'frame', i, '/', job.frames.length, ((Date.now() - t0) / 1000).toFixed(0) + 's'); }
   await b.close(); srv.close();
 });
