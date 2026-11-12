@@ -56,3 +56,12 @@ código.
 | Antes                            | Depois                             |
 | -------------------------------- | ---------------------------------- |
 | ![antes](antes-itens-mobile.jpg) | ![depois](depois-itens-mobile.jpg) |
+
+## Criar obra a partir da estimativa (SPEC 136, BEZ-19)
+
+Tela nova, sem "antes": o botão "Criar obra" no cabeçalho da estimativa abre a confirmação com o que será criado
+(cronograma, previsto por etapa, taxa de administração e local da ficha). Depois de criada, o botão vira "Ver obra".
+
+| Celular                                 | Desktop                          |
+| --------------------------------------- | -------------------------------- |
+| ![depois](depois-criar-obra-mobile.jpg) | ![depois](depois-criar-obra.jpg) |

@@ -10493,6 +10493,10 @@ export type Database = {
       criar_fornecedor_agente: { Args: { p_run_id: string }; Returns: Json }
       criar_lead_agente: { Args: { p_run_id: string }; Returns: Json }
       criar_marco_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_obra_da_estimativa: {
+        Args: { p_estimativa_id: string; p_fases: Json; p_obra: Json }
+        Returns: string
+      }
       criar_pessoa_agente: { Args: { p_run_id: string }; Returns: Json }
       criar_projeto_agente: { Args: { p_run_id: string }; Returns: Json }
       criar_proposta_agente: { Args: { p_run_id: string }; Returns: Json }

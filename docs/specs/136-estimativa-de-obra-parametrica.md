@@ -131,7 +131,10 @@ Cada fatia é um PR com o seu card no Linear (título `[BEZ-NN]`).
 2. **CUB** ([BEZ-13](https://linear.app/bez-company/issue/BEZ-13)) e **adicionais por empresa**
    ([BEZ-14](https://linear.app/bez-company/issue/BEZ-14)): telas do ultra admin e da empresa.
 3. **Fluxo** ([BEZ-18](https://linear.app/bez-company/issue/BEZ-18)): lista, assistente, resultado, versões, cenários.
-4. **Saídas** ([BEZ-19](https://linear.app/bez-company/issue/BEZ-19)): criar obra, PDF, anexar à proposta.
+4. **Saídas** ([BEZ-19](https://linear.app/bez-company/issue/BEZ-19)): criar obra, PDF, anexar à proposta. Criar obra entregue em
+   12/11/2026: RPC `criar_obra_da_estimativa` (migration 20261228000100), uma transação com obra, cronograma em
+   `obra_frente` e previsto por etapa (o subtotal, sem a taxa de administração, que vira a taxa da obra). PDF e anexo
+   seguem pendentes.
 5. **IA:** fora desta SPEC. A leitura do PDF da planta vira uma SPEC própria.
 6. **Liberar** ([BEZ-20](https://linear.app/bez-company/issue/BEZ-20)): validar com obras reais
    ([BEZ-16](https://linear.app/bez-company/issue/BEZ-16)), marcar os parâmetros como validados, ligar numa empresa

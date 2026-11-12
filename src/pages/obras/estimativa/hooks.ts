@@ -16,6 +16,7 @@ import type {
   ResultadoEstimativa,
 } from "@/schemas/estimativaObra";
 import { lerFichaDoBanco, lerPremissasDoBanco, lerResultadoDoBanco } from "./lib";
+import type { FaseDaObra } from "./obraDaEstimativa";
 
 type StatusEstimativa = "rascunho" | "enviada" | "virou_obra";
 
@@ -463,4 +464,45 @@ export function useInsumosDaEstimativa(): Insumos {
     precosSinapi: precosSinapi.data,
     validado: parametros.data.validado,
   };
+}
+
+export interface CriarObraDaEstimativa {
+  estimativaId: string;
+  obra: {
+    nome: string;
+    cep?: string;
+    cidade?: string;
+    localizacao?: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    taxa_administracao_pct: number;
+    data_inicio_prevista: string;
+    data_fim_prevista: string;
+  };
+  fases: FaseDaObra[];
+}
+
+/**
+ * SPEC 136, requisito 11 (BEZ-19): cria a obra, o cronograma e o previsto por etapa numa transação só (RPC
+ * `criar_obra_da_estimativa`) e devolve o id da obra. A estimativa passa a "Virou obra".
+ */
+export function useCriarObraDaEstimativa() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ estimativaId, obra, fases }: CriarObraDaEstimativa): Promise<string> => {
+      const { data, error } = await supabase.rpc("criar_obra_da_estimativa", {
+        p_estimativa_id: estimativaId,
+        p_obra: paraJson(obra),
+        p_fases: paraJson(fases),
+      });
+      if (error) throw error;
+      if (!data) throw new Error("Não foi possível criar a obra");
+      return data;
+    },
+    onSuccess: (_obraId, v) => {
+      void qc.invalidateQueries({ queryKey: CHAVE });
+      void qc.invalidateQueries({ queryKey: [...CHAVE, v.estimativaId] });
+      void qc.invalidateQueries({ queryKey: ["obras"] });
+    },
+  });
 }
