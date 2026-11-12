@@ -661,7 +661,7 @@ export default function Leads() {
               </div>
             )}
 
-            {/* Mobile list view (accordion por etapa, independe do toggle Quadro/Lista) */}
+            {/* Quadro do celular (colunas lado a lado, independe do toggle Quadro/Lista) */}
             <LeadsMobile
               etapas={etapas}
               leadsDaEtapa={getLeadsByEtapa}
