@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { HardHat, MapPin, Plus, User, Globe } from "lucide-react";
 import { PilarPage } from "@/components/PilarPage";
 import { KPICard } from "@/components/KPICard";
+import { KpiResumo } from "@/components/KpiResumo";
+import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
 import { EmptyState } from "@/components/EmptyState";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -95,12 +97,34 @@ export default function ObrasPage() {
         feature: "obras",
         dataTour: "onb-nova-obra",
       }}
+      density="compact"
     >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <KPICard label="Obras" value={String(obras.length)} icon={HardHat} loading={isLoading} />
-        <KPICard label="Em andamento" value={String(ativas)} tone="info" loading={isLoading} />
-        <KPICard label="Paralisadas" value={String(paralisadas)} tone="attention" loading={isLoading} />
-      </div>
+      <CollapsibleKpiSection
+        storageKey="obras"
+        resumo={
+          isLoading ? undefined : (
+            <KpiResumo
+              itens={[
+                { texto: `${obras.length} obras` },
+                { texto: `${ativas} em andamento` },
+                { texto: `${paralisadas} paralisadas`, alerta: paralisadas > 0 },
+              ]}
+            />
+          )
+        }
+      >
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <KPICard density="compact" label="Obras" value={String(obras.length)} icon={HardHat} loading={isLoading} />
+          <KPICard density="compact" label="Em andamento" value={String(ativas)} tone="info" loading={isLoading} />
+          <KPICard
+            density="compact"
+            label="Paralisadas"
+            value={String(paralisadas)}
+            tone="attention"
+            loading={isLoading}
+          />
+        </div>
+      </CollapsibleKpiSection>
 
       <FilaCotacoesPendentes />
 

@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
+import { DisciplinasKPIs } from "./DisciplinasKPIs";
 import { Card, CardContent } from "@/components/ui/card";
-import { KPICard } from "@/components/KPICard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -389,24 +389,8 @@ export function DisciplinasTab({
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Métricas */}
-      <div className="space-y-4">
-        {/* KPI Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <KPICard
-            icon={CheckCircle2}
-            label="Concluídas"
-            value={metrics.concluidas.toString()}
-            tone="positive"
-            subtitle={`${metrics.progressoPct}%`}
-          />
-          <KPICard icon={Clock} label="Em Andamento" value={metrics.emAndamento.toString()} tone="info" />
-          <KPICard icon={Clock} label="Atenção" value={metrics.emAtencao.toString()} tone="warning" />
-          <KPICard icon={AlertTriangle} label="Atrasadas" value={metrics.atrasadas.toString()} tone="danger" />
-          <KPICard icon={Layers} label="Total" value={metrics.total.toString()} tone="neutral" subtitle="atribuições" />
-        </div>
-      </div>
+    <div className="space-y-4">
+      <DisciplinasKPIs metrics={metrics} />
 
       {/* Filtros */}
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">

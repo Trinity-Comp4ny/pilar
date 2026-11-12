@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { CalendarClock, Layers, TrendingUp, PercentCircle, Handshake } from "lucide-react";
 import { KPICard } from "@/components/KPICard";
+import { KpiResumo } from "@/components/KpiResumo";
+import { formatCurrency } from "@/lib/format";
 import { type Lead } from "@/hooks/useLeads";
 import { type Proposta } from "@/hooks/usePropostas";
 import { propostaPrimaria, valorNoFunil, taxaFechamentoPropostas } from "@/pages/leads/lib/comercial";
@@ -14,8 +16,8 @@ interface LeadsKPIsProps {
   proximosAtivo?: boolean;
 }
 
-export function LeadsKPIs({ leads, propostasByLead, onFilterProximos, proximosAtivo = false }: LeadsKPIsProps) {
-  const stats = useMemo(() => {
+function useLeadsStats(leads: Lead[], propostasByLead: Map<string, Proposta[]>) {
+  return useMemo(() => {
     const ativos = leads.filter((l) => ATIVOS.has(l.status));
     // Valor no funil: proposta real quando existe, senão o estimado. A primária
     // (uma por lead) garante que nenhum lead conta duas vezes no somatório.
@@ -52,6 +54,25 @@ export function LeadsKPIs({ leads, propostasByLead, onFilterProximos, proximosAt
       fechamentoPropostas,
     };
   }, [leads, propostasByLead]);
+}
+
+/** Os indicadores numa linha, ao lado de "Indicadores" quando a faixa está recolhida. */
+export function LeadsKPIsResumo({ leads, propostasByLead }: Pick<LeadsKPIsProps, "leads" | "propostasByLead">) {
+  const stats = useLeadsStats(leads, propostasByLead);
+  return (
+    <KpiResumo
+      itens={[
+        { texto: `${stats.total} no pipeline` },
+        { texto: `${formatCurrency(stats.valorPipeline, { compact: true })} no funil` },
+        { texto: `${stats.proximos} fecham em 7 dias` },
+        { texto: `conversão ${stats.conversaoLeads ?? 0}%` },
+      ]}
+    />
+  );
+}
+
+export function LeadsKPIs({ leads, propostasByLead, onFilterProximos, proximosAtivo = false }: LeadsKPIsProps) {
+  const stats = useLeadsStats(leads, propostasByLead);
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-5 gap-2 shrink-0">

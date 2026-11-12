@@ -14,7 +14,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useRegistrarPagina } from "@/hooks/useRecentes";
-import { LeadsKPIs } from "./LeadsKPIs";
+import { LeadsKPIs, LeadsKPIsResumo } from "./LeadsKPIs";
 import { LeadDetailDialog } from "./components/LeadDetailDialog";
 import { LeadFormDialog, EMPTY_LEAD_FORM, type LeadFormData } from "./components/LeadFormDialog";
 import { LeadKanbanCard } from "./components/LeadKanbanCard";
@@ -545,7 +545,10 @@ export default function Leads() {
         />
       }
     >
-      <CollapsibleKpiSection storageKey="leads">
+      <CollapsibleKpiSection
+        storageKey="leads"
+        resumo={<LeadsKPIsResumo leads={leads} propostasByLead={propostasByLead} />}
+      >
         <LeadsKPIs
           leads={leads}
           propostasByLead={propostasByLead}
