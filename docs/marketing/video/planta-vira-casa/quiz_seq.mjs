@@ -13,6 +13,6 @@ ev.last = seq.length / 30;
 const last = items[items.length - 1].frame;
 for (let f = last; f <= 306; f++) push({ src: f, mode: 'score', u: (f - last) / 30 });
 ev.end = seq.length / 30;
-for (let k = 0; k < 84; k++) push({ src: 306, mode: 'end', u: k / 30 });
+for (let k = 0; k < 36; k++) { const u = k / 35, e = u < .5 ? 4*u*u*u : 1 - Math.pow(-2*u + 2, 3) / 2; push({ src: Math.round(306 * (1 - e)), mode: 'rewind', u: k / 30 }); }
 fs.writeFileSync('quiz_seq.json', JSON.stringify({ items, seq, ev }));
 console.log('frames', seq.length, 'dur', (seq.length / 30).toFixed(2), JSON.stringify(ev));

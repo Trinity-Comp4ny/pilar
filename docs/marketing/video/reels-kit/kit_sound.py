@@ -50,6 +50,7 @@ SFX = {
   'whoosh': lambda: filt(noise(int(0.7 * SR)), lo=300, hi=3500) * np.sin(np.pi * np.linspace(0, 1, int(0.7 * SR))) ** 1.5 * 0.5,
   'rain': lambda: filt(noise(int(4.5 * SR)), lo=900, hi=9000) * np.interp(np.arange(int(4.5 * SR)) / SR, [0, 0.8, 3.6, 4.5], [0, 1, 1, 0]) * 0.55,
   'thunder': lambda: filt(noise(int(2.5 * SR)), hi=180) * np.exp(-np.arange(int(2.5 * SR)) / SR * 1.4) * 2.2,
+  'rewind': lambda: (filt(noise(int(1.1 * SR)), lo=500, hi=6000) * np.linspace(0.2, 1, int(1.1 * SR)) ** 2 * np.minimum(1, np.linspace(1.1, 0, int(1.1 * SR)) / 0.15)) * 0.7,
   'pour': lambda: filt(noise(int(1.2 * SR)), lo=80, hi=700) * np.sin(np.pi * np.linspace(0, 1, int(1.2 * SR))) * 0.9,
 }
 for c in cues:
@@ -58,7 +59,7 @@ for c in cues:
     elif ty == 'end':
         for i, m in enumerate([72, 76, 79, 84]): add(tone(m2f(m), 2.2, 0.8), t0 + 0.3 + i * 0.12, 0.07, (i - 1.5) * 0.25)
     elif ty in SFX: add(SFX[ty](), t0, 0.12 if ty in ('pop', 'tick') else 0.25, rng.uniform(-0.3, 0.3))
-fade = np.interp(tt, [0, 0.05, DUR - 0.6, DUR], [0, 1, 1, 0])
+fade = np.interp(tt, [0, 0.02, DUR - 0.25, DUR], [0.6, 1, 1, 0.6])
 mix = np.stack([L, R], 1) * fade[:, None]; mix = np.tanh(mix / np.max(np.abs(mix)) * 1.5) / np.tanh(1.5) * 0.89
 with wave.open(out, 'wb') as w:
     w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR); w.writeframes((mix * 32767).astype('<i2').tobytes())

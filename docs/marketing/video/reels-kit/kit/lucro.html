@@ -30,9 +30,9 @@
   <div class="abs body" id="t2" style="left:90px;right:90px;top:1690px">E o agente já preparou o aditivo para você aprovar.</div>
 </div>
 <script src="kit.js"></script><script>
-window.DUR=18.2;
+window.DUR=15.2;
 const L=[[2.5,'l1'],[3.7,'l2'],[4.6,'l3'],[5.3,'l4'],[6.4,'l5']];
-L.forEach(([t])=>cue(t,'pop')); cue(7.8,'hit'); cue(9.6,'whoosh'); cue(11.0,'tick'); cue(12.6,'ding'); cue(15.2,'end'); cue(0,'start');
+L.forEach(([t])=>cue(t,'pop')); cue(7.8,'hit'); cue(9.6,'whoosh'); cue(11.0,'tick'); cue(12.6,'ding'); cue(0,'start');
 window.render=async(t)=>{
   show('s0',t<2.2); show('s1',t>=2.2&&t<9.6); show('s2',t>=9.6&&t<15.2);
   if(t<2.2){ enter('h1',t,-1); enter('h2',t,-1); pill('p1',t,-1); }
@@ -47,7 +47,6 @@ window.render=async(t)=>{
     const b=expo(lin(u,3.0,3.6)); $('shotQ').style.opacity=b; $('shotQ').style.transform='translateY('+(1-b)*50+'px)';
     const kq=easeIO(lin(u,3.6,5.0)); shotAt($('shotQ'),$('imgQ'),0.9,1250+(2300-1250)*kq,1530+(1600-1530)*kq);
     enter('t2',u,3.4,20); }
-  renderEnd(t,15.2);
 };
-setupEnd('Você descobre o lucro antes ou depois?').then(()=>{ window.ready=true; });
+window.ready=true;
 </script></body></html>
