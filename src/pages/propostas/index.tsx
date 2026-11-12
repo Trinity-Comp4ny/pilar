@@ -576,8 +576,7 @@ export default function Propostas() {
     </FilterBar>
   );
 
-  // Colunas da tabela (SPEC 127). `getSortValue` só habilita o clique no cabeçalho: a ordenação
-  // em si é feita acima, em `filteredPropostas`.
+  // Colunas (SPEC 127): `getSortValue` só liga o clique no cabeçalho; a ordenação é em `filteredPropostas`.
   const propostasColumns: ColumnDef<Proposta>[] = [
     {
       key: "titulo",
@@ -591,13 +590,7 @@ export default function Propostas() {
         </>
       ),
     },
-    {
-      key: "cliente",
-      header: "Cliente/Lead",
-      mobile: "subtitle",
-      className: "text-sm",
-      cell: (p) => p.cliente_nome || p.lead_nome || "—",
-    },
+    { key: "cliente", header: "Cliente/Lead", mobile: "subtitle", cell: (p) => p.cliente_nome || p.lead_nome || "—" },
     {
       key: "valor_proposto",
       mobile: "trailing",
@@ -623,7 +616,6 @@ export default function Propostas() {
     {
       key: "validade",
       header: "Validade",
-      className: "text-sm",
       getSortValue: (p) => p.validade ?? "",
       cell: (p) => (
         <span className={p.validade && p.validade < hoje ? "text-danger-mid font-medium" : undefined}>
