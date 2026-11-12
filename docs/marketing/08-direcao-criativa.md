@@ -149,3 +149,22 @@ fim do vídeo como virada quando não há cartão).
 | 20 | Conversa com o cliente | "A palavra que salva a margem." | Como você responde o "só um ajustezinho"? |
 
 A série 2 não gasta crédito de imagem: é HTML, dá para trocar o texto e gerar de novo em segundos.
+
+## 8. Voz (12/11)
+
+A voz oficial dos vídeos narrados é a **Leda** (Google Chirp 3 HD, `pt-BR-Chirp3-HD-Leda`), escolhida
+pelo CEO depois de comparar sete vozes. Duas coisas a deixam menos robótica: o roteiro inteiro é gerado
+**numa chamada só** (a entonação emenda entre as falas) e o texto é escrito **para ser falado**
+("Tipo: recebi cento e vinte e oito mil...", reticências onde a pessoa respira).
+
+14 vídeos ganharam narração por cima (`src/<id>.voz.json`: cada fala com o segundo em que entra):
+comece-aqui, hora-do-socio, anatomia, antes-depois, dia-do-socio, diario, grupo-da-obra, planilha,
+chuva, nao-faz, glossario, mito-fato, comentario e planos. A voz pronta fica versionada em
+`narration/<id>/voz.ogg`, então o vídeo pode ser refeito sem chave da API.
+
+**Ficaram sem voz, de propósito:** ASMR (o som é o conteúdo), quiz (a pessoa precisa ler e pensar),
+manifestos (a força é a tipografia no ritmo da música), os vídeos-conceito em loop (7 a 9 s, a imagem
+basta), contagem e novidades (mudam toda semana) e os vídeos do fundador (a voz é a dele).
+
+Para mudar uma fala: edite o `voz.json` e rode `./make.sh <id> light|dark` com `GOOGLE_TTS_API_KEY`
+definida. O `narrate.py` avisa "NÃO CABE" quando a fala passa da janela até a próxima.

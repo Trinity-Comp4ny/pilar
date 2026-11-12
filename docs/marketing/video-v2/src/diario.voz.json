@@ -1,0 +1,18 @@
+{
+  "voz": "narração por cima do vídeo (narrate.py, narrar_sobre); t = segundo em que a fala entra",
+  "fim": 16.4,
+  "lines": [
+    {
+      "t": 0.3,
+      "say": "O diário da obra ainda está no WhatsApp?"
+    },
+    {
+      "t": 4.5,
+      "say": "O canteiro fala. A Pilar organiza: serviço feito, material que faltou, pendência."
+    },
+    {
+      "t": 11.4,
+      "say": "Nasce interno. E vai para o cliente quando você liberar."
+    }
+  ]
+}

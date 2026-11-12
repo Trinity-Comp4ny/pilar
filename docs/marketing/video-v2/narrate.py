@@ -274,8 +274,66 @@ def process(raw_bytes, out_path):
         return w.getnframes() / w.getframerate()
 
 
+def narrar_sobre(vid):
+    """Voz por cima de um vídeo já montado (src/<id>.voz.json): cada fala entra no segundo "t" e precisa
+    caber até a próxima. O roteiro inteiro é gerado numa chamada (entonação contínua) e cortado por fala.
+    A voz tratada fica versionada em narration/<id>/voz.ogg, então o vídeo pode ser refeito sem chave."""
+    spec = json.loads((HERE / "src" / f"{vid}.voz.json").read_text())
+    out = HERE / "narration" / vid
+    out.mkdir(parents=True, exist_ok=True)
+    ogg = out / "voz.ogg"
+    if not os.environ.get("GOOGLE_TTS_API_KEY"):
+        if not ogg.exists():
+            sys.exit(f"sem GOOGLE_TTS_API_KEY e sem {ogg}")
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(ogg), "-ac", "1", "-ar", str(SR), "-c:a", "pcm_s16le", str(out / "voice.wav")], check=True)
+        print(f"ok {vid}: voz versionada (voz.ogg)")
+        return
+    lines, fim = spec["lines"], spec["fim"]
+    says = [ln["say"] for ln in lines]
+    cache = out / "cache"
+    cache.mkdir(exist_ok=True)
+    voice = os.environ.get("VOICE_GOOGLE", "pt-BR-Chirp3-HD-Leda")
+    ck = hashlib.sha1(f"sobre|{voice}|{'|'.join(says)}".encode()).hexdigest()[:16]
+    parts = [cache / f"{ck}-{i:02d}.wav" for i in range(len(says))]
+    if not all(p_.exists() for p_ in parts):
+        wavs, _ = tts_google_full(says) if len(says) > 1 else ([tts_google(says[0])[0]], voice)
+        for p_, w_ in zip(parts, wavs):
+            p_.write_bytes(w_)
+    track = np.zeros(int(fim * SR) + SR, dtype=np.float32)
+    rel = []
+    for i, ln in enumerate(lines):
+        janela = (lines[i + 1]["t"] if i + 1 < len(lines) else fim) - ln["t"] - 0.08
+        dst = out / f"s{i:02d}.wav"
+        dur = process(parts[i].read_bytes(), dst)
+        tempo = 1.0
+        if dur > janela:
+            tempo = min(dur / janela, 1.12)
+            with tempfile.NamedTemporaryFile(suffix=".wav") as tmp:
+                subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(dst), "-af", f"atempo={tempo:.3f}", "-c:a", "pcm_s16le", tmp.name], check=True)
+                dst.write_bytes(Path(tmp.name).read_bytes())
+            with wave.open(str(dst)) as w:
+                dur = w.getnframes() / w.getframerate()
+        aviso = "  << NÃO CABE" if dur > janela + 0.05 else ""
+        print(f"{ln['t']:5.2f}s +{dur:.2f}s (janela {janela:.2f}s, ritmo {tempo:.2f}){aviso}  {ln['say'][:60]}")
+        with wave.open(str(dst)) as w:
+            x = np.frombuffer(w.readframes(w.getnframes()), dtype="<i2").astype(np.float32) / 32768
+        a = int(ln["t"] * SR)
+        track[a : a + len(x)] += x[: max(0, len(track) - a)]
+        rel.append({"t": ln["t"], "dur": round(dur, 3), "say": ln["say"], "ritmo": round(tempo, 3)})
+        dst.unlink()
+    track = np.clip(track[: int(fim * SR)], -1, 1)
+    with wave.open(str(out / "voice.wav"), "wb") as w:
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
+        w.writeframes((track * 32767).astype("<i2").tobytes())
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(out / "voice.wav"), "-c:a", "libopus", "-b:a", "48k", str(ogg)], check=True)
+    (out / "timing.json").write_text(json.dumps({"provider": "google", "voice": voice, "lines": rel}, ensure_ascii=False, indent=1))
+    print(f"ok {vid} ({voice})")
+
+
 def main():
     vid = sys.argv[1]
+    if (HERE / "src" / f"{vid}.voz.json").exists():
+        return narrar_sobre(vid)
     script = json.loads((HERE / "src" / f"{vid}.script.json").read_text())
     out = HERE / "narration" / vid
     out.mkdir(parents=True, exist_ok=True)

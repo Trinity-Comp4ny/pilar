@@ -13,12 +13,14 @@ if ls footage/"$id".* >/dev/null 2>&1; then
   python3 footage.py "$id"          # gravação real: quadros, voz e legenda alinhada
 elif [ -f "src/$id.script.json" ] && [ "${SKIP_NARRATION:-}" != "1" ] && grep -q '"narrated": *true' "src/$id.script.json"; then
   python3 narrate.py "$id"
+elif [ -f "src/$id.voz.json" ]; then
+  python3 narrate.py "$id"          # voz por cima de um vídeo já montado (ver narrar_sobre)
 fi
 node build.mjs "$id" ${theme:+--theme "$theme"}
 node render.cjs "$name"
 python3 audio.py "renders/$name.cues.json" "renders/$name.wav"
 voice="narration/$id/voice.wav"
-if [ -f "src/$id.script.json" ] && [ -f "$voice" ]; then
+if { [ -f "src/$id.script.json" ] || [ -f "src/$id.voz.json" ]; } && [ -f "$voice" ]; then
   # a voz comanda: a trilha abaixa quando alguém fala (sidechain) e fica ~12 dB abaixo
   ffmpeg -v error -y -i "renders/$name.video.mp4" -i "renders/$name.wav" -i "$voice" -filter_complex \
     "[2:a]aresample=48000,pan=stereo|c0=c0|c1=c0,asplit=2[v][sc];\

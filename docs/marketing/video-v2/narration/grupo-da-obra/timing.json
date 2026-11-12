@@ -1,0 +1,24 @@
+{
+ "provider": "google",
+ "voice": "pt-BR-Chirp3-HD-Leda",
+ "lines": [
+  {
+   "t": 0.3,
+   "dur": 2.411,
+   "say": "O grupo da obra, às sete da manhã.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 4.5,
+   "dur": 4.231,
+   "say": "Foto, áudio, pergunta do cliente... tudo misturado.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 9.8,
+   "dur": 2.451,
+   "say": "Na Pilar, cada recado já tem lugar.",
+   "ritmo": 1.0
+  }
+ ]
+}

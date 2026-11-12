@@ -1,0 +1,42 @@
+{
+ "provider": "google",
+ "voice": "pt-BR-Chirp3-HD-Leda",
+ "lines": [
+  {
+   "t": 0.1,
+   "dur": 1.46,
+   "say": "O que a Pilar não faz.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 1.75,
+   "dur": 1.375,
+   "say": "Não aprova por você.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 3.4,
+   "dur": 1.914,
+   "say": "Não manda nada sem o seu ok.",
+   "ritmo": 1.027
+  },
+  {
+   "t": 5.4,
+   "dur": 1.391,
+   "say": "Não inventa número.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 7.4,
+   "dur": 1.531,
+   "say": "Não assina a sua ART.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 9.4,
+   "dur": 1.511,
+   "say": "E não cobra por usuário.",
+   "ritmo": 1.0
+  }
+ ]
+}

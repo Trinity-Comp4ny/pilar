@@ -1,0 +1,24 @@
+{
+ "provider": "google",
+ "voice": "pt-BR-Chirp3-HD-Leda",
+ "lines": [
+  {
+   "t": 0.4,
+   "dur": 7.631,
+   "say": "Anatomia de um prejuízo. O projeto foi orçado em quatrocentas e vinte horas. Aí vem uma revisão aqui, um ajuste ali...",
+   "ritmo": 1.0
+  },
+  {
+   "t": 10.0,
+   "dur": 2.533,
+   "say": "Cento e trinta horas que ninguém cobrou.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 14.9,
+   "dur": 3.271,
+   "say": "Na Pilar, a hora real aparece durante.",
+   "ritmo": 1.0
+  }
+ ]
+}
