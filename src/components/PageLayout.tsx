@@ -18,9 +18,9 @@ interface PageLayoutProps {
   className?: string;
   containerClassName?: string;
   /**
-   * `compact`: tela de dados (quadro, Gantt, tabela, mapa). Padding de 16/24 px em vez de
-   * 32 a 48 px e o conteúdo ocupando a altura da tela, para a área principal rolar por
-   * dentro. Num notebook 13" são ~50 px a mais de altura (auditoria de espaço, 2026-11).
+   * `compact`: tela de dados (quadro, Gantt, tabela, mapa). Topo de 16 px em vez de 24,
+   * blocos a 16 px e o conteúdo ocupando a altura da tela, para a área principal rolar por
+   * dentro (auditoria de espaço, 2026-11).
    */
   density?: "default" | "compact";
 }
@@ -91,11 +91,14 @@ export function PageLayout({
             tabIndex={-1}
             className={cn(
               "flex-1 overflow-y-auto w-full bg-background outline-hidden",
-              compacta ? "p-4 md:px-6 md:py-4" : "p-6 md:p-8 xl:p-10 2xl:p-12",
+              // Recuo lateral = o do header (24 px), para o conteúdo alinhar com o título. Eram
+              // 32 a 48 px, desalinhados do título e com um vão acima do 1º bloco (auditoria
+              // de espaço, 2026-11).
+              compacta ? "p-4 md:px-6 md:py-4" : "p-4 md:px-6 md:pt-6",
               // BottomNav (spec 097) é fixa por cima do conteúdo em mobile; sem este
               // espaço reservado, o fim do scroll ficava escondido atrás dela.
               "pb-[calc(6.5rem+env(safe-area-inset-bottom))]",
-              compacta ? "md:pb-4" : "md:pb-8 xl:pb-10 2xl:pb-12",
+              compacta ? "md:pb-4" : "md:pb-8",
               className
             )}
           >

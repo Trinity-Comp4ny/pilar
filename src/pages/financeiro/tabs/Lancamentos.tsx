@@ -7,7 +7,6 @@ import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DataFrescor } from "@/components/DataFrescor";
 import { Clock, TrendingDown, TrendingUp, Upload } from "lucide-react";
@@ -238,20 +237,20 @@ export default function Lancamentos() {
         </CollapsibleKpiSection>
       )}
 
-      <Card className="rounded-2xl border border-black/5 bg-white p-4 max-md:border-0 max-md:bg-transparent max-md:p-0 max-md:shadow-none">
-        <CardContent className="p-0">
-          <LancamentosTable
-            resumo={resumo}
-            filters={filters}
-            // O seletor de tipo da barra é o único agora: trocar por ele segue a regra das
-            // visões (SPEC 150), que lembra a escolha e abre A pagar/A receber em aberto.
-            onFiltersChange={(next) => (next.tipo !== filters.tipo ? trocarVisao(next) : setFilters(next))}
-            onMutated={invalidate}
-          />
+      {/* A tabela já tem moldura: sem card em volta (eram 2 bordas e 16 px de cada lado, que
+        cortavam Valor e Status em 1320 px). Auditoria de espaço, 2026-11. */}
+      <div>
+        <LancamentosTable
+          resumo={resumo}
+          filters={filters}
+          // O seletor de tipo da barra é o único agora: trocar por ele segue a regra das
+          // visões (SPEC 150), que lembra a escolha e abre A pagar/A receber em aberto.
+          onFiltersChange={(next) => (next.tipo !== filters.tipo ? trocarVisao(next) : setFilters(next))}
+          onMutated={invalidate}
+        />
 
-          <ImportarLancamentosDialog open={importar} onOpenChange={setImportar} onImported={invalidate} />
-        </CardContent>
-      </Card>
+        <ImportarLancamentosDialog open={importar} onOpenChange={setImportar} onImported={invalidate} />
+      </div>
     </div>
   );
 }

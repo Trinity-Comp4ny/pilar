@@ -33,4 +33,19 @@ describe("PageLayout", () => {
     const camada = screen.getByText("cabeçalho").closest(".fixed") as HTMLElement;
     expect(camada.style.top).toBe("0px");
   });
+
+  it("o recuo lateral do conteúdo é o do header (24 px), sem os 40 a 48 px de antes", () => {
+    render(
+      <MemoryRouter>
+        <SidebarProvider>
+          <PageLayout header={<div>cabeçalho</div>}>
+            <p>conteúdo</p>
+          </PageLayout>
+        </SidebarProvider>
+      </MemoryRouter>
+    );
+    const area = screen.getByText("conteúdo").closest("[tabindex='-1']") as HTMLElement;
+    expect(area).toHaveClass("md:px-6", "md:pt-6");
+    expect(area.className).not.toMatch(/xl:p-1\d/);
+  });
 });

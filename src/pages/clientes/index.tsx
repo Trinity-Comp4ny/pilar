@@ -413,7 +413,7 @@ export default function Clientes() {
       }}
     >
       <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden">
-        <CardContent className="flex-1 min-h-0 flex flex-col p-4">
+        <CardContent className="flex-1 min-h-0 flex flex-col p-0 pb-2">
           <div className="overflow-x-auto overflow-y-auto w-full flex-1 min-h-0">
             <DataTable
               columns={columns}
