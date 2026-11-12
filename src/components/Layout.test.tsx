@@ -21,7 +21,7 @@ vi.mock("@/components/AtalhosTecladoDialog", () => ({
 vi.mock("@/components/OnboardingChecklist", () => ({ OnboardingChecklist: () => <div data-testid="checklist" /> }));
 vi.mock("@/components/onboarding/OnboardingTourController", () => ({ OnboardingTourController: () => null }));
 vi.mock("@/components/novidades/OQueMudou", () => ({ OQueMudou: () => null }));
-vi.mock("@/components/FaixaAvisos", () => ({ FaixaAvisos: () => null }));
+vi.mock("@/components/FaixaAvisos", () => ({ FaixaAvisos: () => <div data-testid="faixa-avisos" /> }));
 vi.mock("@/components/agente/AgenteAjuda", () => ({ AgenteAjuda: () => null }));
 vi.mock("@/components/pesquisas/NpsCard", () => ({ NpsCard: () => null }));
 vi.mock("@/components/ComunicadoModal", () => ({ ComunicadoModal: () => null }));
@@ -74,6 +74,15 @@ describe("Layout", () => {
     const faixa = await screen.findByTestId("aceite-termos");
     expect(faixa).toHaveAttribute("data-modo", "faixa");
     expect(skip.compareDocumentPosition(faixa) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("faixas de aviso ficam num bloco fixo fora do main, para o PageLayout não cobri-las", async () => {
+    renderLayout();
+    const avisos = await screen.findByTestId("faixa-avisos");
+    const termos = await screen.findByTestId("aceite-termos");
+    expect(screen.getByRole("main")).not.toContainElement(avisos);
+    expect(avisos.parentElement).toHaveClass("fixed");
+    expect(avisos.parentElement).toContainElement(termos);
   });
 
   it("⌘K abre a paleta sob demanda", async () => {

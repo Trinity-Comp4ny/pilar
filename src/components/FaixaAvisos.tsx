@@ -65,7 +65,9 @@ export function FaixaAvisos() {
   };
 
   return (
-    <div className="space-y-2 px-4 pt-3 md:px-0 md:pt-0 md:pb-2">
+    // Mora no bloco fixo do topo do Layout (FaixasDoTopo), com fundo próprio e o mesmo recuo
+    // lateral do cabeçalho das páginas.
+    <div className="space-y-2 bg-background px-4 py-2 md:px-6">
       {visiveis.map((a) => (
         <div
           key={a.chave}
