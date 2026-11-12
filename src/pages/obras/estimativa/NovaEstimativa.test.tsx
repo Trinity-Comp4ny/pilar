@@ -58,6 +58,8 @@ vi.mock("@/components/PilarPage", () => ({
 }));
 vi.mock("@/hooks/usePermissions", () => ({ usePermissions: () => ({ can: () => true }) }));
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => false }));
+const { lookupCEP } = vi.hoisted(() => ({ lookupCEP: vi.fn() }));
+vi.mock("@/lib/brasilApi", () => ({ lookupCEP }));
 
 const abrir = (url = "/obras/estimativas/nova") =>
   render(
@@ -123,6 +125,37 @@ describe("NovaEstimativa", () => {
     expect(screen.getByText(/terreno inclinado, muro de arrimo a medir/)).toBeInTheDocument();
   });
 
+  it("o CEP preenche endereço, cidade e estado, e o início da obra aceita data passada", async () => {
+    lookupCEP.mockResolvedValue({
+      cep: "24020000",
+      street: "Rua da Conceição",
+      neighborhood: "Centro",
+      city: "Niterói",
+      state: "RJ",
+    });
+    const user = userEvent.setup();
+    abrir();
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.type(screen.getByLabelText("Nome da estimativa"), "Casa em Niterói");
+    await user.type(screen.getByLabelText("CEP da obra"), "24020000");
+    await waitFor(() => expect(screen.getByLabelText("Cidade")).toHaveValue("Niterói"));
+    expect(lookupCEP).toHaveBeenCalledWith("24020000");
+    expect(screen.getByLabelText("Endereço")).toHaveValue("Rua da Conceição, Centro");
+    expect(screen.getByRole("combobox", { name: "Estado" })).toHaveTextContent("RJ");
+
+    const inicio = screen.getByLabelText("Início da obra");
+    await user.clear(inicio);
+    await user.type(inicio, "14/08/2025");
+    await user.tab();
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(screen.getByText(/Niterói, Rio de Janeiro \(RJ\) · início em 14\/08\/2025/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Gerar estimativa" }));
+    await waitFor(() => expect(criar).toHaveBeenCalledTimes(1));
+    const [nova] = criar.mock.calls[0] as [{ ficha: { uf: string; inicio: string; cep: string } }];
+    expect(nova.ficha).toMatchObject({ uf: "RJ", inicio: "2025-08-14", cep: "24020-000" });
+  });
+
   it("os itens do catálogo mostram de onde vem o preço antes de calcular", async () => {
     insumos = {
       ...insumosProntos(),
@@ -146,7 +179,7 @@ describe("NovaEstimativa", () => {
     await user.click(screen.getByRole("button", { name: "Continuar" }));
 
     expect(screen.getByText(/R\$\s2\.175 por aparelho/)).toBeInTheDocument();
-    expect(screen.getAllByText("Sem preço do SINAPI em SP: você informa", { exact: false }).length).toBe(4);
+    expect(screen.getAllByText("Sem preço do SINAPI em SP: você informa", { exact: false }).length).toBe(5);
     expect(screen.getAllByText("Sem preço de referência: você informa").length).toBeGreaterThan(0);
     expect(screen.getByText(/6% da base/)).toBeInTheDocument();
     expect(screen.getByLabelText("Descreva a obra")).toBeEnabled();

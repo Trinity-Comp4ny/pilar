@@ -470,16 +470,18 @@ export function calcularEstimativa(entrada: EntradaCalculo): SaidaCalculo {
     fasesBase.map((x) => x.bruto)
   );
 
-  const [anoIni, mesIni] = ficha.inicio.split("-").map(Number);
+  // Ficha antiga traz só `AAAA-MM`: começa no dia 1. As fases andam em meses a partir do dia de início.
+  const [anoIni, mesIni, diaIni = 1] = ficha.inicio.split("-").map(Number);
   const mesIdx0 = mesIni - 1;
+  const deslocamento = diaIni - 1;
   const desembolsoCents = Array.from({ length: meses }, () => 0);
 
   const fases = fasesBase.map((x, i) => {
     const valorCents = x.bruto + taxaPorFase[i];
     const inicioMes = Math.floor(x.f.inicio * meses);
     const fimMes = Math.min(meses, Math.max(inicioMes + 1, Math.ceil(x.f.fim * meses)));
-    const d0 = diaDe(anoIni, mesIdx0 + inicioMes, 1);
-    const d1 = diaDe(anoIni, mesIdx0 + fimMes, 1) - 1;
+    const d0 = diaDe(anoIni, mesIdx0 + inicioMes, 1) + deslocamento;
+    const d1 = diaDe(anoIni, mesIdx0 + fimMes, 1) - 1 + deslocamento;
 
     distribuir(
       valorCents,
@@ -547,7 +549,27 @@ export function calcularEstimativa(entrada: EntradaCalculo): SaidaCalculo {
         mesAntigo,
         regime,
       },
-      etapas: parametros.etapas.map((e, i) => ({ id: e.id, nome: e.nome, fase: e.fase, valor: reais(etapasCents[i]) })),
+      etapas: parametros.etapas.map((e, i) => {
+        // Mesma proporção da natureza da base, por etapa: quanto da etapa é material, mão de obra etc.
+        const [material, maoDeObra, equipamentos, despesas] = distribuir(etapasCents[i], [
+          nb.material,
+          nb.mao_de_obra,
+          nb.equipamentos,
+          nb.despesas,
+        ]);
+        return {
+          id: e.id,
+          nome: e.nome,
+          fase: e.fase,
+          valor: reais(etapasCents[i]),
+          natureza: {
+            material: reais(material),
+            maoDeObra: reais(maoDeObra),
+            equipamentos: reais(equipamentos),
+            despesas: reais(despesas),
+          },
+        };
+      }),
       adicionais: linhasAdicionais.map((l) => ({
         id: l.id,
         rotulo: l.rotulo,
