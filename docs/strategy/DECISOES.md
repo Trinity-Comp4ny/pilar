@@ -11,6 +11,19 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-12 · Google Agenda conectado, por pessoa, com aviso 30 minutos antes
+
+**Decisão:** cada usuário conecta o próprio Google Agenda. As reuniões aparecem na Agenda de Tarefas, junto dos
+prazos, e o sino avisa 30 minutos antes de cada uma. A Pilar só lê a agenda (escopo `calendar.events.readonly`).
+Plano e ordem das próximas ideias (convite do portal, arquivos sem Drive) na SPEC 164.
+
+Contexto: o CEO quer o dia do usuário dentro da Pilar ("daqui meia hora você tem uma reunião") para ele não precisar
+sair da plataforma. Diferente do Drive (uma conta do escritório), agenda é pessoal: ninguém vê a do colega.
+
+**Supera:** nada; é a segunda integração Google, depois do Drive (2026-11-10).
+
+---
+
 ## 2026-11-11 · Fluxo do projeto vira grafo com dependências e caminho crítico
 
 **Decisão:** a aba Fluxo do projeto passa a funcionar como o grafo de um pipeline de CI: etapas, o que roda em
