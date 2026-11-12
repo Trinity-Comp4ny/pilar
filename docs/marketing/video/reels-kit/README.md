@@ -32,7 +32,8 @@ Geist, o logotipo branco e as telas. Render 3D em CPU: cerca de 5 a 12 s por qua
 ## Regras que valem para todo vídeo do kit
 
 - Primeiro quadro já traz o gancho (sem logo de abertura). Uma pílula verde por frase.
-- Entradas ease-out, sem quique. Fechamento: logotipo se desenha, tagline, CTA em pílula, quadro parado.
+- Entradas ease-out, sem quique. Sem quadro final de marca (DECISOES 12/11): o fim emenda no começo (a obra
+  rebobina até a planta ou o vídeo volta ao gancho) e o CTA vai na legenda do post.
 - Telas do produto só da empresa fictícia (Atrium / Residência Toledo / Hotel Serra Verde). Números de exemplo levam
   "dados de exemplo".
 - O 3D é exceção à regra de imagem da marca (ver seção 0 do doc 05): precisa de decisão registrada no `DECISOES.md`.

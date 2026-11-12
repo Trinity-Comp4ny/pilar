@@ -16,22 +16,22 @@ body{background:#15110e}
   <div class="shot" id="shotO"><img id="imgO" src="../assets/shots/obra.png"></div>
   <div class="h3" id="pc"><div id="pc1">Trovoada prevista no dia da concretagem.</div><div id="pc2" style="margin-top:18px">O responsável <span class="pill"><span>reprogramou.</span></span></div></div></div>
 <script src="kit.js"></script><script>
-window.DUR=15.2;
-cue(0,'start'); cue(2.3,'whoosh'); cue(3.4,'tick'); cue(4.4,'ding'); cue(5.3,'rain'); cue(6.1,'thunder'); cue(9.8,'whoosh'); cue(10.1,'pour'); cue(12.2,'end');
+window.DUR=13.2;
+cue(0,'start'); cue(2.3,'whoosh'); cue(3.4,'tick'); cue(4.4,'ding'); cue(5.3,'rain'); cue(6.1,'thunder'); cue(9.8,'whoosh'); cue(10.1,'pour'); cue(12.2,'rewind');
 const pad=n=>String(n).padStart(4,'0');
 window.render=async(t)=>{
   let src=null; if(t<2.3) src='../frames3/f'+pad(Math.round(t*30));
   else if(t>=5.3&&t<9.8) src='../fr_chuva/f'+pad(Math.min(134,Math.round((t-5.3)*30)));
-  else if(t>=9.8) src='../frames3/f'+pad(Math.min(150,70+Math.round((t-9.8)*30)));
+  else if(t>=9.8&&t<12.2) src='../frames3/f'+pad(Math.min(150,70+Math.round((t-9.8)*30)));
+  else if(t>=12.2) src='../frames3/f'+pad(Math.max(0,Math.round(142*(1-easeIO(lin(t,12.2,13.1))))));
   if(src) await setFrame($('f'),src+'.jpg');
   $('hk').style.display=t<2.3?'flex':'none';
   $('prod').style.display=t>=2.3&&t<5.3?'block':'none';
   if(t>=2.3&&t<5.3){ const u=t-2.3; enter('pt',u,-1); pill('pp',u,0.15); const a=expo(lin(u,0.2,0.7)); $('shotO').style.opacity=a;
     shotAt($('shotO'),$('imgO'),0.62+0.18*easeIO(lin(u,0.7,2.2)),1350,500); enter('pc1',u,1.0,20); enter('pc2',u,2.1,20); }
   const ch=$('ch'); let txt=null,t0=0;
-  if(t>=5.6&&t<9.8){txt='Choveu. E o concreto não estava lá.';t0=5.6;} else if(t>=9.9&&t<12.2){txt='Concretagem no dia seco.';t0=9.9;}
+  if(t>=5.6&&t<9.8){txt='Choveu. E o concreto não estava lá.';t0=5.6;} else if(t>=9.9&&t<12.1){txt='Concretagem no dia seco.';t0=9.9;}
   ch.style.display=txt?'flex':'none'; if(txt){ $('cht').textContent=txt; enter('cht',t,t0,20,0.4); }
-  renderEnd(t,12.2);
 };
-setupEnd('O Pilar avisa antes. Quem decide é você.').then(()=>{ window.ready=true; });
+window.ready=true;
 </script></body></html>

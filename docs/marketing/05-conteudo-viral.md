@@ -349,7 +349,8 @@ Regras de leitura:
 ## 6. Produzido (11/11/2026)
 
 Arquivos gerados pelo kit em [`video/reels-kit/`](./video/reels-kit/README.md) e pelo gerador 3D em
-[`video/planta-vira-casa/`](./video/planta-vira-casa/README.md). Os MP4 ficam fora do repo (peso); o código gera de novo.
+[`video/planta-vira-casa/`](./video/planta-vira-casa/README.md). Os MP4 ficam fora do repo (peso); o código gera de novo. Desde 12/11 os vídeos terminam em loop, sem quadro final
+de marca: o CTA vai na legenda (ver DECISOES.md).
 
 | ID | Vídeo | Duração | Observação |
 |---|---|---|---|

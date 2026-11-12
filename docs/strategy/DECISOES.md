@@ -11,6 +11,19 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-12 · Reels virais terminam sem fechamento de marca, em loop
+
+**Decisão:** os vídeos curtos de conteúdo (Reels, TikTok, Shorts da linha viral) não têm mais quadro final com
+logotipo, tagline e CTA. O último quadro emenda no primeiro (a obra rebobina até a planta, ou o vídeo volta ao
+gancho), para o vídeo repetir sem corte. A marca e o CTA ("Planos e demonstração no link da bio") vão na legenda
+do post e no perfil.
+
+Contexto: o CEO notou que todos os vídeos tinham o mesmo final e que esse final quebra o loop, que é o que faz o
+Reel ser revisto e distribuído. Detalhe e exceções (planos, comece aqui, lançamento) em `docs/marketing/08-direcao-criativa.md` §2;
+kit dos Reels 3D em `docs/marketing/video/reels-kit/`.
+
+**Supera:** o "Fechamento: lockup + CTA em pílula + quadro parado por 1 s" de `brand/motion.md` §5, só para a linha de
+conteúdo viral. Vídeo institucional e de demonstração (V-01 a V-03) seguem com fechamento.
 ## 2026-11-11 · Fluxo do projeto vira grafo com dependências e caminho crítico
 
 **Decisão:** a aba Fluxo do projeto passa a funcionar como o grafo de um pipeline de CI: etapas, o que roda em

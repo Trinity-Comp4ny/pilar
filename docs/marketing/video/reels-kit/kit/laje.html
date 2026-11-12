@@ -13,13 +13,12 @@ body{background:#15110e}
 <div id="hook"><div class="box"><div class="h2" style="color:#fff">Mesma casa. <span class="pill"><span>Qual cobertura?</span></span></div></div></div>
 <div id="poll"><div class="box"><div class="h2" style="color:#fff" id="pl">Comenta: <span class="pill"><span>telhado ou laje?</span></span></div></div></div>
 <script src="kit.js"></script><script>
-window.DUR=11.0; cue(0,'start'); cue(1.2,'whoosh'); cue(6.0,'ding'); cue(8.2,'end');
+window.DUR=9.1; cue(0,'start'); cue(1.2,'whoosh'); cue(6.0,'ding'); cue(8.2,'rewind');
 const pad=n=>String(n).padStart(4,'0');
 window.render=async(t)=>{
-  const f=t<1.2?165:Math.min(306,165+Math.round((t-1.2)*30));
+  const f=t<1.2?165:t<8.2?Math.min(306,165+Math.round((t-1.2)*30)):Math.round(306-141*easeIO(lin(t,8.2,9.0)));
   await Promise.all([setFrame($('iA'),'../frames3/f'+pad(f)+'.jpg'),setFrame($('iB'),'../fr_laje/f'+pad(f)+'.jpg')]);
   $('hook').style.display=t<1.2?'flex':'none'; $('poll').style.display=t>=6.0&&t<8.2?'flex':'none'; if(t>=6) enter('pl',t,6.0,20);
-  renderEnd(t,8.2);
 };
-setupEnd().then(()=>{ window.ready=true; });
+window.ready=true;
 </script></body></html>

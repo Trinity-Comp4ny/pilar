@@ -180,15 +180,15 @@ const tex = planTexture();
   g.beginPath(); g.ellipse(cx(4.58), cz(3.55), 0.17*S, 0.2*S, 0, 0, Math.PI*2); g.stroke();
   g.strokeStyle = '#26292d'; g.lineWidth = 3; g.setLineDash([10,8]); g.beginPath(); g.arc(cx(4.2), cz(4.125), 0.7*S, -Math.PI/2, 0); g.stroke(); g.setLineDash([]); } $('plan').src = tex.image.toDataURL('image/png');
 await new Promise(r => $('plan').onload = r);
-window.DUR = 15.0;
-cue(0,'start'); for (let i = 0; i < 5; i++) cue(2.3 + i, 'tick'); cue(7.3, 'hit'); cue(7.9, 'ding'); cue(12.0, 'end');
+window.DUR=12.0;
+cue(0,'start'); for (let i = 0; i < 5; i++) cue(2.3 + i, 'tick'); cue(7.3, 'hit'); cue(7.9, 'ding');
 const C = 2 * Math.PI * 80;
 window.render = async (t) => {
-  show('s0', t < 2.2); show('s1', t >= 2.2 && t < 12.0);
+  show('s0', t < 2.2); show('s1', t >= 2.2);
   if (t < 2.2) { enter('h1', t, -1); enter('h1b', t, -1); pill('p1', t, -1); enter('h2', t, 0.3, 20); }
   if (t >= 2.2 && t < 12.0) {
     const b = $('board'); const bw = b.clientWidth, bh = b.clientHeight;
-    const zk = easeIO(lin(t, 7.4, 8.4));
+    const zk = easeIO(lin(t, 7.4, 8.4)) * (1 - easeIO(lin(t, 11.0, 11.8)));
     const s0 = 0.47, s1 = 1.35; const sc = s0 + (s1 - s0) * zk;
     const fx = 1500 + (1525 - 1500) * zk, fy = 1990 + (1550 - 1990) * zk;
     const ox = bw / 2 - fx * sc, oy = bh / 2 - fy * sc; $('plan').style.transform = 'translate(' + ox + 'px,' + oy + 'px) scale(' + sc + ')';
@@ -197,10 +197,9 @@ window.render = async (t) => {
     $('timer').style.opacity = 1 - lin(t, 7.3, 7.6);
     const r = $('ringE'), bx = b.getBoundingClientRect(); const cx = bx.left + ox + 1516 * sc, cy = bx.top + oy + 1530 * sc, rad = 0.62 * S * sc;
     r.style.width = r.style.height = (2 * rad) + 'px'; r.style.left = (cx - rad) + 'px'; r.style.top = (cy - rad) + 'px'; r.style.opacity = quint(lin(t, 8.4, 8.8));
-    enter('ans', t, 8.6, 30);
+    enter('ans', t, 8.6, 30); if (t > 10.9) { $('ans').style.opacity = 1 - lin(t, 10.9, 11.2); $('ringE').style.opacity = 1 - lin(t, 10.9, 11.2); }
   }
-  renderEnd(t, 12.0);
 };
-await setupEnd('Achou em quantos segundos? Comenta.');
+
 window.ready = true;
 </script></body></html>

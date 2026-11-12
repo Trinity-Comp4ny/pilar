@@ -12,14 +12,13 @@
 <div id="hk"><div class="box"><div class="h2" style="color:#fff">Do traço no papel <span class="pill"><span>à casa pronta.</span></span></div></div></div>
 <div id="ch"><span class="chip" id="chip"><span class="num" id="cn"></span><span id="ct"></span><span class="sub" id="cs"></span></span></div>
 <script src="kit.js"></script><script>
-window.DUR=12.6;
+window.DUR=11.5;
 const ST=[[0.6,'01','Locação e baldrame','marcação e fundação'],[1.9,'02','Pilares','armadura de aço e concreto'],[2.75,'03','Alvenaria','bloco cerâmico, fiada por fiada'],[4.9,'04','Vigas e contrapiso','cinta de amarração e base do piso'],[6.1,'05','Reboco e esquadrias','paredes, portas e janelas'],[7.3,'06','Telhado','tesoura, terça e telha'],[8.55,'07','Paisagismo','jardim e calçada'],[9.2,'','Casa pronta.','']];
 window.render=async(t)=>{
-  await setFrame($('f'),'../fr_h169/f'+String(Math.min(377,Math.round(t*30))).padStart(4,'0')+'.jpg');
+  const fi=t<10.25?Math.round(t*30):Math.round(307*(1-easeIO(lin(t,10.25,11.4)))); await setFrame($('f'),'../fr_h169/f'+String(fi).padStart(4,'0')+'.jpg');
   $('hk').style.display=t<2.5?'block':'none';
   let cur=-1; ST.forEach((s,i)=>{if(t>=s[0])cur=i;}); const ch=$('ch');
-  if(cur<0||t>=10.25){ch.style.display='none';} else { ch.style.display='block'; const s=ST[cur]; $('cn').style.display=s[1]?'':'none'; $('cn').textContent=s[1]; $('ct').textContent=s[2]; $('cs').textContent=s[3]; enter('chip',t,s[0],20,0.35); }
-  renderEnd(t,10.25);
+  if(cur<0||t>=10.2){ch.style.display='none';} else { ch.style.display='block'; const s=ST[cur]; $('cn').style.display=s[1]?'':'none'; $('cn').textContent=s[1]; $('ct').textContent=s[2]; $('cs').textContent=s[3]; enter('chip',t,s[0],20,0.35); }
 };
-setupEnd().then(()=>{ window.ready=true; });
+window.ready=true;
 </script></body></html>
