@@ -39,7 +39,7 @@ async function preencher(senha: string, conf: string) {
   return user;
 }
 
-const enviar = () => screen.getByRole("button", { name: /Definir senha e entrar|Salvando/ });
+const enviar = () => screen.getByRole("button", { name: /^(Criar conta|Criando conta)/ });
 
 // Formulários longos preenchidos tecla a tecla passam de 5s com a suíte inteira em paralelo.
 vi.setConfig({ testTimeout: 15000 });
@@ -99,30 +99,46 @@ describe("ClienteConvite", () => {
     expect(screen.queryByRole("button", { name: "Criar conta" })).not.toBeInTheDocument();
   });
 
-  it("campos vazios não chamam o servidor", async () => {
+  it("botão Criar conta fica desabilitado com campos vazios", async () => {
     renderPage();
     const user = userEvent.setup();
     await user.click(await screen.findByRole("button", { name: "Criar conta" }));
-    await user.click(enviar());
-    expect(await screen.findByText("Confirme a senha")).toBeInTheDocument();
+    expect(enviar()).toBeDisabled();
     expect(h.definir).not.toHaveBeenCalled();
   });
 
-  it("senha fraca é recusada", async () => {
+  it("senha fraca mantém o botão desabilitado", async () => {
     renderPage();
-    const user = await preencher("senha123", "senha123");
-    await user.click(enviar());
-    // O checklist já mostra o que falta; não há mensagem de erro repetida no campo.
-    await waitFor(() => expect(screen.getByRole("list", { name: "Requisitos da senha" })).toBeInTheDocument());
+    await preencher("senha123", "senha123");
+    expect(enviar()).toBeDisabled();
     expect(h.definir).not.toHaveBeenCalled();
   });
 
-  it("confirmação diferente é recusada", async () => {
+  it("confirmação diferente avisa e mantém o botão desabilitado", async () => {
     renderPage();
-    const user = await preencher(SENHA, SENHA + "!");
-    await user.click(enviar());
+    await preencher(SENHA, SENHA + "!");
     expect(await screen.findByText("As senhas não coincidem")).toBeInTheDocument();
+    expect(enviar()).toBeDisabled();
     expect(h.definir).not.toHaveBeenCalled();
+  });
+
+  it("habilita o botão só quando senha e confirmação estão corretas", async () => {
+    renderPage();
+    await preencher(SENHA, SENHA);
+    await waitFor(() => expect(enviar()).toBeEnabled());
+  });
+
+  it("cada campo de senha tem o seu olho para mostrar/ocultar", async () => {
+    renderPage();
+    const user = await preencher(SENHA, SENHA);
+    const [a, b] = screen.getAllByPlaceholderText("••••••••");
+    expect(a).toHaveAttribute("type", "password");
+    expect(b).toHaveAttribute("type", "password");
+    await user.click(screen.getByRole("button", { name: "Mostrar confirmação da senha" }));
+    expect(b).toHaveAttribute("type", "text");
+    expect(a).toHaveAttribute("type", "password");
+    await user.click(screen.getByRole("button", { name: "Mostrar senha" }));
+    expect(a).toHaveAttribute("type", "text");
   });
 
   it("convite expirado/usado: avisa e não cria sessão", async () => {
