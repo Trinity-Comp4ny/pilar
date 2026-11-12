@@ -33,6 +33,7 @@ export default function ClienteConvite() {
   const token = searchParams.get("token");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [estado, setEstado] = useState<Estado>(token ? { fase: "carregando" } : { fase: "invalido" });
 
   useEffect(() => {
@@ -94,6 +95,7 @@ export default function ClienteConvite() {
   };
 
   const senha = useWatch({ control: form.control, name: "password" });
+  const { isValid } = form.formState;
 
   if (estado.fase === "carregando") {
     return (
@@ -222,26 +224,37 @@ export default function ClienteConvite() {
                 <FormItem className="space-y-2">
                   <FormLabel className="text-ink-soft font-medium">Confirmar senha</FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      type={showPassword ? "text" : "password"}
-                      autoComplete="new-password"
-                      placeholder="••••••••"
-                      className="h-11 bg-paper-alt border-paper-border"
-                    />
+                    <div className="relative group">
+                      <Input
+                        {...field}
+                        type={showConfirm ? "text" : "password"}
+                        autoComplete="new-password"
+                        placeholder="••••••••"
+                        className="pr-10 h-11 bg-paper-alt border-paper-border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirm((v) => !v)}
+                        aria-label={showConfirm ? "Ocultar confirmação da senha" : "Mostrar confirmação da senha"}
+                        aria-pressed={showConfirm}
+                        className="absolute right-3 top-3 text-ink/40 hover:text-ink-soft transition-colors"
+                      >
+                        {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <Button variant="brand" className="w-full h-11 font-medium" type="submit" disabled={isLoading}>
+            <Button variant="brand" className="w-full h-11 font-medium" type="submit" disabled={isLoading || !isValid}>
               {isLoading ? (
                 <>
-                  <BusyMark className="mr-2 h-4 w-4" /> Salvando...
+                  <BusyMark className="mr-2 h-4 w-4" /> Criando conta...
                 </>
               ) : (
-                "Definir senha e entrar"
+                "Criar conta"
               )}
             </Button>
           </form>
