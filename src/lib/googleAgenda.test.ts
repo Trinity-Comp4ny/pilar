@@ -6,6 +6,7 @@ import { buildEventosReunioes, linkDoEvento, rotuloAviso, rotuloHorario, type Ev
 
 const base: EventoAgenda = {
   id: "r1",
+  calendario_id: "primary",
   titulo: "Reunião",
   inicio: "2026-11-20T13:00:00.000Z",
   fim: "2026-11-20T14:00:00.000Z",

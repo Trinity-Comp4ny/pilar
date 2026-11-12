@@ -2,8 +2,9 @@
 --
 -- Diferente do Drive (uma conta por escritório), a agenda é PESSOAL: cada usuário conecta
 -- a própria conta Google em Configurações > Integrações. A Pilar pede o escopo
--- `calendar.events` (lê, cria, edita e exclui eventos da agenda principal), copia as
--- reuniões de uma janela de dias para agenda_eventos_google e:
+-- `calendar.events` (lê, cria, edita e exclui eventos) e `calendar.calendarlist.readonly`
+-- (vê quais agendas a conta tem: pessoal, trabalho, compartilhadas). Copia as reuniões das
+-- agendas que a pessoa escolheu, numa janela de dias, para agenda_eventos_google e:
 --   * mostra as reuniões na aba Agenda de Tarefas, como mais uma camada, onde dá para
 --     criar, editar e excluir sem abrir o Google Agenda;
 --   * avisa no sino antes de cada reunião (categoria "agenda"). Padrão: 10 minutos antes,
@@ -12,6 +13,7 @@
 -- Tabelas:
 --   * google_agenda_conexoes: conta conectada por usuário e o refresh token, CIFRADO na
 --     Edge Function (AES-GCM, mesma chave do Drive). Só service_role lê.
+--   * google_agenda_calendarios: as agendas da conta e se cada uma aparece na Pilar.
 --   * agenda_eventos_google: cópia das reuniões. Cada um lê só as próprias (RLS); só a
 --     Edge Function escreve.
 --   * google_drive_oauth_estados ganha `servico` ('drive' | 'agenda'): o mesmo state de
@@ -67,6 +69,8 @@ CREATE TABLE IF NOT EXISTS public.agenda_eventos_google (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   empresa_id uuid NOT NULL REFERENCES public.empresas(id) ON DELETE CASCADE,
   usuario_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  -- Agenda do Google de onde veio (id da agenda; a principal é o e-mail da conta).
+  calendario_id text NOT NULL DEFAULT 'primary',
   google_evento_id text NOT NULL,
   titulo text NOT NULL,
   inicio timestamptz NOT NULL,
@@ -86,7 +90,8 @@ CREATE TABLE IF NOT EXISTS public.agenda_eventos_google (
   -- Quando o aviso de "reunião em breve" saiu. Volta a null se o horário mudar.
   lembrete_em timestamptz,
   atualizado_em timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT agenda_eventos_google_unico UNIQUE (usuario_id, google_evento_id)
+  -- O mesmo evento pode estar em duas agendas da pessoa (convite numa agenda compartilhada).
+  CONSTRAINT agenda_eventos_google_unico UNIQUE (usuario_id, calendario_id, google_evento_id)
 );
 
 CREATE INDEX IF NOT EXISTS agenda_eventos_google_usuario_inicio_idx
@@ -110,6 +115,74 @@ CREATE POLICY agenda_eventos_google_select_proprios ON public.agenda_eventos_goo
 
 COMMENT ON TABLE public.agenda_eventos_google IS
   'Reuniões copiadas do Google Agenda do usuário (SPEC 164). Cada um lê as suas; escrita só pela Edge Function.';
+
+-- 3b. Agendas da conta ---------------------------------------------------------
+-- Lista que o Google devolve (calendarList). `visivel` é escolha da pessoa: nasce como a
+-- agenda está marcada no Google (as que ela vê lá aparecem aqui). Só a Edge Function cria
+-- e atualiza nome/cor; a pessoa só liga e desliga, pela função abaixo.
+CREATE TABLE IF NOT EXISTS public.google_agenda_calendarios (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  empresa_id uuid NOT NULL REFERENCES public.empresas(id) ON DELETE CASCADE,
+  usuario_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  calendario_id text NOT NULL,
+  nome text NOT NULL,
+  -- Cor da agenda no Google (#rrggbb), para a pessoa reconhecer na lista.
+  cor text CHECK (cor IS NULL OR cor ~ '^#[0-9a-fA-F]{6}$'),
+  principal boolean NOT NULL DEFAULT false,
+  -- A pessoa pode criar e editar eventos nesta agenda (dona ou com permissão de edição).
+  pode_editar boolean NOT NULL DEFAULT false,
+  visivel boolean NOT NULL DEFAULT true,
+  atualizado_em timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT google_agenda_calendarios_unico UNIQUE (usuario_id, calendario_id)
+);
+
+CREATE INDEX IF NOT EXISTS google_agenda_calendarios_empresa_idx ON public.google_agenda_calendarios (empresa_id);
+
+ALTER TABLE public.google_agenda_calendarios ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.google_agenda_calendarios FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON public.google_agenda_calendarios TO authenticated;
+
+DROP POLICY IF EXISTS google_agenda_calendarios_select_proprios ON public.google_agenda_calendarios;
+CREATE POLICY google_agenda_calendarios_select_proprios ON public.google_agenda_calendarios
+  FOR SELECT TO authenticated
+  USING (
+    usuario_id = (SELECT auth.uid())
+    AND empresa_id = (SELECT public.get_user_empresa_id())
+  );
+
+COMMENT ON TABLE public.google_agenda_calendarios IS
+  'Agendas da conta Google de cada pessoa e se aparecem na Pilar (SPEC 164). Escrita pela Edge Function e por set_google_agenda_calendario_visivel.';
+
+-- Liga/desliga uma agenda. Desligar tira da Pilar as reuniões dela (e os avisos); ligar
+-- traz de volta na próxima sincronização (a tela sincroniza logo em seguida).
+CREATE OR REPLACE FUNCTION public.set_google_agenda_calendario_visivel(p_id uuid, p_visivel boolean)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_cal record;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'não autenticado' USING ERRCODE = '42501';
+  END IF;
+  UPDATE public.google_agenda_calendarios
+     SET visivel = COALESCE(p_visivel, true), atualizado_em = now()
+   WHERE id = p_id AND usuario_id = auth.uid()
+  RETURNING usuario_id, calendario_id INTO v_cal;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'agenda não encontrada' USING ERRCODE = 'P0002';
+  END IF;
+  IF NOT COALESCE(p_visivel, true) THEN
+    DELETE FROM public.agenda_eventos_google
+     WHERE usuario_id = v_cal.usuario_id AND calendario_id = v_cal.calendario_id;
+  END IF;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.set_google_agenda_calendario_visivel(uuid, boolean) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.set_google_agenda_calendario_visivel(uuid, boolean) TO authenticated;
 
 -- 4. Status da conexão para a tela ------------------------------------------
 CREATE OR REPLACE FUNCTION public.get_google_agenda_status()

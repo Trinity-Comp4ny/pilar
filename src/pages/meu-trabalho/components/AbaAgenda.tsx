@@ -40,7 +40,13 @@ import {
 import { useEtapas } from "../useEtapas";
 import { TarefaDialog } from "./TarefaDialog";
 import { NovaTarefaNoDia, type NovaTarefaNoDiaDados } from "./NovaTarefaNoDia";
-import { CHAVE_EVENTOS_AGENDA, CHAVE_STATUS_AGENDA, useEventosAgenda, useStatusAgenda } from "@/hooks/useGoogleAgenda";
+import {
+  CHAVE_EVENTOS_AGENDA,
+  CHAVE_STATUS_AGENDA,
+  useAgendasDaConta,
+  useEventosAgenda,
+  useStatusAgenda,
+} from "@/hooks/useGoogleAgenda";
 import { buildEventosReunioes, conectarGoogleAgenda, sincronizarAgenda, type EventoAgenda } from "@/lib/googleAgenda";
 import { ReuniaoDialog } from "./ReuniaoDialog";
 import { getSafeErrorMessage } from "@/lib/safeError";
@@ -75,6 +81,7 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos, pode
   const { data: statusAgenda } = useStatusAgenda();
   const agendaConectada = !!statusAgenda?.conectado;
   const { data: reunioes } = useEventosAgenda(agendaConectada);
+  const { data: agendasDaConta } = useAgendasDaConta(agendaConectada);
   const [conectandoAgenda, setConectandoAgenda] = useState(false);
   const [sincronizando, setSincronizando] = useState(false);
   // Diálogo da reunião: null fechado; "nova" ou a reunião aberta.
@@ -319,6 +326,7 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos, pode
         reuniao={reuniaoAberta === "nova" ? null : reuniaoAberta}
         diaInicial={format(cursor, "yyyy-MM-dd")}
         avisoPadrao={statusAgenda?.lembreteMinutos ?? null}
+        agendas={agendasDaConta ?? []}
       />
 
       <TarefaDialog

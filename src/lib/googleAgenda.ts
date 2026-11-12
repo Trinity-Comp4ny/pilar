@@ -9,6 +9,8 @@ import { type PrazoEvento, fmtKey } from "@/components/calendario/eventos";
 
 export interface EventoAgenda {
   id: string;
+  /** Agenda do Google de onde veio (pessoal, trabalho...). */
+  calendario_id: string;
   titulo: string;
   inicio: string;
   fim: string;
@@ -36,6 +38,25 @@ export interface DadosReuniao {
   convidados: string[];
   meet: boolean;
   lembrete_minutos: number | null;
+  /** Agenda onde nasce (só ao criar); sem ela, a principal. */
+  calendario_id?: string;
+}
+
+/** Uma agenda da conta Google e se aparece na Pilar. */
+export interface AgendaDaConta {
+  id: string;
+  calendario_id: string;
+  nome: string;
+  cor: string | null;
+  principal: boolean;
+  pode_editar: boolean;
+  visivel: boolean;
+}
+
+/** Liga ou desliga uma agenda na Pilar (desligar tira as reuniões e os avisos dela). */
+export async function definirAgendaVisivel(id: string, visivel: boolean): Promise<void> {
+  const { error } = await supabase.rpc("set_google_agenda_calendario_visivel", { p_id: id, p_visivel: visivel });
+  if (error) throw error;
 }
 
 /** Opções de aviso (minutos antes). */

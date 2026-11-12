@@ -78,7 +78,7 @@
   },
   "google-calendar": {
     "dominio": "integracoes",
-    "descricao": "Google Agenda de cada pessoa: conecta (OAuth, escopo calendar.events, token cifrado), copia as reuniões, cria, edita e exclui reunião (Meet e convite aos convidados) e, no cron de 5 min, ressincroniza (SPEC 164).",
+    "descricao": "Google Agenda de cada pessoa: conecta (OAuth, escopos calendar.events e calendarlist.readonly, token cifrado), copia as reuniões de todas as agendas ligadas, cria, edita e exclui reunião (Meet e convite aos convidados) e, no cron de 5 min, ressincroniza (SPEC 164).",
     "chamada_externa": "pg_cron (google_agenda_cron) e retorno do OAuth do Google"
   },
   "google-drive": {

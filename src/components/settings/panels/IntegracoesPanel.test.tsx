@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -18,6 +18,9 @@ const h = vi.hoisted(() => ({
   conectarAgenda: vi.fn(),
   desconectarAgenda: vi.fn(),
   definirAviso: vi.fn(),
+  agendas: [] as unknown[],
+  definirAgenda: vi.fn(),
+  sincronizar: vi.fn(),
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
@@ -27,7 +30,9 @@ vi.mock("@/lib/googleDrive", () => ({ conectarGoogleDrive: h.conectar, desconect
 vi.mock("@/hooks/useGoogleAgenda", () => ({
   CHAVE_STATUS_AGENDA: ["a"],
   CHAVE_EVENTOS_AGENDA: ["b"],
+  CHAVE_AGENDAS_DA_CONTA: ["c"],
   useStatusAgenda: () => h.agenda,
+  useAgendasDaConta: () => ({ data: h.agendas }),
 }));
 vi.mock("@/lib/googleAgenda", () => ({
   OPCOES_AVISO: [
@@ -37,6 +42,8 @@ vi.mock("@/lib/googleAgenda", () => ({
   conectarGoogleAgenda: h.conectarAgenda,
   desconectarAgenda: h.desconectarAgenda,
   definirAvisoPadrao: h.definirAviso,
+  definirAgendaVisivel: h.definirAgenda,
+  sincronizarAgenda: h.sincronizar,
 }));
 vi.mock("sonner", () => ({ toast: h.toast }));
 
@@ -66,6 +73,9 @@ beforeEach(() => {
   h.conectarAgenda.mockResolvedValue(undefined);
   h.desconectarAgenda.mockResolvedValue({ ok: true });
   h.definirAviso.mockResolvedValue(undefined);
+  h.agendas = [];
+  h.definirAgenda.mockResolvedValue(undefined);
+  h.sincronizar.mockResolvedValue({ ok: true, eventos: 3 });
 });
 
 describe("IntegracoesPanel: Google Agenda", () => {
@@ -99,6 +109,44 @@ describe("IntegracoesPanel: Google Agenda", () => {
     await user.click(screen.getByRole("button", { name: "Desconectar" }));
     await waitFor(() => expect(h.desconectarAgenda).toHaveBeenCalled());
     expect(h.toast.success).toHaveBeenCalledWith("Google Agenda desconectado", expect.anything());
+  });
+
+  it("lista as agendas da conta; ligar uma sincroniza, desligar não", async () => {
+    h.agenda = {
+      data: { conectado: true, reconectar: false, email: "ana@vrz.com", sincronizadoEm: null, lembreteMinutos: 10 },
+      isLoading: false,
+      isError: false,
+    };
+    h.agendas = [
+      {
+        id: "c1",
+        calendario_id: "ana@vrz.com",
+        nome: "ana@vrz.com",
+        cor: "#9fe1e7",
+        principal: true,
+        pode_editar: true,
+        visivel: true,
+      },
+      {
+        id: "c2",
+        calendario_id: "obra@group",
+        nome: "Obras",
+        cor: null,
+        principal: false,
+        pode_editar: false,
+        visivel: false,
+      },
+    ];
+    const user = abrir();
+    const lista = screen.getByRole("list", { name: "Agendas do Google" });
+    expect(within(lista).getByText("principal")).toBeInTheDocument();
+    expect(within(lista).getByText("só leitura")).toBeInTheDocument();
+    await user.click(screen.getByRole("checkbox", { name: /Obras/ }));
+    await waitFor(() => expect(h.definirAgenda).toHaveBeenCalledWith("c2", true));
+    expect(h.sincronizar).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByRole("checkbox", { name: /ana@vrz\.com/ }));
+    await waitFor(() => expect(h.definirAgenda).toHaveBeenCalledWith("c1", false));
+    expect(h.sincronizar).toHaveBeenCalledTimes(1);
   });
 
   it("muda o aviso padrão das reuniões (10 min de partida)", async () => {

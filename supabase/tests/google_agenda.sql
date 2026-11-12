@@ -9,7 +9,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET search_path = public, extensions;
 
-SELECT plan(13);
+SELECT plan(16);
 
 INSERT INTO public.empresas (id, nome, owner_id, onboarding_completed)
 VALUES ('a1640000-0000-0000-0000-0000000000a1', 'Empresa Agenda', NULL, TRUE)
@@ -50,6 +50,17 @@ VALUES
   ('a1640000-0000-0000-0000-00000000e004', 'a1640000-0000-0000-0000-0000000000a1', 'a1640000-0000-0000-0000-000000000002',
    'g4', 'Da Bia', now() + interval '5 minutes', now() + interval '1 hour', false, NULL, NULL);
 
+-- Agenda compartilhada da Ana ("Obras") com uma reunião, e a agenda da Bia.
+INSERT INTO public.google_agenda_calendarios (id, empresa_id, usuario_id, calendario_id, nome, pode_editar, visivel)
+VALUES
+  ('a1640000-0000-0000-0000-0000000000c1', 'a1640000-0000-0000-0000-0000000000a1', 'a1640000-0000-0000-0000-000000000001',
+   'obras@group', 'Obras', true, true),
+  ('a1640000-0000-0000-0000-0000000000c2', 'a1640000-0000-0000-0000-0000000000a1', 'a1640000-0000-0000-0000-000000000002',
+   'bia@group', 'Da Bia', true, true);
+INSERT INTO public.agenda_eventos_google (empresa_id, usuario_id, calendario_id, google_evento_id, titulo, inicio, fim)
+VALUES ('a1640000-0000-0000-0000-0000000000a1', 'a1640000-0000-0000-0000-000000000001', 'obras@group',
+        'g1', 'Mesmo id, outra agenda', now() + interval '3 days', now() + interval '3 days 1 hour');
+
 -- Avisos (roda como o cron: dono das funções).
 SELECT is(public.agenda_gerar_lembretes(), 2, 'avisa a reunião dentro do padrão de 10 min e a de aviso próprio de 30');
 SELECT is(public.agenda_gerar_lembretes(), 0, 'segunda rodada não repete o aviso');
@@ -68,7 +79,18 @@ SELECT ok(
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claims', '{"sub":"a1640000-0000-0000-0000-000000000001","role":"authenticated"}', true);
 
-SELECT is((SELECT count(*)::int FROM public.agenda_eventos_google), 5, 'Ana lê só as próprias reuniões');
+SELECT is((SELECT count(*)::int FROM public.agenda_eventos_google), 6, 'Ana lê só as próprias reuniões (de todas as agendas)');
+SELECT is((SELECT count(*)::int FROM public.google_agenda_calendarios), 1, 'Ana vê só as próprias agendas');
+SELECT public.set_google_agenda_calendario_visivel('a1640000-0000-0000-0000-0000000000c1', false);
+SELECT is(
+  (SELECT count(*)::int FROM public.agenda_eventos_google WHERE calendario_id = 'obras@group'),
+  0,
+  'desligar a agenda tira as reuniões dela'
+);
+SELECT throws_ok(
+  $$SELECT public.set_google_agenda_calendario_visivel('a1640000-0000-0000-0000-0000000000c2', false)$$,
+  'P0002', NULL, 'ninguém mexe na agenda de outra pessoa'
+);
 SELECT is((SELECT conectado FROM public.get_google_agenda_status()), true, 'status: Ana está conectada');
 SELECT is((SELECT google_email FROM public.get_google_agenda_status()), 'ana@gmail.test', 'status traz a conta da Ana');
 SELECT throws_ok('SELECT * FROM public.google_agenda_conexoes', '42501', NULL, 'ninguém logado lê a tabela de conexões');

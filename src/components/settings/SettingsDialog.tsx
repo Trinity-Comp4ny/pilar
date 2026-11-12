@@ -56,6 +56,7 @@ export function SettingsDialog() {
     if (!retorno) return;
     queryClient.invalidateQueries({ queryKey: ["google-agenda-status"] });
     queryClient.invalidateQueries({ queryKey: ["google-agenda-eventos"] });
+    queryClient.invalidateQueries({ queryKey: ["google-agenda-calendarios"] });
     if (retorno === "conectado")
       toast.success("Google Agenda conectado", {
         description: "Suas reuniões aparecem na Agenda e a Pilar avisa 30 minutos antes.",

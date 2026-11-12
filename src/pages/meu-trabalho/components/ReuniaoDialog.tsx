@@ -13,6 +13,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CHAVE_EVENTOS_AGENDA } from "@/hooks/useGoogleAgenda";
 import {
+  type AgendaDaConta,
   type DadosReuniao,
   type EventoAgenda,
   OPCOES_AVISO,
@@ -32,6 +33,8 @@ type Props = {
   diaInicial: string;
   /** Aviso padrão da pessoa (Configurações), para o rótulo de "Padrão". */
   avisoPadrao: number | null;
+  /** Agendas da conta (pessoal, trabalho...): a reunião nova escolhe onde nasce. */
+  agendas?: AgendaDaConta[];
 };
 
 const PADRAO = "padrao";
@@ -67,7 +70,7 @@ function diaAnterior(dia: string): string {
  * Criar, ver, editar e excluir uma reunião do Google Agenda sem sair da Pilar (SPEC 164).
  * Salvar grava direto no Google (convite por e-mail aos convidados, sala do Meet se pedida).
  */
-export function ReuniaoDialog({ open, onOpenChange, reuniao, diaInicial, avisoPadrao }: Props) {
+export function ReuniaoDialog({ open, onOpenChange, reuniao, diaInicial, avisoPadrao, agendas = [] }: Props) {
   const queryClient = useQueryClient();
   const editando = !!reuniao;
   const somenteLeitura = !!reuniao && !reuniao.pode_editar;
@@ -83,6 +86,10 @@ export function ReuniaoDialog({ open, onOpenChange, reuniao, diaInicial, avisoPa
   const [descricao, setDescricao] = useState("");
   const [meet, setMeet] = useState(true);
   const [aviso, setAviso] = useState(PADRAO);
+  // Onde a reunião nova nasce: só agendas ligadas em que a pessoa pode criar evento.
+  const agendasParaCriar = agendas.filter((a) => a.visivel && a.pode_editar);
+  const agendaPrincipal = agendasParaCriar.find((a) => a.principal)?.calendario_id ?? "primary";
+  const [agenda, setAgenda] = useState(agendaPrincipal);
   const [salvando, setSalvando] = useState(false);
   const [confirmarExclusao, setConfirmarExclusao] = useState(false);
   const [excluindo, setExcluindo] = useState(false);
@@ -119,7 +126,8 @@ export function ReuniaoDialog({ open, onOpenChange, reuniao, diaInicial, avisoPa
     setDescricao("");
     setMeet(true);
     setAviso(PADRAO);
-  }, [open, reuniao, diaInicial]);
+    setAgenda(agendaPrincipal);
+  }, [open, reuniao, diaInicial, agendaPrincipal]);
 
   const listaConvidados = convidados
     .split(/[,;\s]+/)
@@ -153,6 +161,7 @@ export function ReuniaoDialog({ open, onOpenChange, reuniao, diaInicial, avisoPa
       convidados: listaConvidados,
       meet,
       lembrete_minutos: aviso === PADRAO ? null : Number(aviso),
+      ...(!reuniao && agenda !== "primary" ? { calendario_id: agenda } : {}),
     };
     setSalvando(true);
     try {
@@ -235,6 +244,24 @@ export function ReuniaoDialog({ open, onOpenChange, reuniao, diaInicial, avisoPa
               autoFocus={!editando}
             />
           </div>
+
+          {!editando && agendasParaCriar.length > 1 && (
+            <div className="space-y-1.5">
+              <Label>Agenda</Label>
+              <Select value={agenda} onValueChange={setAgenda}>
+                <SelectTrigger className="h-9" aria-label="Agenda">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {agendasParaCriar.map((a) => (
+                    <SelectItem key={a.id} value={a.calendario_id}>
+                      {a.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="flex items-center gap-2">
             <Switch id="reuniao-dia-inteiro" checked={diaInteiro} onCheckedChange={setDiaInteiro} />

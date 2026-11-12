@@ -6,15 +6,17 @@
  *                                      copia os eventos e volta para o app.
  *   POST { acao: "sincronizar" }       logado: copia de novo os próprios eventos.
  *   POST { acao: "desconectar" }       logado: revoga o token e apaga conexão e eventos.
- *   POST { acao: "criar", reuniao }    logado: cria a reunião no Google (com Meet e convite
- *                                      aos convidados, se pedido) e grava a cópia.
+ *   POST { acao: "criar", reuniao }    logado: cria a reunião no Google, na agenda escolhida
+ *                                      (com Meet e convite aos convidados, se pedido), e
+ *                                      grava a cópia.
  *   POST { acao: "editar", id, reuniao } / { acao: "excluir", id }: mesma coisa numa
  *                                      reunião da própria pessoa (id da Pilar).
  *   POST { acao: "cron" }              pg_cron (Bearer CRON_SECRET): ressincroniza as
  *                                      conexões mais velhas e gera os lembretes.
  *
  * verify_jwt = false porque o Google chama o GET sem token da Pilar e o cron usa o segredo
- * próprio; os POSTs de usuário autenticam aqui dentro. Cada um conecta a PRÓPRIA agenda.
+ * próprio; os POSTs de usuário autenticam aqui dentro. Cada um conecta a PRÓPRIA conta, e a
+ * Pilar copia todas as agendas dela que a pessoa deixou ligadas (pessoal, trabalho...).
  */
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -45,6 +47,7 @@ import {
   type EventoGoogle,
   excluirEvento,
   janela,
+  listarAgendas,
   listarEventos,
   paraLinha,
 } from "../_shared/google-calendar.ts";
@@ -141,22 +144,39 @@ serve(
         }
         try {
           if (entrada.data.acao === "criar") {
-            const ev = await criarEvento(token, entrada.data.reuniao as DadosReuniao);
-            const evento = await gravarEvento(svc, conexao, ev, null);
+            // A agenda precisa ser da pessoa e deixar criar evento.
+            const calendarioId = entrada.data.reuniao.calendario_id ?? "primary";
+            let podeEditarAgenda = true;
+            if (calendarioId !== "primary") {
+              const { data: agenda } = await svc
+                .from("google_agenda_calendarios")
+                .select("pode_editar")
+                .eq("usuario_id", user.id)
+                .eq("calendario_id", calendarioId)
+                .maybeSingle();
+              if (!agenda?.pode_editar) {
+                return safeErrorResponse(403, "Você não pode criar eventos nesta agenda", req);
+              }
+              podeEditarAgenda = agenda.pode_editar;
+            }
+            const ev = await criarEvento(token, entrada.data.reuniao as DadosReuniao, calendarioId);
+            const evento = await gravarEvento(svc, conexao, calendarioId, podeEditarAgenda, ev, null);
             return jsonResponse({ ok: true, evento }, 200, req);
           }
 
           // editar / excluir: só reunião da própria pessoa (a linha diz qual é o evento no Google).
           const { data: atual } = await svc
             .from("agenda_eventos_google")
-            .select("id, google_evento_id, inicio, link_reuniao, pode_editar, lembrete_minutos, lembrete_em")
+            .select(
+              "id, calendario_id, google_evento_id, inicio, link_reuniao, pode_editar, lembrete_minutos, lembrete_em"
+            )
             .eq("id", entrada.data.id)
             .eq("usuario_id", user.id)
             .maybeSingle();
           if (!atual) return safeErrorResponse(404, "Reunião não encontrada. Atualize a agenda.", req);
 
           if (entrada.data.acao === "excluir") {
-            await excluirEvento(token, atual.google_evento_id as string);
+            await excluirEvento(token, atual.calendario_id as string, atual.google_evento_id as string);
             await svc.from("agenda_eventos_google").delete().eq("id", atual.id);
             return jsonResponse({ ok: true }, 200, req);
           }
@@ -166,11 +186,12 @@ serve(
           }
           const ev = await editarEvento(
             token,
+            atual.calendario_id as string,
             atual.google_evento_id as string,
             entrada.data.reuniao as DadosReuniao,
             !!atual.link_reuniao
           );
-          const evento = await gravarEvento(svc, conexao, ev, atual);
+          const evento = await gravarEvento(svc, conexao, atual.calendario_id as string, true, ev, atual);
           return jsonResponse({ ok: true, evento }, 200, req);
         } catch (e) {
           if (e instanceof ErroGoogle && (e.status === 403 || e.status === 404)) {
@@ -195,6 +216,7 @@ serve(
           log.warn("revogar token no Google falhou", { erro: String(e) });
         }
         await svc.from("agenda_eventos_google").delete().eq("usuario_id", user.id);
+        await svc.from("google_agenda_calendarios").delete().eq("usuario_id", user.id);
         await svc.from("google_agenda_conexoes").delete().eq("usuario_id", user.id);
       }
       return jsonResponse({ ok: true }, 200, req);
@@ -215,11 +237,6 @@ async function carregar(svc: SupabaseClient, usuarioId: string): Promise<Conexao
   return (data as Conexao | null) ?? null;
 }
 
-/**
- * Copia os eventos da janela para agenda_eventos_google: grava os que vieram e apaga, na
- * janela, os que sumiram (cancelados, recusados, apagados). Devolve quantos ficaram, ou
- * "reconectar" quando a conta revogou o acesso pelo Google.
- */
 /** Token de acesso da conexão; "reconectar" (e marca a conexão) se o Google recusou. */
 async function acesso(svc: SupabaseClient, amb: AmbienteDrive, c: Conexao): Promise<string | "reconectar"> {
   try {
@@ -244,11 +261,14 @@ async function acesso(svc: SupabaseClient, amb: AmbienteDrive, c: Conexao): Prom
 async function gravarEvento(
   svc: SupabaseClient,
   c: Conexao,
+  calendarioId: string,
+  podeEditarAgenda: boolean,
   ev: EventoGoogle,
   antes: { inicio: unknown; lembrete_minutos: unknown; lembrete_em: unknown } | null
 ) {
   const linha = paraLinha(ev);
   if (!linha) return null;
+  linha.pode_editar = linha.pode_editar && podeEditarAgenda;
   const mudou =
     !antes ||
     new Date(antes.inicio as string).getTime() !== new Date(linha.inicio).getTime() ||
@@ -258,12 +278,13 @@ async function gravarEvento(
     .upsert(
       {
         ...linha,
+        calendario_id: calendarioId,
         empresa_id: c.empresa_id,
         usuario_id: c.usuario_id,
         atualizado_em: new Date().toISOString(),
         lembrete_em: mudou ? null : ((antes?.lembrete_em as string | null) ?? null),
       },
-      { onConflict: "usuario_id,google_evento_id" }
+      { onConflict: "usuario_id,calendario_id,google_evento_id" }
     )
     .select("id")
     .single();
@@ -271,28 +292,103 @@ async function gravarEvento(
   return data;
 }
 
+interface AgendaSalva {
+  calendario_id: string;
+  pode_editar: boolean;
+  visivel: boolean;
+}
+
+/**
+ * Atualiza a lista de agendas da conta: as novas entram visíveis se estão marcadas no
+ * Google; as que já existiam guardam a escolha da pessoa; as que sumiram saem com as
+ * reuniões delas. Devolve as agendas ligadas.
+ */
+async function atualizarAgendas(svc: SupabaseClient, token: string, c: Conexao): Promise<AgendaSalva[]> {
+  const doGoogle = await listarAgendas(token);
+  const { data: salvas, error } = await svc
+    .from("google_agenda_calendarios")
+    .select("calendario_id, visivel")
+    .eq("usuario_id", c.usuario_id);
+  if (error) throw error;
+  const escolha = new Map((salvas ?? []).map((a) => [a.calendario_id as string, a.visivel as boolean]));
+  const agora = new Date().toISOString();
+
+  const linhas = doGoogle.map((a) => ({
+    empresa_id: c.empresa_id,
+    usuario_id: c.usuario_id,
+    calendario_id: a.calendario_id,
+    nome: a.nome,
+    cor: a.cor,
+    principal: a.principal,
+    pode_editar: a.pode_editar,
+    visivel: escolha.get(a.calendario_id) ?? a.selecionada,
+    atualizado_em: agora,
+  }));
+  if (linhas.length) {
+    const { error: e } = await svc
+      .from("google_agenda_calendarios")
+      .upsert(linhas, { onConflict: "usuario_id,calendario_id" });
+    if (e) throw e;
+  }
+
+  const atuais = new Set(doGoogle.map((a) => a.calendario_id));
+  const sumiram = (salvas ?? []).map((a) => a.calendario_id as string).filter((id) => !atuais.has(id));
+  if (sumiram.length) {
+    await svc.from("google_agenda_calendarios").delete().eq("usuario_id", c.usuario_id).in("calendario_id", sumiram);
+    await svc.from("agenda_eventos_google").delete().eq("usuario_id", c.usuario_id).in("calendario_id", sumiram);
+  }
+  return linhas.filter((l) => l.visivel);
+}
+
+/**
+ * Copia para agenda_eventos_google os eventos da janela de cada agenda ligada: grava os
+ * que vieram e apaga, na janela, os que sumiram (cancelados, recusados, apagados) e os de
+ * agendas desligadas. Devolve quantos ficaram, ou "reconectar" quando a conta revogou o
+ * acesso pelo Google.
+ */
 async function sincronizar(svc: SupabaseClient, amb: AmbienteDrive, c: Conexao): Promise<number | "reconectar"> {
   const token = await acesso(svc, amb, c);
   if (token === "reconectar") return "reconectar";
 
+  const agendas = await atualizarAgendas(svc, token, c);
   const { de, ate } = janela();
-  const linhas = (await listarEventos(token, de, ate)).map(paraLinha).filter((l) => l !== null);
+  const chave = (calendarioId: string, eventoId: string) => `${calendarioId}\u0000${eventoId}`;
 
-  // Horário mudou: o lembrete volta a valer para o novo horário.
+  // Uma agenda que falha (removida no meio, sem permissão) não derruba as outras: os
+  // eventos dela ficam como estavam até a próxima rodada.
+  const sincronizadas: AgendaSalva[] = [];
+  const linhas: (NonNullable<ReturnType<typeof paraLinha>> & { calendario_id: string })[] = [];
+  for (const agenda of agendas) {
+    try {
+      const eventos = await listarEventos(token, de, ate, agenda.calendario_id);
+      for (const ev of eventos) {
+        const l = paraLinha(ev);
+        if (!l) continue;
+        linhas.push({ ...l, calendario_id: agenda.calendario_id, pode_editar: l.pode_editar && agenda.pode_editar });
+      }
+      sincronizadas.push(agenda);
+    } catch (e) {
+      log.warn("agenda não sincronizou", { calendario_id: agenda.calendario_id, erro: String(e) });
+    }
+  }
+
+  // Horário ou aviso mudou: o aviso volta a valer.
   const { data: atuais, error: errAtuais } = await svc
     .from("agenda_eventos_google")
-    .select("id, google_evento_id, inicio, lembrete_minutos, lembrete_em")
+    .select("id, calendario_id, google_evento_id, inicio, lembrete_minutos, lembrete_em")
     .eq("usuario_id", c.usuario_id)
     .gte("fim", de.toISOString())
     .lte("inicio", ate.toISOString());
   if (errAtuais) throw errAtuais;
-  const porId = new Map((atuais ?? []).map((a) => [a.google_evento_id as string, a]));
+  const porChave = new Map(
+    (atuais ?? []).map((a) => [chave(a.calendario_id as string, a.google_evento_id as string), a])
+  );
   const agora = new Date().toISOString();
 
   // Toda linha leva lembrete_em: no upsert em lote, coluna ausente numa linha vira null.
   const registros = linhas.map((l) => {
-    const antes = porId.get(l.google_evento_id);
-    const mudouHorario =
+    const antes = porChave.get(chave(l.calendario_id, l.google_evento_id));
+    const mudou =
       !!antes &&
       (new Date(antes.inicio as string).getTime() !== new Date(l.inicio).getTime() ||
         (antes.lembrete_minutos ?? null) !== l.lembrete_minutos);
@@ -301,19 +397,28 @@ async function sincronizar(svc: SupabaseClient, amb: AmbienteDrive, c: Conexao):
       empresa_id: c.empresa_id,
       usuario_id: c.usuario_id,
       atualizado_em: agora,
-      lembrete_em: mudouHorario ? null : ((antes?.lembrete_em as string | null | undefined) ?? null),
+      lembrete_em: mudou ? null : ((antes?.lembrete_em as string | null | undefined) ?? null),
     };
   });
 
   for (let i = 0; i < registros.length; i += 200) {
     const { error } = await svc
       .from("agenda_eventos_google")
-      .upsert(registros.slice(i, i + 200), { onConflict: "usuario_id,google_evento_id" });
+      .upsert(registros.slice(i, i + 200), { onConflict: "usuario_id,calendario_id,google_evento_id" });
     if (error) throw error;
   }
 
-  const vieram = new Set(linhas.map((l) => l.google_evento_id));
-  const sumiram = (atuais ?? []).filter((a) => !vieram.has(a.google_evento_id as string)).map((a) => a.id as string);
+  // Some: evento que não veio de uma agenda sincronizada agora, ou de agenda desligada.
+  const vieram = new Set(linhas.map((l) => chave(l.calendario_id, l.google_evento_id)));
+  const sincronizou = new Set(sincronizadas.map((a) => a.calendario_id));
+  const ligadas = new Set(agendas.map((a) => a.calendario_id));
+  const sumiram = (atuais ?? [])
+    .filter((a) => {
+      const cal = a.calendario_id as string;
+      if (!ligadas.has(cal)) return true;
+      return sincronizou.has(cal) && !vieram.has(chave(cal, a.google_evento_id as string));
+    })
+    .map((a) => a.id as string);
   for (let i = 0; i < sumiram.length; i += 200) {
     await svc
       .from("agenda_eventos_google")
@@ -392,8 +497,9 @@ async function retornoDoGoogle(req: Request, amb: AmbienteDrive | null): Promise
       return voltar(retorno, "erro");
     }
 
-    // Conta trocada: os eventos antigos eram da outra conta.
+    // Conta trocada: as agendas e os eventos antigos eram da outra conta.
     await svc.from("agenda_eventos_google").delete().eq("usuario_id", registro.usuario_id);
+    await svc.from("google_agenda_calendarios").delete().eq("usuario_id", registro.usuario_id);
     const conexao: Conexao = {
       usuario_id: registro.usuario_id,
       empresa_id: registro.empresa_id,

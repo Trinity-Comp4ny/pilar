@@ -1,5 +1,7 @@
 import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
 import {
+  listarAgendas,
+  paraAgenda,
   corpoDoEvento,
   criarEvento,
   editarEvento,
@@ -80,7 +82,7 @@ Deno.test("listarEventos pagina e manda o token", async () => {
     );
   };
   const { de, ate } = janela(new Date("2026-11-12T12:00:00Z"));
-  const eventos = await listarEventos("tk", de, ate, f);
+  const eventos = await listarEventos("tk", de, ate, "primary", f);
   assertEquals(
     eventos.map((e) => e.id),
     ["a", "b"]
@@ -179,9 +181,9 @@ Deno.test("criar, editar e excluir chamam a API com convite aos convidados", asy
     dia_inteiro: false,
     meet: true,
   };
-  assertEquals((await criarEvento("tk", d, f)).id, "novo123");
-  await editarEvento("tk", "novo123", d, true, f);
-  await excluirEvento("tk", "novo123", f); // 410: já apagado, não é erro
+  assertEquals((await criarEvento("tk", d, "trabalho@group.calendar.google.com", f)).id, "novo123");
+  await editarEvento("tk", "primary", "novo123", d, true, f);
+  await excluirEvento("tk", "primary", "novo123", f); // 410: já apagado, não é erro
   assertEquals(
     chamadas.map((c) => c.metodo),
     ["POST", "PATCH", "DELETE"]
@@ -191,4 +193,46 @@ Deno.test("criar, editar e excluir chamam a API com convite aos convidados", asy
     true
   );
   assertEquals(chamadas[0].url.includes("conferenceDataVersion=1"), true);
+  // Agenda escolhida vai codificada na URL.
+  assertEquals(chamadas[0].url.includes("/calendars/trabalho%40group.calendar.google.com/events"), true);
+});
+
+Deno.test("agendas da conta: principal, compartilhadas e as só de livre/ocupado ficam de fora", async () => {
+  assertEquals(paraAgenda({ id: "x", accessRole: "freeBusyReader" }), null);
+  assertEquals(paraAgenda({ id: "x", summary: "Feriados", accessRole: "reader", backgroundColor: "red" }), {
+    calendario_id: "x",
+    nome: "Feriados",
+    cor: null,
+    principal: false,
+    pode_editar: false,
+    selecionada: false,
+  });
+  const f = (input: string | URL | Request) => {
+    assertEquals(String(input).includes("/users/me/calendarList"), true);
+    return Promise.resolve(
+      new Response(
+        JSON.stringify({
+          items: [
+            {
+              id: "ana@vrz.com",
+              summary: "ana@vrz.com",
+              primary: true,
+              accessRole: "owner",
+              backgroundColor: "#9fe1e7",
+            },
+            { id: "obra@group", summary: "Obras", summaryOverride: "Obras VRZ", accessRole: "writer", selected: true },
+            { id: "ocupado@group", accessRole: "freeBusyReader" },
+          ],
+        })
+      )
+    );
+  };
+  const agendas = await listarAgendas("tk", f);
+  assertEquals(
+    agendas.map((a) => [a.calendario_id, a.nome, a.principal, a.pode_editar, a.selecionada, a.cor]),
+    [
+      ["ana@vrz.com", "ana@vrz.com", true, true, true, "#9fe1e7"],
+      ["obra@group", "Obras VRZ", false, true, true, null],
+    ]
+  );
 });

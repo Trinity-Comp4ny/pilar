@@ -50,6 +50,7 @@ vi.mock("@/hooks/useGoogleAgenda", () => ({
   CHAVE_EVENTOS_AGENDA: ["google-agenda-eventos"],
   useStatusAgenda: () => ({ data: h.statusAgenda }),
   useEventosAgenda: (habilitado: boolean) => ({ data: habilitado ? h.reunioes : undefined }),
+  useAgendasDaConta: () => ({ data: [] }),
 }));
 vi.mock("@/lib/googleAgenda", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/googleAgenda")>()),
@@ -371,6 +372,7 @@ describe("AbaAgenda", () => {
     h.reunioes = [
       {
         id: "r1",
+        calendario_id: "primary",
         titulo: "Reunião com a VRZ",
         inicio: `${hojeIso}T13:00:00.000Z`,
         fim: `${hojeIso}T14:00:00.000Z`,

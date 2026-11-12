@@ -11,8 +11,23 @@ import { CHAVE_STATUS_DRIVE, useStatusDrive } from "@/hooks/useGoogleDrive";
 import { conectarGoogleDrive, desconectarDrive } from "@/lib/googleDrive";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { formatDateTime } from "@/lib/format";
-import { CHAVE_EVENTOS_AGENDA, CHAVE_STATUS_AGENDA, useStatusAgenda } from "@/hooks/useGoogleAgenda";
-import { OPCOES_AVISO, conectarGoogleAgenda, definirAvisoPadrao, desconectarAgenda } from "@/lib/googleAgenda";
+import {
+  CHAVE_AGENDAS_DA_CONTA,
+  CHAVE_EVENTOS_AGENDA,
+  CHAVE_STATUS_AGENDA,
+  useAgendasDaConta,
+  useStatusAgenda,
+} from "@/hooks/useGoogleAgenda";
+import {
+  type AgendaDaConta,
+  OPCOES_AVISO,
+  conectarGoogleAgenda,
+  definirAgendaVisivel,
+  definirAvisoPadrao,
+  desconectarAgenda,
+  sincronizarAgenda,
+} from "@/lib/googleAgenda";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -34,6 +49,26 @@ function AgendaCard() {
   const [confirmar, setConfirmar] = useState(false);
   const [desconectando, setDesconectando] = useState(false);
   const [salvandoAviso, setSalvandoAviso] = useState(false);
+  const conectadoOk = !!status?.conectado && !status.reconectar;
+  const { data: agendas = [] } = useAgendasDaConta(conectadoOk);
+  const [mudandoAgenda, setMudandoAgenda] = useState<string | null>(null);
+
+  // Ligar traz as reuniões na hora (sincroniza); desligar já tira as reuniões no banco.
+  const alternarAgenda = async (agenda: AgendaDaConta, visivel: boolean) => {
+    setMudandoAgenda(agenda.id);
+    try {
+      await definirAgendaVisivel(agenda.id, visivel);
+      if (visivel) await sincronizarAgenda();
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: CHAVE_AGENDAS_DA_CONTA }),
+        queryClient.invalidateQueries({ queryKey: CHAVE_EVENTOS_AGENDA }),
+      ]);
+    } catch (e) {
+      toast.error("Não foi possível mudar a agenda", { description: getSafeErrorMessage(e, "Tente de novo.") });
+    } finally {
+      setMudandoAgenda(null);
+    }
+  };
 
   const mudarAviso = async (valor: string) => {
     setSalvandoAviso(true);
@@ -65,6 +100,7 @@ function AgendaCard() {
       toast.success("Google Agenda desconectado", { description: "Nada foi alterado na sua agenda." });
       queryClient.invalidateQueries({ queryKey: CHAVE_STATUS_AGENDA });
       queryClient.invalidateQueries({ queryKey: CHAVE_EVENTOS_AGENDA });
+      queryClient.invalidateQueries({ queryKey: CHAVE_AGENDAS_DA_CONTA });
       setConfirmar(false);
     } catch (e) {
       toast.error("Não foi possível desconectar", { description: getSafeErrorMessage(e, "Tente de novo.") });
@@ -114,6 +150,38 @@ function AgendaCard() {
                 {status.sincronizadoEm ? `. Atualizado em ${formatDateTime(status.sincronizadoEm)}` : ""}.
               </p>
             </div>
+            {agendas.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-sm font-medium text-ink">Agendas que aparecem na Pilar</p>
+                <ul className="space-y-1" aria-label="Agendas do Google">
+                  {agendas.map((a) => (
+                    <li key={a.id}>
+                      <label htmlFor={`agenda-${a.id}`} className="flex cursor-pointer items-center gap-2 py-1 text-sm">
+                        <Checkbox
+                          id={`agenda-${a.id}`}
+                          checked={a.visivel}
+                          disabled={mudandoAgenda !== null}
+                          onCheckedChange={(v) => void alternarAgenda(a, v === true)}
+                        />
+                        {/* Cor que a agenda tem no Google: dado do usuário, não token de tema. */}
+                        <span
+                          aria-hidden
+                          className="h-2.5 w-2.5 shrink-0 rounded-full border border-border"
+                          style={a.cor ? { backgroundColor: a.cor } : undefined}
+                        />
+                        <span className="truncate text-ink">{a.nome}</span>
+                        {a.principal && <span className="text-xs text-muted-foreground">principal</span>}
+                        {!a.pode_editar && <span className="text-xs text-muted-foreground">só leitura</span>}
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-xs text-muted-foreground">
+                  Pessoal, trabalho, compartilhadas: todas as agendas da sua conta. Desligar tira as reuniões dela da
+                  Pilar e para os avisos.
+                </p>
+              </div>
+            )}
             <div className="max-w-xs space-y-1.5">
               <Label>Avisar antes das reuniões</Label>
               <Select

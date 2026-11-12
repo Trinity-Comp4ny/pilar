@@ -85,6 +85,7 @@ export type Database = {
       agenda_eventos_google: {
         Row: {
           atualizado_em: string
+          calendario_id: string
           convidados: string[]
           descricao: string | null
           dia_inteiro: boolean
@@ -104,6 +105,7 @@ export type Database = {
         }
         Insert: {
           atualizado_em?: string
+          calendario_id?: string
           convidados?: string[]
           descricao?: string | null
           dia_inteiro?: boolean
@@ -123,6 +125,7 @@ export type Database = {
         }
         Update: {
           atualizado_em?: string
+          calendario_id?: string
           convidados?: string[]
           descricao?: string | null
           dia_inteiro?: boolean
@@ -3251,6 +3254,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "fornecedores_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_agenda_calendarios: {
+        Row: {
+          atualizado_em: string
+          calendario_id: string
+          cor: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          pode_editar: boolean
+          principal: boolean
+          usuario_id: string
+          visivel: boolean
+        }
+        Insert: {
+          atualizado_em?: string
+          calendario_id: string
+          cor?: string | null
+          empresa_id: string
+          id?: string
+          nome: string
+          pode_editar?: boolean
+          principal?: boolean
+          usuario_id: string
+          visivel?: boolean
+        }
+        Update: {
+          atualizado_em?: string
+          calendario_id?: string
+          cor?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          pode_editar?: boolean
+          principal?: boolean
+          usuario_id?: string
+          visivel?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_agenda_calendarios_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
@@ -11465,7 +11515,14 @@ export type Database = {
         Args: { p_delegado: boolean; p_user_id: string }
         Returns: undefined
       }
-      set_google_agenda_lembrete: { Args: { p_minutos: number }; Returns: undefined }
+      set_google_agenda_calendario_visivel: {
+        Args: { p_id: string; p_visivel: boolean }
+        Returns: undefined
+      }
+      set_google_agenda_lembrete: {
+        Args: { p_minutos: number }
+        Returns: undefined
+      }
       set_metas_delegado: {
         Args: { p_delegado: boolean; p_user_id: string }
         Returns: undefined

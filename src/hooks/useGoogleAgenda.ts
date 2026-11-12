@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { EventoAgenda } from "@/lib/googleAgenda";
+import type { AgendaDaConta, EventoAgenda } from "@/lib/googleAgenda";
 
 export interface StatusAgenda {
   conectado: boolean;
@@ -15,6 +15,25 @@ export interface StatusAgenda {
 
 export const CHAVE_STATUS_AGENDA = ["google-agenda-status"] as const;
 export const CHAVE_EVENTOS_AGENDA = ["google-agenda-eventos"] as const;
+export const CHAVE_AGENDAS_DA_CONTA = ["google-agenda-calendarios"] as const;
+
+/** Agendas da conta Google da pessoa (principal primeiro), com a escolha do que aparece. */
+export function useAgendasDaConta(habilitado: boolean) {
+  return useQuery({
+    queryKey: CHAVE_AGENDAS_DA_CONTA,
+    queryFn: async (): Promise<AgendaDaConta[]> => {
+      const { data, error } = await supabase
+        .from("google_agenda_calendarios")
+        .select("id, calendario_id, nome, cor, principal, pode_editar, visivel")
+        .order("principal", { ascending: false })
+        .order("nome", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: habilitado,
+    staleTime: 5 * 60 * 1000,
+  });
+}
 
 /** A pessoa logada tem o Google Agenda conectado? (SPEC 164). */
 export function useStatusAgenda() {
@@ -50,7 +69,7 @@ export function useEventosAgenda(habilitado: boolean) {
       const { data, error } = await supabase
         .from("agenda_eventos_google")
         .select(
-          "id, titulo, inicio, fim, dia_inteiro, local, descricao, convidados, link_reuniao, link_google, pode_editar, lembrete_minutos"
+          "id, calendario_id, titulo, inicio, fim, dia_inteiro, local, descricao, convidados, link_reuniao, link_google, pode_editar, lembrete_minutos"
         )
         .order("inicio", { ascending: true })
         .limit(1000);

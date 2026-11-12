@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { EventoAgenda } from "@/lib/googleAgenda";
+import type { AgendaDaConta, EventoAgenda } from "@/lib/googleAgenda";
 
 const h = vi.hoisted(() => ({
   criar: vi.fn(),
@@ -33,6 +33,7 @@ globalThis.ResizeObserver ??= class {
 
 const REUNIAO: EventoAgenda = {
   id: "r1",
+  calendario_id: "primary",
   titulo: "Reunião com a VRZ",
   inicio: "2026-11-20T17:00:00.000Z",
   fim: "2026-11-20T18:00:00.000Z",
@@ -46,11 +47,48 @@ const REUNIAO: EventoAgenda = {
   lembrete_minutos: 30,
 };
 
-function abrir(reuniao: EventoAgenda | null = null) {
+const AGENDAS: AgendaDaConta[] = [
+  {
+    id: "c1",
+    calendario_id: "ana@vrz.com",
+    nome: "Pessoal",
+    cor: null,
+    principal: true,
+    pode_editar: true,
+    visivel: true,
+  },
+  {
+    id: "c2",
+    calendario_id: "obra@group",
+    nome: "Obras",
+    cor: null,
+    principal: false,
+    pode_editar: true,
+    visivel: true,
+  },
+  {
+    id: "c3",
+    calendario_id: "feriados",
+    nome: "Feriados",
+    cor: null,
+    principal: false,
+    pode_editar: false,
+    visivel: true,
+  },
+];
+
+function abrir(reuniao: EventoAgenda | null = null, agendas: AgendaDaConta[] = []) {
   const onOpenChange = vi.fn();
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <ReuniaoDialog open onOpenChange={onOpenChange} reuniao={reuniao} diaInicial="2026-11-20" avisoPadrao={10} />
+      <ReuniaoDialog
+        open
+        onOpenChange={onOpenChange}
+        reuniao={reuniao}
+        diaInicial="2026-11-20"
+        avisoPadrao={10}
+        agendas={agendas}
+      />
     </QueryClientProvider>
   );
   return { user: userEvent.setup(), onOpenChange };
@@ -87,6 +125,23 @@ describe("ReuniaoDialog", () => {
     expect(new Date(dados.fim).getTime() - new Date(dados.inicio).getTime()).toBe(60 * 60 * 1000);
     expect(h.toast.success).toHaveBeenCalledWith("Reunião criada", expect.anything());
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("reunião nova escolhe a agenda (só as que deixam criar), com a principal de partida", async () => {
+    const { user } = abrir(null, AGENDAS);
+    const seletor = screen.getByRole("combobox", { name: "Agenda" });
+    expect(seletor).toHaveTextContent("Pessoal");
+    await user.click(seletor);
+    expect(screen.queryByRole("option", { name: "Feriados" })).not.toBeInTheDocument();
+    await user.click(await screen.findByRole("option", { name: "Obras" }));
+    await user.type(screen.getByLabelText("Título"), "Visita");
+    await user.click(screen.getByRole("button", { name: "Criar reunião" }));
+    await waitFor(() => expect(h.criar).toHaveBeenCalledWith(expect.objectContaining({ calendario_id: "obra@group" })));
+  });
+
+  it("com uma agenda só não pergunta onde criar", () => {
+    abrir(null, AGENDAS.slice(0, 1));
+    expect(screen.queryByRole("combobox", { name: "Agenda" })).not.toBeInTheDocument();
   });
 
   it("não salva sem título, com convidado inválido ou fim antes do início", async () => {

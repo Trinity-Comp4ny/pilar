@@ -3,15 +3,84 @@
  * agenda principal, e a conversão para a linha de agenda_eventos_google. O OAuth e a cifra
  * do token vêm de `google-drive.ts` (mesmo cliente OAuth, outro escopo).
  *
- * Escopo `calendar.events`: eventos da agenda, sem mexer nas configurações nem na lista de
- * agendas. É escopo sensível (verificação do Google com vídeo de uso), não restrito (sem CASA).
+ * Escopos `calendar.events` (eventos de todas as agendas da conta) e
+ * `calendar.calendarlist.readonly` (quais agendas existem: pessoal, trabalho, compartilhadas).
+ * Não mexe nas configurações da agenda. São escopos sensíveis (verificação do Google com
+ * vídeo de uso), não restritos (sem CASA).
  */
 import { fetchComTempo } from "./http.ts";
 import { ErroGoogle } from "./google-drive.ts";
 
 type Fetch = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
 
-export const ESCOPOS_AGENDA = "openid email https://www.googleapis.com/auth/calendar.events";
+export const ESCOPOS_AGENDA =
+  "openid email https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.calendarlist.readonly";
+
+/** Agenda da conta (calendarList), no formato da Pilar. */
+export interface AgendaGoogle {
+  calendario_id: string;
+  nome: string;
+  cor: string | null;
+  principal: boolean;
+  pode_editar: boolean;
+  /** Marcada para aparecer no Google: é o padrão de visibilidade na Pilar. */
+  selecionada: boolean;
+}
+
+interface ItemCalendarList {
+  id?: string;
+  summary?: string;
+  summaryOverride?: string;
+  backgroundColor?: string;
+  primary?: boolean;
+  accessRole?: string;
+  selected?: boolean;
+}
+
+export function paraAgenda(item: ItemCalendarList): AgendaGoogle | null {
+  if (!item.id || item.id.length > 1024) return null;
+  // freeBusyReader só vê "ocupado", sem título: não serve como agenda na Pilar.
+  if (item.accessRole !== "owner" && item.accessRole !== "writer" && item.accessRole !== "reader") return null;
+  const cor = item.backgroundColor && /^#[0-9a-fA-F]{6}$/.test(item.backgroundColor) ? item.backgroundColor : null;
+  return {
+    calendario_id: item.id,
+    nome: (item.summaryOverride || item.summary || item.id).trim().slice(0, 200),
+    cor,
+    principal: item.primary === true,
+    pode_editar: item.accessRole === "owner" || item.accessRole === "writer",
+    selecionada: item.primary === true || item.selected === true,
+  };
+}
+
+/** Agendas da conta (sem as escondidas no Google e sem as só de livre/ocupado). */
+export async function listarAgendas(token: string, f: Fetch = fetch): Promise<AgendaGoogle[]> {
+  const agendas: AgendaGoogle[] = [];
+  let pagina: string | undefined;
+  do {
+    const p = new URLSearchParams({
+      minAccessRole: "reader",
+      maxResults: "250",
+      fields: "nextPageToken,items(id,summary,summaryOverride,backgroundColor,primary,accessRole,selected)",
+    });
+    if (pagina) p.set("pageToken", pagina);
+    const r = await fetchComTempo(
+      `${API}/users/me/calendarList?${p}`,
+      { headers: { Authorization: `Bearer ${token}` } },
+      undefined,
+      f
+    );
+    if (!r.ok) throw new ErroGoogle(r.status, `Google Agenda respondeu ${r.status}`);
+    const corpo = (await r.json()) as { items?: ItemCalendarList[]; nextPageToken?: string };
+    for (const item of corpo.items ?? []) {
+      const a = paraAgenda(item);
+      if (a) agendas.push(a);
+    }
+    pagina = corpo.nextPageToken;
+  } while (pagina && agendas.length < 100);
+  return agendas;
+}
+
+const agendaNaUrl = (calendarioId: string) => encodeURIComponent(calendarioId);
 const API = "https://www.googleapis.com/calendar/v3";
 
 /** Janela copiada: 30 dias para trás (a aba mostra o mês) e 60 para frente. */
@@ -119,7 +188,13 @@ export function paraLinha(ev: EventoGoogle): LinhaEvento | null {
 }
 
 /** Eventos da agenda principal na janela, já com as recorrências abertas. */
-export async function listarEventos(token: string, de: Date, ate: Date, f: Fetch = fetch): Promise<EventoGoogle[]> {
+export async function listarEventos(
+  token: string,
+  de: Date,
+  ate: Date,
+  calendarioId = "primary",
+  f: Fetch = fetch
+): Promise<EventoGoogle[]> {
   const eventos: EventoGoogle[] = [];
   let pagina: string | undefined;
   do {
@@ -133,7 +208,7 @@ export async function listarEventos(token: string, de: Date, ate: Date, f: Fetch
     });
     if (pagina) p.set("pageToken", pagina);
     const r = await fetchComTempo(
-      `${API}/calendars/primary/events?${p}`,
+      `${API}/calendars/${agendaNaUrl(calendarioId)}/events?${p}`,
       { headers: { Authorization: `Bearer ${token}` } },
       undefined,
       f
@@ -222,10 +297,15 @@ async function escrever(token: string, url: string, init: RequestInit, f: Fetch)
 // sendUpdates=all: os convidados recebem o convite (ou a mudança) por e-mail, como no Google.
 const PARAMS_ESCRITA = `conferenceDataVersion=1&sendUpdates=all&fields=${encodeURIComponent(CAMPOS_EVENTO)}`;
 
-export async function criarEvento(token: string, d: DadosReuniao, f: Fetch = fetch): Promise<EventoGoogle> {
+export async function criarEvento(
+  token: string,
+  d: DadosReuniao,
+  calendarioId = "primary",
+  f: Fetch = fetch
+): Promise<EventoGoogle> {
   const r = await escrever(
     token,
-    `${API}/calendars/primary/events?${PARAMS_ESCRITA}`,
+    `${API}/calendars/${agendaNaUrl(calendarioId)}/events?${PARAMS_ESCRITA}`,
     { method: "POST", body: JSON.stringify(corpoDoEvento(d, !!d.meet)) },
     f
   );
@@ -234,6 +314,7 @@ export async function criarEvento(token: string, d: DadosReuniao, f: Fetch = fet
 
 export async function editarEvento(
   token: string,
+  calendarioId: string,
   id: string,
   d: DadosReuniao,
   jaTemMeet: boolean,
@@ -242,17 +323,22 @@ export async function editarEvento(
   if (!idEventoValido(id)) throw new ErroGoogle(400, "evento inválido");
   const r = await escrever(
     token,
-    `${API}/calendars/primary/events/${id}?${PARAMS_ESCRITA}`,
+    `${API}/calendars/${agendaNaUrl(calendarioId)}/events/${id}?${PARAMS_ESCRITA}`,
     { method: "PATCH", body: JSON.stringify(corpoDoEvento(d, !!d.meet && !jaTemMeet)) },
     f
   );
   return (await r.json()) as EventoGoogle;
 }
 
-export async function excluirEvento(token: string, id: string, f: Fetch = fetch): Promise<void> {
+export async function excluirEvento(token: string, calendarioId: string, id: string, f: Fetch = fetch): Promise<void> {
   if (!idEventoValido(id)) throw new ErroGoogle(400, "evento inválido");
   try {
-    await escrever(token, `${API}/calendars/primary/events/${id}?sendUpdates=all`, { method: "DELETE" }, f);
+    await escrever(
+      token,
+      `${API}/calendars/${agendaNaUrl(calendarioId)}/events/${id}?sendUpdates=all`,
+      { method: "DELETE" },
+      f
+    );
   } catch (e) {
     // Já apagado no Google: para a Pilar, deu certo.
     if (e instanceof ErroGoogle && (e.status === 404 || e.status === 410)) return;

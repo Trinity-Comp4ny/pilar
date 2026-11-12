@@ -14,6 +14,8 @@ const reuniaoSchema = z
     convidados: z.array(emailSchema).max(50, "No máximo 50 convidados").optional(),
     meet: z.boolean().optional(),
     lembrete_minutos: z.number().int().min(-1).max(40320).nullish(),
+    // Agenda onde a reunião nasce (só vale ao criar); sem ela, a principal.
+    calendario_id: z.string().min(1).max(1024).optional(),
   })
   .refine(
     (d) =>
