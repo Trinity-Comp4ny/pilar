@@ -81,9 +81,9 @@ Vale quando ela tira trabalho operacional e você continua no controle. O modelo
 
 Os modelos mais comuns são preço por usuário, preço por escritório com faixas de capacidade e implantação cobrada à parte. Para comparar, faça a conta de um ano com a equipe inteira usando, inclusive quem está em obra, e some implantação e migração. Depois compare com o custo de um único projeto que você descobriu no prejuízo tarde demais. Para o lado da receita, leia [como precificar projeto de arquitetura e engenharia](/blog/como-precificar-projeto-arquitetura-engenharia).
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O Pilar é gestão com agentes de IA para escritórios de engenharia e arquitetura. Não substitui o CAD nem o software de cálculo: organiza o comercial, os projetos e o financeiro em volta deles. Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário ([ver planos](/planos)).
+A Pilar é gestão com agentes de IA para escritórios de engenharia e arquitetura. Não substitui o CAD nem o software de cálculo: organiza o comercial, os projetos e o financeiro em volta deles. Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário ([ver planos](/planos)).
 
 - Funil de leads e proposta por disciplina gerada em DOCX no modelo do escritório, enviada por e-mail ([Gestão](/gestao)).
 - Proposta aprovada vira projeto com as disciplinas, e as parcelas nascem no financeiro no mesmo clique.

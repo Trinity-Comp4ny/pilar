@@ -74,9 +74,9 @@ Indicador sem rotina vira planilha esquecida. Uma rotina enxuta:
 
 Uma folha com oito linhas e três meses lado a lado basta para começar. O que importa é a regularidade. Se hoje esses números estão espalhados por planilhas diferentes, comece pelo que é mais fácil de levantar e acrescente um por mês. Para o caminho de organização como um todo, veja [como organizar um escritório de engenharia](/blog/como-organizar-escritorio-engenharia).
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O Pilar não tem um painel pronto com esses oito indicadores. O que ele faz é deixar os dados de onde eles saem organizados na rotina, sem esforço extra:
+A Pilar não tem um painel pronto com esses oito indicadores. O que ele faz é deixar os dados de onde eles saem organizados na rotina, sem esforço extra:
 
 - **Funil de leads em kanban** com KPIs de conversão e motivo de perda obrigatório ([Gestão](/gestao)).
 - **Prazo com justificativa:** no [módulo Projetos](/projetos), mudar a data de uma disciplina exige o motivo, então a causa do atraso fica registrada.
@@ -84,7 +84,7 @@ O Pilar não tem um painel pronto com esses oito indicadores. O que ele faz é d
 - **Extrato lido por agente de IA:** você solta o PDF do banco, o agente separa receita e despesa e sugere a categoria, e você revisa e aprova antes de gravar.
 - **Cinco relatórios** com prévia e export em CSV, Excel ou PDF, para montar a sua folha de indicadores.
 
-Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça o Pilar [para engenharia](/engenharia).
+Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça a Pilar [para engenharia](/engenharia).
 
 ## Perguntas frequentes
 

@@ -234,7 +234,7 @@ describe("AppSidebar", () => {
     h.novidadesDestaque = true;
     const user = userEvent.setup();
     renderSidebar();
-    const trigger = screen.getByRole("button", { name: "Menu do usuário, há novidades no Pilar" });
+    const trigger = screen.getByRole("button", { name: "Menu do usuário, há novidades na Pilar" });
     await user.click(trigger);
     expect(await screen.findByLabelText("Há novidades")).toBeInTheDocument();
     await user.click(screen.getByText("Novidades"));

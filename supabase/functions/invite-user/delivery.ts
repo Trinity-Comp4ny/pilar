@@ -48,7 +48,7 @@ export async function deliverInvite(
     return {
       ok: false,
       status: 400,
-      message: "Esse e-mail já tem conta no Pilar",
+      message: "Esse e-mail já tem conta na Pilar",
       preservePending: false,
       error,
       esperado: true,

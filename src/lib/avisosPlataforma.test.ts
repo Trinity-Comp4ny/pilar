@@ -10,7 +10,7 @@ const incidente = (over: Partial<IncidenteAviso> = {}): IncidenteAviso => ({
   severidade: "parcial",
   status: "investigando",
   resolvidoEm: null,
-  componentes: ["Aplicação Pilar"],
+  componentes: ["Aplicaçãa Pilar"],
   ultimaAtualizacao: { id: "u1", mensagem: "Encontramos a causa e estamos corrigindo." },
   ...over,
 });
@@ -33,7 +33,7 @@ describe("montarAvisos (SPEC 153)", () => {
       tom: "attention",
       titulo: "Lentidão no Financeiro",
       texto: "Encontramos a causa e estamos corrigindo.",
-      detalhe: "Afeta: Aplicação Pilar",
+      detalhe: "Afeta: Aplicaçãa Pilar",
     });
   });
 

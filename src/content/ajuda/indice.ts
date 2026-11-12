@@ -49,7 +49,7 @@ export const ARTIGOS: readonly ArtigoAjuda[] = [
   {
     slug: "feedback-e-novidades",
     titulo: "Mandar feedback e ver o que mudou",
-    resumo: "Reportar problema, sugerir melhoria e acompanhar as novidades do Pilar.",
+    resumo: "Reportar problema, sugerir melhoria e acompanhar as novidades da Pilar.",
     grupo: "comecar",
     rotas: ["/novidades"],
     palavras: ["bug", "erro", "problema", "sugestão", "melhoria", "suporte", "novidades", "atualização"],
@@ -129,7 +129,7 @@ export const ARTIGOS: readonly ArtigoAjuda[] = [
   {
     slug: "convidar-equipe",
     titulo: "Cadastrar alguém da equipe e dar acesso",
-    resumo: "Incluir a pessoa na equipe e mandar o convite para entrar no Pilar.",
+    resumo: "Incluir a pessoa na equipe e mandar o convite para entrar na Pilar.",
     grupo: "equipe",
     rotas: ["/gestao/equipe"],
     palavras: ["convite", "convidar", "usuário", "usuario", "pessoa", "colaborador", "acesso", "membro"],

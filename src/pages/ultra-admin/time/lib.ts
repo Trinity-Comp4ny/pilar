@@ -71,9 +71,9 @@ export const PLANO_DOS_AGENTES: Record<AgenteId, { quando: string; indicadores: 
     indicadores: [
       "Campanhas, posts, carrosséis e vídeos",
       "Alcance e engajamento por rede, anúncios e Search Console",
-      "Cadastros, ativados e pagantes por post (UTM, vindo do Pilar)",
+      "Cadastros, ativados e pagantes por post (UTM, vindo da Pilar)",
     ],
-    fontes: ["Plataforma de marketing (post-automation)", "Funil por UTM exportado pelo Pilar"],
+    fontes: ["Plataforma de marketing (post-automation)", "Funil por UTM exportado pela Pilar"],
   },
   produto: {
     quando: "Toda segunda às 7h07: áreas usadas e bugs parados. Funis e cliques de raiva com o PostHog (SPEC 125)",
@@ -178,7 +178,7 @@ function mensagemAtraso(p: { contato: string | null; remetente: string; empresa:
 }
 
 function mensagemSemAcesso(p: { contato: string | null; remetente: string; dias: number }): string {
-  return `${saudacao(p.contato, p.remetente)} Faz ${p.dias} dias que vocês não entram no sistema. Travou em alguma coisa? Se quiser, marco 15 minutos para ajustar o Pilar ao jeito do escritório.`;
+  return `${saudacao(p.contato, p.remetente)} Faz ${p.dias} dias que vocês não entram no sistema. Travou em alguma coisa? Se quiser, marco 15 minutos para ajustar a Pilar ao jeito do escritório.`;
 }
 
 // ─── Fila de decisões (fase 0: por regra) ─────────────────────────────────────

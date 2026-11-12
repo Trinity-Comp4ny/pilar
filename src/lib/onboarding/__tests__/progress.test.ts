@@ -46,7 +46,7 @@ describe("filterVisibleSteps", () => {
 describe("deriveProgress", () => {
   const todos = filterVisibleSteps(ONBOARDING_STEPS, allowAll, true);
 
-  it("'Entre no Pilar' já vem feito: ninguém começa do zero", () => {
+  it("'Entre na Pilar' já vem feito: ninguém começa do zero", () => {
     const d = deriveProgress(todos, fatos());
     expect(d.steps.find((s) => s.key === "conta")?.done).toBe(true);
     expect(d.doneSteps).toBe(1);

@@ -59,7 +59,7 @@ beforeEach(() => {
 describe("CartaoBoasVindas", () => {
   it("mostra os três pilares com o primeiro passo de cada um", () => {
     renderCartao();
-    expect(screen.getByRole("heading", { name: "Boas-vindas ao Pilar, Ana." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Boas-vindas à Pilar, Ana." })).toBeInTheDocument();
     const cartoes = screen.getAllByRole("button").filter((b) => b.getAttribute("aria-label") !== "Fechar boas-vindas");
     expect(cartoes.map((c) => c.textContent)).toEqual([
       expect.stringContaining("Cadastre um cliente"),

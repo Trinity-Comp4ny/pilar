@@ -77,9 +77,9 @@ Escritório pequeno costuma achar que não precisa de rotina porque "todo mundo 
 - A taxa está no honorário ou foi repassada, como diz o contrato?
 - Na conclusão, o registro foi encerrado no conselho?
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O Pilar não emite ART nem RRT: isso acontece no sistema do CREA ou do CAU. O que ele faz é tirar o registro da memória e colocar na rotina do projeto.
+A Pilar não emite ART nem RRT: isso acontece no sistema do CREA ou do CAU. O que ele faz é tirar o registro da memória e colocar na rotina do projeto.
 
 - Proposta por disciplina no seu template, onde a taxa do registro aparece como item combinado.
 - Proposta aprovada vira projeto com as disciplinas e os responsáveis definidos, e as parcelas nascem no financeiro.

@@ -18,7 +18,7 @@ interface PilarMarkProps {
 }
 
 /**
- * A coluna do Pilar em SVG, na cor do texto ao redor. Animação só por classe
+ * A coluna da Pilar em SVG, na cor do texto ao redor. Animação só por classe
  * (src/styles/motion.css): zero JavaScript por frame, e movimento reduzido cai no
  * quadro final.
  */

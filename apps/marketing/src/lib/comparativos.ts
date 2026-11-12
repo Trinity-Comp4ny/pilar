@@ -3,7 +3,7 @@
  * `modules.ts`: alimenta o dropdown "Comparações" do header e as páginas
  * /vs/planilha, /vs/trello etc.
  *
- * Regra de conteúdo: só compara com o que o Pilar de fato faz hoje (ver
+ * Regra de conteúdo: só compara com o que a Pilar de fato faz hoje (ver
  * `modules.ts`) e não inventa número de resultado. Planilha e Trello são
  * ferramentas legítimas, só não foram feitas pra este trabalho específico:
  * o tom é factual, não zoeira de concorrente.
@@ -38,7 +38,7 @@ export const COMPARATIVOS: Comparativo[] = [
     slug: "planilha",
     adversario: "Planilha",
     headline: "Planilha guarda o número.",
-    headlineFim: "O Pilar avisa antes de virar prejuízo.",
+    headlineFim: "A Pilar avisa antes de virar prejuízo.",
     lede: "Excel e Google Sheets não têm nada de errado: o problema é o que eles não fazem sozinhos. Toda linha depende de alguém lembrar de atualizar, e ninguém avisa quando o projeto entra no vermelho.",
     seo: {
       titulo: "Planilha ou sistema de gestão de projetos de engenharia?",
@@ -87,12 +87,12 @@ export const COMPARATIVOS: Comparativo[] = [
       {
         pergunta: "Minha planilha tem anos de histórico. Dá pra importar?",
         resposta:
-          "O extrato do banco entra direto, lido pela IA. Os projetos você recadastra: planilha acumula bagunça com o tempo, e começar limpo no Pilar é melhor do que herdar a bagunça organizada.",
+          "O extrato do banco entra direto, lido pela IA. Os projetos você recadastra: planilha acumula bagunça com o tempo, e começar limpo na Pilar é melhor do que herdar a bagunça organizada.",
       },
       {
         pergunta: "Planilha é de graça. Vale pagar por isso?",
         resposta:
-          "A planilha não custa nada até o dia em que um projeto termina no vermelho e ninguém percebeu a tempo. É essa hora perdida (e esse projeto) que o Pilar evita.",
+          "A planilha não custa nada até o dia em que um projeto termina no vermelho e ninguém percebeu a tempo. É essa hora perdida (e esse projeto) que a Pilar evita.",
       },
       {
         pergunta: "Preciso migrar tudo de uma vez?",
@@ -104,7 +104,7 @@ export const COMPARATIVOS: Comparativo[] = [
     slug: "trello",
     adversario: "Trello",
     headline: "Trello organiza tarefa.",
-    headlineFim: "O Pilar organiza o escritório inteiro.",
+    headlineFim: "A Pilar organiza o escritório inteiro.",
     lede: "Trello (e ClickUp, e Asana) são bons quadros genéricos. O problema aparece quando o trabalho do escritório de engenharia é mais que mover cartão: é proposta, é financeiro, é obra, é o cliente perguntando andamento.",
     seo: {
       titulo: "Trello na gestão de projetos de engenharia? Compare",
@@ -148,7 +148,7 @@ export const COMPARATIVOS: Comparativo[] = [
       {
         pergunta: "Uso Trello só pra tarefas, o resto é solto em outro lugar.",
         resposta:
-          "É exatamente esse o ponto: o Pilar junta proposta, projeto e financeiro no mesmo fluxo, então parar de alternar entre ferramentas é o ganho.",
+          "É exatamente esse o ponto: a Pilar junta proposta, projeto e financeiro no mesmo fluxo, então parar de alternar entre ferramentas é o ganho.",
       },
       {
         pergunta: "Trello é mais barato.",
@@ -157,7 +157,7 @@ export const COMPARATIVOS: Comparativo[] = [
       },
       {
         pergunta: "Meu time já está acostumado com quadro kanban.",
-        resposta: "O Pilar também tem quadro, com coluna que o escritório define. A curva de aprendizado é baixa.",
+        resposta: "A Pilar também tem quadro, com coluna que o escritório define. A curva de aprendizado é baixa.",
       },
     ],
   },
@@ -165,7 +165,7 @@ export const COMPARATIVOS: Comparativo[] = [
     slug: "whatsapp",
     adversario: "WhatsApp",
     headline: "WhatsApp é onde o cliente pergunta.",
-    headlineFim: "O Pilar é onde a resposta já está.",
+    headlineFim: "A Pilar é onde a resposta já está.",
     lede: "Grupo por projeto, áudio do canteiro, foto da obra e o cliente perguntando andamento: o WhatsApp é ótimo para conversar e péssimo para guardar o que foi decidido. O histórico some na rolagem.",
     seo: {
       titulo: "WhatsApp para gerenciar projeto e obra? Compare",
@@ -231,7 +231,7 @@ export const COMPARATIVOS: Comparativo[] = [
     slug: "notion",
     adversario: "Notion",
     headline: "Notion é uma folha em branco.",
-    headlineFim: "O Pilar já vem com o escritório montado.",
+    headlineFim: "A Pilar já vem com o escritório montado.",
     lede: "Notion é ótimo para documentação e wiki. Para virar sistema de escritório de engenharia ou arquitetura, alguém precisa desenhar as bases, as relações e as fórmulas, e manter tudo isso de pé.",
     seo: {
       titulo: "Notion para escritório de engenharia e arquitetura?",
@@ -267,7 +267,7 @@ export const COMPARATIVOS: Comparativo[] = [
       },
       {
         criterio: "Manutenção",
-        pilar: "Por conta do Pilar.",
+        pilar: "Por conta da Pilar.",
         alternativa: "Quem montou vira o suporte do sistema.",
       },
     ],
@@ -280,17 +280,17 @@ export const COMPARATIVOS: Comparativo[] = [
       {
         pergunta: "Posso continuar usando Notion para documentação?",
         resposta:
-          "Pode. Wiki, padrões e atas ficam bem no Notion. O Pilar cuida do que tem número, prazo e dinheiro: proposta, projeto, financeiro e obra.",
+          "Pode. Wiki, padrões e atas ficam bem no Notion. A Pilar cuida do que tem número, prazo e dinheiro: proposta, projeto, financeiro e obra.",
       },
       {
-        pergunta: "Consigo adaptar o Pilar ao meu fluxo?",
+        pergunta: "Consigo adaptar a Pilar ao meu fluxo?",
         resposta:
           "O quadro usa as colunas do escritório e o fluxo padrão é configurado uma vez. O que não muda é a ligação entre proposta, projeto e financeiro, que é o que dá trabalho montar no Notion.",
       },
       {
         pergunta: "Quanto custa comparado ao Notion?",
         resposta:
-          "O Pilar cobra por escritório, não por usuário, a partir de R$ 299 por mês. Os planos estão na página de preços.",
+          "A Pilar cobra por escritório, não por usuário, a partir de R$ 299 por mês. Os planos estão na página de preços.",
       },
     ],
   },
@@ -298,7 +298,7 @@ export const COMPARATIVOS: Comparativo[] = [
     slug: "erp-construtora",
     adversario: "ERP de construtora",
     headline: "ERP de construtora gerencia canteiro.",
-    headlineFim: "O Pilar gerencia o escritório que projeta.",
+    headlineFim: "A Pilar gerencia o escritório que projeta.",
     lede: "ERPs de construtora são feitos para quem vende obra: suprimentos em escala, medição de empreiteiro, contabilidade de obra. Escritório de projeto vende proposta por disciplina e precisa de outra coisa.",
     seo: {
       titulo: "ERP de construtora para escritório de projeto? Compare",
@@ -340,17 +340,17 @@ export const COMPARATIVOS: Comparativo[] = [
     ],
     faq: [
       {
-        pergunta: "O Pilar substitui o ERP de uma construtora?",
+        pergunta: "A Pilar substitui o ERP de uma construtora?",
         resposta:
-          "Não. Construtora e incorporadora com gestão de obra como núcleo do negócio estão fora do foco do Pilar. Ele é feito para escritórios de projeto de engenharia e arquitetura.",
+          "Não. Construtora e incorporadora com gestão de obra como núcleo do negócio estão fora do foco da Pilar. Ele é feito para escritórios de projeto de engenharia e arquitetura.",
       },
       {
         pergunta: "E se o escritório também administra obra?",
         resposta:
-          "Para obra por administração, o Pilar tem diário do canteiro, cotação de material e a conta da obra com prestação de contas ao cliente.",
+          "Para obra por administração, a Pilar tem diário do canteiro, cotação de material e a conta da obra com prestação de contas ao cliente.",
       },
       {
-        pergunta: "O Pilar emite nota fiscal ou faz contabilidade?",
+        pergunta: "A Pilar emite nota fiscal ou faz contabilidade?",
         resposta: "Não é um sistema contábil. Ele organiza o financeiro do escritório e gera os relatórios do mês.",
       },
     ],

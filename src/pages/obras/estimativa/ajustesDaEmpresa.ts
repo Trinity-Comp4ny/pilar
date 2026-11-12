@@ -85,7 +85,7 @@ function lerCaminho(fonte: Record<string, unknown> | undefined, caminho: string)
   return typeof bruto === "number" && Number.isFinite(bruto) ? bruto : undefined;
 }
 
-/** Valor do campo na referência do Pilar (o item sem preço, como `a_definir`, não tem). */
+/** Valor do campo na referência da Pilar (o item sem preço, como `a_definir`, não tem). */
 export function valorDaReferencia(a: Adicional, campo: CampoDePreco): number | undefined {
   return lerCaminho(a as unknown as Record<string, unknown>, campo.caminho);
 }

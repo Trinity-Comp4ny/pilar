@@ -95,7 +95,7 @@ describe("useOnboardingProgress", () => {
     h.profile = null;
     const { result } = renderHook(() => useOnboardingProgress(), { wrapper });
     expect(result.current.hasEmpresa).toBe(false);
-    // Só "Entre no Pilar", que nasce marcado.
+    // Só "Entre na Pilar", que nasce marcado.
     expect(result.current.doneSteps).toBe(1);
     expect(supabaseFake.calls).toHaveLength(0);
   });

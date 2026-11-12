@@ -179,7 +179,7 @@ export function CubImportacao() {
             icon={FileSpreadsheet}
             iconTone="brand"
             title="Nenhum CUB importado"
-            description="Sem o CUB, nenhuma empresa consegue gerar estimativa. Envie a planilha do mês (UF, código do CUB e valor por m²) e o Pilar confere antes de gravar."
+            description="Sem o CUB, nenhuma empresa consegue gerar estimativa. Envie a planilha do mês (UF, código do CUB e valor por m²) e a Pilar confere antes de gravar."
             action={{ label: "Escolher a planilha", onClick: () => entrada.current?.click(), variant: "brand" }}
           >
             <p className="mt-3 text-xs text-ink-soft">Aceita .xlsx e .csv, até 5 MB.</p>

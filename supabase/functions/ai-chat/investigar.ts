@@ -39,7 +39,7 @@ export type ResultadoInvestigacao = {
 
 export function promptPlanejador(ferramentas: Ferramenta[]): string {
   const catalogo = ferramentas.map((f) => `- ${f.nome}: ${f.descricao}`).join("\n");
-  return `Você é o planejador de consultas do Pilar, um copiloto para escritórios de engenharia.
+  return `Você é o planejador de consultas da Pilar, um copiloto para escritórios de engenharia.
 Seu trabalho NÃO é responder ao usuário: é decidir quais consultas aos dados do escritório são necessárias para que outro passo responda com precisão.
 
 Ferramentas de leitura disponíveis:

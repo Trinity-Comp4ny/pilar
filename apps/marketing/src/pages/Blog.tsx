@@ -28,7 +28,7 @@ export function Blog() {
   useJsonLd({
     "@context": "https://schema.org",
     "@type": "Blog",
-    name: "Blog do Pilar",
+    name: "Blog da Pilar",
     url: `${BASE}/blog`,
     inLanguage: "pt-BR",
     publisher: { "@type": "Organization", name: "Pilar", url: `${BASE}/` },

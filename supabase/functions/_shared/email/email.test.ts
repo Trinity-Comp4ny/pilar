@@ -268,7 +268,7 @@ Deno.test("assunto: imediato com 1 item usa o título; semanal conta total inclu
   );
   assertEquals(
     N.assuntoNotificacoes({ modo: "imediato", itens: [item("financeiro"), item("obra")], totalOculto: 0 }),
-    "2 alertas importantes no Pilar"
+    "2 alertas importantes na Pilar"
   );
   assertEquals(
     N.assuntoNotificacoes({ modo: "semanal", itens: [item("financeiro")], totalOculto: 4 }),
@@ -287,7 +287,7 @@ Deno.test("assunto: menção com 1 item usa o título; com várias conta as men�
   );
   assertEquals(
     N.assuntoNotificacoes({ modo: "mencao", itens: [item("projeto"), item("tarefa")], totalOculto: 0 }),
-    "2 menções para você no Pilar"
+    "2 menções para você na Pilar"
   );
 });
 

@@ -80,16 +80,16 @@ Agora suponha que o cliente pediu três rodadas extras de revisão, absorvidas s
 
 O ideal é em três momentos: na proposta, com a margem prevista; no meio do projeto, comparando horas gastas com o avanço; e no encerramento, com o número real. A diferença entre previsto e real, repetida em vários projetos, é a melhor informação que um escritório tem para ajustar preço. Se a diferença vem de horas refeitas, o problema é de processo, não de preço: veja [como reduzir retrabalho em projeto de engenharia](/blog/retrabalho-projeto-engenharia).
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O Pilar não faz a conta de lucro por projeto por você hoje. O que ele faz é manter organizados, no [módulo Gestão](/gestao), os números que alimentam essa conta, para que ela deixe de depender de planilhas espalhadas.
+A Pilar não faz a conta de lucro por projeto por você hoje. O que ele faz é manter organizados, no [módulo Gestão](/gestao), os números que alimentam essa conta, para que ela deixe de depender de planilhas espalhadas.
 
 - **Parcelas do contrato no financeiro.** A proposta aprovada vira projeto e as receitas nascem no financeiro. Na aba do [projeto](/projetos), você vê o valor contratado, recebido, pendente e atrasado.
 - **Despesas lançadas e categorizadas.** Solte o extrato do banco ou a fatura do cartão em PDF; o agente de IA separa receita de despesa e sugere a categoria do seu plano de contas. Você revisa e aprova antes de gravar.
 - **Folha com comprovante.** Ao fechar a competência, cada pessoa recebe o comprovante em PDF, com os projetos que tocou no mês: o ponto de partida para estimar a dedicação por projeto.
 - **Relatórios exportáveis.** Cinco relatórios com prévia e export em CSV, Excel ou PDF, para montar a conta com os dados que já estão no sistema.
 
-Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça o Pilar [para engenharia](/engenharia).
+Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça a Pilar [para engenharia](/engenharia).
 
 ## Perguntas frequentes
 

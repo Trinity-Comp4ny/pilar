@@ -77,7 +77,7 @@ export function PublicoPage({ slug }: { slug: PublicoSlug }) {
         <div className="mx-auto max-w-6xl">
           <Reveal variant="up" className="mb-8 max-w-2xl">
             <h2 className="text-[36px] font-medium leading-[1.08] tracking-[-0.035em] text-ink max-[1100px]:text-[30px] max-[850px]:text-[25px]">
-              Como o Pilar <span className="italic text-ink/45">organiza</span>
+              Como a Pilar <span className="italic text-ink/45">organiza</span>
             </h2>
           </Reveal>
           <div className="grid gap-4 md:grid-cols-2">
@@ -124,7 +124,7 @@ export function PublicoPage({ slug }: { slug: PublicoSlug }) {
           </Reveal>
           <Reveal variant="up" delay={0.06}>
             <div className="h-full rounded-[20px] border border-paper-border/80 p-7">
-              <h2 className="mb-4 text-[20px] font-medium text-ink">O que o Pilar não é</h2>
+              <h2 className="mb-4 text-[20px] font-medium text-ink">O que a Pilar não é</h2>
               <ul className="flex flex-col gap-3">
                 {p.naoE.map((t) => (
                   <li key={t} className="flex items-start gap-2.5 text-[14px] leading-snug text-ink-muted">

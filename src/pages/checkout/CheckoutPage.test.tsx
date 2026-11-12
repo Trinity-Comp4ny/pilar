@@ -115,7 +115,7 @@ describe("Checkout", () => {
 
   it("tem um h1 com o plano (SEO: Bing acusava a página sem h1)", () => {
     abrir("/checkout?plano=pro");
-    expect(screen.getByRole("heading", { level: 1, name: "Assinar o Pilar Profissional" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Assinar a Pilar Profissional" })).toBeInTheDocument();
   });
 
   it("ciclo anual usa o preço anual do plano", () => {

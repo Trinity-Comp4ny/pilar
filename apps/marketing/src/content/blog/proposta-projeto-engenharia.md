@@ -85,7 +85,7 @@ A proposta aprovada dispara uma sequência: contrato assinado, ART ou RRT de cad
 
 Se a dúvida é o valor de cada linha, leia [como precificar projeto de arquitetura e engenharia](/blog/como-precificar-projeto-arquitetura-engenharia).
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
 No módulo [Gestão](/gestao), a proposta é montada por disciplina e sai em DOCX no modelo do seu escritório, enviada por e-mail sem sair do sistema. Planos a partir de R$ 299 por mês por escritório, sem cobrança por usuário ([ver planos](/planos)).
 

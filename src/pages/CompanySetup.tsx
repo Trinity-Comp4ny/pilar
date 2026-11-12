@@ -222,8 +222,7 @@ export default function CompanySetup() {
       analytics.track("empresa_onboarding_concluido", { empresa_id: empresaId, convites: enviados });
 
       toast.success("Escritório configurado.", {
-        description:
-          enviados > 0 ? `Boas-vindas ao Pilar. ${enviados} convite(s) enviado(s).` : "Boas-vindas ao Pilar.",
+        description: enviados > 0 ? `Boas-vindas à Pilar. ${enviados} convite(s) enviado(s).` : "Boas-vindas à Pilar.",
       });
       navigate("/inicio");
     } catch (err: unknown) {
@@ -436,10 +435,10 @@ export default function CompanySetup() {
                     name="comoConheceu"
                     render={({ field }) => (
                       <FormItem className="space-y-2">
-                        <FormLabel className="text-ink-soft font-medium">Como você conheceu o Pilar?</FormLabel>
+                        <FormLabel className="text-ink-soft font-medium">Como você conheceu a Pilar?</FormLabel>
                         <FormControl>
                           <EscolhaChips
-                            ariaLabel="Como você conheceu o Pilar"
+                            ariaLabel="Como você conheceu a Pilar"
                             opcoes={CANAIS}
                             value={field.value || null}
                             onChange={field.onChange}
@@ -476,7 +475,7 @@ export default function CompanySetup() {
               <div className="space-y-2">
                 <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Por onde começar?</h1>
                 <p className="text-sm text-ink-soft">
-                  O Pilar cobre os três. Escolha o que quer organizar primeiro e os primeiros passos começam por ele.
+                  A Pilar cobre os três. Escolha o que quer organizar primeiro e os primeiros passos começam por ele.
                 </p>
               </div>
 
@@ -556,7 +555,7 @@ export default function CompanySetup() {
                   </>
                 ) : (
                   <>
-                    {convitesValidos.length > 0 ? "Convidar e entrar no Pilar" : "Entrar no Pilar"}
+                    {convitesValidos.length > 0 ? "Convidar e entrar na Pilar" : "Entrar na Pilar"}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}

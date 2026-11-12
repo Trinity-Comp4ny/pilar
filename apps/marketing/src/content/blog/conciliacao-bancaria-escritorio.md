@@ -77,7 +77,7 @@ A segunda etapa não é opcional. O agente não conhece o contexto que só a equ
 - **Conta de obra misturada com a do escritório.** Quem administra obra precisa de conta separada, como explica o artigo sobre [obra por administração](/blog/obra-por-administracao-prestacao-de-contas).
 - **Uma só pessoa sabe fazer.** Se ela sai de férias, o mês não fecha.
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
 No [módulo Gestão](/gestao), o extrato deixa de ser digitado e passa a ser revisado.
 

@@ -37,7 +37,7 @@ afterEach(() => {
 describe("SobrePilar", () => {
   it("mostra a versão curta e a data do build", () => {
     renderSobre();
-    expect(screen.getByText("Sobre o Pilar")).toBeInTheDocument();
+    expect(screen.getByText("Sobre a Pilar")).toBeInTheDocument();
     expect(screen.getByTestId("versao-app")).toHaveTextContent(/^Versão 0b62931 · \d{2}\/11\/2026/);
   });
 

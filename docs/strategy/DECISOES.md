@@ -11,6 +11,18 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-12 (noite) · A marca é feminina: "a Pilar"
+
+**Decisão:** o nome leva artigo feminino em toda copy, site, app e e-mail: "a Pilar", "da Pilar", "na Pilar".
+A exceção é o app de campo, que segue "o Pilar Campo" (o app).
+
+Contexto: o resumo de IA do Google descrevia "O Pilar", porque o próprio site escrevia assim. O CEO quer "a Pilar".
+Site, blog, app e edge functions foram trocados de uma vez.
+
+**Supera:** o "artigo em aberto" de `brand/usage.md` e o "o Pilar" de `brand/messaging.md`.
+
+---
+
 ## 2026-11-12 (mais tarde) · Ordem das próximas integrações; Open Finance fica de fora por custo
 
 **Decisão:** depois da agenda, a ordem é histórico do lead (com reunião marcada pela Pilar e tarefas no Google

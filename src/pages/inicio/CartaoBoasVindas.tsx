@@ -15,7 +15,7 @@ const ICONE: Record<Objetivo, typeof Building2> = {
 
 /**
  * Boas-vindas do Início (SPEC 149). Quem acabou de entrar vê os três pilares
- * do Pilar lado a lado, com o que escolheu em "Por onde começar" em destaque, e
+ * da Pilar lado a lado, com o que escolheu em "Por onde começar" em destaque, e
  * cada cartão leva direto ao primeiro passo pendente daquele pilar. Some quando
  * a pessoa fecha, dispensa o checklist ou conclui os primeiros passos.
  */
@@ -54,7 +54,7 @@ export function CartaoBoasVindas() {
 
       <div className="max-w-2xl space-y-1 pr-8">
         <h2 className="text-lg font-semibold text-ink">
-          {nome ? `Boas-vindas ao Pilar, ${nome}.` : "Boas-vindas ao Pilar."}
+          {nome ? `Boas-vindas à Pilar, ${nome}.` : "Boas-vindas à Pilar."}
         </h2>
         <p className="text-sm text-ink-soft">
           {empresa ? `O ${empresa} tem` : "Seu escritório tem"} gestão, projetos e obras no mesmo lugar. Escolha um

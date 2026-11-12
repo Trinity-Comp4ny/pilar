@@ -80,9 +80,9 @@ O passo 7 é o que mais se pula. Um cronograma que parece bom isolado pode ser i
 
 Para o controle do dia a dia, por disciplina, veja também [controle de prazo de projetos por disciplina](/blog/controle-prazo-projetos-disciplinas). E para as rodadas entre arquitetura e complementares, o guia de [compatibilização de projetos](/blog/compatibilizacao-de-projetos).
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O [módulo Projetos](/projetos) do Pilar trata o projeto como conjunto de disciplinas, cada uma com responsável e data.
+O [módulo Projetos](/projetos) da Pilar trata o projeto como conjunto de disciplinas, cada uma com responsável e data.
 
 - Cadastre a sequência de etapas e disciplinas do escritório uma vez, e todo projeto novo nasce com ela e com responsável definido.
 - O Gantt mostra a carteira inteira na linha do tempo; arraste a borda da barra e a data de início e a previsão gravam direto.
@@ -90,7 +90,7 @@ O [módulo Projetos](/projetos) do Pilar trata o projeto como conjunto de discip
 - Mudou a data, o sistema exige o motivo, e o histórico do projeto fica completo.
 - O [portal do cliente](/portal) mostra disciplina e entrega num link só de leitura, sem conta e sem aplicativo.
 
-Veja como o Pilar atende [escritórios de arquitetura](/arquitetura). Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos).
+Veja como a Pilar atende [escritórios de arquitetura](/arquitetura). Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos).
 
 ## Perguntas frequentes
 

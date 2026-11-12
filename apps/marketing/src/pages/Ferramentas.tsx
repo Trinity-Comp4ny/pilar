@@ -66,7 +66,7 @@ function Faq({ itens }: { itens: { pergunta: string; resposta: string }[] }) {
   );
 }
 
-/** Fecho de cada ferramenta: o que o Pilar faz com isso, sem esconder a ferramenta atrás de cadastro. */
+/** Fecho de cada ferramenta: o que a Pilar faz com isso, sem esconder a ferramenta atrás de cadastro. */
 function NoPilar({
   titulo,
   texto,
@@ -325,7 +325,7 @@ export function CalculadoraHonorarios() {
 
       <NoPilar
         titulo="Do preço à proposta, sem redigitar."
-        texto="No Pilar, a proposta é montada por disciplina e sai em DOCX no template do escritório. Aprovada, vira projeto com as parcelas no financeiro."
+        texto="Na Pilar, a proposta é montada por disciplina e sai em DOCX no template do escritório. Aprovada, vira projeto com as parcelas no financeiro."
         local={f.slug}
         para="/gestao"
         rotulo="Conhecer o módulo Gestão"
@@ -441,7 +441,7 @@ export function ModeloProposta() {
 
       <NoPilar
         titulo="A proposta sai do sistema, no seu template."
-        texto="No Pilar, a proposta é montada por disciplina, sai em DOCX com a cara do escritório e vai por e-mail sem sair do sistema. Aprovada, vira projeto com as parcelas no financeiro."
+        texto="Na Pilar, a proposta é montada por disciplina, sai em DOCX com a cara do escritório e vai por e-mail sem sair do sistema. Aprovada, vira projeto com as parcelas no financeiro."
         local={f.slug}
         para="/gestao"
         rotulo="Conhecer o módulo Gestão"

@@ -36,7 +36,7 @@ export const PUBLICOS: Publico[] = [
       "Software de gestão para escritório de engenharia: proposta por disciplina, prazo de projeto, financeiro e obra no mesmo sistema, com agentes de IA.",
     headline: "Software de gestão para escritório de engenharia,",
     headlineFim: "do contrato à execução.",
-    lede: "Civil, estrutural, elétrica, hidráulica, HVAC: o escritório vende projeto por disciplina e precisa enxergar prazo, responsável e dinheiro de cada uma. O Pilar junta proposta, projeto, obra e financeiro, e os agentes de IA preparam o trabalho para a equipe aprovar.",
+    lede: "Civil, estrutural, elétrica, hidráulica, HVAC: o escritório vende projeto por disciplina e precisa enxergar prazo, responsável e dinheiro de cada uma. A Pilar junta proposta, projeto, obra e financeiro, e os agentes de IA preparam o trabalho para a equipe aprovar.",
     dores: [
       {
         titulo: "Cada disciplina numa planilha",
@@ -92,14 +92,14 @@ export const PUBLICOS: Publico[] = [
     ],
     faq: [
       {
-        pergunta: "O Pilar serve para escritório de engenharia pequeno?",
+        pergunta: "A Pilar serve para escritório de engenharia pequeno?",
         resposta:
           "Serve. O preço é por escritório, não por usuário, e o plano Essencial cobre até 10 projetos ativos. Quem cresce muda de plano pela quantidade de projetos, obras e leads ativos.",
       },
       {
         pergunta: "Substitui o software de cálculo ou o CAD?",
         resposta:
-          "Não. O Pilar cuida da gestão do escritório: proposta, prazo, financeiro e obra. O projeto técnico continua nas ferramentas que a equipe já usa.",
+          "Não. A Pilar cuida da gestão do escritório: proposta, prazo, financeiro e obra. O projeto técnico continua nas ferramentas que a equipe já usa.",
       },
       {
         pergunta: "O que os agentes de IA fazem?",
@@ -125,7 +125,7 @@ export const PUBLICOS: Publico[] = [
       "Sistema de gestão para escritório de arquitetura: proposta, etapas do projeto, prazo, financeiro, obra e portal do cliente num lugar só, com agentes de IA.",
     headline: "Sistema de gestão para escritório de arquitetura,",
     headlineFim: "do estudo à obra entregue.",
-    lede: "Estudo preliminar, anteprojeto, executivo, complementares e acompanhamento de obra: cada etapa com prazo, responsável e parcela. O Pilar organiza o escritório inteiro e mostra ao cliente onde o projeto está, sem você montar relatório.",
+    lede: "Estudo preliminar, anteprojeto, executivo, complementares e acompanhamento de obra: cada etapa com prazo, responsável e parcela. A Pilar organiza o escritório inteiro e mostra ao cliente onde o projeto está, sem você montar relatório.",
     dores: [
       {
         titulo: "O cliente pergunta toda semana",
@@ -182,9 +182,9 @@ export const PUBLICOS: Publico[] = [
     ],
     faq: [
       {
-        pergunta: "O Pilar serve para escritório de arquitetura ou só engenharia?",
+        pergunta: "A Pilar serve para escritório de arquitetura ou só engenharia?",
         resposta:
-          "Serve para os dois. O fluxo de etapa e disciplina que o Pilar organiza é o mesmo de um escritório de arquitetura que coordena complementares e acompanha obra.",
+          "Serve para os dois. O fluxo de etapa e disciplina que a Pilar organiza é o mesmo de um escritório de arquitetura que coordena complementares e acompanha obra.",
       },
       {
         pergunta: "Meu cliente precisa criar conta para acompanhar o projeto?",

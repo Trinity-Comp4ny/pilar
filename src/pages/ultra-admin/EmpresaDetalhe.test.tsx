@@ -200,7 +200,7 @@ describe("EmpresaDetalhe: estados", () => {
   });
 
   it.each([
-    [{ cobranca: { status: null, trialEndsAt: null, isPaying: false, convidada: true } }, "Usa o Pilar sem pagar."],
+    [{ cobranca: { status: null, trialEndsAt: null, isPaying: false, convidada: true } }, "Usa a Pilar sem pagar."],
     [
       { cobranca: { status: "expired", trialEndsAt: null, isPaying: false, convidada: false } },
       /Teste vencido: só leitura/,

@@ -462,7 +462,7 @@ export default function MfaSetupPage() {
                 className="w-full h-11 font-medium"
                 onClick={() => navigate("/inicio", { replace: true })}
               >
-                Já salvei — acessar o Pilar
+                Já salvei — acessar a Pilar
               </Button>
             </div>
           )}

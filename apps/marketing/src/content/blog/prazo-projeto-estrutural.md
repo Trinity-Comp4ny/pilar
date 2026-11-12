@@ -84,16 +84,16 @@ O prazo escrito como "60 dias a partir da assinatura" é uma armadilha: ele come
 
 Como exemplo hipotético: um escritório promete o lançamento em uma semana após receber o anteprojeto, a fundação em duas semanas após o laudo de sondagem e o detalhamento em quatro semanas após o lançamento das instalações. Se a sondagem atrasa um mês, o contrato já diz o que acontece com a data. Os detalhes de cláusula estão em [contrato de projeto](/blog/contrato-de-projeto), e mudança de escopo depois da assinatura é assunto de [aditivo de projeto](/blog/aditivo-de-projeto).
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O Pilar não calcula estrutura; isso continua no seu software de cálculo. O [módulo Projetos](/projetos) organiza o prazo em volta dele.
+A Pilar não calcula estrutura; isso continua no seu software de cálculo. O [módulo Projetos](/projetos) organiza o prazo em volta dele.
 
 - Cada disciplina tem data, um ou mais responsáveis, link para o arquivo e comentário no mesmo lugar.
 - Ao concluir uma disciplina, o responsável da etapa seguinte é avisado, sem ninguém precisar cobrar.
 - Mudou a data, o sistema pede o motivo. Quando a sondagem atrasar, o histórico mostra por quê.
 - O Gantt mostra a carteira inteira, para ver quando o mesmo calculista tem entregas de projetos diferentes na mesma semana.
 
-Veja como o Pilar atende [escritórios de engenharia](/engenharia). Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos).
+Veja como a Pilar atende [escritórios de engenharia](/engenharia). Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos).
 
 ## Perguntas frequentes
 

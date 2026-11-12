@@ -151,7 +151,7 @@ Regras:
 
 ### 7.1 Variações claras: a paisagem
 
-O fundo preto deixou de ser a cara da marca. A versão de apresentação do Pilar é clara e usa a
+O fundo preto deixou de ser a cara da marca. A versão de apresentação da Pilar é clara e usa a
 mesma arte da hero da landing (`HeroBackdrop`): céu branco que esfria para o azul-gelo e três
 morros nos verdes da marca, com a trama de pontos do dithering nas peças grandes.
 

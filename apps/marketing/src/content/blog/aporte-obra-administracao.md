@@ -99,7 +99,7 @@ Dar ao cliente acesso de leitura aos aportes, às despesas com comprovante e ao 
 
 Combine em contrato o destino do saldo final: devolução ao cliente, abatimento do último aporte ou uso em itens de pós-obra. Sem essa cláusula, o saldo vira discussão justo no momento em que a relação deveria terminar bem.
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
 No [módulo Obra](/obra), cada obra tem a sua conta.
 

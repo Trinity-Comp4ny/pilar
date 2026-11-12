@@ -1,4 +1,4 @@
-O que você reporta chega direto ao time do Pilar, e o que mudou no sistema fica em Novidades.
+O que você reporta chega direto ao time da Pilar, e o que mudou no sistema fica em Novidades.
 
 ## Mandar um feedback
 
@@ -12,4 +12,4 @@ Quando o que você pediu for entregue, você recebe um aviso no sino.
 
 ## Ver o que mudou
 
-No mesmo menu do avatar, clique em [Novidades](/novidades). Um ponto verde no avatar indica que há novidade que você ainda não viu. Quando uma mudança altera o caminho de uma tarefa, o Pilar mostra o aviso **O que mudou** logo depois de você recarregar a página.
+No mesmo menu do avatar, clique em [Novidades](/novidades). Um ponto verde no avatar indica que há novidade que você ainda não viu. Quando uma mudança altera o caminho de uma tarefa, a Pilar mostra o aviso **O que mudou** logo depois de você recarregar a página.

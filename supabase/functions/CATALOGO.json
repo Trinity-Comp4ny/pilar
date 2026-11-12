@@ -141,7 +141,7 @@
   },
   "pilar-checkout-create": {
     "dominio": "billing",
-    "descricao": "Checkout público do Pilar: cria cliente e cobrança na Asaas da plataforma."
+    "descricao": "Checkout público da Pilar: cria cliente e cobrança na Asaas da plataforma."
   },
   "pilar-checkout-status": {
     "dominio": "billing",
@@ -154,7 +154,7 @@
   },
   "pilar-subscription-manage": {
     "dominio": "billing",
-    "descricao": "Troca de plano e cancelamento da assinatura do Pilar pelo admin da empresa."
+    "descricao": "Troca de plano e cancelamento da assinatura da Pilar pelo admin da empresa."
   },
   "pilar-token-pack-create": {
     "dominio": "billing",
@@ -186,7 +186,7 @@
   },
   "reconciliar-assinaturas": {
     "dominio": "jobs",
-    "descricao": "Cron diário: compara cada assinatura do Pilar com o Asaas e avisa o ultra admin das divergências (SPEC 114)."
+    "descricao": "Cron diário: compara cada assinatura da Pilar com o Asaas e avisa o ultra admin das divergências (SPEC 114)."
   },
   "registro-audio-limpar": {
     "dominio": "jobs",

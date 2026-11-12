@@ -193,7 +193,7 @@ export function AgenteAjuda() {
         <section
           ref={painel}
           role="dialog"
-          aria-label="Dúvidas sobre o Pilar"
+          aria-label="Dúvidas sobre a Pilar"
           tabIndex={-1}
           onKeyDown={(e) => e.key === "Escape" && fechar()}
           // Celular: ocupa a área visível inteira e encolhe com o teclado (useAreaVisivel), com
@@ -253,7 +253,7 @@ export function AgenteAjuda() {
                   ) : (
                     <p>
                       Ainda não tenho um passo a passo para isso. Os agentes podem responder com os dados do seu
-                      escritório, ou o time do Pilar responde direto.
+                      escritório, ou o time da Pilar responde direto.
                     </p>
                   )}
                   {m === ultimaResposta && (

@@ -8,7 +8,7 @@ import { usePageMeta } from "../lib/seo";
 // docs/operations/DISASTER_RECOVERY.md, .github/workflows/backup-nightly.yml,
 // drill-restore-mensal.yml e monitor-producao.yml, supabase/tests/cross_tenant_matrix.sql,
 // ADR 0031 (MFA) e ADR 0047 (status page), SPEC 115/116 (LGPD). Mudou o fato, muda aqui.
-// Não citar certificação que o Pilar não tem.
+// Não citar certificação que a Pilar não tem.
 
 const REPO = "https://github.com/Trinity-Comp4ny/pilar";
 const SUBPROCESSADORES_URL = `${REPO}/blob/main/docs/legal/SUBPROCESSADORES.md`;
@@ -25,7 +25,7 @@ const FORNECEDORES: Fornecedor[] = [
   },
   { nome: "Vercel", funcao: "Hospedagem do app e deste site", local: "Rede global; pode processar fora do Brasil" },
   { nome: "Resend", funcao: "E-mails do sistema: convite, recuperação de senha, avisos", local: "EUA" },
-  { nome: "Asaas", funcao: "Cobrança da assinatura do Pilar", local: "Brasil" },
+  { nome: "Asaas", funcao: "Cobrança da assinatura da Pilar", local: "Brasil" },
   {
     nome: "Sentry",
     funcao: "Monitoramento de erros. CPF, CNPJ, senhas e dados bancários são filtrados antes do envio",
@@ -76,7 +76,7 @@ export function Seguranca() {
       <main className="container mx-auto px-6 py-12 max-w-3xl space-y-12">
         <section className="rounded-lg border bg-muted/30 p-6 space-y-2">
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Esta página descreve o que o Pilar faz hoje para proteger os dados do seu escritório. O código do Pilar é
+            Esta página descreve o que a Pilar faz hoje para proteger os dados do seu escritório. O código da Pilar é
             aberto: cada item aqui pode ser conferido no{" "}
             <a href={REPO} target="_blank" rel="noopener noreferrer" className={linkClass}>
               repositório
@@ -84,14 +84,14 @@ export function Seguranca() {
             . Onde ainda há limite, ele está escrito.
           </p>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            O Pilar ainda não tem certificação própria de segurança, como SOC 2 ou ISO 27001.
+            A Pilar ainda não tem certificação própria de segurança, como SOC 2 ou ISO 27001.
           </p>
         </section>
 
         <section>
           <h2 className="text-xl font-medium tracking-tight mb-3">1. Onde os dados ficam</h2>
           <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-            O banco de dados do Pilar fica em São Paulo. Os fornecedores abaixo processam dados para o produto
+            O banco de dados da Pilar fica em São Paulo. Os fornecedores abaixo processam dados para o produto
             funcionar, cada um só no que a função exige. Não vendemos dados.
           </p>
           <div className="rounded-lg border overflow-x-auto">
@@ -117,7 +117,7 @@ export function Seguranca() {
           <p className="text-sm text-muted-foreground leading-relaxed mt-4">
             Lista completa e atualizada, com os serviços públicos de consulta de CEP e CNPJ:{" "}
             <a href={SUBPROCESSADORES_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>
-              subprocessadores do Pilar
+              subprocessadores da Pilar
             </a>
             .
           </p>
@@ -133,8 +133,8 @@ export function Seguranca() {
             </li>
             <li>
               <strong className="text-foreground">Verificação em duas etapas.</strong> Código de app autenticador (TOTP)
-              e códigos de backup, ativados em Configurações, Segurança. É opcional para quem usa o Pilar e obrigatória
-              para a equipe do Pilar que dá suporte a mais de um escritório.
+              e códigos de backup, ativados em Configurações, Segurança. É opcional para quem usa a Pilar e obrigatória
+              para a equipe da Pilar que dá suporte a mais de um escritório.
             </li>
             <li>
               <strong className="text-foreground">Login individual, por convite.</strong> Cada pessoa entra com a

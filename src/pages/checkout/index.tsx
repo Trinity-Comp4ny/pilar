@@ -75,7 +75,7 @@ export default function Checkout() {
     <CheckoutShell backTo="/planos" logoTo="/" badgeLabel="Checkout seguro">
       {/* Título da página para buscador e leitor de tela; o layout já mostra o
           plano no resumo, então não repete na tela (Bing Site Scan, "H1 tag missing"). */}
-      <h1 className="sr-only">Assinar o Pilar {plan.nome}</h1>
+      <h1 className="sr-only">Assinar a Pilar {plan.nome}</h1>
       <div className="grid lg:grid-cols-[1fr_360px] gap-8 items-start">
         {/* Formulário */}
         <section className="bg-white rounded-2xl border border-paper-border p-8 shadow-sm">

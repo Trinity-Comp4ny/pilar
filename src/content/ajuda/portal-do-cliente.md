@@ -1,4 +1,4 @@
-No portal do cliente, o cliente acompanha os projetos do escritório com login próprio, sem acesso ao resto do Pilar.
+No portal do cliente, o cliente acompanha os projetos do escritório com login próprio, sem acesso ao resto da Pilar.
 
 ## Criar o acesso
 
@@ -15,4 +15,4 @@ No mesmo card ficam **Redefinir senha** (quando o cliente esqueceu) e **Revogar*
 ## Bom saber
 
 - O card aparece só para administradores.
-- O cliente precisa ter e-mail cadastrado. Sem ele, o Pilar avisa para cadastrar antes.
+- O cliente precisa ter e-mail cadastrado. Sem ele, a Pilar avisa para cadastrar antes.
