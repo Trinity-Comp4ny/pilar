@@ -145,7 +145,7 @@ serve(
 
         if (reactivateError) {
           log.error("reactivate account failed", reactivateError, { account_id: existingAccount.id, cliente_id });
-          return safeErrorResponse(400, `Falha ao reativar conta do portal: ${reactivateError.message}`, req);
+          return safeErrorResponse(400, "Falha ao reativar o acesso ao portal. Tente novamente.", req);
         }
 
         const { error: resetError } = await supabaseAdmin.rpc("_portal_reset_password_convite", {
@@ -155,7 +155,7 @@ serve(
 
         if (resetError) {
           log.error("reset password convite failed", resetError, { account_id: existingAccount.id });
-          return safeErrorResponse(400, `Convite enviado, mas falhou ao gravar: ${resetError.message}`, req);
+          return safeErrorResponse(400, "O e-mail saiu, mas o acesso não foi gravado. Reenvie o convite.", req);
         }
       } else {
         const { error: insertError } = await supabaseAdmin.rpc("_portal_create_account_convite", {
@@ -172,7 +172,7 @@ serve(
             cliente_id,
             empresa_id: profile.empresa_id,
           });
-          return safeErrorResponse(400, `Convite enviado, mas falhou ao gravar: ${insertError.message}`, req);
+          return safeErrorResponse(400, "O e-mail saiu, mas o acesso não foi gravado. Reenvie o convite.", req);
         }
       }
 
