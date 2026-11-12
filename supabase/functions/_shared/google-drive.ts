@@ -35,12 +35,17 @@ export class ErroGoogle extends Error {
 
 // ---------------------------------------------------------------- OAuth
 
-export function urlDeAutorizacao(cfg: ConfigGoogle, estado: string, emailSugerido?: string): string {
+export function urlDeAutorizacao(
+  cfg: ConfigGoogle,
+  estado: string,
+  emailSugerido?: string,
+  escopos: string = ESCOPOS
+): string {
   const p = new URLSearchParams({
     client_id: cfg.clientId,
     redirect_uri: cfg.redirectUri,
     response_type: "code",
-    scope: ESCOPOS,
+    scope: escopos,
     access_type: "offline",
     // consent: garante o refresh_token mesmo quando a conta já autorizou antes.
     prompt: "consent",
@@ -107,7 +112,7 @@ export async function tokenDeAcesso(cfg: ConfigGoogle, refreshToken: string, f: 
     f
   );
   // 400 invalid_grant: a conta revogou o acesso pelo Google. A tela pede para reconectar.
-  if (!r.ok) throw new ErroGoogle(r.status === 400 ? 401 : r.status, "Conexão com o Google Drive expirou");
+  if (!r.ok) throw new ErroGoogle(r.status === 400 ? 401 : r.status, "Conexão com o Google expirou");
   return ((await r.json()) as TokensGoogle).access_token;
 }
 

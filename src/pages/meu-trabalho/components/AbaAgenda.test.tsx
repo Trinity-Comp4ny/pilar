@@ -26,6 +26,11 @@ const h = vi.hoisted(() => {
     toast,
     mobile: false,
     dados: { titulo: "Rápida", responsavelId: "pe1", projetoId: null } as NovaTarefaNoDiaDados,
+    // Google Agenda (SPEC 164): status da conexão e reuniões da pessoa.
+    statusAgenda: { conectado: false, reconectar: false } as { conectado: boolean; reconectar: boolean } | undefined,
+    reunioes: [] as unknown[],
+    conectarGoogleAgenda: vi.fn(),
+    sincronizarAgenda: vi.fn(),
     salvarCom: { titulo: "Editada", status: "fazendo" } as TarefaInput,
   };
 });
@@ -39,6 +44,17 @@ vi.mock("@/integrations/supabase/client", async () => {
 vi.mock("sonner", () => ({ toast: h.toast }));
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ profile: { id: "u1", empresa_id: "e1" } }) }));
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => h.mobile }));
+vi.mock("@/hooks/useGoogleAgenda", () => ({
+  CHAVE_STATUS_AGENDA: ["google-agenda-status"],
+  CHAVE_EVENTOS_AGENDA: ["google-agenda-eventos"],
+  useStatusAgenda: () => ({ data: h.statusAgenda }),
+  useEventosAgenda: (habilitado: boolean) => ({ data: habilitado ? h.reunioes : undefined }),
+}));
+vi.mock("@/lib/googleAgenda", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/googleAgenda")>()),
+  conectarGoogleAgenda: () => h.conectarGoogleAgenda(),
+  sincronizarAgenda: () => h.sincronizarAgenda(),
+}));
 
 const DIA = new Date(2026, 10, 20);
 
@@ -207,6 +223,10 @@ beforeEach(() => {
   h.mobile = false;
   h.dados = { titulo: "Rápida", responsavelId: "pe1", projetoId: null };
   h.salvarCom = { titulo: "Editada", status: "fazendo" };
+  h.statusAgenda = { conectado: false, reconectar: false };
+  h.reunioes = [];
+  h.conectarGoogleAgenda.mockResolvedValue(undefined);
+  h.sincronizarAgenda.mockResolvedValue({ ok: true, eventos: 1 });
   h.resolve.mockImplementation(padrao);
   h.rpc.mockResolvedValue({ data: [DISCIPLINA], error: null });
 });
@@ -308,8 +328,53 @@ describe("AbaAgenda", () => {
     await user.click(screen.getByRole("button", { name: /Semana/ }));
     expect(screen.getByRole("region", { name: "Semana" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Anterior" }));
-    await user.click(screen.getByRole("button", { name: /Agenda/ }));
+    await user.click(screen.getByRole("button", { name: /^Agenda/ }));
     expect(screen.getByRole("region", { name: "Agenda" })).toBeInTheDocument();
+  });
+
+  it("sem Google Agenda conectado oferece conectar e não mostra a camada de reuniões", async () => {
+    const user = renderAgenda();
+    expect(screen.queryByRole("button", { name: "Esconder reuniao" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Conectar Google Agenda/ }));
+    expect(h.conectarGoogleAgenda).toHaveBeenCalled();
+  });
+
+  it("falha ao conectar o Google Agenda avisa", async () => {
+    h.conectarGoogleAgenda.mockRejectedValue(new Error("x"));
+    const user = renderAgenda();
+    await user.click(screen.getByRole("button", { name: /Conectar Google Agenda/ }));
+    await waitFor(() => expect(h.toast.error).toHaveBeenCalledWith("Não foi possível conectar", expect.anything()));
+  });
+
+  it("acesso revogado pede para reconectar", () => {
+    h.statusAgenda = { conectado: true, reconectar: true };
+    renderAgenda();
+    expect(screen.getByRole("button", { name: /Reconectar Google Agenda/ })).toBeInTheDocument();
+  });
+
+  it("conectado: reunião vira evento, abre a sala e atualiza a agenda", async () => {
+    h.statusAgenda = { conectado: true, reconectar: false };
+    h.reunioes = [
+      {
+        id: "r1",
+        titulo: "Reunião com a VRZ",
+        inicio: `${hojeIso}T13:00:00.000Z`,
+        fim: `${hojeIso}T14:00:00.000Z`,
+        dia_inteiro: false,
+        local: null,
+        link_reuniao: "https://meet.google.com/abc-defg-hij",
+        link_google: null,
+      },
+    ];
+    const abrir = vi.spyOn(window, "open").mockReturnValue(null);
+    const user = renderAgenda();
+    expect(screen.queryByRole("button", { name: /Conectar Google Agenda/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Esconder reuniao" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "reuniao: Reunião com a VRZ" }));
+    expect(abrir).toHaveBeenCalledWith("https://meet.google.com/abc-defg-hij", "_blank", "noopener,noreferrer");
+    await user.click(screen.getByRole("button", { name: "Atualizar reuniões do Google Agenda" }));
+    await waitFor(() => expect(h.toast.success).toHaveBeenCalledWith("Agenda atualizada"));
+    abrir.mockRestore();
   });
 
   it("no mobile só existe a visão agenda", () => {

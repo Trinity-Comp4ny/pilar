@@ -11,12 +11,27 @@ const h = vi.hoisted(() => ({
   >,
   conectar: vi.fn(),
   desconectar: vi.fn(),
+  agenda: { data: { conectado: false, reconectar: false }, isLoading: false, isError: false } as Record<
+    string,
+    unknown
+  >,
+  conectarAgenda: vi.fn(),
+  desconectarAgenda: vi.fn(),
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
 vi.mock("@/hooks/usePermissions", () => ({ usePermissions: () => ({ isAdmin: h.isAdmin }) }));
 vi.mock("@/hooks/useGoogleDrive", () => ({ CHAVE_STATUS_DRIVE: ["s"], useStatusDrive: () => h.status }));
 vi.mock("@/lib/googleDrive", () => ({ conectarGoogleDrive: h.conectar, desconectarDrive: h.desconectar }));
+vi.mock("@/hooks/useGoogleAgenda", () => ({
+  CHAVE_STATUS_AGENDA: ["a"],
+  CHAVE_EVENTOS_AGENDA: ["b"],
+  useStatusAgenda: () => h.agenda,
+}));
+vi.mock("@/lib/googleAgenda", () => ({
+  conectarGoogleAgenda: h.conectarAgenda,
+  desconectarAgenda: h.desconectarAgenda,
+}));
 vi.mock("sonner", () => ({ toast: h.toast }));
 
 import { IntegracoesPanel } from "./IntegracoesPanel";
@@ -36,6 +51,43 @@ beforeEach(() => {
   h.status = { data: { conectado: false, email: null, conectadoEm: null }, isLoading: false, isError: false };
   h.conectar.mockResolvedValue(undefined);
   h.desconectar.mockResolvedValue({ ok: true });
+  h.agenda = { data: { conectado: false, reconectar: false }, isLoading: false, isError: false };
+  h.conectarAgenda.mockResolvedValue(undefined);
+  h.desconectarAgenda.mockResolvedValue({ ok: true });
+});
+
+describe("IntegracoesPanel: Google Agenda", () => {
+  it("qualquer pessoa conecta a própria agenda, mesmo sem ser admin", async () => {
+    h.isAdmin = false;
+    const user = abrir();
+    await user.click(screen.getByRole("button", { name: "Conectar Google Agenda" }));
+    expect(h.conectarAgenda).toHaveBeenCalled();
+  });
+
+  it("acesso revogado no Google pede para reconectar", () => {
+    h.agenda = {
+      data: { conectado: true, reconectar: true, email: "ana@vrz.com" },
+      isLoading: false,
+      isError: false,
+    };
+    abrir();
+    expect(screen.getByText(/recusou o acesso/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reconectar Google Agenda" })).toBeInTheDocument();
+  });
+
+  it("conectado mostra a conta e desconecta com confirmação", async () => {
+    h.agenda = {
+      data: { conectado: true, reconectar: false, email: "ana@vrz.com", sincronizadoEm: null },
+      isLoading: false,
+      isError: false,
+    };
+    const user = abrir();
+    expect(screen.getByText("ana@vrz.com")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Desconectar" }));
+    await user.click(screen.getByRole("button", { name: "Desconectar" }));
+    await waitFor(() => expect(h.desconectarAgenda).toHaveBeenCalled());
+    expect(h.toast.success).toHaveBeenCalledWith("Google Agenda desconectado", expect.anything());
+  });
 });
 
 describe("IntegracoesPanel: Google Drive", () => {

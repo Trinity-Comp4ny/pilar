@@ -3,7 +3,7 @@
 <!-- Gerado por scripts/edge-functions-catalog.mjs a partir de supabase/functions/CATALOGO.json.
      Não editar à mão: edite o CATALOGO.json e rode `node scripts/edge-functions-catalog.mjs`. -->
 
-64 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
+65 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
 migrations) ou origem externa declarada no manifesto. **Login**: `verify_jwt` do `config.toml`
 (JWT aceita a chave anon; "própria" = a função faz a autorização). **Secrets**: lidos direto
 na pasta da função (o que vem de `_shared`, como a chave do Gemini, não aparece).
@@ -122,10 +122,11 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `ultra-admin-empresas` | Gestão de empresas pelo ultra admin. | app | JWT |  | sim |
 | `ultra-admin-usuarios` | Gestão de usuários pelo ultra admin. | app | JWT |  | sim |
 
-## Integrações (Google Drive)
+## Integrações (Google Drive e Google Agenda)
 
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
+| `google-calendar` | Google Agenda de cada pessoa: conecta (OAuth, escopo calendar.events.readonly, token cifrado), copia as reuniões e, no cron de 5 min, ressincroniza e gera o aviso de 30 min antes (SPEC 164). | app, cron, pg_cron (google_agenda_cron) e retorno do OAuth do Google | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `google-drive` | Arquivos do projeto no Google Drive da empresa: pasta por projeto e disciplina, listar, criar pasta, envio direto ao Google, baixar e lixeira (SPEC 163). | app | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `google-drive-oauth` | Conecta e desconecta o Google Drive da empresa (OAuth, escopo drive.file, token cifrado; só admin) (SPEC 163). | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 

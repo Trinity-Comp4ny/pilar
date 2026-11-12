@@ -55,7 +55,7 @@ export function EventoDetalhe({ evento, onOpen }: { evento: PrazoEvento; onOpen:
                 pausado
               </Badge>
             )}
-            {evento.estado === "concluido" && (
+            {evento.estado === "concluido" && evento.camada !== "reuniao" && (
               <Badge className="text-[10px] px-1 py-0 bg-positive hover:bg-positive text-ink">OK</Badge>
             )}
           </div>

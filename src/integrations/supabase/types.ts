@@ -82,6 +82,62 @@ export type Database = {
         }
         Relationships: []
       }
+      agenda_eventos_google: {
+        Row: {
+          atualizado_em: string
+          dia_inteiro: boolean
+          empresa_id: string
+          fim: string
+          google_evento_id: string
+          id: string
+          inicio: string
+          lembrete_em: string | null
+          link_google: string | null
+          link_reuniao: string | null
+          local: string | null
+          titulo: string
+          usuario_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          dia_inteiro?: boolean
+          empresa_id: string
+          fim: string
+          google_evento_id: string
+          id?: string
+          inicio: string
+          lembrete_em?: string | null
+          link_google?: string | null
+          link_reuniao?: string | null
+          local?: string | null
+          titulo: string
+          usuario_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          dia_inteiro?: boolean
+          empresa_id?: string
+          fim?: string
+          google_evento_id?: string
+          id?: string
+          inicio?: string
+          lembrete_em?: string | null
+          link_google?: string | null
+          link_reuniao?: string | null
+          local?: string | null
+          titulo?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agenda_eventos_google_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_actions: {
         Row: {
           args: Json | null
@@ -3190,6 +3246,47 @@ export type Database = {
           },
         ]
       }
+      google_agenda_conexoes: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          erro: string | null
+          google_email: string
+          refresh_token_cifrado: string
+          sincronizado_em: string | null
+          updated_at: string
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          erro?: string | null
+          google_email: string
+          refresh_token_cifrado: string
+          sincronizado_em?: string | null
+          updated_at?: string
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          erro?: string | null
+          google_email?: string
+          refresh_token_cifrado?: string
+          sincronizado_em?: string | null
+          updated_at?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_agenda_conexoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       google_drive_conexoes: {
         Row: {
           conectado_por: string | null
@@ -3235,6 +3332,7 @@ export type Database = {
           estado_hash: string
           expira_em: string
           retorno: string
+          servico: string
           usuario_id: string
         }
         Insert: {
@@ -3243,6 +3341,7 @@ export type Database = {
           estado_hash: string
           expira_em: string
           retorno?: string
+          servico?: string
           usuario_id: string
         }
         Update: {
@@ -3251,6 +3350,7 @@ export type Database = {
           estado_hash?: string
           expira_em?: string
           retorno?: string
+          servico?: string
           usuario_id?: string
         }
         Relationships: [
@@ -9997,6 +10097,7 @@ export type Database = {
         }
         Returns: string
       }
+      agenda_gerar_lembretes: { Args: never; Returns: number }
       agente_pendencia_adiar: {
         Args: { p_dias: number; p_id: string }
         Returns: undefined
@@ -10481,6 +10582,16 @@ export type Database = {
           valor_m2: number
         }[]
       }
+      get_google_agenda_status: {
+        Args: never
+        Returns: {
+          conectado: boolean
+          conectado_em: string
+          erro: string
+          google_email: string
+          sincronizado_em: string
+        }[]
+      }
       get_google_drive_status: {
         Args: never
         Returns: {
@@ -10622,6 +10733,7 @@ export type Database = {
       get_user_empresa_id: { Args: never; Returns: string }
       get_user_empresa_id_text: { Args: never; Returns: string }
       get_user_role: { Args: never; Returns: string }
+      google_agenda_cron: { Args: never; Returns: undefined }
       guard_login_attempt: { Args: { p_email: string }; Returns: boolean }
       guardiao_margem_disparar: { Args: never; Returns: undefined }
       has_aal2: { Args: never; Returns: boolean }

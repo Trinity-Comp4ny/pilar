@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle2, FolderOpen } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FolderOpen, Video } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,118 @@ import { CHAVE_STATUS_DRIVE, useStatusDrive } from "@/hooks/useGoogleDrive";
 import { conectarGoogleDrive, desconectarDrive } from "@/lib/googleDrive";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { formatDateTime } from "@/lib/format";
+import { CHAVE_EVENTOS_AGENDA, CHAVE_STATUS_AGENDA, useStatusAgenda } from "@/hooks/useGoogleAgenda";
+import { conectarGoogleAgenda, desconectarAgenda } from "@/lib/googleAgenda";
 
-// Integrações da empresa (SPEC 163). Hoje: Google Drive, para os arquivos dos projetos.
+// Integrações: Google Drive do escritório (SPEC 163) e Google Agenda de cada pessoa (SPEC 164).
 export function IntegracoesPanel() {
+  return (
+    <div className="space-y-4">
+      <AgendaCard />
+      <DriveCard />
+    </div>
+  );
+}
+
+/** Google Agenda: pessoal. Cada um conecta a própria conta; ninguém vê a agenda do outro. */
+function AgendaCard() {
+  const queryClient = useQueryClient();
+  const { data: status, isLoading, isError } = useStatusAgenda();
+  const [conectando, setConectando] = useState(false);
+  const [confirmar, setConfirmar] = useState(false);
+  const [desconectando, setDesconectando] = useState(false);
+
+  const conectar = async () => {
+    setConectando(true);
+    try {
+      await conectarGoogleAgenda();
+    } catch (e) {
+      setConectando(false);
+      toast.error("Não foi possível conectar", { description: getSafeErrorMessage(e, "Tente de novo.") });
+    }
+  };
+
+  const desconectar = async () => {
+    setDesconectando(true);
+    try {
+      await desconectarAgenda();
+      toast.success("Google Agenda desconectado", { description: "Nada foi alterado na sua agenda." });
+      queryClient.invalidateQueries({ queryKey: CHAVE_STATUS_AGENDA });
+      queryClient.invalidateQueries({ queryKey: CHAVE_EVENTOS_AGENDA });
+      setConfirmar(false);
+    } catch (e) {
+      toast.error("Não foi possível desconectar", { description: getSafeErrorMessage(e, "Tente de novo.") });
+    } finally {
+      setDesconectando(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardContent className="space-y-4 p-6">
+        <div className="flex items-start gap-3">
+          <Video className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-ink">Google Agenda</p>
+            <p className="text-sm text-muted-foreground">
+              Suas reuniões aparecem na Agenda de Tarefas, junto dos prazos, e a Pilar avisa 30 minutos antes de cada
+              uma. A conexão é sua: a equipe não vê a sua agenda. A Pilar só lê, não cria nem altera eventos.
+            </p>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <PageLoader size="inline" />
+        ) : isError ? (
+          <p className="text-sm text-danger-strong">Não foi possível ver o status da conexão.</p>
+        ) : status?.conectado && status.reconectar ? (
+          <div className="space-y-3">
+            <div className="flex items-start gap-2 rounded-lg border border-warning-mid-border bg-warning-soft px-3 py-2.5 text-sm text-warning-strong">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>
+                O Google recusou o acesso a <strong>{status.email}</strong>. Conecte de novo para voltar a receber os
+                avisos.
+              </p>
+            </div>
+            <Button variant="brand" onClick={conectar} loading={conectando}>
+              Reconectar Google Agenda
+            </Button>
+          </div>
+        ) : status?.conectado ? (
+          <div className="space-y-3">
+            <div className="flex items-start gap-2 rounded-lg border border-positive/20 bg-positive/10 px-3 py-2.5 text-sm text-positive-strong">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>
+                Conectado a <strong>{status.email}</strong>
+                {status.sincronizadoEm ? `. Atualizado em ${formatDateTime(status.sincronizadoEm)}` : ""}.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setConfirmar(true)}>
+              Desconectar
+            </Button>
+          </div>
+        ) : (
+          <Button variant="brand" onClick={conectar} loading={conectando}>
+            Conectar Google Agenda
+          </Button>
+        )}
+      </CardContent>
+
+      <ConfirmDialog
+        open={confirmar}
+        onOpenChange={setConfirmar}
+        onConfirm={desconectar}
+        loading={desconectando}
+        variant="destructive"
+        title="Desconectar o Google Agenda?"
+        description="As reuniões saem da Agenda da Pilar e os avisos param. Nada muda na sua agenda do Google."
+        confirmText="Desconectar"
+      />
+    </Card>
+  );
+}
+
+function DriveCard() {
   const { isAdmin } = usePermissions();
   const queryClient = useQueryClient();
   const { data: status, isLoading, isError } = useStatusDrive();
@@ -46,7 +155,7 @@ export function IntegracoesPanel() {
   };
 
   return (
-    <div className="space-y-4">
+    <>
       <Card>
         <CardContent className="space-y-4 p-6">
           <div className="flex items-start gap-3">
@@ -99,6 +208,6 @@ export function IntegracoesPanel() {
         description="A aba Arquivos dos projetos para de mostrar as pastas. Nada é apagado: os arquivos continuam no Drive da conta conectada."
         confirmText="Desconectar"
       />
-    </div>
+    </>
   );
 }

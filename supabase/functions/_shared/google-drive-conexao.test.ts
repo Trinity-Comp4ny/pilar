@@ -35,3 +35,21 @@ Deno.test("URL de retorno junta o status à query que já existe", () => {
     "https://app.pilarsoft.com.br/?drive=erro"
   );
 });
+
+Deno.test("Agenda usa o mesmo cliente OAuth com retorno na própria função", () => {
+  const env: Record<string, string> = {
+    GOOGLE_DRIVE_CLIENT_ID: "id",
+    GOOGLE_DRIVE_CLIENT_SECRET: "segredo",
+    GOOGLE_DRIVE_TOKEN_KEY: "chave",
+    GOOGLE_DRIVE_REDIRECT_URI: "https://api.pilar/drive",
+    SUPABASE_URL: "https://x.supabase.co/",
+  };
+  assertEquals(
+    ambienteDrive((k) => env[k], "google-calendar")?.redirectUri,
+    "https://x.supabase.co/functions/v1/google-calendar"
+  );
+  assertEquals(
+    urlDeRetorno("https://app.pilarsoft.com.br", "/gestao/tarefas", "conectado", "agenda"),
+    "https://app.pilarsoft.com.br/gestao/tarefas?agenda=conectado"
+  );
+});
