@@ -17,6 +17,7 @@ const h = vi.hoisted(() => ({
   >,
   conectarAgenda: vi.fn(),
   desconectarAgenda: vi.fn(),
+  definirAviso: vi.fn(),
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
@@ -29,12 +30,22 @@ vi.mock("@/hooks/useGoogleAgenda", () => ({
   useStatusAgenda: () => h.agenda,
 }));
 vi.mock("@/lib/googleAgenda", () => ({
+  OPCOES_AVISO: [
+    { valor: 10, rotulo: "10 minutos antes" },
+    { valor: 30, rotulo: "30 minutos antes" },
+  ],
   conectarGoogleAgenda: h.conectarAgenda,
   desconectarAgenda: h.desconectarAgenda,
+  definirAvisoPadrao: h.definirAviso,
 }));
 vi.mock("sonner", () => ({ toast: h.toast }));
 
 import { IntegracoesPanel } from "./IntegracoesPanel";
+
+// Select do Radix no jsdom.
+Element.prototype.hasPointerCapture ??= () => false;
+Element.prototype.releasePointerCapture ??= () => {};
+Element.prototype.scrollIntoView ??= () => {};
 
 const abrir = () => {
   render(
@@ -54,6 +65,7 @@ beforeEach(() => {
   h.agenda = { data: { conectado: false, reconectar: false }, isLoading: false, isError: false };
   h.conectarAgenda.mockResolvedValue(undefined);
   h.desconectarAgenda.mockResolvedValue({ ok: true });
+  h.definirAviso.mockResolvedValue(undefined);
 });
 
 describe("IntegracoesPanel: Google Agenda", () => {
@@ -77,7 +89,7 @@ describe("IntegracoesPanel: Google Agenda", () => {
 
   it("conectado mostra a conta e desconecta com confirmação", async () => {
     h.agenda = {
-      data: { conectado: true, reconectar: false, email: "ana@vrz.com", sincronizadoEm: null },
+      data: { conectado: true, reconectar: false, email: "ana@vrz.com", sincronizadoEm: null, lembreteMinutos: 10 },
       isLoading: false,
       isError: false,
     };
@@ -87,6 +99,21 @@ describe("IntegracoesPanel: Google Agenda", () => {
     await user.click(screen.getByRole("button", { name: "Desconectar" }));
     await waitFor(() => expect(h.desconectarAgenda).toHaveBeenCalled());
     expect(h.toast.success).toHaveBeenCalledWith("Google Agenda desconectado", expect.anything());
+  });
+
+  it("muda o aviso padrão das reuniões (10 min de partida)", async () => {
+    h.agenda = {
+      data: { conectado: true, reconectar: false, email: "ana@vrz.com", sincronizadoEm: null, lembreteMinutos: 10 },
+      isLoading: false,
+      isError: false,
+    };
+    const user = abrir();
+    const seletor = screen.getByRole("combobox", { name: "Avisar antes das reuniões" });
+    expect(seletor).toHaveTextContent("10 minutos antes");
+    await user.click(seletor);
+    await user.click(await screen.findByRole("option", { name: "Não avisar" }));
+    await waitFor(() => expect(h.definirAviso).toHaveBeenCalledWith(null));
+    expect(h.toast.success).toHaveBeenCalledWith("Aviso das reuniões atualizado");
   });
 });
 

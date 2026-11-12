@@ -11,10 +11,12 @@ Regras de manutenção:
 
 ---
 
-## 2026-11-12 · Google Agenda conectado, por pessoa, com aviso 30 minutos antes
+## 2026-11-12 · Google Agenda conectado, por pessoa, com criação de reunião e aviso antes
 
 **Decisão:** cada usuário conecta o próprio Google Agenda. As reuniões aparecem na Agenda de Tarefas, junto dos
-prazos, e o sino avisa 30 minutos antes de cada uma. A Pilar só lê a agenda (escopo `calendar.events.readonly`).
+prazos, e dá para criar, editar e excluir reunião ali mesmo (Meet e convite aos convidados), sem abrir o Google
+(escopo `calendar.events`). O sino avisa antes de cada reunião: 10 minutos por padrão, a pessoa muda o padrão e o
+aviso de cada reunião.
 Plano e ordem das próximas ideias (convite do portal, arquivos sem Drive) na SPEC 164.
 
 Contexto: o CEO quer o dia do usuário dentro da Pilar ("daqui meia hora você tem uma reunião") para ele não precisar

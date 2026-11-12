@@ -2,10 +2,12 @@
 --
 -- Diferente do Drive (uma conta por escritório), a agenda é PESSOAL: cada usuário conecta
 -- a própria conta Google em Configurações > Integrações. A Pilar pede o escopo
--- `calendar.events.readonly` (só lê eventos), copia as reuniões de uma janela de dias
--- para agenda_eventos_google e:
---   * mostra as reuniões na aba Agenda de Tarefas, como mais uma camada;
---   * avisa no sino ~30 minutos antes de cada reunião (categoria "agenda").
+-- `calendar.events` (lê, cria, edita e exclui eventos da agenda principal), copia as
+-- reuniões de uma janela de dias para agenda_eventos_google e:
+--   * mostra as reuniões na aba Agenda de Tarefas, como mais uma camada, onde dá para
+--     criar, editar e excluir sem abrir o Google Agenda;
+--   * avisa no sino antes de cada reunião (categoria "agenda"). Padrão: 10 minutos antes,
+--     configurável por pessoa; cada reunião pode ter o próprio aviso (o mesmo do Google).
 --
 -- Tabelas:
 --   * google_agenda_conexoes: conta conectada por usuário e o refresh token, CIFRADO na
@@ -15,8 +17,9 @@
 --   * google_drive_oauth_estados ganha `servico` ('drive' | 'agenda'): o mesmo state de
 --     OAuth (só o hash, uso único, 10 minutos) serve às duas conexões.
 --
--- Cron (5 em 5 min): gera os lembretes do que começa em até 30 min e chama a Edge
--- Function google-calendar para ressincronizar as conexões mais velhas.
+-- Crons: `google-agenda-lembretes` (todo minuto, só SQL) gera os avisos que venceram;
+-- `google-agenda` (5 em 5 min) chama a Edge Function google-calendar para ressincronizar
+-- as conexões mais velhas.
 
 -- 1. Conexão por usuário -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.google_agenda_conexoes (
@@ -27,6 +30,9 @@ CREATE TABLE IF NOT EXISTS public.google_agenda_conexoes (
   sincronizado_em timestamptz,
   -- 'reconectar' quando o Google recusa o refresh token (acesso revogado pela conta).
   erro text,
+  -- Aviso padrão, em minutos antes da reunião; null = não avisar.
+  lembrete_minutos integer DEFAULT 10
+    CHECK (lembrete_minutos IS NULL OR lembrete_minutos BETWEEN 0 AND 1440),
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -67,8 +73,16 @@ CREATE TABLE IF NOT EXISTS public.agenda_eventos_google (
   fim timestamptz NOT NULL,
   dia_inteiro boolean NOT NULL DEFAULT false,
   local text,
+  descricao text,
+  -- E-mails dos convidados (sem a própria pessoa).
+  convidados text[] NOT NULL DEFAULT '{}',
   link_reuniao text,
   link_google text,
+  -- A pessoa organiza a reunião (ou o organizador deixou convidado editar).
+  pode_editar boolean NOT NULL DEFAULT true,
+  -- Aviso desta reunião, em minutos antes (o lembrete pop-up do Google). null = usa o
+  -- padrão da pessoa; -1 = esta reunião não avisa.
+  lembrete_minutos integer CHECK (lembrete_minutos IS NULL OR lembrete_minutos BETWEEN -1 AND 40320),
   -- Quando o aviso de "reunião em breve" saiu. Volta a null se o horário mudar.
   lembrete_em timestamptz,
   atualizado_em timestamptz NOT NULL DEFAULT now(),
@@ -99,7 +113,14 @@ COMMENT ON TABLE public.agenda_eventos_google IS
 
 -- 4. Status da conexão para a tela ------------------------------------------
 CREATE OR REPLACE FUNCTION public.get_google_agenda_status()
-RETURNS TABLE(conectado boolean, google_email text, conectado_em timestamptz, sincronizado_em timestamptz, erro text)
+RETURNS TABLE(
+  conectado boolean,
+  google_email text,
+  conectado_em timestamptz,
+  sincronizado_em timestamptz,
+  erro text,
+  lembrete_minutos integer
+)
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
@@ -110,7 +131,8 @@ AS $function$
     c.google_email,
     c.created_at,
     c.sincronizado_em,
-    c.erro
+    c.erro,
+    COALESCE(c.lembrete_minutos, -1)
   FROM (SELECT auth.uid() AS uid) u
   LEFT JOIN public.google_agenda_conexoes c ON c.usuario_id = u.uid
   WHERE u.uid IS NOT NULL;
@@ -118,6 +140,32 @@ $function$;
 
 REVOKE ALL ON FUNCTION public.get_google_agenda_status() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.get_google_agenda_status() TO authenticated;
+
+-- Aviso padrão da própria pessoa (minutos antes; negativo ou null = não avisar).
+CREATE OR REPLACE FUNCTION public.set_google_agenda_lembrete(p_minutos integer)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'não autenticado' USING ERRCODE = '42501';
+  END IF;
+  IF p_minutos > 1440 THEN
+    RAISE EXCEPTION 'aviso fora do intervalo' USING ERRCODE = '22023';
+  END IF;
+  UPDATE public.google_agenda_conexoes
+     SET lembrete_minutos = CASE WHEN p_minutos < 0 THEN NULL ELSE p_minutos END, updated_at = now()
+   WHERE usuario_id = auth.uid();
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Google Agenda não conectado' USING ERRCODE = 'P0002';
+  END IF;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.set_google_agenda_lembrete(integer) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.set_google_agenda_lembrete(integer) TO authenticated;
 
 -- 5. Categoria "agenda" nas notificações -------------------------------------
 ALTER TABLE public.notificacoes DROP CONSTRAINT IF EXISTS notificacoes_categoria_check;
@@ -128,10 +176,11 @@ ALTER TABLE public.notificacao_preferencias DROP CONSTRAINT IF EXISTS notificaca
 ALTER TABLE public.notificacao_preferencias ADD CONSTRAINT notificacao_preferencias_categoria_check
   CHECK (categoria IN ('tarefa','projeto','disciplina','financeiro','obra','sistema','agenda'));
 
--- 6. Lembretes: o que começa em até 30 minutos e ainda não avisou ------------
--- Rodando de 5 em 5 minutos, o aviso chega entre 25 e 30 minutos antes. Uma reunião que
--- entrou na agenda já em cima da hora (menos de 30 min) avisa na próxima rodada, se ainda
--- não começou.
+-- 6. Lembretes: o aviso de cada reunião que já venceu e ainda não saiu ------
+-- Vale o aviso da reunião (o pop-up do Google, se a pessoa definiu) ou o padrão dela
+-- (10 minutos se nunca mexeu). Rodando todo minuto, sai no minuto certo. Reunião que
+-- entrou na agenda já dentro da janela avisa na próxima rodada, se ainda não começou
+-- (aviso "na hora" vale até 2 minutos depois do início).
 CREATE OR REPLACE FUNCTION public.agenda_gerar_lembretes()
 RETURNS integer
 LANGUAGE plpgsql
@@ -145,18 +194,22 @@ DECLARE
   v_minutos integer;
 BEGIN
   FOR v_ev IN
-    SELECT e.*
+    SELECT e.*, COALESCE(e.lembrete_minutos, c.lembrete_minutos) AS aviso
     FROM public.agenda_eventos_google e
     JOIN public.google_agenda_conexoes c ON c.usuario_id = e.usuario_id
     WHERE e.lembrete_em IS NULL
       AND NOT e.dia_inteiro
-      AND e.inicio > now()
-      AND e.inicio <= now() + interval '30 minutes'
+      AND e.inicio > now() - interval '2 minutes'
+      -- Janela máxima de aviso (4 semanas): o índice parcial corta o resto.
+      AND e.inicio <= now() + interval '28 days'
+      AND COALESCE(e.lembrete_minutos, c.lembrete_minutos) >= 0
+      AND now() >= e.inicio - make_interval(mins => COALESCE(e.lembrete_minutos, c.lembrete_minutos))
+      AND (COALESCE(e.lembrete_minutos, c.lembrete_minutos) = 0 OR e.inicio > now())
     ORDER BY e.inicio
     LIMIT 500
   LOOP
     v_hora := to_char(v_ev.inicio AT TIME ZONE 'America/Sao_Paulo', 'HH24:MI');
-    v_minutos := GREATEST(1, ceil(extract(epoch FROM (v_ev.inicio - now())) / 60)::integer);
+    v_minutos := ceil(extract(epoch FROM (v_ev.inicio - now())) / 60)::integer;
 
     PERFORM public.notificar(
       v_ev.empresa_id,
@@ -165,7 +218,11 @@ BEGIN
       'agenda',
       'high',
       left('Reunião às ' || v_hora || ': ' || v_ev.titulo, 200),
-      'Começa em ' || v_minutos || ' min' ||
+      CASE
+        WHEN v_minutos <= 0 THEN 'Começa agora'
+        WHEN v_minutos < 60 THEN 'Começa em ' || v_minutos || ' min'
+        ELSE 'Começa às ' || v_hora
+      END ||
         CASE WHEN v_ev.link_reuniao IS NOT NULL THEN '. Toque para entrar.' ELSE '.' END,
       'agenda_evento',
       v_ev.id,
@@ -184,7 +241,21 @@ $$;
 REVOKE ALL ON FUNCTION public.agenda_gerar_lembretes() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.agenda_gerar_lembretes() TO service_role;
 
--- 7. Cron: lembretes + ressincronizar pela Edge Function ---------------------
+-- Cron dos avisos: só SQL, todo minuto.
+CREATE OR REPLACE FUNCTION public.google_agenda_lembretes_cron()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  PERFORM public.agenda_gerar_lembretes();
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.google_agenda_lembretes_cron() FROM PUBLIC, anon, authenticated;
+
+-- 7. Cron: ressincronizar pela Edge Function ---------------------
 CREATE OR REPLACE FUNCTION public.google_agenda_cron()
 RETURNS void
 LANGUAGE plpgsql
@@ -195,8 +266,6 @@ DECLARE
   v_url text;
   v_key text;
 BEGIN
-  PERFORM public.agenda_gerar_lembretes();
-
   -- Ninguém conectado: não acorda a Edge Function à toa.
   IF NOT EXISTS (SELECT 1 FROM public.google_agenda_conexoes WHERE erro IS NULL) THEN
     RETURN;
@@ -234,5 +303,10 @@ BEGIN
     PERFORM cron.unschedule('google-agenda');
   END IF;
   PERFORM cron.schedule('google-agenda', '*/5 * * * *', 'SELECT public.google_agenda_cron();');
+
+  IF EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'google-agenda-lembretes') THEN
+    PERFORM cron.unschedule('google-agenda-lembretes');
+  END IF;
+  PERFORM cron.schedule('google-agenda-lembretes', '* * * * *', 'SELECT public.google_agenda_lembretes_cron();');
 END;
 $$;

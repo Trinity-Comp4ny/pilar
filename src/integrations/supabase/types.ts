@@ -85,6 +85,8 @@ export type Database = {
       agenda_eventos_google: {
         Row: {
           atualizado_em: string
+          convidados: string[]
+          descricao: string | null
           dia_inteiro: boolean
           empresa_id: string
           fim: string
@@ -92,14 +94,18 @@ export type Database = {
           id: string
           inicio: string
           lembrete_em: string | null
+          lembrete_minutos: number | null
           link_google: string | null
           link_reuniao: string | null
           local: string | null
+          pode_editar: boolean
           titulo: string
           usuario_id: string
         }
         Insert: {
           atualizado_em?: string
+          convidados?: string[]
+          descricao?: string | null
           dia_inteiro?: boolean
           empresa_id: string
           fim: string
@@ -107,14 +113,18 @@ export type Database = {
           id?: string
           inicio: string
           lembrete_em?: string | null
+          lembrete_minutos?: number | null
           link_google?: string | null
           link_reuniao?: string | null
           local?: string | null
+          pode_editar?: boolean
           titulo: string
           usuario_id: string
         }
         Update: {
           atualizado_em?: string
+          convidados?: string[]
+          descricao?: string | null
           dia_inteiro?: boolean
           empresa_id?: string
           fim?: string
@@ -122,9 +132,11 @@ export type Database = {
           id?: string
           inicio?: string
           lembrete_em?: string | null
+          lembrete_minutos?: number | null
           link_google?: string | null
           link_reuniao?: string | null
           local?: string | null
+          pode_editar?: boolean
           titulo?: string
           usuario_id?: string
         }
@@ -3252,6 +3264,7 @@ export type Database = {
           empresa_id: string
           erro: string | null
           google_email: string
+          lembrete_minutos: number | null
           refresh_token_cifrado: string
           sincronizado_em: string | null
           updated_at: string
@@ -3262,6 +3275,7 @@ export type Database = {
           empresa_id: string
           erro?: string | null
           google_email: string
+          lembrete_minutos?: number | null
           refresh_token_cifrado: string
           sincronizado_em?: string | null
           updated_at?: string
@@ -3272,6 +3286,7 @@ export type Database = {
           empresa_id?: string
           erro?: string | null
           google_email?: string
+          lembrete_minutos?: number | null
           refresh_token_cifrado?: string
           sincronizado_em?: string | null
           updated_at?: string
@@ -10589,6 +10604,7 @@ export type Database = {
           conectado_em: string
           erro: string
           google_email: string
+          lembrete_minutos: number
           sincronizado_em: string
         }[]
       }
@@ -10734,6 +10750,7 @@ export type Database = {
       get_user_empresa_id_text: { Args: never; Returns: string }
       get_user_role: { Args: never; Returns: string }
       google_agenda_cron: { Args: never; Returns: undefined }
+      google_agenda_lembretes_cron: { Args: never; Returns: undefined }
       guard_login_attempt: { Args: { p_email: string }; Returns: boolean }
       guardiao_margem_disparar: { Args: never; Returns: undefined }
       has_aal2: { Args: never; Returns: boolean }
@@ -11448,6 +11465,7 @@ export type Database = {
         Args: { p_delegado: boolean; p_user_id: string }
         Returns: undefined
       }
+      set_google_agenda_lembrete: { Args: { p_minutos: number }; Returns: undefined }
       set_metas_delegado: {
         Args: { p_delegado: boolean; p_user_id: string }
         Returns: undefined

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ViewSwitcher } from "@/components/ViewSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
-import { ChevronLeft, ChevronRight, RefreshCw, Video } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, RefreshCw, Video } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -41,7 +41,8 @@ import { useEtapas } from "../useEtapas";
 import { TarefaDialog } from "./TarefaDialog";
 import { NovaTarefaNoDia, type NovaTarefaNoDiaDados } from "./NovaTarefaNoDia";
 import { CHAVE_EVENTOS_AGENDA, CHAVE_STATUS_AGENDA, useEventosAgenda, useStatusAgenda } from "@/hooks/useGoogleAgenda";
-import { buildEventosReunioes, conectarGoogleAgenda, linkDoEvento, sincronizarAgenda } from "@/lib/googleAgenda";
+import { buildEventosReunioes, conectarGoogleAgenda, sincronizarAgenda, type EventoAgenda } from "@/lib/googleAgenda";
+import { ReuniaoDialog } from "./ReuniaoDialog";
 import { getSafeErrorMessage } from "@/lib/safeError";
 
 type Props = {
@@ -76,6 +77,8 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos, pode
   const { data: reunioes } = useEventosAgenda(agendaConectada);
   const [conectandoAgenda, setConectandoAgenda] = useState(false);
   const [sincronizando, setSincronizando] = useState(false);
+  // Diálogo da reunião: null fechado; "nova" ou a reunião aberta.
+  const [reuniaoAberta, setReuniaoAberta] = useState<EventoAgenda | "nova" | null>(null);
 
   const camadas: CamadaId[] = [
     ...(temProjetos ? (["disciplina"] as const) : []),
@@ -152,8 +155,7 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos, pode
   const abrirEvento = (evento: PrazoEvento) => {
     if (evento.camada === "reuniao") {
       const r = (reunioes ?? []).find((x) => x.id === evento.id);
-      const link = r ? linkDoEvento(r) : null;
-      if (link) window.open(link, "_blank", "noopener,noreferrer");
+      if (r) setReuniaoAberta(r);
       return;
     }
     if (evento.camada === "tarefa") {
@@ -246,6 +248,12 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos, pode
             </Button>
           )}
           {agendaConectada && !statusAgenda?.reconectar && (
+            <Button variant="outline" size="sm" className="h-9" onClick={() => setReuniaoAberta("nova")}>
+              <Plus className="h-4 w-4" />
+              Nova reunião
+            </Button>
+          )}
+          {agendaConectada && !statusAgenda?.reconectar && (
             <Button
               variant="ghost"
               size="icon"
@@ -304,6 +312,14 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos, pode
           )}
         </div>
       </div>
+
+      <ReuniaoDialog
+        open={!!reuniaoAberta}
+        onOpenChange={(open) => !open && setReuniaoAberta(null)}
+        reuniao={reuniaoAberta === "nova" ? null : reuniaoAberta}
+        diaInicial={format(cursor, "yyyy-MM-dd")}
+        avisoPadrao={statusAgenda?.lembreteMinutos ?? null}
+      />
 
       <TarefaDialog
         open={!!tarefaAberta || !!novaNoDia}

@@ -1,29 +1,32 @@
 /**
- * Google Agenda do usuário (SPEC 164): leitura dos eventos e a conversão para a linha de
- * agenda_eventos_google. O OAuth e a cifra do token vêm de `google-drive.ts` (mesmo
- * cliente OAuth, outro escopo).
+ * Google Agenda do usuário (SPEC 164): leitura, criação, edição e exclusão de eventos da
+ * agenda principal, e a conversão para a linha de agenda_eventos_google. O OAuth e a cifra
+ * do token vêm de `google-drive.ts` (mesmo cliente OAuth, outro escopo).
  *
- * Escopo `calendar.events.readonly`: a Pilar só lê eventos; não cria nem altera nada na
- * agenda. É escopo sensível (verificação do Google com vídeo de uso), não restrito (sem CASA).
+ * Escopo `calendar.events`: eventos da agenda, sem mexer nas configurações nem na lista de
+ * agendas. É escopo sensível (verificação do Google com vídeo de uso), não restrito (sem CASA).
  */
 import { fetchComTempo } from "./http.ts";
 import { ErroGoogle } from "./google-drive.ts";
 
 type Fetch = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
 
-export const ESCOPOS_AGENDA = "openid email https://www.googleapis.com/auth/calendar.events.readonly";
+export const ESCOPOS_AGENDA = "openid email https://www.googleapis.com/auth/calendar.events";
 const API = "https://www.googleapis.com/calendar/v3";
 
 /** Janela copiada: 30 dias para trás (a aba mostra o mês) e 60 para frente. */
 export const DIAS_ANTES = 30;
 export const DIAS_DEPOIS = 60;
 const MAX_EVENTOS = 1000;
+const CAMPOS_EVENTO =
+  "id,status,summary,description,location,htmlLink,hangoutLink,eventType,start,end,organizer(self),guestsCanModify,reminders,attendees(email,self,responseStatus),conferenceData(entryPoints(entryPointType,uri))";
 
 /** Recorte do evento da API do Google Agenda que a Pilar usa. */
 export interface EventoGoogle {
   id: string;
   status?: string;
   summary?: string;
+  description?: string;
   location?: string;
   htmlLink?: string;
   hangoutLink?: string;
@@ -31,7 +34,10 @@ export interface EventoGoogle {
   eventType?: string;
   start?: { dateTime?: string; date?: string };
   end?: { dateTime?: string; date?: string };
-  attendees?: { self?: boolean; responseStatus?: string }[];
+  attendees?: { email?: string; self?: boolean; responseStatus?: string }[];
+  organizer?: { self?: boolean };
+  guestsCanModify?: boolean;
+  reminders?: { useDefault?: boolean; overrides?: { method?: string; minutes?: number }[] };
   conferenceData?: { entryPoints?: { entryPointType?: string; uri?: string }[] };
 }
 
@@ -42,8 +48,24 @@ export interface LinhaEvento {
   fim: string;
   dia_inteiro: boolean;
   local: string | null;
+  descricao: string | null;
+  convidados: string[];
   link_reuniao: string | null;
   link_google: string | null;
+  pode_editar: boolean;
+  lembrete_minutos: number | null;
+}
+
+/**
+ * Aviso da reunião lido do Google: o menor lembrete pop-up; sem lembrete nenhum = -1 (não
+ * avisa); "padrão da agenda" = null (vale o padrão da pessoa na Pilar).
+ */
+export function lembreteDoEvento(r: EventoGoogle["reminders"]): number | null {
+  if (!r || r.useDefault !== false) return null;
+  const popups = (r.overrides ?? [])
+    .filter((o) => o.method === "popup" && typeof o.minutes === "number")
+    .map((o) => o.minutes as number);
+  return popups.length ? Math.min(...popups) : -1;
 }
 
 /** Só https: link de reunião vira `href` e vai na notificação. */
@@ -83,8 +105,16 @@ export function paraLinha(ev: EventoGoogle): LinhaEvento | null {
     fim: new Date(fim).toISOString(),
     dia_inteiro: diaInteiro,
     local,
+    descricao: ev.description?.slice(0, 8000) || null,
+    convidados: (ev.attendees ?? [])
+      .filter((a) => !a.self && a.email)
+      .map((a) => (a.email as string).slice(0, 320))
+      .slice(0, 100),
     link_reuniao: urlSegura(ev.hangoutLink) ?? urlSegura(video) ?? (local ? urlSegura(local) : null),
     link_google: urlSegura(ev.htmlLink),
+    // Sem organizador informado é evento da própria agenda.
+    pode_editar: ev.organizer?.self !== false || ev.guestsCanModify === true,
+    lembrete_minutos: lembreteDoEvento(ev.reminders),
   };
 }
 
@@ -99,8 +129,7 @@ export async function listarEventos(token: string, de: Date, ate: Date, f: Fetch
       singleEvents: "true",
       orderBy: "startTime",
       maxResults: "250",
-      fields:
-        "nextPageToken,items(id,status,summary,location,htmlLink,hangoutLink,eventType,start,end,attendees(self,responseStatus),conferenceData(entryPoints(entryPointType,uri)))",
+      fields: `nextPageToken,items(${CAMPOS_EVENTO})`,
     });
     if (pagina) p.set("pageToken", pagina);
     const r = await fetchComTempo(
@@ -120,4 +149,113 @@ export async function listarEventos(token: string, de: Date, ate: Date, f: Fetch
 export function janela(agora = new Date()): { de: Date; ate: Date } {
   const dia = 24 * 60 * 60 * 1000;
   return { de: new Date(agora.getTime() - DIAS_ANTES * dia), ate: new Date(agora.getTime() + DIAS_DEPOIS * dia) };
+}
+
+// ---------------------------------------------------------------- escrita
+
+/** O que a tela manda para criar ou editar uma reunião. */
+export interface DadosReuniao {
+  titulo: string;
+  /** ISO com fuso (hora marcada) ou YYYY-MM-DD (dia inteiro). */
+  inicio: string;
+  fim: string;
+  dia_inteiro: boolean;
+  local?: string | null;
+  descricao?: string | null;
+  convidados?: string[];
+  /** Cria a sala do Google Meet (só se ainda não tiver). */
+  meet?: boolean;
+  /** Minutos antes; null = padrão da agenda; -1 = sem aviso. */
+  lembrete_minutos?: number | null;
+}
+
+/** Corpo do evento na API do Google. */
+export function corpoDoEvento(d: DadosReuniao, comMeet: boolean): Record<string, unknown> {
+  const quando = (v: string) => (d.dia_inteiro ? { date: v.slice(0, 10) } : { dateTime: new Date(v).toISOString() });
+  // Dia inteiro: a tela manda o último dia; o Google quer o dia seguinte (fim exclusivo).
+  const fimDiaInteiro = () => {
+    const dia = new Date(`${d.fim.slice(0, 10)}T12:00:00Z`);
+    dia.setUTCDate(dia.getUTCDate() + 1);
+    return { date: dia.toISOString().slice(0, 10) };
+  };
+  const lembrete = d.lembrete_minutos;
+  return {
+    summary: d.titulo,
+    description: d.descricao ?? "",
+    location: d.local ?? "",
+    start: quando(d.inicio),
+    end: d.dia_inteiro ? fimDiaInteiro() : quando(d.fim),
+    attendees: (d.convidados ?? []).map((email) => ({ email })),
+    reminders:
+      lembrete === null || lembrete === undefined
+        ? { useDefault: true }
+        : { useDefault: false, overrides: lembrete < 0 ? [] : [{ method: "popup", minutes: lembrete }] },
+    ...(comMeet
+      ? {
+          conferenceData: {
+            createRequest: { requestId: crypto.randomUUID(), conferenceSolutionKey: { type: "hangoutsMeet" } },
+          },
+        }
+      : {}),
+  };
+}
+
+/** Id de evento do Google: base32hex em minúsculas, mais "_" das ocorrências de recorrência. */
+export function idEventoValido(id: unknown): id is string {
+  return typeof id === "string" && /^[a-zA-Z0-9_]{5,1024}$/.test(id);
+}
+
+async function escrever(token: string, url: string, init: RequestInit, f: Fetch): Promise<Response> {
+  const r = await fetchComTempo(
+    url,
+    {
+      ...init,
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", ...(init.headers ?? {}) },
+    },
+    undefined,
+    f
+  );
+  if (!r.ok) throw new ErroGoogle(r.status, `Google Agenda respondeu ${r.status}`);
+  return r;
+}
+
+// sendUpdates=all: os convidados recebem o convite (ou a mudança) por e-mail, como no Google.
+const PARAMS_ESCRITA = `conferenceDataVersion=1&sendUpdates=all&fields=${encodeURIComponent(CAMPOS_EVENTO)}`;
+
+export async function criarEvento(token: string, d: DadosReuniao, f: Fetch = fetch): Promise<EventoGoogle> {
+  const r = await escrever(
+    token,
+    `${API}/calendars/primary/events?${PARAMS_ESCRITA}`,
+    { method: "POST", body: JSON.stringify(corpoDoEvento(d, !!d.meet)) },
+    f
+  );
+  return (await r.json()) as EventoGoogle;
+}
+
+export async function editarEvento(
+  token: string,
+  id: string,
+  d: DadosReuniao,
+  jaTemMeet: boolean,
+  f: Fetch = fetch
+): Promise<EventoGoogle> {
+  if (!idEventoValido(id)) throw new ErroGoogle(400, "evento inválido");
+  const r = await escrever(
+    token,
+    `${API}/calendars/primary/events/${id}?${PARAMS_ESCRITA}`,
+    { method: "PATCH", body: JSON.stringify(corpoDoEvento(d, !!d.meet && !jaTemMeet)) },
+    f
+  );
+  return (await r.json()) as EventoGoogle;
+}
+
+export async function excluirEvento(token: string, id: string, f: Fetch = fetch): Promise<void> {
+  if (!idEventoValido(id)) throw new ErroGoogle(400, "evento inválido");
+  try {
+    await escrever(token, `${API}/calendars/primary/events/${id}?sendUpdates=all`, { method: "DELETE" }, f);
+  } catch (e) {
+    // Já apagado no Google: para a Pilar, deu certo.
+    if (e instanceof ErroGoogle && (e.status === 404 || e.status === 410)) return;
+    throw e;
+  }
 }

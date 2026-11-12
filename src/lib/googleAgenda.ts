@@ -1,3 +1,4 @@
+import { supabase } from "@/integrations/supabase/client";
 import { invocar } from "@/lib/googleDrive";
 import { type PrazoEvento, fmtKey } from "@/components/calendario/eventos";
 
@@ -13,8 +14,46 @@ export interface EventoAgenda {
   fim: string;
   dia_inteiro: boolean;
   local: string | null;
+  descricao: string | null;
+  convidados: string[];
   link_reuniao: string | null;
   link_google: string | null;
+  /** A pessoa organiza (ou o organizador deixou convidado editar). */
+  pode_editar: boolean;
+  /** Minutos antes; null = padrão da pessoa; -1 = sem aviso. */
+  lembrete_minutos: number | null;
+}
+
+/** O que vai para a Edge Function ao criar ou editar. */
+export interface DadosReuniao {
+  titulo: string;
+  /** ISO com fuso (hora marcada) ou YYYY-MM-DD (dia inteiro; fim = último dia). */
+  inicio: string;
+  fim: string;
+  dia_inteiro: boolean;
+  local: string | null;
+  descricao: string | null;
+  convidados: string[];
+  meet: boolean;
+  lembrete_minutos: number | null;
+}
+
+/** Opções de aviso (minutos antes). */
+export const OPCOES_AVISO: { valor: number; rotulo: string }[] = [
+  { valor: 0, rotulo: "Na hora" },
+  { valor: 5, rotulo: "5 minutos antes" },
+  { valor: 10, rotulo: "10 minutos antes" },
+  { valor: 15, rotulo: "15 minutos antes" },
+  { valor: 30, rotulo: "30 minutos antes" },
+  { valor: 60, rotulo: "1 hora antes" },
+  { valor: 1440, rotulo: "1 dia antes" },
+];
+
+export const AVISO_PADRAO = 10;
+
+export function rotuloAviso(minutos: number | null): string {
+  if (minutos === null || minutos < 0) return "Não avisar";
+  return OPCOES_AVISO.find((o) => o.valor === minutos)?.rotulo ?? `${minutos} minutos antes`;
 }
 
 /** Leva o usuário ao consentimento do Google; o Google devolve para a página atual. */
@@ -35,6 +74,25 @@ export const sincronizarAgenda = () =>
     { acao: "sincronizar" },
     "Não foi possível atualizar a agenda."
   );
+
+export const criarReuniao = (reuniao: DadosReuniao) =>
+  invocar<{ ok: true; evento: { id: string } | null }>(
+    "google-calendar",
+    { acao: "criar", reuniao },
+    "Não foi possível criar a reunião."
+  );
+
+export const editarReuniao = (id: string, reuniao: DadosReuniao) =>
+  invocar<{ ok: true }>("google-calendar", { acao: "editar", id, reuniao }, "Não foi possível salvar a reunião.");
+
+export const excluirReuniao = (id: string) =>
+  invocar<{ ok: true }>("google-calendar", { acao: "excluir", id }, "Não foi possível excluir a reunião.");
+
+/** Aviso padrão da pessoa (minutos antes); null = não avisar. */
+export async function definirAvisoPadrao(minutos: number | null): Promise<void> {
+  const { error } = await supabase.rpc("set_google_agenda_lembrete", { p_minutos: minutos ?? -1 });
+  if (error) throw error;
+}
 
 export const desconectarAgenda = () =>
   invocar<{ ok: true }>("google-calendar", { acao: "desconectar" }, "Não foi possível desconectar.");

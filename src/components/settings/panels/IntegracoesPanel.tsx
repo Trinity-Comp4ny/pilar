@@ -12,7 +12,9 @@ import { conectarGoogleDrive, desconectarDrive } from "@/lib/googleDrive";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { formatDateTime } from "@/lib/format";
 import { CHAVE_EVENTOS_AGENDA, CHAVE_STATUS_AGENDA, useStatusAgenda } from "@/hooks/useGoogleAgenda";
-import { conectarGoogleAgenda, desconectarAgenda } from "@/lib/googleAgenda";
+import { OPCOES_AVISO, conectarGoogleAgenda, definirAvisoPadrao, desconectarAgenda } from "@/lib/googleAgenda";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Integrações: Google Drive do escritório (SPEC 163) e Google Agenda de cada pessoa (SPEC 164).
 export function IntegracoesPanel() {
@@ -31,6 +33,20 @@ function AgendaCard() {
   const [conectando, setConectando] = useState(false);
   const [confirmar, setConfirmar] = useState(false);
   const [desconectando, setDesconectando] = useState(false);
+  const [salvandoAviso, setSalvandoAviso] = useState(false);
+
+  const mudarAviso = async (valor: string) => {
+    setSalvandoAviso(true);
+    try {
+      await definirAvisoPadrao(valor === "-1" ? null : Number(valor));
+      await queryClient.invalidateQueries({ queryKey: CHAVE_STATUS_AGENDA });
+      toast.success("Aviso das reuniões atualizado");
+    } catch (e) {
+      toast.error("Não foi possível salvar o aviso", { description: getSafeErrorMessage(e, "Tente de novo.") });
+    } finally {
+      setSalvandoAviso(false);
+    }
+  };
 
   const conectar = async () => {
     setConectando(true);
@@ -65,8 +81,9 @@ function AgendaCard() {
           <div className="space-y-1">
             <p className="text-sm font-medium text-ink">Google Agenda</p>
             <p className="text-sm text-muted-foreground">
-              Suas reuniões aparecem na Agenda de Tarefas, junto dos prazos, e a Pilar avisa 30 minutos antes de cada
-              uma. A conexão é sua: a equipe não vê a sua agenda. A Pilar só lê, não cria nem altera eventos.
+              Suas reuniões aparecem na Agenda de Tarefas, junto dos prazos. Você cria, edita e exclui reuniões ali
+              mesmo, com sala do Meet e convite aos convidados, e a Pilar avisa antes de cada uma. A conexão é sua: a
+              equipe não vê a sua agenda.
             </p>
           </div>
         </div>
@@ -95,6 +112,29 @@ function AgendaCard() {
               <p>
                 Conectado a <strong>{status.email}</strong>
                 {status.sincronizadoEm ? `. Atualizado em ${formatDateTime(status.sincronizadoEm)}` : ""}.
+              </p>
+            </div>
+            <div className="max-w-xs space-y-1.5">
+              <Label>Avisar antes das reuniões</Label>
+              <Select
+                value={status.lembreteMinutos === null ? "-1" : String(status.lembreteMinutos)}
+                onValueChange={mudarAviso}
+                disabled={salvandoAviso}
+              >
+                <SelectTrigger className="h-9" aria-label="Avisar antes das reuniões">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {OPCOES_AVISO.map((o) => (
+                    <SelectItem key={o.valor} value={String(o.valor)}>
+                      {o.rotulo}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="-1">Não avisar</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Vale para as reuniões sem aviso próprio. O aviso de cada reunião muda na própria reunião.
               </p>
             </div>
             <Button variant="outline" size="sm" onClick={() => setConfirmar(true)}>

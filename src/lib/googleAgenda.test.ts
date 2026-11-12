@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke: vi.fn() } } }));
 
-import { buildEventosReunioes, linkDoEvento, rotuloHorario, type EventoAgenda } from "./googleAgenda";
+import { buildEventosReunioes, linkDoEvento, rotuloAviso, rotuloHorario, type EventoAgenda } from "./googleAgenda";
 
 const base: EventoAgenda = {
   id: "r1",
@@ -11,6 +11,10 @@ const base: EventoAgenda = {
   fim: "2026-11-20T14:00:00.000Z",
   dia_inteiro: false,
   local: null,
+  descricao: null,
+  convidados: [],
+  pode_editar: true,
+  lembrete_minutos: null,
   link_reuniao: null,
   link_google: "https://www.google.com/calendar/event?eid=1",
 };
@@ -21,6 +25,14 @@ describe("googleAgenda", () => {
     expect(rotuloHorario({ ...base, link_reuniao: "https://zoom.us/j/1" })).toMatch(/ · Online$/);
     expect(rotuloHorario({ ...base, local: "Sala 2" })).toMatch(/ · Sala 2$/);
     expect(rotuloHorario({ ...base, dia_inteiro: true })).toBe("Dia inteiro");
+  });
+
+  it("rótulo do aviso", () => {
+    expect(rotuloAviso(10)).toBe("10 minutos antes");
+    expect(rotuloAviso(0)).toBe("Na hora");
+    expect(rotuloAviso(null)).toBe("Não avisar");
+    expect(rotuloAviso(-1)).toBe("Não avisar");
+    expect(rotuloAviso(45)).toBe("45 minutos antes");
   });
 
   it("o clique abre a sala; sem sala, o evento no Google", () => {

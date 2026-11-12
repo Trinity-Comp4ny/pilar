@@ -27,7 +27,8 @@ const h = vi.hoisted(() => {
     mobile: false,
     dados: { titulo: "Rápida", responsavelId: "pe1", projetoId: null } as NovaTarefaNoDiaDados,
     // Google Agenda (SPEC 164): status da conexão e reuniões da pessoa.
-    statusAgenda: { conectado: false, reconectar: false } as { conectado: boolean; reconectar: boolean } | undefined,
+    statusAgenda: { conectado: false, reconectar: false } as
+      { conectado: boolean; reconectar: boolean; lembreteMinutos?: number | null } | undefined,
     reunioes: [] as unknown[],
     conectarGoogleAgenda: vi.fn(),
     sincronizarAgenda: vi.fn(),
@@ -121,6 +122,19 @@ vi.mock("./NovaTarefaNoDia", () => ({
       <button onClick={() => p.onMaisCampos("Rascunho")}>Mais campos</button>
     </div>
   ),
+}));
+vi.mock("./ReuniaoDialog", () => ({
+  ReuniaoDialog: (p: {
+    open: boolean;
+    reuniao: { titulo: string } | null;
+    diaInicial: string;
+    avisoPadrao: number | null;
+  }) =>
+    p.open ? (
+      <div role="dialog" aria-label="Reunião">
+        {p.reuniao ? `reunião ${p.reuniao.titulo}` : `nova reunião em ${p.diaInicial}`} · aviso {String(p.avisoPadrao)}
+      </div>
+    ) : null,
 }));
 vi.mock("./TarefaDialog", () => ({
   TarefaDialog: (p: {
@@ -352,8 +366,8 @@ describe("AbaAgenda", () => {
     expect(screen.getByRole("button", { name: /Reconectar Google Agenda/ })).toBeInTheDocument();
   });
 
-  it("conectado: reunião vira evento, abre a sala e atualiza a agenda", async () => {
-    h.statusAgenda = { conectado: true, reconectar: false };
+  it("conectado: reunião vira evento, abre o detalhe, cria nova e atualiza a agenda", async () => {
+    h.statusAgenda = { conectado: true, reconectar: false, lembreteMinutos: 10 };
     h.reunioes = [
       {
         id: "r1",
@@ -362,19 +376,23 @@ describe("AbaAgenda", () => {
         fim: `${hojeIso}T14:00:00.000Z`,
         dia_inteiro: false,
         local: null,
+        descricao: null,
+        convidados: [],
+        pode_editar: true,
+        lembrete_minutos: null,
         link_reuniao: "https://meet.google.com/abc-defg-hij",
         link_google: null,
       },
     ];
-    const abrir = vi.spyOn(window, "open").mockReturnValue(null);
     const user = renderAgenda();
     expect(screen.queryByRole("button", { name: /Conectar Google Agenda/ })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Esconder reuniao" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "reuniao: Reunião com a VRZ" }));
-    expect(abrir).toHaveBeenCalledWith("https://meet.google.com/abc-defg-hij", "_blank", "noopener,noreferrer");
+    expect(screen.getByRole("dialog", { name: "Reunião" })).toHaveTextContent("reunião Reunião com a VRZ · aviso 10");
+    await user.click(screen.getByRole("button", { name: /Nova reunião/ }));
+    expect(screen.getByRole("dialog", { name: "Reunião" })).toHaveTextContent("nova reunião em");
     await user.click(screen.getByRole("button", { name: "Atualizar reuniões do Google Agenda" }));
     await waitFor(() => expect(h.toast.success).toHaveBeenCalledWith("Agenda atualizada"));
-    abrir.mockRestore();
   });
 
   it("no mobile só existe a visão agenda", () => {

@@ -126,7 +126,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
-| `google-calendar` | Google Agenda de cada pessoa: conecta (OAuth, escopo calendar.events.readonly, token cifrado), copia as reuniões e, no cron de 5 min, ressincroniza e gera o aviso de 30 min antes (SPEC 164). | app, cron, pg_cron (google_agenda_cron) e retorno do OAuth do Google | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `google-calendar` | Google Agenda de cada pessoa: conecta (OAuth, escopo calendar.events, token cifrado), copia as reuniões, cria, edita e exclui reunião (Meet e convite aos convidados) e, no cron de 5 min, ressincroniza (SPEC 164). | app, cron, pg_cron (google_agenda_cron) e retorno do OAuth do Google | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `google-drive` | Arquivos do projeto no Google Drive da empresa: pasta por projeto e disciplina, listar, criar pasta, envio direto ao Google, baixar e lixeira (SPEC 163). | app | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `google-drive-oauth` | Conecta e desconecta o Google Drive da empresa (OAuth, escopo drive.file, token cifrado; só admin) (SPEC 163). | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 

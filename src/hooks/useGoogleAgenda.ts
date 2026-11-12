@@ -9,6 +9,8 @@ export interface StatusAgenda {
   sincronizadoEm: string | null;
   /** O Google recusou o acesso: a pessoa precisa conectar de novo. */
   reconectar: boolean;
+  /** Aviso padrão em minutos antes; null = não avisar. */
+  lembreteMinutos: number | null;
 }
 
 export const CHAVE_STATUS_AGENDA = ["google-agenda-status"] as const;
@@ -28,6 +30,12 @@ export function useStatusAgenda() {
         conectadoEm: linha?.conectado_em ?? null,
         sincronizadoEm: linha?.sincronizado_em ?? null,
         reconectar: linha?.erro === "reconectar",
+        lembreteMinutos:
+          linha?.lembrete_minutos === undefined || linha.lembrete_minutos === null
+            ? 10
+            : linha.lembrete_minutos < 0
+              ? null
+              : linha.lembrete_minutos,
       };
     },
     staleTime: 5 * 60 * 1000,
@@ -41,7 +49,9 @@ export function useEventosAgenda(habilitado: boolean) {
     queryFn: async (): Promise<EventoAgenda[]> => {
       const { data, error } = await supabase
         .from("agenda_eventos_google")
-        .select("id, titulo, inicio, fim, dia_inteiro, local, link_reuniao, link_google")
+        .select(
+          "id, titulo, inicio, fim, dia_inteiro, local, descricao, convidados, link_reuniao, link_google, pode_editar, lembrete_minutos"
+        )
         .order("inicio", { ascending: true })
         .limit(1000);
       if (error) throw error;
