@@ -1,4 +1,4 @@
-# 05 · Conteúdo viral (Reels, TikTok, Shorts)
+# 09 · Conteúdo viral (Reels, TikTok, Shorts)
 
 > Linha de vídeo curto feita para alcance: a planta que vira obra e as séries que saem dela.
 > Complementa o calendário de [02-canais-e-calendario.md](./02-canais-e-calendario.md) (ocupa o Reel
@@ -348,21 +348,23 @@ Regras de leitura:
 
 ## 6. Produzido (11/11/2026)
 
-Arquivos gerados pelo kit em [`video/reels-kit/`](./video/reels-kit/README.md) e pelo gerador 3D em
-[`video/planta-vira-casa/`](./video/planta-vira-casa/README.md). Os MP4 ficam fora do repo (peso); o código gera de novo. Desde 12/11 os vídeos terminam em loop, sem quadro final
-de marca: o CTA vai na legenda (ver DECISOES.md).
+As peças prontas para postar (vídeo, capa e legenda) estão na biblioteca [`conteudo/`](./conteudo/README.md):
+Reels `30` a `38` e o carrossel `c17`. Legendas e índice saem do `conteudo/organizar.py`. O código que gera de novo
+está em [`video/planta-vira-casa/`](./video/planta-vira-casa/README.md) (3D) e [`video/reels-kit/`](./video/reels-kit/README.md)
+(motion e variações). Os vídeos terminam em loop, sem quadro final de marca, como define o
+[08](./08-direcao-criativa.md) §2: o CTA vai na legenda.
 
-| ID | Vídeo | Duração | Observação |
+| ID | Vídeo (pasta em `conteudo/reels/`) | Duração | Observação |
 |---|---|---|---|
-| V-20 | Planta vira casa (9:16, 16:9, sem texto e em loop) | 12,6 s / 14,5 s | revisão técnica da ordem antes de publicar |
-| V-21 | Quiz "Você sabe o nome disso?" | 27,7 s | 8 peças |
-| V-24 | Ache o erro em 5 s | 15 s | porta do banheiro bate no vaso |
-| V-26 | Uma casa. Cinco projetos. (raio-X) | 17,3 s | arquitetura, estrutural, elétrico, hidráulico, sanitário |
-| V-27 | O projeto acabou. E o lucro? | 18,2 s | números da empresa fictícia, com "dados de exemplo" |
-| V-28 | Só uma mudancinha | 19 s | humor + aditivo real |
-| V-30 | Concretagem e chuva | 15,2 s | o Pilar avisa; quem reprograma é o responsável |
-| V-33 | Na obra e no cronograma | 13,4 s | 3D sincronizado com o cronograma real |
-| V-34 | Telhado ou laje? | 11 s | enquete nos comentários |
-| Carrossel | Glossário da obra | 7 slides | baldrame, verga, contraverga, cinta, tesoura |
+| V-20 | Planta vira casa, com 16:9 e sem texto (`30`) | 11 s | revisão técnica da ordem antes de publicar |
+| V-21 | Quiz "Você sabe o nome disso?" (`31`) | 26 s | 8 peças |
+| V-24 | Ache o erro em 5 s (`32`) | 12 s | porta do banheiro bate no vaso |
+| V-26 | Uma casa. Cinco projetos. (`33`) | 16 s | arquitetura, estrutural, elétrico, hidráulico, sanitário |
+| V-27 | O projeto acabou. E o lucro? (`34`) | 15 s | números da empresa fictícia, com "dados de exemplo" |
+| V-28 | Só uma mudancinha (`35`) | 16 s | humor + aditivo real |
+| V-30 | Concretagem e chuva (`36`) | 13 s | o Pilar avisa; quem reprograma é o responsável |
+| V-33 | Na obra e no cronograma (`37`) | 12 s | 3D sincronizado com o cronograma real |
+| V-34 | Telhado ou laje? (`38`) | 9 s | enquete nos comentários |
+| Carrossel | Glossário da obra (`c17`) | 7 slides | baldrame, verga, contraverga, cinta, tesoura |
 | Capas | Uma por Reel | 1080 × 1920 | essencial no centro 3:4 |
 

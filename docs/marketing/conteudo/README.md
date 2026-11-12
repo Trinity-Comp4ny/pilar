@@ -9,23 +9,25 @@ uma peça, rode `python3 docs/marketing/conteudo/organizar.py`. Legenda nova ou 
 
 | Tipo | Quantidade |
 | --- | --- |
-| Reels | 29 |
-| Carrosséis | 16 |
+| Reels | 38 |
+| Carrosséis | 17 |
 | Posts únicos | 38 |
 | Stories (grupos) | 8 |
 | Vídeos do fundador (roteiro pronto, a gravar) | 12 |
 
 **Como decidir o que postar:** estratégia em [05](../05-plano-de-marketing-2026-11.md), calendário e
 regra de variedade em [06](../06-banco-de-conteudo.md), gente real em [07](../07-direcao-de-conteudo.md),
-conceito, fim de vídeo e voz em [08](../08-direcao-criativa.md). Visão geral de cada leva em
-[`pranchas/`](./pranchas/).
+conceito, fim de vídeo e voz em [08](../08-direcao-criativa.md), séries 3D e quizzes de obra em
+[09](../09-conteudo-viral.md). Visão geral de cada leva em [`pranchas/`](./pranchas/).
 
 **Antes de postar qualquer peça:** primeira linha da legenda = gancho; link só na bio; número de exemplo
 dito como exemplo; só o que roda em produção; nada de dado real de cliente sem autorização.
 
 **De onde vem cada coisa** (para refazer): vídeos em `video-v2/src/` (`./make.sh <id> light|dark`),
 posts em `posts/render-posts.mjs` e `posts/render-conceito.mjs`, fotos-fonte em `posts/fotos/`,
-narrações em `video-v2/narration/`, teleprompter em `gravacao/teleprompter.html`.
+narrações em `video-v2/narration/`, teleprompter em `gravacao/teleprompter.html`. Reels `30` a `38` e o
+carrossel `c17`: obra 3D em `video/planta-vira-casa/`, motion e variações em `video/reels-kit/`; os MP4 e as
+capas entram em `video-v2/renders/` e os slides em `posts/out/` antes de rodar o `organizar.py`.
 
 ## Reels
 
@@ -60,6 +62,15 @@ narrações em `video-v2/narration/`, teleprompter em `gravacao/teleprompter.htm
 | [27-conceito-nivel](reels/27-conceito-nivel/) | Conceito: o nível | posicionamento | 7 s | música |
 | [28-conceito-betoneira](reels/28-conceito-betoneira/) | Conceito: a betoneira | obra e clima | 8 s | música |
 | [29-conceito-busca](reels/29-conceito-busca/) | Conceito: a busca | conta aberta | 9 s | música |
+| [30-planta-vira-casa-3d](reels/30-planta-vira-casa-3d/) | Do traço no papel à casa pronta (3D) | educativo | 11 s | música |
+| [31-quiz-pecas-da-obra](reels/31-quiz-pecas-da-obra/) | Você sabe o nome disso? (8 peças da obra) | engajamento | 26 s | música |
+| [32-ache-o-erro](reels/32-ache-o-erro/) | Tem um erro nesta planta (5 s) | engajamento | 12 s | música |
+| [33-uma-casa-cinco-projetos](reels/33-uma-casa-cinco-projetos/) | Uma casa. Cinco projetos. | educativo | 16 s | música |
+| [34-e-o-lucro](reels/34-e-o-lucro/) | O projeto acabou. E o lucro? | conta aberta | 15 s | música |
+| [35-so-uma-mudancinha](reels/35-so-uma-mudancinha/) | Cliente: só uma mudancinha | dor nomeada | 16 s | música |
+| [36-chuva-na-concretagem-3d](reels/36-chuva-na-concretagem-3d/) | Concretagem marcada. Olha o céu. (3D) | obra e clima | 13 s | música |
+| [37-obra-e-cronograma](reels/37-obra-e-cronograma/) | Na obra e no cronograma | na tela | 12 s | música |
+| [38-telhado-ou-laje](reels/38-telhado-ou-laje/) | Mesma casa. Telhado ou laje? | engajamento | 9 s | música |
 
 ## Carrosséis
 
@@ -81,6 +92,7 @@ narrações em `video-v2/narration/`, teleprompter em `gravacao/teleprompter.htm
 | [c14-perguntas-do-cliente](carrosseis/c14-perguntas-do-cliente/) | As 4 perguntas que todo cliente faz | na tela | 6 slides |
 | [c15-carta-do-fundador](carrosseis/c15-carta-do-fundador/) | Carta do fundador | bastidores | 4 slides |
 | [c16-glossario](carrosseis/c16-glossario/) | Glossário do escritório de projeto | educativo | 7 slides |
+| [c17-glossario-da-obra](carrosseis/c17-glossario-da-obra/) | Glossário da obra: 5 peças que todo mundo vê | educativo | 7 slides |
 
 ## Posts únicos
 

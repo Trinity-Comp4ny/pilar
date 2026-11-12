@@ -243,6 +243,104 @@ Resposta curta: aditivo, registrado no dia em que o pedido chega. Com data, quem
 Salve para a próxima vez que o cliente pedir "só um ajustezinho".
 
 {H_ESC}"""),
+    # Série 3D "planta vira obra" e motion de produto (gerador em docs/marketing/video/planta-vira-casa e reels-kit)
+    dict(slug="30-planta-vira-casa-3d", arquivos=["planta-vira-casa-3d.mp4", ("planta-vira-casa-3d-capa.jpg", "capa.jpg"), ("planta-vira-casa-3d-16x9.mp4", "variacao-16x9.mp4"), ("planta-vira-casa-3d-sem-texto.mp4", "variacao-sem-texto.mp4")],
+         titulo="Do traço no papel à casa pronta (3D)", pilar="educativo", voz=False,
+         uso="Revisar a ordem técnica das etapas antes de postar. 16:9 para YouTube e LinkedIn; a versão sem texto serve para anúncio.",
+         legenda=f"""Do traço no papel à casa pronta, em 11 segundos.
+
+Locação, baldrame, pilares, alvenaria, vigas, reboco, esquadrias, telhado e paisagismo, na ordem em que a obra acontece. Na Pilar, cada uma dessas etapas vira tarefa no cronograma da obra, com prazo e responsável.
+
+Qual etapa mais atrasa nas suas obras? Comenta aqui.
+
+{CTA}
+
+{H_OBRA}"""),
+    dict(slug="31-quiz-pecas-da-obra", arquivos=["quiz-pecas-da-obra-3d.mp4", ("quiz-pecas-da-obra-3d-capa.jpg", "capa.jpg")],
+         titulo="Você sabe o nome disso? (8 peças da obra)", pilar="engajamento", voz=False,
+         legenda=f"""Oito peças de uma obra. Você sabe o nome de cada uma?
+
+O vídeo pausa antes da resposta. Conta quantas acertou e deixa o número aqui embaixo.
+
+Salva para mostrar ao estagiário.
+
+{CTA}
+
+{H_OBRA}"""),
+    dict(slug="32-ache-o-erro", arquivos=["ache-o-erro.mp4", ("ache-o-erro-capa.jpg", "capa.jpg")],
+         titulo="Tem um erro nesta planta (5 s)", pilar="engajamento", voz=False,
+         legenda=f"""Tem um erro nesta planta. Você tem 5 segundos.
+
+Achou em quantos segundos? Comenta o número (sem spoiler para quem ainda não viu).
+
+Erro de projeto que chega na obra vira retrabalho. Revisão é etapa, não detalhe.
+
+{CTA}
+
+{H_ARQ}"""),
+    dict(slug="33-uma-casa-cinco-projetos", arquivos=["casa-cinco-projetos-3d.mp4", ("casa-cinco-projetos-3d-capa.jpg", "capa.jpg")],
+         titulo="Uma casa. Cinco projetos.", pilar="educativo", voz=False,
+         legenda=f"""Uma casa. Cinco projetos.
+
+Arquitetura, estrutural, elétrico, hidráulico e sanitário. Cada disciplina tem escopo, prazo e responsável, e quem coordena precisa ver todas ao mesmo tempo. É assim que a Pilar organiza o projeto: por disciplina.
+
+Qual disciplina mais atrasa no seu escritório?
+
+{CTA}
+
+{H_ESC}"""),
+    dict(slug="34-e-o-lucro", arquivos=["e-o-lucro.mp4", ("e-o-lucro-capa.jpg", "capa.jpg")],
+         titulo="O projeto acabou. E o lucro?", pilar="conta aberta", voz=False,
+         legenda=f"""O projeto acabou. E o lucro? (projeto de exemplo)
+
+Contrato de R$ 158.000, 780 horas orçadas. O cliente trocou o forro, as horas de MEP passaram do previsto e o lucro do projeto foi para -1,5%. Na Pilar, esse número aparece enquanto ainda dá para agir, e o agente já prepara o aditivo para você aprovar.
+
+Você descobre o lucro antes ou depois? Comenta.
+
+{CTA}
+
+{H_ESC}"""),
+    dict(slug="35-so-uma-mudancinha", arquivos=["so-uma-mudancinha.mp4", ("so-uma-mudancinha-capa.jpg", "capa.jpg")],
+         titulo="Cliente: só uma mudancinha", pilar="dor nomeada", voz=False,
+         legenda=f"""Cliente: só uma mudancinha.
+
+Tirar uma parede, virar a escada, transformar o banheiro em suíte, sem mudar o prazo. Toda mudancinha tem custo. Na Pilar, o agente prepara o aditivo com as horas do projeto, o sistema confere e você aprova.
+
+Marca aquele colega que já recebeu essa mensagem.
+
+{CTA}
+
+{H_ARQ}"""),
+    dict(slug="36-chuva-na-concretagem-3d", arquivos=["chuva-concretagem-3d.mp4", ("chuva-concretagem-3d-capa.jpg", "capa.jpg")],
+         titulo="Concretagem marcada. Olha o céu. (3D)", pilar="obra e clima", voz=False,
+         uso="Mesmo tema do 10-chuva: não postar os dois na mesma semana.",
+         legenda=f"""Concretagem marcada para amanhã. Olha o céu.
+
+A Pilar cruza o cronograma da obra com a previsão do tempo e avisa quando uma etapa sensível cai num dia de chuva. Quem decide reprogramar é o responsável.
+
+Já perdeu concretagem por causa da chuva? Conta aqui.
+
+{CTA}
+
+{H_OBRA}"""),
+    dict(slug="37-obra-e-cronograma", arquivos=["obra-e-cronograma-3d.mp4", ("obra-e-cronograma-3d-capa.jpg", "capa.jpg")],
+         titulo="Na obra e no cronograma", pilar="na tela", voz=False,
+         legenda=f"""Na obra e no cronograma, ao mesmo tempo.
+
+Em cima, a casa subindo. Embaixo, o cronograma da obra na Pilar, etapa por etapa, com responsável, prazo e avanço. O alerta de clima fica no mesmo lugar.
+
+{CTA}
+
+{H_OBRA}"""),
+    dict(slug="38-telhado-ou-laje", arquivos=["telhado-ou-laje-3d.mp4", ("telhado-ou-laje-3d-capa.jpg", "capa.jpg")],
+         titulo="Mesma casa. Telhado ou laje?", pilar="engajamento", voz=False,
+         legenda=f"""Mesma casa. Telhado ou laje?
+
+Em cima, tesoura, terça e telha cerâmica. Embaixo, laje com platibanda. Você faria qual, e por quê? Comenta.
+
+{CTA}
+
+{H_OBRA}"""),
 ]
 
 # ----------------------------------------------------------------------------------------------
@@ -337,6 +435,15 @@ Matheus, fundador da Pilar."""),
 Os termos que todo mundo usa e pouca gente explica. Salve e mande para o estagiário.
 
 {H_ARQ}"""),
+    ("c17-glossario-da-obra", "Glossário da obra: 5 peças que todo mundo vê", "educativo", f"""Você sabe o nome dessas peças?
+
+Baldrame, verga, contraverga, cinta de amarração e tesoura: cinco partes da obra que todo mundo vê e pouca gente sabe explicar. Arraste para ver o que cada uma faz.
+
+Salva para mostrar ao estagiário.
+
+{CTA}
+
+{H_OBRA}"""),
 ]
 OBS_CARROSSEL = {"c15-carta-do-fundador": "Revisar o texto com o Matheus antes de postar."}
 
@@ -518,9 +625,12 @@ def main():
     for pref, titulo, pilar, leg in CARROSSEIS:
         n = pref.split("-")[0][1:]
         pasta = AQUI / "carrosseis" / f"c{int(n):02d}-{pref.split('-', 1)[1]}"
-        slides = sorted(OUT.glob(f"{pref}-[0-9][0-9]*.png"))
+        # slide em PNG (arte chapada) ou JPG (foto e 3D, bem mais leve)
+        slides = sorted([*OUT.glob(f"{pref}-[0-9][0-9]*.png"), *OUT.glob(f"{pref}-[0-9][0-9]*.jpg")])
         for i, s in enumerate(slides, 1):
-            copia(s, pasta / f"{i:02d}.png")
+            copia(s, pasta / f"{i:02d}{s.suffix}")
+        if not slides:  # sem a pasta de geração nesta máquina: vale o que já está na biblioteca
+            slides = sorted([*pasta.glob("[0-9][0-9].png"), *pasta.glob("[0-9][0-9].jpg")])
         escreve_legenda(pasta, titulo, f"Carrossel 4:5, {len(slides)} slides", pilar, leg, OBS_CARROSSEL.get(pref),
                         "Poste os slides na ordem dos nomes (01, 02...). O 01 é a capa.")
         indice["carrosseis"].append((pasta.name, titulo, pilar, f"{len(slides)} slides", ""))
@@ -547,6 +657,8 @@ def main():
         for t in telas:
             resto = t.stem[len(pref):].lstrip("-")
             copia(t, pasta / (f"tela-{resto}.png" if resto else "tela.png"))
+        if not telas:  # sem a pasta de geração nesta máquina: vale o que já está na biblioteca
+            telas = sorted(pasta.glob("tela*.png"))
         (pasta / "como-usar.md").write_text(f"# {titulo}\n\n**Formato:** story 9:16, {len(telas)} tela(s). Story não tem legenda: o texto está na arte.\n\n**Como usar:** {como}\n\nDeixe livres os 250 px de cima e os 340 px de baixo (interface do Instagram).\n")
         indice["stories"].append((pref, titulo, "", f"{len(telas)} tela(s)", ""))
 
@@ -558,7 +670,7 @@ def main():
         hook = d.get("hook", "").replace("*", "")
         falas = "\n".join(f"{i}. {ln['text']}" for i, ln in enumerate(d["lines"], 1))
         prev = RENDERS / f"{d['id']}-dark.mp4"
-        tem_prev = copia(prev, pasta / "previa-sem-gravacao.mp4") if prev.exists() else False
+        tem_prev = copia(prev, pasta / "previa-sem-gravacao.mp4") if prev.exists() else (pasta / "previa-sem-gravacao.mp4").exists()
         (pasta / "roteiro.md").write_text(f"""# {hook}
 
 **Formato:** Reel 9:16 do fundador, gravado no celular · **Status:** a gravar
@@ -621,15 +733,17 @@ uma peça, rode `python3 docs/marketing/conteudo/organizar.py`. Legenda nova ou 
 
 **Como decidir o que postar:** estratégia em [05](../05-plano-de-marketing-2026-11.md), calendário e
 regra de variedade em [06](../06-banco-de-conteudo.md), gente real em [07](../07-direcao-de-conteudo.md),
-conceito, fim de vídeo e voz em [08](../08-direcao-criativa.md). Visão geral de cada leva em
-[`pranchas/`](./pranchas/).
+conceito, fim de vídeo e voz em [08](../08-direcao-criativa.md), séries 3D e quizzes de obra em
+[09](../09-conteudo-viral.md). Visão geral de cada leva em [`pranchas/`](./pranchas/).
 
 **Antes de postar qualquer peça:** primeira linha da legenda = gancho; link só na bio; número de exemplo
 dito como exemplo; só o que roda em produção; nada de dado real de cliente sem autorização.
 
 **De onde vem cada coisa** (para refazer): vídeos em `video-v2/src/` (`./make.sh <id> light|dark`),
 posts em `posts/render-posts.mjs` e `posts/render-conceito.mjs`, fotos-fonte em `posts/fotos/`,
-narrações em `video-v2/narration/`, teleprompter em `gravacao/teleprompter.html`.
+narrações em `video-v2/narration/`, teleprompter em `gravacao/teleprompter.html`. Reels `30` a `38` e o
+carrossel `c17`: obra 3D em `video/planta-vira-casa/`, motion e variações em `video/reels-kit/`; os MP4 e as
+capas entram em `video-v2/renders/` e os slides em `posts/out/` antes de rodar o `organizar.py`.
 
 ## Reels
 
