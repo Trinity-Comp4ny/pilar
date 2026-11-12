@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ViewSwitcher } from "@/components/ViewSwitcher";
@@ -48,6 +49,8 @@ type Props = {
   temProjetos: boolean;
   /** Só admin escolhe o responsável de uma tarefa nova (igual ao formulário completo). */
   podeEscolherResponsavel?: boolean;
+  /** Onde pôr a navegação do calendário (barra de filtros da página). Sem isto, fica acima da agenda. */
+  toolbarSlot?: HTMLElement | null;
 };
 
 /**
@@ -56,7 +59,14 @@ type Props = {
  * pra ligar/desligar. Clicar numa tarefa abre a edição; numa disciplina, o
  * projeto de origem.
  */
-export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos, podeEscolherResponsavel = false }: Props) {
+export function AbaAgenda({
+  pessoaIds,
+  minhaPessoaId,
+  canEdit,
+  temProjetos,
+  podeEscolherResponsavel = false,
+  toolbarSlot,
+}: Props) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { data: disciplinas } = useDisciplinas(temProjetos ? pessoaIds : null, { enabled: temProjetos });
@@ -175,33 +185,39 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos, pode
       )
     : undefined;
 
+  const navegacao = (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex items-center gap-1">
+        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => step(-1)} aria-label="Anterior">
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <span className="text-sm font-medium min-w-[150px] text-center">{labelPeriodo(view, cursor)}</span>
+        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => step(1)} aria-label="Próximo">
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="sm" className="ml-1 h-9 text-sm rounded-full" onClick={goHoje}>
+          Hoje
+        </Button>
+      </div>
+
+      {/* Mês/Semana ficam ilegíveis em 390px (grid de 7 colunas fixas); em
+          mobile só Agenda é oferecida, então o seletor vira redundante. */}
+      {!isMobile && (
+        <ViewSwitcher
+          options={(Object.keys(VIEW_LABEL) as CalendarioView[]).map((v) => ({ value: v, label: VIEW_LABEL[v] }))}
+          value={view}
+          onChange={setView}
+          ariaLabel="Modo do calendário"
+        />
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => step(-1)} aria-label="Anterior">
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm font-medium min-w-[150px] text-center">{labelPeriodo(view, cursor)}</span>
-          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => step(1)} aria-label="Próximo">
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="sm" className="ml-1 h-9 text-sm rounded-full" onClick={goHoje}>
-            Hoje
-          </Button>
-        </div>
-
-        {/* Mês/Semana ficam ilegíveis em 390px (grid de 7 colunas fixas); em
-            mobile só Agenda é oferecida, então o seletor vira redundante. */}
-        {!isMobile && (
-          <ViewSwitcher
-            options={(Object.keys(VIEW_LABEL) as CalendarioView[]).map((v) => ({ value: v, label: VIEW_LABEL[v] }))}
-            value={view}
-            onChange={setView}
-            ariaLabel="Modo do calendário"
-          />
-        )}
-      </div>
+      {/* Navegação do calendário: na barra de filtros da página quando há onde pôr, em vez de
+          uma segunda linha de controles acima da agenda (auditoria de espaço, 2026-11). */}
+      {toolbarSlot ? createPortal(navegacao, toolbarSlot) : navegacao}
 
       <div className="flex gap-4 rounded-lg border bg-white overflow-hidden min-h-[480px]">
         <CalendarioSidebar
