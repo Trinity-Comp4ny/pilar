@@ -54,18 +54,20 @@ function MoreSheetRow({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm transition-colors hover:bg-muted",
+        // Tamanho de lista do sistema no celular (17 px, alvo de ~52 px): o 14 px de antes
+        // ficava menor que o resto do app e do iOS (feedback do dono, 12/11).
+        "flex min-h-[52px] w-full items-center gap-4 rounded-2xl px-3 py-3 text-left text-[17px] transition-colors hover:bg-muted active:bg-muted",
         destructive ? "text-destructive" : "text-ink"
       )}
     >
-      <Icon size={18} className="shrink-0" />
+      <Icon size={22} strokeWidth={1.8} className="shrink-0" />
       <span className="flex-1 tracking-tight">{label}</span>
       {badge ? (
-        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1.5 text-[11px] font-bold leading-none text-white">
+        <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-danger px-1.5 text-xs font-bold leading-none text-white">
           {badge}
         </span>
       ) : dot ? (
-        <span aria-label="Há novidades" className="h-2.5 w-2.5 rounded-full bg-brand" />
+        <span aria-label="Há novidades" className="h-3 w-3 rounded-full bg-brand" />
       ) : null}
     </button>
   );
@@ -109,7 +111,12 @@ export function MoreSheet({ open, onOpenChange }: MoreSheetProps) {
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom" className="rounded-t-2xl p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        {/* Sobe mais que antes: folga embaixo acima da barra do iOS e cantos iguais aos dos
+            painéis de baixo (`DialogContent` no celular). */}
+        <SheetContent
+          side="bottom"
+          className="max-h-[92dvh] overflow-y-auto rounded-t-[26px] px-3 pt-4 pb-[calc(env(safe-area-inset-bottom)+1.5rem)]"
+        >
           <SheetHeader className="sr-only">
             <SheetTitle>Menu</SheetTitle>
           </SheetHeader>
@@ -123,19 +130,19 @@ export function MoreSheet({ open, onOpenChange }: MoreSheetProps) {
             <button
               type="button"
               onClick={closeAnd(() => openSettings("conta"))}
-              className="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-3 py-3 text-left hover:bg-muted"
+              className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl px-3 py-3 text-left hover:bg-muted"
             >
-              <AvatarStack pessoas={[{ nome: userName, avatarUrl: profile?.avatar_url }]} size="xs" />
+              <AvatarStack pessoas={[{ nome: userName, avatarUrl: profile?.avatar_url }]} size="md" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold leading-tight text-ink">{userName}</p>
-                {userEmail && <p className="truncate text-xs leading-tight text-muted-foreground">{userEmail}</p>}
+                <p className="truncate text-[17px] font-semibold leading-snug text-ink">{userName}</p>
+                {userEmail && <p className="truncate text-sm leading-snug text-muted-foreground">{userEmail}</p>}
               </div>
-              <Settings size={16} className="shrink-0 text-muted-foreground" />
+              <Settings size={20} className="shrink-0 text-muted-foreground" />
             </button>
             <NotificationInbox side="bottom" align="end" />
           </div>
 
-          <div className="my-1 border-t" />
+          <div className="my-2 border-t" />
 
           <MoreSheetRow
             icon={Sparkles}
@@ -164,7 +171,7 @@ export function MoreSheet({ open, onOpenChange }: MoreSheetProps) {
             <MoreSheetRow icon={Zap} label="Portal Ultra" onClick={closeAnd(() => navigate("/ultra-admin"))} />
           )}
 
-          <div className="my-1 border-t" />
+          <div className="my-2 border-t" />
 
           <MoreSheetRow
             icon={LogOut}

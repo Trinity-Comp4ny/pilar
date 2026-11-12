@@ -87,7 +87,7 @@ describe("BottomNav", () => {
   it("mostra os pilares na ordem fixa e marca o ativo", () => {
     renderNav();
     const botoes = screen.getAllByRole("button").map((b) => b.getAttribute("aria-label"));
-    expect(botoes).toEqual(["Projetos", "Obras", "Gestão", "Menu"]);
+    expect(botoes).toEqual(["Gestão", "Projetos", "Obras", "Menu"]);
     expect(screen.getByRole("button", { name: "Projetos" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: /Início/ })).toHaveAttribute("data-ativo", "true");
     expect(screen.getByRole("button", { name: "Projetos" })).toHaveAttribute("data-ativo", "false");
