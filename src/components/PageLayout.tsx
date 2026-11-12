@@ -50,7 +50,7 @@ export function PageLayout({
   // Alvos dos portais PageTabs/PageToolbar (filhos que montam a própria toolbar).
   const [tabsEl, setTabsEl] = useState<HTMLDivElement | null>(null);
   const [toolbarEl, setToolbarEl] = useState<HTMLDivElement | null>(null);
-  const slots = useMemo(() => ({ tabsEl, toolbarEl }), [tabsEl, toolbarEl]);
+  const slots = useMemo(() => ({ tabsEl, toolbarEl, dentroDoLayout: true }), [tabsEl, toolbarEl]);
 
   // Spec 002, req. 8: em troca de rota o shell não
   // remonta, então move o foco para o conteúdo novo e anuncia a página para
