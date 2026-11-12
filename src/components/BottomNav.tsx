@@ -11,8 +11,8 @@ import { usePendenciasAgentes } from "@/hooks/useEscopos";
 const carregarMoreSheet = () => import("@/components/MoreSheet");
 const MoreSheet = lazy(() => carregarMoreSheet().then((m) => ({ default: m.MoreSheet })));
 
-/** Ordem dos pilares na barra (SPEC 134): Início, Projetos, Obra, Gestão, Menu. */
-const PILAR_ORDER: ModuleId[] = ["projetos", "obras", "gestao"];
+/** Ordem dos pilares na barra: Início, Gestão, Projetos, Obra, Menu (pedido do dono, 12/11). */
+const PILAR_ORDER: ModuleId[] = ["gestao", "projetos", "obras"];
 const INDICE_MENU = PILAR_ORDER.length + 1;
 
 const ITEM_CLASS =
@@ -71,7 +71,7 @@ function LenteAtiva({ indice }: { indice: number }) {
 /**
  * Navegação mobile (< 768px, SPEC 134 sobre a spec 097 / ADR 0040): pílula flutuante
  * de vidro líquido, solta das bordas. Cinco itens, sempre nesta ordem: Início,
- * Projetos, Obra, Gestão, Menu. Os 3 pilares mantêm slot fixo mesmo sem feature
+ * Gestão, Projetos, Obra, Menu. Os 3 pilares mantêm slot fixo mesmo sem feature
  * liberada para a empresa (decisão do ADR 0040): quem barra o acesso é o
  * `FeatureRoute` da rota, não este componente. Agentes mora no Menu, com o contador
  * de pendências no ícone dele. Some ao rolar para baixo e com o teclado aberto
