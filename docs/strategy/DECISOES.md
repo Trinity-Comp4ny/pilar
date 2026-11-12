@@ -11,11 +11,25 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-12 (mais tarde) · Ordem das próximas integrações; Open Finance fica de fora por custo
+
+**Decisão:** depois da agenda, a ordem é histórico do lead (com reunião marcada pela Pilar e tarefas no Google
+Agenda), WhatsApp semiautomático pela API oficial, assinatura eletrônica da proposta e importação de extrato OFX.
+NFS-e espera validação com escritórios; Microsoft 365 e ata de reunião sob demanda. Análise de custo na SPEC 164.
+
+Contexto: o CEO gostou de WhatsApp e assinatura. Open Finance custa a partir de R$ 2.500/mês (Pluggy), caro para a
+base atual; o OFX resolve a conciliação sem custo.
+
+**Supera:** a lista "Integrações sugeridas" da primeira versão da SPEC 164.
+
+---
+
 ## 2026-11-12 · Google Agenda conectado, por pessoa, com criação de reunião e aviso antes
 
 **Decisão:** cada usuário conecta o próprio Google Agenda. As reuniões aparecem na Agenda de Tarefas, junto dos
 prazos, e dá para criar, editar e excluir reunião ali mesmo (Meet e convite aos convidados), sem abrir o Google
-(escopo `calendar.events`). O sino avisa antes de cada reunião: 10 minutos por padrão, a pessoa muda o padrão e o
+(escopo `calendar.events`), puxando todas as agendas da conta (pessoal, trabalho, compartilhadas), cada uma ligável.
+O sino avisa antes de cada reunião: 10 minutos por padrão, a pessoa muda o padrão e o
 aviso de cada reunião.
 Plano e ordem das próximas ideias (convite do portal, arquivos sem Drive) na SPEC 164.
 
