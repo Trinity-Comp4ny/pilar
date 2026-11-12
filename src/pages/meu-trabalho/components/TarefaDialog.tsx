@@ -218,7 +218,7 @@ function TarefaFormBody({
   return (
     <div className="flex h-full min-h-0 flex-col">
       {/* Cabeçalho: chip + título editável */}
-      <div className="shrink-0 border-b px-10 pt-8 pb-5">
+      <div className="shrink-0 border-b px-4 pt-3 pb-4 md:px-10 md:pt-8 md:pb-5">
         <DialogTitle className="sr-only">
           {readOnly ? "Detalhes da tarefa" : tarefa ? "Editar tarefa" : "Nova tarefa"}
         </DialogTitle>
@@ -262,7 +262,7 @@ function TarefaFormBody({
         primaryLabel="Detalhes"
         secondaryLabel="Atividades"
         primary={
-          <div className="h-full space-y-7 overflow-y-auto px-8 py-6">
+          <div className="h-full space-y-7 overflow-y-auto px-4 py-4 md:px-8 md:py-6">
             {/* Propriedades em grade 2 colunas */}
             <div className="grid max-w-3xl grid-cols-1 gap-x-10 gap-y-4 md:grid-cols-2">
               <Prop icon={Circle} label="Status">
@@ -427,7 +427,7 @@ function TarefaFormBody({
       />
 
       {/* Rodapé */}
-      <DialogFooter className="shrink-0 border-t px-8 py-3">
+      <DialogFooter className="shrink-0 border-t px-4 py-3 md:px-8">
         <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
           {readOnly ? "Fechar" : "Cancelar"}
         </Button>
