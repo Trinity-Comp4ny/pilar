@@ -50,6 +50,9 @@ vi.mock("../components/LancamentosTable", () => ({
       <button type="button" onClick={() => onFiltersChange({ ...filters, search: "aluguel" })}>
         tabela-buscar
       </button>
+      <button type="button" onClick={() => onFiltersChange({ ...filters, tipo: "despesa" })}>
+        tabela-a-pagar
+      </button>
       <button type="button" onClick={onMutated}>
         tabela-mutou
       </button>
@@ -113,8 +116,9 @@ describe("Lancamentos: KPIs", () => {
   it("com o resumo carregado mostra os quatro KPIs", () => {
     renderTab();
     expect(screen.getByText("Recebido")).toBeInTheDocument();
-    // "A pagar" aparece no seletor de visão e no KPI.
-    expect(screen.getAllByText("A pagar")).toHaveLength(2);
+    // Só no KPI: o seletor de visão que repetia o da barra de filtros saiu.
+    expect(screen.getAllByText("A pagar")).toHaveLength(1);
+    expect(screen.queryByRole("group", { name: "O que ver" })).not.toBeInTheDocument();
     expect(screen.queryByText("Não foi possível carregar os dados financeiros")).not.toBeInTheDocument();
   });
 
@@ -178,6 +182,14 @@ describe("Lancamentos: recorte, filtros na URL e recarga", () => {
       expect(screen.getByTestId("url").textContent).toContain(`ft=${esperado.tipo}`);
       cleanup();
     }
+  });
+
+  it("trocar o tipo pela barra segue a regra das visões: abre em aberto e lembra a escolha", async () => {
+    renderTab();
+    await userEvent.setup().click(screen.getByRole("button", { name: "tabela-a-pagar" }));
+    expect(screen.getByTestId("filtros")).toHaveTextContent('"tipo":"despesa","status":"pendentes"');
+    expect(localStorage.getItem("pilar:financeiro:lancamentos:visao")).toBe("despesa");
+    localStorage.removeItem("pilar:financeiro:lancamentos:visao");
   });
 
   it("atrasados aparecem no KPI 'A pagar'", () => {

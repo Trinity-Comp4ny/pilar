@@ -60,9 +60,10 @@ const QUICK_ICON: Record<QuickFilter, typeof CircleDashed> = {
   pagos: CheckCircle2,
 };
 const TIPO_OPCOES: ViewOption<LancamentosFilters["tipo"]>[] = [
-  { value: "todos", label: "Todos", icon: LayoutList },
-  { value: "receita", label: "Receitas", icon: ArrowUpCircle },
-  { value: "despesa", label: "Despesas", icon: ArrowDownCircle },
+  // Mesmos nomes das visões da SPEC 150: este é o único seletor de tipo da tela.
+  { value: "todos", label: "Tudo", icon: LayoutList },
+  { value: "receita", label: "A receber", icon: ArrowUpCircle },
+  { value: "despesa", label: "A pagar", icon: ArrowDownCircle },
 ];
 const QUICK_ORDER: QuickFilter[] = ["em-aberto", "atrasados", "vence-semana", "pagos"];
 
