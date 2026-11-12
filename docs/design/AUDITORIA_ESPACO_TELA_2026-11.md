@@ -391,6 +391,24 @@ botão só com ícone). Os achados reais vieram da revisão das capturas:
 
 Antes e depois em [`antes-depois/auditoria-espaco-p6/`](antes-depois/auditoria-espaco-p6/README.md).
 
+### P7: celular, formulários e Configurações (12/11) — feito
+
+- **Listas no celular** (Clientes, Equipe, Fornecedores, Propostas) viram cards pelo modo `mobile`
+  da `DataTable`, sem card em volta.
+- **Linha de atalhos do módulo** recolhe ao rolar para baixo no celular (`useRecolherAoRolar`).
+- **Formulários e Configurações:** varredura de 10 formulários de criação e das 7 seções, no
+  desktop e no celular. Nenhum fundo preto sobrou. O anel de foco passou do preto para o verde
+  escuro do sistema (`green-700`), e as Configurações abrem com foco no diálogo, não em "Conta".
+- **Defeito encontrado na varredura:** `projetos.exemplo` sem GRANT de leitura. O checklist de
+  primeiros passos falhava com 403 e mostrava "Ocorreu um erro" no Início
+  (`20261226000000_projetos_grant_coluna_exemplo.sql`).
+- **Portal do Cliente:** o login usa uma função do servidor que não roda no ambiente local da
+  sessão. A revisão foi pelo código; o portal usa os mesmos componentes base e herda o verde e o
+  anel de foco.
+
+Antes e depois em [`antes-depois/celular-listas-e-cabecalho/`](antes-depois/celular-listas-e-cabecalho/README.md)
+e [`antes-depois/foco-verde/`](antes-depois/foco-verde/README.md).
+
 ## 4. Regras propostas para o design system
 
 Para não voltar a acontecer (entrar em `PILAR_DESIGN_SYSTEM.md` após aprovação):
