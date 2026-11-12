@@ -63,6 +63,10 @@ jobs:
           # Em PR o checkout é o merge commit (refs/pull/N/merge): HEAD^1 é a ponta da
           # base, então HEAD^1..HEAD é exatamente o que o PR muda. Profundidade 2 basta.
           fetch-depth: 2
+          # Só precisa do scripts/ci-escopo.sh e dos nomes dos arquivos do diff (árvore, não
+          # conteúdo): este job libera todos os outros, então cada segundo aqui conta.
+          sparse-checkout: scripts
+          filter: blob:none
       # CI seletivo: cada grupo de checks roda só se o PR mexe no que ele verifica
       # (regras e o porquê de cada uma em scripts/ci-escopo.sh). Arquivo desconhecido
       # liga tudo. Em 10/11, 52% dos commits só mexiam em teste unitário e não
@@ -128,6 +132,18 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Sem a mídia de docs/ (~390 MB de vídeos e prints, que nenhum job lê): o
+          # checkout baixa só o resto. `filter: blob:none` deixa o clone parcial buscar
+          # apenas os arquivos que ficam no working tree (checkout de 13 a 30 s por job).
+          sparse-checkout: |
+            /*
+            !/docs/marketing/conteudo/
+            !/docs/marketing/video/
+            !/docs/marketing/video-v2/
+            !/docs/design/antes-depois/
+          sparse-checkout-cone-mode: false
+          filter: blob:none
       - uses: ./.github/actions/setup-deps
       - run: npm run lint
       - name: Prettier (formatação)
@@ -143,6 +159,18 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Sem a mídia de docs/ (~390 MB de vídeos e prints, que nenhum job lê): o
+          # checkout baixa só o resto. `filter: blob:none` deixa o clone parcial buscar
+          # apenas os arquivos que ficam no working tree (checkout de 13 a 30 s por job).
+          sparse-checkout: |
+            /*
+            !/docs/marketing/conteudo/
+            !/docs/marketing/video/
+            !/docs/marketing/video-v2/
+            !/docs/design/antes-depois/
+          sparse-checkout-cone-mode: false
+          filter: blob:none
       - uses: ./.github/actions/setup-deps
       - name: Typecheck do app
         run: npx tsc --noEmit -p tsconfig.app.json
@@ -165,6 +193,18 @@ jobs:
         shard: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Sem a mídia de docs/ (~390 MB de vídeos e prints, que nenhum job lê): o
+          # checkout baixa só o resto. `filter: blob:none` deixa o clone parcial buscar
+          # apenas os arquivos que ficam no working tree (checkout de 13 a 30 s por job).
+          sparse-checkout: |
+            /*
+            !/docs/marketing/conteudo/
+            !/docs/marketing/video/
+            !/docs/marketing/video-v2/
+            !/docs/design/antes-depois/
+          sparse-checkout-cone-mode: false
+          filter: blob:none
       - uses: ./.github/actions/setup-deps
       - name: Vitest (shard ${{ matrix.shard }}/8, com cobertura)
         # O relatório blob carrega resultado e cobertura do shard; o job `coverage`
@@ -196,6 +236,18 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Sem a mídia de docs/ (~390 MB de vídeos e prints, que nenhum job lê): o
+          # checkout baixa só o resto. `filter: blob:none` deixa o clone parcial buscar
+          # apenas os arquivos que ficam no working tree (checkout de 13 a 30 s por job).
+          sparse-checkout: |
+            /*
+            !/docs/marketing/conteudo/
+            !/docs/marketing/video/
+            !/docs/marketing/video-v2/
+            !/docs/design/antes-depois/
+          sparse-checkout-cone-mode: false
+          filter: blob:none
       - uses: ./.github/actions/setup-deps
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -222,6 +274,18 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Sem a mídia de docs/ (~390 MB de vídeos e prints, que nenhum job lê): o
+          # checkout baixa só o resto. `filter: blob:none` deixa o clone parcial buscar
+          # apenas os arquivos que ficam no working tree (checkout de 13 a 30 s por job).
+          sparse-checkout: |
+            /*
+            !/docs/marketing/conteudo/
+            !/docs/marketing/video/
+            !/docs/marketing/video-v2/
+            !/docs/design/antes-depois/
+          sparse-checkout-cone-mode: false
+          filter: blob:none
       - uses: ./.github/actions/setup-deps
       - name: Código morto não cresce (Knip)
         # Catraca: knip-baseline.json guarda a contagem de 07/10 e só pode cair.
@@ -240,6 +304,18 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Sem a mídia de docs/ (~390 MB de vídeos e prints, que nenhum job lê): o
+          # checkout baixa só o resto. `filter: blob:none` deixa o clone parcial buscar
+          # apenas os arquivos que ficam no working tree (checkout de 13 a 30 s por job).
+          sparse-checkout: |
+            /*
+            !/docs/marketing/conteudo/
+            !/docs/marketing/video/
+            !/docs/marketing/video-v2/
+            !/docs/design/antes-depois/
+          sparse-checkout-cone-mode: false
+          filter: blob:none
       # `npm audit` lê só o package-lock.json: não precisa de node_modules (antes o
       # job gastava ~50 s de `npm ci` para um comando de 1 s).
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -313,6 +389,17 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          # Sem a mídia de docs/ (~390 MB de vídeos e prints, que nenhum job lê): o
+          # checkout baixa só o resto. `filter: blob:none` deixa o clone parcial buscar
+          # apenas os arquivos que ficam no working tree (checkout de 13 a 30 s por job).
+          sparse-checkout: |
+            /*
+            !/docs/marketing/conteudo/
+            !/docs/marketing/video/
+            !/docs/marketing/video-v2/
+            !/docs/design/antes-depois/
+          sparse-checkout-cone-mode: false
+          filter: blob:none
           # O guard compara com a base do PR, então precisa do histórico.
           fetch-depth: 0
       - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3
@@ -471,6 +558,18 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Sem a mídia de docs/ (~390 MB de vídeos e prints, que nenhum job lê): o
+          # checkout baixa só o resto. `filter: blob:none` deixa o clone parcial buscar
+          # apenas os arquivos que ficam no working tree (checkout de 13 a 30 s por job).
+          sparse-checkout: |
+            /*
+            !/docs/marketing/conteudo/
+            !/docs/marketing/video/
+            !/docs/marketing/video-v2/
+            !/docs/design/antes-depois/
+          sparse-checkout-cone-mode: false
+          filter: blob:none
       - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2
         with:
           deno-version: v1.45.x # acompanha o runtime que o Supabase executa hoje
@@ -524,6 +623,18 @@ jobs:
       CI: "true"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Sem a mídia de docs/ (~390 MB de vídeos e prints, que nenhum job lê): o
+          # checkout baixa só o resto. `filter: blob:none` deixa o clone parcial buscar
+          # apenas os arquivos que ficam no working tree (checkout de 13 a 30 s por job).
+          sparse-checkout: |
+            /*
+            !/docs/marketing/conteudo/
+            !/docs/marketing/video/
+            !/docs/marketing/video-v2/
+            !/docs/design/antes-depois/
+          sparse-checkout-cone-mode: false
+          filter: blob:none
       - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
@@ -685,6 +796,18 @@ jobs:
       AUTH_HOOK_SEND_EMAIL_SECRET: ${{ secrets.AUTH_HOOK_SEND_EMAIL_SECRET }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Sem a mídia de docs/ (~390 MB de vídeos e prints, que nenhum job lê): o
+          # checkout baixa só o resto. `filter: blob:none` deixa o clone parcial buscar
+          # apenas os arquivos que ficam no working tree (checkout de 13 a 30 s por job).
+          sparse-checkout: |
+            /*
+            !/docs/marketing/conteudo/
+            !/docs/marketing/video/
+            !/docs/marketing/video-v2/
+            !/docs/design/antes-depois/
+          sparse-checkout-cone-mode: false
+          filter: blob:none
       - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
@@ -746,12 +869,27 @@ jobs:
   # sentido bloquear merge com ele. Falha aqui é sinal para investigar staging, não para
   # impedir uma entrada.
   e2e:
-    name: E2E → staging (Playwright)
+    name: E2E → staging (${{ matrix.suite.nome }})
     needs: [deploy-staging]
     if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     environment: Staging
+    # As três suítes eram passos em sequência de um job só (42 s + 137 s + a11y, ~250 s
+    # no total). Em paralelo, cada uma paga o próprio build (~50 s de preparo), e o tempo
+    # total cai para o da mais lenta (autenticados). Nenhuma depende do resultado da outra:
+    # antes, `!cancelled()` já fazia as seguintes rodarem mesmo com a anterior falhando.
+    # Por que isolar: de set. a out./2026 um único spec vermelho (a11y da landing) fez os
+    # logados serem PULADOS em todo push, e dois specs apodreceram sem ninguém ver.
+    # Marketing mede a landing EM PRODUÇÃO (www.pilarsoft.com.br), não depende deste commit;
+    # é o único lugar que a mede no ar (ver e2e/marketing-a11y.spec.ts).
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - { id: sem-login, nome: "sem login", projeto: chromium }
+          - { id: autenticados, nome: "autenticados", projeto: authenticated }
+          - { id: marketing, nome: "acessibilidade do marketing", projeto: marketing }
     env:
       CI: "true"
       # O Playwright builda o front e sobe `npm run preview` local (ver
@@ -768,6 +906,18 @@ jobs:
       E2E_PORTAL_PASSWORD: ${{ secrets.E2E_PORTAL_PASSWORD }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Sem a mídia de docs/ (~390 MB de vídeos e prints, que nenhum job lê): o
+          # checkout baixa só o resto. `filter: blob:none` deixa o clone parcial buscar
+          # apenas os arquivos que ficam no working tree (checkout de 13 a 30 s por job).
+          sparse-checkout: |
+            /*
+            !/docs/marketing/conteudo/
+            !/docs/marketing/video/
+            !/docs/marketing/video-v2/
+            !/docs/design/antes-depois/
+          sparse-checkout-cone-mode: false
+          filter: blob:none
       # Node 22: e2e/auth.setup.ts cria um client Supabase, e o construtor sempre
       # inicializa o RealtimeClient, que exige WebSocket nativo (Node 22+). Achado real,
       # 17/08: os specs autenticados quebravam aqui antes mesmo do login.
@@ -780,7 +930,7 @@ jobs:
       # A empresa do usuário de E2E fica sempre ativa, sem depender do relógio do
       # trial (venceu em 31/08 e bloqueou o app por um mês). Mesmo secret do deploy.
       - name: Garantir fixture do usuário de E2E
-        if: env.E2E_TEST_EMAIL != ''
+        if: ${{ matrix.suite.id == 'autenticados' && env.E2E_TEST_EMAIL != '' }}
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f scripts/e2e-staging-fixture.sql
@@ -788,41 +938,20 @@ jobs:
       # Specs que não dependem de login (landing, login-validation, portal-cliente,
       # security...). O de acessibilidade do site de marketing saiu deste passo (ver
       # o último passo abaixo).
-      - name: Specs sem autenticação
-        run: npx playwright test --project=chromium
+      - name: Specs (${{ matrix.suite.nome }})
+        # Autenticados precisam do usuário de teste: sem ele, avisa e pula (como antes).
+        if: ${{ matrix.suite.id != 'autenticados' || env.E2E_TEST_EMAIL != '' }}
+        run: npx playwright test --project=${{ matrix.suite.projeto }}
         env:
-          # Um relatório por passo: com a pasta padrão, cada `playwright test`
-          # apagava o relatório do anterior e o artifact só tinha o último passo.
-          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/sem-login
-
-      # `!cancelled()`: os specs logados rodam mesmo se um spec sem login falhar.
-      # Sem isso, de set. a out./2026 um único spec vermelho (a11y da landing) fez
-      # este passo ser PULADO em todo push, e dois specs logados apodreceram sem
-      # ninguém ver (botão "Nova Receita" que deixou de existir; limite de trial).
-      - name: Specs autenticados
-        if: ${{ !cancelled() && env.E2E_TEST_EMAIL != '' }}
-        run: npx playwright test --project=authenticated
-        env:
-          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/autenticados
+          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/${{ matrix.suite.id }}
       - name: Aviso quando o usuário de teste não está provisionado
-        if: env.E2E_TEST_EMAIL == ''
+        if: ${{ matrix.suite.id == 'autenticados' && env.E2E_TEST_EMAIL == '' }}
         run: echo "::warning::E2E_TEST_EMAIL/E2E_TEST_PASSWORD ausentes no Environment Staging, então os specs autenticados foram pulados. Crie o usuário de teste em staging e adicione os secrets."
-
-      # Acessibilidade do site de marketing EM PRODUÇÃO (www.pilarsoft.com.br). Não
-      # depende deste commit, mas é o único lugar que mede a landing no ar. Ficou
-      # informativo de set. a out./2026 por uma falha que era do próprio teste (a
-      # emulação de movimento reduzido nunca ligava; ver e2e/marketing-a11y.spec.ts).
-      # Corrigido, volta a reprovar o job.
-      - name: Acessibilidade do site de marketing
-        if: ${{ !cancelled() }}
-        run: npx playwright test --project=marketing
-        env:
-          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report/marketing
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
-          name: playwright-report-${{ github.run_id }}
+          name: playwright-report-${{ matrix.suite.id }}-${{ github.run_id }}
           path: playwright-report/
           retention-days: 7
           if-no-files-found: ignore
