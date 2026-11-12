@@ -17,7 +17,7 @@ Deno.env.set("RESEND_FROM", "Pilar <no-reply@test.dev>");
 Deno.env.delete("RESEND_REPLY_TO");
 
 const { escapeHtml, html, htmlToText, multiline, raw } = await import("./html.ts");
-const { fromAddress, resolveFrom, resolveReplyTo, sendEmail } = await import("./client.ts");
+const { chaveIdempotencia, fromAddress, resolveFrom, resolveReplyTo, sendEmail } = await import("./client.ts");
 const T = await import("./index.ts");
 const N = await import("./templates/notificacoes.ts");
 
@@ -529,4 +529,14 @@ Deno.test("cobrança com abertura própria escapa o texto e usa o assunto da eta
   assert(!t.html.includes("<script>"), "script não pode passar");
   assertStringIncludes(t.html, "&lt;script&gt;");
   assertStringIncludes(t.html, "Segunda linha");
+});
+
+Deno.test("chaveIdempotencia separa staging de produção (mesma conta do Resend)", () => {
+  const chave = "ops-resumo-2026-11-12-a@b.c";
+  const prod = chaveIdempotencia(chave, "https://vepnsonbnsimqcsfcagm.supabase.co");
+  const staging = chaveIdempotencia(chave, "https://rizaklgstyfrwgmdsldf.supabase.co");
+  assertEquals(prod, `vepnsonbnsimqcsfcagm:${chave}`);
+  assert(prod !== staging);
+  assertEquals(chaveIdempotencia(chave, ""), `local:${chave}`);
+  assertEquals(chaveIdempotencia("x".repeat(300), "https://abc.supabase.co").length, 256);
 });
