@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useRef } from "react";
+import { Suspense, lazy, useRef } from "react";
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -25,9 +25,6 @@ const AtalhosTecladoDialog = lazy(() =>
 const OnboardingChecklist = lazy(() =>
   import("@/components/OnboardingChecklist").then((m) => ({ default: m.OnboardingChecklist }))
 );
-// Lazy: faixa de incidente, manutenção e comunicado (SPEC 153/157). Fora do boot: a faixa chega
-// quando a consulta chega, e o boot não carrega o formatador de datas nem os ícones dela.
-const FaixaAvisos = lazy(() => import("@/components/FaixaAvisos").then((m) => ({ default: m.FaixaAvisos })));
 // Lazy: modal "O que mudou" (SPEC 152). Só monta conteúdo quando há mudança de fluxo nova.
 const OQueMudou = lazy(() => import("@/components/novidades/OQueMudou").then((m) => ({ default: m.OQueMudou })));
 // Lazy: agente da ajuda no canto (SPEC 155). Traz o markdown dos artigos; fora do bundle de entrada.
@@ -40,11 +37,10 @@ const ComunicadoModal = lazy(() =>
 const RegistroDispositivo = lazy(() =>
   import("@/components/RegistroDispositivo").then((m) => ({ default: m.RegistroDispositivo }))
 );
+// Lazy: faixas do topo (Termos e avisos, SPEC 153/157) e o bloco fixo que mede a altura delas.
+// Fora do bundle de entrada: o teto do boot é apertado (scripts/check-bundle-size.mjs).
+const FaixasDoTopo = lazy(() => import("@/components/FaixasDoTopo").then((m) => ({ default: m.FaixasDoTopo })));
 // Lazy: NPS no Início (SPEC 156).
-// Lazy: faixa de reaceite dos Termos (só admin vê). Depois do skip link para não roubar o 1º Tab.
-const AceiteTermosBanner = lazy(() =>
-  import("@/components/AceiteTermosBanner").then((m) => ({ default: m.AceiteTermosBanner }))
-);
 const NpsCard = lazy(() => import("@/components/pesquisas/NpsCard").then((m) => ({ default: m.NpsCard })));
 const OnboardingTourController = lazy(() =>
   import("@/components/onboarding/OnboardingTourController").then((m) => ({
@@ -75,45 +71,6 @@ function DevErrorTrigger() {
   return null;
 }
 
-/**
- * Faixas do topo: reaceite dos Termos (só admin) e incidente/manutenção (SPEC 153/157).
- * Ficam num bloco fixo acima do conteúdo, e a altura dele vira `--faixas-h`, que o `<main>`
- * e o `PageLayout` usam para descer. Antes elas ficavam no fluxo do `<main>`, e o `PageLayout`
- * (camada fixa e opaca) as cobria em toda tela que o usa: o aviso de incidente não aparecia
- * (auditoria de espaço, 2026-11).
- */
-function FaixasDoTopo({ left }: { left: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const raiz = document.documentElement;
-    const medir = () => raiz.style.setProperty("--faixas-h", `${el.offsetHeight}px`);
-    medir();
-    // jsdom (testes) não tem ResizeObserver: mede uma vez e segue.
-    if (typeof ResizeObserver === "undefined") return () => raiz.style.removeProperty("--faixas-h");
-    const obs = new ResizeObserver(medir);
-    obs.observe(el);
-    return () => {
-      obs.disconnect();
-      raiz.style.removeProperty("--faixas-h");
-    };
-  }, []);
-
-  return (
-    <div ref={ref} className="fixed right-0 top-0 z-50" style={{ left }}>
-      <Suspense fallback={null}>
-        <AceiteTermosBanner modo="faixa" />
-      </Suspense>
-      {/* Incidente e manutenção declarados no Ultra admin (SPEC 153). */}
-      <Suspense fallback={null}>
-        <FaixaAvisos />
-      </Suspense>
-    </div>
-  );
-}
-
 function LayoutContent() {
   const { state, isMobile } = useSidebar();
   const mainRef = useRef<HTMLElement>(null);
@@ -127,7 +84,9 @@ function LayoutContent() {
       >
         Pular para conteúdo principal
       </a>
-      <FaixasDoTopo left={sidebarOffset(state, isMobile)} />
+      <Suspense fallback={null}>
+        <FaixasDoTopo left={sidebarOffset(state, isMobile)} />
+      </Suspense>
       <AppSidebar />
       <div style={{ marginLeft: sidebarOffset(state, isMobile), paddingTop: "var(--faixas-h, 0px)" }}>
         <main
