@@ -44,7 +44,9 @@ const BUDGETS = {
   // espaço (PR #822) soma ~0,3 kB gzip ao boot: o painel flutuante da sidebar em tela estreita
   // (abre por cima, fecha com clique fora/Esc) e o slot de toolbar das páginas. O bloco das
   // faixas do topo (FaixasDoTopo) ficou lazy, o que recuperou 0,14 kB.
-  entry: 128 * 1024,
+  // 2026-11-12: 129 kB (era 128). O convite de instalar o app (PR #834) soma ~0,5 kB gzip ao
+  // chunk de entrada (128,5): captura do `beforeinstallprompt` e ManifestDoApp, que rodam no boot.
+  entry: 129 * 1024,
   // Tudo que o navegador baixa antes da primeira tela: a entrada mais os chunks que o
   // index.html pré-carrega (modulepreload) e o CSS. O limite só da entrada não via o
   // vendor-pdf e o vendor-charts sendo pré-carregados em toda página (~860 kB brutos),
