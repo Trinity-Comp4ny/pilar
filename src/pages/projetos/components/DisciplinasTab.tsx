@@ -1,3 +1,5 @@
+import { createPortal } from "react-dom";
+import { filterTriggerClass } from "@/components/filters/filterStyles";
 import { useState, useMemo } from "react";
 import { DisciplinasKPIs } from "./DisciplinasKPIs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -137,6 +139,8 @@ interface DisciplinasTabProps {
   canEdit?: boolean;
   onChanged?: () => void;
   isLoading?: boolean;
+  /** Onde pôr os filtros (barra da página). Sem isto, ficam numa linha acima da lista. */
+  toolbarSlot?: HTMLElement | null;
 }
 
 const VISAO_OPCOES: ViewOption<"cards" | "table">[] = [
@@ -151,6 +155,7 @@ export function DisciplinasTab({
   canEdit = false,
   onChanged,
   isLoading,
+  toolbarSlot,
 }: DisciplinasTabProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
@@ -388,66 +393,76 @@ export function DisciplinasTab({
     },
   ];
 
+  const filtros = (
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="relative w-[220px] shrink-0">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar disciplina..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="h-9 rounded-full pl-9"
+        />
+      </div>
+
+      <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <SelectTrigger
+          className={filterTriggerClass(statusFilter !== "todos", "w-auto")}
+          aria-label="Filtrar por status"
+        >
+          <SelectValue placeholder="Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="todos">Todos os status</SelectItem>
+          <SelectItem value="Não Iniciado">Não Iniciado</SelectItem>
+          <SelectItem value="Em Andamento">Em Andamento</SelectItem>
+          <SelectItem value="Concluído">Concluído</SelectItem>
+          <SelectItem value="Pendente">Pendente</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select value={projetoFilter} onValueChange={setProjetoFilter}>
+        <SelectTrigger
+          className={filterTriggerClass(projetoFilter !== "todos", "w-auto")}
+          aria-label="Filtrar por projeto"
+        >
+          <SelectValue placeholder="Projeto" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="todos">Todos os projetos</SelectItem>
+          {projetosUnicos.map((p) => (
+            <SelectItem key={p.id} value={p.id}>
+              {p.nome}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs"
+          onClick={expandedDisciplinas.size > 0 ? collapseAll : expandAll}
+        >
+          {expandedDisciplinas.size > 0 ? "Recolher" : "Expandir"} tudo
+        </Button>
+        <ViewSwitcher
+          options={VISAO_OPCOES}
+          value={viewMode}
+          onChange={setViewMode}
+          ariaLabel="Visualização das disciplinas"
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-4">
       <DisciplinasKPIs metrics={metrics} />
 
-      {/* Filtros */}
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar disciplina..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 h-9"
-          />
-        </div>
-
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px] h-9" aria-label="Filtrar por status">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos os status</SelectItem>
-            <SelectItem value="Não Iniciado">Não Iniciado</SelectItem>
-            <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-            <SelectItem value="Concluído">Concluído</SelectItem>
-            <SelectItem value="Pendente">Pendente</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={projetoFilter} onValueChange={setProjetoFilter}>
-          <SelectTrigger className="w-[220px] h-9" aria-label="Filtrar por projeto">
-            <SelectValue placeholder="Projeto" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos os projetos</SelectItem>
-            {projetosUnicos.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.nome}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <div className="flex items-center gap-1 ml-auto">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs"
-            onClick={expandedDisciplinas.size > 0 ? collapseAll : expandAll}
-          >
-            {expandedDisciplinas.size > 0 ? "Recolher" : "Expandir"} tudo
-          </Button>
-          <ViewSwitcher
-            options={VISAO_OPCOES}
-            value={viewMode}
-            onChange={setViewMode}
-            ariaLabel="Visualização das disciplinas"
-          />
-        </div>
-      </div>
+      {/* Filtros: na barra da página quando há onde pôr (auditoria de espaço, 2026-11). */}
+      {toolbarSlot ? createPortal(filtros, toolbarSlot) : filtros}
 
       {/* Conteúdo */}
       {filtered.length === 0 ? (
