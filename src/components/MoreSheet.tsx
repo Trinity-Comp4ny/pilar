@@ -7,6 +7,7 @@ import {
   Megaphone,
   MessageSquare,
   Settings,
+  Smartphone,
   ShieldCheck,
   Sparkles,
   Zap,
@@ -25,6 +26,7 @@ import { usePendenciasAgentes } from "@/hooks/useEscopos";
 import { useNovidades } from "@/hooks/useNovidades";
 import { abrirAgenteAjuda } from "@/lib/agenteAjudaEvento";
 import { useValoresOcultos } from "@/contexts/ValoresOcultosContext";
+import { useInstalarApp } from "@/hooks/useInstalarApp";
 import { cn } from "@/lib/utils";
 
 interface MoreSheetProps {
@@ -97,6 +99,7 @@ export function MoreSheet({ open, onOpenChange }: MoreSheetProps) {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const { data: pendenciasAgentes } = usePendenciasAgentes();
   const { pendentes: novidades } = useNovidades();
+  const instalarApp = useInstalarApp("escritorio", "menu");
 
   const userName = profile
     ? [profile.first_name, profile.last_name].filter(Boolean).join(" ").trim() || user?.email || "Usuário"
@@ -159,6 +162,13 @@ export function MoreSheet({ open, onOpenChange }: MoreSheetProps) {
             onClick={closeAnd(() => navigate("/novidades"))}
           />
           <MoreSheetRow icon={MessageSquare} label="Feedback" onClick={closeAnd(() => setFeedbackOpen(true))} />
+          {instalarApp.disponivel && (
+            <MoreSheetRow
+              icon={Smartphone}
+              label="Instalar app"
+              onClick={closeAnd(() => void instalarApp.instalar())}
+            />
+          )}
           <MoreSheetRow
             icon={valoresOcultos ? Eye : EyeOff}
             label={valoresOcultos ? "Mostrar valores financeiros" : "Ocultar valores financeiros"}
@@ -184,6 +194,7 @@ export function MoreSheet({ open, onOpenChange }: MoreSheetProps) {
         </SheetContent>
       </Sheet>
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+      {instalarApp.dialogo}
     </>
   );
 }
