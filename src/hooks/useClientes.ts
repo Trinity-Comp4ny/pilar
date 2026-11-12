@@ -303,8 +303,11 @@ export const useClientes = (options: UseClientesOptions = {}) => {
         .eq("ativo", true);
       if (error) throw error;
       const map = new Map<string, PortalStatus>();
+      // Vários acessos por cliente (SPEC 164): basta um ativo para o cliente estar "ativo".
       for (const row of data ?? []) {
-        map.set(row.cliente_id as string, row.senha_hash ? "ativo" : "convite_pendente");
+        const id = row.cliente_id as string;
+        if (map.get(id) === "ativo") continue;
+        map.set(id, row.senha_hash ? "ativo" : "convite_pendente");
       }
       return map;
     },
@@ -330,6 +333,7 @@ export const useClientes = (options: UseClientesOptions = {}) => {
       .select("id")
       .eq("cliente_id", clienteId)
       .eq("ativo", true)
+      .limit(1)
       .maybeSingle();
     if (error) throw error;
 
@@ -337,9 +341,9 @@ export const useClientes = (options: UseClientesOptions = {}) => {
   };
 
   const invitePortalMutation = useMutation({
-    mutationFn: async ({ clienteId, email }: { clienteId: string; email: string }) => {
+    mutationFn: async ({ clienteId, email, nome }: { clienteId: string; email: string; nome?: string }) => {
       const { data, error: fnError } = await supabase.functions.invoke("invite-cliente-portal", {
-        body: { cliente_id: clienteId, email },
+        body: { cliente_id: clienteId, email, ...(nome ? { nome } : {}) },
       });
 
       if (fnError) {
@@ -356,9 +360,18 @@ export const useClientes = (options: UseClientesOptions = {}) => {
   });
 
   const resetPortalPasswordMutation = useMutation({
-    mutationFn: async ({ clienteId, nomeCliente }: { clienteId: string; nomeCliente: string }) => {
+    mutationFn: async ({
+      clienteId,
+      nomeCliente,
+      accountId,
+    }: {
+      clienteId: string;
+      nomeCliente: string;
+      /** Qual acesso do cliente (vários por cliente, SPEC 164). */
+      accountId?: string;
+    }) => {
       const { data, error: fnError } = await supabase.functions.invoke("reset-cliente-portal-password", {
-        body: { cliente_id: clienteId, nome_cliente: nomeCliente },
+        body: { cliente_id: clienteId, nome_cliente: nomeCliente, ...(accountId ? { account_id: accountId } : {}) },
       });
 
       if (fnError) {
@@ -381,6 +394,8 @@ export const useClientes = (options: UseClientesOptions = {}) => {
       .from("cliente_portal_accounts")
       .select("email")
       .eq("cliente_id", clienteId)
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle();
     if (error) throw error;
 

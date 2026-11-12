@@ -46,7 +46,13 @@ describe("useClienteDetalhe", () => {
       error: null,
     });
     sb.resultado("propostas.select", { data: [{ id: "pr1", titulo: "Proposta A" }], error: null });
-    sb.resultado("cliente_portal_accounts.select", { data: { id: "acc", email: "c@x.com" }, error: null });
+    sb.resultado("cliente_portal_accounts.select", {
+      data: [
+        { id: "acc", email: "c@x.com" },
+        { id: "acc2", email: "d@x.com" },
+      ],
+      error: null,
+    });
 
     const result = setup();
     await waitFor(() => expect(result.current.isLoadingProjetos).toBe(false));
@@ -62,7 +68,7 @@ describe("useClienteDetalhe", () => {
     expect(sb.de("projeto_disciplinas", "in")[0].args).toEqual(["projeto_id", ["p1", "p2"]]);
     await waitFor(() => expect(result.current.propostas).toHaveLength(1));
     expect(sb.de("propostas", "is")[0].args).toEqual(["deleted_at", null]);
-    expect(result.current.portalStatus).toEqual({ exists: true, email: "c@x.com" });
+    expect(result.current.portalStatus).toEqual({ exists: true, email: "c@x.com", emails: ["c@x.com", "d@x.com"] });
     expect(sb.de("cliente_portal_accounts", "eq").map((c) => c.args)).toEqual([
       ["cliente_id", "cli-1"],
       ["ativo", true],
@@ -81,7 +87,7 @@ describe("useClienteDetalhe", () => {
     expect(result.current.cliente).toBeNull();
     expect(result.current.projetos).toEqual([]);
     expect(result.current.propostas).toEqual([]);
-    expect(result.current.portalStatus).toEqual({ exists: false, email: null });
+    expect(result.current.portalStatus).toEqual({ exists: false, email: null, emails: [] });
     expect(sb.de("projeto_disciplinas", "select")).toHaveLength(0);
   });
 

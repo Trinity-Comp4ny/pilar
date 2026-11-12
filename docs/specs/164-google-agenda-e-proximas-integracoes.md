@@ -61,13 +61,19 @@ mão, o mesmo raciocínio do botão de conectar o Drive). Acesso revogado no Goo
 além da principal, agenda da equipe (ver a do colega), Outlook, aviso por push no celular (depende do app/PWA com
 push) e aviso por WhatsApp.
 
-## Fase 2: convite do portal do cliente
+## Fase 2: convite do portal do cliente (como ficou)
 
-- O campo de e-mail do convite nasce com o e-mail do cadastro do cliente; o admin confirma ou troca antes de enviar.
-- Mais de um e-mail por cliente (o cliente quer dar acesso à esposa, ao sócio): o admin adiciona e revoga cada
-  acesso. Cada pessoa recebe o próprio convite por e-mail e cria a própria senha (fluxo que já existe).
-- Hoje `invite-cliente-portal` recusa um segundo acesso ("Este cliente já possui acesso"); muda para um acesso por
-  e-mail dentro do mesmo cliente.
+- **E-mail puxado do cadastro.** O primeiro convite já vem com o e-mail do cliente, com o aviso "Puxado do cadastro
+  do cliente. Confira antes de enviar."; o admin confirma ou troca. Cliente sem e-mail: o que for digitado fica no
+  cadastro.
+- **Vários acessos por cliente.** Cada e-mail é um acesso próprio do mesmo cliente (a esposa, o sócio), com nome
+  opcional ("Maria, esposa"). Cada pessoa recebe o próprio convite e cria a própria senha (fluxo que já existia).
+  Saiu a `UNIQUE (cliente_id, empresa_id)` de `cliente_portal_accounts`; continua `UNIQUE (empresa_id, email)`: no
+  escritório um e-mail é de um cliente só (o convite avisa se o e-mail já acessa outro cliente).
+- **Gerenciar acessos.** O diálogo lista quem entra (ativo ou convite pendente, último acesso) e, por pessoa,
+  reenvia o convite ou manda novo acesso (`reset-cliente-portal-password` recebe `account_id`) e revoga só aquele
+  acesso. Na página do cliente, o cartão do portal mostra quantas pessoas e quais e-mails, com "Gerenciar acessos".
+- O portal não muda: tudo vem da sessão (conta → cliente), então cada pessoa vê os projetos do cliente.
 
 ## Fase 3: arquivos sem Drive conectado
 

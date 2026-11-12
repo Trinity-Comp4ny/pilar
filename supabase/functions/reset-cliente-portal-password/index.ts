@@ -38,7 +38,7 @@ serve(
 
       const entrada = lerEntrada(await lerJson(req));
       if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
-      const { cliente_id, nome_cliente } = entrada.data;
+      const { cliente_id, account_id, nome_cliente } = entrada.data;
 
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
@@ -54,14 +54,18 @@ serve(
       });
       if (limite) return limite;
 
-      const { data: account, error: accountError } = await supabaseAdmin
+      let consulta = supabaseAdmin
         .from("cliente_portal_accounts")
-        .select("id, email")
+        .select("id, email, nome")
         .eq("cliente_id", cliente_id)
-        .eq("empresa_id", profile.empresa_id)
-        .single();
+        .eq("empresa_id", profile.empresa_id);
+      if (account_id) consulta = consulta.eq("id", account_id);
+      const { data: contas, error: accountError } = await consulta.limit(2);
 
-      if (accountError || !account) return safeErrorResponse(404, "Conta do portal não encontrada", req);
+      if (accountError || !contas?.length) return safeErrorResponse(404, "Conta do portal não encontrada", req);
+      // Cliente com vários acessos: a tela precisa dizer qual (SPEC 164).
+      if (contas.length > 1) return safeErrorResponse(409, "Escolha qual acesso do cliente reenviar", req);
+      const account = contas[0];
 
       const { data: empresa } = await supabaseAdmin
         .from("empresas")
@@ -91,7 +95,7 @@ serve(
             email: empresa?.email,
           },
           ...templateAcessoPortalCliente({
-            nomeCliente: nome_cliente ?? "Cliente",
+            nomeCliente: account.nome ?? nome_cliente ?? "Cliente",
             email: account.email,
             conviteUrl,
             isReset: true,

@@ -3,7 +3,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDate } from "@/lib/format";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { mensagemDaFunction } from "@/lib/edgeError";
 import { PageLayout } from "@/components/PageLayout";
@@ -18,14 +17,13 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Globe,
-  KeyRound,
   Mail,
   MapPin,
   Pencil,
   Phone,
-  ShieldOff,
   Trash2,
   User,
+  Users,
   Landmark,
   ChevronDown,
   ChevronRight,
@@ -37,7 +35,6 @@ import {
 import { formatDocument, formatPhone } from "@/lib/maskUtils";
 import { useClienteDetalhe } from "@/pages/clientes/hooks/useClienteDetalhe";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useRequireAal2 } from "@/hooks/useRequireAal2";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useClientes } from "@/hooks/useClientes";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -198,37 +195,9 @@ function ProjetoAccordion({ projeto, children }: { projeto: ProjetoResumo; child
 // ─── Visão Geral ─────────────────────────────────────────────────────────────
 
 function VisaoGeralTab({ cliente, podeGerirPortal }: { cliente: Cliente; podeGerirPortal: boolean }) {
-  const queryClient = useQueryClient();
-  const requireAal2 = useRequireAal2();
   const [confirmPortalOpen, setConfirmPortalOpen] = useState(false);
-  const [resetCredentials, setResetCredentials] = useState<{ email: string } | null>(null);
-
   const { portalStatus, isLoadingPortal } = useClienteDetalhe(cliente.id);
-  const { resetPortalPassword, isResettingPortal, revokePortalAccess, isRevokingPortal } = useClientes();
-
-  const handleReset = async () => {
-    if (!(await requireAal2())) return;
-    try {
-      const { email } = await resetPortalPassword({
-        clienteId: cliente.id,
-        nomeCliente: `${cliente.nome}${cliente.sobrenome ? " " + cliente.sobrenome : ""}`,
-      });
-      setResetCredentials({ email });
-    } catch {
-      // erro tratado pelo onError do hook
-    }
-  };
-
-  const handleRevoke = async () => {
-    if (!(await requireAal2())) return;
-    try {
-      await revokePortalAccess(cliente.id);
-      setResetCredentials(null);
-      queryClient.invalidateQueries({ queryKey: ["portal-status", cliente.id] });
-    } catch {
-      // erro tratado pelo onError do hook
-    }
-  };
+  const emailsPortal = portalStatus?.emails ?? (portalStatus?.email ? [portalStatus.email] : []);
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -337,52 +306,29 @@ function VisaoGeralTab({ cliente, podeGerirPortal }: { cliente: Cliente; podeGer
 
             {!isLoadingPortal && portalStatus?.exists && (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 bg-positive/10 border border-positive/20 rounded-lg px-3 py-2 text-sm text-positive-strong">
-                  <Globe className="h-4 w-4" />
-                  <span className="flex-1">Cliente possui acesso ao portal</span>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleReset}
-                    disabled={isResettingPortal || isRevokingPortal}
-                    className="flex-1"
-                  >
-                    {isResettingPortal ? (
-                      <BusyMark className="h-3.5 w-3.5 mr-1.5" />
-                    ) : (
-                      <KeyRound className="h-3.5 w-3.5 mr-1.5" />
-                    )}
-                    {isResettingPortal ? "Redefinindo..." : "Redefinir senha"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleRevoke}
-                    disabled={isRevokingPortal || isResettingPortal}
-                    className="border-danger-mid-border text-danger-strong hover:bg-danger-soft"
-                  >
-                    {isRevokingPortal ? (
-                      <BusyMark className="h-3.5 w-3.5 mr-1.5" />
-                    ) : (
-                      <ShieldOff className="h-3.5 w-3.5 mr-1.5" />
-                    )}
-                    {isRevokingPortal ? "Revogando..." : "Revogar"}
-                  </Button>
-                </div>
-                {resetCredentials && (
-                  <div className="border border-warning-mid-border bg-warning-soft rounded-lg p-3 text-sm text-warning-strong">
-                    Senha redefinida! Credenciais enviadas para <strong>{resetCredentials.email}</strong>.
+                <div className="flex items-start gap-2 bg-positive/10 border border-positive/20 rounded-lg px-3 py-2 text-sm text-positive-strong">
+                  <Globe className="mt-0.5 h-4 w-4 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p>
+                      {emailsPortal.length === 1
+                        ? "1 pessoa com acesso ao portal"
+                        : `${emailsPortal.length} pessoas com acesso ao portal`}
+                    </p>
+                    <p className="truncate text-xs">{emailsPortal.join(", ")}</p>
                   </div>
-                )}
+                </div>
+                <Button size="sm" variant="outline" onClick={() => setConfirmPortalOpen(true)}>
+                  <Users className="h-3.5 w-3.5 mr-1.5" />
+                  Gerenciar acessos
+                </Button>
               </div>
             )}
 
             {!isLoadingPortal && !portalStatus?.exists && (
               <div className="space-y-2">
                 <p className="text-xs text-muted-foreground">
-                  O cliente recebe um link para criar a senha e acompanha os projetos dele.
+                  O cliente recebe um link para criar a senha e acompanha os projetos dele. Dá para dar acesso a mais de
+                  uma pessoa.
                 </p>
                 <Button size="sm" onClick={() => setConfirmPortalOpen(true)} variant="brand">
                   <Globe className="h-3.5 w-3.5 mr-1.5" />

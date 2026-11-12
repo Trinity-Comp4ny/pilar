@@ -38,7 +38,7 @@ serve(
 
       const entrada = lerEntrada(await lerJson(req));
       if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
-      const { cliente_id, email } = entrada.data;
+      const { cliente_id, email, nome } = entrada.data;
 
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
@@ -73,16 +73,23 @@ serve(
 
       if (clienteError || !cliente) return safeErrorResponse(404, "Cliente não encontrado", req);
 
+      const normalizedEmail = String(email).toLowerCase().trim();
+      // Vários acessos por cliente (SPEC 164): cada e-mail é uma conta. O e-mail é único
+      // dentro do escritório, então a conta achada aqui pode ser deste ou de outro cliente.
       const { data: existingAccount } = await supabaseAdmin
         .from("cliente_portal_accounts")
-        .select("id, ativo")
-        .eq("cliente_id", cliente_id)
+        .select("id, ativo, cliente_id")
+        .eq("email", normalizedEmail)
         .eq("empresa_id", profile.empresa_id)
         .maybeSingle();
 
-      if (existingAccount?.ativo) return safeErrorResponse(409, "Este cliente já possui acesso ao portal", req);
-
-      const normalizedEmail = String(email).toLowerCase().trim();
+      if (existingAccount && existingAccount.cliente_id !== cliente_id) {
+        return safeErrorResponse(409, "Este e-mail já acessa o portal de outro cliente do escritório", req);
+      }
+      if (existingAccount?.ativo) {
+        return safeErrorResponse(409, "Este e-mail já tem acesso ao portal deste cliente", req);
+      }
+      const nomeAcesso = nome ?? cliente.nome;
 
       const { data: empresa } = await supabaseAdmin
         .from("empresas")
@@ -113,7 +120,7 @@ serve(
             email: empresa?.email,
           },
           ...templateAcessoPortalCliente({
-            nomeCliente: cliente.nome,
+            nomeCliente: nomeAcesso,
             email: normalizedEmail,
             conviteUrl,
             empresaNome: empresa?.nome,
@@ -131,7 +138,7 @@ serve(
           .update({
             ativo: true,
             email: normalizedEmail,
-            nome: cliente.nome,
+            nome: nomeAcesso,
             updated_at: new Date().toISOString(),
           })
           .eq("id", existingAccount.id);
@@ -154,7 +161,7 @@ serve(
         const { error: insertError } = await supabaseAdmin.rpc("_portal_create_account_convite", {
           p_cliente_id: cliente.id,
           p_empresa_id: profile.empresa_id,
-          p_nome: cliente.nome,
+          p_nome: nomeAcesso,
           p_email: normalizedEmail,
           p_token_hash: hash,
           p_created_by: user.id,
