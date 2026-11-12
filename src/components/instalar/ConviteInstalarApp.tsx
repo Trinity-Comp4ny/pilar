@@ -8,8 +8,8 @@ import { conviteDispensado, dispensarConvite, type PublicoApp } from "@/lib/inst
 import { cn } from "@/lib/utils";
 
 const TEXTO: Record<PublicoApp, string> = {
-  escritorio: "Abre em tela cheia, sem procurar o link.",
-  portal: "Seus projetos a um toque, sem procurar o link.",
+  escritorio: "Você ainda abre pelo navegador. Instalado, abre em tela cheia, como um app.",
+  portal: "Você ainda abre pelo navegador. Instalado, seus projetos ficam a um toque.",
 };
 
 interface ConviteInstalarAppProps {
@@ -42,25 +42,25 @@ export function ConviteInstalarApp({ publico, className }: ConviteInstalarAppPro
       <section
         aria-label="Instalar o Pilar"
         className={cn(
-          "relative flex items-center gap-3 rounded-3xl border border-border/60 bg-surface-card p-4 pr-11 shadow-card",
+          "relative flex items-center gap-3 rounded-3xl border border-border/60 bg-surface-card p-4 pr-9 shadow-card",
           className
         )}
       >
         <img src="/apple-touch-icon.png" alt="" aria-hidden="true" className="h-11 w-11 shrink-0 rounded-xl" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-ink">Tenha o Pilar na tela inicial</p>
+          <p className="text-sm font-semibold text-ink">Instale o Pilar no celular</p>
           <p className="mt-0.5 text-xs text-ink-soft">{TEXTO[publico]}</p>
         </div>
-        <Button size="sm" className="shrink-0" onClick={() => void instalar()}>
+        <Button size="sm" variant="brand" className="shrink-0" onClick={() => void instalar()}>
           {nativo ? "Instalar" : "Como instalar"}
         </Button>
         <button
           type="button"
           onClick={fechar}
-          className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand/60"
+          className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full text-ink-muted transition-colors hover:bg-surface-muted hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand/60"
           aria-label="Fechar convite para instalar"
         >
-          <X size={16} />
+          <X size={14} />
         </button>
       </section>
       {dialogo}

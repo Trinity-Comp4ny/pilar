@@ -20,7 +20,7 @@ describe("ConviteInstalarApp", () => {
     __reiniciarInstalacaoParaTeste({ plataforma: "ios" });
     render(<ConviteInstalarApp publico="portal" />);
 
-    expect(screen.getByText("Tenha o Pilar na tela inicial")).toBeInTheDocument();
+    expect(screen.getByText("Instale o Pilar no celular")).toBeInTheDocument();
     expect(screen.getByText(/Seus projetos a um toque/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Como instalar" }));
 
@@ -56,21 +56,21 @@ describe("ConviteInstalarApp", () => {
   it("não aparece no app já instalado, no computador nem depois de fechado", async () => {
     __reiniciarInstalacaoParaTeste({ plataforma: "instalado" });
     const { unmount } = render(<ConviteInstalarApp publico="escritorio" />);
-    expect(screen.queryByText("Tenha o Pilar na tela inicial")).not.toBeInTheDocument();
+    expect(screen.queryByText("Instale o Pilar no celular")).not.toBeInTheDocument();
     unmount();
 
     __reiniciarInstalacaoParaTeste({ plataforma: "ios" });
     h.mobile = false;
     const desk = render(<ConviteInstalarApp publico="escritorio" />);
-    expect(screen.queryByText("Tenha o Pilar na tela inicial")).not.toBeInTheDocument();
+    expect(screen.queryByText("Instale o Pilar no celular")).not.toBeInTheDocument();
     desk.unmount();
 
     h.mobile = true;
     const cel = render(<ConviteInstalarApp publico="escritorio" />);
     await userEvent.click(screen.getByRole("button", { name: "Fechar convite para instalar" }));
-    expect(screen.queryByText("Tenha o Pilar na tela inicial")).not.toBeInTheDocument();
+    expect(screen.queryByText("Instale o Pilar no celular")).not.toBeInTheDocument();
     cel.unmount();
     render(<ConviteInstalarApp publico="escritorio" />);
-    expect(screen.queryByText("Tenha o Pilar na tela inicial")).not.toBeInTheDocument();
+    expect(screen.queryByText("Instale o Pilar no celular")).not.toBeInTheDocument();
   });
 });
