@@ -1,7 +1,7 @@
 import { useRef, useState, type ReactNode, type UIEvent } from "react";
 import { cn } from "@/lib/utils";
 
-export interface KanbanMobileColuna {
+interface KanbanMobileColuna {
   id: string;
   titulo: string;
   /** Cor do ponto (hex da etapa ou classe `bg-*`). */
