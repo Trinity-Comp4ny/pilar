@@ -67,7 +67,7 @@ describe("ClienteConvite", () => {
   it("mostra o escritório que convidou e só entra no formulário ao clicar em Criar conta", async () => {
     renderPage();
     expect(await screen.findByText("Escritório Seed")).toBeInTheDocument();
-    expect(screen.getByText("Portal do cliente Pilar")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Portal do cliente" })).toBeInTheDocument();
     expect(screen.queryByPlaceholderText("••••••••")).not.toBeInTheDocument();
     await userEvent.setup().click(screen.getByRole("button", { name: "Criar conta" }));
     expect(await screen.findByRole("heading", { name: "Crie sua conta" })).toBeInTheDocument();

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Lock, Eye, EyeOff, Mail, Building2 } from "lucide-react";
+import { Lock, Eye, EyeOff, Mail } from "lucide-react";
 import { setPortalToken } from "@/hooks/useClienteAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { passwordResetSchema, passwordResetDefaultValues, type PasswordResetFormData } from "@/schemas";
@@ -130,13 +130,11 @@ export default function ClienteConvite() {
       <div className="landing-grain min-h-dvh w-full flex items-center justify-center bg-paper p-8">
         <div className="w-full max-w-[400px] space-y-8 animate-in fade-in slide-in-from-left-8 duration-700">
           <div className="text-center space-y-3">
-            <div className="flex justify-center mb-6">
+            <div className="flex items-center justify-center gap-4 mb-6">
               <Logo size="lg" className="text-ink" />
+              <span className="h-7 w-px bg-ink/25" aria-hidden="true" />
+              <h1 className="text-xl md:text-2xl font-medium tracking-tight text-ink">Portal do cliente</h1>
             </div>
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand text-ink">
-              <Building2 className="h-7 w-7" />
-            </div>
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Portal do cliente Pilar</h1>
             <p className="text-sm text-ink-soft">
               <strong className="font-semibold text-ink">{empresa}</strong> deu acesso a você ao portal do cliente na
               Pilar. Acompanhe seus projetos, entregas e documentos em um só lugar.

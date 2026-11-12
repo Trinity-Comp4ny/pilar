@@ -105,6 +105,7 @@ const ANON_ESPERADO = new Set([
   "campo_registrar_visita",
   // Spec 099: convite por link. Quem clica ainda não tem sessão nenhuma; o token
   // do convite (hash sha256, expira, uso único) é a credencial.
+  "portal_convite_consultar",
   "portal_convite_definir_senha",
   "campo_convite_definir_senha",
   // Roda ANTES do signInWithPassword, por definição sem sessão.
