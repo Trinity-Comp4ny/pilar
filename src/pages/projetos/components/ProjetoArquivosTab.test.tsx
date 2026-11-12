@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -53,6 +53,15 @@ const eletrica = {
   nome: "Elétrica",
 };
 
+const cliente = {
+  pasta_id: "cli-1234567890",
+  pasta_pai_id: raiz.pasta_id,
+  projeto_id: "p1",
+  projeto_disciplina_id: null,
+  nome: "Cliente",
+  para_cliente: true,
+};
+
 function abrir(canEdit = true) {
   render(
     <QueryClientProvider client={new QueryClient()}>
@@ -66,11 +75,12 @@ beforeEach(() => {
   vi.clearAllMocks();
   h.isAdmin = true;
   h.status = { conectado: true, email: "drive@vrz.com", conectadoEm: null };
-  h.pasta = { data: { raiz, pastas: [raiz, eletrica] } };
+  h.pasta = { data: { raiz, pastas: [raiz, eletrica, cliente] } };
   h.conteudo = {
     [raiz.pasta_id]: {
       itens: [
         { id: eletrica.pasta_id, name: "Elétrica", mimeType: MIME_PASTA },
+        { id: cliente.pasta_id, name: "Cliente", mimeType: MIME_PASTA },
         {
           id: "arq-1234567890",
           name: "planta.pdf",
@@ -80,6 +90,7 @@ beforeEach(() => {
         },
       ],
     },
+    [cliente.pasta_id]: { itens: [{ id: "ent-1234567890", name: "entrega.pdf", mimeType: "application/pdf" }] },
     [eletrica.pasta_id]: { itens: [{ id: "dwg-1234567890", name: "quadro.dwg", mimeType: "application/acad" }] },
   };
   h.conectar.mockResolvedValue(undefined);
@@ -151,5 +162,30 @@ describe("ProjetoArquivosTab", () => {
     expect(screen.queryByRole("button", { name: "Excluir planta.pdf" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Baixar planta.pdf" }));
     expect(h.baixar).toHaveBeenCalled();
+  });
+
+  it("pasta Cliente: marcada como do portal, fixa, e avisa dentro dela", async () => {
+    const user = abrir();
+    const linha = screen.getByText("Cliente").closest("tr") as HTMLElement;
+    expect(within(linha).getByText("aparece no portal do cliente")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Excluir Cliente" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/O cliente vê esta pasta/)).not.toBeInTheDocument();
+    await user.click(linha);
+    expect(await screen.findByText("entrega.pdf")).toBeInTheDocument();
+    expect(screen.getByText(/O cliente vê esta pasta no portal/)).toBeInTheDocument();
+  });
+
+  it("arrastar arquivo mostra o aviso de soltar e o drop envia", async () => {
+    abrir();
+    expect(screen.queryByText(/Aparece aqui o que foi criado/)).not.toBeInTheDocument();
+    const alvo = screen.getByText("planta.pdf").closest(".relative") as HTMLElement;
+    const arquivo = new File(["x"], "corte.pdf", { type: "application/pdf" });
+    const dataTransfer = { types: ["Files"], files: [arquivo] };
+    fireEvent.dragEnter(alvo, { dataTransfer });
+    expect(screen.getByText("Solte para enviar")).toBeInTheDocument();
+    expect(screen.getByText("Os arquivos vão para a pasta 421 - Casa")).toBeInTheDocument();
+    fireEvent.drop(alvo, { dataTransfer });
+    expect(screen.queryByText("Solte para enviar")).not.toBeInTheDocument();
+    await waitFor(() => expect(h.enviar).toHaveBeenCalledWith(raiz.pasta_id, arquivo, expect.any(Function)));
   });
 });

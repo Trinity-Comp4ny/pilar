@@ -264,6 +264,16 @@ export async function baixar(token: string, id: string, f: Fetch = fetch): Promi
   return r;
 }
 
+/** Documento do Google (Docs, Planilhas, Apresentações): não tem binário, exporta como PDF. */
+export async function exportarPdf(token: string, id: string, f: Fetch = fetch): Promise<Response> {
+  if (!idDriveValido(id)) throw new ErroGoogle(400, "arquivo inválido");
+  const r = await f(`${DRIVE}/files/${id}/export?mimeType=application/pdf`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!r.ok) throw new ErroGoogle(r.status, `Google Drive respondeu ${r.status}`);
+  return r;
+}
+
 /**
  * Abre um upload retomável e devolve a URL da sessão. O navegador manda o arquivo direto
  * para essa URL (o binário não passa pela Pilar). O `Origin` vai junto para o Google

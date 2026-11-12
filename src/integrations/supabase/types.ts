@@ -2010,6 +2010,7 @@ export type Database = {
           empresa_id: string
           id: string
           nome: string
+          para_cliente: boolean
           pasta_id: string
           pasta_pai_id: string | null
           projeto_disciplina_id: string | null
@@ -2021,6 +2022,7 @@ export type Database = {
           empresa_id: string
           id?: string
           nome: string
+          para_cliente?: boolean
           pasta_id: string
           pasta_pai_id?: string | null
           projeto_disciplina_id?: string | null
@@ -2032,6 +2034,7 @@ export type Database = {
           empresa_id?: string
           id?: string
           nome?: string
+          para_cliente?: boolean
           pasta_id?: string
           pasta_pai_id?: string | null
           projeto_disciplina_id?: string | null

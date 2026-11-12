@@ -1,6 +1,9 @@
 /** Regras puras das pastas do projeto no Drive (SPEC 163). */
 import { nomeLimpo } from "../_shared/google-drive.ts";
 
+/** Pasta do projeto que aparece no portal do cliente (marcada com para_cliente). */
+export const NOME_PASTA_CLIENTE = "Cliente";
+
 /**
  * Nome da pasta do projeto: o nome que o escritório deu ("421 - Residência Silva").
  * O código gerado pelo sistema (PRJ-0034) é chave interna e não entra (SPEC 100).
