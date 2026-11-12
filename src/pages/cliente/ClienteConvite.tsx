@@ -213,7 +213,6 @@ export default function ClienteConvite() {
                     </div>
                   </FormControl>
                   <PasswordRequirements password={senha ?? ""} />
-                  <FormMessage />
                 </FormItem>
               )}
             />

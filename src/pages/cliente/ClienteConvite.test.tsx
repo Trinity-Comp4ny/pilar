@@ -112,7 +112,8 @@ describe("ClienteConvite", () => {
     renderPage();
     const user = await preencher("senha123", "senha123");
     await user.click(enviar());
-    expect(await screen.findByText("Senha deve ter pelo menos 12 caracteres")).toBeInTheDocument();
+    // O checklist já mostra o que falta; não há mensagem de erro repetida no campo.
+    await waitFor(() => expect(screen.getByRole("list", { name: "Requisitos da senha" })).toBeInTheDocument());
     expect(h.definir).not.toHaveBeenCalled();
   });
 
