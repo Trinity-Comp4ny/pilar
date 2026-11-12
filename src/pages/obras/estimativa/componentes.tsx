@@ -167,6 +167,9 @@ export function Pilula({ ativa, onClick, children, disabled, title }: PilulaProp
 /** Avisos que mudam a leitura do número: ficam abertos. Os demais são contexto e ficam num resumo de uma linha. */
 const AVISOS_DE_ATENCAO = new Set(["uf_vizinha", "mes_antigo", "coerencia", "ajuste_ignorado"]);
 
+const ACAO_DO_AVISO =
+  "rounded-md py-0.5 font-medium text-ink underline underline-offset-2 hover:no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
 function resumoDoContexto(avisos: ResultadoEstimativa["avisos"]): string {
   const aDefinir = avisos.filter((a) => a.codigo === "adicional_a_definir").length;
   const partes: string[] = [];
@@ -182,7 +185,14 @@ function resumoDoContexto(avisos: ResultadoEstimativa["avisos"]): string {
  * os de contexto (item a definir, faixa ampliada, parâmetros em validação) viram uma linha, com o texto completo
  * em "Ver detalhes": a lista longa logo no topo escondia o custo (feedback de 12/11).
  */
-export function AvisosEstimativa({ avisos }: { avisos: ResultadoEstimativa["avisos"] }) {
+export function AvisosEstimativa({
+  avisos,
+  onInformarPendentes,
+}: {
+  avisos: ResultadoEstimativa["avisos"];
+  /** Abre o "Informar valor" do primeiro item sem valor. Ausente para quem só lê. */
+  onInformarPendentes?: () => void;
+}) {
   const [aberto, setAberto] = useState(false);
   const idDetalhes = useId();
   const atencao = avisos.filter((a) => AVISOS_DE_ATENCAO.has(a.codigo));
@@ -202,18 +212,27 @@ export function AvisosEstimativa({ avisos }: { avisos: ResultadoEstimativa["avis
       )}
       {contexto.length > 0 && (
         <div className="rounded-xl border bg-card px-3 py-2 text-sm text-ink-soft">
-          <div className="flex items-center gap-2">
-            <Info className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="min-w-0 flex-1">{resumoDoContexto(contexto)}</span>
-            <button
-              type="button"
-              className="shrink-0 rounded-md px-1 py-0.5 font-medium text-ink underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-expanded={aberto}
-              aria-controls={idDetalhes}
-              onClick={() => setAberto((v) => !v)}
-            >
-              {aberto ? "Ocultar" : "Ver detalhes"}
-            </button>
+          <div className="flex items-start gap-2">
+            <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+            <div className="min-w-0 flex-1">
+              <p>{resumoDoContexto(contexto)}</p>
+              <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                {onInformarPendentes && contexto.some((a) => a.codigo === "adicional_a_definir") && (
+                  <button type="button" className={ACAO_DO_AVISO} onClick={onInformarPendentes}>
+                    Informar valores
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className={ACAO_DO_AVISO}
+                  aria-expanded={aberto}
+                  aria-controls={idDetalhes}
+                  onClick={() => setAberto((v) => !v)}
+                >
+                  {aberto ? "Ocultar" : "Ver detalhes"}
+                </button>
+              </div>
+            </div>
           </div>
           {aberto && (
             <ul id={idDetalhes} className="mt-2 space-y-1.5 border-t pt-2">

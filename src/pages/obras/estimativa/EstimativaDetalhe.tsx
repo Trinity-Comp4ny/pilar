@@ -269,7 +269,17 @@ export default function EstimativaDetalhe() {
       ) : (
         calculo?.ok && (
           <>
-            <AvisosEstimativa avisos={calculo.resultado.avisos} />
+            <AvisosEstimativa
+              avisos={calculo.resultado.avisos}
+              onInformarPendentes={
+                podeEditar
+                  ? () => {
+                      const pendente = calculo.resultado.adicionais.find((x) => x.valor === null && x.quantidade > 0);
+                      if (pendente) abrirInformar(pendente);
+                    }
+                  : undefined
+              }
+            />
             {aba === "custo" && (
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
                 <CustoTab
