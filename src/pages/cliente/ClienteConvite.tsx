@@ -22,7 +22,7 @@ type ConviteResp = { ok: boolean; token?: string; nome?: string; erro?: string }
 type ConviteInfo = { ok: boolean; nome?: string; email?: string; empresa?: string; erro?: string };
 type Estado =
   | { fase: "carregando" }
-  | { fase: "invalido"; erro: string }
+  | { fase: "invalido" }
   | { fase: "boas-vindas"; info: ConviteInfo }
   | { fase: "senha"; info: ConviteInfo };
 
@@ -33,28 +33,26 @@ export default function ClienteConvite() {
   const token = searchParams.get("token");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [estado, setEstado] = useState<Estado>({ fase: token ? "carregando" : "invalido" });
+  const [estado, setEstado] = useState<Estado>(token ? { fase: "carregando" } : { fase: "invalido" });
 
   useEffect(() => {
     if (!token) return;
     let ativo = true;
-    supabase
-      .rpc("portal_convite_consultar", { p_token: token })
-      .then(({ data, error }) => {
+    const carregar = async () => {
+      try {
+        const { data, error } = await supabase.rpc("portal_convite_consultar", { p_token: token });
         if (!ativo) return;
         const info = data as unknown as ConviteInfo | null;
         if (error || !info?.ok || !info.email) {
-          setEstado({
-            fase: "invalido",
-            erro: error ? "Não foi possível abrir o convite agora. Tente novamente em instantes." : (info?.erro ?? "Convite inválido ou expirado"),
-          });
+          setEstado({ fase: "invalido" });
           return;
         }
         setEstado({ fase: "boas-vindas", info });
-      })
-      .catch(() => {
-        if (ativo) setEstado({ fase: "invalido", erro: "Não foi possível abrir o convite agora. Tente novamente em instantes." });
-      });
+      } catch {
+        if (ativo) setEstado({ fase: "invalido" });
+      }
+    };
+    void carregar();
     return () => {
       ativo = false;
     };

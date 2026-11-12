@@ -4,7 +4,13 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import ClienteConvite from "./ClienteConvite";
 
-const h = vi.hoisted(() => ({ rpc: vi.fn(), consultar: vi.fn(), definir: vi.fn(), toastError: vi.fn(), toastSuccess: vi.fn() }));
+const h = vi.hoisted(() => ({
+  rpc: vi.fn(),
+  consultar: vi.fn(),
+  definir: vi.fn(),
+  toastError: vi.fn(),
+  toastSuccess: vi.fn(),
+}));
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: h.rpc } }));
 vi.mock("sonner", () => ({ toast: { error: h.toastError, success: h.toastSuccess } }));
@@ -95,8 +101,9 @@ describe("ClienteConvite", () => {
 
   it("campos vazios não chamam o servidor", async () => {
     renderPage();
-    await userEvent.setup().click(await screen.findByRole("button", { name: "Criar conta" }));
-    await userEvent.setup().click(enviar());
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: "Criar conta" }));
+    await user.click(enviar());
     expect(await screen.findByText("Confirme a senha")).toBeInTheDocument();
     expect(h.definir).not.toHaveBeenCalled();
   });

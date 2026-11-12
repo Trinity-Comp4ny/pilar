@@ -33,7 +33,7 @@ WITH allowed(sig) AS (
     ('campo_verify_session(text)'), ('campo_trocar_senha(text, text)'),
     -- Spec 099: convite por link, cliente/funcionário ainda sem sessão nenhuma ao
     -- clicar no link e definir a própria senha (mesma categoria de portal_login acima).
-    ('portal_convite_definir_senha(text, text)'), ('campo_convite_definir_senha(text, text)'),
+    ('portal_convite_definir_senha(text, text)'), ('portal_convite_consultar(text)'), ('campo_convite_definir_senha(text, text)'),
     ('campo_listar_tarefas(text)'), ('campo_criar_tarefa(text, text)'),
     ('campo_listar_rdos(text, integer)'),
     ('campo_salvar_rdo(text, date, text, text, integer, text, text, text)'),
