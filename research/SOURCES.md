@@ -211,6 +211,20 @@ _Nota: `guide-to-seed-fundraising.md` (leva 3) e a tentativa `how-to-raise-a-see
 | 🟠         | Sequoia (Training Data)               | Harrison Chase — Ambient Agents & Agent Inbox (podcast)                           | done   | themes/agent-ux-patterns.md |
 | ⚪         | Mantlr / Fuselab / Interactive Studio | Agent UX patterns 2026 (síntese secundária)                                       | done   | themes/agent-ux-patterns.md |
 
+## Leva — Marketing, conteúdo e aquisição (2026-11)
+
+| Prioridade | Fonte                                   | Item                                                                                       | Status | Arquivo                                                  |
+| ---------- | --------------------------------------- | ------------------------------------------------------------------------------------------ | ------ | -------------------------------------------------------- |
+| 🔴         | Linear/Ramp/Attio/Clay/Granola/Notion/Duolingo/Nubank/Conta Azul/RD | Posicionamento e conteúdo de 10 marcas de referência (via buscas; primárias bloqueadas) | done   | marketing/marcas-referencia-posicionamento-e-conteudo.md |
+| 🔴         | Edelman/LinkedIn                        | 2025 B2B Thought Leadership Impact Report (hidden buyers)                                  | done   | marketing/organico-vs-pago-vertical-saas-b2b-brasil.md   |
+| 🔴         | Refine Labs / Understory                | Attribution mirage; self-reported attribution x software                                   | done   | marketing/organico-vs-pago-vertical-saas-b2b-brasil.md   |
+| 🟠         | Metadata / Dreamdata / Trafius / Stone  | Benchmarks CPC/CPM/CPL LinkedIn, Google, Meta (global e BR)                                | done   | marketing/organico-vs-pago-vertical-saas-b2b-brasil.md   |
+| 🔴         | First Round Review                      | Linear's path to PMF (texto completo; fetch bloqueado em 2026-11-10)                       | pending |                                                          |
+| 🔴         | First Round Review                      | How Notion does marketing (texto completo; fetch bloqueado)                                | pending |                                                          |
+| 🟠         | MKT1 (Emily Kramer)                     | How Clay approaches marketing (vídeo/newsletter; fetch bloqueado)                          | pending |                                                          |
+| 🟠         | Google Ads Keyword Planner (manual)     | Volume e CPC BR de "software/sistema para escritório de engenharia/arquitetura"            | pending |                                                          |
+| 🟠         | AsBEA / Sinaenco / CAU-BR / Mútua       | Eventos, parcerias e canais de conteúdo com escritórios (nada achado na busca)             | pending |                                                          |
+
 ## Descobertas (fontes novas encontradas durante a coleta)
 
 _Adicionar aqui links/séries descobertos nas notas, depois promover às seções acima._
@@ -234,4 +248,6 @@ _Adicionar aqui links/séries descobertos nas notas, depois promover às seçõe
 - 🟠 MCP Apps / Google A2UI — specs de generative UI (agente comunica UI ao app) — mapear viabilidade técnica pro design system do Pilar (tokens)
 - 🟠 LangChain — repo `agents-from-scratch` / `ambient-agent-101` (padrão de referência do agent inbox + HITL + memória) — https://github.com/langchain-ai/agents-from-scratch
 - ⚪ Salesforce Agentforce Observability — log de input/passo/ação/guardrail (padrão "action audit & undo") — benchmark de rastreabilidade
+- 🟠 Vobi Talks (ArchDaily) — conteúdo da Vobi ensinando arquiteto a captar cliente no Instagram; mapear formato e alcance — https://www.archdaily.com/pt/tag/instagram
+- 🟠 Conta Azul — evento anual do ecossistema contábil como motor de crescimento (Mundo do Marketing) — análogo para comunidade de escritórios
 - 🟠 Intercom Fin — UX de "explainable rationale" (mostra fonte/guia que gerou a resposta) — análogo de confiança pro sócio

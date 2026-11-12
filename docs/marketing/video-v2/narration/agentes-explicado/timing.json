@@ -1,0 +1,73 @@
+{
+ "provider": "google",
+ "voice": "pt-BR-Chirp3-HD-Leda",
+ "total": 61.761,
+ "lines": [
+  {
+   "id": "l01",
+   "text": "Lançar um pagamento. Montar um aditivo. Resumir a semana.",
+   "start": 0.5,
+   "dur": 4.451
+  },
+  {
+   "id": "l02",
+   "text": "É trabalho que toma horas do sócio, e não é engenharia.",
+   "start": 5.211,
+   "dur": 3.871
+  },
+  {
+   "id": "l03",
+   "text": "A Pilar faz esse preparo por você. E nada vai adiante sem a sua aprovação.",
+   "start": 9.532,
+   "dur": 6.091
+  },
+  {
+   "id": "l04",
+   "text": "Funciona em três passos. Primeiro, a IA prepara.",
+   "start": 16.003,
+   "dur": 3.451
+  },
+  {
+   "id": "l05",
+   "text": "Você conta do jeito que falaria: recebi 128 mil do centro cirúrgico, primeira parcela de três.",
+   "start": 19.674,
+   "dur": 7.131
+  },
+  {
+   "id": "l06",
+   "text": "A Pilar acha o projeto e monta o lançamento.",
+   "start": 27.065,
+   "dur": 2.511
+  },
+  {
+   "id": "l07",
+   "text": "Depois, o sistema confere: o projeto pelo nome, a parcela calculada, a categoria do seu plano de contas.",
+   "start": 29.916,
+   "dur": 6.671
+  },
+  {
+   "id": "l08",
+   "text": "Por último, você aprova. Só então o lançamento entra no financeiro.",
+   "start": 36.927,
+   "dur": 4.731
+  },
+  {
+   "id": "l09",
+   "text": "O mesmo vale para o aditivo: o projeto passou das horas previstas, e a Pilar monta o aditivo com a conta de cada valor.",
+   "start": 42.108,
+   "dur": 7.631
+  },
+  {
+   "id": "l10",
+   "text": "E toda semana, o resumo chega pronto, com cada número conferido.",
+   "start": 50.119,
+   "dur": 4.291
+  },
+  {
+   "id": "l11",
+   "text": "Pilar. A IA prepara. O sistema confere. Você aprova.",
+   "start": 54.93,
+   "dur": 4.231
+  }
+ ]
+}

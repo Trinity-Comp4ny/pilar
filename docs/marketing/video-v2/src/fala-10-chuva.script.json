@@ -1,0 +1,37 @@
+{
+  "id": "fala-10-chuva",
+  "hook": "Quem marcou a concretagem *para o dia da chuva*?",
+  "tail": 3.4,
+  "lines": [
+    {
+      "id": "l01",
+      "text": "Toda obra já perdeu uma concretagem para a chuva."
+    },
+    {
+      "id": "l02",
+      "text": "Na Pilar, você marca a tarefa como sensível ao clima.",
+      "show": {
+        "type": "tela",
+        "tela": "cronograma",
+        "legenda": "Tarefa sensível ao clima"
+      }
+    },
+    {
+      "id": "l03",
+      "text": "E a Pilar cruza o cronograma com a previsão do local da obra.",
+      "show": {
+        "type": "tela",
+        "tela": "clima",
+        "legenda": "Aviso antes, com o motivo"
+      }
+    },
+    {
+      "id": "l04",
+      "text": "Se o dia tem chance alta de chuva, você é avisado antes, com o motivo."
+    },
+    {
+      "id": "l05",
+      "text": "Quem decide reprogramar é você. Mas agora você decide sabendo."
+    }
+  ]
+}

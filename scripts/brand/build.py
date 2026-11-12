@@ -34,7 +34,9 @@ ABA = (3.0, 25.0, 6.0)  # x1, x2, y do ábaco
 # Três caneluras (DECISOES 2026-11-07): a do meio é o eixo de simetria, x=14.
 FLUTES = [7.0, 14.0, 21.0]
 FLUTE_Y = (9.0, 23.0)
-ABA_OPACITY = 0.85
+# Símbolo numa cor só (DECISOES 2026-11-10): o ábaco é opaco como as outras quatro linhas.
+# Antes era 0,85, e o ábaco aparecia como um cinza diferente do resto.
+ABA_OPACITY = 1.0
 
 # Espaços em módulos X. Com X = 7u (três caneluras) as medidas em u ficam quase as da
 # coluna de quatro caneluras (X = 5u, 2X/1,5X/2X): os lockups não mudam de proporção.
@@ -69,7 +71,7 @@ def mark_group(color, scale=1.0, tx=0.0, ty=0.0, w=STROKE, solid=False, flutes=N
     op = 1 if solid else ABA_OPACITY
     lines = [
         f'<path d="M{X(CAP[0])} {Y(CAP[2])}H{X(CAP[1])}"/>',
-        f'<path d="M{X(ABA[0])} {Y(ABA[2])}H{X(ABA[1])}" stroke-opacity="{op}"/>',
+        f'<path d="M{X(ABA[0])} {Y(ABA[2])}H{X(ABA[1])}"' + (f' stroke-opacity="{op}"' if op < 1 else "") + "/>",
     ]
     for fx in flutes or FLUTES:
         lines.append(f'<path d="M{X(fx)} {Y(FLUTE_Y[0])}V{Y(FLUTE_Y[1])}"/>')
@@ -387,7 +389,7 @@ def build_assets():
 
 # ---- Produção ---------------------------------------------------------------
 # O que o app e a landing servem. logotipo.oficial.test.tsx reprova se divergir.
-EMAIL_LOGO = "logo-v3.png"  # versione ao trocar o desenho: cliente de e-mail guarda cache
+EMAIL_LOGO = "logo-v4.png"  # versione ao trocar o desenho: cliente de e-mail guarda cache
 # Versione também a og:image: LinkedIn, WhatsApp e Slack guardam a prévia pela URL.
 OG_IMAGE = "og-image-v2.jpg"
 SITES = ["public", "apps/marketing/public"]  # app e landing

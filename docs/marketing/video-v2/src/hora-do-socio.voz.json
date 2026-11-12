@@ -1,0 +1,18 @@
+{
+  "voz": "narração por cima do vídeo (narrate.py, narrar_sobre); t = segundo em que a fala entra",
+  "fim": 18.4,
+  "lines": [
+    {
+      "t": 0.3,
+      "say": "Quanto custa uma hora do sócio? Nesse exemplo, uns cento e setenta reais."
+    },
+    {
+      "t": 6.6,
+      "say": "E quantas vão para retrabalho? Redigitar, cobrar status, montar relatório..."
+    },
+    {
+      "t": 12.9,
+      "say": "Devolver duas horas por semana já paga o sistema."
+    }
+  ]
+}

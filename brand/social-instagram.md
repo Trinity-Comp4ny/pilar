@@ -140,7 +140,7 @@ de croquis (20 a 30 peças) vem do `post-automation`; todas seguem [imagery.md](
 - **Capa:** gancho com pílula verde e a promessa concreta. Sem logo grande.
 - **Itens:** um por slide. Numeral grande em Ink peso 300, título de uma ou duas linhas, apoio de
   até três linhas. A barra de progresso no topo mostra onde o leitor está.
-- **Final:** Ink, gancho de fechamento, um CTA ("Teste grátis por 3 dias") e o handle. Nunca dois CTAs.
+- **Final:** Ink, gancho de fechamento, um CTA ("Veja os planos · link na bio"; não há teste grátis, DECISOES 2026-11-08) e o handle. Nunca dois CTAs.
 - **Continuidade:** mesmo fundo nos slides 1 a 6 (Paper); só o último vira Ink. Mesma margem, mesmo
   rodapé, mesma posição do título, para o olho não reaprender a tela a cada deslize.
 - Cada slide funciona sozinho se for salvo ou compartilhado.

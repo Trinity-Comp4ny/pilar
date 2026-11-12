@@ -104,6 +104,22 @@ conector leva a Pilar para onde o sócio já conversa. Detalhe e runbook na SPEC
 
 ---
 
+## 2026-11-10 · Símbolo numa cor só: o ábaco deixa de ser 85%
+
+**Decisão:** as cinco linhas do símbolo (capitel, ábaco e três caneluras) têm a mesma cor e a mesma opacidade em
+todo lugar: app, landing, e-mail, ícones, imagem de compartilhamento, posts e vídeos. O ábaco, que saía a 85%,
+passa a ser opaco. Nos vídeos e posts, o símbolo também não ganha caneluras verdes: entra em traço técnico, numa
+cor só.
+
+Contexto: o CEO viu nos vídeos de marketing que a segunda linha horizontal parecia um cinza diferente do resto e
+pediu o logo monocromático. Aplicado em `scripts/brand/build.py` (todos os SVG e PNG regenerados), `PilarMark`, tela
+de carregamento do app e da landing, templates do Instagram e `brand/logo.md`. O logo do e-mail virou `logo-v4.png`
+(o `v3` fica no ar para e-mails antigos), porque cliente de e-mail guarda cache.
+
+**Supera:** "Ábaco a 85%" de `brand/logo.md` (BEZ-385) e a versão `brand` com caneluras verdes nos vídeos.
+
+---
+
 ## 2026-11-09 (mais tarde) · Menção com @ sai por e-mail na hora, junto com o sino
 
 **Decisão:** quando alguém marca uma pessoa com @ num comentário (projeto, disciplina ou tarefa), o e-mail sai no

@@ -1,0 +1,18 @@
+{
+  "voz": "narração por cima do vídeo (narrate.py, narrar_sobre); t = segundo em que a fala entra",
+  "fim": 14.4,
+  "lines": [
+    {
+      "t": 0.3,
+      "say": "Isso funciona para escritório pequeno? Aqui somos quatro."
+    },
+    {
+      "t": 4.5,
+      "say": "Funciona, e foi pensada para começar pequeno. Usuários ilimitados: os quatro entram, e o próximo também."
+    },
+    {
+      "t": 12.0,
+      "say": "Comenta aí que a gente responde."
+    }
+  ]
+}

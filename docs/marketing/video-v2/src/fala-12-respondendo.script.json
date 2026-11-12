@@ -1,0 +1,42 @@
+{
+  "id": "fala-12-respondendo",
+  "hook": "Respondendo: *“a IA vai substituir o engenheiro?”*",
+  "tail": 3.4,
+  "lines": [
+    {
+      "id": "l01",
+      "text": "Recebi essa pergunta nos comentários e quero responder com calma."
+    },
+    {
+      "id": "l02",
+      "text": "Não. A IA não assina projeto, não assina ART e não decide nada sozinha.",
+      "show": {
+        "type": "lista",
+        "itens": [
+          "Não assina projeto",
+          "Não assina ART",
+          "Não decide sozinha"
+        ],
+        "icone": "x",
+        "cor": "#FCA5A5"
+      }
+    },
+    {
+      "id": "l03",
+      "text": "O que ela faz é tirar do seu caminho o trabalho que não é engenharia."
+    },
+    {
+      "id": "l04",
+      "text": "Lançamento, aditivo, resumo da semana. Ela prepara, você aprova.",
+      "show": {
+        "type": "tela",
+        "tela": "aditivo",
+        "legenda": "A IA prepara, você aprova"
+      }
+    },
+    {
+      "id": "l05",
+      "text": "Manda a sua pergunta aqui que eu respondo no próximo vídeo."
+    }
+  ]
+}

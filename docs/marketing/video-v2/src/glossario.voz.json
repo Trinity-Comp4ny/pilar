@@ -1,0 +1,26 @@
+{
+  "voz": "narração por cima do vídeo (narrate.py, narrar_sobre); t = segundo em que a fala entra",
+  "fim": 14.4,
+  "lines": [
+    {
+      "t": 0.5,
+      "say": "ART: quem responde pelo projeto."
+    },
+    {
+      "t": 3.3,
+      "say": "RRT: o mesmo, no CAU."
+    },
+    {
+      "t": 6.1,
+      "say": "Aditivo: sem ele, a revisão é grátis."
+    },
+    {
+      "t": 8.9,
+      "say": "Curva S: planejado contra realizado."
+    },
+    {
+      "t": 11.7,
+      "say": "Margem: medida durante. Não só no fim."
+    }
+  ]
+}
