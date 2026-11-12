@@ -68,8 +68,9 @@ export function PageLayout({
   return (
     <PageSlotsContext.Provider value={slots}>
       <div
-        className="fixed top-0 right-0 bottom-0 bg-background z-40 overflow-hidden flex flex-col transition-[left] duration-300 ease-in-out"
-        style={{ left: standalone ? 0 : sidebarOffset(state, isMobile) }}
+        className="fixed right-0 bottom-0 bg-background z-40 overflow-hidden flex flex-col transition-[left] duration-300 ease-in-out"
+        // `--faixas-h`: altura das faixas de aviso fixas no topo (Layout). Sem elas, 0.
+        style={{ left: standalone ? 0 : sidebarOffset(state, isMobile), top: standalone ? 0 : "var(--faixas-h, 0px)" }}
       >
         {header && (
           <div className="sticky top-0 z-20 w-full bg-background border-b">

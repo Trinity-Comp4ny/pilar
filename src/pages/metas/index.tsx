@@ -15,8 +15,9 @@ export default function MetasPage() {
 
   return (
     <div
-      className="fixed top-0 right-0 bottom-0 bg-background z-40 overflow-hidden flex flex-col transition-[left] duration-300 ease-in-out"
-      style={{ left: sidebarOffset(state, isMobile) }}
+      className="fixed right-0 bottom-0 bg-background z-40 overflow-hidden flex flex-col transition-[left] duration-300 ease-in-out"
+      // Desce pela altura das faixas de aviso do topo (Layout), como o PageLayout.
+      style={{ left: sidebarOffset(state, isMobile), top: "var(--faixas-h, 0px)" }}
     >
       <div className="sticky top-0 z-20 w-full bg-background border-b">
         <PageHeader title="Metas">
