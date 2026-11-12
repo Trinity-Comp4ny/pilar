@@ -11,6 +11,19 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-12 · Reels virais terminam sem fechamento de marca, em loop
+
+**Decisão:** os vídeos curtos de conteúdo (Reels, TikTok, Shorts da linha viral) não têm mais quadro final com
+logotipo, tagline e CTA. O último quadro emenda no primeiro (a obra rebobina até a planta, ou o vídeo volta ao
+gancho), para o vídeo repetir sem corte. A marca e o CTA ("Planos e demonstração no link da bio") vão na legenda
+do post e no perfil.
+
+Contexto: o CEO notou que todos os vídeos tinham o mesmo final e que esse final quebra o loop, que é o que faz o
+Reel ser revisto e distribuído. Kit e roteiros em `docs/marketing/video/reels-kit/` e `docs/marketing/05-conteudo-viral.md`.
+
+**Supera:** o "Fechamento: lockup + CTA em pílula + quadro parado por 1 s" de `brand/motion.md` §5, só para a linha de
+conteúdo viral. Vídeo institucional e de demonstração (V-01 a V-03) seguem com fechamento.
+
 ## 2026-11-10 (mais tarde) · Conector da Pilar vai para os diretórios oficiais do Claude e do ChatGPT
 
 **Decisão:** o usuário final não vai colar URL de conector. O conector da Pilar será publicado no diretório de

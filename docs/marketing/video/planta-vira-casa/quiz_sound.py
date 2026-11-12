@@ -34,7 +34,7 @@ pad = lp(pad, hi=1800); L += pad; R += pad
 def kick():
     n = int(0.3 * SR); t = np.arange(n) / SR; return np.sin(2 * np.pi * np.cumsum(50 + 90 * np.exp(-t * 30)) / SR) * np.exp(-t * 10)
 k = 0.0
-while k < ev['end'] - 0.2:
+while k < DUR - 0.1:
     add(kick(), k, 0.3); root = prog[int(k / bar) % 4][0] - 12
     add(lp(tone(m2f(root), B, 0.18, (1, 0.6, 0.3)), hi=800), k, 0.16); k += B
 # pergunta: tique-taque; resposta: acerto (duas notas)
@@ -47,8 +47,8 @@ for t0 in ev['answer']:
 for t0 in ev['play']:
     n = int(0.6 * SR); add(lp(rng.standard_normal(n), lo=300, hi=3000) * np.sin(np.pi * np.linspace(0, 1, n)) ** 1.5, t0, 0.06)
 # fechamento
-for i, m in enumerate([72, 76, 79, 84]): add(tone(m2f(m), 2.2, 0.8), ev['end'] + 0.9 + i * 0.12, 0.07, (i - 1.5) * 0.25)
-fade = np.interp(tt, [0, 0.05, DUR - 0.6, DUR], [0, 1, 1, 0])
+n = int(1.1 * SR); add(lp(rng.standard_normal(n), lo=500, hi=6000) * np.linspace(0.2, 1, n) ** 2, ev['end'], 0.2)
+fade = np.interp(tt, [0, 0.02, DUR - 0.25, DUR], [0.6, 1, 1, 0.6])
 mix = np.stack([L, R], 1) * fade[:, None]; mix = np.tanh(mix / np.max(np.abs(mix)) * 1.5) / np.tanh(1.5) * 0.89
 with wave.open(out, 'wb') as w:
     w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR); w.writeframes((mix * 32767).astype('<i2').tobytes())

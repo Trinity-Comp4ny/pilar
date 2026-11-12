@@ -40,11 +40,11 @@
   <div id="cap" class="abs h3"><div id="c1">O agente prepara o aditivo com as horas do projeto.</div><div id="c2" style="margin-top:18px">O sistema confere. <span class="pill"><span>Você aprova.</span></span></div></div>
 </div>
 <script src="kit.js"></script><script>
-window.DUR=19.0;
+window.DUR=16.2;
 const MSG=[[2.3,'m1',0],[3.5,'m2',1],[4.8,'m3',0],[5.9,'m4',0],[6.9,'m5',2],[7.9,'m6',3],[8.9,'m7',4],[9.8,'m8',0]];
 const HRS=[[3.5,12],[6.9,30],[7.9,46],[8.9,46]];
 MSG.forEach(([t,id])=>cue(t,id==='m3'||id==='m8'?'send':'pop'));
-cue(0,'start'); cue(11.2,'whoosh'); cue(12.6,'hit'); cue(14.6,'ding'); cue(16.2,'end');
+cue(0,'start'); cue(11.2,'whoosh'); cue(12.6,'hit'); cue(14.6,'ding');
 window.render=async(t)=>{
   show('s0',t<2.2); show('s1',t>=2.2&&t<11.2); show('s2',t>=11.2&&t<16.2);
   if(t<2.2){ enter('h1',t,-1); enter('h2',t,-1); pill('p1',t,-1); enter('h3',t,0.4,20); }
@@ -63,7 +63,6 @@ window.render=async(t)=>{
     const r=$('ring'); r.style.opacity=quint(lin(u,3.3,3.7));
     const bx=box.getBoundingClientRect(); const cx=bx.left+ox+2688*sc, cy=bx.top+oy+1652*sc; r.style.width='200px'; r.style.height='100px'; r.style.left=(cx-100)+'px'; r.style.top=(cy-50)+'px';
   }
-  renderEnd(t,16.2);
 };
-setupEnd().then(()=>{ window.ready=true; });
+window.ready=true;
 </script></body></html>
