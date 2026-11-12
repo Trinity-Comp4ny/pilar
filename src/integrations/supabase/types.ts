@@ -11077,6 +11077,10 @@ export type Database = {
         Args: { p_nova_senha: string; p_senha_atual: string; p_token: string }
         Returns: Json
       }
+      portal_convite_consultar: {
+        Args: { p_token: string }
+        Returns: Json
+      }
       portal_convite_definir_senha: {
         Args: { p_senha: string; p_token: string }
         Returns: Json

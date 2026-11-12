@@ -43,14 +43,14 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
-| `invite-cliente-portal` | Convida o cliente para o portal (manda o e-mail antes de gravar). | app | JWT | `PUBLIC_SITE_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `invite-cliente-portal` | Convida o cliente para o portal (manda o e-mail antes de gravar). | app | JWT | `APP_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-aprovar-proposta` | Cliente aprova proposta pelo portal (auth pelo token do portal). | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-arquivos` | Portal do cliente: lista e baixa os arquivos da pasta Cliente do projeto no Google Drive do escritório; só do cliente da sessão (SPEC 163). | app | própria | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-entrega-download` | URL assinada de 5 minutos para arquivo de entrega do portal. | **sem chamador conhecido** | própria | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-get-projeto` | Dados do projeto para o portal (auth pelo token do portal). | **sem chamador conhecido** | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-obra-fotos` | URLs assinadas das fotos curadas do diário e dos registros liberados ao cliente, para o portal (spec 087, SPEC 135). | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-resumo-semana` | Resumo da semana da obra para o portal do cliente, escrito pela IA só com os registros liberados e guardado até o conjunto mudar (SPEC 135). | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
-| `reset-cliente-portal-password` | Redefine a senha do cliente do portal (e-mail antes de mexer na conta). | app | JWT | `PUBLIC_SITE_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `reset-cliente-portal-password` | Redefine a senha do cliente do portal (e-mail antes de mexer na conta). | app | JWT | `APP_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `upload-portal-entrega` | Upload autenticado de arquivo de entrega para o portal. | **sem chamador conhecido** | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 
 ## Pilar Campo
@@ -60,7 +60,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `campo-registro-arquivos` | URLs assinadas das fotos e do áudio dos PRÓPRIOS registros de obra, para a conta de campo (token). SPEC 135. | app | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `campo-registro-criar` | Registro de obra do Pilar Campo (áudio, foto, texto), autorizado pelo token de campo: guarda e responde na hora, a IA organiza em segundo plano. SPEC 135. | app | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `campo-upload-foto` | Upload de foto do Pilar Campo, autorizado pelo token de campo (conta sem usuário Supabase). | app | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
-| `invite-campo` | Emite credencial de acesso do Pilar Campo para a equipe de obra. | app | JWT | `PUBLIC_SITE_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `invite-campo` | Emite credencial de acesso do Pilar Campo para a equipe de obra. | app | JWT | `APP_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `registro-criar` | Registro de obra gravado pelo escritório (áudio, foto, texto), autorizado pelo JWT do usuário: guarda e responde na hora, a IA organiza em segundo plano. SPEC 135. | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `registro-reprocessar` | Tentar de novo a organização de um registro de obra que falhou; vale para o escritório (JWT) e para o campo (token). SPEC 135. | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 
