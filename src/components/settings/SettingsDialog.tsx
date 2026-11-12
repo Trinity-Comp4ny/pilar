@@ -70,7 +70,15 @@ export function SettingsDialog() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(next) => !next && closeSettings()}>
-      <DialogContent className="z-60 flex max-w-[min(100vw-2rem,980px)] h-[min(88dvh,700px)] gap-0 p-0 overflow-hidden">
+      <DialogContent
+        className="z-60 flex max-w-[min(100vw-2rem,980px)] h-[min(88dvh,700px)] gap-0 p-0 overflow-hidden"
+        // Abre com o foco no próprio diálogo: focar o 1º item do menu ("Conta") deixava um anel
+        // nele mesmo com outra seção aberta, parecendo dois itens selecionados.
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          (e.currentTarget as HTMLElement | null)?.focus();
+        }}
+      >
         <div className="flex min-h-0 w-full flex-col sm:flex-row">
           {/* Rail de seções */}
           <nav
