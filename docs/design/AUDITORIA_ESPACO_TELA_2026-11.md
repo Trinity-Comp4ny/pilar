@@ -353,6 +353,24 @@ de Disciplinas foram para a barra da página
 ([`antes-depois/auditoria-espaco-p4/`](antes-depois/auditoria-espaco-p4/README.md)). Com isso, o
 plano da auditoria está completo.
 
+### P5: segunda varredura (12/11) — feito
+
+O Matheus apontou mais vãos (Visão geral, Lançamentos, Clima). Uma varredura medida de 30 rotas em
+1320 × 750 (script Playwright: vão entre o cabeçalho e o 1º bloco, recuo do conteúdo × recuo do
+título, card dentro de card, largura travada) achou a causa comum e alguns casos isolados:
+
+| Achado                                                                                                   | Telas                                                                              | Correção                                                                                                                      |
+| -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `PageLayout` padrão com 32/40/48 px de recuo, contra 24 px do título: vão no topo e conteúdo desalinhado | 17 rotas (Financeiro, Início, Ajuda, Novidades, Clima, Fornecedores, Obra, Ultra…) | Recuo lateral de 24 px e topo de 24 px em toda tela (`md:px-6 md:pt-6`)                                                       |
+| Card em volta de tabela que já tem moldura (duas bordas, +16 px de cada lado)                            | Lançamentos                                                                        | Card removido                                                                                                                 |
+| Tabela de Lançamentos mais larga que a tela: Valor e Status fora em 1320 px                              | Lançamentos                                                                        | Categoria, projeto e contraparte cortam com reticências (nome no `title`), "atrasado" embaixo da data; limites maiores em 2xl |
+| `CardContent p-4` em volta da `DataTable` (texto 32 px dentro da borda)                                  | Clientes, Equipe, Fornecedores                                                     | `p-0` (padrão da Propostas)                                                                                                   |
+| Linha de barra só para "3 de 3"                                                                          | Fornecedores                                                                       | Barra removida; contagem no cabeçalho quando a busca recorta                                                                  |
+| Coluna central de 1024 px                                                                                | Clima                                                                              | Largura toda                                                                                                                  |
+| Blocos de meia largura com a outra metade vazia                                                          | Obra › Visão                                                                       | Marcos de faturamento ao lado do Avanço                                                                                       |
+
+Antes e depois em [`antes-depois/auditoria-espaco-p5/`](antes-depois/auditoria-espaco-p5/README.md).
+
 ## 4. Regras propostas para o design system
 
 Para não voltar a acontecer (entrar em `PILAR_DESIGN_SYSTEM.md` após aprovação):
@@ -367,3 +385,6 @@ Para não voltar a acontecer (entrar em `PILAR_DESIGN_SYSTEM.md` após aprovaç�
 5. **Nada fixo por cima do conteúdo em desktop**, exceto toast e dialog.
 6. **Validar em 1440 × 800** (notebook 13") além de 1440 × 900: o conteúdo principal tem que ficar com
    pelo menos 65% da altura do viewport.
+7. **Recuo do conteúdo = recuo do título** (24 px em desktop). Recuo maior só desalinha e empurra o
+   conteúdo para baixo.
+8. **Tabela com moldura não vai dentro de card**, e card de lista não soma padding à `DataTable`.

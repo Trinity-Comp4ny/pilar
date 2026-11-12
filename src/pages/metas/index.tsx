@@ -35,7 +35,7 @@ export default function MetasPage() {
       {/* Área com rolagem própria: precisa receber foco para rolar pelo teclado (axe
           scrollable-region-focusable) quando o conteúdo não tem nada focável. */}
       <div
-        className="flex-1 overflow-y-auto w-full bg-background p-6 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:p-8"
+        className="flex-1 overflow-y-auto w-full bg-background p-4 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:px-6 md:pt-6 md:pb-8"
         tabIndex={0}
         role="region"
         aria-label="Painel de metas"

@@ -233,7 +233,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
           />
         </FilterBar>
       </PageToolbar>
-      <CardContent className="flex-1 min-h-0 flex flex-col p-4">
+      <CardContent className="flex-1 min-h-0 flex flex-col p-0 pb-2">
         {/* A página é de altura fixa (main com overflow-y-hidden): o scroll vive
             aqui e a altura vem do flex, não de um calc() com número mágico que
             estourava no mobile (header + chip-nav + BottomNav) e cortava as
