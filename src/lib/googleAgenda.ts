@@ -120,10 +120,20 @@ export const desconectarAgenda = () =>
 
 const hora = (iso: string) => new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
+/** O link é uma sala do Google Meet? Compara o host inteiro, não um pedaço da URL. */
+export function ehGoogleMeet(link: string | null): boolean {
+  if (!link) return false;
+  try {
+    return new URL(link).hostname === "meet.google.com";
+  } catch {
+    return false;
+  }
+}
+
 /** "14:00–15:00 · Meet" / "Dia inteiro · Sala 2". */
 export function rotuloHorario(ev: EventoAgenda): string {
   const quando = ev.dia_inteiro ? "Dia inteiro" : `${hora(ev.inicio)}–${hora(ev.fim)}`;
-  const onde = ev.link_reuniao?.includes("meet.google.com") ? "Meet" : ev.link_reuniao ? "Online" : ev.local;
+  const onde = ehGoogleMeet(ev.link_reuniao) ? "Meet" : ev.link_reuniao ? "Online" : ev.local;
   return onde ? `${quando} · ${onde}` : quando;
 }
 

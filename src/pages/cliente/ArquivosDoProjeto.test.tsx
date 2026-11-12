@@ -74,7 +74,7 @@ describe("ArquivosDoProjeto", () => {
     const link = await screen.findByRole("link", { name: /Pranchas aprovadas/ });
     expect(link).toHaveAttribute("href", "https://wetransfer.com/x");
     expect(link).toHaveAttribute("target", "_blank");
-    expect(screen.getByRole("link", { name: /site\.com/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "https://site.com/" })).toHaveAttribute("href", "https://site.com/");
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
   });
 

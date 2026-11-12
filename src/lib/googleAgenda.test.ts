@@ -2,7 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { functions: { invoke: vi.fn() } } }));
 
-import { buildEventosReunioes, linkDoEvento, rotuloAviso, rotuloHorario, type EventoAgenda } from "./googleAgenda";
+import {
+  buildEventosReunioes,
+  ehGoogleMeet,
+  linkDoEvento,
+  rotuloAviso,
+  rotuloHorario,
+  type EventoAgenda,
+} from "./googleAgenda";
 
 const base: EventoAgenda = {
   id: "r1",
@@ -26,6 +33,14 @@ describe("googleAgenda", () => {
     expect(rotuloHorario({ ...base, link_reuniao: "https://zoom.us/j/1" })).toMatch(/ · Online$/);
     expect(rotuloHorario({ ...base, local: "Sala 2" })).toMatch(/ · Sala 2$/);
     expect(rotuloHorario({ ...base, dia_inteiro: true })).toBe("Dia inteiro");
+  });
+
+  it("só é Meet quando o host é meet.google.com", () => {
+    expect(ehGoogleMeet("https://meet.google.com/abc-defg-hij")).toBe(true);
+    expect(ehGoogleMeet("https://meet.google.com.evil.com/x")).toBe(false);
+    expect(ehGoogleMeet("https://evil.com/meet.google.com")).toBe(false);
+    expect(ehGoogleMeet("não é url")).toBe(false);
+    expect(ehGoogleMeet(null)).toBe(false);
   });
 
   it("rótulo do aviso", () => {
