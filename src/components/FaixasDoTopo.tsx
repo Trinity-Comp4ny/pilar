@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useRef } from "react";
+import { registrarAlvoFaixas } from "@/lib/faixasDoTopo";
 
 // As faixas em si também são preguiçosas: a do Termos só aparece para admin, e a de avisos
 // traz o formatador de datas e os ícones dela.
@@ -35,6 +36,8 @@ export function FaixasDoTopo({ left }: { left: number }) {
 
   return (
     <div ref={ref} className="fixed right-0 top-0 z-50" style={{ left }}>
+      {/* Somente leitura e "visualizando como" se encaixam aqui (lib/faixasDoTopo). */}
+      <div ref={registrarAlvoFaixas} />
       <Suspense fallback={null}>
         <AceiteTermosBanner modo="faixa" />
       </Suspense>
