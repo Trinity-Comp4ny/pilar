@@ -125,7 +125,7 @@ serve(
           empresa_id: profile.empresa_id,
           user_id: user.id,
         });
-        return safeErrorResponse(400, `Convite enviado, mas falhou ao gravar: ${resetError.message}`, req);
+        return safeErrorResponse(400, "O e-mail saiu, mas o acesso não foi gravado. Reenvie o convite.", req);
       }
 
       return jsonResponse({ success: true, email: account.email }, 200, req);
