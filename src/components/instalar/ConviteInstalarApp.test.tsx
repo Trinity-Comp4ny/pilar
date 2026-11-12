@@ -21,7 +21,7 @@ describe("ConviteInstalarApp", () => {
     render(<ConviteInstalarApp publico="portal" />);
 
     expect(screen.getByText("Instale o Pilar no celular")).toBeInTheDocument();
-    expect(screen.getByText(/Seus projetos a um toque/)).toBeInTheDocument();
+    expect(screen.getByText(/seus projetos ficam a um toque/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Como instalar" }));
 
     expect(await screen.findByRole("dialog", { name: "Instalar no iPhone" })).toBeInTheDocument();

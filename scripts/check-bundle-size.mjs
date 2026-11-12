@@ -74,7 +74,10 @@ const BUDGETS = {
   // ~0,4 kB gzip ao boot (335,3): o menu "⋯" de ações do PageHeader, o painel de baixo que ocupa a
   // largura toda e o tamanho dos seletores compactos. Estão em toda tela; o quadro mobile e o menu
   // seguem lazy.
-  initialLoad: 336 * 1024,
+  // 2026-11-12: 337 kB (era 336). O convite de instalar o app (PR #834) soma ~0,6 kB gzip ao boot
+  // (336,6): a captura do `beforeinstallprompt` precisa rodar no main.tsx, antes do React, e o
+  // ManifestDoApp troca o manifest por público. O cartão e o painel de passos seguem fora do boot.
+  initialLoad: 337 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app
