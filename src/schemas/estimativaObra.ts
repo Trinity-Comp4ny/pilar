@@ -432,7 +432,7 @@ export const resultadoSchema = z.object({
       fase: z.string(),
       valor: z.number().nullable(),
       aDefinir: z.boolean(),
-      // Resultados salvos antes da origem existir leem como referência provisória do Pilar.
+      // Resultados salvos antes da origem existir leem como referência provisória da Pilar.
       quantidade: z.number().default(1),
       unidade: z.string().nullable().default(null),
       valorUnitario: z.number().nullable().default(null),

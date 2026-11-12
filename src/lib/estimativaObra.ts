@@ -171,7 +171,7 @@ export function descreverAdicional(a: Adicional): string {
   }
 }
 
-/** Ficha inicial do assistente, com o que o Pilar sabe sem perguntar. */
+/** Ficha inicial do assistente, com o que a Pilar sabe sem perguntar. */
 export function fichaInicial(inicio: string, uf: Uf = "SP"): Ficha {
   return {
     tipo: "residencial",
@@ -330,14 +330,14 @@ export function calcularEstimativa(entrada: EntradaCalculo): SaidaCalculo {
       return {
         ok: false,
         motivo: "regime_indisponivel",
-        mensagem: `O Pilar ainda não tem o CUB ${rotuloRegime(regime)} para esse tipo de obra. Escolha o outro regime ou fale com o time para importar.`,
+        mensagem: `A Pilar ainda não tem o CUB ${rotuloRegime(regime)} para esse tipo de obra. Escolha o outro regime ou fale com o time para importar.`,
       };
     }
     return escolha.erro === "sem_cub"
       ? {
           ok: false,
           motivo: "sem_cub",
-          mensagem: "O Pilar ainda não tem a tabela do CUB para esse tipo de obra. Fale com o time para importar.",
+          mensagem: "A Pilar ainda não tem a tabela do CUB para esse tipo de obra. Fale com o time para importar.",
         }
       : {
           ok: false,
@@ -420,7 +420,7 @@ export function calcularEstimativa(entrada: EntradaCalculo): SaidaCalculo {
   if (faixaExtra > 0) {
     avisos.push({
       codigo: "faixa_provisoria",
-      mensagem: `${formatarNumero(Math.round(provisoriaPct * 10) / 10)}% do total usa referência provisória do Pilar, sem fonte pública, então a faixa ficou ${formatarNumero(faixaExtra)} ${faixaExtra === 1 ? "ponto percentual" : "pontos percentuais"} mais larga. Informe o valor dos itens ou use a tabela de preços da empresa para estreitar.`,
+      mensagem: `${formatarNumero(Math.round(provisoriaPct * 10) / 10)}% do total usa referência provisória da Pilar, sem fonte pública, então a faixa ficou ${formatarNumero(faixaExtra)} ${faixaExtra === 1 ? "ponto percentual" : "pontos percentuais"} mais larga. Informe o valor dos itens ou use a tabela de preços da empresa para estreitar.`,
     });
   }
 

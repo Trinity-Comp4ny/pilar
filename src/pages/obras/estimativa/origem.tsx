@@ -157,7 +157,7 @@ function detalheDoItem(a: Adicional): Detalhe {
         ...base,
         chip: "referencia_pilar",
         linhas: [
-          ["Origem", "Referência provisória do Pilar"],
+          ["Origem", "Referência provisória da Pilar"],
           ["Item", a.rotulo],
           ...(a.nota ? ([["Valor usado", a.nota]] as [string, ReactNode][]) : []),
           ["Fonte pública", "nenhuma"],
@@ -185,7 +185,7 @@ interface DialogoOrigemProps {
   onFechar: () => void;
   /** Ação "Informar valor" ou "Trocar o valor"; ausente para quem só lê. */
   onInformar?: (item: Adicional) => void;
-  /** Abre a tabela de preços da empresa, oferecida quando a origem é a empresa ou a referência do Pilar. */
+  /** Abre a tabela de preços da empresa, oferecida quando a origem é a empresa ou a referência da Pilar. */
   onAbrirTabela?: () => void;
 }
 

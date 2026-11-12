@@ -5,7 +5,7 @@ import { MARKETING_APP_URL } from "../marketing";
 
 /**
  * Ficha do Marketing (SPEC 128, ADR 0061): a área vive na plataforma de marketing, produto
- * próprio. Aqui só o atalho para abrir e o que o Pilar troca com ela.
+ * próprio. Aqui só o atalho para abrir e o que a Pilar troca com ela.
  */
 export function MarketingExterno() {
   return (
@@ -29,12 +29,12 @@ export function MarketingExterno() {
       </Card>
       <Card className="border border-black/5">
         <CardHeader className="pb-1">
-          <CardTitle className="text-base">O que o Pilar manda para lá</CardTitle>
+          <CardTitle className="text-base">O que a Pilar manda para lá</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="list-disc space-y-1 pl-5 text-sm text-ink-soft">
             <li>Cadastros, ativados e pagantes por link publicado, pela UTM do cadastro.</li>
-            <li>Só contagem: nenhum nome, e-mail ou dado de escritório sai do Pilar.</li>
+            <li>Só contagem: nenhum nome, e-mail ou dado de escritório sai da Pilar.</li>
             <li>Token de integração próprio, que dá para trocar sem mexer no resto.</li>
           </ul>
         </CardContent>

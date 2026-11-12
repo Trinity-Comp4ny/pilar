@@ -309,7 +309,7 @@ describe("NovaEstimativa", () => {
   it("sem nenhum CUB, explica em vez de abrir o assistente", () => {
     insumos = { ...insumosProntos(), cub: [] };
     abrir();
-    expect(screen.getByText("O Pilar ainda não tem a tabela do CUB")).toBeInTheDocument();
+    expect(screen.getByText("A Pilar ainda não tem a tabela do CUB")).toBeInTheDocument();
     expect(screen.queryByText("Que obra é essa?")).not.toBeInTheDocument();
   });
 

@@ -40,7 +40,7 @@ export function OQueMudou() {
     <Dialog open onOpenChange={(o) => !o && fechar()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>O que mudou no Pilar</DialogTitle>
+          <DialogTitle>O que mudou na Pilar</DialogTitle>
           <DialogDescription>Algumas tarefas mudaram de lugar ou de jeito. Vale um minuto.</DialogDescription>
         </DialogHeader>
         <NovidadeLista itens={fluxo} />

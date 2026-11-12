@@ -26,10 +26,10 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
 | `ativar-plano` | Tokeniza o cartão no trial sem cobrar e grava o consentimento datado (SPEC 098). | app | JWT | `ALLOWED_ORIGINS` `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
-| `pilar-checkout-create` | Checkout público do Pilar: cria cliente e cobrança na Asaas da plataforma. | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `pilar-checkout-create` | Checkout público da Pilar: cria cliente e cobrança na Asaas da plataforma. | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `pilar-checkout-status` | Consulta pública do status de pagamento do checkout. | app | própria | `ALLOWED_ORIGINS` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `pilar-checkout-webhook` | Eventos da Asaas da plataforma: libera signup, renova assinatura, credita tokens, inadimplência. | Asaas da plataforma (webhook) | própria | `ALLOWED_ORIGINS` `ASAAS_PLATFORM_WEBHOOK_TOKEN` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
-| `pilar-subscription-manage` | Troca de plano e cancelamento da assinatura do Pilar pelo admin da empresa. | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `pilar-subscription-manage` | Troca de plano e cancelamento da assinatura da Pilar pelo admin da empresa. | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `pilar-token-pack-create` | Compra avulsa de pacote de tokens de IA (SPEC 077/080). | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `verificar-documento` | Sobe a empresa para o nível Prata ao informar CNPJ ou CPF (SPEC 098). | app | JWT |  | sim |
 
@@ -102,7 +102,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `aviso-ultra-admin-email` | Disparada pelo trigger de notificacoes (pg_net): manda por e-mail, na hora, cada aviso de plataforma do ultra admin (feedback, novo cadastro, ativar plano bloqueado). SPEC 113. | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `guardiao-margem-cron` | Cron diário: prepara rascunho de aditivo, sustentado pelas despesas do projeto, quando ele estoura o orçamento (specs 081 e 107). | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `notificacoes-email-cron` | Cron: manda por e-mail o que está na central de notificações e ninguém leu. | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
-| `reconciliar-assinaturas` | Cron diário: compara cada assinatura do Pilar com o Asaas e avisa o ultra admin das divergências (SPEC 114). | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `reconciliar-assinaturas` | Cron diário: compara cada assinatura da Pilar com o Asaas e avisa o ultra admin das divergências (SPEC 114). | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `registro-audio-limpar` | Cron: apaga o áudio do registro de obra após 12 meses, de conta de campo excluída e arquivos órfãos (ADR 0062). | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `retencao-pos-trial` | Cron: avisos e exclusão de empresa depois do trial vencido (SPEC 098 Fase 3). | cron | própria | `ALLOWED_ORIGINS` `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `reverificar-documentos-pendentes` | Cron: reverifica CNPJ ou CPF pendentes do trial (SPEC 098). | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |

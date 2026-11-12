@@ -75,9 +75,9 @@ Com isso, o relatório mensal deixa de ser a única janela do cliente para a obr
 
 Se hoje a obra é controlada em planilhas soltas, a comparação entre [planilha e sistema](/vs/planilha) mostra onde o tempo se perde.
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O Pilar junta, no mesmo lugar, a matéria-prima do relatório de obra e dá ao cliente uma forma de acompanhar sem depender do documento mensal.
+A Pilar junta, no mesmo lugar, a matéria-prima do relatório de obra e dá ao cliente uma forma de acompanhar sem depender do documento mensal.
 
 - **Diário que chega do canteiro.** Pelo [Pilar Campo](/campo), o encarregado registra clima, efetivo, atividade, ocorrência, pendência, foto e medição no celular, mesmo sem sinal. O registro aparece no [módulo Obra](/obra) sem ninguém redigitar.
 - **Cronograma em dois níveis.** Frentes de serviço com passos dentro, e o campo marca cada tarefa como avançou, concluiu ou parou.

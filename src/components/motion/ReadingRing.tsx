@@ -16,7 +16,7 @@ interface ReadingRingProps {
 const markWeight = (size: number) => (size < 50 ? 2.6 : size < 100 ? 1.9 : 1.6);
 
 /**
- * Anel de leitura (R1, ADR 0049): o carregamento do Pilar para página, seção e
+ * Anel de leitura (R1, ADR 0049): o carregamento da Pilar para página, seção e
  * card. Decorativo; quem anuncia a espera é o `role="status"` de quem o usa
  * (ver PageLoader). Reserva o espaço desde o primeiro render, então a tela não
  * pula quando o anel aparece.

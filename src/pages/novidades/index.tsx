@@ -10,7 +10,7 @@ import { useMarcarNovidadesVistas, useNovidades } from "@/hooks/useNovidades";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { formatDateTime } from "@/lib/format";
 
-// Novidades do produto (SPEC 152): o que mudou no Pilar, da release mais nova à mais velha.
+// Novidades do produto (SPEC 152): o que mudou na Pilar, da release mais nova à mais velha.
 // Abrir a página conta como ter visto: o ponto do menu e o modal "O que mudou" somem.
 export default function Novidades() {
   usePageTitle("Novidades");
@@ -28,7 +28,7 @@ export default function Novidades() {
   return (
     <PilarPage title="Novidades">
       <p className="text-sm text-ink-muted">
-        O que mudou no Pilar. Mudanças no caminho de uma tarefa aparecem primeiro.
+        O que mudou na Pilar. Mudanças no caminho de uma tarefa aparecem primeiro.
       </p>
 
       {isLoading ? (
@@ -42,7 +42,7 @@ export default function Novidades() {
         <EmptyState
           icon={Sparkles}
           title="Nenhuma novidade por enquanto"
-          description="Quando sair uma melhoria no Pilar, ela aparece aqui."
+          description="Quando sair uma melhoria na Pilar, ela aparece aqui."
         />
       ) : (
         <div className="space-y-4">

@@ -96,7 +96,7 @@ export function useConvitePendente(pessoaId: string | undefined, enabled: boolea
 }
 
 /**
- * Convida a pessoa da Equipe para o Pilar. A conta criada pelo convite é ligada a
+ * Convida a pessoa da Equipe para a Pilar. A conta criada pelo convite é ligada a
  * ela no banco, mesmo que o login use outro e-mail (migration 20261207000000).
  */
 export async function convidarPessoa(pessoa: { id: string; nome: string; email: string }) {

@@ -1,6 +1,6 @@
 /**
  * Faixa de avisos da plataforma (SPEC 153): o que o ultra admin declarou em Incidentes vira
- * aviso para quem está usando o Pilar. Regra pura (sem React, sem rede) para dar para testar.
+ * aviso para quem está usando a Pilar. Regra pura (sem React, sem rede) para dar para testar.
  *
  * - Incidente aberto: faixa com a cor da severidade e a última atualização.
  * - Incidente resolvido há menos de 30 min: "Normalizado", depois some.
@@ -139,7 +139,7 @@ export function montarAvisos(
         chave: `manutencao:${m.id}:programada`,
         tom: "info",
         titulo: `Manutenção programada: ${m.titulo}`,
-        texto: m.mensagem ?? "O Pilar pode ficar indisponível nesse intervalo. Salve o que estiver fazendo antes.",
+        texto: m.mensagem ?? "A Pilar pode ficar indisponível nesse intervalo. Salve o que estiver fazendo antes.",
         detalhe: `Previsto ${janelaManutencao(inicio, fim)}`,
       });
     }

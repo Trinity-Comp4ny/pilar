@@ -118,7 +118,7 @@ export function AceiteTermosBanner({ modo = "ambos" }: { modo?: ModoAceiteTermos
               Novos Termos de Uso
             </h2>
             <p className="text-sm leading-relaxed text-ink-muted">
-              {`Os Termos de Uso e a Política de Privacidade do Pilar mudaram e valem desde ${TERMS_VIGENCIA_TEXTO}. Como administrador da conta, você aceita em nome da empresa para seguir usando.`}
+              {`Os Termos de Uso e a Política de Privacidade da Pilar mudaram e valem desde ${TERMS_VIGENCIA_TEXTO}. Como administrador da conta, você aceita em nome da empresa para seguir usando.`}
             </p>
           </div>
           <LinkTermos className="block text-sm font-medium text-ink underline underline-offset-2" />

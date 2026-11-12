@@ -82,7 +82,7 @@ A rotina que sustenta os três acordos é uma reunião curta, sempre no mesmo di
 
 O detalhe do acompanhamento de prazo entre disciplinas está em [controle de prazo de projetos](/blog/controle-prazo-projetos-disciplinas). Aqui, o importante é que a reunião serve para destravar, não para cobrar status. Se a pergunta é "como está?", a resposta será sempre "andando". Pergunte "o que você está esperando e de quem?".
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
 O [módulo Projetos](/projetos) trata o projeto como um conjunto de disciplinas, cada uma com gente e data.
 
@@ -92,7 +92,7 @@ O [módulo Projetos](/projetos) trata o projeto como um conjunto de disciplinas,
 - Gantt da carteira inteira, para enxergar a semana congestionada antes de prometer prazo.
 - Ao concluir uma disciplina, o responsável da etapa seguinte é avisado; mudou a data, o sistema pede o motivo.
 
-O Pilar não faz controle de horas da equipe: a gestão é por responsável, entrega e prazo. Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário, então incluir a equipe inteira não muda o preço. [Veja os planos](/planos) ou como o Pilar atende [escritórios de engenharia](/engenharia).
+A Pilar não faz controle de horas da equipe: a gestão é por responsável, entrega e prazo. Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário, então incluir a equipe inteira não muda o preço. [Veja os planos](/planos) ou como a Pilar atende [escritórios de engenharia](/engenharia).
 
 ## Perguntas frequentes
 

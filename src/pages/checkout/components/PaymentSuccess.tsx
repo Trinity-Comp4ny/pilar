@@ -15,7 +15,7 @@ export function PaymentSuccess({ email, planNome, inviteDispatched }: PaymentSuc
 
       <div>
         <h2 className="text-3xl font-medium text-ink">Pagamento confirmado</h2>
-        <p className="text-ink-muted mt-2">Plano {planNome} ativo. Bem-vindo ao Pilar.</p>
+        <p className="text-ink-muted mt-2">Plano {planNome} ativo. Bem-vindo à Pilar.</p>
       </div>
 
       <div className="bg-muted border border-border rounded-xl p-6 text-left space-y-3">

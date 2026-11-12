@@ -10,7 +10,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 
 import { ReadingRing } from "@/components/motion/ReadingRing";
 
-// Suporte do Pilar encaminha o cliente ao escritório responsável pela conta.
+// Suporte da Pilar encaminha o cliente ao escritório responsável pela conta.
 const SUPORTE_EMAIL = "suporte@pilarsoft.com.br";
 
 function calcProgress(disciplinas: ClienteProjeto["disciplinas"]): number {

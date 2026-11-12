@@ -17,7 +17,7 @@ export function SobrePilar() {
     <Card className="border border-border-subtle">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <Info size={16} className="text-ink" /> Sobre o Pilar
+          <Info size={16} className="text-ink" /> Sobre a Pilar
         </CardTitle>
         <CardDescription data-testid="versao-app" className="font-mono text-xs">
           {versaoAtual()}

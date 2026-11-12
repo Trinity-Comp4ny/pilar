@@ -159,7 +159,7 @@ export default function Signup() {
               <div className="space-y-2">
                 <h2 className="text-lg font-semibold text-ink">Esse e-mail já tem conta</h2>
                 <p className="text-sm text-ink-soft">
-                  <span className="font-medium text-ink">{form.getValues("email")}</span> já está cadastrado no Pilar.
+                  <span className="font-medium text-ink">{form.getValues("email")}</span> já está cadastrado na Pilar.
                   Entre com sua senha ou crie uma nova se não lembrar.
                 </p>
               </div>

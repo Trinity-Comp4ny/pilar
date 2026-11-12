@@ -316,7 +316,7 @@ export function AppSidebar() {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              aria-label={novidades.temDestaque ? "Menu do usuário, há novidades no Pilar" : "Menu do usuário"}
+              aria-label={novidades.temDestaque ? "Menu do usuário, há novidades na Pilar" : "Menu do usuário"}
               title={userName}
               className={cn(
                 "relative flex h-9 w-9 items-center justify-center rounded-full transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black/10",

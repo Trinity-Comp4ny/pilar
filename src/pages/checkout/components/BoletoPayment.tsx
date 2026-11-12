@@ -68,7 +68,7 @@ export function BoletoPayment({ bankSlipUrl, identificationField, value, isPolli
 
       <p className="text-xs text-ink-muted bg-warning-soft border border-warning-mid-border rounded-lg p-3">
         Após o pagamento, o banco leva de 1 a 3 dias úteis pra processar. Assim que cair, enviamos email com o link de
-        acesso ao Pilar.
+        acesso à Pilar.
       </p>
 
       <div className="flex items-center justify-center gap-2 text-sm text-ink-muted pt-2">

@@ -79,7 +79,7 @@ Um sistema feito para escritório de projeto parte de outro desenho: o projeto �
 3. **Escolha uma data de virada.** A partir dela, a reunião de segunda usa só o sistema.
 4. **Desligue a planilha.** Se as duas continuam vivas, a equipe atualiza a mais fácil e as duas ficam erradas.
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
 O [módulo Projetos](/projetos) faz o que a planilha pede que alguém lembre.
 

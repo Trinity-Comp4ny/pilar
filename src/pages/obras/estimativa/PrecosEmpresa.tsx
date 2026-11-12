@@ -45,7 +45,7 @@ function registroDe(ajuste: Ajuste | undefined): { quando: string | null; por: s
 
 /**
  * Tabela de preços da empresa (SPEC 137, BEZ-14): o valor de cada item do catálogo e dos adicionais ao lado da
- * referência. O valor da empresa vale antes do SINAPI e da referência do Pilar. Todos da empresa leem; só o admin
+ * referência. O valor da empresa vale antes do SINAPI e da referência da Pilar. Todos da empresa leem; só o admin
  * escreve (a RLS também confere).
  */
 export default function PrecosEmpresa() {
@@ -184,7 +184,7 @@ export default function PrecosEmpresa() {
   return (
     <PilarPage title="Tabela de preços" breadcrumbs={BREADCRUMB}>
       <p className="-mt-2 max-w-2xl text-sm text-ink-soft">
-        O valor da sua empresa vale antes de qualquer referência (SINAPI ou provisória do Pilar) em toda estimativa
+        O valor da sua empresa vale antes de qualquer referência (SINAPI ou provisória da Pilar) em toda estimativa
         nova. Versões já salvas guardam o valor da época.
       </p>
 
@@ -227,7 +227,7 @@ export default function PrecosEmpresa() {
         onConfirm={() => voltando && gravar(voltando, null, "Voltou à referência")}
         title="Voltar à referência?"
         itemName={voltando?.adicional.rotulo}
-        description="A empresa deixa de ter valor próprio para este item. As próximas estimativas usam o SINAPI ou a referência do Pilar."
+        description="A empresa deixa de ter valor próprio para este item. As próximas estimativas usam o SINAPI ou a referência da Pilar."
         confirmText="Voltar à referência"
         loading={salvar.isPending}
       />

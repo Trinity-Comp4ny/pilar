@@ -80,7 +80,7 @@ Cliente que não sabe em que pé está o projeto liga para perguntar, e cada lig
 - **Mostre o andamento por disciplina**, não um percentual genérico. "Arquitetura entregue, estrutural em andamento, instalações aguardando lançamento estrutural" é claro para qualquer cliente.
 - **Deixe as pendências do cliente visíveis.** Quando ele vê que a etapa seguinte depende da aprovação dele, a aprovação costuma vir mais rápido.
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
 O [módulo Projetos](/projetos) foi feito para escritório multidisciplinar: o projeto é um conjunto de disciplinas, cada uma com gente e data.
 

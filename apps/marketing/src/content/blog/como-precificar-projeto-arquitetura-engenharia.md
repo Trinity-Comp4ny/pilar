@@ -97,9 +97,9 @@ Em projeto com arquitetura, estrutural, elétrica e hidrossanitário, precifique
 
 Ao fechar um projeto, compare o que foi vendido com o que entrou e com quanto a equipe trabalhou nele. Esse histórico calibra o seu R$/m² e a sua estimativa de horas para a próxima proposta. Sem ele, o escritório repete o mesmo erro de preço por anos. É o tipo de conta que a planilha até guarda, mas raramente cruza; comparamos os caminhos em [Pilar vs planilha](/vs/planilha).
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O Pilar não calcula o seu preço por você. Ele guarda o que foi vendido, por disciplina, e liga isso ao que entra no caixa, para a próxima proposta partir de dado real. Planos a partir de R$ 299 por mês por escritório, sem cobrança por usuário ([ver planos](/planos)).
+A Pilar não calcula o seu preço por você. Ele guarda o que foi vendido, por disciplina, e liga isso ao que entra no caixa, para a próxima proposta partir de dado real. Planos a partir de R$ 299 por mês por escritório, sem cobrança por usuário ([ver planos](/planos)).
 
 - Proposta por disciplina em DOCX no modelo do escritório, com funil e motivo de perda registrado ([Gestão](/gestao)).
 - Proposta aceita vira projeto com as parcelas no financeiro, em parcelas mensais ou marcos.

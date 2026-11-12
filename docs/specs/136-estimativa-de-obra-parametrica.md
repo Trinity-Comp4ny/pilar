@@ -12,14 +12,14 @@
 ## Problema
 
 Na primeira reunião o cliente do escritório de projeto pergunta "quanto custa construir e quanto tempo leva?".
-Hoje o sócio responde no chute ou numa planilha própria, e a resposta não chega ao Pilar: quando a obra começa, o
+Hoje o sócio responde no chute ou numa planilha própria, e a resposta não chega à Pilar: quando a obra começa, o
 cronograma e o previsto por etapa são digitados do zero. Quem fecha a proposta sem uma faixa de custo perde a
 conversa para quem tem número.
 
 ## Objetivo
 
 O usuário descreve a obra (tipo, padrão, local, área, o que ela tem) e recebe em menos de 5 minutos uma faixa de
-custo com fonte de preço e um cronograma fase › etapa › serviço. Com um clique isso vira a obra no Pilar ou um PDF
+custo com fonte de preço e um cronograma fase › etapa › serviço. Com um clique isso vira a obra na Pilar ou um PDF
 para o cliente. Medida de sucesso: tempo até a primeira estimativa e % de estimativas que viram obra.
 
 **Fora de escopo (MVP 1):**

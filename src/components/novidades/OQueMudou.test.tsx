@@ -48,21 +48,21 @@ beforeEach(() => {
 describe("OQueMudou (SPEC 152)", () => {
   it("não abre sem mudança de fluxo nova", () => {
     montar();
-    expect(screen.queryByText("O que mudou no Pilar")).not.toBeInTheDocument();
+    expect(screen.queryByText("O que mudou na Pilar")).not.toBeInTheDocument();
   });
 
   it("mostra só as mudanças de fluxo, com o selo de quem pediu, e marca como visto ao fechar", async () => {
     h.comFluxo = [release];
     const user = userEvent.setup();
     montar();
-    expect(screen.getByText("O que mudou no Pilar")).toBeInTheDocument();
+    expect(screen.getByText("O que mudou na Pilar")).toBeInTheDocument();
     expect(screen.getByText("A fatura agora sai de dentro do projeto")).toBeInTheDocument();
     expect(screen.getByText("Você pediu")).toBeInTheDocument();
     expect(screen.queryByText("Exporta em Excel")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Entendi" }));
     expect(h.marcar).toHaveBeenCalledTimes(1);
-    expect(screen.queryByText("O que mudou no Pilar")).not.toBeInTheDocument();
+    expect(screen.queryByText("O que mudou na Pilar")).not.toBeInTheDocument();
   });
 
   it("leva às outras novidades", async () => {
@@ -77,6 +77,6 @@ describe("OQueMudou (SPEC 152)", () => {
   it("não abre em cima da própria página de Novidades", () => {
     h.comFluxo = [release];
     montar("/novidades");
-    expect(screen.queryByText("O que mudou no Pilar")).not.toBeInTheDocument();
+    expect(screen.queryByText("O que mudou na Pilar")).not.toBeInTheDocument();
   });
 });

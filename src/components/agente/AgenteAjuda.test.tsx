@@ -39,9 +39,9 @@ describe("AgenteAjuda (SPEC 155)", () => {
   it('abre pelo "?" do cabeçalho como chat, sem título, e sugere os artigos da tela', async () => {
     const user = montar();
     await user.click(screen.getByRole("button", { name: "Abrir dúvidas" }));
-    const chat = screen.getByRole("dialog", { name: "Dúvidas sobre o Pilar" });
+    const chat = screen.getByRole("dialog", { name: "Dúvidas sobre a Pilar" });
     expect(chat).toBeInTheDocument();
-    expect(screen.queryByText("Agente do Pilar")).not.toBeInTheDocument();
+    expect(screen.queryByText("Agente da Pilar")).not.toBeInTheDocument();
     expect(screen.getByText("Nesta tela:")).toBeInTheDocument();
     expect(screen.getByLabelText("Sua pergunta")).toHaveFocus();
 

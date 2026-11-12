@@ -75,9 +75,9 @@ Comece pelo trabalho que ninguém gosta de fazer e que tem conferência fácil. 
 
 Deixe por último, ou fora, o que envolve julgamento técnico ou relacionamento com cliente. A IA ajuda mais quando libera tempo para essas tarefas do que quando tenta fazê-las. Para organizar o restante da rotina, veja [como organizar um escritório de engenharia](/blog/como-organizar-escritorio-engenharia) e o [fluxo de caixa do escritório](/blog/fluxo-de-caixa-escritorio-engenharia).
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O Pilar é gestão com agentes de IA para escritórios de engenharia e arquitetura, e segue a regra deste artigo: a IA prepara, o sistema confere, você aprova. Os agentes que estão no produto hoje:
+A Pilar é gestão com agentes de IA para escritórios de engenharia e arquitetura, e segue a regra deste artigo: a IA prepara, o sistema confere, você aprova. Os agentes que estão no produto hoje:
 
 - **Extrato e fatura lidos por IA** ([Gestão](/gestao)). Solte o PDF do banco ou do cartão. O agente separa receita de despesa, identifica "parcela 3 de 12" e sugere a categoria do seu plano de contas. Você revisa e aprova antes de gravar.
 - **Orçamento do fornecedor lido por IA** ([Obra](/obra)). Fotografe o orçamento ou solte o PDF. O agente reconhece se é cesta ou comparação entre lojas e devolve os itens com preço e prazo, que entram na cotação comparada lado a lado.

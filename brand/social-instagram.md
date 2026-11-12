@@ -214,5 +214,5 @@ O perfil mostra o feed em colunas de 3 peças no formato 3:4. Para o conjunto pa
 - **Automação:** copie `brand/social/templates/` e `apps/marketing/public/fonts/geist-variable*.woff2`
   para o `post-automation` (`templates/instagram/`) e aponte o `render-image.js`. Os placeholders
   são os mesmos dos templates atuais de lá. O `docs/brand.md` do `post-automation` está
-  desatualizado (usa `#0A0A0A`, `#3C3C3C` e gradiente): vale o `brand/` do Pilar.
+  desatualizado (usa `#0A0A0A`, `#3C3C3C` e gradiente): vale o `brand/` da Pilar.
 - **Gerar as prévias:** `python3 scripts/brand/render-social.py`.

@@ -39,6 +39,6 @@ export interface Pessoa {
   // Vem da view pessoas_safe: true quando o papel pode ver folha (salário,
   // contas, PIX, CPF completo). Para os demais, esses campos chegam mascarados.
   pode_ver_sensivel?: boolean;
-  // Login ligado à pessoa (null = sem acesso ao Pilar).
+  // Login ligado à pessoa (null = sem acesso à Pilar).
   profile_id?: string | null;
 }

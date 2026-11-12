@@ -308,7 +308,7 @@ describe("NotFound", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Página não encontrada");
     expect(screen.getByText("404")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Ir para a página inicial" })).toHaveAttribute("href", "/");
-    expect(screen.getByRole("link", { name: "Ir para o login do Pilar" })).toHaveAttribute("href", `${APP_URL}/login`);
+    expect(screen.getByRole("link", { name: "Ir para o login da Pilar" })).toHaveAttribute("href", `${APP_URL}/login`);
     confereDestinos(container);
 
     expect(document.title).toBe("Página não encontrada | Pilar");

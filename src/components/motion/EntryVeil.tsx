@@ -3,12 +3,12 @@ import { ReadingRing } from "./ReadingRing";
 import { bootIsShowing, dismissBoot } from "./boot";
 import { isEntryVeilMounted, isOwnVeilShowing, veilMounted, veilUnmounted } from "./veilState";
 
-const DEFAULT_LABEL = "Abrindo o Pilar";
+const DEFAULT_LABEL = "Abrindo a Pilar";
 
 /**
  * Véu de entrada (T02, ADR 0049): cobre a tela entre o login e a primeira tela do
  * app só com o anel. Se o boot do index.html ainda está na tela, o véu reaproveita
- * o anel dele em vez de montar outro. A legenda ("Abrindo o Pilar") não aparece na
+ * o anel dele em vez de montar outro. A legenda ("Abrindo a Pilar") não aparece na
  * tela (pedido do Matheus, 12/11): fica só para leitor de tela.
  */
 export function EntryVeil({ label }: { label?: string }) {

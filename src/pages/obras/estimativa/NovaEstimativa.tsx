@@ -356,7 +356,7 @@ export default function NovaEstimativa() {
       <PilarPage title="Nova estimativa" breadcrumbs={BREADCRUMB}>
         <EmptyState
           icon={FileSpreadsheet}
-          title="O Pilar ainda não tem a tabela do CUB"
+          title="A Pilar ainda não tem a tabela do CUB"
           description="Sem o CUB não dá para calcular. Fale com o time para importar a tabela do mês."
         />
       </PilarPage>

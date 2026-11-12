@@ -1,4 +1,4 @@
-// ai-chat — Copiloto conversacional do Pilar (MVP consultivo, read-only).
+// ai-chat — Copiloto conversacional da Pilar (MVP consultivo, read-only).
 //
 // Fluxo: mensagem do usuário → ORQUESTRADOR classifica a intenção → aciona o
 // AGENTE DE DOMÍNIO (read-only, via RLS/JWT do usuário) que coleta os dados →

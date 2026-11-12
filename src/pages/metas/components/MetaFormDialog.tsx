@@ -307,7 +307,7 @@ export function MetaFormDialog({ open, onOpenChange, meta }: MetaFormDialogProps
         </Select>
         <p className="text-xs text-muted-foreground">
           {def
-            ? "O valor atual é calculado sozinho a partir dos dados do Pilar."
+            ? "O valor atual é calculado sozinho a partir dos dados da Pilar."
             : "Você atualiza o valor atual na mão."}
         </p>
       </div>

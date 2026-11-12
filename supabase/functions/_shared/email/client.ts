@@ -1,10 +1,10 @@
 /**
- * Saída única de e-mail do Pilar (ADR 0039). Resend via fetch, retry com backoff,
+ * Saída única de e-mail da Pilar (ADR 0039). Resend via fetch, retry com backoff,
  * text/plain automático, Idempotency-Key, remetente por classe, registro em
  * `email_envios` e recusa de endereço suprimido.
  *
  * Classes:
- * - "plataforma": Pilar → usuário do Pilar (auth, trial, LGPD, notificação).
+ * - "plataforma": Pilar → usuário da Pilar (auth, trial, LGPD, notificação).
  * - "escritorio": escritório → cliente final, via Pilar (cobrança, proposta, portal).
  *   Exige `empresa`; `from` vira "<Empresa> via Pilar", `replyTo` vira o e-mail da empresa.
  *

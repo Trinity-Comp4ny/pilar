@@ -7,7 +7,7 @@ O funil mostra em que etapa está cada negociação. Mover o lead entre colunas 
 
 ## Quando o lead é perdido
 
-Ao mover para a coluna que conta como **Perdido**, o Pilar pede o **Motivo da perda**. Escreva o motivo e clique em **Confirmar perda**. O motivo fica no histórico do lead e ajuda a entender por que o escritório perde negócio.
+Ao mover para a coluna que conta como **Perdido**, a Pilar pede o **Motivo da perda**. Escreva o motivo e clique em **Confirmar perda**. O motivo fica no histórico do lead e ajuda a entender por que o escritório perde negócio.
 
 ## Quando o lead é ganho
 
@@ -28,6 +28,6 @@ Clique no card para abrir o lead. No rodapé:
 
 ## Colunas do funil
 
-Você pode criar colunas com **Nova coluna**: nome, cor e **Conta como** (em andamento, ganho ou perdido). O funil precisa ter uma coluna que conta como **Ganho**; sem ela, o Pilar avisa e não converte o lead em cliente.
+Você pode criar colunas com **Nova coluna**: nome, cor e **Conta como** (em andamento, ganho ou perdido). O funil precisa ter uma coluna que conta como **Ganho**; sem ela, a Pilar avisa e não converte o lead em cliente.
 
 Veja também: [criar e enviar uma proposta](/ajuda/criar-e-enviar-proposta).

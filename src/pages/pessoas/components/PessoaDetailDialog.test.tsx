@@ -23,7 +23,7 @@ vi.mock("@/integrations/supabase/client", async () => {
   h.calls = chain.calls;
   return { supabase: { from: chain.from, rpc: h.rpc } };
 });
-// Acesso ao Pilar tem teste próprio (PessoaAcessoSecao.test.tsx).
+// Acesso à Pilar tem teste próprio (PessoaAcessoSecao.test.tsx).
 vi.mock("./PessoaAcessoSecao", () => ({ PessoaAcessoSecao: () => null }));
 
 const RITA: Pessoa = {

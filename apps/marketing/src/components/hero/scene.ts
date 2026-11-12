@@ -1,7 +1,7 @@
 /**
  * Roteiro da cena da hero (SPEC 072).
  *
- * A cena é uma sessão contínua no Pilar conduzida por um agente: ele escreve o
+ * A cena é uma sessão contínua na Pilar conduzida por um agente: ele escreve o
  * pedido em português, monta o lançamento, pede aprovação, o lead fecha e vira
  * projeto, a receita entra no financeiro, a margem e o cronograma do projeto
  * aparecem, e a obra recebe o diário do campo. É a tagline ("gestão com agentes

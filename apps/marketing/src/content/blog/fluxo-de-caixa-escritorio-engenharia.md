@@ -103,9 +103,9 @@ Se o roteiro passa de uma manhã, o gargalo quase sempre está nos passos 2 e 3:
 
 Se você se reconheceu em dois desses, a comparação entre [planilha e sistema](/vs/planilha) ajuda a decidir a hora de trocar.
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O [módulo Gestão](/gestao) do Pilar junta proposta e financeiro, então a receita nasce do contrato e não de digitação.
+O [módulo Gestão](/gestao) da Pilar junta proposta e financeiro, então a receita nasce do contrato e não de digitação.
 
 - A proposta aprovada vira projeto, e as parcelas (mensais ou por marco) nascem no financeiro no mesmo clique.
 - Extrato do banco e fatura do cartão entram em PDF. O agente de IA separa receita de despesa, identifica parcelamento e sugere a categoria do seu plano de contas; você revisa e aprova antes de gravar.

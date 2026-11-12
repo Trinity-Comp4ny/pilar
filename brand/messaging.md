@@ -6,7 +6,7 @@
 
 ## One-liner (elevator)
 
-> O Pilar é gestão com agentes de IA para escritórios de engenharia e arquitetura: proposta, projeto, obra e financeiro conectados, e os agentes preparam o trabalho para você revisar e aprovar.
+> A Pilar é gestão com agentes de IA para escritórios de engenharia e arquitetura: proposta, projeto, obra e financeiro conectados, e os agentes preparam o trabalho para você revisar e aprovar.
 
 ## Tagline
 
@@ -76,7 +76,7 @@ Só entra aqui o que roda em produção. Mudou o produto, muda esta tabela prime
 
 | Objeção                            | Resposta                                                                                                                                                                       |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| "Já uso planilha."                 | "Planilha não te avisa quando o projeto vira prejuízo, nem leva o dado do contrato ao canteiro. O Pilar faz os dois."                                                          |
+| "Já uso planilha."                 | "Planilha não te avisa quando o projeto vira prejuízo, nem leva o dado do contrato ao canteiro. A Pilar faz os dois."                                                          |
 | "É mais um sistema pra alimentar." | "Um fluxo só: o dado entra na proposta e segue até a obra e o financeiro. Os agentes lançam o resto. Você alimenta menos, não mais."                                           |
 | "Confio no que a IA escreve?"      | "A IA prepara o rascunho, o sistema confere os números e você aprova. Nada vai pro cliente nem pro financeiro sem o seu OK."                                                   |
 | "A IA erra conta."                 | "A conta não é da IA. Custo, horas e valor saem do cálculo do sistema, a partir das suas despesas."                                                                            |
@@ -90,7 +90,7 @@ Só entra aqui o que roda em produção. Mudou o produto, muda esta tabela prime
 
 ## Não dizer
 
-- Não posicionar como ERP de construtora. O Pilar é o sistema do escritório que projeta e acompanha a obra.
+- Não posicionar como ERP de construtora. A Pilar é o sistema do escritório que projeta e acompanha a obra.
 - Não prometer IA autônoma ("faz tudo sozinha"). Sempre aprovação humana.
 - Não anunciar agente que não roda em produção (cobrança automática, orçamento por IA, leitura de planta).
 - Não competir por lista de features: competir pelo fluxo único e pelo número conferido (ver arquétipo Hard Fact, BRAND.md §2).

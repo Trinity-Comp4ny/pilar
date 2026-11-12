@@ -186,7 +186,7 @@ serve(
         if (inviteError) {
           return safeErrorResponse(
             400,
-            isEmailExistsError(inviteError) ? "Esse e-mail já tem conta no Pilar" : "Falha ao reenviar o convite",
+            isEmailExistsError(inviteError) ? "Esse e-mail já tem conta na Pilar" : "Falha ao reenviar o convite",
             req
           );
         }
@@ -243,7 +243,7 @@ serve(
           .is("usado_em", null);
         return safeErrorResponse(
           400,
-          isEmailExistsError(inviteError) ? "Esse e-mail já tem conta no Pilar" : "Falha ao enviar convite",
+          isEmailExistsError(inviteError) ? "Esse e-mail já tem conta na Pilar" : "Falha ao enviar convite",
           req
         );
       }

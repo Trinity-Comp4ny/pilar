@@ -86,9 +86,9 @@ O cruzamento com o avanço físico é tratado em [medição de obra](/blog/medic
 
 Quem está no canteiro na hora de chegada e saída: normalmente o encarregado ou o mestre de obras. O engenheiro ou arquiteto confere nas visitas e cobra quando o registro parece copiado. Para o hábito pegar, o registro tem de levar segundos e ser feito no celular, na própria obra, sem depender de sinal.
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O [Pilar Campo](/campo) é a parte do Pilar feita para o canteiro. O encarregado abre no navegador do celular e registra o dia, com o efetivo junto do resto.
+O [Pilar Campo](/campo) é a parte da Pilar feita para o canteiro. O encarregado abre no navegador do celular e registra o dia, com o efetivo junto do resto.
 
 - Clima, efetivo, atividade, foto e quantidade executada no mesmo registro do dia.
 - Funciona sem sinal: o registro fica no aparelho e sobe sozinho quando a rede volta, sem duplicar.

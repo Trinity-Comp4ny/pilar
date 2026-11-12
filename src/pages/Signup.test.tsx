@@ -161,7 +161,7 @@ describe("Signup", () => {
     await user.click(botaoCriar());
     await waitFor(() =>
       expect(toastError).toHaveBeenCalledWith("Erro ao criar conta", {
-        description: "Este e-mail ainda não tem conta no Pilar. Fale com o time para criar a da sua empresa.",
+        description: "Este e-mail ainda não tem conta na Pilar. Fale com o time para criar a da sua empresa.",
       })
     );
     expect(JSON.stringify(toastError.mock.calls)).not.toContain("Database error");
