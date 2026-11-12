@@ -2,7 +2,7 @@
 
 Vídeos curtos verticais (1080 × 1920, 30 fps) montados em HTML com as curvas, tipografia e cores da marca,
 capturados quadro a quadro pelo Chromium headless e com trilha original sincronizada (`kit_sound.py`).
-Roteiros, legendas e calendário: [../../05-conteudo-viral.md](../../05-conteudo-viral.md).
+Roteiros, legendas e calendário: [../../09-conteudo-viral.md](../../09-conteudo-viral.md).
 
 | Página (`kit/`) | Vídeo | Fonte das imagens |
 |---|---|---|
@@ -36,4 +36,4 @@ Geist, o logotipo branco e as telas. Render 3D em CPU: cerca de 5 a 12 s por qua
   rebobina até a planta ou o vídeo volta ao gancho) e o CTA vai na legenda do post.
 - Telas do produto só da empresa fictícia (Atrium / Residência Toledo / Hotel Serra Verde). Números de exemplo levam
   "dados de exemplo".
-- O 3D é exceção à regra de imagem da marca (ver seção 0 do doc 05): precisa de decisão registrada no `DECISOES.md`.
+- O 3D é exceção à regra de imagem da marca (ver seção 0 do doc 09): precisa de decisão registrada no `DECISOES.md`.

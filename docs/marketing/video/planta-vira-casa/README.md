@@ -3,7 +3,7 @@
 Reels 1080 × 1920, 30 fps, feitos 100% por código: a obra sobe a partir dos traços de uma planta impressa
 (three.js renderizado no Chromium headless), os textos seguem a marca (Geist, Ink, pílula verde) e a trilha é
 original (`sound.py`, `quiz_sound.py`), sincronizada com os eventos da obra. Roteiros e calendário:
-[../../05-conteudo-viral.md](../../05-conteudo-viral.md).
+[../../09-conteudo-viral.md](../../09-conteudo-viral.md).
 
 | Arquivo | O que é |
 |---|---|

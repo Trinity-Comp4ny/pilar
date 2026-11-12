@@ -24,6 +24,9 @@ kit dos Reels 3D em `docs/marketing/video/reels-kit/`.
 
 **Supera:** o "Fechamento: lockup + CTA em pílula + quadro parado por 1 s" de `brand/motion.md` §5, só para a linha de
 conteúdo viral. Vídeo institucional e de demonstração (V-01 a V-03) seguem com fechamento.
+
+---
+
 ## 2026-11-11 · Fluxo do projeto vira grafo com dependências e caminho crítico
 
 **Decisão:** a aba Fluxo do projeto passa a funcionar como o grafo de um pipeline de CI: etapas, o que roda em
