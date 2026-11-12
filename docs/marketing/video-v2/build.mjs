@@ -26,10 +26,19 @@ const names = new Set([...src.matchAll(/icon\("([a-z0-9-]+)"/g)].map((m) => m[1]
 for (const m of src.matchAll(/\["([a-z0-9-]+)",\s*"/g)) names.add(m[1]);
 for (const m of src.matchAll(/"icone":\s*"([a-z0-9-]+)"/g)) names.add(m[1]);
 names.add("lock");
+// tira comentários HTML repetindo até não sobrar nenhum (um "<!--" pode se formar depois de um corte)
+const semComentarios = (txt) => {
+  let antes;
+  do {
+    antes = txt;
+    txt = txt.replace(/<!--[\s\S]*?-->/g, "");
+  } while (txt !== antes);
+  return txt.replace(/<!--|-->/g, "");
+};
 const icons = {};
 for (const n of names) {
   try {
-    icons[n] = readFileSync(join(vendor, "lucide-static/icons", n + ".svg"), "utf8").replace(/<!--.*?-->/gs, "").replace(/class="[^"]*"/, "").trim();
+    icons[n] = semComentarios(readFileSync(join(vendor, "lucide-static/icons", n + ".svg"), "utf8")).replace(/class="[^"]*"/, "").trim();
   } catch {
     // nome que não é ícone (ex.: chave de dado); ignorado
   }
