@@ -231,7 +231,9 @@ function VisaoGeralTab({ cliente, podeGerirPortal }: { cliente: Cliente; podeGer
   };
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    // Duas colunas no desktop: travado em 672 px, sobravam ~300 px vazios ao lado num notebook 13"
+    // (auditoria de espaço, 2026-11). No celular segue uma coluna.
+    <div className="grid items-start gap-4 lg:grid-cols-2">
       {/* Dados */}
       <Card>
         <CardContent className="p-6 space-y-4">
