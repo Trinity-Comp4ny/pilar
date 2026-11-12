@@ -73,6 +73,8 @@ vi.mock("@/components/SectionTabs", () => ({
     </nav>
   ),
 }));
+const tela = { celular: false };
+vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => tela.celular }));
 vi.mock("./financeiro/components/PeriodoPopover", () => ({ PeriodoPopover: () => <span>periodo</span> }));
 vi.mock("./financeiro/tabs/VisaoGeral", () => ({
   default: ({
@@ -164,17 +166,27 @@ const url = () => new URLSearchParams(screen.getByTestId("url").textContent ?? "
 beforeEach(() => {
   vi.clearAllMocks();
   perm.podeCriar = true;
+  tela.celular = false;
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(2026, 10, 10, 12, 0));
 });
 afterEach(() => vi.useRealTimers());
 
 describe("Financeiro", () => {
+  it("no celular o período continua na barra, abaixo das abas", async () => {
+    tela.celular = true;
+    abrir();
+    expect(await screen.findByText("conteudo:visao")).toBeInTheDocument();
+    expect(screen.getByTestId("toolbar")).toHaveTextContent("periodo");
+  });
+
   it("abre na Visão Geral com o mês atual na URL e o filtro de período", async () => {
     abrir();
     expect(await screen.findByText("conteudo:visao")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Financeiro" })).toBeInTheDocument();
-    expect(screen.getByTestId("toolbar")).toHaveTextContent("periodo");
+    // Desktop: o período fica no fim da linha das abas, sem uma linha de barra só para ele.
+    expect(screen.queryByTestId("toolbar")).not.toBeInTheDocument();
+    expect(screen.getByText("periodo")).toBeInTheDocument();
     expect(titulo.atual).toBe("Financeiro");
     expect(url().get("tab")).toBe("visao-geral");
     expect(url().get("from")).toBe("2026-11-01");

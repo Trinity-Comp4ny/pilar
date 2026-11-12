@@ -34,4 +34,11 @@ describe("DataFrescor", () => {
     fireEvent.click(screen.getByRole("button", { name: /Atualizar dados agora/ }));
     expect(onRefresh).toHaveBeenCalledOnce();
   });
+
+  it("compactOnMobile esconde o texto só no celular (sem deixar pedaço visível ao lado do ícone)", () => {
+    render(<DataFrescor updatedAt={Date.now()} compactOnMobile />);
+    const texto = screen.getByText(/Atualizado/);
+    expect(texto).toHaveClass("max-md:sr-only");
+    expect(screen.getByRole("status")).not.toHaveClass("max-md:w-6");
+  });
 });

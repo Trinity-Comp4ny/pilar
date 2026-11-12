@@ -222,7 +222,7 @@ export default function CustosIa() {
         </Tooltip>
       </p>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <KPICard icon={Coins} label="Custo" value={t?.custo ?? 0} loading={query.isLoading} />
         <KPICard
           icon={Zap}
