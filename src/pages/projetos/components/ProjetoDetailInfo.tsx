@@ -71,7 +71,7 @@ export function ProjetoDetailInfo({
       {/* Colunas pela largura real (container), não pela tela: 5 cards em 720px
           cortavam cliente, contrato e prazo. */}
       <div className="@container">
-        <div className="mb-6 grid grid-cols-2 gap-3 @2xl:grid-cols-3 @4xl:grid-cols-5">
+        <div className="mb-3 grid grid-cols-2 gap-2 @2xl:grid-cols-3 @4xl:grid-cols-5">
           <KPICard label="Cliente" icon={User} value={projeto.cliente_nome || "—"} />
 
           <KPICard
@@ -138,7 +138,7 @@ export function ProjetoDetailInfo({
       </div>
 
       {/* Progress */}
-      <div className="mb-6">
+      <div>
         <div className="flex items-center justify-between mb-1">
           <span className="text-xs text-muted-foreground">Progresso das disciplinas</span>
           <span className="text-xs font-medium">{progress}%</span>

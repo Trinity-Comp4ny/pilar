@@ -10,6 +10,9 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useRecentes } from "@/hooks/useRecentes";
 import { useProjetoDetail } from "./hooks/useProjetoDetail";
 import { ProjetoDetailHeader } from "./components/ProjetoDetailHeader";
+import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
+import { KpiResumo } from "@/components/KpiResumo";
+import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
 import { ProjetoDetailInfo } from "./components/ProjetoDetailInfo";
 import { ProjetoDetailTabs } from "./components/ProjetoDetailTabs";
 import { ProjetoFormDialog } from "./components/ProjetoFormDialog";
@@ -107,6 +110,7 @@ export default function ProjetoDetail() {
 
   return (
     <PageLayout
+      density="compact"
       header={
         <PageHeader title={projeto.nome} breadcrumbs={[{ label: "Projetos", to: "/projetos" }]}>
           {canEdit && pausado && (
@@ -137,7 +141,7 @@ export default function ProjetoDetail() {
       }
     >
       {pausado && pausaAberta && (
-        <div role="status" className="mb-4 rounded-lg border border-status-paused bg-muted px-4 py-3 text-sm">
+        <div role="status" className="rounded-lg border border-status-paused bg-muted px-4 py-3 text-sm">
           <p className="font-semibold text-foreground">
             Projeto pausado desde {new Date(pausaAberta.pausado_em).toLocaleDateString("pt-BR")} (
             {diasDePausa(pausaAberta.pausado_em)} dias)
@@ -147,27 +151,49 @@ export default function ProjetoDetail() {
         </div>
       )}
 
-      <ProjetoDetailHeader
-        projeto={projeto}
-        deadline={deadline}
-        canEdit={canEdit}
-        onUpdateStatus={handleStatusDoCabecalho}
-        onUpdatePrioridade={(prioridade) => handleQuickUpdateProjeto({ prioridade })}
-      />
-
-      <ProjetoDetailInfo
-        projeto={projeto}
-        progress={progress}
-        margemBrutaPct={margemBrutaPct}
-        canEdit={canEdit}
-        onUpdatePrazo={(data_previsao) => handleQuickUpdateProjeto({ data_previsao })}
-        // Sem financeiro o valor vem mascarado (null): deixar o campo editável
-        // faria o blur enviar 0 e tentar zerar o contrato.
-        onUpdateContrato={
-          podeEditarValor ? (valor_contrato) => handleQuickUpdateProjeto({ valor_contrato }) : undefined
+      {/* Indicadores recolhíveis, com status/prioridade/prazo na mesma linha e um resumo
+          quando recolhidos: a 1ª disciplina subia de y=540 (auditoria de espaço, 2026-11). */}
+      <CollapsibleKpiSection
+        storageKey="projeto-detalhe"
+        controls={
+          <ProjetoDetailHeader
+            projeto={projeto}
+            deadline={deadline}
+            canEdit={canEdit}
+            onUpdateStatus={handleStatusDoCabecalho}
+            onUpdatePrioridade={(prioridade) => handleQuickUpdateProjeto({ prioridade })}
+          />
         }
-        onUpdateArea={(area_m2) => handleQuickUpdateProjeto({ area_m2 })}
-      />
+        resumo={
+          <KpiResumo
+            itens={[
+              ...(projeto.cliente_nome ? [{ texto: projeto.cliente_nome }] : []),
+              ...(projeto.valor_contrato != null
+                ? [{ texto: formatCurrency(projeto.valor_contrato, { compact: true }) }]
+                : []),
+              ...(projeto.data_previsao ? [{ texto: `prazo ${formatDate(projeto.data_previsao)}` }] : []),
+              ...(margemBrutaPct !== null
+                ? [{ texto: `margem ${formatPercent(margemBrutaPct)}`, alerta: margemBrutaPct < 0 }]
+                : []),
+              { texto: `${progress}% concluído` },
+            ]}
+          />
+        }
+      >
+        <ProjetoDetailInfo
+          projeto={projeto}
+          progress={progress}
+          margemBrutaPct={margemBrutaPct}
+          canEdit={canEdit}
+          onUpdatePrazo={(data_previsao) => handleQuickUpdateProjeto({ data_previsao })}
+          // Sem financeiro o valor vem mascarado (null): deixar o campo editável
+          // faria o blur enviar 0 e tentar zerar o contrato.
+          onUpdateContrato={
+            podeEditarValor ? (valor_contrato) => handleQuickUpdateProjeto({ valor_contrato }) : undefined
+          }
+          onUpdateArea={(area_m2) => handleQuickUpdateProjeto({ area_m2 })}
+        />
+      </CollapsibleKpiSection>
 
       <ProjetoDetailTabs
         projeto={projeto}
