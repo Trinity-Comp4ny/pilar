@@ -963,3 +963,35 @@ describe("calcularEstimativa: itens do catálogo e origem do preço (SPEC 137)",
     expect(lida.success && lida.data.itens).toEqual({});
   });
 });
+
+describe("feedback de 12/11: início com dia, natureza por etapa e ar de 36.000 BTU", () => {
+  it("início com dia desloca o cronograma para aquele dia; só o mês continua começando no dia 1", () => {
+    const soMes = calcular({ ficha: { ...sobrado, inicio: "2025-08" } });
+    const comDia = calcular({ ficha: { ...sobrado, inicio: "2025-08-15" } });
+    expect(soMes.fases[0].inicio).toBe("2025-08-01");
+    expect(comDia.fases[0].inicio).toBe("2025-08-15");
+    expect(comDia.fases.at(-1)?.fim).toBe(
+      new Date(Date.parse(`${soMes.fases.at(-1)?.fim}T00:00:00Z`) + 14 * 86_400_000).toISOString().slice(0, 10)
+    );
+    expect(comDia.desembolso[0].mes).toBe("2025-08");
+    expect(comDia.provavel).toBe(soMes.provavel);
+  });
+
+  it("cada etapa traz a divisão por natureza, que soma o valor da etapa", () => {
+    const r = calcular({ ficha: sobrado });
+    for (const e of r.etapas) {
+      const n = e.natureza!;
+      expect(Math.round((n.material + n.maoDeObra + n.equipamentos + n.despesas) * 100)).toBe(
+        Math.round(e.valor * 100)
+      );
+    }
+  });
+
+  it("split piso-teto de 36.000 BTU sem preço do SINAPI fica a definir e conta como ponto de instalação", () => {
+    const r = calcular({ ficha: { ...sobrado, itens: { ac36: 2 } } });
+    const ac = r.adicionais.find((a) => a.id === "ac36");
+    expect(ac?.origem.tipo).toBe("a_definir");
+    expect(ac?.quantidade).toBe(2);
+    expect(r.adicionais.find((a) => a.id === "acinst")?.quantidade).toBe(2);
+  });
+});

@@ -73,7 +73,7 @@ export const PASSO_ROTULO: Record<Passo, string> = {
 
 const CAMPOS_DO_PASSO: Record<Passo, readonly (keyof Ficha)[]> = {
   tipo: ["tipo", "subtipo", "padrao"],
-  local: ["uf", "area", "pavimentos", "terreno", "inicio"],
+  local: ["cep", "endereco", "cidade", "uf", "area", "pavimentos", "terreno", "inicio"],
   programa: [
     "quartos",
     "suites",
@@ -117,18 +117,22 @@ export function errosDoPasso(passo: Passo, ficha: unknown): ErrosDaFicha {
   return doPasso;
 }
 
-/** `AAAA-MM` do mês atual para frente. */
-export function proximosMeses(hoje: Date, quantos = 24): { valor: string; rotulo: string }[] {
-  return Array.from({ length: quantos }, (_, i) => {
-    const d = new Date(Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth() + i, 1));
-    const valor = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
-    return { valor, rotulo: rotuloMes(valor) };
-  });
+/** Primeiro dia do mês seguinte ao de hoje (`AAAA-MM-DD`): quase ninguém começa obra no mês em que pede a estimativa. */
+export function dataPadraoDeInicio(hoje: Date): string {
+  const d = new Date(Date.UTC(hoje.getUTCFullYear(), hoje.getUTCMonth() + 1, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`;
 }
 
-/** O mês seguinte ao de hoje: quase ninguém começa obra no mês em que pede a estimativa. */
-export function mesPadraoDeInicio(hoje: Date): string {
-  return proximosMeses(hoje, 2)[1].valor;
+/** Início da ficha como data `AAAA-MM-DD`. Ficha antiga guarda só `AAAA-MM`: vale o dia 1. */
+export function dataDoInicio(inicio: string): string {
+  return /^\d{4}-\d{2}$/.test(inicio) ? `${inicio}-01` : inicio;
+}
+
+/** `2027-03-15` → `15/03/2027`; ficha antiga (`2027-03`) → `mar/2027`. */
+export function rotuloInicio(inicio: string): string {
+  if (/^\d{4}-\d{2}$/.test(inicio)) return rotuloMes(inicio);
+  const [ano, mes, dia] = inicio.split("-");
+  return `${dia}/${mes}/${ano}`;
 }
 
 /** `2027-03` → `mar/2027`. */

@@ -30,6 +30,13 @@ export const GRUPOS: GrupoDoCatalogo[] = [
       { id: "ac12", nome: "Split 12.000 BTU", controle: "contador", unidade: "aparelhos", porUnidade: "aparelho" },
       { id: "ac18", nome: "Split 18.000 BTU", controle: "contador", unidade: "aparelhos", porUnidade: "aparelho" },
       { id: "ac24", nome: "Split 24.000 BTU", controle: "contador", unidade: "aparelhos", porUnidade: "aparelho" },
+      {
+        id: "ac36",
+        nome: "Split piso-teto 36.000 BTU",
+        controle: "contador",
+        unidade: "aparelhos",
+        porUnidade: "aparelho",
+      },
     ],
   },
   {

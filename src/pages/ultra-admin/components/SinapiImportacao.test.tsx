@@ -142,7 +142,7 @@ describe("SinapiImportacao", () => {
     ];
     const user = userEvent.setup();
     render(<SinapiImportacao />);
-    expect(screen.getByText("1 de 5")).toBeInTheDocument();
+    expect(screen.getByText("1 de 6")).toBeInTheDocument();
     await user.upload(screen.getByLabelText("Relatório do SINAPI"), arquivoQualquer());
     expect(await screen.findByText(/já foi importado/)).toBeInTheDocument();
   });

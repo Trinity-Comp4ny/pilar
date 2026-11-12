@@ -7,6 +7,7 @@ const MIGRATIONS = [
   "supabase/migrations/20261114000100_estimativa_obra.sql",
   "supabase/migrations/20261116000100_estimativa_terreno_inclinado.sql",
   "supabase/migrations/20261117000100_estimativa_itens_catalogo.sql",
+  "supabase/migrations/20261228000000_estimativa_ar_36000_btu.sql",
 ];
 
 function jsonDaMigration(sql: string): Record<string, unknown> {

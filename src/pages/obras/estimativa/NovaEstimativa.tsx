@@ -24,7 +24,7 @@ import {
   PASSO_ROTULO,
   errosDaFicha,
   errosDoPasso,
-  mesPadraoDeInicio,
+  dataPadraoDeInicio,
   type ErrosDaFicha,
   type Passo,
 } from "./lib";
@@ -390,7 +390,7 @@ export default function NovaEstimativa() {
   const doLead = lead.data ?? null;
   const daProposta = proposta.data ?? null;
   const cliente = daProposta?.nomeCliente || doLead?.nomeCompleto || "";
-  const fichaBase = fichaInicial(mesPadraoDeInicio(new Date()));
+  const fichaBase = fichaInicial(dataPadraoDeInicio(new Date()));
   return (
     <Assistente
       insumos={insumos}

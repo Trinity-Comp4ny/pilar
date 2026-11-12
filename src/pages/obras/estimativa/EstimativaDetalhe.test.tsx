@@ -121,9 +121,14 @@ describe("EstimativaDetalhe", () => {
     expect(screen.getByLabelText("Taxa de administração")).toBeInTheDocument();
   });
 
-  it("parâmetros ainda em validação aparecem como aviso", () => {
+  it("parâmetros ainda em validação aparecem no resumo dos avisos, com o texto inteiro em detalhes", async () => {
+    const user = userEvent.setup();
     abrir();
-    expect(screen.getByRole("list", { name: "Avisos da estimativa" })).toBeInTheDocument();
+    const avisos = screen.getByRole("region", { name: "Avisos da estimativa" });
+    expect(within(avisos).getByText(/parâmetros em validação/)).toBeInTheDocument();
+    expect(within(avisos).queryByText(/ainda não foram conferidos com obras reais/)).not.toBeInTheDocument();
+    await user.click(within(avisos).getByRole("button", { name: "Ver detalhes" }));
+    expect(within(avisos).getByText(/ainda não foram conferidos com obras reais/)).toBeInTheDocument();
   });
 
   it("mudar a administração recalcula e grava sozinho depois de uma pausa", async () => {

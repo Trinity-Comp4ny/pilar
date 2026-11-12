@@ -102,7 +102,7 @@ export interface ContextoLinha {
 }
 
 const UNIDADE_INVARIAVEL = new Set(["kWp", "m²", "un"]);
-const ITENS_DE_CLIMATIZACAO = ["ac9", "ac12", "ac18", "ac24"] as const;
+const ITENS_DE_CLIMATIZACAO = ["ac9", "ac12", "ac18", "ac24", "ac36"] as const;
 
 /** Quantidade do item na ficha. null = o item não se aplica a esta obra; 0 = aplica, mas falta a medida. */
 function quantidadeDoItem(id: AdicionalId, ficha: Ficha): number | null {
