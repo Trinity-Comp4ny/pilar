@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { ReadingRing } from "./ReadingRing";
-import { bootIsShowing, dismissBoot, setBootCaption } from "./boot";
+import { bootIsShowing, dismissBoot } from "./boot";
 import { isEntryVeilMounted, isOwnVeilShowing, veilMounted, veilUnmounted } from "./veilState";
 
 const DEFAULT_LABEL = "Abrindo o Pilar";
 
 /**
  * Véu de entrada (T02, ADR 0049): cobre a tela entre o login e a primeira tela do
- * app com o anel e "Abrindo {empresa}". Se o boot do index.html ainda está na
- * tela, o véu reaproveita o anel dele (troca só a legenda) em vez de montar outro.
+ * app só com o anel. Se o boot do index.html ainda está na tela, o véu reaproveita
+ * o anel dele em vez de montar outro. A legenda ("Abrindo o Pilar") não aparece na
+ * tela (pedido do Matheus, 12/11): fica só para leitor de tela.
  */
 export function EntryVeil({ label }: { label?: string }) {
   const text = label ?? DEFAULT_LABEL;
@@ -24,10 +25,6 @@ export function EntryVeil({ label }: { label?: string }) {
     };
   }, [usesBoot]);
 
-  useEffect(() => {
-    if (usesBoot) setBootCaption(text);
-  }, [usesBoot, text]);
-
   if (usesBoot) {
     return (
       <span role="status" className="sr-only">
@@ -40,7 +37,7 @@ export function EntryVeil({ label }: { label?: string }) {
     <div role="status" aria-live="polite" className="entry-veil">
       <div className="entry-veil__body">
         <ReadingRing size={112} delay={0} />
-        <p className="entry-veil__caption">{text}</p>
+        <p className="sr-only">{text}</p>
       </div>
     </div>
   );

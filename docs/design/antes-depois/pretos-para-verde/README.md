@@ -58,3 +58,13 @@ nos componentes base.
 
 No "antes" do Início no celular o "At" cortado já tinha saído (P6, mesmo PR). Esta mudança
 aumenta o ícone e a área de toque.
+
+## Animação de entrada sem texto
+
+Pedido do Matheus (12/11): a animação de entrada mostrava "Abrindo o Pilar" (ou "Abrindo o
+portal", "Abrindo o Pilar Campo") embaixo da marca. Agora aparece só a marca animada. O texto
+continua escondido, para leitor de tela.
+
+| Tela                             | Antes                           | Depois                            |
+| -------------------------------- | ------------------------------- | --------------------------------- |
+| Entrada depois do login, celular | ![antes](antes-entrada-cel.jpg) | ![depois](depois-entrada-cel.jpg) |

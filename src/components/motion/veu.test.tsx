@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import { EntryVeil, VeilExit } from "./EntryVeil";
-import { bootIsShowing, dismissBoot, setBootCaption } from "./boot";
+import { bootIsShowing, dismissBoot } from "./boot";
 import { isEntryVeilMounted, isOwnVeilShowing } from "./veilState";
 
 vi.mock("./ReadingRing", () => ({ ReadingRing: () => <div data-testid="anel" /> }));
 
 function montarBoot() {
-  document.body.insertAdjacentHTML("beforeend", '<div id="boot"><p id="boot-caption">Carregando</p></div>');
+  document.body.insertAdjacentHTML("beforeend", '<div id="boot"></div>');
 }
 
 beforeEach(() => {
@@ -28,18 +28,14 @@ afterEach(() => {
 describe("boot", () => {
   it("sem boot na página nada acontece", () => {
     expect(bootIsShowing()).toBe(false);
-    setBootCaption("x");
     expect(() => dismissBoot()).not.toThrow();
   });
 
-  it("troca a legenda e sai com fade uma vez só", () => {
+  it("sai com fade uma vez só", () => {
     montarBoot();
     const stop = vi.fn();
     window.__pilarBootStop = stop;
     expect(bootIsShowing()).toBe(true);
-    setBootCaption("Abrindo Seed");
-    expect(document.getElementById("boot-caption")).toHaveTextContent("Abrindo Seed");
-
     dismissBoot();
     expect(bootIsShowing()).toBe(false);
     expect(document.getElementById("boot")!.style.opacity).toBe("0");
@@ -70,9 +66,11 @@ describe("EntryVeil", () => {
     montarBoot();
     const { rerender, unmount } = render(<EntryVeil />);
     expect(screen.queryByTestId("anel")).not.toBeInTheDocument();
-    expect(document.getElementById("boot-caption")).toHaveTextContent("Abrindo o Pilar");
+    // Sem legenda visível (só o anel); o texto fica para leitor de tela.
+    expect(document.getElementById("boot")).not.toHaveTextContent("Abrindo");
+    expect(screen.getByRole("status")).toHaveClass("sr-only");
     rerender(<EntryVeil label="Abrindo Seed" />);
-    expect(document.getElementById("boot-caption")).toHaveTextContent("Abrindo Seed");
+    expect(screen.getByRole("status")).toHaveTextContent("Abrindo Seed");
     expect(isOwnVeilShowing()).toBe(false);
 
     unmount();
