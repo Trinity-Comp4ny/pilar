@@ -332,7 +332,9 @@ function ChipCategoria({
       aria-label={label}
       className={cn(
         "whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-        ativo ? "border-ink bg-ink text-white" : "border-border text-muted-foreground hover:bg-muted/60 hover:text-ink"
+        ativo
+          ? "border-brand bg-brand text-ink"
+          : "border-border text-muted-foreground hover:bg-muted/60 hover:text-ink"
       )}
     >
       {children}

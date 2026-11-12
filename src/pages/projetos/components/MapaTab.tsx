@@ -388,9 +388,7 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
                             setTileMenuOpen(false);
                           }}
                           className={`flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                            active
-                              ? "bg-primary text-primary-foreground"
-                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            active ? "bg-brand text-ink" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                           }`}
                         >
                           <Icon className="h-3.5 w-3.5 shrink-0" />

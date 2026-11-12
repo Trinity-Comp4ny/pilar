@@ -32,7 +32,7 @@ export function FiltroChips<T extends string>({
             className={cn(
               "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1 text-xs transition-colors max-md:h-9 max-md:text-[13px] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black/10",
               ativo
-                ? "border-transparent bg-ink font-medium text-background"
+                ? "border-transparent bg-brand font-medium text-ink"
                 : "border-black/10 bg-background text-ink-soft hover:border-black/20 hover:text-ink"
             )}
           >

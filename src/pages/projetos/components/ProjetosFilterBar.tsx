@@ -156,7 +156,7 @@ function FiltersPanel({
                 className={cn(
                   "flex items-center gap-1.5 px-3 h-7 rounded-full text-xs border transition-colors",
                   active
-                    ? "bg-foreground text-background border-foreground"
+                    ? "bg-brand text-ink border-brand"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted border-transparent"
                 )}
               >
@@ -184,7 +184,7 @@ function FiltersPanel({
                 className={cn(
                   "flex items-center gap-1.5 px-3 h-7 rounded-full text-xs border transition-colors",
                   active
-                    ? "bg-foreground text-background border-foreground"
+                    ? "bg-brand text-ink border-brand"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted border-transparent"
                 )}
               >
@@ -266,7 +266,7 @@ function FilterSection({
           {icon}
           <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{title}</span>
           {count !== undefined && count > 0 && (
-            <span className="text-[10px] bg-foreground text-background rounded-full px-1.5 py-0 min-w-[18px] tabular-nums">
+            <span className="text-[10px] bg-brand text-ink rounded-full px-1.5 py-0 min-w-[18px] tabular-nums">
               {count}
             </span>
           )}
@@ -371,7 +371,7 @@ function PeriodoSection({
                 className={cn(
                   "px-3 h-7 rounded-full text-xs border transition-colors",
                   active
-                    ? "bg-foreground text-background border-foreground"
+                    ? "bg-brand text-ink border-brand"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted border-transparent"
                 )}
               >

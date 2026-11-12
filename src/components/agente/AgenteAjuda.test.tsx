@@ -47,7 +47,7 @@ describe("AgenteAjuda (SPEC 155)", () => {
 
     await user.click(screen.getByRole("button", { name: "Criar um lead" }));
     // A sugestão vira mensagem da pessoa e a resposta chega no chat.
-    expect(screen.getByText("Criar um lead", { selector: "p.bg-ink" })).toBeInTheDocument();
+    expect(screen.getByText("Criar um lead", { selector: "p.bg-brand" })).toBeInTheDocument();
     expect(await screen.findByRole("link", { name: /Ir para Leads/ })).toBeInTheDocument();
   });
 

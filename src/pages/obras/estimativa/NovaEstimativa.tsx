@@ -61,7 +61,7 @@ function Passos({ passo, indice }: { passo: Passo; indice: number }) {
             <span
               className={cn(
                 "grid h-6 w-6 place-items-center rounded-full border text-xs font-semibold",
-                atual && "border-ink bg-ink text-white",
+                atual && "border-brand bg-brand text-ink",
                 feito && "border-brand bg-brand text-ink",
                 !atual && !feito && "bg-card text-ink-soft"
               )}

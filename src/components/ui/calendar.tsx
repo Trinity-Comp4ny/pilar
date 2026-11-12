@@ -80,7 +80,7 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         range_end: "day-range-end rounded-r-md",
         range_middle: "[&>button]:bg-accent [&>button]:text-accent-foreground [&>button:hover]:bg-accent",
         selected:
-          "[&>button]:bg-primary [&>button]:text-primary-foreground [&>button:hover]:bg-primary [&>button:hover]:text-primary-foreground [&>button:focus]:bg-primary [&>button:focus]:text-primary-foreground",
+          "[&>button]:bg-brand [&>button]:text-ink [&>button:hover]:bg-brand [&>button:hover]:text-ink [&>button:focus]:bg-brand [&>button:focus]:text-ink",
         today: "[&>button]:bg-accent [&>button]:text-accent-foreground",
         outside:
           "day-outside text-muted-foreground opacity-50 aria-[selected]:text-muted-foreground aria-[selected]:opacity-30",
