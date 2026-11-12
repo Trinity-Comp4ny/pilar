@@ -4,7 +4,15 @@ import { TarefasWorkspace, type MolduraTarefasProps } from "./TarefasWorkspace";
 
 function MolduraPagina({ toolbar, search, primaryAction, children }: MolduraTarefasProps) {
   return (
-    <PilarPage title="Tarefas" toolbar={toolbar} search={search} primaryAction={primaryAction}>
+    // Tela de dados: padding compacto e altura da tela, para o Quadro rolar por dentro.
+    <PilarPage
+      title="Tarefas"
+      toolbar={toolbar}
+      search={search}
+      primaryAction={primaryAction}
+      density="compact"
+      containerClassName="h-full flex flex-col min-h-0"
+    >
       {children}
     </PilarPage>
   );

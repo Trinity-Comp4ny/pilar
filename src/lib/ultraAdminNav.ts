@@ -12,6 +12,10 @@ import {
   UsersRound,
   FlaskConical,
   LayoutDashboard,
+  Megaphone,
+  LifeBuoy,
+  Smile,
+  MessagesSquare,
   MessageSquare,
   ShieldCheck,
   Siren,
@@ -30,6 +34,11 @@ export type UltraSecaoId =
   | "testes"
   | "funcionalidades"
   | "feedback"
+  | "releases"
+  | "ajuda"
+  | "satisfacao"
+  | "comunicados"
+  | "previas"
   | "atividade"
   | "incidentes"
   | "custos-ia"
@@ -68,6 +77,16 @@ export const ULTRA_SECOES: readonly UltraSecao[] = [
     group: "Produto",
   },
   { id: "feedback", title: "Feedback", url: `${ULTRA_ADMIN_BASE}/feedback`, icon: MessageSquare, group: "Produto" },
+  { id: "releases", title: "Releases", url: `${ULTRA_ADMIN_BASE}/releases`, icon: Megaphone, group: "Produto" },
+  { id: "ajuda", title: "Lacunas da ajuda", url: `${ULTRA_ADMIN_BASE}/ajuda`, icon: LifeBuoy, group: "Produto" },
+  { id: "satisfacao", title: "Satisfação", url: `${ULTRA_ADMIN_BASE}/satisfacao`, icon: Smile, group: "Produto" },
+  {
+    id: "previas",
+    title: "Prévia de recursos",
+    url: `${ULTRA_ADMIN_BASE}/previas`,
+    icon: FlaskConical,
+    group: "Produto",
+  },
   {
     id: "estimativa",
     title: "Estimativa de obra",
@@ -77,6 +96,13 @@ export const ULTRA_SECOES: readonly UltraSecao[] = [
   },
   { id: "atividade", title: "Atividade", url: `${ULTRA_ADMIN_BASE}/atividade`, icon: Activity, group: "Operação" },
   { id: "incidentes", title: "Incidentes", url: `${ULTRA_ADMIN_BASE}/incidentes`, icon: Siren, group: "Operação" },
+  {
+    id: "comunicados",
+    title: "Comunicados",
+    url: `${ULTRA_ADMIN_BASE}/comunicados`,
+    icon: MessagesSquare,
+    group: "Operação",
+  },
   { id: "custos-ia", title: "Custos de IA", url: `${ULTRA_ADMIN_BASE}/custos-ia`, icon: Coins, group: "Operação" },
   { id: "lgpd", title: "Pedidos LGPD", url: `${ULTRA_ADMIN_BASE}/lgpd`, icon: ShieldCheck, group: "Operação" },
 ];

@@ -1,16 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ZoomSwitcher } from "@/components/gantt/ZoomSwitcher";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Calendar, ChevronDown, Layers, AlertTriangle } from "lucide-react";
+import { Layers, AlertTriangle } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { PageLoader } from "@/components/motion/PageLoader";
 import { cn } from "@/lib/utils";
@@ -31,7 +26,8 @@ import {
 import { useGanttDrag } from "@/components/gantt/useGanttDrag";
 import { DisciplinaTimelineRows } from "./CronogramaDisciplinaRows";
 import { CronogramaColunaProjetos } from "./CronogramaColunaProjetos";
-import { CronogramaMeusToggle, useFiltroMeusProjetos } from "./CronogramaMeusToggle";
+import { useFiltroMeusProjetos } from "./CronogramaMeusToggle";
+import { CronogramaControles } from "./CronogramaControles";
 import { useMinhaPessoa } from "@/hooks/useMinhaPessoa";
 import { useReordenarProjetos } from "@/pages/projetos/hooks/useReordenarProjetos";
 import {
@@ -41,74 +37,14 @@ import {
   projetoTemDisciplinaDaPessoa,
 } from "@/pages/projetos/lib/ordemPrioridade";
 
-interface MultiSelectProps {
-  options: string[];
-  selected: string[];
-  onChange: (val: string[]) => void;
-  placeholder: string;
-  searchPlaceholder?: string;
-}
-
-function MultiSelect({ options, selected, onChange, placeholder, searchPlaceholder }: MultiSelectProps) {
-  const [open, setOpen] = useState(false);
-
-  const toggle = (value: string) => {
-    if (selected.includes(value)) {
-      onChange(selected.filter((v) => v !== value));
-    } else {
-      onChange([...selected, value]);
-    }
-  };
-
-  const label =
-    selected.length === 0 ? placeholder : selected.length === 1 ? selected[0] : `${selected.length} selecionados`;
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={cn(
-            "h-7 text-xs w-[160px] justify-between font-normal",
-            selected.length > 0 && "border-foreground"
-          )}
-        >
-          <span className="truncate">{label}</span>
-          <ChevronDown className="h-3 w-3 ml-1 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0" align="start">
-        <Command>
-          <CommandInput placeholder={searchPlaceholder ?? "Buscar..."} className="h-8 text-xs" />
-          <CommandList>
-            <CommandEmpty className="text-xs py-2 text-center text-muted-foreground">Nenhum resultado.</CommandEmpty>
-            <CommandGroup>
-              {selected.length > 0 && (
-                <CommandItem onSelect={() => onChange([])} className="text-xs text-muted-foreground">
-                  Limpar seleção
-                </CommandItem>
-              )}
-              {options.map((opt) => (
-                <CommandItem key={opt} onSelect={() => toggle(opt)} className="text-xs gap-2">
-                  <Checkbox checked={selected.includes(opt)} className="pointer-events-none" />
-                  <span className="truncate">{opt}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
 interface CronogramaProjetosTabProps {
   projetos: Projeto[];
   /** Grava a nova data ao arrastar a barra. Sem isto, as barras não arrastam. */
   onDatesChange?: (projetoId: string, updates: { data_inicio: string; data_previsao: string }) => Promise<void>;
   /** Quem edita projetos arrasta a alça para mudar a ordem de prioridade (SPEC 143). */
   canReorder?: boolean;
+  /** Onde pôr os controles (barra de filtros da página). Sem isto, ficam numa linha acima do Gantt. */
+  toolbarSlot?: HTMLElement | null;
 }
 
 const STATUS_BAR_COLORS: Record<string, string> = {
@@ -126,7 +62,12 @@ function formatDateBR(d: string | undefined | Date): string {
   return date.toLocaleDateString("pt-BR");
 }
 
-export function CronogramaProjetosTab({ projetos, onDatesChange, canReorder = false }: CronogramaProjetosTabProps) {
+export function CronogramaProjetosTab({
+  projetos,
+  onDatesChange,
+  canReorder = false,
+  toolbarSlot,
+}: CronogramaProjetosTabProps) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [zoom, setZoom] = useState<ZoomLevel>("months");
@@ -265,16 +206,16 @@ export function CronogramaProjetosTab({ projetos, onDatesChange, canReorder = fa
     });
   };
 
-  const scrollToToday = () => {
+  const scrollToToday = useCallback(() => {
     if (!scrollRef.current || todayPct < 0) return;
     const container = scrollRef.current;
     const target = (todayPct / 100) * container.scrollWidth - container.clientWidth / 2;
     container.scrollTo({ left: target, behavior: "smooth" });
-  };
+  }, [todayPct]);
 
   useEffect(() => {
-    if (todayPct >= 0) scrollToToday();
-  }, [todayPct]);
+    scrollToToday();
+  }, [scrollToToday]);
 
   // ── Arraste das barras (edita data do projeto) ───────────────────────────────
 
@@ -328,85 +269,38 @@ export function CronogramaProjetosTab({ projetos, onDatesChange, canReorder = fa
 
   const projetosSemDatas = projetos.filter((p) => !parseDate(p.data_inicio) || !parseDate(p.data_previsao));
 
+  const controles = (
+    <CronogramaControles
+      meus={meus}
+      onMeus={setMeus}
+      status={statusFilter}
+      onStatus={setStatusFilter}
+      statusOptions={statusOptions}
+      clienteOptions={clienteOptions}
+      clientes={clienteFilter}
+      onClientes={setClienteFilter}
+      responsavelOptions={responsavelOptions}
+      responsaveis={responsavelFilter}
+      onResponsaveis={setResponsavelFilter}
+      zoom={zoom}
+      onZoom={setZoom}
+      onHoje={scrollToToday}
+      hojeDesabilitado={todayPct < 0}
+      total={visibleProjetos.length}
+      isSaving={isSaving}
+      isDragging={isDragging}
+      cores={STATUS_BAR_COLORS}
+      podeArrastar={!!onDatesChange}
+    />
+  );
+
   return (
-    <div className="space-y-4" style={{ userSelect: isDragging ? "none" : undefined }}>
-      {/* Header */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col gap-3">
-            {/* Title + zoom controls: título e controles empilham em mobile
-                (achado da auditoria: "Cronograma de Projetos" + "Hoje" +
-                "Meses"/"Semanas" não cabiam em 390px sem quebrar linha nem
-                truncar, e o excesso vazava em vez de ficar contido). */}
-            <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-              <div className="flex min-w-0 items-center gap-2">
-                <Calendar className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <h3 className="truncate text-sm font-semibold">Cronograma de Projetos</h3>
-                <span className="shrink-0 text-[11px] text-muted-foreground">
-                  {visibleProjetos.length} projeto{visibleProjetos.length === 1 ? "" : "s"}
-                </span>
-                {isSaving && <span className="text-[10px] text-muted-foreground animate-pulse">Salvando...</span>}
-                {isDragging && (
-                  <span className="text-[10px] text-muted-foreground/60 border border-dashed border-muted-foreground/30 rounded px-1.5 py-0.5">
-                    Esc para cancelar
-                  </span>
-                )}
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs gap-1"
-                  onClick={scrollToToday}
-                  disabled={todayPct < 0}
-                >
-                  Hoje
-                </Button>
-                <ZoomSwitcher value={zoom} onChange={setZoom} />
-              </div>
-            </div>
-
-            {/* Filters row */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <CronogramaMeusToggle value={meus} onChange={setMeus} />
-              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as ProjectStatus | "all")}>
-                <SelectTrigger className="h-7 text-xs w-[160px]" aria-label="Filtrar por status">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {statusOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {clienteOptions.length > 0 && (
-                <MultiSelect
-                  options={clienteOptions}
-                  selected={clienteFilter}
-                  onChange={setClienteFilter}
-                  placeholder="Cliente"
-                  searchPlaceholder="Buscar cliente..."
-                />
-              )}
-              {responsavelOptions.length > 0 && (
-                <MultiSelect
-                  options={responsavelOptions}
-                  selected={responsavelFilter}
-                  onChange={setResponsavelFilter}
-                  placeholder="Responsável"
-                  searchPlaceholder="Buscar responsável..."
-                />
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    // Desktop: o Gantt ocupa a altura que sobra e rola por dentro (era `100svh - 420px`).
+    <div className="flex flex-col gap-4 md:min-h-0" style={{ userSelect: isDragging ? "none" : undefined }}>
+      {toolbarSlot ? createPortal(controles, toolbarSlot) : <div className="shrink-0 overflow-x-auto">{controles}</div>}
 
       {projetosSemDatas.length > 0 && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-warning-soft border border-warning-mid-border text-warning-strong text-xs">
+        <div className="flex shrink-0 items-center gap-2 px-3 py-2 rounded-lg bg-warning-soft border border-warning-mid-border text-warning-strong text-xs">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
           <span>
             {projetosSemDatas.length} projeto{projetosSemDatas.length > 1 ? "s" : ""} sem data de início ou previsão:{" "}
@@ -443,9 +337,9 @@ export function CronogramaProjetosTab({ projetos, onDatesChange, canReorder = fa
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <div className="flex items-start max-h-[calc(100svh-420px)] overflow-y-auto">
+        <Card className="md:flex md:min-h-0 md:flex-col">
+          <CardContent className="p-0 md:flex md:min-h-0 md:flex-col">
+            <div className="flex items-start max-h-[calc(100svh-420px)] overflow-y-auto md:max-h-none md:min-h-0">
               <CronogramaColunaProjetos
                 rows={rows}
                 isMobile={isMobile}
@@ -536,7 +430,7 @@ export function CronogramaProjetosTab({ projetos, onDatesChange, canReorder = fa
                         if (!geo) {
                           return (
                             <div key={row.projeto.id}>
-                              <div className="h-14 border-b relative" />
+                              <div className="h-11 border-b relative" />
                               {isExpanded && (
                                 <DisciplinaTimelineRows
                                   projetoId={row.projeto.id}
@@ -553,12 +447,12 @@ export function CronogramaProjetosTab({ projetos, onDatesChange, canReorder = fa
 
                         return (
                           <div key={row.projeto.id}>
-                            <div className={cn("h-14 border-b relative", row.atrasado && "bg-danger-soft/20")}>
+                            <div className={cn("h-11 border-b relative", row.atrasado && "bg-danger-soft/20")}>
                               <Tooltip open={isThisDragging ? false : undefined}>
                                 <TooltipTrigger asChild>
                                   <div
                                     className={cn(
-                                      "absolute top-3 h-8 rounded-md flex items-center overflow-visible shadow-sm border border-black/5 transition-shadow",
+                                      "absolute top-2 h-7 rounded-md flex items-center overflow-visible shadow-sm border border-black/5 transition-shadow",
                                       row.barClass,
                                       row.atrasado && "ring-2 ring-red-300 ring-offset-1",
                                       isThisDragging && "opacity-90 ring-2 ring-white/60 shadow-md"
@@ -721,26 +615,6 @@ export function CronogramaProjetosTab({ projetos, onDatesChange, canReorder = fa
           </CardContent>
         </Card>
       )}
-
-      {/* Legend */}
-      <div className="flex items-center justify-center flex-wrap gap-4 text-xs text-muted-foreground">
-        {Object.entries(STATUS_BAR_COLORS).map(([status, color]) => (
-          <div key={status} className="flex items-center gap-1.5">
-            <div className={cn("h-2.5 w-6 rounded-sm", color)} />
-            <span>{PROJECT_STATUS_CONFIG[status as ProjectStatus]?.label || status}</span>
-          </div>
-        ))}
-        <div className="flex items-center gap-1.5">
-          <div className="h-2.5 w-0.5 bg-red-500" />
-          <span>Hoje</span>
-        </div>
-        {onDatesChange && (
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <span>↔</span>
-            <span>Arraste as bordas para ajustar datas</span>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

@@ -184,6 +184,25 @@ const previews: Preview[] = [
     }),
   },
   {
+    slug: "aviso-legal-termos",
+    grupo: "Plataforma",
+    nota: "Aviso aos administradores de mudança nos Termos de Uso (Termos v2, cláusula 15)",
+    email: T.templateAvisoLegal({
+      nome: "João",
+      assunto: "Os Termos de Uso do Pilar mudam em 10 de dezembro",
+      titulo: "Novos Termos de Uso do Pilar",
+      lead: "Atualizamos os Termos de Uso e a Política de Privacidade. As mudanças valem para a sua conta a partir de 10 de dezembro de 2026.",
+      itens: [
+        "Agentes de IA: a IA prepara e a sua equipe revisa e aprova.",
+        "Créditos de IA: a cota do plano renova a cada ciclo.",
+      ],
+      vigencia: "10 de dezembro de 2026",
+      link: "https://www.pilarsoft.com.br/termos",
+      linkLabel: "Ler os Termos de Uso",
+      rodape: "Os Termos de Uso preveem este aviso com 30 dias de antecedência.",
+    }),
+  },
+  {
     slug: "feedback-recebido",
     grupo: "Plataforma",
     nota: "Aviso ao ultra admin de feedback enviado pelo app (SPEC 112)",

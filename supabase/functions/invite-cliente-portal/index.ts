@@ -29,8 +29,10 @@ serve(
         .single();
 
       if (profileError || !profile) return safeErrorResponse(403, "Profile not found", req);
-      if (profile.role !== "admin" && profile.role !== "ultra_admin") {
-        return safeErrorResponse(403, "Apenas admin pode criar acesso ao portal", req);
+      // Admin e coordenador cuidam do contato com o cliente (mesmos papéis da RLS
+      // de cliente_portal_accounts).
+      if (!["admin", "ultra_admin", "coordenador"].includes(profile.role)) {
+        return safeErrorResponse(403, "Apenas admin ou coordenador pode criar acesso ao portal", req);
       }
       if (!profile.empresa_id) return safeErrorResponse(403, "Você precisa pertencer a uma empresa", req);
 

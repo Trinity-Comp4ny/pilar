@@ -165,34 +165,57 @@ describe("brasilApi", () => {
 });
 
 describe("checkDuplicates", () => {
-  it("filtra por janela de data e valor e compara descrição sem sufixo de parcela", async () => {
-    h.resolver = () => ({
+  it("consulta o motor no servidor (rpc_buscar_duplicatas) e mapeia confiança e motivo", async () => {
+    h.rpc.mockResolvedValueOnce({
       data: [
-        { id: "1", descricao: "Aluguel (2/12)", valor: 1000 },
-        { id: "2", descricao: "ALUGUEL", valor: 1005 },
-        { id: "3", descricao: "Luz", valor: 1000 },
+        {
+          id: "1",
+          descricao: "Aluguel (2/12)",
+          valor: "1000.00",
+          data_vencimento: "2026-11-09",
+          status: "Pendente",
+          contraparte_nome: "Imobiliária",
+          nota_fiscal: null,
+          confianca: "alta",
+          motivo: "Mesmo fornecedor, mesmo valor e vencimento próximo",
+        },
       ],
+      error: null,
     });
     const r = await checkDuplicates({
       table: "despesas",
       descricao: "Aluguel (1/12)",
       valor: 1000,
       dataVencimento: new Date(2026, 10, 10),
+      contraparteId: "f1",
+      notaFiscal: "NF 9",
       excludeId: "9",
+      grupoParcela: "g1",
     });
-    expect(r.map((x) => x.id)).toEqual(["1", "2"]);
-    const q = findCall(h.sb.calls, "despesas")!;
-    expect(q.filters).toContainEqual(["gte", "data_vencimento", "2026-11-05"]);
-    expect(q.filters).toContainEqual(["lte", "data_vencimento", "2026-11-15"]);
-    expect(q.filters).toContainEqual(["gte", "valor", 990]);
-    expect(q.filters).toContainEqual(["neq", "id", "9"]);
+    expect(h.rpc).toHaveBeenCalledWith("rpc_buscar_duplicatas", {
+      p_tipo: "despesa",
+      p_valor: 1000,
+      p_data: "2026-11-10",
+      p_descricao: "Aluguel (1/12)",
+      p_contraparte_id: "f1",
+      p_nota_fiscal: "NF 9",
+      p_excluir_id: "9",
+      p_grupo_parcela: "g1",
+    });
+    expect(r).toEqual([
+      expect.objectContaining({ id: "1", valor: 1000, confianca: "alta", contraparte_nome: "Imobiliária" }),
+    ]);
+    expect(h.sb.from).not.toHaveBeenCalled();
   });
 
-  it("erro ou sem dados devolve lista vazia", async () => {
-    h.resolver = () => ({ error: { message: "x" } });
+  it("erro ou sem dados devolve lista vazia (não bloqueia o salvamento)", async () => {
+    h.rpc.mockResolvedValueOnce({ data: null, error: { message: "x" } });
     const base = { table: "receitas" as const, descricao: "a", valor: 1, dataVencimento: new Date() };
     expect(await checkDuplicates(base)).toEqual([]);
-    expect(findCall(h.sb.calls, "receitas")!.filters.some((f) => f[0] === "neq")).toBe(false);
+    expect(h.rpc).toHaveBeenLastCalledWith(
+      "rpc_buscar_duplicatas",
+      expect.objectContaining({ p_tipo: "receita", p_contraparte_id: undefined, p_nota_fiscal: undefined })
+    );
   });
 });
 

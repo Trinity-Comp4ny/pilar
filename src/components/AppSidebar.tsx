@@ -8,6 +8,8 @@ import {
   PanelLeftOpen,
   Settings,
   MessageSquare,
+  Megaphone,
+  HelpCircle,
   Eye,
   EyeOff,
 } from "lucide-react";
@@ -29,6 +31,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useValoresOcultos } from "@/contexts/ValoresOcultosContext";
 import { ImpersonationPicker } from "@/components/ImpersonationPicker";
 import { NotificationInbox } from "@/components/NotificationInbox";
+import { CommandPaletteHint } from "@/components/CommandPaletteHint";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { usePendenciasAgentes } from "@/hooks/useEscopos";
 import { useModuleNav } from "@/hooks/useModuleNav";
@@ -36,6 +39,7 @@ import { MODULES, type ModuleId, type ModuleMenuItem } from "@/lib/modules";
 import { PANEL_WIDTH, RAIL_WIDTH } from "@/lib/shellLayout";
 import { ULTRA_ADMIN_BASE, ULTRA_GRUPOS, ULTRA_SECOES, isUltraAdminPath, ultraSecaoAtiva } from "@/lib/ultraAdminNav";
 import { useFeedbackNovosCount } from "@/hooks/useFeedbackNovosCount";
+import { useNovidades } from "@/hooks/useNovidades";
 
 // Shell dos 3 pilares (spec 001-shell-3-pilares): o menu vem do mapa central de
 // módulos. Desktop em duas colunas: trilho fixo à esquerda (Início, módulos,
@@ -84,6 +88,7 @@ export function AppSidebar() {
   const onUltra = isUltraAdmin && isUltraAdminPath(currentPath);
   const ultraAtiva = onUltra ? ultraSecaoAtiva(currentPath) : null;
   const { data: feedbackNovos = 0 } = useFeedbackNovosCount(isUltraAdmin);
+  const { pendentes: novidades } = useNovidades();
 
   // Trocar de módulo pelo trilho abre o painel: quem clica quer ver os itens dele.
   const handleSelectModule = (id: ModuleId) => {
@@ -271,21 +276,25 @@ export function AppSidebar() {
         )}
       </nav>
 
-      {/* Sino + conta */}
+      {/* Busca/comandos (⌘K) + sino + conta */}
       <div className="flex shrink-0 flex-col items-center gap-2 pt-2">
+        <CommandPaletteHint />
         <NotificationInbox />
         <DropdownMenu open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              aria-label="Menu do usuário"
+              aria-label={novidades.temDestaque ? "Menu do usuário, há novidades no Pilar" : "Menu do usuário"}
               title={userName}
               className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-full transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black/10",
+                "relative flex h-9 w-9 items-center justify-center rounded-full transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black/10",
                 isUserRouteActive || isUserMenuOpen ? "bg-brand" : "hover:bg-brand/30"
               )}
             >
               <AvatarStack pessoas={[{ nome: userName, avatarUrl: profile?.avatar_url }]} size="xs" />
+              {novidades.temDestaque && (
+                <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-brand ring-2 ring-white" />
+              )}
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" side="right" sideOffset={12} className="min-w-[240px]">
@@ -298,6 +307,17 @@ export function AppSidebar() {
               <Settings size={16} className="shrink-0 text-muted-foreground" />
             </DropdownMenuItem>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate("/ajuda")} className="justify-between">
+              Central de ajuda
+              <HelpCircle size={16} className="text-muted-foreground" />
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/novidades")} className="justify-between">
+              Novidades
+              <span className="flex items-center gap-2">
+                {novidades.temDestaque && <span aria-label="Há novidades" className="h-2 w-2 rounded-full bg-brand" />}
+                <Megaphone size={16} className="text-muted-foreground" />
+              </span>
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setFeedbackOpen(true)} className="justify-between">
               Feedback
               <MessageSquare size={16} className="text-muted-foreground" />

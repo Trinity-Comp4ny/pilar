@@ -11,6 +11,99 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-11 · Fluxo do projeto vira grafo com dependências e caminho crítico
+
+**Decisão:** a aba Fluxo do projeto passa a funcionar como o grafo de um pipeline de CI: etapas, o que roda em
+paralelo, status, datas previstas e reais, previsão de conclusão projetada pelo andamento real e caminho crítico.
+Disciplinas ganham dependência explícita (fase 2), com a coluna anterior inteira como padrão. Plano em fases na
+SPEC 162.
+
+Contexto: hoje o sócio abre disciplina por disciplina para saber se um atraso empurra a entrega; a lista de
+disciplinas não responde isso. Continua sem biblioteca de grafo (ADR 0020): layout em colunas, desenhado à mão.
+
+**Supera:** o fora de escopo da SPEC 071 ("DAG genérico com dependências arbitrárias") e o da SPEC 051 ("recalcular
+datas futuras quando uma etapa atrasa").
+
+---
+
+## 2026-11-10 (mais tarde) · Google Drive conectado à Pilar; a Pilar segue sem guardar arquivo
+
+**Decisão:** o escritório conecta o Google Drive dele à Pilar (botão em Configurações, só admin) e cada projeto
+ganha uma pasta no Drive, com uma subpasta por disciplina, que a equipe navega, alimenta e baixa na aba Arquivos do
+projeto. O arquivo vai do navegador direto para o Google; a Pilar não guarda binário. Escopo `drive.file` (só o que a
+Pilar cria): sem auditoria anual do Google. Detalhe na SPEC 163.
+
+Contexto: na reunião com a VRZ o sócio pediu para ver e gerenciar as pastas do Drive dentro da Pilar; colar link já
+existe e não basta. Guardar os arquivos na Pilar (opção C da SPEC 163) ficou para depois.
+
+**Supera:** nada; confirma a de 2026-07-30 (a Pilar não hospeda binário) e acrescenta a integração.
+
+---
+
+## 2026-11-10 (mais tarde) · Bônus da folha quando a disciplina é concluída; portal liberado também ao coordenador
+
+**Decisão:** o bônus de produtividade (m² e percentual) entra na folha do mês em que a disciplina da pessoa é
+concluída, não mais no mês em que o projeto começou. Como a base do bônus é do projeto, cada projeto paga uma vez por
+pessoa: no mês da primeira disciplina dela concluída ali; projeto já pago numa folha fechada não volta. Projeto
+cancelado não paga. Dar acesso ao portal do cliente passa a ser possível de dentro do projeto, por admin e
+coordenador (antes só admin, só pela tela de Clientes).
+
+Contexto: na VRZ um projeto fechado na semana anterior, que nem tinha começado, já aparecia no bônus da folha. O sócio
+pediu "quando concluir a disciplina". O coordenador é quem fala com o cliente; o portal precisava estar a um clique,
+no projeto.
+
+**Supera:** a regra "projeto que começou no mês da folha" (SPEC 032, migration 20261209000000) e o "só admin" do convite
+ao portal.
+
+---
+
+## 2026-11-10 (mais tarde) · Conector da Pilar vai para os diretórios oficiais do Claude e do ChatGPT
+
+**Decisão:** o usuário final não vai colar URL de conector. O conector da Pilar será publicado no diretório de
+conectores do Claude e no diretório de apps do ChatGPT, para o usuário conectar pedindo na conversa ("conecte a
+Pilar") ou com um clique no diretório. Fica como próximo passo planejado, depois da fase 1 validada: tem revisão
+externa e exige domínio próprio, produção, política de privacidade do conector, página pública, material de listagem
+e conta de teste. Checklist completo na SPEC 151, "Próximos passos".
+
+Contexto: o ICP usa Claude e ChatGPT pelo app, não por configuração técnica; é assim que Notion, Canva e Slack
+distribuem os conectores deles.
+
+**Supera:** a URL colada à mão como forma de o cliente conectar (fica só para teste e piloto).
+
+---
+
+## 2026-11-10 · Profissionalizar a relação com o usuário: novidades, voz do cliente, ajuda e confiança
+
+**Decisão:** entra no roadmap o bloco de profissionalização da plataforma, com prioridade nesta ordem: "O que mudou"
+no aviso de nova versão + "Você pediu, entregamos" (SPEC 152); faixa de incidente e manutenção no app; central de
+ajuda + assistente de agentes no canto da tela (mesmo motor do `/chat`, com botão que leva à tela); bug zero com
+prazo; NPS com limite de frequência; prévia de recursos opcional. Regra editorial: só vai para o usuário o que muda
+o que ele vê ou faz; infra, refatoração e teste ficam internos.
+
+Contexto: com mais de um escritório, avisar mudança por WhatsApp não escala e o feedback não volta para quem pediu.
+Análise do código + referências globais (Linear, GitHub, Intercom, Canny, Omie) em
+`research/themes/profissionalizacao-saas-referencias.md`.
+
+**Supera:** o adiamento de "What's New", central de novidades e NPS no `SCORECARD_MATURIDADE_2026-08` ("com 1 design
+partner, WhatsApp entrega o mesmo").
+
+---
+
+## 2026-11-10 · A Pilar vira conector para ChatGPT e Claude (MCP), começando só leitura
+
+**Decisão:** a Pilar ganha um conector MCP para o cliente consultar os dados do escritório de dentro do ChatGPT,
+do Claude (claude.ai e Desktop) e de outros clientes MCP. A conexão é por OAuth na tela da Pilar, com o login de
+sempre. A fase 1 só lê (projetos, aditivos, propostas, leads, clientes, resumo financeiro); escrita vem depois, como
+rascunho que o usuário aprova no app. O usuário não deve ver o endereço do provedor: o conector usa o domínio próprio
+(`api.pilarsoft.com.br`, add-on de domínio do Supabase) antes de abrir para cliente.
+
+Contexto: o ICP já usa ChatGPT e Claude no dia a dia (não Claude Code); empresas buscam serviço, não só software, e o
+conector leva a Pilar para onde o sócio já conversa. Detalhe e runbook na SPEC 151.
+
+**Supera:** nada; é a primeira decisão sobre integração com assistentes externos.
+
+---
+
 ## 2026-11-10 · Símbolo numa cor só: o ábaco deixa de ser 85%
 
 **Decisão:** as cinco linhas do símbolo (capitel, ábaco e três caneluras) têm a mesma cor e a mesma opacidade em
@@ -24,6 +117,33 @@ de carregamento do app e da landing, templates do Instagram e `brand/logo.md`. O
 (o `v3` fica no ar para e-mails antigos), porque cliente de e-mail guarda cache.
 
 **Supera:** "Ábaco a 85%" de `brand/logo.md` (BEZ-385) e a versão `brand` com caneluras verdes nos vídeos.
+
+---
+
+## 2026-11-09 (mais tarde) · Menção com @ sai por e-mail na hora, junto com o sino
+
+**Decisão:** quando alguém marca uma pessoa com @ num comentário (projeto, disciplina ou tarefa), o e-mail sai no
+mesmo instante em que a notificação aparece no sino, sem a janela de 5 minutos e sem esperar o resumo de segunda.
+Vale para toda categoria, inclusive tarefa; só não sai para quem desligou o e-mail daquela categoria. O ciclo de
+5 minutos fica como rede de segurança, se o envio na hora falhar.
+
+Contexto: o cliente reclamou que as pessoas marcadas "não recebiam nada"; o CEO quer o e-mail no mesmo instante do app.
+
+**Supera:** o "por e-mail em ~5 min se não for lida" da decisão de Equipe logo abaixo.
+
+---
+
+## 2026-11-09 · Equipe é onde se dá acesso ao Pilar; o @ só oferece quem tem login
+
+**Decisão:** cadastrar alguém na Equipe é também dar o acesso: o cadastro de pessoa nova já envia o convite (caixa
+"Dar acesso ao Pilar", marcada por padrão, só para admin) e a ficha da pessoa mostra se ela tem login, convida ou liga a
+um login que já existe com outro e-mail. O menu de @ das atividades lista só quem tem login (sai a etiqueta "sem
+acesso"). Menção chega no sistema e por e-mail em ~5 min se não for lida.
+
+Contexto: num escritório cliente, pessoas com login corporativo estavam na Equipe com o e-mail pessoal; o vínculo era só por
+e-mail idêntico, então apareciam "sem acesso" no @ e não recebiam menção. Os dois casos foram ligados à mão em produção.
+
+**Supera:** a etiqueta "sem acesso" no menu de menção (SPEC 132) e a menção só no resumo semanal por e-mail (SPEC 096).
 
 ---
 

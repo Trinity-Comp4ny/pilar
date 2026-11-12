@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { parseCurrencyString, formatCurrencyInput, removeNonNumeric, formatCurrency, formatValorToInput } from "./currencyUtils";
+import {
+  parseCurrencyString,
+  formatCurrencyInput,
+  removeNonNumeric,
+  formatCurrency,
+  formatValorToInput,
+} from "./currencyUtils";
 
 describe("parseCurrencyString", () => {
   it("parses formatted Brazilian currency", () => {

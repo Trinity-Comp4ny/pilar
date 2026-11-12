@@ -17,6 +17,12 @@ interface PageLayoutProps {
   toolbar?: React.ReactNode;
   className?: string;
   containerClassName?: string;
+  /**
+   * `compact`: tela de dados (quadro, Gantt, tabela, mapa). Padding de 16/24 px em vez de
+   * 32 a 48 px e o conteúdo ocupando a altura da tela, para a área principal rolar por
+   * dentro. Num notebook 13" são ~50 px a mais de altura (auditoria de espaço, 2026-11).
+   */
+  density?: "default" | "compact";
 }
 
 // Cada página monta o próprio PageLayout, então "troca de rota" = novo mount.
@@ -32,7 +38,9 @@ export function PageLayout({
   className,
   containerClassName,
   standalone,
+  density = "default",
 }: PageLayoutProps) {
+  const compacta = density === "compact";
   const { state, isMobile } = useSidebar();
   const mainRef = useRef<HTMLElement>(null);
   // Dentro do Layout já existe um <main id="main-content">; aqui vira div (mesmo foco e
@@ -81,14 +89,18 @@ export function PageLayout({
             ref={mainRef as React.Ref<HTMLDivElement>}
             tabIndex={-1}
             className={cn(
-              "flex-1 overflow-y-auto w-full bg-background p-6 md:p-8 xl:p-10 2xl:p-12 outline-hidden",
+              "flex-1 overflow-y-auto w-full bg-background outline-hidden",
+              compacta ? "p-4 md:px-6 md:py-4" : "p-6 md:p-8 xl:p-10 2xl:p-12",
               // BottomNav (spec 097) é fixa por cima do conteúdo em mobile; sem este
               // espaço reservado, o fim do scroll ficava escondido atrás dela.
-              "pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-8 xl:pb-10 2xl:pb-12",
+              "pb-[calc(6.5rem+env(safe-area-inset-bottom))]",
+              compacta ? "md:pb-4" : "md:pb-8 xl:pb-10 2xl:pb-12",
               className
             )}
           >
-            <div className={cn("w-full mx-auto space-y-6", containerClassName)}>{children}</div>
+            <div className={cn("w-full mx-auto", compacta ? "space-y-4" : "space-y-6", containerClassName)}>
+              {children}
+            </div>
           </Conteudo>
         </div>
 

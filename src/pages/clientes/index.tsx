@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { formatDocument, formatPhone } from "@/lib/maskUtils";
 import { PilarPage } from "@/components/PilarPage";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useAbrirCriacaoPelaUrl } from "@/hooks/useAbrirCriacaoPelaUrl";
 import { Can } from "@/components/Can";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -112,6 +113,9 @@ export default function Clientes() {
     setEditingCliente(null);
     setIsDialogOpen(true);
   };
+
+  // "Novo cliente" da busca rápida (⌘K) chega com ?new=1. Mesmo gate do botão.
+  useAbrirCriacaoPelaUrl(can("clientes", "create"), handleOpenCreate);
 
   const handleEditClick = (cliente: Cliente, e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -397,6 +401,7 @@ export default function Clientes() {
       toolbar={toolbar}
       className="overflow-y-hidden"
       containerClassName="h-full flex flex-col min-h-0"
+      density="compact"
       title="Clientes"
       search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "Buscar por nome, CPF/CNPJ ou email" }}
       primaryAction={{

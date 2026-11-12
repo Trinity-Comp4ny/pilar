@@ -39,6 +39,12 @@ export interface Modulo {
   /** Fim da headline, renderizado em itálico apagado, no padrão das seções da home. */
   headlineFim: string;
   lede: string;
+  /**
+   * O que o Google lê: title (sem o " | Pilar"), meta description (110 a 160
+   * caracteres) e o H1, que abre o parágrafo de apoio logo abaixo da headline.
+   * A headline continua sendo a frase de marca; o H1 carrega a palavra-chave.
+   */
+  seo: { titulo: string; descricao: string; h1: string };
   /** URL falsa mostrada na barra do frame de produto. */
   url: string;
   /** Classes de cor derivadas dos tokens (ver tokens.css). */
@@ -78,7 +84,13 @@ export const MODULOS: Modulo[] = [
     resumo: "Do lead ao dinheiro na conta.",
     headline: "Do primeiro contato",
     headlineFim: "ao dinheiro na conta.",
-    lede: "Funil, proposta, contrato e financeiro no mesmo lugar. O lead que entra hoje vira a receita que você concilia no fim do mês, sem redigitar nada.",
+    lede: "Contrato incluído, tudo no mesmo lugar: o lead que entra hoje vira a receita que você concilia no fim do mês, sem redigitar nada.",
+    seo: {
+      titulo: "Proposta e financeiro para escritório de engenharia",
+      descricao:
+        "Funil de leads, proposta por disciplina no seu template e financeiro do escritório de engenharia e arquitetura no mesmo sistema, sem redigitar nada.",
+      h1: "Proposta, funil e financeiro para escritórios de engenharia e arquitetura",
+    },
     url: "app.pilarsoft.com.br/gestao/leads",
     cor: {
       fill: "bg-modulo-gestao",
@@ -184,6 +196,12 @@ export const MODULOS: Modulo[] = [
     headline: "Disciplina, prazo e responsável",
     headlineFim: "sob controle.",
     lede: "Feito do jeito que escritório multidisciplinar trabalha: o projeto não é uma tarefa, é um conjunto de disciplinas com gente e data em cada uma.",
+    seo: {
+      titulo: "Gestão de projetos de engenharia por disciplina",
+      descricao:
+        "Gestão de projetos de engenharia e arquitetura por disciplina: quadro do escritório, Gantt da carteira, prazo e responsável em cada disciplina.",
+      h1: "Gestão de projetos de engenharia e arquitetura por disciplina",
+    },
     url: "app.pilarsoft.com.br/projetos/cronograma",
     cor: {
       fill: "bg-modulo-projetos",
@@ -289,7 +307,13 @@ export const MODULOS: Modulo[] = [
     resumo: "O canteiro alimenta o escritório.",
     headline: "O canteiro alimenta",
     headlineFim: "o escritório.",
-    lede: "Diário de obra que chega preenchido do celular, cotação de material comparada lado a lado e prestação de contas para quem administra obra por taxa.",
+    lede: "O diário chega preenchido do celular, a cotação de material vem comparada lado a lado e quem administra obra por taxa presta contas ao cliente com comprovante.",
+    seo: {
+      titulo: "Diário de obra e conta da obra por administração",
+      descricao:
+        "Diário de obra (RDO) preenchido do celular, cotação de material comparada e prestação de contas para quem administra obra por taxa de administração.",
+      h1: "Diário de obra, cotação e conta da obra por administração",
+    },
     url: "app.pilarsoft.com.br/obras/diario",
     cor: {
       fill: "bg-modulo-obra",
@@ -393,6 +417,12 @@ export const MODULOS: Modulo[] = [
     headline: "Seu cliente acompanha sozinho.",
     headlineFim: "Seu WhatsApp descansa.",
     lede: "Um link só de leitura, sem conta e sem aplicativo. Quem contratou projeto vê disciplina e entrega; quem contratou obra vê aporte, despesa com comprovante e a sua taxa.",
+    seo: {
+      titulo: "Portal do cliente para acompanhar projeto e obra",
+      descricao:
+        "Link só de leitura para o cliente acompanhar disciplinas, entregas, parcelas e a prestação de contas da obra, sem conta, sem aplicativo e sem senha.",
+      h1: "Portal do cliente para acompanhar projeto e obra",
+    },
     url: "app.pilarsoft.com.br/portal/santa-rita",
     cor: {
       fill: "bg-modulo-gestao",
@@ -465,6 +495,12 @@ export const MODULOS: Modulo[] = [
     headline: "O canteiro registra.",
     headlineFim: "Sem sinal e sem e-mail.",
     lede: "O encarregado abre no navegador do celular, registra o dia e vai embora. Sem rede, tudo fica no aparelho e sobe sozinho quando o sinal volta.",
+    seo: {
+      titulo: "Aplicativo de diário de obra que funciona sem sinal",
+      descricao:
+        "O encarregado registra o diário de obra pelo navegador do celular, com foto e efetivo. Sem sinal, fica no aparelho e sobe sozinho quando a rede volta.",
+      h1: "Aplicativo de diário de obra para o canteiro, mesmo sem sinal",
+    },
     url: "app.pilarsoft.com.br/campo/diario",
     cor: {
       fill: "bg-modulo-obra",

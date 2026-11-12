@@ -10,13 +10,13 @@
     "authenticated_chamavel": "159 em staging e prod (2026-10-21). Prod mede 148 hoje e chega a 159 no release que leva o que já está no staging: ops_decidir_acao, ops_definir_agente_ativo, ops_marcar_empresa_interna, ops_produto, ops_receita, ops_saude_empresas (time de agentes no Ultra, SPEC 126/128-131), rpc_meta_historico, rpc_metas_progresso (metas, SPEC 123) e campo_aceitar_audio, campo_listar_registros, campo_responder_efetivo (diário no Pilar Campo, SPEC 135: validam o token de campo no corpo e estão nas allowlists de anon). Já passam pelo teste de função exposta sem checagem. 164 em 2026-10-28: +2 de rpc_pausar_projeto e rpc_retomar_projeto (SPEC 141, ainda não contadas) e +3 da SPEC 144 (rpc_criar_convite_cotacao, rpc_revogar_convite_cotacao, rpc_avaliar_fornecedor: conferem empresa e permissão no corpo). A parte pública do link de cotação (cotacao_link_consultar e cotacao_link_responder) é só do service_role e não entra. Medido no banco local montado das migrations; sobe a baseline antes do deploy para a auditoria não ficar vermelha. 165 depois da SPEC 143: +1 de rpc_reordenar_projetos (confere empresa e permissão no corpo)."
   },
   "prod": {
-    "verificado_em": "2026-10-21",
+    "verificado_em": "2026-11-09",
     "tabelas_sem_rls": 0,
     "anon_chamavel": 0,
     "anon_trigger_inerte": 0,
     "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
-    "authenticated_chamavel": 165,
+    "authenticated_chamavel": 177,
     "search_path_mutavel": 0,
     "policy_auth_por_linha": 0,
     "fk_sem_indice": 51,
@@ -33,13 +33,13 @@
     ]
   },
   "staging": {
-    "verificado_em": "2026-10-21",
+    "verificado_em": "2026-11-09",
     "tabelas_sem_rls": 0,
     "anon_chamavel": 0,
     "anon_trigger_inerte": 0,
     "rls_sem_policy_com_grant": 0,
     "view_sem_invoker_nao_revisada": 0,
-    "authenticated_chamavel": 165,
+    "authenticated_chamavel": 177,
     "search_path_mutavel": 0,
     "policy_auth_por_linha": 0,
     "fk_sem_indice": 51,
@@ -87,5 +87,15 @@
     "authenticated_chamavel": "140 -> 148 em prod: só a baseline de prod que não tinha sido regravada em 01/09 (staging já registrava 148). Desde 02/09 entraram 25 funções de spec (tokens por usuário, revisões, painel, trial, retenção, ultra admin, convites, perfil público) e saíram outras tantas; todas com search_path fixo e sem anon fora da allowlist.",
     "fk_sem_indice": "104 (prod) / 117 (staging) -> 126. Tabelas novas e colunas created_by/updated_by. A maior tabela afetada em produção tem cerca de 1.000 linhas; não é hot path, segue como dívida.",
     "policy_auth_por_linha": "25 -> 7. Melhorou (migração das policies); trava o ganho."
+  },
+  "_mudou_em_2026_11_11": {
+    "authenticated_chamavel": "170 -> 171. Entrou 1: rpc_apagar_notificacoes_comentario (20261212000000, apaga a notificação de menção quando o comentário é apagado; feedback 7a4802e8). search_path fixo, REVOKE de PUBLIC/anon, filtra pela empresa de quem chama (get_user_empresa_id) e só apaga se o comentário já saiu do jsonb do item. Deveria ter subido no próprio PR #789; reprovou a auditoria do release de 2026-11-11."
+  },
+  "_mudou_em_2026_11_09": {
+    "motivo": "Auditoria do PR de release #762 reprovou: authenticated_chamavel 169 em prod e 170 em staging, baseline 165 (regravada em 2026-10-21). Mesma causa das outras vezes: PRs criaram função SECURITY DEFINER chamável por authenticated sem atualizar a baseline. Medido ao vivo nos dois projetos em 2026-11-09.",
+    "authenticated_chamavel": "165 -> 170. Entraram 5, saiu nenhuma: agente_pendencias_atualizar (20261125/20261127, pendências dos agentes), cobranca_decidir (20261126, escada de cobrança), projeto_prazo_avisar e projeto_aditivo_prazo_criar (20261127, prazo em risco) já estão em prod; vincular_pessoa_conta (20261207, vínculo pessoa ↔ login) chega a prod com este release. Todas com search_path fixo, nenhuma chamável por anon, e todas filtram pela empresa de quem chama (get_user_empresa_id); vincular_pessoa_conta exige admin via has_role('admin')."
+  },
+  "_mudou_em_2026_11_11_profissionalizacao": {
+    "authenticated_chamavel": "171 -> 177. Entram 6 RPCs SECURITY DEFINER do bloco de profissionalização (SPECs 152, 157 e 159): novidades_publicadas e marcar_novidades_vistas (só auth.uid(), devolvem e gravam só o que é do próprio usuário), publicar_release (exige is_ultra_admin), comunicados_para_mim e dispensar_comunicado (filtram pelo perfil de quem chama), registrar_dispositivo (só grava o navegador de auth.uid()). Todas com search_path fixo e REVOKE de PUBLIC/anon. As funções de trigger novas (_product_release_guarda_publicacao, _pesquisa_avisar_detrator) não são chamáveis."
   }
 }

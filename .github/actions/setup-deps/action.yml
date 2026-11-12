@@ -1,0 +1,29 @@
+name: Node + dependências (com cache de node_modules)
+description: >
+  Instala o Node 22 e restaura node_modules do cache. Só roda `npm ci` quando a
+  chave muda (lockfile ou algum package.json). Usado por todos os jobs de Node do
+  ci.yml, que antes pagavam 15 a 50 s de `npm ci` cada um, em paralelo.
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+      with:
+        node-version: 22
+
+    # Cache da ÁRVORE instalada, não do ~/.npm: restaurar ~770 MB compactados é mais
+    # rápido que o `npm ci` reconstruir tudo do tarball. Os package.json entram na
+    # chave de propósito: com cache hit o `npm ci` não roda, e é ele que reprova
+    # package.json fora de sync com o lockfile. Mudou package.json, a chave muda e o
+    # `npm ci` volta a validar.
+    - id: cache
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+      with:
+        path: |
+          node_modules
+          apps/marketing/node_modules
+        key: node-modules-${{ runner.os }}-node22-${{ hashFiles('package-lock.json', 'package.json', 'apps/marketing/package.json') }}
+
+    - if: steps.cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: npm ci --no-audit --no-fund

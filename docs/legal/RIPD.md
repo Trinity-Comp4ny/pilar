@@ -45,12 +45,12 @@ texto livre (observação, conversa com a IA).
 
 ## 4. Riscos residuais e plano
 
-| Risco residual                                                                  | Situação                                             | Ação                                                                    |
-| ------------------------------------------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------- |
-| Transferência internacional (Vercel, Sentry, PostHog, Resend, provedores de IA) | Sem cláusula específica assinada com cada fornecedor | Aceitar o DPA de cada operador (COMPLIANCE.md, "Fornecedores críticos") |
-| Controlador sem CNPJ próprio                                                    | Risco aceito pelo CEO (docs/legal/README.md)         | Atualizar políticas e este RIPD quando o CNPJ sair                      |
-| Termos e política sem revisão jurídica                                          | Pendente                                             | Revisão por advogado                                                    |
-| Encarregado (DPO)                                                               | Contato público `privacidade@pilarsoft.com.br`       | Nomear formalmente quem responde e manter a caixa monitorada            |
+| Risco residual                                                                  | Situação                                                                           | Ação                                                                    |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Transferência internacional (Vercel, Sentry, PostHog, Resend, provedores de IA) | Sem cláusula específica assinada com cada fornecedor                               | Aceitar o DPA de cada operador (COMPLIANCE.md, "Fornecedores críticos") |
+| Controlador sem CNPJ próprio                                                    | Resolvido em 2026-11-10: MATHEUS PREZIA REZENDE TECH LTDA, CNPJ 63.418.862/0001-59 | Nenhuma                                                                 |
+| Termos e política sem revisão jurídica                                          | Pendente                                                                           | Revisão por advogado                                                    |
+| Encarregado (DPO)                                                               | Nomeado em 2026-11-10: Matheus Prezia Rezende, `privacidade@pilarsoft.com.br`      | Manter a caixa monitorada                                               |
 
 ## 5. Conclusão
 

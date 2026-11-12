@@ -9,6 +9,7 @@
  */
 
 import { createClient, type SupabaseClient, type User } from "https://esm.sh/@supabase/supabase-js@2";
+import { clientIdDoAppExterno } from "./app-externo.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
@@ -92,6 +93,15 @@ export function isUUID(value: unknown): value is string {
   return typeof value === "string" && UUID_RE.test(value);
 }
 
+/**
+ * 403 quando o token é de app externo (ChatGPT, Claude: SPEC 151), ou null quando a requisição
+ * pode seguir. Chamar logo depois de autenticar o usuário, em toda função que age em nome dele.
+ */
+export function recusarAppExterno(req: Request): Response | null {
+  if (!clientIdDoAppExterno(req.headers.get("Authorization"))) return null;
+  return safeErrorResponse(403, "Apps conectados à Pilar têm acesso somente leitura, pelo conector.", req);
+}
+
 // ---------------------------------------------------------------------------
 // Auth — validate Bearer format and return authenticated Supabase client
 // ---------------------------------------------------------------------------
@@ -120,6 +130,10 @@ export async function authenticateUser(req: Request): Promise<AuthSuccess | Auth
   if (authError || !user) {
     return { error: safeErrorResponse(401, "User not authenticated", req) };
   }
+
+  // Token de app externo (ChatGPT, Claude) é só leitura e só pelo conector (SPEC 151).
+  const appExterno = recusarAppExterno(req);
+  if (appExterno) return { error: appExterno };
 
   return { supabase, user };
 }

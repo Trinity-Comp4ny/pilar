@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, useLocation } from "react-router-dom";
@@ -50,6 +50,9 @@ vi.mock("../components/LancamentosTable", () => ({
       <button type="button" onClick={() => onFiltersChange({ ...filters, search: "aluguel" })}>
         tabela-buscar
       </button>
+      <button type="button" onClick={() => onFiltersChange({ ...filters, tipo: "despesa" })}>
+        tabela-a-pagar
+      </button>
       <button type="button" onClick={onMutated}>
         tabela-mutou
       </button>
@@ -65,6 +68,23 @@ vi.mock("../components/ImportarLancamentosDialog", () => ({
     ) : null,
 }));
 vi.mock("@/components/DataFrescor", () => ({ DataFrescor: () => null }));
+vi.mock("../hooks/useTitulosPosicao", () => ({
+  useTitulosPosicao: (tipo: string | null) => ({
+    isLoading: false,
+    data: tipo
+      ? {
+          hoje: "2026-11-10",
+          baldes: {
+            vencidos: { qtd: 2, valor: 8050 },
+            hoje: { qtd: 1, valor: 3400 },
+            semana: { qtd: 2, valor: 1720.35 },
+            futuro: { qtd: 6, valor: 6100 },
+            pagos_mes: { qtd: 1, valor: 289.9 },
+          },
+        }
+      : undefined,
+  }),
+}));
 
 import Lancamentos from "./Lancamentos";
 
@@ -96,7 +116,9 @@ describe("Lancamentos: KPIs", () => {
   it("com o resumo carregado mostra os quatro KPIs", () => {
     renderTab();
     expect(screen.getByText("Recebido")).toBeInTheDocument();
-    expect(screen.getByText("A pagar")).toBeInTheDocument();
+    // Só no KPI: o seletor de visão que repetia o da barra de filtros saiu.
+    expect(screen.getAllByText("A pagar")).toHaveLength(1);
+    expect(screen.queryByRole("group", { name: "O que ver" })).not.toBeInTheDocument();
     expect(screen.queryByText("Não foi possível carregar os dados financeiros")).not.toBeInTheDocument();
   });
 
@@ -143,18 +165,31 @@ describe("Lancamentos: recorte, filtros na URL e recarga", () => {
   });
 
   it("cada KPI aplica o filtro de tipo e status correspondente", async () => {
-    const user = userEvent.setup();
+    // Ao aplicar um tipo, a aba vira A pagar / A receber e os KPIs dão lugar aos chips
+    // de posição; por isso cada KPI é clicado numa montagem nova.
+    const casos: [string, { tipo: string; status: string }][] = [
+      ["Recebido", { tipo: "receita", status: "pagos" }],
+      ["Pago", { tipo: "despesa", status: "pagos" }],
+      ["A receber", { tipo: "receita", status: "pendentes" }],
+      ["A pagar", { tipo: "despesa", status: "pendentes" }],
+    ];
+    for (const [kpi, esperado] of casos) {
+      const user = userEvent.setup();
+      renderTab();
+      // "A pagar"/"A receber" também nomeiam o seletor de visão; o KPI é o último.
+      await user.click(screen.getAllByText(kpi).at(-1)!);
+      expect(JSON.parse(screen.getByTestId("filtros").textContent ?? "{}")).toEqual(esperado);
+      expect(screen.getByTestId("url").textContent).toContain(`ft=${esperado.tipo}`);
+      cleanup();
+    }
+  });
+
+  it("trocar o tipo pela barra segue a regra das visões: abre em aberto e lembra a escolha", async () => {
     renderTab();
-    const filtros = () => JSON.parse(screen.getByTestId("filtros").textContent ?? "{}");
-    await user.click(screen.getByText("Recebido"));
-    expect(filtros()).toEqual({ tipo: "receita", status: "pagos" });
-    await user.click(screen.getByText("Pago"));
-    expect(filtros()).toEqual({ tipo: "despesa", status: "pagos" });
-    await user.click(screen.getByText("A receber"));
-    expect(filtros()).toEqual({ tipo: "receita", status: "pendentes" });
-    await user.click(screen.getByText("A pagar"));
-    expect(filtros()).toEqual({ tipo: "despesa", status: "pendentes" });
-    expect(screen.getByTestId("url").textContent).toContain("ft=despesa");
+    await userEvent.setup().click(screen.getByRole("button", { name: "tabela-a-pagar" }));
+    expect(screen.getByTestId("filtros")).toHaveTextContent('"tipo":"despesa","status":"pendentes"');
+    expect(localStorage.getItem("pilar:financeiro:lancamentos:visao")).toBe("despesa");
+    localStorage.removeItem("pilar:financeiro:lancamentos:visao");
   });
 
   it("atrasados aparecem no KPI 'A pagar'", () => {
@@ -180,10 +215,33 @@ describe("Lancamentos: recorte, filtros na URL e recarga", () => {
       ["lancamentos-pagina"],
       ["lancamentos-resumo"],
       ["grupos-parcela-resumo"],
+      ["titulos-posicao"],
     ]);
     expect(screen.queryByRole("button", { name: "importado" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /Importar/ }));
     await user.click(screen.getByRole("button", { name: "importado" }));
-    expect(invalidate).toHaveBeenCalledTimes(6);
+    expect(invalidate).toHaveBeenCalledTimes(8);
+  });
+});
+
+describe("Lancamentos: visões A pagar / A receber", () => {
+  it("A pagar troca os KPIs gerais pelos chips de posição", () => {
+    renderTab("/?ft=despesa&fs=pendentes");
+    expect(screen.getByRole("button", { name: /Vencidos/ })).toHaveTextContent("R$ 8.050,00");
+    expect(screen.getByRole("button", { name: /Pagos no mês/ })).toBeInTheDocument();
+    expect(screen.queryByText("Recebido")).not.toBeInTheDocument();
+  });
+
+  it("clicar em Vencidos marca o chip (filtro aplicado na URL)", async () => {
+    renderTab("/?ft=despesa&fs=pendentes");
+    const vencidos = screen.getByRole("button", { name: /Vencidos/ });
+    expect(vencidos).toHaveAttribute("aria-pressed", "false");
+    await userEvent.setup().click(vencidos);
+    expect(screen.getByRole("button", { name: /Vencidos/ })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("A receber nomeia o balde de pagos como recebidos", () => {
+    renderTab("/?ft=receita&fs=pendentes");
+    expect(screen.getByRole("button", { name: /Recebidos no mês/ })).toBeInTheDocument();
   });
 });

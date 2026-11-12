@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  formatBytes,
   formatCurrency,
   formatDateTime,
   formatDecimal,
@@ -120,5 +121,20 @@ describe("formatDateTime", () => {
   it("nulo e inválido viram traço", () => {
     expect(formatDateTime(null)).toBe("-");
     expect(formatDateTime("abc")).toBe("-");
+  });
+});
+
+describe("formatBytes", () => {
+  it("escolhe a unidade e usa vírgula decimal", () => {
+    expect(formatBytes(512)).toBe("512 B");
+    expect(formatBytes(2048)).toBe("2 KB");
+    expect(formatBytes("13002342")).toBe("12 MB");
+    expect(formatBytes(1.5 * 1024 ** 3)).toBe("1,5 GB");
+  });
+
+  it("vazio ou inválido vira traço", () => {
+    expect(formatBytes(undefined)).toBe("-");
+    expect(formatBytes("")).toBe("-");
+    expect(formatBytes("abc")).toBe("-");
   });
 });

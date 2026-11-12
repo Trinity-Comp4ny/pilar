@@ -3,8 +3,10 @@ import * as React from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-export interface NumberInputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "type" | "inputMode" | "min" | "max"> {
+export interface NumberInputProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "value" | "onChange" | "type" | "inputMode" | "min" | "max"
+> {
   /** String numérica guardada no form (ex.: "12", "3,5"). Aceita pai que guarda número. */
   value: string;
   onChange: (value: string) => void;
@@ -40,7 +42,8 @@ export const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
     // sem useEffect. Mantém o buffer quando o value do pai é o MESMO número.
     if (value !== prevValue.current) {
       prevValue.current = value;
-      const same = !Number.isNaN(toNum(value, allowDecimal)) && toNum(value, allowDecimal) === toNum(buffer, allowDecimal);
+      const same =
+        !Number.isNaN(toNum(value, allowDecimal)) && toNum(value, allowDecimal) === toNum(buffer, allowDecimal);
       if (value !== buffer && !same) setBuffer(value);
     }
 

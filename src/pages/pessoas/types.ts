@@ -29,6 +29,8 @@ export interface Pessoa {
   data_demissao?: string;
   salario_fixo?: number;
   valor_m2?: number;
+  // Percentual (0 a 100) sobre o valor dos projetos do mês, pago como produtividade.
+  percentual_producao?: number;
   cnpj?: string;
   razao_social?: string;
   pis_nit?: string;
@@ -37,4 +39,6 @@ export interface Pessoa {
   // Vem da view pessoas_safe: true quando o papel pode ver folha (salário,
   // contas, PIX, CPF completo). Para os demais, esses campos chegam mascarados.
   pode_ver_sensivel?: boolean;
+  // Login ligado à pessoa (null = sem acesso ao Pilar).
+  profile_id?: string | null;
 }

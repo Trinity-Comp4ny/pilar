@@ -3,7 +3,7 @@
 <!-- Gerado por scripts/edge-functions-catalog.mjs a partir de supabase/functions/CATALOGO.json.
      Não editar à mão: edite o CATALOGO.json e rode `node scripts/edge-functions-catalog.mjs`. -->
 
-58 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
+64 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
 migrations) ou origem externa declarada no manifesto. **Login**: `verify_jwt` do `config.toml`
 (JWT aceita a chave anon; "própria" = a função faz a autorização). **Secrets**: lidos direto
 na pasta da função (o que vem de `_shared`, como a chave do Gemini, não aparece).
@@ -18,6 +18,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `ai-cotacao-import` | Lê PDF ou imagem de orçamento de fornecedor e extrai os itens (Gemini, spec 023). | app | JWT |  | sim |
 | `ai-estimativa-itens` | Lê a descrição da obra e devolve só itens do catálogo da estimativa, com quantidade, o que ficou de fora e o que faltou saber; nunca preço nem prazo (Gemini, SPEC 138). | app | JWT | `AI_GATEWAY_API_KEY` `GEMINI_API_KEY` | sim |
 | `ai-import-financeiro` | Extrai lançamentos do texto de um extrato ou fatura (spec 017). | app | JWT |  | sim |
+| `mcp` | Conector MCP da Pilar para ChatGPT, Claude e outros clientes: OAuth 2.1 pelo Supabase Auth e seis ferramentas só de leitura (projetos, propostas, leads, clientes, resumo financeiro) com o token e a RLS do usuário (SPEC 151). | clientes MCP (ChatGPT, Claude) com token OAuth do usuário | própria | `MCP_AUTH_ISSUER` `MCP_PUBLIC_URL` `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `resumo-semanal` | Resumo semanal do Início: lê os fatos da semana pelo RLS de quem pediu (empresa para quem vê dinheiro, pessoa para os demais), o modelo redige e o código confere os números (SPEC 121). | app | JWT |  | sim |
 
 ## Assinatura do Pilar (Asaas da plataforma)
@@ -44,6 +45,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | --- | --- | --- | --- | --- | --- |
 | `invite-cliente-portal` | Convida o cliente para o portal (manda o e-mail antes de gravar). | app | JWT | `PUBLIC_SITE_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-aprovar-proposta` | Cliente aprova proposta pelo portal (auth pelo token do portal). | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `portal-arquivos` | Portal do cliente: lista e baixa os arquivos da pasta Cliente do projeto no Google Drive do escritório; só do cliente da sessão (SPEC 163). | app | própria | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-entrega-download` | URL assinada de 5 minutos para arquivo de entrega do portal. | **sem chamador conhecido** | própria | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-get-projeto` | Dados do projeto para o portal (auth pelo token do portal). | **sem chamador conhecido** | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-obra-fotos` | URLs assinadas das fotos curadas do diário e dos registros liberados ao cliente, para o portal (spec 087, SPEC 135). | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
@@ -85,6 +87,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
+| `aviso-legal-admins` | Ultra admin manda por e-mail um aviso legal do catálogo (ex.: Termos de Uso 2.0) a todos os administradores ativos, sem duplicar quem já recebeu. Cumpre o aviso de 30 dias da cláusula 15 e do Anexo A5 dos Termos. | app, aba Pedidos LGPD do ultra admin | JWT |  | sim |
 | `exportar-dados-titular` | Atende o pedido de exportação de dados (LGPD art. 18): monta a cópia, guarda em bucket privado e manda link de 7 dias (SPEC 115). | cron, trigger notify_data_export_request (pg_net) | própria | `DATA_DELETION_NOTIFY_SECRET` `LGPD_DPO_EMAIL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `resend-webhook` | Recebe o status de entrega do Resend e fecha o ciclo do e-mail enviado. | Resend (webhook) | própria | `RESEND_WEBHOOK_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `send-data-deletion-notification` | E-mail de confirmação de exclusão de dados (LGPD), disparado por trigger. | cron | JWT | `APP_URL` `DATA_DELETION_NOTIFY_SECRET` `LGPD_DPO_EMAIL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
@@ -115,8 +118,16 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `log-impersonation` | Abre e encerra sessão de impersonation do ultra admin, com registro no servidor. | app | JWT |  | sim |
 | `ops-agente-run` | Executa um agente de operação da Pilar (Receita, Clientes, Chefe de gabinete): fatos do banco, texto do modelo aterrado em código, ações pendentes no Ultra e resumo do dia por e-mail (SPEC 126). | app, cron | própria | `APP_URL` `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `ops-export-funil` | Devolve à plataforma de marketing (post-automation) cadastros, ativados e pagantes por dia e UTM, sem dado pessoal, autenticada por token próprio (SPEC 128). | **sem chamador conhecido** | própria | `OPS_EXPORT_TOKEN` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `release-rascunho` | Grava o rascunho das novidades de um release a partir das linhas Novidade: dos commits, chamado pelo GitHub Actions no push em main com token próprio (SPEC 152). | **sem chamador conhecido** | própria | `RELEASE_NOTAS_TOKEN` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `ultra-admin-empresas` | Gestão de empresas pelo ultra admin. | app | JWT |  | sim |
 | `ultra-admin-usuarios` | Gestão de usuários pelo ultra admin. | app | JWT |  | sim |
+
+## Integrações (Google Drive)
+
+| Função | O que faz | Chamada por | Login | Secrets | Teste |
+| --- | --- | --- | --- | --- | --- |
+| `google-drive` | Arquivos do projeto no Google Drive da empresa: pasta por projeto e disciplina, listar, criar pasta, envio direto ao Google, baixar e lixeira (SPEC 163). | app | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `google-drive-oauth` | Conecta e desconecta o Google Drive da empresa (OAuth, escopo drive.file, token cifrado; só admin) (SPEC 163). | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 
 ## Utilitários
 
@@ -136,4 +147,5 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 - `send-invoice-reminder`
 - `feedback-sync`
 - `ops-export-funil`
+- `release-rascunho`
 - `turnstile-verify`

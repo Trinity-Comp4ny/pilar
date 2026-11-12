@@ -49,6 +49,7 @@ Todas as ações que **precisam** ser feitas manualmente (config de dashboards) 
 - [ ] `RESEND_REPLY_TO` = caixa real que recebe resposta dos e-mails de plataforma (só depois do MX, ver E-mail abaixo)
 - [ ] `RESEND_WEBHOOK_SECRET` = o `whsec_...` que o Resend mostra ao criar o webhook (ver seção E-mail)
 - [ ] `APP_URL` = `https://app.pilarsoft.com.br`; `PUBLIC_SITE_URL` = `https://www.pilarsoft.com.br` (assets e fontes do e-mail vêm daqui)
+- [ ] `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET` (credencial OAuth "Aplicativo da Web" do Google Cloud, redirect `https://<projeto>.supabase.co/functions/v1/google-drive-oauth`) e `GOOGLE_DRIVE_TOKEN_KEY` (`openssl rand -base64 32`; trocar a chave invalida as conexões e cada escritório reconecta). Passo a passo na SPEC 163
 - [ ] NUNCA `EMAIL_DRY_RUN` em staging/prod (só no `.env` local: sem ele e sem chave, `sendEmail` lança de propósito)
 
 ### Database → Backups
@@ -142,7 +143,7 @@ Configurar os Environments `staging` e `production` conforme
 ### Settings → Branch Protection (main)
 
 - [ ] Require PR review (1 approver)
-- [ ] Require status checks: `lint-test-build`, `audit`, `secrets-scan`, `pgtap`, `e2e`
+- [ ] Require status checks: `CI OK (aggregate gate)` (agrega todos os gates do `ci.yml`) e `CodeQL`
 - [ ] Require signed commits (recomendado)
 - [ ] Require linear history
 
@@ -213,18 +214,18 @@ uma vez por ambiente e gravar **o mesmo valor** nos dois lados:
 - [ ] Terminal: `supabase secrets set CRON_SECRET='<valor>' --project-ref <project-ref>`
 - [ ] SQL Editor:
       `sql
-  SELECT vault.create_secret('https://<project-ref>.supabase.co', 'app_supabase_url', 'URL do próprio projeto');
-  SELECT vault.create_secret('<mesmo valor de CRON_SECRET>', 'app_cron_secret', 'Segredo compartilhado só entre os cron jobs e as edge functions de cron');
-  `
+SELECT vault.create_secret('https://<project-ref>.supabase.co', 'app_supabase_url', 'URL do próprio projeto');
+SELECT vault.create_secret('<mesmo valor de CRON_SECRET>', 'app_cron_secret', 'Segredo compartilhado só entre os cron jobs e as edge functions de cron');
+`
       (sem eles, `notificacoes_email_disparar()`, `trial_expiry_disparar()` e
       `guardiao_margem_disparar()` pulam com `NOTICE`, sem lançar erro; se os
       dois lados não baterem, a edge function responde 401)
 - [ ] Monitor de cron do banco no Sentry (migration `20261012000000`): mesmo DSN do Sentry das edge
       functions, ambiente `staging` ou `production`:
       `sql
-  SELECT vault.create_secret('<SENTRY_DSN>', 'app_sentry_dsn', 'DSN para check-in de cron');
-  SELECT vault.create_secret('production', 'app_sentry_env', 'Ambiente do check-in de cron');
-  `
+SELECT vault.create_secret('<SENTRY_DSN>', 'app_sentry_dsn', 'DSN para check-in de cron');
+SELECT vault.create_secret('production', 'app_sentry_env', 'Ambiente do check-in de cron');
+`
 - [ ] **Verificar de verdade** (o job fica `succeeded` no `cron.job_run_details` mesmo pulando o
       disparo, foi assim que produção ficou um mês sem expirar trial):
       `SELECT public.ops_saude_crons();` → `secrets_faltando: []`, e

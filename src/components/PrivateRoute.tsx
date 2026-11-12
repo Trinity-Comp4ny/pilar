@@ -7,6 +7,7 @@ import { isUltraAdmin } from "@/lib/roles";
 import { mfaDevBypass } from "@/lib/mfaDevBypass";
 import { statusDeAcesso } from "@/lib/cobranca";
 import { monitoring } from "@/lib/monitoring";
+import { autorizacaoPendente, rotaDeAutorizacao } from "@/lib/oauthPendente";
 import Layout from "./Layout";
 import { ReadOnlyBanner } from "./ReadOnlyBanner";
 import { AlertTriangle } from "lucide-react";
@@ -165,6 +166,13 @@ export function PrivateRoute() {
     location.pathname === "/mfa/setup"
   ) {
     return <Outlet />;
+  }
+
+  // SPEC 151: o login começou num pedido de conexão do ChatGPT/Claude. Senha, Google e MFA
+  // terminam aqui; volta para a tela de autorização em vez de abrir o Início.
+  const pedidoDeConexao = autorizacaoPendente();
+  if (pedidoDeConexao) {
+    return <Navigate to={rotaDeAutorizacao(pedidoDeConexao)} replace />;
   }
 
   if (empresaId && subStatus === undefined) {

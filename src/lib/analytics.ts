@@ -17,6 +17,8 @@
  * PII scrubbing: todos os traits/properties passam por scrub() antes de sair,
  * mesma blocklist e regex do monitoring.ts.
  *
+ * Google Tag Manager (gtm.ts) passa pelo mesmo portão: só carrega com o aceite.
+ *
  * Carregamento: o SDK do PostHog (~80 kB gzip) vem por import dinâmico no
  * primeiro uso com consentimento, fora do carregamento inicial. Chamadas feitas
  * antes do download terminar esperam na ordem em que chegaram.
@@ -25,6 +27,7 @@
 import type { PostHog } from "posthog-js";
 import { env } from "./env";
 import { getCookieConsent, saveCookieConsent } from "./cookieConsent";
+import { loadGtm, revokeGtm } from "./gtm";
 import type { EventoProduto } from "./eventosProduto";
 
 type Props = Record<string, unknown>;
@@ -216,6 +219,7 @@ export const analytics: Analytics = KEY ? posthogAnalytics : noopAnalytics;
 
 export function initAnalytics() {
   analytics.init();
+  if (hasAnalyticsConsent()) loadGtm();
 }
 
 /** Único ponto que liga/desliga o PostHog em runtime. Chamado por cookieConsentSync.ts. */
@@ -223,8 +227,10 @@ export function applyCookieConsent(analyticsAccepted: boolean) {
   saveCookieConsent(analyticsAccepted);
   if (analyticsAccepted) {
     analytics.init();
+    loadGtm();
     return;
   }
+  revokeGtm();
   if (posthogInitialized && posthog) {
     posthog.opt_out_capturing();
     posthog.reset();

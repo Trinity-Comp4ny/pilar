@@ -22,5 +22,12 @@ npx tsc --noEmit --pretty --project tsconfig.app.json
 # 3. Lint + format staged
 npx lint-staged
 
-# 4. Tests (rejeita commit se quebrar contrato)
-npm run test:run --silent
+# 4. Testes afetados pelos arquivos staged (rejeita commit se quebrar contrato).
+# Só os relacionados (`vitest related` segue o grafo de imports), não a suíte inteira:
+# a suíte tem 500+ arquivos e levava 5 min ou mais por commit. A suíte inteira roda no
+# CI de todo PR, em 4 shards. supabase/functions fica de fora: é Deno, não Vitest.
+STAGED_TS=$(git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' ':(exclude)supabase/functions/**')
+if [ -n "$STAGED_TS" ]; then
+  # shellcheck disable=SC2086 # um path por palavra é o que o vitest espera
+  npx vitest related --run --silent --passWithNoTests $STAGED_TS
+fi

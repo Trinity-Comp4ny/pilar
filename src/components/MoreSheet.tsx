@@ -1,7 +1,10 @@
 import {
   Eye,
   EyeOff,
+  HelpCircle,
+  MessageCircleQuestion,
   LogOut,
+  Megaphone,
   MessageSquare,
   Settings,
   ShieldCheck,
@@ -19,6 +22,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { usePendenciasAgentes } from "@/hooks/useEscopos";
+import { useNovidades } from "@/hooks/useNovidades";
+import { abrirAgenteAjuda } from "@/lib/agenteAjudaEvento";
 import { useValoresOcultos } from "@/contexts/ValoresOcultosContext";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +38,7 @@ function MoreSheetRow({
   onClick,
   destructive,
   badge,
+  dot,
 }: {
   icon: LucideIcon;
   label: string;
@@ -40,6 +46,8 @@ function MoreSheetRow({
   destructive?: boolean;
   /** Contador à direita (ex.: pendências dos agentes). */
   badge?: number;
+  /** Ponto da marca: há algo novo para ver (ex.: Novidades). */
+  dot?: boolean;
 }) {
   return (
     <button
@@ -56,6 +64,8 @@ function MoreSheetRow({
         <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1.5 text-[11px] font-bold leading-none text-white">
           {badge}
         </span>
+      ) : dot ? (
+        <span aria-label="Há novidades" className="h-2.5 w-2.5 rounded-full bg-brand" />
       ) : null}
     </button>
   );
@@ -84,6 +94,7 @@ export function MoreSheet({ open, onOpenChange }: MoreSheetProps) {
   const { ocultos: valoresOcultos, toggle: toggleValoresOcultos } = useValoresOcultos();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const { data: pendenciasAgentes } = usePendenciasAgentes();
+  const { pendentes: novidades } = useNovidades();
 
   const userName = profile
     ? [profile.first_name, profile.last_name].filter(Boolean).join(" ").trim() || user?.email || "Usuário"
@@ -131,6 +142,14 @@ export function MoreSheet({ open, onOpenChange }: MoreSheetProps) {
             label="Agentes"
             badge={pendenciasAgentes?.length ?? 0}
             onClick={closeAnd(() => navigate("/agentes"))}
+          />
+          <MoreSheetRow icon={MessageCircleQuestion} label="Dúvidas" onClick={closeAnd(abrirAgenteAjuda)} />
+          <MoreSheetRow icon={HelpCircle} label="Central de ajuda" onClick={closeAnd(() => navigate("/ajuda"))} />
+          <MoreSheetRow
+            icon={Megaphone}
+            label="Novidades"
+            dot={novidades.temDestaque}
+            onClick={closeAnd(() => navigate("/novidades"))}
           />
           <MoreSheetRow icon={MessageSquare} label="Feedback" onClick={closeAnd(() => setFeedbackOpen(true))} />
           <MoreSheetRow

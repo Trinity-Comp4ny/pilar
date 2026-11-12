@@ -33,6 +33,7 @@ export {
   templateRetencaoAviso,
   templateAvisoPlataforma,
   templateFeedbackRecebido,
+  templateAvisoLegal,
 } from "./templates/plataforma.ts";
 export {
   MAX_ITENS_EMAIL,

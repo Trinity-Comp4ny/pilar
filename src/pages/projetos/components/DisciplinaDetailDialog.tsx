@@ -52,7 +52,8 @@ import { mensagemDaPausa, comEstadoDaDisciplina, type EstadoDaDisciplina } from 
 import { PausarDialog } from "./PausarDialog";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { notificarMencao } from "@/lib/notificarMencao";
-import { ComentarioCard } from "@/components/atividades/ComentarioCard";
+import { ComentariosLista } from "@/components/atividades/ComentariosLista";
+import { useComentarioAutoria } from "@/hooks/useComentarioAutoria";
 
 interface DisciplinaDetailDialogProps {
   open: boolean;
@@ -162,6 +163,7 @@ function DisciplinaDetailBody({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const persistida = !!disciplina.id;
   const comentarios = disciplina.comentarios ?? [];
+  const { autorId } = useComentarioAutoria(autorNome);
   const temAtividades = persistida && !!onUpdateComentarios;
   const checklist = useDisciplinaChecklist(persistida ? disciplina.id : undefined);
   const checklistItens = checklist.data ?? [];
@@ -238,6 +240,7 @@ function DisciplinaDetailBody({
         id,
         texto,
         autor: autorNome,
+        autorId,
         data: new Date().toISOString(),
         mencionados: mencionados.length ? mencionados : undefined,
       },
@@ -628,18 +631,14 @@ function DisciplinaDetailBody({
             {temAtividades ? (
               <>
                 <div className="flex-1 min-h-0 space-y-2 overflow-y-auto px-5 py-4">
-                  {comentarios.length === 0 ? (
-                    <p className="py-8 text-center text-xs text-muted-foreground">Nenhum comentário ainda</p>
-                  ) : (
-                    comentarios.map((c) => (
-                      <ComentarioCard
-                        key={c.id}
-                        comentario={c}
-                        pessoas={pessoas}
-                        destacado={c.id === comentarioDestacado}
-                      />
-                    ))
-                  )}
+                  <ComentariosLista
+                    comentarios={comentarios}
+                    pessoas={pessoas}
+                    autorNome={autorNome}
+                    destacadoId={comentarioDestacado}
+                    onExcluir={(id) => onUpdateComentarios?.(comentarios.filter((x) => x.id !== id))}
+                    entidade={disciplina.id ? { tipo: "disciplina", id: disciplina.id } : undefined}
+                  />
                 </div>
                 <div className="shrink-0 border-t bg-background/60 p-4">
                   <AtividadeComposer pessoas={pessoas} onSubmit={adicionarComentario} />

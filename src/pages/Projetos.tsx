@@ -15,6 +15,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useAbrirCriacaoPelaUrl } from "@/hooks/useAbrirCriacaoPelaUrl";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PROJECT_PRIORITY_CONFIG, type ProjectPriority } from "@/constants";
 import { type Projeto, getDeadlineStatus } from "@/types/projetos";
@@ -26,7 +27,7 @@ import { FluxoDisciplinasDialog } from "@/pages/projetos/components/FluxoDiscipl
 import { DisciplinasTab } from "@/pages/projetos/components/DisciplinasTab";
 import { CronogramaProjetosTab } from "@/pages/projetos/components/CronogramaProjetosTab";
 import { ProjetosFilterBar, EMPTY_FILTERS, type DeadlineFilter } from "@/pages/projetos/components/ProjetosFilterBar";
-import { ProjetosKPIs } from "@/pages/projetos/components/ProjetosKPIs";
+import { ProjetosKPIs, ProjetosKPIsResumo } from "@/pages/projetos/components/ProjetosKPIs";
 import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
 import { ProjetosEmptyState } from "@/pages/projetos/components/ProjetosEmptyState";
 import { KanbanBoard } from "@/pages/projetos/components/KanbanBoard";
@@ -39,6 +40,11 @@ import { FilterBar } from "@/components/filters/FilterBar";
 import { ordenarKanban, type KanbanSortAccessors, type KanbanSortKey } from "@/lib/kanbanSort";
 import { ReopenProjetoDialog } from "@/pages/projetos/components/ProjetoStatusDialogs";
 import { useProjetosData } from "@/pages/projetos/hooks/useProjetosData";
+import {
+  projetoAtendeDisciplinas,
+  recortarDisciplinas,
+  type CriteriosDisciplina,
+} from "@/pages/projetos/lib/filtroDisciplina";
 import { useProjetosUrlState } from "@/pages/projetos/hooks/useProjetosUrlState";
 import { useProjetoStatusMove } from "@/pages/projetos/hooks/useProjetoStatusMove";
 import { PausarProjetoDialog } from "@/pages/projetos/components/PausarProjetoDialog";
@@ -145,6 +151,9 @@ export default function ProjetosKanban() {
     setIsFormDialogOpen(true);
   };
 
+  // "Novo projeto" da busca rápida (⌘K) chega com ?new=1. Mesmo gate do botão.
+  useAbrirCriacaoPelaUrl(canEdit, handleNewProjeto);
+
   const handleDelete = (id: string) => {
     const projeto = projetos.find((p) => p.id === id);
     setProjetoToDelete({ id, nome: projeto?.nome ?? "Projeto" });
@@ -206,30 +215,27 @@ export default function ProjetosKanban() {
     return new Set(filters.disciplinaIds.map((id) => map.get(id)).filter(Boolean) as string[]);
   }, [disciplinas, filters.disciplinaIds]);
 
+  const criteriosDisciplina = useMemo<CriteriosDisciplina>(
+    () => ({
+      prioridades: filters.prioridades,
+      pessoaIds: filters.pessoaIds,
+      disciplinaNomes: disciplinaNomesSelected,
+    }),
+    [filters.prioridades, filters.pessoaIds, disciplinaNomesSelected]
+  );
+
   const matchesFilters = (projeto: Projeto): boolean => {
     if (filters.search) {
       const q = filters.search.trim().toLowerCase();
       const haystack = `${projeto.nome} ${projeto.cliente_nome || ""}`.toLowerCase();
       if (!haystack.includes(q)) return false;
     }
-    if (filters.prioridades.length > 0 && !filters.prioridades.includes(projeto.prioridade as ProjectPriority)) {
-      return false;
-    }
     if (filters.clienteIds.length > 0 && !filters.clienteIds.includes(projeto.cliente_id)) {
       return false;
     }
-    if (filters.pessoaIds.length > 0) {
-      const matched = projeto.disciplinas?.some((d) => {
-        if (filters.pessoaIds.includes(d.responsavel_id || "")) return true;
-        if (d.responsaveis?.some((r) => filters.pessoaIds.includes(r.responsavel_id))) return true;
-        return false;
-      });
-      if (!matched) return false;
-    }
-    if (disciplinaNomesSelected.size > 0) {
-      const matched = projeto.disciplinas?.some((d) => disciplinaNomesSelected.has((d.disciplina || "").toLowerCase()));
-      if (!matched) return false;
-    }
+    // Prioridade, pessoa e disciplina valem por disciplina, juntos (a prioridade
+    // da disciplina manda; sem ela, vale a do projeto).
+    if (!projetoAtendeDisciplinas(projeto, criteriosDisciplina)) return false;
     if (filters.deadlineStatus.length > 0) {
       const ds = getDeadlineStatus(projeto);
       const key = ds?.status_data;
@@ -258,6 +264,12 @@ export default function ProjetosKanban() {
     () => projetos.filter(matchesFilters),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [projetos, filters, disciplinaNomesSelected]
+  );
+
+  // Na aba Disciplinas o filtro desce até a linha: só as disciplinas que atendem.
+  const disciplinasFiltradas = useMemo(
+    () => recortarDisciplinas(filteredProjetos, criteriosDisciplina),
+    [filteredProjetos, criteriosDisciplina]
   );
 
   // Agrupa e ordena por etapa (coluna) uma única vez por render, em vez de rodar
@@ -356,8 +368,20 @@ export default function ProjetosKanban() {
   const noProjetos = !loadingProjetos && !projetosError && projetos.length === 0;
   const noResults = !loadingProjetos && !projetosError && projetos.length > 0 && filteredProjetos.length === 0;
 
+  const preencheAltura = activeTab === "quadro" || activeTab === "cronograma" || activeTab === "mapa";
+  const [slotCronograma, setSlotCronograma] = useState<HTMLDivElement | null>(null);
+
   const toolbar = (
-    <FilterBar end={isColecao ? <KanbanSortControl sort={sort} onChange={setSort} keys={sortKeys} /> : undefined}>
+    <FilterBar
+      end={
+        isColecao ? (
+          <KanbanSortControl sort={sort} onChange={setSort} keys={sortKeys} />
+        ) : activeTab === "cronograma" ? (
+          // Os controles do Gantt (Meus, status, zoom, legenda) entram aqui, na mesma linha.
+          <div ref={setSlotCronograma} className="flex items-center" />
+        ) : undefined
+      }
+    >
       {isColecao && <ViewSwitcher options={VISAO_OPCOES} value={viewMode} onChange={setViewMode} iconOnlyOnMobile />}
       <ProjetosFilterBar
         pessoas={pessoas}
@@ -372,8 +396,10 @@ export default function ProjetosKanban() {
   return (
     <PageLayout
       toolbar={toolbar}
-      className={activeTab === "quadro" ? "md:overflow-y-hidden" : undefined}
-      containerClassName={cn("flex flex-col", activeTab === "quadro" && "md:h-full md:min-h-0")}
+      // Quadro e Cronograma cabem na altura da tela e rolam por dentro (colunas, linhas do Gantt).
+      className={preencheAltura ? "md:overflow-y-hidden" : undefined}
+      containerClassName={cn("flex flex-col", preencheAltura && "md:h-full md:min-h-0")}
+      density="compact"
       header={
         <PageHeader
           title="Projetos"
@@ -441,7 +467,10 @@ export default function ProjetosKanban() {
       {/* KPIs (a navegação entre recortes vive na sidebar; só entram quando há dado
           pra mostrar). Visão, filtros e ordenação ficam na toolbar (SPEC 124). */}
       {isColecao && (
-        <CollapsibleKpiSection storageKey="projetos">
+        <CollapsibleKpiSection
+          storageKey="projetos"
+          resumo={!loadingProjetos && projetos.length > 0 ? <ProjetosKPIsResumo projetos={projetos} /> : undefined}
+        >
           {!loadingProjetos && projetos.length > 0 && (
             <ProjetosKPIs
               projetos={projetos}
@@ -522,7 +551,7 @@ export default function ProjetosKanban() {
       ) : activeTab === "disciplinas" ? (
         <div>
           <DisciplinasTab
-            projetos={filteredProjetos}
+            projetos={disciplinasFiltradas}
             projetosTodos={projetos}
             catalogo={disciplinas}
             canEdit={canEdit}
@@ -530,11 +559,12 @@ export default function ProjetosKanban() {
           />
         </div>
       ) : activeTab === "cronograma" ? (
-        <div>
+        <div className="md:flex md:min-h-0 md:flex-1 md:flex-col">
           <CronogramaProjetosTab
             projetos={filteredProjetos}
             onDatesChange={canEdit ? handleCronogramaProjetoDates : undefined}
             canReorder={canEdit}
+            toolbarSlot={slotCronograma}
           />
         </div>
       ) : activeTab === "mapa" ? (

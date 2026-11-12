@@ -20,6 +20,7 @@ const h = vi.hoisted(() => ({
   ocultos: false,
   toggleOcultos: vi.fn(),
   pendencias: [] as unknown[] | undefined,
+  novidadesDestaque: false,
   feedbackNovos: 0,
   nav: {} as Record<string, unknown>,
   feedbackOpen: vi.fn(),
@@ -40,6 +41,9 @@ vi.mock("@/contexts/ValoresOcultosContext", () => ({
 }));
 vi.mock("@/hooks/useEscopos", () => ({ usePendenciasAgentes: () => ({ data: h.pendencias }) }));
 vi.mock("@/hooks/useFeedbackNovosCount", () => ({ useFeedbackNovosCount: () => ({ data: h.feedbackNovos }) }));
+vi.mock("@/hooks/useNovidades", () => ({
+  useNovidades: () => ({ pendentes: { comFluxo: [], temDestaque: h.novidadesDestaque } }),
+}));
 vi.mock("@/hooks/useModuleNav", () => ({ useModuleNav: () => h.nav }));
 vi.mock("@/components/ImpersonationPicker", () => ({ ImpersonationPicker: () => null }));
 vi.mock("@/components/NotificationInbox", () => ({ NotificationInbox: () => <div data-testid="sino" /> }));
@@ -114,6 +118,7 @@ beforeEach(() => {
   h.perms = { isAdmin: false, isUltraAdmin: false };
   h.ocultos = false;
   h.pendencias = [];
+  h.novidadesDestaque = false;
   h.feedbackNovos = 0;
   h.nav = navPadrao();
 });
@@ -196,6 +201,17 @@ describe("AppSidebar", () => {
     await user.click(await screen.findByText("Log out"));
     expect(h.auth.signOut).toHaveBeenCalled();
     await vi.waitFor(() => expect(h.navigate).toHaveBeenCalledWith("/login"));
+  });
+
+  it("Novidades no menu do usuário, com ponto quando há algo novo (SPEC 152)", async () => {
+    h.novidadesDestaque = true;
+    const user = userEvent.setup();
+    renderSidebar();
+    const trigger = screen.getByRole("button", { name: "Menu do usuário, há novidades no Pilar" });
+    await user.click(trigger);
+    expect(await screen.findByLabelText("Há novidades")).toBeInTheDocument();
+    await user.click(screen.getByText("Novidades"));
+    expect(h.navigate).toHaveBeenCalledWith("/novidades");
   });
 
   it("admin vê o Portal Admin; valores ocultos mostra a opção inversa", async () => {

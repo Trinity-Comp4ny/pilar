@@ -18,12 +18,20 @@ export interface Fontes {
   horasLancadas: Linha[];
   usoIa: Linha[];
   acoes: Linha[];
+  acessos: Linha[];
   pedidosExportacao: Linha[];
   pedidosExclusao: Linha[];
 }
 
 /** Limites por seção: a cópia fica utilizável e o limite aparece no próprio arquivo. */
-export const LIMITES = { notificacoes: 2000, acoes: 5000, usoIa: 5000, horasLancadas: 5000, conversasIa: 500 };
+export const LIMITES = {
+  notificacoes: 2000,
+  acoes: 5000,
+  acessos: 5000,
+  usoIa: 5000,
+  horasLancadas: 5000,
+  conversasIa: 500,
+};
 
 // Nunca saem, em seção nenhuma: segredo de autenticação, conteúdo alterado por outras
 // pessoas na trilha de auditoria e caminho interno de arquivo.
@@ -72,6 +80,8 @@ export function montarExportacao(fontes: Fontes, geradoEm: string) {
     horas_lancadas: lista(fontes.horasLancadas, LIMITES.horasLancadas),
     uso_de_ia: lista(fontes.usoIa, LIMITES.usoIa),
     historico_de_acoes: lista(fontes.acoes, LIMITES.acoes),
+    // Marco Civil, art. 15: data, hora e IP de cada acesso, guardados por 6 meses.
+    registros_de_acesso: lista(fontes.acessos, LIMITES.acessos),
     pedidos_lgpd: {
       exportacao: lista(fontes.pedidosExportacao),
       exclusao: lista(fontes.pedidosExclusao),

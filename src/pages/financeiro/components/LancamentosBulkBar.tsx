@@ -39,12 +39,7 @@ export function LancamentosBulkBar({ count, canEdit, onMarkPaid, onDelete, onCle
             Excluir
           </Button>
         )}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onClear}
-          className="h-7 text-xs text-muted-foreground gap-1"
-        >
+        <Button variant="ghost" size="sm" onClick={onClear} className="h-7 text-xs text-muted-foreground gap-1">
           <X className="h-3 w-3" />
           Limpar seleção
         </Button>

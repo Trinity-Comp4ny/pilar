@@ -9,7 +9,6 @@ import { Plus, Trash2, Landmark, X, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { formatValorToInput, parseCurrencyString } from "@/lib/currencyUtils";
-import { MoneyInput } from "@/components/forms/MoneyInput";
 import { formatCPF, formatCNPJ, formatPhone, formatAgency, formatBankAccount } from "@/lib/maskUtils";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -23,33 +22,31 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { pessoaSchema, pessoaDefaultValues, type PessoaFormData, type PessoaFormInput } from "@/schemas";
+import {
+  pessoaSchema,
+  pessoaDefaultValues,
+  parsePercentual,
+  type PessoaFormData,
+  type PessoaFormInput,
+} from "@/schemas";
 import { Badge } from "@/components/ui/badge";
 import { detectTipoChavePix, normalizarChavePix, TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import type { Pessoa, ContaBancaria, ChavePix } from "../types";
 import { BusyMark } from "@/components/motion/BusyMark";
+import { parseSupabaseError } from "./pessoaErros";
+import { CampoDarAcesso } from "./ConviteNovaPessoa";
+import { convidarNovaPessoa } from "./convidarNovaPessoa";
+import { RemuneracaoCampos } from "./RemuneracaoCampos";
 
 interface PessoaFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editPessoa: Pessoa | null;
   onSaved: () => void;
+  podeConvidar?: boolean; // admin convida a pessoa nova já no cadastro
 }
 
-function parseSupabaseError(err: unknown): string {
-  const e = err as { code?: string; message?: string };
-  if (e.code === "23505") {
-    const msg = (e.message ?? "").toLowerCase();
-    if (msg.includes("cpf")) return "CPF já cadastrado na empresa";
-    if (msg.includes("email")) return "Email já cadastrado na empresa";
-    if (msg.includes("telefone")) return "Telefone já cadastrado na empresa";
-    return "Registro duplicado — verifique CPF, email ou telefone";
-  }
-  if (e.code === "23502") return "Preencha todos os campos obrigatórios.";
-  return err instanceof Error && !e.code ? err.message : "Não foi possível salvar. Tente de novo.";
-}
-
-export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: PessoaFormDialogProps) {
+export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved, podeConvidar }: PessoaFormDialogProps) {
   const isEditMode = editPessoa !== null;
   // Na criação todos veem/gravam os campos sensíveis. Na edição, quem não
   // tem acesso à folha abre o registro mascarado (salário/contas/PIX/CPF vêm
@@ -74,9 +71,11 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
   const [chavesPix, setChavesPix] = useState<ChavePix[]>([]);
   const [newChavePix, setNewChavePix] = useState("");
   const [bankOpen, setBankOpen] = useState(false);
+  const [enviarConvite, setEnviarConvite] = useState(true);
 
   useEffect(() => {
     if (!open) return;
+    setEnviarConvite(true);
 
     if (editPessoa) {
       form.reset({
@@ -95,6 +94,8 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
         data_demissao: editPessoa.data_demissao || "",
         salario_fixo: editPessoa.salario_fixo != null ? formatValorToInput(editPessoa.salario_fixo) : "",
         valor_m2: editPessoa.valor_m2 != null ? formatValorToInput(editPessoa.valor_m2) : "",
+        percentual_producao:
+          editPessoa.percentual_producao != null ? String(editPessoa.percentual_producao).replace(".", ",") : "",
         cnpj: editPessoa.cnpj || "",
         razao_social: editPessoa.razao_social || "",
       });
@@ -211,6 +212,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
         chaves_pix: finalPix,
         salario_fixo: formData.salario_fixo ? parseCurrencyString(formData.salario_fixo) : null,
         valor_m2: formData.valor_m2 ? parseCurrencyString(formData.valor_m2) : null,
+        percentual_producao: parsePercentual(formData.percentual_producao),
         cnpj: formData.tipo_contrato === CONTRACT_TYPES.PJ ? formData.cnpj || null : null,
         razao_social: formData.tipo_contrato === CONTRACT_TYPES.PJ ? formData.razao_social || null : null,
       };
@@ -223,6 +225,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
           delete updatePayload.cpf;
           delete updatePayload.salario_fixo;
           delete updatePayload.valor_m2;
+          delete updatePayload.percentual_producao;
           delete updatePayload.contas_bancarias;
           delete updatePayload.chaves_pix;
         }
@@ -239,12 +242,11 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
             empresaError ?? new Error("Não foi possível identificar sua empresa. Recarregue a página e tente de novo.")
           );
         }
-        const { error } = await supabase.from("pessoas").insert({
-          ...payload,
-          empresa_id: empresaId,
-        } as never);
+        const ins = { ...payload, empresa_id: empresaId } as never;
+        const { data: criada, error } = await supabase.from("pessoas").insert(ins).select("id").single();
         if (error) throw error;
         toast.success("Pessoa cadastrada", { description: "Nova pessoa adicionada com sucesso" });
+        if (podeConvidar && enviarConvite && criada?.id) await convidarNovaPessoa({ ...payload, id: criada.id });
       }
 
       onOpenChange(false);
@@ -490,30 +492,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
           <div className="px-6 py-4 space-y-3">
             <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Remuneração e Datas</Label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {canEditSensitive && (
-                <>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="salario_fixo" className="text-xs">
-                      {isEstagio ? "Bolsa (R$)" : "Salário Fixo (R$)"}
-                    </Label>
-                    <MoneyInput
-                      id="salario_fixo"
-                      value={form.watch("salario_fixo") ?? ""}
-                      onChange={(v) => form.setValue("salario_fixo", v)}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="valor_m2" className="text-xs">
-                      Valor m² (R$)
-                    </Label>
-                    <MoneyInput
-                      id="valor_m2"
-                      value={form.watch("valor_m2") ?? ""}
-                      onChange={(v) => form.setValue("valor_m2", v)}
-                    />
-                  </div>
-                </>
-              )}
+              {canEditSensitive && <RemuneracaoCampos form={form} isEstagio={isEstagio} />}
               <div className="space-y-1.5">
                 <Label htmlFor="data_admissao_picker" className="text-xs">
                   Admissão
@@ -726,6 +705,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved }: Pe
             )}
           </div>
 
+          {podeConvidar && !isEditMode && <CampoDarAcesso checked={enviarConvite} onCheckedChange={setEnviarConvite} />}
           {/* Footer */}
           <div className="flex items-center gap-2 px-6 py-4 bg-muted/30">
             <Button type="button" variant="ghost" size="sm" onClick={() => onOpenChange(false)} disabled={isSubmitting}>

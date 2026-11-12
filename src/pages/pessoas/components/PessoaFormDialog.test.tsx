@@ -11,6 +11,7 @@ const h = vi.hoisted(() => ({
   rpc: vi.fn(),
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
+  convidar: vi.fn(),
 }));
 
 vi.mock("@/integrations/supabase/client", async () => {
@@ -19,6 +20,7 @@ vi.mock("@/integrations/supabase/client", async () => {
   h.calls = chain.calls;
   return { supabase: { from: chain.from, rpc: h.rpc } };
 });
+vi.mock("../hooks/useAcessoPessoa", () => ({ convidarPessoa: h.convidar }));
 vi.mock("sonner", () => ({ toast: { error: h.toastError, success: h.toastSuccess } }));
 
 globalThis.ResizeObserver ??= class {
@@ -47,10 +49,18 @@ const PESSOA: Pessoa = {
   pode_ver_sensivel: false,
 };
 
-function renderDialog(editPessoa: Pessoa | null = null) {
+function renderDialog(editPessoa: Pessoa | null = null, podeConvidar = false) {
   const onOpenChange = vi.fn();
   const onSaved = vi.fn();
-  render(<PessoaFormDialog open onOpenChange={onOpenChange} editPessoa={editPessoa} onSaved={onSaved} />);
+  render(
+    <PessoaFormDialog
+      open
+      onOpenChange={onOpenChange}
+      editPessoa={editPessoa}
+      onSaved={onSaved}
+      podeConvidar={podeConvidar}
+    />
+  );
   return { onOpenChange, onSaved, user: userEvent.setup() };
 }
 
@@ -107,6 +117,39 @@ describe("Equipe › PessoaFormDialog", () => {
       salario_fixo: null,
     });
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("admin cadastra e já convida, com o convite ligado à pessoa criada", async () => {
+    h.resolve.mockReturnValue({ data: { id: "p-nova" }, error: null });
+    h.convidar.mockResolvedValue({ contaExistente: false });
+    const { user, onSaved } = renderDialog(null, true);
+    await preencherMinimo(user);
+    expect(screen.getByRole("checkbox", { name: "Dar acesso ao Pilar" })).toBeChecked();
+    await user.click(screen.getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(h.convidar).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "p-nova", nome: "Rita Alves", email: "rita@seed.test" })
+    );
+  });
+
+  it("desmarcar o acesso cadastra sem convite", async () => {
+    h.resolve.mockReturnValue({ data: { id: "p-nova" }, error: null });
+    const { user, onSaved } = renderDialog(null, true);
+    await preencherMinimo(user);
+    await user.click(screen.getByRole("checkbox", { name: "Dar acesso ao Pilar" }));
+    await user.click(screen.getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(h.convidar).not.toHaveBeenCalled();
+  });
+
+  it("convite que falha não desfaz o cadastro, só avisa", async () => {
+    h.resolve.mockReturnValue({ data: { id: "p-nova" }, error: null });
+    h.convidar.mockRejectedValue(new Error("limite"));
+    const { user, onSaved } = renderDialog(null, true);
+    await preencherMinimo(user);
+    await user.click(screen.getByRole("button", { name: "Salvar" }));
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(h.toastError).toHaveBeenCalledWith("Pessoa cadastrada, mas o convite não saiu", expect.anything());
   });
 
   it("sem empresa identificada não grava e avisa", async () => {
@@ -192,7 +235,7 @@ describe("Equipe › PessoaFormDialog", () => {
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
     const up = h.calls.find((c) => c.op === "update");
     expect(up?.payload).toMatchObject({ cargo: "Coordenadora" });
-    for (const campo of ["cpf", "salario_fixo", "valor_m2", "contas_bancarias", "chaves_pix"]) {
+    for (const campo of ["cpf", "salario_fixo", "valor_m2", "percentual_producao", "contas_bancarias", "chaves_pix"]) {
       expect(up?.payload).not.toHaveProperty(campo);
     }
     expect(up?.filters).toContainEqual(["eq", "id", "p1"]);
@@ -216,6 +259,25 @@ describe("Equipe › PessoaFormDialog", () => {
     await user.click(screen.getByRole("button", { name: "Atualizar" }));
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
     expect(h.calls.find((c) => c.op === "update")?.payload).toHaveProperty("salario_fixo");
+  });
+
+  it("percentual sobre o valor do projeto: aceita vírgula, grava número e mostra o salvo", async () => {
+    const { user, onSaved } = renderDialog({ ...PESSOA, cpf: "", pode_ver_sensivel: true, percentual_producao: 10 });
+    const campo = screen.getByLabelText("% do valor do projeto");
+    expect(campo).toHaveValue("10");
+    await user.clear(campo);
+    await user.type(campo, "2,5");
+    await user.click(screen.getByRole("button", { name: "Atualizar" }));
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(h.calls.find((c) => c.op === "update")?.payload).toMatchObject({ percentual_producao: 2.5 });
+  });
+
+  it("percentual fora de 0 a 100 bloqueia o salvamento", async () => {
+    const { user } = renderDialog({ ...PESSOA, cpf: "", pode_ver_sensivel: true });
+    await user.type(screen.getByLabelText("% do valor do projeto"), "150");
+    await user.click(screen.getByRole("button", { name: "Atualizar" }));
+    expect(await screen.findByText("Use um percentual entre 0 e 100")).toBeInTheDocument();
+    expect(h.calls.find((c) => c.op === "update")).toBeUndefined();
   });
   describe("contas bancárias e chaves PIX", () => {
     async function abrirBanco(user: ReturnType<typeof userEvent.setup>) {

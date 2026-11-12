@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { act, screen, within } from "@testing-library/react";
+import { act, cleanup, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -103,13 +103,31 @@ describe("LandingHeader", () => {
     expect(links(container).filter((a) => a.getAttribute("href") === DEMO_URL)).toHaveLength(0);
   });
 
-  it("com o hint de login, troca o CTA por 'Abrir Pilar' e esconde o Entrar", () => {
+  it("com o hint de login, troca o Entrar por 'Abrir Pilar' e mantém o Ver planos", () => {
     document.cookie = "pilar_logged_hint=1; path=/";
     renderNaRota(<LandingHeader />);
-    expect(screen.queryByRole("link", { name: "Entrar" })).not.toBeInTheDocument();
-    for (const a of screen.getAllByRole("link", { name: /Abrir Pilar/ })) {
-      expect(a).toHaveAttribute("href", `${APP_URL}/inicio`);
-    }
+    expect(screen.queryByRole("link", { name: /Entrar/ })).not.toBeInTheDocument();
+    const abrir = screen.getAllByRole("link", { name: /Abrir Pilar/ });
+    expect(abrir).toHaveLength(2);
+    for (const a of abrir) expect(a).toHaveAttribute("href", `${APP_URL}/inicio`);
+    expect(screen.getAllByRole("link", { name: /Ver planos/ })).toHaveLength(2);
+  });
+
+  it("hero e fecho usam o mesmo botão de acesso do header", () => {
+    renderNaRota(<HeroSection />);
+    expect(screen.getByRole("link", { name: /Entrar/ })).toHaveAttribute("href", `${APP_URL}/login`);
+    cleanup();
+
+    document.cookie = "pilar_logged_hint=1; path=/";
+    renderNaRota(<HeroSection />);
+    expect(screen.queryByRole("link", { name: /Entrar/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Abrir Pilar/ })).toHaveAttribute("href", `${APP_URL}/inicio`);
+    cleanup();
+
+    renderNaRota(<CTASection />);
+    expect(screen.queryByRole("link", { name: /Entrar/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Abrir Pilar/ })).toHaveAttribute("href", `${APP_URL}/inicio`);
+    expect(screen.getByRole("link", { name: /Ver planos/ })).toHaveAttribute("href", "/planos");
   });
 
   it("o menu Produto abre pelo teclado e fecha com Esc", async () => {
@@ -245,7 +263,7 @@ describe("CTAs para a demonstração em toda página", () => {
 describe("páginas de módulo e comparação", () => {
   it.each(MODULOS.map((m) => [m.slug, m] as const))("/%s mostra headline, FAQ e as outras quatro frentes", (_s, m) => {
     renderNaRota(<ModulePage slug={m.slug} />, `/${m.slug}`);
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(m.headline);
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(m.seo.h1);
     for (const f of m.faq) expect(screen.getByText(f.pergunta)).toBeInTheDocument();
     for (const outro of MODULOS.filter((o) => o.slug !== m.slug)) {
       expect(screen.getByText(outro.nome, { selector: "a span span" }).closest("a")).toHaveAttribute(
@@ -253,7 +271,7 @@ describe("páginas de módulo e comparação", () => {
         `/${outro.slug}`
       );
     }
-    expect(document.title).toBe(`${m.nome} | Pilar`);
+    expect(document.title).toBe(`${m.seo.titulo} | Pilar`);
     const jsonLd = document.head.querySelector('script[type="application/ld+json"]');
     expect(JSON.parse(jsonLd?.textContent ?? "{}").mainEntity).toHaveLength(m.faq.length);
   });
@@ -275,10 +293,10 @@ describe("páginas de módulo e comparação", () => {
 
   it.each(COMPARATIVOS.map((c) => [c.slug, c] as const))("/vs/%s mostra a tabela e o FAQ", (_s, c) => {
     const { container } = renderNaRota(<ComparativoPage slug={c.slug} />, `/vs/${c.slug}`);
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(c.headline);
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(c.seo.h1);
     for (const l of c.linhas) expect(within(container).getAllByText(l.criterio).length).toBeGreaterThan(0);
     for (const f of c.faq) expect(screen.getByText(f.pergunta)).toBeInTheDocument();
-    expect(document.title).toBe(`Pilar vs ${c.adversario} | Pilar`);
+    expect(document.title).toBe(`${c.seo.titulo} | Pilar`);
   });
 });
 

@@ -51,6 +51,11 @@ destinatário e respeitando a preferência por categoria. Dois disparos: **imedi
 alta ou crítica, a cada 5 minutos, só se não foi lida no aplicativo) e **resumo semanal**
 (segunda-feira, 08:00, um e-mail por pessoa com o que ficou sem leitura na semana).
 
+**Menção com @** tem disparo próprio (DECISOES 2026-11-09): a `rpc_notificar_mencao` chama a
+edge function no mesmo instante em que cria a notificação (`modo: "mencao"`, só os ids daquela
+menção). Sai em qualquer categoria, inclusive tarefa, salvo se a pessoa desligou o e-mail da
+categoria. Se o disparo falhar, a varredura imediata de 5 em 5 minutos reenvia.
+
 | Notificação                              | Categoria           | Severidade | Quem recebe                                                                 | Valor em R$ no corpo        |
 | ---------------------------------------- | ------------------- | ---------- | --------------------------------------------------------------------------- | --------------------------- |
 | Pagamento vencido                        | financeiro          | crítica    | vê financeiro                                                               | sim                         |
@@ -70,7 +75,7 @@ alta ou crítica, a cada 5 minutos, só se não foi lida no aplicativo) e **resu
 | Obra atrasada                            | obra                | alta       | gestão operacional e responsável da obra                                    | não                         |
 | Obra sem diário há dias                  | obra                | média      | idem                                                                        | não                         |
 | Tarefa atribuída a você                  | tarefa              | média      | só a pessoa atribuída, nunca quem atribuiu                                  | não                         |
-| Menção em comentário                     | a do item comentado | média      | só quem foi mencionado                                                      | o que estiver no comentário |
+| Menção em comentário (e-mail na hora)    | a do item comentado | média      | só quem foi mencionado                                                      | o que estiver no comentário |
 
 ## Regras que valem sempre
 

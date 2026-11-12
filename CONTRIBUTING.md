@@ -97,34 +97,57 @@ Configurado via Husky:
 1. `gitleaks` — bloqueia commit com secrets.
 2. `tsc --noEmit` — typecheck.
 3. `lint-staged` — eslint + prettier nos staged.
-4. `vitest run` — testes unitários.
+4. `vitest related` — só os testes ligados aos arquivos staged (pelo grafo de imports).
+   A suíte inteira roda no CI.
 
 Para pular em emergência: `git commit --no-verify` (use com discrição, CI ainda valida).
 
 ## CI
 
-O que roda hoje (`.github/workflows/ci.yml`), em push e PR para `main` e `staging`:
+O que roda hoje (`.github/workflows/ci.yml`), em push e PR para `main` e `staging`. Cada
+pergunta é um job, e todos rodam em paralelo: uma falha não esconde as outras.
 
-- **lint-test-build**: eslint, typecheck, vitest com piso de cobertura, Knip (código morto
-  não cresce), build e budget de bundle. Regras de design system e `no-console` são erro;
+- **changes** — CI seletivo: decide, pelos arquivos do PR, quais grupos de checks rodam
+  (`scripts/ci-escopo.sh`). Ex.: PR só de teste unitário pula E2E, banco e Edge Functions;
+  PR só da LP pula E2E e banco; PR só de docs roda só o secrets scan. Arquivo que não cai
+  em nenhuma regra liga tudo, e push em `staging`/`main` roda tudo sempre. Lint,
+  typecheck, build e audit rodam em todo PR com código.
+- **lint** — eslint e `prettier --check`. Regras de design system e `no-console` são erro;
   ocorrências antigas ficam congeladas em `eslint-suppressions.json` (ADR 0045).
-- **e2e-local**: Playwright contra Supabase local no runner, em todo PR. Mesmo comando
-  local: `npm run test:e2e:local` (precisa `supabase start`).
-- **audit** — `npm audit --audit-level=high`.
-- **secrets-scan** — gitleaks sobre o histórico inteiro.
-- **deploy-staging** — só em push no `staging`, depois dos três acima. Aplica migrations
-  e deploya edge functions no Supabase de staging.
+- **typecheck** — `tsc` do app e da LP (`apps/marketing`).
+- **unit-tests** — Vitest em 8 shards, com cobertura coletada em cada um.
+- **coverage** — junta os 8 shards (`vitest --merge-reports`) e aplica os pisos do
+  `vite.config.ts` sobre o total. Shard isolado não aplica piso (`VITEST_SHARD_SEM_PISO`).
+- **build** — Knip (código morto não cresce), build do app, budget de bundle, build da LP.
+- **e2e-local** — Playwright contra Supabase local, em 3 shards, cada um com o próprio
+  banco. Regressão visual só no shard 1. Mesmo comando local: `npm run test:e2e:local`
+  (precisa `supabase start`; `E2E_SHARD=1/3` reproduz um shard).
+- **commits** — mensagens dos commits do PR no padrão `tipo(escopo): descrição`, sem
+  `wip` nem `fixup!` esquecido (o merge é por rebase, então viram histórico). O hook
+  `commit-msg` confere o mesmo padrão no commit.
+- **audit** — `npm audit --audit-level=high` (lê só o lockfile; SBOM no push).
+- **secrets-scan** — gitleaks sobre o histórico inteiro. Roda inclusive em PR só de docs.
+- **database** — sobe o stack Supabase (sem Studio, edge-runtime e imgproxy), aplica todas
+  as migrations num banco vazio em Postgres 17, roda as suites pgTAP de `supabase/tests/`
+  e avalia se `types.ts` está em sync com as migrations. Inclui o **guard de migration
+  destrutiva**, que roda antes de qualquer `db push`.
+- **types-sync** — reprova se o `types.ts` commitado diverge do schema das migrations.
+- **edge-functions** — `deno check` e `deno test` em `supabase/functions/`.
+- **ci-ok** — job agregado, único required check do branch protection. Roda sempre
+  (`if: always()`) e reprova se qualquer gate não passou: job pulado conta como sucesso
+  para o GitHub, então sem isso um PR vermelho ficava mergeável. "Pulado" só é aceito
+  para job cujo grupo o escopo do PR desligou.
+- **deploy-staging** — só em push no `staging`, depois dos gates de código e banco. Aplica
+  migrations e deploya edge functions no Supabase de staging.
 - **deploy-production** — só em push no `main`, com aprovação do Environment `Production`.
-
-- **database** — sobe o stack Supabase completo (`supabase start`), aplica as 183
-  migrations num banco vazio, roda as 9 suites pgTAP de `supabase/tests/` (~80 asserts em
-  RLS, impersonation e features) e confere que `types.ts` está em sync com as migrations.
-  Inclui o **guard de migration destrutiva**, que roda antes de qualquer `db push`.
-- **edge-functions** — `deno check` nas 44 funções de `supabase/functions/`.
-- **ci-ok**: job agregado, required check do branch protection de `staging`.
 - **CodeQL** (workflow `codeql.yml`): o check "Code scanning results / CodeQL" também é
   required em `staging` desde 2026-10-08. Reprova só alerta NOVO de severidade alta
   introduzido pelo PR; os alertas antigos não travam merge.
+
+Velocidade: `node_modules` vem de cache (`.github/actions/setup-deps`); o browser do
+Playwright e os pacotes de sistema dele também (`.github/actions/setup-playwright`, que
+evita o `apt-get update` do `install-deps` oficial); e o `supabase start` corre em
+segundo plano enquanto o Node instala (`scripts/ci-wait-supabase.sh`).
 
 Antes de abrir PR com migration nova, dá para rodar o guard local:
 
@@ -148,6 +171,22 @@ Depois do deploy em staging (não em PR):
   O antigo `e2e-staging.yml` foi removido. Ele nunca executou uma única vez: o
   `workflow_run` apontava para "Deploy Supabase", workflow deletado em `bd77a39`, e
   gatilho desse tipo só se registra a partir da branch default.
+
+## Automações do GitHub
+
+- **Issue de falha que fecha sozinha** (`.github/actions/notify-cron-failure`): todo cron
+  abre issue "Cron falhando: X" quando falha e a fecha na primeira execução verde. O mesmo
+  vale para o pipeline pós-merge: "Pipeline quebrado: staging" (deploy, smoke ou E2E de
+  staging) e "Pipeline quebrado: produção" (release em `main`). Run cancelado não abre issue.
+- **`Closes #N` em staging** (`fechar-issues-staging.yml`): fecha as issues citadas nos
+  commits que chegam em `staging`, com link para o commit.
+- **Auto-merge do Dependabot** (`dependabot-auto-merge.yml`): PR de minor/patch entra
+  sozinho, por rebase, quando todos os required checks passam. Major fica para revisão.
+  Depende de "Allow auto-merge" ligado nas configurações do repositório.
+- **Resumo do CI**: o job `CI OK` escreve uma tabela gate a gate no resumo do run.
+- **Limpeza de branches** (`limpar-branches.yml`, segunda de manhã): apaga a branch
+  remota cujo PR foi mergeado e não recebeu nada depois. Sem PR, PR aberto ou fechado
+  sem merge fica e aparece no resumo do run para revisão.
 
 ## Edge Functions
 

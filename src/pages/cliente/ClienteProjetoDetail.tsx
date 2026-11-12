@@ -12,6 +12,7 @@ import { FinanceiroContent } from "@/pages/portal/PortalFinanceiro";
 import { EntregasContent } from "@/pages/portal/PortalEntregas";
 import { TimelineContent, type TimelineDisciplina } from "@/pages/portal/PortalTimeline";
 import { PendenciasCard } from "@/pages/portal/PendenciasCard";
+import { ArquivosDoProjeto } from "./ArquivosDoProjeto";
 import type { ClienteAccount } from "@/hooks/useClienteAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { toast } from "sonner";
@@ -199,6 +200,8 @@ function ProjetoOverview({ projeto, refresh }: { projeto: ClienteProjetoData; re
           </CardContent>
         </Card>
       </div>
+
+      <ArquivosDoProjeto projetoId={projeto.projeto_id} />
 
       <TimelineContent disciplinas={(projeto.disciplinas as TimelineDisciplina[]) ?? []} />
     </div>

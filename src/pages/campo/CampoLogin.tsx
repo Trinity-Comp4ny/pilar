@@ -10,6 +10,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { getCampoToken, setCampoToken } from "./useCampoAuth";
 
 import { BusyMark } from "@/components/motion/BusyMark";
+import { AvisoPrivacidadeConvidado } from "@/components/legal/AvisoPrivacidadeConvidado";
 
 type LoginResp = { ok: boolean; token?: string; nome?: string; must_change_senha?: boolean; erro?: string };
 
@@ -108,6 +109,7 @@ export default function CampoLogin() {
         <p className="text-center text-xs text-muted-foreground">
           O acesso é criado pelo escritório. Perdeu a senha? Fale com o responsável pela obra.
         </p>
+        <AvisoPrivacidadeConvidado />
       </div>
     </div>
   );

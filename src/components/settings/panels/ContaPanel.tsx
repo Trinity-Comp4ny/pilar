@@ -25,6 +25,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { AvatarStack } from "@/components/AvatarStack";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmailChangeCard } from "@/components/profile/EmailChangeCard";
+import { SobrePilar } from "@/components/settings/SobrePilar";
+import { PreviasRecursos } from "@/components/settings/PreviasRecursos";
 import { useOnboardingState } from "@/hooks/useOnboardingState";
 import { PESSOAS_EMPRESA_QUERY_KEY } from "@/pages/meu-trabalho/hooks";
 
@@ -434,6 +436,10 @@ export function ContaPanel() {
           </Button>
         </CardContent>
       </Card>
+
+      <PreviasRecursos />
+
+      <SobrePilar />
 
       <ConfirmDialog
         open={isRemoveAvatarConfirmOpen}

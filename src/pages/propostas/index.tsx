@@ -78,6 +78,7 @@ import { SmartInvoiceDialog } from "@/pages/propostas/components/SmartInvoiceDia
 import { BusyMark } from "@/components/motion/BusyMark";
 import { ReadingRing } from "@/components/motion/ReadingRing";
 import { disciplinasDoDocumento } from "./lib/disciplinasDocumento";
+import { perguntarEsforco } from "@/components/pesquisas/perguntarEsforco";
 
 interface PropostaDisciplina {
   id: string;
@@ -334,6 +335,7 @@ export default function Propostas() {
       createProposta.mutate(createPayload, {
         onSuccess: (data) => {
           persistDisciplinas(data.id, () => {
+            void perguntarEsforco("proposta");
             toast.success("Proposta criada");
             setIsFormOpen(false);
             resetForm();
@@ -686,7 +688,7 @@ export default function Propostas() {
 
   if (isLoading) {
     return (
-      <PageLayout header={header} toolbar={toolbar}>
+      <PageLayout header={header} toolbar={toolbar} density="compact">
         <div className="flex items-center justify-center py-12">
           <ReadingRing size={64} />
         </div>
@@ -695,9 +697,11 @@ export default function Propostas() {
   }
 
   return (
-    <PageLayout header={header} toolbar={toolbar}>
+    // Tabela preenche a altura que sobra e rola por dentro (era `100svh - 360px`, que deixava
+    // ~150 px mortos embaixo num notebook 13"; auditoria de espaço, 2026-11).
+    <PageLayout header={header} toolbar={toolbar} density="compact" containerClassName="h-full flex flex-col min-h-0">
       <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col min-h-0">
-        <CardContent className="flex-1 min-h-0 p-0 pb-4">
+        <CardContent className="flex min-h-0 flex-1 flex-col p-0 pb-4">
           {propostas.length === 0 ? (
             <EmptyState
               icon={FileText}
@@ -716,14 +720,14 @@ export default function Propostas() {
               }}
             />
           ) : viewMode === "table" ? (
-            <div className="overflow-x-auto">
+            <div className="min-h-0 flex-1 overflow-x-auto">
               <DataTable
                 columns={propostasColumns}
                 data={{ rows: filteredPropostas, isPending: false, error: null }}
                 rowKey={(p) => p.id}
                 onRowClick={(p) => openDetail(p.id)}
                 rowLabel={(p) => `Ver detalhes da proposta ${p.titulo}`}
-                maxHeight="calc(100svh - 360px)"
+                maxHeight="100%"
                 // A ordem vem do pai: a mesma lista ordenada alimenta a visão em cards.
                 sortingState={
                   sortField && sortField !== "created_at" ? [{ id: sortField, desc: sortDir === "desc" }] : []

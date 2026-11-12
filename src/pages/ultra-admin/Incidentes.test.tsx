@@ -29,6 +29,7 @@ vi.mock("./hooks", async (orig) => ({
 }));
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock("sonner", () => ({ toast }));
+vi.mock("./components/ManutencoesProgramadas", () => ({ ManutencoesProgramadas: () => null }));
 vi.mock("@/components/PilarPage", () => ({
   PilarPage: ({
     title,

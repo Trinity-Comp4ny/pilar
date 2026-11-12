@@ -27,6 +27,7 @@ export const DOMINIOS = {
   comunicacao: "E-mail",
   jobs: "Jobs agendados (pg_cron)",
   plataforma: "Plataforma (ultra admin)",
+  integracoes: "Integrações (Google Drive)",
   utilitario: "Utilitários",
 };
 

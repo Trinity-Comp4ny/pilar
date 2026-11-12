@@ -14,13 +14,23 @@ import { trackCta } from "../analytics";
  * Como o fundo é o verde, o texto vai em tinta escura (regra da marca: verde só
  * aguenta texto escuro por cima, nunca branco).
  *
- * As comparações ("Pilar vs X") vieram do header pro rodapé: nenhum dos sites
- * de referência (Notion, Slack, Stripe) trata isso como item de navegação
- * principal, e com só duas páginas um dropdown inteiro pesava mais do que o
- * conteúdo merecia. O Slack guarda exatamente esse tipo de link no rodapé.
+ * As comparações ("Pilar vs X") são páginas de busca: quem chega nelas vem do
+ * Google ou de um artigo do blog. Ficam no rodapé porque é o único link fixo do
+ * site até elas (ajuda o Google a achá-las), mas dentro de Conteúdo, que é o que
+ * elas são, e não numa coluna própria disputando atenção com Produto.
  */
 
 const COLUNAS = [
+  {
+    titulo: "Conteúdo",
+    links: [
+      { label: "Blog", to: "/blog" },
+      { label: "Ferramentas", to: "/ferramentas" },
+      { label: "Para engenharia", to: "/engenharia" },
+      { label: "Para arquitetura", to: "/arquitetura" },
+      ...COMPARATIVOS.map((c) => ({ label: `Pilar vs ${c.adversario}`, to: `/vs/${c.slug}` })),
+    ],
+  },
   {
     titulo: "Empresa",
     links: [
@@ -28,6 +38,7 @@ const COLUNAS = [
       { label: "Perguntas frequentes", to: "/faq" },
       { label: "Termos de uso", to: "/termos" },
       { label: "Privacidade", to: "/privacidade" },
+      { label: "Segurança", to: "/seguranca" },
     ],
   },
 ];
@@ -36,7 +47,7 @@ export function LandingFooter() {
   return (
     <footer className="w-full bg-card-brand px-5 md:px-10 pt-12 md:pt-20 pb-8 md:pb-10">
       <div className="max-w-6xl mx-auto">
-        <div className="grid md:grid-cols-[1.2fr_1fr_1fr_1fr_1fr] gap-10 md:gap-8 mb-14">
+        <div className="grid md:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] gap-10 md:gap-8 mb-14">
           <div>
             <Logo size="sm" className="text-ink mb-5" />
             <p className="text-[13.5px] text-ink/80 max-w-xs leading-relaxed">
@@ -72,19 +83,6 @@ export function LandingFooter() {
               </ul>
             </div>
           ))}
-
-          <div>
-            <h3 className="text-[10.5px] uppercase tracking-[0.14em] text-ink/70 mb-4">Comparações</h3>
-            <ul className="flex flex-col gap-3">
-              {COMPARATIVOS.map((c) => (
-                <li key={c.slug}>
-                  <Link to={`/vs/${c.slug}`} className="text-[13.5px] text-ink/75 hover:text-ink transition-colors">
-                    Pilar vs {c.adversario}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
 
           <div>
             <h3 className="text-[10.5px] uppercase tracking-[0.14em] text-ink/70 mb-4">Conta</h3>

@@ -4,7 +4,8 @@
     ".": {
       "entry": ["e2e/**/*.ts", "tests/synthetic/**/*.ts", "scripts/**/*.{mjs,ts}"],
       "project": ["src/**/*.{ts,tsx}", "e2e/**/*.ts", "scripts/**/*.{mjs,ts}"],
-      "ignore": ["src/integrations/supabase/types.ts"]
+      "ignore": ["src/integrations/supabase/types.ts"],
+      "ignoreDependencies": ["postgres", "fflate", "unpdf"]
     },
     "apps/marketing": {
       "entry": ["scripts/**/*.mjs"],

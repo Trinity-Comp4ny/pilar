@@ -1,0 +1,45 @@
+name: Limpar branches mergeadas
+
+# Regra do CLAUDE.md: entre trabalhos só sobrevivem `main` e `staging`. Em 10/11 havia
+# 19 branches remotas, várias de PR já mergeado. Toda segunda apaga as que têm PR
+# mergeado e nenhum commit depois do merge; o resto (sem PR, PR aberto, PR fechado
+# sem merge) só aparece no resumo do run para revisão. O trabalho apagado continua
+# acessível pelo PR (refs/pull/N/head).
+#
+# `schedule` só dispara a partir da branch default (main): liga no próximo release.
+# Até lá, rodar à mão pelo Actions (workflow_dispatch, com dry-run por padrão).
+
+on:
+  schedule:
+    - cron: "17 11 * * 1" # segunda 08:17 BRT
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Só listar, sem apagar"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write # apagar a ref da branch
+  pull-requests: read
+
+concurrency:
+  group: limpar-branches
+  cancel-in-progress: false
+
+jobs:
+  limpar:
+    name: Apagar branches de PR mergeado
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          sparse-checkout: scripts
+      - name: Limpar
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          # No agendado não há input: apaga de verdade. No manual, segue o checkbox.
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '' }}
+        run: scripts/limpar-branches-mergeadas.sh

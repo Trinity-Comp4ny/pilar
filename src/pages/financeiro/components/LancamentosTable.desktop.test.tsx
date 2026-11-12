@@ -91,8 +91,8 @@ vi.mock("./LancamentosFilterBar", () => ({
     </div>
   ),
 }));
-vi.mock("./LancamentoDetailDialog", () => ({
-  LancamentoDetailDialog: ({
+vi.mock("./LancamentoDetailSheet", () => ({
+  LancamentoDetailSheet: ({
     lancamento,
     open,
     onEditInTab,
@@ -187,8 +187,9 @@ function lanc(p: Partial<Lancamento>): Lancamento {
     projeto_id: null,
     projeto_nome: null,
     centro_custo_id: null,
-    conta_id: null,
-    conta_nome: null,
+    // Com conta: marcar como pago só pede a conta para quem não tem (B7, SPEC 150).
+    conta_id: "c-1",
+    conta_nome: "Itaú PJ",
     contraparte_id: null,
     contraparte_tipo: null,
     contraparte_nome: null,
@@ -540,7 +541,11 @@ describe("LancamentosTable desktop: seleção e ações em massa", () => {
     const dlg = screen.getByRole("alertdialog");
     expect(within(dlg).getByText("Excluir 2 lançamento(s)?")).toBeInTheDocument();
     fireEvent.click(within(dlg).getByRole("button", { name: "Excluir todos" }));
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("2 excluído(s)"));
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith("2 excluído(s)", {
+        action: { label: "Desfazer", onClick: expect.any(Function) },
+      })
+    );
     expect(onMutated).toHaveBeenCalled();
     expect(sb.client.rpc).toHaveBeenCalledWith("rpc_soft_delete", { p_tabela: "despesas", p_id: "d-1" });
     expect(sb.client.rpc).toHaveBeenCalledWith("rpc_soft_delete", { p_tabela: "receitas", p_id: "r-1" });
@@ -694,7 +699,11 @@ describe("LancamentosTable desktop: grupos de parcelas", () => {
     const dlg = await screen.findByRole("alertdialog");
     expect(within(dlg).getByText("Excluir grupo inteiro (2 parcelas)?")).toBeInTheDocument();
     await user.click(within(dlg).getByRole("button", { name: "Excluir grupo" }));
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("2 excluído(s)"));
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith("2 excluído(s)", {
+        action: { label: "Desfazer", onClick: expect.any(Function) },
+      })
+    );
     expect(sb.client.rpc).toHaveBeenCalledWith("rpc_soft_delete", { p_tabela: "despesas", p_id: "p-1" });
     expect(sb.client.rpc).toHaveBeenCalledWith("rpc_soft_delete", { p_tabela: "despesas", p_id: "p-2" });
   });

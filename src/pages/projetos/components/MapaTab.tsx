@@ -196,7 +196,13 @@ export function MapaTab() {
   }, []);
 
   return (
-    <div role="tabpanel" id="projetos-tabpanel-mapa" aria-labelledby="projetos-tab-mapa">
+    // Desktop: o mapa ocupa a altura que sobra na página (era `100dvh - 320px`).
+    <div
+      role="tabpanel"
+      id="projetos-tabpanel-mapa"
+      aria-labelledby="projetos-tab-mapa"
+      className="md:flex md:min-h-0 md:flex-1 md:flex-col"
+    >
       {/* Controles do mapa: busca + filtro de status */}
       <div className="flex items-center justify-end gap-2 mb-3 flex-wrap">
         <Popover open={searchOpen} onOpenChange={setSearchOpen}>
@@ -353,8 +359,11 @@ export function MapaTab() {
 
           <div
             ref={wrapperRef}
-            className="rounded-lg overflow-hidden border relative bg-muted"
-            style={{ height: isFullscreen ? "100dvh" : "calc(100dvh - 320px)", minHeight: "420px" }}
+            className={cn(
+              "rounded-lg overflow-hidden border relative bg-muted",
+              !isFullscreen && "h-[calc(100dvh-320px)] md:h-auto md:flex-1"
+            )}
+            style={{ height: isFullscreen ? "100dvh" : undefined, minHeight: "420px" }}
           >
             {/* Seletor de camada */}
             <div className="absolute bottom-8 left-3 z-1000">

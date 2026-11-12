@@ -7,9 +7,9 @@ Status de conformidade LGPD + roadmap SOC2/ISO.
 ### Papéis
 
 - **Controlador:** cliente do Pilar (escritório de engenharia), controla dados dos seus próprios clientes finais
-- **Operador:** Pilar (razão social e CNPJ próprios em regularização, ver
+- **Operador:** Pilar, operado por MATHEUS PREZIA REZENDE TECH LTDA, CNPJ 63.418.862/0001-59 (ver
   [docs/legal/README.md](../legal/README.md))
-- **DPO:** privacidade@pilarsoft.com.br
+- **DPO (encarregado):** Matheus Prezia Rezende, privacidade@pilarsoft.com.br
 
 ### Bases legais de tratamento
 

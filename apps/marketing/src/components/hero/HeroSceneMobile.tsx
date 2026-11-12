@@ -131,10 +131,9 @@ export function HeroSceneMobile({ ato, estatico }: { ato: number; estatico: bool
             </div>
           ))}
           <m.div
-            className="mt-3 flex items-center justify-center gap-1.5 rounded-full py-2 text-[12px] font-medium"
+            className="mt-3 flex items-center justify-center gap-1.5 rounded-full py-2 text-[12px] font-medium text-ink-on-brand"
             animate={{
-              backgroundColor: aprovado ? "hsl(var(--positive-strong))" : "hsl(var(--brand-accent))",
-              color: aprovado ? "#ffffff" : "hsl(var(--text-on-brand))",
+              backgroundColor: aprovado ? "hsl(var(--brand-accent-soft))" : "hsl(var(--brand-accent))",
             }}
             transition={{ duration: 0.3 }}
           >

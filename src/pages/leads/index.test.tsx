@@ -142,10 +142,10 @@ beforeEach(() => {
   }
 });
 
-const abrir = () =>
+const abrir = (url = "/gestao/leads") =>
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[url]}>
         <Leads />
       </MemoryRouter>
     </QueryClientProvider>
@@ -155,6 +155,17 @@ const novoLead = () => screen.getAllByRole("button", { name: /Novo lead/ })[0];
 const dialogo = (nome: string | RegExp) => screen.getByRole("dialog", { name: nome });
 
 describe("Leads: criar lead", () => {
+  it("busca rápida: ?new=1 já abre o formulário de novo lead", () => {
+    abrir("/gestao/leads?new=1");
+    expect(dialogo("Novo lead")).toBeInTheDocument();
+  });
+
+  it("busca rápida: sem permissão de editar leads não abre o formulário", () => {
+    canEdit = false;
+    abrir("/gestao/leads?new=1");
+    expect(screen.queryByRole("dialog", { name: "Novo lead" })).not.toBeInTheDocument();
+  });
+
   it("salva com o valor convertido para número e fecha o formulário", async () => {
     const user = userEvent.setup();
     abrir();
@@ -583,7 +594,8 @@ describe("Leads: filtros, busca e visão em lista", () => {
       .find((el) => el.tagName === "INPUT") as HTMLInputElement;
 
   async function escolher(user: ReturnType<typeof userEvent.setup>, filtro: string, opcao: string) {
-    await user.click(screen.getByRole("button", { name: filtro }));
+    // Com filtro ativo o nome vira "Rótulo: opção" (acompanha o texto visível).
+    await user.click(screen.getByRole("button", { name: new RegExp(`^${filtro}(:|$)`) }));
     await user.click(await screen.findByRole("option", { name: opcao }));
   }
 

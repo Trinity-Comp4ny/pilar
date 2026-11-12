@@ -5,7 +5,7 @@
 // Tunar limites em BUDGETS abaixo. Variável BUDGET_OVERRIDE=relaxed
 // permite passagem temporária com warning (use só em emergência).
 
-import { readdir, readFile, stat } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 
@@ -33,7 +33,13 @@ const BUDGETS = {
   // 2026-10-13 (2): 125 kB. A troca de senha do portal passou a ser lazy (levava
   // react-hook-form e todos os schemas para o boot) e o env.ts deixou o zod; a
   // entrada caiu de ~143 para ~113 kB.
-  entry: 125 * 1024,
+  //
+  // 2026-11-11: 127 kB (era 125). staging media 123,3 kB; o bloco de profissionalização (PR #794)
+  // pôs no boot só o que aparece antes de qualquer clique: o ponto de Novidades no menu e a
+  // contagem no aviso de versão nova (lib/novidades, sem zod), a escuta da tecla "?" e os ícones
+  // das seções novas do Ultra admin, ~2,7 kB gzip. Faixa de avisos, modal "O que mudou", agente
+  // da ajuda, NPS, comunicado, novo aceite e registro do navegador ficaram lazy.
+  entry: 127 * 1024,
   // Tudo que o navegador baixa antes da primeira tela: a entrada mais os chunks que o
   // index.html pré-carrega (modulepreload) e o CSS. O limite só da entrada não via o
   // vendor-pdf e o vendor-charts sendo pré-carregados em toda página (~860 kB brutos),
@@ -48,7 +54,18 @@ const BUDGETS = {
   // 2026-11-07: 329 kB (era 328). staging já media 328,0 kB; o onboarding da SPEC 149 não pôs
   // nenhum módulo no boot (telas e cartões são lazy), mas os chunks novos aumentam a tabela de
   // preload da entrada em ~0,1 kB. Reavaliar se voltar a encostar.
-  initialLoad: 329 * 1024,
+  // 2026-11-09: 330 kB (era 329). staging media 328,1 kB; a rodada de minor/patch do Dependabot
+  // (PR #755: supabase-js 2.118, Radix 1.x→1.y, lucide-react) somou ~0,9 kB gzip ao boot e
+  // encostou em 329,0. Nenhum módulo novo no boot, só versão nova das mesmas libs.
+  // 2026-11-11: 331 kB (era 330). staging já media 330,0 kB, colado no teto. A faixa de reaceite
+  // dos Termos (só admin vê) entra lazy e não põe módulo no boot; o import dinâmico e a entrada na
+  // tabela de preload somam ~0,2 kB (330,2 kB).
+  // 2026-11-11: 334 kB (era 331). O PR #794 soma ~2,8 kB gzip ao boot (ver o comentário da
+  // entrada acima). Reavaliar se voltar a encostar.
+  // 2026-11-11: 335 kB (era 334). O vidro líquido da barra mobile (PR #812: src/styles/vidro.css e
+  // a lente da aba ativa no BottomNav) soma ~0,9 kB gzip ao boot e estourou por 0,1 kB (334,1).
+  // A barra está em toda tela mobile, então não tem como ser lazy.
+  initialLoad: 335 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app
@@ -66,17 +83,19 @@ function fmt(bytes) {
 async function main() {
   let entries;
   try {
-    entries = await readdir(DIST);
+    entries = await readdir(DIST, { withFileTypes: true });
   } catch {
     console.error(`[budget] dist/assets não encontrado. Rode 'npm run build' antes.`);
     process.exit(1);
   }
 
   const chunks = [];
-  for (const name of entries) {
+  // O tipo vem do próprio readdir: sem stat() antes do readFile() no mesmo caminho
+  // (CodeQL js/file-system-race).
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    const name = entry.name;
     const full = join(DIST, name);
-    const s = await stat(full);
-    if (!s.isFile()) continue;
     const ext = name.endsWith(".js") ? "js" : name.endsWith(".css") ? "css" : null;
     if (!ext) continue;
     const raw = await readFile(full);

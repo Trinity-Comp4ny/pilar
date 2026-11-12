@@ -1,14 +1,29 @@
+import { Search } from "lucide-react";
+import { teclaModificadora } from "@/lib/teclado";
+import { abrirPaletaComandos } from "@/lib/paletaComandosEvento";
+
 /**
- * Indicador sutil do atalho ⌘K. Fica em arquivo próprio (sem importar o cmdk)
- * para o Layout renderizá-lo sem puxar o CommandPalette para o bundle de entrada.
+ * Atalho ⌘K no rodapé do trilho da sidebar. Antes era uma etiqueta fixa no canto inferior
+ * direito, por cima do conteúdo (Kanban, tabelas, legenda do Gantt) em toda tela; aqui ela
+ * ocupa um espaço que já existe e ainda abre a paleta no clique (auditoria de espaço, 2026-11).
+ * Fica em arquivo próprio (sem importar o cmdk) para não puxar o CommandPalette para o bundle
+ * de entrada: o clique só dispara o evento que o Layout escuta.
  */
 export function CommandPaletteHint() {
-  const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/i.test(navigator.platform);
-  const combo = isMac ? "⌘K" : "Ctrl+K";
+  const mod = teclaModificadora();
+  const combo = mod === "⌘" ? "⌘K" : "Ctrl+K";
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-40 hidden select-none items-center gap-1 rounded-md border border-border/60 bg-background/80 px-2 py-1 text-[10px] font-medium text-muted-foreground shadow-sm backdrop-blur md:flex">
-      <kbd className="font-mono">{combo}</kbd>
-      <span>para comandos</span>
-    </div>
+    <button
+      type="button"
+      onClick={abrirPaletaComandos}
+      aria-label={`Buscar e comandos (${combo})`}
+      title={`Buscar e comandos (${combo})`}
+      className="group flex w-14 flex-col items-center gap-1 rounded-xl py-1 text-black/60 transition-colors hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black/10"
+    >
+      <span className="flex h-8 w-10 items-center justify-center rounded-full transition-colors group-hover:bg-brand/30">
+        <Search size={18} strokeWidth={1.5} aria-hidden />
+      </span>
+      <kbd className="font-mono text-[10px] leading-none">{combo}</kbd>
+    </button>
   );
 }

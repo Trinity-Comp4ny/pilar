@@ -55,6 +55,16 @@ sms_sent = 100
 token_verifications = 100
 anonymous_users = 100
 
+# Servidor OAuth 2.1 (SPEC 151): é por ele que ChatGPT, Claude e outros clientes MCP conectam
+# a conta do usuário ao conector da Pilar. A tela de autorização é do app (Site URL + este
+# caminho). Registro dinâmico ligado porque é assim que os clientes MCP se cadastram sozinhos;
+# o usuário sempre aprova na tela da Pilar. Em staging e produção a mesma configuração é feita
+# no painel (Authentication > OAuth Server), ver o runbook da SPEC 151.
+[auth.oauth_server]
+enabled = true
+authorization_url_path = "/oauth/autorizar"
+allow_dynamic_registration = true
+
 [auth.mfa.totp]
 enroll_enabled = true
 verify_enabled = true
@@ -75,6 +85,11 @@ verify_jwt = false
 entrypoint = "./functions/auth-email-hook/index.ts"
 
 [functions.portal-get-projeto]
+verify_jwt = false
+
+# Retorno do OAuth do Google (SPEC 163): o Google chama sem token da Pilar; os POSTs
+# autenticam o usuário dentro da função.
+[functions.google-drive-oauth]
 verify_jwt = false
 
 # ── Funções públicas / com autenticação própria ──────────────────────────────
@@ -125,8 +140,17 @@ verify_jwt = false
 [functions.ops-export-funil]
 verify_jwt = false
 
+# Conector MCP (SPEC 151): o 401 com WWW-Authenticate (início do OAuth) sai da própria
+# função, e o gateway responderia um 401 seco. A função valida o token com getUser().
+[functions.mcp]
+verify_jwt = false
+
 # Feedback fecha pela PR (SPEC 145): chamado pelo GitHub Actions com token próprio, sem JWT.
 [functions.feedback-sync]
+verify_jwt = false
+
+# Novidades do release (SPEC 152): chamado pelo GitHub Actions com token próprio, sem JWT.
+[functions.release-rascunho]
 verify_jwt = false
 
 [functions.registro-audio-limpar]
@@ -157,6 +181,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.portal-entrega-download]
+verify_jwt = false
+
+# Arquivos da pasta "Cliente" no portal (SPEC 163): sessão do portal, sem JWT do app.
+[functions.portal-arquivos]
 verify_jwt = false
 
 [auth.sms]

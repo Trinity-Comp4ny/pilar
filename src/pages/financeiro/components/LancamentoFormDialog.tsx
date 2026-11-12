@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format, addMonths } from "date-fns";
+import { format } from "date-fns";
 import { toast } from "sonner";
 import { FormDialog } from "@/components/FormDialog";
 import { Button } from "@/components/ui/button";
@@ -9,24 +9,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, ChevronDown, QrCode, Settings2, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, QrCode, Settings2, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { parseCurrencyString } from "@/lib/currencyUtils";
 import { MoneyInput } from "@/components/forms/MoneyInput";
-import { checkDuplicates } from "@/lib/duplicateCheck";
-import { DuplicateWarningDialog } from "@/components/DuplicateWarningDialog";
+import { useChecagemDuplicata } from "../hooks/useChecagemDuplicata";
 import { TIPO_CHAVE_PIX_LABEL } from "@/lib/pixUtils";
 import { useFinanceAuxData } from "../hooks/useFinanceAuxData";
 import { defaultValues, rateiosValidos, schema, type FormData, type FormInput } from "../lib/lancamentoFormSchema";
 import { clienteDoProjeto, projetoContinuaValido, projetosDoCliente } from "../lib/vinculoClienteProjeto";
 import type { Lancamento, TipoLancamento } from "../hooks/useLancamentosUnified";
 import { CentroCustoManager } from "./CentroCustoManager";
-import { analytics } from "@/lib/analytics";
+import { registrarLancamentoCriado } from "../lib/lancamentoCriado";
+import type { Json } from "@/integrations/supabase/types";
+import { montarLinhasNovas, statusEmAberto } from "../lib/lancamentoLinhas";
+
+// O form guarda Date; o DatePicker fala ISO (yyyy-MM-dd). Meio-dia evita virar o dia no fuso.
+const paraIso = (d: Date | undefined) => (d ? format(d, "yyyy-MM-dd") : undefined);
+const deIso = (iso: string) => new Date(`${iso}T12:00:00`);
 
 export interface LancamentoFormDialogProps {
   open: boolean;
@@ -52,9 +56,6 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
   });
 
   const [saving, setSaving] = useState(false);
-  const [duplicates, setDuplicates] = useState<Awaited<ReturnType<typeof checkDuplicates>>>([]);
-  const [showDupWarning, setShowDupWarning] = useState(false);
-  const [pendingData, setPendingData] = useState<FormData | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [ccManagerOpen, setCcManagerOpen] = useState(false);
   const [rateios, setRateios] = useState<{ centro_custo_id: string; percentual: string }[]>([]);
@@ -87,7 +88,14 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
           currency: "BRL",
         }),
         dataVencimento: lancamento.data_vencimento ? new Date(lancamento.data_vencimento + "T12:00:00") : new Date(),
-        status: lancamento.status === "Recebido" ? "Recebida" : lancamento.status,
+        // "Atrasado" não é escolha do usuário: é Pendente com vencimento passado. O
+        // select só oferece Pendente/Pago; ao salvar, statusEmAberto recalcula.
+        status:
+          lancamento.status === "Recebido"
+            ? "Recebida"
+            : lancamento.status === "Atrasado"
+              ? "Pendente"
+              : lancamento.status,
         formaPagamento: lancamento.forma_pagamento ?? "",
         parcelas: "1",
         categoriaId: lancamento.categoria_id ?? "",
@@ -152,9 +160,6 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
       rateiosValidos(rateioOn, rateios); // valida antes de gravar (ver rateiosValidos)
       const numParcelas = Math.min(60, Math.max(1, parseInt(data.parcelas || "1") || 1));
       const valorNum = parseCurrencyString(data.valorTotal);
-      const valorParcela = Math.round((valorNum / numParcelas) * 100) / 100;
-      const { data: empresaId } = await supabase.rpc("get_user_empresa_id");
-      if (!empresaId) throw new Error("Usuário sem empresa");
 
       const grupoParcela = !isEdit && numParcelas > 1 ? crypto.randomUUID() : null;
       const table = isReceita ? "receitas" : "despesas";
@@ -167,11 +172,16 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
         const payload = isReceita
           ? {
               data_vencimento: format(data.dataVencimento, "yyyy-MM-dd"),
-              data_recebimento: data.status === "Recebida" ? format(data.dataVencimento, "yyyy-MM-dd") : null,
+              // Mesma regra da despesa: a data real do recebimento não é trocada pelo
+              // vencimento ao editar outro campo (diagnóstico 2026-11-07, B3).
+              data_recebimento:
+                data.status === "Recebida"
+                  ? (lancamento.data_efetivacao ?? format(data.dataVencimento, "yyyy-MM-dd"))
+                  : null,
               data_competencia: dataCompetenciaStr,
               descricao: data.descricao,
               valor: valorNum,
-              status: data.status === "Recebida" ? "Recebido" : data.status,
+              status: data.status === "Recebida" ? "Recebido" : statusEmAberto(data.status, data.dataVencimento),
               forma_pagamento: data.formaPagamento || null,
               categoria_id: data.categoriaId || null,
               projeto_id: data.projetoId || null,
@@ -190,7 +200,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
               data_competencia: dataCompetenciaStr,
               descricao: data.descricao,
               valor: valorNum,
-              status: data.status,
+              status: statusEmAberto(data.status, data.dataVencimento),
               forma_pagamento: data.formaPagamento || null,
               categoria_id: data.categoriaId || null,
               projeto_id: data.projetoId || null,
@@ -213,73 +223,26 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
         await persistRateio(lancamento.id, tipo);
         toast.success("Lançamento atualizado");
       } else {
-        const rows = Array.from({ length: numParcelas }, (_, i) => {
-          const dataParcela = addMonths(data.dataVencimento, i);
-          const dataStr = format(dataParcela, "yyyy-MM-dd");
-          const isUltima = i === numParcelas - 1 && numParcelas > 1;
-          const valorFinal = isUltima
-            ? Math.round((valorNum - valorParcela * (numParcelas - 1)) * 100) / 100
-            : valorParcela;
-          const desc = numParcelas > 1 ? `${data.descricao} (${i + 1}/${numParcelas})` : data.descricao;
-          const isPrimeira = i === 0;
-          return isReceita
-            ? {
-                data_vencimento: dataStr,
-                data_recebimento: isPrimeira && data.status === "Recebida" ? dataStr : null,
-                data_competencia: dataCompetenciaStr,
-                descricao: desc,
-                valor: valorFinal,
-                status: isPrimeira && data.status === "Recebida" ? "Recebido" : "Pendente",
-                forma_pagamento: data.formaPagamento || null,
-                categoria_id: data.categoriaId || null,
-                projeto_id: data.projetoId || null,
-                conta_id: data.contaId || null,
-                cliente_id: data.clienteId || null,
-                centro_custo_id: data.centroCustoId || null,
-                nota_fiscal: data.notaFiscal || null,
-                observacao: data.observacao || null,
-                empresa_id: empresaId,
-                grupo_parcela: grupoParcela,
-                parcela_numero: numParcelas > 1 ? i + 1 : null,
-                parcela_total: numParcelas > 1 ? numParcelas : null,
-              }
-            : {
-                data_vencimento: dataStr,
-                data_pagamento: isPrimeira && data.status === "Pago" ? dataStr : null,
-                data_competencia: dataCompetenciaStr,
-                descricao: desc,
-                valor: valorFinal,
-                status: isPrimeira ? data.status : "Pendente",
-                forma_pagamento: data.formaPagamento || null,
-                categoria_id: data.categoriaId || null,
-                projeto_id: data.projetoId || null,
-                conta_id: data.contaId || null,
-                cartao_id: data.cartaoId || null,
-                fornecedor_id: data.fornecedorId || null,
-                centro_custo_id: data.centroCustoId || null,
-                nota_fiscal: data.notaFiscal || null,
-                observacao: data.observacao || null,
-                empresa_id: empresaId,
-                grupo_parcela: grupoParcela,
-                parcela_numero: numParcelas > 1 ? i + 1 : null,
-                parcela_total: numParcelas > 1 ? numParcelas : null,
-                recorrente: data.recorrente,
-                periodicidade: data.recorrente ? data.periodicidade : null,
-              };
+        const rows = montarLinhasNovas(data, {
+          isReceita,
+          numParcelas,
+          valorNum,
+          grupoParcela,
+          dataCompetencia: dataCompetenciaStr,
         });
-        const { data: inserted, error } = await supabase
-          .from(table)
-          .insert(rows as never)
-          .select("id");
+        // Linhas + rateio numa transação só (rpc_lancamentos_criar): se o rateio
+        // falhar, nenhuma parcela fica gravada. empresa_id vem do servidor.
+        const { error } = await supabase.rpc("rpc_lancamentos_criar", {
+          p_tipo: tipo,
+          p_linhas: rows as unknown as Json,
+          p_rateios: rateiosValidos(rateioOn, rateios).map((r) => ({
+            centro_custo_id: r.centro_custo_id,
+            percentual: Number(r.percentual),
+          })),
+        });
         if (error) throw new Error(error.message + (error.details ? ` (${error.details})` : ""));
 
-        if (rateioOn && rateios.length > 0 && inserted) {
-          for (const row of inserted as Array<{ id: string }>) {
-            await persistRateio(row.id, tipo);
-          }
-        }
-
-        analytics.track("lancamento_criado", { tipo, parcelas: numParcelas, rateio: rateioOn });
+        registrarLancamentoCriado(tipo, numParcelas, rateioOn);
         toast.success(isReceita ? "Receita cadastrada" : "Despesa cadastrada", {
           description: `${numParcelas} registro(s) criado(s)`,
         });
@@ -294,26 +257,18 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
     }
   };
 
+  const duplicata = useChecagemDuplicata({
+    isReceita,
+    contrapartes: isReceita ? aux.clientes : aux.fornecedores,
+    salvar: save,
+  });
+
   const onSubmit = form.handleSubmit(async (data) => {
     if (isEdit) {
       await save(data);
       return;
     }
-    const valorNum = parseCurrencyString(data.valorTotal);
-    const numParcelas = parseInt(data.parcelas || "1") || 1;
-    const found = await checkDuplicates({
-      table: isReceita ? "receitas" : "despesas",
-      descricao: data.descricao,
-      valor: valorNum / numParcelas,
-      dataVencimento: data.dataVencimento,
-    });
-    if (found.length > 0) {
-      setDuplicates(found);
-      setPendingData(data);
-      setShowDupWarning(true);
-      return;
-    }
-    await save(data);
+    await duplicata.verificarESalvar(data);
   });
 
   const clienteId = form.watch("clienteId") ?? "";
@@ -403,29 +358,12 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1.5">
                 <Label className="text-xs">Vencimento *</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={cn(
-                        "w-full h-9 justify-start text-xs font-normal",
-                        !form.watch("dataVencimento") && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-1.5 h-3 w-3" />
-                      {form.watch("dataVencimento") ? format(form.watch("dataVencimento"), "dd/MM/yyyy") : "Selecionar"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={form.watch("dataVencimento")}
-                      onSelect={(d) => d && form.setValue("dataVencimento", d)}
-                      autoFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <DatePicker
+                  value={paraIso(form.watch("dataVencimento"))}
+                  onChange={(v) => v && form.setValue("dataVencimento", deIso(v))}
+                  placeholder="Selecionar"
+                  className="h-9 text-xs"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Status</Label>
@@ -624,31 +562,12 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
             <div className="pb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">Data de competência</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={cn(
-                        "w-full h-9 justify-start text-xs font-normal",
-                        !form.watch("dataCompetencia") && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-1.5 h-3 w-3" />
-                      {form.watch("dataCompetencia")
-                        ? format(form.watch("dataCompetencia") as Date, "dd/MM/yyyy")
-                        : "Igual ao vencimento"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={form.watch("dataCompetencia")}
-                      onSelect={(d) => form.setValue("dataCompetencia", d)}
-                      autoFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <DatePicker
+                  value={paraIso(form.watch("dataCompetencia"))}
+                  onChange={(v) => form.setValue("dataCompetencia", v ? deIso(v) : undefined)}
+                  placeholder="Igual ao vencimento"
+                  className="h-9 text-xs"
+                />
               </div>
 
               <div className="space-y-1.5">
@@ -771,16 +690,11 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs">Nota fiscal</Label>
-                <Select value={form.watch("notaFiscal")} onValueChange={(v) => form.setValue("notaFiscal", v)}>
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Sim">Sim</SelectItem>
-                    <SelectItem value="Não">Não</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* Número da NF (antes era um Sim/Não): é o sinal mais forte de duplicata. */}
+                <Label htmlFor="nota-fiscal" className="text-xs">
+                  Nº da nota fiscal
+                </Label>
+                <Input id="nota-fiscal" {...form.register("notaFiscal")} placeholder="Ex.: 1234" className="h-9" />
               </div>
               <div className="space-y-1.5 md:col-span-2">
                 <Label className="text-xs">Observação</Label>
@@ -830,21 +744,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
         }}
       />
 
-      <DuplicateWarningDialog
-        open={showDupWarning}
-        onOpenChange={(v) => {
-          setShowDupWarning(v);
-          if (!v) setPendingData(null);
-        }}
-        duplicates={duplicates}
-        onConfirm={() => {
-          setShowDupWarning(false);
-          if (pendingData) {
-            save(pendingData);
-            setPendingData(null);
-          }
-        }}
-      />
+      {duplicata.dialog}
     </>
   );
 }
