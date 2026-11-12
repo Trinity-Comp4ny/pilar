@@ -323,13 +323,17 @@ de filtros).
   Projetos. O gatilho ficou na linha própria, que recolhida custa só ~24 px.
 - Cronograma: controles na toolbar, legenda no botão (i). Gantt em 1320×750: ~10 linhas.
 
-Falta: Lançamentos (vai junto com a limpeza dos seletores do P2), resumo inline nas outras telas
-com KPI, e a linha compacta do Gantt.
+**Resto feito** (antes e depois em
+[`antes-depois/auditoria-espaco-p2/`](antes-depois/auditoria-espaco-p2/README.md)): linha do Gantt
+de 44 px (13 linhas em 1320×750) e resumo recolhido em Leads, Disciplinas, Obras, Lançamentos e no
+detalhe do projeto (componente `KpiResumo`).
 
 ### P2: limpar duplicações por tela (1 PR por módulo)
 
-- Detalhe de projeto: título repetido, KPIs recolhíveis, seletor de visão na toolbar.
-- Lançamentos: um seletor só, "Vendo…" e "Atualizado" absorvidos pela toolbar.
+- ~~Detalhe de projeto: título repetido, KPIs recolhíveis, seletor de visão na toolbar.~~ Feito:
+  status/prioridade/prazo na linha dos indicadores, seletor na linha das abas.
+- ~~Lançamentos: um seletor só, "Vendo…" e "Atualizado" absorvidos pela toolbar.~~ Feito: o
+  seletor da barra é o único; recorte, "Atualizado" e Importar numa linha ao lado dos indicadores.
 - Visão geral: 5 KPIs numa linha.
 - Disciplinas, Mapa, Agenda, Relatórios: filtros do conteúdo para a toolbar.
 - Cliente detalhe sem `max-w-2xl`.
