@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { KPICard } from "@/components/KPICard";
 import { KpiResumo } from "@/components/KpiResumo";
 import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
-import { formatCurrency } from "@/lib/format";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
@@ -93,6 +93,8 @@ export default function Lancamentos() {
   );
 
   const [importar, setImportar] = useState(false);
+  // Resumo dos indicadores mascarado como os cards ("ocultar valores").
+  const formatCurrency = useMoneyMask();
 
   // Visões A pagar / A receber / Tudo (SPEC 150): são o filtro de tipo promovido para o
   // topo, com a posição por vencimento em chips. A última visão usada volta ao abrir,
