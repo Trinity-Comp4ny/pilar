@@ -2,6 +2,10 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Download, ExternalLink, File, Folder, FolderOpen, Link2 } from "lucide-react";
 import { toast } from "sonner";
+import { EmptyState } from "@/components/EmptyState";
+import { BusyMark } from "@/components/motion/BusyMark";
+import { PageLoader } from "@/components/motion/PageLoader";
+import { useAcaoPendente } from "@/hooks/useAcaoPendente";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
@@ -11,9 +15,10 @@ import { getSafeErrorMessage } from "@/lib/safeError";
 import { baixarArquivoPortal, ehPastaPortal, listarArquivosPortal, type ArquivoPortal } from "./portalArquivos";
 
 /**
- * Arquivos que o escritório deixou na pasta do cliente no Google Drive (SPEC 163) e os
- * links do projeto marcados para o cliente (SPEC 164). Sem nenhum dos dois, o bloco não
- * aparece.
+ * Aba Arquivos do portal: o que o escritório deixou na pasta do cliente no Google Drive
+ * (SPEC 163) e os links do projeto marcados para o cliente (SPEC 164). Baixar um arquivo
+ * pode demorar (o Drive converte documento em PDF), então o botão e uma linha de status
+ * mostram a espera até o download começar.
  */
 export function ArquivosDoProjeto({ projetoId }: { projetoId: string }) {
   const [pastaId, setPastaId] = useState<string | undefined>(undefined);
@@ -24,16 +29,53 @@ export function ArquivosDoProjeto({ projetoId }: { projetoId: string }) {
     retry: false,
   });
 
+  const { executar, pendente, algumaPendente } = useAcaoPendente();
+  const [baixando, setBaixando] = useState<string | null>(null);
+
   const links = pastaId ? [] : (consulta.data?.links ?? []);
   const temPasta = !!consulta.data?.pasta;
-  // Na raiz: só mostra o card quando há pasta ou link. Dentro de uma subpasta, sempre.
-  if (!pastaId && (consulta.isLoading || consulta.isError || (!temPasta && links.length === 0))) return null;
+
+  if (!pastaId && consulta.isLoading) return <PageLoader label="Abrindo os arquivos" />;
+  if (!pastaId && consulta.isError) {
+    return (
+      <Card>
+        <CardContent className="p-4 sm:p-5">
+          <EmptyState
+            icon={FolderOpen}
+            title="Não foi possível abrir os arquivos"
+            description={getSafeErrorMessage(consulta.error, "Tente de novo em instantes.")}
+            action={{ label: "Tentar de novo", onClick: () => void consulta.refetch(), variant: "outline" }}
+          />
+        </CardContent>
+      </Card>
+    );
+  }
+  if (!pastaId && !temPasta && links.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-4 sm:p-5">
+          <EmptyState
+            icon={FolderOpen}
+            title="Nenhum arquivo por aqui ainda"
+            description="Quando o escritório compartilhar arquivos deste projeto, eles aparecem nesta aba."
+          />
+        </CardContent>
+      </Card>
+    );
+  }
 
   const caminho = consulta.data?.caminho ?? [];
   const baixar = (a: ArquivoPortal) =>
-    baixarArquivoPortal(projetoId, a).catch((e) =>
-      toast.error("Não foi possível baixar", { description: getSafeErrorMessage(e, a.name) })
-    );
+    executar(a.id, async () => {
+      setBaixando(a.name);
+      try {
+        await baixarArquivoPortal(projetoId, a);
+      } catch (e) {
+        toast.error("Não foi possível baixar", { description: getSafeErrorMessage(e, a.name) });
+      } finally {
+        setBaixando(null);
+      }
+    });
 
   const colunas: ColumnDef<ArquivoPortal>[] = [
     {
@@ -77,12 +119,13 @@ export function ArquivosDoProjeto({ projetoId }: { projetoId: string }) {
             variant="ghost"
             size="icon"
             aria-label={`Baixar ${a.name}`}
+            loading={pendente(a.id)}
             onClick={(e) => {
               e.stopPropagation();
               void baixar(a);
             }}
           >
-            <Download className="h-4 w-4" />
+            {!pendente(a.id) && <Download className="h-4 w-4" />}
           </Button>
         ),
     },
@@ -113,6 +156,13 @@ export function ArquivosDoProjeto({ projetoId }: { projetoId: string }) {
               </li>
             ))}
           </ul>
+        )}
+
+        {algumaPendente && (
+          <p role="status" className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2 text-sm text-ink">
+            <BusyMark className="h-4 w-4" />
+            Preparando o download{baixando ? ` de ${baixando}` : ""}…
+          </p>
         )}
 
         {(pastaId || temPasta) && caminho.length > 1 && (

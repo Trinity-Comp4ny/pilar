@@ -20,7 +20,9 @@ import { Progress } from "@/components/ui/progress";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { FormDialog } from "@/components/FormDialog";
+import { BusyMark } from "@/components/motion/BusyMark";
 import { PageLoader } from "@/components/motion/PageLoader";
+import { useAcaoPendente } from "@/hooks/useAcaoPendente";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { toDataSourceResult } from "@/types/dataSource";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -45,11 +47,24 @@ interface ProjetoArquivosTabProps {
   canEdit: boolean;
 }
 
+/** preparando: pedindo o link de envio ao Drive; enviando: bytes subindo; finalizando: 100% enviado, esperando o Drive confirmar. */
+type FaseEnvio = "preparando" | "enviando" | "finalizando";
+
 interface Envio {
   id: string;
   nome: string;
   progresso: number;
+  fase: FaseEnvio;
 }
+
+const faseDoProgresso = (p: number): FaseEnvio => (p >= 1 ? "finalizando" : p > 0 ? "enviando" : "preparando");
+
+const textoDaFase = (e: Envio) =>
+  e.fase === "preparando"
+    ? "Preparando…"
+    : e.fase === "finalizando"
+      ? "Finalizando no Drive…"
+      : `${Math.round(e.progresso * 100)}%`;
 
 const linkDaPasta = (id: string) => `https://drive.google.com/drive/folders/${id}`;
 
@@ -165,6 +180,7 @@ function NavegadorDePastas({ raiz, pastas, canEdit }: { raiz: PastaDrive; pastas
   const [excluir, setExcluir] = useState<ItemDrive | null>(null);
   const [excluindo, setExcluindo] = useState(false);
   const [arrastando, setArrastando] = useState(false);
+  const { executar, pendente } = useAcaoPendente();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const pastaDeDisciplina = new Set(pastas.filter((p) => p.projeto_disciplina_id).map((p) => p.pasta_id));
@@ -188,10 +204,10 @@ function NavegadorDePastas({ raiz, pastas, canEdit }: { raiz: PastaDrive; pastas
     await Promise.all(
       lista.map(async (arquivo) => {
         const id = `${arquivo.name}-${arquivo.size}-${Math.random()}`;
-        setEnvios((e) => [...e, { id, nome: arquivo.name, progresso: 0 }]);
+        setEnvios((e) => [...e, { id, nome: arquivo.name, progresso: 0, fase: "preparando" }]);
         try {
           await enviarArquivo(destino, arquivo, (p) =>
-            setEnvios((e) => e.map((x) => (x.id === id ? { ...x, progresso: p } : x)))
+            setEnvios((e) => e.map((x) => (x.id === id ? { ...x, progresso: p, fase: faseDoProgresso(p) } : x)))
           );
           enviados++;
         } catch (e) {
@@ -237,8 +253,10 @@ function NavegadorDePastas({ raiz, pastas, canEdit }: { raiz: PastaDrive; pastas
   };
 
   const baixar = (item: ItemDrive) =>
-    baixarArquivo(item).catch((e) =>
-      toast.error("Não foi possível baixar", { description: getSafeErrorMessage(e, item.name) })
+    executar(item.id, () =>
+      baixarArquivo(item).catch((e) =>
+        toast.error("Não foi possível baixar", { description: getSafeErrorMessage(e, item.name) })
+      )
     );
 
   const colunas: ColumnDef<ItemDrive>[] = [
@@ -290,8 +308,14 @@ function NavegadorDePastas({ raiz, pastas, canEdit }: { raiz: PastaDrive; pastas
       cell: (i) => (
         <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
           {!ehPasta(i) && (
-            <Button variant="ghost" size="icon" aria-label={`Baixar ${i.name}`} onClick={() => baixar(i)}>
-              <Download className="h-4 w-4" />
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={`Baixar ${i.name}`}
+              loading={pendente(i.id)}
+              onClick={() => baixar(i)}
+            >
+              {!pendente(i.id) && <Download className="h-4 w-4" />}
             </Button>
           )}
           {i.webViewLink && (
@@ -384,9 +408,9 @@ function NavegadorDePastas({ raiz, pastas, canEdit }: { raiz: PastaDrive; pastas
                   <FolderPlus className="mr-1.5 h-3.5 w-3.5" />
                   Nova pasta
                 </Button>
-                <Button variant="brand" size="sm" onClick={() => inputRef.current?.click()}>
-                  <Upload className="mr-1.5 h-3.5 w-3.5" />
-                  Enviar arquivos
+                <Button variant="brand" size="sm" loading={envios.length > 0} onClick={() => inputRef.current?.click()}>
+                  {envios.length === 0 && <Upload className="mr-1.5 h-3.5 w-3.5" />}
+                  {envios.length > 0 ? "Enviando…" : "Enviar arquivos"}
                 </Button>
                 <input
                   ref={inputRef}
@@ -411,17 +435,25 @@ function NavegadorDePastas({ raiz, pastas, canEdit }: { raiz: PastaDrive; pastas
         )}
 
         {envios.length > 0 && (
-          <ul className="space-y-2" aria-label="Envios em andamento">
-            {envios.map((e) => (
-              <li key={e.id} className="space-y-1 text-sm">
-                <div className="flex justify-between gap-2">
-                  <span className="truncate">{e.nome}</span>
-                  <span className="text-muted-foreground">{Math.round(e.progresso * 100)}%</span>
-                </div>
-                <Progress value={e.progresso * 100} className="h-2" indicatorClassName="bg-brand" />
-              </li>
-            ))}
-          </ul>
+          <div role="status" className="space-y-3 rounded-lg border border-brand/40 bg-brand/10 p-3">
+            <p className="flex items-center gap-2 text-sm font-medium text-ink">
+              <BusyMark className="h-4 w-4" />
+              {envios.length === 1
+                ? "Enviando 1 arquivo para o Drive…"
+                : `Enviando ${envios.length} arquivos para o Drive…`}
+            </p>
+            <ul className="space-y-2" aria-label="Envios em andamento">
+              {envios.map((e) => (
+                <li key={e.id} className="space-y-1 text-sm">
+                  <div className="flex justify-between gap-2">
+                    <span className="truncate">{e.nome}</span>
+                    <span className="shrink-0 text-muted-foreground">{textoDaFase(e)}</span>
+                  </div>
+                  <Progress value={e.progresso * 100} className="h-2" indicatorClassName="bg-brand" />
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
 
         <DataTable

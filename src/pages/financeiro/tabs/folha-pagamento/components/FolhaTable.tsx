@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
+import { useAcaoPendente } from "@/hooks/useAcaoPendente";
 import { formatPercent } from "@/lib/format";
 import type { FolhaItem } from "../types";
 
@@ -22,7 +23,7 @@ interface FolhaTableProps {
   deltas?: Map<string, number>;
   onRowClick: (item: FolhaItem) => void;
   onStatusChange: (folhaId: string | undefined, newStatus: string) => void;
-  onDownloadComprovante?: (item: FolhaItem) => void;
+  onDownloadComprovante?: (item: FolhaItem) => void | Promise<void>;
 }
 
 export function FolhaTable({
@@ -35,6 +36,8 @@ export function FolhaTable({
   onDownloadComprovante,
 }: FolhaTableProps) {
   const formatCurrency = useMoneyMask();
+  // Gerar o PDF leva alguns segundos: o botão mostra a espera e não aceita o segundo clique.
+  const { executar, pendente } = useAcaoPendente();
   const isEdited = (item: FolhaItem, field: string) => item.edited_fields?.includes(field);
   const isPreview = statusFolha === "preview";
 
@@ -211,9 +214,10 @@ export function FolhaTable({
                 className="h-8 w-8"
                 title={`Baixar comprovante de ${item.p_nome}`}
                 aria-label={`Baixar comprovante de ${item.p_nome}`}
-                onClick={() => onDownloadComprovante?.(item)}
+                loading={pendente(item.p_id)}
+                onClick={() => executar(item.p_id, async () => onDownloadComprovante?.(item))}
               >
-                <FileDown className="h-4 w-4" />
+                {!pendente(item.p_id) && <FileDown className="h-4 w-4" />}
               </Button>
             ),
           },

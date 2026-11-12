@@ -323,6 +323,21 @@ describe("FolhaPagamento: mês fechado", () => {
       v_total: 5800,
     });
   });
+
+  it("enquanto o comprovante é gerado, o botão fica ocupado e o segundo clique não gera outro", async () => {
+    sb.rpcResultado("get_folha_pessoas_pii", { data: [], error: null });
+    let concluir!: () => void;
+    gerarComprovantePDF.mockImplementationOnce(() => new Promise<void>((r) => (concluir = r)));
+    const { user } = setup();
+    await linha("Ana Souza");
+    const botao = () => screen.getByRole("button", { name: "Baixar comprovante de Ana Souza" });
+    await user.click(botao());
+    await waitFor(() => expect(botao()).toBeDisabled());
+    expect(botao()).toHaveAttribute("aria-busy", "true");
+    concluir();
+    await waitFor(() => expect(botao()).toBeEnabled());
+    expect(gerarComprovantePDF).toHaveBeenCalledTimes(1);
+  });
 });
 
 // Ordem das leituras de folha_pagamento ao montar: a folha do mês, o histórico e o
