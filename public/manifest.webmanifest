@@ -1,8 +1,9 @@
 {
+  "id": "/dashboard",
   "name": "Pilar",
   "short_name": "Pilar",
   "description": "Sistema operacional para escritórios de engenharia e arquitetura",
-  "start_url": "/dashboard",
+  "start_url": "/inicio",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
@@ -45,10 +46,10 @@
       "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
     },
     {
-      "name": "Dashboard",
-      "short_name": "Dashboard",
+      "name": "Início",
+      "short_name": "Início",
       "description": "Visão geral do escritório",
-      "url": "/dashboard",
+      "url": "/inicio",
       "icons": [{ "src": "/favicon.svg", "sizes": "any" }]
     }
   ]

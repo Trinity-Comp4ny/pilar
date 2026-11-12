@@ -5,10 +5,13 @@ import { initMonitoring, monitoring } from "./lib/monitoring";
 import { initAnalytics } from "./lib/analytics";
 import { initStaleChunkReload } from "./lib/staleChunkReload";
 import { envWarnings } from "./lib/env";
+import { iniciarCapturaInstalacao } from "./lib/instalarApp";
 
 initMonitoring();
 initAnalytics();
 initStaleChunkReload();
+// Antes do React: o Android avisa cedo que o app pode ser instalado (ver instalarApp.ts).
+iniciarCapturaInstalacao();
 
 // Config ausente que degrada o produto sem impedir o boot (captcha, Sentry, analytics).
 // Reportado depois do initMonitoring para chegar no Sentry: antes, um deploy sem
