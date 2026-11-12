@@ -68,13 +68,12 @@ export function CronogramaColunaProjetos({
                       <div
                         ref={drag.innerRef}
                         {...drag.draggableProps}
-                        className={cn(
-                          "border-b",
-                          row.atrasado && "bg-danger-soft/40",
-                          snap.isDragging && "bg-card shadow-md"
-                        )}
+                        className={cn(row.atrasado && "bg-danger-soft/40", snap.isDragging && "bg-card shadow-md")}
                       >
-                        <div className="w-full h-14 flex items-stretch">
+                        {/* A borda fica na própria linha (44 px com borda), igual à linha da barra
+                            na linha do tempo; na div de fora somava 1 px por projeto e as
+                            colunas desalinhavam. */}
+                        <div className="w-full h-11 border-b flex items-stretch">
                           {podeReordenar && (
                             <div
                               {...drag.dragHandleProps}

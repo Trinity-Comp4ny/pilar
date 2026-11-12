@@ -430,7 +430,7 @@ export function CronogramaProjetosTab({
                         if (!geo) {
                           return (
                             <div key={row.projeto.id}>
-                              <div className="h-14 border-b relative" />
+                              <div className="h-11 border-b relative" />
                               {isExpanded && (
                                 <DisciplinaTimelineRows
                                   projetoId={row.projeto.id}
@@ -447,12 +447,12 @@ export function CronogramaProjetosTab({
 
                         return (
                           <div key={row.projeto.id}>
-                            <div className={cn("h-14 border-b relative", row.atrasado && "bg-danger-soft/20")}>
+                            <div className={cn("h-11 border-b relative", row.atrasado && "bg-danger-soft/20")}>
                               <Tooltip open={isThisDragging ? false : undefined}>
                                 <TooltipTrigger asChild>
                                   <div
                                     className={cn(
-                                      "absolute top-3 h-8 rounded-md flex items-center overflow-visible shadow-sm border border-black/5 transition-shadow",
+                                      "absolute top-2 h-7 rounded-md flex items-center overflow-visible shadow-sm border border-black/5 transition-shadow",
                                       row.barClass,
                                       row.atrasado && "ring-2 ring-red-300 ring-offset-1",
                                       isThisDragging && "opacity-90 ring-2 ring-white/60 shadow-md"
