@@ -24,7 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -36,7 +36,7 @@ import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { usePendenciasAgentes } from "@/hooks/useEscopos";
 import { useModuleNav } from "@/hooks/useModuleNav";
 import { MODULES, type ModuleId, type ModuleMenuItem } from "@/lib/modules";
-import { PANEL_WIDTH, RAIL_WIDTH } from "@/lib/shellLayout";
+import { PANEL_WIDTH, RAIL_WIDTH, telaEstreitaParaPainel } from "@/lib/shellLayout";
 import { ULTRA_ADMIN_BASE, ULTRA_GRUPOS, ULTRA_SECOES, isUltraAdminPath, ultraSecaoAtiva } from "@/lib/ultraAdminNav";
 import { useFeedbackNovosCount } from "@/hooks/useFeedbackNovosCount";
 import { useNovidades } from "@/hooks/useNovidades";
@@ -90,10 +90,42 @@ export function AppSidebar() {
   const { data: feedbackNovos = 0 } = useFeedbackNovosCount(isUltraAdmin);
   const { pendentes: novidades } = useNovidades();
 
-  // Trocar de módulo pelo trilho abre o painel: quem clica quer ver os itens dele.
+  // Painel flutuante: recolhido numa tela estreita, escolher um módulo abre o painel por cima
+  // do conteúdo, sem empurrar a página nem mudar a escolha salva. Fecha ao escolher um link
+  // (do painel ou do trilho), ao clicar fora ou com Esc. Escolher o módulo também navega para
+  // a 1ª tela dele, então fechar "ao mudar de rota" sumiria com o painel na hora. Em tela larga,
+  // abrir o painel segue fixando (empurra o conteúdo).
+  const [flutuante, setFlutuante] = useState(false);
+  const raizRef = useRef<HTMLDivElement>(null);
+  const painelVisivel = !collapsed || flutuante;
+
+  useEffect(() => {
+    if (!flutuante) return;
+    const fora = (e: MouseEvent) => {
+      if (raizRef.current && !raizRef.current.contains(e.target as Node)) setFlutuante(false);
+    };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setFlutuante(false);
+    document.addEventListener("mousedown", fora);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", fora);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [flutuante]);
+
+  // Trocar de módulo pelo trilho mostra o painel: quem clica quer ver os itens dele.
   const handleSelectModule = (id: ModuleId) => {
-    if (collapsed) setOpen(true);
+    if (collapsed) {
+      if (telaEstreitaParaPainel()) setFlutuante(true);
+      else setOpen(true);
+    }
     selectModule(id);
+  };
+
+  // Fixar o painel flutuante: vira painel aberto de verdade (empurra o conteúdo, fica salvo).
+  const fixarPainel = () => {
+    setFlutuante(false);
+    setOpen(true);
   };
 
   const handleLogout = async () => {
@@ -362,11 +394,12 @@ export function AppSidebar() {
         <Logo size="xs" />
         <button
           type="button"
-          onClick={toggleSidebar}
-          aria-label="Recolher menu"
+          onClick={flutuante ? fixarPainel : toggleSidebar}
+          aria-label={flutuante ? "Fixar menu aberto" : "Recolher menu"}
+          title={flutuante ? "Fixar menu aberto" : "Recolher menu"}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-soft transition-all duration-200 hover:bg-black/4 hover:text-ink active:scale-95"
         >
-          <PanelLeftClose size={18} strokeWidth={1.5} />
+          {flutuante ? <PanelLeftOpen size={18} strokeWidth={1.5} /> : <PanelLeftClose size={18} strokeWidth={1.5} />}
         </button>
       </div>
 
@@ -438,9 +471,13 @@ export function AppSidebar() {
   if (isMobile) return null;
 
   return (
-    <div className="fixed left-0 top-0 z-50 flex h-dvh border-r border-black/5 bg-white">
+    <div
+      ref={raizRef}
+      className="fixed left-0 top-0 z-50 flex h-dvh border-r border-black/5 bg-white"
+      onClick={(e) => flutuante && (e.target as HTMLElement).closest("a") && setFlutuante(false)}
+    >
       {rail}
-      {!collapsed && panel}
+      {painelVisivel && <div className={cn(flutuante && "border-r border-black/5 shadow-elegant")}>{panel}</div>}
     </div>
   );
 }

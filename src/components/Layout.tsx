@@ -2,7 +2,7 @@ import { Suspense, lazy, useEffect, useRef } from "react";
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { sidebarOffset } from "@/lib/shellLayout";
+import { sidebarOffset, telaEstreitaParaPainel } from "@/lib/shellLayout";
 import { BottomNav } from "@/components/BottomNav";
 import { useCommandPalette } from "@/hooks/useCommandPalette";
 import { useAtalhosTeclado } from "@/hooks/useAtalhosTeclado";
@@ -170,7 +170,8 @@ function LayoutContent() {
 
 export default function Layout() {
   return (
-    <SidebarProvider>
+    // Tela estreita começa com o painel recolhido; o cookie com a escolha da pessoa vence.
+    <SidebarProvider defaultOpen={!telaEstreitaParaPainel()}>
       <AvatarDiretorioProvider>
         <LayoutContent />
       </AvatarDiretorioProvider>
