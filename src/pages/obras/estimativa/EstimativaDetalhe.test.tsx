@@ -18,7 +18,8 @@ let insumos: Insumos = insumosProntos();
 let versoes: VersaoEstimativa[] = [];
 let podeEditar = true;
 
-const { navegar, atualizar, salvarVersao, excluir } = vi.hoisted(() => ({
+const { navegar, atualizar, salvarVersao, excluir, criarObra } = vi.hoisted(() => ({
+  criarObra: vi.fn(),
   navegar: vi.fn(),
   atualizar: vi.fn(),
   salvarVersao: vi.fn(),
@@ -37,6 +38,12 @@ vi.mock("./hooks", () => ({
   useAtualizarEstimativa: () => ({ mutate: atualizar, mutateAsync: atualizar, isPending: false }),
   useSalvarVersao: () => ({ mutateAsync: salvarVersao, isPending: false }),
   useExcluirEstimativa: () => ({ mutateAsync: excluir, isPending: false }),
+  useCriarObraDaEstimativa: () => ({ mutateAsync: criarObra, isPending: false }),
+}));
+vi.mock("@/hooks/useNivelConfianca", () => ({ useNivelConfianca: () => ({ isAdmin: true }) }));
+vi.mock("@/components/trial/DesbloqueioNivel", () => ({ DesbloqueioNivel: () => <p>Limite do plano</p> }));
+vi.mock("@/pages/obras/lib/clima", () => ({
+  geocodarCidade: vi.fn().mockResolvedValue([{ latitude: -22.9, longitude: -43.1 }]),
 }));
 
 vi.mock("@/components/PilarPage", () => ({
@@ -394,5 +401,66 @@ describe("EstimativaDetalhe: origem do preço (SPEC 137)", () => {
     const dialogo = await screen.findByRole("dialog");
     expect(within(dialogo).queryByRole("button", { name: "Abrir a tabela de preços" })).not.toBeInTheDocument();
     expect(within(dialogo).getByRole("button", { name: "Usar outro valor" })).toBeInTheDocument();
+  });
+
+  describe("criar obra (SPEC 136, BEZ-19)", () => {
+    beforeEach(() => {
+      criarObra.mockReset();
+      criarObra.mockResolvedValue("obra-9");
+    });
+
+    it("mostra o que será criado e cria a obra com cronograma, previsto e local da ficha", async () => {
+      estimativa = {
+        ...criarEstimativa(),
+        ficha: {
+          ...FICHA_SOBRADO,
+          cep: "24020-000",
+          endereco: "Rua da Conceição, Centro",
+          cidade: "Niterói",
+          uf: "RJ",
+        },
+      };
+      const user = userEvent.setup();
+      abrir();
+      await user.click(screen.getByRole("button", { name: "Criar obra" }));
+      const dialogo = await screen.findByRole("dialog");
+      expect(within(dialogo).getByLabelText("Nome da obra")).toHaveValue("Sobrado Alphaville");
+      expect(within(dialogo).getByText(/fases, \d+ etapas e \d+ serviços/)).toBeInTheDocument();
+      expect(within(dialogo).getByText(/Rua da Conceição, Centro · Niterói\/RJ · 24020-000/)).toBeInTheDocument();
+
+      await user.click(within(dialogo).getByRole("button", { name: "Criar obra" }));
+      await waitFor(() => expect(criarObra).toHaveBeenCalledTimes(1));
+      const [arg] = criarObra.mock.calls[0] as [
+        { estimativaId: string; obra: Record<string, unknown>; fases: { etapas: { previsto: number }[] }[] },
+      ];
+      expect(arg.estimativaId).toBe("est-1");
+      expect(arg.obra).toMatchObject({
+        nome: "Sobrado Alphaville",
+        cep: "24020-000",
+        cidade: "Niterói",
+        latitude: -22.9,
+        taxa_administracao_pct: 12,
+      });
+      const previsto = arg.fases.flatMap((f) => f.etapas).reduce((t, e) => t + Math.round(e.previsto * 100), 0);
+      expect(previsto).toBe(Math.round(resultadoDoSobrado().subtotal * 100));
+      expect(navegar).toHaveBeenCalledWith("/obras/obra-9");
+    });
+
+    it("limite de obras do plano abre o desbloqueio em vez de erro", async () => {
+      criarObra.mockRejectedValue({ message: "capacidade:obras", hint: "1", code: "P0001" });
+      const user = userEvent.setup();
+      abrir();
+      await user.click(screen.getByRole("button", { name: "Criar obra" }));
+      const dialogo = await screen.findByRole("dialog");
+      await user.click(within(dialogo).getByRole("button", { name: "Criar obra" }));
+      expect(await screen.findByText("Limite do plano")).toBeInTheDocument();
+    });
+
+    it("estimativa que já virou obra mostra Ver obra no lugar de Criar obra", () => {
+      estimativa = { ...criarEstimativa(), status: "virou_obra", obraId: "obra-9" };
+      abrir();
+      expect(screen.queryByRole("button", { name: "Criar obra" })).not.toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "Ver obra" })).toHaveAttribute("href", "/obras/obra-9");
+    });
   });
 });

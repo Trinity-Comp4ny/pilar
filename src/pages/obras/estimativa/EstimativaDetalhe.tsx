@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Calculator, CalendarClock, Pencil, Scale, Trash2, Wallet } from "lucide-react";
+import { Calculator, CalendarClock, HardHat, Pencil, Scale, Trash2, Wallet } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { FormDialog } from "@/components/FormDialog";
@@ -17,6 +17,7 @@ import { calcularEstimativa, padroesDisponiveis } from "@/lib/estimativaObra";
 import { SUBTIPOS, type Padrao, type Premissas, type ResultadoEstimativa } from "@/schemas/estimativaObra";
 import { AvisosEstimativa } from "./componentes";
 import { CenariosTab } from "./CenariosTab";
+import { CriarObraDialog } from "./CriarObraDialog";
 import { CronogramaTab } from "./CronogramaTab";
 import { CustoTab } from "./CustoTab";
 import {
@@ -66,6 +67,8 @@ export default function EstimativaDetalhe() {
   const [confirmaExcluir, setConfirmaExcluir] = useState(false);
   const [origemAberta, setOrigemAberta] = useState<"base" | LinhaDeItem | null>(null);
   const [informando, setInformando] = useState<LinhaDeItem | null>(null);
+  const [criandoObra, setCriandoObra] = useState(false);
+  const podeCriarObra = podeEditar && can("obras", "create");
 
   const e = query.data;
   usePageTitle(e?.nome ?? "Estimativa");
@@ -228,18 +231,38 @@ export default function EstimativaDetalhe() {
         <SectionTabs tabs={ABAS} value={aba} onValueChange={(v) => setAba(v as Aba)} ariaLabel="Seções da estimativa" />
       }
       actions={
-        podeEditar ? (
+        podeEditar || e.obraId ? (
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link to={`/obras/estimativas/${id}/editar`} aria-label="Editar a ficha">
-                <Pencil className="h-4 w-4 sm:mr-1.5" aria-hidden="true" />
-                <span className="max-sm:sr-only">Editar a ficha</span>
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setConfirmaExcluir(true)} aria-label="Excluir">
-              <Trash2 className="h-4 w-4 sm:mr-1.5" aria-hidden="true" />
-              <span className="max-sm:sr-only">Excluir</span>
-            </Button>
+            {e.obraId ? (
+              <Button variant="outline" size="sm" asChild>
+                <Link to={`/obras/${e.obraId}`}>
+                  <HardHat className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                  Ver obra
+                </Link>
+              </Button>
+            ) : (
+              podeCriarObra &&
+              calculo?.ok && (
+                <Button variant="brand" size="sm" onClick={() => setCriandoObra(true)}>
+                  <HardHat className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                  Criar obra
+                </Button>
+              )
+            )}
+            {podeEditar && (
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to={`/obras/estimativas/${id}/editar`} aria-label="Editar a ficha">
+                    <Pencil className="h-4 w-4 sm:mr-1.5" aria-hidden="true" />
+                    <span className="max-sm:sr-only">Editar a ficha</span>
+                  </Link>
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setConfirmaExcluir(true)} aria-label="Excluir">
+                  <Trash2 className="h-4 w-4 sm:mr-1.5" aria-hidden="true" />
+                  <span className="max-sm:sr-only">Excluir</span>
+                </Button>
+              </>
+            )}
           </div>
         ) : undefined
       }
@@ -307,6 +330,20 @@ export default function EstimativaDetalhe() {
             )}
           </>
         )
+      )}
+
+      {calculo?.ok && ficha && criandoObra && (
+        <CriarObraDialog
+          open
+          onOpenChange={setCriandoObra}
+          estimativa={{ id, nome: e.nome }}
+          ficha={ficha}
+          resultado={calculo.resultado}
+          antesDeCriar={
+            alterado ? () => atualizar.mutateAsync({ id, ficha, premissas, resultado: calculo.resultado }) : undefined
+          }
+          onCriada={(obraId) => navigate(`/obras/${obraId}`)}
+        />
       )}
 
       {calculo?.ok && (
