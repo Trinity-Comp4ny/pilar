@@ -70,7 +70,11 @@ const BUDGETS = {
   // 2026-11-11: 335 kB (era 334). O vidro líquido da barra mobile (PR #812: src/styles/vidro.css e
   // a lente da aba ativa no BottomNav) soma ~0,9 kB gzip ao boot e estourou por 0,1 kB (334,1).
   // A barra está em toda tela mobile, então não tem como ser lazy.
-  initialLoad: 335 * 1024,
+  // 2026-11-12: 336 kB (era 335). staging media 334,9 kB; os ajustes do celular (PR #828) somam
+  // ~0,4 kB gzip ao boot (335,3): o menu "⋯" de ações do PageHeader, o painel de baixo que ocupa a
+  // largura toda e o tamanho dos seletores compactos. Estão em toda tela; o quadro mobile e o menu
+  // seguem lazy.
+  initialLoad: 336 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app
