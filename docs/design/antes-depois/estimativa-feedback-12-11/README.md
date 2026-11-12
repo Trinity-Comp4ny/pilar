@@ -11,7 +11,8 @@ página (cabeçalho, abas, menu) não aparece.
 
 ## Aba Custo
 
-Os avisos viram uma linha com "Ver detalhes". "Material e mão de obra" sobe para logo abaixo do total, com o valor em
+Os avisos de contexto viram uma linha com "Informar valores" (abre o primeiro item sem valor) e "Ver detalhes".
+Número fora do normal na ficha vira aviso de atenção: aqui, 1 kWp de energia solar para 459 m². "Material e mão de obra" sobe para logo abaixo do total, com o valor em
 reais. A etapa abre e mostra material, mão de obra, equipamentos, despesas e os serviços com as datas. "De onde vem o
 preço" desce para depois dos totais.
 

@@ -218,6 +218,14 @@ export function avisosCoerencia(ficha: Ficha): string[] {
       `${formatarNumero(ficha.area)} m² em ${ficha.pavimentos} pavimentos dá menos de 30 m² por pavimento. Confira a área e os pavimentos.`
     );
   }
+  // Fotovoltaica pequena para a casa: uma residência costuma pedir 1 kWp a cada 40 a 60 m². Abaixo de 1 kWp a cada
+  // 100 m² quase sempre é a quantidade digitada errada (ex.: 1 kWp marcado só para "ter energia solar").
+  const kwp = ficha.itens.fv ?? 0;
+  if (kwp > 0 && kwp < ficha.area / 100) {
+    avisos.push(
+      `${formatarNumero(kwp)} kWp de energia solar para ${formatarNumero(ficha.area)} m² fica abaixo do usual (em geral 1 kWp a cada 40 a 60 m²). Confira a potência do sistema.`
+    );
+  }
   if (ficha.terreno > 0 && ficha.piscina > ficha.terreno * 0.4) {
     avisos.push("A piscina ocupa mais de 40% do terreno. Confira a área da piscina e do terreno.");
   }

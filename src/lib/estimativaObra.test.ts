@@ -995,3 +995,13 @@ describe("feedback de 12/11: início com dia, natureza por etapa e ar de 36.000 
     expect(r.adicionais.find((a) => a.id === "acinst")?.quantidade).toBe(2);
   });
 });
+
+describe("coerência: energia solar", () => {
+  it("avisa quando a potência fica abaixo de 1 kWp a cada 100 m²", () => {
+    const pouco = avisosCoerencia({ ...sobrado, area: 459, itens: { fv: 1 } });
+    expect(pouco.some((a) => a.includes("1 kWp de energia solar para 459 m²"))).toBe(true);
+    const ok = avisosCoerencia({ ...sobrado, area: 459, itens: { fv: 8 } });
+    expect(ok.some((a) => a.includes("kWp"))).toBe(false);
+    expect(avisosCoerencia({ ...sobrado, itens: {} }).some((a) => a.includes("kWp"))).toBe(false);
+  });
+});

@@ -283,6 +283,16 @@ describe("EstimativaDetalhe: origem do preço (SPEC 137)", () => {
     expect(screen.getByRole("button", { name: /Origem do preço de energia solar.*A definir/i })).toBeInTheDocument();
   });
 
+  it("o resumo dos avisos abre o Informar valor do primeiro item sem valor", async () => {
+    comItens();
+    const user = userEvent.setup();
+    abrir();
+    const avisos = screen.getByRole("region", { name: "Avisos da estimativa" });
+    await user.click(within(avisos).getByRole("button", { name: "Informar valores" }));
+    const dialogo = await screen.findByRole("dialog");
+    expect(within(dialogo).getAllByText(/instalação dos aparelhos de ar-condicionado/i).length).toBeGreaterThan(0);
+  });
+
   it("clicar na origem SINAPI abre o código, a UF, o mês e o regime", async () => {
     comItens();
     const user = userEvent.setup();
