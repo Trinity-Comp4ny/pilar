@@ -22,6 +22,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 vi.mock("sonner", () => ({ toast: { error: h.toastError, success: h.toastSuccess } }));
 vi.mock("@/hooks/usePageTitle", () => ({ usePageTitle: vi.fn() }));
+vi.mock("./ArquivosDoProjeto", () => ({ ArquivosDoProjeto: () => null }));
 vi.mock("@/lib/monitoring", () => ({
   reportInvokeError: h.reportInvokeError,
   monitoring: { captureException: vi.fn() },

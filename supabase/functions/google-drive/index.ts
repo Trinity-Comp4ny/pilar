@@ -39,7 +39,7 @@ import {
 } from "../_shared/google-drive.ts";
 import { acessoDaConexao, ambienteDrive, carregarConexao } from "../_shared/google-drive-conexao.ts";
 import { ACOES_DE_ESCRITA, type AcaoDrive, lerAcao } from "./entrada.ts";
-import { nomeDaPastaDoProjeto, pastasQueFaltam } from "./pastas.ts";
+import { NOME_PASTA_CLIENTE, nomeDaPastaDoProjeto, pastasQueFaltam } from "./pastas.ts";
 
 const log = createLogger("google-drive");
 
@@ -49,6 +49,7 @@ interface PastaRegistrada {
   projeto_id: string;
   projeto_disciplina_id: string | null;
   nome: string;
+  para_cliente?: boolean;
 }
 
 serve(
@@ -120,7 +121,7 @@ interface Contexto {
 async function pastaRegistrada(svc: SupabaseClient, empresaId: string, pastaId: string) {
   const { data } = await svc
     .from("drive_pastas")
-    .select("pasta_id, pasta_pai_id, projeto_id, projeto_disciplina_id, nome")
+    .select("pasta_id, pasta_pai_id, projeto_id, projeto_disciplina_id, nome, para_cliente")
     .eq("empresa_id", empresaId)
     .eq("pasta_id", pastaId)
     .maybeSingle();
@@ -204,9 +205,12 @@ async function executar(req: Request, svc: SupabaseClient, ctx: Contexto, acao: 
       if (!achado) return safeErrorResponse(404, "Arquivo não encontrado", req);
       if (achado.meta.mimeType === MIME_PASTA) {
         const propria = await pastaRegistrada(svc, ctx.empresaId, acao.arquivo_id);
-        // A pasta de uma disciplina acompanha a disciplina; não sai pela lixeira.
+        // A pasta de uma disciplina acompanha a disciplina; a do cliente alimenta o portal.
         if (propria?.projeto_disciplina_id) {
           return safeErrorResponse(409, "A pasta da disciplina não pode ir para a lixeira", req);
+        }
+        if (propria?.para_cliente) {
+          return safeErrorResponse(409, "A pasta do cliente não pode ir para a lixeira", req);
         }
         await svc.from("drive_pastas").delete().eq("empresa_id", ctx.empresaId).eq("pasta_id", acao.arquivo_id);
       }
@@ -229,7 +233,7 @@ async function pastaDoProjeto(req: Request, svc: SupabaseClient, ctx: Contexto, 
   const [{ data: registradas }, { data: disciplinas }] = await Promise.all([
     svc
       .from("drive_pastas")
-      .select("pasta_id, pasta_pai_id, projeto_id, projeto_disciplina_id, nome")
+      .select("pasta_id, pasta_pai_id, projeto_id, projeto_disciplina_id, nome, para_cliente")
       .eq("projeto_id", projetoId),
     svc.from("projeto_disciplinas").select("id, nome").eq("projeto_id", projetoId).order("ordem_etapa"),
   ]);
@@ -248,7 +252,7 @@ async function pastaDoProjeto(req: Request, svc: SupabaseClient, ctx: Contexto, 
         // Duas abas abrindo ao mesmo tempo: fica a que chegou primeiro.
         const { data: outra } = await svc
           .from("drive_pastas")
-          .select("pasta_id, pasta_pai_id, projeto_id, projeto_disciplina_id, nome")
+          .select("pasta_id, pasta_pai_id, projeto_id, projeto_disciplina_id, nome, para_cliente")
           .eq("projeto_id", projetoId)
           .is("pasta_pai_id", null)
           .maybeSingle();
@@ -266,6 +270,23 @@ async function pastaDoProjeto(req: Request, svc: SupabaseClient, ctx: Contexto, 
         pasta_id: criada.id,
         pasta_pai_id: raiz.pasta_id,
         nome: criada.name,
+        created_by: ctx.userId,
+      };
+      const { error } = await svc.from("drive_pastas").insert(linha);
+      if (error) await moverParaLixeira(ctx.token, criada.id).catch(() => undefined);
+      else pastas.push(linha);
+    }
+    // Pasta "Cliente": o que estiver nela aparece no portal do cliente.
+    if (!pastas.some((p) => p.para_cliente)) {
+      const criada = await criarPasta(ctx.token, NOME_PASTA_CLIENTE, raiz.pasta_id);
+      const linha = {
+        empresa_id: ctx.empresaId,
+        projeto_id: projetoId,
+        projeto_disciplina_id: null,
+        pasta_id: criada.id,
+        pasta_pai_id: raiz.pasta_id,
+        nome: criada.name,
+        para_cliente: true,
         created_by: ctx.userId,
       };
       const { error } = await svc.from("drive_pastas").insert(linha);

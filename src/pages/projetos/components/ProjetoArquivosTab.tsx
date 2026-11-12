@@ -38,7 +38,6 @@ import {
 } from "@/lib/googleDrive";
 import { formatBytes, formatDateTime } from "@/lib/format";
 import { getSafeErrorMessage } from "@/lib/safeError";
-import { cn } from "@/lib/utils";
 
 interface ProjetoArquivosTabProps {
   projetoId: string;
@@ -152,6 +151,12 @@ function NavegadorDePastas({ raiz, pastas, canEdit }: { raiz: PastaDrive; pastas
   const inputRef = useRef<HTMLInputElement>(null);
 
   const pastaDeDisciplina = new Set(pastas.filter((p) => p.projeto_disciplina_id).map((p) => p.pasta_id));
+  const pastaDoCliente = pastas.find((p) => p.para_cliente)?.pasta_id;
+  // Pastas fixas do projeto (disciplinas e Cliente) não vão para a lixeira.
+  const pastaFixa = (id: string) => pastaDeDisciplina.has(id) || id === pastaDoCliente;
+  const dentroDaPastaDoCliente = !!pastaDoCliente && caminho.some((p) => p.id === pastaDoCliente);
+  // dragenter/dragleave disparam a cada elemento filho: o contador evita o aviso piscar.
+  const profundidadeArraste = useRef(0);
   const recarregar = () => queryClient.invalidateQueries({ queryKey: ["google-drive-pasta", atual.id] });
 
   const abrir = (item: ItemDrive) => {
@@ -238,6 +243,11 @@ function NavegadorDePastas({ raiz, pastas, canEdit }: { raiz: PastaDrive; pastas
               disciplina
             </span>
           )}
+          {i.id === pastaDoCliente && (
+            <span className="shrink-0 rounded-full bg-brand/20 px-2 py-0.5 text-[11px] text-ink">
+              aparece no portal do cliente
+            </span>
+          )}
         </span>
       ),
     },
@@ -274,7 +284,7 @@ function NavegadorDePastas({ raiz, pastas, canEdit }: { raiz: PastaDrive; pastas
               </a>
             </Button>
           )}
-          {canEdit && !pastaDeDisciplina.has(i.id) && (
+          {canEdit && !pastaFixa(i.id) && (
             <Button variant="ghost" size="icon" aria-label={`Excluir ${i.name}`} onClick={() => setExcluir(i)}>
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -284,23 +294,46 @@ function NavegadorDePastas({ raiz, pastas, canEdit }: { raiz: PastaDrive; pastas
     },
   ];
 
+  const temArquivo = (e: DragEvent) => Array.from(e.dataTransfer.types).includes("Files");
+
   const aoSoltar = (e: DragEvent) => {
     e.preventDefault();
+    profundidadeArraste.current = 0;
     setArrastando(false);
     if (canEdit && e.dataTransfer.files.length) void enviar(e.dataTransfer.files);
   };
 
   return (
     <Card
-      onDragOver={(e) => {
-        if (!canEdit) return;
+      onDragEnter={(e) => {
+        if (!canEdit || !temArquivo(e)) return;
         e.preventDefault();
+        profundidadeArraste.current += 1;
         setArrastando(true);
       }}
-      onDragLeave={() => setArrastando(false)}
+      onDragOver={(e) => {
+        if (!canEdit || !temArquivo(e)) return;
+        e.preventDefault();
+      }}
+      onDragLeave={() => {
+        profundidadeArraste.current = Math.max(0, profundidadeArraste.current - 1);
+        if (profundidadeArraste.current === 0) setArrastando(false);
+      }}
       onDrop={aoSoltar}
-      className={cn(arrastando && "ring-2 ring-brand")}
+      className="relative"
     >
+      {arrastando && (
+        <div
+          role="status"
+          className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 rounded-[inherit] border-2 border-dashed border-brand bg-background/90"
+        >
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand">
+            <Upload className="h-5 w-5 text-ink" />
+          </span>
+          <p className="text-sm font-medium text-ink">Solte para enviar</p>
+          <p className="text-xs text-muted-foreground">Os arquivos vão para a pasta {atual.nome}</p>
+        </div>
+      )}
       <CardContent className="space-y-4 p-4 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <nav aria-label="Caminho da pasta" className="flex min-w-0 flex-wrap items-center gap-1 text-sm">
@@ -354,6 +387,12 @@ function NavegadorDePastas({ raiz, pastas, canEdit }: { raiz: PastaDrive; pastas
           </div>
         </div>
 
+        {dentroDaPastaDoCliente && (
+          <p className="rounded-lg bg-brand/10 px-3 py-2 text-sm text-ink">
+            O cliente vê esta pasta no portal e pode baixar o que estiver aqui.
+          </p>
+        )}
+
         {envios.length > 0 && (
           <ul className="space-y-2" aria-label="Envios em andamento">
             {envios.map((e) => (
@@ -362,7 +401,7 @@ function NavegadorDePastas({ raiz, pastas, canEdit }: { raiz: PastaDrive; pastas
                   <span className="truncate">{e.nome}</span>
                   <span className="text-muted-foreground">{Math.round(e.progresso * 100)}%</span>
                 </div>
-                <Progress value={e.progresso * 100} />
+                <Progress value={e.progresso * 100} className="h-2" indicatorClassName="bg-brand" />
               </li>
             ))}
           </ul>
@@ -382,11 +421,6 @@ function NavegadorDePastas({ raiz, pastas, canEdit }: { raiz: PastaDrive; pastas
           emptyMessage={canEdit ? "Pasta vazia. Arraste arquivos para cá ou use Enviar arquivos." : "Pasta vazia."}
           errorTitle="Não foi possível listar a pasta"
         />
-
-        <p className="text-xs text-muted-foreground">
-          Aparece aqui o que foi criado ou enviado pela Pilar. O que for salvo direto no Drive, fora da Pilar, aparece
-          em Abrir no Drive.
-        </p>
       </CardContent>
 
       <FormDialog

@@ -24,6 +24,8 @@ export interface PastaDrive {
   projeto_id: string;
   projeto_disciplina_id: string | null;
   nome: string;
+  /** Pasta "Cliente": o conteúdo aparece no portal do cliente. */
+  para_cliente?: boolean;
 }
 
 /** Erro com o código que a função devolve (nao_conectado, reconectar, sumiu). */

@@ -98,8 +98,16 @@ baixar (passa pela função: quem vê pela Pilar não precisa ter acesso à cont
 para a lixeira (restaurável no Drive por 30 dias). A pasta de disciplina não vai para a lixeira. Quem só vê o
 projeto navega e baixa; criar, enviar e excluir pedem edição em Projetos.
 
-**Limite conhecido do `drive.file`:** arquivo salvo direto no Drive, fora da Pilar, não aparece na lista (a tela
-avisa e oferece "Abrir no Drive"). Ver tudo exige o escopo `drive` completo, que é restrito: verificação do Google
+**Pasta Cliente e portal (2026-11-12).** Todo projeto ganha, junto das disciplinas, a pasta `Cliente`
+(`drive_pastas.para_cliente`, uma por projeto). O que estiver nela (e nas subpastas criadas pela Pilar dentro dela)
+aparece no portal do cliente, no bloco "Arquivos do projeto" da visão geral do projeto: o cliente navega e baixa,
+sem ver o Drive nem ter conta Google. A função pública `portal-arquivos` valida a sessão do portal
+(`portal_verify_session_readonly`), exige que o projeto seja do cliente da sessão e só serve o que está sob a pasta
+Cliente; documento do Google sai como PDF. Sem Drive conectado o bloco não aparece. A pasta Cliente não vai para
+a lixeira e a aba Arquivos marca que ela "aparece no portal do cliente".
+
+**Limite conhecido do `drive.file`:** arquivo salvo direto no Drive, fora da Pilar, não aparece na lista (nem no
+portal); "Abrir no Drive" mostra tudo. Ver tudo exige o escopo `drive` completo, que é restrito: verificação do Google
 e auditoria de segurança (CASA) todo ano. Rever quando houver demanda de clientes.
 
 **Para ligar em cada ambiente** (Google Cloud Console, projeto da Pilar):
@@ -115,7 +123,7 @@ e auditoria de segurança (CASA) todo ano. Rever quando houver demanda de client
    mostra que a integração não está configurada.
 5. CSP do app libera `https://www.googleapis.com` em `connect-src` (o envio sai do navegador).
 
-**Fora desta entrega:** mostrar a pasta no portal do cliente, renomear, mover entre pastas, OneDrive.
+**Fora desta entrega:** renomear, mover entre pastas, OneDrive.
 
 ## Critérios de aceite (opção B)
 
@@ -126,3 +134,5 @@ e auditoria de segurança (CASA) todo ano. Rever quando houver demanda de client
 - [x] Listar, criar pasta, enviar, baixar e excluir só em pasta ligada à empresa de quem chama.
 - [x] Conexão revogada no Google vira "conecte de novo", não erro genérico.
 - [x] Envio direto ao Google com progresso; nada do arquivo passa pela Pilar.
+- [x] Pasta `Cliente` criada com as das disciplinas, protegida da lixeira; o cliente vê e baixa no portal só o que
+      está nela, e só do próprio projeto.
