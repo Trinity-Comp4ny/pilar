@@ -26,14 +26,11 @@ const names = new Set([...src.matchAll(/icon\("([a-z0-9-]+)"/g)].map((m) => m[1]
 for (const m of src.matchAll(/\["([a-z0-9-]+)",\s*"/g)) names.add(m[1]);
 for (const m of src.matchAll(/"icone":\s*"([a-z0-9-]+)"/g)) names.add(m[1]);
 names.add("lock");
-// tira comentários HTML repetindo até não sobrar nenhum (um "<!--" pode se formar depois de um corte)
+// só o elemento <svg>: o arquivo do lucide traz um comentário de licença antes dele (nada de regex de HTML)
 const semComentarios = (txt) => {
-  let antes;
-  do {
-    antes = txt;
-    txt = txt.replace(/<!--[\s\S]*?-->/g, "");
-  } while (txt !== antes);
-  return txt.replace(/<!--|-->/g, "");
+  const ini = txt.indexOf("<svg");
+  const fim = txt.lastIndexOf("</svg>");
+  return ini >= 0 && fim > ini ? txt.slice(ini, fim + "</svg>".length) : "";
 };
 const icons = {};
 for (const n of names) {
