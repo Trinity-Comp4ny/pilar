@@ -376,7 +376,7 @@ export default function ProjetosKanban() {
       end={
         isColecao ? (
           <KanbanSortControl sort={sort} onChange={setSort} keys={sortKeys} />
-        ) : activeTab === "cronograma" || activeTab === "mapa" ? (
+        ) : activeTab === "cronograma" || activeTab === "mapa" || activeTab === "disciplinas" ? (
           // Os controles do Gantt e do mapa (Meus, status, zoom, legenda) entram aqui, na mesma linha.
           <div ref={setSlotDaAba} className="flex items-center" />
         ) : undefined
@@ -556,6 +556,7 @@ export default function ProjetosKanban() {
             catalogo={disciplinas}
             canEdit={canEdit}
             onChanged={refreshDisciplinas}
+            toolbarSlot={slotDaAba}
           />
         </div>
       ) : activeTab === "cronograma" ? (
