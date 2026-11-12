@@ -2,8 +2,8 @@ const http = require('http'), fs = require('fs'), path = require('path');
 const { chromium } = require('playwright');
 const root = __dirname; const [,, outDir, n, fps] = process.argv;
 const types = { '.js':'text/javascript', '.woff2':'font/woff2', '.svg':'image/svg+xml', '.html':'text/html' };
-const srv = http.createServer((q, r) => { const p = path.join(root, decodeURIComponent(q.url.split('?')[0])); fs.readFile(p, (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'Content-Type': types[path.extname(p)] || 'application/octet-stream' }); r.end(d); }); });
-srv.listen(8766, async () => {
+const srv = http.createServer((q, r) => { const p = path.resolve(root, '.' + path.posix.normalize('/' + decodeURIComponent(q.url.split('?')[0]))); if (!p.startsWith(root + path.sep)) { r.writeHead(403); return r.end(); } fs.readFile(p, (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'Content-Type': types[path.extname(p)] || 'application/octet-stream' }); r.end(d); }); });
+srv.listen(8766, '127.0.0.1', async () => {
   const b = await chromium.launch(); const pg = await b.newPage({ viewport: { width: 1080, height: 1920 } });
   pg.on('pageerror', e => console.log('ERR', e.message));
   await pg.goto('http://localhost:8766/overlay.html'); await pg.waitForFunction(() => window.ready);

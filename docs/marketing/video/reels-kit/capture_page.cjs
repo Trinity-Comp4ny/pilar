@@ -3,8 +3,8 @@ const http = require('http'), fs = require('fs'), path = require('path');
 const { chromium } = require('playwright');
 const root = __dirname; const [,, page, outDir, only] = process.argv;
 const types = { '.js':'text/javascript', '.css':'text/css', '.woff2':'font/woff2', '.svg':'image/svg+xml', '.html':'text/html', '.png':'image/png', '.jpg':'image/jpeg' };
-const srv = http.createServer((q, r) => { const p = path.join(root, decodeURIComponent(q.url.split('?')[0])); fs.readFile(p, (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'Content-Type': types[path.extname(p)] || 'application/octet-stream' }); r.end(d); }); });
-srv.listen(0, async () => {
+const srv = http.createServer((q, r) => { const p = path.resolve(root, '.' + path.posix.normalize('/' + decodeURIComponent(q.url.split('?')[0]))); if (!p.startsWith(root + path.sep)) { r.writeHead(403); return r.end(); } fs.readFile(p, (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'Content-Type': types[path.extname(p)] || 'application/octet-stream' }); r.end(d); }); });
+srv.listen(0, '127.0.0.1', async () => {
   const port = srv.address().port; const b = await chromium.launch();
   const vp = page.includes('w=1920') ? { width: 1920, height: 1080 } : page.includes('h=1350') ? { width: 1080, height: 1350 } : { width: 1080, height: 1920 };
   const pg = await b.newPage({ viewport: vp }); pg.on('pageerror', e => console.log('ERR', e.message)); pg.on('console', m => { if (m.type() === 'error') console.log('console', m.text()); });
