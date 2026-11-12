@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -93,7 +93,7 @@ export default function ClienteConvite() {
     }
   };
 
-  const senha = form.watch("password");
+  const senha = useWatch({ control: form.control, name: "password" });
 
   if (estado.fase === "carregando") {
     return (
