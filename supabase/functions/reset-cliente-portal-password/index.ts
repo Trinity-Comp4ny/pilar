@@ -77,9 +77,9 @@ serve(
         return safeErrorResponse(422, "Cadastre o e-mail da empresa em Configurações para enviar ao cliente", req);
 
       const { token, hash } = await gerarConviteToken();
-      const siteUrl = Deno.env.get("PUBLIC_SITE_URL");
-      if (!siteUrl) log.error("PUBLIC_SITE_URL secret not set — email button will be broken", null, {});
-      const conviteUrl = `${siteUrl ?? "https://www.pilarsoft.com.br"}/cliente/convite?token=${token}`;
+      const appUrl = Deno.env.get("APP_URL");
+      if (!appUrl) log.error("APP_URL secret not set — email button will point to production", null, {});
+      const conviteUrl = `${(appUrl ?? "https://app.pilarsoft.com.br").replace(/\/+$/, "")}/cliente/convite?token=${token}`;
 
       // Envia o e-mail ANTES de mexer na conta: se o envio falhar, nada muda pro
       // cliente (senha atual continua valendo) e o admin recebe erro claro para
