@@ -1,18 +1,10 @@
 import { Suspense, lazy, useEffect, useRef } from "react";
 import { registrarAlvoFaixas } from "@/lib/faixasDoTopo";
 
-// As faixas em si também são preguiçosas: a do Termos só aparece para admin, e a de avisos
-// traz o formatador de datas e os ícones dela.
+// A faixa em si também é preguiçosa: traz o formatador de datas e os ícones dela.
 const FaixaAvisos = lazy(() => import("@/components/FaixaAvisos").then((m) => ({ default: m.FaixaAvisos })));
-const AceiteTermosBanner = lazy(() =>
-  import("@/components/AceiteTermosBanner").then((m) => ({ default: m.AceiteTermosBanner }))
-);
-const AceiteAnaliseBanner = lazy(() =>
-  import("@/components/AceiteAnaliseBanner").then((m) => ({ default: m.AceiteAnaliseBanner }))
-);
-
 /**
- * Faixas do topo: reaceite dos Termos (só admin) e incidente/manutenção (SPEC 153/157).
+ * Faixas do topo: incidente e manutenção (SPEC 153/157). Aviso de Termos e de análise de uso moram no canto inferior direito (AvisosDoCanto).
  * Ficam num bloco fixo acima do conteúdo, e a altura dele vira `--faixas-h`, que o `<main>`
  * e o `PageLayout` usam para descer. Antes elas ficavam no fluxo do `<main>`, e o `PageLayout`
  * (camada fixa e opaca) as cobria em toda tela que o usa: o aviso de incidente não aparecia
@@ -41,13 +33,6 @@ export function FaixasDoTopo({ left }: { left: number }) {
     <div ref={ref} className="fixed right-0 top-0 z-50" style={{ left }}>
       {/* Somente leitura e "visualizando como" se encaixam aqui (lib/faixasDoTopo). */}
       <div ref={registrarAlvoFaixas} />
-      <Suspense fallback={null}>
-        <AceiteTermosBanner modo="faixa" />
-      </Suspense>
-      {/* Consentimento de análise de uso (PostHog), só para quem ainda não decidiu. */}
-      <Suspense fallback={null}>
-        <AceiteAnaliseBanner />
-      </Suspense>
       {/* Incidente e manutenção declarados no Ultra admin (SPEC 153). */}
       <Suspense fallback={null}>
         <FaixaAvisos />

@@ -39,6 +39,7 @@ const RegistroDispositivo = lazy(() =>
 );
 // Lazy: faixas do topo (Termos e avisos, SPEC 153/157) e o bloco fixo que mede a altura delas.
 // Fora do bundle de entrada: o teto do boot é apertado (scripts/check-bundle-size.mjs).
+const AvisosDoCanto = lazy(() => import("@/components/AvisosDoCanto").then((m) => ({ default: m.AvisosDoCanto })));
 const FaixasDoTopo = lazy(() => import("@/components/FaixasDoTopo").then((m) => ({ default: m.FaixasDoTopo })));
 // Lazy: NPS no Início (SPEC 156).
 const NpsCard = lazy(() => import("@/components/pesquisas/NpsCard").then((m) => ({ default: m.NpsCard })));
@@ -86,6 +87,7 @@ function LayoutContent() {
       </a>
       <Suspense fallback={null}>
         <FaixasDoTopo left={sidebarOffset(state, isMobile)} />
+        <AvisosDoCanto />
       </Suspense>
       <AppSidebar />
       <div style={{ marginLeft: sidebarOffset(state, isMobile), paddingTop: "var(--faixas-h, 0px)" }}>

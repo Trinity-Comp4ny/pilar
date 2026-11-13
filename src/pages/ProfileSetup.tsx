@@ -28,6 +28,8 @@ import { FUNCOES } from "@/lib/perfilEscritorio";
 import { EtapasProgress } from "@/components/onboarding/EtapasProgress";
 import { ROLE_LABEL } from "@/lib/permissions";
 import { analytics } from "@/lib/analytics";
+import { AnaliseOptIn } from "@/components/AnaliseOptIn";
+import { setAnalyticsConsent } from "@/lib/cookieConsentSync";
 
 /**
  * Quem está entrando (SPEC 149). O dono configura o escritório depois desta
@@ -72,6 +74,7 @@ export default function ProfileSetup() {
 
   const password = form.watch("password");
   const termsAccepted = form.watch("termsAccepted");
+  const [analiseAceita, setAnaliseAceita] = useState(false);
   const ehConvidado = entrada.tipo === "convidado";
 
   // Dono: acesso, contato, escritório e por onde começar. Convidado: só as duas primeiras.
@@ -188,6 +191,9 @@ export default function ProfileSetup() {
           source: "profile_setup",
         });
         if (termsError) throw termsError;
+        // Primeiro acesso (Google, convite, checkout): a decisão de análise sai junto com o aceite.
+        // Falha aqui não pode travar o onboarding: o cartão do app pergunta de novo.
+        await setAnalyticsConsent(user.id, analiseAceita).catch(() => undefined);
       }
 
       // 3. Só então gravar o perfil e concluir o onboarding.
@@ -430,6 +436,8 @@ export default function ProfileSetup() {
                       )}
                     />
                   )}
+
+                  {hasAcceptedTerms === false && <AnaliseOptIn checked={analiseAceita} onChange={setAnaliseAceita} />}
 
                   {hasAcceptedTerms === true && (
                     <p className="text-xs text-ink-soft">

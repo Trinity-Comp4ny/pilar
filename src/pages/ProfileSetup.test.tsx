@@ -23,6 +23,7 @@ vi.mock("@/integrations/supabase/client", async () => {
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ refreshProfile: h.refreshProfile }) }));
 vi.mock("sonner", () => ({ toast: { error: h.toastError, success: h.toastSuccess } }));
 vi.mock("@/hooks/usePageTitle", () => ({ usePageTitle: vi.fn() }));
+vi.mock("@/lib/cookieConsentSync", () => ({ setAnalyticsConsent: vi.fn(async () => undefined) }));
 
 globalThis.ResizeObserver ??= class {
   observe() {}
@@ -129,7 +130,7 @@ describe("ProfileSetup", () => {
     renderPage();
     const user = userEvent.setup();
     await waitFor(() => expect(screen.getAllByPlaceholderText("••••••••")).toHaveLength(1));
-    await user.click(await screen.findByRole("checkbox"));
+    await user.click(await screen.findByRole("checkbox", { name: /Li e concordo/ }));
     await user.click(salvar());
     expect(await screen.findByText("Nome é obrigatório")).toBeInTheDocument();
     expect(screen.getByText("Sobrenome é obrigatório")).toBeInTheDocument();
@@ -138,14 +139,14 @@ describe("ProfileSetup", () => {
 
   it("sem aceitar os termos o botão fica desabilitado", async () => {
     renderPage();
-    await screen.findByRole("checkbox");
+    await screen.findByRole("checkbox", { name: /Li e concordo/ });
     expect(salvar()).toBeDisabled();
   });
 
   it("senha fraca é recusada antes de avançar e de ir ao servidor", async () => {
     renderPage();
     const user = userEvent.setup();
-    await user.click(await screen.findByRole("checkbox"));
+    await user.click(await screen.findByRole("checkbox", { name: /Li e concordo/ }));
     await preencherAcesso(user, "abc");
     expect(await screen.findByText("Senha deve ter pelo menos 12 caracteres")).toBeInTheDocument();
     expect(screen.queryByPlaceholderText("(00) 00000-0000")).not.toBeInTheDocument();
@@ -164,7 +165,7 @@ describe("ProfileSetup", () => {
   it("fluxo completo: senha primeiro, aceite, perfil, refresh e vai ao início", async () => {
     renderPage();
     const user = userEvent.setup();
-    await user.click(await screen.findByRole("checkbox"));
+    await user.click(await screen.findByRole("checkbox", { name: /Li e concordo/ }));
     await preencherBasico(user, SENHA);
     await user.click(salvar());
     expect(await screen.findByTestId("inicio")).toBeInTheDocument();
@@ -185,7 +186,7 @@ describe("ProfileSetup", () => {
     h.auth.updateUser.mockResolvedValue({ error: { message: "Password should be at least 12" } });
     renderPage();
     const user = userEvent.setup();
-    await user.click(await screen.findByRole("checkbox"));
+    await user.click(await screen.findByRole("checkbox", { name: /Li e concordo/ }));
     await preencherBasico(user, SENHA);
     await user.click(salvar());
     await waitFor(() => expect(h.toastError).toHaveBeenCalledWith("Erro ao salvar", expect.anything()));
@@ -201,7 +202,7 @@ describe("ProfileSetup", () => {
     cenario({ updateError: { message: 'new row violates row-level security policy for table "profiles"' } });
     renderPage();
     const user = userEvent.setup();
-    await user.click(await screen.findByRole("checkbox"));
+    await user.click(await screen.findByRole("checkbox", { name: /Li e concordo/ }));
     await preencherBasico(user);
     await user.click(salvar());
     await waitFor(() =>
@@ -216,7 +217,7 @@ describe("ProfileSetup", () => {
     usuario({ provider: "google", identities: ["google"] });
     renderPage();
     const user = userEvent.setup();
-    await user.click(await screen.findByRole("checkbox"));
+    await user.click(await screen.findByRole("checkbox", { name: /Li e concordo/ }));
     await waitFor(() => expect(screen.queryByPlaceholderText("••••••••")).not.toBeInTheDocument());
     await preencherBasico(user);
     await user.click(salvar());
@@ -242,7 +243,7 @@ describe("ProfileSetup", () => {
     cenario({ termsError: { message: "duplicate key value violates unique constraint" } });
     renderPage();
     const user = userEvent.setup();
-    await user.click(await screen.findByRole("checkbox"));
+    await user.click(await screen.findByRole("checkbox", { name: /Li e concordo/ }));
     await preencherBasico(user);
     await user.click(salvar());
     await waitFor(() =>
@@ -258,7 +259,7 @@ describe("ProfileSetup", () => {
     cenario({ role: "admin", empresaOk: false });
     renderPage();
     const user = userEvent.setup();
-    await user.click(await screen.findByRole("checkbox"));
+    await user.click(await screen.findByRole("checkbox", { name: /Li e concordo/ }));
     await preencherBasico(user);
     await user.click(salvar());
     expect(await screen.findByTestId("company-setup")).toBeInTheDocument();
@@ -292,7 +293,7 @@ describe("ProfileSetup", () => {
     usuario({ provider: "google", identities: ["google"] });
     renderPage();
     const user = userEvent.setup();
-    await user.click(await screen.findByRole("checkbox"));
+    await user.click(await screen.findByRole("checkbox", { name: /Li e concordo/ }));
     await preencherAcesso(user);
     expect(await screen.findByText("Etapa 2 de 2")).toBeInTheDocument();
     expect(h.calls.some((c) => c.table === "profiles" && c.op === "update")).toBe(false);
@@ -304,7 +305,7 @@ describe("ProfileSetup", () => {
     usuario({ provider: "google", identities: ["google"] });
     renderPage();
     const user = userEvent.setup();
-    await user.click(await screen.findByRole("checkbox"));
+    await user.click(await screen.findByRole("checkbox", { name: /Li e concordo/ }));
     await preencherAcesso(user);
     await user.type(await screen.findByPlaceholderText("(00) 00000-0000"), "11999998888");
     await user.click(salvar());
@@ -316,7 +317,7 @@ describe("ProfileSetup", () => {
     usuario({ provider: "google", identities: ["google"] });
     renderPage();
     const user = userEvent.setup();
-    await user.click(await screen.findByRole("checkbox"));
+    await user.click(await screen.findByRole("checkbox", { name: /Li e concordo/ }));
     await preencherBasico(user);
     h.auth.getUser.mockResolvedValue({ data: { user: null } });
     await user.click(salvar());

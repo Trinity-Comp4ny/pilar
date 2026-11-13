@@ -91,7 +91,8 @@ test("pagamento confirmado vira conta com empresa e o dono entra pelo convite", 
   await page.getByPlaceholder("Ex: Souza").fill("Jornada");
   const senha = page.getByPlaceholder("••••••••");
   if ((await senha.count()) > 0) await senha.fill("Pilar!Jornada2026");
-  const termos = page.getByRole("checkbox");
+  // Só a caixa dos Termos: existe também a caixa opcional de análise de uso, que não pode ser marcada aqui.
+  const termos = page.getByRole("checkbox", { name: /Li e concordo/ });
   if (await termos.isVisible().catch(() => false)) await termos.check();
   await page.getByRole("button", { name: /Continuar/ }).click();
 

@@ -94,13 +94,18 @@ no corpo, para o Matheus acompanhar a evolução. Sem exceção para mudança vi
   por symlink, `vite --port 8081`) e capture ali. Nunca "reconstrua de memória".
 - **Depois** = a branch do PR, mesma rota, mesmo viewport (1440px; mobile 390px quando o
   layout mobile muda), mesmo dado seed (`dev@local.test`).
-- Guarde as imagens em `docs/design/antes-depois/<spec-ou-pr>/` (`antes-<tela>.jpg`,
-  `depois-<tela>.jpg`) com um `README.md` na mesma pasta: tabela `Antes | Depois` por
-  tela, imagens por caminho relativo (`![antes](antes-tela.jpg)`). No corpo do PR vai um
-  link comum para esse README na branch (`https://github.com/Trinity-Comp4ny/pilar/blob/<branch>/docs/design/antes-depois/<pasta>/README.md`).
-  Não embutir imagem no corpo do PR pela ferramenta do GitHub da sessão: ela troca
-  `![](url)` e `<img>` por texto em crases e a imagem aparece quebrada (11/11, PR #812).
-  Cada nova fase do mesmo PR acrescenta as suas telas ao README.
+- Guarde as imagens em `docs/design/antes-depois/<spec-ou-pr>/` (uma imagem por tela, **antes e
+  depois lado a lado na mesma imagem**, com os rótulos "ANTES" e "DEPOIS") com um `README.md` na
+  mesma pasta. **As imagens aparecem dentro do corpo do PR**, não só num link: commite as imagens,
+  pegue o SHA do commit e use `![antes e depois](https://github.com/Trinity-Comp4ny/pilar/blob/<SHA>/docs/design/antes-depois/<pasta>/<tela>.jpg?raw=true)`.
+  O SHA fixa a imagem: link por nome de branch quebra quando a branch é apagada no merge (foi o que
+  aconteceu no PR #842). Edite o corpo com `gh pr edit <n> --body-file` (o CLI preserva a imagem; a
+  ferramenta do GitHub da sessão troca `![](url)` por texto em crases e a imagem aparece quebrada,
+  11/11, PR #812). Confira com `gh pr view <n> --json body` que o `![` está no corpo. Cada nova fase
+  do mesmo PR acrescenta as suas telas.
+- **PR visual sem as imagens no corpo está incompleto**: não dar como pronto nem pedir aprovação.
+  Se o teste visual regrava as referências (label `atualizar-visual`), as imagens novas só existem
+  depois que o workflow termina: espere-o e monte os prints antes de avisar o Matheus.
 - Dado seed apenas (repo público): nada de dado real de cliente nos prints.
 - Fase sem mudança visual (só código/teste) diz isso em uma linha em vez de tabela.
 
