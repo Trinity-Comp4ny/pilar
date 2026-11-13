@@ -19,3 +19,4 @@ export { default as Estimativa } from "./Estimativa";
 export { default as PedidosLgpd } from "./PedidosLgpd";
 export { default as TimeCentral } from "./time/Central";
 export { default as TimeAgenteFicha } from "./time/AgenteFicha";
+export { default as DoresMercado } from "./DoresMercado";
