@@ -26,6 +26,7 @@ import { BusyMark } from "@/components/motion/BusyMark";
 import { EscolhaChips } from "@/components/forms/EscolhaChips";
 import { FUNCOES } from "@/lib/perfilEscritorio";
 import { EtapasProgress } from "@/components/onboarding/EtapasProgress";
+import { ROTULOS_CADASTRO_CONVIDADO, ROTULOS_CADASTRO_DONO } from "@/lib/onboarding/etapasCadastro";
 import { ROLE_LABEL } from "@/lib/permissions";
 import { analytics } from "@/lib/analytics";
 import { AnaliseOptIn } from "@/components/AnaliseOptIn";
@@ -77,10 +78,8 @@ export default function ProfileSetup() {
   const [analiseAceita, setAnaliseAceita] = useState(false);
   const ehConvidado = entrada.tipo === "convidado";
 
-  // Dono: acesso, contato, escritório e por onde começar. Convidado: só as duas primeiras.
-  const rotulos = ehConvidado
-    ? ["Seu acesso", "Seu contato"]
-    : ["Seu acesso", "Seu contato", "Seu escritório", "Por onde começar"];
+  // Dono: acesso, contato, escritório e plano. Convidado: só as duas primeiras.
+  const rotulos = ehConvidado ? ROTULOS_CADASTRO_CONVIDADO : ROTULOS_CADASTRO_DONO;
 
   // Valida só os campos do passo 1 antes de avançar para o contato.
   const avancar = async () => {
