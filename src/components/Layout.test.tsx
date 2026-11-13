@@ -26,6 +26,7 @@ vi.mock("@/components/agente/AgenteAjuda", () => ({ AgenteAjuda: () => null }));
 vi.mock("@/components/pesquisas/NpsCard", () => ({ NpsCard: () => null }));
 vi.mock("@/components/ComunicadoModal", () => ({ ComunicadoModal: () => null }));
 vi.mock("@/components/RegistroDispositivo", () => ({ RegistroDispositivo: () => null }));
+vi.mock("@/components/AceiteAnaliseBanner", () => ({ AceiteAnaliseBanner: () => null }));
 vi.mock("@/components/AceiteTermosBanner", () => ({
   AceiteTermosBanner: ({ modo }: { modo?: string }) => <div data-testid="aceite-termos" data-modo={modo} />,
 }));
