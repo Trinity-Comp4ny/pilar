@@ -46,7 +46,10 @@ const BUDGETS = {
   // faixas do topo (FaixasDoTopo) ficou lazy, o que recuperou 0,14 kB.
   // 2026-11-12: 129 kB (era 128). O convite de instalar o app (PR #834) soma ~0,5 kB gzip ao
   // chunk de entrada (128,5): captura do `beforeinstallprompt` e ManifestDoApp, que rodam no boot.
-  entry: 129 * 1024,
+  // 2026-11-13: 130 kB (era 129). Parar de reportar duas vezes cada falha do Supabase (PR #851)
+  // põe no boot o detector `jaReportadoPelaRede` e o fingerprint por consulta, ~0,2 kB gzip; a
+  // entrada de staging já estava colada no teto (129,0 kB). Corta ~70% do volume de erro do Sentry.
+  entry: 130 * 1024,
   // Tudo que o navegador baixa antes da primeira tela: a entrada mais os chunks que o
   // index.html pré-carrega (modulepreload) e o CSS. O limite só da entrada não via o
   // vendor-pdf e o vendor-charts sendo pré-carregados em toda página (~860 kB brutos),
