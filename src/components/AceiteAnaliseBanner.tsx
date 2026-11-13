@@ -59,12 +59,17 @@ export function AceiteAnaliseBanner() {
       <div className="flex items-center gap-2">
         <BarChart3 className="h-4 w-4 shrink-0" strokeWidth={2} />
         <span>
-          <span className="font-medium">Podemos medir como você usa a Pilar?</span>{" "}
-          Telas visitadas, cliques e gravação da tela com todo texto e campo escondidos. Nunca nomes, valores ou documentos.
+          <span className="font-medium">Podemos medir como você usa a Pilar?</span> Telas visitadas, cliques e gravação
+          da tela com todo texto e campo escondidos. Nunca nomes, valores ou documentos.
         </span>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="text-xs font-medium underline underline-offset-2">
+        <a
+          href="/privacidade"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs font-medium underline underline-offset-2"
+        >
           Saiba mais
         </a>
         <Button
@@ -76,7 +81,13 @@ export function AceiteAnaliseBanner() {
         >
           Recusar
         </Button>
-        <Button size="sm" variant="brand" className="h-7 px-3 text-xs" loading={decidir.isPending} onClick={() => decidir.mutate(true)}>
+        <Button
+          size="sm"
+          variant="brand"
+          className="h-7 px-3 text-xs"
+          loading={decidir.isPending}
+          onClick={() => decidir.mutate(true)}
+        >
           Aceitar
         </Button>
       </div>
