@@ -17,7 +17,8 @@ import { TurnstileWidget } from "@/components/TurnstileWidget";
 import { env } from "@/lib/env";
 import { signupSchema, signupDefaultValues, type SignupFormData } from "@/schemas";
 import { translateAuthError } from "@/lib/authErrors";
-import { analytics } from "@/lib/analytics";
+import { analytics, applyCookieConsent } from "@/lib/analytics";
+import { AnaliseOptIn } from "@/components/AnaliseOptIn";
 import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legalVersions";
 import { Logo } from "@/components/Logo";
 import { guardarOrigemCadastro, lerOrigemCadastro } from "@/lib/origemCadastro";
@@ -46,6 +47,7 @@ export default function Signup() {
 
   const password = form.watch("password");
   const termsAccepted = form.watch("termsAccepted");
+  const [analiseAceita, setAnaliseAceita] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -95,6 +97,8 @@ export default function Signup() {
       return;
     }
 
+    // Decisão de análise tomada aqui vale a partir do primeiro login (carryover em cookieConsentSync).
+    applyCookieConsent(analiseAceita);
     analytics.track("signup_completed", { method: "email" });
     setResultado("enviado");
     setIsLoading(false);
@@ -117,6 +121,8 @@ export default function Signup() {
 
   const handleGoogle = async () => {
     setIsGoogleLoading(true);
+    // O redirecionamento ao Google descarta o estado da tela: grava a decisão antes de sair.
+    applyCookieConsent(analiseAceita);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: `${window.location.origin}/auth/callback` },
@@ -415,6 +421,8 @@ export default function Signup() {
                       </FormItem>
                     )}
                   />
+
+                  <AnaliseOptIn checked={analiseAceita} onChange={setAnaliseAceita} />
 
                   <Button
                     variant="brand"
