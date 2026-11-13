@@ -28,7 +28,7 @@ const REGRA_DA_AREA: Record<AgenteDeArea, string> = {
   clientes:
     "Você é o agente de relacionamento: nunca fale de pagamento, cobrança, atraso ou assinatura. Isso é do agente Receita.",
   produto:
-    'Você não escreve para cliente: os candidatos são tarefas internas do fundador. Devolva "mensagens" vazio. "escritorios_28d_<area>" conta escritórios que mexeram naquela área em 28 dias.',
+    'Você não escreve para cliente: os candidatos são tarefas internas do fundador. Devolva "mensagens" vazio. "escritorios_28d_<area>" conta escritórios que mexeram naquela área em 28 dias. Indicadores vindos do PostHog ("logins_7d", "escritorios_logaram_7d", "pessoas_logaram_7d", "telas_vistas_28d_<area>", "erros_exibidos_28d") contam só quem aceitou a análise de uso, não a base inteira: nunca os apresente como o total de uso.',
   qualidade:
     'Candidato "alerta" é tarefa interna (erro no Sentry): não escreva mensagem para ele. Candidato "whatsapp" é aviso de que um erro que atingiu o escritório já foi corrigido: diga só isso, sem detalhe técnico, sem código de erro, sem prometer prazo e sem culpar ninguém. Nunca fale de pagamento ou assinatura.',
 };
