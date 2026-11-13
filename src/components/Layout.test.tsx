@@ -75,7 +75,7 @@ describe("Layout", () => {
     const analise = await screen.findByTestId("aceite-analise");
     expect(termos).toHaveAttribute("data-modo", "faixa");
     const canto = termos.parentElement!;
-    expect(canto).toHaveClass("fixed", "bottom-24", "right-4");
+    expect(canto).toHaveClass("fixed", "bottom-36", "right-4", "z-50");
     expect(canto).toContainElement(analise);
     expect(screen.getByRole("main")).not.toContainElement(canto);
   });
