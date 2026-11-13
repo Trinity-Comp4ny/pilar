@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 // @ts-expect-error módulo .mjs sem tipos
-import { caminhoProibido, classificarRuido, lerVeredito, sanitizarTexto, selecionar } from "./lib.mjs";
+import { caminhoDeSaidaValido, caminhoProibido, classificarRuido, lerVeredito, sanitizarTexto, selecionar, shortIdValido } from "./lib.mjs";
 
 describe("classificarRuido", () => {
   it.each([
@@ -63,5 +63,22 @@ describe("selecionar", () => {
     );
     expect(r.ruido.map((x: { issue: { shortId: string } }) => x.issue.shortId)).toEqual(["A"]);
     expect(r.candidatas.map((x: { shortId: string }) => x.shortId)).toEqual(["C", "B"]);
+  });
+});
+
+describe("validações de entrada", () => {
+  it("shortId só no formato do Sentry", () => {
+    expect(shortIdValido("PILAR-1T")).toBe(true);
+    expect(shortIdValido("PILAR-1T\nids=[]")).toBe(false);
+    expect(shortIdValido("../x")).toBe(false);
+  });
+  it("saída só dentro de .sentry-triagem/", () => {
+    expect(caminhoDeSaidaValido(".sentry-triagem/issue.md")).toBe(true);
+    expect(caminhoDeSaidaValido("/etc/passwd")).toBe(false);
+    expect(caminhoDeSaidaValido(".sentry-triagem/../x")).toBe(false);
+  });
+  it("Script error só quando é o título inteiro", () => {
+    expect(classificarRuido("Script error.")).not.toBeNull();
+    expect(classificarRuido("Erro real: Script error em checkout")).toBeNull();
   });
 });

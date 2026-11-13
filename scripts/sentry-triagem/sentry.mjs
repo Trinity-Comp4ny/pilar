@@ -12,7 +12,7 @@
 
 import { appendFileSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
-import { sanitizarTexto, selecionar } from "./lib.mjs";
+import { caminhoDeSaidaValido, sanitizarTexto, selecionar, shortIdValido } from "./lib.mjs";
 
 const HOST = process.env.SENTRY_HOST ?? "us.sentry.io";
 const ORG = process.env.SENTRY_ORG ?? "bez-company";
@@ -69,7 +69,8 @@ async function listar() {
     console.log(`ignorada ${issue.shortId}: ${motivo}`);
   }
   console.log(`candidatas: ${candidatas.map((i) => i.shortId).join(", ") || "nenhuma"}`);
-  const saida = JSON.stringify(candidatas.map((i) => i.shortId));
+  // Só códigos no formato do Sentry chegam ao $GITHUB_OUTPUT (e dali à matrix do workflow).
+  const saida = JSON.stringify(candidatas.map((i) => i.shortId).filter(shortIdValido));
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `ids=${saida}\n`);
   else console.log(saida);
 }
@@ -86,6 +87,7 @@ function frames(evento) {
 }
 
 async function detalhe(shortId, saida) {
+  if (!shortIdValido(shortId) || !caminhoDeSaidaValido(saida)) throw new Error("issue ou caminho de saída inválido");
   const id = await idDaIssue(shortId);
   const issue = await api(`organizations/${ORG}/issues/${id}/`);
   const evento = await api(`organizations/${ORG}/issues/${id}/events/latest/`);
