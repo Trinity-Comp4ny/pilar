@@ -237,7 +237,7 @@ describe("AppSidebar", () => {
     const trigger = screen.getByRole("button", { name: "Menu do usuário, há novidades na Pilar" });
     await user.click(trigger);
     expect(await screen.findByLabelText("Há novidades")).toBeInTheDocument();
-    await user.click(screen.getByRole("menuitem", { name: /Novidades/ }));
+    await user.click(screen.getByText("Novidades"));
     expect(h.navigate).toHaveBeenCalledWith("/novidades");
   });
 

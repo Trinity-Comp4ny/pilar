@@ -94,12 +94,11 @@ export default function Inicio() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 rounded-full p-0 text-muted-foreground hover:text-ink"
+              className="h-8 gap-1.5 rounded-full px-3 text-muted-foreground hover:text-ink"
               onClick={() => setEditando(true)}
-              aria-label="Personalizar"
-              title="Personalizar"
             >
-              <SlidersHorizontal size={16} aria-hidden="true" />
+              <SlidersHorizontal size={14} aria-hidden="true" />
+              Personalizar
             </Button>
           )}
         </PageHeader>
