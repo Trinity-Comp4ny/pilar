@@ -1,7 +1,7 @@
 # SPEC: Onboarding inteligente e plano de configuração por dependências
 
 **Data:** 2026-11-13
-**Status:** Aprovada (2026-11-13). Fases 1 e 2 implementadas; Fases 3 e 4 pendentes
+**Status:** Aprovada (2026-11-13). Fases 1 a 3 implementadas; Fase 4 pendente
 **Autor:** Claude, a pedido do Matheus
 **Módulo:** onboarding | início | ultra-admin
 **Complementa:** [SPEC 149](149-onboarding-empresa-usuario-e-primeira-semana.md) (não a substitui: reaproveita dados, eventos e o checklist derivado de dado real)
@@ -187,7 +187,25 @@ Clientes → Equipe (com custo) → Projeto → Lançamento vinculado.
 - **Não verificado:** a migration não foi aplicada (sem Docker nesta máquina); o `types.ts` foi escrito à
   mão no formato do gerador e o job `types-sync` do CI é quem confirma.
 
-**Pendente:** Fase 3 (grafo e bloqueio no checklist, passos de conta e cartão), Fase 4 (painel de dores).
+**Fase 3 (branch `feat/onboarding-inteligente-fase-3`, empilhada sobre a Fase 2):**
+
+- `steps.ts` ganha o grafo: `dependeDe` (obrigatório: bloqueia) e `sugereAntes` (recomendado: só ordena e vira
+  dica). Obrigatórios: proposta e obra pedem cliente; projeto pede cliente e equipe. Recomendados: lançamento
+  pede conta bancária e projeto; convidar colega pede equipe. Pré-requisito que a pessoa não vê (feature ou
+  admin) não bloqueia, e passo já feito nunca aparece bloqueado.
+- Passos novos de Gestão: **conta bancária** (obrigatório) e **cartão** (opcional), com contagem real de
+  `contas` e `cartoes`. **Equipe** deixou de ser opcional, porque o projeto depende dela.
+- `ordemTopologica()` e `prerequisitosObrigatorios()`: o plano do onboarding deixou de usar tabela própria
+  de ordem; os pré-requisitos obrigatórios entram sozinhos e a ordem vem do grafo. Ciclo lança erro (testado).
+- Checklist: passo bloqueado mostra cadeado, "Falta: cliente" e o toque leva ao pré-requisito. O tour não
+  dispara em passo bloqueado, e o "próximo passo" nunca é um bloqueado.
+- `/inicio`: o cartão de boas-vindas mostra **o plano** de quem concluiu o onboarding (passos da dor, em
+  ordem, com minutos que faltam, feito e bloqueado). Sem onboarding concluído, segue com os três pilares.
+- Decisões em aberto 1 e 4 resolvidas como recomendado: o lançamento não exige conta (só sugere), e o
+  trabalho foi fatiado em PRs por fase.
+- Fora desta fase: passo de fatura de cartão e tours dos passos novos (a aba Carteira não tem âncora de tour).
+
+**Pendente:** Fase 4 (painel de dores no ultra-admin).
 
 ## Decisões em aberto
 

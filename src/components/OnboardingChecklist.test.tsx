@@ -32,6 +32,8 @@ const SECOES = [
         descricao: "Primeiro cliente",
         rota: "/gestao/clientes",
         done: true,
+        bloqueadoPor: [],
+        sugeridoAntes: [],
       },
       {
         key: "convite",
@@ -40,6 +42,8 @@ const SECOES = [
         rota: "/gestao/equipe",
         done: false,
         opcional: true,
+        bloqueadoPor: [],
+        sugeridoAntes: [],
       },
     ],
   },
@@ -48,7 +52,17 @@ const SECOES = [
     label: "Projetos",
     done: 1,
     total: 1,
-    steps: [{ key: "proj", titulo: "Criar projeto", descricao: "d", rota: "/projetos", done: true }],
+    steps: [
+      {
+        key: "proj",
+        titulo: "Criar projeto",
+        descricao: "d",
+        rota: "/projetos",
+        done: true,
+        bloqueadoPor: [],
+        sugeridoAntes: [],
+      },
+    ],
   },
 ];
 
@@ -137,5 +151,44 @@ describe("OnboardingChecklist", () => {
     h.state = { dismissed: false, completed_at: "2026-11-01" };
     rerender(<OnboardingChecklist />);
     expect(h.setCompleted).toHaveBeenCalledTimes(1);
+  });
+
+  it("passo bloqueado mostra o que falta e leva ao pré-requisito (SPEC 165)", async () => {
+    h.progress = {
+      ...h.progress,
+      sections: [
+        {
+          pilar: "gestao",
+          label: "Gestão",
+          done: 0,
+          total: 2,
+          steps: [
+            {
+              key: "cliente",
+              titulo: "Cadastre um cliente",
+              descricao: "Quem contrata",
+              rota: "/gestao/clientes",
+              done: false,
+              bloqueadoPor: [],
+              sugeridoAntes: [],
+            },
+            {
+              key: "proposta",
+              titulo: "Crie uma proposta",
+              descricao: "Escopo e valor",
+              rota: "/gestao/propostas",
+              done: false,
+              bloqueadoPor: [{ key: "cliente", titulo: "Cadastre um cliente", rota: "/gestao/clientes" }],
+              sugeridoAntes: [],
+            },
+          ],
+        },
+      ],
+    };
+    render(<OnboardingChecklist />);
+    const proposta = screen.getByRole("button", { name: /Crie uma proposta\. Antes: Cadastre um cliente/ });
+    expect(proposta).toHaveTextContent("Falta: cliente.");
+    await userEvent.setup().click(proposta);
+    expect(h.navigate).toHaveBeenCalledWith("/gestao/clientes");
   });
 });
