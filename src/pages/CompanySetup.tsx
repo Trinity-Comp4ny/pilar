@@ -5,9 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { analytics } from "@/lib/analytics";
@@ -25,19 +24,15 @@ import {
 import { Logo } from "@/components/Logo";
 import { BusyMark } from "@/components/motion/BusyMark";
 import { EscolhaChips } from "@/components/forms/EscolhaChips";
+import { EtapasProgress } from "@/components/onboarding/EtapasProgress";
 import { cn } from "@/lib/utils";
 import { useConsultaCnpj, type ConsultaCnpj } from "@/hooks/useConsultaCnpj";
-import {
-  CANAIS,
-  DISCIPLINAS,
-  OBJETIVOS,
-  PORTES,
-  normalizarSite,
-  sugerirSite,
-  type Objetivo,
-} from "@/lib/perfilEscritorio";
+import { DISCIPLINAS, OBJETIVOS, PORTES, normalizarSite, sugerirSite, type Objetivo } from "@/lib/perfilEscritorio";
 
 type Etapa = "escritorio" | "comecar";
+
+/** Mesma lista do /profile-setup do dono: o cadastro inteiro é uma barra só (SPEC 165). */
+const ROTULOS_ETAPAS = ["Seu acesso", "Seu contato", "Seu escritório", "Por onde começar"];
 type Papel = "user" | "coordenador" | "admin";
 type ConviteRascunho = { email: string; papel: Papel };
 
@@ -65,8 +60,8 @@ function formatarCnpj(v: string): string {
 }
 
 /**
- * Configuração do escritório pelo dono (SPEC 149), etapas 2 e 3 de 3:
- * "Seu escritório" (nome, CNPJ, site, porte, disciplinas, como conheceu) e
+ * Configuração do escritório pelo dono (SPEC 149), etapas 3 e 4 de 4:
+ * "Seu escritório" (nome, CNPJ, site, porte, disciplinas) e
  * "Por onde começar" (pilar de partida e convite opcional de colegas). Tudo
  * que o ultra-admin anotou na criação já vem preenchido.
  */
@@ -74,7 +69,6 @@ export default function CompanySetup() {
   usePageTitle("Configuração da Empresa");
   const [etapa, setEtapa] = useState<Etapa>("escritorio");
   const [isLoading, setIsLoading] = useState(false);
-  const [progressValue, setProgressValue] = useState(0);
   const [objetivo, setObjetivo] = useState<Objetivo | null>(null);
   const [convites, setConvites] = useState<ConviteRascunho[]>(CONVITES_VAZIOS);
   const navigate = useNavigate();
@@ -100,7 +94,6 @@ export default function CompanySetup() {
       site: empresa.site ?? "",
       porte: empresa.porte ?? "",
       disciplinas: empresa.disciplinas ?? [],
-      comoConheceu: empresa.como_conheceu ?? "",
     });
     if (
       empresa.objetivo_inicial === "gestao" ||
@@ -111,12 +104,6 @@ export default function CompanySetup() {
     }
     setHydrated(true);
   }, [profile?.empresas, hydrated, reset]);
-
-  const targetProgress = etapa === "escritorio" ? Math.round((2 / 3) * 100) : 100;
-  useEffect(() => {
-    const t = window.setTimeout(() => setProgressValue(targetProgress), 150);
-    return () => window.clearTimeout(t);
-  }, [targetProgress]);
 
   const empresaId = profile?.empresa_id ?? null;
   const receita = useConsultaCnpj(form.watch("cnpj") ?? "");
@@ -149,7 +136,6 @@ export default function CompanySetup() {
           site: normalizarSite(values.site ?? ""),
           porte: values.porte || null,
           disciplinas: values.disciplinas.length > 0 ? values.disciplinas : null,
-          como_conheceu: values.comoConheceu || null,
           ...doEndereco,
         })
         .eq("id", empresaId);
@@ -168,7 +154,6 @@ export default function CompanySetup() {
         etapa: "escritorio",
         porte: values.porte || "sem_resposta",
         disciplinas: values.disciplinas.length,
-        como_conheceu: values.comoConheceu || "sem_resposta",
         tem_site: Boolean(values.site),
         tem_cnpj: Boolean(values.cnpj),
       });
@@ -264,48 +249,20 @@ export default function CompanySetup() {
         )}
 
         <div className="w-full max-w-[480px] space-y-8 pt-10 lg:pt-0 animate-in fade-in slide-in-from-left-8 duration-700">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Logo variant="mark" size="md" />
-                <div className="leading-tight">
-                  <div className="text-sm font-semibold text-ink">Pilar</div>
-                  <div className="text-xs text-ink-soft">
-                    Configuração inicial · Etapa {etapa === "escritorio" ? 2 : 3} de 3
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <div className="h-2.5 w-2.5 rounded-full bg-brand/70" />
-                <div
-                  className={cn(
-                    "h-2.5 w-2.5 rounded-full",
-                    etapa === "escritorio" ? "bg-brand shadow-sm shadow-brand/30" : "bg-brand/70"
-                  )}
-                />
-                <div
-                  className={cn(
-                    "h-2.5 w-2.5 rounded-full",
-                    etapa === "comecar" ? "bg-brand shadow-sm shadow-brand/30" : "bg-muted"
-                  )}
-                />
-              </div>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <Logo variant="mark" size="md" />
+              <div className="text-sm font-semibold text-ink">Pilar</div>
             </div>
-
-            <Progress
-              value={progressValue}
-              className="h-2 bg-paper-border"
-              indicatorClassName="bg-gradient-brand transition-all duration-700 ease-out"
-            />
+            <EtapasProgress etapa={etapa === "escritorio" ? 3 : 4} rotulos={ROTULOS_ETAPAS} />
           </div>
 
           {etapa === "escritorio" ? (
             <>
               <div className="space-y-2">
-                <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Seu escritório</h1>
+                <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Confirme seu escritório</h1>
                 <p className="text-sm text-ink-soft">
-                  Confira o que já sabemos e complete o resto. Só o nome é obrigatório.
+                  Já deixamos o que sabemos preenchido. Confira, ajuste o que precisar e siga. Só o nome é obrigatório.
                 </p>
               </div>
 
@@ -425,26 +382,6 @@ export default function CompanySetup() {
                             onChange={field.onChange}
                           />
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="comoConheceu"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-ink-soft font-medium">Como você conheceu a Pilar?</FormLabel>
-                        <FormControl>
-                          <EscolhaChips
-                            ariaLabel="Como você conheceu a Pilar"
-                            opcoes={CANAIS}
-                            value={field.value || null}
-                            onChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormDescription className="text-xs text-ink-soft">Opcional.</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
