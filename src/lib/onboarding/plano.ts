@@ -42,7 +42,7 @@ const MINUTOS: Record<string, number> = {
   fornecedor: 3,
 };
 
-export interface PassoDoPlano {
+interface PassoDoPlano {
   key: string;
   titulo: string;
   descricao: string;
