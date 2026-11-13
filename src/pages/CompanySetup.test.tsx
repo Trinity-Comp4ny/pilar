@@ -83,7 +83,7 @@ describe("CompanySetup · Seu escritório (etapa 2)", () => {
     expect(screen.getByDisplayValue("alfa.com.br")).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "6 a 15" })).toHaveAttribute("aria-checked", "true");
     expect(screen.getByRole("button", { name: "Estrutural" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByText("Configuração inicial · Etapa 2 de 3")).toBeInTheDocument();
+    expect(screen.getByText("Etapa 3 de 4")).toBeInTheDocument();
   });
 
   it("aplica máscara de CNPJ enquanto digita", async () => {
@@ -115,7 +115,6 @@ describe("CompanySetup · Seu escritório (etapa 2)", () => {
     await user.click(screen.getByRole("button", { name: "Usar alfaeng.com.br" }));
     await user.click(screen.getByRole("radio", { name: "1 a 5 pessoas" }));
     await user.click(screen.getByRole("button", { name: "Arquitetura" }));
-    await user.click(screen.getByRole("radio", { name: "ChatGPT ou outra IA" }));
     await irParaEtapa3(user);
     expect(updates()[0]?.payload).toEqual({
       nome: "Escritório Seed",
@@ -123,7 +122,6 @@ describe("CompanySetup · Seu escritório (etapa 2)", () => {
       site: "alfaeng.com.br",
       porte: "1-5",
       disciplinas: ["arquitetura"],
-      como_conheceu: "ia",
     });
     expect(updates()[0]?.filters).toContainEqual(["eq", "id", "e1"]);
   });

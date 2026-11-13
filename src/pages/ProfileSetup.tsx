@@ -6,11 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowLeft, ArrowRight, Eye, EyeOff, Link2, Lock, Phone, User } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, EyeOff, Lock, Phone, User } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { getSafeErrorMessage } from "@/lib/safeError";
@@ -25,7 +24,8 @@ import {
 
 import { BusyMark } from "@/components/motion/BusyMark";
 import { EscolhaChips } from "@/components/forms/EscolhaChips";
-import { FUNCOES, normalizarLinkedin } from "@/lib/perfilEscritorio";
+import { FUNCOES } from "@/lib/perfilEscritorio";
+import { EtapasProgress } from "@/components/onboarding/EtapasProgress";
 import { ROLE_LABEL } from "@/lib/permissions";
 import { analytics } from "@/lib/analytics";
 import { AnaliseOptIn } from "@/components/AnaliseOptIn";
@@ -43,9 +43,8 @@ type Entrada =
 export default function ProfileSetup() {
   usePageTitle("Configuração do Perfil");
   const [isLoading, setIsLoading] = useState(false);
-  const [progressValue, setProgressValue] = useState(0);
+  const [passo, setPasso] = useState<1 | 2>(1);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   // Quem já tem senha (OAuth do Google, ou self-serve que definiu no /cadastro)
   // não redefine senha aqui: escondemos o campo e pulamos o updateUser({ password }).
   // Só o dono que chega por magic link do checkout (com invite_token) ainda define.
@@ -78,12 +77,19 @@ export default function ProfileSetup() {
   const [analiseAceita, setAnaliseAceita] = useState(false);
   const ehConvidado = entrada.tipo === "convidado";
 
-  const targetProgress = ehConvidado ? 100 : Math.round((1 / 3) * 100);
+  // Dono: acesso, contato, escritório e por onde começar. Convidado: só as duas primeiras.
+  const rotulos = ehConvidado
+    ? ["Seu acesso", "Seu contato"]
+    : ["Seu acesso", "Seu contato", "Seu escritório", "Por onde começar"];
 
-  useEffect(() => {
-    const t = window.setTimeout(() => setProgressValue(targetProgress), 150);
-    return () => window.clearTimeout(t);
-  }, [targetProgress]);
+  // Valida só os campos do passo 1 antes de avançar para o contato.
+  const avancar = async () => {
+    const campos: ("firstName" | "lastName" | "password" | "termsAccepted")[] = ["firstName", "lastName"];
+    if (!pulaSenha) campos.push("password");
+    const ok = await form.trigger(campos);
+    if (!ok) return;
+    setPasso(2);
+  };
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -111,7 +117,7 @@ export default function ProfileSetup() {
         const { data: profile } = await supabase
           .from("profiles")
           .select(
-            "first_name, last_name, contato, email, empresa_id, funcao, linkedin_url, role, empresas(nome, onboarding_completed)"
+            "first_name, last_name, contato, email, empresa_id, funcao, role, empresas(nome, onboarding_completed)"
           )
           .eq("id", user.id)
           .single();
@@ -122,9 +128,7 @@ export default function ProfileSetup() {
             lastName: profile.last_name ?? "",
             phone: profile.contato ?? "",
             funcao: profile.funcao ?? "",
-            linkedin: profile.linkedin_url ?? "",
             password: "",
-            confirmPassword: "",
           });
           setEmpresaId(profile.empresa_id ?? null);
           const ehAdmin = profile.role === "admin" || profile.role === "ultra_admin";
@@ -193,7 +197,6 @@ export default function ProfileSetup() {
       }
 
       // 3. Só então gravar o perfil e concluir o onboarding.
-      const linkedin = normalizarLinkedin(values.linkedin ?? "");
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -201,7 +204,6 @@ export default function ProfileSetup() {
           last_name: values.lastName.trim(),
           contato: values.phone,
           funcao: values.funcao,
-          linkedin_url: linkedin.ok ? linkedin.url : null,
           onboarding_completed: true,
         })
         .eq("id", user.id);
@@ -215,7 +217,6 @@ export default function ProfileSetup() {
         etapa: "perfil",
         entrada: entrada.tipo,
         funcao: values.funcao,
-        tem_linkedin: linkedin.ok && Boolean(linkedin.url),
       });
 
       const { data: updatedProfile } = await supabase
@@ -254,39 +255,21 @@ export default function ProfileSetup() {
         </Link>
 
         <div className="w-full max-w-[460px] space-y-8 animate-in fade-in slide-in-from-left-8 duration-700">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Logo variant="mark" size="md" />
-                <div className="leading-tight">
-                  <div className="text-sm font-semibold text-ink">Pilar</div>
-                  <div className="text-xs text-ink-soft">
-                    {ehConvidado ? "Entrada no escritório" : "Configuração inicial · Etapa 1 de 3"}
-                  </div>
-                </div>
-              </div>
-
-              {!ehConvidado && (
-                <div className="flex items-center gap-2">
-                  <div className="h-2.5 w-2.5 rounded-full bg-brand shadow-sm shadow-brand/30" />
-                  <div className="h-2.5 w-2.5 rounded-full bg-muted" />
-                  <div className="h-2.5 w-2.5 rounded-full bg-muted" />
-                </div>
-              )}
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <Logo variant="mark" size="md" />
+              <div className="text-sm font-semibold text-ink">Pilar</div>
             </div>
-
-            <Progress
-              value={progressValue}
-              className="h-2 bg-paper-border"
-              indicatorClassName="bg-gradient-brand transition-all duration-700 ease-out"
-            />
+            <EtapasProgress etapa={passo} rotulos={rotulos} />
           </div>
 
           <div className="space-y-2">
             <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">
               {entrada.tipo === "convidado" && entrada.empresaNome
                 ? `Boas-vindas ao ${entrada.empresaNome}`
-                : "Seu perfil"}
+                : passo === 2
+                  ? "Como falamos com você"
+                  : "Seu acesso"}
             </h1>
             {entrada.tipo === "convidado" && (entrada.convidadoPor || entrada.papel) && (
               <p className="text-sm text-ink">
@@ -307,168 +290,209 @@ export default function ProfileSetup() {
               </p>
             )}
             <p className="text-sm text-ink-soft">
-              {pulaSenha
-                ? "Confirme seus dados para continuar."
-                : "Confirme seus dados e defina uma senha para continuar."}
+              {passo === 2
+                ? "Usamos o celular só para avisos importantes da sua conta."
+                : pulaSenha
+                  ? "Confirme seu nome para continuar."
+                  : "Seu nome e uma senha. Leva menos de um minuto."}
             </p>
           </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleUpdate)} className="space-y-5">
-              <div className="grid grid-cols-2 gap-3">
-                <FormField
-                  control={form.control}
-                  name="firstName"
-                  render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel className="text-ink-soft font-medium">
-                        Nome <span className="text-danger-mid">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <div className="relative group">
-                          <User className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
-                          <Input
-                            {...field}
-                            placeholder="Ex: Maria"
-                            className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel className="text-ink-soft font-medium">
-                        Sobrenome <span className="text-danger-mid">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Ex: Souza"
-                          className="h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+            <form
+              onSubmit={(e) => {
+                // Enter no passo 1 avança em vez de tentar salvar com o contato vazio.
+                if (passo === 1) {
+                  e.preventDefault();
+                  void avancar();
+                  return;
+                }
+                void form.handleSubmit(handleUpdate)(e);
+              }}
+              className="space-y-5"
+            >
+              {passo === 1 ? (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField
+                      control={form.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel className="text-ink-soft font-medium">
+                            Nome <span className="text-danger-mid">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <div className="relative group">
+                              <User className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                              <Input
+                                {...field}
+                                placeholder="Ex: Maria"
+                                className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem className="space-y-2">
+                          <FormLabel className="text-ink-soft font-medium">
+                            Sobrenome <span className="text-danger-mid">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Ex: Souza"
+                              className="h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="text-ink-soft font-medium">
-                      Celular (WhatsApp) <span className="text-danger-mid">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <div className="relative group">
-                        <Phone className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
-                        <Input
-                          {...field}
-                          type="tel"
-                          placeholder="(00) 00000-0000"
-                          className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/\D/g, "");
-                            const formatted = value
-                              .replace(/^(\d{2})/, "($1) ")
-                              .replace(/(\d{5})(\d)/, "$1-$2")
-                              .slice(0, 15);
-                            field.onChange(formatted);
-                          }}
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="funcao"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="text-ink-soft font-medium">
-                      Sua função no escritório <span className="text-danger-mid">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <EscolhaChips
-                        ariaLabel="Sua função no escritório"
-                        opcoes={FUNCOES}
-                        value={field.value || null}
-                        onChange={field.onChange}
+                  {!pulaSenha && (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem className="space-y-2">
+                            <FormLabel className="text-ink-soft font-medium">
+                              Nova senha <span className="text-danger-mid">*</span>
+                            </FormLabel>
+                            <FormControl>
+                              <div className="relative group">
+                                <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                                <Input
+                                  {...field}
+                                  type={showPassword ? "text" : "password"}
+                                  placeholder="••••••••"
+                                  className="pl-10 pr-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPassword((v) => !v)}
+                                  className="absolute right-3 top-3 text-ink/40 hover:text-brand transition-colors"
+                                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                                >
+                                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </button>
+                              </div>
+                            </FormControl>
+                            {password && <PasswordStrengthIndicator password={password} />}
+                            <p className="text-xs text-ink-soft">
+                              Mínimo 12 caracteres, com maiúscula, minúscula, número e símbolo.
+                            </p>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    </>
+                  )}
 
-              <FormField
-                control={form.control}
-                name="linkedin"
-                render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="text-ink-soft font-medium">
-                      LinkedIn <span className="font-normal text-ink-muted">(opcional)</span>
-                    </FormLabel>
-                    <FormControl>
-                      <div className="relative group">
-                        <Link2 className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
-                        <Input
-                          {...field}
-                          value={field.value ?? ""}
-                          placeholder="linkedin.com/in/seu-perfil"
-                          className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                        />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  {hasAcceptedTerms === false && (
+                    <FormField
+                      control={form.control}
+                      name="termsAccepted"
+                      render={({ field }) => (
+                        <FormItem className="space-y-0">
+                          <div className="flex items-start gap-2">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                className="mt-0.5 data-[state=checked]:bg-brand data-[state=checked]:border-brand data-[state=checked]:text-ink"
+                              />
+                            </FormControl>
+                            <FormLabel className="text-sm font-normal text-ink-soft leading-snug cursor-pointer select-none">
+                              Li e concordo com os{" "}
+                              <Link
+                                to="/termos"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-ink underline underline-offset-2"
+                              >
+                                Termos de Uso
+                              </Link>{" "}
+                              e a{" "}
+                              <Link
+                                to="/privacidade"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-ink underline underline-offset-2"
+                              >
+                                Política de Privacidade
+                              </Link>
+                            </FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  )}
 
-              {!pulaSenha && (
+                  {hasAcceptedTerms === false && <AnaliseOptIn checked={analiseAceita} onChange={setAnaliseAceita} />}
+
+                  {hasAcceptedTerms === true && (
+                    <p className="text-xs text-ink-soft">
+                      Você já aceitou os{" "}
+                      <Link to="/termos" target="_blank" rel="noopener noreferrer" className="text-ink underline">
+                        Termos de Uso
+                      </Link>{" "}
+                      e a{" "}
+                      <Link to="/privacidade" target="_blank" rel="noopener noreferrer" className="text-ink underline">
+                        Política de Privacidade
+                      </Link>
+                      .
+                    </p>
+                  )}
+
+                  <Button
+                    variant="brand"
+                    className="w-full h-11 font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
+                    type="button"
+                    onClick={avancar}
+                    disabled={hasAcceptedTerms === null || (hasAcceptedTerms === false && !termsAccepted)}
+                  >
+                    Continuar
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
                 <>
                   <FormField
                     control={form.control}
-                    name="password"
+                    name="phone"
                     render={({ field }) => (
                       <FormItem className="space-y-2">
                         <FormLabel className="text-ink-soft font-medium">
-                          Nova senha <span className="text-danger-mid">*</span>
+                          Celular (WhatsApp) <span className="text-danger-mid">*</span>
                         </FormLabel>
                         <FormControl>
                           <div className="relative group">
-                            <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                            <Phone className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
                             <Input
                               {...field}
-                              type={showPassword ? "text" : "password"}
-                              placeholder="••••••••"
-                              className="pl-10 pr-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                              type="tel"
+                              placeholder="(00) 00000-0000"
+                              className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                              onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, "");
+                                const formatted = value
+                                  .replace(/^(\d{2})/, "($1) ")
+                                  .replace(/(\d{5})(\d)/, "$1-$2")
+                                  .slice(0, 15);
+                                field.onChange(formatted);
+                              }}
                             />
-                            <button
-                              type="button"
-                              onClick={() => setShowPassword((v) => !v)}
-                              className="absolute right-3 top-3 text-ink/40 hover:text-brand transition-colors"
-                              aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-                            >
-                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
                           </div>
                         </FormControl>
-                        {password && <PasswordStrengthIndicator password={password} />}
-                        <p className="text-xs text-ink-soft">
-                          Mínimo 12 caracteres, com maiúscula, minúscula, número e símbolo.
-                        </p>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -476,111 +500,52 @@ export default function ProfileSetup() {
 
                   <FormField
                     control={form.control}
-                    name="confirmPassword"
+                    name="funcao"
                     render={({ field }) => (
                       <FormItem className="space-y-2">
                         <FormLabel className="text-ink-soft font-medium">
-                          Confirmar senha <span className="text-danger-mid">*</span>
+                          Sua função no escritório <span className="text-danger-mid">*</span>
                         </FormLabel>
                         <FormControl>
-                          <div className="relative group">
-                            <Lock className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
-                            <Input
-                              {...field}
-                              type={showConfirmPassword ? "text" : "password"}
-                              placeholder="••••••••"
-                              className="pl-10 pr-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowConfirmPassword((v) => !v)}
-                              className="absolute right-3 top-3 text-ink/40 hover:text-brand transition-colors"
-                              aria-label={showConfirmPassword ? "Ocultar senha" : "Mostrar senha"}
-                            >
-                              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                          </div>
+                          <EscolhaChips
+                            ariaLabel="Sua função no escritório"
+                            opcoes={FUNCOES}
+                            value={field.value || null}
+                            onChange={field.onChange}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
+                  <Button
+                    variant="brand"
+                    className="w-full h-11 font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
+                    type="submit"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <BusyMark className="mr-2 h-4 w-4" /> Salvando...
+                      </>
+                    ) : (
+                      <>
+                        Continuar
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setPasso(1)}
+                    className="flex items-center gap-2 text-sm font-medium text-ink-soft hover:text-brand transition-colors"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Voltar
+                  </button>
                 </>
               )}
-
-              {hasAcceptedTerms === false && (
-                <FormField
-                  control={form.control}
-                  name="termsAccepted"
-                  render={({ field }) => (
-                    <FormItem className="space-y-0">
-                      <div className="flex items-start gap-2">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            className="mt-0.5 data-[state=checked]:bg-brand data-[state=checked]:border-brand data-[state=checked]:text-ink"
-                          />
-                        </FormControl>
-                        <FormLabel className="text-sm font-normal text-ink-soft leading-snug cursor-pointer select-none">
-                          Li e concordo com os{" "}
-                          <Link
-                            to="/termos"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-ink underline underline-offset-2"
-                          >
-                            Termos de Uso
-                          </Link>{" "}
-                          e a{" "}
-                          <Link
-                            to="/privacidade"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-ink underline underline-offset-2"
-                          >
-                            Política de Privacidade
-                          </Link>
-                        </FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              {hasAcceptedTerms === false && <AnaliseOptIn checked={analiseAceita} onChange={setAnaliseAceita} />}
-
-              {hasAcceptedTerms === true && (
-                <p className="text-xs text-ink-soft">
-                  Você já aceitou os{" "}
-                  <Link to="/termos" target="_blank" rel="noopener noreferrer" className="text-ink underline">
-                    Termos de Uso
-                  </Link>{" "}
-                  e a{" "}
-                  <Link to="/privacidade" target="_blank" rel="noopener noreferrer" className="text-ink underline">
-                    Política de Privacidade
-                  </Link>
-                  .
-                </p>
-              )}
-
-              <Button
-                variant="brand"
-                className="w-full h-11 font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
-                type="submit"
-                disabled={isLoading || hasAcceptedTerms === null || (hasAcceptedTerms === false && !termsAccepted)}
-              >
-                {isLoading ? (
-                  <>
-                    <BusyMark className="mr-2 h-4 w-4" /> Salvando...
-                  </>
-                ) : (
-                  <>
-                    Continuar
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </>
-                )}
-              </Button>
             </form>
           </Form>
 
