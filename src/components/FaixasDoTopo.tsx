@@ -7,6 +7,9 @@ const FaixaAvisos = lazy(() => import("@/components/FaixaAvisos").then((m) => ({
 const AceiteTermosBanner = lazy(() =>
   import("@/components/AceiteTermosBanner").then((m) => ({ default: m.AceiteTermosBanner }))
 );
+const AceiteAnaliseBanner = lazy(() =>
+  import("@/components/AceiteAnaliseBanner").then((m) => ({ default: m.AceiteAnaliseBanner }))
+);
 
 /**
  * Faixas do topo: reaceite dos Termos (só admin) e incidente/manutenção (SPEC 153/157).
@@ -40,6 +43,10 @@ export function FaixasDoTopo({ left }: { left: number }) {
       <div ref={registrarAlvoFaixas} />
       <Suspense fallback={null}>
         <AceiteTermosBanner modo="faixa" />
+      </Suspense>
+      {/* Consentimento de análise de uso (PostHog), só para quem ainda não decidiu. */}
+      <Suspense fallback={null}>
+        <AceiteAnaliseBanner />
       </Suspense>
       {/* Incidente e manutenção declarados no Ultra admin (SPEC 153). */}
       <Suspense fallback={null}>
