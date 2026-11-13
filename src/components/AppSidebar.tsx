@@ -10,7 +10,6 @@ import {
   MessageSquare,
   Megaphone,
   HelpCircle,
-  Gift,
   Eye,
   EyeOff,
 } from "lucide-react";
@@ -311,21 +310,6 @@ export function AppSidebar() {
 
       {/* Busca/comandos (⌘K) + sino + conta */}
       <div className="flex shrink-0 flex-col items-center gap-2 pt-2">
-        {/* Há release publicada que a pessoa ainda não viu: atalho direto para Novidades. */}
-        {novidades.temDestaque && (
-          <NavLink
-            to="/novidades"
-            className={railItemClass(currentPath.startsWith("/novidades"))}
-            aria-label="Temos novidades na Pilar"
-            title="Temos novidades"
-          >
-            <span className={railIconClass(currentPath.startsWith("/novidades"))}>
-              <Gift size={18} strokeWidth={1.5} />
-              <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-brand ring-2 ring-white" />
-            </span>
-            Novidades
-          </NavLink>
-        )}
         <CommandPaletteHint />
         <NotificationInbox />
         <DropdownMenu open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
