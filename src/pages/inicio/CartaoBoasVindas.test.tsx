@@ -120,6 +120,8 @@ describe("CartaoBoasVindas", () => {
     it("troca os três pilares pelos passos da dor, na ordem de dependência", () => {
       renderCartao();
       expect(screen.getByText(/Seu plano:/)).toBeInTheDocument();
+      expect(screen.getByText(/Montamos seu plano com o que você nos contou/)).toBeInTheDocument();
+      expect(screen.queryByText(/Escolha um pilar/)).not.toBeInTheDocument();
       const itens = screen.getAllByRole("listitem").map((li) => li.textContent ?? "");
       expect(itens[0]).toContain("Cadastre um cliente");
       expect(itens.findIndex((t) => t.includes("Cadastre sua equipe"))).toBeLessThan(

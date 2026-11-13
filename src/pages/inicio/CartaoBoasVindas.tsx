@@ -83,8 +83,9 @@ export function CartaoBoasVindas() {
           {nome ? `Boas-vindas à Pilar, ${nome}.` : "Boas-vindas à Pilar."}
         </h2>
         <p className="text-sm text-ink-soft">
-          {empresa ? `O ${empresa} tem` : "Seu escritório tem"} gestão, projetos e obras no mesmo lugar. Escolha um
-          pilar para dar o primeiro passo; o checklist no canto da tela acompanha o resto.
+          {temPlano
+            ? "Montamos seu plano com o que você nos contou. Siga a ordem: cada passo vem depois do que ele precisa para funcionar."
+            : `${empresa ? `O ${empresa} tem` : "Seu escritório tem"} gestão, projetos e obras no mesmo lugar. Escolha um pilar para dar o primeiro passo; o checklist no canto da tela acompanha o resto.`}
         </p>
       </div>
 
