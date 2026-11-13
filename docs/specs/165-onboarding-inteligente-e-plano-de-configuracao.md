@@ -1,7 +1,7 @@
 # SPEC: Onboarding inteligente e plano de configuração por dependências
 
 **Data:** 2026-11-13
-**Status:** Aprovada (2026-11-13). Fases 1 a 3 implementadas; Fase 4 pendente
+**Status:** Aprovada (2026-11-13). Fases 1 a 4 implementadas (Fase 4 aguardando dados reais)
 **Autor:** Claude, a pedido do Matheus
 **Módulo:** onboarding | início | ultra-admin
 **Complementa:** [SPEC 149](149-onboarding-empresa-usuario-e-primeira-semana.md) (não a substitui: reaproveita dados, eventos e o checklist derivado de dado real)
@@ -205,7 +205,22 @@ Clientes → Equipe (com custo) → Projeto → Lançamento vinculado.
   trabalho foi fatiado em PRs por fase.
 - Fora desta fase: passo de fatura de cartão e tours dos passos novos (a aba Carteira não tem âncora de tour).
 
-**Pendente:** Fase 4 (painel de dores no ultra-admin).
+**Fase 4 (branch `feat/onboarding-inteligente-fase-4`, empilhada sobre a Fase 3):**
+
+- Ultra-admin › Produto › **Dores do mercado** (`/ultra-admin/dores`). Lê `onboarding_respostas` (RLS já
+  liberada ao ultra-admin na Fase 2) com o escritório ao lado (nome, porte, disciplinas). Sem migration.
+- Mostra: iniciaram, concluíram, marcaram dor e escreveram texto; **ranking das dores** (menções, quantas
+  vezes é a principal, % da base, que só conta quem marcou alguma dor); **a dor muda com o porte e com a
+  disciplina?** (top 3 de cada grupo); **como resolvem hoje** (resposta do aprofundamento por dor); o que
+  usam hoje; projetos ao mesmo tempo; e **o texto livre**, mais novo primeiro, com link para a empresa.
+- Filtro por porte e **exportação em CSV** do recorte. O texto livre é de terceiros: células que começam com
+  `=`, `+`, `-` ou `@` ganham apóstrofo (CSV injection), e a tela mostra tudo como texto.
+- Lógica de agregação pura em `doresLib.ts`, com testes (ranking, cruzamentos, filtro, CSV).
+- Limites: 5.000 linhas por consulta, o mesmo teto da Satisfação. Sem período nem comparação entre meses:
+  entram quando houver volume. Dado real ainda não existe, então a tela abre com o estado vazio.
+
+**Pendente:** nada do desenho original. Próximos passos naturais, quando houver dados: período no
+painel, cruzar dor com `empresa_ativada` (SPEC 149) e levar a dor principal à régua de ativação (SPEC 130).
 
 ## Decisões em aberto
 
