@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
 import { APP_URL } from "../config";
 import { requestCookieConsentReview } from "../cookieConsent";
-import { COMPARATIVOS } from "../lib/comparativos";
-import { MODULOS } from "../lib/modules";
+import { COMPARATIVOS_NAV, MODULOS_NAV } from "../lib/navegacao";
 import { Logo } from "./Logo";
 import { DEMO_URL } from "../lib/contato";
 import { trackCta } from "../analytics";
@@ -28,7 +27,7 @@ const COLUNAS = [
       { label: "Ferramentas", to: "/ferramentas" },
       { label: "Para engenharia", to: "/engenharia" },
       { label: "Para arquitetura", to: "/arquitetura" },
-      ...COMPARATIVOS.map((c) => ({ label: `Pilar vs ${c.adversario}`, to: `/vs/${c.slug}` })),
+      ...COMPARATIVOS_NAV.map((c) => ({ label: `Pilar vs ${c.adversario}`, to: `/vs/${c.slug}` })),
     ],
   },
   {
@@ -59,7 +58,7 @@ export function LandingFooter() {
           <div>
             <h3 className="text-[10.5px] uppercase tracking-[0.14em] text-ink/70 mb-4">Produto</h3>
             <ul className="flex flex-col gap-3">
-              {MODULOS.map((mo) => (
+              {MODULOS_NAV.map((mo) => (
                 <li key={mo.slug}>
                   <Link to={`/${mo.slug}`} className="text-[13.5px] text-ink/75 hover:text-ink transition-colors">
                     {mo.nome}
