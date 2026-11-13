@@ -6,6 +6,7 @@ import { FormDialog } from "@/components/FormDialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { mensagemDaFunction } from "@/lib/edgeError";
 
 interface Props {
   open: boolean;
@@ -21,7 +22,7 @@ function useInviteCampo() {
       const { data, error } = await supabase.functions.invoke("invite-campo", {
         body: { obra_id: input.obraId, nome: input.nome, email: input.email || undefined },
       });
-      if (error) throw error;
+      if (error) throw new Error(await mensagemDaFunction(error, "Falha ao criar o acesso"));
       const res = data as {
         success?: boolean;
         modo?: "convite" | "senha";
