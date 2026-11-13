@@ -118,6 +118,22 @@ const PasswordReset = lazy(() => import("./pages/PasswordReset"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const SemAcesso = lazy(() => import("./pages/SemAcesso"));
 
+/**
+ * Falha do react-query que a camada de rede (supabaseFetch) ainda não reportou: sem duplicar, e
+ * com fingerprint por origem para não virar tudo uma issue só, "Erro inesperado".
+ */
+function reportarFalha(origem: "query" | "mutation", err: unknown, extra: Record<string, unknown>, chave = "") {
+  if (jaReportadoPelaRede(err)) return;
+  // Supabase retorna PostgrestError (objeto plano, não instanceof Error);
+  // sem isso o Sentry recebia "[object Object]" e perdia a causa real.
+  const raw = getRawErrorMessage(err) || "Erro inesperado";
+  monitoring.captureException(
+    err instanceof Error ? err : new Error(raw),
+    { source: `react-query.${origem}`, ...extra },
+    { fingerprint: ["react-query", origem, chave, raw] }
+  );
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -129,17 +145,7 @@ const queryClient = new QueryClient({
     mutations: {
       onError: (error, variables) => {
         toast.error(getSafeErrorMessage(error));
-        // Falha do Supabase a camada de rede já reportou (supabaseFetch): reportar de novo duplica.
-        if (jaReportadoPelaRede(error)) return;
-        // Supabase retorna PostgrestError (objeto plano, não instanceof Error);
-        // sem isso o Sentry recebia "[object Object]" e perdia a causa real.
-        const raw = getRawErrorMessage(error) || "Erro inesperado";
-        monitoring.captureException(
-          error instanceof Error ? error : new Error(raw),
-          { source: "react-query.mutation", variables },
-          // Sem isso tudo sem mensagem caía numa issue só, "Erro inesperado".
-          { fingerprint: ["react-query", "mutation", raw] }
-        );
+        reportarFalha("mutation", error, { variables });
       },
     },
   },
@@ -147,16 +153,8 @@ const queryClient = new QueryClient({
 
 queryClient.getQueryCache().subscribe((event) => {
   if (event.type === "updated" && event.action.type === "error") {
-    const err = event.action.error;
-    // Falha do Supabase a camada de rede já reportou (supabaseFetch): reportar de novo duplica.
-    if (jaReportadoPelaRede(err)) return;
-    const raw = getRawErrorMessage(err) || "Erro inesperado";
-    monitoring.captureException(
-      err instanceof Error ? err : new Error(raw),
-      { source: "react-query.query", queryKey: event.query.queryKey },
-      // A chave da consulta separa as telas; sem ela tudo sem mensagem virava "Erro inesperado".
-      { fingerprint: ["react-query", "query", String(event.query.queryKey[0] ?? "?"), raw] }
-    );
+    const { queryKey } = event.query;
+    reportarFalha("query", event.action.error, { queryKey }, String(queryKey[0]));
   }
 });
 
