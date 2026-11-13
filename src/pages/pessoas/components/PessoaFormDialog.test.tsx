@@ -124,7 +124,7 @@ describe("Equipe › PessoaFormDialog", () => {
     h.convidar.mockResolvedValue({ contaExistente: false });
     const { user, onSaved } = renderDialog(null, true);
     await preencherMinimo(user);
-    expect(screen.getByRole("checkbox", { name: "Dar acesso ao Pilar" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Dar acesso à Pilar" })).toBeChecked();
     await user.click(screen.getByRole("button", { name: "Salvar" }));
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
     expect(h.convidar).toHaveBeenCalledWith(
@@ -136,7 +136,7 @@ describe("Equipe › PessoaFormDialog", () => {
     h.resolve.mockReturnValue({ data: { id: "p-nova" }, error: null });
     const { user, onSaved } = renderDialog(null, true);
     await preencherMinimo(user);
-    await user.click(screen.getByRole("checkbox", { name: "Dar acesso ao Pilar" }));
+    await user.click(screen.getByRole("checkbox", { name: "Dar acesso à Pilar" }));
     await user.click(screen.getByRole("button", { name: "Salvar" }));
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
     expect(h.convidar).not.toHaveBeenCalled();

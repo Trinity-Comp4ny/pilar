@@ -1,0 +1,4 @@
+# a voz gerada é refeita por narrate.py; só a gravação manual e os tempos ficam versionados
+*/l[0-9]*.wav
+*/voice.wav
+cache/

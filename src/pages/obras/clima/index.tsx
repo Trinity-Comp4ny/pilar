@@ -282,7 +282,9 @@ export default function ObraClimaPage() {
         />
       }
     >
-      <div className="mx-auto w-full max-w-5xl space-y-4">
+      {/* Largura toda, alinhada ao título: a coluna central de 1024 px deixava ~230 px vazios de
+          cada lado num notebook e cortava a previsão por hora (auditoria de espaço, 2026-11). */}
+      <div className="w-full space-y-4">
         {/* Abas de lugares (obras + cidades salvas) + minha localização */}
         <div className="flex items-center gap-1 overflow-x-auto overflow-y-hidden border-b border-black/10">
           <button

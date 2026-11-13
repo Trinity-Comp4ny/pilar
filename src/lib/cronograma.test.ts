@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { barPosition, computeDraggedDates, generateColumns, parseDate, toIso, todayPosition } from "./cronograma";
+import {
+  barPosition,
+  computeDraggedDates,
+  generateColumns,
+  parseDate,
+  passoDosRotulos,
+  rotuloCurtoDoMes,
+  toIso,
+  todayPosition,
+} from "./cronograma";
 
 const jan1 = parseDate("2026-01-01")!;
 const jun30 = parseDate("2026-06-30")!;
@@ -80,5 +89,18 @@ describe("todayPosition", () => {
 
   it("hoje fora do intervalo devolve -1", () => {
     expect(todayPosition(jan1, jun30, parseDate("2027-01-01")!)).toBe(-1);
+  });
+});
+
+describe("Gantt no celular", () => {
+  it("rótulo curto do mês", () => {
+    expect(rotuloCurtoDoMes(new Date(2026, 11, 1))).toBe("dez/26");
+    expect(rotuloCurtoDoMes(new Date(2027, 0, 15))).toBe("jan/27");
+  });
+
+  it("passo dos rótulos conforme a largura da coluna", () => {
+    expect(passoDosRotulos(72)).toBe(1);
+    expect(passoDosRotulos(11)).toBe(4);
+    expect(passoDosRotulos(0)).toBe(1);
   });
 });

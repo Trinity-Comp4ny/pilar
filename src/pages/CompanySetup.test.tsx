@@ -51,7 +51,7 @@ function renderPage() {
 
 const cnpj = () => screen.getByPlaceholderText("00.000.000/0000-00");
 const continuar = () => screen.getByRole("button", { name: /Continuar|Salvando/ });
-const entrar = () => screen.getByRole("button", { name: /Entrar no Pilar|Convidar e entrar|Entrando/ });
+const entrar = () => screen.getByRole("button", { name: /Entrar na Pilar|Convidar e entrar|Entrando/ });
 const updates = () => h.calls.filter((c) => c.table === "empresas" && c.op === "update");
 
 async function irParaEtapa3(user: ReturnType<typeof userEvent.setup>) {

@@ -86,16 +86,16 @@ Planilha funciona enquanto o volume é pequeno e uma pessoa só cuida dela. Ela 
 
 O critério prático: se você já perdeu um cliente porque esqueceu de retornar, ou não sabe dizer por que perdeu os últimos cinco, a planilha não está dando conta.
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O [módulo Gestão](/gestao) do Pilar cobre o comercial de quem vende projeto, ligado ao resto do escritório.
+O [módulo Gestão](/gestao) da Pilar cobre o comercial de quem vende projeto, ligado ao resto do escritório.
 
 - **Funil de leads em kanban.** Seis colunas, arrastar entre elas, indicadores de conversão e motivo de perda obrigatório.
 - **Cliente preenchido pelo CNPJ.** Digite o CNPJ e o cadastro vem pronto.
 - **Proposta por disciplina, no seu template.** O documento sai em DOCX com o modelo do escritório e vai por e-mail sem sair do sistema.
 - **Aprovou, virou projeto.** A proposta aceita vira projeto com as disciplinas, e as parcelas nascem no financeiro no mesmo clique.
 
-Se o seu escritório é de arquitetura, veja também como o Pilar funciona [para arquitetura](/arquitetura). Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos).
+Se o seu escritório é de arquitetura, veja também como a Pilar funciona [para arquitetura](/arquitetura). Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos).
 
 ## Perguntas frequentes
 

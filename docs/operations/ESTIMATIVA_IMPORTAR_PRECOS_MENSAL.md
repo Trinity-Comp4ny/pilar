@@ -61,6 +61,12 @@ O resumo do job lista as UFs sem fonte automática; elas seguem na importação 
 Sem o CUB do mês anterior a partir do dia 10, ou sem o SINAPI a partir do dia 15, abre "Preço de referência
 atrasado: CUB/SINAPI do mês (alvo)". Fecha sozinha quando o mês chega.
 
+Essa conta olha o mês mais novo do conjunto, então a conferência também mostra uma tabela "CUB por UF" no resumo
+(último mês, meses atrás do esperado, origem automática ou manual). A mesma issue abre quando uma UF que vinha
+pela coleta automática fica mais de 3 meses atrás: o Sinduscon parou de publicar ou mudou o site. Resolve importando
+o mês à mão (a origem passa a manual e o alerta some) ou corrigindo a fonte em `CUB_PORTAIS`. UF que só tem
+importação manual aparece na tabela mas não alerta.
+
 ### Testar e rodar à mão
 
 Actions > Preços de referência > Run workflow: por padrão só lê e mostra o resumo, sem gravar. "mês" força um mês

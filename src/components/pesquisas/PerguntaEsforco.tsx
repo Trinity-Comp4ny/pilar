@@ -11,7 +11,7 @@ export function PerguntaEsforco({ id, fluxo, rota }: { id: string | number; flux
   };
   return (
     <div className="flex w-[340px] max-w-[calc(100vw-2rem)] items-center gap-3 rounded-lg border border-black/10 bg-surface-card p-3 text-sm text-ink shadow-elegant">
-      <span className="flex-1">Foi fácil fazer isso no Pilar?</span>
+      <span className="flex-1">Foi fácil fazer isso na Pilar?</span>
       <button
         type="button"
         aria-label="Foi fácil"

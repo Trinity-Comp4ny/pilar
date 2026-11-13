@@ -92,9 +92,9 @@ Em [obra por administração](/blog/obra-por-administracao-prestacao-de-contas),
 - Mostrar o percentual geral sem as frentes.
 - Medir no escritório, a partir de mensagem, sem ir à frente.
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O Pilar organiza o avanço físico da obra a partir do canteiro. Ele não faz a medição para pagamento de empreiteiro; essa conta continua no seu controle de contratos.
+A Pilar organiza o avanço físico da obra a partir do canteiro. Ele não faz a medição para pagamento de empreiteiro; essa conta continua no seu controle de contratos.
 
 - No [módulo Obra](/obra), o cronograma tem dois níveis: frentes de serviço com passos dentro.
 - No [Pilar Campo](/campo), o encarregado marca cada tarefa como avançou, concluiu ou parou, com foto e quantidade executada no mesmo registro do dia.

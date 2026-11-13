@@ -12,9 +12,17 @@ vi.mock("@/components/ui/sidebar", async (orig) => ({
   useSidebar: () => ({ state: "expanded", isMobile: false, open: true, setOpenMobile: vi.fn() }),
 }));
 vi.mock("@/components/ModuleChipNav", () => ({ ModuleChipNav: () => null }));
-const perms = vi.hoisted(() => ({ financeiro: true }));
+const perms = vi.hoisted(() => ({ financeiro: true, isAdmin: true, role: "admin" }));
 vi.mock("@/hooks/usePermissions", () => ({
-  usePermissions: () => ({ can: (f: string) => (f === "financeiro" ? perms.financeiro : true) }),
+  usePermissions: () => ({
+    can: (f: string) => (f === "financeiro" ? perms.financeiro : true),
+    isAdmin: perms.isAdmin,
+    role: perms.role,
+  }),
+}));
+vi.mock("@/components/portal/AcessoPortalDialog", () => ({
+  AcessoPortalDialog: ({ open, clienteId }: { open: boolean; clienteId: string }) =>
+    open ? <div role="dialog">portal:{clienteId}</div> : null,
 }));
 const titulo = vi.hoisted(() => vi.fn());
 vi.mock("@/hooks/usePageTitle", () => ({ usePageTitle: titulo }));
@@ -48,6 +56,7 @@ import ProjetoDetail from "./ProjetoDetail";
 const projeto = {
   id: "proj-1",
   nome: "Residência Silva",
+  cliente_id: "cli-1",
   cliente_nome: "Ana",
   status: "Em Andamento",
   prioridade: "Alta",
@@ -111,6 +120,8 @@ describe("ProjetoDetail", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     perms.financeiro = true;
+    perms.isAdmin = true;
+    perms.role = "admin";
     pausas.aberta = null;
     detalhe.valor = base();
   });
@@ -192,6 +203,26 @@ describe("ProjetoDetail", () => {
     detalhe.valor = base({ projeto: { ...projeto, status: "Concluído" } });
     montar();
     expect(screen.queryByRole("button", { name: /Pausar projeto/ })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["admin", true, "admin", true],
+    ["coordenador", false, "coordenador", true],
+    ["usuário comum", false, "user", false],
+  ])("portal do cliente no cabeçalho: %s", (_nome, isAdmin, role, ve) => {
+    perms.isAdmin = isAdmin;
+    perms.role = role;
+    montar();
+    const botao = screen.queryByRole("button", { name: /Portal do cliente/ });
+    if (!ve) return expect(botao).not.toBeInTheDocument();
+    fireEvent.click(botao!);
+    expect(screen.getByText("portal:cli-1")).toBeInTheDocument();
+  });
+
+  it("projeto sem cliente não oferece o portal", () => {
+    detalhe.valor = base({ projeto: { ...projeto, cliente_id: "" } });
+    montar();
+    expect(screen.queryByRole("button", { name: /Portal do cliente/ })).not.toBeInTheDocument();
   });
 
   it("sem edição não há ações nem campos editáveis", () => {

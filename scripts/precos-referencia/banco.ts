@@ -6,7 +6,7 @@
 // inteiro da UF, ou nada).
 import postgres from "postgres";
 import type { Regime } from "@/schemas/estimativaObra";
-import type { MesBase } from "./fonte.ts";
+import type { MesBase, UltimoCubDaUf } from "./fonte.ts";
 import type { LinhaCub } from "./cub.ts";
 
 export interface LinhaSinapiParaGravar {
@@ -85,6 +85,14 @@ export function abrirBanco(url: string) {
       return linhas.map((l) => ({ ...l, mes_base: mesTexto(l.mes_base), valor_m2: Number(l.valor_m2) }));
     },
 
+    /** Por UF e regime, o mês mais novo do CUB e a `fonte` dele. */
+    async ultimoCubPorUf(): Promise<UltimoCubDaUf[]> {
+      const linhas = await sql<{ uf: string; regime: string; mes_base: unknown; fonte: string | null }[]>`
+        SELECT DISTINCT ON (uf, regime) uf, regime, mes_base, fonte
+        FROM public.cub_valores ORDER BY uf, regime, mes_base DESC`;
+      return linhas.map((l) => ({ uf: l.uf, regime: l.regime, mes: mesTexto(l.mes_base), fonte: l.fonte ?? "" }));
+    },
+
     async gravarCub(linhas: LinhaCub[], fonte: string): Promise<void> {
       if (linhas.length === 0) return;
       await sql.begin(async (tx) => {
@@ -124,6 +132,7 @@ export function bancoDeSondagem(parametros: unknown, ultimoSinapi: MesBase): Ban
     fonteSinapi: async () => null,
     gravarSinapi: async () => {},
     cubDesde: async () => [],
+    ultimoCubPorUf: async () => [],
     gravarCub: async () => {},
     fechar: async () => {},
   };

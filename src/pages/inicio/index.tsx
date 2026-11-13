@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CartaoPendenciasAgentes } from "./CartaoPendenciasAgentes";
 import { CartaoBoasVindas } from "./CartaoBoasVindas";
+import { ConviteInstalarApp } from "@/components/instalar/ConviteInstalarApp";
 import { PainelGrid } from "./painel/PainelGrid";
 import { HeroInicio } from "./hero/HeroInicio";
 import { LAYOUT_PADRAO } from "./painel/catalogo";
@@ -106,6 +107,9 @@ export default function Inicio() {
       <div className="flex flex-col gap-5">
         {/* Primeiro acesso (SPEC 149): os três pilares e o primeiro passo de cada um. */}
         {!editando && <CartaoBoasVindas />}
+
+        {/* Celular aberto pelo navegador: convite para pôr o Pilar na tela inicial. */}
+        {!editando && <ConviteInstalarApp publico="escritorio" />}
 
         {painel.isLoading ? (
           <>

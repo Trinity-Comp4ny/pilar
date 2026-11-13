@@ -1,0 +1,18 @@
+{
+  "voz": "narração por cima do vídeo (narrate.py, narrar_sobre); t = segundo em que a fala entra",
+  "fim": 16.4,
+  "lines": [
+    {
+      "t": 0.3,
+      "say": "O mesmo escritório, antes e depois da Pilar."
+    },
+    {
+      "t": 3.6,
+      "say": "A proposta aceita vira projeto. O lucro aparece enquanto dá para agir. E o cliente acompanha pelo portal."
+    },
+    {
+      "t": 14.5,
+      "say": "Um sistema só."
+    }
+  ]
+}

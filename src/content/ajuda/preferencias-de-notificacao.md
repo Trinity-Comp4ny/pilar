@@ -1,4 +1,4 @@
-Você escolhe o que chega no sino do Pilar e o que chega por e-mail, por tipo de aviso.
+Você escolhe o que chega no sino da Pilar e o que chega por e-mail, por tipo de aviso.
 
 ## Passo a passo
 

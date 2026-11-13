@@ -106,7 +106,7 @@ describe("PrecosEmpresa", () => {
     abrir();
     await user.click(linhaDe("Piscina").getByRole("button", { name: "Definir valor" }));
     const dialogo = await screen.findByRole("dialog");
-    expect(within(dialogo).getByText(/Referência do Pilar: R\$\s2\.500,00/)).toBeInTheDocument();
+    expect(within(dialogo).getByText(/Referência da Pilar: R\$\s2\.500,00/)).toBeInTheDocument();
     await user.type(within(dialogo).getByLabelText("Valor por m²"), "300000");
     await user.type(within(dialogo).getByLabelText(/Observação/), "Tabela do fornecedor");
     await user.click(within(dialogo).getByRole("button", { name: "Salvar valor" }));

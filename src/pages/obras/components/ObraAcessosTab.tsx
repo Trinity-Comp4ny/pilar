@@ -43,14 +43,15 @@ export function ObraAcessosTab({ obraId, canEdit }: { obraId: string; canEdit: b
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        {canEdit && (
+      {/* Com a lista vazia o EmptyState já traz o botão: a linha de cima só aparece com acessos. */}
+      {canEdit && acessos.length > 0 && (
+        <div className="flex justify-end">
           <Button variant="brand" size="sm" onClick={() => setCriarOpen(true)}>
             <HardHat className="mr-1.5 h-4 w-4" />
             Criar acesso
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {acessos.length === 0 ? (
         <EmptyState

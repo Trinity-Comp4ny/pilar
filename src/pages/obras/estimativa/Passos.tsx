@@ -1,12 +1,17 @@
 import { Building2, Factory, Home, type LucideIcon } from "lucide-react";
-import { useMemo, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
+import { BusyMark } from "@/components/motion/BusyMark";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
+import { lookupCEP } from "@/lib/brasilApi";
+import { formatCEP, onlyDigits } from "@/lib/maskUtils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { avisosCoerencia, rotuloPadrao, type SaidaCalculo } from "@/lib/estimativaObra";
 import {
   PADROES,
   SUBTIPOS,
+  UFS,
   type Ficha,
   type Padrao,
   type Premissas,
@@ -24,8 +29,8 @@ import {
   TIPO_INFO,
   UFS_ORDENADAS,
   UF_NOME,
-  proximosMeses,
-  rotuloMes,
+  dataDoInicio,
+  rotuloInicio,
   type ErrosDaFicha,
   type Passo,
 } from "./lib";
@@ -166,12 +171,32 @@ export function PassoLocal({
   onClienteNome: (v: string) => void;
   erroNome?: string;
 }) {
-  const meses = useMemo(() => {
-    const lista = proximosMeses(new Date());
-    return lista.some((m) => m.valor === ficha.inicio)
-      ? lista
-      : [{ valor: ficha.inicio, rotulo: rotuloMes(ficha.inicio) }, ...lista];
-  }, [ficha.inicio]);
+  const [buscandoCep, setBuscandoCep] = useState(false);
+  const [avisoCep, setAvisoCep] = useState<string | null>(null);
+  const ultimoCep = useRef(onlyDigits(ficha.cep ?? ""));
+
+  // CEP → endereço, cidade e estado (BrasilAPI com ViaCEP de reserva). O estado continua editável.
+  const buscarCep = async (cep: string) => {
+    const digitos = onlyDigits(cep);
+    if (digitos.length !== 8 || digitos === ultimoCep.current) return;
+    ultimoCep.current = digitos;
+    setBuscandoCep(true);
+    setAvisoCep(null);
+    try {
+      const end = await lookupCEP(digitos);
+      if (!end) {
+        setAvisoCep("CEP não encontrado. Preencha o endereço e o estado à mão.");
+        return;
+      }
+      const endereco = [end.street, end.neighborhood].filter(Boolean).join(", ");
+      if (endereco) atualizar("endereco", endereco);
+      if (end.city) atualizar("cidade", end.city);
+      const uf = (UFS as readonly string[]).includes(end.state) ? (end.state as Ficha["uf"]) : null;
+      if (uf) atualizar("uf", uf);
+    } finally {
+      setBuscandoCep(false);
+    }
+  };
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
@@ -195,6 +220,43 @@ export function PassoLocal({
           onChange={(e) => onClienteNome(e.target.value)}
         />
       </Campo>
+      <Campo id="est-cep" rotulo="CEP da obra" dica={avisoCep ?? "Opcional. Preenche o endereço e o estado."}>
+        <div className="relative">
+          <Input
+            id="est-cep"
+            inputMode="numeric"
+            placeholder="00000-000"
+            maxLength={9}
+            value={ficha.cep ?? ""}
+            onChange={(e) => {
+              const cep = formatCEP(e.target.value);
+              atualizar("cep", cep);
+              void buscarCep(cep);
+            }}
+          />
+          {buscandoCep && (
+            <BusyMark className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          )}
+        </div>
+      </Campo>
+      <Campo id="est-endereco" rotulo="Endereço" erro={erros.endereco}>
+        <Input
+          id="est-endereco"
+          value={ficha.endereco ?? ""}
+          maxLength={300}
+          placeholder="Rua, bairro"
+          onChange={(e) => atualizar("endereco", e.target.value)}
+        />
+      </Campo>
+      <Campo id="est-cidade" rotulo="Cidade" erro={erros.cidade}>
+        <Input
+          id="est-cidade"
+          value={ficha.cidade ?? ""}
+          maxLength={120}
+          placeholder="Ex.: Campinas"
+          onChange={(e) => atualizar("cidade", e.target.value)}
+        />
+      </Campo>
       <Campo id="est-uf" rotulo="Estado" dica="Define a tabela de preço (CUB) usada." erro={erros.uf}>
         <Select value={ficha.uf} onValueChange={(v) => atualizar("uf", v as Ficha["uf"])}>
           <SelectTrigger id="est-uf">
@@ -209,19 +271,18 @@ export function PassoLocal({
           </SelectContent>
         </Select>
       </Campo>
-      <Campo id="est-inicio" rotulo="Início previsto" erro={erros.inicio}>
-        <Select value={ficha.inicio} onValueChange={(v) => atualizar("inicio", v)}>
-          <SelectTrigger id="est-inicio">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {meses.map((m) => (
-              <SelectItem key={m.valor} value={m.valor}>
-                {m.rotulo}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <Campo
+        id="est-inicio"
+        rotulo="Início da obra"
+        dica="Pode ser uma data passada, para obra que já começou."
+        erro={erros.inicio}
+      >
+        <DatePicker
+          id="est-inicio"
+          value={dataDoInicio(ficha.inicio)}
+          onChange={(v) => v && atualizar("inicio", v)}
+          clearable={false}
+        />
       </Campo>
       <Campo id="est-area" rotulo="Área construída" erro={erros.area}>
         <CampoNumero
@@ -425,7 +486,7 @@ export function PassoRevisao({
         />
         <LinhaRevisao
           rotulo="Local"
-          valor={`${UF_NOME[ficha.uf]} (${ficha.uf}) · início em ${rotuloMes(ficha.inicio)}`}
+          valor={`${ficha.cidade ? `${ficha.cidade}, ` : ""}${UF_NOME[ficha.uf]} (${ficha.uf}) · início em ${rotuloInicio(ficha.inicio)}`}
           passo="local"
           onEditar={onEditar}
         />

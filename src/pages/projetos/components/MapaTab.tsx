@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -47,7 +48,7 @@ function formatDate(d: string | null) {
   return new Date(d + "T00:00:00").toLocaleDateString("pt-BR");
 }
 
-export function MapaTab() {
+export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = {}) {
   const moneyMask = useMoneyMask();
   const formatCurrency = (v: number | null) => (v ? moneyMask(v) : null);
   const navigate = useNavigate();
@@ -195,68 +196,79 @@ export function MapaTab() {
     setSheetProjeto(p);
   }, []);
 
-  return (
-    <div role="tabpanel" id="projetos-tabpanel-mapa" aria-labelledby="projetos-tab-mapa">
-      {/* Controles do mapa: busca + filtro de status */}
-      <div className="flex items-center justify-end gap-2 mb-3 flex-wrap">
-        <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="h-9 rounded-full text-sm gap-1.5">
-              <Search className="h-4 w-4" />
-              Localizar
-              {filtrados.length > 0 && (
-                <span className="ml-0.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground leading-none">
-                  {filtrados.length}
-                </span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[300px] p-0" align="end">
-            <Command>
-              <CommandInput placeholder="Buscar projeto ou cliente..." />
-              <CommandList>
-                <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
-                <CommandGroup heading="Projetos">
-                  {filtrados.map((p) => (
-                    <CommandItem key={p.id} value={p.nome} onSelect={() => handleSearchSelect(p.id)} className="gap-2">
-                      <div
-                        className="w-2.5 h-2.5 rounded-full shrink-0"
-                        style={{ background: STATUS_MARKER_COLORS[p.status] || "hsl(var(--status-unknown))" }}
-                      />
-                      <span className="truncate">{p.nome}</span>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-                <CommandGroup heading="Clientes">
-                  {clientesAgrupados.map((c) => (
-                    <CommandItem
-                      key={c.id ?? "__sem_cliente__"}
-                      value={`cliente ${c.nome}`}
-                      onSelect={() => handleClienteSelect(c.id)}
-                      className="gap-2"
-                    >
-                      <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                      <span className="truncate">{c.nome}</span>
-                      <span className="ml-auto text-[10px] text-muted-foreground shrink-0">{c.projetos.length}p</span>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+  const controles = (
+    <div className="flex flex-wrap items-center gap-2">
+      <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" className="h-9 rounded-full text-sm gap-1.5">
+            <Search className="h-4 w-4" />
+            Localizar
+            {filtrados.length > 0 && (
+              <span className="ml-0.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground leading-none">
+                {filtrados.length}
+              </span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[300px] p-0" align="end">
+          <Command>
+            <CommandInput placeholder="Buscar projeto ou cliente..." />
+            <CommandList>
+              <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
+              <CommandGroup heading="Projetos">
+                {filtrados.map((p) => (
+                  <CommandItem key={p.id} value={p.nome} onSelect={() => handleSearchSelect(p.id)} className="gap-2">
+                    <div
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ background: STATUS_MARKER_COLORS[p.status] || "hsl(var(--status-unknown))" }}
+                    />
+                    <span className="truncate">{p.nome}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+              <CommandGroup heading="Clientes">
+                {clientesAgrupados.map((c) => (
+                  <CommandItem
+                    key={c.id ?? "__sem_cliente__"}
+                    value={`cliente ${c.nome}`}
+                    onSelect={() => handleClienteSelect(c.id)}
+                    className="gap-2"
+                  >
+                    <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="truncate">{c.nome}</span>
+                    <span className="ml-auto text-[10px] text-muted-foreground shrink-0">{c.projetos.length}p</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
 
-        <FilterSelect
-          label="Status"
-          value={statusFilter}
-          emptyValue="todos"
-          onChange={setStatusFilter}
-          options={[
-            { value: "todos", label: "Todos os status" },
-            ...Object.values(PROJECT_STATUS).map((st) => ({ value: st, label: st })),
-          ]}
-        />
-      </div>
+      <FilterSelect
+        label="Status"
+        value={statusFilter}
+        emptyValue="todos"
+        onChange={setStatusFilter}
+        options={[
+          { value: "todos", label: "Todos os status" },
+          ...Object.values(PROJECT_STATUS).map((st) => ({ value: st, label: st })),
+        ]}
+      />
+    </div>
+  );
+
+  return (
+    // Desktop: o mapa ocupa a altura que sobra na página (era `100dvh - 320px`).
+    <div
+      role="tabpanel"
+      id="projetos-tabpanel-mapa"
+      aria-labelledby="projetos-tab-mapa"
+      className="md:flex md:min-h-0 md:flex-1 md:flex-col"
+    >
+      {/* Controles do mapa (busca + status): na barra de filtros da página quando há onde pôr,
+          em vez de uma linha só para eles acima do mapa (auditoria de espaço, 2026-11). */}
+      {toolbarSlot ? createPortal(controles, toolbarSlot) : <div className="mb-3 flex justify-end">{controles}</div>}
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
@@ -353,8 +365,11 @@ export function MapaTab() {
 
           <div
             ref={wrapperRef}
-            className="rounded-lg overflow-hidden border relative bg-muted"
-            style={{ height: isFullscreen ? "100dvh" : "calc(100dvh - 320px)", minHeight: "420px" }}
+            className={cn(
+              "rounded-lg overflow-hidden border relative bg-muted",
+              !isFullscreen && "h-[calc(100dvh-320px)] md:h-auto md:flex-1"
+            )}
+            style={{ height: isFullscreen ? "100dvh" : undefined, minHeight: "420px" }}
           >
             {/* Seletor de camada */}
             <div className="absolute bottom-8 left-3 z-1000">
@@ -373,9 +388,7 @@ export function MapaTab() {
                             setTileMenuOpen(false);
                           }}
                           className={`flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                            active
-                              ? "bg-primary text-primary-foreground"
-                              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            active ? "bg-brand text-ink" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                           }`}
                         >
                           <Icon className="h-3.5 w-3.5 shrink-0" />

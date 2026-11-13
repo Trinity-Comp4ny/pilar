@@ -14,7 +14,7 @@ interface CheckoutShellProps {
   children: ReactNode;
 }
 
-// Casco visual comum aos dois checkouts do Pilar: o de assinatura (público,
+// Casco visual comum aos dois checkouts da Pilar: o de assinatura (público,
 // /checkout) e o de compra de tokens (autenticado, /comprar-tokens). Extraído
 // pra garantir que os dois sempre pareçam o mesmo produto — cabeçalho, fundo
 // aurora e container ficam aqui; cada página monta o próprio grid de conteúdo.

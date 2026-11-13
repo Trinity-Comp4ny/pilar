@@ -7,6 +7,7 @@ import {
   mesesPendentes,
   planilhaDoZip,
   precisaReimportar,
+  situacaoCubPorUf,
 } from "./fonte";
 
 const PAGINA = "https://www.caixa.gov.br/poder-publico/modernizacao-gestao/sinapi/Paginas/default.aspx";
@@ -120,5 +121,44 @@ describe("atraso", () => {
 
   it("nada gravado é atraso", () => {
     expect(atraso("cub", null, dia("2026-11-01"))?.esperado).toBe("2026-09-01");
+  });
+});
+
+describe("situacaoCubPorUf", () => {
+  const auto = (uf: string, mes: string, regime = "onerado") => ({
+    uf,
+    regime,
+    mes,
+    fonte: `CUB ${mes.slice(5, 7)}/${mes.slice(0, 4)} (coleta automática: cub.org.br, Sinduscon-${uf})`,
+  });
+  const hoje = dia("2026-11-11"); // passado o dia 10: esperado outubro
+
+  it("conta os meses atrás do esperado e não alerta até o limite", () => {
+    const [mg] = situacaoCubPorUf([auto("MG", "2026-07-01")], ["MG"], hoje);
+    expect(mg).toEqual({ uf: "MG", mes: "2026-07-01", mesesAtras: 3, automatica: true, alerta: false });
+  });
+
+  it("alerta quando a fonte automática passou do limite", () => {
+    const [mg] = situacaoCubPorUf([auto("MG", "2026-06-01")], ["MG"], hoje);
+    expect(mg.mesesAtras).toBe(4);
+    expect(mg.alerta).toBe(true);
+  });
+
+  it("não alerta UF de importação manual nem UF sem nada", () => {
+    const manual = { uf: "AC", regime: "onerado", mes: "2026-01-01", fonte: "CUB 01/2026 (importação manual)" };
+    const [ac, to] = situacaoCubPorUf([manual], ["AC", "TO"], hoje);
+    expect(ac).toMatchObject({ mesesAtras: 9, automatica: false, alerta: false });
+    expect(to).toEqual({ uf: "TO", mes: null, mesesAtras: null, automatica: false, alerta: false });
+  });
+
+  it("vale o regime mais novo da UF (RS e MS só publicam sem desoneração)", () => {
+    const linhas = [auto("RS", "2026-10-01", "onerado"), auto("RS", "2026-03-01", "desonerado")];
+    const [rs] = situacaoCubPorUf(linhas, ["RS"], hoje);
+    expect(rs).toMatchObject({ mes: "2026-10-01", mesesAtras: 0, alerta: false });
+  });
+
+  it("antes do dia 10 o esperado é o mês retrasado", () => {
+    const [sp] = situacaoCubPorUf([auto("SP", "2026-09-01")], ["SP"], dia("2026-11-05"));
+    expect(sp.mesesAtras).toBe(0);
   });
 });

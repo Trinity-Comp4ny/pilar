@@ -91,7 +91,7 @@ export function LeadAutoConvertDialog({ open, onOpenChange, isPending, onConvert
           <Button variant="outline" onClick={onSkip}>
             Apenas marcar como Ganho
           </Button>
-          <Button onClick={onConvert} className="bg-positive hover:bg-positive/90 text-white" disabled={isPending}>
+          <Button onClick={onConvert} variant="brand" disabled={isPending}>
             {isPending ? (
               <>
                 <BusyMark className="mr-2 h-4 w-4" /> Convertendo...

@@ -157,12 +157,6 @@
     justify-items: center;
     gap: 6px;
   }
-  .entry-veil__caption {
-    margin: 0;
-    min-height: 1.25rem;
-    font-size: 0.875rem;
-    color: hsl(var(--text-muted));
-  }
   .veil-exit {
     pointer-events: none;
     animation: veil-out 0.36s ease-in forwards;

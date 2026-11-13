@@ -71,14 +71,69 @@ describe("FluxoPipeline", () => {
     expect(dot).toBeInTheDocument();
   });
 
-  it("clique na disciplina chama onOpenDisciplina com a disciplina certa", async () => {
+  it("clique seleciona a disciplina; 'Abrir disciplina' chama onOpenDisciplina com a certa", async () => {
     const onOpenDisciplina = vi.fn();
     const alvo = disc({ disciplina: "Estrutural", etapa: 1 });
+    const seguinte = disc({ disciplina: "Compatibilização", etapa: 2 });
 
-    render(<FluxoPipeline disciplinas={[alvo]} onOpenDisciplina={onOpenDisciplina} />);
+    render(<FluxoPipeline disciplinas={[alvo, seguinte]} onOpenDisciplina={onOpenDisciplina} />);
 
-    await userEvent.click(screen.getByText("Estrutural"));
+    await userEvent.click(screen.getByRole("button", { name: /Estrutural/ }));
+    expect(onOpenDisciplina).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: /Estrutural/ })).toHaveAttribute("aria-pressed", "true");
+
+    const detalhe = screen.getByRole("region", { name: "Detalhe de Estrutural" });
+    expect(detalhe).toHaveTextContent("Nada: é o início do fluxo");
+    expect(detalhe).toHaveTextContent("Compatibilização");
+
+    await userEvent.click(screen.getByRole("button", { name: "Abrir disciplina" }));
     expect(onOpenDisciplina).toHaveBeenCalledWith(alvo);
+  });
+
+  it("clicar de novo na selecionada fecha o detalhe", async () => {
+    render(<FluxoPipeline disciplinas={[disc({ disciplina: "Estrutural", etapa: 1 })]} />);
+
+    await userEvent.click(screen.getByRole("button", { name: /Estrutural/ }));
+    expect(screen.getByRole("region", { name: "Detalhe de Estrutural" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /Estrutural/ }));
+    expect(screen.queryByRole("region", { name: "Detalhe de Estrutural" })).not.toBeInTheDocument();
+  });
+
+  it("cabeçalho da coluna mostra concluídas/total", () => {
+    render(
+      <FluxoPipeline
+        disciplinas={[
+          disc({ disciplina: "Topografia", etapa: 1, status: "Concluído", data_final: "2026-03-02" }),
+          disc({ disciplina: "Sondagem", etapa: 1 }),
+        ]}
+      />
+    );
+    expect(screen.getByTitle("Concluídas / total")).toHaveTextContent("1/2");
+  });
+
+  it("resumo projeta a conclusão pelo atraso e mostra o desvio sobre a previsão do projeto", () => {
+    render(
+      <FluxoPipeline
+        hoje="2026-03-11"
+        projetoDataPrevisao="2026-03-12"
+        disciplinas={[
+          disc({
+            disciplina: "Elétrico",
+            etapa: 1,
+            status: "Em Andamento",
+            data_inicio: "2026-03-02",
+            data_previsao: "2026-03-09",
+          }),
+          disc({ disciplina: "Compatibilização", etapa: 2, data_inicio: "2026-03-10", data_previsao: "2026-03-12" }),
+        ]}
+      />
+    );
+    const resumo = screen.getByLabelText("Resumo do fluxo");
+    // Elétrico atrasou 2 dias úteis (fim estimado = hoje); a compatibilização vai para 16/03.
+    expect(resumo).toHaveTextContent("16/03/2026");
+    expect(resumo).toHaveTextContent("+2 dias úteis sobre 12/03/2026");
+    expect(resumo).toHaveTextContent("Elétrico");
+    expect(screen.getByText("2d de atraso")).toBeInTheDocument();
   });
 
   it("com prefers-reduced-motion, não aplica classe de animação de entrada", () => {

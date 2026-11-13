@@ -23,8 +23,9 @@ suporte, já com a pergunta, e vira pauta de artigo.
 
 ## Requisitos
 
-1. Botão "Como faço?" no canto inferior direito (computador) e item "Como faço?" no menu do
-   celular abrem o painel do agente. Some na tela `/agentes`, que já é a conversa.
+1. Botão verde "Dúvidas", com a estrela dos Agentes, no canto inferior direito (computador), e
+   item "Dúvidas" no menu do celular abrem um chat flutuante no canto (sem título, balões de
+   mensagem, campo embaixo; Enter envia, Esc fecha). Some na tela `/agentes`, que já é a conversa.
 2. Ao abrir, mostra os artigos da tela atual ("Nesta tela").
 3. A pergunta em linguagem natural é respondida pela central (SPEC 154): o artigo mais próximo
    inteiro, com **Ir para <tela>** e **Abrir na central**, e até dois outros que podem ajudar.

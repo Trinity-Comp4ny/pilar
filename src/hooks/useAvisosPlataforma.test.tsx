@@ -26,7 +26,7 @@ const INCIDENTE = {
   status_incident_components: [
     { status_components: { nome_exibicao: "Portal do cliente", ordem: 2 } },
     { status_components: null },
-    { status_components: { nome_exibicao: "Aplicação Pilar", ordem: 1 } },
+    { status_components: { nome_exibicao: "Aplicaçãa Pilar", ordem: 1 } },
   ],
   status_incident_updates: [
     { id: "u1", mensagem: "Investigando.", created_at: "2026-11-11T10:00:00Z" },
@@ -61,7 +61,7 @@ describe("useAvisosPlataforma (SPEC 153 e 157)", () => {
     expect(result.current[0]).toMatchObject({
       chave: "incidente:i1:u2",
       texto: "Causa encontrada.",
-      detalhe: "Afeta: Aplicação Pilar, Portal do cliente",
+      detalhe: "Afeta: Aplicaçãa Pilar, Portal do cliente",
     });
     expect(result.current[1].chave).toBe("comunicado:c1");
   });

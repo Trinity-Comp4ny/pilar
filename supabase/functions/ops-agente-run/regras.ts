@@ -252,16 +252,16 @@ function candidatoAtivacao(s: SaudeEmpresa, remetente: string, agora: Date): Omi
   const saud = saudacao(s.contato_nome, remetente);
   const porMarco: Record<MarcoAtivacao, { titulo: string; texto: string }> = {
     primeiro_projeto: {
-      titulo: `${s.empresa_nome}: ${dias} dias no Pilar e nenhum projeto cadastrado`,
-      texto: `${saud} Faz ${dias} dias que o escritório entrou no Pilar e ainda não tem projeto cadastrado. Quer montar o primeiro comigo? Em 15 minutos fica com disciplinas e orçamento, e a margem começa a aparecer.`,
+      titulo: `${s.empresa_nome}: ${dias} dias na Pilar e nenhum projeto cadastrado`,
+      texto: `${saud} Faz ${dias} dias que o escritório entrou na Pilar e ainda não tem projeto cadastrado. Quer montar o primeiro comigo? Em 15 minutos fica com disciplinas e orçamento, e a margem começa a aparecer.`,
     },
     equipe: {
-      titulo: `${s.empresa_nome}: só uma pessoa usando o Pilar`,
-      texto: `${saud} Vi que por enquanto só você usa o Pilar aí. Quer ajuda para chamar a equipe? Com cada um atualizando as próprias tarefas, o andamento dos projetos fica certo sem você precisar cobrar.`,
+      titulo: `${s.empresa_nome}: só uma pessoa usando a Pilar`,
+      texto: `${saud} Vi que por enquanto só você usa a Pilar aí. Quer ajuda para chamar a equipe? Com cada um atualizando as próprias tarefas, o andamento dos projetos fica certo sem você precisar cobrar.`,
     },
     segundo_modulo: {
-      titulo: `${s.empresa_nome}: usa só uma área do Pilar`,
-      texto: `${saud} O escritório já usa o Pilar, mas só numa parte. O que mais ajuda a ver se cada projeto dá lucro é ter projetos e Financeiro juntos. Quer que eu mostre em 15 minutos como ligar os dois?`,
+      titulo: `${s.empresa_nome}: usa só uma área da Pilar`,
+      texto: `${saud} O escritório já usa a Pilar, mas só numa parte. O que mais ajuda a ver se cada projeto dá lucro é ter projetos e Financeiro juntos. Quer que eu mostre em 15 minutos como ligar os dois?`,
     },
   };
   return {
@@ -312,7 +312,7 @@ export function candidatosClientes(saude: SaudeEmpresa[], remetente: string, ago
           modulos_usados: s.modulos_usados ?? null,
           estagio: s.estagio ?? null,
         },
-        textoPadrao: `${saudacao(s.contato_nome, remetente)} Vi que o Pilar foi menos usado aí nesta semana. Mudou algo no escritório ou travou em alguma parte? Se quiser, marco 15 minutos para ajustar.`,
+        textoPadrao: `${saudacao(s.contato_nome, remetente)} Vi que a Pilar foi menos usada aí nesta semana. Mudou algo no escritório ou travou em alguma parte? Se quiser, marco 15 minutos para ajustar.`,
       });
     }
     if (sumido) {
@@ -333,7 +333,7 @@ export function candidatosClientes(saude: SaudeEmpresa[], remetente: string, ago
           situacao: s.situacao_cobranca,
           estagio: s.estagio ?? null,
         },
-        textoPadrao: `${saudacao(s.contato_nome, remetente)} Faz ${dias} dias que vocês não entram no sistema. Travou em alguma coisa? Se quiser, marco 15 minutos para ajustar o Pilar ao jeito do escritório.`,
+        textoPadrao: `${saudacao(s.contato_nome, remetente)} Faz ${dias} dias que vocês não entram no sistema. Travou em alguma coisa? Se quiser, marco 15 minutos para ajustar a Pilar ao jeito do escritório.`,
       });
     }
     // Ativação só para quem não sumiu: sumido já tem o contato de "sem acesso".
@@ -638,7 +638,7 @@ export function candidatosQualidade(
         prioridade: 2,
         prazo: null,
         fatos: { motivo: "erro_corrigido", erro: c.shortId, onde },
-        textoPadrao: `${saudacao(s.contato_nome, remetente)} Nos últimos dias apareceu um erro para vocês no Pilar${
+        textoPadrao: `${saudacao(s.contato_nome, remetente)} Nos últimos dias apareceu um erro para vocês na Pilar${
           onde ? `, em ${onde}` : ""
         }. Já está corrigido. Se notarem mais alguma coisa estranha, me avisa por aqui.`,
       });

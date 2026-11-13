@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AceiteTermosBanner } from "./AceiteTermosBanner";
+import { AceiteTermosBanner, type ModoAceiteTermos } from "./AceiteTermosBanner";
 import { TERMS_VERSION } from "@/lib/legalVersions";
 
 /**
@@ -38,12 +38,12 @@ vi.mock("@/integrations/supabase/client", () => {
 const ANTES_DA_VIGENCIA = new Date("2026-11-20T12:00:00-03:00");
 const DEPOIS_DA_VIGENCIA = new Date("2026-12-11T12:00:00-03:00");
 
-function renderizar(rota = "/inicio") {
+function renderizar(rota = "/inicio", modo?: ModoAceiteTermos) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={[rota]}>
-        <AceiteTermosBanner />
+        <AceiteTermosBanner modo={modo} />
       </MemoryRouter>
     </QueryClientProvider>
   );
@@ -119,5 +119,29 @@ describe("AceiteTermosBanner", () => {
     renderizar("/profile-setup");
     await new Promise((r) => setTimeout(r, 0));
     expect(screen.queryByText(/Atualizamos os Termos/)).not.toBeInTheDocument();
+  });
+
+  // App renderiza só a janela e o Layout só a faixa, depois do skip link (o 1º Tab é dele).
+  it("modo janela: antes da vigência não mostra a faixa", async () => {
+    renderizar("/inicio", "janela");
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.queryByText(/Atualizamos os Termos/)).not.toBeInTheDocument();
+  });
+
+  it("modo janela: depois da vigência mostra a janela", async () => {
+    vi.setSystemTime(DEPOIS_DA_VIGENCIA);
+    renderizar("/inicio", "janela");
+    expect(await screen.findByRole("dialog", { name: "Novos Termos de Uso" })).toBeInTheDocument();
+  });
+
+  it("modo faixa: antes da vigência mostra a faixa, depois não abre a janela", async () => {
+    const { unmount } = renderizar("/inicio", "faixa");
+    expect(await screen.findByText(/Atualizamos os Termos de Uso/)).toBeInTheDocument();
+    unmount();
+
+    vi.setSystemTime(DEPOIS_DA_VIGENCIA);
+    renderizar("/inicio", "faixa");
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

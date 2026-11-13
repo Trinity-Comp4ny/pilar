@@ -22,6 +22,10 @@ function montar(rota = "/gestao/leads") {
   render(
     <QueryClientProvider client={new QueryClient()}>
       <MemoryRouter initialEntries={[rota]}>
+        {/* Faz o papel do "?" do cabeçalho: quem abre o painel e recebe o foco de volta. */}
+        <button type="button" onClick={abrirAgenteAjuda}>
+          Abrir dúvidas
+        </button>
         <AgenteAjuda />
       </MemoryRouter>
     </QueryClientProvider>
@@ -32,18 +36,38 @@ function montar(rota = "/gestao/leads") {
 beforeEach(() => vi.clearAllMocks());
 
 describe("AgenteAjuda (SPEC 155)", () => {
-  it("abre pelo balão e sugere os artigos da tela", async () => {
+  it('abre pelo "?" do cabeçalho como chat, sem título, e sugere os artigos da tela', async () => {
     const user = montar();
-    await user.click(screen.getByRole("button", { name: /Como faço\?/ }));
-    expect(screen.getByText("Nesta tela")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Criar um lead" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Abrir dúvidas" }));
+    const chat = screen.getByRole("dialog", { name: "Dúvidas sobre a Pilar" });
+    expect(chat).toBeInTheDocument();
+    expect(screen.queryByText("Agente da Pilar")).not.toBeInTheDocument();
+    expect(screen.getByText("Nesta tela:")).toBeInTheDocument();
+    expect(screen.getByLabelText("Sua pergunta")).toHaveFocus();
+
+    await user.click(screen.getByRole("button", { name: "Criar um lead" }));
+    // A sugestão vira mensagem da pessoa e a resposta chega no chat.
+    expect(screen.getByText("Criar um lead", { selector: "p.bg-brand" })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: /Ir para Leads/ })).toBeInTheDocument();
+  });
+
+  it("Enter envia, Esc fecha e o foco volta a quem abriu", async () => {
+    const user = montar("/inicio");
+    await user.click(screen.getByRole("button", { name: "Abrir dúvidas" }));
+    await user.type(screen.getByLabelText("Sua pergunta"), "como eu crio um lead{Enter}");
+    expect(await screen.findByRole("link", { name: /Ir para Leads/ })).toBeInTheDocument();
+    expect(screen.getByLabelText("Sua pergunta")).toHaveValue("");
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Abrir dúvidas" })).toHaveFocus();
   });
 
   it("responde 'como eu crio um lead?' com o caminho e o botão para a tela", async () => {
     const user = montar("/inicio");
     act(() => abrirAgenteAjuda());
     await user.type(screen.getByLabelText("Sua pergunta"), "como eu crio um lead");
-    await user.click(screen.getByRole("button", { name: "Perguntar" }));
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
     expect(await screen.findByText("Criar um lead", { selector: "p" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Ir para Leads/ })).toHaveAttribute("href", "/gestao/leads");
     expect(h.registrar).not.toHaveBeenCalled();
@@ -53,7 +77,7 @@ describe("AgenteAjuda (SPEC 155)", () => {
     const user = montar("/inicio");
     act(() => abrirAgenteAjuda());
     await user.type(screen.getByLabelText("Sua pergunta"), "emitir nota fiscal eletrônica");
-    await user.click(screen.getByRole("button", { name: "Perguntar" }));
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
     expect(screen.getByText(/Ainda não tenho um passo a passo/)).toBeInTheDocument();
     expect(h.registrar).toHaveBeenCalledWith("emitir nota fiscal eletrônica", "/inicio", "agente");
 
@@ -65,13 +89,13 @@ describe("AgenteAjuda (SPEC 155)", () => {
     const user = montar("/inicio");
     act(() => abrirAgenteAjuda());
     await user.type(screen.getByLabelText("Sua pergunta"), "xyzw");
-    await user.click(screen.getByRole("button", { name: "Perguntar" }));
+    await user.click(screen.getByRole("button", { name: "Enviar" }));
     await user.click(screen.getByRole("button", { name: "Falar com o suporte" }));
     expect(screen.getByTestId("suporte")).toHaveTextContent("Dúvida: xyzw");
   });
 
-  it("some na tela dos agentes", () => {
-    montar("/agentes");
-    expect(screen.queryByRole("button", { name: /Como faço\?/ })).not.toBeInTheDocument();
+  it("não tem botão flutuante por cima do conteúdo", () => {
+    montar("/gestao/leads");
+    expect(screen.queryByRole("button", { name: /Dúvidas:/ })).not.toBeInTheDocument();
   });
 });

@@ -17,7 +17,7 @@ export interface MoneyInputProps extends Omit<
 }
 
 /**
- * Campo de dinheiro (R$) padrão do Pilar. Dígitos entram como centavos
+ * Campo de dinheiro (R$) padrão da Pilar. Dígitos entram como centavos
  * (`12345` → `R$ 123,45`), seguindo a convenção já usada nos forms financeiros.
  * Substitui o par repetido `<Input onChange={(e) => setValue(formatCurrencyInput(e.target.value))}>`.
  * Nunca use `type="number"` para dinheiro: ele rejeita "1.234,56" e mostra spinner.

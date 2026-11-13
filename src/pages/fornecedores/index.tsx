@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { PageLayout } from "@/components/PageLayout";
-import { FilterBar } from "@/components/filters/FilterBar";
 import { PageHeader } from "@/components/PageHeader";
 import { Can } from "@/components/Can";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -266,6 +265,7 @@ export default function Fornecedores() {
   const columns: ColumnDef<Fornecedor>[] = [
     {
       key: "nome",
+      mobile: "title",
       header: "Nome",
       className: "font-medium",
       getSortValue: (f) => f.nome.toLowerCase(),
@@ -273,6 +273,7 @@ export default function Fornecedores() {
     },
     {
       key: "cnpj",
+      mobile: "subtitle",
       header: "CNPJ",
       getSortValue: (f) => f.cnpj ?? "",
       cell: (f) => (f.cnpj ? formatCNPJ(f.cnpj) : "-"),
@@ -301,6 +302,7 @@ export default function Fornecedores() {
       ? [
           {
             key: "acoes",
+            mobile: "trailing" as const,
             header: "Ações",
             align: "end" as const,
             cell: (f: Fornecedor) => (
@@ -355,22 +357,8 @@ export default function Fornecedores() {
     />
   );
 
-  // Toolbar padrão (SPEC 124): a lista não tem filtro além da busca do header, então traz só a contagem.
-  const toolbar = (
-    <FilterBar
-      end={
-        <span className="text-xs text-muted-foreground tabular-nums">
-          {filtered.length} de {fornecedores.length}
-        </span>
-      }
-    >
-      {null}
-    </FilterBar>
-  );
-
   return (
     <PageLayout
-      toolbar={toolbar}
       className="overflow-y-hidden"
       containerClassName="h-full flex flex-col min-h-0"
       header={
@@ -386,6 +374,13 @@ export default function Fornecedores() {
           }}
           children={
             <>
+              {/* Sem linha de barra só para a contagem (a lista não tem filtro além da busca):
+                  ela aparece aqui quando a busca recorta (auditoria de espaço, 2026-11). */}
+              {searchTerm.trim() !== "" && (
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {filtered.length} de {fornecedores.length}
+                </span>
+              )}
               {canEdit && (
                 <Button variant="outline" size="sm" onClick={() => setReconciliarOpen(true)}>
                   <Link2 className="mr-1.5 h-4 w-4" />
@@ -517,8 +512,8 @@ export default function Fornecedores() {
         />
       }
     >
-      <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden">
-        <CardContent className="flex-1 min-h-0 flex flex-col p-4">
+      <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden max-md:border-0 max-md:bg-transparent max-md:shadow-none">
+        <CardContent className="flex-1 min-h-0 flex flex-col p-0 pb-2">
           {/* O main está com overflow-y-hidden (página de altura fixa), então o
               scroll precisa viver aqui, senão a tabela é cortada sem rolar. */}
           <div className="overflow-x-auto overflow-y-auto w-full flex-1 min-h-0">

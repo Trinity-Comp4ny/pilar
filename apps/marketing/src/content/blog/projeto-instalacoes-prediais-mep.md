@@ -90,9 +90,9 @@ O papel do coordenador:
 - Projetista parceiro trabalhando sobre base superada porque não soube da revisão.
 - Mudança de equipamento pedida pelo cliente tratada como ajuste, quando é escopo novo e pede [aditivo de projeto](/blog/aditivo-de-projeto).
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O Pilar não faz detecção de interferência nem dimensiona instalação; isso continua no seu CAD ou BIM. O [módulo Projetos](/projetos) organiza a coordenação em volta: quem faz cada disciplina, até quando e o que foi combinado.
+A Pilar não faz detecção de interferência nem dimensiona instalação; isso continua no seu CAD ou BIM. O [módulo Projetos](/projetos) organiza a coordenação em volta: quem faz cada disciplina, até quando e o que foi combinado.
 
 - Cada disciplina tem um ou mais responsáveis, com etiqueta, link para o arquivo e comentário no mesmo lugar.
 - O fluxo padrão do escritório é cadastrado uma vez, e todo projeto novo nasce com a sequência de etapas e disciplinas.
@@ -100,7 +100,7 @@ O Pilar não faz detecção de interferência nem dimensiona instalação; isso 
 - Mudou a data, o sistema pede o motivo, e o histórico mostra qual informação atrasou.
 - O Gantt da carteira mostra quando o mesmo projetista de instalações tem entregas de vários projetos na mesma semana.
 
-Veja como o Pilar atende [escritórios de engenharia](/engenharia) e [de arquitetura](/arquitetura). Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos).
+Veja como a Pilar atende [escritórios de engenharia](/engenharia) e [de arquitetura](/arquitetura). Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos).
 
 ## Perguntas frequentes
 

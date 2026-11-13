@@ -10,6 +10,7 @@ import { FilterBar } from "@/components/filters/FilterBar";
 import { PeriodoPopover } from "./financeiro/components/PeriodoPopover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useAbrirCriacaoPelaUrl, PARAM_CRIACAO } from "@/hooks/useAbrirCriacaoPelaUrl";
 import { useRegistrarPagina } from "@/hooks/useRecentes";
@@ -130,6 +131,7 @@ export default function Financeiro() {
   );
 
   const isRoot = activeTab === "visao-geral";
+  const isMobile = useIsMobile();
   const activeLabel = FINANCEIRO_TABS_ALL.find((t) => t.id === activeTab)?.label ?? "Financeiro";
   usePageTitle(isRoot ? "Financeiro" : `Financeiro · ${activeLabel}`);
 
@@ -143,20 +145,31 @@ export default function Financeiro() {
             primaryAction={{ label: "Novo lançamento", icon: Plus, onClick: () => setEscolhendoTipo(true) }}
           />
         }
+        // Desktop: o período da Visão geral fica no fim da linha das abas, em vez de ocupar uma
+        // linha de 52 px só para ele. No celular as abas já usam a largura toda, então ele
+        // continua na barra (auditoria de espaço, 2026-11).
         toolbar={
-          isRoot ? (
+          isRoot && isMobile ? (
             <FilterBar>
               <PeriodoPopover activeTab={activeTab} />
             </FilterBar>
           ) : undefined
         }
         tabs={
-          <SectionTabs
-            tabs={FINANCEIRO_TABS_ALL}
-            value={activeTab}
-            onValueChange={handleTabChange}
-            ariaLabel="Seções do financeiro"
-          />
+          <div className="flex items-center gap-2">
+            <SectionTabs
+              tabs={FINANCEIRO_TABS_ALL}
+              value={activeTab}
+              onValueChange={handleTabChange}
+              ariaLabel="Seções do financeiro"
+              className="min-w-0 flex-1"
+            />
+            {isRoot && !isMobile && (
+              <div className="shrink-0 pr-4 md:pr-6">
+                <PeriodoPopover activeTab={activeTab} />
+              </div>
+            )}
+          </div>
         }
       >
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">

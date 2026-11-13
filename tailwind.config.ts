@@ -63,6 +63,14 @@ export default {
 
         // Pilar design tokens — ver src/styles/tokens.css
         // Formato hsl(... / <alpha-value>) habilita opacity modifier (ex: bg-paper/90)
+        // Superfícies do app (tokens.css). Sem este mapa, `bg-surface-card` não gerava classe e o
+        // card ficava transparente (NPS, "Foi fácil?", cards do Kanban).
+        surface: {
+          app: "hsl(var(--surface-app) / <alpha-value>)",
+          card: "hsl(var(--surface-card) / <alpha-value>)",
+          sidebar: "hsl(var(--surface-sidebar) / <alpha-value>)",
+          muted: "hsl(var(--surface-muted) / <alpha-value>)",
+        },
         paper: {
           DEFAULT: "hsl(var(--surface-landing) / <alpha-value>)",
           alt: "hsl(var(--surface-landing-alt) / <alpha-value>)",

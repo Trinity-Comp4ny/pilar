@@ -239,7 +239,7 @@ export default function ComprarTokens() {
                   navigate("/inicio");
                 }}
               >
-                Voltar ao Pilar
+                Voltar à Pilar
               </Button>
             </div>
           ) : result ? (

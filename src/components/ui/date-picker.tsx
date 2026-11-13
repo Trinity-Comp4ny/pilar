@@ -20,6 +20,8 @@ interface DatePickerProps {
   fromYear?: number;
   toYear?: number;
   id?: string;
+  /** Mostra o "X" de limpar. `false` em data obrigatória: o campo nunca fica vazio pelo botão. */
+  clearable?: boolean;
 }
 
 function parseIso(iso?: string): Date | undefined {
@@ -53,6 +55,7 @@ export function DatePicker({
   fromYear,
   toYear,
   id,
+  clearable = true,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const [editando, setEditando] = useState(false);
@@ -244,7 +247,7 @@ export function DatePicker({
           )}
         </PopoverContent>
       </Popover>
-      {displayValue && !disabled && (
+      {clearable && displayValue && !disabled && (
         <button
           type="button"
           onClick={(e) => {

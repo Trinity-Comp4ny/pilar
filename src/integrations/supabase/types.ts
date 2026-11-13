@@ -82,6 +82,77 @@ export type Database = {
         }
         Relationships: []
       }
+      agenda_eventos_google: {
+        Row: {
+          atualizado_em: string
+          calendario_id: string
+          convidados: string[]
+          descricao: string | null
+          dia_inteiro: boolean
+          empresa_id: string
+          fim: string
+          google_evento_id: string
+          id: string
+          inicio: string
+          lembrete_em: string | null
+          lembrete_minutos: number | null
+          link_google: string | null
+          link_reuniao: string | null
+          local: string | null
+          pode_editar: boolean
+          titulo: string
+          usuario_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          calendario_id?: string
+          convidados?: string[]
+          descricao?: string | null
+          dia_inteiro?: boolean
+          empresa_id: string
+          fim: string
+          google_evento_id: string
+          id?: string
+          inicio: string
+          lembrete_em?: string | null
+          lembrete_minutos?: number | null
+          link_google?: string | null
+          link_reuniao?: string | null
+          local?: string | null
+          pode_editar?: boolean
+          titulo: string
+          usuario_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          calendario_id?: string
+          convidados?: string[]
+          descricao?: string | null
+          dia_inteiro?: boolean
+          empresa_id?: string
+          fim?: string
+          google_evento_id?: string
+          id?: string
+          inicio?: string
+          lembrete_em?: string | null
+          lembrete_minutos?: number | null
+          link_google?: string | null
+          link_reuniao?: string | null
+          local?: string | null
+          pode_editar?: boolean
+          titulo?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agenda_eventos_google_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_actions: {
         Row: {
           args: Json | null
@@ -2003,6 +2074,74 @@ export type Database = {
           },
         ]
       }
+      drive_pastas: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          para_cliente: boolean
+          pasta_id: string
+          pasta_pai_id: string | null
+          projeto_disciplina_id: string | null
+          projeto_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          id?: string
+          nome: string
+          para_cliente?: boolean
+          pasta_id: string
+          pasta_pai_id?: string | null
+          projeto_disciplina_id?: string | null
+          projeto_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          para_cliente?: boolean
+          pasta_id?: string
+          pasta_pai_id?: string | null
+          projeto_disciplina_id?: string | null
+          projeto_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drive_pastas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drive_pastas_projeto_disciplina_id_fkey"
+            columns: ["projeto_disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_disciplinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drive_pastas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drive_pastas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_dominios_bloqueados: {
         Row: {
           created_at: string
@@ -3115,6 +3254,173 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "fornecedores_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_agenda_calendarios: {
+        Row: {
+          atualizado_em: string
+          calendario_id: string
+          cor: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          pode_editar: boolean
+          principal: boolean
+          usuario_id: string
+          visivel: boolean
+        }
+        Insert: {
+          atualizado_em?: string
+          calendario_id: string
+          cor?: string | null
+          empresa_id: string
+          id?: string
+          nome: string
+          pode_editar?: boolean
+          principal?: boolean
+          usuario_id: string
+          visivel?: boolean
+        }
+        Update: {
+          atualizado_em?: string
+          calendario_id?: string
+          cor?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          pode_editar?: boolean
+          principal?: boolean
+          usuario_id?: string
+          visivel?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_agenda_calendarios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_agenda_conexoes: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          erro: string | null
+          google_email: string
+          lembrete_minutos: number | null
+          refresh_token_cifrado: string
+          sincronizado_em: string | null
+          updated_at: string
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          erro?: string | null
+          google_email: string
+          lembrete_minutos?: number | null
+          refresh_token_cifrado: string
+          sincronizado_em?: string | null
+          updated_at?: string
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          erro?: string | null
+          google_email?: string
+          lembrete_minutos?: number | null
+          refresh_token_cifrado?: string
+          sincronizado_em?: string | null
+          updated_at?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_agenda_conexoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_drive_conexoes: {
+        Row: {
+          conectado_por: string | null
+          created_at: string
+          empresa_id: string
+          google_email: string
+          pasta_raiz_id: string
+          refresh_token_cifrado: string
+          updated_at: string
+        }
+        Insert: {
+          conectado_por?: string | null
+          created_at?: string
+          empresa_id: string
+          google_email: string
+          pasta_raiz_id: string
+          refresh_token_cifrado: string
+          updated_at?: string
+        }
+        Update: {
+          conectado_por?: string | null
+          created_at?: string
+          empresa_id?: string
+          google_email?: string
+          pasta_raiz_id?: string
+          refresh_token_cifrado?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_drive_conexoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_drive_oauth_estados: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          estado_hash: string
+          expira_em: string
+          retorno: string
+          servico: string
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          estado_hash: string
+          expira_em: string
+          retorno?: string
+          servico?: string
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          estado_hash?: string
+          expira_em?: string
+          retorno?: string
+          servico?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_drive_oauth_estados_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
@@ -9856,6 +10162,7 @@ export type Database = {
         }
         Returns: string
       }
+      agenda_gerar_lembretes: { Args: never; Returns: number }
       agente_pendencia_adiar: {
         Args: { p_dias: number; p_id: string }
         Returns: undefined
@@ -10186,6 +10493,10 @@ export type Database = {
       criar_fornecedor_agente: { Args: { p_run_id: string }; Returns: Json }
       criar_lead_agente: { Args: { p_run_id: string }; Returns: Json }
       criar_marco_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_obra_da_estimativa: {
+        Args: { p_estimativa_id: string; p_fases: Json; p_obra: Json }
+        Returns: string
+      }
       criar_pessoa_agente: { Args: { p_run_id: string }; Returns: Json }
       criar_projeto_agente: { Args: { p_run_id: string }; Returns: Json }
       criar_proposta_agente: { Args: { p_run_id: string }; Returns: Json }
@@ -10340,6 +10651,25 @@ export type Database = {
           valor_m2: number
         }[]
       }
+      get_google_agenda_status: {
+        Args: never
+        Returns: {
+          conectado: boolean
+          conectado_em: string
+          erro: string
+          google_email: string
+          lembrete_minutos: number
+          sincronizado_em: string
+        }[]
+      }
+      get_google_drive_status: {
+        Args: never
+        Returns: {
+          conectado: boolean
+          conectado_em: string
+          google_email: string
+        }[]
+      }
       get_grupos_parcela_resumo: {
         Args: { p_grupo_ids: string[] }
         Returns: {
@@ -10473,6 +10803,8 @@ export type Database = {
       get_user_empresa_id: { Args: never; Returns: string }
       get_user_empresa_id_text: { Args: never; Returns: string }
       get_user_role: { Args: never; Returns: string }
+      google_agenda_cron: { Args: never; Returns: undefined }
+      google_agenda_lembretes_cron: { Args: never; Returns: undefined }
       guard_login_attempt: { Args: { p_email: string }; Returns: boolean }
       guardiao_margem_disparar: { Args: never; Returns: undefined }
       has_aal2: { Args: never; Returns: boolean }
@@ -10745,6 +11077,7 @@ export type Database = {
         Args: { p_nova_senha: string; p_senha_atual: string; p_token: string }
         Returns: Json
       }
+      portal_convite_consultar: { Args: { p_token: string }; Returns: Json }
       portal_convite_definir_senha: {
         Args: { p_senha: string; p_token: string }
         Returns: Json
@@ -11185,6 +11518,14 @@ export type Database = {
       }
       set_financeiro_delegado: {
         Args: { p_delegado: boolean; p_user_id: string }
+        Returns: undefined
+      }
+      set_google_agenda_calendario_visivel: {
+        Args: { p_id: string; p_visivel: boolean }
+        Returns: undefined
+      }
+      set_google_agenda_lembrete: {
+        Args: { p_minutos: number }
         Returns: undefined
       }
       set_metas_delegado: {

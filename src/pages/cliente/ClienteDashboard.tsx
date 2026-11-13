@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FolderKanban, ArrowRight, Building2 } from "lucide-react";
 import { ClienteShell } from "./ClienteShell";
+import { ConviteInstalarApp } from "@/components/instalar/ConviteInstalarApp";
 import { useClienteProjetos, type ClienteProjeto } from "./useClienteProjetos";
 import { useClienteObras } from "./useClienteObraData";
 import type { ClienteAccount } from "@/hooks/useClienteAuth";
@@ -10,7 +11,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 
 import { ReadingRing } from "@/components/motion/ReadingRing";
 
-// Suporte do Pilar encaminha o cliente ao escritório responsável pela conta.
+// Suporte da Pilar encaminha o cliente ao escritório responsável pela conta.
 const SUPORTE_EMAIL = "suporte@pilarsoft.com.br";
 
 function calcProgress(disciplinas: ClienteProjeto["disciplinas"]): number {
@@ -38,6 +39,9 @@ export default function ClienteDashboard() {
           <h1 className="text-xl font-semibold text-ink">Olá, {account.nome.split(" ")[0]}</h1>
           <p className="text-sm text-muted-foreground mt-1">Acompanhe o andamento dos seus projetos.</p>
         </div>
+
+        {/* Celular aberto pelo navegador: convite para pôr o portal na tela inicial. */}
+        <ConviteInstalarApp publico="portal" />
 
         {/* Loading */}
         {loading && (

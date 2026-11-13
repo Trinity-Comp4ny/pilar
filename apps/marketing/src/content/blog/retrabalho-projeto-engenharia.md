@@ -82,9 +82,9 @@ Quando o prazo muda, registre o motivo. O histórico de mudanças de data mostra
 - Compatibilização em momentos marcados, não quando sobra tempo.
 - Mudança de prazo sempre com motivo escrito.
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O [módulo Projetos](/projetos) do Pilar organiza o projeto do jeito que o escritório multidisciplinar trabalha: um conjunto de disciplinas, com gente e data em cada uma.
+O [módulo Projetos](/projetos) da Pilar organiza o projeto do jeito que o escritório multidisciplinar trabalha: um conjunto de disciplinas, com gente e data em cada uma.
 
 - **Fluxo padrão do escritório.** Cadastre a sequência de etapas e disciplinas uma vez, e todo projeto novo nasce com ela e com responsável definido.
 - **Vários responsáveis por disciplina**, com etiqueta, link e comentário no mesmo lugar, para a decisão ficar registrada junto do trabalho.
@@ -92,7 +92,7 @@ O [módulo Projetos](/projetos) do Pilar organiza o projeto do jeito que o escri
 - **Atraso pede justificativa.** Mudou a data, o sistema exige o motivo, e o histórico do projeto fica inteiro.
 - **Proposta por disciplina.** No [módulo Gestão](/gestao), a proposta sai no template do escritório, montada por disciplina.
 
-Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça o Pilar [para engenharia](/engenharia).
+Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça a Pilar [para engenharia](/engenharia).
 
 ## Perguntas frequentes
 

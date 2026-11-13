@@ -2,7 +2,7 @@ import { trackCta } from "../analytics";
 import { DEMO_URL } from "../lib/contato";
 
 /**
- * Caminho secundário para quem quer ver o Pilar antes de assinar (decisão de
+ * Caminho secundário para quem quer ver a Pilar antes de assinar (decisão de
  * 2026-11-08): os botões principais levam aos planos; a demonstração fica numa
  * linha discreta embaixo, em nova aba (Google Agenda) e sem dar `window.opener`.
  */

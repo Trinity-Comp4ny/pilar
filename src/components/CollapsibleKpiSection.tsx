@@ -15,6 +15,11 @@ interface CollapsibleKpiSectionProps {
    */
   controls?: React.ReactNode;
   label?: string;
+  /**
+   * Resumo de uma linha mostrado ao lado do rótulo enquanto a faixa está recolhida
+   * (ex.: "9 ativos · 8 em atraso"). Recolher passa a custar só essa linha.
+   */
+  resumo?: React.ReactNode;
 }
 
 /**
@@ -26,6 +31,7 @@ export function CollapsibleKpiSection({
   children,
   controls,
   label = "Indicadores",
+  resumo,
 }: CollapsibleKpiSectionProps) {
   const [open, setOpen] = usePersistedOpen(`kpis-${storageKey}`);
 
@@ -36,6 +42,10 @@ export function CollapsibleKpiSection({
           <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", !open && "-rotate-90")} />
           {label}
         </CollapsibleTrigger>
+        {/* Celular: o resumo desce para uma linha inteira, abaixo do gatilho e dos controles. */}
+        {!open && resumo && (
+          <div className="mr-auto min-w-0 max-md:order-last max-md:basis-full md:truncate">{resumo}</div>
+        )}
         {controls && <div className="flex flex-wrap items-center gap-2">{controls}</div>}
       </div>
       <CollapsibleContent>

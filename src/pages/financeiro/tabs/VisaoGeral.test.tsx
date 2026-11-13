@@ -165,7 +165,7 @@ describe("VisaoGeral", () => {
   it("KPIs com lucro, margem e pendências", () => {
     setup();
     expect(screen.getByText("Lucro líquido")).toBeInTheDocument();
-    expect(screen.getByText("Margem de 40.0%")).toBeInTheDocument();
+    expect(screen.getByText("Margem de 40,0%")).toBeInTheDocument();
     expect(screen.getByText("3 lançamento(s) pendente(s)")).toBeInTheDocument();
     expect(screen.getByText("2 lançamento(s) pendente(s)")).toBeInTheDocument();
     expect(screen.getAllByText(/R\$\s?40\.000,00/).length).toBeGreaterThan(0);
@@ -196,7 +196,7 @@ describe("VisaoGeral", () => {
   it("lucro negativo continua mostrando a margem negativa", () => {
     financeState.data = { ...dadosCheios, stats: { ...dadosCheios.stats, saldo: -20000 } };
     setup();
-    expect(screen.getByText("Margem de -20.0%")).toBeInTheDocument();
+    expect(screen.getByText("Margem de -20,0%")).toBeInTheDocument();
   });
 
   it("gráfico alterna entre comparativo mensal/diário e performance", () => {

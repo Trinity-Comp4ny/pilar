@@ -71,7 +71,7 @@ export function CancelDialog({ open, onOpenChange, current }: CancelDialogProps)
             <AlertDialogTitle>Cancelar assinatura</AlertDialogTitle>
           </div>
           <AlertDialogDescription>
-            A assinatura do Pilar {current.plan?.nome} será encerrada. Nenhuma nova cobrança será gerada.
+            A assinatura da Pilar {current.plan?.nome} será encerrada. Nenhuma nova cobrança será gerada.
             {dentroDoArrependimento ? (
               <>
                 {" "}

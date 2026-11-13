@@ -90,9 +90,9 @@ O passo 8 é o que transforma o diário em gestão. Registro que ninguém lê vi
 
 Depende da exigência do conselho e do contrato. O Livro de Ordem é um registro previsto pelo sistema Confea/CREA, com regras próprias. Muitos escritórios mantêm os dois: o livro para a exigência formal e o RDO digital para a gestão do dia a dia. Confirme com o CREA ou o CAU da sua região o que vale para o seu caso.
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O [Pilar Campo](/campo) é a parte do Pilar feita para o canteiro: o encarregado abre no navegador do celular, registra o dia e o escritório recebe o diário pronto no [módulo Obra](/obra).
+O [Pilar Campo](/campo) é a parte da Pilar feita para o canteiro: o encarregado abre no navegador do celular, registra o dia e o escritório recebe o diário pronto no [módulo Obra](/obra).
 
 - Clima, efetivo, atividade, ocorrência, pendência, foto e medição no mesmo registro.
 - Funciona sem sinal: o dia fica no aparelho e sobe sozinho quando a rede volta, foto por foto, sem duplicar.

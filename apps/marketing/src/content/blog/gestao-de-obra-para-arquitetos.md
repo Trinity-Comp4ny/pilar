@@ -77,9 +77,9 @@ O que muda entre os modelos é a profundidade, não a necessidade de registro. E
 - **Pendências com dono e data.** Decisão de acabamento, chegada de material, liberação de frente.
 - **Relatório periódico ao cliente**, com o resumo do período. O formato está em [relatório de obra para o cliente](/blog/relatorio-de-obra-cliente).
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O [módulo Obra](/obra) do Pilar foi feito para escritório de projeto que também atua no canteiro, nos três modelos.
+O [módulo Obra](/obra) da Pilar foi feita para escritório de projeto que também atua no canteiro, nos três modelos.
 
 - Diário de obra preenchido pelo encarregado no celular com o [Pilar Campo](/campo): clima, efetivo, atividade, ocorrência, pendência, foto e medição, mesmo sem sinal.
 - Cronograma de obra em dois níveis, com frentes de serviço e passos marcados pelo campo como avançou, concluiu ou parou.
@@ -87,7 +87,7 @@ O [módulo Obra](/obra) do Pilar foi feito para escritório de projeto que tamb�
 - Orçamento de fornecedor lido por agente de IA e cotação comparada lado a lado, com a vencedora registrada.
 - O cliente acompanha pelo [portal do cliente](/portal), num link só de leitura, sem conta e sem aplicativo.
 
-Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça o Pilar para [escritórios de arquitetura](/arquitetura).
+Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça a Pilar para [escritórios de arquitetura](/arquitetura).
 
 ## Perguntas frequentes
 

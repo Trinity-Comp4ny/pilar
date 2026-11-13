@@ -234,8 +234,8 @@ export function ProjectDetailDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-none w-[96vw] h-[92dvh] overflow-hidden p-0 gap-0 flex flex-col">
           {/* Header compacto */}
-          <div className="shrink-0 px-8 pt-6 pb-4 border-b bg-muted/50">
-            <DialogHeader className="mb-0">
+          <div className="shrink-0 px-4 pt-3 pb-4 md:px-8 md:pt-6 border-b bg-muted/50">
+            <DialogHeader className="mb-0 text-left">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -323,7 +323,7 @@ export function ProjectDetailDialog({
             primaryLabel="Disciplinas"
             secondaryLabel="Atividades"
             primary={
-              <div className="h-full overflow-y-auto px-8 py-6">
+              <div className="h-full overflow-y-auto px-4 py-4 md:px-8 md:py-6">
                 <div className="flex items-center justify-between mb-3">
                   <Label className="text-xs font-semibold uppercase text-muted-foreground flex items-center gap-1.5">
                     <Layers className="h-3.5 w-3.5" />
@@ -499,7 +499,7 @@ export function ProjectDetailDialog({
               </div>
             }
             secondary={
-              <div className="flex h-full flex-col bg-muted/10 px-6 py-5">
+              <div className="flex h-full flex-col bg-muted/10 px-4 py-4 md:px-6 md:py-5">
                 <Label className="mb-3 flex shrink-0 items-center gap-2 text-sm font-semibold">
                   <MessageSquare className="h-4 w-4" /> Atividades
                 </Label>
@@ -511,7 +511,7 @@ export function ProjectDetailDialog({
           />
 
           {/* Footer */}
-          <div className="shrink-0 flex items-center justify-end gap-2 px-6 py-3 border-t bg-muted/30">
+          <div className="shrink-0 flex items-center justify-end gap-2 px-4 md:px-6 py-3 border-t bg-muted/30">
             <Button
               size="sm"
               onClick={() => {

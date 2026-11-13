@@ -61,7 +61,7 @@ export function PlanoTab({ empresaId, currentPlan }: { empresaId: string | null;
                   {PLAN_LABELS[currentPlan]}
                 </Badge>
               </CardTitle>
-              <CardDescription>Acesso completo ao Pilar no plano {PLAN_LABELS[currentPlan]}</CardDescription>
+              <CardDescription>Acesso completo à Pilar no plano {PLAN_LABELS[currentPlan]}</CardDescription>
             </div>
             <Button variant="outline" onClick={() => setComercialOpen(true)}>
               Falar com comercial

@@ -1,0 +1,41 @@
+{
+  "id": "fala-03-ia-nao-aprova",
+  "hook": "A IA da Pilar *não* aprova nada",
+  "tail": 3.4,
+  "lines": [
+    {
+      "id": "l01",
+      "text": "Muita gente me pergunta se dá para confiar em IA no financeiro do escritório."
+    },
+    {
+      "id": "l02",
+      "text": "Na Pilar, a IA prepara. Você conta o que aconteceu e ela monta o lançamento.",
+      "show": {
+        "type": "tela",
+        "tela": "aditivo",
+        "legenda": "A IA prepara"
+      }
+    },
+    {
+      "id": "l03",
+      "text": "O sistema confere a conta: o projeto, o valor, a parcela.",
+      "show": {
+        "type": "lista",
+        "itens": [
+          "Projeto pelo nome",
+          "Valor do contrato",
+          "Parcela calculada"
+        ],
+        "icone": "shield-check"
+      }
+    },
+    {
+      "id": "l04",
+      "text": "E nada grava sem o seu ok. Quem aprova é você."
+    },
+    {
+      "id": "l05",
+      "text": "É assim que dá para usar IA sem perder o controle."
+    }
+  ]
+}

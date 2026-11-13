@@ -91,9 +91,9 @@ Controle mínimo de estoque do canteiro:
 
 Com esse controle, a próxima cotação já começa sabendo o que não precisa comprar.
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O [módulo Obra](/obra) do Pilar tem a cotação de material dentro da obra, junto do diário e da conta.
+O [módulo Obra](/obra) da Pilar tem a cotação de material dentro da obra, junto do diário e da conta.
 
 - **Orçamento do fornecedor lido por IA.** Fotografe o orçamento ou solte o PDF. O agente de IA reconhece se é cesta ou comparação entre lojas e devolve os itens com preço e prazo. Você revisa antes de usar.
 - **Cotação comparada lado a lado.** Propostas dos fornecedores na mesma tabela, cesta com vários itens, e a vencedora eleita com histórico.

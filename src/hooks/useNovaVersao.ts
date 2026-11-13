@@ -92,8 +92,8 @@ export function useNovaVersao(): void {
       if (cancelado) return;
       toast.info(itens ? `Nova versão com ${contagemNovidades(itens)}` : "Nova versão disponível", {
         description: itens
-          ? "Recarregue para ver o que mudou no Pilar."
-          : "Recarregue para usar a versão mais recente do Pilar.",
+          ? "Recarregue para ver o que mudou na Pilar."
+          : "Recarregue para usar a versão mais recente da Pilar.",
         duration: Infinity,
         action: {
           label: "Recarregar",

@@ -55,7 +55,7 @@ export function TrialBanner() {
           <div className="space-y-2">
             <h2 className="text-xl font-semibold tracking-tight text-ink">Seu teste grátis terminou</h2>
             <p className="text-sm text-ink-muted leading-relaxed">
-              O período gratuito da sua empresa chegou ao fim. Assine um plano para continuar acessando o Pilar.
+              O período gratuito da sua empresa chegou ao fim. Assine um plano para continuar acessando a Pilar.
             </p>
           </div>
           <Button className="w-full" size="lg" variant="brand" onClick={() => openSettings("pagamento")}>

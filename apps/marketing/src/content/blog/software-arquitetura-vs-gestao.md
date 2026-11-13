@@ -73,16 +73,16 @@ Se a ferramenta de projeto já está resolvida, a lista para escolher a gestão 
 
 O passo a passo de avaliação, com perguntas para a demonstração, está em [sistema de gestão para escritório de arquitetura](/blog/sistema-gestao-escritorio-arquitetura). Se hoje a gestão é uma planilha, vale ver também a comparação entre [planilha e sistema](/vs/planilha).
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O Pilar é o software de gestão, não a ferramenta de projeto. Ele não abre arquivo de CAD nem modelo BIM, e não pretende. Ele organiza o escritório em volta do desenho:
+A Pilar é o software de gestão, não a ferramenta de projeto. Ele não abre arquivo de CAD nem modelo BIM, e não pretende. Ele organiza o escritório em volta do desenho:
 
 - **Projeto por disciplina:** quadro com as colunas do escritório, fluxo padrão de etapas e mais de um responsável por disciplina ([Projetos](/projetos)).
 - **Gantt da carteira inteira**, com justificativa obrigatória quando a data muda e aviso ao próximo responsável quando uma disciplina é concluída.
 - **Proposta por disciplina** em DOCX no seu modelo, que vira projeto e parcelas no financeiro quando o cliente aprova ([Gestão](/gestao)).
 - **Portal do cliente:** um link só de leitura, sem conta e sem aplicativo, com disciplinas, entregas e parcelas ([Portal](/portal)).
 
-Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça o Pilar [para arquitetura](/arquitetura).
+Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça a Pilar [para arquitetura](/arquitetura).
 
 ## Perguntas frequentes
 

@@ -26,7 +26,7 @@ const ROTULO_ACAO = {
 
 /**
  * Plano de prazo em risco (SPEC 148): mostra as disciplinas ainda abertas e prepara três ações
- * opcionais (avisar a equipe, comunicar o cliente, abrir aditivo de prazo). O Pilar não prevê a nova
+ * opcionais (avisar a equipe, comunicar o cliente, abrir aditivo de prazo). A Pilar não prevê a nova
  * data: ela depende de horas lançadas, que ainda não existem. A data e os dias são do usuário.
  */
 export function PrazoDrawer({ pendencia, onOpenChange, canEdit }: PrazoDrawerProps) {
@@ -151,7 +151,7 @@ export function PrazoDrawer({ pendencia, onOpenChange, canEdit }: PrazoDrawerPro
                       : ` ${plural(abertas.length, "disciplina segue", "disciplinas seguem")} em aberto.`}
                   </li>
                   <li>
-                    O Pilar não prevê a nova data: ela depende das horas lançadas por disciplina, que ainda não existem.
+                    A Pilar não prevê a nova data: ela depende das horas lançadas por disciplina, que ainda não existem.
                     Você informa a data ou os dias de aditivo.
                   </li>
                 </ul>
@@ -196,7 +196,7 @@ export function PrazoDrawer({ pendencia, onOpenChange, canEdit }: PrazoDrawerPro
                     Avisar os responsáveis{feitas.avisar && <Aplicado />}
                   </label>
                   <p className="pl-6 text-xs text-muted-foreground">
-                    Notificação no Pilar com a entrega e a quantidade de disciplinas abertas. Sem responsável com conta,
+                    Notificação na Pilar com a entrega e a quantidade de disciplinas abertas. Sem responsável com conta,
                     vai para a gestão.
                   </p>
                 </div>

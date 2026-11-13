@@ -32,6 +32,8 @@ import {
   mesValido,
   planilhaDoZip,
   precisaReimportar,
+  situacaoCubPorUf,
+  LIMITE_ATRASO_UF,
   type ArquivoSinapi,
   type Base,
   type MesBase,
@@ -665,6 +667,7 @@ async function coletarCub(db: Banco): Promise<void> {
   resumo(`### CUB${dryRun ? " (sem gravar)" : ""}`);
   const falhas: string[] = [];
   const semFonte: string[] = [];
+  const jaNoBanco: string[] = [];
   let total = 0;
 
   for (const uf of ufs) {
@@ -672,7 +675,10 @@ async function coletarCub(db: Banco): Promise<void> {
     const aBuscar = (["onerado", "desonerado"] as Regime[]).filter(
       (r) => Boolean(forcado) || !tem(uf, doMaisNovo[0], r)
     );
-    if (aBuscar.length === 0) continue;
+    if (aBuscar.length === 0) {
+      jaNoBanco.push(uf);
+      continue;
+    }
 
     // Fontes da UF em ordem. SP e RS publicam só no portal próprio.
     const portal = portaisDaUf(uf, extras);
@@ -701,6 +707,10 @@ async function coletarCub(db: Banco): Promise<void> {
       for (const mes of doMaisNovo) {
         if (!forcado && tem(uf, mes, regime)) {
           achou = true; // já temos este mês: os mais antigos não interessam
+          const pulados = doMaisNovo.indexOf(mes);
+          resumo(
+            `- ${uf} ${mes.slice(5, 7)}/${mes.slice(0, 4)} ${nomeRegime} desoneração: já está no banco; o Sinduscon ainda não publicou os ${pulados} mês(es) seguinte(s).`
+          );
           break;
         }
         const rotulo = `${uf} ${mes.slice(5, 7)}/${mes.slice(0, 4)} ${nomeRegime} desoneração`;
@@ -758,6 +768,10 @@ async function coletarCub(db: Banco): Promise<void> {
     }
   }
 
+  if (jaNoBanco.length > 0) {
+    const m = doMaisNovo[0];
+    resumo(`- Já no banco com ${m.slice(5, 7)}/${m.slice(0, 4)} nos dois regimes: ${jaNoBanco.join(", ")}.`);
+  }
   if (semFonte.length > 0) resumo(`- Sem fonte automática, fica na importação manual: ${semFonte.join("; ")}.`);
   resumo(`- Total: ${total} valores ${dryRun ? "lidos" : "gravados"}.`);
   if (falhas.length > 0) {
@@ -784,10 +798,31 @@ async function conferir(db: Banco): Promise<void> {
     );
     if (a) atrasos.push(a);
   }
-  if (atrasos.length > 0) {
+
+  // CUB por UF: a conferência acima só vê o mês mais novo do conjunto, e uma UF parada passaria batido.
+  const situacao = situacaoCubPorUf(await db.ultimoCubPorUf(), UFS, hoje);
+  resumo("");
+  resumo("#### CUB por UF");
+  resumo("| UF | Último mês | Meses atrás | Origem |");
+  resumo("|---|---|---|---|");
+  for (const s of situacao) {
+    const mes = s.mes ? `${s.mes.slice(5, 7)}/${s.mes.slice(0, 4)}` : "nenhum";
+    const origem = s.mes ? (s.automatica ? "automática" : "manual") : "";
+    resumo(`| ${s.uf} | ${mes} | ${s.mesesAtras ?? ""}${s.alerta ? " (PAROU)" : ""} | ${origem} |`);
+  }
+  const paradas = situacao.filter((s) => s.alerta).map((s) => s.uf);
+
+  const problemas: string[] = [];
+  if (atrasos.length > 0)
+    problemas.push(`Preço de referência atrasado: ${atrasos.map((a) => a.base.toUpperCase()).join(" e ")}.`);
+  if (paradas.length > 0) {
+    problemas.push(
+      `CUB parado há mais de ${LIMITE_ATRASO_UF} meses em ${paradas.join(", ")} (a fonte automática deixou de trazer o mês).`
+    );
+  }
+  if (problemas.length > 0) {
     throw new Error(
-      `Preço de referência atrasado: ${atrasos.map((a) => a.base.toUpperCase()).join(" e ")}. ` +
-        "Importe em Ultra > Estimativa de obra (docs/operations/ESTIMATIVA_IMPORTAR_PRECOS_MENSAL.md)."
+      `${problemas.join(" ")} Importe em Ultra > Estimativa de obra (docs/operations/ESTIMATIVA_IMPORTAR_PRECOS_MENSAL.md).`
     );
   }
 }

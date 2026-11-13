@@ -1,0 +1,18 @@
+{
+  "voz": "narração por cima do vídeo (narrate.py, narrar_sobre); t = segundo em que a fala entra",
+  "fim": 18.6,
+  "lines": [
+    {
+      "t": 0.4,
+      "say": "Anatomia de um prejuízo. O projeto foi orçado em quatrocentas e vinte horas. Aí vem uma revisão aqui, um ajuste ali..."
+    },
+    {
+      "t": 10.0,
+      "say": "Cento e trinta horas que ninguém cobrou."
+    },
+    {
+      "t": 14.9,
+      "say": "Na Pilar, a hora real aparece durante."
+    }
+  ]
+}

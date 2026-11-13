@@ -46,7 +46,7 @@ const FAQS = [
   {
     pergunta: "Já uso planilha. Por que trocar?",
     resposta:
-      "Planilha não gera a proposta no seu template, não avisa o responsável da etapa seguinte e não recebe o diário de obra do canteiro. O Pilar faz as três coisas.",
+      "Planilha não gera a proposta no seu template, não avisa o responsável da etapa seguinte e não recebe o diário de obra do canteiro. A Pilar faz as três coisas.",
   },
   {
     pergunta: "É mais um sistema para alimentar?",
@@ -58,9 +58,9 @@ export function Faq() {
   const [aberta, setAberta] = useState<number | null>(0);
 
   usePageMeta({
-    titulo: "Perguntas frequentes sobre o Pilar, software de gestão | Pilar",
+    titulo: "Perguntas frequentes sobre a Pilar, software de gestão | Pilar",
     descricao:
-      "Para quem é o Pilar, como os módulos se conectam e o que a IA faz (e o que ela nunca faz sem o seu aval). As respostas antes de assinar.",
+      "Para quem é a Pilar, como os módulos se conectam e o que a IA faz (e o que ela nunca faz sem o seu aval). As respostas antes de assinar.",
     caminho: "/faq",
   });
 
@@ -96,7 +96,7 @@ export function Faq() {
           <div className="max-w-3xl mx-auto">
             <Reveal className="mb-14 p-6 md:p-8 rounded-xl bg-paper-alt border border-paper-border">
               <h2 className="text-xl md:text-2xl font-medium text-ink tracking-tight mb-6">
-                O Pilar serve pro meu escritório?
+                A Pilar serve pro meu escritório?
               </h2>
               <div className="grid sm:grid-cols-2 gap-8">
                 <div>

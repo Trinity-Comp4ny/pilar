@@ -1,7 +1,7 @@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
-/** Caixa "Dar acesso ao Pilar" do cadastro de pessoa nova. */
+/** Caixa "Dar acesso à Pilar" do cadastro de pessoa nova. */
 export function CampoDarAcesso({
   checked,
   onCheckedChange,
@@ -20,7 +20,7 @@ export function CampoDarAcesso({
         />
         <div className="space-y-0.5">
           <Label htmlFor="enviar_convite" className="text-sm font-medium">
-            Dar acesso ao Pilar
+            Dar acesso à Pilar
           </Label>
           <p className="text-xs text-muted-foreground">
             Envia o convite para o e-mail acima. Com acesso, a pessoa aparece no @ das atividades e recebe os avisos.

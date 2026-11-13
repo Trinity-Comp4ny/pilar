@@ -61,7 +61,7 @@ export function HeroSceneMobile({ ato, estatico }: { ato: number; estatico: bool
       className="relative rounded-2xl border border-paper-border bg-white overflow-hidden shadow-[0_2px_4px_rgba(0,0,0,0.04),0_20px_50px_-24px_rgba(0,0,0,0.3)]"
     >
       <div className="flex items-center gap-2 px-4 py-3 border-b border-paper-border/70 bg-paper-alt/60">
-        <img src="/pilar-logo.svg" alt="" className="w-5 h-5 shrink-0" />
+        <img src="/pilar-logo.svg" alt="Logo da Pilar" className="w-5 h-5 shrink-0" />
         <span className="text-[12px] font-medium text-ink">Copiloto do escritório</span>
         <m.span
           className="ml-auto w-1.5 h-1.5 rounded-full bg-brand"
@@ -131,10 +131,9 @@ export function HeroSceneMobile({ ato, estatico }: { ato: number; estatico: bool
             </div>
           ))}
           <m.div
-            className="mt-3 flex items-center justify-center gap-1.5 rounded-full py-2 text-[12px] font-medium"
+            className="mt-3 flex items-center justify-center gap-1.5 rounded-full py-2 text-[12px] font-medium text-ink-on-brand"
             animate={{
-              backgroundColor: aprovado ? "hsl(var(--positive-strong))" : "hsl(var(--brand-accent))",
-              color: aprovado ? "#ffffff" : "hsl(var(--text-on-brand))",
+              backgroundColor: aprovado ? "hsl(var(--brand-accent-soft))" : "hsl(var(--brand-accent))",
             }}
             transition={{ duration: 0.3 }}
           >

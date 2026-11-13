@@ -13,7 +13,15 @@ imagem esperada, a atual e o diff de cada tela. Se a diferença é bug, corrija.
 ## Atualizar a referência
 
 A referência precisa ser gerada em Linux (mesmo runner do CI); a do macOS difere
-em fonte e antialiasing. Por isso não se atualiza na máquina local:
+em fonte e antialiasing. Por isso não se atualiza na máquina local.
+
+**Jeito normal (funciona pelo celular):** ponha a label `atualizar-visual` no PR.
+O workflow `atualizar-referencias-visuais.yml` sobe o Supabase local, regrava as
+referências, commita os PNGs na branch do PR, dispara o CI de novo e tira a label.
+Confira as imagens novas no diff do PR antes de mergear: a referência passa a ser
+o que a tela mostra agora.
+
+Jeito manual (só se o workflow não servir):
 
 1. No PR, ligue `E2E_VISUAL_ATUALIZAR: "1"` no job `e2e-local` do `ci.yml` e faça push.
 2. Baixe o artifact `screenshots-visual-*` do run e copie os PNGs para

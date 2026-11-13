@@ -17,6 +17,10 @@ import { PRIVACY_VERSION, TERMS_VERSION, TERMS_VIGENCIA_TEXTO, termosVigentes } 
  *
  * Antes da vigência: faixa no topo, com "Agora não" (volta na próxima sessão).
  * Depois da vigência: janela que só fecha com o aceite.
+ *
+ * `modo` separa as duas partes porque elas vivem em lugares diferentes: a janela é global
+ * (App), para bloquear em qualquer tela; a faixa fica no Layout, depois do skip link, para
+ * o primeiro Tab continuar sendo "Pular para conteúdo principal".
  */
 
 const CHAVE_ADIADO = "pilar_aceite_termos_adiado";
@@ -58,7 +62,9 @@ function LinkTermos({ className }: { className?: string }) {
   );
 }
 
-export function AceiteTermosBanner() {
+export type ModoAceiteTermos = "faixa" | "janela" | "ambos";
+
+export function AceiteTermosBanner({ modo = "ambos" }: { modo?: ModoAceiteTermos }) {
   const { user, profile } = useAuth();
   const { pathname } = useLocation();
   const queryClient = useQueryClient();
@@ -95,6 +101,7 @@ export function AceiteTermosBanner() {
   const vigente = termosVigentes();
 
   if (vigente) {
+    if (modo === "faixa") return null;
     return (
       <div
         role="dialog"
@@ -111,7 +118,7 @@ export function AceiteTermosBanner() {
               Novos Termos de Uso
             </h2>
             <p className="text-sm leading-relaxed text-ink-muted">
-              {`Os Termos de Uso e a Política de Privacidade do Pilar mudaram e valem desde ${TERMS_VIGENCIA_TEXTO}. Como administrador da conta, você aceita em nome da empresa para seguir usando.`}
+              {`Os Termos de Uso e a Política de Privacidade da Pilar mudaram e valem desde ${TERMS_VIGENCIA_TEXTO}. Como administrador da conta, você aceita em nome da empresa para seguir usando.`}
             </p>
           </div>
           <LinkTermos className="block text-sm font-medium text-ink underline underline-offset-2" />
@@ -130,7 +137,7 @@ export function AceiteTermosBanner() {
     );
   }
 
-  if (adiado) return null;
+  if (adiado || modo === "janela") return null;
 
   const adiar = () => {
     try {

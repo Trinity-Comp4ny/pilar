@@ -19,6 +19,7 @@ import { getMonthLabel } from "../types";
 import { calcularVariavel, calcularTotal, subtotalProjeto } from "../folhaCalc";
 
 import { BusyMark } from "@/components/motion/BusyMark";
+import { useAcaoPendente } from "@/hooks/useAcaoPendente";
 import { ReadingRing } from "@/components/motion/ReadingRing";
 
 interface CloseMonthDialogProps {
@@ -306,8 +307,8 @@ interface HistoryDetailDialogProps {
   selectedHistory: HistoryItem | null;
   loading: boolean;
   items: FolhaItem[];
-  onDownloadLote?: () => void;
-  onDownloadComprovante?: (item: FolhaItem) => void;
+  onDownloadLote?: () => void | Promise<void>;
+  onDownloadComprovante?: (item: FolhaItem) => void | Promise<void>;
 }
 
 export function HistoryDetailDialog({
@@ -320,6 +321,8 @@ export function HistoryDetailDialog({
   onDownloadComprovante,
 }: HistoryDetailDialogProps) {
   const formatCurrency = useMoneyMask();
+  // O lote junta todos os PDFs e demora: botão ocupado até o download começar.
+  const { executar, pendente } = useAcaoPendente();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90dvh] overflow-y-auto">
@@ -331,8 +334,13 @@ export function HistoryDetailDialog({
         </DialogHeader>
         {!loading && items.length > 0 && onDownloadLote && (
           <div className="flex justify-end">
-            <Button variant="outline" size="sm" onClick={onDownloadLote}>
-              Baixar lote de comprovantes
+            <Button
+              variant="outline"
+              size="sm"
+              loading={pendente("lote")}
+              onClick={() => executar("lote", async () => onDownloadLote())}
+            >
+              {pendente("lote") ? "Gerando comprovantes…" : "Baixar lote de comprovantes"}
             </Button>
           </div>
         )}
@@ -384,9 +392,10 @@ export function HistoryDetailDialog({
                         variant="outline"
                         size="sm"
                         className="h-8 gap-1 text-xs"
-                        onClick={() => onDownloadComprovante?.(item)}
+                        loading={pendente(item.p_id)}
+                        onClick={() => executar(item.p_id, async () => onDownloadComprovante?.(item))}
                       >
-                        <FileDown className="h-3.5 w-3.5" />
+                        {!pendente(item.p_id) && <FileDown className="h-3.5 w-3.5" />}
                         PDF
                       </Button>
                     </TableCell>

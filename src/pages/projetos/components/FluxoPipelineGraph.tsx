@@ -13,6 +13,8 @@ export interface FluxoPipelineNode {
   metaLabel?: string;
   /** Texto livre do badge de checklist: "2/5" (real) ou "5 itens" (template). Ausente = sem badge. */
   checklistLabel?: string;
+  /** Tom do `metaLabel`: atraso em vermelho, conclusão em verde. Ausente = neutro. */
+  metaTone?: "danger" | "success";
 }
 
 export interface FluxoPipelineStage {
@@ -20,6 +22,8 @@ export interface FluxoPipelineStage {
   titulo: string;
   /** Ex.: "5 dias úteis". Só o editor de template usa isso hoje. */
   subtitulo?: string;
+  /** Contagem "concluídas/total" no cabeçalho (grafo real, SPEC 162). */
+  resumo?: string;
   nodes: FluxoPipelineNode[];
 }
 
@@ -55,6 +59,10 @@ export function usePrefersReducedMotion(): boolean {
 interface ConnectorPath {
   d: string;
   length: number;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
 }
 
 /** Mede as caixas de etapa (via ref) e calcula um path bezier entre cada par consecutivo. */
@@ -86,6 +94,10 @@ function useEtapaConnectors(stageCount: number) {
         next.push({
           d: `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`,
           length: Math.abs(x2 - x1) + Math.abs(y2 - y1),
+          x1,
+          y1,
+          x2,
+          y2,
         });
       }
 
@@ -109,14 +121,32 @@ interface FluxoPipelineGraphProps {
   stages: FluxoPipelineStage[];
   onNodeClick?: (nodeKey: string) => void;
   className?: string;
+  /**
+   * Modo seleção (grafo real): `null` = nada selecionado, string = key do nó
+   * selecionado. Ausente = sem seleção (prévias do editor e do wizard).
+   */
+  selectedNodeKey?: string | null;
+  /** Índices dos conectores realçados; o conector i liga a etapa i à i+1. */
+  highlightedConnectors?: number[];
 }
+
+const META_TONE_CLASS: Record<NonNullable<FluxoPipelineNode["metaTone"]>, string> = {
+  danger: "text-danger-strong font-medium",
+  success: "text-success-strong",
+};
 
 /**
  * Grafo puro (colunas conectadas por SVG, estilo pipeline de CI). Não sabe nada de
  * disciplina/projeto real nem de template de fluxo: só recebe `stages` genéricos.
  * Reusado tanto pelo grafo real (FluxoPipeline) quanto pela prévia do editor.
  */
-export function FluxoPipelineGraph({ stages, onNodeClick, className }: FluxoPipelineGraphProps) {
+export function FluxoPipelineGraph({
+  stages,
+  onNodeClick,
+  className,
+  selectedNodeKey,
+  highlightedConnectors,
+}: FluxoPipelineGraphProps) {
   const reducedMotion = usePrefersReducedMotion();
   const { containerRef, stageRefs, paths } = useEtapaConnectors(stages.length);
   const [drawn, setDrawn] = useState(reducedMotion);
@@ -138,18 +168,34 @@ export function FluxoPipelineGraph({ stages, onNodeClick, className }: FluxoPipe
     <div className={cn("overflow-x-auto", className)}>
       <div ref={containerRef} className="relative flex items-stretch gap-14 py-1 min-w-max">
         <svg className="absolute inset-0 pointer-events-none" width="100%" height="100%">
-          {paths.map((p, i) => (
-            <path
-              key={i}
-              d={p.d}
-              fill="none"
-              className="stroke-border"
-              strokeWidth={2}
-              strokeDasharray={p.length}
-              strokeDashoffset={drawn ? 0 : p.length}
-              style={reducedMotion ? undefined : { transition: `stroke-dashoffset 700ms ${i * 90}ms ease-out` }}
-            />
-          ))}
+          {paths.map((p, i) => {
+            const realcado = highlightedConnectors?.includes(i) ?? false;
+            return (
+              <g key={i} data-connector={i} data-realcado={realcado || undefined}>
+                <path
+                  d={p.d}
+                  fill="none"
+                  className={realcado ? "stroke-status-progress" : "stroke-border"}
+                  strokeWidth={realcado ? 2.5 : 2}
+                  strokeDasharray={p.length}
+                  strokeDashoffset={drawn ? 0 : p.length}
+                  style={reducedMotion ? undefined : { transition: `stroke-dashoffset 700ms ${i * 90}ms ease-out` }}
+                />
+                <circle
+                  cx={p.x1}
+                  cy={p.y1}
+                  r={3.5}
+                  className={realcado ? "fill-status-progress" : "fill-status-unknown"}
+                />
+                <circle
+                  cx={p.x2}
+                  cy={p.y2}
+                  r={3.5}
+                  className={realcado ? "fill-status-progress" : "fill-status-unknown"}
+                />
+              </g>
+            );
+          })}
         </svg>
 
         {stages.map((stage, i) => (
@@ -167,6 +213,11 @@ export function FluxoPipelineGraph({ stages, onNodeClick, className }: FluxoPipe
             <div className="px-3 py-2 border-b bg-muted/40 flex items-baseline justify-between gap-2">
               <span className="text-xs font-semibold text-info-strong truncate">{stage.titulo}</span>
               {stage.subtitulo && <span className="text-[10px] text-muted-foreground shrink-0">{stage.subtitulo}</span>}
+              {stage.resumo && (
+                <span className="text-[10px] text-muted-foreground shrink-0" title="Concluídas / total">
+                  {stage.resumo}
+                </span>
+              )}
             </div>
             <div>
               {stage.nodes.length === 0 ? (
@@ -175,12 +226,17 @@ export function FluxoPipelineGraph({ stages, onNodeClick, className }: FluxoPipe
                 stage.nodes.map((node) => {
                   const config = STATUS_VISUAL_CONFIG[node.status];
                   const Icon = config.icon;
+                  const selecionado = selectedNodeKey != null && selectedNodeKey === node.key;
                   return (
                     <button
                       key={node.key}
                       type="button"
                       onClick={() => onNodeClick?.(node.key)}
-                      className="w-full flex items-center gap-2 px-3 py-2 border-b last:border-b-0 hover:bg-muted/40 transition-colors text-left"
+                      aria-pressed={selectedNodeKey !== undefined ? selecionado : undefined}
+                      className={cn(
+                        "w-full flex items-center gap-2 px-3 py-2 border-b last:border-b-0 transition-colors text-left",
+                        selecionado ? "bg-info-soft ring-2 ring-inset ring-status-progress" : "hover:bg-muted/40"
+                      )}
                     >
                       <span
                         className={cn(
@@ -201,7 +257,11 @@ export function FluxoPipelineGraph({ stages, onNodeClick, className }: FluxoPipe
                               <User className="h-2.5 w-2.5" /> {node.responsavelNome}
                             </span>
                           )}
-                          {node.metaLabel && <span>{node.metaLabel}</span>}
+                          {node.metaLabel && (
+                            <span className={cn("shrink-0", node.metaTone && META_TONE_CLASS[node.metaTone])}>
+                              {node.metaLabel}
+                            </span>
+                          )}
                           {node.checklistLabel && <span className="shrink-0">{node.checklistLabel}</span>}
                         </span>
                       </span>

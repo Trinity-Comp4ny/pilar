@@ -62,7 +62,7 @@ export function montarExportacao(fontes: Fontes, geradoEm: string) {
       gerado_em: geradoEm,
       base_legal: "LGPD, art. 18, II (acesso) e V (portabilidade)",
       conteudo:
-        "Dados da sua conta no Pilar. Projetos, clientes, financeiro e cadastro de equipe são dados da sua empresa e são exportados pelo administrador dela.",
+        "Dados da sua conta na Pilar. Projetos, clientes, financeiro e cadastro de equipe são dados da sua empresa e são exportados pelo administrador dela.",
       limites: LIMITES,
     },
     perfil: limpar(fontes.perfil),

@@ -2,10 +2,10 @@ import { assertEquals, assertNotEquals } from "https://deno.land/std@0.168.0/tes
 import { hashDoPrompt, proveniencia, releaseAtual } from "./ai-proveniencia.ts";
 
 Deno.test("hashDoPrompt: 16 hex, estável para o mesmo prompt e diferente quando o prompt muda", async () => {
-  const a = await hashDoPrompt("Você é o orquestrador do Pilar.");
+  const a = await hashDoPrompt("Você é o orquestrador da Pilar.");
   assertEquals(/^[0-9a-f]{16}$/.test(a), true);
-  assertEquals(await hashDoPrompt("Você é o orquestrador do Pilar."), a);
-  assertNotEquals(await hashDoPrompt("Você é o orquestrador do Pilar!"), a);
+  assertEquals(await hashDoPrompt("Você é o orquestrador da Pilar."), a);
+  assertNotEquals(await hashDoPrompt("Você é o orquestrador da Pilar!"), a);
 });
 
 Deno.test("releaseAtual: commit do deploy, null sem RELEASE_SHA ou com valor vazio", () => {
