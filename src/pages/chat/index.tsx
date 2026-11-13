@@ -200,8 +200,9 @@ export default function ChatPage() {
 
   return (
     <div
-      className="fixed inset-y-0 right-0 z-40 flex flex-col bg-background transition-[left] duration-300 ease-in-out"
-      style={{ left }}
+      className="fixed bottom-0 right-0 z-40 flex flex-col bg-background transition-[left] duration-300 ease-in-out"
+      // Desce pela altura das faixas de aviso do topo (Layout), como o PageLayout.
+      style={{ left, top: "var(--faixas-h, 0px)" }}
     >
       {/* Header padrão da casa (spec 002 via PageHeader), sempre visível. */}
       <div className="border-b border-border">

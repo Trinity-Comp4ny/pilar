@@ -222,7 +222,7 @@ export default function ProfileSetup() {
       const needsCompanySetup = isAdmin && !updatedProfile?.empresas?.onboarding_completed;
 
       if (!needsCompanySetup) {
-        toast.success("Tudo pronto.", { description: "Boas-vindas ao Pilar." });
+        toast.success("Tudo pronto.", { description: "Boas-vindas à Pilar." });
       }
       navigate(needsCompanySetup ? "/company-setup" : "/inicio");
     } catch (err: unknown) {

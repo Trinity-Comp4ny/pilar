@@ -32,7 +32,7 @@ const incidente: Aviso = {
   tom: "attention",
   titulo: "Lentidão no Financeiro",
   texto: "Encontramos a causa e estamos corrigindo.",
-  detalhe: "Afeta: Aplicação Pilar",
+  detalhe: "Afeta: Aplicaçãa Pilar",
 };
 
 beforeEach(() => {
@@ -50,7 +50,7 @@ describe("FaixaAvisos (SPEC 153)", () => {
     h.avisos = [incidente];
     render(<FaixaAvisos />);
     expect(screen.getByRole("status")).toHaveTextContent("Lentidão no Financeiro");
-    expect(screen.getByText("Afeta: Aplicação Pilar")).toBeInTheDocument();
+    expect(screen.getByText("Afeta: Aplicaçãa Pilar")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Acompanhar/ })).toHaveAttribute("href", "https://status.exemplo.test");
   });
 

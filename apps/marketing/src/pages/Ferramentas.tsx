@@ -21,13 +21,12 @@ const BASE = "https://www.pilarsoft.com.br";
 const reais = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 2 });
 const numero = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
 
-function Hero({ rotulo, h1, lede }: { rotulo: string; h1: ReactNode; lede: string }) {
+function Hero({ h1, lede }: { h1: ReactNode; lede: string }) {
   return (
     <section className="relative isolate overflow-hidden px-5 pb-12 pt-24 md:px-10 md:pb-16 md:pt-32">
       <HeroBackdrop />
       <div className="relative z-10 mx-auto max-w-6xl">
         <Reveal variant="up" className="max-w-3xl">
-          <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.16em] text-ink/50">{rotulo}</p>
           <h1 className="mb-5 text-[48px] font-medium leading-[1.08] tracking-[-0.035em] text-ink max-[1100px]:text-[38px] max-[850px]:text-[29px] max-[420px]:text-[25px]">
             {h1}
           </h1>
@@ -67,7 +66,7 @@ function Faq({ itens }: { itens: { pergunta: string; resposta: string }[] }) {
   );
 }
 
-/** Fecho de cada ferramenta: o que o Pilar faz com isso, sem esconder a ferramenta atrás de cadastro. */
+/** Fecho de cada ferramenta: o que a Pilar faz com isso, sem esconder a ferramenta atrás de cadastro. */
 function NoPilar({
   titulo,
   texto,
@@ -116,7 +115,6 @@ export function Ferramentas() {
   return (
     <>
       <Hero
-        rotulo="Ferramentas"
         h1={
           <>
             Ferramentas para escritório de <span className="italic text-ink/45">engenharia e arquitetura.</span>
@@ -230,7 +228,6 @@ export function CalculadoraHonorarios() {
   return (
     <>
       <Hero
-        rotulo="Ferramenta aberta"
         h1={f.h1}
         lede="Quanto custa uma hora do seu escritório, por quanto ela precisa ser vendida e quanto vale o projeto pelas horas estimadas. Os números de exemplo são hipotéticos: troque pelos seus."
       />
@@ -328,7 +325,7 @@ export function CalculadoraHonorarios() {
 
       <NoPilar
         titulo="Do preço à proposta, sem redigitar."
-        texto="No Pilar, a proposta é montada por disciplina e sai em DOCX no template do escritório. Aprovada, vira projeto com as parcelas no financeiro."
+        texto="Na Pilar, a proposta é montada por disciplina e sai em DOCX no template do escritório. Aprovada, vira projeto com as parcelas no financeiro."
         local={f.slug}
         para="/gestao"
         rotulo="Conhecer o módulo Gestão"
@@ -394,7 +391,6 @@ export function ModeloProposta() {
   return (
     <>
       <Hero
-        rotulo="Ferramenta aberta"
         h1={f.h1}
         lede="A estrutura de uma proposta por disciplina que evita a briga mais comum: o que estava ou não estava incluído. Copie, baixe e adapte ao seu escritório."
       />
@@ -445,7 +441,7 @@ export function ModeloProposta() {
 
       <NoPilar
         titulo="A proposta sai do sistema, no seu template."
-        texto="No Pilar, a proposta é montada por disciplina, sai em DOCX com a cara do escritório e vai por e-mail sem sair do sistema. Aprovada, vira projeto com as parcelas no financeiro."
+        texto="Na Pilar, a proposta é montada por disciplina, sai em DOCX com a cara do escritório e vai por e-mail sem sair do sistema. Aprovada, vira projeto com as parcelas no financeiro."
         local={f.slug}
         para="/gestao"
         rotulo="Conhecer o módulo Gestão"

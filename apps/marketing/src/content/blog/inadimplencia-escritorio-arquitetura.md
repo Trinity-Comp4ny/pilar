@@ -86,16 +86,16 @@ Inadimplência que ninguém vê não é cobrada. Uma rotina semanal curta resolv
 
 Isso só funciona se a parcela existir antes de o dinheiro cair. Quando a proposta aprovada já gera as parcelas do contrato, a vencida aparece na lista sem ninguém lembrar. É a mesma base do [fluxo de caixa do escritório](/blog/fluxo-de-caixa-escritorio-engenharia).
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O Pilar não cobra o cliente por você nem emite boleto em nome do escritório. O que ele faz, no [módulo Gestão](/gestao), é deixar visível quem deve e quanto, sem planilha paralela.
+A Pilar não cobra o cliente por você nem emite boleto em nome do escritório. O que ele faz, no [módulo Gestão](/gestao), é deixar visível quem deve e quanto, sem planilha paralela.
 
 - A proposta aprovada vira projeto, e as parcelas (mensais ou por marco) nascem no financeiro no mesmo clique.
 - Na aba de cada projeto, valor contratado, recebido, pendente e atrasado, com um clique para marcar recebido.
 - O extrato do banco entra em PDF, lido por um agente de IA; você revisa e aprova antes de gravar.
 - O [portal do cliente](/portal) mostra disciplina, entrega e parcela num link só de leitura.
 
-Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça o Pilar para [escritórios de arquitetura](/arquitetura).
+Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça a Pilar para [escritórios de arquitetura](/arquitetura).
 
 ## Perguntas frequentes
 

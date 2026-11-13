@@ -12,6 +12,7 @@ import { FinanceiroContent } from "@/pages/portal/PortalFinanceiro";
 import { EntregasContent } from "@/pages/portal/PortalEntregas";
 import { TimelineContent, type TimelineDisciplina } from "@/pages/portal/PortalTimeline";
 import { PendenciasCard } from "@/pages/portal/PendenciasCard";
+import { ArquivosDoProjeto } from "./ArquivosDoProjeto";
 import type { ClienteAccount } from "@/hooks/useClienteAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { toast } from "sonner";
@@ -249,6 +250,8 @@ export default function ClienteProjetoDetail() {
     content = <FinanceiroContent receitas={data.receitas ?? []} />;
   } else if (subPath === "/entregas") {
     content = <EntregasContent projetoId={data.projeto_id} />;
+  } else if (subPath === "/arquivos") {
+    content = <ArquivosDoProjeto projetoId={data.projeto_id} />;
   } else {
     content = <ProjetoOverview projeto={data} refresh={refresh} />;
   }

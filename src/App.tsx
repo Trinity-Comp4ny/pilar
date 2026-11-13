@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { ManifestDoApp } from "@/components/instalar/ManifestDoApp";
 import { toast } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { monitoring } from "@/lib/monitoring";
@@ -231,14 +232,16 @@ const App = () => {
           <SoltaBoot />
           <BrowserRouter>
             <PageTracker />
+            <ManifestDoApp />
             <AuthProvider>
               <ImpersonationProvider>
                 <SettingsModalProvider>
                   <ValoresOcultosProvider>
                     <ImpersonationBanner />
                     <TrialBanner />
+                    {/* Só a janela (após a vigência); a faixa fica no Layout, depois do skip link. */}
                     <Suspense fallback={null}>
-                      <AceiteTermosBanner />
+                      <AceiteTermosBanner modo="janela" />
                     </Suspense>
                     <Suspense fallback={<EntryVeil />}>
                       <Routes>
@@ -462,6 +465,7 @@ const App = () => {
                           <Route path="projeto/:id" element={<ClienteProjetoDetail />} />
                           <Route path="projeto/:id/financeiro" element={<ClienteProjetoDetail />} />
                           <Route path="projeto/:id/entregas" element={<ClienteProjetoDetail />} />
+                          <Route path="projeto/:id/arquivos" element={<ClienteProjetoDetail />} />
                           <Route path="obra/:id" element={<ClienteObraDetail />} />
                         </Route>
 

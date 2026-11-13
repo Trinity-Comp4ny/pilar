@@ -85,9 +85,9 @@ O contrato precisa dizer como se trata pedido novo: o cliente pede, o escritóri
 4. **Canal de aprovação indefinido.** Defina por onde a aprovação vale (e-mail, por exemplo) e quem do lado do cliente pode aprovar.
 5. **Contrato que diverge da proposta.** Escopo, valor e parcelas precisam ser os mesmos nos dois documentos.
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O contrato continua sendo um documento seu, revisado pelo seu advogado. O que o Pilar faz é garantir que o que foi combinado chegue inteiro à gestão do projeto.
+O contrato continua sendo um documento seu, revisado pelo seu advogado. O que a Pilar faz é garantir que o que foi combinado chegue inteiro à gestão do projeto.
 
 - A proposta é montada por disciplina e gerada em DOCX no template do escritório, pronta para enviar por e-mail sem sair do sistema. É a base do escopo do contrato.
 - Aprovada, a proposta vira projeto com as disciplinas, e as parcelas (mensais ou por marco) nascem no financeiro no mesmo clique.

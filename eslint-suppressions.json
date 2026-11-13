@@ -29,11 +29,6 @@
       "count": 2
     }
   },
-  "src/pages/clientes/[id]/index.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "src/pages/company/types.ts": {
     "no-restricted-syntax": {
       "count": 3
@@ -51,7 +46,7 @@
   },
   "src/pages/projetos/components/CronogramaProjetosTab.tsx": {
     "no-restricted-syntax": {
-      "count": 6
+      "count": 5
     }
   },
   "src/pages/projetos/components/DisciplinasTab.tsx": {

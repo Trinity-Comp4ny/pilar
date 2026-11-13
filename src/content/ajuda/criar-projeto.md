@@ -11,7 +11,7 @@ O projeto é o trabalho técnico contratado: escopo, disciplinas, prazos e valor
 
 ## Atalho pela proposta
 
-Proposta aceita vira projeto com **Criar projeto** (ou **Aceitar e criar projeto**), já com as disciplinas da proposta. Na sequência, o Pilar oferece gerar as parcelas a receber.
+Proposta aceita vira projeto com **Criar projeto** (ou **Aceitar e criar projeto**), já com as disciplinas da proposta. Na sequência, a Pilar oferece gerar as parcelas a receber.
 
 ## Bom saber
 

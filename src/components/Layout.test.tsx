@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import Layout from "./Layout";
+import { abrirPaletaComandos } from "@/lib/paletaComandosEvento";
 
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => false }));
 vi.mock("@/components/AppSidebar", () => ({ AppSidebar: () => <nav data-testid="sidebar" /> }));
@@ -20,11 +21,14 @@ vi.mock("@/components/AtalhosTecladoDialog", () => ({
 vi.mock("@/components/OnboardingChecklist", () => ({ OnboardingChecklist: () => <div data-testid="checklist" /> }));
 vi.mock("@/components/onboarding/OnboardingTourController", () => ({ OnboardingTourController: () => null }));
 vi.mock("@/components/novidades/OQueMudou", () => ({ OQueMudou: () => null }));
-vi.mock("@/components/FaixaAvisos", () => ({ FaixaAvisos: () => null }));
+vi.mock("@/components/FaixaAvisos", () => ({ FaixaAvisos: () => <div data-testid="faixa-avisos" /> }));
 vi.mock("@/components/agente/AgenteAjuda", () => ({ AgenteAjuda: () => null }));
 vi.mock("@/components/pesquisas/NpsCard", () => ({ NpsCard: () => null }));
 vi.mock("@/components/ComunicadoModal", () => ({ ComunicadoModal: () => null }));
 vi.mock("@/components/RegistroDispositivo", () => ({ RegistroDispositivo: () => null }));
+vi.mock("@/components/AceiteTermosBanner", () => ({
+  AceiteTermosBanner: ({ modo }: { modo?: string }) => <div data-testid="aceite-termos" data-modo={modo} />,
+}));
 vi.mock("@/lib/monitoring", () => ({ monitoring: { captureException: vi.fn(), addBreadcrumb: vi.fn() } }));
 
 function renderLayout(rota = "/inicio") {
@@ -60,7 +64,25 @@ describe("Layout", () => {
     expect(screen.getByTestId("bottom-nav")).toBeInTheDocument();
     expect(screen.getByText("Página início")).toBeInTheDocument();
     expect(await screen.findByTestId("checklist")).toBeInTheDocument();
-    expect(screen.getByText(/para comandos/)).toBeInTheDocument();
+    // A dica do ⌘K mora no trilho da sidebar, não flutuando por cima do conteúdo.
+    expect(screen.queryByText(/para comandos/)).not.toBeInTheDocument();
+  });
+
+  it("a faixa de reaceite dos Termos vem depois do skip link: o 1º Tab é o skip link", async () => {
+    renderLayout();
+    const skip = screen.getByRole("link", { name: "Pular para conteúdo principal" });
+    const faixa = await screen.findByTestId("aceite-termos");
+    expect(faixa).toHaveAttribute("data-modo", "faixa");
+    expect(skip.compareDocumentPosition(faixa) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("faixas de aviso ficam num bloco fixo fora do main, para o PageLayout não cobri-las", async () => {
+    renderLayout();
+    const avisos = await screen.findByTestId("faixa-avisos");
+    const termos = await screen.findByTestId("aceite-termos");
+    expect(screen.getByRole("main")).not.toContainElement(avisos);
+    expect(avisos.parentElement).toHaveClass("fixed");
+    expect(avisos.parentElement).toContainElement(termos);
   });
 
   it("⌘K abre a paleta sob demanda", async () => {
@@ -68,6 +90,14 @@ describe("Layout", () => {
     expect(screen.queryByTestId("paleta")).not.toBeInTheDocument();
     await act(async () => {
       fireEvent.keyDown(window, { key: "k", metaKey: true });
+    });
+    expect(await screen.findByTestId("paleta")).toBeInTheDocument();
+  });
+
+  it("o botão do trilho abre a paleta pelo evento, sem atalho de teclado", async () => {
+    renderLayout();
+    await act(async () => {
+      abrirPaletaComandos();
     });
     expect(await screen.findByTestId("paleta")).toBeInTheDocument();
   });

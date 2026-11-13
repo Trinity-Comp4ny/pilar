@@ -7,10 +7,12 @@ import {
   FolderKanban,
   DollarSign,
   FileCheck,
+  FolderOpen,
   LayoutDashboard,
   ChevronDown,
   KeyRound,
   Building2,
+  Smartphone,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -24,6 +26,7 @@ import { portalLogout, type ClienteAccount } from "@/hooks/useClienteAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
 import { TrocarSenhaForm } from "./TrocarSenhaForm";
+import { useInstalarApp } from "@/hooks/useInstalarApp";
 
 interface ClienteShellProps {
   account: ClienteAccount;
@@ -38,12 +41,14 @@ const projetoNavItems = [
   { path: "", label: "Visão Geral", icon: FolderKanban, end: true },
   { path: "/financeiro", label: "Financeiro", icon: DollarSign, end: false },
   { path: "/entregas", label: "Entregas", icon: FileCheck, end: false },
+  { path: "/arquivos", label: "Arquivos", icon: FolderOpen, end: false },
 ];
 
 export function ClienteShell({ account, children, projetoId, projetoNome, obraNome }: ClienteShellProps) {
   const navigate = useNavigate();
   const [isAdminSession, setIsAdminSession] = useState(false);
   const [senhaDialogOpen, setSenhaDialogOpen] = useState(false);
+  const instalarApp = useInstalarApp("portal", "menu");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -103,6 +108,12 @@ export function ClienteShell({ account, children, projetoId, projetoNome, obraNo
                   <KeyRound className="h-4 w-4 mr-2" />
                   Trocar senha
                 </DropdownMenuItem>
+                {instalarApp.disponivel && (
+                  <DropdownMenuItem onClick={() => void instalarApp.instalar()}>
+                    <Smartphone className="h-4 w-4 mr-2" />
+                    Instalar app
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="h-4 w-4 mr-2" />
@@ -203,6 +214,7 @@ export function ClienteShell({ account, children, projetoId, projetoNome, obraNo
           <TrocarSenhaForm onSuccess={() => setSenhaDialogOpen(false)} onCancel={() => setSenhaDialogOpen(false)} />
         </DialogContent>
       </Dialog>
+      {instalarApp.dialogo}
     </div>
   );
 }

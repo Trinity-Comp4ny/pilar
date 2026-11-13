@@ -22,6 +22,9 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 vi.mock("sonner", () => ({ toast: { error: h.toastError, success: h.toastSuccess } }));
 vi.mock("@/hooks/usePageTitle", () => ({ usePageTitle: vi.fn() }));
+vi.mock("./ArquivosDoProjeto", () => ({
+  ArquivosDoProjeto: () => <div data-testid="aba-arquivos" />,
+}));
 vi.mock("@/lib/monitoring", () => ({
   reportInvokeError: h.reportInvokeError,
   monitoring: { captureException: vi.fn() },
@@ -215,6 +218,20 @@ describe("ClienteProjetoDetail", () => {
         expect(h.toastError).toHaveBeenCalledWith("Sessão inválida", { description: "Faça login novamente." })
       );
       expect(h.invoke).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("aba Arquivos", () => {
+    it("o menu do projeto tem a aba Arquivos e ela abre o conteúdo de arquivos", async () => {
+      renderPage("/cliente/projeto/p1/arquivos");
+      expect(await screen.findByTestId("aba-arquivos")).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /Arquivos/ })).toHaveAttribute("href", "/cliente/projeto/p1/arquivos");
+    });
+
+    it("a Visão Geral não repete o bloco de arquivos", async () => {
+      renderPage("/cliente/projeto/p1");
+      await screen.findByText("Residência Seed");
+      expect(screen.queryByTestId("aba-arquivos")).not.toBeInTheDocument();
     });
   });
 

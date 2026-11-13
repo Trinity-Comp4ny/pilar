@@ -152,3 +152,54 @@ export function atraso(base: Base, ultimoGravado: MesBase | null, hoje: Date): A
   if (ultimoGravado && ultimoGravado >= esperado) return null;
   return { base, esperado, ultimo: ultimoGravado };
 }
+
+/** Último mês do CUB gravado para uma UF e regime, com a `fonte` daquela linha. */
+export interface UltimoCubDaUf {
+  uf: string;
+  regime: string;
+  mes: MesBase;
+  fonte: string;
+}
+
+export interface SituacaoCubDaUf {
+  uf: string;
+  /** Mês mais novo da UF em qualquer regime (RS e MS só publicam sem desoneração). */
+  mes: MesBase | null;
+  /** Meses entre o esperado (pelo prazo do dia 10) e o mês mais novo da UF. */
+  mesesAtras: number | null;
+  /** O mês mais novo veio do robô; senão, da importação manual. */
+  automatica: boolean;
+  /** Fonte automática que parou: atrás do esperado mais que o limite. Manual não alerta (seria issue eterna). */
+  alerta: boolean;
+}
+
+/** Quantos meses o CUB de uma UF pode ficar atrás do esperado antes de alertar (MG, PI, RN atrasam 2 a 3). */
+export const LIMITE_ATRASO_UF = 3;
+
+function mesesEntre(de: MesBase, ate: MesBase): number {
+  const [a1, m1] = de.split("-").map(Number);
+  const [a2, m2] = ate.split("-").map(Number);
+  return (a2 - a1) * 12 + (m2 - m1);
+}
+
+/**
+ * Situação do CUB por UF, para o resumo da conferência. A conferência geral (`atraso`) só olha o mês mais novo do
+ * conjunto; esta pega a UF que ficou para trás, como um Sinduscon que parou de publicar no portal da CBIC.
+ */
+export function situacaoCubPorUf(
+  ultimos: UltimoCubDaUf[],
+  ufs: readonly string[],
+  hoje: Date,
+  limite = LIMITE_ATRASO_UF
+): SituacaoCubDaUf[] {
+  const maisNovo = mesMaisNovoPossivel(hoje);
+  const esperado = hoje.getUTCDate() >= PRAZO_DIA.cub ? maisNovo : somarMeses(maisNovo, -1);
+  return ufs.map((uf) => {
+    const daUf = ultimos.filter((l) => l.uf === uf && mesValido(l.mes));
+    if (daUf.length === 0) return { uf, mes: null, mesesAtras: null, automatica: false, alerta: false };
+    const topo = daUf.reduce((a, b) => (b.mes > a.mes ? b : a));
+    const automatica = /coleta automática/i.test(topo.fonte);
+    const mesesAtras = Math.max(0, mesesEntre(topo.mes, esperado));
+    return { uf, mes: topo.mes, mesesAtras, automatica, alerta: automatica && mesesAtras > limite };
+  });
+}

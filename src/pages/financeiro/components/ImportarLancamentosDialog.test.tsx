@@ -395,6 +395,21 @@ describe("ImportarLancamentosDialog: desfazer", () => {
     expect(screen.queryByRole("button", { name: /Desfazer/ })).not.toBeInTheDocument();
   });
 
+  it("enquanto desfaz, o botão mostra a espera e não aceita outro clique", async () => {
+    let concluir!: () => void;
+    hook.desfazer.mockImplementationOnce(() => new Promise<undefined>((r) => (concluir = () => r(undefined))));
+    setup();
+    await importar();
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /Desfazer/ }));
+    });
+    const ocupado = screen.getByRole("button", { name: /Desfazendo/ });
+    expect(ocupado).toBeDisabled();
+    expect(ocupado).toHaveAttribute("aria-busy", "true");
+    await act(async () => concluir());
+    await waitFor(() => expect(screen.queryByRole("button", { name: /Desfazendo/ })).not.toBeInTheDocument());
+  });
+
   it("erro ao desfazer mantém o resumo e avisa", async () => {
     hook.desfazer.mockRejectedValueOnce(new Error("lote já alterado"));
     setup();

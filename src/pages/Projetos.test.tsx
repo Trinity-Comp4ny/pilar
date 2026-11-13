@@ -199,6 +199,7 @@ vi.mock("@/pages/projetos/components/ProjetosFilterBar", () => ({
   },
 }));
 vi.mock("@/pages/projetos/components/ProjetosKPIs", () => ({
+  ProjetosKPIsResumo: () => <span data-testid="kpis-resumo" />,
   ProjetosKPIs: ({
     onFilterAtraso,
     onFilterProximos,
@@ -539,6 +540,27 @@ describe("Projetos: quadro e filtros", () => {
     abrir();
     fireEvent.click(screen.getByRole("button", { name: botao }));
     expect(visiveis()).toEqual(esperado);
+  });
+
+  it("filtro de prioridade olha a disciplina, não só o projeto", () => {
+    ctx.projetos = [
+      ...PROJETOS,
+      {
+        id: "p4",
+        nome: "Clínica Gama",
+        cliente_id: "c4",
+        prioridade: "Baixa",
+        status: "Em andamento",
+        etapa_id: "e1",
+        disciplinas: [{ disciplina: "Hidráulica", responsavel_id: "pe3", prioridade: "Alta" }],
+      },
+    ];
+    abrir();
+    fireEvent.click(screen.getByRole("button", { name: "f-prioridade" }));
+    const nomes = ["Torre Alfa", "Casa Beta", "Galpão Órfão", "Clínica Gama"].filter(
+      (n) => within(screen.getByTestId("kanban")).queryByText(n) !== null
+    );
+    expect(nomes).toEqual(["Torre Alfa", "Clínica Gama"]);
   });
 
   it("sem resultado mostra o vazio de filtro e limpar volta tudo", () => {

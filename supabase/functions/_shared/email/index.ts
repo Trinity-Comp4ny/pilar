@@ -1,5 +1,5 @@
 /**
- * Módulo de e-mail do Pilar (ADR 0039). Importar daqui, nunca dos arquivos internos:
+ * Módulo de e-mail da Pilar (ADR 0039). Importar daqui, nunca dos arquivos internos:
  *   import { sendEmail, templateConviteUsuario } de ../_shared/email/index.ts (a partir da pasta da função).
  */
 

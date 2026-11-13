@@ -115,7 +115,7 @@ function Linha({
   return (
     <div className="relative overflow-hidden border-b border-black/5">
       {podeMarcar && (
-        <div className="absolute inset-y-0 right-0 flex items-stretch bg-ink" style={{ width: ACAO_LARGURA }}>
+        <div className="absolute inset-y-0 right-0 flex items-stretch bg-brand" style={{ width: ACAO_LARGURA }}>
           <button
             type="button"
             tabIndex={aberta ? 0 : -1}
@@ -125,9 +125,9 @@ function Linha({
               setDeslocamento(0);
               onMarkPaid();
             }}
-            className="flex w-full flex-col items-center justify-center gap-1 text-xs font-semibold text-white"
+            className="flex w-full flex-col items-center justify-center gap-1 text-xs font-semibold text-ink"
           >
-            <Check size={18} strokeWidth={2.4} className="text-brand" aria-hidden="true" />
+            <Check size={18} strokeWidth={2.4} className="text-ink" aria-hidden="true" />
             {rotuloAcao}
           </button>
         </div>

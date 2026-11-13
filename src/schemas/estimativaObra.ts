@@ -76,6 +76,10 @@ export const fichaSchema = z
     subtipo: z.string().min(1, "Escolha o subtipo da obra"),
     padrao: z.enum(PADROES),
     uf: z.enum(UFS),
+    /** Onde é a obra. Opcionais: o CEP preenche endereço, cidade e UF; o cálculo só lê a UF. */
+    cep: z.string().max(9, "Confira o CEP").optional(),
+    endereco: z.string().max(300, "O endereço passa de 300 caracteres").optional(),
+    cidade: z.string().max(120, "Confira a cidade").optional(),
     area: z.number(NUMERO).positive("Informe a área construída").max(1_000_000, "Confira a área construída"),
     pavimentos: z
       .number(NUMERO)
@@ -87,8 +91,11 @@ export const fichaSchema = z
     topografia: z.enum(TOPOGRAFIAS).default("plano"),
     /** m² de parede de muro de arrimo (comprimento × altura média). 0 = ainda não medido. */
     arrimo: z.number(NUMERO).min(0, "Não pode ser negativo").max(100_000, "Confira a área do muro").default(0),
-    /** Mês previsto de início, `AAAA-MM`. */
-    inicio: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Escolha o mês de início"),
+    /**
+     * Início da obra, `AAAA-MM-DD`. Pode ser no passado (obra já começada). Ficha antiga tem só `AAAA-MM`, lida
+     * como dia 1.
+     */
+    inicio: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?$/, "Escolha a data de início da obra"),
     quartos: inteiro(99),
     suites: inteiro(99),
     banheiros: inteiro(99),
@@ -205,6 +212,7 @@ export const ADICIONAIS_IDS = [
   "ac12",
   "ac18",
   "ac24",
+  "ac36",
   "acinst",
   "aqsolar",
   "fv",
@@ -273,6 +281,7 @@ export const parametrosSchema = z
       ac12: adicionalSchema.optional(),
       ac18: adicionalSchema.optional(),
       ac24: adicionalSchema.optional(),
+      ac36: adicionalSchema.optional(),
       acinst: adicionalSchema.optional(),
       aqsolar: adicionalSchema.optional(),
       fv: adicionalSchema.optional(),
@@ -403,7 +412,18 @@ export const resultadoSchema = z.object({
     // Estimativas salvas antes do regime existir usam a série clássica.
     regime: z.enum(REGIMES).default("onerado"),
   }),
-  etapas: z.array(z.object({ id: z.string(), nome: z.string(), fase: z.string(), valor: z.number() })),
+  etapas: z.array(
+    z.object({
+      id: z.string(),
+      nome: z.string(),
+      fase: z.string(),
+      valor: z.number(),
+      /** Divisão da etapa por natureza. Ausente em resultado salvo antes disso. */
+      natureza: z
+        .object({ material: z.number(), maoDeObra: z.number(), equipamentos: z.number(), despesas: z.number() })
+        .optional(),
+    })
+  ),
   adicionais: z.array(
     z.object({
       id: z.enum(ADICIONAIS_IDS),
@@ -412,7 +432,7 @@ export const resultadoSchema = z.object({
       fase: z.string(),
       valor: z.number().nullable(),
       aDefinir: z.boolean(),
-      // Resultados salvos antes da origem existir leem como referência provisória do Pilar.
+      // Resultados salvos antes da origem existir leem como referência provisória da Pilar.
       quantidade: z.number().default(1),
       unidade: z.string().nullable().default(null),
       valorUnitario: z.number().nullable().default(null),

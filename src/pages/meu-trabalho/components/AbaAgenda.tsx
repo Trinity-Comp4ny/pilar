@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ViewSwitcher } from "@/components/ViewSwitcher";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, RefreshCw, Video } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   type CamadaId,
@@ -39,6 +41,16 @@ import {
 import { useEtapas } from "../useEtapas";
 import { TarefaDialog } from "./TarefaDialog";
 import { NovaTarefaNoDia, type NovaTarefaNoDiaDados } from "./NovaTarefaNoDia";
+import {
+  CHAVE_EVENTOS_AGENDA,
+  CHAVE_STATUS_AGENDA,
+  useAgendasDaConta,
+  useEventosAgenda,
+  useStatusAgenda,
+} from "@/hooks/useGoogleAgenda";
+import { buildEventosReunioes, conectarGoogleAgenda, sincronizarAgenda, type EventoAgenda } from "@/lib/googleAgenda";
+import { ReuniaoDialog } from "./ReuniaoDialog";
+import { getSafeErrorMessage } from "@/lib/safeError";
 
 type Props = {
   pessoaIds: string[] | null;
@@ -48,6 +60,8 @@ type Props = {
   temProjetos: boolean;
   /** Só admin escolhe o responsável de uma tarefa nova (igual ao formulário completo). */
   podeEscolherResponsavel?: boolean;
+  /** Onde pôr a navegação do calendário (barra de filtros da página). Sem isto, fica acima da agenda. */
+  toolbarSlot?: HTMLElement | null;
 };
 
 /**
@@ -56,7 +70,14 @@ type Props = {
  * pra ligar/desligar. Clicar numa tarefa abre a edição; numa disciplina, o
  * projeto de origem.
  */
-export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos, podeEscolherResponsavel = false }: Props) {
+export function AbaAgenda({
+  pessoaIds,
+  minhaPessoaId,
+  canEdit,
+  temProjetos,
+  podeEscolherResponsavel = false,
+  toolbarSlot,
+}: Props) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { data: disciplinas } = useDisciplinas(temProjetos ? pessoaIds : null, { enabled: temProjetos });
@@ -65,10 +86,24 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos, pode
   const { data: projetos } = useProjetosLite();
   const { data: etapas } = useEtapas();
   const { atualizar, criar } = useTarefaMutations();
+  const queryClient = useQueryClient();
+  // Google Agenda da própria pessoa (SPEC 164): reuniões viram mais uma camada.
+  const { data: statusAgenda } = useStatusAgenda();
+  const agendaConectada = !!statusAgenda?.conectado;
+  const { data: reunioes } = useEventosAgenda(agendaConectada);
+  const { data: agendasDaConta } = useAgendasDaConta(agendaConectada);
+  const [conectandoAgenda, setConectandoAgenda] = useState(false);
+  const [sincronizando, setSincronizando] = useState(false);
+  // Diálogo da reunião: null fechado; "nova" ou a reunião aberta.
+  const [reuniaoAberta, setReuniaoAberta] = useState<EventoAgenda | "nova" | null>(null);
 
-  const camadas: CamadaId[] = temProjetos ? ["disciplina", "tarefa"] : ["tarefa"];
+  const camadas: CamadaId[] = [
+    ...(temProjetos ? (["disciplina"] as const) : []),
+    "tarefa",
+    ...(agendaConectada ? (["reuniao"] as const) : []),
+  ];
   const { cursor, setCursor, view, setView, step, goHoje } = useCalendarioNav();
-  const { visiveis, toggle } = useCamadasVisiveis({ disciplina: true, tarefa: true });
+  const { visiveis, toggle } = useCamadasVisiveis({ disciplina: true, tarefa: true, reuniao: true });
 
   const [tarefaAberta, setTarefaAberta] = useState<TarefaItem | null>(null);
   // Formulário completo aberto pelo "Mais campos" do quadro curto: nasce com o prazo do dia.
@@ -103,13 +138,43 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos, pode
         projetoNome: t.projeto?.nome ?? null,
       }))
     );
-    return filtrarVisiveis([...eventosDisc, ...eventosTar], visiveis);
-  }, [disciplinas, tarefas, visiveis]);
+    const eventosReuniao = agendaConectada ? buildEventosReunioes(reunioes ?? []) : [];
+    return filtrarVisiveis([...eventosReuniao, ...eventosDisc, ...eventosTar], visiveis);
+  }, [disciplinas, tarefas, reunioes, agendaConectada, visiveis]);
 
   const eventosPorDia = useMemo(() => groupByDia(eventos), [eventos]);
   const diasComEvento = useDiasComEvento(eventosPorDia);
 
+  const conectarAgenda = async () => {
+    setConectandoAgenda(true);
+    try {
+      await conectarGoogleAgenda();
+    } catch (e) {
+      setConectandoAgenda(false);
+      toast.error("Não foi possível conectar", { description: getSafeErrorMessage(e, "Tente de novo.") });
+    }
+  };
+
+  const atualizarAgenda = async () => {
+    setSincronizando(true);
+    try {
+      await sincronizarAgenda();
+      await queryClient.invalidateQueries({ queryKey: CHAVE_EVENTOS_AGENDA });
+      toast.success("Agenda atualizada");
+    } catch (e) {
+      toast.error("Não foi possível atualizar a agenda", { description: getSafeErrorMessage(e, "Tente de novo.") });
+    } finally {
+      queryClient.invalidateQueries({ queryKey: CHAVE_STATUS_AGENDA });
+      setSincronizando(false);
+    }
+  };
+
   const abrirEvento = (evento: PrazoEvento) => {
+    if (evento.camada === "reuniao") {
+      const r = (reunioes ?? []).find((x) => x.id === evento.id);
+      if (r) setReuniaoAberta(r);
+      return;
+    }
     if (evento.camada === "tarefa") {
       const t = (tarefas ?? []).find((x) => x.id === evento.id);
       if (t) setTarefaAberta(t);
@@ -175,21 +240,48 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos, pode
       )
     : undefined;
 
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => step(-1)} aria-label="Anterior">
-            <ChevronLeft className="h-4 w-4" />
+  const navegacao = (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex items-center gap-1">
+        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => step(-1)} aria-label="Anterior">
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <span className="text-sm font-medium min-w-[150px] text-center">{labelPeriodo(view, cursor)}</span>
+        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => step(1)} aria-label="Próximo">
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="sm" className="ml-1 h-9 text-sm rounded-full" onClick={goHoje}>
+          Hoje
+        </Button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Google Agenda: conectar fica sempre à mão; conectado, vira "nova reunião" e "atualizar". */}
+        {statusAgenda && (!agendaConectada || statusAgenda.reconectar) && (
+          <Button variant="outline" size="sm" className="h-9" onClick={conectarAgenda} loading={conectandoAgenda}>
+            <Video className="h-4 w-4" />
+            {statusAgenda.reconectar ? "Reconectar Google Agenda" : "Conectar Google Agenda"}
           </Button>
-          <span className="text-sm font-medium min-w-[150px] text-center">{labelPeriodo(view, cursor)}</span>
-          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => step(1)} aria-label="Próximo">
-            <ChevronRight className="h-4 w-4" />
+        )}
+        {agendaConectada && !statusAgenda?.reconectar && (
+          <Button variant="outline" size="sm" className="h-9" onClick={() => setReuniaoAberta("nova")}>
+            <Plus className="h-4 w-4" />
+            Nova reunião
           </Button>
-          <Button variant="outline" size="sm" className="ml-1 h-9 text-sm rounded-full" onClick={goHoje}>
-            Hoje
+        )}
+        {agendaConectada && !statusAgenda?.reconectar && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            onClick={atualizarAgenda}
+            loading={sincronizando}
+            aria-label="Atualizar reuniões do Google Agenda"
+            title="Atualizar reuniões do Google Agenda"
+          >
+            <RefreshCw className="h-4 w-4" />
           </Button>
-        </div>
+        )}
 
         {/* Mês/Semana ficam ilegíveis em 390px (grid de 7 colunas fixas); em
             mobile só Agenda é oferecida, então o seletor vira redundante. */}
@@ -202,6 +294,14 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos, pode
           />
         )}
       </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-3">
+      {/* Navegação do calendário: na barra de filtros da página quando há onde pôr, em vez de
+          uma segunda linha de controles acima da agenda (auditoria de espaço, 2026-11). */}
+      {toolbarSlot ? createPortal(navegacao, toolbarSlot) : navegacao}
 
       <div className="flex gap-4 rounded-lg border bg-white overflow-hidden min-h-[480px]">
         <CalendarioSidebar
@@ -235,6 +335,15 @@ export function AbaAgenda({ pessoaIds, minhaPessoaId, canEdit, temProjetos, pode
           )}
         </div>
       </div>
+
+      <ReuniaoDialog
+        open={!!reuniaoAberta}
+        onOpenChange={(open) => !open && setReuniaoAberta(null)}
+        reuniao={reuniaoAberta === "nova" ? null : reuniaoAberta}
+        diaInicial={format(cursor, "yyyy-MM-dd")}
+        avisoPadrao={statusAgenda?.lembreteMinutos ?? null}
+        agendas={agendasDaConta ?? []}
+      />
 
       <TarefaDialog
         open={!!tarefaAberta || !!novaNoDia}

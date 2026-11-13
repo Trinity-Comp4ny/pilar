@@ -3,7 +3,7 @@
 <!-- Gerado por scripts/edge-functions-catalog.mjs a partir de supabase/functions/CATALOGO.json.
      Não editar à mão: edite o CATALOGO.json e rode `node scripts/edge-functions-catalog.mjs`. -->
 
-61 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
+65 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
 migrations) ou origem externa declarada no manifesto. **Login**: `verify_jwt` do `config.toml`
 (JWT aceita a chave anon; "própria" = a função faz a autorização). **Secrets**: lidos direto
 na pasta da função (o que vem de `_shared`, como a chave do Gemini, não aparece).
@@ -26,10 +26,10 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
 | `ativar-plano` | Tokeniza o cartão no trial sem cobrar e grava o consentimento datado (SPEC 098). | app | JWT | `ALLOWED_ORIGINS` `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
-| `pilar-checkout-create` | Checkout público do Pilar: cria cliente e cobrança na Asaas da plataforma. | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `pilar-checkout-create` | Checkout público da Pilar: cria cliente e cobrança na Asaas da plataforma. | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `pilar-checkout-status` | Consulta pública do status de pagamento do checkout. | app | própria | `ALLOWED_ORIGINS` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `pilar-checkout-webhook` | Eventos da Asaas da plataforma: libera signup, renova assinatura, credita tokens, inadimplência. | Asaas da plataforma (webhook) | própria | `ALLOWED_ORIGINS` `ASAAS_PLATFORM_WEBHOOK_TOKEN` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
-| `pilar-subscription-manage` | Troca de plano e cancelamento da assinatura do Pilar pelo admin da empresa. | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `pilar-subscription-manage` | Troca de plano e cancelamento da assinatura da Pilar pelo admin da empresa. | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `pilar-token-pack-create` | Compra avulsa de pacote de tokens de IA (SPEC 077/080). | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `verificar-documento` | Sobe a empresa para o nível Prata ao informar CNPJ ou CPF (SPEC 098). | app | JWT |  | sim |
 
@@ -43,13 +43,14 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 
 | Função | O que faz | Chamada por | Login | Secrets | Teste |
 | --- | --- | --- | --- | --- | --- |
-| `invite-cliente-portal` | Convida o cliente para o portal (manda o e-mail antes de gravar). | app | JWT | `PUBLIC_SITE_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `invite-cliente-portal` | Convida o cliente para o portal (manda o e-mail antes de gravar). | app | JWT | `APP_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-aprovar-proposta` | Cliente aprova proposta pelo portal (auth pelo token do portal). | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `portal-arquivos` | Portal do cliente: lista e baixa os arquivos da pasta Cliente do projeto no Google Drive do escritório; só do cliente da sessão (SPEC 163). | app | própria | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-entrega-download` | URL assinada de 5 minutos para arquivo de entrega do portal. | **sem chamador conhecido** | própria | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-get-projeto` | Dados do projeto para o portal (auth pelo token do portal). | **sem chamador conhecido** | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-obra-fotos` | URLs assinadas das fotos curadas do diário e dos registros liberados ao cliente, para o portal (spec 087, SPEC 135). | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-resumo-semana` | Resumo da semana da obra para o portal do cliente, escrito pela IA só com os registros liberados e guardado até o conjunto mudar (SPEC 135). | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
-| `reset-cliente-portal-password` | Redefine a senha do cliente do portal (e-mail antes de mexer na conta). | app | JWT | `PUBLIC_SITE_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `reset-cliente-portal-password` | Redefine a senha do cliente do portal (e-mail antes de mexer na conta). | app | JWT | `APP_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `upload-portal-entrega` | Upload autenticado de arquivo de entrega para o portal. | **sem chamador conhecido** | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 
 ## Pilar Campo
@@ -59,7 +60,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `campo-registro-arquivos` | URLs assinadas das fotos e do áudio dos PRÓPRIOS registros de obra, para a conta de campo (token). SPEC 135. | app | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `campo-registro-criar` | Registro de obra do Pilar Campo (áudio, foto, texto), autorizado pelo token de campo: guarda e responde na hora, a IA organiza em segundo plano. SPEC 135. | app | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `campo-upload-foto` | Upload de foto do Pilar Campo, autorizado pelo token de campo (conta sem usuário Supabase). | app | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
-| `invite-campo` | Emite credencial de acesso do Pilar Campo para a equipe de obra. | app | JWT | `PUBLIC_SITE_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `invite-campo` | Emite credencial de acesso do Pilar Campo para a equipe de obra. | app | JWT | `APP_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `registro-criar` | Registro de obra gravado pelo escritório (áudio, foto, texto), autorizado pelo JWT do usuário: guarda e responde na hora, a IA organiza em segundo plano. SPEC 135. | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `registro-reprocessar` | Tentar de novo a organização de um registro de obra que falhou; vale para o escritório (JWT) e para o campo (token). SPEC 135. | app | JWT | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 
@@ -101,7 +102,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `aviso-ultra-admin-email` | Disparada pelo trigger de notificacoes (pg_net): manda por e-mail, na hora, cada aviso de plataforma do ultra admin (feedback, novo cadastro, ativar plano bloqueado). SPEC 113. | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `guardiao-margem-cron` | Cron diário: prepara rascunho de aditivo, sustentado pelas despesas do projeto, quando ele estoura o orçamento (specs 081 e 107). | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `notificacoes-email-cron` | Cron: manda por e-mail o que está na central de notificações e ninguém leu. | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
-| `reconciliar-assinaturas` | Cron diário: compara cada assinatura do Pilar com o Asaas e avisa o ultra admin das divergências (SPEC 114). | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `reconciliar-assinaturas` | Cron diário: compara cada assinatura da Pilar com o Asaas e avisa o ultra admin das divergências (SPEC 114). | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `registro-audio-limpar` | Cron: apaga o áudio do registro de obra após 12 meses, de conta de campo excluída e arquivos órfãos (ADR 0062). | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `retencao-pos-trial` | Cron: avisos e exclusão de empresa depois do trial vencido (SPEC 098 Fase 3). | cron | própria | `ALLOWED_ORIGINS` `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `reverificar-documentos-pendentes` | Cron: reverifica CNPJ ou CPF pendentes do trial (SPEC 098). | cron | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
@@ -120,6 +121,14 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `release-rascunho` | Grava o rascunho das novidades de um release a partir das linhas Novidade: dos commits, chamado pelo GitHub Actions no push em main com token próprio (SPEC 152). | **sem chamador conhecido** | própria | `RELEASE_NOTAS_TOKEN` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `ultra-admin-empresas` | Gestão de empresas pelo ultra admin. | app | JWT |  | sim |
 | `ultra-admin-usuarios` | Gestão de usuários pelo ultra admin. | app | JWT |  | sim |
+
+## Integrações (Google Drive e Google Agenda)
+
+| Função | O que faz | Chamada por | Login | Secrets | Teste |
+| --- | --- | --- | --- | --- | --- |
+| `google-calendar` | Google Agenda de cada pessoa: conecta (OAuth, escopos calendar.events e calendarlist.readonly, token cifrado), copia as reuniões de todas as agendas ligadas, cria, edita e exclui reunião (Meet e convite aos convidados) e, no cron de 5 min, ressincroniza (SPEC 164). | app, cron, pg_cron (google_agenda_cron) e retorno do OAuth do Google | própria | `CRON_SECRET` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `google-drive` | Arquivos do projeto no Google Drive da empresa: pasta por projeto e disciplina, listar, criar pasta, envio direto ao Google, baixar e lixeira (SPEC 163). | app | JWT | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `google-drive-oauth` | Conecta e desconecta o Google Drive da empresa (OAuth, escopo drive.file, token cifrado; só admin) (SPEC 163). | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 
 ## Utilitários
 

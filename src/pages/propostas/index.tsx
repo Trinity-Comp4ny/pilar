@@ -576,11 +576,11 @@ export default function Propostas() {
     </FilterBar>
   );
 
-  // Colunas da tabela (SPEC 127). `getSortValue` só habilita o clique no cabeçalho: a ordenação
-  // em si é feita acima, em `filteredPropostas`.
+  // Colunas (SPEC 127): `getSortValue` só liga o clique no cabeçalho; a ordenação é em `filteredPropostas`.
   const propostasColumns: ColumnDef<Proposta>[] = [
     {
       key: "titulo",
+      mobile: "title",
       header: "Título",
       getSortValue: (p) => p.titulo,
       cell: (p) => (
@@ -590,9 +590,10 @@ export default function Propostas() {
         </>
       ),
     },
-    { key: "cliente", header: "Cliente/Lead", className: "text-sm", cell: (p) => p.cliente_nome || p.lead_nome || "—" },
+    { key: "cliente", header: "Cliente/Lead", mobile: "subtitle", cell: (p) => p.cliente_nome || p.lead_nome || "—" },
     {
       key: "valor_proposto",
+      mobile: "trailing",
       header: "Valor",
       className: "text-sm font-medium",
       getSortValue: (p) => p.valor_proposto ?? 0,
@@ -600,6 +601,7 @@ export default function Propostas() {
     },
     {
       key: "status",
+      mobile: "badge",
       header: "Status",
       align: "center",
       cell: (p) => {
@@ -614,7 +616,6 @@ export default function Propostas() {
     {
       key: "validade",
       header: "Validade",
-      className: "text-sm",
       getSortValue: (p) => p.validade ?? "",
       cell: (p) => (
         <span className={p.validade && p.validade < hoje ? "text-danger-mid font-medium" : undefined}>
@@ -688,7 +689,7 @@ export default function Propostas() {
 
   if (isLoading) {
     return (
-      <PageLayout header={header} toolbar={toolbar}>
+      <PageLayout header={header} toolbar={toolbar} density="compact">
         <div className="flex items-center justify-center py-12">
           <ReadingRing size={64} />
         </div>
@@ -697,9 +698,11 @@ export default function Propostas() {
   }
 
   return (
-    <PageLayout header={header} toolbar={toolbar}>
-      <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col min-h-0">
-        <CardContent className="flex-1 min-h-0 p-0 pb-4">
+    // Tabela preenche a altura que sobra e rola por dentro (era `100svh - 360px`, que deixava
+    // ~150 px mortos embaixo num notebook 13"; auditoria de espaço, 2026-11).
+    <PageLayout header={header} toolbar={toolbar} density="compact" containerClassName="h-full flex flex-col min-h-0">
+      <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col min-h-0 max-md:border-0 max-md:bg-transparent max-md:shadow-none">
+        <CardContent className="flex min-h-0 flex-1 flex-col p-0 pb-4">
           {propostas.length === 0 ? (
             <EmptyState
               icon={FileText}
@@ -718,14 +721,14 @@ export default function Propostas() {
               }}
             />
           ) : viewMode === "table" ? (
-            <div className="overflow-x-auto">
+            <div className="min-h-0 flex-1 overflow-x-auto">
               <DataTable
                 columns={propostasColumns}
                 data={{ rows: filteredPropostas, isPending: false, error: null }}
                 rowKey={(p) => p.id}
                 onRowClick={(p) => openDetail(p.id)}
                 rowLabel={(p) => `Ver detalhes da proposta ${p.titulo}`}
-                maxHeight="calc(100svh - 360px)"
+                maxHeight="100%"
                 // A ordem vem do pai: a mesma lista ordenada alimenta a visão em cards.
                 sortingState={
                   sortField && sortField !== "created_at" ? [{ id: sortField, desc: sortDir === "desc" }] : []

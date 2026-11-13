@@ -117,9 +117,9 @@ serve(
         }
 
         const { token, hash } = await gerarConviteToken();
-        const siteUrl = Deno.env.get("PUBLIC_SITE_URL");
-        if (!siteUrl) log.error("PUBLIC_SITE_URL secret not set — email button will be broken", null, {});
-        const conviteUrl = `${siteUrl ?? "https://www.pilarsoft.com.br"}/campo/convite?token=${token}`;
+        const appUrl = Deno.env.get("APP_URL");
+        if (!appUrl) log.error("APP_URL secret not set — email button will point to production", null, {});
+        const conviteUrl = `${(appUrl ?? "https://app.pilarsoft.com.br").replace(/\/+$/, "")}/campo/convite?token=${token}`;
 
         const { data: empresa } = await supabaseAdmin
           .from("empresas")

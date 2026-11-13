@@ -39,6 +39,10 @@ export type EventoProduto =
   | "cronograma_tarefa_concluida"
   | "convite_enviado"
   | "relatorio_exportado"
+  // App na tela inicial do celular (PWA)
+  | "app_instalar_acao"
+  | "app_instalar_dispensado"
+  | "app_instalado"
   // IA
   | "inicio_agentes_abrir"
   | "inicio_resumo_exibido"

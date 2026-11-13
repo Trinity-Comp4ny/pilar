@@ -44,7 +44,7 @@ export function PosicaoChips({ tipo, posicao, loading, ativo, onSelect }: Props)
             className={cn(
               "flex min-w-40 shrink-0 flex-col items-start gap-0.5 rounded-xl border px-3.5 py-2.5 text-left transition-colors",
               "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
-              selecionado ? "border-ink bg-ink text-white" : "border-border bg-background hover:bg-muted/50",
+              selecionado ? "border-brand bg-brand text-ink" : "border-border bg-background hover:bg-muted/50",
               vazio && !selecionado && "opacity-60"
             )}
           >

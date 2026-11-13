@@ -132,6 +132,8 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
 
   const chaveVisao = obra ? LS_VISAO_OBRA : LS_VISAO;
   const [visao, setVisao] = useState<Visao>(() => {
+    // Link do aviso de reunião (SPEC 164) abre direto na Agenda.
+    if (!obra && searchParams.get("visao") === "agenda") return "agenda";
     try {
       const v = localStorage.getItem(chaveVisao);
       if (v === "agenda" && !obra) return "agenda";
@@ -505,6 +507,8 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
     setFiltroData("todas");
   };
 
+  const [slotAgenda, setSlotAgenda] = useState<HTMLDivElement | null>(null);
+
   // Toolbar (SPEC 124): visão primeiro, depois os filtros; ordenação (quadro) ou colunas (lista) à direita.
   const toolbar = (
     <FilterBar
@@ -525,6 +529,8 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
         onChange={trocarVisao}
         iconOnlyOnMobile
       />
+      {/* Na Agenda, a navegação do calendário (anterior/próximo, Hoje, Mês/Semana) entra aqui. */}
+      {visao === "agenda" && <div ref={setSlotAgenda} className="flex items-center" />}
       {visao !== "agenda" && (
         <>
           <FiltroPessoa
@@ -574,6 +580,7 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
           canEdit
           temProjetos={temProjetos}
           podeEscolherResponsavel={isAdmin}
+          toolbarSlot={slotAgenda}
         />
       ) : isLoading ? (
         <PageLoader label={obra ? "Carregando as tarefas da obra" : "Carregando seu trabalho"} />

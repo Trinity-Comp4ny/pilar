@@ -171,7 +171,7 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
     <FormDialog
       open={open}
       onOpenChange={handleOpenChange}
-      title={imediata ? "Assinar o Pilar" : "Ativar plano"}
+      title={imediata ? "Assinar a Pilar" : "Ativar plano"}
       description={
         imediata
           ? subscription.status === "trialing"

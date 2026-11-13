@@ -1,0 +1,67 @@
+{
+  "id": "agentes-explicado",
+  "lead": 0.5,
+  "tail": 2.6,
+  "lines": [
+    {
+      "id": "l01",
+      "text": "Lançar um pagamento. Montar um aditivo. Resumir a semana.",
+      "gap": 0.26,
+      "say": "Lançar um pagamento... montar um aditivo... resumir a semana."
+    },
+    {
+      "id": "l02",
+      "text": "É trabalho que toma horas do sócio, e não é engenharia.",
+      "gap": 0.45,
+      "say": "É trabalho que toma horas do sócio. E não é engenharia."
+    },
+    {
+      "id": "l03",
+      "text": "A Pilar faz esse preparo por você. E nada vai adiante sem a sua aprovação.",
+      "gap": 0.38
+    },
+    {
+      "id": "l04",
+      "text": "Funciona em três passos. Primeiro, a IA prepara.",
+      "gap": 0.22
+    },
+    {
+      "id": "l05",
+      "text": "Você conta do jeito que falaria: recebi 128 mil do centro cirúrgico, primeira parcela de três.",
+      "say": "Você conta do jeito que falaria. Tipo: recebi cento e vinte e oito mil do centro cirúrgico, primeira parcela de três.",
+      "gap": 0.26
+    },
+    {
+      "id": "l06",
+      "text": "A Pilar acha o projeto e monta o lançamento.",
+      "gap": 0.34
+    },
+    {
+      "id": "l07",
+      "text": "Depois, o sistema confere: o projeto pelo nome, a parcela calculada, a categoria do seu plano de contas.",
+      "gap": 0.34
+    },
+    {
+      "id": "l08",
+      "text": "Por último, você aprova. Só então o lançamento entra no financeiro.",
+      "gap": 0.45
+    },
+    {
+      "id": "l09",
+      "text": "O mesmo vale para o aditivo: o projeto passou das horas previstas, e a Pilar monta o aditivo com a conta de cada valor.",
+      "gap": 0.38,
+      "say": "O mesmo vale para o aditivo: o projeto passou das horas previstas, e a Pilar monta o aditivo com a conta de cada valor."
+    },
+    {
+      "id": "l10",
+      "text": "E toda semana, o resumo chega pronto, com cada número conferido.",
+      "gap": 0.52
+    },
+    {
+      "id": "l11",
+      "text": "Pilar. A IA prepara. O sistema confere. Você aprova.",
+      "gap": 0.0
+    }
+  ],
+  "narrated": true
+}

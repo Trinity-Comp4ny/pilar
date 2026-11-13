@@ -246,19 +246,14 @@ export function LeadDetailDialog({
 
         <DialogFooter className="flex-row flex-wrap items-center gap-2 pt-4 mt-4 border-t sm:justify-start">
           {lead.status === "Ganho" && !lead.cliente_id && (
-            <Button size="sm" className="bg-positive hover:bg-positive/90 text-white" onClick={onConvert}>
+            <Button size="sm" variant="brand" onClick={onConvert}>
               <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
               Transformar em Cliente
             </Button>
           )}
 
           {canEdit && podeConverterProjeto && onConvertProjeto && (
-            <Button
-              size="sm"
-              className="bg-positive hover:bg-positive/90 text-white"
-              onClick={onConvertProjeto}
-              disabled={convertProjetoPending}
-            >
+            <Button size="sm" variant="brand" onClick={onConvertProjeto} disabled={convertProjetoPending}>
               {convertProjetoPending ? (
                 <BusyMark className="mr-1.5 h-3.5 w-3.5" />
               ) : (

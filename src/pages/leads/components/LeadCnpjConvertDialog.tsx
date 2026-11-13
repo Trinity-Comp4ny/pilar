@@ -144,11 +144,7 @@ export function LeadCnpjConvertDialog({ open, onOpenChange, isPending, onConvert
           <Button variant="outline" onClick={handleConvertWithoutCnpj} disabled={isPending}>
             Criar sem CNPJ
           </Button>
-          <Button
-            onClick={handleConvertWithCnpj}
-            disabled={!lookup || isPending}
-            className="bg-positive hover:bg-positive/90 text-white"
-          >
+          <Button onClick={handleConvertWithCnpj} disabled={!lookup || isPending} variant="brand">
             {isPending ? (
               <>
                 <BusyMark className="mr-2 h-4 w-4" /> Convertendo...

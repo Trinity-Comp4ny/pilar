@@ -3,6 +3,7 @@
 @import "./styles/landing.css";
 @import "./styles/tailwind-compat.css";
 @import "./styles/motion.css";
+@import "./styles/vidro.css";
 @config "../tailwind.config.ts";
 
 /* Inter autohospedada (mesmos arquivos da landing). Antes vinha do Google Fonts,
@@ -63,7 +64,9 @@
 
     --border: var(--c-gray-200);
     --input: var(--c-gray-200);
-    --ring: var(--c-ink-900);
+    /* Anel de foco no verde do sistema (escuro o bastante: 5:1 sobre branco, acima dos 3:1 de
+       contraste de foco). O verde da marca é claro demais para isso. Era o preto (12/11). */
+    --ring: var(--c-green-700);
 
     --radius: 0.75rem;
   }

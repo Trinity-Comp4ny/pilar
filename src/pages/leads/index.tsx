@@ -14,7 +14,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useRegistrarPagina } from "@/hooks/useRecentes";
-import { LeadsKPIs } from "./LeadsKPIs";
+import { LeadsKPIs, LeadsKPIsResumo } from "./LeadsKPIs";
 import { LeadDetailDialog } from "./components/LeadDetailDialog";
 import { LeadFormDialog, EMPTY_LEAD_FORM, type LeadFormData } from "./components/LeadFormDialog";
 import { LeadKanbanCard } from "./components/LeadKanbanCard";
@@ -536,6 +536,7 @@ export default function Leads() {
       toolbar={toolbar}
       className="overflow-y-hidden"
       containerClassName="h-full flex flex-col min-h-0"
+      density="compact"
       header={
         <PageHeader
           title="Leads"
@@ -544,7 +545,10 @@ export default function Leads() {
         />
       }
     >
-      <CollapsibleKpiSection storageKey="leads">
+      <CollapsibleKpiSection
+        storageKey="leads"
+        resumo={<LeadsKPIsResumo leads={leads} propostasByLead={propostasByLead} />}
+      >
         <LeadsKPIs
           leads={leads}
           propostasByLead={propostasByLead}
@@ -657,7 +661,7 @@ export default function Leads() {
               </div>
             )}
 
-            {/* Mobile list view (accordion por etapa, independe do toggle Quadro/Lista) */}
+            {/* Quadro do celular (colunas lado a lado, independe do toggle Quadro/Lista) */}
             <LeadsMobile
               etapas={etapas}
               leadsDaEtapa={getLeadsByEtapa}

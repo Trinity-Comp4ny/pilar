@@ -1,11 +1,11 @@
 # Voz & Tom
 
-> Como o Pilar fala. Voz = constante (a personalidade). Tom = varia com o contexto.
+> Como a Pilar fala. Voz = constante (a personalidade). Tom = varia com o contexto.
 > Ref: [BRAND.md](./BRAND.md) · Última atualização: `2026-06-10` · `v0`
 
 ## Voz (sempre)
 
-O Pilar fala como **um sócio experiente que entende de engenharia e de número** — direto, confiante, sem enrolação. Tira o cliente da névoa com clareza, não com hype.
+A Pilar fala como **um sócio experiente que entende de engenharia e de número** — direto, confiante, sem enrolação. Tira o cliente da névoa com clareza, não com hype.
 
 Quatro traços:
 

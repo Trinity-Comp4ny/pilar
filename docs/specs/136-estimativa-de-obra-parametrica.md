@@ -12,14 +12,14 @@
 ## Problema
 
 Na primeira reunião o cliente do escritório de projeto pergunta "quanto custa construir e quanto tempo leva?".
-Hoje o sócio responde no chute ou numa planilha própria, e a resposta não chega ao Pilar: quando a obra começa, o
+Hoje o sócio responde no chute ou numa planilha própria, e a resposta não chega à Pilar: quando a obra começa, o
 cronograma e o previsto por etapa são digitados do zero. Quem fecha a proposta sem uma faixa de custo perde a
 conversa para quem tem número.
 
 ## Objetivo
 
 O usuário descreve a obra (tipo, padrão, local, área, o que ela tem) e recebe em menos de 5 minutos uma faixa de
-custo com fonte de preço e um cronograma fase › etapa › serviço. Com um clique isso vira a obra no Pilar ou um PDF
+custo com fonte de preço e um cronograma fase › etapa › serviço. Com um clique isso vira a obra na Pilar ou um PDF
 para o cliente. Medida de sucesso: tempo até a primeira estimativa e % de estimativas que viram obra.
 
 **Fora de escopo (MVP 1):**
@@ -131,7 +131,10 @@ Cada fatia é um PR com o seu card no Linear (título `[BEZ-NN]`).
 2. **CUB** ([BEZ-13](https://linear.app/bez-company/issue/BEZ-13)) e **adicionais por empresa**
    ([BEZ-14](https://linear.app/bez-company/issue/BEZ-14)): telas do ultra admin e da empresa.
 3. **Fluxo** ([BEZ-18](https://linear.app/bez-company/issue/BEZ-18)): lista, assistente, resultado, versões, cenários.
-4. **Saídas** ([BEZ-19](https://linear.app/bez-company/issue/BEZ-19)): criar obra, PDF, anexar à proposta.
+4. **Saídas** ([BEZ-19](https://linear.app/bez-company/issue/BEZ-19)): criar obra, PDF, anexar à proposta. Criar obra entregue em
+   12/11/2026: RPC `criar_obra_da_estimativa` (migration 20261228000100), uma transação com obra, cronograma em
+   `obra_frente` e previsto por etapa (o subtotal, sem a taxa de administração, que vira a taxa da obra). PDF e anexo
+   seguem pendentes.
 5. **IA:** fora desta SPEC. A leitura do PDF da planta vira uma SPEC própria.
 6. **Liberar** ([BEZ-20](https://linear.app/bez-company/issue/BEZ-20)): validar com obras reais
    ([BEZ-16](https://linear.app/bez-company/issue/BEZ-16)), marcar os parâmetros como validados, ligar numa empresa

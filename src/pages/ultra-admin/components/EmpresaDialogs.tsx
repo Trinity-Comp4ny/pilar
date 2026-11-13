@@ -415,7 +415,7 @@ export function TornarConvidadaDialog(props: AcaoNome) {
     <ConfirmarComNome
       {...props}
       title={`Tornar ${props.empresaNome} convidada?`}
-      description="Passa a usar o Pilar sem pagar. O prazo de teste acaba, os avisos param e, se estiver só leitura, volta a editar na hora."
+      description="Passa a usar a Pilar sem pagar. O prazo de teste acaba, os avisos param e, se estiver só leitura, volta a editar na hora."
       submitLabel="Tornar convidada"
     />
   );

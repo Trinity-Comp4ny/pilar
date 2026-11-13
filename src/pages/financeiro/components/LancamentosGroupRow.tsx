@@ -107,7 +107,7 @@ export function LancamentosGroupRow({
         </span>
       </td>
       <td className={cn(cellPad, cellTextSize, "text-muted-foreground whitespace-nowrap")}>{proximaLabel}</td>
-      <td className={cn(cellPad, "font-semibold max-w-[220px]", cellTextSize)}>
+      <td className={cn(cellPad, "font-semibold max-w-[200px] 2xl:max-w-[280px]", cellTextSize)}>
         <span className="inline-flex w-full items-center gap-1.5">
           {isExpanded ? (
             <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -117,9 +117,24 @@ export function LancamentosGroupRow({
           <span className="truncate">{groupDesc}</span>
         </span>
       </td>
-      <td className={cn(cellPad, "max-w-[160px] truncate", cellTextSize)}>{first.contraparte_nome || "-"}</td>
-      <td className={cn(cellPad, "whitespace-nowrap", cellTextSize)}>{first.categoria_nome || "-"}</td>
-      <td className={cn(cellPad, "whitespace-nowrap", cellTextSize)}>{first.projeto_nome || "-"}</td>
+      <td
+        className={cn(cellPad, "max-w-[140px] truncate 2xl:max-w-[200px]", cellTextSize)}
+        title={first.contraparte_nome ?? undefined}
+      >
+        {first.contraparte_nome || "-"}
+      </td>
+      <td
+        className={cn(cellPad, "max-w-[130px] truncate 2xl:max-w-[200px]", cellTextSize)}
+        title={first.categoria_nome ?? undefined}
+      >
+        {first.categoria_nome || "-"}
+      </td>
+      <td
+        className={cn(cellPad, "max-w-[130px] truncate 2xl:max-w-[200px]", cellTextSize)}
+        title={first.projeto_nome ?? undefined}
+      >
+        {first.projeto_nome || "-"}
+      </td>
       <td className={cn(cellPad, "text-xs text-muted-foreground whitespace-nowrap")}>{parcelaLabel}</td>
       <td className={cn(cellPad, "whitespace-nowrap text-right tabular-nums", cellTextSize)}>
         <div className={cn("font-semibold", isReceita ? "text-positive-strong" : "text-ink")}>

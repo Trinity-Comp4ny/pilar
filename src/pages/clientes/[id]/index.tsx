@@ -3,7 +3,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDate } from "@/lib/format";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { mensagemDaFunction } from "@/lib/edgeError";
 import { PageLayout } from "@/components/PageLayout";
@@ -17,26 +16,14 @@ import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   Globe,
-  KeyRound,
   Mail,
   MapPin,
   Pencil,
   Phone,
-  Send,
-  ShieldOff,
   Trash2,
   User,
+  Users,
   Landmark,
   ChevronDown,
   ChevronRight,
@@ -48,7 +35,6 @@ import {
 import { formatDocument, formatPhone } from "@/lib/maskUtils";
 import { useClienteDetalhe } from "@/pages/clientes/hooks/useClienteDetalhe";
 import { usePermissions } from "@/hooks/usePermissions";
-import { useRequireAal2 } from "@/hooks/useRequireAal2";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useClientes } from "@/hooks/useClientes";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -58,6 +44,7 @@ import { FinanceiroContent } from "@/pages/portal/PortalFinanceiro";
 import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
 import { EntregasContent } from "@/pages/portal/PortalEntregas";
 import { EntregaFormDialog } from "@/pages/portal/EntregaFormDialog";
+import { AcessoPortalDialog } from "@/components/portal/AcessoPortalDialog";
 import { PROJECT_STATUS_CONFIG } from "@/constants";
 import { PROPOSTA_STATUS_CONFIG } from "@/hooks/usePropostas";
 import { cn } from "@/lib/utils";
@@ -207,61 +194,15 @@ function ProjetoAccordion({ projeto, children }: { projeto: ProjetoResumo; child
 
 // ─── Visão Geral ─────────────────────────────────────────────────────────────
 
-function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolean }) {
-  const queryClient = useQueryClient();
-  const requireAal2 = useRequireAal2();
+function VisaoGeralTab({ cliente, podeGerirPortal }: { cliente: Cliente; podeGerirPortal: boolean }) {
   const [confirmPortalOpen, setConfirmPortalOpen] = useState(false);
-  const [portalCredentials, setPortalCredentials] = useState<{ email: string } | null>(null);
-  const [resetCredentials, setResetCredentials] = useState<{ email: string } | null>(null);
-
   const { portalStatus, isLoadingPortal } = useClienteDetalhe(cliente.id);
-  const {
-    invitePortal,
-    isInvitingPortal,
-    resetPortalPassword,
-    isResettingPortal,
-    revokePortalAccess,
-    isRevokingPortal,
-  } = useClientes();
-
-  const handleInvite = async () => {
-    if (!(await requireAal2())) return;
-    try {
-      const { email } = await invitePortal({ clienteId: cliente.id, email: cliente.email });
-      setPortalCredentials({ email });
-      queryClient.invalidateQueries({ queryKey: ["portal-status", cliente.id] });
-    } catch {
-      // erro tratado pelo onError do hook
-    }
-  };
-
-  const handleReset = async () => {
-    if (!(await requireAal2())) return;
-    try {
-      const { email } = await resetPortalPassword({
-        clienteId: cliente.id,
-        nomeCliente: `${cliente.nome}${cliente.sobrenome ? " " + cliente.sobrenome : ""}`,
-      });
-      setResetCredentials({ email });
-    } catch {
-      // erro tratado pelo onError do hook
-    }
-  };
-
-  const handleRevoke = async () => {
-    if (!(await requireAal2())) return;
-    try {
-      await revokePortalAccess(cliente.id);
-      setPortalCredentials(null);
-      setResetCredentials(null);
-      queryClient.invalidateQueries({ queryKey: ["portal-status", cliente.id] });
-    } catch {
-      // erro tratado pelo onError do hook
-    }
-  };
+  const emailsPortal = portalStatus?.emails ?? (portalStatus?.email ? [portalStatus.email] : []);
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    // Duas colunas no desktop: travado em 672 px, sobravam ~300 px vazios ao lado num notebook 13"
+    // (auditoria de espaço, 2026-11). No celular segue uma coluna.
+    <div className="grid items-start gap-4 lg:grid-cols-2">
       {/* Dados */}
       <Card>
         <CardContent className="p-6 space-y-4">
@@ -352,7 +293,7 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
       )}
 
       {/* Portal do Cliente */}
-      {isAdmin && (
+      {podeGerirPortal && (
         <Card>
           <CardContent className="p-6 space-y-3">
             <p className="text-xs font-medium flex items-center gap-2 text-muted-foreground">
@@ -365,124 +306,49 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
               </div>
             )}
 
-            {!isLoadingPortal && (portalStatus?.exists || !!portalCredentials) && (
+            {!isLoadingPortal && portalStatus?.exists && (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 bg-positive/10 border border-positive/20 rounded-lg px-3 py-2 text-sm text-positive-strong">
-                  <Globe className="h-4 w-4" />
-                  <span className="flex-1">Cliente possui acesso ao portal</span>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleReset}
-                    disabled={isResettingPortal || isRevokingPortal}
-                    className="flex-1"
-                  >
-                    {isResettingPortal ? (
-                      <BusyMark className="h-3.5 w-3.5 mr-1.5" />
-                    ) : (
-                      <KeyRound className="h-3.5 w-3.5 mr-1.5" />
-                    )}
-                    {isResettingPortal ? "Redefinindo..." : "Redefinir senha"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleRevoke}
-                    disabled={isRevokingPortal || isResettingPortal}
-                    className="border-danger-mid-border text-danger-strong hover:bg-danger-soft"
-                  >
-                    {isRevokingPortal ? (
-                      <BusyMark className="h-3.5 w-3.5 mr-1.5" />
-                    ) : (
-                      <ShieldOff className="h-3.5 w-3.5 mr-1.5" />
-                    )}
-                    {isRevokingPortal ? "Revogando..." : "Revogar"}
-                  </Button>
-                </div>
-                {resetCredentials && (
-                  <div className="border border-warning-mid-border bg-warning-soft rounded-lg p-3 text-sm text-warning-strong">
-                    Senha redefinida! Credenciais enviadas para <strong>{resetCredentials.email}</strong>.
-                  </div>
-                )}
-              </div>
-            )}
-
-            {!isLoadingPortal && portalCredentials && (
-              <div className="border border-positive/20 bg-positive/10 rounded-lg p-3 text-sm text-positive-strong">
-                Acesso criado! Credenciais enviadas para <strong>{portalCredentials.email}</strong>.
-              </div>
-            )}
-
-            {!isLoadingPortal && !portalStatus?.exists && !portalCredentials && (
-              <div className="space-y-2">
-                {cliente.email ? (
-                  <>
-                    <p className="text-xs text-muted-foreground">
-                      Criar acesso para <span className="font-medium text-foreground">{cliente.email}</span>
+                <div className="flex items-start gap-2 bg-positive/10 border border-positive/20 rounded-lg px-3 py-2 text-sm text-positive-strong">
+                  <Globe className="mt-0.5 h-4 w-4 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p>
+                      {emailsPortal.length === 1
+                        ? "1 pessoa com acesso ao portal"
+                        : `${emailsPortal.length} pessoas com acesso ao portal`}
                     </p>
-                    <Button
-                      size="sm"
-                      onClick={() => setConfirmPortalOpen(true)}
-                      disabled={isInvitingPortal}
-                      variant="brand"
-                    >
-                      {isInvitingPortal ? (
-                        <BusyMark className="h-3.5 w-3.5 mr-1.5" />
-                      ) : (
-                        <Globe className="h-3.5 w-3.5 mr-1.5" />
-                      )}
-                      {isInvitingPortal ? "Criando..." : "Criar acesso ao portal"}
-                    </Button>
-                  </>
-                ) : (
-                  <p className="text-xs text-muted-foreground italic">Cadastre um email para criar acesso ao portal.</p>
-                )}
+                    <p className="truncate text-xs">{emailsPortal.join(", ")}</p>
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => setConfirmPortalOpen(true)}>
+                  <Users className="h-3.5 w-3.5 mr-1.5" />
+                  Gerenciar acessos
+                </Button>
+              </div>
+            )}
+
+            {!isLoadingPortal && !portalStatus?.exists && (
+              <div className="space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  O cliente recebe um link para criar a senha e acompanha os projetos dele. Dá para dar acesso a mais de
+                  uma pessoa.
+                </p>
+                <Button size="sm" onClick={() => setConfirmPortalOpen(true)} variant="brand">
+                  <Globe className="h-3.5 w-3.5 mr-1.5" />
+                  Criar acesso ao portal
+                </Button>
               </div>
             )}
           </CardContent>
         </Card>
       )}
 
-      <AlertDialog open={confirmPortalOpen} onOpenChange={setConfirmPortalOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Criar acesso ao portal?</AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-3 text-sm text-muted-foreground">
-                <p>
-                  Será criado acesso para{" "}
-                  <span className="font-medium text-foreground">
-                    {cliente.nome}
-                    {cliente.sobrenome ? ` ${cliente.sobrenome}` : ""}
-                  </span>
-                  .
-                </p>
-                <div className="flex items-start gap-2 rounded-lg border border-info-mid-border bg-info-soft px-3 py-2.5 text-info-strong">
-                  <Send className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                  <p>
-                    As credenciais serão enviadas para <strong>{cliente.email}</strong>.
-                  </p>
-                </div>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setConfirmPortalOpen(false);
-                handleInvite();
-              }}
-              className="bg-brand hover:bg-brand/90 text-ink"
-            >
-              <Send className="h-3.5 w-3.5 mr-1.5" />
-              Criar e enviar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <AcessoPortalDialog
+        open={confirmPortalOpen}
+        onOpenChange={setConfirmPortalOpen}
+        clienteId={cliente.id}
+        clienteNome={`${cliente.nome}${cliente.sobrenome ? ` ${cliente.sobrenome}` : ""}`}
+        clienteEmail={cliente.email}
+      />
     </div>
   );
 }
@@ -492,7 +358,7 @@ function VisaoGeralTab({ cliente, isAdmin }: { cliente: Cliente; isAdmin: boolea
 export default function ClienteDetalhePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isAdmin, can } = usePermissions();
+  const { isAdmin, role, can } = usePermissions();
   const canEdit = can("clientes", "edit");
   const canEditEntregas = can("portal_cliente", "edit");
   const isMobile = useIsMobile();
@@ -651,7 +517,7 @@ export default function ClienteDetalhePage() {
       <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         {/* Visão Geral */}
         <TabsContent value="visao-geral">
-          <VisaoGeralTab cliente={cliente} isAdmin={isAdmin} />
+          <VisaoGeralTab cliente={cliente} podeGerirPortal={isAdmin || role === "coordenador"} />
         </TabsContent>
 
         {/* Projetos */}

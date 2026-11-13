@@ -205,7 +205,7 @@ export function FeedbackDialog({ open, onOpenChange, mensagemInicial }: Feedback
             value={mensagem}
             onChange={(e) => setMensagem(e.target.value)}
             placeholder={
-              tipo === "bug" ? "Descreva o problema que você encontrou" : "O que você gostaria que o Pilar fizesse?"
+              tipo === "bug" ? "Descreva o problema que você encontrou" : "O que você gostaria que a Pilar fizesse?"
             }
             rows={4}
             maxLength={5000}

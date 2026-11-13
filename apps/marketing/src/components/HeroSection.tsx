@@ -1,6 +1,6 @@
 import { m, useReducedMotion } from "framer-motion";
-import { APP_URL } from "../config";
 import { trackCta } from "../analytics";
+import { useAcesso } from "../loginHint";
 import { HeroScene } from "./hero/HeroScene";
 import { HeroBackdrop } from "./hero/HeroBackdrop";
 import { SplitButton } from "./ui/SplitButton";
@@ -50,6 +50,7 @@ function Palavras({ texto, atraso = 0, className }: { texto: string; atraso?: nu
 
 export function HeroSection() {
   const reducedMotion = useReducedMotion();
+  const acesso = useAcesso();
 
   return (
     <section className="relative isolate overflow-hidden pt-20 md:pt-36 pb-10 md:pb-20">
@@ -98,12 +99,14 @@ export function HeroSection() {
             transition={{ duration: 0.7, ease: EASE.out, delay: 0.65 }}
             className="flex flex-col items-center gap-3"
           >
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            {/* Lado a lado também no celular: empilhados, os dois botões comiam
+                quase um terço da primeira tela. */}
+            <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
               <SplitButton to="/planos" onClick={() => trackCta("ver_planos", "hero")}>
                 Ver planos
               </SplitButton>
-              <SplitButton href={`${APP_URL}/login`} onClick={() => trackCta("entrar", "hero")} fantasma>
-                Entrar
+              <SplitButton href={acesso.href} onClick={() => trackCta(acesso.evento, "hero")} fantasma>
+                {acesso.rotulo}
               </SplitButton>
             </div>
             <LinkDemo local="hero" />

@@ -87,6 +87,9 @@ function SheetHandle() {
   );
 }
 
+/** `p-0` na lista de classes do chamador. */
+const SEM_PADDING = /(^|\s)p-0(\s|$)/;
+
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
@@ -96,6 +99,9 @@ const DialogContent = React.forwardRef<
   }
 >(({ className, overlayClassName, children, onOpenAutoFocus, onCloseAutoFocus, ...props }, ref) => {
   const foco = useRestaurarFoco(onOpenAutoFocus, onCloseAutoFocus);
+  // Diálogo de layout próprio (`p-0`: cabeçalho, abas e rodapé com padding interno). No celular
+  // o painel não soma o padding dele por fora: somado, o conteúdo ficava espremido no meio.
+  const layoutProprio = SEM_PADDING.test(className ?? "");
   return (
     <DialogPortal>
       <DialogOverlay className={overlayClassName} />
@@ -104,7 +110,11 @@ const DialogContent = React.forwardRef<
         className={cn(
           // Desktop (md+): modal central. Celular (SPEC 134): painel ancorado embaixo, que sobe.
           "fixed left-[50%] top-[50%] z-50 grid w-full max-w-[min(100vw-2rem,900px)] max-h-[90dvh] translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto border bg-background p-4 sm:p-6 shadow-lg duration-200 outline-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 md:data-[state=closed]:zoom-out-95 md:data-[state=open]:zoom-in-95 md:data-[state=closed]:slide-out-to-left-1/2 md:data-[state=closed]:slide-out-to-top-[48%] md:data-[state=open]:slide-in-from-left-1/2 md:data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
-          "max-md:inset-x-0 max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:max-h-[92dvh] max-md:max-w-none max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-b-none max-md:rounded-t-[26px] max-md:border-x-0 max-md:border-b-0 max-md:px-4 max-md:pb-[max(1rem,env(safe-area-inset-bottom))] max-md:pt-8 max-md:duration-300 max-md:data-[state=closed]:slide-out-to-bottom max-md:data-[state=open]:slide-in-from-bottom",
+          // `max-md:w-full` vence larguras próprias (`w-[96vw]`), que deixavam uma faixa à direita.
+          "max-md:inset-x-0 max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:w-full max-md:max-h-[92dvh] max-md:max-w-none max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-b-none max-md:rounded-t-[26px] max-md:border-x-0 max-md:border-b-0 max-md:duration-300 max-md:data-[state=closed]:slide-out-to-bottom max-md:data-[state=open]:slide-in-from-bottom",
+          layoutProprio
+            ? "max-md:pb-[env(safe-area-inset-bottom)] max-md:pt-6"
+            : "max-md:px-4 max-md:pb-[max(1rem,env(safe-area-inset-bottom))] max-md:pt-8",
           className
         )}
         {...props}

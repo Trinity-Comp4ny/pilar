@@ -84,7 +84,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     key: "conta",
     pilar: "conta",
-    titulo: "Entre no Pilar",
+    titulo: "Entre na Pilar",
     descricao: "Conta criada e escritório configurado.",
     rota: "/inicio",
     check: { tipo: "sempre" },
@@ -93,7 +93,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     key: "colega",
     pilar: "conta",
     titulo: "Convide um colega",
-    descricao: "O Pilar rende quando o time inteiro registra no mesmo lugar.",
+    descricao: "A Pilar rende quando o time inteiro registra no mesmo lugar.",
     rota: "/admin",
     adminOnly: true,
     check: { tipo: "tabela", source: "profiles", ativos: "desativado_em", minimo: 2 },

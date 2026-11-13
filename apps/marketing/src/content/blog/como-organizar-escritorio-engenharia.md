@@ -92,9 +92,9 @@ A planilha é ótima para começar e ruim para crescer: não avisa atraso, não 
 
 Compare em [Pilar ou planilha](/vs/planilha) e [Pilar ou Trello](/vs/trello). Para o que avaliar num sistema, veja [software de gestão para escritório de engenharia](/blog/software-gestao-escritorio-engenharia).
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O Pilar é gestão com agentes de IA para escritórios de engenharia e arquitetura. Na prática, as cinco frentes acima vivem no mesmo lugar:
+A Pilar é gestão com agentes de IA para escritórios de engenharia e arquitetura. Na prática, as cinco frentes acima vivem no mesmo lugar:
 
 - **Comercial:** funil de leads em kanban com motivo de perda e proposta por disciplina gerada em DOCX no seu template ([Gestão](/gestao)).
 - **Contrato:** proposta aprovada vira projeto com disciplinas, e as parcelas nascem no financeiro no mesmo clique.
@@ -102,7 +102,7 @@ O Pilar é gestão com agentes de IA para escritórios de engenharia e arquitetu
 - **Financeiro:** extrato e fatura lidos por IA, com categoria sugerida do seu plano de contas e você aprovando antes de gravar.
 - **Equipe:** folha com comprovante em PDF por pessoa.
 
-Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça o Pilar para [engenharia](/engenharia).
+Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça a Pilar para [engenharia](/engenharia).
 
 ## Perguntas frequentes
 

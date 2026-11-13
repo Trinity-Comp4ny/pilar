@@ -26,7 +26,7 @@ interface PessoaAcessoSecaoProps {
 const PAPEIS_ADMIN = ["admin", "owner", "ultra_admin"];
 
 /**
- * Acesso ao Pilar da pessoa da Equipe: se ela tem login e qual é. Quem tem login
+ * Acesso à Pilar da pessoa da Equipe: se ela tem login e qual é. Quem tem login
  * aparece no @ das atividades e recebe o aviso da menção (no sistema e por e-mail).
  * Admin convida (o convite já nasce ligado à pessoa) ou liga a um login que já existe
  * com outro e-mail.
@@ -87,7 +87,7 @@ export function PessoaAcessoSecao({ pessoa, onVinculoAlterado }: PessoaAcessoSec
     <div className="border-t pt-4 space-y-3">
       <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-1.5">
         <KeyRound className="h-3.5 w-3.5" />
-        Acesso ao Pilar
+        Acesso à Pilar
       </h4>
 
       {profileId ? (
@@ -107,7 +107,7 @@ export function PessoaAcessoSecao({ pessoa, onVinculoAlterado }: PessoaAcessoSec
           <p className="text-sm text-muted-foreground">
             {convite
               ? `Convite enviado para ${convite.email}, válido até ${formatDate(convite.expira_em)}.`
-              : "Sem login no Pilar: não aparece no @ das atividades e não recebe avisos."}
+              : "Sem login na Pilar: não aparece no @ das atividades e não recebe avisos."}
           </p>
 
           {podeGerir && (
@@ -119,7 +119,7 @@ export function PessoaAcessoSecao({ pessoa, onVinculoAlterado }: PessoaAcessoSec
                 disabled={!pessoa.email}
                 onClick={enviarConvite}
               >
-                {convite ? "Reenviar convite" : "Convidar para o Pilar"}
+                {convite ? "Reenviar convite" : "Convidar para a Pilar"}
               </Button>
 
               {contasLivres.length > 0 && (

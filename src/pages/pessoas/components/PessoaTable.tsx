@@ -98,6 +98,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
   const columns: ColumnDef<Pessoa>[] = [
     {
       key: "nome",
+      mobile: "title",
       header: "Nome",
       className: "font-medium",
       getSortValue: (p) => p.nome,
@@ -115,6 +116,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
     },
     {
       key: "tipo",
+      mobile: "badge",
       header: "Tipo",
       getSortValue: (p) => p.tipo_contrato,
       cell: (p) => (
@@ -131,6 +133,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
     },
     {
       key: "status",
+      mobile: "trailing",
       header: "Status",
       getSortValue: (p) => p.status || "ativo",
       cell: (p) => (
@@ -146,6 +149,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
     },
     {
       key: "cargo",
+      mobile: "subtitle",
       header: "Cargo",
       getSortValue: (p) => p.cargo ?? "",
       cell: (p) => p.cargo,
@@ -204,7 +208,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
     );
 
   return (
-    <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden">
+    <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden max-md:border-0 max-md:bg-transparent max-md:shadow-none">
       {/* Toolbar padrão (SPEC 124). Busca local: a página Equipe não controla o estado. */}
       <PageToolbar>
         <FilterBar
@@ -233,7 +237,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
           />
         </FilterBar>
       </PageToolbar>
-      <CardContent className="flex-1 min-h-0 flex flex-col p-4">
+      <CardContent className="flex-1 min-h-0 flex flex-col p-0 pb-2">
         {/* A página é de altura fixa (main com overflow-y-hidden): o scroll vive
             aqui e a altura vem do flex, não de um calc() com número mágico que
             estourava no mobile (header + chip-nav + BottomNav) e cortava as

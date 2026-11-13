@@ -1,0 +1,14 @@
+{
+  "voz": "narração por cima do vídeo (narrate.py, narrar_sobre); t = segundo em que a fala entra",
+  "fim": 10,
+  "lines": [
+    {
+      "t": 0.1,
+      "say": "Usuários ilimitados. A plataforma inteira. Em todo plano."
+    },
+    {
+      "t": 4.3,
+      "say": "A partir de duzentos e noventa e nove por mês. Link na bio."
+    }
+  ]
+}

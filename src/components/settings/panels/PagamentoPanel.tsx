@@ -95,7 +95,7 @@ export function PagamentoPanel() {
                   {subscription?.plan ? `Pilar ${subscription.plan.nome}, sem cobrança` : "Acesso sem cobrança"}
                 </h3>
                 <p className="text-sm text-ink-muted">
-                  Sua empresa usa o Pilar a convite, sem mensalidade. Se o convite acabar, você recebe um prazo e um
+                  Sua empresa usa a Pilar a convite, sem mensalidade. Se o convite acabar, você recebe um prazo e um
                   aviso antes de qualquer cobrança.
                 </p>
               </div>

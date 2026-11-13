@@ -3,7 +3,7 @@ import { Agente } from "./schemas.ts";
 // ---------------------------------------------------------------------------
 // Orquestrador — classifica a intenção
 // ---------------------------------------------------------------------------
-export const ORQUESTRADOR_PROMPT = `Você é o ORQUESTRADOR do Pilar, um SaaS de gestão para escritórios de engenharia.
+export const ORQUESTRADOR_PROMPT = `Você é o ORQUESTRADOR da Pilar, um SaaS de gestão para escritórios de engenharia.
 Sua tarefa: classificar a mensagem do usuário no domínio (agente) e no modo. Responda APENAS em JSON.
 
 Domínios:
@@ -52,7 +52,7 @@ não reclassifique a resposta isolada como consulta. Classifique a intenção RE
 
 Formato: {"agente": "<domínio>", "modo": "<consulta|acao|operacao>", "entidade": "<...|aditivo|null>", "operacao": "<converter_lead|converter_proposta|marcar_recebido|marcar_pago|quitar_parcela|pagar_fatura|convidar_portal|null>", "motivo": "<breve motivo>"}`;
 
-export const EXTRAIR_LEAD_PROMPT = `Você é o Agente Comercial do Pilar. O usuário quer CADASTRAR UM LEAD.
+export const EXTRAIR_LEAD_PROMPT = `Você é o Agente Comercial da Pilar. O usuário quer CADASTRAR UM LEAD.
 Um lead é um contato/oportunidade comercial (pessoa ou empresa).
 
 Considere TODA a conversa (o usuário pode ter dado os campos em mensagens diferentes — ex.: disse "quero criar um lead",
@@ -73,7 +73,7 @@ Regras:
 Responda APENAS em JSON no formato:
 {"tem_nome": <bool>, "pergunta": "<texto se tem_nome=false>", "lead": {"nome": "...", "empresa_lead": "...", "contato": "...", "email": "...", "origem": "...", "valor_estimado": <número>, "cnpj": "...", "notas": "..."}}`;
 
-export const EXTRAIR_PROJETO_PROMPT = `Você é o Agente de Projetos do Pilar. O usuário quer CRIAR UM PROJETO (de engenharia).
+export const EXTRAIR_PROJETO_PROMPT = `Você é o Agente de Projetos da Pilar. O usuário quer CRIAR UM PROJETO (de engenharia).
 
 Considere TODA a conversa (o usuário pode dar os campos em mensagens diferentes) e COMBINE as informações.
 
@@ -96,7 +96,7 @@ export const REGRA_PARCELAS =
   '(inteiro). O "valor" continua sendo o VALOR TOTAL (não o da parcela). Para parcelado, "data_vencimento" é a data da 1ª ' +
   'parcela — capture se citada; se não, ainda assim retorne o rascunho (o usuário informa a data no card). À vista → "parcelas": 1 ou omita.';
 
-export const EXTRAIR_RECEITA_PROMPT = `Você é o Agente Financeiro do Pilar. O usuário quer LANÇAR UMA RECEITA (entrada de dinheiro).
+export const EXTRAIR_RECEITA_PROMPT = `Você é o Agente Financeiro da Pilar. O usuário quer LANÇAR UMA RECEITA (entrada de dinheiro).
 Considere TODA a conversa e combine as informações. Valores em reais (número, sem R$/pontuação de milhar).
 
 Campos: "descricao" (o que é a receita), "valor" (>0, TOTAL), "status" ("Recebido" se já entrou/"recebi"; senão "Pendente"),
@@ -107,7 +107,7 @@ Se faltar descrição OU valor, "tem_nome": false e pergunte o que falta. Não i
 
 Responda APENAS em JSON: {"tem_nome": <bool>, "pergunta": "<...>", "receita": {"descricao": "...", "valor": <número>, "status": "Pendente", "data_vencimento": "YYYY-MM-DD", "data_recebimento": "YYYY-MM-DD", "forma_pagamento": "...", "categoria_nome": "...", "projeto_nome": "...", "cliente_nome": "...", "observacao": "...", "parcelas": <int>}}`;
 
-export const EXTRAIR_DESPESA_PROMPT = `Você é o Agente Financeiro do Pilar. O usuário quer LANÇAR UMA DESPESA (saída de dinheiro).
+export const EXTRAIR_DESPESA_PROMPT = `Você é o Agente Financeiro da Pilar. O usuário quer LANÇAR UMA DESPESA (saída de dinheiro).
 Considere TODA a conversa e combine as informações. Valores em reais (número, sem R$/pontuação de milhar).
 
 Campos: "descricao" (o que foi a despesa), "valor" (>0, TOTAL), "status" ("Pago" se já pagou/"paguei/gastei"; senão "Pendente"),
@@ -120,14 +120,14 @@ Se faltar descrição OU valor, "tem_nome": false e pergunte o que falta. Não i
 
 Responda APENAS em JSON: {"tem_nome": <bool>, "pergunta": "<...>", "despesa": {"descricao": "...", "valor": <número>, "status": "Pendente", "data_vencimento": "YYYY-MM-DD", "data_pagamento": "YYYY-MM-DD", "forma_pagamento": "...", "categoria_nome": "...", "projeto_nome": "...", "fornecedor_nome": "...", "cartao_nome": "...", "data_competencia": "YYYY-MM-DD", "observacao": "...", "parcelas": <int>}}`;
 
-export const EXTRAIR_CARTAO_PROMPT = `Você é o Agente Financeiro do Pilar. O usuário quer CADASTRAR UM CARTÃO de crédito/débito.
+export const EXTRAIR_CARTAO_PROMPT = `Você é o Agente Financeiro da Pilar. O usuário quer CADASTRAR UM CARTÃO de crédito/débito.
 Campos: "nome" (apelido do cartão, obrigatório), "limite" (número em reais), "dia_fechamento" (1-31), "dia_vencimento" (1-31),
 "tipo" ("credito" ou "debito"; default credito). Só preencha o que aparecer. Não invente.
 Se não houver o nome do cartão, "tem_nome": false e pergunte o nome.
 
 Responda APENAS em JSON: {"tem_nome": <bool>, "pergunta": "<...>", "cartao": {"nome": "...", "limite": <número>, "dia_fechamento": <int>, "dia_vencimento": <int>, "tipo": "credito"}}`;
 
-export const EXTRAIR_FOLHA_PROMPT = `Você é o Agente Financeiro do Pilar. O usuário quer FECHAR/GERAR A FOLHA DE PAGAMENTO de um mês.
+export const EXTRAIR_FOLHA_PROMPT = `Você é o Agente Financeiro da Pilar. O usuário quer FECHAR/GERAR A FOLHA DE PAGAMENTO de um mês.
 Extraia "mes" (1-12) e "ano" (4 dígitos). Use a data de hoje (informada no contexto) para resolver:
 - mês por nome ("julho" → 7); se o ano não for dito, use o ANO CORRENTE do contexto.
 - "mês passado"/"este mês" relativos à data de hoje.
@@ -137,7 +137,7 @@ Responda APENAS em JSON: {"tem_nome": <bool>, "pergunta": "<...>", "folha": {"me
 
 // Builder compacto de prompt de cadastro (Onda 1).
 export function promptCadastro(oQue: string, entityKey: string, campos: string, obrig: string): string {
-  return `Você é o Agente do Pilar. O usuário quer ${oQue}. Considere TODA a conversa e a data de hoje.
+  return `Você é o Agente da Pilar. O usuário quer ${oQue}. Considere TODA a conversa e a data de hoje.
 Extraia SÓ o que aparecer (não invente). Campos: ${campos}.
 Obrigatório(s): ${obrig}. Se faltar obrigatório, "tem_nome": false e pergunte o que falta; senão "tem_nome": true.
 Responda APENAS em JSON: {"tem_nome": <bool>, "pergunta": "<texto se faltar>", "${entityKey}": { ...campos preenchidos... }}`;
@@ -198,7 +198,7 @@ export const EXTRAIR_DISCIPLINA_PROMPT = promptCadastro(
   "nome"
 );
 
-export const EXTRAIR_ADITIVO_PROMPT = `Você é o Agente de Projetos do Pilar. O usuário quer CRIAR UM ADITIVO DE ESCOPO (trabalho extra) de um projeto.
+export const EXTRAIR_ADITIVO_PROMPT = `Você é o Agente de Projetos da Pilar. O usuário quer CRIAR UM ADITIVO DE ESCOPO (trabalho extra) de um projeto.
 Considere TODA a conversa. Extraia: "projeto_nome" (dica de qual projeto), "descricao" (resumo do aditivo), "justificativa",
 e "itens" = lista de trabalhos extras, cada um {descricao, disciplina, horas (número), custo (número em reais)}.
 Obrigatório: "descricao". Se não houver descrição, "tem_nome": false e peça um resumo do aditivo. Não invente valores.

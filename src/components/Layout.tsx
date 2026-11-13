@@ -2,9 +2,8 @@ import { Suspense, lazy, useRef } from "react";
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { sidebarOffset } from "@/lib/shellLayout";
+import { sidebarOffset, telaEstreitaParaPainel } from "@/lib/shellLayout";
 import { BottomNav } from "@/components/BottomNav";
-import { CommandPaletteHint } from "@/components/CommandPaletteHint";
 import { useCommandPalette } from "@/hooks/useCommandPalette";
 import { useAtalhosTeclado } from "@/hooks/useAtalhosTeclado";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -26,9 +25,6 @@ const AtalhosTecladoDialog = lazy(() =>
 const OnboardingChecklist = lazy(() =>
   import("@/components/OnboardingChecklist").then((m) => ({ default: m.OnboardingChecklist }))
 );
-// Lazy: faixa de incidente, manutenção e comunicado (SPEC 153/157). Fora do boot: a faixa chega
-// quando a consulta chega, e o boot não carrega o formatador de datas nem os ícones dela.
-const FaixaAvisos = lazy(() => import("@/components/FaixaAvisos").then((m) => ({ default: m.FaixaAvisos })));
 // Lazy: modal "O que mudou" (SPEC 152). Só monta conteúdo quando há mudança de fluxo nova.
 const OQueMudou = lazy(() => import("@/components/novidades/OQueMudou").then((m) => ({ default: m.OQueMudou })));
 // Lazy: agente da ajuda no canto (SPEC 155). Traz o markdown dos artigos; fora do bundle de entrada.
@@ -41,6 +37,9 @@ const ComunicadoModal = lazy(() =>
 const RegistroDispositivo = lazy(() =>
   import("@/components/RegistroDispositivo").then((m) => ({ default: m.RegistroDispositivo }))
 );
+// Lazy: faixas do topo (Termos e avisos, SPEC 153/157) e o bloco fixo que mede a altura delas.
+// Fora do bundle de entrada: o teto do boot é apertado (scripts/check-bundle-size.mjs).
+const FaixasDoTopo = lazy(() => import("@/components/FaixasDoTopo").then((m) => ({ default: m.FaixasDoTopo })));
 // Lazy: NPS no Início (SPEC 156).
 const NpsCard = lazy(() => import("@/components/pesquisas/NpsCard").then((m) => ({ default: m.NpsCard })));
 const OnboardingTourController = lazy(() =>
@@ -49,15 +48,11 @@ const OnboardingTourController = lazy(() =>
   }))
 );
 
-// Atalho ⌘K sempre ativo (hook leve); o dialog pesado só monta quando aberto.
+// Atalho ⌘K sempre ativo (hook leve); o dialog pesado só monta quando aberto. A dica visual
+// do atalho mora no trilho da sidebar (CommandPaletteHint), não flutuando sobre o conteúdo.
 function CommandPaletteMount() {
   const { open, setOpen } = useCommandPalette();
-  return (
-    <>
-      <CommandPaletteHint />
-      <Suspense fallback={null}>{open && <CommandPalette open={open} onOpenChange={setOpen} />}</Suspense>
-    </>
-  );
+  return <Suspense fallback={null}>{open && <CommandPalette open={open} onOpenChange={setOpen} />}</Suspense>;
 }
 
 // Atalho "?" sempre ativo (hook leve); o painel só monta quando aberto.
@@ -89,8 +84,11 @@ function LayoutContent() {
       >
         Pular para conteúdo principal
       </a>
+      <Suspense fallback={null}>
+        <FaixasDoTopo left={sidebarOffset(state, isMobile)} />
+      </Suspense>
       <AppSidebar />
-      <div style={{ marginLeft: sidebarOffset(state, isMobile) }}>
+      <div style={{ marginLeft: sidebarOffset(state, isMobile), paddingTop: "var(--faixas-h, 0px)" }}>
         <main
           ref={mainRef}
           id="main-content"
@@ -100,10 +98,6 @@ function LayoutContent() {
           className="pb-[calc(6.5rem+env(safe-area-inset-bottom))] outline-hidden md:px-10 md:pb-10 md:pt-4"
         >
           <DentroDoMainProvider value>
-            {/* Incidente e manutenção declarados no Ultra admin (SPEC 153). */}
-            <Suspense fallback={null}>
-              <FaixaAvisos />
-            </Suspense>
             <ErrorBoundary>
               <DevErrorTrigger />
               {/* Página preguiçosa baixando: a sidebar fica e o anel ocupa só o conteúdo. */}
@@ -135,7 +129,8 @@ function LayoutContent() {
 
 export default function Layout() {
   return (
-    <SidebarProvider>
+    // Tela estreita começa com o painel recolhido; o cookie com a escolha da pessoa vence.
+    <SidebarProvider defaultOpen={!telaEstreitaParaPainel()}>
       <AvatarDiretorioProvider>
         <LayoutContent />
       </AvatarDiretorioProvider>

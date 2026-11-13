@@ -74,16 +74,16 @@ Algumas cláusulas não descrevem entregas, mas protegem o escopo:
 
 O passo 6 é onde muito escritório falha. O comercial escreve um escopo cuidadoso, mas a equipe técnica nunca o lê, e faz o que o cliente pede no telefone.
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O Pilar não escreve o escopo por você. O que ele faz é levar o que foi vendido até quem executa, sem redigitar.
+A Pilar não escreve o escopo por você. O que ele faz é levar o que foi vendido até quem executa, sem redigitar.
 
 - No [módulo Gestão](/gestao), a proposta é montada por disciplina e gerada em DOCX no template do escritório.
 - Aprovada, a proposta vira projeto com as disciplinas no [módulo Projetos](/projetos), com mais de um responsável por disciplina.
 - Comentário, etiqueta e link em cada disciplina, para o pedido do cliente ficar registrado onde o trabalho acontece.
 - Mudou a data, o sistema pede o motivo: quando o pedido extra atrasa a entrega, o histórico mostra por quê.
 
-Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça o Pilar para [escritórios de engenharia](/engenharia).
+Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça a Pilar para [escritórios de engenharia](/engenharia).
 
 ## Perguntas frequentes
 
