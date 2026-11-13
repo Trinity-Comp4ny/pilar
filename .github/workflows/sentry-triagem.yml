@@ -1,0 +1,175 @@
+name: Sentry triagem e correção
+
+# Issue nova do Sentry (produção) → triagem pelo Claude Code → PR para staging, issue do GitHub ou silêncio.
+# Quem aprova o PR é sempre uma pessoa: o agente nunca mergeia.
+#
+# A cada 2 h (e sob demanda) busca no Sentry as issues não resolvidas de produção, ignora o ruído
+# conhecido (scripts/sentry-triagem/lib.mjs) sem gastar IA e manda até 3 issues por rodada ao agente,
+# as com mais usuários afetados primeiro. Issue com PR ou issue do GitHub com o código no título
+# (ex.: "PILAR-1T") não é tratada de novo.
+#
+# Secrets de repositório (sem eles a rodada só avisa e sai):
+#   ANTHROPIC_API_KEY  chave da API Anthropic, usada só no passo do agente
+#   SENTRY_TOKEN       token de integração interna do Sentry, escopos event:read e event:write
+# Mesma pegadinha de todo `schedule`: só dispara a partir da branch default (main).
+# Runbook: docs/operations/runbooks/sentry-triagem.md
+
+on:
+  schedule:
+    - cron: "17 */2 * * *"
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: "Código de uma issue específica (ex.: PILAR-1T). Vazio = busca automática."
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sentry-triagem
+  cancel-in-progress: false
+
+jobs:
+  listar:
+    name: Listar issues
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+    outputs:
+      ids: ${{ steps.escolha.outputs.ids }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - id: escolha
+        env:
+          SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ inputs.issue }}
+        run: |
+          set -euo pipefail
+          if [ -n "$ISSUE" ]; then
+            # Valida o formato antes de usar em qualquer lugar.
+            [[ "$ISSUE" =~ ^[A-Z0-9]+-[A-Z0-9]+$ ]] || { echo "::error::Código de issue inválido"; exit 1; }
+            echo "ids=[\"$ISSUE\"]" >> "$GITHUB_OUTPUT"
+          else
+            node scripts/sentry-triagem/sentry.mjs listar
+          fi
+          grep -q '^ids=' "$GITHUB_OUTPUT" || echo 'ids=[]' >> "$GITHUB_OUTPUT"
+
+  triar:
+    name: Triar ${{ matrix.issue }}
+    needs: listar
+    if: needs.listar.outputs.ids != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        issue: ${{ fromJSON(needs.listar.outputs.ids) }}
+    permissions:
+      contents: write # empurrar a branch sentry/<ID>
+      pull-requests: write
+      issues: write
+      actions: write # disparar o CI (push com GITHUB_TOKEN não dispara workflow)
+    env:
+      ISSUE: ${{ matrix.issue }}
+      GH_TOKEN: ${{ github.token }}
+      GIT_NAME: github-actions[bot]
+      GIT_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: staging
+      - uses: ./.github/actions/setup-deps
+
+      - name: Contexto da issue
+        env:
+          SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p .sentry-triagem
+          node scripts/sentry-triagem/sentry.mjs detalhe "$ISSUE" .sentry-triagem/issue.md
+          cp scripts/sentry-triagem/prompt.md .sentry-triagem/prompt.md
+
+      - name: Agente (triagem e correção)
+        id: agente
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ANTHROPIC_API_KEY:-}" ]; then
+            echo "::notice::ANTHROPIC_API_KEY ausente: triagem desligada."
+            echo "pular=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Só edita código do app e funções; CI, scripts e dependências ficam fora do alcance.
+          npx --yes @anthropic-ai/claude-code@2.1.323 -p "Siga as instruções de .sentry-triagem/prompt.md para a issue em .sentry-triagem/issue.md." \
+            --model claude-sonnet-5-5 \
+            --max-turns 40 \
+            --allowedTools "Read,Grep,Glob,Edit(src/**),Write(src/**),Edit(supabase/functions/**),Write(supabase/functions/**),Edit(supabase/migrations/**),Write(supabase/migrations/**),Write(.sentry-triagem/veredito.json),Bash(npx tsc:*),Bash(npx vitest run:*)"
+          echo "pular=false" >> "$GITHUB_OUTPUT"
+
+      - name: Aplicar o veredito
+        if: steps.agente.outputs.pular == 'false'
+        env:
+          SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
+        run: |
+          set -euo pipefail
+          [ -f .sentry-triagem/veredito.json ] || { echo "::error::O agente não escreveu o veredito"; exit 1; }
+
+          # Guarda: nada fora do alcance permitido pode ter mudado. Roda ANTES de qualquer script do repo.
+          PROIBIDO='^(\.github/|\.claude/|scripts/|package(-lock)?\.json$|apps/marketing/package\.json$|vercel\.json$|\.env)'
+          if git status --porcelain --untracked-files=all -- . ':!.sentry-triagem' | awk '{print $NF}' | grep -E "$PROIBIDO"; then
+            echo "::error::O agente alterou caminho proibido. Rodada descartada."
+            exit 1
+          fi
+
+          ACAO=$(node -e '
+            import("./scripts/sentry-triagem/lib.mjs").then(({ lerVeredito }) => {
+              const v = lerVeredito(require("fs").readFileSync(".sentry-triagem/veredito.json", "utf8"));
+              require("fs").writeFileSync(".sentry-triagem/veredito.limpo.json", JSON.stringify(v));
+              console.log(v.acao);
+            });
+          ')
+          MOTIVO=$(jq -r .motivo .sentry-triagem/veredito.limpo.json)
+          TITULO=$(jq -r .titulo_pr .sentry-triagem/veredito.limpo.json)
+          RESUMO=$(jq -r .resumo .sentry-triagem/veredito.limpo.json)
+          LINK="https://bez-company.sentry.io/issues/$ISSUE/"
+
+          case "$ACAO" in
+            ruido)
+              node scripts/sentry-triagem/sentry.mjs ignorar "$ISSUE" "$MOTIVO"
+              echo "Ignorada: $MOTIVO"
+              ;;
+            humano)
+              gh issue create --assignee MRezende0 \
+                --title "[Sentry $ISSUE] precisa de decisão humana" \
+                --body "$(printf 'Triagem automática da issue %s (%s).\n\n**Por que não virou PR:** %s\n\nSentry: %s' "$ISSUE" "$ISSUE" "$MOTIVO" "$LINK")"
+              node scripts/sentry-triagem/sentry.mjs comentar "$ISSUE" "Triagem automática: aberta issue no GitHub para decisão humana. $MOTIVO"
+              ;;
+            corrigir)
+              if git diff --quiet && [ -z "$(git ls-files --others --exclude-standard -- . ':!.sentry-triagem')" ]; then
+                echo "::error::Veredito 'corrigir' sem nenhuma mudança no código."
+                exit 1
+              fi
+              BRANCH="sentry/$(echo "$ISSUE" | tr 'A-Z' 'a-z')"
+              git checkout -b "$BRANCH"
+              git add -A -- . ':!.sentry-triagem'
+              git -c user.name="$GIT_NAME" -c user.email="$GIT_EMAIL" commit \
+                -m "$TITULO" \
+                -m "Fixes $ISSUE (Sentry). $MOTIVO" \
+                -m "Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
+              git push origin "$BRANCH"
+              gh pr create --base staging --head "$BRANCH" --assignee MRezende0 \
+                --title "$TITULO ($ISSUE)" \
+                --body "$(printf '## Sentry\n%s\n\n## Cause\n%s\n\n## Change\n%s\n\nFixes %s\n\nAutomated triage: review the diff before merging. Nothing was run in production.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)' "$LINK" "$MOTIVO" "$RESUMO" "$ISSUE")"
+              # Push com GITHUB_TOKEN não gera evento de PR: o CI sai por aqui.
+              gh workflow run ci.yml --ref "$BRANCH"
+              node scripts/sentry-triagem/sentry.mjs comentar "$ISSUE" "Triagem automática: PR aberto na branch $BRANCH."
+              ;;
+          esac
