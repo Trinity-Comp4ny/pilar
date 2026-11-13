@@ -157,6 +157,12 @@ async function abrir(page: Page, rota: string) {
   await page.waitForLoadState("networkidle");
   await esperarCarregado(page);
   await page.evaluate(() => document.fonts.ready);
+  // O cartão de análise de uso (canto inferior direito) chega depois do carregamento da tela:
+  // sem esperar por ele a foto sai ora com ele, ora sem. Se o usuário já decidiu, segue sem.
+  await page
+    .getByText("Podemos medir como você usa a Pilar?")
+    .waitFor({ timeout: 8000 })
+    .catch(() => undefined);
   await fixarTextoVariavel(page);
 }
 
