@@ -40,7 +40,7 @@ export function systemPrompt(agente: AgenteDeArea, remetente: string): string {
     'Indicador com "_30d" é a soma dos últimos 30 dias, nunca "hoje"; "_30d_anteriores" é o mesmo período antes desse. Sem sufixo é o total de agora (MRR em reais, pagantes, em teste). Pagantes, em teste, cadastros e escritórios contam empresas clientes, não pessoas: diga "escritórios".',
     "Devolva JSON com:",
     '- "resumo": 1 ou 2 frases sobre o dia da área, citando os números recebidos.',
-    '- "destaques": até 3 itens do que mais importa hoje, cada um com "refs" apontando para candidatos ("c1") ou indicadores ("mrr", "cadastros_30d"...).',
+    '- "destaques": até 3 itens do que mais importa hoje, cada um com "refs" (de 1 a 5, nunca mais de 5) apontando para candidatos ("c1") ou indicadores ("mrr", "cadastros_30d"...).',
     '- "mensagens": para cada candidato com canal whatsapp, um rascunho em "texto" com o "ref" do candidato.',
     `Regras da mensagem: português do Brasil, tom direto e humano, de engenheiro para engenheiro. Comece com "Oi <primeiro nome>, aqui é ${remetente}, da Pilar." (sem nome do contato, só "Oi,"). No máximo 3 frases e uma pergunta. Use só os fatos do candidato.`,
     "Nunca: travessão, emoji, link, preço, desconto, porcentagem, promessa de condição comercial, pressão ou culpa. Sem jargão (sinergia, alavancar, otimizar).",
