@@ -8,7 +8,9 @@ const RUIDO = [
   { motivo: "sessão expirada (refresh token)", re: /refresh_token_not_found|refresh_token_already_used/i },
   { motivo: "código MFA digitado errado", re: /mfa_verification_failed/i },
   { motivo: "cartão recusado pelo Asaas", re: /Asaas: Transação não autorizada|cobrança imediata recusada/i },
-  { motivo: "ruído do navegador", re: /ResizeObserver loop|Non-Error promise rejection|Script error\.?$/i },
+  { motivo: "ruído do navegador (ResizeObserver)", re: /ResizeObserver loop/i },
+  { motivo: "ruído do navegador (rejeição não-Error)", re: /Non-Error promise rejection/i },
+  { motivo: "ruído do navegador (Script error)", re: /^(?:Error: )?Script error\.?$/i },
 ];
 
 /** Devolve o motivo se o título é ruído conhecido, senão null. */
@@ -41,6 +43,16 @@ export function sanitizarTexto(valor, max = 400) {
     .replace(/\s+/g, " ")
     .trim();
   return s.length > max ? `${s.slice(0, max)}…` : s;
+}
+
+/** Código de issue do Sentry (ex.: PILAR-1T). Qualquer outra coisa nunca vira caminho, saída de workflow nem argumento. */
+export function shortIdValido(valor) {
+  return /^[A-Z0-9]+-[A-Z0-9]+$/.test(String(valor));
+}
+
+/** O contexto da issue só pode ser escrito dentro de .sentry-triagem/ (sem .. nem caminho absoluto). */
+export function caminhoDeSaidaValido(caminho) {
+  return /^\.sentry-triagem\/[A-Za-z0-9._-]+$/.test(String(caminho)) && !String(caminho).includes("..");
 }
 
 const ACOES = ["corrigir", "ruido", "humano"];
