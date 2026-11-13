@@ -4,15 +4,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { getSafeErrorMessage } from "@/lib/safeError";
 import { analytics } from "@/lib/analytics";
-import { edgeFunctionErrorMessage } from "@/lib/edgeFunctionError";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Building2, FolderKanban, Globe, Hash, HardHat } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, Globe, Hash } from "lucide-react";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -27,27 +24,15 @@ import { EscolhaChips } from "@/components/forms/EscolhaChips";
 import { EtapasProgress } from "@/components/onboarding/EtapasProgress";
 import { cn } from "@/lib/utils";
 import { useConsultaCnpj, type ConsultaCnpj } from "@/hooks/useConsultaCnpj";
-import { DISCIPLINAS, OBJETIVOS, PORTES, normalizarSite, sugerirSite, type Objetivo } from "@/lib/perfilEscritorio";
+import { DISCIPLINAS, PORTES, normalizarSite, sugerirSite } from "@/lib/perfilEscritorio";
+import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
+import { PageLoader } from "@/components/motion/PageLoader";
+import { useOnboardingRespostas } from "@/hooks/useOnboardingRespostas";
+import { ROTULOS_CADASTRO_DONO } from "@/lib/onboarding/etapasCadastro";
+import { dorPrincipalDe, type RespostasOnboarding } from "@/lib/onboarding/dores";
+import type { PlanoOnboarding } from "@/lib/onboarding/plano";
 
-type Etapa = "escritorio" | "comecar";
-
-/** Mesma lista do /profile-setup do dono: o cadastro inteiro é uma barra só (SPEC 165). */
-const ROTULOS_ETAPAS = ["Seu acesso", "Seu contato", "Seu escritório", "Por onde começar"];
-type Papel = "user" | "coordenador" | "admin";
-type ConviteRascunho = { email: string; papel: Papel };
-
-const ICONE_OBJETIVO: Record<Objetivo, typeof Building2> = {
-  gestao: Building2,
-  projetos: FolderKanban,
-  obras: HardHat,
-};
-
-const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-const CONVITES_VAZIOS: ConviteRascunho[] = [
-  { email: "", papel: "user" },
-  { email: "", papel: "user" },
-  { email: "", papel: "user" },
-];
+type Etapa = "escritorio" | "wizard";
 
 function formatarCnpj(v: string): string {
   return v
@@ -69,8 +54,7 @@ export default function CompanySetup() {
   usePageTitle("Configuração da Empresa");
   const [etapa, setEtapa] = useState<Etapa>("escritorio");
   const [isLoading, setIsLoading] = useState(false);
-  const [objetivo, setObjetivo] = useState<Objetivo | null>(null);
-  const [convites, setConvites] = useState<ConviteRascunho[]>(CONVITES_VAZIOS);
+  const [concluindo, setConcluindo] = useState(false);
   const navigate = useNavigate();
   const { profile, user, refreshProfile } = useAuth();
   const siteSugerido = sugerirSite(user?.email);
@@ -95,13 +79,6 @@ export default function CompanySetup() {
       porte: empresa.porte ?? "",
       disciplinas: empresa.disciplinas ?? [],
     });
-    if (
-      empresa.objetivo_inicial === "gestao" ||
-      empresa.objetivo_inicial === "projetos" ||
-      empresa.objetivo_inicial === "obras"
-    ) {
-      setObjetivo(empresa.objetivo_inicial);
-    }
     setHydrated(true);
   }, [profile?.empresas, hydrated, reset]);
 
@@ -157,7 +134,7 @@ export default function CompanySetup() {
         tem_site: Boolean(values.site),
         tem_cnpj: Boolean(values.cnpj),
       });
-      setEtapa("comecar");
+      setEtapa("wizard");
     } catch (err: unknown) {
       toast.error("Erro ao salvar", { description: getSafeErrorMessage(err) });
     } finally {
@@ -165,62 +142,78 @@ export default function CompanySetup() {
     }
   };
 
-  const convitesValidos = convites.filter((c) => c.email.trim());
-  const convitesInvalidos = convitesValidos.some((c) => !EMAIL_RE.test(c.email.trim()));
+  const { respostas, carregando, salvar } = useOnboardingRespostas();
 
-  const enviarConvites = async (): Promise<number> => {
-    let falhas = 0;
-    for (const c of convitesValidos) {
-      const { error } = await supabase.functions.invoke("invite-user", {
-        body: { email: c.email.trim().toLowerCase(), nome: "", role: c.papel },
-      });
-      if (error) {
-        falhas += 1;
-        const msg = await edgeFunctionErrorMessage(error, "Não foi possível enviar o convite.");
-        toast.error(`Convite para ${c.email.trim()} não saiu`, { description: msg });
-        continue;
-      }
-      analytics.track("convite_enviado", { papel: c.papel, origem: "onboarding" });
-    }
-    return convitesValidos.length - falhas;
+  // Quem fechou a aba no meio do onboarding volta direto de onde parou: o escritório já foi gravado.
+  const retomou = !carregando && respostas.etapaAtual > 1 && !respostas.concluidoEm;
+  useEffect(() => {
+    if (retomou) setEtapa("wizard");
+  }, [retomou]);
+
+  const salvarRascunho = async (proximas: RespostasOnboarding) => {
+    const ok = await salvar(proximas);
+    if (!ok) toast.error("Não foi possível guardar suas respostas agora", { description: "Você pode continuar." });
   };
 
-  const concluir = async () => {
+  const concluir = async (finais: RespostasOnboarding, plano: PlanoOnboarding) => {
     if (!empresaId) return;
-    if (convitesInvalidos) {
-      toast.error("Confira os e-mails dos colegas");
-      return;
-    }
-    setIsLoading(true);
+    setConcluindo(true);
     try {
       const { error } = await supabase
         .from("empresas")
-        .update({ objetivo_inicial: objetivo, onboarding_completed: true })
+        .update({ objetivo_inicial: plano.objetivo, onboarding_completed: true })
         .eq("id", empresaId);
       if (error) throw error;
 
-      const enviados = convitesValidos.length > 0 ? await enviarConvites() : 0;
-
+      await salvar({ ...finais, concluidoEm: new Date().toISOString() });
       await refreshProfile();
 
-      if (objetivo) analytics.track("onboarding_objetivo_escolhido", { objetivo });
-      analytics.track("empresa_onboarding_concluido", { empresa_id: empresaId, convites: enviados });
-
-      toast.success("Escritório configurado.", {
-        description: enviados > 0 ? `Boas-vindas à Pilar. ${enviados} convite(s) enviado(s).` : "Boas-vindas à Pilar.",
+      analytics.track("onboarding_dor_escolhida", {
+        dores: finais.dores,
+        principal: dorPrincipalDe(finais.dores, finais.dorPrincipal) ?? "sem_resposta",
+        tem_texto: Boolean(finais.textoLivre.trim()),
       });
+      analytics.track("onboarding_plano_gerado", {
+        passos: plano.passos.map((p) => p.key),
+        minutos: plano.minutosTotal,
+      });
+      analytics.track("onboarding_objetivo_escolhido", { objetivo: plano.objetivo });
+      analytics.track("empresa_onboarding_concluido", { empresa_id: empresaId });
+
+      toast.success("Escritório configurado.", { description: "Boas-vindas à Pilar." });
       navigate("/inicio");
     } catch (err: unknown) {
       toast.error("Erro ao salvar", { description: getSafeErrorMessage(err) });
     } finally {
-      setIsLoading(false);
+      setConcluindo(false);
     }
   };
 
-  const setConvite = (i: number, patch: Partial<ConviteRascunho>) =>
-    setConvites((lista) => lista.map((c, j) => (j === i ? { ...c, ...patch } : c)));
-
   const site = form.watch("site");
+
+  if (etapa === "wizard") {
+    if (carregando) return <PageLoader size="page" label="Preparando seu onboarding" />;
+    const nome = profile?.first_name?.trim() || "bem-vindo";
+    return (
+      <OnboardingWizard
+        nome={nome}
+        empresaNome={form.getValues("name") || profile?.empresas?.nome || "seu escritório"}
+        porte={form.getValues("porte") || profile?.empresas?.porte || null}
+        respostasIniciais={respostas}
+        onSalvar={salvarRascunho}
+        onConcluir={concluir}
+        onResponder={(pergunta, r) =>
+          analytics.track("onboarding_pergunta_respondida", {
+            pergunta,
+            respondeu:
+              r.dores.length > 0 || Boolean(r.contexto.projetosAtivos) || (r.contexto.ferramentas ?? []).length > 0,
+          })
+        }
+        concluindo={concluindo}
+        onVoltarAoCadastro={() => setEtapa("escritorio")}
+      />
+    );
+  }
 
   return (
     <div className="landing-grain min-h-dvh w-full flex overflow-hidden bg-paper">
@@ -229,24 +222,13 @@ export default function CompanySetup() {
         <div className="absolute inset-0 -z-10 pointer-events-none">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-brand/6 rounded-full blur-[100px] animate-aurora" />
         </div>
-        {etapa === "escritorio" ? (
-          <Link
-            to="/profile-setup"
-            className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-ink-soft hover:text-brand transition-colors font-medium text-sm group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            Voltar
-          </Link>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setEtapa("escritorio")}
-            className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-ink-soft hover:text-brand transition-colors font-medium text-sm group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            Voltar
-          </button>
-        )}
+        <Link
+          to="/profile-setup"
+          className="absolute top-8 left-8 lg:left-12 flex items-center gap-2 text-ink-soft hover:text-brand transition-colors font-medium text-sm group"
+        >
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          Voltar
+        </Link>
 
         <div className="w-full max-w-[480px] space-y-8 pt-10 lg:pt-0 animate-in fade-in slide-in-from-left-8 duration-700">
           <div className="space-y-4">
@@ -254,34 +236,58 @@ export default function CompanySetup() {
               <Logo variant="mark" size="md" />
               <div className="text-sm font-semibold text-ink">Pilar</div>
             </div>
-            <EtapasProgress etapa={etapa === "escritorio" ? 3 : 4} rotulos={ROTULOS_ETAPAS} />
+            <EtapasProgress etapa={3} rotulos={ROTULOS_CADASTRO_DONO} />
           </div>
 
-          {etapa === "escritorio" ? (
-            <>
-              <div className="space-y-2">
-                <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Confirme seu escritório</h1>
-                <p className="text-sm text-ink-soft">
-                  Já deixamos o que sabemos preenchido. Confira, ajuste o que precisar e siga. Só o nome é obrigatório.
-                </p>
-              </div>
+          <>
+            <div className="space-y-2">
+              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Confirme seu escritório</h1>
+              <p className="text-sm text-ink-soft">
+                Já deixamos o que sabemos preenchido. Confira, ajuste o que precisar e siga. Só o nome é obrigatório.
+              </p>
+            </div>
 
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(salvarEscritorio)} className="space-y-5">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(salvarEscritorio)} className="space-y-5">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-ink-soft font-medium">
+                        Nome do escritório <span className="text-danger-mid">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative group">
+                          <Building2 className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                          <Input
+                            {...field}
+                            className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
-                    name="name"
+                    name="cnpj"
                     render={({ field }) => (
                       <FormItem className="space-y-2">
-                        <FormLabel className="text-ink-soft font-medium">
-                          Nome do escritório <span className="text-danger-mid">*</span>
-                        </FormLabel>
+                        <FormLabel className="text-ink-soft font-medium">CNPJ</FormLabel>
                         <FormControl>
                           <div className="relative group">
-                            <Building2 className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                            <Hash className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
                             <Input
                               {...field}
+                              placeholder="00.000.000/0000-00"
+                              inputMode="numeric"
                               className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                              maxLength={18}
+                              onChange={(e) => field.onChange(formatarCnpj(e.target.value))}
                             />
                           </div>
                         </FormControl>
@@ -290,215 +296,98 @@ export default function CompanySetup() {
                     )}
                   />
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="cnpj"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="text-ink-soft font-medium">CNPJ</FormLabel>
-                          <FormControl>
-                            <div className="relative group">
-                              <Hash className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
-                              <Input
-                                {...field}
-                                placeholder="00.000.000/0000-00"
-                                inputMode="numeric"
-                                className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                                maxLength={18}
-                                onChange={(e) => field.onChange(formatarCnpj(e.target.value))}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="site"
-                      render={({ field }) => (
-                        <FormItem className="space-y-2">
-                          <FormLabel className="text-ink-soft font-medium">Site</FormLabel>
-                          <FormControl>
-                            <div className="relative group">
-                              <Globe className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
-                              <Input
-                                {...field}
-                                placeholder={siteSugerido ?? "seuescritorio.com.br"}
-                                className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
-                              />
-                            </div>
-                          </FormControl>
-                          {siteSugerido && !site && (
-                            <button
-                              type="button"
-                              className="text-xs text-ink-soft underline-offset-2 hover:underline"
-                              onClick={() => form.setValue("site", siteSugerido, { shouldDirty: true })}
-                            >
-                              Usar {siteSugerido}
-                            </button>
-                          )}
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <ResultadoReceita consulta={receita} />
-
                   <FormField
                     control={form.control}
-                    name="disciplinas"
+                    name="site"
                     render={({ field }) => (
                       <FormItem className="space-y-2">
-                        <FormLabel className="text-ink-soft font-medium">Disciplinas do escritório</FormLabel>
+                        <FormLabel className="text-ink-soft font-medium">Site</FormLabel>
                         <FormControl>
-                          <EscolhaChips
-                            multiplo
-                            ariaLabel="Disciplinas do escritório"
-                            opcoes={DISCIPLINAS}
-                            value={field.value ?? []}
-                            onChange={field.onChange}
-                          />
+                          <div className="relative group">
+                            <Globe className="absolute left-3 top-3 h-4 w-4 text-ink/40 group-focus-within:text-brand transition-colors" />
+                            <Input
+                              {...field}
+                              placeholder={siteSugerido ?? "seuescritorio.com.br"}
+                              className="pl-10 h-11 bg-paper-alt border-paper-border focus:border-brand focus:ring-brand/20 transition-all"
+                            />
+                          </div>
                         </FormControl>
+                        {siteSugerido && !site && (
+                          <button
+                            type="button"
+                            className="text-xs text-ink-soft underline-offset-2 hover:underline"
+                            onClick={() => form.setValue("site", siteSugerido, { shouldDirty: true })}
+                          >
+                            Usar {siteSugerido}
+                          </button>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  <FormField
-                    control={form.control}
-                    name="porte"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel className="text-ink-soft font-medium">Quantas pessoas trabalham aí</FormLabel>
-                        <FormControl>
-                          <EscolhaChips
-                            ariaLabel="Quantas pessoas trabalham no escritório"
-                            opcoes={PORTES}
-                            value={field.value || null}
-                            onChange={field.onChange}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <Button
-                    variant="brand"
-                    className="w-full h-11 font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
-                    type="submit"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <BusyMark className="mr-2 h-4 w-4" /> Salvando...
-                      </>
-                    ) : (
-                      <>
-                        Continuar
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </Form>
-            </>
-          ) : (
-            <>
-              <div className="space-y-2">
-                <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-ink">Por onde começar?</h1>
-                <p className="text-sm text-ink-soft">
-                  A Pilar cobre os três. Escolha o que quer organizar primeiro e os primeiros passos começam por ele.
-                </p>
-              </div>
-
-              <div role="radiogroup" aria-label="Por onde começar" className="grid gap-3">
-                {OBJETIVOS.map((o) => {
-                  const Icone = ICONE_OBJETIVO[o.value];
-                  const ativo = objetivo === o.value;
-                  return (
-                    <button
-                      key={o.value}
-                      type="button"
-                      role="radio"
-                      aria-checked={ativo}
-                      onClick={() => setObjetivo(o.value)}
-                      className={cn(
-                        "flex items-start gap-3 rounded-xl border p-4 text-left transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black/10",
-                        ativo ? "border-ink bg-paper-alt" : "border-paper-border bg-paper hover:border-black/20"
-                      )}
-                    >
-                      <Icone className={cn("mt-0.5 h-5 w-5 shrink-0", ativo ? "text-ink" : "text-ink/40")} />
-                      <span className="min-w-0">
-                        <span className="block text-sm font-semibold text-ink">{o.label}</span>
-                        <span className="block text-sm text-ink-soft">{o.descricao}</span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <h2 className="text-sm font-semibold text-ink">Chame seu time</h2>
-                  <p className="text-xs text-ink-soft">
-                    Opcional. Dá para convidar depois em Administração › Usuários.
-                  </p>
                 </div>
-                {convites.map((c, i) => (
-                  <div key={i} className="flex gap-2">
-                    <div className="min-w-0 flex-1">
-                      <Label htmlFor={`convite-email-${i}`} className="sr-only">
-                        E-mail do colega {i + 1}
-                      </Label>
-                      <Input
-                        id={`convite-email-${i}`}
-                        type="email"
-                        value={c.email}
-                        onChange={(e) => setConvite(i, { email: e.target.value })}
-                        placeholder="colega@escritorio.com.br"
-                        className="h-11 bg-paper-alt border-paper-border"
-                        aria-invalid={Boolean(c.email.trim()) && !EMAIL_RE.test(c.email.trim())}
-                      />
-                    </div>
-                    <Select value={c.papel} onValueChange={(v) => setConvite(i, { papel: v as Papel })}>
-                      <SelectTrigger className="h-11 w-[150px] bg-paper-alt" aria-label={`Papel do colega ${i + 1}`}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="user">Usuário</SelectItem>
-                        <SelectItem value="coordenador">Coordenador</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ))}
-              </div>
 
-              <Button
-                variant="brand"
-                className="w-full h-11 font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
-                type="button"
-                onClick={concluir}
-                disabled={isLoading || convitesInvalidos}
-              >
-                {isLoading ? (
-                  <>
-                    <BusyMark className="mr-2 h-4 w-4" /> Entrando...
-                  </>
-                ) : (
-                  <>
-                    {convitesValidos.length > 0 ? "Convidar e entrar na Pilar" : "Entrar na Pilar"}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </>
-                )}
-              </Button>
-            </>
-          )}
+                <ResultadoReceita consulta={receita} />
+
+                <FormField
+                  control={form.control}
+                  name="disciplinas"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-ink-soft font-medium">Disciplinas do escritório</FormLabel>
+                      <FormControl>
+                        <EscolhaChips
+                          multiplo
+                          ariaLabel="Disciplinas do escritório"
+                          opcoes={DISCIPLINAS}
+                          value={field.value ?? []}
+                          onChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="porte"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-ink-soft font-medium">Quantas pessoas trabalham aí</FormLabel>
+                      <FormControl>
+                        <EscolhaChips
+                          ariaLabel="Quantas pessoas trabalham no escritório"
+                          opcoes={PORTES}
+                          value={field.value || null}
+                          onChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button
+                  variant="brand"
+                  className="w-full h-11 font-medium shadow-lg shadow-brand/20 hover:shadow-brand/30 transition-all active:scale-[0.98] text-sm"
+                  type="submit"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <BusyMark className="mr-2 h-4 w-4" /> Salvando...
+                    </>
+                  ) : (
+                    <>
+                      Continuar
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </form>
+            </Form>
+          </>
         </div>
       </div>
 
@@ -527,7 +416,7 @@ export default function CompanySetup() {
           <div className="space-y-6 max-w-lg ml-auto text-right animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
             <div className="flex justify-end">
               <span className="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
-                {etapa === "escritorio" ? "Seu escritório" : "Último passo"}
+                Seu escritório
               </span>
             </div>
 

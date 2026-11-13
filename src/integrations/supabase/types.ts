@@ -5631,6 +5631,59 @@ export type Database = {
           },
         ]
       }
+      onboarding_respostas: {
+        Row: {
+          concluido_em: string | null
+          contexto: Json
+          created_at: string
+          dor_principal: string | null
+          dores: string[]
+          empresa_id: string
+          etapa_atual: number
+          id: string
+          texto_livre: string | null
+          updated_at: string
+          user_id: string
+          versao: number
+        }
+        Insert: {
+          concluido_em?: string | null
+          contexto?: Json
+          created_at?: string
+          dor_principal?: string | null
+          dores?: string[]
+          empresa_id: string
+          etapa_atual?: number
+          id?: string
+          texto_livre?: string | null
+          updated_at?: string
+          user_id: string
+          versao?: number
+        }
+        Update: {
+          concluido_em?: string | null
+          contexto?: Json
+          created_at?: string
+          dor_principal?: string | null
+          dores?: string[]
+          empresa_id?: string
+          etapa_atual?: number
+          id?: string
+          texto_livre?: string | null
+          updated_at?: string
+          user_id?: string
+          versao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_respostas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ops_acoes: {
         Row: {
           agente_id: string

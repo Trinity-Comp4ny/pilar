@@ -51,12 +51,17 @@ function renderPage() {
 
 const cnpj = () => screen.getByPlaceholderText("00.000.000/0000-00");
 const continuar = () => screen.getByRole("button", { name: /Continuar|Salvando/ });
-const entrar = () => screen.getByRole("button", { name: /Entrar na Pilar|Convidar e entrar|Entrando/ });
+const entrar = () => screen.getByRole("button", { name: /Entrar na Pilar|Entrando/ });
+const botao = (nome: RegExp | string) => screen.getByRole("button", { name: nome });
+const rascunhos = () => h.calls.filter((c) => c.table === "onboarding_respostas" && c.op === "upsert");
 const updates = () => h.calls.filter((c) => c.table === "empresas" && c.op === "update");
 
-async function irParaEtapa3(user: ReturnType<typeof userEvent.setup>) {
+type Usuario = ReturnType<typeof userEvent.setup>;
+
+/** Confirma o escritório e cai na primeira tela do onboarding inteligente. */
+async function irParaWizard(user: Usuario) {
   await user.click(continuar());
-  expect(await screen.findByRole("heading", { name: "Por onde começar?" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: /Oi, Ana\. Vamos deixar o .* pronto\./ })).toBeInTheDocument();
 }
 
 vi.setConfig({ testTimeout: 15000 });
@@ -64,14 +69,14 @@ vi.setConfig({ testTimeout: 15000 });
 beforeEach(() => {
   vi.clearAllMocks();
   h.calls.length = 0;
-  h.profile = { empresa_id: "e1", empresas: { nome: "Escritório Seed", cnpj: "" } };
+  h.profile = { empresa_id: "e1", first_name: "Ana", empresas: { nome: "Escritório Seed", cnpj: "" } };
   h.user = { id: "u1", email: "dono@alfaeng.com.br" };
   h.refreshProfile.mockResolvedValue(undefined);
   h.invoke.mockResolvedValue({ data: { success: true }, error: null });
   h.resolve.mockImplementation(() => ({ error: null }));
 });
 
-describe("CompanySetup · Seu escritório (etapa 2)", () => {
+describe("CompanySetup · Confirme seu escritório (etapa 3)", () => {
   it("pré-preenche o que o ultra-admin anotou na criação", () => {
     h.profile = {
       empresa_id: "e1",
@@ -115,7 +120,7 @@ describe("CompanySetup · Seu escritório (etapa 2)", () => {
     await user.click(screen.getByRole("button", { name: "Usar alfaeng.com.br" }));
     await user.click(screen.getByRole("radio", { name: "1 a 5 pessoas" }));
     await user.click(screen.getByRole("button", { name: "Arquitetura" }));
-    await irParaEtapa3(user);
+    await irParaWizard(user);
     expect(updates()[0]?.payload).toEqual({
       nome: "Escritório Seed",
       cnpj: null,
@@ -143,7 +148,7 @@ describe("CompanySetup · Seu escritório (etapa 2)", () => {
         description: "Você não tem permissão para realizar esta ação.",
       })
     );
-    expect(screen.queryByRole("heading", { name: "Por onde começar?" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /Oi, Ana/ })).not.toBeInTheDocument();
   });
 
   it("usuário sem empresa vinculada recebe erro e não grava nada", async () => {
@@ -203,7 +208,7 @@ describe("CompanySetup · consulta do CNPJ na Receita (SPEC 149)", () => {
     const user = userEvent.setup();
     await user.type(cnpj(), CNPJ_VALIDO);
     await screen.findByText("ALFA ENGENHARIA LTDA");
-    await irParaEtapa3(user);
+    await irParaWizard(user);
     expect(updates()[0]?.payload).toMatchObject({
       endereco: "RUA DAS FLORES, 100 - CENTRO",
       cidade: "BAURU",
@@ -214,80 +219,158 @@ describe("CompanySetup · consulta do CNPJ na Receita (SPEC 149)", () => {
   });
 
   it("não sobrescreve endereço que o escritório já tem", async () => {
-    h.profile = { empresa_id: "e1", empresas: { nome: "Alfa", cidade: "Marília", estado: "SP" } };
+    h.profile = { empresa_id: "e1", first_name: "Ana", empresas: { nome: "Alfa", cidade: "Marília", estado: "SP" } };
     renderPage();
     const user = userEvent.setup();
     await user.type(cnpj(), CNPJ_VALIDO);
     await screen.findByText("ALFA ENGENHARIA LTDA");
-    await irParaEtapa3(user);
+    await irParaWizard(user);
     expect(updates()[0]?.payload).not.toHaveProperty("cidade");
     expect(updates()[0]?.payload).not.toHaveProperty("estado");
     expect(updates()[0]?.payload).toMatchObject({ endereco: "RUA DAS FLORES, 100 - CENTRO", cep: "17010000" });
   });
 });
 
-describe("CompanySetup · Por onde começar (etapa 3)", () => {
-  it("os três pilares aparecem com o mesmo peso", async () => {
+describe("CompanySetup · onboarding inteligente (etapa 4, SPEC 165)", () => {
+  it("depois do escritório vem a tela de boas-vindas, com a barra na etapa 4 de 4", async () => {
     renderPage();
-    await irParaEtapa3(userEvent.setup());
-    expect(screen.getAllByRole("radio").map((r) => r.textContent)).toEqual([
-      expect.stringContaining("Gestão"),
-      expect.stringContaining("Projetos"),
-      expect.stringContaining("Obras"),
-    ]);
+    await irParaWizard(userEvent.setup());
+    expect(screen.getByText("Etapa 4 de 4")).toBeInTheDocument();
+    expect(screen.getByText("Pergunta 1 de 7")).toBeInTheDocument();
+    expect(h.refreshProfile).not.toHaveBeenCalled();
   });
 
-  it("grava o pilar escolhido, conclui o onboarding e entra sem convidar ninguém", async () => {
+  it("dor, aprofundamento, operação e ferramentas viram rascunho e o plano é concluído", async () => {
     renderPage();
     const user = userEvent.setup();
-    await irParaEtapa3(user);
-    await user.click(screen.getByRole("radio", { name: /Obras/ }));
-    await user.click(entrar());
-    expect(await screen.findByTestId("inicio")).toBeInTheDocument();
-    expect(updates()[1]?.payload).toEqual({ objetivo_inicial: "obras", onboarding_completed: true });
-    expect(h.invoke).not.toHaveBeenCalled();
-    expect(h.refreshProfile).toHaveBeenCalled();
-    expect(h.track).toHaveBeenCalledWith("onboarding_objetivo_escolhido", { objetivo: "obras" });
-  });
+    await irParaWizard(user);
+    await user.click(botao(/Começar/));
 
-  it("pular a escolha também conclui", async () => {
-    renderPage();
-    const user = userEvent.setup();
-    await irParaEtapa3(user);
-    await user.click(entrar());
-    expect(await screen.findByTestId("inicio")).toBeInTheDocument();
-    expect(updates()[1]?.payload).toEqual({ objetivo_inicial: null, onboarding_completed: true });
-  });
+    await user.click(await screen.findByRole("button", { name: "Estouro de prazo e de cronograma" }));
+    await user.click(screen.getByRole("button", { name: "Não sei quem está fazendo o quê" }));
+    await user.type(screen.getByLabelText(/Conta com suas palavras/), "Perdemos prazo toda semana");
+    await user.click(botao("Continuar"));
 
-  it("convida os colegas informados pela mesma função do painel de usuários", async () => {
-    renderPage();
-    const user = userEvent.setup();
-    await irParaEtapa3(user);
-    await user.type(screen.getByLabelText("E-mail do colega 1"), "Bia@AlfaEng.com.br");
+    // A primeira dor marcada é a principal e define a pergunta de aprofundamento.
+    expect(
+      await screen.findByRole("heading", { name: "Como você acompanha o prazo das entregas hoje?" })
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("radio", { name: "Cobrando no WhatsApp" }));
+    await user.click(botao("Continuar"));
+
+    expect(await screen.findByRole("heading", { name: /quantos projetos vocês tocam/i })).toBeInTheDocument();
+    await user.click(screen.getByRole("radio", { name: "6 a 15" }));
+    await user.click(botao("Continuar"));
+
+    // Espelho: a resposta anterior aparece na pergunta seguinte.
+    expect(
+      await screen.findByRole("heading", { name: "Com 6 a 15 projetos ativos, o que sustenta isso hoje?" })
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Planilhas (Excel, Google)" }));
+    await user.click(botao("Continuar"));
+
+    expect(await screen.findByRole("heading", { name: "Prazo de cada entrega sob controle" })).toBeInTheDocument();
+    await user.click(botao(/Ver meu plano/));
+
+    expect(await screen.findByRole("heading", { name: "Seu plano, Ana" })).toBeInTheDocument();
+    expect(screen.getAllByRole("listitem").map((li) => li.textContent)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("Cadastre um cliente"),
+        expect.stringContaining("Abra seu primeiro projeto"),
+      ])
+    );
     await user.click(entrar());
+
     expect(await screen.findByTestId("inicio")).toBeInTheDocument();
-    expect(h.invoke).toHaveBeenCalledTimes(1);
-    expect(h.invoke).toHaveBeenCalledWith("invite-user", {
-      body: { email: "bia@alfaeng.com.br", nome: "", role: "user" },
+    expect(updates()[1]?.payload).toEqual({ objetivo_inicial: "projetos", onboarding_completed: true });
+    const ultimo = rascunhos().at(-1)?.payload as Record<string, unknown>;
+    expect(ultimo).toMatchObject({
+      user_id: "u1",
+      empresa_id: "e1",
+      dores: ["prazos", "equipe"],
+      dor_principal: "prazos",
+      texto_livre: "Perdemos prazo toda semana",
+      contexto: {
+        aprofundamento: { dor: "prazos", resposta: "whatsapp" },
+        projetosAtivos: "6-15",
+        ferramentas: ["planilhas"],
+      },
     });
+    expect(ultimo.concluido_em).toEqual(expect.any(String));
+    expect(h.track).toHaveBeenCalledWith("onboarding_dor_escolhida", {
+      dores: ["prazos", "equipe"],
+      principal: "prazos",
+      tem_texto: true,
+    });
+    expect(h.track).toHaveBeenCalledWith(
+      "onboarding_plano_gerado",
+      expect.objectContaining({ passos: expect.any(Array) })
+    );
+    expect(h.track).toHaveBeenCalledWith("onboarding_objetivo_escolhido", { objetivo: "projetos" });
+    expect(h.refreshProfile).toHaveBeenCalled();
   });
 
-  it("e-mail de colega inválido trava o botão", async () => {
+  it("pular tudo ainda gera um plano padrão e conclui", async () => {
     renderPage();
     const user = userEvent.setup();
-    await irParaEtapa3(user);
-    await user.type(screen.getByLabelText("E-mail do colega 1"), "bia@");
-    expect(entrar()).toBeDisabled();
-  });
-
-  it("convite que falha não impede a entrada", async () => {
-    h.invoke.mockResolvedValue({ data: null, error: new Error("Limite de usuários") });
-    renderPage();
-    const user = userEvent.setup();
-    await irParaEtapa3(user);
-    await user.type(screen.getByLabelText("E-mail do colega 1"), "bia@alfaeng.com.br");
+    await irParaWizard(user);
+    await user.click(botao(/Começar/));
+    await user.click(botao("Pular")); // dores: sem dor, a pergunta de aprofundamento some
+    expect(await screen.findByRole("heading", { name: /quantos projetos vocês tocam/i })).toBeInTheDocument();
+    await user.click(botao("Pular"));
+    await user.click(botao("Pular"));
+    await user.click(botao(/Ver meu plano/));
     await user.click(entrar());
     expect(await screen.findByTestId("inicio")).toBeInTheDocument();
-    expect(h.toastError).toHaveBeenCalledWith("Convite para bia@alfaeng.com.br não saiu", expect.anything());
+    expect(updates()[1]?.payload).toEqual({ objetivo_inicial: "gestao", onboarding_completed: true });
+  });
+
+  it("no máximo 3 dores", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    await irParaWizard(user);
+    await user.click(botao(/Começar/));
+    for (const nome of [
+      "Estouro de prazo e de cronograma",
+      "Não sei quem está fazendo o quê",
+      "Proposta lenta ou sem padrão",
+    ]) {
+      await user.click(await screen.findByRole("button", { name: nome }));
+    }
+    expect(screen.getByRole("button", { name: "Controle de obra: diário, medição, fornecedor" })).toBeDisabled();
+  });
+
+  it("falha ao guardar o rascunho avisa, mas não trava a pessoa", async () => {
+    h.resolve.mockImplementation((q) =>
+      q.table === "onboarding_respostas" && q.op === "upsert" ? { error: { message: "boom" } } : { error: null }
+    );
+    renderPage();
+    const user = userEvent.setup();
+    await irParaWizard(user);
+    await user.click(botao(/Começar/));
+    expect(await screen.findByRole("heading", { name: "O que mais pesa no escritório hoje?" })).toBeInTheDocument();
+    await waitFor(() =>
+      expect(h.toastError).toHaveBeenCalledWith("Não foi possível guardar suas respostas agora", expect.anything())
+    );
+  });
+
+  it("quem fechou a aba volta de onde parou, sem refazer o escritório", async () => {
+    h.resolve.mockImplementation((q) =>
+      q.table === "onboarding_respostas" && q.op === "select"
+        ? {
+            data: {
+              dores: ["prazos"],
+              dor_principal: "prazos",
+              texto_livre: null,
+              contexto: {},
+              etapa_atual: 4,
+              concluido_em: null,
+            },
+          }
+        : { error: null }
+    );
+    renderPage();
+    expect(await screen.findByRole("heading", { name: /quantos projetos vocês tocam/i })).toBeInTheDocument();
+    expect(screen.getByText("Pergunta 4 de 7")).toBeInTheDocument();
   });
 });
