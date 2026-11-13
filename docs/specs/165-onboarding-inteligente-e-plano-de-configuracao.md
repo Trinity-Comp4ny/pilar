@@ -1,7 +1,7 @@
 # SPEC: Onboarding inteligente e plano de configuração por dependências
 
 **Data:** 2026-11-13
-**Status:** Aprovada (2026-11-13). Fase 1 implementada; Fases 2 a 4 pendentes
+**Status:** Aprovada (2026-11-13). Fases 1 e 2 implementadas; Fases 3 e 4 pendentes
 **Autor:** Claude, a pedido do Matheus
 **Módulo:** onboarding | início | ultra-admin
 **Complementa:** [SPEC 149](149-onboarding-empresa-usuario-e-primeira-semana.md) (não a substitui: reaproveita dados, eventos e o checklist derivado de dado real)
@@ -166,8 +166,28 @@ Clientes → Equipe (com custo) → Projeto → Lançamento vinculado.
 - `EtapasProgress`: barra segmentada animada ("Etapa N de M") nas duas telas. Dono: 4 etapas; convidado: 2.
 - Sem migration, sem mudança de banco.
 
-**Pendente:** Fase 2 (wizard e `onboarding_respostas`), Fase 3 (plano e checklist por dependência),
-Fase 4 (painel de dores). Antes/depois visual do PR da Fase 1 ainda não capturado.
+**Fase 2 (branch `feat/onboarding-inteligente-fase-2`, empilhada sobre a Fase 1):**
+
+- Migration `20261230000000_onboarding_respostas`: uma linha por pessoa (`user_id` único) com dores (até 3),
+  dor principal, texto livre, contexto (aprofundamento, projetos ativos, ferramentas), `etapa_atual` e
+  `concluido_em`. RLS: a pessoa lê e escreve só a própria linha, na própria empresa; o ultra-admin lê todas.
+- `OnboardingWizard`: tela cheia, uma pergunta por tela, entrada animada (respeita movimento reduzido),
+  barra de etapas do cadastro (etapa 4 de 4) e "Pergunta N de 7". Cada tela grava o rascunho; fechou a aba,
+  volta de onde parou, sem refazer o escritório. Tudo pulável.
+- Telas finais (7): boas-vindas, dores (até 3 + texto livre), aprofundamento da dor principal (some se
+  pulou as dores), projetos ativos (espelha o porte já sabido), ferramentas (espelha os projetos ativos),
+  prévia do que o Pilar faz para a dor e **plano** com passos, minutos e a dor que puxou cada um.
+- O plano é regra determinística (`lib/onboarding/plano.ts`) com a ordem de dependência (cliente, equipe,
+  colegas, proposta, projeto, fluxo, financeiro, obra, fornecedor). A fase 3 troca a tabela pelo grafo.
+- A dor principal define o pilar de partida (`empresas.objetivo_inicial`) e a ordem do checklist. O passo
+  "Por onde começar" e o convite de até 3 colegas saíram daqui; convidar colegas é passo do plano.
+- Eventos: `onboarding_pergunta_respondida`, `onboarding_dor_escolhida`, `onboarding_plano_gerado`.
+- Desvios do desenho original: função e celular ficam no `/profile-setup` (já entregues na Fase 1), então o
+  wizard tem 7 telas, não 8. A prévia é texto sobre o que existe no produto, sem prints do seed.
+- **Não verificado:** a migration não foi aplicada (sem Docker nesta máquina); o `types.ts` foi escrito à
+  mão no formato do gerador e o job `types-sync` do CI é quem confirma.
+
+**Pendente:** Fase 3 (grafo e bloqueio no checklist, passos de conta e cartão), Fase 4 (painel de dores).
 
 ## Decisões em aberto
 

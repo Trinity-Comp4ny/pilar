@@ -31,6 +31,9 @@ export type EventoProduto =
   | "onboarding_etapa_concluida"
   | "onboarding_objetivo_escolhido"
   | "onboarding_boas_vindas_acao"
+  | "onboarding_pergunta_respondida"
+  | "onboarding_dor_escolhida"
+  | "onboarding_plano_gerado"
   // Uso dos módulos (ativação e adoção)
   | "cliente_criado"
   | "lead_criado"
