@@ -10,7 +10,6 @@ import {
   MessageSquare,
   Megaphone,
   HelpCircle,
-  Gift,
   Eye,
   EyeOff,
 } from "lucide-react";
@@ -320,7 +319,7 @@ export function AppSidebar() {
             title="Temos novidades"
           >
             <span className={railIconClass(currentPath.startsWith("/novidades"))}>
-              <Gift size={18} strokeWidth={1.5} />
+              <Megaphone size={18} strokeWidth={1.5} />
               <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-brand ring-2 ring-white" />
             </span>
             Novidades
