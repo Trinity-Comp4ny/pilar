@@ -364,7 +364,8 @@ def load_track(path, dur):
 
 
 def main():
-    meta = json.load(open(sys.argv[1]))
+    with open(sys.argv[1]) as f:
+        meta = json.load(f)
     dur = meta["duration"]
     S = meta.get("sections")
     # music/<nome do vídeo>.mp3 (ou .wav), se existir, substitui a trilha sintetizada

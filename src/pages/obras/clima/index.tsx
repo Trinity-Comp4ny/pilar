@@ -216,13 +216,14 @@ export default function ObraClimaPage() {
   const [localizando, setLocalizando] = useState(false);
 
   useEffect(() => {
-    if (!alvo) return;
+    // Posição do aparelho nunca vai para o storage: só obra ou cidade escolhida.
+    if (!alvo || modoLocal) return;
     try {
       localStorage.setItem(LAST_KEY, JSON.stringify(alvo));
     } catch {
       /* modo privado: sem persistência */
     }
-  }, [alvo]);
+  }, [alvo, modoLocal]);
 
   const selecionar = (a: Alvo) => {
     setModoLocal(false);
