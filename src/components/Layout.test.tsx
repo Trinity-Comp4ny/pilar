@@ -26,7 +26,7 @@ vi.mock("@/components/agente/AgenteAjuda", () => ({ AgenteAjuda: () => null }));
 vi.mock("@/components/pesquisas/NpsCard", () => ({ NpsCard: () => null }));
 vi.mock("@/components/ComunicadoModal", () => ({ ComunicadoModal: () => null }));
 vi.mock("@/components/RegistroDispositivo", () => ({ RegistroDispositivo: () => null }));
-vi.mock("@/components/AceiteAnaliseBanner", () => ({ AceiteAnaliseBanner: () => null }));
+vi.mock("@/components/AceiteAnaliseCard", () => ({ AceiteAnaliseCard: () => <div data-testid="aceite-analise" /> }));
 vi.mock("@/components/AceiteTermosBanner", () => ({
   AceiteTermosBanner: ({ modo }: { modo?: string }) => <div data-testid="aceite-termos" data-modo={modo} />,
 }));
@@ -69,21 +69,23 @@ describe("Layout", () => {
     expect(screen.queryByText(/para comandos/)).not.toBeInTheDocument();
   });
 
-  it("a faixa de reaceite dos Termos vem depois do skip link: o 1º Tab é o skip link", async () => {
+  it("avisos de Termos e de análise ficam num bloco fixo no canto inferior direito, nunca no topo", async () => {
     renderLayout();
-    const skip = screen.getByRole("link", { name: "Pular para conteúdo principal" });
-    const faixa = await screen.findByTestId("aceite-termos");
-    expect(faixa).toHaveAttribute("data-modo", "faixa");
-    expect(skip.compareDocumentPosition(faixa) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const termos = await screen.findByTestId("aceite-termos");
+    const analise = await screen.findByTestId("aceite-analise");
+    expect(termos).toHaveAttribute("data-modo", "faixa");
+    const canto = termos.parentElement!;
+    expect(canto).toHaveClass("fixed", "bottom-24", "right-4");
+    expect(canto).toContainElement(analise);
+    expect(screen.getByRole("main")).not.toContainElement(canto);
   });
 
-  it("faixas de aviso ficam num bloco fixo fora do main, para o PageLayout não cobri-las", async () => {
+  it("a faixa de incidente continua num bloco fixo fora do main, para o PageLayout não cobri-la", async () => {
     renderLayout();
     const avisos = await screen.findByTestId("faixa-avisos");
-    const termos = await screen.findByTestId("aceite-termos");
     expect(screen.getByRole("main")).not.toContainElement(avisos);
     expect(avisos.parentElement).toHaveClass("fixed");
-    expect(avisos.parentElement).toContainElement(termos);
+    expect(screen.queryByTestId("aceite-termos")?.parentElement).not.toBe(avisos.parentElement);
   });
 
   it("⌘K abre a paleta sob demanda", async () => {

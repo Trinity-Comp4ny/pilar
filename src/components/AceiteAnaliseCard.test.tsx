@@ -3,7 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AceiteAnaliseBanner } from "./AceiteAnaliseBanner";
+import { AceiteAnaliseCard } from "./AceiteAnaliseCard";
 
 const { auth, conta, setConsent, cookie } = vi.hoisted(() => ({
   auth: { user: null as { id: string } | null },
@@ -28,13 +28,13 @@ function renderizar(rota = "/inicio") {
   return render(
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={[rota]}>
-        <AceiteAnaliseBanner />
+        <AceiteAnaliseCard />
       </MemoryRouter>
     </QueryClientProvider>
   );
 }
 
-describe("AceiteAnaliseBanner", () => {
+describe("AceiteAnaliseCard", () => {
   beforeEach(() => {
     auth.user = { id: "u1" };
     conta.valor = null;

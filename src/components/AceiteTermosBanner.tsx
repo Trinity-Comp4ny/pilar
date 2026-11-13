@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FileText } from "lucide-react";
 import { toast } from "sonner";
+import { AvisoCanto } from "@/components/AvisoCanto";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +16,7 @@ import { PRIVACY_VERSION, TERMS_VERSION, TERMS_VIGENCIA_TEXTO, termosVigentes } 
  * dentro do app, e o aceite fica gravado com data e versão (`terms_acceptances`,
  * source 'reaceite'). Membro da equipe não vê nada: o contrato é com a empresa.
  *
- * Antes da vigência: faixa no topo, com "Agora não" (volta na próxima sessão).
+ * Antes da vigência: cartão no canto inferior direito (nunca faixa no topo), com "Agora não" (volta na próxima sessão).
  * Depois da vigência: janela que só fecha com o aceite.
  *
  * `modo` separa as duas partes porque elas vivem em lugares diferentes: a janela é global
@@ -149,37 +150,28 @@ export function AceiteTermosBanner({ modo = "ambos" }: { modo?: ModoAceiteTermos
   };
 
   return (
-    <div
-      role="status"
-      className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 bg-fill-info px-4 py-2.5 text-sm text-fill-info-foreground"
+    <AvisoCanto
+      icone={<FileText className="h-4 w-4" strokeWidth={2} />}
+      titulo="Atualizamos os Termos de Uso e a Política de Privacidade"
+      acoes={
+        <>
+          <LinkTermos className="mr-auto text-xs font-medium underline underline-offset-2" />
+          <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={adiar}>
+            Agora não
+          </Button>
+          <Button
+            size="sm"
+            variant="brand"
+            className="h-7 px-3 text-xs"
+            loading={aceitar.isPending}
+            onClick={() => aceitar.mutate()}
+          >
+            Li e aceito
+          </Button>
+        </>
+      }
     >
-      <div className="flex items-center gap-2">
-        <FileText className="h-4 w-4 shrink-0" strokeWidth={2} />
-        <span>
-          <span className="font-medium">Atualizamos os Termos de Uso e a Política de Privacidade.</span>{" "}
-          {`Valem para a sua conta a partir de ${TERMS_VIGENCIA_TEXTO}.`}
-        </span>
-      </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <LinkTermos className="text-xs font-medium underline underline-offset-2" />
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-7 px-2 text-xs text-fill-info-foreground hover:bg-fill-info-foreground/10 hover:text-fill-info-foreground"
-          onClick={adiar}
-        >
-          Agora não
-        </Button>
-        <Button
-          size="sm"
-          variant="brand"
-          className="h-7 px-3 text-xs"
-          loading={aceitar.isPending}
-          onClick={() => aceitar.mutate()}
-        >
-          Li e aceito
-        </Button>
-      </div>
-    </div>
+      {`Valem para a sua conta a partir de ${TERMS_VIGENCIA_TEXTO}.`}
+    </AvisoCanto>
   );
 }
