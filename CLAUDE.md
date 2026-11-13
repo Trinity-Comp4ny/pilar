@@ -89,6 +89,11 @@ usar, o que é proibido). Regras que valem sempre:
 Todo PR (ou fase de uma sprint) que muda a aparência de uma tela mostra **o antes e o depois**
 no corpo, para o Matheus acompanhar a evolução. Sem exceção para mudança visual.
 
+**Regra rígida: o PR só é aberto depois que a imagem antes/depois existe e vai embutida no corpo**
+(uma imagem lado a lado, fixada por SHA). "Sem Docker/Supabase local" não dispensa: capture com
+mock do cliente Supabase, Playwright com rotas interceptadas ou harness do componente real. Se
+nada servir, pergunte ao dono antes de abrir. Nunca abrir PR visual "sem print" para completar depois.
+
 - **Antes** = como a tela era na base do PR (`origin/staging` no momento de abrir). Suba a base
   numa worktree separada (`git worktree add --detach /tmp/pilar-antes <base>`, `node_modules`
   por symlink, `vite --port 8081`) e capture ali. Nunca "reconstrua de memória".
