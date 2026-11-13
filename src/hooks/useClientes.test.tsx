@@ -340,7 +340,10 @@ describe("useClientes: listas completas e bordas", () => {
   it("motivo escrito pela função (422) chega ao toast, sem virar 'Tente novamente'", async () => {
     const motivo = "Cadastre o e-mail da empresa em Configurações para enviar ao cliente";
     supabaseFake.respondInvoke("invite-cliente-portal", {
-      error: { message: "Edge Function returned a non-2xx status code", context: { json: async () => ({ error: motivo }) } },
+      error: {
+        message: "Edge Function returned a non-2xx status code",
+        context: { json: async () => ({ error: motivo }) },
+      },
     });
     const { result } = renderHook(() => useClientes({ enableListQueries: false }), { wrapper });
 
