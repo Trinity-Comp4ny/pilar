@@ -79,7 +79,9 @@ const BUDGETS = {
   // 2026-11-12: 337 kB (era 336). O convite de instalar o app (PR #834) soma ~0,6 kB gzip ao boot
   // (336,6): a captura do `beforeinstallprompt` precisa rodar no main.tsx, antes do React, e o
   // ManifestDoApp troca o manifest por público. O cartão e o painel de passos seguem fora do boot.
-  initialLoad: 337 * 1024,
+  // 2026-11-13: 338 kB (era 337). Os eventos login_realizado/erro_exibido, a troca de id por :id no
+  // pageview e o canto de avisos (AvisosDoCanto, lazy) somam ~0,3 kB gzip ao boot; estourou por 0,1 kB.
+  initialLoad: 338 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app
