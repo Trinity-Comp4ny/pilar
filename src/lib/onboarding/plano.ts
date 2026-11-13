@@ -1,44 +1,38 @@
-import { ONBOARDING_STEPS, type OnboardingStep } from "@/lib/onboarding/steps";
+import {
+  ONBOARDING_STEPS,
+  ordemTopologica,
+  prerequisitosObrigatorios,
+  type OnboardingStep,
+} from "@/lib/onboarding/steps";
 import { OBJETIVO_DA_DOR, rotuloDaDor, type Dor, type ProjetosAtivos } from "@/lib/onboarding/dores";
 import type { Objetivo } from "@/lib/perfilEscritorio";
 
 /**
- * Plano provisório (SPEC 165, fase 2): da dor principal e das outras, os passos do
- * checklist que resolvem aquela dor, já na ordem em que um depende do outro. A fase 3
- * troca a tabela de pré-requisitos abaixo por um grafo no próprio `steps.ts`.
+ * Plano de configuração (SPEC 165): da dor principal e das outras, os passos do checklist
+ * que resolvem aquela dor. Os pré-requisitos obrigatórios entram sozinhos e a ordem vem do
+ * grafo de dependências do `steps.ts` (fase 3): nenhum passo aparece antes do que ele precisa.
  */
 
-/** Passos (chaves de `ONBOARDING_STEPS`) que cada dor pede. */
+/** Passos (chaves de `ONBOARDING_STEPS`) que cada dor pede. Os pré-requisitos vêm do grafo. */
 const PASSOS_DA_DOR: Record<Dor, string[]> = {
-  lucro_projeto: ["cliente", "equipe", "projeto", "financeiro"],
-  prazos: ["cliente", "equipe", "projeto", "fluxo"],
-  propostas: ["cliente", "proposta", "projeto"],
-  financeiro: ["cliente", "financeiro"],
+  lucro_projeto: ["cliente", "equipe", "projeto", "conta_bancaria", "financeiro"],
+  prazos: ["projeto", "fluxo"],
+  propostas: ["proposta", "projeto"],
+  financeiro: ["conta_bancaria", "cartao", "financeiro"],
   equipe: ["equipe", "colega", "projeto"],
   cliente_andamento: ["cliente", "projeto", "colega"],
-  aditivos: ["cliente", "proposta", "projeto"],
-  obra: ["cliente", "obra", "fornecedor"],
+  aditivos: ["proposta", "projeto"],
+  obra: ["obra", "fornecedor"],
   espalhado: ["cliente", "equipe", "projeto", "colega"],
   outra: ["cliente", "equipe", "projeto"],
 };
-
-/** Ordem em que as coisas dependem umas das outras: quem vem antes é pré-requisito. */
-const ORDEM_DE_DEPENDENCIA = [
-  "cliente",
-  "equipe",
-  "colega",
-  "proposta",
-  "projeto",
-  "fluxo",
-  "financeiro",
-  "obra",
-  "fornecedor",
-];
 
 /** Minutos que cada passo costuma levar, para o "~N min no total" do plano. */
 const MINUTOS: Record<string, number> = {
   cliente: 3,
   equipe: 5,
+  conta_bancaria: 3,
+  cartao: 3,
   colega: 2,
   proposta: 8,
   projeto: 8,
@@ -84,22 +78,25 @@ export function montarPlano({ dores, dorPrincipal, projetosAtivos, porte }: Entr
     dores.length === 0 ? ["outra"] : [...new Set<Dor>([...(dorPrincipal ? [dorPrincipal] : []), ...dores])];
 
   const motivoDe = new Map<string, Dor>();
-  for (const dor of ordemDeDores) {
-    for (const key of PASSOS_DA_DOR[dor]) if (!motivoDe.has(key)) motivoDe.set(key, dor);
-  }
+  const pedir = (key: string, dor: Dor) => {
+    if (!motivoDe.has(key)) motivoDe.set(key, dor);
+    // O que este passo exige entra junto, com a mesma dor como motivo.
+    for (const dep of prerequisitosObrigatorios(key)) if (!motivoDe.has(dep)) motivoDe.set(dep, dor);
+  };
+  for (const dor of ordemDeDores) for (const key of PASSOS_DA_DOR[dor]) pedir(key, dor);
 
   // Equipe grande (16+ pessoas) sempre precisa de Equipe e de colegas convidados.
   if (porte === "16-40" || porte === "40+") {
-    if (!motivoDe.has("equipe")) motivoDe.set("equipe", ordemDeDores[0]);
-    if (!motivoDe.has("colega")) motivoDe.set("colega", ordemDeDores[0]);
+    pedir("equipe", ordemDeDores[0]);
+    pedir("colega", ordemDeDores[0]);
   }
   // Muitos projetos ativos pedem o fluxo de disciplinas padronizado.
-  if ((projetosAtivos === "16-30" || projetosAtivos === "30+") && motivoDe.has("projeto") && !motivoDe.has("fluxo")) {
-    motivoDe.set("fluxo", ordemDeDores[0]);
+  if ((projetosAtivos === "16-30" || projetosAtivos === "30+") && motivoDe.has("projeto")) {
+    pedir("fluxo", ordemDeDores[0]);
   }
 
   const passos: PassoDoPlano[] = [];
-  for (const key of ORDEM_DE_DEPENDENCIA) {
+  for (const key of ordemTopologica()) {
     const motivo = motivoDe.get(key);
     const passo = passoPorChave(key);
     if (!motivo || !passo) continue;

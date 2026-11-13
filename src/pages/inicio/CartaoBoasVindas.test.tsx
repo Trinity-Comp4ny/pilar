@@ -14,6 +14,14 @@ const h = vi.hoisted(() => ({
   counts: {} as Record<string, number>,
   dispensar: vi.fn(),
   track: vi.fn(),
+  respostas: {
+    dores: [],
+    dorPrincipal: null,
+    textoLivre: "",
+    contexto: {},
+    etapaAtual: 1,
+    concluidoEm: null,
+  } as Record<string, unknown>,
 }));
 
 vi.mock("@/contexts/AuthContext", () => ({
@@ -35,6 +43,9 @@ vi.mock("@/hooks/useOnboardingProgress", () => ({
     hasEmpresa: true,
   }),
 }));
+vi.mock("@/hooks/useOnboardingRespostas", () => ({
+  useOnboardingRespostas: () => ({ respostas: h.respostas, carregando: false, salvar: vi.fn() }),
+}));
 vi.mock("@/lib/analytics", () => ({ analytics: { track: h.track } }));
 
 function renderCartao() {
@@ -44,6 +55,7 @@ function renderCartao() {
         <Route path="/inicio" element={<CartaoBoasVindas />} />
         <Route path="/obras" element={<div data-testid="obras" />} />
         <Route path="/gestao/clientes" element={<div data-testid="clientes" />} />
+        <Route path="/gestao/equipe" element={<div data-testid="equipe" />} />
       </Routes>
     </MemoryRouter>
   );
@@ -54,6 +66,7 @@ beforeEach(() => {
   h.objetivo = null;
   h.state = { ...EMPTY_ONBOARDING_STATE };
   h.counts = {};
+  h.respostas = { dores: [], dorPrincipal: null, textoLivre: "", contexto: {}, etapaAtual: 1, concluidoEm: null };
 });
 
 describe("CartaoBoasVindas", () => {
@@ -90,5 +103,54 @@ describe("CartaoBoasVindas", () => {
     unmount();
     h.state = { ...EMPTY_ONBOARDING_STATE, completed_at: "2026-11-07T10:00:00Z" };
     expect(renderCartao().container).toBeEmptyDOMElement();
+  });
+
+  describe("plano de quem concluiu o onboarding (SPEC 165)", () => {
+    beforeEach(() => {
+      h.respostas = {
+        dores: ["prazos"],
+        dorPrincipal: "prazos",
+        textoLivre: "",
+        contexto: {},
+        etapaAtual: 7,
+        concluidoEm: "2026-11-13T12:00:00Z",
+      };
+    });
+
+    it("troca os três pilares pelos passos da dor, na ordem de dependência", () => {
+      renderCartao();
+      expect(screen.getByText(/Seu plano:/)).toBeInTheDocument();
+      const itens = screen.getAllByRole("listitem").map((li) => li.textContent ?? "");
+      expect(itens[0]).toContain("Cadastre um cliente");
+      expect(itens.findIndex((t) => t.includes("Cadastre sua equipe"))).toBeLessThan(
+        itens.findIndex((t) => t.includes("Abra seu primeiro projeto"))
+      );
+      expect(screen.queryByRole("button", { name: /Gestão/ })).not.toBeInTheDocument();
+    });
+
+    it("passo bloqueado diz o que falta e o toque vai ao pré-requisito", async () => {
+      renderCartao();
+      const projeto = screen.getByRole("button", { name: /Abra seu primeiro projeto/ });
+      expect(projeto).toHaveTextContent(/Antes: cadastre um cliente; cadastre sua equipe/i);
+      await userEvent.setup().click(projeto);
+      expect(await screen.findByTestId("clientes")).toBeInTheDocument();
+      expect(h.track).toHaveBeenCalledWith("onboarding_boas_vindas_acao", { passo: "projeto" });
+    });
+
+    it("passo feito fica marcado e não é clicável", () => {
+      h.counts = { clientes: 1 };
+      renderCartao();
+      expect(screen.getByRole("button", { name: /Cadastre um cliente/ })).toBeDisabled();
+      expect(screen.getByRole("button", { name: /Abra seu primeiro projeto/ })).toHaveTextContent(
+        /Antes: cadastre sua equipe/i
+      );
+    });
+
+    it("sem onboarding concluído, segue mostrando os três pilares", () => {
+      h.respostas = { ...h.respostas, concluidoEm: null };
+      renderCartao();
+      expect(screen.queryByText(/Seu plano:/)).not.toBeInTheDocument();
+      expect(screen.getAllByRole("button").length).toBeGreaterThanOrEqual(3);
+    });
   });
 });
