@@ -88,11 +88,26 @@ function renderPage() {
   );
 }
 
-async function preencherBasico(user: ReturnType<typeof userEvent.setup>) {
+type Usuario = ReturnType<typeof userEvent.setup>;
+
+/** Etapa 1 (acesso): nome, sobrenome e, quando a conta ainda não tem senha, a senha. Termina em "Continuar". */
+async function preencherAcesso(user: Usuario, senha?: string) {
   await user.type(screen.getByPlaceholderText("Ex: Maria"), "Maria");
   await user.type(screen.getByPlaceholderText("Ex: Souza"), "Souza");
-  await user.type(screen.getByPlaceholderText("(00) 00000-0000"), "11999998888");
+  if (senha) await user.type(screen.getByPlaceholderText("••••••••"), senha);
+  await user.click(salvar());
+}
+
+/** Etapa 2 (contato): celular e função. Não clica em salvar. */
+async function preencherContato(user: Usuario) {
+  await user.type(await screen.findByPlaceholderText("(00) 00000-0000"), "11999998888");
   await user.click(screen.getByRole("radio", { name: "Sócio ou diretor" }));
+}
+
+/** As duas etapas, deixando o botão final pronto para salvar. */
+async function preencherBasico(user: Usuario, senha?: string) {
+  await preencherAcesso(user, senha);
+  await preencherContato(user);
 }
 
 const salvar = () => screen.getByRole("button", { name: /Continuar|Salvar|Concluir|Salvando/ });
@@ -113,12 +128,11 @@ describe("ProfileSetup", () => {
   it("convite (com invite_token) pede senha; campos vazios ficam com erro", async () => {
     renderPage();
     const user = userEvent.setup();
-    await waitFor(() => expect(screen.getAllByPlaceholderText("••••••••")).toHaveLength(2));
+    await waitFor(() => expect(screen.getAllByPlaceholderText("••••••••")).toHaveLength(1));
     await user.click(await screen.findByRole("checkbox"));
     await user.click(salvar());
     expect(await screen.findByText("Nome é obrigatório")).toBeInTheDocument();
     expect(screen.getByText("Sobrenome é obrigatório")).toBeInTheDocument();
-    expect(screen.getByText("Telefone obrigatório")).toBeInTheDocument();
     expect(h.auth.updateUser).not.toHaveBeenCalled();
   });
 
@@ -128,28 +142,30 @@ describe("ProfileSetup", () => {
     expect(salvar()).toBeDisabled();
   });
 
-  it("senha fraca/divergente é recusada antes de ir ao servidor", async () => {
+  it("senha fraca é recusada antes de avançar e de ir ao servidor", async () => {
     renderPage();
     const user = userEvent.setup();
     await user.click(await screen.findByRole("checkbox"));
-    await preencherBasico(user);
-    const [senha, conf] = screen.getAllByPlaceholderText("••••••••");
-    await user.type(senha, "abc");
-    await user.type(conf, "abd");
-    await user.click(salvar());
+    await preencherAcesso(user, "abc");
     expect(await screen.findByText("Senha deve ter pelo menos 12 caracteres")).toBeInTheDocument();
-    expect(screen.getByText("As senhas não coincidem")).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("(00) 00000-0000")).not.toBeInTheDocument();
     expect(h.auth.updateUser).not.toHaveBeenCalled();
+  });
+
+  it("botão de mostrar revela a senha digitada", async () => {
+    renderPage();
+    const user = userEvent.setup();
+    const campo = await screen.findByPlaceholderText("••••••••");
+    expect(campo).toHaveAttribute("type", "password");
+    await user.click(screen.getByRole("button", { name: "Mostrar senha" }));
+    expect(campo).toHaveAttribute("type", "text");
   });
 
   it("fluxo completo: senha primeiro, aceite, perfil, refresh e vai ao início", async () => {
     renderPage();
     const user = userEvent.setup();
     await user.click(await screen.findByRole("checkbox"));
-    await preencherBasico(user);
-    const [senha, conf] = screen.getAllByPlaceholderText("••••••••");
-    await user.type(senha, SENHA);
-    await user.type(conf, SENHA);
+    await preencherBasico(user, SENHA);
     await user.click(salvar());
     expect(await screen.findByTestId("inicio")).toBeInTheDocument();
     expect(h.auth.updateUser).toHaveBeenCalledWith({ password: SENHA });
@@ -160,7 +176,6 @@ describe("ProfileSetup", () => {
       first_name: "Maria",
       last_name: "Souza",
       funcao: "socio",
-      linkedin_url: null,
       onboarding_completed: true,
     });
     expect(h.refreshProfile).toHaveBeenCalled();
@@ -171,16 +186,14 @@ describe("ProfileSetup", () => {
     renderPage();
     const user = userEvent.setup();
     await user.click(await screen.findByRole("checkbox"));
-    await preencherBasico(user);
-    const [senha, conf] = screen.getAllByPlaceholderText("••••••••");
-    await user.type(senha, SENHA);
-    await user.type(conf, SENHA);
+    await preencherBasico(user, SENHA);
     await user.click(salvar());
     await waitFor(() => expect(h.toastError).toHaveBeenCalledWith("Erro ao salvar", expect.anything()));
     expect(h.calls.some((c) => c.table === "profiles" && c.op === "update")).toBe(false);
     expect(h.calls.some((c) => c.table === "terms_acceptances" && c.op === "insert")).toBe(false);
     expect(screen.queryByTestId("inicio")).not.toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Ex: Maria")).toHaveValue("Maria");
+    // Segue na etapa de contato, com o que foi digitado, para tentar de novo.
+    expect(screen.getByPlaceholderText("(00) 00000-0000")).toHaveValue("(11) 99999-8888");
   });
 
   it("erro de RLS ao salvar perfil vira mensagem segura", async () => {
@@ -265,14 +278,26 @@ describe("ProfileSetup", () => {
     expect(await screen.findByRole("heading", { name: "Boas-vindas ao Alfa Engenharia" })).toBeInTheDocument();
     expect(screen.getByText("Ana Souza")).toBeInTheDocument();
     expect(screen.getByText("Coordenador")).toBeInTheDocument();
-    expect(screen.getByText("Entrada no escritório")).toBeInTheDocument();
+    expect(screen.getByText("Etapa 1 de 2")).toBeInTheDocument();
   });
 
-  it("dono de escritório novo vê a etapa 1 de 3", async () => {
+  it("dono de escritório novo vê a etapa 1 de 4", async () => {
     cenario({ role: "admin", empresaOk: false });
     renderPage();
-    expect(await screen.findByText("Configuração inicial · Etapa 1 de 3")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Seu perfil" })).toBeInTheDocument();
+    expect(await screen.findByText("Etapa 1 de 4")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Seu acesso" })).toBeInTheDocument();
+  });
+
+  it("avança para o contato sem salvar nada e a barra vai para a etapa 2", async () => {
+    usuario({ provider: "google", identities: ["google"] });
+    renderPage();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("checkbox"));
+    await preencherAcesso(user);
+    expect(await screen.findByText("Etapa 2 de 2")).toBeInTheDocument();
+    expect(h.calls.some((c) => c.table === "profiles" && c.op === "update")).toBe(false);
+    await user.click(screen.getByRole("button", { name: "Voltar" }));
+    expect(await screen.findByPlaceholderText("Ex: Maria")).toHaveValue("Maria");
   });
 
   it("sem função escolhida não salva", async () => {
@@ -280,25 +305,11 @@ describe("ProfileSetup", () => {
     renderPage();
     const user = userEvent.setup();
     await user.click(await screen.findByRole("checkbox"));
-    await user.type(screen.getByPlaceholderText("Ex: Maria"), "Maria");
-    await user.type(screen.getByPlaceholderText("Ex: Souza"), "Souza");
-    await user.type(screen.getByPlaceholderText("(00) 00000-0000"), "11999998888");
+    await preencherAcesso(user);
+    await user.type(await screen.findByPlaceholderText("(00) 00000-0000"), "11999998888");
     await user.click(salvar());
     expect(await screen.findByText("Escolha sua função no escritório")).toBeInTheDocument();
     expect(h.calls.some((c) => c.table === "profiles" && c.op === "update")).toBe(false);
-  });
-
-  it("LinkedIn informado é gravado normalizado", async () => {
-    usuario({ provider: "google", identities: ["google"] });
-    renderPage();
-    const user = userEvent.setup();
-    await user.click(await screen.findByRole("checkbox"));
-    await preencherBasico(user);
-    await user.type(screen.getByPlaceholderText("linkedin.com/in/seu-perfil"), "linkedin.com/in/maria-souza");
-    await user.click(salvar());
-    await screen.findByTestId("inicio");
-    const update = h.calls.find((c) => c.table === "profiles" && c.op === "update");
-    expect(update?.payload).toMatchObject({ linkedin_url: "https://linkedin.com/in/maria-souza" });
   });
 
   it("sessão perdida no envio mostra erro e não navega", async () => {

@@ -84,20 +84,20 @@ test("pagamento confirmado vira conta com empresa e o dono entra pelo convite", 
 
   await page.goto(acesso!);
   await page.waitForURL(/\/profile-setup/, { timeout: 20_000 });
-  await expect(page.getByRole("heading", { name: "Seu perfil" })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("heading", { name: "Seu acesso" })).toBeVisible({ timeout: 15_000 });
 
+  // SPEC 165: duas etapas. Acesso (nome, senha sem confirmação, termos) e contato (celular e função).
   await page.getByPlaceholder("Ex: Maria").fill("Ana");
   await page.getByPlaceholder("Ex: Souza").fill("Jornada");
+  const senha = page.getByPlaceholder("••••••••");
+  if ((await senha.count()) > 0) await senha.fill("Pilar!Jornada2026");
+  const termos = page.getByRole("checkbox");
+  if (await termos.isVisible().catch(() => false)) await termos.check();
+  await page.getByRole("button", { name: /Continuar/ }).click();
+
   await page.getByPlaceholder("(00) 00000-0000").fill("11988887777");
   // SPEC 149: a função no escritório é obrigatória no perfil.
   await page.getByRole("radio", { name: "Sócio ou diretor" }).click();
-  const senhas = page.getByPlaceholder("••••••••");
-  if ((await senhas.count()) > 0) {
-    await senhas.nth(0).fill("Pilar!Jornada2026");
-    await senhas.nth(1).fill("Pilar!Jornada2026");
-  }
-  const termos = page.getByRole("checkbox");
-  if (await termos.isVisible().catch(() => false)) await termos.check();
   await page.getByRole("button", { name: /Continuar/ }).click();
 
   await page.waitForURL(/\/(inicio|company-setup)/, { timeout: 20_000 });
