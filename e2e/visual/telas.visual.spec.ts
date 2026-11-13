@@ -152,17 +152,20 @@ async function esperarCarregado(page: Page) {
   await page.waitForLoadState("networkidle");
 }
 
-async function abrir(page: Page, rota: string) {
+async function abrir(page: Page, rota: string, { esperarAvisos = false } = {}) {
   await page.goto(rota);
   await page.waitForLoadState("networkidle");
   await esperarCarregado(page);
   await page.evaluate(() => document.fonts.ready);
-  // O cartão de análise de uso (canto inferior direito) chega depois do carregamento da tela:
-  // sem esperar por ele a foto sai ora com ele, ora sem. Se o usuário já decidiu, segue sem.
-  await page
-    .getByText("Podemos medir como você usa a Pilar?")
-    .waitFor({ timeout: 8000 })
-    .catch(() => undefined);
+  // Só nas telas logadas: o cartão de análise de uso (canto inferior direito) chega depois do
+  // carregamento, e sem esperar por ele a foto sai ora com ele, ora sem. Na tela de login não
+  // existe cartão, e esperar à toa deixava a foto cair no meio da animação da página.
+  if (esperarAvisos) {
+    await page
+      .getByText("Podemos medir como você usa a Pilar?")
+      .waitFor({ timeout: 8000 })
+      .catch(() => undefined);
+  }
   await fixarTextoVariavel(page);
 }
 
@@ -197,7 +200,7 @@ test.describe("Telas do app (desktop 1280×720)", () => {
   for (const [nome, rota] of telas) {
     test(nome, async ({ page }) => {
       if (nome === "inicio") await fixarResumoSemanal(page);
-      await abrir(page, rota);
+      await abrir(page, rota, { esperarAvisos: true });
       await expect(page.locator("#main-content")).toBeVisible();
       await expect(page).toHaveScreenshot(`${nome}.png`, opcoes(page));
     });
@@ -209,7 +212,7 @@ test.describe("Celular (390×844)", () => {
 
   test("inicio-celular", async ({ page }) => {
     await fixarResumoSemanal(page);
-    await abrir(page, "/inicio");
+    await abrir(page, "/inicio", { esperarAvisos: true });
     await expect(page.locator("#main-content")).toBeVisible();
     await expect(page).toHaveScreenshot("inicio-celular.png", opcoes(page));
   });
