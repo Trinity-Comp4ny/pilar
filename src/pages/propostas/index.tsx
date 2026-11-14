@@ -692,7 +692,7 @@ export default function Propostas() {
   return (
     // Tabela preenche a altura que sobra e rola por dentro (era `100svh - 360px`, que deixava
     // ~150 px mortos embaixo num notebook 13"; auditoria de espaço, 2026-11).
-    <PageLayout header={header} toolbar={toolbar} density="compact" containerClassName="h-full flex flex-col min-h-0">
+    <PageLayout header={header} toolbar={toolbar} density="compact" containerClassName="md:flex md:h-full md:min-h-0 md:flex-col">
       <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col min-h-0 max-md:border-0 max-md:bg-transparent max-md:shadow-none">
         <CardContent className="flex min-h-0 flex-1 flex-col p-0 pb-4">
           {propostas.length === 0 ? (

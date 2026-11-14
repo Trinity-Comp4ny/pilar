@@ -11,7 +11,7 @@ function MolduraPagina({ toolbar, search, primaryAction, children }: MolduraTare
       search={search}
       primaryAction={primaryAction}
       density="compact"
-      containerClassName="h-full flex flex-col min-h-0"
+      containerClassName="md:flex md:h-full md:min-h-0 md:flex-col"
     >
       {children}
     </PilarPage>

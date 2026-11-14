@@ -352,7 +352,7 @@ export default function Fornecedores() {
   return (
     <PageLayout
       className="overflow-y-hidden"
-      containerClassName="h-full flex flex-col min-h-0"
+      containerClassName="md:flex md:h-full md:min-h-0 md:flex-col"
       header={
         <PageHeader
           title="Fornecedores"

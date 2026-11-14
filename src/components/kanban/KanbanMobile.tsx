@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode, type UIEvent } from "react";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 interface KanbanMobileColuna {
@@ -21,68 +21,15 @@ const ehClasse = (cor: string) => cor.startsWith("bg-");
 
 /**
  * Quadro Kanban no celular (< md): colunas lado a lado que passam com o dedo, uma por
- * tela com a ponta da próxima aparecendo, como o quadro do ClickUp no app. Em cima, uma
- * faixa com o nome de cada coluna leva direto a ela e marca onde a pessoa está.
- * Substitui as colunas empilhadas em acordeão (feedback do dono, 12/11). Sem arrastar:
+ * tela com a ponta da próxima aparecendo, como o quadro do ClickUp no app. Sem faixa de
+ * filtro por coluna: o título de cada coluna já diz onde a pessoa está (feedback do dono,
+ * 14/11). Substitui as colunas empilhadas em acordeão (12/11). Sem arrastar:
  * mover de coluna é pelo menu do card, como antes.
  */
 export function KanbanMobile({ colunas, ariaLabel }: KanbanMobileProps) {
-  const trilho = useRef<HTMLDivElement>(null);
-  const faixa = useRef<HTMLDivElement>(null);
-  const [ativa, setAtiva] = useState(0);
-
-  const irPara = (i: number) => {
-    const alvo = trilho.current?.children[i] as HTMLElement | undefined;
-    trilho.current?.scrollTo({ left: alvo ? alvo.offsetLeft - 16 : 0, behavior: "smooth" });
-  };
-
-  const aoRolar = (e: UIEvent<HTMLDivElement>) => {
-    const el = e.currentTarget;
-    const primeira = el.children[0] as HTMLElement | undefined;
-    if (!primeira) return;
-    const passo = primeira.offsetWidth + 12; // largura da coluna + gap-3
-    const i = Math.min(colunas.length - 1, Math.max(0, Math.round(el.scrollLeft / passo)));
-    if (i === ativa) return;
-    setAtiva(i);
-    const chip = faixa.current?.children[i] as HTMLElement | undefined;
-    chip?.scrollIntoView?.({ block: "nearest", inline: "center", behavior: "smooth" });
-  };
-
   return (
     <section aria-label={ariaLabel} className="md:hidden">
-      <div
-        ref={faixa}
-        role="tablist"
-        aria-label="Colunas"
-        className="-mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        {colunas.map((c, i) => (
-          <button
-            key={c.id}
-            type="button"
-            role="tab"
-            aria-selected={i === ativa}
-            onClick={() => irPara(i)}
-            className={cn(
-              "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13px] font-medium transition-colors",
-              i === ativa ? "border-brand bg-brand text-ink" : "border-border bg-surface-card text-ink-soft"
-            )}
-          >
-            <span
-              className={cn("h-2 w-2 shrink-0 rounded-full", ehClasse(c.cor) && c.cor)}
-              style={ehClasse(c.cor) ? undefined : { backgroundColor: c.cor }}
-            />
-            {c.titulo}
-            <span className="tabular-nums opacity-70">{c.quantidade}</span>
-          </button>
-        ))}
-      </div>
-
-      <div
-        ref={trilho}
-        onScroll={aoRolar}
-        className="-mx-4 flex snap-x snap-mandatory items-start gap-3 overflow-x-auto scroll-px-4 px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
+      <div className="-mx-4 flex snap-x snap-mandatory items-start gap-3 overflow-x-auto scroll-px-4 px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {colunas.map((c) => (
           <div
             key={c.id}

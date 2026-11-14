@@ -107,7 +107,7 @@ export default function Pessoas() {
   return (
     <PilarPage
       className="overflow-y-hidden"
-      containerClassName="h-full flex flex-col min-h-0"
+      containerClassName="md:flex md:h-full md:min-h-0 md:flex-col"
       density="compact"
       title="Equipe"
       primaryAction={
