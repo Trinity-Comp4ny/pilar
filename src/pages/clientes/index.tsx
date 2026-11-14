@@ -403,7 +403,7 @@ export default function Clientes() {
     <PilarPage
       toolbar={toolbar}
       className="overflow-y-hidden"
-      containerClassName="h-full flex flex-col min-h-0"
+      containerClassName="md:flex md:h-full md:min-h-0 md:flex-col"
       density="compact"
       title="Clientes"
       search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "Buscar por nome, CPF/CNPJ ou email" }}

@@ -535,7 +535,7 @@ export default function Leads() {
     <PageLayout
       toolbar={toolbar}
       className="overflow-y-hidden"
-      containerClassName="h-full flex flex-col min-h-0"
+      containerClassName="md:flex md:h-full md:min-h-0 md:flex-col"
       density="compact"
       header={
         <PageHeader
