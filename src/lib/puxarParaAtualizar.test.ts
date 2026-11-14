@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   LIMIAR_PUXAR,
   MAXIMO_PUXAR,
+  alvoTratoGestoProprio,
   amortecer,
   podeIniciarPuxar,
   progressoDoPuxar,
@@ -26,5 +27,24 @@ describe("puxarParaAtualizar", () => {
     expect(podeIniciarPuxar({ ...base, scrollY: 40 })).toBe(false);
     expect(podeIniciarPuxar({ ...base, sobreposicaoAberta: true })).toBe(false);
     expect(podeIniciarPuxar({ ...base, alvoProprio: true })).toBe(false);
+  });
+
+  it("reconhece alvo que trata o gesto sozinho", () => {
+    document.body.innerHTML = `<div id="a"><input id="i"/></div><div data-no-ptr><span id="n"></span></div><p id="p"></p>`;
+    const sem = () => ({ overflowY: "visible", overflowX: "visible" }) as CSSStyleDeclaration;
+    expect(alvoTratoGestoProprio(document.getElementById("i"), sem)).toBe(true);
+    expect(alvoTratoGestoProprio(document.getElementById("n"), sem)).toBe(true);
+    expect(alvoTratoGestoProprio(document.getElementById("p"), sem)).toBe(false);
+    expect(alvoTratoGestoProprio(null, sem)).toBe(false);
+  });
+
+  it("área que rola por dentro também é própria", () => {
+    document.body.innerHTML = `<div id="r"><p id="p"></p></div>`;
+    const r = document.getElementById("r") as HTMLElement;
+    Object.defineProperty(r, "scrollHeight", { value: 500 });
+    Object.defineProperty(r, "clientHeight", { value: 100 });
+    const estilo = (el: Element) =>
+      ({ overflowY: el === r ? "auto" : "visible", overflowX: "visible" }) as CSSStyleDeclaration;
+    expect(alvoTratoGestoProprio(document.getElementById("p"), estilo)).toBe(true);
   });
 });

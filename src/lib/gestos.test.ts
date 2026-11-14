@@ -24,5 +24,6 @@ describe("gestos", () => {
     expect(deveFecharSheet(50, 400, 0)).toBe(false);
     expect(deveFecharSheet(50, 400, 0.9)).toBe(true);
     expect(deveFecharSheet(-10, 400, 2)).toBe(false);
+    expect(deveFecharSheet(20, 400, 2)).toBe(false);
   });
 });

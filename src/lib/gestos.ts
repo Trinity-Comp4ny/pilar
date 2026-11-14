@@ -28,8 +28,11 @@ export function decidirDeslize(dx: number, larguraEsq: number, larguraDir: numbe
   return "volta";
 }
 
+/** Deslocamento mínimo (px) para um "flick" valer: toque que treme não fecha o sheet. */
+const FLICK_MINIMO = 40;
+
 /** Sheet de baixo: fecha se arrastou mais de 1/3 da altura ou com velocidade (px/ms) de "flick". */
 export function deveFecharSheet(deslocamento: number, altura: number, velocidade: number): boolean {
   if (deslocamento <= 0) return false;
-  return deslocamento > altura / 3 || velocidade > 0.6;
+  return deslocamento > altura / 3 || (velocidade > 0.6 && deslocamento > FLICK_MINIMO);
 }
