@@ -46,7 +46,7 @@
   },
   "src/pages/projetos/components/CronogramaProjetosTab.tsx": {
     "no-restricted-syntax": {
-      "count": 5
+      "count": 2
     }
   },
   "src/pages/projetos/components/DisciplinasTab.tsx": {

@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export interface RowAction {
+interface RowAction {
   label: string;
   icon?: LucideIcon;
   onClick: () => void;
