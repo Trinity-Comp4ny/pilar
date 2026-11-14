@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect } from "react";
+import { PullToRefresh } from "@/components/mobile/PullToRefresh";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -247,6 +248,7 @@ const App = () => {
           <SoltaBoot />
           <BrowserRouter>
             <PageTracker />
+            <PullToRefresh />
             <ManifestDoApp />
             <AuthProvider>
               <ImpersonationProvider>
