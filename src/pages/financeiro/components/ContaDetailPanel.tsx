@@ -49,7 +49,7 @@ export function ContaDetailPanel({ conta, canEdit, onEdit, onDelete }: ContaDeta
 
       <div className="border-t pt-5">
         <p className="text-xs text-muted-foreground mb-1">Saldo Atual</p>
-        <p className="text-3xl font-bold">
+        <p className="text-xl font-semibold tabular-nums">
           R$ {conta.saldo_atual?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
         </p>
         <p

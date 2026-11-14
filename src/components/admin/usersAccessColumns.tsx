@@ -1,7 +1,7 @@
+import { RowActions } from "@/components/data/RowActions";
 import { Pencil, Target, Trash2, Users as UsersIcon, Wallet } from "lucide-react";
 import type { ColumnDef } from "@/components/data/DataTable";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import type { PilarRole } from "@/lib/roles";
 import type { ManagedUser } from "./UsersAccessManager";
 
@@ -94,63 +94,38 @@ export function buildUsersColumns({
       : []),
     {
       key: "acoes",
-      header: "Ações",
+      header: <span className="sr-only">Ações</span>,
       align: "end",
-      className: "w-32",
       cell: (u) => {
         const isUltra = u.role === "ultra_admin";
         if (canManage && u.isPending) {
           return (
-            <div className="flex justify-end gap-2">
-              {onResendInvite && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full"
-                  onClick={() => onResendInvite(u)}
-                  aria-label={`Reenviar convite para ${u.email}`}
-                >
-                  Reenviar
-                </Button>
-              )}
-              {onCancelInvite && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full text-danger-mid"
-                  onClick={() => onCancelInvite(u)}
-                  aria-label={`Cancelar convite de ${u.email}`}
-                >
-                  Cancelar
-                </Button>
-              )}
-            </div>
+            <RowActions
+              label={u.email}
+              actions={[
+                ...(onResendInvite ? [{ label: "Reenviar convite", onClick: () => onResendInvite(u) }] : []),
+                ...(onCancelInvite
+                  ? [{ label: "Cancelar convite", destructive: true, onClick: () => onCancelInvite(u) }]
+                  : []),
+              ]}
+            />
           );
         }
         if (canManage && !isUltra) {
           return (
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded-full"
-                onClick={() => onEdit(u)}
-                aria-label={`Editar acessos de ${u.name}`}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded-full text-danger-mid"
-                onClick={() => onDelete(u)}
-                disabled={u.id === currentUserId}
-                aria-label={`Remover ${u.name}`}
-                title={u.id === currentUserId ? "Você não pode remover a si mesmo" : "Remover"}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
+            <RowActions
+              label={u.name}
+              actions={[
+                { label: "Editar acessos", icon: Pencil, onClick: () => onEdit(u) },
+                {
+                  label: "Remover",
+                  icon: Trash2,
+                  destructive: true,
+                  disabled: u.id === currentUserId,
+                  onClick: () => onDelete(u),
+                },
+              ]}
+            />
           );
         }
         if (isUltra) {

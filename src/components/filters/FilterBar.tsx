@@ -32,7 +32,7 @@ export function FilterBar({ children, end, className }: FilterBarProps) {
       )}
     >
       {children}
-      {end && <div className="ml-auto flex shrink-0 items-center gap-2 pl-2">{end}</div>}
+      {end && <div className="sticky right-0 ml-auto flex shrink-0 items-center gap-2 bg-background pl-2">{end}</div>}
     </div>
   );
 }

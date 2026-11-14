@@ -1,3 +1,4 @@
+import { clicarAcaoDe, itemDeAcao } from "@/test/acoesLinha";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -111,7 +112,7 @@ describe("Configurações › Empresa › usuários", () => {
   it("ultra admin é protegido contra edição", async () => {
     const user = await renderPanel();
     await abaUsuarios(user);
-    await user.click(screen.getByRole("button", { name: "Editar ultra@seed.test" }));
+    await clicarAcaoDe(user, "ultra@seed.test", "Editar");
     expect(h.toastError).toHaveBeenCalledWith("Usuário protegido", expect.any(Object));
     expect(screen.queryByText("Editar usuário")).not.toBeInTheDocument();
   });
@@ -119,7 +120,7 @@ describe("Configurações › Empresa › usuários", () => {
   it("edita nome composto e contato", async () => {
     const user = await renderPanel();
     await abaUsuarios(user);
-    await user.click(screen.getByRole("button", { name: "Editar Bia Souza Lima" }));
+    await clicarAcaoDe(user, "Bia Souza Lima", "Editar");
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByPlaceholderText("Sobrenome")).toHaveValue("Souza Lima");
     await user.clear(within(dialog).getByPlaceholderText("(11) 99999-9999"));
@@ -134,7 +135,7 @@ describe("Configurações › Empresa › usuários", () => {
   it("papel desconhecido cai para user e sobrenome é obrigatório", async () => {
     const user = await renderPanel();
     await abaUsuarios(user);
-    await user.click(screen.getByRole("button", { name: "Editar Caio" }));
+    await clicarAcaoDe(user, "Caio", "Editar");
     const dialog = await screen.findByRole("dialog");
     await user.click(within(dialog).getByRole("button", { name: "Salvar" }));
     expect(h.toastError).toHaveBeenCalledWith("Nome e sobrenome são obrigatórios");
@@ -145,7 +146,7 @@ describe("Configurações › Empresa › usuários", () => {
     h.requireAal2.mockResolvedValue(false);
     const user = await renderPanel();
     await abaUsuarios(user);
-    await user.click(screen.getByRole("button", { name: "Editar Bia Souza Lima" }));
+    await clicarAcaoDe(user, "Bia Souza Lima", "Editar");
     await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Salvar" }));
     await waitFor(() => expect(h.requireAal2).toHaveBeenCalled());
     expect(h.calls.some((c) => c.op === "update")).toBe(false);
@@ -155,7 +156,7 @@ describe("Configurações › Empresa › usuários", () => {
     falhas["profiles:update"] = { error: { message: "boom" } };
     const user = await renderPanel();
     await abaUsuarios(user);
-    await user.click(screen.getByRole("button", { name: "Editar Bia Souza Lima" }));
+    await clicarAcaoDe(user, "Bia Souza Lima", "Editar");
     await user.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Salvar" }));
     await waitFor(() =>
       expect(h.toastError).toHaveBeenCalledWith("Não foi possível atualizar o usuário", expect.any(Object))
@@ -166,7 +167,7 @@ describe("Configurações › Empresa › usuários", () => {
   it("remove usuário pela edge function", async () => {
     const user = await renderPanel();
     await abaUsuarios(user);
-    await user.click(screen.getByRole("button", { name: "Remover Bia Souza Lima" }));
+    await clicarAcaoDe(user, "Bia Souza Lima", "Remover");
     await user.click(await screen.findByRole("button", { name: "Remover" }));
     await waitFor(() => expect(h.toastSuccess).toHaveBeenCalledWith("Usuário removido"));
     expect(h.invoke).toHaveBeenCalledWith("delete-user", { body: { user_id: "u2" } });
@@ -177,18 +178,18 @@ describe("Configurações › Empresa › usuários", () => {
     h.requireAal2.mockResolvedValueOnce(false);
     const user = await renderPanel();
     await abaUsuarios(user);
-    await user.click(screen.getByRole("button", { name: "Remover Bia Souza Lima" }));
+    await clicarAcaoDe(user, "Bia Souza Lima", "Remover");
     await user.click(await screen.findByRole("button", { name: "Remover" }));
     await waitFor(() => expect(h.requireAal2).toHaveBeenCalled());
     expect(h.invoke).not.toHaveBeenCalled();
 
     h.invoke.mockResolvedValue({ data: null, error: new Error("tenancy") });
-    await user.click(screen.getByRole("button", { name: "Remover Bia Souza Lima" }));
+    await clicarAcaoDe(user, "Bia Souza Lima", "Remover");
     await user.click(await screen.findByRole("button", { name: "Remover" }));
     await waitFor(() =>
       expect(h.toastError).toHaveBeenCalledWith("Não foi possível remover o usuário", expect.any(Object))
     );
-    expect(screen.getByRole("button", { name: "Remover Bia Souza Lima" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Mais ações de Bia Souza Lima" })).toBeInTheDocument();
   });
 
   it("convite para conta existente e papel admin", async () => {

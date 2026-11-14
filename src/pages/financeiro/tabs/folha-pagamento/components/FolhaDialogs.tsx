@@ -293,7 +293,7 @@ function EditableField({
       ) : isEditing && readOnlyWhenEditing ? (
         <p className="text-muted-foreground">{formatCurrency(editValue ?? value)}</p>
       ) : (
-        <p className={isBold ? "font-bold text-lg text-positive-strong" : ""}>
+        <p className={isBold ? "font-semibold text-base text-positive-strong" : ""}>
           {isCurrency ? formatCurrency(value) : `${value?.toLocaleString("pt-BR")}${suffix || ""}`}
         </p>
       )}

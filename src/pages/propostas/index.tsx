@@ -1,3 +1,4 @@
+import { RowActions } from "@/components/data/RowActions";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { formatDate, formatDecimal } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -627,29 +628,20 @@ export default function Propostas() {
       ? [
           {
             key: "acoes",
-            header: "Ações",
+            header: <span className="sr-only">Ações</span>,
             align: "end" as const,
             cell: (p: Proposta) => (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-11 w-11 text-muted-foreground hover:text-foreground"
-                    aria-label="Mais opções"
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onClick={() => setConfirmDelete({ id: p.id, titulo: p.titulo })}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <RowActions
+                label={p.titulo}
+                actions={[
+                  {
+                    label: "Excluir",
+                    icon: Trash2,
+                    destructive: true,
+                    onClick: () => setConfirmDelete({ id: p.id, titulo: p.titulo }),
+                  },
+                ]}
+              />
             ),
           },
         ]

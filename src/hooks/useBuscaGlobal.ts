@@ -88,7 +88,7 @@ async function buscar(termo: string): Promise<BuscaGrupo[]> {
         tipo: "fornecedor" as const,
         id: r.id,
         label: r.nome,
-        rota: `/obras/fornecedores/${r.id}`,
+        rota: `/gestao/fornecedores/${r.id}`,
         icon: HardHat,
       }));
     }),
