@@ -77,7 +77,7 @@ export function SplitButton({
     );
   }
 
-  // Destino fora do Pilar (a agenda da demonstração) abre em nova aba e sem
+  // Destino fora da Pilar (a agenda da demonstração) abre em nova aba e sem
   // `window.opener`, como os cartões de plano e o rodapé já faziam; app e login
   // continuam na mesma aba.
   const externo =

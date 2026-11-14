@@ -16,7 +16,7 @@ import { getCookieConsent } from "./cookieConsent";
 
 type ConsentSource = "carryover" | "settings";
 
-async function fetchLatestConsent(userId: string): Promise<boolean | null> {
+export async function fetchLatestConsent(userId: string): Promise<boolean | null> {
   const { data, error } = await supabase
     .from("cookie_consents")
     .select("analytics")

@@ -13,6 +13,10 @@ const SENTRY_RELEASE = process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.SENTRY_R
 // Vercel (build local), cai em "development". Ver ADR 0036.
 const SENTRY_ENVIRONMENT = process.env.VERCEL_ENV ?? process.env.SENTRY_ENV ?? "development";
 
+// Momento do build, mostrado junto do SHA em Configurações > Conta ("Sobre o Pilar"),
+// para o suporte saber de qual deploy o usuário está falando.
+const BUILD_TIME = new Date().toISOString();
+
 // Escreve o SHA do deploy num arquivo que o app busca sem cache pra saber que
 // já existe versão mais nova que a do bundle carregado (ver useNovaVersao).
 // Sem isto, uma aba aberta segue rodando bundle antigo por dias: foi assim que
@@ -131,6 +135,7 @@ export default defineConfig(({ mode }) => ({
   define: {
     __SENTRY_RELEASE__: JSON.stringify(SENTRY_RELEASE),
     __SENTRY_ENVIRONMENT__: JSON.stringify(SENTRY_ENVIRONMENT),
+    __BUILD_TIME__: JSON.stringify(BUILD_TIME),
   },
   // Pré-otimiza os deps que só entram via import() (exportação de relatórios). Sem
   // isto, o Vite os descobre em voo no primeiro uso, re-otimiza o cache e troca os
@@ -219,25 +224,31 @@ export default defineConfig(({ mode }) => ({
       // financeiro, autenticação/portal/admin e landing): medido lib 82/80/82/84, hooks
       // 51/42/49/54, hooks de módulo 35/28/32/40, components 51/48/43/53, financeiro
       // 58/52/48/60, obras 49/46/43/51, projetos 33/28/29/36. Pisos ~2 pontos abaixo.
-      thresholds: {
-        // Piso global (todo o código coberto pelo include), medido em 07/11/2026.
-        statements: 93,
-        branches: 86,
-        functions: 92,
-        lines: 95,
-        "src/lib/**": { statements: 94, branches: 89, functions: 94, lines: 96 },
-        "src/hooks/**": { statements: 94, branches: 88, functions: 94, lines: 96 },
-        "src/pages/*/hooks/**": { statements: 93, branches: 82, functions: 95, lines: 96 },
-        "src/components/**": { statements: 93, branches: 87, functions: 91, lines: 95 },
-        "src/pages/financeiro/**": { statements: 91, branches: 83, functions: 87, lines: 93 },
-        "src/pages/obras/**": { statements: 92, branches: 85, functions: 89, lines: 93 },
-        "src/pages/projetos/**": { statements: 93, branches: 86, functions: 94, lines: 96 },
-        // Por criticidade, não por pasta: arquivo que decide acesso, autentica ou mexe
-        // com dinheiro tem piso próprio, alto, para não se esconder na média da pasta.
-        // Uma entrada por arquivo de propósito: `perFile` dentro de glob agrega (medido
-        // em 13/10). Medido em 13/10 e piso logo abaixo; arquivo crítico novo entra aqui.
-        ...CRITICOS,
-      },
+      // Shard do CI (`vitest --shard`): cada máquina vê só uma fração dos testes, então o piso
+      // aplicado ali reprovaria sempre. O shard só coleta; o job `coverage` junta os
+      // relatórios (`--merge-reports`) e é ele que aplica o piso, sobre o total.
+      thresholds:
+        process.env.VITEST_SHARD_SEM_PISO === "1"
+          ? undefined
+          : {
+              // Piso global (todo o código coberto pelo include), medido em 07/11/2026.
+              statements: 93,
+              branches: 86,
+              functions: 92,
+              lines: 95,
+              "src/lib/**": { statements: 94, branches: 89, functions: 94, lines: 96 },
+              "src/hooks/**": { statements: 94, branches: 88, functions: 94, lines: 96 },
+              "src/pages/*/hooks/**": { statements: 93, branches: 82, functions: 95, lines: 96 },
+              "src/components/**": { statements: 93, branches: 87, functions: 91, lines: 95 },
+              "src/pages/financeiro/**": { statements: 91, branches: 83, functions: 87, lines: 93 },
+              "src/pages/obras/**": { statements: 92, branches: 85, functions: 89, lines: 93 },
+              "src/pages/projetos/**": { statements: 93, branches: 86, functions: 94, lines: 96 },
+              // Por criticidade, não por pasta: arquivo que decide acesso, autentica ou mexe
+              // com dinheiro tem piso próprio, alto, para não se esconder na média da pasta.
+              // Uma entrada por arquivo de propósito: `perFile` dentro de glob agrega (medido
+              // em 13/10). Medido em 13/10 e piso logo abaixo; arquivo crítico novo entra aqui.
+              ...CRITICOS,
+            },
     },
   },
 }));

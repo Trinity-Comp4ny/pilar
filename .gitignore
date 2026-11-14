@@ -26,6 +26,8 @@ supabase/.temp
 .env.*
 !.env.example
 coverage
+# Relatórios blob do Vitest (shards do CI)
+.vitest
 .eslintcache
 *.tsbuildinfo
 
@@ -60,3 +62,6 @@ graphify-out/
 
 # Deno 2.x local gera lockfile v5; o CI e o runtime do Supabase rodam Deno 1.45
 deno.lock
+
+# Contexto temporário da triagem automática do Sentry
+.sentry-triagem/

@@ -1,3 +1,4 @@
+import { clicarAcao } from "@/test/acoesLinha";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -64,11 +65,11 @@ const linhas = () => screen.getAllByRole("row").slice(1);
 const busca = () => screen.getByRole("textbox", { name: /Buscar por nome/ });
 
 describe("PessoaTable", () => {
-  it("lista todos com contador, CPF mascarado e tipo desconhecido como texto cru", () => {
+  it("lista todos com contador, sem CPF na tabela e tipo desconhecido como texto cru", () => {
     renderTabela();
     expect(linhas()).toHaveLength(3);
     expect(screen.getByText("3 de 3")).toBeInTheDocument();
-    expect(screen.getByText("***.***.***-25")).toBeInTheDocument();
+    expect(screen.queryByText("***.***.***-25")).not.toBeInTheDocument();
     expect(screen.queryByText("529.982.247-25")).not.toBeInTheDocument();
     expect(screen.getByText("desconhecido")).toBeInTheDocument();
     // Status ausente vale "ativo"; inativo aparece rotulado.
@@ -131,9 +132,9 @@ describe("PessoaTable", () => {
   it("admin edita e exclui sem disparar o clique da linha", async () => {
     const { user, onRowClick, onEditClick, onDeleteClick } = renderTabela({ isAdmin: true });
     const linha = linhas().find((r) => within(r).queryByText("Rita Alves"))!;
-    await user.click(within(linha).getByRole("button", { name: "Editar" }));
-    expect(onEditClick).toHaveBeenCalledWith(expect.objectContaining({ id: "p2" }), expect.anything());
-    await user.click(within(linha).getByRole("button", { name: "Excluir" }));
+    await clicarAcao(user, linha, "Editar");
+    expect(onEditClick).toHaveBeenCalledWith(expect.objectContaining({ id: "p2" }));
+    await clicarAcao(user, linha, "Excluir");
     expect(onDeleteClick).toHaveBeenCalledWith("p2");
     expect(onRowClick).not.toHaveBeenCalled();
   });

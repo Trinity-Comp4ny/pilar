@@ -88,14 +88,14 @@ export function PagamentoPanel() {
                 <Handshake className="w-6 h-6 text-ink" />
               </div>
               <div className="space-y-2">
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium uppercase tracking-wider bg-brand text-ink">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-2xs font-medium uppercase tracking-wider bg-brand text-ink">
                   Empresa convidada
                 </span>
                 <h3 className="text-lg font-medium text-ink">
                   {subscription?.plan ? `Pilar ${subscription.plan.nome}, sem cobrança` : "Acesso sem cobrança"}
                 </h3>
                 <p className="text-sm text-ink-muted">
-                  Sua empresa usa o Pilar a convite, sem mensalidade. Se o convite acabar, você recebe um prazo e um
+                  Sua empresa usa a Pilar a convite, sem mensalidade. Se o convite acabar, você recebe um prazo e um
                   aviso antes de qualquer cobrança.
                 </p>
               </div>

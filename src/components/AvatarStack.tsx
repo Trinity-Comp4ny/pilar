@@ -8,7 +8,7 @@ export type PessoaAvatar = string | { nome: string; avatarUrl?: string | null };
 interface AvatarStackProps {
   pessoas: PessoaAvatar[];
   max?: number;
-  size?: "xs" | "sm" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   className?: string;
 }
 
@@ -81,7 +81,14 @@ export function AvatarStack({ pessoas, max = 3, size = "sm", className }: Avatar
 
   const visible = unique.slice(0, max);
   const overflow = unique.length - visible.length;
-  const dim = size === "xs" ? "h-5 w-5 text-[9px]" : size === "lg" ? "h-16 w-16 text-lg" : "h-6 w-6 text-[10px]";
+  const dim =
+    size === "xs"
+      ? "h-5 w-5 text-3xs"
+      : size === "md"
+        ? "h-10 w-10 text-sm"
+        : size === "lg"
+          ? "h-16 w-16 text-lg"
+          : "h-6 w-6 text-3xs";
 
   return (
     <div className={cn("flex items-center -space-x-1.5", className)}>

@@ -28,7 +28,7 @@ const REGRA_DA_AREA: Record<AgenteDeArea, string> = {
   clientes:
     "Você é o agente de relacionamento: nunca fale de pagamento, cobrança, atraso ou assinatura. Isso é do agente Receita.",
   produto:
-    'Você não escreve para cliente: os candidatos são tarefas internas do fundador. Devolva "mensagens" vazio. "escritorios_28d_<area>" conta escritórios que mexeram naquela área em 28 dias.',
+    'Você não escreve para cliente: os candidatos são tarefas internas do fundador. Devolva "mensagens" vazio. "escritorios_28d_<area>" conta escritórios que mexeram naquela área em 28 dias. Indicadores vindos do PostHog ("logins_7d", "escritorios_logaram_7d", "pessoas_logaram_7d", "telas_vistas_28d_<area>", "erros_exibidos_28d") contam só quem aceitou a análise de uso, não a base inteira: nunca os apresente como o total de uso.',
   qualidade:
     'Candidato "alerta" é tarefa interna (erro no Sentry): não escreva mensagem para ele. Candidato "whatsapp" é aviso de que um erro que atingiu o escritório já foi corrigido: diga só isso, sem detalhe técnico, sem código de erro, sem prometer prazo e sem culpar ninguém. Nunca fale de pagamento ou assinatura.',
 };
@@ -40,7 +40,7 @@ export function systemPrompt(agente: AgenteDeArea, remetente: string): string {
     'Indicador com "_30d" é a soma dos últimos 30 dias, nunca "hoje"; "_30d_anteriores" é o mesmo período antes desse. Sem sufixo é o total de agora (MRR em reais, pagantes, em teste). Pagantes, em teste, cadastros e escritórios contam empresas clientes, não pessoas: diga "escritórios".',
     "Devolva JSON com:",
     '- "resumo": 1 ou 2 frases sobre o dia da área, citando os números recebidos.',
-    '- "destaques": até 3 itens do que mais importa hoje, cada um com "refs" apontando para candidatos ("c1") ou indicadores ("mrr", "cadastros_30d"...).',
+    '- "destaques": até 3 itens do que mais importa hoje, cada um com "refs" (de 1 a 5, nunca mais de 5) apontando para candidatos ("c1") ou indicadores ("mrr", "cadastros_30d"...).',
     '- "mensagens": para cada candidato com canal whatsapp, um rascunho em "texto" com o "ref" do candidato.',
     `Regras da mensagem: português do Brasil, tom direto e humano, de engenheiro para engenheiro. Comece com "Oi <primeiro nome>, aqui é ${remetente}, da Pilar." (sem nome do contato, só "Oi,"). No máximo 3 frases e uma pergunta. Use só os fatos do candidato.`,
     "Nunca: travessão, emoji, link, preço, desconto, porcentagem, promessa de condição comercial, pressão ou culpa. Sem jargão (sinergia, alavancar, otimizar).",

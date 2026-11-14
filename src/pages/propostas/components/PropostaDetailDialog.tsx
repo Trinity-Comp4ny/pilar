@@ -89,7 +89,7 @@ function InfoRow({
     <div className="flex items-start gap-2.5">
       <Icon className="h-3.5 w-3.5 text-muted-foreground mt-0.5 shrink-0" />
       <div className="min-w-0">
-        <p className="text-[10px] text-muted-foreground">{label}</p>
+        <p className="text-3xs text-muted-foreground">{label}</p>
         <p className={`text-sm font-medium ${valueClass || ""}`}>{value}</p>
       </div>
     </div>
@@ -196,7 +196,7 @@ export function PropostaDetailDialog({
               {proposta.codigo && <p className="text-xs text-muted-foreground font-mono mt-0.5">{proposta.codigo}</p>}
               <DialogDescription className="sr-only">Detalhes e ações da proposta {proposta.titulo}</DialogDescription>
             </div>
-            <Badge className={`text-[11px] shrink-0 mt-0.5 ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
+            <Badge className={`text-2xs shrink-0 mt-0.5 ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
               {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
             </Badge>
           </div>
@@ -238,7 +238,7 @@ export function PropostaDetailDialog({
 
           {proposta.observacao && (
             <div className="bg-muted/50 rounded-lg p-3">
-              <p className="text-[10px] text-muted-foreground mb-1">Observações</p>
+              <p className="text-3xs text-muted-foreground mb-1">Observações</p>
               <p className="text-sm">{proposta.observacao}</p>
             </div>
           )}
@@ -399,7 +399,7 @@ export function PropostaDetailDialog({
                   <CheckCircle2 className="h-4 w-4 text-positive-strong shrink-0" />
                   <div>
                     <p className="text-xs font-medium text-positive-strong">Contrato assinado</p>
-                    <p className="text-[11px] text-positive-strong">O cliente assinou o contrato.</p>
+                    <p className="text-2xs text-positive-strong">O cliente assinou o contrato.</p>
                   </div>
                 </div>
               ) : proposta.contrato_recusado ? (
@@ -408,7 +408,7 @@ export function PropostaDetailDialog({
                     <XCircle className="h-4 w-4 text-danger-mid shrink-0" />
                     <div>
                       <p className="text-xs font-medium text-danger-strong">Contrato recusado</p>
-                      <p className="text-[11px] text-danger-strong">
+                      <p className="text-2xs text-danger-strong">
                         O cliente recusou o contrato. Gere um novo para reenviar.
                       </p>
                     </div>

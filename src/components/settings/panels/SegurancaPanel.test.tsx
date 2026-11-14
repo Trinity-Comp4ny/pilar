@@ -18,6 +18,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 vi.mock("@/lib/supabase", () => ({ verifyCurrentPassword: h.verifyCurrentPassword }));
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ user: h.email ? { email: h.email } : null }) }));
 vi.mock("@/components/MfaSetup", () => ({ MfaSetup: () => <div data-testid="mfa-setup" /> }));
+vi.mock("@/components/settings/NavegadoresConta", () => ({ NavegadoresConta: () => null }));
 vi.mock("sonner", () => ({ toast: { error: h.toastError, success: h.toastSuccess } }));
 
 const ATUAL = "Atual#Senha2025";

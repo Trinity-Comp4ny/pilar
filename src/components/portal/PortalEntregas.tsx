@@ -1,0 +1,416 @@
+import { useState, useEffect, useCallback } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { FileCheck, CheckCircle2, RotateCcw, FileText, ExternalLink, Clock, MessageSquare } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { reportInvokeError } from "@/lib/monitoring";
+import { cn } from "@/lib/utils";
+import { getPortalToken } from "@/hooks/useClienteAuth";
+import { EmptyState } from "@/components/EmptyState";
+import { ConversaPortal } from "@/components/portal/ConversaPortal";
+import { useNaoLidasCliente } from "@/components/portal/useConversaPortal";
+import { callUntypedRpc } from "@/lib/supabaseRpc";
+
+import { ReadingRing } from "@/components/motion/ReadingRing";
+
+interface Entrega {
+  id: string;
+  titulo: string;
+  descricao: string | null;
+  tipo: string | null;
+  status: "pendente" | "aprovado" | "revisao_solicitada";
+  drive_url: string | null;
+  projeto_disciplina_id: string | null;
+  disciplina_nome: string | null;
+  /** Origem, só preenchida pela RPC do portal (para a tela de Pendências juntar projetos e obras). */
+  projeto_nome?: string | null;
+  obra_nome?: string | null;
+  resposta_cliente: string | null;
+  respondido_em: string | null;
+  aprovado_ip: string | null;
+  aprovado_user_agent: string | null;
+  created_at: string;
+}
+
+const STATUS_CONFIG: Record<Entrega["status"], { label: string; color: string; icon: typeof Clock }> = {
+  pendente: { label: "Aguardando resposta", color: "bg-warning-soft text-warning-strong", icon: Clock },
+  aprovado: { label: "Aprovado", color: "bg-positive/10 text-positive-strong", icon: CheckCircle2 },
+  revisao_solicitada: {
+    label: "Revisão solicitada",
+    color: "bg-attention-soft text-attention-strong",
+    icon: RotateCcw,
+  },
+};
+
+/**
+ * Solicitações do escritório ao cliente. Sem `projetoId`/`obraId` lista todas as do cliente
+ * (tela de Pendências); com um deles, só as daquele projeto ou obra.
+ */
+export function EntregasContent({
+  projetoId,
+  obraId,
+  token,
+  readOnly,
+  mostrarOrigem,
+  apenasPendentes,
+  vazioTexto,
+}: {
+  projetoId?: string;
+  obraId?: string;
+  token?: string;
+  readOnly?: boolean;
+  mostrarOrigem?: boolean;
+  /** Só o que aguarda resposta (Início e visão geral); sem nada, mostra `vazioTexto` ou não mostra nada. */
+  apenasPendentes?: boolean;
+  vazioTexto?: string;
+}) {
+  const [entregas, setEntregas] = useState<Entrega[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [respondingId, setRespondingId] = useState<string | null>(null);
+  const [resposta, setResposta] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const fetchEntregas = useCallback(async () => {
+    setLoadError(false);
+    try {
+      const portalToken = token ?? getPortalToken();
+      if (portalToken) {
+        // Cliente do portal (auth por token): RLS não alcança, usa RPC por token.
+        const { data, error: rpcError } = await callUntypedRpc<Entrega[]>("portal_listar_solicitacoes", {
+          p_token: portalToken,
+          p_projeto_id: projetoId ?? null,
+          p_obra_id: obraId ?? null,
+        });
+        if (rpcError) throw rpcError;
+        if (data) setEntregas(data);
+      } else {
+        // Staff autenticado (JWT): SELECT direto coberto por RLS.
+        let query = supabase
+          .from("portal_entregas")
+          .select(
+            "id, titulo, descricao, tipo, status, drive_url, projeto_disciplina_id, resposta_cliente, respondido_em, aprovado_ip, aprovado_user_agent, created_at, projeto_disciplinas(nome)"
+          );
+        if (projetoId) query = query.eq("projeto_id", projetoId);
+        if (obraId) query = query.eq("obra_id", obraId);
+        const { data, error: fetchError } = await query.order("created_at", { ascending: true });
+        if (fetchError) throw fetchError;
+        if (data)
+          setEntregas(
+            (
+              data as unknown as (Omit<Entrega, "disciplina_nome"> & {
+                projeto_disciplinas: { nome: string } | null;
+              })[]
+            ).map((d) => ({ ...d, disciplina_nome: d.projeto_disciplinas?.nome ?? null }))
+          );
+      }
+    } catch (err) {
+      reportInvokeError(err, "portal-entregas:carregar");
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [projetoId, obraId, token]);
+
+  useEffect(() => {
+    fetchEntregas();
+  }, [fetchEntregas]);
+
+  const handleAprovar = async (id: string) => {
+    const portalToken = token ?? getPortalToken();
+    if (!portalToken) return;
+    setSaving(true);
+    const { error } = await callUntypedRpc("portal_aprovar_entrega", {
+      p_token: portalToken,
+      p_entrega_id: id,
+    });
+    if (error)
+      toast.error("Não foi possível aprovar", {
+        description: "Tente novamente em instantes ou fale com o escritório.",
+      });
+    else toast.success("Aprovado");
+    await fetchEntregas();
+    setSaving(false);
+  };
+
+  const handleSolicitarRevisao = async (id: string) => {
+    if (!resposta.trim()) return;
+    const portalToken = token ?? getPortalToken();
+    if (!portalToken) return;
+    setSaving(true);
+    const { error } = await callUntypedRpc("portal_solicitar_revisao_entrega", {
+      p_token: portalToken,
+      p_entrega_id: id,
+      p_resposta: resposta.trim(),
+    });
+    if (error)
+      toast.error("Não foi possível enviar a solicitação", {
+        description: "Tente novamente em instantes ou fale com o escritório.",
+      });
+    else toast.success("Solicitação de revisão enviada");
+    setRespondingId(null);
+    setResposta("");
+    await fetchEntregas();
+    setSaving(false);
+  };
+
+  if (loading)
+    return (
+      <div className="flex justify-center py-8">
+        <ReadingRing size={64} />
+      </div>
+    );
+
+  if (loadError) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center text-sm text-muted-foreground">
+          Não foi possível carregar as solicitações agora. Atualize a página em instantes ou fale com o escritório se o
+          problema continuar.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (apenasPendentes && !entregas.some((e) => e.status === "pendente")) {
+    if (!vazioTexto) return null;
+    return (
+      <Card className="border-brand/30 bg-brand/10">
+        <CardContent className="p-4 flex items-center gap-3">
+          <div className="h-9 w-9 rounded-full bg-brand/20 flex items-center justify-center">
+            <FileCheck className="h-4 w-4 text-ink" />
+          </div>
+          <p className="text-sm font-medium text-ink">{vazioTexto}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (entregas.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-0">
+          <EmptyState icon={FileText} title="Nenhuma solicitação no momento" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const pendentes = entregas.filter((e) => e.status === "pendente");
+  const concluidos = apenasPendentes ? [] : entregas.filter((e) => e.status !== "pendente");
+
+  return (
+    <div className="space-y-6">
+      {pendentes.length > 0 && (
+        <section>
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+            <FileCheck className="h-4 w-4 text-warning-mid" />
+            Aguardando sua resposta ({pendentes.length})
+          </h3>
+          <div className="space-y-3">
+            {pendentes.map((e) => (
+              <EntregaCard
+                key={e.id}
+                entrega={e}
+                isResponding={respondingId === e.id}
+                resposta={resposta}
+                setResposta={setResposta}
+                onStartRevisao={() => setRespondingId(e.id)}
+                onCancelRevisao={() => {
+                  setRespondingId(null);
+                  setResposta("");
+                }}
+                onAprovar={() => handleAprovar(e.id)}
+                onSolicitar={() => handleSolicitarRevisao(e.id)}
+                saving={saving}
+                readOnly={readOnly}
+                mostrarOrigem={mostrarOrigem}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {concluidos.length > 0 && (
+        <section>
+          <h3 className="text-sm font-semibold mb-3">Respondidas</h3>
+          <div className="space-y-2">
+            {concluidos.map((e) => (
+              <EntregaCard
+                key={e.id}
+                entrega={e}
+                isResponding={false}
+                resposta=""
+                setResposta={() => undefined}
+                onStartRevisao={() => undefined}
+                onCancelRevisao={() => undefined}
+                onAprovar={() => undefined}
+                onSolicitar={() => undefined}
+                saving={false}
+                readOnly={readOnly}
+                mostrarOrigem={mostrarOrigem}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
+function EntregaCard({
+  entrega,
+  isResponding,
+  resposta,
+  setResposta,
+  onStartRevisao,
+  onCancelRevisao,
+  onAprovar,
+  onSolicitar,
+  saving,
+  readOnly,
+  mostrarOrigem,
+}: {
+  entrega: Entrega;
+  isResponding: boolean;
+  resposta: string;
+  setResposta: (v: string) => void;
+  onStartRevisao: () => void;
+  onCancelRevisao: () => void;
+  onAprovar: () => void;
+  onSolicitar: () => void;
+  saving: boolean;
+  readOnly?: boolean;
+  mostrarOrigem?: boolean;
+}) {
+  const origem = entrega.obra_nome ?? entrega.projeto_nome;
+  const config = STATUS_CONFIG[entrega.status];
+  const StatusIcon = config.icon;
+
+  return (
+    <Card className={cn(entrega.status === "pendente" && "border-warning-mid-border")}>
+      <CardContent className="p-4 space-y-2">
+        <div className="flex items-start gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-sm font-medium">{entrega.titulo}</p>
+              {mostrarOrigem && origem && (
+                <Badge variant="outline" className="text-[10px]">
+                  {entrega.obra_nome ? "Obra" : "Projeto"}: {origem}
+                </Badge>
+              )}
+              {entrega.disciplina_nome && (
+                <Badge variant="secondary" className="text-3xs" title="Etapa do projeto">
+                  {entrega.disciplina_nome}
+                </Badge>
+              )}
+            </div>
+            {entrega.descricao && <p className="text-xs text-muted-foreground mt-1">{entrega.descricao}</p>}
+            <div className="flex items-center gap-3 mt-1.5 text-2xs text-muted-foreground flex-wrap">
+              <span>{new Date(entrega.created_at).toLocaleDateString("pt-BR")}</span>
+              {entrega.drive_url && (
+                <a
+                  href={entrega.drive_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-info-strong hover:underline"
+                >
+                  <ExternalLink className="h-3 w-3" /> Abrir no Drive
+                </a>
+              )}
+            </div>
+          </div>
+          <Badge className={cn("text-3xs border shrink-0", config.color)}>
+            <StatusIcon className="h-3 w-3 mr-1" />
+            {config.label}
+          </Badge>
+        </div>
+
+        {entrega.resposta_cliente && (
+          <div className="rounded p-2 bg-attention-soft border border-attention-soft-border text-2xs text-attention-strong">
+            <span className="font-medium">Solicitação do cliente:</span> {entrega.resposta_cliente}
+          </div>
+        )}
+
+        {readOnly && entrega.status === "aprovado" && entrega.respondido_em && (
+          <p className="text-3xs text-muted-foreground">
+            Aprovado em {new Date(entrega.respondido_em).toLocaleString("pt-BR")}
+            {entrega.aprovado_ip ? ` · IP ${entrega.aprovado_ip}` : ""}
+          </p>
+        )}
+
+        {!readOnly && entrega.status === "pendente" && (
+          <div className="pt-2 border-t">
+            {isResponding ? (
+              <div className="space-y-2 pt-2">
+                <Textarea
+                  value={resposta}
+                  onChange={(ev) => setResposta(ev.target.value)}
+                  placeholder="Descreva o que precisa ser revisado..."
+                  rows={3}
+                  className="text-sm"
+                />
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" className="h-11 sm:h-9" onClick={onCancelRevisao}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="h-11 sm:h-9"
+                    onClick={onSolicitar}
+                    disabled={saving || !resposta.trim()}
+                  >
+                    <RotateCcw className="h-3 w-3 mr-1" /> Solicitar revisão
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-2 flex-wrap pt-2">
+                <Button size="sm" variant="brand" className="h-11 sm:h-9" onClick={onAprovar} disabled={saving}>
+                  <CheckCircle2 className="h-3 w-3 mr-1" /> Aprovar
+                </Button>
+                <Button size="sm" variant="outline" className="h-11 sm:h-9" onClick={onStartRevisao}>
+                  <RotateCcw className="h-3 w-3 mr-1" /> Solicitar revisão
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+        <FioDaSolicitacao entregaId={entrega.id} lado={readOnly ? "equipe" : "cliente"} />
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Fio de conversa da solicitação: o cliente tira a dúvida antes de aprovar, sem sair do item. */
+function FioDaSolicitacao({ entregaId, lado }: { entregaId: string; lado: "cliente" | "equipe" }) {
+  const [aberto, setAberto] = useState(false);
+  const naoLidas = useNaoLidasCliente();
+  const pendentes =
+    lado === "cliente" ? ((naoLidas.data ?? []).find((n) => n.entrega_id === entregaId)?.total ?? 0) : 0;
+
+  return (
+    <div className="border-t pt-2">
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-11 gap-1.5 px-2 text-muted-foreground sm:h-9"
+        onClick={() => setAberto((v) => !v)}
+        aria-expanded={aberto}
+      >
+        <MessageSquare className="h-3.5 w-3.5" />
+        {aberto ? "Fechar conversa" : lado === "cliente" ? "Tirar dúvida com o escritório" : "Conversar com o cliente"}
+        {!aberto && pendentes > 0 && (
+          <Badge variant="warning" className="ml-1 text-[10px]">
+            {pendentes} nova{pendentes === 1 ? "" : "s"}
+          </Badge>
+        )}
+      </Button>
+      {aberto && <ConversaPortal lado={lado} escopo={{ entregaId }} className="mt-2 max-h-96" />}
+    </div>
+  );
+}

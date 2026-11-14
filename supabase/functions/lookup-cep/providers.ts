@@ -25,8 +25,10 @@ const brasilApiSchema = z.object({
   neighborhood: z.string().nullish(),
 });
 
+// "CEP não encontrado" do ViaCEP chega como `erro: true` ou, em alguns casos,
+// como a string "true" (PILAR-3K). Os dois são "não achou", não mudança de formato.
 const viaCepSchema = z.union([
-  z.object({ erro: z.literal(true) }),
+  z.object({ erro: z.union([z.literal(true), z.literal("true")]) }),
   z.object({
     cep: z.string().nullish(),
     logradouro: z.string().nullish(),

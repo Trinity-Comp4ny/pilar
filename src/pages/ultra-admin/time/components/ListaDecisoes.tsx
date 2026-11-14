@@ -112,8 +112,8 @@ export function ListaDecisoes({
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 rounded-full p-0"
+                          size="xs"
+                          className="w-8 rounded-full p-0"
                           aria-label={`Mais ações: ${d.titulo}`}
                         >
                           <MoreHorizontal size={16} />

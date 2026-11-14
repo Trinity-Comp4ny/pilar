@@ -1,6 +1,13 @@
 export interface ProjetoDetalhe {
+  /** Ausente em folhas fechadas antes da regra por conclusão. */
+  projeto_id?: string;
   nome: string;
   area_m2: number;
+  // Valor do contrato do projeto, base do percentual. Ausente em folhas
+  // fechadas antes do percentual existir.
+  valor_base?: number;
+  /** Dia em que a pessoa concluiu a disciplina que pagou o projeto (a primeira dela ali). */
+  concluido_em?: string;
 }
 
 export interface FolhaItem {
@@ -9,7 +16,11 @@ export interface FolhaItem {
   p_cargo: string;
   p_salario_fixo: number;
   p_valor_m2: number;
+  // Percentual (0 a 100) sobre o valor dos projetos do mês. Soma com o m².
+  p_percentual?: number;
   soma_area: number;
+  // Soma dos valores de contrato que servem de base ao percentual.
+  soma_valor_base?: number;
   v_variavel: number;
   v_total: number;
   lista_projetos: string[];

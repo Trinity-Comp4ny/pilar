@@ -54,7 +54,7 @@ describe("PlanoTab", () => {
     await waitFor(() => expect(within(stat("Clientes")).getByText("30")).toBeInTheDocument());
     expect(within(stat("Usuários ativos")).getByText("4")).toBeInTheDocument();
     expect(within(stat("Projetos")).getByText("12")).toBeInTheDocument();
-    expect(screen.getByText("Acesso completo ao Pilar no plano Pro")).toBeInTheDocument();
+    expect(screen.getByText("Acesso completo à Pilar no plano Pro")).toBeInTheDocument();
 
     const perfis = h.calls.find((c) => c.table === "profiles")!;
     expect(perfis.filters).toContainEqual(["eq", "empresa_id", "e1"]);

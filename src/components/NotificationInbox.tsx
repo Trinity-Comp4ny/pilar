@@ -99,7 +99,9 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
     const link = resolveLink(n);
     if (link) {
       setOpen(false);
-      navigate(link);
+      // Link externo (sala da reunião do Google Agenda, SPEC 164) abre em outra aba.
+      if (/^https:\/\//i.test(link)) window.open(link, "_blank", "noopener,noreferrer");
+      else navigate(link);
     }
   };
 
@@ -234,7 +236,7 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
                         {n.titulo}
                       </p>
                       {n.mensagem && <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{n.mensagem}</p>}
-                      <p className="mt-1 text-[11px] text-muted-foreground">{formatTimeAgo(n.created_at)}</p>
+                      <p className="mt-1 text-2xs text-muted-foreground">{formatTimeAgo(n.created_at)}</p>
                     </div>
                     <div className="flex items-center gap-1">
                       {!n.lido_em && <span className="h-2 w-2 shrink-0 rounded-full bg-chart-danger" />}
@@ -264,8 +266,8 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
             <div className="flex items-center justify-between border-t px-2 py-1.5">
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-7 text-xs text-muted-foreground"
+                size="xs"
+                className="text-muted-foreground"
                 disabled={naoLidasNoFiltro === 0}
                 onClick={() => marcarTodas.mutate(filtro)}
               >
@@ -274,8 +276,8 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
               </Button>
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-7 text-xs text-muted-foreground"
+                size="xs"
+                className="text-muted-foreground"
                 onClick={() => arquivarTodas.mutate(filtro)}
               >
                 <Archive className="mr-1.5 h-3.5 w-3.5" />
@@ -330,7 +332,9 @@ function ChipCategoria({
       aria-label={label}
       className={cn(
         "whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-        ativo ? "border-ink bg-ink text-white" : "border-border text-muted-foreground hover:bg-muted/60 hover:text-ink"
+        ativo
+          ? "border-brand bg-brand text-ink"
+          : "border-border text-muted-foreground hover:bg-muted/60 hover:text-ink"
       )}
     >
       {children}

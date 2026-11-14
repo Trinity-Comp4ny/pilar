@@ -1,3 +1,4 @@
+import { KPICard } from "@/components/KPICard";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -14,8 +15,9 @@ import {
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
+import { KpiResumo } from "@/components/KpiResumo";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -42,15 +44,7 @@ function statusBadge(status: StatusProposta) {
 }
 
 function KpiCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="mt-1 text-xl font-semibold tabular-nums">{value}</p>
-        {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
-      </CardContent>
-    </Card>
-  );
+  return <KPICard label={label} value={value} subtitle={hint} />;
 }
 
 type Moeda = (valor: number) => string;
@@ -172,7 +166,7 @@ export default function FornecedorDetalhePage() {
       <PageLayout header={<PageHeader title="Fornecedor não encontrado" breadcrumbs={BREADCRUMB} />}>
         <p className="text-sm text-muted-foreground">
           Este fornecedor não existe ou foi removido.{" "}
-          <button onClick={() => navigate("/obras/fornecedores")} className="underline">
+          <button onClick={() => navigate("/gestao/fornecedores")} className="underline">
             Voltar para Fornecedores
           </button>
         </p>
@@ -227,27 +221,41 @@ export default function FornecedorDetalhePage() {
         )}
       </div>
 
-      {/* KPIs */}
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
-        <KpiCard label="Obras" value={String(resumo.obras)} />
-        <KpiCard label="Total comprado" value={formatCurrency(resumo.totalComprado)} hint="Conta da obra" />
-        <KpiCard
-          label="Cotações"
-          value={String(resumo.cotacoesParticipadas)}
-          hint={`${Math.round(resumo.taxaVitoria * 100)}% de vitória (${resumo.vitorias})`}
-        />
-        <KpiCard label="Ticket médio" value={formatCurrency(resumo.ticketMedio)} />
-        <KpiCard label="Última compra" value={resumo.ultimaCompra ? formatDate(resumo.ultimaCompra) : "—"} />
-        <KpiCard
-          label="Nota"
-          value={avaliacoes.length > 0 ? formatarNota(notaMedia(avaliacoes)) : "Sem avaliação"}
-          hint={
-            avaliacoes.length > 0
-              ? `${avaliacoes.length} ${avaliacoes.length === 1 ? "avaliação" : "avaliações"}`
-              : undefined
-          }
-        />
-      </div>
+      {/* Indicadores recolhíveis com resumo, como nas outras telas: no celular os 6 cards
+          empilhados empurravam o conteúdo da aba para fora da tela (auditoria, 2026-11). */}
+      <CollapsibleKpiSection
+        storageKey="fornecedor-detalhe"
+        resumo={
+          <KpiResumo
+            itens={[
+              { texto: `${resumo.obras} ${resumo.obras === 1 ? "obra" : "obras"}` },
+              { texto: `${formatCurrency(resumo.totalComprado)} comprado` },
+              { texto: avaliacoes.length > 0 ? `nota ${formatarNota(notaMedia(avaliacoes))}` : "sem avaliação" },
+            ]}
+          />
+        }
+      >
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+          <KpiCard label="Obras" value={String(resumo.obras)} />
+          <KpiCard label="Total comprado" value={formatCurrency(resumo.totalComprado)} hint="Conta da obra" />
+          <KpiCard
+            label="Cotações"
+            value={String(resumo.cotacoesParticipadas)}
+            hint={`${Math.round(resumo.taxaVitoria * 100)}% de vitória (${resumo.vitorias})`}
+          />
+          <KpiCard label="Ticket médio" value={formatCurrency(resumo.ticketMedio)} />
+          <KpiCard label="Última compra" value={resumo.ultimaCompra ? formatDate(resumo.ultimaCompra) : "—"} />
+          <KpiCard
+            label="Nota"
+            value={avaliacoes.length > 0 ? formatarNota(notaMedia(avaliacoes)) : "Sem avaliação"}
+            hint={
+              avaliacoes.length > 0
+                ? `${avaliacoes.length} ${avaliacoes.length === 1 ? "avaliação" : "avaliações"}`
+                : undefined
+            }
+          />
+        </div>
+      </CollapsibleKpiSection>
 
       <Tabs value={tab} onValueChange={setTab} className="mt-6">
         {/* Cotações */}

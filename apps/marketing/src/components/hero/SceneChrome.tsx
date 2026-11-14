@@ -153,7 +153,7 @@ export function AppSidebar({ ato }: { ato: number }) {
         <div className="h-16 flex items-center justify-between pl-5 pr-3 shrink-0">
           {/* A marca de verdade, o mesmo SVG que o app serve. */}
           <span className="flex items-center gap-3">
-            <img src="/pilar-logo.svg" alt="" className="w-7 h-7 shrink-0" />
+            <img src="/pilar-logo.svg" alt="Logo da Pilar" className="w-7 h-7 shrink-0" />
             <span className="text-[15px] font-medium tracking-tight text-ink">Pilar</span>
           </span>
           <PanelLeftClose className="w-[18px] h-[18px] text-black/50" strokeWidth={1.5} />

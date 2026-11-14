@@ -3,6 +3,7 @@
  * estático: nada aqui é imagem, então não corta, não pixela e não desatualiza
  * junto com a UI real. Toda animação respeita `prefers-reduced-motion`.
  */
+import type { ReactNode } from "react";
 import { m, useReducedMotion } from "framer-motion";
 import type { MockNome, ModuloSlug } from "../../lib/modules";
 
@@ -317,77 +318,124 @@ export function PortalScreen() {
 
 /* ── Campo: o celular do encarregado, desenhado à mão em CSS ──────────── */
 
+/**
+ * Moldura de celular com a proporção de um iPhone de verdade (9:19,5), barra de
+ * status, ilha e indicador de início. Antes a moldura só abraçava o conteúdo e o
+ * aparelho saía quase quadrado, achatado. O miolo é uma coluna: o que vem antes
+ * do `mt-auto` fica no topo e o botão de ação desce para o pé da tela, como no app.
+ */
+export function Celular({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={`mx-auto w-full max-w-[272px] ${className}`}>
+      <div className="rounded-[46px] bg-ink p-[7px] shadow-[0_32px_64px_-24px_rgba(0,0,0,0.5)] ring-1 ring-black/10">
+        <div className="relative flex aspect-[9/19.5] flex-col overflow-hidden rounded-[39px] bg-app">
+          <div className="relative flex h-11 shrink-0 items-center justify-between px-7 pt-1 text-[10.5px] font-semibold tabular-nums text-ink">
+            <span>9:41</span>
+            <span className="absolute left-1/2 top-2.5 h-[22px] w-[76px] -translate-x-1/2 rounded-full bg-ink" />
+            <span className="flex items-center gap-1" aria-hidden="true">
+              <span className="flex items-end gap-[1.5px]">
+                {[4, 6, 8, 10].map((h, i) => (
+                  <span
+                    key={h}
+                    className={`w-[2.5px] rounded-[1px] ${i < 2 ? "bg-ink" : "bg-ink/25"}`}
+                    style={{ height: h }}
+                  />
+                ))}
+              </span>
+              <span className="relative ml-0.5 h-[10px] w-[20px] rounded-[3px] border border-ink/40 p-[1.5px]">
+                <span className="block h-full w-[70%] rounded-[1.5px] bg-ink" />
+              </span>
+            </span>
+          </div>
+          <div className="flex min-h-0 flex-1 flex-col px-4 pb-2 pt-2">{children}</div>
+          <span className="mx-auto mb-2 h-[4px] w-[96px] shrink-0 rounded-full bg-ink/80" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Cabeçalho das telas do Campo: obra em caixa-alta e o título do dia. */
+function TopoCampo({ obra, titulo, chip }: { obra: string; titulo: string; chip?: ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-2 pb-3">
+      <div>
+        <p className="text-[8px] uppercase tracking-wider text-ink-muted">{obra}</p>
+        <p className="text-[15px] font-semibold tracking-tight text-ink">{titulo}</p>
+      </div>
+      {chip}
+    </div>
+  );
+}
+
 export function CampoScreen() {
   const reduced = useReducedMotion();
 
   return (
-    <div className="mx-auto w-[300px]">
-      <div className="rounded-[36px] border-[3px] border-ink bg-ink shadow-[0_28px_56px_-20px_rgba(0,0,0,0.45)]">
-        <div className="relative overflow-hidden rounded-[32px] bg-app">
-          <span className="absolute left-1/2 top-3.5 h-6 w-20 -translate-x-1/2 rounded-full bg-ink" />
+    <Celular>
+      <TopoCampo
+        obra="Obra Santa Rita"
+        titulo="Diário de hoje"
+        chip={
+          <span className="mt-0.5 flex items-center gap-1 rounded-full bg-app-muted px-2 py-1 text-[7.5px] uppercase tracking-wider text-ink-muted">
+            <span className="h-1.5 w-1.5 rounded-full bg-chart-warning" />
+            Sem sinal
+          </span>
+        }
+      />
 
-          <div className="px-4 pb-6 pt-12">
-            <div className="flex items-center justify-between pb-3">
-              <div>
-                <p className="text-[8px] uppercase tracking-wider text-ink-muted">Obra Santa Rita</p>
-                <p className="text-[13px] font-semibold tracking-tight text-ink">Diário de hoje</p>
-              </div>
-              <span className="flex items-center gap-1 rounded-full bg-app-muted px-2 py-1 text-[7.5px] uppercase tracking-wider text-ink-muted">
-                <span className="h-1.5 w-1.5 rounded-full bg-chart-warning" />
-                Sem sinal
-              </span>
-            </div>
-
-            <div className="rounded-lg border border-black/5 bg-white p-2.5 mb-2.5">
-              {[
-                ["Clima", "Nublado"],
-                ["Efetivo em obra", "14"],
-                ["Alvenaria 3º pav.", "62 m²"],
-              ].map(([k, v]) => (
-                <div
-                  key={k}
-                  className="flex justify-between text-[10px] text-ink-soft py-1 border-b border-black/5 last:border-0"
-                >
-                  <span>{k}</span>
-                  <span className="text-ink tabular-nums">{v}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-3 gap-1.5 mb-2.5">
-              {[0, 1, 2].map((i) => (
-                <m.span
-                  key={i}
-                  className="aspect-square rounded-md bg-app-muted block"
-                  initial={reduced ? false : { opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, delay: reduced ? 0 : 0.3 + i * 0.12 }}
-                />
-              ))}
-            </div>
-
-            <div className="flex items-center justify-between rounded-lg border border-black/5 bg-white px-2.5 py-2 mb-3">
-              <span className="text-[10px] text-ink">Tarefa do cronograma</span>
-              <span className="text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-success-soft text-success-strong">
-                Concluída
-              </span>
-            </div>
-
-            <span className="flex h-9 w-full items-center justify-center rounded-full bg-brand text-[12px] font-medium text-ink">
-              Enviar o dia
-            </span>
-            <m.p
-              className="mt-2 text-center text-[8px] text-ink-muted"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: reduced ? 0 : 0.9 }}
-            >
-              Fica no aparelho e sobe sozinho quando o sinal voltar
-            </m.p>
+      <div className="mb-3 rounded-xl border border-black/5 bg-white px-3 py-1.5">
+        {[
+          ["Clima", "Nublado"],
+          ["Efetivo em obra", "14"],
+          ["Alvenaria 3º pav.", "62 m²"],
+          ["Ocorrências", "1"],
+        ].map(([k, v]) => (
+          <div
+            key={k}
+            className="flex justify-between border-b border-black/5 py-1.5 text-[10.5px] text-ink-soft last:border-0"
+          >
+            <span>{k}</span>
+            <span className="tabular-nums text-ink">{v}</span>
           </div>
-        </div>
+        ))}
       </div>
-    </div>
+
+      <p className="mb-1.5 text-[8px] uppercase tracking-wider text-ink-muted">Fotos do serviço</p>
+      <div className="mb-3 grid grid-cols-3 gap-1.5">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <m.span
+            key={i}
+            className="block aspect-square rounded-lg bg-app-muted"
+            initial={reduced ? false : { opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: reduced ? 0 : 0.3 + i * 0.1 }}
+          />
+        ))}
+        <span className="flex aspect-square items-center justify-center rounded-lg border border-dashed border-black/15 text-[16px] font-light text-ink-muted">
+          +
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between rounded-xl border border-black/5 bg-white px-3 py-2.5">
+        <span className="text-[10.5px] text-ink">Tarefa do cronograma</span>
+        <span className={`rounded-full px-1.5 py-0.5 text-[7.5px] uppercase tracking-wider ${CHIP.ok}`}>Concluída</span>
+      </div>
+
+      <div className="mt-auto pt-3">
+        <span className="flex h-10 w-full items-center justify-center rounded-full bg-brand text-[12.5px] font-medium text-ink">
+          Enviar o dia
+        </span>
+        <m.p
+          className="mt-2 text-center text-[8.5px] text-ink-muted"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: reduced ? 0 : 0.9 }}
+        >
+          Fica no aparelho e sobe sozinho quando o sinal voltar
+        </m.p>
+      </div>
+    </Celular>
   );
 }
 
@@ -679,40 +727,53 @@ export function CampoTarefasScreen() {
   const tarefas = [
     { t: "Armadura da viga V3", status: "Concluída", ok: true },
     { t: "Forma do pilar P12", status: "62 m² hoje", ok: true },
+    { t: "Escoramento laje L4", status: "Concluída", ok: true },
     { t: "Concretagem 3º pav.", status: "Parada: chuva" },
+    { t: "Desforma 2º pav.", status: "Amanhã" },
   ];
+  const feitas = tarefas.filter((t) => t.ok).length;
+
   return (
-    <div className="mx-auto w-[300px]">
-      <div className="rounded-[36px] border-[3px] border-ink bg-ink shadow-[0_28px_56px_-20px_rgba(0,0,0,0.45)]">
-        <div className="relative overflow-hidden rounded-[32px] bg-app">
-          <span className="absolute left-1/2 top-3.5 h-6 w-20 -translate-x-1/2 rounded-full bg-ink" />
-          <div className="px-4 pb-6 pt-12">
-            <div className="pb-3">
-              <p className="text-[8px] uppercase tracking-wider text-ink-muted">Frente Estrutura</p>
-              <p className="text-[13px] font-semibold tracking-tight text-ink">Tarefas de hoje</p>
-            </div>
-            {tarefas.map((t) => (
-              <div
-                key={t.t}
-                className="flex items-center justify-between gap-2 rounded-lg border border-black/5 bg-white px-2.5 py-2.5 mb-2"
-              >
-                <span className="text-[10px] text-ink truncate">{t.t}</span>
-                <span
-                  className={`text-[7.5px] uppercase tracking-wider px-1.5 py-0.5 rounded-full shrink-0 ${
-                    t.ok ? CHIP.ok : CHIP.neutro
-                  }`}
-                >
-                  {t.status}
-                </span>
-              </div>
-            ))}
-            <span className="mt-1 flex h-9 w-full items-center justify-center rounded-full bg-brand text-[12px] font-medium text-ink">
-              Enviar pro escritório
-            </span>
-          </div>
+    <Celular>
+      <TopoCampo obra="Frente Estrutura" titulo="Tarefas de hoje" />
+
+      <div className="mb-3 rounded-xl border border-black/5 bg-white px-3 py-2.5">
+        <div className="mb-1.5 flex justify-between text-[10px]">
+          <span className="text-ink-soft">Avanço do dia</span>
+          <span className="tabular-nums text-ink">
+            {feitas} de {tarefas.length}
+          </span>
         </div>
+        <span className="block h-1.5 overflow-hidden rounded-full bg-app-muted">
+          <span
+            className="block h-full rounded-full bg-brand"
+            style={{ width: `${(feitas / tarefas.length) * 100}%` }}
+          />
+        </span>
       </div>
-    </div>
+
+      {tarefas.map((t) => (
+        <div
+          key={t.t}
+          className="mb-2 flex items-center justify-between gap-2 rounded-xl border border-black/5 bg-white px-3 py-2.5"
+        >
+          <span className="truncate text-[10.5px] text-ink">{t.t}</span>
+          <span
+            className={`shrink-0 rounded-full px-1.5 py-0.5 text-[7.5px] uppercase tracking-wider ${
+              t.ok ? CHIP.ok : CHIP.neutro
+            }`}
+          >
+            {t.status}
+          </span>
+        </div>
+      ))}
+
+      <div className="mt-auto pt-3">
+        <span className="flex h-10 w-full items-center justify-center rounded-full bg-brand text-[12.5px] font-medium text-ink">
+          Enviar pro escritório
+        </span>
+      </div>
+    </Celular>
   );
 }
 

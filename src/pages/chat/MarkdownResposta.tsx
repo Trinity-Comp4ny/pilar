@@ -14,7 +14,7 @@ export function MarkdownResposta({ children }: { children: string }) {
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          // Link para registro do Pilar (ex.: /projetos/abc) navega sem recarregar o app.
+          // Link para registro da Pilar (ex.: /projetos/abc) navega sem recarregar o app.
           a: ({ href, children: texto }) =>
             href?.startsWith("/") && !href.startsWith("//") ? (
               <Link to={href}>{texto}</Link>

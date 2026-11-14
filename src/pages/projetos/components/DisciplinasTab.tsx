@@ -1,6 +1,8 @@
+import { createPortal } from "react-dom";
+import { filterTriggerClass } from "@/components/filters/filterStyles";
 import { useState, useMemo } from "react";
+import { DisciplinasKPIs } from "./DisciplinasKPIs";
 import { Card, CardContent } from "@/components/ui/card";
-import { KPICard } from "@/components/KPICard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,7 +87,7 @@ function getStatusBadge(status: string | undefined) {
   const config = DISCIPLINA_STATUS_CONFIG[status || "Não Iniciado"] || DISCIPLINA_STATUS_CONFIG["Não Iniciado"];
   const Icon = config.icon;
   return (
-    <Badge variant="outline" className={cn("text-[11px] gap-1 font-normal", config.bgColor, config.color)}>
+    <Badge variant="outline" className={cn("text-2xs gap-1 font-normal", config.bgColor, config.color)}>
       <Icon className="h-3 w-3" />
       {config.label}
     </Badge>
@@ -137,6 +139,8 @@ interface DisciplinasTabProps {
   canEdit?: boolean;
   onChanged?: () => void;
   isLoading?: boolean;
+  /** Onde pôr os filtros (barra da página). Sem isto, ficam numa linha acima da lista. */
+  toolbarSlot?: HTMLElement | null;
 }
 
 const VISAO_OPCOES: ViewOption<"cards" | "table">[] = [
@@ -151,6 +155,7 @@ export function DisciplinasTab({
   canEdit = false,
   onChanged,
   isLoading,
+  toolbarSlot,
 }: DisciplinasTabProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("todos");
@@ -299,7 +304,7 @@ export function DisciplinasTab({
         primeira ? (
           <div className="flex items-center gap-2">
             <span className="font-semibold">{grupo.nome}</span>
-            <Badge variant="secondary" className="text-[10px] font-normal">
+            <Badge variant="secondary" className="text-3xs font-normal">
               {grupo.projetos.length}
             </Badge>
             {canEdit && onChanged && (
@@ -340,13 +345,13 @@ export function DisciplinasTab({
           <div className="flex items-center gap-1">
             {getStatusBadge(disciplina.status)}
             {atrasada && dlStatus && (
-              <Badge variant="destructive" className="text-[10px] gap-0.5">
+              <Badge variant="destructive" className="text-3xs gap-0.5">
                 <AlertTriangle className="h-3 w-3" />
                 {dlStatus.days}d
               </Badge>
             )}
             {atencao && dlStatus && (
-              <Badge className="text-[10px] gap-0.5 bg-fill-warning hover:bg-fill-warning text-fill-warning-foreground">
+              <Badge className="text-3xs gap-0.5 bg-fill-warning hover:bg-fill-warning text-fill-warning-foreground">
                 <Clock className="h-3 w-3" />
                 {dlStatus.days}d
               </Badge>
@@ -381,89 +386,83 @@ export function DisciplinasTab({
       header: "Projeto Status",
       cell: ({ projeto }) =>
         PROJECT_STATUS_CONFIG[projeto.status] ? (
-          <Badge variant="outline" className={cn("text-[11px]", PROJECT_STATUS_CONFIG[projeto.status].color)}>
+          <Badge variant="outline" className={cn("text-2xs", PROJECT_STATUS_CONFIG[projeto.status].color)}>
             {PROJECT_STATUS_CONFIG[projeto.status].label}
           </Badge>
         ) : null,
     },
   ];
 
+  const filtros = (
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="relative w-[220px] shrink-0">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Buscar disciplina..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="h-9 rounded-full pl-9"
+        />
+      </div>
+
+      <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <SelectTrigger
+          className={filterTriggerClass(statusFilter !== "todos", "w-auto")}
+          aria-label="Filtrar por status"
+        >
+          <SelectValue placeholder="Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="todos">Todos os status</SelectItem>
+          <SelectItem value="Não Iniciado">Não Iniciado</SelectItem>
+          <SelectItem value="Em Andamento">Em Andamento</SelectItem>
+          <SelectItem value="Concluído">Concluído</SelectItem>
+          <SelectItem value="Pendente">Pendente</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select value={projetoFilter} onValueChange={setProjetoFilter}>
+        <SelectTrigger
+          className={filterTriggerClass(projetoFilter !== "todos", "w-auto")}
+          aria-label="Filtrar por projeto"
+        >
+          <SelectValue placeholder="Projeto" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="todos">Todos os projetos</SelectItem>
+          {projetosUnicos.map((p) => (
+            <SelectItem key={p.id} value={p.id}>
+              {p.nome}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs"
+          onClick={expandedDisciplinas.size > 0 ? collapseAll : expandAll}
+        >
+          {expandedDisciplinas.size > 0 ? "Recolher" : "Expandir"} tudo
+        </Button>
+        <ViewSwitcher
+          options={VISAO_OPCOES}
+          value={viewMode}
+          onChange={setViewMode}
+          ariaLabel="Visualização das disciplinas"
+        />
+      </div>
+    </div>
+  );
+
   return (
-    <div className="space-y-6">
-      {/* Métricas */}
-      <div className="space-y-4">
-        {/* KPI Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <KPICard
-            icon={CheckCircle2}
-            label="Concluídas"
-            value={metrics.concluidas.toString()}
-            tone="positive"
-            subtitle={`${metrics.progressoPct}%`}
-          />
-          <KPICard icon={Clock} label="Em Andamento" value={metrics.emAndamento.toString()} tone="info" />
-          <KPICard icon={Clock} label="Atenção" value={metrics.emAtencao.toString()} tone="warning" />
-          <KPICard icon={AlertTriangle} label="Atrasadas" value={metrics.atrasadas.toString()} tone="danger" />
-          <KPICard icon={Layers} label="Total" value={metrics.total.toString()} tone="neutral" subtitle="atribuições" />
-        </div>
-      </div>
+    <div className="space-y-4">
+      <DisciplinasKPIs metrics={metrics} />
 
-      {/* Filtros */}
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar disciplina..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 h-9"
-          />
-        </div>
-
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px] h-9" aria-label="Filtrar por status">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos os status</SelectItem>
-            <SelectItem value="Não Iniciado">Não Iniciado</SelectItem>
-            <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-            <SelectItem value="Concluído">Concluído</SelectItem>
-            <SelectItem value="Pendente">Pendente</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={projetoFilter} onValueChange={setProjetoFilter}>
-          <SelectTrigger className="w-[220px] h-9" aria-label="Filtrar por projeto">
-            <SelectValue placeholder="Projeto" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos os projetos</SelectItem>
-            {projetosUnicos.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.nome}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <div className="flex items-center gap-1 ml-auto">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-xs"
-            onClick={expandedDisciplinas.size > 0 ? collapseAll : expandAll}
-          >
-            {expandedDisciplinas.size > 0 ? "Recolher" : "Expandir"} tudo
-          </Button>
-          <ViewSwitcher
-            options={VISAO_OPCOES}
-            value={viewMode}
-            onChange={setViewMode}
-            ariaLabel="Visualização das disciplinas"
-          />
-        </div>
-      </div>
+      {/* Filtros: na barra da página quando há onde pôr (auditoria de espaço, 2026-11). */}
+      {toolbarSlot ? createPortal(filtros, toolbarSlot) : filtros}
 
       {/* Conteúdo */}
       {filtered.length === 0 ? (
@@ -518,12 +517,12 @@ export function DisciplinasTab({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-semibold text-sm">{grupo.nome}</h3>
-                          <Badge variant="secondary" className="text-[11px] font-normal">
+                          <Badge variant="secondary" className="text-2xs font-normal">
                             {grupo.projetos.length} projeto
                             {grupo.projetos.length !== 1 ? "s" : ""}
                           </Badge>
                           {hasAtrasadas && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
+                            <span className="text-3xs px-2 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
                               <AlertTriangle size={10} /> Atraso
                             </span>
                           )}
@@ -644,13 +643,13 @@ export function DisciplinasTab({
                             <div className="flex items-center gap-2 pl-7 sm:pl-0 shrink-0">
                               {getStatusBadge(disciplina.status)}
                               {atrasada && dlStatus && (
-                                <Badge variant="destructive" className="text-[10px] gap-0.5">
+                                <Badge variant="destructive" className="text-3xs gap-0.5">
                                   <AlertTriangle className="h-3 w-3" />
                                   Em Atraso {dlStatus.days > 0 ? `(${dlStatus.days}d)` : ""}
                                 </Badge>
                               )}
                               {atencao && dlStatus && (
-                                <Badge className="text-[10px] gap-0.5 bg-fill-warning hover:bg-fill-warning text-fill-warning-foreground">
+                                <Badge className="text-3xs gap-0.5 bg-fill-warning hover:bg-fill-warning text-fill-warning-foreground">
                                   <Clock className="h-3 w-3" />
                                   Atenção {dlStatus.days > 0 ? `(${dlStatus.days}d)` : ""}
                                 </Badge>
@@ -658,7 +657,7 @@ export function DisciplinasTab({
                               {PROJECT_STATUS_CONFIG[projeto.status] && (
                                 <Badge
                                   variant="outline"
-                                  className={cn("text-[11px]", PROJECT_STATUS_CONFIG[projeto.status].color)}
+                                  className={cn("text-2xs", PROJECT_STATUS_CONFIG[projeto.status].color)}
                                 >
                                   {PROJECT_STATUS_CONFIG[projeto.status].label}
                                 </Badge>

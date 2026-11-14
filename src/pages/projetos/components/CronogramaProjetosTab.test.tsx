@@ -129,7 +129,7 @@ function montar(props: Partial<Parameters<typeof CronogramaProjetosTab>[0]> = {}
 
 const barra = (nome: string) =>
   [...document.querySelectorAll("span.truncate")].find(
-    (e) => e.textContent === nome && e.className.includes("text-[10px]")
+    (e) => e.textContent === nome && e.className.includes("text-3xs")
   ) as HTMLElement;
 
 describe("CronogramaProjetosTab", () => {

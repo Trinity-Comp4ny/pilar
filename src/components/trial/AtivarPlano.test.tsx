@@ -132,7 +132,7 @@ describe("AtivarPlano", () => {
   it("teste vencido: título e botão de assinar com o valor, cobrança hoje", async () => {
     invoke.mockResolvedValue({ data: { success: true }, error: null });
     const { onAtivado } = abrir(assinatura({ status: "expired" }));
-    expect(screen.getByText("Assinar o Pilar")).toBeInTheDocument();
+    expect(screen.getByText("Assinar a Pilar")).toBeInTheDocument();
     const user = await preencher();
     await user.click(screen.getByRole("button", { name: /^Assinar e pagar R\$\s499,00$/ }));
     await waitFor(() => expect(onAtivado).toHaveBeenCalled());

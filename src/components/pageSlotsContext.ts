@@ -4,6 +4,8 @@ import { createContext } from "react";
 export interface PageSlots {
   tabsEl: HTMLElement | null;
   toolbarEl: HTMLElement | null;
+  /** Verdadeiro dentro de um `PageLayout` (mesmo antes dos elementos montarem). */
+  dentroDoLayout?: boolean;
 }
 
 export const PageSlotsContext = createContext<PageSlots>({ tabsEl: null, toolbarEl: null });

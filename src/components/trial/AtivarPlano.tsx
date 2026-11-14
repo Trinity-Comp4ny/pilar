@@ -171,7 +171,7 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
     <FormDialog
       open={open}
       onOpenChange={handleOpenChange}
-      title={imediata ? "Assinar o Pilar" : "Ativar plano"}
+      title={imediata ? "Assinar a Pilar" : "Ativar plano"}
       description={
         imediata
           ? subscription.status === "trialing"
@@ -209,7 +209,7 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
                 )}
               >
                 {plan.destaque && (
-                  <span className="absolute -top-2.5 right-2 text-[9px] uppercase tracking-wider bg-brand text-ink px-2 py-0.5 rounded-full">
+                  <span className="absolute -top-2.5 right-2 text-3xs uppercase tracking-wider bg-brand text-ink px-2 py-0.5 rounded-full">
                     Sugerido
                   </span>
                 )}
@@ -225,7 +225,7 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
                 </p>
                 <ul className="mt-2 space-y-0.5">
                   {capacidadeDoPlano(plan).map((linha) => (
-                    <li key={linha} className="text-[11px] leading-snug text-ink-muted">
+                    <li key={linha} className="text-2xs leading-snug text-ink-muted">
                       {linha}
                     </li>
                   ))}
@@ -249,7 +249,7 @@ export function AtivarPlano({ open, onOpenChange, subscription, onAtivado }: Ati
           <div className="space-y-1.5">
             <Label htmlFor="ativar-cc-number" className="flex items-center justify-between">
               Número do cartão
-              {cardBrand && <span className="text-[11px] uppercase tracking-wider text-ink-disabled">{cardBrand}</span>}
+              {cardBrand && <span className="text-2xs uppercase tracking-wider text-ink-disabled">{cardBrand}</span>}
             </Label>
             <Input
               id="ativar-cc-number"

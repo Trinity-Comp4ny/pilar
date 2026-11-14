@@ -85,7 +85,7 @@ export function SeletorColunas({ colunas }: { colunas: ColunasLista }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
+        <Button variant="outline" size="xs" className="gap-1.5">
           <SlidersHorizontal className="h-3.5 w-3.5" /> Colunas
         </Button>
       </DropdownMenuTrigger>
@@ -170,10 +170,10 @@ function NovaListaInline({ onCriar, criando }: Pick<EtapaControls, "onCriar" | "
         ))}
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="brand" size="sm" className="h-8" onClick={criar} disabled={!nome.trim() || criando}>
+        <Button variant="brand" size="xs" onClick={criar} disabled={!nome.trim() || criando}>
           Adicionar
         </Button>
-        <Button variant="ghost" size="sm" className="h-8" onClick={fechar}>
+        <Button variant="ghost" size="xs" onClick={fechar}>
           Cancelar
         </Button>
       </div>
@@ -301,22 +301,19 @@ function Linha({
     >
       {/* Nome + tipo + contadores */}
       <div className="flex min-w-0 items-center gap-2">
-        {item.numero != null && (
-          <span className="shrink-0 font-mono text-xs text-muted-foreground">#{item.numero}</span>
-        )}
         <span className="flex min-w-0 flex-col">
           <span className="truncate text-foreground">{item.titulo}</span>
           {item.obraCaminho && (
-            <span className="truncate text-[11px] text-muted-foreground" title={item.obraCaminho}>
+            <span className="truncate text-2xs text-muted-foreground" title={item.obraCaminho}>
               {item.obraCaminho}
             </span>
           )}
         </span>
-        <Badge variant="outline" className="shrink-0 text-[10px] font-normal text-muted-foreground">
+        <Badge variant="outline" className="shrink-0 text-3xs font-normal text-muted-foreground">
           {ehTarefa ? "Tarefa" : "Disciplina"}
         </Badge>
         {(item.comentarios > 0 || item.links > 0) && (
-          <span className="ml-0.5 hidden shrink-0 items-center gap-2 text-[11px] text-muted-foreground sm:inline-flex">
+          <span className="ml-0.5 hidden shrink-0 items-center gap-2 text-2xs text-muted-foreground sm:inline-flex">
             {item.comentarios > 0 && (
               <span className="inline-flex items-center gap-0.5">
                 <MessageSquare className="h-3 w-3" />
@@ -513,7 +510,7 @@ export function ListaTrabalho({
                     {grupo.itens.length > 0 && (
                       <div
                         style={{ gridTemplateColumns: template }}
-                        className="grid items-center gap-4 border-b bg-muted/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                        className="grid items-center gap-4 border-b bg-muted/10 px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-muted-foreground"
                       >
                         <span>Nome</span>
                         {ativas.map((c) => (

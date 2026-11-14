@@ -35,12 +35,12 @@ export function AvaliarFornecedor({ propostaId, fornecedorId, fornecedorNome }: 
   return (
     <>
       {atual ? (
-        <Button variant="ghost" size="sm" className="h-7" onClick={() => setAberto(true)}>
+        <Button variant="ghost" size="xs" onClick={() => setAberto(true)}>
           Nota {formatarNota(atual.nota_geral)}
           <span className="ml-1 text-muted-foreground">· editar</span>
         </Button>
       ) : (
-        <Button variant="outline" size="sm" className="h-7" onClick={() => setAberto(true)}>
+        <Button variant="outline" size="xs" onClick={() => setAberto(true)}>
           Avaliar fornecedor
         </Button>
       )}

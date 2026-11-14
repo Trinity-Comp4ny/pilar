@@ -1,0 +1,18 @@
+{
+  "voz": "narração por cima do vídeo (narrate.py, narrar_sobre); t = segundo em que a fala entra",
+  "fim": 14.4,
+  "lines": [
+    {
+      "t": 0.5,
+      "say": "O seu controle de projetos, hoje."
+    },
+    {
+      "t": 6.4,
+      "say": "Qual versão é a certa?"
+    },
+    {
+      "t": 10.1,
+      "say": "Na Pilar, é uma versão só, na tela de todo mundo."
+    }
+  ]
+}

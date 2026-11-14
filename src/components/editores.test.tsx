@@ -6,6 +6,7 @@ import { LabelsEditor } from "./LabelsEditor";
 import { LinksEditor, type LinkItem } from "./LinksEditor";
 import { HorasMinutosField } from "./HorasMinutosField";
 import { CommandPaletteHint } from "./CommandPaletteHint";
+import { EVENTO_ABRIR_PALETA } from "@/lib/paletaComandosEvento";
 import { ErrorBoundary } from "./ErrorBoundary";
 
 const h = vi.hoisted(() => ({
@@ -140,6 +141,15 @@ describe("CommandPaletteHint", () => {
     Object.defineProperty(Navigator.prototype, "platform", { get: () => "Win32", configurable: true });
     render(<CommandPaletteHint />);
     expect(screen.getByText("Ctrl+K")).toBeInTheDocument();
+  });
+
+  it("é um botão do trilho que abre a paleta", () => {
+    const ouvinte = vi.fn();
+    window.addEventListener(EVENTO_ABRIR_PALETA, ouvinte);
+    render(<CommandPaletteHint />);
+    fireEvent.click(screen.getByRole("button", { name: /Buscar e comandos/ }));
+    expect(ouvinte).toHaveBeenCalledTimes(1);
+    window.removeEventListener(EVENTO_ABRIR_PALETA, ouvinte);
   });
 });
 

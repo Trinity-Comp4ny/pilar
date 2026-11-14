@@ -1,0 +1,30 @@
+{
+  "voz": "narração por cima do vídeo (narrate.py, narrar_sobre); t = segundo em que a fala entra",
+  "fim": 12.2,
+  "lines": [
+    {
+      "t": 0.1,
+      "say": "O que a Pilar não faz."
+    },
+    {
+      "t": 1.75,
+      "say": "Não aprova por você."
+    },
+    {
+      "t": 3.4,
+      "say": "Não manda nada sem o seu ok."
+    },
+    {
+      "t": 5.4,
+      "say": "Não inventa número."
+    },
+    {
+      "t": 7.4,
+      "say": "Não assina a sua ART."
+    },
+    {
+      "t": 9.4,
+      "say": "E não cobra por usuário."
+    }
+  ]
+}

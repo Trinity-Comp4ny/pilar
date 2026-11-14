@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CartaoPendenciasAgentes } from "./CartaoPendenciasAgentes";
 import { CartaoBoasVindas } from "./CartaoBoasVindas";
+import { ConviteInstalarApp } from "@/components/instalar/ConviteInstalarApp";
 import { PainelGrid } from "./painel/PainelGrid";
 import { HeroInicio } from "./hero/HeroInicio";
 import { LAYOUT_PADRAO } from "./painel/catalogo";
@@ -57,22 +58,56 @@ export default function Inicio() {
     navigate("/agentes", prompt ? { state: { prompt } } : undefined);
   };
 
+  // Porta dos agentes: logo abaixo do resumo (2º item da tela). Não é indicador, é ação.
+  const barraAgentes = podeAgentes && !editando && (
+    <section aria-label="Agentes">
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          perguntar();
+        }}
+        className="flex items-center gap-3 rounded-full border border-border/60 bg-white py-2 pl-3 pr-2 shadow-card focus-within:ring-2 focus-within:ring-brand/60"
+      >
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand text-ink">
+          <Sparkles size={18} />
+        </span>
+        <input
+          value={pergunta}
+          onChange={(event) => setPergunta(event.target.value)}
+          placeholder="Pergunte aos agentes"
+          className="flex-1 bg-transparent py-1.5 text-base text-ink outline-hidden placeholder:text-ink-muted"
+          aria-label="Perguntar aos agentes"
+        />
+        <button
+          type="submit"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand text-ink transition-opacity hover:opacity-90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand/60"
+          aria-label="Abrir conversa com os agentes"
+        >
+          <ArrowRight size={18} />
+        </button>
+      </form>
+    </section>
+  );
+
   const renderHero = (acoes: React.ReactNode) => (
-    <HeroInicio
-      nome={profile?.first_name?.trim() || null}
-      tema={cabecalho.tema}
-      mostrarResumo={cabecalho.mostrarResumo}
-      editando={editando}
-      acoes={acoes}
-      onTema={cabecalho.setTema}
-      onMostrarResumo={cabecalho.setMostrarResumo}
-      resumo={{
-        estado: resumo.estado,
-        resumo: resumo.resumo,
-        erro: resumo.erro,
-        onTentarDeNovo: resumo.tentarDeNovo,
-      }}
-    />
+    <>
+      <HeroInicio
+        nome={profile?.first_name?.trim() || null}
+        tema={cabecalho.tema}
+        mostrarResumo={cabecalho.mostrarResumo}
+        editando={editando}
+        acoes={acoes}
+        onTema={cabecalho.setTema}
+        onMostrarResumo={cabecalho.setMostrarResumo}
+        resumo={{
+          estado: resumo.estado,
+          resumo: resumo.resumo,
+          erro: resumo.erro,
+          onTentarDeNovo: resumo.tentarDeNovo,
+        }}
+      />
+      {barraAgentes}
+    </>
   );
 
   return (
@@ -92,12 +127,13 @@ export default function Inicio() {
           {!editando && (
             <Button
               variant="ghost"
-              size="sm"
-              className="h-8 gap-1.5 rounded-full px-3 text-muted-foreground hover:text-ink"
+              size="xs"
+              className="w-8 rounded-full p-0 text-muted-foreground hover:text-ink"
               onClick={() => setEditando(true)}
+              aria-label="Personalizar"
+              title="Personalizar"
             >
-              <SlidersHorizontal size={14} aria-hidden="true" />
-              Personalizar
+              <SlidersHorizontal size={16} aria-hidden="true" />
             </Button>
           )}
         </PageHeader>
@@ -106,6 +142,9 @@ export default function Inicio() {
       <div className="flex flex-col gap-5">
         {/* Primeiro acesso (SPEC 149): os três pilares e o primeiro passo de cada um. */}
         {!editando && <CartaoBoasVindas />}
+
+        {/* Celular aberto pelo navegador: convite para pôr o Pilar na tela inicial. */}
+        {!editando && <ConviteInstalarApp publico="escritorio" />}
 
         {painel.isLoading ? (
           <>
@@ -143,37 +182,6 @@ export default function Inicio() {
         ) : null}
 
         {podeAgentes && !editando && <CartaoPendenciasAgentes />}
-
-        {/* Porta dos agentes: fica fora do painel porque não é indicador, é ação. */}
-        {podeAgentes && !editando && (
-          <section aria-label="Agentes">
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                perguntar();
-              }}
-              className="flex items-center gap-3 rounded-full border border-border/60 bg-white py-2 pl-3 pr-2 shadow-card focus-within:ring-2 focus-within:ring-brand/60"
-            >
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand text-ink">
-                <Sparkles size={18} />
-              </span>
-              <input
-                value={pergunta}
-                onChange={(event) => setPergunta(event.target.value)}
-                placeholder="Pergunte aos agentes"
-                className="flex-1 bg-transparent py-1.5 text-base text-ink outline-hidden placeholder:text-ink-muted"
-                aria-label="Perguntar aos agentes"
-              />
-              <button
-                type="submit"
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand text-ink transition-opacity hover:opacity-90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand/60"
-                aria-label="Abrir conversa com os agentes"
-              >
-                <ArrowRight size={18} />
-              </button>
-            </form>
-          </section>
-        )}
       </div>
     </PageLayout>
   );

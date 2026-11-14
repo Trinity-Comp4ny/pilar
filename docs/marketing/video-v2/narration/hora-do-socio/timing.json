@@ -1,0 +1,24 @@
+{
+ "provider": "google",
+ "voice": "pt-BR-Chirp3-HD-Leda",
+ "lines": [
+  {
+   "t": 0.3,
+   "dur": 4.811,
+   "say": "Quanto custa uma hora do sócio? Nesse exemplo, uns cento e setenta reais.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 6.6,
+   "dur": 5.351,
+   "say": "E quantas vão para retrabalho? Redigitar, cobrar status, montar relatório...",
+   "ritmo": 1.0
+  },
+  {
+   "t": 12.9,
+   "dur": 3.268,
+   "say": "Devolver duas horas por semana já paga o sistema.",
+   "ritmo": 1.0
+  }
+ ]
+}

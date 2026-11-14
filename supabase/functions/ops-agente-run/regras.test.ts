@@ -498,7 +498,7 @@ Deno.test("qualidade: erro resolvido vira aviso por escritório que ainda é cli
   assertEquals(cs[0].tipo, "whatsapp");
   assertEquals(
     cs[0].textoPadrao,
-    "Oi Ana, aqui é Matheus, da Pilar. Nos últimos dias apareceu um erro para vocês no Pilar, em Financeiro. Já está corrigido. Se notarem mais alguma coisa estranha, me avisa por aqui."
+    "Oi Ana, aqui é Matheus, da Pilar. Nos últimos dias apareceu um erro para vocês na Pilar, em Financeiro. Já está corrigido. Se notarem mais alguma coisa estranha, me avisa por aqui."
   );
   assert(!FORA_DA_AREA.qualidade!.test(cs[0].textoPadrao));
 });

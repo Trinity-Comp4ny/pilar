@@ -1,15 +1,17 @@
-import { useParams, useOutletContext } from "react-router-dom";
+import { useParams, useOutletContext, useSearchParams } from "react-router-dom";
+import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
+import { KPICard } from "@/components/KPICard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Building2 } from "lucide-react";
 import { ClienteShell } from "./ClienteShell";
-import { useClienteObraData, type ClienteObraFrente } from "./useClienteObraData";
+import { useClienteObraData } from "./useClienteObraData";
 import { usePortalObraFotos, usePortalRegistroFotos, usePortalResumoSemana } from "./usePortalObraFotos";
 import { RegistrosPortal } from "./RegistrosPortal";
-import { TimelineContent, type TimelineDisciplina } from "@/pages/portal/PortalTimeline";
+import { CronogramaObraContent, ResumoFrentes } from "./PortalCronogramaObra";
 import { ContaObraContent } from "@/pages/portal/PortalContaObra";
+import { EntregasContent } from "@/components/portal/PortalEntregas";
 import { RdoFeedCard } from "@/pages/obras/components/RdoFeedCard";
 import { EmptyState } from "@/components/EmptyState";
-import { estadoFrenteCronograma, type EstadoFrente } from "@/lib/obras";
 import type { ClienteAccount } from "@/hooks/useClienteAuth";
 import { usePageTitle } from "@/hooks/usePageTitle";
 
@@ -20,30 +22,22 @@ function formatDate(d: string | null | undefined): string {
   return new Date(d + "T00:00:00").toLocaleDateString("pt-BR");
 }
 
-// Traduz o estado calculado da frente (obras.ts) para o vocabulário do
-// TimelineContent, que conta "Concluído" no progresso e destaca "Em andamento".
-const ESTADO_LABEL: Record<EstadoFrente, string> = {
-  concluida: "Concluído",
-  em_andamento: "Em andamento",
-  atrasada: "Atrasada",
-  futura: "Não iniciado",
-  sem_prazo: "Sem prazo",
-};
-
-function frentesParaTimeline(frentes: ClienteObraFrente[]): TimelineDisciplina[] {
-  return frentes.map((f) => ({
-    disciplina: f.nome,
-    status: ESTADO_LABEL[estadoFrenteCronograma(f, f.tarefas)],
-    data_inicio: f.data_inicio ?? undefined,
-    data_previsao: f.data_fim ?? undefined,
-  }));
-}
+const ABAS_OBRA: SectionTab[] = [
+  { id: "geral", label: "Visão geral" },
+  { id: "cronograma", label: "Cronograma" },
+  { id: "rdo", label: "RDO" },
+  { id: "financeiro", label: "Financeiro" },
+];
+type Aba = "geral" | "cronograma" | "rdo" | "financeiro";
 
 export default function ClienteObraDetail() {
   const { id } = useParams<{ id: string }>();
   usePageTitle("Portal | Obra");
   const account = useOutletContext<ClienteAccount>();
   const { data, loading, error } = useClienteObraData(id);
+  const [params, setParams] = useSearchParams();
+  const abaParam = params.get("aba");
+  const aba = (ABAS_OBRA.find((a) => a.id === abaParam)?.id ?? "geral") as Aba;
   const fotoIds = (data?.diario ?? []).flatMap((d) => d.fotos.map((f) => f.id));
   const { data: urlPorFoto = {} } = usePortalObraFotos(fotoIds);
   const registros = data?.registros ?? [];
@@ -79,65 +73,96 @@ export default function ClienteObraDetail() {
   }
 
   return (
-    <ClienteShell account={account} obraNome={data.nome}>
+    <ClienteShell account={account} obraNome={data.nome} obraId={data.obra_id}>
       <div className="space-y-6">
-        <div className="grid grid-cols-2 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Início previsto</p>
-              <p className="text-sm font-semibold mt-1">{formatDate(data.data_inicio_prevista)}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">Previsão de conclusão</p>
-              <p className="text-sm font-semibold mt-1">{formatDate(data.data_fim_prevista)}</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div>
-          <h2 className="text-sm font-semibold mb-3">Andamento da obra</h2>
-          <TimelineContent disciplinas={frentesParaTimeline(data.frentes)} />
-        </div>
-
-        <div>
-          <h2 className="text-sm font-semibold mb-3">Prestação de contas</h2>
-          <ContaObraContent conta={data.conta} taxaPct={data.taxa_administracao_pct} />
-        </div>
-
-        <RegistrosPortal
-          registros={registros}
-          fotosPorRegistro={fotosPorRegistro}
-          resumo={{ carregando: resumoSemana.isLoading, texto: resumoSemana.data ?? null }}
+        <SectionTabs
+          tabs={ABAS_OBRA}
+          value={aba}
+          onValueChange={(v) => setParams(v === "geral" ? {} : { aba: v }, { replace: true })}
+          ariaLabel="Seções da obra"
         />
+        {aba === "geral" && (
+          <div className="space-y-6">
+            <EntregasContent obraId={data.obra_id} apenasPendentes />
 
-        <div>
-          <h2 className="text-sm font-semibold mb-3">Diário</h2>
-          {data.diario.length === 0 ? (
-            <EmptyState
-              icon={Building2}
-              title="Nenhum registro ainda"
-              description="Assim que a equipe lançar o dia, ele aparece aqui."
-            />
-          ) : (
-            <div className="mx-auto max-w-xl">
-              {data.diario.map((dia, i) => (
-                <RdoFeedCard
-                  key={dia.id}
-                  data={dia.data}
-                  clima={dia.clima}
-                  atividades={dia.atividades}
-                  fotos={dia.fotos.flatMap((f) => {
-                    const url = urlPorFoto[f.id];
-                    return url ? [{ id: f.id, url }] : [];
-                  })}
-                  ultimo={i === data.diario.length - 1}
-                />
-              ))}
+            <div className="grid grid-cols-2 gap-4">
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-xs text-muted-foreground">Início previsto</p>
+                  <p className="text-sm font-semibold mt-1">{formatDate(data.data_inicio_prevista)}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <p className="text-xs text-muted-foreground">Previsão de conclusão</p>
+                  <p className="text-sm font-semibold mt-1">{formatDate(data.data_fim_prevista)}</p>
+                </CardContent>
+              </Card>
             </div>
-          )}
-        </div>
+
+            <ResumoFrentes frentes={data.frentes} />
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <KPICard label="Aportado pelo cliente" value={data.conta.total_aportado} tone="neutral" />
+              <KPICard label="Gasto na obra" value={data.conta.total_gasto} tone="warning" />
+              <KPICard
+                label="Saldo em conta"
+                value={data.conta.saldo}
+                tone={data.conta.saldo < 0 ? "danger" : "positive"}
+              />
+            </div>
+          </div>
+        )}
+
+        {aba === "cronograma" && (
+          <div className="">
+            <CronogramaObraContent frentes={data.frentes} />
+          </div>
+        )}
+
+        {aba === "rdo" && (
+          <div className="space-y-6">
+            <RegistrosPortal
+              registros={registros}
+              fotosPorRegistro={fotosPorRegistro}
+              resumo={{ carregando: resumoSemana.isLoading, texto: resumoSemana.data ?? null }}
+            />
+
+            <div>
+              <h2 className="text-sm font-semibold mb-3">Diário</h2>
+              {data.diario.length === 0 ? (
+                <EmptyState
+                  icon={Building2}
+                  title="Nenhum registro ainda"
+                  description="Assim que a equipe lançar o dia, ele aparece aqui."
+                />
+              ) : (
+                <div className="mx-auto max-w-xl">
+                  {data.diario.map((dia, i) => (
+                    <RdoFeedCard
+                      key={dia.id}
+                      data={dia.data}
+                      clima={dia.clima}
+                      atividades={dia.atividades}
+                      fotos={dia.fotos.flatMap((f) => {
+                        const url = urlPorFoto[f.id];
+                        return url ? [{ id: f.id, url }] : [];
+                      })}
+                      ultimo={i === data.diario.length - 1}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {aba === "financeiro" && (
+          <div className="">
+            <h2 className="text-sm font-semibold mb-3">Prestação de contas</h2>
+            <ContaObraContent conta={data.conta} taxaPct={data.taxa_administracao_pct} />
+          </div>
+        )}
       </div>
     </ClienteShell>
   );

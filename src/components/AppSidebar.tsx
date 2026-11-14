@@ -8,6 +8,8 @@ import {
   PanelLeftOpen,
   Settings,
   MessageSquare,
+  Megaphone,
+  HelpCircle,
   Eye,
   EyeOff,
 } from "lucide-react";
@@ -22,20 +24,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useValoresOcultos } from "@/contexts/ValoresOcultosContext";
 import { ImpersonationPicker } from "@/components/ImpersonationPicker";
 import { NotificationInbox } from "@/components/NotificationInbox";
+import { CommandPaletteHint } from "@/components/CommandPaletteHint";
 import { FeedbackDialog } from "@/components/FeedbackDialog";
 import { usePendenciasAgentes } from "@/hooks/useEscopos";
 import { useModuleNav } from "@/hooks/useModuleNav";
 import { MODULES, type ModuleId, type ModuleMenuItem } from "@/lib/modules";
-import { PANEL_WIDTH, RAIL_WIDTH } from "@/lib/shellLayout";
+import { PANEL_WIDTH, RAIL_WIDTH, telaEstreitaParaPainel } from "@/lib/shellLayout";
 import { ULTRA_ADMIN_BASE, ULTRA_GRUPOS, ULTRA_SECOES, isUltraAdminPath, ultraSecaoAtiva } from "@/lib/ultraAdminNav";
 import { useFeedbackNovosCount } from "@/hooks/useFeedbackNovosCount";
+import { useNovidades } from "@/hooks/useNovidades";
 
 // Shell dos 3 pilares (spec 001-shell-3-pilares): o menu vem do mapa central de
 // módulos. Desktop em duas colunas: trilho fixo à esquerda (Início, módulos,
@@ -84,11 +88,44 @@ export function AppSidebar() {
   const onUltra = isUltraAdmin && isUltraAdminPath(currentPath);
   const ultraAtiva = onUltra ? ultraSecaoAtiva(currentPath) : null;
   const { data: feedbackNovos = 0 } = useFeedbackNovosCount(isUltraAdmin);
+  const { pendentes: novidades } = useNovidades();
 
-  // Trocar de módulo pelo trilho abre o painel: quem clica quer ver os itens dele.
+  // Painel flutuante: recolhido numa tela estreita, escolher um módulo abre o painel por cima
+  // do conteúdo, sem empurrar a página nem mudar a escolha salva. Fecha ao escolher um link
+  // (do painel ou do trilho), ao clicar fora ou com Esc. Escolher o módulo também navega para
+  // a 1ª tela dele, então fechar "ao mudar de rota" sumiria com o painel na hora. Em tela larga,
+  // abrir o painel segue fixando (empurra o conteúdo).
+  const [flutuante, setFlutuante] = useState(false);
+  const raizRef = useRef<HTMLDivElement>(null);
+  const painelVisivel = !collapsed || flutuante;
+
+  useEffect(() => {
+    if (!flutuante) return;
+    const fora = (e: MouseEvent) => {
+      if (raizRef.current && !raizRef.current.contains(e.target as Node)) setFlutuante(false);
+    };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setFlutuante(false);
+    document.addEventListener("mousedown", fora);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", fora);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [flutuante]);
+
+  // Trocar de módulo pelo trilho mostra o painel: quem clica quer ver os itens dele.
   const handleSelectModule = (id: ModuleId) => {
-    if (collapsed) setOpen(true);
+    if (collapsed) {
+      if (telaEstreitaParaPainel()) setFlutuante(true);
+      else setOpen(true);
+    }
     selectModule(id);
+  };
+
+  // Fixar o painel flutuante: vira painel aberto de verdade (empurra o conteúdo, fica salvo).
+  const fixarPainel = () => {
+    setFlutuante(false);
+    setOpen(true);
   };
 
   const handleLogout = async () => {
@@ -137,12 +174,12 @@ export function AppSidebar() {
         <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] shrink-0" />
         <span className="tracking-tight flex-1">{item.title}</span>
         {item.badge === "novo" && (
-          <span className="text-[10px] leading-none font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-brand text-ink">
+          <span className="text-3xs leading-none font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-brand text-ink">
             Novo
           </span>
         )}
         {item.badge === "em breve" && (
-          <span className="text-[10px] leading-none font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">
+          <span className="text-3xs leading-none font-medium tracking-wide uppercase px-1.5 py-0.5 rounded-full bg-black/5 text-black/50">
             Em breve
           </span>
         )}
@@ -235,7 +272,7 @@ export function AppSidebar() {
               <span className={railIconClass(isActive)}>
                 <Icon size={18} strokeWidth={1.5} />
                 {pendencias > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-brand px-1 text-center text-[10px] font-semibold leading-4 text-ink ring-2 ring-white">
+                  <span className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-brand px-1 text-center text-3xs font-semibold leading-4 text-ink ring-2 ring-white">
                     {pendencias}
                   </span>
                 )}
@@ -271,21 +308,40 @@ export function AppSidebar() {
         )}
       </nav>
 
-      {/* Sino + conta */}
+      {/* Busca/comandos (⌘K) + sino + conta */}
       <div className="flex shrink-0 flex-col items-center gap-2 pt-2">
+        {/* Há release publicada que a pessoa ainda não viu: atalho direto para Novidades. */}
+        {novidades.temDestaque && (
+          <NavLink
+            to="/novidades"
+            className={railItemClass(currentPath.startsWith("/novidades"))}
+            aria-label="Temos novidades na Pilar"
+            title="Temos novidades"
+          >
+            <span className={railIconClass(currentPath.startsWith("/novidades"))}>
+              <Megaphone size={18} strokeWidth={1.5} />
+              <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-brand ring-2 ring-white" />
+            </span>
+            Novidades
+          </NavLink>
+        )}
+        <CommandPaletteHint />
         <NotificationInbox />
         <DropdownMenu open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              aria-label="Menu do usuário"
+              aria-label={novidades.temDestaque ? "Menu do usuário, há novidades na Pilar" : "Menu do usuário"}
               title={userName}
               className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-full transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black/10",
+                "relative flex h-9 w-9 items-center justify-center rounded-full transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black/10",
                 isUserRouteActive || isUserMenuOpen ? "bg-brand" : "hover:bg-brand/30"
               )}
             >
               <AvatarStack pessoas={[{ nome: userName, avatarUrl: profile?.avatar_url }]} size="xs" />
+              {novidades.temDestaque && (
+                <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-brand ring-2 ring-white" />
+              )}
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" side="right" sideOffset={12} className="min-w-[240px]">
@@ -298,6 +354,17 @@ export function AppSidebar() {
               <Settings size={16} className="shrink-0 text-muted-foreground" />
             </DropdownMenuItem>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate("/ajuda")} className="justify-between">
+              Central de ajuda
+              <HelpCircle size={16} className="text-muted-foreground" />
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/novidades")} className="justify-between">
+              Novidades
+              <span className="flex items-center gap-2">
+                {novidades.temDestaque && <span aria-label="Há novidades" className="h-2 w-2 rounded-full bg-brand" />}
+                <Megaphone size={16} className="text-muted-foreground" />
+              </span>
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setFeedbackOpen(true)} className="justify-between">
               Feedback
               <MessageSquare size={16} className="text-muted-foreground" />
@@ -342,11 +409,12 @@ export function AppSidebar() {
         <Logo size="xs" />
         <button
           type="button"
-          onClick={toggleSidebar}
-          aria-label="Recolher menu"
+          onClick={flutuante ? fixarPainel : toggleSidebar}
+          aria-label={flutuante ? "Fixar menu aberto" : "Recolher menu"}
+          title={flutuante ? "Fixar menu aberto" : "Recolher menu"}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-soft transition-all duration-200 hover:bg-black/4 hover:text-ink active:scale-95"
         >
-          <PanelLeftClose size={18} strokeWidth={1.5} />
+          {flutuante ? <PanelLeftOpen size={18} strokeWidth={1.5} /> : <PanelLeftClose size={18} strokeWidth={1.5} />}
         </button>
       </div>
 
@@ -361,7 +429,7 @@ export function AppSidebar() {
               <div key={group} className="space-y-1">
                 {/* Grupo de um item só (Time) dispensa o título: o item já se chama assim. */}
                 {secoes.length > 1 && (
-                  <p className="px-3 pt-1 text-[10px] font-medium uppercase tracking-wider text-black/35">{group}</p>
+                  <p className="px-3 pt-1 text-3xs font-medium uppercase tracking-wider text-black/35">{group}</p>
                 )}
                 {secoes.map((secao) => {
                   const Icon = secao.icon;
@@ -381,7 +449,7 @@ export function AppSidebar() {
                       <Icon size={18} strokeWidth={1.5} className="w-[18px] h-[18px] shrink-0" />
                       <span className="tracking-tight flex-1">{secao.title}</span>
                       {contador > 0 && (
-                        <span className="min-w-5 rounded-full bg-brand px-1.5 text-center text-[10px] font-semibold leading-5 text-ink tabular-nums">
+                        <span className="min-w-5 rounded-full bg-brand px-1.5 text-center text-3xs font-semibold leading-5 text-ink tabular-nums">
                           {contador}
                         </span>
                       )}
@@ -401,9 +469,7 @@ export function AppSidebar() {
           {moduleGroups.map((group, i) => (
             <div key={group.label ?? `grupo-${i}`} className="space-y-1">
               {group.label && (
-                <p className="px-3 pt-1 text-[10px] font-medium uppercase tracking-wider text-black/35">
-                  {group.label}
-                </p>
+                <p className="px-3 pt-1 text-3xs font-medium uppercase tracking-wider text-black/35">{group.label}</p>
               )}
               {group.entries.map(({ item, nav }) => renderItem(item, nav))}
             </div>
@@ -418,9 +484,13 @@ export function AppSidebar() {
   if (isMobile) return null;
 
   return (
-    <div className="fixed left-0 top-0 z-50 flex h-dvh border-r border-black/5 bg-white">
+    <div
+      ref={raizRef}
+      className="fixed left-0 top-0 z-50 flex h-dvh border-r border-black/5 bg-white"
+      onClick={(e) => flutuante && (e.target as HTMLElement).closest("a") && setFlutuante(false)}
+    >
       {rail}
-      {!collapsed && panel}
+      {painelVisivel && <div className={cn(flutuante && "border-r border-black/5 shadow-elegant")}>{panel}</div>}
     </div>
   );
 }

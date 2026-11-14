@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import type { AjustesEmpresa } from "@/schemas/estimativaObra";
 import { parametrosDaMigration } from "@/test/estimativaFixtures";
+import { clicarAcao } from "@/test/acoesLinha";
 import PrecosEmpresa from "./PrecosEmpresa";
 
 /**
@@ -51,6 +52,12 @@ const abrir = () =>
       <PrecosEmpresa />
     </MemoryRouter>
   );
+
+const acaoDe = async (user: ReturnType<typeof userEvent.setup>, rotulo: string, acao: string) => {
+  const tr = screen.getByText(rotulo).closest("tr");
+  if (!tr) throw new Error(`Linha ${rotulo} não encontrada`);
+  await clicarAcao(user, tr as HTMLElement, acao);
+};
 
 const linhaDe = (rotulo: string) => {
   const tr = screen.getByText(rotulo).closest("tr");
@@ -104,9 +111,9 @@ describe("PrecosEmpresa", () => {
   it("admin define o valor por m² e grava com o registro de quem mudou", async () => {
     const user = userEvent.setup();
     abrir();
-    await user.click(linhaDe("Piscina").getByRole("button", { name: "Definir valor" }));
+    await acaoDe(user, "Piscina", "Definir valor");
     const dialogo = await screen.findByRole("dialog");
-    expect(within(dialogo).getByText(/Referência do Pilar: R\$\s2\.500,00/)).toBeInTheDocument();
+    expect(within(dialogo).getByText(/Referência da Pilar: R\$\s2\.500,00/)).toBeInTheDocument();
     await user.type(within(dialogo).getByLabelText("Valor por m²"), "300000");
     await user.type(within(dialogo).getByLabelText(/Observação/), "Tabela do fornecedor");
     await user.click(within(dialogo).getByRole("button", { name: "Salvar valor" }));
@@ -121,7 +128,7 @@ describe("PrecosEmpresa", () => {
   it("percentual acima de 100 mostra o motivo e não grava", async () => {
     const user = userEvent.setup();
     abrir();
-    await user.click(linhaDe("Fundação").getByRole("button", { name: "Definir valor" }));
+    await acaoDe(user, "Fundação", "Definir valor");
     const dialogo = await screen.findByRole("dialog");
     await user.type(within(dialogo).getByLabelText("Percentual da base"), "120");
     await user.click(within(dialogo).getByRole("button", { name: "Salvar valor" }));
@@ -132,7 +139,7 @@ describe("PrecosEmpresa", () => {
   it("sem preencher nada, pede pelo menos um valor", async () => {
     const user = userEvent.setup();
     abrir();
-    await user.click(linhaDe("Piscina").getByRole("button", { name: "Definir valor" }));
+    await acaoDe(user, "Piscina", "Definir valor");
     const dialogo = await screen.findByRole("dialog");
     await user.click(within(dialogo).getByRole("button", { name: "Salvar valor" }));
     expect(within(dialogo).getByRole("alert")).toHaveTextContent("Informe pelo menos um valor");
@@ -142,7 +149,7 @@ describe("PrecosEmpresa", () => {
   it("item a definir grava o valor por unidade", async () => {
     const user = userEvent.setup();
     abrir();
-    await user.click(linhaDe("Energia solar fotovoltaica").getByRole("button", { name: "Definir valor" }));
+    await acaoDe(user, "Energia solar fotovoltaica", "Definir valor");
     const dialogo = await screen.findByRole("dialog");
     await user.type(within(dialogo).getByLabelText("Valor por kWp"), "520000");
     await user.click(within(dialogo).getByRole("button", { name: "Salvar valor" }));
@@ -155,7 +162,7 @@ describe("PrecosEmpresa", () => {
     ajustes = { adicionais: { piscina: { valor: 3000 } } };
     const user = userEvent.setup();
     abrir();
-    await user.click(linhaDe("Piscina").getByRole("button", { name: "Voltar à referência" }));
+    await acaoDe(user, "Piscina", "Voltar à referência");
     expect(mutate).not.toHaveBeenCalled();
     const dialogo = await screen.findByRole("alertdialog");
     await user.click(within(dialogo).getByRole("button", { name: "Voltar à referência" }));

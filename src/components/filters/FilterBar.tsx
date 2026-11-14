@@ -32,7 +32,7 @@ export function FilterBar({ children, end, className }: FilterBarProps) {
       )}
     >
       {children}
-      {end && <div className="ml-auto flex shrink-0 items-center gap-2 pl-2">{end}</div>}
+      {end && <div className="sticky right-0 ml-auto flex shrink-0 items-center gap-2 bg-background pl-2">{end}</div>}
     </div>
   );
 }
@@ -212,7 +212,7 @@ export function FilterPopover({
           <SlidersHorizontal className="h-4 w-4" aria-hidden />
           <span className="sr-only sm:not-sr-only">{label}</span>
           {ativo && (
-            <span className="min-w-5 rounded-full bg-ink px-1.5 py-0.5 text-center text-[11px] leading-none text-background tabular-nums">
+            <span className="min-w-5 rounded-full bg-brand px-1.5 py-0.5 text-center text-2xs leading-none text-ink tabular-nums">
               {count}
             </span>
           )}

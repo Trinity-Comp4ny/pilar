@@ -58,7 +58,7 @@ export function BarrasHorizontais({
       {colunas && (
         <div
           className={cn(
-            "grid items-baseline gap-3 text-[10px] uppercase tracking-wide text-muted-foreground",
+            "grid items-baseline gap-3 text-3xs uppercase tracking-wide text-muted-foreground",
             temDetalhe ? "grid-cols-[minmax(72px,26%)_1fr_auto_auto]" : "grid-cols-[minmax(72px,26%)_1fr_auto]"
           )}
         >
@@ -91,7 +91,7 @@ export function BarrasHorizontais({
               </span>
               <span className="min-w-[36px] text-right text-[13px] font-semibold tabular-nums text-ink">
                 {item.rotulo ?? item.valor}
-                {unidade && <span className="ml-0.5 text-[10px] font-normal text-muted-foreground">{unidade}</span>}
+                {unidade && <span className="ml-0.5 text-3xs font-normal text-muted-foreground">{unidade}</span>}
               </span>
               {temDetalhe && (
                 <span className="min-w-[64px] text-right text-[11.5px] tabular-nums text-muted-foreground">
@@ -129,7 +129,7 @@ export function BarrasDivergentes({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="grid grid-cols-[minmax(104px,34%)_1fr] gap-3 text-[10px] uppercase tracking-wide text-muted-foreground">
+      <div className="grid grid-cols-[minmax(104px,34%)_1fr] gap-3 text-3xs uppercase tracking-wide text-muted-foreground">
         <span />
         <span className="flex justify-between">
           <span>{legenda.esquerda}</span>

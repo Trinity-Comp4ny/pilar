@@ -1,6 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { sb } from "@/pages/financeiro/testing/supabaseMock";
 import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
 
@@ -21,7 +22,7 @@ import { reportInvokeError } from "@/lib/monitoring";
 import { FinanceiroContent } from "./PortalFinanceiro";
 import { TimelineContent } from "./PortalTimeline";
 import { BadgePendencias, PendenciasCard } from "./PendenciasCard";
-import { EntregasContent } from "./PortalEntregas";
+import { EntregasContent } from "@/components/portal/PortalEntregas";
 
 const TZ_ORIGINAL = process.env.TZ;
 beforeAll(() => {
@@ -87,18 +88,15 @@ describe("FinanceiroContent", () => {
 });
 
 describe("TimelineContent", () => {
-  it("calcula o progresso e mostra datas, responsável e status de cada etapa", () => {
+  it("calcula o progresso e mostra só o status de cada etapa, sem datas nem responsável", () => {
     render(
       <TimelineContent
         disciplinas={[
           {
             disciplina: "Arquitetura",
             status: "Concluído",
-            data_inicio: "2026-01-10",
-            data_final: "2026-03-01",
-            responsavel_nome: "Ana",
           },
-          { disciplina: "Estrutural", status: "Em andamento", data_previsao: "2026-12-01" },
+          { disciplina: "Estrutural", status: "Em andamento" },
           { disciplina: "Elétrica", status: "Pausada" },
           { disciplina: "Hidráulica" },
         ]}
@@ -106,10 +104,7 @@ describe("TimelineContent", () => {
     );
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "25");
     expect(screen.getByText("25% concluído · 1 de 4 etapas")).toBeInTheDocument();
-    expect(screen.getByText("Início: 10/01/2026")).toBeInTheDocument();
-    expect(screen.getByText("Concluído: 01/03/2026")).toBeInTheDocument();
-    expect(screen.getByText("Previsão: 01/12/2026")).toBeInTheDocument();
-    expect(screen.getByText("Responsável: Ana")).toBeInTheDocument();
+    expect(screen.queryByText(/Início:|Previsão:|Responsável:/)).not.toBeInTheDocument();
     expect(screen.getByText("Não iniciado")).toBeInTheDocument();
   });
 
@@ -124,7 +119,7 @@ describe("PendenciasCard", () => {
   function Local() {
     return <span data-testid="local">{useLocation().pathname}</span>;
   }
-  function renderCard(receitas: ClienteReceita[], entregas = 0) {
+  function renderCard(receitas: ClienteReceita[]) {
     render(
       <MemoryRouter initialEntries={["/p/1"]}>
         <Routes>
@@ -132,7 +127,7 @@ describe("PendenciasCard", () => {
             path="*"
             element={
               <>
-                <PendenciasCard baseUrl="/p/1" receitas={receitas} portalEntregasPendentes={entregas} />
+                <PendenciasCard baseUrl="/p/1" receitas={receitas} />
                 <Local />
               </>
             }
@@ -158,28 +153,23 @@ describe("PendenciasCard", () => {
     expect(screen.getByText(/1 item precisa/)).toBeInTheDocument();
   });
 
-  it("lista entregas, atrasos e vencimentos próximos e navega para a aba certa", () => {
-    renderCard(
-      [
-        receita({ id: "a", data_vencimento: "2026-11-01" }),
-        receita({ id: "b", data_vencimento: "2026-11-05" }),
-        receita({ id: "c", data_vencimento: "2026-11-15" }),
-        receita({ id: "d", data_vencimento: "2026-11-16" }),
-      ],
-      2
-    );
-    expect(screen.getByText(/6 itens precisam/)).toBeInTheDocument();
-    fireEvent.click(screen.getByText("2 entregas para aprovar"));
-    expect(screen.getByTestId("local").textContent).toBe("/p/1/entregas");
+  it("lista atrasos e vencimentos próximos e navega para a aba certa", () => {
+    renderCard([
+      receita({ id: "a", data_vencimento: "2026-11-01" }),
+      receita({ id: "b", data_vencimento: "2026-11-05" }),
+      receita({ id: "c", data_vencimento: "2026-11-15" }),
+      receita({ id: "d", data_vencimento: "2026-11-16" }),
+    ]);
+    expect(screen.getByText(/4 itens precisam/)).toBeInTheDocument();
+    expect(screen.queryByText(/entrega/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByText("2 parcelas em atraso"));
     expect(screen.getByTestId("local").textContent).toBe("/p/1/financeiro");
     fireEvent.click(screen.getByText("2 parcelas vencendo em 7 dias"));
     expect(screen.getByTestId("local").textContent).toBe("/p/1/financeiro");
   });
 
-  it("singular para uma entrega e uma parcela atrasada", () => {
-    renderCard([receita({ data_vencimento: "2026-11-01" })], 1);
-    expect(screen.getByText("1 entrega para aprovar")).toBeInTheDocument();
+  it("singular para uma parcela atrasada", () => {
+    renderCard([receita({ data_vencimento: "2026-11-01" })]);
     expect(screen.getByText("1 parcela em atraso")).toBeInTheDocument();
   });
 
@@ -192,6 +182,12 @@ describe("PendenciasCard", () => {
     expect(screen.getByText("3 pendentes")).toBeInTheDocument();
   });
 });
+
+// O fio de conversa de cada solicitação usa react-query (contador de não lidas).
+function renderComQuery(ui: React.ReactElement) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+}
 
 describe("EntregasContent", () => {
   const entrega = (p: Record<string, unknown>) => ({
@@ -225,8 +221,8 @@ describe("EntregasContent", () => {
       ],
       error: null,
     });
-    render(<EntregasContent projetoId="p1" readOnly />);
-    expect(await screen.findByText("Histórico")).toBeInTheDocument();
+    renderComQuery(<EntregasContent projetoId="p1" readOnly />);
+    expect(await screen.findByText("Respondidas")).toBeInTheDocument();
     expect(screen.getByText("Arquitetura")).toBeInTheDocument();
     expect(screen.getByText(/IP 1\.2\.3\.4/)).toBeInTheDocument();
     expect(screen.getByText("Ajustar cotas")).toBeInTheDocument();
@@ -237,41 +233,41 @@ describe("EntregasContent", () => {
 
   it("erro ao carregar avisa na tela e reporta", async () => {
     sb.resultado("portal_entregas.select", { data: null, error: { message: "rls" } });
-    render(<EntregasContent projetoId="p1" />);
-    expect(await screen.findByText(/Não foi possível carregar as entregas agora/)).toBeInTheDocument();
+    renderComQuery(<EntregasContent projetoId="p1" />);
+    expect(await screen.findByText(/Não foi possível carregar as solicitações agora/)).toBeInTheDocument();
     expect(reportInvokeError).toHaveBeenCalledWith({ message: "rls" }, "portal-entregas:carregar");
   });
 
   it("sem entregas mostra o vazio", async () => {
     sb.resultado("portal_entregas.select", { data: [], error: null });
-    render(<EntregasContent projetoId="p1" />);
-    expect(await screen.findByText("Nenhuma entrega disponível")).toBeInTheDocument();
+    renderComQuery(<EntregasContent projetoId="p1" />);
+    expect(await screen.findByText("Nenhuma solicitação no momento")).toBeInTheDocument();
   });
 
   it("cliente por token: lista pela RPC e aprova", async () => {
     portal.token = "tok";
-    sb.rpcResultado("portal_listar_entregas", {
+    sb.rpcResultado("portal_listar_solicitacoes", {
       data: [entrega({ descricao: "Planta baixa", drive_url: "https://drive/x" })],
       error: null,
     });
     sb.rpcResultado("portal_aprovar_entrega", { data: null, error: null });
-    render(<EntregasContent projetoId="p1" />);
+    renderComQuery(<EntregasContent projetoId="p1" />);
     expect(await screen.findByText("Aguardando sua resposta (1)")).toBeInTheDocument();
     expect(screen.getByText("Planta baixa")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Abrir no Drive/ })).toHaveAttribute("href", "https://drive/x");
-    expect(sb.argsRpc("portal_listar_entregas")).toEqual({ p_token: "tok", p_projeto_id: "p1" });
+    expect(sb.argsRpc("portal_listar_solicitacoes")).toEqual({ p_token: "tok", p_projeto_id: "p1", p_obra_id: null });
 
     fireEvent.click(screen.getByRole("button", { name: /Aprovar/ }));
-    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Entregável aprovado"));
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Aprovado"));
     expect(sb.argsRpc("portal_aprovar_entrega")).toEqual({ p_token: "tok", p_entrega_id: "e1" });
-    expect(sb.client.rpc.mock.calls.filter((c) => c[0] === "portal_listar_entregas")).toHaveLength(2);
+    expect(sb.client.rpc.mock.calls.filter((c) => c[0] === "portal_listar_solicitacoes")).toHaveLength(2);
   });
 
   it("token passado por prop tem prioridade; erro ao aprovar avisa", async () => {
     portal.token = "sessao";
-    sb.rpcResultado("portal_listar_entregas", { data: [entrega({})], error: null });
+    sb.rpcResultado("portal_listar_solicitacoes", { data: [entrega({})], error: null });
     sb.rpcResultado("portal_aprovar_entrega", { data: null, error: { message: "x" } });
-    render(<EntregasContent projetoId="p1" token="prop" />);
+    renderComQuery(<EntregasContent projetoId="p1" token="prop" />);
     fireEvent.click(await screen.findByRole("button", { name: /Aprovar/ }));
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível aprovar", expect.anything()));
     expect(sb.argsRpc("portal_aprovar_entrega")).toEqual({ p_token: "prop", p_entrega_id: "e1" });
@@ -279,12 +275,12 @@ describe("EntregasContent", () => {
 
   it("pedir revisão exige texto, envia aparado e pode ser cancelado", async () => {
     portal.token = "tok";
-    sb.rpcResultado("portal_listar_entregas", { data: [entrega({})], error: null });
+    sb.rpcResultado("portal_listar_solicitacoes", { data: [entrega({})], error: null });
     sb.rpcResultado("portal_solicitar_revisao_entrega", [
       { data: null, error: { message: "x" } },
       { data: null, error: null },
     ]);
-    render(<EntregasContent projetoId="p1" />);
+    renderComQuery(<EntregasContent projetoId="p1" />);
     fireEvent.click(await screen.findByRole("button", { name: /Solicitar revisão/ }));
     const enviar = () => screen.getAllByRole("button", { name: /Solicitar revisão/ }).at(-1) as HTMLButtonElement;
     expect(enviar()).toBeDisabled();
@@ -312,7 +308,7 @@ describe("EntregasContent", () => {
 
   it("sem token a equipe não aprova nem pede revisão pelo portal", async () => {
     sb.resultado("portal_entregas.select", { data: [{ ...entrega({}), projeto_disciplinas: null }], error: null });
-    render(<EntregasContent projetoId="p1" />);
+    renderComQuery(<EntregasContent projetoId="p1" />);
     fireEvent.click(await screen.findByRole("button", { name: /Aprovar/ }));
     fireEvent.click(screen.getByRole("button", { name: /Solicitar revisão/ }));
     fireEvent.change(screen.getByPlaceholderText(/Descreva/), { target: { value: "x" } });

@@ -197,3 +197,21 @@ export function todayPosition(timelineStart: Date, timelineEnd: Date, hoje = new
   const pct = (diffDays(timelineStart, today) / totalDays) * 100;
   return pct >= 0 && pct <= 100 ? pct : -1;
 }
+
+/**
+ * Gantt no celular: em meses, a linha do tempo cabe na tela em vez de mostrar dois meses e pedir rolagem
+ * (feedback de 12/11). Cada mês tem no mínimo esta largura; abaixo disso a rolagem volta.
+ */
+export const LARGURA_MINIMA_MES_CELULAR_PX = 8;
+
+/** Rótulo curto do mês para a régua estreita: `dez/26`. */
+export function rotuloCurtoDoMes(date: Date): string {
+  const mes = date.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
+  return `${mes}/${String(date.getFullYear()).slice(2)}`;
+}
+
+/** De quantas em quantas colunas a régua mostra o rótulo, para os rótulos não se encostarem. */
+export function passoDosRotulos(larguraDaColunaPx: number, larguraDoRotuloPx = 44): number {
+  if (!(larguraDaColunaPx > 0)) return 1;
+  return Math.max(1, Math.ceil(larguraDoRotuloPx / larguraDaColunaPx));
+}

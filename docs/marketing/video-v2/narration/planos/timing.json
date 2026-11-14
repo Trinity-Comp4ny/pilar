@@ -1,0 +1,18 @@
+{
+ "provider": "google",
+ "voice": "pt-BR-Chirp3-HD-Leda",
+ "lines": [
+  {
+   "t": 0.1,
+   "dur": 4.128,
+   "say": "Usuários ilimitados. A plataforma inteira. Em todo plano.",
+   "ritmo": 1.086
+  },
+  {
+   "t": 4.3,
+   "dur": 4.651,
+   "say": "A partir de duzentos e noventa e nove por mês. Link na bio.",
+   "ritmo": 1.0
+  }
+ ]
+}

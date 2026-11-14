@@ -58,3 +58,10 @@ jobs:
         with:
           job-name: Monitor de produção
           token: ${{ github.token }}
+      - name: Fechar a issue de falha (voltou a passar)
+        if: success()
+        uses: ./.github/actions/notify-cron-failure
+        with:
+          job-name: Monitor de produção
+          token: ${{ github.token }}
+          status: success

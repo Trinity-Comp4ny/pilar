@@ -102,6 +102,33 @@ describe("gerarComprovantePDF", () => {
   });
 });
 
+describe("gerarComprovantePDF: percentual", () => {
+  const cabecalho = () => (autoTable.mock.calls[0][1] as { head: string[][] }).head[0];
+
+  it("só percentual: troca as colunas de m² pela de percentual", async () => {
+    await gerarComprovantePDF(
+      item({
+        p_valor_m2: 0,
+        p_percentual: 10,
+        detalhe_projetos: [{ nome: "Armário cozinha", area_m2: 0, valor_base: 10000 }],
+        v_variavel: 1000,
+      }),
+      { mes: 11, ano: 2026 }
+    );
+    expect(cabecalho()).toEqual(["Projeto", "Percentual", "Subtotal"]);
+    expect(corpoTabela()).toEqual([["Armário cozinha", "10,0% de R$ 10.000,00", "R$ 1.000,00"]]);
+  });
+
+  it("m² e percentual: as duas regras na mesma linha, subtotal somado", async () => {
+    await gerarComprovantePDF(
+      item({ p_valor_m2: 5, p_percentual: 2.5, detalhe_projetos: [{ nome: "Casa", area_m2: 120, valor_base: 40000 }] }),
+      { mes: 11, ano: 2026 }
+    );
+    expect(cabecalho()).toEqual(["Projeto", "Área", "Valor/m²", "Percentual", "Subtotal"]);
+    expect(corpoTabela()).toEqual([["Casa", "120 m²", "R$ 5,00/m²", "2,5% de R$ 40.000,00", "R$ 1.600,00"]]);
+  });
+});
+
 describe("gerarLoteComprovantesPDF", () => {
   it("uma página por pessoa num único PDF", async () => {
     await gerarLoteComprovantesPDF([item(), item({ p_nome: "Maria" }), item({ p_nome: "Ana" })], {

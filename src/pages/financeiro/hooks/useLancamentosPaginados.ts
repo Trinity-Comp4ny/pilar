@@ -42,8 +42,7 @@ export function useLancamentosPaginados({ filters, sortKey, sortDir }: Lancament
       if (error) throw error;
       return (data ?? []) as unknown as LancamentoRow[];
     },
-    getNextPageParam: (lastPage, allPages) =>
-      lastPage.length === PAGE_SIZE ? allPages.length * PAGE_SIZE : undefined,
+    getNextPageParam: (lastPage, allPages) => (lastPage.length === PAGE_SIZE ? allPages.length * PAGE_SIZE : undefined),
     staleTime: 30 * 1000,
   });
 

@@ -94,7 +94,7 @@ export function ChangePlanDialog({ open, onOpenChange, current }: ChangePlanDial
                 )}
               >
                 {isCurrent && (
-                  <span className="absolute top-2 right-2 text-[9px] uppercase tracking-wider bg-muted text-ink-muted px-2 py-0.5 rounded-full">
+                  <span className="absolute top-2 right-2 text-3xs uppercase tracking-wider bg-muted text-ink-muted px-2 py-0.5 rounded-full">
                     Atual
                   </span>
                 )}
@@ -108,7 +108,7 @@ export function ChangePlanDialog({ open, onOpenChange, current }: ChangePlanDial
                 <p className="text-xs text-ink-muted">/mês</p>
                 <ul className="mt-2 space-y-0.5">
                   {capacidadeDoPlano(plan).map((linha) => (
-                    <li key={linha} className="text-[11px] leading-snug text-ink-muted">
+                    <li key={linha} className="text-2xs leading-snug text-ink-muted">
                       {linha}
                     </li>
                   ))}

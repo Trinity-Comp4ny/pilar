@@ -32,7 +32,9 @@ INSERT INTO _excecao VALUES
   ('guard_login_attempt(text)',
    'rate limit do login: por desenho anônimo, só consulta e grava contador por e-mail/IP, sem ler dado de tenant'),
   ('check_convite_rate_limit(uuid)',
-   'só conta convites da empresa informada e lança erro de limite, não devolve dado; chamada pela edge invite-user');
+   'só conta convites da empresa informada e lança erro de limite, não devolve dado; chamada pela edge invite-user'),
+  ('portal_convite_consultar(text)',
+   'cliente ainda sem sessão ao abrir o link do convite: a autorização é o token (hash, validade e conta ativa), com rate limit por IP; devolve só nome, e-mail e escritório do próprio convite');
 
 -- 1. Nenhuma DEFINER exposta fora da lista deixa de referenciar um controle.
 SELECT is(

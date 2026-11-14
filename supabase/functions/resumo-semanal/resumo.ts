@@ -226,7 +226,7 @@ export function systemPrompt(escopo: Escopo): string {
     escopo === "empresa"
       ? 'o sócio de um escritório de engenharia ou arquitetura. Fale da empresa em terceira pessoa neutra ("A empresa", "O escritório").'
       : 'uma pessoa da equipe de um escritório de engenharia ou arquitetura. Fale com ela em segunda pessoa ("você") e só do que é dela.';
-  return `Você escreve o resumo semanal do Pilar para ${quem}
+  return `Você escreve o resumo semanal da Pilar para ${quem}
 
 REGRAS
 1. Use APENAS os fatos do JSON. Não some, não calcule, não estime, não arredonde. Copie números e valores exatamente como aparecem (o dinheiro já vem formatado, como "R$ 15.000").

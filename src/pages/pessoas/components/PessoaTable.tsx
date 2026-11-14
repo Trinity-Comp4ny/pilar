@@ -1,6 +1,6 @@
+import { RowActions } from "@/components/data/RowActions";
 import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageToolbar } from "@/components/PageSlots";
 import { FilterBar, FilterSelect } from "@/components/filters/FilterBar";
@@ -98,6 +98,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
   const columns: ColumnDef<Pessoa>[] = [
     {
       key: "nome",
+      mobile: "title",
       header: "Nome",
       className: "font-medium",
       getSortValue: (p) => p.nome,
@@ -115,6 +116,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
     },
     {
       key: "tipo",
+      mobile: "badge",
       header: "Tipo",
       getSortValue: (p) => p.tipo_contrato,
       cell: (p) => (
@@ -131,6 +133,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
     },
     {
       key: "status",
+      mobile: "trailing",
       header: "Status",
       getSortValue: (p) => p.status || "ativo",
       cell: (p) => (
@@ -140,12 +143,8 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
       ),
     },
     {
-      key: "cpf",
-      header: "CPF",
-      cell: (p) => (p.cpf ? `***.***.***-${p.cpf.replace(/\D/g, "").slice(-2)}` : "-"),
-    },
-    {
       key: "cargo",
+      mobile: "subtitle",
       header: "Cargo",
       getSortValue: (p) => p.cargo ?? "",
       cell: (p) => p.cargo,
@@ -160,32 +159,16 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
       ? [
           {
             key: "acoes",
-            header: "Ações",
+            header: <span className="sr-only">Ações</span>,
             align: "end" as const,
             cell: (p: Pessoa) => (
-              <div className="flex gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={(e) => onEditClick(p, e)}
-                  aria-label="Editar"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-danger-mid"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteClick(p.id);
-                  }}
-                  aria-label="Excluir"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+              <RowActions
+                label={p.nome}
+                actions={[
+                  { label: "Editar", icon: Pencil, onClick: () => onEditClick(p) },
+                  { label: "Excluir", icon: Trash2, destructive: true, onClick: () => onDeleteClick(p.id) },
+                ]}
+              />
             ),
           },
         ]
@@ -204,7 +187,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
     );
 
   return (
-    <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden">
+    <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden max-md:border-0 max-md:bg-transparent max-md:shadow-none">
       {/* Toolbar padrão (SPEC 124). Busca local: a página Equipe não controla o estado. */}
       <PageToolbar>
         <FilterBar
@@ -233,7 +216,7 @@ export function PessoaTable({ pessoas, isLoading, isAdmin, onRowClick, onEditCli
           />
         </FilterBar>
       </PageToolbar>
-      <CardContent className="flex-1 min-h-0 flex flex-col p-4">
+      <CardContent className="flex-1 min-h-0 flex flex-col p-0 pb-2">
         {/* A página é de altura fixa (main com overflow-y-hidden): o scroll vive
             aqui e a altura vem do flex, não de um calc() com número mágico que
             estourava no mobile (header + chip-nav + BottomNav) e cortava as

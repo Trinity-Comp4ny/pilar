@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import type { ReactNode } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
@@ -143,6 +144,21 @@ describe("FiltroPeriodo", () => {
     await user.click(dias[0].querySelector("button") ?? dias[0]);
     expect(onChange).toHaveBeenCalled();
     expect(onChange.mock.calls[0][0]).toBeInstanceOf(Date);
+  });
+
+  it("'Personalizado' aceita digitar De e Até", async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<FiltroPeriodo from={undefined} to={undefined} onChange={onChange} presets={["tudo", "custom"]} />);
+    await user.click(screen.getByRole("button", { name: labelForPreset("tudo") }));
+    await user.click(screen.getByRole("button", { name: labelForPreset("custom") }));
+    const de = await screen.findByRole("textbox", { name: "De" });
+    await user.type(de, "01032026{Enter}");
+    await user.type(screen.getByRole("textbox", { name: "Até" }), "31032026{Enter}");
+    const [inicio, fim] = onChange.mock.calls.at(-1)!;
+    expect(format(inicio, "yyyy-MM-dd")).toBe("2026-03-01");
+    expect(format(fim, "yyyy-MM-dd")).toBe("2026-03-31");
+    expect(screen.getByRole("textbox", { name: "De" })).toHaveValue("01/03/2026");
   });
 
   it("intervalo só com início é 'Personalizado'", () => {

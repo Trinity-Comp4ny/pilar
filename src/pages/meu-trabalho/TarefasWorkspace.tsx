@@ -1,16 +1,7 @@
 import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import {
-  CalendarClock,
-  CalendarDays,
-  LayoutGrid,
-  List,
-  ListChecks,
-  ListFilter,
-  Plus,
-  type LucideIcon,
-} from "lucide-react";
+import { CalendarClock, LayoutGrid, List, ListChecks, ListFilter, Plus, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EditColumnDialog, type ColunaEditavel } from "@/components/kanban/EditColumnDialog";
@@ -25,7 +16,6 @@ import { useKanbanSort } from "@/hooks/useKanbanSort";
 import { ordenarKanban } from "@/lib/kanbanSort";
 import { ListaTrabalho, SeletorColunas } from "./components/ListaTrabalho";
 import { TarefaDialog } from "./components/TarefaDialog";
-import { AbaAgenda } from "./components/AbaAgenda";
 import { ViewSwitcher, type ViewOption } from "@/components/ViewSwitcher";
 import { FilterBar, FilterClear, FilterSelect } from "@/components/filters/FilterBar";
 import { FiltroPessoa } from "./components/FiltrosTrabalho";
@@ -53,13 +43,12 @@ import { PageLoader } from "@/components/motion/PageLoader";
 const LS_VISAO = "pilar.meu-trabalho.visao";
 const LS_VISAO_OBRA = "pilar.obra-tarefas.visao";
 
-type Visao = "lista" | "quadro" | "agenda";
+type Visao = "lista" | "quadro";
 type FiltroData = "todas" | "atrasadas" | "hoje" | "semana" | "sem_prazo";
 
 const VISAO_OPCOES: ViewOption<Visao>[] = [
   { value: "lista", label: "Lista", icon: List },
   { value: "quadro", label: "Quadro", icon: LayoutGrid },
-  { value: "agenda", label: "Agenda", icon: CalendarDays },
 ];
 
 const TIPO_LABEL: Record<FiltroTipo, string> = {
@@ -134,7 +123,6 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
   const [visao, setVisao] = useState<Visao>(() => {
     try {
       const v = localStorage.getItem(chaveVisao);
-      if (v === "agenda" && !obra) return "agenda";
       if (v === "quadro") return "quadro";
       return "lista";
     } catch {
@@ -519,63 +507,44 @@ export function TarefasWorkspace({ moldura: Moldura, obra }: Props) {
         ) : undefined
       }
     >
-      <ViewSwitcher
-        options={obra ? VISAO_OPCOES.filter((o) => o.value !== "agenda") : VISAO_OPCOES}
-        value={visao}
-        onChange={trocarVisao}
-        iconOnlyOnMobile
-      />
-      {visao !== "agenda" && (
-        <>
-          <FiltroPessoa
-            value={filtroPessoas}
-            pessoas={pessoas ?? []}
-            minhaPessoaId={minhaPessoaId}
-            onChange={setFiltroPessoas}
-          />
-          {filtraTipo && (
-            <FilterSelect
-              label="Tipo"
-              icon={ListFilter}
-              value={tipo}
-              emptyValue="tudo"
-              onChange={(v) => setTipo(v as FiltroTipo)}
-              options={(Object.keys(TIPO_LABEL) as FiltroTipo[]).map((t) => ({ value: t, label: TIPO_LABEL[t] }))}
-            />
-          )}
+      <ViewSwitcher options={VISAO_OPCOES} value={visao} onChange={trocarVisao} iconOnlyOnMobile />
+      <>
+        <FiltroPessoa
+          value={filtroPessoas}
+          pessoas={pessoas ?? []}
+          minhaPessoaId={minhaPessoaId}
+          onChange={setFiltroPessoas}
+        />
+        {filtraTipo && (
           <FilterSelect
-            label="Prazo"
-            icon={CalendarClock}
-            value={filtroData}
-            emptyValue="todas"
-            onChange={(v) => setFiltroData(v as FiltroData)}
-            options={(Object.keys(DATA_LABEL) as FiltroData[]).map((d) => ({ value: d, label: DATA_LABEL[d] }))}
+            label="Tipo"
+            icon={ListFilter}
+            value={tipo}
+            emptyValue="tudo"
+            onChange={(v) => setTipo(v as FiltroTipo)}
+            options={(Object.keys(TIPO_LABEL) as FiltroTipo[]).map((t) => ({ value: t, label: TIPO_LABEL[t] }))}
           />
-          <FilterClear count={filtrosAtivos} onClick={limparFiltros} />
-        </>
-      )}
+        )}
+        <FilterSelect
+          label="Prazo"
+          icon={CalendarClock}
+          value={filtroData}
+          emptyValue="todas"
+          onChange={(v) => setFiltroData(v as FiltroData)}
+          options={(Object.keys(DATA_LABEL) as FiltroData[]).map((d) => ({ value: d, label: DATA_LABEL[d] }))}
+        />
+        <FilterClear count={filtrosAtivos} onClick={limparFiltros} />
+      </>
     </FilterBar>
   );
 
   return (
     <Moldura
       toolbar={toolbar}
-      search={
-        visao !== "agenda"
-          ? { value: busca, onChange: setBusca, placeholder: obra ? "Buscar nesta obra" : "Buscar no meu trabalho" }
-          : undefined
-      }
-      primaryAction={visao !== "agenda" ? { label: "Nova tarefa", icon: Plus, onClick: () => abrirNova() } : undefined}
+      search={{ value: busca, onChange: setBusca, placeholder: obra ? "Buscar nesta obra" : "Buscar no meu trabalho" }}
+      primaryAction={{ label: "Nova tarefa", icon: Plus, onClick: () => abrirNova() }}
     >
-      {visao === "agenda" ? (
-        <AbaAgenda
-          pessoaIds={pessoaIdsEfetivos}
-          minhaPessoaId={minhaPessoaId}
-          canEdit
-          temProjetos={temProjetos}
-          podeEscolherResponsavel={isAdmin}
-        />
-      ) : isLoading ? (
+      {isLoading ? (
         <PageLoader label={obra ? "Carregando as tarefas da obra" : "Carregando seu trabalho"} />
       ) : isError ? (
         <p className="py-12 text-center text-sm text-destructive">

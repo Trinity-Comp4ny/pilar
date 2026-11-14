@@ -1,0 +1,30 @@
+{
+  "voz": "narração por cima do vídeo (narrate.py, narrar_sobre); t = segundo em que a fala entra",
+  "fim": 14.4,
+  "lines": [
+    {
+      "t": 1.1,
+      "say": "A IA vai decidir pelo engenheiro?"
+    },
+    {
+      "t": 3.0,
+      "say": "Mito. Ela prepara, você aprova."
+    },
+    {
+      "t": 5.4,
+      "say": "A IA inventa número?"
+    },
+    {
+      "t": 7.3,
+      "say": "Mito. A conta é do sistema."
+    },
+    {
+      "t": 9.6,
+      "say": "IA é coisa de escritório grande?"
+    },
+    {
+      "t": 11.75,
+      "say": "Mito. Começa em duzentos e noventa e nove."
+    }
+  ]
+}

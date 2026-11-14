@@ -14,6 +14,8 @@ export interface DisciplinaComentario {
   id: string;
   texto: string;
   autor: string;
+  /** Id do usuário (auth) que escreveu. Comentários antigos não têm: autoria cai no nome. */
+  autorId?: string;
   data: string;
   /** Ids de pessoas marcadas (@menção). Base para notificação futura. */
   mencionados?: string[];

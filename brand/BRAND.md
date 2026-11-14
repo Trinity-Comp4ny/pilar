@@ -28,7 +28,7 @@
 
 ## 1. Essência
 
-**O que é o Pilar:** sistema de gestão com agentes de IA para escritórios de engenharia e arquitetura. Proposta, projeto, obra, cliente e financeiro conectados: o dado do contrato chega à execução sem redigitar.
+**O que é a Pilar:** sistema de gestão com agentes de IA para escritórios de engenharia e arquitetura. Proposta, projeto, obra, cliente e financeiro conectados: o dado do contrato chega à execução sem redigitar.
 
 **Categoria:** SaaS vertical de gestão para AEC (Arquitetura, Engenharia e Construção), AI-native: os agentes preparam o trabalho, o sistema confere os números, uma pessoa aprova.
 
@@ -49,13 +49,13 @@
 
 **Para** donos e sócios de escritórios de **engenharia e arquitetura**
 **que** tocam contrato, projeto, obra e caixa em ferramentas que não conversam,
-**o Pilar é** o sistema de gestão que conecta proposta, projeto, obra e financeiro, com agentes de IA que preparam o trabalho operacional
+**a Pilar é** o sistema de gestão que conecta proposta, projeto, obra e financeiro, com agentes de IA que preparam o trabalho operacional
 **diferente de** planilhas dispersas, ferramentas genéricas de tarefa e ERPs de construtora,
 **porque** cada número que a IA escreve é conferido pelo sistema e nada segue sem a aprovação de uma pessoa.
 
-**Escopo:** o Pilar é o sistema do escritório que projeta e acompanha a obra. Não é o ERP da construtora.
+**Escopo:** a Pilar é o sistema do escritório que projeta e acompanha a obra. Não é o ERP da construtora.
 
-**Dor central:** a proposta está no Word, o cronograma no Excel, o diário de obra no WhatsApp e o caixa no banco. O dono monta o quadro na cabeça e só vê o resultado quando já acabou. O Pilar junta tudo e mostra enquanto ainda dá para agir.
+**Dor central:** a proposta está no Word, o cronograma no Excel, o diário de obra no WhatsApp e o caixa no banco. O dono monta o quadro na cabeça e só vê o resultado quando já acabou. A Pilar junta tudo e mostra enquanto ainda dá para agir.
 
 **Arquétipo de PMF (a validar):** provavelmente _Hard Fact_ (Sequoia). O mercado está resignado ("não tem como saber antes"), não com cabelo em chamas. O GTM é **quebrar a resignação** (educar, demo com dados reais), não vencer comparação de features. Ref: `research/INSIGHTS.md` #6.
 

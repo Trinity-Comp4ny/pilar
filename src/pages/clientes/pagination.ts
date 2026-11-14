@@ -15,11 +15,7 @@ export function clampPage(page: number, totalPages: number): number {
 }
 
 // Intervalo 1-based exibido ("Mostrando 21-40 de 57"). Vazio quando total é 0.
-export function getPageRange(
-  page: number,
-  pageSize: number,
-  total: number
-): { from: number; to: number } {
+export function getPageRange(page: number, pageSize: number, total: number): { from: number; to: number } {
   if (total <= 0 || pageSize <= 0) return { from: 0, to: 0 };
   const from = page * pageSize + 1;
   const to = Math.min((page + 1) * pageSize, total);

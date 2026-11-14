@@ -49,6 +49,7 @@ export const TABELAS_MANTIDAS = [
   "consentimentos_cobranca",
   "cookie_consents",
   "audit_logs",
+  "registros_acesso", // Marco Civil, art. 15: 6 meses, apagados pela limpeza diária
   "ai_token_ledger",
   "data_export_requests",
   "data_deletion_requests",

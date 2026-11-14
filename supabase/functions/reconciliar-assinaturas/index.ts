@@ -5,7 +5,7 @@
  * Agendado por reconciliar_assinaturas_disparar() (pg_cron, 6h30), com
  *   Authorization: Bearer <CRON_SECRET>
  *
- * Compara cada assinatura do Pilar com a assinatura e as últimas cobranças no Asaas
+ * Compara cada assinatura da Pilar com a assinatura e as últimas cobranças no Asaas
  * da plataforma e avisa o ultra admin (sino e e-mail) das divergências. Não corrige:
  * mudar status de cobrança mexe no acesso do cliente, a correção é humana.
  */

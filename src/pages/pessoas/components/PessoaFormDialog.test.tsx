@@ -124,7 +124,7 @@ describe("Equipe › PessoaFormDialog", () => {
     h.convidar.mockResolvedValue({ contaExistente: false });
     const { user, onSaved } = renderDialog(null, true);
     await preencherMinimo(user);
-    expect(screen.getByRole("checkbox", { name: "Dar acesso ao Pilar" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Dar acesso à Pilar" })).toBeChecked();
     await user.click(screen.getByRole("button", { name: "Salvar" }));
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
     expect(h.convidar).toHaveBeenCalledWith(
@@ -136,7 +136,7 @@ describe("Equipe › PessoaFormDialog", () => {
     h.resolve.mockReturnValue({ data: { id: "p-nova" }, error: null });
     const { user, onSaved } = renderDialog(null, true);
     await preencherMinimo(user);
-    await user.click(screen.getByRole("checkbox", { name: "Dar acesso ao Pilar" }));
+    await user.click(screen.getByRole("checkbox", { name: "Dar acesso à Pilar" }));
     await user.click(screen.getByRole("button", { name: "Salvar" }));
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
     expect(h.convidar).not.toHaveBeenCalled();
@@ -235,7 +235,7 @@ describe("Equipe › PessoaFormDialog", () => {
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
     const up = h.calls.find((c) => c.op === "update");
     expect(up?.payload).toMatchObject({ cargo: "Coordenadora" });
-    for (const campo of ["cpf", "salario_fixo", "valor_m2", "contas_bancarias", "chaves_pix"]) {
+    for (const campo of ["cpf", "salario_fixo", "valor_m2", "percentual_producao", "contas_bancarias", "chaves_pix"]) {
       expect(up?.payload).not.toHaveProperty(campo);
     }
     expect(up?.filters).toContainEqual(["eq", "id", "p1"]);
@@ -259,6 +259,25 @@ describe("Equipe › PessoaFormDialog", () => {
     await user.click(screen.getByRole("button", { name: "Atualizar" }));
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
     expect(h.calls.find((c) => c.op === "update")?.payload).toHaveProperty("salario_fixo");
+  });
+
+  it("percentual sobre o valor do projeto: aceita vírgula, grava número e mostra o salvo", async () => {
+    const { user, onSaved } = renderDialog({ ...PESSOA, cpf: "", pode_ver_sensivel: true, percentual_producao: 10 });
+    const campo = screen.getByLabelText("% do valor do projeto");
+    expect(campo).toHaveValue("10");
+    await user.clear(campo);
+    await user.type(campo, "2,5");
+    await user.click(screen.getByRole("button", { name: "Atualizar" }));
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(h.calls.find((c) => c.op === "update")?.payload).toMatchObject({ percentual_producao: 2.5 });
+  });
+
+  it("percentual fora de 0 a 100 bloqueia o salvamento", async () => {
+    const { user } = renderDialog({ ...PESSOA, cpf: "", pode_ver_sensivel: true });
+    await user.type(screen.getByLabelText("% do valor do projeto"), "150");
+    await user.click(screen.getByRole("button", { name: "Atualizar" }));
+    expect(await screen.findByText("Use um percentual entre 0 e 100")).toBeInTheDocument();
+    expect(h.calls.find((c) => c.op === "update")).toBeUndefined();
   });
   describe("contas bancárias e chaves PIX", () => {
     async function abrirBanco(user: ReturnType<typeof userEvent.setup>) {

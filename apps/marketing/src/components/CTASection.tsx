@@ -1,7 +1,6 @@
 import { m, useReducedMotion } from "framer-motion";
-import { APP_URL } from "../config";
 import { trackCta } from "../analytics";
-import { useLoginHint } from "../loginHint";
+import { useAcesso } from "../loginHint";
 import { Reveal } from "./Reveal";
 import { SplitButton } from "./ui/SplitButton";
 import { HeroBackdrop } from "./hero/HeroBackdrop";
@@ -15,12 +14,8 @@ import { LinkDemo } from "./LinkDemo";
  * três links de peso igual. Desde a SPEC 133 o primário é agendar a demo.
  */
 export function CTASection() {
-  const loggedIn = useLoginHint();
+  const acesso = useAcesso();
   const reducedMotion = useReducedMotion();
-
-  const primario = loggedIn
-    ? { href: `${APP_URL}/inicio`, to: undefined, label: "Abrir Pilar", evento: "abrir_pilar" }
-    : { href: undefined, to: "/planos", label: "Ver planos", evento: "ver_planos" };
 
   return (
     <section className="w-full bg-paper px-4 md:px-10 pb-10 md:pb-20">
@@ -49,19 +44,16 @@ export function CTASection() {
             </m.p>
 
             <div className="flex flex-col items-center gap-4">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <SplitButton
-                  href={primario.href}
-                  to={primario.to}
-                  onClick={() => trackCta(primario.evento, "cta_final")}
-                >
-                  {primario.label}
+              {/* Os mesmos dois botões da hero e do header, na mesma ordem. */}
+              <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
+                <SplitButton to="/planos" onClick={() => trackCta("ver_planos", "cta_final")}>
+                  Ver planos
                 </SplitButton>
-                <SplitButton href={`${APP_URL}/login`} onClick={() => trackCta("entrar", "cta_final")} fantasma>
-                  Entrar
+                <SplitButton href={acesso.href} onClick={() => trackCta(acesso.evento, "cta_final")} fantasma>
+                  {acesso.rotulo}
                 </SplitButton>
               </div>
-              {!loggedIn && <LinkDemo local="cta_final" />}
+              {!acesso.logado && <LinkDemo local="cta_final" />}
             </div>
           </div>
         </div>

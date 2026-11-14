@@ -14,7 +14,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { useRegistrarPagina } from "@/hooks/useRecentes";
-import { LeadsKPIs } from "./LeadsKPIs";
+import { LeadsKPIs, LeadsKPIsResumo } from "./LeadsKPIs";
 import { LeadDetailDialog } from "./components/LeadDetailDialog";
 import { LeadFormDialog, EMPTY_LEAD_FORM, type LeadFormData } from "./components/LeadFormDialog";
 import { LeadKanbanCard } from "./components/LeadKanbanCard";
@@ -28,6 +28,7 @@ import { DesbloqueioNivel } from "@/components/trial/DesbloqueioNivel";
 import { parseCapacidadeError, type CapacidadeErro } from "@/lib/capacidade";
 import { analytics } from "@/lib/analytics";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useAbrirCriacaoPelaUrl } from "@/hooks/useAbrirCriacaoPelaUrl";
 import { useLeadEtapas, type LeadEtapa } from "@/pages/leads/hooks/useLeadEtapas";
 import { useEtapasDoFunil } from "@/pages/leads/hooks/useEtapasDoFunil";
 import { KanbanSkeleton } from "./components/KanbanSkeleton";
@@ -58,6 +59,7 @@ import {
   etapaDoLead,
   primeiraEtapaDoBucket,
 } from "@/pages/leads/lib/etapas";
+import { CONTAINER_TELA_DADOS } from "@/lib/shellLayout";
 
 type PeriodoFilter = "todos" | "prox7" | "atrasados" | "mes";
 const PERIODO_OPTIONS: { value: PeriodoFilter; label: string }[] = [
@@ -117,6 +119,8 @@ export default function Leads() {
   const primariaDoLead = (leadId: string) => propostaPrimaria(propostasByLead.get(leadId) ?? []);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // "Novo lead" da busca rápida (⌘K) chega com ?new=1. Mesmo gate do botão.
+  useAbrirCriacaoPelaUrl(can("leads", "edit"), () => setIsDialogOpen(true));
   // Faixa de leads ativos do plano (DECISOES.md 2026-11-06): o trigger recusa o
   // lead novo e aqui abre o mesmo diálogo de limite de projetos e obras.
   const [capacidadeErro, setCapacidadeErro] = useState<CapacidadeErro | null>(null);
@@ -531,8 +535,9 @@ export default function Leads() {
   return (
     <PageLayout
       toolbar={toolbar}
-      className="overflow-y-hidden"
-      containerClassName="h-full flex flex-col min-h-0"
+      className="md:overflow-y-hidden"
+      containerClassName={CONTAINER_TELA_DADOS}
+      density="compact"
       header={
         <PageHeader
           title="Leads"
@@ -541,7 +546,10 @@ export default function Leads() {
         />
       }
     >
-      <CollapsibleKpiSection storageKey="leads">
+      <CollapsibleKpiSection
+        storageKey="leads"
+        resumo={<LeadsKPIsResumo leads={leads} propostasByLead={propostasByLead} />}
+      >
         <LeadsKPIs
           leads={leads}
           propostasByLead={propostasByLead}
@@ -654,7 +662,7 @@ export default function Leads() {
               </div>
             )}
 
-            {/* Mobile list view (accordion por etapa, independe do toggle Quadro/Lista) */}
+            {/* Quadro do celular (colunas lado a lado, independe do toggle Quadro/Lista) */}
             <LeadsMobile
               etapas={etapas}
               leadsDaEtapa={getLeadsByEtapa}

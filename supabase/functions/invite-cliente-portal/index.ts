@@ -29,14 +29,16 @@ serve(
         .single();
 
       if (profileError || !profile) return safeErrorResponse(403, "Profile not found", req);
-      if (profile.role !== "admin" && profile.role !== "ultra_admin") {
-        return safeErrorResponse(403, "Apenas admin pode criar acesso ao portal", req);
+      // Admin e coordenador cuidam do contato com o cliente (mesmos papéis da RLS
+      // de cliente_portal_accounts).
+      if (!["admin", "ultra_admin", "coordenador"].includes(profile.role)) {
+        return safeErrorResponse(403, "Apenas admin ou coordenador pode criar acesso ao portal", req);
       }
       if (!profile.empresa_id) return safeErrorResponse(403, "Você precisa pertencer a uma empresa", req);
 
       const entrada = lerEntrada(await lerJson(req));
       if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
-      const { cliente_id, email } = entrada.data;
+      const { cliente_id, email, nome } = entrada.data;
 
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
@@ -71,16 +73,23 @@ serve(
 
       if (clienteError || !cliente) return safeErrorResponse(404, "Cliente não encontrado", req);
 
+      const normalizedEmail = String(email).toLowerCase().trim();
+      // Vários acessos por cliente (SPEC 164): cada e-mail é uma conta. O e-mail é único
+      // dentro do escritório, então a conta achada aqui pode ser deste ou de outro cliente.
       const { data: existingAccount } = await supabaseAdmin
         .from("cliente_portal_accounts")
-        .select("id, ativo")
-        .eq("cliente_id", cliente_id)
+        .select("id, ativo, cliente_id")
+        .eq("email", normalizedEmail)
         .eq("empresa_id", profile.empresa_id)
         .maybeSingle();
 
-      if (existingAccount?.ativo) return safeErrorResponse(409, "Este cliente já possui acesso ao portal", req);
-
-      const normalizedEmail = String(email).toLowerCase().trim();
+      if (existingAccount && existingAccount.cliente_id !== cliente_id) {
+        return safeErrorResponse(409, "Este e-mail já acessa o portal de outro cliente do escritório", req);
+      }
+      if (existingAccount?.ativo) {
+        return safeErrorResponse(409, "Este e-mail já tem acesso ao portal deste cliente", req);
+      }
+      const nomeAcesso = nome ?? cliente.nome;
 
       const { data: empresa } = await supabaseAdmin
         .from("empresas")
@@ -96,9 +105,9 @@ serve(
       // intacta) — mesma postura de segurança que o fluxo de senha legado já
       // tinha (só grava depois de confirmar que o cliente vai receber o link).
       const { token, hash } = await gerarConviteToken();
-      const siteUrl = Deno.env.get("PUBLIC_SITE_URL");
-      if (!siteUrl) log.error("PUBLIC_SITE_URL secret not set — email button will be broken", null, {});
-      const conviteUrl = `${siteUrl ?? "https://www.pilarsoft.com.br"}/cliente/convite?token=${token}`;
+      const appUrl = Deno.env.get("APP_URL");
+      if (!appUrl) log.error("APP_URL secret not set — email button will point to production", null, {});
+      const conviteUrl = `${(appUrl ?? "https://app.pilarsoft.com.br").replace(/\/+$/, "")}/cliente/convite?token=${token}`;
 
       try {
         await sendEmail({
@@ -111,7 +120,7 @@ serve(
             email: empresa?.email,
           },
           ...templateAcessoPortalCliente({
-            nomeCliente: cliente.nome,
+            nomeCliente: nomeAcesso,
             email: normalizedEmail,
             conviteUrl,
             empresaNome: empresa?.nome,
@@ -129,14 +138,14 @@ serve(
           .update({
             ativo: true,
             email: normalizedEmail,
-            nome: cliente.nome,
+            nome: nomeAcesso,
             updated_at: new Date().toISOString(),
           })
           .eq("id", existingAccount.id);
 
         if (reactivateError) {
           log.error("reactivate account failed", reactivateError, { account_id: existingAccount.id, cliente_id });
-          return safeErrorResponse(400, `Falha ao reativar conta do portal: ${reactivateError.message}`, req);
+          return safeErrorResponse(400, "Falha ao reativar o acesso ao portal. Tente novamente.", req);
         }
 
         const { error: resetError } = await supabaseAdmin.rpc("_portal_reset_password_convite", {
@@ -146,13 +155,13 @@ serve(
 
         if (resetError) {
           log.error("reset password convite failed", resetError, { account_id: existingAccount.id });
-          return safeErrorResponse(400, `Convite enviado, mas falhou ao gravar: ${resetError.message}`, req);
+          return safeErrorResponse(400, "O e-mail saiu, mas o acesso não foi gravado. Reenvie o convite.", req);
         }
       } else {
         const { error: insertError } = await supabaseAdmin.rpc("_portal_create_account_convite", {
           p_cliente_id: cliente.id,
           p_empresa_id: profile.empresa_id,
-          p_nome: cliente.nome,
+          p_nome: nomeAcesso,
           p_email: normalizedEmail,
           p_token_hash: hash,
           p_created_by: user.id,
@@ -163,7 +172,7 @@ serve(
             cliente_id,
             empresa_id: profile.empresa_id,
           });
-          return safeErrorResponse(400, `Convite enviado, mas falhou ao gravar: ${insertError.message}`, req);
+          return safeErrorResponse(400, "O e-mail saiu, mas o acesso não foi gravado. Reenvie o convite.", req);
         }
       }
 

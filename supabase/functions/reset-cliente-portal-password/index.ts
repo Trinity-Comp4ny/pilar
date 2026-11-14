@@ -29,14 +29,16 @@ serve(
         .single();
 
       if (profileError || !profile) return safeErrorResponse(403, "Profile not found", req);
-      if (profile.role !== "admin" && profile.role !== "ultra_admin") {
-        return safeErrorResponse(403, "Apenas admin pode redefinir senhas do portal", req);
+      // Admin e coordenador cuidam do contato com o cliente (mesmos papéis da RLS
+      // de cliente_portal_accounts).
+      if (!["admin", "ultra_admin", "coordenador"].includes(profile.role)) {
+        return safeErrorResponse(403, "Apenas admin ou coordenador pode redefinir senhas do portal", req);
       }
       if (!profile.empresa_id) return safeErrorResponse(403, "Você precisa pertencer a uma empresa", req);
 
       const entrada = lerEntrada(await lerJson(req));
       if (!entrada.ok) return safeErrorResponse(400, entrada.error, req);
-      const { cliente_id, nome_cliente } = entrada.data;
+      const { cliente_id, account_id, nome_cliente } = entrada.data;
 
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL") ?? "",
@@ -52,14 +54,18 @@ serve(
       });
       if (limite) return limite;
 
-      const { data: account, error: accountError } = await supabaseAdmin
+      let consulta = supabaseAdmin
         .from("cliente_portal_accounts")
-        .select("id, email")
+        .select("id, email, nome")
         .eq("cliente_id", cliente_id)
-        .eq("empresa_id", profile.empresa_id)
-        .single();
+        .eq("empresa_id", profile.empresa_id);
+      if (account_id) consulta = consulta.eq("id", account_id);
+      const { data: contas, error: accountError } = await consulta.limit(2);
 
-      if (accountError || !account) return safeErrorResponse(404, "Conta do portal não encontrada", req);
+      if (accountError || !contas?.length) return safeErrorResponse(404, "Conta do portal não encontrada", req);
+      // Cliente com vários acessos: a tela precisa dizer qual (SPEC 164).
+      if (contas.length > 1) return safeErrorResponse(409, "Escolha qual acesso do cliente reenviar", req);
+      const account = contas[0];
 
       const { data: empresa } = await supabaseAdmin
         .from("empresas")
@@ -71,9 +77,9 @@ serve(
         return safeErrorResponse(422, "Cadastre o e-mail da empresa em Configurações para enviar ao cliente", req);
 
       const { token, hash } = await gerarConviteToken();
-      const siteUrl = Deno.env.get("PUBLIC_SITE_URL");
-      if (!siteUrl) log.error("PUBLIC_SITE_URL secret not set — email button will be broken", null, {});
-      const conviteUrl = `${siteUrl ?? "https://www.pilarsoft.com.br"}/cliente/convite?token=${token}`;
+      const appUrl = Deno.env.get("APP_URL");
+      if (!appUrl) log.error("APP_URL secret not set — email button will point to production", null, {});
+      const conviteUrl = `${(appUrl ?? "https://app.pilarsoft.com.br").replace(/\/+$/, "")}/cliente/convite?token=${token}`;
 
       // Envia o e-mail ANTES de mexer na conta: se o envio falhar, nada muda pro
       // cliente (senha atual continua valendo) e o admin recebe erro claro para
@@ -89,7 +95,7 @@ serve(
             email: empresa?.email,
           },
           ...templateAcessoPortalCliente({
-            nomeCliente: nome_cliente ?? "Cliente",
+            nomeCliente: account.nome ?? nome_cliente ?? "Cliente",
             email: account.email,
             conviteUrl,
             isReset: true,
@@ -119,7 +125,7 @@ serve(
           empresa_id: profile.empresa_id,
           user_id: user.id,
         });
-        return safeErrorResponse(400, `Convite enviado, mas falhou ao gravar: ${resetError.message}`, req);
+        return safeErrorResponse(400, "O e-mail saiu, mas o acesso não foi gravado. Reenvie o convite.", req);
       }
 
       return jsonResponse({ success: true, email: account.email }, 200, req);

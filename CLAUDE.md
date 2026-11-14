@@ -89,17 +89,45 @@ usar, o que é proibido). Regras que valem sempre:
 Todo PR (ou fase de uma sprint) que muda a aparência de uma tela mostra **o antes e o depois**
 no corpo, para o Matheus acompanhar a evolução. Sem exceção para mudança visual.
 
+**Regra rígida: o PR só é aberto depois que a imagem antes/depois existe e vai embutida no corpo**
+(uma imagem lado a lado, fixada por SHA). "Sem Docker/Supabase local" não dispensa: capture com
+mock do cliente Supabase, Playwright com rotas interceptadas ou harness do componente real. Se
+nada servir, pergunte ao dono antes de abrir. Nunca abrir PR visual "sem print" para completar depois.
+
 - **Antes** = como a tela era na base do PR (`origin/staging` no momento de abrir). Suba a base
   numa worktree separada (`git worktree add --detach /tmp/pilar-antes <base>`, `node_modules`
   por symlink, `vite --port 8081`) e capture ali. Nunca "reconstrua de memória".
 - **Depois** = a branch do PR, mesma rota, mesmo viewport (1440px; mobile 390px quando o
   layout mobile muda), mesmo dado seed (`dev@local.test`).
-- Guarde as imagens em `docs/design/antes-depois/<spec-ou-pr>/` (`antes-<tela>.jpg`,
-  `depois-<tela>.jpg`) e embuta no corpo do PR por link permanente com o SHA do commit
-  (`https://raw.githubusercontent.com/Trinity-Comp4ny/pilar/<sha>/docs/design/antes-depois/...`),
-  em tabela `Antes | Depois` por tela. Cada nova fase do mesmo PR acrescenta as suas telas.
+- Guarde as imagens em `docs/design/antes-depois/<spec-ou-pr>/` (uma imagem por tela, **antes e
+  depois lado a lado na mesma imagem**, com os rótulos "ANTES" e "DEPOIS") com um `README.md` na
+  mesma pasta. **As imagens aparecem dentro do corpo do PR**, não só num link: commite as imagens,
+  pegue o SHA do commit e use `![antes e depois](https://github.com/Trinity-Comp4ny/pilar/blob/<SHA>/docs/design/antes-depois/<pasta>/<tela>.jpg?raw=true)`.
+  O SHA fixa a imagem: link por nome de branch quebra quando a branch é apagada no merge (foi o que
+  aconteceu no PR #842). Edite o corpo com `gh pr edit <n> --body-file` (o CLI preserva a imagem; a
+  ferramenta do GitHub da sessão troca `![](url)` por texto em crases e a imagem aparece quebrada,
+  11/11, PR #812). Confira com `gh pr view <n> --json body` que o `![` está no corpo. Cada nova fase
+  do mesmo PR acrescenta as suas telas.
+- **PR visual sem as imagens no corpo está incompleto**: não dar como pronto nem pedir aprovação.
+  Se o teste visual regrava as referências (label `atualizar-visual`), as imagens novas só existem
+  depois que o workflow termina: espere-o e monte os prints antes de avisar o Matheus.
 - Dado seed apenas (repo público): nada de dado real de cliente nos prints.
 - Fase sem mudança visual (só código/teste) diz isso em uma linha em vez de tabela.
+
+## O dono trabalha pelo celular (REGRA DO DONO)
+
+O Matheus acompanha as sessões pelo app do Claude no celular. Nunca dar como próximo
+passo algo que exige computador: baixar artifact do GitHub, copiar arquivo, rodar
+comando local, abrir DevTools. Resolver daqui (sessão, workflow, ferramenta do
+GitHub) ou, se não houver jeito, oferecer uma ação que caiba no celular (pôr uma
+label, aprovar, clicar num link).
+
+- Regressão visual reprovou por mudança de propósito: pôr a label `atualizar-visual`
+  no PR (a sessão consegue pela ferramenta do GitHub). O workflow
+  `atualizar-referencias-visuais.yml` regrava as referências no runner Linux,
+  commita na branch e dispara o CI de novo. Ver `e2e/visual/README.md`.
+- Imagem para ele ver vai inline (arquivo enviado na conversa ou artifact), não como
+  caminho local.
 
 ## Documentação
 
@@ -163,7 +191,7 @@ O repo permite squash e rebase, mas BLOQUEIA merge commit.
 **Limpeza obrigatória após CADA merge**
 
 - Deletar a branch merged, local e remota (`--delete-branch`, ou `git branch -D` + `git push origin --delete`).
-- Fechar manualmente as issues resolvidas: `Closes #` não dispara porque o merge é em `staging`, não na branch default `main`. Comentar o PR/commit que corrigiu.
+- Issues resolvidas: escrever `Closes #N` (ou `Fixes`/`Resolves`) na mensagem do commit. O `Closes` nativo não dispara em `staging`, então o workflow `fechar-issues-staging.yml` fecha a issue quando o commit chega lá, com link para ele. Sem a linha no commit, fechar à mão.
 - Trocar para `staging`, `git pull --ff-only`, e apagar as branches locais já merged.
 
 **Verificação de fecho**

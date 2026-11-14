@@ -1,14 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/format";
 
 export interface TimelineDisciplina {
   disciplina: string;
   status?: string;
-  data_inicio?: string;
-  data_previsao?: string;
-  data_final?: string;
-  responsavel_nome?: string;
 }
 
 export function TimelineContent({ disciplinas }: { disciplinas: TimelineDisciplina[] }) {
@@ -57,23 +52,15 @@ export function TimelineContent({ disciplinas }: { disciplinas: TimelineDiscipli
                       />
                       {i < disciplinas.length - 1 && <div className="w-0.5 flex-1 bg-muted mt-1" />}
                     </div>
-                    <div className="flex-1 pb-4">
+                    <div className="flex-1 pb-2">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium" title="Área do projeto">
                           {d.disciplina}
                         </p>
-                        <Badge variant={isConcluido ? "default" : "secondary"} className="text-[10px]">
+                        <Badge variant={isConcluido ? "default" : "secondary"} className="text-3xs">
                           {d.status || "Não iniciado"}
                         </Badge>
                       </div>
-                      <div className="flex gap-3 text-xs text-muted-foreground mt-1">
-                        {d.data_inicio && <span>Início: {formatDate(d.data_inicio)}</span>}
-                        {d.data_previsao && <span>Previsão: {formatDate(d.data_previsao)}</span>}
-                        {d.data_final && <span>Concluído: {formatDate(d.data_final)}</span>}
-                      </div>
-                      {d.responsavel_nome && (
-                        <p className="text-xs text-muted-foreground mt-0.5">Responsável: {d.responsavel_nome}</p>
-                      )}
                     </div>
                   </div>
                 );

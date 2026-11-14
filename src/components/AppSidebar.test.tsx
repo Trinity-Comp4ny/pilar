@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
@@ -20,6 +20,7 @@ const h = vi.hoisted(() => ({
   ocultos: false,
   toggleOcultos: vi.fn(),
   pendencias: [] as unknown[] | undefined,
+  novidadesDestaque: false,
   feedbackNovos: 0,
   nav: {} as Record<string, unknown>,
   feedbackOpen: vi.fn(),
@@ -40,6 +41,9 @@ vi.mock("@/contexts/ValoresOcultosContext", () => ({
 }));
 vi.mock("@/hooks/useEscopos", () => ({ usePendenciasAgentes: () => ({ data: h.pendencias }) }));
 vi.mock("@/hooks/useFeedbackNovosCount", () => ({ useFeedbackNovosCount: () => ({ data: h.feedbackNovos }) }));
+vi.mock("@/hooks/useNovidades", () => ({
+  useNovidades: () => ({ pendentes: { comFluxo: [], temDestaque: h.novidadesDestaque } }),
+}));
 vi.mock("@/hooks/useModuleNav", () => ({ useModuleNav: () => h.nav }));
 vi.mock("@/components/ImpersonationPicker", () => ({ ImpersonationPicker: () => null }));
 vi.mock("@/components/NotificationInbox", () => ({ NotificationInbox: () => <div data-testid="sino" /> }));
@@ -114,9 +118,13 @@ beforeEach(() => {
   h.perms = { isAdmin: false, isUltraAdmin: false };
   h.ocultos = false;
   h.pendencias = [];
+  h.novidadesDestaque = false;
   h.feedbackNovos = 0;
   h.nav = navPadrao();
 });
+
+// Largura simulada (painel flutuante) não vaza para o próximo teste.
+afterEach(() => vi.restoreAllMocks());
 
 describe("AppSidebar", () => {
   it("não renderiza no mobile", () => {
@@ -138,8 +146,9 @@ describe("AppSidebar", () => {
     expect(screen.getByTestId("sino")).toBeInTheDocument();
   });
 
-  it("selecionar módulo com painel recolhido reabre o painel", async () => {
+  it("tela larga: selecionar módulo com painel recolhido reabre o painel", async () => {
     h.sidebar.state = "collapsed";
+    vi.spyOn(window, "innerWidth", "get").mockReturnValue(1600);
     renderSidebar();
     expect(screen.queryByRole("navigation", { name: /Menu de/ })).not.toBeInTheDocument();
     const user = userEvent.setup();
@@ -148,6 +157,29 @@ describe("AppSidebar", () => {
     await user.click(screen.getByRole("button", { name: "Projetos" }));
     expect(h.sidebar.setOpen).toHaveBeenCalledWith(true);
     expect(selectModule).toHaveBeenCalledWith("projetos");
+  });
+
+  it("tela estreita: o painel recolhido abre flutuando, fixa pelo botão e fecha com Esc", async () => {
+    h.sidebar.state = "collapsed";
+    vi.spyOn(window, "innerWidth", "get").mockReturnValue(1320);
+    renderSidebar();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Projetos" }));
+    // Mostra o painel sem mudar o estado salvo (não empurra o conteúdo).
+    expect(h.sidebar.setOpen).not.toHaveBeenCalled();
+    expect(screen.getByRole("navigation", { name: /Menu de/ })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("navigation", { name: /Menu de/ })).not.toBeInTheDocument();
+
+    // Escolher um item do painel fecha o flutuante.
+    await user.click(screen.getByRole("button", { name: "Projetos" }));
+    const painel = screen.getByRole("navigation", { name: /Menu de/ });
+    await user.click(within(painel).getAllByRole("link")[0]);
+    expect(screen.queryByRole("navigation", { name: /Menu de/ })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Projetos" }));
+    await user.click(screen.getByRole("button", { name: "Fixar menu aberto" }));
+    expect(h.sidebar.setOpen).toHaveBeenCalledWith(true);
   });
 
   it("selecionar módulo com painel aberto não mexe no painel", async () => {
@@ -196,6 +228,17 @@ describe("AppSidebar", () => {
     await user.click(await screen.findByText("Log out"));
     expect(h.auth.signOut).toHaveBeenCalled();
     await vi.waitFor(() => expect(h.navigate).toHaveBeenCalledWith("/login"));
+  });
+
+  it("Novidades no menu do usuário, com ponto quando há algo novo (SPEC 152)", async () => {
+    h.novidadesDestaque = true;
+    const user = userEvent.setup();
+    renderSidebar();
+    const trigger = screen.getByRole("button", { name: "Menu do usuário, há novidades na Pilar" });
+    await user.click(trigger);
+    expect(await screen.findByLabelText("Há novidades")).toBeInTheDocument();
+    await user.click(screen.getByRole("menuitem", { name: /Novidades/ }));
+    expect(h.navigate).toHaveBeenCalledWith("/novidades");
   });
 
   it("admin vê o Portal Admin; valores ocultos mostra a opção inversa", async () => {

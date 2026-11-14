@@ -1,3 +1,4 @@
+import { clicarAcaoDe, itemDeAcao } from "@/test/acoesLinha";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -155,11 +156,11 @@ describe("Admin › Usuários: convite", () => {
   it("convite pendente: reenviar e cancelar", async () => {
     render(<Harness />);
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "Reenviar convite para davi@seed.test" }));
+    await clicarAcaoDe(user, "davi@seed.test", "Reenviar convite");
     await waitFor(() =>
       expect(h.invoke).toHaveBeenCalledWith("invite-user", { body: { action: "resend", convite_id: "c1" } })
     );
-    await user.click(screen.getByRole("button", { name: "Cancelar convite de davi@seed.test" }));
+    await clicarAcaoDe(user, "davi@seed.test", "Cancelar convite");
     await waitFor(() =>
       expect(h.invoke).toHaveBeenCalledWith("invite-user", { method: "DELETE", body: { convite_id: "c1" } })
     );
@@ -169,7 +170,7 @@ describe("Admin › Usuários: convite", () => {
   it("falha ao cancelar convite mantém o convite na lista", async () => {
     h.invoke.mockResolvedValue({ data: null, error: httpError({ error: "Convite não encontrado." }) });
     render(<Harness />);
-    await userEvent.setup().click(screen.getByRole("button", { name: "Cancelar convite de davi@seed.test" }));
+    await clicarAcaoDe(userEvent.setup(), "davi@seed.test", "Cancelar convite");
     await waitFor(() =>
       expect(h.toastError).toHaveBeenCalledWith("Não foi possível cancelar o convite", {
         description: "Convite não encontrado.",
@@ -180,7 +181,7 @@ describe("Admin › Usuários: convite", () => {
 
   it("convite sem id (recém-criado) pede recarregar para reenviar", async () => {
     render(<Harness initial={[{ id: "pending-1", nome: "X", email: "x@seed.test", role: "user", isPending: true }]} />);
-    await userEvent.setup().click(screen.getByRole("button", { name: "Reenviar convite para x@seed.test" }));
+    await clicarAcaoDe(userEvent.setup(), "x@seed.test", "Reenviar convite");
     expect(h.toastError).toHaveBeenCalledWith("Recarregue a página para reenviar este convite");
     expect(h.invoke).not.toHaveBeenCalled();
   });
@@ -194,15 +195,15 @@ describe("Admin › Usuários: papel, acessos e remoção", () => {
     expect(screen.queryByRole("button", { name: "Remover Root" })).not.toBeInTheDocument();
   });
 
-  it("não é possível remover a si mesmo", () => {
+  it("não é possível remover a si mesmo", async () => {
     render(<Harness />);
-    expect(screen.getByRole("button", { name: "Remover Ana Admin" })).toBeDisabled();
+    expect(await itemDeAcao(userEvent.setup(), "Ana Admin", "Remover")).toHaveAttribute("aria-disabled", "true");
   });
 
   it("trocar papel chama a RPC e atualiza a lista", async () => {
     render(<Harness />);
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "Editar acessos de Carla User" }));
+    await clicarAcaoDe(user, "Carla User", "Editar acessos");
     const dialog = await screen.findByRole("dialog");
     await user.click(within(dialog).getByRole("radio", { name: /Admin da empresa/ }));
     await user.click(within(dialog).getByRole("button", { name: "Salvar alterações" }));
@@ -214,7 +215,7 @@ describe("Admin › Usuários: papel, acessos e remoção", () => {
     h.rpc.mockResolvedValue({ data: null, error: { message: "Apenas admin pode alterar papéis" } });
     render(<Harness />);
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "Editar acessos de Carla User" }));
+    await clicarAcaoDe(user, "Carla User", "Editar acessos");
     const dialog = await screen.findByRole("dialog");
     await user.click(within(dialog).getByRole("radio", { name: /Admin da empresa/ }));
     await user.click(within(dialog).getByRole("button", { name: "Salvar alterações" }));
@@ -225,7 +226,7 @@ describe("Admin › Usuários: papel, acessos e remoção", () => {
   it("2FA negado bloqueia a troca de papel antes da RPC", async () => {
     render(<Harness />);
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "Editar acessos de Carla User" }));
+    await clicarAcaoDe(user, "Carla User", "Editar acessos");
     const dialog = await screen.findByRole("dialog");
     h.requireAal2.mockResolvedValue(false);
     await user.click(within(dialog).getByRole("button", { name: "Salvar alterações" }));
@@ -236,12 +237,12 @@ describe("Admin › Usuários: papel, acessos e remoção", () => {
   it("usuário comum não recebe concessões; coordenador recebe e a RPC é chamada", async () => {
     render(<Harness />);
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "Editar acessos de Carla User" }));
+    await clicarAcaoDe(user, "Carla User", "Editar acessos");
     let dialog = await screen.findByRole("dialog");
     expect(within(dialog).queryByRole("switch")).not.toBeInTheDocument();
     await user.click(within(dialog).getByRole("button", { name: "Cancelar" }));
 
-    await user.click(screen.getByRole("button", { name: "Editar acessos de Bruno Coord" }));
+    await clicarAcaoDe(user, "Bruno Coord", "Editar acessos");
     dialog = await screen.findByRole("dialog");
     await user.click(within(dialog).getByRole("switch", { name: "Acesso financeiro de Bruno Coord" }));
     await waitFor(() =>
@@ -266,7 +267,7 @@ describe("Admin › Usuários: papel, acessos e remoção", () => {
     h.rpc.mockResolvedValue({ data: null, error: { message: "Somente coordenador pode receber" } });
     render(<Harness />);
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "Editar acessos de Bruno Coord" }));
+    await clicarAcaoDe(user, "Bruno Coord", "Editar acessos");
     const dialog = await screen.findByRole("dialog");
     await user.click(within(dialog).getByRole("switch", { name: "Acesso financeiro de Bruno Coord" }));
     await waitFor(() => expect(h.toastError).toHaveBeenCalled());
@@ -276,7 +277,7 @@ describe("Admin › Usuários: papel, acessos e remoção", () => {
   it("remover pede confirmação e chama delete-user", async () => {
     render(<Harness />);
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "Remover Carla User" }));
+    await clicarAcaoDe(user, "Carla User", "Remover");
     expect(await screen.findByText("Remover usuário")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Remover" }));
     await waitFor(() => expect(h.invoke).toHaveBeenCalledWith("delete-user", { body: { user_id: "u3" } }));
@@ -287,7 +288,7 @@ describe("Admin › Usuários: papel, acessos e remoção", () => {
     h.invoke.mockResolvedValue({ data: null, error: new Error("403") });
     render(<Harness />);
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "Remover Carla User" }));
+    await clicarAcaoDe(user, "Carla User", "Remover");
     await user.click(await screen.findByRole("button", { name: "Remover" }));
     await waitFor(() => expect(h.toastError).toHaveBeenCalledWith("Erro ao remover usuário"));
     expect(estado.users.some((u) => u.id === "u3")).toBe(true);

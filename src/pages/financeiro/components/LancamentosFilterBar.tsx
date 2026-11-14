@@ -60,9 +60,10 @@ const QUICK_ICON: Record<QuickFilter, typeof CircleDashed> = {
   pagos: CheckCircle2,
 };
 const TIPO_OPCOES: ViewOption<LancamentosFilters["tipo"]>[] = [
-  { value: "todos", label: "Todos", icon: LayoutList },
-  { value: "receita", label: "Receitas", icon: ArrowUpCircle },
-  { value: "despesa", label: "Despesas", icon: ArrowDownCircle },
+  // Mesmos nomes das visões da SPEC 150: este é o único seletor de tipo da tela.
+  { value: "todos", label: "Tudo", icon: LayoutList },
+  { value: "receita", label: "A receber", icon: ArrowUpCircle },
+  { value: "despesa", label: "A pagar", icon: ArrowDownCircle },
 ];
 const QUICK_ORDER: QuickFilter[] = ["em-aberto", "atrasados", "vence-semana", "pagos"];
 
@@ -123,9 +124,9 @@ export function LancamentosFilterBar({
             <>
               <Button
                 variant="ghost"
-                size="sm"
+                size="xs"
                 onClick={onToggleGrouped}
-                className="h-8 px-2 text-xs gap-1 text-muted-foreground"
+                className="px-2 gap-1 text-muted-foreground"
                 title={grouped ? "Desagrupar parcelas" : "Agrupar parcelas"}
               >
                 <Layers className="h-3.5 w-3.5" />
@@ -134,9 +135,9 @@ export function LancamentosFilterBar({
               {grouped && allGroupIds.length > 0 && (
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="xs"
                   onClick={onToggleExpandAll}
-                  className="h-8 px-2 text-xs gap-1 text-muted-foreground"
+                  className="px-2 gap-1 text-muted-foreground"
                   title={allExpanded ? "Recolher todos" : "Expandir todos"}
                 >
                   {allExpanded ? <ChevronsUp className="h-3.5 w-3.5" /> : <ChevronsDown className="h-3.5 w-3.5" />}
@@ -463,7 +464,7 @@ function CheckboxSearchSection({
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</span>
           {selected.length > 0 && (
-            <span className="text-[10px] bg-brand text-ink rounded-full px-1.5 py-0 min-w-[18px] text-center tabular-nums">
+            <span className="text-3xs bg-brand text-ink rounded-full px-1.5 py-0 min-w-[18px] text-center tabular-nums">
               {selected.length}
             </span>
           )}
@@ -501,7 +502,7 @@ function CheckboxSearchSection({
 
 function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1 rounded-full bg-brand text-ink border border-brand/30 text-[11px] font-medium">
+    <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1 rounded-full bg-brand text-ink border border-brand/30 text-2xs font-medium">
       <span className="truncate max-w-[200px]">{label}</span>
       <button
         type="button"

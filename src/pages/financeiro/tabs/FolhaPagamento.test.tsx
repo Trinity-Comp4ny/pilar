@@ -62,7 +62,6 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(2026, 10, 10, 22, 30));
   sb.rpcResultado("get_user_empresa_id", { data: "emp-1", error: null });
-  sb.resultado("projetos.select", { data: [], error: null });
   sb.resultado("folha_pagamento.select", { data: [], error: null });
   sb.resultado("folha_pagamento.insert", { data: null, error: null });
   sb.rpcResultado("get_folha_preview", { data: preview, error: null });
@@ -324,11 +323,25 @@ describe("FolhaPagamento: mês fechado", () => {
       v_total: 5800,
     });
   });
+
+  it("enquanto o comprovante é gerado, o botão fica ocupado e o segundo clique não gera outro", async () => {
+    sb.rpcResultado("get_folha_pessoas_pii", { data: [], error: null });
+    let concluir!: () => void;
+    gerarComprovantePDF.mockImplementationOnce(() => new Promise<void>((r) => (concluir = r)));
+    const { user } = setup();
+    await linha("Ana Souza");
+    const botao = () => screen.getByRole("button", { name: "Baixar comprovante de Ana Souza" });
+    await user.click(botao());
+    await waitFor(() => expect(botao()).toBeDisabled());
+    expect(botao()).toHaveAttribute("aria-busy", "true");
+    concluir();
+    await waitFor(() => expect(botao()).toBeEnabled());
+    expect(gerarComprovantePDF).toHaveBeenCalledTimes(1);
+  });
 });
 
-// Ordem das leituras de folha_pagamento ao montar: histórico, mês anterior (delta) e
-// por fim a folha do mês (que antes espera a empresa e os projetos). O detalhe do
-// histórico vem depois, ao clicar.
+// Ordem das leituras de folha_pagamento ao montar: a folha do mês, o histórico e o
+// mês anterior (delta). O detalhe do histórico vem depois, ao clicar.
 describe("FolhaPagamento: busca, filtro de status e competência", () => {
   const fechada = [
     { id: "f-ana", pessoa_id: "p-ana", mes: 11, ano: 2026, salario_fixo: 5000, total_receber: 5000, status: "pago" },
@@ -385,6 +398,7 @@ describe("FolhaPagamento: busca, filtro de status e competência", () => {
   it("delta contra o mês anterior aparece quando a pessoa tinha folha", async () => {
     sb.resultado("folha_pagamento.select", [
       { data: [], error: null },
+      { data: [], error: null },
       {
         data: [
           { pessoa_id: "p-ana", total_receber: 5000 },
@@ -392,7 +406,6 @@ describe("FolhaPagamento: busca, filtro de status e competência", () => {
         ],
         error: null,
       },
-      { data: [], error: null },
     ]);
     setup();
     const ana = await linha("Ana Souza");
@@ -426,8 +439,8 @@ describe("FolhaPagamento: histórico", () => {
 
   function prepararHistorico() {
     sb.resultado("folha_pagamento.select", [
-      { data: historico, error: null },
       { data: [], error: null },
+      { data: historico, error: null },
       { data: [], error: null },
       { data: detalheOutubro, error: null },
     ]);
@@ -449,8 +462,8 @@ describe("FolhaPagamento: histórico", () => {
 
   it("erro no histórico avisa", async () => {
     sb.resultado("folha_pagamento.select", [
-      { data: null, error: { message: "x" } },
       { data: [], error: null },
+      { data: null, error: { message: "x" } },
       { data: [], error: null },
     ]);
     setup();
@@ -502,8 +515,8 @@ describe("FolhaPagamento: histórico", () => {
 
   it("competência sem registros mostra vazio; erro ao abrir outra avisa", async () => {
     sb.resultado("folha_pagamento.select", [
-      { data: historico, error: null },
       { data: [], error: null },
+      { data: historico, error: null },
       { data: [], error: null },
       { data: [], error: null },
       { data: null, error: { message: "x" } },
@@ -601,5 +614,98 @@ describe("FolhaPagamento: bordas do pagamento e do comprovante", () => {
       source: "folha.downloadComprovante",
       pessoa_id: "p-ana",
     });
+  });
+});
+
+describe("FolhaPagamento: produtividade por percentual", () => {
+  // Montador: sem fixo, 10% do valor do projeto (armário de R$ 10 mil = R$ 1.000).
+  // Carla: fixo + m² + percentual somados.
+  const previewPercentual = [
+    {
+      pessoa_id: "p-montador",
+      nome: "Marcos Montador",
+      cargo: "Montador",
+      salario_fixo: 0,
+      valor_m2: 0,
+      total_area: 0,
+      percentual_producao: 10,
+      total_valor_base: 10000,
+      total_variavel: 1000,
+      total_receber: 1000,
+      projetos_nomes: ["Armário cozinha"],
+      detalhe_projetos: [{ nome: "Armário cozinha", area_m2: 0, valor_base: 10000 }],
+    },
+    {
+      pessoa_id: "p-carla",
+      nome: "Carla Dias",
+      cargo: "Arquiteta",
+      salario_fixo: 3000,
+      valor_m2: 5,
+      total_area: 120,
+      percentual_producao: 2.5,
+      total_valor_base: 40000,
+      total_variavel: 1600,
+      total_receber: 4600,
+      projetos_nomes: ["Casa 120m²"],
+      detalhe_projetos: [{ nome: "Casa 120m²", area_m2: 120, valor_base: 40000 }],
+    },
+  ];
+
+  beforeEach(() => {
+    sb.rpcResultado("get_folha_preview", { data: previewPercentual, error: null });
+  });
+
+  it("mostra a base e o percentual na produtividade e soma no total", async () => {
+    setup();
+    const montador = nbsp((await linha("Marcos Montador")).textContent);
+    expect(montador).toContain("R$ 10.000,00");
+    expect(montador).toContain("x 10,0%");
+    expect(montador).not.toContain("m²");
+    expect(montador).toContain("R$ 1.000,00");
+    const carla = nbsp((await linha("Carla Dias")).textContent);
+    expect(carla).toContain("120 m²");
+    expect(carla).toContain("x 2,5%");
+    expect(carla).toContain("R$ 4.600,00");
+  });
+
+  it("editar o valor dos projetos recalcula o variável pelo percentual", async () => {
+    const { user } = setup();
+    await user.click(await screen.findByLabelText("Ver detalhes de Marcos Montador"));
+    const dlg = screen.getByRole("dialog");
+    expect(nbsp(dlg.textContent)).toContain("10,0% de R$ 10.000,00");
+    expect(nbsp(dlg.textContent)).toContain("R$ 1.000,00");
+    await user.click(within(dlg).getByRole("button", { name: "Editar" }));
+    // Sem m²: os campos são salário, valor dos projetos e total.
+    const [, base] = within(dlg).getAllByRole("spinbutton");
+    await user.clear(base);
+    await user.type(base, "15000");
+    await user.click(within(dlg).getByRole("button", { name: "Salvar alterações" }));
+    expect(nbsp((await linha("Marcos Montador")).textContent)).toContain("R$ 1.500,00");
+  });
+
+  it("fechar grava o percentual e a base junto com o variável", async () => {
+    const { user } = setup();
+    await linha("Marcos Montador");
+    await user.click(screen.getByRole("button", { name: /Fechar folha/ }));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: /Confirmar fechamento/ }));
+    await waitFor(() => expect(sb.de("folha_pagamento", "insert")).toHaveLength(1));
+    const payload = sb.de("folha_pagamento", "insert")[0].args[0] as Array<Record<string, unknown>>;
+    expect(payload).toEqual([
+      expect.objectContaining({
+        pessoa_id: "p-montador",
+        percentual_producao: 10,
+        total_valor_base: 10000,
+        adicional_variavel: 1000,
+        total_receber: 1000,
+        detalhe_projetos: [{ nome: "Armário cozinha", area_m2: 0, valor_base: 10000 }],
+      }),
+      expect.objectContaining({
+        pessoa_id: "p-carla",
+        percentual_producao: 2.5,
+        total_valor_base: 40000,
+        adicional_variavel: 1600,
+        total_receber: 4600,
+      }),
+    ]);
   });
 });

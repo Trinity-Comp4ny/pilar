@@ -1,5 +1,5 @@
 {
-  "git": { "deploymentEnabled": { "dependabot/**": false } },
+  "git": { "deploymentEnabled": { "dependabot/**": false, "claude/**": false, "release/**": false, "fix/**": false } },
   "ignoreCommand": "bash ../../scripts/vercel-ignore.sh marketing",
   "redirects": [
     { "source": "/dashboard", "destination": "https://app.pilarsoft.com.br/inicio", "permanent": false },
@@ -19,6 +19,14 @@
     {
       "source": "/assets/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/.well-known/ard.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json; charset=utf-8" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
+      ]
     },
     {
       "source": "/fonts/(.*)",

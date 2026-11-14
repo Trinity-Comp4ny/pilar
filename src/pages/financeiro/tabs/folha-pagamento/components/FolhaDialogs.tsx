@@ -13,11 +13,13 @@ import {
 } from "@/components/ui/dialog";
 import { CheckCircle2, FileDown } from "lucide-react";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
+import { formatPercent } from "@/lib/format";
 import type { FolhaItem, HistoryItem } from "../types";
 import { getMonthLabel } from "../types";
 import { calcularVariavel, calcularTotal, subtotalProjeto } from "../folhaCalc";
 
 import { BusyMark } from "@/components/motion/BusyMark";
+import { useAcaoPendente } from "@/hooks/useAcaoPendente";
 import { ReadingRing } from "@/components/motion/ReadingRing";
 
 interface CloseMonthDialogProps {
@@ -107,12 +109,23 @@ export function DetailEditDialog({
   onEditFormChange,
 }: DetailEditDialogProps) {
   const formatCurrency = useMoneyMask();
-  // Fórmula: variável = área × valor/m²; total = fixo + variável. Ao editar,
-  // recalculamos os derivados para não fechar folha com total inconsistente.
+  // Fórmula: variável = área × valor/m² + valor dos projetos × percentual;
+  // total = fixo + variável. Ao editar, recalculamos os derivados para não
+  // fechar folha com total inconsistente.
   const salario = editForm.p_salario_fixo ?? person?.p_salario_fixo ?? 0;
   const area = editForm.soma_area ?? person?.soma_area ?? 0;
+  const valorBase = editForm.soma_valor_base ?? person?.soma_valor_base ?? 0;
   const valorM2 = person?.p_valor_m2 ?? 0;
-  const variavelCalc = calcularVariavel(area, valorM2);
+  const percentual = person?.p_percentual ?? 0;
+  const temPercentual = percentual > 0;
+  const temM2 = valorM2 > 0 || !temPercentual;
+  const variavelCalc = calcularVariavel(area, valorM2, valorBase, percentual);
+  const regraVariavel = [
+    temM2 ? `área × ${formatCurrency(valorM2)}/m²` : null,
+    temPercentual ? `${formatPercent(percentual)} do valor dos projetos` : null,
+  ]
+    .filter(Boolean)
+    .join(" + ");
   const totalCalc = calcularTotal(salario, variavelCalc);
   const totalManual = editForm.v_total;
   const totalDesacoplado = isEditing && totalManual !== undefined && Math.abs(totalManual - totalCalc) > 0.01;
@@ -144,14 +157,26 @@ export function DetailEditDialog({
                 onChange={(v) => onEditFormChange("p_salario_fixo", v)}
                 isCurrency
               />
-              <EditableField
-                label="Produtividade (m²)"
-                isEditing={isEditing}
-                value={person.soma_area}
-                editValue={editForm.soma_area}
-                onChange={(v) => onEditFormChange("soma_area", v)}
-                suffix=" m²"
-              />
+              {temM2 && (
+                <EditableField
+                  label="Produtividade (m²)"
+                  isEditing={isEditing}
+                  value={person.soma_area}
+                  editValue={editForm.soma_area}
+                  onChange={(v) => onEditFormChange("soma_area", v)}
+                  suffix=" m²"
+                />
+              )}
+              {temPercentual && (
+                <EditableField
+                  label={`Valor dos projetos (${formatPercent(percentual)})`}
+                  isEditing={isEditing}
+                  value={person.soma_valor_base ?? 0}
+                  editValue={editForm.soma_valor_base}
+                  onChange={(v) => onEditFormChange("soma_valor_base", v)}
+                  isCurrency
+                />
+              )}
               <EditableField
                 label="Variável"
                 isEditing={isEditing}
@@ -174,8 +199,7 @@ export function DetailEditDialog({
 
             {isEditing && (
               <p className="text-xs text-muted-foreground">
-                Variável recalculado de área × {formatCurrency(valorM2)}/m². Total sugerido: {formatCurrency(totalCalc)}
-                .
+                Variável recalculado de {regraVariavel}. Total sugerido: {formatCurrency(totalCalc)}.
               </p>
             )}
             {totalDesacoplado && (
@@ -190,12 +214,23 @@ export function DetailEditDialog({
                 <span className="text-xs font-semibold text-muted-foreground">Variável por projeto</span>
                 <div className="rounded border border-border divide-y">
                   {person.detalhe_projetos.map((p, i) => (
-                    <div key={`${p.nome}-${i}`} className="flex justify-between px-2 py-1 text-sm">
-                      <span className="truncate max-w-[220px]">{p.nome}</span>
-                      <span className="text-muted-foreground">
-                        {(p.area_m2 || 0).toLocaleString("pt-BR")} m² ={" "}
-                        {formatCurrency(subtotalProjeto(p, person.p_valor_m2))}
-                      </span>
+                    <div key={`${p.nome}-${i}`} className="px-2 py-1.5 text-sm">
+                      <div className="flex justify-between gap-3">
+                        <span className="truncate min-w-0">{p.nome}</span>
+                        <span className="font-medium shrink-0">
+                          {formatCurrency(subtotalProjeto(p, person.p_valor_m2, percentual))}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {[
+                          temM2
+                            ? `${(p.area_m2 || 0).toLocaleString("pt-BR")} m² × ${formatCurrency(person.p_valor_m2)}`
+                            : null,
+                          temPercentual ? `${formatPercent(percentual)} de ${formatCurrency(p.valor_base ?? 0)}` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" + ")}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -258,7 +293,7 @@ function EditableField({
       ) : isEditing && readOnlyWhenEditing ? (
         <p className="text-muted-foreground">{formatCurrency(editValue ?? value)}</p>
       ) : (
-        <p className={isBold ? "font-bold text-lg text-positive-strong" : ""}>
+        <p className={isBold ? "font-semibold text-base text-positive-strong" : ""}>
           {isCurrency ? formatCurrency(value) : `${value?.toLocaleString("pt-BR")}${suffix || ""}`}
         </p>
       )}
@@ -272,8 +307,8 @@ interface HistoryDetailDialogProps {
   selectedHistory: HistoryItem | null;
   loading: boolean;
   items: FolhaItem[];
-  onDownloadLote?: () => void;
-  onDownloadComprovante?: (item: FolhaItem) => void;
+  onDownloadLote?: () => void | Promise<void>;
+  onDownloadComprovante?: (item: FolhaItem) => void | Promise<void>;
 }
 
 export function HistoryDetailDialog({
@@ -286,6 +321,8 @@ export function HistoryDetailDialog({
   onDownloadComprovante,
 }: HistoryDetailDialogProps) {
   const formatCurrency = useMoneyMask();
+  // O lote junta todos os PDFs e demora: botão ocupado até o download começar.
+  const { executar, pendente } = useAcaoPendente();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90dvh] overflow-y-auto">
@@ -297,8 +334,13 @@ export function HistoryDetailDialog({
         </DialogHeader>
         {!loading && items.length > 0 && onDownloadLote && (
           <div className="flex justify-end">
-            <Button variant="outline" size="sm" onClick={onDownloadLote}>
-              Baixar lote de comprovantes
+            <Button
+              variant="outline"
+              size="sm"
+              loading={pendente("lote")}
+              onClick={() => executar("lote", async () => onDownloadLote())}
+            >
+              {pendente("lote") ? "Gerando comprovantes…" : "Baixar lote de comprovantes"}
             </Button>
           </div>
         )}
@@ -315,7 +357,7 @@ export function HistoryDetailDialog({
                 <TableRow>
                   <TableHead>Colaborador</TableHead>
                   <TableHead className="text-right">Salário fixo</TableHead>
-                  <TableHead className="text-right">Variável (m²)</TableHead>
+                  <TableHead className="text-right">Variável</TableHead>
                   <TableHead className="text-right">Total a receber</TableHead>
                   <TableHead className="text-center">Status</TableHead>
                   <TableHead className="text-right">Comprovante</TableHead>
@@ -348,11 +390,12 @@ export function HistoryDetailDialog({
                     <TableCell className="text-right">
                       <Button
                         variant="outline"
-                        size="sm"
-                        className="h-8 gap-1 text-xs"
-                        onClick={() => onDownloadComprovante?.(item)}
+                        size="xs"
+                        className="gap-1"
+                        loading={pendente(item.p_id)}
+                        onClick={() => executar(item.p_id, async () => onDownloadComprovante?.(item))}
                       >
-                        <FileDown className="h-3.5 w-3.5" />
+                        {!pendente(item.p_id) && <FileDown className="h-3.5 w-3.5" />}
                         PDF
                       </Button>
                     </TableCell>

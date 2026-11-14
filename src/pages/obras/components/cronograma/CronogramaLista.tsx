@@ -92,7 +92,7 @@ export function CronogramaLista(props: ListaProps) {
     <div className="overflow-hidden rounded-2xl border border-black/5 bg-white [--recuo:10px] md:[--recuo:20px]">
       <div className={cn(GRID, "hidden border-b bg-muted/30 px-3 py-2")}>
         {["Fase, etapa, serviço e tarefa", "Responsável", "Etiquetas", "Início", "Fim", "Avanço", ""].map((c, i) => (
-          <span key={i} className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <span key={i} className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground">
             {c}
           </span>
         ))}
@@ -297,7 +297,7 @@ function NoLinha({
         >
           {aberto ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </button>
-        <span className="hidden shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground md:inline">
+        <span className="hidden shrink-0 rounded bg-muted px-1.5 py-0.5 text-3xs font-medium uppercase tracking-wide text-muted-foreground md:inline">
           {NIVEL_LABEL[nivel]}
         </span>
         {editando ? (
@@ -669,10 +669,10 @@ function NovoItem({
         className="h-8 max-w-md flex-1 text-[13px]"
         aria-label={NOVO_LABEL[nivel]}
       />
-      <Button size="sm" variant="brand" className="h-8" onClick={criar} disabled={!nome.trim() || salvando}>
+      <Button size="xs" variant="brand" onClick={criar} disabled={!nome.trim() || salvando}>
         Criar
       </Button>
-      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={onFechar} aria-label="Fechar">
+      <Button size="icon-sm" variant="ghost" onClick={onFechar} aria-label="Fechar">
         <X className="h-4 w-4" />
       </Button>
     </div>

@@ -41,6 +41,8 @@ vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => h.auth }));
 vi.mock("@/hooks/usePermissions", () => ({ usePermissions: () => ({ isAdmin: h.isAdmin }) }));
 vi.mock("@/hooks/useOnboardingState", () => ({ useOnboardingState: () => ({ reset: h.resetOnboarding }) }));
 vi.mock("@/components/profile/EmailChangeCard", () => ({ EmailChangeCard: () => <div data-testid="email-card" /> }));
+vi.mock("@/components/settings/SobrePilar", () => ({ SobrePilar: () => <div data-testid="sobre-pilar" /> }));
+vi.mock("@/components/settings/PreviasRecursos", () => ({ PreviasRecursos: () => null }));
 vi.mock("sonner", () => ({ toast: { error: h.toastError, success: h.toastSuccess } }));
 
 const PERFIL = {

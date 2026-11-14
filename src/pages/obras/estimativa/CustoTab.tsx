@@ -1,9 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatCurrency, formatPercent } from "@/lib/format";
+import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { rotuloMesBase, rotuloPadrao } from "@/lib/estimativaObra";
 import type { ResultadoEstimativa } from "@/schemas/estimativaObra";
 import { toDataSourceResult } from "@/types/dataSource";
@@ -134,22 +136,78 @@ function DesembolsoMensal({ r }: { r: ResultadoEstimativa }) {
 function NaturezaDoCusto({ r }: { r: ResultadoEstimativa }) {
   const total = r.natureza.reduce((s, n) => s + n.valor, 0);
   return (
-    <Bloco titulo="Por natureza">
+    <Bloco
+      titulo="Material e mão de obra"
+      nota="A mão de obra já está dentro da base do CUB e dos itens: aqui ela aparece separada. A divisão segue a proporção média dos parâmetros."
+    >
       <div className="flex h-3 overflow-hidden rounded-full" role="img" aria-label="Divisão do custo por natureza">
         {r.natureza.map((n) => (
           <span key={n.id} style={{ width: `${(n.valor / total) * 100}%`, background: COR_NATUREZA[n.id] }} />
         ))}
       </div>
-      <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-ink-soft">
+      <dl className="grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
         {r.natureza.map((n) => (
-          <li key={n.id} className="flex items-center gap-1.5">
-            <span aria-hidden="true" className="h-2.5 w-2.5 rounded-sm" style={{ background: COR_NATUREZA[n.id] }} />
-            {n.rotulo}{" "}
-            <strong className="font-semibold tabular-nums text-ink">{formatPercent((n.valor / total) * 100, 1)}</strong>
-          </li>
+          <div key={n.id} className="flex items-center justify-between gap-3">
+            <dt className="flex items-center gap-1.5 text-ink-soft">
+              <span aria-hidden="true" className="h-2.5 w-2.5 rounded-sm" style={{ background: COR_NATUREZA[n.id] }} />
+              {n.rotulo}
+            </dt>
+            <dd className="tabular-nums">
+              <strong className="font-semibold text-ink">{reais0(n.valor)}</strong>{" "}
+              <span className="text-xs text-ink-soft">
+                {formatPercent((n.valor / total) * 100, (n.valor / total) * 100 < 1 ? 1 : 0)}
+              </span>
+            </dd>
+          </div>
         ))}
-      </ul>
+      </dl>
     </Bloco>
+  );
+}
+
+const NATUREZA_DA_ETAPA = [
+  ["material", "Material"],
+  ["maoDeObra", "Mão de obra"],
+  ["equipamentos", "Equipamentos"],
+  ["despesas", "Despesas da obra"],
+] as const;
+
+/** Detalhe da etapa: quanto é material e mão de obra, quando acontece e quais serviços entram. */
+function DetalheDaEtapa({ etapa, r }: { etapa: Etapa; r: ResultadoEstimativa }) {
+  const fase = r.fases.find((f) => f.id === etapa.fase);
+  const daEtapa = fase?.etapas.filter((e) => e.nome === etapa.nome) ?? [];
+  const blocos = daEtapa.length > 0 ? daEtapa : (fase?.etapas ?? []);
+  return (
+    <div className="space-y-3 text-sm">
+      {etapa.natureza && (
+        <dl className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
+          {NATUREZA_DA_ETAPA.map(([chave, rotulo]) => (
+            <div key={chave} className="flex justify-between gap-2">
+              <dt className="text-ink-soft">{rotulo}</dt>
+              <dd className="tabular-nums text-ink">{reais0(etapa.natureza![chave])}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      {blocos.length > 0 && (
+        <div className="space-y-2">
+          {blocos.map((b) => (
+            <div key={b.nome}>
+              <p className="text-xs text-ink-soft">
+                {b.nome === etapa.nome ? "Serviços" : b.nome} · {formatDate(b.inicio)} a {formatDate(b.fim)}
+              </p>
+              <ul className="mt-1 flex flex-wrap gap-1.5">
+                {b.servicos.map((sv) => (
+                  <li key={sv.nome} className="rounded-md bg-muted px-2 py-0.5 text-xs text-ink">
+                    {sv.nome}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -166,8 +224,33 @@ export function CustoTab({ resultado: r, onOrigem, onInformar }: CustoTabProps) 
   const maiorEtapa = Math.max(...r.etapas.map((e) => e.valor));
   const adicionaisTotal = r.adicionais.reduce((s, a) => s + (a.valor ?? 0), 0);
 
+  const [etapasAbertas, setEtapasAbertas] = useState<ReadonlySet<string>>(new Set());
+  const alternarEtapa = (e: Etapa) =>
+    setEtapasAbertas((atual) => {
+      const novo = new Set(atual);
+      if (novo.has(e.id)) novo.delete(e.id);
+      else novo.add(e.id);
+      return novo;
+    });
+
   const colunasEtapa: ColumnDef<Etapa>[] = [
-    { key: "etapa", header: "Etapa", cell: (e) => e.nome, mobile: "title" },
+    {
+      key: "etapa",
+      header: "Etapa",
+      cell: (e) => (
+        <span className="flex items-center gap-1.5">
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 shrink-0 text-ink-soft transition-transform",
+              etapasAbertas.has(e.id) && "rotate-180"
+            )}
+            aria-hidden="true"
+          />
+          {e.nome}
+        </span>
+      ),
+      mobile: "title",
+    },
     {
       key: "valor",
       header: "Valor",
@@ -241,14 +324,21 @@ export function CustoTab({ resultado: r, onOrigem, onInformar }: CustoTabProps) 
     <div className="space-y-4">
       <ResumoDoCusto r={r} />
 
-      <OrigemDoPreco resultado={r} />
+      <NaturezaDoCusto r={r} />
 
-      <Bloco titulo="Por etapa" nota="Base do CUB distribuída pelos percentuais dos parâmetros.">
+      <Bloco
+        titulo="Por etapa"
+        nota="Base do CUB distribuída pelos percentuais dos parâmetros. Toque na etapa para ver material, mão de obra e serviços."
+      >
         <DataTable
           columns={colunasEtapa}
           data={toDataSourceResult<Etapa>({ data: r.etapas })}
           rowKey={(e) => e.id}
           density="compact"
+          onRowClick={alternarEtapa}
+          rowLabel={(e) => `${etapasAbertas.has(e.id) ? "Recolher" : "Ver detalhes de"} ${e.nome}`}
+          expandedIds={etapasAbertas}
+          renderExpanded={(e) => <DetalheDaEtapa etapa={e} r={r} />}
         />
       </Bloco>
 
@@ -291,10 +381,9 @@ export function CustoTab({ resultado: r, onOrigem, onInformar }: CustoTabProps) 
         </dl>
       </section>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <NaturezaDoCusto r={r} />
-        <DesembolsoMensal r={r} />
-      </div>
+      <OrigemDoPreco resultado={r} />
+
+      <DesembolsoMensal r={r} />
     </div>
   );
 }

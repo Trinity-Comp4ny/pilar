@@ -14,6 +14,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { formatDateTime } from "@/lib/format";
 import { mensagemDaFunction } from "@/lib/edgeError";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import { AvisosLegais } from "./components/AvisosLegais";
 
 interface PedidoRow {
   id: string;
@@ -176,6 +177,8 @@ export default function PedidosLgpd() {
         emptyMessage="Nenhum pedido de exclusão até agora."
         errorTitle="Não foi possível carregar os pedidos"
       />
+
+      <AvisosLegais />
 
       <FormDialog
         open={!!aprovarAlvo}

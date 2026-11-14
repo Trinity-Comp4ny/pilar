@@ -17,6 +17,8 @@
  * PII scrubbing: todos os traits/properties passam por scrub() antes de sair,
  * mesma blocklist e regex do monitoring.ts.
  *
+ * Google Tag Manager (gtm.ts) passa pelo mesmo portão: só carrega com o aceite.
+ *
  * Carregamento: o SDK do PostHog (~80 kB gzip) vem por import dinâmico no
  * primeiro uso com consentimento, fora do carregamento inicial. Chamadas feitas
  * antes do download terminar esperam na ordem em que chegaram.
@@ -25,6 +27,7 @@
 import type { PostHog } from "posthog-js";
 import { env } from "./env";
 import { getCookieConsent, saveCookieConsent } from "./cookieConsent";
+import { loadGtm, revokeGtm } from "./gtm";
 import type { EventoProduto } from "./eventosProduto";
 
 type Props = Record<string, unknown>;
@@ -163,7 +166,15 @@ function ensurePosthogInit(ph: PostHog) {
     capture_pageleave: true,
     autocapture: false,
     person_profiles: "identified_only",
-    disable_session_recording: true,
+    // Replay só liga com o aceite (withPosthog) E com o replay ligado no projeto PostHog.
+    // Tudo mascarado: o vídeo mostra layout, cliques e navegação, nunca texto, campo ou
+    // imagem (docs/ROPA.md, item 11), mesmo padrão do replay do Sentry (OPCOES_REPLAY).
+    disable_session_recording: false,
+    session_recording: {
+      maskAllInputs: true,
+      maskTextSelector: "*",
+      blockSelector: "img, video, canvas, iframe",
+    },
     bootstrap: { distinctID: ensureAnonId() },
     sanitize_properties: (props) => scrub(props) as Record<string, unknown>,
   });
@@ -216,6 +227,7 @@ export const analytics: Analytics = KEY ? posthogAnalytics : noopAnalytics;
 
 export function initAnalytics() {
   analytics.init();
+  if (hasAnalyticsConsent()) loadGtm();
 }
 
 /** Único ponto que liga/desliga o PostHog em runtime. Chamado por cookieConsentSync.ts. */
@@ -223,8 +235,10 @@ export function applyCookieConsent(analyticsAccepted: boolean) {
   saveCookieConsent(analyticsAccepted);
   if (analyticsAccepted) {
     analytics.init();
+    loadGtm();
     return;
   }
+  revokeGtm();
   if (posthogInitialized && posthog) {
     posthog.opt_out_capturing();
     posthog.reset();

@@ -266,13 +266,12 @@ export const FEATURES: readonly FeatureDefinition[] = [
   {
     key: "obras_fornecedores",
     label: "Fornecedores",
-    description: "Cadastro de fornecedores da obra",
+    description: "Cadastro de fornecedores da empresa (projetos e obras)",
     group: "operacao",
     icon: Truck,
     core: false,
     universal: true,
     addon: false,
-    parent: "obras",
   },
   {
     key: "obras_clima",
@@ -392,7 +391,7 @@ export const FEATURE_MODULE: Record<FeatureKey, FeatureModuleId | null> = {
   mapa: "projetos",
   // Obras
   obras: "obras",
-  obras_fornecedores: "obras",
+  obras_fornecedores: "gestao",
   obras_clima: "obras",
   obras_diario: "obras",
   obras_cronograma: "obras",

@@ -79,6 +79,11 @@ const ANON_ESPERADO = new Set([
   "portal_change_password",
   "portal_aprovar_entrega",
   "portal_listar_entregas",
+  "portal_listar_solicitacoes",
+  "portal_listar_mensagens",
+  "portal_enviar_mensagem",
+  "portal_marcar_mensagens_lidas",
+  "portal_contar_mensagens_nao_lidas",
   "portal_solicitar_revisao_entrega",
   "get_cliente_obras",
   "get_cliente_obra_detail",
@@ -105,6 +110,7 @@ const ANON_ESPERADO = new Set([
   "campo_registrar_visita",
   // Spec 099: convite por link. Quem clica ainda não tem sessão nenhuma; o token
   // do convite (hash sha256, expira, uso único) é a credencial.
+  "portal_convite_consultar",
   "portal_convite_definir_senha",
   "campo_convite_definir_senha",
   // Roda ANTES do signInWithPassword, por definição sem sessão.

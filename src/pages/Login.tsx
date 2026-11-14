@@ -222,7 +222,7 @@ export default function Login() {
                   </label>
                 </div>
                 {ultimo === "senha" && (
-                  <span className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-medium text-ink">
+                  <span className="rounded-full bg-brand px-2 py-0.5 text-3xs font-medium text-ink">
                     usado por último
                   </span>
                 )}

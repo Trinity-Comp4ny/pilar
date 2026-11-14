@@ -11,6 +11,172 @@ Regras de manutenção:
 
 ---
 
+## 2026-11-12 (noite) · A marca é feminina: "a Pilar"
+
+**Decisão:** o nome leva artigo feminino em toda copy, site, app e e-mail: "a Pilar", "da Pilar", "na Pilar".
+A exceção é o app de campo, que segue "o Pilar Campo" (o app).
+
+Contexto: o resumo de IA do Google descrevia "O Pilar", porque o próprio site escrevia assim. O CEO quer "a Pilar".
+Site, blog, app e edge functions foram trocados de uma vez.
+
+**Supera:** o "artigo em aberto" de `brand/usage.md` e o "o Pilar" de `brand/messaging.md`.
+
+---
+
+## 2026-11-12 (mais tarde) · Ordem das próximas integrações; Open Finance fica de fora por custo
+
+**Decisão:** depois da agenda, a ordem é histórico do lead (com reunião marcada pela Pilar e tarefas no Google
+Agenda), WhatsApp semiautomático pela API oficial, assinatura eletrônica da proposta e importação de extrato OFX.
+NFS-e espera validação com escritórios; Microsoft 365 e ata de reunião sob demanda. Análise de custo na SPEC 164.
+
+Contexto: o CEO gostou de WhatsApp e assinatura. Open Finance custa a partir de R$ 2.500/mês (Pluggy), caro para a
+base atual; o OFX resolve a conciliação sem custo.
+
+**Supera:** a lista "Integrações sugeridas" da primeira versão da SPEC 164.
+
+---
+
+## 2026-11-12 · Google Agenda conectado, por pessoa, com criação de reunião e aviso antes
+
+**Decisão:** cada usuário conecta o próprio Google Agenda. As reuniões aparecem na Agenda de Tarefas, junto dos
+prazos, e dá para criar, editar e excluir reunião ali mesmo (Meet e convite aos convidados), sem abrir o Google
+(escopo `calendar.events`), puxando todas as agendas da conta (pessoal, trabalho, compartilhadas), cada uma ligável.
+O sino avisa antes de cada reunião: 10 minutos por padrão, a pessoa muda o padrão e o
+aviso de cada reunião.
+Plano e ordem das próximas ideias (convite do portal, arquivos sem Drive) na SPEC 164.
+
+Contexto: o CEO quer o dia do usuário dentro da Pilar ("daqui meia hora você tem uma reunião") para ele não precisar
+sair da plataforma. Diferente do Drive (uma conta do escritório), agenda é pessoal: ninguém vê a do colega.
+
+**Supera:** nada; é a segunda integração Google, depois do Drive (2026-11-10).
+
+---
+
+## 2026-11-12 · Reels virais terminam sem fechamento de marca, em loop
+
+**Decisão:** os vídeos curtos de conteúdo (Reels, TikTok, Shorts da linha viral) não têm mais quadro final com
+logotipo, tagline e CTA. O último quadro emenda no primeiro (a obra rebobina até a planta, ou o vídeo volta ao
+gancho), para o vídeo repetir sem corte. A marca e o CTA ("Planos e demonstração no link da bio") vão na legenda
+do post e no perfil.
+
+Contexto: o CEO notou que todos os vídeos tinham o mesmo final e que esse final quebra o loop, que é o que faz o
+Reel ser revisto e distribuído. Detalhe e exceções (planos, comece aqui, lançamento) em `docs/marketing/08-direcao-criativa.md` §2;
+kit dos Reels 3D em `docs/marketing/video/reels-kit/`.
+
+**Supera:** o "Fechamento: lockup + CTA em pílula + quadro parado por 1 s" de `brand/motion.md` §5, só para a linha de
+conteúdo viral. Vídeo institucional e de demonstração (V-01 a V-03) seguem com fechamento.
+
+---
+
+## 2026-11-11 · Fluxo do projeto vira grafo com dependências e caminho crítico
+
+**Decisão:** a aba Fluxo do projeto passa a funcionar como o grafo de um pipeline de CI: etapas, o que roda em
+paralelo, status, datas previstas e reais, previsão de conclusão projetada pelo andamento real e caminho crítico.
+Disciplinas ganham dependência explícita (fase 2), com a coluna anterior inteira como padrão. Plano em fases na
+SPEC 162.
+
+Contexto: hoje o sócio abre disciplina por disciplina para saber se um atraso empurra a entrega; a lista de
+disciplinas não responde isso. Continua sem biblioteca de grafo (ADR 0020): layout em colunas, desenhado à mão.
+
+**Supera:** o fora de escopo da SPEC 071 ("DAG genérico com dependências arbitrárias") e o da SPEC 051 ("recalcular
+datas futuras quando uma etapa atrasa").
+
+---
+
+## 2026-11-10 (mais tarde) · Google Drive conectado à Pilar; a Pilar segue sem guardar arquivo
+
+**Decisão:** o escritório conecta o Google Drive dele à Pilar (botão em Configurações, só admin) e cada projeto
+ganha uma pasta no Drive, com uma subpasta por disciplina, que a equipe navega, alimenta e baixa na aba Arquivos do
+projeto. O arquivo vai do navegador direto para o Google; a Pilar não guarda binário. Escopo `drive.file` (só o que a
+Pilar cria): sem auditoria anual do Google. Detalhe na SPEC 163.
+
+Contexto: na reunião com a VRZ o sócio pediu para ver e gerenciar as pastas do Drive dentro da Pilar; colar link já
+existe e não basta. Guardar os arquivos na Pilar (opção C da SPEC 163) ficou para depois.
+
+**Supera:** nada; confirma a de 2026-07-30 (a Pilar não hospeda binário) e acrescenta a integração.
+
+---
+
+## 2026-11-10 (mais tarde) · Bônus da folha quando a disciplina é concluída; portal liberado também ao coordenador
+
+**Decisão:** o bônus de produtividade (m² e percentual) entra na folha do mês em que a disciplina da pessoa é
+concluída, não mais no mês em que o projeto começou. Como a base do bônus é do projeto, cada projeto paga uma vez por
+pessoa: no mês da primeira disciplina dela concluída ali; projeto já pago numa folha fechada não volta. Projeto
+cancelado não paga. Dar acesso ao portal do cliente passa a ser possível de dentro do projeto, por admin e
+coordenador (antes só admin, só pela tela de Clientes).
+
+Contexto: na VRZ um projeto fechado na semana anterior, que nem tinha começado, já aparecia no bônus da folha. O sócio
+pediu "quando concluir a disciplina". O coordenador é quem fala com o cliente; o portal precisava estar a um clique,
+no projeto.
+
+**Supera:** a regra "projeto que começou no mês da folha" (SPEC 032, migration 20261209000000) e o "só admin" do convite
+ao portal.
+
+---
+
+## 2026-11-10 (mais tarde) · Conector da Pilar vai para os diretórios oficiais do Claude e do ChatGPT
+
+**Decisão:** o usuário final não vai colar URL de conector. O conector da Pilar será publicado no diretório de
+conectores do Claude e no diretório de apps do ChatGPT, para o usuário conectar pedindo na conversa ("conecte a
+Pilar") ou com um clique no diretório. Fica como próximo passo planejado, depois da fase 1 validada: tem revisão
+externa e exige domínio próprio, produção, política de privacidade do conector, página pública, material de listagem
+e conta de teste. Checklist completo na SPEC 151, "Próximos passos".
+
+Contexto: o ICP usa Claude e ChatGPT pelo app, não por configuração técnica; é assim que Notion, Canva e Slack
+distribuem os conectores deles.
+
+**Supera:** a URL colada à mão como forma de o cliente conectar (fica só para teste e piloto).
+
+---
+
+## 2026-11-10 · Profissionalizar a relação com o usuário: novidades, voz do cliente, ajuda e confiança
+
+**Decisão:** entra no roadmap o bloco de profissionalização da plataforma, com prioridade nesta ordem: "O que mudou"
+no aviso de nova versão + "Você pediu, entregamos" (SPEC 152); faixa de incidente e manutenção no app; central de
+ajuda + assistente de agentes no canto da tela (mesmo motor do `/chat`, com botão que leva à tela); bug zero com
+prazo; NPS com limite de frequência; prévia de recursos opcional. Regra editorial: só vai para o usuário o que muda
+o que ele vê ou faz; infra, refatoração e teste ficam internos.
+
+Contexto: com mais de um escritório, avisar mudança por WhatsApp não escala e o feedback não volta para quem pediu.
+Análise do código + referências globais (Linear, GitHub, Intercom, Canny, Omie) em
+`research/themes/profissionalizacao-saas-referencias.md`.
+
+**Supera:** o adiamento de "What's New", central de novidades e NPS no `SCORECARD_MATURIDADE_2026-08` ("com 1 design
+partner, WhatsApp entrega o mesmo").
+
+---
+
+## 2026-11-10 · A Pilar vira conector para ChatGPT e Claude (MCP), começando só leitura
+
+**Decisão:** a Pilar ganha um conector MCP para o cliente consultar os dados do escritório de dentro do ChatGPT,
+do Claude (claude.ai e Desktop) e de outros clientes MCP. A conexão é por OAuth na tela da Pilar, com o login de
+sempre. A fase 1 só lê (projetos, aditivos, propostas, leads, clientes, resumo financeiro); escrita vem depois, como
+rascunho que o usuário aprova no app. O usuário não deve ver o endereço do provedor: o conector usa o domínio próprio
+(`api.pilarsoft.com.br`, add-on de domínio do Supabase) antes de abrir para cliente.
+
+Contexto: o ICP já usa ChatGPT e Claude no dia a dia (não Claude Code); empresas buscam serviço, não só software, e o
+conector leva a Pilar para onde o sócio já conversa. Detalhe e runbook na SPEC 151.
+
+**Supera:** nada; é a primeira decisão sobre integração com assistentes externos.
+
+---
+
+## 2026-11-10 · Símbolo numa cor só: o ábaco deixa de ser 85%
+
+**Decisão:** as cinco linhas do símbolo (capitel, ábaco e três caneluras) têm a mesma cor e a mesma opacidade em
+todo lugar: app, landing, e-mail, ícones, imagem de compartilhamento, posts e vídeos. O ábaco, que saía a 85%,
+passa a ser opaco. Nos vídeos e posts, o símbolo também não ganha caneluras verdes: entra em traço técnico, numa
+cor só.
+
+Contexto: o CEO viu nos vídeos de marketing que a segunda linha horizontal parecia um cinza diferente do resto e
+pediu o logo monocromático. Aplicado em `scripts/brand/build.py` (todos os SVG e PNG regenerados), `PilarMark`, tela
+de carregamento do app e da landing, templates do Instagram e `brand/logo.md`. O logo do e-mail virou `logo-v4.png`
+(o `v3` fica no ar para e-mails antigos), porque cliente de e-mail guarda cache.
+
+**Supera:** "Ábaco a 85%" de `brand/logo.md` (BEZ-385) e a versão `brand` com caneluras verdes nos vídeos.
+
+---
+
 ## 2026-11-09 (mais tarde) · Menção com @ sai por e-mail na hora, junto com o sino
 
 **Decisão:** quando alguém marca uma pessoa com @ num comentário (projeto, disciplina ou tarefa), o e-mail sai no

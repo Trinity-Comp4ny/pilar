@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Pilar | Gestão com agentes de IA para engenharia e arquitetura</title>
+    <title>Pilar: gestão com IA para escritório de engenharia e arquitetura</title>
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
@@ -14,10 +14,14 @@
     <meta name="author" content="Pilar" />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://www.pilarsoft.com.br/" />
+    <link rel="alternate" type="application/rss+xml" title="Blog da Pilar" href="https://www.pilarsoft.com.br/blog/feed.xml" />
     <!-- Geist é a fonte de verdade (ver index.css); Inter só existe como
          fallback de @font-face caso Geist falhe, e não deve ser baixada de
          propósito. Preload forçava os dois downloads em toda visita. -->
     <link rel="preload" href="/fonts/geist-variable.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- Itálico: a palavra giratória do H1 usa, acima da dobra. Sem o preload ela só
+         começava a baixar depois do CSS, no fim da cadeia crítica. -->
+    <link rel="preload" href="/fonts/geist-variable-italic.woff2" as="font" type="font/woff2" crossorigin />
     <meta property="og:title" content="Pilar | Gestão com agentes de IA para engenharia e arquitetura" />
     <meta
       property="og:description"
@@ -31,7 +35,7 @@
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Logo do Pilar sobre morros verdes, com a frase: gestão com agentes de IA para escritórios de engenharia e arquitetura" />
+    <meta property="og:image:alt" content="Logo da Pilar sobre morros verdes, com a frase: gestão com agentes de IA para escritórios de engenharia e arquitetura" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Pilar | Gestão com agentes de IA para engenharia e arquitetura" />
@@ -47,8 +51,19 @@
           {
             "@type": "Organization",
             "name": "Pilar",
+            "legalName": "MATHEUS PREZIA REZENDE TECH LTDA",
+            "taxID": "63.418.862/0001-59",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Rua Pedro Salido Nogueira, 63, Casa 10, Solar das Esmeraldas",
+              "addressLocality": "Marília",
+              "addressRegion": "SP",
+              "postalCode": "17516-545",
+              "addressCountry": "BR"
+            },
             "url": "https://www.pilarsoft.com.br/",
             "logo": "https://www.pilarsoft.com.br/pilar-logo.svg",
+            "sameAs": ["https://www.instagram.com/pilarsoft.app/"],
             "contactPoint": {
               "@type": "ContactPoint",
               "contactType": "customer service",
@@ -67,9 +82,19 @@
             "@type": "SoftwareApplication",
             "name": "Pilar",
             "applicationCategory": "BusinessApplication",
+            "applicationSubCategory": "Gestão de escritório de engenharia e arquitetura",
             "operatingSystem": "Web",
             "url": "https://www.pilarsoft.com.br/",
-            "description": "Sistema de gestão com agentes de IA para escritórios de engenharia e arquitetura: proposta, projeto, obra e financeiro conectados, com a aprovação da equipe."
+            "description": "Sistema de gestão com agentes de IA para escritórios de engenharia e arquitetura: proposta, projeto, obra e financeiro conectados, com a aprovação da equipe.",
+            "inLanguage": "pt-BR",
+            "offers": {
+              "@type": "AggregateOffer",
+              "priceCurrency": "BRL",
+              "lowPrice": "299",
+              "highPrice": "899",
+              "offerCount": "3",
+              "url": "https://www.pilarsoft.com.br/planos"
+            }
           }
         ]
       }
@@ -97,7 +122,7 @@
       <div class="boot-body">
         <div class="boot-ring">
           <canvas id="boot-canvas"></canvas>
-          <svg viewBox="-1 -0.5 30 25.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M1 2H27"/><path d="M3 6H25" stroke-opacity=".85"/><path class="f" pathLength="1" d="M7 23V9"/><path class="f" pathLength="1" d="M12 23V9"/><path class="f" pathLength="1" d="M17 23V9"/><path class="f" pathLength="1" d="M22 23V9"/></svg>
+          <svg viewBox="-1 -0.5 30 25.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M1 2H27"/><path d="M3 6H25"/><path class="f" pathLength="1" d="M7 23V9"/><path class="f" pathLength="1" d="M12 23V9"/><path class="f" pathLength="1" d="M17 23V9"/><path class="f" pathLength="1" d="M22 23V9"/></svg>
         </div>
         <p id="boot-caption"></p>
       </div>

@@ -61,7 +61,7 @@ export function templateTrialExpirado(params: { empresaNome: string; billingUrl:
   const { empresaNome, billingUrl } = params;
 
   return {
-    subject: "Seu teste grátis do Pilar terminou",
+    subject: "Seu teste grátis da Pilar terminou",
     html: shell({
       preview: "Seus dados continuam guardados. Assine para voltar a editar.",
       footerNote: `Você recebeu este e-mail por administrar a empresa ${empresaNome} na ${BRAND.nome}.`,
@@ -160,7 +160,7 @@ export function templateLgpdExportacaoPronta(params: { nome: string; link: strin
     subject: "Sua cópia de dados está pronta",
     html: shell({
       preview: `O link para baixar seus dados vale até ${validoAte}`,
-      footerNote: `Você recebeu este e-mail porque pediu uma cópia dos seus dados no ${BRAND.nome} (LGPD, art. 18).`,
+      footerNote: `Você recebeu este e-mail porque pediu uma cópia dos seus dados na ${BRAND.nome} (LGPD, art. 18).`,
       hero: {
         titulo: html`Sua ${em("cópia de dados")} está pronta`,
         lead: html`Olá, ${strong(nome)}. Montamos o arquivo com os dados da sua conta: perfil, preferências,
@@ -186,8 +186,8 @@ export function templateLgpdExclusaoConcluida(params: { nome: string }): EmailTe
   return {
     subject: "Seus dados foram excluídos",
     html: shell({
-      preview: `Atendemos seu pedido de exclusão no ${BRAND.nome}`,
-      footerNote: `Você recebeu este e-mail porque pediu a exclusão dos seus dados no ${BRAND.nome} (LGPD, art. 18).`,
+      preview: `Atendemos seu pedido de exclusão na ${BRAND.nome}`,
+      footerNote: `Você recebeu este e-mail porque pediu a exclusão dos seus dados na ${BRAND.nome} (LGPD, art. 18).`,
       hero: {
         titulo: html`Seus ${em("dados foram excluídos")}`,
         lead: html`Olá, ${strong(nome)}. Atendemos seu pedido: nome, e-mail, telefone e foto saíram da sua conta, junto
@@ -214,7 +214,7 @@ export function templateLgpdExclusaoRecusada(params: { nome: string; motivo: str
     subject: "Seu pedido de exclusão precisa de um passo antes",
     html: shell({
       preview: "Não conseguimos excluir sua conta ainda",
-      footerNote: `Você recebeu este e-mail porque pediu a exclusão dos seus dados no ${BRAND.nome} (LGPD, art. 18).`,
+      footerNote: `Você recebeu este e-mail porque pediu a exclusão dos seus dados na ${BRAND.nome} (LGPD, art. 18).`,
       hero: {
         titulo: html`Seu pedido de exclusão ${em("ainda não foi atendido")}`,
         lead: html`Olá, ${strong(nome)}. Analisamos seu pedido e ele não pôde ser atendido agora.`,
@@ -406,6 +406,45 @@ export function templateAvisoPlataforma(params: {
         card([kv("Quando", enviadoEm)], { mt: mensagem ? 16 : 0 }),
         button("Abrir no painel", url),
         ...(dicaResposta ? [small(dicaResposta)] : []),
+      ],
+    }),
+  };
+}
+
+/**
+ * Aviso legal aos administradores das contas (Termos de Uso, Política de Privacidade,
+ * reajuste, fornecedor novo). Os Termos v2 (cláusula 15 e Anexo A5) prometem esse aviso
+ * por e-mail antes da mudança valer.
+ */
+export function templateAvisoLegal(params: {
+  nome: string;
+  assunto: string;
+  titulo: string;
+  lead: string;
+  itens: string[];
+  vigencia: string;
+  link: string;
+  linkLabel: string;
+  rodape: string;
+}): EmailTemplate {
+  const { nome, assunto, titulo, lead, itens, vigencia, link: href, linkLabel, rodape } = params;
+  return {
+    subject: assunto,
+    html: shell({
+      preview: lead.slice(0, 120),
+      footerNote: `Você recebeu este e-mail porque administra uma conta na ${BRAND.nome}. ${rodape}`,
+      hero: {
+        titulo: html`${titulo}`,
+        lead: html`Olá, ${strong(nome)}. ${lead}`,
+      },
+      content: [
+        card(
+          itens.map((item, i) => paragraph(html`${strong("·")} ${item}`, { mt: i === 0 ? 0 : 8 })),
+          { accent: "info", mt: 0 }
+        ),
+        card([kv("Vale a partir de", vigencia)], { mt: 16 }),
+        button(linkLabel, href),
+        small(html`Dúvidas ou discordância? Responda este e-mail ou escreva para privacidade@pilarsoft.com.br.`),
       ],
     }),
   };

@@ -68,6 +68,38 @@ export function ObraTimelineTab({ obra, onIrParaDiario }: { obra: ObraResumo; on
         <Progress value={obra.avanco} className="h-2" />
       </Bloco>
 
+      {/* Marcos ao lado do Avanço: os dois eram meia largura com a outra metade vazia
+          (auditoria de espaço, 2026-11). */}
+      <Bloco titulo={obra.projeto_id ? "Marcos de faturamento" : "Projeto"}>
+        {!obra.projeto_id ? (
+          <p className="text-sm text-muted-foreground">
+            Esta obra não está ligada a um projeto. Vincule na edição para ver marcos e faturamento.
+          </p>
+        ) : marcos.length === 0 ? (
+          <p className="text-sm text-muted-foreground">O projeto não tem marcos cadastrados.</p>
+        ) : (
+          <>
+            {/* Contexto pra decidir se já é hora de faturar (spec 065) — avanço
+                da OBRA inteira, não do marco específico: a UI não pode implicar
+                uma precisão por marco que o dado não sustenta. */}
+            <p className="-mt-1 text-xs text-muted-foreground">Obra {obra.avanco}% concluída</p>
+            <ul className="space-y-1.5">
+              {marcos.map((m) => (
+                <li key={m.id} className="flex items-center justify-between gap-2 text-sm">
+                  <span className="inline-flex min-w-0 items-center gap-1.5">
+                    <Flag className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <span className="truncate text-ink">{m.nome}</span>
+                  </span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {m.data_prevista ? formatDate(m.data_prevista) : "sem data"} · {formatCurrency(m.valor)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </Bloco>
+
       <div className="lg:col-span-2">
         <Bloco titulo="Curva S — planejado × realizado">
           <ObraCurvaS obraId={obra.id} />
@@ -118,36 +150,6 @@ export function ObraTimelineTab({ obra, onIrParaDiario }: { obra: ObraResumo; on
               </li>
             ))}
           </ul>
-        )}
-      </Bloco>
-
-      <Bloco titulo={obra.projeto_id ? "Marcos de faturamento" : "Projeto"}>
-        {!obra.projeto_id ? (
-          <p className="text-sm text-muted-foreground">
-            Esta obra não está ligada a um projeto. Vincule na edição para ver marcos e faturamento.
-          </p>
-        ) : marcos.length === 0 ? (
-          <p className="text-sm text-muted-foreground">O projeto não tem marcos cadastrados.</p>
-        ) : (
-          <>
-            {/* Contexto pra decidir se já é hora de faturar (spec 065) — avanço
-                da OBRA inteira, não do marco específico: a UI não pode implicar
-                uma precisão por marco que o dado não sustenta. */}
-            <p className="-mt-1 text-xs text-muted-foreground">Obra {obra.avanco}% concluída</p>
-            <ul className="space-y-1.5">
-              {marcos.map((m) => (
-                <li key={m.id} className="flex items-center justify-between gap-2 text-sm">
-                  <span className="inline-flex min-w-0 items-center gap-1.5">
-                    <Flag className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    <span className="truncate text-ink">{m.nome}</span>
-                  </span>
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {m.data_prevista ? formatDate(m.data_prevista) : "sem data"} · {formatCurrency(m.valor)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </>
         )}
       </Bloco>
     </div>

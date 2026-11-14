@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
 import type { ReactNode } from "react";
 import type { ChainQuery, ChainResult } from "@/test/supabaseChain";
 import Pessoas from "./index";
@@ -72,11 +73,13 @@ const PESSOAS = [
   },
 ];
 
-function renderPage() {
+function renderPage(url = "/gestao/equipe") {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <Pessoas />
+      <MemoryRouter initialEntries={[url]}>
+        <Pessoas />
+      </MemoryRouter>
     </QueryClientProvider>
   );
 }
@@ -102,8 +105,7 @@ describe("Equipe (página)", () => {
     renderPage();
     await screen.findAllByText("Rita Alves");
     expect(screen.queryByRole("button", { name: "Nova pessoa" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Excluir" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Editar" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Mais ações/ })).not.toBeInTheDocument();
   });
 
   it("admin abre o cadastro de nova pessoa", async () => {
@@ -112,11 +114,24 @@ describe("Equipe (página)", () => {
     expect(await screen.findByRole("dialog", { name: "Nova pessoa" })).toBeInTheDocument();
   });
 
+  it("busca rápida: ?new=1 abre o cadastro de nova pessoa", async () => {
+    renderPage("/gestao/equipe?new=1");
+    expect(await screen.findByRole("dialog", { name: "Nova pessoa" })).toBeInTheDocument();
+  });
+
+  it("busca rápida: sem permissão de editar a equipe não abre o cadastro", async () => {
+    h.canEdit = false;
+    renderPage("/gestao/equipe?new=1");
+    await screen.findAllByText("Rita Alves");
+    expect(screen.queryByRole("dialog", { name: "Nova pessoa" })).not.toBeInTheDocument();
+  });
+
   it("excluir pede confirmação e faz exclusão lógica (deleted_at)", async () => {
     renderPage();
     const user = userEvent.setup();
     await screen.findAllByText("Rita Alves");
-    await user.click(screen.getAllByRole("button", { name: "Excluir" })[0]);
+    await user.click(screen.getAllByRole("button", { name: /^Mais ações/ })[0]);
+    await user.click(await screen.findByRole("menuitem", { name: "Excluir" }));
     expect(await screen.findByText("Excluir pessoa")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Excluir" }));
     await waitFor(() => expect(h.toastSuccess).toHaveBeenCalledWith("Pessoa excluída"));
@@ -131,7 +146,8 @@ describe("Equipe (página)", () => {
     renderPage();
     const user = userEvent.setup();
     await screen.findAllByText("Rita Alves");
-    await user.click(screen.getAllByRole("button", { name: "Excluir" })[0]);
+    await user.click(screen.getAllByRole("button", { name: /^Mais ações/ })[0]);
+    await user.click(await screen.findByRole("menuitem", { name: "Excluir" }));
     await user.click(await screen.findByRole("button", { name: "Cancelar" }));
     expect(h.calls.some((c) => c.op === "update")).toBe(false);
   });
@@ -143,7 +159,8 @@ describe("Equipe (página)", () => {
     renderPage();
     const user = userEvent.setup();
     await screen.findAllByText("Rita Alves");
-    await user.click(screen.getAllByRole("button", { name: "Excluir" })[0]);
+    await user.click(screen.getAllByRole("button", { name: /^Mais ações/ })[0]);
+    await user.click(await screen.findByRole("menuitem", { name: "Excluir" }));
     await user.click(await screen.findByRole("button", { name: "Excluir" }));
     await waitFor(() =>
       expect(h.toastError).toHaveBeenCalledWith("Não foi possível excluir a pessoa. Tente novamente.")

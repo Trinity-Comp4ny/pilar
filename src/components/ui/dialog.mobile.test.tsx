@@ -36,4 +36,35 @@ describe("DialogContent como painel de baixo no celular (SPEC 134)", () => {
     expect(fechar).toHaveLength(2);
     expect(fechar.some((b) => b.className.includes("md:hidden"))).toBe(true);
   });
+
+  it("ocupa a largura toda mesmo quando o chamador fixa uma largura (w-[96vw])", () => {
+    render(
+      <Dialog open>
+        <DialogContent className="w-[96vw] max-w-none">
+          <DialogTitle>Projeto</DialogTitle>
+          <DialogDescription>Detalhe</DialogDescription>
+        </DialogContent>
+      </Dialog>
+    );
+    expect(screen.getByRole("dialog").className).toContain("max-md:w-full");
+  });
+
+  it("layout próprio (p-0) não ganha o padding lateral do painel no celular", () => {
+    render(
+      <Dialog open>
+        <DialogContent className="flex flex-col gap-0 p-0">
+          <DialogTitle>Projeto</DialogTitle>
+          <DialogDescription>Detalhe</DialogDescription>
+        </DialogContent>
+      </Dialog>
+    );
+    const classes = screen.getByRole("dialog").className;
+    expect(classes).not.toContain("max-md:px-4");
+    expect(classes).toContain("max-md:pt-6");
+  });
+
+  it("formulário comum segue com o padding do painel", () => {
+    abrir();
+    expect(screen.getByRole("dialog").className).toContain("max-md:px-4");
+  });
 });

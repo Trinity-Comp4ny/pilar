@@ -42,15 +42,16 @@ export function DataFrescor({ updatedAt, isFetching, onRefresh, className, compa
     <span
       className={cn(
         "inline-flex items-center gap-1.5 text-xs text-muted-foreground",
-        compactOnMobile &&
-          "max-md:w-6 max-md:justify-start max-md:overflow-hidden max-md:pl-1.5 max-md:whitespace-nowrap",
+        // Celular: só o ícone, maior e com área de toque de 32 px (pedido do Matheus, 12/11).
+        compactOnMobile && "max-md:p-2 max-md:[&>svg]:h-4 max-md:[&>svg]:w-4",
         className
       )}
       role="status"
       aria-live="polite"
     >
       {isFetching ? <BusyMark className="h-3 w-3" /> : <RefreshCw className="h-3 w-3" aria-hidden="true" />}
-      {label}
+      {/* Só o ícone no celular: cortar a largura deixava aparecer "At" ao lado dele. */}
+      <span className={cn(compactOnMobile && "max-md:sr-only")}>{label}</span>
     </span>
   );
 

@@ -1,0 +1,24 @@
+{
+ "provider": "google",
+ "voice": "pt-BR-Chirp3-HD-Leda",
+ "lines": [
+  {
+   "t": 0.3,
+   "dur": 3.45,
+   "say": "Isso funciona para escritório pequeno? Aqui somos quatro.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 4.5,
+   "dur": 6.877,
+   "say": "Funciona, e foi pensada para começar pequeno. Usuários ilimitados: os quatro entram, e o próximo também.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 12.0,
+   "dur": 1.686,
+   "say": "Comenta aí que a gente responde.",
+   "ritmo": 1.0
+  }
+ ]
+}

@@ -61,7 +61,12 @@ function textoVisivel(): Trecho[] {
     html = html.replace(/<!--[\s\S]*?-->/g, "");
   }
   const llms = readFileSync(join(RAIZ_APP, "public/llms.txt"), "utf8");
-  return [...doCodigo, { origem: "index.html", texto: html }, { origem: "public/llms.txt", texto: llms }];
+  // Artigos do blog: texto que o visitante lê inteiro, com as mesmas regras.
+  const dirBlog = join(SRC, "content/blog");
+  const artigos = readdirSync(dirBlog)
+    .filter((n) => n.endsWith(".md"))
+    .map((n) => ({ origem: `src/content/blog/${n}`, texto: readFileSync(join(dirBlog, n), "utf8") }));
+  return [...doCodigo, { origem: "index.html", texto: html }, { origem: "public/llms.txt", texto: llms }, ...artigos];
 }
 
 const PROIBIDOS: { motivo: string; padrao: RegExp }[] = [

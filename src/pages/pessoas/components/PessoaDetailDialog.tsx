@@ -22,6 +22,7 @@ import { useMetasProgresso } from "@/hooks/useMetas";
 import { formatarValor, percentual, rotuloDaMeta } from "@/lib/metas";
 import type { Pessoa } from "../types";
 import { PessoaAcessoSecao } from "./PessoaAcessoSecao";
+import { formatPercent } from "@/lib/format";
 
 const formatDateBR = (iso?: string) => {
   if (!iso) return "-";
@@ -174,6 +175,12 @@ export function PessoaDetailDialog({
                       : "-"}
                   </p>
                 </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">% do valor do projeto</Label>
+                  <p className="font-medium">
+                    {pessoa.percentual_producao ? formatPercent(Number(pessoa.percentual_producao)) : "-"}
+                  </p>
+                </div>
               </>
             )}
           </div>
@@ -250,7 +257,7 @@ export function PessoaDetailDialog({
                           <div className="flex items-center gap-2">
                             <span className="font-medium truncate">{conta.banco}</span>
                             {conta.is_primary && (
-                              <span className="text-[10px] bg-brand text-ink px-1.5 py-0.5 rounded font-medium">
+                              <span className="text-3xs bg-brand text-ink px-1.5 py-0.5 rounded font-medium">
                                 Principal
                               </span>
                             )}

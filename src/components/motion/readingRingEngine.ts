@@ -1,7 +1,7 @@
 // Anel de leitura (R1, ADR 0049): poeira cinza em anel, uma varredura verde que
 // dá a volta com um brilho suave por baixo, um pulso de leitura saindo do centro
 // e uma respiração leve. Mesmo motor do MoleculeField do Precursal, com as cores
-// do Pilar. A cópia sem React para o boot vive em public/boot-ring.js.
+// da Pilar. A cópia sem React para o boot vive em public/boot-ring.js.
 
 const TONES = ["hsl(160 45% 72%)", "#A4EC86", "hsl(78 62% 58%)"];
 const SEED = 20261009;
