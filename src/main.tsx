@@ -12,10 +12,6 @@ initAnalytics();
 initStaleChunkReload();
 // Antes do React: o Android avisa cedo que o app pode ser instalado (ver instalarApp.ts).
 iniciarCapturaInstalacao();
-// Marca o último toque: só mutation logo após um toque vibra (ver haptico.ts).
-if (window.matchMedia?.("(pointer: coarse)").matches) {
-  void import("./lib/mobileBoot").then((m) => m.iniciarMobile());
-}
 
 // Config ausente que degrada o produto sem impedir o boot (captcha, Sentry, analytics).
 // Reportado depois do initMonitoring para chegar no Sentry: antes, um deploy sem

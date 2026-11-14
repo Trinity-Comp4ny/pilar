@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { haptico } from "@/lib/haptico";
+import { haptico, hapticoDeMutation, iniciarRastroDeToque } from "@/lib/haptico";
 import { PilarMark } from "@/components/motion/PilarMark";
 import {
   LIMIAR_PUXAR,
@@ -32,6 +32,16 @@ export function PullToRefresh() {
 
   useEffect(() => {
     if (!window.matchMedia?.("(pointer: coarse)").matches) return;
+
+    // Mesmo gancho do celular: vibra quando uma ação da pessoa (mutation) conclui ou falha.
+    const pararToque = iniciarRastroDeToque();
+    const pararMutations = queryClient.getMutationCache().subscribe((evento) => {
+      if (evento.type !== "updated") return;
+      const acao = evento.action.type;
+      if (acao === "success" || acao === "error") {
+        hapticoDeMutation(acao === "success" ? "sucesso" : "erro", evento.mutation.meta);
+      }
+    });
 
     let inicioY = 0;
     let inicioX = 0;
@@ -132,6 +142,8 @@ export function PullToRefresh() {
       document.removeEventListener("touchmove", aoMover);
       document.removeEventListener("touchend", aoSoltar);
       document.removeEventListener("touchcancel", aoCancelar);
+      pararToque();
+      pararMutations();
     };
   }, [queryClient]);
 

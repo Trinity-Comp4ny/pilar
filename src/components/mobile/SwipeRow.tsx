@@ -1,9 +1,9 @@
 import { Suspense, lazy } from "react";
+import { TELA_DE_TOQUE } from "@/lib/telaDeToque";
 import type { SwipeRowProps } from "./SwipeRowImpl";
 
 // Lazy: o gesto só serve em tela de toque e fica fora do bundle de entrada (teto apertado).
 const SwipeRowImpl = lazy(() => import("./SwipeRowImpl").then((m) => ({ default: m.SwipeRowImpl })));
-const TELA_DE_TOQUE = typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches;
 
 /**
  * Linha de lista deslizável (celular): arrasta para um lado e solta para executar a ação.

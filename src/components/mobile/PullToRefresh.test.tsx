@@ -106,4 +106,25 @@ describe("PullToRefresh", () => {
     montar();
     expect(spy).not.toHaveBeenCalledWith("touchstart", expect.anything(), expect.anything());
   });
+
+  it("vibra quando uma mutation logo após um toque conclui ou falha", async () => {
+    const vibrate = vi.fn();
+    Object.defineProperty(navigator, "vibrate", { value: vibrate, configurable: true });
+    // Toque sim, "reduzir movimento" não (senão o háptico se cala de propósito).
+    window.matchMedia = vi
+      .fn()
+      .mockImplementation((q: string) => ({ matches: q.includes("coarse") })) as unknown as typeof window.matchMedia;
+    montar();
+    document.dispatchEvent(new Event("pointerdown"));
+    const ok = qc.getMutationCache().build(qc, { mutationFn: async () => 1 });
+    await ok.execute(undefined);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(vibrate).toHaveBeenCalledWith([12, 40, 12]);
+    const ruim = qc
+      .getMutationCache()
+      .build(qc, { mutationFn: async () => Promise.reject(new Error("x")), retry: false });
+    await ruim.execute(undefined).catch(() => undefined);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(vibrate).toHaveBeenCalledWith([40, 60, 40]);
+  });
 });

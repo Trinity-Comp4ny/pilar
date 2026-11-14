@@ -230,9 +230,7 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
                     acaoEsquerda={
                       aba === "inbox" && !n.lido_em
                         ? {
-                            rotulo: "Lida",
-                            icone: <CheckCheck className="h-4 w-4" />,
-                            className: "bg-chart-success",
+                            tipo: "lida",
                             onAcionar: () => marcarLida.mutate(n.id),
                           }
                         : undefined
@@ -240,9 +238,7 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
                     acaoDireita={
                       aba === "inbox"
                         ? {
-                            rotulo: "Arquivar",
-                            icone: <Archive className="h-4 w-4" />,
-                            className: "bg-primary",
+                            tipo: "arquivar",
                             onAcionar: () => arquivar.mutate(n.id),
                           }
                         : undefined

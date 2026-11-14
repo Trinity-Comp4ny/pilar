@@ -3,12 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { SwipeRowImpl } from "./SwipeRowImpl";
 import { SwipeRow } from "./SwipeRow";
 
-const acao = (rotulo: string, onAcionar = vi.fn()) => ({
-  rotulo,
-  icone: <span />,
-  className: "bg-primary",
-  onAcionar,
-});
+const acao = (tipo: "lida" | "arquivar", onAcionar = vi.fn()) => ({ tipo, onAcionar });
 
 function arrastar(el: HTMLElement, de: [number, number], ate: [number, number]) {
   fireEvent.pointerDown(el, { pointerType: "touch", pointerId: 1, clientX: de[0], clientY: de[1] });
@@ -29,7 +24,7 @@ describe("SwipeRowImpl", () => {
   it("arrastar para a direita além do limiar aciona a ação da esquerda", () => {
     const lida = vi.fn();
     render(
-      <SwipeRowImpl acaoEsquerda={acao("Lida", lida)} acaoDireita={acao("Arquivar")}>
+      <SwipeRowImpl acaoEsquerda={acao("lida", lida)} acaoDireita={acao("arquivar")}>
         <span data-testid="linha">linha</span>
       </SwipeRowImpl>
     );
@@ -40,7 +35,7 @@ describe("SwipeRowImpl", () => {
   it("arrastar para a esquerda aciona a ação da direita", () => {
     const arquivar = vi.fn();
     render(
-      <SwipeRowImpl acaoDireita={acao("Arquivar", arquivar)}>
+      <SwipeRowImpl acaoDireita={acao("arquivar", arquivar)}>
         <span data-testid="linha">linha</span>
       </SwipeRowImpl>
     );
@@ -51,7 +46,7 @@ describe("SwipeRowImpl", () => {
   it("arrasto curto volta sem acionar; gesto vertical e mouse são ignorados", () => {
     const lida = vi.fn();
     render(
-      <SwipeRowImpl acaoEsquerda={acao("Lida", lida)}>
+      <SwipeRowImpl acaoEsquerda={acao("lida", lida)}>
         <span data-testid="linha">linha</span>
       </SwipeRowImpl>
     );
@@ -67,7 +62,7 @@ describe("SwipeRowImpl", () => {
   it("pointercancel desfaz o arrasto", () => {
     const lida = vi.fn();
     render(
-      <SwipeRowImpl acaoEsquerda={acao("Lida", lida)}>
+      <SwipeRowImpl acaoEsquerda={acao("lida", lida)}>
         <span data-testid="linha">linha</span>
       </SwipeRowImpl>
     );
@@ -81,7 +76,7 @@ describe("SwipeRowImpl", () => {
   it("clique logo após arrastar é engolido", () => {
     const clique = vi.fn();
     render(
-      <SwipeRowImpl acaoEsquerda={acao("Lida")}>
+      <SwipeRowImpl acaoEsquerda={acao("lida")}>
         <button data-testid="b" onClick={clique}>
           b
         </button>
@@ -97,7 +92,7 @@ describe("SwipeRowImpl", () => {
 
 describe("SwipeRow (wrapper)", () => {
   it("sem toque renderiza só o conteúdo", () => {
-    render(<SwipeRow acaoEsquerda={acao("Lida")}>linha simples</SwipeRow>);
+    render(<SwipeRow acaoEsquerda={acao("lida")}>linha simples</SwipeRow>);
     expect(screen.getByText("linha simples")).toBeInTheDocument();
   });
 
@@ -105,7 +100,7 @@ describe("SwipeRow (wrapper)", () => {
     vi.resetModules();
     window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia;
     const { SwipeRow: ComToque } = await import("./SwipeRow");
-    render(<ComToque acaoEsquerda={acao("Lida")}>linha de toque</ComToque>);
+    render(<ComToque acaoEsquerda={acao("lida")}>linha de toque</ComToque>);
     await waitFor(() => expect(screen.getByText("linha de toque")).toBeInTheDocument());
   });
 });
