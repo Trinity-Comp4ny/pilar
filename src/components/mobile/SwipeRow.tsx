@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { decidirDeslize, ehHorizontal, limitarDeslize } from "@/lib/gestos";
 import { haptico } from "@/lib/haptico";
 
-export interface AcaoDeslize {
+interface AcaoDeslize {
   rotulo: string;
   icone: ReactNode;
   /** Fundo da ação: token semântico (ex.: "bg-success", "bg-destructive"). */
