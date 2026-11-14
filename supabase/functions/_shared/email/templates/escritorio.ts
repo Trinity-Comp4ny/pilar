@@ -150,6 +150,40 @@ export function templateAcessoPortalCliente(params: {
   };
 }
 
+export function templateSolicitacaoCliente(params: {
+  nomeCliente: string;
+  titulo: string;
+  descricao?: string | null;
+  /** Onde a solicitação vive, já em texto: "Obra Casa do Lago" ou "Projeto Residência Lago". */
+  origem: string;
+  portalUrl: string;
+  empresaNome?: string;
+}): EmailTemplate {
+  const { nomeCliente, titulo, descricao, origem, portalUrl, empresaNome } = params;
+  const quem = empresaNome ? strong(empresaNome) : "Seu escritório";
+
+  return {
+    subject: `Precisamos de você: ${titulo}`,
+    html: shell({
+      preview: `${empresaNome ?? "Seu escritório"} enviou uma solicitação pelo portal`,
+      footerNote: empresaNome
+        ? `Enviado por ${empresaNome} via ${BRAND.nome}.`
+        : "Você recebeu este e-mail porque um escritório enviou uma solicitação pelo portal do cliente.",
+      hero: {
+        titulo: html`Uma solicitação ${em("aguarda você")}`,
+        lead: html`Olá, ${strong(nomeCliente)}. ${quem} enviou uma solicitação pelo portal. Abra para aprovar ou pedir
+        revisão.`,
+      },
+      content: [
+        card([kv("Solicitação", titulo), kv("Onde", origem), ...(descricao ? [kv("Detalhes", descricao)] : [])], {
+          mt: 0,
+        }),
+        button("Abrir no portal", portalUrl),
+      ],
+    }),
+  };
+}
+
 export function templateConviteAcessoCampo(params: {
   nome: string;
   email: string;

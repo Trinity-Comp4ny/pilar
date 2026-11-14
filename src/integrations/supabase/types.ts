@@ -4213,9 +4213,7 @@ export type Database = {
           obra_frente_id: string | null
           obra_id: string
           pago_por: string | null
-          quantidade: number | null
           tipo: string
-          unidade: string | null
           updated_at: string
           updated_by: string | null
           valor: number
@@ -4234,9 +4232,7 @@ export type Database = {
           obra_frente_id?: string | null
           obra_id: string
           pago_por?: string | null
-          quantidade?: number | null
           tipo: string
-          unidade?: string | null
           updated_at?: string
           updated_by?: string | null
           valor: number
@@ -4255,9 +4251,7 @@ export type Database = {
           obra_frente_id?: string | null
           obra_id?: string
           pago_por?: string | null
-          quantidade?: number | null
           tipo?: string
-          unidade?: string | null
           updated_at?: string
           updated_by?: string | null
           valor?: number
@@ -11181,6 +11175,28 @@ export type Database = {
           updated_at: string
         }[]
       }
+      portal_listar_solicitacoes: {
+        Args: { p_obra_id?: string; p_projeto_id?: string; p_token: string }
+        Returns: {
+          aprovado_ip: unknown
+          aprovado_user_agent: string
+          created_at: string
+          descricao: string
+          disciplina_nome: string
+          drive_url: string
+          id: string
+          obra_id: string
+          obra_nome: string
+          projeto_disciplina_id: string
+          projeto_id: string
+          projeto_nome: string
+          respondido_em: string
+          resposta_cliente: string
+          status: string
+          tipo: string
+          titulo: string
+        }[]
+      }
       portal_login: {
         Args: { p_email: string; p_senha: string }
         Returns: Json
@@ -11473,8 +11489,6 @@ export type Database = {
           p_obra_frente_id?: string
           p_obra_id: string
           p_pago_por?: string
-          p_quantidade?: number
-          p_unidade?: string
           p_valor: number
         }
         Returns: {
@@ -11491,9 +11505,7 @@ export type Database = {
           obra_frente_id: string | null
           obra_id: string
           pago_por: string | null
-          quantidade: number | null
           tipo: string
-          unidade: string | null
           updated_at: string
           updated_by: string | null
           valor: number

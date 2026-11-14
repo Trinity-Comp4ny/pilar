@@ -20,6 +20,7 @@ export {
   templateConviteAcessoCampo,
   templateMensagemManual,
   templatePropostaEnvio,
+  templateSolicitacaoCliente,
 } from "./templates/escritorio.ts";
 export {
   templateLgpdExclusaoConcluida,
