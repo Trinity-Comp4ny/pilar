@@ -310,7 +310,7 @@ export default function ComprarTokens() {
                       <Label htmlFor="ccNumber" className="flex items-center justify-between">
                         Número do cartão
                         {cardBrand && (
-                          <span className="text-[11px] font-medium text-ink-disabled uppercase tracking-wider">
+                          <span className="text-2xs font-medium text-ink-disabled uppercase tracking-wider">
                             {cardBrand}
                           </span>
                         )}
@@ -493,7 +493,7 @@ export default function ComprarTokens() {
         {!result && (
           <aside className="sticky top-[73px] space-y-4">
             <div className="bg-white rounded-2xl border border-paper-border p-6 shadow-sm">
-              <p className="text-[10px] uppercase tracking-widest text-ink-disabled mb-4">Escolha o pacote</p>
+              <p className="text-3xs uppercase tracking-widest text-ink-disabled mb-4">Escolha o pacote</p>
 
               <div className="space-y-2.5">
                 {TIER_ORDER.map((id) => {
@@ -528,7 +528,7 @@ export default function ComprarTokens() {
                   <p className="text-2xl font-semibold text-ink">
                     {formatCurrency(tier.valorCentavos / 100, { decimals: 2 })}
                   </p>
-                  <p className="text-[11px] text-ink-disabled">pagamento único</p>
+                  <p className="text-2xs text-ink-disabled">pagamento único</p>
                 </div>
               </div>
             </div>

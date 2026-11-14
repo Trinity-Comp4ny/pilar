@@ -236,7 +236,7 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
                         {n.titulo}
                       </p>
                       {n.mensagem && <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{n.mensagem}</p>}
-                      <p className="mt-1 text-[11px] text-muted-foreground">{formatTimeAgo(n.created_at)}</p>
+                      <p className="mt-1 text-2xs text-muted-foreground">{formatTimeAgo(n.created_at)}</p>
                     </div>
                     <div className="flex items-center gap-1">
                       {!n.lido_em && <span className="h-2 w-2 shrink-0 rounded-full bg-chart-danger" />}

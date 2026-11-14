@@ -47,7 +47,7 @@ export function GoogleButton({
       {loading ? <BusyMark className="h-4 w-4" /> : <GoogleLogo />}
       Continuar com Google
       {destaque && (
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-brand px-2 py-0.5 text-[10px] font-medium text-ink">
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-brand px-2 py-0.5 text-3xs font-medium text-ink">
           usado por último
         </span>
       )}

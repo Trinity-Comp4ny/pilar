@@ -587,7 +587,7 @@ export default function Propostas() {
       cell: (p) => (
         <>
           <p className="text-sm font-medium">{p.titulo}</p>
-          {p.codigo && <p className="text-[11px] text-muted-foreground font-mono">{p.codigo}</p>}
+          {p.codigo && <p className="text-2xs text-muted-foreground font-mono">{p.codigo}</p>}
         </>
       ),
     },
@@ -752,10 +752,10 @@ export default function Propostas() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium truncate">{p.titulo}</p>
-                          {p.codigo && <p className="text-[11px] text-muted-foreground font-mono">{p.codigo}</p>}
+                          {p.codigo && <p className="text-2xs text-muted-foreground font-mono">{p.codigo}</p>}
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                          <Badge className={`text-[10px] ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
+                          <Badge className={`text-3xs ${PROPOSTA_STATUS_CONFIG[displayStatus]?.color || ""}`}>
                             {PROPOSTA_STATUS_CONFIG[displayStatus]?.label || displayStatus}
                           </Badge>
                           {canDelete && (
@@ -907,7 +907,7 @@ export default function Propostas() {
                   placeholder="PROP-001"
                 />
                 {codigoDuplicado && (
-                  <p className="text-[11px] text-warning-mid">Já existe uma proposta com este código.</p>
+                  <p className="text-2xs text-warning-mid">Já existe uma proposta com este código.</p>
                 )}
               </div>
               <div className="space-y-2">
@@ -970,7 +970,7 @@ export default function Propostas() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-2xs text-muted-foreground">
                     Ao converter em projeto, o lead será automaticamente promovido a cliente.
                   </p>
                 </div>
@@ -991,7 +991,7 @@ export default function Propostas() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-2xs text-muted-foreground">
                     Opcional. Você pode criar a proposta sem vínculo e associar depois.
                   </p>
                 </div>
@@ -1032,7 +1032,7 @@ export default function Propostas() {
             </div>
 
             {disciplinasTotais.totalValor > 0 && (
-              <div className="flex flex-wrap items-center gap-2 -mt-2 text-[11px] text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2 -mt-2 text-2xs text-muted-foreground">
                 <span>Soma das disciplinas: {formatCurrency(disciplinasTotais.totalValor)}</span>
                 {valorDiverge && (
                   <>
@@ -1052,7 +1052,7 @@ export default function Propostas() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Disciplinas</Label>
-                <span className="text-[11px] text-muted-foreground">Opcional. Detalha horas, custo e valor.</span>
+                <span className="text-2xs text-muted-foreground">Opcional. Detalha horas, custo e valor.</span>
               </div>
               <DisciplinasEditor rows={disciplinasRows} onChange={setDisciplinasRows} disabled={!canEdit} />
             </div>
@@ -1063,7 +1063,7 @@ export default function Propostas() {
                 value={form.validade || ""}
                 onChange={(v) => setForm({ ...form, validade: v || undefined })}
               />
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-2xs text-muted-foreground">
                 Após esta data a proposta aparece como expirada. Padrão: 30 dias a partir da criação.
               </p>
             </div>

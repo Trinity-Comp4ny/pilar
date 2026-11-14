@@ -102,11 +102,7 @@ export default function ClienteDashboard() {
                         <div className="min-w-0">
                           <h3 className="text-sm font-semibold text-ink truncate mt-0.5">{projeto.projeto_nome}</h3>
                         </div>
-                        <StatusBadge
-                          domain="projeto"
-                          status={projeto.projeto_status}
-                          className="text-[10px] shrink-0"
-                        />
+                        <StatusBadge domain="projeto" status={projeto.projeto_status} className="text-3xs shrink-0" />
                       </div>
 
                       {/* Barra de progresso */}
@@ -165,7 +161,7 @@ export default function ClienteDashboard() {
                           <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
                           <h3 className="text-sm font-semibold text-ink truncate">{obra.nome}</h3>
                         </div>
-                        <StatusBadge domain="obra" status={obra.status} className="text-[10px] shrink-0" />
+                        <StatusBadge domain="obra" status={obra.status} className="text-3xs shrink-0" />
                       </div>
                       <div>
                         <div className="flex items-center justify-between mb-1.5">

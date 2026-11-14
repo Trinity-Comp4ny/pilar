@@ -112,7 +112,7 @@ interface BadgePendenciasProps {
 export function BadgePendencias({ count }: BadgePendenciasProps) {
   if (count === 0) return null;
   return (
-    <Badge variant="warning" className="text-[10px]">
+    <Badge variant="warning" className="text-3xs">
       {count} pendente{count === 1 ? "" : "s"}
     </Badge>
   );

@@ -347,7 +347,7 @@ export function ObraFormDialog({ open, onOpenChange, obra, onSaved }: Props) {
               }
             />
             {local && local.localizacao && local.latitude == null && (
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-2xs text-muted-foreground">
                 Sem coordenadas pra este endereço — a previsão de tempo na aba Clima fica indisponível.
               </p>
             )}

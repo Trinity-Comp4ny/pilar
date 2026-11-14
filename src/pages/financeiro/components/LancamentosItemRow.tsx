@@ -109,7 +109,7 @@ function StatusBadge({
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled className="text-[10px] text-muted-foreground">
+        <DropdownMenuItem disabled className="text-3xs text-muted-foreground">
           Clique para alterar
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -185,7 +185,7 @@ export function LancamentosItemRow({
       <td className={cn(cellPad, cellTextSize, "whitespace-nowrap", overdue && "text-danger-mid font-medium")}>
         {formatDateDisplay(dataExibir)}
         {/* "Atrasado" embaixo da data, não ao lado: na mesma linha a coluna dobrava de largura. */}
-        {overdue && <span className="block text-[10px] uppercase leading-none">atrasado</span>}
+        {overdue && <span className="block text-3xs uppercase leading-none">atrasado</span>}
       </td>
       <td
         className={cn(cellPad, "font-medium max-w-[200px] 2xl:max-w-[280px] truncate", cellTextSize)}
@@ -193,7 +193,7 @@ export function LancamentosItemRow({
       >
         {l.descricao}
         {isTransf && l.conta_nome && (
-          <span className="ml-1 text-[10px] text-muted-foreground font-normal">({l.conta_nome})</span>
+          <span className="ml-1 text-3xs text-muted-foreground font-normal">({l.conta_nome})</span>
         )}
       </td>
       <td

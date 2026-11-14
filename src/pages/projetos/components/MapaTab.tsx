@@ -204,7 +204,7 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
             <Search className="h-4 w-4" />
             Localizar
             {filtrados.length > 0 && (
-              <span className="ml-0.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground leading-none">
+              <span className="ml-0.5 rounded-full bg-muted px-1.5 py-0.5 text-3xs font-medium text-muted-foreground leading-none">
                 {filtrados.length}
               </span>
             )}
@@ -236,7 +236,7 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
                   >
                     <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                     <span className="truncate">{c.nome}</span>
-                    <span className="ml-auto text-[10px] text-muted-foreground shrink-0">{c.projetos.length}p</span>
+                    <span className="ml-auto text-3xs text-muted-foreground shrink-0">{c.projetos.length}p</span>
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -301,7 +301,7 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
                   {semCoordenadas.length === 1 ? "projeto não aparece" : "projetos não aparecem"} no mapa: o endereço
                   cadastrado ainda não tem latitude e longitude. Abra o projeto e salve o endereço para posicioná-lo.
                 </span>
-                <span className="ml-auto text-[10px] text-muted-foreground/70">
+                <span className="ml-auto text-3xs text-muted-foreground/70">
                   {semCoordenadasExpanded ? "ocultar ▲" : "ver projetos ▼"}
                 </span>
               </button>
@@ -498,7 +498,7 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
                     <div className="flex items-start gap-2.5">
                       <Building2 className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                       <div>
-                        <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Cliente</p>
+                        <p className="text-2xs text-muted-foreground uppercase tracking-wide">Cliente</p>
                         <p className="text-sm">{sheetProjeto.cliente_nome}</p>
                       </div>
                     </div>
@@ -508,7 +508,7 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
                     <div className="flex items-start gap-2.5">
                       <DollarSign className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                       <div>
-                        <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Valor do contrato</p>
+                        <p className="text-2xs text-muted-foreground uppercase tracking-wide">Valor do contrato</p>
                         <p className="text-sm font-medium">{formatCurrency(sheetProjeto.valor_contrato)}</p>
                       </div>
                     </div>
@@ -518,7 +518,7 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
                     <div className="flex items-start gap-2.5">
                       <Calendar className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                       <div>
-                        <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Período</p>
+                        <p className="text-2xs text-muted-foreground uppercase tracking-wide">Período</p>
                         <p className="text-sm">
                           {formatDate(sheetProjeto.data_inicio) ?? "—"}
                           {" → "}
@@ -532,7 +532,7 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
                     <div className="flex items-start gap-2.5">
                       <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                       <div>
-                        <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Área</p>
+                        <p className="text-2xs text-muted-foreground uppercase tracking-wide">Área</p>
                         <p className="text-sm">{sheetProjeto.area_m2.toLocaleString("pt-BR")} m²</p>
                       </div>
                     </div>
@@ -542,7 +542,7 @@ export function MapaTab({ toolbarSlot }: { toolbarSlot?: HTMLElement | null } = 
                     <div className="flex items-start gap-2.5">
                       <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                       <div>
-                        <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Endereço</p>
+                        <p className="text-2xs text-muted-foreground uppercase tracking-wide">Endereço</p>
                         <p className="text-sm text-muted-foreground">{sheetProjeto.localizacao}</p>
                       </div>
                     </div>

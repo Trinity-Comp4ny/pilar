@@ -102,12 +102,12 @@ function ProjetoCard({ projeto }: { projeto: ProjetoResumo }) {
             <div className="min-w-0">
               <p className="text-sm font-medium truncate group-hover:text-brand transition-colors">{projeto.nome}</p>
             </div>
-            {config && <Badge className={cn("text-[10px] shrink-0", config.color)}>{config.label}</Badge>}
+            {config && <Badge className={cn("text-3xs shrink-0", config.color)}>{config.label}</Badge>}
           </div>
 
           {projeto.total_disciplinas > 0 && (
             <div className="space-y-1">
-              <div className="flex justify-between text-[10px] text-muted-foreground">
+              <div className="flex justify-between text-3xs text-muted-foreground">
                 <span>Progresso</span>
                 <span>{progress}%</span>
               </div>
@@ -141,10 +141,10 @@ function PropostaCard({ proposta, onOpen }: { proposta: PropostaResumo; onOpen: 
         <CardContent className="p-4 space-y-3">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              {proposta.codigo && <p className="text-[10px] font-mono text-muted-foreground">{proposta.codigo}</p>}
+              {proposta.codigo && <p className="text-3xs font-mono text-muted-foreground">{proposta.codigo}</p>}
               <p className="text-sm font-medium truncate group-hover:text-brand transition-colors">{proposta.titulo}</p>
             </div>
-            {config && <Badge className={cn("text-[10px] shrink-0", config.color)}>{config.label}</Badge>}
+            {config && <Badge className={cn("text-3xs shrink-0", config.color)}>{config.label}</Badge>}
           </div>
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>{proposta.valor_proposto != null ? formatCurrency(proposta.valor_proposto) : "Sem valor"}</span>
@@ -185,7 +185,7 @@ function ProjetoAccordion({ projeto, children }: { projeto: ProjetoResumo; child
             <span className="text-sm font-medium">{projeto.nome}</span>
           </div>
         </div>
-        {config && <Badge className={cn("text-[10px] shrink-0", config.color)}>{config.label}</Badge>}
+        {config && <Badge className={cn("text-3xs shrink-0", config.color)}>{config.label}</Badge>}
       </button>
       {open && <div className="px-4 pb-4 pt-2 border-t">{children}</div>}
     </div>
@@ -208,18 +208,18 @@ function VisaoGeralTab({ cliente, podeGerirPortal }: { cliente: Cliente; podeGer
         <CardContent className="p-6 space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <div>
-              <p className="text-[10px] uppercase text-muted-foreground tracking-wider mb-1">CPF / CNPJ</p>
+              <p className="text-3xs uppercase text-muted-foreground tracking-wider mb-1">CPF / CNPJ</p>
               <p className="text-sm font-medium">{formatDocument(cliente.cpf_cnpj)}</p>
             </div>
             {cliente.origem && (
               <div>
-                <p className="text-[10px] uppercase text-muted-foreground tracking-wider mb-1">Origem</p>
+                <p className="text-3xs uppercase text-muted-foreground tracking-wider mb-1">Origem</p>
                 <p className="text-sm font-medium">{cliente.origem}</p>
               </div>
             )}
             {cliente.tipo_nf && (
               <div>
-                <p className="text-[10px] uppercase text-muted-foreground tracking-wider mb-1">Tipo NF</p>
+                <p className="text-3xs uppercase text-muted-foreground tracking-wider mb-1">Tipo NF</p>
                 <p className="text-sm font-medium capitalize">
                   {TIPO_NF_LABELS[cliente.tipo_nf.toLowerCase()] ?? cliente.tipo_nf}
                 </p>
@@ -278,10 +278,10 @@ function VisaoGeralTab({ cliente, podeGerirPortal }: { cliente: Cliente; podeGer
                     <div className="flex items-center gap-2">
                       <span className="font-medium truncate">{conta.banco}</span>
                       {conta.is_primary && (
-                        <span className="text-[10px] bg-brand text-ink px-1.5 py-0.5 rounded">Principal</span>
+                        <span className="text-3xs bg-brand text-ink px-1.5 py-0.5 rounded">Principal</span>
                       )}
                     </div>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-2xs text-muted-foreground">
                       Ag. {conta.agencia} · Cc. {conta.conta} · <span className="capitalize">{conta.tipo}</span>
                     </p>
                   </div>

@@ -95,11 +95,11 @@ export function LinksDoProjeto({ projetoId, canEdit }: { projetoId: string; canE
                   <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 </a>
                 {l.cliente ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-info-soft px-2 py-0.5 text-[11px] font-medium text-info-strong">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-info-soft px-2 py-0.5 text-2xs font-medium text-info-strong">
                     <Eye className="h-3 w-3" />o cliente vê
                   </span>
                 ) : (
-                  <span className="text-[11px] text-muted-foreground">só a equipe</span>
+                  <span className="text-2xs text-muted-foreground">só a equipe</span>
                 )}
                 {canEdit && (
                   <>

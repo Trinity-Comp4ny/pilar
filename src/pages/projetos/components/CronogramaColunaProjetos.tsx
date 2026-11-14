@@ -51,7 +51,7 @@ export function CronogramaColunaProjetos({
     // cliente e a alça de arraste, e fica só o nome truncado.
     <div className={cn("shrink-0 border-r bg-muted/30", GANTT_LABEL_W)}>
       <div className="h-10 border-b px-3 flex items-center">
-        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+        <span className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
           {pessoaId ? "Meus projetos" : "Projeto"}
         </span>
       </div>
@@ -106,7 +106,7 @@ export function CronogramaColunaProjetos({
                               {row.atrasado && <AlertTriangle className="h-3 w-3 text-danger-mid shrink-0" />}
                               {projeto.ordem_prioridade != null && (
                                 <span
-                                  className="shrink-0 rounded bg-brand/40 px-1.5 text-[10px] font-semibold tabular-nums"
+                                  className="shrink-0 rounded bg-brand/40 px-1.5 text-3xs font-semibold tabular-nums"
                                   aria-label={`Prioridade ${projeto.ordem_prioridade}`}
                                 >
                                   #{projeto.ordem_prioridade}
@@ -120,7 +120,7 @@ export function CronogramaColunaProjetos({
                                   className={cn("inline-block h-1.5 w-1.5 rounded-full shrink-0", row.barClass)}
                                   aria-hidden
                                 />
-                                <span className="text-[10px] text-muted-foreground truncate">
+                                <span className="text-3xs text-muted-foreground truncate">
                                   {cfg?.label || projeto.status}
                                   {projeto.cliente_nome && ` · ${projeto.cliente_nome}`}
                                 </span>

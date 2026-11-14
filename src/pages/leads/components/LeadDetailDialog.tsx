@@ -104,7 +104,7 @@ export function LeadDetailDialog({
             {nomeCompleto}
             <Badge className={statusConfig?.color}>{etapaNome ?? statusConfig?.label ?? lead.status}</Badge>
             {lead.status === "Perdido" && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-danger-soft text-danger-strong flex items-center gap-1">
+              <span className="text-3xs px-2 py-0.5 rounded-full font-medium bg-danger-soft text-danger-strong flex items-center gap-1">
                 <AlertTriangle size={10} /> Perdido
               </span>
             )}
@@ -167,7 +167,7 @@ export function LeadDetailDialog({
           {proposta && (
             <div className="space-y-2 rounded-lg border border-border p-3">
               <div className="flex items-center justify-between gap-2">
-                <Label className="text-[10px] uppercase text-muted-foreground tracking-wider flex items-center gap-1">
+                <Label className="text-3xs uppercase text-muted-foreground tracking-wider flex items-center gap-1">
                   <FileText className="h-3 w-3" /> Proposta
                 </Label>
                 {propStatusConfig && <Badge className={propStatusConfig.color}>{propStatusConfig.label}</Badge>}
@@ -198,14 +198,14 @@ export function LeadDetailDialog({
 
           {lead.origem && (
             <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Origem</Label>
+              <Label className="text-3xs uppercase text-muted-foreground tracking-wider">Origem</Label>
               <p className="text-sm text-foreground border-l-2 border-border pl-3 py-0.5">{lead.origem}</p>
             </div>
           )}
 
           {lead.status === "Perdido" && lead.motivo_perda && (
             <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase text-muted-foreground tracking-wider text-danger-strong">
+              <Label className="text-3xs uppercase text-muted-foreground tracking-wider text-danger-strong">
                 Motivo da Perda
               </Label>
               <p className="text-sm text-danger-mid bg-danger-soft p-3 rounded-lg border border-danger-soft-border">
@@ -216,7 +216,7 @@ export function LeadDetailDialog({
 
           {lead.status === "Ganho" && lead.convertido_em && (
             <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase text-muted-foreground tracking-wider text-positive-strong">
+              <Label className="text-3xs uppercase text-muted-foreground tracking-wider text-positive-strong">
                 Convertido em
               </Label>
               <p className="text-sm text-positive-strong bg-positive/10 p-3 rounded-lg border border-positive/10">
@@ -227,7 +227,7 @@ export function LeadDetailDialog({
 
           {lead.notas && (
             <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Notas</Label>
+              <Label className="text-3xs uppercase text-muted-foreground tracking-wider">Notas</Label>
               <p className="text-sm text-foreground border-l-2 border-border pl-3 py-0.5 whitespace-pre-wrap">
                 {lead.notas}
               </p>

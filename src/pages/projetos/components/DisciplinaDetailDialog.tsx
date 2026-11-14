@@ -253,7 +253,7 @@ function DisciplinaDetailBody({
       {/* Cabeçalho */}
       <div className="shrink-0 border-b px-4 pt-3 pb-4 md:px-8 md:pt-6">
         <div className="mb-1.5 flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-2xs font-medium uppercase tracking-wide text-muted-foreground">
             <Layers className="h-3 w-3" /> {disciplina.codigo || "Disciplina"}
           </span>
         </div>

@@ -163,7 +163,7 @@ export function DisciplinasTableView({
                 <span className="text-sm font-medium">{disc.disciplina}</span>
               )}
               {atrasada && (
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
+                <span className="text-3xs px-1.5 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
                   <AlertTriangle size={10} /> Atrasada
                 </span>
               )}
@@ -175,7 +175,7 @@ export function DisciplinasTableView({
                       : "Revisões já concluídas nesta disciplina"
                   }
                   className={cn(
-                    "text-[9px] px-1.5 py-0.5 rounded-full font-semibold flex items-center gap-1",
+                    "text-3xs px-1.5 py-0.5 rounded-full font-semibold flex items-center gap-1",
                     revisoes.abertas > 0 ? "bg-warning-soft text-warning-strong" : "bg-muted text-muted-foreground"
                   )}
                 >
@@ -218,7 +218,7 @@ export function DisciplinasTableView({
                 </SelectContent>
               </Select>
             ) : dpc ? (
-              <span className={cn("text-[10px] px-2 py-0.5 rounded-full font-medium", dpc.bgColor, dpc.color)}>
+              <span className={cn("text-3xs px-2 py-0.5 rounded-full font-medium", dpc.bgColor, dpc.color)}>
                 {dpc.label}
               </span>
             ) : (
@@ -555,7 +555,7 @@ export function DisciplinasTableView({
               onChange={(v) => setConcludingDate(v || "")}
               maxDate={new Date().toISOString().split("T")[0]}
             />
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-2xs text-muted-foreground">
               Use a data em que o trabalho foi de fato entregue, não a data administrativa de hoje.
             </p>
           </div>

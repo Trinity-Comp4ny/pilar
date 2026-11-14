@@ -275,12 +275,12 @@ function NavegadorDePastas({ raiz, pastas, canEdit }: { raiz: PastaDrive; pastas
           )}
           <span className="truncate">{i.name}</span>
           {pastaDeDisciplina.has(i.id) && (
-            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-2xs text-muted-foreground">
               disciplina
             </span>
           )}
           {i.id === pastaDoCliente && (
-            <span className="shrink-0 rounded-full bg-brand/20 px-2 py-0.5 text-[11px] text-ink">
+            <span className="shrink-0 rounded-full bg-brand/20 px-2 py-0.5 text-2xs text-ink">
               aparece no portal do cliente
             </span>
           )}

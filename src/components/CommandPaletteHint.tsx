@@ -23,7 +23,7 @@ export function CommandPaletteHint() {
       <span className="flex h-8 w-10 items-center justify-center rounded-full transition-colors group-hover:bg-brand/30">
         <Search size={18} strokeWidth={1.5} aria-hidden />
       </span>
-      <kbd className="font-mono text-[10px] leading-none">{combo}</kbd>
+      <kbd className="font-mono text-3xs leading-none">{combo}</kbd>
     </button>
   );
 }

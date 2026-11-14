@@ -61,7 +61,7 @@ export function KanbanCard({
             {eyebrow}
           </div>
           {tag && (
-            <span className="shrink-0 rounded-md border border-border px-1.5 py-0.5 text-[11px] leading-none text-muted-foreground">
+            <span className="shrink-0 rounded-md border border-border px-1.5 py-0.5 text-2xs leading-none text-muted-foreground">
               {tag}
             </span>
           )}
@@ -121,7 +121,7 @@ function KanbanCardMenu({ children }: { children: ReactNode }) {
 /** Chip de etiqueta do rodapé (labels do usuário). Mesmo visual em toda tela. */
 export function KanbanChip({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <span className={cn("rounded-md bg-muted px-1.5 py-0.5 text-[11px] leading-none text-foreground/80", className)}>
+    <span className={cn("rounded-md bg-muted px-1.5 py-0.5 text-2xs leading-none text-foreground/80", className)}>
       {children}
     </span>
   );

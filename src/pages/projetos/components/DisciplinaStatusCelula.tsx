@@ -31,7 +31,7 @@ export function DisciplinaStatusCelula({
   const atual = status || "Não Iniciado";
   if (!canEdit) {
     return (
-      <Badge variant="outline" className="text-[11px]">
+      <Badge variant="outline" className="text-2xs">
         {atual}
       </Badge>
     );

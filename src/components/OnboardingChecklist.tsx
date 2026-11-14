@@ -162,7 +162,7 @@ function SectionBlock({
           {section.label}
           <span
             className={cn(
-              "rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
+              "rounded-full px-1.5 py-0.5 text-2xs font-semibold tabular-nums",
               done ? "bg-success-soft text-positive-strong" : "bg-surface-muted text-ink/60"
             )}
           >
@@ -217,15 +217,15 @@ function StepRow({ step, onClick }: { step: OnboardingStepView; onClick: () => v
           )}
         >
           {step.titulo}
-          {step.opcional && !done && <span className="ml-1.5 text-[11px] font-normal text-ink/40">opcional</span>}
+          {step.opcional && !done && <span className="ml-1.5 text-2xs font-normal text-ink/40">opcional</span>}
         </span>
         {bloqueado ? (
-          <span className="mt-0.5 block text-[11px] leading-snug text-ink/50">
+          <span className="mt-0.5 block text-2xs leading-snug text-ink/50">
             Falta: {falta.join(" e ")}. Toque para fazer primeiro.
           </span>
         ) : (
           !done && (
-            <span className="mt-0.5 block text-[11px] leading-snug text-ink/50">
+            <span className="mt-0.5 block text-2xs leading-snug text-ink/50">
               {step.descricao}
               {dica && <span className="block text-ink/40">Antes, de preferência: {dica.toLowerCase()}.</span>}
             </span>

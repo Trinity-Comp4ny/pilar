@@ -128,7 +128,7 @@ export default function MapCanvas({ filtrados, tileKey, selectedProjeto, mapRef,
             <Tooltip direction="top" offset={[0, -14]} opacity={0.95}>
               <span className="flex flex-col">
                 <span className="text-xs font-medium">{projeto.nome}</span>
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-2xs text-muted-foreground">
                   {STATUS_SYMBOLS[projeto.status] ?? ""} {projeto.status}
                 </span>
               </span>

@@ -139,8 +139,8 @@ export function CronogramaGantt({
           <div className="flex min-w-0 items-center gap-2">
             <CalendarClock className="h-4 w-4 shrink-0 text-muted-foreground" />
             <h3 className="text-sm font-semibold text-ink">Linha do tempo</h3>
-            {isSaving && <span className="animate-pulse text-[10px] text-muted-foreground">Salvando…</span>}
-            {isDragging && <span className="text-[10px] text-muted-foreground">Esc cancela</span>}
+            {isSaving && <span className="animate-pulse text-3xs text-muted-foreground">Salvando…</span>}
+            {isDragging && <span className="text-3xs text-muted-foreground">Esc cancela</span>}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <Button variant="outline" size="sm" className="h-7 text-xs" onClick={scrollToToday} disabled={todayPct < 0}>
@@ -154,7 +154,7 @@ export function CronogramaGantt({
           {/* Coluna fixa com a árvore */}
           <div className={cn("shrink-0 border-r bg-muted/30", GANTT_LABEL_W)}>
             <div className="flex h-10 items-center border-b px-3">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Fase / etapa / serviço / tarefa
               </span>
             </div>
@@ -188,7 +188,7 @@ export function CronogramaGantt({
                         {l.arvore.no.nome}
                       </span>
                       {!isMobile && (
-                        <span className="truncate text-[10px] text-muted-foreground">
+                        <span className="truncate text-3xs text-muted-foreground">
                           {NIVEL_LABEL[l.arvore.nivel]} · {ESTADO_LABEL[l.arvore.estado]}
                           {l.arvore.total > 0 && ` · ${l.arvore.progresso}%`}
                         </span>
@@ -208,7 +208,7 @@ export function CronogramaGantt({
                     />
                     <span
                       className={cn(
-                        "truncate text-[11px]",
+                        "truncate text-2xs",
                         l.tarefa.status === "concluida" ? "text-muted-foreground line-through" : "text-ink"
                       )}
                     >
@@ -228,14 +228,14 @@ export function CronogramaGantt({
                   reguaCurta ? (
                     <div key={i} className={cn("relative flex-1", i % passo === 0 && "border-l first:border-l-0")}>
                       {i % passo === 0 && i + passo <= columns.length && (
-                        <span className="absolute left-1 top-1/2 -translate-y-1/2 whitespace-nowrap text-[10px] font-medium text-muted-foreground">
+                        <span className="absolute left-1 top-1/2 -translate-y-1/2 whitespace-nowrap text-3xs font-medium text-muted-foreground">
                           {rotuloCurtoDoMes(col.start)}
                         </span>
                       )}
                     </div>
                   ) : (
                     <div key={i} className="flex flex-1 items-center justify-center border-r last:border-r-0">
-                      <span className="text-[10px] font-medium capitalize text-muted-foreground">{col.label}</span>
+                      <span className="text-3xs font-medium capitalize text-muted-foreground">{col.label}</span>
                     </div>
                   )
                 )}
@@ -328,7 +328,7 @@ function Barra({
       !tarefa && linha.arvore.periodo ? intervalo(linha.arvore.periodo.inicio, linha.arvore.periodo.fim) : null;
     if (!resumo) {
       return (
-        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] italic text-muted-foreground">
+        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-3xs italic text-muted-foreground">
           sem período
         </span>
       );
@@ -393,7 +393,7 @@ function Barra({
           canEdit && "mx-2 cursor-grab active:cursor-grabbing"
         )}
       >
-        <span className="truncate text-[10px] font-medium text-white">
+        <span className="truncate text-3xs font-medium text-white">
           {!tarefa && linha.arvore.total > 0 ? `${linha.arvore.progresso}%` : titulo}
         </span>
       </button>

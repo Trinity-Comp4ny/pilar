@@ -104,7 +104,7 @@ export function NpsCard() {
           </button>
         ))}
       </div>
-      <div className="flex justify-between text-[11px] text-ink-muted">
+      <div className="flex justify-between text-2xs text-ink-muted">
         <span>Nada provável</span>
         <span>Muito provável</span>
       </div>

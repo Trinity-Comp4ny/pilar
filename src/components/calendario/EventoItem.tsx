@@ -13,7 +13,7 @@ export function EventoChip({ evento }: { evento: PrazoEvento }) {
   return (
     <div
       title={`${ESTADO_LABEL[evento.estado]} · ${camada.label}`}
-      className={cn("flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded border-l-2", ESTADO_CHIP[evento.estado])}
+      className={cn("flex items-center gap-1 text-2xs px-1.5 py-0.5 rounded border-l-2", ESTADO_CHIP[evento.estado])}
     >
       <span aria-hidden className="font-semibold">
         {ESTADO_SIMBOLO[evento.estado]}
@@ -41,26 +41,26 @@ export function EventoDetalhe({ evento, onOpen }: { evento: PrazoEvento; onOpen:
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-medium truncate">{evento.titulo}</span>
             {evento.estado === "atrasado" && (
-              <Badge variant="destructive" className="text-[10px] px-1 py-0">
+              <Badge variant="destructive" className="text-3xs px-1 py-0">
                 atraso
               </Badge>
             )}
             {evento.estado === "proximo" && (
-              <Badge className="text-[10px] px-1 py-0 bg-fill-warning hover:bg-fill-warning text-fill-warning-foreground">
+              <Badge className="text-3xs px-1 py-0 bg-fill-warning hover:bg-fill-warning text-fill-warning-foreground">
                 próximo
               </Badge>
             )}
             {evento.estado === "pausado" && (
-              <Badge variant="outline" className="text-[10px] px-1 py-0">
+              <Badge variant="outline" className="text-3xs px-1 py-0">
                 pausado
               </Badge>
             )}
             {evento.estado === "concluido" && evento.camada !== "reuniao" && (
-              <Badge className="text-[10px] px-1 py-0 bg-positive hover:bg-positive text-ink">OK</Badge>
+              <Badge className="text-3xs px-1 py-0 bg-positive hover:bg-positive text-ink">OK</Badge>
             )}
           </div>
-          {evento.subtitulo && <div className="text-[10px] text-muted-foreground truncate">{evento.subtitulo}</div>}
-          {evento.responsavel && <div className="text-[10px] text-muted-foreground truncate">{evento.responsavel}</div>}
+          {evento.subtitulo && <div className="text-3xs text-muted-foreground truncate">{evento.subtitulo}</div>}
+          {evento.responsavel && <div className="text-3xs text-muted-foreground truncate">{evento.responsavel}</div>}
         </div>
       </div>
       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50 group-hover:text-muted-foreground" />

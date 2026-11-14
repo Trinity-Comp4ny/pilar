@@ -164,8 +164,8 @@ export function CronogramaControles(p: CronogramaControlesProps) {
       <span className="hidden shrink-0 px-1 text-xs tabular-nums text-muted-foreground 2xl:inline">
         {p.total} projeto{p.total === 1 ? "" : "s"}
       </span>
-      {p.isSaving && <span className="shrink-0 text-[11px] text-muted-foreground animate-pulse">Salvando...</span>}
-      {p.isDragging && <span className="shrink-0 text-[11px] text-muted-foreground">Esc para cancelar</span>}
+      {p.isSaving && <span className="shrink-0 text-2xs text-muted-foreground animate-pulse">Salvando...</span>}
+      {p.isDragging && <span className="shrink-0 text-2xs text-muted-foreground">Esc para cancelar</span>}
       <Button
         variant="outline"
         aria-label="Hoje"

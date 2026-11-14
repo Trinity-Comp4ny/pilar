@@ -263,18 +263,18 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                               <p className="text-xs text-muted-foreground mt-0.5 truncate">{fluxo.descricao}</p>
                             )}
                             <div className="flex items-center gap-2 mt-2">
-                              <Badge variant="secondary" className="text-[10px]">
+                              <Badge variant="secondary" className="text-3xs">
                                 {fluxoOrdens.length} coluna{fluxoOrdens.length !== 1 ? "s" : ""}
                               </Badge>
-                              <Badge variant="outline" className="text-[10px]">
+                              <Badge variant="outline" className="text-3xs">
                                 {fluxo.disciplinas.length} disciplina{fluxo.disciplinas.length !== 1 ? "s" : ""}
                               </Badge>
                             </div>
                             <div className="flex items-center gap-1 mt-2 flex-wrap">
                               {fluxoOrdens.map((ordem, i) => (
                                 <div key={ordem} className="flex items-center gap-1">
-                                  {i > 0 && <span className="text-muted-foreground text-[10px]">→</span>}
-                                  <span className="text-[10px] bg-white border rounded px-1.5 py-0.5">
+                                  {i > 0 && <span className="text-muted-foreground text-3xs">→</span>}
+                                  <span className="text-3xs bg-white border rounded px-1.5 py-0.5">
                                     {fluxo.disciplinas
                                       .filter((d) => d.ordem === ordem)
                                       .map((d) => d.nome)
@@ -437,7 +437,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                             }
                                             className="h-6 w-9 border-none p-0 text-xs text-right shadow-none focus-visible:ring-0 disabled:opacity-100"
                                           />
-                                          <span className="flex items-center gap-1 text-[11px] text-muted-foreground whitespace-nowrap">
+                                          <span className="flex items-center gap-1 text-2xs text-muted-foreground whitespace-nowrap">
                                             dias úteis
                                             {duracaoTravada && <Lock className="h-3 w-3" />}
                                           </span>
@@ -453,7 +453,7 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
 
                                       {responsavelTravado ? (
                                         <div
-                                          className="flex items-center gap-2 text-[11px] text-muted-foreground"
+                                          className="flex items-center gap-2 text-2xs text-muted-foreground"
                                           title="Definidos por tarefa"
                                         >
                                           <AvatarStack pessoas={resp.nomes} size="xs" />
@@ -467,14 +467,14 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                             pessoas={pessoas}
                                             onChange={(ids) => updateResponsaveis(disc._key, ids)}
                                           />
-                                          <p className="text-[10px] text-muted-foreground">
+                                          <p className="text-3xs text-muted-foreground">
                                             Usado se nenhuma tarefa tiver responsável
                                           </p>
                                         </div>
                                       )}
 
                                       <div className="border-t pt-2">
-                                        <Label className="text-[11px] text-muted-foreground mb-1 flex items-center gap-1">
+                                        <Label className="text-2xs text-muted-foreground mb-1 flex items-center gap-1">
                                           <ListChecks className="h-3 w-3" /> Tarefas (responsável e dias úteis por
                                           tarefa)
                                         </Label>
