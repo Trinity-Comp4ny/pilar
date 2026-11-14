@@ -95,7 +95,7 @@ beforeEach(() => {
   sessionStorage.setItem("pilar_portal_token", "tok");
   h.rpcs = {
     get_cliente_projeto_detail: { data: PROJETO, error: null },
-    portal_listar_entregas: { data: [ENTREGA], error: null },
+    portal_listar_solicitacoes: { data: [ENTREGA], error: null },
     portal_aprovar_entrega: { data: null, error: null },
     portal_solicitar_revisao_entrega: { data: null, error: null },
   };
@@ -126,11 +126,10 @@ describe("ClienteProjetoDetail", () => {
     expect(h.rpc).not.toHaveBeenCalledWith("get_cliente_projeto_detail", expect.anything());
   });
 
-  it("pendências: parcelas atrasadas, a vencer e entregas levam às abas certas", async () => {
+  it("pendências: parcelas atrasadas e a vencer", async () => {
     h.rpcs.get_cliente_projeto_detail = {
       data: {
         ...PROJETO,
-        portal_entregas_pendentes: 2,
         receitas: [
           {
             id: "r1",
@@ -162,11 +161,10 @@ describe("ClienteProjetoDetail", () => {
     };
     renderPage();
     expect(await screen.findByText("Você tem pendências")).toBeInTheDocument();
-    expect(screen.getByText("4 itens precisam da sua atenção.")).toBeInTheDocument();
+    expect(screen.getByText("2 itens precisam da sua atenção.")).toBeInTheDocument();
     expect(screen.getByText("1 parcela em atraso")).toBeInTheDocument();
     expect(screen.getByText(/1 parcela\s*vencendo em 7 dias/)).toBeInTheDocument();
-    await userEvent.setup().click(screen.getByText("2 entregas para aprovar"));
-    expect(await screen.findByText("Planta baixa")).toBeInTheDocument();
+    expect(screen.queryByText(/entrega/)).not.toBeInTheDocument();
   });
 
   describe("aprovar proposta", () => {
@@ -235,57 +233,10 @@ describe("ClienteProjetoDetail", () => {
     });
   });
 
-  describe("aba Entregas", () => {
-    it("aprovar entrega chama o RPC por token", async () => {
-      renderPage("/cliente/projeto/p1/entregas");
-      await userEvent.setup().click(await screen.findByRole("button", { name: /^Aprovar$/ }));
-      await waitFor(() =>
-        expect(h.rpc).toHaveBeenCalledWith("portal_aprovar_entrega", { p_token: "tok", p_entrega_id: "en1" })
-      );
-      expect(h.toastSuccess).toHaveBeenCalledWith("Entregável aprovado");
-    });
-
-    it("erro ao aprovar mostra mensagem amigável", async () => {
-      h.rpcs.portal_aprovar_entrega = { data: null, error: { message: "entrega de outro cliente" } };
-      renderPage("/cliente/projeto/p1/entregas");
-      await userEvent.setup().click(await screen.findByRole("button", { name: /^Aprovar$/ }));
-      await waitFor(() =>
-        expect(h.toastError).toHaveBeenCalledWith("Não foi possível aprovar", {
-          description: "Tente novamente em instantes ou fale com o escritório.",
-        })
-      );
-    });
-
-    it("solicitar revisão exige texto e envia aparado", async () => {
-      renderPage("/cliente/projeto/p1/entregas");
-      const user = userEvent.setup();
-      await user.click(await screen.findByRole("button", { name: /Solicitar revisão/ }));
-      const enviar = screen.getAllByRole("button", { name: /Solicitar revisão/ }).at(-1)!;
-      expect(enviar).toBeDisabled();
-      await user.type(screen.getByPlaceholderText("Descreva o que precisa ser revisado..."), "   ");
-      expect(enviar).toBeDisabled();
-      await user.type(screen.getByPlaceholderText("Descreva o que precisa ser revisado..."), "Ajustar cotas  ");
-      await user.click(enviar);
-      await waitFor(() =>
-        expect(h.rpc).toHaveBeenCalledWith("portal_solicitar_revisao_entrega", {
-          p_token: "tok",
-          p_entrega_id: "en1",
-          p_resposta: "Ajustar cotas",
-        })
-      );
-    });
-
-    it("falha ao listar entregas mostra aviso", async () => {
-      h.rpcs.portal_listar_entregas = { data: null, error: { message: "boom" } };
-      renderPage("/cliente/projeto/p1/entregas");
-      expect(await screen.findByText(/Não foi possível carregar as entregas agora/)).toBeInTheDocument();
-    });
-
-    it("sem entregas mostra estado vazio", async () => {
-      h.rpcs.portal_listar_entregas = { data: [], error: null };
-      renderPage("/cliente/projeto/p1/entregas");
-      expect(await screen.findByText("Nenhuma entrega disponível")).toBeInTheDocument();
-    });
+  it("não há aba Entregas no portal", async () => {
+    renderPage("/cliente/projeto/p1");
+    await screen.findByText("Residência Seed");
+    expect(screen.queryByRole("link", { name: /Entregas/ })).not.toBeInTheDocument();
   });
 
   it("aba Financeiro lista parcelas e resumo", async () => {

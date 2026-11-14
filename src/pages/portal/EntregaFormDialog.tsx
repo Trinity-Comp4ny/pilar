@@ -23,11 +23,13 @@ const TIPO_OPTIONS = [
 interface EntregaFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  projetoId: string;
+  /** A solicitação é de um projeto OU de uma obra. */
+  projetoId?: string;
+  obraId?: string;
   onCreated: () => void;
 }
 
-export function EntregaFormDialog({ open, onOpenChange, projetoId, onCreated }: EntregaFormDialogProps) {
+export function EntregaFormDialog({ open, onOpenChange, projetoId, obraId, onCreated }: EntregaFormDialogProps) {
   const { profile } = useAuth();
   const disciplinas = useProjetoDisciplinas(projetoId);
   const [titulo, setTitulo] = useState("");
@@ -48,11 +50,12 @@ export function EntregaFormDialog({ open, onOpenChange, projetoId, onCreated }: 
   };
 
   const handleSubmit = async () => {
-    if (!titulo.trim() || !urlValida || !profile?.empresa_id) return;
+    if (!titulo.trim() || !urlValida || !profile?.empresa_id || !(projetoId || obraId)) return;
     setSaving(true);
     const { error } = await supabase.from("portal_entregas").insert({
       empresa_id: profile.empresa_id,
-      projeto_id: projetoId,
+      projeto_id: projetoId ?? null,
+      obra_id: obraId ?? null,
       titulo: titulo.trim(),
       tipo: tipo.trim() || null,
       descricao: descricao.trim() || null,
@@ -62,12 +65,12 @@ export function EntregaFormDialog({ open, onOpenChange, projetoId, onCreated }: 
     } as never);
     setSaving(false);
     if (error) {
-      toast.error("Não foi possível criar a entrega", {
+      toast.error("Não foi possível criar a solicitação", {
         description: getSafeErrorMessage(error, "Tente de novo em instantes."),
       });
       return;
     }
-    toast.success("Entrega criada");
+    toast.success("Solicitação criada");
     limpar();
     onOpenChange(false);
     onCreated();
@@ -77,11 +80,11 @@ export function EntregaFormDialog({ open, onOpenChange, projetoId, onCreated }: 
     <FormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Nova entrega"
-      description="O cliente vai ver isso no portal dele e poder aprovar ou pedir revisão."
+      title="Nova solicitação ao cliente"
+      description="Aparece nas Pendências do portal do cliente, onde ele aprova ou pede revisão."
       size="md"
       onSubmit={handleSubmit}
-      submitLabel="Criar entrega"
+      submitLabel="Enviar ao cliente"
       isPending={saving}
       submitDisabled={!titulo.trim() || !urlValida}
     >
@@ -92,7 +95,7 @@ export function EntregaFormDialog({ open, onOpenChange, projetoId, onCreated }: 
             id="entrega-titulo"
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}
-            placeholder="Ex.: Anteprojeto revisado"
+            placeholder="Ex.: Aprovar a troca do piso da sala"
             autoFocus
           />
         </div>
@@ -113,21 +116,23 @@ export function EntregaFormDialog({ open, onOpenChange, projetoId, onCreated }: 
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label>Etapa</Label>
-            <Select value={disciplinaId} onValueChange={setDisciplinaId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sem etapa vinculada" />
-              </SelectTrigger>
-              <SelectContent>
-                {(disciplinas.data ?? []).map((d) => (
-                  <SelectItem key={d.id} value={d.id!}>
-                    {d.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {projetoId && (
+            <div className="space-y-2">
+              <Label>Etapa</Label>
+              <Select value={disciplinaId} onValueChange={setDisciplinaId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sem etapa vinculada" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(disciplinas.data ?? []).map((d) => (
+                    <SelectItem key={d.id} value={d.id!}>
+                      {d.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -136,7 +141,7 @@ export function EntregaFormDialog({ open, onOpenChange, projetoId, onCreated }: 
             id="entrega-descricao"
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
-            placeholder="Detalhes do que está sendo entregue..."
+            placeholder="O que o cliente precisa ver ou decidir..."
             rows={3}
           />
         </div>

@@ -23,6 +23,9 @@ interface Entrega {
   drive_url: string | null;
   projeto_disciplina_id: string | null;
   disciplina_nome: string | null;
+  /** Origem, só preenchida pela RPC do portal (para a tela de Pendências juntar projetos e obras). */
+  projeto_nome?: string | null;
+  obra_nome?: string | null;
   resposta_cliente: string | null;
   respondido_em: string | null;
   aprovado_ip: string | null;
@@ -40,14 +43,27 @@ const STATUS_CONFIG: Record<Entrega["status"], { label: string; color: string; i
   },
 };
 
+/**
+ * Solicitações do escritório ao cliente. Sem `projetoId`/`obraId` lista todas as do cliente
+ * (tela de Pendências); com um deles, só as daquele projeto ou obra.
+ */
 export function EntregasContent({
   projetoId,
+  obraId,
   token,
   readOnly,
+  mostrarOrigem,
+  apenasPendentes,
+  vazioTexto,
 }: {
-  projetoId: string;
+  projetoId?: string;
+  obraId?: string;
   token?: string;
   readOnly?: boolean;
+  mostrarOrigem?: boolean;
+  /** Só o que aguarda resposta (Início e visão geral); sem nada, mostra `vazioTexto` ou não mostra nada. */
+  apenasPendentes?: boolean;
+  vazioTexto?: string;
 }) {
   const [entregas, setEntregas] = useState<Entrega[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,21 +78,23 @@ export function EntregasContent({
       const portalToken = token ?? getPortalToken();
       if (portalToken) {
         // Cliente do portal (auth por token): RLS não alcança, usa RPC por token.
-        const { data, error: rpcError } = await callUntypedRpc<Entrega[]>("portal_listar_entregas", {
+        const { data, error: rpcError } = await callUntypedRpc<Entrega[]>("portal_listar_solicitacoes", {
           p_token: portalToken,
-          p_projeto_id: projetoId,
+          p_projeto_id: projetoId ?? null,
+          p_obra_id: obraId ?? null,
         });
         if (rpcError) throw rpcError;
         if (data) setEntregas(data);
       } else {
         // Staff autenticado (JWT): SELECT direto coberto por RLS.
-        const { data, error: fetchError } = await supabase
+        let query = supabase
           .from("portal_entregas")
           .select(
             "id, titulo, descricao, tipo, status, drive_url, projeto_disciplina_id, resposta_cliente, respondido_em, aprovado_ip, aprovado_user_agent, created_at, projeto_disciplinas(nome)"
-          )
-          .eq("projeto_id", projetoId)
-          .order("created_at", { ascending: true });
+          );
+        if (projetoId) query = query.eq("projeto_id", projetoId);
+        if (obraId) query = query.eq("obra_id", obraId);
+        const { data, error: fetchError } = await query.order("created_at", { ascending: true });
         if (fetchError) throw fetchError;
         if (data)
           setEntregas(
@@ -93,7 +111,7 @@ export function EntregasContent({
     } finally {
       setLoading(false);
     }
-  }, [projetoId, token]);
+  }, [projetoId, obraId, token]);
 
   useEffect(() => {
     fetchEntregas();
@@ -111,7 +129,7 @@ export function EntregasContent({
       toast.error("Não foi possível aprovar", {
         description: "Tente novamente em instantes ou fale com o escritório.",
       });
-    else toast.success("Entregável aprovado");
+    else toast.success("Aprovado");
     await fetchEntregas();
     setSaving(false);
   };
@@ -148,8 +166,22 @@ export function EntregasContent({
     return (
       <Card>
         <CardContent className="p-6 text-center text-sm text-muted-foreground">
-          Não foi possível carregar as entregas agora. Atualize a página em instantes ou fale com o escritório se o
+          Não foi possível carregar as solicitações agora. Atualize a página em instantes ou fale com o escritório se o
           problema continuar.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (apenasPendentes && !entregas.some((e) => e.status === "pendente")) {
+    if (!vazioTexto) return null;
+    return (
+      <Card className="border-brand/30 bg-brand/10">
+        <CardContent className="p-4 flex items-center gap-3">
+          <div className="h-9 w-9 rounded-full bg-brand/20 flex items-center justify-center">
+            <FileCheck className="h-4 w-4 text-ink" />
+          </div>
+          <p className="text-sm font-medium text-ink">{vazioTexto}</p>
         </CardContent>
       </Card>
     );
@@ -159,14 +191,14 @@ export function EntregasContent({
     return (
       <Card>
         <CardContent className="p-0">
-          <EmptyState icon={FileText} title="Nenhuma entrega disponível" />
+          <EmptyState icon={FileText} title="Nenhuma solicitação no momento" />
         </CardContent>
       </Card>
     );
   }
 
   const pendentes = entregas.filter((e) => e.status === "pendente");
-  const concluidos = entregas.filter((e) => e.status !== "pendente");
+  const concluidos = apenasPendentes ? [] : entregas.filter((e) => e.status !== "pendente");
 
   return (
     <div className="space-y-6">
@@ -193,6 +225,7 @@ export function EntregasContent({
                 onSolicitar={() => handleSolicitarRevisao(e.id)}
                 saving={saving}
                 readOnly={readOnly}
+                mostrarOrigem={mostrarOrigem}
               />
             ))}
           </div>
@@ -201,7 +234,7 @@ export function EntregasContent({
 
       {concluidos.length > 0 && (
         <section>
-          <h3 className="text-sm font-semibold mb-3">Histórico</h3>
+          <h3 className="text-sm font-semibold mb-3">Respondidas</h3>
           <div className="space-y-2">
             {concluidos.map((e) => (
               <EntregaCard
@@ -216,6 +249,7 @@ export function EntregasContent({
                 onSolicitar={() => undefined}
                 saving={false}
                 readOnly={readOnly}
+                mostrarOrigem={mostrarOrigem}
               />
             ))}
           </div>
@@ -236,6 +270,7 @@ function EntregaCard({
   onSolicitar,
   saving,
   readOnly,
+  mostrarOrigem,
 }: {
   entrega: Entrega;
   isResponding: boolean;
@@ -247,7 +282,9 @@ function EntregaCard({
   onSolicitar: () => void;
   saving: boolean;
   readOnly?: boolean;
+  mostrarOrigem?: boolean;
 }) {
+  const origem = entrega.obra_nome ?? entrega.projeto_nome;
   const config = STATUS_CONFIG[entrega.status];
   const StatusIcon = config.icon;
 
@@ -258,6 +295,11 @@ function EntregaCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="text-sm font-medium">{entrega.titulo}</p>
+              {mostrarOrigem && origem && (
+                <Badge variant="outline" className="text-[10px]">
+                  {entrega.obra_nome ? "Obra" : "Projeto"}: {origem}
+                </Badge>
+              )}
               {entrega.disciplina_nome && (
                 <Badge variant="secondary" className="text-[10px]" title="Etapa do projeto">
                   {entrega.disciplina_nome}

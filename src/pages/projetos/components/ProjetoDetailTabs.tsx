@@ -13,6 +13,7 @@ import {
   History,
   MessageSquare,
   FolderOpen,
+  Send,
 } from "lucide-react";
 import { PageTabs } from "@/components/PageSlots";
 import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
@@ -39,6 +40,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { AplicarFluxoDialog } from "./AplicarFluxoDialog";
 import { ProjetoAtividadesPanel } from "./ProjetoAtividadesPanel";
 import { ProjetoArquivosTab } from "./ProjetoArquivosTab";
+import { SolicitacoesDoCliente } from "@/pages/portal/SolicitacoesDoCliente";
 
 interface ProjetoDetailTabsProps {
   projeto: Projeto;
@@ -66,6 +68,7 @@ const PROJETO_TABS: SectionTab[] = [
   { id: "disciplinas", label: "Disciplinas", icon: Layers },
   { id: "atividades", label: "Atividades", icon: MessageSquare },
   { id: "arquivos", label: "Arquivos", icon: FolderOpen },
+  { id: "solicitacoes", label: "Solicitações", icon: Send },
   { id: "pagamentos", label: "Pagamentos", icon: DollarSign },
   { id: "escopo", label: "Escopo", icon: ScrollText },
   { id: "historico", label: "Histórico", icon: History },
@@ -127,6 +130,7 @@ export function ProjetoDetailTabs({
     if (h === "historico") return { tab: "historico", view: null };
     if (h === "atividades") return { tab: "atividades", view: null };
     if (h === "arquivos") return { tab: "arquivos", view: null };
+    if (h === "solicitacoes") return { tab: "solicitacoes", view: null };
     return { tab: "disciplinas", view: null };
   };
 
@@ -385,6 +389,10 @@ export function ProjetoDetailTabs({
 
           <TabsContent value="arquivos">
             {activeTab === "arquivos" && <ProjetoArquivosTab projetoId={projeto.id} canEdit={canEdit} />}
+          </TabsContent>
+
+          <TabsContent value="solicitacoes">
+            {activeTab === "solicitacoes" && <SolicitacoesDoCliente projetoId={projeto.id} />}
           </TabsContent>
 
           <TabsContent value="pagamentos">

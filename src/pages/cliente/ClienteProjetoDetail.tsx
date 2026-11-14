@@ -9,8 +9,8 @@ import { ClienteShell } from "./ClienteShell";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useClienteProjetoData } from "./useClienteProjetoData";
 import { FinanceiroContent } from "@/pages/portal/PortalFinanceiro";
-import { EntregasContent } from "@/pages/portal/PortalEntregas";
 import { TimelineContent, type TimelineDisciplina } from "@/pages/portal/PortalTimeline";
+import { EntregasContent } from "@/pages/portal/PortalEntregas";
 import { PendenciasCard } from "@/pages/portal/PendenciasCard";
 import { ArquivosDoProjeto } from "./ArquivosDoProjeto";
 import type { ClienteAccount } from "@/hooks/useClienteAuth";
@@ -176,14 +176,12 @@ function ProjetoOverview({ projeto, refresh }: { projeto: ClienteProjetoData; re
 
   return (
     <div className="space-y-6">
+      <EntregasContent projetoId={projeto.projeto_id} apenasPendentes />
+
       {mostrarAprovar ? (
         <AprovarPropostaCard projeto={projeto} refresh={refresh} />
       ) : (
-        <PendenciasCard
-          baseUrl={`/cliente/projeto/${projeto.projeto_id}`}
-          receitas={projeto.receitas ?? []}
-          portalEntregasPendentes={projeto.portal_entregas_pendentes ?? 0}
-        />
+        <PendenciasCard baseUrl={`/cliente/projeto/${projeto.projeto_id}`} receitas={projeto.receitas ?? []} />
       )}
 
       <div className="grid grid-cols-2 gap-4">
@@ -248,8 +246,6 @@ export default function ClienteProjetoDetail() {
   let content: React.ReactNode;
   if (subPath === "/financeiro") {
     content = <FinanceiroContent receitas={data.receitas ?? []} />;
-  } else if (subPath === "/entregas") {
-    content = <EntregasContent projetoId={data.projeto_id} />;
   } else if (subPath === "/arquivos") {
     content = <ArquivosDoProjeto projetoId={data.projeto_id} />;
   } else {

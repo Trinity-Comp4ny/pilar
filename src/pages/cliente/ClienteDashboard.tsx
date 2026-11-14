@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FolderKanban, ArrowRight, Building2 } from "lucide-react";
 import { ClienteShell } from "./ClienteShell";
+import { EntregasContent } from "@/pages/portal/PortalEntregas";
 import { ConviteInstalarApp } from "@/components/instalar/ConviteInstalarApp";
 import { useClienteProjetos, type ClienteProjeto } from "./useClienteProjetos";
 import { useClienteObras } from "./useClienteObraData";
@@ -42,6 +43,12 @@ export default function ClienteDashboard() {
 
         {/* Celular aberto pelo navegador: convite para pôr o portal na tela inicial. */}
         <ConviteInstalarApp publico="portal" />
+
+        {/* Pendências: o que o escritório pediu ao cliente, de todos os projetos e obras. */}
+        <section aria-label="Pendências" className="space-y-3">
+          <h2 className="text-sm font-semibold text-ink">Pendências</h2>
+          <EntregasContent apenasPendentes mostrarOrigem vazioTexto="Nada pendente. Você está em dia." />
+        </section>
 
         {/* Loading */}
         {loading && (

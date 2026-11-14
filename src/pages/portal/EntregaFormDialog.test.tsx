@@ -4,7 +4,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fake, rpcComEmpresa } from "@/pages/obras/testing/supabaseFake";
 
-// Nova entrega do portal: título obrigatório, link só do Google Drive/Docs (mesma regra do
+// Nova solicitação ao cliente do portal: título obrigatório, link só do Google Drive/Docs (mesma regra do
 // CHECK do banco), tipo e etapa opcionais, payload gravado, erro do servidor (RLS) e
 // usuário sem empresa no perfil.
 
@@ -46,7 +46,7 @@ function montar() {
   return h;
 }
 
-const criar = () => screen.getByRole("button", { name: "Criar entrega" });
+const criar = () => screen.getByRole("button", { name: "Enviar ao cliente" });
 const escolher = (combo: HTMLElement, opcao: string) => {
   fireEvent.keyDown(combo, { key: "Enter" });
   fireEvent.click(within(screen.getByRole("listbox")).getByRole("option", { name: opcao }));
@@ -91,6 +91,7 @@ describe("EntregaFormDialog", () => {
     expect(fake.escritas("portal_entregas")[0].payload).toEqual({
       empresa_id: "emp-1",
       projeto_id: "proj-1",
+      obra_id: null,
       titulo: "Anteprojeto revisado",
       tipo: "aprovacao",
       descricao: "Planta e cortes",
@@ -98,7 +99,7 @@ describe("EntregaFormDialog", () => {
       projeto_disciplina_id: "d-2",
       status: "pendente",
     });
-    expect(toast.success).toHaveBeenCalledWith("Entrega criada");
+    expect(toast.success).toHaveBeenCalledWith("Solicitação criada");
     expect(h.onOpenChange).toHaveBeenCalledWith(false);
   });
 
@@ -121,7 +122,7 @@ describe("EntregaFormDialog", () => {
     fireEvent.change(screen.getByLabelText("Título"), { target: { value: "Memorial" } });
     fireEvent.click(criar());
     await waitFor(() =>
-      expect(toast.error).toHaveBeenCalledWith("Não foi possível criar a entrega", {
+      expect(toast.error).toHaveBeenCalledWith("Não foi possível criar a solicitação", {
         description: "Você não tem permissão para realizar esta ação.",
       })
     );

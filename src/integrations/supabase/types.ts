@@ -4213,7 +4213,9 @@ export type Database = {
           obra_frente_id: string | null
           obra_id: string
           pago_por: string | null
+          quantidade: number | null
           tipo: string
+          unidade: string | null
           updated_at: string
           updated_by: string | null
           valor: number
@@ -4232,7 +4234,9 @@ export type Database = {
           obra_frente_id?: string | null
           obra_id: string
           pago_por?: string | null
+          quantidade?: number | null
           tipo: string
+          unidade?: string | null
           updated_at?: string
           updated_by?: string | null
           valor: number
@@ -4251,7 +4255,9 @@ export type Database = {
           obra_frente_id?: string | null
           obra_id?: string
           pago_por?: string | null
+          quantidade?: number | null
           tipo?: string
+          unidade?: string | null
           updated_at?: string
           updated_by?: string | null
           valor?: number
@@ -6656,8 +6662,9 @@ export type Database = {
           drive_url: string | null
           empresa_id: string
           id: string
+          obra_id: string | null
           projeto_disciplina_id: string | null
-          projeto_id: string
+          projeto_id: string | null
           respondido_em: string | null
           resposta_cliente: string | null
           status: string | null
@@ -6674,8 +6681,9 @@ export type Database = {
           drive_url?: string | null
           empresa_id: string
           id?: string
+          obra_id?: string | null
           projeto_disciplina_id?: string | null
-          projeto_id: string
+          projeto_id?: string | null
           respondido_em?: string | null
           resposta_cliente?: string | null
           status?: string | null
@@ -6692,8 +6700,9 @@ export type Database = {
           drive_url?: string | null
           empresa_id?: string
           id?: string
+          obra_id?: string | null
           projeto_disciplina_id?: string | null
-          projeto_id?: string
+          projeto_id?: string | null
           respondido_em?: string | null
           resposta_cliente?: string | null
           status?: string | null
@@ -6707,6 +6716,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_entregas_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
             referencedColumns: ["id"]
           },
           {
@@ -11457,6 +11473,8 @@ export type Database = {
           p_obra_frente_id?: string
           p_obra_id: string
           p_pago_por?: string
+          p_quantidade?: number
+          p_unidade?: string
           p_valor: number
         }
         Returns: {
@@ -11473,7 +11491,9 @@ export type Database = {
           obra_frente_id: string | null
           obra_id: string
           pago_por: string | null
+          quantidade: number | null
           tipo: string
+          unidade: string | null
           updated_at: string
           updated_by: string | null
           valor: number

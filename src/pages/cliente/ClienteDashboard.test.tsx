@@ -84,6 +84,56 @@ describe("ClienteDashboard", () => {
     expect(screen.getByText("Início: —")).toBeInTheDocument();
   });
 
+  it("Pendências do início juntam as solicitações de projetos e obras, com a origem", async () => {
+    const base = { status: "pendente", descricao: null, tipo: "aprovacao", drive_url: null, disciplina_nome: null };
+    h.rpcs.portal_listar_solicitacoes = {
+      data: [
+        {
+          ...base,
+          id: "s1",
+          titulo: "Aprovar piso",
+          obra_nome: "Casa Lago",
+          projeto_nome: null,
+          created_at: "2026-11-10",
+        },
+        {
+          ...base,
+          id: "s2",
+          titulo: "Enviar RG",
+          obra_nome: null,
+          projeto_nome: "Residência Seed",
+          created_at: "2026-11-11",
+        },
+        {
+          ...base,
+          id: "s3",
+          status: "aprovado",
+          titulo: "Já feita",
+          obra_nome: null,
+          projeto_nome: "X",
+          created_at: "2026-11-01",
+        },
+      ],
+      error: null,
+    };
+    renderPage();
+    expect(await screen.findByText("Aprovar piso")).toBeInTheDocument();
+    expect(screen.getByText("Obra: Casa Lago")).toBeInTheDocument();
+    expect(screen.getByText("Enviar RG")).toBeInTheDocument();
+    expect(screen.queryByText("Já feita")).not.toBeInTheDocument();
+    expect(h.rpc).toHaveBeenCalledWith("portal_listar_solicitacoes", {
+      p_token: "tok",
+      p_projeto_id: null,
+      p_obra_id: null,
+    });
+  });
+
+  it("sem solicitações o início diz que está em dia", async () => {
+    h.rpcs.portal_listar_solicitacoes = { data: [], error: null };
+    renderPage();
+    expect(await screen.findByText("Nada pendente. Você está em dia.")).toBeInTheDocument();
+  });
+
   it("clicar no projeto abre o detalhe", async () => {
     renderPage();
     await userEvent.setup().click(await screen.findByText("Residência Seed"));
