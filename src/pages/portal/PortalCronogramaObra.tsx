@@ -66,7 +66,7 @@ export function ResumoFrentes({ frentes }: { frentes: ClienteObraFrente[] }) {
             aria-valuemax={100}
             aria-label="Andamento da obra"
           >
-            <div className="h-3 rounded-full bg-positive transition-all" style={{ width: `${pct}%` }} />
+            <div className="h-3 rounded-full bg-brand transition-all" style={{ width: `${pct}%` }} />
           </div>
           <p className="text-xs text-muted-foreground">
             {concluidas} de {total} {total === 1 ? "etapa concluída" : "etapas concluídas"}
