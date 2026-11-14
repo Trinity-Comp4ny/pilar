@@ -49,7 +49,10 @@ const BUDGETS = {
   // 2026-11-13: 130 kB (era 129). Parar de reportar duas vezes cada falha do Supabase (PR #851)
   // põe no boot o detector `jaReportadoPelaRede` e o fingerprint por consulta, ~0,2 kB gzip; a
   // entrada de staging já estava colada no teto (129,0 kB). Corta ~70% do volume de erro do Sentry.
-  entry: 130 * 1024,
+  // 2026-11-14: 131 kB (era 130). Funções de celular (PR #870: puxar para atualizar, compartilhar,
+  // deslizar linha, alça do sheet, biometria, háptico, badge do ícone). O código dos gestos já carrega
+  // sob demanda só em tela de toque; sobra na entrada a fiação mínima (~0,5 kB gzip).
+  entry: 131 * 1024,
   // Tudo que o navegador baixa antes da primeira tela: a entrada mais os chunks que o
   // index.html pré-carrega (modulepreload) e o CSS. O limite só da entrada não via o
   // vendor-pdf e o vendor-charts sendo pré-carregados em toda página (~860 kB brutos),
@@ -84,7 +87,8 @@ const BUDGETS = {
   // ManifestDoApp troca o manifest por público. O cartão e o painel de passos seguem fora do boot.
   // 2026-11-13: 338 kB (era 337). O atalho Novidades no trilho da sidebar (PR #846) soma ~0,1 kB
   // gzip ao boot (337,1): o item só aparece com release não vista, mas o código está no shell.
-  initialLoad: 338 * 1024,
+  // 2026-11-14: 339 kB (era 338). Mesma fiação mínima do PR #870 (338,7 kB medidos no CI).
+  initialLoad: 339 * 1024,
   // Qualquer chunk individual (vendor-*, página lazy)
   perChunk: 600 * 1024,
   // Soma de todos JS gzipped — proxy pra peso total app
