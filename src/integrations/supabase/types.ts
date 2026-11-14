@@ -6797,6 +6797,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "portal_mensagens_autor_profile_id_fkey"
+            columns: ["autor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "portal_mensagens_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
@@ -11057,7 +11064,11 @@ export type Database = {
         }[]
       }
       marcar_mensagens_portal_lidas_equipe: {
-        Args: { p_entrega_id?: string; p_obra_id?: string; p_projeto_id?: string }
+        Args: {
+          p_entrega_id?: string
+          p_obra_id?: string
+          p_projeto_id?: string
+        }
         Returns: undefined
       }
       marcar_novidades_vistas: { Args: never; Returns: undefined }
