@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom";
 import ClienteProjetoDetail from "./ClienteProjetoDetail";
 
@@ -22,6 +23,8 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 vi.mock("sonner", () => ({ toast: { error: h.toastError, success: h.toastSuccess } }));
 vi.mock("@/hooks/usePageTitle", () => ({ usePageTitle: vi.fn() }));
+// O cliente do portal não tem login Supabase: a conversa dele não usa o perfil.
+vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ profile: null, user: null }) }));
 vi.mock("./ArquivosDoProjeto", () => ({
   ArquivosDoProjeto: () => <div data-testid="aba-arquivos" />,
 }));
@@ -78,14 +81,17 @@ const ENTREGA = {
 };
 
 function renderPage(path = "/cliente/projeto/p1") {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <MemoryRouter initialEntries={[path]}>
-      <Routes>
-        <Route path="/cliente" element={<Outlet context={ACCOUNT} />}>
-          <Route path="projeto/:id/*" element={<ClienteProjetoDetail />} />
-        </Route>
-      </Routes>
-    </MemoryRouter>
+    <QueryClientProvider client={qc}>
+      <MemoryRouter initialEntries={[path]}>
+        <Routes>
+          <Route path="/cliente" element={<Outlet context={ACCOUNT} />}>
+            <Route path="projeto/:id/*" element={<ClienteProjetoDetail />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 
@@ -231,6 +237,17 @@ describe("ClienteProjetoDetail", () => {
       await screen.findByText("Residência Seed");
       expect(screen.queryByTestId("aba-arquivos")).not.toBeInTheDocument();
     });
+  });
+
+  it("botão Falar com o escritório abre a conversa do projeto", async () => {
+    h.rpcs.portal_listar_mensagens = { data: [], error: null };
+    renderPage("/cliente/projeto/p1");
+    await userEvent.setup().click(await screen.findByRole("button", { name: /Falar com o escritório/ }));
+    expect(await screen.findByText("Conversa com o escritório")).toBeInTheDocument();
+    expect(h.rpc).toHaveBeenCalledWith(
+      "portal_listar_mensagens",
+      expect.objectContaining({ p_token: "tok", p_projeto_id: "p1" })
+    );
   });
 
   it("não há aba Entregas no portal", async () => {

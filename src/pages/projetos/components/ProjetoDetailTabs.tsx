@@ -68,7 +68,7 @@ const PROJETO_TABS: SectionTab[] = [
   { id: "disciplinas", label: "Disciplinas", icon: Layers },
   { id: "atividades", label: "Atividades", icon: MessageSquare },
   { id: "arquivos", label: "Arquivos", icon: FolderOpen },
-  { id: "solicitacoes", label: "Solicitações", icon: Send },
+  { id: "cliente", label: "Cliente", icon: Send },
   { id: "pagamentos", label: "Pagamentos", icon: DollarSign },
   { id: "escopo", label: "Escopo", icon: ScrollText },
   { id: "historico", label: "Histórico", icon: History },
@@ -130,7 +130,7 @@ export function ProjetoDetailTabs({
     if (h === "historico") return { tab: "historico", view: null };
     if (h === "atividades") return { tab: "atividades", view: null };
     if (h === "arquivos") return { tab: "arquivos", view: null };
-    if (h === "solicitacoes") return { tab: "solicitacoes", view: null };
+    if (h === "cliente" || h === "solicitacoes") return { tab: "cliente", view: null };
     return { tab: "disciplinas", view: null };
   };
 
@@ -391,8 +391,8 @@ export function ProjetoDetailTabs({
             {activeTab === "arquivos" && <ProjetoArquivosTab projetoId={projeto.id} canEdit={canEdit} />}
           </TabsContent>
 
-          <TabsContent value="solicitacoes">
-            {activeTab === "solicitacoes" && <SolicitacoesDoCliente projetoId={projeto.id} />}
+          <TabsContent value="cliente">
+            {activeTab === "cliente" && <SolicitacoesDoCliente projetoId={projeto.id} />}
           </TabsContent>
 
           <TabsContent value="pagamentos">

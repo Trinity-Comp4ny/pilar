@@ -164,6 +164,10 @@
     "dominio": "portal",
     "descricao": "Cliente aprova proposta pelo portal (auth pelo token do portal)."
   },
+  "portal-avisar-mensagem": {
+    "dominio": "portal",
+    "descricao": "Avisa por e-mail o cliente do portal quando o escritório escreve na conversa (um e-mail por janela de 30 minutos)."
+  },
   "portal-avisar-solicitacao": {
     "dominio": "portal",
     "descricao": "Avisa por e-mail os acessos do portal do cliente quando o escritório cria uma solicitação (projeto ou obra)."

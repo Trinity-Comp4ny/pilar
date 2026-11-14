@@ -3,13 +3,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { FileCheck, CheckCircle2, RotateCcw, FileText, ExternalLink, Clock } from "lucide-react";
+import { FileCheck, CheckCircle2, RotateCcw, FileText, ExternalLink, Clock, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { reportInvokeError } from "@/lib/monitoring";
 import { cn } from "@/lib/utils";
 import { getPortalToken } from "@/hooks/useClienteAuth";
 import { EmptyState } from "@/components/EmptyState";
+import { ConversaPortal } from "@/components/portal/ConversaPortal";
+import { useNaoLidasCliente } from "@/components/portal/useConversaPortal";
 import { callUntypedRpc } from "@/lib/supabaseRpc";
 
 import { ReadingRing } from "@/components/motion/ReadingRing";
@@ -378,7 +380,37 @@ function EntregaCard({
             )}
           </div>
         )}
+        <FioDaSolicitacao entregaId={entrega.id} lado={readOnly ? "equipe" : "cliente"} />
       </CardContent>
     </Card>
+  );
+}
+
+/** Fio de conversa da solicitação: o cliente tira a dúvida antes de aprovar, sem sair do item. */
+function FioDaSolicitacao({ entregaId, lado }: { entregaId: string; lado: "cliente" | "equipe" }) {
+  const [aberto, setAberto] = useState(false);
+  const naoLidas = useNaoLidasCliente();
+  const pendentes =
+    lado === "cliente" ? ((naoLidas.data ?? []).find((n) => n.entrega_id === entregaId)?.total ?? 0) : 0;
+
+  return (
+    <div className="border-t pt-2">
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-11 gap-1.5 px-2 text-muted-foreground sm:h-9"
+        onClick={() => setAberto((v) => !v)}
+        aria-expanded={aberto}
+      >
+        <MessageSquare className="h-3.5 w-3.5" />
+        {aberto ? "Fechar conversa" : lado === "cliente" ? "Tirar dúvida com o escritório" : "Conversar com o cliente"}
+        {!aberto && pendentes > 0 && (
+          <Badge variant="warning" className="ml-1 text-[10px]">
+            {pendentes} nova{pendentes === 1 ? "" : "s"}
+          </Badge>
+        )}
+      </Button>
+      {aberto && <ConversaPortal lado={lado} escopo={{ entregaId }} className="mt-2 max-h-96" />}
+    </div>
   );
 }

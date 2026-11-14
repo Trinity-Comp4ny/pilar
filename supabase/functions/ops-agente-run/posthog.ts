@@ -47,7 +47,9 @@ async function consultar(cfg: ConfigPosthog, hogql: string, buscar: Buscar): Pro
     body: JSON.stringify({ query: { kind: "HogQLQuery", query: hogql } }),
   });
   if (r.status === 401 || r.status === 403) {
-    throw new Error(`PostHog recusou a chave (${r.status}): confira o POSTHOG_PERSONAL_API_KEY e o escopo Query: read.`);
+    throw new Error(
+      `PostHog recusou a chave (${r.status}): confira o POSTHOG_PERSONAL_API_KEY e o escopo Query: read.`
+    );
   }
   if (!r.ok) throw new Error(`PostHog respondeu ${r.status}`);
   const lida = respostaSchema.safeParse(await r.json());

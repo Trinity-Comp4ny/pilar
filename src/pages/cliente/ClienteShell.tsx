@@ -26,6 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
 import { TrocarSenhaForm } from "./TrocarSenhaForm";
 import { useInstalarApp } from "@/hooks/useInstalarApp";
+import { FaleComEscritorio } from "./FaleComEscritorio";
 
 interface ClienteShellProps {
   account: ClienteAccount;
@@ -34,6 +35,8 @@ interface ClienteShellProps {
   projetoNome?: string;
   /** Sub-header de obra (sem abas): mostra "voltar" + nome da obra. */
   obraNome?: string;
+  /** Obra aberta: habilita o botão "Falar com o escritório" dela. */
+  obraId?: string;
 }
 
 const projetoNavItems = [
@@ -42,7 +45,7 @@ const projetoNavItems = [
   { path: "/arquivos", label: "Arquivos", icon: FolderOpen, end: false },
 ];
 
-export function ClienteShell({ account, children, projetoId, projetoNome, obraNome }: ClienteShellProps) {
+export function ClienteShell({ account, children, projetoId, projetoNome, obraNome, obraId }: ClienteShellProps) {
   const navigate = useNavigate();
   const [isAdminSession, setIsAdminSession] = useState(false);
   const [senhaDialogOpen, setSenhaDialogOpen] = useState(false);
@@ -213,6 +216,8 @@ export function ClienteShell({ account, children, projetoId, projetoNome, obraNo
         </DialogContent>
       </Dialog>
       {instalarApp.dialogo}
+      {projetoId && <FaleComEscritorio projetoId={projetoId} titulo={projetoNome} />}
+      {obraId && !projetoId && <FaleComEscritorio obraId={obraId} titulo={obraNome} />}
     </div>
   );
 }

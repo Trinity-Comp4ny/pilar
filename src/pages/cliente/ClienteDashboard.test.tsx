@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ClienteDashboard from "./ClienteDashboard";
 
 const h = vi.hoisted(() => ({
@@ -37,17 +38,20 @@ const PROJETO = {
 };
 
 function renderPage() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <MemoryRouter initialEntries={["/cliente/dashboard"]}>
-      <Routes>
-        <Route path="/cliente" element={<Outlet context={ACCOUNT} />}>
-          <Route path="dashboard" element={<ClienteDashboard />} />
-        </Route>
-        <Route path="/cliente/login" element={<div data-testid="login" />} />
-        <Route path="/cliente/projeto/:id" element={<div data-testid="projeto" />} />
-        <Route path="/gestao/clientes" element={<div data-testid="painel" />} />
-      </Routes>
-    </MemoryRouter>
+    <QueryClientProvider client={qc}>
+      <MemoryRouter initialEntries={["/cliente/dashboard"]}>
+        <Routes>
+          <Route path="/cliente" element={<Outlet context={ACCOUNT} />}>
+            <Route path="dashboard" element={<ClienteDashboard />} />
+          </Route>
+          <Route path="/cliente/login" element={<div data-testid="login" />} />
+          <Route path="/cliente/projeto/:id" element={<div data-testid="projeto" />} />
+          <Route path="/gestao/clientes" element={<div data-testid="painel" />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 

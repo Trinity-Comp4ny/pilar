@@ -1,6 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { sb } from "@/pages/financeiro/testing/supabaseMock";
 import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
 
@@ -182,6 +183,12 @@ describe("PendenciasCard", () => {
   });
 });
 
+// O fio de conversa de cada solicitação usa react-query (contador de não lidas).
+function renderComQuery(ui: React.ReactElement) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+}
+
 describe("EntregasContent", () => {
   const entrega = (p: Record<string, unknown>) => ({
     id: "e1",
@@ -214,7 +221,7 @@ describe("EntregasContent", () => {
       ],
       error: null,
     });
-    render(<EntregasContent projetoId="p1" readOnly />);
+    renderComQuery(<EntregasContent projetoId="p1" readOnly />);
     expect(await screen.findByText("Respondidas")).toBeInTheDocument();
     expect(screen.getByText("Arquitetura")).toBeInTheDocument();
     expect(screen.getByText(/IP 1\.2\.3\.4/)).toBeInTheDocument();
@@ -226,14 +233,14 @@ describe("EntregasContent", () => {
 
   it("erro ao carregar avisa na tela e reporta", async () => {
     sb.resultado("portal_entregas.select", { data: null, error: { message: "rls" } });
-    render(<EntregasContent projetoId="p1" />);
+    renderComQuery(<EntregasContent projetoId="p1" />);
     expect(await screen.findByText(/Não foi possível carregar as solicitações agora/)).toBeInTheDocument();
     expect(reportInvokeError).toHaveBeenCalledWith({ message: "rls" }, "portal-entregas:carregar");
   });
 
   it("sem entregas mostra o vazio", async () => {
     sb.resultado("portal_entregas.select", { data: [], error: null });
-    render(<EntregasContent projetoId="p1" />);
+    renderComQuery(<EntregasContent projetoId="p1" />);
     expect(await screen.findByText("Nenhuma solicitação no momento")).toBeInTheDocument();
   });
 
@@ -244,7 +251,7 @@ describe("EntregasContent", () => {
       error: null,
     });
     sb.rpcResultado("portal_aprovar_entrega", { data: null, error: null });
-    render(<EntregasContent projetoId="p1" />);
+    renderComQuery(<EntregasContent projetoId="p1" />);
     expect(await screen.findByText("Aguardando sua resposta (1)")).toBeInTheDocument();
     expect(screen.getByText("Planta baixa")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Abrir no Drive/ })).toHaveAttribute("href", "https://drive/x");
@@ -260,7 +267,7 @@ describe("EntregasContent", () => {
     portal.token = "sessao";
     sb.rpcResultado("portal_listar_solicitacoes", { data: [entrega({})], error: null });
     sb.rpcResultado("portal_aprovar_entrega", { data: null, error: { message: "x" } });
-    render(<EntregasContent projetoId="p1" token="prop" />);
+    renderComQuery(<EntregasContent projetoId="p1" token="prop" />);
     fireEvent.click(await screen.findByRole("button", { name: /Aprovar/ }));
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível aprovar", expect.anything()));
     expect(sb.argsRpc("portal_aprovar_entrega")).toEqual({ p_token: "prop", p_entrega_id: "e1" });
@@ -273,7 +280,7 @@ describe("EntregasContent", () => {
       { data: null, error: { message: "x" } },
       { data: null, error: null },
     ]);
-    render(<EntregasContent projetoId="p1" />);
+    renderComQuery(<EntregasContent projetoId="p1" />);
     fireEvent.click(await screen.findByRole("button", { name: /Solicitar revisão/ }));
     const enviar = () => screen.getAllByRole("button", { name: /Solicitar revisão/ }).at(-1) as HTMLButtonElement;
     expect(enviar()).toBeDisabled();
@@ -301,7 +308,7 @@ describe("EntregasContent", () => {
 
   it("sem token a equipe não aprova nem pede revisão pelo portal", async () => {
     sb.resultado("portal_entregas.select", { data: [{ ...entrega({}), projeto_disciplinas: null }], error: null });
-    render(<EntregasContent projetoId="p1" />);
+    renderComQuery(<EntregasContent projetoId="p1" />);
     fireEvent.click(await screen.findByRole("button", { name: /Aprovar/ }));
     fireEvent.click(screen.getByRole("button", { name: /Solicitar revisão/ }));
     fireEvent.change(screen.getByPlaceholderText(/Descreva/), { target: { value: "x" } });

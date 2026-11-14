@@ -3,7 +3,7 @@
 <!-- Gerado por scripts/edge-functions-catalog.mjs a partir de supabase/functions/CATALOGO.json.
      Não editar à mão: edite o CATALOGO.json e rode `node scripts/edge-functions-catalog.mjs`. -->
 
-66 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
+67 funções. **Chamada por**: app (chamada no código do front), cron (pg_cron nas
 migrations) ou origem externa declarada no manifesto. **Login**: `verify_jwt` do `config.toml`
 (JWT aceita a chave anon; "própria" = a função faz a autorização). **Secrets**: lidos direto
 na pasta da função (o que vem de `_shared`, como a chave do Gemini, não aparece).
@@ -46,6 +46,7 @@ acima; candidata a remoção, lembrando que apagar o código não despublica a f
 | `invite-cliente-portal` | Convida o cliente para o portal (manda o e-mail antes de gravar). | app | JWT | `APP_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-aprovar-proposta` | Cliente aprova proposta pelo portal (auth pelo token do portal). | app | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-arquivos` | Portal do cliente: lista e baixa os arquivos da pasta Cliente do projeto no Google Drive do escritório; só do cliente da sessão (SPEC 163). | app | própria | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
+| `portal-avisar-mensagem` | Avisa por e-mail o cliente do portal quando o escritório escreve na conversa (um e-mail por janela de 30 minutos). | app | JWT | `APP_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-avisar-solicitacao` | Avisa por e-mail os acessos do portal do cliente quando o escritório cria uma solicitação (projeto ou obra). | app | JWT | `APP_URL` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-entrega-download` | URL assinada de 5 minutos para arquivo de entrega do portal. | **sem chamador conhecido** | própria | `SUPABASE_ANON_KEY` `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |
 | `portal-get-projeto` | Dados do projeto para o portal (auth pelo token do portal). | **sem chamador conhecido** | própria | `SUPABASE_SERVICE_ROLE_KEY` `SUPABASE_URL` | sim |

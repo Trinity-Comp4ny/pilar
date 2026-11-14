@@ -73,7 +73,7 @@ export default function ClienteObraDetail() {
   }
 
   return (
-    <ClienteShell account={account} obraNome={data.nome}>
+    <ClienteShell account={account} obraNome={data.nome} obraId={data.obra_id}>
       <div className="space-y-6">
         <SectionTabs
           tabs={ABAS_OBRA}
