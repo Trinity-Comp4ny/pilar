@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   FolderKanban,
   DollarSign,
-  FileCheck,
   FolderOpen,
   LayoutDashboard,
   ChevronDown,
@@ -40,7 +39,6 @@ interface ClienteShellProps {
 const projetoNavItems = [
   { path: "", label: "Visão Geral", icon: FolderKanban, end: true },
   { path: "/financeiro", label: "Financeiro", icon: DollarSign, end: false },
-  { path: "/entregas", label: "Entregas", icon: FileCheck, end: false },
   { path: "/arquivos", label: "Arquivos", icon: FolderOpen, end: false },
 ];
 

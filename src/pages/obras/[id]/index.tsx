@@ -11,6 +11,7 @@ import {
   MapPin,
   Pencil,
   Scale,
+  Send,
   Trash2,
   User,
   Wallet,
@@ -34,6 +35,7 @@ import { sensivelClimaLabel } from "@/lib/obras";
 import { cn } from "@/lib/utils";
 import { ObraFormDialog } from "../components/ObraFormDialog";
 import { ObraAcessosTab } from "../components/ObraAcessosTab";
+import { SolicitacoesDoCliente } from "@/pages/portal/SolicitacoesDoCliente";
 import { ObraTimelineTab } from "../components/ObraTimelineTab";
 import { ObraDiarioTab } from "../components/ObraDiarioTab";
 import { ObraCronogramaTab } from "../components/ObraCronogramaTab";
@@ -119,6 +121,7 @@ export default function ObraDetalhePage() {
     ...(showCotacoes ? [{ id: "cotacoes", label: "Cotações", icon: Scale }] : []),
     ...(showEstoque ? [{ id: "estoque", label: "Estoque", icon: Boxes }] : []),
     ...(showConta ? [{ id: "conta", label: "Conta da obra", icon: Wallet }] : []),
+    ...(obra.modelo_cobranca === "administracao" ? [{ id: "solicitacoes", label: "Solicitações", icon: Send }] : []),
     ...(canEdit ? [{ id: "acessos", label: "Acessos", icon: HardHat }] : []),
   ];
 
@@ -241,6 +244,11 @@ export default function ObraDetalhePage() {
         {showConta && (
           <TabsContent value="conta">
             <ObraContaTab obra={obra} canEdit={canEdit} />
+          </TabsContent>
+        )}
+        {obra.modelo_cobranca === "administracao" && (
+          <TabsContent value="solicitacoes">
+            <SolicitacoesDoCliente obraId={obra.id} />
           </TabsContent>
         )}
         {canEdit && (

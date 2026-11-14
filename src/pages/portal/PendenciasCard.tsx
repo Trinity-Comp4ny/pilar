@@ -8,10 +8,9 @@ import type { ClienteReceita } from "@/pages/cliente/useClienteProjetoData";
 interface PendenciasCardProps {
   baseUrl: string;
   receitas: ClienteReceita[];
-  portalEntregasPendentes: number;
 }
 
-export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: PendenciasCardProps) {
+export function PendenciasCard({ baseUrl, receitas }: PendenciasCardProps) {
   const navigate = useNavigate();
 
   // Datas locais (YYYY-MM-DD): toISOString (UTC) à noite já cai no dia seguinte e
@@ -28,13 +27,11 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
   const faturasProximasVencimento = faturasProximasVencimentoList.length;
 
   const pendencias = {
-    entregasPendentes: portalEntregasPendentes,
     faturasProximasVencimento,
     faturasAtrasadas,
   };
 
-  const totalPendencias =
-    pendencias.entregasPendentes + pendencias.faturasProximasVencimento + pendencias.faturasAtrasadas;
+  const totalPendencias = pendencias.faturasProximasVencimento + pendencias.faturasAtrasadas;
 
   if (totalPendencias === 0) {
     return (
@@ -68,21 +65,6 @@ export function PendenciasCard({ baseUrl, receitas, portalEntregasPendentes }: P
         </div>
 
         <div className="space-y-1.5">
-          {pendencias.entregasPendentes > 0 && (
-            <button
-              onClick={() => navigate(`${baseUrl}/entregas`)}
-              className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-md bg-white hover:bg-warning-soft border border-warning-soft-border text-sm transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <FileCheck className="h-3.5 w-3.5 text-warning-mid" />
-                <span>
-                  {pendencias.entregasPendentes} entrega{pendencias.entregasPendentes === 1 ? "" : "s"} para aprovar
-                </span>
-              </div>
-              <ChevronRight className="h-3.5 w-3.5 text-warning-mid" />
-            </button>
-          )}
-
           {pendencias.faturasAtrasadas > 0 && (
             <div className="flex items-center gap-2">
               <button
