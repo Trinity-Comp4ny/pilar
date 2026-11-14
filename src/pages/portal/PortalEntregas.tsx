@@ -368,13 +368,7 @@ function EntregaCard({
               </div>
             ) : (
               <div className="flex gap-2 flex-wrap pt-2">
-                <Button
-                  size="sm"
-                  variant="brand"
-                  className="h-11 sm:h-9 bg-positive hover:bg-positive/90"
-                  onClick={onAprovar}
-                  disabled={saving}
-                >
+                <Button size="sm" variant="brand" className="h-11 sm:h-9" onClick={onAprovar} disabled={saving}>
                   <CheckCircle2 className="h-3 w-3 mr-1" /> Aprovar
                 </Button>
                 <Button size="sm" variant="outline" className="h-11 sm:h-9" onClick={onStartRevisao}>
