@@ -9,7 +9,7 @@ const TIPOS = {
   arquivar: { rotulo: "Arquivar", icone: <Archive className="h-4 w-4" />, className: "bg-primary" },
 } as const;
 
-export interface AcaoDeslize {
+interface AcaoDeslize {
   tipo: keyof typeof TIPOS;
   onAcionar: () => void;
 }
