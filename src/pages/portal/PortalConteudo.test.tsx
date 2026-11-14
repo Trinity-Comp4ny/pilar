@@ -21,7 +21,7 @@ import { reportInvokeError } from "@/lib/monitoring";
 import { FinanceiroContent } from "./PortalFinanceiro";
 import { TimelineContent } from "./PortalTimeline";
 import { BadgePendencias, PendenciasCard } from "./PendenciasCard";
-import { EntregasContent } from "./PortalEntregas";
+import { EntregasContent } from "@/components/portal/PortalEntregas";
 
 const TZ_ORIGINAL = process.env.TZ;
 beforeAll(() => {

@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FolderKanban, ArrowRight, Building2 } from "lucide-react";
 import { ClienteShell } from "./ClienteShell";
-import { EntregasContent } from "@/pages/portal/PortalEntregas";
+import { EntregasContent } from "@/components/portal/PortalEntregas";
 import { ConviteInstalarApp } from "@/components/instalar/ConviteInstalarApp";
 import { useClienteProjetos, type ClienteProjeto } from "./useClienteProjetos";
 import { useClienteObras } from "./useClienteObraData";

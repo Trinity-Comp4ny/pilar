@@ -28,7 +28,7 @@ WITH allowed(sig) AS (
     -- Entrypoints pré-autenticação com caller anon real (portal/campo/cliente)
     ('portal_login(text, text)'), ('portal_verify_session(text)'),
     ('portal_verify_session_readonly(text)'), ('portal_change_password(text, text, text)'),
-    ('portal_listar_entregas(text, uuid)'), ('portal_aprovar_entrega(text, uuid)'),
+    ('portal_listar_entregas(text, uuid)'), ('portal_listar_solicitacoes(text, uuid, uuid)'), ('portal_aprovar_entrega(text, uuid)'),
     ('portal_solicitar_revisao_entrega(text, uuid, text)'), ('campo_login(text, text)'),
     ('campo_verify_session(text)'), ('campo_trocar_senha(text, text)'),
     -- Spec 099: convite por link, cliente/funcionário ainda sem sessão nenhuma ao

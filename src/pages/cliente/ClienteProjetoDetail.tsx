@@ -10,7 +10,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useClienteProjetoData } from "./useClienteProjetoData";
 import { FinanceiroContent } from "@/pages/portal/PortalFinanceiro";
 import { TimelineContent, type TimelineDisciplina } from "@/pages/portal/PortalTimeline";
-import { EntregasContent } from "@/pages/portal/PortalEntregas";
+import { EntregasContent } from "@/components/portal/PortalEntregas";
 import { PendenciasCard } from "@/pages/portal/PendenciasCard";
 import { ArquivosDoProjeto } from "./ArquivosDoProjeto";
 import type { ClienteAccount } from "@/hooks/useClienteAuth";

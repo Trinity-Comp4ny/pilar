@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePermissions } from "@/hooks/usePermissions";
-import { EntregasContent } from "./PortalEntregas";
-import { EntregaFormDialog } from "./EntregaFormDialog";
+import { EntregasContent } from "@/components/portal/PortalEntregas";
+import { EntregaFormDialog } from "@/components/portal/EntregaFormDialog";
 
 /**
  * Aba do escritório: pede algo ao cliente (aprovação, documento, informação) e acompanha a resposta.

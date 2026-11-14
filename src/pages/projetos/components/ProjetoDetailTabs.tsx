@@ -40,7 +40,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { AplicarFluxoDialog } from "./AplicarFluxoDialog";
 import { ProjetoAtividadesPanel } from "./ProjetoAtividadesPanel";
 import { ProjetoArquivosTab } from "./ProjetoArquivosTab";
-import { SolicitacoesDoCliente } from "@/pages/portal/SolicitacoesDoCliente";
+import { SolicitacoesDoCliente } from "@/components/portal/SolicitacoesDoCliente";
 
 interface ProjetoDetailTabsProps {
   projeto: Projeto;
