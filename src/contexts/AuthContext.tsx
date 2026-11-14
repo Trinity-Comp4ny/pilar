@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from "react";
-import { definirBadgeApp } from "@/lib/badgeApp";
 import { useQueryClient } from "@tanstack/react-query";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -140,7 +139,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, fetchProfile]);
 
   const signOut = useCallback(async () => {
-    definirBadgeApp(0);
     await supabase.auth.signOut();
     // Limpa o cache do react-query para não vazar dados de uma role/sessão
     // para a próxima que logar na mesma aba (bleed observado no QA).

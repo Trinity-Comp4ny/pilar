@@ -98,6 +98,9 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
     definirBadgeApp(naoLidas);
   }, [naoLidas]);
 
+  // Sair (ou desmontar a casca) zera o número do ícone.
+  useEffect(() => () => definirBadgeApp(0), []);
+
   const abrir = (n: Notificacao) => {
     if (!n.lido_em) marcarLida.mutate(n.id);
     const link = resolveLink(n);
