@@ -303,13 +303,13 @@ function EntregaCard({
                 </Badge>
               )}
               {entrega.disciplina_nome && (
-                <Badge variant="secondary" className="text-[10px]" title="Etapa do projeto">
+                <Badge variant="secondary" className="text-3xs" title="Etapa do projeto">
                   {entrega.disciplina_nome}
                 </Badge>
               )}
             </div>
             {entrega.descricao && <p className="text-xs text-muted-foreground mt-1">{entrega.descricao}</p>}
-            <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground flex-wrap">
+            <div className="flex items-center gap-3 mt-1.5 text-2xs text-muted-foreground flex-wrap">
               <span>{new Date(entrega.created_at).toLocaleDateString("pt-BR")}</span>
               {entrega.drive_url && (
                 <a
@@ -323,20 +323,20 @@ function EntregaCard({
               )}
             </div>
           </div>
-          <Badge className={cn("text-[10px] border shrink-0", config.color)}>
+          <Badge className={cn("text-3xs border shrink-0", config.color)}>
             <StatusIcon className="h-3 w-3 mr-1" />
             {config.label}
           </Badge>
         </div>
 
         {entrega.resposta_cliente && (
-          <div className="rounded p-2 bg-attention-soft border border-attention-soft-border text-[11px] text-attention-strong">
+          <div className="rounded p-2 bg-attention-soft border border-attention-soft-border text-2xs text-attention-strong">
             <span className="font-medium">Solicitação do cliente:</span> {entrega.resposta_cliente}
           </div>
         )}
 
         {readOnly && entrega.status === "aprovado" && entrega.respondido_em && (
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-3xs text-muted-foreground">
             Aprovado em {new Date(entrega.respondido_em).toLocaleString("pt-BR")}
             {entrega.aprovado_ip ? ` · IP ${entrega.aprovado_ip}` : ""}
           </p>

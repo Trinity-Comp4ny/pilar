@@ -44,7 +44,7 @@ export function buildUsersColumns({
           {u.id === currentUserId && (
             <Badge
               variant="outline"
-              className="h-5 rounded-full border-black/10 bg-black/5 px-2 text-[10px] text-black/60"
+              className="h-5 rounded-full border-black/10 bg-black/5 px-2 text-3xs text-black/60"
             >
               Você
             </Badge>
@@ -130,7 +130,7 @@ export function buildUsersColumns({
         }
         if (isUltra) {
           return (
-            <span className="text-[11px] text-muted-foreground" title="Ultra admin: gerenciado via SQL">
+            <span className="text-2xs text-muted-foreground" title="Ultra admin: gerenciado via SQL">
               Protegido
             </span>
           );

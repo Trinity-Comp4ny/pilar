@@ -570,7 +570,7 @@ export default function CampoRegistrarDia() {
         <div className="space-y-2 rounded-xl border border-black/5 p-3">
           <div className="flex items-center justify-between">
             <Label className="text-sm">Tarefas do cronograma</Label>
-            <span className="text-[11px] text-muted-foreground">Marque o que andou</span>
+            <span className="text-2xs text-muted-foreground">Marque o que andou</span>
           </div>
 
           {tarefas.length === 0 ? (
@@ -590,9 +590,7 @@ export default function CampoRegistrarDia() {
                       />
                       <label htmlFor={`ct-${t.id}`} className="min-w-0 flex-1 cursor-pointer">
                         <span className="block truncate text-sm text-ink">{t.titulo}</span>
-                        {t.frente_nome && (
-                          <span className="block text-[11px] text-muted-foreground">{t.frente_nome}</span>
-                        )}
+                        {t.frente_nome && <span className="block text-2xs text-muted-foreground">{t.frente_nome}</span>}
                       </label>
                     </div>
                     {marcada && (
@@ -760,7 +758,7 @@ export default function CampoRegistrarDia() {
               className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-black/15 bg-muted/40 text-muted-foreground"
             >
               <Camera className="h-6 w-6" />
-              <span className="text-[11px]">Foto</span>
+              <span className="text-2xs">Foto</span>
             </button>
           </div>
         </div>
@@ -768,7 +766,7 @@ export default function CampoRegistrarDia() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label>Medição (opcional)</Label>
-            <span className="text-[11px] text-muted-foreground">Ex: concreto, tijolo, área de reboco</span>
+            <span className="text-2xs text-muted-foreground">Ex: concreto, tijolo, área de reboco</span>
           </div>
           {medicoes.map((m, i) => (
             <div key={i} className="flex items-center gap-2">

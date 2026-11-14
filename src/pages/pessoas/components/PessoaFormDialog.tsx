@@ -273,7 +273,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved, pode
         <form onSubmit={(e) => e.preventDefault()} className="divide-y">
           {/* Dados Pessoais */}
           <div className="px-6 py-4 space-y-3">
-            <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Dados Pessoais</Label>
+            <Label className="text-3xs uppercase text-muted-foreground tracking-wider">Dados Pessoais</Label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="primeiro_nome" className="text-xs">
@@ -378,7 +378,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved, pode
                   className={cn(form.formState.errors.cpf && "border-destructive focus-visible:ring-destructive")}
                 />
                 {!canEditSensitive && (
-                  <p className="text-[10px] text-muted-foreground">CPF completo restrito a quem tem acesso à folha</p>
+                  <p className="text-3xs text-muted-foreground">CPF completo restrito a quem tem acesso à folha</p>
                 )}
                 {form.formState.errors.cpf && (
                   <p className="text-xs text-danger-mid">{form.formState.errors.cpf.message}</p>
@@ -409,7 +409,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved, pode
 
           {/* Vínculo */}
           <div className="px-6 py-4 space-y-3">
-            <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Vínculo</Label>
+            <Label className="text-3xs uppercase text-muted-foreground tracking-wider">Vínculo</Label>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="tipo_contrato" className="text-xs">
@@ -456,7 +456,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved, pode
 
           {isPJ && (
             <div className="px-6 py-4 space-y-3 bg-highlight-soft/30">
-              <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Dados PJ</Label>
+              <Label className="text-3xs uppercase text-muted-foreground tracking-wider">Dados PJ</Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="cnpj" className="text-xs">
@@ -490,7 +490,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved, pode
 
           {/* Remuneração e Datas */}
           <div className="px-6 py-4 space-y-3">
-            <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Remuneração e Datas</Label>
+            <Label className="text-3xs uppercase text-muted-foreground tracking-wider">Remuneração e Datas</Label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {canEditSensitive && <RemuneracaoCampos form={form} isEstagio={isEstagio} />}
               <div className="space-y-1.5">
@@ -541,9 +541,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved, pode
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pb-4 space-y-4">
                   <div className="space-y-3">
-                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">
-                      Contas Bancárias
-                    </Label>
+                    <Label className="text-3xs uppercase text-muted-foreground tracking-wider">Contas Bancárias</Label>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                       <div className="space-y-1">
                         <Label className="text-xs">Banco</Label>
@@ -620,7 +618,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved, pode
                               </span>
                               <span className="text-xs text-muted-foreground capitalize shrink-0">{conta.tipo}</span>
                               {conta.is_primary && (
-                                <span className="text-[10px] text-foreground font-medium">Principal</span>
+                                <span className="text-3xs text-foreground font-medium">Principal</span>
                               )}
                             </div>
                             <Button
@@ -640,7 +638,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved, pode
                   </div>
 
                   <div className="space-y-3">
-                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Chaves PIX</Label>
+                    <Label className="text-3xs uppercase text-muted-foreground tracking-wider">Chaves PIX</Label>
                     <div className="flex gap-2">
                       <div className="relative flex-1">
                         <Input
@@ -650,7 +648,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved, pode
                           onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddChavePix())}
                         />
                         {newChavePix && (
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-3xs text-muted-foreground">
                             {(() => {
                               const t = detectTipoChavePix(newChavePix);
                               return t ? TIPO_CHAVE_PIX_LABEL[t] : "...";
@@ -677,7 +675,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved, pode
                             variant="secondary"
                             className="flex items-center gap-1.5 pl-2 pr-1 py-1 text-xs"
                           >
-                            <span className="text-[10px] text-muted-foreground">
+                            <span className="text-3xs text-muted-foreground">
                               {TIPO_CHAVE_PIX_LABEL[c.tipo as keyof typeof TIPO_CHAVE_PIX_LABEL] ?? c.tipo}
                             </span>
                             <span className="font-medium">{c.chave}</span>
@@ -697,7 +695,7 @@ export function PessoaFormDialog({ open, onOpenChange, editPessoa, onSaved, pode
               </Collapsible>
             ) : (
               <div className="py-4">
-                <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Dados bancários</Label>
+                <Label className="text-3xs uppercase text-muted-foreground tracking-wider">Dados bancários</Label>
                 <p className="text-sm text-muted-foreground mt-2">
                   Dados bancários e PIX são restritos a quem tem acesso à folha.
                 </p>

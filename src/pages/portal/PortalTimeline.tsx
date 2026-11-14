@@ -57,7 +57,7 @@ export function TimelineContent({ disciplinas }: { disciplinas: TimelineDiscipli
                         <p className="text-sm font-medium" title="Área do projeto">
                           {d.disciplina}
                         </p>
-                        <Badge variant={isConcluido ? "default" : "secondary"} className="text-[10px]">
+                        <Badge variant={isConcluido ? "default" : "secondary"} className="text-3xs">
                           {d.status || "Não iniciado"}
                         </Badge>
                       </div>

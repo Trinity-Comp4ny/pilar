@@ -212,7 +212,7 @@ export function FilterPopover({
           <SlidersHorizontal className="h-4 w-4" aria-hidden />
           <span className="sr-only sm:not-sr-only">{label}</span>
           {ativo && (
-            <span className="min-w-5 rounded-full bg-brand px-1.5 py-0.5 text-center text-[11px] leading-none text-ink tabular-nums">
+            <span className="min-w-5 rounded-full bg-brand px-1.5 py-0.5 text-center text-2xs leading-none text-ink tabular-nums">
               {count}
             </span>
           )}

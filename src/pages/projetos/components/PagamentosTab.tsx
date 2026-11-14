@@ -92,10 +92,10 @@ function StatusBadgeAlerta({ pagamento }: { pagamento: PagamentoProjeto }) {
 
   return (
     <div className="flex items-center gap-1.5">
-      <Badge className={`text-[10px] ${config.color}`}>{config.label}</Badge>
-      {tipo === "atrasado" && <span className="text-[10px] font-medium text-danger-mid">{dias}d atrasado</span>}
+      <Badge className={`text-3xs ${config.color}`}>{config.label}</Badge>
+      {tipo === "atrasado" && <span className="text-3xs font-medium text-danger-mid">{dias}d atrasado</span>}
       {tipo === "proximo" && dias <= 7 && (
-        <span className="text-[10px] font-medium text-warning-mid">vence em {dias}d</span>
+        <span className="text-3xs font-medium text-warning-mid">vence em {dias}d</span>
       )}
     </div>
   );
@@ -228,7 +228,7 @@ export function PagamentosTab({ projetoId, canEdit }: PagamentosTabProps) {
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium truncate">{pag.descricao}</p>
                       {pag.parcela_numero && pag.parcela_total && (
-                        <Badge variant="outline" className="text-[10px] shrink-0">
+                        <Badge variant="outline" className="text-3xs shrink-0">
                           {pag.parcela_numero}/{pag.parcela_total}
                         </Badge>
                       )}

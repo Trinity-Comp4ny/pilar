@@ -373,7 +373,7 @@ export function CronogramaProjetosTab({
                   <div className="h-10 border-b flex sticky top-0 bg-background z-10 relative">
                     {columns.map((col, i) => (
                       <div key={i} className="flex-1 border-r last:border-r-0 flex items-center justify-center">
-                        <span className="text-[10px] font-medium text-muted-foreground capitalize">{col.label}</span>
+                        <span className="text-3xs font-medium text-muted-foreground capitalize">{col.label}</span>
                       </div>
                     ))}
 
@@ -383,7 +383,7 @@ export function CronogramaProjetosTab({
                         className="absolute top-0 bottom-0 w-0.5 bg-red-500 pointer-events-none"
                         style={{ left: `${todayPct}%` }}
                       >
-                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-fill-danger text-fill-danger-foreground text-[9px] px-1.5 py-0.5 font-bold whitespace-nowrap rounded-t-sm z-10">
+                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-fill-danger text-fill-danger-foreground text-3xs px-1.5 py-0.5 font-bold whitespace-nowrap rounded-t-sm z-10">
                           HOJE
                         </div>
                       </div>
@@ -505,10 +505,7 @@ export function CronogramaProjetosTab({
                                       }}
                                     >
                                       <span
-                                        className={cn(
-                                          "text-[10px] font-medium truncate",
-                                          textoSobreBarra(row.barClass)
-                                        )}
+                                        className={cn("text-3xs font-medium truncate", textoSobreBarra(row.barClass))}
                                       >
                                         {row.projeto.nome}
                                       </span>
@@ -540,9 +537,9 @@ export function CronogramaProjetosTab({
                                   <div className="space-y-1.5">
                                     <p className="font-semibold text-sm">{row.projeto.nome}</p>
                                     <div className="flex items-center gap-2">
-                                      {cfg && <Badge className={cn("text-[10px]", cfg.color)}>{cfg.label}</Badge>}
+                                      {cfg && <Badge className={cn("text-3xs", cfg.color)}>{cfg.label}</Badge>}
                                       {row.deadlineStatus && (
-                                        <Badge className={cn("text-[10px]", row.deadlineStatus.color)}>
+                                        <Badge className={cn("text-3xs", row.deadlineStatus.color)}>
                                           {row.deadlineStatus.label}
                                           {row.deadlineStatus.days > 0 ? ` (${row.deadlineStatus.days}d)` : ""}
                                         </Badge>
@@ -569,7 +566,7 @@ export function CronogramaProjetosTab({
                                         </p>
                                       )}
                                     </div>
-                                    <p className="text-[10px] text-muted-foreground/60 border-t pt-1 mt-1">
+                                    <p className="text-3xs text-muted-foreground/60 border-t pt-1 mt-1">
                                       {canDrag
                                         ? "Arraste as bordas para ajustar as datas"
                                         : "Clique para abrir o cronograma"}

@@ -43,7 +43,7 @@ export function FolhaHistory({ history, selectedMonth, selectedYear, onOpenDetai
                   <div className="font-bold text-foreground">{formatCurrency(h.total)}</div>
                   <Badge
                     variant="secondary"
-                    className={`mt-1 capitalize text-[10px] h-5 px-2
+                    className={`mt-1 capitalize text-3xs h-5 px-2
                       ${h.status === "pago" ? "bg-positive text-white" : ""}
                       ${h.status === "pendente" ? "bg-fill-warning text-fill-warning-foreground" : ""}
                       ${h.status === "cancelado" ? "bg-fill-danger text-fill-danger-foreground" : ""}

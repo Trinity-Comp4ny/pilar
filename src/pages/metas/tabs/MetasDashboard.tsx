@@ -271,7 +271,7 @@ export default function MetasDashboard({ onCreate }: MetasDashboardProps) {
                       <div className="flex justify-between items-center gap-2">
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-sm font-medium truncate">{v.meta.nome}</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-ink-muted shrink-0">
+                          <span className="text-3xs px-1.5 py-0.5 rounded-full bg-muted text-ink-muted shrink-0">
                             {labelDoEscopo(v.meta.pessoa_id)}
                           </span>
                         </div>

@@ -212,16 +212,16 @@ export function FluxoPipelineGraph({
           >
             <div className="px-3 py-2 border-b bg-muted/40 flex items-baseline justify-between gap-2">
               <span className="text-xs font-semibold text-info-strong truncate">{stage.titulo}</span>
-              {stage.subtitulo && <span className="text-[10px] text-muted-foreground shrink-0">{stage.subtitulo}</span>}
+              {stage.subtitulo && <span className="text-3xs text-muted-foreground shrink-0">{stage.subtitulo}</span>}
               {stage.resumo && (
-                <span className="text-[10px] text-muted-foreground shrink-0" title="Concluídas / total">
+                <span className="text-3xs text-muted-foreground shrink-0" title="Concluídas / total">
                   {stage.resumo}
                 </span>
               )}
             </div>
             <div>
               {stage.nodes.length === 0 ? (
-                <div className="px-3 py-2.5 text-[11px] text-muted-foreground text-center">sem disciplinas</div>
+                <div className="px-3 py-2.5 text-2xs text-muted-foreground text-center">sem disciplinas</div>
               ) : (
                 stage.nodes.map((node) => {
                   const config = STATUS_VISUAL_CONFIG[node.status];
@@ -251,7 +251,7 @@ export function FluxoPipelineGraph({
                       </span>
                       <span className="flex-1 min-w-0">
                         <span className="block text-xs font-medium truncate">{node.titulo}</span>
-                        <span className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                        <span className="flex items-center gap-2 text-3xs text-muted-foreground">
                           {node.responsavelNome && (
                             <span className="flex items-center gap-0.5 truncate">
                               <User className="h-2.5 w-2.5" /> {node.responsavelNome}

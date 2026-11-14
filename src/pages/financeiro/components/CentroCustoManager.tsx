@@ -194,12 +194,12 @@ export function CentroCustoManager({ open, onOpenChange, onChanged }: Props) {
                       <div className="flex items-center gap-2">
                         <span className="font-medium truncate">{c.nome}</span>
                         {c.codigo && (
-                          <Badge variant="outline" className="text-[10px]">
+                          <Badge variant="outline" className="text-3xs">
                             {c.codigo}
                           </Badge>
                         )}
                         {!c.ativo && (
-                          <Badge variant="secondary" className="text-[10px]">
+                          <Badge variant="secondary" className="text-3xs">
                             inativo
                           </Badge>
                         )}
@@ -213,7 +213,7 @@ export function CentroCustoManager({ open, onOpenChange, onChanged }: Props) {
                       title={c.ativo ? "Desativar" : "Ativar"}
                       aria-label={c.ativo ? "Desativar" : "Ativar"}
                     >
-                      <span className="text-[10px]">{c.ativo ? "ON" : "OFF"}</span>
+                      <span className="text-3xs">{c.ativo ? "ON" : "OFF"}</span>
                     </Button>
                     <Button
                       variant="ghost"

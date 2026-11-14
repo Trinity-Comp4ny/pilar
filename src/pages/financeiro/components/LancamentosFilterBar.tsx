@@ -464,7 +464,7 @@ function CheckboxSearchSection({
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{title}</span>
           {selected.length > 0 && (
-            <span className="text-[10px] bg-brand text-ink rounded-full px-1.5 py-0 min-w-[18px] text-center tabular-nums">
+            <span className="text-3xs bg-brand text-ink rounded-full px-1.5 py-0 min-w-[18px] text-center tabular-nums">
               {selected.length}
             </span>
           )}
@@ -502,7 +502,7 @@ function CheckboxSearchSection({
 
 function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1 rounded-full bg-brand text-ink border border-brand/30 text-[11px] font-medium">
+    <span className="inline-flex items-center gap-1 h-6 pl-2.5 pr-1 rounded-full bg-brand text-ink border border-brand/30 text-2xs font-medium">
       <span className="truncate max-w-[200px]">{label}</span>
       <button
         type="button"

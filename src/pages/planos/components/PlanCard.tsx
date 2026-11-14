@@ -30,7 +30,7 @@ export function PlanCard({ plan, cycle }: PlanCardProps) {
       )}
     >
       {plan.destaque && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand text-ink text-[10px] uppercase tracking-widest font-semibold px-3 py-1 rounded-full">
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand text-ink text-3xs uppercase tracking-widest font-semibold px-3 py-1 rounded-full">
           Mais popular
         </span>
       )}

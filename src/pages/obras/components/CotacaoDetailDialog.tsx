@@ -169,7 +169,7 @@ export function CotacaoDetailDialog({ open, onOpenChange, obraId, cotacao, canEd
                               </span>
                             )}
                             {p.origem === "link" && (
-                              <Badge variant="outline" className="ml-1.5 text-[10px] font-normal">
+                              <Badge variant="outline" className="ml-1.5 text-3xs font-normal">
                                 Preenchido pelo fornecedor
                               </Badge>
                             )}

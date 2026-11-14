@@ -73,14 +73,14 @@ export function LeadKanbanCard({
         temBadges ? (
           <>
             {lead.cliente_id && (
-              <Badge variant="outline" className="h-5 border-brand/40 bg-brand px-1.5 text-[11px] font-normal text-ink">
+              <Badge variant="outline" className="h-5 border-brand/40 bg-brand px-1.5 text-2xs font-normal text-ink">
                 Cliente
               </Badge>
             )}
             {propStatusConfig && (
               <Badge
                 variant="outline"
-                className={cn("h-5 border-transparent px-1.5 text-[11px] font-normal", propStatusConfig.color)}
+                className={cn("h-5 border-transparent px-1.5 text-2xs font-normal", propStatusConfig.color)}
               >
                 {propStatusConfig.label}
               </Badge>

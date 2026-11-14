@@ -56,7 +56,7 @@ export function FolhaTable({
               {isPreview && (semProjeto || variavelZerado) && (
                 <span
                   title={semProjeto ? "Sem projeto no período" : "Variável zerado"}
-                  className="inline-flex items-center gap-1 text-[10px] text-warning-strong bg-warning-soft rounded px-1.5 py-0.5"
+                  className="inline-flex items-center gap-1 text-3xs text-warning-strong bg-warning-soft rounded px-1.5 py-0.5"
                 >
                   <AlertTriangle className="h-3 w-3" />
                   {semProjeto ? "sem projeto" : "variável 0"}

@@ -87,7 +87,7 @@ function getStatusBadge(status: string | undefined) {
   const config = DISCIPLINA_STATUS_CONFIG[status || "Não Iniciado"] || DISCIPLINA_STATUS_CONFIG["Não Iniciado"];
   const Icon = config.icon;
   return (
-    <Badge variant="outline" className={cn("text-[11px] gap-1 font-normal", config.bgColor, config.color)}>
+    <Badge variant="outline" className={cn("text-2xs gap-1 font-normal", config.bgColor, config.color)}>
       <Icon className="h-3 w-3" />
       {config.label}
     </Badge>
@@ -304,7 +304,7 @@ export function DisciplinasTab({
         primeira ? (
           <div className="flex items-center gap-2">
             <span className="font-semibold">{grupo.nome}</span>
-            <Badge variant="secondary" className="text-[10px] font-normal">
+            <Badge variant="secondary" className="text-3xs font-normal">
               {grupo.projetos.length}
             </Badge>
             {canEdit && onChanged && (
@@ -345,13 +345,13 @@ export function DisciplinasTab({
           <div className="flex items-center gap-1">
             {getStatusBadge(disciplina.status)}
             {atrasada && dlStatus && (
-              <Badge variant="destructive" className="text-[10px] gap-0.5">
+              <Badge variant="destructive" className="text-3xs gap-0.5">
                 <AlertTriangle className="h-3 w-3" />
                 {dlStatus.days}d
               </Badge>
             )}
             {atencao && dlStatus && (
-              <Badge className="text-[10px] gap-0.5 bg-fill-warning hover:bg-fill-warning text-fill-warning-foreground">
+              <Badge className="text-3xs gap-0.5 bg-fill-warning hover:bg-fill-warning text-fill-warning-foreground">
                 <Clock className="h-3 w-3" />
                 {dlStatus.days}d
               </Badge>
@@ -386,7 +386,7 @@ export function DisciplinasTab({
       header: "Projeto Status",
       cell: ({ projeto }) =>
         PROJECT_STATUS_CONFIG[projeto.status] ? (
-          <Badge variant="outline" className={cn("text-[11px]", PROJECT_STATUS_CONFIG[projeto.status].color)}>
+          <Badge variant="outline" className={cn("text-2xs", PROJECT_STATUS_CONFIG[projeto.status].color)}>
             {PROJECT_STATUS_CONFIG[projeto.status].label}
           </Badge>
         ) : null,
@@ -517,12 +517,12 @@ export function DisciplinasTab({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-semibold text-sm">{grupo.nome}</h3>
-                          <Badge variant="secondary" className="text-[11px] font-normal">
+                          <Badge variant="secondary" className="text-2xs font-normal">
                             {grupo.projetos.length} projeto
                             {grupo.projetos.length !== 1 ? "s" : ""}
                           </Badge>
                           {hasAtrasadas && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
+                            <span className="text-3xs px-2 py-0.5 rounded-full font-semibold bg-danger-soft text-danger-strong flex items-center gap-1">
                               <AlertTriangle size={10} /> Atraso
                             </span>
                           )}
@@ -643,13 +643,13 @@ export function DisciplinasTab({
                             <div className="flex items-center gap-2 pl-7 sm:pl-0 shrink-0">
                               {getStatusBadge(disciplina.status)}
                               {atrasada && dlStatus && (
-                                <Badge variant="destructive" className="text-[10px] gap-0.5">
+                                <Badge variant="destructive" className="text-3xs gap-0.5">
                                   <AlertTriangle className="h-3 w-3" />
                                   Em Atraso {dlStatus.days > 0 ? `(${dlStatus.days}d)` : ""}
                                 </Badge>
                               )}
                               {atencao && dlStatus && (
-                                <Badge className="text-[10px] gap-0.5 bg-fill-warning hover:bg-fill-warning text-fill-warning-foreground">
+                                <Badge className="text-3xs gap-0.5 bg-fill-warning hover:bg-fill-warning text-fill-warning-foreground">
                                   <Clock className="h-3 w-3" />
                                   Atenção {dlStatus.days > 0 ? `(${dlStatus.days}d)` : ""}
                                 </Badge>
@@ -657,7 +657,7 @@ export function DisciplinasTab({
                               {PROJECT_STATUS_CONFIG[projeto.status] && (
                                 <Badge
                                   variant="outline"
-                                  className={cn("text-[11px]", PROJECT_STATUS_CONFIG[projeto.status].color)}
+                                  className={cn("text-2xs", PROJECT_STATUS_CONFIG[projeto.status].color)}
                                 >
                                   {PROJECT_STATUS_CONFIG[projeto.status].label}
                                 </Badge>
