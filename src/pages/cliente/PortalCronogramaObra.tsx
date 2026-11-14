@@ -15,7 +15,7 @@ import {
   todayPosition,
   textoSobreBarra,
 } from "@/lib/cronograma";
-import type { ClienteObraFrente } from "@/pages/cliente/useClienteObraData";
+import type { ClienteObraFrente } from "./useClienteObraData";
 
 export const ESTADO_FRENTE: Record<EstadoFrente, { label: string; bar: string; badge: string }> = {
   concluida: { label: "Concluída", bar: "bg-positive", badge: "bg-positive/10 text-positive-strong" },

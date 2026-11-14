@@ -216,7 +216,7 @@ CREATE TRIGGER trg_notificar_solicitacao_obra_respondida
   AFTER UPDATE OF status ON public.portal_entregas
   FOR EACH ROW EXECUTE FUNCTION public.tg_notificar_solicitacao_obra_respondida();
 
-REVOKE ALL ON FUNCTION public.tg_notificar_solicitacao_obra_respondida() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.tg_notificar_solicitacao_obra_respondida() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.portal_listar_solicitacoes(TEXT, UUID, UUID) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.portal_listar_solicitacoes(TEXT, UUID, UUID) TO anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION public.portal_aprovar_entrega(TEXT, UUID) FROM PUBLIC;

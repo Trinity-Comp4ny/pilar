@@ -35,7 +35,7 @@ import { sensivelClimaLabel } from "@/lib/obras";
 import { cn } from "@/lib/utils";
 import { ObraFormDialog } from "../components/ObraFormDialog";
 import { ObraAcessosTab } from "../components/ObraAcessosTab";
-import { SolicitacoesDoCliente } from "@/pages/portal/SolicitacoesDoCliente";
+import { SolicitacoesDoCliente } from "@/components/portal/SolicitacoesDoCliente";
 import { ObraTimelineTab } from "../components/ObraTimelineTab";
 import { ObraDiarioTab } from "../components/ObraDiarioTab";
 import { ObraCronogramaTab } from "../components/ObraCronogramaTab";
