@@ -9,6 +9,7 @@ import {
   diffDays,
   endOfMonth,
   generateColumns,
+  rotuloCurtoDoMes,
   parseDate,
   startOfMonth,
   todayPosition,
@@ -191,10 +192,10 @@ function GanttObra({ frentes }: { frentes: FrenteComEstado[] }) {
                   {colunas.map((c) => (
                     <div
                       key={c.start.toISOString()}
-                      className="border-l pb-1.5 text-center text-[11px] capitalize text-muted-foreground"
+                      className="border-l pb-1.5 text-center text-[11px] text-muted-foreground"
                       style={{ flex: Math.max(1, diffDays(c.start, c.end) + 1) }}
                     >
-                      {c.label}
+                      {rotuloCurtoDoMes(c.start)}
                     </div>
                   ))}
                 </div>
@@ -237,10 +238,10 @@ function GanttObra({ frentes }: { frentes: FrenteComEstado[] }) {
             {hoje >= 0 && (
               <div className="pointer-events-none relative h-0">
                 <div
-                  className="absolute bottom-0 w-px bg-ink/60"
+                  className="absolute bottom-0 w-px bg-ink/40"
                   style={{
                     left: `calc(140px + (100% - 140px) * ${hoje / 100})`,
-                    height: `${frentes.length * 44 + 28}px`,
+                    height: `${frentes.length * 45}px`,
                   }}
                   aria-hidden
                 />
