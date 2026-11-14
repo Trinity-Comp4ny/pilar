@@ -156,13 +156,13 @@ export function AceiteTermosBanner({ modo = "ambos" }: { modo?: ModoAceiteTermos
       acoes={
         <>
           <LinkTermos className="mr-auto text-xs font-medium underline underline-offset-2" />
-          <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={adiar}>
+          <Button size="xs" variant="ghost" className="px-2" onClick={adiar}>
             Agora não
           </Button>
           <Button
-            size="sm"
+            size="xs"
             variant="brand"
-            className="h-7 px-3 text-xs"
+            className="px-3"
             loading={aceitar.isPending}
             onClick={() => aceitar.mutate()}
           >

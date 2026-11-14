@@ -182,8 +182,8 @@ export function ManageDisciplinasDialog({
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                         <Button
                           variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-muted-foreground hover:text-ink"
+                          size="xs"
+                          className="w-8 p-0 text-muted-foreground hover:text-ink"
                           onClick={() => openEdit(d)}
                           aria-label={`Editar disciplina ${d.nome}`}
                         >
@@ -191,8 +191,8 @@ export function ManageDisciplinasDialog({
                         </Button>
                         <Button
                           variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-muted-foreground hover:text-danger-mid"
+                          size="xs"
+                          className="w-8 p-0 text-muted-foreground hover:text-danger-mid"
                           onClick={() => setDeleteId(d.id)}
                           aria-label={`Excluir disciplina ${d.nome}`}
                         >

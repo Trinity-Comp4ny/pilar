@@ -141,7 +141,7 @@ export default function Lancamentos() {
         Vendo <span className="font-medium text-foreground">{recorteLabel(filters)}</span> · por vencimento
       </p>
       <DataFrescor updatedAt={resumoUpdatedAt} isFetching={fetchingResumo} onRefresh={() => void refetchResumo()} />
-      <Button size="sm" variant="outline" className="h-8 rounded-full gap-1" onClick={() => setImportar(true)}>
+      <Button size="xs" variant="outline" className="rounded-full gap-1" onClick={() => setImportar(true)}>
         <Upload className="h-3.5 w-3.5" />
         Importar
       </Button>

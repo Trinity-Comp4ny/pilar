@@ -669,10 +669,10 @@ function NovoItem({
         className="h-8 max-w-md flex-1 text-[13px]"
         aria-label={NOVO_LABEL[nivel]}
       />
-      <Button size="sm" variant="brand" className="h-8" onClick={criar} disabled={!nome.trim() || salvando}>
+      <Button size="xs" variant="brand" onClick={criar} disabled={!nome.trim() || salvando}>
         Criar
       </Button>
-      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={onFechar} aria-label="Fechar">
+      <Button size="icon-sm" variant="ghost" onClick={onFechar} aria-label="Fechar">
         <X className="h-4 w-4" />
       </Button>
     </div>

@@ -106,8 +106,7 @@ export function LinksDoProjeto({ projetoId, canEdit }: { projetoId: string; canE
                     <Button
                       type="button"
                       variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
+                      size="icon-sm"
                       onClick={() => alternarCliente(i)}
                       disabled={salvar.isPending}
                       aria-label={
@@ -122,8 +121,7 @@ export function LinksDoProjeto({ projetoId, canEdit }: { projetoId: string; canE
                     <Button
                       type="button"
                       variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
+                      size="icon-sm"
                       onClick={() => remover(i)}
                       disabled={salvar.isPending}
                       aria-label={`Remover link: ${l.rotulo || l.url}`}

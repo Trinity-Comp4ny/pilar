@@ -85,7 +85,7 @@ export function SeletorColunas({ colunas }: { colunas: ColunasLista }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
+        <Button variant="outline" size="xs" className="gap-1.5">
           <SlidersHorizontal className="h-3.5 w-3.5" /> Colunas
         </Button>
       </DropdownMenuTrigger>
@@ -170,10 +170,10 @@ function NovaListaInline({ onCriar, criando }: Pick<EtapaControls, "onCriar" | "
         ))}
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="brand" size="sm" className="h-8" onClick={criar} disabled={!nome.trim() || criando}>
+        <Button variant="brand" size="xs" onClick={criar} disabled={!nome.trim() || criando}>
           Adicionar
         </Button>
-        <Button variant="ghost" size="sm" className="h-8" onClick={fechar}>
+        <Button variant="ghost" size="xs" onClick={fechar}>
           Cancelar
         </Button>
       </div>

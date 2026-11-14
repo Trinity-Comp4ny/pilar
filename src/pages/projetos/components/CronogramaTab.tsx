@@ -20,6 +20,7 @@ import {
   barPosition,
   toIso,
 } from "@/lib/cronograma";
+import { GANTT_LABEL_W, GANTT_GUIDE_LINE, GANTT_GUIDE_CHIP } from "@/components/gantt/ganttStyle";
 import { useGanttDrag } from "@/components/gantt/useGanttDrag";
 import {
   type DisciplinaResponsavel,
@@ -385,7 +386,7 @@ export function CronogramaTab({
                 fixa de 220px sozinha consumia mais da metade de uma tela de 390px,
                 sobrando só uma faixa estreita pra timeline). Some o responsável,
                 mantém só o nome truncado. */}
-            <div className={cn("shrink-0 border-r bg-muted/30", isMobile ? "w-[104px]" : "w-[220px]")}>
+            <div className={cn("shrink-0 border-r bg-muted/30", GANTT_LABEL_W)}>
               <div className="h-10 border-b px-3 flex items-center">
                 <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                   Disciplina
@@ -467,14 +468,9 @@ export function CronogramaTab({
 
                   {/* Vertical guide line during drag */}
                   {guideX !== null && (
-                    <div
-                      className="absolute top-0 bottom-0 w-px bg-chart-info/70 z-30 pointer-events-none"
-                      style={{ left: `${guideX}px` }}
-                    >
+                    <div className={GANTT_GUIDE_LINE} style={{ left: `${guideX}px` }}>
                       {/* Date chip at top of guide */}
-                      <div className="absolute top-1 left-2 bg-chart-info text-white text-[9px] px-1.5 py-0.5 rounded whitespace-nowrap shadow-md font-medium">
-                        {guideDateLabel()}
-                      </div>
+                      <div className={GANTT_GUIDE_CHIP}>{guideDateLabel()}</div>
                     </div>
                   )}
 

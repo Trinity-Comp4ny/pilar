@@ -210,8 +210,7 @@ export function FolhaTable({
             cell: (item: FolhaItem) => (
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-8 w-8"
+                size="icon-sm"
                 title={`Baixar comprovante de ${item.p_nome}`}
                 aria-label={`Baixar comprovante de ${item.p_nome}`}
                 loading={pendente(item.p_id)}

@@ -69,7 +69,7 @@ export function AgendaView({ cursor, eventos, onEventoClick, renderNovoNoDia }: 
                 {renderNovoNoDia && (
                   <Popover open={diaAberto === dia} onOpenChange={(aberto) => setDiaAberto(aberto ? dia : null)}>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className="mt-2 h-8">
+                      <Button variant="outline" size="xs" className="mt-2">
                         <Plus className="mr-1 h-3.5 w-3.5" /> Tarefa
                         <span className="sr-only">
                           em {d.toLocaleDateString("pt-BR", { day: "numeric", month: "long" })}

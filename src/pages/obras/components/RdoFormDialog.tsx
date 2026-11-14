@@ -590,8 +590,8 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial, ra
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
-                  className="h-8 shrink-0"
+                  size="xs"
+                  className="shrink-0"
                   onClick={adicionarTarefa}
                   disabled={!novaTarefa.titulo.trim() || criarTarefa.isPending}
                 >
@@ -669,8 +669,8 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial, ra
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
-                  className="h-8 shrink-0"
+                  size="xs"
+                  className="shrink-0"
                   onClick={adicionarEfetivo}
                   disabled={!novoEfetivo.fornecedorId || !novoEfetivo.quantidade}
                 >
@@ -747,8 +747,8 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial, ra
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
-                  className="h-8 shrink-0"
+                  size="xs"
+                  className="shrink-0"
                   onClick={adicionarImpedimento}
                   disabled={!novoImpedimento.descricao.trim()}
                 >
@@ -826,8 +826,8 @@ export function RdoFormDialog({ open, onOpenChange, obraId, rdos, rdoInicial, ra
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
-                  className="h-8 shrink-0"
+                  size="xs"
+                  className="shrink-0"
                   onClick={adicionarVisita}
                   disabled={!novaVisita.fornecedorId}
                 >

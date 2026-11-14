@@ -125,7 +125,7 @@ function Stat({
         {label}
       </div>
       <div
-        className={`mt-2 text-2xl font-medium tracking-tight ${variant === "ok" ? "text-success-mid" : "text-black"}`}
+        className={`mt-2 text-xl font-semibold tabular-nums tracking-tight ${variant === "ok" ? "text-success-mid" : "text-black"}`}
       >
         {value}
       </div>

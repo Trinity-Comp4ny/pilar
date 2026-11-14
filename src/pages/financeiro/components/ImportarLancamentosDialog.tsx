@@ -552,8 +552,8 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
                               <Button
                                 type="button"
                                 variant="outline"
-                                size="sm"
-                                className="h-8 w-full justify-start"
+                                size="xs"
+                                className="w-full justify-start"
                                 onClick={() =>
                                   atualizar(it.id, {
                                     tipo: it.tipo === "despesa" ? "receita" : "despesa",
@@ -622,8 +622,8 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
                               <Button
                                 type="button"
                                 variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                size="icon-sm"
+                                className="text-muted-foreground hover:text-destructive"
                                 onClick={() => removerLinha(it.id)}
                                 aria-label="Remover linha"
                               >

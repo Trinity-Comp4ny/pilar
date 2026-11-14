@@ -1,3 +1,4 @@
+import { GANTT_LABEL_W } from "@/components/gantt/ganttStyle";
 import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-pangea/dnd";
 import { AlertTriangle, ChevronRight, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -48,7 +49,7 @@ export function CronogramaColunaProjetos({
   return (
     // Mobile: a coluna fixa de 260px sozinha consumia 66% de uma tela de 390px; some o status e o
     // cliente e a alça de arraste, e fica só o nome truncado.
-    <div className={cn("shrink-0 border-r bg-muted/30", isMobile ? "w-[104px]" : "w-[260px]")}>
+    <div className={cn("shrink-0 border-r bg-muted/30", GANTT_LABEL_W)}>
       <div className="h-10 border-b px-3 flex items-center">
         <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
           {pessoaId ? "Meus projetos" : "Projeto"}

@@ -23,6 +23,7 @@ import {
   type GanttDragType,
   type ZoomLevel,
 } from "@/lib/cronograma";
+import { GANTT_GUIDE_LINE, GANTT_GUIDE_CHIP, GANTT_DRAG_TIP } from "@/components/gantt/ganttStyle";
 import { useGanttDrag } from "@/components/gantt/useGanttDrag";
 import { DisciplinaTimelineRows } from "./CronogramaDisciplinaRows";
 import { CronogramaColunaProjetos } from "./CronogramaColunaProjetos";
@@ -408,13 +409,8 @@ export function CronogramaProjetosTab({
 
                     {/* Vertical guide line during drag */}
                     {guideX !== null && (
-                      <div
-                        className="absolute top-0 bottom-0 w-px bg-blue-400/70 z-30 pointer-events-none"
-                        style={{ left: `${guideX}px` }}
-                      >
-                        <div className="absolute top-1 left-2 bg-blue-600 text-white text-[9px] px-1.5 py-0.5 rounded whitespace-nowrap shadow-md font-medium">
-                          {guideDateLabel()}
-                        </div>
+                      <div className={GANTT_GUIDE_LINE} style={{ left: `${guideX}px` }}>
+                        <div className={GANTT_GUIDE_CHIP}>{guideDateLabel()}</div>
                       </div>
                     )}
 
@@ -588,9 +584,7 @@ export function CronogramaProjetosTab({
                                   className="absolute top-1/2 -translate-y-1/2 z-40 pointer-events-none"
                                   style={{ left: `${guideX + 14}px` }}
                                 >
-                                  <div className="bg-gray-900/90 text-white text-[10px] px-2 py-1 rounded-md whitespace-nowrap shadow-lg font-medium">
-                                    {getDragLabel(geo, dragOverride.type)}
-                                  </div>
+                                  <div className={GANTT_DRAG_TIP}>{getDragLabel(geo, dragOverride.type)}</div>
                                 </div>
                               )}
                             </div>

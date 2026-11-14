@@ -212,8 +212,8 @@ export function UsoPanel() {
               {canComprar && (
                 <Button
                   variant="brand"
-                  size="sm"
-                  className="h-7 px-2.5 text-xs rounded-full"
+                  size="xs"
+                  className="px-2.5 rounded-full"
                   onClick={() => {
                     closeSettings();
                     navigate("/comprar-tokens");

@@ -424,8 +424,8 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
             {hasReceitasData && (
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-8 shrink-0 gap-1 text-muted-foreground"
+                size="xs"
+                className="shrink-0 gap-1 text-muted-foreground"
                 onClick={() => setDetalheCategoria("receitas")}
               >
                 Ver detalhes
@@ -458,8 +458,8 @@ export default function VisaoGeral({ onNavigateTab, onNovoLancamento }: VisaoGer
             {hasDespesasData && (
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-8 shrink-0 gap-1 text-muted-foreground"
+                size="xs"
+                className="shrink-0 gap-1 text-muted-foreground"
                 onClick={() => setDetalheCategoria("despesas")}
               >
                 Ver detalhes

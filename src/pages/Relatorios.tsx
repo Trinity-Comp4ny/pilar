@@ -580,7 +580,7 @@ export default function Relatorios() {
               <div className="flex items-center gap-2">
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+                    <Button variant="outline" size="xs" className="gap-1.5">
                       <Columns3 size={13} />
                       Colunas
                       {visibleColumns.size < ALL_COLUMNS.length && (
@@ -622,7 +622,7 @@ export default function Relatorios() {
                 </Popover>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button size="sm" variant="brand" className="h-8 text-xs gap-1.5" disabled={!filteredData.length}>
+                    <Button size="xs" variant="brand" className="gap-1.5" disabled={!filteredData.length}>
                       <Download size={13} />
                       Exportar
                       <ChevronDown size={13} className="opacity-70" />

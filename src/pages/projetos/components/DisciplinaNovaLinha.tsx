@@ -63,16 +63,15 @@ export function DisciplinaNovaLinha({
       <TableCell className="py-2">
         <div className="flex gap-1">
           <Button
-            size="icon"
+            size="icon-sm"
             variant="brand"
-            className="h-8 w-8"
             onClick={onAdd}
             disabled={!newDisc.disciplina || !newDisc.responsavel_id}
             aria-label="Adicionar disciplina"
           >
             <Plus className="h-4 w-4" />
           </Button>
-          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={onCancel} aria-label="Cancelar">
+          <Button size="icon-sm" variant="ghost" onClick={onCancel} aria-label="Cancelar">
             <X className="h-4 w-4" />
           </Button>
         </div>

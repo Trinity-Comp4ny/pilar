@@ -266,8 +266,8 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
             <div className="flex items-center justify-between border-t px-2 py-1.5">
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-7 text-xs text-muted-foreground"
+                size="xs"
+                className="text-muted-foreground"
                 disabled={naoLidasNoFiltro === 0}
                 onClick={() => marcarTodas.mutate(filtro)}
               >
@@ -276,8 +276,8 @@ export function NotificationInbox({ side = "right", align = "end" }: Notificatio
               </Button>
               <Button
                 variant="ghost"
-                size="sm"
-                className="h-7 text-xs text-muted-foreground"
+                size="xs"
+                className="text-muted-foreground"
                 onClick={() => arquivarTodas.mutate(filtro)}
               >
                 <Archive className="mr-1.5 h-3.5 w-3.5" />
