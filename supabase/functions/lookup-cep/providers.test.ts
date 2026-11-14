@@ -111,6 +111,21 @@ Deno.test("fromViaCep retorna null quando o CEP não é encontrado (erro:true)",
   }
 });
 
+Deno.test("fromViaCep trata erro:\"true\" (string) como CEP não encontrado, sem acusar mudança de formato (PILAR-3K)", async () => {
+  let chamadas = 0;
+  const restore = stubFetch(() => {
+    chamadas++;
+    return jsonResponse({ erro: "true" });
+  });
+  try {
+    assertEquals(await fromViaCep("00000000"), null);
+    // Só a chamada ao ViaCEP: nenhum captureException (que faria outro fetch) foi disparado.
+    assertEquals(chamadas, 1);
+  } finally {
+    restore();
+  }
+});
+
 Deno.test(
   "fromViaCep retorna null (não quebra) quando o formato da resposta mudou — reprodução do PILAR-2J",
   async () => {
