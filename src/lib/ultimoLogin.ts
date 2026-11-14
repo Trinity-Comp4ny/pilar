@@ -2,7 +2,7 @@
 // método o usuário usou no último login bem-sucedido, para a tela de login
 // destacar a opção. Device pode ser compartilhado, então nunca expõe identidade.
 
-export type MetodoLogin = "google" | "senha";
+export type MetodoLogin = "google" | "senha" | "passkey";
 
 const KEY = "pilar:ultimo-login";
 
@@ -25,7 +25,7 @@ export function ultimoMetodo(): MetodoLogin | null {
     const raw = localStorage.getItem(KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<RegistroLogin>;
-    if (parsed.metodo === "google" || parsed.metodo === "senha") return parsed.metodo;
+    if (parsed.metodo === "google" || parsed.metodo === "senha" || parsed.metodo === "passkey") return parsed.metodo;
     return null;
   } catch {
     return null;

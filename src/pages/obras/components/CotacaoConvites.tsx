@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CompartilharButton } from "@/components/mobile/CompartilharButton";
 import { toast } from "sonner";
 import { Copy, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -249,6 +250,17 @@ function LinkGeradoDialog({
             <Copy className="mr-1.5 h-4 w-4" />
             Copiar link
           </Button>
+          <CompartilharButton
+            dados={() =>
+              gerado
+                ? {
+                    titulo: "Cotação",
+                    texto: `Cotação para ${gerado.fornecedor}: informe preço e prazo pelo link.`,
+                    url: gerado.link,
+                  }
+                : null
+            }
+          />
           <Button variant="outline" onClick={onClose}>
             Fechar
           </Button>

@@ -8,7 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, ArrowLeft, Eye, EyeOff, Fingerprint } from "lucide-react";
+import { entrarComPasskey, passkeyDisponivel } from "@/lib/passkey";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { GoogleButton } from "@/components/GoogleButton";
 import { loginSchema, loginDefaultValues, type LoginFormData } from "@/schemas";
@@ -27,6 +28,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const ultimo = ultimoMetodo();
@@ -103,6 +105,27 @@ export default function Login() {
     sessionStorage.setItem("pilar_post_login", "1");
     navigate("/inicio");
     setIsLoading(false);
+  };
+
+  const handlePasskey = async () => {
+    setIsPasskeyLoading(true);
+    const r = await entrarComPasskey();
+    if (!r.ok) {
+      setIsPasskeyLoading(false);
+      if (!r.cancelado) toast.error("Não foi possível entrar com biometria", { description: r.mensagem });
+      return;
+    }
+    // Mesmo desfecho do login por senha: MFA (aal2) ainda é exigido quando ativo.
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal?.nextLevel === "aal2" && aal?.currentLevel === "aal1") {
+      navigate("/mfa");
+      setIsPasskeyLoading(false);
+      return;
+    }
+    marcarLogin("passkey");
+    sessionStorage.setItem("pilar_post_login", "1");
+    navigate("/inicio");
+    setIsPasskeyLoading(false);
   };
 
   const handleGoogle = async () => {
@@ -253,6 +276,20 @@ export default function Login() {
               <span className="bg-paper px-2 text-ink-muted">ou</span>
             </div>
           </div>
+
+          {passkeyDisponivel() && (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              loading={isPasskeyLoading}
+              disabled={isLoading || isGoogleLoading}
+              onClick={handlePasskey}
+            >
+              <Fingerprint className="mr-2 h-4 w-4" />
+              Entrar com biometria
+            </Button>
+          )}
 
           <GoogleButton
             onClick={handleGoogle}

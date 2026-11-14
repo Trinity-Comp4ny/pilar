@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CompartilharButton } from "@/components/mobile/CompartilharButton";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Check, Copy, HardHat } from "lucide-react";
@@ -69,12 +70,16 @@ export function CriarAcessoCampoDialog({ open, onOpenChange, obraId }: Props) {
     }
   };
 
+  const textoDoAcesso = () => {
+    if (!resultado) return "";
+    return resultado.modo === "convite"
+      ? `Pilar Campo\nEnviamos um convite para ${resultado.email} para definir a senha.`
+      : `Pilar Campo\nEmail: ${resultado.email}\nSenha: ${resultado.senha}`;
+  };
+
   const copiar = async () => {
     if (!resultado) return;
-    const texto =
-      resultado.modo === "convite"
-        ? `Pilar Campo\nEnviamos um convite para ${resultado.email} para definir a senha.`
-        : `Pilar Campo\nEmail: ${resultado.email}\nSenha: ${resultado.senha}`;
+    const texto = textoDoAcesso();
     await navigator.clipboard.writeText(texto);
     setCopiado(true);
     toast.success("Copiado");
@@ -126,6 +131,14 @@ export function CriarAcessoCampoDialog({ open, onOpenChange, obraId }: Props) {
             {copiado ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             {copiado ? "Copiado" : "Use o botão abaixo pra copiar"}
           </p>
+          <CompartilharButton
+            size="sm"
+            dados={() => ({
+              titulo: "Acesso ao Pilar Campo",
+              texto: textoDoAcesso(),
+              url: "https://pilarsoft.com.br/campo",
+            })}
+          />
         </div>
       ) : (
         <div className="space-y-4">

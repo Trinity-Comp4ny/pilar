@@ -100,6 +100,12 @@ const schema = {
   VITE_POSTHOG_KEY: optionalText,
   VITE_POSTHOG_HOST: optionalUrl,
 
+  /**
+   * Passkey (biometria) no login e em Segurança. Só ligar depois de habilitar passkey no Auth do
+   * Supabase do ambiente; "true" liga, qualquer outro valor deixa desligado.
+   */
+  VITE_PASSKEY_ENABLED: optionalText,
+
   /** Status page externa (SPEC 105). Definida, a rota /status do app redireciona para ela. */
   VITE_STATUS_URL: optionalUrl,
 

@@ -1,8 +1,9 @@
 import { Suspense, lazy, useEffect } from "react";
+import { hapticoDeMutation } from "@/lib/haptico";
 import { PullToRefresh } from "@/components/mobile/PullToRefresh";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { ManifestDoApp } from "@/components/instalar/ManifestDoApp";
 import { toast } from "sonner";
@@ -144,6 +145,11 @@ function reportarFalha(origem: "query" | "mutation", err: unknown, extra: Record
 }
 
 const queryClient = new QueryClient({
+  // Vibração curta quando a ação da pessoa (salvar, aprovar, registrar) conclui ou falha.
+  mutationCache: new MutationCache({
+    onSuccess: (_d, _v, _c, mutation) => hapticoDeMutation("sucesso", mutation.meta),
+    onError: (_e, _v, _c, mutation) => hapticoDeMutation("erro", mutation.meta),
+  }),
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5,

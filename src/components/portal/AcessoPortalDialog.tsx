@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CompartilharButton } from "@/components/mobile/CompartilharButton";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Clock, Copy, Send, ShieldOff, UserPlus } from "lucide-react";
 import { toast } from "sonner";
@@ -163,6 +164,15 @@ export function AcessoPortalDialog({
                     <Copy className="h-3.5 w-3.5" />
                     Copiar link do portal
                   </Button>
+                  <CompartilharButton
+                    variant="ghost"
+                    size="sm"
+                    dados={() => ({
+                      titulo: "Portal do cliente",
+                      texto: "Acompanhe seu projeto pelo portal:",
+                      url: linkDoPortal(),
+                    })}
+                  />
                 </div>
                 <ul className="divide-y rounded-lg border" aria-label="Acessos ao portal">
                   {acessos.map((a) => (
