@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { haptico } from "@/lib/haptico";
 import { PilarMark } from "@/components/motion/PilarMark";
 import {
   LIMIAR_PUXAR,
@@ -86,7 +87,7 @@ export function PullToRefresh() {
       pintar(distancia, false);
       desenharTraco(progressoDoPuxar(distancia));
       const agora = distancia >= LIMIAR_PUXAR;
-      if (agora && !passouLimiar) navigator.vibrate?.(10);
+      if (agora && !passouLimiar) haptico("leve");
       passouLimiar = agora;
     };
 
