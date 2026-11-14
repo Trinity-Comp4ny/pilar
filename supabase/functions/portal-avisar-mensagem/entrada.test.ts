@@ -1,0 +1,9 @@
+import { assertEquals } from "https://deno.land/std@0.168.0/testing/asserts.ts";
+import { lerEntrada } from "./entrada.ts";
+
+Deno.test("aviso de mensagem exige o id da mensagem", () => {
+  const id = "6f1c2a9e-1b2c-4d3e-8f4a-5b6c7d8e9f00";
+  const r = lerEntrada({ mensagem_id: id });
+  assertEquals(r.ok && r.data.mensagem_id, id);
+  assertEquals(lerEntrada({}), { ok: false, error: "mensagem_id inválido" });
+});

@@ -184,6 +184,34 @@ export function templateSolicitacaoCliente(params: {
   };
 }
 
+export function templateMensagemPortal(params: {
+  nomeCliente: string;
+  autor: string;
+  trecho: string;
+  origem: string;
+  portalUrl: string;
+  empresaNome?: string;
+}): EmailTemplate {
+  const { nomeCliente, autor, trecho, origem, portalUrl, empresaNome } = params;
+  const curto = trecho.length > 280 ? `${trecho.slice(0, 280).trimEnd()}…` : trecho;
+
+  return {
+    subject: `Nova mensagem de ${empresaNome ?? autor}`,
+    html: shell({
+      preview: `${autor} escreveu pelo portal`,
+      footerNote: empresaNome
+        ? `Enviado por ${empresaNome} via ${BRAND.nome}.`
+        : "Você recebeu este e-mail porque um escritório escreveu pelo portal do cliente.",
+      hero: {
+        titulo: html`Você tem uma ${em("mensagem nova")}`,
+        lead: html`Olá, ${strong(nomeCliente)}. ${strong(autor)} escreveu para você no portal. Para não encher sua
+        caixa, mensagens seguidas chegam em um aviso só.`,
+      },
+      content: [card([kv("Onde", origem), kv("Mensagem", curto)], { mt: 0 }), button("Responder no portal", portalUrl)],
+    }),
+  };
+}
+
 export function templateConviteAcessoCampo(params: {
   nome: string;
   email: string;

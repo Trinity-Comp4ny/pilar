@@ -1,7 +1,43 @@
 import { z } from "../_shared/schemas.ts";
 import type { ExtracaoBase } from "./criacao.ts";
-import { EXTRAIR_ADITIVO_PROMPT, EXTRAIR_CARTAO_PROMPT, EXTRAIR_CATEGORIA_PROMPT, EXTRAIR_CENTRO_CUSTO_PROMPT, EXTRAIR_CLIENTE_PROMPT, EXTRAIR_CONTA_PROMPT, EXTRAIR_DESPESA_PROMPT, EXTRAIR_DISCIPLINA_PROMPT, EXTRAIR_FOLHA_PROMPT, EXTRAIR_FORNECEDOR_PROMPT, EXTRAIR_LEAD_PROMPT, EXTRAIR_MARCO_PROMPT, EXTRAIR_PESSOA_PROMPT, EXTRAIR_PROJETO_PROMPT, EXTRAIR_PROPOSTA_PROMPT, EXTRAIR_RECEITA_PROMPT } from "./prompts.ts";
-import { AGENTE_LABEL, AditivoExtractionSchema, Agente, CartaoExtractionSchema, CategoriaExtractionSchema, CentroCustoExtractionSchema, ClienteExtractionSchema, ContaExtractionSchema, DespesaExtractionSchema, DisciplinaExtractionSchema, FolhaExtractionSchema, FornecedorExtractionSchema, LeadExtractionSchema, MarcoExtractionSchema, PessoaExtractionSchema, ProjetoExtractionSchema, PropostaExtractionSchema, ReceitaExtractionSchema } from "./schemas.ts";
+import {
+  EXTRAIR_ADITIVO_PROMPT,
+  EXTRAIR_CARTAO_PROMPT,
+  EXTRAIR_CATEGORIA_PROMPT,
+  EXTRAIR_CENTRO_CUSTO_PROMPT,
+  EXTRAIR_CLIENTE_PROMPT,
+  EXTRAIR_CONTA_PROMPT,
+  EXTRAIR_DESPESA_PROMPT,
+  EXTRAIR_DISCIPLINA_PROMPT,
+  EXTRAIR_FOLHA_PROMPT,
+  EXTRAIR_FORNECEDOR_PROMPT,
+  EXTRAIR_LEAD_PROMPT,
+  EXTRAIR_MARCO_PROMPT,
+  EXTRAIR_PESSOA_PROMPT,
+  EXTRAIR_PROJETO_PROMPT,
+  EXTRAIR_PROPOSTA_PROMPT,
+  EXTRAIR_RECEITA_PROMPT,
+} from "./prompts.ts";
+import {
+  AGENTE_LABEL,
+  AditivoExtractionSchema,
+  Agente,
+  CartaoExtractionSchema,
+  CategoriaExtractionSchema,
+  CentroCustoExtractionSchema,
+  ClienteExtractionSchema,
+  ContaExtractionSchema,
+  DespesaExtractionSchema,
+  DisciplinaExtractionSchema,
+  FolhaExtractionSchema,
+  FornecedorExtractionSchema,
+  LeadExtractionSchema,
+  MarcoExtractionSchema,
+  PessoaExtractionSchema,
+  ProjetoExtractionSchema,
+  PropostaExtractionSchema,
+  ReceitaExtractionSchema,
+} from "./schemas.ts";
 
 // Config estática por entidade criável. Runtime (db/admin/req/...) é injetado no dispatch.
 export type EntidadeCfg = {

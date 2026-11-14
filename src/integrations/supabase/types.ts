@@ -6742,6 +6742,97 @@ export type Database = {
           },
         ]
       }
+      portal_mensagens: {
+        Row: {
+          autor_nome: string
+          autor_profile_id: string | null
+          autor_tipo: string
+          created_at: string
+          empresa_id: string
+          entrega_id: string | null
+          id: string
+          interna: boolean
+          lida_pela_equipe_em: string | null
+          lida_pelo_cliente_em: string | null
+          obra_id: string | null
+          projeto_id: string | null
+          texto: string
+        }
+        Insert: {
+          autor_nome: string
+          autor_profile_id?: string | null
+          autor_tipo: string
+          created_at?: string
+          empresa_id: string
+          entrega_id?: string | null
+          id?: string
+          interna?: boolean
+          lida_pela_equipe_em?: string | null
+          lida_pelo_cliente_em?: string | null
+          obra_id?: string | null
+          projeto_id?: string | null
+          texto: string
+        }
+        Update: {
+          autor_nome?: string
+          autor_profile_id?: string | null
+          autor_tipo?: string
+          created_at?: string
+          empresa_id?: string
+          entrega_id?: string | null
+          id?: string
+          interna?: boolean
+          lida_pela_equipe_em?: string | null
+          lida_pelo_cliente_em?: string | null
+          obra_id?: string | null
+          projeto_id?: string | null
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_mensagens_autor_profile_id_fkey"
+            columns: ["autor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_mensagens_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_mensagens_entrega_id_fkey"
+            columns: ["entrega_id"]
+            isOneToOne: false
+            referencedRelation: "portal_entregas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_mensagens_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_mensagens_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_mensagens_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_release_itens: {
         Row: {
           commit_sha: string | null
@@ -10140,6 +10231,20 @@ export type Database = {
         }
         Returns: undefined
       }
+      _portal_msg_escopo: {
+        Args: {
+          p_cliente_id: string
+          p_empresa_id: string
+          p_entrega_id: string
+          p_obra_id: string
+          p_projeto_id: string
+        }
+        Returns: {
+          entrega_id: string
+          obra_id: string
+          projeto_id: string
+        }[]
+      }
       _portal_reset_password: {
         Args: { p_account_id: string; p_nova_senha: string }
         Returns: undefined
@@ -10951,6 +11056,10 @@ export type Database = {
           origem: string
         }[]
       }
+      marcar_mensagens_portal_lidas_equipe: {
+        Args: { p_entrega_id?: string; p_obra_id?: string; p_projeto_id?: string }
+        Returns: undefined
+      }
       marcar_novidades_vistas: { Args: never; Returns: undefined }
       mfa_backup_codes_remaining: { Args: never; Returns: number }
       mfa_consume_backup_code: { Args: { p_code: string }; Returns: boolean }
@@ -11140,10 +11249,29 @@ export type Database = {
         Args: { p_nova_senha: string; p_senha_atual: string; p_token: string }
         Returns: Json
       }
+      portal_contar_mensagens_nao_lidas: {
+        Args: { p_token: string }
+        Returns: {
+          entrega_id: string
+          obra_id: string
+          projeto_id: string
+          total: number
+        }[]
+      }
       portal_convite_consultar: { Args: { p_token: string }; Returns: Json }
       portal_convite_definir_senha: {
         Args: { p_senha: string; p_token: string }
         Returns: Json
+      }
+      portal_enviar_mensagem: {
+        Args: {
+          p_entrega_id?: string
+          p_obra_id?: string
+          p_projeto_id?: string
+          p_texto: string
+          p_token: string
+        }
+        Returns: string
       }
       portal_get_projeto_disciplinas: {
         Args: { p_projeto_id: string; p_token: string }
@@ -11175,6 +11303,22 @@ export type Database = {
           updated_at: string
         }[]
       }
+      portal_listar_mensagens: {
+        Args: {
+          p_entrega_id?: string
+          p_obra_id?: string
+          p_projeto_id?: string
+          p_token: string
+        }
+        Returns: {
+          autor_nome: string
+          autor_tipo: string
+          created_at: string
+          id: string
+          lida_pelo_cliente_em: string
+          texto: string
+        }[]
+      }
       portal_listar_solicitacoes: {
         Args: { p_obra_id?: string; p_projeto_id?: string; p_token: string }
         Returns: {
@@ -11200,6 +11344,15 @@ export type Database = {
       portal_login: {
         Args: { p_email: string; p_senha: string }
         Returns: Json
+      }
+      portal_marcar_mensagens_lidas: {
+        Args: {
+          p_entrega_id?: string
+          p_obra_id?: string
+          p_projeto_id?: string
+          p_token: string
+        }
+        Returns: undefined
       }
       portal_solicitar_revisao_entrega: {
         Args: { p_entrega_id: string; p_resposta: string; p_token: string }

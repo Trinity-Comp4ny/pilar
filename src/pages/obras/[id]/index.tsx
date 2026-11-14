@@ -121,7 +121,7 @@ export default function ObraDetalhePage() {
     ...(showCotacoes ? [{ id: "cotacoes", label: "Cotações", icon: Scale }] : []),
     ...(showEstoque ? [{ id: "estoque", label: "Estoque", icon: Boxes }] : []),
     ...(showConta ? [{ id: "conta", label: "Conta da obra", icon: Wallet }] : []),
-    ...(obra.modelo_cobranca === "administracao" ? [{ id: "solicitacoes", label: "Solicitações", icon: Send }] : []),
+    ...(obra.modelo_cobranca === "administracao" ? [{ id: "cliente", label: "Cliente", icon: Send }] : []),
     ...(canEdit ? [{ id: "acessos", label: "Acessos", icon: HardHat }] : []),
   ];
 
@@ -247,7 +247,7 @@ export default function ObraDetalhePage() {
           </TabsContent>
         )}
         {obra.modelo_cobranca === "administracao" && (
-          <TabsContent value="solicitacoes">
+          <TabsContent value="cliente">
             <SolicitacoesDoCliente obraId={obra.id} />
           </TabsContent>
         )}
