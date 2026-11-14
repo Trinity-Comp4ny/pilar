@@ -189,12 +189,7 @@ export function LeadDetailDialog({
                 )}
               </div>
               {onOpenProposta && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 px-2 text-xs"
-                  onClick={() => onOpenProposta(proposta.id)}
-                >
+                <Button variant="ghost" size="xs" className="px-2" onClick={() => onOpenProposta(proposta.id)}>
                   <PencilIcon className="mr-1.5 h-3.5 w-3.5" /> Editar proposta
                 </Button>
               )}

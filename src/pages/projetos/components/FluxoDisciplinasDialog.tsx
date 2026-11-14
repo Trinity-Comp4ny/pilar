@@ -287,16 +287,16 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                           <div className="flex gap-1 shrink-0">
                             <Button
                               variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-info-mid"
+                              size="xs"
+                              className="w-8 p-0 text-info-mid"
                               onClick={() => handleEdit(fluxo)}
                             >
                               <Edit size={16} />
                             </Button>
                             <Button
                               variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 text-danger-mid"
+                              size="xs"
+                              className="w-8 p-0 text-danger-mid"
                               onClick={() => setConfirmDeleteId(fluxo.id)}
                             >
                               <Trash2 size={16} />
@@ -386,8 +386,8 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                 <Button
                                   type="button"
                                   variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
+                                  size="xs"
+                                  className="w-8 p-0"
                                   disabled={ordemIdx === 0}
                                   onClick={() => moveColuna(ordem, "up")}
                                 >
@@ -396,8 +396,8 @@ export function FluxoDisciplinasDialog({ open, onOpenChange, disciplinas, pessoa
                                 <Button
                                   type="button"
                                   variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
+                                  size="xs"
+                                  className="w-8 p-0"
                                   disabled={ordemIdx === ordens.length - 1}
                                   onClick={() => moveColuna(ordem, "down")}
                                 >

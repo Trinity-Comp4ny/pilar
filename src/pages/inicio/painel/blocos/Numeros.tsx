@@ -35,7 +35,7 @@ function Numero({ valor, rotulo, chip, destaque, onClick }: NumeroProps) {
       )}
     >
       <span className="flex items-baseline gap-2">
-        <span className="text-2xl font-bold leading-none tabular-nums text-ink">{valor}</span>
+        <span className="text-xl font-semibold leading-none tabular-nums text-ink">{valor}</span>
         {chip && (
           <span
             className={cn(

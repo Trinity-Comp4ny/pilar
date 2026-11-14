@@ -390,8 +390,8 @@ export function HistoryDetailDialog({
                     <TableCell className="text-right">
                       <Button
                         variant="outline"
-                        size="sm"
-                        className="h-8 gap-1 text-xs"
+                        size="xs"
+                        className="gap-1"
                         loading={pendente(item.p_id)}
                         onClick={() => executar(item.p_id, async () => onDownloadComprovante?.(item))}
                       >

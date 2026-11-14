@@ -124,9 +124,9 @@ export function LancamentosFilterBar({
             <>
               <Button
                 variant="ghost"
-                size="sm"
+                size="xs"
                 onClick={onToggleGrouped}
-                className="h-8 px-2 text-xs gap-1 text-muted-foreground"
+                className="px-2 gap-1 text-muted-foreground"
                 title={grouped ? "Desagrupar parcelas" : "Agrupar parcelas"}
               >
                 <Layers className="h-3.5 w-3.5" />
@@ -135,9 +135,9 @@ export function LancamentosFilterBar({
               {grouped && allGroupIds.length > 0 && (
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="xs"
                   onClick={onToggleExpandAll}
-                  className="h-8 px-2 text-xs gap-1 text-muted-foreground"
+                  className="px-2 gap-1 text-muted-foreground"
                   title={allExpanded ? "Recolher todos" : "Expandir todos"}
                 >
                   {allExpanded ? <ChevronsUp className="h-3.5 w-3.5" /> : <ChevronsDown className="h-3.5 w-3.5" />}

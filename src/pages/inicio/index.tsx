@@ -93,8 +93,8 @@ export default function Inicio() {
           {!editando && (
             <Button
               variant="ghost"
-              size="sm"
-              className="h-8 w-8 rounded-full p-0 text-muted-foreground hover:text-ink"
+              size="xs"
+              className="w-8 rounded-full p-0 text-muted-foreground hover:text-ink"
               onClick={() => setEditando(true)}
               aria-label="Personalizar"
               title="Personalizar"

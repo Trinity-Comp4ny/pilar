@@ -334,7 +334,7 @@ function CheckboxSearchSection({
           )}
         </div>
         {selected.length > 0 && (
-          <Button variant="ghost" size="sm" className="h-7 text-xs w-full" onClick={onClear}>
+          <Button variant="ghost" size="xs" className="w-full" onClick={onClear}>
             {clearLabel}
           </Button>
         )}
@@ -397,8 +397,8 @@ function PeriodoSection({
         <div className="flex gap-1.5">
           <Button
             variant="ghost"
-            size="sm"
-            className="h-7 text-xs flex-1"
+            size="xs"
+            className="flex-1"
             onClick={() => {
               const today = new Date();
               const in30 = new Date();
@@ -413,12 +413,7 @@ function PeriodoSection({
             <Clock className="h-3 w-3 mr-1" /> Próximos 30d
           </Button>
           {hasDate && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs"
-              onClick={() => onChange({ ...filters, dataInicio: "", dataFim: "" })}
-            >
+            <Button variant="ghost" size="xs" onClick={() => onChange({ ...filters, dataInicio: "", dataFim: "" })}>
               Limpar
             </Button>
           )}

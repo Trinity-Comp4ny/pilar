@@ -128,9 +128,9 @@ function LancamentosTable({
                       <>
                         {onAprovar && (
                           <Button
-                            size="sm"
+                            size="xs"
                             variant="ghost"
-                            className="h-7 px-2 text-xs text-success-strong"
+                            className="px-2 text-success-strong"
                             disabled={isMutando}
                             onClick={() => onAprovar(l)}
                           >
@@ -140,9 +140,9 @@ function LancamentosTable({
                         )}
                         {onRejeitar && (
                           <Button
-                            size="sm"
+                            size="xs"
                             variant="ghost"
-                            className="h-7 px-2 text-xs text-danger-mid"
+                            className="px-2 text-danger-mid"
                             disabled={isMutando}
                             onClick={() => onRejeitar(l)}
                           >
@@ -154,9 +154,9 @@ function LancamentosTable({
                     ) : (
                       onReabrir && (
                         <Button
-                          size="sm"
+                          size="xs"
                           variant="ghost"
-                          className="h-7 px-2 text-xs text-muted-foreground"
+                          className="px-2 text-muted-foreground"
                           disabled={isMutando}
                           onClick={() => onReabrir(l)}
                         >

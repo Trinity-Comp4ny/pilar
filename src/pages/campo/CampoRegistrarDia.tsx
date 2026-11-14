@@ -667,8 +667,8 @@ export default function CampoRegistrarDia() {
               <Button
                 type="button"
                 variant="ghost"
-                size="icon"
-                className="h-8 w-8 shrink-0"
+                size="icon-sm"
+                className="shrink-0"
                 onClick={() => removerEfetivo(i)}
                 aria-label="Remover"
               >
@@ -824,8 +824,8 @@ export default function CampoRegistrarDia() {
               <Button
                 type="button"
                 variant="ghost"
-                size="icon"
-                className="h-8 w-8 shrink-0"
+                size="icon-sm"
+                className="shrink-0"
                 onClick={() => removerImpedimento(i)}
                 aria-label="Remover"
               >
@@ -885,8 +885,8 @@ export default function CampoRegistrarDia() {
               <Button
                 type="button"
                 variant="ghost"
-                size="icon"
-                className="h-8 w-8 shrink-0"
+                size="icon-sm"
+                className="shrink-0"
                 onClick={() => removerVisita(i)}
                 aria-label="Remover"
               >

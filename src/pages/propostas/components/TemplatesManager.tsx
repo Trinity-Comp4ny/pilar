@@ -151,8 +151,8 @@ export function TemplatesManager() {
           </div>
           <Button
             variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-danger-mid shrink-0"
+            size="icon-sm"
+            className="text-danger-mid shrink-0"
             onClick={() => setDeleteId(t.id)}
             aria-label="Excluir template"
           >
@@ -179,7 +179,7 @@ export function TemplatesManager() {
 
         <div className="flex items-center justify-between border-t pt-2">
           <span className="text-[10px] text-muted-foreground">{t.variaveis.length} variáveis</span>
-          <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => handlePreview(t)}>
+          <Button variant="outline" size="xs" className="gap-1" onClick={() => handlePreview(t)}>
             <Eye className="h-3 w-3" />
             Preview
           </Button>

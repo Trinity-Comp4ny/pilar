@@ -83,8 +83,8 @@ export function DatePanel({ value, onSelect, onClear, clearLabel = "Limpar" }: D
               key={a.label}
               type="button"
               variant="outline"
-              size="sm"
-              className="h-7 px-2 text-xs"
+              size="xs"
+              className="px-2"
               onClick={() => onSelect(addDays(hoje, a.dias))}
             >
               {a.label}

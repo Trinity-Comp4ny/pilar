@@ -261,7 +261,7 @@ export function ProjectDetailDialog({
                 {canEdit && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2 -mt-1" aria-label="Mais opções">
+                      <Button variant="ghost" size="icon-sm" className="-mr-2 -mt-1" aria-label="Mais opções">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -330,7 +330,7 @@ export function ProjectDetailDialog({
                     Disciplinas ({disciplinasLegacy.length})
                   </Label>
                   {canEdit && !isAddingDisc && (
-                    <Button size="sm" variant="brand" className="h-7 text-xs" onClick={() => setIsAddingDisc(true)}>
+                    <Button size="xs" variant="brand" onClick={() => setIsAddingDisc(true)}>
                       <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar
                     </Button>
                   )}
@@ -370,9 +370,8 @@ export function ProjectDetailDialog({
                     </Select>
                     <div className="flex justify-end gap-2">
                       <Button
-                        size="sm"
+                        size="xs"
                         variant="ghost"
-                        className="h-7 text-xs"
                         onClick={() => {
                           setIsAddingDisc(false);
                           setNewDisc({ disciplina: "", responsavel_id: "" });
@@ -381,9 +380,8 @@ export function ProjectDetailDialog({
                         Cancelar
                       </Button>
                       <Button
-                        size="sm"
+                        size="xs"
                         variant="brand"
-                        className="h-7 text-xs"
                         disabled={!newDisc.disciplina || !newDisc.responsavel_id}
                         onClick={onAddDisc}
                       >
@@ -398,7 +396,7 @@ export function ProjectDetailDialog({
                     <div className="flex flex-col items-center gap-3 text-xs text-muted-foreground text-center py-8 border border-dashed rounded-lg">
                       <span>Nenhuma disciplina definida.</span>
                       {canEdit && (
-                        <Button size="sm" variant="brand" className="h-7 text-xs" onClick={() => setIsAddingDisc(true)}>
+                        <Button size="xs" variant="brand" onClick={() => setIsAddingDisc(true)}>
                           <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar disciplina
                         </Button>
                       )}
@@ -469,8 +467,8 @@ export function ProjectDetailDialog({
                           {canEdit && (
                             <Button
                               variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-danger-mid"
+                              size="icon-sm"
+                              className="shrink-0 text-muted-foreground hover:text-danger-mid"
                               onClick={() => setConfirmDeleteIdx(idx)}
                               aria-label="Excluir disciplina"
                             >

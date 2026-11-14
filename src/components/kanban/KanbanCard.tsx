@@ -104,8 +104,8 @@ function KanbanCardMenu({ children }: { children: ReactNode }) {
       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
         <Button
           variant="ghost"
-          size="icon"
-          className="-my-1.5 -mr-1.5 h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+          size="icon-sm"
+          className="-my-1.5 -mr-1.5 shrink-0 text-muted-foreground hover:text-foreground"
           aria-label="Mais opções"
         >
           <MoreVertical className="h-4 w-4" />

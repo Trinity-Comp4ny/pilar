@@ -70,18 +70,18 @@ export function AceiteAnaliseCard() {
             Saiba mais
           </a>
           <Button
-            size="sm"
+            size="xs"
             variant="ghost"
-            className="h-7 px-2 text-xs"
+            className="px-2"
             disabled={decidir.isPending}
             onClick={() => decidir.mutate(false)}
           >
             Recusar
           </Button>
           <Button
-            size="sm"
+            size="xs"
             variant="brand"
-            className="h-7 px-3 text-xs"
+            className="px-3"
             loading={decidir.isPending}
             onClick={() => decidir.mutate(true)}
           >

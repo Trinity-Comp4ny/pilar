@@ -42,8 +42,8 @@ export function RowActions({ actions, label }: RowActionsProps) {
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            size="icon-sm"
+            className="text-muted-foreground hover:text-foreground"
             aria-label={label ? `Mais ações de ${label}` : "Mais ações"}
           >
             <MoreVertical className="h-4 w-4" />

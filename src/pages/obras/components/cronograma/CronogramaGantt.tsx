@@ -28,6 +28,7 @@ import {
   type LinhaCronograma,
   type NoArvore,
 } from "@/pages/obras/lib/obraArvore";
+import { GANTT_LABEL_W, GANTT_FRAME } from "@/components/gantt/ganttStyle";
 import { useGanttDrag } from "@/components/gantt/useGanttDrag";
 import type { ObraFrenteRow } from "@/pages/obras/hooks/useObraFrentes";
 import type { ObraTarefa } from "@/pages/obras/hooks/useObraTarefas";
@@ -133,7 +134,7 @@ export function CronogramaGantt({
 
   return (
     <div className="space-y-3" style={{ userSelect: isDragging ? "none" : undefined }}>
-      <div className="overflow-hidden rounded-2xl border border-black/5 bg-white">
+      <div className={GANTT_FRAME}>
         <div className="flex flex-col items-start gap-2 border-b p-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-2">
             <CalendarClock className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -151,7 +152,7 @@ export function CronogramaGantt({
 
         <div className="flex">
           {/* Coluna fixa com a árvore */}
-          <div className={cn("shrink-0 border-r bg-muted/30", isMobile ? "w-[132px]" : "w-[280px]")}>
+          <div className={cn("shrink-0 border-r bg-muted/30", GANTT_LABEL_W)}>
             <div className="flex h-10 items-center border-b px-3">
               <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Fase / etapa / serviço / tarefa
