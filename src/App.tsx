@@ -1,6 +1,4 @@
 import { Suspense, lazy, useEffect } from "react";
-import { hapticoDeMutation } from "@/lib/haptico";
-import { PullToRefresh } from "@/components/mobile/PullToRefresh";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -34,6 +32,10 @@ import { useNovaVersao } from "./hooks/useNovaVersao";
 
 // Modal de configuracoes: so monta quando o usuario abre. Estatico, arrastava os
 // 6 paineis (empresa, pagamento, uso...) pro entry chunk e estourava o budget.
+// Lazy: puxar para atualizar só serve em tela de toque; fora do bundle de entrada (teto apertado).
+const PullToRefresh = lazy(() =>
+  import("@/components/mobile/PullToRefresh").then((m) => ({ default: m.PullToRefresh }))
+);
 const SettingsDialog = lazy(() =>
   import("./components/settings/SettingsDialog").then((m) => ({ default: m.SettingsDialog }))
 );
@@ -144,11 +146,20 @@ function reportarFalha(origem: "query" | "mutation", err: unknown, extra: Record
   );
 }
 
+// Decidido uma vez: quem não tem toque nunca baixa o chunk do puxar para atualizar.
+const TELA_DE_TOQUE = typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches;
+
+// Em tela de toque, `lib/mobileBoot` (carregado sob demanda pelo main.tsx) escuta este evento e vibra.
+function vibrarMutation(tipo: "sucesso" | "erro", meta?: Record<string, unknown>) {
+  if (!TELA_DE_TOQUE) return;
+  window.dispatchEvent(new CustomEvent("pilar:mutation", { detail: { tipo, meta } }));
+}
+
 const queryClient = new QueryClient({
   // Vibração curta quando a ação da pessoa (salvar, aprovar, registrar) conclui ou falha.
   mutationCache: new MutationCache({
-    onSuccess: (_d, _v, _c, mutation) => hapticoDeMutation("sucesso", mutation.meta),
-    onError: (_e, _v, _c, mutation) => hapticoDeMutation("erro", mutation.meta),
+    onSuccess: (_d, _v, _c, mutation) => vibrarMutation("sucesso", mutation.meta),
+    onError: (_e, _v, _c, mutation) => vibrarMutation("erro", mutation.meta),
   }),
   defaultOptions: {
     queries: {
@@ -254,7 +265,11 @@ const App = () => {
           <SoltaBoot />
           <BrowserRouter>
             <PageTracker />
-            <PullToRefresh />
+            {TELA_DE_TOQUE && (
+              <Suspense fallback={null}>
+                <PullToRefresh />
+              </Suspense>
+            )}
             <ManifestDoApp />
             <AuthProvider>
               <ImpersonationProvider>
