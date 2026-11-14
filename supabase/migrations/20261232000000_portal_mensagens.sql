@@ -32,6 +32,8 @@ CREATE TABLE public.portal_mensagens (
 CREATE INDEX idx_portal_mensagens_projeto ON public.portal_mensagens (projeto_id, created_at);
 CREATE INDEX idx_portal_mensagens_obra ON public.portal_mensagens (obra_id, created_at);
 CREATE INDEX idx_portal_mensagens_entrega ON public.portal_mensagens (entrega_id, created_at);
+CREATE INDEX idx_portal_mensagens_empresa ON public.portal_mensagens (empresa_id);
+CREATE INDEX idx_portal_mensagens_autor_profile ON public.portal_mensagens (autor_profile_id);
 
 ALTER TABLE public.portal_mensagens ENABLE ROW LEVEL SECURITY;
 
@@ -45,7 +47,7 @@ CREATE POLICY "portal_mensagens_equipe_escreve" ON public.portal_mensagens
     empresa_id = public.get_user_empresa_id()
     AND public.user_has_feature('portal_cliente', 'editor')
     AND autor_tipo = 'escritorio'
-    AND autor_profile_id = auth.uid()
+    AND autor_profile_id = (SELECT auth.uid())
   );
 
 -- ---------------------------------------------------------------------------
