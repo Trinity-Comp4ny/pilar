@@ -174,7 +174,7 @@ export default function FornecedorDetalhePage() {
       <PageLayout header={<PageHeader title="Fornecedor não encontrado" breadcrumbs={BREADCRUMB} />}>
         <p className="text-sm text-muted-foreground">
           Este fornecedor não existe ou foi removido.{" "}
-          <button onClick={() => navigate("/obras/fornecedores")} className="underline">
+          <button onClick={() => navigate("/gestao/fornecedores")} className="underline">
             Voltar para Fornecedores
           </button>
         </p>

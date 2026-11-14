@@ -131,7 +131,7 @@ export function FolhaTable({
       key: "total",
       header: "Total a receber",
       align: "end",
-      className: "font-bold text-lg",
+      className: "font-semibold",
       cell: (item) => (
         <>
           {formatCurrency(item.v_total)} {isEdited(item, "total") && "*"}

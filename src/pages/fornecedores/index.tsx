@@ -3,13 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Plus, Pencil, Trash2, Truck, Link2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { RowActions } from "@/components/data/RowActions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { PageLayout } from "@/components/PageLayout";
 import { PageHeader } from "@/components/PageHeader";
-import { Can } from "@/components/Can";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -46,6 +46,7 @@ const EMPTY_FORM: FormState = { nome: "", cnpj: "", contato: "", email: "", tele
 export default function Fornecedores() {
   usePageTitle("Fornecedores");
   const { can } = usePermissions();
+  const podeExcluir = can("obras", "delete");
   const navigate = useNavigate();
   // Decisão de produto: fornecedor é cadastro global da empresa, mas a porta de
   // gerência vive no módulo Obra (é onde ele mais se usa: cotação e conta da obra).
@@ -303,31 +304,22 @@ export default function Fornecedores() {
           {
             key: "acoes",
             mobile: "trailing" as const,
-            header: "Ações",
+            header: <span className="sr-only">Ações</span>,
             align: "end" as const,
             cell: (f: Fornecedor) => (
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={(e) => handleEditClick(f, e)}
-                  aria-label="Editar fornecedor"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Can feature="obras" action="delete">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-danger-mid"
-                    onClick={(e) => handleDeleteClick(f, e)}
-                    aria-label="Excluir fornecedor"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </Can>
-              </div>
+              <RowActions
+                label={f.nome}
+                actions={[
+                  { label: "Editar", icon: Pencil, onClick: () => handleEditClick(f) },
+                  {
+                    label: "Excluir",
+                    icon: Trash2,
+                    destructive: true,
+                    hidden: !podeExcluir,
+                    onClick: () => handleDeleteClick(f),
+                  },
+                ]}
+              />
             ),
           },
         ]
@@ -521,7 +513,7 @@ export default function Fornecedores() {
               columns={columns}
               data={{ rows: filtered }}
               rowKey={(f) => f.id}
-              onRowClick={(f) => navigate(`/obras/fornecedores/${f.id}`)}
+              onRowClick={(f) => navigate(`/gestao/fornecedores/${f.id}`)}
               emptyState={emptyState}
             />
           </div>

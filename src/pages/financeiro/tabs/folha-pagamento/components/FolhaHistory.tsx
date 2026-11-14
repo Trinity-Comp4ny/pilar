@@ -16,7 +16,7 @@ export function FolhaHistory({ history, selectedMonth, selectedYear, onOpenDetai
   const formatCurrency = useMoneyMask();
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold flex items-center gap-2">
+      <h3 className="text-base font-semibold flex items-center gap-2">
         <History className="h-5 w-5" />
         Histórico de Folhas
       </h3>
@@ -34,7 +34,7 @@ export function FolhaHistory({ history, selectedMonth, selectedYear, onOpenDetai
             >
               <CardContent className="p-4 flex items-center justify-between">
                 <div>
-                  <div className="font-semibold text-lg">
+                  <div className="font-semibold text-base">
                     {getMonthLabel(h.mes)} {h.ano}
                   </div>
                   <div className="text-sm text-muted-foreground">{h.count} colaboradores</div>

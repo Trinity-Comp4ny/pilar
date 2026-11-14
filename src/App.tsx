@@ -2,7 +2,7 @@ import { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { ManifestDoApp } from "@/components/instalar/ManifestDoApp";
 import { toast } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -47,6 +47,13 @@ const ArtigoAjuda = lazy(() => import("./pages/ajuda/Artigo"));
 const ComprarTokens = lazy(() => import("./pages/comprar-tokens"));
 const AutorizarApp = lazy(() => import("./pages/oauth/Autorizar"));
 const MeuTrabalho = lazy(() => import("./pages/meu-trabalho"));
+// Links antigos (aviso de reunião) abriam a Agenda como visão de Tarefas.
+function TarefasOuAgenda() {
+  const [params] = useSearchParams();
+  if (params.get("visao") === "agenda") return <Navigate to="/gestao/agenda" replace />;
+  return <MeuTrabalho />;
+}
+const Agenda = lazy(() => import("./pages/meu-trabalho/AgendaPagina"));
 const Obras = lazy(() => import("./pages/obras"));
 const ObraClima = lazy(() => import("./pages/obras/clima"));
 const ObraDetalhe = lazy(() => import("./pages/obras/[id]"));
@@ -295,11 +302,6 @@ const App = () => {
                             <Route element={<FeatureRoute feature="obras_clima" />}>
                               <Route path="/obras/clima" element={<ObraClima />} />
                             </Route>
-                            {/* Fornecedor mora no módulo Obra (spec 026). */}
-                            <Route element={<FeatureRoute feature="obras_fornecedores" />}>
-                              <Route path="/obras/fornecedores" element={<Fornecedores />} />
-                              <Route path="/obras/fornecedores/:id" element={<FornecedorDetalhe />} />
-                            </Route>
                             {/* Estimativa paramétrica (SPEC 136): feature opt-in por empresa. */}
                             <Route element={<FeatureRoute feature="estimativa_obra" />}>
                               <Route path="/obras/estimativas" element={<EstimativasObra />} />
@@ -314,7 +316,8 @@ const App = () => {
                           {/* Gestão: /gestao abre a primeira aba; cada aba vive em /gestao/*. */}
                           <Route path="/gestao" element={<Navigate to="/gestao/tarefas" replace />} />
                           <Route element={<FeatureRoute feature="meu_trabalho" />}>
-                            <Route path="/gestao/tarefas" element={<MeuTrabalho />} />
+                            <Route path="/gestao/tarefas" element={<TarefasOuAgenda />} />
+                            <Route path="/gestao/agenda" element={<Agenda />} />
                           </Route>
                           <Route element={<FeatureRoute feature="leads" />}>
                             <Route path="/gestao/leads" element={<Leads />} />
@@ -325,6 +328,11 @@ const App = () => {
                           </Route>
                           <Route element={<FeatureRoute feature="propostas" />}>
                             <Route path="/gestao/propostas" element={<Propostas />} />
+                          </Route>
+                          {/* Fornecedor é cadastro da empresa: serve a projeto e a obra. */}
+                          <Route element={<FeatureRoute feature="obras_fornecedores" />}>
+                            <Route path="/gestao/fornecedores" element={<Fornecedores />} />
+                            <Route path="/gestao/fornecedores/:id" element={<FornecedorDetalhe />} />
                           </Route>
                           {/* Financeiro: gate de módulo da empresa + RLS. Desde o
                           ADR 0029 não há recorte por usuário. */}
@@ -402,7 +410,11 @@ const App = () => {
                           />
                           <Route
                             path="/fornecedores/*"
-                            element={<RedirectPrefix from="/fornecedores" to="/obras/fornecedores" />}
+                            element={<RedirectPrefix from="/fornecedores" to="/gestao/fornecedores" />}
+                          />
+                          <Route
+                            path="/obras/fornecedores/*"
+                            element={<RedirectPrefix from="/obras/fornecedores" to="/gestao/fornecedores" />}
                           />
                           <Route path="/calendario/*" element={<Navigate to="/projetos/cronograma" replace />} />
                           <Route path="/disciplinas" element={<Navigate to="/projetos/disciplinas" replace />} />

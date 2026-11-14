@@ -301,9 +301,6 @@ function Linha({
     >
       {/* Nome + tipo + contadores */}
       <div className="flex min-w-0 items-center gap-2">
-        {item.numero != null && (
-          <span className="shrink-0 font-mono text-xs text-muted-foreground">#{item.numero}</span>
-        )}
         <span className="flex min-w-0 flex-col">
           <span className="truncate text-foreground">{item.titulo}</span>
           {item.obraCaminho && (

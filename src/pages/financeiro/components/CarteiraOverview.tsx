@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDateShort } from "@/lib/format";
+import { KPICard } from "@/components/KPICard";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
 import type { Fatura } from "../hooks/useFaturas";
 import type { ContaItem } from "../hooks/useContasCartoes";
@@ -23,22 +24,17 @@ export function CarteiraOverview({ contas, faturas, onDetalhe, onPagar }: Cartei
     <div className="space-y-6">
       {/* Resumo do topo */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="p-5 rounded-lg border bg-muted/30">
-          <p className="text-xs text-muted-foreground mb-1">Saldo em contas</p>
-          <p className="text-3xl font-bold">{formatCurrency(saldoTotal)}</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {contas.length} conta{contas.length === 1 ? "" : "s"}
-          </p>
-        </div>
-        <div className="p-5 rounded-lg border bg-muted/30">
-          <p className="text-xs text-muted-foreground mb-1">Faturas a pagar</p>
-          <p className={cn("text-3xl font-bold", totalAPagar > 0 && "text-negative-strong")}>
-            {formatCurrency(totalAPagar)}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {faturas.length} fatura{faturas.length === 1 ? "" : "s"} em aberto
-          </p>
-        </div>
+        <KPICard
+          label="Saldo em contas"
+          value={saldoTotal}
+          subtitle={`${contas.length} conta${contas.length === 1 ? "" : "s"}`}
+        />
+        <KPICard
+          label="Faturas a pagar"
+          value={totalAPagar}
+          valueTone={totalAPagar > 0 ? "danger" : undefined}
+          subtitle={`${faturas.length} fatura${faturas.length === 1 ? "" : "s"} em aberto`}
+        />
       </div>
 
       {/* Faturas a pagar */}

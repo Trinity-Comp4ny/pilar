@@ -253,7 +253,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     pilar: "obras",
     titulo: "Cadastre um fornecedor",
     descricao: "Quem fornece material e serviço para as obras.",
-    rota: "/obras/fornecedores",
+    rota: "/gestao/fornecedores",
     feature: "obras",
     opcional: true,
     check: { tipo: "tabela", source: "fornecedores", ativos: "deleted_at" },
