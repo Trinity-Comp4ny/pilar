@@ -30,6 +30,7 @@ import { ClienteMessageDialog } from "./ClienteMessageDialog";
 import { ClienteFormDialog } from "./ClienteFormDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { CLIENTES_PAGE_SIZE, getTotalPages, clampPage, getPageRange } from "./pagination";
+import { CONTAINER_TELA_DADOS } from "@/lib/shellLayout";
 
 export default function Clientes() {
   usePageTitle("Clientes");
@@ -385,8 +386,8 @@ export default function Clientes() {
   return (
     <PilarPage
       toolbar={toolbar}
-      className="overflow-y-hidden"
-      containerClassName="md:flex md:h-full md:min-h-0 md:flex-col"
+      className="md:overflow-y-hidden"
+      containerClassName={CONTAINER_TELA_DADOS}
       density="compact"
       title="Clientes"
       search={{ value: searchTerm, onChange: setSearchTerm, placeholder: "Buscar por nome, CPF/CNPJ ou email" }}

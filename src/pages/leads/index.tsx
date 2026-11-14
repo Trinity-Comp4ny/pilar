@@ -59,6 +59,7 @@ import {
   etapaDoLead,
   primeiraEtapaDoBucket,
 } from "@/pages/leads/lib/etapas";
+import { CONTAINER_TELA_DADOS } from "@/lib/shellLayout";
 
 type PeriodoFilter = "todos" | "prox7" | "atrasados" | "mes";
 const PERIODO_OPTIONS: { value: PeriodoFilter; label: string }[] = [
@@ -534,8 +535,8 @@ export default function Leads() {
   return (
     <PageLayout
       toolbar={toolbar}
-      className="overflow-y-hidden"
-      containerClassName="md:flex md:h-full md:min-h-0 md:flex-col"
+      className="md:overflow-y-hidden"
+      containerClassName={CONTAINER_TELA_DADOS}
       density="compact"
       header={
         <PageHeader

@@ -23,6 +23,7 @@ import { ReconciliarDialog } from "./ReconciliarDialog";
 import { softDelete, restaurar } from "@/lib/softDelete";
 
 import { BusyMark } from "@/components/motion/BusyMark";
+import { CONTAINER_TELA_DADOS } from "@/lib/shellLayout";
 
 interface Fornecedor {
   id: string;
@@ -351,8 +352,8 @@ export default function Fornecedores() {
 
   return (
     <PageLayout
-      className="overflow-y-hidden"
-      containerClassName="md:flex md:h-full md:min-h-0 md:flex-col"
+      className="md:overflow-y-hidden"
+      containerClassName={CONTAINER_TELA_DADOS}
       header={
         <PageHeader
           title="Fornecedores"

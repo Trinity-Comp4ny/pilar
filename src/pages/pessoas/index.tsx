@@ -15,6 +15,7 @@ import { PessoaTable } from "./components/PessoaTable";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PESSOAS_EMPRESA_QUERY_KEY } from "@/pages/meu-trabalho/hooks";
 import { useAuth } from "@/contexts/AuthContext";
+import { CONTAINER_TELA_DADOS } from "@/lib/shellLayout";
 
 export default function Pessoas() {
   usePageTitle("Equipe");
@@ -106,8 +107,8 @@ export default function Pessoas() {
 
   return (
     <PilarPage
-      className="overflow-y-hidden"
-      containerClassName="md:flex md:h-full md:min-h-0 md:flex-col"
+      className="md:overflow-y-hidden"
+      containerClassName={CONTAINER_TELA_DADOS}
       density="compact"
       title="Equipe"
       primaryAction={

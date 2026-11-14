@@ -1,6 +1,7 @@
 import { PilarPage } from "@/components/PilarPage";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { TarefasWorkspace, type MolduraTarefasProps } from "./TarefasWorkspace";
+import { CONTAINER_TELA_DADOS } from "@/lib/shellLayout";
 
 function MolduraPagina({ toolbar, search, primaryAction, children }: MolduraTarefasProps) {
   return (
@@ -11,7 +12,7 @@ function MolduraPagina({ toolbar, search, primaryAction, children }: MolduraTare
       search={search}
       primaryAction={primaryAction}
       density="compact"
-      containerClassName="md:flex md:h-full md:min-h-0 md:flex-col"
+      containerClassName={CONTAINER_TELA_DADOS}
     >
       {children}
     </PilarPage>

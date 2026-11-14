@@ -80,6 +80,7 @@ import { BusyMark } from "@/components/motion/BusyMark";
 import { ReadingRing } from "@/components/motion/ReadingRing";
 import { disciplinasDoDocumento } from "./lib/disciplinasDocumento";
 import { perguntarEsforco } from "@/components/pesquisas/perguntarEsforco";
+import { CONTAINER_TELA_DADOS } from "@/lib/shellLayout";
 
 interface PropostaDisciplina {
   id: string;
@@ -690,14 +691,8 @@ export default function Propostas() {
   }
 
   return (
-    // Tabela preenche a altura que sobra e rola por dentro (era `100svh - 360px`, que deixava
-    // ~150 px mortos embaixo num notebook 13"; auditoria de espaço, 2026-11).
-    <PageLayout
-      header={header}
-      toolbar={toolbar}
-      density="compact"
-      containerClassName="md:flex md:h-full md:min-h-0 md:flex-col"
-    >
+    // Tabela preenche a altura que sobra e rola por dentro no desktop (auditoria de espaço, 2026-11).
+    <PageLayout header={header} toolbar={toolbar} density="compact" containerClassName={CONTAINER_TELA_DADOS}>
       <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col min-h-0 max-md:border-0 max-md:bg-transparent max-md:shadow-none">
         <CardContent className="flex min-h-0 flex-1 flex-col p-0 pb-4">
           {propostas.length === 0 ? (
