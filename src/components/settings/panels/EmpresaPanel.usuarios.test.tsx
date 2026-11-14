@@ -1,4 +1,4 @@
-import { clicarAcaoDe, itemDeAcao } from "@/test/acoesLinha";
+import { clicarAcaoDe } from "@/test/acoesLinha";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
