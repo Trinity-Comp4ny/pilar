@@ -164,6 +164,10 @@
     "dominio": "portal",
     "descricao": "Cliente aprova proposta pelo portal (auth pelo token do portal)."
   },
+  "portal-avisar-solicitacao": {
+    "dominio": "portal",
+    "descricao": "Avisa por e-mail os acessos do portal do cliente quando o escritório cria uma solicitação (projeto ou obra)."
+  },
   "portal-arquivos": {
     "dominio": "portal",
     "descricao": "Portal do cliente: lista e baixa os arquivos da pasta Cliente do projeto no Google Drive do escritório; só do cliente da sessão (SPEC 163)."

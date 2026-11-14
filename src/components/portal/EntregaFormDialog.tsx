@@ -49,10 +49,26 @@ export function EntregaFormDialog({ open, onOpenChange, projetoId, obraId, onCre
     setDisciplinaId("");
   };
 
+  // E-mail ao cliente é complemento: a solicitação já está no portal, então falha aqui só avisa a equipe.
+  const avisarCliente = async (entregaId: string) => {
+    const { data, error } = await supabase.functions.invoke("portal-avisar-solicitacao", {
+      body: { entrega_id: entregaId },
+    });
+    const enviados = (data as { enviados?: number } | null)?.enviados ?? 0;
+    if (error || enviados === 0) {
+      toast.warning("O cliente não foi avisado por e-mail", {
+        description: "A solicitação está no portal dele. Confira se o cliente tem acesso liberado.",
+      });
+    }
+  };
+
   const handleSubmit = async () => {
     if (!titulo.trim() || !urlValida || !profile?.empresa_id || !(projetoId || obraId)) return;
     setSaving(true);
+    // O id nasce aqui para o aviso por e-mail saber qual solicitação é, sem reler a linha.
+    const entregaId = crypto.randomUUID();
     const { error } = await supabase.from("portal_entregas").insert({
+      id: entregaId,
       empresa_id: profile.empresa_id,
       projeto_id: projetoId ?? null,
       obra_id: obraId ?? null,
@@ -71,6 +87,7 @@ export function EntregaFormDialog({ open, onOpenChange, projetoId, obraId, onCre
       return;
     }
     toast.success("Solicitação criada");
+    void avisarCliente(entregaId);
     limpar();
     onOpenChange(false);
     onCreated();

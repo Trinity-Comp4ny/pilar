@@ -11,7 +11,7 @@ import { fake, rpcComEmpresa } from "@/pages/obras/testing/supabaseFake";
 vi.mock("@/integrations/supabase/client", async () => ({
   supabase: (await import("@/pages/obras/testing/supabaseFake")).fake.supabase,
 }));
-const toast = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }));
+const toast = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn(), warning: vi.fn() }));
 vi.mock("sonner", () => ({ toast }));
 const auth = vi.hoisted(() => ({ profile: { empresa_id: "emp-1" } as { empresa_id: string } | null }));
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ profile: auth.profile }) }));
@@ -60,6 +60,30 @@ describe("EntregaFormDialog", () => {
     auth.profile = { empresa_id: "emp-1" };
   });
 
+  it("depois de criar, pede o e-mail ao cliente e só avisa a equipe se ele não saiu", async () => {
+    fake.invoke.mockResolvedValueOnce({ data: { enviados: 1 }, error: null });
+    montar();
+    fireEvent.change(screen.getByLabelText("Título"), { target: { value: "Aprovar piso" } });
+    fireEvent.click(criar());
+    await waitFor(() =>
+      expect(fake.invoke).toHaveBeenCalledWith("portal-avisar-solicitacao", {
+        body: { entrega_id: expect.any(String) },
+      })
+    );
+    expect(toast.warning).not.toHaveBeenCalled();
+  });
+
+  it("cliente sem acesso liberado: solicitação criada e aviso de que o e-mail não saiu", async () => {
+    fake.invoke.mockResolvedValueOnce({ data: { enviados: 0, motivo: "sem_acesso" }, error: null });
+    montar();
+    fireEvent.change(screen.getByLabelText("Título"), { target: { value: "Aprovar piso" } });
+    fireEvent.click(criar());
+    await waitFor(() =>
+      expect(toast.warning).toHaveBeenCalledWith("O cliente não foi avisado por e-mail", expect.anything())
+    );
+    expect(toast.success).toHaveBeenCalledWith("Solicitação criada");
+  });
+
   it("sem título não deixa criar", () => {
     montar();
     expect(criar()).toBeDisabled();
@@ -89,6 +113,7 @@ describe("EntregaFormDialog", () => {
     fireEvent.click(criar());
     await waitFor(() => expect(h.onCreated).toHaveBeenCalled());
     expect(fake.escritas("portal_entregas")[0].payload).toEqual({
+      id: expect.any(String),
       empresa_id: "emp-1",
       projeto_id: "proj-1",
       obra_id: null,

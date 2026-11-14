@@ -79,6 +79,7 @@ const ANON_ESPERADO = new Set([
   "portal_change_password",
   "portal_aprovar_entrega",
   "portal_listar_entregas",
+  "portal_listar_solicitacoes",
   "portal_solicitar_revisao_entrega",
   "get_cliente_obras",
   "get_cliente_obra_detail",
