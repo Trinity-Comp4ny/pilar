@@ -1,0 +1,18 @@
+{
+  "voz": "narração por cima do vídeo (narrate.py, narrar_sobre); t = segundo em que a fala entra",
+  "fim": 16.4,
+  "lines": [
+    {
+      "t": 0.3,
+      "say": "O grupo da obra, às sete da manhã."
+    },
+    {
+      "t": 4.5,
+      "say": "Foto, áudio, pergunta do cliente... tudo misturado."
+    },
+    {
+      "t": 9.8,
+      "say": "Na Pilar, cada recado já tem lugar."
+    }
+  ]
+}

@@ -9,6 +9,8 @@ import type { ReactNode } from "react";
 // "Novo lançamento" global abre o formulário certo e invalida todas as queries.
 
 vi.mock("@/hooks/useRecentes", () => ({ useRegistrarPagina: vi.fn() }));
+const perm = vi.hoisted(() => ({ podeCriar: true }));
+vi.mock("@/hooks/usePermissions", () => ({ usePermissions: () => ({ can: () => perm.podeCriar }) }));
 const titulo = vi.hoisted(() => ({ atual: "" }));
 vi.mock("@/hooks/usePageTitle", () => ({ usePageTitle: (t: string) => (titulo.atual = t) }));
 vi.mock("@/components/PageLayout", () => ({
@@ -71,6 +73,8 @@ vi.mock("@/components/SectionTabs", () => ({
     </nav>
   ),
 }));
+const tela = { celular: false };
+vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => tela.celular }));
 vi.mock("./financeiro/components/PeriodoPopover", () => ({ PeriodoPopover: () => <span>periodo</span> }));
 vi.mock("./financeiro/tabs/VisaoGeral", () => ({
   default: ({
@@ -161,17 +165,28 @@ const url = () => new URLSearchParams(screen.getByTestId("url").textContent ?? "
 
 beforeEach(() => {
   vi.clearAllMocks();
+  perm.podeCriar = true;
+  tela.celular = false;
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(2026, 10, 10, 12, 0));
 });
 afterEach(() => vi.useRealTimers());
 
 describe("Financeiro", () => {
+  it("no celular o período continua na barra, abaixo das abas", async () => {
+    tela.celular = true;
+    abrir();
+    expect(await screen.findByText("conteudo:visao")).toBeInTheDocument();
+    expect(screen.getByTestId("toolbar")).toHaveTextContent("periodo");
+  });
+
   it("abre na Visão Geral com o mês atual na URL e o filtro de período", async () => {
     abrir();
     expect(await screen.findByText("conteudo:visao")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Financeiro" })).toBeInTheDocument();
-    expect(screen.getByTestId("toolbar")).toHaveTextContent("periodo");
+    // Desktop: o período fica no fim da linha das abas, sem uma linha de barra só para ele.
+    expect(screen.queryByTestId("toolbar")).not.toBeInTheDocument();
+    expect(screen.getByText("periodo")).toBeInTheDocument();
     expect(titulo.atual).toBe("Financeiro");
     expect(url().get("tab")).toBe("visao-geral");
     expect(url().get("from")).toBe("2026-11-01");
@@ -257,5 +272,33 @@ describe("Financeiro", () => {
     });
     expect(screen.queryByRole("button", { name: "transf-salvar" })).not.toBeInTheDocument();
     expect(invalidate).toHaveBeenCalledTimes(6);
+  });
+
+  it.each(["receita", "despesa"])(
+    "busca rápida: ?new=%s abre o formulário já no tipo e sai da URL mantendo aba e período",
+    async (tipo) => {
+      abrir(`/financeiro?tab=lancamentos&new=${tipo}`);
+      expect(await screen.findByText("conteudo:lancamentos")).toBeInTheDocument();
+      expect(screen.getByText(`form:${tipo}`)).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "escolher:receita" })).not.toBeInTheDocument();
+      expect(url().get("new")).toBeNull();
+      expect(url().get("tab")).toBe("lancamentos");
+      expect(url().get("from")).toBe("2026-11-01");
+    }
+  );
+
+  it("busca rápida: ?new= sem tipo conhecido abre a escolha de tipo", async () => {
+    abrir("/financeiro?new=1");
+    await screen.findByText("conteudo:visao");
+    expect(screen.getByRole("button", { name: "escolher:receita" })).toBeInTheDocument();
+    expect(url().get("new")).toBeNull();
+  });
+
+  it("busca rápida: sem permissão de criar não abre o formulário", async () => {
+    perm.podeCriar = false;
+    abrir("/financeiro?tab=lancamentos&new=despesa");
+    await screen.findByText("conteudo:lancamentos");
+    expect(screen.queryByText("form:despesa")).not.toBeInTheDocument();
+    expect(url().get("new")).toBeNull();
   });
 });

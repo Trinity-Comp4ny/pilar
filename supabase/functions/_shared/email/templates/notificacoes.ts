@@ -89,10 +89,10 @@ export function agruparPorCategoria(itens: NotifItem[]): Array<{ categoria: Noti
 export function assuntoNotificacoes(params: Pick<NotificacoesParams, "modo" | "itens" | "totalOculto">): string {
   const total = params.itens.length + params.totalOculto;
   if (params.modo === "mencao") {
-    return total === 1 ? params.itens[0].titulo : `${total} menções para você no ${BRAND.nome}`;
+    return total === 1 ? params.itens[0].titulo : `${total} menções para você na ${BRAND.nome}`;
   }
   if (params.modo === "imediato") {
-    return total === 1 ? params.itens[0].titulo : `${total} alertas importantes no ${BRAND.nome}`;
+    return total === 1 ? params.itens[0].titulo : `${total} alertas importantes na ${BRAND.nome}`;
   }
   return `Seu resumo da semana: ${total} ${total === 1 ? "pendência" : "pendências"}`;
 }

@@ -106,16 +106,16 @@ Para estruturar o documento inteiro, veja [como fazer uma proposta de projeto de
 
 O mesmo raciocínio vale para as outras disciplinas, com fatores próprios. No estrutural, por exemplo, pesam sistema construtivo e revisões de arquitetura: veja [quanto cobrar por projeto estrutural](/blog/quanto-cobrar-projeto-estrutural).
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O Pilar não calcula o seu preço. Ele guarda o que foi vendido, disciplina por disciplina, e liga isso ao que entra no caixa, para a próxima proposta partir de histórico real e não de memória.
+A Pilar não calcula o seu preço. Ele guarda o que foi vendido, disciplina por disciplina, e liga isso ao que entra no caixa, para a próxima proposta partir de histórico real e não de memória.
 
 - **Proposta por disciplina** em DOCX no modelo do escritório, enviada por e-mail, com funil de leads e motivo de perda registrado ([Gestão](/gestao)).
 - **Aprovou, virou projeto:** a proposta aceita cria o projeto com as disciplinas, e as parcelas nascem no financeiro, mensais ou por marco.
 - **Parcelas à vista no projeto:** contratado, recebido, pendente e atrasado na aba do [projeto](/projetos).
 - **Folha com comprovante** que mostra os projetos que cada pessoa tocou no mês, ponto de partida para estimar a dedicação real.
 
-Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça o Pilar [para engenharia](/engenharia).
+Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça a Pilar [para engenharia](/engenharia).
 
 ## Perguntas frequentes
 

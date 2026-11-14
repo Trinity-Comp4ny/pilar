@@ -31,7 +31,7 @@ export function DisciplinaStatusCelula({
   const atual = status || "Não Iniciado";
   if (!canEdit) {
     return (
-      <Badge variant="outline" className="text-[11px]">
+      <Badge variant="outline" className="text-2xs">
         {atual}
       </Badge>
     );
@@ -39,7 +39,10 @@ export function DisciplinaStatusCelula({
 
   return (
     <Select value={atual} onValueChange={onChange} disabled={atual === "Pausada"}>
-      <SelectTrigger className="h-7 text-xs border-0 bg-transparent hover:bg-muted px-2 -ml-2" aria-label="Status">
+      <SelectTrigger
+        className="h-7 w-auto whitespace-nowrap text-xs border-0 bg-transparent hover:bg-muted px-2 -ml-2"
+        aria-label="Status"
+      >
         <span className="flex items-center gap-1.5">
           <span className={cn("h-2 w-2 rounded-full", STATUS_DOT[atual])} />
           <SelectValue />

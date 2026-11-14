@@ -16,6 +16,17 @@ teste automatizado (qual) ou exercício do fluxo real (qual tela, qual caminho).
 "Passou o typecheck" não é verificação de comportamento.
 -->
 
+## Novidade para o cliente
+
+<!--
+SPEC 152. Isto muda o que o usuário vê ou faz? Se sim, ponha no commit (não aqui):
+  Novidade: <uma frase com o que o cliente ganha>
+  Impacto: fluxo | melhoria | correcao
+  Modulo: <chave da feature, opcional>
+fluxo = muda o caminho de algo que ele já fazia (abre o modal "O que mudou").
+Infra, refatoração, teste e CI não levam a linha. Escreva "Interno" se for o caso.
+-->
+
 ---
 
 ## Gates

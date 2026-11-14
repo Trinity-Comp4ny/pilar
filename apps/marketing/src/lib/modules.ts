@@ -41,7 +41,7 @@ export interface Modulo {
   lede: string;
   /**
    * O que o Google lê: title (sem o " | Pilar"), meta description (110 a 160
-   * caracteres) e o H1, que aparece como a linha pequena acima da headline.
+   * caracteres) e o H1, que abre o parágrafo de apoio logo abaixo da headline.
    * A headline continua sendo a frase de marca; o H1 carrega a palavra-chave.
    */
   seo: { titulo: string; descricao: string; h1: string };
@@ -84,7 +84,7 @@ export const MODULOS: Modulo[] = [
     resumo: "Do lead ao dinheiro na conta.",
     headline: "Do primeiro contato",
     headlineFim: "ao dinheiro na conta.",
-    lede: "Funil, proposta, contrato e financeiro no mesmo lugar. O lead que entra hoje vira a receita que você concilia no fim do mês, sem redigitar nada.",
+    lede: "Contrato incluído, tudo no mesmo lugar: o lead que entra hoje vira a receita que você concilia no fim do mês, sem redigitar nada.",
     seo: {
       titulo: "Proposta e financeiro para escritório de engenharia",
       descricao:
@@ -307,7 +307,7 @@ export const MODULOS: Modulo[] = [
     resumo: "O canteiro alimenta o escritório.",
     headline: "O canteiro alimenta",
     headlineFim: "o escritório.",
-    lede: "Diário de obra que chega preenchido do celular, cotação de material comparada lado a lado e prestação de contas para quem administra obra por taxa.",
+    lede: "O diário chega preenchido do celular, a cotação de material vem comparada lado a lado e quem administra obra por taxa presta contas ao cliente com comprovante.",
     seo: {
       titulo: "Diário de obra e conta da obra por administração",
       descricao:

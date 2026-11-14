@@ -1,3 +1,4 @@
+import { RowActions } from "@/components/data/RowActions";
 import { useMemo, useState } from "react";
 import { Info, Tags } from "lucide-react";
 import { toast } from "sonner";
@@ -7,7 +8,6 @@ import { EmptyState } from "@/components/EmptyState";
 import { PageLoader } from "@/components/motion/PageLoader";
 import { PilarPage } from "@/components/PilarPage";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -45,7 +45,7 @@ function registroDe(ajuste: Ajuste | undefined): { quando: string | null; por: s
 
 /**
  * Tabela de preços da empresa (SPEC 137, BEZ-14): o valor de cada item do catálogo e dos adicionais ao lado da
- * referência. O valor da empresa vale antes do SINAPI e da referência do Pilar. Todos da empresa leem; só o admin
+ * referência. O valor da empresa vale antes do SINAPI e da referência da Pilar. Todos da empresa leem; só o admin
  * escreve (a RLS também confere).
  */
 export default function PrecosEmpresa() {
@@ -133,19 +133,16 @@ export default function PrecosEmpresa() {
   if (isAdmin) {
     colunas.push({
       key: "acoes",
-      header: "",
+      header: <span className="sr-only">Ações</span>,
       align: "end",
       cell: (l) => (
-        <span className="flex justify-end gap-2">
-          {l.ajustado && (
-            <Button variant="ghost" size="sm" onClick={() => setVoltando(l)}>
-              Voltar à referência
-            </Button>
-          )}
-          <Button variant="outline" size="sm" onClick={() => setEditando(l)}>
-            {l.ajustado ? "Editar" : "Definir valor"}
-          </Button>
-        </span>
+        <RowActions
+          label={l.adicional.rotulo}
+          actions={[
+            { label: l.ajustado ? "Editar" : "Definir valor", onClick: () => setEditando(l) },
+            { label: "Voltar à referência", hidden: !l.ajustado, onClick: () => setVoltando(l) },
+          ]}
+        />
       ),
     });
   }
@@ -184,7 +181,7 @@ export default function PrecosEmpresa() {
   return (
     <PilarPage title="Tabela de preços" breadcrumbs={BREADCRUMB}>
       <p className="-mt-2 max-w-2xl text-sm text-ink-soft">
-        O valor da sua empresa vale antes de qualquer referência (SINAPI ou provisória do Pilar) em toda estimativa
+        O valor da sua empresa vale antes de qualquer referência (SINAPI ou provisória da Pilar) em toda estimativa
         nova. Versões já salvas guardam o valor da época.
       </p>
 
@@ -227,7 +224,7 @@ export default function PrecosEmpresa() {
         onConfirm={() => voltando && gravar(voltando, null, "Voltou à referência")}
         title="Voltar à referência?"
         itemName={voltando?.adicional.rotulo}
-        description="A empresa deixa de ter valor próprio para este item. As próximas estimativas usam o SINAPI ou a referência do Pilar."
+        description="A empresa deixa de ter valor próprio para este item. As próximas estimativas usam o SINAPI ou a referência da Pilar."
         confirmText="Voltar à referência"
         loading={salvar.isPending}
       />

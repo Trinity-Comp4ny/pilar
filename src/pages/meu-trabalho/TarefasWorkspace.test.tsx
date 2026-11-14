@@ -51,11 +51,6 @@ vi.mock("@/components/PilarPage", () => ({
     </main>
   ),
 }));
-vi.mock("./components/AbaAgenda", () => ({
-  AbaAgenda: ({ pessoaIds }: { pessoaIds: string[] | null }) => (
-    <div data-testid="agenda">{JSON.stringify(pessoaIds)}</div>
-  ),
-}));
 vi.mock("./components/TarefaDialog", () => ({
   TarefaDialog: (p: {
     open: boolean;
@@ -221,7 +216,7 @@ describe("TarefasWorkspace: lista", () => {
   it("agrupa tarefas e disciplinas nas colunas", async () => {
     renderWorkspace();
     await screen.findByRole("group", { name: "Revisar prancha" });
-    expect(screen.getByText("#42")).toBeInTheDocument();
+    expect(screen.queryByText("#42")).not.toBeInTheDocument();
     expect(linha("Medir terreno")).toBeInTheDocument();
     expect(linha("Estrutural")).toHaveTextContent("Disciplina");
     expect(screen.getByRole("button", { name: /Revisão\s*1/ })).toBeInTheDocument();
@@ -459,14 +454,6 @@ describe("TarefasWorkspace: visões, links e obra", () => {
     expect(await screen.findByText("Medir terreno")).toBeInTheDocument();
     expect(screen.queryByRole("group", { name: "Medir terreno" })).not.toBeInTheDocument();
     expect(localStorage.getItem("pilar.meu-trabalho.visao")).toBe("quadro");
-  });
-
-  it("agenda esconde busca e filtros", async () => {
-    localStorage.setItem("pilar.meu-trabalho.visao", "agenda");
-    renderWorkspace({ path: "/tarefas?pessoas=pe2" });
-    expect(screen.getByTestId("agenda")).toHaveTextContent('["pe2"]');
-    expect(screen.queryByRole("textbox", { name: "Buscar" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Nova tarefa" })).not.toBeInTheDocument();
   });
 
   it("filtro de pessoa pela URL consulta só as tarefas dela", async () => {

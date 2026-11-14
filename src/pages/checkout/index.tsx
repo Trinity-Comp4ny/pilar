@@ -73,6 +73,9 @@ export default function Checkout() {
 
   return (
     <CheckoutShell backTo="/planos" logoTo="/" badgeLabel="Checkout seguro">
+      {/* Título da página para buscador e leitor de tela; o layout já mostra o
+          plano no resumo, então não repete na tela (Bing Site Scan, "H1 tag missing"). */}
+      <h1 className="sr-only">Assinar a Pilar {plan.nome}</h1>
       <div className="grid lg:grid-cols-[1fr_360px] gap-8 items-start">
         {/* Formulário */}
         <section className="bg-white rounded-2xl border border-paper-border p-8 shadow-sm">
@@ -123,10 +126,10 @@ export default function Checkout() {
         <aside className="sticky top-[73px] space-y-4">
           <div className="bg-white rounded-2xl border border-paper-border p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-[10px] uppercase tracking-widest text-ink-disabled">Resumo do pedido</p>
+              <p className="text-3xs uppercase tracking-widest text-ink-disabled">Resumo do pedido</p>
               <Link
                 to="/planos"
-                className="flex items-center gap-1 text-[11px] text-ink-soft hover:text-ink transition-colors font-medium"
+                className="flex items-center gap-1 text-2xs text-ink-soft hover:text-ink transition-colors font-medium"
               >
                 Trocar plano <ArrowRight className="w-3 h-3" />
               </Link>
@@ -158,7 +161,7 @@ export default function Checkout() {
               <span className="text-xs uppercase tracking-wider text-ink-muted">Total</span>
               <div className="text-right">
                 <p className="text-2xl font-semibold text-ink">{formatBRL(planValue)}</p>
-                <p className="text-[11px] text-ink-disabled">{cycle === "yearly" ? "por ano" : "por mês"}</p>
+                <p className="text-2xs text-ink-disabled">{cycle === "yearly" ? "por ano" : "por mês"}</p>
               </div>
             </div>
           </div>

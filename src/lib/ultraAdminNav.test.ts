@@ -15,6 +15,7 @@ describe("ultraAdminNav", () => {
     expect(ultraSecaoAtiva("/ultra-admin/empresas")).toBe("empresas");
     expect(ultraSecaoAtiva("/ultra-admin/empresas/abc")).toBe("empresas");
     expect(ultraSecaoAtiva("/ultra-admin/custos-ia")).toBe("custos-ia");
+    expect(ultraSecaoAtiva("/ultra-admin/dores")).toBe("dores");
     expect(ultraSecaoAtiva("/projetos")).toBeNull();
   });
 

@@ -76,6 +76,19 @@
     "dominio": "utilitario",
     "descricao": "Geocodifica endereço pelo Nominatim (mapa)."
   },
+  "google-calendar": {
+    "dominio": "integracoes",
+    "descricao": "Google Agenda de cada pessoa: conecta (OAuth, escopos calendar.events e calendarlist.readonly, token cifrado), copia as reuniões de todas as agendas ligadas, cria, edita e exclui reunião (Meet e convite aos convidados) e, no cron de 5 min, ressincroniza (SPEC 164).",
+    "chamada_externa": "pg_cron (google_agenda_cron) e retorno do OAuth do Google"
+  },
+  "google-drive": {
+    "dominio": "integracoes",
+    "descricao": "Arquivos do projeto no Google Drive da empresa: pasta por projeto e disciplina, listar, criar pasta, envio direto ao Google, baixar e lixeira (SPEC 163)."
+  },
+  "google-drive-oauth": {
+    "dominio": "integracoes",
+    "descricao": "Conecta e desconecta o Google Drive da empresa (OAuth, escopo drive.file, token cifrado; só admin) (SPEC 163)."
+  },
   "guardiao-margem-cron": {
     "dominio": "jobs",
     "descricao": "Cron diário: prepara rascunho de aditivo, sustentado pelas despesas do projeto, quando ele estoura o orçamento (specs 081 e 107)."
@@ -128,7 +141,7 @@
   },
   "pilar-checkout-create": {
     "dominio": "billing",
-    "descricao": "Checkout público do Pilar: cria cliente e cobrança na Asaas da plataforma."
+    "descricao": "Checkout público da Pilar: cria cliente e cobrança na Asaas da plataforma."
   },
   "pilar-checkout-status": {
     "dominio": "billing",
@@ -141,7 +154,7 @@
   },
   "pilar-subscription-manage": {
     "dominio": "billing",
-    "descricao": "Troca de plano e cancelamento da assinatura do Pilar pelo admin da empresa."
+    "descricao": "Troca de plano e cancelamento da assinatura da Pilar pelo admin da empresa."
   },
   "pilar-token-pack-create": {
     "dominio": "billing",
@@ -150,6 +163,18 @@
   "portal-aprovar-proposta": {
     "dominio": "portal",
     "descricao": "Cliente aprova proposta pelo portal (auth pelo token do portal)."
+  },
+  "portal-avisar-mensagem": {
+    "dominio": "portal",
+    "descricao": "Avisa por e-mail o cliente do portal quando o escritório escreve na conversa (um e-mail por janela de 30 minutos)."
+  },
+  "portal-avisar-solicitacao": {
+    "dominio": "portal",
+    "descricao": "Avisa por e-mail os acessos do portal do cliente quando o escritório cria uma solicitação (projeto ou obra)."
+  },
+  "portal-arquivos": {
+    "dominio": "portal",
+    "descricao": "Portal do cliente: lista e baixa os arquivos da pasta Cliente do projeto no Google Drive do escritório; só do cliente da sessão (SPEC 163)."
   },
   "portal-entrega-download": {
     "dominio": "portal",
@@ -169,7 +194,7 @@
   },
   "reconciliar-assinaturas": {
     "dominio": "jobs",
-    "descricao": "Cron diário: compara cada assinatura do Pilar com o Asaas e avisa o ultra admin das divergências (SPEC 114)."
+    "descricao": "Cron diário: compara cada assinatura da Pilar com o Asaas e avisa o ultra admin das divergências (SPEC 114)."
   },
   "registro-audio-limpar": {
     "dominio": "jobs",
@@ -182,6 +207,10 @@
   "registro-reprocessar": {
     "dominio": "campo",
     "descricao": "Tentar de novo a organização de um registro de obra que falhou; vale para o escritório (JWT) e para o campo (token). SPEC 135."
+  },
+  "release-rascunho": {
+    "dominio": "plataforma",
+    "descricao": "Grava o rascunho das novidades de um release a partir das linhas Novidade: dos commits, chamado pelo GitHub Actions no push em main com token próprio (SPEC 152)."
   },
   "resend-webhook": {
     "dominio": "comunicacao",

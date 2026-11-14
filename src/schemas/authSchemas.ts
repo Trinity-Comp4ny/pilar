@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { passwordSchema } from "@/lib/passwordPolicy";
-import { CANAIS, DISCIPLINAS, FUNCOES, PORTES, normalizarLinkedin } from "@/lib/perfilEscritorio";
+import { DISCIPLINAS, FUNCOES, PORTES, normalizarLinkedin } from "@/lib/perfilEscritorio";
 
 // SPEC 149: função no escritório (obrigatória) e LinkedIn (opcional) no perfil.
 const funcaoSchema = z
@@ -70,31 +70,19 @@ export const passwordResetDefaultValues: PasswordResetFormData = { password: "",
 // termsAccepted fica opcional no schema: a obrigatoriedade (só quando ainda não
 // existe aceite registrado, ver SPEC 049) é decidida no componente, não aqui,
 // porque depende de estado carregado do banco (mesmo padrão do captcha em Signup).
-export const profileSetupSchema = z
-  .object({
-    firstName: z.string().trim().min(1, "Nome é obrigatório"),
-    lastName: z.string().trim().min(1, "Sobrenome é obrigatório"),
-    phone: z.string().trim().min(10, "Telefone obrigatório"),
-    funcao: funcaoSchema,
-    linkedin: linkedinSchema,
-    password: passwordSchema,
-    confirmPassword: z.string().min(1, "Confirme a senha"),
-    termsAccepted: z.boolean().optional(),
-  })
-  .refine((d) => d.password === d.confirmPassword, {
-    message: "As senhas não coincidem",
-    path: ["confirmPassword"],
-  });
-// Contas OAuth (Google) chegam sem senha própria: o onboarding não pede senha,
-// então firstName/lastName/phone bastam. Ignora password/confirmPassword do form.
-export const profileSetupOAuthSchema = z.object({
+// SPEC 165: duas etapas na mesma tela. "Seu acesso" (nome, sobrenome, senha com
+// botão de mostrar, sem confirmação) e "Seu contato" (celular e função). O LinkedIn
+// saiu da entrada: continua editável em Perfil.
+export const profileSetupSchema = z.object({
   firstName: z.string().trim().min(1, "Nome é obrigatório"),
   lastName: z.string().trim().min(1, "Sobrenome é obrigatório"),
   phone: z.string().trim().min(10, "Telefone obrigatório"),
   funcao: funcaoSchema,
-  linkedin: linkedinSchema,
+  password: passwordSchema,
   termsAccepted: z.boolean().optional(),
 });
+// Contas OAuth (Google) chegam sem senha própria: o onboarding não pede senha.
+export const profileSetupOAuthSchema = profileSetupSchema.omit({ password: true });
 
 export type ProfileSetupFormData = z.infer<typeof profileSetupSchema>;
 export const profileSetupDefaultValues: ProfileSetupFormData = {
@@ -102,9 +90,7 @@ export const profileSetupDefaultValues: ProfileSetupFormData = {
   lastName: "",
   phone: "",
   funcao: "",
-  linkedin: "",
   password: "",
-  confirmPassword: "",
   termsAccepted: false,
 };
 
@@ -136,11 +122,6 @@ export const companySetupSchema = z
       .optional()
       .default([])
       .refine((l) => l.every((d) => DISCIPLINAS.some((o) => o.value === d)), { message: "Disciplina inválida" }),
-    comoConheceu: z
-      .string()
-      .optional()
-      .default("")
-      .refine((v) => !v || CANAIS.some((c) => c.value === v), { message: "Opção inválida" }),
   })
   .refine(
     (d) => {
@@ -158,7 +139,6 @@ export const companySetupDefaultValues: CompanySetupFormData = {
   site: "",
   porte: "",
   disciplinas: [],
-  comoConheceu: "",
 };
 
 export const profileEditSchema = z.object({

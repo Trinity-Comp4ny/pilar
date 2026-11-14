@@ -20,6 +20,8 @@ interface DatePickerProps {
   fromYear?: number;
   toYear?: number;
   id?: string;
+  /** Mostra o "X" de limpar. `false` em data obrigatória: o campo nunca fica vazio pelo botão. */
+  clearable?: boolean;
 }
 
 function parseIso(iso?: string): Date | undefined {
@@ -53,6 +55,7 @@ export function DatePicker({
   fromYear,
   toYear,
   id,
+  clearable = true,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const [editando, setEditando] = useState(false);
@@ -231,20 +234,14 @@ export function DatePicker({
           />
           {hojePermitido && (
             <div className="flex justify-end border-t px-3 py-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                onClick={() => escolher(hoje)}
-              >
+              <Button type="button" variant="ghost" size="xs" className="px-2" onClick={() => escolher(hoje)}>
                 Hoje
               </Button>
             </div>
           )}
         </PopoverContent>
       </Popover>
-      {displayValue && !disabled && (
+      {clearable && displayValue && !disabled && (
         <button
           type="button"
           onClick={(e) => {

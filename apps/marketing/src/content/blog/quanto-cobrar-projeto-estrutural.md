@@ -99,16 +99,16 @@ Para a estrutura do documento inteiro, veja [como fazer uma proposta de projeto 
 
 Se o escritório também faz instalações, o raciocínio é o mesmo com outros fatores: veja [quanto cobrar por projeto elétrico](/blog/quanto-cobrar-projeto-eletrico).
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O Pilar não calcula o preço do projeto estrutural. Ele mantém junto o que foi vendido, o prazo de cada disciplina e o que entrou no caixa, para a próxima proposta partir de histórico e não de memória.
+A Pilar não calcula o preço do projeto estrutural. Ele mantém junto o que foi vendido, o prazo de cada disciplina e o que entrou no caixa, para a próxima proposta partir de histórico e não de memória.
 
 - **Proposta por disciplina** em DOCX no modelo do escritório, com funil de leads e motivo de perda registrado ([Gestão](/gestao)).
 - **Proposta aceita vira projeto** com as disciplinas e as parcelas no financeiro, mensais ou por marco.
 - **Prazo com motivo:** no [módulo Projetos](/projetos), mudar a data de uma disciplina exige justificativa. Quando a arquitetura atrasa a entrada do estrutural, fica registrado.
 - **Aviso na passagem:** ao concluir uma disciplina, o responsável da etapa seguinte é avisado.
 
-Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça o Pilar [para engenharia](/engenharia).
+Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça a Pilar [para engenharia](/engenharia).
 
 ## Perguntas frequentes
 

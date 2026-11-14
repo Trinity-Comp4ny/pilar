@@ -6,6 +6,9 @@
  * Todo evento sai com `empresa_id` (super propriedade registrada no login), o que permite
  * retenção e adoção por escritório no plano grátis do PostHog.
  *
+ * Sessão: login_realizado (1x por sessão do navegador, com role) responde "quem entrou e quando";
+ * erro_exibido (contexto "entidade:ação", nunca a mensagem) mostra em que módulo as pessoas travam.
+ *
  * Funil de ativação: signup_completed → empresa_onboarding_concluido → cliente_criado →
  * projeto_criado → lancamento_criado. Adoção por módulo: obra_criada, rdo_registrado,
  * lead_criado, convite_enviado, ia_mensagem_enviada, relatorio_exportado, cronograma_item_criado,
@@ -17,6 +20,9 @@
 export type EventoProduto =
   // Navegação
   | "$pageview"
+  // Sessão e fricção
+  | "login_realizado"
+  | "erro_exibido"
   // Cadastro e onboarding
   | "signup_completed"
   | "signup_email_ja_cadastrado"
@@ -25,6 +31,9 @@ export type EventoProduto =
   | "onboarding_etapa_concluida"
   | "onboarding_objetivo_escolhido"
   | "onboarding_boas_vindas_acao"
+  | "onboarding_pergunta_respondida"
+  | "onboarding_dor_escolhida"
+  | "onboarding_plano_gerado"
   // Uso dos módulos (ativação e adoção)
   | "cliente_criado"
   | "lead_criado"
@@ -39,6 +48,10 @@ export type EventoProduto =
   | "cronograma_tarefa_concluida"
   | "convite_enviado"
   | "relatorio_exportado"
+  // App na tela inicial do celular (PWA)
+  | "app_instalar_acao"
+  | "app_instalar_dispensado"
+  | "app_instalado"
   // IA
   | "inicio_agentes_abrir"
   | "inicio_resumo_exibido"

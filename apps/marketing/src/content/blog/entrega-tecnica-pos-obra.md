@@ -76,9 +76,9 @@ O que separa um pós-obra organizado de um pós-obra no improviso:
 
 O mesmo vale para o que o cliente recebeu ao longo da obra: se ele acompanhou o andamento mês a mês, a entrega vira continuação de uma conversa e não uma surpresa. Veja o que mostrar em [relatório de obra para o cliente](/blog/relatorio-de-obra-cliente).
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O Pilar não gera o manual nem o termo de entrega. O que ele faz é guardar, ao longo da obra, o histórico que a entrega e o pós-obra precisam.
+A Pilar não gera o manual nem o termo de entrega. O que ele faz é guardar, ao longo da obra, o histórico que a entrega e o pós-obra precisam.
 
 - **Diário de obra com foto**, registrado pelo encarregado no celular, mesmo sem sinal, pelo [Pilar Campo](/campo). As fotos das instalações antes do fechamento ficam no registro do dia, com data e local.
 - **Cronograma em dois níveis** no [módulo Obra](/obra), com frentes de serviço e passos marcados como avançou, concluiu ou parou.

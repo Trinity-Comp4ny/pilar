@@ -3,14 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Plus, Pencil, Trash2, Truck, Link2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { RowActions } from "@/components/data/RowActions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DataTable, type ColumnDef } from "@/components/data/DataTable";
 import { PageLayout } from "@/components/PageLayout";
-import { FilterBar } from "@/components/filters/FilterBar";
 import { PageHeader } from "@/components/PageHeader";
-import { Can } from "@/components/Can";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EmptyState } from "@/components/EmptyState";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -24,6 +23,7 @@ import { ReconciliarDialog } from "./ReconciliarDialog";
 import { softDelete, restaurar } from "@/lib/softDelete";
 
 import { BusyMark } from "@/components/motion/BusyMark";
+import { CONTAINER_TELA_DADOS } from "@/lib/shellLayout";
 
 interface Fornecedor {
   id: string;
@@ -47,6 +47,7 @@ const EMPTY_FORM: FormState = { nome: "", cnpj: "", contato: "", email: "", tele
 export default function Fornecedores() {
   usePageTitle("Fornecedores");
   const { can } = usePermissions();
+  const podeExcluir = can("obras", "delete");
   const navigate = useNavigate();
   // Decisão de produto: fornecedor é cadastro global da empresa, mas a porta de
   // gerência vive no módulo Obra (é onde ele mais se usa: cotação e conta da obra).
@@ -266,6 +267,7 @@ export default function Fornecedores() {
   const columns: ColumnDef<Fornecedor>[] = [
     {
       key: "nome",
+      mobile: "title",
       header: "Nome",
       className: "font-medium",
       getSortValue: (f) => f.nome.toLowerCase(),
@@ -273,6 +275,7 @@ export default function Fornecedores() {
     },
     {
       key: "cnpj",
+      mobile: "subtitle",
       header: "CNPJ",
       getSortValue: (f) => f.cnpj ?? "",
       cell: (f) => (f.cnpj ? formatCNPJ(f.cnpj) : "-"),
@@ -301,31 +304,23 @@ export default function Fornecedores() {
       ? [
           {
             key: "acoes",
-            header: "Ações",
+            mobile: "trailing" as const,
+            header: <span className="sr-only">Ações</span>,
             align: "end" as const,
             cell: (f: Fornecedor) => (
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={(e) => handleEditClick(f, e)}
-                  aria-label="Editar fornecedor"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Can feature="obras" action="delete">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-danger-mid"
-                    onClick={(e) => handleDeleteClick(f, e)}
-                    aria-label="Excluir fornecedor"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </Can>
-              </div>
+              <RowActions
+                label={f.nome}
+                actions={[
+                  { label: "Editar", icon: Pencil, onClick: () => handleEditClick(f) },
+                  {
+                    label: "Excluir",
+                    icon: Trash2,
+                    destructive: true,
+                    hidden: !podeExcluir,
+                    onClick: () => handleDeleteClick(f),
+                  },
+                ]}
+              />
             ),
           },
         ]
@@ -355,24 +350,10 @@ export default function Fornecedores() {
     />
   );
 
-  // Toolbar padrão (SPEC 124): a lista não tem filtro além da busca do header, então traz só a contagem.
-  const toolbar = (
-    <FilterBar
-      end={
-        <span className="text-xs text-muted-foreground tabular-nums">
-          {filtered.length} de {fornecedores.length}
-        </span>
-      }
-    >
-      {null}
-    </FilterBar>
-  );
-
   return (
     <PageLayout
-      toolbar={toolbar}
-      className="overflow-y-hidden"
-      containerClassName="h-full flex flex-col min-h-0"
+      className="md:overflow-y-hidden"
+      containerClassName={CONTAINER_TELA_DADOS}
       header={
         <PageHeader
           title="Fornecedores"
@@ -386,6 +367,13 @@ export default function Fornecedores() {
           }}
           children={
             <>
+              {/* Sem linha de barra só para a contagem (a lista não tem filtro além da busca):
+                  ela aparece aqui quando a busca recorta (auditoria de espaço, 2026-11). */}
+              {searchTerm.trim() !== "" && (
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {filtered.length} de {fornecedores.length}
+                </span>
+              )}
               {canEdit && (
                 <Button variant="outline" size="sm" onClick={() => setReconciliarOpen(true)}>
                   <Link2 className="mr-1.5 h-4 w-4" />
@@ -517,8 +505,8 @@ export default function Fornecedores() {
         />
       }
     >
-      <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden">
-        <CardContent className="flex-1 min-h-0 flex flex-col p-4">
+      <Card className="rounded-2xl border border-black/5 bg-white w-full flex flex-col flex-1 min-h-0 overflow-hidden max-md:border-0 max-md:bg-transparent max-md:shadow-none">
+        <CardContent className="flex-1 min-h-0 flex flex-col p-0 pb-2">
           {/* O main está com overflow-y-hidden (página de altura fixa), então o
               scroll precisa viver aqui, senão a tabela é cortada sem rolar. */}
           <div className="overflow-x-auto overflow-y-auto w-full flex-1 min-h-0">
@@ -526,7 +514,7 @@ export default function Fornecedores() {
               columns={columns}
               data={{ rows: filtered }}
               rowKey={(f) => f.id}
-              onRowClick={(f) => navigate(`/obras/fornecedores/${f.id}`)}
+              onRowClick={(f) => navigate(`/gestao/fornecedores/${f.id}`)}
               emptyState={emptyState}
             />
           </div>

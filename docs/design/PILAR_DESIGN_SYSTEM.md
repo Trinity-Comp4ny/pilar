@@ -110,7 +110,8 @@ Ordem vertical fixa de toda página: **header** (título, busca, ação primári
 
 O celular tem casca própria, não é o desktop encolhido. O desktop não muda.
 
-- **`BottomNav`**: pílula flutuante (16 px das bordas, blur), cinco itens: Início, Projetos, Obra, Gestão, Menu. Item ativo com fundo `brand` e ícone e texto `ink`. Some ao rolar para baixo e com o teclado aberto (`useBarraVisivel`). Agentes mora no Menu, com o contador de pendências.
+- **`BottomNav`**: pílula flutuante de vidro líquido (16 px das bordas; `.vidro-liquido` em `src/styles/vidro.css`: desfoque + saturação, borda de luz, brilho no ponto do toque), cinco itens: Início, Gestão, Projetos, Obra, Menu (ordem do dono, 12/11). O ativo é marcado por uma lente `brand` que desliza com mola entre os itens (`.vidro-lente`), com ícone e texto `ink`. O vidro fica restrito à barra: não usar em tabela, formulário ou card de dado. Some ao rolar para baixo e com o teclado aberto (`useBarraVisivel`). Agentes mora no Menu, com o contador de pendências.
+- **Ações secundárias do cabeçalho**: passe por `acoes` do `PageHeader` (botões contornados no desktop, um menu "⋯" no celular). Botões com texto em `children` estouram a linha em 390px.
 - **Ação principal**: o `primaryAction` do `PageHeader` vira o **`MobileFab`** (verde, 44 px, texto e ícone `ink`, acima da barra). Não monte botão flutuante à mão nem repita a ação no corpo da página.
 - **Abas, chips e filtros numa linha só**, com altura de 34 a 36 px e cantos totalmente arredondados. O que não cabe rola para o lado; nunca quebra em duas linhas (`FiltroChips` e `FilterBar` já fazem).
 - **Campos com 16 px**: `Input`, `Textarea`, `SelectTrigger` e `CommandInput` usam `text-sm max-md:text-base`: 14 px no desktop (um `text-xs` passado por quem usa continua valendo lá) e 16 px no celular. Campo de texto com menos de 16 px faz o iOS dar zoom ao tocar. Campo próprio novo segue a mesma regra; não use `text-base md:text-sm`, porque o `md:text-sm` sobrevive ao merge e desfaz o tamanho que o uso pediu.
@@ -139,6 +140,7 @@ O celular tem casca própria, não é o desktop encolhido. O desktop não muda.
 
 - **`KanbanCard`** (`src/components/kanban/KanbanCard.tsx`): único card dos quadros de Tarefas, Projetos e Leads. Slots `eyebrow`, `tag`, `menu`, `title`, `subtitle`, `meta`, `footer`; raio, padding e posição das peças são fixos. Sem "#N" na face. Prioridade via `KanbanPriority`, etiqueta do usuário via `KanbanChip`.
 - **`KanbanColumn` + `KanbanDraggable`** (`src/components/kanban/KanbanColumn.tsx`): cabeçalho, menu da coluna, minimizar, superfície de soltar e vazio ("Nada aqui"). Medidas em `kanbanLayout.ts`.
+- **`KanbanMobile`** (`src/components/kanban/KanbanMobile.tsx`): o quadro abaixo de `md`. Colunas lado a lado que passam com o dedo (uma por tela, a ponta da próxima aparecendo) e uma faixa com o nome das colunas no alto. Sem arrastar: mover de coluna é pelo menu do card. Não empilhar colunas em acordeão no celular.
 - **Ordenação** (`src/lib/kanbanSort.ts` + `KanbanSortControl`): cada quadro declara as chaves que suporta e como ler o valor; o controle e os rótulos são um só.
 
 ### Números e KPIs

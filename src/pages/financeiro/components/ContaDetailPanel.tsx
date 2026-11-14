@@ -49,7 +49,7 @@ export function ContaDetailPanel({ conta, canEdit, onEdit, onDelete }: ContaDeta
 
       <div className="border-t pt-5">
         <p className="text-xs text-muted-foreground mb-1">Saldo Atual</p>
-        <p className="text-3xl font-bold">
+        <p className="text-xl font-semibold tabular-nums">
           R$ {conta.saldo_atual?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
         </p>
         <p
@@ -91,7 +91,7 @@ export function ContaDetailPanel({ conta, canEdit, onEdit, onDelete }: ContaDeta
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium">{conta.chave_pix}</p>
             {conta.tipo_chave_pix && (
-              <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+              <Badge variant="secondary" className="text-3xs h-4 px-1.5">
                 {TIPO_CHAVE_PIX_LABEL[conta.tipo_chave_pix]}
               </Badge>
             )}

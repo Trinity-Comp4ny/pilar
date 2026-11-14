@@ -182,8 +182,8 @@ function MfaEnrollModal({ open, enrollment, onClose, onVerified }: MfaEnrollModa
                 <Button
                   type="button"
                   variant="outline"
-                  size="icon"
-                  className="shrink-0 h-8 w-8"
+                  size="icon-sm"
+                  className="shrink-0"
                   onClick={handleCopy}
                   aria-label="Copiar chave"
                 >

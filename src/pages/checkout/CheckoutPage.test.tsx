@@ -113,6 +113,11 @@ describe("Checkout", () => {
     expect(screen.getByRole("button", { name: /Pagar/ })).toHaveTextContent("R$ 499,00");
   });
 
+  it("tem um h1 com o plano (SEO: Bing acusava a página sem h1)", () => {
+    abrir("/checkout?plano=pro");
+    expect(screen.getByRole("heading", { level: 1, name: "Assinar a Pilar Profissional" })).toBeInTheDocument();
+  });
+
   it("ciclo anual usa o preço anual do plano", () => {
     abrir("/checkout?plano=pro&ciclo=yearly");
     expect(screen.getByRole("button", { name: /Pagar/ })).toHaveTextContent("R$ 4.990,00");

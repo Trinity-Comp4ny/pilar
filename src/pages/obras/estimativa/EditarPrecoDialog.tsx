@@ -82,7 +82,7 @@ function Formulario({ item, atual, salvando, onFechar, onSalvar, registro }: Pro
       open={item !== null}
       onOpenChange={(aberto) => !aberto && onFechar()}
       title={item ? `Valor da sua empresa: ${item.rotulo}` : "Valor da sua empresa"}
-      description="Este valor vale antes do SINAPI e da referência do Pilar em toda estimativa da empresa. Versões já salvas guardam o valor da época."
+      description="Este valor vale antes do SINAPI e da referência da Pilar em toda estimativa da empresa. Versões já salvas guardam o valor da época."
       submitLabel="Salvar valor"
       isPending={salvando}
       onSubmit={enviar}
@@ -99,7 +99,7 @@ function Formulario({ item, atual, salvando, onFechar, onSalvar, registro }: Pro
                 rotulo={c.rotulo}
                 dica={
                   referencia
-                    ? `Referência do Pilar: ${referencia}. Em branco, vale a referência.`
+                    ? `Referência da Pilar: ${referencia}. Em branco, vale a referência.`
                     : `Por ${unidadeDoPreco(item.adicional)}.`
                 }
               >

@@ -136,8 +136,9 @@ function analisarPagina(rota) {
     twitterCard: Boolean(meta(html, "name", "twitter:card")),
     h1s,
     imagens: imgs.length,
-    // alt="" é a marcação certa de imagem decorativa; falta é não ter o atributo.
-    imagensSemAlt: imgs.filter((t) => atributo(t, "alt") === null).length,
+    // Conta alt ausente E vazio: o Bing Site Scan acusa "Alt attribute missing"
+    // também em alt="" (11/2026). Imagem decorativa de verdade vai por CSS ou SVG inline.
+    imagensSemAlt: imgs.filter((t) => !atributo(t, "alt")?.trim()).length,
     linksInternos: new Set(links.filter(ehInterno).map((h) => h.replace(BASE, ""))).size,
     palavras: textoPuro(main).split(" ").filter(Boolean).length,
     jsonLd: jsonLds(html),

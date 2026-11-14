@@ -1,10 +1,10 @@
 /**
- * Saída única de e-mail do Pilar (ADR 0039). Resend via fetch, retry com backoff,
+ * Saída única de e-mail da Pilar (ADR 0039). Resend via fetch, retry com backoff,
  * text/plain automático, Idempotency-Key, remetente por classe, registro em
  * `email_envios` e recusa de endereço suprimido.
  *
  * Classes:
- * - "plataforma": Pilar → usuário do Pilar (auth, trial, LGPD, notificação).
+ * - "plataforma": Pilar → usuário da Pilar (auth, trial, LGPD, notificação).
  * - "escritorio": escritório → cliente final, via Pilar (cobrança, proposta, portal).
  *   Exige `empresa`; `from` vira "<Empresa> via Pilar", `replyTo` vira o e-mail da empresa.
  *
@@ -25,6 +25,22 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const DRY_RUN = (Deno.env.get("EMAIL_DRY_RUN") ?? "false") === "true";
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 const MAX_RETRIES = 3;
+
+/**
+ * Staging e produção usam a mesma conta do Resend, e a Idempotency-Key vale por conta.
+ * Sem separar por ambiente, o mesmo job nos dois (ex.: resumo do dia às 07:10 para o
+ * mesmo ultra_admin) disputa a chave: quem chega segundo leva 409 "corpo diferente" e
+ * o e-mail não sai. O ref do projeto (subdomínio do SUPABASE_URL) separa os dois.
+ */
+export function chaveIdempotencia(chave: string, supabaseUrl = Deno.env.get("SUPABASE_URL") ?? ""): string {
+  let ambiente = "local";
+  try {
+    ambiente = new URL(supabaseUrl).hostname.split(".")[0] || "local";
+  } catch {
+    // URL ausente ou inválida (teste, dev): fica "local"
+  }
+  return `${ambiente}:${chave}`.slice(0, 256);
+}
 const BASE_DELAY_MS = 500;
 
 export type EmailClasse = "plataforma" | "escritorio";
@@ -198,7 +214,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
   const text = input.text ?? htmlToText(input.html);
   const from = resolveFrom(input);
   const replyTo = resolveReplyTo(input);
-  const idempotencyKey = (input.idempotencyKey ?? crypto.randomUUID()).slice(0, 256);
+  const idempotencyKey = chaveIdempotencia(input.idempotencyKey ?? crypto.randomUUID());
 
   if (DRY_RUN) {
     const envioId = await logInsert({ ...base, status: "dry_run" });
@@ -248,13 +264,13 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
       }
 
       const errBody = await res.text();
-      const retryable = res.status >= 500 || res.status === 429;
       lastError = new Error(`Resend ${res.status}: ${errBody}`);
-      if (!retryable || attempt === MAX_RETRIES - 1) throw lastError;
+      // 4xx (fora 429) não melhora repetindo: registra a falha e sai.
+      if (res.status < 500 && res.status !== 429) break;
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
-      if (attempt === MAX_RETRIES - 1) break;
     }
+    if (attempt === MAX_RETRIES - 1) break;
 
     await sleep(BASE_DELAY_MS * 2 ** attempt);
   }

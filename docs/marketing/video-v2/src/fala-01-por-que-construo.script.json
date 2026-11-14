@@ -1,0 +1,42 @@
+{
+  "id": "fala-01-por-que-construo",
+  "hook": "Por que eu estou construindo *a Pilar*",
+  "tail": 3.4,
+  "lines": [
+    {
+      "id": "l01",
+      "text": "Eu vi muito escritório de engenharia bom perdendo dinheiro sem perceber."
+    },
+    {
+      "id": "l02",
+      "text": "A proposta ficava no Word, o controle no Excel e a obra no grupo do WhatsApp.",
+      "show": {
+        "type": "lista",
+        "itens": [
+          "Proposta no Word",
+          "Controle no Excel",
+          "Obra no WhatsApp"
+        ],
+        "icone": "x",
+        "cor": "#FCA5A5"
+      }
+    },
+    {
+      "id": "l03",
+      "text": "E o lucro do projeto só aparecia quando o projeto já tinha acabado."
+    },
+    {
+      "id": "l04",
+      "text": "A Pilar junta tudo isso num lugar só, e mostra a margem enquanto ainda dá para agir.",
+      "show": {
+        "type": "tela",
+        "tela": "margem",
+        "legenda": "A margem de cada projeto, durante"
+      }
+    },
+    {
+      "id": "l05",
+      "text": "Eu construo isso porque quem projeta merece ganhar pelo que projeta."
+    }
+  ]
+}

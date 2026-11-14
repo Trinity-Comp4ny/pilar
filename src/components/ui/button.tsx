@@ -13,7 +13,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        // Sem variante = ação principal: verde da marca, igual a `brand` (o preto saiu do app).
+        default: "bg-brand text-ink hover:bg-brand/90",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
@@ -26,8 +27,11 @@ const buttonVariants = cva(
       size: {
         default: "h-10 px-4 py-2",
         sm: "h-9 px-3",
+        /** Ação secundária em barra densa/linha de tabela: h-8, texto xs. */
+        xs: "h-8 px-3 text-xs",
         lg: "h-11 px-8",
         icon: "h-10 w-10",
+        "icon-sm": "h-8 w-8",
       },
     },
     defaultVariants: {

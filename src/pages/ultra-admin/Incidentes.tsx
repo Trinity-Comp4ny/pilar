@@ -30,6 +30,8 @@ import {
 } from "./hooks";
 import { estadoDosComponentes, quandoRelativo } from "./lib";
 import { EmptyState } from "@/components/EmptyState";
+import { ManutencoesProgramadas } from "./components/ManutencoesProgramadas";
+import { AVISOS_PLATAFORMA_KEY } from "@/hooks/useAvisosPlataforma";
 
 const SEVERIDADES: Array<{ value: Severidade; label: string; ajuda: string }> = [
   { value: "degradado", label: "Lento ou instável", ajuda: "Funciona, mas com lentidão ou erro intermitente." },
@@ -74,7 +76,11 @@ export default function Incidentes() {
     [componentes, incidentes]
   );
   const afetados = componentes.filter((c) => estado.get(c.id) !== "operacional").length;
-  const recarregar = () => qc.invalidateQueries({ queryKey: KEYS.incidentes });
+  const recarregar = () => {
+    // A faixa do app (SPEC 153) lê os mesmos incidentes: o ultra admin vê o efeito na hora.
+    void qc.invalidateQueries({ queryKey: AVISOS_PLATAFORMA_KEY });
+    return qc.invalidateQueries({ queryKey: KEYS.incidentes });
+  };
 
   const criar = useMutation({
     mutationFn: async (input: { titulo: string; severidade: Severidade; componentIds: string[]; mensagem: string }) => {
@@ -196,6 +202,8 @@ export default function Incidentes() {
           <CardIncidente key={i.id} incidente={i} componentes={componentes} onAtualizar={() => setAtualizarAlvo(i)} />
         ))}
       </section>
+
+      <ManutencoesProgramadas />
 
       {resolvidos.length > 0 && (
         <Collapsible>

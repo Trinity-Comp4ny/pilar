@@ -14,6 +14,7 @@
  *   }
  */
 
+import { analytics } from "./analytics";
 import { monitoring } from "./monitoring";
 import { getSafeErrorMessage } from "./safeError";
 
@@ -46,6 +47,9 @@ export function reportError(error: unknown, ctx: ReportContext): ReportedError {
     context: ctx.context,
     ...ctx.extra,
   });
+
+  // Só o contexto (entidade:ação), nunca a mensagem: o PostHog mostra onde as pessoas travam.
+  analytics.track("erro_exibido", { contexto: ctx.context });
 
   // 403 de RLS não é "erro inesperado": dizer isso ao usuário só gera ticket.
   const message = isPermissionDenied(error)

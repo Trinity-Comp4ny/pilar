@@ -26,7 +26,7 @@ const SECTIONS: Secao[] = [
         <li>
           {forte("Plataforma")}: o software Pilar, incluindo aplicativo web, Pilar Campo, portal do cliente e APIs.
         </li>
-        <li>{forte("Cliente")}: a empresa que contrata o Pilar e é titular da assinatura.</li>
+        <li>{forte("Cliente")}: a empresa que contrata a Pilar e é titular da assinatura.</li>
         <li>{forte("Usuário")}: pessoa com login na conta do Cliente.</li>
         <li>
           {forte("Convidado")}: pessoa que acessa a Plataforma a convite do Cliente sem ser Usuário (cliente final no
@@ -50,7 +50,7 @@ const SECTIONS: Secao[] = [
     titulo: "2. Objeto e licença de uso",
     corpo: (
       <p>
-        O Pilar concede ao Cliente uma licença não exclusiva e intransferível para usar a Plataforma durante a vigência
+        A Pilar concede ao Cliente uma licença não exclusiva e intransferível para usar a Plataforma durante a vigência
         da assinatura, para a gestão do próprio negócio. Não é permitido sublicenciar, revender ou disponibilizar a
         Plataforma a terceiros fora da empresa Cliente, exceto aos Convidados que o próprio Cliente chamar.
       </p>
@@ -84,7 +84,7 @@ const SECTIONS: Secao[] = [
           </li>
           <li>
             Criar ou usar conta, inclusive em período de avaliação, para engenharia reversa, comparação comercial
-            competitiva ou reprodução do produto, sem autorização prévia e por escrito do Pilar.
+            competitiva ou reprodução do produto, sem autorização prévia e por escrito da Pilar.
           </li>
           <li>Sobrecarregar a infraestrutura de propósito (raspagem agressiva, testes de carga não autorizados).</li>
           <li>
@@ -134,7 +134,7 @@ const SECTIONS: Secao[] = [
     corpo: (
       <ul className="list-disc pl-6 space-y-1">
         <li>
-          O Cliente é o {forte("controlador")} dos Dados do Cliente e o Pilar é {forte("operador")} (LGPD). O tratamento
+          O Cliente é o {forte("controlador")} dos Dados do Cliente e a Pilar é {forte("operador")} (LGPD). O tratamento
           segue o Anexo de Tratamento de Dados Pessoais, no fim destes Termos, que faz parte deles.
         </li>
         <li>
@@ -142,7 +142,7 @@ const SECTIONS: Secao[] = [
           e para gravar áudio e imagem pelo Pilar Campo, incluindo informar as pessoas gravadas.
         </li>
         <li>
-          Os dados de conta dos Usuários e a cobrança da assinatura são tratados pelo Pilar como controlador, conforme a
+          Os dados de conta dos Usuários e a cobrança da assinatura são tratados pela Pilar como controlador, conforme a
           Política de Privacidade.
         </li>
       </ul>
@@ -152,7 +152,7 @@ const SECTIONS: Secao[] = [
     titulo: "7. Acesso do suporte",
     corpo: (
       <p>
-        A equipe do Pilar pode acessar a conta do Cliente somente para atender um pedido de suporte do Cliente,
+        A equipe da Pilar pode acessar a conta do Cliente somente para atender um pedido de suporte do Cliente,
         investigar falha ou incidente de segurança, ou cumprir obrigação legal. Todo acesso fica registrado, é feito por
         pessoa sob dever de sigilo e se limita ao necessário para a finalidade.
       </p>
@@ -162,7 +162,7 @@ const SECTIONS: Secao[] = [
     titulo: "8. Propriedade intelectual",
     corpo: (
       <ul className="list-disc pl-6 space-y-1">
-        <li>O código, o design, a marca e os demais ativos da Plataforma pertencem ao Pilar.</li>
+        <li>O código, o design, a marca e os demais ativos da Plataforma pertencem à Pilar.</li>
         <li>O Cliente mantém todos os direitos sobre os Dados do Cliente e sobre o conteúdo gerado a partir deles.</li>
         <li>
           Sugestões enviadas pelo Cliente podem ser usadas para melhorar o produto, sem obrigação de compensação e sem
@@ -216,15 +216,15 @@ const SECTIONS: Secao[] = [
     corpo: (
       <>
         <p>
-          Na máxima extensão permitida por lei, o Pilar não responde por danos indiretos ou lucros cessantes, nem por
+          Na máxima extensão permitida por lei, a Pilar não responde por danos indiretos ou lucros cessantes, nem por
           dano decorrente de: uso indevido da Plataforma; uso de conteúdo gerado por Agente de IA sem a revisão prevista
-          na cláusula 5; falha de terceiros fora do controle razoável do Pilar; ou descumprimento destes Termos pelo
+          na cláusula 5; falha de terceiros fora do controle razoável da Pilar; ou descumprimento destes Termos pelo
           Cliente.
         </p>
         <p className="mt-2">
-          A responsabilidade total do Pilar por este contrato fica limitada ao valor pago pelo Cliente nos 12 meses
+          A responsabilidade total da Pilar por este contrato fica limitada ao valor pago pelo Cliente nos 12 meses
           anteriores ao fato que a originou. Esta limitação não se aplica a dolo, culpa grave, nem a violação de dados
-          pessoais causada por falha de segurança atribuível ao Pilar, nem a outra hipótese em que a lei proíba limitar.
+          pessoais causada por falha de segurança atribuível à Pilar, nem a outra hipótese em que a lei proíba limitar.
         </p>
       </>
     ),
@@ -246,7 +246,7 @@ const SECTIONS: Secao[] = [
         <li>O contrato vigora enquanto a assinatura estiver ativa.</li>
         <li>Qualquer parte pode rescindir a qualquer momento; o Cliente mantém acesso até o fim do ciclo já pago.</li>
         <li>
-          O Pilar pode suspender ou encerrar a conta por violação destes Termos, inadimplência não resolvida depois de
+          A Pilar pode suspender ou encerrar a conta por violação destes Termos, inadimplência não resolvida depois de
           aviso, ou uso fraudulento.
         </li>
         <li>
@@ -315,7 +315,7 @@ const ANEXO: Secao[] = [
     titulo: "A2. Instruções do Cliente",
     corpo: (
       <p>
-        O Pilar trata os dados somente para prestar o serviço, conforme as instruções do Cliente dadas pelo uso normal
+        A Pilar trata os dados somente para prestar o serviço, conforme as instruções do Cliente dadas pelo uso normal
         da Plataforma e por estes Termos, e nunca para finalidade própria. Se uma instrução parecer contrária à lei, o
         Pilar avisa o Cliente.
       </p>
@@ -335,7 +335,7 @@ const ANEXO: Secao[] = [
     titulo: "A4. Confidencialidade e segurança",
     corpo: (
       <p>
-        Quem trata os dados no Pilar está sob dever de sigilo. O Pilar mantém medidas técnicas e administrativas
+        Quem trata os dados na Pilar está sob dever de sigilo. A Pilar mantém medidas técnicas e administrativas
         compatíveis com o risco (LGPD, art. 46), descritas na seção 8 da Política de Privacidade, incluindo isolamento
         entre empresas, conexão cifrada, cópia de segurança cifrada e registro de auditoria.
       </p>
@@ -345,9 +345,9 @@ const ANEXO: Secao[] = [
     titulo: "A5. Suboperadores",
     corpo: (
       <p>
-        O Cliente autoriza os fornecedores listados na seção 4 da Política de Privacidade. O Pilar exige deles
+        O Cliente autoriza os fornecedores listados na seção 4 da Política de Privacidade. A Pilar exige deles
         obrigações de proteção de dados compatíveis com este Anexo e responde por eles perante o Cliente. Antes de
-        incluir fornecedor novo que trate Dados do Cliente, o Pilar avisa os administradores da conta por e-mail com 30
+        incluir fornecedor novo que trate Dados do Cliente, a Pilar avisa os administradores da conta por e-mail com 30
         dias de antecedência. O Cliente pode se opor por motivo ligado à proteção de dados; se não houver solução, pode
         rescindir sem multa, com reembolso do período pago e não usado.
       </p>
@@ -357,7 +357,7 @@ const ANEXO: Secao[] = [
     titulo: "A6. Transferência internacional",
     corpo: (
       <p>
-        Parte dos fornecedores processa dados fora do Brasil. O Pilar adota para cada um as garantias do art. 33 da
+        Parte dos fornecedores processa dados fora do Brasil. A Pilar adota para cada um as garantias do art. 33 da
         LGPD, pelas cláusulas-padrão da ANPD (Resolução CD/ANPD nº 19/2024) ou mecanismo equivalente admitido.
       </p>
     ),
@@ -366,8 +366,8 @@ const ANEXO: Secao[] = [
     titulo: "A7. Direitos dos titulares",
     corpo: (
       <p>
-        Pedido de titular sobre Dados do Cliente que chegar ao Pilar é encaminhado ao Cliente. O Pilar oferece meios
-        para o Cliente atender (correção, exportação, exclusão) e ajuda no que depender dele.
+        Pedido de titular sobre Dados do Cliente que chegar à Pilar é encaminhado ao Cliente. A Pilar oferece meios para
+        o Cliente atender (correção, exportação, exclusão) e ajuda no que depender dele.
       </p>
     ),
   },
@@ -375,7 +375,7 @@ const ANEXO: Secao[] = [
     titulo: "A8. Incidentes de segurança",
     corpo: (
       <p>
-        O Pilar avisa o Cliente em até 2 dias úteis depois de confirmar incidente que envolva Dados do Cliente, com o
+        A Pilar avisa o Cliente em até 2 dias úteis depois de confirmar incidente que envolva Dados do Cliente, com o
         que se sabe sobre natureza, dados e titulares afetados e medidas tomadas, e coopera para o Cliente cumprir suas
         próprias comunicações à ANPD e aos titulares (Resolução CD/ANPD nº 15/2024).
       </p>
@@ -385,7 +385,7 @@ const ANEXO: Secao[] = [
     titulo: "A9. Fim do tratamento",
     corpo: (
       <p>
-        Encerrado o contrato, o Cliente pode exportar os dados por 90 dias (cláusula 13). Depois, o Pilar elimina os
+        Encerrado o contrato, o Cliente pode exportar os dados por 90 dias (cláusula 13). Depois, a Pilar elimina os
         Dados do Cliente, inclusive das cópias de segurança no ciclo normal de 30 dias delas, salvo o que a lei obrigue
         a guardar.
       </p>
@@ -395,7 +395,7 @@ const ANEXO: Secao[] = [
     titulo: "A10. Comprovação",
     corpo: (
       <p>
-        O Pilar fornece ao Cliente, mediante pedido razoável e no máximo uma vez por ano (salvo incidente), as
+        A Pilar fornece ao Cliente, mediante pedido razoável e no máximo uma vez por ano (salvo incidente), as
         informações necessárias para demonstrar o cumprimento deste Anexo, incluindo a lista atualizada de fornecedores
         e a descrição das medidas de segurança.
       </p>
@@ -414,7 +414,7 @@ function Bloco({ secao }: { secao: Secao }) {
 
 export function Termos() {
   usePageMeta({
-    titulo: "Termos de Uso da plataforma de gestão Pilar | Pilar",
+    titulo: "Termos de Uso da plataforma de gestãa Pilar | Pilar",
     descricao:
       "As condições de uso da plataforma Pilar para escritórios de engenharia e arquitetura: conta, contratação, pagamento, IA, dados e responsabilidades.",
     caminho: "/termos",

@@ -1,6 +1,6 @@
 # ICP & Personas
 
-> Pra quem o Pilar fala. Filtro de toda feature e toda copy.
+> Pra quem a Pilar fala. Filtro de toda feature e toda copy.
 > Ref: [BRAND.md](./BRAND.md) · `docs/strategy/DECISOES.md` (2026-09-01) · Última atualização: `2026-09-01` · `v1`
 
 ## ICP
@@ -14,7 +14,7 @@
 
 > ICP original decidido em mesa redonda 2026-05-13, descartando arquitetura por "fluxo criativo,
 > fases diferentes". Expandido em 2026-09-01 (`DECISOES.md`): Rafael (Mawe Arquitetura, design
-> partner desde 18/08) validou o mesmo fluxo de disciplina→etapa fora do Pilar, é o sinal de
+> partner desde 18/08) validou o mesmo fluxo de disciplina→etapa fora da Pilar, é o sinal de
 > produto mais forte hoje (metodologia cruzada, primeira reação forte ao portal). A divergência
 > prevista não se confirmou com uso real — construtora continua fora.
 
@@ -32,14 +32,14 @@
 
 - **Quem:** toca a execução, lança horas, fala com cliente.
 - **Dor:** retrabalho de alimentar vários sistemas; cobrança e escopo se perdem.
-- **Valor do Pilar:** um fluxo só; portal do cliente reduz idas e vindas.
+- **Valor da Pilar:** um fluxo só; portal do cliente reduz idas e vindas.
 - **Como fala com ele:** funcional, economia de tempo, menos planilha.
 
 ## Persona terciária — Cliente final (portal)
 
 - **Quem:** quem contrata o projeto e acompanha pelo portal.
 - **Valor:** transparência (status, faturas, documentos) sem precisar cobrar por WhatsApp.
-- **Como fala com ele:** institucional, claro, sóbrio — representa a marca do escritório, não a do Pilar.
+- **Como fala com ele:** institucional, claro, sóbrio — representa a marca do escritório, não a da Pilar.
 
 ## GTM (contexto pra copy)
 

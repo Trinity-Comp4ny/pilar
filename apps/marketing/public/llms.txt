@@ -32,7 +32,7 @@
 
 ## Blog
 
-- [Blog do Pilar](https://www.pilarsoft.com.br/blog): guias práticos de gestão para escritórios de engenharia e arquitetura
+- [Blog da Pilar](https://www.pilarsoft.com.br/blog): guias práticos de gestão para escritórios de engenharia e arquitetura
 - [Software de gestão para escritório de engenharia: o que avaliar antes de contratar](https://www.pilarsoft.com.br/blog/software-gestao-escritorio-engenharia)
 - [Sistema de gestão para escritório de arquitetura](https://www.pilarsoft.com.br/blog/sistema-gestao-escritorio-arquitetura)
 - [Como fazer uma proposta de projeto de engenharia por disciplina](https://www.pilarsoft.com.br/blog/proposta-projeto-engenharia)
@@ -84,9 +84,13 @@
 
 - [FAQ](https://www.pilarsoft.com.br/faq)
 
+## Segurança
+
+- [Segurança e confiança](https://www.pilarsoft.com.br/seguranca): onde os dados ficam (banco em São Paulo), isolamento por escritório, verificação em duas etapas, backup diário com restauração testada todo mês, exportação e exclusão de dados pela LGPD, página de status e reporte de vulnerabilidade
+
 ## Informações
 
-O Pilar atende escritórios de projeto técnico, de engenharia multidisciplinar e de arquitetura, que vendem projeto por proposta e acompanham ou administram obra por taxa. Não é ERP de construtora nem de incorporadora, e não substitui ferramentas de desenho, cálculo, CAD ou BIM. Os agentes de IA consultam dados reais do escritório e preparam ações (proposta, orçamento, lançamento financeiro); nada é executado sem revisão e aprovação de uma pessoa da equipe.
+A Pilar atende escritórios de projeto técnico, de engenharia multidisciplinar e de arquitetura, que vendem projeto por proposta e acompanham ou administram obra por taxa. Não é ERP de construtora nem de incorporadora, e não substitui ferramentas de desenho, cálculo, CAD ou BIM. Os agentes de IA consultam dados reais do escritório e preparam ações (proposta, orçamento, lançamento financeiro); nada é executado sem revisão e aprovação de uma pessoa da equipe.
 
 ## Legal
 

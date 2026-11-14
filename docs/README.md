@@ -23,6 +23,7 @@ design system, agentes, engavetados com gatilho). Cada item linka o doc com o de
 | 📐 **Specs** | [`specs/`](./specs/) | Especificações de feature (Spec Driven Development): quê/porquê antes de codar |
 | 🎨 **Design system** | [`design/`](./design/) | Contrato visual da UI ([`PILAR_DESIGN_SYSTEM.md`](./design/PILAR_DESIGN_SYSTEM.md)): componentes, tokens, padrões e catálogo de deriva |
 | 🧪 **QA** | [`qa/`](./qa/) | Rodadas de QA: catálogos de teste, matriz RLS, achados e status das correções |
+| 📣 **Marketing** | [`marketing/`](./marketing/) | Plano de marketing, direção de conteúdo e a [biblioteca pronta para postar](./marketing/conteudo/README.md) (Reels, carrosséis, posts, stories e legendas) |
 | ⚖️ **Legal** | [`legal/`](./legal/) | Política de privacidade e documentos legais |
 
 ## Fora de `docs/` (referência rápida)

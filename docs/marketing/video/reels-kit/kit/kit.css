@@ -1,0 +1,24 @@
+@font-face{font-family:Geist;src:url(../assets/geist-variable.woff2) format('woff2');font-weight:100 900}
+:root{--ink:#1A1A1A;--ink8:#3D3D3D;--g6:#5F6572;--g4:#9EA3AE;--g3:#D1D5DB;--paper:#F7F7F7;--p0:#FFFFFF;--p2:#EDEDED;--brand:#A4EC86;--brand-soft:#E2F6DA;--brand-strong:#366B1F;--neg:#BA1C1C;--warn:#8A4B0F}
+*{box-sizing:border-box}
+html,body{margin:0;width:var(--W,1080px);height:var(--H,1920px);overflow:hidden;font-family:Geist,sans-serif;-webkit-font-smoothing:antialiased;background:var(--paper);color:var(--ink)}
+.abs{position:absolute}
+.scene{position:absolute;inset:0;display:none}
+.hook{font-weight:500;font-size:96px;line-height:1.05;letter-spacing:-0.035em}
+.h2{font-weight:500;font-size:72px;line-height:1.08;letter-spacing:-0.03em}
+.h3{font-weight:500;font-size:56px;line-height:1.12;letter-spacing:-0.03em}
+.body{font-weight:400;font-size:40px;line-height:1.3;color:var(--ink8)}
+.small{font-weight:400;font-size:30px;color:var(--g6)}
+.pill{position:relative;display:inline-block;padding:0 22px;color:var(--ink)}
+.pill::before{content:"";position:absolute;inset:6px 0 2px 0;background:var(--brand);border-radius:999px;transform-origin:left;transform:scaleX(var(--s,1));z-index:0}
+.pill>span{position:relative;z-index:1}
+.chip{display:inline-flex;align-items:center;gap:16px;background:rgba(26,26,26,.86);color:#fff;border-radius:999px;padding:16px 30px;font-weight:500;font-size:40px;letter-spacing:-0.02em}
+.shot{position:absolute;overflow:hidden;border-radius:28px;background:#fff;box-shadow:0 30px 80px rgba(26,26,26,.18),0 0 0 1px rgba(26,26,26,.06)}
+.shot>img{position:absolute;left:0;top:0;transform-origin:0 0}
+#end{position:absolute;inset:0;background:var(--ink);display:none;flex-direction:column;align-items:center;justify-content:center;gap:52px}
+#end .logo{width:500px;height:auto}
+#end .tag{font-weight:500;font-size:54px;line-height:1.12;letter-spacing:-0.03em;color:#fff;text-align:center;max-width:880px}
+#end .cta{font-weight:500;font-size:40px;color:var(--ink);background:var(--brand);border-radius:999px;padding:22px 44px}
+#end .url{font-weight:400;font-size:34px;color:var(--g4);margin-top:-26px}
+#end .q{font-weight:500;font-size:68px;line-height:1.1;letter-spacing:-0.035em;color:#fff;text-align:center;max-width:900px}
+.foot{position:absolute;left:0;right:0;bottom:70px;text-align:center;font-size:26px;color:var(--g4)}

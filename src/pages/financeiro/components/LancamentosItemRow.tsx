@@ -109,7 +109,7 @@ function StatusBadge({
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled className="text-[10px] text-muted-foreground">
+        <DropdownMenuItem disabled className="text-3xs text-muted-foreground">
           Clique para alterar
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -184,19 +184,38 @@ export function LancamentosItemRow({
       </td>
       <td className={cn(cellPad, cellTextSize, "whitespace-nowrap", overdue && "text-danger-mid font-medium")}>
         {formatDateDisplay(dataExibir)}
-        {overdue && <span className="ml-1 text-[10px] uppercase">atrasado</span>}
+        {/* "Atrasado" embaixo da data, não ao lado: na mesma linha a coluna dobrava de largura. */}
+        {overdue && <span className="block text-3xs uppercase leading-none">atrasado</span>}
       </td>
-      <td className={cn(cellPad, "font-medium max-w-[220px] truncate", cellTextSize)}>
+      <td
+        className={cn(cellPad, "font-medium max-w-[200px] 2xl:max-w-[280px] truncate", cellTextSize)}
+        title={l.descricao}
+      >
         {l.descricao}
         {isTransf && l.conta_nome && (
-          <span className="ml-1 text-[10px] text-muted-foreground font-normal">({l.conta_nome})</span>
+          <span className="ml-1 text-3xs text-muted-foreground font-normal">({l.conta_nome})</span>
         )}
       </td>
-      <td className={cn(cellPad, "max-w-[160px] truncate", cellTextSize)}>
+      <td
+        className={cn(cellPad, "max-w-[140px] truncate 2xl:max-w-[200px]", cellTextSize)}
+        title={l.contraparte_nome ?? undefined}
+      >
         {isTransf ? (l.contraparte_nome ?? "-") : l.contraparte_nome || "-"}
       </td>
-      <td className={cn(cellPad, "whitespace-nowrap", cellTextSize)}>{isTransf ? "-" : l.categoria_nome || "-"}</td>
-      <td className={cn(cellPad, "whitespace-nowrap", cellTextSize)}>{isTransf ? "-" : l.projeto_nome || "-"}</td>
+      {/* Categoria e projeto cortam com reticências (nome inteiro no title): sem limite, um
+          nome longo empurrava Valor e Status para fora da tela num notebook 13". */}
+      <td
+        className={cn(cellPad, "max-w-[130px] truncate 2xl:max-w-[200px]", cellTextSize)}
+        title={isTransf ? undefined : (l.categoria_nome ?? undefined)}
+      >
+        {isTransf ? "-" : l.categoria_nome || "-"}
+      </td>
+      <td
+        className={cn(cellPad, "max-w-[130px] truncate 2xl:max-w-[200px]", cellTextSize)}
+        title={isTransf ? undefined : (l.projeto_nome ?? undefined)}
+      >
+        {isTransf ? "-" : l.projeto_nome || "-"}
+      </td>
       <td className={cn(cellPad, "whitespace-nowrap text-xs text-muted-foreground")}>
         {!isTransf && l.parcela_numero && l.parcela_total && l.parcela_total > 1
           ? `${l.parcela_numero}/${l.parcela_total}`

@@ -18,7 +18,7 @@ interface PilarMarkProps {
 }
 
 /**
- * A coluna do Pilar em SVG, na cor do texto ao redor. Animação só por classe
+ * A coluna da Pilar em SVG, na cor do texto ao redor. Animação só por classe
  * (src/styles/motion.css): zero JavaScript por frame, e movimento reduzido cai no
  * quadro final.
  */
@@ -39,7 +39,7 @@ export function PilarMark({ variant = "static", weight = 1.6, title, className =
       {...a11y}
     >
       <path className="pm-cap" pathLength={1} d="M1 2H27" />
-      <path className="pm-aba" pathLength={1} d="M3 6H25" strokeOpacity={0.85} />
+      <path className="pm-aba" pathLength={1} d="M3 6H25" />
       {CANELURAS.map((x, i) => (
         <path key={x} className={`pm-fl pm-f${i + 1}`} pathLength={1} d={fromTop ? `M${x} 9V23` : `M${x} 23V9`} />
       ))}

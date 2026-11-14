@@ -331,7 +331,7 @@ export default function RelatoriosRentabilidade({ modo }: Props) {
               </Select>
             </div>
             {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs gap-1 shrink-0">
+              <Button variant="ghost" size="xs" onClick={clearFilters} className="gap-1 shrink-0">
                 <X size={12} />
                 Limpar
               </Button>
@@ -350,11 +350,11 @@ export default function RelatoriosRentabilidade({ modo }: Props) {
           </Badge>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => handleExport("csv")}>
+          <Button variant="outline" size="xs" className="gap-1.5" onClick={() => handleExport("csv")}>
             <Download size={13} />
             CSV
           </Button>
-          <Button size="sm" variant="brand" className="h-8 text-xs gap-1.5" onClick={() => handleExport("pdf")}>
+          <Button size="xs" variant="brand" className="gap-1.5" onClick={() => handleExport("pdf")}>
             <Download size={13} />
             PDF
           </Button>

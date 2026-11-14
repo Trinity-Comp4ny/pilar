@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useMoneyMask } from "@/hooks/useMoneyMask";
+import { useAcaoPendente } from "@/hooks/useAcaoPendente";
 import { formatPercent } from "@/lib/format";
 import type { FolhaItem } from "../types";
 
@@ -22,7 +23,7 @@ interface FolhaTableProps {
   deltas?: Map<string, number>;
   onRowClick: (item: FolhaItem) => void;
   onStatusChange: (folhaId: string | undefined, newStatus: string) => void;
-  onDownloadComprovante?: (item: FolhaItem) => void;
+  onDownloadComprovante?: (item: FolhaItem) => void | Promise<void>;
 }
 
 export function FolhaTable({
@@ -35,6 +36,8 @@ export function FolhaTable({
   onDownloadComprovante,
 }: FolhaTableProps) {
   const formatCurrency = useMoneyMask();
+  // Gerar o PDF leva alguns segundos: o botão mostra a espera e não aceita o segundo clique.
+  const { executar, pendente } = useAcaoPendente();
   const isEdited = (item: FolhaItem, field: string) => item.edited_fields?.includes(field);
   const isPreview = statusFolha === "preview";
 
@@ -53,7 +56,7 @@ export function FolhaTable({
               {isPreview && (semProjeto || variavelZerado) && (
                 <span
                   title={semProjeto ? "Sem projeto no período" : "Variável zerado"}
-                  className="inline-flex items-center gap-1 text-[10px] text-warning-strong bg-warning-soft rounded px-1.5 py-0.5"
+                  className="inline-flex items-center gap-1 text-3xs text-warning-strong bg-warning-soft rounded px-1.5 py-0.5"
                 >
                   <AlertTriangle className="h-3 w-3" />
                   {semProjeto ? "sem projeto" : "variável 0"}
@@ -128,7 +131,7 @@ export function FolhaTable({
       key: "total",
       header: "Total a receber",
       align: "end",
-      className: "font-bold text-lg",
+      className: "font-semibold",
       cell: (item) => (
         <>
           {formatCurrency(item.v_total)} {isEdited(item, "total") && "*"}
@@ -207,13 +210,13 @@ export function FolhaTable({
             cell: (item: FolhaItem) => (
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-8 w-8"
+                size="icon-sm"
                 title={`Baixar comprovante de ${item.p_nome}`}
                 aria-label={`Baixar comprovante de ${item.p_nome}`}
-                onClick={() => onDownloadComprovante?.(item)}
+                loading={pendente(item.p_id)}
+                onClick={() => executar(item.p_id, async () => onDownloadComprovante?.(item))}
               >
-                <FileDown className="h-4 w-4" />
+                {!pendente(item.p_id) && <FileDown className="h-4 w-4" />}
               </Button>
             ),
           },

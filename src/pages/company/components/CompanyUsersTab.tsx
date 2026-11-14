@@ -1,3 +1,4 @@
+import { RowActions } from "@/components/data/RowActions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -63,31 +64,23 @@ export function CompanyUsersTab({
     { key: "funcao", header: "Função", className: "text-black/70", cell: (u) => u.role || "-" },
     {
       key: "acoes",
-      header: "Ações",
+      header: <span className="sr-only">Ações</span>,
       align: "end",
       cell: (u) =>
         isAdmin && !u.id.startsWith("pending-") ? (
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-full"
-              onClick={() => onEditUser(u)}
-              aria-label={`Editar ${u.name}`}
-            >
-              <Pencil className="h-4 w-4" aria-hidden="true" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-full text-danger-mid"
-              onClick={() => onDeleteUser(u.id)}
-              disabled={u.id === currentUserId}
-              aria-label={`Remover ${u.name}`}
-            >
-              <Trash2 className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </div>
+          <RowActions
+            label={u.name}
+            actions={[
+              { label: "Editar", icon: Pencil, onClick: () => onEditUser(u) },
+              {
+                label: "Remover",
+                icon: Trash2,
+                destructive: true,
+                disabled: u.id === currentUserId,
+                onClick: () => onDeleteUser(u.id),
+              },
+            ]}
+          />
         ) : (
           <span className="text-black/40">-</span>
         ),

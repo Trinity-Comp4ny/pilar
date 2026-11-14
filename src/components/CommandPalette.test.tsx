@@ -83,20 +83,41 @@ describe("CommandPalette", () => {
     expect(screen.getByText("Sair")).toBeInTheDocument();
   });
 
-  it("criar navega e dispara o evento da paleta", async () => {
-    const listener = vi.fn();
-    window.addEventListener("palette:create-lead", listener);
+  it("criar navega para a página com ?new=, que abre o formulário", async () => {
     const user = abrir();
     await user.click(screen.getByText("Novo lead"));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(h.navigate).toHaveBeenCalledWith("/gestao/leads?new=1");
-    expect(listener).toHaveBeenCalled();
-    window.removeEventListener("palette:create-lead", listener);
+  });
+
+  it("nova receita leva o tipo receita", async () => {
+    const user = abrir();
+    await user.click(screen.getByText("Nova receita"));
+    expect(h.navigate).toHaveBeenCalledWith("/gestao/financeiro?tab=lancamentos&new=receita");
+  });
+
+  it("nova despesa leva o tipo despesa", async () => {
+    const user = abrir();
+    await user.click(screen.getByText("Nova despesa"));
+    expect(h.navigate).toHaveBeenCalledWith("/gestao/financeiro?tab=lancamentos&new=despesa");
   });
 
   it("configurações abre o modal na aba conta", async () => {
     const user = abrir();
     await user.click(screen.getByText("Configurações"));
     expect(h.openSettings).toHaveBeenCalledWith("conta");
+  });
+
+  it("atalhos de teclado mostra a dica ? e abre o painel pelo evento global", async () => {
+    const user = abrir();
+    const ouvinte = vi.fn();
+    window.addEventListener("atalhos:abrir", ouvinte);
+    const item = screen.getByText("Atalhos de teclado").closest("[cmdk-item]") as HTMLElement;
+    expect(item).toHaveTextContent("?");
+    await user.click(screen.getByText("Atalhos de teclado"));
+    expect(ouvinte).toHaveBeenCalledTimes(1);
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    window.removeEventListener("atalhos:abrir", ouvinte);
   });
 
   it("sair encerra a sessão e vai para o login", async () => {

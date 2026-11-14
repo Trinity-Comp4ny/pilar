@@ -169,7 +169,7 @@ export function CotacaoDetailDialog({ open, onOpenChange, obraId, cotacao, canEd
                               </span>
                             )}
                             {p.origem === "link" && (
-                              <Badge variant="outline" className="ml-1.5 text-[10px] font-normal">
+                              <Badge variant="outline" className="ml-1.5 text-3xs font-normal">
                                 Preenchido pelo fornecedor
                               </Badge>
                             )}
@@ -220,7 +220,7 @@ export function CotacaoDetailDialog({ open, onOpenChange, obraId, cotacao, canEd
                           <td className="py-2">
                             <div className="flex justify-end gap-0.5">
                               {editavel && (
-                                <Button variant="ghost" size="sm" className="h-7" onClick={() => setDecisao(p)}>
+                                <Button variant="ghost" size="xs" onClick={() => setDecisao(p)}>
                                   Escolher
                                 </Button>
                               )}
@@ -516,8 +516,8 @@ function ItensEditor({
         <Button
           type="button"
           variant="ghost"
-          size="sm"
-          className="h-7 px-2 text-xs"
+          size="xs"
+          className="px-2"
           onClick={() => setItens((prev) => [...prev, linhaVazia()])}
         >
           <Plus className="mr-1 h-3.5 w-3.5" />

@@ -101,7 +101,7 @@ O constrangimento quase sempre vem de surpresa. Três práticas evitam:
 2. **Mostre a taxa como linha própria** em todo fechamento, com a base de cálculo à vista. Taxa diluída nas despesas parece cobrança escondida.
 3. **Calcule a cada lançamento, não no fim do mês.** Se o cliente vê a taxa crescer junto com a despesa, o fechamento não traz surpresa.
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
 No [módulo Obra](/obra), cada obra tem a sua conta: aporte do cliente, despesa com comprovante, saldo e a sua taxa de administração calculada a cada lançamento.
 

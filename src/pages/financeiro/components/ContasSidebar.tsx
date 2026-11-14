@@ -59,7 +59,7 @@ function CartaoRow({
         {venc && (
           <span
             className={cn(
-              "text-[10px] shrink-0 rounded-full px-1.5 py-0.5 leading-none",
+              "text-3xs shrink-0 rounded-full px-1.5 py-0.5 leading-none",
               venc.vencida ? "bg-danger-soft text-danger-strong" : "bg-black/5 text-muted-foreground"
             )}
           >
@@ -134,7 +134,7 @@ export function ContasSidebar({
                   )}
                 >
                   <div
-                    className="w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
+                    className="w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-white text-3xs font-bold"
                     style={{ backgroundColor: conta.cor || "hsl(var(--chart-neutral))" }}
                   >
                     {conta.banco ? conta.banco.substring(0, 2).toUpperCase() : "??"}

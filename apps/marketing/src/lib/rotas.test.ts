@@ -80,6 +80,7 @@ describe("rotas da landing", () => {
         "/planos",
         "/termos",
         "/privacidade",
+        "/seguranca",
       ])
     );
     expect(ler("../App.tsx")).toMatch(/<Route\s+path="\*"\s+element={<NotFound \/>}/);

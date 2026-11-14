@@ -95,7 +95,7 @@ const DADOS: Linha[] = [
   [
     "Dados que o escritório insere: clientes, equipe, fornecedores, projetos, obras, financeiro, documentos, fotos e áudios do Pilar Campo",
     "Prestar o serviço contratado pelo escritório",
-    "Definida pelo escritório, que é o controlador. O Pilar trata como operador (seção 1)",
+    "Definida pelo escritório, que é o controlador. A Pilar trata como operador (seção 1)",
   ],
 ];
 
@@ -187,7 +187,7 @@ export function Privacidade() {
   usePageMeta({
     titulo: "Política de Privacidade | Pilar",
     descricao:
-      "Como o Pilar coleta, usa e protege os dados do seu escritório de engenharia ou arquitetura, e quais são os seus direitos pela LGPD.",
+      "Como a Pilar coleta, usa e protege os dados do seu escritório de engenharia ou arquitetura, e quais são os seus direitos pela LGPD.",
     caminho: "/privacidade",
   });
 
@@ -220,7 +220,7 @@ export function Privacidade() {
           <h2 className="text-2xl font-medium tracking-tight mb-3">Resumo</h2>
           <div className="text-sm text-muted-foreground leading-relaxed space-y-3">
             <p>
-              O Pilar é um sistema de gestão com agentes de IA para escritórios de engenharia e arquitetura. Esta página
+              A Pilar é um sistema de gestão com agentes de IA para escritórios de engenharia e arquitetura. Esta página
               explica quais dados pessoais tratamos, para quê, com quem compartilhamos, por quanto tempo guardamos e
               como você exerce seus direitos pela Lei Geral de Proteção de Dados (Lei 13.709/2018, LGPD).
             </p>
@@ -238,15 +238,15 @@ export function Privacidade() {
             <strong className="text-foreground">Controlador:</strong> {EMPRESA.razaoSocial}, CNPJ {EMPRESA.cnpj}, com
             sede na {EMPRESA.endereco}, titular da marca Pilar.
           </p>
-          <p>O Pilar tem dois papéis, e eles mudam a quem você deve se dirigir:</p>
+          <p>A Pilar tem dois papéis, e eles mudam a quem você deve se dirigir:</p>
           <ul className="list-disc pl-6 space-y-1">
             <li>
-              <strong className="text-foreground">Controlador</strong> dos dados de quem usa o Pilar (conta, acesso,
+              <strong className="text-foreground">Controlador</strong> dos dados de quem usa a Pilar (conta, acesso,
               cobrança, consentimentos) e de quem visita este site.
             </li>
             <li>
               <strong className="text-foreground">Operador</strong> dos dados que o escritório cliente insere no
-              sistema: os clientes dele, a equipe, os fornecedores, as obras. Aqui quem decide é o escritório, e o Pilar
+              sistema: os clientes dele, a equipe, os fornecedores, as obras. Aqui quem decide é o escritório, e a Pilar
               trata esses dados conforme as instruções dele e os{" "}
               <Link to="/termos" className="text-ink underline">
                 Termos de Uso
@@ -255,7 +255,7 @@ export function Privacidade() {
             </li>
           </ul>
           <p>
-            Se você é cliente de um escritório que usa o Pilar (portal do cliente), fornecedor que respondeu uma cotação
+            Se você é cliente de um escritório que usa a Pilar (portal do cliente), fornecedor que respondeu uma cotação
             por link, ou profissional que usa o Pilar Campo a convite de um escritório, o controlador dos seus dados é
             esse escritório. Peça a ele o exercício dos seus direitos. Se escrever para nós, encaminhamos o pedido.
           </p>
@@ -264,7 +264,7 @@ export function Privacidade() {
         <Secao titulo="2. Que dados tratamos, para quê e com qual base legal">
           <Tabela cabecalho={["Dado", "Para quê", "Base legal (LGPD)"]} linhas={DADOS} />
           <p>
-            O Pilar não foi feito para dados sensíveis (saúde, biometria, origem racial, opinião política). Eles podem
+            A Pilar não foi feita para dados sensíveis (saúde, biometria, origem racial, opinião política). Eles podem
             aparecer por acaso em texto livre ou em áudio; nesse caso são tratados com o mesmo cuidado e sob a
             responsabilidade do escritório que os inseriu.
           </p>
@@ -272,7 +272,7 @@ export function Privacidade() {
 
         <Secao titulo="3. Agentes de IA">
           <p>
-            Quando você usa um agente de IA do Pilar (chat, leitura de cotação ou documento financeiro, organização do
+            Quando você usa um agente de IA da Pilar (chat, leitura de cotação ou documento financeiro, organização do
             registro de obra a partir de áudio e fotos), o conteúdo necessário para a tarefa é enviado ao provedor do
             modelo: hoje o Google Gemini e, quando ativados, Anthropic e TypeSafe AI pelo Vercel AI Gateway.
           </p>
@@ -296,7 +296,7 @@ export function Privacidade() {
           </p>
           <Tabela cabecalho={["Fornecedor", "Função", "Onde processa"]} linhas={OPERADORES} />
           <p>
-            <strong className="text-foreground">Acesso do suporte:</strong> para resolver um problema, a equipe do Pilar
+            <strong className="text-foreground">Acesso do suporte:</strong> para resolver um problema, a equipe da Pilar
             pode acessar a conta do escritório. Todo acesso fica registrado.
           </p>
         </Secao>
@@ -330,7 +330,7 @@ export function Privacidade() {
                 .
               </p>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Sua escolha vale neste site e no aplicativo. Se você tem conta no Pilar, ela fica registrada na conta e
+                Sua escolha vale neste site e no aplicativo. Se você tem conta na Pilar, ela fica registrada na conta e
                 pode ser alterada em Configurações, Privacidade.
               </p>
             </div>
@@ -356,6 +356,13 @@ export function Privacidade() {
           <p>
             Se um incidente de segurança puder causar risco ou dano relevante a você, avisamos você e a ANPD nos prazos
             da Resolução CD/ANPD nº 15/2024.
+          </p>
+          <p>
+            Onde cada fornecedor processa os dados, backup, controle de acesso e como reportar uma vulnerabilidade:{" "}
+            <Link to="/seguranca" className="text-ink underline">
+              Segurança e confiança
+            </Link>
+            .
           </p>
         </Secao>
 
@@ -400,7 +407,7 @@ export function Privacidade() {
 
         <Secao titulo="11. Menores de idade">
           <p>
-            O Pilar é um serviço para empresas e não se destina a menores de 18 anos. Se identificarmos dado de menor
+            A Pilar é um serviço para empresas e não se destina a menores de 18 anos. Se identificarmos dado de menor
             cadastrado como usuário, ele é excluído.
           </p>
         </Secao>

@@ -24,7 +24,7 @@ import { defaultValues, rateiosValidos, schema, type FormData, type FormInput } 
 import { clienteDoProjeto, projetoContinuaValido, projetosDoCliente } from "../lib/vinculoClienteProjeto";
 import type { Lancamento, TipoLancamento } from "../hooks/useLancamentosUnified";
 import { CentroCustoManager } from "./CentroCustoManager";
-import { analytics } from "@/lib/analytics";
+import { registrarLancamentoCriado } from "../lib/lancamentoCriado";
 import type { Json } from "@/integrations/supabase/types";
 import { montarLinhasNovas, statusEmAberto } from "../lib/lancamentoLinhas";
 
@@ -242,7 +242,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
         });
         if (error) throw new Error(error.message + (error.details ? ` (${error.details})` : ""));
 
-        analytics.track("lancamento_criado", { tipo, parcelas: numParcelas, rateio: rateioOn });
+        registrarLancamentoCriado(tipo, numParcelas, rateioOn);
         toast.success(isReceita ? "Receita cadastrada" : "Despesa cadastrada", {
           description: `${numParcelas} registro(s) criado(s)`,
         });
@@ -317,7 +317,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Coluna esquerda — obrigatórios */}
           <div className="space-y-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Dados principais</p>
+            <p className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground">Dados principais</p>
 
             <div className="space-y-1.5">
               <Label htmlFor="descricao" className="text-xs">
@@ -402,7 +402,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
 
           {/* Coluna direita — vínculos */}
           <div className="space-y-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Vínculos</p>
+            <p className="text-3xs font-semibold uppercase tracking-wider text-muted-foreground">Vínculos</p>
 
             {isReceita ? (
               <div className="space-y-1.5">
@@ -432,7 +432,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                       <div key={i} className="flex items-center gap-2 text-xs">
                         <QrCode className="h-3 w-3 shrink-0 text-muted-foreground" />
                         <span className="font-medium">{c.chave}</span>
-                        <Badge variant="outline" className="text-[10px] h-4 px-1 ml-auto">
+                        <Badge variant="outline" className="text-3xs h-4 px-1 ml-auto">
                           {TIPO_CHAVE_PIX_LABEL[c.tipo as keyof typeof TIPO_CHAVE_PIX_LABEL] ?? c.tipo}
                         </Badge>
                       </div>
@@ -575,7 +575,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                   Centro de custo
                   <button
                     type="button"
-                    className="text-[10px] text-ink hover:underline inline-flex items-center gap-0.5"
+                    className="text-3xs text-ink hover:underline inline-flex items-center gap-0.5"
                     onClick={() => setCcManagerOpen(true)}
                   >
                     <Settings2 className="h-3 w-3" /> gerenciar
@@ -606,7 +606,7 @@ export function LancamentoFormDialog({ open, onOpenChange, tipo, lancamento, onS
                   <button
                     type="button"
                     className={cn(
-                      "text-[10px] px-2 py-0.5 rounded border",
+                      "text-3xs px-2 py-0.5 rounded border",
                       rateioOn ? "bg-brand text-ink border-brand" : "bg-transparent text-muted-foreground"
                     )}
                     onClick={() => {

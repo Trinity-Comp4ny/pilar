@@ -296,7 +296,7 @@ export function SmartInvoiceDialog({ open, onClose, projetoId, propostaValor, pr
                                 <div className="flex items-center gap-1.5">
                                   {m.nome}
                                   {m.receita_id && (
-                                    <Badge variant="secondary" className="text-[10px] py-0">
+                                    <Badge variant="secondary" className="text-3xs py-0">
                                       Vinculado
                                     </Badge>
                                   )}

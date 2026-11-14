@@ -100,13 +100,15 @@ export function useClienteDetalhe(clienteId: string) {
   const portalStatusQuery = useQuery({
     queryKey: ["portal-status", clienteId],
     queryFn: async () => {
+      // Vários acessos por cliente (SPEC 164): a página mostra os e-mails com acesso.
       const { data } = await supabase
         .from("cliente_portal_accounts")
         .select("id, email")
         .eq("cliente_id", clienteId)
         .eq("ativo", true)
-        .maybeSingle();
-      return data ? { exists: true, email: data.email as string } : { exists: false, email: null as string | null };
+        .order("created_at", { ascending: true });
+      const emails = (data ?? []).map((a) => a.email as string);
+      return { exists: emails.length > 0, email: emails[0] ?? null, emails };
     },
     enabled: !!clienteId,
   });

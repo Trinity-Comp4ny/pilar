@@ -42,7 +42,7 @@ export function PerfilPessoaPopover({ pessoaId, children }: PerfilPessoaPopoverP
               <div className="min-w-0">
                 <p className="truncate font-semibold text-foreground">{perfil.nome}</p>
                 {perfil.cargo && <p className="truncate text-sm text-muted-foreground">{perfil.cargo}</p>}
-                {!perfil.tem_conta && <p className="text-xs text-muted-foreground">Ainda sem acesso ao Pilar</p>}
+                {!perfil.tem_conta && <p className="text-xs text-muted-foreground">Ainda sem acesso à Pilar</p>}
               </div>
             </div>
             {perfil.email && (

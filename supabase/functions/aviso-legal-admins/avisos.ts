@@ -1,7 +1,7 @@
 /**
  * Catálogo dos avisos legais por e-mail aos administradores das contas. Puro (sem Deno):
  * conteúdo fixo por aviso, revisado no PR, para o painel nunca mandar texto livre em
- * nome do Pilar. Aviso novo (reajuste, fornecedor novo) entra aqui com id próprio; o id
+ * nome da Pilar. Aviso novo (reajuste, fornecedor novo) entra aqui com id próprio; o id
  * faz parte da chave de idempotência, então reenviar o mesmo aviso não duplica.
  */
 
@@ -24,14 +24,14 @@ export const AVISOS_LEGAIS: Record<string, AvisoLegal> = {
   "termos-2.0": {
     id: "termos-2.0",
     nome: "Termos de Uso 2.0 e Política de Privacidade 2.1",
-    assunto: "Os Termos de Uso do Pilar mudam em 10 de dezembro",
-    titulo: "Novos Termos de Uso do Pilar",
+    assunto: "Os Termos de Uso da Pilar mudam em 10 de dezembro",
+    titulo: "Novos Termos de Uso da Pilar",
     lead: "Atualizamos os Termos de Uso e a Política de Privacidade. As mudanças valem para a sua conta a partir de 10 de dezembro de 2026. O que muda:",
     itens: [
-      "Agentes de IA: a IA prepara e a sua equipe revisa e aprova. O Pilar não substitui a responsabilidade técnica (ART e RRT) do escritório.",
+      "Agentes de IA: a IA prepara e a sua equipe revisa e aprova. A Pilar não substitui a responsabilidade técnica (ART e RRT) do escritório.",
       "Créditos de IA: a cota do plano renova a cada ciclo; créditos comprados à parte não expiram e podem ser desfeitos em até 7 dias se não forem usados.",
       "Proteção de dados: o Anexo de Tratamento de Dados Pessoais passa a fazer parte dos Termos, com a lista de fornecedores e o aviso de 30 dias antes de incluir um novo.",
-      "Responsabilidade: limite igual ao valor pago nos 12 meses anteriores, sem limitar dolo, culpa grave ou vazamento de dados por falha do Pilar.",
+      "Responsabilidade: limite igual ao valor pago nos 12 meses anteriores, sem limitar dolo, culpa grave ou vazamento de dados por falha da Pilar.",
       "Preço: reajuste avisado com 30 dias, com direito de cancelar sem multa. Foro: o do domicílio do seu escritório.",
       "Privacidade: a política agora lista todos os fornecedores, onde cada um processa os dados, os prazos de guarda e os registros de acesso exigidos pelo Marco Civil.",
     ],

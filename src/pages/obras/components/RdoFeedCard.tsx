@@ -99,7 +99,7 @@ export function RdoFeedCard({
           {(autor || fotos.length > 0) && (
             <div className="flex items-center justify-between gap-2 border-t border-black/5 pt-2">
               {autor ? (
-                <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5 text-2xs text-muted-foreground">
                   <AvatarStack pessoas={[autor]} max={1} size="xs" />
                   Por {autor}
                 </span>
@@ -118,7 +118,7 @@ export function RdoFeedCard({
                       />
                     ))}
                   </span>
-                  <span className="text-[11px] text-muted-foreground">{fotos.length}</span>
+                  <span className="text-2xs text-muted-foreground">{fotos.length}</span>
                 </span>
               )}
             </div>

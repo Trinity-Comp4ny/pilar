@@ -106,7 +106,7 @@ export function ContaFormDialog({
             <Label className="flex items-center gap-2">
               Chave PIX
               {chavePix && (
-                <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                <Badge variant="secondary" className="text-3xs h-4 px-1.5">
                   {TIPO_CHAVE_PIX_LABEL[detectTipoChavePix(chavePix) as TipoChavePix] ?? "Detectando..."}
                 </Badge>
               )}

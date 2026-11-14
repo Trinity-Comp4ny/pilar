@@ -85,7 +85,7 @@ O formato mais comum ainda é a planilha mensal por e-mail, com uma pasta de com
 
 A alternativa é dar ao cliente um acesso de leitura ao que está registrado: aportes, despesas com comprovante e saldo, atualizados conforme você lança. O relatório mensal continua existindo, mas deixa de ser a única janela. Escritórios que fazem isso costumam receber menos ligação de sexta à tarde, porque a pergunta já tem onde ser respondida.
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
 No [módulo Obra](/obra), cada obra tem a sua conta: aporte do cliente, despesa com comprovante, saldo e a sua taxa de administração calculada a cada lançamento. O cliente acompanha pelo portal.
 

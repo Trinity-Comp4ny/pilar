@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { KPICard } from "@/components/KPICard";
+import { KpiResumo } from "@/components/KpiResumo";
+import { CollapsibleKpiSection } from "@/components/CollapsibleKpiSection";
+import { useMoneyMask } from "@/hooks/useMoneyMask";
 import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DataFrescor } from "@/components/DataFrescor";
 import { Clock, TrendingDown, TrendingUp, Upload } from "lucide-react";
 import { LancamentosTable } from "../components/LancamentosTable";
-import { ViewSwitcher } from "@/components/ViewSwitcher";
 import { PosicaoChips } from "../components/PosicaoChips";
 import { baldeAtivo, filtroDoBalde } from "../components/posicaoFiltros";
 import { useTitulosPosicao } from "../hooks/useTitulosPosicao";
@@ -33,11 +34,6 @@ export function invalidateLancamentos(qc: ReturnType<typeof useQueryClient>) {
 
 type Visao = "despesa" | "receita" | "todos";
 const VISAO_STORAGE_KEY = "pilar:financeiro:lancamentos:visao";
-const VISOES = [
-  { value: "despesa" as const, label: "A pagar" },
-  { value: "receita" as const, label: "A receber" },
-  { value: "todos" as const, label: "Tudo" },
-];
 
 function lerVisaoSalva(): Visao | null {
   try {
@@ -96,6 +92,8 @@ export default function Lancamentos() {
   );
 
   const [importar, setImportar] = useState(false);
+  // Resumo dos indicadores mascarado como os cards ("ocultar valores").
+  const formatCurrency = useMoneyMask();
 
   // Visões A pagar / A receber / Tudo (SPEC 150): são o filtro de tipo promovido para o
   // topo, com a posição por vencimento em chips. A última visão usada volta ao abrir,
@@ -108,14 +106,15 @@ export default function Lancamentos() {
     // Só na montagem.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const trocarVisao = (v: Visao) => {
+  const trocarVisao = (next: LancamentosFilters) => {
+    const v = next.tipo;
     salvarVisao(v);
     if (v === "todos") {
-      setFilters({ ...filters, tipo: "todos" });
+      setFilters(next);
       return;
     }
     // Ao entrar em A pagar/A receber, o padrão é o que está em aberto.
-    setFilters({ ...filters, tipo: v, status: filters.status === "todos" ? "pendentes" : filters.status });
+    setFilters({ ...next, status: next.status === "todos" ? "pendentes" : next.status });
   };
   const tipoTitulos = visao === "todos" ? null : visao;
   const posicao = useTitulosPosicao(tipoTitulos);
@@ -133,92 +132,125 @@ export default function Lancamentos() {
     refetch: refetchResumo,
   } = useLancamentosResumo(filters);
 
+  // Recorte, frescor e importar numa linha só, à direita dos indicadores. Antes eram três
+  // linhas acima dos KPIs, com um segundo seletor A pagar/A receber/Tudo que repetia o da
+  // barra de filtros (auditoria de espaço, 2026-11: a 1ª linha da tabela estava em y=520).
+  const linhaRecorte = (
+    <div className="flex flex-wrap items-center gap-3">
+      <p className="text-xs text-muted-foreground">
+        Vendo <span className="font-medium text-foreground">{recorteLabel(filters)}</span> · por vencimento
+      </p>
+      <DataFrescor updatedAt={resumoUpdatedAt} isFetching={fetchingResumo} onRefresh={() => void refetchResumo()} />
+      <Button size="xs" variant="outline" className="rounded-full gap-1" onClick={() => setImportar(true)}>
+        <Upload className="h-3.5 w-3.5" />
+        Importar
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="space-y-6 w-full">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="space-y-2">
-          <ViewSwitcher options={VISOES} value={visao} onChange={trocarVisao} ariaLabel="O que ver" />
-          <p className="text-sm text-muted-foreground">
-            Vendo <span className="font-medium text-foreground">{recorteLabel(filters)}</span> · por vencimento
-          </p>
-          <DataFrescor
-            updatedAt={resumoUpdatedAt}
-            isFetching={fetchingResumo}
-            onRefresh={() => void refetchResumo()}
-            className="mt-1"
+    <div className="space-y-4 w-full">
+      {tipoTitulos ? (
+        <>
+          <div className="flex justify-end">{linhaRecorte}</div>
+          <PosicaoChips
+            tipo={tipoTitulos}
+            posicao={posicao.data}
+            loading={posicao.isLoading}
+            ativo={ativo}
+            onSelect={(b) => posicao.data && setFilters(filtroDoBalde(b, posicao.data.hoje, filters))}
           />
-        </div>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" className="h-9 rounded-full gap-1" onClick={() => setImportar(true)}>
-            <Upload className="h-3.5 w-3.5" />
-            Importar
-          </Button>
-        </div>
-      </div>
-
-      {tipoTitulos && (
-        <PosicaoChips
-          tipo={tipoTitulos}
-          posicao={posicao.data}
-          loading={posicao.isLoading}
-          ativo={ativo}
-          onSelect={(b) => posicao.data && setFilters(filtroDoBalde(b, posicao.data.hoje, filters))}
-        />
-      )}
-
-      {/* KPIs clicáveis (visão Tudo): cada um aplica o filtro correspondente. */}
-      {/* Colunas pela largura real (container), não pela tela: com as duas sidebars,
-          1024px de tela deixam ~480px aqui, e 4 cards cortavam o valor. */}
-      {tipoTitulos ? null : erroResumo ? (
-        <FinanceErrorState onRetry={() => void refetchResumo()} />
+        </>
+      ) : erroResumo ? (
+        <>
+          <div className="flex justify-end">{linhaRecorte}</div>
+          <FinanceErrorState onRetry={() => void refetchResumo()} />
+        </>
       ) : (
-        <div className="@container">
-          <div className="grid grid-cols-2 gap-3 @2xl:grid-cols-4">
-            <KPICard
-              label="Recebido"
-              value={resumo.recebido}
-              icon={TrendingUp}
-              tone="positive"
-              loading={loadingResumo}
-              onClick={() => patchFilters({ tipo: "receita", status: "pagos" })}
-            />
-            <KPICard
-              label="Pago"
-              value={resumo.pago}
-              icon={TrendingDown}
-              tone="danger"
-              loading={loadingResumo}
-              onClick={() => patchFilters({ tipo: "despesa", status: "pagos" })}
-            />
-            <KPICard
-              label="A receber"
-              value={resumo.aReceber}
-              icon={Clock}
-              tone="info"
-              loading={loadingResumo}
-              onClick={() => patchFilters({ tipo: "receita", status: "pendentes" })}
-            />
-            <KPICard
-              label="A pagar"
-              value={resumo.aPagar}
-              icon={Clock}
-              tone="warning"
-              loading={loadingResumo}
-              subtitle={resumo.atrasadosCount > 0 ? `${resumo.atrasadosCount} atrasado(s)` : undefined}
-              subtitleTone="danger"
-              onClick={() => patchFilters({ tipo: "despesa", status: "pendentes" })}
-            />
+        // KPIs clicáveis (visão Tudo): cada um aplica o filtro correspondente. Recolhidos,
+        // viram um resumo na mesma linha.
+        <CollapsibleKpiSection
+          storageKey="lancamentos"
+          controls={linhaRecorte}
+          resumo={
+            loadingResumo ? undefined : (
+              <KpiResumo
+                itens={[
+                  { texto: `recebido ${formatCurrency(resumo.recebido, { compact: true })}` },
+                  { texto: `pago ${formatCurrency(resumo.pago, { compact: true })}` },
+                  { texto: `a receber ${formatCurrency(resumo.aReceber, { compact: true })}` },
+                  {
+                    texto: `a pagar ${formatCurrency(resumo.aPagar, { compact: true })}${
+                      resumo.atrasadosCount > 0 ? ` (${resumo.atrasadosCount} atrasados)` : ""
+                    }`,
+                    alerta: resumo.atrasadosCount > 0,
+                  },
+                ]}
+              />
+            )
+          }
+        >
+          {/* Colunas pela largura real (container), não pela tela: com as duas sidebars,
+              1024px de tela deixam ~480px aqui, e 4 cards cortavam o valor. */}
+          <div className="@container">
+            <div className="grid grid-cols-2 gap-2 @2xl:grid-cols-4">
+              <KPICard
+                density="compact"
+                label="Recebido"
+                value={resumo.recebido}
+                icon={TrendingUp}
+                tone="positive"
+                loading={loadingResumo}
+                onClick={() => patchFilters({ tipo: "receita", status: "pagos" })}
+              />
+              <KPICard
+                density="compact"
+                label="Pago"
+                value={resumo.pago}
+                icon={TrendingDown}
+                tone="danger"
+                loading={loadingResumo}
+                onClick={() => patchFilters({ tipo: "despesa", status: "pagos" })}
+              />
+              <KPICard
+                density="compact"
+                label="A receber"
+                value={resumo.aReceber}
+                icon={Clock}
+                tone="info"
+                loading={loadingResumo}
+                onClick={() => patchFilters({ tipo: "receita", status: "pendentes" })}
+              />
+              <KPICard
+                density="compact"
+                label="A pagar"
+                value={resumo.aPagar}
+                icon={Clock}
+                tone="warning"
+                loading={loadingResumo}
+                subtitle={resumo.atrasadosCount > 0 ? `${resumo.atrasadosCount} atrasado(s)` : undefined}
+                subtitleTone="danger"
+                onClick={() => patchFilters({ tipo: "despesa", status: "pendentes" })}
+              />
+            </div>
           </div>
-        </div>
+        </CollapsibleKpiSection>
       )}
 
-      <Card className="rounded-2xl border border-black/5 bg-white p-4 max-md:border-0 max-md:bg-transparent max-md:p-0 max-md:shadow-none">
-        <CardContent className="p-0">
-          <LancamentosTable resumo={resumo} filters={filters} onFiltersChange={setFilters} onMutated={invalidate} />
+      {/* A tabela já tem moldura: sem card em volta (eram 2 bordas e 16 px de cada lado, que
+        cortavam Valor e Status em 1320 px). Auditoria de espaço, 2026-11. */}
+      <div>
+        <LancamentosTable
+          resumo={resumo}
+          filters={filters}
+          // O seletor de tipo da barra é o único agora: trocar por ele segue a regra das
+          // visões (SPEC 150), que lembra a escolha e abre A pagar/A receber em aberto.
+          onFiltersChange={(next) => (next.tipo !== filters.tipo ? trocarVisao(next) : setFilters(next))}
+          onMutated={invalidate}
+        />
 
-          <ImportarLancamentosDialog open={importar} onOpenChange={setImportar} onImported={invalidate} />
-        </CardContent>
-      </Card>
+        <ImportarLancamentosDialog open={importar} onOpenChange={setImportar} onImported={invalidate} />
+      </div>
     </div>
   );
 }

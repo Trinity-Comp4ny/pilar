@@ -68,7 +68,7 @@ describe("AtividadeComposer, marcação", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
-  it("não oferece no menu quem não tem login no Pilar", () => {
+  it("não oferece no menu quem não tem login na Pilar", () => {
     render(<AtividadeComposer pessoas={pessoas} onSubmit={vi.fn()} />);
 
     digitar("@");

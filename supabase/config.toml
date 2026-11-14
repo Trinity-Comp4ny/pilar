@@ -87,6 +87,16 @@ entrypoint = "./functions/auth-email-hook/index.ts"
 [functions.portal-get-projeto]
 verify_jwt = false
 
+# Retorno do OAuth do Google (SPEC 163): o Google chama sem token da Pilar; os POSTs
+# autenticam o usuário dentro da função.
+[functions.google-drive-oauth]
+verify_jwt = false
+
+# Google Agenda (SPEC 164): retorno do OAuth sem token da Pilar e cron com CRON_SECRET;
+# os POSTs de usuário autenticam dentro da função.
+[functions.google-calendar]
+verify_jwt = false
+
 # ── Funções públicas / com autenticação própria ──────────────────────────────
 # Estas NÃO validam o JWT do Supabase no gateway. A verdade de auth vive dentro
 # de cada função (token do portal, assinatura de webhook, captcha, cron secret).
@@ -144,6 +154,10 @@ verify_jwt = false
 [functions.feedback-sync]
 verify_jwt = false
 
+# Novidades do release (SPEC 152): chamado pelo GitHub Actions com token próprio, sem JWT.
+[functions.release-rascunho]
+verify_jwt = false
+
 [functions.registro-audio-limpar]
 verify_jwt = false
 
@@ -172,6 +186,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.portal-entrega-download]
+verify_jwt = false
+
+# Arquivos da pasta "Cliente" no portal (SPEC 163): sessão do portal, sem JWT do app.
+[functions.portal-arquivos]
 verify_jwt = false
 
 [auth.sms]

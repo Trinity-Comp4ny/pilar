@@ -85,7 +85,7 @@ serve(
 
         if (error) {
           if (error.code === "23505") {
-            return jsonResponse({ error: "Este CNPJ já tem uma conta no Pilar." }, 409, req);
+            return jsonResponse({ error: "Este CNPJ já tem uma conta na Pilar." }, 409, req);
           }
           log.error("update empresas (cnpj pendente) failed", error, { empresa_id: empresaId });
           return safeErrorResponse(500, "Falha ao salvar o CNPJ", req);
@@ -124,7 +124,7 @@ serve(
 
       if (error) {
         if (error.code === "23505") {
-          return jsonResponse({ error: "Este CNPJ já tem uma conta no Pilar." }, 409, req);
+          return jsonResponse({ error: "Este CNPJ já tem uma conta na Pilar." }, 409, req);
         }
         log.error("update empresas (cnpj verificado) failed", error, { empresa_id: empresaId });
         return safeErrorResponse(500, "Falha ao salvar o CNPJ", req);
@@ -167,7 +167,7 @@ serve(
 
     if (error) {
       if (error.code === "23505") {
-        return jsonResponse({ error: "Este CPF já tem uma conta no Pilar." }, 409, req);
+        return jsonResponse({ error: "Este CPF já tem uma conta na Pilar." }, 409, req);
       }
       log.error("update empresas (cpf) failed", error, { empresa_id: empresaId });
       return safeErrorResponse(500, "Falha ao salvar o CPF", req);

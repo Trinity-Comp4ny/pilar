@@ -63,6 +63,7 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
   const [avisos, setAvisos] = useState<string[]>([]);
   const [textoColado, setTextoColado] = useState("");
   const [fase, setFase] = useState<"idle" | "lendo" | "extraindo">("idle");
+  const [desfazendo, setDesfazendo] = useState(false);
   const [arquivoPendente, setArquivoPendente] = useState<File | null>(null);
   const [abasDisponiveis, setAbasDisponiveis] = useState<string[]>([]);
   const [abaEscolhida, setAbaEscolhida] = useState<string>("");
@@ -246,6 +247,7 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
   }
 
   async function onDesfazer() {
+    setDesfazendo(true);
     try {
       await desfazer();
       setResumo(null);
@@ -254,6 +256,8 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
     } catch (err) {
       reportInvokeError(err, "financeiro-import:desfazer");
       toast.error("Erro ao desfazer", { description: msg(err) });
+    } finally {
+      setDesfazendo(false);
     }
   }
 
@@ -366,9 +370,9 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
                     Saídas {formatCurrency(resumo.totalDespesa)}, entradas {formatCurrency(resumo.totalReceita)}.
                   </span>
                   {temDesfazer && (
-                    <Button variant="outline" size="sm" onClick={onDesfazer}>
-                      <Undo2 className="mr-2 h-4 w-4" />
-                      Desfazer
+                    <Button variant="outline" size="sm" loading={desfazendo} onClick={onDesfazer}>
+                      {!desfazendo && <Undo2 className="mr-2 h-4 w-4" />}
+                      {desfazendo ? "Desfazendo…" : "Desfazer"}
                     </Button>
                   )}
                 </AlertDescription>
@@ -548,8 +552,8 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
                               <Button
                                 type="button"
                                 variant="outline"
-                                size="sm"
-                                className="h-8 w-full justify-start"
+                                size="xs"
+                                className="w-full justify-start"
                                 onClick={() =>
                                   atualizar(it.id, {
                                     tipo: it.tipo === "despesa" ? "receita" : "despesa",
@@ -618,8 +622,8 @@ export function ImportarLancamentosDialog({ open, onOpenChange, onImported }: Pr
                               <Button
                                 type="button"
                                 variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                size="icon-sm"
+                                className="text-muted-foreground hover:text-destructive"
                                 onClick={() => removerLinha(it.id)}
                                 aria-label="Remover linha"
                               >

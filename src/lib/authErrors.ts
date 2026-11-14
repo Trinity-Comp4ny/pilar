@@ -8,7 +8,7 @@ const EMAIL_EXISTE = "Este email já tem conta. Entre com sua senha ou continue 
 // SPEC 133: cadastro por convite. O banco recusa conta nova sem convite; o GoTrue
 // devolve a mensagem do trigger ("Cadastro fechado: ...") ou, conforme a versão e o
 // fluxo (Google), o genérico "Database error saving new user".
-const SEM_CONVITE = "Este e-mail ainda não tem conta no Pilar. Fale com o time para criar a da sua empresa.";
+const SEM_CONVITE = "Este e-mail ainda não tem conta na Pilar. Fale com o time para criar a da sua empresa.";
 
 const CODE_MAP: Record<string, string> = {
   weak_password: SENHA_FRACA,

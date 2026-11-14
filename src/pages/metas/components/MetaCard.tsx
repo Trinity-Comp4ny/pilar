@@ -94,7 +94,7 @@ export function MetaCard({ view, onEdit, onDelete }: MetaCardProps) {
           {!restrito && (
             <span
               className={cn(
-                "text-2xl font-bold tabular-nums leading-none shrink-0",
+                "text-xl font-semibold tabular-nums leading-none shrink-0",
                 isCompleted ? "text-positive-strong" : "text-foreground"
               )}
             >

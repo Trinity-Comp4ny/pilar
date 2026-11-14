@@ -53,7 +53,7 @@ function resumoCobranca(situacao: Situacao, empresa: Empresa): string {
     case "pagante":
       return "Assinatura ativa no Asaas.";
     case "convidada":
-      return "Usa o Pilar sem pagar.";
+      return "Usa a Pilar sem pagar.";
     case "em_teste": {
       const prazo = prazoTeste(empresa.cobranca.trialEndsAt);
       if (prazo?.startsWith("venceu")) return `Teste ${prazo}: vira só leitura na próxima verificação diária.`;

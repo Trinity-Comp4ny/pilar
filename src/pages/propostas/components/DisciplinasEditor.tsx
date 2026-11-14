@@ -165,7 +165,7 @@ export function DisciplinasEditor({ rows, onChange, disabled }: DisciplinasEdito
       </div>
 
       {!disabled && (
-        <Button type="button" variant="outline" size="sm" className="text-xs h-8" onClick={addRow}>
+        <Button type="button" variant="outline" size="xs" onClick={addRow}>
           <Plus className="h-3.5 w-3.5 mr-1" /> Adicionar disciplina
         </Button>
       )}

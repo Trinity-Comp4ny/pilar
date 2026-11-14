@@ -2,10 +2,10 @@ import { Suspense, lazy, useRef } from "react";
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { sidebarOffset } from "@/lib/shellLayout";
+import { sidebarOffset, telaEstreitaParaPainel } from "@/lib/shellLayout";
 import { BottomNav } from "@/components/BottomNav";
-import { CommandPaletteHint } from "@/components/CommandPaletteHint";
 import { useCommandPalette } from "@/hooks/useCommandPalette";
+import { useAtalhosTeclado } from "@/hooks/useAtalhosTeclado";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageLoader } from "@/components/motion/PageLoader";
 import { VeilExit } from "@/components/motion/EntryVeil";
@@ -16,25 +16,50 @@ import { DentroDoMainProvider } from "@/components/mainLandmark";
 // Lazy: o CommandPalette carrega o cmdk. Fora do bundle de entrada; só baixa no 1º ⌘K.
 const CommandPalette = lazy(() => import("@/components/CommandPalette").then((m) => ({ default: m.CommandPalette })));
 
+// Lazy: o painel de atalhos só baixa no 1º "?" (ou pelo item da paleta).
+const AtalhosTecladoDialog = lazy(() =>
+  import("@/components/AtalhosTecladoDialog").then((m) => ({ default: m.AtalhosTecladoDialog }))
+);
+
 // Lazy: onboarding (checklist + tour driver.js) fica fora do bundle de entrada.
 const OnboardingChecklist = lazy(() =>
   import("@/components/OnboardingChecklist").then((m) => ({ default: m.OnboardingChecklist }))
 );
+// Lazy: modal "O que mudou" (SPEC 152). Só monta conteúdo quando há mudança de fluxo nova.
+const OQueMudou = lazy(() => import("@/components/novidades/OQueMudou").then((m) => ({ default: m.OQueMudou })));
+// Lazy: agente da ajuda no canto (SPEC 155). Traz o markdown dos artigos; fora do bundle de entrada.
+const AgenteAjuda = lazy(() => import("@/components/agente/AgenteAjuda").then((m) => ({ default: m.AgenteAjuda })));
+// Lazy: comunicado em modal (SPEC 157).
+const ComunicadoModal = lazy(() =>
+  import("@/components/ComunicadoModal").then((m) => ({ default: m.ComunicadoModal }))
+);
+// Lazy: registro do navegador para o alerta de acesso novo (SPEC 159).
+const RegistroDispositivo = lazy(() =>
+  import("@/components/RegistroDispositivo").then((m) => ({ default: m.RegistroDispositivo }))
+);
+// Lazy: faixas do topo (Termos e avisos, SPEC 153/157) e o bloco fixo que mede a altura delas.
+// Fora do bundle de entrada: o teto do boot é apertado (scripts/check-bundle-size.mjs).
+const AvisosDoCanto = lazy(() => import("@/components/AvisosDoCanto").then((m) => ({ default: m.AvisosDoCanto })));
+const FaixasDoTopo = lazy(() => import("@/components/FaixasDoTopo").then((m) => ({ default: m.FaixasDoTopo })));
+// Lazy: NPS no Início (SPEC 156).
+const NpsCard = lazy(() => import("@/components/pesquisas/NpsCard").then((m) => ({ default: m.NpsCard })));
 const OnboardingTourController = lazy(() =>
   import("@/components/onboarding/OnboardingTourController").then((m) => ({
     default: m.OnboardingTourController,
   }))
 );
 
-// Atalho ⌘K sempre ativo (hook leve); o dialog pesado só monta quando aberto.
+// Atalho ⌘K sempre ativo (hook leve); o dialog pesado só monta quando aberto. A dica visual
+// do atalho mora no trilho da sidebar (CommandPaletteHint), não flutuando sobre o conteúdo.
 function CommandPaletteMount() {
   const { open, setOpen } = useCommandPalette();
-  return (
-    <>
-      <CommandPaletteHint />
-      <Suspense fallback={null}>{open && <CommandPalette open={open} onOpenChange={setOpen} />}</Suspense>
-    </>
-  );
+  return <Suspense fallback={null}>{open && <CommandPalette open={open} onOpenChange={setOpen} />}</Suspense>;
+}
+
+// Atalho "?" sempre ativo (hook leve); o painel só monta quando aberto.
+function AtalhosTecladoMount() {
+  const { open, setOpen } = useAtalhosTeclado();
+  return <Suspense fallback={null}>{open && <AtalhosTecladoDialog open={open} onOpenChange={setOpen} />}</Suspense>;
 }
 
 // Gatilho só-dev para pré-visualizar o ErrorBoundary: abra qualquer página com ?boom
@@ -60,8 +85,12 @@ function LayoutContent() {
       >
         Pular para conteúdo principal
       </a>
+      <Suspense fallback={null}>
+        <FaixasDoTopo left={sidebarOffset(state, isMobile)} />
+        <AvisosDoCanto />
+      </Suspense>
       <AppSidebar />
-      <div style={{ marginLeft: sidebarOffset(state, isMobile) }}>
+      <div style={{ marginLeft: sidebarOffset(state, isMobile), paddingTop: "var(--faixas-h, 0px)" }}>
         <main
           ref={mainRef}
           id="main-content"
@@ -86,9 +115,15 @@ function LayoutContent() {
       <BottomNav />
       <VeilExit />
       <CommandPaletteMount />
+      <AtalhosTecladoMount />
       <Suspense fallback={null}>
         <OnboardingChecklist />
         <OnboardingTourController />
+        <OQueMudou />
+        <AgenteAjuda />
+        <NpsCard />
+        <RegistroDispositivo />
+        <ComunicadoModal />
       </Suspense>
     </div>
   );
@@ -96,7 +131,8 @@ function LayoutContent() {
 
 export default function Layout() {
   return (
-    <SidebarProvider>
+    // Tela estreita começa com o painel recolhido; o cookie com a escolha da pessoa vence.
+    <SidebarProvider defaultOpen={!telaEstreitaParaPainel()}>
       <AvatarDiretorioProvider>
         <LayoutContent />
       </AvatarDiretorioProvider>

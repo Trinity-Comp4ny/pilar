@@ -84,20 +84,14 @@ describe("profileSetupSchema", () => {
     phone: "11999999999",
     funcao: "socio",
     password: "Senha@123456!",
-    confirmPassword: "Senha@123456!",
   };
 
   it("aceita dados válidos", () => {
     expect(profileSetupSchema.safeParse(validBase).success).toBe(true);
   });
 
-  it("rejeita senhas que não coincidem", () => {
-    const r = profileSetupSchema.safeParse({ ...validBase, confirmPassword: "outra-senha-diferente!" });
-    expect(r.success).toBe(false);
-    if (!r.success) {
-      const issue = r.error.issues.find((i) => i.path.includes("confirmPassword"));
-      expect(issue?.message).toContain("coincidem");
-    }
+  it("rejeita senha fraca (não há campo de confirmação, SPEC 165)", () => {
+    expect(profileSetupSchema.safeParse({ ...validBase, password: "abc" }).success).toBe(false);
   });
 
   it("rejeita telefone muito curto", () => {
@@ -109,12 +103,6 @@ describe("profileSetupSchema", () => {
     expect(r.success).toBe(false);
     if (!r.success) expect(r.error.issues.find((i) => i.path.includes("funcao"))?.message).toContain("função");
   });
-
-  it("LinkedIn é opcional, mas quando vem precisa ser do LinkedIn", () => {
-    expect(profileSetupSchema.safeParse({ ...validBase, linkedin: "" }).success).toBe(true);
-    expect(profileSetupSchema.safeParse({ ...validBase, linkedin: "linkedin.com/in/joao" }).success).toBe(true);
-    expect(profileSetupSchema.safeParse({ ...validBase, linkedin: "https://site.com/joao" }).success).toBe(false);
-  });
 });
 
 describe("companySetupSchema — perfil do escritório (SPEC 149)", () => {
@@ -124,7 +112,6 @@ describe("companySetupSchema — perfil do escritório (SPEC 149)", () => {
       site: "alfa.com.br",
       porte: "6-15",
       disciplinas: ["estrutural", "arquitetura"],
-      comoConheceu: "ia",
     });
     expect(r.success).toBe(true);
   });
@@ -132,6 +119,5 @@ describe("companySetupSchema — perfil do escritório (SPEC 149)", () => {
   it("recusa valor fora das listas", () => {
     expect(companySetupSchema.safeParse({ name: "Alfa", porte: "100" }).success).toBe(false);
     expect(companySetupSchema.safeParse({ name: "Alfa", disciplinas: ["eletrica"] }).success).toBe(false);
-    expect(companySetupSchema.safeParse({ name: "Alfa", comoConheceu: "tv" }).success).toBe(false);
   });
 });

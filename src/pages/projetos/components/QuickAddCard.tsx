@@ -109,9 +109,9 @@ export function QuickAddCard({ etapaId, clientes, onCreated }: QuickAddCardProps
       </Select>
       <div className="flex gap-1.5">
         <Button
-          size="sm"
+          size="xs"
           variant="brand"
-          className="h-7 text-xs flex-1"
+          className="flex-1"
           onClick={submit}
           disabled={saving || !nome.trim() || !clienteId}
         >

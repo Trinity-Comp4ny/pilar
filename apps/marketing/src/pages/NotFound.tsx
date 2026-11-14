@@ -39,7 +39,7 @@ export function NotFound() {
               href={`${APP_URL}/login`}
               className="text-[13.5px] text-ink/60 hover:text-ink transition-colors underline decoration-ink/25 underline-offset-4"
             >
-              Ir para o login do Pilar
+              Ir para o login da Pilar
             </a>
           </div>
         </div>

@@ -2,11 +2,13 @@ import { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { ManifestDoApp } from "@/components/instalar/ManifestDoApp";
 import { toast } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { monitoring } from "@/lib/monitoring";
 import { getSafeErrorMessage, getRawErrorMessage } from "@/lib/safeError";
+import { jaReportadoPelaRede } from "@/lib/supabaseFetch";
 import { usePageTracking } from "@/hooks/usePageTracking";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
@@ -39,9 +41,19 @@ const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const Inicio = lazy(() => import("./pages/inicio"));
+const Novidades = lazy(() => import("./pages/novidades"));
+const Ajuda = lazy(() => import("./pages/ajuda"));
+const ArtigoAjuda = lazy(() => import("./pages/ajuda/Artigo"));
 const ComprarTokens = lazy(() => import("./pages/comprar-tokens"));
 const AutorizarApp = lazy(() => import("./pages/oauth/Autorizar"));
 const MeuTrabalho = lazy(() => import("./pages/meu-trabalho"));
+// Links antigos (aviso de reunião) abriam a Agenda como visão de Tarefas.
+function TarefasOuAgenda() {
+  const [params] = useSearchParams();
+  if (params.get("visao") === "agenda") return <Navigate to="/gestao/agenda" replace />;
+  return <MeuTrabalho />;
+}
+const Agenda = lazy(() => import("./pages/meu-trabalho/AgendaPagina"));
 const Obras = lazy(() => import("./pages/obras"));
 const ObraClima = lazy(() => import("./pages/obras/clima"));
 const ObraDetalhe = lazy(() => import("./pages/obras/[id]"));
@@ -62,6 +74,10 @@ const Pessoas = lazy(() => import("./pages/pessoas"));
 const Metas = lazy(() => import("./pages/metas"));
 const CompanySetup = lazy(() => import("./pages/CompanySetup"));
 const ProfileSetup = lazy(() => import("./pages/ProfileSetup"));
+// Reaceite dos Termos (só admin vê): fora do carregamento inicial, que tem teto de tamanho.
+const AceiteTermosBanner = lazy(() =>
+  import("./components/AceiteTermosBanner").then((m) => ({ default: m.AceiteTermosBanner }))
+);
 const Timesheet = lazy(() => import("./pages/Timesheet"));
 const Chat = lazy(() => import("./pages/chat"));
 const Propostas = lazy(() => import("./pages/propostas"));
@@ -91,6 +107,12 @@ const UltraUsuarios = lazy(() => ultraAdmin().then((m) => ({ default: m.Usuarios
 const UltraTestes = lazy(() => ultraAdmin().then((m) => ({ default: m.Testes })));
 const UltraFuncionalidades = lazy(() => ultraAdmin().then((m) => ({ default: m.Funcionalidades })));
 const UltraFeedback = lazy(() => ultraAdmin().then((m) => ({ default: m.Feedback })));
+const UltraReleases = lazy(() => ultraAdmin().then((m) => ({ default: m.Releases })));
+const UltraAjudaLacunas = lazy(() => ultraAdmin().then((m) => ({ default: m.AjudaLacunas })));
+const UltraSatisfacao = lazy(() => ultraAdmin().then((m) => ({ default: m.Satisfacao })));
+const UltraDoresMercado = lazy(() => ultraAdmin().then((m) => ({ default: m.DoresMercado })));
+const UltraComunicados = lazy(() => ultraAdmin().then((m) => ({ default: m.Comunicados })));
+const UltraPrevias = lazy(() => ultraAdmin().then((m) => ({ default: m.Previas })));
 const UltraAtividade = lazy(() => ultraAdmin().then((m) => ({ default: m.Atividade })));
 const UltraIncidentes = lazy(() => ultraAdmin().then((m) => ({ default: m.Incidentes })));
 const UltraCustosIa = lazy(() => ultraAdmin().then((m) => ({ default: m.CustosIa })));
@@ -104,6 +126,22 @@ const PasswordReset = lazy(() => import("./pages/PasswordReset"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const SemAcesso = lazy(() => import("./pages/SemAcesso"));
 
+/**
+ * Falha do react-query que a camada de rede (supabaseFetch) ainda não reportou: sem duplicar, e
+ * com fingerprint por origem para não virar tudo uma issue só, "Erro inesperado".
+ */
+function reportarFalha(origem: "query" | "mutation", err: unknown, extra: Record<string, unknown>, chave = "") {
+  if (jaReportadoPelaRede(err)) return;
+  // Supabase retorna PostgrestError (objeto plano, não instanceof Error);
+  // sem isso o Sentry recebia "[object Object]" e perdia a causa real.
+  const raw = getRawErrorMessage(err) || "Erro inesperado";
+  monitoring.captureException(
+    err instanceof Error ? err : new Error(raw),
+    { source: `react-query.${origem}`, ...extra },
+    { fingerprint: ["react-query", origem, chave, raw] }
+  );
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -115,13 +153,7 @@ const queryClient = new QueryClient({
     mutations: {
       onError: (error, variables) => {
         toast.error(getSafeErrorMessage(error));
-        // Supabase retorna PostgrestError (objeto plano, não instanceof Error);
-        // sem isso o Sentry recebia "[object Object]" e perdia a causa real.
-        const raw = getRawErrorMessage(error) || "Erro inesperado";
-        monitoring.captureException(error instanceof Error ? error : new Error(raw), {
-          source: "react-query.mutation",
-          variables,
-        });
+        reportarFalha("mutation", error, { variables });
       },
     },
   },
@@ -129,12 +161,8 @@ const queryClient = new QueryClient({
 
 queryClient.getQueryCache().subscribe((event) => {
   if (event.type === "updated" && event.action.type === "error") {
-    const err = event.action.error;
-    const raw = getRawErrorMessage(err) || "Erro inesperado";
-    monitoring.captureException(err instanceof Error ? err : new Error(raw), {
-      source: "react-query.query",
-      queryKey: event.query.queryKey,
-    });
+    const { queryKey } = event.query;
+    reportarFalha("query", event.action.error, { queryKey }, String(queryKey[0]));
   }
 });
 
@@ -219,12 +247,17 @@ const App = () => {
           <SoltaBoot />
           <BrowserRouter>
             <PageTracker />
+            <ManifestDoApp />
             <AuthProvider>
               <ImpersonationProvider>
                 <SettingsModalProvider>
                   <ValoresOcultosProvider>
                     <ImpersonationBanner />
                     <TrialBanner />
+                    {/* Só a janela (após a vigência); a faixa fica no Layout, depois do skip link. */}
+                    <Suspense fallback={null}>
+                      <AceiteTermosBanner modo="janela" />
+                    </Suspense>
                     <Suspense fallback={<EntryVeil />}>
                       <Routes>
                         <Route path="/" element={<ExternalRedirect />} />
@@ -255,6 +288,9 @@ const App = () => {
 
                         <Route element={<PrivateRoute />}>
                           <Route path="/inicio" element={<Inicio />} />
+                          <Route path="/novidades" element={<Novidades />} />
+                          <Route path="/ajuda" element={<Ajuda />} />
+                          <Route path="/ajuda/:slug" element={<ArtigoAjuda />} />
 
                           {/* ===== Rotas aninhadas por módulo (ADR 0016) ===== */}
 
@@ -265,11 +301,6 @@ const App = () => {
                               herda o módulo ligado via parent em features.ts. */}
                             <Route element={<FeatureRoute feature="obras_clima" />}>
                               <Route path="/obras/clima" element={<ObraClima />} />
-                            </Route>
-                            {/* Fornecedor mora no módulo Obra (spec 026). */}
-                            <Route element={<FeatureRoute feature="obras_fornecedores" />}>
-                              <Route path="/obras/fornecedores" element={<Fornecedores />} />
-                              <Route path="/obras/fornecedores/:id" element={<FornecedorDetalhe />} />
                             </Route>
                             {/* Estimativa paramétrica (SPEC 136): feature opt-in por empresa. */}
                             <Route element={<FeatureRoute feature="estimativa_obra" />}>
@@ -285,7 +316,8 @@ const App = () => {
                           {/* Gestão: /gestao abre a primeira aba; cada aba vive em /gestao/*. */}
                           <Route path="/gestao" element={<Navigate to="/gestao/tarefas" replace />} />
                           <Route element={<FeatureRoute feature="meu_trabalho" />}>
-                            <Route path="/gestao/tarefas" element={<MeuTrabalho />} />
+                            <Route path="/gestao/tarefas" element={<TarefasOuAgenda />} />
+                            <Route path="/gestao/agenda" element={<Agenda />} />
                           </Route>
                           <Route element={<FeatureRoute feature="leads" />}>
                             <Route path="/gestao/leads" element={<Leads />} />
@@ -296,6 +328,11 @@ const App = () => {
                           </Route>
                           <Route element={<FeatureRoute feature="propostas" />}>
                             <Route path="/gestao/propostas" element={<Propostas />} />
+                          </Route>
+                          {/* Fornecedor é cadastro da empresa: serve a projeto e a obra. */}
+                          <Route element={<FeatureRoute feature="obras_fornecedores" />}>
+                            <Route path="/gestao/fornecedores" element={<Fornecedores />} />
+                            <Route path="/gestao/fornecedores/:id" element={<FornecedorDetalhe />} />
                           </Route>
                           {/* Financeiro: gate de módulo da empresa + RLS. Desde o
                           ADR 0029 não há recorte por usuário. */}
@@ -373,7 +410,11 @@ const App = () => {
                           />
                           <Route
                             path="/fornecedores/*"
-                            element={<RedirectPrefix from="/fornecedores" to="/obras/fornecedores" />}
+                            element={<RedirectPrefix from="/fornecedores" to="/gestao/fornecedores" />}
+                          />
+                          <Route
+                            path="/obras/fornecedores/*"
+                            element={<RedirectPrefix from="/obras/fornecedores" to="/gestao/fornecedores" />}
                           />
                           <Route path="/calendario/*" element={<Navigate to="/projetos/cronograma" replace />} />
                           <Route path="/disciplinas" element={<Navigate to="/projetos/disciplinas" replace />} />
@@ -390,6 +431,7 @@ const App = () => {
                           <Route path="/company-setup" element={<CompanySetup />} />
                           <Route path="/profile-setup" element={<ProfileSetup />} />
                           <Route path="/profile" element={<SettingsRedirect section="conta" />} />
+                          <Route path="/seguranca" element={<SettingsRedirect section="seguranca" />} />
                           <Route path="/company" element={<SettingsRedirect section="empresa" />} />
                           <Route path="/billing" element={<SettingsRedirect section="pagamento" />} />
 
@@ -410,6 +452,12 @@ const App = () => {
                               <Route path="testes" element={<UltraTestes />} />
                               <Route path="funcionalidades" element={<UltraFuncionalidades />} />
                               <Route path="feedback" element={<UltraFeedback />} />
+                              <Route path="releases" element={<UltraReleases />} />
+                              <Route path="ajuda" element={<UltraAjudaLacunas />} />
+                              <Route path="satisfacao" element={<UltraSatisfacao />} />
+                              <Route path="dores" element={<UltraDoresMercado />} />
+                              <Route path="comunicados" element={<UltraComunicados />} />
+                              <Route path="previas" element={<UltraPrevias />} />
                               <Route path="atividade" element={<UltraAtividade />} />
                               <Route path="incidentes" element={<UltraIncidentes />} />
                               <Route path="custos-ia" element={<UltraCustosIa />} />
@@ -438,6 +486,7 @@ const App = () => {
                           <Route path="projeto/:id" element={<ClienteProjetoDetail />} />
                           <Route path="projeto/:id/financeiro" element={<ClienteProjetoDetail />} />
                           <Route path="projeto/:id/entregas" element={<ClienteProjetoDetail />} />
+                          <Route path="projeto/:id/arquivos" element={<ClienteProjetoDetail />} />
                           <Route path="obra/:id" element={<ClienteObraDetail />} />
                         </Route>
 

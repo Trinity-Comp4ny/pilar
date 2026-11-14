@@ -39,7 +39,7 @@ export function AtividadeComposer({ pessoas, onSubmit, placeholder }: AtividadeC
   const sugestoes = mentionOpen
     ? [
         ...("all".startsWith(consulta) || "todos".startsWith(consulta) ? [{ id: TODOS_ID, nome: "all" }] : []),
-        // Só quem tem login: marcar quem não acessa o Pilar não avisa ninguém. O acesso
+        // Só quem tem login: marcar quem não acessa a Pilar não avisa ninguém. O acesso
         // se dá na Equipe (convite ou ligar a uma conta existente).
         ...pessoas.filter((p) => !semConta.has(p.id) && p.nome.toLowerCase().includes(consulta)),
       ]

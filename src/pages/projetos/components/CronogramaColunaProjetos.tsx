@@ -1,3 +1,4 @@
+import { GANTT_LABEL_W } from "@/components/gantt/ganttStyle";
 import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-pangea/dnd";
 import { AlertTriangle, ChevronRight, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -48,9 +49,9 @@ export function CronogramaColunaProjetos({
   return (
     // Mobile: a coluna fixa de 260px sozinha consumia 66% de uma tela de 390px; some o status e o
     // cliente e a alça de arraste, e fica só o nome truncado.
-    <div className={cn("shrink-0 border-r bg-muted/30", isMobile ? "w-[104px]" : "w-[260px]")}>
+    <div className={cn("shrink-0 border-r bg-muted/30", GANTT_LABEL_W)}>
       <div className="h-10 border-b px-3 flex items-center">
-        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+        <span className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
           {pessoaId ? "Meus projetos" : "Projeto"}
         </span>
       </div>
@@ -68,13 +69,12 @@ export function CronogramaColunaProjetos({
                       <div
                         ref={drag.innerRef}
                         {...drag.draggableProps}
-                        className={cn(
-                          "border-b",
-                          row.atrasado && "bg-danger-soft/40",
-                          snap.isDragging && "bg-card shadow-md"
-                        )}
+                        className={cn(row.atrasado && "bg-danger-soft/40", snap.isDragging && "bg-card shadow-md")}
                       >
-                        <div className="w-full h-14 flex items-stretch">
+                        {/* A borda fica na própria linha (44 px com borda), igual à linha da barra
+                            na linha do tempo; na div de fora somava 1 px por projeto e as
+                            colunas desalinhavam. */}
+                        <div className="w-full h-11 border-b flex items-stretch">
                           {podeReordenar && (
                             <div
                               {...drag.dragHandleProps}
@@ -106,7 +106,7 @@ export function CronogramaColunaProjetos({
                               {row.atrasado && <AlertTriangle className="h-3 w-3 text-danger-mid shrink-0" />}
                               {projeto.ordem_prioridade != null && (
                                 <span
-                                  className="shrink-0 rounded bg-brand/40 px-1.5 text-[10px] font-semibold tabular-nums"
+                                  className="shrink-0 rounded bg-brand/40 px-1.5 text-3xs font-semibold tabular-nums"
                                   aria-label={`Prioridade ${projeto.ordem_prioridade}`}
                                 >
                                   #{projeto.ordem_prioridade}
@@ -120,7 +120,7 @@ export function CronogramaColunaProjetos({
                                   className={cn("inline-block h-1.5 w-1.5 rounded-full shrink-0", row.barClass)}
                                   aria-hidden
                                 />
-                                <span className="text-[10px] text-muted-foreground truncate">
+                                <span className="text-3xs text-muted-foreground truncate">
                                   {cfg?.label || projeto.status}
                                   {projeto.cliente_nome && ` · ${projeto.cliente_nome}`}
                                 </span>

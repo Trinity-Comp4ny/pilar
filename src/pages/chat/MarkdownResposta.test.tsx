@@ -11,7 +11,7 @@ const montar = (texto: string) =>
   );
 
 describe("MarkdownResposta", () => {
-  it("link para registro do Pilar vira rota interna", () => {
+  it("link para registro da Pilar vira rota interna", () => {
     montar("Veja [Projeto Horizonte](/projetos/abc).");
     const link = screen.getByRole("link", { name: "Projeto Horizonte" });
     expect(link).toHaveAttribute("href", "/projetos/abc");

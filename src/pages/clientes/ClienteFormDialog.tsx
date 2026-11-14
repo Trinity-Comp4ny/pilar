@@ -267,7 +267,7 @@ export function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: Clie
         <form onSubmit={(e) => e.preventDefault()} className="divide-y">
           {/* Identificação */}
           <div className="px-6 py-4 space-y-3">
-            <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Identificação</Label>
+            <Label className="text-3xs uppercase text-muted-foreground tracking-wider">Identificação</Label>
 
             {/* Seletor PF / PJ */}
             <div className="grid grid-cols-2 gap-2">
@@ -451,10 +451,8 @@ export function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: Clie
                 {/* Contas Bancárias */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">
-                      Contas bancárias
-                    </Label>
-                    <span className="text-[10px] text-muted-foreground">Para recebimento</span>
+                    <Label className="text-3xs uppercase text-muted-foreground tracking-wider">Contas bancárias</Label>
+                    <span className="text-3xs text-muted-foreground">Para recebimento</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                     <div className="space-y-1">
@@ -532,7 +530,7 @@ export function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: Clie
                             </span>
                             <span className="text-xs text-muted-foreground capitalize shrink-0">{conta.tipo}</span>
                             {conta.is_primary && (
-                              <span className="text-[10px] text-foreground font-medium">Principal</span>
+                              <span className="text-3xs text-foreground font-medium">Principal</span>
                             )}
                           </div>
                           <Button
@@ -553,7 +551,7 @@ export function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: Clie
 
                 {/* Chaves PIX */}
                 <div className="space-y-3">
-                  <Label className="text-[10px] uppercase text-muted-foreground tracking-wider">Chaves PIX</Label>
+                  <Label className="text-3xs uppercase text-muted-foreground tracking-wider">Chaves PIX</Label>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
                       <Input
@@ -563,7 +561,7 @@ export function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: Clie
                         onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddChavePix())}
                       />
                       {newChavePix && (
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-3xs text-muted-foreground">
                           {(() => {
                             const t = detectTipoChavePix(newChavePix);
                             return t ? TIPO_CHAVE_PIX_LABEL[t] : "...";
@@ -593,7 +591,7 @@ export function ClienteFormDialog({ open, onOpenChange, cliente, onSaved }: Clie
                                 prev.map((item, idx) => (idx === i ? { ...item, tipo: e.target.value } : item))
                               )
                             }
-                            className="text-[10px] text-muted-foreground bg-transparent border-none outline-hidden cursor-pointer hover:text-foreground transition-colors appearance-none"
+                            className="text-3xs text-muted-foreground bg-transparent border-none outline-hidden cursor-pointer hover:text-foreground transition-colors appearance-none"
                           >
                             {Object.entries(TIPO_CHAVE_PIX_LABEL).map(([value, label]) => (
                               <option key={value} value={value}>

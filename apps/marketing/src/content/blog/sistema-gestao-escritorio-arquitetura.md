@@ -74,9 +74,9 @@ Muitos escritórios de arquitetura seguem com o cliente até a obra, por acompan
 - O preço não sobe a cada estagiário que entra.
 - O sistema não tenta substituir o seu software de projeto, seja CAD ou BIM.
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O Pilar é gestão com agentes de IA para escritórios de engenharia e arquitetura. O módulo [Projetos](/projetos) foi feito para o jeito como escritório multidisciplinar trabalha: projeto é um conjunto de disciplinas com gente e data em cada uma. Planos a partir de R$ 299 por mês por escritório, sem cobrança por usuário ([ver planos](/planos)).
+A Pilar é gestão com agentes de IA para escritórios de engenharia e arquitetura. O módulo [Projetos](/projetos) foi feito para o jeito como escritório multidisciplinar trabalha: projeto é um conjunto de disciplinas com gente e data em cada uma. Planos a partir de R$ 299 por mês por escritório, sem cobrança por usuário ([ver planos](/planos)).
 
 - Quadro com as colunas do escritório e fluxo padrão de etapas e disciplinas, com mais de um responsável por disciplina.
 - Gantt da carteira inteira, aviso ao responsável da etapa seguinte e motivo obrigatório quando a data muda.

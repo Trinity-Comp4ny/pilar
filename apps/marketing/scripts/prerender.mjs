@@ -90,6 +90,7 @@ const ROTAS = [
   "/faq",
   "/termos",
   "/privacidade",
+  "/seguranca",
 ];
 
 /** Escapa texto para XML (título e descrição dos artigos no feed). */
@@ -133,7 +134,7 @@ function gravarFeed() {
   const feed = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Blog do Pilar</title>
+    <title>Blog da Pilar</title>
     <link>${BASE}/blog</link>
     <atom:link href="${BASE}/blog/feed.xml" rel="self" type="application/rss+xml" />
     <description>Gestão para escritórios de engenharia e arquitetura: proposta, prazo, obra e financeiro.</description>
@@ -145,6 +146,21 @@ ${itens}
   mkdirSync(join(DIST, "blog"), { recursive: true });
   writeFileSync(join(DIST, "blog", "feed.xml"), feed);
   return artigos.length;
+}
+
+/**
+ * Na home, troca o <link rel="stylesheet"> do bundle por um <style> inline: o CSS
+ * (~16 KiB) deixa de ser um pedido bloqueando a primeira pintura (Lighthouse:
+ * "Render-blocking requests"). As demais rotas seguem com o arquivo, que o
+ * navegador já terá em cache depois da home. O CSP já permite style-src inline.
+ */
+function embutirCssCritico(html) {
+  const link = html.match(/<link\b[^>]*rel="stylesheet"[^>]*href="(\/assets\/[^"]+\.css)"[^>]*>/);
+  if (!link) return html;
+  const arquivo = join(DIST, link[1]);
+  if (!existsSync(arquivo)) return html;
+  const css = readFileSync(arquivo, "utf8").replace(/<\/style/gi, "<\\/style");
+  return html.replace(link[0], () => `<style>${css}</style>`);
 }
 
 /**
@@ -248,7 +264,8 @@ async function main() {
       instalarDocumento(dom);
       try {
         const desmontar = await renderizar(rota);
-        const html = dom.serialize();
+        let html = dom.serialize();
+        if (rota === "/") html = embutirCssCritico(html);
         await desmontar();
         const destino = rota === "/" ? join(DIST, "index.html") : join(DIST, rota.replace(/^\//, ""), "index.html");
         mkdirSync(join(destino, ".."), { recursive: true });

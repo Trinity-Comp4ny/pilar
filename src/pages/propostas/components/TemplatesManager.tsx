@@ -144,15 +144,15 @@ export function TemplatesManager() {
             <div className="min-w-0">
               <p className="text-sm font-medium truncate">{t.nome}</p>
               {t.descricao && <p className="text-xs text-muted-foreground truncate">{t.descricao}</p>}
-              <p className="text-[10px] text-muted-foreground mt-0.5">
+              <p className="text-3xs text-muted-foreground mt-0.5">
                 {new Date(t.created_at).toLocaleDateString("pt-BR")}
               </p>
             </div>
           </div>
           <Button
             variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-danger-mid shrink-0"
+            size="icon-sm"
+            className="text-danger-mid shrink-0"
             onClick={() => setDeleteId(t.id)}
             aria-label="Excluir template"
           >
@@ -165,21 +165,21 @@ export function TemplatesManager() {
             <Badge
               key={v}
               variant="secondary"
-              className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-positive/10 text-positive-strong" : "bg-warning-soft text-warning-strong"}`}
+              className={`text-3xs ${v in AUTO_VARIABLES ? "bg-positive/10 text-positive-strong" : "bg-warning-soft text-warning-strong"}`}
             >
               {v}
             </Badge>
           ))}
           {t.variaveis.length > 5 && (
-            <Badge variant="secondary" className="text-[10px]">
+            <Badge variant="secondary" className="text-3xs">
               +{t.variaveis.length - 5}
             </Badge>
           )}
         </div>
 
         <div className="flex items-center justify-between border-t pt-2">
-          <span className="text-[10px] text-muted-foreground">{t.variaveis.length} variáveis</span>
-          <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => handlePreview(t)}>
+          <span className="text-3xs text-muted-foreground">{t.variaveis.length} variáveis</span>
+          <Button variant="outline" size="xs" className="gap-1" onClick={() => handlePreview(t)}>
             <Eye className="h-3 w-3" />
             Preview
           </Button>
@@ -223,7 +223,7 @@ export function TemplatesManager() {
               <div className="flex items-center gap-2 mb-3">
                 <FileText className="h-4 w-4 text-blue-500" />
                 <h4 className="text-sm font-medium">Propostas</h4>
-                <Badge variant="secondary" className="text-[10px] bg-blue-50 text-blue-700">
+                <Badge variant="secondary" className="text-3xs bg-blue-50 text-blue-700">
                   {templatesProposta.length}
                 </Badge>
               </div>
@@ -239,7 +239,7 @@ export function TemplatesManager() {
               <div className="flex items-center gap-2 mb-3">
                 <FileText className="h-4 w-4 text-purple-500" />
                 <h4 className="text-sm font-medium">Contratos</h4>
-                <Badge variant="secondary" className="text-[10px] bg-purple-50 text-purple-700">
+                <Badge variant="secondary" className="text-3xs bg-purple-50 text-purple-700">
                   {templatesContrato.length}
                 </Badge>
               </div>
@@ -272,7 +272,7 @@ export function TemplatesManager() {
               {previewTemplate?.nome}
               <Badge
                 variant="secondary"
-                className={`text-[10px] ml-1 ${previewTemplate?.tipo === "contrato" ? "bg-purple-50 text-purple-700" : "bg-blue-50 text-blue-700"}`}
+                className={`text-3xs ml-1 ${previewTemplate?.tipo === "contrato" ? "bg-purple-50 text-purple-700" : "bg-blue-50 text-blue-700"}`}
               >
                 {previewTemplate?.tipo === "contrato" ? "Contrato" : "Proposta"}
               </Badge>
@@ -310,13 +310,13 @@ export function TemplatesManager() {
                   <Badge
                     key={v}
                     variant="secondary"
-                    className={`text-[10px] ${v in AUTO_VARIABLES ? "bg-positive/10 text-positive-strong" : "bg-warning-soft text-warning-strong"}`}
+                    className={`text-3xs ${v in AUTO_VARIABLES ? "bg-positive/10 text-positive-strong" : "bg-warning-soft text-warning-strong"}`}
                   >
                     {`{{${v}}}`}
                   </Badge>
                 ))}
               </div>
-              <p className="text-[10px] text-muted-foreground mt-1.5">
+              <p className="text-3xs text-muted-foreground mt-1.5">
                 <span className="inline-block w-2 h-2 rounded-sm bg-positive/10 border border-positive/30 mr-1" />
                 preenchimento automático
                 <span className="inline-block w-2 h-2 rounded-sm bg-amber-100 border border-amber-300 mx-1 ml-3" />
@@ -351,7 +351,7 @@ export function TemplatesManager() {
                   <SelectItem value="contrato">Contrato</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-3xs text-muted-foreground">
                 Templates de contrato aparecem só ao clicar em "Gerar contrato" em uma proposta aceita.
               </p>
             </div>
@@ -379,7 +379,7 @@ export function TemplatesManager() {
                 accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
               />
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-3xs text-muted-foreground">
                 Use {"{{VARIAVEL}}"} no documento. Variáveis reconhecidas: {Object.keys(AUTO_VARIABLES).join(", ")}
               </p>
             </div>

@@ -382,7 +382,7 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
                       />
                     </th>
                   )}
-                  <th className={cn(TABLE_HEAD_CLASS, "h-11 w-[60px] px-3 whitespace-nowrap")}>Tipo</th>
+                  <th className={cn(TABLE_HEAD_CLASS, "h-11 w-[52px] px-2 whitespace-nowrap")}>Tipo</th>
                   <SortableTH
                     label="Data"
                     k="data"
@@ -397,15 +397,17 @@ export function LancamentosTable({ resumo, filters, onFiltersChange, onMutated }
                     sort={sort}
                     onSort={headerSort}
                     icon={<SortIcon k="descricao" />}
-                    className="min-w-[220px]"
+                    className="min-w-[200px]"
                   />
+                  {/* Quebra depois da barra (espaço de largura zero): numa linha só, o título era
+                      mais largo que a coluna e empurrava Status para fora em 1320 px. */}
                   <SortableTH
-                    label="Cliente/Fornecedor"
+                    label={"Cliente/\u200BFornecedor"}
                     k="contraparte"
                     sort={sort}
                     onSort={headerSort}
                     icon={<SortIcon k="contraparte" />}
-                    className="min-w-[160px]"
+                    className="min-w-[140px] whitespace-normal leading-tight"
                   />
                   <SortableTH
                     label="Categoria"

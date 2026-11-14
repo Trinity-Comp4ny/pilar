@@ -82,6 +82,77 @@ export type Database = {
         }
         Relationships: []
       }
+      agenda_eventos_google: {
+        Row: {
+          atualizado_em: string
+          calendario_id: string
+          convidados: string[]
+          descricao: string | null
+          dia_inteiro: boolean
+          empresa_id: string
+          fim: string
+          google_evento_id: string
+          id: string
+          inicio: string
+          lembrete_em: string | null
+          lembrete_minutos: number | null
+          link_google: string | null
+          link_reuniao: string | null
+          local: string | null
+          pode_editar: boolean
+          titulo: string
+          usuario_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          calendario_id?: string
+          convidados?: string[]
+          descricao?: string | null
+          dia_inteiro?: boolean
+          empresa_id: string
+          fim: string
+          google_evento_id: string
+          id?: string
+          inicio: string
+          lembrete_em?: string | null
+          lembrete_minutos?: number | null
+          link_google?: string | null
+          link_reuniao?: string | null
+          local?: string | null
+          pode_editar?: boolean
+          titulo: string
+          usuario_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          calendario_id?: string
+          convidados?: string[]
+          descricao?: string | null
+          dia_inteiro?: boolean
+          empresa_id?: string
+          fim?: string
+          google_evento_id?: string
+          id?: string
+          inicio?: string
+          lembrete_em?: string | null
+          lembrete_minutos?: number | null
+          link_google?: string | null
+          link_reuniao?: string | null
+          local?: string | null
+          pode_editar?: boolean
+          titulo?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agenda_eventos_google_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_actions: {
         Row: {
           args: Json | null
@@ -603,6 +674,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ai_usage_logs_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ajuda_perguntas_sem_resposta: {
+        Row: {
+          created_at: string
+          created_by: string
+          empresa_id: string | null
+          id: string
+          origem: string
+          rota: string | null
+          texto: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          empresa_id?: string | null
+          id?: string
+          origem: string
+          rota?: string | null
+          texto: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          empresa_id?: string | null
+          id?: string
+          origem?: string
+          rota?: string | null
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ajuda_perguntas_sem_resposta_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
@@ -1965,6 +2074,74 @@ export type Database = {
           },
         ]
       }
+      drive_pastas: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          para_cliente: boolean
+          pasta_id: string
+          pasta_pai_id: string | null
+          projeto_disciplina_id: string | null
+          projeto_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          empresa_id: string
+          id?: string
+          nome: string
+          para_cliente?: boolean
+          pasta_id: string
+          pasta_pai_id?: string | null
+          projeto_disciplina_id?: string | null
+          projeto_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          para_cliente?: boolean
+          pasta_id?: string
+          pasta_pai_id?: string | null
+          projeto_disciplina_id?: string | null
+          projeto_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drive_pastas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drive_pastas_projeto_disciplina_id_fkey"
+            columns: ["projeto_disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_disciplinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drive_pastas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drive_pastas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_dominios_bloqueados: {
         Row: {
           created_at: string
@@ -3077,6 +3254,173 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "fornecedores_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_agenda_calendarios: {
+        Row: {
+          atualizado_em: string
+          calendario_id: string
+          cor: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          pode_editar: boolean
+          principal: boolean
+          usuario_id: string
+          visivel: boolean
+        }
+        Insert: {
+          atualizado_em?: string
+          calendario_id: string
+          cor?: string | null
+          empresa_id: string
+          id?: string
+          nome: string
+          pode_editar?: boolean
+          principal?: boolean
+          usuario_id: string
+          visivel?: boolean
+        }
+        Update: {
+          atualizado_em?: string
+          calendario_id?: string
+          cor?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          pode_editar?: boolean
+          principal?: boolean
+          usuario_id?: string
+          visivel?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_agenda_calendarios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_agenda_conexoes: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          erro: string | null
+          google_email: string
+          lembrete_minutos: number | null
+          refresh_token_cifrado: string
+          sincronizado_em: string | null
+          updated_at: string
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          erro?: string | null
+          google_email: string
+          lembrete_minutos?: number | null
+          refresh_token_cifrado: string
+          sincronizado_em?: string | null
+          updated_at?: string
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          erro?: string | null
+          google_email?: string
+          lembrete_minutos?: number | null
+          refresh_token_cifrado?: string
+          sincronizado_em?: string | null
+          updated_at?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_agenda_conexoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_drive_conexoes: {
+        Row: {
+          conectado_por: string | null
+          created_at: string
+          empresa_id: string
+          google_email: string
+          pasta_raiz_id: string
+          refresh_token_cifrado: string
+          updated_at: string
+        }
+        Insert: {
+          conectado_por?: string | null
+          created_at?: string
+          empresa_id: string
+          google_email: string
+          pasta_raiz_id: string
+          refresh_token_cifrado: string
+          updated_at?: string
+        }
+        Update: {
+          conectado_por?: string | null
+          created_at?: string
+          empresa_id?: string
+          google_email?: string
+          pasta_raiz_id?: string
+          refresh_token_cifrado?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_drive_conexoes_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: true
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      google_drive_oauth_estados: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          estado_hash: string
+          expira_em: string
+          retorno: string
+          servico: string
+          usuario_id: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          estado_hash: string
+          expira_em: string
+          retorno?: string
+          servico?: string
+          usuario_id: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          estado_hash?: string
+          expira_em?: string
+          retorno?: string
+          servico?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "google_drive_oauth_estados_empresa_id_fkey"
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
@@ -5287,6 +5631,59 @@ export type Database = {
           },
         ]
       }
+      onboarding_respostas: {
+        Row: {
+          concluido_em: string | null
+          contexto: Json
+          created_at: string
+          dor_principal: string | null
+          dores: string[]
+          empresa_id: string
+          etapa_atual: number
+          id: string
+          texto_livre: string | null
+          updated_at: string
+          user_id: string
+          versao: number
+        }
+        Insert: {
+          concluido_em?: string | null
+          contexto?: Json
+          created_at?: string
+          dor_principal?: string | null
+          dores?: string[]
+          empresa_id: string
+          etapa_atual?: number
+          id?: string
+          texto_livre?: string | null
+          updated_at?: string
+          user_id: string
+          versao?: number
+        }
+        Update: {
+          concluido_em?: string | null
+          contexto?: Json
+          created_at?: string
+          dor_principal?: string | null
+          dores?: string[]
+          empresa_id?: string
+          etapa_atual?: number
+          id?: string
+          texto_livre?: string | null
+          updated_at?: string
+          user_id?: string
+          versao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_respostas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ops_acoes: {
         Row: {
           agente_id: string
@@ -5551,6 +5948,53 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pesquisas_satisfacao: {
+        Row: {
+          comentario: string | null
+          created_at: string
+          created_by: string
+          dispensou: boolean
+          empresa_id: string | null
+          fluxo: string | null
+          id: string
+          nota: number | null
+          rota: string | null
+          tipo: string
+        }
+        Insert: {
+          comentario?: string | null
+          created_at?: string
+          created_by?: string
+          dispensou?: boolean
+          empresa_id?: string | null
+          fluxo?: string | null
+          id?: string
+          nota?: number | null
+          rota?: string | null
+          tipo: string
+        }
+        Update: {
+          comentario?: string | null
+          created_at?: string
+          created_by?: string
+          dispensou?: boolean
+          empresa_id?: string | null
+          fluxo?: string | null
+          id?: string
+          nota?: number | null
+          rota?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pesquisas_satisfacao_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
             referencedColumns: ["id"]
           },
         ]
@@ -6039,6 +6483,91 @@ export type Database = {
           },
         ]
       }
+      plataforma_comunicados: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          empresa_id: string | null
+          encerrado_em: string | null
+          fim: string | null
+          formato: string
+          id: string
+          inicio: string
+          link_rotulo: string | null
+          link_url: string | null
+          mensagem: string
+          plano_slug: string | null
+          so_admins: boolean
+          titulo: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string | null
+          encerrado_em?: string | null
+          fim?: string | null
+          formato?: string
+          id?: string
+          inicio?: string
+          link_rotulo?: string | null
+          link_url?: string | null
+          mensagem: string
+          plano_slug?: string | null
+          so_admins?: boolean
+          titulo: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          empresa_id?: string | null
+          encerrado_em?: string | null
+          fim?: string | null
+          formato?: string
+          id?: string
+          inicio?: string
+          link_rotulo?: string | null
+          link_url?: string | null
+          mensagem?: string
+          plano_slug?: string | null
+          so_admins?: boolean
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plataforma_comunicados_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plataforma_comunicados_dispensas: {
+        Row: {
+          comunicado_id: string
+          dispensado_em: string
+          user_id: string
+        }
+        Insert: {
+          comunicado_id: string
+          dispensado_em?: string
+          user_id: string
+        }
+        Update: {
+          comunicado_id?: string
+          dispensado_em?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plataforma_comunicados_dispensas_comunicado_id_fkey"
+            columns: ["comunicado_id"]
+            isOneToOne: false
+            referencedRelation: "plataforma_comunicados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_settings: {
         Row: {
           cadastro_aberto: boolean
@@ -6127,8 +6656,9 @@ export type Database = {
           drive_url: string | null
           empresa_id: string
           id: string
+          obra_id: string | null
           projeto_disciplina_id: string | null
-          projeto_id: string
+          projeto_id: string | null
           respondido_em: string | null
           resposta_cliente: string | null
           status: string | null
@@ -6145,8 +6675,9 @@ export type Database = {
           drive_url?: string | null
           empresa_id: string
           id?: string
+          obra_id?: string | null
           projeto_disciplina_id?: string | null
-          projeto_id: string
+          projeto_id?: string | null
           respondido_em?: string | null
           resposta_cliente?: string | null
           status?: string | null
@@ -6163,8 +6694,9 @@ export type Database = {
           drive_url?: string | null
           empresa_id?: string
           id?: string
+          obra_id?: string | null
           projeto_disciplina_id?: string | null
-          projeto_id?: string
+          projeto_id?: string | null
           respondido_em?: string | null
           resposta_cliente?: string | null
           status?: string | null
@@ -6178,6 +6710,13 @@ export type Database = {
             columns: ["empresa_id"]
             isOneToOne: false
             referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_entregas_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
             referencedColumns: ["id"]
           },
           {
@@ -6202,6 +6741,193 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      portal_mensagens: {
+        Row: {
+          autor_nome: string
+          autor_profile_id: string | null
+          autor_tipo: string
+          created_at: string
+          empresa_id: string
+          entrega_id: string | null
+          id: string
+          interna: boolean
+          lida_pela_equipe_em: string | null
+          lida_pelo_cliente_em: string | null
+          obra_id: string | null
+          projeto_id: string | null
+          texto: string
+        }
+        Insert: {
+          autor_nome: string
+          autor_profile_id?: string | null
+          autor_tipo: string
+          created_at?: string
+          empresa_id: string
+          entrega_id?: string | null
+          id?: string
+          interna?: boolean
+          lida_pela_equipe_em?: string | null
+          lida_pelo_cliente_em?: string | null
+          obra_id?: string | null
+          projeto_id?: string | null
+          texto: string
+        }
+        Update: {
+          autor_nome?: string
+          autor_profile_id?: string | null
+          autor_tipo?: string
+          created_at?: string
+          empresa_id?: string
+          entrega_id?: string | null
+          id?: string
+          interna?: boolean
+          lida_pela_equipe_em?: string | null
+          lida_pelo_cliente_em?: string | null
+          obra_id?: string | null
+          projeto_id?: string | null
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_mensagens_autor_profile_id_fkey"
+            columns: ["autor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_mensagens_autor_profile_id_fkey"
+            columns: ["autor_profile_id"]
+            isOneToOne: false
+            referencedRelation: "v_uso_tokens_usuario_ciclo"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "portal_mensagens_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_mensagens_entrega_id_fkey"
+            columns: ["entrega_id"]
+            isOneToOne: false
+            referencedRelation: "portal_entregas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_mensagens_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_mensagens_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_mensagens_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_release_itens: {
+        Row: {
+          commit_sha: string | null
+          criado_em: string
+          feedback_ids: string[]
+          id: string
+          impacto: string
+          modulo: string | null
+          ordem: number
+          release_id: string
+          texto: string
+        }
+        Insert: {
+          commit_sha?: string | null
+          criado_em?: string
+          feedback_ids?: string[]
+          id?: string
+          impacto: string
+          modulo?: string | null
+          ordem?: number
+          release_id: string
+          texto: string
+        }
+        Update: {
+          commit_sha?: string | null
+          criado_em?: string
+          feedback_ids?: string[]
+          id?: string
+          impacto?: string
+          modulo?: string | null
+          ordem?: number
+          release_id?: string
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_release_itens_release_id_fkey"
+            columns: ["release_id"]
+            isOneToOne: false
+            referencedRelation: "product_releases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_release_vistas: {
+        Row: {
+          user_id: string
+          visto_ate: string
+        }
+        Insert: {
+          user_id: string
+          visto_ate?: string
+        }
+        Update: {
+          user_id?: string
+          visto_ate?: string
+        }
+        Relationships: []
+      }
+      product_releases: {
+        Row: {
+          criada_em: string
+          id: string
+          publicada_em: string | null
+          publicada_por: string | null
+          sha: string | null
+          titulo: string
+          versao: string | null
+        }
+        Insert: {
+          criada_em?: string
+          id?: string
+          publicada_em?: string | null
+          publicada_por?: string | null
+          sha?: string | null
+          titulo: string
+          versao?: string | null
+        }
+        Update: {
+          criada_em?: string
+          id?: string
+          publicada_em?: string | null
+          publicada_por?: string | null
+          sha?: string | null
+          titulo?: string
+          versao?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -7537,6 +8263,30 @@ export type Database = {
           },
         ]
       }
+      recursos_previa: {
+        Row: {
+          ativo: boolean
+          chave: string
+          created_at: string
+          descricao: string
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean
+          chave: string
+          created_at?: string
+          descricao: string
+          nome: string
+        }
+        Update: {
+          ativo?: boolean
+          chave?: string
+          created_at?: string
+          descricao?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       registros_acesso: {
         Row: {
           conta_id: string | null
@@ -7806,6 +8556,39 @@ export type Database = {
           resolved_at?: string | null
           severidade?: string
           status?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
+      status_manutencoes: {
+        Row: {
+          cancelada_em: string | null
+          created_at: string
+          created_by: string | null
+          fim: string
+          id: string
+          inicio: string
+          mensagem: string | null
+          titulo: string
+        }
+        Insert: {
+          cancelada_em?: string | null
+          created_at?: string
+          created_by?: string | null
+          fim: string
+          id?: string
+          inicio: string
+          mensagem?: string | null
+          titulo: string
+        }
+        Update: {
+          cancelada_em?: string | null
+          created_at?: string
+          created_by?: string | null
+          fim?: string
+          id?: string
+          inicio?: string
+          mensagem?: string | null
           titulo?: string
         }
         Relationships: []
@@ -8413,6 +9196,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      usuario_dispositivos: {
+        Row: {
+          descricao: string | null
+          dispositivo_id: string
+          primeiro_em: string
+          ultimo_em: string
+          user_id: string
+        }
+        Insert: {
+          descricao?: string | null
+          dispositivo_id: string
+          primeiro_em?: string
+          ultimo_em?: string
+          user_id: string
+        }
+        Update: {
+          descricao?: string | null
+          dispositivo_id?: string
+          primeiro_em?: string
+          ultimo_em?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      usuario_previas: {
+        Row: {
+          chave: string
+          ligado_em: string
+          user_id: string
+        }
+        Insert: {
+          chave: string
+          ligado_em?: string
+          user_id: string
+        }
+        Update: {
+          chave?: string
+          ligado_em?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_previas_chave_fkey"
+            columns: ["chave"]
+            isOneToOne: false
+            referencedRelation: "recursos_previa"
+            referencedColumns: ["chave"]
+          },
+        ]
       }
     }
     Views: {
@@ -9405,6 +10238,20 @@ export type Database = {
         }
         Returns: undefined
       }
+      _portal_msg_escopo: {
+        Args: {
+          p_cliente_id: string
+          p_empresa_id: string
+          p_entrega_id: string
+          p_obra_id: string
+          p_projeto_id: string
+        }
+        Returns: {
+          entrega_id: string
+          obra_id: string
+          projeto_id: string
+        }[]
+      }
       _portal_reset_password: {
         Args: { p_account_id: string; p_nova_senha: string }
         Returns: undefined
@@ -9490,6 +10337,7 @@ export type Database = {
         }
         Returns: string
       }
+      agenda_gerar_lembretes: { Args: never; Returns: number }
       agente_pendencia_adiar: {
         Args: { p_dias: number; p_id: string }
         Returns: undefined
@@ -9714,6 +10562,18 @@ export type Database = {
         }
         Returns: string
       }
+      comunicados_para_mim: {
+        Args: never
+        Returns: {
+          formato: string
+          id: string
+          inicio: string
+          link_rotulo: string
+          link_url: string
+          mensagem: string
+          titulo: string
+        }[]
+      }
       cotacao_link_consultar: { Args: { p_token_hash: string }; Returns: Json }
       cotacao_link_responder: {
         Args: {
@@ -9808,6 +10668,10 @@ export type Database = {
       criar_fornecedor_agente: { Args: { p_run_id: string }; Returns: Json }
       criar_lead_agente: { Args: { p_run_id: string }; Returns: Json }
       criar_marco_agente: { Args: { p_run_id: string }; Returns: Json }
+      criar_obra_da_estimativa: {
+        Args: { p_estimativa_id: string; p_fases: Json; p_obra: Json }
+        Returns: string
+      }
       criar_pessoa_agente: { Args: { p_run_id: string }; Returns: Json }
       criar_projeto_agente: { Args: { p_run_id: string }; Returns: Json }
       criar_proposta_agente: { Args: { p_run_id: string }; Returns: Json }
@@ -9850,6 +10714,10 @@ export type Database = {
           saldo_comprado: number
           saldo_plano: number
         }[]
+      }
+      dispensar_comunicado: {
+        Args: { p_comunicado_id: string }
+        Returns: undefined
       }
       excluir_empresa_retencao: {
         Args: { p_empresa_id: string; p_motivo: string }
@@ -9956,6 +10824,25 @@ export type Database = {
           total_valor_base: number
           total_variavel: number
           valor_m2: number
+        }[]
+      }
+      get_google_agenda_status: {
+        Args: never
+        Returns: {
+          conectado: boolean
+          conectado_em: string
+          erro: string
+          google_email: string
+          lembrete_minutos: number
+          sincronizado_em: string
+        }[]
+      }
+      get_google_drive_status: {
+        Args: never
+        Returns: {
+          conectado: boolean
+          conectado_em: string
+          google_email: string
         }[]
       }
       get_grupos_parcela_resumo: {
@@ -10091,6 +10978,8 @@ export type Database = {
       get_user_empresa_id: { Args: never; Returns: string }
       get_user_empresa_id_text: { Args: never; Returns: string }
       get_user_role: { Args: never; Returns: string }
+      google_agenda_cron: { Args: never; Returns: undefined }
+      google_agenda_lembretes_cron: { Args: never; Returns: undefined }
       guard_login_attempt: { Args: { p_email: string }; Returns: boolean }
       guardiao_margem_disparar: { Args: never; Returns: undefined }
       has_aal2: { Args: never; Returns: boolean }
@@ -10174,6 +11063,15 @@ export type Database = {
           origem: string
         }[]
       }
+      marcar_mensagens_portal_lidas_equipe: {
+        Args: {
+          p_entrega_id?: string
+          p_obra_id?: string
+          p_projeto_id?: string
+        }
+        Returns: undefined
+      }
+      marcar_novidades_vistas: { Args: never; Returns: undefined }
       mfa_backup_codes_remaining: { Args: never; Returns: number }
       mfa_consume_backup_code: { Args: { p_code: string }; Returns: boolean }
       mfa_generate_backup_codes: { Args: never; Returns: string[] }
@@ -10248,6 +11146,7 @@ export type Database = {
         }
         Returns: number
       }
+      novidades_publicadas: { Args: never; Returns: Json }
       ops_agente_disparar: { Args: { p_agente_id: string }; Returns: undefined }
       ops_decidir_acao: {
         Args: {
@@ -10361,9 +11260,29 @@ export type Database = {
         Args: { p_nova_senha: string; p_senha_atual: string; p_token: string }
         Returns: Json
       }
+      portal_contar_mensagens_nao_lidas: {
+        Args: { p_token: string }
+        Returns: {
+          entrega_id: string
+          obra_id: string
+          projeto_id: string
+          total: number
+        }[]
+      }
+      portal_convite_consultar: { Args: { p_token: string }; Returns: Json }
       portal_convite_definir_senha: {
         Args: { p_senha: string; p_token: string }
         Returns: Json
+      }
+      portal_enviar_mensagem: {
+        Args: {
+          p_entrega_id?: string
+          p_obra_id?: string
+          p_projeto_id?: string
+          p_texto: string
+          p_token: string
+        }
+        Returns: string
       }
       portal_get_projeto_disciplinas: {
         Args: { p_projeto_id: string; p_token: string }
@@ -10395,9 +11314,56 @@ export type Database = {
           updated_at: string
         }[]
       }
+      portal_listar_mensagens: {
+        Args: {
+          p_entrega_id?: string
+          p_obra_id?: string
+          p_projeto_id?: string
+          p_token: string
+        }
+        Returns: {
+          autor_nome: string
+          autor_tipo: string
+          created_at: string
+          id: string
+          lida_pelo_cliente_em: string
+          texto: string
+        }[]
+      }
+      portal_listar_solicitacoes: {
+        Args: { p_obra_id?: string; p_projeto_id?: string; p_token: string }
+        Returns: {
+          aprovado_ip: unknown
+          aprovado_user_agent: string
+          created_at: string
+          descricao: string
+          disciplina_nome: string
+          drive_url: string
+          id: string
+          obra_id: string
+          obra_nome: string
+          projeto_disciplina_id: string
+          projeto_id: string
+          projeto_nome: string
+          respondido_em: string
+          resposta_cliente: string
+          status: string
+          tipo: string
+          titulo: string
+        }[]
+      }
       portal_login: {
         Args: { p_email: string; p_senha: string }
         Returns: Json
+      }
+      portal_marcar_mensagens_lidas: {
+        Args: {
+          p_entrega_id?: string
+          p_obra_id?: string
+          p_projeto_id?: string
+          p_token: string
+        }
+        Returns: undefined
       }
       portal_solicitar_revisao_entrega: {
         Args: { p_entrega_id: string; p_resposta: string; p_token: string }
@@ -10423,6 +11389,7 @@ export type Database = {
           projeto_id: string
         }[]
       }
+      publicar_release: { Args: { p_release_id: string }; Returns: number }
       rate_limit_cleanup: { Args: never; Returns: undefined }
       rate_limit_cleanup_monitored: { Args: never; Returns: undefined }
       recalc_disciplina_status_por_checklist: {
@@ -10437,6 +11404,10 @@ export type Database = {
       regenerate_convite_token: {
         Args: { p_convite_id: string }
         Returns: string
+      }
+      registrar_dispositivo: {
+        Args: { p_descricao: string; p_dispositivo_id: string }
+        Returns: boolean
       }
       registrar_heartbeat_agente: {
         Args: { p_agent_type: string; p_detail?: Json; p_status: string }
@@ -10796,6 +11767,14 @@ export type Database = {
       }
       set_financeiro_delegado: {
         Args: { p_delegado: boolean; p_user_id: string }
+        Returns: undefined
+      }
+      set_google_agenda_calendario_visivel: {
+        Args: { p_id: string; p_visivel: boolean }
+        Returns: undefined
+      }
+      set_google_agenda_lembrete: {
+        Args: { p_minutos: number }
         Returns: undefined
       }
       set_metas_delegado: {

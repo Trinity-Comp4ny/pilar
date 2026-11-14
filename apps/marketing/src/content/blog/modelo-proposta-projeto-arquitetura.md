@@ -83,7 +83,7 @@ Uma prática útil é oferecer duas opções na mesma proposta: uma contrataçã
 
 Se quiser partir de uma estrutura pronta, o [modelo de proposta de projeto](/ferramentas/modelo-de-proposta) traz escopo, exclusões, revisões, prazo e parcelas para copiar ou baixar. Adapte as etapas ao que você descreveu acima e mantenha o mesmo texto no [contrato de projeto](/blog/contrato-de-projeto): proposta e contrato que dizem coisas diferentes viram argumento do cliente.
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
 No [módulo Gestão](/gestao), a proposta deixa de ser um arquivo perdido numa pasta.
 
@@ -92,7 +92,7 @@ No [módulo Gestão](/gestao), a proposta deixa de ser um arquivo perdido numa p
 - Aprovada, a proposta vira projeto, e as parcelas (mensais ou por marco) nascem no financeiro no mesmo clique.
 - Cliente preenchido pelo CNPJ, sem copiar dado na mão.
 
-Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça o Pilar para [escritórios de arquitetura](/arquitetura).
+Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos) ou conheça a Pilar para [escritórios de arquitetura](/arquitetura).
 
 ## Perguntas frequentes
 

@@ -60,8 +60,8 @@ describe("PessoaAcessoSecao", () => {
     const user = userEvent.setup();
     render(<PessoaAcessoSecao pessoa={AMANDA} />);
 
-    expect(screen.getByText(/Sem login no Pilar/)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Convidar para o Pilar" }));
+    expect(screen.getByText(/Sem login na Pilar/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Convidar para a Pilar" }));
 
     await waitFor(() => expect(h.convidar).toHaveBeenCalled());
     expect(h.convidar.mock.calls[0][0]).toMatchObject({ id: "p1", email: "amanda@pessoal.test" });
@@ -92,7 +92,7 @@ describe("PessoaAcessoSecao", () => {
     h.contasLivres = [{ id: "u1", nome: "Amanda Rizzo", email: "amanda@escritorio.test" }];
     render(<PessoaAcessoSecao pessoa={AMANDA} />);
 
-    expect(screen.queryByRole("button", { name: "Convidar para o Pilar" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Convidar para a Pilar" })).not.toBeInTheDocument();
     expect(screen.queryByRole("combobox", { name: "Conta de login" })).not.toBeInTheDocument();
   });
 });

@@ -7,6 +7,7 @@ import {
   Clock,
   FileText,
   Home,
+  Keyboard,
   LogOut,
   MapPin,
   Plus,
@@ -17,6 +18,7 @@ import {
   UserPlus,
   Users,
   Wallet,
+  HelpCircle,
 } from "lucide-react";
 import {
   CommandDialog,
@@ -30,10 +32,11 @@ import {
 } from "@/components/ui/command";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettingsModal } from "@/contexts/SettingsModalContext";
-import { type PaletteCreateEvent } from "@/hooks/useCommandPalette";
+import { abrirAtalhosTeclado } from "@/hooks/useAtalhosTeclado";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useBuscaGlobal, type BuscaResultado, type BuscaTipo } from "@/hooks/useBuscaGlobal";
 import { useRecentItems, type RecentItem } from "@/hooks/useRecentItems";
+import { buscarArtigos } from "@/lib/ajudaBusca";
 
 interface CommandPaletteProps {
   open: boolean;
@@ -41,9 +44,9 @@ interface CommandPaletteProps {
 }
 
 type NavCmd = { label: string; path: string; icon: typeof Home; keywords?: string };
+// `path` leva ?new=: a página abre o formulário de criação (useAbrirCriacaoPelaUrl).
 type CreateCmd = {
   label: string;
-  event: PaletteCreateEvent;
   path: string;
   icon: typeof Plus;
   keywords?: string;
@@ -64,42 +67,36 @@ const NAV_COMMANDS: NavCmd[] = [
 const CREATE_COMMANDS: CreateCmd[] = [
   {
     label: "Nova receita",
-    event: "palette:create-receita",
-    path: "/gestao/financeiro?tab=receitas&new=1",
+    path: "/gestao/financeiro?tab=lancamentos&new=receita",
     icon: TrendingUp,
     keywords: "criar adicionar entrada lancamento",
   },
   {
     label: "Nova despesa",
-    event: "palette:create-despesa",
-    path: "/gestao/financeiro?tab=despesas&new=1",
+    path: "/gestao/financeiro?tab=lancamentos&new=despesa",
     icon: TrendingDown,
     keywords: "criar adicionar pagamento lancamento",
   },
   {
     label: "Novo projeto",
-    event: "palette:create-projeto",
     path: "/projetos?new=1",
     icon: Calendar,
     keywords: "criar adicionar obra",
   },
   {
     label: "Novo lead",
-    event: "palette:create-lead",
     path: "/gestao/leads?new=1",
     icon: UserPlus,
     keywords: "criar adicionar prospect",
   },
   {
     label: "Novo cliente",
-    event: "palette:create-cliente",
     path: "/gestao/clientes?new=1",
     icon: Building2,
     keywords: "criar adicionar contato",
   },
   {
     label: "Novo membro de equipe",
-    event: "palette:create-pessoa",
     path: "/gestao/equipe?new=1",
     icon: Users,
     keywords: "criar adicionar pessoa colaborador",
@@ -147,6 +144,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const recs = recentes();
 
   const navFiltrado = NAV_COMMANDS.filter((cmd) => combina(query, cmd.label, cmd.keywords));
+  // Central de ajuda (SPEC 154): artigos que respondem ao que foi digitado.
+  const ajuda = query.trim().length >= 3 ? buscarArtigos(query).slice(0, 4) : [];
   const createFiltrado = CREATE_COMMANDS.filter((cmd) => combina(query, cmd.label, cmd.keywords));
 
   const close = () => {
@@ -167,8 +166,11 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const runCreate = (cmd: CreateCmd) => {
     close();
     navigate(cmd.path);
-    // Em um próximo passo, as páginas podem ouvir esse evento para abrir o dialog automaticamente.
-    window.dispatchEvent(new CustomEvent(cmd.event));
+  };
+
+  const runAtalhos = () => {
+    close();
+    abrirAtalhosTeclado();
   };
 
   const runLogout = async () => {
@@ -214,6 +216,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         {!buscando &&
         favs.length === 0 &&
         recs.length === 0 &&
+        ajuda.length === 0 &&
         navFiltrado.length === 0 &&
         createFiltrado.length === 0 ? (
           <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
@@ -289,6 +292,20 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           </CommandGroup>
         ) : null}
 
+        {ajuda.length > 0 ? (
+          <>
+            {buscando ? <CommandSeparator /> : null}
+            <CommandGroup heading="Ajuda">
+              {ajuda.map((a) => (
+                <CommandItem key={a.slug} value={`ajuda ${a.slug}`} onSelect={() => runNavigate(`/ajuda/${a.slug}`)}>
+                  <HelpCircle className="mr-2 h-4 w-4" />
+                  <span className="truncate">{a.titulo}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </>
+        ) : null}
+
         {navFiltrado.length > 0 ? (
           <>
             {buscando || favs.length > 0 || recs.length > 0 ? <CommandSeparator /> : null}
@@ -318,7 +335,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 const Icon = cmd.icon;
                 return (
                   <CommandItem
-                    key={cmd.event}
+                    key={cmd.path}
                     value={`criar ${cmd.label} ${cmd.keywords ?? ""}`}
                     onSelect={() => runCreate(cmd)}
                   >
@@ -338,6 +355,11 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <CommandItem value="acoes configuracoes perfil ajustes preferencias" onSelect={runSettings}>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Configurações</span>
+              </CommandItem>
+              <CommandItem value="acoes atalhos de teclado teclas shortcuts ajuda" onSelect={runAtalhos}>
+                <Keyboard className="mr-2 h-4 w-4" />
+                <span>Atalhos de teclado</span>
+                <CommandShortcut>?</CommandShortcut>
               </CommandItem>
               <CommandItem value="acoes sair logout signout" onSelect={runLogout}>
                 <LogOut className="mr-2 h-4 w-4" />

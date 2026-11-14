@@ -1,0 +1,41 @@
+{
+  "id": "fala-02-por-escritorio",
+  "hook": "Por que a Pilar *não* cobra por usuário",
+  "tail": 3.4,
+  "lines": [
+    {
+      "id": "l01",
+      "text": "Quase todo sistema cobra por usuário. A gente decidiu não cobrar."
+    },
+    {
+      "id": "l02",
+      "text": "Porque o escritório cresce, e o estagiário, o mestre de obras e o sócio precisam estar no mesmo sistema.",
+      "show": {
+        "type": "lista",
+        "itens": [
+          "Estagiário",
+          "Mestre de obras",
+          "Sócio"
+        ],
+        "icone": "user-round"
+      }
+    },
+    {
+      "id": "l03",
+      "text": "Cobrar por cabeça faz o escritório deixar gente de fora. E aí volta a planilha."
+    },
+    {
+      "id": "l04",
+      "text": "Então todo plano tem usuários ilimitados, a partir de duzentos e noventa e nove reais por mês.",
+      "show": {
+        "type": "numero",
+        "valor": "R$ 299",
+        "rotulo": "por mês · usuários ilimitados"
+      }
+    },
+    {
+      "id": "l05",
+      "text": "O plano muda quanto, nunca o quê."
+    }
+  ]
+}

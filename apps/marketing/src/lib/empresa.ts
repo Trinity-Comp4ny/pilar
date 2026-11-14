@@ -1,4 +1,4 @@
-// Identificação legal de quem opera o Pilar. Fonte única para a Política de Privacidade
+// Identificação legal de quem opera a Pilar. Fonte única para a Política de Privacidade
 // (LGPD art. 9º, III e art. 41) e os Termos de Uso. Por decisão do CEO (2026-11-10), não
 // aparece no rodapé do site.
 export const EMPRESA = {

@@ -194,7 +194,7 @@ export default function CampoHome() {
         </div>
 
         <section className="space-y-4" aria-labelledby="registros-titulo">
-          <h2 id="registros-titulo" className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <h2 id="registros-titulo" className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
             Registros da obra
           </h2>
           {carregandoRegistros && registros.length === 0 ? (
@@ -243,7 +243,7 @@ export default function CampoHome() {
         </Button>
 
         <div className="space-y-2">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-2xs font-medium uppercase tracking-wide text-muted-foreground">
             Últimos dias (formulário)
           </p>
           {isLoading ? (

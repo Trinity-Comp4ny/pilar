@@ -1,0 +1,24 @@
+{
+ "provider": "google",
+ "voice": "pt-BR-Chirp3-HD-Leda",
+ "lines": [
+  {
+   "t": 0.3,
+   "dur": 2.831,
+   "say": "O diário da obra ainda está no WhatsApp?",
+   "ritmo": 1.0
+  },
+  {
+   "t": 4.5,
+   "dur": 5.811,
+   "say": "O canteiro fala. A Pilar organiza: serviço feito, material que faltou, pendência.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 11.4,
+   "dur": 3.831,
+   "say": "Nasce interno. E vai para o cliente quando você liberar.",
+   "ritmo": 1.0
+  }
+ ]
+}

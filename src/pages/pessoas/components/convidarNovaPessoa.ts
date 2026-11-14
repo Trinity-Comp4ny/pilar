@@ -14,7 +14,7 @@ export async function convidarNovaPessoa(pessoa: { id: string; nome: string; ema
   } catch (err) {
     reportInvokeError(err, "invite-user:nova-pessoa");
     toast.error("Pessoa cadastrada, mas o convite não saiu", {
-      description: await edgeFunctionErrorMessage(err, 'Abra a pessoa na Equipe e use "Convidar para o Pilar".'),
+      description: await edgeFunctionErrorMessage(err, 'Abra a pessoa na Equipe e use "Convidar para a Pilar".'),
     });
   }
 }

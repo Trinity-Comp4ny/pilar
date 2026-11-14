@@ -1,0 +1,36 @@
+{
+ "provider": "google",
+ "voice": "pt-BR-Chirp3-HD-Leda",
+ "lines": [
+  {
+   "t": 0.5,
+   "dur": 2.531,
+   "say": "ART: quem responde pelo projeto.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 3.3,
+   "dur": 2.271,
+   "say": "RRT: o mesmo, no CAU.",
+   "ritmo": 1.0
+  },
+  {
+   "t": 6.1,
+   "dur": 2.811,
+   "say": "Aditivo: sem ele, a revisão é grátis.",
+   "ritmo": 1.12
+  },
+  {
+   "t": 8.9,
+   "dur": 2.704,
+   "say": "Curva S: planejado contra realizado.",
+   "ritmo": 1.041
+  },
+  {
+   "t": 11.7,
+   "dur": 2.757,
+   "say": "Margem: medida durante. Não só no fim.",
+   "ritmo": 1.12
+  }
+ ]
+}

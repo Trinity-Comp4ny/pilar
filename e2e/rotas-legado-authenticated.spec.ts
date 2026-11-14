@@ -19,7 +19,7 @@ const REDIRECTS: Array<{ de: string; path: string; query?: Record<string, string
   { de: "/financeiro?tab=carteira", path: "/gestao/financeiro", query: { tab: "carteira" } },
   { de: "/meu-trabalho?view=quadro", path: "/gestao/tarefas", query: { view: "quadro" } },
   { de: "/gestao/meu-trabalho", path: "/gestao/tarefas" },
-  { de: "/fornecedores", path: "/obras/fornecedores" },
+  { de: "/fornecedores", path: "/gestao/fornecedores" },
   { de: "/calendario/2026/10", path: "/projetos/cronograma" },
   { de: "/projetos/calendario", path: "/projetos/cronograma" },
 ];

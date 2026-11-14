@@ -22,6 +22,8 @@ research/
   sequoia/
   first-round/
   techstars-500/ # Techstars, 500, SaaStr, Lenny, NfX, Bessemer, etc.
+  aec/           # domínio AEC e concorrentes (market-scout)
+  marketing/     # posicionamento, conteúdo, canais e custo de mídia (orgânico x pago)
   themes/        # notas temáticas que cruzam fontes (fundraising, gtm, pricing, pmf, ai-agents...)
 ```
 

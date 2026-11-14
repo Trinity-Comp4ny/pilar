@@ -1,0 +1,9 @@
+{
+  "name": "pilar-video-v2",
+  "private": true,
+  "description": "Ferramentas dos vídeos de marketing (fora do workspace do app). Instale com: npm install --prefix docs/marketing/video-v2/vendor",
+  "dependencies": {
+    "gsap": "3.12.5",
+    "lucide-static": "0.460.0"
+  }
+}

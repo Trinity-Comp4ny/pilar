@@ -61,7 +61,7 @@ export function PlanoTab({ empresaId, currentPlan }: { empresaId: string | null;
                   {PLAN_LABELS[currentPlan]}
                 </Badge>
               </CardTitle>
-              <CardDescription>Acesso completo ao Pilar no plano {PLAN_LABELS[currentPlan]}</CardDescription>
+              <CardDescription>Acesso completo à Pilar no plano {PLAN_LABELS[currentPlan]}</CardDescription>
             </div>
             <Button variant="outline" onClick={() => setComercialOpen(true)}>
               Falar com comercial
@@ -125,7 +125,7 @@ function Stat({
         {label}
       </div>
       <div
-        className={`mt-2 text-2xl font-medium tracking-tight ${variant === "ok" ? "text-success-mid" : "text-black"}`}
+        className={`mt-2 text-xl font-semibold tabular-nums tracking-tight ${variant === "ok" ? "text-success-mid" : "text-black"}`}
       >
         {value}
       </div>

@@ -276,8 +276,8 @@ export default function Carteira() {
                         {canEdit && (
                           <Button
                             variant="outline"
-                            size="sm"
-                            className="h-8 rounded-full text-sm"
+                            size="xs"
+                            className="rounded-full text-sm"
                             onClick={() => openNewCartaoParaConta(panelConta)}
                           >
                             <Plus className="h-4 w-4 mr-1" /> Adicionar cartão

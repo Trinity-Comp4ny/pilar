@@ -60,5 +60,5 @@ Deno.test("withSentry em produção: o envelope do span não leva prompt nem res
   assertEquals(corpos[0].includes("Construtora Alfa"), false);
   assertEquals(corpos[0].includes("gen_ai.input.messages"), false);
   assertEquals(corpos[0].includes("gen_ai.output.messages"), false);
-  assertEquals(corpos[0].includes("\"gen_ai.usage.input_tokens\":120"), true);
+  assertEquals(corpos[0].includes('"gen_ai.usage.input_tokens":120'), true);
 });

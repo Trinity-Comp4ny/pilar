@@ -21,3 +21,10 @@ Deno.test("nome ausente, vazio ou que não é texto fica de fora", () => {
     assertEquals(r.ok && r.data.nome_cliente, undefined);
   }
 });
+
+Deno.test("acesso específico do cliente é opcional, mas precisa ser uuid", () => {
+  const conta = "7a1c2a9e-1b2c-4d3e-8f4a-5b6c7d8e9f01";
+  const r = lerEntrada({ cliente_id: cliente, account_id: conta });
+  assertEquals(r.ok && r.data.account_id, conta);
+  assertEquals(lerEntrada({ cliente_id: cliente, account_id: "x" }), { ok: false, error: "account_id inválido" });
+});

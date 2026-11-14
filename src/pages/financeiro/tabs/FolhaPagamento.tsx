@@ -19,6 +19,7 @@ import { FolhaHistory } from "./folha-pagamento/components/FolhaHistory";
 import { FinanceErrorState } from "../components/FinanceErrorState";
 import { gerarComprovantePDF, gerarLoteComprovantesPDF } from "./folha-pagamento/folhaComprovante";
 import {
+  areaDeProjetosUnicos,
   calcularVariavel,
   calcularTotal,
   parseDetalhe,
@@ -37,7 +38,6 @@ export default function FolhaPagamento() {
   const [saving, setSaving] = useState(false);
   const [data, setData] = useState<FolhaItem[]>([]);
   const [statusFolha, setStatusFolha] = useState<"preview" | "closed">("preview");
-  const [totalUniqueArea, setTotalUniqueArea] = useState(0);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [empresaNome, setEmpresaNome] = useState<string | undefined>(undefined);
   // Total pago por pessoa no mês anterior; o delta (atual − anterior) é derivado.
@@ -139,21 +139,6 @@ export default function FolhaPagamento() {
     setLoading(true);
     setLoadError(false);
     try {
-      const { data: projectsData } = await supabase
-        .from("projetos")
-        .select("area_m2, data_inicio")
-        .eq("empresa_id", (await supabase.rpc("get_user_empresa_id")).data ?? "")
-        .is("deleted_at", null);
-
-      const uniqueArea = (projectsData || [])
-        .filter((p) => {
-          if (!p.data_inicio) return false;
-          const [ano, mes] = p.data_inicio.split("-").map(Number);
-          return ano === selectedYear && mes === selectedMonth;
-        })
-        .reduce((acc, curr) => acc + Number(curr.area_m2 || 0), 0);
-      setTotalUniqueArea(uniqueArea);
-
       const { data: existingData, error: checkError } = await supabase
         .from("folha_pagamento")
         .select("*")
@@ -491,6 +476,7 @@ export default function FolhaPagamento() {
   };
 
   const totalFolha = data.reduce((acc, item) => acc + item.v_total, 0);
+  const totalUniqueArea = areaDeProjetosUnicos(data);
 
   // Delta = total atual − total do mês anterior (undefined se não houver folha
   // anterior daquela pessoa, para a tabela mostrar "-" em vez de um número falso).

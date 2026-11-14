@@ -58,7 +58,7 @@ export function MiniMes({ selecionado, diasComEvento, onSelectDate }: MiniMesPro
 
       <div className="grid grid-cols-7 gap-y-0.5">
         {MINI_WEEKDAYS.map((wd, i) => (
-          <div key={i} className="text-[10px] text-muted-foreground text-center h-6 grid place-items-center">
+          <div key={i} className="text-3xs text-muted-foreground text-center h-6 grid place-items-center">
             {wd}
           </div>
         ))}

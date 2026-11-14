@@ -96,9 +96,9 @@ Pé-direito é um ponto à parte: forro, viga, duto e luminária disputam os mes
 - Projetista parceiro sem saber que saiu base nova.
 - Tratar pedido novo do cliente como item de compatibilização. Mudança de escopo é [aditivo de projeto](/blog/aditivo-de-projeto), não interferência.
 
-## Como o Pilar ajuda
+## Como a Pilar ajuda
 
-O Pilar não detecta interferência no modelo; isso continua no seu CAD ou BIM. O que o [módulo Projetos](/projetos) organiza é a coordenação em volta: quem faz, até quando e o que foi combinado.
+A Pilar não detecta interferência no modelo; isso continua no seu CAD ou BIM. O que o [módulo Projetos](/projetos) organiza é a coordenação em volta: quem faz, até quando e o que foi combinado.
 
 - Cada disciplina tem um ou mais responsáveis, com etiqueta, link para o arquivo da rodada e comentário no mesmo lugar.
 - O quadro tem as colunas que o escritório definir, como uma coluna para disciplinas em compatibilização.
@@ -106,7 +106,7 @@ O Pilar não detecta interferência no modelo; isso continua no seu CAD ou BIM. 
 - Mudou a data, o sistema pede o motivo, e o histórico explica depois onde o prazo foi.
 - O Gantt mostra a carteira inteira, para enxergar quando a mesma equipe tem rodadas de projetos diferentes na mesma semana.
 
-Veja como o Pilar atende [escritórios de engenharia](/engenharia) e [como montar o cronograma](/blog/cronograma-projeto-arquitetura) com as rodadas previstas. Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos).
+Veja como a Pilar atende [escritórios de engenharia](/engenharia) e [como montar o cronograma](/blog/cronograma-projeto-arquitetura) com as rodadas previstas. Os planos começam em R$ 299 por mês por escritório, sem cobrança por usuário. [Veja os planos](/planos).
 
 ## Perguntas frequentes
 
